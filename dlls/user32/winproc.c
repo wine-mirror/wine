@@ -441,20 +441,6 @@ static void MDICREATESTRUCT16to32A( const MDICREATESTRUCT16* from, MDICREATESTRU
     to->szClass = MapSL(from->szClass);
 }
 
-static WPARAM map_wparam_char_AtoW( WPARAM wParam, DWORD len )
-{
-    CHAR ch[2];
-    WCHAR wch;
-
-    ch[0] = (wParam >> 8);
-    ch[1] = wParam & 0xff;
-    if (len > 1 && ch[0])
-        RtlMultiByteToUnicodeN( &wch, sizeof(wch), NULL, ch, 2 );
-    else
-        RtlMultiByteToUnicodeN( &wch, sizeof(wch), NULL, ch + 1, 1 );
-    return MAKEWPARAM( wch, HIWORD(wParam) );
-}
-
 static WPARAM map_wparam_char_WtoA( WPARAM wParam, DWORD len )
 {
     WCHAR wch = wParam;
@@ -602,14 +588,16 @@ static LRESULT call_dialog_proc_Ato16( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 static LRESULT call_window_proc_AtoW( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                       LRESULT *result, void *arg )
 {
-    return WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wp, lp, result, arg );
+    return WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wp, lp, result,
+                                 arg, WMCHAR_MAP_CALLWINDOWPROC );
 }
 
 /* helper callback for 16->32W conversion */
 static LRESULT call_dialog_proc_AtoW( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                       LRESULT *result, void *arg )
 {
-    return WINPROC_CallProcAtoW( call_dialog_proc, hwnd, msg, wp, lp, result, arg );
+    return WINPROC_CallProcAtoW( call_dialog_proc, hwnd, msg, wp, lp, result,
+                                 arg, WMCHAR_MAP_CALLWINDOWPROC );
 }
 
 
@@ -783,7 +771,7 @@ static HANDLE16 convert_handle_32_to_16(UINT_PTR src, unsigned int flags)
  * Call a window procedure, translating args from Ansi to Unicode.
  */
 LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, WPARAM wParam,
-                              LPARAM lParam, LRESULT *result, void *arg )
+                              LPARAM lParam, LRESULT *result, void *arg, enum wm_char_mapping mapping )
 {
     LRESULT ret = 0;
 
@@ -979,19 +967,8 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
         if (lParam)
         {
             MSG newmsg = *(MSG *)lParam;
-            switch(newmsg.message)
-            {
-            case WM_CHAR:
-            case WM_DEADCHAR:
-            case WM_SYSCHAR:
-            case WM_SYSDEADCHAR:
-                newmsg.wParam = map_wparam_char_AtoW( newmsg.wParam, 1 );
-                break;
-            case WM_IME_CHAR:
-                newmsg.wParam = map_wparam_char_AtoW( newmsg.wParam, 2 );
-                break;
-            }
-            ret = callback( hwnd, msg, wParam, (LPARAM)&newmsg, result, arg );
+            if (map_wparam_AtoW( newmsg.message, &newmsg.wParam, WMCHAR_MAP_NOMAPPING ))
+                ret = callback( hwnd, msg, wParam, (LPARAM)&newmsg, result, arg );
         }
         else ret = callback( hwnd, msg, wParam, lParam, result, arg );
         break;
@@ -1003,11 +980,9 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
     case WM_SYSCHAR:
     case WM_SYSDEADCHAR:
     case EM_SETPASSWORDCHAR:
-        ret = callback( hwnd, msg, map_wparam_char_AtoW(wParam,1), lParam, result, arg );
-        break;
-
     case WM_IME_CHAR:
-        ret = callback( hwnd, msg, map_wparam_char_AtoW(wParam,2), lParam, result, arg );
+        if (map_wparam_AtoW( msg, &wParam, mapping ))
+            ret = callback( hwnd, msg, wParam, lParam, result, arg );
         break;
 
     case WM_GETTEXTLENGTH:
@@ -1270,9 +1245,20 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
         else ret = callback( hwnd, msg, wParam, lParam, result, arg );
         break;
 
+    case WM_CHAR:
+        {
+            WCHAR wch = wParam;
+            char ch[2];
+            DWORD len;
+
+            RtlUnicodeToMultiByteN( ch, 2, &len, &wch, sizeof(wch) );
+            ret = callback( hwnd, msg, (BYTE)ch[0], lParam, result, arg );
+            if (len == 2) ret = callback( hwnd, msg, (BYTE)ch[1], lParam, result, arg );
+        }
+        break;
+
     case WM_CHARTOITEM:
     case WM_MENUCHAR:
-    case WM_CHAR:
     case WM_DEADCHAR:
     case WM_SYSCHAR:
     case WM_SYSDEADCHAR:
@@ -2202,7 +2188,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
  * Call the window procedure of the specified window.
  */
 BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                          LRESULT *result, BOOL unicode )
+                          LRESULT *result, BOOL unicode, enum wm_char_mapping mapping )
 {
     WND *wndPtr;
     WINDOWPROC *proc;
@@ -2231,7 +2217,7 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         if (proc->procA)
             call_window_proc( hwnd, msg, wParam, lParam, result, proc->procA );
         else
-            WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, result, proc->procW );
+            WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, result, proc->procW, mapping );
     }
     return TRUE;
 }
@@ -2302,7 +2288,8 @@ LRESULT WINAPI CallWindowProcA(
     else if (proc->procA)
         call_window_proc( hwnd, msg, wParam, lParam, &result, proc->procA );
     else if (proc->procW)
-        WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, &result, proc->procW );
+        WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, &result,
+                              proc->procW, WMCHAR_MAP_CALLWINDOWPROC );
     else
         WINPROC_CallProc32ATo16( call_window_proc16, hwnd, msg, wParam, lParam, &result, proc->proc16 );
     return result;
@@ -2386,7 +2373,8 @@ INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
         ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procA );
     else if (proc->procW)
     {
-        ret = WINPROC_CallProcAtoW( call_dialog_proc, hwnd, msg, wParam, lParam, &result, proc->procW );
+        ret = WINPROC_CallProcAtoW( call_dialog_proc, hwnd, msg, wParam, lParam, &result,
+                                    proc->procW, WMCHAR_MAP_CALLWINDOWPROC );
         SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
     }
     else

@@ -168,6 +168,25 @@ extern void USER_unload_driver(void);
 struct received_message_info;
 struct hook16_queue_info;
 
+/* type of message-sending functions that need special WM_CHAR handling */
+enum wm_char_mapping
+{
+    WMCHAR_MAP_POSTMESSAGE,
+    WMCHAR_MAP_SENDMESSAGE,
+    WMCHAR_MAP_SENDMESSAGETIMEOUT,
+    WMCHAR_MAP_RECVMESSAGE,
+    WMCHAR_MAP_DISPATCHMESSAGE,
+    WMCHAR_MAP_CALLWINDOWPROC,
+    WMCHAR_MAP_COUNT,
+    WMCHAR_MAP_NOMAPPING = WMCHAR_MAP_COUNT
+};
+
+/* data to store state for A/W mappings of WM_CHAR */
+struct wm_char_mapping_data
+{
+    BYTE lead_byte[WMCHAR_MAP_COUNT];
+};
+
 /* this is the structure stored in TEB->Win32ClientInfo */
 /* no attempt is made to keep the layout compatible with the Windows one */
 struct user_thread_info
@@ -178,6 +197,7 @@ struct user_thread_info
     HHOOK                         hook;                   /* Current hook */
     struct received_message_info *receive_info;           /* Message being currently received */
     struct hook16_queue_info     *hook16_info;            /* Opaque pointer for 16-bit hook support */
+    struct wm_char_mapping_data  *wmchar_data;            /* Data for WM_CHAR mappings */
     DWORD                         GetMessageTimeVal;      /* Value for GetMessageTime */
     DWORD                         GetMessagePosVal;       /* Value for GetMessagePos */
     ULONG_PTR                     GetMessageExtraInfoVal; /* Value for GetMessageExtraInfo */
@@ -186,7 +206,7 @@ struct user_thread_info
     UINT                          active_hooks;           /* Bitmap of active hooks */
     HWND                          desktop;                /* Desktop window */
 
-    ULONG                         pad[11];                /* Available for more data */
+    ULONG                         pad[10];                /* Available for more data */
 };
 
 struct hook_extra_info
@@ -215,6 +235,7 @@ extern BOOL FOCUS_MouseActivate( HWND hwnd );
 extern BOOL HOOK_IsHooked( INT id );
 extern void erase_now( HWND hwnd, UINT rdw_flags );
 extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam );
+extern BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping );
 extern LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
                                                UINT msg, WPARAM wparam, LPARAM lparam,
                                                UINT flags, UINT timeout, PDWORD_PTR res_ptr );
@@ -237,7 +258,8 @@ extern WNDPROC WINPROC_AllocProc( WNDPROC funcA, WNDPROC funcW );
 extern BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val );
 
 extern LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg,
-                                     WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg );
+                                     WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg,
+                                     enum wm_char_mapping mapping );
 extern LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT16 msg,
                                         WPARAM16 wParam, LPARAM lParam, LRESULT *result, void *arg );
 extern LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT msg,
@@ -247,7 +269,7 @@ extern INT_PTR WINPROC_CallDlgProc16( DLGPROC16 func, HWND16 hwnd, UINT16 msg, W
 extern INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 extern INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 extern BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                                 LRESULT *result, BOOL unicode );
+                                 LRESULT *result, BOOL unicode, enum wm_char_mapping mapping );
 
 /* message spy definitions */
 

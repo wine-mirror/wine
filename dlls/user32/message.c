@@ -82,6 +82,7 @@ struct send_message_info
     UINT              timeout;    /* timeout for SendMessageTimeout */
     SENDASYNCPROC     callback;   /* callback function for SendMessageCallback */
     ULONG_PTR         data;       /* callback data */
+    enum wm_char_mapping wm_char;
 };
 
 
@@ -349,39 +350,83 @@ static BOOL CALLBACK broadcast_message_callback( HWND hwnd, LPARAM lparam )
  *
  * Convert the wparam of an ASCII message to Unicode.
  */
-static WPARAM map_wparam_AtoW( UINT message, WPARAM wparam )
+BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping )
 {
+    char ch[2];
+    WCHAR wch[2];
+
+    wch[0] = wch[1] = 0;
     switch(message)
     {
+    case WM_CHAR:
+        /* WM_CHAR is magic: a DBCS char can be sent/posted as two consecutive WM_CHAR
+         * messages, in which case the first char is stored, and the conversion
+         * to Unicode only takes place once the second char is sent/posted.
+         */
+        if (mapping != WMCHAR_MAP_NOMAPPING)
+        {
+            struct wm_char_mapping_data *data = get_user_thread_info()->wmchar_data;
+            BYTE low = LOBYTE(*wparam);
+
+            if (HIBYTE(*wparam))
+            {
+                ch[0] = low;
+                ch[1] = HIBYTE(*wparam);
+                RtlMultiByteToUnicodeN( wch, sizeof(wch), NULL, ch, 2 );
+                TRACE( "map %02x,%02x -> %04x mapping %u\n", (BYTE)ch[0], (BYTE)ch[1], wch[0], mapping );
+                if (data) data->lead_byte[mapping] = 0;
+            }
+            else if (data && data->lead_byte[mapping])
+            {
+                ch[0] = data->lead_byte[mapping];
+                ch[1] = low;
+                RtlMultiByteToUnicodeN( wch, sizeof(wch), NULL, ch, 2 );
+                TRACE( "map stored %02x,%02x -> %04x mapping %u\n", (BYTE)ch[0], (BYTE)ch[1], wch[0], mapping );
+                data->lead_byte[mapping] = 0;
+            }
+            else if (!IsDBCSLeadByte( low ))
+            {
+                ch[0] = low;
+                RtlMultiByteToUnicodeN( wch, sizeof(wch), NULL, ch, 1 );
+                TRACE( "map %02x -> %04x\n", (BYTE)ch[0], wch[0] );
+                if (data) data->lead_byte[mapping] = 0;
+            }
+            else  /* store it and wait for trail byte */
+            {
+                if (!data)
+                {
+                    if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) )))
+                        return FALSE;
+                    get_user_thread_info()->wmchar_data = data;
+                }
+                TRACE( "storing lead byte %02x mapping %u\n", low, mapping );
+                data->lead_byte[mapping] = low;
+                return FALSE;
+            }
+            *wparam = MAKEWPARAM(wch[0], wch[1]);
+            break;
+        }
+        /* else fall through */
     case WM_CHARTOITEM:
     case EM_SETPASSWORDCHAR:
-    case WM_CHAR:
     case WM_DEADCHAR:
     case WM_SYSCHAR:
     case WM_SYSDEADCHAR:
     case WM_MENUCHAR:
-        {
-            char ch[2];
-            WCHAR wch[2];
-            ch[0] = (wparam & 0xff);
-            ch[1] = (wparam >> 8);
-            MultiByteToWideChar(CP_ACP, 0, ch, 2, wch, 2);
-            wparam = MAKEWPARAM(wch[0], wch[1]);
-        }
+        ch[0] = LOBYTE(*wparam);
+        ch[1] = HIBYTE(*wparam);
+        RtlMultiByteToUnicodeN( wch, sizeof(wch), NULL, ch, 2 );
+        *wparam = MAKEWPARAM(wch[0], wch[1]);
         break;
     case WM_IME_CHAR:
-        {
-            char ch[2];
-            WCHAR wch;
-            ch[0] = (wparam >> 8);
-            ch[1] = (wparam & 0xff);
-            if (ch[0]) MultiByteToWideChar(CP_ACP, 0, ch, 2, &wch, 1);
-            else MultiByteToWideChar(CP_ACP, 0, &ch[1], 1, &wch, 1);
-            wparam = MAKEWPARAM( wch, HIWORD(wparam) );
-        }
+        ch[0] = HIBYTE(*wparam);
+        ch[1] = LOBYTE(*wparam);
+        if (ch[0]) RtlMultiByteToUnicodeN( wch, sizeof(wch[0]), NULL, ch, 2 );
+        else RtlMultiByteToUnicodeN( wch, sizeof(wch[0]), NULL, ch + 1, 1 );
+        *wparam = MAKEWPARAM(wch[0], HIWORD(*wparam));
         break;
     }
-    return wparam;
+    return TRUE;
 }
 
 
@@ -1509,7 +1554,7 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
  * Call a window procedure and the corresponding hooks.
  */
 static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                 BOOL unicode, BOOL same_thread )
+                                 BOOL unicode, BOOL same_thread, enum wm_char_mapping mapping )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     LRESULT result = 0;
@@ -1534,7 +1579,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, unicode );
 
     /* now call the window procedure */
-    if (!WINPROC_call_window( hwnd, msg, wparam, lparam, &result, unicode )) goto done;
+    if (!WINPROC_call_window( hwnd, msg, wparam, lparam, &result, unicode, mapping )) goto done;
 
     /* and finally the WH_CALLWNDPROCRET hook */
     cwpret.lResult = result;
@@ -2086,7 +2131,8 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
         old_info = thread_info->receive_info;
         thread_info->receive_info = &info;
         result = call_window_proc( info.msg.hwnd, info.msg.message, info.msg.wParam,
-                                   info.msg.lParam, (info.type != MSG_ASCII), FALSE );
+                                   info.msg.lParam, (info.type != MSG_ASCII), FALSE,
+                                   WMCHAR_MAP_RECVMESSAGE );
         reply_message( &info, result, TRUE );
         thread_info->receive_info = old_info;
     next:
@@ -2362,7 +2408,8 @@ static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BO
 
     if (info->dest_tid == GetCurrentThreadId())
     {
-        result = call_window_proc( info->hwnd, info->msg, info->wparam, info->lparam, unicode, TRUE );
+        result = call_window_proc( info->hwnd, info->msg, info->wparam, info->lparam,
+                                   unicode, TRUE, info->wm_char );
         if (info->type == MSG_CALLBACK)
             call_sendmsg_callback( info->callback, info->hwnd, info->msg, info->data, result );
         ret = TRUE;
@@ -2372,10 +2419,11 @@ static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BO
         if (dest_pid != GetCurrentProcessId() && (info->type == MSG_ASCII || info->type == MSG_UNICODE))
             info->type = MSG_OTHER_PROCESS;
 
-        /* MSG_ASCII can be sent unconverted; everything else needs to be Unicode */
-        if (info->type != MSG_ASCII && !unicode && is_unicode_message( info->msg ))
+        /* MSG_ASCII can be sent unconverted except for WM_CHAR; everything else needs to be Unicode */
+        if (!unicode && is_unicode_message( info->msg ) &&
+            (info->type != MSG_ASCII || info->msg == WM_CHAR))
             ret = WINPROC_CallProcAtoW( send_inter_thread_callback, info->hwnd, info->msg,
-                                        info->wparam, info->lparam, &result, info );
+                                        info->wparam, info->lparam, &result, info, info->wm_char );
         else
             ret = send_inter_thread_message( info, &result );
     }
@@ -2461,6 +2509,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     info.lparam  = lparam;
     info.flags   = flags;
     info.timeout = timeout;
+    info.wm_char  = WMCHAR_MAP_SENDMESSAGETIMEOUT;
 
     return send_message( &info, res_ptr, FALSE );
 }
@@ -2502,6 +2551,7 @@ LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     info.lparam  = lparam;
     info.flags   = SMTO_NORMAL;
     info.timeout = 0;
+    info.wm_char  = WMCHAR_MAP_SENDMESSAGE;
 
     send_message( &info, &res, FALSE );
     return res;
@@ -2527,6 +2577,7 @@ BOOL WINAPI SendNotifyMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     info.wparam  = wparam;
     info.lparam  = lparam;
     info.flags   = 0;
+    info.wm_char = WMCHAR_MAP_SENDMESSAGETIMEOUT;
 
     return send_message( &info, NULL, FALSE );
 }
@@ -2578,6 +2629,7 @@ BOOL WINAPI SendMessageCallbackA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
     info.callback = callback;
     info.data     = data;
     info.flags    = 0;
+    info.wm_char  = WMCHAR_MAP_SENDMESSAGETIMEOUT;
 
     return send_message( &info, NULL, FALSE );
 }
@@ -2649,7 +2701,8 @@ DWORD WINAPI InSendMessageEx( LPVOID reserved )
  */
 BOOL WINAPI PostMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    return PostMessageW( hwnd, msg, map_wparam_AtoW( msg, wparam ), lparam );
+    if (!map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_POSTMESSAGE )) return TRUE;
+    return PostMessageW( hwnd, msg, wparam, lparam );
 }
 
 
@@ -2697,7 +2750,8 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
  */
 BOOL WINAPI PostThreadMessageA( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    return PostThreadMessageW( thread, msg, map_wparam_AtoW( msg, wparam ), lparam );
+    if (!map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_POSTMESSAGE )) return TRUE;
+    return PostThreadMessageW( thread, msg, wparam, lparam );
 }
 
 
@@ -2899,7 +2953,7 @@ BOOL WINAPI GetMessageA( MSG *msg, HWND hwnd, UINT first, UINT last )
 BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG pmsg )
 {
     MSG msg = *pmsg;
-    msg.wParam = map_wparam_AtoW( msg.message, msg.wParam );
+    map_wparam_AtoW( msg.message, &msg.wParam, WMCHAR_MAP_NOMAPPING );
     return IsDialogMessageW( hwndDlg, &msg );
 }
 
@@ -2975,7 +3029,7 @@ LRESULT WINAPI DispatchMessageA( const MSG* msg )
                       msg->wParam, msg->lParam );
 
     if (!WINPROC_call_window( msg->hwnd, msg->message, msg->wParam, msg->lParam,
-                              &retval, FALSE ))
+                              &retval, FALSE, WMCHAR_MAP_DISPATCHMESSAGE ))
     {
         if (!IsWindow( msg->hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         else SetLastError( ERROR_MESSAGE_SYNC_ONLY );
@@ -3033,7 +3087,7 @@ LRESULT WINAPI DispatchMessageW( const MSG* msg )
                       msg->wParam, msg->lParam );
 
     if (!WINPROC_call_window( msg->hwnd, msg->message, msg->wParam, msg->lParam,
-                              &retval, TRUE ))
+                              &retval, TRUE, WMCHAR_MAP_DISPATCHMESSAGE ))
     {
         if (!IsWindow( msg->hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         else SetLastError( ERROR_MESSAGE_SYNC_ONLY );

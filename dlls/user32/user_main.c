@@ -251,6 +251,7 @@ static void thread_detach(void)
 
     WIN_DestroyThreadWindows( get_user_thread_info()->desktop );
     CloseHandle( get_user_thread_info()->server_queue );
+    HeapFree( GetProcessHeap(), 0, get_user_thread_info()->wmchar_data );
 
     exiting_thread_id = 0;
 }
