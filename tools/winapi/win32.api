@@ -5849,7 +5849,9 @@ LPSTR
 
 %wstr
 
+LPCWSTR
 LPWSTR
+PWSTR
 
 %void
 

@@ -57,8 +57,8 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
 /***********************************************************************
  *             CryptCATAdminAddCatalog (WINTRUST.@)
  */
-BOOL WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, WCHAR *catalogFile,
-                                    WCHAR *selectBaseName, DWORD flags)
+BOOL WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,
+                                    PWSTR selectBaseName, DWORD flags)
 {
     FIXME("%p %s %s %d\n", catAdmin, debugstr_w(catalogFile),
           debugstr_w(selectBaseName), flags);
@@ -106,7 +106,7 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
  *
  */
 BOOL WINAPI CryptCATAdminReleaseCatalogContext(HCATADMIN hCatAdmin,
-                                               HCATADMIN hCatInfo,
+                                               HCATINFO hCatInfo,
                                                DWORD dwFlags)
 {
     FIXME("%p %p %x\n", hCatAdmin, hCatInfo, dwFlags);
