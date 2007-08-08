@@ -153,6 +153,10 @@ static inline DefaultHandler *impl_from_IAdviseSink( IAdviseSink *iface )
 
 static void DefaultHandler_Destroy(DefaultHandler* This);
 
+static inline BOOL object_is_running(DefaultHandler *This)
+{
+    return IRunnableObject_IsRunning((IRunnableObject*)&This->lpvtblIRunnableObject);
+}
 
 /*********************************************************
  * Method implementation for the  non delegating IUnknown
@@ -316,7 +320,7 @@ static HRESULT WINAPI DefaultHandler_SetClientSite(
 
   TRACE("(%p, %p)\n", iface, pClientSite);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     hr = IOleObject_SetClientSite(This->pOleDelegate, pClientSite);
 
   /*
@@ -380,7 +384,7 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
 	debugstr_w(szContainerApp),
 	debugstr_w(szContainerObj));
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     IOleObject_SetHostNames(This->pOleDelegate, szContainerApp, szContainerObj);
 
   /* Be sure to cleanup before re-assinging the strings. */
@@ -409,7 +413,7 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
 /* undos the work done by DefaultHandler_Run */
 static void WINAPI DefaultHandler_Stop(DefaultHandler *This)
 {
-  if (!This->pOleDelegate)
+  if (!object_is_running(This))
     return;
 
   IOleObject_Unadvise(This->pOleDelegate, This->dwAdvConn);
@@ -449,7 +453,7 @@ static HRESULT WINAPI DefaultHandler_Close(
 
   TRACE("(%d)\n", dwSaveOption);
 
-  if (!This->pOleDelegate)
+  if (!object_is_running(This))
     return S_OK;
 
   hr = IOleObject_Close(This->pOleDelegate, dwSaveOption);
@@ -478,7 +482,7 @@ static HRESULT WINAPI DefaultHandler_SetMoniker(
 	dwWhichMoniker,
 	pmk);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     return IOleObject_SetMoniker(This->pOleDelegate, dwWhichMoniker, pmk);
 
   return S_OK;
@@ -502,7 +506,7 @@ static HRESULT WINAPI DefaultHandler_GetMoniker(
   TRACE("(%p, %d, %d, %p)\n",
 	iface, dwAssign, dwWhichMoniker, ppmk);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     return IOleObject_GetMoniker(This->pOleDelegate, dwAssign, dwWhichMoniker,
                                  ppmk);
 
@@ -537,7 +541,7 @@ static HRESULT WINAPI DefaultHandler_InitFromData(
   TRACE("(%p, %p, %d, %d)\n",
 	iface, pDataObject, fCreation, dwReserved);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     return IOleObject_InitFromData(This->pOleDelegate, pDataObject, fCreation,
 		                   dwReserved);
   return OLE_E_NOTRUNNING;
@@ -560,7 +564,7 @@ static HRESULT WINAPI DefaultHandler_GetClipboardData(
   TRACE("(%p, %d, %p)\n",
 	iface, dwReserved, ppDataObject);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     return IOleObject_GetClipboardData(This->pOleDelegate, dwReserved,
                                        ppDataObject);
 
@@ -606,7 +610,7 @@ static HRESULT WINAPI DefaultHandler_EnumVerbs(
 
   TRACE("(%p, %p)\n", iface, ppEnumOleVerb);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     hr = IOleObject_EnumVerbs(This->pOleDelegate, ppEnumOleVerb);
 
   if (hr == OLE_S_USEREG)
@@ -652,7 +656,7 @@ static HRESULT WINAPI DefaultHandler_GetUserClassID(
 
   TRACE("(%p, %p)\n", iface, pClsid);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     return IOleObject_GetUserClassID(This->pOleDelegate, pClsid);
 
   /* Sanity check. */
@@ -701,7 +705,7 @@ static HRESULT WINAPI DefaultHandler_SetExtent(
   TRACE("(%p, %x, (%d x %d))\n", iface,
         dwDrawAspect, psizel->cx, psizel->cy);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     IOleObject_SetExtent(This->pOleDelegate, dwDrawAspect, psizel);
 
   return OLE_E_NOTRUNNING;
@@ -728,7 +732,7 @@ static HRESULT WINAPI DefaultHandler_GetExtent(
 
   TRACE("(%p, %x, %p)\n", iface, dwDrawAspect, psizel);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     return IOleObject_GetExtent(This->pOleDelegate, dwDrawAspect, psizel);
 
   hres = IUnknown_QueryInterface(This->dataCache, &IID_IViewObject2, (void**)&cacheView);
@@ -862,7 +866,7 @@ static HRESULT WINAPI DefaultHandler_GetMiscStatus(
 
   TRACE("(%p, %x, %p)\n", iface, dwAspect, pdwStatus);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     return IOleObject_GetMiscStatus(This->pOleDelegate, dwAspect, pdwStatus);
 
   hres = OleRegGetMiscStatus(&This->clsid, dwAspect, pdwStatus);
@@ -888,7 +892,7 @@ static HRESULT WINAPI DefaultHandler_SetColorScheme(
 
   TRACE("(%p, %p))\n", iface, pLogpal);
 
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     return IOleObject_SetColorScheme(This->pOleDelegate, pLogpal);
 
   return OLE_E_NOTRUNNING;
@@ -1272,7 +1276,7 @@ static HRESULT WINAPI DefaultHandler_Run(
   FIXME("(%p): semi-stub\n", pbc);
 
   /* already running? if so nothing to do */
-  if (This->pOleDelegate)
+  if (object_is_running(This))
     return S_OK;
 
   hr = CoCreateInstance(&This->clsid, NULL, CLSCTX_LOCAL_SERVER,
