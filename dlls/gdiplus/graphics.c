@@ -488,7 +488,7 @@ static GpStatus draw_polyline(GpGraphics *graphics, GpPen *pen,
         else if((pen->startcap == LineCapCustom) && pen->customstart)
             shorten_line_amt(ptcopy[1].X, ptcopy[1].Y,
                              &ptcopy[0].X, &ptcopy[0].Y,
-                             pen->customend->inset * pen->width);
+                             pen->customstart->inset * pen->width);
 
         draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
                  pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X, pt[count - 1].Y);
@@ -582,7 +582,7 @@ static GpStatus draw_polybezier(GpGraphics *graphics, GpPen *pen,
         if(pen->startcap == LineCapArrowAnchor)
             shorten_bezier_amt(ptcopy, pen->width, TRUE);
         else if((pen->startcap == LineCapCustom) && pen->customstart)
-            shorten_bezier_amt(ptcopy, pen->width * pen->customend->inset, TRUE);
+            shorten_bezier_amt(ptcopy, pen->width * pen->customstart->inset, TRUE);
 
         /* the direction of the line cap is parallel to the direction at the
          * end of the bezier (which, if it has been shortened, is not the same
@@ -689,7 +689,7 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
                     shorten_bezier_amt(&ptcopy[j - 1], pen->width, TRUE);
                 else if((pen->startcap == LineCapCustom) && pen->customstart)
                     shorten_bezier_amt(&ptcopy[j - 1],
-                                       pen->width * pen->customend->inset, TRUE);
+                                       pen->width * pen->customstart->inset, TRUE);
 
                 draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
                     pt[j - 1].X - (ptcopy[j - 1].X - ptcopy[j].X),
