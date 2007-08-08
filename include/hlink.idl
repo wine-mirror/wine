@@ -26,6 +26,7 @@ interface IHlinkBrowseContext;
 cpp_quote("HRESULT WINAPI HlinkCreateFromMoniker(IMoniker*, LPCWSTR, LPCWSTR, IHlinkSite*, DWORD, IUnknown*, REFIID, void**);")
 cpp_quote("HRESULT WINAPI HlinkCreateFromString(LPCWSTR, LPCWSTR, LPCWSTR, IHlinkSite*, DWORD, IUnknown*, REFIID, void**);")
 cpp_quote("HRESULT WINAPI HlinkCreateFromData(IDataObject*, IHlinkSite*, DWORD dwSiteData, IUnknown*, REFIID, void**);")
+cpp_quote("HRESULT WINAPI HlinkCreateExtensionServices(LPCWSTR, HWND, LPCWSTR, LPCWSTR, IUnknown*, REFIID, void**);")
 cpp_quote("HRESULT WINAPI HlinkQueryCreateFromData(IDataObject*);")
 cpp_quote("HRESULT WINAPI HlinkClone(IHlink*, REFIID, IHlinkSite*, DWORD, void **);")
 cpp_quote("HRESULT WINAPI HlinkCreateBrowseContext(IUnknown*, REFIID, void **);")

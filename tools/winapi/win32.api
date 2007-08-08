@@ -1549,6 +1549,34 @@ LPGUID
 
 void
 
+%%hlink.dll
+
+%long
+
+DWORD
+HRESULT
+HWND
+
+%ptr
+
+IBindStatusCallback *
+IDataObject *
+IHlink *
+IHlinkBrowseContext *
+IHlinkFrame *
+IHlinkSite *
+IMoniker *
+IUnknown *
+LPBC
+LPWSTR *
+REFIID
+ULONG *
+void **
+
+%wstr
+
+LPCWSTR
+
 %%iccvid.dll
 
 %long
