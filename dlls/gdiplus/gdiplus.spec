@@ -516,7 +516,7 @@
 @ stdcall GdipSetCompositingQuality(ptr long)
 @ stub GdipSetCustomLineCapBaseCap
 @ stub GdipSetCustomLineCapBaseInset
-@ stub GdipSetCustomLineCapStrokeCaps
+@ stdcall GdipSetCustomLineCapStrokeCaps(ptr long long)
 @ stub GdipSetCustomLineCapStrokeJoin
 @ stub GdipSetCustomLineCapWidthScale
 @ stub GdipSetEffectParameters

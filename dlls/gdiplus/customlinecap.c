@@ -115,3 +115,17 @@ GpStatus WINGDIPAPI GdipDeleteCustomLineCap(GpCustomLineCap *customCap)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipSetCustomLineCapStrokeCaps(GpCustomLineCap* custom,
+    GpLineCap start, GpLineCap end)
+{
+    static int calls;
+
+    if(!custom)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
