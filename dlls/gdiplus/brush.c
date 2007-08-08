@@ -316,6 +316,20 @@ GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetLineSigmaBlend(GpLineGradient *line, REAL focus,
+    REAL scale)
+{
+    static int calls;
+
+    if(!line || focus < 0.0 || focus > 1.0 || scale < 0.0 || scale > 1.0)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetLineWrapMode(GpLineGradient *line,
     GpWrapMode wrap)
 {

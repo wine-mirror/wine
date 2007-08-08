@@ -540,7 +540,7 @@
 @ stub GdipSetLineGammaCorrection
 @ stub GdipSetLineLinearBlend
 @ stub GdipSetLinePresetBlend
-@ stub GdipSetLineSigmaBlend
+@ stdcall GdipSetLineSigmaBlend(ptr long long)
 @ stub GdipSetLineTransform
 @ stdcall GdipSetLineWrapMode(ptr long)
 @ stdcall GdipSetMatrixElements(ptr long long long long long long)
