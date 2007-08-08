@@ -2503,6 +2503,7 @@ BOOL	CONSOLE_AppendHistory(const WCHAR* ptr)
     BOOL	ret;
 
     while (len && (ptr[len - 1] == '\n' || ptr[len - 1] == '\r')) len--;
+    if (!len) return FALSE;
 
     SERVER_START_REQ( append_console_input_history )
     {
