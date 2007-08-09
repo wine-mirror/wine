@@ -5444,6 +5444,26 @@ void
 LPCWSTR
 LPWSTR
 
+%%wing32.dll
+
+%long
+
+BOOL
+COLORREF
+HBITMAP
+HBRUSH
+HDC
+HPALETTE
+INT
+UINT
+
+%ptr
+
+BITMAPINFO *
+RGBQUAD *
+void *
+void **
+
 %%wininet.dll
 
 %double
