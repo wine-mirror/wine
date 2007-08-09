@@ -1556,6 +1556,19 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
     return (hr == S_OK) ? TRUE : FALSE;
 }
 
+static INTERNET_STATUS_CALLBACK set_status_callback(
+    LPWININETHANDLEHEADER lpwh, INTERNET_STATUS_CALLBACK callback, BOOL unicode)
+{
+    INTERNET_STATUS_CALLBACK ret;
+
+    if (unicode) lpwh->dwInternalFlags |= INET_CALLBACKW;
+    else lpwh->dwInternalFlags &= ~INET_CALLBACKW;
+
+    ret = lpwh->lpfnStatusCB;
+    lpwh->lpfnStatusCB = callback;
+
+    return ret;
+}
 
 /***********************************************************************
  *           InternetSetStatusCallbackA (WININET.@)
@@ -1576,16 +1589,12 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
 
     TRACE("0x%08x\n", (ULONG)hInternet);
     
-    lpwh = WININET_GetObject(hInternet);
-    if (!lpwh)
+    if (!(lpwh = WININET_GetObject(hInternet)))
         return INTERNET_INVALID_STATUS_CALLBACK;
 
-    lpwh->dwInternalFlags &= ~INET_CALLBACKW;
-    retVal = lpwh->lpfnStatusCB;
-    lpwh->lpfnStatusCB = lpfnIntCB;
+    retVal = set_status_callback(lpwh, lpfnIntCB, FALSE);
 
     WININET_Release( lpwh );
-
     return retVal;
 }
 
@@ -1607,17 +1616,13 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
     LPWININETHANDLEHEADER lpwh;
 
     TRACE("0x%08x\n", (ULONG)hInternet);
-    
-    lpwh = WININET_GetObject(hInternet);
-    if (!lpwh)
+
+    if (!(lpwh = WININET_GetObject(hInternet)))
         return INTERNET_INVALID_STATUS_CALLBACK;
 
-    lpwh->dwInternalFlags |= INET_CALLBACKW;
-    retVal = lpwh->lpfnStatusCB;
-    lpwh->lpfnStatusCB = lpfnIntCB;
+    retVal = set_status_callback(lpwh, lpfnIntCB, TRUE);
 
     WININET_Release( lpwh );
-
     return retVal;
 }
 
@@ -2344,6 +2349,12 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 
     switch (dwOption)
     {
+    case INTERNET_OPTION_CALLBACK:
+      {
+        INTERNET_STATUS_CALLBACK callback = *(INTERNET_STATUS_CALLBACK *)lpBuffer;
+        ret = (set_status_callback(lpwhh, callback, TRUE) != INTERNET_INVALID_STATUS_CALLBACK);
+        break;
+      }
     case INTERNET_OPTION_HTTP_VERSION:
       {
         HTTP_VERSION_INFO* pVersion=(HTTP_VERSION_INFO*)lpBuffer;
@@ -2466,6 +2477,16 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
 
     switch( dwOption )
     {
+    case INTERNET_OPTION_CALLBACK:
+        {
+        LPWININETHANDLEHEADER lpwh;
+        INTERNET_STATUS_CALLBACK callback = *(INTERNET_STATUS_CALLBACK *)lpBuffer;
+
+        if (!(lpwh = (LPWININETHANDLEHEADER)WININET_GetObject(hInternet))) return FALSE;
+        r = (set_status_callback(lpwh, callback, FALSE) != INTERNET_INVALID_STATUS_CALLBACK);
+        WININET_Release(lpwh);
+        return r;
+        }
     case INTERNET_OPTION_PROXY:
         {
         LPINTERNET_PROXY_INFOA pi = (LPINTERNET_PROXY_INFOA) lpBuffer;
