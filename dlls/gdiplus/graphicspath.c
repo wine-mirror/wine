@@ -282,6 +282,36 @@ GpStatus WINGDIPAPI GdipCreatePath(GpFillMode fill, GpPath **path)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreatePath2(GDIPCONST GpPointF* points,
+    GDIPCONST BYTE* types, INT count, GpFillMode fill, GpPath **path)
+{
+    if(!path)
+        return InvalidParameter;
+
+    *path = GdipAlloc(sizeof(GpPath));
+    if(!*path)  return OutOfMemory;
+
+    (*path)->pathdata.Points = GdipAlloc(count * sizeof(PointF));
+    (*path)->pathdata.Types = GdipAlloc(count);
+
+    if(!(*path)->pathdata.Points || !(*path)->pathdata.Types){
+        GdipFree((*path)->pathdata.Points);
+        GdipFree((*path)->pathdata.Types);
+        GdipFree(*path);
+        return OutOfMemory;
+    }
+
+    memcpy((*path)->pathdata.Points, points, count * sizeof(PointF));
+    memcpy((*path)->pathdata.Types, types, count);
+    (*path)->pathdata.Count = count;
+    (*path)->datalen = count;
+
+    (*path)->fill = fill;
+    (*path)->newfigure = TRUE;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
 {
     if(!path)

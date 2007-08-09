@@ -113,7 +113,7 @@
 @ stub GdipCreateMetafileFromStream
 @ stdcall GdipCreateMetafileFromWmf(ptr long ptr ptr)
 @ stub GdipCreateMetafileFromWmfFile
-@ stub GdipCreatePath2
+@ stdcall GdipCreatePath2(ptr ptr long long ptr)
 @ stub GdipCreatePath2I
 @ stdcall GdipCreatePath(long ptr)
 @ stdcall GdipCreatePathGradient(ptr long long ptr)
