@@ -1128,6 +1128,16 @@ static const char okmsg[] =
 "Server: winetest\r\n"
 "\r\n";
 
+static const char notokmsg[] =
+"HTTP/1.0 400 Bad Request\r\n"
+"Server: winetest\r\n"
+"\r\n";
+
+static const char noauthmsg[] =
+"HTTP/1.0 401 Unauthorized\r\n"
+"Server: winetest\r\n"
+"\r\n";
+
 static const char proxymsg[] =
 "HTTP/1.1 407 Proxy Authentication Required\r\n"
 "Server: winetest\r\n"
@@ -1208,6 +1218,22 @@ static DWORD CALLBACK server_thread(LPVOID param)
             }
             else
                 send(c, proxymsg, sizeof proxymsg-1, 0);
+        }
+
+        if (strstr(buffer, "/test3"))
+        {
+            if (strstr(buffer, "Authorization: Basic dXNlcjpwd2Q="))
+                send(c, okmsg, sizeof okmsg-1, 0);
+            else
+                send(c, noauthmsg, sizeof noauthmsg-1, 0);
+        }
+
+        if (strstr(buffer, "/test4"))
+        {
+            if (strstr(buffer, "Connection: Close"))
+                send(c, okmsg, sizeof okmsg-1, 0);
+            else
+                send(c, notokmsg, sizeof notokmsg-1, 0);
         }
 
         if (strstr(buffer, "/quit"))
@@ -1366,6 +1392,53 @@ static void test_proxy_direct(int port)
     InternetCloseHandle(hi);
 }
 
+static void test_header_handling_order(int port)
+{
+    static char authorization[] = "Authorization: Basic dXNlcjpwd2Q=";
+    static char connection[]    = "Connection: Close";
+
+    static const char *types[2] = { "*", NULL };
+    HINTERNET session, connect, request;
+    DWORD size, status;
+    BOOL ret;
+
+    session = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(session != NULL, "InternetOpen failed\n");
+
+    connect = InternetConnect(session, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "InternetConnect failed\n");
+
+    request = HttpOpenRequest(connect, NULL, "/test3", NULL, NULL, types, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(request, authorization, ~0UL, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
+
+    status = 0;
+    size = sizeof(status);
+    ret = HttpQueryInfo( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(status == 200, "request failed with status %u\n", status);
+
+    InternetCloseHandle(request);
+
+    request = HttpOpenRequest(connect, NULL, "/test4", NULL, NULL, types, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(request, connection, ~0UL, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
+
+    status = 0;
+    size = sizeof(status);
+    ret = HttpQueryInfo( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(status == 200, "request failed with status %u\n", status);
+
+    InternetCloseHandle(request);
+    InternetCloseHandle(connect);
+    InternetCloseHandle(session);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -1386,6 +1459,7 @@ static void test_http_connection(void)
     test_basic_request(si.port, "/test1");
     test_proxy_indirect(si.port);
     test_proxy_direct(si.port);
+    test_header_handling_order(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "/quit");

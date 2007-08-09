@@ -2596,6 +2596,12 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         }
 
         HTTP_FixURL(lpwhr);
+        HTTP_ProcessHeader(lpwhr, szConnection,
+                           lpwhr->hdr.dwFlags & INTERNET_FLAG_KEEP_CONNECTION ? szKeepAlive : szClose,
+                           HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
+
+        HTTP_InsertAuthorization(lpwhr);
+        HTTP_InsertProxyAuthorization(lpwhr);
 
         /* add the headers the caller supplied */
         if( lpszHeaders && dwHeaderLength )
@@ -2603,13 +2609,6 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             HTTP_HttpAddRequestHeadersW(lpwhr, lpszHeaders, dwHeaderLength,
                         HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
         }
-
-        HTTP_ProcessHeader(lpwhr, szConnection,
-                           lpwhr->hdr.dwFlags & INTERNET_FLAG_KEEP_CONNECTION ? szKeepAlive : szClose,
-                           HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
-
-        HTTP_InsertAuthorization(lpwhr);
-        HTTP_InsertProxyAuthorization(lpwhr);
 
         requestString = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, FALSE);
  
