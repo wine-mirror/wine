@@ -132,7 +132,57 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
     if(create_pbuffer) {
         HDC hdc_parent = GetDC(win_handle);
-        int iPixelFormat = 1; /* We only have a single useful format in Wine's OpenGL32, so use this for now. It should be fixed. */
+        int iPixelFormat = 0;
+        short red, green, blue, alphaBits, colorBits;
+        short depthBits, stencilBits;
+
+        IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
+        WINED3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IWineD3DSurfaceImpl *) StencilSurface)->resource.format : 0;
+
+        int attribs[256];
+        int nAttribs = 0;
+        unsigned int nFormats;
+
+#define PUSH1(att)        attribs[nAttribs++] = (att);
+#define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);
+
+        /* Retrieve the specifications for the pixelformat from the backbuffer / stencilbuffer */
+        getColorBits(target->resource.format, &red, &green, &blue, &alphaBits, &colorBits);
+        getDepthStencilBits(StencilBufferFormat, &depthBits, &stencilBits);
+        PUSH2(WGL_DRAW_TO_PBUFFER_ARB, 1); /* We need pbuffer support; doublebuffering isn't needed */
+        PUSH2(WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB); /* Make sure we don't get a float or color index format */
+        PUSH2(WGL_COLOR_BITS_ARB, colorBits);
+        PUSH2(WGL_ALPHA_BITS_ARB, alphaBits);
+        PUSH2(WGL_DEPTH_BITS_ARB, depthBits);
+        PUSH2(WGL_STENCIL_BITS_ARB, stencilBits);
+        PUSH1(0); /* end the list */
+
+#undef PUSH1
+#undef PUSH2
+
+        /* Try to find a pixelformat that matches exactly. If that fails let ChoosePixelFormat try to find a close match */
+        if(!GL_EXTCALL(wglChoosePixelFormatARB(hdc_parent, (const int*)&attribs, NULL, 1, &iPixelFormat, &nFormats)))
+        {
+            PIXELFORMATDESCRIPTOR pfd;
+
+            TRACE("Falling back to ChoosePixelFormat as wglChoosePixelFormatARB failed\n");
+
+            ZeroMemory(&pfd, sizeof(pfd));
+            pfd.nSize      = sizeof(pfd);
+            pfd.nVersion   = 1;
+            pfd.dwFlags    = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER_DONTCARE | PFD_DRAW_TO_WINDOW;
+            pfd.iPixelType = PFD_TYPE_RGBA;
+            pfd.cColorBits = colorBits;
+            pfd.cDepthBits = depthBits;
+            pfd.cStencilBits = stencilBits;
+            pfd.iLayerType = PFD_MAIN_PLANE;
+
+            iPixelFormat = ChoosePixelFormat(hdc_parent, &pfd);
+            if(!iPixelFormat) {
+                /* If this happens something is very wrong as ChoosePixelFormat barely fails */
+                ERR("Can't find a suitable iPixelFormat for the pbuffer\n");
+            }
+        }
 
         TRACE("Creating a pBuffer drawable for the new context\n");
         pbuffer = GL_EXTCALL(wglCreatePbufferARB(hdc_parent, iPixelFormat, target->currentDesc.Width, target->currentDesc.Height, 0));
