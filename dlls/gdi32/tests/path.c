@@ -70,7 +70,7 @@ static void test_widenpath(void)
     /* Test if WidenPath seems to have done his job */
     nSize = GetPath(hdc, NULL, NULL, 0);
     ok(nSize != -1, "GetPath fails after calling WidenPath.\n");
-    ok(nSize > 6, "Path number of points is to low. Should be more than 6 but is %d\n", nSize);
+    ok(nSize > 6, "Path number of points is too low. Should be more than 6 but is %d\n", nSize);
 
     AbortPath(hdc);
 

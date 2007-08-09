@@ -5057,7 +5057,7 @@ static void test_VarAdd(void)
     VARADD(R8, R8_MAX, R8, R8_MIN, R8, R8_MAX + R8_MIN);
     VARADD(R8, R8_MIN, R8, R8_MIN, R8, R8_MIN + R8_MIN);
 
-    /* Manualy test BSTR + BSTR */
+    /* Manually test BSTR + BSTR */
     V_VT(&left) = VT_BSTR;
     V_BSTR(&left) = lbstr;
     V_VT(&right) = VT_BSTR;

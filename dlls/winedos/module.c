@@ -302,7 +302,7 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk, W
  SetFilePointer(hFile,image_start,NULL,FILE_BEGIN);
  if (!ReadFile(hFile,load_start,image_size,&len,NULL) || len != image_size) {
   /* check if this is due to the workaround for the pre-1.10 MS linker and we
-     realy had only 4 bytes on the last page */
+     really had only 4 bytes on the last page */
   if (mz_header.e_cblp != 4 || image_size - len != 512 - 4) {
     SetLastError(ERROR_BAD_FORMAT);
     goto load_error;

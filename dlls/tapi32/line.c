@@ -737,7 +737,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
             RegSetValueExA( hkCards, "NextID", 0, REG_DWORD, (LPBYTE)&dwval,
                     sizeof(DWORD));
         }
-    } else hkCards = 0;  /* should realy fail */
+    } else hkCards = 0;  /* should really fail */
     /* check if sufficient room is available */
     lpTranslateCaps->dwNeededSize =  sizeof(LINETRANSLATECAPS) + length;
     if ( lpTranslateCaps->dwNeededSize > lpTranslateCaps->dwTotalSize ) {

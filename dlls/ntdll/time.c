@@ -826,7 +826,7 @@ NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER Time )
  *
  *  Note: Windows uses a timer clocked at a multiple of 1193182 Hz. There is a
  *  good number of applications that crash when the returned frequency is either
- *  lower or higher then what Windows gives. Also too high counter values are
+ *  lower or higher than what Windows gives. Also too high counter values are
  *  reported to give problems.
  */
 NTSTATUS WINAPI NtQueryPerformanceCounter( PLARGE_INTEGER Counter, PLARGE_INTEGER Frequency )

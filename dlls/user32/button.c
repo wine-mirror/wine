@@ -584,7 +584,7 @@ static UINT BUTTON_BStoDT(DWORD style)
    }
 
    /* DrawText ignores vertical alignment for multiline text,
-    * but we use these flags to align label manualy.
+    * but we use these flags to align label manually.
     */
    if (get_button_type(style) != BS_GROUPBOX)
    {

@@ -1521,7 +1521,7 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
         lpMm_new.iVertGap, "iVertGap", "%d" );
     eq( GetSystemMetrics( SM_ARRANGE ),
         lpMm_new.iArrange, "iArrange", "%d" );
-    /* now some realy invalid settings */
+    /* now some really invalid settings */
     lpMm_cur.iWidth = -1;
     lpMm_cur.iHorzGap = -1;
     lpMm_cur.iVertGap = -1;

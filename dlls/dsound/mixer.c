@@ -121,7 +121,7 @@ DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, D
 }
 
 /** Convert a resampled pointer that fits for primary to a 'native' sample pointer
- * freqAccNext is used here rather then freqAcc: In case the app wants to fill up to
+ * freqAccNext is used here rather than freqAcc: In case the app wants to fill up to
  * the play position it won't overwrite it
  */
 static DWORD DSOUND_bufpos_to_secpos(const IDirectSoundBufferImpl *dsb, DWORD bufpos)
