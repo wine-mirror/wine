@@ -575,6 +575,7 @@ BOOL WINAPI CryptSIPCreateIndirectData(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pcb
 
     if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
         ret = sip->info.pfCreate(pSubjectInfo, pcbIndirectData, pIndirectData);
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -593,6 +594,7 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
     if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
         ret = sip->info.pfGet(pSubjectInfo, pdwEncodingType, dwIndex,
          pcbSignedDataMsg, pbSignedDataMsg);
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -611,6 +613,7 @@ BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEnc
     if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
         ret = sip->info.pfPut(pSubjectInfo, pdwEncodingType, pdwIndex,
          cbSignedDataMsg, pbSignedDataMsg);
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -627,6 +630,7 @@ BOOL WINAPI CryptSIPRemoveSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo,
 
     if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
         ret = sip->info.pfRemove(pSubjectInfo, dwIndex);
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -643,5 +647,6 @@ BOOL WINAPI CryptSIPVerifyIndirectData(SIP_SUBJECTINFO* pSubjectInfo,
 
     if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
         ret = sip->info.pfVerify(pSubjectInfo, pIndirectData);
+    TRACE("returning %d\n", ret);
     return ret;
 }

@@ -707,11 +707,15 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
 BOOL WINAPI CertCompareCertificate(DWORD dwCertEncodingType,
  PCERT_INFO pCertId1, PCERT_INFO pCertId2)
 {
+    BOOL ret;
+
     TRACE("(%08x, %p, %p)\n", dwCertEncodingType, pCertId1, pCertId2);
 
-    return CertCompareCertificateName(dwCertEncodingType, &pCertId1->Issuer,
+    ret = CertCompareCertificateName(dwCertEncodingType, &pCertId1->Issuer,
      &pCertId2->Issuer) && CertCompareIntegerBlob(&pCertId1->SerialNumber,
      &pCertId2->SerialNumber);
+    TRACE("returning %d\n", ret);
+    return ret;
 }
 
 BOOL WINAPI CertCompareCertificateName(DWORD dwCertEncodingType,
@@ -731,6 +735,7 @@ BOOL WINAPI CertCompareCertificateName(DWORD dwCertEncodingType,
     }
     else
         ret = FALSE;
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -773,6 +778,7 @@ BOOL WINAPI CertCompareIntegerBlob(PCRYPT_INTEGER_BLOB pInt1,
     }
     else
         ret = FALSE;
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -1134,6 +1140,7 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
         SetLastError(CRYPT_E_NOT_FOUND);
         ret = NULL;
     }
+    TRACE("returning %p\n", ret);
     return ret;
 }
 
@@ -1220,7 +1227,7 @@ PCCERT_CONTEXT WINAPI CertGetIssuerCertificateFromStore(HCERTSTORE hCertStore,
             ret = NULL;
         }
     }
-
+    TRACE("returning %p\n", ret);
     return ret;
 }
 
