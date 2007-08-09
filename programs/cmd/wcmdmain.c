@@ -1090,7 +1090,8 @@ void WCMD_run_program (WCHAR *command, int called) {
         if (!assumeInternal && !console) errorlevel = 0;
         else
         {
-            if (assumeInternal || !HIWORD(console)) WaitForSingleObject (pe.hProcess, INFINITE);
+            /* Always wait when called in a batch program context */
+            if (assumeInternal || context || !HIWORD(console)) WaitForSingleObject (pe.hProcess, INFINITE);
             GetExitCodeProcess (pe.hProcess, &errorlevel);
             if (errorlevel == STILL_ACTIVE) errorlevel = 0;
         }
