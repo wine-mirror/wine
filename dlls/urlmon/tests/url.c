@@ -111,6 +111,7 @@ static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
 static BOOL stopped_binding = FALSE, emulate_protocol = FALSE,
     data_available = FALSE, http_is_first = TRUE;
 static DWORD read = 0, bindf = 0;
+static CHAR mime_type[512];
 
 static LPCWSTR urls[] = {
     WINE_ABOUT_URL,
@@ -561,6 +562,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
         CHECK_EXPECT(OnProgress_MIMETYPEAVAILABLE);
         ok(download_state == BEFORE_DOWNLOAD, "Download state was %d, expected BEFORE_DOWNLOAD\n",
            download_state);
+        WideCharToMultiByte(CP_ACP, 0, szStatusText, -1, mime_type, sizeof(mime_type)-1, NULL, NULL);
         break;
     case BINDSTATUS_BEGINDOWNLOADDATA:
         CHECK_EXPECT(OnProgress_BEGINDOWNLOADDATA);
@@ -631,6 +633,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
     HRESULT hres;
     DWORD readed;
     BYTE buf[512];
+    CHAR clipfmt[512];
 
     CHECK_EXPECT2(OnDataAvailable);
     ok(download_state == DOWNLOADING || download_state == END_DOWNLOAD,
@@ -643,7 +646,15 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
     /* FIXME: Uncomment after removing BindToStorage hack. */
     ok(pformatetc != NULL, "pformatetx == NULL\n");
     if(pformatetc) {
-        ok(pformatetc->cfFormat == 0xc02d, "clipformat=%x\n", pformatetc->cfFormat); 
+        if (mime_type[0]) {
+            clipfmt[0] = 0;
+            ok(GetClipboardFormatName(pformatetc->cfFormat, clipfmt, sizeof(clipfmt)-1),
+               "GetClipboardFormatName failed, error %d\n", GetLastError());
+            ok(!lstrcmp(clipfmt, mime_type), "clipformat != mime_type, \"%s\" != \"%s\"\n",
+               clipfmt, mime_type);
+        } else {
+            ok(pformatetc->cfFormat == 0, "clipformat=%x\n", pformatetc->cfFormat);
+        }
         ok(pformatetc->ptd == NULL, "ptd = %p\n", pformatetc->ptd);
         ok(pformatetc->dwAspect == 1, "dwAspect=%u\n", pformatetc->dwAspect);
         ok(pformatetc->lindex == -1, "lindex=%d\n", pformatetc->lindex);
@@ -796,6 +807,7 @@ static void test_BindToStorage(int protocol, BOOL emul)
     download_state = BEFORE_DOWNLOAD;
     stopped_binding = FALSE;
     data_available = FALSE;
+    mime_type[0] = 0;
 
     SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
