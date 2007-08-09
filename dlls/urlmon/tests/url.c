@@ -641,12 +641,9 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
        download_state);
     data_available = TRUE;
 
-    if (0)
-    {
-    /* FIXME: Uncomment after removing BindToStorage hack. */
     ok(pformatetc != NULL, "pformatetx == NULL\n");
     if(pformatetc) {
-        if (mime_type[0]) {
+        if (mime_type[0]) todo_wine {
             clipfmt[0] = 0;
             ok(GetClipboardFormatName(pformatetc->cfFormat, clipfmt, sizeof(clipfmt)-1),
                "GetClipboardFormatName failed, error %d\n", GetLastError());
@@ -666,7 +663,6 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
         ok(pstgmed->tymed == TYMED_ISTREAM, "tymed=%u\n", pstgmed->tymed);
         ok(U(*pstgmed).pstm != NULL, "pstm == NULL\n");
         ok(pstgmed->pUnkForRelease != NULL, "pUnkForRelease == NULL\n");
-    }
     }
 
     if(U(*pstgmed).pstm) {
@@ -895,17 +891,16 @@ static void test_BindToStorage(int protocol, BOOL emul)
         DispatchMessage(&msg);
     }
 
+    todo_wine CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {
-        todo_wine CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
         CHECK_CALLED(Start);
         CHECK_CALLED(UnlockRequest);
     }else {
         if(test_protocol == HTTP_TEST) {
-            CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
-            todo_wine CHECK_CALLED(QueryInterface_IHttpNegotiate);
-            todo_wine CHECK_CALLED(BeginningTransaction);
+            CHECK_CALLED(QueryInterface_IHttpNegotiate);
+            CHECK_CALLED(BeginningTransaction);
             /* QueryInterface_IHttpNegotiate2 and GetRootSecurityId
              * called on WinXP but not on Win98 */
             CLEAR_CALLED(QueryInterface_IHttpNegotiate2);
@@ -918,12 +913,9 @@ static void test_BindToStorage(int protocol, BOOL emul)
                 CHECK_NOT_CALLED(OnProgress_CONNECTING);
             }
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
-            todo_wine CHECK_CALLED(OnResponse);
-            todo_wine { CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE); }
-        }else {
-            todo_wine CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
-            CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
+            CHECK_CALLED(OnResponse);
         }
+        CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == HTTP_TEST)
             CLEAR_CALLED(OnProgress_DOWNLOADINGDATA);

@@ -617,12 +617,6 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
                         dwService = INTERNET_SERVICE_GOPHER;
                         break;
 
-                    case INTERNET_SCHEME_HTTP:
-                        if (!url.nPort)
-                            url.nPort = INTERNET_DEFAULT_HTTP_PORT;
-                        dwService = INTERNET_SERVICE_HTTP;
-                        break;
-
                     case INTERNET_SCHEME_HTTPS:
                         if (!url.nPort)
                             url.nPort = INTERNET_DEFAULT_HTTPS_PORT;
@@ -755,8 +749,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
         return E_FAIL;
     }
 
-    if(url.nScheme == INTERNET_SCHEME_HTTP
-       || url.nScheme== INTERNET_SCHEME_HTTPS
+    if(url.nScheme== INTERNET_SCHEME_HTTPS
        || url.nScheme== INTERNET_SCHEME_FTP
        || url.nScheme == INTERNET_SCHEME_GOPHER)
         return URLMonikerImpl_BindToStorage_hack(This->URLName, pbc, pmkToLeft, riid, ppvObject);
