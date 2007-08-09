@@ -1218,16 +1218,15 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
     DWORD dwUrlLength = dwUrlLength_orig;
     const WCHAR lpszSeparators[3]={';','?',0};
     const WCHAR lpszSlash[2]={'/',0};
-    if(dwUrlLength==0)
-        dwUrlLength=strlenW(lpszUrl);
 
     TRACE("(%s %u %x %p)\n", debugstr_w(lpszUrl), dwUrlLength, dwFlags, lpUC);
 
-    if (!lpszUrl_orig || !*lpszUrl_orig)
+    if (!lpszUrl_orig || !*lpszUrl_orig || !lpUC)
     {
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+    if (!dwUrlLength) dwUrlLength = strlenW(lpszUrl);
 
     if (dwFlags & ICU_DECODE)
     {
