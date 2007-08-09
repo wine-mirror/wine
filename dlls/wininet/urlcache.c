@@ -38,6 +38,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wininet.h"
+#include "winineti.h"
 #include "winerror.h"
 #include "internet.h"
 #include "winreg.h"
@@ -2800,7 +2801,7 @@ BOOL WINAPI SetUrlCacheEntryGroupW(LPCWSTR lpszUrlName, DWORD dwFlags,
 /***********************************************************************
  *           GetUrlCacheConfigInfoW (WININET.@)
  */
-BOOL WINAPI GetUrlCacheConfigInfoW(LPDWORD CacheInfo, LPDWORD size, DWORD bitmask)
+BOOL WINAPI GetUrlCacheConfigInfoW(LPINTERNET_CACHE_CONFIG_INFOW CacheInfo, LPDWORD size, DWORD bitmask)
 {
     FIXME("(%p, %p, %x)\n", CacheInfo, size, bitmask);
     INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
@@ -2812,7 +2813,7 @@ BOOL WINAPI GetUrlCacheConfigInfoW(LPDWORD CacheInfo, LPDWORD size, DWORD bitmas
  *
  * CacheInfo is some CACHE_CONFIG_INFO structure, with no MS info found by google
  */
-BOOL WINAPI GetUrlCacheConfigInfoA(LPDWORD CacheInfo, LPDWORD size, DWORD bitmask)
+BOOL WINAPI GetUrlCacheConfigInfoA(LPINTERNET_CACHE_CONFIG_INFOA CacheInfo, LPDWORD size, DWORD bitmask)
 {
     FIXME("(%p, %p, %x)\n", CacheInfo, size, bitmask);
     INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
@@ -2855,13 +2856,13 @@ BOOL WINAPI SetUrlCacheGroupAttributeW( GROUPID gid, DWORD dwFlags, DWORD dwAttr
     return TRUE;
 }
 
-BOOL WINAPI SetUrlCacheConfigInfoA( LPDWORD lpCacheConfigInfo, DWORD dwFieldControl )
+BOOL WINAPI SetUrlCacheConfigInfoA( LPINTERNET_CACHE_CONFIG_INFOA lpCacheConfigInfo, DWORD dwFieldControl )
 {
     FIXME("(%p, 0x%08x) stub\n", lpCacheConfigInfo, dwFieldControl);
     return TRUE;
 }
 
-BOOL WINAPI SetUrlCacheConfigInfoW( LPDWORD lpCacheConfigInfo, DWORD dwFieldControl )
+BOOL WINAPI SetUrlCacheConfigInfoW( LPINTERNET_CACHE_CONFIG_INFOW lpCacheConfigInfo, DWORD dwFieldControl )
 {
     FIXME("(%p, 0x%08x) stub\n", lpCacheConfigInfo, dwFieldControl);
     return TRUE;
@@ -2877,13 +2878,11 @@ BOOL WINAPI SetUrlCacheConfigInfoW( LPDWORD lpCacheConfigInfo, DWORD dwFieldCont
  *   hInst       [I] Instance of process calling the function.
  *   lpszCmdLine [I] Options used by function.
  *   nCmdShow    [I] The nCmdShow value to use when showing windows created, if any.
- *
- * RETURNS
- *   nothing
  */
-void WINAPI DeleteIE3Cache(HWND hWnd, HINSTANCE hInst, LPSTR lpszCmdLine, int nCmdShow)
+DWORD WINAPI DeleteIE3Cache(HWND hWnd, HINSTANCE hInst, LPSTR lpszCmdLine, int nCmdShow)
 {
     FIXME("(%p, %p, %s, %d)\n", hWnd, hInst, debugstr_a(lpszCmdLine), nCmdShow);
+    return 0;
 }
 
 /***********************************************************************
@@ -2891,12 +2890,12 @@ void WINAPI DeleteIE3Cache(HWND hWnd, HINSTANCE hInst, LPSTR lpszCmdLine, int nC
  *
  * PARAMS
  *   url        [I]    Url
- *   b                 Unknown
- *   c                 Unknown ptr
+ *   dwFlags           Unknown
+ *   pftLastModified   Unknown ptr
  */
-DWORD WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD b, void *c )
+BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLastModified )
 {
-    FIXME("(%s, %08x, %p) stub\n", debugstr_a(url), b, c);
+    FIXME("(%s, %08x, %p) stub\n", debugstr_a(url), dwFlags, pftLastModified);
     return FALSE;
 }
 
@@ -2905,11 +2904,11 @@ DWORD WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD b, void *c )
  *
  * PARAMS
  *   url        [I]    Url
- *   b                 Unknown
- *   c                 Unknown ptr
+ *   dwFlags           Unknown
+ *   pftLastModified   Unknown ptr
  */
-DWORD WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD b, void *c )
+BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLastModified )
 {
-    FIXME("(%s, %08x, %p) stub\n", debugstr_w(url), b, c);
+    FIXME("(%s, %08x, %p) stub\n", debugstr_w(url), dwFlags, pftLastModified);
     return FALSE;
 }

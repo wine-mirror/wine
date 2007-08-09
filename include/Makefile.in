@@ -370,6 +370,7 @@ SRCDIR_INCLUDES = \
 	winerror.h \
 	wingdi.h \
 	wininet.h \
+	winineti.h \
 	winioctl.h \
 	winldap.h \
 	winnetwk.h \

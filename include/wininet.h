@@ -1460,10 +1460,6 @@ BOOLAPI RetrieveUrlCacheEntryFileA(LPCSTR ,LPINTERNET_CACHE_ENTRY_INFOA ,LPDWORD
 BOOLAPI RetrieveUrlCacheEntryFileW(LPCWSTR ,LPINTERNET_CACHE_ENTRY_INFOW ,LPDWORD ,DWORD);
 #define RetrieveUrlCacheEntryFile  WINELIB_NAME_AW(RetrieveUrlCacheEntryFile)
 
-BOOLAPI SetUrlCacheConfigInfoA(LPDWORD,DWORD);
-BOOLAPI SetUrlCacheConfigInfoW(LPDWORD,DWORD);
-#define SetUrlCacheConfigInfo  WINELIB_NAME_AW(SetUrlCacheConfigInfo)
-
 BOOLAPI UnlockUrlCacheEntryFileA(LPCSTR ,DWORD);
 BOOLAPI UnlockUrlCacheEntryFileW(LPCWSTR ,DWORD);
 #define UnlockUrlCacheEntryFile  WINELIB_NAME_AW(UnlockUrlCacheEntryFile)

@@ -53,6 +53,7 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "wininet.h"
+#include "winineti.h"
 #include "winnls.h"
 #include "wine/debug.h"
 #include "winerror.h"
@@ -3916,8 +3917,8 @@ BOOL WINAPI ResumeSuspendedDownload( HINTERNET hInternet, DWORD dwError )
     return FALSE;
 }
 
-DWORD WINAPI InternetQueryFortezzaStatus(void *a, DWORD b)
+BOOL WINAPI InternetQueryFortezzaStatus(DWORD *a, DWORD_PTR b)
 {
-    FIXME("(%p, %08x) stub\n", a, b);
+    FIXME("(%p, %08lx) stub\n", a, b);
     return 0;
 }
