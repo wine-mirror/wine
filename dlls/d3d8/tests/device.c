@@ -50,7 +50,7 @@ static int get_refcount(IUnknown *object)
         int rc_new = rc; \
         ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     } else {\
-        trace("%s failed: %s\n", c, DXGetErrorString8(r)); \
+        trace("%s failed: %#08x\n", c, r); \
     }
 
 #define CHECK_RELEASE(obj,d,rc) \
@@ -86,8 +86,8 @@ static int get_refcount(IUnknown *object)
     { \
         void *container_ptr = (void *)0x1337c0d3; \
         hr = IDirect3DSurface8_GetContainer(obj, &iid, &container_ptr); \
-        ok(SUCCEEDED(hr) && container_ptr == expected, "GetContainer returned: hr %#x, container_ptr %p. " \
-            "Expected hr %#x, container_ptr %p\n", hr, container_ptr, S_OK, expected); \
+        ok(SUCCEEDED(hr) && container_ptr == expected, "GetContainer returned: hr %#08x, container_ptr %p. " \
+            "Expected hr %#08x, container_ptr %p\n", hr, container_ptr, S_OK, expected); \
         if (container_ptr && container_ptr != (void *)0x1337c0d3) IUnknown_Release((IUnknown *)container_ptr); \
     }
 
@@ -104,7 +104,7 @@ static void check_mipmap_levels(
         DWORD levels = IDirect3DBaseTexture8_GetLevelCount(texture);
         ok(levels == count, "Invalid level count. Expected %d got %u\n", count, levels);
     } else 
-        trace("CreateTexture failed: %s\n", DXGetErrorString8(hr));
+        trace("CreateTexture failed: %#08x\n", hr);
 
     if (texture) IUnknown_Release( texture );
 }
@@ -136,7 +136,7 @@ static void test_mipmap_levels(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     if(FAILED(hr))
     {
-        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
         goto cleanup;
     }
 
@@ -181,7 +181,7 @@ static void test_swapchain(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     if(FAILED(hr))
     {
-        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
         goto cleanup;
     }
 
@@ -191,39 +191,39 @@ static void test_swapchain(void)
     /* Create a bunch of swapchains */
     d3dpp.BackBufferCount = 0;
     hr = IDirect3DDevice8_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain1);
-    ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "Failed to create a swapchain (%#08x)\n", hr);
     ok(d3dpp.BackBufferCount == 1, "The back buffer count in the presentparams struct is %d\n", d3dpp.BackBufferCount);
 
     d3dpp.BackBufferCount  = 1;
     hr = IDirect3DDevice8_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain2);
-    ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "Failed to create a swapchain (%#08x)\n", hr);
 
     d3dpp.BackBufferCount  = 2;
     hr = IDirect3DDevice8_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain3);
-    ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "Failed to create a swapchain (%#08x)\n", hr);
     if(SUCCEEDED(hr)) {
         /* Swapchain 3, created with backbuffercount 2 */
         backbuffer = (void *) 0xdeadbeef;
         hr = IDirect3DSwapChain8_GetBackBuffer(swapchain3, 0, 0, &backbuffer);
-        ok(SUCCEEDED(hr), "Failed to get the 1st back buffer (%s)\n", DXGetErrorString8(hr));
+        ok(SUCCEEDED(hr), "Failed to get the 1st back buffer (%#08x)\n", hr);
         ok(backbuffer != NULL && backbuffer != (void *) 0xdeadbeef, "The back buffer is %p\n", backbuffer);
         if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface8_Release(backbuffer);
 
         backbuffer = (void *) 0xdeadbeef;
         hr = IDirect3DSwapChain8_GetBackBuffer(swapchain3, 1, 0, &backbuffer);
-        ok(SUCCEEDED(hr), "Failed to get the 2nd back buffer (%s)\n", DXGetErrorString8(hr));
+        ok(SUCCEEDED(hr), "Failed to get the 2nd back buffer (%#08x)\n", hr);
         ok(backbuffer != NULL && backbuffer != (void *) 0xdeadbeef, "The back buffer is %p\n", backbuffer);
         if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface8_Release(backbuffer);
 
         backbuffer = (void *) 0xdeadbeef;
         hr = IDirect3DSwapChain8_GetBackBuffer(swapchain3, 2, 0, &backbuffer);
-        ok(hr == D3DERR_INVALIDCALL, "GetBackBuffer returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3DERR_INVALIDCALL, "GetBackBuffer returned %#08x\n", hr);
         ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
         if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface8_Release(backbuffer);
 
         backbuffer = (void *) 0xdeadbeef;
         hr = IDirect3DSwapChain8_GetBackBuffer(swapchain3, 3, 0, &backbuffer);
-        ok(FAILED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString8(hr));
+        ok(FAILED(hr), "Failed to get the back buffer (%#08x)\n", hr);
         ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
         if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface8_Release(backbuffer);
     }
@@ -231,32 +231,32 @@ static void test_swapchain(void)
     /* Check the back buffers of the swapchains */
     /* Swapchain 1, created with backbuffercount 0 */
     hr = IDirect3DSwapChain8_GetBackBuffer(swapchain1, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-    ok(SUCCEEDED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString8(hr));
-    ok(backbuffer != NULL, "The back buffer is NULL (%s)\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "Failed to get the back buffer (%#08x)\n", hr);
+    ok(backbuffer != NULL, "The back buffer is NULL (%#08x)\n", hr);
     if(backbuffer) IDirect3DSurface8_Release(backbuffer);
 
     backbuffer = (void *) 0xdeadbeef;
     hr = IDirect3DSwapChain8_GetBackBuffer(swapchain1, 1, 0, &backbuffer);
-    ok(FAILED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString8(hr));
+    ok(FAILED(hr), "Failed to get the back buffer (%#08x)\n", hr);
     ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
     if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface8_Release(backbuffer);
 
     /* Swapchain 2 - created with backbuffercount 1 */
     backbuffer = (void *) 0xdeadbeef;
     hr = IDirect3DSwapChain8_GetBackBuffer(swapchain2, 0, 0, &backbuffer);
-    ok(SUCCEEDED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "Failed to get the back buffer (%#08x)\n", hr);
     ok(backbuffer != NULL && backbuffer != (void *) 0xdeadbeef, "The back buffer is %p\n", backbuffer);
     if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface8_Release(backbuffer);
 
     backbuffer = (void *) 0xdeadbeef;
     hr = IDirect3DSwapChain8_GetBackBuffer(swapchain2, 1, 0, &backbuffer);
-    ok(hr == D3DERR_INVALIDCALL, "GetBackBuffer returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3DERR_INVALIDCALL, "GetBackBuffer returned %#08x\n", hr);
     ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
     if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface8_Release(backbuffer);
 
     backbuffer = (void *) 0xdeadbeef;
     hr = IDirect3DSwapChain8_GetBackBuffer(swapchain2, 2, 0, &backbuffer);
-    ok(FAILED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString8(hr));
+    ok(FAILED(hr), "Failed to get the back buffer (%#08x)\n", hr);
     ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
     if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface8_Release(backbuffer);
 
@@ -324,7 +324,7 @@ static void test_refcount(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     if(FAILED(hr))
     {
-        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
         goto cleanup;
     }
     IDirect3DDevice8_GetDeviceCaps(pDevice, &caps);
@@ -555,13 +555,13 @@ static void test_refcount(void)
         BYTE *data;
         /* Vertex buffers can be locked multiple times */
         hr = IDirect3DVertexBuffer8_Lock(pVertexBuffer, 0, 0, &data, 0);
-        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Lock failed with %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Lock failed with %#08x\n", hr);
         hr = IDirect3DVertexBuffer8_Lock(pVertexBuffer, 0, 0, &data, 0);
-        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Lock failed with %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Lock failed with %#08x\n", hr);
         hr = IDirect3DVertexBuffer8_Unlock(pVertexBuffer);
-        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %#08x\n", hr);
         hr = IDirect3DVertexBuffer8_Unlock(pVertexBuffer);
-        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %#08x\n", hr);
     }
 
     /* The implicit render target is not freed if refcount reaches 0.
@@ -638,50 +638,50 @@ static void test_cursor(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     if(FAILED(hr))
     {
-        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
         goto cleanup;
     }
 
     IDirect3DDevice8_CreateImageSurface(pDevice, 32, 32, D3DFMT_A8R8G8B8, &cursor);
-    ok(cursor != NULL, "IDirect3DDevice8_CreateOffscreenPlainSurface failed with %08x\n", hr);
+    ok(cursor != NULL, "IDirect3DDevice8_CreateOffscreenPlainSurface failed with %#08x\n", hr);
 
     /* Initially hidden */
     hr = IDirect3DDevice8_ShowCursor(pDevice, TRUE);
-    ok(hr == FALSE, "IDirect3DDevice8_ShowCursor returned %08x\n", hr);
+    ok(hr == FALSE, "IDirect3DDevice8_ShowCursor returned %#08x\n", hr);
 
     /* Not enabled without a surface*/
     hr = IDirect3DDevice8_ShowCursor(pDevice, TRUE);
-    ok(hr == FALSE, "IDirect3DDevice8_ShowCursor returned %08x\n", hr);
+    ok(hr == FALSE, "IDirect3DDevice8_ShowCursor returned %#08x\n", hr);
 
     /* Fails */
     hr = IDirect3DDevice8_SetCursorProperties(pDevice, 0, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_SetCursorProperties returned %08x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_SetCursorProperties returned %#08x\n", hr);
 
     hr = IDirect3DDevice8_SetCursorProperties(pDevice, 0, 0, cursor);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetCursorProperties returned %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetCursorProperties returned %#08x\n", hr);
 
     IDirect3DSurface8_Release(cursor);
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
     hr = GetCursorInfo(&info);
-    ok(hr != 0, "GetCursorInfo returned %08x\n", hr);
+    ok(hr != 0, "GetCursorInfo returned %#08x\n", hr);
     ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
 
     /* Still hidden */
     hr = IDirect3DDevice8_ShowCursor(pDevice, TRUE);
-    ok(hr == FALSE, "IDirect3DDevice8_ShowCursor returned %08x\n", hr);
+    ok(hr == FALSE, "IDirect3DDevice8_ShowCursor returned %#08x\n", hr);
 
     /* Enabled now*/
     hr = IDirect3DDevice8_ShowCursor(pDevice, TRUE);
-    ok(hr == TRUE, "IDirect3DDevice8_ShowCursor returned %08x\n", hr);
+    ok(hr == TRUE, "IDirect3DDevice8_ShowCursor returned %#08x\n", hr);
 
     /* GDI cursor unchanged */
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
     hr = GetCursorInfo(&info);
-    ok(hr != 0, "GetCursorInfo returned %08x\n", hr);
+    ok(hr != 0, "GetCursorInfo returned %#08x\n", hr);
     ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
 
@@ -717,14 +717,14 @@ static void test_states(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     if(FAILED(hr))
     {
-        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
         goto cleanup;
     }
 
     hr = IDirect3DDevice8_SetRenderState(pDevice, D3DRS_ZVISIBLE, TRUE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState(D3DRS_ZVISIBLE, TRUE) returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState(D3DRS_ZVISIBLE, TRUE) returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(pDevice, D3DRS_ZVISIBLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState(D3DRS_ZVISIBLE, FALSE) returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState(D3DRS_ZVISIBLE, FALSE) returned %#08x\n", hr);
 
 cleanup:
     if(pD3d) IDirect3D8_Release(pD3d);
@@ -741,7 +741,7 @@ static void test_shader_versions(void)
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     if (pD3d != NULL) {
         hr = IDirect3D8_GetDeviceCaps(pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &d3dcaps);
-        ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to get D3D8 caps (%08x)\n", hr);
+        ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to get D3D8 caps (%#08x)\n", hr);
         if (SUCCEEDED(hr)) {
             ok(d3dcaps.VertexShaderVersion <= D3DVS_VERSION(1,1), "Unexpected VertexShaderVersion (%#x > %#x)\n", d3dcaps.VertexShaderVersion, D3DVS_VERSION(1,1));
             ok(d3dcaps.PixelShaderVersion <= D3DPS_VERSION(1,4), "Unexpected PixelShaderVersion (%#x > %#x)\n", d3dcaps.PixelShaderVersion, D3DPS_VERSION(1,4));
@@ -770,7 +770,7 @@ static void test_display_modes(void)
 
     for(i=0; i<max_modes;i++) {
         res = IDirect3D8_EnumAdapterModes(pD3d, D3DADAPTER_DEFAULT, i, &dmode);
-        ok(res==D3D_OK, "EnumAdapterModes returned %s for mode %u!\n", DXGetErrorString8(res), i);
+        ok(res==D3D_OK, "EnumAdapterModes returned %#08x for mode %u!\n", res, i);
         if(res != D3D_OK)
             continue;
 
@@ -807,39 +807,39 @@ static void test_scene(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %#08x\n", hr);
     if(!pDevice)
     {
-        skip("could not create device, IDirect3D8_CreateDevice returned %08x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
         goto cleanup;
     }
 
     /* Test an EndScene without beginscene. Should return an error */
     hr = IDirect3DDevice8_EndScene(pDevice);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_EndScene returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_EndScene returned %#08x\n", hr);
 
     /* Test a normal BeginScene / EndScene pair, this should work */
     hr = IDirect3DDevice8_BeginScene(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed with %#08x\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IDirect3DDevice8_EndScene(pDevice);
-        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %#08x\n", hr);
     }
 
     /* Test another EndScene without having begun a new scene. Should return an error */
     hr = IDirect3DDevice8_EndScene(pDevice);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_EndScene returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_EndScene returned %#08x\n", hr);
 
     /* Two nested BeginScene and EndScene calls */
     hr = IDirect3DDevice8_BeginScene(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed with %#08x\n", hr);
     hr = IDirect3DDevice8_BeginScene(pDevice);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_BeginScene returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_BeginScene returned %#08x\n", hr);
     hr = IDirect3DDevice8_EndScene(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %#08x\n", hr);
     hr = IDirect3DDevice8_EndScene(pDevice);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_EndScene returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_EndScene returned %#08x\n", hr);
 
     /* StretchRect does not exit in Direct3D8, so no equivalent to the d3d9 stretchrect tests */
 
@@ -891,121 +891,121 @@ static void test_shader(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %#08x\n", hr);
     if(!pDevice)
     {
-        skip("could not create device, IDirect3D8_CreateDevice returned %08x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
         goto cleanup;
     }
     IDirect3DDevice8_GetDeviceCaps(pDevice, &caps);
 
     /* First create a vertex shader */
     hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, simple_vs, &hVertexShader, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %#08x\n", hr);
     /* Msdn says that the new vertex shader is set immediately. This is wrong, apparently */
     hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %#08x\n", hr);
     ok(hTempHandle == 0, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, 0);
     /* Assign the shader, then verify that GetVertexShader works */
     hr = IDirect3DDevice8_SetVertexShader(pDevice, hVertexShader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
     hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %#08x\n", hr);
     ok(hTempHandle == hVertexShader, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, hVertexShader);
     /* Verify that we can retrieve the declaration */
     hr = IDirect3DDevice8_GetVertexShaderDeclaration(pDevice, hVertexShader, NULL, &data_size);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderDeclaration returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderDeclaration returned %#08x\n", hr);
     ok(data_size == vertex_decl_size, "Got data_size %u, expected %u\n", data_size, vertex_decl_size);
     data = HeapAlloc(GetProcessHeap(), 0, vertex_decl_size);
     data_size = 1;
     hr = IDirect3DDevice8_GetVertexShaderDeclaration(pDevice, hVertexShader, data, &data_size);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetVertexShaderDeclaration returned %s (0x%#x), "
-            "expected D3DERR_INVALIDCALL\n", DXGetErrorString8(hr), hr);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetVertexShaderDeclaration returned (%#08x), "
+            "expected D3DERR_INVALIDCALL\n", hr);
     ok(data_size == 1, "Got data_size %u, expected 1\n", data_size);
     data_size = vertex_decl_size;
     hr = IDirect3DDevice8_GetVertexShaderDeclaration(pDevice, hVertexShader, data, &data_size);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderDeclaration returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderDeclaration returned %#08x\n", hr);
     ok(data_size == vertex_decl_size, "Got data_size %u, expected %u\n", data_size, vertex_decl_size);
     ok(!memcmp(data, dwVertexDecl, vertex_decl_size), "data not equal to shader declaration\n");
     HeapFree(GetProcessHeap(), 0, data);
     /* Verify that we can retrieve the shader function */
     hr = IDirect3DDevice8_GetVertexShaderFunction(pDevice, hVertexShader, NULL, &data_size);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderFucntion returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderFucntion returned %#08x\n", hr);
     ok(data_size == simple_vs_size, "Got data_size %u, expected %u\n", data_size, simple_vs_size);
     data = HeapAlloc(GetProcessHeap(), 0, simple_vs_size);
     data_size = 1;
     hr = IDirect3DDevice8_GetVertexShaderFunction(pDevice, hVertexShader, data, &data_size);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetVertexShaderFunction returned %s (0x%#x), "
-            "expected D3DERR_INVALIDCALL\n", DXGetErrorString8(hr), hr);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetVertexShaderFunction returned (%#08x), "
+            "expected D3DERR_INVALIDCALL\n", hr);
     ok(data_size == 1, "Got data_size %u, expected 1\n", data_size);
     data_size = simple_vs_size;
     hr = IDirect3DDevice8_GetVertexShaderFunction(pDevice, hVertexShader, data, &data_size);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderFunction returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderFunction returned %#08x\n", hr);
     ok(data_size == simple_vs_size, "Got data_size %u, expected %u\n", data_size, simple_vs_size);
     ok(!memcmp(data, simple_vs, simple_vs_size), "data not equal to shader function\n");
     HeapFree(GetProcessHeap(), 0, data);
     /* Delete the assigned shader. This is supposed to work */
     hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %#08x\n", hr);
     /* The shader should be unset now */
     hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %#08x\n", hr);
     ok(hTempHandle == 0, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, 0);
 
     if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 0))
     {
         /* The same with a pixel shader */
         hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader);
-        ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %#08x\n", hr);
         /* Msdn says that the new pixel shader is set immediately. This is wrong, apparently */
         hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
-        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %#08x\n", hr);
         ok(hTempHandle == 0, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, 0);
         /* Assign the shader, then verify that GetPixelShader works */
         hr = IDirect3DDevice8_SetPixelShader(pDevice, hPixelShader);
-        ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %#08x\n", hr);
         hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
-        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %#08x\n", hr);
         ok(hTempHandle == hPixelShader, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, hPixelShader);
         /* Verify that we can retrieve the shader function */
         hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, NULL, &data_size);
-        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShaderFucntion returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShaderFunction returned %#08x\n", hr);
         ok(data_size == simple_ps_size, "Got data_size %u, expected %u\n", data_size, simple_ps_size);
         data = HeapAlloc(GetProcessHeap(), 0, simple_ps_size);
         data_size = 1;
         hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, data, &data_size);
-        ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetPixelShaderFunction returned %s (0x%#x), "
-                "expected D3DERR_INVALIDCALL\n", DXGetErrorString8(hr), hr);
+        ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetPixelShaderFunction returned (%#08x), "
+                "expected D3DERR_INVALIDCALL\n", hr);
         ok(data_size == 1, "Got data_size %u, expected 1\n", data_size);
         data_size = simple_ps_size;
         hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, data, &data_size);
-        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShaderFunction returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShaderFunction returned %#08x\n", hr);
         ok(data_size == simple_ps_size, "Got data_size %u, expected %u\n", data_size, simple_ps_size);
         ok(!memcmp(data, simple_ps, simple_ps_size), "data not equal to shader function\n");
         HeapFree(GetProcessHeap(), 0, data);
         /* Delete the assigned shader. This is supposed to work */
         hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
-        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %#08x\n", hr);
         /* The shader should be unset now */
         hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
-        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %#08x\n", hr);
         ok(hTempHandle == 0, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, 0);
 
         /* What happens if a non-bound shader is deleted? */
         hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader);
-        ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %#08x\n", hr);
         hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader2);
-        ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %#08x\n", hr);
 
         hr = IDirect3DDevice8_SetPixelShader(pDevice, hPixelShader);
-        ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %#08x\n", hr);
         hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader2);
-        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %#08x\n", hr);
         hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
-        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %#08x\n", hr);
         ok(hTempHandle == hPixelShader, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, hPixelShader);
         hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
-        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %#08x\n", hr);
     }
     else
     {
@@ -1014,19 +1014,19 @@ static void test_shader(void)
 
     /* What happens if a non-bound shader is deleted? */
     hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, NULL, &hVertexShader, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %#08x\n", hr);
     hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, NULL, &hVertexShader2, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %#08x\n", hr);
 
     hr = IDirect3DDevice8_SetVertexShader(pDevice, hVertexShader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
     hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader2);
-    ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %#08x\n", hr);
     hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %#08x\n", hr);
     ok(hTempHandle == hVertexShader, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, hVertexShader);
     hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %#08x\n", hr);
 
 cleanup:
     if(pD3d) IDirect3D8_Release(pD3d);
@@ -1063,25 +1063,25 @@ static void test_limits(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %#08x\n", hr);
     if(!pDevice)
     {
-        skip("could not create device, IDirect3D8_CreateDevice returned %08x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
         goto cleanup;
     }
 
     hr = IDirect3DDevice8_CreateTexture(pDevice, 16, 16, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreateTexture failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateTexture failed with %#08x\n", hr);
     if(!pTexture) goto cleanup;
 
     /* There are 8 texture stages. We should be able to access all of them */
     for(i = 0; i < 8; i++) {
         hr = IDirect3DDevice8_SetTexture(pDevice, i, (IDirect3DBaseTexture8 *) pTexture);
-        ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture for sampler %d failed with %s\n", i, DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture for sampler %d failed with %#08x\n", i, hr);
         hr = IDirect3DDevice8_SetTexture(pDevice, i, NULL);
-        ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture for sampler %d failed with %s\n", i, DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture for sampler %d failed with %#08x\n", i, hr);
         hr = IDirect3DDevice8_SetTextureStageState(pDevice, i, D3DTSS_COLOROP, D3DTOP_ADD);
-        ok(hr == D3D_OK, "IDirect3DDevice8_SetTextureStageState for texture %d failed with %s\n", i, DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetTextureStageState for texture %d failed with %#08x\n", i, hr);
     }
 
     /* Investigations show that accessing higher textures stage states does not return an error either. Writing

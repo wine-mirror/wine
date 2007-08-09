@@ -51,13 +51,13 @@ static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
     hr = IDirect3DDevice8_CreateTexture(device, 640, 480, 1 /* Levels */, 0 /* usage */, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &tex);
     if(FAILED(hr) || !tex )  /* This is not a test */
     {
-        trace("Can't create an offscreen plain surface to read the render target data, hr=%s\n", DXGetErrorString8(hr));
+        trace("Can't create an offscreen plain surface to read the render target data, hr=%#08x\n", hr);
         return 0xdeadbeef;
     }
     hr = IDirect3DTexture8_GetSurfaceLevel(tex, 0, &surf);
     if(FAILED(hr) || !tex )  /* This is not a test */
     {
-        trace("Can't get surface from texture, hr=%s\n", DXGetErrorString8(hr));
+        trace("Can't get surface from texture, hr=%#08x\n", hr);
         ret = 0xdeadbeee;
         goto out;
     }
@@ -65,7 +65,7 @@ static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
     hr = IDirect3DDevice8_GetFrontBuffer(device, surf);
     if(FAILED(hr))
     {
-        trace("Can't read the front buffer data, hr=%s\n", DXGetErrorString8(hr));
+        trace("Can't read the front buffer data, hr=%#08x\n", hr);
         ret = 0xdeadbeed;
         goto out;
     }
@@ -73,7 +73,7 @@ static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
     hr = IDirect3DSurface8_LockRect(surf, &lockedRect, &rectToLock, D3DLOCK_READONLY);
     if(FAILED(hr))
     {
-        trace("Can't lock the offscreen surface, hr=%s\n", DXGetErrorString8(hr));
+        trace("Can't lock the offscreen surface, hr=%#08x\n", hr);
         ret = 0xdeadbeec;
         goto out;
     }
@@ -84,7 +84,7 @@ static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
     hr = IDirect3DSurface8_UnlockRect(surf);
     if(FAILED(hr))
     {
-        trace("Can't unlock the offscreen surface, hr=%s\n", DXGetErrorString8(hr));
+        trace("Can't unlock the offscreen surface, hr=%#08x\n", hr);
     }
 
 out:
@@ -120,7 +120,7 @@ static IDirect3DDevice8 *init_d3d8(void)
     present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
 
     hr = IDirect3D8_CreateDevice(d3d8_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D_CreateDevice returned: %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D_CreateDevice returned: %#08x\n", hr);
 
     return device_ptr;
 }
@@ -181,69 +181,69 @@ static void lighting_test(IDirect3DDevice8 *device)
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
 
     /* Setup some states that may cause issues */
     hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), (D3DMATRIX *) mat);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetTransform(device, D3DTS_VIEW, (D3DMATRIX *)mat);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, (D3DMATRIX *) mat);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_STENCILENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHATESTENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHABLENDENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed with %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed with %#08x\n", hr);
 
     hr = IDirect3DDevice8_SetVertexShader(device, fvf);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
 
     hr = IDirect3DDevice8_BeginScene(device);
-    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed with %#08x\n", hr);
     if(hr == D3D_OK)
     {
         /* No lights are defined... That means, lit vertices should be entirely black */
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
-        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
         hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
                                                     2 /*PrimCount */, Indices, D3DFMT_INDEX16, unlitquad, sizeof(unlitquad[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice8_DrawIndexedPrimitiveUP failed with %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_DrawIndexedPrimitiveUP failed with %#08x\n", hr);
 
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, TRUE);
-        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
         hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
                                                     2 /*PrimCount */, Indices, D3DFMT_INDEX16, litquad, sizeof(litquad[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice8_DrawIndexedPrimitiveUP failed with %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_DrawIndexedPrimitiveUP failed with %#08x\n", hr);
 
         hr = IDirect3DDevice8_SetVertexShader(device, nfvf);
-        ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader failed with %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader failed with %#08x\n", hr);
 
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
-        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
         hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
                                                     2 /*PrimCount */, Indices, D3DFMT_INDEX16, unlitnquad, sizeof(unlitnquad[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice8_DrawIndexedPrimitiveUP failed with %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_DrawIndexedPrimitiveUP failed with %#08x\n", hr);
 
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, TRUE);
-        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
         hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
                                                     2 /*PrimCount */, Indices, D3DFMT_INDEX16, litnquad, sizeof(litnquad[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice8_DrawIndexedPrimitiveUP failed with %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_DrawIndexedPrimitiveUP failed with %#08x\n", hr);
 
         IDirect3DDevice8_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %#08x\n", hr);
     }
 
     IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
@@ -258,7 +258,7 @@ static void lighting_test(IDirect3DDevice8 *device)
     ok(color == 0x00000000, "Lit quad width normals has color %08x\n", color);
 
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
 }
 
 static void clear_test(IDirect3DDevice8 *device)
@@ -270,7 +270,7 @@ static void clear_test(IDirect3DDevice8 *device)
     DWORD color;
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
 
     /* Positive x, negative y */
     rect[0].x1 = 0;
@@ -287,7 +287,7 @@ static void clear_test(IDirect3DDevice8 *device)
      * is ignored, the positive is still cleared afterwards
      */
     hr = IDirect3DDevice8_Clear(device, 2, rect, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
 
     /* negative x, negative y */
     rect_negneg.x1 = 640;
@@ -295,7 +295,7 @@ static void clear_test(IDirect3DDevice8 *device)
     rect_negneg.x2 = 320;
     rect_negneg.y2 = 0;
     hr = IDirect3DDevice8_Clear(device, 1, &rect_negneg, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
 
     IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
@@ -359,60 +359,60 @@ static void fog_test(IDirect3DDevice8 *device)
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Clear returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_Clear returned %#08x\n", hr);
 
     /* Setup initial states: No lighting, fog on, fog color */
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
-    ok(hr == D3D_OK, "Turning off lighting returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "Turning off lighting returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
-    ok(hr == D3D_OK, "Turning on fog calculations returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "Turning on fog calculations returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGCOLOR, 0xFF00FF00 /* A nice green */);
-    ok(hr == D3D_OK, "Turning on fog calculations returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "Turning on fog calculations returned %#08x\n", hr);
 
     /* First test: Both table fog and vertex fog off */
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_NONE);
-    ok(hr == D3D_OK, "Turning off table fog returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "Turning off table fog returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_NONE);
-    ok(hr == D3D_OK, "Turning off table fog returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "Turning off table fog returned %#08x\n", hr);
 
     /* Start = 0, end = 1. Should be default, but set them */
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGSTART, *((DWORD *) &start));
-    ok(hr == D3D_OK, "Setting fog start returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "Setting fog start returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGEND, *((DWORD *) &end));
-    ok(hr == D3D_OK, "Setting fog start returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "Setting fog start returned %#08x\n", hr);
 
     if(IDirect3DDevice8_BeginScene(device) == D3D_OK)
     {
         hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
-        ok( hr == D3D_OK, "SetVertexShader returned %s\n", DXGetErrorString8(hr));
+        ok( hr == D3D_OK, "SetVertexShader returned %#08x\n", hr);
         /* Untransformed, vertex fog = NONE, table fog = NONE: Read the fog weighting from the specular color */
         hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
                                                      2 /*PrimCount */, Indices, D3DFMT_INDEX16, unstransformed_1,
                                                      sizeof(unstransformed_1[0]));
-        ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %#08x\n", hr);
 
         /* That makes it use the Z value */
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-        ok(hr == D3D_OK, "Turning off table fog returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "Turning off table fog returned %#08x\n", hr);
         /* Untransformed, vertex fog != none (or table fog != none):
          * Use the Z value as input into the equation
          */
         hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
                                                      2 /*PrimCount */, Indices, D3DFMT_INDEX16, unstransformed_2,
                                                      sizeof(unstransformed_1[0]));
-        ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %#08x\n", hr);
 
         /* transformed verts */
         hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
-        ok( hr == D3D_OK, "SetVertexShader returned %s\n", DXGetErrorString8(hr));
+        ok( hr == D3D_OK, "SetVertexShader returned %#08x\n", hr);
         /* Transformed, vertex fog != NONE, pixel fog == NONE: Use specular color alpha component */
         hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
                                                      2 /*PrimCount */, Indices, D3DFMT_INDEX16, transformed_1,
                                                      sizeof(transformed_1[0]));
-        ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %#08x\n", hr);
 
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_LINEAR);
-        ok( hr == D3D_OK, "Setting fog table mode to D3DFOG_LINEAR returned %s\n", DXGetErrorString8(hr));
+        ok( hr == D3D_OK, "Setting fog table mode to D3DFOG_LINEAR returned %#08x\n", hr);
         /* Transformed, table fog != none, vertex anything: Use Z value as input to the fog
          * equation
          */
@@ -421,7 +421,7 @@ static void fog_test(IDirect3DDevice8 *device)
                                                      sizeof(transformed_2[0]));
 
         hr = IDirect3DDevice8_EndScene(device);
-        ok(hr == D3D_OK, "EndScene returned %s\n", DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "EndScene returned %#08x\n", hr);
     }
     else
     {
@@ -440,7 +440,7 @@ static void fog_test(IDirect3DDevice8 *device)
 
     /* Turn off the fog master switch to avoid confusing other tests */
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
-    ok(hr == D3D_OK, "Turning off fog calculations returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "Turning off fog calculations returned %#08x\n", hr);
 }
 
 static void present_test(IDirect3DDevice8 *device)
@@ -488,7 +488,7 @@ static void present_test(IDirect3DDevice8 *device)
     ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
     color = getPixelColor(device, 512, 240);
     ok(color == 0x00ffffff, "Present failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     color = getPixelColor(device, 64, 240);
@@ -544,27 +544,27 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     };
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff800080, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
 
     hr = IDirect3DDevice8_CreateVertexShader(device, decl, rcp_test, &shader, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned with %#08x\n", hr);
 
     IDirect3DDevice8_SetVertexShader(device, shader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
     IDirect3DDevice8_SetVertexShaderConstant(device, 0, constant, 1);
 
     hr = IDirect3DDevice8_BeginScene(device);
-    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene returned %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene returned %#08x\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
-        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%#08x)\n", hr);
         hr = IDirect3DDevice8_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %#08x\n", hr);
     }
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
     color = getPixelColor(device, 320, 240);
     c1 = (color & 0x00ff0000 )>> 16;
     c2 = (color & 0x0000ff00 )>>  8;
@@ -577,27 +577,27 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     IDirect3DDevice8_DeleteVertexShader(device, shader);
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff800080, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
 
     hr = IDirect3DDevice8_CreateVertexShader(device, decl, rsq_test, &shader, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned with %#08x\n", hr);
 
     IDirect3DDevice8_SetVertexShader(device, shader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
     IDirect3DDevice8_SetVertexShaderConstant(device, 0, constant, 1);
 
     hr = IDirect3DDevice8_BeginScene(device);
-    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene returned %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene returned %#08x\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
-        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%#08x)\n", hr);
         hr = IDirect3DDevice8_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %#08x\n", hr);
     }
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
     color = getPixelColor(device, 320, 240);
     c1 = (color & 0x00ff0000 )>> 16;
     c2 = (color & 0x0000ff00 )>>  8;
@@ -625,17 +625,17 @@ static void offscreen_test(IDirect3DDevice8 *device)
     };
 
     hr = IDirect3DDevice8_GetDepthStencilSurface(device, &depthstencil);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetDepthStencilSurface failed, hr = %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetDepthStencilSurface failed, hr = %#08x\n", hr);
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
-    ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
+    ok(hr == D3D_OK, "Clear failed, hr = %#08x\n", hr);
 
     hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture);
-    ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %08x\n", hr);
+    ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
     if(!offscreenTexture) {
         trace("Failed to create an X8R8G8B8 offscreen texture, trying R5G6B5\n");
         hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &offscreenTexture);
-        ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
         if(!offscreenTexture) {
             skip("Cannot create an offscreen render target\n");
             goto out;
@@ -643,49 +643,49 @@ static void offscreen_test(IDirect3DDevice8 *device)
     }
 
     hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-    ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
+    ok(hr == D3D_OK, "Can't get back buffer, hr = %#08x\n", hr);
     if(!backbuffer) {
         goto out;
     }
 
     hr = IDirect3DTexture8_GetSurfaceLevel(offscreenTexture, 0, &offscreen);
-    ok(hr == D3D_OK, "Can't get offscreen surface, hr = %08x\n", hr);
+    ok(hr == D3D_OK, "Can't get offscreen surface, hr = %#08x\n", hr);
     if(!offscreen) {
         goto out;
     }
 
     hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_TEX1);
-    ok(hr == D3D_OK, "SetVertexShader failed, hr = %08x\n", hr);
+    ok(hr == D3D_OK, "SetVertexShader failed, hr = %#08x\n", hr);
 
     hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
+    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %#08x\n", hr);
     hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
+    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %#08x\n", hr);
     hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MINFILTER, D3DTEXF_NONE);
-    ok(SUCCEEDED(hr), "SetTextureStageState D3DSAMP_MINFILTER failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "SetTextureStageState D3DSAMP_MINFILTER failed (%#08x)\n", hr);
     hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAGFILTER, D3DTEXF_NONE);
-    ok(SUCCEEDED(hr), "SetTextureStageState D3DSAMP_MAGFILTER failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "SetTextureStageState D3DSAMP_MAGFILTER failed (%#08x)\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
 
     if(IDirect3DDevice8_BeginScene(device) == D3D_OK) {
         hr = IDirect3DDevice8_SetRenderTarget(device, offscreen, depthstencil);
-        ok(hr == D3D_OK, "SetRenderTarget failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "SetRenderTarget failed, hr = %#08x\n", hr);
         hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
-        ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "Clear failed, hr = %#08x\n", hr);
 
         /* Draw without textures - Should resut in a white quad */
         hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
-        ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %#08x\n", hr);
 
         hr = IDirect3DDevice8_SetRenderTarget(device, backbuffer, depthstencil);
-        ok(hr == D3D_OK, "SetRenderTarget failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "SetRenderTarget failed, hr = %#08x\n", hr);
         hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *) offscreenTexture);
         ok(hr == D3D_OK, "SetTexture failed, %s\n", DXGetErrorString8(hr));
 
         /* This time with the texture */
         hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
-        ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %#08x\n", hr);
 
         IDirect3DDevice8_EndScene(device);
     }
