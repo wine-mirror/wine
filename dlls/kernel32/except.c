@@ -319,7 +319,16 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, 0, env, NULL, &startup, &info);
     FreeEnvironmentStringsA( env );
 
-    if (ret) WaitForSingleObject(hEvent, INFINITE);  /* wait for debugger to come up... */
+    if (ret)
+    {
+        /* wait for debugger to come up... */
+        HANDLE handles[2];
+        CloseHandle(info.hThread);
+        handles[0]=hEvent;
+        handles[1]=info.hProcess;
+        WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+        CloseHandle(info.hProcess);
+    }
     else ERR("Couldn't start debugger (%s) (%d)\n"
              "Read the Wine Developers Guide on how to set up winedbg or another debugger\n",
              debugstr_a(cmdline), GetLastError());
