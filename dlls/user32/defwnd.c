@@ -812,20 +812,15 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         result = 1; /* success. FIXME: check text length */
         break;
 
-    /* for far east users (IMM32) - <hidenori@a2.ctktv.ne.jp> */
     case WM_IME_CHAR:
-        {
-            CHAR    chChar1 = (CHAR)( (wParam>>8) & 0xff );
-            CHAR    chChar2 = (CHAR)( wParam & 0xff );
-
-            if (chChar1)
-                SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar1, lParam );
-            SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar2, lParam );
-        }
+        if (HIBYTE(wParam)) PostMessageA( hwnd, WM_CHAR, HIBYTE(wParam), lParam );
+        PostMessageA( hwnd, WM_CHAR, LOBYTE(wParam), lParam );
         break;
+
     case WM_IME_KEYDOWN:
         result = SendMessageA( hwnd, WM_KEYDOWN, wParam, lParam );
         break;
+
     case WM_IME_KEYUP:
         result = SendMessageA( hwnd, WM_KEYUP, wParam, lParam );
         break;
@@ -968,10 +963,10 @@ LRESULT WINAPI DefWindowProcW(
         result = 1; /* success. FIXME: check text length */
         break;
 
-    /* for far east users (IMM32) - <hidenori@a2.ctktv.ne.jp> */
     case WM_IME_CHAR:
-        SendMessageW( hwnd, WM_CHAR, wParam, lParam );
+        PostMessageW( hwnd, WM_CHAR, wParam, lParam );
         break;
+
     case WM_IME_SETCONTEXT:
         {
             HWND hwndIME;
