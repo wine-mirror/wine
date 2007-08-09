@@ -215,6 +215,21 @@ static const WCHAR szInstaller_LocalSystemComponent_fmt[] = {
 'S','-','1','-','5','-','1','8','\\',
 'C','o','m','p','o','n','e','n','t','s','\\','%','s',0};
 
+static const WCHAR szInstaller_LocalClassesProd_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'C','l','a','s','s','e','s','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'P','r','o','d','u','c','t','s','\\','%','s',0};
+
+static const WCHAR szInstaller_LocalManagedProd_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'M','a','n','a','g','e','d','\\','%','s','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'P','r','o','d','u','c','t','s','\\','%','s',0};
 
 #define SQUISH_GUID_SIZE 33
 
@@ -929,6 +944,55 @@ UINT MSIREG_OpenLocalSystemComponentKey(LPCWSTR szComponent, HKEY *key, BOOL cre
     return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
 }
 
+UINT MSIREG_OpenLocalClassesProductKey(LPCWSTR szProductCode, HKEY *key, BOOL create)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n", debugstr_w(szProductCode));
+
+    if (!squash_guid(szProductCode, squished_pc))
+        return ERROR_FUNCTION_FAILED;
+
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath, szInstaller_LocalClassesProd_fmt, squished_pc);
+
+    if (create)
+        return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+}
+
+UINT MSIREG_OpenLocalManagedProductKey(LPCWSTR szProductCode, HKEY *key, BOOL create)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+    LPWSTR usersid;
+    UINT r;
+
+    TRACE("%s\n", debugstr_w(szProductCode));
+
+    if (!squash_guid(szProductCode, squished_pc))
+        return ERROR_FUNCTION_FAILED;
+
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    r = get_user_sid(&usersid);
+    if (r != ERROR_SUCCESS || !usersid)
+    {
+        ERR("Failed to retrieve user SID: %d\n", r);
+        return r;
+    }
+
+    sprintfW(keypath, szInstaller_LocalManagedProd_fmt, usersid, squished_pc);
+    msi_free(usersid);
+
+    if (create)
+        return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+}
 
 /*************************************************************************
  *  MsiDecomposeDescriptorW   [MSI.@]
