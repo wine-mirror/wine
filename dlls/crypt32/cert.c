@@ -908,11 +908,21 @@ static BOOL compare_cert_by_subject_cert(PCCERT_CONTEXT pCertContext,
     CERT_INFO *pCertInfo = (CERT_INFO *)pvPara;
     BOOL ret;
 
+    /* Matching serial number and subject match.. */
     ret = CertCompareCertificateName(pCertContext->dwCertEncodingType,
      &pCertInfo->Issuer, &pCertContext->pCertInfo->Subject);
-    if (ret && pCertInfo->SerialNumber.cbData)
+    if (ret)
         ret = CertCompareIntegerBlob(&pCertContext->pCertInfo->SerialNumber,
          &pCertInfo->SerialNumber);
+    else
+    {
+        /* failing that, if the serial number and issuer match, we match */
+        ret = CertCompareIntegerBlob(&pCertContext->pCertInfo->SerialNumber,
+         &pCertInfo->SerialNumber);
+        if (ret)
+            ret = CertCompareCertificateName(pCertContext->dwCertEncodingType,
+             &pCertInfo->Issuer, &pCertContext->pCertInfo->Issuer);
+    }
     TRACE("returning %d\n", ret);
     return ret;
 }
