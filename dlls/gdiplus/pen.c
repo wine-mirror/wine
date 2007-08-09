@@ -102,6 +102,7 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, REAL width, GpUnit unit,
     gp_pen->join = LineJoinMiter;
     gp_pen->miterlimit = 10.0;
     gp_pen->dash = DashStyleSolid;
+    gp_pen->offset = 0.0;
     GdipCreateSolidFill(color, (GpSolidFill **)(&gp_pen->brush));
 
     if(!((gp_pen->unit == UnitWorld) || (gp_pen->unit == UnitPixel))) {
@@ -157,6 +158,16 @@ GpStatus WINGDIPAPI GdipGetPenDashArray(GpPen *pen, REAL *dash, INT count)
         return GenericError;
 
     memcpy(dash, pen->dashes, count * sizeof(REAL));
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPenDashOffset(GpPen *pen, REAL *offset)
+{
+    if(!pen || !offset)
+        return InvalidParameter;
+
+    *offset = pen->offset;
 
     return Ok;
 }
@@ -254,6 +265,17 @@ GpStatus WINGDIPAPI GdipSetPenDashArray(GpPen *pen, GDIPCONST REAL *dash,
     GdipSetPenDashStyle(pen, DashStyleCustom);
     memcpy(pen->dashes, dash, count * sizeof(REAL));
     pen->numdashes = count;
+
+    return Ok;
+}
+
+/* FIXME: dash offset not used */
+GpStatus WINGDIPAPI GdipSetPenDashOffset(GpPen *pen, REAL offset)
+{
+    if(!pen)
+        return InvalidParameter;
+
+    pen->offset = offset;
 
     return Ok;
 }

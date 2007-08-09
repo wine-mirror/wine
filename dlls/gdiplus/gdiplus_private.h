@@ -68,6 +68,7 @@ struct GpPen{
     GpDashStyle dash;
     REAL *dashes;
     INT numdashes;
+    REAL offset;    /* dash offset */
     GpBrush *brush;
 };
 
