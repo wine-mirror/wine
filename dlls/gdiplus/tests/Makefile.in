@@ -9,6 +9,7 @@ CTESTS = \
 	brush.c \
 	graphics.c \
 	graphicspath.c \
+	image.c \
 	matrix.c \
 	pen.c
 
