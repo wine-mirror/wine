@@ -1279,6 +1279,11 @@ typedef struct {
     DWORD   idx[13];
 } constants_entry;
 
+struct StageState {
+    DWORD stage;
+    DWORD state;
+};
+
 struct IWineD3DStateBlockImpl
 {
     /* IUnknown fields */
@@ -1379,6 +1384,8 @@ struct IWineD3DStateBlockImpl
     unsigned int              num_contained_ps_consts_i;
     DWORD                     contained_ps_consts_b[MAX_CONST_B];
     unsigned int              num_contained_ps_consts_b;
+    struct StageState         contained_tss_states[MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE)];
+    unsigned int              num_contained_tss_states;
 };
 
 extern void stateblock_savedstates_set(
