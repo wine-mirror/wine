@@ -257,17 +257,34 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     BITMAPFILEHEADER *bmfh;
     BITMAPINFOHEADER *bmih;
     BYTE *buff;
-    INT datalen = stride * height, size;
+    INT datalen, size;
     IStream *stream;
 
     TRACE("%d %d %d %d %p %p\n", width, height, stride, format, scan0, bitmap);
 
-    if(!scan0 || !bitmap)
+    if(!bitmap || width <= 0 || height <= 0 || (scan0 && (stride % 4))){
+        *bitmap = NULL;
         return InvalidParameter;
+    }
+
+    if(scan0 && !stride)
+        return InvalidParameter;
+
+    /* FIXME: windows allows negative stride (reads backwards from scan0) */
+    if(stride < 0){
+        FIXME("negative stride\n");
+        return InvalidParameter;
+    }
 
     *bitmap = GdipAlloc(sizeof(GpBitmap));
     if(!*bitmap)    return OutOfMemory;
 
+    if(stride == 0){
+        stride = width * (PIXELFORMATBPP(format) / 8);
+        stride = (stride + 3) & ~3;
+    }
+
+    datalen = abs(stride * height);
     size = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + datalen;
     buff = GdipAlloc(size);
     if(!buff){
@@ -284,12 +301,16 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
 
     bmih->biSize            = sizeof(BITMAPINFOHEADER);
     bmih->biWidth           = width;
-    bmih->biHeight          = height;
+    bmih->biHeight          = -height;
     /* FIXME: use the rest of the data from format */
     bmih->biBitCount        = PIXELFORMATBPP(format);
     bmih->biCompression     = BI_RGB;
+    bmih->biSizeImage       = datalen;
 
-    memcpy(bmih + 1, scan0, datalen);
+    if(scan0)
+        memcpy(bmih + 1, scan0, datalen);
+    else
+        memset(bmih + 1, 0, datalen);
 
     if(CreateStreamOnHGlobal(buff, TRUE, &stream) != S_OK){
         ERR("could not make stream\n");

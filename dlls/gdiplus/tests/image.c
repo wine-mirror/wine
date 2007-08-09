@@ -32,29 +32,27 @@ static void test_Scan0()
 
     bm = NULL;
     stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat24bppRGB, NULL, &bm);
-    todo_wine{
-        expect(Ok, stat);
-        ok(NULL != bm, "Expected bitmap to be initialized\n");
-    }
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
     GdipDisposeImage((GpImage*)bm);
 
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, -10, 10, PixelFormat24bppRGB, NULL, &bm);
     expect(InvalidParameter, stat);
-    todo_wine
-        expect(NULL, bm);
+
+    expect(NULL, bm);
 
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(-10, 10, 10, PixelFormat24bppRGB, NULL, &bm);
     expect(InvalidParameter, stat);
-    todo_wine
-        expect(NULL, bm);
+
+    expect(NULL, bm);
 
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, 0, 10, PixelFormat24bppRGB, NULL, &bm);
     expect(InvalidParameter, stat);
-    todo_wine
-        expect(NULL, bm);
+
+    expect(NULL, bm);
 
     bm = NULL;
     stat = GdipCreateBitmapFromScan0(10, 10, 12, PixelFormat24bppRGB, buff, &bm);
@@ -64,17 +62,13 @@ static void test_Scan0()
 
     bm = (GpBitmap*) 0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat24bppRGB, buff, &bm);
-    todo_wine{
-        expect(InvalidParameter, stat);
-        expect(NULL, bm);
-    }
+    expect(InvalidParameter, stat);
+    expect(NULL, bm);
 
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, 10, 0, PixelFormat24bppRGB, buff, &bm);
-    todo_wine{
-        expect(InvalidParameter, stat);
-        expect(0xdeadbeef, bm);
-    }
+    expect(InvalidParameter, stat);
+    expect(0xdeadbeef, bm);
 }
 
 START_TEST(image)
