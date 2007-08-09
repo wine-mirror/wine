@@ -74,7 +74,7 @@
 @ stdcall GdipCreateBitmapFromFile(wstr ptr)
 @ stub GdipCreateBitmapFromFileICM
 @ stub GdipCreateBitmapFromGdiDib
-@ stub GdipCreateBitmapFromGraphics
+@ stdcall GdipCreateBitmapFromGraphics(long long ptr ptr)
 @ stub GdipCreateBitmapFromHBITMAP
 @ stub GdipCreateBitmapFromHICON
 @ stub GdipCreateBitmapFromResource

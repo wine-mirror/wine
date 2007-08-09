@@ -251,6 +251,26 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromFile(GDIPCONST WCHAR* filename,
     return stat;
 }
 
+/* FIXME: this should create a bitmap in the given size with the attributes
+ * (resolution etc.) of the graphics object */
+GpStatus WINGDIPAPI GdipCreateBitmapFromGraphics(INT width, INT height,
+    GpGraphics* target, GpBitmap** bitmap)
+{
+    static int calls;
+    GpStatus ret;
+
+    if(!target || !bitmap)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("hacked stub\n");
+
+    ret = GdipCreateBitmapFromScan0(width, height, 0, PixelFormat24bppRGB,
+                                    NULL, bitmap);
+
+    return ret;
+}
+
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     PixelFormat format, BYTE* scan0, GpBitmap** bitmap)
 {
