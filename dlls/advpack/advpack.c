@@ -116,6 +116,7 @@ void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir)
     do
     {
         LPWSTR value, ptr, key, key_copy = NULL;
+        DWORD flags = 0;
 
         SetupGetLineTextW(&context, NULL, NULL, NULL,
                           line, MAX_FIELD_LENGTH, &size);
@@ -141,16 +142,22 @@ void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir)
         while (*value == ' ')
             value++;
 
-        /* FIXME: need to check the query option */
+        /* Extract the flags */
         ptr = strchrW(value, ',');
-        if (ptr)
+        if (ptr) {
             *ptr = '\0';
+            flags = atolW(ptr+1);
+        }
 
         /* set dest to pszWorkingDir if key is SourceDir */
         if (pszWorkingDir && !lstrcmpiW(value, source_dir))
             lstrcpynW(dest, pszWorkingDir, MAX_PATH);
         else
             get_dest_dir(hInf, value, dest, MAX_PATH);
+
+        /* If prompting required, provide dialog to request path */
+        if (flags & 0x04)
+            FIXME("Need to support changing paths - default will be used\n");
 
         /* set all ldids to dest */
         while ((ptr = get_parameter(&key, ',')))
