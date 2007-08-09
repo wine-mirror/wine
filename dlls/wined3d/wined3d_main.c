@@ -126,7 +126,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 
        if (!RegisterClassA(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
        {
-           ERR("Failed to register window class 'WineD3D_OpenGL'!");
+           ERR("Failed to register window class 'WineD3D_OpenGL'!\n");
            return FALSE;
        }
 
