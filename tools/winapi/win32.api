@@ -2312,6 +2312,16 @@ VOID
 LPCWSTR
 LPWSTR
 
+%%mprapi.dll
+
+%long
+
+BOOL
+
+%wstr
+
+LPWSTR
+
 %%msacm32.drv
 
 %long
