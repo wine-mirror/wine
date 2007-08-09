@@ -177,7 +177,8 @@ static char *CRYPT_GetKeyName(DWORD dwEncodingType, LPCSTR pszFuncName,
     len = sizeof(szEncodingTypeFmt) + lstrlenA(pszFuncName) + lstrlenA(oid);
     szKey = CryptMemAlloc(len);
     if (szKey)
-        sprintf(szKey, szEncodingTypeFmt, dwEncodingType, pszFuncName, oid);
+        sprintf(szKey, szEncodingTypeFmt,
+         GET_CERT_ENCODING_TYPE(dwEncodingType), pszFuncName, oid);
     return szKey;
 }
 
@@ -250,7 +251,7 @@ BOOL WINAPI CryptInstallOIDFunctionAddress(HMODULE hModule,
                 func = CryptMemAlloc(sizeof(struct OIDFunction));
             if (func)
             {
-                func->encoding = dwEncodingType;
+                func->encoding = GET_CERT_ENCODING_TYPE(dwEncodingType);
                 if (HIWORD(rgFuncEntry[i].pszOID))
                 {
                     LPSTR oid;
@@ -290,7 +291,7 @@ static BOOL CRYPT_GetFuncFromReg(DWORD dwEncodingType, LPCSTR pszOID,
         DWORD type, size = 0;
 
         rc = RegQueryValueExA(key, "FuncName", NULL, &type, NULL, &size);
-        if (rc == ERROR_MORE_DATA && type == REG_SZ)
+        if ((!rc || rc == ERROR_MORE_DATA) && type == REG_SZ)
         {
             funcName = CryptMemAlloc(size);
             rc = RegQueryValueExA(key, "FuncName", NULL, &type,
@@ -299,7 +300,7 @@ static BOOL CRYPT_GetFuncFromReg(DWORD dwEncodingType, LPCSTR pszOID,
         else
             funcName = szFuncName;
         rc = RegQueryValueExW(key, DllW, NULL, &type, NULL, &size);
-        if (rc == ERROR_MORE_DATA && type == REG_SZ)
+        if ((!rc || rc == ERROR_MORE_DATA) && type == REG_SZ)
         {
             LPWSTR dllName = CryptMemAlloc(size);
 
@@ -318,7 +319,7 @@ static BOOL CRYPT_GetFuncFromReg(DWORD dwEncodingType, LPCSTR pszOID,
                     lib = LoadLibraryW(dllName);
                     if (lib)
                     {
-                        *ppvFuncAddr = GetProcAddress(lib, szFuncName);
+                        *ppvFuncAddr = GetProcAddress(lib, funcName);
                         if (*ppvFuncAddr)
                         {
                             *phFuncAddr = (HCRYPTOIDFUNCADDR)lib;
@@ -368,7 +369,7 @@ BOOL WINAPI CryptGetOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
         EnterCriticalSection(&set->cs);
         LIST_FOR_EACH_ENTRY(function, &set->functions, struct OIDFunction, next)
         {
-            if (function->encoding == dwEncodingType)
+            if (function->encoding == GET_CERT_ENCODING_TYPE(dwEncodingType))
             {
                 if (HIWORD(pszOID))
                 {
@@ -395,6 +396,7 @@ BOOL WINAPI CryptGetOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
     if (!*ppvFuncAddr)
         ret = CRYPT_GetFuncFromReg(dwEncodingType, pszOID, set->name,
          ppvFuncAddr, phFuncAddr);
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
