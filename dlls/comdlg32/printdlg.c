@@ -3398,14 +3398,16 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
 
     /* short cut exit, just return default values */
     if (setupdlg->Flags & PSD_RETURNDEFAULT) {
-	DEVMODEA *dm;
-	
-	dm = GlobalLock(pdlg.hDevMode);
-    	PRINTDLG_PaperSizeA(&pdlg, dm->u1.s1.dmPaperSize, &setupdlg->ptPaperSize);
-	GlobalUnlock(pdlg.hDevMode);
-	setupdlg->ptPaperSize.x=_c_10mm2size(setupdlg,setupdlg->ptPaperSize.x);
-	setupdlg->ptPaperSize.y=_c_10mm2size(setupdlg,setupdlg->ptPaperSize.y);
-	return TRUE;
+        DEVMODEA *dm;
+
+	setupdlg->hDevMode = pdlg.hDevMode;
+	setupdlg->hDevNames = pdlg.hDevNames;
+        dm = GlobalLock(pdlg.hDevMode);
+        PRINTDLG_PaperSizeA(&pdlg, dm->u1.s1.dmPaperSize, &setupdlg->ptPaperSize);
+        GlobalUnlock(pdlg.hDevMode);
+        setupdlg->ptPaperSize.x=_c_10mm2size(setupdlg,setupdlg->ptPaperSize.x);
+        setupdlg->ptPaperSize.y=_c_10mm2size(setupdlg,setupdlg->ptPaperSize.y);
+        return TRUE;
     }
 
     /* get dialog template */
