@@ -2430,6 +2430,41 @@ LPWSTR
 PCWSTR
 PWSTR
 
+%%mscoree.dll
+
+%long
+
+BOOL
+DWORD
+HINSTANCE
+HRESULT
+__int32
+int
+
+%ptr
+
+DWORD *
+HMODULE *
+IUnknown **
+LPVOID
+LPVOID *
+PBYTE
+REFCLSID
+REFIID
+PVOID
+PVOID *
+VOID *
+
+%wstr
+
+LPCWSTR
+LPWSTR
+
+%void
+
+VOID
+void
+
 %%msdmo.dll
 
 %long
