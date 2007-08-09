@@ -41,7 +41,7 @@ static void init_function_pointers(void)
     pSetupGetField = (void *)GetProcAddress(hSetupAPI, "pSetupGetField"); 
 }
 
-static const char tmpfile[] = ".\\tmp.inf";
+static const char tmpfilename[] = ".\\tmp.inf";
 
 /* some large strings */
 #define A255 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
@@ -66,12 +66,12 @@ static const char tmpfile[] = ".\\tmp.inf";
 static HINF test_file_contents( const char *data, UINT *err_line )
 {
     DWORD res;
-    HANDLE handle = CreateFileA( tmpfile, GENERIC_READ|GENERIC_WRITE,
+    HANDLE handle = CreateFileA( tmpfilename, GENERIC_READ|GENERIC_WRITE,
                                  FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0 );
     if (handle == INVALID_HANDLE_VALUE) return 0;
     if (!WriteFile( handle, data, strlen(data), &res, NULL )) trace( "write error\n" );
     CloseHandle( handle );
-    return SetupOpenInfFileA( tmpfile, 0, INF_STYLE_WIN4, err_line );
+    return SetupOpenInfFileA( tmpfilename, 0, INF_STYLE_WIN4, err_line );
 }
 
 static const char *get_string_field( INFCONTEXT *context, DWORD index )
@@ -284,6 +284,8 @@ static const struct
  { "ab=cd\",\"ef",         "ab",            { "cd,ef" } },
  { "ab=cd\",ef",           "ab",            { "cd,ef" } },
  { "ab=cd\",ef\\\nab",     "ab",            { "cd,ef\\" } },
+ /* single quotes (unhandled)*/
+ { "HKLM,A,B,'C',D",       NULL,            { "HKLM", "A","B","'C'","D" } },
  /* spaces */
  { " a b = c , d \n",      "a b",           { "c", "d" } },
  { " a b = c ,\" d\" \n",  "a b",           { "c", " d" } },
@@ -474,5 +476,5 @@ START_TEST(parser)
     test_key_names();
     test_close_inf_file();
     test_pSetupGetField();
-    DeleteFileA( tmpfile );
+    DeleteFileA( tmpfilename );
 }
