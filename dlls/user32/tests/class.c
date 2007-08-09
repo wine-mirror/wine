@@ -33,11 +33,20 @@
 #include "wingdi.h"
 #include "winuser.h"
 
+/* we don't want to include commctrl.h: */
+static const CHAR WC_EDITA[] = "Edit";
+static const WCHAR WC_EDITW[] = {'E','d','i','t',0};
+
 #define NUMCLASSWORDS 4
 
 static LRESULT WINAPI ClassTest_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     return DefWindowProcW (hWnd, msg, wParam, lParam);
+}
+
+static LRESULT WINAPI ClassTest_WndProc2 (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    return DefWindowProcA (hWnd, msg, wParam, lParam);
 }
 
 /***********************************************************************
@@ -560,7 +569,12 @@ static void test_defwndproc()
 {
     static const char classA[] = "deftest";
     static const WCHAR classW[] = {'d','e','f','t','e','s','t',0};
+    WCHAR unistring[] = {0x142, 0x40e, 0x3b4, 0};  /* a string that would be destoryed by a W->A->W conversion */
     WNDPROC pDefWindowProcA, pDefWindowProcW;
+    WNDCLASSEXA cls;  /* the memory layout of WNDCLASSEXA and WNDCLASSEXW is the same */
+    WCHAR buf[128];
+    ATOM atom;
+    HWND hwnd;
     int i;
 
     pDefWindowProcA = (void *)GetProcAddress(GetModuleHandle("user32.dll"), "DefWindowProcA");
@@ -568,9 +582,6 @@ static void test_defwndproc()
 
     for (i = 0; i < 4; i++)
     {
-        WNDCLASSEXA cls;  /* the memory layout of WNDCLASSEXA and WNDCLASSEXW is the same */
-        ATOM atom;
-        HWND hwnd;
         ZeroMemory(&cls, sizeof(cls));
         cls.cbSize = sizeof(cls);
         cls.hInstance = GetModuleHandle(NULL);
@@ -608,7 +619,109 @@ static void test_defwndproc()
         DestroyWindow(hwnd);
         UnregisterClass((LPSTR)(DWORD_PTR)atom, GetModuleHandle(NULL));
     }
+
+    /* built-in winproc - window A/W type automatically detected */
+    ZeroMemory(&cls, sizeof(cls));
+    cls.cbSize = sizeof(cls);
+    cls.hInstance = GetModuleHandle(NULL);
+    cls.hbrBackground = GetStockObject (WHITE_BRUSH);
+    cls.lpszClassName = classA;
+    cls.lpfnWndProc = pDefWindowProcW;
+    atom = RegisterClassExA(&cls);
+
+    hwnd = CreateWindowExW(0, classW, NULL, WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, GetModuleHandleA(NULL), 0);
+    ok(IsWindowUnicode(hwnd), "Windows should be Unicode\n");
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)pDefWindowProcA);
+    ok(IsWindowUnicode(hwnd), "Windows should have remained Unicode\n");
+    ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcW, "Invalid ANSI winproc\n");
+    ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcA, "Invalid Unicode winproc\n");
+    SetWindowLongPtrA(hwnd, GWL_WNDPROC, (LONG_PTR)ClassTest_WndProc);
+    ok(IsWindowUnicode(hwnd) == FALSE, "SetWindowLongPtrA should have switched window to ANSI\n");
+
+    DestroyWindow(hwnd);
+    UnregisterClass((LPSTR)(DWORD_PTR)atom, GetModuleHandle(NULL));
+
+    /* custom winproc - the same function can be used as both A and W*/
+    ZeroMemory(&cls, sizeof(cls));
+    cls.cbSize = sizeof(cls);
+    cls.hInstance = GetModuleHandle(NULL);
+    cls.hbrBackground = GetStockObject (WHITE_BRUSH);
+    cls.lpszClassName = classA;
+    cls.lpfnWndProc = ClassTest_WndProc2;
+    atom = RegisterClassExA(&cls);
+
+    hwnd = CreateWindowExW(0, classW, NULL, WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, GetModuleHandleA(NULL), 0);
+    ok(IsWindowUnicode(hwnd) == FALSE, "Window should be ANSI\n");
+    SetWindowLongPtrW(hwnd, GWL_WNDPROC, (LONG_PTR)ClassTest_WndProc);
+    ok(IsWindowUnicode(hwnd), "SetWindowLongPtrW should have changed window to Unicode\n");
+    SetWindowLongPtrA(hwnd, GWL_WNDPROC, (LONG_PTR)ClassTest_WndProc);
+    ok(IsWindowUnicode(hwnd) == FALSE, "SetWindowLongPtrA should have changed window to ANSI\n");
+
+    DestroyWindow(hwnd);
+    UnregisterClass((LPSTR)(DWORD_PTR)atom, GetModuleHandle(NULL));
+
+    /* calling built-in and custom winprocs with CallWindowProc[AW]. Despite
+     * a slightly different nature the end result is the same */
+    hwnd = CreateWindowW(WC_EDITW, unistring, WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, NULL, 0);
+    CallWindowProcW((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, unistring, sizeof(unistring)) == 0, "WM_GETTEXT invalid return\n");
+    CallWindowProcA((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, unistring, sizeof(unistring)) == 0, "WM_GETTEXT invalid return\n");
+    CallWindowProcW((WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, unistring, sizeof(unistring)) == 0, "WM_GETTEXT invalid return\n");
+
+    SetWindowTextW(hwnd, classW);
+    CallWindowProcA((WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT invalid return\n");
+
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)ClassTest_WndProc2);
+    ok(IsWindowUnicode(hwnd) == FALSE, "SetWindowLongPtrA should have changed window to ANSI\n");
+    SetWindowTextA(hwnd, classA);  /* Windows resets the title to WideStringToMultiByte(unistring) */
+    memset(buf, 0, sizeof(buf));
+    CallWindowProcA((WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT invalid return\n");
+    CallWindowProcA((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT invalid return\n");
+    CallWindowProcW((WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT invalid return\n");
+
+    CallWindowProcW((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, classW, sizeof(classW)) == 0, "WM_GETTEXT invalid return\n");
+
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowA(WC_EDITA, classA, WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, NULL, 0);
+
+    CallWindowProcA((WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT invalid return\n");
+    CallWindowProcA((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT invalid return\n");
+    CallWindowProcW((WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT invalid return\n");
+
+    CallWindowProcW((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, classW, sizeof(classW)) == 0, "WM_GETTEXT invalid return\n");
+
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)ClassTest_WndProc);
+    SetWindowTextW(hwnd, unistring);
+    CallWindowProcW((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, unistring, sizeof(unistring)) == 0, "WM_GETTEXT invalid return\n");
+    CallWindowProcA((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, unistring, sizeof(unistring)) == 0, "WM_GETTEXT invalid return\n");
+    CallWindowProcW((WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, unistring, sizeof(unistring)) == 0, "WM_GETTEXT invalid return\n");
+
+    SetWindowTextW(hwnd, classW);
+    CallWindowProcA((WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+    ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT invalid return\n");
+
+    DestroyWindow(hwnd);
 }
+
 
 static LRESULT WINAPI TestDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
