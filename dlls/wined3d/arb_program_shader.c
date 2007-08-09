@@ -614,10 +614,10 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
          partialprecision = mask & WINED3DSPDM_PARTIALPRECISION;
          mask &= ~(WINED3DSPDM_MSAMPCENTROID | WINED3DSPDM_PARTIALPRECISION | WINED3DSPDM_SATURATE);
          if (mask)
-            FIXME("Unrecognized modifier(0x%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
+            FIXME("Unrecognized modifier(%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
 
          if (centroid)
-             FIXME("Unhandled modifier(0x%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
+             FIXME("Unhandled modifier(%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
      }
      shift = (dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
 
