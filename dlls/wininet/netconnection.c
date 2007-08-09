@@ -47,6 +47,7 @@
 #include "winbase.h"
 #include "wininet.h"
 #include "winerror.h"
+#include "wincrypt.h"
 
 /* To avoid conflicts with the Unix socket headers. we only need it for
  * the error codes anyway. */
@@ -55,7 +56,6 @@
 
 #include "wine/debug.h"
 #include "internet.h"
-#include "wincrypt.h"
 
 #define RESPONSE_TIMEOUT        30            /* FROM internet.c */
 

@@ -58,6 +58,7 @@
 #include "winerror.h"
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
+#include "wincrypt.h"
 
 #include "wine/exception.h"
 
@@ -65,7 +66,6 @@
 #include "resource.h"
 
 #include "wine/unicode.h"
-#include "wincrypt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 

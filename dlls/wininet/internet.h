@@ -40,6 +40,10 @@
 #ifdef HAVE_OPENSSL_SSL_H
 #define DSA __ssl_DSA  /* avoid conflict with commctrl.h */
 #undef FAR
+/* avoid conflict with wincrypt.h */
+#undef PKCS7_SIGNER_INFO
+#undef X509_NAME
+#undef X509_CERT_PAIR
 # include <openssl/ssl.h>
 #undef FAR
 #define FAR do_not_use_this_in_wine
