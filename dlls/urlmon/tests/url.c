@@ -912,9 +912,11 @@ static void test_BindToStorage(int protocol, BOOL emul)
                 CHECK_NOT_CALLED(OnProgress_FINDINGRESOURCE);
                 CHECK_NOT_CALLED(OnProgress_CONNECTING);
             }
-            CHECK_CALLED(OnProgress_SENDINGREQUEST);
-            CHECK_CALLED(OnResponse);
         }
+        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST)
+            CHECK_CALLED(OnProgress_SENDINGREQUEST);
+        if(test_protocol == HTTP_TEST)
+            CHECK_CALLED(OnResponse);
         CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == HTTP_TEST)
