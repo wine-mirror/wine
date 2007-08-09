@@ -668,3 +668,17 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipSetImagePalette(GpImage *image,
+    GDIPCONST ColorPalette *palette)
+{
+    static int calls;
+
+    if(!image || !palette)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}

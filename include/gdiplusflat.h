@@ -208,6 +208,7 @@ GpStatus WINGDIPAPI GdipLoadImageFromStreamICM(IStream*,GpImage**);
 GpStatus WINGDIPAPI GdipRemovePropertyItem(GpImage*,PROPID);
 GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage*,IStream*,
     GDIPCONST CLSID*,GDIPCONST EncoderParameters*);
+GpStatus WINGDIPAPI GdipSetImagePalette(GpImage*,GDIPCONST ColorPalette*);
 
 GpStatus WINGDIPAPI GdipCreateImageAttributes(GpImageAttributes**);
 GpStatus WINGDIPAPI GdipDisposeImageAttributes(GpImageAttributes*);

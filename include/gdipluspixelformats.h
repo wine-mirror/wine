@@ -48,4 +48,25 @@ typedef INT PixelFormat;
 #define    PixelFormat64bppPARGB        (14 | (64 << 8) | PixelFormatAlpha  | PixelFormatPAlpha | PixelFormatExtended)
 #define    PixelFormatMax               15
 
+#ifdef __cplusplus
+
+struct ColorPalette
+{
+public:
+    UINT Flags;
+    UINT Count;
+    ARGB Entries[1];
+};
+
+#else /* end of c++ typedefs */
+
+typedef struct ColorPalette
+{
+    UINT Flags;
+    UINT Count;
+    ARGB Entries[1];
+} ColorPalette;
+
+#endif  /* end of c typedefs */
+
 #endif

@@ -532,7 +532,7 @@
 @ stub GdipSetImageAttributesThreshold
 @ stub GdipSetImageAttributesToIdentity
 @ stdcall GdipSetImageAttributesWrapMode(ptr long long long)
-@ stub GdipSetImagePalette
+@ stdcall GdipSetImagePalette(ptr ptr)
 @ stub GdipSetInfinite
 @ stdcall GdipSetInterpolationMode(ptr long)
 @ stub GdipSetLineBlend
