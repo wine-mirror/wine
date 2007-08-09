@@ -582,6 +582,20 @@ UINT MSIREG_OpenUserFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     return rc;
 }
 
+UINT MSIREG_DeleteUserFeaturesKey(LPCWSTR szProduct)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n",debugstr_w(szProduct));
+    if (!squash_guid(szProduct,squished_pc))
+        return ERROR_FUNCTION_FAILED;
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath,szUserFeatures_fmt,squished_pc);
+    return RegDeleteTreeW(HKEY_CURRENT_USER, keypath);
+}
+
 UINT MSIREG_OpenFeatures(HKEY* key)
 {
     return RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller_Features,key);

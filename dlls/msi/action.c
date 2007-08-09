@@ -3610,7 +3610,10 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     UINT rc;
     HKEY hkey=0;
     HKEY hukey=0;
-    
+
+    if (!msi_check_publish(package))
+        return ERROR_SUCCESS;
+
     rc = MSIREG_OpenFeaturesKey(package->ProductCode,&hkey,TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
@@ -3703,6 +3706,45 @@ end:
     RegCloseKey(hkey);
     RegCloseKey(hukey);
     return rc;
+}
+
+static UINT msi_unpublish_feature(MSIPACKAGE *package, MSIFEATURE *feature)
+{
+    UINT r;
+    HKEY hkey;
+
+    TRACE("unpublishing feature %s\n", debugstr_w(feature->Feature));
+
+    r = MSIREG_OpenUserFeaturesKey(package->ProductCode, &hkey, FALSE);
+    if (r == ERROR_SUCCESS)
+    {
+        RegDeleteValueW(hkey, feature->Feature);
+        RegCloseKey(hkey);
+    }
+
+    r = MSIREG_OpenUserDataFeaturesKey(package->ProductCode, &hkey, FALSE);
+    if (r == ERROR_SUCCESS)
+    {
+        RegDeleteValueW(hkey, feature->Feature);
+        RegCloseKey(hkey);
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_UnpublishFeatures(MSIPACKAGE *package)
+{
+    MSIFEATURE *feature;
+
+    if (msi_check_publish(package))
+        return ERROR_SUCCESS;
+
+    LIST_FOR_EACH_ENTRY(feature, &package->features, MSIFEATURE, entry)
+    {
+        msi_unpublish_feature(package, feature);
+    }
+
+    return ERROR_SUCCESS;
 }
 
 static UINT msi_get_local_package_name( LPWSTR path )
@@ -3957,6 +3999,7 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
     MSIREG_DeleteProductKey(package->ProductCode);
     MSIREG_DeleteUserProductKey(package->ProductCode);
     MSIREG_DeleteUserDataProductKey(package->ProductCode);
+    MSIREG_DeleteUserFeaturesKey(package->ProductCode);
 
 done:
     msi_free(remove);
@@ -5109,12 +5152,6 @@ static UINT ACTION_UnpublishComponents( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t',0 };
     return msi_unimplemented_action_stub( package, "UnpublishComponents", table );
-}
-
-static UINT ACTION_UnpublishFeatures( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'F','e','a','t','u','r','e','C','o','m','p','o','n','e','n','t','s',0 };
-    return msi_unimplemented_action_stub( package, "UnpublishFeatures", table );
 }
 
 static UINT ACTION_UnregisterClassInfo( MSIPACKAGE *package )
