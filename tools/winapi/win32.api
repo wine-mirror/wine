@@ -885,6 +885,26 @@ LPVOID *
 REFCLSID
 REFIID
 
+%%d3drm.dll
+
+%long
+
+D3DCOLOR
+
+%float
+
+D3DVALUE
+
+%ptr
+
+D3DRMMATRIX4D
+LPD3DRMQUATERNION
+LPD3DVECTOR
+
+%void
+
+void
+
 %%dbghelp.dll
 
 %long
