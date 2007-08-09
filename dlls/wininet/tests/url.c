@@ -404,11 +404,11 @@ static void InternetCreateUrlA_test(void)
                     host[]       = "host";
 
 	/* test NULL lpUrlComponents */
-	ret = InternetCreateUrlA(NULL, 0, NULL, &len);
 	SetLastError(0xdeadbeef);
+	ret = InternetCreateUrlA(NULL, 0, NULL, &len);
 	ok(!ret, "Expected failure\n");
-	ok(GetLastError() == 0xdeadbeef,
-		"Expected 0xdeadbeef, got %d\n", GetLastError());
+	ok(GetLastError() == ERROR_INVALID_PARAMETER,
+		"Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 	ok(len == -1, "Expected len -1, got %d\n", len);
 
 	/* test zero'ed lpUrlComponents */
