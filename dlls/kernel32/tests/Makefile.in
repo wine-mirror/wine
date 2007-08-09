@@ -13,6 +13,7 @@ CTESTS = \
 	codepage.c \
 	comm.c \
 	console.c \
+	debugger.c \
 	directory.c \
 	drive.c \
 	environ.c \
