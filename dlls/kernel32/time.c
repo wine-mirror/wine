@@ -101,7 +101,10 @@ static int TIME_DayLightCompareDate( const SYSTEMTIME *date,
     if (date->wMonth > compareDate->wMonth)
         return 1; /* We are in a month after the date limit. */
 
-    if (compareDate->wDayOfWeek <= 6)
+    /* if year is 0 then date is in day-of-week format, otherwise
+     * it's absolute date.
+     */
+    if (compareDate->wYear == 0)
     {
         WORD First;
         /* compareDate->wDay is interpreted as number of the week in the month
@@ -160,11 +163,14 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
 
     if (pTZinfo->DaylightDate.wMonth != 0)
     {
-        if (pTZinfo->StandardDate.wMonth == 0 ||
-            pTZinfo->StandardDate.wDay<1 ||
+        /* if year is 0 then date is in day-of-week format, otherwise
+         * it's absolute date.
+         */
+        if (pTZinfo->StandardDate.wYear == 0 &&
+            (pTZinfo->StandardDate.wDay<1 ||
             pTZinfo->StandardDate.wDay>5 ||
             pTZinfo->DaylightDate.wDay<1 ||
-            pTZinfo->DaylightDate.wDay>5)
+            pTZinfo->DaylightDate.wDay>5))
         {
             SetLastError(ERROR_INVALID_PARAMETER);
             return TIME_ZONE_ID_INVALID;
