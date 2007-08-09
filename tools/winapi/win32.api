@@ -4864,6 +4864,31 @@ void
 LPCWSTR
 LPWSTR
 
+%%userenv.dll
+
+%long
+
+BOOL
+DWORD
+HANDLE
+
+%ptr
+
+DWORD *
+LPDWORD
+LPPROFILEINFOA
+LPVOID *
+
+%str
+
+LPCSTR
+LPSTR
+
+%wstr
+
+LPCWSTR
+LPWSTR
+
 %%usp10.dll
 
 %long
