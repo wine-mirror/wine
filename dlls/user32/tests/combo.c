@@ -21,12 +21,15 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define STRICT
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 #include "wine/test.h"
 
-HWND hMainWnd;
+#define COMBO_ID 1995
+
+static HWND hMainWnd;
 
 #define expect_eq(expr, value, type, fmt); { type val = expr; ok(val == (value), #expr " expected " #fmt " got " #fmt "\n", (value), val); }
 #define expect_rect(r, _left, _top, _right, _bottom) ok(r.left == _left && r.top == _top && \
@@ -35,7 +38,7 @@ HWND hMainWnd;
 
 static HWND build_combo(DWORD style)
 {
-    return CreateWindow("ComboBox", "Combo", WS_VISIBLE|WS_CHILD|style, 5, 5, 100, 100, hMainWnd, NULL, NULL, 0);
+    return CreateWindow("ComboBox", "Combo", WS_VISIBLE|WS_CHILD|style, 5, 5, 100, 100, hMainWnd, (HMENU)COMBO_ID, NULL, 0);
 }
 
 static int font_height(HFONT hFont)
@@ -84,6 +87,9 @@ static void test_setfont(DWORD style)
     if (!is_font_installed("Marlett"))
     {
         skip("Marlett font not available\n");
+        DestroyWindow(hCombo);
+        DeleteObject(hFont1);
+        DeleteObject(hFont2);
         return;
     }
 
@@ -130,6 +136,87 @@ static void test_setfont(DWORD style)
     DeleteObject(hFont2);
 }
 
+static LRESULT (CALLBACK *old_parent_proc)(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+static LPCSTR expected_edit_text;
+static LPCSTR expected_list_text;
+
+static LRESULT CALLBACK parent_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_COMMAND:
+        switch (wparam)
+        {
+            case MAKEWPARAM(COMBO_ID, CBN_SELCHANGE):
+            {
+                HWND hCombo = (HWND)lparam;
+                int idx;
+                char list[20], edit[20];
+
+                memset(list, 0, sizeof(list));
+                memset(edit, 0, sizeof(edit));
+
+                idx = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
+                SendMessage(hCombo, CB_GETLBTEXT, idx, (LPARAM)list);
+                SendMessage(hCombo, WM_GETTEXT, sizeof(edit), (LPARAM)edit);
+
+                ok(!strcmp(edit, expected_edit_text), "edit: got %s, expected %s\n",
+                   edit, expected_edit_text);
+                ok(!strcmp(list, expected_list_text), "list: got %s, expected %s\n",
+                   list, expected_list_text);
+            }
+            break;
+        }
+        break;
+    }
+
+    return CallWindowProc(old_parent_proc, hwnd, msg, wparam, lparam);
+}
+
+static void test_selection(DWORD style, const char * const text[],
+                           const int *edit, const int *list)
+{
+    INT idx;
+    HWND hCombo;
+
+    hCombo = build_combo(style);
+
+    SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)text[0]);
+    SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)text[1]);
+    SendMessage(hCombo, CB_SETCURSEL, -1, 0);
+
+    old_parent_proc = (void *)SetWindowLongPtr(hMainWnd, GWLP_WNDPROC, (ULONG_PTR)parent_wnd_proc);
+
+    idx = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
+    ok(idx == -1, "expected selection -1, got %d\n", idx);
+
+    expected_list_text = text[list[0]];
+    expected_edit_text = text[edit[0]];
+    SendMessage(hCombo, WM_KEYDOWN, VK_DOWN, 0);
+
+    expected_list_text = text[list[1]];
+    expected_edit_text = text[edit[1]];
+    SendMessage(hCombo, WM_KEYDOWN, VK_DOWN, 0);
+
+    expected_list_text = text[list[2]];
+    expected_edit_text = text[edit[2]];
+    SendMessage(hCombo, WM_KEYDOWN, VK_UP, 0);
+
+    SetWindowLongPtr(hMainWnd, GWLP_WNDPROC, (ULONG_PTR)old_parent_proc);
+    DestroyWindow(hCombo);
+}
+
+static void test_CBN_SELCHANGE(void)
+{
+    static const char * const text[] = { "alpha", "beta", "" };
+    static const int sel_1[] = { 2, 0, 1 };
+    static const int sel_2[] = { 0, 1, 0 };
+
+    test_selection(CBS_SIMPLE, text, sel_1, sel_2);
+    test_selection(CBS_DROPDOWN, text, sel_1, sel_2);
+    test_selection(CBS_DROPDOWNLIST, text, sel_2, sel_2);
+}
+
 START_TEST(combo)
 {
     hMainWnd = CreateWindow("static", "Test", WS_OVERLAPPEDWINDOW, 10, 10, 300, 300, NULL, NULL, NULL, 0);
@@ -137,5 +224,7 @@ START_TEST(combo)
 
     test_setfont(CBS_DROPDOWN);
     test_setfont(CBS_DROPDOWNLIST);
+    test_CBN_SELCHANGE();
+
     DestroyWindow(hMainWnd);
 }

@@ -1347,7 +1347,9 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 	   case LBN_SELCHANGE:
 	   case LBN_SELCANCEL:
 
-               TRACE("[%p]: lbox selection change [%x]\n", lphc->self, lphc->wState );
+                TRACE("[%p]: lbox selection change [%x]\n", lphc->self, lphc->wState );
+
+		CB_NOTIFY( lphc, CBN_SELCHANGE );
 
 		if( HIWORD(wParam) == LBN_SELCHANGE)
 		{
@@ -1371,9 +1373,7 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
                 }
 		else lphc->wState &= ~CBF_NOROLLUP;
 
-		CB_NOTIFY( lphc, CBN_SELCHANGE );
-
-		/* fall through */
+                break;
 
 	   case LBN_SETFOCUS:
 	   case LBN_KILLFOCUS:
