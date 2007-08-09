@@ -1376,6 +1376,9 @@ MAKE_FUNCPTR(png_set_bgr);
 MAKE_FUNCPTR(png_destroy_read_struct);
 MAKE_FUNCPTR(png_set_palette_to_rgb);
 MAKE_FUNCPTR(png_read_update_info);
+MAKE_FUNCPTR(png_get_tRNS);
+MAKE_FUNCPTR(png_get_PLTE);
+MAKE_FUNCPTR(png_set_expand);
 #undef MAKE_FUNCPTR
 
 static void *load_libpng(void)
@@ -1397,6 +1400,9 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_destroy_read_struct);
         LOAD_FUNCPTR(png_set_palette_to_rgb);
         LOAD_FUNCPTR(png_read_update_info);
+        LOAD_FUNCPTR(png_get_tRNS);
+        LOAD_FUNCPTR(png_get_PLTE);
+        LOAD_FUNCPTR(png_set_expand);
 
 #undef LOAD_FUNCPTR
     }
@@ -1410,13 +1416,17 @@ static HRESULT OLEPictureImpl_LoadPNG(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
     png_io              io;
     png_structp         png_ptr = NULL;
     png_infop           info_ptr = NULL;
-    INT                 row, rowsize, height, width;
+    INT                 row, rowsize, height, width, num_trans, i, j;
     png_bytep*          row_pointers = NULL;
     png_bytep           pngdata = NULL;
     BITMAPINFOHEADER    bmi;
-    HDC                 hdcref = NULL;
+    HDC                 hdcref = NULL, hdcXor, hdcMask;
     HRESULT             ret;
-    BOOL                set_bgr = FALSE;
+    BOOL                transparency;
+    png_bytep           trans;
+    png_color_16p       trans_values;
+    COLORREF            white = RGB(255, 255, 255), black = RGB(0, 0, 0);
+    HBITMAP             hbmoldXor, hbmoldMask, temp;
 
     if(!libpng_handle) {
         if(!load_libpng()) {
@@ -1435,7 +1445,7 @@ static HRESULT OLEPictureImpl_LoadPNG(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
     if(setjmp(png_jmpbuf(png_ptr))){
         TRACE("Error in libpng\n");
         ret = E_FAIL;
-        goto pngend;
+        goto end;
     }
 
     info_ptr = ppng_create_info_struct(png_ptr);
@@ -1447,19 +1457,16 @@ static HRESULT OLEPictureImpl_LoadPNG(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
          png_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA)){
         FIXME("Unsupported .PNG type: %d\n", png_ptr->color_type);
         ret = E_FAIL;
-        goto pngend;
+        goto end;
     }
 
-    if (png_ptr->color_type == PNG_COLOR_TYPE_PALETTE){
-        ppng_set_palette_to_rgb(png_ptr);
-        set_bgr = TRUE;
-    }
+    transparency = (ppng_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, &trans_values)
+                       == PNG_INFO_tRNS);
 
-    if (png_ptr->color_type == PNG_COLOR_TYPE_RGB ||
-        png_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA ||
-        set_bgr){
-        ppng_set_bgr(png_ptr);
-    }
+    /* sets format from anything to RGBA */
+    ppng_set_expand(png_ptr);
+    /* sets format to BGRA */
+    ppng_set_bgr(png_ptr);
 
     ppng_read_update_info(png_ptr, info_ptr);
 
@@ -1474,7 +1481,7 @@ static HRESULT OLEPictureImpl_LoadPNG(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
 
     if(!pngdata || !row_pointers){
         ret = E_FAIL;
-        goto pngend;
+        goto end;
     }
 
     for (row = 0; row < height; row++){
@@ -1504,12 +1511,71 @@ static HRESULT OLEPictureImpl_LoadPNG(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
         (BITMAPINFO*)&bmi,
         DIB_RGB_COLORS
     );
+
+    /* only fully-transparent alpha is handled */
+    if((info_ptr->channels != 4) || !transparency){
+        ReleaseDC(0, hdcref);
+        goto succ;
+    }
+
+    This->hbmXor = CreateDIBitmap(
+        hdcref,
+        &bmi,
+        CBM_INIT,
+        pngdata,
+        (BITMAPINFO*)&bmi,
+        DIB_RGB_COLORS
+    );
+
+    /* set transparent pixels to black, all others to white */
+    for(i = 0; i < height; i++){
+        for(j = 3; j < rowsize; j += 4){
+            if(row_pointers[i][j] == 0)
+                *((DWORD*)(&row_pointers[i][j - 3])) = black;
+            else
+                *((DWORD*)(&row_pointers[i][j - 3])) = white;
+        }
+    }
+
+    temp = CreateDIBitmap(
+        hdcref,
+        &bmi,
+        CBM_INIT,
+        pngdata,
+        (BITMAPINFO*)&bmi,
+        DIB_RGB_COLORS
+    );
+
     ReleaseDC(0, hdcref);
+
+    This->hbmMask = CreateBitmap(width,-height,1,1,NULL);
+    hdcXor = CreateCompatibleDC(NULL);
+    hdcMask = CreateCompatibleDC(NULL);
+
+    hbmoldXor = SelectObject(hdcXor,temp);
+    hbmoldMask = SelectObject(hdcMask,This->hbmMask);
+    SetBkColor(hdcXor,black);
+    BitBlt(hdcMask,0,0,width,height,hdcXor,0,0,SRCCOPY);
+
+    SelectObject(hdcXor,This->hbmXor);
+    DeleteObject(temp);
+
+    SetTextColor(hdcXor,white);
+    SetBkColor(hdcXor,black);
+    BitBlt(hdcXor,0,0,width,height,hdcMask,0,0,SRCAND);
+
+    SelectObject(hdcXor,hbmoldXor);
+    SelectObject(hdcMask,hbmoldMask);
+
+    DeleteDC(hdcXor);
+    DeleteDC(hdcMask);
+
+succ:
     This->desc.picType = PICTYPE_BITMAP;
     OLEPictureImpl_SetBitmap(This);
     ret = S_OK;
 
-pngend:
+end:
     if(png_ptr)
         ppng_destroy_read_struct(&png_ptr,
                                 (info_ptr ? &info_ptr : (png_infopp) NULL),
