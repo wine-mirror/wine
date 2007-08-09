@@ -23,7 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "profinfo.h"
+#include "userenv.h"
 
 #include "wine/debug.h"
 
@@ -103,12 +103,7 @@ BOOL WINAPI GetProfilesDirectoryW( LPWSTR lpProfilesDir, LPDWORD lpcchSize )
     return FALSE;
 }
 
-/* FIXME: these belong in userenv.h */
-#define PT_TEMPORARY    0x00000001
-#define PT_ROAMING      0x00000002
-#define PT_MANDATORY    0x00000004
-
-BOOL WINAPI GetProfileType( LPDWORD pdwFlags )
+BOOL WINAPI GetProfileType( DWORD *pdwFlags )
 {
     FIXME("%p\n", pdwFlags );
     *pdwFlags = 0;

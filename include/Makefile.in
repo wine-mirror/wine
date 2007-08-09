@@ -348,6 +348,7 @@ SRCDIR_INCLUDES = \
 	tlhelp32.h \
 	tmschema.h \
 	twain.h \
+	userenv.h \
 	usp10.h \
 	uuids.h \
 	uxtheme.h \
