@@ -166,7 +166,7 @@ UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
     return r;
 }
 
-UINT MSI_IterateRecords( MSIQUERY *view, DWORD *count,
+UINT MSI_IterateRecords( MSIQUERY *view, LPDWORD count,
                          record_func func, LPVOID param )
 {
     MSIRECORD *rec = NULL;
@@ -602,7 +602,7 @@ UINT WINAPI MsiViewModify( MSIHANDLE hView, MSIMODIFY eModifyMode,
 }
 
 MSIDBERROR WINAPI MsiViewGetErrorW( MSIHANDLE handle, LPWSTR szColumnNameBuffer,
-                              DWORD *pcchBuf )
+                              LPDWORD pcchBuf )
 {
     MSIQUERY *query = NULL;
     static const WCHAR szError[] = { 0 };
@@ -634,7 +634,7 @@ MSIDBERROR WINAPI MsiViewGetErrorW( MSIHANDLE handle, LPWSTR szColumnNameBuffer,
 }
 
 MSIDBERROR WINAPI MsiViewGetErrorA( MSIHANDLE handle, LPSTR szColumnNameBuffer,
-                              DWORD *pcchBuf )
+                              LPDWORD pcchBuf )
 {
     static const CHAR szError[] = { 0 };
     MSIQUERY *query = NULL;

@@ -216,7 +216,7 @@ UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
  * MsiGetTargetPath   (internal)
  */
 static UINT WINAPI MSI_GetTargetPath( MSIHANDLE hInstall, LPCWSTR szFolder,
-                                      awstring *szPathBuf, DWORD* pcchPathBuf )
+                                      awstring *szPathBuf, LPDWORD pcchPathBuf )
 {
     MSIPACKAGE *package;
     LPWSTR path;
@@ -297,7 +297,7 @@ done:
  * MsiGetTargetPathA        (MSI.@)
  */
 UINT WINAPI MsiGetTargetPathA( MSIHANDLE hInstall, LPCSTR szFolder, 
-                               LPSTR szPathBuf, DWORD* pcchPathBuf )
+                               LPSTR szPathBuf, LPDWORD pcchPathBuf )
 {
     LPWSTR szwFolder;
     awstring path;
@@ -323,7 +323,7 @@ UINT WINAPI MsiGetTargetPathA( MSIHANDLE hInstall, LPCSTR szFolder,
  * MsiGetTargetPathW        (MSI.@)
  */
 UINT WINAPI MsiGetTargetPathW( MSIHANDLE hInstall, LPCWSTR szFolder,
-                               LPWSTR szPathBuf, DWORD* pcchPathBuf )
+                               LPWSTR szPathBuf, LPDWORD pcchPathBuf )
 {
     awstring path;
 
@@ -339,7 +339,7 @@ UINT WINAPI MsiGetTargetPathW( MSIHANDLE hInstall, LPCWSTR szFolder,
  * MsiGetSourcePath   (internal)
  */
 static UINT MSI_GetSourcePath( MSIHANDLE hInstall, LPCWSTR szFolder,
-                               awstring *szPathBuf, DWORD* pcchPathBuf )
+                               awstring *szPathBuf, LPDWORD pcchPathBuf )
 {
     MSIPACKAGE *package;
     LPWSTR path;
@@ -429,7 +429,7 @@ done:
  * MsiGetSourcePathA     (MSI.@)
  */
 UINT WINAPI MsiGetSourcePathA( MSIHANDLE hInstall, LPCSTR szFolder, 
-                               LPSTR szPathBuf, DWORD* pcchPathBuf )
+                               LPSTR szPathBuf, LPDWORD pcchPathBuf )
 {
     LPWSTR folder;
     awstring str;
@@ -451,7 +451,7 @@ UINT WINAPI MsiGetSourcePathA( MSIHANDLE hInstall, LPCSTR szFolder,
  * MsiGetSourcePathW     (MSI.@)
  */
 UINT WINAPI MsiGetSourcePathW( MSIHANDLE hInstall, LPCWSTR szFolder,
-                               LPWSTR szPathBuf, DWORD* pcchPathBuf )
+                               LPWSTR szPathBuf, LPDWORD pcchPathBuf )
 {
     awstring str;
 
@@ -932,7 +932,7 @@ UINT WINAPI MsiGetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
 * MsiGetFeatureCostA   (MSI.@)
 */
 UINT WINAPI MsiGetFeatureCostA(MSIHANDLE hInstall, LPCSTR szFeature,
-                  MSICOSTTREE iCostTree, INSTALLSTATE iState, INT *piCost)
+                  MSICOSTTREE iCostTree, INSTALLSTATE iState, LPINT piCost)
 {
     FIXME("(%ld %s %i %i %p): stub\n", hInstall, debugstr_a(szFeature),
           iCostTree, iState, piCost);
@@ -944,7 +944,7 @@ UINT WINAPI MsiGetFeatureCostA(MSIHANDLE hInstall, LPCSTR szFeature,
 * MsiGetFeatureCostW   (MSI.@)
 */
 UINT WINAPI MsiGetFeatureCostW(MSIHANDLE hInstall, LPCWSTR szFeature,
-                  MSICOSTTREE iCostTree, INSTALLSTATE iState, INT *piCost)
+                  MSICOSTTREE iCostTree, INSTALLSTATE iState, LPINT piCost)
 {
     FIXME("(%ld %s %i %i %p): stub\n", hInstall, debugstr_w(szFeature),
           iCostTree, iState, piCost);
@@ -1228,7 +1228,7 @@ UINT WINAPI MsiSetInstallLevel(MSIHANDLE hInstall, int iInstallLevel)
  * MsiGetFeatureValidStatesW (MSI.@)
  */
 UINT WINAPI MsiGetFeatureValidStatesW(MSIHANDLE hInstall, LPCWSTR szFeature,
-                  DWORD* pInstallState)
+                  LPDWORD pInstallState)
 {
     if(pInstallState) *pInstallState = 1<<INSTALLSTATE_LOCAL;
     FIXME("%ld %s %p stub returning %d\n",
@@ -1241,7 +1241,7 @@ UINT WINAPI MsiGetFeatureValidStatesW(MSIHANDLE hInstall, LPCWSTR szFeature,
  * MsiGetFeatureValidStatesA (MSI.@)
  */
 UINT WINAPI MsiGetFeatureValidStatesA(MSIHANDLE hInstall, LPCSTR szFeature,
-                  DWORD* pInstallState)
+                  LPDWORD pInstallState)
 {
     UINT ret;
     LPWSTR szwFeature = strdupAtoW(szFeature);

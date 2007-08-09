@@ -1014,7 +1014,7 @@ UINT MSIREG_OpenLocalManagedProductKey(LPCWSTR szProductCode, HKEY *key, BOOL cr
  *
  */
 UINT WINAPI MsiDecomposeDescriptorW( LPCWSTR szDescriptor, LPWSTR szProduct,
-                LPWSTR szFeature, LPWSTR szComponent, DWORD *pUsed )
+                LPWSTR szFeature, LPWSTR szComponent, LPDWORD pUsed )
 {
     UINT r, len;
     LPWSTR p;
@@ -1063,7 +1063,7 @@ UINT WINAPI MsiDecomposeDescriptorW( LPCWSTR szDescriptor, LPWSTR szProduct,
 }
 
 UINT WINAPI MsiDecomposeDescriptorA( LPCSTR szDescriptor, LPSTR szProduct,
-                LPSTR szFeature, LPSTR szComponent, DWORD *pUsed )
+                LPSTR szFeature, LPSTR szComponent, LPDWORD pUsed )
 {
     WCHAR product[MAX_FEATURE_CHARS+1];
     WCHAR feature[MAX_FEATURE_CHARS+1];
@@ -1277,8 +1277,8 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
 }
 
 static UINT WINAPI MSI_EnumComponentQualifiers( LPCWSTR szComponent, DWORD iIndex,
-                awstring *lpQualBuf, DWORD* pcchQual,
-                awstring *lpAppBuf, DWORD* pcchAppBuf )
+                awstring *lpQualBuf, LPDWORD pcchQual,
+                awstring *lpAppBuf, LPDWORD pcchAppBuf )
 {
     DWORD name_sz, val_sz, name_max, val_max, type, ofs;
     LPWSTR name = NULL, val = NULL;
@@ -1374,8 +1374,8 @@ end:
  *  MsiEnumComponentQualifiersA [MSI.@]
  */
 UINT WINAPI MsiEnumComponentQualifiersA( LPCSTR szComponent, DWORD iIndex,
-                LPSTR lpQualifierBuf, DWORD* pcchQualifierBuf,
-                LPSTR lpApplicationDataBuf, DWORD* pcchApplicationDataBuf )
+                LPSTR lpQualifierBuf, LPDWORD pcchQualifierBuf,
+                LPSTR lpApplicationDataBuf, LPDWORD pcchApplicationDataBuf )
 {
     awstring qual, appdata;
     LPWSTR comp;
@@ -1405,8 +1405,8 @@ UINT WINAPI MsiEnumComponentQualifiersA( LPCSTR szComponent, DWORD iIndex,
  *  MsiEnumComponentQualifiersW [MSI.@]
  */
 UINT WINAPI MsiEnumComponentQualifiersW( LPCWSTR szComponent, DWORD iIndex,
-                LPWSTR lpQualifierBuf, DWORD* pcchQualifierBuf,
-                LPWSTR lpApplicationDataBuf, DWORD* pcchApplicationDataBuf )
+                LPWSTR lpQualifierBuf, LPDWORD pcchQualifierBuf,
+                LPWSTR lpApplicationDataBuf, LPDWORD pcchApplicationDataBuf )
 {
     awstring qual, appdata;
 
@@ -1492,7 +1492,7 @@ UINT WINAPI MsiEnumRelatedProductsA(LPCSTR szUpgradeCode, DWORD dwReserved,
  * MsiEnumPatchesA            [MSI.@]
  */
 UINT WINAPI MsiEnumPatchesA( LPCSTR szProduct, DWORD iPatchIndex,
-        LPSTR lpPatchBuf, LPSTR lpTransformsBuf, DWORD* pcchTransformsBuf)
+        LPSTR lpPatchBuf, LPSTR lpTransformsBuf, LPDWORD pcchTransformsBuf)
 {
     FIXME("%s %d %p %p %p\n", debugstr_a(szProduct),
           iPatchIndex, lpPatchBuf, lpTransformsBuf, pcchTransformsBuf);
@@ -1503,7 +1503,7 @@ UINT WINAPI MsiEnumPatchesA( LPCSTR szProduct, DWORD iPatchIndex,
  * MsiEnumPatchesW            [MSI.@]
  */
 UINT WINAPI MsiEnumPatchesW( LPCWSTR szProduct, DWORD iPatchIndex,
-        LPWSTR lpPatchBuf, LPWSTR lpTransformsBuf, DWORD* pcchTransformsBuf)
+        LPWSTR lpPatchBuf, LPWSTR lpTransformsBuf, LPDWORD pcchTransformsBuf)
 {
     FIXME("%s %d %p %p %p\n", debugstr_w(szProduct),
           iPatchIndex, lpPatchBuf, lpTransformsBuf, pcchTransformsBuf);

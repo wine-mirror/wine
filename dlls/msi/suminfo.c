@@ -502,7 +502,7 @@ UINT WINAPI MsiGetSummaryInformationA(MSIHANDLE hDatabase,
     return ret;
 }
 
-UINT WINAPI MsiSummaryInfoGetPropertyCount(MSIHANDLE hSummaryInfo, UINT *pCount)
+UINT WINAPI MsiSummaryInfoGetPropertyCount(MSIHANDLE hSummaryInfo, PUINT pCount)
 {
     MSISUMMARYINFO *si;
 
@@ -619,8 +619,8 @@ LPWSTR msi_get_suminfo_product( IStorage *stg )
 }
 
 UINT WINAPI MsiSummaryInfoGetPropertyA(
-      MSIHANDLE handle, UINT uiProperty, UINT *puiDataType, INT *piValue,
-      FILETIME *pftValue, LPSTR szValueBuf, DWORD *pcchValueBuf)
+      MSIHANDLE handle, UINT uiProperty, PUINT puiDataType, LPINT piValue,
+      FILETIME *pftValue, LPSTR szValueBuf, LPDWORD pcchValueBuf)
 {
     awstring str;
 
@@ -635,8 +635,8 @@ UINT WINAPI MsiSummaryInfoGetPropertyA(
 }
 
 UINT WINAPI MsiSummaryInfoGetPropertyW(
-      MSIHANDLE handle, UINT uiProperty, UINT *puiDataType, INT *piValue,
-      FILETIME *pftValue, LPWSTR szValueBuf, DWORD *pcchValueBuf)
+      MSIHANDLE handle, UINT uiProperty, PUINT puiDataType, LPINT piValue,
+      FILETIME *pftValue, LPWSTR szValueBuf, LPDWORD pcchValueBuf)
 {
     awstring str;
 

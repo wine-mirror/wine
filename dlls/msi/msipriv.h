@@ -653,23 +653,23 @@ extern UINT MSI_SetFeatureStates( MSIPACKAGE *package );
 extern UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine );
 
 /* record internals */
-extern UINT MSI_RecordSetIStream( MSIRECORD *, unsigned int, IStream *);
-extern UINT MSI_RecordGetIStream( MSIRECORD *, unsigned int, IStream **);
-extern const WCHAR *MSI_RecordGetString( const MSIRECORD *, unsigned int );
-extern MSIRECORD *MSI_CreateRecord( unsigned int );
-extern UINT MSI_RecordSetInteger( MSIRECORD *, unsigned int, int );
-extern UINT MSI_RecordSetStringW( MSIRECORD *, unsigned int, LPCWSTR );
-extern UINT MSI_RecordSetStringA( MSIRECORD *, unsigned int, LPCSTR );
-extern BOOL MSI_RecordIsNull( MSIRECORD *, unsigned int );
-extern UINT MSI_RecordGetStringW( MSIRECORD * , unsigned int, LPWSTR, DWORD *);
-extern UINT MSI_RecordGetStringA( MSIRECORD *, unsigned int, LPSTR, DWORD *);
-extern int MSI_RecordGetInteger( MSIRECORD *, unsigned int );
-extern UINT MSI_RecordReadStream( MSIRECORD *, unsigned int, char *, DWORD *);
-extern unsigned int MSI_RecordGetFieldCount( const MSIRECORD *rec );
-extern UINT MSI_RecordSetStream( MSIRECORD *, unsigned int, IStream * );
-extern UINT MSI_RecordDataSize( MSIRECORD *, unsigned int );
-extern UINT MSI_RecordStreamToFile( MSIRECORD *, unsigned int, LPCWSTR );
-extern UINT MSI_RecordCopyField( MSIRECORD *, unsigned int, MSIRECORD *, unsigned int );
+extern UINT MSI_RecordSetIStream( MSIRECORD *, UINT, IStream *);
+extern UINT MSI_RecordGetIStream( MSIRECORD *, UINT, IStream **);
+extern const WCHAR *MSI_RecordGetString( const MSIRECORD *, UINT );
+extern MSIRECORD *MSI_CreateRecord( UINT );
+extern UINT MSI_RecordSetInteger( MSIRECORD *, UINT, int );
+extern UINT MSI_RecordSetStringW( MSIRECORD *, UINT, LPCWSTR );
+extern UINT MSI_RecordSetStringA( MSIRECORD *, UINT, LPCSTR );
+extern BOOL MSI_RecordIsNull( MSIRECORD *, UINT );
+extern UINT MSI_RecordGetStringW( MSIRECORD * , UINT, LPWSTR, LPDWORD);
+extern UINT MSI_RecordGetStringA( MSIRECORD *, UINT, LPSTR, LPDWORD);
+extern int MSI_RecordGetInteger( MSIRECORD *, UINT );
+extern UINT MSI_RecordReadStream( MSIRECORD *, UINT, char *, LPDWORD);
+extern UINT MSI_RecordGetFieldCount( const MSIRECORD *rec );
+extern UINT MSI_RecordSetStream( MSIRECORD *, UINT, IStream * );
+extern UINT MSI_RecordDataSize( MSIRECORD *, UINT );
+extern UINT MSI_RecordStreamToFile( MSIRECORD *, UINT, LPCWSTR );
+extern UINT MSI_RecordCopyField( MSIRECORD *, UINT, MSIRECORD *, UINT );
 
 /* stream internals */
 extern UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm );
@@ -683,7 +683,7 @@ extern UINT MSI_OpenDatabaseW( LPCWSTR, LPCWSTR, MSIDATABASE ** );
 extern UINT MSI_DatabaseOpenViewW(MSIDATABASE *, LPCWSTR, MSIQUERY ** );
 extern UINT MSI_OpenQuery( MSIDATABASE *, MSIQUERY **, LPCWSTR, ... );
 typedef UINT (*record_func)( MSIRECORD *, LPVOID );
-extern UINT MSI_IterateRecords( MSIQUERY *, DWORD *, record_func, LPVOID );
+extern UINT MSI_IterateRecords( MSIQUERY *, LPDWORD, record_func, LPVOID );
 extern MSIRECORD *MSI_QueryGetRecord( MSIDATABASE *db, LPCWSTR query, ... );
 extern UINT MSI_DatabaseImport( MSIDATABASE *, LPCWSTR, LPCWSTR );
 extern UINT MSI_DatabaseExport( MSIDATABASE *, LPCWSTR, LPCWSTR, LPCWSTR );
@@ -707,8 +707,8 @@ extern UINT MSI_OpenPackageW( LPCWSTR szPackage, MSIPACKAGE **pPackage );
 extern UINT MSI_SetTargetPathW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern UINT MSI_SetPropertyW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern INT MSI_ProcessMessage( MSIPACKAGE *, INSTALLMESSAGE, MSIRECORD * );
-extern UINT MSI_GetPropertyW( MSIPACKAGE *, LPCWSTR, LPWSTR, DWORD * );
-extern UINT MSI_GetPropertyA(MSIPACKAGE *, LPCSTR, LPSTR, DWORD* );
+extern UINT MSI_GetPropertyW( MSIPACKAGE *, LPCWSTR, LPWSTR, LPDWORD );
+extern UINT MSI_GetPropertyA(MSIPACKAGE *, LPCSTR, LPSTR, LPDWORD );
 extern MSICONDITION MSI_EvaluateConditionW( MSIPACKAGE *, LPCWSTR );
 extern UINT MSI_GetComponentStateW( MSIPACKAGE *, LPCWSTR, INSTALLSTATE *, INSTALLSTATE * );
 extern UINT MSI_GetFeatureStateW( MSIPACKAGE *, LPCWSTR, INSTALLSTATE *, INSTALLSTATE * );
@@ -719,7 +719,7 @@ extern UINT msi_package_add_media_disk(MSIPACKAGE *, DWORD, DWORD, DWORD, LPWSTR
 extern UINT msi_clone_properties(MSIPACKAGE *);
 
 /* for deformating */
-extern UINT MSI_FormatRecordW( MSIPACKAGE *, MSIRECORD *, LPWSTR, DWORD * );
+extern UINT MSI_FormatRecordW( MSIPACKAGE *, MSIRECORD *, LPWSTR, LPDWORD );
 
 /* registry data encoding/decoding functions */
 extern BOOL unsquash_guid(LPCWSTR in, LPWSTR out);
@@ -791,8 +791,8 @@ extern LPWSTR msi_get_suminfo_product( IStorage *stg );
 
 /* undocumented functions */
 UINT WINAPI MsiCreateAndVerifyInstallerDirectory( DWORD );
-UINT WINAPI MsiDecomposeDescriptorW( LPCWSTR, LPWSTR, LPWSTR, LPWSTR, DWORD * );
-UINT WINAPI MsiDecomposeDescriptorA( LPCSTR, LPSTR, LPSTR, LPSTR, DWORD * );
+UINT WINAPI MsiDecomposeDescriptorW( LPCWSTR, LPWSTR, LPWSTR, LPWSTR, LPDWORD );
+UINT WINAPI MsiDecomposeDescriptorA( LPCSTR, LPSTR, LPSTR, LPSTR, LPDWORD );
 LANGID WINAPI MsiLoadStringW( MSIHANDLE, UINT, LPWSTR, int, LANGID );
 LANGID WINAPI MsiLoadStringA( MSIHANDLE, UINT, LPSTR, int, LANGID );
 

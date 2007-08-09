@@ -1361,7 +1361,7 @@ static MSIRECORD *MSI_GetPropertyRow( MSIPACKAGE *package, LPCWSTR name )
 
 /* internal function, not compatible with MsiGetPropertyW */
 UINT MSI_GetPropertyW( MSIPACKAGE *package, LPCWSTR szName, 
-                       LPWSTR szValueBuf, DWORD* pchValueBuf )
+                       LPWSTR szValueBuf, LPDWORD pchValueBuf )
 {
     MSIRECORD *row;
     UINT rc = ERROR_FUNCTION_FAILED;
@@ -1423,7 +1423,7 @@ int msi_get_property_int(MSIPACKAGE *package, LPCWSTR prop, int def)
 }
 
 static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
-                             awstring *szValueBuf, DWORD* pchValueBuf )
+                             awstring *szValueBuf, LPDWORD pchValueBuf )
 {
     static const WCHAR empty[] = {0};
     MSIPACKAGE *package;
@@ -1513,7 +1513,7 @@ done:
 }
 
 UINT WINAPI MsiGetPropertyA( MSIHANDLE hInstall, LPCSTR szName,
-                             LPSTR szValueBuf, DWORD* pchValueBuf )
+                             LPSTR szValueBuf, LPDWORD pchValueBuf )
 {
     awstring val;
     LPWSTR name;
@@ -1532,7 +1532,7 @@ UINT WINAPI MsiGetPropertyA( MSIHANDLE hInstall, LPCSTR szName,
 }
 
 UINT WINAPI MsiGetPropertyW( MSIHANDLE hInstall, LPCWSTR szName,
-                             LPWSTR szValueBuf, DWORD* pchValueBuf )
+                             LPWSTR szValueBuf, LPDWORD pchValueBuf )
 {
     awstring val;
 

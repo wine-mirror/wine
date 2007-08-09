@@ -611,7 +611,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
 
 
 UINT MSI_FormatRecordW( MSIPACKAGE* package, MSIRECORD* record, LPWSTR buffer,
-                        DWORD *size )
+                        LPDWORD size )
 {
     LPWSTR deformated;
     LPWSTR rec;
@@ -658,7 +658,7 @@ UINT MSI_FormatRecordW( MSIPACKAGE* package, MSIRECORD* record, LPWSTR buffer,
 }
 
 UINT WINAPI MsiFormatRecordW( MSIHANDLE hInstall, MSIHANDLE hRecord, 
-                              LPWSTR szResult, DWORD *sz )
+                              LPWSTR szResult, LPDWORD sz )
 {
     UINT r = ERROR_INVALID_HANDLE;
     MSIPACKAGE *package;
@@ -738,7 +738,7 @@ done:
 }
 
 UINT WINAPI MsiFormatRecordA( MSIHANDLE hInstall, MSIHANDLE hRecord,
-                              LPSTR szResult, DWORD *sz )
+                              LPSTR szResult, LPDWORD sz )
 {
     UINT r;
     DWORD len, save;
