@@ -206,6 +206,12 @@ BOOL WINAPI I_CryptUninstallAsn1Module(void *x)
     return TRUE;
 }
 
+void *WINAPI I_CryptGetAsn1Decoder(long x)
+{
+    FIXME("%08lx\n", x);
+    return NULL;
+}
+
 BOOL WINAPI CryptFormatObject(DWORD dwCertEncodingType, DWORD dwFormatType,
  DWORD dwFormatStrType, void *pFormatStruct, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat, DWORD *pcbFormat)
