@@ -333,7 +333,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 BOOL WINAPI
 DllMain(HINSTANCE hInstDLL,
         DWORD Reason,
-        void *lpv)
+        LPVOID lpv)
 {
     TRACE("(%p,%x,%p)\n", hInstDLL, Reason, lpv);
     return TRUE;
