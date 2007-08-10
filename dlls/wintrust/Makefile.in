@@ -8,6 +8,7 @@ IMPORTS   = crypt32 user32 advapi32 kernel32
 DELAYIMPORTS = imagehlp
 
 C_SRCS = \
+	asn.c \
 	crypt.c \
 	register.c \
 	wintrust_main.c

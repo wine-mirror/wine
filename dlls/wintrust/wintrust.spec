@@ -94,12 +94,12 @@
 @ stub WVTAsn1SpcFinancialCriteriaInfoEncode
 @ stub WVTAsn1SpcIndirectDataContentDecode
 @ stub WVTAsn1SpcIndirectDataContentEncode
-@ stub WVTAsn1SpcLinkDecode
-@ stub WVTAsn1SpcLinkEncode
+@ stdcall WVTAsn1SpcLinkDecode(long str ptr long long ptr ptr)
+@ stdcall WVTAsn1SpcLinkEncode(long str ptr ptr ptr)
 @ stub WVTAsn1SpcMinimalCriteriaInfoDecode
 @ stub WVTAsn1SpcMinimalCriteriaInfoEncode
-@ stub WVTAsn1SpcPeImageDataDecode
-@ stub WVTAsn1SpcPeImageDataEncode
+@ stdcall WVTAsn1SpcPeImageDataDecode(long str ptr long long ptr ptr)
+@ stdcall WVTAsn1SpcPeImageDataEncode(long str ptr ptr ptr)
 @ stub WVTAsn1SpcSigInfoDecode
 @ stub WVTAsn1SpcSigInfoEncode
 @ stub WVTAsn1SpcSpAgencyInfoDecode
