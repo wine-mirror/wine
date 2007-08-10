@@ -73,5 +73,17 @@ static void test_Scan0()
 
 START_TEST(image)
 {
+    struct GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+
+    gdiplusStartupInput.GdiplusVersion              = 1;
+    gdiplusStartupInput.DebugEventCallback          = NULL;
+    gdiplusStartupInput.SuppressBackgroundThread    = 0;
+    gdiplusStartupInput.SuppressExternalCodecs      = 0;
+
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
     test_Scan0();
+
+    GdiplusShutdown(gdiplusToken);
 }
