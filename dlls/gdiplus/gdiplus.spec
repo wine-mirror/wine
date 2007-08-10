@@ -595,7 +595,7 @@
 @ stub GdipSetStringFormatTrimming
 @ stub GdipSetTextContrast
 @ stub GdipSetTextRenderingHint
-@ stub GdipSetTextureTransform
+@ stdcall GdipSetTextureTransform(ptr ptr)
 @ stub GdipSetTextureWrapMode
 @ stdcall GdipSetWorldTransform(ptr ptr)
 @ stub GdipShearMatrix

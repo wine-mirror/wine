@@ -625,3 +625,17 @@ GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipSetTextureTransform(GpTexture *texture,
+    GDIPCONST GpMatrix *matrix)
+{
+    static int calls;
+
+    if(!texture || !matrix)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return Ok;
+}
