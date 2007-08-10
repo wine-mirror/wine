@@ -4138,6 +4138,16 @@ BOOL WINAPI CryptDecodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+    if (!cbEncoded)
+    {
+        SetLastError(CRYPT_E_ASN1_EOD);
+        return FALSE;
+    }
+    if (cbEncoded > MAX_ENCODED_LEN)
+    {
+        SetLastError(CRYPT_E_ASN1_LARGE);
+        return FALSE;
+    }
 
     if (!(pCryptDecodeObjectEx = CRYPT_GetBuiltinDecoder(dwCertEncodingType,
      lpszStructType)))
