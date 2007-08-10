@@ -384,9 +384,13 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromStreamICM(IStream* stream,
 
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
 {
+    HDC hdc;
+
     if(!image)
         return InvalidParameter;
 
+    IPicture_get_CurDC(image->picture, &hdc);
+    DeleteDC(hdc);
     IPicture_Release(image->picture);
     GdipFree(image);
 
@@ -427,6 +431,29 @@ GpStatus WINGDIPAPI GdipGetImageBounds(GpImage *image, GpRectF *srcRect,
           srcRect->Width, srcRect->Height, *srcUnit);
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage *image,
+    GpGraphics **graphics)
+{
+    HDC hdc;
+
+    if(!image || !graphics)
+        return InvalidParameter;
+
+    if(image->type != ImageTypeBitmap){
+        FIXME("not implemented for image type %d\n", image->type);
+        return NotImplemented;
+    }
+
+    IPicture_get_CurDC(image->picture, &hdc);
+
+    if(!hdc){
+        hdc = CreateCompatibleDC(0);
+        IPicture_SelectPicture(image->picture, hdc, NULL, NULL);
+    }
+
+    return GdipCreateFromHDC(hdc, graphics);
 }
 
 GpStatus WINGDIPAPI GdipGetImageHeight(GpImage *image, UINT *height)

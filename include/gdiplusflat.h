@@ -192,6 +192,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromStream(IStream*,GpBitmap**);
 GpStatus WINGDIPAPI GdipCreateBitmapFromStreamICM(IStream*,GpBitmap**);
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage*);
 GpStatus WINGDIPAPI GdipGetImageBounds(GpImage*,GpRectF*,GpUnit*);
+GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage*,GpGraphics**);
 GpStatus WINGDIPAPI GdipGetImageHeight(GpImage*,UINT*);
 GpStatus WINGDIPAPI GdipGetImageHorizontalResolution(GpImage*,REAL*);
 GpStatus WINGDIPAPI GdipGetImagePixelFormat(GpImage*,PixelFormat*);
