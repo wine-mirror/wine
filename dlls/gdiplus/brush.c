@@ -16,10 +16,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
 #include "wingdi.h"
 
+#define COBJMACROS
 #include "objbase.h"
+#include "olectl.h"
+#include "ole2.h"
 
 #include "gdiplus.h"
 #include "gdiplus_private.h"
@@ -238,6 +245,121 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
     (*sf)->brush.gdibrush = CreateSolidBrush(col);
     (*sf)->brush.bt = BrushTypeSolidColor;
     (*sf)->color = color;
+
+    return Ok;
+}
+
+/* FIXME: imageattr ignored */
+GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
+    GDIPCONST GpImageAttributes *imageattr, REAL x, REAL y, REAL width,
+    REAL height, GpTexture **texture)
+{
+    HDC hdc;
+    OLE_HANDLE hbm;
+    HBITMAP old = NULL;
+    BITMAPINFO bmi;
+    BITMAPINFOHEADER *bmih;
+    INT n_x, n_y, n_width, n_height, abs_height, stride, image_stride, i, bytespp;
+    BOOL bm_is_selected;
+    BYTE *dibits, *buff, *textbits;
+
+    if(!image || !texture || x < 0.0 || y < 0.0 || width < 0.0 || height < 0.0)
+        return InvalidParameter;
+
+    if(image->type != ImageTypeBitmap){
+        FIXME("not implemented for image type %d\n", image->type);
+        return NotImplemented;
+    }
+
+    n_x = roundr(x);
+    n_y = roundr(y);
+    n_width = roundr(width);
+    n_height = roundr(height);
+
+    if(n_x + n_width > ((GpBitmap*)image)->width ||
+       n_y + n_height > ((GpBitmap*)image)->height)
+        return InvalidParameter;
+
+    IPicture_get_Handle(image->picture, &hbm);
+    if(!hbm)   return GenericError;
+    IPicture_get_CurDC(image->picture, &hdc);
+    bm_is_selected = (hdc != 0);
+
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biBitCount = 0;
+
+    if(!bm_is_selected){
+        hdc = CreateCompatibleDC(0);
+        old = SelectObject(hdc, (HBITMAP)hbm);
+    }
+
+    /* fill out bmi */
+    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+
+    bytespp = bmi.bmiHeader.biBitCount / 8;
+    abs_height = abs(bmi.bmiHeader.biHeight);
+
+    if(n_x > bmi.bmiHeader.biWidth || n_x + n_width > bmi.bmiHeader.biWidth ||
+       n_y > abs_height || n_y + n_height > abs_height)
+        return InvalidParameter;
+
+    dibits = GdipAlloc(bmi.bmiHeader.biSizeImage);
+
+    if(dibits)  /* this is not a good place to error out */
+        GetDIBits(hdc, (HBITMAP)hbm, 0, abs_height, dibits, &bmi, DIB_RGB_COLORS);
+
+    if(!bm_is_selected){
+        SelectObject(hdc, old);
+        DeleteDC(hdc);
+    }
+
+    if(!dibits)
+        return OutOfMemory;
+
+    image_stride = (bmi.bmiHeader.biWidth * bytespp + 3) & ~3;
+    stride = (n_width * bytespp + 3) & ~3;
+    buff = GdipAlloc(sizeof(BITMAPINFOHEADER) + stride * n_height);
+    if(!buff){
+        GdipFree(dibits);
+        return OutOfMemory;
+    }
+
+    bmih = (BITMAPINFOHEADER*)buff;
+    textbits = (BYTE*) (bmih + 1);
+    bmih->biSize = sizeof(BITMAPINFOHEADER);
+    bmih->biWidth = n_width;
+    bmih->biHeight = n_height;
+    bmih->biCompression = BI_RGB;
+    bmih->biSizeImage = stride * n_height;
+    bmih->biBitCount = bmi.bmiHeader.biBitCount;
+    bmih->biClrUsed = 0;
+    bmih->biPlanes = 1;
+
+    /* image is flipped */
+    if(bmi.bmiHeader.biHeight > 0){
+        dibits += bmi.bmiHeader.biSizeImage;
+        image_stride *= -1;
+        textbits += stride * (n_height - 1);
+        stride *= -1;
+    }
+
+    for(i = 0; i < n_height; i++)
+        memcpy(&textbits[i * stride],
+               &dibits[n_x * bytespp + (n_y + i) * image_stride],
+               abs(stride));
+
+    *texture = GdipAlloc(sizeof(GpTexture));
+    if (!*texture) return OutOfMemory;
+
+    (*texture)->brush.lb.lbStyle = BS_DIBPATTERNPT;
+    (*texture)->brush.lb.lbColor = DIB_RGB_COLORS;
+    (*texture)->brush.lb.lbHatch = (ULONG_PTR)buff;
+
+    (*texture)->brush.gdibrush = CreateBrushIndirect(&(*texture)->brush.lb);
+    (*texture)->brush.bt = BrushTypeTextureFill;
+
+    GdipFree(dibits);
+    GdipFree(buff);
 
     return Ok;
 }

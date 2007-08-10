@@ -134,7 +134,7 @@
 @ stub GdipCreateTexture2
 @ stub GdipCreateTexture2I
 @ stub GdipCreateTexture
-@ stub GdipCreateTextureIA
+@ stdcall GdipCreateTextureIA(ptr ptr long long long long ptr)
 @ stub GdipCreateTextureIAI
 @ stdcall GdipDeleteBrush(ptr)
 @ stub GdipDeleteCachedBitmap

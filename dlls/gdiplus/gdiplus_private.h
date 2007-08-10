@@ -115,6 +115,10 @@ struct GpLineGradient{
     BOOL gamma;
 };
 
+struct GpTexture{
+    GpBrush brush;
+};
+
 struct GpPath{
     GpFillMode fill;
     GpPathData pathdata;
