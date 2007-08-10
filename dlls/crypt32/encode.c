@@ -3513,7 +3513,37 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         ret = encodeFunc(dwCertEncodingType, lpszStructType, pvStructInfo,
          dwFlags, pEncodePara, pvEncoded, pcbEncoded);
     else
-        SetLastError(ERROR_FILE_NOT_FOUND);
+    {
+        static HCRYPTOIDFUNCSET encodeObjectSet = NULL;
+        CryptEncodeObjectFunc pCryptEncodeObject;
+
+        /* Try CryptEncodeObject function.  Don't call CryptEncodeObject
+         * directly, as that could cause an infinite loop.
+         */
+        if (!encodeObjectSet)
+            encodeObjectSet =
+             CryptInitOIDFunctionSet(CRYPT_OID_ENCODE_OBJECT_FUNC, 0);
+        CryptGetOIDFunctionAddress(encodeObjectSet, dwCertEncodingType,
+         lpszStructType, 0, (void **)&pCryptEncodeObject, &hFunc);
+        if (pCryptEncodeObject)
+        {
+            if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+            {
+                ret = pCryptEncodeObject(dwCertEncodingType, lpszStructType,
+                 pvStructInfo, NULL, pcbEncoded);
+                if (ret && (ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara,
+                 pvEncoded, pcbEncoded, *pcbEncoded)))
+                    ret = pCryptEncodeObject(dwCertEncodingType,
+                     lpszStructType, pvStructInfo, *(BYTE **)pvEncoded,
+                     pcbEncoded);
+            }
+            else
+                ret = pCryptEncodeObject(dwCertEncodingType, lpszStructType,
+                 pvStructInfo, pvEncoded, pcbEncoded);
+        }
+        else
+            SetLastError(ERROR_FILE_NOT_FOUND);
+    }
     if (hFunc)
         CryptFreeOIDFunctionAddress(hFunc, 0);
     return ret;
