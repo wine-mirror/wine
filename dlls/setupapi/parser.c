@@ -316,7 +316,8 @@ static const WCHAR *get_dirid_subst( struct inf_file *file, int dirid, unsigned 
 
 /* retrieve the string substitution for a given string, or NULL if not found */
 /* if found, len is set to the substitution length */
-static const WCHAR *get_string_subst( struct inf_file *file, const WCHAR *str, unsigned int *len )
+static const WCHAR *get_string_subst( struct inf_file *file, const WCHAR *str, unsigned int *len,
+                                      BOOL no_trailing_slash )
 {
     static const WCHAR percent = '%';
 
@@ -353,6 +354,7 @@ static const WCHAR *get_string_subst( struct inf_file *file, const WCHAR *str, u
         dirid_str[*len] = 0;
         dirid = strtolW( dirid_str, &end, 10 );
         if (!*end) ret = get_dirid_subst( file, dirid, len );
+        if (no_trailing_slash && ret && *len && ret[*len - 1] == '\\') *len -= 1;
         HeapFree( GetProcessHeap(), 0, dirid_str );
         return ret;
     }
@@ -387,7 +389,7 @@ unsigned int PARSER_string_substW( struct inf_file *file, const WCHAR *text, WCH
         else /* end of the %xx% string, find substitution */
         {
             len = p - start - 1;
-            subst = get_string_subst( file, start + 1, &len );
+            subst = get_string_subst( file, start + 1, &len, p[1] == '\\' );
             if (!subst)
             {
                 subst = start;

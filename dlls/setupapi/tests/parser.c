@@ -60,6 +60,7 @@ static const char tmpfilename[] = ".\\tmp.inf";
 #define STR_SECTION "[Strings]\nfoo=aaa\nbar=bbb\nloop=%loop2%\nloop2=%loop%\n" \
                     "per%%cent=abcd\nper=1\ncent=2\n22=foo\n" \
                     "big=" A400 "\n" \
+                    "mydrive=\"C:\\\"\n" \
                     "verybig=" A400 A400 A400 "\n"
 
 /* create a new file with specified contents and open it */
@@ -284,6 +285,7 @@ static const struct
  { "ab=cd\",\"ef",         "ab",            { "cd,ef" } },
  { "ab=cd\",ef",           "ab",            { "cd,ef" } },
  { "ab=cd\",ef\\\nab",     "ab",            { "cd,ef\\" } },
+
  /* single quotes (unhandled)*/
  { "HKLM,A,B,'C',D",       NULL,            { "HKLM", "A","B","'C'","D" } },
  /* spaces */
@@ -317,6 +319,16 @@ static const struct
  { "a=%big%%big%%big%%big%\n" STR_SECTION,   "a", { A400 A400 A400 A400 } },
  { "a=%big%%big%%big%%big%%big%%big%%big%%big%%big%\n" STR_SECTION,   "a", { A400 A400 A400 A400 A400 A400 A400 A400 A400 } },
  { "a=%big%%big%%big%%big%%big%%big%%big%%big%%big%%big%%big%\n" STR_SECTION,   "a", { A4097 /*MAX_INF_STRING_LENGTH+1*/ } },
+
+ /* Prove expansion of system entries removes extra \'s and string
+    replacements doesnt                                            */
+ { "ab=\"%24%\"\n" STR_SECTION,           "ab", { "C:\\" } },
+ { "ab=\"%mydrive%\"\n" STR_SECTION,      "ab", { "C:\\" } },
+ { "ab=\"%24%\\fred\"\n" STR_SECTION,     "ab", { "C:\\fred" } },
+ { "ab=\"%mydrive%\\fred\"\n" STR_SECTION,"ab", { "C:\\\\fred" } },
+ /* Confirm duplicate \'s kept */
+ { "ab=\"%24%\\\\fred\"",      "ab",            { "C:\\\\fred" } },
+ { "ab=C:\\\\FRED",            "ab",            { "C:\\\\FRED" } },
 };
 
 /* check the key of a certain line */

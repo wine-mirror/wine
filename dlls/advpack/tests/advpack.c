@@ -419,12 +419,10 @@ static void translateinfstringex_test(void)
     hr = pTranslateInfStringEx(hinf, inf_file, "Options.NTx86", "Result1",
                               buffer, size, &size, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    todo_wine {  /* Wine returns C:\\Program Files, not C:\Program Files */
-      ok(!lstrcmpi(buffer, PROG_FILES_ROOT),
-             "Expected %s, got %s\n", PROG_FILES_ROOT, buffer);
-      ok(size == lstrlenA(PROG_FILES_ROOT)+1, "Expected size %d, got %d\n",
-             lstrlenA(PROG_FILES_ROOT)+1, size);
-    }
+    ok(!lstrcmpi(buffer, PROG_FILES_ROOT),
+           "Expected %s, got %s\n", PROG_FILES_ROOT, buffer);
+    ok(size == lstrlenA(PROG_FILES_ROOT)+1, "Expected size %d, got %d\n",
+           lstrlenA(PROG_FILES_ROOT)+1, size);
 
     memset(buffer, 'a', PROG_FILES_LEN);
     buffer[PROG_FILES_LEN - 1] = '\0';
