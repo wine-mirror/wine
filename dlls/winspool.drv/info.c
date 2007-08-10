@@ -5105,6 +5105,11 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPCWSTR pEnvironment,
         return FALSE;
     }
 
+    if ((pcbNeeded == NULL) || (pcReturned == NULL)) {
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+
     /* initialize return values */
     if(pDriverInfo)
         memset( pDriverInfo, 0, cbBuf);

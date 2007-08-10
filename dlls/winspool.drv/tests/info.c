@@ -1070,6 +1070,115 @@ static void test_EnumPorts(void)
 
 /* ########################### */
 
+static void test_EnumPrinterDrivers(void)
+{
+    DWORD   res;
+    LPBYTE  buffer;
+    DWORD   cbBuf;
+    DWORD   pcbNeeded;
+    DWORD   pcReturned;
+    DWORD   level;
+
+    /* 1-3 for w95/w98/NT4; 1-3+6 for me; 1-6 for w2k/xp/2003; 1-6+8 for vista */
+    for(level = 0; level < 10; level++) {
+        cbBuf = 0xdeadbeef;
+        pcReturned = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res = EnumPrinterDriversA(NULL, NULL, level, NULL, 0, &cbBuf, &pcReturned);
+        RETURN_ON_DEACTIVATED_SPOOLER(res)
+
+        /* use only a short test, when we test with an invalid level */
+        if(!level || (level == 7) || (level > 8)) {
+
+            ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
+                (res && (pcReturned == 0)),
+                "(%d) got %u with %u and 0x%x "
+                "(expected '0' with ERROR_INVALID_LEVEL or '!=0' and 0x0)\n",
+                level, res, GetLastError(), pcReturned);
+            continue;
+        }
+
+        /* some level are not supported in all windows versions */
+        if (!res && (GetLastError() == ERROR_INVALID_LEVEL)) {
+            skip("Level %d not supported\n", level);
+            continue;
+        }
+
+        ok( ((!res) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) ||
+            (res && (default_printer == NULL)),
+            "(%u) got %u with %u for %s (expected '0' with "
+            "ERROR_INSUFFICIENT_BUFFER or '!= 0' without a printer)\n",
+            level, res, GetLastError(), default_printer);
+
+        if (!cbBuf) {
+            skip("no valid buffer size returned\n");
+            continue;
+        }
+
+        buffer = HeapAlloc(GetProcessHeap(), 0, cbBuf + 4);
+        if (buffer == NULL) continue;
+
+        SetLastError(0xdeadbeef);
+        pcbNeeded = 0xdeadbeef;
+        res = EnumPrinterDriversA(NULL, NULL, level, buffer, cbBuf, &pcbNeeded, &pcReturned);
+        ok(res, "(%u) got %u with %u (expected '!=0')\n", level, res, GetLastError());
+        ok(pcbNeeded == cbBuf, "(%d) returned %d (expected %d)\n", level, pcbNeeded, cbBuf);
+
+        /* validate the returned Data here */
+        if (level > 1) {
+            LPDRIVER_INFO_2A di = (LPDRIVER_INFO_2A) buffer;
+
+            ok( strrchr(di->pDriverPath, '\\') != NULL,
+                "(%u) got %s for %s (expected a full path)\n",
+                level, di->pDriverPath, di->pName);
+
+        }
+
+        SetLastError(0xdeadbeef);
+        pcReturned = 0xdeadbeef;
+        pcbNeeded = 0xdeadbeef;
+        res = EnumPrinterDriversA(NULL, NULL, level, buffer, cbBuf+1, &pcbNeeded, &pcReturned);
+        ok(res, "(%u) got %u with %u (expected '!=0')\n", level, res, GetLastError());
+        ok(pcbNeeded == cbBuf, "(%u) returned %u (expected %u)\n", level, pcbNeeded, cbBuf);
+
+        SetLastError(0xdeadbeef);
+        pcbNeeded = 0xdeadbeef;
+        res = EnumPrinterDriversA(NULL, NULL, level, buffer, cbBuf-1, &pcbNeeded, &pcReturned);
+        ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+            "(%u) got %u with %u (expected '0' with ERROR_INSUFFICIENT_BUFFER)\n",
+            level, res, GetLastError());
+        ok(pcbNeeded == cbBuf, "(%u) returned %u (expected %u)\n", level, pcbNeeded, cbBuf);
+
+/*
+      Do not add the next test:
+      NT: ERROR_INVALID_USER_BUFFER
+      win9x: crash or 100% CPU
+
+      res = EnumPrinterDriversA(NULL, NULL, level, NULL, cbBuf, &pcbNeeded, &pcReturned);
+*/
+
+        SetLastError(0xdeadbeef);
+        pcbNeeded = 0xdeadbeef;
+        pcReturned = 0xdeadbeef;
+        res = EnumPrinterDriversA(NULL, NULL, level, buffer, cbBuf, NULL, &pcReturned);
+        ok( res || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ,
+            "(%u) got %u with %u (expected '!=0' or '0' with "
+            "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
+
+        pcbNeeded = 0xdeadbeef;
+        pcReturned = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res = EnumPrinterDriversA(NULL, NULL, level, buffer, cbBuf, &pcbNeeded, NULL);
+        ok( res || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ,
+            "(%u) got %u with %u (expected '!=0' or '0' with "
+            "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
+
+        HeapFree(GetProcessHeap(), 0, buffer);
+    } /* for(level ... */
+}
+
+/* ########################### */
+
 static void test_GetDefaultPrinter(void)
 {
     BOOL    retval;
@@ -2246,6 +2355,7 @@ START_TEST(info)
     if (default_printer) test_EnumForms(default_printer);
     test_EnumMonitors();
     test_EnumPorts();
+    test_EnumPrinterDrivers();
     test_EnumPrinters();
     test_GetDefaultPrinter();
     test_GetPrinterDriverDirectory();
