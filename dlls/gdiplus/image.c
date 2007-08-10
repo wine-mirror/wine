@@ -130,7 +130,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     bmi.bmiHeader.biBitCount = 0;
 
     if(!bm_is_selected){
-        hdc = GetDC(0);
+        hdc = CreateCompatibleDC(0);
         old = SelectObject(hdc, (HBITMAP)hbm);
     }
 
@@ -149,7 +149,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
 
     if(!bm_is_selected){
         SelectObject(hdc, old);
-        ReleaseDC(0, hdc);
+        DeleteDC(hdc);
     }
 
     lockeddata->Width = rect->Width;
@@ -210,7 +210,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     bmi.bmiHeader.biBitCount = 0;
 
     if(!bm_is_selected){
-        hdc = GetDC(0);
+        hdc = CreateCompatibleDC(0);
         old = SelectObject(hdc, (HBITMAP)hbm);
     }
 
@@ -221,7 +221,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
 
     if(!bm_is_selected){
         SelectObject(hdc, old);
-        ReleaseDC(0, hdc);
+        DeleteDC(hdc);
     }
 
     GdipFree(bitmap->bitmapbits);
@@ -677,11 +677,11 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
 
         if(!hdc){
             HBITMAP old;
-            hdc = GetDC(0);
+            hdc = CreateCompatibleDC(0);
             old = SelectObject(hdc, (HBITMAP)hbm);
             GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
             SelectObject(hdc, old);
-            ReleaseDC(0, hdc);
+            DeleteDC(hdc);
         }
         else
             GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
