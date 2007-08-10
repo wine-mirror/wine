@@ -58,6 +58,15 @@ static void test_PageSetupDlgA(void)
         "returned %u with %u and 0x%x (expected '0' and "
         "CDERR_STRUCTSIZE)\n", res, GetLastError(), CommDlgExtendedError());
 
+    ZeroMemory(pDlg, sizeof(PAGESETUPDLGA));
+    pDlg->lStructSize = sizeof(PAGESETUPDLGA) +1;
+    pDlg->Flags = PSD_RETURNDEFAULT;
+    SetLastError(0xdeadbeef);
+    res = PageSetupDlgA(pDlg);
+    ok( !res && (CommDlgExtendedError() == CDERR_STRUCTSIZE),
+        "returned %u with %u and 0x%x (expected '0' and CDERR_STRUCTSIZE)\n",
+        res, GetLastError(), CommDlgExtendedError());
+
 
     ZeroMemory(pDlg, sizeof(PAGESETUPDLGA));
     pDlg->lStructSize = sizeof(PAGESETUPDLGA);
@@ -104,6 +113,15 @@ static void test_PrintDlgA(void)
     res = PrintDlgA(pDlg);
     ok( !res && (CommDlgExtendedError() == CDERR_STRUCTSIZE),
         "returned %d with 0x%x and 0x%x (expected '0' and "
+        "CDERR_STRUCTSIZE)\n", res, GetLastError(), CommDlgExtendedError());
+
+    ZeroMemory(pDlg, sizeof(PRINTDLGA));
+    pDlg->lStructSize = sizeof(PRINTDLGA) + 1;
+    pDlg->Flags = PD_RETURNDEFAULT;
+    SetLastError(0xdeadbeef);
+    res = PrintDlgA(pDlg);
+    ok( !res && (CommDlgExtendedError() == CDERR_STRUCTSIZE),
+        "returned %u with %u and 0x%x (expected '0' and "
         "CDERR_STRUCTSIZE)\n", res, GetLastError(), CommDlgExtendedError());
 
 
