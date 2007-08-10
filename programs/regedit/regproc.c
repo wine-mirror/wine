@@ -109,7 +109,9 @@ static BYTE* convertHexCSVToHex(char *str, DWORD *size)
         *d++ =(BYTE)wc;
         (*size)++;
 
-        s+=(wc < 0x10 ? 2 : 3);
+        /* Skip one or two digits and any comma */
+        while (*s && *s!=',') s++;
+        if (*s) s++;
     }
 
     return data;
