@@ -984,7 +984,7 @@ static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixe
 }
 
 /* Search our internal pixelformat list for the WGL format corresponding to the given fbconfig */
-static int ConvertPixelFormatGLXtoWGL(Display *display, int fmt_id)
+static WineGLPixelFormat* ConvertPixelFormatGLXtoWGL(Display *display, int fmt_id)
 {
     int i;
 
@@ -995,11 +995,11 @@ static int ConvertPixelFormatGLXtoWGL(Display *display, int fmt_id)
     for(i=0; i<WineGLPixelFormatListSize; i++) {
         if(WineGLPixelFormatList[i].fmt_id == fmt_id) {
             TRACE("Returning iPixelFormat %d for fmt_id 0x%x\n", WineGLPixelFormatList[i].iPixelFormat, fmt_id);
-            return WineGLPixelFormatList[i].iPixelFormat;
+            return &WineGLPixelFormatList[i];
         }
     }
     TRACE("No compatible format found for fmt_id 0x%x\n", fmt_id);
-    return 0;
+    return NULL;
 }
 
 /**
@@ -2513,8 +2513,9 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
     int nCfgs = 0;
     UINT it;
     int fmt_id;
-    int fmt = 0;
+    WineGLPixelFormat *fmt;
     int pfmt_it = 0;
+    int run;
 
     TRACE("(%p, %p, %p, %d, %p, %p): hackish\n", hdc, piAttribIList, pfAttribFList, nMaxFormats, piFormats, nNumFormats);
     if (NULL != pfAttribFList) {
@@ -2537,23 +2538,30 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
 
     /* Loop through all matching formats and check if they are suitable.
     * Note that this function should at max return nMaxFormats different formats */
-    for (it = 0; it < nCfgs; ++it) {
-        gl_test = pglXGetFBConfigAttrib(gdi_display, cfgs[it], GLX_FBCONFIG_ID, &fmt_id);
-        if (gl_test) {
-            ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
-            continue;
-        }
+    for(run=0; run < 2; run++)
+    {
+        for (it = 0; it < nCfgs; ++it) {
+            gl_test = pglXGetFBConfigAttrib(gdi_display, cfgs[it], GLX_FBCONFIG_ID, &fmt_id);
+            if (gl_test) {
+                ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
+                continue;
+            }
 
-        /* Search for the format in our list of compatible formats */
-        fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fmt_id);
-        if(!fmt)
-            continue;
+            /* Search for the format in our list of compatible formats */
+            fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fmt_id);
+            if(!fmt)
+                continue;
 
-        if(pfmt_it < nMaxFormats) {
-            piFormats[pfmt_it] = fmt;
-            TRACE("at %d/%d found FBCONFIG_ID 0x%x (%d)\n", it + 1, nCfgs, fmt_id, piFormats[pfmt_it]);
+            /* During the first run we only want onscreen formats and during the second only offscreen 'XOR' */
+            if( ((run == 0) && fmt->offscreenOnly) || ((run == 1) && !fmt->offscreenOnly) )
+                continue;
+
+            if(pfmt_it < nMaxFormats) {
+                piFormats[pfmt_it] = fmt->iPixelFormat;
+                TRACE("at %d/%d found FBCONFIG_ID 0x%x (%d)\n", it + 1, nCfgs, fmt_id, piFormats[pfmt_it]);
+            }
+            pfmt_it++;
         }
-        pfmt_it++;
     }
 
     *nNumFormats = pfmt_it;
