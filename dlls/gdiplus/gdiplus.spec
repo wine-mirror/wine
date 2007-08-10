@@ -66,7 +66,7 @@
 @ stub GdipCombineRegionRectI
 @ stub GdipCombineRegionRegion
 @ stub GdipComment
-@ stub GdipConvertToEmfPlus
+@ stdcall GdipConvertToEmfPlus(ptr ptr ptr long ptr ptr)
 @ stub GdipConvertToEmfPlusToFile
 @ stub GdipConvertToEmfPlusToStream
 @ stub GdipCreateAdjustableArrowCap

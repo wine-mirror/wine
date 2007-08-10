@@ -191,6 +191,13 @@ enum LinearGradientMode
     LinearGradientModeBackwardDiagonal
 };
 
+enum EmfType
+{
+    EmfTypeEmfOnly     = MetafileTypeEmf,
+    EmfTypeEmfPlusOnly = MetafileTypeEmfPlusOnly,
+    EmfTypeEmfPlusDual = MetafileTypeEmfPlusDual
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -211,6 +218,7 @@ typedef enum ImageType ImageType;
 typedef enum WrapMode WrapMode;
 typedef enum MetafileType MetafileType;
 typedef enum LinearGradientMode LinearGradientMode;
+typedef enum EmfType EmfType;
 
 #endif /* end of c typedefs */
 

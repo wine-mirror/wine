@@ -255,6 +255,24 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromFile(GDIPCONST WCHAR* filename,
     return stat;
 }
 
+GpStatus WINGDIPAPI GdipConvertToEmfPlus(const GpGraphics* ref,
+    GpMetafile* metafile, BOOL* succ, EmfType emfType,
+    const WCHAR* description, GpMetafile** out_metafile)
+{
+    static int calls;
+
+    if(!ref || !metafile || !out_metafile)
+        return InvalidParameter;
+
+    *succ = FALSE;
+    *out_metafile = NULL;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 /* FIXME: this should create a bitmap in the given size with the attributes
  * (resolution etc.) of the graphics object */
 GpStatus WINGDIPAPI GdipCreateBitmapFromGraphics(INT width, INT height,
