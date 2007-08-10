@@ -55,13 +55,11 @@ static void test_encodeSPCLink(void)
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     link.dwLinkChoice = SPC_URL_LINK_CHOICE;
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -75,18 +73,15 @@ static void test_encodeSPCLink(void)
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_IA5_STRING,
      "Expected CRYPT_E_INVALID_IA5_STRING, got %08x\n", GetLastError());
     /* Unlike the crypt32 string encoding routines, size is not set to the
      * index of the first invalid character.
      */
-    todo_wine
     ok(size == 0, "Expected size 0, got %d\n", size);
     link.pwszUrl = url;
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -98,7 +93,6 @@ static void test_encodeSPCLink(void)
     link.pwszFile = (LPWSTR)nihongoURL;
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -110,7 +104,6 @@ static void test_encodeSPCLink(void)
     memset(&link.Moniker, 0, sizeof(link.Moniker));
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -123,7 +116,6 @@ static void test_encodeSPCLink(void)
     link.Moniker.SerializedData.cbData = sizeof(data);
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {

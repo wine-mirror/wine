@@ -44,14 +44,232 @@ WINE_DEFAULT_DEBUG_CHANNEL(cryptasn);
 
 #endif
 
+static BOOL CRYPT_EncodeLen(DWORD len, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    DWORD bytesNeeded, significantBytes = 0;
+
+    if (len <= 0x7f)
+        bytesNeeded = 1;
+    else
+    {
+        DWORD temp;
+
+        for (temp = len, significantBytes = sizeof(temp); !(temp & 0xff000000);
+         temp <<= 8, significantBytes--)
+            ;
+        bytesNeeded = significantBytes + 1;
+    }
+    if (!pbEncoded)
+    {
+        *pcbEncoded = bytesNeeded;
+        return TRUE;
+    }
+    if (*pcbEncoded < bytesNeeded)
+    {
+        SetLastError(ERROR_MORE_DATA);
+        return FALSE;
+    }
+    if (len <= 0x7f)
+        *pbEncoded = (BYTE)len;
+    else
+    {
+        DWORD i;
+
+        *pbEncoded++ = significantBytes | 0x80;
+        for (i = 0; i < significantBytes; i++)
+        {
+            *(pbEncoded + significantBytes - i - 1) = (BYTE)(len & 0xff);
+            len >>= 8;
+        }
+    }
+    *pcbEncoded = bytesNeeded;
+    return TRUE;
+}
+
+static BOOL WINAPI CRYPT_AsnEncodeOctets(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    BOOL ret = TRUE;
+    const CRYPT_DATA_BLOB *blob = (const CRYPT_DATA_BLOB *)pvStructInfo;
+    DWORD bytesNeeded, lenBytes;
+
+    TRACE("(%d, %p), %p, %d\n", blob->cbData, blob->pbData, pbEncoded,
+     *pcbEncoded);
+
+    CRYPT_EncodeLen(blob->cbData, NULL, &lenBytes);
+    bytesNeeded = 1 + lenBytes + blob->cbData;
+    if (!pbEncoded)
+        *pcbEncoded = bytesNeeded;
+    else if (*pcbEncoded < bytesNeeded)
+    {
+        *pcbEncoded = bytesNeeded;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        *pbEncoded++ = ASN_OCTETSTRING;
+        CRYPT_EncodeLen(blob->cbData, pbEncoded, &lenBytes);
+        pbEncoded += lenBytes;
+        if (blob->cbData)
+            memcpy(pbEncoded, blob->pbData, blob->cbData);
+    }
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
 BOOL WINAPI WVTAsn1SpcLinkEncode(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
-    FIXME("(0x%08x, %s, %p, %p, %p)\n", dwCertEncodingType,
+    BOOL ret = FALSE;
+
+    TRACE("(0x%08x, %s, %p, %p, %p)\n", dwCertEncodingType,
      debugstr_a(lpszStructType), pvStructInfo, pbEncoded,
      pcbEncoded);
-    return FALSE;
+
+    __TRY
+    {
+        const SPC_LINK *link = (const SPC_LINK *)pvStructInfo;
+        DWORD bytesNeeded, lenBytes;
+
+        switch (link->dwLinkChoice)
+        {
+        case SPC_FILE_LINK_CHOICE:
+        {
+            DWORD fileNameLen, fileNameLenBytes;
+            LPWSTR ptr;
+
+            fileNameLen = lstrlenW(link->u.pwszFile) * sizeof(WCHAR);
+            CRYPT_EncodeLen(fileNameLen, NULL, &fileNameLenBytes);
+            CRYPT_EncodeLen(1 + fileNameLenBytes + fileNameLen, NULL,
+             &lenBytes);
+            bytesNeeded = 2 + lenBytes + fileNameLenBytes + fileNameLen;
+            if (!pbEncoded)
+            {
+                *pcbEncoded = bytesNeeded;
+                ret = TRUE;
+            }
+            else if (*pcbEncoded < bytesNeeded)
+            {
+                SetLastError(ERROR_MORE_DATA);
+                *pcbEncoded = bytesNeeded;
+            }
+            else
+            {
+                *pcbEncoded = bytesNeeded;
+                *pbEncoded++ = ASN_CONSTRUCTOR | ASN_CONTEXT | 2;
+                CRYPT_EncodeLen(1 + fileNameLenBytes + fileNameLen, pbEncoded,
+                 &lenBytes);
+                pbEncoded += lenBytes;
+                *pbEncoded++ = ASN_CONTEXT;
+                CRYPT_EncodeLen(fileNameLen, pbEncoded, &fileNameLenBytes);
+                pbEncoded += fileNameLenBytes;
+                for (ptr = link->u.pwszFile; ptr && *ptr; ptr++)
+                {
+                    *(WCHAR *)pbEncoded = hton16(*ptr);
+                    pbEncoded += sizeof(WCHAR);
+                }
+                ret = TRUE;
+            }
+            break;
+        }
+        case SPC_MONIKER_LINK_CHOICE:
+        {
+            DWORD classIdLenBytes, dataLenBytes, dataLen;
+            CRYPT_DATA_BLOB classId = { sizeof(link->u.Moniker.ClassId),
+             (BYTE *)&link->u.Moniker.ClassId };
+
+            CRYPT_EncodeLen(classId.cbData, NULL, &classIdLenBytes);
+            CRYPT_EncodeLen(link->u.Moniker.SerializedData.cbData, NULL,
+             &dataLenBytes);
+            dataLen = 2 + classIdLenBytes + classId.cbData +
+             dataLenBytes + link->u.Moniker.SerializedData.cbData;
+            CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
+            bytesNeeded = 1 + dataLen + lenBytes;
+            if (!pbEncoded)
+            {
+                *pcbEncoded = bytesNeeded;
+                ret = TRUE;
+            }
+            else if (*pcbEncoded < bytesNeeded)
+            {
+                SetLastError(ERROR_MORE_DATA);
+                *pcbEncoded = bytesNeeded;
+            }
+            else
+            {
+                DWORD size;
+
+                *pcbEncoded = bytesNeeded;
+                *pbEncoded++ = ASN_CONSTRUCTOR | ASN_CONTEXT | 1;
+                CRYPT_EncodeLen(dataLen, pbEncoded, &lenBytes);
+                pbEncoded += lenBytes;
+                size = 1 + classIdLenBytes + classId.cbData;
+                CRYPT_AsnEncodeOctets(X509_ASN_ENCODING, NULL, &classId,
+                 pbEncoded, &size);
+                pbEncoded += size;
+                size = 1 + dataLenBytes + link->u.Moniker.SerializedData.cbData;
+                CRYPT_AsnEncodeOctets(X509_ASN_ENCODING, NULL,
+                 &link->u.Moniker.SerializedData, pbEncoded, &size);
+                pbEncoded += size;
+                ret = TRUE;
+            }
+            break;
+        }
+        case SPC_URL_LINK_CHOICE:
+        {
+            LPWSTR ptr;
+            DWORD urlLen;
+
+            /* Check for invalid characters in URL */
+            ret = TRUE;
+            urlLen = 0;
+            for (ptr = link->u.pwszUrl; ptr && *ptr && ret; ptr++)
+                if (*ptr > 0x7f)
+                {
+                    *pcbEncoded = 0;
+                    SetLastError(CRYPT_E_INVALID_IA5_STRING);
+                    ret = FALSE;
+                }
+                else
+                    urlLen++;
+            if (ret)
+            {
+                CRYPT_EncodeLen(urlLen, NULL, &lenBytes);
+                bytesNeeded = 1 + lenBytes + urlLen;
+                if (!pbEncoded)
+                    *pcbEncoded = bytesNeeded;
+                else if (*pcbEncoded < bytesNeeded)
+                {
+                    SetLastError(ERROR_MORE_DATA);
+                    *pcbEncoded = bytesNeeded;
+                    ret = FALSE;
+                }
+                else
+                {
+                    *pcbEncoded = bytesNeeded;
+                    *pbEncoded++ = ASN_CONTEXT;
+                    CRYPT_EncodeLen(urlLen, pbEncoded, &lenBytes);
+                    pbEncoded += lenBytes;
+                    for (ptr = link->u.pwszUrl; ptr && *ptr; ptr++)
+                        *pbEncoded++ = (BYTE)*ptr;
+                }
+            }
+            break;
+        }
+        default:
+            SetLastError(E_INVALIDARG);
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    TRACE("returning %d\n", ret);
+    return ret;
 }
 
 BOOL WINAPI WVTAsn1SpcPeImageDataEncode(DWORD dwCertEncodingType,
