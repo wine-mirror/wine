@@ -377,9 +377,15 @@ CRYPT_PROVIDER_DATA * WINAPI WTHelperProvDataFromStateData(HANDLE hStateData);
 #define SPC_SP_AGENCY_INFO_OBJID     "1.3.6.1.4.1.311.2.1.10"
 #define SPC_STATEMENT_TYPE_OBJID     "1.3.6.1.4.1.311.2.1.11"
 #define SPC_SP_OPUS_INFO_OBJID       "1.3.6.1.4.1.311.2.1.12"
+#define SPC_CERT_EXTENSIONS_OBJID    "1.3.6.1.4.1.311.2.1.14"
 #define SPC_PE_IMAGE_DATA_OBJID      "1.3.6.1.4.1.311.2.1.15"
+#define SPC_RAW_FILE_DATA_OBJID      "1.3.6.1.4.1.311.2.1.18"
+#define SPC_STRUCTURED_STORAGE_DATA_OBJID "1.3.6.1.4.1.311.2.1.19"
 #define SPC_JAVA_CLASS_DATA_OBJID    "1.3.6.1.4.1.311.2.1.20"
+#define SPC_INDIVIDUAL_SP_KEY_PURPOSE_OBJID "1.3.6.1.4.1.311.2.1.21"
+#define SPC_COMMERCIAL_SP_KEY_PURPOSE_OBJID "1.3.6.1.4.1.311.2.1.22"
 #define SPC_CAB_DATA_OBJID           "1.3.6.1.4.1.311.2.1.25"
+#define SPC_GLUE_RDN_OBJID           "1.3.6.1.4.1.311.2.1.25"
 #define SPC_MINIMAL_CRITERIA_OBJID   "1.3.6.1.4.1.311.2.1.26"
 #define SPC_FINANCIAL_CRITERIA_OBJID "1.3.6.1.4.1.311.2.1.27"
 #define SPC_LINK_OBJID               "1.3.6.1.4.1.311.2.1.28"
@@ -400,6 +406,103 @@ CRYPT_PROVIDER_DATA * WINAPI WTHelperProvDataFromStateData(HANDLE hStateData);
 #define SPC_SIGINFO_STRUCT               ((LPCSTR) 2130)
 #define CAT_NAMEVALUE_STRUCT             ((LPCSTR) 2221)
 #define CAT_MEMBERINFO_STRUCT            ((LPCSTR) 2222)
+
+#define SPC_UUID_LENGTH 16
+typedef BYTE SPC_UUID[SPC_UUID_LENGTH];
+
+typedef struct _SPC_SERIALIZED_OBJECT
+{
+    SPC_UUID        ClassId;
+    CRYPT_DATA_BLOB SerializedData;
+} SPC_SERIALIZED_OBJECT, *PSPC_SERIALIZED_OBJECT;
+
+typedef struct SPC_SIGINFO_
+{
+    DWORD dwSipVersion;
+    GUID  gSIPGuid;
+    DWORD dwReserved1;
+    DWORD dwReserved2;
+    DWORD dwReserved3;
+    DWORD dwReserved4;
+    DWORD dwReserved5;
+} SPC_SIGINFO, *PSPC_SIGINFO;
+
+#define SPC_URL_LINK_CHOICE     1
+#define SPC_MONIKER_LINK_CHOICE 2
+#define SPC_FILE_LINK_CHOICE    3
+
+typedef struct SPC_LINK_
+{
+    DWORD dwLinkChoice;
+    union
+    {
+        LPWSTR                pwszUrl;
+        SPC_SERIALIZED_OBJECT Moniker;
+        LPWSTR                pwszFile;
+    } DUMMYUNIONNAME;
+} SPC_LINK, *PSPC_LINK;
+
+typedef struct _SPC_PE_IMAGE_DATA
+{
+    CRYPT_BIT_BLOB Flags;
+    PSPC_LINK      pFile;
+} SPC_PE_IMAGE_DATA, *PSPC_PE_IMAGE_DATA;
+
+typedef struct _SPC_INDIRECT_DATA_CONTENT
+{
+    CRYPT_ATTRIBUTE_TYPE_VALUE Data;
+    CRYPT_ALGORITHM_IDENTIFIER DigestAlgorithm;
+    CRYPT_HASH_BLOB            Digest;
+} SPC_INDIRECT_DATA_CONTENT, *PSPC_INDIRECT_DATA_CONTENT;
+
+typedef struct _SPC_FINANCIAL_CRITERIA
+{
+    BOOL fFinancialInfoAvailable;
+    BOOL fMeetsCriteria;
+} SPC_FINANCIAL_CRITERIA, *PSPC_FINANCIAL_CRITERIA;
+
+typedef struct _SPC_IMAGE
+{
+    struct SPC_LINK_ *pImageLink;
+    CRYPT_DATA_BLOB   Bitmap;
+    CRYPT_DATA_BLOB   Metafile;
+    CRYPT_DATA_BLOB   EnhancedMetafile;
+    CRYPT_DATA_BLOB   GifFile;
+} SPC_IMAGE, *PSPC_IMAGE;
+
+typedef struct _SPC_SP_AGENCY_INFO
+{
+    struct SPC_LINK_ *pPolicyInformation;
+    LPWSTR            pwszPolicyDisplayText;
+    PSPC_IMAGE        pLogoImage;
+    struct SPC_LINK_ *pLogoLink;
+} SPC_SP_AGENCY_INFO, *PSPC_SP_AGENCY_INFO;
+
+typedef struct _SPC_STATEMENT_TYPE
+{
+    DWORD  cKeyPurposeId;
+    LPSTR *rgpszKeyPurposeId;
+} SPC_STATEMENT_TYPE, *PSPC_STATEMENT_TYPE;
+
+typedef struct _SPC_SP_OPUS_INFO
+{
+    LPCWSTR           pwszProgramName;
+    struct SPC_LINK_ *pMoreInfo;
+    struct SPC_LINK_ *pPublisherInfo;
+} SPC_SP_OPUS_INFO, *PSPC_SP_OPUS_INFO;
+
+typedef struct _CAT_NAMEVALUE
+{
+    LPWSTR          pwszTag;
+    DWORD           fdwFlags;
+    CRYPT_DATA_BLOB Value;
+} CAT_NAMEVALUE, *PCAT_NAMEVALUE;
+
+typedef struct _CAT_MEMBERINFO
+{
+    LPWSTR pwszSubjGuid;
+    DWORD  dwCertVersion;
+} CAT_MEMBERINFO, *PCAT_MEMBERINFO;
 
 #define WIN_SPUB_ACTION_PUBLISHED_SOFTWARE \
      { 0x64b9d180, 0x8da2, 0x11cf, { 0x87,0x36,0x00,0xaa,0x00,0xa4,0x85,0xeb }}
