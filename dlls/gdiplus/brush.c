@@ -85,7 +85,16 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
 
             (*clone)->gdibrush = CreateSolidBrush((*clone)->lb.lbColor);
             break;
+        case BrushTypeTextureFill:
+            *clone = GdipAlloc(sizeof(GpTexture));
+            if(!*clone)    return OutOfMemory;
+
+            memcpy(*clone, brush, sizeof(GpTexture));
+
+            (*clone)->gdibrush = CreateBrushIndirect(&(*clone)->lb);
+            break;
         default:
+            ERR("not implemented for brush type %d\n", brush->bt);
             return NotImplemented;
     }
 
@@ -385,6 +394,7 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
             break;
         case BrushTypeSolidColor:
         case BrushTypeLinearGradient:
+        case BrushTypeTextureFill:
         default:
             break;
     }
