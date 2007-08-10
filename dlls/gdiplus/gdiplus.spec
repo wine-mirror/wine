@@ -618,7 +618,7 @@
 @ stub GdipTranslateRegion
 @ stub GdipTranslateRegionI
 @ stub GdipTranslateTextureTransform
-@ stub GdipTranslateWorldTransform
+@ stdcall GdipTranslateWorldTransform(ptr long long long)
 @ stub GdipVectorTransformMatrixPoints
 @ stub GdipVectorTransformMatrixPointsI
 @ stub GdipWarpPath

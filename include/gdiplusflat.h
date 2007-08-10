@@ -97,6 +97,7 @@ GpStatus WINGDIPAPI GdipSetPageUnit(GpGraphics*,GpUnit);
 GpStatus WINGDIPAPI GdipSetPixelOffsetMode(GpGraphics*,PixelOffsetMode);
 GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics*,SmoothingMode);
 GpStatus WINGDIPAPI GdipSetWorldTransform(GpGraphics*,GpMatrix*);
+GpStatus WINGDIPAPI GdipTranslateWorldTransform(GpGraphics*,REAL,REAL,GpMatrixOrder);
 
 GpStatus WINGDIPAPI GdipCloneBrush(GpBrush*,GpBrush**);
 GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF*,INT,GpWrapMode,

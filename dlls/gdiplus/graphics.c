@@ -1594,3 +1594,12 @@ GpStatus WINGDIPAPI GdipSetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
     GdipDeleteMatrix(graphics->worldtrans);
     return GdipCloneMatrix(matrix, &graphics->worldtrans);
 }
+
+GpStatus WINGDIPAPI GdipTranslateWorldTransform(GpGraphics *graphics, REAL dx,
+    REAL dy, GpMatrixOrder order)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    return GdipTranslateMatrix(graphics->worldtrans, dx, dy, order);
+}
