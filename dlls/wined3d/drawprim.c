@@ -244,13 +244,14 @@ static void drawStridedFast(IWineD3DDevice *iface,UINT numberOfVertices, GLenum 
 #if 1
         glDrawElements(glPrimitiveType, numberOfVertices, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
                      (const char *)idxData+(idxSize * startIdx));
+        checkGLcall("glDrawElements");
 #else /* using drawRangeElements may be faster */
 
         glDrawRangeElements(glPrimitiveType, minIndex, minIndex + numberOfVertices - 1, numberOfVertices,
                       idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
                       (const char *)idxData+(idxSize * startIdx));
-#endif
         checkGLcall("glDrawRangeElements");
+#endif
 
     } else {
 
