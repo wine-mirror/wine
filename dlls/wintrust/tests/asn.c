@@ -147,7 +147,6 @@ static void test_decodeSPCLink(void)
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      emptyURLSPCLink, sizeof(emptyURLSPCLink), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -160,7 +159,6 @@ static void test_decodeSPCLink(void)
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      urlSPCLink, sizeof(urlSPCLink), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -173,7 +171,6 @@ static void test_decodeSPCLink(void)
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      fileSPCLink, sizeof(fileSPCLink), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -186,7 +183,6 @@ static void test_decodeSPCLink(void)
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      emptyMonikerSPCLink, sizeof(emptyMonikerSPCLink), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -195,14 +191,15 @@ static void test_decodeSPCLink(void)
         link = (SPC_LINK *)buf;
         ok(link->dwLinkChoice == SPC_MONIKER_LINK_CHOICE,
          "Expected SPC_MONIKER_LINK_CHOICE, got %d\n", link->dwLinkChoice);
-        ok(!memcmp(&link->Moniker, &emptyMoniker, sizeof(emptyMoniker)),
-         "Unexpected value\n");
+        ok(!memcmp(&link->Moniker.ClassId, &emptyMoniker.ClassId,
+         sizeof(emptyMoniker.ClassId)), "Unexpected value\n");
+        ok(link->Moniker.SerializedData.cbData == 0,
+         "Expected no serialized data\n");
         LocalFree(buf);
     }
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      monikerSPCLink, sizeof(monikerSPCLink), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -224,7 +221,6 @@ static void test_decodeSPCLink(void)
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      badMonikerSPCLink, sizeof(badMonikerSPCLink), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_BAD_ENCODE,
      "Expected CRYPT_E_BAD_ENCODE, got %08x\n", GetLastError());
 }
