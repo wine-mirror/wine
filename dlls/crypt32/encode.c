@@ -3493,6 +3493,8 @@ BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     if (!(pCryptEncodeObjectEx = CRYPT_GetBuiltinEncoder(dwCertEncodingType,
      lpszStructType)))
     {
+        TRACE_(crypt)("OID %s not found or unimplemented, looking for DLL\n",
+         debugstr_a(lpszStructType));
         pCryptEncodeObject = CRYPT_LoadEncoderFunc(dwCertEncodingType,
          lpszStructType, &hFunc);
         if (!pCryptEncodeObject)
@@ -3500,10 +3502,8 @@ BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
              lpszStructType, &hFunc);
     }
     if (pCryptEncodeObject)
-    {
         ret = pCryptEncodeObject(dwCertEncodingType, lpszStructType,
          pvStructInfo, pbEncoded, pcbEncoded);
-    }
     else if (pCryptEncodeObjectEx)
         ret = pCryptEncodeObjectEx(dwCertEncodingType, lpszStructType,
          pvStructInfo, 0, NULL, pbEncoded, pcbEncoded);

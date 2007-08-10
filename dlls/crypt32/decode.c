@@ -4050,8 +4050,6 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         case (WORD)PKCS7_SIGNER_INFO:
             decodeFunc = CRYPT_AsnDecodePKCSSignerInfo;
             break;
-        default:
-            FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
         }
     }
     else if (!strcmp(lpszStructType, szOID_CERT_EXTENSIONS))
@@ -4088,9 +4086,6 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         decodeFunc = CRYPT_AsnDecodeEnhancedKeyUsage;
     else if (!strcmp(lpszStructType, szOID_ISSUING_DIST_POINT))
         decodeFunc = CRYPT_AsnDecodeIssuingDistPoint;
-    else
-        TRACE_(crypt)("OID %s not found or unimplemented\n",
-         debugstr_a(lpszStructType));
     return decodeFunc;
 }
 
@@ -4152,6 +4147,8 @@ BOOL WINAPI CryptDecodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     if (!(pCryptDecodeObjectEx = CRYPT_GetBuiltinDecoder(dwCertEncodingType,
      lpszStructType)))
     {
+        TRACE_(crypt)("OID %s not found or unimplemented, looking for DLL\n",
+         debugstr_a(lpszStructType));
         pCryptDecodeObject = CRYPT_LoadDecoderFunc(dwCertEncodingType,
          lpszStructType, &hFunc);
         if (!pCryptDecodeObject)
@@ -4204,8 +4201,12 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         *(BYTE **)pvStructInfo = NULL;
     decodeFunc = CRYPT_GetBuiltinDecoder(dwCertEncodingType, lpszStructType);
     if (!decodeFunc)
+    {
+        TRACE_(crypt)("OID %s not found or unimplemented, looking for DLL\n",
+         debugstr_a(lpszStructType));
         decodeFunc = CRYPT_LoadDecoderExFunc(dwCertEncodingType, lpszStructType,
          &hFunc);
+    }
     if (decodeFunc)
         ret = decodeFunc(dwCertEncodingType, lpszStructType, pbEncoded,
          cbEncoded, dwFlags, pDecodePara, pvStructInfo, pcbStructInfo);
