@@ -43,6 +43,7 @@ static HRESULT (WINAPI *pTranslateInfString)(LPCSTR,LPCSTR,LPCSTR,LPCSTR,LPSTR,D
 static HRESULT (WINAPI *pTranslateInfStringEx)(HINF,PCSTR,PCSTR,PCSTR,PSTR,DWORD,PDWORD,PVOID);
 
 static CHAR inf_file[MAX_PATH];
+static CHAR PROG_FILES_ROOT[MAX_PATH];
 static CHAR PROG_FILES[MAX_PATH];
 static DWORD PROG_FILES_LEN;
 
@@ -52,9 +53,10 @@ static void get_progfiles_dir(void)
     DWORD size = MAX_PATH;
 
     RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion", &hkey);
-    RegQueryValueExA(hkey, "ProgramFilesDir", NULL, NULL, (LPBYTE)PROG_FILES, &size);
+    RegQueryValueExA(hkey, "ProgramFilesDir", NULL, NULL, (LPBYTE)PROG_FILES_ROOT, &size);
     RegCloseKey(hkey);
 
+    lstrcpyA(PROG_FILES, PROG_FILES_ROOT);
     lstrcatA(PROG_FILES, TEST_STRING1);
     PROG_FILES_LEN = lstrlenA(PROG_FILES) + 1;
 }
@@ -198,6 +200,9 @@ static void create_inf_file(void)
     append_str(&ptr, "Signature=\"$Chicago$\"\n");
     append_str(&ptr, "[CustInstDestSection]\n");
     append_str(&ptr, "49001=ProgramFilesDir\n");
+    append_str(&ptr, "49010=DestA,1\n");
+    append_str(&ptr, "49020=DestB\n");
+    append_str(&ptr, "49030=DestC\n");
     append_str(&ptr, "[ProgramFilesDir]\n");
     append_str(&ptr, "HKLM,\"Software\\Microsoft\\Windows\\CurrentVersion\",");
     append_str(&ptr, "\"ProgramFilesDir\",,\"%%24%%\\%%LProgramF%%\"\n");
@@ -207,10 +212,20 @@ static void create_inf_file(void)
     append_str(&ptr, "[Options.NTx86]\n");
     append_str(&ptr, "49001=ProgramFilesDir\n");
     append_str(&ptr, "InstallDir=%%49001%%\\%%DefaultAppPath%%\n");
+    append_str(&ptr, "Result1=%%49010%%\n");
+    append_str(&ptr, "Result2=%%49020%%\n");
+    append_str(&ptr, "Result3=%%49030%%\n");
     append_str(&ptr, "CustomHDestination=CustInstDestSection\n");
     append_str(&ptr, "[Strings]\n");
     append_str(&ptr, "DefaultAppPath=\"Application Name\"\n");
     append_str(&ptr, "LProgramF=\"Program Files\"\n");
+    append_str(&ptr, "[DestA]\n");
+    append_str(&ptr, "HKLM,\"Software\\Garbage\",\"ProgramFilesDir\",,'%%24%%\\%%LProgramF%%'\n");
+    append_str(&ptr, "[DestB]\n");
+    append_str(&ptr, "'HKLM','Software\\Microsoft\\Windows\\CurrentVersion',");
+    append_str(&ptr, "'ProgramFilesDir',,\"%%24%%\"\n");
+    append_str(&ptr, "[DestC]\n");
+    append_str(&ptr, "HKLM,\"Software\\Garbage\",\"ProgramFilesDir\",,'%%24%%'\n");
 
     WriteFile(hf, data, ptr - data, &dwNumberOfBytesWritten, NULL);
     CloseHandle(hf);
@@ -396,6 +411,48 @@ static void translateinfstringex_test(void)
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!strcmp(buffer, PROG_FILES), "Expected %s, got %s\n", PROG_FILES, buffer);
     ok(size == PROG_FILES_LEN, "Expected size %d, got %d\n", PROG_FILES_LEN, size);
+
+    /* Single quote test (Note size includes null on return from call) */
+    memset(buffer, 'a', PROG_FILES_LEN);
+    buffer[PROG_FILES_LEN - 1] = '\0';
+    size = MAX_PATH;
+    hr = pTranslateInfStringEx(hinf, inf_file, "Options.NTx86", "Result1",
+                              buffer, size, &size, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    todo_wine {  /* Wine returns C:\\Program Files, not C:\Program Files */
+      ok(!lstrcmpi(buffer, PROG_FILES_ROOT),
+             "Expected %s, got %s\n", PROG_FILES_ROOT, buffer);
+      ok(size == lstrlenA(PROG_FILES_ROOT)+1, "Expected size %d, got %d\n",
+             lstrlenA(PROG_FILES_ROOT)+1, size);
+    }
+
+    memset(buffer, 'a', PROG_FILES_LEN);
+    buffer[PROG_FILES_LEN - 1] = '\0';
+    size = MAX_PATH;
+    hr = pTranslateInfStringEx(hinf, inf_file, "Options.NTx86", "Result2",
+                              buffer, size, &size, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(!lstrcmpi(buffer, PROG_FILES_ROOT),
+           "Expected %s, got %s\n", PROG_FILES_ROOT, buffer);
+    ok(size == lstrlenA(PROG_FILES_ROOT)+1, "Expected size %d, got %d\n",
+           lstrlenA(PROG_FILES_ROOT)+1, size);
+
+    {
+        char drive[MAX_PATH];
+        lstrcpy(drive, PROG_FILES_ROOT);
+        drive[3] = 0x00; /* Just keep the system drive plus '\' */
+
+        memset(buffer, 'a', PROG_FILES_LEN);
+        buffer[PROG_FILES_LEN - 1] = '\0';
+        size = MAX_PATH;
+        hr = pTranslateInfStringEx(hinf, inf_file, "Options.NTx86", "Result3",
+                                  buffer, size, &size, NULL);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok(!lstrcmpi(buffer, drive),
+               "Expected %s, got %s\n", drive, buffer);
+        ok(size == lstrlenA(drive)+1, "Expected size %d, got %d\n",
+               lstrlenA(drive)+1, size);
+    }
 
     /* close the INF again */
     hr = pCloseINFEngine(hinf);
