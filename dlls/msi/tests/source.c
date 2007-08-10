@@ -30,6 +30,21 @@
 
 #include "wine/test.h"
 
+static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
+
+static UINT (WINAPI *pMsiSourceListGetInfoA)
+    (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, LPSTR, LPDWORD);
+
+static void init_functionpointers(void)
+{
+    HMODULE hmsi = GetModuleHandleA("msi.dll");
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+
+    pMsiSourceListGetInfoA = (void*)GetProcAddress(hmsi, "MsiSourceListGetInfoA");
+
+    pConvertSidToStringSidA = (void*)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
+}
+
 /* copied from dlls/msi/registry.c */
 static BOOL squash_guid(LPCWSTR in, LPWSTR out)
 {
@@ -93,7 +108,7 @@ static void get_user_sid(LPSTR *usersid)
     size = sizeof(buf);
     GetTokenInformation(token, TokenUser, (void *)buf, size, &size);
     user = (PTOKEN_USER)buf;
-    ConvertSidToStringSid(user->User.Sid, usersid);
+    pConvertSidToStringSidA(user->User.Sid, usersid);
 }
 
 static void test_MsiSourceListGetInfo(void)
@@ -113,82 +128,82 @@ static void test_MsiSourceListGetInfo(void)
     get_user_sid(&usersid);
 
     /* NULL szProductCodeOrPatchCode */
-    r = MsiSourceListGetInfoA(NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* empty szProductCodeOrPatchCode */
-    r = MsiSourceListGetInfoA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* garbage szProductCodeOrPatchCode */
-    r = MsiSourceListGetInfoA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /*  szProductCodeOrPatchCode */
-    r = MsiSourceListGetInfoA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* guid without brackets */
-    r = MsiSourceListGetInfoA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* guid with brackets */
-    r = MsiSourceListGetInfoA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
 
     /* same length as guid, but random */
-    r = MsiSourceListGetInfoA("ADKD-2KSDFF2-DKK1KNFJASD9GLKWME-1I3KAD", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA("ADKD-2KSDFF2-DKK1KNFJASD9GLKWME-1I3KAD", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* invalid context */
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_NONE,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_NONE,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* another invalid context */
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_ALLUSERMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_ALLUSERMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* yet another invalid context */
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_ALL,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_ALL,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* mix two valid contexts */
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED | MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED | MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* invalid option */
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               4, INSTALLPROPERTY_PACKAGENAME, NULL, NULL);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
 
     /* NULL property */
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, NULL, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* empty property */
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, "", NULL, NULL);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
 
     /* value is non-NULL while size is NULL */
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, value, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* size is non-NULL while value is NULL */
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
 
@@ -199,7 +214,7 @@ static void test_MsiSourceListGetInfo(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* user product key exists */
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
 
@@ -208,7 +223,7 @@ static void test_MsiSourceListGetInfo(void)
 
     /* SourceList key exists */
     size = 0xdeadbeef;
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(size == 0, "Expected 0, got %d\n", size);
@@ -219,14 +234,14 @@ static void test_MsiSourceListGetInfo(void)
 
     /* PackageName value exists */
     size = 0xdeadbeef;
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(size == 11, "Expected 11, got %d\n", size);
 
     /* read the value, don't change size */
     lstrcpyA(value, "aaa");
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, value, &size);
     ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(!lstrcmpA(value, "aaa"), "Expected 'aaa', got %s\n", value);
@@ -234,7 +249,7 @@ static void test_MsiSourceListGetInfo(void)
 
     /* read the value, fix size */
     size++;
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, value, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(value, "msitest.msi"), "Expected 'msitest.msi', got %s\n", value);
@@ -242,14 +257,14 @@ static void test_MsiSourceListGetInfo(void)
 
     /* empty property now that product key exists */
     size = 0xdeadbeef;
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, "", NULL, &size);
     ok(r == ERROR_UNKNOWN_PROPERTY, "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
     /* nonexistent property now that product key exists */
     size = 0xdeadbeef;
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, "nonexistent", NULL, &size);
     ok(r == ERROR_UNKNOWN_PROPERTY, "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
@@ -260,14 +275,14 @@ static void test_MsiSourceListGetInfo(void)
 
     /* nonexistent property now that nonexistent value exists */
     size = 0xdeadbeef;
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, "nonexistent", NULL, &size);
     ok(r == ERROR_UNKNOWN_PROPERTY, "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
     /* invalid option now that product key exists */
     size = 0xdeadbeef;
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               4, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(size == 11, "Expected 11, got %d\n", size);
@@ -281,7 +296,7 @@ static void test_MsiSourceListGetInfo(void)
 
     /* try a patch */
     size = 0xdeadbeef;
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PATCH, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_UNKNOWN_PATCH, "Expected ERROR_UNKNOWN_PATCH, got %d\n", r);
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
@@ -296,7 +311,7 @@ static void test_MsiSourceListGetInfo(void)
      * NOTE: using prodcode guid, but it really doesn't matter
      */
     size = 0xdeadbeef;
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PATCH, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
@@ -306,7 +321,7 @@ static void test_MsiSourceListGetInfo(void)
 
     /* SourceList key exists */
     size = 0xdeadbeef;
-    r = MsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PATCH, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(size == 0, "Expected 0, got %d\n", size);
@@ -319,5 +334,7 @@ static void test_MsiSourceListGetInfo(void)
 
 START_TEST(source)
 {
+    init_functionpointers();
+
     test_MsiSourceListGetInfo();
 }

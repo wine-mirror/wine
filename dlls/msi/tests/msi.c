@@ -31,16 +31,35 @@ typedef struct test_MSIFILEHASHINFO {
     ULONG dwData[4];
 } test_MSIFILEHASHINFO, *test_PMSIFILEHASHINFO;
 
-typedef INSTALLSTATE (WINAPI *fnMsiUseFeatureExA)(LPCSTR, LPCSTR ,DWORD, DWORD );
-fnMsiUseFeatureExA pMsiUseFeatureExA;
-typedef UINT (WINAPI *fnMsiOpenPackageExA)(LPCSTR, DWORD, MSIHANDLE*);
-fnMsiOpenPackageExA pMsiOpenPackageExA;
-typedef UINT (WINAPI *fnMsiOpenPackageExW)(LPCWSTR, DWORD, MSIHANDLE*);
-fnMsiOpenPackageExW pMsiOpenPackageExW;
-typedef INSTALLSTATE (WINAPI *fnMsiGetComponentPathA)(LPCSTR, LPCSTR, LPSTR, DWORD*);
-fnMsiGetComponentPathA pMsiGetComponentPathA;
-typedef UINT (WINAPI *fnMsiGetFileHashA)(LPCSTR, DWORD, test_PMSIFILEHASHINFO);
-fnMsiGetFileHashA pMsiGetFileHashA;
+static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
+
+static INSTALLSTATE (WINAPI *pMsiGetComponentPathA)
+    (LPCSTR, LPCSTR, LPSTR, DWORD*);
+static UINT (WINAPI *pMsiGetFileHashA)
+    (LPCSTR, DWORD, test_PMSIFILEHASHINFO);
+static UINT (WINAPI *pMsiOpenPackageExA)
+    (LPCSTR, DWORD, MSIHANDLE*);
+static UINT (WINAPI *pMsiOpenPackageExW)
+    (LPCWSTR, DWORD, MSIHANDLE*);
+static UINT (WINAPI *pMsiQueryComponentStateA)
+    (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, LPCSTR, INSTALLSTATE*);
+static INSTALLSTATE (WINAPI *pMsiUseFeatureExA)
+    (LPCSTR, LPCSTR ,DWORD, DWORD );
+
+static void init_functionpointers(void)
+{
+    HMODULE hmsi = GetModuleHandleA("msi.dll");
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+
+    pMsiGetComponentPathA = (void*)GetProcAddress(hmsi, "MsiGetComponentPathA");
+    pMsiGetFileHashA = (void*)GetProcAddress(hmsi, "MsiGetFileHashA");
+    pMsiOpenPackageExA = (void*)GetProcAddress(hmsi, "MsiOpenPackageExA");
+    pMsiOpenPackageExW = (void*)GetProcAddress(hmsi, "MsiOpenPackageExW");
+    pMsiQueryComponentStateA = (void*)GetProcAddress(hmsi, "MsiQueryComponentStateA");
+    pMsiUseFeatureExA = (void*)GetProcAddress(hmsi, "MsiUseFeatureExA");
+
+    pConvertSidToStringSidA = (void*)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
+}
 
 static void test_usefeature(void)
 {
@@ -324,7 +343,7 @@ static void get_user_sid(LPSTR *usersid)
     size = sizeof(buf);
     GetTokenInformation(token, TokenUser, (void *)buf, size, &size);
     user = (PTOKEN_USER)buf;
-    ConvertSidToStringSid(user->User.Sid, usersid);
+    pConvertSidToStringSidA(user->User.Sid, usersid);
 }
 
 static void test_MsiQueryProductState(void)
@@ -664,42 +683,42 @@ static void test_MsiQueryComponentState(void)
 
     /* NULL szProductCode */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(NULL, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA(NULL, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
     /* empty szProductCode */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA("", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);\
+    r = pMsiQueryComponentStateA("", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);\
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
     /* random szProductCode */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA("random", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA("random", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
     /* GUID-length szProductCode */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA("DJANE93KNDNAS-2KN2NR93KMN3LN13=L1N3KDE", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA("DJANE93KNDNAS-2KN2NR93KMN3LN13=L1N3KDE", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
     /* GUID-length with brackets */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA("{JANE93KNDNAS-2KN2NR93KMN3LN13=L1N3KD}", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA("{JANE93KNDNAS-2KN2NR93KMN3LN13=L1N3KD}", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
     /* actual GUID */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
@@ -710,7 +729,7 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
@@ -727,7 +746,7 @@ static void test_MsiQueryComponentState(void)
 
     /* local system product key exists */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
@@ -736,7 +755,7 @@ static void test_MsiQueryComponentState(void)
 
     /* LocalPackage value exists */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
@@ -748,7 +767,7 @@ static void test_MsiQueryComponentState(void)
 
     /* component key exists */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
@@ -757,7 +776,7 @@ static void test_MsiQueryComponentState(void)
 
     /* component\product exists */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_NOTUSED, "Expected INSTALLSTATE_NOTUSED, got %d\n", state);
 
@@ -765,7 +784,7 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
@@ -779,7 +798,7 @@ static void test_MsiQueryComponentState(void)
     /* MSIINSTALLCONTEXT_USERUNMANAGED */
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
@@ -790,7 +809,7 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
@@ -812,7 +831,7 @@ static void test_MsiQueryComponentState(void)
     RegCloseKey(prodkey);
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
@@ -826,7 +845,7 @@ static void test_MsiQueryComponentState(void)
 
     /* component key exists */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
@@ -835,7 +854,7 @@ static void test_MsiQueryComponentState(void)
 
     /* component\product exists */
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_NOTUSED, "Expected INSTALLSTATE_NOTUSED, got %d\n", state);
 
@@ -843,14 +862,14 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     /* MSIINSTALLCONTEXT_USERMANAGED */
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
@@ -861,7 +880,7 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
 
@@ -877,7 +896,7 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
@@ -897,7 +916,7 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = 0xdeadbeef;
-    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
@@ -912,17 +931,7 @@ static void test_MsiQueryComponentState(void)
 
 START_TEST(msi)
 {
-    HMODULE hmod = GetModuleHandle("msi.dll");
-    pMsiUseFeatureExA = (fnMsiUseFeatureExA) 
-        GetProcAddress(hmod, "MsiUseFeatureExA");
-    pMsiOpenPackageExA = (fnMsiOpenPackageExA) 
-        GetProcAddress(hmod, "MsiOpenPackageExA");
-    pMsiOpenPackageExW = (fnMsiOpenPackageExW) 
-        GetProcAddress(hmod, "MsiOpenPackageExW");
-    pMsiGetComponentPathA = (fnMsiGetComponentPathA)
-        GetProcAddress(hmod, "MsiGetComponentPathA" );
-    pMsiGetFileHashA = (fnMsiGetFileHashA)
-        GetProcAddress(hmod, "MsiGetFileHashA" );
+    init_functionpointers();
 
     test_usefeature();
     test_null();
