@@ -3003,7 +3003,8 @@ static BOOL glxRequireExtension(const char *requiredExtension)
 
 static void register_extension_string(const char *ext)
 {
-    strcat(WineGLInfo.wglExtensions, " ");
+    if (WineGLInfo.wglExtensions[0])
+        strcat(WineGLInfo.wglExtensions, " ");
     strcat(WineGLInfo.wglExtensions, ext);
 
     TRACE("'%s'\n", ext);
@@ -3016,10 +3017,7 @@ static BOOL register_extension(const WineGLExtension * ext)
     assert( WineGLExtensionListSize < MAX_EXTENSIONS );
     WineGLExtensionList[WineGLExtensionListSize++] = ext;
 
-    strcat(WineGLInfo.wglExtensions, " ");
-    strcat(WineGLInfo.wglExtensions, ext->extName);
-
-    TRACE("'%s'\n", ext->extName);
+    register_extension_string(ext->extName);
 
     for (i = 0; ext->extEntryPoints[i].funcName; ++i)
         TRACE("    - '%s'\n", ext->extEntryPoints[i].funcName);
