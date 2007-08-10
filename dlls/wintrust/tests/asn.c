@@ -217,8 +217,232 @@ static void test_decodeSPCLink(void)
      "Expected CRYPT_E_BAD_ENCODE, got %08x\n", GetLastError());
 }
 
+static const BYTE emptySequence[] = { 0x30,0x00 };
+static BYTE flags[] = { 1 };
+static const BYTE onlyFlagsPEImage[] = { 0x30,0x04,0x03,0x02,0x00,0x01 };
+static const BYTE moreFlagsPEImage[] = {
+0x30,0x06,0x03,0x04,0x04,0xff,0x80,0x10 };
+static const BYTE onlyEmptyFilePEImage[] = {
+0x30,0x06,0xa0,0x04,0xa2,0x02,0x80,0x00 };
+static const BYTE flagsAndEmptyFilePEImage[] = {
+0x30,0x0a,0x03,0x02,0x00,0x01,0xa0,0x04,0xa2,0x02,0x80,0x00 };
+static const BYTE flagsAndFilePEImage[] = {
+0x30,0x1c,0x03,0x02,0x00,0x01,0xa0,0x16,0xa2,0x14,0x80,0x12,0x00,0x68,0x00,
+0x74,0x00,0x74,0x00,0x70,0x00,0x3a,0x00,0x2f,0x00,0x2f,0x22,0x6f,0x57,0x5b };
+
+static void test_encodeSPCPEImage(void)
+{
+    BOOL ret;
+    DWORD size = 0;
+    LPBYTE buf;
+    SPC_PE_IMAGE_DATA imageData = { { 0 } };
+    SPC_LINK link = { 0 };
+
+    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(emptySequence), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, emptySequence, sizeof(emptySequence)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* With an invalid link: */
+    imageData.pFile = &link;
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(!ret && GetLastError () == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    /* With just unused bits field set: */
+    imageData.pFile = NULL;
+    imageData.Flags.cUnusedBits = 1;
+    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(emptySequence), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, emptySequence, sizeof(emptySequence)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* With flags set: */
+    imageData.Flags.cUnusedBits = 0;
+    imageData.Flags.pbData = flags;
+    imageData.Flags.cbData = sizeof(flags);
+    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(onlyFlagsPEImage), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, onlyFlagsPEImage, sizeof(onlyFlagsPEImage)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* With just an empty file: */
+    imageData.Flags.cbData = 0;
+    link.dwLinkChoice = SPC_FILE_LINK_CHOICE;
+    imageData.pFile = &link;
+    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(onlyEmptyFilePEImage), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, onlyEmptyFilePEImage, sizeof(onlyEmptyFilePEImage)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* With flags and an empty file: */
+    imageData.Flags.pbData = flags;
+    imageData.Flags.cbData = sizeof(flags);
+    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(flagsAndEmptyFilePEImage), "Unexpected size %d\n",
+         size);
+        ok(!memcmp(buf, flagsAndEmptyFilePEImage,
+         sizeof(flagsAndEmptyFilePEImage)), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Finally, a non-empty file: */
+    link.pwszFile = (LPWSTR)nihongoURL;
+    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(flagsAndFilePEImage), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, flagsAndFilePEImage, sizeof(flagsAndFilePEImage)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void test_decodeSPCPEImage(void)
+{
+    static const WCHAR emptyString[] = { 0 };
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+    SPC_PE_IMAGE_DATA *imageData;
+
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     emptySequence, sizeof(emptySequence),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        imageData = (SPC_PE_IMAGE_DATA *)buf;
+        ok(imageData->Flags.cbData == 0, "Expected empty flags, got %d\n",
+         imageData->Flags.cbData);
+        ok(imageData->pFile == NULL, "Expected no file\n");
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     onlyFlagsPEImage, sizeof(onlyFlagsPEImage),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        imageData = (SPC_PE_IMAGE_DATA *)buf;
+        ok(imageData->Flags.cbData == sizeof(flags),
+         "Unexpected flags size %d\n", imageData->Flags.cbData);
+        if (imageData->Flags.cbData)
+            ok(!memcmp(imageData->Flags.pbData, flags, sizeof(flags)),
+             "Unexpected flags\n");
+        ok(imageData->pFile == NULL, "Expected no file\n");
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     onlyEmptyFilePEImage, sizeof(onlyEmptyFilePEImage),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        imageData = (SPC_PE_IMAGE_DATA *)buf;
+        ok(imageData->Flags.cbData == 0, "Expected empty flags, got %d\n",
+         imageData->Flags.cbData);
+        ok(imageData->pFile != NULL, "Expected a file\n");
+        if (imageData->pFile)
+        {
+            ok(imageData->pFile->dwLinkChoice == SPC_FILE_LINK_CHOICE,
+             "Expected SPC_FILE_LINK_CHOICE, got %d\n",
+             imageData->pFile->dwLinkChoice);
+            ok(!lstrcmpW(imageData->pFile->pwszFile, emptyString),
+             "Unexpected file\n");
+        }
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     flagsAndEmptyFilePEImage, sizeof(flagsAndEmptyFilePEImage),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        imageData = (SPC_PE_IMAGE_DATA *)buf;
+        ok(imageData->Flags.cbData == sizeof(flags),
+         "Unexpected flags size %d\n", imageData->Flags.cbData);
+        if (imageData->Flags.cbData)
+            ok(!memcmp(imageData->Flags.pbData, flags, sizeof(flags)),
+             "Unexpected flags\n");
+        ok(imageData->pFile != NULL, "Expected a file\n");
+        if (imageData->pFile)
+        {
+            ok(imageData->pFile->dwLinkChoice == SPC_FILE_LINK_CHOICE,
+             "Expected SPC_FILE_LINK_CHOICE, got %d\n",
+             imageData->pFile->dwLinkChoice);
+            ok(!lstrcmpW(imageData->pFile->pwszFile, emptyString),
+             "Unexpected file\n");
+        }
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+     flagsAndFilePEImage, sizeof(flagsAndFilePEImage),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        imageData = (SPC_PE_IMAGE_DATA *)buf;
+        ok(imageData->Flags.cbData == sizeof(flags),
+         "Unexpected flags size %d\n", imageData->Flags.cbData);
+        if (imageData->Flags.cbData)
+            ok(!memcmp(imageData->Flags.pbData, flags, sizeof(flags)),
+             "Unexpected flags\n");
+        ok(imageData->pFile != NULL, "Expected a file\n");
+        if (imageData->pFile)
+        {
+            ok(imageData->pFile->dwLinkChoice == SPC_FILE_LINK_CHOICE,
+             "Expected SPC_FILE_LINK_CHOICE, got %d\n",
+             imageData->pFile->dwLinkChoice);
+            ok(!lstrcmpW(imageData->pFile->pwszFile, nihongoURL),
+             "Unexpected file\n");
+        }
+        LocalFree(buf);
+    }
+}
+
 START_TEST(asn)
 {
     test_encodeSPCLink();
     test_decodeSPCLink();
+    test_encodeSPCPEImage();
+    test_decodeSPCPEImage();
 }
