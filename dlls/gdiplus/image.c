@@ -142,15 +142,19 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     stride = (stride + 3) & ~3;
 
     buff = GdipAlloc(stride * abs_height);
-    if(!buff)   return OutOfMemory;
 
     bmi.bmiHeader.biBitCount = bitspp;
-    GetDIBits(hdc, (HBITMAP)hbm, 0, abs_height, buff, &bmi, DIB_RGB_COLORS);
+
+    if(buff)
+        GetDIBits(hdc, (HBITMAP)hbm, 0, abs_height, buff, &bmi, DIB_RGB_COLORS);
 
     if(!bm_is_selected){
         SelectObject(hdc, old);
         DeleteDC(hdc);
     }
+
+    if(!buff)
+        return OutOfMemory;
 
     lockeddata->Width = rect->Width;
     lockeddata->Height = rect->Height;
