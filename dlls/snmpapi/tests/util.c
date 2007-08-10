@@ -23,7 +23,6 @@
 #include <windef.h>
 #include <snmp.h>
 
-static HMODULE hSnmpapi = 0;
 static INT  (WINAPI *pSnmpUtilAsnAnyCpy)(AsnAny*, AsnAny*);
 static VOID (WINAPI *pSnmpUtilAsnAnyFree)(AsnAny*);
 static INT  (WINAPI *pSnmpUtilOctetsCmp)(AsnOctetString*, AsnOctetString*);
@@ -33,14 +32,21 @@ static INT  (WINAPI *pSnmpUtilOctetsNCmp)(AsnOctetString*, AsnOctetString*, UINT
 
 static void InitFunctionPtrs(void)
 {
-    hSnmpapi = GetModuleHandle("snmpapi.dll");
+    HMODULE hSnmpapi = GetModuleHandle("snmpapi.dll");
 
-    pSnmpUtilAsnAnyCpy = (void*)GetProcAddress(hSnmpapi, "SnmpUtilAsnAnyCpy");
-    pSnmpUtilAsnAnyFree = (void*)GetProcAddress(hSnmpapi, "SnmpUtilAsnAnyFree");
-    pSnmpUtilOctetsCmp = (void*)GetProcAddress(hSnmpapi, "SnmpUtilOctetsCmp");
-    pSnmpUtilOctetsCpy = (void*)GetProcAddress(hSnmpapi, "SnmpUtilOctetsCpy");
-    pSnmpUtilOctetsFree = (void*)GetProcAddress(hSnmpapi, "SnmpUtilOctetsFree");
-    pSnmpUtilOctetsNCmp = (void*)GetProcAddress(hSnmpapi, "SnmpUtilOctetsNCmp");
+#define SNMPAPI_GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(hSnmpapi, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
+
+    SNMPAPI_GET_PROC(SnmpUtilAsnAnyCpy)
+    SNMPAPI_GET_PROC(SnmpUtilAsnAnyFree)
+    SNMPAPI_GET_PROC(SnmpUtilOctetsCmp)
+    SNMPAPI_GET_PROC(SnmpUtilOctetsCpy)
+    SNMPAPI_GET_PROC(SnmpUtilOctetsFree)
+    SNMPAPI_GET_PROC(SnmpUtilOctetsNCmp)
+
+#undef SNMPAPI_GET_PROC
 }
 
 static void test_SnmpUtilOidToA(void)
