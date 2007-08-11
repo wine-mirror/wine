@@ -2209,15 +2209,19 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     {
         if (proc->procW)
             call_window_proc( hwnd, msg, wParam, lParam, result, proc->procW );
-        else
+        else if (proc->procA)
             WINPROC_CallProcWtoA( call_window_proc, hwnd, msg, wParam, lParam, result, proc->procA );
+        else
+            WINPROC_CallProcWtoA( call_window_proc_Ato16, hwnd, msg, wParam, lParam, result, proc->proc16 );
     }
     else
     {
         if (proc->procA)
             call_window_proc( hwnd, msg, wParam, lParam, result, proc->procA );
-        else
+        else if (proc->procW)
             WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, result, proc->procW, mapping );
+        else
+            WINPROC_CallProc32ATo16( call_window_proc16, hwnd, msg, wParam, lParam, result, proc->proc16 );
     }
     return TRUE;
 }
