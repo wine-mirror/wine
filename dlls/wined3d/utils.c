@@ -2486,8 +2486,16 @@ BOOL getColorBits(WINED3DFORMAT fmt, short *redSize, short *greenSize, short *bl
     TRACE("fmt: %s\n", debug_d3dformat(fmt));
     switch(fmt)
     {
-        case WINED3DFMT_R5G6B5:
         case WINED3DFMT_X8R8G8B8:
+        case WINED3DFMT_R8G8B8:
+        case WINED3DFMT_A8R8G8B8:
+        case WINED3DFMT_A2R10G10B10:
+        case WINED3DFMT_X1R5G5B5:
+        case WINED3DFMT_A1R5G5B5:
+        case WINED3DFMT_R5G6B5:
+        case WINED3DFMT_R3G3B2:
+        case WINED3DFMT_A8P8:
+        case WINED3DFMT_P8:
             break;
         default:
             ERR("Unsupported format: %s\n", debug_d3dformat(fmt));
