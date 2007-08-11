@@ -453,6 +453,59 @@ static const CHAR amp_component_dat[] = "Component\tComponentId\tDirectory_\tAtt
                                         "Component\tComponent\n"
                                         "augustus\t\tMSITESTDIR\t0\tMYPROP=2718\taugustus\n";
 
+static const CHAR rem_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "hydrogen\t{C844BD1E-1907-4C00-8BC9-150BD70DF0A1}\tMSITESTDIR\t0\t\thydrogen\n"
+                                        "helium\t{5AD3C142-CEF8-490D-B569-784D80670685}\tMSITESTDIR\t1\t\thelium\n"
+                                        "lithium\t\tMSITESTDIR\t2\t\tlithium\n";
+
+static const CHAR rem_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "feature\thydrogen\n"
+                                           "feature\thelium\n"
+                                           "feature\tlithium";
+
+static const CHAR rem_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "hydrogen\thydrogen\thydrogen\t0\t\t\t8192\t1\n"
+                                   "helium\thelium\thelium\t0\t\t\t8192\t1\n"
+                                   "lithium\tlithium\tlithium\t0\t\t\t8192\t1";
+
+static const CHAR rem_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                               "s72\tS255\tI2\n"
+                                               "InstallExecuteSequence\tAction\n"
+                                               "ValidateProductID\t\t700\n"
+                                               "CostInitialize\t\t800\n"
+                                               "FileCost\t\t900\n"
+                                               "CostFinalize\t\t1000\n"
+                                               "InstallValidate\t\t1400\n"
+                                               "InstallInitialize\t\t1500\n"
+                                               "ProcessComponents\t\t1600\n"
+                                               "UnpublishFeatures\t\t1800\n"
+                                               "RemoveFiles\t\t3500\n"
+                                               "InstallFiles\t\t4000\n"
+                                               "RegisterUser\t\t6000\n"
+                                               "RegisterProduct\t\t6100\n"
+                                               "PublishFeatures\t\t6300\n"
+                                               "PublishProduct\t\t6400\n"
+                                               "InstallFinalize\t\t6600";
+
+static const CHAR rem_remove_files_dat[] = "FileKey\tComponent_\tFileName\tDirProperty\tInstallMode\n"
+                                           "s72\ts72\tS255\ts72\tI2\n"
+                                           "RemoveFile\tFileKey\n"
+                                           "furlong\thydrogen\tfurlong\tMSITESTDIR\t1\n"
+                                           "firkin\thelium\tfirkin\tMSITESTDIR\t1\n"
+                                           "fortnight\tlithium\tfortnight\tMSITESTDIR\t1\n"
+                                           "becquerel\thydrogen\tbecquerel\tMSITESTDIR\t2\n"
+                                           "dioptre\thelium\tdioptre\tMSITESTDIR\t2\n"
+                                           "attoparsec\tlithium\tattoparsec\tMSITESTDIR\t2\n"
+                                           "storeys\thydrogen\tstoreys\tMSITESTDIR\t3\n"
+                                           "block\thelium\tblock\tMSITESTDIR\t3\n"
+                                           "siriometer\tlithium\tsiriometer\tMSITESTDIR\t3\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -687,6 +740,19 @@ static const msi_table amp_tables[] =
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
+};
+
+static const msi_table rem_tables[] =
+{
+    ADD_TABLE(rem_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rem_feature_comp),
+    ADD_TABLE(rem_file),
+    ADD_TABLE(rem_install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+    ADD_TABLE(rem_remove_files),
 };
 
 /* cabinet definitions */
@@ -2670,6 +2736,135 @@ static void test_adminprops(void)
     RemoveDirectory("msitest");
 }
 
+static void create_pf(LPCSTR file, BOOL is_file)
+{
+    CHAR path[MAX_PATH];
+
+    lstrcpyA(path, PROG_FILES_DIR);
+    lstrcatA(path, "\\");
+    lstrcatA(path, file);
+
+    if (is_file)
+        create_file(path, 500);
+    else
+        CreateDirectoryA(path, NULL);
+}
+
+static void test_removefiles(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\hydrogen", 500);
+    create_file("msitest\\helium", 500);
+    create_file("msitest\\lithium", 500);
+
+    create_database(msifile, rem_tables, sizeof(rem_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
+    ok(!pf_exists("msitest\\helium"), "File installed\n");
+    ok(pf_exists("msitest\\lithium"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!pf_exists("msitest\\helium"), "File not deleted\n");
+    ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
+    todo_wine
+    {
+        ok(!pf_exists("msitest\\hydrogen"), "File not deleted\n");
+        ok(delete_pf("msitest", FALSE), "File deleted\n");
+    }
+
+    create_pf("msitest", FALSE);
+    create_pf("msitest\\hydrogen", TRUE);
+    create_pf("msitest\\helium", TRUE);
+    create_pf("msitest\\lithium", TRUE);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
+    ok(pf_exists("msitest\\helium"), "File not installed\n");
+    ok(pf_exists("msitest\\lithium"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\helium", TRUE), "File deleted\n");
+    ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
+    todo_wine
+    {
+        ok(!pf_exists("msitest\\hydrogen"), "File not deleted\n");
+        ok(delete_pf("msitest", FALSE), "File deleted\n");
+    }
+
+    create_pf("msitest", FALSE);
+    create_pf("msitest\\furlong", TRUE);
+    create_pf("msitest\\firkin", TRUE);
+    create_pf("msitest\\fortnight", TRUE);
+    create_pf("msitest\\becquerel", TRUE);
+    create_pf("msitest\\dioptre", TRUE);
+    create_pf("msitest\\attoparsec", TRUE);
+    create_pf("msitest\\storeys", TRUE);
+    create_pf("msitest\\block", TRUE);
+    create_pf("msitest\\siriometer", TRUE);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
+    ok(!pf_exists("msitest\\helium"), "File installed\n");
+    ok(pf_exists("msitest\\lithium"), "File not installed\n");
+    ok(pf_exists("msitest\\becquerel"), "File not installed\n");
+    ok(pf_exists("msitest\\dioptre"), "File not installed\n");
+    ok(pf_exists("msitest\\attoparsec"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+    todo_wine
+    {
+        ok(!pf_exists("msitest\\firkin"), "File not deleted\n");
+        ok(!pf_exists("msitest\\fortnight"), "File not deleted\n");
+        ok(!pf_exists("msitest\\furlong"), "File not deleted\n");
+        ok(!pf_exists("msitest\\storeys"), "File not deleted\n");
+        ok(!pf_exists("msitest\\block"), "File not deleted\n");
+        ok(!pf_exists("msitest\\siriometer"), "File not deleted\n");
+    }
+
+    create_pf("msitest\\furlong", TRUE);
+    create_pf("msitest\\firkin", TRUE);
+    create_pf("msitest\\fortnight", TRUE);
+    create_pf("msitest\\storeys", TRUE);
+    create_pf("msitest\\block", TRUE);
+    create_pf("msitest\\siriometer", TRUE);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!delete_pf("msitest\\helium", TRUE), "File not deleted\n");
+    ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
+    ok(delete_pf("msitest\\furlong", TRUE), "File deleted\n");
+    ok(delete_pf("msitest\\firkin", TRUE), "File deleted\n");
+    ok(delete_pf("msitest\\fortnight", TRUE), "File deleted\n");
+    ok(delete_pf("msitest\\attoparsec", TRUE), "File deleted\n");
+    ok(delete_pf("msitest\\siriometer", TRUE), "File deleted\n");
+    todo_wine
+    {
+        ok(!delete_pf("msitest\\hydrogen", TRUE), "File not deleted\n");
+        ok(!delete_pf("msitest\\becquerel", TRUE), "File not deleted\n");
+        ok(!delete_pf("msitest\\dioptre", TRUE), "File not deleted\n");
+        ok(!delete_pf("msitest\\storeys", TRUE), "File not deleted\n");
+        ok(!delete_pf("msitest\\block", TRUE), "File not deleted\n");
+    }
+    ok(delete_pf("msitest", FALSE), "File deleted\n");
+
+    DeleteFile(msifile);
+    DeleteFile("msitest\\hydrogen");
+    DeleteFile("msitest\\helium");
+    DeleteFile("msitest\\lithium");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -2708,6 +2903,7 @@ START_TEST(install)
     test_currentworkingdir();
     test_admin();
     test_adminprops();
+    test_removefiles();
 
     SetCurrentDirectoryA(prev_path);
 }
