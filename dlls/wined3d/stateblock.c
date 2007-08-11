@@ -249,8 +249,6 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 
         /* type 0 represents the primary stateblock, so free all the resources */
         if (This->blockType == WINED3DSBT_INIT) {
-            FIXME("Releasing primary stateblock\n");
-
             /* NOTE: according to MSDN: The application is responsible for making sure the texture references are cleared down */
             for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++) {
                 if (This->textures[counter]) {
