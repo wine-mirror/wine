@@ -1623,9 +1623,18 @@ static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT 
       dstRowOffset = -dstDib.dsBm.bmWidthBytes;
     }
 
+    /* Handle overlapping regions on the same DIB */
+    if (physDevSrc == physDevDst && ySrc < yDst)
+    {
+      srcPtr += srcRowOffset * (height - 1);
+      srcRowOffset = -srcRowOffset;
+      dstPtr += dstRowOffset * (height - 1);
+      dstRowOffset = -dstRowOffset;
+    }
+
     for (y = yDst; y < yDst + height; ++y)
     {
-      memcpy(dstPtr, srcPtr, bytesToCopy);
+      memmove(dstPtr, srcPtr, bytesToCopy);
       srcPtr += srcRowOffset;
       dstPtr += dstRowOffset;
     }
