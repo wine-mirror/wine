@@ -208,6 +208,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         short red, green, blue, alpha;
         short colorBits;
         short depthBits, stencilBits;
+        int res;
 
         hdc = GetDC(win_handle);
         if(hdc == NULL) {
@@ -249,7 +250,20 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         }
 
         DescribePixelFormat(hdc, iPixelFormat, sizeof(pfd), &pfd);
-        SetPixelFormat(hdc, iPixelFormat, NULL);
+        res = SetPixelFormat(hdc, iPixelFormat, NULL);
+        if(!res) {
+            int oldPixelFormat = GetPixelFormat(hdc);
+
+            if(oldPixelFormat) {
+                /* OpenGL doesn't allow pixel format adjustments. Print an error and continue using the old format.
+                 * There's a big chance that the old format works although with a performance hit and perhaps rendering errors. */
+                ERR("HDC=%p is already set to iPixelFormat=%d and OpenGL doesn't allow changes!\n", hdc, oldPixelFormat);
+            }
+            else {
+                ERR("SetPixelFormat failed on HDC=%p for iPixelFormat=%d\n", hdc, iPixelFormat);
+                return FALSE;
+            }
+        }
     }
 
     ctx = wglCreateContext(hdc);
