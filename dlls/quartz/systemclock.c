@@ -244,14 +244,11 @@ static HRESULT WINAPI SystemClockImpl_GetTime(IReferenceClock* iface, REFERENCE_
   curTimeTickCount = GetTickCount();
 
   EnterCriticalSection(&This->safe);
-  /** TODO: safe this not using * 10000 */
+  if (This->lastTimeTickCount == curTimeTickCount) hr = S_FALSE;
   This->lastRefTime += (REFERENCE_TIME) (DWORD) (curTimeTickCount - This->lastTimeTickCount) * (REFERENCE_TIME) 10000;
   This->lastTimeTickCount = curTimeTickCount;
-  LeaveCriticalSection(&This->safe);
-
   *pTime = This->lastRefTime;
-  if (This->lastTimeTickCount == curTimeTickCount) hr = S_FALSE;
-  This->lastTimeTickCount = curTimeTickCount;
+  LeaveCriticalSection(&This->safe);
   return hr;
 }
 

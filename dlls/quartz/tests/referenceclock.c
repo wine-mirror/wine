@@ -63,9 +63,7 @@ static void test_IReferenceClock_methods(const char * clockdesc, IReferenceClock
     Sleep(1000); /* Sleep for at least 1 second */
     hr = IReferenceClock_GetTime(pClock, &time2);
     /* After a 1-second sleep, there is no excuse to get S_FALSE (see TODO above) */
-    todo_wine {
     ok (hr == S_OK, "%s - Expected S_OK, got 0x%08x\n", clockdesc, hr);
-    }
 
     /* FIXME: How much deviation should be allowed after a sleep? */
     diff = time2 - time1;
