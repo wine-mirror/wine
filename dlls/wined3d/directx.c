@@ -1691,7 +1691,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         case WINED3DFMT_A4R4G4B4:
         case WINED3DFMT_R3G3B2:
         case WINED3DFMT_A8:
-        case WINED3DFMT_A8R3G3B2:
         case WINED3DFMT_X4R4G4B4:
         case WINED3DFMT_A8B8G8R8:
         case WINED3DFMT_X8B8G8R8:
@@ -1762,6 +1761,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             /* Not supported */
         case WINED3DFMT_G16R16:
         case WINED3DFMT_A16B16G16R16:
+        case WINED3DFMT_A8R3G3B2:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return WINED3DERR_NOTAVAILABLE;
 
