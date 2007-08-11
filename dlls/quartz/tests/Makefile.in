@@ -8,7 +8,8 @@ EXTRALIBS = -lstrmiids
 
 CTESTS = \
 	filtergraph.c \
-	memallocator.c
+	memallocator.c \
+	referenceclock.c
 
 @MAKE_TEST_RULES@
 
