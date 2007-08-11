@@ -32,26 +32,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
-typedef enum {
-    NO_CONVERSION,
-    CONVERT_PALETTED,
-    CONVERT_PALETTED_CK,
-    CONVERT_CK_565,
-    CONVERT_CK_5551,
-    CONVERT_CK_4444,
-    CONVERT_CK_4444_ARGB,
-    CONVERT_CK_1555,
-    CONVERT_555,
-    CONVERT_CK_RGB24,
-    CONVERT_CK_8888,
-    CONVERT_CK_8888_ARGB,
-    CONVERT_RGB32_888,
-    CONVERT_V8U8,
-    CONVERT_X8L8V8U8,
-    CONVERT_Q8W8V8U8,
-    CONVERT_V16U16
-} CONVERT_TYPES;
-
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
 
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
@@ -1484,7 +1464,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
    IWineD3DSurface Internal (No mapping to directx api) parts follow
    ****************************************************** */
 
-static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode) {
+HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode) {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
     const GlPixelFormatDesc *glDesc;
     getFormatDescEntry(This->resource.format, &GLINFO_LOCATION, &glDesc);
@@ -1613,6 +1593,18 @@ static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BO
             /* What should I do here about GL_ATI_envmap_bumpmap?
              * Convert it or allow data loss by loading it into a 8 bit / channel texture?
              */
+            break;
+
+        case WINED3DFMT_A4L4:
+            /* A4L4 exists as an internal gl format, but for some reason there is not
+             * format+type combination to load it. Thus convert it to A8L8, then load it
+             * with A4L4 internal, but A8L8 format+type
+             */
+            *convert = CONVERT_A4L4;
+            *format = GL_LUMINANCE_ALPHA;
+            *internal = GL_LUMINANCE4_ALPHA4;
+            *type = GL_UNSIGNED_BYTE;
+            *target_bpp = 2;
             break;
 
         default:
@@ -1801,6 +1793,23 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
             break;
         }
 
+        case CONVERT_A4L4:
+        {
+            unsigned int x, y;
+            unsigned char *Source;
+            unsigned char *Dest;
+            for(y = 0; y < height; y++) {
+                Source = (unsigned char *) (src + y * pitch);
+                Dest = (unsigned char *) (dst + y * outpitch);
+                for (x = 0; x < width; x++ ) {
+                    unsigned char color = (*Source++);
+                    /* A */ Dest[1] = (color & 0xf0) << 0;
+                    /* L */ Dest[0] = (color & 0x0f) << 4;
+                    Dest += 2;
+                }
+            }
+            break;
+        }
         default:
             ERR("Unsupported conversation type %d\n", convert);
     }

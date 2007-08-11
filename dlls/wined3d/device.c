@@ -5153,6 +5153,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     int offset    = 0;
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
     glDescriptor *glDescription = NULL;
+    GLenum dummy;
+    int bpp;
+    CONVERT_TYPES convert = NO_CONVERSION;
 
     WINED3DSURFACE_DESC  winedesc;
 
@@ -5176,6 +5179,19 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     if(srcPool != WINED3DPOOL_SYSTEMMEM  || destPool != WINED3DPOOL_DEFAULT){
         WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n", pSourceSurface, pDestinationSurface);
         return WINED3DERR_INVALIDCALL;
+    }
+
+    /* This call loads the opengl surface directly, instead of copying the surface to the
+     * destination's sysmem copy. If surface conversion is needed, use BltFast instead to
+     * copy in sysmem and use regular surface loading.
+     */
+    d3dfmt_get_conv((IWineD3DSurfaceImpl *) pDestinationSurface, FALSE, TRUE,
+                    &dummy, &dummy, &dummy, &convert, &bpp, FALSE);
+    if(convert != NO_CONVERSION) {
+        return IWineD3DSurface_BltFast(pDestinationSurface,
+                                        pDestPoint  ? pDestPoint->x : 0,
+                                        pDestPoint  ? pDestPoint->y : 0,
+                                        pSourceSurface, (RECT *) pSourceRect, 0);
     }
 
     if (destFormat == WINED3DFMT_UNKNOWN) {

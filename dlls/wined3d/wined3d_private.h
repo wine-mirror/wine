@@ -1220,6 +1220,29 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DCl
 
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]);
 
+typedef enum {
+    NO_CONVERSION,
+    CONVERT_PALETTED,
+    CONVERT_PALETTED_CK,
+    CONVERT_CK_565,
+    CONVERT_CK_5551,
+    CONVERT_CK_4444,
+    CONVERT_CK_4444_ARGB,
+    CONVERT_CK_1555,
+    CONVERT_555,
+    CONVERT_CK_RGB24,
+    CONVERT_CK_8888,
+    CONVERT_CK_8888_ARGB,
+    CONVERT_RGB32_888,
+    CONVERT_V8U8,
+    CONVERT_X8L8V8U8,
+    CONVERT_Q8W8V8U8,
+    CONVERT_V16U16,
+    CONVERT_A4L4
+} CONVERT_TYPES;
+
+HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode);
+
 /*****************************************************************************
  * IWineD3DVertexDeclaration implementation structure
  */
