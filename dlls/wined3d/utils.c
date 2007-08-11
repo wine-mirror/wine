@@ -96,8 +96,8 @@ static const StaticPixelFormatDesc formats[] = {
     {WINED3DFMT_D24S8       ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,24     ,8          ,FALSE },
     {WINED3DFMT_D24X8       ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,24     ,0          ,FALSE },
     {WINED3DFMT_D24X4S4     ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,24     ,4          ,FALSE },
-    {WINED3DFMT_D16         ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,16     ,0          ,FALSE },
-    {WINED3DFMT_L16         ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,FALSE },
+    {WINED3DFMT_D16         ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,16     ,0          ,FALSE },
+    {WINED3DFMT_L16         ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,16      ,0          ,FALSE },
     {WINED3DFMT_D32F_LOCKABLE,0x0       ,0x0        ,0x0        ,0x0        ,4      ,32     ,0          ,FALSE },
     {WINED3DFMT_D24FS8      ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,24     ,8          ,FALSE },
     /* Is this a vertex buffer? */
