@@ -205,7 +205,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
             IWineD3DSurface_UnlockRect(This->backBuffer[0]);
 
             DestroyContext(This->wineD3DDevice, This->context[0]);
-            This->context[0] = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer, This->win_handle, FALSE /* pbuffer */);
+            This->context[0] = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer, This->win_handle, FALSE /* pbuffer */, &This->presentParms);
 
             IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_DISCARD);
             memcpy(r.pBits, mem, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
@@ -537,7 +537,7 @@ WineD3DContext *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *
     TRACE("Creating a new context for swapchain %p, thread %d\n", This, GetCurrentThreadId());
 
     ctx = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer,
-                        This->context[0]->win_handle, FALSE /* pbuffer */);
+                        This->context[0]->win_handle, FALSE /* pbuffer */, &This->presentParms);
     if(!ctx) {
         ERR("Failed to create a new context for the swapchain\n");
         return NULL;

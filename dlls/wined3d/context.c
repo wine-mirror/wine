@@ -119,9 +119,10 @@ static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, HWND win_hand
  *  target: Surface this context will render to
  *  win_handle: handle to the window which we are drawing to
  *  create_pbuffer: tells whether to create a pbuffer or not
+ *  pPresentParameters: contains the pixelformats to use for onscreen rendering
  *
  *****************************************************************************/
-WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win_handle, BOOL create_pbuffer) {
+WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win_handle, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms) {
     HDC oldDrawable, hdc;
     HPBUFFERARB pbuffer = NULL;
     HGLRC ctx = NULL, oldCtx;
@@ -222,18 +223,23 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         pfd.dwFlags    = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;/*PFD_GENERIC_ACCELERATED*/
         pfd.iPixelType = PFD_TYPE_RGBA;
         pfd.cColorBits = 32;
-        pfd.cDepthBits = 24;
-        pfd.cStencilBits = 8;
+        pfd.cDepthBits = 0;
+        pfd.cStencilBits = 0;
         pfd.iLayerType = PFD_MAIN_PLANE;
 
         /* Try to match the colorBits of the d3d format */
         if(getColorBits(target->resource.format, &red, &green, &blue, &alpha, &colorBits))
             pfd.cColorBits = colorBits;
 
-        /* TODO: get the depth/stencil format from auto depth stencil format */
-        if(getDepthStencilBits(WINED3DFMT_D24S8, &depthBits, &stencilBits)) {
-            pfd.cDepthBits = depthBits;
-            pfd.cStencilBits = stencilBits;
+        /* Retrieve the depth stencil format from the present parameters.
+         * The choice of the proper format can give a nice performance boost
+         * in case of GPU limited programs. */
+        if(pPresentParms->EnableAutoDepthStencil) {
+            TRACE("pPresentParms->EnableAutoDepthStencil=enabled; using AutoDepthStencilFormat=%s\n", debug_d3dformat(pPresentParms->AutoDepthStencilFormat));
+            if(getDepthStencilBits(pPresentParms->AutoDepthStencilFormat, &depthBits, &stencilBits)) {
+                pfd.cDepthBits = depthBits;
+                pfd.cStencilBits = stencilBits;
+            }
         }
 
         iPixelFormat = ChoosePixelFormat(hdc, &pfd);
@@ -696,7 +702,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
                      */
                     This->pbufferContext = CreateContext(This, targetimpl,
                             ((IWineD3DSwapChainImpl *) This->swapchains[0])->context[0]->win_handle,
-                            TRUE /* pbuffer */);
+                            TRUE /* pbuffer */, &((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms);
                     This->pbufferWidth = targetimpl->currentDesc.Width;
                     This->pbufferHeight = targetimpl->currentDesc.Height;
                    }
