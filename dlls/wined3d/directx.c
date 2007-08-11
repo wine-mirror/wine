@@ -1308,129 +1308,50 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
     return WINED3D_OK;
 }
 
-static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(int iPixelFormat, WINED3DFORMAT Format) {
-#if 0 /* This code performs a strict test between the format and the current X11  buffer depth, which may give the best performance */
-  int gl_test;
-  int rb, gb, bb, ab, type, buf_sz;
+static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_PixelFormat *cfg, WINED3DFORMAT Format) {
+    short redSize, greenSize, blueSize, alphaSize, colorBits;
 
-  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_RED_SIZE,   &rb);
-  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_GREEN_SIZE, &gb);
-  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_BLUE_SIZE,  &bb);
-  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_ALPHA_SIZE, &ab);
-  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_RENDER_TYPE, &type);
-  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_BUFFER_SIZE, &buf_sz);
+    if(!cfg)
+        return FALSE;
 
-  switch (Format) {
-  case WINED3DFMT_X8R8G8B8:
-  case WINED3DFMT_R8G8B8:
-    if (8 == rb && 8 == gb && 8 == bb) return TRUE;
-    break;
-  case WINED3DFMT_A8R8G8B8:
-    if (8 == rb && 8 == gb && 8 == bb && 8 == ab) return TRUE;
-    break;
-  case WINED3DFMT_A2R10G10B10:
-    if (10 == rb && 10 == gb && 10 == bb && 2 == ab) return TRUE;
-    break;
-  case WINED3DFMT_X1R5G5B5:
-    if (5 == rb && 5 == gb && 5 == bb) return TRUE;
-    break;
-  case WINED3DFMT_A1R5G5B5:
-    if (5 == rb && 5 == gb && 5 == bb && 1 == ab) return TRUE;
-    break;
-  case WINED3DFMT_X4R4G4B4:
-    if (16 == buf_sz && 4 == rb && 4 == gb && 4 == bb) return TRUE;
-    break;
-  case WINED3DFMT_R5G6B5:
-    if (5 == rb && 6 == gb && 5 == bb) return TRUE;
-    break;
-  case WINED3DFMT_R3G3B2:
-    if (3 == rb && 3 == gb && 2 == bb) return TRUE;
-    break;
-  case WINED3DFMT_A8P8:
-    if (type & GLX_COLOR_INDEX_BIT && 8 == buf_sz && 8 == ab) return TRUE;
-    break;
-  case WINED3DFMT_P8:
-    if (type & GLX_COLOR_INDEX_BIT && 8 == buf_sz) return TRUE;
-    break;
-  default:
-    break;
-  }
-  return FALSE;
-#else /* Most of the time performance is less of an issue than compatibility, this code allows for most common opengl/d3d formats */
-switch (Format) {
-  case WINED3DFMT_X8R8G8B8:
-  case WINED3DFMT_R8G8B8:
-  case WINED3DFMT_A8R8G8B8:
-  case WINED3DFMT_A2R10G10B10:
-  case WINED3DFMT_X1R5G5B5:
-  case WINED3DFMT_A1R5G5B5:
-  case WINED3DFMT_R5G6B5:
-  case WINED3DFMT_R3G3B2:
-  case WINED3DFMT_A8P8:
-  case WINED3DFMT_P8:
-return TRUE;
-  default:
-    break;
-  }
-return FALSE;
-#endif
+    if(!getColorBits(Format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits)) {
+        ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(Format));
+        return FALSE;
+    }
+
+    if(cfg->redSize < redSize)
+        return FALSE;
+
+    if(cfg->greenSize < greenSize)
+        return FALSE;
+
+    if(cfg->blueSize < blueSize)
+        return FALSE;
+
+    if(cfg->alphaSize < alphaSize)
+        return FALSE;
+
+    return TRUE;
 }
 
-static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(int iPixelFormat, WINED3DFORMAT Format) {
-#if 0/* This code performs a strict test between the format and the current X11  buffer depth, which may give the best performance */
-  int gl_test;
-  int db, sb;
+static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_PixelFormat *cfg, WINED3DFORMAT Format) {
+    short depthSize, stencilSize;
 
-  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_DEPTH_SIZE, &db);
-  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_STENCIL_SIZE, &sb);
+    if(!cfg)
+        return FALSE;
 
-  switch (Format) {
-  case WINED3DFMT_D16:
-  case WINED3DFMT_D16_LOCKABLE:
-    if (16 == db) return TRUE;
-    break;
-  case WINED3DFMT_D32:
-    if (32 == db) return TRUE;
-    break;
-  case WINED3DFMT_D15S1:
-    if (15 == db) return TRUE;
-    break;
-  case WINED3DFMT_D24S8:
-    if (24 == db && 8 == sb) return TRUE;
-    break;
-  case WINED3DFMT_D24FS8:
-    if (24 == db && 8 == sb) return TRUE;
-    break;
-  case WINED3DFMT_D24X8:
-    if (24 == db) return TRUE;
-    break;
-  case WINED3DFMT_D24X4S4:
-    if (24 == db && 4 == sb) return TRUE;
-    break;
-  case WINED3DFMT_D32F_LOCKABLE:
-    if (32 == db) return TRUE;
-    break;
-  default:
-    break;
-  }
-  return FALSE;
-#else /* Most of the time performance is less of an issue than compatibility, this code allows for most common opengl/d3d formats */
-  switch (Format) {
-  case WINED3DFMT_D16:
-  case WINED3DFMT_D16_LOCKABLE:
-  case WINED3DFMT_D32:
-  case WINED3DFMT_D15S1:
-  case WINED3DFMT_D24S8:
-  case WINED3DFMT_D24FS8:
-  case WINED3DFMT_D24X8:
-  case WINED3DFMT_D24X4S4:
-  case WINED3DFMT_D32F_LOCKABLE:
+    if(!getDepthStencilBits(Format, &depthSize, &stencilSize)) {
+        ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(Format));
+        return FALSE;
+    }
+
+    if(cfg->depthSize < depthSize)
+        return FALSE;
+
+    if(cfg->stencilSize < stencilSize)
+        return FALSE;
+
     return TRUE;
-  default:
-    break;
-  }
-  return FALSE;
-#endif
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
@@ -1438,6 +1359,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
                                                    WINED3DFORMAT RenderTargetFormat,
                                                    WINED3DFORMAT DepthStencilFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    int nCfgs;
+    WineD3D_PixelFormat *cfgs;
     int it;
 
     WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n",
@@ -1452,9 +1375,11 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
-    for (it = 0; it < Adapters[Adapter].nCfgs; ++it) {
-        if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(it, RenderTargetFormat)) {
-            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(it, DepthStencilFormat)) {
+    cfgs = Adapters[Adapter].cfgs;
+    nCfgs = Adapters[Adapter].nCfgs;
+    for (it = 0; it < nCfgs; ++it) {
+        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&cfgs[it], RenderTargetFormat)) {
+            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&cfgs[it], DepthStencilFormat)) {
                 TRACE_(d3d_caps)("(%p) : Formats matched\n", This);
                 return WINED3D_OK;
             }
@@ -1502,6 +1427,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     int nCfgs = 0;
+    WineD3D_PixelFormat *cfgs;
     int it;
     HRESULT hr = WINED3DERR_NOTAVAILABLE;
 
@@ -1518,21 +1444,18 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* TODO: Store in adapter structure */
-    if (WineD3D_CreateFakeGLContext()) {
-        nCfgs = DescribePixelFormat(wined3d_fake_gl_context_hdc, 0, 0, NULL);
-        for (it = 0; it < nCfgs; ++it) {
-            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(it, DisplayFormat)) {
-                hr = WINED3D_OK;
-                TRACE_(d3d_caps)("OK\n");
-                break ;
-            }
+    cfgs = Adapters[Adapter].cfgs;
+    nCfgs = Adapters[Adapter].nCfgs;
+    for (it = 0; it < nCfgs; ++it) {
+        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&cfgs[it], DisplayFormat)) {
+            hr = WINED3D_OK;
+            TRACE_(d3d_caps)("OK\n");
+            break ;
         }
-
-        if(hr != WINED3D_OK)
-            ERR("unsupported format %s\n", debug_d3dformat(DisplayFormat));
-        WineD3D_ReleaseFakeGLContext();
     }
+
+    if(hr != WINED3D_OK)
+        ERR("unsupported format %s\n", debug_d3dformat(DisplayFormat));
 
     if(hr != WINED3D_OK)
         TRACE_(d3d_caps)("returning something different from WINED3D_OK\n");
@@ -2541,6 +2464,7 @@ ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
     return IUnknown_Release(volumeParent);
 }
 
+#define PUSH1(att)        attribs[nAttribs++] = (att);
 #define GLINFO_LOCATION (Adapters[0].gl_info)
 BOOL InitAdapters(void) {
     BOOL ret;
@@ -2576,8 +2500,43 @@ BOOL InitAdapters(void) {
         Adapters[0].description = "Direct3D HAL";
 
         if (WineD3D_CreateFakeGLContext()) {
+            int iPixelFormat;
+            int attribs[8];
+            int values[8];
+            int nAttribs = 0;
+            int res;
+            WineD3D_PixelFormat *cfgs;
+
             attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
             GL_EXTCALL(wglGetPixelFormatAttribivARB(wined3d_fake_gl_context_hdc, 0, 0, 1, &attribute, &Adapters[0].nCfgs));
+
+            Adapters[0].cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Adapters[0].nCfgs *sizeof(WineD3D_PixelFormat));
+            cfgs = Adapters[0].cfgs;
+            PUSH1(WGL_RED_BITS_ARB)
+            PUSH1(WGL_GREEN_BITS_ARB)
+            PUSH1(WGL_BLUE_BITS_ARB)
+            PUSH1(WGL_ALPHA_BITS_ARB)
+            PUSH1(WGL_DEPTH_BITS_ARB)
+            PUSH1(WGL_STENCIL_BITS_ARB)
+
+            for(iPixelFormat=1; iPixelFormat<=Adapters[0].nCfgs; iPixelFormat++) {
+                res = GL_EXTCALL(wglGetPixelFormatAttribivARB(wined3d_fake_gl_context_hdc, iPixelFormat, 0, nAttribs, attribs, values));
+
+                if(!res)
+                    continue;
+
+                /* Cache the pixel format */
+                cfgs->iPixelFormat = iPixelFormat;
+                cfgs->redSize = values[0];
+                cfgs->greenSize = values[1];
+                cfgs->blueSize = values[2];
+                cfgs->alphaSize = values[3];
+                cfgs->depthSize = values[4];
+                cfgs->stencilSize = values[5];
+
+                TRACE("iPixelFormat=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d\n", cfgs->iPixelFormat, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize);
+                cfgs++;
+            }
             WineD3D_ReleaseFakeGLContext();
         }
 
@@ -2590,6 +2549,7 @@ BOOL InitAdapters(void) {
 
     return TRUE;
 }
+#undef PUSH1
 #undef GLINFO_LOCATION
 
 /**********************************************************

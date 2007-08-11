@@ -573,6 +573,13 @@ struct PLIGHTINFOEL {
 /* The default light parameters */
 extern const WINED3DLIGHT WINED3D_default_light;
 
+typedef struct WineD3D_PixelFormat
+{
+    int iPixelFormat; /* WGL pixel format */
+    int redSize, greenSize, blueSize, alphaSize;
+    int depthSize, stencilSize;
+} WineD3D_PixelFormat;
+
 /* The adapter structure */
 typedef struct GLPixelFormatDesc GLPixelFormatDesc;
 struct WineD3DAdapter
@@ -582,6 +589,7 @@ struct WineD3DAdapter
     const char              *driver;
     const char              *description;
     int                     nCfgs;
+    WineD3D_PixelFormat     *cfgs;
 };
 
 extern BOOL InitAdapters(void);
