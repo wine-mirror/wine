@@ -47,10 +47,10 @@ int ME_GetTextLength(ME_TextEditor *editor)
 }
 
 
-int ME_GetTextLengthEx(ME_TextEditor *editor, GETTEXTLENGTHEX *how)
+int ME_GetTextLengthEx(ME_TextEditor *editor, const GETTEXTLENGTHEX *how)
 {
   int length;
-  
+
   if (how->flags & GTL_PRECISE && how->flags & GTL_CLOSE)
     return E_INVALIDARG;
   if (how->flags & GTL_NUMCHARS && how->flags & GTL_NUMBYTES)
@@ -1148,8 +1148,8 @@ static int ME_GetSelCursor(ME_TextEditor *editor, int dir)
   else
     return 1;
 }
-      
-BOOL ME_UpdateSelection(ME_TextEditor *editor, ME_Cursor *pTempCursor)
+
+BOOL ME_UpdateSelection(ME_TextEditor *editor, const ME_Cursor *pTempCursor)
 {
   ME_Cursor old_anchor = editor->pCursors[1];
   

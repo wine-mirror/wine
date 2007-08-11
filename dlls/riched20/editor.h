@@ -206,9 +206,9 @@ void ME_InsertGraphicsFromCursor(ME_TextEditor *editor, int nCursor);
 void ME_InsertTableCellFromCursor(ME_TextEditor *editor, int nCursor);
 void ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars);
 int ME_GetTextLength(ME_TextEditor *editor);
-int ME_GetTextLengthEx(ME_TextEditor *editor, GETTEXTLENGTHEX *how);
+int ME_GetTextLengthEx(ME_TextEditor *editor, const GETTEXTLENGTHEX *how);
 ME_Style *ME_GetSelectionInsertStyle(ME_TextEditor *editor);
-BOOL ME_UpdateSelection(ME_TextEditor *editor, ME_Cursor *pTempCursor);
+BOOL ME_UpdateSelection(ME_TextEditor *editor, const ME_Cursor *pTempCursor);
 
 /* wrap.c */
 void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp);
@@ -285,4 +285,4 @@ LRESULT ME_StreamOutRange(ME_TextEditor *editor, DWORD dwFormat, int nStart, int
 LRESULT ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream);
 
 /* clipboard.c */
-HRESULT ME_GetDataObject(ME_TextEditor *editor, CHARRANGE *lpchrg, LPDATAOBJECT *lplpdataobj);
+HRESULT ME_GetDataObject(ME_TextEditor *editor, const CHARRANGE *lpchrg, LPDATAOBJECT *lplpdataobj);

@@ -782,7 +782,7 @@ ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int
 
 
 static int
-ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, const WCHAR *text, CHARRANGE *chrgText)
+ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCHAR *text, CHARRANGE *chrgText)
 {
   const int nLen = lstrlenW(text);
   const int nTextLen = ME_GetTextLength(editor);
