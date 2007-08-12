@@ -1945,13 +1945,25 @@ static nsresult NSAPI nsIOService_GetProtocolFlags(nsIIOService *iface, const ch
     return nsIIOService_GetProtocolFlags(nsio, aScheme, _retval);
 }
 
+static BOOL is_gecko_special_uri(const char *spec)
+{
+    static const char chromeW[] = "chrome:";
+    static const char jarW[] = "jar:";
+    static const char resourceW[] = "resource:";
+    static const char javascriptW[] = "javascript:";
+
+    return !strncasecmp(spec, chromeW,     sizeof(chromeW)-1)
+        || !strncasecmp(spec, resourceW,   sizeof(resourceW)-1)
+        || !strncasecmp(spec, jarW,        sizeof(jarW)-1)
+        || !strncasecmp(spec, javascriptW, sizeof(javascriptW)-1);
+}
+
 static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *aSpec,
         const char *aOriginCharset, nsIURI *aBaseURI, nsIURI **_retval)
 {
     const char *spec = NULL;
     NSContainer *nscontainer = NULL;
     nsIURI *uri = NULL;
-    PRBool is_javascript = FALSE;
     LPCWSTR base_wine_url = NULL;
     nsIWineURI *base_wine_uri = NULL, *wine_uri;
     nsresult nsres;
@@ -1961,12 +1973,12 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     TRACE("(%p(%s) %s %p %p)\n", aSpec, debugstr_a(spec), debugstr_a(aOriginCharset),
           aBaseURI, _retval);
 
+    if(is_gecko_special_uri(spec))
+        return nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, _retval);
+
     if(aBaseURI) {
         nsACString base_uri_str;
         const char *base_uri = NULL;
-
-        static const char szChrome[] = "chrome:";
-        static const char szResource[] = "resource:";
 
         nsACString_Init(&base_uri_str, NULL);
 
@@ -1979,24 +1991,11 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         }
 
         nsACString_Finish(&base_uri_str);
-
-        if(!strncmp(spec, szChrome, sizeof(szChrome)-1)
-           || !strncmp(spec, szResource, sizeof(szResource)-1))
-            aBaseURI = NULL;
     }
 
     nsres = nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, &uri);
     if(NS_FAILED(nsres))
         TRACE("NewURI failed: %08x\n", nsres);
-
-    if(uri) {
-        nsIURI_SchemeIs(uri, "javascript", &is_javascript);
-        if(is_javascript) {
-            TRACE("returning javascript uri: %p\n", uri);
-            *_retval = uri;
-            return NS_OK;
-        }
-    }
 
     if(aBaseURI) {
         nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsIWineURI, (void**)&base_wine_uri);
