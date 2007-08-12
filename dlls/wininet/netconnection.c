@@ -572,10 +572,10 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
  */
 BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *available)
 {
+    *available = 0;
     if (!NETCON_connected(connection))
         return FALSE;
 
-    *available = 0;
 #ifdef SONAME_LIBSSL
     if (connection->peek_msg) *available = connection->peek_len;
 #endif

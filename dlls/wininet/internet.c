@@ -3314,48 +3314,38 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
     switch (lpwhr->hdr.htype)
     {
     case WH_HHTTPREQ:
+        retval = TRUE;
         if (NETCON_query_data_available(&lpwhr->netConnection,
-                                        lpdwNumberOfBytesAvailble))
+                                        lpdwNumberOfBytesAvailble) &&
+            !*lpdwNumberOfBytesAvailble)
         {
-            retval = TRUE;
-            if (!*lpdwNumberOfBytesAvailble)
+            /* Even if we are in async mode, we need to determine whether
+             * there is actually more data available. We do this by trying
+             * to peek only a single byte in async mode. */
+            BOOL async = (lpwhr->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC);
+            if (NETCON_recv(&lpwhr->netConnection, buffer,
+                            min(async ? 1 : sizeof(buffer),
+                                lpwhr->dwContentLength - lpwhr->dwContentRead),
+                            MSG_PEEK, (int *)lpdwNumberOfBytesAvailble) &&
+                async && *lpdwNumberOfBytesAvailble)
             {
-                /* Even if we are in async mode, we need to determine whether
-                 * there is actually more data available. We do this by trying
-                 * to peek only a single byte in async mode. */
-                BOOL async = (lpwhr->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC);
-                if (!NETCON_recv(&lpwhr->netConnection, buffer,
-                                 min(async ? 1 : sizeof(buffer),
-                                     lpwhr->dwContentLength - lpwhr->dwContentRead),
-                                 MSG_PEEK, (int *)lpdwNumberOfBytesAvailble))
+                WORKREQUEST workRequest;
+
+                *lpdwNumberOfBytesAvailble = 0;
+                workRequest.asyncproc = AsyncInternetQueryDataAvailableProc;
+                workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
+
+                retval = INTERNET_AsyncCall(&workRequest);
+                if (!retval)
                 {
-                    INTERNET_SetLastError(ERROR_NO_MORE_FILES);
+                    WININET_Release( &lpwhr->hdr );
+                }
+                else
+                {
+                    INTERNET_SetLastError(ERROR_IO_PENDING);
                     retval = FALSE;
                 }
-                else if (async && *lpdwNumberOfBytesAvailble)
-                {
-                    WORKREQUEST workRequest;
-
-                    *lpdwNumberOfBytesAvailble = 0;
-                    workRequest.asyncproc = AsyncInternetQueryDataAvailableProc;
-                    workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
-
-                    retval = INTERNET_AsyncCall(&workRequest);
-                    if (!retval)
-                    {
-                        WININET_Release( &lpwhr->hdr );
-                    }
-                    else
-                    {
-                        INTERNET_SetLastError(ERROR_IO_PENDING);
-                        retval = FALSE;
-                    }
-                }
             }
-        }
-        else
-        {
-            INTERNET_SetLastError(ERROR_NO_MORE_FILES);
         }
         break;
 
