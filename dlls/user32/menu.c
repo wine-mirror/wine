@@ -3387,7 +3387,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
 
     MENU_SelectItem( hwnd, hTrackMenu, uItem, TRUE, 0 );
 
-    if (wParam & HTSYSMENU)
+    if (wParam & HTSYSMENU && wChar != ' ')
     {
         /* prevent sysmenu activation for managed windows on Alt down/up */
         if (GetPropA( hwnd, "__wine_x11_managed" ))
