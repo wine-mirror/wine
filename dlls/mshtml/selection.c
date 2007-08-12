@@ -177,7 +177,7 @@ static HRESULT WINAPI HTMLSelectionObject_clear(IHTMLSelectionObject *iface)
 static HRESULT WINAPI HTMLSelectionObject_get_type(IHTMLSelectionObject *iface, BSTR *p)
 {
     HTMLSelectionObject *This = HTMLSELOBJ_THIS(iface);
-    PRInt32 range_cnt = 0;
+    PRBool collapsed = TRUE;
 
     static const WCHAR wszNone[] = {'N','o','n','e',0};
     static const WCHAR wszText[] = {'T','e','x','t',0};
@@ -185,9 +185,10 @@ static HRESULT WINAPI HTMLSelectionObject_get_type(IHTMLSelectionObject *iface, 
     TRACE("(%p)->(%p)\n", This, p);
 
     if(This->nsselection)
-        nsISelection_GetRangeCount(This->nsselection, &range_cnt);
+        nsISelection_GetIsCollapsed(This->nsselection, &collapsed);
 
-    *p = SysAllocString(range_cnt ? wszText : wszNone); /* FIXME: control */
+    *p = SysAllocString(collapsed ? wszNone : wszText); /* FIXME: control */
+    TRACE("ret %s\n", debugstr_w(*p));
     return S_OK;
 }
 
