@@ -63,19 +63,29 @@ HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
     HRESULT hres;
 
     if(!typelib) {
-        hres = LoadRegTypeLib(&LIBID_MSHTML, 4, 0, LOCALE_SYSTEM_DEFAULT, &typelib);
+        ITypeLib *tl;
+
+        hres = LoadRegTypeLib(&LIBID_MSHTML, 4, 0, LOCALE_SYSTEM_DEFAULT, &tl);
         if(FAILED(hres)) {
             ERR("LoadRegTypeLib failed: %08x\n", hres);
             return hres;
         }
+
+        if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+            ITypeLib_Release(tl);
     }
 
     if(!typeinfos[tid]) {
-        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], typeinfos+tid);
+        ITypeInfo *typeinfo;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &typeinfo);
         if(FAILED(hres)) {
             ERR("GetTypeInfoOfGuid failed: %08x\n", hres);
             return hres;
         }
+
+        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), typeinfo, NULL))
+            ITypeInfo_Release(typeinfo);
     }
 
     *typeinfo = typeinfos[tid];
