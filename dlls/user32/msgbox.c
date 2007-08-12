@@ -248,6 +248,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 
     /* Message boxes are always desktop centered, so query desktop size and center window */
     monitor = MonitorFromWindow(lpmb->hwndOwner ? lpmb->hwndOwner : GetActiveWindow(), MONITOR_DEFAULTTOPRIMARY);
+    mon_info.cbSize = sizeof(mon_info);
     GetMonitorInfoW(monitor, &mon_info);
     wleft = (mon_info.rcWork.left + mon_info.rcWork.right - wwidth) / 2;
     wtop = (mon_info.rcWork.top + mon_info.rcWork.bottom - wheight) / 2;
