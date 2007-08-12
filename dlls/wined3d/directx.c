@@ -1934,8 +1934,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                             WINED3DPBLENDCAPS_ZERO;
 
     *pCaps->DestBlendCaps = WINED3DPBLENDCAPS_BLENDFACTOR     |
-                            WINED3DPBLENDCAPS_BOTHINVSRCALPHA |
-                            WINED3DPBLENDCAPS_BOTHSRCALPHA    |
                             WINED3DPBLENDCAPS_DESTALPHA       |
                             WINED3DPBLENDCAPS_DESTCOLOR       |
                             WINED3DPBLENDCAPS_INVDESTALPHA    |
@@ -1948,6 +1946,9 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                             WINED3DPBLENDCAPS_ZERO;
     /* NOTE: WINED3DPBLENDCAPS_SRCALPHASAT is not supported as dest blend factor,
      * according to the glBlendFunc manpage
+     *
+     * WINED3DPBLENDCAPS_BOTHINVSRCALPHA and WINED3DPBLENDCAPS_BOTHSRCALPHA are
+     * legacy settings for srcblend only
      */
 
     *pCaps->AlphaCmpCaps = WINED3DPCMPCAPS_ALWAYS       |
