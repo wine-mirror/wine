@@ -285,7 +285,11 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         case WINED3DBLEND_INVDESTALPHA       : dstBlend = GL_ONE_MINUS_DST_ALPHA;  break;
         case WINED3DBLEND_DESTCOLOR          : dstBlend = GL_DST_COLOR;  break;
         case WINED3DBLEND_INVDESTCOLOR       : dstBlend = GL_ONE_MINUS_DST_COLOR;  break;
-        case WINED3DBLEND_SRCALPHASAT        : dstBlend = GL_SRC_ALPHA_SATURATE;  break;
+
+        case WINED3DBLEND_SRCALPHASAT        :
+            dstBlend = GL_SRC_ALPHA_SATURATE;
+            WARN("Application uses SRCALPHASAT as dest blend factor, expect problems\n");
+            break;
 
         case WINED3DBLEND_BOTHSRCALPHA       : dstBlend = GL_SRC_ALPHA;
             srcBlend = GL_SRC_ALPHA;

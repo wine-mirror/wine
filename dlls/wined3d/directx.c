@@ -1945,9 +1945,11 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                             WINED3DPBLENDCAPS_INVSRCCOLOR     |
                             WINED3DPBLENDCAPS_ONE             |
                             WINED3DPBLENDCAPS_SRCALPHA        |
-                            WINED3DPBLENDCAPS_SRCALPHASAT     |
                             WINED3DPBLENDCAPS_SRCCOLOR        |
                             WINED3DPBLENDCAPS_ZERO;
+    /* NOTE: WINED3DPBLENDCAPS_SRCALPHASAT is not supported as dest blend factor,
+     * according to the glBlendFunc manpage
+     */
 
     *pCaps->AlphaCmpCaps = WINED3DPCMPCAPS_ALWAYS       |
                            WINED3DPCMPCAPS_EQUAL        |
