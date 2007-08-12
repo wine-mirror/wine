@@ -62,6 +62,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_OL           "cmd_ol"
 #define NSCMD_OUTDENT      "cmd_outdent"
 #define NSCMD_PASTE        "cmd_paste"
+#define NSCMD_SELECTALL           "cmd_selectAll"
 #define NSCMD_SELECTBEGINLINE     "cmd_selectBeginLine"
 #define NSCMD_SELECTBOTTOM        "cmd_selectBottom"
 #define NSCMD_SELECTCHARNEXT      "cmd_selectCharNext"
@@ -778,6 +779,20 @@ static HRESULT exec_fontsize(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     return S_OK;
 }
 
+static HRESULT exec_selectall(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_SELECTALL, NULL);
+
+    update_doc(This, UPDATE_UI);
+    return S_OK;
+}
+
 static HRESULT exec_bold(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     TRACE("(%p)\n", This);
@@ -1110,10 +1125,19 @@ static HRESULT query_edit_status(HTMLDocument *This, OLECMD *cmd)
     return S_OK;
 }
 
+static HRESULT query_selall_status(HTMLDocument *This, OLECMD *cmd)
+{
+    TRACE("(%p)->(%p)\n", This, cmd);
+
+    cmd->cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+    return S_OK;
+}
+
 const cmdtable_t editmode_cmds[] = {
     {IDM_DELETE,          query_edit_status,    exec_delete},
     {IDM_FONTNAME,        query_edit_status,    exec_fontname},
     {IDM_FONTSIZE,        query_edit_status,    exec_fontsize},
+    {IDM_SELECTALL,       query_selall_status , exec_selectall},
     {IDM_FORECOLOR,       query_edit_status,    exec_forecolor},
     {IDM_BOLD,            query_edit_status,    exec_bold},
     {IDM_ITALIC,          query_edit_status,    exec_italic},
