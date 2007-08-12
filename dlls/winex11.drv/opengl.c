@@ -1020,6 +1020,8 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     int value = 0;
     int i = 0;
     int bestFormat = -1;
+    int bestDBuffer = -1;
+    int bestStereo = -1;
     int bestColor = -1;
     int bestAlpha = -1;
     int bestDepth = -1;
@@ -1062,33 +1064,68 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
             continue;
         }
 
-        /* Doublebuffer:
-         * Ignore doublebuffer when PFD_DOUBLEBUFFER_DONTCARE is set. Further if the flag
-         * is not set, we must return a format without double buffering. */
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value);
         if (value) dwFlags |= PFD_DOUBLEBUFFER;
-        if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) && ((ppfd->dwFlags^dwFlags) & PFD_DOUBLEBUFFER))
-        {
-            TRACE("dbl buffer mismatch for iPixelFormat=%d\n", i+1);
-            continue;
-        }
-
-        /* Stereo:
-         * Ignore stereo when PFD_STEREO_DONTCARE is set. Further if the flag
-         * is not set, we must return a format without stereo support. */
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STEREO, &value);
         if (value) dwFlags |= PFD_STEREO;
-        if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE) && ((ppfd->dwFlags^dwFlags) & PFD_STEREO))
-        {
-            TRACE("stereo mismatch for iPixelFormat=%d\n", i+1);
-            continue;
-        }
-
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_BUFFER_SIZE, &color); /* cColorBits */
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ALPHA_SIZE, &alpha); /* cAlphaBits */
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DEPTH_SIZE, &depth); /* cDepthBits */
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STENCIL_SIZE, &stencil); /* cStencilBits */
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_AUX_BUFFERS, &aux); /* cAuxBuffers */
+
+        /* The behavior of PDF_STEREO/PFD_STEREO_DONTCARE and PFD_DOUBLEBUFFER / PFD_DOUBLEBUFFER_DONTCARE
+         * is not very clear on MSDN. They specify that ChoosePixelFormat tries to match pixel formats
+         * with the flag (PFD_STEREO / PFD_DOUBLEBUFFERING) set. Otherwise it says that it tries to match
+         * formats without the given flag set.
+         * A test on Windows using a Radeon 9500pro on WinXP (the driver doesn't support Stereo)
+         * has indicated that a format without stereo is returned when stereo is unavailable.
+         * So in case PFD_STEREO is set, formats that support it should have priority above formats
+         * without. In case PFD_STEREO_DONTCARE is set, stereo is ignored.
+         *
+         * To summarize the following is most likely the correct behavior:
+         * stereo not set -> prefer no-stereo formats, else also accept stereo formats
+         * stereo set -> prefer stereo formats, else also accept no-stereo formats
+         * stereo don't care -> it doesn't matter whether we get stereo or not
+         *
+         * In Wine we will treat no-stereo the same way as don't care because it makes
+         * format selection even more complicated and second drivers with Stereo advertise
+         * each format twice anyway.
+         */
+
+        /* Doublebuffer, see the comments above */
+        if( !(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) ) {
+            if( ((ppfd->dwFlags & PFD_DOUBLEBUFFER) != bestDBuffer) &&
+                ((dwFlags & PFD_DOUBLEBUFFER) == (ppfd->dwFlags & PFD_DOUBLEBUFFER)) )
+            {
+                bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+                bestStereo = dwFlags & PFD_STEREO;
+                bestAlpha = alpha;
+                bestColor = color;
+                bestDepth = depth;
+                bestStencil = stencil;
+                bestAux = aux;
+                bestFormat = i;
+                continue;
+            }
+        }
+
+        /* Stereo, see the comments above. */
+        if( !(ppfd->dwFlags & PFD_STEREO_DONTCARE) ) {
+            if( ((ppfd->dwFlags & PFD_STEREO) != bestStereo) &&
+                ((dwFlags & PFD_STEREO) == (ppfd->dwFlags & PFD_STEREO)) )
+            {
+                bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+                bestStereo = dwFlags & PFD_STEREO;
+                bestAlpha = alpha;
+                bestColor = color;
+                bestDepth = depth;
+                bestStencil = stencil;
+                bestAux = aux;
+                bestFormat = i;
+                continue;
+            }
+        }
 
         /* Below we will do a number of checks to select the 'best' pixelformat.
          * We assume the precedence cColorBits > cAlphaBits > cDepthBits > cStencilBits -> cAuxBuffers.
@@ -1099,6 +1136,8 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
         if( ((ppfd->cColorBits > bestColor) && (color > bestColor)) ||
             ((color >= ppfd->cColorBits) && (color < bestColor)) )
         {
+            bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+            bestStereo = dwFlags & PFD_STEREO;
             bestAlpha = alpha;
             bestColor = color;
             bestDepth = depth;
@@ -1115,6 +1154,8 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
         if( ((ppfd->cAlphaBits > bestAlpha) && (alpha > bestAlpha)) ||
             ((alpha >= ppfd->cAlphaBits) && (alpha < bestAlpha)) )
         {
+            bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+            bestStereo = dwFlags & PFD_STEREO;
             bestAlpha = alpha;
             bestColor = color;
             bestDepth = depth;
@@ -1131,6 +1172,8 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
         if( ((ppfd->cDepthBits > bestDepth) && (depth > bestDepth)) ||
             ((depth >= ppfd->cDepthBits) && (depth < bestDepth)) )
         {
+            bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+            bestStereo = dwFlags & PFD_STEREO;
             bestAlpha = alpha;
             bestColor = color;
             bestDepth = depth;
@@ -1147,6 +1190,8 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
         if( ((ppfd->cStencilBits > bestStencil) && (stencil > bestStencil)) ||
             ((stencil >= ppfd->cStencilBits) && (stencil < bestStencil)) )
         {
+            bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+            bestStereo = dwFlags & PFD_STEREO;
             bestAlpha = alpha;
             bestColor = color;
             bestDepth = depth;
@@ -1163,6 +1208,8 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
         if( ((ppfd->cAuxBuffers > bestAux) && (aux > bestAux)) ||
             ((aux >= ppfd->cAuxBuffers) && (aux < bestAux)) )
         {
+            bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+            bestStereo = dwFlags & PFD_STEREO;
             bestAlpha = alpha;
             bestColor = color;
             bestDepth = depth;
@@ -1189,7 +1236,6 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 
     return ret;
 }
-
 /**
  * X11DRV_DescribePixelFormat
  *
