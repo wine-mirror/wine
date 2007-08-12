@@ -3325,8 +3325,8 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
                  * to peek only a single byte in async mode. */
                 BOOL async = (lpwhr->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC);
                 if (!NETCON_recv(&lpwhr->netConnection, buffer,
-                                 async ? 1 : min(sizeof(buffer),
-                                                 lpwhr->dwContentLength - lpwhr->dwContentRead),
+                                 min(async ? 1 : sizeof(buffer),
+                                     lpwhr->dwContentLength - lpwhr->dwContentRead),
                                  MSG_PEEK, (int *)lpdwNumberOfBytesAvailble))
                 {
                     INTERNET_SetLastError(ERROR_NO_MORE_FILES);
