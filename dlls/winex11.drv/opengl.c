@@ -1233,10 +1233,20 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   ppfd->nVersion = 1;
 
   /* These flags are always the same... */
-  ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+  ppfd->dwFlags = PFD_SUPPORT_OPENGL;
   /* Now the flags extracted from the Visual */
 
   wine_tsx11_lock();
+
+  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_X_RENDERABLE, &value);
+  if(value)
+      ppfd->dwFlags |= PFD_SUPPORT_GDI;
+
+  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
+  if(value & GLX_WINDOW_BIT)
+      ppfd->dwFlags |= PFD_DRAW_TO_WINDOW;
+  if(value & GLX_PIXMAP_BIT)
+      ppfd->dwFlags |= PFD_DRAW_TO_BITMAP;
 
   pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_CONFIG_CAVEAT, &value);
   if(value == GLX_SLOW_CONFIG)
