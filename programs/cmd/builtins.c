@@ -654,7 +654,6 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   WCHAR variable[4];
   WCHAR *firstCmd;
   int thisDepth;
-  BOOL isDirs = FALSE;
 
   /* Check:
      the first line includes the % variable name as first parm
@@ -730,8 +729,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
         if (hff != INVALID_HANDLE_VALUE) {
           do {
             BOOL isDirectory = (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
-            if ((isDirs && isDirectory) ||
-                (!isDirs && !isDirectory))
+            if (!isDirectory)
             {
               thisCmdStart = cmdStart;
               WINE_TRACE("Processing FOR filename %s\n", wine_dbgstr_w(fd.cFileName));
