@@ -261,8 +261,11 @@ static HRESULT WINAPI HTMLTxtRange_scrollIntoView(IHTMLTxtRange *iface, VARIANT_
 static HRESULT WINAPI HTMLTxtRange_collapse(IHTMLTxtRange *iface, VARIANT_BOOL Start)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, Start);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, Start);
+
+    nsIDOMRange_Collapse(This->nsrange, Start != VARIANT_FALSE);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIANT_BOOL *Success)
