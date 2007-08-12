@@ -699,6 +699,7 @@ static IBindStatusCallback bsc = { &BindStatusCallbackVtbl };
 static void test_CreateAsyncBindCtx(void)
 {
     IBindCtx *bctx = (IBindCtx*)0x0ff00ff0;
+    IUnknown *unk;
     HRESULT hres;
     ULONG ref;
     BIND_OPTS bindopts;
@@ -726,6 +727,11 @@ static void test_CreateAsyncBindCtx(void)
     ok(bindopts.dwTickCountDeadline == 0,
                 "bindopts.dwTickCountDeadline = %08x, expected: 0\n", bindopts.dwTickCountDeadline);
 
+    hres = IBindCtx_QueryInterface(bctx, &IID_IAsyncBindCtx, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IID_IAsyncBindCtx) failed: %08x, expected E_NOINTERFACE\n", hres);
+    if(SUCCEEDED(hres))
+        IUnknown_Release(unk);
+
     ref = IBindCtx_Release(bctx);
     ok(ref == 0, "bctx should be destroyed here\n");
 }
@@ -733,6 +739,7 @@ static void test_CreateAsyncBindCtx(void)
 static void test_CreateAsyncBindCtxEx(void)
 {
     IBindCtx *bctx = NULL, *bctx_arg = NULL;
+    IUnknown *unk;
     BIND_OPTS bindopts;
     HRESULT hres;
 
@@ -782,6 +789,11 @@ static void test_CreateAsyncBindCtxEx(void)
     hres = CreateAsyncBindCtxEx(NULL, 0, &bsc, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
     todo_wine CHECK_CALLED(QueryInterface_IServiceProvider);
+
+    hres = IBindCtx_QueryInterface(bctx, &IID_IAsyncBindCtx, (void**)&unk);
+    ok(hres == S_OK, "QueryInterface(IID_IAsyncBindCtx) failed: %08x\n", hres);
+    if(SUCCEEDED(hres))
+        IUnknown_Release(unk);
 
     if(SUCCEEDED(hres))
         IBindCtx_Release(bctx);

@@ -1070,64 +1070,6 @@ static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszLeft
 }
 
 /***********************************************************************
- *           CreateAsyncBindCtx (URLMON.@)
- */
-HRESULT WINAPI CreateAsyncBindCtx(DWORD reserved, IBindStatusCallback *callback,
-    IEnumFORMATETC *format, IBindCtx **pbind)
-{
-    TRACE("(%08x %p %p %p)\n", reserved, callback, format, pbind);
-
-    if(!callback)
-        return E_INVALIDARG;
-
-    return CreateAsyncBindCtxEx(NULL, 0, callback, format, pbind, 0);
-}
-/***********************************************************************
- *           CreateAsyncBindCtxEx (URLMON.@)
- *
- * Create an asynchronous bind context.
- */ 
-HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
-    IBindStatusCallback *callback, IEnumFORMATETC *format, IBindCtx** pbind,
-    DWORD reserved)
-{
-    HRESULT hres;
-    BIND_OPTS bindopts;
-    IBindCtx *bctx;
-
-    TRACE("(%p %08x %p %p %p %d)\n", ibind, options, callback, format, pbind, reserved);
-
-    if(!pbind)
-        return E_INVALIDARG;
-
-    if(options)
-        FIXME("not supported options %08x\n", options);
-    if(format)
-        FIXME("format is not supported\n");
-
-    if(reserved)
-        WARN("reserved=%d\n", reserved);
-
-    hres = CreateBindCtx(0, &bctx);
-    if(FAILED(hres))
-        return hres;
-
-    bindopts.cbStruct = sizeof(BIND_OPTS);
-    bindopts.grfFlags = BIND_MAYBOTHERUSER;
-    bindopts.grfMode = STGM_READWRITE | STGM_SHARE_EXCLUSIVE;
-    bindopts.dwTickCountDeadline = 0;
-    IBindCtx_SetBindOptions(bctx, &bindopts);
-
-    if(callback)
-        RegisterBindStatusCallback(bctx, callback, NULL, 0);
-
-    *pbind = bctx;
-
-    return S_OK;
-}
-
-
-/***********************************************************************
  *           CreateURLMonikerEx (URLMON.@)
  *
  * Create a url moniker.
