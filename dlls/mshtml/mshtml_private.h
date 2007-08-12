@@ -112,6 +112,7 @@ struct HTMLDocument {
     const IOleControlVtbl                 *lpOleControlVtbl;
     const IHlinkTargetVtbl                *lpHlinkTargetVtbl;
     const IPersistStreamInitVtbl          *lpPersistStreamInitVtbl;
+    const ICustomDocVtbl                  *lpCustomDocVtbl;
 
     LONG ref;
 
@@ -305,6 +306,7 @@ typedef struct {
 #define HLNKTARGET(x)    ((IHlinkTarget*)                 &(x)->lpHlinkTargetVtbl)
 #define CONPTCONT(x)     ((IConnectionPointContainer*)    &(x)->lpConnectionPointContainerVtbl)
 #define PERSTRINIT(x)    ((IPersistStreamInit*)           &(x)->lpPersistStreamInitVtbl)
+#define CUSTOMDOC(x)     ((ICustomDoc*)                   &(x)->lpCustomDocVtbl)
 
 #define NSWBCHROME(x)    ((nsIWebBrowserChrome*)          &(x)->lpWebBrowserChromeVtbl)
 #define NSCML(x)         ((nsIContextMenuListener*)       &(x)->lpContextMenuListenerVtbl)

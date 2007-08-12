@@ -676,6 +676,46 @@ static const IOleControlVtbl OleControlVtbl = {
     OleControl_FreezeEvents
 };
 
+/**********************************************************
+ * ICustomDoc implementation
+ */
+
+#define CUSTOMDOC_THIS(iface) DEFINE_THIS(HTMLDocument, CustomDoc, iface)
+
+static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = CUSTOMDOC_THIS(iface);
+    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+}
+
+static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
+{
+    HTMLDocument *This = CUSTOMDOC_THIS(iface);
+    return IHTMLDocument2_AddRef(HTMLDOC(This));
+}
+
+static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
+{
+    HTMLDocument *This = CUSTOMDOC_THIS(iface);
+    return IHTMLDocument_Release(HTMLDOC(This));
+}
+
+static HRESULT WINAPI CustomDoc_SetUIHandler(ICustomDoc *iface, IDocHostUIHandler *pUIHandler)
+{
+    HTMLDocument *This = CUSTOMDOC_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pUIHandler);
+    return E_NOTIMPL;
+}
+
+#undef CUSTOMDOC_THIS
+
+static const ICustomDocVtbl CustomDocVtbl = {
+    CustomDoc_QueryInterface,
+    CustomDoc_AddRef,
+    CustomDoc_Release,
+    CustomDoc_SetUIHandler
+};
+
 void HTMLDocument_LockContainer(HTMLDocument *This, BOOL fLock)
 {
     IOleContainer *container;
@@ -697,6 +737,7 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
     This->lpOleObjectVtbl = &OleObjectVtbl;
     This->lpOleDocumentVtbl = &OleDocumentVtbl;
     This->lpOleControlVtbl = &OleControlVtbl;
+    This->lpCustomDocVtbl = &CustomDocVtbl;
 
     This->usermode = UNKNOWN_USERMODE;
 
