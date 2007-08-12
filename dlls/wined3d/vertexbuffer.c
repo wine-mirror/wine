@@ -235,7 +235,8 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
      */
     if( /* Position transformed vs untransformed */
         ((This->strided.u.s.position_transformed || strided.u.s.position_transformed) &&
-          This->strided.u.s.position.lpData != strided.u.s.position.lpData) ||
+          (This->strided.u.s.position.lpData != strided.u.s.position.lpData ||
+           This->strided.u.s.position.dwType != strided.u.s.position.dwType)) ||
         /* Diffuse position and data type */
         This->strided.u.s.diffuse.lpData != strided.u.s.diffuse.lpData || This->strided.u.s.diffuse.dwStride != strided.u.s.diffuse.dwStride ||
          This->strided.u.s.diffuse.dwType != strided.u.s.diffuse.dwType ||
