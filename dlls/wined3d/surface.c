@@ -1607,6 +1607,30 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             *target_bpp = 2;
             break;
 
+        case WINED3DFMT_R32F:
+            /* Can be loaded in theory with fmt=GL_RED, type=GL_FLOAT, but this fails. The reason
+             * is that D3D expects the undefined green, blue and alpha channels to return 1.0
+             * when sampling, but OpenGL sets green and blue to 0.0 instead. Thus we have to inject
+             * 1.0 instead.
+             *
+             * The alpha channel defaults to 1.0 in opengl, so nothing has to be done about it.
+             */
+            *convert = CONVERT_R32F;
+            *format = GL_RGB;
+            *internal = GL_RGB32F_ARB;
+            *type = GL_FLOAT;
+            *target_bpp = 12;
+            break;
+
+        case WINED3DFMT_R16F:
+            /* Simmilar to R32F */
+            *convert = CONVERT_R16F;
+            *format = GL_RGB;
+            *internal = GL_RGB16F_ARB;
+            *type = GL_HALF_FLOAT_ARB;
+            *target_bpp = 6;
+            break;
+
         default:
             break;
     }
@@ -1806,6 +1830,45 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                     /* A */ Dest[1] = (color & 0xf0) << 0;
                     /* L */ Dest[0] = (color & 0x0f) << 4;
                     Dest += 2;
+                }
+            }
+            break;
+        }
+
+        case CONVERT_R32F:
+        {
+            unsigned int x, y;
+            float *Source;
+            float *Dest;
+            for(y = 0; y < height; y++) {
+                Source = (float *) (src + y * pitch);
+                Dest = (float *) (dst + y * outpitch);
+                for (x = 0; x < width; x++ ) {
+                    float color = (*Source++);
+                    Dest[0] = color;
+                    Dest[1] = 1.0;
+                    Dest[2] = 1.0;
+                    Dest += 3;
+                }
+            }
+            break;
+        }
+
+        case CONVERT_R16F:
+        {
+            unsigned int x, y;
+            WORD *Source;
+            WORD *Dest;
+            WORD one = 0x3c00;
+            for(y = 0; y < height; y++) {
+                Source = (WORD *) (src + y * pitch);
+                Dest = (WORD *) (dst + y * outpitch);
+                for (x = 0; x < width; x++ ) {
+                    WORD color = (*Source++);
+                    Dest[0] = color;
+                    Dest[1] = one;
+                    Dest[2] = one;
+                    Dest += 3;
                 }
             }
             break;

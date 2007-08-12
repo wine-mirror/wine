@@ -1233,7 +1233,9 @@ typedef enum {
     CONVERT_X8L8V8U8,
     CONVERT_Q8W8V8U8,
     CONVERT_V16U16,
-    CONVERT_A4L4
+    CONVERT_A4L4,
+    CONVERT_R32F,
+    CONVERT_R16F
 } CONVERT_TYPES;
 
 HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode);
