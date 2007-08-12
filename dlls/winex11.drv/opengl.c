@@ -139,7 +139,7 @@ typedef struct wine_glpbuffer {
 static Wine_GLContext *context_list;
 static struct WineGLInfo WineGLInfo = { 0 };
 static int use_render_texture_emulation = 1;
-static int use_render_texture_ati = 0;
+static int use_render_texture_ati = 1;
 static int swap_interval = 1;
 
 #define MAX_EXTENSIONS 16
@@ -241,10 +241,12 @@ MAKE_FUNCPTR(glXGetCurrentReadDrawable)
 
 /* GLX Extensions */
 static void* (*pglXGetProcAddressARB)(const GLubyte *);
-static BOOL  (*pglXBindTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
-static BOOL  (*pglXReleaseTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
-static BOOL  (*pglXDrawableAttribARB)(Display *dpy, GLXDrawable draw, const int *attribList);
 static int   (*pglXSwapIntervalSGI)(int);
+
+/* ATI GLX Extensions */
+static BOOL  (*pglXBindTexImageATI)(Display *dpy, GLXPbuffer pbuffer, int buffer);
+static BOOL  (*pglXReleaseTexImageATI)(Display *dpy, GLXPbuffer pbuffer, int buffer);
+static BOOL  (*pglXDrawableAttribATI)(Display *dpy, GLXDrawable draw, const int *attribList);
 
 /* NV GLX Extension */
 static void* (*pglXAllocateMemoryNV)(GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority);
@@ -502,9 +504,9 @@ LOAD_FUNCPTR(glXFreeMemoryNV)
     }
 
     if(glxRequireExtension("GLX_ATI_render_texture")) {
-        pglXBindTexImageARB = (void*)pglXGetProcAddressARB((const GLubyte *) "glXBindTexImageARB");
-        pglXReleaseTexImageARB = (void*)pglXGetProcAddressARB((const GLubyte *) "glXReleaseTexImageARB");
-        pglXDrawableAttribARB = (void*)pglXGetProcAddressARB((const GLubyte *) "glXDrawableAttribARB");
+        pglXBindTexImageATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXBindTexImageATI");
+        pglXReleaseTexImageATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXReleaseTexImageATI");
+        pglXDrawableAttribATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXDrawableAttribATI");
     }
 
     X11DRV_WineGL_LoadExtensions();
@@ -2490,11 +2492,11 @@ static GLboolean WINAPI X11DRV_wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, cons
     if (!use_render_texture_ati && 1 == use_render_texture_emulation) {
         return GL_TRUE;
     }
-    if (NULL != pglXDrawableAttribARB) {
+    if (NULL != pglXDrawableAttribATI) {
         if (use_render_texture_ati) {
             FIXME("Need conversion for GLX_ATI_render_texture\n");
         }
-        return pglXDrawableAttribARB(object->display, object->drawable, piAttribList); 
+        return pglXDrawableAttribATI(object->display, object->drawable, piAttribList);
     }
     return GL_FALSE;
 }
@@ -2893,8 +2895,35 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
         return GL_TRUE;
     }
 
-    if (NULL != pglXBindTexImageARB) {
-        return pglXBindTexImageARB(object->display, object->drawable, iBuffer);
+    if (NULL != pglXBindTexImageATI) {
+        int buffer;
+
+        switch(iBuffer)
+        {
+            case WGL_FRONT_LEFT_ARB:
+                buffer = GLX_FRONT_LEFT_ATI;
+                break;
+            case WGL_FRONT_RIGHT_ARB:
+                buffer = GLX_FRONT_RIGHT_ATI;
+                break;
+            case WGL_BACK_LEFT_ARB:
+                buffer = GLX_BACK_LEFT_ATI;
+                break;
+            case WGL_BACK_RIGHT_ARB:
+                buffer = GLX_BACK_RIGHT_ATI;
+                break;
+            default:
+                ERR("Unknown iBuffer=%#x\n", iBuffer);
+                return FALSE;
+        }
+
+        /* In the sample 'ogl_offscreen_rendering_3' from codesampler.net I get garbage on the screen.
+         * I'm not sure if that's a bug in the ATI extension or in the program. I think that the program
+         * expected a single buffering format since it didn't ask for double buffering. A buffer swap
+         * fixed the program. I don't know what the correct behavior is. On the other hand that demo
+         * works fine using our pbuffer emulation path.
+         */
+        return pglXBindTexImageATI(object->display, object->drawable, buffer);
     }
     return GL_FALSE;
 }
@@ -2919,8 +2948,28 @@ static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int i
     if (!use_render_texture_ati && 1 == use_render_texture_emulation) {
         return GL_TRUE;
     }
-    if (NULL != pglXReleaseTexImageARB) {
-        return pglXReleaseTexImageARB(object->display, object->drawable, iBuffer);
+    if (NULL != pglXReleaseTexImageATI) {
+        int buffer;
+
+        switch(iBuffer)
+        {
+            case WGL_FRONT_LEFT_ARB:
+                buffer = GLX_FRONT_LEFT_ATI;
+                break;
+            case WGL_FRONT_RIGHT_ARB:
+                buffer = GLX_FRONT_RIGHT_ATI;
+                break;
+            case WGL_BACK_LEFT_ARB:
+                buffer = GLX_BACK_LEFT_ATI;
+                break;
+            case WGL_BACK_RIGHT_ARB:
+                buffer = GLX_BACK_RIGHT_ATI;
+                break;
+            default:
+                ERR("Unknown iBuffer=%#x\n", iBuffer);
+                return FALSE;
+        }
+        return pglXReleaseTexImageATI(object->display, object->drawable, buffer);
     }
     return GL_FALSE;
 }
