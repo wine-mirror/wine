@@ -910,11 +910,6 @@ typedef enum winetexturestates {
     MAX_WINETEXTURESTATES        = 13,
 } winetexturestates;
 
-typedef struct Wined3dTextureStateMap {
-    CONST int state;
-    int function;
-} Wined3dTextureStateMap;
-
 /*****************************************************************************
  * IWineD3DBaseTexture implementation structure (extends IWineD3DResourceImpl)
  */
