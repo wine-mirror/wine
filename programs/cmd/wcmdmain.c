@@ -839,13 +839,13 @@ static void init_msvcrt_io_block(STARTUPINFO* st)
          * to change those std handles (this depends on the way wcmd sets
          * it's new input & output handles)
          */
-        size_t sz = max(sizeof(unsigned) + (sizeof(WCHAR) + sizeof(HANDLE)) * 3, st_p.cbReserved2);
+        size_t sz = max(sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * 3, st_p.cbReserved2);
         BYTE* ptr = HeapAlloc(GetProcessHeap(), 0, sz);
         if (ptr)
         {
             unsigned num = *(unsigned*)st_p.lpReserved2;
-            WCHAR* flags = (WCHAR*)(ptr + sizeof(unsigned));
-            HANDLE* handles = (HANDLE*)(flags + num * sizeof(WCHAR));
+            char* flags = (char*)(ptr + sizeof(unsigned));
+            HANDLE* handles = (HANDLE*)(flags + num * sizeof(char));
 
             memcpy(ptr, st_p.lpReserved2, st_p.cbReserved2);
             st->cbReserved2 = sz;
