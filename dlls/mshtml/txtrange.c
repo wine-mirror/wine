@@ -224,8 +224,15 @@ static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElem
 static HRESULT WINAPI HTMLTxtRange_duplicate(IHTMLTxtRange *iface, IHTMLTxtRange **Duplicate)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, Duplicate);
-    return E_NOTIMPL;
+    nsIDOMRange *nsrange = NULL;
+
+    TRACE("(%p)->(%p)\n", This, Duplicate);
+
+    nsIDOMRange_CloneRange(This->nsrange, &nsrange);
+    *Duplicate = HTMLTxtRange_Create(nsrange);
+    nsIDOMRange_Release(nsrange);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_inRange(IHTMLTxtRange *iface, IHTMLTxtRange *Range,
@@ -240,7 +247,7 @@ static HRESULT WINAPI HTMLTxtRange_isEqual(IHTMLTxtRange *iface, IHTMLTxtRange *
         VARIANT_BOOL *IsEqual)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%p %p)\n", This, Range, IsEqual);
     return E_NOTIMPL;
 }
 
