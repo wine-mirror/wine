@@ -397,7 +397,9 @@ static void InternetReadFile_test(int flags)
         if (flags & INTERNET_FLAG_ASYNC)
             SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
         rc = InternetQueryDataAvailable(hor,&length,0x0,0x0);
-        ok(!(rc == 0 && length != 0),"InternetQueryDataAvailable failed\n");
+        ok(!(rc == 0 && length != 0),"InternetQueryDataAvailable failed with non-zero length\n");
+        ok(rc != 0 || ((flags & INTERNET_FLAG_ASYNC) && GetLastError() == ERROR_IO_PENDING),
+           "InternetQueryDataAvailable failed, error %d\n", GetLastError());
         if (flags & INTERNET_FLAG_ASYNC)
         {
             if (rc != 0)
