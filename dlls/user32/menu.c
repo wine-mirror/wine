@@ -2682,13 +2682,13 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
     else if ((vk == VK_RIGHT) && !IS_SYSTEM_MENU(menu))
     {
         int i = menu->FocusedItem + 1;
-        while (i < (menu->nItems - 1)) {
+        while (i < menu->nItems) {
             if ((menu->items[i].wID >= SC_SIZE &&
                  menu->items[i].wID <= SC_RESTORE)) {
                 i++;
             } else break;
         }
-        if (i == (menu->nItems - 1)) {
+        if (i == menu->nItems) {
             atEnd = TRUE;
         }
     }
