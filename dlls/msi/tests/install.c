@@ -1733,7 +1733,7 @@ static BOOL pf_exists(LPCSTR file)
 static void delete_pfmsitest_files(void)
 {
     SHFILEOPSTRUCT shfl;
-    CHAR path[MAX_PATH+10];
+    CHAR path[MAX_PATH+11];
 
     lstrcpyA(path, PROG_FILES_DIR);
     lstrcatA(path, "\\msitest\\*");
