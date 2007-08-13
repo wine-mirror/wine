@@ -87,17 +87,29 @@ static LPWSTR tempfileW = NULL;
 
 /* ################################ */
 /* report common behavior only once */
-static DWORD report_deactivated_spooler = 1;
+static DWORD deactivated_spooler_reported = 0;
 #define RETURN_ON_DEACTIVATED_SPOOLER(res) \
-    if((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE)) \
+    if ((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE)) \
     { \
-        if(report_deactivated_spooler > 0) { \
-            report_deactivated_spooler--; \
+        if (!deactivated_spooler_reported) { \
+            deactivated_spooler_reported++; \
             skip("The Service 'Spooler' is required for many test\n"); \
         } \
         return; \
     }
 
+static DWORD access_denied_reported = 0;
+#define RETURN_ON_ACCESS_DENIED(res) \
+    if ((res == 0) && (GetLastError() == ERROR_ACCESS_DENIED)) \
+    { \
+        if (!access_denied_reported) { \
+            access_denied_reported++; \
+            skip("More Access-Rights are required for many test\n"); \
+        } \
+        return; \
+    }
+
+/* ################################ */
 
 static void find_default_printer(VOID)
 {
@@ -313,11 +325,7 @@ static void test_AddMonitor(void)
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     RETURN_ON_DEACTIVATED_SPOOLER(res)
-
-    if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        skip("(ACCESS_DENIED)\n");
-        return;
-    }
+    RETURN_ON_ACCESS_DENIED(res)
 
     /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_INVALID_ENVIRONMENT */
     ok(!res && ((GetLastError() == ERROR_INVALID_PARAMETER) ||
@@ -440,10 +448,8 @@ static void test_AddPort(void)
     SetLastError(0xdeadbeef);
     res = AddPortA(NULL, 0, empty);
     /* Allowed only for (Printer-)Administrators */
-    if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        skip("(ACCESS_DENIED)\n");
-        return;
-    }
+    RETURN_ON_ACCESS_DENIED(res)
+
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
@@ -593,10 +599,8 @@ static void test_ConfigurePort(void)
     SetLastError(0xdeadbeef);
     res = ConfigurePortA(NULL, 0, empty);
     /* Allowed only for (Printer-)Administrators */
-    if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        skip("(ACCESS_DENIED)\n");
-        return;
-    }
+    RETURN_ON_ACCESS_DENIED(res)
+
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
@@ -734,10 +738,8 @@ static void test_DeletePort(void)
     SetLastError(0xdeadbeef);
     res = DeletePortA(NULL, 0, empty);
     /* Allowed only for (Printer-)Administrators */
-    if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        skip("(ACCESS_DENIED)\n");
-        return;
-    }
+    RETURN_ON_ACCESS_DENIED(res)
+
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
@@ -1810,6 +1812,8 @@ static void test_XcvDataW_MonitorUI(void)
     SetLastError(0xdeadbeef);
     res = OpenPrinter(xcv_localport, &hXcv, &pd);
     RETURN_ON_DEACTIVATED_SPOOLER(res)
+    RETURN_ON_ACCESS_DENIED(res)
+
     ok(res, "returned %d with %u and handle %p (expected '!= 0')\n", res, GetLastError(), hXcv);
     if (!res) return;
 
@@ -1927,6 +1931,8 @@ static void test_XcvDataW_PortIsValid(void)
     res = OpenPrinter(xcv_localport, &hXcv, &pd);
 
     RETURN_ON_DEACTIVATED_SPOOLER(res)
+    RETURN_ON_ACCESS_DENIED(res)
+
     ok(res, "returned %d with %u and handle %p (expected '!= 0')\n", res, GetLastError(), hXcv);
     if (!res) return;
 
