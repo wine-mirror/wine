@@ -661,20 +661,22 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
 
     if (pProtocolData->pData >= (LPVOID)BINDSTATUS_DOWNLOADINGDATA)
     {
+        /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
+         * read, so clear the flag _before_ calling so it does not incorrectly get cleared
+         * after the status callback is called */
+        This->flags &= ~FLAG_REQUEST_COMPLETE;
         if (!InternetQueryDataAvailable(This->request, &This->available_bytes, 0, 0))
         {
-            if (GetLastError() == ERROR_IO_PENDING)
+            if (GetLastError() != ERROR_IO_PENDING)
             {
-                This->flags &= ~FLAG_REQUEST_COMPLETE;
-            }
-            else
-            {
+                This->flags |= FLAG_REQUEST_COMPLETE;
                 WARN("InternetQueryDataAvailable failed: %d\n", GetLastError());
                 HTTPPROTOCOL_ReportResult(This, INET_E_DATA_NOT_AVAILABLE);
             }
         }
         else
         {
+            This->flags |= FLAG_REQUEST_COMPLETE;
             HTTPPROTOCOL_ReportData(This);
         }
     }
