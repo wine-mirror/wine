@@ -125,15 +125,16 @@ static int open_mailto_url( const char *url )
  * DDE helper functions.
  */
 
-static char *ddeExec = NULL;
-static HSZ hszTopic = 0;
+static char *ddeString = NULL;
+static HSZ hszTopic = 0, hszReturn = 0;
+static DWORD ddeInst = 0;
 
-/* Dde callback, save the execute string for processing */
+/* Dde callback, save the execute or request string for processing */
 static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
                                 HSZ hsz1, HSZ hsz2, HDDEDATA hData,
                                 ULONG_PTR dwData1, ULONG_PTR dwData2)
 {
-    DWORD size = 0;
+    DWORD size = 0, ret = 0;
 
     WINE_TRACE("dde_cb: %04x, %04x, %p, %p, %p, %p, %08lx, %08lx\n",
                uType, uFmt, hConv, hsz1, hsz2, hData, dwData1, dwData2);
@@ -148,12 +149,25 @@ static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
         case XTYP_EXECUTE:
             if (!(size = DdeGetData(hData, NULL, 0, 0)))
                 WINE_ERR("DdeGetData returned zero size of execute string\n");
-            else if (!(ddeExec = HeapAlloc(GetProcessHeap(), 0, size)))
+            else if (!(ddeString = HeapAlloc(GetProcessHeap(), 0, size)))
                 WINE_ERR("Out of memory\n");
-            else if (DdeGetData(hData, (LPBYTE)ddeExec, size, 0) != size)
+            else if (DdeGetData(hData, (LPBYTE)ddeString, size, 0) != size)
                 WINE_WARN("DdeGetData did not return %d bytes\n", size);
             DdeFreeDataHandle(hData);
             return (HDDEDATA)DDE_FACK;
+
+        case XTYP_REQUEST:
+            ret = -3; /* error */
+            if (!(size = DdeQueryString(ddeInst, hsz2, NULL, 0, CP_WINANSI)))
+                WINE_ERR("DdeQueryString returned zero size of request string\n");
+            else if (!(ddeString = HeapAlloc(GetProcessHeap(), 0, size+1)))
+                WINE_ERR("Out of memory\n");
+            else if (DdeQueryString(ddeInst, hsz2, ddeString, size+1, CP_WINANSI) != size)
+                WINE_WARN("DdeQueryString did not return %d bytes\n", size);
+            else
+                ret = -2; /* acknowledgment */
+            return DdeCreateDataHandle(ddeInst, (LPBYTE)&ret, sizeof(ret), 0,
+                                       hszReturn, CF_TEXT, 0);
 
         default:
             return NULL;
@@ -164,15 +178,15 @@ static char *get_url_from_dde(void)
 {
     static const char szApplication[] = "IExplore";
     static const char szTopic[] = "WWW_OpenURL";
+    static const char szReturn[] = "Return";
 
     HSZ hszApplication = 0;
-    DWORD ddeInst = 0;
     UINT_PTR timer = 0;
     int rc;
     char *ret = NULL;
 
     rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
-                        CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0);
+                        CBF_FAIL_POKES, 0);
     if (rc != DMLERR_NO_ERROR)
     {
         WINE_ERR("Unable to initialize DDE, DdeInitialize returned %d\n", rc);
@@ -193,6 +207,13 @@ static char *get_url_from_dde(void)
         goto done;
     }
 
+    hszReturn = DdeCreateStringHandleA(ddeInst, szReturn, CP_WINANSI);
+    if (!hszReturn)
+    {
+        WINE_ERR("Unable to initialize DDE, DdeCreateStringHandle failed\n");
+        goto done;
+    }
+
     if (!DdeNameService(ddeInst, hszApplication, 0, DNS_REGISTER))
     {
         WINE_ERR("Unable to initialize DDE, DdeNameService failed\n");
@@ -206,7 +227,7 @@ static char *get_url_from_dde(void)
         goto done;
     }
 
-    while (!ddeExec)
+    while (!ddeString)
     {
         MSG msg;
         if (!GetMessage(&msg, NULL, 0, 0)) break;
@@ -214,21 +235,21 @@ static char *get_url_from_dde(void)
         DispatchMessage(&msg);
     }
 
-    if (ddeExec)
+    if (ddeString)
     {
-        if (*ddeExec == '"')
+        if (*ddeString == '"')
         {
-            char *endquote = strchr(ddeExec+1, '"');
+            char *endquote = strchr(ddeString+1, '"');
             if (!endquote)
             {
-                WINE_ERR("Unabled to retrieve URL from string '%s'\n", ddeExec);
+                WINE_ERR("Unabled to retrieve URL from string '%s'\n", ddeString);
                 goto done;
             }
             *endquote = 0;
-            ret = ddeExec+1;
+            ret = ddeString+1;
         }
         else
-            ret = ddeExec;
+            ret = ddeString;
     }
 
 done:
@@ -236,6 +257,7 @@ done:
     if (ddeInst)
     {
         if (hszTopic && hszApplication) DdeNameService(ddeInst, hszApplication, 0, DNS_UNREGISTER);
+        if (hszReturn) DdeFreeStringHandle(ddeInst, hszReturn);
         if (hszTopic) DdeFreeStringHandle(ddeInst, hszTopic);
         if (hszApplication) DdeFreeStringHandle(ddeInst, hszApplication);
         DdeUninitialize(ddeInst);
@@ -332,6 +354,6 @@ int main(int argc, char *argv[])
         ret = open_http_url( url );
 
 done:
-    HeapFree(GetProcessHeap(), 0, ddeExec);
+    HeapFree(GetProcessHeap(), 0, ddeString);
     return ret;
 }
