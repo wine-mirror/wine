@@ -93,6 +93,16 @@ static inline UINT      DOSMEM_ResizeBlock(void *ptr, UINT size, BOOL exact)
     return winedos.ResizeDosBlock ? winedos.ResizeDosBlock(ptr, size, TRUE) : 0;
 }
 
+static HANDLE get_win16_heap(void)
+{
+    static HANDLE win16_heap;
+
+    /* we create global memory block with execute permission. The access can be limited
+     * for 16-bit code on selector level */
+    if (!win16_heap) win16_heap = HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 0, 0);
+    return win16_heap;
+}
+
 /***********************************************************************
  *           GLOBAL_GetArena
  *
@@ -235,7 +245,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned cha
     size = (size + 0x1f) & ~0x1f;
 
     /* Allocate the linear memory */
-    ptr = HeapAlloc( GetProcessHeap(), 0, size );
+    ptr = HeapAlloc( get_win16_heap(), 0, size );
       /* FIXME: free discardable blocks and try again? */
     if (!ptr) return 0;
 
@@ -244,7 +254,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned cha
     handle = GLOBAL_CreateBlock( flags, ptr, size, hOwner, selflags );
     if (!handle)
     {
-        HeapFree( GetProcessHeap(), 0, ptr );
+        HeapFree( get_win16_heap(), 0, ptr );
         return 0;
     }
 
@@ -293,6 +303,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     void *ptr, *newptr;
     GLOBALARENA *pArena, *pNewArena;
     WORD sel = GlobalHandleToSel16( handle );
+    HANDLE heap = get_win16_heap();
 
     TRACE("%04x %d flags=%04x\n",
                     handle, size, flags );
@@ -315,7 +326,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         if (pArena->flags & GA_DOSMEM)
             DOSMEM_FreeBlock( (void *)pArena->base );
         else
-            HeapFree( GetProcessHeap(), 0, (void *)pArena->base );
+            HeapFree( heap, 0, (void *)pArena->base );
         pArena->base = 0;
 
         /* Note: we rely on the fact that SELECTOR_ReallocBlock won't
@@ -374,13 +385,11 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
          */
 
 	if (ptr)
-            newptr = HeapReAlloc( GetProcessHeap(),
+            newptr = HeapReAlloc( heap,
 		(pArena->pageLockCount > 0) ? HEAP_REALLOC_IN_PLACE_ONLY : 0, 
                               ptr, size );
 	else
-            newptr = HeapAlloc( GetProcessHeap(),
-		(pArena->pageLockCount > 0) ? HEAP_REALLOC_IN_PLACE_ONLY : 0, 
-                              size );
+            newptr = HeapAlloc( heap, 0, size );
 
     }
 
@@ -392,7 +401,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
             if (pArena->flags & GA_DOSMEM)
                 DOSMEM_FreeBlock( (void *)pArena->base );
             else
-                HeapFree( GetProcessHeap(), 0, ptr );
+                HeapFree( heap, 0, ptr );
             SELECTOR_FreeBlock( sel );
             memset( pArena, 0, sizeof(GLOBALARENA) );
         }
@@ -408,7 +417,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         if (pArena->flags & GA_DOSMEM)
             DOSMEM_FreeBlock( (void *)pArena->base );
         else
-            HeapFree( GetProcessHeap(), 0, ptr );
+            HeapFree( heap, 0, ptr );
         memset( pArena, 0, sizeof(GLOBALARENA) );
         return 0;
     }
@@ -419,7 +428,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         if (pArena->flags & GA_DOSMEM)
             DOSMEM_FreeBlock( (void *)pArena->base );
         else
-            HeapFree( GetProcessHeap(), 0, ptr );
+            HeapFree( heap, 0, ptr );
         SELECTOR_FreeBlock( sel );
         return 0;
     }
@@ -463,7 +472,7 @@ HGLOBAL16 WINAPI GlobalFree16(
 
     TRACE("%04x\n", handle );
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
-    HeapFree( GetProcessHeap(), 0, ptr );
+    HeapFree( get_win16_heap(), 0, ptr );
     return 0;
 }
 
