@@ -929,7 +929,7 @@ static BYTE iTunesSerialNum[] = {
 static void testFindCert(void)
 {
     HCERTSTORE store;
-    PCCERT_CONTEXT context = NULL;
+    PCCERT_CONTEXT context = NULL, subject;
     BOOL ret;
     CERT_INFO certInfo = { 0 };
     CRYPT_HASH_BLOB blob;
@@ -1067,7 +1067,7 @@ static void testFindCert(void)
     ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n",
      GetLastError());
     ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-     iTunesCert3, sizeof(iTunesCert3), CERT_STORE_ADD_NEW, NULL);
+     iTunesCert3, sizeof(iTunesCert3), CERT_STORE_ADD_NEW, &subject);
     ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n",
      GetLastError());
 
@@ -1098,6 +1098,18 @@ static void testFindCert(void)
         ok(context == NULL, "Expected one cert only\n");
     }
 
+    context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+     CERT_FIND_ISSUER_OF, subject, NULL);
+    ok(context != NULL, "Expected an issuer\n");
+    if (context)
+    {
+        PCCERT_CONTEXT none = CertFindCertificateInStore(store,
+         X509_ASN_ENCODING, 0, CERT_FIND_ISSUER_OF, context, NULL);
+
+        ok(!none, "Expected no parent of issuer\n");
+        CertFreeCertificateContext(context);
+    }
+    CertFreeCertificateContext(subject);
     CertCloseStore(store, 0);
 }
 
