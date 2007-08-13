@@ -2479,6 +2479,8 @@ BOOL InitAdapters(void) {
     /* For now only one default adapter */
     {
         int attribute;
+        DISPLAY_DEVICEW DisplayDevice;
+
         TRACE("Initializing default adapter\n");
         Adapters[0].monitorPoint.x = -1;
         Adapters[0].monitorPoint.y = -1;
@@ -2498,6 +2500,12 @@ BOOL InitAdapters(void) {
 
         Adapters[0].driver = "Display";
         Adapters[0].description = "Direct3D HAL";
+
+        /* Initialize the Adapter's DeviceName which is required for ChangeDisplaySettings and friends */
+        DisplayDevice.cb = sizeof(DisplayDevice);
+        EnumDisplayDevicesW(NULL, 0 /* Adapter 0 = iDevNum 0 */, &DisplayDevice, 0);
+        TRACE("DeviceName: %s\n", debugstr_w(DisplayDevice.DeviceName));
+        strcpyW(Adapters[0].DeviceName, DisplayDevice.DeviceName);
 
         if (WineD3D_CreateFakeGLContext()) {
             int iPixelFormat;

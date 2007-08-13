@@ -588,6 +588,7 @@ struct WineD3DAdapter
     WineD3D_GL_Info         gl_info;
     const char              *driver;
     const char              *description;
+    WCHAR                   DeviceName[CCHDEVICENAME]; /* DeviceName for use with e.g. ChangeDisplaySettings */
     int                     nCfgs;
     WineD3D_PixelFormat     *cfgs;
 };
