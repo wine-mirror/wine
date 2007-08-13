@@ -4423,7 +4423,9 @@ static void test_decodeEnhancedKeyUsage(DWORD dwEncoding)
     }
 }
 
-static const BYTE authorityKeyIdWithId[] = { 0x30,0x03,0x80,0x01,0x01 };
+static BYTE keyId[] = { 1,2,3,4 };
+static const BYTE authorityKeyIdWithId[] = {
+ 0x30,0x06,0x80,0x04,0x01,0x02,0x03,0x04 };
 static const BYTE authorityKeyIdWithIssuer[] = { 0x30,0x19,0xa1,0x17,0x30,0x15,
  0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,
  0x20,0x4c,0x61,0x6e,0x67,0x00 };
@@ -4447,8 +4449,8 @@ static void test_encodeAuthorityKeyId(DWORD dwEncoding)
         LocalFree(buf);
     }
     /* With just a key id */
-    info.KeyId.cbData = sizeof(serialNum);
-    info.KeyId.pbData = (BYTE *)serialNum;
+    info.KeyId.cbData = sizeof(keyId);
+    info.KeyId.pbData = keyId;
     ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -4519,8 +4521,8 @@ static void test_decodeAuthorityKeyId(DWORD dwEncoding)
 
         ok(size >= sizeof(CERT_AUTHORITY_KEY_ID_INFO), "Unexpected size %d\n",
          size);
-        ok(info->KeyId.cbData == sizeof(serialNum), "Unexpected key id len\n");
-        ok(!memcmp(info->KeyId.pbData, serialNum, sizeof(serialNum)),
+        ok(info->KeyId.cbData == sizeof(keyId), "Unexpected key id len\n");
+        ok(!memcmp(info->KeyId.pbData, keyId, sizeof(keyId)),
          "Unexpected key id\n");
         ok(info->CertIssuer.cbData == 0, "Expected no issuer name\n");
         ok(info->CertSerialNumber.cbData == 0, "Expected no serial number\n");
@@ -4587,8 +4589,8 @@ static void test_encodeAuthorityKeyId2(DWORD dwEncoding)
         LocalFree(buf);
     }
     /* With just a key id */
-    info.KeyId.cbData = sizeof(serialNum);
-    info.KeyId.pbData = (BYTE *)serialNum;
+    info.KeyId.cbData = sizeof(keyId);
+    info.KeyId.pbData = keyId;
     ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -4670,8 +4672,8 @@ static void test_decodeAuthorityKeyId2(DWORD dwEncoding)
 
         ok(size >= sizeof(CERT_AUTHORITY_KEY_ID2_INFO), "Unexpected size %d\n",
          size);
-        ok(info->KeyId.cbData == sizeof(serialNum), "Unexpected key id len\n");
-        ok(!memcmp(info->KeyId.pbData, serialNum, sizeof(serialNum)),
+        ok(info->KeyId.cbData == sizeof(keyId), "Unexpected key id len\n");
+        ok(!memcmp(info->KeyId.pbData, keyId, sizeof(keyId)),
          "Unexpected key id\n");
         ok(info->AuthorityCertIssuer.cAltEntry == 0,
          "Expected no issuer name entries\n");

@@ -2003,6 +2003,45 @@ static BOOL CRYPT_AsnEncodeAltNameEntry(const CERT_ALT_NAME_ENTRY *entry,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeIntegerSwapBytes(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret;
+
+    __TRY
+    {
+        const CRYPT_DATA_BLOB *blob = (const CRYPT_DATA_BLOB *)pvStructInfo;
+        CRYPT_DATA_BLOB newBlob = { blob->cbData, NULL };
+
+        ret = TRUE;
+        if (newBlob.cbData)
+        {
+            newBlob.pbData = CryptMemAlloc(newBlob.cbData);
+            if (newBlob.pbData)
+            {
+                DWORD i;
+
+                for (i = 0; i < newBlob.cbData; i++)
+                    newBlob.pbData[newBlob.cbData - i - 1] = blob->pbData[i];
+            }
+            else
+                ret = FALSE;
+        }
+        if (ret)
+            ret = CRYPT_AsnEncodeInteger(dwCertEncodingType, lpszStructType,
+             &newBlob, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+        CryptMemFree(newBlob.pbData);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodeAuthorityKeyId(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -2022,7 +2061,7 @@ static BOOL WINAPI CRYPT_AsnEncodeAuthorityKeyId(DWORD dwCertEncodingType,
         {
             swapped[cSwapped].tag = ASN_CONTEXT | 0;
             swapped[cSwapped].pvStructInfo = &info->KeyId;
-            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeInteger;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeIntegerSwapBytes;
             items[cItem].pvStructInfo = &swapped[cSwapped];
             items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
             cSwapped++;
@@ -2155,7 +2194,7 @@ static BOOL WINAPI CRYPT_AsnEncodeAuthorityKeyId2(DWORD dwCertEncodingType,
         {
             swapped[cSwapped].tag = ASN_CONTEXT | 0;
             swapped[cSwapped].pvStructInfo = &info->KeyId;
-            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeInteger;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeIntegerSwapBytes;
             items[cItem].pvStructInfo = &swapped[cSwapped];
             items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
             cSwapped++;
