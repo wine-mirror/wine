@@ -250,19 +250,18 @@ static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
 
             if (ext)
             {
-                CRYPT_DATA_BLOB *value;
+                CRYPT_DATA_BLOB value;
                 DWORD size;
 
                 ret = CryptDecodeObjectEx(X509_ASN_ENCODING,
                  szOID_SUBJECT_KEY_IDENTIFIER, ext->Value.pbData,
-                 ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &value,
+                 ext->Value.cbData, CRYPT_DECODE_NOCOPY_FLAG, NULL, &value,
                  &size);
                 if (ret)
                 {
-                    ret = CertContext_CopyParam(pvData, pcbData, value->pbData,
-                     value->cbData);
-                    CertContext_SetProperty(context, dwPropId, 0, value);
-                    LocalFree(value);
+                    ret = CertContext_CopyParam(pvData, pcbData, value.pbData,
+                     value.cbData);
+                    CertContext_SetProperty(context, dwPropId, 0, &value);
                 }
             }
             else
