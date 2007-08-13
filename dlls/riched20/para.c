@@ -83,7 +83,7 @@ void ME_MarkAllForWrapping(ME_TextEditor *editor)
   ME_MarkForWrapping(editor, editor->pBuffer->pFirst->member.para.next_para, editor->pBuffer->pLast);
 }
 
-void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, ME_DisplayItem *last)
+void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, const ME_DisplayItem *last)
 {
   while(first != last)
   {
@@ -92,7 +92,7 @@ void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, ME_Display
   }
 }
 
-void ME_MarkForPainting(ME_TextEditor *editor, ME_DisplayItem *first, ME_DisplayItem *last)
+void ME_MarkForPainting(ME_TextEditor *editor, ME_DisplayItem *first, const ME_DisplayItem *last)
 {
   while(first != last)
   {
@@ -277,12 +277,12 @@ ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *item) {
   return ME_FindItemBackOrHere(item, diParagraph);
 }
 
-static void ME_DumpStyleEffect(char **p, const char *name, PARAFORMAT2 *fmt, int mask)
+static void ME_DumpStyleEffect(char **p, const char *name, const PARAFORMAT2 *fmt, int mask)
 {
   *p += sprintf(*p, "%-22s%s\n", name, (fmt->dwMask & mask) ? ((fmt->wEffects & mask) ? "yes" : "no") : "N/A");
 }
 
-void ME_DumpParaStyleToBuf(PARAFORMAT2 *pFmt, char buf[2048])
+void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048])
 {
   /* FIXME only PARAFORMAT styles implemented */
   char *p;
@@ -318,7 +318,7 @@ void ME_DumpParaStyleToBuf(PARAFORMAT2 *pFmt, char buf[2048])
   ME_DumpStyleEffect(&p, "Page break before:", pFmt, PFM_PAGEBREAKBEFORE);
 }
 
-void ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, PARAFORMAT2 *pFmt)
+void ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const PARAFORMAT2 *pFmt)
 {
   PARAFORMAT2 copy;
   assert(sizeof(*para->member.para.pFmt) == sizeof(PARAFORMAT2));
@@ -372,7 +372,7 @@ ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayIte
 }
 
 
-void ME_SetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
+void ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt)
 {
   ME_DisplayItem *para, *para_end;
   
@@ -386,7 +386,7 @@ void ME_SetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
   } while(1);
 }
 
-void ME_GetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, PARAFORMAT2 *pFmt)
+void ME_GetParaFormat(ME_TextEditor *editor, const ME_DisplayItem *para, PARAFORMAT2 *pFmt)
 {
   if (pFmt->cbSize >= sizeof(PARAFORMAT2))
   {
