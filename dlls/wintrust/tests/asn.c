@@ -240,7 +240,6 @@ static void test_encodeSPCPEImage(void)
 
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -254,7 +253,6 @@ static void test_encodeSPCPEImage(void)
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(!ret && GetLastError () == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* With just unused bits field set: */
@@ -262,7 +260,6 @@ static void test_encodeSPCPEImage(void)
     imageData.Flags.cUnusedBits = 1;
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -277,7 +274,6 @@ static void test_encodeSPCPEImage(void)
     imageData.Flags.cbData = sizeof(flags);
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -292,7 +288,6 @@ static void test_encodeSPCPEImage(void)
     imageData.pFile = &link;
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -306,7 +301,6 @@ static void test_encodeSPCPEImage(void)
     imageData.Flags.cbData = sizeof(flags);
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -320,7 +314,6 @@ static void test_encodeSPCPEImage(void)
     link.pwszFile = (LPWSTR)nihongoURL;
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
