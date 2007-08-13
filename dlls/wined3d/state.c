@@ -802,6 +802,11 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             fogstart = 1.0;
             fogend = 0.0;
         }
+
+        if(GL_SUPPORT(EXT_FOG_COORD)) {
+            glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+        }
         context->last_was_foggy_shader = TRUE;
     }
     else if( use_ps(stateblock->wineD3DDevice) ) {
@@ -836,6 +841,11 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 fogenable = FALSE;
                 break;
             default: FIXME("Unexpected WINED3DRS_FOGVERTEXMODE %d\n", stateblock->renderState[WINED3DRS_FOGVERTEXMODE]);
+        }
+
+        if(GL_SUPPORT(EXT_FOG_COORD)) {
+            glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
         }
     }
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
@@ -944,13 +954,26 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         glEnable(GL_FOG);
         checkGLcall("glEnable GL_FOG");
 
-        glFogfv(GL_FOG_START, &fogstart);
-        checkGLcall("glFogf(GL_FOG_START, fogstart");
-        TRACE("Fog Start == %f\n", fogstart);
+        if(fogstart != fogend)
+        {
+            glFogfv(GL_FOG_START, &fogstart);
+            checkGLcall("glFogf(GL_FOG_START, fogstart");
+            TRACE("Fog Start == %f\n", fogstart);
 
-        glFogfv(GL_FOG_END, &fogend);
-        checkGLcall("glFogf(GL_FOG_END, fogend");
-        TRACE("Fog End == %f\n", fogend);
+            glFogfv(GL_FOG_END, &fogend);
+            checkGLcall("glFogf(GL_FOG_END, fogend");
+            TRACE("Fog End == %f\n", fogend);
+        }
+        else
+        {
+            glFogf(GL_FOG_START, -1.0 / 0.0);
+            checkGLcall("glFogf(GL_FOG_START, fogstart");
+            TRACE("Fog Start == %f\n", fogstart);
+
+            glFogf(GL_FOG_END, 0.0);
+            checkGLcall("glFogf(GL_FOG_END, fogend");
+            TRACE("Fog End == %f\n", fogend);
+        }
     } else {
         glDisable(GL_FOG);
         checkGLcall("glDisable GL_FOG");

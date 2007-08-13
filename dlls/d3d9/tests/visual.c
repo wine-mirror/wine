@@ -557,9 +557,77 @@ static void fog_test(IDirect3DDevice9 *device)
         trace("Info: Table fog not supported by this device\n");
     }
 
+    /* Now test the special case fogstart == fogend */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+
+    if(IDirect3DDevice9_BeginScene(device) == D3D_OK)
+    {
+        start = 512;
+        end = 512;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, *((DWORD *) &start));
+        ok(hr == D3D_OK, "Setting fog start returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGEND, *((DWORD *) &end));
+        ok(hr == D3D_OK, "Setting fog start returned %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
+        ok( hr == D3D_OK, "SetFVF returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+        ok( hr == D3D_OK, "IDirect3DDevice9_SetRenderState %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_NONE);
+        ok( hr == D3D_OK, "Setting fog table mode to D3DFOG_LINEAR returned %s\n", DXGetErrorString9(hr));
+
+        /* Untransformed vertex, z coord = 0.1, fogstart = 512, fogend = 512. Would result in
+         * a completely fog-free primitive because start > zcoord, but because start == end, the primitive
+         * is fully covered by fog. The same happens to the 2nd untransformed quad with z = 1.0.
+         * The third transformed quad remains unfogged because the fogcoords are read from the specular
+         * color and has fixed fogstart and fogend.
+         */
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                2 /*PrimCount */, Indices, D3DFMT_INDEX16, unstransformed_1,
+                sizeof(unstransformed_1[0]));
+        ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                2 /*PrimCount */, Indices, D3DFMT_INDEX16, unstransformed_2,
+                sizeof(unstransformed_1[0]));
+        ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
+        ok( hr == D3D_OK, "SetFVF returned %s\n", DXGetErrorString9(hr));
+        /* Transformed, vertex fog != NONE, pixel fog == NONE: Use specular color alpha component */
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                2 /*PrimCount */, Indices, D3DFMT_INDEX16, transformed_1,
+                sizeof(transformed_1[0]));
+        ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "EndScene returned %s\n", DXGetErrorString9(hr));
+    }
+    else
+    {
+        ok(FALSE, "BeginScene failed\n");
+    }
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x0000FF00, "Untransformed vertex with vertex fog and z = 0.1 has color %08x\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color == 0x0000FF00, "Untransformed vertex with vertex fog and z = 1.0 has color %08x\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
+
     /* Turn off the fog master switch to avoid confusing other tests */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
     ok(hr == D3D_OK, "Turning off fog calculations returned %s\n", DXGetErrorString9(hr));
+    start = 0.0;
+    end = 1.0;
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, *((DWORD *) &start));
+    ok(hr == D3D_OK, "Setting fog start returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGEND, *((DWORD *) &end));
+    ok(hr == D3D_OK, "Setting fog end returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+    ok( hr == D3D_OK, "IDirect3DDevice9_SetRenderState %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_LINEAR);
+    ok( hr == D3D_OK, "Setting fog table mode to D3DFOG_LINEAR returned %s\n", DXGetErrorString9(hr));
 }
 
 /* This test verifies the behaviour of cube maps wrt. texture wrapping.
