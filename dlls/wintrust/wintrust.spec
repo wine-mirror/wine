@@ -93,7 +93,7 @@
 @ stub WVTAsn1SpcFinancialCriteriaInfoDecode
 @ stub WVTAsn1SpcFinancialCriteriaInfoEncode
 @ stub WVTAsn1SpcIndirectDataContentDecode
-@ stub WVTAsn1SpcIndirectDataContentEncode
+@ stdcall WVTAsn1SpcIndirectDataContentEncode(long str ptr ptr ptr)
 @ stdcall WVTAsn1SpcLinkDecode(long str ptr long long ptr ptr)
 @ stdcall WVTAsn1SpcLinkEncode(long str ptr ptr ptr)
 @ stub WVTAsn1SpcMinimalCriteriaInfoDecode
