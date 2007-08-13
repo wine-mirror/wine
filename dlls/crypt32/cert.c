@@ -972,6 +972,7 @@ static BOOL compare_cert_by_cert_id(PCCERT_CONTEXT pCertContext, DWORD dwType,
         }
         else
             ret = FALSE;
+        break;
     }
     default:
         ret = FALSE;
