@@ -2240,9 +2240,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     if (pStreamData != NULL) {
         IWineD3DVertexBufferImpl *vbImpl = (IWineD3DVertexBufferImpl *) pStreamData;
         InterlockedIncrement(&vbImpl->bindCount);
+        IWineD3DVertexBuffer_AddRef(pStreamData);
     }
     if (oldSrc != NULL) {
         InterlockedDecrement(&((IWineD3DVertexBufferImpl *) oldSrc)->bindCount);
+        IWineD3DVertexBuffer_Release(oldSrc);
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
@@ -4752,13 +4754,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
                                                     UINT PrimitiveCount, CONST void* pVertexStreamZeroData,
                                                     UINT VertexStreamZeroStride) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVertexBuffer *vb;
 
     TRACE("(%p) : Type=(%d,%s), pCount=%d, pVtxData=%p, Stride=%d\n", This, PrimitiveType,
              debug_d3dprimitivetype(PrimitiveType),
              PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
+    vb = This->stateBlock->streamSource[0];
     This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
+    if(vb) IWineD3DVertexBuffer_Release(vb);
     This->stateBlock->streamOffset[0] = 0;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
     This->stateBlock->streamIsUP = TRUE;
@@ -4787,6 +4792,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
                                                              UINT VertexStreamZeroStride) {
     int                 idxStride;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVertexBuffer *vb;
     IWineD3DIndexBuffer *ib;
 
     TRACE("(%p) : Type=(%d,%s), MinVtxIdx=%d, NumVIdx=%d, PCount=%d, pidxdata=%p, IdxFmt=%d, pVtxdata=%p, stride=%d\n",
@@ -4801,7 +4807,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     }
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
+    vb = This->stateBlock->streamSource[0];
     This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
+    if(vb) IWineD3DVertexBuffer_Release(vb);
     This->stateBlock->streamIsUP = TRUE;
     This->stateBlock->streamOffset[0] = 0;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;

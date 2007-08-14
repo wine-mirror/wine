@@ -262,6 +262,13 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                     }
                 }
             }
+            for (counter = 0; counter < MAX_STREAMS; counter++) {
+                if(This->streamSource[counter]) {
+                    if(0 != IWineD3DVertexBuffer_Release(This->streamSource[counter])) {
+                        TRACE("Vertex buffer still referenced by stateblock, applications has leaked Stream %u, buffer %p\n", counter, This->streamSource[counter]);
+                    }
+                }
+            }
             if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
 
         }
