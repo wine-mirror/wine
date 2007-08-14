@@ -209,6 +209,7 @@ static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
         __EXCEPT_PAGE_FAULT
         {
             SetLastError(STATUS_ACCESS_VIOLATION);
+            ret = FALSE;
         }
         __ENDTRY;
     }
