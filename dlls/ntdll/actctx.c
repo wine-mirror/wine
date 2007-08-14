@@ -1525,7 +1525,7 @@ static NTSTATUS parse_manifest( struct actctx_loader* acl, struct assembly_ident
     return status;
 }
 
-static NTSTATUS open_nt_file( HANDLE handle, UNICODE_STRING *name )
+static NTSTATUS open_nt_file( HANDLE *handle, UNICODE_STRING *name )
 {
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
