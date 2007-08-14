@@ -1140,6 +1140,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
             TRACE("(%p) Allocating data for an occlusion query\n", This);
             object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryOcclusionData));
             GL_EXTCALL(glGenQueriesARB(1, &((WineQueryOcclusionData *)(object->extendedData))->queryId));
+            ((WineQueryOcclusionData *)(object->extendedData))->ctx = This->activeContext;
             break;
         }
     case WINED3DQUERYTYPE_EVENT:

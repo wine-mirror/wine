@@ -187,7 +187,9 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_OCCLUSION:
     {
         DWORD* data = pData;
-        if (GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
+        if (GL_SUPPORT(ARB_OCCLUSION_QUERY) &&
+            ((WineQueryOcclusionData *)This->extendedData)->ctx == This->wineD3DDevice->activeContext &&
+            This->wineD3DDevice->activeContext->tid == GetCurrentThreadId()) {
             GLuint available;
             GLuint samples;
             GLuint queryId = ((WineQueryOcclusionData *)This->extendedData)->queryId;
@@ -206,7 +208,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
                 res = S_FALSE;
             }
         } else {
-            FIXME("(%p) : Occlusion queries not supported. Returning 1.\n", This);
+            WARN("(%p) : Occlusion queries not supported, or wrong context. Returning 1.\n", This);
             *data = 1;
             res = S_OK;
         }
@@ -380,13 +382,19 @@ static HRESULT  WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIs
     switch (This->type) {
         case WINED3DQUERYTYPE_OCCLUSION:
             if (GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
-                if (dwIssueFlags & WINED3DISSUE_BEGIN) {
-                    GL_EXTCALL(glBeginQueryARB(GL_SAMPLES_PASSED_ARB, ((WineQueryOcclusionData *)This->extendedData)->queryId));
-                    checkGLcall("glBeginQuery()");
-                }
-                if (dwIssueFlags & WINED3DISSUE_END) {
-                    GL_EXTCALL(glEndQueryARB(GL_SAMPLES_PASSED_ARB));
-                    checkGLcall("glEndQuery()");
+                WineD3DContext *ctx = ((WineQueryOcclusionData *)This->extendedData)->ctx;
+
+                if(ctx != This->wineD3DDevice->activeContext || ctx->tid != GetCurrentThreadId()) {
+                    WARN("Not the owning context, can't start query\n");
+                } else {
+                    if (dwIssueFlags & WINED3DISSUE_BEGIN) {
+                        GL_EXTCALL(glBeginQueryARB(GL_SAMPLES_PASSED_ARB, ((WineQueryOcclusionData *)This->extendedData)->queryId));
+                        checkGLcall("glBeginQuery()");
+                    }
+                    if (dwIssueFlags & WINED3DISSUE_END) {
+                        GL_EXTCALL(glEndQueryARB(GL_SAMPLES_PASSED_ARB));
+                        checkGLcall("glEndQuery()");
+                    }
                 }
             } else {
                 FIXME("(%p) : Occlusion queries not supported\n", This);
