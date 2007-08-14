@@ -62,7 +62,6 @@ my %special_dlls =
 (
   "glu32"    => "GLU32FILES",
   "opengl32" => "OPENGLFILES",
-  "wined3d"  => "OPENGLFILES",
   "winex11.drv" => "XFILES",
   "winequartz.drv" => "QUARTZFILES"
 );

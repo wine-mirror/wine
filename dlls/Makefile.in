@@ -8,7 +8,7 @@ VPATH     = @srcdir@
 # special configure-dependent targets
 
 GLU32FILES = glu32
-OPENGLFILES = opengl32 wined3d
+OPENGLFILES = opengl32
 QUARTZFILES = winequartz.drv
 XFILES = winex11.drv
 EXTRADIRS = @GLU32FILES@ @OPENGLFILES@ @QUARTZFILES@ @XFILES@
@@ -206,6 +206,7 @@ BASEDIRS = \
 	winealsa.drv \
 	wineaudioio.drv \
 	winecoreaudio.drv \
+	wined3d \
 	winedos \
 	wineesd.drv \
 	winejack.drv \
@@ -313,7 +314,6 @@ SUBDIRS = \
 	$(TESTSUBDIRS) \
 	glu32 \
 	opengl32 \
-	wined3d \
 	winequartz.drv \
 	winex11.drv
 
