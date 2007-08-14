@@ -183,3 +183,8 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+void WINAPI CertFreeCertificateChain(PCCERT_CHAIN_CONTEXT pChainContext)
+{
+    FIXME("(%p): stub\n", pChainContext);
+}
