@@ -569,15 +569,18 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 	if (style & TTS_BALLOON)
 	{
           ptfx = rc.left + ((rc.right - rc.left) / 2);
-          if(rect.top - size.cy >= 0)
+
+          /* CENTERTIP ballon tooltips default to below the field
+             if they fit on the screen                            */
+          if(rc.bottom + size.cy > GetSystemMetrics(SM_CYSCREEN))
           {
-            rect.top -= size.cy;
+            rect.top = rc.top - size.cy;
             infoPtr->bToolBelow = FALSE;
           }
           else
           {
             infoPtr->bToolBelow = TRUE;
-            rect.top += 20;
+            rect.top = rc.bottom;
           }
           rect.left = max(0, rect.left - BALLOON_STEMINDENT);
         }
