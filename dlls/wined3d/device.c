@@ -2796,6 +2796,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
 
     if(oldIdxs != pIndexData) {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
+        if(pIndexData) IWineD3DIndexBuffer_AddRef(pIndexData);
+        if(oldIdxs) IWineD3DIndexBuffer_Release(oldIdxs);
     }
     return WINED3D_OK;
 }
@@ -4785,6 +4787,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
                                                              UINT VertexStreamZeroStride) {
     int                 idxStride;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DIndexBuffer *ib;
 
     TRACE("(%p) : Type=(%d,%s), MinVtxIdx=%d, NumVIdx=%d, PCount=%d, pidxdata=%p, IdxFmt=%d, pVtxdata=%p, stride=%d\n",
              This, PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
@@ -4815,7 +4818,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     /* MSDN specifies stream zero settings and index buffer must be set to NULL */
     This->stateBlock->streamSource[0] = NULL;
     This->stateBlock->streamStride[0] = 0;
-    This->stateBlock->pIndexData = NULL;
+    ib = This->stateBlock->pIndexData;
+    if(ib) {
+        IWineD3DIndexBuffer_Release(ib);
+        This->stateBlock->pIndexData = NULL;
+    }
     /* No need to mark the stream source state dirty here. Either the app calls UP drawing again, or it has to call
      * SetStreamSource to specify a vertex buffer
      */

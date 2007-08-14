@@ -262,6 +262,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                     }
                 }
             }
+            if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
 
         }
 
