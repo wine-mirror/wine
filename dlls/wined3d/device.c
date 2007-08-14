@@ -1975,6 +1975,25 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
         IWineD3DDevice_SetTexture(iface, WINED3DVERTEXTEXTURESAMPLER0 + sampler, NULL);
     }
 
+    /* Release the update stateblock */
+    if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
+        if(This->updateStateBlock != This->stateBlock)
+            FIXME("(%p) Something's still holding the Update stateblock\n",This);
+    }
+    This->updateStateBlock = NULL;
+
+    { /* because were not doing proper internal refcounts releasing the primary state block
+        causes recursion with the extra checks in ResourceReleased, to avoid this we have
+        to set this->stateBlock = NULL; first */
+        IWineD3DStateBlock *stateBlock = (IWineD3DStateBlock *)This->stateBlock;
+        This->stateBlock = NULL;
+
+        /* Release the stateblock */
+        if(IWineD3DStateBlock_Release(stateBlock) > 0){
+            FIXME("(%p) Something's still holding the Update stateblock\n",This);
+        }
+    }
+
     /* Release the buffers (with sanity checks)*/
     TRACE("Releasing the depth stencil buffer at %p\n", This->stencilBufferTarget);
     if(This->stencilBufferTarget != NULL && (IWineD3DSurface_Release(This->stencilBufferTarget) >0)){
@@ -2007,25 +2026,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     HeapFree(GetProcessHeap(), 0, This->swapchains);
     This->swapchains = NULL;
     This->NumberOfSwapChains = 0;
-
-    /* Release the update stateblock */
-    if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
-        if(This->updateStateBlock != This->stateBlock)
-            FIXME("(%p) Something's still holding the Update stateblock\n",This);
-    }
-    This->updateStateBlock = NULL;
-
-    { /* because were not doing proper internal refcounts releasing the primary state block
-        causes recursion with the extra checks in ResourceReleased, to avoid this we have
-        to set this->stateBlock = NULL; first */
-        IWineD3DStateBlock *stateBlock = (IWineD3DStateBlock *)This->stateBlock;
-        This->stateBlock = NULL;
-
-        /* Release the stateblock */
-        if(IWineD3DStateBlock_Release(stateBlock) > 0){
-            FIXME("(%p) Something's still holding the Update stateblock\n",This);
-        }
-    }
 
     HeapFree(GetProcessHeap(), 0, This->render_targets);
     HeapFree(GetProcessHeap(), 0, This->fbo_color_attachments);
