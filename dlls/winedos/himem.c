@@ -291,4 +291,9 @@ void DOSVM_InitSegments( void )
     ptr = DOSVM_AllocDataUMB( DOSVM_RELAY_DATA_SIZE, 
                               0, &DOSVM_dpmi_segments->relay_data_sel);
     memset( ptr, 0, DOSVM_RELAY_DATA_SIZE );
+
+    /*
+     * As we store code in UMB we should make sure it is executable
+     */
+    VirtualProtect((void *)DOSVM_UMB_BOTTOM, DOSVM_UMB_TOP - DOSVM_UMB_BOTTOM, PAGE_EXECUTE_READWRITE, NULL);
 }
