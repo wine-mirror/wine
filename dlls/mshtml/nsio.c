@@ -1883,15 +1883,9 @@ static nsresult NSAPI nsIOService_QueryInterface(nsIIOService *iface, nsIIDRef r
 {
     *result = NULL;
 
-    if(IsEqualGUID(&IID_nsISupports, riid)) {
-        TRACE("(IID_nsISupports %p)\n", result);
+    if(IsEqualGUID(&IID_nsISupports, riid)
+       || IsEqualGUID(&IID_nsIIOService, riid)) {
         *result = iface;
-    }else if(IsEqualGUID(&IID_nsIIOService, riid)) {
-        TRACE("(IID_nsIIOService %p)\n", result);
-        *result = iface;
-    }
-
-    if(*result) {
         nsIIOService_AddRef(iface);
         return S_OK;
     }
