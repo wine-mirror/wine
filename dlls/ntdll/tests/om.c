@@ -25,6 +25,7 @@
 #include "winnt.h"
 #include "stdlib.h"
 
+static HANDLE   (WINAPI *pCreateWaitableTimerA)(SECURITY_ATTRIBUTES*, BOOL, LPCSTR);
 static NTSTATUS (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, LPCSTR);
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
 static VOID     (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
@@ -246,12 +247,12 @@ static void test_name_collisions(void)
     pNtClose(h1);
     pNtClose(h2);
     
-    h = CreateWaitableTimerA(NULL, TRUE, "om.c-test");
+    h = pCreateWaitableTimerA(NULL, TRUE, "om.c-test");
     ok(h != 0, "CreateWaitableTimerA failed got ret=%p (%d)\n", h, GetLastError());
     status = pNtCreateTimer(&h1, GENERIC_ALL, &attr, NotificationTimer);
     ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
         "NtCreateTimer should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08x)\n", status);
-    h2 = CreateWaitableTimerA(NULL, TRUE, "om.c-test");
+    h2 = pCreateWaitableTimerA(NULL, TRUE, "om.c-test");
     winerr = GetLastError();
     ok(h2 != 0 && winerr == ERROR_ALREADY_EXISTS,
         "CreateWaitableTimerA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%d)\n", h2, winerr);
@@ -541,11 +542,15 @@ static void test_symboliclink(void)
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
+
     if (!hntdll)
     {
         skip("not running on NT, skipping test\n");
         return;
     }
+
+    pCreateWaitableTimerA = (void *)GetProcAddress(hkernel32, "CreateWaitableTimerA");
 
     pRtlCreateUnicodeStringFromAsciiz = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeStringFromAsciiz");
     pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
