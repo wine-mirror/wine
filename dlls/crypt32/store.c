@@ -488,7 +488,7 @@ static void *CRYPT_CollectionAdvanceEnum(PWINE_COLLECTIONSTORE store,
         pPrev = NULL;
     }
     else
-        child = storeEntry->store->certs.enumContext(storeEntry->store, NULL);
+        child = contextStore->enumContext(storeEntry->store, NULL);
     if (child)
         ret = CRYPT_CollectionCreateContextFromChild(store, storeEntry, child,
          contextSize, FALSE);
