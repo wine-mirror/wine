@@ -1550,6 +1550,15 @@ GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics *graphics, GraphicsState *state)
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipScaleWorldTransform(GpGraphics *graphics, REAL sx,
+    REAL sy, GpMatrixOrder order)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    return GdipScaleMatrix(graphics->worldtrans, sx, sy, order);
+}
+
 GpStatus WINGDIPAPI GdipSetCompositingMode(GpGraphics *graphics,
     CompositingMode mode)
 {

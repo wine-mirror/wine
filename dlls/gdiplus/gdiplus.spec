@@ -501,7 +501,7 @@
 @ stub GdipScalePathGradientTransform
 @ stub GdipScalePenTransform
 @ stub GdipScaleTextureTransform
-@ stub GdipScaleWorldTransform
+@ stdcall GdipScaleWorldTransform(ptr long long long)
 @ stub GdipSetAdjustableArrowCapFillState
 @ stub GdipSetAdjustableArrowCapHeight
 @ stub GdipSetAdjustableArrowCapMiddleInset
