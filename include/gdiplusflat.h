@@ -81,6 +81,7 @@ GpStatus WINGDIPAPI GdipFillPolygonI(GpGraphics*,GpBrush*,GDIPCONST GpPoint*,INT
     GpFillMode);
 GpStatus WINGDIPAPI GdipFillRectangle(GpGraphics*,GpBrush*,REAL,REAL,REAL,REAL);
 GpStatus WINGDIPAPI GdipFillRectangleI(GpGraphics*,GpBrush*,INT,INT,INT,INT);
+GpStatus WINGDIPAPI GdipGetCompositingMode(GpGraphics*,CompositingMode*);
 GpStatus WINGDIPAPI GdipGetCompositingQuality(GpGraphics*,CompositingQuality*);
 GpStatus WINGDIPAPI GdipGetInterpolationMode(GpGraphics*,InterpolationMode*);
 GpStatus WINGDIPAPI GdipGetPageScale(GpGraphics*,REAL*);
@@ -90,6 +91,7 @@ GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics*,SmoothingMode*);
 GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics*,GpMatrix*);
 GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics*,GraphicsState);
 GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics*,GraphicsState*);
+GpStatus WINGDIPAPI GdipSetCompositingMode(GpGraphics*,CompositingMode);
 GpStatus WINGDIPAPI GdipSetCompositingQuality(GpGraphics*,CompositingQuality);
 GpStatus WINGDIPAPI GdipSetInterpolationMode(GpGraphics*,InterpolationMode);
 GpStatus WINGDIPAPI GdipSetPageScale(GpGraphics*,REAL);

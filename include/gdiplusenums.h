@@ -198,6 +198,12 @@ enum EmfType
     EmfTypeEmfPlusDual = MetafileTypeEmfPlusDual
 };
 
+enum CompositingMode
+{
+    CompositingModeSourceOver,
+    CompositingModeSourceCopy
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -219,6 +225,7 @@ typedef enum WrapMode WrapMode;
 typedef enum MetafileType MetafileType;
 typedef enum LinearGradientMode LinearGradientMode;
 typedef enum EmfType EmfType;
+typedef enum CompositingMode CompositingMode;
 
 #endif /* end of c typedefs */
 

@@ -760,6 +760,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
     (*graphics)->compqual = CompositingQualityDefault;
     (*graphics)->interpolation = InterpolationModeDefault;
     (*graphics)->pixeloffset = PixelOffsetModeDefault;
+    (*graphics)->compmode = CompositingModeSourceOver;
     (*graphics)->unit = UnitDisplay;
     (*graphics)->scale = 1.0;
 
@@ -1421,6 +1422,18 @@ GpStatus WINGDIPAPI GdipFillRectangleI(GpGraphics *graphics, GpBrush *brush,
     return Ok;
 }
 
+/* FIXME: Compositing mode is not used anywhere except the getter/setter. */
+GpStatus WINGDIPAPI GdipGetCompositingMode(GpGraphics *graphics,
+    CompositingMode *mode)
+{
+    if(!graphics || !mode)
+        return InvalidParameter;
+
+    *mode = graphics->compmode;
+
+    return Ok;
+}
+
 /* FIXME: Compositing quality is not used anywhere except the getter/setter. */
 GpStatus WINGDIPAPI GdipGetCompositingQuality(GpGraphics *graphics,
     CompositingQuality *quality)
@@ -1521,6 +1534,17 @@ GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics *graphics, GraphicsState *state)
         FIXME("graphics state not implemented\n");
 
     return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipSetCompositingMode(GpGraphics *graphics,
+    CompositingMode mode)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    graphics->compmode = mode;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetCompositingQuality(GpGraphics *graphics,
