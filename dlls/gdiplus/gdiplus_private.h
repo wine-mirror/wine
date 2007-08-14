@@ -170,4 +170,8 @@ struct GpImageAttributes{
     WrapMode wrap;
 };
 
+struct GpFont{
+    LOGFONTW lfw;
+};
+
 #endif
