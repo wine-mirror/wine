@@ -91,17 +91,20 @@ DWORD joystick_map_pov(POINTL *p)
 LONG joystick_map_axis(ObjProps *props, int val)
 {
     LONG ret;
+    LONG center = (props->lMax - props->lMin) / 2;
 
     /* map the value from the hmin-hmax range into the wmin-wmax range */
     ret = MulDiv( val - props->lDevMin, props->lMax - props->lMin,
-                  props->lDevMax - props->lDevMin ) + props->lMin;
+                  props->lDevMax - props->lDevMin );
 
-    if ((ret >= -props->lDeadZone / 2 ) && (ret <= props->lDeadZone / 2))
-        ret = (props->lMax - props->lMin) / 2  + props->lMin;
+    if (abs( ret - center ) <= props->lDeadZone / 2 )
+        ret = center;
+
+    ret += props->lMin;
 
     TRACE( "(%d %d) -> (%d <%d> %d): val=%d ret=%d\n",
            props->lDevMin, props->lDevMax,
-           props->lMin, props->lDeadZone, props->lDevMax,
+           props->lMin, props->lDeadZone, props->lMax,
            val, ret );
 
     return ret;
