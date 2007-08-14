@@ -1301,7 +1301,11 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   if(value == GLX_SLOW_CONFIG)
       ppfd->dwFlags |= PFD_GENERIC_ACCELERATED;
 
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value); if (value) ppfd->dwFlags |= PFD_DOUBLEBUFFER;
+  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value);
+  if (value) {
+      ppfd->dwFlags |= PFD_DOUBLEBUFFER;
+      ppfd->dwFlags &= ~PFD_SUPPORT_GDI;
+  }
   pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STEREO, &value); if (value) ppfd->dwFlags |= PFD_STEREO;
 
   /* Pixel type */
@@ -2773,6 +2777,13 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
                 break;
 
             case WGL_SUPPORT_GDI_ARB:
+                if (!fmt) goto pix_error;
+                hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &tmp);
+                if (hTest) goto get_error;
+                if(tmp) {
+                    piValues[i] = GL_FALSE;
+                    continue;
+                }
                 curGLXAttr = GLX_X_RENDERABLE;
                 break;
 

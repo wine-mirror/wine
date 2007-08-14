@@ -35,6 +35,9 @@ static int (WINAPI *pwglReleasePbufferDCARB)(HPBUFFERARB, HDC);
 #define WGL_GREEN_BITS_ARB 0x2017
 #define WGL_BLUE_BITS_ARB  0x2019
 #define WGL_ALPHA_BITS_ARB 0x201B
+#define WGL_SUPPORT_GDI_ARB   0x200F
+#define WGL_DOUBLE_BUFFER_ARB 0x2011
+
 static BOOL (WINAPI *pwglChoosePixelFormatARB)(HDC, const int *, const FLOAT *, UINT, int *, UINT *);
 static BOOL (WINAPI *pwglGetPixelFormatAttribivARB)(HDC, int, int, UINT, const int *, int *);
 
@@ -225,6 +228,28 @@ static void test_colorbits(HDC hdc)
                                        iAttribRet[0], iAttribRet[1]);
 }
 
+static void test_gdi_dbuf(HDC hdc)
+{
+    const int iAttribList[] = { WGL_SUPPORT_GDI_ARB, WGL_DOUBLE_BUFFER_ARB };
+    int iAttribRet[sizeof(iAttribList)/sizeof(iAttribList[0])];
+    unsigned int nFormats;
+    int iPixelFormat;
+    int res;
+
+    nFormats = DescribePixelFormat(hdc, 0, 0, NULL);
+    for(iPixelFormat = 1;iPixelFormat <= nFormats;iPixelFormat++)
+    {
+        res = pwglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0,
+                  sizeof(iAttribList)/sizeof(iAttribList[0]), iAttribList,
+                  iAttribRet);
+        ok(res!=FALSE, "wglGetPixelFormatAttribivARB failed for pixel format %d\n", iPixelFormat);
+        if(res == FALSE)
+            continue;
+
+        ok(!(iAttribRet[0] && iAttribRet[1]), "GDI support and double buffering on pixel format %d\n", iPixelFormat);
+    }
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -274,6 +299,7 @@ START_TEST(opengl)
 
         test_setpixelformat();
         test_colorbits(hdc);
+        test_gdi_dbuf(hdc);
 
         wgl_extensions = pwglGetExtensionsStringARB(hdc);
         if(wgl_extensions == NULL) skip("Skipping opengl32 tests because this OpenGL implementation doesn't support WGL extensions!\n");
