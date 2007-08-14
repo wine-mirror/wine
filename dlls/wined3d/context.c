@@ -588,6 +588,16 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     glColorMask(GL_TRUE, GL_TRUE,GL_TRUE,GL_TRUE);
     checkGLcall("glColorMask");
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPING));
+    if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+        glDisable(GL_COLOR_SUM_EXT);
+        Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SPECULARENABLE));
+        checkGLcall("glDisable(GL_COLOR_SUM_EXT)");
+    }
+    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        GL_EXTCALL(glFinalCombinerInputNV(GL_VARIABLE_B_NV, GL_SPARE0_NV, GL_UNSIGNED_IDENTITY_NV, GL_RGB));
+        Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SPECULARENABLE));
+        checkGLcall("glFinalCombinerInputNV");
+    }
 
     /* Setup transforms */
     glMatrixMode(GL_MODELVIEW);
