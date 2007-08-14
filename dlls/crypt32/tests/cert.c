@@ -32,19 +32,24 @@
 static BOOL (WINAPI * pCryptVerifyCertificateSignatureEx)
                         (HCRYPTPROV, DWORD, DWORD, void *, DWORD, void *, DWORD, void *);
 
-#define CRYPT_GET_PROC(func)                                       \
-    p ## func = (void *)GetProcAddress(hCrypt32, #func);
+static BOOL (WINAPI * pCryptAcquireContextW)
+                        (HCRYPTPROV *, LPCWSTR, LPCWSTR, DWORD, DWORD);
 
 static void init_function_pointers(void)
 {
-    HMODULE hCrypt32;
+    HMODULE hCrypt32 = GetModuleHandleA("crypt32.dll");
+    HMODULE hAdvapi32 = GetModuleHandleA("advapi32.dll");
 
-    pCryptVerifyCertificateSignatureEx = NULL;
+#define GET_PROC(dll, func) \
+    p ## func = (void *)GetProcAddress(dll, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
 
-    hCrypt32 = GetModuleHandleA("crypt32.dll");
-    assert(hCrypt32);
+    GET_PROC(hCrypt32, CryptVerifyCertificateSignatureEx)
 
-    CRYPT_GET_PROC(CryptVerifyCertificateSignatureEx);
+    GET_PROC(hAdvapi32, CryptAcquireContextW)
+
+#undef GET_PROC
 }
 
 static BYTE subjectName[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
@@ -1519,9 +1524,9 @@ static void testCertSigs(void)
     DWORD sigSize = sizeof(sig);
 
     /* Just in case a previous run failed, delete this thing */
-    CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
-    ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    ret = pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
     ok(ret, "CryptAcquireContext failed: %08x\n", GetLastError());
 
@@ -1530,7 +1535,7 @@ static void testCertSigs(void)
 
     CryptDestroyKey(key);
     CryptReleaseContext(csp, 0);
-    ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    ret = pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 }
 
@@ -1645,9 +1650,9 @@ static void testCreateSelfSignCert(void)
      */
 
     /* Acquire a CSP */
-    CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
-    ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    ret = pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
     ok(ret, "CryptAcquireContext failed: %08x\n", GetLastError());
 
@@ -1702,7 +1707,7 @@ static void testCreateSelfSignCert(void)
     }
 
     CryptReleaseContext(csp, 0);
-    ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    ret = pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 
     /* do the same test with AT_KEYEXCHANGE  and key info*/
@@ -1750,7 +1755,7 @@ static void testCreateSelfSignCert(void)
         CertFreeCertificateContext(context);
     }
 
-    CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
         CRYPT_DELETEKEYSET);
 }
 
@@ -2359,7 +2364,7 @@ static void testAcquireCertPrivateKey(void)
     keyProvInfo.rgProvParam = NULL;
     keyProvInfo.dwKeySpec = AT_SIGNATURE;
 
-    CryptAcquireContextW(NULL, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextW(NULL, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, selfSignedCert,
@@ -2392,7 +2397,7 @@ static void testAcquireCertPrivateKey(void)
     ok(!ret && GetLastError() == CRYPT_E_NO_KEY_PROPERTY,
      "Expected CRYPT_E_NO_KEY_PROPERTY, got %08x\n", GetLastError());
 
-    CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
     ret = CryptImportKey(csp, privKey, sizeof(privKey), 0, 0, &key);
     ok(ret, "CryptImportKey failed: %08x\n", GetLastError());
@@ -2513,7 +2518,7 @@ static void testAcquireCertPrivateKey(void)
     }
 
     CryptReleaseContext(csp, 0);
-    CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 
     CertFreeCertificateContext(cert);

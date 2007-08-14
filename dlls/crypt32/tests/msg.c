@@ -29,6 +29,23 @@
 
 static char oid_rsa_md5[] = szOID_RSA_MD5;
 
+static BOOL (WINAPI * pCryptAcquireContextW)
+                        (HCRYPTPROV *, LPCWSTR, LPCWSTR, DWORD, DWORD);
+
+static void init_function_pointers(void)
+{
+    HMODULE hAdvapi32 = GetModuleHandleA("advapi32.dll");
+
+#define GET_PROC(dll, func) \
+    p ## func = (void *)GetProcAddress(dll, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
+
+    GET_PROC(hAdvapi32, CryptAcquireContextW)
+
+#undef GET_PROC
+}
+
 static void test_msg_open_to_encode(void)
 {
     HCRYPTMSG msg;
@@ -1042,10 +1059,10 @@ static void test_signed_msg_open(void)
          "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
     }
     /* The signer's hCryptProv must also be valid. */
-    ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+    ret = pCryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
      PROV_RSA_FULL, CRYPT_NEWKEYSET);
     if (!ret && GetLastError() == NTE_EXISTS)
-        ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+        ret = pCryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
          PROV_RSA_FULL, 0);
     ok(ret, "CryptAcquireContextW failed: %x\n", GetLastError());
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
@@ -1054,7 +1071,7 @@ static void test_signed_msg_open(void)
     CryptMsgClose(msg);
 
     CryptReleaseContext(signer.hCryptProv, 0);
-    CryptAcquireContextW(&signer.hCryptProv, cspNameW, MS_DEF_PROV_W,
+    pCryptAcquireContextW(&signer.hCryptProv, cspNameW, MS_DEF_PROV_W,
      PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 }
 
@@ -1101,10 +1118,10 @@ static void test_signed_msg_update(void)
     signer.HashAlgorithm.pszObjId = oid_rsa_md5;
     signInfo.cSigners = 1;
     signInfo.rgSigners = &signer;
-    ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+    ret = pCryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
      PROV_RSA_FULL, CRYPT_NEWKEYSET);
     if (!ret && GetLastError() == NTE_EXISTS)
-        ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+        ret = pCryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
          PROV_RSA_FULL, 0);
     ok(ret, "CryptAcquireContextW failed: %x\n", GetLastError());
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING,
@@ -1183,7 +1200,7 @@ static void test_signed_msg_update(void)
 
     CryptDestroyKey(key);
     CryptReleaseContext(signer.hCryptProv, 0);
-    CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL, PROV_RSA_FULL,
+    pCryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 }
 
@@ -1428,10 +1445,10 @@ static void test_signed_msg_encoding(void)
     signer.HashAlgorithm.pszObjId = oid_rsa_md5;
     signInfo.cSigners = 1;
     signInfo.rgSigners = &signer;
-    ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+    ret = pCryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
      PROV_RSA_FULL, CRYPT_NEWKEYSET);
     if (!ret && GetLastError() == NTE_EXISTS)
-        ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+        ret = pCryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
          PROV_RSA_FULL, 0);
     ok(ret, "CryptAcquireContextW failed: %x\n", GetLastError());
     ret = CryptImportKey(signer.hCryptProv, (LPBYTE)privKey, sizeof(privKey),
@@ -1546,7 +1563,7 @@ static void test_signed_msg_encoding(void)
 
     CryptDestroyKey(key);
     CryptReleaseContext(signer.hCryptProv, 0);
-    CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL, PROV_RSA_FULL,
+    pCryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 }
 
@@ -1605,10 +1622,10 @@ static void test_signed_msg_get_param(void)
     signer.HashAlgorithm.pszObjId = oid_rsa_md5;
     signInfo.cSigners = 1;
     signInfo.rgSigners = &signer;
-    ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+    ret = pCryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
      PROV_RSA_FULL, CRYPT_NEWKEYSET);
     if (!ret && GetLastError() == NTE_EXISTS)
-        ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+        ret = pCryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
          PROV_RSA_FULL, 0);
     ok(ret, "CryptAcquireContextW failed: %x\n", GetLastError());
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
@@ -1640,7 +1657,7 @@ static void test_signed_msg_get_param(void)
     CryptMsgClose(msg);
 
     CryptReleaseContext(signer.hCryptProv, 0);
-    CryptAcquireContextW(&signer.hCryptProv, cspNameW, MS_DEF_PROV_W,
+    pCryptAcquireContextW(&signer.hCryptProv, cspNameW, MS_DEF_PROV_W,
      PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 }
 
@@ -2042,6 +2059,8 @@ static void test_decode_msg(void)
 
 START_TEST(msg)
 {
+     init_function_pointers();
+
     /* Basic parameter checking tests */
     test_msg_open_to_encode();
     test_msg_open_to_decode();
