@@ -1464,6 +1464,7 @@ typedef struct  WineQueryOcclusionData {
 
 typedef struct  WineQueryEventData {
     GLuint  fenceId;
+    WineD3DContext *ctx;
 } WineQueryEventData;
 
 /*****************************************************************************
