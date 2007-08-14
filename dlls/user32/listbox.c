@@ -2677,7 +2677,8 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
             return LB_ERR;
         }
         descr->items[wParam].data = lParam;
-        return LB_OKAY;
+        /* undocumented: returns TRUE, not LB_OKAY (0) */
+        return TRUE;
 
     case LB_GETCOUNT16:
     case LB_GETCOUNT:

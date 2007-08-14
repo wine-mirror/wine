@@ -512,6 +512,27 @@ static void test_itemfrompoint(void)
     DestroyWindow( hList );
 }
 
+static void test_listbox_item_data(void)
+{
+    HWND hList;
+    int r, id;
+
+    hList = CreateWindow( "ListBox", "list test", 0,
+                          1, 1, 600, 100, NULL, NULL, NULL, NULL );
+    ok( hList != NULL, "failed to create listbox\n");
+
+    id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi");
+    ok( id == 0, "item id wrong\n");
+
+    r = SendMessage( hList, LB_SETITEMDATA, 0, MAKELPARAM( 20, 0 ));
+    ok(r == TRUE, "LB_SETITEMDATA returned %d instead of TRUE\n", r);
+
+    r = SendMessage( hList, LB_GETITEMDATA, 0, 0);
+    ok( r == 20, "get item data failed\n");
+
+    DestroyWindow( hList );
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
@@ -587,4 +608,5 @@ START_TEST(listbox)
   test_selection();
   test_listbox_height();
   test_itemfrompoint();
+  test_listbox_item_data();
 }
