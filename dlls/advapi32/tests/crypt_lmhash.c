@@ -406,7 +406,10 @@ static void test_SystemFunction_encrypt(descrypt func, int num)
     int r;
 
     if (!func)
+    {
+        skip("SystemFunction%03d is not available\n", num);
         return;
+    }
 
     r = func(NULL, NULL, NULL);
     ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
@@ -424,7 +427,10 @@ static void test_SystemFunction_decrypt(descrypt func, int num)
     int r;
 
     if (!func)
+    {
+        skip("SystemFunction%03d is not available\n", num);
         return;
+    }
 
     r = func(NULL, NULL, NULL);
     ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
@@ -447,7 +453,10 @@ static void test_SystemFunction_enc32(descrypt func, int num)
     int r;
 
     if (!func)
+    {
+        skip("SystemFunction%03d is not available\n", num);
         return;
+    }
 
     memset(output, 0, sizeof output);
 
@@ -466,7 +475,10 @@ static void test_SystemFunction_dec32(descrypt func, int num)
     int r;
 
     if (!func)
+    {
+        skip("SystemFunction%03d is not available\n", num);
         return;
+    }
 
     memset(output, 0, sizeof output);
 
@@ -485,9 +497,16 @@ static void test_memcmpfunc(memcmpfunc fn)
     int r;
 
     if (!fn)
+    {
+        skip("function is not available\n");
         return;
+    }
 
-    /* r = fn(NULL, NULL); - crashes */
+    if (0)
+    {
+        /* crashes */
+        r = fn(NULL, NULL);
+    }
 
     memset(arg1, 0, sizeof arg1);
     memset(arg2, 0, sizeof arg2);
@@ -518,41 +537,55 @@ static void test_memcmpfunc(memcmpfunc fn)
 
 START_TEST(crypt_lmhash)
 {
-    HMODULE module;
-
-    if (!(module = LoadLibrary("advapi32.dll"))) return;
+    HMODULE module = GetModuleHandleA("advapi32.dll");
 
     pSystemFunction001 = (fnSystemFunction001)GetProcAddress( module, "SystemFunction001" );
     if (pSystemFunction001)
         test_SystemFunction001();
+    else
+        skip("SystemFunction001 is not available\n");
 
     pSystemFunction002 = (fnSystemFunction002)GetProcAddress( module, "SystemFunction002" );
     if (pSystemFunction002)
         test_SystemFunction002();
+    else
+        skip("SystemFunction002 is not available\n");
 
     pSystemFunction003 = (fnSystemFunction003)GetProcAddress( module, "SystemFunction003" );
     if (pSystemFunction003)
         test_SystemFunction003();
+    else
+        skip("SystemFunction002 is not available\n");
 
     pSystemFunction004 = (fnSystemFunction004)GetProcAddress( module, "SystemFunction004" );
     if (pSystemFunction004)
         test_SystemFunction004();
+    else
+        skip("SystemFunction004 is not available\n");
 
     pSystemFunction005 = (fnSystemFunction005)GetProcAddress( module, "SystemFunction005" );
     if (pSystemFunction005)
         test_SystemFunction005();
+    else
+        skip("SystemFunction005 is not available\n");
 
     pSystemFunction006 = (fnSystemFunction006)GetProcAddress( module, "SystemFunction006" );
     if (pSystemFunction006) 
         test_SystemFunction006();
+    else
+        skip("SystemFunction006 is not available\n");
 
     pSystemFunction008 = (fnSystemFunction008)GetProcAddress( module, "SystemFunction008" );
     if (pSystemFunction008)
         test_SystemFunction008();
+    else
+        skip("SystemFunction008 is not available\n");
 
     pSystemFunction009 = (fnSystemFunction009)GetProcAddress( module, "SystemFunction009" );
     if (pSystemFunction009)
         test_SystemFunction009();
+    else
+        skip("SystemFunction009 is not available\n");
 
     pSystemFunction012 = (descrypt) GetProcAddress( module, "SystemFunction012");
     pSystemFunction013 = (descrypt) GetProcAddress( module, "SystemFunction013");
@@ -605,4 +638,6 @@ START_TEST(crypt_lmhash)
     pSystemFunction032 = (fnSystemFunction032)GetProcAddress( module, "SystemFunction032" );
     if (pSystemFunction032)
         test_SystemFunction032();
+    else
+        skip("SystemFunction032 is not available\n");
 }
