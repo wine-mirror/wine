@@ -830,7 +830,7 @@ static DWORD SHNameTranslate(LPWSTR* wString, LPCWSTR* pWToFrom, BOOL more)
 	    aString += size;
 	  } while ((size != 1) && more);
 	  /* The two sizes might be different in the case of multibyte chars */
-	  size = MultiByteToWideChar(CP_ACP, 0, aString, aSize, *wString, 0);
+	  size = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*pWToFrom, aSize, *wString, 0);
 	  if (*wString) /* only in the second loop */
 	  {
 	    MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*pWToFrom, aSize, *wString, size);
