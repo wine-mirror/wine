@@ -1050,13 +1050,22 @@ void drawPrimitive(IWineD3DDevice *iface,
         if (numberOfVertices == 0 )
             numberOfVertices = calculatedNumberOfindices;
 
-        if(!This->strided_streams.u.s.position_transformed && !use_vs(This)) {
-            if(This->activeContext->num_untracked_materials &&
-               This->stateBlock->renderState[WINED3DRS_LIGHTING]) {
-                IWineD3DVertexBufferImpl *vb;
-
+        if(!use_vs(This)) {
+            if(!This->strided_streams.u.s.position_transformed && This->activeContext->num_untracked_materials &&
+                This->stateBlock->renderState[WINED3DRS_LIGHTING]) {
                 FIXME("Using software emulation because not all material properties could be tracked\n");
                 emulation = TRUE;
+            }
+            else if(This->activeContext->fog_coord && This->stateBlock->renderState[WINED3DRS_FOGENABLE]) {
+                /* Either write a pipeline replacement shader or convert the specular alpha from unsigned byte
+                 * to a float in the vertex buffer
+                 */
+                FIXME("Using software emulation because manual fog coordinates are provided\n");
+                emulation = TRUE;
+            }
+
+            if(emulation) {
+                IWineD3DVertexBufferImpl *vb;
 
                 strided = &stridedlcl;
                 memcpy(&stridedlcl, &This->strided_streams, sizeof(stridedlcl));

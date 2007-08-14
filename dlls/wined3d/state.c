@@ -803,9 +803,10 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             fogend = 0.0;
         }
 
-        if(GL_SUPPORT(EXT_FOG_COORD)) {
+        if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
             glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
             checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+            context->fog_coord = FALSE;
         }
         context->last_was_foggy_shader = TRUE;
     }
@@ -843,9 +844,10 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             default: FIXME("Unexpected WINED3DRS_FOGVERTEXMODE %d\n", stateblock->renderState[WINED3DRS_FOGVERTEXMODE]);
         }
 
-        if(GL_SUPPORT(EXT_FOG_COORD)) {
+        if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
             glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
             checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+            context->fog_coord = FALSE;
         }
     }
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
@@ -862,9 +864,10 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
-                    if(GL_SUPPORT(EXT_FOG_COORD)) {
+                    if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                         glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
                         checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                        context->fog_coord = FALSE;
                     }
                     break;
                 }
@@ -873,9 +876,10 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP2);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
-                    if(GL_SUPPORT(EXT_FOG_COORD)) {
+                    if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                         glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
                         checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                        context->fog_coord = FALSE;
                     }
                     break;
                 }
@@ -884,9 +888,10 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_LINEAR);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
-                    if(GL_SUPPORT(EXT_FOG_COORD)) {
+                    if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                         glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
                         checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                        context->fog_coord = FALSE;
                     }
                     break;
                 }
@@ -897,8 +902,11 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                  * Same happens with Vertexfog on transformed vertices
                  */
                 if(GL_SUPPORT(EXT_FOG_COORD)) {
-                    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
-                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)\n");
+                    if(context->fog_coord == FALSE) {
+                        glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
+                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)\n");
+                        context->fog_coord = TRUE;
+                    }
                     glFogi(GL_FOG_MODE, GL_LINEAR);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
                     fogstart = 0xff;
@@ -920,27 +928,30 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             case WINED3DFOG_EXP:
                 glFogi(GL_FOG_MODE, GL_EXP);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
-                if(GL_SUPPORT(EXT_FOG_COORD)) {
+                if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                     glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
                     checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                    context->fog_coord = FALSE;
                 }
                 break;
 
             case WINED3DFOG_EXP2:
                 glFogi(GL_FOG_MODE, GL_EXP2);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
-                if(GL_SUPPORT(EXT_FOG_COORD)) {
+                if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                     glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
                     checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                    context->fog_coord = FALSE;
                 }
                 break;
 
             case WINED3DFOG_LINEAR:
                 glFogi(GL_FOG_MODE, GL_LINEAR);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
-                if(GL_SUPPORT(EXT_FOG_COORD)) {
+                if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                     glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
                     checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                    context->fog_coord = FALSE;
                 }
                 break;
 

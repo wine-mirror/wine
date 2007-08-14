@@ -518,6 +518,7 @@ struct WineD3DContext {
     GLenum                  untracked_materials[2];
     BOOL                    last_was_blit, last_was_ckey;
     char                    texShaderBumpMap;
+    BOOL                    fog_coord;
 
     /* The actual opengl context */
     HGLRC                   glCtx;
