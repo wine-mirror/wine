@@ -102,7 +102,125 @@ static void testCreateCertChainEngine(void)
     CertCloseStore(store, 0);
 }
 
+static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
+ 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
+ 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
+ 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30,
+ 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31, 0x13, 0x30,
+ 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20,
+ 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01,
+ 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01,
+ 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
+
+static void testGetCertChain(void)
+{
+    BOOL ret;
+    CERT_CHAIN_ENGINE_CONFIG config = { 0 };
+    HCERTCHAINENGINE engine;
+    PCCERT_CONTEXT cert;
+    CERT_CHAIN_PARA para = { 0 };
+    PCCERT_CHAIN_CONTEXT chain;
+    HCERTSTORE store;
+
+    /* Basic parameter checks */
+    ret = CertGetCertificateChain(NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    ret = CertGetCertificateChain(NULL, NULL, NULL, NULL, NULL, 0, NULL,
+     &chain);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    /* Crash
+    ret = CertGetCertificateChain(NULL, NULL, NULL, NULL, &para, 0, NULL, NULL);
+    ret = CertGetCertificateChain(NULL, NULL, NULL, NULL, &para, 0, NULL,
+     &chain);
+     */
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
+     sizeof(bigCert));
+    todo_wine
+    ret = CertGetCertificateChain(NULL, cert, NULL, NULL, NULL, 0, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    /* Crash
+    ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL, NULL);
+     */
+
+    /* Tests with an invalid cert (one whose signature is bad) */
+    ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
+     &chain);
+    ok(!ret, "Expected failure\n");
+    para.cbSize = sizeof(para);
+    ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
+     &chain);
+    ok(!ret, "Expected failure\n");
+    CertFreeCertificateContext(cert);
+
+    /* Tests with a valid cert that doesn't trace back to a trusted root */
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, selfSignedCert,
+     sizeof(selfSignedCert));
+    ret = CertGetCertificateChain(NULL, cert, NULL, NULL, NULL, 0, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
+     &chain);
+    todo_wine
+    ok(ret, "CertGetCertificateChain failed: %08x\n", GetLastError());
+    todo_wine
+    ok(chain != NULL, "Expected a chain\n");
+    if (chain)
+    {
+        ok(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_UNTRUSTED_ROOT,
+         "Expected CERT_TRUST_IS_UNTRUSTED_ROOT, got %08x\n",
+         chain->TrustStatus.dwErrorStatus);
+        ok(chain->TrustStatus.dwInfoStatus == CERT_TRUST_HAS_PREFERRED_ISSUER,
+         "Expected CERT_TRUST_HAS_PREFERRED_ISSUER, got %08x\n",
+         chain->TrustStatus.dwInfoStatus);
+        ok(chain->cChain == 1, "Expected 1 chain, got %d\n", chain->cChain);
+        ok(chain->rgpChain[0]->cElement == 1,
+         "Expected one chain element, got %d\n", chain->rgpChain[0]->cElement);
+        ok(chain->rgpChain[0]->pTrustListInfo == NULL,
+         "Expected no trust list\n");
+        CertFreeCertificateChain(chain);
+    }
+
+    /* A self-signed cert isn't affected by having no chain to a trusted root */
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    config.cbSize = sizeof(config);
+    config.hRestrictedRoot = store;
+    ret = CertCreateCertificateChainEngine(&config, &engine);
+    ok(ret, "CertCreateCertificateChainEngine failed: %08x\n", GetLastError());
+    ret = CertGetCertificateChain(engine, cert, NULL, NULL, &para, 0, NULL,
+     &chain);
+    todo_wine
+    ok(chain != NULL, "Expected a chain\n");
+    if (chain)
+    {
+        ok(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_UNTRUSTED_ROOT,
+         "Expected CERT_TRUST_IS_UNTRUSTED_ROOT, got %08x\n",
+         chain->TrustStatus.dwErrorStatus);
+        ok(chain->TrustStatus.dwInfoStatus == CERT_TRUST_HAS_PREFERRED_ISSUER,
+         "Expected CERT_TRUST_HAS_PREFERRED_ISSUER, got %08x\n",
+         chain->TrustStatus.dwInfoStatus);
+        ok(chain->cChain == 1, "Expected 1 chain, got %d\n", chain->cChain);
+        ok(chain->rgpChain[0]->cElement == 1,
+         "Expected one chain element, got %d\n", chain->rgpChain[0]->cElement);
+        ok(chain->rgpChain[0]->pTrustListInfo == NULL,
+         "Expected no trust list\n");
+        CertFreeCertificateChain(chain);
+    }
+    CertFreeCertificateChainEngine(engine);
+    CertCloseStore(store, 0);
+    CertFreeCertificateContext(cert);
+}
+
 START_TEST(chain)
 {
     testCreateCertChainEngine();
+    testGetCertChain();
 }
