@@ -1456,6 +1456,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
     if (!(This->Flags & SFLAG_DCINUSE))
         return WINED3DERR_INVALIDCALL;
 
+    if (This->hDC !=hDC) {
+        WARN("Application tries to release an invalid DC(%p), surface dc is %p\n", hDC, This->hDC);
+        return WINED3DERR_INVALIDCALL;
+    }
+
     /* we locked first, so unlock now */
     IWineD3DSurface_UnlockRect(iface);
 
