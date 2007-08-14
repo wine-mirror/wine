@@ -94,6 +94,10 @@ static inline DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, c
     return ERROR_FILE_NOT_FOUND;
 }
 
+static void wined3d_do_nothing(void)
+{
+}
+
 /* At process attach */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
@@ -137,6 +141,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
        {
            wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
            wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
+       }
+       else /* We are most likely on Windows */
+       {
+           wine_tsx11_lock_ptr   = wined3d_do_nothing;
+           wine_tsx11_unlock_ptr = wined3d_do_nothing;
        }
        /* @@ Wine registry key: HKCU\Software\Wine\Direct3D */
        if ( RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Direct3D", &hkey ) ) hkey = 0;
