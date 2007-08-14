@@ -135,7 +135,7 @@ START_TEST(string)
     hMsvcrt = GetModuleHandleA("msvcrt.dll");
     if (!hMsvcrt)
         hMsvcrt = GetModuleHandleA("msvcrtd.dll");
-    ok(hMsvcrt != 0, "LoadLibraryA failed\n");
+    ok(hMsvcrt != 0, "GetModuleHandleA failed\n");
     SET(pmemcpy,"memcpy");
     SET(pmemcmp,"memcmp");
 

@@ -187,7 +187,7 @@ static void InitFunctionPtrs(void)
   hMsvcrt = GetModuleHandleA("msvcrt.dll");
   if (!hMsvcrt)
     hMsvcrt = GetModuleHandleA("msvcrtd.dll");
-  ok(hMsvcrt != 0, "LoadLibraryA failed\n");
+  ok(hMsvcrt != 0, "GetModuleHandleA failed\n");
   if (hMsvcrt)
   {
     SETNOFAIL(poperator_new, "??_U@YAPAXI@Z");
@@ -1004,8 +1004,5 @@ START_TEST(cpp)
   test_rtti();
   test_demangle_datatype();
   test_demangle();
-
-  if (hMsvcrt)
-    FreeLibrary(hMsvcrt);
 }
 #endif /* __i386__ */
