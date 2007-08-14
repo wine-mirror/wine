@@ -492,12 +492,10 @@ static void testGetCertChain(void)
 
     /* Basic parameter checks */
     ret = CertGetCertificateChain(NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     ret = CertGetCertificateChain(NULL, NULL, NULL, NULL, NULL, 0, NULL,
      &chain);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* Crash
@@ -509,7 +507,6 @@ static void testGetCertChain(void)
      sizeof(bigCert));
     todo_wine
     ret = CertGetCertificateChain(NULL, cert, NULL, NULL, NULL, 0, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* Crash
@@ -530,14 +527,11 @@ static void testGetCertChain(void)
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, selfSignedCert,
      sizeof(selfSignedCert));
     ret = CertGetCertificateChain(NULL, cert, NULL, NULL, NULL, 0, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
      &chain);
-    todo_wine
     ok(ret, "CertGetCertificateChain failed: %08x\n", GetLastError());
-    todo_wine
     ok(chain != NULL, "Expected a chain\n");
     if (chain)
     {
@@ -564,7 +558,6 @@ static void testGetCertChain(void)
     ok(ret, "CertCreateCertificateChainEngine failed: %08x\n", GetLastError());
     ret = CertGetCertificateChain(engine, cert, NULL, NULL, &para, 0, NULL,
      &chain);
-    todo_wine
     ok(chain != NULL, "Expected a chain\n");
     if (chain)
     {
@@ -625,14 +618,12 @@ static void testGetCertChain(void)
         else
             ret = CertGetCertificateChain(NULL, cert, NULL,
              config.hRestrictedRoot, &para, 0, NULL, &chain);
-        todo_wine
         ok(ret, "CertGetCertificateChain failed: %08x\n", GetLastError());
         if (ret)
         {
             /* Since there's no guarantee the Verisign cert is in the Root
              * store, either error is acceptable.
              */
-            todo_wine
             ok(chain->TrustStatus.dwErrorStatus == CERT_TRUST_NO_ERROR ||
              chain->TrustStatus.dwErrorStatus == CERT_TRUST_IS_UNTRUSTED_ROOT,
              "Expected no error or CERT_TRUST_IS_UNTRUSTED_ROOT, got %08x\n",
