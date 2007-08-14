@@ -146,8 +146,8 @@ CRYPT_PROVIDER_CERT * WINAPI WTHelperGetProvCertFromChain(
  */
 CRYPT_PROVIDER_DATA * WINAPI WTHelperProvDataFromStateData(HANDLE hStateData)
 {
-    FIXME("%p\n", hStateData);
-    return NULL;
+    TRACE("%p\n", hStateData);
+    return (CRYPT_PROVIDER_DATA *)hStateData;
 }
 
 static const WCHAR Software_Publishing[] = {
