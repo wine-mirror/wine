@@ -180,6 +180,8 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
      pCertContext, pTime, hAdditionalStore, pChainPara, dwFlags, pvReserved,
      ppChainContext);
 
+    if (ppChainContext)
+        *ppChainContext = NULL;
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
