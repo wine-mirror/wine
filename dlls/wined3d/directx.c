@@ -414,12 +414,22 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
 
     TRACE_(d3d_caps)("(%p)\n", gl_info);
 
+#ifdef USE_WIN32_OPENGL
+#define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, (const char *) #pfn);
+    mod_gl = LoadLibraryA("opengl32.dll");
+    if(!mod_gl) {
+        ERR("Can't load opengl32.dll!\n");
+        return FALSE;
+    }
+#else
+#define USE_GL_FUNC(pfn) pfn = (void*)p_wglGetProcAddress( (const char *) #pfn);
     /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 (glXGetProcAddress wrapper) instead of opengl32's */
     mod_gl = LoadLibraryA("gdi32.dll");
     if(!mod_gl) {
         ERR("Can't load gdi32.dll!\n");
         return FALSE;
     }
+#endif
 
     p_wglGetProcAddress = (void*)GetProcAddress(mod_gl, "wglGetProcAddress");
     if(!p_wglGetProcAddress) {
@@ -428,7 +438,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     }
 
 /* Dynamicly load all GL core functions */
-#define USE_GL_FUNC(pfn) pfn = (void*)p_wglGetProcAddress( (const char *) #pfn);
     GL_FUNCS_GEN;
 #undef USE_GL_FUNC
 
