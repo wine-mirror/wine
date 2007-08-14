@@ -92,18 +92,23 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
 
     EndPath(graphics->hdc);
 
-    /* Get an estimate for the amount the pen width is affected by the world
-     * transform. (This is similar to what some of the wine drivers do.) */
-    pt[0].X = 0.0;
-    pt[0].Y = 0.0;
-    pt[1].X = 1.0;
-    pt[1].Y = 1.0;
-    GdipTransformMatrixPoints(graphics->worldtrans, pt, 2);
-    width = sqrt((pt[1].X - pt[0].X) * (pt[1].X - pt[0].X) +
-                 (pt[1].Y - pt[0].Y) * (pt[1].Y - pt[0].Y)) / sqrt(2.0);
+    if(pen->unit == UnitPixel){
+        width = pen->width;
+    }
+    else{
+        /* Get an estimate for the amount the pen width is affected by the world
+         * transform. (This is similar to what some of the wine drivers do.) */
+        pt[0].X = 0.0;
+        pt[0].Y = 0.0;
+        pt[1].X = 1.0;
+        pt[1].Y = 1.0;
+        GdipTransformMatrixPoints(graphics->worldtrans, pt, 2);
+        width = sqrt((pt[1].X - pt[0].X) * (pt[1].X - pt[0].X) +
+                     (pt[1].Y - pt[0].Y) * (pt[1].Y - pt[0].Y)) / sqrt(2.0);
 
-    width *= pen->width * convert_unit(graphics->hdc,
-                          pen->unit == UnitWorld ? graphics->unit : pen->unit);
+        width *= pen->width * convert_unit(graphics->hdc,
+                              pen->unit == UnitWorld ? graphics->unit : pen->unit);
+    }
 
     if(pen->dash == DashStyleCustom){
         numdashes = min(pen->numdashes, MAX_DASHLEN);
