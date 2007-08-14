@@ -62,12 +62,9 @@ CHAR CURR_DIR[MAX_PATH];
 
 static void init_function_pointers(void)
 {
-    hCabinet = LoadLibraryA("cabinet.dll");
+    hCabinet = GetModuleHandleA("cabinet.dll");
 
-    if (hCabinet)
-    {
-        pExtract = (void *)GetProcAddress(hCabinet, "Extract");
-    }
+    pExtract = (void *)GetProcAddress(hCabinet, "Extract");
 }
 
 /* creates a file with the specified name for tests */
