@@ -31,6 +31,7 @@ import "wtypes.idl";
 typedef HRESULT nsresult;
 typedef ULONG nsrefcnt;
 
+typedef IID nsID;
 typedef IID nsIID;
 typedef nsIID nsCID;
 typedef REFIID nsIIDRef;
@@ -87,7 +88,6 @@ interface nsISupports
 
 /* Currently we don't need a full declaration of these interfaces */
 typedef nsISupports nsISHistory;
-typedef nsISupports nsISimpleEnumerator;
 typedef nsISupports nsIWidget;
 typedef nsISupports nsIDOMAbstractView;
 typedef nsISupports nsIHttpHeaderVisitor;
@@ -111,6 +111,8 @@ typedef nsISupports nsIDOMCSSValue;
 typedef nsISupports nsIDOMCSSRule;
 typedef nsISupports nsIPrintSession;
 typedef nsISupports nsIControllerCommandTable;
+typedef nsISupports nsIPrincipal;
+typedef nsISupports nsIAtom;
 
 [
     object,
@@ -203,6 +205,149 @@ interface nsISupportsWeakReference : nsISupports
 interface nsIInterfaceRequestor : nsISupports
 {
     nsresult GetInterface(const nsIID *riid, void **result);
+}
+
+[
+    object,
+    uuid(d1899240-f9d2-11d2-bdd6-000064657374)
+    /* FROZEN */
+]
+interface nsISimpleEnumerator : nsISupports
+{
+    nsresult HasMoreElements(PRBool *_retval);
+    nsresult GetNext(nsISupports **_retval);
+}
+
+[
+    object,
+    uuid(114744d9-c369-456e-b55a-52fe52880d2d)
+    /* NOT_FROZEN */
+]
+interface nsIArray : nsISupports
+{
+    nsresult GetLength(PRUint32 *aLength);
+    nsresult QueryElementAt(PRUint32 index, const nsIID *uuid, void **result);
+    nsresult IndexOf(PRUint32 startIndex, nsISupports *element, PRUint32 *_retval);
+    nsresult Enumerate(nsISimpleEnumerator **_retval);
+}
+
+[
+    object,
+    uuid(af059da0-c85b-40ec-af07-ae4bfdc192cc)
+    /* NOT_FROZEN */
+]
+interface nsIMutableArray : nsIArray
+{
+    nsresult AppendElement(nsISupports *element, PRBool weak);
+    nsresult RemoveElementAt(PRUint32 index);
+    nsresult InsertElementAt(nsISupports *element, PRUint32 index, PRBool weak);
+    nsresult Clear();
+}
+
+[
+    object,
+    uuid(4d12e540-83d7-11d5-90ed-0010a4e73d9a)
+    /* NOT_FROZEN */
+]
+interface nsIVariant : nsISupports
+{
+    enum nsDataType {
+        TYPE_INT8,
+        TYPE_INT16,
+        TYPE_INT32,
+        TYPE_INT64,
+        TYPE_UINT8,
+        TYPE_UINT16,
+        TYPE_UINT32,
+        TYPE_UINT64,
+        TYPE_FLOAT,
+        TYPE_DOUBLE,
+        TYPE_BOOL,
+        TYPE_CHAR,
+        TYPE_WCHAR,
+        TYPE_VOID,
+        TYPE_ID,
+        TYPE_DOMSTRING,
+        TYPE_CHAR_STR,
+        TYPE_WCHAR_STR,
+        TYPE_INTERFACE,
+        TYPE_INTERFACE_IS,
+        TYPE_ARRAY,
+        TYPE_STRING_SIZE_IS,
+        TYPE_WSTRING_SIZE_IS,
+        TYPE_UTF8STRING,
+        TYPE_CSTRING,
+        TYPE_ASTRING,
+        TYPE_AMPTY_ARRAY,
+        TYPE_EMPTY
+    };
+
+    nsresult GetDataType(PRUint16 *aDataType);
+    nsresult GetAsInt8(PRUint8 *_retval);
+    nsresult GetAsInt16(PRInt16 *_retval);
+    nsresult GetAsInt32(PRInt32 *_retval);
+    nsresult GetAsInt64(PRInt64 *_retval);
+    nsresult GetAsUint8(PRUint8 *_retval);
+    nsresult GetAsUint16(PRUint16 *_retval);
+    nsresult GetAsUint32(PRUint32 *_retval);
+    nsresult GetAsUint64(PRUint64 *_retval);
+    nsresult GetAsFloat(float *_retval);
+    nsresult GetAsDouble(double *_retval);
+    nsresult GetAsBool(PRBool *_retval);
+    nsresult GetAsChar(char *_retval);
+    nsresult GetAsWChar(PRUnichar *_retval);
+    nsresult GetAsID(nsID *retval);
+    nsresult GetAsAString(nsAString *_retval);
+    nsresult GetAsDOMString(nsAString *_retval);
+    nsresult GetAsACString(nsACString *_retval);
+    nsresult GetAsAUTF8String(nsACString *_retval);
+    nsresult GetAsString(char **_retval);
+    nsresult GetAsWString(PRUnichar **_retval);
+    nsresult GetAsISupports(nsISupports **_retval);
+    nsresult GetAsInterface(nsIID * *iid, void **iface);
+    nsresult GetAsArray(PRUint16 *type, nsIID *iid, PRUint32 *count, void **ptr);
+    nsresult GetAsStringWithSize(PRUint32 *size, char **str);
+    nsresult GetAsWStringWithSize(PRUint32 *size, PRUnichar **str);
+}
+
+[
+    object,
+    uuid(5586a590-8c82-11d5-90f3-0010a4e73d9a)
+    /* NOT_FROZEN */
+]
+interface nsIWritableVariant : nsIVariant
+{
+    nsresult GetWritable(PRBool *aWritable);
+    nsresult SetWritable(PRBool aWritable);
+    nsresult SetAsInt8(PRUint8 aValue);
+    nsresult SetAsInt16(PRInt16 aValue);
+    nsresult SetAsInt32(PRInt32 aValue);
+    nsresult SetAsInt64(PRInt64 aValue);
+    nsresult SetAsUint8(PRUint8 aValue);
+    nsresult SetAsUint16(PRUint16 aValue);
+    nsresult SetAsUint32(PRUint32 aValue);
+    nsresult SetAsUint64(PRUint64 aValue);
+    nsresult SetAsFloat(float aValue);
+    nsresult SetAsDouble(double aValue);
+    nsresult SetAsBool(PRBool aValue);
+    nsresult SetAsChar(char aValue);
+    nsresult SetAsWChar(PRUnichar aValue);
+    nsresult SetAsID(const nsID *aValue);
+    nsresult SetAsAString(const nsAString *aValue);
+    nsresult SetAsDOMString(const nsAString *aValue);
+    nsresult SetAsACString(const nsACString *aValue);
+    nsresult SetAsAUTF8String(const nsACString *aValue);
+    nsresult SetAsString(const char *aValue);
+    nsresult SetAsWString(const PRUnichar *aValue);
+    nsresult SetAsISupports(nsISupports *aValue);
+    nsresult SetAsInterface(const nsIID *iid, void *iface);
+    nsresult SetAsArray(PRUint16 type, const nsIID *iid, PRUint32 count, void *ptr);
+    nsresult SetAsStringWithSize(PRUint32 size, const char *str);
+    nsresult SetAsWStringWithSize(PRUint32 size, const PRUnichar *str);
+    nsresult SetAsVoid();
+    nsresult SetAsEmpty();
+    nsresult SetAsEmptyArray();
+    nsresult SetFromVariant(nsIVariant *aValue);
 }
 
 [
@@ -1707,6 +1852,29 @@ interface nsIContentSerializer : nsISupports
     nsresult AppendElementEnd(nsIDOMElement *aElement, nsAString *aStr);
     nsresult Flush(nsAString *aStr);
     nsresult AppendDocumentStart(nsIDOMDocument *aDocument, nsAString *aStr);
+}
+
+[
+    object,
+    uuid(68b97c56-2289-48ac-a9e1-72c30fd3dba2)
+]
+interface nsIScriptContainer : nsISupports
+{
+    typedef void *JSObject;
+
+    nsresult GetContext(void **aContext);
+    nsresult GetGlobalObject(void **aGlobalObject);
+    nsresult CompileScript(const PRUnichar *aText, PRInt32 aTextLength, void *aScopeObject,
+            nsIPrincipal *aPrincipal, const char *aURL, PRUint32 aLineNo, PRUint32 aVersion, void **_retval);
+    nsresult ExecuteScript(void *aScriptObject, void *aScopeObject, nsAString *aRetVal, PRBool *aIsUndefined);
+    nsresult CompileFunction(void *aTarget, const nsACString *aName, PRUint32 aArgCount,
+            const char **aArgArray, const nsAString *aBody, const char *aURL, PRInt32 aLineNo,
+            PRBool aShared, void* *_retval);
+    nsresult CallFunction(nsISupports *aTarget, void *aScope, void *aHandler, nsIArray *argv,
+            nsIVariant **_retval);
+    nsresult BindEventHandler(nsISupports *aTarget, void *aScope, nsIAtom *aName, void *aHandler);
+    nsresult HoldScriptObject(void *aObject);
+    nsresult DropScriptObject(void *aObject);
 }
 
 /*

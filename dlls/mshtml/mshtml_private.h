@@ -339,6 +339,7 @@ HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
 
 HTMLWindow *HTMLWindow_Create(HTMLDocument*);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
+void setup_nswindow(HTMLWindow*);
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);
 void HTMLDocument_Persist_Init(HTMLDocument*);
@@ -388,6 +389,8 @@ void nsAString_Finish(nsAString*);
 
 nsIInputStream *create_nsstream(const char*,PRInt32);
 nsICommandParams *create_nscommand_params(void);
+nsIMutableArray *create_nsarray(void);
+nsIWritableVariant *create_nsvariant(void);
 void nsnode_to_nsstring(nsIDOMNode*,nsAString*);
 nsIController *get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);

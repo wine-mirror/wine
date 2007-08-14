@@ -43,6 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NS_COMMANDPARAMS_CONTRACTID "@mozilla.org/embedcomp/command-params;1"
 #define NS_HTMLSERIALIZER_CONTRACTID "@mozilla.org/layout/contentserializer;1?mimetype=text/html"
 #define NS_EDITORCONTROLLER_CONTRACTID "@mozilla.org/editor/editorcontroller;1"
+#define NS_ARRAY_CONTRACTID "@mozilla.org/array;1"
+#define NS_VARIANT_CONTRACTID "@mozilla.org/variant;1"
 
 #define APPSTARTUP_TOPIC "app-startup"
 
@@ -464,6 +466,44 @@ nsIInputStream *create_nsstream(const char *data, PRInt32 data_len)
     }
 
     return (nsIInputStream*)ret;
+}
+
+nsIMutableArray *create_nsarray(void)
+{
+    nsIMutableArray *ret;
+    nsresult nsres;
+
+    if(!pCompMgr)
+        return NULL;
+
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
+            NS_ARRAY_CONTRACTID, NULL, &IID_nsIMutableArray,
+            (void**)&ret);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIArray: %08x\n", nsres);
+        return NULL;
+    }
+
+    return ret;
+}
+
+nsIWritableVariant *create_nsvariant(void)
+{
+    nsIWritableVariant *ret;
+    nsresult nsres;
+
+    if(!pCompMgr)
+        return NULL;
+
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
+            NS_VARIANT_CONTRACTID, NULL, &IID_nsIWritableVariant,
+            (void**)&ret);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIWritableVariant: %08x\n", nsres);
+        return NULL;
+    }
+
+    return ret;
 }
 
 nsICommandParams *create_nscommand_params(void)
