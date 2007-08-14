@@ -173,6 +173,9 @@ static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
   TEST_AND_DUMP(ppfd->dwFlags, PFD_SWAP_COPY);
   TEST_AND_DUMP(ppfd->dwFlags, PFD_SWAP_EXCHANGE);
   TEST_AND_DUMP(ppfd->dwFlags, PFD_SWAP_LAYER_BUFFERS);
+  /* PFD_SUPPORT_COMPOSITION is new in Vista, it is similar to composition
+   * under X e.g. COMPOSITE + GLX_EXT_TEXTURE_FROM_PIXMAP. */
+  TEST_AND_DUMP(ppfd->dwFlags, PFD_SUPPORT_COMPOSITION);
 #undef TEST_AND_DUMP
   TRACE("\n");
 
