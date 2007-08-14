@@ -1528,7 +1528,7 @@ static nsresult NSAPI nsURI_GetAsciiSpec(nsIWineURI *iface, nsACString *aAsciiSp
 
     TRACE("(%p)->(%p)\n", This, aAsciiSpec);
 
-    if(This->wine_url)
+    if(This->use_wine_url)
         return nsIURI_GetSpec(NSURI(This), aAsciiSpec);
 
     if(This->uri)
