@@ -196,7 +196,7 @@
 @ stub GdipDrawPolygonI
 @ stub GdipDrawRectangle
 @ stdcall GdipDrawRectangleI(ptr ptr long long long long)
-@ stub GdipDrawRectangles
+@ stdcall GdipDrawRectangles(ptr ptr ptr long)
 @ stub GdipDrawRectanglesI
 @ stub GdipDrawString
 @ stub GdipEmfToWmfBits

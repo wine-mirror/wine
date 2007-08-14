@@ -75,6 +75,7 @@ GpStatus WINGDIPAPI GdipDrawLines(GpGraphics*,GpPen*,GDIPCONST GpPointF*,INT);
 GpStatus WINGDIPAPI GdipDrawPath(GpGraphics*,GpPen*,GpPath*);
 GpStatus WINGDIPAPI GdipDrawPie(GpGraphics*,GpPen*,REAL,REAL,REAL,REAL,REAL,REAL);
 GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics*,GpPen*,INT,INT,INT,INT);
+GpStatus WINGDIPAPI GdipDrawRectangles(GpGraphics*,GpPen*,GpRectF*,INT);
 GpStatus WINGDIPAPI GdipFillPath(GpGraphics*,GpBrush*,GpPath*);
 GpStatus WINGDIPAPI GdipFillPie(GpGraphics*,GpBrush*,REAL,REAL,REAL,REAL,REAL,REAL);
 GpStatus WINGDIPAPI GdipFillPolygonI(GpGraphics*,GpBrush*,GDIPCONST GpPoint*,INT,
