@@ -1528,6 +1528,15 @@ GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics *graphics, GraphicsState stat
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipRotateWorldTransform(GpGraphics *graphics, REAL angle,
+    GpMatrixOrder order)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    return GdipRotateMatrix(graphics->worldtrans, angle, order);
+}
+
 GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics *graphics, GraphicsState *state)
 {
     static int calls;

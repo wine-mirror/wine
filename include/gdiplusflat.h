@@ -90,6 +90,7 @@ GpStatus WINGDIPAPI GdipGetPixelOffsetMode(GpGraphics*,PixelOffsetMode*);
 GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics*,SmoothingMode*);
 GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics*,GpMatrix*);
 GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics*,GraphicsState);
+GpStatus WINGDIPAPI GdipRotateWorldTransform(GpGraphics*,REAL,GpMatrixOrder);
 GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics*,GraphicsState*);
 GpStatus WINGDIPAPI GdipSetCompositingMode(GpGraphics*,CompositingMode);
 GpStatus WINGDIPAPI GdipSetCompositingQuality(GpGraphics*,CompositingQuality);

@@ -490,7 +490,7 @@
 @ stub GdipRotatePathGradientTransform
 @ stub GdipRotatePenTransform
 @ stub GdipRotateTextureTransform
-@ stub GdipRotateWorldTransform
+@ stdcall GdipRotateWorldTransform(ptr long long)
 @ stub GdipSaveAdd
 @ stub GdipSaveAddImage
 @ stdcall GdipSaveGraphics(ptr ptr)
