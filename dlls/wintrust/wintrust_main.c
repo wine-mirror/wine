@@ -105,9 +105,23 @@ CRYPT_PROVIDER_SGNR * WINAPI WTHelperGetProvSignerFromChain(
  CRYPT_PROVIDER_DATA *pProvData, DWORD idxSigner, BOOL fCounterSigner,
  DWORD idxCounterSigner)
 {
-    FIXME("%p %d %d %d\n", pProvData, idxSigner, fCounterSigner,
+    CRYPT_PROVIDER_SGNR *sgnr;
+
+    TRACE("(%p %d %d %d)\n", pProvData, idxSigner, fCounterSigner,
      idxCounterSigner);
-    return NULL;
+
+    if (idxSigner >= pProvData->csSigners || !pProvData->pasSigners)
+        return NULL;
+    sgnr = &pProvData->pasSigners[idxSigner];
+    if (fCounterSigner)
+    {
+        if (idxCounterSigner >= sgnr->csCounterSigners ||
+         !sgnr->pasCounterSigners)
+            return NULL;
+        sgnr = &sgnr->pasCounterSigners[idxCounterSigner];
+    }
+    TRACE("returning %p\n", sgnr);
+    return sgnr;
 }
 
 /***********************************************************************
