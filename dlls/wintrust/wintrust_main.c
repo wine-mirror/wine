@@ -94,8 +94,7 @@ LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID, LPVOID ActionData )
 HRESULT WINAPI WinVerifyTrustEx( HWND hwnd, GUID *ActionID,
  WINTRUST_DATA* ActionData )
 {
-    FIXME("%p %s %p\n", hwnd, debugstr_guid(ActionID), ActionData);
-    return S_OK;
+    return WinVerifyTrust(hwnd, ActionID, ActionData);
 }
 
 /***********************************************************************
