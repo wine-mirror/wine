@@ -442,11 +442,13 @@ static char* get_template_name(struct parsed_symbol* sym)
     unsigned num_mark = sym->names.num;
     unsigned start_mark = sym->names.start;
     unsigned stack_mark = sym->stack.num;
+    struct array array_pmt;
 
     sym->names.start = sym->names.num;
     if (!(name = get_literal_string(sym)))
         return FALSE;
-    args = get_args(sym, NULL, FALSE, '<', '>');
+    str_array_init(&array_pmt);
+    args = get_args(sym, &array_pmt, FALSE, '<', '>');
     if (args != NULL)
         name = str_printf(sym, "%s%s", name, args);
     sym->names.num = num_mark;

@@ -873,7 +873,7 @@ static int strcmp_space(const char *s1, const char *s2)
 
 static void test_demangle(void)
 {
-    static struct {const char* in; const char* out;} test[] = {
+    static struct {const char* in; const char* out; unsigned int flags;} test[] = {
 {"??0bad_alloc@std@@QAE@ABV01@@Z", "public: __thiscall std::bad_alloc::bad_alloc(class std::bad_alloc const &)"},
 {"??0bad_alloc@std@@QAE@PBD@Z", "public: __thiscall std::bad_alloc::bad_alloc(char const *)"},
 {"??0bad_cast@@AAE@PBQBD@Z", "private: __thiscall bad_cast::bad_cast(char const * const *)"},
@@ -976,15 +976,16 @@ static void test_demangle(void)
 {"??2?$aaa@AAUbbb@@AAUccc@@AAU2@@ddd@1eee@2@QAEHXZ", "public: int __thiscall eee::eee::ddd::ddd::aaa<struct bbb &,struct ccc &,struct ccc &>::operator new(void)"},
 {"?pSW@@3P6GHKPAX0PAU_tagSTACKFRAME@@0P6GH0K0KPAK@ZP6GPAX0K@ZP6GK0K@ZP6GK00PAU_tagADDRESS@@@Z@ZA", "int (__stdcall* pSW)(unsigned long,void *,void *,struct _tagSTACKFRAME *,void *,int (__stdcall*)(void *,unsigned long,void *,unsigned long,unsigned long *),void * (__stdcall*)(void *,unsigned long),unsigned long (__stdcall*)(void *,unsigned long),unsigned long (__stdcall*)(void *,void *,struct _tagADDRESS *))"},
 {"?$_aaa@Vbbb@@", "_aaa<class bbb>"},
-{"??$_aaa@Vbbb@@", "??$_aaa@Vbbb@@"},
 {"?$aaa@Vbbb@ccc@@Vddd@2@", "aaa<class ccc::bbb,class ccc::ddd>"},
+{ "??0?$Foo@P6GHPAX0@Z@@QAE@PAD@Z", "public: __thiscall Foo<int (__stdcall*)(void *,void *)>::Foo<int (__stdcall*)(void *,void *)>(char *)"},
+{ "??0?$Foo@P6GHPAX0@Z@@QAE@PAD@Z", "__thiscall Foo<int (__stdcall*)(void *,void *)>::Foo<int (__stdcall*)(void *,void *)>(char *)", 0x880},
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));
     char* name;
 
     for (i = 0; i < num_test; i++)
     {
-	name = p__unDName(0, test[i].in, 0, pmalloc, pfree, 0);
+	name = p__unDName(0, test[i].in, 0, pmalloc, pfree, test[i].flags);
         ok(name != NULL && !strcmp_space(test[i].out, name),
                 "Got name \"%s\" for %d\n", name, i);
         pfree(name);
