@@ -673,6 +673,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
     TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
 
+    if (This->Flags & SFLAG_LOCKED) {
+        WARN("Surface is already locked, returning D3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
     if (!(This->Flags & SFLAG_LOCKABLE)) {
         /* Note: UpdateTextures calls CopyRects which calls this routine to populate the
               texture regions, and since the destination is an unlockable region we need
