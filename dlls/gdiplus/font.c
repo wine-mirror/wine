@@ -21,6 +21,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winnls.h"
 
 #include "objbase.h"
 
@@ -37,6 +38,24 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     if(!*font)  return OutOfMemory;
 
     memcpy(&(*font)->lfw, logfont, sizeof(LOGFONTW));
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipCreateFontFromLogfontA(HDC hdc,
+    GDIPCONST LOGFONTA *lfa, GpFont **font)
+{
+    LOGFONTW lfw;
+
+    if(!lfa || !font)
+        return InvalidParameter;
+
+    memcpy(&lfw, lfa, sizeof(LOGFONTA));
+
+    if(!MultiByteToWideChar(CP_ACP, 0, lfa->lfFaceName, -1, lfw.lfFaceName, LF_FACESIZE))
+        return GenericError;
+
+    GdipCreateFontFromLogfontW(hdc, &lfw, font);
 
     return Ok;
 }
