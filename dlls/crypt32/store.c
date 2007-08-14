@@ -819,7 +819,7 @@ static void *CRYPT_ProvEnumCRL(PWINECRYPT_CERTSTORE store, void *pPrev)
         /* same dirty trick: replace the returned context's hCertStore with
          * store.
          */
-        ((PCERT_CONTEXT)ret)->hCertStore = store;
+        ((PCRL_CONTEXT)ret)->hCertStore = store;
     }
     return ret;
 }
