@@ -593,16 +593,19 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetDepthStencilSurface(LPDIRECT3DDE
     }
 
     EnterCriticalSection(&d3d9_cs);
-    hr=IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice,&pZStencilSurface);
-    if(hr == D3D_OK && pZStencilSurface != NULL){
-        IWineD3DSurface_GetParent(pZStencilSurface,(IUnknown**)ppZStencilSurface);
-        IWineD3DSurface_Release(pZStencilSurface);
-    }else{
-        FIXME("Call to IWineD3DDevice_GetRenderTarget failed\n");
-        *ppZStencilSurface = NULL;
+    hr = IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice,&pZStencilSurface);
+    if(hr == D3D_OK) {
+        if(pZStencilSurface != NULL){
+            IWineD3DSurface_GetParent(pZStencilSurface,(IUnknown**)ppZStencilSurface);
+            IWineD3DSurface_Release(pZStencilSurface);
+        } else {
+            *ppZStencilSurface = NULL;
+        }
+    } else {
+        WARN("Call to IWineD3DDevice_GetDepthStencilSurface failed\n");
     }
     LeaveCriticalSection(&d3d9_cs);
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_BeginScene(LPDIRECT3DDEVICE9 iface) {
