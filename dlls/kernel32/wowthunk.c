@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #include "wine/winbase16.h"
 #include "windef.h"
@@ -587,9 +588,19 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
         {
             EXCEPTION_REGISTRATION_RECORD frame;
             frame.Handler = vm86_handler;
+            errno = 0;
             __wine_push_frame( &frame );
             __wine_enter_vm86( context );
             __wine_pop_frame( &frame );
+            if (errno != 0)  /* enter_vm86 will fall with ENOSYS on x64 kernels */
+            {
+                ERR("__wine_enter_vm86 failed (errno=%d)\n", errno);
+                if (errno == ENOSYS)
+                    SetLastError(ERROR_NOT_SUPPORTED);
+                else
+                    SetLastError(ERROR_GEN_FAILURE);
+                return FALSE;
+            }
         }
         else
         {
