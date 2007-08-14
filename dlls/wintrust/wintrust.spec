@@ -80,7 +80,7 @@
 @ stub WTHelperGetFileHandle
 @ stub WTHelperGetFileName
 @ stub WTHelperGetKnownUsages
-@ stub WTHelperGetProvCertFromChain
+@ stdcall WTHelperGetProvCertFromChain(ptr long)
 @ stub WTHelperGetProvPrivateDataFromChain
 @ stdcall WTHelperGetProvSignerFromChain(ptr long long long)
 @ stub WTHelperIsInRootStore

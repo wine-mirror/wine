@@ -125,6 +125,23 @@ CRYPT_PROVIDER_SGNR * WINAPI WTHelperGetProvSignerFromChain(
 }
 
 /***********************************************************************
+ *		WTHelperGetProvCertFromChain (WINTRUST.@)
+ */
+CRYPT_PROVIDER_CERT * WINAPI WTHelperGetProvCertFromChain(
+ CRYPT_PROVIDER_SGNR *pSgnr, DWORD idxCert)
+{
+    CRYPT_PROVIDER_CERT *cert;
+
+    TRACE("(%p %d)\n", pSgnr, idxCert);
+
+    if (idxCert >= pSgnr->csCertChain || !pSgnr->pasCertChain)
+        return NULL;
+    cert = &pSgnr->pasCertChain[idxCert];
+    TRACE("returning %p\n", cert);
+    return cert;
+}
+
+/***********************************************************************
  *		WTHelperProvDataFromStateData (WINTRUST.@)
  */
 CRYPT_PROVIDER_DATA * WINAPI WTHelperProvDataFromStateData(HANDLE hStateData)
