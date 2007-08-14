@@ -24,6 +24,8 @@
 
 static IDirect3D8 *(WINAPI *pDirect3DCreate8)(UINT);
 
+static BOOL (WINAPI *pGetCursorInfo)(PCURSORINFO);
+
 static const DWORD simple_vs[] = {0xFFFE0101,       /* vs_1_1               */
     0x00000009, 0xC0010000, 0x90E40000, 0xA0E40000, /* dp4 oPos.x, v0, c0   */
     0x00000009, 0xC0020000, 0x90E40000, 0xA0E40001, /* dp4 oPos.y, v0, c1   */
@@ -616,10 +618,18 @@ static void test_cursor(void)
     CURSORINFO                   info;
     IDirect3DSurface8 *cursor = NULL;
     HCURSOR cur;
+    HMODULE user32_handle = GetModuleHandleA("user32.dll");
+
+    pGetCursorInfo = (void *)GetProcAddress(user32_handle, "GetCursorInfo");
+    if (!pGetCursorInfo)
+    {
+        skip("GetCursorInfo is not available\n");
+        return;
+    }
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    hr = GetCursorInfo(&info);
+    hr = pGetCursorInfo(&info);
     cur = info.hCursor;
 
     pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
@@ -664,7 +674,7 @@ static void test_cursor(void)
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    hr = GetCursorInfo(&info);
+    hr = pGetCursorInfo(&info);
     ok(hr != 0, "GetCursorInfo returned %#08x\n", hr);
     ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
@@ -680,7 +690,7 @@ static void test_cursor(void)
     /* GDI cursor unchanged */
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    hr = GetCursorInfo(&info);
+    hr = pGetCursorInfo(&info);
     ok(hr != 0, "GetCursorInfo returned %#08x\n", hr);
     ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
