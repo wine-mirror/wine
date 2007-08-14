@@ -2126,6 +2126,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,avifil32.dll,1
 11,,browseui.dll,1
 11,,comcat.dll,1
+11,,comctl32.dll,2
 11,,d3dxof.dll,1
 11,,ddraw.dll,1
 11,,ddrawex.dll,1
