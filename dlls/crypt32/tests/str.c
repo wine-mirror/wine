@@ -271,7 +271,11 @@ static void test_CertRDNValueToStrW(void)
     WCHAR buffer[2000];
     CERT_RDN_VALUE_BLOB blob = { 0, NULL };
 
-    if (!pCertRDNValueToStrW) return;
+    if (!pCertRDNValueToStrW)
+    {
+        skip("CertRDNValueToStrW is not available\n");
+        return;
+    }
 
     /* This crashes
     ret = pCertRDNValueToStrW(0, NULL, NULL, 0);
@@ -319,7 +323,11 @@ static void test_CertNameToStrA(void)
 {
     PCCERT_CONTEXT context;
 
-    if (!pCertNameToStrA) return;
+    if (!pCertNameToStrA)
+    {
+        skip("CertNameToStrA is not available\n");
+        return;
+    }
 
     context = CertCreateCertificateContext(X509_ASN_ENCODING, cert,
      sizeof(cert));
@@ -392,7 +400,11 @@ static void test_CertNameToStrW(void)
 {
     PCCERT_CONTEXT context;
 
-    if (!pCertNameToStrW) return;
+    if (!pCertNameToStrW)
+    {
+        skip("CertNameToStrW is not available\n");
+        return;
+    }
 
     context = CertCreateCertificateContext(X509_ASN_ENCODING, cert,
      sizeof(cert));
@@ -473,7 +485,11 @@ static void test_CertStrToNameA(void)
     DWORD size, i;
     BYTE buf[100];
 
-    if (!pCertStrToNameA) return;
+    if (!pCertStrToNameA)
+    {
+        skip("CertStrToNameA is not available\n");
+        return;
+    }
 
     /* Crash
     ret = pCertStrToNameA(0, NULL, 0, NULL, NULL, NULL, NULL);
@@ -554,7 +570,11 @@ static void test_CertStrToNameW(void)
     LPCWSTR errorPtr;
     BYTE buf[100];
 
-    if (!pCertStrToNameW) return;
+    if (!pCertStrToNameW)
+    {
+        skip("CertStrToNameW is not available\n");
+        return;
+    }
 
     /* Crash
     ret = pCertStrToNameW(0, NULL, 0, NULL, NULL, NULL, NULL);
@@ -600,7 +620,7 @@ static void test_CertStrToNameW(void)
 
 START_TEST(str)
 {
-    dll = LoadLibrary("Crypt32.dll");
+    dll = GetModuleHandleA("Crypt32.dll");
 
     pCertNameToStrA = (CertNameToStrAFunc)GetProcAddress(dll,"CertNameToStrA");
     pCertNameToStrW = (CertNameToStrWFunc)GetProcAddress(dll,"CertNameToStrW");
@@ -619,6 +639,4 @@ START_TEST(str)
     test_CertNameToStrW();
     test_CertStrToNameA();
     test_CertStrToNameW();
-
-    FreeLibrary(dll);
 }

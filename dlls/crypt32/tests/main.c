@@ -225,8 +225,6 @@ static void test_cryptTls(void)
     DWORD index;
     BOOL ret;
 
-    if (!hCrypt) return;
-
     pI_CryptAllocTls = (I_CryptAllocTlsFunc)GetProcAddress(hCrypt,
      "I_CryptAllocTls");
     pI_CryptDetachTls = (I_CryptDetachTlsFunc)GetProcAddress(hCrypt,
@@ -290,8 +288,6 @@ static void test_readTrustedPublisherDWORD(void)
 {
     I_CryptReadTrustedPublisherDWORDValueFromRegistryFunc pReadDWORD;
 
-    if (!hCrypt) return;
-
     pReadDWORD = 
      (I_CryptReadTrustedPublisherDWORDValueFromRegistryFunc)GetProcAddress(
      hCrypt, "I_CryptReadTrustedPublisherDWORDValueFromRegistry");
@@ -335,8 +331,6 @@ static void test_getDefaultCryptProv(void)
     I_CryptGetDefaultCryptProvFunc pI_CryptGetDefaultCryptProv;
     HCRYPTPROV prov;
 
-    if (!hCrypt) return;
-
     pI_CryptGetDefaultCryptProv = (I_CryptGetDefaultCryptProvFunc)
      GetProcAddress(hCrypt, "I_CryptGetDefaultCryptProv");
     if (!pI_CryptGetDefaultCryptProv) return;
@@ -362,8 +356,6 @@ static void test_CryptInstallOssGlobal(void)
     int ret,i;
     I_CryptInstallOssGlobal pI_CryptInstallOssGlobal;
 
-    if (!hCrypt) return;
-
     pI_CryptInstallOssGlobal= (I_CryptInstallOssGlobal)GetProcAddress(hCrypt,"I_CryptInstallOssGlobal");
     /* passing in some random values to I_CryptInstallOssGlobal, it always returns 9 the first time, then 10, 11 etc.*/
     for(i=0;i<30;i++)
@@ -375,7 +367,8 @@ static void test_CryptInstallOssGlobal(void)
 
 START_TEST(main)
 {
-    hCrypt = LoadLibraryA("crypt32.dll");
+    hCrypt = GetModuleHandleA("crypt32.dll");
+
     test_findAttribute();
     test_findExtension();
     test_findRDNAttr();
