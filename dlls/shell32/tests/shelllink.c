@@ -41,6 +41,8 @@ static fnILFree pILFree;
 static fnILIsEqual pILIsEqual;
 static fnSHILCreateFromPath pSHILCreateFromPath;
 
+static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR, LPSTR, DWORD);
+
 static const GUID _IID_IShellLinkDataList = {
     0x45e2b4ae, 0xb1c3, 0x11d0,
     { 0xb9, 0x2f, 0x00, 0xa0, 0xc9, 0x03, 0x12, 0xe1 }
@@ -563,7 +565,7 @@ static void test_load_save(void)
     /* Create a temporary non-executable file */
     r=GetTempPath(sizeof(mypath), mypath);
     ok(r>=0 && r<sizeof(mypath), "GetTempPath failed (%d), err %d\n", r, GetLastError());
-    r=GetLongPathName(mypath, mydir, sizeof(mydir));
+    r=pGetLongPathNameA(mypath, mydir, sizeof(mydir));
     ok(r>=0 && r<sizeof(mydir), "GetLongPathName failed (%d), err %d\n", r, GetLastError());
     p=strrchr(mydir, '\\');
     if (p)
@@ -681,12 +683,14 @@ static void test_datalink(void)
 START_TEST(shelllink)
 {
     HRESULT r;
-    HMODULE hmod;
+    HMODULE hmod = GetModuleHandleA("shell32.dll");
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
 
-    hmod = GetModuleHandle("shell32");
     pILFree = (fnILFree) GetProcAddress(hmod, (LPSTR)155);
     pILIsEqual = (fnILIsEqual) GetProcAddress(hmod, (LPSTR)21);
     pSHILCreateFromPath = (fnSHILCreateFromPath) GetProcAddress(hmod, (LPSTR)28);
+
+    pGetLongPathNameA = (void *)GetProcAddress(hkernel32, "GetLongPathNameA");
 
     r = CoInitialize(NULL);
     ok(SUCCEEDED(r), "CoInitialize failed (0x%08x)\n", r);
