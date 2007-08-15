@@ -123,8 +123,43 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(PIDSCDRIVER iface, PDSD
 
 static HRESULT WINAPI IDsCaptureDriverImpl_Open(PIDSCDRIVER iface)
 {
-    FIXME("stub\n");
-    return DS_OK;
+    HRESULT hr = S_OK;
+    IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
+    int err=0;
+    snd_pcm_t *pcm = NULL;
+    snd_pcm_hw_params_t *hw_params;
+
+    /* While this is not really needed, it is a good idea to do this,
+     * to see if sound can be initialized */
+
+    hw_params = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_hw_params_sizeof());
+    if (!hw_params)
+    {
+        hr = DSERR_OUTOFMEMORY;
+        WARN("--> %08x\n", hr);
+        return hr;
+    }
+
+    err = snd_pcm_open(&pcm, WOutDev[This->wDevID].pcmname, SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
+    if (err < 0) goto err;
+    err = snd_pcm_hw_params_any(pcm, hw_params);
+    if (err < 0) goto err;
+    err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_MMAP_INTERLEAVED);
+    if (err < 0) goto err;
+
+    TRACE("Success\n");
+    snd_pcm_close(pcm);
+    HeapFree(GetProcessHeap(), 0, hw_params);
+    return hr;
+
+    err:
+    hr = DSERR_GENERIC;
+    WARN("Failed to open device: %s\n", snd_strerror(err));
+    if (pcm)
+        snd_pcm_close(pcm);
+    HeapFree(GetProcessHeap(), 0, hw_params);
+    WARN("--> %08x\n", hr);
+    return hr;
 }
 
 static HRESULT WINAPI IDsCaptureDriverImpl_Close(PIDSCDRIVER iface)
