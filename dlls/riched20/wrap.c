@@ -429,11 +429,13 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   ME_InitContext(&c, editor, hDC);
   c.pt.x = 0;
   c.pt.y = 0;
+  editor->nHeight = 0;
   item = editor->pBuffer->pFirst->next;
   while(item != editor->pBuffer->pLast) {
     BOOL bRedraw = FALSE;
 
     assert(item->type == diParagraph);
+    editor->nHeight = max(editor->nHeight, item->member.para.nYPos);
     if ((item->member.para.nFlags & MEPF_REWRAP)
      || (item->member.para.nYPos != c.pt.y))
       bRedraw = TRUE;

@@ -291,6 +291,7 @@ typedef struct tagME_TextEditor
   int nCursors;
   SIZE sizeWindow;
   int nTotalLength, nLastTotalLength;
+  int nHeight;
   int nUDArrowX;
   int nSequence;
   COLORREF rgbBackColor;

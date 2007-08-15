@@ -1131,6 +1131,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->pCursors[1].pRun = ME_FindItemFwd(ed->pBuffer->pFirst, diRun);
   ed->pCursors[1].nOffset = 0;
   ed->nLastTotalLength = ed->nTotalLength = 0;
+  ed->nHeight = 0;
   ed->nUDArrowX = -1;
   ed->nSequence = 0;
   ed->rgbBackColor = -1;

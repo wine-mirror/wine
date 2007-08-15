@@ -460,7 +460,7 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
   hWnd = editor->hWnd;
   si.cbSize = sizeof(si);
   bScrollBarWasVisible = ME_GetYScrollVisible(editor);
-  bScrollBarWillBeVisible = editor->nTotalLength > editor->sizeWindow.cy;
+  bScrollBarWillBeVisible = editor->nHeight > editor->sizeWindow.cy;
   
   if (bScrollBarWasVisible != bScrollBarWillBeVisible)
   {
