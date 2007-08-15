@@ -386,7 +386,7 @@
 @ stub GdipGetRenderingOrigin
 @ stdcall GdipGetSmoothingMode(ptr ptr)
 @ stdcall GdipGetSolidFillColor(ptr ptr)
-@ stub GdipGetStringFormatAlign
+@ stdcall GdipGetStringFormatAlign(ptr ptr)
 @ stub GdipGetStringFormatDigitSubstitution
 @ stub GdipGetStringFormatFlags
 @ stub GdipGetStringFormatHotkeyPrefix
@@ -585,7 +585,7 @@
 @ stub GdipSetRenderingOrigin
 @ stdcall GdipSetSmoothingMode(ptr long)
 @ stdcall GdipSetSolidFillColor(ptr ptr)
-@ stub GdipSetStringFormatAlign
+@ stdcall GdipSetStringFormatAlign(ptr long)
 @ stub GdipSetStringFormatDigitSubstitution
 @ stub GdipSetStringFormatFlags
 @ stub GdipSetStringFormatHotkeyPrefix

@@ -214,6 +214,13 @@ enum TextRenderingHint
     TextRenderingHintClearTypeGridFit
 };
 
+enum StringAlignment
+{
+    StringAlignmentNear    = 0,
+    StringAlignmentCenter  = 1,
+    StringAlignmentFar     = 2
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -237,6 +244,7 @@ typedef enum LinearGradientMode LinearGradientMode;
 typedef enum EmfType EmfType;
 typedef enum CompositingMode CompositingMode;
 typedef enum TextRenderingHint TextRenderingHint;
+typedef enum StringAlignment StringAlignment;
 
 #endif /* end of c typedefs */
 
