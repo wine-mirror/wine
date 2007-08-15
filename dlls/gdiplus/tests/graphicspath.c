@@ -503,6 +503,48 @@ static void test_ellipse(void)
     GdipDeletePath(path);
 }
 
+static path_test_t linei_path[] = {
+    {5.00, 5.00, PathPointTypeStart, 0, 0}, /*0*/
+    {6.00, 8.00, PathPointTypeLine, 0, 0}, /*1*/
+    {409.92, 110.20, PathPointTypeLine, 0, 0}, /*2*/
+    {543.96, 156.53, PathPointTypeBezier, 0, 0}, /*3*/
+    {625.80, 346.22, PathPointTypeBezier, 0, 0}, /*4*/
+    {592.71, 533.88, PathPointTypeBezier, 0, 0}, /*5*/
+    {592.47, 535.28, PathPointTypeBezier, 0, 0}, /*6*/
+    {592.22, 536.67, PathPointTypeBezier, 0, 0}, /*7*/
+    {591.96, 538.06, PathPointTypeBezier, 0, 0}, /*8*/
+    {15.00, 15.00, PathPointTypeLine, 0, 0}, /*9*/
+    {26.00, 28.00, PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}, /*10*/
+    {35.00, 35.00, PathPointTypeStart, 0, 0}, /*11*/
+    {36.00, 38.00, PathPointTypeLine, 0, 0} /*12*/
+    };
+
+static void test_linei(void)
+{
+    GpStatus status;
+    GpPath *path;
+    GpPointF points[2];
+
+    points[0].X = 7.0;
+    points[0].Y = 11.0;
+    points[1].X = 13.0;
+    points[1].Y = 17.0;
+
+    GdipCreatePath(FillModeAlternate, &path);
+    status = GdipAddPathLineI(path, 5.0, 5.0, 6.0, 8.0);
+    expect(Ok, status);
+    GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, -80.0, 100.0);
+    status = GdipAddPathLineI(path, 15.0, 15.0, 26.0, 28.0);
+    expect(Ok, status);
+    GdipClosePathFigure(path);
+    status = GdipAddPathLineI(path, 35.0, 35.0, 36.0, 38.0);
+    expect(Ok, status);
+
+    ok_path(path, linei_path, sizeof(linei_path)/sizeof(path_test_t), FALSE);
+
+    GdipDeletePath(path);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -521,6 +563,7 @@ START_TEST(graphicspath)
     test_worldbounds();
     test_pathpath();
     test_ellipse();
+    test_linei();
 
     GdiplusShutdown(gdiplusToken);
 }
