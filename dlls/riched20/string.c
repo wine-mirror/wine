@@ -76,7 +76,7 @@ ME_String *ME_MakeStringB(int nMaxChars)
   return s;
 }
 
-ME_String *ME_StrDup(ME_String *s)
+ME_String *ME_StrDup(const ME_String *s)
 {
   return ME_MakeStringN(s->szData, s->nLen);
 }
@@ -87,7 +87,7 @@ void ME_DestroyString(ME_String *s)
   FREE_OBJ(s);
 }
 
-void ME_AppendString(ME_String *s1, ME_String *s2)
+void ME_AppendString(ME_String *s1, const ME_String *s2)
 {
   if (s1->nLen+s2->nLen+1 <= s1->nBuffer) {
     lstrcpyW(s1->szData+s1->nLen, s2->szData);
@@ -107,7 +107,7 @@ void ME_AppendString(ME_String *s1, ME_String *s2)
   }
 }
 
-ME_String *ME_ConcatString(ME_String *s1, ME_String *s2)
+ME_String *ME_ConcatString(const ME_String *s1, const ME_String *s2)
 {
   ME_String *s = ALLOC_OBJ(ME_String);
   s->nLen = s1->nLen+s2->nLen;
@@ -134,7 +134,7 @@ ME_String *ME_VSplitString(ME_String *orig, int charidx)
   return s;
 }
 
-int ME_IsWhitespaces(ME_String *s)
+int ME_IsWhitespaces(const ME_String *s)
 {
   /* FIXME multibyte */
   WCHAR *pos = s->szData;
@@ -147,7 +147,7 @@ int ME_IsWhitespaces(ME_String *s)
     return 1;
 }
 
-int ME_IsSplitable(ME_String *s)
+int ME_IsSplitable(const ME_String *s)
 {
   WCHAR *pos = s->szData;
   WCHAR ch;
@@ -173,18 +173,18 @@ int ME_CalcSkipChars(ME_String *s)
 }
 */
 
-int ME_StrLen(ME_String *s) { 
+int ME_StrLen(const ME_String *s) {
   return s->nLen;
 }
 
-int ME_StrVLen(ME_String *s) {
+int ME_StrVLen(const ME_String *s) {
   return s->nLen;
 }
 
-int ME_StrRelPos(ME_String *s, int nVChar, int *pRelChars)
+int ME_StrRelPos(const ME_String *s, int nVChar, int *pRelChars)
 {
   int nRelChars = *pRelChars;
-  
+
   TRACE("%s,%d,&%d\n", debugstr_w(s->szData), nVChar, *pRelChars);
 
   assert(*pRelChars);
@@ -200,7 +200,7 @@ int ME_StrRelPos(ME_String *s, int nVChar, int *pRelChars)
   return nVChar;
 }
 
-int ME_StrRelPos2(ME_String *s, int nVChar, int nRelChars)
+int ME_StrRelPos2(const ME_String *s, int nVChar, int nRelChars)
 {
   return ME_StrRelPos(s, nVChar, &nRelChars);
 }
@@ -224,7 +224,7 @@ int ME_VPosToPos(ME_String *s, int nVPos)
   */
 }
 
-int ME_PosToVPos(ME_String *s, int nPos)
+int ME_PosToVPos(const ME_String *s, int nPos)
 {
   if (!nPos)
     return 0;
@@ -245,10 +245,10 @@ void ME_StrDeleteV(ME_String *s, int nVChar, int nChars)
   s->nLen -= (end_ofs - nVChar);
 }
 
-int ME_GetCharFwd(ME_String *s, int nPos)
+int ME_GetCharFwd(const ME_String *s, int nPos)
 {
   int nVPos = 0;
-  
+
   assert(nPos < ME_StrLen(s));
   if (nPos)
     nVPos = ME_StrRelPos2(s, nVPos, nPos);
@@ -258,10 +258,10 @@ int ME_GetCharFwd(ME_String *s, int nPos)
   return -1;
 }
 
-int ME_GetCharBack(ME_String *s, int nPos)
+int ME_GetCharBack(const ME_String *s, int nPos)
 {
   int nVPos = ME_StrVLen(s);
-  
+
   assert(nPos < ME_StrLen(s));
   if (nPos)
     nVPos = ME_StrRelPos2(s, nVPos, -nPos);
@@ -271,7 +271,7 @@ int ME_GetCharBack(ME_String *s, int nPos)
   return -1;
 }
 
-int ME_FindNonWhitespaceV(ME_String *s, int nVChar) {
+int ME_FindNonWhitespaceV(const ME_String *s, int nVChar) {
   int i;
   for (i = nVChar; i<s->nLen && ME_IsWSpace(s->szData[i]); i++)
     ;
@@ -280,7 +280,7 @@ int ME_FindNonWhitespaceV(ME_String *s, int nVChar) {
 }
 
 /* note: returns offset of the first trailing whitespace */
-int ME_ReverseFindNonWhitespaceV(ME_String *s, int nVChar) {
+int ME_ReverseFindNonWhitespaceV(const ME_String *s, int nVChar) {
   int i;
   for (i = nVChar; i>0 && ME_IsWSpace(s->szData[i-1]); i--)
     ;
@@ -289,7 +289,7 @@ int ME_ReverseFindNonWhitespaceV(ME_String *s, int nVChar) {
 }
 
 /* note: returns offset of the first trailing nonwhitespace */
-int ME_ReverseFindWhitespaceV(ME_String *s, int nVChar) {
+int ME_ReverseFindWhitespaceV(const ME_String *s, int nVChar) {
   int i;
   for (i = nVChar; i>0 && !ME_IsWSpace(s->szData[i-1]); i--)
     ;

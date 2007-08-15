@@ -94,25 +94,25 @@ ME_String *ME_MakeString(LPCWSTR szText);
 ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars);
 ME_String *ME_MakeStringR(WCHAR cRepeat, int nMaxChars);
 ME_String *ME_MakeStringB(int nMaxChars);
-ME_String *ME_StrDup(ME_String *s);
+ME_String *ME_StrDup(const ME_String *s);
 void ME_DestroyString(ME_String *s);
-void ME_AppendString(ME_String *s1, ME_String *s2);
-ME_String *ME_ConcatString(ME_String *s1, ME_String *s2);
+void ME_AppendString(ME_String *s1, const ME_String *s2);
+ME_String *ME_ConcatString(const ME_String *s1, const ME_String *s2);
 ME_String *ME_VSplitString(ME_String *orig, int nVPos);
-int ME_IsWhitespaces(ME_String *s);
-int ME_IsSplitable(ME_String *s);
+int ME_IsWhitespaces(const ME_String *s);
+int ME_IsSplitable(const ME_String *s);
 /* int ME_CalcSkipChars(ME_String *s); */
-int ME_StrLen(ME_String *s);
-int ME_StrVLen(ME_String *s);
-int ME_FindNonWhitespaceV(ME_String *s, int nVChar);
+int ME_StrLen(const ME_String *s);
+int ME_StrVLen(const ME_String *s);
+int ME_FindNonWhitespaceV(const ME_String *s, int nVChar);
 int ME_FindWhitespaceV(ME_String *s, int nVChar);
 int ME_CallWordBreakProc(ME_TextEditor *editor, ME_String *str, INT start, INT code);
-int ME_GetCharFwd(ME_String *s, int nPos); /* get char starting from start */
-int ME_GetCharBack(ME_String *s, int nPos); /* get char starting from \0  */
-int ME_StrRelPos(ME_String *s, int nVChar, int *pRelChars);
-int ME_StrRelPos2(ME_String *s, int nVChar, int nRelChars);
+int ME_GetCharFwd(const ME_String *s, int nPos); /* get char starting from start */
+int ME_GetCharBack(const ME_String *s, int nPos); /* get char starting from \0  */
+int ME_StrRelPos(const ME_String *s, int nVChar, int *pRelChars);
+int ME_StrRelPos2(const ME_String *s, int nVChar, int nRelChars);
 int ME_VPosToPos(ME_String *s, int nVPos);
-int ME_PosToVPos(ME_String *s, int nPos);
+int ME_PosToVPos(const ME_String *s, int nPos);
 void ME_StrDeleteV(ME_String *s, int nVChar, int nChars);
 /* smart helpers for A<->W conversions, they reserve/free memory and call MultiByte<->WideChar functions */
 LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz);
@@ -130,8 +130,8 @@ static inline int ME_CharCompare(WCHAR a, WCHAR b, int caseSensitive)
 
 /* note: those two really return the first matching offset (starting from EOS)+1 
  * in other words, an offset of the first trailing white/black */
-int ME_ReverseFindNonWhitespaceV(ME_String *s, int nVChar);
-int ME_ReverseFindWhitespaceV(ME_String *s, int nVChar);
+int ME_ReverseFindNonWhitespaceV(const ME_String *s, int nVChar);
+int ME_ReverseFindWhitespaceV(const ME_String *s, int nVChar);
 
 /* row.c */
 ME_DisplayItem *ME_FindRowStart(ME_Context *c, ME_DisplayItem *run, int nRelPos);
@@ -155,15 +155,15 @@ int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run);
 int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run);
 int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset);
 int ME_GetLastSplittablePlace(ME_Context *c, ME_Run *run);
-int ME_CanJoinRuns(ME_Run *run1, ME_Run *run2);
+int ME_CanJoinRuns(const ME_Run *run1, const ME_Run *run2);
 void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p);
 ME_DisplayItem *ME_SplitRun(ME_Context *c, ME_DisplayItem *item, int nChar);
 ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_DisplayItem *item, int nChar);
 int ME_FindSplitPoint(ME_Context *c, POINT *pt, ME_Run *run, int desperate);
 void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run);
 ME_DisplayItem *ME_SplitFurther(ME_TextEditor *editor, ME_DisplayItem *run);
-void ME_CalcRunExtent(ME_Context *c, ME_Paragraph *para, ME_Run *run);
-SIZE ME_GetRunSize(ME_Context *c, ME_Paragraph *para, ME_Run *run, int nLen);
+void ME_CalcRunExtent(ME_Context *c, const ME_Paragraph *para, ME_Run *run);
+SIZE ME_GetRunSize(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen);
 void ME_CursorFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_Cursor *pCursor);
 void ME_RunOfsFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem **ppRun, int *pOfs);
 int ME_CharOfsFromRunOfs(ME_TextEditor *editor, ME_DisplayItem *pRun, int nOfs);

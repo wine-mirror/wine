@@ -32,7 +32,7 @@ WINE_DECLARE_DEBUG_CHANNEL(richedit_lists);
  *
  * Returns 1 if two runs can be safely merged into one, 0 otherwise.
  */ 
-int ME_CanJoinRuns(ME_Run *run1, ME_Run *run2)
+int ME_CanJoinRuns(const ME_Run *run1, const ME_Run *run2)
 {
   if ((run1->nFlags | run2->nFlags) & MERF_NOJOIN)
     return 0;
@@ -652,7 +652,7 @@ static void ME_GetTextExtent(ME_Context *c, LPCWSTR szText, int nChars, ME_Style
  * Finds width, height, ascent and descent of a run, up to given character
  * (nLen).
  */
-static SIZE ME_GetRunSizeCommon(ME_Context *c, ME_Paragraph *para, ME_Run *run, int nLen,
+static SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen,
                                 int *pAscent, int *pDescent)
 {
   SIZE size;
@@ -728,7 +728,7 @@ static SIZE ME_GetRunSizeCommon(ME_Context *c, ME_Paragraph *para, ME_Run *run, 
  * Finds width and height (but not ascent and descent) of a part of the run
  * up to given character.    
  */     
-SIZE ME_GetRunSize(ME_Context *c, ME_Paragraph *para, ME_Run *run, int nLen)
+SIZE ME_GetRunSize(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen)
 {
   int asc, desc;
   return ME_GetRunSizeCommon(c, para, run, nLen, &asc, &desc);
@@ -741,7 +741,7 @@ SIZE ME_GetRunSize(ME_Context *c, ME_Paragraph *para, ME_Run *run, int nLen)
  * is calculated based on whole row's ascent and descent anyway, so no need
  * to use it here.        
  */     
-void ME_CalcRunExtent(ME_Context *c, ME_Paragraph *para, ME_Run *run)
+void ME_CalcRunExtent(ME_Context *c, const ME_Paragraph *para, ME_Run *run)
 {
   if (run->nFlags & MERF_HIDDEN)
     run->nWidth = 0;
