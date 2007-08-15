@@ -31,13 +31,28 @@
 GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     GDIPCONST LOGFONTW *logfont, GpFont **font)
 {
+    HFONT hfont, oldfont;
+    TEXTMETRICW textmet;
+
     if(!logfont || !font)
         return InvalidParameter;
 
     *font = GdipAlloc(sizeof(GpFont));
     if(!*font)  return OutOfMemory;
 
-    memcpy(&(*font)->lfw, logfont, sizeof(LOGFONTW));
+    memcpy(&(*font)->lfw.lfFaceName, logfont->lfFaceName, LF_FACESIZE *
+           sizeof(WCHAR));
+    (*font)->lfw.lfHeight = logfont->lfHeight;
+
+    hfont = CreateFontIndirectW(&(*font)->lfw);
+    oldfont = SelectObject(hdc, hfont);
+    GetTextMetricsW(hdc, &textmet);
+
+    (*font)->lfw.lfHeight = -textmet.tmHeight;
+    (*font)->lfw.lfWeight = textmet.tmWeight;
+
+    SelectObject(hdc, oldfont);
+    DeleteObject(hfont);
 
     return Ok;
 }

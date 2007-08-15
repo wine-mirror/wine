@@ -44,13 +44,11 @@ static void test_logfont(void)
     stat = GdipGetLogFontW(font, graphics, &lfw2);
     expect(Ok, stat);
 
-    todo_wine
-        ok(lfw2.lfHeight < 0, "Expected negative height\n");
+    ok(lfw2.lfHeight < 0, "Expected negative height\n");
     expect(0, lfw2.lfWidth);
     expect(0, lfw2.lfEscapement);
     expect(0, lfw2.lfOrientation);
-    todo_wine
-        ok((lfw2.lfWeight >= 100) && (lfw2.lfWeight <= 900), "Expected weight to be set\n");
+    ok((lfw2.lfWeight >= 100) && (lfw2.lfWeight <= 900), "Expected weight to be set\n");
     expect(0, lfw2.lfItalic);
     expect(0, lfw2.lfUnderline);
     expect(0, lfw2.lfStrikeOut);
