@@ -233,9 +233,7 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
          &len);
         if (!ret)
             goto error;
-        if (!pbSignedDataMsg)
-            *pcbSignedDataMsg = pCert->dwLength;
-        else if (*pcbSignedDataMsg < pCert->dwLength)
+        if (*pcbSignedDataMsg < pCert->dwLength)
         {
             *pcbSignedDataMsg = pCert->dwLength;
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
