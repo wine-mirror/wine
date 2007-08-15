@@ -441,7 +441,7 @@
 @ stdcall GdipLoadImageFromStreamICM(ptr ptr)
 @ stub GdipMeasureCharacterRanges
 @ stub GdipMeasureDriverString
-@ stub GdipMeasureString
+@ stdcall GdipMeasureString(ptr ptr long ptr ptr ptr ptr ptr ptr)
 @ stub GdipMultiplyLineTransform
 @ stdcall GdipMultiplyMatrix(ptr ptr long)
 @ stub GdipMultiplyPathGradientTransform

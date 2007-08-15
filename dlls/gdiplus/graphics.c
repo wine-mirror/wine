@@ -1709,6 +1709,99 @@ GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
+    GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, RectF *bounds,
+    INT *codepointsfitted, INT *linesfilled)
+{
+    HFONT oldfont;
+    WCHAR* stringdup;
+    INT sum = 0, height = 0, fit, fitcpy, max_width = 0, i, j, lret, nwidth;
+    SIZE size;
+
+    if(!graphics || !string || !font || !rect)
+        return InvalidParameter;
+
+    if(format || codepointsfitted || linesfilled){
+        FIXME("not implemented for given parameters\n");
+        if(format)
+            TRACE("format attr is %d\n", format->attr);
+        return NotImplemented;
+    }
+
+    if(length == -1) length = lstrlenW(string);
+
+    stringdup = GdipAlloc(length * sizeof(WCHAR));
+    if(!stringdup) return OutOfMemory;
+
+    oldfont = SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
+    nwidth = roundr(rect->Width);
+
+    for(i = 0, j = 0; i < length; i++){
+        if(!isprintW(string[i]) && (string[i] != '\n'))
+            continue;
+
+        stringdup[j] = string[i];
+        j++;
+    }
+
+    stringdup[j] = 0;
+    length = j;
+
+    while(sum < length){
+        GetTextExtentExPointW(graphics->hdc, stringdup + sum, length - sum,
+                              nwidth, &fit, NULL, &size);
+        fitcpy = fit;
+
+        if(fit == 0)
+            break;
+
+        for(lret = 0; lret < fit; lret++)
+            if(*(stringdup + sum + lret) == '\n')
+                break;
+
+        /* Line break code (may look strange, but it imitates windows). */
+        if(lret < fit)
+            fit = lret;    /* this is not an off-by-one error */
+        else if(fit < (length - sum)){
+            if(*(stringdup + sum + fit) == ' ')
+                while(*(stringdup + sum + fit) == ' ')
+                    fit++;
+            else
+                while(*(stringdup + sum + fit - 1) != ' '){
+                    fit--;
+
+                    if(*(stringdup + sum + fit) == '\t')
+                        break;
+
+                    if(fit == 0){
+                        fit = fitcpy;
+                        break;
+                    }
+                }
+        }
+
+        GetTextExtentExPointW(graphics->hdc, stringdup + sum, fit,
+                              nwidth, &j, NULL, &size);
+
+        sum += fit + (lret < fitcpy ? 1 : 0);
+        height += size.cy;
+        max_width = max(max_width, size.cx);
+
+        if(height > roundr(rect->Height))
+            break;
+    }
+
+    bounds->X = rect->X;
+    bounds->Y = rect->Y;
+    bounds->Width = (REAL)max_width;
+    bounds->Height = min((REAL)height, rect->Height);
+
+    DeleteObject(SelectObject(graphics->hdc, oldfont));
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics *graphics, GraphicsState state)
 {
     static int calls;
