@@ -2899,6 +2899,21 @@ LPVOID *
 REFCLSID
 REFIID
 
+%%nddeapi.dll
+
+%long
+
+DWORD
+UINT
+
+%str
+
+LPSTR
+
+%wstr
+
+LPWSTR
+
 %%netapi32.dll
 
 %long
