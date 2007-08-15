@@ -452,10 +452,6 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return MMSYSERR_ALLOCATED;
     }
 
-    if ((dwFlags & WAVE_DIRECTSOUND) && !(wwi->dwSupport & WAVECAPS_DIRECTSOUND))
-	/* not supported, ignore it */
-	dwFlags &= ~WAVE_DIRECTSOUND;
-
     wwi->pcm = 0;
     flags = SND_PCM_NONBLOCK;
 
@@ -559,7 +555,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     err = snd_pcm_hw_params_get_buffer_size(hw_params, &buffer_size);
 
     snd_pcm_sw_params_current(pcm, sw_params);
-    EXIT_ON_ERROR( snd_pcm_sw_params_set_start_threshold(pcm, sw_params, dwFlags & WAVE_DIRECTSOUND ? INT_MAX : 1 ), MMSYSERR_ERROR, "unable to set start threshold");
+    EXIT_ON_ERROR( snd_pcm_sw_params_set_start_threshold(pcm, sw_params, 1), MMSYSERR_ERROR, "unable to set start threshold");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_silence_size(pcm, sw_params, 0), MMSYSERR_ERROR, "unable to set silence size");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_avail_min(pcm, sw_params, period_size), MMSYSERR_ERROR, "unable to set avail min");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_xfer_align(pcm, sw_params, 1), MMSYSERR_ERROR, "unable to set xfer align");
@@ -594,17 +590,12 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	  wwi->format.Format.nSamplesPerSec, wwi->format.Format.nChannels,
 	  wwi->format.Format.nBlockAlign);
 
-    if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwi->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-	wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
-        if (wwi->hThread)
-            SetThreadPriority(wwi->hThread, THREAD_PRIORITY_TIME_CRITICAL);
-	WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
-	CloseHandle(wwi->hStartUpEvent);
-    } else {
-	wwi->hThread = INVALID_HANDLE_VALUE;
-	wwi->dwThreadID = 0;
-    }
+    wwi->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
+    if (wwi->hThread)
+        SetThreadPriority(wwi->hThread, THREAD_PRIORITY_TIME_CRITICAL);
+    WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
+    CloseHandle(wwi->hStartUpEvent);
     wwi->hStartUpEvent = INVALID_HANDLE_VALUE;
 
     return widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
@@ -816,28 +807,6 @@ static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
         return MMSYSERR_NOERROR;
     }
     return MMSYSERR_INVALPARAM;
-}
-
-/**************************************************************************
- *                              widDsCreate                     [internal]
- */
-static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
-{
-    TRACE("(%d,%p)\n",wDevID,drv);
-
-    /* the HAL isn't much better than the HEL if we can't do mmap() */
-    FIXME("DirectSoundCapture not implemented\n");
-    FIXME("The (slower) DirectSound HEL mode will be used instead.\n");
-    return MMSYSERR_NOTSUPPORTED;
-}
-
-/**************************************************************************
- *                              widDsDesc                       [internal]
- */
-static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
-{
-    memcpy(desc, &(WInDev[wDevID].ds_desc), sizeof(DSDRIVERDESC));
-    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************

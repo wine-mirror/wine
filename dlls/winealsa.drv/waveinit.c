@@ -525,12 +525,6 @@ static int ALSA_AddCaptureDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcm
         return(rc);
     }
 
-    if (wwi.dwSupport & WAVECAPS_DIRECTSOUND)
-    {
-        FIXME("Add support for DSCapture\n");
-        wwi.dwSupport &= ~WAVECAPS_DIRECTSOUND;
-    }
-
     rc = ALSA_AddDeviceToArray(&wwi, &WInDev, &ALSA_WidNumDevs, &ALSA_WidNumMallocedDevs, isdefault);
     if (rc)
         ALSA_FreeDevice(&wwi);

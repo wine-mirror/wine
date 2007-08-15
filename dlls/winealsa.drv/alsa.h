@@ -193,6 +193,10 @@ int	ALSA_XRUNRecovery(WINE_WAVEDEV * wwo, int err);
 void	ALSA_copyFormat(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2);
 BOOL	ALSA_supportedFormat(LPWAVEFORMATEX wf);
 
+/* dscapture.c */
+DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv);
+DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc);
+
 /* dsoutput.c */
 DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);

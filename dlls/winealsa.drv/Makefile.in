@@ -8,6 +8,7 @@ EXTRALIBS = -ldxguid -luuid @ALSALIBS@
 
 C_SRCS = \
 	alsa.c \
+	dscapture.c \
 	dsoutput.c \
 	midi.c \
 	mixer.c \
