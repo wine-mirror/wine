@@ -12,7 +12,8 @@ CTESTS = \
 	graphicspath.c \
 	image.c \
 	matrix.c \
-	pen.c
+	pen.c \
+	stringformat.c
 
 @MAKE_TEST_RULES@
 
