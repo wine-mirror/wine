@@ -230,7 +230,8 @@ ME_MoveCaret(ME_TextEditor *editor)
 {
   int x, y, height;
 
-  ME_WrapMarkedParagraphs(editor);
+  if (ME_WrapMarkedParagraphs(editor))
+    ME_UpdateScrollBar(editor);
   ME_GetCursorCoordinates(editor, &editor->pCursors[0], &x, &y, &height);
   if(editor->bHaveFocus)
   {
