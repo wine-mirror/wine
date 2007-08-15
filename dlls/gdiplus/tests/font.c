@@ -58,6 +58,40 @@ static void test_logfont(void)
     expect(0, lfw2.lfQuality);
     expect(0, lfw2.lfPitchAndFamily);
 
+    GdipDeleteFont(font);
+
+    memset(&lfw, 0, sizeof(LOGFONTW));
+    lfw.lfHeight = 25;
+    lfw.lfWidth = 25;
+    lfw.lfEscapement = lfw.lfOrientation = 50;
+    lfw.lfItalic = lfw.lfUnderline = lfw.lfStrikeOut = TRUE;
+
+    memset(&lfw2, 0xff, sizeof(LOGFONTW));
+    memcpy(&lfw.lfFaceName, arial, 6 * sizeof(WCHAR));
+
+    stat = GdipCreateFontFromLogfontW(hdc, &lfw, &font);
+    expect(Ok, stat);
+    stat = GdipGetLogFontW(font, graphics, &lfw2);
+    expect(Ok, stat);
+
+    ok(lfw2.lfHeight < 0, "Expected negative height\n");
+    expect(0, lfw2.lfWidth);
+    expect(0, lfw2.lfEscapement);
+    expect(0, lfw2.lfOrientation);
+    ok((lfw2.lfWeight >= 100) && (lfw2.lfWeight <= 900), "Expected weight to be set\n");
+    todo_wine{
+        expect(TRUE, lfw2.lfItalic);
+        expect(TRUE, lfw2.lfUnderline);
+        expect(TRUE, lfw2.lfStrikeOut);
+    }
+    expect(0, lfw2.lfCharSet);
+    expect(0, lfw2.lfOutPrecision);
+    expect(0, lfw2.lfClipPrecision);
+    expect(0, lfw2.lfQuality);
+    expect(0, lfw2.lfPitchAndFamily);
+
+    GdipDeleteFont(font);
+
     GdipDeleteGraphics(graphics);
     ReleaseDC(0, hdc);
 }
