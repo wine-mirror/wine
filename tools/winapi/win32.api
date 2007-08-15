@@ -2528,13 +2528,16 @@ BOOL
 DWORD
 HINSTANCE
 HRESULT
+HWND
 INT
 
 %ptr
 
+IMoniker *
 LPVOID *
 REFCLSID
 REFIID
+VARIANT *
 
 %str
 
@@ -2543,6 +2546,7 @@ LPSTR
 %wstr
 
 LPCWSTR
+WCHAR *
 
 %%msi.dll
 
