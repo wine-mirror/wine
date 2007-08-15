@@ -3864,6 +3864,22 @@ PWRSCHEMESENUMPROC
 
 LPWSTR
 
+%%printui.dll
+
+%long
+
+DWORD
+HINSTANCE
+HWND
+
+%wstr
+
+LPCWSTR
+
+%void
+
+void
+
 %%psapi.dll
 
 %long
