@@ -43,6 +43,9 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     memcpy(&(*font)->lfw.lfFaceName, logfont->lfFaceName, LF_FACESIZE *
            sizeof(WCHAR));
     (*font)->lfw.lfHeight = logfont->lfHeight;
+    (*font)->lfw.lfItalic = logfont->lfItalic;
+    (*font)->lfw.lfUnderline = logfont->lfUnderline;
+    (*font)->lfw.lfStrikeOut = logfont->lfStrikeOut;
 
     hfont = CreateFontIndirectW(&(*font)->lfw);
     oldfont = SelectObject(hdc, hfont);

@@ -79,11 +79,9 @@ static void test_logfont(void)
     expect(0, lfw2.lfEscapement);
     expect(0, lfw2.lfOrientation);
     ok((lfw2.lfWeight >= 100) && (lfw2.lfWeight <= 900), "Expected weight to be set\n");
-    todo_wine{
-        expect(TRUE, lfw2.lfItalic);
-        expect(TRUE, lfw2.lfUnderline);
-        expect(TRUE, lfw2.lfStrikeOut);
-    }
+    expect(TRUE, lfw2.lfItalic);
+    expect(TRUE, lfw2.lfUnderline);
+    expect(TRUE, lfw2.lfStrikeOut);
     expect(0, lfw2.lfCharSet);
     expect(0, lfw2.lfOutPrecision);
     expect(0, lfw2.lfClipPrecision);
