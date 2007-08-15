@@ -217,6 +217,33 @@ GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipAddPathLineI(GpPath *path, INT x1, INT y1, INT x2, INT y2)
+{
+    INT old_count;
+
+    if(!path)
+        return InvalidParameter;
+
+    if(!lengthen_path(path, 2))
+        return OutOfMemory;
+
+    old_count = path->pathdata.Count;
+
+    path->pathdata.Points[old_count].X = (REAL) x1;
+    path->pathdata.Points[old_count].Y = (REAL) y1;
+    path->pathdata.Points[old_count + 1].X = (REAL) x2;
+    path->pathdata.Points[old_count + 1].Y = (REAL) y2;
+
+    path->pathdata.Types[old_count] =
+        (path->newfigure ? PathPointTypeStart : PathPointTypeLine);
+    path->pathdata.Types[old_count + 1] = PathPointTypeLine;
+
+    path->newfigure = FALSE;
+    path->pathdata.Count += 2;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipAddPathPath(GpPath *path, GDIPCONST GpPath* addingPath,
     BOOL connect)
 {

@@ -19,7 +19,7 @@
 @ stdcall GdipAddPathLine2(ptr ptr long)
 @ stub GdipAddPathLine2I
 @ stub GdipAddPathLine
-@ stub GdipAddPathLineI
+@ stdcall GdipAddPathLineI(ptr long long long long)
 @ stdcall GdipAddPathPath(ptr ptr long)
 @ stub GdipAddPathPie
 @ stub GdipAddPathPieI
