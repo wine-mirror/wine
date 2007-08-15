@@ -990,6 +990,13 @@ static void HttpHeaders_test(void)
     ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
                 buffer,&len,&index)==0,"Second Index Should Not Exist\n");
 
+    index = 0;
+    len = 5; /* could store the string but not the NULL terminator */
+    strcpy(buffer,"Warning");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index) == FALSE,"Query succeeded on a too small buffer\n");
+    ok(strcmp(buffer,"Warning")==0, "incorrect string was returned(%s)\n",buffer); /* string not touched */
+    ok(len == 6, "Invalid length (exp. 6, got %d)\n", len); /* unlike success, the length includes the NULL-terminator */
 
     /* a call with NULL will fail but will return the length */
     index = 0;
