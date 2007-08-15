@@ -1296,6 +1296,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         return NotImplemented;
     }
 
+    if(length == -1) length = lstrlenW(string);
+
     stringdup = GdipAlloc(length * sizeof(WCHAR));
     if(!stringdup) return OutOfMemory;
 
