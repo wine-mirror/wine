@@ -59,3 +59,15 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontA(HDC hdc,
 
     return Ok;
 }
+
+/* FIXME: use graphics */
+GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
+    LOGFONTW *lfw)
+{
+    if(!font || !graphics || !lfw)
+        return InvalidParameter;
+
+    memcpy(lfw, &font->lfw, sizeof(LOGFONTW));
+
+    return Ok;
+}

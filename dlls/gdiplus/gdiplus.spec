@@ -312,7 +312,7 @@
 @ stub GdipGetLineTransform
 @ stub GdipGetLineWrapMode
 @ stub GdipGetLogFontA
-@ stub GdipGetLogFontW
+@ stdcall GdipGetLogFontW(ptr ptr ptr)
 @ stdcall GdipGetMatrixElements(ptr ptr)
 @ stub GdipGetMetafileDownLevelRasterizationLimit
 @ stub GdipGetMetafileHeaderFromEmf
