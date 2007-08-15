@@ -765,17 +765,18 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 	if (!This->notify)
 	    hres = IDirectSoundCaptureNotifyImpl_Create(This, &This->notify);
 	if (This->notify) {
-	    if (This->device->hwbuf) {
+	    IDirectSoundNotify_AddRef((LPDIRECTSOUNDNOTIFY)This->notify);
+	    if (This->device->hwbuf && !This->hwnotify) {
 		hres = IDsCaptureDriverBuffer_QueryInterface(This->device->hwbuf,
 		    &IID_IDsDriverNotify, (LPVOID*)&(This->hwnotify));
 		if (hres != DS_OK) {
 		    WARN("IDsCaptureDriverBuffer_QueryInterface failed\n");
+		    IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
 		    *ppobj = 0;
 		    return hres;
 	        }
 	    }
 
-	    IDirectSoundNotify_AddRef((LPDIRECTSOUNDNOTIFY)This->notify);
 	    *ppobj = (LPVOID)This->notify;
 	    return DS_OK;
 	}
