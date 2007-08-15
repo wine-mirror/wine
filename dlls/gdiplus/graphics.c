@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <math.h>
+#include <limits.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -1716,6 +1717,10 @@ GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
     return Ok;
 }
 
+/* Find the smallest rectangle that bounds the text when it is printed in rect
+ * according to the format options listed in format. If rect has 0 width and
+ * height, then just find the smallest rectangle that bounds the text when it's
+ * printed at location (rect->X, rect-Y). */
 GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, RectF *bounds,
@@ -1723,7 +1728,8 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 {
     HFONT oldfont;
     WCHAR* stringdup;
-    INT sum = 0, height = 0, fit, fitcpy, max_width = 0, i, j, lret, nwidth;
+    INT sum = 0, height = 0, fit, fitcpy, max_width = 0, i, j, lret, nwidth,
+        nheight;
     SIZE size;
 
     if(!graphics || !string || !font || !rect)
@@ -1744,6 +1750,10 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 
     oldfont = SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
     nwidth = roundr(rect->Width);
+    nheight = roundr(rect->Height);
+
+    if((nwidth == 0) && (nheight == 0))
+        nwidth = nheight = INT_MAX;
 
     for(i = 0, j = 0; i < length; i++){
         if(!isprintW(string[i]) && (string[i] != '\n'))
@@ -1796,7 +1806,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
         height += size.cy;
         max_width = max(max_width, size.cx);
 
-        if(height > roundr(rect->Height))
+        if(height > nheight)
             break;
 
         /* Stop if this was a linewrap (but not if it was a linebreak). */
@@ -1807,7 +1817,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     bounds->X = rect->X;
     bounds->Y = rect->Y;
     bounds->Width = (REAL)max_width;
-    bounds->Height = min((REAL)height, rect->Height);
+    bounds->Height = (REAL) min(height, nheight);
 
     DeleteObject(SelectObject(graphics->hdc, oldfont));
 
