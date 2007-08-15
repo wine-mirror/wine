@@ -239,8 +239,6 @@ static void test_ExitCode(void)
         return;
     }
 
-    ret=RegSetValueExA(hkey, "auto", 0, REG_SZ, (BYTE*)"1", 2);
-    ok(ret == ERROR_SUCCESS, "unable to set AeDebug/auto: ret=%d\n", ret);
     crash_and_debug(hkey, test_exe, "dbgevent");
     crash_and_debug(hkey, test_exe, "dbgnoevent");
 
