@@ -2277,7 +2277,7 @@ void WINAPI RtlReleaseActivationContext( HANDLE handle )
 /******************************************************************
  *		RtlActivateActivationContext (NTDLL.@)
  */
-NTSTATUS WINAPI RtlActivateActivationContext( ULONG unknown, HANDLE handle, ULONG_PTR *cookie )
+NTSTATUS WINAPI RtlActivateActivationContext( ULONG unknown, HANDLE handle, PULONG_PTR cookie )
 {
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
 
