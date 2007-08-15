@@ -1276,7 +1276,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     INT length, GDIPCONST GpFont *font, GDIPCONST RectF *rect,
     GDIPCONST GpStringFormat *format, GDIPCONST GpBrush *brush)
 {
-    HRGN rgn;
+    HRGN rgn = NULL;
     HFONT gdifont;
     LOGFONTW lfw;
     TEXTMETRICW textmet;
@@ -1284,7 +1284,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     POINT corners[4];
     WCHAR* stringdup;
     REAL angle, ang_cos, ang_sin, rel_width, rel_height;
-    INT sum = 0, height = 0, fit, fitcpy, save_state, i, j, lret, nwidth;
+    INT sum = 0, height = 0, fit, fitcpy, save_state, i, j, lret, nwidth,
+        nheight;
     SIZE size;
 
     if(!graphics || !string || !font || !brush || !rect)
@@ -1312,16 +1313,24 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     rectcpy[2].X = rectcpy[1].X = rect->X + rect->Width;
     rectcpy[3].Y = rectcpy[2].Y = rect->Y + rect->Height;
     transform_and_round_points(graphics, corners, rectcpy, 4);
-    rel_width = sqrt((corners[1].x - corners[0].x) * (corners[1].x - corners[0].x) +
-                     (corners[1].y - corners[0].y) * (corners[1].y - corners[0].y))
-                     / rect->Width;
-    nwidth = roundr(rel_width * rect->Width);
-    rel_height = sqrt((corners[2].x - corners[1].x) * (corners[2].x - corners[1].x) +
-                      (corners[2].y - corners[1].y) * (corners[2].y - corners[1].y))
-                      / rect->Height;
 
-    rgn = CreatePolygonRgn(corners, 4, ALTERNATE);
-    SelectClipRgn(graphics->hdc, rgn);
+    if(roundr(rect->Width) == 0 && roundr(rect->Height) == 0){
+        rel_width = rel_height = 1.0;
+        nwidth = nheight = INT_MAX;
+    }
+    else{
+        rel_width = sqrt((corners[1].x - corners[0].x) * (corners[1].x - corners[0].x) +
+                         (corners[1].y - corners[0].y) * (corners[1].y - corners[0].y))
+                         / rect->Width;
+        rel_height = sqrt((corners[2].x - corners[1].x) * (corners[2].x - corners[1].x) +
+                          (corners[2].y - corners[1].y) * (corners[2].y - corners[1].y))
+                          / rect->Height;
+
+        nwidth = roundr(rel_width * rect->Width);
+        nheight = roundr(rel_height * rect->Height);
+        rgn = CreatePolygonRgn(corners, 4, ALTERNATE);
+        SelectClipRgn(graphics->hdc, rgn);
+    }
 
     /* Use gdi to find the font, then perform transformations on it (height,
      * width, angle). */
@@ -1393,7 +1402,6 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
                     }
                 }
         }
-
         TabbedTextOutW(graphics->hdc,
                        corners[0].x - roundr(ang_sin * (REAL) height),
                        corners[0].y + roundr(ang_cos * (REAL) height),
@@ -1402,7 +1410,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         sum += fit + (lret < fitcpy ? 1 : 0);
         height += size.cy;
 
-        if(height > roundr(rect->Height * rel_height))
+        if(height > nheight)
             break;
 
         /* Stop if this was a linewrap (but not if it was a linebreak). */
