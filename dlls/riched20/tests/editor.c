@@ -1823,6 +1823,72 @@ static void test_unicode_conversions(void)
     DestroyWindow(hwnd);
 }
 
+
+static void test_EM_GETTEXTLENGTHEX(void)
+{
+    HWND hwnd;
+    GETTEXTLENGTHEX gtl;
+    int ret;
+
+    /* single line */
+    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
+                           0, 0, 200, 60, 0, 0, 0, 0);
+    ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    ok(ret == 0, "ret %d\n",ret);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    ok(ret == 0, "ret %d\n",ret);
+
+    SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) "a\nb\n\n\r\n");
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    todo_wine ok(ret == 1, "ret %d\n",ret);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    todo_wine ok(ret == 1, "ret %d\n",ret);
+
+    DestroyWindow(hwnd);
+
+    /* multi line */
+    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP | ES_MULTILINE,
+                           0, 0, 200, 60, 0, 0, 0, 0);
+    ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    todo_wine ok(ret == 0, "ret %d\n",ret);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    ok(ret == 0, "ret %d\n",ret);
+
+    SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) "a\nb\n\n\r\n");
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    todo_wine ok(ret == 10, "ret %d\n",ret);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    ok(ret == 6, "ret %d\n",ret);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -1855,6 +1921,7 @@ START_TEST( editor )
   test_EM_StreamIn_Undo();
   test_EM_FORMATRANGE();
   test_unicode_conversions();
+  test_EM_GETTEXTLENGTHEX();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

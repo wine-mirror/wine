@@ -57,8 +57,8 @@ int ME_GetTextLengthEx(ME_TextEditor *editor, const GETTEXTLENGTHEX *how)
     return E_INVALIDARG;
   
   length = ME_GetTextLength(editor);
-  
-  if (how->flags & GTL_USECRLF)
+
+  if ((GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_MULTILINE) && (how->flags & GTL_USECRLF))
     length += editor->nParagraphs;
   
   if (how->flags & GTL_NUMBYTES)
