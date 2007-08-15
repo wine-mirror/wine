@@ -130,7 +130,7 @@
 @ stub GdipCreateRegionRgnData
 @ stdcall GdipCreateSolidFill(long ptr)
 @ stdcall GdipCreateStreamOnFile(ptr long ptr)
-@ stub GdipCreateStringFormat
+@ stdcall GdipCreateStringFormat(long long ptr)
 @ stub GdipCreateTexture2
 @ stub GdipCreateTexture2I
 @ stub GdipCreateTexture

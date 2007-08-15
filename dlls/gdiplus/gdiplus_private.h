@@ -174,4 +174,9 @@ struct GpFont{
     LOGFONTW lfw;
 };
 
+struct GpStringFormat{
+    INT attr;
+    LANGID lang;
+};
+
 #endif

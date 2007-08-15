@@ -18,7 +18,8 @@ C_SRCS = \
 	imageattributes.c \
 	matrix.c \
 	pathiterator.c \
-	pen.c
+	pen.c \
+	stringformat.c
 
 @MAKE_DLL_RULES@
 
