@@ -140,7 +140,7 @@
 @ stub GdipDeleteCachedBitmap
 @ stdcall GdipDeleteCustomLineCap(ptr)
 @ stub GdipDeleteEffect
-@ stub GdipDeleteFont
+@ stdcall GdipDeleteFont(ptr)
 @ stub GdipDeleteFontFamily
 @ stdcall GdipDeleteGraphics(ptr)
 @ stdcall GdipDeleteMatrix(ptr)

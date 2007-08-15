@@ -75,6 +75,16 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontA(HDC hdc,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipDeleteFont(GpFont* font)
+{
+    if(!font)
+        return InvalidParameter;
+
+    GdipFree(font);
+
+    return Ok;
+}
+
 /* FIXME: use graphics */
 GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
     LOGFONTW *lfw)
