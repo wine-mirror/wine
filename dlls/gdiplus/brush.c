@@ -486,6 +486,20 @@ GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetLineBlend(GpLineGradient *brush,
+    GDIPCONST REAL *blend, GDIPCONST REAL* positions, INT count)
+{
+    static int calls;
+
+    if(!brush || !blend || !positions || count <= 0)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetLineGammaCorrection(GpLineGradient *line,
     BOOL usegamma)
 {
