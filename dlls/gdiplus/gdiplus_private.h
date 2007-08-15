@@ -80,6 +80,7 @@ struct GpGraphics{
     InterpolationMode interpolation;
     PixelOffsetMode pixeloffset;
     CompositingMode compmode;
+    TextRenderingHint texthint;
     GpUnit unit;    /* page unit */
     REAL scale;     /* page scale */
     GpMatrix * worldtrans; /* world transform */

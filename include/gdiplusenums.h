@@ -204,6 +204,16 @@ enum CompositingMode
     CompositingModeSourceCopy
 };
 
+enum TextRenderingHint
+{
+    TextRenderingHintSystemDefault = 0,
+    TextRenderingHintSingleBitPerPixelGridFit,
+    TextRenderingHintSingleBitPerPixel,
+    TextRenderingHintAntiAliasGridFit,
+    TextRenderingHintAntiAlias,
+    TextRenderingHintClearTypeGridFit
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -226,6 +236,7 @@ typedef enum MetafileType MetafileType;
 typedef enum LinearGradientMode LinearGradientMode;
 typedef enum EmfType EmfType;
 typedef enum CompositingMode CompositingMode;
+typedef enum TextRenderingHint TextRenderingHint;
 
 #endif /* end of c typedefs */
 

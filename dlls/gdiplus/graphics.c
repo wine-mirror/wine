@@ -1686,6 +1686,18 @@ GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics *graphics, SmoothingMode *mo
     return Ok;
 }
 
+/* FIXME: Text rendering hint is not used anywhere except the getter/setter. */
+GpStatus WINGDIPAPI GdipGetTextRenderingHint(GpGraphics *graphics,
+    TextRenderingHint *hint)
+{
+    if(!graphics || !hint)
+        return InvalidParameter;
+
+    *hint = graphics->texthint;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix)
 {
     if(!graphics || !matrix)
@@ -1809,6 +1821,17 @@ GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics *graphics, SmoothingMode mod
         return InvalidParameter;
 
     graphics->smoothing = mode;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetTextRenderingHint(GpGraphics *graphics,
+    TextRenderingHint hint)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    graphics->texthint = hint;
 
     return Ok;
 }

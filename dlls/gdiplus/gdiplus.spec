@@ -396,7 +396,7 @@
 @ stub GdipGetStringFormatTabStops
 @ stub GdipGetStringFormatTrimming
 @ stub GdipGetTextContrast
-@ stub GdipGetTextRenderingHint
+@ stdcall GdipGetTextRenderingHint(ptr ptr)
 @ stub GdipGetTextureImage
 @ stub GdipGetTextureTransform
 @ stub GdipGetTextureWrapMode
@@ -594,7 +594,7 @@
 @ stub GdipSetStringFormatTabStops
 @ stub GdipSetStringFormatTrimming
 @ stub GdipSetTextContrast
-@ stub GdipSetTextRenderingHint
+@ stdcall GdipSetTextRenderingHint(ptr long)
 @ stdcall GdipSetTextureTransform(ptr ptr)
 @ stub GdipSetTextureWrapMode
 @ stdcall GdipSetWorldTransform(ptr ptr)
