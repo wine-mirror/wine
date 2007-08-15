@@ -136,6 +136,8 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     if(!This->doc)
         return NS_OK;
 
+    setup_nswindow(This->doc->window);
+
     if(This->editor_controller) {
         nsIController_Release(This->editor_controller);
         This->editor_controller = NULL;
