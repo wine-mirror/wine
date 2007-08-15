@@ -44,6 +44,16 @@ GpStatus WINGDIPAPI GdipCreateStringFormat(INT attr, LANGID lang,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat *format)
+{
+    if(!format)
+        return InvalidParameter;
+
+    GdipFree(format);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetStringFormatAlign(GpStringFormat *format,
     StringAlignment *align)
 {
