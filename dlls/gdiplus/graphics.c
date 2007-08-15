@@ -1287,6 +1287,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     INT sum = 0, height = 0, fit, fitcpy, save_state, i, j, lret, nwidth,
         nheight;
     SIZE size;
+    RECT drawcoord;
 
     if(!graphics || !string || !font || !brush || !rect)
         return InvalidParameter;
@@ -1366,15 +1367,16 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     length = j;
 
     while(sum < length){
+        drawcoord.left = corners[0].x + roundr(ang_sin * (REAL) height);
+        drawcoord.top = corners[0].y + roundr(ang_cos * (REAL) height);
+
         GetTextExtentExPointW(graphics->hdc, stringdup + sum, length - sum,
                               nwidth, &fit, NULL, &size);
         fitcpy = fit;
 
         if(fit == 0){
-            TabbedTextOutW(graphics->hdc,
-                           corners[0].x + roundr(ang_sin * (REAL) height),
-                           corners[0].y + roundr(ang_cos * (REAL) height),
-                           stringdup + sum, 1, 0, 0, 0);
+            DrawTextW(graphics->hdc, stringdup + sum, 1, &drawcoord, DT_NOCLIP |
+                      DT_EXPANDTABS);
             break;
         }
 
@@ -1402,10 +1404,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
                     }
                 }
         }
-        TabbedTextOutW(graphics->hdc,
-                       corners[0].x - roundr(ang_sin * (REAL) height),
-                       corners[0].y + roundr(ang_cos * (REAL) height),
-                       stringdup + sum, min(length - sum, fit), 0, 0, 0);
+        DrawTextW(graphics->hdc, stringdup + sum, min(length - sum, fit),
+                  &drawcoord, DT_NOCLIP | DT_EXPANDTABS);
 
         sum += fit + (lret < fitcpy ? 1 : 0);
         height += size.cy;
