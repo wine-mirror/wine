@@ -990,6 +990,37 @@ static void HttpHeaders_test(void)
     ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
                 buffer,&len,&index)==0,"Second Index Should Not Exist\n");
 
+
+    /* a call with NULL will fail but will return the length */
+    index = 0;
+    len = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                NULL,&len,&index) == FALSE,"Query worked\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected last error: %d\n", GetLastError());
+    ok(len > 40, "Invalid length (exp. more than 40, got %d)\n", len);
+    ok(index == 0, "Index was incremented\n");
+
+    /* even for a len that is too small */
+    index = 0;
+    len = 15;
+    SetLastError(0xdeadbeef);
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                NULL,&len,&index) == FALSE,"Query worked\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected last error: %d\n", GetLastError());
+    ok(len > 40, "Invalid length (exp. more than 40, got %d)\n", len);
+    ok(index == 0, "Index was incremented\n");
+
+    index = 0;
+    len = 0;
+    SetLastError(0xdeadbeef);
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                NULL,&len,&index) == FALSE,"Query worked\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected last error: %d\n", GetLastError());
+    ok(len > 40, "Invalid length (exp. more than 40, got %d)\n", len);
+    ok(index == 0, "Index was incremented\n");
+
+
     /* a working query */
     index = 0;
     len = sizeof(buffer);

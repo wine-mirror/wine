@@ -1973,6 +1973,8 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	goto lend;
     }
 
+    if (lpBuffer == NULL)
+        *lpdwBufferLength = 0;
     bSuccess = HTTP_HttpQueryInfoW( lpwhr, dwInfoLevel,
 	                            lpBuffer, lpdwBufferLength, lpdwIndex);
 
@@ -2008,11 +2010,19 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
                                lpdwBufferLength, lpdwIndex );
     }
 
-    len = (*lpdwBufferLength)*sizeof(WCHAR);
-    bufferW = HeapAlloc( GetProcessHeap(), 0, len );
-    /* buffer is in/out because of HTTP_QUERY_CUSTOM */
-    if ((dwInfoLevel & HTTP_QUERY_HEADER_MASK) == HTTP_QUERY_CUSTOM)
-        MultiByteToWideChar(CP_ACP,0,lpBuffer,-1,bufferW,len);
+    if (lpBuffer)
+    {
+        len = (*lpdwBufferLength)*sizeof(WCHAR);
+        bufferW = HeapAlloc( GetProcessHeap(), 0, len );
+        /* buffer is in/out because of HTTP_QUERY_CUSTOM */
+        if ((dwInfoLevel & HTTP_QUERY_HEADER_MASK) == HTTP_QUERY_CUSTOM)
+            MultiByteToWideChar(CP_ACP,0,lpBuffer,-1,bufferW,len);
+    } else
+    {
+        bufferW = NULL;
+        len = 0;
+    }
+
     result = HttpQueryInfoW( hHttpRequest, dwInfoLevel, bufferW,
                            &len, lpdwIndex );
     if( result )
