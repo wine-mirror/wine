@@ -55,6 +55,17 @@ GpStatus WINGDIPAPI GdipGetStringFormatAlign(GpStringFormat *format,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetStringFormatTrimming(GpStringFormat *format,
+    StringTrimming *trimming)
+{
+    if(!format || !trimming)
+        return InvalidParameter;
+
+    *trimming = format->trimming;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetStringFormatAlign(GpStringFormat *format,
     StringAlignment align)
 {
@@ -62,6 +73,17 @@ GpStatus WINGDIPAPI GdipSetStringFormatAlign(GpStringFormat *format,
         return InvalidParameter;
 
     format->align = align;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetStringFormatTrimming(GpStringFormat *format,
+    StringTrimming trimming)
+{
+    if(!format)
+        return InvalidParameter;
+
+    format->trimming = trimming;
 
     return Ok;
 }

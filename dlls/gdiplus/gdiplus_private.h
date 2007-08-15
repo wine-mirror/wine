@@ -179,6 +179,7 @@ struct GpStringFormat{
     INT attr;
     LANGID lang;
     StringAlignment align;
+    StringTrimming trimming;
 };
 
 #endif

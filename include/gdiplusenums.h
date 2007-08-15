@@ -221,6 +221,29 @@ enum StringAlignment
     StringAlignmentFar     = 2
 };
 
+enum StringFormatFlags
+{
+    StringFormatFlagsDirectionRightToLeft  = 0x00000001,
+    StringFormatFlagsDirectionVertical     = 0x00000002,
+    StringFormatFlagsNoFitBlackBox         = 0x00000004,
+    StringFormatFlagsDisplayFormatControl  = 0x00000020,
+    StringFormatFlagsNoFontFallback        = 0x00000400,
+    StringFormatFlagsMeasureTrailingSpaces = 0x00000800,
+    StringFormatFlagsNoWrap                = 0x00001000,
+    StringFormatFlagsLineLimit             = 0x00002000,
+    StringFormatFlagsNoClip                = 0x00004000
+};
+
+enum StringTrimming
+{
+    StringTrimmingNone                 = 0,
+    StringTrimmingCharacter            = 1,
+    StringTrimmingWord                 = 2,
+    StringTrimmingEllipsisCharacter    = 3,
+    StringTrimmingEllipsisWord         = 4,
+    StringTrimmingEllipsisPath         = 5
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -245,6 +268,8 @@ typedef enum EmfType EmfType;
 typedef enum CompositingMode CompositingMode;
 typedef enum TextRenderingHint TextRenderingHint;
 typedef enum StringAlignment StringAlignment;
+typedef enum StringTrimming StringTrimming;
+typedef enum StringFormatFlags StringFormatFlags;
 
 #endif /* end of c typedefs */
 

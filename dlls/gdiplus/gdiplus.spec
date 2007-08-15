@@ -394,7 +394,7 @@
 @ stub GdipGetStringFormatMeasurableCharacterRangeCount
 @ stub GdipGetStringFormatTabStopCount
 @ stub GdipGetStringFormatTabStops
-@ stub GdipGetStringFormatTrimming
+@ stdcall GdipGetStringFormatTrimming(ptr ptr)
 @ stub GdipGetTextContrast
 @ stdcall GdipGetTextRenderingHint(ptr ptr)
 @ stub GdipGetTextureImage
@@ -592,7 +592,7 @@
 @ stub GdipSetStringFormatLineAlign
 @ stub GdipSetStringFormatMeasurableCharacterRanges
 @ stub GdipSetStringFormatTabStops
-@ stub GdipSetStringFormatTrimming
+@ stdcall GdipSetStringFormatTrimming(ptr long)
 @ stub GdipSetTextContrast
 @ stdcall GdipSetTextRenderingHint(ptr long)
 @ stdcall GdipSetTextureTransform(ptr ptr)
