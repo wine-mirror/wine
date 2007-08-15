@@ -1289,12 +1289,13 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     if(!graphics || !string || !font || !brush || !rect)
         return InvalidParameter;
 
-    if(format || (brush->bt != BrushTypeSolidColor)){
+    if((brush->bt != BrushTypeSolidColor)){
         FIXME("not implemented for given parameters\n");
-        if(format)
-            TRACE("format attr is %d\n", format->attr);
         return NotImplemented;
     }
+
+    if(format)
+        TRACE("may be ignoring some format flags: attr %x\n", format->attr);
 
     if(length == -1) length = lstrlenW(string);
 
@@ -1401,6 +1402,10 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         height += size.cy;
 
         if(height > roundr(rect->Height * rel_height))
+            break;
+
+        /* Stop if this was a linewrap (but not if it was a linebreak). */
+        if((lret == fitcpy) && format && (format->attr & StringFormatFlagsNoWrap))
             break;
     }
 
