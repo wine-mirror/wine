@@ -1355,8 +1355,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     length = j;
 
     while(sum < length){
-        GetTextExtentExPointW(graphics->hdc, stringdup, length, nwidth,
-                              &fit, NULL, &size);
+        GetTextExtentExPointW(graphics->hdc, stringdup + sum, length - sum,
+                              nwidth, &fit, NULL, &size);
         fitcpy = fit;
 
         if(fit == 0){
@@ -1374,21 +1374,23 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         /* Line break code (may look strange, but it imitates windows). */
         if(lret < fit)
             fit = lret;    /* this is not an off-by-one error */
-        else if(*(stringdup + sum + fit) == ' ')
-            while(*(stringdup + sum + fit) == ' ')
-                fit++;
-        else
-            while(*(stringdup + sum + fit - 1) != ' '){
-                fit--;
+        else if(fit < (length - sum)){
+            if(*(stringdup + sum + fit) == ' ')
+                while(*(stringdup + sum + fit) == ' ')
+                    fit++;
+            else
+                while(*(stringdup + sum + fit - 1) != ' '){
+                    fit--;
 
-                if(*(stringdup + sum + fit) == '\t')
-                    break;
+                    if(*(stringdup + sum + fit) == '\t')
+                        break;
 
-                if(fit == 0){
-                    fit = fitcpy;
-                    break;
+                    if(fit == 0){
+                        fit = fitcpy;
+                        break;
+                    }
                 }
-            }
+        }
 
         TabbedTextOutW(graphics->hdc,
                        corners[0].x - roundr(ang_sin * (REAL) height),
