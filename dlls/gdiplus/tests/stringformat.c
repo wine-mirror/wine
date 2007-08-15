@@ -43,8 +43,7 @@ static void test_constructor(void)
     expect(HotkeyPrefixNone, n);
     expect(StringAlignmentNear, align);
     expect(StringAlignmentNear, align);
-    todo_wine
-        expect(StringTrimmingCharacter, trimming);
+    expect(StringTrimmingCharacter, trimming);
 
     stat = GdipDeleteStringFormat(format);
     expect(Ok, stat);

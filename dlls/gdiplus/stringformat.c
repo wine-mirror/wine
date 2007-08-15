@@ -40,6 +40,7 @@ GpStatus WINGDIPAPI GdipCreateStringFormat(INT attr, LANGID lang,
 
     (*format)->attr = attr;
     (*format)->lang = lang;
+    (*format)->trimming = StringTrimmingCharacter;
 
     return Ok;
 }
