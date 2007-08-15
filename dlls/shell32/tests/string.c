@@ -100,9 +100,7 @@ START_TEST(string)
 {
     CoInitialize(0);
 
-    hShell32 = LoadLibraryA("shell32.dll");
-    if (!hShell32)
-        return;
+    hShell32 = GetModuleHandleA("shell32.dll");
 
     pStrRetToStrNAW = (void*)GetProcAddress(hShell32, (LPSTR)96);
     if (pStrRetToStrNAW)

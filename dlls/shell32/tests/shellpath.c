@@ -73,7 +73,7 @@ struct shellExpectedValues {
     BYTE pidlType;
 };
 
-static HMODULE hShell32;
+static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO *);
 static HRESULT (WINAPI *pSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
 static HRESULT (WINAPI *pSHGetFolderLocation)(HWND, int, HANDLE, DWORD,
  LPITEMIDLIST *);
@@ -152,45 +152,42 @@ static const struct shellExpectedValues optionalShellValues[] = {
 
 static void loadShell32(void)
 {
-    hShell32 = LoadLibraryA("shell32");
-    if (hShell32)
+    HMODULE hShell32 = GetModuleHandleA("shell32");
+
+#define GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(hShell32, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
+
+    GET_PROC(DllGetVersion)
+    GET_PROC(SHGetFolderPathA)
+    GET_PROC(SHGetFolderLocation)
+    GET_PROC(SHGetSpecialFolderPathA)
+    GET_PROC(SHGetSpecialFolderLocation)
+    GET_PROC(ILFindLastID)
+    if (!pILFindLastID)
+        pILFindLastID = (void *)GetProcAddress(hShell32, (LPCSTR)16);
+    GET_PROC(SHFileOperationA)
+    GET_PROC(SHGetMalloc)
+
+    ok(pSHGetMalloc != NULL, "shell32 is missing SHGetMalloc\n");
+    if (pSHGetMalloc)
     {
-        HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO *);
+        HRESULT hr = pSHGetMalloc(&pMalloc);
 
-        pSHGetFolderPathA = (void *)GetProcAddress(hShell32,
-         "SHGetFolderPathA");
-        pSHGetFolderLocation = (void *)GetProcAddress(hShell32,
-         "SHGetFolderLocation");
-        pSHGetSpecialFolderPathA = (void *)GetProcAddress(hShell32,
-         "SHGetSpecialFolderPathA");
-        pSHGetSpecialFolderLocation = (void *)GetProcAddress(hShell32,
-         "SHGetSpecialFolderLocation");
-        pDllGetVersion = (void *)GetProcAddress(hShell32, "DllGetVersion");
-        pILFindLastID = (void *)GetProcAddress(hShell32, "ILFindLastID");
-        if (!pILFindLastID)
-            pILFindLastID = (void *)GetProcAddress(hShell32, (LPCSTR)16);
-        pSHFileOperationA = (void *)GetProcAddress(hShell32,
-         "SHFileOperationA");
-        pSHGetMalloc = (void *)GetProcAddress(hShell32, "SHGetMalloc");
-
-        ok(pSHGetMalloc != NULL, "shell32 is missing SHGetMalloc\n");
-        if (pSHGetMalloc)
-        {
-            HRESULT hr = pSHGetMalloc(&pMalloc);
-
-            ok(SUCCEEDED(hr), "SHGetMalloc failed: 0x%08x\n", hr);
-            ok(pMalloc != NULL, "SHGetMalloc returned a NULL IMalloc\n");
-        }
-
-        if (pDllGetVersion)
-        {
-            shellVersion.cbSize = sizeof(shellVersion);
-            pDllGetVersion(&shellVersion);
-            if (winetest_interactive)
-                printf("shell32 version is %d.%d\n",
-                 shellVersion.dwMajorVersion, shellVersion.dwMinorVersion);
-        }
+        ok(SUCCEEDED(hr), "SHGetMalloc failed: 0x%08x\n", hr);
+        ok(pMalloc != NULL, "SHGetMalloc returned a NULL IMalloc\n");
     }
+
+    if (pDllGetVersion)
+    {
+        shellVersion.cbSize = sizeof(shellVersion);
+        pDllGetVersion(&shellVersion);
+        if (winetest_interactive)
+            printf("shell32 version is %d.%d\n",
+             shellVersion.dwMajorVersion, shellVersion.dwMinorVersion);
+    }
+#undef GET_PROC
 }
 
 #ifndef CSIDL_PROFILES
@@ -892,7 +889,6 @@ START_TEST(shellpath)
     if (!init()) return;
 
     loadShell32();
-    if (!hShell32) return;
 
     if (myARGC >= 3)
         doChild(myARGV[2]);
