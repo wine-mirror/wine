@@ -970,10 +970,11 @@ static void test_ImpersonateNamedPipeClient(HANDLE hClientToken, DWORD security_
 
     (*test_func)(0, hToken);
 
+    ImpersonationLevel = 0xdeadbeef; /* to avoid false positives */
     ret = GetTokenInformation(hToken, TokenImpersonationLevel, &ImpersonationLevel, sizeof(ImpersonationLevel), &size);
     todo_wine {
     ok(ret, "GetTokenInformation(TokenImpersonationLevel) failed with error %d\n", GetLastError());
-    ok(ImpersonationLevel == SecurityImpersonation, "ImpersonationLevel should have been SecurityImpersonation instead of %d\n", ImpersonationLevel);
+    ok(ImpersonationLevel == SecurityImpersonation, "ImpersonationLevel should have been SecurityImpersonation(%d) instead of %d\n", SecurityImpersonation, ImpersonationLevel);
     }
 
     CloseHandle(hToken);
