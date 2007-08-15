@@ -97,6 +97,40 @@ GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipAddPathBezierI(GpPath *path, INT x1, INT y1, INT x2,
+    INT y2, INT x3, INT y3, INT x4, INT y4)
+{
+    INT old_count;
+
+    if(!path)
+        return InvalidParameter;
+
+    if(!lengthen_path(path, 4))
+        return OutOfMemory;
+
+    old_count = path->pathdata.Count;
+
+    path->pathdata.Points[old_count].X = (REAL) x1;
+    path->pathdata.Points[old_count].Y = (REAL) y1;
+    path->pathdata.Points[old_count + 1].X = (REAL) x2;
+    path->pathdata.Points[old_count + 1].Y = (REAL) y2;
+    path->pathdata.Points[old_count + 2].X = (REAL) x3;
+    path->pathdata.Points[old_count + 2].Y = (REAL) y3;
+    path->pathdata.Points[old_count + 3].X = (REAL) x4;
+    path->pathdata.Points[old_count + 3].Y = (REAL) y4;
+
+    path->pathdata.Types[old_count] =
+        (path->newfigure ? PathPointTypeStart : PathPointTypeLine);
+    path->pathdata.Types[old_count + 1] = PathPointTypeBezier;
+    path->pathdata.Types[old_count + 2] = PathPointTypeBezier;
+    path->pathdata.Types[old_count + 3] = PathPointTypeBezier;
+
+    path->newfigure = FALSE;
+    path->pathdata.Count += 4;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipAddPathBeziers(GpPath *path, GDIPCONST GpPointF *points,
     INT count)
 {

@@ -1291,6 +1291,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 
     if(format || (brush->bt != BrushTypeSolidColor)){
         FIXME("not implemented for given parameters\n");
+        if(format)
+            TRACE("format attr is %d\n", format->attr);
         return NotImplemented;
     }
 
