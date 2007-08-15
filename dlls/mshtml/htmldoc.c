@@ -172,6 +172,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
         if(This->window)
             IHTMLWindow2_Release(HTMLWINDOW2(This->window));
 
+        detach_selection(This);
         release_nodes(This);
 
         ConnectionPointContainer_Destroy(&This->cp_container);
@@ -376,7 +377,7 @@ static HRESULT WINAPI HTMLDocument_get_selection(IHTMLDocument2 *iface, IHTMLSel
         }
     }
 
-    *p = HTMLSelectionObject_Create(nsselection);
+    *p = HTMLSelectionObject_Create(This, nsselection);
     return S_OK;
 }
 
@@ -1127,6 +1128,8 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->nodes = NULL;
     ret->readystate = READYSTATE_UNINITIALIZED;
     ret->window = NULL;
+
+    list_init(&ret->selection_list);
 
     hres = IHTMLDocument_QueryInterface(HTMLDOC(ret), riid, ppvObject);
     if(FAILED(hres)) {

@@ -150,6 +150,8 @@ struct HTMLDocument {
     ConnectionPoint cp_htmldocevents2;
     ConnectionPoint cp_propnotif;
 
+    struct list selection_list;
+
     HTMLDOMNode *nodes;
 };
 
@@ -401,10 +403,12 @@ HRESULT load_stream(BSCallback*,IStream*);
 void set_document_bscallback(HTMLDocument*,BSCallback*);
 void set_current_mon(HTMLDocument*,IMoniker*);
 
-IHTMLSelectionObject *HTMLSelectionObject_Create(nsISelection*);
+IHTMLSelectionObject *HTMLSelectionObject_Create(HTMLDocument*,nsISelection*);
 IHTMLTxtRange *HTMLTxtRange_Create(nsIDOMRange*);
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration*);
 IHTMLStyleSheet *HTMLStyleSheet_Create(void);
+
+void detach_selection(HTMLDocument*);
 
 void HTMLElement_Create(HTMLDOMNode*);
 void HTMLBodyElement_Create(HTMLElement*);

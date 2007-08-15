@@ -42,6 +42,9 @@ typedef struct {
     LONG ref;
 
     nsISelection *nsselection;
+    HTMLDocument *doc;
+
+    struct list entry;
 } HTMLSelectionObject;
 
 #define HTMLSELOBJ(x)  ((IHTMLSelectionObject*) &(x)->lpHTMLSelectionObjectVtbl)
@@ -95,6 +98,8 @@ static ULONG WINAPI HTMLSelectionObject_Release(IHTMLSelectionObject *iface)
     if(!ref) {
         if(This->nsselection)
             nsISelection_Release(This->nsselection);
+        if(This->doc)
+            list_remove(&This->entry);
         mshtml_free(This);
     }
 
@@ -208,7 +213,7 @@ static const IHTMLSelectionObjectVtbl HTMLSelectionObjectVtbl = {
     HTMLSelectionObject_get_type
 };
 
-IHTMLSelectionObject *HTMLSelectionObject_Create(nsISelection *nsselection)
+IHTMLSelectionObject *HTMLSelectionObject_Create(HTMLDocument *doc, nsISelection *nsselection)
 {
     HTMLSelectionObject *ret = mshtml_alloc(sizeof(HTMLSelectionObject));
 
@@ -216,5 +221,17 @@ IHTMLSelectionObject *HTMLSelectionObject_Create(nsISelection *nsselection)
     ret->ref = 1;
     ret->nsselection = nsselection; /* We shouldn't call AddRef here */
 
+    ret->doc = doc;
+    list_add_head(&doc->selection_list, &ret->entry);
+
     return HTMLSELOBJ(ret);
+}
+
+void detach_selection(HTMLDocument *This)
+{
+    HTMLSelectionObject *iter;
+
+    LIST_FOR_EACH_ENTRY(iter, &This->selection_list, HTMLSelectionObject, entry) {
+        iter->doc = NULL;
+    }
 }
