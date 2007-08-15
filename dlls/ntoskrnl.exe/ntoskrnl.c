@@ -461,7 +461,7 @@ ULONG WINAPI KeQueryTimeIncrement(void)
 /***********************************************************************
  *           MmAllocateNonCachedMemory   (NTOSKRNL.EXE.@)
  */
-LPVOID WINAPI MmAllocateNonCachedMemory( SIZE_T size )
+PVOID WINAPI MmAllocateNonCachedMemory( SIZE_T size )
 {
     TRACE( "%lu\n", size );
     return VirtualAlloc( NULL, size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE|PAGE_NOCACHE );
