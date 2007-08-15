@@ -3267,6 +3267,27 @@ void *
 
 void
 
+%%ntprint.dll
+
+%long
+
+BOOL
+DWORD
+HANDLE
+
+%ptr
+
+LPDWORD
+LPVOID
+
+%wstr
+
+LPWSTR
+
+%void
+
+VOID
+
 %%odbc32.dll
 
 %long
