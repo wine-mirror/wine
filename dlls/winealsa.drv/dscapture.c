@@ -91,6 +91,146 @@ struct IDsCaptureDriverBufferImpl
     snd_pcm_uframes_t mmap_buflen_frames, mmap_pos;
 };
 
+#if 0
+/** Convert the position an application sees into a position ALSA sees */
+static snd_pcm_uframes_t fakepos_to_realpos(const IDsCaptureDriverBufferImpl* This, DWORD fakepos)
+{
+    snd_pcm_uframes_t realpos;
+    if (fakepos < This->mmap_ofs_bytes)
+        realpos = This->mmap_buflen_bytes + fakepos - This->mmap_ofs_bytes;
+    else realpos = fakepos - This->mmap_ofs_bytes;
+    return snd_pcm_bytes_to_frames(This->pcm, realpos) % This->mmap_buflen_frames;
+}
+#endif
+
+/** Convert the position ALSA sees into a position an application sees */
+static DWORD realpos_to_fakepos(const IDsCaptureDriverBufferImpl* This, snd_pcm_uframes_t realpos)
+{
+    DWORD realposb = snd_pcm_frames_to_bytes(This->pcm, realpos);
+    return (realposb + This->mmap_ofs_bytes) % This->mmap_buflen_bytes;
+}
+
+/** Raw copy data, with buffer wrap around */
+static void CopyDataWrap(const IDsCaptureDriverBufferImpl* This, LPBYTE dest, DWORD fromwhere, DWORD copylen, DWORD buflen)
+{
+    DWORD remainder = buflen - fromwhere;
+    if (remainder >= copylen)
+    {
+        CopyMemory(dest, This->mmap_buffer + fromwhere, copylen);
+    }
+    else
+    {
+        CopyMemory(dest, This->mmap_buffer + fromwhere, remainder);
+        copylen -= remainder;
+        CopyMemory(dest, This->mmap_buffer, copylen);
+    }
+}
+
+/** Copy data from the mmap buffer to backbuffer, taking into account all wraparounds that may occur */
+static void CopyData(const IDsCaptureDriverBufferImpl* This, snd_pcm_uframes_t fromwhere, snd_pcm_uframes_t len)
+{
+    DWORD dlen = snd_pcm_frames_to_bytes(This->pcm, len) % This->mmap_buflen_bytes;
+
+    /* Backbuffer */
+    DWORD ofs = realpos_to_fakepos(This, fromwhere);
+    DWORD remainder = This->mmap_buflen_bytes - ofs;
+
+    /* MMAP buffer */
+    DWORD realbuflen = snd_pcm_frames_to_bytes(This->pcm, This->mmap_buflen_frames);
+    DWORD realofs = snd_pcm_frames_to_bytes(This->pcm, fromwhere);
+
+    if (remainder >= dlen)
+    {
+       CopyDataWrap(This, This->presented_buffer + ofs, realofs, dlen, realbuflen);
+    }
+    else
+    {
+       CopyDataWrap(This, This->presented_buffer + ofs, realofs, remainder, realbuflen);
+       dlen -= remainder;
+       CopyDataWrap(This, This->presented_buffer, (realofs+remainder)%realbuflen, dlen, realbuflen);
+    }
+}
+
+/** Fill buffers, for starting and stopping
+ * Alsa won't start playing until everything is filled up
+ * This also updates mmap_pos
+ *
+ * Returns: Amount of periods in use so snd_pcm_avail_update
+ * doesn't have to be called up to 4x in GetPosition()
+ */
+static snd_pcm_uframes_t CommitAll(IDsCaptureDriverBufferImpl *This, DWORD forced)
+{
+    const snd_pcm_channel_area_t *areas;
+    snd_pcm_uframes_t used;
+    const snd_pcm_uframes_t commitahead = This->mmap_buflen_frames;
+
+    used = This->mmap_buflen_frames - snd_pcm_avail_update(This->pcm);
+    TRACE("%p needs to commit to %lu, used: %lu\n", This, commitahead, used);
+    if (used < commitahead && (forced || This->play_looping))
+    {
+        snd_pcm_uframes_t done, putin = commitahead - used;
+        snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
+        CopyData(This, This->mmap_pos, putin);
+        done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
+        This->mmap_pos += done;
+        used += done;
+        putin = commitahead - used;
+
+        if (This->mmap_pos == This->mmap_buflen_frames && (snd_pcm_sframes_t)putin > 0 && This->play_looping)
+        {
+            snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
+            This->mmap_ofs_bytes += snd_pcm_frames_to_bytes(This->pcm, This->mmap_buflen_frames);
+            This->mmap_ofs_bytes %= This->mmap_buflen_bytes;
+            CopyData(This, This->mmap_pos, putin);
+            done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
+            This->mmap_pos += done;
+            used += done;
+        }
+    }
+
+    if (This->mmap_pos == This->mmap_buflen_frames)
+    {
+        This->mmap_ofs_bytes += snd_pcm_frames_to_bytes(This->pcm, This->mmap_buflen_frames);
+        This->mmap_ofs_bytes %= This->mmap_buflen_bytes;
+        This->mmap_pos = 0;
+    }
+
+    return used;
+}
+
+static void CheckXRUN(IDsCaptureDriverBufferImpl* This)
+{
+    snd_pcm_state_t state = snd_pcm_state(This->pcm);
+    snd_pcm_sframes_t delay;
+    int err;
+
+    snd_pcm_hwsync(This->pcm);
+    snd_pcm_delay(This->pcm, &delay);
+    if ( state == SND_PCM_STATE_XRUN )
+    {
+        err = snd_pcm_prepare(This->pcm);
+        CommitAll(This, FALSE);
+        snd_pcm_start(This->pcm);
+        WARN("xrun occurred\n");
+        if ( err < 0 )
+            ERR("recovery from xrun failed, prepare failed: %s\n", snd_strerror(err));
+    }
+    else if ( state == SND_PCM_STATE_SUSPENDED )
+    {
+        int err = snd_pcm_resume(This->pcm);
+        TRACE("recovery from suspension occurred\n");
+        if (err < 0 && err != -EAGAIN){
+            err = snd_pcm_prepare(This->pcm);
+            if (err < 0)
+                ERR("recovery from suspend failed, prepare failed: %s\n", snd_strerror(err));
+        }
+    }
+    else if ( state != SND_PCM_STATE_RUNNING)
+    {
+        WARN("Unhandled state: %d\n", state);
+    }
+}
+
 /**
  * Allocate the memory-mapped buffer for direct sound, and set up the
  * callback.
@@ -347,8 +487,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(PIDSCDRIVERBUFFER ifa
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(PIDSCDRIVERBUFFER iface, LPDWORD lpdwCappos, LPDWORD lpdwReadpos)
 {
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
-
-    FIXME("stub!\n");
+    snd_pcm_uframes_t hw_pptr, hw_wptr;
 
     EnterCriticalSection(&This->pcm_crst);
 
@@ -359,9 +498,32 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(PIDSCDRIVERBUFFER i
         return DSERR_GENERIC;
     }
 
+    if (snd_pcm_state(This->pcm) != SND_PCM_STATE_RUNNING)
+    {
+        hw_pptr = This->mmap_pos;
+        CheckXRUN(This);
+    }
+    else
+    {
+        /* FIXME: Unused at the moment */
+        snd_pcm_uframes_t used = CommitAll(This, FALSE);
+
+        if (This->mmap_pos > used)
+            hw_pptr = This->mmap_pos - used;
+        else
+            hw_pptr = This->mmap_buflen_frames - used + This->mmap_pos;
+    }
+    hw_wptr = This->mmap_pos;
+
+    if (lpdwCappos)
+        *lpdwCappos = realpos_to_fakepos(This, hw_wptr);
+    if (lpdwReadpos)
+        *lpdwReadpos = realpos_to_fakepos(This, hw_wptr);
+
     LeaveCriticalSection(&This->pcm_crst);
 
-    return DSERR_GENERIC;
+    TRACE("hw_pptr=0x%08x, hw_wptr=0x%08x playpos=%d, writepos=%d\n", (unsigned int)hw_pptr, (unsigned int)hw_wptr, lpdwCappos?*lpdwCappos:-1, lpdwReadpos?*lpdwReadpos:-1);
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetStatus(PIDSCDRIVERBUFFER iface, LPDWORD lpdwStatus)
@@ -400,6 +562,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(PIDSCDRIVERBUFFER iface, 
         /* Not well supported because of the difference in ALSA size and DSOUND's notion of size
          * what it does right now is fill the buffer once.. ALSA size */
         FIXME("Non-looping buffers are not properly supported!\n");
+    CommitAll(This, TRUE);
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
     return DS_OK;
