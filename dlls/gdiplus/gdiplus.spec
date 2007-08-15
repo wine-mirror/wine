@@ -390,7 +390,7 @@
 @ stub GdipGetStringFormatDigitSubstitution
 @ stub GdipGetStringFormatFlags
 @ stdcall GdipGetStringFormatHotkeyPrefix(ptr ptr)
-@ stub GdipGetStringFormatLineAlign
+@ stdcall GdipGetStringFormatLineAlign(ptr ptr)
 @ stub GdipGetStringFormatMeasurableCharacterRangeCount
 @ stub GdipGetStringFormatTabStopCount
 @ stub GdipGetStringFormatTabStops
@@ -589,7 +589,7 @@
 @ stub GdipSetStringFormatDigitSubstitution
 @ stub GdipSetStringFormatFlags
 @ stdcall GdipSetStringFormatHotkeyPrefix(ptr long)
-@ stub GdipSetStringFormatLineAlign
+@ stdcall GdipSetStringFormatLineAlign(ptr long)
 @ stub GdipSetStringFormatMeasurableCharacterRanges
 @ stub GdipSetStringFormatTabStops
 @ stdcall GdipSetStringFormatTrimming(ptr long)

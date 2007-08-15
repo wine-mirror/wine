@@ -66,6 +66,17 @@ GpStatus WINGDIPAPI GdipGetStringFormatHotkeyPrefix(GDIPCONST GpStringFormat
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetStringFormatLineAlign(GpStringFormat *format,
+    StringAlignment *align)
+{
+    if(!format || !align)
+        return InvalidParameter;
+
+    *align = format->vertalign;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetStringFormatTrimming(GpStringFormat *format,
     StringTrimming *trimming)
 {
@@ -95,6 +106,17 @@ GpStatus WINGDIPAPI GdipSetStringFormatHotkeyPrefix(GpStringFormat *format,
         return InvalidParameter;
 
     format->hkprefix = (HotkeyPrefix) hkpx;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetStringFormatLineAlign(GpStringFormat *format,
+    StringAlignment align)
+{
+    if(!format)
+        return InvalidParameter;
+
+    format->vertalign = align;
 
     return Ok;
 }

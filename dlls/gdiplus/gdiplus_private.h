@@ -181,6 +181,7 @@ struct GpStringFormat{
     StringAlignment align;
     StringTrimming trimming;
     HotkeyPrefix hkprefix;
+    StringAlignment vertalign;
 };
 
 #endif
