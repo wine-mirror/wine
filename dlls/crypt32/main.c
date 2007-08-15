@@ -44,6 +44,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
         case DLL_PROCESS_DETACH:
             crypt_oid_free();
             crypt_sip_free();
+            default_chain_engine_free();
             if (hDefProv) CryptReleaseContext(hDefProv, 0);
             break;
     }
