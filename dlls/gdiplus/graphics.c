@@ -1729,12 +1729,13 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     if(!graphics || !string || !font || !rect)
         return InvalidParameter;
 
-    if(format || codepointsfitted || linesfilled){
+    if(codepointsfitted || linesfilled){
         FIXME("not implemented for given parameters\n");
-        if(format)
-            TRACE("format attr is %d\n", format->attr);
         return NotImplemented;
     }
+
+    if(format)
+        TRACE("may be ignoring some format flags: attr %x\n", format->attr);
 
     if(length == -1) length = lstrlenW(string);
 
@@ -1796,6 +1797,10 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
         max_width = max(max_width, size.cx);
 
         if(height > roundr(rect->Height))
+            break;
+
+        /* Stop if this was a linewrap (but not if it was a linebreak). */
+        if((lret == fitcpy) && format && (format->attr & StringFormatFlagsNoWrap))
             break;
     }
 
