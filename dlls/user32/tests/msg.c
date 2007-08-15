@@ -54,11 +54,6 @@
 static BOOL test_DestroyWindow_flag;
 static HWINEVENTHOOK hEvent_hook;
 
-static HWND (WINAPI *pGetAncestor)(HWND,UINT);
-static void (WINAPI *pNotifyWinEvent)(DWORD, HWND, LONG, LONG);
-static HWINEVENTHOOK (WINAPI *pSetWinEventHook)(DWORD, DWORD, HMODULE, WINEVENTPROC, DWORD, DWORD, DWORD);
-static BOOL (WINAPI *pUnhookWinEvent)(HWINEVENTHOOK);
-
 static void dump_winpos_flags(UINT flags);
 
 static const WCHAR testWindowClassW[] =
@@ -1407,22 +1402,35 @@ static int sequence_cnt, sequence_size;
 static struct message* sequence;
 static int log_all_parent_messages;
 
+/* user32 functions */
+static HWND (WINAPI *pGetAncestor)(HWND,UINT);
+static void (WINAPI *pNotifyWinEvent)(DWORD, HWND, LONG, LONG);
+static HWINEVENTHOOK (WINAPI *pSetWinEventHook)(DWORD, DWORD, HMODULE, WINEVENTPROC, DWORD, DWORD, DWORD);
+static BOOL (WINAPI *pTrackMouseEvent)(TRACKMOUSEEVENT*);
+static BOOL (WINAPI *pUnhookWinEvent)(HWINEVENTHOOK);
+/* kernel32 functions */
+static BOOL (WINAPI *pGetCPInfoExA)(UINT, DWORD, LPCPINFOEXA);
+
 static void init_procs(void)
 {
     HMODULE user32 = GetModuleHandleA("user32.dll");
+    HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
 
-#define USER32_GET_PROC(func) \
-    p ## func = (void*)GetProcAddress(user32, #func); \
+#define GET_PROC(dll, func) \
+    p ## func = (void*)GetProcAddress(dll, #func); \
     if(!p ## func) { \
       trace("GetProcAddress(%s) failed\n", #func); \
     }
 
-    USER32_GET_PROC(GetAncestor)
-    USER32_GET_PROC(NotifyWinEvent)
-    USER32_GET_PROC(SetWinEventHook)
-    USER32_GET_PROC(UnhookWinEvent)
+    GET_PROC(user32, GetAncestor)
+    GET_PROC(user32, NotifyWinEvent)
+    GET_PROC(user32, SetWinEventHook)
+    GET_PROC(user32, TrackMouseEvent)
+    GET_PROC(user32, UnhookWinEvent)
 
-#undef USER32_GET_PROC
+    GET_PROC(kernel32, GetCPInfoExA)
+
+#undef GET_PROC
 }
 
 static void add_message(const struct message *msg)
@@ -8478,7 +8486,7 @@ static void test_TrackMouseEvent(void)
     tme.hwndTrack = track_hwnd; \
     tme.dwHoverTime = track_hover_time; \
     SetLastError(0xdeadbeef); \
-    ret = TrackMouseEvent(&tme); \
+    ret = pTrackMouseEvent(&tme); \
     ok(ret, "TrackMouseEvent(TME_HOVER) error %d\n", GetLastError())
 
 #define track_query(expected_track_flags, expected_track_hwnd, expected_hover_time) \
@@ -8487,7 +8495,7 @@ static void test_TrackMouseEvent(void)
     tme.hwndTrack = (HWND)0xdeadbeef; \
     tme.dwHoverTime = 0xdeadbeef; \
     SetLastError(0xdeadbeef); \
-    ret = TrackMouseEvent(&tme); \
+    ret = pTrackMouseEvent(&tme); \
     ok(ret, "TrackMouseEvent(TME_QUERY) error %d\n", GetLastError());\
     ok(tme.cbSize == sizeof(tme), "wrong tme.cbSize %u\n", tme.cbSize); \
     ok(tme.dwFlags == (expected_track_flags), \
@@ -8503,7 +8511,7 @@ static void test_TrackMouseEvent(void)
     tme.hwndTrack = track_hwnd; \
     tme.dwHoverTime = 0xdeadbeef; \
     SetLastError(0xdeadbeef); \
-    ret = TrackMouseEvent(&tme); \
+    ret = pTrackMouseEvent(&tme); \
     ok(ret, "TrackMouseEvent(TME_HOVER | TME_CANCEL) error %d\n", GetLastError())
 
     default_hover_time = 0xdeadbeef;
@@ -8543,7 +8551,7 @@ static void test_TrackMouseEvent(void)
     tme.hwndTrack = (HWND)0xdeadbeef;
     tme.dwHoverTime = 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    ret = TrackMouseEvent(&tme);
+    ret = pTrackMouseEvent(&tme);
     ok(!ret, "TrackMouseEvent should fail\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "not expected error %d\n", GetLastError());
 
@@ -8552,7 +8560,7 @@ static void test_TrackMouseEvent(void)
     tme.hwndTrack = (HWND)0xdeadbeef;
     tme.dwHoverTime = 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    ret = TrackMouseEvent(&tme);
+    ret = pTrackMouseEvent(&tme);
     ok(!ret, "TrackMouseEvent should fail\n");
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "not expected error %d\n", GetLastError());
 
@@ -8561,7 +8569,7 @@ static void test_TrackMouseEvent(void)
     tme.hwndTrack = (HWND)0xdeadbeef;
     tme.dwHoverTime = 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    ret = TrackMouseEvent(&tme);
+    ret = pTrackMouseEvent(&tme);
     ok(!ret, "TrackMouseEvent should fail\n");
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "not expected error %d\n", GetLastError());
 
@@ -9288,7 +9296,7 @@ static void test_dbcs_wm_char(void)
     UINT i, j, k;
     struct message wmCharSeq[2];
 
-    GetCPInfoExA( CP_ACP, 0, &cpinfo );
+    pGetCPInfoExA( CP_ACP, 0, &cpinfo );
     if (cpinfo.MaxCharSize != 2)
     {
         skip( "Skipping DBCS WM_CHAR test in SBCS codepage '%s'\n", cpinfo.CodePageName );
@@ -9616,7 +9624,12 @@ START_TEST(msg)
     test_SendMessageTimeout();
     test_edit_messages();
     test_quit_message();
-    test_TrackMouseEvent();
+
+    if (!pTrackMouseEvent)
+        skip("TrackMouseEvent is not available\n");
+    else
+        test_TrackMouseEvent();
+
     test_SetWindowRgn();
     test_sys_menu();
     test_dialog_messages();
@@ -9635,4 +9648,6 @@ START_TEST(msg)
 	   GetLastError() == 0xdeadbeef, /* Win9x */
            "unexpected error %d\n", GetLastError());
     }
+    else
+        skip("UnhookWinEvent is not available\n");
 }

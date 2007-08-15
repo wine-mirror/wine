@@ -37,8 +37,25 @@
 
 static ATOM atomMenuCheckClass;
 
-static BOOL (WINAPI *pSetMenuInfo)(HMENU,LPCMENUINFO);
 static BOOL (WINAPI *pGetMenuInfo)(HMENU,LPCMENUINFO);
+static UINT (WINAPI *pSendInput)(UINT, INPUT*, size_t);
+static BOOL (WINAPI *pSetMenuInfo)(HMENU,LPCMENUINFO);
+
+static void init_function_pointers(void)
+{
+    HMODULE hdll = GetModuleHandleA("user32");
+
+#define GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(hdll, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
+
+    GET_PROC(GetMenuInfo)
+    GET_PROC(SendInput)
+    GET_PROC(SetMenuInfo)
+
+#undef GET_PROC
+}
 
 static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -471,7 +488,11 @@ static void test_menu_bmp_and_string(void)
     HWND hwnd;
     int count, szidx, txtidx, bmpidx, hassub, mnuopt, ispop;
 
-    if( !pGetMenuInfo) return;
+    if( !pGetMenuInfo)
+    {
+        skip("GetMenuInfo is not available\n");
+        return;
+    }
 
     memset( bmfill, 0x55, sizeof( bmfill));
     hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL,
@@ -1674,7 +1695,7 @@ static void send_key(WORD wVk)
     i[0].type = i[1].type = INPUT_KEYBOARD;
     i[0].u.ki.wVk = i[1].u.ki.wVk = wVk;
     i[1].u.ki.dwFlags = KEYEVENTF_KEYUP;
-    SendInput(2, (INPUT *) i, sizeof(INPUT));
+    pSendInput(2, (INPUT *) i, sizeof(INPUT));
 }
 
 static void click_menu(HANDLE hWnd, struct menu_item_pair_s *mi)
@@ -1699,7 +1720,7 @@ static void click_menu(HANDLE hWnd, struct menu_item_pair_s *mi)
     i[0].u.mi.dwFlags |= MOUSEEVENTF_MOVE;
     i[1].u.mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
     i[2].u.mi.dwFlags |= MOUSEEVENTF_LEFTUP;
-    SendInput(3, (INPUT *) i, sizeof(INPUT));
+    pSendInput(3, (INPUT *) i, sizeof(INPUT));
 
     /* hack to prevent mouse message buildup in Wine */
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
@@ -2220,10 +2241,7 @@ static void test_InsertMenu(void)
 
 START_TEST(menu)
 {
-    pSetMenuInfo =
-        (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "SetMenuInfo" );
-    pGetMenuInfo =
-        (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetMenuInfo" );
+    init_function_pointers();
 
     register_menu_check_class();
 
@@ -2233,8 +2251,13 @@ START_TEST(menu)
     test_menu_iteminfo();
     test_menu_search_bycommand();
     test_menu_bmp_and_string();
-    test_menu_input();
+
+    if( !pSendInput)
+        skip("SendInput is not available\n");
+    else
+        test_menu_input();
     test_menu_flags();
+
     test_menu_hilitemenuitem();
     test_CheckMenuRadioItem();
     test_menu_resource_layout();

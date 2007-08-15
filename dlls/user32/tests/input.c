@@ -59,7 +59,7 @@
 static HWND hWndTest;
 static long timetag = 0x10000000;
 
-static UINT (WINAPI *ptr_SendInput) (UINT, INPUT*, size_t);
+static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 
 #define MAXKEYEVENTS 6
 #define MAXKEYMESSAGES MAXKEYEVENTS /* assuming a key event generates one
@@ -147,6 +147,20 @@ typedef union
     unsigned long lp2;
 } KEYLP;
 
+static void init_function_pointers(void)
+{
+    HMODULE hdll = GetModuleHandleA("user32");
+
+#define GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(hdll, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
+
+    GET_PROC(SendInput)
+
+#undef GET_PROC
+}
+
 static int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
 {
     UINT message;
@@ -209,21 +223,12 @@ static int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
  */
 static void do_test( HWND hwnd, int seqnr, const KEV td[] )
 {
-    HMODULE module;
     INPUT inputs[MAXKEYEVENTS];
     KMSG expmsg[MAXKEYEVENTS];
     MSG msg;
     char buf[100];
     UINT evtctr=0;
     int kmctr, i;
-
-    module = GetModuleHandleA("user32");
-    ptr_SendInput = (void *)GetProcAddress(module, "SendInput");
-    if (!ptr_SendInput)
-    {
-        skip("skipping SendInput tests\n");
-        return;
-    }
 
     buf[0]='\0';
     TrackSysKey=0; /* see input.c */
@@ -238,7 +243,7 @@ static void do_test( HWND hwnd, int seqnr, const KEV td[] )
     for( kmctr = 0; kmctr < MAXKEYEVENTS && expmsg[kmctr].message; kmctr++)
         ;
     assert( evtctr <= MAXKEYEVENTS );
-    assert( evtctr == ptr_SendInput(evtctr, &inputs[0], sizeof(INPUT)));
+    assert( evtctr == pSendInput(evtctr, &inputs[0], sizeof(INPUT)));
     i = 0;
     if (winetest_debug > 1)
         trace("======== key stroke sequence #%d: %s =============\n",
@@ -485,8 +490,14 @@ static void test_Input_blackbox(void)
     int ii;
     BYTE ks1[256], ks2[256];
     LONG_PTR prevWndProc;
-
     HWND window;
+
+    if (!pSendInput)
+    {
+        skip("SendInput is not available\n");
+        return;
+    }
+
     window = CreateWindow("Static", NULL, WS_POPUP|WS_HSCROLL|WS_VSCROLL
         |WS_VISIBLE, 0, 0, 200, 60, NULL, NULL,
         NULL, NULL);
@@ -510,7 +521,7 @@ static void test_Input_blackbox(void)
         GetKeyboardState(ks1);
         i.u.ki.dwFlags = sendinput_test[ii].dwFlags;
         i.u.ki.wVk = sendinput_test[ii].wVk;
-        SendInput(1, (INPUT*)&i, sizeof(TEST_INPUT));
+        pSendInput(1, (INPUT*)&i, sizeof(TEST_INPUT));
         empty_message_queue();
         GetKeyboardState(ks2);
         compare_and_check(ii, ks1, ks2,
@@ -665,7 +676,13 @@ static void test_mouse_ll_hook(void)
 
 START_TEST(input)
 {
-    test_Input_whitebox();
+    init_function_pointers();
+
+    if (!pSendInput)
+        skip("SendInput is not available\n");
+    else
+        test_Input_whitebox();
+
     test_Input_blackbox();
     test_keynames();
     test_mouse_ll_hook();

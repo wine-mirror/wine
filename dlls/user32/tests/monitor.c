@@ -24,6 +24,7 @@
 #include "winuser.h"
 
 static HMODULE hdll;
+static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODEA, HWND, DWORD, LPVOID);
 static BOOL (WINAPI *pEnumDisplayDevicesA)(LPCSTR,DWORD,LPDISPLAY_DEVICEA,DWORD);
 static BOOL (WINAPI *pEnumDisplayMonitors)(HDC,LPRECT,MONITORENUMPROC,LPARAM);
 static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
@@ -33,11 +34,20 @@ static HMONITOR (WINAPI *pMonitorFromWindow)(HWND,DWORD);
 static void init_function_pointers(void)
 {
     hdll = GetModuleHandleA("user32.dll");
-    pEnumDisplayDevicesA = (void*)GetProcAddress(hdll, "EnumDisplayDevicesA");
-    pEnumDisplayMonitors = (void*)GetProcAddress(hdll, "EnumDisplayMonitors");
-    pGetMonitorInfoA = (void*)GetProcAddress(hdll, "GetMonitorInfoA");
-    pMonitorFromPoint = (void*)GetProcAddress(hdll, "MonitorFromPoint");
-    pMonitorFromWindow = (void*)GetProcAddress(hdll, "MonitorFromWindow");
+
+#define GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(hdll, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
+
+    GET_PROC(ChangeDisplaySettingsExA)
+    GET_PROC(EnumDisplayDevicesA)
+    GET_PROC(EnumDisplayMonitors)
+    GET_PROC(GetMonitorInfoA)
+    GET_PROC(MonitorFromPoint)
+    GET_PROC(MonitorFromWindow)
+
+#undef GET_PROC
 }
 
 static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc,
@@ -129,6 +139,12 @@ static void test_ChangeDisplaySettingsEx(void)
     LONG res;
     int i;
 
+    if (!pChangeDisplaySettingsExA)
+    {
+        skip("ChangeDisplaySettingsExA is not available\n");
+        return;
+    }
+
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
 
@@ -139,7 +155,7 @@ static void test_ChangeDisplaySettingsEx(void)
         dm.dmBitsPerPel       = vid_modes_test[i].bpp;
         dm.dmDisplayFrequency = vid_modes_test[i].freq;
         dm.dmFields           = vid_modes_test[i].fields;
-        res = ChangeDisplaySettingsEx(NULL, &dm, NULL, CDS_FULLSCREEN, NULL);
+        res = pChangeDisplaySettingsExA(NULL, &dm, NULL, CDS_FULLSCREEN, NULL);
         ok(vid_modes_test[i].success ?
            (res == DISP_CHANGE_SUCCESSFUL) :
            (res == DISP_CHANGE_BADMODE || res == DISP_CHANGE_BADPARAM),
@@ -172,7 +188,7 @@ static void test_ChangeDisplaySettingsEx(void)
             ok(EqualRect(&r, &virt), "Invalid clip rect: (%d %d) x (%d %d)\n", r.left, r.top, r.right, r.bottom);
         }
     }
-    res = ChangeDisplaySettingsEx(NULL, NULL, NULL, CDS_RESET, NULL);
+    res = pChangeDisplaySettingsExA(NULL, NULL, NULL, CDS_RESET, NULL);
     ok(res == DISP_CHANGE_SUCCESSFUL, "Failed to reset default resolution: %d\n", res);
 }
 
@@ -202,4 +218,6 @@ START_TEST(monitor)
         test_ChangeDisplaySettingsEx();
     if (pMonitorFromPoint && pMonitorFromWindow)
         test_monitors();
+    else
+        skip("MonitorFromPoint and/or MonitorFromWindow are not available\n");
 }
