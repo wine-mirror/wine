@@ -983,10 +983,24 @@ static void HttpHeaders_test(void)
                 buffer,&len,&index),"Unable to query header\n");
     ok(index == 1, "Index was not incremented\n");
     ok(strcmp(buffer,"test1")==0, "incorrect string was returned(%s)\n",buffer);
+    ok(len == 5, "Invalid length (exp. 5, got %d)\n", len);
+    ok(buffer[len] == 0, "Buffer not NULL-terminated\n"); /* len show only 5 characters but the buffer is NULL-terminated*/
     len = sizeof(buffer);
     strcpy(buffer,"Warning");
     ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
                 buffer,&len,&index)==0,"Second Index Should Not Exist\n");
+
+    /* a working query */
+    index = 0;
+    len = sizeof(buffer);
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                buffer,&len,&index),"Unable to query header\n");
+    /* what's in the middle differs between Wine and Windows so currently we check only the beginning and the end */
+    ok(strncmp(buffer, "POST /posttest.php HTTP/1", 25)==0, "Invalid beginning of headers string\n");
+    ok(strcmp(buffer + strlen(buffer) - 4, "\r\n\r\n")==0, "Invalid end of headers string\n");
+    ok(index == 0, "Index was incremented\n");
+
+
 
     ok(HttpAddRequestHeaders(hRequest,"Warning:test2",-1,HTTP_ADDREQ_FLAG_ADD),
             "Failed to add duplicate header using HTTP_ADDREQ_FLAG_ADD\n");

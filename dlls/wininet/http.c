@@ -1664,19 +1664,33 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
 
     case HTTP_QUERY_RAW_HEADERS_CRLF:
         {
-            DWORD len = strlenW(lpwhr->lpszRawHeaders);
+            LPWSTR headers;
+            DWORD len;
+            BOOL ret;
+
+            if (request_only)
+                headers = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, FALSE);
+            else
+                headers = lpwhr->lpszRawHeaders;
+
+	    len = strlenW(headers);
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
             {
                 *lpdwBufferLength = (len + 1) * sizeof(WCHAR);
                 INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                return FALSE;
+                ret = FALSE;
+            } else
+            {
+                memcpy(lpBuffer, headers, (len+1)*sizeof(WCHAR));
+                *lpdwBufferLength = len * sizeof(WCHAR);
+
+                TRACE("returning data: %s\n", debugstr_wn((WCHAR*)lpBuffer, len));
+                ret = TRUE;
             }
-            memcpy(lpBuffer, lpwhr->lpszRawHeaders, (len+1)*sizeof(WCHAR));
-            *lpdwBufferLength = len * sizeof(WCHAR);
 
-            TRACE("returning data: %s\n", debugstr_wn((WCHAR*)lpBuffer, len));
-
-            return TRUE;
+            if (request_only)
+                HeapFree(GetProcessHeap(), 0, headers);
+            return ret;
         }
     case HTTP_QUERY_RAW_HEADERS:
         {
