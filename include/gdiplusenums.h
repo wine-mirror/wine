@@ -244,6 +244,14 @@ enum StringTrimming
     StringTrimmingEllipsisPath         = 5
 };
 
+enum HotkeyPrefix
+{
+    HotkeyPrefixNone   = 0,
+    HotkeyPrefixShow   = 1,
+    HotkeyPrefixHide   = 2
+};
+
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -270,6 +278,7 @@ typedef enum TextRenderingHint TextRenderingHint;
 typedef enum StringAlignment StringAlignment;
 typedef enum StringTrimming StringTrimming;
 typedef enum StringFormatFlags StringFormatFlags;
+typedef enum HotkeyPrefix HotkeyPrefix;
 
 #endif /* end of c typedefs */
 

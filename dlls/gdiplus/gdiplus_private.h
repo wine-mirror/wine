@@ -180,6 +180,7 @@ struct GpStringFormat{
     LANGID lang;
     StringAlignment align;
     StringTrimming trimming;
+    HotkeyPrefix hkprefix;
 };
 
 #endif
