@@ -234,6 +234,7 @@ typedef struct WINE_CRYPTCERTSTORE
 void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, HCRYPTPROV hCryptProv,
  DWORD dwFlags, CertStoreType type);
 void CRYPT_FreeStore(PWINECRYPT_CERTSTORE store);
+void CRYPT_EmptyStore(HCERTSTORE store);
 
 PWINECRYPT_CERTSTORE CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara);
@@ -242,6 +243,8 @@ PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(HCRYPTPROV hCryptProv,
  const CERT_STORE_PROV_INFO *pProvInfo);
 PWINECRYPT_CERTSTORE CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
  DWORD dwEncodingType, HCRYPTPROV hCryptProv, DWORD dwFlags,
+ const void *pvPara);
+PWINECRYPT_CERTSTORE CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
  const void *pvPara);
 
 /* Helper function for store reading functions and
