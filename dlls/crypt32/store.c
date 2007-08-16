@@ -156,31 +156,31 @@ typedef struct _WINE_HASH_TO_DELETE
 
 typedef struct _WINE_REGSTOREINFO
 {
-    DWORD                dwOpenFlags;
-    HCRYPTPROV           cryptProv;
-    PWINECRYPT_CERTSTORE memStore;
-    HKEY                 key;
-    BOOL                 dirty;
-    CRITICAL_SECTION     cs;
-    struct list          certsToDelete;
-    struct list          crlsToDelete;
+    DWORD            dwOpenFlags;
+    HCRYPTPROV       cryptProv;
+    HCERTSTORE       memStore;
+    HKEY             key;
+    BOOL             dirty;
+    CRITICAL_SECTION cs;
+    struct list      certsToDelete;
+    struct list      crlsToDelete;
 } WINE_REGSTOREINFO, *PWINE_REGSTOREINFO;
 
 typedef struct _WINE_FILESTOREINFO
 {
-    DWORD                dwOpenFlags;
-    HCRYPTPROV           cryptProv;
-    PWINECRYPT_CERTSTORE memStore;
-    HANDLE               file;
-    BOOL                 dirty;
+    DWORD      dwOpenFlags;
+    HCRYPTPROV cryptProv;
+    HCERTSTORE memStore;
+    HANDLE     file;
+    BOOL       dirty;
 } WINE_FILESTOREINFO, *PWINE_FILESTOREINFO;
 
 typedef struct _WINE_MSGSTOREINFO
 {
-    DWORD                dwOpenFlags;
-    HCRYPTPROV           cryptProv;
-    PWINECRYPT_CERTSTORE memStore;
-    HCRYPTMSG            msg;
+    DWORD      dwOpenFlags;
+    HCRYPTPROV cryptProv;
+    HCERTSTORE memStore;
+    HCRYPTMSG  msg;
 } WINE_MSGSTOREINFO, *PWINE_MSGSTOREINFO;
 
 typedef struct _WINE_STORE_LIST_ENTRY
@@ -1421,7 +1421,8 @@ static WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv,
         {
             PWINECRYPT_CERTSTORE memStore;
 
-            memStore = CRYPT_MemOpenStore(hCryptProv, dwFlags, NULL);
+            memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, hCryptProv,
+             CERT_STORE_CREATE_NEW_FLAG, NULL);
             if (memStore)
             {
                 PWINE_REGSTOREINFO regInfo = CryptMemAlloc(
@@ -1827,7 +1828,8 @@ static PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv,
     {
         PWINECRYPT_CERTSTORE memStore;
 
-        memStore = CRYPT_MemOpenStore(hCryptProv, dwFlags, NULL);
+        memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, hCryptProv,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
         if (memStore)
         {
             if (CRYPT_ReadSerializedFile(file, memStore))
@@ -1963,7 +1965,8 @@ static PWINECRYPT_CERTSTORE CRYPT_MsgOpenStore(HCRYPTPROV hCryptProv,
 
     TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
 
-    memStore = CRYPT_MemOpenStore(hCryptProv, dwFlags, NULL);
+    memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, hCryptProv,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
     if (memStore)
     {
         BOOL ret;
