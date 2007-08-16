@@ -231,6 +231,13 @@ typedef struct WINE_CRYPTCERTSTORE
     PCONTEXT_PROPERTY_LIST      properties;
 } WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
 
+void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, HCRYPTPROV hCryptProv,
+ DWORD dwFlags, CertStoreType type);
+void CRYPT_FreeStore(PWINECRYPT_CERTSTORE store);
+
+PWINECRYPT_CERTSTORE CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara);
+
 /* Helper function for store reading functions and
  * CertAddSerializedElementToStore.  Returns a context of the appropriate type
  * if it can, or NULL otherwise.  Doesn't validate any of the properties in

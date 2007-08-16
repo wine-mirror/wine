@@ -11,10 +11,12 @@ C_SRCS = \
 	base64.c \
 	cert.c \
 	chain.c \
-	crl.c \
+	collectionstore.c \
 	context.c \
+	crl.c \
 	decode.c \
 	encode.c \
+	main.c \
 	msg.c \
 	oid.c \
 	proplist.c \
@@ -22,8 +24,7 @@ C_SRCS = \
 	serialize.c \
 	sip.c \
 	store.c \
-	str.c \
-	main.c
+	str.c
 
 RC_SRCS = crypt32.rc
 
