@@ -317,10 +317,21 @@ static BOOL CRYPT_MemDeleteCrl(PWINECRYPT_CERTSTORE store, void *pCrlContext)
     return TRUE;
 }
 
-static void CRYPT_MemEmptyStore(PWINE_MEMSTORE store)
+static void CRYPT_EmptyStore(HCERTSTORE store)
 {
-    ContextList_Empty(store->certs);
-    ContextList_Empty(store->crls);
+    PCCERT_CONTEXT cert;
+    PCCRL_CONTEXT crl;
+
+    do {
+        cert = CertEnumCertificatesInStore(store, NULL);
+        if (cert)
+            CertDeleteCertificateFromStore(cert);
+    } while (cert);
+    do {
+        crl = CertEnumCRLsInStore(store, NULL);
+        if (crl)
+            CertDeleteCRLFromStore(crl);
+    } while (crl);
 }
 
 static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
@@ -1359,7 +1370,7 @@ static BOOL WINAPI CRYPT_RegControl(HCERTSTORE hCertStore, DWORD dwFlags,
     {
     case CERT_STORE_CTRL_RESYNC:
         CRYPT_RegFlushStore(store, FALSE);
-        CRYPT_MemEmptyStore((PWINE_MEMSTORE)store->memStore);
+        CRYPT_EmptyStore(store->memStore);
         CRYPT_RegReadFromReg(store);
         ret = TRUE;
         break;
@@ -1758,7 +1769,7 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
     switch (dwCtrlType)
     {
     case CERT_STORE_CTRL_RESYNC:
-        CRYPT_MemEmptyStore((PWINE_MEMSTORE)store->memStore);
+        CRYPT_EmptyStore(store->memStore);
         CRYPT_ReadSerializedFile(store->file, store);
         ret = TRUE;
         break;
