@@ -6956,7 +6956,9 @@ const DWORD SavedVertexStates_R[NUM_SAVEDVERTEXSTATES_R] = {
     WINED3DRS_RANGEFOGENABLE                ,
     WINED3DRS_SPECULARMATERIALSOURCE        ,
     WINED3DRS_TWEENFACTOR                   ,
-    WINED3DRS_VERTEXBLEND
+    WINED3DRS_VERTEXBLEND                   ,
+    WINED3DRS_CULLMODE                      ,
+    WINED3DRS_FOGCOLOR
 };
 
 const DWORD SavedVertexStates_T[NUM_SAVEDVERTEXSTATES_T] = {

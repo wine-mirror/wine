@@ -91,7 +91,7 @@ void hash_table_remove(hash_table_t *table, void *key);
 #define NUM_SAVEDPIXELSTATES_R     35
 #define NUM_SAVEDPIXELSTATES_T     18
 #define NUM_SAVEDPIXELSTATES_S     12
-#define NUM_SAVEDVERTEXSTATES_R    31
+#define NUM_SAVEDVERTEXSTATES_R    33
 #define NUM_SAVEDVERTEXSTATES_T    2
 #define NUM_SAVEDVERTEXSTATES_S    1
 
