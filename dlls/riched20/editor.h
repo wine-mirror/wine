@@ -71,8 +71,8 @@ CHARFORMAT2W *ME_ToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from);
 void ME_CopyToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from);
 CHARFORMAT2W *ME_ToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from);
 void ME_CopyToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from);
-void ME_CopyCharFormat(CHARFORMAT2W *pDest, CHARFORMAT2W *pSrc); /* only works with 2W structs */
-void ME_CharFormatFromLogFont(HDC hDC, LOGFONTW *lf, CHARFORMAT2W *fmt); /* ditto */
+void ME_CopyCharFormat(CHARFORMAT2W *pDest, const CHARFORMAT2W *pSrc); /* only works with 2W structs */
+void ME_CharFormatFromLogFont(HDC hDC, const LOGFONTW *lf, CHARFORMAT2W *fmt); /* ditto */
 
 /* list.c */
 void ME_InsertBefore(ME_DisplayItem *diWhere, ME_DisplayItem *diWhat);
@@ -213,7 +213,7 @@ BOOL ME_UpdateSelection(ME_TextEditor *editor, const ME_Cursor *pTempCursor);
 /* wrap.c */
 void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp);
 ME_DisplayItem *ME_MakeRow(int height, int baseline, int width);
-void ME_InsertRowStart(ME_WrapContext *wc, ME_DisplayItem *pEnd);
+void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd);
 void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp);
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor);
 void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor);
@@ -268,7 +268,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd);
 void ME_DestroyEditor(ME_TextEditor *editor);
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode);
 void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam);
-ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, ME_DisplayItem *di);
+ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_DisplayItem *pdi);
 void ME_CommitUndo(ME_TextEditor *editor);
 void ME_Undo(ME_TextEditor *editor);
 void ME_Redo(ME_TextEditor *editor);

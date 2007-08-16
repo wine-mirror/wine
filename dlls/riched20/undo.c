@@ -48,7 +48,7 @@ void ME_EmptyUndoStack(ME_TextEditor *editor)
   } 
 }
 
-ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, ME_DisplayItem *pdi) {
+ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_DisplayItem *pdi) {
   if (editor->nUndoMode == umIgnore)
     return NULL;
   else if (editor->nUndoLimit == 0)

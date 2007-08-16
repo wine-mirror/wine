@@ -181,7 +181,7 @@ ME_Style *ME_ApplyStyle(ME_Style *sSrc, CHARFORMAT2W *style)
   return s;
 }
 
-void ME_CopyCharFormat(CHARFORMAT2W *pDest, CHARFORMAT2W *pSrc)
+void ME_CopyCharFormat(CHARFORMAT2W *pDest, const CHARFORMAT2W *pSrc)
 {
   /* using this with non-2W structs is forbidden */
   assert(pSrc->cbSize == sizeof(CHARFORMAT2W));
@@ -189,7 +189,7 @@ void ME_CopyCharFormat(CHARFORMAT2W *pDest, CHARFORMAT2W *pSrc)
   CopyMemory(pDest, pSrc, sizeof(CHARFORMAT2W));
 }
 
-static void ME_DumpStyleEffect(char **p, const char *name, CHARFORMAT2W *fmt, int mask)
+static void ME_DumpStyleEffect(char **p, const char *name, const CHARFORMAT2W *fmt, int mask)
 {
   *p += sprintf(*p, "%-22s%s\n", name, (fmt->dwMask & mask) ? ((fmt->dwEffects & mask) ? "YES" : "no") : "N/A");
 }
@@ -253,7 +253,7 @@ void ME_DumpStyleToBuf(CHARFORMAT2W *pFmt, char buf[2048])
 
 
 static void
-ME_LogFontFromStyle(HDC hDC, LOGFONTW *lf, ME_Style *s, int nZoomNumerator, int nZoomDenominator)
+ME_LogFontFromStyle(HDC hDC, LOGFONTW *lf, const ME_Style *s, int nZoomNumerator, int nZoomDenominator)
 {
   int rx, ry;
   rx = GetDeviceCaps(hDC, LOGPIXELSX);
@@ -286,10 +286,10 @@ ME_LogFontFromStyle(HDC hDC, LOGFONTW *lf, ME_Style *s, int nZoomNumerator, int 
   lf->lfCharSet = s->fmt.bCharSet;
 }
 
-void ME_CharFormatFromLogFont(HDC hDC, LOGFONTW *lf, CHARFORMAT2W *fmt)
+void ME_CharFormatFromLogFont(HDC hDC, const LOGFONTW *lf, CHARFORMAT2W *fmt)
 {
   int rx, ry;
-  
+
   ME_InitCharFormat2W(fmt);
   rx = GetDeviceCaps(hDC, LOGPIXELSX);
   ry = GetDeviceCaps(hDC, LOGPIXELSY);
@@ -308,7 +308,7 @@ void ME_CharFormatFromLogFont(HDC hDC, LOGFONTW *lf, CHARFORMAT2W *fmt)
   fmt->bCharSet = lf->lfCharSet;
 }
 
-static BOOL ME_IsFontEqual(LOGFONTW *p1, LOGFONTW *p2)
+static BOOL ME_IsFontEqual(const LOGFONTW *p1, const LOGFONTW *p2)
 {
   if (memcmp(p1, p2, sizeof(LOGFONTW)-sizeof(p1->lfFaceName)))
     return FALSE;

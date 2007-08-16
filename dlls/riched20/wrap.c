@@ -51,7 +51,7 @@ static void ME_BeginRow(ME_WrapContext *wc)
   wc->pt.x = 0;
 }
 
-void ME_InsertRowStart(ME_WrapContext *wc, ME_DisplayItem *pEnd)
+void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
 {
   ME_DisplayItem *p, *row, *para;
   int ascent = 0, descent = 0, width=0, shift = 0, align = 0;
