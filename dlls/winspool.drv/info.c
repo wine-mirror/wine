@@ -6635,15 +6635,127 @@ BOOL WINAPI AddPrinterDriverExW( LPWSTR pName, DWORD level, LPBYTE pDriverInfo, 
 }
 
 /******************************************************************************
- *		AddPrinterDriverExA (WINSPOOL.@)
+ *  AddPrinterDriverExA (WINSPOOL.@)
+ *
+ * See AddPrinterDriverExW.
+ *
  */
-BOOL WINAPI AddPrinterDriverExA( LPSTR pName, DWORD Level,
-    LPBYTE pDriverInfo, DWORD dwFileCopyFlags)
+BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo, DWORD dwFileCopyFlags)
 {
-    FIXME("%s %d %p %d\n", debugstr_a(pName),
-           Level, pDriverInfo, dwFileCopyFlags);
-    SetLastError(ERROR_PRINTER_DRIVER_BLOCKED);
-    return FALSE;
+    DRIVER_INFO_8A  *diA;
+    DRIVER_INFO_8W   diW;
+    LPWSTR  nameW = NULL;
+    DWORD   lenA;
+    DWORD   len;
+    DWORD   res = FALSE;
+
+    FIXME("(%s, %d, %p, 0x%x)\n", debugstr_a(pName), Level, pDriverInfo, dwFileCopyFlags);
+    diA = (DRIVER_INFO_8A  *) pDriverInfo;
+    ZeroMemory(&diW, sizeof(diW));
+
+    if (Level < 2 || Level == 5 || Level == 7 || Level > 8) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    if (diA == NULL) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* convert servername to unicode */
+    if (pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pName, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pName, -1, nameW, len);
+    }
+
+    /* common fields */
+    diW.cVersion = diA->cVersion;
+
+    len = MultiByteToWideChar(CP_ACP, 0, diA->pName, -1, NULL, 0);
+    diW.pName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, diA->pName, -1, diW.pName, len);
+
+    len = MultiByteToWideChar(CP_ACP, 0, diA->pEnvironment, -1, NULL, 0);
+    diW.pEnvironment = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, diA->pEnvironment, -1, diW.pEnvironment, len);
+
+    len = MultiByteToWideChar(CP_ACP, 0, diA->pDriverPath, -1, NULL, 0);
+    diW.pDriverPath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, diA->pDriverPath, -1, diW.pDriverPath, len);
+
+    len = MultiByteToWideChar(CP_ACP, 0, diA->pDataFile, -1, NULL, 0);
+    diW.pDataFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, diA->pDataFile, -1, diW.pDataFile, len);
+
+    len = MultiByteToWideChar(CP_ACP, 0, diA->pConfigFile, -1, NULL, 0);
+    diW.pConfigFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, diA->pConfigFile, -1, diW.pConfigFile, len);
+
+    if (Level > 2) {
+        lenA = multi_sz_lenA(diA->pDependentFiles);
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pDependentFiles, lenA, NULL, 0);
+        diW.pDependentFiles = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pDependentFiles, lenA, diW.pDependentFiles, len);
+
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pMonitorName, -1, NULL, 0);
+        diW.pMonitorName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pMonitorName, -1, diW.pMonitorName, len);
+    }
+
+    if (Level > 3) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pDefaultDataType, -1, NULL, 0);
+        diW.pDefaultDataType = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pDefaultDataType, -1, diW.pDefaultDataType, len);
+
+        lenA = multi_sz_lenA(diA->pszzPreviousNames);
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pszzPreviousNames, lenA, NULL, 0);
+        diW.pszzPreviousNames = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pszzPreviousNames, lenA, diW.pszzPreviousNames, len);
+    }
+
+    if (Level > 5) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pszMfgName, -1, NULL, 0);
+        diW.pszMfgName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pszMfgName, -1, diW.pszMfgName, len);
+
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pszOEMUrl, -1, NULL, 0);
+        diW.pszOEMUrl = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pszOEMUrl, -1, diW.pszOEMUrl, len);
+
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pszHardwareID, -1, NULL, 0);
+        diW.pszHardwareID = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pszHardwareID, -1, diW.pszHardwareID, len);
+
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pszProvider, -1, NULL, 0);
+        diW.pszProvider = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pszProvider, -1, diW.pszProvider, len);
+    }
+
+    if (Level > 7) {
+        FIXME("level %u is incomplete\n", Level);
+    }
+
+    res = AddPrinterDriverExW(nameW, Level, (LPBYTE) &diW, dwFileCopyFlags);
+    TRACE("got %u with %u\n", res, GetLastError());
+    HeapFree(GetProcessHeap(), 0, nameW);
+    HeapFree(GetProcessHeap(), 0, diW.pName);
+    HeapFree(GetProcessHeap(), 0, diW.pEnvironment);
+    HeapFree(GetProcessHeap(), 0, diW.pDriverPath);
+    HeapFree(GetProcessHeap(), 0, diW.pDataFile);
+    HeapFree(GetProcessHeap(), 0, diW.pConfigFile);
+    HeapFree(GetProcessHeap(), 0, diW.pDependentFiles);
+    HeapFree(GetProcessHeap(), 0, diW.pMonitorName);
+    HeapFree(GetProcessHeap(), 0, diW.pDefaultDataType);
+    HeapFree(GetProcessHeap(), 0, diW.pszzPreviousNames);
+    HeapFree(GetProcessHeap(), 0, diW.pszMfgName);
+    HeapFree(GetProcessHeap(), 0, diW.pszOEMUrl);
+    HeapFree(GetProcessHeap(), 0, diW.pszHardwareID);
+    HeapFree(GetProcessHeap(), 0, diW.pszProvider);
+
+    TRACE("=> %u with %u\n", res, GetLastError());
+    return res;
 }
 
 /******************************************************************************
