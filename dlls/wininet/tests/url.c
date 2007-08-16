@@ -98,8 +98,8 @@ static void InternetCrackUrl_test(void)
   URL_COMPONENTSA urlSrc, urlComponents;
   char protocol[32], hostName[1024], userName[1024];
   char password[1024], extra[1024], path[1024];
-  BOOL ret;
-  DWORD GLE;
+  BOOL ret, firstret;
+  DWORD GLE, firstGLE;
 
   ZeroMemory(&urlSrc, sizeof(urlSrc));
   urlSrc.dwStructSize = sizeof(urlSrc);
@@ -155,30 +155,42 @@ static void InternetCrackUrl_test(void)
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
   ok(InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents),"InternetCrackUrl failed with GLE %d\n",GetLastError());
 
-
   /* Tests for lpsz* members pointing to real strings while 
-   * some corresponding length members are set to zero */
+   * some corresponding length members are set to zero.
+   * As of IE7 (wininet 7.0*?) all members are checked. So we
+   * run the first test and expect the outcome to be the same
+   * for the first four (scheme, hostname, username and password).
+   * The last two (path and extrainfo) are the same for all versions
+   * of the wininet.dll.
+   */
   copy_compsA(&urlSrc, &urlComponents, 0, 1024, 1024, 1024, 2048, 1024);
-  ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
-  ok(ret==1, "InternetCrackUrl returned %d with GLE=%d (expected to return 1)\n",
-    ret, GetLastError());
+  SetLastError(0xdeadbeef);
+  firstret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
+  firstGLE = GetLastError();
 
   copy_compsA(&urlSrc, &urlComponents, 32, 0, 1024, 1024, 2048, 1024);
+  SetLastError(0xdeadbeef);
   ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
-  ok(ret==1, "InternetCrackUrl returned %d with GLE=%d (expected to return 1)\n",
-    ret, GetLastError());
+  GLE = GetLastError();
+  ok(ret==firstret && (GLE==firstGLE), "InternetCrackUrl returned %d with GLE=%d (expected to return %d)\n",
+    ret, GetLastError(), firstret);
 
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 0, 1024, 2048, 1024);
+  SetLastError(0xdeadbeef);
   ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
-  ok(ret==1, "InternetCrackUrl returned %d with GLE=%d (expected to return 1)\n",
-    ret, GetLastError());
+  GLE = GetLastError();
+  ok(ret==firstret && (GLE==firstGLE), "InternetCrackUrl returned %d with GLE=%d (expected to return %d)\n",
+    ret, GetLastError(), firstret);
 
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 0, 2048, 1024);
+  SetLastError(0xdeadbeef);
   ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
-  ok(ret==1, "InternetCrackUrl returned %d with GLE=%d (expected to return 1)\n",
-    ret, GetLastError());
+  GLE = GetLastError();
+  ok(ret==firstret && (GLE==firstGLE), "InternetCrackUrl returned %d with GLE=%d (expected to return %d)\n",
+    ret, GetLastError(), firstret);
 
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 0, 1024);
+  SetLastError(0xdeadbeef);
   ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
   GLE = GetLastError();
   todo_wine
@@ -187,6 +199,7 @@ static void InternetCrackUrl_test(void)
     ret, GLE);
 
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 0);
+  SetLastError(0xdeadbeef);
   ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
   GLE = GetLastError();
   todo_wine
