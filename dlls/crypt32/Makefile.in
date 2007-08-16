@@ -21,6 +21,7 @@ C_SRCS = \
 	oid.c \
 	proplist.c \
 	protectdata.c \
+	provstore.c \
 	serialize.c \
 	sip.c \
 	store.c \
