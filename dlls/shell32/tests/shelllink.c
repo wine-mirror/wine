@@ -64,7 +64,7 @@ static LPITEMIDLIST path_to_pidl(const char* path)
 
     if (!pSHSimpleIDListFromPathAW)
     {
-        HMODULE hdll=LoadLibraryA("shell32.dll");
+        HMODULE hdll=GetModuleHandleA("shell32.dll");
         pSHSimpleIDListFromPathAW=(void*)GetProcAddress(hdll, (char*)162);
         if (!pSHSimpleIDListFromPathAW)
             trace("SHSimpleIDListFromPathAW not found in shell32.dll\n");
