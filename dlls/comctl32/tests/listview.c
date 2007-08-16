@@ -676,6 +676,28 @@ static void test_items(void)
     DestroyWindow(hwnd);
 }
 
+static void test_columns(void)
+{
+    HWND hwnd;
+    LVCOLUMN column;
+    DWORD rc;
+
+    hwnd = CreateWindowEx(0, "SysListView32", "foo", LVS_REPORT,
+                10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
+    ok(hwnd != NULL, "failed to create listview window\n");
+
+    /* Add a column with no mask */
+    memset(&column, 0xaa, sizeof(column));
+    column.mask = 0;
+    rc = ListView_InsertColumn(hwnd, 0, &column);
+    ok(rc==0, "Inserting column with no mask failed with %d\n", rc);
+
+    /* Check its width */
+    rc = ListView_GetColumnWidth(hwnd, 0);
+    ok(rc==10, "Inserting column with no mask failed to set width to 10 with %d\n", rc);
+
+    DestroyWindow(hwnd);
+}
 /* test setting imagelist between WM_NCCREATE and WM_CREATE */
 static WNDPROC listviewWndProc;
 static HIMAGELIST test_create_imagelist;
@@ -1041,4 +1063,5 @@ START_TEST(listview)
     test_color();
     test_item_count();
     test_item_position();
+    test_columns();
 }
