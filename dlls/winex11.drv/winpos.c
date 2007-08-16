@@ -160,19 +160,11 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 
     if (changed & WS_DISABLED)
     {
-        if (data->whole_window && data->managed)
+        if (data->whole_window && data->wm_hints)
         {
-            XWMHints *wm_hints;
             wine_tsx11_lock();
-            if (!(wm_hints = XGetWMHints( display, data->whole_window )))
-                wm_hints = XAllocWMHints();
-            if (wm_hints)
-            {
-                wm_hints->flags |= InputHint;
-                wm_hints->input = !(new_style & WS_DISABLED);
-                XSetWMHints( display, data->whole_window, wm_hints );
-                XFree(wm_hints);
-            }
+            data->wm_hints->input = !(new_style & WS_DISABLED);
+            XSetWMHints( display, data->whole_window, data->wm_hints );
             wine_tsx11_unlock();
         }
     }

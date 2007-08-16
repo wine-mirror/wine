@@ -646,6 +646,7 @@ struct x11drv_win_data
     RECT        whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT        client_rect;    /* client area relative to whole window */
     XIC         xic;            /* X input context */
+    XWMHints   *wm_hints;       /* window manager hints */
     BOOL        managed;        /* is window managed? */
     struct dce *dce;            /* DCE for CS_OWNDC or CS_CLASSDC windows */
     unsigned int lock_changes;  /* lock count for X11 change requests */

@@ -248,9 +248,10 @@ static void destroy_icon_window( Display *display, struct x11drv_win_data *data 
  *
  * Set the icon wm hints
  */
-static void set_icon_hints( Display *display, struct x11drv_win_data *data,
-                            XWMHints *hints, HICON hIcon )
+static void set_icon_hints( Display *display, struct x11drv_win_data *data, HICON hIcon )
 {
+    XWMHints *hints = data->wm_hints;
+
     if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
     data->hWMIconBitmap = 0;
@@ -468,7 +469,6 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
 {
     Window group_leader;
     XClassHint *class_hints;
-    XWMHints* wm_hints;
     Atom protocols[3];
     Atom window_type;
     MwmHints mwm_hints;
@@ -566,24 +566,19 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     XChangeProperty( display, data->whole_window, x11drv_atom(XdndAware),
                      XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
 
-    wm_hints = XAllocWMHints();
     wine_tsx11_unlock();
 
     /* wm hints */
-    if (wm_hints)
+    if (data->wm_hints)
     {
-        wm_hints->flags = InputHint | StateHint | WindowGroupHint;
-        wm_hints->input = !(style & WS_DISABLED);
-
-        set_icon_hints( display, data, wm_hints,
-                        (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICON ) );
-
-        wm_hints->initial_state = (style & WS_MINIMIZE) ? IconicState : NormalState;
-        wm_hints->window_group = group_leader;
+        data->wm_hints->flags = InputHint | StateHint | WindowGroupHint;
+        data->wm_hints->input = !(style & WS_DISABLED);
+        data->wm_hints->initial_state = (style & WS_MINIMIZE) ? IconicState : NormalState;
+        data->wm_hints->window_group = group_leader;
+        set_icon_hints( display, data, (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICON ) );
 
         wine_tsx11_lock();
-        XSetWMHints( display, data->whole_window, wm_hints );
-        XFree(wm_hints);
+        XSetWMHints( display, data->whole_window, data->wm_hints );
         wine_tsx11_unlock();
     }
 }
@@ -599,7 +594,6 @@ void X11DRV_set_iconic_state( HWND hwnd )
     Display *display = thread_display();
     struct x11drv_win_data *data;
     RECT rect;
-    XWMHints* wm_hints;
     DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
     BOOL iconic = (style & WS_MINIMIZE) != 0;
 
@@ -610,12 +604,14 @@ void X11DRV_set_iconic_state( HWND hwnd )
 
     wine_tsx11_lock();
 
-    if (!(wm_hints = XGetWMHints( display, data->whole_window ))) wm_hints = XAllocWMHints();
-    wm_hints->flags |= StateHint | IconPositionHint;
-    wm_hints->initial_state = iconic ? IconicState : NormalState;
-    wm_hints->icon_x = rect.left - virtual_screen_rect.left;
-    wm_hints->icon_y = rect.top - virtual_screen_rect.top;
-    XSetWMHints( display, data->whole_window, wm_hints );
+    if (data->wm_hints)
+    {
+        data->wm_hints->flags |= StateHint | IconPositionHint;
+        data->wm_hints->initial_state = iconic ? IconicState : NormalState;
+        data->wm_hints->icon_x = rect.left - virtual_screen_rect.left;
+        data->wm_hints->icon_y = rect.top - virtual_screen_rect.top;
+        XSetWMHints( display, data->whole_window, data->wm_hints );
+    }
 
     if (style & WS_VISIBLE)
     {
@@ -626,7 +622,6 @@ void X11DRV_set_iconic_state( HWND hwnd )
                 XMapWindow( display, data->whole_window );
     }
 
-    XFree(wm_hints);
     wine_tsx11_unlock();
 }
 
@@ -913,6 +908,7 @@ void X11DRV_DestroyWindow( HWND hwnd )
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
     wine_tsx11_lock();
     XDeleteContext( display, (XID)hwnd, win_data_context );
+    XFree( data->wm_hints );
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );
 }
@@ -938,6 +934,7 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
         if (!winContext) winContext = XUniqueContext();
         if (!win_data_context) win_data_context = XUniqueContext();
         XSaveContext( display, (XID)hwnd, win_data_context, (char *)data );
+        data->wm_hints = XAllocWMHints();
         wine_tsx11_unlock();
     }
     return data;
@@ -1325,7 +1322,6 @@ void X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
     Display *display = thread_display();
     struct x11drv_win_data *data;
-    XWMHints* wm_hints;
 
     if (type != ICON_BIG) return;  /* nothing to do here */
 
@@ -1333,15 +1329,11 @@ void X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
     if (!data->whole_window) return;
     if (!data->managed) return;
 
-    wine_tsx11_lock();
-    if (!(wm_hints = XGetWMHints( display, data->whole_window ))) wm_hints = XAllocWMHints();
-    wine_tsx11_unlock();
-    if (wm_hints)
+    if (data->wm_hints)
     {
-        set_icon_hints( display, data, wm_hints, icon );
+        set_icon_hints( display, data, icon );
         wine_tsx11_lock();
-        XSetWMHints( display, data->whole_window, wm_hints );
-        XFree( wm_hints );
+        XSetWMHints( display, data->whole_window, data->wm_hints );
         wine_tsx11_unlock();
     }
 }
