@@ -321,6 +321,9 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
+    IInternetProtocolSink_AddRef(pOIProtSink);
+    This->protocol_sink = pOIProtSink;
+
     memset(&This->bind_info, 0, sizeof(This->bind_info));
     This->bind_info.cbSize = sizeof(BINDINFO);
     hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &This->grfBINDF, &This->bind_info);
@@ -354,7 +357,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         url.nPort = INTERNET_DEFAULT_HTTP_PORT;
 
     if(!(This->grfBINDF & BINDF_FROMURLMON))
-        IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_DIRECTBIND, NULL);
+        IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_DIRECTBIND, NULL);
 
     hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_USER_AGENT, &user_agent,
                                            1, &num);
@@ -392,9 +395,6 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         hres = INET_E_NO_SESSION;
         goto done;
     }
-
-    IInternetProtocolSink_AddRef(pOIProtSink);
-    This->protocol_sink = pOIProtSink;
 
     /* Native does not check for success of next call, so we won't either */
     InternetSetStatusCallbackW(This->internet, HTTPPROTOCOL_InternetStatusCallback);
@@ -434,7 +434,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         goto done;
     }
 
-    hres = IInternetProtocolSink_QueryInterface(pOIProtSink, &IID_IServiceProvider,
+    hres = IInternetProtocolSink_QueryInterface(This->protocol_sink, &IID_IServiceProvider,
                                                 (void **)&service_provider);
     if (hres != S_OK)
     {
@@ -533,7 +533,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 done:
     if (hres != S_OK)
     {
-        IInternetProtocolSink_ReportResult(pOIProtSink, hres, 0, NULL);
+        IInternetProtocolSink_ReportResult(This->protocol_sink, hres, 0, NULL);
         HTTPPROTOCOL_Close(This);
     }
 
