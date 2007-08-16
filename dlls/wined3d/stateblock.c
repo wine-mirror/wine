@@ -186,8 +186,8 @@ void stateblock_copy(
             PLIGHTINFOEL *light = LIST_ENTRY(e1, PLIGHTINFOEL, entry), *light2;
             light2 = HeapAlloc(GetProcessHeap(), 0, sizeof(*light));
             memcpy(light2, light, sizeof(*light));
-            list_add_tail(&This->lightMap[l], &light2->entry);
-            if(light2->glIndex != -1) This->activeLights[light2->glIndex] = light2;
+            list_add_tail(&Dest->lightMap[l], &light2->entry);
+            if(light2->glIndex != -1) Dest->activeLights[light2->glIndex] = light2;
         }
     }
 
