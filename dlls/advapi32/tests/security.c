@@ -1302,8 +1302,15 @@ static void test_LookupAccountName(void)
      */
 
     user_size = UNLEN + 1;
+    SetLastError(0xdeadbeef);
     ret = GetUserNameA(user_name, &user_size);
-    ok(ret, "Failed to get user name\n");
+    if (!ret && (GetLastError() == ERROR_NOT_LOGGED_ON))
+    {
+        /* Probably on win9x where the user used 'Cancel' instead of properly logging in */
+        skip("Cannot get the user name (win9x and not logged in properly)\n");
+        return;
+    }
+    ok(ret, "Failed to get user name : %d\n", GetLastError());
 
     /* get sizes */
     sid_size = 0;
