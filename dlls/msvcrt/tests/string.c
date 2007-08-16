@@ -78,8 +78,10 @@ static void test_swab( void ) {
 static void test_ismbblead(void)
 {
     unsigned int s = '\354';
+    int mb_orig_max = __mb_cur_max;
 
     _setmbcp(936);
+    ok(__mb_cur_max == mb_orig_max, "__mb_cur_max shouldn't be updated (is %d != %d)\n", __mb_cur_max, mb_orig_max);
     todo_wine ok(_ismbblead(s), "got result %d\n", _ismbblead(s));
     _setmbcp(1252);
 }

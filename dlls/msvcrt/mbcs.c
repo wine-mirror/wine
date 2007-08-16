@@ -911,7 +911,7 @@ int CDECL _ismbckata(unsigned int c)
 int CDECL _ismbblead(unsigned int c)
 {
   /* FIXME: should reference MSVCRT_mbctype */
-  return MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(c);
+  return MSVCRT_isleadbyte(c);
 }
 
 
