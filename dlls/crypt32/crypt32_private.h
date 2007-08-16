@@ -172,6 +172,65 @@ extern PCWINE_CONTEXT_INTERFACE pCertInterface;
 extern PCWINE_CONTEXT_INTERFACE pCRLInterface;
 extern PCWINE_CONTEXT_INTERFACE pCTLInterface;
 
+/* (Internal) certificate store types and functions */
+struct WINE_CRYPTCERTSTORE;
+
+typedef struct WINE_CRYPTCERTSTORE * (*StoreOpenFunc)(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara);
+
+/* Called to enumerate the next context in a store. */
+typedef void * (*EnumFunc)(struct WINE_CRYPTCERTSTORE *store, void *pPrev);
+
+/* Called to add a context to a store.  If toReplace is not NULL,
+ * context replaces toReplace in the store, and access checks should not be
+ * performed.  Otherwise context is a new context, and it should only be
+ * added if the store allows it.  If ppStoreContext is not NULL, the added
+ * context should be returned in *ppStoreContext.
+ */
+typedef BOOL (*AddFunc)(struct WINE_CRYPTCERTSTORE *store, void *context,
+ void *toReplace, const void **ppStoreContext);
+
+typedef BOOL (*DeleteFunc)(struct WINE_CRYPTCERTSTORE *store, void *context);
+
+typedef struct _CONTEXT_FUNCS
+{
+    AddFunc    addContext;
+    EnumFunc   enumContext;
+    DeleteFunc deleteContext;
+} CONTEXT_FUNCS, *PCONTEXT_FUNCS;
+
+typedef enum _CertStoreType {
+    StoreTypeMem,
+    StoreTypeCollection,
+    StoreTypeProvider,
+} CertStoreType;
+
+struct _CONTEXT_PROPERTY_LIST;
+typedef struct _CONTEXT_PROPERTY_LIST *PCONTEXT_PROPERTY_LIST;
+
+#define WINE_CRYPTCERTSTORE_MAGIC 0x74726563
+
+/* A cert store is polymorphic through the use of function pointers.  A type
+ * is still needed to distinguish collection stores from other types.
+ * On the function pointers:
+ * - closeStore is called when the store's ref count becomes 0
+ * - control is optional, but should be implemented by any store that supports
+ *   persistence
+ */
+typedef struct WINE_CRYPTCERTSTORE
+{
+    DWORD                       dwMagic;
+    LONG                        ref;
+    DWORD                       dwOpenFlags;
+    HCRYPTPROV                  cryptProv;
+    CertStoreType               type;
+    PFN_CERT_STORE_PROV_CLOSE   closeStore;
+    CONTEXT_FUNCS               certs;
+    CONTEXT_FUNCS               crls;
+    PFN_CERT_STORE_PROV_CONTROL control; /* optional */
+    PCONTEXT_PROPERTY_LIST      properties;
+} WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
+
 /* Helper function for store reading functions and
  * CertAddSerializedElementToStore.  Returns a context of the appropriate type
  * if it can, or NULL otherwise.  Doesn't validate any of the properties in
@@ -227,9 +286,6 @@ void *Context_GetLinkedContext(void *context, size_t contextSize);
 /* Copies properties from fromContext to toContext. */
 void Context_CopyProperties(const void *to, const void *from,
  size_t contextSize);
-
-struct _CONTEXT_PROPERTY_LIST;
-typedef struct _CONTEXT_PROPERTY_LIST *PCONTEXT_PROPERTY_LIST;
 
 /* Returns context's properties, or the linked context's properties if context
  * is a link context.

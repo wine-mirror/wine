@@ -41,8 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-#define WINE_CRYPTCERTSTORE_MAGIC 0x74726563
-
 static const WINE_CONTEXT_INTERFACE gCertInterface = {
     (CreateContextFunc)CertCreateCertificateContext,
     (AddContextToStoreFunc)CertAddCertificateContextToStore,
@@ -87,59 +85,6 @@ static const WINE_CONTEXT_INTERFACE gCTLInterface = {
     (DeleteContextFunc)CertDeleteCTLFromStore,
 };
 PCWINE_CONTEXT_INTERFACE pCTLInterface = &gCTLInterface;
-
-struct WINE_CRYPTCERTSTORE;
-
-typedef struct WINE_CRYPTCERTSTORE * (*StoreOpenFunc)(HCRYPTPROV hCryptProv,
- DWORD dwFlags, const void *pvPara);
-
-/* Called to enumerate the next context in a store. */
-typedef void * (*EnumFunc)(struct WINE_CRYPTCERTSTORE *store, void *pPrev);
-
-/* Called to add a context to a store.  If toReplace is not NULL,
- * context replaces toReplace in the store, and access checks should not be
- * performed.  Otherwise context is a new context, and it should only be
- * added if the store allows it.  If ppStoreContext is not NULL, the added
- * context should be returned in *ppStoreContext.
- */
-typedef BOOL (*AddFunc)(struct WINE_CRYPTCERTSTORE *store, void *context,
- void *toReplace, const void **ppStoreContext);
-
-typedef BOOL (*DeleteFunc)(struct WINE_CRYPTCERTSTORE *store, void *context);
-
-typedef struct _CONTEXT_FUNCS
-{
-    AddFunc    addContext;
-    EnumFunc   enumContext;
-    DeleteFunc deleteContext;
-} CONTEXT_FUNCS, *PCONTEXT_FUNCS;
-
-typedef enum _CertStoreType {
-    StoreTypeMem,
-    StoreTypeCollection,
-    StoreTypeProvider,
-} CertStoreType;
-
-/* A cert store is polymorphic through the use of function pointers.  A type
- * is still needed to distinguish collection stores from other types.
- * On the function pointers:
- * - closeStore is called when the store's ref count becomes 0
- * - control is optional, but should be implemented by any store that supports
- *   persistence
- */
-typedef struct WINE_CRYPTCERTSTORE
-{
-    DWORD                       dwMagic;
-    LONG                        ref;
-    DWORD                       dwOpenFlags;
-    HCRYPTPROV                  cryptProv;
-    CertStoreType               type;
-    PFN_CERT_STORE_PROV_CLOSE   closeStore;
-    CONTEXT_FUNCS               certs;
-    CONTEXT_FUNCS               crls;
-    PFN_CERT_STORE_PROV_CONTROL control; /* optional */
-    PCONTEXT_PROPERTY_LIST      properties;
-} WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
 
 typedef struct _WINE_MEMSTORE
 {
