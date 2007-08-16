@@ -418,6 +418,24 @@ static void set_registry_environment(void)
     NtClose( attr.RootDirectory );
 }
 
+/***********************************************************************
+ *           set_additional_environment
+ *
+ * Set some additional environment variables not specified in the registry.
+ */
+static void set_additional_environment(void)
+{
+    static const WCHAR usernameW[] = {'U','S','E','R','N','A','M','E',0};
+    const char *name = wine_get_user_name();
+    DWORD len = MultiByteToWideChar( CP_UNIXCP, 0, name, -1, NULL, 0 );
+    if (len)
+    {
+        LPWSTR nameW = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_UNIXCP, 0, name, -1, nameW, len );
+        SetEnvironmentVariableW( usernameW, nameW );
+        HeapFree( GetProcessHeap(), 0, nameW );
+    }
+}
 
 /***********************************************************************
  *              set_library_wargv
@@ -745,6 +763,7 @@ static BOOL process_init(void)
         convert_old_config();
 
         set_registry_environment();
+        set_additional_environment();
     }
 
     init_windows_dirs();
