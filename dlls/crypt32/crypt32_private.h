@@ -246,6 +246,12 @@ PWINECRYPT_CERTSTORE CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
  const void *pvPara);
 PWINECRYPT_CERTSTORE CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
  const void *pvPara);
+PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
+ const void *pvPara);
+PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreA(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara);
+PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara);
 
 /* Helper function for store reading functions and
  * CertAddSerializedElementToStore.  Returns a context of the appropriate type
