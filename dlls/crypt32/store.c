@@ -107,12 +107,12 @@ typedef BOOL (*AddFunc)(struct WINE_CRYPTCERTSTORE *store, void *context,
 
 typedef BOOL (*DeleteFunc)(struct WINE_CRYPTCERTSTORE *store, void *context);
 
-typedef struct _CONTEXT_STORE
+typedef struct _CONTEXT_FUNCS
 {
     AddFunc    addContext;
     EnumFunc   enumContext;
     DeleteFunc deleteContext;
-} CONTEXT_STORE, *PCONTEXT_STORE;
+} CONTEXT_FUNCS, *PCONTEXT_FUNCS;
 
 typedef enum _CertStoreType {
     StoreTypeMem,
@@ -135,8 +135,8 @@ typedef struct WINE_CRYPTCERTSTORE
     HCRYPTPROV                  cryptProv;
     CertStoreType               type;
     PFN_CERT_STORE_PROV_CLOSE   closeStore;
-    CONTEXT_STORE               certs;
-    CONTEXT_STORE               crls;
+    CONTEXT_FUNCS               certs;
+    CONTEXT_FUNCS               crls;
     PFN_CERT_STORE_PROV_CONTROL control; /* optional */
     PCONTEXT_PROPERTY_LIST      properties;
 } WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
@@ -406,28 +406,28 @@ static void *CRYPT_CollectionCreateContextFromChild(PWINE_COLLECTIONSTORE store,
 }
 
 static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
- unsigned int contextStoreOffset, void *context, void *toReplace, unsigned int contextSize,
+ unsigned int contextFuncsOffset, void *context, void *toReplace, unsigned int contextSize,
  void **pChildContext)
 {
     BOOL ret;
     void *childContext = NULL;
     PWINE_STORE_LIST_ENTRY storeEntry = NULL;
 
-    TRACE("(%p, %d, %p, %p, %d)\n", store, contextStoreOffset, context,
+    TRACE("(%p, %d, %p, %p, %d)\n", store, contextFuncsOffset, context,
      toReplace, contextSize);
 
     ret = FALSE;
     if (toReplace)
     {
         void *existingLinked = Context_GetLinkedContext(toReplace, contextSize);
-        PCONTEXT_STORE contextStore;
+        PCONTEXT_FUNCS contextFuncs;
 
         storeEntry = *(PWINE_STORE_LIST_ENTRY *)Context_GetExtra(toReplace,
          contextSize);
-        contextStore = (PCONTEXT_STORE)((LPBYTE)storeEntry->store +
-         contextStoreOffset);
-        ret = contextStore->addContext(storeEntry->store, context,
-         existingLinked, (const void **)&childContext);
+        contextFuncs = (PCONTEXT_FUNCS)((LPBYTE)storeEntry->store +
+         contextFuncsOffset);
+        ret = contextFuncs->addContext(storeEntry->store, context,
+         existingLinked, childContext);
     }
     else
     {
@@ -439,11 +439,11 @@ static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
         {
             if (entry->dwUpdateFlags & CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG)
             {
-                PCONTEXT_STORE contextStore = (PCONTEXT_STORE)(
-                 (LPBYTE)entry->store + contextStoreOffset);
+                PCONTEXT_FUNCS contextFuncs = (PCONTEXT_FUNCS)(
+                 (LPBYTE)entry->store + contextFuncsOffset);
 
                 storeEntry = entry;
-                ret = contextStore->addContext(entry->store, context, NULL,
+                ret = contextFuncs->addContext(entry->store, context, NULL,
                  (const void **)&childContext);
                 break;
             }
@@ -466,13 +466,13 @@ static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
  * Assumes the collection store's lock is held.
  */
 static void *CRYPT_CollectionAdvanceEnum(PWINE_COLLECTIONSTORE store,
- PWINE_STORE_LIST_ENTRY storeEntry, size_t contextStoreOffset,
+ PWINE_STORE_LIST_ENTRY storeEntry, size_t contextFuncsOffset,
  PCWINE_CONTEXT_INTERFACE contextInterface, void *pPrev, size_t contextSize)
 {
     void *ret, *child;
     struct list *storeNext = list_next(&store->stores, &storeEntry->entry);
-    PCONTEXT_STORE contextStore = (PCONTEXT_STORE)((LPBYTE)storeEntry->store +
-     contextStoreOffset);
+    PCONTEXT_FUNCS contextFuncs = (PCONTEXT_FUNCS)((LPBYTE)storeEntry->store +
+     contextFuncsOffset);
 
     TRACE("(%p, %p, %p)\n", store, storeEntry, pPrev);
 
@@ -483,12 +483,12 @@ static void *CRYPT_CollectionAdvanceEnum(PWINE_COLLECTIONSTORE store,
          */
         child = Context_GetLinkedContext(pPrev, contextSize);
         contextInterface->duplicate(child);
-        child = contextStore->enumContext(storeEntry->store, child);
+        child = contextFuncs->enumContext(storeEntry->store, child);
         contextInterface->free(pPrev);
         pPrev = NULL;
     }
     else
-        child = contextStore->enumContext(storeEntry->store, NULL);
+        child = contextFuncs->enumContext(storeEntry->store, NULL);
     if (child)
         ret = CRYPT_CollectionCreateContextFromChild(store, storeEntry, child,
          contextSize, FALSE);
@@ -496,7 +496,7 @@ static void *CRYPT_CollectionAdvanceEnum(PWINE_COLLECTIONSTORE store,
     {
         if (storeNext)
             ret = CRYPT_CollectionAdvanceEnum(store, LIST_ENTRY(storeNext,
-             WINE_STORE_LIST_ENTRY, entry), contextStoreOffset,
+             WINE_STORE_LIST_ENTRY, entry), contextFuncsOffset,
              contextInterface, NULL, contextSize);
         else
         {
