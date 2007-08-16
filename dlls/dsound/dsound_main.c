@@ -47,9 +47,10 @@
 #include "mmddk.h"
 #include "wine/debug.h"
 #include "dsound.h"
+#include "dsconf.h"
+#include "initguid.h"
 #include "dsdriver.h"
 #include "dsound_private.h"
-#include "dsconf.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
