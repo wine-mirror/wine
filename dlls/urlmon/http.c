@@ -142,11 +142,6 @@ static void HTTPPROTOCOL_AllDataRead(HttpProtocol *This)
 
 static void HTTPPROTOCOL_Close(HttpProtocol *This)
 {
-    if (This->protocol_sink)
-    {
-        IInternetProtocolSink_Release(This->protocol_sink);
-        This->protocol_sink = 0;
-    }
     if (This->http_negotiate)
     {
         IHttpNegotiate_Release(This->http_negotiate);
@@ -172,11 +167,6 @@ static void HTTPPROTOCOL_Close(HttpProtocol *This)
         if (This->full_header != wszHeaders)
             HeapFree(GetProcessHeap(), 0, This->full_header);
         This->full_header = 0;
-    }
-    if (This->bind_info.cbSize)
-    {
-        ReleaseBindInfo(&This->bind_info);
-        memset(&This->bind_info, 0, sizeof(This->bind_info));
     }
     This->flags = 0;
 }
@@ -213,6 +203,18 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
             IInternetProtocolSink_Switch(This->protocol_sink, &data);
         else
             IInternetProtocol_Continue((IInternetProtocol *)This, &data);
+        return;
+    case INTERNET_STATUS_HANDLE_CLOSING:
+        if (This->protocol_sink)
+        {
+            IInternetProtocolSink_Release(This->protocol_sink);
+            This->protocol_sink = 0;
+        }
+        if (This->bind_info.cbSize)
+        {
+            ReleaseBindInfo(&This->bind_info);
+            memset(&This->bind_info, 0, sizeof(This->bind_info));
+        }
         return;
     default:
         WARN("Unhandled Internet status callback %d\n", dwInternetStatus);
