@@ -1036,13 +1036,13 @@ static void CRYPT_RegReadSerializedFromReg(const WINE_REGSTOREINFO *store, HKEY 
                             switch (addedType)
                             {
                             case CERT_STORE_CERTIFICATE_CONTEXT:
-                                contextInterface = &gCertInterface;
+                                contextInterface = pCertInterface;
                                 break;
                             case CERT_STORE_CRL_CONTEXT:
-                                contextInterface = &gCRLInterface;
+                                contextInterface = pCRLInterface;
                                 break;
                             case CERT_STORE_CTL_CONTEXT:
-                                contextInterface = &gCTLInterface;
+                                contextInterface = pCTLInterface;
                                 break;
                             default:
                                 contextInterface = NULL;
@@ -1175,8 +1175,8 @@ static BOOL CRYPT_SerializeContextsToReg(HKEY key,
 static BOOL CRYPT_RegWriteToReg(PWINE_REGSTOREINFO store)
 {
     static const WCHAR * const subKeys[] = { CertsW, CRLsW, CTLsW };
-    static const WINE_CONTEXT_INTERFACE * const interfaces[] = { &gCertInterface,
-     &gCRLInterface, &gCTLInterface };
+    const WINE_CONTEXT_INTERFACE * const interfaces[] = { pCertInterface,
+     pCRLInterface, pCTLInterface };
     struct list *listToDelete[] = { &store->certsToDelete, &store->crlsToDelete,
      NULL };
     BOOL ret = TRUE;
