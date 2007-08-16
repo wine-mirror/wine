@@ -477,13 +477,11 @@ static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
  * Assumes the collection store's lock is held.
  */
 static void *CRYPT_CollectionAdvanceEnum(PWINE_COLLECTIONSTORE store,
- PWINE_STORE_LIST_ENTRY storeEntry, size_t contextFuncsOffset,
+ PWINE_STORE_LIST_ENTRY storeEntry, PCONTEXT_FUNCS contextFuncs,
  PCWINE_CONTEXT_INTERFACE contextInterface, void *pPrev, size_t contextSize)
 {
     void *ret, *child;
     struct list *storeNext = list_next(&store->stores, &storeEntry->entry);
-    PCONTEXT_FUNCS contextFuncs = (PCONTEXT_FUNCS)((LPBYTE)storeEntry->store +
-     contextFuncsOffset);
 
     TRACE("(%p, %p, %p)\n", store, storeEntry, pPrev);
 
@@ -506,9 +504,19 @@ static void *CRYPT_CollectionAdvanceEnum(PWINE_COLLECTIONSTORE store,
     else
     {
         if (storeNext)
-            ret = CRYPT_CollectionAdvanceEnum(store, LIST_ENTRY(storeNext,
-             WINE_STORE_LIST_ENTRY, entry), contextFuncsOffset,
-             contextInterface, NULL, contextSize);
+        {
+            /* We always want the same function pointers (from certs, crls)
+             * in the next store, so use the same offset into the next store.
+             */
+            size_t offset = (LPBYTE)contextFuncs - (LPBYTE)storeEntry->store;
+            PWINE_STORE_LIST_ENTRY storeNextEntry =
+             LIST_ENTRY(storeNext, WINE_STORE_LIST_ENTRY, entry);
+            PCONTEXT_FUNCS storeNextContexts =
+             (PCONTEXT_FUNCS)((LPBYTE)storeNextEntry->store + offset);
+
+            ret = CRYPT_CollectionAdvanceEnum(store, storeNextEntry,
+             storeNextContexts, contextInterface, NULL, contextSize);
+        }
         else
         {
             SetLastError(CRYPT_E_NOT_FOUND);
@@ -559,7 +567,7 @@ static void *CRYPT_CollectionEnumCert(PWINECRYPT_CERTSTORE store, void *pPrev)
          sizeof(CERT_CONTEXT));
 
         ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-         offsetof(WINECRYPT_CERTSTORE, certs), pCertInterface, pPrev,
+         &storeEntry->store->certs, pCertInterface, pPrev,
          sizeof(CERT_CONTEXT));
     }
     else
@@ -570,7 +578,7 @@ static void *CRYPT_CollectionEnumCert(PWINECRYPT_CERTSTORE store, void *pPrev)
              WINE_STORE_LIST_ENTRY, entry);
 
             ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-             offsetof(WINECRYPT_CERTSTORE, certs), pCertInterface, NULL,
+             &storeEntry->store->certs, pCertInterface, NULL,
              sizeof(CERT_CONTEXT));
         }
         else
@@ -638,8 +646,7 @@ static void *CRYPT_CollectionEnumCRL(PWINECRYPT_CERTSTORE store, void *pPrev)
          sizeof(CRL_CONTEXT));
 
         ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-         offsetof(WINECRYPT_CERTSTORE, crls), pCRLInterface, pPrev,
-         sizeof(CRL_CONTEXT));
+         &storeEntry->store->crls, pCRLInterface, pPrev, sizeof(CRL_CONTEXT));
     }
     else
     {
@@ -649,7 +656,7 @@ static void *CRYPT_CollectionEnumCRL(PWINECRYPT_CERTSTORE store, void *pPrev)
              WINE_STORE_LIST_ENTRY, entry);
 
             ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry,
-             offsetof(WINECRYPT_CERTSTORE, crls), pCRLInterface, NULL,
+             &storeEntry->store->crls, pCRLInterface, NULL,
              sizeof(CRL_CONTEXT));
         }
         else
