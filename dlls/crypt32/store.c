@@ -722,7 +722,7 @@ static BOOL CRYPT_ProvAddCert(PWINECRYPT_CERTSTORE store, void *cert,
 
     if (toReplace)
         ret = ps->memStore->certs.addContext(ps->memStore, cert, toReplace,
-         (const void **)ppStoreContext);
+         ppStoreContext);
     else
     {
         ret = TRUE;
@@ -731,7 +731,7 @@ static BOOL CRYPT_ProvAddCert(PWINECRYPT_CERTSTORE store, void *cert,
              CERT_STORE_PROV_WRITE_ADD_FLAG);
         if (ret)
             ret = ps->memStore->certs.addContext(ps->memStore, cert, NULL,
-             (const void **)ppStoreContext);
+             ppStoreContext);
     }
     /* dirty trick: replace the returned context's hCertStore with
      * store.
@@ -781,7 +781,7 @@ static BOOL CRYPT_ProvAddCRL(PWINECRYPT_CERTSTORE store, void *crl,
 
     if (toReplace)
         ret = ps->memStore->crls.addContext(ps->memStore, crl, toReplace,
-         (const void **)ppStoreContext);
+         ppStoreContext);
     else
     {
         if (ps->hdr.dwOpenFlags & CERT_STORE_READONLY_FLAG)
@@ -797,7 +797,7 @@ static BOOL CRYPT_ProvAddCRL(PWINECRYPT_CERTSTORE store, void *crl,
                  CERT_STORE_PROV_WRITE_ADD_FLAG);
             if (ret)
                 ret = ps->memStore->crls.addContext(ps->memStore, crl, NULL,
-                 (const void **)ppStoreContext);
+                 ppStoreContext);
         }
     }
     /* dirty trick: replace the returned context's hCertStore with
@@ -856,8 +856,7 @@ static BOOL WINAPI CRYPT_ProvControl(HCERTSTORE hCertStore, DWORD dwFlags,
 static PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, PWINECRYPT_CERTSTORE memStore, const CERT_STORE_PROV_INFO *pProvInfo)
 {
-    PWINE_PROVIDERSTORE ret = (PWINE_PROVIDERSTORE)CryptMemAlloc(
-     sizeof(WINE_PROVIDERSTORE));
+    PWINE_PROVIDERSTORE ret = CryptMemAlloc(sizeof(WINE_PROVIDERSTORE));
 
     if (ret)
     {
