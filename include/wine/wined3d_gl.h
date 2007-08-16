@@ -1138,6 +1138,15 @@ void (WINE_GLAPI *glVertex4sv) (const GLshort* v);
 void (WINE_GLAPI *glVertexPointer) (GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
 void (WINE_GLAPI *glViewport) (GLint x, GLint y, GLsizei width, GLsizei height);
 
+/* WGL functions */
+HGLRC   (WINAPI *pwglCreateContext)(HDC);
+BOOL    (WINAPI *pwglDeleteContext)(HGLRC);
+HGLRC   (WINAPI *pwglGetCurrentContext)(void);
+HDC     (WINAPI *pwglGetCurrentDC)(void);
+PROC    (WINAPI *pwglGetProcAddress)(LPCSTR);
+BOOL    (WINAPI *pwglMakeCurrent)(HDC,HGLRC);
+BOOL    (WINAPI *pwglShareLists)(HGLRC,HGLRC);
+
 #define GL_FUNCS_GEN \
     USE_GL_FUNC(glAccum) \
     USE_GL_FUNC(glAlphaFunc) \
@@ -1475,6 +1484,15 @@ void (WINE_GLAPI *glViewport) (GLint x, GLint y, GLsizei width, GLsizei height);
     USE_GL_FUNC(glVertex4sv) \
     USE_GL_FUNC(glVertexPointer) \
     USE_GL_FUNC(glViewport)
+
+#define WGL_FUNCS_GEN \
+    USE_WGL_FUNC(wglCreateContext) \
+    USE_WGL_FUNC(wglDeleteContext) \
+    USE_WGL_FUNC(wglGetCurrentContext) \
+    USE_WGL_FUNC(wglGetCurrentDC) \
+    USE_WGL_FUNC(wglGetProcAddress) \
+    USE_WGL_FUNC(wglMakeCurrent) \
+    USE_WGL_FUNC(wglShareLists)
 
 
 /****************************************************

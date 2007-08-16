@@ -168,14 +168,14 @@ static void WineD3D_ReleaseFakeGLContext(void) {
         return;
     }
 
-    glCtx = wglGetCurrentContext();
+    glCtx = pwglGetCurrentContext();
 
     TRACE_(d3d_caps)("decrementing ref from %i\n", wined3d_fake_gl_context_ref);
     if (0 == (--wined3d_fake_gl_context_ref) ) {
         if(!wined3d_fake_gl_context_foreign && glCtx) {
             TRACE_(d3d_caps)("destroying fake GL context\n");
-            wglMakeCurrent(NULL, NULL);
-            wglDeleteContext(glCtx);
+            pwglMakeCurrent(NULL, NULL);
+            pwglDeleteContext(glCtx);
         }
         if(wined3d_fake_gl_context_hdc)
             ReleaseDC(wined3d_fake_gl_context_hwnd, wined3d_fake_gl_context_hdc);
@@ -203,7 +203,7 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
 
     wined3d_fake_gl_context_foreign = TRUE;
 
-    glCtx = wglGetCurrentContext();
+    glCtx = pwglGetCurrentContext();
     if (!glCtx) {
         PIXELFORMATDESCRIPTOR pfd;
         int iPixelFormat;
@@ -241,14 +241,14 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
         SetPixelFormat(wined3d_fake_gl_context_hdc, iPixelFormat, &pfd);
 
         /* Create a GL context */
-        glCtx = wglCreateContext(wined3d_fake_gl_context_hdc);
+        glCtx = pwglCreateContext(wined3d_fake_gl_context_hdc);
         if (!glCtx) {
             WARN_(d3d_caps)("Error creating default context for capabilities initialization\n");
             goto fail;
         }
 
         /* Make it the current GL context */
-        if (!wglMakeCurrent(wined3d_fake_gl_context_hdc, glCtx)) {
+        if (!pwglMakeCurrent(wined3d_fake_gl_context_hdc, glCtx)) {
             WARN_(d3d_caps)("Error setting default context as current for capabilities initialization\n");
             goto fail;
         }
@@ -267,7 +267,7 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
     if(wined3d_fake_gl_context_hwnd)
         DestroyWindow(wined3d_fake_gl_context_hwnd);
     wined3d_fake_gl_context_hwnd = NULL;
-    if(glCtx) wglDeleteContext(glCtx);
+    if(glCtx) pwglDeleteContext(glCtx);
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     LEAVE_GL();
     return FALSE;
@@ -404,7 +404,33 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     int         i;
     HDC         hdc;
     HMODULE     mod_gl;
-    PROC        (WINAPI *p_wglGetProcAddress)(LPCSTR  lpszProc);
+
+#ifdef USE_WIN32_OPENGL
+#define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, #pfn);
+    mod_gl = LoadLibraryA("opengl32.dll");
+    if(!mod_gl) {
+        ERR("Can't load opengl32.dll!\n");
+        return FALSE;
+    }
+#else
+#define USE_GL_FUNC(pfn) pfn = (void*)pwglGetProcAddress(#pfn);
+    /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 (glXGetProcAddress wrapper) instead of opengl32's */
+    mod_gl = GetModuleHandleA("gdi32.dll");
+#endif
+
+/* Load WGL core functions from opengl32.dll */
+#define USE_WGL_FUNC(pfn) p##pfn = (void*)GetProcAddress(mod_gl, #pfn);
+    WGL_FUNCS_GEN;
+#undef USE_WGL_FUNC
+
+    if(!pwglGetProcAddress) {
+        ERR("Unable to load wglGetProcAddress!\n");
+        return FALSE;
+    }
+
+/* Dynamicly load all GL core functions */
+    GL_FUNCS_GEN;
+#undef USE_GL_FUNC
 
     /* Make sure that we've got a context */
     /* TODO: CreateFakeGLContext should really take a display as a parameter  */
@@ -413,33 +439,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
         return_value = FALSE;
 
     TRACE_(d3d_caps)("(%p)\n", gl_info);
-
-#ifdef USE_WIN32_OPENGL
-#define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, (const char *) #pfn);
-    mod_gl = LoadLibraryA("opengl32.dll");
-    if(!mod_gl) {
-        ERR("Can't load opengl32.dll!\n");
-        return FALSE;
-    }
-#else
-#define USE_GL_FUNC(pfn) pfn = (void*)p_wglGetProcAddress( (const char *) #pfn);
-    /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 (glXGetProcAddress wrapper) instead of opengl32's */
-    mod_gl = LoadLibraryA("gdi32.dll");
-    if(!mod_gl) {
-        ERR("Can't load gdi32.dll!\n");
-        return FALSE;
-    }
-#endif
-
-    p_wglGetProcAddress = (void*)GetProcAddress(mod_gl, "wglGetProcAddress");
-    if(!p_wglGetProcAddress) {
-        ERR("Unable to load wglGetProcAddress!\n");
-        return FALSE;
-    }
-
-/* Dynamicly load all GL core functions */
-    GL_FUNCS_GEN;
-#undef USE_GL_FUNC
 
     gl_string = (const char *) glGetString(GL_RENDERER);
     if (NULL == gl_string)
@@ -607,7 +606,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     gl_info->ps_arb_constantsF = 0;
 
 /* Now work out what GL support this card really has */
-#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) p_wglGetProcAddress( (const char *) #pfn);
+#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) pwglGetProcAddress(#pfn);
     GL_EXT_FUNCS_GEN;
     WGL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
@@ -1009,7 +1008,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
 /* TODO: config lookups */
 
     /* Make sure there's an active HDC else the WGL extensions will fail */
-    hdc = wglGetCurrentDC();
+    hdc = pwglGetCurrentDC();
     if (hdc) {
         WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
         TRACE_(d3d_caps)("WGL_Extensions reported:\n");

@@ -266,8 +266,8 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         }
     }
 
-    ctx = wglCreateContext(hdc);
-    if(This->numContexts) wglShareLists(This->contexts[0]->glCtx, ctx);
+    ctx = pwglCreateContext(hdc);
+    if(This->numContexts) pwglShareLists(This->contexts[0]->glCtx, ctx);
 
     if(!ctx) {
         ERR("Failed to create a WGL context\n");
@@ -280,7 +280,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     ret = AddContextToArray(This, win_handle, hdc, ctx, pbuffer);
     if(!ret) {
         ERR("Failed to add the newly created context to the context list\n");
-        wglDeleteContext(ctx);
+        pwglDeleteContext(ctx);
         if(create_pbuffer) {
             GL_EXTCALL(wglReleasePbufferDCARB(pbuffer, hdc));
             GL_EXTCALL(wglDestroyPbufferARB(pbuffer));
@@ -294,9 +294,9 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     TRACE("Successfully created new context %p\n", ret);
 
     /* Set up the context defaults */
-    oldCtx  = wglGetCurrentContext();
-    oldDrawable = wglGetCurrentDC();
-    if(wglMakeCurrent(hdc, ctx) == FALSE) {
+    oldCtx  = pwglGetCurrentContext();
+    oldDrawable = pwglGetCurrentDC();
+    if(pwglMakeCurrent(hdc, ctx) == FALSE) {
         ERR("Cannot activate context to set up defaults\n");
         goto out;
     }
@@ -368,7 +368,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     }
 
     if(oldDrawable && oldCtx) {
-        wglMakeCurrent(oldDrawable, oldCtx);
+        pwglMakeCurrent(oldDrawable, oldCtx);
     }
 
 out:
@@ -430,15 +430,15 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
 
     /* check that we are the current context first */
     TRACE("Destroying ctx %p\n", context);
-    if(wglGetCurrentContext() == context->glCtx){
-        wglMakeCurrent(NULL, NULL);
+    if(pwglGetCurrentContext() == context->glCtx){
+        pwglMakeCurrent(NULL, NULL);
     }
 
     if(context->isPBuffer) {
         GL_EXTCALL(wglReleasePbufferDCARB(context->pbuffer, context->hdc));
         GL_EXTCALL(wglDestroyPbufferARB(context->pbuffer));
     } else ReleaseDC(context->win_handle, context->hdc);
-    wglDeleteContext(context->glCtx);
+    pwglDeleteContext(context->glCtx);
 
     RemoveContextFromArray(This, context);
 }
@@ -831,7 +831,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         BOOL ret;
         TRACE("Switching gl ctx to %p, hdc=%p ctx=%p\n", context, context->hdc, context->glCtx);
         LEAVE_GL();
-        ret = wglMakeCurrent(context->hdc, context->glCtx);
+        ret = pwglMakeCurrent(context->hdc, context->glCtx);
         ENTER_GL();
         if(ret == FALSE) {
             ERR("Failed to activate the new context\n");
