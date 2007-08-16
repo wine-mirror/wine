@@ -204,7 +204,7 @@ Wine環境ではverifyフラグは意味を持ちません。\n"
   WCMD_EXIT,
 "EXIT は現在のコマンドセッションを終了してcmdを呼び出したOSまたはシェルに戻します。\n"
 
-  1000, "CMD 内蔵のコマンド:\n\
+  WCMD_ALLHELP, "CMD 内蔵のコマンド:\n\
 ATTRIB\t\tDOSファイルの属性を表示又は変更\n\
 CALL\t\t外部のバッチファイルを呼び出し\n\
 CD (CHDIR)\tカレントディレクトリを変更\n\

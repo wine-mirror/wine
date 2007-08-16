@@ -204,7 +204,7 @@ Doðrulama bayraðýnýn Wine'da bir iþlevi yoktur.\n"
 "EXIT geçerli komut oturumunu sonlandýrýr ve cmd'yi çaðýrdýðýnýz\n\
 yerden iþletim sistemine döner.\n"
 
-  1000, "CMD dahili komutlarý:\n\
+  WCMD_ALLHELP, "CMD dahili komutlarý:\n\
 ATTRIB\t\tDOS dosya özelliklerini göster veya deðiþtir\n\
 CALL\t\tToplu iþlem dosyasý içerisinden bir diðerini çalýþtýr\n\
 CD (CHDIR)\tGeçerli dizini deðiþtir\n\

@@ -202,7 +202,7 @@ O flag de verificação não tem função no Wine.\n"
 "EXIT termina a sessão de comando atual e retorna ao sistema operacional\n\
 ou shell que tenha invocado o cmd.\n"
 
-  1000, "CMD - os comando internos são:\n\
+  WCMD_ALLHELP, "CMD - os comando internos são:\n\
 ATTRIB\t\tMostra ou troca atributos de arquivo DOS\n\
 CALL\t\tInvoca um arquivo de lote dentro de outro\n\
 CD (CHDIR)\tMuda o diretório padrão atual\n\
@@ -413,7 +413,7 @@ O flag de verificação não tem função no Wine.\n"
 "EXIT termina a sessão de comando actual e retorna ao sistema operacional\n\
 ou shell que tenha invocado o cmd.\n"
 
-  1000, "CMD - os comando internos são:\n\
+  WCMD_ALLHELP, "CMD - os comando internos são:\n\
 ATTRIB\t\tMostra ou troca atributos do ficheiro DOS\n\
 CALL\t\tInvoca um ficheiro de lote dentro de outro\n\
 CD (CHDIR)\tMuda o directório padrão actual\n\

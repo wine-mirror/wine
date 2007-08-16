@@ -203,7 +203,7 @@ De verify-schakelaar heeft geen functie binnen Wine.\n"
 "EXIT beëindigt de lopende sessie en keert terug\n\
 naar het besturingssysteem of de schil van waaruit cmd werd gestart.\n"
 
-  1000, "CMD's ingebouwde opdrachten zijn:\n\
+  WCMD_ALLHELP, "CMD's ingebouwde opdrachten zijn:\n\
 ATTRIB\t\tToon of wijzig DOS bestandsattributen\n\
 CALL\t\tRoep een batchbestand aan vanuit een ander bestand\n\
 CD (CHDIR)\tWijzig de huidige directory\n\

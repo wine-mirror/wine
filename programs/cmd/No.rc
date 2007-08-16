@@ -206,7 +206,7 @@ arbeidskatalog til den som er oppgitt.\n"
 "EXIT avslutter gjeldende kommandoøkt og returnerer til operativsystemet\n\
 eller skallet CMD ble startet fra.\n"
 
-  1000, "Innebygde kommandoer i CMD:\n\
+  WCMD_ALLHELP, "Innebygde kommandoer i CMD:\n\
 ATTRIB\t\tViser eller endrer DOS-filattributter\n\
 CALL\t\tKall en satsvis fil inne i en annen\n\
 CD (CHDIR)\tBytter arbeidskatalog\n\

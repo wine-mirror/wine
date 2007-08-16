@@ -208,7 +208,7 @@ PUSHD.\n"
 "EXIT terminates the current command session and returns\n\
 to the operating system or shell from which you invoked cmd.\n"
 
-  1000, "CMD built-in commands are:\n\
+  WCMD_ALLHELP, "CMD built-in commands are:\n\
 ATTRIB\t\tShow or change DOS file attributes\n\
 CALL\t\tInvoke a batch file from inside another\n\
 CD (CHDIR)\tChange current default directory\n\

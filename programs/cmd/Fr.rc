@@ -200,7 +200,7 @@ Le flag de verification n'a pas de fonction dans Wine.\n"
 "EXIT termine la session de ligne de commande et retourne\n\
 au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
 
-  1000, "Les commandes internes CMD sont:\n\
+  WCMD_ALLHELP, "Les commandes internes CMD sont:\n\
 ATTRIB\t\tAffiche ou change les attributs de fichiers DOS\n\
 CALL\t\tInvoque un fichier batch à l'intérieur d'un autre\n\
 CD (CHDIR)\tChange le répertoire courant par défaut\n\

@@ -229,7 +229,7 @@ mit PUSHD gespeicherten.\n"
 Betriebssystem oder der Shell zurück, von der CMD gestart wurde.\n"
 
 
-  1000, "CMD eingebauten Befehle sind:\n\
+  WCMD_ALLHELP, "CMD eingebauten Befehle sind:\n\
 ATTRIB\t\tZeigt an oder ändert die DOS Dateieigenschaften\n\
 CALL\t\tRuft eine Batch-Datei innerhalb einer anderen auf\n\
 CD (CHDIR)\tWechselt in das Verzeichnis\n\

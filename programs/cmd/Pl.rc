@@ -203,7 +203,7 @@ Ustawienia flagi nic nie zmieniaj¹ pod Wine'em.\n"
 "EXIT koñczy bierz¹c¹ sesjê cmd i powraca do systemu operacyjnego\n\
 lub pow³oki, w której uruchomiono cmd.\n"
 
-  1000, "CMD - wbudowane komendy:\n\
+  WCMD_ALLHELP, "CMD - wbudowane komendy:\n\
 ATTRIB\t\tPokazuje lub zmienia atrybuty pliku\n\
 CALL\t\tWywo³uje plik bat z innego pliku\n\
 CD (CHDIR)\tZmienia bierz¹cy katalog\n\

@@ -206,7 +206,7 @@ Pøíznak verify nemá ve Wine žádnou funkci.\n"
 operaènímu systému nebo pøíkazovému interpretu,\n\
 ze kterého byl cmd spuštìn.\n"
 
-  1000, "Vestavìné pøíkazy CMD jsou:\n\
+  WCMD_ALLHELP, "Vestavìné pøíkazy CMD jsou:\n\
 ATTRIB\t\tZobrazí nebo nastaví DOS-ovské souborové attributy\n\
 CALL\t\tZavolá dávkový soubor z jiného\n\
 CD (CHDIR)\tZmìní pracovní adresáø\n\

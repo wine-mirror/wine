@@ -225,7 +225,7 @@ PUSHD.\n"
 "EXIT termina la sesión de comandos actual y regresa al sistema\n\
 operativo o intérprete de comandos desde el que invocó cmd.\n"
 
-  1000, "Los comandos internos de CMD son:\n\
+  WCMD_ALLHELP, "Los comandos internos de CMD son:\n\
 ATTRIB\t\tMostrar o cambiar los atributos de archivo de DOS\n\
 CALL\t\tInvocar un archivo por lotes desde dentro de otro\n\
 CD (CHDIR)\tCambiar el directorio por defecto actual\n\
