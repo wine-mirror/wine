@@ -51,17 +51,12 @@ static INT (WINAPI *pVariantTimeToDosDateTime)(double,USHORT*,USHORT *);
 #define CHECKPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func); \
   if (!p##func) { trace("function " # func " not available, not testing it\n"); return; }
 
-  /* Is a given function exported from oleaut32? */
-#define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
-
 /* Have IRecordInfo data type? */
-#define HAVE_OLEAUT32_RECORD  HAVE_FUNC(SafeArraySetRecordInfo)
-/* Have CY data type? */
-#define HAVE_OLEAUT32_CY      HAVE_FUNC(VarCyAdd)
+static int HAVE_OLEAUT32_RECORD = 0;
 /* Have I8/UI8 data type? */
-#define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
+static int HAVE_OLEAUT32_I8 = 0;
 /* Is this an ancient version with support for only I2/I4/R4/R8/DATE? */
-#define IS_ANCIENT (!HAVE_FUNC(VarI1FromI2))
+static int IS_ANCIENT = 0;
 
 /* When comparing floating point values we cannot expect an exact match
  * because the rounding errors depend on the exact algorithm.
@@ -98,6 +93,20 @@ static INT (WINAPI *pVariantTimeToDosDateTime)(double,USHORT*,USHORT *);
 #define R4_MIN FLT_MIN
 #define R8_MAX DBL_MAX
 #define R8_MIN DBL_MIN
+
+static void init(void)
+{
+  hOleaut32 = GetModuleHandle("oleaut32.dll");
+
+  /* Is a given function exported from oleaut32? */
+#define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
+
+  HAVE_OLEAUT32_I8 = HAVE_FUNC(VarI8FromI1);
+  HAVE_OLEAUT32_RECORD = HAVE_FUNC(SafeArraySetRecordInfo);
+  IS_ANCIENT = (!HAVE_FUNC(VarI1FromI2));
+
+#undef HAVE_FUNC
+}
 
 /* Functions to set a DECIMAL */
 static void setdec(DECIMAL* dec, BYTE scl, BYTE sgn, ULONG hi32, ULONG64 lo64)
@@ -8203,7 +8212,7 @@ static void test_VarImp(void)
 
 START_TEST(vartest)
 {
-  hOleaut32 = LoadLibraryA("oleaut32.dll");
+  init();
 
   test_VariantInit();
   test_VariantClear();
