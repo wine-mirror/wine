@@ -760,13 +760,12 @@ static void test_GetStandardColorSpaceProfileW(void)
 static void test_EnumColorProfilesA(void)
 {
     BOOL ret;
-    DWORD size, number;
+    DWORD total, size, number;
     ENUMTYPEA record;
-    BYTE buffer[MAX_PATH];
+    BYTE *buffer;
 
     /* Parameter checks */
 
-    size = sizeof(buffer);
     memset( &record, 0, sizeof(ENUMTYPEA) );
 
     record.dwSize = sizeof(ENUMTYPEA);
@@ -774,6 +773,12 @@ static void test_EnumColorProfilesA(void)
     record.dwFields |= ET_DATACOLORSPACE;
     record.dwDataColorSpace = SPACE_RGB;
 
+    total = 0;
+    ret = pEnumColorProfilesA( NULL, &record, NULL, &total, &number );
+    ok( !ret, "EnumColorProfilesA() failed (%d)\n", GetLastError() );
+    buffer = HeapAlloc( GetProcessHeap(), 0, total );
+
+    size = total;
     ret = pEnumColorProfilesA( machine, &record, buffer, &size, &number );
     ok( !ret, "EnumColorProfilesA() succeeded (%d)\n", GetLastError() );
 
@@ -798,23 +803,23 @@ static void test_EnumColorProfilesA(void)
 
     if (standardprofile)
     {
-        size = sizeof(buffer);
+        size = total;
 
         ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
         ok( ret, "EnumColorProfilesA() failed (%d)\n", GetLastError() );
     }
+    HeapFree( GetProcessHeap(), 0, buffer );
 }
 
 static void test_EnumColorProfilesW(void)
 {
     BOOL ret;
-    DWORD size, number;
+    DWORD total, size, number;
     ENUMTYPEW record;
-    BYTE buffer[MAX_PATH * sizeof(WCHAR)];
+    BYTE *buffer;
 
     /* Parameter checks */
 
-    size = sizeof(buffer);
     memset( &record, 0, sizeof(ENUMTYPEW) );
 
     record.dwSize = sizeof(ENUMTYPEW);
@@ -822,6 +827,12 @@ static void test_EnumColorProfilesW(void)
     record.dwFields |= ET_DATACOLORSPACE;
     record.dwDataColorSpace = SPACE_RGB;
 
+    total = 0;
+    ret = pEnumColorProfilesW( NULL, &record, NULL, &total, &number );
+    ok( !ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
+    buffer = HeapAlloc( GetProcessHeap(), 0, total * sizeof(WCHAR) );
+
+    size = total;
     ret = pEnumColorProfilesW( machineW, &record, buffer, &size, &number );
     ok( !ret, "EnumColorProfilesW() succeeded (%d)\n", GetLastError() );
 
@@ -833,7 +844,7 @@ static void test_EnumColorProfilesW(void)
 
     if (standardprofileW)
     {
-        ret = pEnumColorProfilesW( NULL, &record, buffer, &size, NULL );
+        ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
         ok( ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
     }
 
@@ -846,11 +857,12 @@ static void test_EnumColorProfilesW(void)
 
     if (standardprofileW)
     {
-        size = sizeof(buffer);
+        size = total;
 
         ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
         ok( ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
     }
+    HeapFree( GetProcessHeap(), 0, buffer );
 }
 
 static void test_InstallColorProfileA(void)
