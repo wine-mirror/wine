@@ -370,8 +370,7 @@ HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode)
 
     nsIDOMNode_GetNodeType(nsnode, &node_type);
 
-    if(node_type == NS_ELEMENT_NODE
-       || node_type == NS_DOCUMENT_NODE)
+    if(node_type == ELEMENT_NODE)
         HTMLElement_Create(ret);
 
     return ret;

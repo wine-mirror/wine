@@ -47,9 +47,6 @@
 
 #define NSAPI WINAPI
 
-#define NS_ELEMENT_NODE   1
-#define NS_DOCUMENT_NODE  9
-
 #define MSHTML_E_NODOC    0x800a025c
 
 typedef struct HTMLDOMNode HTMLDOMNode;
