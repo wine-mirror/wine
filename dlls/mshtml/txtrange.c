@@ -337,8 +337,24 @@ static HRESULT WINAPI HTMLTxtRange_moveEnd(IHTMLTxtRange *iface, BSTR Unit,
 static HRESULT WINAPI HTMLTxtRange_select(IHTMLTxtRange *iface)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    if(This->doc->nscontainer) {
+        nsIDOMWindow *dom_window = NULL;
+        nsISelection *nsselection;
+
+        nsIWebBrowser_GetContentDOMWindow(This->doc->nscontainer->webbrowser, &dom_window);
+        nsIDOMWindow_GetSelection(dom_window, &nsselection);
+        nsIDOMWindow_Release(dom_window);
+
+        nsISelection_RemoveAllRanges(nsselection);
+        nsISelection_AddRange(nsselection, This->nsrange);
+
+        nsISelection_Release(nsselection);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_pasteHTML(IHTMLTxtRange *iface, BSTR html)
