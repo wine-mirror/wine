@@ -46,7 +46,7 @@ static HMODULE hOleaut32;
 /* Get a conversion function ptr, return if function not available */
 #define CHECKPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func); \
   if (!p##func) { \
-    trace("function " # func " not available, not testing it\n"); return; }
+    skip("function " # func " not available, not testing it\n"); return; }
 
 /* Is a given function exported from oleaut32? */
 #define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
@@ -2347,7 +2347,10 @@ static void test_VarI8Copy(void)
   LONGLONG in = 1;
 
   if (!HAVE_OLEAUT32_I8)
+  {
+    skip("I8 and UI8 data types are not available\n");
     return;
+  }
 
   VariantInit(&vSrc);
   VariantInit(&vDst);
@@ -2374,7 +2377,10 @@ static void test_VarI8ChangeTypeEx(void)
   VARIANTARG vSrc, vDst;
 
   if (!HAVE_OLEAUT32_I8)
+  {
+    skip("I8 and UI8 data types are not available\n");
     return;
+  }
 
   in = 1;
 
@@ -2603,7 +2609,10 @@ static void test_VarUI8Copy(void)
   ULONGLONG in = 1;
 
   if (!HAVE_OLEAUT32_I8)
+  {
+    skip("I8 and UI8 data types are not available\n");
     return;
+  }
 
   VariantInit(&vSrc);
   VariantInit(&vDst);
@@ -2630,7 +2639,10 @@ static void test_VarUI8ChangeTypeEx(void)
   VARIANTARG vSrc, vDst;
 
   if (!HAVE_OLEAUT32_I8)
+  {
+    skip("I8 and UI8 data types are not available\n");
     return;
+  }
 
   in = 1;
 
