@@ -34,6 +34,8 @@
 #include <process.h>
 #include <errno.h>
 
+static HANDLE proc_handles[2];
+
 static void test_fdopen( void )
 {
     static const char buffer[] = {0,1,2,3,4,5,6,7,8,9};
@@ -922,7 +924,7 @@ static void test_pipes(const char* selfname)
     arg_v[3] = str_fdr; sprintf(str_fdr, "%d", pipes[0]);
     arg_v[4] = str_fdw; sprintf(str_fdw, "%d", pipes[1]);
     arg_v[5] = NULL;
-    _spawnvp(_P_NOWAIT, selfname, arg_v);
+    proc_handles[0] = (HANDLE)_spawnvp(_P_NOWAIT, selfname, arg_v);
     ok(close(pipes[1]) == 0, "unable to close %d: %d\n", pipes[1], errno);
 
     r=read(pipes[0], buf, sizeof(buf)-1);
@@ -947,7 +949,7 @@ static void test_pipes(const char* selfname)
     arg_v[3] = str_fdr; sprintf(str_fdr, "%d", pipes[0]);
     arg_v[4] = str_fdw; sprintf(str_fdw, "%d", pipes[1]);
     arg_v[5] = NULL;
-    _spawnvp(_P_NOWAIT, selfname, arg_v);
+    proc_handles[1] = (HANDLE)_spawnvp(_P_NOWAIT, selfname, arg_v);
     ok(close(pipes[1]) == 0, "unable to close %d: %d\n", pipes[1], errno);
     file=fdopen(pipes[0], "r");
 
@@ -1004,4 +1006,9 @@ START_TEST(file)
     test_get_osfhandle();
     test_setmaxstdio();
     test_pipes(arg_v[0]);
+
+    /* Wait for the (_P_NOWAIT) spawned processes to finish to make sure the report
+     * file contains lines in the correct order
+     */
+    WaitForMultipleObjects(sizeof(proc_handles)/sizeof(proc_handles[0]), proc_handles, TRUE, 5000);
 }
