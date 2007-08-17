@@ -1748,7 +1748,7 @@ void WINAPI NdrSimpleStructFree(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 
-static unsigned long EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned long EmbeddedComplexSize(const MIDL_STUB_MESSAGE *pStubMsg,
                                          PFORMAT_STRING pFormat)
 {
   switch (*pFormat) {
@@ -3109,7 +3109,7 @@ void WINAPI NdrComplexArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
     pMemory = ComplexFree(pStubMsg, pMemory, pFormat, NULL);
 }
 
-static ULONG UserMarshalFlags(PMIDL_STUB_MESSAGE pStubMsg)
+static ULONG UserMarshalFlags(const MIDL_STUB_MESSAGE *pStubMsg)
 {
   return MAKELONG(pStubMsg->dwDestContext,
                   pStubMsg->RpcMsg->DataRepresentation);
@@ -4419,7 +4419,7 @@ void WINAPI NdrVaryingArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
     EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
 }
 
-static ULONG get_discriminant(unsigned char fc, unsigned char *pMemory)
+static ULONG get_discriminant(unsigned char fc, const unsigned char *pMemory)
 {
     switch (fc)
     {
@@ -4427,16 +4427,16 @@ static ULONG get_discriminant(unsigned char fc, unsigned char *pMemory)
     case RPC_FC_CHAR:
     case RPC_FC_SMALL:
     case RPC_FC_USMALL:
-        return *(UCHAR *)pMemory;
+        return *(const UCHAR *)pMemory;
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
     case RPC_FC_ENUM16:
-        return *(USHORT *)pMemory;
+        return *(const USHORT *)pMemory;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
-        return *(ULONG *)pMemory;
+        return *(const ULONG *)pMemory;
     default:
         FIXME("Unhandled base type: 0x%02x\n", fc);
         return 0;
@@ -5773,7 +5773,7 @@ static struct context_handle_entry *get_context_entry(NDR_CCONTEXT CContext)
     return che;
 }
 
-static struct context_handle_entry *context_entry_from_guid(LPGUID uuid)
+static struct context_handle_entry *context_entry_from_guid(LPCGUID uuid)
 {
     struct context_handle_entry *che;
     LIST_FOR_EACH_ENTRY(che, &context_handle_list, struct context_handle_entry, entry)
@@ -5823,7 +5823,7 @@ void WINAPI NDRCContextMarshall(NDR_CCONTEXT CContext, void *pBuff)
 
 static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
                                       RPC_BINDING_HANDLE hBinding,
-                                      ndr_context_handle *chi)
+                                      const ndr_context_handle *chi)
 {
     struct context_handle_entry *che = NULL;
 

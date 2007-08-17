@@ -440,7 +440,7 @@ static RPC_STATUS RPCRT4_SecurePacket(RpcConnection *Connection,
  */
 static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
                                   void *Buffer, unsigned int BufferLength,
-                                  void *Auth, unsigned int AuthLength)
+                                  const void *Auth, unsigned int AuthLength)
 {
   PUCHAR buffer_pos;
   DWORD hdr_size;
