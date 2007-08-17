@@ -49,6 +49,34 @@ typedef struct {
 
 #define HTMLTXTRANGE(x)  ((IHTMLTxtRange*)  &(x)->lpHTMLTxtRangeVtbl)
 
+static HTMLTxtRange *get_range_object(HTMLDocument *doc, IHTMLTxtRange *iface)
+{
+    HTMLTxtRange *iter;
+
+    LIST_FOR_EACH_ENTRY(iter, &doc->range_list, HTMLTxtRange, entry) {
+        if(HTMLTXTRANGE(iter) == iface)
+            return iter;
+    }
+
+    ERR("Could not find range in document\n");
+    return NULL;
+}
+
+static int string_to_nscmptype(LPCWSTR str)
+{
+    static const WCHAR seW[] = {'S','t','a','r','t','T','o','E','n','d',0};
+    static const WCHAR ssW[] = {'S','t','a','r','t','T','o','S','t','a','r','t',0};
+    static const WCHAR esW[] = {'E','n','d','T','o','S','t','a','r','t',0};
+    static const WCHAR eeW[] = {'E','n','d','T','o','E','n','d',0};
+
+    if(!strcmpiW(str, seW))  return NS_START_TO_END;
+    if(!strcmpiW(str, ssW))  return NS_START_TO_START;
+    if(!strcmpiW(str, esW))  return NS_END_TO_START;
+    if(!strcmpiW(str, eeW))  return NS_END_TO_END;
+
+    return -1;
+}
+
 #define HTMLTXTRANGE_THIS(iface) DEFINE_THIS(HTMLTxtRange, HTMLTxtRange, iface)
 
 static HRESULT WINAPI HTMLTxtRange_QueryInterface(IHTMLTxtRange *iface, REFIID riid, void **ppv)
@@ -383,8 +411,27 @@ static HRESULT WINAPI HTMLTxtRange_compareEndPoints(IHTMLTxtRange *iface, BSTR h
         IHTMLTxtRange *SourceRange, long *ret)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(how), SourceRange, ret);
-    return E_NOTIMPL;
+    HTMLTxtRange *src_range;
+    PRInt16 nsret = 0;
+    int nscmpt;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(how), SourceRange, ret);
+
+    nscmpt = string_to_nscmptype(how);
+    if(nscmpt == -1)
+        return E_INVALIDARG;
+
+    src_range = get_range_object(This->doc, SourceRange);
+    if(!src_range)
+        return E_FAIL;
+
+    nsres = nsIDOMRange_CompareBoundaryPoints(This->nsrange, nscmpt, src_range->nsrange, &nsret);
+    if(NS_FAILED(nsres))
+        ERR("CompareBoundaryPoints failed: %08x\n", nsres);
+
+    *ret = nsret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_findText(IHTMLTxtRange *iface, BSTR String,

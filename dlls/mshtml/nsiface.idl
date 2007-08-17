@@ -819,6 +819,13 @@ interface nsIDOMHTMLDocument : nsIDOMDocument
 ]
 interface nsIDOMRange : nsISupports
 {
+    enum {
+        NS_START_TO_START,
+        NS_START_TO_END,
+        NS_END_TO_END,
+        NS_END_TO_START
+    };
+
     nsresult GetStartContainer(nsIDOMNode **aStartContainer);
     nsresult GetStartOffset(PRInt32 *aStartOffset);
     nsresult GetEndContainer(nsIDOMNode **aEndContainer);
