@@ -5470,6 +5470,12 @@ static void test_VarAnd(void)
                 BOOL bFail = FALSE;
                 SKIPTESTAND(rightvt);
 
+                /* Check if we need/have support for I8 and/or UI8 */
+                if ((leftvt == VT_I8 || leftvt == VT_UI8 ||
+                    rightvt == VT_I8 || rightvt == VT_UI8) &&
+                    !HAVE_OLEAUT32_I8)
+                    continue;
+
                 memset(&left, 0, sizeof(left));
                 memset(&right, 0, sizeof(right));
                 V_VT(&left) = leftvt | ExtraFlags[i];
