@@ -1173,24 +1173,24 @@ static void WINAPI wine_glCurrentPaletteMatrixARB( GLint index ) {
   LEAVE_GL();
 }
 
-static void WINAPI wine_glDeformSGIX( GLint mask ) {
-  void (*func_glDeformSGIX)( GLint ) = extension_funcs[142];
+static void WINAPI wine_glDeformSGIX( GLbitfield mask ) {
+  void (*func_glDeformSGIX)( GLbitfield ) = extension_funcs[142];
   TRACE("(%d)\n", mask );
   ENTER_GL();
   func_glDeformSGIX( mask );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glDeformationMap3dSGIX( GLint target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble w1, GLdouble w2, GLint wstride, GLint worder, GLdouble* points ) {
-  void (*func_glDeformationMap3dSGIX)( GLint, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, GLdouble* ) = extension_funcs[143];
+static void WINAPI wine_glDeformationMap3dSGIX( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble w1, GLdouble w2, GLint wstride, GLint worder, GLdouble* points ) {
+  void (*func_glDeformationMap3dSGIX)( GLenum, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, GLdouble* ) = extension_funcs[143];
   TRACE("(%d, %f, %f, %d, %d, %f, %f, %d, %d, %f, %f, %d, %d, %p)\n", target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, w1, w2, wstride, worder, points );
   ENTER_GL();
   func_glDeformationMap3dSGIX( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, w1, w2, wstride, worder, points );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glDeformationMap3fSGIX( GLint target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat w1, GLfloat w2, GLint wstride, GLint worder, GLfloat* points ) {
-  void (*func_glDeformationMap3fSGIX)( GLint, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, GLfloat* ) = extension_funcs[144];
+static void WINAPI wine_glDeformationMap3fSGIX( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat w1, GLfloat w2, GLint wstride, GLint worder, GLfloat* points ) {
+  void (*func_glDeformationMap3fSGIX)( GLenum, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, GLfloat* ) = extension_funcs[144];
   TRACE("(%d, %f, %f, %d, %d, %f, %f, %d, %d, %f, %f, %d, %d, %p)\n", target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, w1, w2, wstride, worder, points );
   ENTER_GL();
   func_glDeformationMap3fSGIX( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, w1, w2, wstride, worder, points );
@@ -3001,8 +3001,8 @@ static void WINAPI wine_glGetProgramivNV( GLuint id, GLenum pname, GLint* params
   LEAVE_GL();
 }
 
-static void WINAPI wine_glGetQueryObjecti64vEXT( GLuint id, GLenum pname, INT64* params ) {
-  void (*func_glGetQueryObjecti64vEXT)( GLuint, GLenum, INT64* ) = extension_funcs[368];
+static void WINAPI wine_glGetQueryObjecti64vEXT( GLuint id, GLenum pname, GLint64EXT* params ) {
+  void (*func_glGetQueryObjecti64vEXT)( GLuint, GLenum, GLint64EXT* ) = extension_funcs[368];
   TRACE("(%d, %d, %p)\n", id, pname, params );
   ENTER_GL();
   func_glGetQueryObjecti64vEXT( id, pname, params );
@@ -3025,8 +3025,8 @@ static void WINAPI wine_glGetQueryObjectivARB( GLuint id, GLenum pname, GLint* p
   LEAVE_GL();
 }
 
-static void WINAPI wine_glGetQueryObjectui64vEXT( GLuint id, GLenum pname, UINT64* params ) {
-  void (*func_glGetQueryObjectui64vEXT)( GLuint, GLenum, UINT64* ) = extension_funcs[371];
+static void WINAPI wine_glGetQueryObjectui64vEXT( GLuint id, GLenum pname, GLuint64EXT* params ) {
+  void (*func_glGetQueryObjectui64vEXT)( GLuint, GLenum, GLuint64EXT* ) = extension_funcs[371];
   TRACE("(%d, %d, %p)\n", id, pname, params );
   ENTER_GL();
   func_glGetQueryObjectui64vEXT( id, pname, params );
@@ -3523,8 +3523,8 @@ static void WINAPI wine_glHistogramEXT( GLenum target, GLsizei width, GLenum int
   LEAVE_GL();
 }
 
-static void WINAPI wine_glIglooInterfaceSGIX( GLint pname, GLint* params ) {
-  void (*func_glIglooInterfaceSGIX)( GLint, GLint* ) = extension_funcs[432];
+static void WINAPI wine_glIglooInterfaceSGIX( GLenum pname, GLvoid* params ) {
+  void (*func_glIglooInterfaceSGIX)( GLenum, GLvoid* ) = extension_funcs[432];
   TRACE("(%d, %p)\n", pname, params );
   ENTER_GL();
   func_glIglooInterfaceSGIX( pname, params );
@@ -3857,8 +3857,8 @@ static void WINAPI wine_glListParameterivSGIX( GLuint list, GLenum pname, GLint*
   LEAVE_GL();
 }
 
-static void WINAPI wine_glLoadIdentityDeformationMapSGIX( GLint mask ) {
-  void (*func_glLoadIdentityDeformationMapSGIX)( GLint ) = extension_funcs[469];
+static void WINAPI wine_glLoadIdentityDeformationMapSGIX( GLbitfield mask ) {
+  void (*func_glLoadIdentityDeformationMapSGIX)( GLbitfield ) = extension_funcs[469];
   TRACE("(%d)\n", mask );
   ENTER_GL();
   func_glLoadIdentityDeformationMapSGIX( mask );

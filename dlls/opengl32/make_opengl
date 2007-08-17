@@ -6,12 +6,16 @@ use strict;
 #   make_opengl path_to_spec_file opengl_version
 #
 #     - path_to_spec_file is the path to the directory where the OpenGL
-#       spec files are located. These files are part of the OpenGL
-#       sample implementation CVS tree and are located in
+#       spec files are located. These files are hosted in the OpenGL
+#       extension registry at opengl.org:
+#       http://www.opengl.org/registry/api/gl.spec
+#       http://www.opengl.org/registry/api/gl.tm
+#
+#       The files used to be hosted and maintained by SGI. You can still find
+#       find them in the sample implementation CVS tree which is located at
 #       CVS_ROOT/projects/ogl-sample/main/doc/registry/specs.
-#       You can find them on the web at the following URL :
+#       You can also find them on the web at the following URL :
 #         http://oss.sgi.com/cgi-bin/cvsweb.cgi/projects/ogl-sample/main/doc/registry/specs/
-#       You will need gl.tm and gl.spec.
 #
 #     - opengl_version is the OpenGL version emulated by the library
 #       (can be 1.0 to 1.5).
@@ -324,28 +328,6 @@ while (my $line = <TYPES>) {
 }
 # This is to override the 'void' -> '*' bogus conversion
 $pseudo_to_opengl{"void"} = "void";
-$pseudo_to_opengl{"Int64EXT"} = "INT64";
-$pseudo_to_opengl{"UInt64EXT"} = "UINT64";
-$pseudo_to_opengl{"BufferAccessARB"} = "GLenum";
-$pseudo_to_opengl{"BufferOffsetARB"} = "GLintptr";
-$pseudo_to_opengl{"BufferOffset"} = "GLintptr";
-$pseudo_to_opengl{"BufferPNameARB"} = "GLenum";
-$pseudo_to_opengl{"BufferPointerNameARB"} = "GLenum";
-$pseudo_to_opengl{"BufferSizeARB"} = "GLsizeiptr";
-$pseudo_to_opengl{"BufferSize"} = "GLsizeiptr";
-$pseudo_to_opengl{"BufferTargetARB"} = "GLenum";
-$pseudo_to_opengl{"BufferUsageARB"} = "GLenum";
-$pseudo_to_opengl{"FramebufferAttachment"} = "GLenum";
-$pseudo_to_opengl{"FramebufferTarget"} = "GLenum";
-$pseudo_to_opengl{"ProgramParameterPName"} = "GLenum";
-$pseudo_to_opengl{"ProgramTarget"} = "GLenum";
-$pseudo_to_opengl{"RenderbufferTarget"} = "GLenum";
-$pseudo_to_opengl{"VertexAttribEnum"} = "GLenum";
-# This is a bug in the spec file...
-$pseudo_to_opengl{"FfdTargetSGIX"} = "GLint";
-$pseudo_to_opengl{"FfdMaskSGIX"} = "GLint";
-$pseudo_to_opengl{"IglooFunctionSelectSGIX"} = "GLint";
-$pseudo_to_opengl{"IglooParameterSGIX"} = "GLint";
 
 #
 # Then, create the list of all OpenGL functions using the 'gl.spec'
