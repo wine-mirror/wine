@@ -42,6 +42,9 @@ typedef struct {
     LONG ref;
 
     nsIDOMRange *nsrange;
+    HTMLDocument *doc;
+
+    struct list entry;
 } HTMLTxtRange;
 
 #define HTMLTXTRANGE(x)  ((IHTMLTxtRange*)  &(x)->lpHTMLTxtRangeVtbl)
@@ -94,6 +97,8 @@ static ULONG WINAPI HTMLTxtRange_Release(IHTMLTxtRange *iface)
     if(!ref) {
         if(This->nsrange)
             nsISelection_Release(This->nsrange);
+        if(This->doc)
+            list_remove(&This->entry);
         mshtml_free(This);
     }
 
@@ -229,7 +234,7 @@ static HRESULT WINAPI HTMLTxtRange_duplicate(IHTMLTxtRange *iface, IHTMLTxtRange
     TRACE("(%p)->(%p)\n", This, Duplicate);
 
     nsIDOMRange_CloneRange(This->nsrange, &nsrange);
-    *Duplicate = HTMLTxtRange_Create(nsrange);
+    *Duplicate = HTMLTxtRange_Create(This->doc, nsrange);
     nsIDOMRange_Release(nsrange);
 
     return S_OK;
@@ -472,7 +477,7 @@ static const IHTMLTxtRangeVtbl HTMLTxtRangeVtbl = {
     HTMLTxtRange_execCommandShowHelp
 };
 
-IHTMLTxtRange *HTMLTxtRange_Create(nsIDOMRange *nsrange)
+IHTMLTxtRange *HTMLTxtRange_Create(HTMLDocument *doc, nsIDOMRange *nsrange)
 {
     HTMLTxtRange *ret = mshtml_alloc(sizeof(HTMLTxtRange));
 
@@ -483,5 +488,17 @@ IHTMLTxtRange *HTMLTxtRange_Create(nsIDOMRange *nsrange)
         nsIDOMRange_AddRef(nsrange);
     ret->nsrange = nsrange;
 
+    ret->doc = doc;
+    list_add_head(&doc->range_list, &ret->entry);
+
     return HTMLTXTRANGE(ret);
+}
+
+void detach_ranges(HTMLDocument *This)
+{
+    HTMLTxtRange *iter;
+
+    LIST_FOR_EACH_ENTRY(iter, &This->range_list, HTMLTxtRange, entry) {
+        iter->doc = NULL;
+    }
 }

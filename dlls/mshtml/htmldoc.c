@@ -173,6 +173,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
             IHTMLWindow2_Release(HTMLWINDOW2(This->window));
 
         detach_selection(This);
+        detach_ranges(This);
         release_nodes(This);
 
         ConnectionPointContainer_Destroy(&This->cp_container);
@@ -1130,6 +1131,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->window = NULL;
 
     list_init(&ret->selection_list);
+    list_init(&ret->range_list);
 
     hres = IHTMLDocument_QueryInterface(HTMLDOC(ret), riid, ppvObject);
     if(FAILED(hres)) {

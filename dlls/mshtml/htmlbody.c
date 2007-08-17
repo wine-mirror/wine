@@ -427,7 +427,7 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
         nsIDOMDocumentRange_Release(nsdocrange);
     }
 
-    *range = HTMLTxtRange_Create(nsrange);
+    *range = HTMLTxtRange_Create(This->element->node->doc, nsrange);
     return S_OK;
 }
 

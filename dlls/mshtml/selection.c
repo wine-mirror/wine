@@ -161,7 +161,7 @@ static HRESULT WINAPI HTMLSelectionObject_createRange(IHTMLSelectionObject *ifac
             ERR("GetRangeAt failed: %08x\n", nsres);
     }
 
-    *range = (IDispatch*)HTMLTxtRange_Create(nsrange);
+    *range = (IDispatch*)HTMLTxtRange_Create(This->doc, nsrange);
     return S_OK;
 }
 
