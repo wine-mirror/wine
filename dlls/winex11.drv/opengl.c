@@ -139,7 +139,7 @@ typedef struct wine_glpbuffer {
 static Wine_GLContext *context_list;
 static struct WineGLInfo WineGLInfo = { 0 };
 static int use_render_texture_emulation = 1;
-static int use_render_texture_ati = 1;
+static int use_render_texture_ati = 0;
 static int swap_interval = 1;
 
 #define MAX_EXTENSIONS 16
@@ -507,6 +507,7 @@ LOAD_FUNCPTR(glXFreeMemoryNV)
     }
 
     if(glxRequireExtension("GLX_ATI_render_texture")) {
+        use_render_texture_ati = 1;
         pglXBindTexImageATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXBindTexImageATI");
         pglXReleaseTexImageATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXReleaseTexImageATI");
         pglXDrawableAttribATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXDrawableAttribATI");
