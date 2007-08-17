@@ -279,11 +279,16 @@ static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARA
                 pt1 = pt;
 
             if (pt.x)
-                queue_event((LPDIRECTINPUTDEVICE8A)This, id_to_offset(&This->base.data_format,
-                            DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS),
-                            pt1.x, hook->time, This->base.dinput->evsequence);
+            {
+                inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS;
+                wdata = pt1.x;
+            }
             if (pt.y)
             {
+                /* Already have X, need to queue it */
+                if (inst_id != -1)
+                    queue_event((LPDIRECTINPUTDEVICE8A)This, id_to_offset(&This->base.data_format, inst_id),
+                                wdata, hook->time, This->base.dinput->evsequence);
                 inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS;
                 wdata = pt1.y;
             }
