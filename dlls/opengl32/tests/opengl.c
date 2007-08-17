@@ -50,17 +50,24 @@ static const char* wgl_extensions = NULL;
 
 static void init_functions(void)
 {
+#define GET_PROC(func) \
+    p ## func = (void*)wglGetProcAddress(#func); \
+    if(!p ## func) \
+      trace("wglGetProcAddress(%s) failed\n", #func);
+
     /* WGL_ARB_extensions_string */
-    pwglGetExtensionsStringARB = (void*)wglGetProcAddress("wglGetExtensionsStringARB");
+    GET_PROC(wglGetExtensionsStringARB)
 
     /* WGL_ARB_pixel_format */
-    pwglChoosePixelFormatARB = (void*)wglGetProcAddress("wglChoosePixelFormatARB");
-    pwglGetPixelFormatAttribivARB = (void*)wglGetProcAddress("wglGetPixelFormatAttribivARB");
+    GET_PROC(wglChoosePixelFormatARB)
+    GET_PROC(wglGetPixelFormatAttribivARB)
 
     /* WGL_ARB_pbuffer */
-    pwglCreatePbufferARB = (void*)wglGetProcAddress("wglCreatePbufferARB");
-    pwglGetPbufferDCARB = (void*)wglGetProcAddress("wglGetPbufferDCARB");
-    pwglReleasePbufferDCARB = (void*)wglGetProcAddress("wglReleasePbufferDCARB");
+    GET_PROC(wglCreatePbufferARB)
+    GET_PROC(wglGetPbufferDCARB)
+    GET_PROC(wglReleasePbufferDCARB)
+
+#undef GET_PROC
 }
 
 static void test_pbuffers(HDC hdc)
