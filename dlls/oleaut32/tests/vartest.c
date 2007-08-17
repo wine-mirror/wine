@@ -102,6 +102,9 @@ static void init(void)
 #define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
 
   HAVE_OLEAUT32_I8 = HAVE_FUNC(VarI8FromI1);
+  if (!HAVE_OLEAUT32_I8)
+      skip("No support for I8 and UI8 data types\n");
+
   HAVE_OLEAUT32_RECORD = HAVE_FUNC(SafeArraySetRecordInfo);
   IS_ANCIENT = (!HAVE_FUNC(VarI1FromI2));
 
@@ -5148,6 +5151,12 @@ static void test_VarCat(void)
                 leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN  ||
                 leftvt == VT_RECORD || rightvt == VT_RECORD  ||
                 leftvt == 15 || rightvt == 15 /* Undefined type */)
+                continue;
+
+            /* Check if we need/have support for I8 and/or UI8 */
+            if ((leftvt == VT_I8 || leftvt == VT_UI8 ||
+                rightvt == VT_I8 || rightvt == VT_UI8) &&
+                !HAVE_OLEAUT32_I8)
                 continue;
 
             if (leftvt == VT_NULL && rightvt == VT_NULL)
