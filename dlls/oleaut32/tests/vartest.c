@@ -6857,7 +6857,7 @@ static void test_VarPow(void)
 
     hres = pVarPow(&dec, &right, &result);
     ok(hres == S_OK && V_VT(&result) == VT_R8,
-        "VARPOW: expected coerced hres 0x%X type VT_R8, got hres 0x%X type%s!\n",
+        "VARPOW: expected coerced hres 0x%X type VT_R8, got hres 0x%X type %s!\n",
         S_OK, hres, vtstr(V_VT(&result)));
     ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 4.0),
         "VARPOW: DECIMAL value %f, expected %f\n", V_R8(&result), 4.0);
@@ -7682,7 +7682,7 @@ static void test_VarIdiv(void)
 
     hres = VarIdiv(&dec, &right, &result);
     ok(hres == S_OK && V_VT(&result) == VT_I8,
-        "VARIDIV: expected coerced hres 0x%X type VT_I8, got hres 0x%X type%s!\n",
+        "VARIDIV: expected coerced hres 0x%X type VT_I8, got hres 0x%X type %s!\n",
         S_OK, hres, vtstr(V_VT(&result)));
     ok(hres == S_OK && V_I8(&result) == 1,
         "VARIDIV: DECIMAL value 0x%x%08x, expected %d\n",
@@ -8200,7 +8200,7 @@ static void test_VarImp(void)
 
     hres = pVarImp(&dec, &right, &result);
     ok(hres == S_OK && V_VT(&result) == VT_I8,
-        "VARIMP: expected coerced hres 0x%X type VT_I8, got hres 0x%X type%s!\n",
+        "VARIMP: expected coerced hres 0x%X type VT_I8, got hres 0x%X type %s!\n",
         S_OK, hres, vtstr(V_VT(&result)));
     ok(hres == S_OK && V_I8(&result) == -3,
         "VARIMP: DECIMAL value 0x%x%08x, expected %d\n",
