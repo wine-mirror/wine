@@ -96,7 +96,6 @@ typedef struct _WINE_MEMSTORE
 typedef struct _WINE_MSGSTOREINFO
 {
     DWORD      dwOpenFlags;
-    HCRYPTPROV cryptProv;
     HCERTSTORE memStore;
     HCRYPTMSG  msg;
 } WINE_MSGSTOREINFO, *PWINE_MSGSTOREINFO;
@@ -603,7 +602,6 @@ static PWINECRYPT_CERTSTORE CRYPT_MsgOpenStore(HCRYPTPROV hCryptProv,
                 CERT_STORE_PROV_INFO provInfo = { 0 };
 
                 info->dwOpenFlags = dwFlags;
-                info->cryptProv = hCryptProv;
                 info->memStore = memStore;
                 info->msg = CryptMsgDuplicate(msg);
                 provInfo.cbSize = sizeof(provInfo);
@@ -631,16 +629,19 @@ static PWINECRYPT_CERTSTORE CRYPT_PKCSOpenStore(HCRYPTPROV hCryptProv,
     PWINECRYPT_CERTSTORE store = NULL;
     const CRYPT_DATA_BLOB *data = (const CRYPT_DATA_BLOB *)pvPara;
     BOOL ret;
+    DWORD msgOpenFlags = dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG ? 0 :
+     CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
 
     TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
 
-    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, 0, NULL,
-     NULL);
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, msgOpenFlags, CMSG_SIGNED,
+     hCryptProv, NULL, NULL);
     ret = CryptMsgUpdate(msg, data->pbData, data->cbData, TRUE);
     if (!ret)
     {
         CryptMsgClose(msg);
-        msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+        msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, msgOpenFlags, 0,
+         hCryptProv, NULL, NULL);
         ret = CryptMsgUpdate(msg, data->pbData, data->cbData, TRUE);
         if (ret)
         {
