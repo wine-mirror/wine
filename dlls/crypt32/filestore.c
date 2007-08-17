@@ -28,7 +28,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 typedef struct _WINE_FILESTOREINFO
 {
     DWORD      dwOpenFlags;
-    HCRYPTPROV cryptProv;
     HCERTSTORE memStore;
     HANDLE     file;
     BOOL       dirty;
@@ -182,7 +181,6 @@ PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
                     CERT_STORE_PROV_INFO provInfo = { 0 };
 
                     info->dwOpenFlags = dwFlags;
-                    info->cryptProv = hCryptProv;
                     info->memStore = memStore;
                     info->file = file;
                     info->dirty = FALSE;
