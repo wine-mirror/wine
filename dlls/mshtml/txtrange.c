@@ -180,8 +180,38 @@ static HRESULT WINAPI HTMLTxtRange_get_htmlText(IHTMLTxtRange *iface, BSTR *p)
 static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsIDOMDocument *nsdoc;
+    nsIDOMText *text_node;
+    nsAString text_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!This->doc)
+        return MSHTML_E_NODOC;
+
+    nsres = nsIWebNavigation_GetDocument(This->doc->nscontainer->navigation, &nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return S_OK;
+    }
+
+    nsAString_Init(&text_str, v);
+    nsres = nsIDOMDocument_CreateTextNode(nsdoc, &text_str, &text_node);
+    nsAString_Finish(&text_str);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateTextNode failed: %08x\n", nsres);
+        return S_OK;
+    }
+    nsres = nsIDOMRange_DeleteContents(This->nsrange);
+    if(NS_FAILED(nsres))
+        ERR("DeleteContents failed: %08x\n", nsres);
+
+    nsres = nsIDOMRange_InsertNode(This->nsrange, (nsIDOMNode*)text_node);
+    if(NS_FAILED(nsres))
+        ERR("InsertNode failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_get_text(IHTMLTxtRange *iface, BSTR *p)
