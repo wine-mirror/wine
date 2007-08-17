@@ -9,6 +9,8 @@ IMPORTS   = shdocvw user32 gdi32 kernel32
 C_SRCS = \
 	main.c
 
+RC_SRCS = version.rc
+
 @MAKE_PROG_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

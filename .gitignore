@@ -789,6 +789,7 @@ programs/explorer/explorer
 programs/hh/hh
 programs/icinfo/icinfo
 programs/iexplore/iexplore
+programs/iexplore/version.res
 programs/msiexec/msiexec
 programs/msiexec/msiexec.ico
 programs/msiexec/rsrc.res
