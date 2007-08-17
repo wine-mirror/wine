@@ -193,16 +193,14 @@ static BOOL WINAPI CRYPT_ProvControl(HCERTSTORE hCertStore, DWORD dwFlags,
     return ret;
 }
 
-PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(HCRYPTPROV hCryptProv,
- DWORD dwFlags, PWINECRYPT_CERTSTORE memStore,
- const CERT_STORE_PROV_INFO *pProvInfo)
+PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(DWORD dwFlags,
+ PWINECRYPT_CERTSTORE memStore, const CERT_STORE_PROV_INFO *pProvInfo)
 {
     PWINE_PROVIDERSTORE ret = CryptMemAlloc(sizeof(WINE_PROVIDERSTORE));
 
     if (ret)
     {
-        CRYPT_InitStore(&ret->hdr, hCryptProv, dwFlags,
-         StoreTypeProvider);
+        CRYPT_InitStore(&ret->hdr, dwFlags, StoreTypeProvider);
         ret->dwStoreProvFlags = pProvInfo->dwStoreProvFlags;
         if (ret->dwStoreProvFlags & CERT_STORE_PROV_EXTERNAL_FLAG)
         {
@@ -289,8 +287,7 @@ PWINECRYPT_CERTSTORE CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
             {
                 if (provOpenFunc(lpszStoreProvider, dwEncodingType, hCryptProv,
                  dwFlags, pvPara, memStore, &provInfo))
-                    ret = CRYPT_ProvCreateStore(hCryptProv, dwFlags, memStore,
-                     &provInfo);
+                    ret = CRYPT_ProvCreateStore(dwFlags, memStore, &provInfo);
                 else
                     CertCloseStore(memStore, 0);
             }

@@ -100,18 +100,12 @@ typedef struct _WINE_MSGSTOREINFO
     HCRYPTMSG  msg;
 } WINE_MSGSTOREINFO, *PWINE_MSGSTOREINFO;
 
-void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, HCRYPTPROV hCryptProv,
- DWORD dwFlags, CertStoreType type)
+void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
+ CertStoreType type)
 {
     store->ref = 1;
     store->dwMagic = WINE_CRYPTCERTSTORE_MAGIC;
     store->type = type;
-    if (!hCryptProv)
-    {
-        hCryptProv = CRYPT_GetDefaultProvider();
-        dwFlags |= CERT_STORE_NO_CRYPT_RELEASE_FLAG;
-    }
-    store->cryptProv = hCryptProv;
     store->dwOpenFlags = dwFlags;
     store->properties = NULL;
 }
@@ -253,7 +247,7 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
         if (store)
         {
             memset(store, 0, sizeof(WINE_MEMSTORE));
-            CRYPT_InitStore(&store->hdr, hCryptProv, dwFlags, StoreTypeMem);
+            CRYPT_InitStore(&store->hdr, dwFlags, StoreTypeMem);
             store->hdr.closeStore          = CRYPT_MemCloseStore;
             store->hdr.certs.addContext    = CRYPT_MemAddCert;
             store->hdr.certs.enumContext   = CRYPT_MemEnumCert;
@@ -266,6 +260,9 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
              sizeof(CERT_CONTEXT));
             store->crls = ContextList_Create(pCRLInterface,
              sizeof(CRL_CONTEXT));
+            /* Mem store doesn't need crypto provider, so close it */
+            if (hCryptProv && !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
+                CryptReleaseContext(hCryptProv, 0);
         }
     }
     return (PWINECRYPT_CERTSTORE)store;
@@ -446,7 +443,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreW(HCRYPTPROV hCryptProv,
     if (ret)
     {
         HCERTSTORE regStore = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W,
-         0, hCryptProv, dwFlags, pvPara);
+         0, 0, dwFlags, pvPara);
 
         if (regStore)
         {
@@ -465,7 +462,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreW(HCRYPTPROV hCryptProv,
                 dwFlags &= ~CERT_SYSTEM_STORE_CURRENT_USER;
                 dwFlags |= CERT_SYSTEM_STORE_LOCAL_MACHINE;
                 regStore = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0,
-                 hCryptProv, dwFlags, pvPara);
+                 0, dwFlags, pvPara);
                 if (regStore)
                 {
                     CertAddStoreToCollection(store, regStore,
@@ -474,6 +471,9 @@ static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreW(HCRYPTPROV hCryptProv,
                     CertCloseStore(regStore, 0);
                 }
             }
+            /* System store doesn't need crypto provider, so close it */
+            if (hCryptProv && !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
+                CryptReleaseContext(hCryptProv, 0);
         }
     }
     return (PWINECRYPT_CERTSTORE)store;
@@ -544,7 +544,7 @@ static PWINECRYPT_CERTSTORE CRYPT_MsgOpenStore(HCRYPTPROV hCryptProv,
 
     TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
 
-    memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, hCryptProv,
+    memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     if (memStore)
     {
@@ -609,8 +609,11 @@ static PWINECRYPT_CERTSTORE CRYPT_MsgOpenStore(HCRYPTPROV hCryptProv,
                  sizeof(msgProvFuncs[0]);
                 provInfo.rgpvStoreProvFunc = msgProvFuncs;
                 provInfo.hStoreProv = info;
-                store = CRYPT_ProvCreateStore(hCryptProv, dwFlags, memStore,
+                store = CRYPT_ProvCreateStore(dwFlags, memStore,
                  &provInfo);
+                /* Msg store doesn't need crypto provider, so close it */
+                if (hCryptProv && !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
+                    CryptReleaseContext(hCryptProv, 0);
             }
             else
                 CertCloseStore(memStore, 0);
@@ -657,7 +660,7 @@ static PWINECRYPT_CERTSTORE CRYPT_PKCSOpenStore(HCRYPTPROV hCryptProv,
         }
     }
     if (ret)
-        store = CRYPT_MsgOpenStore(hCryptProv, dwFlags, msg);
+        store = CRYPT_MsgOpenStore(0, dwFlags, msg);
     CryptMsgClose(msg);
     TRACE("returning %p\n", store);
     return store;
@@ -1133,8 +1136,6 @@ BOOL WINAPI CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     {
         TRACE("%p's ref count is 0, freeing\n", hcs);
         hcs->dwMagic = 0;
-        if (!(hcs->dwOpenFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
-            CryptReleaseContext(hcs->cryptProv, 0);
         hcs->closeStore(hcs, dwFlags);
     }
     else

@@ -530,8 +530,11 @@ PWINECRYPT_CERTSTORE CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
                      sizeof(regProvFuncs[0]);
                     provInfo.rgpvStoreProvFunc = regProvFuncs;
                     provInfo.hStoreProv = regInfo;
-                    store = CRYPT_ProvCreateStore(hCryptProv, dwFlags, memStore,
-                     &provInfo);
+                    store = CRYPT_ProvCreateStore(dwFlags, memStore, &provInfo);
+                    /* Reg store doesn't need crypto provider, so close it */
+                    if (hCryptProv &&
+                     !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
+                        CryptReleaseContext(hCryptProv, 0);
                 }
             }
         }

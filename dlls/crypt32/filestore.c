@@ -167,7 +167,7 @@ PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
     {
         PWINECRYPT_CERTSTORE memStore;
 
-        memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, hCryptProv,
+        memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
          CERT_STORE_CREATE_NEW_FLAG, NULL);
         if (memStore)
         {
@@ -189,8 +189,11 @@ PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
                      sizeof(fileProvFuncs[0]);
                     provInfo.rgpvStoreProvFunc = fileProvFuncs;
                     provInfo.hStoreProv = info;
-                    store = CRYPT_ProvCreateStore(hCryptProv, dwFlags, memStore,
-                     &provInfo);
+                    store = CRYPT_ProvCreateStore(dwFlags, memStore, &provInfo);
+                    /* File store doesn't need crypto provider, so close it */
+                    if (hCryptProv &&
+                     !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
+                        CryptReleaseContext(hCryptProv, 0);
                 }
             }
         }

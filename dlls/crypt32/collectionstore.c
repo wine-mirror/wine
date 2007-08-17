@@ -357,8 +357,7 @@ PWINECRYPT_CERTSTORE CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
         if (store)
         {
             memset(store, 0, sizeof(WINE_COLLECTIONSTORE));
-            CRYPT_InitStore(&store->hdr, hCryptProv, dwFlags,
-             StoreTypeCollection);
+            CRYPT_InitStore(&store->hdr, dwFlags, StoreTypeCollection);
             store->hdr.closeStore          = CRYPT_CollectionCloseStore;
             store->hdr.certs.addContext    = CRYPT_CollectionAddCert;
             store->hdr.certs.enumContext   = CRYPT_CollectionEnumCert;

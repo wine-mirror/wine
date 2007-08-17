@@ -222,7 +222,6 @@ typedef struct WINE_CRYPTCERTSTORE
     DWORD                       dwMagic;
     LONG                        ref;
     DWORD                       dwOpenFlags;
-    HCRYPTPROV                  cryptProv;
     CertStoreType               type;
     PFN_CERT_STORE_PROV_CLOSE   closeStore;
     CONTEXT_FUNCS               certs;
@@ -231,16 +230,15 @@ typedef struct WINE_CRYPTCERTSTORE
     PCONTEXT_PROPERTY_LIST      properties;
 } WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
 
-void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, HCRYPTPROV hCryptProv,
- DWORD dwFlags, CertStoreType type);
+void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
+ CertStoreType type);
 void CRYPT_FreeStore(PWINECRYPT_CERTSTORE store);
 void CRYPT_EmptyStore(HCERTSTORE store);
 
 PWINECRYPT_CERTSTORE CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara);
-PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(HCRYPTPROV hCryptProv,
- DWORD dwFlags, PWINECRYPT_CERTSTORE memStore,
- const CERT_STORE_PROV_INFO *pProvInfo);
+PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(DWORD dwFlags,
+ PWINECRYPT_CERTSTORE memStore, const CERT_STORE_PROV_INFO *pProvInfo);
 PWINECRYPT_CERTSTORE CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
  DWORD dwEncodingType, HCRYPTPROV hCryptProv, DWORD dwFlags,
  const void *pvPara);
