@@ -37,7 +37,6 @@ typedef struct _WINE_HASH_TO_DELETE
 typedef struct _WINE_REGSTOREINFO
 {
     DWORD            dwOpenFlags;
-    HCRYPTPROV       cryptProv;
     HCERTSTORE       memStore;
     HKEY             key;
     BOOL             dirty;
@@ -518,7 +517,6 @@ PWINECRYPT_CERTSTORE CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
                     CERT_STORE_PROV_INFO provInfo = { 0 };
 
                     regInfo->dwOpenFlags = dwFlags;
-                    regInfo->cryptProv = hCryptProv;
                     regInfo->memStore = memStore;
                     regInfo->key = key;
                     InitializeCriticalSection(&regInfo->cs);
