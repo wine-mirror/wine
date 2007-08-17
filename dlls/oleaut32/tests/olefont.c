@@ -798,10 +798,13 @@ static void test_AddRefHfont(void)
 
 START_TEST(olefont)
 {
-	hOleaut32 = LoadLibraryA("oleaut32.dll");    
+	hOleaut32 = GetModuleHandleA("oleaut32.dll");
 	pOleCreateFontIndirect = (void*)GetProcAddress(hOleaut32, "OleCreateFontIndirect");
 	if (!pOleCreateFontIndirect)
+	{
+	    skip("OleCreateFontIndirect not available\n");
 	    return;
+	}
 
 	test_QueryInterface();
 	test_type_info();

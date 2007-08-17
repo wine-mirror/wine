@@ -394,7 +394,7 @@ static void test_VarFormat(void)
 
 START_TEST(varformat)
 {
-  hOleaut32 = LoadLibraryA("oleaut32.dll");
+  hOleaut32 = GetModuleHandleA("oleaut32.dll");
 
   test_VarFormatNumber();
   test_VarFormat();

@@ -1682,7 +1682,7 @@ static void test_SafeArrayDestroyData (void)
 
 START_TEST(safearray)
 {
-    hOleaut32 = LoadLibraryA("oleaut32.dll");
+    hOleaut32 = GetModuleHandleA("oleaut32.dll");
 
     GETPTR(SafeArrayAllocDescriptorEx);
     GETPTR(SafeArrayCopyData);

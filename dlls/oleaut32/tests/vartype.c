@@ -5765,10 +5765,7 @@ static void test_ChangeType_keep_dst(void)
 
 START_TEST(vartype)
 {
-  hOleaut32 = LoadLibraryA("oleaut32.dll");
-  ok(hOleaut32 != 0, "Failed to load oleaut32.dll\n");
-  if (!hOleaut32)
-    return;
+  hOleaut32 = GetModuleHandleA("oleaut32.dll");
 
   trace("LCID's: System=0x%08x, User=0x%08x\n", GetSystemDefaultLCID(),
         GetUserDefaultLCID());

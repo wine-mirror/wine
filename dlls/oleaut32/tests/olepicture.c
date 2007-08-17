@@ -426,11 +426,14 @@ static void test_OleCreatePictureIndirect(void)
 
 START_TEST(olepicture)
 {
-	hOleaut32 = LoadLibraryA("oleaut32.dll");
+	hOleaut32 = GetModuleHandleA("oleaut32.dll");
 	pOleLoadPicture = (void*)GetProcAddress(hOleaut32, "OleLoadPicture");
 	pOleCreatePictureIndirect = (void*)GetProcAddress(hOleaut32, "OleCreatePictureIndirect");
 	if (!pOleLoadPicture)
+	{
+	    skip("OleLoadPicture is not available\n");
 	    return;
+	}
 
 	/* Test regular 1x1 pixel images of gif, jpg, bmp type */
         test_pic(gifimage, sizeof(gifimage));
