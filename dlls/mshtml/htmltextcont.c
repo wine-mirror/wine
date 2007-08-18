@@ -102,7 +102,7 @@ static HRESULT WINAPI HTMLTextContainer_get_scrollHeight(IHTMLTextContainer *ifa
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
     nsIDOMNSHTMLElement *nselem;
-    PRInt32 height;
+    PRInt32 height = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
