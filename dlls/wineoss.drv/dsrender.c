@@ -344,9 +344,7 @@ static HRESULT DSDB_MapBuffer(IDsDriverBufferImpl *dsdb)
         dsdb->mapping = mmap(NULL, dsdb->maplen, PROT_WRITE, MAP_SHARED,
                              dsdb->fd, 0);
         if (dsdb->mapping == (LPBYTE)-1) {
-            ERR("Could not map sound device for direct access (%s)\n", strerror(errno));
-	    ERR("Please run winecfg, open \"Audio\" page and set\n"
-                "\"Hardware Acceleration\" to \"Emulation\".\n");
+            WARN("Could not map sound device for direct access (%s)\n", strerror(errno));
             return DSERR_GENERIC;
         }
         TRACE("The sound device has been mapped for direct access at %p, size=%d\n", dsdb->mapping, dsdb->maplen);

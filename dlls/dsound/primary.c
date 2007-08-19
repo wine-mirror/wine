@@ -224,8 +224,19 @@ HRESULT DSOUND_PrimaryCreate(DirectSoundDevice *device)
 						  &(device->buflen),&(device->buffer),
 						  (LPVOID*)&(device->hwbuf));
 		if (err != DS_OK) {
-			WARN("IDsDriver_CreateSoundBuffer failed\n");
-			return err;
+			WARN("IDsDriver_CreateSoundBuffer failed, falling back to waveout\n");
+			/* Wine-only: close wine directsound driver, then reopen without WAVE_DIRECTSOUND */
+			device->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT;
+			waveOutClose(device->hwo);
+			IDsDriver_Release(device->driver);
+			device->driver = device->buffer = NULL;
+			device->hwo = 0;
+			err = mmErr(waveOutOpen(&(device->hwo), device->drvdesc.dnDevNode, device->pwfx, (DWORD_PTR)DSOUND_callback, (DWORD)device, CALLBACK_FUNCTION));
+			if (err != DS_OK)
+			{
+				WARN("Falling back to waveout failed too! Giving up\n");
+				return err;
+			}
 		}
 	}
 
