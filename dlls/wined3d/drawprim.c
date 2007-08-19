@@ -761,7 +761,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVerte
                     break;
 
                 case WINED3DDECLTYPE_UBYTE4:
-                    GL_EXTCALL(glVertexAttrib4NubvARB(instancedData[j], ptr));
+                    GL_EXTCALL(glVertexAttrib4ubvARB(instancedData[j], ptr));
                     break;
                 case WINED3DDECLTYPE_UBYTE4N:
                 case WINED3DDECLTYPE_D3DCOLOR:
