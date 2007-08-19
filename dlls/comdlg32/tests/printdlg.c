@@ -73,10 +73,16 @@ static void test_PageSetupDlgA(void)
     pDlg->Flags = PSD_RETURNDEFAULT;
     SetLastError(0xdeadbeef);
     res = PageSetupDlgA(pDlg);
+    trace("after pagesetupdlga res = %d, le %d, ext error 0x%x\n",
+	res, GetLastError(), CommDlgExtendedError());
     ok( res || (CommDlgExtendedError() == PDERR_NODEFAULTPRN),
         "returned %u with %u and 0x%x (expected '!= 0' or '0' and "
         "PDERR_NODEFAULTPRN)\n", res, GetLastError(), CommDlgExtendedError());
-
+    if (!res && (CommDlgExtendedError() == PDERR_NODEFAULTPRN)) {
+	skip("No printer configured.\n");
+	HeapFree(GetProcessHeap(), 0, pDlg);
+	return;
+    }
     ok( pDlg->hDevMode && pDlg->hDevNames,
         "got %p and %p (expected '!= NULL' for both)\n",
         pDlg->hDevMode, pDlg->hDevNames);
