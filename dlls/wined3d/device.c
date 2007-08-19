@@ -4344,7 +4344,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) 
     HRESULT temp_result;
     int i;
 
-    ERR("(%p)\n", This);
+    TRACE("(%p)\n", This);
     
     if (This->isRecordingState) {
         return WINED3DERR_INVALIDCALL;
