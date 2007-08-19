@@ -514,6 +514,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
             }
         }
 
+        for(i = 0; i < MAX_STREAMS; i++) {
+            if(object->streamSource[i]) {
+                IWineD3DVertexBuffer_AddRef(object->streamSource[i]);
+            }
+        }
+
     } else if (Type == WINED3DSBT_PIXELSTATE) {
 
         TRACE("PIXELSTATE => Pretend all pixel shates have changed\n");
@@ -558,6 +564,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
                 object->contained_sampler_states[object->num_contained_sampler_states].state = SavedPixelStates_S[i];
                 object->num_contained_sampler_states++;
             }
+        }
+
+        /* Pixel state blocks do not contain vertex buffers. Set them to NULL to avoid wrong refcounting
+         * on them. This makes releasing the buffer easier
+         */
+        for(i = 0; i < MAX_STREAMS; i++) {
+            object->streamSource[i] = NULL;
         }
 
     } else if (Type == WINED3DSBT_VERTEXSTATE) {
@@ -611,6 +624,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
                 PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
                 light->changed = TRUE;
                 light->enabledChanged = TRUE;
+            }
+        }
+
+        for(i = 0; i < MAX_STREAMS; i++) {
+            if(object->streamSource[i]) {
+                IWineD3DVertexBuffer_AddRef(object->streamSource[i]);
             }
         }
     } else {
@@ -2237,6 +2256,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
+        if(pStreamData) IWineD3DVertexBuffer_AddRef(pStreamData);
+        if(oldSrc) IWineD3DVertexBuffer_Release(oldSrc);
         return WINED3D_OK;
     }
 

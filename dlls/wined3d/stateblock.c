@@ -262,15 +262,15 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                     }
                 }
             }
-            for (counter = 0; counter < MAX_STREAMS; counter++) {
-                if(This->streamSource[counter]) {
-                    if(0 != IWineD3DVertexBuffer_Release(This->streamSource[counter])) {
-                        TRACE("Vertex buffer still referenced by stateblock, applications has leaked Stream %u, buffer %p\n", counter, This->streamSource[counter]);
-                    }
+            if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
+        }
+
+        for (counter = 0; counter < MAX_STREAMS; counter++) {
+            if(This->streamSource[counter]) {
+                if(0 != IWineD3DVertexBuffer_Release(This->streamSource[counter])) {
+                    TRACE("Vertex buffer still referenced by stateblock, applications has leaked Stream %u, buffer %p\n", counter, This->streamSource[counter]);
                 }
             }
-            if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
-
         }
 
         for(counter = 0; counter < LIGHTMAP_SIZE; counter++) {
@@ -532,6 +532,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 TRACE("Updating stream source %d to %p, stride to %d\n", i, targetStateBlock->streamSource[i],
                                                                             targetStateBlock->streamStride[i]);
                 This->streamStride[i] = targetStateBlock->streamStride[i];
+                if(targetStateBlock->streamSource[i]) IWineD3DVertexBuffer_AddRef(targetStateBlock->streamSource[i]);
+                if(This->streamSource[i]) IWineD3DVertexBuffer_Release(This->streamSource[i]);
                 This->streamSource[i] = targetStateBlock->streamSource[i];
             }
 
@@ -600,7 +602,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         memcpy(This->vertexShaderConstantF, targetStateBlock->vertexShaderConstantF, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
         memcpy(This->streamStride, targetStateBlock->streamStride, sizeof(This->streamStride));
         memcpy(This->streamOffset, targetStateBlock->streamOffset, sizeof(This->streamOffset));
-        memcpy(This->streamSource, targetStateBlock->streamSource, sizeof(This->streamSource));
         memcpy(This->streamFreq, targetStateBlock->streamFreq, sizeof(This->streamFreq));
         memcpy(This->streamFlags, targetStateBlock->streamFlags, sizeof(This->streamFlags));
         This->pIndexData = targetStateBlock->pIndexData;
@@ -621,6 +622,14 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         memcpy(This->textureState, targetStateBlock->textureState, sizeof(This->textureState));
         memcpy(This->samplerState, targetStateBlock->samplerState, sizeof(This->samplerState));
         This->scissorRect = targetStateBlock->scissorRect;
+
+        for(i = 0; i < MAX_STREAMS; i++) {
+            if(targetStateBlock->streamSource[i] != This->streamSource[i]) {
+                if(targetStateBlock->streamSource[i]) IWineD3DVertexBuffer_AddRef(targetStateBlock->streamSource[i]);
+                if(This->streamSource[i]) IWineD3DVertexBuffer_Release(This->streamSource[i]);
+                This->streamSource[i] = targetStateBlock->streamSource[i];
+            }
+        }
     } else if(This->blockType == WINED3DSBT_VERTEXSTATE) {
         This->vertexShader = targetStateBlock->vertexShader;
         memcpy(This->vertexShaderConstantB, targetStateBlock->vertexShaderConstantB, sizeof(This->vertexShaderConstantI));
@@ -638,6 +647,13 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         for (j = 0; j < MAX_TEXTURES; j++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
                 This->textureState[j][SavedVertexStates_R[i]] = targetStateBlock->textureState[j][SavedVertexStates_R[i]];
+            }
+        }
+        for(i = 0; i < MAX_STREAMS; i++) {
+            if(targetStateBlock->streamSource[i] != This->streamSource[i]) {
+                if(targetStateBlock->streamSource[i]) IWineD3DVertexBuffer_AddRef(targetStateBlock->streamSource[i]);
+                if(This->streamSource[i]) IWineD3DVertexBuffer_Release(This->streamSource[i]);
+                This->streamSource[i] = targetStateBlock->streamSource[i];
             }
         }
     } else if(This->blockType == WINED3DSBT_PIXELSTATE) {
