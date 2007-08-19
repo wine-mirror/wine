@@ -519,6 +519,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
                 IWineD3DVertexBuffer_AddRef(object->streamSource[i]);
             }
         }
+        if(object->pIndexData) {
+            IWineD3DIndexBuffer_AddRef(object->pIndexData);
+        }
 
     } else if (Type == WINED3DSBT_PIXELSTATE) {
 
@@ -572,6 +575,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         for(i = 0; i < MAX_STREAMS; i++) {
             object->streamSource[i] = NULL;
         }
+        object->pIndexData = NULL;
 
     } else if (Type == WINED3DSBT_VERTEXSTATE) {
 
@@ -632,6 +636,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
                 IWineD3DVertexBuffer_AddRef(object->streamSource[i]);
             }
         }
+        object->pIndexData = NULL;
     } else {
         FIXME("Unrecognized state block type %d\n", Type);
     }
@@ -2821,6 +2826,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
+        if(pIndexData) IWineD3DIndexBuffer_AddRef(pIndexData);
+        if(oldIdxs) IWineD3DIndexBuffer_Release(oldIdxs);
         return WINED3D_OK;
     }
 

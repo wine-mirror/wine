@@ -262,7 +262,6 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                     }
                 }
             }
-            if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
         }
 
         for (counter = 0; counter < MAX_STREAMS; counter++) {
@@ -272,6 +271,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                 }
             }
         }
+        if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
 
         for(counter = 0; counter < LIGHTMAP_SIZE; counter++) {
             struct list *e1, *e2;
@@ -488,7 +488,9 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         if (This->changed.indices && ((This->pIndexData != targetStateBlock->pIndexData)
                         || (This->baseVertexIndex != targetStateBlock->baseVertexIndex))) {
             TRACE("Updating pindexData to %p, baseVertexIndex to %d\n",
-            targetStateBlock->pIndexData, targetStateBlock->baseVertexIndex);
+                  targetStateBlock->pIndexData, targetStateBlock->baseVertexIndex);
+            if(targetStateBlock->pIndexData) IWineD3DIndexBuffer_AddRef(targetStateBlock->pIndexData);
+            if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
             This->pIndexData = targetStateBlock->pIndexData;
             This->baseVertexIndex = targetStateBlock->baseVertexIndex;
         }
@@ -604,7 +606,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         memcpy(This->streamOffset, targetStateBlock->streamOffset, sizeof(This->streamOffset));
         memcpy(This->streamFreq, targetStateBlock->streamFreq, sizeof(This->streamFreq));
         memcpy(This->streamFlags, targetStateBlock->streamFlags, sizeof(This->streamFlags));
-        This->pIndexData = targetStateBlock->pIndexData;
         This->baseVertexIndex = targetStateBlock->baseVertexIndex;
         memcpy(This->transforms, targetStateBlock->transforms, sizeof(This->transforms));
         record_lights(This, targetStateBlock);
@@ -623,6 +624,11 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         memcpy(This->samplerState, targetStateBlock->samplerState, sizeof(This->samplerState));
         This->scissorRect = targetStateBlock->scissorRect;
 
+        if(targetStateBlock->pIndexData != This->pIndexData) {
+            if(targetStateBlock->pIndexData) IWineD3DIndexBuffer_AddRef(targetStateBlock->pIndexData);
+            if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
+            This->pIndexData = targetStateBlock->pIndexData;
+        }
         for(i = 0; i < MAX_STREAMS; i++) {
             if(targetStateBlock->streamSource[i] != This->streamSource[i]) {
                 if(targetStateBlock->streamSource[i]) IWineD3DVertexBuffer_AddRef(targetStateBlock->streamSource[i]);
