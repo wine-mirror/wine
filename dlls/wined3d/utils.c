@@ -2418,14 +2418,14 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
 #endif
 
 /* Setup this textures matrix according to the texture flags*/
-void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords)
+void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed)
 {
     float mat[16];
 
     glMatrixMode(GL_TEXTURE);
     checkGLcall("glMatrixMode(GL_TEXTURE)");
 
-    if (flags == WINED3DTTFF_DISABLE) {
+    if (flags == WINED3DTTFF_DISABLE || transformed) {
         glLoadIdentity();
         checkGLcall("glLoadIdentity()");
         return;

@@ -1875,7 +1875,8 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
     set_texture_matrix((float *)&stateblock->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
                         stateblock->textureState[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS],
-                        (stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU);
+                        (stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU,
+                        context->last_was_rhw);
 
 }
 
@@ -3198,7 +3199,7 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
 }
 
 static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    BOOL useVertexShaderFunction = FALSE, updateFog = FALSE;
+    BOOL useVertexShaderFunction = FALSE, updateFog = FALSE, updateTexMatrices = FALSE;
     BOOL usePixelShaderFunction = stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE && stateblock->pixelShader
             && ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
     BOOL transformed;
@@ -3227,6 +3228,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
     if(transformed != context->last_was_rhw && !useVertexShaderFunction) {
         updateFog = TRUE;
+        updateTexMatrices = TRUE;
     }
 
     /* Reapply lighting if it is not scheduled for reapplication already */
@@ -3330,6 +3332,14 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
     if(updateFog) {
         state_fog(STATE_RENDER(WINED3DRS_FOGENABLE), stateblock, context);
+    }
+    if(updateTexMatrices) {
+        int i;
+        for(i = 0; i < MAX_TEXTURES; i++) {
+            if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + i))) {
+                transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + i), stateblock, context);
+            }
+        }
     }
 }
 

@@ -91,7 +91,7 @@ void hash_table_remove(hash_table_t *table, void *key);
 #define NUM_SAVEDPIXELSTATES_R     35
 #define NUM_SAVEDPIXELSTATES_T     18
 #define NUM_SAVEDPIXELSTATES_S     12
-#define NUM_SAVEDVERTEXSTATES_R    33
+#define NUM_SAVEDVERTEXSTATES_R    34
 #define NUM_SAVEDVERTEXSTATES_T    2
 #define NUM_SAVEDVERTEXSTATES_S    1
 
@@ -1532,7 +1532,7 @@ GLenum StencilOp(DWORD op);
 GLenum CompareFunc(DWORD func);
 void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 void   set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx);
-void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords);
+void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed);
 
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height);
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain);
