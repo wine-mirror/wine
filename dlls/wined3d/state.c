@@ -2631,9 +2631,9 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
         }
         checkGLcall("glOrtho");
 
-        /* Window Coord 0 is the middle of the first pixel, so translate by 3/8 pixels */
-        glTranslatef(0.375, 0.375, 0);
-        checkGLcall("glTranslatef(0.375, 0.375, 0)");
+        /* Window Coord 0 is the middle of the first pixel, so translate by 1/2 pixels */
+        glTranslatef(0.5, 0.5, 0);
+        checkGLcall("glTranslatef(0.5, 0.5, 0)");
         /* D3D texture coordinates are flipped compared to OpenGL ones, so
          * render everything upside down when rendering offscreen. */
         if (stateblock->wineD3DDevice->render_offscreen) {
@@ -2647,9 +2647,14 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
             the left to the right end of the viewport (with all matrices set to
             be identity), the x coords of both ends of the line would be not
             -1 and 1 respectively but (-1-1/viewport_widh) and (1-1/viewport_width)
-            instead.                                                               */
-        glTranslatef(0.9 / stateblock->viewport.Width, -0.9 / stateblock->viewport.Height, 0);
-        checkGLcall("glTranslatef (0.9 / width, -0.9 / height, 0)");
+            instead.
+
+            1.0 / Width is used because the coord range goes from -1.0 to 1.0, then we
+            divide by the Width/Height, so we need the half range(1.0) to translate by
+            half a pixel.
+         */
+        glTranslatef(1.0 / stateblock->viewport.Width, -1.0/ stateblock->viewport.Height, 0);
+        checkGLcall("glTranslatef (1.0 / width, -1.0 / height, 0)");
 
         /* D3D texture coordinates are flipped compared to OpenGL ones, so
             * render everything upside down when rendering offscreen. */
@@ -3369,8 +3374,8 @@ static void viewport(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
 
     checkGLcall("glViewport");
 
-    stateblock->wineD3DDevice->posFixup[2] = 0.9 / stateblock->viewport.Width;
-    stateblock->wineD3DDevice->posFixup[3] = -0.9 / stateblock->viewport.Height;
+    stateblock->wineD3DDevice->posFixup[2] = 1.0 / stateblock->viewport.Width;
+    stateblock->wineD3DDevice->posFixup[3] = -1.0 / stateblock->viewport.Height;
     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
         transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock, context);
     }
