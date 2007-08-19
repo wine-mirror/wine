@@ -1700,6 +1700,508 @@ out:
     IDirect3D9_Release(d3d);
 }
 
+static void texture_transform_flags_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3D9 *d3d;
+    D3DFORMAT fmt = D3DFMT_X8R8G8B8;
+    D3DCAPS9 caps;
+    IDirect3DTexture9 *texture = NULL;
+    IDirect3DVolumeTexture9 *volume = NULL;
+    unsigned int x, y, z;
+    D3DLOCKED_RECT lr;
+    D3DLOCKED_BOX lb;
+    DWORD color;
+    IDirect3DVertexDeclaration9 *decl, *decl2;
+    float identity[16] = {1.0, 0.0, 0.0, 0.0,
+                           0.0, 1.0, 0.0, 0.0,
+                           0.0, 0.0, 1.0, 0.0,
+                           0.0, 0.0, 0.0, 1.0};
+    static const D3DVERTEXELEMENT9 decl_elements[] = {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 decl_elements2[] = {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+
+    memset(&lr, 0, sizeof(lr));
+    memset(&lb, 0, sizeof(lb));
+    IDirect3DDevice9_GetDirect3D(device, &d3d);
+    if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
+                                     D3DRTYPE_TEXTURE, D3DFMT_A16B16G16R16) == D3D_OK) {
+        fmt = D3DFMT_A16B16G16R16;
+    }
+    IDirect3D9_Release(d3d);
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements2, &decl2);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState(D3DSAMP_SRGBTEXTURE) returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState(D3DSAMP_MAGFILTER) returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState(D3DSAMP_MINFILTER) returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState(D3DSAMP_MIPFILTER) returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState(D3DSAMP_ADDRESSU) returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState(D3DSAMP_ADDRESSV) returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSW, D3DTADDRESS_CLAMP);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState(D3DSAMP_ADDRESSW) returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState(D3DRS_LIGHTING) returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateTexture(device, caps.MaxTextureWidth, caps.MaxTextureHeight, 1,
+                                        0, fmt, D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %s\n", DXGetErrorString9(hr));
+    if(!texture) {
+        skip("Failed to create the test texture\n");
+        return;
+    }
+
+    /* Unfortunately there is no easy way to set up a texture coordinate passthrough
+     * in d3d fixed function pipeline, so create a texture that has a gradient from 0.0 to
+     * 1.0 in red and green for the x and y coords
+     */
+    hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_LockRect returned %s\n", DXGetErrorString9(hr));
+    for(y = 0; y < caps.MaxTextureHeight; y++) {
+        for(x = 0; x < caps.MaxTextureWidth; x++) {
+            double r_f = (double) y / (double) caps.MaxTextureHeight;
+            double g_f = (double) x / (double) caps.MaxTextureWidth;
+            if(fmt == D3DFMT_A16B16G16R16) {
+                unsigned short r, g;
+                unsigned short *dst = (unsigned short *) (((char *) lr.pBits) + y * lr.Pitch + x * 8);
+                r = (unsigned short) (r_f * 65536.0);
+                g = (unsigned short) (g_f * 65536.0);
+                dst[0] = r;
+                dst[1] = g;
+                dst[2] = 0;
+                dst[3] = 65535;
+            } else {
+                unsigned char *dst = ((unsigned char *) lr.pBits) + y * lr.Pitch + x * 4;
+                unsigned char r = (unsigned char) (r_f * 255.0);
+                unsigned char g = (unsigned char) (g_f * 255.0);
+                dst[0] = 0;
+                dst[1] = g;
+                dst[2] = r;
+                dst[3] = 255;
+            }
+        }
+    }
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_UnlockRect returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        float quad1[] = {
+            -1.0,      -1.0,       0.1,     1.0,    1.0,
+            -1.0,       0.0,       0.1,     1.0,    1.0,
+             0.0,      -1.0,       0.1,     1.0,    1.0,
+             0.0,       0.0,       0.1,     1.0,    1.0,
+        };
+        float quad2[] = {
+            -1.0,       0.0,       0.1,     1.0,    1.0,
+            -1.0,       1.0,       0.1,     1.0,    1.0,
+             0.0,       0.0,       0.1,     1.0,    1.0,
+             0.0,       1.0,       0.1,     1.0,    1.0,
+        };
+        float quad3[] = {
+             0.0,       0.0,       0.1,     0.5,    0.5,
+             0.0,       1.0,       0.1,     0.5,    0.5,
+             1.0,       0.0,       0.1,     0.5,    0.5,
+             1.0,       1.0,       0.1,     0.5,    0.5,
+        };
+        float quad4[] = {
+             320,       480,       0.1,     1.0,    0.0,    1.0,
+             320,       240,       0.1,     1.0,    0.0,    1.0,
+             640,       480,       0.1,     1.0,    0.0,    1.0,
+             640,       240,       0.1,     1.0,    0.0,    1.0,
+        };
+        float mat[16] = {0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0};
+
+        /* What happens with the texture matrix if D3DTSS_TEXTURETRANSFORMFLAGS is disabled? */
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &mat);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* What happens with transforms enabled? */
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* What happens if 4 coords are used, but only 2 given ?*/
+        mat[8] = 1.0;
+        mat[13] = 1.0;
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &mat);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT4);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* What happens with transformed geometry? This setup lead to 0/0 coords with untransformed
+         * geometry. If the same applies to transformed vertices, the quad will be black, otherwise red,
+         * due to the coords in the vertices. (turns out red, indeed)
+         */
+        memset(mat, 0, sizeof(mat));
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &mat);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_TEX1);
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, 6 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x00FFFF00 || color == 0x00FEFE00, "quad 1 has color %08x, expected 0x00FFFF00\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color == 0x00000000, "quad 2 has color %08x, expected 0x0000000\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color == 0x0000FF00 || color == 0x0000FE00, "quad 3 has color %08x, expected 0x0000FF00\n", color);
+    color = getPixelColor(device, 480, 360);
+    ok(color == 0x00FF0000 || 0x00FE0000, "quad 4 has color %08x, expected 0x00FF0000\n", color);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        float quad1[] = {
+            -1.0,      -1.0,       0.1,     0.8,    0.2,
+            -1.0,       0.0,       0.1,     0.8,    0.2,
+             0.0,      -1.0,       0.1,     0.8,    0.2,
+             0.0,       0.0,       0.1,     0.8,    0.2,
+        };
+        float quad2[] = {
+            -1.0,       0.0,       0.1,     0.5,    1.0,
+            -1.0,       1.0,       0.1,     0.5,    1.0,
+             0.0,       0.0,       0.1,     0.5,    1.0,
+             0.0,       1.0,       0.1,     0.5,    1.0,
+        };
+        float quad3[] = {
+             0.0,       0.0,       0.1,     0.5,    1.0,
+             0.0,       1.0,       0.1,     0.5,    1.0,
+             1.0,       0.0,       0.1,     0.5,    1.0,
+             1.0,       1.0,       0.1,     0.5,    1.0,
+        };
+        float quad4[] = {
+             0.0,      -1.0,       0.1,     0.8,    0.2,
+             0.0,       0.0,       0.1,     0.8,    0.2,
+             1.0,      -1.0,       0.1,     0.8,    0.2,
+             1.0,       0.0,       0.1,     0.8,    0.2,
+        };
+        float mat[16] = {0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0,
+                          0.0, 1.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0};
+
+        /* What happens to the default 1 in the 3rd coordinate if it is disabled?
+         */
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &mat);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* What does this mean? Not sure... */
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT1);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* Just to be sure, the same as quad2 above */
+        memset(mat, 0, sizeof(mat));
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &mat);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* Now, what happens to the 2nd coordinate(that is disabled in the matrix) if it is not
+         * used? And what happens to the first?
+         */
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT1);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x00FF0000 || color == 0x00FE0000, "quad 1 has color %08x, expected 0x00FF0000\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color == 0x00000000, "quad 2 has color %08x, expected 0x0000000\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color == 0x00ff8000 || color == 0x00fe7f00, "quad 3 has color %08x, expected 0x00ff8000\n", color);
+    color = getPixelColor(device, 480, 360);
+    ok(color == 0x0033cc00 || color == 0x0032cb00, "quad 4 has color %08x, expected 0x0033cc00\n", color);
+
+    IDirect3DTexture9_Release(texture);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff203040, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+    /* Use a smaller volume texture than the biggest possible size for memory and performance reasons
+     * Thus watch out if sampling from texels between 0 and 1.
+     */
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 32, 32, 32, 1, 0, fmt, D3DPOOL_MANAGED, &volume, 0);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL,
+       "IDirect3DDevice9_CreateVolumeTexture failed with %s\n", DXGetErrorString9(hr));
+    if(!volume) {
+        skip("Failed to create a volume texture\n");
+        goto out;
+    }
+
+    hr = IDirect3DVolumeTexture9_LockBox(volume, 0, &lb, NULL, 0);
+    ok(hr == D3D_OK, "IDirect3DVolumeTexture9_LockBox failed with %s\n", DXGetErrorString9(hr));
+    for(z = 0; z < 32; z++) {
+        for(y = 0; y < 32; y++) {
+            for(x = 0; x < 32; x++) {
+                char size = (fmt == D3DFMT_A16B16G16R16 ? 8 : 4);
+                void *mem = ((char *)  lb.pBits) + y * lb.RowPitch + z * lb.SlicePitch + x * size;
+                float r_f = (float) x / 31.0;
+                float g_f = (float) y / 31.0;
+                float b_f = (float) z / 31.0;
+
+                if(fmt == D3DFMT_A16B16G16R16) {
+                    unsigned short *mem_s = mem;
+                    mem_s[0]  = r_f * 65535.0;
+                    mem_s[1]  = g_f * 65535.0;
+                    mem_s[2]  = b_f * 65535.0;
+                    mem_s[3]  = 65535;
+                } else {
+                    unsigned char *mem_c = mem;
+                    mem_c[0]  = b_f * 255.0;
+                    mem_c[1]  = g_f * 255.0;
+                    mem_c[2]  = r_f * 255.0;
+                    mem_c[3]  = 255;
+                }
+            }
+        }
+    }
+    hr = IDirect3DVolumeTexture9_UnlockBox(volume, 0);
+    ok(hr == D3D_OK, "IDirect3DVolumeTexture9_UnlockBox failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) volume);
+    ok(hr == D3D_OK, "IDirect3DVolumeTexture9_UnlockBox failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        float quad1[] = {
+            -1.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
+            -1.0,       0.0,       0.1,     1.0,    1.0,    1.0,
+             0.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
+             0.0,       0.0,       0.1,     1.0,    1.0,    1.0
+        };
+        float quad2[] = {
+            -1.0,       0.0,       0.1,     1.0,    1.0,    1.0,
+            -1.0,       1.0,       0.1,     1.0,    1.0,    1.0,
+             0.0,       0.0,       0.1,     1.0,    1.0,    1.0,
+             0.0,       1.0,       0.1,     1.0,    1.0,    1.0
+        };
+        float quad3[] = {
+             0.0,       0.0,       0.1,     0.0,    0.0,
+             0.0,       1.0,       0.1,     0.0,    0.0,
+             1.0,       0.0,       0.1,     0.0,    0.0,
+             1.0,       1.0,       0.1,     0.0,    0.0
+        };
+        float quad4[] = {
+             0.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
+             0.0,       0.0,       0.1,     1.0,    1.0,    1.0,
+             1.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
+             1.0,       0.0,       0.1,     1.0,    1.0,    1.0
+        };
+        float mat[16] = {1.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 1.0, 0.0,
+                          0.0, 1.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 1.0};
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+
+        /* Draw a quad with all 3 coords enabled. Nothing fancy. v and w are swapped, but have the same
+         * values
+         */
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) mat);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* Now disable the w coordinate. Does that change the input, or the output. The coordinates
+         * are swapped by the matrix. If it changes the input, the v coord will be missing(green),
+         * otherwise the w will be missing(blue).
+         * turns out that the blue color is missing, so it is an output modification
+         */
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* default values? Set up the identity matrix, pass in 2 vertex coords, and enable 4 */
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) identity);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT4);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 5 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* D3DTTFF_COUNT1. Set a NULL matrix, and count1, pass in all values as 1.0 */
+        memset(mat, 0, sizeof(mat));
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) mat);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT1);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x00ffffff, "quad 1 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color == 0x00ffff00, "quad 2 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color == 0x000000ff, "quad 3 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 480, 360);
+    ok(color == 0x00ffffff, "quad 4 has color %08x, expected 0x00ffffff\n", color);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff303030, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        float quad1[] = {
+            -1.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
+            -1.0,       0.0,       0.1,     1.0,    1.0,    1.0,
+             0.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
+             0.0,       0.0,       0.1,     1.0,    1.0,    1.0
+        };
+        float quad2[] = {
+            -1.0,       0.0,       0.1,
+            -1.0,       1.0,       0.1,
+             0.0,       0.0,       0.1,
+             0.0,       1.0,       0.1,
+        };
+        float quad3[] = {
+             0.0,       0.0,       0.1,     1.0,
+             0.0,       1.0,       0.1,     1.0,
+             1.0,       0.0,       0.1,     1.0,
+             1.0,       1.0,       0.1,     1.0
+        };
+        float mat[16] =  {0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0,
+                           0.0, 1.0, 0.0, 0.0};
+        float mat2[16] = {0.0, 0.0, 0.0, 1.0,
+                           1.0, 0.0, 0.0, 0.0,
+                           0.0, 1.0, 0.0, 0.0,
+                           0.0, 0.0, 1.0, 0.0};
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+
+        /* Default values? 4 coords used, 3 passed. What happens to the 4th?
+         */
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) mat);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT4);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* None passed */
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) identity);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 3 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        /* 4 used, 1 passed */
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, decl2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) mat2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 4 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x0000ff00, "quad 1 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color == 0x00000000, "quad 2 has color %08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color == 0x00ff0000, "quad 3 has color %08x, expected 0x00ff0000\n", color);
+    /* Quad4: unused */
+
+    IDirect3DVolumeTexture9_Release(volume);
+
+    out:
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &identity);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture returned %s\n", DXGetErrorString9(hr));
+    IDirect3DVertexDeclaration9_Release(decl);
+    IDirect3DVertexDeclaration9_Release(decl2);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -1776,6 +2278,8 @@ START_TEST(visual)
     offscreen_test(device_ptr);
     release_buffer_test(device_ptr);
     float_texture_test(device_ptr);
+    texture_transform_flags_test(device_ptr);
+
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0))
     {
