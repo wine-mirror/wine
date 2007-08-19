@@ -1230,7 +1230,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     }
     else {
         ret = bestFormat+1; /* the return value should be a 1-based index */
-        TRACE("Successfully found a matching mode, returning index: %d %x\n", ret, WineGLPixelFormatList[bestFormat-1].fmt_id);
+        TRACE("Successfully found a matching mode, returning index: %d %x\n", ret, WineGLPixelFormatList[bestFormat].fmt_id);
     }
 
     wine_tsx11_unlock();
