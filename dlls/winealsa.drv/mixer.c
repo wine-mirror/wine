@@ -511,7 +511,7 @@ static void ALSA_MixerInit(void)
         else if (!mastelem)
         {
             /* If there is nothing sensible that can act as 'Master' control, something is wrong */
-            FIXME("No master control found, disabling mixer\n");
+            FIXME("No master control found on %s, disabling mixer\n", snd_ctl_card_info_get_name(info));
             goto close;
         }
 
