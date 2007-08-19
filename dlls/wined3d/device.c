@@ -2240,7 +2240,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
         return WINED3DERR_INVALIDCALL;
     }
 
-    oldSrc = This->stateBlock->streamSource[StreamNumber];
+    oldSrc = This->updateStateBlock->streamSource[StreamNumber];
     TRACE("(%p) : StreamNo: %u, OldStream (%p), NewStream (%p), OffsetInBytes %u, NewStride %u\n", This, StreamNumber, oldSrc, pStreamData, OffsetInBytes, Stride);
 
     This->updateStateBlock->changed.streamSource[StreamNumber] = TRUE;
