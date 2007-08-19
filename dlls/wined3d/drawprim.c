@@ -430,36 +430,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     case 1: s = ptrToCoords[0];
                     }
 
-                    /* Projected is more 'fun' - Move the last coord to the 'q'
-                          parameter (see comments under WINED3DTSS_TEXTURETRANSFORMFLAGS */
-                    if ((This->stateBlock->textureState[textureNo][WINED3DTSS_TEXTURETRANSFORMFLAGS] != WINED3DTTFF_DISABLE) &&
-                        (This->stateBlock->textureState[textureNo][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED)) {
-
-                        if (This->stateBlock->textureState[textureNo][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED) {
-                            switch (coordsToUse) {
-                            case 0:  /* Drop Through */
-                            case 1:
-                                FIXME("WINED3DTTFF_PROJECTED but only zero or one coordinate?\n");
-                                break;
-                            case 2:
-                                q = t;
-                                t = 0.0;
-                                coordsToUse = 4;
-                                break;
-                            case 3:
-                                q = r;
-                                r = 0.0;
-                                coordsToUse = 4;
-                                break;
-                            case 4:  /* Nop here */
-                                break;
-                            default:
-                                FIXME("Unexpected WINED3DTSS_TEXTURETRANSFORMFLAGS value of %d\n",
-                                      This->stateBlock->textureState[textureNo][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED);
-                            }
-                        }
-                    }
-
                     switch (coordsToUse) {   /* Supply the provided texture coords */
                     case WINED3DTTFF_COUNT1:
                         VTRACE(("tex:%d, s=%f\n", textureNo, s));
