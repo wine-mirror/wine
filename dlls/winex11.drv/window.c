@@ -142,7 +142,15 @@ static int get_window_attributes( Display *display, struct x11drv_win_data *data
     attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
     attr->save_under        = ((GetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
     attr->cursor            = x11drv_thread_data()->cursor;
-    return (CWOverrideRedirect | CWSaveUnder | CWColormap | CWCursor);
+    attr->bit_gravity       = NorthWestGravity;
+    attr->backing_store     = NotUseful;
+    attr->event_mask        = (ExposureMask | PointerMotionMask |
+                               ButtonPressMask | ButtonReleaseMask | EnterWindowMask |
+                               KeyPressMask | KeyReleaseMask | FocusChangeMask | KeymapStateMask);
+    if (data->managed) attr->event_mask |= StructureNotifyMask;
+
+    return (CWOverrideRedirect | CWSaveUnder | CWColormap | CWCursor |
+            CWEventMask | CWBitGravity | CWBackingStore);
 }
 
 
@@ -153,13 +161,15 @@ static int get_window_attributes( Display *display, struct x11drv_win_data *data
  */
 void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data )
 {
-    XSetWindowAttributes attr;
-    int mask = get_window_attributes( display, data, &attr );
+    if (data->whole_window != root_window)
+    {
+        XSetWindowAttributes attr;
+        int mask = get_window_attributes( display, data, &attr );
 
-    wine_tsx11_lock();
-    if (data->whole_window != DefaultRootWindow(display))
+        wine_tsx11_lock();
         XChangeWindowAttributes( display, data->whole_window, mask, &attr );
-    wine_tsx11_unlock();
+        wine_tsx11_unlock();
+    }
 }
 
 
@@ -773,15 +783,6 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     if (!(cy = rect.bottom - rect.top)) cy = 1;
 
     mask = get_window_attributes( display, data, &attr );
-
-    /* set the attributes that don't change over the lifetime of the window */
-    attr.bit_gravity   = NorthWestGravity;
-    attr.backing_store = NotUseful;
-    attr.event_mask    = (ExposureMask | PointerMotionMask |
-                          ButtonPressMask | ButtonReleaseMask | EnterWindowMask |
-                          KeyPressMask | KeyReleaseMask | StructureNotifyMask |
-                          FocusChangeMask | KeymapStateMask);
-    mask |= CWBitGravity | CWBackingStore | CWEventMask;
 
     wine_tsx11_lock();
 
