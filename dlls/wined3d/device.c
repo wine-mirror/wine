@@ -522,6 +522,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         if(object->pIndexData) {
             IWineD3DIndexBuffer_AddRef(object->pIndexData);
         }
+        if(object->vertexShader) {
+            IWineD3DVertexShader_AddRef(object->vertexShader);
+        }
+        if(object->pixelShader) {
+            IWineD3DPixelShader_AddRef(object->pixelShader);
+        }
 
     } else if (Type == WINED3DSBT_PIXELSTATE) {
 
@@ -568,6 +574,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
                 object->num_contained_sampler_states++;
             }
         }
+        if(object->pixelShader) {
+            IWineD3DPixelShader_AddRef(object->pixelShader);
+        }
 
         /* Pixel state blocks do not contain vertex buffers. Set them to NULL to avoid wrong refcounting
          * on them. This makes releasing the buffer easier
@@ -576,6 +585,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
             object->streamSource[i] = NULL;
         }
         object->pIndexData = NULL;
+        object->vertexShader = NULL;
 
     } else if (Type == WINED3DSBT_VERTEXSTATE) {
 
@@ -636,7 +646,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
                 IWineD3DVertexBuffer_AddRef(object->streamSource[i]);
             }
         }
+        if(object->vertexShader) {
+            IWineD3DVertexShader_AddRef(object->vertexShader);
+        }
         object->pIndexData = NULL;
+        object->pixelShader = NULL;
     } else {
         FIXME("Unrecognized state block type %d\n", Type);
     }
@@ -3091,6 +3105,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
     This->updateStateBlock->changed.vertexShader = TRUE;
 
     if (This->isRecordingState) {
+        if(pShader) IWineD3DVertexShader_AddRef(pShader);
+        if(oldShader) IWineD3DVertexShader_Release(oldShader);
         TRACE("Recording... not performing anything\n");
         return WINED3D_OK;
     } else if(oldShader == pShader) {
@@ -3100,6 +3116,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
     }
 
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
+    if(pShader) IWineD3DVertexShader_AddRef(pShader);
+    if(oldShader) IWineD3DVertexShader_Release(oldShader);
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VSHADER);
 
@@ -3478,6 +3496,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
 
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
+        if(pShader) IWineD3DPixelShader_AddRef(pShader);
+        if(oldShader) IWineD3DPixelShader_Release(oldShader);
         return WINED3D_OK;
     }
 
@@ -3485,6 +3505,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
         TRACE("App is setting the old pixel shader over, nothing to do\n");
         return WINED3D_OK;
     }
+
+    if(pShader) IWineD3DPixelShader_AddRef(pShader);
+    if(oldShader) IWineD3DPixelShader_Release(oldShader);
 
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);

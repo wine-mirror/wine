@@ -73,18 +73,6 @@ static ULONG  WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface)
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        /* SetPixelShader does not AddRef. If the bound pixel shader is destroyed, the pointer in the stateblock remains
-         * unchanged. Drawing again will most likely crash, even on windows. A problem can occur if the application creates
-         * a new pixel shader which resides at the same address. Then SetPixelShader will think it is a NOP change, and won't
-         * dirtify the state.
-         *
-         * Do NOT call GetPixelShader here. This will addRef and cause a recursion. And do NOT set the pixel shader to NULL,
-         * Windows does not do that(Although no test exists since they'd crash randomly)
-         */
-        if(iface == ((IWineD3DDeviceImpl *) This->baseShader.device)->stateBlock->pixelShader) {
-            IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *) This->baseShader.device, STATE_PIXELSHADER);
-        }
-
         if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
             struct list *linked_programs = &This->baseShader.linked_programs;
 

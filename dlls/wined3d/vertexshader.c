@@ -460,11 +460,6 @@ static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        if(iface == ((IWineD3DDeviceImpl *) This->baseShader.device)->stateBlock->vertexShader) {
-            /* See comment in PixelShader::Release */
-            IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *) This->baseShader.device, STATE_VSHADER);
-        }
-
         if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
             struct list *linked_programs = &This->baseShader.linked_programs;
 
