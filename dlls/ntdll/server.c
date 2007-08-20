@@ -219,7 +219,7 @@ void server_protocol_perror( const char *err )
  *
  * Send a request to the server.
  */
-static void send_request( const struct __server_request_info *req )
+static unsigned int send_request( const struct __server_request_info *req )
 {
     unsigned int i;
     int ret;
@@ -227,7 +227,7 @@ static void send_request( const struct __server_request_info *req )
     if (!req->u.req.request_header.request_size)
     {
         if ((ret = write( ntdll_get_thread_data()->request_fd, &req->u.req,
-                          sizeof(req->u.req) )) == sizeof(req->u.req)) return;
+                          sizeof(req->u.req) )) == sizeof(req->u.req)) return STATUS_SUCCESS;
 
     }
     else
@@ -242,11 +242,12 @@ static void send_request( const struct __server_request_info *req )
             vec[i+1].iov_len = req->data[i].size;
         }
         if ((ret = writev( ntdll_get_thread_data()->request_fd, vec, i+1 )) ==
-            req->u.req.request_header.request_size + sizeof(req->u.req)) return;
+            req->u.req.request_header.request_size + sizeof(req->u.req)) return STATUS_SUCCESS;
     }
 
     if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
     if (errno == EPIPE) server_abort_thread(0);
+    if (errno == EFAULT) return STATUS_ACCESS_VIOLATION;
     server_protocol_perror( "write" );
 }
 
@@ -283,11 +284,12 @@ static void read_reply_data( void *buffer, size_t size )
  *
  * Wait for a reply from the server.
  */
-static inline void wait_reply( struct __server_request_info *req )
+static inline unsigned int wait_reply( struct __server_request_info *req )
 {
     read_reply_data( &req->u.reply, sizeof(req->u.reply) );
     if (req->u.reply.reply_header.reply_size)
         read_reply_data( req->reply_data, req->u.reply.reply_header.reply_size );
+    return req->u.reply.reply_header.error;
 }
 
 
@@ -317,12 +319,13 @@ unsigned int wine_server_call( void *req_ptr )
 {
     struct __server_request_info * const req = req_ptr;
     sigset_t old_set;
+    unsigned int ret;
 
     pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, &old_set );
-    send_request( req );
-    wait_reply( req );
+    ret = send_request( req );
+    if (!ret) ret = wait_reply( req );
     pthread_functions.sigprocmask( SIG_SETMASK, &old_set, NULL );
-    return req->u.reply.reply_header.error;
+    return ret;
 }
 
 
