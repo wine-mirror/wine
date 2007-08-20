@@ -356,7 +356,7 @@ unsigned char* CDECL _mbsninc(const unsigned char* str, MSVCRT_size_t num)
  */
 unsigned int CDECL _mbclen(const unsigned char* str)
 {
-  return MSVCRT_isleadbyte(*str) ? 2 : 1;
+  return _ismbblead(*str) ? 2 : 1;
 }
 
 /*********************************************************************
@@ -379,17 +379,19 @@ int CDECL MSVCRT_mblen(const char* str, MSVCRT_size_t size)
  */
 MSVCRT_size_t CDECL _mbslen(const unsigned char* str)
 {
-  if(MSVCRT___mb_cur_max > 1)
+  MSVCRT_size_t len = 0;
+  while(*str)
   {
-    MSVCRT_size_t len = 0;
-    while(*str)
+    if (_ismbblead(*str))
     {
-      str += MSVCRT_isleadbyte(*str) ? 2 : 1;
-      len++;
+      str++;
+      if (!*str)  /* count only full chars */
+        break;
     }
-    return len;
+    str++;
+    len++;
   }
-  return u_strlen(str); /* ASCII CP */
+  return len;
 }
 
 /*********************************************************************

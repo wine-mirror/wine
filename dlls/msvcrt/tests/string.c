@@ -166,6 +166,8 @@ static void test_mbcp(void)
     int mb_orig_max = __mb_cur_max;
     int curr_mbcp = _getmbcp();
     unsigned char *mbstring = (unsigned char *)"\xb0\xb1\xb2 \xb3\xb4 \xb5"; /* incorrect string */
+    unsigned char *mbstring2 = (unsigned char *)"\xb0\xb1\xb2\xb3Q\xb4\xb5"; /* correct string */
+    unsigned char *mbsonlylead = (unsigned char *)"\xb0";
 
     /* some two single-byte code pages*/
     test_codepage(1252);
@@ -186,11 +188,18 @@ static void test_mbcp(void)
     ok(_ismbbtrail('\xb0'), "\xa0 should be a trail byte\n");
     ok(_ismbbtrail(' ') == FALSE, "' ' should not be a trail byte\n");
 
-
     /* _mbsnextc */
     expect_eq(_mbsnextc(mbstring), 0xb0b1, int, "%x");
     expect_eq(_mbsnextc(&mbstring[2]), 0xb220, int, "%x");  /* lead + invalid tail */
     expect_eq(_mbsnextc(&mbstring[3]), 0x20, int, "%x");    /* single char */
+
+    /* _mbclen/_mbslen */
+    expect_eq(_mbclen(mbstring), 2, int, "%d");
+    expect_eq(_mbclen(&mbstring[2]), 2, int, "%d");
+    expect_eq(_mbclen(&mbstring[3]), 1, int, "%d");
+    expect_eq(_mbslen(mbstring2), 4, int, "%d");
+    expect_eq(_mbslen(mbsonlylead), 0, int, "%d");          /* lead + NUL not counted as character */
+    expect_eq(_mbslen(mbstring), 4, int, "%d");             /* lead + invalid trail counted */
 
     _setmbcp(curr_mbcp);
 }
