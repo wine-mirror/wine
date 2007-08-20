@@ -60,7 +60,6 @@ extern WORD* MSVCRT__pctype;
 
 /* mbctype data modified when the locale changes */
 extern int MSVCRT___mb_cur_max;
-extern unsigned char MSVCRT_mbctype[257];
 
 #define MSVCRT_LEADBYTE  0x8000
 
@@ -357,7 +356,6 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
       /* Restore C locale ctype info */
       MSVCRT___mb_cur_max = 1;
       memcpy(MSVCRT_current_ctype, MSVCRT__ctype, sizeof(MSVCRT__ctype));
-      memset(MSVCRT_mbctype, 0, sizeof(MSVCRT_mbctype));
       if (!lc_all) break;
     case MSVCRT_LC_MONETARY:
       if (!lc_all) break;
@@ -527,55 +525,6 @@ const char* CDECL _Strftime(char *out, unsigned int len, const char *fmt,
   /* FIXME: */
   TRACE("(%p %d %s %p %p) stub\n", out, len, fmt, tm, foo);
   return "";
-}
-
-/* FIXME: MBCP probably belongs in mbcs.c */
-
-/*********************************************************************
- *		_setmbcp (MSVCRT.@)
- */
-int CDECL _setmbcp(int cp)
-{
-  LOCK_LOCALE;
-  if ( cp > _MB_CP_SBCS)
-  {
-    if( MSVCRT___lc_codepage != cp)
-      /* FIXME: set ctype behaviour for this cp */
-      MSVCRT___lc_codepage = cp;
-  }
-  else if(cp == _MB_CP_ANSI)
-  {
-    MSVCRT___lc_codepage = GetACP();
-  }
-  else if(cp == _MB_CP_OEM)
-  {
-    MSVCRT___lc_codepage = GetOEMCP();
-  }
-  else if(cp == _MB_CP_LOCALE)
-  {
-    GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER,
-                    (WCHAR *)&MSVCRT___lc_codepage, sizeof(INT)/sizeof(WCHAR) );
-  }
-  else if(cp == _MB_CP_SBCS)
-  {
-    FIXME ("SBCS codepages not implemented\n");
-  }
-  else
-  {
-    FIXME ("Unreal codepages (e.g. %d) not implemented\n", cp);
-  }
-  MSVCRT___lc_collate_cp = MSVCRT___lc_codepage;
-  UNLOCK_LOCALE;
-  TRACE("(%d) -> %d\n", cp, MSVCRT___lc_codepage);
-  return 0;
-}
-
-/*********************************************************************
- *		_getmbcp (MSVCRT.@)
- */
-int CDECL _getmbcp(void)
-{
-  return MSVCRT___lc_codepage;
 }
 
 /*********************************************************************

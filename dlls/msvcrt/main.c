@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #include "msvcrt.h"
+#include "msvcrt/mbctype.h"
 
 #include "wine/debug.h"
 
@@ -83,6 +84,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_init_args();
     msvcrt_init_signals();
     MSVCRT_setlocale(0, "C");
+    _setmbcp(_MB_CP_LOCALE);
     TRACE("finished process init\n");
     break;
   case DLL_THREAD_ATTACH:

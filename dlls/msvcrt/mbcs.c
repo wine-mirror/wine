@@ -32,6 +32,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 unsigned char MSVCRT_mbctype[257];
 int MSVCRT___mb_cur_max = 1;
+extern int MSVCRT___lc_collate_cp;
+
+/* It seems that the data about valid trail bytes is not available from kernel32
+ * so we have to store is here. The format is the same as for lead bytes in CPINFO */
+struct cp_extra_info_t
+{
+    int cp;
+    BYTE TrailBytes[MAX_LEADBYTES];
+};
+
+static struct cp_extra_info_t g_cpextrainfo[] =
+{
+    {932, {0x40, 0x7e, 0x80, 0xfc, 0, 0}},
+    {936, {0x40, 0xfe, 0, 0}},
+    {949, {0x41, 0xfe, 0, 0}},
+    {950, {0x40, 0x7e, 0xa1, 0xfe, 0, 0}},
+    {20932, {1, 255, 0, 0}},
+    {0, {1, 255, 0, 0}}       /* match all with FIXME */
+};
 
 static MSVCRT_wchar_t msvcrt_mbc_to_wc(unsigned int ch)
 {
@@ -129,6 +148,133 @@ unsigned char* CDECL __p__mbctype(void)
 int* CDECL __p___mb_cur_max(void)
 {
   return &MSVCRT___mb_cur_max;
+}
+
+/*********************************************************************
+ *		_setmbcp (MSVCRT.@)
+ */
+int CDECL _setmbcp(int cp)
+{
+  int newcp;
+  CPINFO cpi;
+  BYTE *bytes;
+  WORD chartypes[256];
+  WORD *curr_type;
+  char bufA[256];
+  WCHAR bufW[256];
+  int charcount;
+  int ret;
+  int i;
+
+  switch (cp)
+  {
+    case _MB_CP_ANSI:
+      newcp = GetACP();
+      break;
+    case _MB_CP_OEM:
+      newcp = GetOEMCP();
+      break;
+    case _MB_CP_LOCALE:
+      newcp = MSVCRT___lc_codepage;
+      break;
+    case _MB_CP_SBCS:
+      newcp = 20127;   /* ASCII */
+      break;
+    default:
+      newcp = cp;
+      break;
+  }
+
+  if (!GetCPInfo(newcp, &cpi))
+  {
+    WARN("Codepage %d not found\n", newcp);
+    msvcrt_set_errno(MSVCRT_EINVAL);
+    return -1;
+  }
+
+  /* setup the _mbctype */
+  memset(MSVCRT_mbctype, 0, sizeof(MSVCRT_mbctype));
+
+  bytes = cpi.LeadByte;
+  while (bytes[0] || bytes[1])
+  {
+    for (i = bytes[0]; i <= bytes[1]; i++)
+      MSVCRT_mbctype[i + 1] |= _M1;
+    bytes += 2;
+  }
+
+  if (cpi.MaxCharSize > 1)
+  {
+    /* trail bytes not available through kernel32 but stored in a structure in msvcrt */
+    struct cp_extra_info_t *cpextra = g_cpextrainfo;
+    while (TRUE)
+    {
+      if (cpextra->cp == 0 || cpextra->cp == newcp)
+      {
+        if (cpextra->cp == 0)
+          FIXME("trail bytes data not available for DBCS codepage %d - assuming all bytes\n", newcp);
+
+        bytes = cpextra->TrailBytes;
+        while (bytes[0] || bytes[1])
+        {
+          for (i = bytes[0]; i <= bytes[1]; i++)
+            MSVCRT_mbctype[i + 1] |= _M2;
+          bytes += 2;
+        }
+        break;
+      }
+      cpextra++;
+    }
+  }
+
+  /* we can't use GetStringTypeA directly because we don't have a locale - only a code page
+   */
+  charcount = 0;
+  for (i = 0; i < 256; i++)
+    if (!(MSVCRT_mbctype[i + 1] & _M1))
+      bufA[charcount++] = i;
+
+  ret = MultiByteToWideChar(newcp, 0, bufA, charcount, bufW, charcount);
+  if (ret != charcount)
+    ERR("MultiByteToWideChar of chars failed for cp %d, ret=%d (exp %d), error=%d\n", newcp, ret, charcount, GetLastError());
+
+  GetStringTypeW(CT_CTYPE1, bufW, charcount, chartypes);
+
+  curr_type = chartypes;
+  for (i = 0; i < 256; i++)
+    if (!(MSVCRT_mbctype[i + 1] & _M1))
+    {
+	if ((*curr_type) & C1_UPPER)
+	    MSVCRT_mbctype[i + 1] |= _SBUP;
+	if ((*curr_type) & C1_LOWER)
+	    MSVCRT_mbctype[i + 1] |= _SBLOW;
+	curr_type++;
+    }
+
+  if (newcp == 932)   /* CP932 only - set _MP and _MS */
+  {
+    /* On Windows it's possible to calculate the _MP and _MS from CT_CTYPE1
+     * and CT_CTYPE3. But as of Wine 0.9.43 we return wrong values what makes
+     * it hard. As this is set only for codepage 932 we hardcode it what gives
+     * also faster execution.
+     */
+    for (i = 161; i <= 165; i++)
+      MSVCRT_mbctype[i + 1] |= _MP;
+    for (i = 166; i <= 223; i++)
+      MSVCRT_mbctype[i + 1] |= _MS;
+  }
+
+  MSVCRT___lc_collate_cp = MSVCRT___lc_codepage = newcp;
+  TRACE("(%d) -> %d\n", cp, MSVCRT___lc_codepage);
+  return 0;
+}
+
+/*********************************************************************
+ *		_getmbcp (MSVCRT.@)
+ */
+int CDECL _getmbcp(void)
+{
+  return MSVCRT___lc_codepage;
 }
 
 /*********************************************************************

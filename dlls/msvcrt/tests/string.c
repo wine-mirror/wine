@@ -75,15 +75,110 @@ static void test_swab( void ) {
     ok(memcmp(to,expected3,testsize) == 0, "Testing small size %d returned '%*.*s'\n", testsize, testsize, testsize, to);
 }
 
-static void test_ismbblead(void)
+#if 0      /* use this to generate more tests */
+
+static void test_codepage(int cp)
+{
+    int i;
+    int prev;
+    int count = 1;
+
+    ok(_setmbcp(cp) == 0, "Couldn't set mbcp\n");
+
+    prev = _mbctype[0];
+    printf("static int result_cp_%d_mbctype[] = { ", cp);
+    for (i = 1; i < 257; i++)
+    {
+        if (_mbctype[i] != prev)
+        {
+            printf("0x%x,%d, ", prev, count);
+            prev = _mbctype[i];
+            count = 1;
+        }
+        else
+            count++;
+    }
+    printf("0x%x,%d };\n", prev, count);
+}
+
+#define test_codepage_todo(cp, todo) test_codepage(cp)
+
+#else
+
+/* RLE-encoded mbctype tables for given codepages */
+static int result_cp_1252_mbctype[] = { 0x0,66, 0x10,26, 0x0,6, 0x20,26, 0x0,8, 0x20,1,
+  0x0,6, 0x10,1, 0x0,1, 0x10,1, 0x0,1, 0x10,1, 0x0,11, 0x20,1, 0x0,1, 0x20,1, 0x0,1,
+  0x20,1, 0x10,1, 0x0,10, 0x20,1, 0x0,10, 0x20,1, 0x0,4, 0x20,1, 0x0,5, 0x10,23, 0x0,1,
+  0x10,7, 0x20,24, 0x0,1, 32,8 };
+static int result_cp_1250_mbctype[] = { 0x0,66, 0x10,26, 0x0,6, 0x20,26, 0x0,15, 0x10,1,
+  0x0,1, 0x10,4, 0x0,10, 0x20,1, 0x0,1, 0x20,4, 0x0,3, 0x10,1, 0x0,1, 0x10,1, 0x0,4,
+  0x10,1, 0x0,4, 0x10,1, 0x0,3, 0x20,1, 0x0,1, 0x20,1, 0x0,3, 0x20,2, 0x0,1, 0x10,1,
+  0x0,1, 0x20,2, 0x10,23, 0x0,1, 0x10,7, 0x20,24, 0x0,1, 0x20,7, 0,1 };
+static int result_cp_932_mbctype[] = { 0x0,65, 0x8,1, 0x18,26, 0x8,6, 0x28,26, 0x8,4,
+  0x0,1, 0x8,1, 0xc,31, 0x8,1, 0xa,5, 0x9,58, 0xc,29, 0,3 };
+static int result_cp_936_mbctype[] = { 0x0,65, 0x8,1, 0x18,26, 0x8,6, 0x28,26, 0x8,6,
+  0xc,126, 0,1 };
+static int result_cp_949_mbctype[] = { 0x0,66, 0x18,26, 0x8,6, 0x28,26, 0x8,6, 0xc,126,
+  0,1 };
+static int result_cp_950_mbctype[] = { 0x0,65, 0x8,1, 0x18,26, 0x8,6, 0x28,26, 0x8,4,
+  0x0,2, 0x4,32, 0xc,94, 0,1 };
+static int result_cp_20932_mbctype[] = { 0x0,2, 0x8,64, 0x18,26, 0x8,6, 0x28,26, 0x8,19,
+  0xc,1, 0x8,18, 0xc,94, 0,1 };
+
+static int todo_none[] = { -2 };
+static int todo_cp_932[] = { 254, -2 };
+static int todo_cp_20932[] = { 143, -2 };
+
+void test_cp_table(int cp, int *result, int *todo)
+{
+    int i;
+    int count = 0;
+    int curr = 0;
+    _setmbcp(cp);
+    for (i = 0; i < 256; i++)
+    {
+        if (count == 0)
+        {
+            curr = result[0];
+            count = result[1];
+            result += 2;
+        }
+	if (i == *todo + 1)
+	{
+            todo_wine ok(_mbctype[i] == curr, "CP%d: Mismatch in ctype for character %d - %d instead of %d\n", cp, i-1, _mbctype[i], curr);
+            todo++;
+	}
+	else
+            ok(_mbctype[i] == curr, "CP%d: Mismatch in ctype for character %d - %d instead of %d\n", cp, i-1, _mbctype[i], curr);
+        count--;
+    }
+}
+
+#define test_codepage(num) test_cp_table(num, result_cp_##num##_mbctype, todo_none);
+#define test_codepage_todo(num, todo) test_cp_table(num, result_cp_##num##_mbctype, todo);
+
+#endif
+
+static void test_mbcp(void)
 {
     unsigned int s = '\354';
     int mb_orig_max = __mb_cur_max;
+    int curr_mbcp = _getmbcp();
+
+    /* some two single-byte code pages*/
+    test_codepage(1252);
+    test_codepage(1250);
+    /* double byte code pages */
+    test_codepage_todo(932, todo_cp_932);
+    test_codepage(936);
+    test_codepage(949);
+    test_codepage(950);
+    test_codepage_todo(20932, todo_cp_20932);
 
     _setmbcp(936);
     ok(__mb_cur_max == mb_orig_max, "__mb_cur_max shouldn't be updated (is %d != %d)\n", __mb_cur_max, mb_orig_max);
     todo_wine ok(_ismbblead(s), "got result %d\n", _ismbblead(s));
-    _setmbcp(1252);
+    _setmbcp(curr_mbcp);
 }
 
 static void test_mbsspn( void)
@@ -155,7 +250,7 @@ START_TEST(string)
     test_swab();
 
     /* Test ismbblead*/
-    test_ismbblead();
+    test_mbcp();
    /* test _mbsspn */
     test_mbsspn();
     test_mbsspnp();
