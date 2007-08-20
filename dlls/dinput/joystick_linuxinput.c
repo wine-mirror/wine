@@ -149,14 +149,8 @@ struct JoyDev {
 	BYTE				keybits[(KEY_MAX+7)/8];
 	BYTE				ffbits[(FF_MAX+7)/8];	
 
-#define AXIS_ABS     0
-#define AXIS_ABSMIN  1
-#define AXIS_ABSMAX  2
-#define AXIS_ABSFUZZ 3
-#define AXIS_ABSFLAT 4
-
 	/* data returned by the EVIOCGABS() ioctl */
-	int				axes[ABS_MAX][5];
+        struct input_absinfo            axes[ABS_MAX];
 };
 
 struct JoystickImpl
@@ -290,11 +284,11 @@ static void find_joydevs(void)
 	    if (-1!=ioctl(fd,EVIOCGABS(j),&(joydev.axes[j]))) {
 	      TRACE(" ... with axis %d: cur=%d, min=%d, max=%d, fuzz=%d, flat=%d\n",
 		  j,
-		  joydev.axes[j][AXIS_ABS],
-		  joydev.axes[j][AXIS_ABSMIN],
-		  joydev.axes[j][AXIS_ABSMAX],
-		  joydev.axes[j][AXIS_ABSFUZZ],
-		  joydev.axes[j][AXIS_ABSFLAT]
+		  joydev.axes[j].value,
+		  joydev.axes[j].minimum,
+		  joydev.axes[j].maximum,
+		  joydev.axes[j].fuzz,
+		  joydev.axes[j].flat
 		  );
 	    }
 	  }
@@ -420,12 +414,12 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i], df->dwObjSize);
         newDevice->axes[i] = idx;
-        newDevice->props[idx].lDevMin = newDevice->joydev->axes[i][AXIS_ABSMIN];
-        newDevice->props[idx].lDevMax = newDevice->joydev->axes[i][AXIS_ABSMAX];
+        newDevice->props[idx].lDevMin = newDevice->joydev->axes[i].minimum;
+        newDevice->props[idx].lDevMax = newDevice->joydev->axes[i].maximum;
         newDevice->props[idx].lMin    = 0;
         newDevice->props[idx].lMax    = 0xffff;
         newDevice->props[idx].lSaturation = 0;
-        newDevice->props[idx].lDeadZone = MulDiv(newDevice->joydev->axes[i][AXIS_ABSFLAT], 0xffff,
+        newDevice->props[idx].lDeadZone = MulDiv(newDevice->joydev->axes[i].flat, 0xffff,
              newDevice->props[idx].lDevMax - newDevice->props[idx].lDevMin);
 
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numAxes++) | DIDFT_ABSAXIS;
@@ -615,7 +609,7 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
  */
 #define CENTER_AXIS(a) \
     (ji->axes[a] == -1 ? 0 : joystick_map_axis( &ji->props[ji->axes[a]], \
-                                                ji->joydev->axes[a][AXIS_ABS] ))
+                                                ji->joydev->axes[a].value ))
 static void fake_current_js_state(JoystickImpl *ji)
 {
     int i;
