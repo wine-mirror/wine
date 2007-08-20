@@ -833,61 +833,13 @@ static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
     return render_type;
 }
 
-static BOOL get_fbconfig_from_visualid(Display *display, Visual *visual, GLXFBConfig *fbconfig, int *fmt_id)
-{
-    GLXFBConfig* cfgs = NULL;
-    int i;
-    int nCfgs;
-    int tmp_fmt_id;
-    int tmp_vis_id;
-    VisualID visualid;
-
-    if(!display || !visual) {
-        ERR("Invalid display or visual\n");
-	return FALSE;
-    }
-    visualid = XVisualIDFromVisual(visual);
-
-    /* Get a list of all available framebuffer configurations */
-    cfgs = pglXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
-    if (NULL == cfgs || 0 == nCfgs) {
-        ERR("glXChooseFBConfig returns NULL\n");
-        if(cfgs != NULL) XFree(cfgs);
-        return FALSE;
-    }
-
-    /* Find the requested offscreen format and count the number of offscreen formats */
-    for(i=0; i<nCfgs; i++) {
-        pglXGetFBConfigAttrib(display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
-        pglXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &tmp_fmt_id);
-
-        /* We are looking up the GLX index of our main visual and have found it :) */
-        if(visualid == tmp_vis_id) {
-            TRACE("Found FBCONFIG_ID 0x%x at index %d for VISUAL_ID 0x%x\n", tmp_fmt_id, i, tmp_vis_id);
-            *fbconfig = cfgs[i];
-            *fmt_id = tmp_fmt_id;
-            XFree(cfgs);
-            return TRUE;
-        }
-    }
-
-    ERR("No fbconfig found for Wine's main visual (0x%lx), expect problems!\n", visualid);
-    XFree(cfgs);
-    return FALSE;
-}
-
 static BOOL init_formats(Display *display, int screen, Visual *visual)
 {
     int fmt_id, tmp_vis_id, tmp_fmt_id, nCfgs, i;
     GLXFBConfig* cfgs;
-    GLXFBConfig fbconfig;
+    GLXFBConfig fbconfig = NULL;
+    VisualID visualid = XVisualIDFromVisual(visual);
     int nOffscreenFormats = 0;
-
-    /* Locate the fbconfig correspondig to our main visual */
-    if(!get_fbconfig_from_visualid(display, visual, &fbconfig, &fmt_id)) {
-        ERR("Can't get the FBCONFIG_ID for the main visual, expect problems!\n");
-        return FALSE;
-    }
 
     /* As mentioned in various parts of the code only the format of the main visual can be used for onscreen rendering.
     * Next to this format there are also so called offscreen rendering formats (used for pbuffers) which can be supported
@@ -895,54 +847,51 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
     * because this call lists both types of formats instead of only onscreen ones. */
     cfgs = pglXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
     if (NULL == cfgs || 0 == nCfgs) {
-        WARN("glXChooseFBConfig returns NULL\n");
+        ERR("glXChooseFBConfig returns NULL\n");
         if(cfgs != NULL) XFree(cfgs);
-
-        /* We only have the single format of Wine's main visual */
-        WineGLPixelFormatList = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineGLPixelFormat));
-        WineGLPixelFormatList[0].iPixelFormat = 1;
-        WineGLPixelFormatList[0].fbconfig = fbconfig;
-        WineGLPixelFormatList[0].fmt_id = fmt_id;
-        WineGLPixelFormatList[0].render_type = get_render_type_from_fbconfig(display, fbconfig);
-        WineGLPixelFormatList[0].offscreenOnly = FALSE;
-        WineGLPixelFormatListSize = 1;
+        return FALSE;
     }
-    else {
-        /* Count the number of offscreen formats to determine the size for our pixelformat list */
-        for(i=0; i<nCfgs; i++) {
-            pglXGetFBConfigAttrib(display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
 
-            /* We have found an offscreen rendering format :) */
-            if(tmp_vis_id == 0) {
-                nOffscreenFormats++;
-            }
+    /* Count the number of offscreen formats to determine the size for our pixelformat list */
+    for(i=0; i<nCfgs; i++) {
+        pglXGetFBConfigAttrib(display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
+
+        /* We have found Wine's main visual */
+        if(tmp_vis_id == visualid) {
+            pglXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &fmt_id);
+            fbconfig = cfgs[i];
         }
-        TRACE("Number of offscreen formats: %d\n", nOffscreenFormats);
 
-        /* Allocate memory for all the offscreen pixelformats and the format of Wine's main visual */
-        WineGLPixelFormatList = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (1+nOffscreenFormats)*sizeof(WineGLPixelFormat));
-        WineGLPixelFormatList[0].iPixelFormat = 1;
-        WineGLPixelFormatList[0].fbconfig = fbconfig;
-        WineGLPixelFormatList[0].fmt_id = fmt_id;
-        WineGLPixelFormatList[0].render_type = get_render_type_from_fbconfig(display, fbconfig);
-        WineGLPixelFormatList[0].offscreenOnly = FALSE;
-        WineGLPixelFormatListSize = 1;
+        /* We have found an offscreen rendering format :) */
+        if(tmp_vis_id == 0) {
+            nOffscreenFormats++;
+        }
+    }
+    TRACE("Number of offscreen formats: %d\n", nOffscreenFormats);
 
-        /* Fill the list with offscreen formats */
-        for(i=0; i<nCfgs; i++) {
-            pglXGetFBConfigAttrib(display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
-            pglXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &tmp_fmt_id);
+    /* Allocate memory for all the offscreen pixelformats and the format of Wine's main visual */
+    WineGLPixelFormatList = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (1+nOffscreenFormats)*sizeof(WineGLPixelFormat));
+    WineGLPixelFormatList[0].iPixelFormat = 1;
+    WineGLPixelFormatList[0].fbconfig = fbconfig;
+    WineGLPixelFormatList[0].fmt_id = fmt_id;
+    WineGLPixelFormatList[0].render_type = get_render_type_from_fbconfig(display, fbconfig);
+    WineGLPixelFormatList[0].offscreenOnly = FALSE;
+    WineGLPixelFormatListSize = 1;
 
-            /* We have found an offscreen rendering format :) */
-            if(tmp_vis_id == 0) {
-                TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", tmp_fmt_id, WineGLPixelFormatListSize+1, i);
-                WineGLPixelFormatList[WineGLPixelFormatListSize].iPixelFormat = WineGLPixelFormatListSize+1; /* The index starts at 1 */
-                WineGLPixelFormatList[WineGLPixelFormatListSize].fbconfig = cfgs[i];
-                WineGLPixelFormatList[WineGLPixelFormatListSize].fmt_id = tmp_fmt_id;
-                WineGLPixelFormatList[WineGLPixelFormatListSize].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
-                WineGLPixelFormatList[WineGLPixelFormatListSize].offscreenOnly = TRUE;
-                WineGLPixelFormatListSize++;
-            }
+    /* Fill the list with offscreen formats */
+    for(i=0; i<nCfgs; i++) {
+        pglXGetFBConfigAttrib(display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
+        pglXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &tmp_fmt_id);
+
+        /* We have found an offscreen rendering format :) */
+        if(tmp_vis_id == 0) {
+            TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", tmp_fmt_id, WineGLPixelFormatListSize+1, i);
+            WineGLPixelFormatList[WineGLPixelFormatListSize].iPixelFormat = WineGLPixelFormatListSize+1; /* The index starts at 1 */
+            WineGLPixelFormatList[WineGLPixelFormatListSize].fbconfig = cfgs[i];
+            WineGLPixelFormatList[WineGLPixelFormatListSize].fmt_id = tmp_fmt_id;
+            WineGLPixelFormatList[WineGLPixelFormatListSize].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
+            WineGLPixelFormatList[WineGLPixelFormatListSize].offscreenOnly = TRUE;
+            WineGLPixelFormatListSize++;
         }
     }
 
