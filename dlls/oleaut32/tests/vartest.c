@@ -7864,6 +7864,10 @@ static void test_VarImp(void)
         {
             SKIPTESTIMP(leftvt);
 
+            /* Check if we need/have support for I8 and/or UI8 */
+            if ((leftvt == VT_I8 || leftvt == VT_UI8) && !HAVE_OLEAUT32_I8)
+                continue;
+
             for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
             {
                 BOOL bFail = FALSE;
@@ -7875,6 +7879,10 @@ static void test_VarImp(void)
                 if ((leftvt == VT_UI4 && rightvt == VT_BSTR) ||
                     (leftvt == VT_UI8 && rightvt == VT_BSTR) ||
                     ExtraFlags[i] == VT_BYREF)
+                    continue;
+
+                /* Check if we need/have support for I8 and/or UI8 */
+                if ((rightvt == VT_I8 || rightvt == VT_UI8) && !HAVE_OLEAUT32_I8)
                     continue;
 
                 memset(&left, 0, sizeof(left));
@@ -7988,8 +7996,11 @@ static void test_VarImp(void)
     VARIMP(EMPTY,0,UI1,1,I2,-1);
     VARIMP(EMPTY,0,UI2,1,I4,-1);
     VARIMP(EMPTY,0,UI4,1,I4,-1);
-    VARIMP(EMPTY,0,I8,1,I8,-1);
-    VARIMP(EMPTY,0,UI8,1,I4,-1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(EMPTY,0,I8,1,I8,-1);
+        VARIMP(EMPTY,0,UI8,1,I4,-1);
+    }
     VARIMP(EMPTY,0,INT,-1,I4,-1);
     VARIMP(EMPTY,0,UINT,1,I4,-1);
     VARIMP(NULL,0,EMPTY,0,NULL,0);
@@ -8005,8 +8016,11 @@ static void test_VarImp(void)
     VARIMP(NULL,0,UI1,1,UI1,1);
     VARIMP(NULL,0,UI2,1,I4,1);
     VARIMP(NULL,0,UI4,1,I4,1);
-    VARIMP(NULL,0,I8,1,I8,1);
-    VARIMP(NULL,0,UI8,1,I4,1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(NULL,0,I8,1,I8,1);
+        VARIMP(NULL,0,UI8,1,I4,1);
+    }
     VARIMP(NULL,0,INT,-1,I4,-1);
     VARIMP(NULL,0,UINT,1,I4,1);
     VARIMP(I2,-1,EMPTY,0,I2,0);
@@ -8021,8 +8035,11 @@ static void test_VarImp(void)
     VARIMP(I2,-1,UI1,1,I2,1);
     VARIMP(I2,-1,UI2,1,I4,1);
     VARIMP(I2,-1,UI4,1,I4,1);
-    VARIMP(I2,-1,I8,1,I8,1);
-    VARIMP(I2,-1,UI8,1,I4,1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(I2,-1,I8,1,I8,1);
+        VARIMP(I2,-1,UI8,1,I4,1);
+    }
     VARIMP(I2,-1,INT,-1,I4,-1);
     VARIMP(I2,-1,UINT,1,I4,1);
     VARIMP(I4,2,EMPTY,0,I4,-3);
@@ -8038,8 +8055,11 @@ static void test_VarImp(void)
     VARIMP(I4,2,UI1,1,I4,-3);
     VARIMP(I4,2,UI2,1,I4,-3);
     VARIMP(I4,2,UI4,1,I4,-3);
-    VARIMP(I4,2,I8,1,I8,-3);
-    VARIMP(I4,2,UI8,1,I4,-3);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(I4,2,I8,1,I8,-3);
+        VARIMP(I4,2,UI8,1,I4,-3);
+    }
     VARIMP(I4,2,INT,-1,I4,-1);
     VARIMP(I4,2,UINT,1,I4,-3);
     VARIMP(R4,-1.0f,EMPTY,0,I4,0);
@@ -8055,8 +8075,11 @@ static void test_VarImp(void)
     VARIMP(R4,-1.0f,UI1,1,I4,1);
     VARIMP(R4,-1.0f,UI2,1,I4,1);
     VARIMP(R4,-1.0f,UI4,1,I4,1);
-    VARIMP(R4,-1.0f,I8,1,I8,1);
-    VARIMP(R4,-1.0f,UI8,1,I4,1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(R4,-1.0f,I8,1,I8,1);
+        VARIMP(R4,-1.0f,UI8,1,I4,1);
+    }
     VARIMP(R4,-1.0f,INT,-1,I4,-1);
     VARIMP(R4,-1.0f,UINT,1,I4,1);
     VARIMP(R8,1.0,EMPTY,0,I4,-2);
@@ -8072,8 +8095,11 @@ static void test_VarImp(void)
     VARIMP(R8,1.0,UI1,1,I4,-1);
     VARIMP(R8,1.0,UI2,1,I4,-1);
     VARIMP(R8,1.0,UI4,1,I4,-1);
-    VARIMP(R8,1.0,I8,1,I8,-1);
-    VARIMP(R8,1.0,UI8,1,I4,-1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(R8,1.0,I8,1,I8,-1);
+        VARIMP(R8,1.0,UI8,1,I4,-1);
+    }
     VARIMP(R8,1.0,INT,-1,I4,-1);
     VARIMP(R8,1.0,UINT,1,I4,-1);
     VARIMP(DATE,0,EMPTY,0,I4,-1);
@@ -8089,8 +8115,11 @@ static void test_VarImp(void)
     VARIMP(DATE,0,UI1,1,I4,-1);
     VARIMP(DATE,0,UI2,1,I4,-1);
     VARIMP(DATE,0,UI4,1,I4,-1);
-    VARIMP(DATE,0,I8,1,I8,-1);
-    VARIMP(DATE,0,UI8,1,I4,-1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(DATE,0,I8,1,I8,-1);
+        VARIMP(DATE,0,UI8,1,I4,-1);
+    }
     VARIMP(DATE,0,INT,-1,I4,-1);
     VARIMP(DATE,0,UINT,1,I4,-1);
     VARIMP(BSTR,false_str,EMPTY,0,I2,-1);
@@ -8106,8 +8135,11 @@ static void test_VarImp(void)
     VARIMP(BSTR,false_str,UI1,1,I2,-1);
     VARIMP(BSTR,false_str,UI2,1,I4,-1);
     VARIMP(BSTR,false_str,UI4,1,I4,-1);
-    VARIMP(BSTR,false_str,I8,1,I8,-1);
-    VARIMP(BSTR,false_str,UI8,1,I4,-1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(BSTR,false_str,I8,1,I8,-1);
+        VARIMP(BSTR,false_str,UI8,1,I4,-1);
+    }
     VARIMP(BSTR,false_str,INT,-1,I4,-1);
     VARIMP(BSTR,false_str,UINT,1,I4,-1);
     VARIMP(BOOL,VARIANT_TRUE,EMPTY,0,I2,0);
@@ -8123,8 +8155,11 @@ static void test_VarImp(void)
     VARIMP(BOOL,VARIANT_TRUE,UI1,1,I2,1);
     VARIMP(BOOL,VARIANT_TRUE,UI2,1,I4,1);
     VARIMP(BOOL,VARIANT_TRUE,UI4,1,I4,1);
-    VARIMP(BOOL,VARIANT_TRUE,I8,1,I8,1);
-    VARIMP(BOOL,VARIANT_TRUE,UI8,1,I4,1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(BOOL,VARIANT_TRUE,I8,1,I8,1);
+        VARIMP(BOOL,VARIANT_TRUE,UI8,1,I4,1);
+    }
     VARIMP(BOOL,VARIANT_TRUE,INT,-1,I4,-1);
     VARIMP(BOOL,VARIANT_TRUE,UINT,1,I4,1);
     VARIMP(I1,-1,EMPTY,0,I4,0);
@@ -8140,8 +8175,11 @@ static void test_VarImp(void)
     VARIMP(I1,-1,UI1,1,I4,1);
     VARIMP(I1,-1,UI2,1,I4,1);
     VARIMP(I1,-1,UI4,1,I4,1);
-    VARIMP(I1,-1,I8,1,I8,1);
-    VARIMP(I1,-1,UI8,1,I4,1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(I1,-1,I8,1,I8,1);
+        VARIMP(I1,-1,UI8,1,I4,1);
+    }
     VARIMP(I1,-1,INT,-1,I4,-1);
     VARIMP(I1,-1,UINT,1,I4,1);
     VARIMP(UI1,0,EMPTY,0,I2,-1);
@@ -8157,8 +8195,11 @@ static void test_VarImp(void)
     VARIMP(UI1,0,UI1,1,UI1,255);
     VARIMP(UI1,0,UI2,1,I4,-1);
     VARIMP(UI1,0,UI4,1,I4,-1);
-    VARIMP(UI1,0,I8,1,I8,-1);
-    VARIMP(UI1,0,UI8,1,I4,-1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(UI1,0,I8,1,I8,-1);
+        VARIMP(UI1,0,UI8,1,I4,-1);
+    }
     VARIMP(UI1,0,INT,-1,I4,-1);
     VARIMP(UI1,0,UINT,1,I4,-1);
     VARIMP(UI2,0,EMPTY,0,I4,-1);
@@ -8174,8 +8215,11 @@ static void test_VarImp(void)
     VARIMP(UI2,0,UI1,1,I4,-1);
     VARIMP(UI2,0,UI2,1,I4,-1);
     VARIMP(UI2,0,UI4,1,I4,-1);
-    VARIMP(UI2,0,I8,1,I8,-1);
-    VARIMP(UI2,0,UI8,1,I4,-1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(UI2,0,I8,1,I8,-1);
+        VARIMP(UI2,0,UI8,1,I4,-1);
+    }
     VARIMP(UI2,0,INT,-1,I4,-1);
     VARIMP(UI2,0,UINT,1,I4,-1);
     VARIMP(UI4,0,EMPTY,0,I4,-1);
@@ -8191,43 +8235,49 @@ static void test_VarImp(void)
     VARIMP(UI4,0,UI1,1,I4,-1);
     VARIMP(UI4,0,UI2,1,I4,-1);
     VARIMP(UI4,0,UI4,1,I4,-1);
-    VARIMP(UI4,0,I8,1,I8,-1);
-    VARIMP(UI4,0,UI8,1,I4,-1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(UI4,0,I8,1,I8,-1);
+        VARIMP(UI4,0,UI8,1,I4,-1);
+    }
     VARIMP(UI4,0,INT,-1,I4,-1);
     VARIMP(UI4,0,UINT,1,I4,-1);
-    VARIMP(I8,-1,EMPTY,0,I8,0);
-    VARIMP(I8,-1,NULL,0,NULL,0);
-    VARIMP(I8,-1,I2,-1,I8,-1);
-    VARIMP(I8,-1,I4,-1,I8,-1);
-    VARIMP(I8,-1,R4,0.0f,I8,0);
-    VARIMP(I8,-1,R8,-1.0,I8,-1);
-    VARIMP(I8,-1,DATE,0,I8,0);
-    VARIMP(I8,-1,BSTR,true_str,I8,-1);
-    VARIMP(I8,-1,BOOL,VARIANT_FALSE,I8,0);
-    VARIMP(I8,-1,I1,0,I8,0);
-    VARIMP(I8,-1,UI1,1,I8,1);
-    VARIMP(I8,-1,UI2,1,I8,1);
-    VARIMP(I8,-1,UI4,1,I8,1);
-    VARIMP(I8,-1,I8,1,I8,1);
-    VARIMP(I8,-1,UI8,1,I8,1);
-    VARIMP(I8,-1,UINT,1,I8,1);
-    VARIMP(UI8,0,EMPTY,0,I4,-1);
-    VARIMP(UI8,0,NULL,0,I4,-1);
-    VARIMP(UI8,0,I2,-1,I4,-1);
-    VARIMP(UI8,0,I4,-1,I4,-1);
-    VARIMP(UI8,0,R4,0.0f,I4,-1);
-    VARIMP(UI8,0,R8,-1.0,I4,-1);
-    VARIMP(UI8,0,DATE,0,I4,-1);
-    VARIMP(UI8,0,BSTR,true_str,I4,-1);
-    VARIMP(UI8,0,BOOL,VARIANT_FALSE,I4,-1);
-    VARIMP(UI8,0,I1,0,I4,-1);
-    VARIMP(UI8,0,UI1,1,I4,-1);
-    VARIMP(UI8,0,UI2,1,I4,-1);
-    VARIMP(UI8,0,UI4,1,I4,-1);
-    VARIMP(UI8,0,I8,1,I8,-1);
-    VARIMP(UI8,0,UI8,1,I4,-1);
-    VARIMP(UI8,0,INT,-1,I4,-1);
-    VARIMP(UI8,0,UINT,1,I4,-1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(I8,-1,EMPTY,0,I8,0);
+        VARIMP(I8,-1,NULL,0,NULL,0);
+        VARIMP(I8,-1,I2,-1,I8,-1);
+        VARIMP(I8,-1,I4,-1,I8,-1);
+        VARIMP(I8,-1,R4,0.0f,I8,0);
+        VARIMP(I8,-1,R8,-1.0,I8,-1);
+        VARIMP(I8,-1,DATE,0,I8,0);
+        VARIMP(I8,-1,BSTR,true_str,I8,-1);
+        VARIMP(I8,-1,BOOL,VARIANT_FALSE,I8,0);
+        VARIMP(I8,-1,I1,0,I8,0);
+        VARIMP(I8,-1,UI1,1,I8,1);
+        VARIMP(I8,-1,UI2,1,I8,1);
+        VARIMP(I8,-1,UI4,1,I8,1);
+        VARIMP(I8,-1,I8,1,I8,1);
+        VARIMP(I8,-1,UI8,1,I8,1);
+        VARIMP(I8,-1,UINT,1,I8,1);
+        VARIMP(UI8,0,EMPTY,0,I4,-1);
+        VARIMP(UI8,0,NULL,0,I4,-1);
+        VARIMP(UI8,0,I2,-1,I4,-1);
+        VARIMP(UI8,0,I4,-1,I4,-1);
+        VARIMP(UI8,0,R4,0.0f,I4,-1);
+        VARIMP(UI8,0,R8,-1.0,I4,-1);
+        VARIMP(UI8,0,DATE,0,I4,-1);
+        VARIMP(UI8,0,BSTR,true_str,I4,-1);
+        VARIMP(UI8,0,BOOL,VARIANT_FALSE,I4,-1);
+        VARIMP(UI8,0,I1,0,I4,-1);
+        VARIMP(UI8,0,UI1,1,I4,-1);
+        VARIMP(UI8,0,UI2,1,I4,-1);
+        VARIMP(UI8,0,UI4,1,I4,-1);
+        VARIMP(UI8,0,I8,1,I8,-1);
+        VARIMP(UI8,0,UI8,1,I4,-1);
+        VARIMP(UI8,0,INT,-1,I4,-1);
+        VARIMP(UI8,0,UINT,1,I4,-1);
+    }
     VARIMP(INT,-1,EMPTY,0,I4,0);
     VARIMP(INT,-1,NULL,0,NULL,0);
     VARIMP(INT,-1,I2,-1,I4,-1);
@@ -8241,8 +8291,11 @@ static void test_VarImp(void)
     VARIMP(INT,-1,UI1,1,I4,1);
     VARIMP(INT,-1,UI2,1,I4,1);
     VARIMP(INT,-1,UI4,1,I4,1);
-    VARIMP(INT,-1,I8,1,I8,1);
-    VARIMP(INT,-1,UI8,1,I4,1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(INT,-1,I8,1,I8,1);
+        VARIMP(INT,-1,UI8,1,I4,1);
+    }
     VARIMP(INT,-1,INT,-1,I4,-1);
     VARIMP(INT,-1,UINT,1,I4,1);
     VARIMP(UINT,1,EMPTY,0,I4,-2);
@@ -8258,8 +8311,11 @@ static void test_VarImp(void)
     VARIMP(UINT,1,UI1,1,I4,-1);
     VARIMP(UINT,1,UI2,1,I4,-1);
     VARIMP(UINT,1,UI4,1,I4,-1);
-    VARIMP(UINT,1,I8,1,I8,-1);
-    VARIMP(UINT,1,UI8,1,I4,-1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIMP(UINT,1,I8,1,I8,-1);
+        VARIMP(UINT,1,UI8,1,I4,-1);
+    }
     VARIMP(UINT,1,INT,-1,I4,-1);
     VARIMP(UINT,1,UINT,1,I4,-1);
 
@@ -8284,13 +8340,16 @@ static void test_VarImp(void)
     ok(hres == S_OK && V_I4(&result) == -1,
         "VARIMP: CY value %d, expected %d\n", V_I4(&result), -1);
 
-    hres = pVarImp(&cy, &right, &result);
-    ok(hres == S_OK && V_VT(&result) == VT_I8,
-        "VARIMP: expected coerced hres 0x%X type VT_I8, got hres 0x%X type %s!\n",
-        S_OK, hres, vtstr(V_VT(&result)));
-    ok(hres == S_OK && V_I8(&result) == -2,
-        "VARIMP: CY value %x%08x, expected %d\n",
-        (DWORD)((V_I8(&result)) >> 32), (DWORD)(V_I8(&result)), -2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        hres = pVarImp(&cy, &right, &result);
+        ok(hres == S_OK && V_VT(&result) == VT_I8,
+            "VARIMP: expected coerced hres 0x%X type VT_I8, got hres 0x%X type %s!\n",
+            S_OK, hres, vtstr(V_VT(&result)));
+        ok(hres == S_OK && V_I8(&result) == -2,
+            "VARIMP: CY value %x%08x, expected %d\n",
+            (DWORD)((V_I8(&result)) >> 32), (DWORD)(V_I8(&result)), -2);
+    }
 
     hres = pVarImp(&left, &cy, &result);
     ok(hres == S_OK && V_VT(&result) == VT_I4,
@@ -8313,13 +8372,16 @@ static void test_VarImp(void)
     ok(hres == S_OK && V_I4(&result) == -1,
         "VARIMP: DECIMAL value %d, expected %d\n", V_I4(&result), -1);
 
-    hres = pVarImp(&dec, &right, &result);
-    ok(hres == S_OK && V_VT(&result) == VT_I8,
-        "VARIMP: expected coerced hres 0x%X type VT_I8, got hres 0x%X type %s!\n",
-        S_OK, hres, vtstr(V_VT(&result)));
-    ok(hres == S_OK && V_I8(&result) == -3,
-        "VARIMP: DECIMAL value 0x%x%08x, expected %d\n",
-	(DWORD)(V_I8(&result) >>32), (DWORD)V_I8(&result), -3);
+    if (HAVE_OLEAUT32_I8)
+    {
+        hres = pVarImp(&dec, &right, &result);
+        ok(hres == S_OK && V_VT(&result) == VT_I8,
+            "VARIMP: expected coerced hres 0x%X type VT_I8, got hres 0x%X type %s!\n",
+            S_OK, hres, vtstr(V_VT(&result)));
+        ok(hres == S_OK && V_I8(&result) == -3,
+            "VARIMP: DECIMAL value 0x%x%08x, expected %d\n",
+	    (DWORD)(V_I8(&result) >>32), (DWORD)V_I8(&result), -3);
+    }
 
     SysFreeString(false_str);
     SysFreeString(true_str);
