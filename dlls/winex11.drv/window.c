@@ -66,11 +66,10 @@ static const char visual_id_prop[]    = "__wine_x11_visual_id";
  *
  * Check if a given window should be managed
  */
-static inline BOOL is_window_managed( HWND hwnd )
+BOOL is_window_managed( HWND hwnd, const RECT *window_rect )
 {
     DWORD style, ex_style;
 
-    if (!managed_mode) return FALSE;
     /* tray window is always managed */
     ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
     if (ex_style & WS_EX_TRAYWINDOW) return TRUE;
@@ -87,13 +86,11 @@ static inline BOOL is_window_managed( HWND hwnd )
     if (ex_style & WS_EX_APPWINDOW) return TRUE;
     if (style & WS_POPUP)
     {
-        RECT rect;
-
         /* popup with sysmenu == caption are managed */
         if (style & WS_SYSMENU) return TRUE;
         /* full-screen popup windows are managed */
-        GetWindowRect( hwnd, &rect );
-        if ((rect.right - rect.left) == screen_width && (rect.bottom - rect.top) == screen_height)
+        if ((window_rect->right - window_rect->left) == screen_width &&
+            (window_rect->bottom - window_rect->top) == screen_height)
             return TRUE;
     }
     /* default: not managed */
@@ -130,14 +127,6 @@ BOOL X11DRV_is_window_rect_mapped( const RECT *rect )
 static int get_window_attributes( Display *display, struct x11drv_win_data *data,
                                   XSetWindowAttributes *attr )
 {
-    if (!data->managed &&
-        root_window == DefaultRootWindow( display ) &&
-        data->whole_window != root_window &&
-        is_window_managed( data->hwnd ))
-    {
-        data->managed = TRUE;
-        SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
-    }
     attr->override_redirect = !data->managed;
     attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
     attr->save_under        = ((GetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
@@ -774,22 +763,18 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     int cx, cy, mask;
     XSetWindowAttributes attr;
     XIM xim;
-    RECT rect;
 
-    rect = data->window_rect;
-    X11DRV_window_to_X_rect( data, &rect );
-
-    if (!(cx = rect.right - rect.left)) cx = 1;
-    if (!(cy = rect.bottom - rect.top)) cy = 1;
+    if (!(cx = data->window_rect.right - data->window_rect.left)) cx = 1;
+    if (!(cy = data->window_rect.bottom - data->window_rect.top)) cy = 1;
 
     mask = get_window_attributes( display, data, &attr );
 
     wine_tsx11_lock();
 
-    data->whole_rect = rect;
+    data->whole_rect = data->window_rect;
     data->whole_window = XCreateWindow( display, root_window,
-                                        rect.left - virtual_screen_rect.left,
-                                        rect.top - virtual_screen_rect.top,
+                                        data->window_rect.left - virtual_screen_rect.left,
+                                        data->window_rect.top - virtual_screen_rect.top,
                                         cx, cy, 0, screen_depth, InputOutput,
                                         visual, mask, &attr );
 

@@ -79,6 +79,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 #define _NET_WM_STATE_ADD     1
 #define _NET_WM_STATE_TOGGLE  2
 
+static const char managed_prop[] = "__wine_x11_managed";
+
 /***********************************************************************
  *           X11DRV_Expose
  */
@@ -236,13 +238,28 @@ static BOOL fullscreen_state_changed( const struct x11drv_win_data *data,
 BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                                    const RECT *rectClient, UINT swp_flags, const RECT *valid_rects )
 {
+    Display *display = thread_display();
     struct x11drv_win_data *data;
     RECT new_whole_rect, old_client_rect, old_screen_rect;
     WND *win;
     DWORD old_style, new_style;
-    BOOL ret;
+    BOOL ret, make_managed = FALSE;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
+
+    /* check if we need to switch the window to managed */
+    if (!data->managed && data->whole_window && managed_mode &&
+        root_window == DefaultRootWindow( display ) &&
+        data->whole_window != root_window)
+    {
+        if (is_window_managed( hwnd, rectWindow ))
+        {
+            TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
+            make_managed = TRUE;
+            data->managed = TRUE;
+            SetPropA( hwnd, managed_prop, (HANDLE)1 );
+        }
+    }
 
     new_whole_rect = *rectWindow;
     X11DRV_window_to_X_rect( data, &new_whole_rect );
@@ -294,8 +311,6 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 
     if (ret)
     {
-        Display *display = thread_display();
-
         /* invalidate DCEs */
 
         if ((((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) && (new_style & WS_VISIBLE)) ||
@@ -314,6 +329,14 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 
         TRACE( "win %p window %s client %s style %08x\n",
                hwnd, wine_dbgstr_rect(rectWindow), wine_dbgstr_rect(rectClient), new_style );
+
+        if (make_managed && (old_style & WS_VISIBLE))
+        {
+            wine_tsx11_lock();
+            XUnmapWindow( display, data->whole_window );
+            wine_tsx11_unlock();
+            old_style &= ~WS_VISIBLE;  /* force it to be mapped again below */
+        }
 
         if (!IsRectEmpty( &valid_rects[0] ))
         {
