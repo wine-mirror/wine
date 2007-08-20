@@ -201,6 +201,19 @@ static void test_mbcp(void)
     expect_eq(_mbslen(mbsonlylead), 0, int, "%d");          /* lead + NUL not counted as character */
     expect_eq(_mbslen(mbstring), 4, int, "%d");             /* lead + invalid trail counted */
 
+
+    /* functions that depend on locale codepage, not mbcp.
+     * we hope the current locale to be SBCS because setlocale(LC_ALL, ".1252") seems not to work yet
+     * (as of Wine 0.9.43)
+     */
+    if (__mb_cur_max == 1)
+    {
+        expect_eq(mblen((char *)mbstring, 3), 1, int, "%x");
+        expect_eq(_mbstrlen((char *)mbstring2), 7, int, "%d");
+    }
+    else
+        skip("Current locale has double-byte charset - could leave to false positives\n");
+
     _setmbcp(curr_mbcp);
 }
 
