@@ -2557,12 +2557,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
          * furthermore if still used, probably nobody pays attention to such details.
          */
         if (pLight->Falloff == 0) {
-            rho = 6.28f;
+            /* Falloff = 0 is easy, because d3d's and opengl's spot light equations have the
+             * falloff resp. exponent parameter as an exponent, so the spot light lighting
+             * will always be 1.0 for both of them, and we don't have to care for the
+             * rest of the rather complex calculation
+             */
+            object->exponent = 0;
         } else {
             rho = pLight->Theta + (pLight->Phi - pLight->Theta)/(2*pLight->Falloff);
+            if (rho < 0.0001) rho = 0.0001f;
+            object->exponent = -0.3/log(cos(rho/2));
         }
-        if (rho < 0.0001) rho = 0.0001f;
-        object->exponent = -0.3/log(cos(rho/2));
 	if (object->exponent > 128.0) {
 		object->exponent = 128.0;
 	}
