@@ -145,7 +145,8 @@ static const WCHAR strCC32SubclassInfo[] = {
 
 static BOOL create_manifest( BOOL install )
 {
-    static const WCHAR dirW[] = {'\\','w','i','n','s','x','s','\\','m','a','n','i','f','e','s','t','s','\\',0};
+    static const WCHAR winsxsW[] = {'\\','w','i','n','s','x','s',0};
+    static const WCHAR manifestsW[] = {'\\','m','a','n','i','f','e','s','t','s','\\',0};
 
     DWORD len, written;
     WCHAR *buffer;
@@ -154,10 +155,14 @@ static BOOL create_manifest( BOOL install )
 
     len = MultiByteToWideChar( CP_UTF8, 0, manifest_filename, sizeof(manifest_filename), NULL, 0 );
     len += GetWindowsDirectoryW( NULL, 0 );
-    len = len * sizeof(WCHAR) + sizeof(dirW);
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len ))) return FALSE;
+    len += lstrlenW(winsxsW);
+    len += lstrlenW(manifestsW);
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
     GetWindowsDirectoryW( buffer, len );
-    lstrcatW( buffer, dirW );
+    lstrcatW( buffer, winsxsW );
+    CreateDirectoryW( buffer, NULL );
+    lstrcatW( buffer, manifestsW );
+    CreateDirectoryW( buffer, NULL );
     MultiByteToWideChar( CP_UTF8, 0, manifest_filename, sizeof(manifest_filename),
                          buffer + lstrlenW(buffer), len );
     if (install)
