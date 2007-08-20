@@ -737,7 +737,8 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
 
     TRACE("(this=%p,0x%08x,%p)\n", This, len, ptr);
 
-    if (This->joyfd==-1) {
+    if (!This->base.acquired)
+    {
         WARN("not acquired\n");
         return DIERR_NOTACQUIRED;
     }
@@ -863,13 +864,14 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
     return DI_OK;
 }
 
-static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE8A iface) {
+static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
+{
     JoystickImpl *This = (JoystickImpl *)iface;
+
     TRACE("(%p)\n",This);
 
-    if (This->joyfd==-1) {
-      return DIERR_NOTACQUIRED;
-    }
+    if (!This->base.acquired)
+        return DIERR_NOTACQUIRED;
 
     joy_polldev(This);
     return DI_OK;
