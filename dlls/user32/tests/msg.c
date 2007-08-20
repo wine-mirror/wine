@@ -3724,7 +3724,7 @@ static void test_showwindow(void)
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create popup window\n");
     ok(!IsZoomed(hwnd), "window should NOT be maximized\n");
-    ok_sequence(WmCreatePopupSeq, "CreateWindow(WS_VISIBLE):popup", TRUE);
+    ok_sequence(WmCreatePopupSeq, "CreateWindow(WS_VISIBLE):popup", FALSE);
     trace("done\n");
 
     trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for visible popup window\n");
@@ -4065,7 +4065,7 @@ static void test_messages(void)
     ok_sequence(WmShowVisiblePopupSeq_2, "SetWindowPos:show_visible_popup_2", FALSE);
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
-    ok_sequence(WmShowVisiblePopupSeq_3, "SetWindowPos:show_visible_popup_3", FALSE);
+    ok_sequence(WmShowVisiblePopupSeq_3, "SetWindowPos:show_visible_popup_3", TRUE);
     DestroyWindow(hchild);
 
     /* this time add WS_VISIBLE for CreateWindowEx, but this fact actually

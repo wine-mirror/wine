@@ -252,7 +252,9 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         root_window == DefaultRootWindow( display ) &&
         data->whole_window != root_window)
     {
-        if (is_window_managed( hwnd, rectWindow ))
+        if (!(swp_flags & (SWP_NOACTIVATE|SWP_HIDEWINDOW)) ||
+            is_window_managed( hwnd, rectWindow ) ||
+            hwnd == GetActiveWindow())
         {
             TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
             make_managed = TRUE;
@@ -787,7 +789,7 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         SendMessageW( hwnd, WM_SHOWWINDOW, SW_RESTORE, 0 );
         data->lock_changes++;
         SetWindowPos( hwnd, 0, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
-                      SWP_NOZORDER | SWP_FRAMECHANGED | SWP_STATECHANGED );
+                      SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_STATECHANGED );
         data->lock_changes--;
     }
     else WIN_ReleasePtr( win );
@@ -888,7 +890,7 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
     TRACE("desktop %p change to (%dx%d)\n", hwnd, width, height);
     data->lock_changes++;
     X11DRV_SetWindowPos( hwnd, 0, &virtual_screen_rect, &virtual_screen_rect,
-                           SWP_NOZORDER|SWP_NOMOVE, NULL );
+                         SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE, NULL );
     data->lock_changes--;
     ClipCursor(NULL);
     SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_depth,

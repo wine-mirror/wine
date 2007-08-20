@@ -974,7 +974,7 @@ static void get_desktop_xwin( Display *display, struct x11drv_win_data *data )
         SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
         data->whole_window = root_window;
         X11DRV_SetWindowPos( data->hwnd, 0, &virtual_screen_rect, &virtual_screen_rect,
-                               SWP_NOZORDER, NULL );
+                             SWP_NOZORDER | SWP_NOACTIVATE, NULL );
         if (root_window != DefaultRootWindow( display ))
         {
             data->managed = TRUE;
@@ -1039,7 +1039,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     /* initialize the dimensions before sending WM_GETMINMAXINFO */
     SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-    X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER, NULL );
+    X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER | SWP_NOACTIVATE, NULL );
 
     /* create an X window if it's a top level window */
     if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
@@ -1083,7 +1083,8 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         if (cs->cy < 0) cs->cy = 0;
 
         SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-        if (!X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER, NULL )) return FALSE;
+        if (!X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER | SWP_NOACTIVATE, NULL ))
+            return FALSE;
     }
 
     /* send WM_NCCREATE */
@@ -1111,7 +1112,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     /* yes, even if the CBT hook was called with HWND_TOP */
     insert_after = (wndPtr->dwStyle & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
 
-    X11DRV_SetWindowPos( hwnd, insert_after, &wndPtr->rectWindow, &rect, 0, NULL );
+    X11DRV_SetWindowPos( hwnd, insert_after, &wndPtr->rectWindow, &rect, SWP_NOACTIVATE, NULL );
 
     TRACE( "win %p window %d,%d,%d,%d client %d,%d,%d,%d whole %d,%d,%d,%d X client %d,%d,%d,%d xwin %x\n",
            hwnd, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
