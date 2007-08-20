@@ -461,42 +461,17 @@ static char *get_process_name(void)
 
 
 /***********************************************************************
- *              X11DRV_set_wm_hints
+ *              set_initial_wm_hints
  *
- * Set the window manager hints for a newly-created window
+ * Set the window manager hints that don't change over the lifetime of a window.
  */
-void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
+static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data )
 {
-    Window group_leader;
-    XClassHint *class_hints;
-    Atom protocols[3];
-    Atom window_type;
-    MwmHints mwm_hints;
-    Atom dndVersion = 4;
     int i;
-    DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
-    DWORD ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
-    HWND owner = GetWindow( data->hwnd, GW_OWNER );
+    Atom protocols[3];
+    Atom dndVersion = 4;
+    XClassHint *class_hints;
     char *process_name = get_process_name();
-
-    if (data->hwnd == GetDesktopWindow())
-    {
-        if (data->whole_window == DefaultRootWindow(display)) return;
-        /* force some styles for the desktop to get the correct decorations */
-        style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-        owner = 0;
-    }
-
-    /* transient for hint */
-    if (owner)
-    {
-        Window owner_win = X11DRV_get_whole_window( owner );
-        wine_tsx11_lock();
-        XSetTransientForHint( display, data->whole_window, owner_win );
-        wine_tsx11_unlock();
-        group_leader = owner_win;
-    }
-    else group_leader = data->whole_window;
 
     wine_tsx11_lock();
 
@@ -519,15 +494,57 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
         XFree( class_hints );
     }
 
-    /* size hints */
-    set_size_hints( display, data, style );
-
     /* set the WM_CLIENT_MACHINE and WM_LOCALE_NAME properties */
     XSetWMProperties(display, data->whole_window, NULL, NULL, NULL, 0, NULL, NULL, NULL);
     /* set the pid. together, these properties are needed so the window manager can kill us if we freeze */
     i = getpid();
     XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_PID),
                     XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&i, 1);
+
+    XChangeProperty( display, data->whole_window, x11drv_atom(XdndAware),
+                     XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
+
+    wine_tsx11_unlock();
+}
+
+
+/***********************************************************************
+ *              X11DRV_set_wm_hints
+ *
+ * Set the window manager hints for a newly-created window
+ */
+void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
+{
+    Window group_leader;
+    Atom window_type;
+    MwmHints mwm_hints;
+    DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
+    DWORD ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
+    HWND owner = GetWindow( data->hwnd, GW_OWNER );
+
+    if (data->hwnd == GetDesktopWindow())
+    {
+        if (data->whole_window == DefaultRootWindow(display)) return;
+        /* force some styles for the desktop to get the correct decorations */
+        style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+        owner = 0;
+    }
+
+    /* transient for hint */
+    if (owner)
+    {
+        Window owner_win = X11DRV_get_whole_window( owner );
+        wine_tsx11_lock();
+        XSetTransientForHint( display, data->whole_window, owner_win );
+        wine_tsx11_unlock();
+        group_leader = owner_win;
+    }
+    else group_leader = data->whole_window;
+
+    wine_tsx11_lock();
+
+    /* size hints */
+    set_size_hints( display, data, style );
 
     /* set the WM_WINDOW_TYPE */
     window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
@@ -562,9 +579,6 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     XChangeProperty( display, data->whole_window, x11drv_atom(_MOTIF_WM_HINTS),
                      x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
                      (unsigned char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
-
-    XChangeProperty( display, data->whole_window, x11drv_atom(XdndAware),
-                     XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
 
     wine_tsx11_unlock();
 
@@ -797,6 +811,7 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     xim = x11drv_thread_data()->xim;
     if (xim) data->xic = X11DRV_CreateIC( xim, display, data->whole_window );
 
+    set_initial_wm_hints( display, data );
     X11DRV_set_wm_hints( display, data );
 
     SetPropA( data->hwnd, whole_window_prop, (HANDLE)data->whole_window );
