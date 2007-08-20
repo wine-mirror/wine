@@ -7298,6 +7298,10 @@ static void test_VarIdiv(void)
         {
             SKIPTESTIDIV(leftvt);
 
+            /* Check if we need/have support for I8 and/or UI8 */
+            if ((leftvt == VT_I8 || leftvt == VT_UI8) && !HAVE_OLEAUT32_I8)
+                continue;
+
             for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
             {
                 BOOL bFail = FALSE;
@@ -7305,6 +7309,10 @@ static void test_VarIdiv(void)
 
                 /* Native crashes with extra flag VT_BYREF */
                 if (ExtraFlags[i] == VT_BYREF)
+                    continue;
+
+                /* Check if we need/have support for I8 and/or UI8 */
+                if ((rightvt == VT_I8 || rightvt == VT_UI8) && !HAVE_OLEAUT32_I8)
                     continue;
 
                 memset(&left, 0, sizeof(left));
@@ -7423,8 +7431,11 @@ static void test_VarIdiv(void)
     VARIDIV(EMPTY,0,UI1,1,I2,0);
     VARIDIV(EMPTY,0,UI2,1,I4,0);
     VARIDIV(EMPTY,0,UI4,1,I4,0);
-    VARIDIV(EMPTY,0,I8,1,I8,0);
-    VARIDIV(EMPTY,0,UI8,1,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(EMPTY,0,I8,1,I8,0);
+        VARIDIV(EMPTY,0,UI8,1,I4,0);
+    }
     VARIDIV(EMPTY,0,INT,1,I4,0);
     VARIDIV(EMPTY,0,UINT,1,I4,0);
     VARIDIV(NULL,0,EMPTY,0,NULL,0);
@@ -7440,8 +7451,11 @@ static void test_VarIdiv(void)
     VARIDIV(NULL,0,UI1,1,NULL,0);
     VARIDIV(NULL,0,UI2,1,NULL,0);
     VARIDIV(NULL,0,UI4,1,NULL,0);
-    VARIDIV(NULL,0,I8,1,NULL,0);
-    VARIDIV(NULL,0,UI8,1,NULL,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(NULL,0,I8,1,NULL,0);
+        VARIDIV(NULL,0,UI8,1,NULL,0);
+    }
     VARIDIV(NULL,0,INT,1,NULL,0);
     VARIDIV(NULL,0,UINT,1,NULL,0);
     VARIDIV(I2,2,NULL,0,NULL,0);
@@ -7456,8 +7470,11 @@ static void test_VarIdiv(void)
     VARIDIV(I2,2,UI1,1,I2,2);
     VARIDIV(I2,2,UI2,1,I4,2);
     VARIDIV(I2,2,UI4,1,I4,2);
-    VARIDIV(I2,2,I8,1,I8,2);
-    VARIDIV(I2,2,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(I2,2,I8,1,I8,2);
+        VARIDIV(I2,2,UI8,1,I4,2);
+    }
     VARIDIV(I2,2,INT,1,I4,2);
     VARIDIV(I2,2,UINT,1,I4,2);
     VARIDIV(I4,2,NULL,0,NULL,0);
@@ -7472,8 +7489,11 @@ static void test_VarIdiv(void)
     VARIDIV(I4,2,UI1,1,I4,2);
     VARIDIV(I4,2,UI2,1,I4,2);
     VARIDIV(I4,2,UI4,1,I4,2);
-    VARIDIV(I4,2,I8,1,I8,2);
-    VARIDIV(I4,2,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(I4,2,I8,1,I8,2);
+        VARIDIV(I4,2,UI8,1,I4,2);
+    }
     VARIDIV(I4,2,INT,1,I4,2);
     VARIDIV(I4,2,UINT,1,I4,2);
     VARIDIV(R4,2.0f,NULL,0,NULL,0);
@@ -7488,8 +7508,11 @@ static void test_VarIdiv(void)
     VARIDIV(R4,2.0f,UI1,1,I4,2);
     VARIDIV(R4,2.0f,UI2,1,I4,2);
     VARIDIV(R4,2.0f,UI4,1,I4,2);
-    VARIDIV(R4,2.0f,I8,1,I8,2);
-    VARIDIV(R4,2.0f,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(R4,2.0f,I8,1,I8,2);
+        VARIDIV(R4,2.0f,UI8,1,I4,2);
+    }
     VARIDIV(R4,2.0f,INT,1,I4,2);
     VARIDIV(R4,2.0f,UINT,1,I4,2);
     VARIDIV(R8,2.0,NULL,0,NULL,0);
@@ -7504,8 +7527,11 @@ static void test_VarIdiv(void)
     VARIDIV(R8,2.0,UI1,1,I4,2);
     VARIDIV(R8,2.0,UI2,1,I4,2);
     VARIDIV(R8,2.0,UI4,1,I4,2);
-    VARIDIV(R8,2.0,I8,1,I8,2);
-    VARIDIV(R8,2.0,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(R8,2.0,I8,1,I8,2);
+        VARIDIV(R8,2.0,UI8,1,I4,2);
+    }
     VARIDIV(R8,2.0,INT,1,I4,2);
     VARIDIV(R8,2.0,UINT,1,I4,2);
     VARIDIV(DATE,2,NULL,0,NULL,0);
@@ -7520,8 +7546,11 @@ static void test_VarIdiv(void)
     VARIDIV(DATE,2,UI1,1,I4,2);
     VARIDIV(DATE,2,UI2,1,I4,2);
     VARIDIV(DATE,2,UI4,1,I4,2);
-    VARIDIV(DATE,2,I8,1,I8,2);
-    VARIDIV(DATE,2,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(DATE,2,I8,1,I8,2);
+        VARIDIV(DATE,2,UI8,1,I4,2);
+    }
     VARIDIV(DATE,2,INT,1,I4,2);
     VARIDIV(DATE,2,UINT,1,I4,2);
     VARIDIV(BSTR,num2_str,NULL,0,NULL,0);
@@ -7536,8 +7565,11 @@ static void test_VarIdiv(void)
     VARIDIV(BSTR,num2_str,UI1,1,I4,2);
     VARIDIV(BSTR,num2_str,UI2,1,I4,2);
     VARIDIV(BSTR,num2_str,UI4,1,I4,2);
-    VARIDIV(BSTR,num2_str,I8,1,I8,2);
-    VARIDIV(BSTR,num2_str,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(BSTR,num2_str,I8,1,I8,2);
+        VARIDIV(BSTR,num2_str,UI8,1,I4,2);
+    }
     VARIDIV(BSTR,num2_str,INT,1,I4,2);
     VARIDIV(BSTR,num2_str,UINT,1,I4,2);
     VARIDIV(BOOL,VARIANT_TRUE,NULL,0,NULL,0);
@@ -7552,8 +7584,11 @@ static void test_VarIdiv(void)
     VARIDIV(BOOL,VARIANT_TRUE,UI1,1,I2,-1);
     VARIDIV(BOOL,VARIANT_TRUE,UI2,1,I4,-1);
     VARIDIV(BOOL,VARIANT_TRUE,UI4,1,I4,-1);
-    VARIDIV(BOOL,VARIANT_TRUE,I8,1,I8,-1);
-    VARIDIV(BOOL,VARIANT_TRUE,UI8,1,I4,-1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(BOOL,VARIANT_TRUE,I8,1,I8,-1);
+        VARIDIV(BOOL,VARIANT_TRUE,UI8,1,I4,-1);
+    }
     VARIDIV(BOOL,VARIANT_TRUE,INT,1,I4,-1);
     VARIDIV(BOOL,VARIANT_TRUE,UINT,1,I4,-1);
     VARIDIV(I1,2,NULL,0,NULL,0);
@@ -7568,8 +7603,11 @@ static void test_VarIdiv(void)
     VARIDIV(I1,2,UI1,1,I4,2);
     VARIDIV(I1,2,UI2,1,I4,2);
     VARIDIV(I1,2,UI4,1,I4,2);
-    VARIDIV(I1,2,I8,1,I8,2);
-    VARIDIV(I1,2,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(I1,2,I8,1,I8,2);
+        VARIDIV(I1,2,UI8,1,I4,2);
+    }
     VARIDIV(I1,2,INT,1,I4,2);
     VARIDIV(I1,2,UINT,1,I4,2);
     VARIDIV(UI1,2,NULL,0,NULL,0);
@@ -7584,8 +7622,11 @@ static void test_VarIdiv(void)
     VARIDIV(UI1,2,UI1,1,UI1,2);
     VARIDIV(UI1,2,UI2,1,I4,2);
     VARIDIV(UI1,2,UI4,1,I4,2);
-    VARIDIV(UI1,2,I8,1,I8,2);
-    VARIDIV(UI1,2,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(UI1,2,I8,1,I8,2);
+        VARIDIV(UI1,2,UI8,1,I4,2);
+    }
     VARIDIV(UI1,2,INT,1,I4,2);
     VARIDIV(UI1,2,UINT,1,I4,2);
     VARIDIV(UI2,2,NULL,0,NULL,0);
@@ -7600,8 +7641,11 @@ static void test_VarIdiv(void)
     VARIDIV(UI2,2,UI1,1,I4,2);
     VARIDIV(UI2,2,UI2,1,I4,2);
     VARIDIV(UI2,2,UI4,1,I4,2);
-    VARIDIV(UI2,2,I8,1,I8,2);
-    VARIDIV(UI2,2,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(UI2,2,I8,1,I8,2);
+        VARIDIV(UI2,2,UI8,1,I4,2);
+    }
     VARIDIV(UI2,2,INT,1,I4,2);
     VARIDIV(UI2,2,UINT,1,I4,2);
     VARIDIV(UI4,2,NULL,0,NULL,0);
@@ -7616,41 +7660,47 @@ static void test_VarIdiv(void)
     VARIDIV(UI4,2,UI1,1,I4,2);
     VARIDIV(UI4,2,UI2,1,I4,2);
     VARIDIV(UI4,2,UI4,1,I4,2);
-    VARIDIV(UI4,2,I8,1,I8,2);
-    VARIDIV(UI4,2,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(UI4,2,I8,1,I8,2);
+        VARIDIV(UI4,2,UI8,1,I4,2);
+    }
     VARIDIV(UI4,2,INT,1,I4,2);
     VARIDIV(UI4,2,UINT,1,I4,2);
-    VARIDIV(I8,2,NULL,0,NULL,0);
-    VARIDIV(I8,2,I2,1,I8,2);
-    VARIDIV(I8,2,I4,1,I8,2);
-    VARIDIV(I8,2,R4,1.0f,I8,2);
-    VARIDIV(I8,2,R8,1.0,I8,2);
-    VARIDIV(I8,2,DATE,1,I8,2);
-    VARIDIV(I8,2,BSTR,num1_str,I8,2);
-    VARIDIV(I8,2,BOOL,1,I8,2);
-    VARIDIV(I8,2,I1,1,I8,2);
-    VARIDIV(I8,2,UI1,1,I8,2);
-    VARIDIV(I8,2,UI2,1,I8,2);
-    VARIDIV(I8,2,UI4,1,I8,2);
-    VARIDIV(I8,2,I8,1,I8,2);
-    VARIDIV(I8,2,UI8,1,I8,2);
-    VARIDIV(I8,2,UINT,1,I8,2);
-    VARIDIV(UI8,2,NULL,0,NULL,0);
-    VARIDIV(UI8,2,I2,1,I4,2);
-    VARIDIV(UI8,2,I4,1,I4,2);
-    VARIDIV(UI8,2,R4,1.0f,I4,2);
-    VARIDIV(UI8,2,R8,1.0,I4,2);
-    VARIDIV(UI8,2,DATE,1,I4,2);
-    VARIDIV(UI8,2,BSTR,num1_str,I4,2);
-    VARIDIV(UI8,2,BOOL,VARIANT_TRUE,I4,-2);
-    VARIDIV(UI8,2,I1,1,I4,2);
-    VARIDIV(UI8,2,UI1,1,I4,2);
-    VARIDIV(UI8,2,UI2,1,I4,2);
-    VARIDIV(UI8,2,UI4,1,I4,2);
-    VARIDIV(UI8,2,I8,1,I8,2);
-    VARIDIV(UI8,2,UI8,1,I4,2);
-    VARIDIV(UI8,2,INT,1,I4,2);
-    VARIDIV(UI8,2,UINT,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(I8,2,NULL,0,NULL,0);
+        VARIDIV(I8,2,I2,1,I8,2);
+        VARIDIV(I8,2,I4,1,I8,2);
+        VARIDIV(I8,2,R4,1.0f,I8,2);
+        VARIDIV(I8,2,R8,1.0,I8,2);
+        VARIDIV(I8,2,DATE,1,I8,2);
+        VARIDIV(I8,2,BSTR,num1_str,I8,2);
+        VARIDIV(I8,2,BOOL,1,I8,2);
+        VARIDIV(I8,2,I1,1,I8,2);
+        VARIDIV(I8,2,UI1,1,I8,2);
+        VARIDIV(I8,2,UI2,1,I8,2);
+        VARIDIV(I8,2,UI4,1,I8,2);
+        VARIDIV(I8,2,I8,1,I8,2);
+        VARIDIV(I8,2,UI8,1,I8,2);
+        VARIDIV(I8,2,UINT,1,I8,2);
+        VARIDIV(UI8,2,NULL,0,NULL,0);
+        VARIDIV(UI8,2,I2,1,I4,2);
+        VARIDIV(UI8,2,I4,1,I4,2);
+        VARIDIV(UI8,2,R4,1.0f,I4,2);
+        VARIDIV(UI8,2,R8,1.0,I4,2);
+        VARIDIV(UI8,2,DATE,1,I4,2);
+        VARIDIV(UI8,2,BSTR,num1_str,I4,2);
+        VARIDIV(UI8,2,BOOL,VARIANT_TRUE,I4,-2);
+        VARIDIV(UI8,2,I1,1,I4,2);
+        VARIDIV(UI8,2,UI1,1,I4,2);
+        VARIDIV(UI8,2,UI2,1,I4,2);
+        VARIDIV(UI8,2,UI4,1,I4,2);
+        VARIDIV(UI8,2,I8,1,I8,2);
+        VARIDIV(UI8,2,UI8,1,I4,2);
+        VARIDIV(UI8,2,INT,1,I4,2);
+        VARIDIV(UI8,2,UINT,1,I4,2);
+    }
     VARIDIV(INT,2,NULL,0,NULL,0);
     VARIDIV(INT,2,I2,1,I4,2);
     VARIDIV(INT,2,I4,1,I4,2);
@@ -7663,7 +7713,10 @@ static void test_VarIdiv(void)
     VARIDIV(INT,2,UI1,1,I4,2);
     VARIDIV(INT,2,UI2,1,I4,2);
     VARIDIV(INT,2,UI4,1,I4,2);
-    VARIDIV(INT,2,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(INT,2,UI8,1,I4,2);
+    }
     VARIDIV(INT,2,INT,1,I4,2);
     VARIDIV(INT,2,UINT,1,I4,2);
     VARIDIV(UINT,2,NULL,0,NULL,0);
@@ -7678,8 +7731,11 @@ static void test_VarIdiv(void)
     VARIDIV(UINT,2,UI1,1,I4,2);
     VARIDIV(UINT,2,UI2,1,I4,2);
     VARIDIV(UINT,2,UI4,1,I4,2);
-    VARIDIV(UINT,2,I8,1,I8,2);
-    VARIDIV(UINT,2,UI8,1,I4,2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARIDIV(UINT,2,I8,1,I8,2);
+        VARIDIV(UINT,2,UI8,1,I4,2);
+    }
     VARIDIV(UINT,2,INT,1,I4,2);
     VARIDIV(UINT,2,UINT,1,I4,2);
 
@@ -7704,13 +7760,16 @@ static void test_VarIdiv(void)
     ok(hres == S_OK && V_I4(&result) == 1,
         "VARIDIV: CY value %d, expected %d\n", V_I4(&result), 1);
 
-    hres = VarIdiv(&cy, &right, &result);
-    ok(hres == S_OK && V_VT(&result) == VT_I8,
-        "VARIDIV: expected coerced hres 0x%X type VT_I8, got hres 0x%X type %s!\n",
-        S_OK, hres, vtstr(V_VT(&result)));
-    ok(hres == S_OK && V_I8(&result) == 5000,
-        "VARIDIV: CY value 0x%x%08x, expected 0x%x\n",
-	(DWORD)(V_I8(&result) >>32), (DWORD)V_I8(&result), 5000);
+    if (HAVE_OLEAUT32_I8)
+    {
+        hres = VarIdiv(&cy, &right, &result);
+        ok(hres == S_OK && V_VT(&result) == VT_I8,
+            "VARIDIV: expected coerced hres 0x%X type VT_I8, got hres 0x%X type %s!\n",
+            S_OK, hres, vtstr(V_VT(&result)));
+        ok(hres == S_OK && V_I8(&result) == 5000,
+            "VARIDIV: CY value 0x%x%08x, expected 0x%x\n",
+	    (DWORD)(V_I8(&result) >>32), (DWORD)V_I8(&result), 5000);
+    }
 
     hres = VarIdiv(&left, &cy, &result);
     ok(hres == S_OK && V_VT(&result) == VT_I4,
@@ -7733,13 +7792,16 @@ static void test_VarIdiv(void)
     ok(hres == S_OK && V_I4(&result) == 1,
         "VARIDIV: DECIMAL value %d, expected %d\n", V_I4(&result), 1);
 
-    hres = VarIdiv(&dec, &right, &result);
-    ok(hres == S_OK && V_VT(&result) == VT_I8,
-        "VARIDIV: expected coerced hres 0x%X type VT_I8, got hres 0x%X type %s!\n",
-        S_OK, hres, vtstr(V_VT(&result)));
-    ok(hres == S_OK && V_I8(&result) == 1,
-        "VARIDIV: DECIMAL value 0x%x%08x, expected %d\n",
-	(DWORD)(V_I8(&result) >> 32), (DWORD)V_I8(&result), 1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        hres = VarIdiv(&dec, &right, &result);
+        ok(hres == S_OK && V_VT(&result) == VT_I8,
+            "VARIDIV: expected coerced hres 0x%X type VT_I8, got hres 0x%X type %s!\n",
+            S_OK, hres, vtstr(V_VT(&result)));
+        ok(hres == S_OK && V_I8(&result) == 1,
+            "VARIDIV: DECIMAL value 0x%x%08x, expected %d\n",
+	    (DWORD)(V_I8(&result) >> 32), (DWORD)V_I8(&result), 1);
+    }
 
     /* Check for division by zero */
     V_VT(&left) = VT_INT;
