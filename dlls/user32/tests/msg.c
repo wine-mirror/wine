@@ -1464,7 +1464,7 @@ static void flush_events(void)
 
     while (diff > 0)
     {
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, diff, QS_ALLINPUT );
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min(10,diff), QS_ALLINPUT ) == WAIT_TIMEOUT) break;
         while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
         diff = time - GetTickCount();
     }
@@ -4143,7 +4143,7 @@ static void test_messages(void)
     ok_sequence(WmSetMenuNonVisibleNoSizeChangeSeq, "SetMenu:NonVisibleNoSizeChange", FALSE);
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow( hwnd );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     ok (SetMenu(hwnd, 0), "SetMenu\n");
     ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange", FALSE);
@@ -4151,10 +4151,10 @@ static void test_messages(void)
     ok_sequence(WmSetMenuVisibleSizeChangeSeq, "SetMenu:VisibleSizeChange", FALSE);
 
     UpdateWindow( hwnd );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     ok(DrawMenuBar(hwnd), "DrawMenuBar\n");
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence(WmDrawMenuBarSeq, "DrawMenuBar", FALSE);
 
     DestroyWindow(hwnd);
@@ -4178,7 +4178,7 @@ static void test_messages(void)
     EnableWindow(hparent, TRUE);
     ok_sequence(WmEnableWindowSeq_2, "EnableWindow(TRUE)", FALSE);
 
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
 
     test_MsgWaitForMultipleObjects(hparent);
@@ -4211,13 +4211,13 @@ static void test_messages(void)
                            NULL, NULL, 0);
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(0, IDI_APPLICATION));
     ok_sequence(WmSetIcon_1, "WM_SETICON for shown window with caption", FALSE);
 
     ShowWindow(hwnd, SW_HIDE);
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(0, IDI_APPLICATION));
     ok_sequence(WmSetIcon_2, "WM_SETICON for hidden window with caption", FALSE);
@@ -4229,13 +4229,13 @@ static void test_messages(void)
                            NULL, NULL, 0);
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(0, IDI_APPLICATION));
     ok_sequence(WmSetIcon_2, "WM_SETICON for shown window without caption", FALSE);
 
     ShowWindow(hwnd, SW_HIDE);
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(0, IDI_APPLICATION));
     ok_sequence(WmSetIcon_2, "WM_SETICON for hidden window without caption", FALSE);
@@ -4596,6 +4596,7 @@ static void test_button_messages(void)
     ok(hwnd != 0, "Failed to create button window\n");
 
     SetFocus(0);
+    flush_events();
     flush_sequence();
 
     SendMessageA(hwnd, WM_LBUTTONDOWN, 0, 0);
@@ -4948,7 +4949,7 @@ static void test_paint_messages(void)
     check_update_rgn( hwnd, 0 );
 
     /* flush pending messages */
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
 
     GetClientRect( hwnd, &rect );
@@ -4961,7 +4962,7 @@ static void test_paint_messages(void)
     ok(InvalidateRect(0, &rect, FALSE), "InvalidateRect(0, &rc, FALSE) should fail\n");
     check_update_rgn( hwnd, hrgn );
     ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmPaint, "Paint", FALSE );
     RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
     check_update_rgn( hwnd, 0 );
@@ -4974,7 +4975,7 @@ static void test_paint_messages(void)
     ok(ValidateRect(0, &rect), "ValidateRect(0, &rc) should not fail\n");
     check_update_rgn( hwnd, hrgn );
     ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmPaint, "Paint", FALSE );
     RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
     check_update_rgn( hwnd, 0 );
@@ -4984,7 +4985,7 @@ static void test_paint_messages(void)
     ok(!InvalidateRgn(0, NULL, FALSE), "InvalidateRgn(0, NULL, FALSE) should fail\n");
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error code %d\n", GetLastError());
     check_update_rgn( hwnd, 0 );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
 
     trace("testing ValidateRgn(0, NULL)\n");
@@ -4992,15 +4993,14 @@ static void test_paint_messages(void)
     ok(!ValidateRgn(0, NULL), "ValidateRgn(0, NULL) should fail\n");
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error code %d\n", GetLastError());
     check_update_rgn( hwnd, 0 );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
 
     /* now with frame */
     SetRectRgn( hrgn, -5, -5, 20, 20 );
 
     /* flush pending messages */
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
-
+    flush_events();
     flush_sequence();
     RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_FRAME );
     ok_sequence( WmEmptySeq, "EmptySeq", FALSE );
@@ -5082,7 +5082,7 @@ static void test_paint_messages(void)
     RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_FRAME );
     RedrawWindow( hwnd, NULL, 0, RDW_ERASENOW );
     /* make sure no WM_PAINT was generated */
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmInvalidateRgn, "InvalidateRgn", FALSE );
 
     flush_sequence();
@@ -5141,7 +5141,7 @@ static void test_paint_messages(void)
     RedrawWindow( hchild, NULL, 0, RDW_ERASENOW );
     ok_sequence( WmEmptySeq, "EraseNow child", FALSE );
 
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmParentPaintNc, "WmParentPaintNc", FALSE );
 
     RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
@@ -5161,7 +5161,7 @@ static void test_paint_messages(void)
     ok_sequence( WmInvalidateParentChild, "InvalidateParentChild3", FALSE );
 
     /* flush all paint messages */
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
 
     /* RDW_UPDATENOW on child with WS_CLIPCHILDREN doesn't change corresponding parent area */
@@ -5174,7 +5174,7 @@ static void test_paint_messages(void)
     check_update_rgn( hparent, hrgn );
 
     /* flush all paint messages */
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     SetWindowLong( hparent, GWL_STYLE, GetWindowLong(hparent,GWL_STYLE) & ~WS_CLIPCHILDREN );
     flush_sequence();
 
@@ -5188,7 +5188,7 @@ static void test_paint_messages(void)
     CombineRgn( hrgn, hrgn, hrgn2, RGN_DIFF );
     check_update_rgn( hparent, hrgn );
     /* flush all paint messages */
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
 
     /* same as above but parent gets completely validated */
@@ -5199,7 +5199,7 @@ static void test_paint_messages(void)
     RedrawWindow( hchild, NULL, 0, RDW_UPDATENOW );
     ok_sequence( WmInvalidateErasePaint2, "WmInvalidateErasePaint2", FALSE );
     check_update_rgn( hparent, 0 );  /* no update region */
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmEmptySeq, "WmEmpty", FALSE );  /* and no paint messages */
 
     /* make sure RDW_VALIDATE on child doesn't have the same effect */
@@ -5262,7 +5262,7 @@ static void test_paint_messages(void)
     RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN );
     SetRectRgn( hrgn, 0, 0, 30, 30 );
     check_update_rgn( hparent, hrgn );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmParentPaintNc, "WmParentPaintNc3", FALSE );
 
     /* validate doesn't cause RDW_NOERASE or RDW_NOFRAME in child */
@@ -5289,63 +5289,63 @@ static void test_paint_messages(void)
 
     flush_sequence();
     RedrawWindow( hparent, NULL, 0, RDW_INTERNALPAINT | RDW_NOCHILDREN );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmParentOnlyPaint, "WmParentOnlyPaint", FALSE );
 
     RedrawWindow( hparent, NULL, 0, RDW_INTERNALPAINT | RDW_ALLCHILDREN );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmParentPaint, "WmParentPaint", FALSE );
 
     RedrawWindow( hparent, NULL, 0, RDW_INTERNALPAINT );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmParentOnlyPaint, "WmParentOnlyPaint", FALSE );
 
     assert( GetWindowLong(hparent, GWL_STYLE) & WS_CLIPCHILDREN );
     UpdateWindow( hparent );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     trace("testing SWP_FRAMECHANGED on parent with WS_CLIPCHILDREN\n");
     RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence(WmSWP_FrameChanged_clip, "SetWindowPos:FrameChanged_clip", FALSE );
 
     UpdateWindow( hparent );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     trace("testing SWP_FRAMECHANGED|SWP_DEFERERASE on parent with WS_CLIPCHILDREN\n");
     RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_DEFERERASE |
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence(WmSWP_FrameChangedDeferErase, "SetWindowPos:FrameChangedDeferErase", FALSE );
 
     SetWindowLong( hparent, GWL_STYLE, GetWindowLong(hparent,GWL_STYLE) & ~WS_CLIPCHILDREN );
     ok_sequence( WmSetParentStyle, "WmSetParentStyle", FALSE );
     RedrawWindow( hparent, NULL, 0, RDW_INTERNALPAINT );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence( WmParentPaint, "WmParentPaint", FALSE );
 
     assert( !(GetWindowLong(hparent, GWL_STYLE) & WS_CLIPCHILDREN) );
     UpdateWindow( hparent );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     trace("testing SWP_FRAMECHANGED on parent without WS_CLIPCHILDREN\n");
     RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence(WmSWP_FrameChanged_noclip, "SetWindowPos:FrameChanged_noclip", FALSE );
 
     UpdateWindow( hparent );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     trace("testing SWP_FRAMECHANGED|SWP_DEFERERASE on parent without WS_CLIPCHILDREN\n");
     RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_DEFERERASE |
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence(WmSWP_FrameChangedDeferErase, "SetWindowPos:FrameChangedDeferErase", FALSE );
 
     log_all_parent_messages--;
@@ -7353,7 +7353,6 @@ static void test_scrollwindowex(void)
 {
     HWND hwnd, hchild;
     RECT rect={0,0,130,130};
-    MSG msg;
 
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test Scroll",
             WS_VISIBLE|WS_OVERLAPPEDWINDOW,
@@ -7374,7 +7373,7 @@ static void test_scrollwindowex(void)
     ok_sequence(WmEmptySeq, "ScrollWindowEx", 0);
     trace("end scroll\n");
     flush_sequence();
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", 0);
     flush_events();
     flush_sequence();
@@ -7385,7 +7384,7 @@ static void test_scrollwindowex(void)
     ok_sequence(WmEmptySeq, "ScrollWindowEx", 0);
     trace("end scroll\n");
     flush_sequence();
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence(ScrollWindowPaint2, "ScrollWindowEx", 0);
     flush_events();
     flush_sequence();
@@ -7400,7 +7399,7 @@ static void test_scrollwindowex(void)
     }
     trace("end scroll\n");
     flush_sequence();
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", 0);
     flush_events();
     flush_sequence();
@@ -7410,7 +7409,7 @@ static void test_scrollwindowex(void)
     ScrollWindow( hwnd, 5, 5, NULL, NULL);
     trace("end scroll\n");
     flush_sequence();
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     ok_sequence(ScrollWindowPaint1, "ScrollWindow", 0);
 
     ok(DestroyWindow(hchild), "failed to destroy window\n");
@@ -7580,7 +7579,7 @@ static void test_DispatchMessage(void)
                                100, 100, 200, 200, 0, 0, 0, NULL);
     ShowWindow( hwnd, SW_SHOW );
     UpdateWindow( hwnd );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
     SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)DispatchMessageCheckProc );
 
@@ -7664,14 +7663,13 @@ static LRESULT WINAPI send_msg_delay_proc(HWND hwnd, UINT message, WPARAM wParam
 
 static void test_SendMessageTimeout(void)
 {
-    MSG msg;
     HANDLE thread;
     struct sendmsg_info info;
     DWORD tid;
 
     info.hwnd = CreateWindowA( "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
                                100, 100, 200, 200, 0, 0, 0, NULL);
-    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
 
     info.timeout = 1000;
@@ -8050,7 +8048,7 @@ static void test_PeekMessage(void)
     trace("signalling to start looping\n");
     SetEvent(info.hevent[EV_START_STOP]);
 
-    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    flush_events();
     flush_sequence();
 
     SetLastError(0xdeadbeef);
@@ -8473,7 +8471,6 @@ static void pump_msg_loop_timeout(DWORD timeout, BOOL inject_mouse_move)
 
 static void test_TrackMouseEvent(void)
 {
-    MSG msg;
     TRACKMOUSEEVENT tme;
     BOOL ret;
     HWND hwnd, hchild;
@@ -8588,7 +8585,7 @@ static void test_TrackMouseEvent(void)
     track_hover(hchild, 0);
     track_query(0, NULL, 0);
 
-    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    flush_events();
     flush_sequence();
 
     track_hover(hwnd, 0);
@@ -9240,14 +9237,13 @@ static void test_dialog_messages(void)
 static void test_nullCallback(void)
 {
     HWND hwnd;
-    MSG msg;
 
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create overlapped window\n");
 
     SendMessageCallbackA(hwnd,WM_NULL,0,0,NULL,0);
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     DestroyWindow(hwnd);
 }
 

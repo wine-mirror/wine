@@ -66,7 +66,7 @@ static void flush_events(void)
 
     while (diff > 0)
     {
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, diff, QS_ALLINPUT );
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min(10,diff), QS_ALLINPUT ) == WAIT_TIMEOUT) break;
         while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
         diff = time - GetTickCount();
     }
@@ -2421,7 +2421,7 @@ static void test_keyboard_input(HWND hwnd)
     SetFocus(hwnd);
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
 
-    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    flush_events();
 
     PostMessageA(hwnd, WM_KEYDOWN, 0, 0);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
@@ -2448,7 +2448,7 @@ static void test_keyboard_input(HWND hwnd)
     SetFocus(0);
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
-    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    flush_events();
 
     PostMessageA(hwnd, WM_KEYDOWN, 0, 0);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
@@ -2631,7 +2631,7 @@ static void test_mouse_input(HWND hwnd)
     TEST_MOUSEACTIVATE(HTHELP,MA_ACTIVATE);
 
     /* Clear any messages left behind by WM_MOUSEACTIVATE tests */
-    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    flush_events();
 
     DestroyWindow(popup);
 }
@@ -2877,7 +2877,6 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
     STYLESTRUCT ss;
     HWND hwnd;
     HWND hwndParent = NULL;
-    MSG msg;
 
     ss.styleNew = dwStyleIn;
     ss.styleOld = dwExStyleIn;
@@ -2892,11 +2891,7 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
                     dwStyleIn, 0, 0, 0, 0, hwndParent, NULL, NULL, &ss);
     assert(hwnd);
 
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
+    flush_events();
 
     dwActualStyle = GetWindowLong(hwnd, GWL_STYLE);
     dwActualExStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
@@ -3454,7 +3449,6 @@ static void test_csparentdc(void)
 {
    WNDCLASSA clsMain, cls;
    HWND hwndMain, hwnd1, hwnd2;
-   MSG msg;
    RECT rc;
 
    struct parentdc_test test_answer;
@@ -3560,43 +3554,43 @@ static void test_csparentdc(void)
 
    zero_parentdc_test(&test_answer);
    InvalidateRect(hwndMain, NULL, TRUE);
-   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   flush_events();
    parentdc_ok(test1, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, 0, 0, 50, 50);
    InvalidateRect(hwndMain, &rc, TRUE);
-   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   flush_events();
    parentdc_ok(test2, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, 0, 0, 10, 10);
    InvalidateRect(hwndMain, &rc, TRUE);
-   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   flush_events();
    parentdc_ok(test3, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, 40, 40, 50, 50);
    InvalidateRect(hwndMain, &rc, TRUE);
-   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   flush_events();
    parentdc_ok(test4, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, 20, 20, 60, 60);
    InvalidateRect(hwndMain, &rc, TRUE);
-   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   flush_events();
    parentdc_ok(test5, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, 0, 0, 10, 10);
    InvalidateRect(hwnd1, &rc, TRUE);
-   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   flush_events();
    parentdc_ok(test6, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, -5, -5, 65, 65);
    InvalidateRect(hwnd1, &rc, TRUE);
-   while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+   flush_events();
    parentdc_ok(test7, test_answer);
 
    DestroyWindow(hwndMain);
