@@ -328,6 +328,8 @@ while (my $line = <TYPES>) {
 }
 # This is to override the 'void' -> '*' bogus conversion
 $pseudo_to_opengl{"void"} = "void";
+$pseudo_to_opengl{"Int64EXT"} = "INT64";
+$pseudo_to_opengl{"UInt64EXT"} = "UINT64";
 
 #
 # Then, create the list of all OpenGL functions using the 'gl.spec'

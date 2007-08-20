@@ -3001,8 +3001,8 @@ static void WINAPI wine_glGetProgramivNV( GLuint id, GLenum pname, GLint* params
   LEAVE_GL();
 }
 
-static void WINAPI wine_glGetQueryObjecti64vEXT( GLuint id, GLenum pname, GLint64EXT* params ) {
-  void (*func_glGetQueryObjecti64vEXT)( GLuint, GLenum, GLint64EXT* ) = extension_funcs[368];
+static void WINAPI wine_glGetQueryObjecti64vEXT( GLuint id, GLenum pname, INT64* params ) {
+  void (*func_glGetQueryObjecti64vEXT)( GLuint, GLenum, INT64* ) = extension_funcs[368];
   TRACE("(%d, %d, %p)\n", id, pname, params );
   ENTER_GL();
   func_glGetQueryObjecti64vEXT( id, pname, params );
@@ -3025,8 +3025,8 @@ static void WINAPI wine_glGetQueryObjectivARB( GLuint id, GLenum pname, GLint* p
   LEAVE_GL();
 }
 
-static void WINAPI wine_glGetQueryObjectui64vEXT( GLuint id, GLenum pname, GLuint64EXT* params ) {
-  void (*func_glGetQueryObjectui64vEXT)( GLuint, GLenum, GLuint64EXT* ) = extension_funcs[371];
+static void WINAPI wine_glGetQueryObjectui64vEXT( GLuint id, GLenum pname, UINT64* params ) {
+  void (*func_glGetQueryObjectui64vEXT)( GLuint, GLenum, UINT64* ) = extension_funcs[371];
   TRACE("(%d, %d, %p)\n", id, pname, params );
   ENTER_GL();
   func_glGetQueryObjectui64vEXT( id, pname, params );
