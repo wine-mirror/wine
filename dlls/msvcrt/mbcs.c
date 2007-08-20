@@ -282,9 +282,9 @@ int CDECL _getmbcp(void)
  */
 unsigned int CDECL _mbsnextc(const unsigned char* str)
 {
-  if(MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(*str))
+  if(_ismbblead(*str))
     return *str << 8 | str[1];
-  return *str; /* ASCII CP or SB char */
+  return *str;
 }
 
 /*********************************************************************
