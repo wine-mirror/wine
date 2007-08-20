@@ -159,17 +159,6 @@ struct JoyDev {
 	int				axes[ABS_MAX][5];
 };
 
-struct ObjProps
-{
-	/* what we have */
-	LONG				havemax;
-	LONG				havemin;
-	/* what range and deadzone the game wants */
-	LONG				wantmin;
-	LONG				wantmax;
-	LONG				deadzone;
-};
-
 struct JoystickImpl
 {
         struct IDirectInputDevice2AImpl base;
