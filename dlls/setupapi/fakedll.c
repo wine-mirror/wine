@@ -301,10 +301,32 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
     }
     else
     {
+        if (GetLastError() == ERROR_PATH_NOT_FOUND)
+        {
+            WCHAR *path;
+            WCHAR *pathel;
+
+            /* create the directory/directories */
+            path = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1)*sizeof(WCHAR));
+            strcpyW(path, name);
+
+            pathel = strchrW(path, '\\');
+            while (pathel != NULL)
+            {
+                *pathel = 0;
+                if (!CreateDirectoryW(path, NULL))
+                    TRACE("Couldn't create directory %s - error: %d\n", wine_dbgstr_w(path), GetLastError());
+                *pathel = '\\';
+                pathel = strchrW(pathel+1, '\\');
+            }
+
+            HeapFree(GetProcessHeap(), 0, path);
+        }
+
         h = CreateFileW( name, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL );
         if (h == INVALID_HANDLE_VALUE)
         {
-            WARN( "failed to create %s\n", debugstr_w(name) );
+            ERR( "failed to create %s (error=%u)\n", debugstr_w(name), GetLastError() );
             return FALSE;
         }
     }
