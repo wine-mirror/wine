@@ -8421,6 +8421,8 @@ static void test_quit_message(void)
 }
 
 static const struct message WmMouseHoverSeq[] = {
+    { WM_MOUSEACTIVATE, sent|optional },  /* we can get those when moving the mouse in focus-follow-mouse mode under X11 */
+    { WM_MOUSEACTIVATE, sent|optional },
     { WM_TIMER, sent|optional }, /* XP sends it */
     { WM_SYSTIMER, sent },
     { WM_MOUSEHOVER, sent|wparam, 0 },
