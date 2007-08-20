@@ -879,6 +879,7 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
  */
 void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 {
+    struct x11drv_thread_data *data = x11drv_thread_data();
     Cursor cursor;
 
     if (lpCursor)
@@ -887,40 +888,22 @@ void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
     else
         TRACE("NULL\n");
 
-    if (root_window != DefaultRootWindow(gdi_display))
-    {
-        /* If in desktop mode, set the cursor on the desktop window */
+    /* set the same cursor for all top-level windows of the current thread */
 
-        wine_tsx11_lock();
-        cursor = create_cursor( gdi_display, lpCursor );
-        if (cursor)
-        {
-            XDefineCursor( gdi_display, root_window, cursor );
-	    /* Make the change take effect immediately */
-	    XFlush(gdi_display);
-            XFreeCursor( gdi_display, cursor );
-        }
-        wine_tsx11_unlock();
-    }
-    else /* set the same cursor for all top-level windows of the current thread */
+    wine_tsx11_lock();
+    cursor = create_cursor( data->display, lpCursor );
+    if (cursor)
     {
-        struct x11drv_thread_data *data = x11drv_thread_data();
-
-        wine_tsx11_lock();
-        cursor = create_cursor( data->display, lpCursor );
-        if (cursor)
+        if (data->cursor) XFreeCursor( data->display, data->cursor );
+        data->cursor = cursor;
+        if (data->cursor_window)
         {
-            if (data->cursor) XFreeCursor( data->display, data->cursor );
-            data->cursor = cursor;
-            if (data->cursor_window)
-            {
-                XDefineCursor( data->display, data->cursor_window, cursor );
-                /* Make the change take effect immediately */
-                XFlush( data->display );
-            }
+            XDefineCursor( data->display, data->cursor_window, cursor );
+            /* Make the change take effect immediately */
+            XFlush( data->display );
         }
-        wine_tsx11_unlock();
     }
+    wine_tsx11_unlock();
 }
 
 /***********************************************************************
