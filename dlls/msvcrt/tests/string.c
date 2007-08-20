@@ -161,7 +161,6 @@ void test_cp_table(int cp, int *result, int *todo)
 
 static void test_mbcp(void)
 {
-    unsigned int s = '\354';
     int mb_orig_max = __mb_cur_max;
     int curr_mbcp = _getmbcp();
 
@@ -177,7 +176,12 @@ static void test_mbcp(void)
 
     _setmbcp(936);
     ok(__mb_cur_max == mb_orig_max, "__mb_cur_max shouldn't be updated (is %d != %d)\n", __mb_cur_max, mb_orig_max);
-    todo_wine ok(_ismbblead(s), "got result %d\n", _ismbblead(s));
+    ok(_ismbblead('\354'), "\354 should be a lead byte\n");
+    ok(_ismbblead(' ') == FALSE, "' ' should not be a lead byte\n");
+    ok(_ismbblead(0x1234b0), "0x1234b0 should not be a lead byte\n");
+    ok(_ismbblead(0x123420) == FALSE, "0x123420 should not be a lead byte\n");
+    ok(_ismbbtrail('\xb0'), "\xa0 should be a trail byte\n");
+    ok(_ismbbtrail(' ') == FALSE, "' ' should not be a trail byte\n");
     _setmbcp(curr_mbcp);
 }
 

@@ -1056,8 +1056,7 @@ int CDECL _ismbckata(unsigned int c)
  */
 int CDECL _ismbblead(unsigned int c)
 {
-  /* FIXME: should reference MSVCRT_mbctype */
-  return MSVCRT_isleadbyte(c);
+  return (MSVCRT_mbctype[(c&0xff) + 1] & _M1) != 0;
 }
 
 
@@ -1066,8 +1065,7 @@ int CDECL _ismbblead(unsigned int c)
  */
 int CDECL _ismbbtrail(unsigned int c)
 {
-  /* FIXME: should reference MSVCRT_mbctype */
-  return !_ismbblead(c);
+  return (MSVCRT_mbctype[(c&0xff) + 1] & _M2) != 0;
 }
 
 /*********************************************************************
