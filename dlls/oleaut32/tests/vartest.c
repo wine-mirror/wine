@@ -5140,6 +5140,10 @@ static void test_VarCat(void)
 
         SKIPTESTS(leftvt);
 
+        /* Check if we need/have support for I8 and/or UI8 */
+        if ((leftvt == VT_I8 || leftvt == VT_UI8) && !HAVE_OLEAUT32_I8)
+            continue;
+
         for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
         {
 
@@ -5154,9 +5158,7 @@ static void test_VarCat(void)
                 continue;
 
             /* Check if we need/have support for I8 and/or UI8 */
-            if ((leftvt == VT_I8 || leftvt == VT_UI8 ||
-                rightvt == VT_I8 || rightvt == VT_UI8) &&
-                !HAVE_OLEAUT32_I8)
+            if ((rightvt == VT_I8 || rightvt == VT_UI8) && !HAVE_OLEAUT32_I8)
                 continue;
 
             if (leftvt == VT_NULL && rightvt == VT_NULL)
@@ -5465,15 +5467,17 @@ static void test_VarAnd(void)
         {
             SKIPTESTAND(leftvt);
 
+            /* Check if we need/have support for I8 and/or UI8 */
+            if ((leftvt == VT_I8 || leftvt == VT_UI8) && !HAVE_OLEAUT32_I8)
+                continue;
+
             for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
             {
                 BOOL bFail = FALSE;
                 SKIPTESTAND(rightvt);
 
                 /* Check if we need/have support for I8 and/or UI8 */
-                if ((leftvt == VT_I8 || leftvt == VT_UI8 ||
-                    rightvt == VT_I8 || rightvt == VT_UI8) &&
-                    !HAVE_OLEAUT32_I8)
+                if ((rightvt == VT_I8 || rightvt == VT_UI8) && !HAVE_OLEAUT32_I8)
                     continue;
 
                 memset(&left, 0, sizeof(left));
