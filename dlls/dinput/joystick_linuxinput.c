@@ -505,24 +505,31 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
 
     find_joydevs();
 
-    if ((index = get_joystick_index(rguid)) < MAX_JOYDEV) {
-      if ((riid == NULL) ||
-      IsEqualGUID(&IID_IDirectInputDeviceA,riid) ||
-      IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
-      IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
-      IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
-        *pdev = (IDirectInputDeviceA*) alloc_device(rguid, &JoystickAvt, dinput, index);
-        TRACE("Creating a Joystick device (%p)\n", *pdev);
-        if (*pdev==0) {
-          ERR("out of memory\n");
-          return DIERR_OUTOFMEMORY;
+    if ((index = get_joystick_index(rguid)) < MAX_JOYDEV &&
+        have_joydevs && index < have_joydevs)
+    {
+        if ((riid == NULL) ||
+            IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
+            IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
+            IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
+            IsEqualGUID(&IID_IDirectInputDevice8A, riid))
+        {
+            *pdev = (IDirectInputDeviceA*) alloc_device(rguid, &JoystickAvt, dinput, index);
+            TRACE("Created a Joystick device (%p)\n", *pdev);
+
+            if (*pdev == NULL)
+            {
+                ERR("out of memory\n");
+                return DIERR_OUTOFMEMORY;
+            }
+            return DI_OK;
         }
-        return DI_OK;
-      } else {
+
+        WARN("no interface\n");
         return DIERR_NOINTERFACE;
-      }
     }
 
+    WARN("invalid device GUID\n");
     return DIERR_DEVICENOTREG;
 }
 
@@ -533,24 +540,30 @@ static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, RE
 
     find_joydevs();
 
-    if ((index = get_joystick_index(rguid)) < MAX_JOYDEV) {
-      if ((riid == NULL) ||
-      IsEqualGUID(&IID_IDirectInputDeviceW,riid) ||
-      IsEqualGUID(&IID_IDirectInputDevice2W,riid) ||
-      IsEqualGUID(&IID_IDirectInputDevice7W,riid) ||
-      IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
-        *pdev = (IDirectInputDeviceW*) alloc_device(rguid, &JoystickWvt, dinput, index);
-        TRACE("Creating a Joystick device (%p)\n", *pdev);
-        if (*pdev==0) {
-          ERR("out of memory\n");
-          return DIERR_OUTOFMEMORY;
+    if ((index = get_joystick_index(rguid)) < MAX_JOYDEV &&
+        have_joydevs && index < have_joydevs)
+    {
+        if ((riid == NULL) ||
+            IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
+            IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
+            IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
+            IsEqualGUID(&IID_IDirectInputDevice8W, riid))
+        {
+            *pdev = (IDirectInputDeviceW*) alloc_device(rguid, &JoystickWvt, dinput, index);
+            TRACE("Created a Joystick device (%p)\n", *pdev);
+
+            if (*pdev == NULL)
+            {
+                ERR("out of memory\n");
+                return DIERR_OUTOFMEMORY;
+            }
+            return DI_OK;
         }
-        return DI_OK;
-      } else {
+        WARN("no interface\n");
         return DIERR_NOINTERFACE;
-      }
     }
 
+    WARN("invalid device GUID\n");
     return DIERR_DEVICENOTREG;
 }
 
