@@ -276,7 +276,7 @@ static BOOL do_reg_operation( HKEY hkey, const WCHAR *value, INFCONTEXT *context
             }
             else RegDeleteValueW( hkey, value );
         }
-        else RegDeleteKeyW( hkey, NULL );
+        else NtDeleteKey( hkey );
         return TRUE;
     }
 
