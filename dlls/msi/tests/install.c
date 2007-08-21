@@ -869,8 +869,15 @@ static void init_functionpointers(void)
 {
     HMODULE hmsi = GetModuleHandleA("msi.dll");
 
-    pMsiQueryComponentStateA = (void*)GetProcAddress(hmsi, "MsiQueryComponentStateA");
-    pMsiSourceListGetInfoA = (void*)GetProcAddress(hmsi, "MsiSourceListGetInfoA");
+#define GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(hmsi, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
+
+    GET_PROC(MsiQueryComponentStateA);
+    GET_PROC(MsiSourceListGetInfoA);
+
+#undef GET_PROC
 }
 
 static BOOL check_record(MSIHANDLE rec, UINT field, LPCSTR val)
