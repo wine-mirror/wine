@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = dnsapi.dll
-IMPORTS   = kernel32
+IMPORTS   = dnsapi kernel32
 
 CTESTS = \
 	name.c \

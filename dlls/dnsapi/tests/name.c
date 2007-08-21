@@ -27,21 +27,6 @@
 
 #include "wine/test.h"
 
-static HMODULE dnsapi;
-
-static BOOL        (WINAPI *pDnsNameCompare_A)(LPSTR,LPSTR);
-static DNS_STATUS  (WINAPI *pDnsValidateName_A)(LPCSTR,DNS_NAME_FORMAT);
-
-#define GETFUNCPTR(func) p##func = (void *)GetProcAddress( dnsapi, #func ); \
-    if (!p##func) return FALSE;
-
-static BOOL init_function_ptrs( void )
-{
-    GETFUNCPTR( DnsNameCompare_A )
-    GETFUNCPTR( DnsValidateName_A )
-    return TRUE;
-}
-
 static const struct
 {
     LPCSTR name;
@@ -155,12 +140,12 @@ static void test_DnsValidateName_A( void )
     unsigned int i;
     DNS_STATUS status;
 
-    status = pDnsValidateName_A( NULL, DnsNameDomain );
+    status = DnsValidateName_A( NULL, DnsNameDomain );
     ok( status == ERROR_INVALID_NAME, "succeeded unexpectedly\n" );
 
     for (i = 0; i < sizeof(test_data) / sizeof(test_data[0]); i++)
     {
-        status = pDnsValidateName_A( test_data[i].name, test_data[i].format );
+        status = DnsValidateName_A( test_data[i].name, test_data[i].format );
         ok( status == test_data[i].status, "%d: \'%s\': got %d, expected %d\n",
             i, test_data[i].name, status, test_data[i].status );
     }
@@ -185,56 +170,39 @@ static void test_DnsNameCompare_A( void )
                 b_dot_a_dot[]    = "b.a.",
                 b_dot_a_dotdot[] = "b.a..";
 
-    ok( pDnsNameCompare_A( NULL, NULL ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( NULL, NULL ) == TRUE, "failed unexpectedly\n" );
 
-    ok( pDnsNameCompare_A( empty, empty ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( dot, empty ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( empty, dot ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( dot, dotdot ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( dotdot, dot ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( a, a ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( a, A ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( A, a ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b, A_dot_B ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b, a_dot_b ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b_dot, a_dot_b_dot ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b_dotdot, a_dot_b_dotdot ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( empty, empty ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( dot, empty ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( empty, dot ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( dot, dotdot ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( dotdot, dot ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( a, a ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( a, A ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( A, a ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b, A_dot_B ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b, a_dot_b ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b_dot, a_dot_b_dot ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b_dotdot, a_dot_b_dotdot ) == TRUE, "failed unexpectedly\n" );
 
-    ok( pDnsNameCompare_A( empty, NULL ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( NULL, empty ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( empty, NULL ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( NULL, empty ) == FALSE, "succeeded unexpectedly\n" );
 
-    ok( pDnsNameCompare_A( a, b ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( a, B ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( A, b ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b, B_dot_A ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b_dot, b_dot_a_dot ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b, a_dot_a ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b_dotdot, b_dot_a_dotdot ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b_dot, b_dot_a_dotdot ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b_dotdot, b_dot_a_dot ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b_dot, b_dot_a ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( a_dot_b, b_dot_a_dot ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( a, b ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( a, B ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( A, b ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b, B_dot_A ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b_dot, b_dot_a_dot ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b, a_dot_a ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b_dotdot, b_dot_a_dotdot ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b_dot, b_dot_a_dotdot ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b_dotdot, b_dot_a_dot ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b_dot, b_dot_a ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsNameCompare_A( a_dot_b, b_dot_a_dot ) == FALSE, "succeeded unexpectedly\n" );
 }
 
 START_TEST(name)
 {
-    dnsapi = LoadLibraryA( "dnsapi.dll" );
-    if (!dnsapi)
-    {
-        /* Doesn't exist before W2K */
-        skip("dnsapi.dll cannot be loaded\n");
-        return;
-    }
-
-    if (!init_function_ptrs())
-    {
-        skip("Needed functions are not available\n");
-        FreeLibrary( dnsapi );
-        return;
-    }
-
     test_DnsValidateName_A();
     test_DnsNameCompare_A();
-
-    FreeLibrary( dnsapi );
 }

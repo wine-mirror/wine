@@ -28,23 +28,6 @@
 
 #include "wine/test.h"
 
-static HMODULE dnsapi;
-
-static BOOL        (WINAPI *pDnsRecordCompare)(PDNS_RECORD,PDNS_RECORD);
-static BOOL        (WINAPI *pDnsRecordSetCompare)(PDNS_RECORD,PDNS_RECORD,PDNS_RECORD*,PDNS_RECORD*);
-static DNS_RECORD* (WINAPI *pDnsRecordSetDetach)(PDNS_RECORD);
-
-#define GETFUNCPTR(func) p##func = (void *)GetProcAddress( dnsapi, #func ); \
-    if (!p##func) return FALSE;
-
-static BOOL init_function_ptrs( void )
-{
-    GETFUNCPTR( DnsRecordCompare )
-    GETFUNCPTR( DnsRecordSetCompare )
-    GETFUNCPTR( DnsRecordSetDetach )
-    return TRUE;
-}
-
 static char name1[] = "localhost";
 static char name2[] = "LOCALHOST";
 
@@ -54,25 +37,25 @@ static DNS_RECORDA r3 = { NULL, name1, DNS_TYPE_A, sizeof(DNS_A_DATA), { 0 }, 12
 
 static void test_DnsRecordCompare( void )
 {
-    ok( pDnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r1 ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r1 ) == TRUE, "failed unexpectedly\n" );
 
     r2.pName = name2;
-    ok( pDnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
 
     r2.Flags.S.CharSet = DnsCharSetUnicode;
-    ok( pDnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == FALSE, "succeeded unexpectedly\n" );
 
     r2.Flags.S.CharSet = DnsCharSetAnsi;
-    ok( pDnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == FALSE, "succeeded unexpectedly\n" );
 
     r1.Flags.S.CharSet = DnsCharSetAnsi;
-    ok( pDnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
 
     r1.dwTtl = 0;
-    ok( pDnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
 
     r2.Data.A.IpAddress = 0;
-    ok( pDnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == FALSE, "succeeded unexpectedly\n" );
 }
 
 static void test_DnsRecordSetCompare( void )
@@ -94,36 +77,36 @@ static void test_DnsRecordSetCompare( void )
     DNS_RRSET_TERMINATE( rr1 );
     DNS_RRSET_TERMINATE( rr2 );
 
-    ok( pDnsRecordSetCompare( NULL, NULL, NULL, NULL ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsRecordSetCompare( rr1.pFirstRR, NULL, NULL, NULL ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsRecordSetCompare( NULL, rr2.pFirstRR, NULL, NULL ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordSetCompare( NULL, NULL, NULL, NULL ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordSetCompare( rr1.pFirstRR, NULL, NULL, NULL ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordSetCompare( NULL, rr2.pFirstRR, NULL, NULL ) == FALSE, "succeeded unexpectedly\n" );
 
     diff1 = NULL;
     diff2 = NULL;
 
-    ok( pDnsRecordSetCompare( NULL, NULL, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordSetCompare( NULL, NULL, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
     ok( diff1 == NULL && diff2 == NULL, "unexpected result: %p, %p\n", diff1, diff2 );
 
-    ok( pDnsRecordSetCompare( rr1.pFirstRR, NULL, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordSetCompare( rr1.pFirstRR, NULL, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
     ok( diff1 != NULL && diff2 == NULL, "unexpected result: %p, %p\n", diff1, diff2 );
 
-    ok( pDnsRecordSetCompare( NULL, rr2.pFirstRR, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordSetCompare( NULL, rr2.pFirstRR, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
     ok( diff1 == NULL && diff2 != NULL, "unexpected result: %p, %p\n", diff1, diff2 );
 
-    ok( pDnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, NULL, &diff2 ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, NULL, &diff2 ) == TRUE, "failed unexpectedly\n" );
     ok( diff2 == NULL, "unexpected result: %p\n", diff2 );
 
-    ok( pDnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, NULL ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, NULL ) == TRUE, "failed unexpectedly\n" );
     ok( diff1 == NULL, "unexpected result: %p\n", diff1 );
 
-    ok( pDnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, &diff2 ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, &diff2 ) == TRUE, "failed unexpectedly\n" );
     ok( diff1 == NULL && diff2 == NULL, "unexpected result: %p, %p\n", diff1, diff2 );
 
     r2.Data.A.IpAddress = 0;
 
-    ok( pDnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, NULL, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, NULL ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, NULL, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, NULL ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
 }
 
 static void test_DnsRecordSetDetach( void )
@@ -137,10 +120,10 @@ static void test_DnsRecordSetDetach( void )
     DNS_RRSET_ADD( rr, &r3 );
     DNS_RRSET_TERMINATE( rr );
 
-    ok( !pDnsRecordSetDetach( NULL ), "succeeded unexpectedly\n" );
+    ok( !DnsRecordSetDetach( NULL ), "succeeded unexpectedly\n" );
 
     r = rr.pFirstRR;
-    s = pDnsRecordSetDetach( r );
+    s = DnsRecordSetDetach( r );
 
     ok( s == &r3, "failed unexpectedly: got %p, expected %p\n", s, &r3 );
     ok( r == &r1, "failed unexpectedly: got %p, expected %p\n", r, &r1 );
@@ -149,24 +132,7 @@ static void test_DnsRecordSetDetach( void )
 
 START_TEST(record)
 {
-    dnsapi = LoadLibraryA( "dnsapi.dll" );
-    if (!dnsapi)
-    {
-        /* Doesn't exist before W2K */
-        skip("dnsapi.dll cannot be loaded\n");
-        return;
-    }
-
-    if (!init_function_ptrs())
-    {
-        skip("Needed functions are not available\n");
-        FreeLibrary( dnsapi );
-        return;
-    }
-
     test_DnsRecordCompare();
     test_DnsRecordSetCompare();
     test_DnsRecordSetDetach();
-
-    FreeLibrary( dnsapi );
 }
