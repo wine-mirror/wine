@@ -337,7 +337,7 @@ static void test_RtlUniform(void)
  */
 
     if (result == 0x7fffff9f) {
-        trace("Most likely running on Windows Vista, skipping rest of tests\n");
+        skip("Most likely running on Windows Vista which uses a different algorithm\n");
         return;
     }
 
@@ -635,7 +635,7 @@ static void test_RtlRandom(void)
  */
 
     if (seed == 0x3fc) {
-        trace("Most likely running on Windows Vista, skipping rest of tests\n");
+        skip("Most likely running on Windows Vista which uses a different algorithm\n");
         return;
     }
 
