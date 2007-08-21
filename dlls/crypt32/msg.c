@@ -807,6 +807,28 @@ static BOOL CSignerHandles_Construct(CSignerHandles *handles,
     return ret;
 }
 
+/* Allocates a CSignedMsgData's handles.  Assumes its info has already been
+ * constructed.
+ */
+static BOOL CSignedMsgData_AllocateHandles(CSignedMsgData *msg_data)
+{
+    BOOL ret = TRUE;
+
+    if (msg_data->info->cSignerInfo)
+    {
+        msg_data->signerHandles =
+         CryptMemAlloc(msg_data->info->cSignerInfo * sizeof(CSignerHandles));
+        if (msg_data->signerHandles)
+            memset(msg_data->signerHandles, 0,
+             msg_data->info->cSignerInfo * sizeof(CSignerHandles));
+        else
+            ret = FALSE;
+    }
+    else
+        msg_data->signerHandles = NULL;
+    return ret;
+}
+
 static void CSignedMsgData_CloseHandles(CSignedMsgData *msg_data)
 {
     DWORD i;
@@ -1185,23 +1207,14 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
             ret = FALSE;
         if (ret && info->cSigners)
         {
-            msg->msg_data.signerHandles =
-             CryptMemAlloc(info->cSigners * sizeof(CSignerHandles));
-            if (msg->msg_data.signerHandles)
-                msg->msg_data.info->rgSignerInfo =
-                 CryptMemAlloc(info->cSigners * sizeof(CMSG_SIGNER_INFO));
-            else
-            {
-                ret = FALSE;
-                msg->msg_data.info->rgSignerInfo = NULL;
-            }
+            msg->msg_data.info->rgSignerInfo =
+             CryptMemAlloc(info->cSigners * sizeof(CMSG_SIGNER_INFO));
             if (msg->msg_data.info->rgSignerInfo)
             {
                 msg->msg_data.info->cSignerInfo = info->cSigners;
-                memset(msg->msg_data.signerHandles, 0,
-                 msg->msg_data.info->cSignerInfo * sizeof(CSignerHandles));
                 memset(msg->msg_data.info->rgSignerInfo, 0,
                  msg->msg_data.info->cSignerInfo * sizeof(CMSG_SIGNER_INFO));
+                ret = CSignedMsgData_AllocateHandles(&msg->msg_data);
                 for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
                 {
                     ret = CSignerInfo_Construct(
