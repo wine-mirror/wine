@@ -617,14 +617,6 @@ static BOOL CRYPT_IsValidSigner(CMSG_SIGNER_ENCODE_INFO_WITH_CMS *signer)
     return TRUE;
 }
 
-typedef struct _CSignerHandles
-{
-    HCRYPTPROV       prov;
-    HCRYPTHASH       contentHash;
-    HCRYPTHASH       authAttrHash;
-    HCRYPTKEY        key;
-} CSignerHandles;
-
 static BOOL CRYPT_ConstructBlob(CRYPT_DATA_BLOB *out, const CRYPT_DATA_BLOB *in)
 {
     BOOL ret = TRUE;
@@ -722,62 +714,33 @@ static BOOL CRYPT_ConstructAttributes(CRYPT_ATTRIBUTES *out,
     return ret;
 }
 
-/* Constructs a CSignerHandles with a copy of crypt_prov (not add-ref'ed - the
- * caller must do this if necessary), a hash handle based on HashAlgorithm, and
- * an authenticated attributes hash handle if hasAuthAttrs is TRUE.
- */
-static BOOL CSignerHandles_Construct(CSignerHandles *handles,
- HCRYPTPROV crypt_prov, CRYPT_ALGORITHM_IDENTIFIER *HashAlgorithm,
- BOOL hasAuthAttrs)
-{
-    ALG_ID algID;
-    BOOL ret;
-
-    handles->prov = crypt_prov;
-    algID = CertOIDToAlgId(HashAlgorithm->pszObjId);
-    ret = CryptCreateHash(handles->prov, algID, 0, 0, &handles->contentHash);
-    if (ret && hasAuthAttrs)
-        ret = CryptCreateHash(handles->prov, algID, 0, 0,
-         &handles->authAttrHash);
-    return ret;
-}
-
-/* Constructs both a CSignerHandles and a CMSG_SIGNER_INFO from a
- * CMSG_SIGNER_ENCODE_INFO_WITH_CMS.
- */
-static BOOL CSignerInfo_Construct(CSignerHandles *handles,
- CMSG_SIGNER_INFO *info, CMSG_SIGNER_ENCODE_INFO_WITH_CMS *in, DWORD open_flags)
+/* Constructs a CMSG_SIGNER_INFO from a CMSG_SIGNER_ENCODE_INFO_WITH_CMS. */
+static BOOL CSignerInfo_Construct(CMSG_SIGNER_INFO *info,
+ CMSG_SIGNER_ENCODE_INFO_WITH_CMS *in)
 {
     BOOL ret;
 
-    if (!(open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG))
-        CryptContextAddRef(in->hCryptProv, NULL, 0);
-    ret = CSignerHandles_Construct(handles, in->hCryptProv, &in->HashAlgorithm,
-     in->cAuthAttr > 0);
+    /* Note: needs to change if CMS fields are supported */
+    info->dwVersion = CMSG_SIGNER_INFO_V1;
+    ret = CRYPT_ConstructBlob(&info->Issuer, &in->pCertInfo->Issuer);
     if (ret)
-    {
-        /* Note: needs to change if CMS fields are supported */
-        info->dwVersion = CMSG_SIGNER_INFO_V1;
-        ret = CRYPT_ConstructBlob(&info->Issuer, &in->pCertInfo->Issuer);
-        if (ret)
-            ret = CRYPT_ConstructBlob(&info->SerialNumber,
-             &in->pCertInfo->SerialNumber);
-        /* Assumption:  algorithm IDs will point to static strings, not
-         * stack-based ones, so copying the pointer values is safe.
-         */
-        info->HashAlgorithm.pszObjId = in->HashAlgorithm.pszObjId;
-        if (ret)
-            ret = CRYPT_ConstructBlob(&info->HashAlgorithm.Parameters,
-             &in->HashAlgorithm.Parameters);
-        memset(&info->HashEncryptionAlgorithm, 0,
-         sizeof(info->HashEncryptionAlgorithm));
-        if (ret)
-            ret = CRYPT_ConstructAttributes(&info->AuthAttrs,
-             (CRYPT_ATTRIBUTES *)&in->cAuthAttr);
-        if (ret)
-            ret = CRYPT_ConstructAttributes(&info->UnauthAttrs,
-             (CRYPT_ATTRIBUTES *)&in->cUnauthAttr);
-    }
+        ret = CRYPT_ConstructBlob(&info->SerialNumber,
+         &in->pCertInfo->SerialNumber);
+    /* Assumption:  algorithm IDs will point to static strings, not
+     * stack-based ones, so copying the pointer values is safe.
+     */
+    info->HashAlgorithm.pszObjId = in->HashAlgorithm.pszObjId;
+    if (ret)
+        ret = CRYPT_ConstructBlob(&info->HashAlgorithm.Parameters,
+         &in->HashAlgorithm.Parameters);
+    memset(&info->HashEncryptionAlgorithm, 0,
+     sizeof(info->HashEncryptionAlgorithm));
+    if (ret)
+        ret = CRYPT_ConstructAttributes(&info->AuthAttrs,
+         (CRYPT_ATTRIBUTES *)&in->cAuthAttr);
+    if (ret)
+        ret = CRYPT_ConstructAttributes(&info->UnauthAttrs,
+         (CRYPT_ATTRIBUTES *)&in->cUnauthAttr);
     return ret;
 }
 
@@ -807,6 +770,14 @@ static void CSignerInfo_Free(CMSG_SIGNER_INFO *info)
     CryptMemFree(info->UnauthAttrs.rgAttr);
 }
 
+typedef struct _CSignerHandles
+{
+    HCRYPTPROV prov;
+    HCRYPTHASH contentHash;
+    HCRYPTHASH authAttrHash;
+    HCRYPTKEY  key;
+} CSignerHandles;
+
 typedef struct _CSignedMsgData
 {
     CRYPT_SIGNED_INFO *info;
@@ -819,6 +790,26 @@ typedef struct _CSignedEncodeMsg
     CRYPT_DATA_BLOB data;
     CSignedMsgData  msg_data;
 } CSignedEncodeMsg;
+
+/* Constructs a CSignerHandles with a copy of crypt_prov (not add-ref'ed - the
+ * caller must do this if necessary), a hash handle based on HashAlgorithm, and
+ * an authenticated attributes hash handle if hasAuthAttrs is TRUE.
+ */
+static BOOL CSignerHandles_Construct(CSignerHandles *handles,
+ HCRYPTPROV crypt_prov, CRYPT_ALGORITHM_IDENTIFIER *HashAlgorithm,
+ BOOL hasAuthAttrs)
+{
+    ALG_ID algID;
+    BOOL ret;
+
+    handles->prov = crypt_prov;
+    algID = CertOIDToAlgId(HashAlgorithm->pszObjId);
+    ret = CryptCreateHash(handles->prov, algID, 0, 0, &handles->contentHash);
+    if (ret && hasAuthAttrs)
+        ret = CryptCreateHash(handles->prov, algID, 0, 0,
+         &handles->authAttrHash);
+    return ret;
+}
 
 static void CSignedMsgData_CloseHandles(CSignedMsgData *msg_data)
 {
@@ -1217,9 +1208,22 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
                 memset(msg->msg_data.info->rgSignerInfo, 0,
                  msg->msg_data.info->cSignerInfo * sizeof(CMSG_SIGNER_INFO));
                 for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
-                    ret = CSignerInfo_Construct(&msg->msg_data.signerHandles[i],
+                {
+                    ret = CSignerInfo_Construct(
                      &msg->msg_data.info->rgSignerInfo[i],
-                     &info->rgSigners[i], dwFlags);
+                     &info->rgSigners[i]);
+                    if (ret)
+                    {
+                        if (!(dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG))
+                            CryptContextAddRef(info->rgSigners[i].hCryptProv,
+                             NULL, 0);
+                        ret = CSignerHandles_Construct(
+                         &msg->msg_data.signerHandles[i],
+                         info->rgSigners[i].hCryptProv,
+                         &info->rgSigners[i].HashAlgorithm,
+                         info->rgSigners[i].cAuthAttr > 0);
+                    }
+                }
             }
             else
                 ret = FALSE;
