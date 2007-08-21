@@ -63,6 +63,20 @@ static inline void msvcrt_tm_to_unix( struct tm *dest, const struct MSVCRT_tm *s
     dest->tm_isdst = src->tm_isdst;
 }
 
+static inline void unix_tm_to_msvcrt( struct MSVCRT_tm *dest, const struct tm *src )
+{
+    memset( dest, 0, sizeof(*dest) );
+    dest->tm_sec   = src->tm_sec;
+    dest->tm_min   = src->tm_min;
+    dest->tm_hour  = src->tm_hour;
+    dest->tm_mday  = src->tm_mday;
+    dest->tm_mon   = src->tm_mon;
+    dest->tm_year  = src->tm_year;
+    dest->tm_wday  = src->tm_wday;
+    dest->tm_yday  = src->tm_yday;
+    dest->tm_isdst = src->tm_isdst;
+}
+
 #define SECSPERDAY        86400
 /* 1601 to 1970 is 369 years plus 89 leap days */
 #define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
@@ -73,74 +87,16 @@ static inline void msvcrt_tm_to_unix( struct tm *dest, const struct MSVCRT_tm *s
 /**********************************************************************
  *		mktime (MSVCRT.@)
  */
-MSVCRT_time_t CDECL MSVCRT_mktime(struct MSVCRT_tm *t)
+MSVCRT_time_t CDECL MSVCRT_mktime(struct MSVCRT_tm *mstm)
 {
-    MSVCRT_time_t secs;
-    FILETIME lft, uft;
-    ULONGLONG time;
-    struct MSVCRT_tm ts, *ptm;
-    int cleaps, day;
+    time_t secs;
+    struct tm tm;
 
-    ts=*t;
-    /* to prevent arithmetic overflows put constraints on some fields */
-    /* whether the effective date falls in the 1970-2038 time period */
-    /* will be tested later */
-    /* BTW, I have no idea what limits native msvcrt has. */
-    if ( ts.tm_year < 0 || ts.tm_year > 140  ||
-            ts.tm_mon < -840 || ts.tm_mon > 840 ||
-            ts.tm_mday < -20160 || ts.tm_mday > 20160 ||
-            ts.tm_hour < -484000 || ts.tm_hour > 484000 ||
-            ts.tm_min < -29000000 || ts.tm_min > 29000000 )
-        return -1;
-           
-    /* normalize the tm month fields */
-    if( ts.tm_mon > 11) { ts.tm_year += ts.tm_mon / 12; ts.tm_mon %= 12; }
-    if( ts.tm_mon < 0) {
-        int dy = (11 - ts.tm_mon) / 12;
-        ts.tm_year -= dy;
-        ts.tm_mon += dy * 12;
-    }
-    /* now calculate a day count from the date
-     * First start counting years from March. This way the leap days
-     * are added at the end of the year, not somewhere in the middle.
-     * Formula's become so much less complicate that way.
-     * To convert: add 12 to the month numbers of Jan and Feb, and 
-     * take 1 from the year */
-    if(ts.tm_mon < 2) {
-        ts.tm_mon += 14;
-        ts.tm_year += 1899;
-    } else {
-        ts.tm_mon += 2;
-        ts.tm_year += 1900;
-    }
-    cleaps = (3 * (ts.tm_year / 100) + 3) / 4;   /* nr of "century leap years"*/
-    day =  (36525 * ts.tm_year) / 100 - cleaps + /* year * dayperyr, corrected*/
-             (1959 * ts.tm_mon) / 64 +    /* months * daypermonth */
-             ts.tm_mday -                 /* day of the month */
-             584817 ;                     /* zero that on 1601-01-01 */
-    /* done */
+    msvcrt_tm_to_unix( &tm, mstm );
+    secs = mktime( &tm );
+    unix_tm_to_msvcrt( mstm, &tm );
 
-    /* convert to 100 ns ticks */
-    time = ((((ULONGLONG) day * 24 +
-            ts.tm_hour) * 60 +
-            ts.tm_min) * 60 +
-            ts.tm_sec ) * TICKSPERSEC;
-    
-    lft.dwHighDateTime = (DWORD) (time >> 32);
-    lft.dwLowDateTime = (DWORD) time;
-
-    LocalFileTimeToFileTime(&lft, &uft);
-
-    time = ((ULONGLONG)uft.dwHighDateTime << 32) | uft.dwLowDateTime;
-    time /= TICKSPERSEC;
-    if( time < SECS_1601_TO_1970 || time > (SECS_1601_TO_1970 + INT_MAX))
-        return -1;
-    secs = time - SECS_1601_TO_1970;
-    /* compute tm_wday, tm_yday and renormalize the other fields of the
-     * tm structure */
-    if ((ptm = MSVCRT_localtime( &secs ))) *t = *ptm;
-
-    return secs; 
+    return secs < 0 ? -1 : secs;
 }
 
 /*********************************************************************
@@ -148,47 +104,14 @@ MSVCRT_time_t CDECL MSVCRT_mktime(struct MSVCRT_tm *t)
  */
 struct MSVCRT_tm* CDECL MSVCRT_localtime(const MSVCRT_time_t* secs)
 {
-  thread_data_t * const data = msvcrt_get_thread_data();
-  int i;
-  FILETIME ft, lft;
-  SYSTEMTIME st;
-  DWORD tzid;
-  TIME_ZONE_INFORMATION tzinfo;
-  ULONGLONG time;
+    struct tm tm;
+    thread_data_t *data = msvcrt_get_thread_data();
+    time_t seconds = *secs;
 
-  /* time < 0 means a date before midnight of January 1, 1970 */
-  if (*secs < 0) return NULL;
+    localtime_r( &seconds, &tm );
+    unix_tm_to_msvcrt( &data->time_buffer, &tm );
 
-  time = *secs * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-
-  ft.dwHighDateTime = (UINT)(time >> 32);
-  ft.dwLowDateTime  = (UINT)time;
-
-  FileTimeToLocalFileTime(&ft, &lft);
-  FileTimeToSystemTime(&lft, &st);
-
-  data->time_buffer.tm_sec  = st.wSecond;
-  data->time_buffer.tm_min  = st.wMinute;
-  data->time_buffer.tm_hour = st.wHour;
-  data->time_buffer.tm_mday = st.wDay;
-  data->time_buffer.tm_year = st.wYear - 1900;
-  data->time_buffer.tm_mon  = st.wMonth  - 1;
-  data->time_buffer.tm_wday = st.wDayOfWeek;
-
-  for (i = data->time_buffer.tm_yday = 0; i < st.wMonth - 1; i++) {
-    data->time_buffer.tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
-  }
-
-  data->time_buffer.tm_yday += st.wDay - 1;
- 
-  tzid = GetTimeZoneInformation(&tzinfo);
-
-  if (tzid == TIME_ZONE_ID_INVALID)
-    data->time_buffer.tm_isdst = -1;
-  else 
-    data->time_buffer.tm_isdst = (tzid == TIME_ZONE_ID_DAYLIGHT?1:0);
-
-  return &data->time_buffer;
+    return &data->time_buffer;
 }
 
 /*********************************************************************
@@ -232,7 +155,7 @@ struct MSVCRT_tm* CDECL MSVCRT_gmtime(const MSVCRT_time_t* secs)
  */
 char* CDECL _strdate(char* date)
 {
-  LPCSTR format = "MM'/'dd'/'yy";
+  static const char format[] = "MM'/'dd'/'yy";
 
   GetDateFormatA(LOCALE_NEUTRAL, 0, NULL, format, date, 9);
 
@@ -256,7 +179,7 @@ MSVCRT_wchar_t* CDECL _wstrdate(MSVCRT_wchar_t* date)
  */
 char* CDECL _strtime(char* time)
 {
-  LPCSTR format = "HH':'mm':'ss";
+  static const char format[] = "HH':'mm':'ss";
 
   GetTimeFormatA(LOCALE_NEUTRAL, 0, NULL, format, time, 9); 
 
