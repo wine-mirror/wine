@@ -2084,6 +2084,47 @@ static BOOL CDecodeHashMsg_VerifyHash(CDecodeMsg *msg)
     return ret;
 }
 
+static BOOL CDecodeSignedMsg_VerifySignature(CDecodeMsg *msg, PCERT_INFO info)
+{
+    BOOL ret = FALSE;
+    DWORD i;
+
+    for (i = 0; !ret && i < msg->u.signed_data.info->cSignerInfo; i++)
+    {
+        ret = CertCompareCertificateName(X509_ASN_ENCODING,
+         &msg->u.signed_data.info->rgSignerInfo[i].Issuer, &info->Issuer);
+        if (ret)
+            ret = CertCompareIntegerBlob(
+             &msg->u.signed_data.info->rgSignerInfo[i].SerialNumber,
+             &info->SerialNumber);
+    }
+    if (ret)
+    {
+        HCRYPTKEY key;
+
+        ret = CryptImportPublicKeyInfo(msg->crypt_prov, X509_ASN_ENCODING,
+         &info->SubjectPublicKeyInfo, &key);
+        if (ret)
+        {
+            HCRYPTHASH hash;
+
+            if (msg->u.signed_data.info->rgSignerInfo[i].AuthAttrs.cAttr)
+                hash = msg->u.signed_data.signerHandles[i].authAttrHash;
+            else
+                hash = msg->u.signed_data.signerHandles[i].contentHash;
+            ret = CryptVerifySignatureW(hash,
+             msg->u.signed_data.info->rgSignerInfo[i].EncryptedHash.pbData,
+             msg->u.signed_data.info->rgSignerInfo[i].EncryptedHash.cbData,
+             key, NULL, 0);
+            CryptDestroyKey(key);
+        }
+    }
+    else
+        SetLastError(CRYPT_E_SIGNER_NOT_FOUND);
+
+    return ret;
+}
+
 static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
  DWORD dwCtrlType, const void *pvCtrlPara)
 {
@@ -2096,7 +2137,7 @@ static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
         switch (msg->type)
         {
         case CMSG_SIGNED:
-            FIXME("CMSG_CTRL_VERIFY_SIGNATURE: stub\n");
+            ret = CDecodeSignedMsg_VerifySignature(msg, (PCERT_INFO)pvCtrlPara);
             break;
         default:
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);

@@ -2291,7 +2291,6 @@ static void test_msg_control(void)
      */
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_SIGNER_NOT_FOUND,
      "Expected CRYPT_E_SIGNER_NOT_FOUND, got %08x\n", GetLastError());
     /* The cert info is expected to have an issuer, serial number, and public
@@ -2303,7 +2302,6 @@ static void test_msg_control(void)
     certInfo.Issuer.pbData = encodedCommonName;
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
      "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     CryptMsgClose(msg);
@@ -2315,7 +2313,6 @@ static void test_msg_control(void)
     /* Again, cert info needs to have a public key set */
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
      "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     /* The public key is supposed to be in encoded form.. */
@@ -2324,7 +2321,6 @@ static void test_msg_control(void)
     certInfo.SubjectPublicKeyInfo.PublicKey.pbData = aKey;
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
      "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
     /* but not as a X509_PUBLIC_KEY_INFO.. */
@@ -2333,7 +2329,6 @@ static void test_msg_control(void)
     certInfo.SubjectPublicKeyInfo.PublicKey.pbData = encodedPubKey;
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
      "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
     /* This decodes successfully, but it doesn't match any key in the message */
@@ -2341,6 +2336,10 @@ static void test_msg_control(void)
     certInfo.SubjectPublicKeyInfo.PublicKey.pbData = mod_encoded;
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+    /* In Wine's rsaenh, this fails to decode because the key length is too
+     * small.  Not sure if that's a bug in rsaenh, so leaving todo_wine for
+     * now.
+     */
     todo_wine
     ok(!ret && GetLastError() == NTE_BAD_SIGNATURE,
      "Expected NTE_BAD_SIGNATURE, got %08x\n", GetLastError());
