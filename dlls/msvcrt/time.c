@@ -105,10 +105,14 @@ MSVCRT_time_t CDECL MSVCRT_mktime(struct MSVCRT_tm *mstm)
 struct MSVCRT_tm* CDECL MSVCRT_localtime(const MSVCRT_time_t* secs)
 {
     struct tm tm;
-    thread_data_t *data = msvcrt_get_thread_data();
+    thread_data_t *data;
     time_t seconds = *secs;
 
-    localtime_r( &seconds, &tm );
+    if (seconds < 0) return NULL;
+
+    if (!localtime_r( &seconds, &tm )) return NULL;
+
+    data = msvcrt_get_thread_data();
     unix_tm_to_msvcrt( &data->time_buffer, &tm );
 
     return &data->time_buffer;
