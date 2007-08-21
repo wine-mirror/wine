@@ -790,20 +790,23 @@ typedef struct _CSignedEncodeMsg
     CSignedMsgData  msg_data;
 } CSignedEncodeMsg;
 
-/* Constructs a CSignerHandles with a hash handle based on HashAlgorithm, and
- * an authenticated attributes hash handle if hasAuthAttrs is TRUE.
+/* Constructs the signer handles for the signerIndex'th signer of msg_data.
+ * Assumes signerIndex is a valid idnex, and that msg_data's info has already
+ * been constructed.
  */
-static BOOL CSignerHandles_Construct(CSignerHandles *handles,
- HCRYPTPROV crypt_prov, CRYPT_ALGORITHM_IDENTIFIER *HashAlgorithm,
- BOOL hasAuthAttrs)
+static BOOL CSignedMsgData_ConstructSignerHandles(CSignedMsgData *msg_data,
+ DWORD signerIndex, HCRYPTPROV crypt_prov)
 {
     ALG_ID algID;
     BOOL ret;
 
-    algID = CertOIDToAlgId(HashAlgorithm->pszObjId);
-    ret = CryptCreateHash(crypt_prov, algID, 0, 0, &handles->contentHash);
-    if (ret && hasAuthAttrs)
-        ret = CryptCreateHash(crypt_prov, algID, 0, 0, &handles->authAttrHash);
+    algID = CertOIDToAlgId(
+     msg_data->info->rgSignerInfo[signerIndex].HashAlgorithm.pszObjId);
+    ret = CryptCreateHash(crypt_prov, algID, 0, 0,
+     &msg_data->signerHandles->contentHash);
+    if (ret && msg_data->info->rgSignerInfo[signerIndex].AuthAttrs.cAttr > 0)
+        ret = CryptCreateHash(crypt_prov, algID, 0, 0,
+         &msg_data->signerHandles->authAttrHash);
     return ret;
 }
 
@@ -1222,11 +1225,8 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
                      &info->rgSigners[i]);
                     if (ret)
                     {
-                        ret = CSignerHandles_Construct(
-                         &msg->msg_data.signerHandles[i],
-                         info->rgSigners[i].hCryptProv,
-                         &info->rgSigners[i].HashAlgorithm,
-                         info->rgSigners[i].cAuthAttr > 0);
+                        ret = CSignedMsgData_ConstructSignerHandles(
+                         &msg->msg_data, i, info->rgSigners[i].hCryptProv);
                         if (dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
                             CryptReleaseContext(info->rgSigners[i].hCryptProv,
                              0);
