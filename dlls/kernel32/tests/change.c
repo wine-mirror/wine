@@ -256,7 +256,13 @@ static void test_ffcn(void)
     static const WCHAR szBoo[] = { '\\','b','o','o',0 };
     static const WCHAR szHoo[] = { '\\','h','o','o',0 };
 
+    SetLastError(0xdeadbeef);
     r = GetTempPathW( MAX_PATH, path );
+    if (!r && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("GetTempPathW is not implemented\n");
+        return;
+    }
     ok( r != 0, "temp path failed\n");
     if (!r)
         return;
@@ -376,7 +382,10 @@ static void test_readdirectorychanges(void)
     PFILE_NOTIFY_INFORMATION pfni;
 
     if (!pReadDirectoryChangesW)
+    {
+        skip("ReadDirectoryChangesW is not available\n");
         return;
+    }
 
     r = GetTempPathW( MAX_PATH, path );
     ok( r != 0, "temp path failed\n");
@@ -587,7 +596,10 @@ static void test_readdirectorychanges_null(void)
     PFILE_NOTIFY_INFORMATION pfni;
 
     if (!pReadDirectoryChangesW)
+    {
+        skip("ReadDirectoryChangesW is not available\n");
         return;
+    }
 
     r = GetTempPathW( MAX_PATH, path );
     ok( r != 0, "temp path failed\n");
@@ -678,7 +690,13 @@ static void test_readdirectorychanges_filedir(void)
     static const WCHAR szFoo[] = { '\\','f','o','o',0 };
     PFILE_NOTIFY_INFORMATION pfni;
 
+    SetLastError(0xdeadbeef);
     r = GetTempPathW( MAX_PATH, path );
+    if (!r && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("GetTempPathW is not implemented\n");
+        return;
+    }
     ok( r != 0, "temp path failed\n");
     if (!r)
         return;
