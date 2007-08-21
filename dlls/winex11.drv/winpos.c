@@ -397,23 +397,22 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                 {
                     /* window got shown, map it */
                     TRACE( "mapping win %p\n", hwnd );
-                    X11DRV_sync_window_style( display, data );
-                    X11DRV_set_wm_hints( display, data );
-                    wine_tsx11_lock();
-                    XMapWindow( display, data->whole_window );
-                    XFlush( display );
-                    wine_tsx11_unlock();
                     mapped = TRUE;
                 }
                 else if ((swp_flags & (SWP_NOSIZE | SWP_NOMOVE)) != (SWP_NOSIZE | SWP_NOMOVE))
                 {
                     /* resizing from zero size to non-zero -> map */
                     TRACE( "mapping non zero size or off-screen win %p\n", hwnd );
+                    mapped = TRUE;
+                }
+                if (mapped)
+                {
+                    X11DRV_sync_window_style( display, data );
+                    X11DRV_set_wm_hints( display, data );
                     wine_tsx11_lock();
                     XMapWindow( display, data->whole_window );
                     XFlush( display );
                     wine_tsx11_unlock();
-                    mapped = TRUE;
                 }
                 SetRect( &old_screen_rect, 0, 0, screen_width, screen_height );
                 if (fullscreen_state_changed( data, &old_client_rect, &old_screen_rect, &new_fs_state ) || mapped)
