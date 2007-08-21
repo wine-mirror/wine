@@ -805,6 +805,20 @@ typedef struct _CSignedEncodeMsg
     CSignedMsgData  msg_data;
 } CSignedEncodeMsg;
 
+static void CSignedMsgData_CloseHandles(CSignedMsgData *msg_data)
+{
+    DWORD i;
+
+    for (i = 0; i < msg_data->info->cSignerInfo; i++)
+    {
+        CryptDestroyKey(msg_data->signerHandles[i].key);
+        CryptDestroyHash(msg_data->signerHandles[i].contentHash);
+        CryptDestroyHash(msg_data->signerHandles[i].authAttrHash);
+        CryptReleaseContext(msg_data->signerHandles[i].prov, 0);
+    }
+    CryptMemFree(msg_data->signerHandles);
+}
+
 static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
 {
     CSignedEncodeMsg *msg = (CSignedEncodeMsg *)hCryptMsg;
@@ -814,14 +828,8 @@ static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
     CRYPT_FreeBlobArray((BlobArray *)&msg->msg_data.info->cCertEncoded);
     CRYPT_FreeBlobArray((BlobArray *)&msg->msg_data.info->cCrlEncoded);
     for (i = 0; i < msg->msg_data.info->cSignerInfo; i++)
-    {
         CSignerInfo_Free(&msg->msg_data.info->rgSignerInfo[i]);
-        CryptDestroyKey(msg->msg_data.signerHandles[i].key);
-        CryptDestroyHash(msg->msg_data.signerHandles[i].contentHash);
-        CryptDestroyHash(msg->msg_data.signerHandles[i].authAttrHash);
-        CryptReleaseContext(msg->msg_data.signerHandles[i].prov, 0);
-    }
-    CryptMemFree(msg->msg_data.signerHandles);
+    CSignedMsgData_CloseHandles(&msg->msg_data);
     CryptMemFree(msg->msg_data.info->rgSignerInfo);
     CryptMemFree(msg->msg_data.info);
 }
