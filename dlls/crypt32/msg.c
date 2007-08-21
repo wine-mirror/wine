@@ -1926,6 +1926,47 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     return ret;
 }
 
+static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
+ DWORD dwCtrlType, const void *pvCtrlPara)
+{
+    CDecodeMsg *msg = (CDecodeMsg *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    switch (dwCtrlType)
+    {
+    case CMSG_CTRL_VERIFY_SIGNATURE:
+        switch (msg->type)
+        {
+        case CMSG_SIGNED:
+            FIXME("CMSG_CTRL_VERIFY_SIGNATURE: stub\n");
+            break;
+        default:
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        }
+        break;
+    case CMSG_CTRL_DECRYPT:
+        switch (msg->type)
+        {
+        default:
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        }
+        break;
+    case CMSG_CTRL_VERIFY_HASH:
+        switch (msg->type)
+        {
+        case CMSG_HASHED:
+            FIXME("CMSG_CTRL_VERIFY_HASH: stub\n");
+            break;
+        default:
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        }
+        break;
+    default:
+        SetLastError(CRYPT_E_CONTROL_TYPE);
+    }
+    return ret;
+}
+
 HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
  DWORD dwMsgType, HCRYPTPROV_LEGACY hCryptProv, PCERT_INFO pRecipientInfo,
  PCMSG_STREAM_INFO pStreamInfo)
@@ -1945,7 +1986,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
     {
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
          CDecodeMsg_Close, CDecodeMsg_GetParam, CDecodeMsg_Update,
-         CRYPT_DefaultMsgControl);
+         CDecodeMsg_Control);
         msg->type = dwMsgType;
         if (hCryptProv)
             msg->crypt_prov = hCryptProv;

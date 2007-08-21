@@ -2197,18 +2197,15 @@ static void test_msg_control(void)
     /* Bad control type */
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_CONTROL_TYPE,
      "Expected CRYPT_E_CONTROL_TYPE, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 1, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_CONTROL_TYPE,
      "Expected CRYPT_E_CONTROL_TYPE, got %08x\n", GetLastError());
     /* Can't verify the hash of an indeterminate-type message */
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     /* Crashes
@@ -2216,7 +2213,6 @@ static void test_msg_control(void)
      */
     /* Can't decrypt an indeterminate-type message */
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     CryptMsgClose(msg);
@@ -2234,7 +2230,6 @@ static void test_msg_control(void)
      */
     /* Can't verify the signature of a hash message */
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     CryptMsgUpdate(msg, hashEmptyBareContent, sizeof(hashEmptyBareContent),
@@ -2252,7 +2247,6 @@ static void test_msg_control(void)
     /* Can't decrypt an indeterminate-type message */
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     CryptMsgClose(msg);
@@ -2262,13 +2256,11 @@ static void test_msg_control(void)
     /* Can't verify the hash of a signed message */
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     /* Can't decrypt a signed message */
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     /* Crash
