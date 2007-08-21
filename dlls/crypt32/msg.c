@@ -902,8 +902,13 @@ static BOOL CSignedMsgData_AppendMessageDigestAttribute(
     return ret;
 }
 
+typedef enum {
+    Sign,
+    Verify
+} SignOrVerify;
+
 static BOOL CSignedMsgData_UpdateAuthenticatedAttributes(
- CSignedMsgData *msg_data)
+ CSignedMsgData *msg_data, SignOrVerify flag)
 {
     DWORD i;
     BOOL ret = TRUE;
@@ -914,18 +919,22 @@ static BOOL CSignedMsgData_UpdateAuthenticatedAttributes(
     {
         if (msg_data->info->rgSignerInfo[i].AuthAttrs.cAttr)
         {
-            BYTE oid_rsa_data_encoded[] = { 0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,
-             0x0d,0x01,0x07,0x01 };
-            CRYPT_DATA_BLOB content = { sizeof(oid_rsa_data_encoded),
-             oid_rsa_data_encoded };
-            char contentType[] = szOID_RSA_contentType;
-            CRYPT_ATTRIBUTE contentTypeAttr = { contentType, 1, &content };
+            if (flag == Sign)
+            {
+                BYTE oid_rsa_data_encoded[] = { 0x06,0x09,0x2a,0x86,0x48,0x86,
+                 0xf7,0x0d,0x01,0x07,0x01 };
+                CRYPT_DATA_BLOB content = { sizeof(oid_rsa_data_encoded),
+                 oid_rsa_data_encoded };
+                char contentType[] = szOID_RSA_contentType;
+                CRYPT_ATTRIBUTE contentTypeAttr = { contentType, 1, &content };
 
-            /* FIXME: does this depend on inner OID? */
-            ret = CRYPT_AppendAttribute(
-             &msg_data->info->rgSignerInfo[i].AuthAttrs, &contentTypeAttr);
-            if (ret)
-                ret = CSignedMsgData_AppendMessageDigestAttribute(msg_data, i);
+                /* FIXME: does this depend on inner OID? */
+                ret = CRYPT_AppendAttribute(
+                 &msg_data->info->rgSignerInfo[i].AuthAttrs, &contentTypeAttr);
+                if (ret)
+                    ret = CSignedMsgData_AppendMessageDigestAttribute(msg_data,
+                     i);
+            }
             if (ret)
             {
                 LPBYTE encodedAttrs;
@@ -1000,14 +1009,14 @@ static BOOL CSignedMsgData_Sign(CSignedMsgData *msg_data)
 }
 
 static BOOL CSignedMsgData_Update(CSignedMsgData *msg_data,
- const BYTE *pbData, DWORD cbData, BOOL fFinal)
+ const BYTE *pbData, DWORD cbData, BOOL fFinal, SignOrVerify flag)
 {
     BOOL ret = CSignedMsgData_UpdateHash(msg_data, pbData, cbData);
 
     if (ret && fFinal)
     {
-        ret = CSignedMsgData_UpdateAuthenticatedAttributes(msg_data);
-        if (ret)
+        ret = CSignedMsgData_UpdateAuthenticatedAttributes(msg_data, flag);
+        if (ret && flag == Sign)
             ret = CSignedMsgData_Sign(msg_data);
     }
     return ret;
@@ -1137,7 +1146,8 @@ static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 
     if (msg->base.streamed || (msg->base.open_flags & CMSG_DETACHED_FLAG))
     {
-        ret = CSignedMsgData_Update(&msg->msg_data, pbData, cbData, fFinal);
+        ret = CSignedMsgData_Update(&msg->msg_data, pbData, cbData, fFinal,
+         Sign);
         if (msg->base.streamed)
             FIXME("streamed partial stub\n");
     }
@@ -1161,7 +1171,7 @@ static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
                 ret = TRUE;
             if (ret)
                 ret = CSignedMsgData_Update(&msg->msg_data, pbData, cbData,
-                 fFinal);
+                 fFinal, Sign);
         }
     }
     return ret;
@@ -1337,7 +1347,10 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
         break;
     case CMSG_SIGNED:
         if (msg->u.signed_data.info)
+        {
             LocalFree(msg->u.signed_data.info);
+            CSignedMsgData_CloseHandles(&msg->u.signed_data);
+        }
         break;
     }
     CryptMemFree(msg->msg_data.pbData);
@@ -1472,7 +1485,46 @@ static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
      CRYPT_DECODE_ALLOC_FLAG, NULL, (CRYPT_SIGNED_INFO *)&signedInfo,
      &size);
     if (ret)
+    {
+        DWORD i;
+
         msg->u.signed_data.info = signedInfo;
+        ret = CSignedMsgData_AllocateHandles(&msg->u.signed_data);
+        for (i = 0; ret && i < msg->u.signed_data.info->cSignerInfo; i++)
+            ret = CSignedMsgData_ConstructSignerHandles(&msg->u.signed_data, i,
+             msg->crypt_prov);
+        if (ret)
+        {
+            /* Now that we have all the content, update the hash handles with
+             * it.  Have to decode it if the type is szOID_RSA_data.
+             */
+            if (msg->u.signed_data.info->content.Content.cbData)
+            {
+                if (!strcmp(msg->u.signed_data.info->content.pszObjId,
+                 szOID_RSA_data))
+                {
+                    CRYPT_DATA_BLOB *blob;
+
+                    ret = CryptDecodeObjectEx(X509_ASN_ENCODING,
+                     X509_OCTET_STRING,
+                     msg->u.signed_data.info->content.Content.pbData,
+                     msg->u.signed_data.info->content.Content.cbData,
+                     CRYPT_DECODE_ALLOC_FLAG, NULL, (LPBYTE)&blob, &size);
+                    if (ret)
+                    {
+                        ret = CSignedMsgData_Update(&msg->u.signed_data,
+                         blob->pbData, blob->cbData, TRUE, Verify);
+                        LocalFree(blob);
+                    }
+                }
+                else
+                    ret = CSignedMsgData_Update(&msg->u.signed_data,
+                     msg->u.signed_data.info->content.Content.pbData,
+                     msg->u.signed_data.info->content.Content.cbData, TRUE,
+                     Verify);
+            }
+        }
+    }
     return ret;
 }
 /* Decodes the content in blob as the type given, and updates the value
