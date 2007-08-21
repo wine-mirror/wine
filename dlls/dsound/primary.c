@@ -229,7 +229,8 @@ HRESULT DSOUND_PrimaryCreate(DirectSoundDevice *device)
 			device->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT;
 			waveOutClose(device->hwo);
 			IDsDriver_Release(device->driver);
-			device->driver = device->buffer = NULL;
+                        device->driver = NULL;
+                        device->buffer = NULL;
 			device->hwo = 0;
 			err = mmErr(waveOutOpen(&(device->hwo), device->drvdesc.dnDevNode, device->pwfx, (DWORD_PTR)DSOUND_callback, (DWORD)device, CALLBACK_FUNCTION));
 			if (err != DS_OK)
