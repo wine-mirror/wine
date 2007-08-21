@@ -831,9 +831,12 @@ static void CSignedMsgData_CloseHandles(CSignedMsgData *msg_data)
 
     for (i = 0; i < msg_data->info->cSignerInfo; i++)
     {
-        CryptDestroyKey(msg_data->signerHandles[i].key);
-        CryptDestroyHash(msg_data->signerHandles[i].contentHash);
-        CryptDestroyHash(msg_data->signerHandles[i].authAttrHash);
+        if (msg_data->signerHandles[i].key)
+            CryptDestroyKey(msg_data->signerHandles[i].key);
+        if (msg_data->signerHandles[i].contentHash)
+            CryptDestroyHash(msg_data->signerHandles[i].contentHash);
+        if (msg_data->signerHandles[i].authAttrHash)
+            CryptDestroyHash(msg_data->signerHandles[i].authAttrHash);
     }
     CryptMemFree(msg_data->signerHandles);
 }
