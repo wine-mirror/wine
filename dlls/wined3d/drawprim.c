@@ -350,7 +350,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
     /* Default settings for data that is not passed */
     if (sd->u.s.normal.lpData == NULL) {
-        glNormal3f(0, 0, 1);
+        glNormal3f(0, 0, 0);
     }
     if(sd->u.s.diffuse.lpData == NULL) {
         glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

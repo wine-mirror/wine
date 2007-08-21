@@ -1196,7 +1196,16 @@ static void state_zbias(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
 
 static void state_normalize(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    if (stateblock->renderState[WINED3DRS_NORMALIZENORMALS]) {
+    if(isStateDirty(context, STATE_VDECL)) {
+        return;
+    }
+    /* Without vertex normals, we set the current normal to 0/0/0 to remove the diffuse factor
+     * from the opengl lighting equation, as d3d does. Normalization of 0/0/0 can lead to a division
+     * by zero and is not properly defined in opengl, so avoid it
+     */
+    if (stateblock->renderState[WINED3DRS_NORMALIZENORMALS] && (
+        stateblock->wineD3DDevice->strided_streams.u.s.normal.lpData ||
+        stateblock->wineD3DDevice->strided_streams.u.s.normal.VBO)) {
         glEnable(GL_NORMALIZE);
         checkGLcall("glEnable(GL_NORMALIZE);");
     } else {
@@ -3031,8 +3040,8 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
         checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
 
     } else {
-        glNormal3f(0, 0, 1);
-        checkGLcall("glNormal3f(0, 0, 1)");
+        glNormal3f(0, 0, 0);
+        checkGLcall("glNormal3f(0, 0, 0)");
     }
 
     /* Diffuse Colour --------------------------------------------*/
@@ -3306,6 +3315,9 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
         if(context->last_was_vshader && !isStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPLANEENABLE))) {
             state_clipping(STATE_RENDER(WINED3DRS_CLIPPLANEENABLE), stateblock, context);
+        }
+        if(!isStateDirty(context, STATE_RENDER(WINED3DRS_NORMALIZENORMALS))) {
+            state_normalize(STATE_RENDER(WINED3DRS_NORMALIZENORMALS), stateblock, context);
         }
     } else {
         /* We compile the shader here because we need the vertex declaration
