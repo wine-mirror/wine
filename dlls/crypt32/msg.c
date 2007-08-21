@@ -792,12 +792,17 @@ static void CSignerInfo_Free(CMSG_SIGNER_INFO *info)
     CryptMemFree(info->UnauthAttrs.rgAttr);
 }
 
+typedef struct _CSignedMsgData
+{
+    CRYPT_SIGNED_INFO *info;
+    CSignerHandles    *signerHandles;
+} CSignedMsgData;
+
 typedef struct _CSignedEncodeMsg
 {
-    CryptMsgBase      base;
-    CRYPT_DATA_BLOB   data;
-    CRYPT_SIGNED_INFO info;
-    CSignerHandles   *signerHandles;
+    CryptMsgBase    base;
+    CRYPT_DATA_BLOB data;
+    CSignedMsgData  msg_data;
 } CSignedEncodeMsg;
 
 static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
@@ -806,18 +811,19 @@ static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
     DWORD i;
 
     CryptMemFree(msg->data.pbData);
-    CRYPT_FreeBlobArray((BlobArray *)&msg->info.cCertEncoded);
-    CRYPT_FreeBlobArray((BlobArray *)&msg->info.cCrlEncoded);
-    for (i = 0; i < msg->info.cSignerInfo; i++)
+    CRYPT_FreeBlobArray((BlobArray *)&msg->msg_data.info->cCertEncoded);
+    CRYPT_FreeBlobArray((BlobArray *)&msg->msg_data.info->cCrlEncoded);
+    for (i = 0; i < msg->msg_data.info->cSignerInfo; i++)
     {
-        CSignerInfo_Free(&msg->info.rgSignerInfo[i]);
-        CryptDestroyKey(msg->signerHandles[i].key);
-        CryptDestroyHash(msg->signerHandles[i].contentHash);
-        CryptDestroyHash(msg->signerHandles[i].authAttrHash);
-        CryptReleaseContext(msg->signerHandles[i].prov, 0);
+        CSignerInfo_Free(&msg->msg_data.info->rgSignerInfo[i]);
+        CryptDestroyKey(msg->msg_data.signerHandles[i].key);
+        CryptDestroyHash(msg->msg_data.signerHandles[i].contentHash);
+        CryptDestroyHash(msg->msg_data.signerHandles[i].authAttrHash);
+        CryptReleaseContext(msg->msg_data.signerHandles[i].prov, 0);
     }
-    CryptMemFree(msg->signerHandles);
-    CryptMemFree(msg->info.rgSignerInfo);
+    CryptMemFree(msg->msg_data.signerHandles);
+    CryptMemFree(msg->msg_data.info->rgSignerInfo);
+    CryptMemFree(msg->msg_data.info);
 }
 
 static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
@@ -861,7 +867,7 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         CRYPT_SIGNED_INFO info;
         char oid_rsa_data[] = szOID_RSA_data;
 
-        memcpy(&info, &msg->info, sizeof(info));
+        memcpy(&info, msg->msg_data.info, sizeof(info));
         /* Quirk:  OID is only encoded messages if an update has happened */
         if (msg->base.state != MsgStateInit)
             info.content.pszObjId = oid_rsa_data;
@@ -889,23 +895,24 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         break;
     }
     case CMSG_COMPUTED_HASH_PARAM:
-        if (dwIndex >= msg->info.cSignerInfo)
+        if (dwIndex >= msg->msg_data.info->cSignerInfo)
             SetLastError(CRYPT_E_INVALID_INDEX);
         else
-            ret = CryptGetHashParam(msg->signerHandles[dwIndex].contentHash,
-             HP_HASHVAL, pvData, pcbData, 0);
+            ret = CryptGetHashParam(
+             msg->msg_data.signerHandles[dwIndex].contentHash, HP_HASHVAL,
+             pvData, pcbData, 0);
         break;
     case CMSG_ENCODED_SIGNER:
-        if (dwIndex >= msg->info.cSignerInfo)
+        if (dwIndex >= msg->msg_data.info->cSignerInfo)
             SetLastError(CRYPT_E_INVALID_INDEX);
         else
             ret = CryptEncodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-             PKCS7_SIGNER_INFO, &msg->info.rgSignerInfo[dwIndex], 0, NULL,
-             pvData, pcbData);
+             PKCS7_SIGNER_INFO, &msg->msg_data.info->rgSignerInfo[dwIndex], 0,
+             NULL, pvData, pcbData);
         break;
     case CMSG_VERSION_PARAM:
-        ret = CRYPT_CopyParam(pvData, pcbData, &msg->info.version,
-         sizeof(msg->info.version));
+        ret = CRYPT_CopyParam(pvData, pcbData, &msg->msg_data.info->version,
+         sizeof(msg->msg_data.info->version));
         break;
     default:
         SetLastError(CRYPT_E_INVALID_MSG_TYPE);
@@ -921,9 +928,9 @@ static BOOL CSignedEncodeMsg_UpdateHash(CSignedEncodeMsg *msg,
 
     TRACE("(%p, %p, %d)\n", msg, pbData, cbData);
 
-    for (i = 0; ret && i < msg->info.cSignerInfo; i++)
-        ret = CryptHashData(msg->signerHandles[i].contentHash, pbData, cbData,
-         0);
+    for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
+        ret = CryptHashData(msg->msg_data.signerHandles[i].contentHash, pbData,
+         cbData, 0);
     return ret;
 }
 
@@ -953,13 +960,15 @@ static BOOL CSignedEncodeMsg_AppendMessageDigestAttribute(CSignedEncodeMsg *msg,
     CRYPT_ATTRIBUTE messageDigestAttr = { messageDigest, 1, &encodedHash };
 
     size = sizeof(DWORD);
-    ret = CryptGetHashParam(msg->signerHandles[signerIndex].contentHash,
-     HP_HASHSIZE, (LPBYTE)&hash.cbData, &size, 0);
+    ret = CryptGetHashParam(
+     msg->msg_data.signerHandles[signerIndex].contentHash, HP_HASHSIZE,
+     (LPBYTE)&hash.cbData, &size, 0);
     if (ret)
     {
         hash.pbData = CryptMemAlloc(hash.cbData);
-        ret = CryptGetHashParam(msg->signerHandles[signerIndex].contentHash,
-         HP_HASHVAL, hash.pbData, &hash.cbData, 0);
+        ret = CryptGetHashParam(
+         msg->msg_data.signerHandles[signerIndex].contentHash, HP_HASHVAL,
+         hash.pbData, &hash.cbData, 0);
         if (ret)
         {
             ret = CRYPT_AsnEncodeOctets(0, NULL, &hash, CRYPT_ENCODE_ALLOC_FLAG,
@@ -967,7 +976,7 @@ static BOOL CSignedEncodeMsg_AppendMessageDigestAttribute(CSignedEncodeMsg *msg,
             if (ret)
             {
                 ret = CRYPT_AppendAttribute(
-                 &msg->info.rgSignerInfo[signerIndex].AuthAttrs,
+                 &msg->msg_data.info->rgSignerInfo[signerIndex].AuthAttrs,
                  &messageDigestAttr);
                 LocalFree(encodedHash.pbData);
             }
@@ -985,9 +994,9 @@ static BOOL CSignedEncodeMsg_UpdateAuthenticatedAttributes(
 
     TRACE("(%p)\n", msg);
 
-    for (i = 0; ret && i < msg->info.cSignerInfo; i++)
+    for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
     {
-        if (msg->info.rgSignerInfo[i].AuthAttrs.cAttr)
+        if (msg->msg_data.info->rgSignerInfo[i].AuthAttrs.cAttr)
         {
             BYTE oid_rsa_data_encoded[] = { 0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,
              0x0d,0x01,0x07,0x01 };
@@ -997,8 +1006,8 @@ static BOOL CSignedEncodeMsg_UpdateAuthenticatedAttributes(
             CRYPT_ATTRIBUTE contentTypeAttr = { contentType, 1, &content };
 
             /* FIXME: does this depend on inner OID? */
-            ret = CRYPT_AppendAttribute(&msg->info.rgSignerInfo[i].AuthAttrs,
-             &contentTypeAttr);
+            ret = CRYPT_AppendAttribute(
+             &msg->msg_data.info->rgSignerInfo[i].AuthAttrs, &contentTypeAttr);
             if (ret)
                 ret = CSignedEncodeMsg_AppendMessageDigestAttribute(msg, i);
             if (ret)
@@ -1007,12 +1016,13 @@ static BOOL CSignedEncodeMsg_UpdateAuthenticatedAttributes(
                 DWORD size;
 
                 ret = CryptEncodeObjectEx(X509_ASN_ENCODING, PKCS_ATTRIBUTES,
-                 &msg->info.rgSignerInfo[i].AuthAttrs, CRYPT_ENCODE_ALLOC_FLAG,
-                 NULL, (LPBYTE)&encodedAttrs, &size);
+                 &msg->msg_data.info->rgSignerInfo[i].AuthAttrs,
+                 CRYPT_ENCODE_ALLOC_FLAG, NULL, (LPBYTE)&encodedAttrs, &size);
                 if (ret)
                 {
-                    ret = CryptHashData(msg->signerHandles[i].authAttrHash,
-                     encodedAttrs, size, 0);
+                    ret = CryptHashData(
+                     msg->msg_data.signerHandles[i].authAttrHash, encodedAttrs,
+                     size, 0);
                     LocalFree(encodedAttrs);
                 }
             }
@@ -1042,27 +1052,29 @@ static BOOL CSignedEncodeMsg_Sign(CSignedEncodeMsg *msg)
 
     TRACE("(%p)\n", msg);
 
-    for (i = 0; ret && i < msg->info.cSignerInfo; i++)
+    for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
     {
         HCRYPTHASH hash;
 
-        if (msg->info.rgSignerInfo[i].AuthAttrs.cAttr)
-            hash = msg->signerHandles[i].authAttrHash;
+        if (msg->msg_data.info->rgSignerInfo[i].AuthAttrs.cAttr)
+            hash = msg->msg_data.signerHandles[i].authAttrHash;
         else
-            hash = msg->signerHandles[i].contentHash;
+            hash = msg->msg_data.signerHandles[i].contentHash;
         ret = CryptSignHashW(hash, AT_SIGNATURE, NULL, 0, NULL,
-         &msg->info.rgSignerInfo[i].EncryptedHash.cbData);
+         &msg->msg_data.info->rgSignerInfo[i].EncryptedHash.cbData);
         if (ret)
         {
-            msg->info.rgSignerInfo[i].EncryptedHash.pbData =
-             CryptMemAlloc(msg->info.rgSignerInfo[i].EncryptedHash.cbData);
-            if (msg->info.rgSignerInfo[i].EncryptedHash.pbData)
+            msg->msg_data.info->rgSignerInfo[i].EncryptedHash.pbData =
+             CryptMemAlloc(
+             msg->msg_data.info->rgSignerInfo[i].EncryptedHash.cbData);
+            if (msg->msg_data.info->rgSignerInfo[i].EncryptedHash.pbData)
             {
                 ret = CryptSignHashW(hash, AT_SIGNATURE, NULL, 0,
-                 msg->info.rgSignerInfo[i].EncryptedHash.pbData,
-                 &msg->info.rgSignerInfo[i].EncryptedHash.cbData);
+                 msg->msg_data.info->rgSignerInfo[i].EncryptedHash.pbData,
+                 &msg->msg_data.info->rgSignerInfo[i].EncryptedHash.cbData);
                 if (ret)
-                    CRYPT_ReverseBytes(&msg->info.rgSignerInfo[i].EncryptedHash);
+                    CRYPT_ReverseBytes(
+                     &msg->msg_data.info->rgSignerInfo[i].EncryptedHash);
             }
             else
                 ret = FALSE;
@@ -1151,39 +1163,48 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
          CSignedEncodeMsg_Update, CRYPT_DefaultMsgControl);
         msg->data.cbData = 0;
         msg->data.pbData = NULL;
-        memset(&msg->info, 0, sizeof(msg->info));
-        msg->info.version = CMSG_SIGNED_DATA_V1;
-        if (info->cSigners)
+        msg->msg_data.info = CryptMemAlloc(sizeof(CRYPT_SIGNED_INFO));
+        if (msg->msg_data.info)
         {
-            msg->signerHandles =
+            memset(msg->msg_data.info, 0, sizeof(CRYPT_SIGNED_INFO));
+            msg->msg_data.info->version = CMSG_SIGNED_DATA_V1;
+        }
+        else
+            ret = FALSE;
+        if (ret && info->cSigners)
+        {
+            msg->msg_data.signerHandles =
              CryptMemAlloc(info->cSigners * sizeof(CSignerHandles));
-            if (msg->signerHandles)
-                msg->info.rgSignerInfo =
+            if (msg->msg_data.signerHandles)
+                msg->msg_data.info->rgSignerInfo =
                  CryptMemAlloc(info->cSigners * sizeof(CMSG_SIGNER_INFO));
             else
             {
                 ret = FALSE;
-                msg->info.rgSignerInfo = NULL;
+                msg->msg_data.info->rgSignerInfo = NULL;
             }
-            if (msg->info.rgSignerInfo)
+            if (msg->msg_data.info->rgSignerInfo)
             {
-                msg->info.cSignerInfo = info->cSigners;
-                memset(msg->signerHandles, 0,
-                 msg->info.cSignerInfo * sizeof(CSignerHandles));
-                memset(msg->info.rgSignerInfo, 0,
-                 msg->info.cSignerInfo * sizeof(CMSG_SIGNER_INFO));
-                for (i = 0; ret && i < msg->info.cSignerInfo; i++)
-                    ret = CSignerInfo_Construct(&msg->signerHandles[i],
-                     &msg->info.rgSignerInfo[i], &info->rgSigners[i], dwFlags);
+                msg->msg_data.info->cSignerInfo = info->cSigners;
+                memset(msg->msg_data.signerHandles, 0,
+                 msg->msg_data.info->cSignerInfo * sizeof(CSignerHandles));
+                memset(msg->msg_data.info->rgSignerInfo, 0,
+                 msg->msg_data.info->cSignerInfo * sizeof(CMSG_SIGNER_INFO));
+                for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
+                    ret = CSignerInfo_Construct(&msg->msg_data.signerHandles[i],
+                     &msg->msg_data.info->rgSignerInfo[i],
+                     &info->rgSigners[i], dwFlags);
             }
             else
                 ret = FALSE;
         }
         if (ret)
-            ret = CRYPT_ConstructBlobArray((BlobArray *)&msg->info.cCertEncoded,
+            ret = CRYPT_ConstructBlobArray(
+             (BlobArray *)&msg->msg_data.info->cCertEncoded,
              (const BlobArray *)&info->cCertEncoded);
         if (ret)
-            ret = CRYPT_ConstructBlobArray((BlobArray *)&msg->info.cCrlEncoded,
+            ret = CRYPT_ConstructBlobArray(
+             (BlobArray *)&msg->msg_data.info->cCrlEncoded,
              (const BlobArray *)&info->cCrlEncoded);
         if (!ret)
         {
