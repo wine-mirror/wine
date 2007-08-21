@@ -1989,6 +1989,10 @@ static void compare_signer_info(const CMSG_SIGNER_INFO *got,
     /* FIXME: check more things */
 }
 
+static const BYTE signedWithCertAndCrlComputedHash[] = {
+0x08,0xd6,0xc0,0x5a,0x21,0x51,0x2a,0x79,0xa1,0xdf,0xeb,0x9d,0x2a,0x8f,0x26,
+0x2f };
+
 static void test_decode_msg_get_param(void)
 {
     HCRYPTMSG msg;
@@ -2099,6 +2103,9 @@ static void test_decode_msg_get_param(void)
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     ok(value == 1, "Expected 1 CRL, got %d\n", value);
     check_param("crl", msg, CMSG_CRL_PARAM, crl, sizeof(crl));
+    check_param("signed with cert and CRL computed hash", msg,
+     CMSG_COMPUTED_HASH_PARAM, signedWithCertAndCrlComputedHash,
+     sizeof(signedWithCertAndCrlComputedHash));
     CryptMsgClose(msg);
 }
 
