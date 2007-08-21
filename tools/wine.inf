@@ -2171,6 +2171,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,,explorer.exe
 10,,notepad.exe
 10,,regedit.exe
+10,,twain_32.dll
 10,,winebrowser.exe
 10,,winhelp.exe
 10,command,start.exe
