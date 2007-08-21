@@ -1155,7 +1155,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     }
 
     IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    if(swapchain || iface == myDevice->render_targets[0]) {
+    if(swapchain || (myDevice->render_targets && iface == myDevice->render_targets[0])) {
         if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
             static BOOL warned = FALSE;
             if(!warned) {
