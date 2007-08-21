@@ -119,7 +119,7 @@ static inline UUID *LookupObjType(UUID *ObjUuid)
 }
 
 static RpcServerInterface* RPCRT4_find_interface(UUID* object,
-                                                 RPC_SYNTAX_IDENTIFIER* if_id,
+                                                 const RPC_SYNTAX_IDENTIFIER* if_id,
                                                  BOOL check_object)
 {
   UUID* MgrType = NULL;

@@ -1475,7 +1475,7 @@ ULONG RpcAssoc_Release(RpcAssoc *assoc)
 
 #define ROUND_UP(value, alignment) (((value) + ((alignment) - 1)) & ~((alignment)-1))
 
-static RPC_STATUS RpcAssoc_BindConnection(RpcAssoc *assoc, RpcConnection *conn,
+static RPC_STATUS RpcAssoc_BindConnection(const RpcAssoc *assoc, RpcConnection *conn,
                                           const RPC_SYNTAX_IDENTIFIER *InterfaceId,
                                           const RPC_SYNTAX_IDENTIFIER *TransferSyntax)
 {
