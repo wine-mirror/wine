@@ -1089,6 +1089,20 @@ static BOOL CSignedMsgData_Sign(CSignedMsgData *msg_data)
     return ret;
 }
 
+static BOOL CSignedMsgData_Update(CSignedMsgData *msg_data,
+ const BYTE *pbData, DWORD cbData, BOOL fFinal)
+{
+    BOOL ret = CSignedMsgData_UpdateHash(msg_data, pbData, cbData);
+
+    if (ret && fFinal)
+    {
+        ret = CSignedMsgData_UpdateAuthenticatedAttributes(msg_data);
+        if (ret)
+            ret = CSignedMsgData_Sign(msg_data);
+    }
+    return ret;
+}
+
 static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal)
 {
@@ -1097,14 +1111,7 @@ static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 
     if (msg->base.streamed || (msg->base.open_flags & CMSG_DETACHED_FLAG))
     {
-        ret = CSignedMsgData_UpdateHash(&msg->msg_data, pbData, cbData);
-        if (ret && fFinal)
-        {
-            ret = CSignedMsgData_UpdateAuthenticatedAttributes(
-             &msg->msg_data);
-            if (ret)
-                ret = CSignedMsgData_Sign(&msg->msg_data);
-        }
+        ret = CSignedMsgData_Update(&msg->msg_data, pbData, cbData, fFinal);
         if (msg->base.streamed)
             FIXME("streamed partial stub\n");
     }
@@ -1127,12 +1134,8 @@ static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             else
                 ret = TRUE;
             if (ret)
-                ret = CSignedMsgData_UpdateHash(&msg->msg_data, pbData, cbData);
-            if (ret)
-                ret = CSignedMsgData_UpdateAuthenticatedAttributes(
-                 &msg->msg_data);
-            if (ret)
-                ret = CSignedMsgData_Sign(&msg->msg_data);
+                ret = CSignedMsgData_Update(&msg->msg_data, pbData, cbData,
+                 fFinal);
         }
     }
     return ret;
