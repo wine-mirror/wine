@@ -2805,9 +2805,17 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
     TRACE("(%p)->(%p,%p,%p,%08x,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
 
     /* Get the swapchain. One of the surfaces has to be a primary surface */
+    if(This->resource.pool == WINED3DPOOL_SYSTEMMEM) {
+        WARN("Destination is in sysmem, rejecting gl blt\n");
+        return WINED3DERR_INVALIDCALL;
+    }
     IWineD3DSurface_GetContainer( (IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&dstSwapchain);
     if(dstSwapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) dstSwapchain);
     if(Src) {
+        if(Src->resource.pool == WINED3DPOOL_SYSTEMMEM) {
+            WARN("Src is in sysmem, rejecting gl blt\n");
+            return WINED3DERR_INVALIDCALL;
+        }
         IWineD3DSurface_GetContainer( (IWineD3DSurface *) Src, &IID_IWineD3DSwapChain, (void **)&srcSwapchain);
         if(srcSwapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) srcSwapchain);
     }
