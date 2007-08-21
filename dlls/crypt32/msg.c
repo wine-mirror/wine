@@ -1926,6 +1926,38 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     return ret;
 }
 
+static BOOL CDecodeHashMsg_VerifyHash(CDecodeMsg *msg)
+{
+    BOOL ret;
+    CRYPT_DATA_BLOB hashBlob;
+
+    ret = ContextPropertyList_FindProperty(msg->properties,
+     CMSG_HASH_DATA_PARAM, &hashBlob);
+    if (ret)
+    {
+        DWORD computedHashSize = 0;
+
+        ret = CDecodeHashMsg_GetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL,
+         &computedHashSize);
+        if (hashBlob.cbData == computedHashSize)
+        {
+            LPBYTE computedHash = CryptMemAlloc(computedHashSize);
+
+            if (computedHash)
+            {
+                ret = CDecodeHashMsg_GetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0,
+                 computedHash, &computedHashSize);
+                if (ret)
+                    ret = !memcmp(hashBlob.pbData, computedHash,
+                     hashBlob.cbData);
+            }
+            else
+                ret = FALSE;
+        }
+    }
+    return ret;
+}
+
 static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
  DWORD dwCtrlType, const void *pvCtrlPara)
 {
@@ -1955,7 +1987,7 @@ static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
         switch (msg->type)
         {
         case CMSG_HASHED:
-            FIXME("CMSG_CTRL_VERIFY_HASH: stub\n");
+            ret = CDecodeHashMsg_VerifyHash(msg);
             break;
         default:
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
