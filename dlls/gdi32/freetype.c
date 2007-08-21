@@ -4564,7 +4564,7 @@ DWORD WineEngGetFontUnicodeRanges(HDC hdc, LPGLYPHSET glyphset)
         }
     }
 
-    GDI_ReleaseObj(hdc);
+    DC_ReleaseDCPtr(dc);
     return size;
 }
 
@@ -4579,7 +4579,7 @@ BOOL WINAPI FontIsLinked(HDC hdc)
     if(!dc) return FALSE;
     if(dc->gdiFont && !list_empty(&dc->gdiFont->child_fonts))
         ret = TRUE;
-    GDI_ReleaseObj(hdc);
+    DC_ReleaseDCPtr(dc);
     TRACE("returning %d\n", ret);
     return ret;
 }

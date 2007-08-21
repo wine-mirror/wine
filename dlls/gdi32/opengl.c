@@ -74,7 +74,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
     if (!dc->funcs->pwglCreateContext) FIXME(" :stub\n");
     else ret = dc->funcs->pwglCreateContext(dc->physDev);
 
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -99,7 +99,7 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc)
     if (!dc->funcs->pwglDeleteContext) FIXME(" :stub\n");
     else ret = dc->funcs->pwglDeleteContext(hglrc);
 
-    GDI_ReleaseObj(ctx->hdc);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -152,7 +152,7 @@ static HDC WINAPI wglGetPbufferDCARB(void *pbuffer)
 
     TRACE("(%p), hdc=%p\n", pbuffer, ret);
     
-    GDI_ReleaseObj(hdc);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -178,11 +178,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
     if (!dc->funcs->pwglMakeCurrent) FIXME(" :stub\n");
     else ret = dc->funcs->pwglMakeCurrent(dc->physDev,hglrc);
 
-    if(hglrc == NULL)
-        GDI_ReleaseObj(default_hdc);
-    else
-        GDI_ReleaseObj(hdc);
-
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -203,15 +199,15 @@ static BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglr
 
     ReadDC = DC_GetDCPtr( hReadDC);
     if (!ReadDC) {
-        GDI_ReleaseObj(hDrawDC);
+        DC_ReleaseDCPtr(DrawDC);
         return FALSE;
     }
 
     if (!DrawDC->funcs->pwglMakeContextCurrentARB) FIXME(" :stub\n");
     else ret = DrawDC->funcs->pwglMakeContextCurrentARB(DrawDC->physDev, ReadDC->physDev, hglrc);
 
-    GDI_ReleaseObj(hDrawDC);
-    GDI_ReleaseObj(hReadDC);
+    DC_ReleaseDCPtr(DrawDC);
+    DC_ReleaseDCPtr(ReadDC);
 
     return ret;
 }
@@ -236,7 +232,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
     if (!dc->funcs->pwglShareLists) FIXME(" :stub\n");
     else ret = dc->funcs->pwglShareLists(hglrc1, hglrc2);
 
-    GDI_ReleaseObj(ctx->hdc);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -255,7 +251,7 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase
     if (!dc->funcs->pwglUseFontBitmapsA) FIXME(" :stub\n");
     else ret = dc->funcs->pwglUseFontBitmapsA(dc->physDev, first, count, listBase);
 
-    GDI_ReleaseObj( hdc);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -274,7 +270,7 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase
     if (!dc->funcs->pwglUseFontBitmapsW) FIXME(" :stub\n");
     else ret = dc->funcs->pwglUseFontBitmapsW(dc->physDev, first, count, listBase);
 
-    GDI_ReleaseObj( hdc);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -298,7 +294,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
     if (!dc->funcs->pwglGetProcAddress) FIXME(" :stub\n");
     else ret = dc->funcs->pwglGetProcAddress(func);
 
-    GDI_ReleaseObj(default_hdc);
+    DC_ReleaseDCPtr( dc );
 
     /* At the moment we implement one WGL extension which requires a HDC. When we
      * are looking up this call and when the Extension is available (that is the case

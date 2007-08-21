@@ -80,7 +80,7 @@ INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
     if(!dc) return SP_ERROR;
 
     if (dc->funcs->pStartDoc) ret = dc->funcs->pStartDoc( dc->physDev, doc );
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -140,7 +140,7 @@ INT WINAPI EndDoc(HDC hdc)
     if(!dc) return SP_ERROR;
 
     if (dc->funcs->pEndDoc) ret = dc->funcs->pEndDoc( dc->physDev );
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -159,7 +159,7 @@ INT WINAPI StartPage(HDC hdc)
         ret = dc->funcs->pStartPage( dc->physDev );
     else
         FIXME("stub\n");
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -177,7 +177,7 @@ INT WINAPI EndPage(HDC hdc)
 
     if (dc->funcs->pEndPage) ret = dc->funcs->pEndPage( dc->physDev );
     abort_proc = dc->pAbortProc;
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     if (abort_proc && !abort_proc( hdc, 0 ))
     {
         EndDoc( hdc );
@@ -197,7 +197,7 @@ INT WINAPI AbortDoc(HDC hdc)
     if(!dc) return SP_ERROR;
 
     if (dc->funcs->pAbortDoc) ret = dc->funcs->pAbortDoc( dc->physDev );
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -223,7 +223,7 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc16, INT16 reserved)
     }
 
     abproc = dc->pAbortProc;
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
 
     if (abproc)
 	ret = abproc(hdc, 0);
@@ -241,7 +241,7 @@ static BOOL CALLBACK call_abort_proc16( HDC hdc, INT code )
 
     if (!dc) return FALSE;
     proc16 = dc->pAbortProc16;
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     if (proc16)
     {
         WORD args[2];
@@ -266,7 +266,7 @@ INT16 WINAPI SetAbortProc16(HDC16 hdc16, ABORTPROC16 abrtprc)
 
     if (!dc) return FALSE;
     dc->pAbortProc16 = abrtprc;
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return SetAbortProc( hdc, call_abort_proc16 );
 }
 
@@ -280,7 +280,7 @@ INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
 
     if (!dc) return FALSE;
     dc->pAbortProc = abrtprc;
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return TRUE;
 }
 

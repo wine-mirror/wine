@@ -71,7 +71,7 @@ BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
         points->y = MulDiv( points->y - dc->vportOrgY, dc->wndExtY, dc->vportExtY ) + dc->wndOrgY;
         points++;
     }
-    GDI_ReleaseObj( HDC_32(hdc) );
+    DC_ReleaseDCPtr( dc );
     return TRUE;
 }
 
@@ -99,7 +99,7 @@ BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
             points++;
         }
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return (count < 0);
 }
 
@@ -118,7 +118,7 @@ BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
         points->y = MulDiv( points->y - dc->wndOrgY, dc->vportExtY, dc->wndExtY ) + dc->vportOrgY;
         points++;
     }
-    GDI_ReleaseObj( HDC_32(hdc) );
+    DC_ReleaseDCPtr( dc );
     return TRUE;
 }
 
@@ -143,7 +143,7 @@ BOOL WINAPI LPtoDP( HDC hdc, LPPOINT points, INT count )
                            dc->xformWorld2Vport.eDy + 0.5 );
         points++;
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return TRUE;
 }
 
@@ -226,7 +226,7 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
     dc->MapMode = mode;
     DC_UpdateXforms( dc );
  done:
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -265,7 +265,7 @@ BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
     if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
  done:
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -297,7 +297,7 @@ BOOL WINAPI SetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
     DC_UpdateXforms( dc );
 
  done:
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -339,7 +339,7 @@ BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
     if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
  done:
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -370,7 +370,7 @@ BOOL WINAPI SetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
     dc->wndOrgY = y;
     DC_UpdateXforms( dc );
  done:
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -401,7 +401,7 @@ BOOL WINAPI OffsetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt)
     dc->vportOrgY += y;
     DC_UpdateXforms( dc );
  done:
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -432,7 +432,7 @@ BOOL WINAPI OffsetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
     dc->wndOrgY += y;
     DC_UpdateXforms( dc );
  done:
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -474,7 +474,7 @@ BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT xNum, INT xDenom,
     if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
  done:
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -516,6 +516,6 @@ BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT xNum, INT xDenom,
     if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
  done:
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }

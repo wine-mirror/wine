@@ -45,7 +45,7 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
         TRACE("%p %d,%d %dx%d %06x\n", hdc, left, top, width, height, rop );
         bRet = dc->funcs->pPatBlt( dc->physDev, left, top, width, height, rop );
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return bRet;
 }
 
@@ -61,7 +61,7 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
 
     if ((dcDst = DC_GetDCUpdate( hdcDst )) && dcDst->funcs->pBitBlt)
     {
-        GDI_ReleaseObj( hdcDst );
+        DC_ReleaseDCPtr( dcDst );
         /* FIXME: there is a race condition here */
         dcSrc = DC_GetDCUpdate( hdcSrc );
         dcDst = DC_GetDCPtr( hdcDst );
@@ -71,8 +71,8 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
         ret = dcDst->funcs->pBitBlt( dcDst->physDev, xDst, yDst, width, height,
                                      dcSrc ? dcSrc->physDev : NULL, xSrc, ySrc, rop );
 
-        GDI_ReleaseObj( hdcDst );
-        if (dcSrc) GDI_ReleaseObj( hdcSrc );
+        DC_ReleaseDCPtr( dcDst );
+        if (dcSrc) DC_ReleaseDCPtr( dcSrc );
     }
     else if(dcDst && dcDst->funcs->pStretchDIBits)
     {
@@ -82,7 +82,7 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
         LPVOID bits;
         INT lines;
 
-        GDI_ReleaseObj( hdcDst );
+        DC_ReleaseDCPtr( dcDst );
 
         if(GetObjectType( hdcSrc ) != OBJ_MEMDC)
         {
@@ -119,7 +119,7 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
         return (lines == height);
     }
     else if(dcDst)
-        GDI_ReleaseObj( hdcDst );
+        DC_ReleaseDCPtr( dcDst );
 
     return ret;
 }
@@ -139,7 +139,7 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
 
     if ((dcDst = DC_GetDCUpdate( hdcDst )) && dcDst->funcs->pStretchBlt)
     {
-        GDI_ReleaseObj( hdcDst );
+        DC_ReleaseDCPtr( dcDst );
         /* FIXME: there is a race condition here */
         if ((dcSrc = DC_GetDCUpdate( hdcSrc )))
         {
@@ -152,8 +152,8 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
             ret = dcDst->funcs->pStretchBlt( dcDst->physDev, xDst, yDst, widthDst, heightDst,
                                              dcSrc->physDev, xSrc, ySrc, widthSrc, heightSrc,
                                              rop );
-            GDI_ReleaseObj( hdcDst );
-            GDI_ReleaseObj( hdcSrc );
+            DC_ReleaseDCPtr( dcDst );
+            DC_ReleaseDCPtr( dcSrc );
         }
     }
     else if(dcDst && dcDst->funcs->pStretchDIBits)
@@ -164,7 +164,7 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
         LPVOID bits;
         INT lines;
 
-        GDI_ReleaseObj( hdcDst );
+        DC_ReleaseDCPtr( dcDst );
 
         if(GetObjectType( hdcSrc ) != OBJ_MEMDC) return FALSE;
 
@@ -197,7 +197,7 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
         return (lines == heightSrc);
     }
     else if(dcDst)
-        GDI_ReleaseObj( hdcDst );
+        DC_ReleaseDCPtr( dcDst );
 
     return ret;
 }
@@ -496,7 +496,7 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
     BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
 
-    if ((dcSrc = DC_GetDCUpdate( hdcSrc ))) GDI_ReleaseObj( hdcSrc );
+    if ((dcSrc = DC_GetDCUpdate( hdcSrc ))) DC_ReleaseDCPtr( dcSrc );
     /* FIXME: there is a race condition here */
     if ((dcDst = DC_GetDCUpdate( hdcDst )))
     {
@@ -510,8 +510,8 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
             ret = dcDst->funcs->pAlphaBlend( dcDst->physDev, xDst, yDst, widthDst, heightDst,
                                              dcSrc ? dcSrc->physDev : NULL,
                                              xSrc, ySrc, widthSrc, heightSrc, blendFunction );
-        if (dcSrc) GDI_ReleaseObj( hdcSrc );
-        GDI_ReleaseObj( hdcDst );
+        if (dcSrc) DC_ReleaseDCPtr( dcSrc );
+        DC_ReleaseDCPtr( dcDst );
     }
     return ret;
 }

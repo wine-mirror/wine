@@ -148,7 +148,7 @@ BOOL WINAPI BeginPath(HDC hdc)
             dc->path.state=PATH_Open;
         }
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -176,7 +176,7 @@ BOOL WINAPI EndPath(HDC hdc)
         /* Set flag to indicate that path is finished */
         else dc->path.state=PATH_Closed;
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -206,7 +206,7 @@ BOOL WINAPI AbortPath( HDC hdc )
         ret = dc->funcs->pAbortPath(dc->physDev);
     else /* Remove all entries from the path */
         PATH_EmptyPath( &dc->path );
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -245,7 +245,7 @@ BOOL WINAPI CloseFigure(HDC hdc)
             }
         }
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -293,7 +293,7 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes,
      else ret = pPath->numEntriesUsed;
    }
  done:
-   GDI_ReleaseObj( hdc );
+   DC_ReleaseDCPtr( dc );
    return ret;
 }
 
@@ -328,7 +328,7 @@ HRGN WINAPI PathToRegion(HDC hdc)
        else
            hrgnRval=0;
    }
-   GDI_ReleaseObj( hdc );
+   DC_ReleaseDCPtr( dc );
    return hrgnRval;
 }
 
@@ -431,7 +431,7 @@ BOOL WINAPI FillPath(HDC hdc)
             PATH_EmptyPath(&dc->path);
         }
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return bRet;
 }
 
@@ -471,7 +471,7 @@ BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
            /* FIXME: Should this function delete the path even if it failed? */
        }
    }
-   GDI_ReleaseObj( hdc );
+   DC_ReleaseDCPtr( dc );
    return success;
 }
 
@@ -1709,7 +1709,7 @@ BOOL WINAPI FlattenPath(HDC hdc)
         if(pPath->state != PATH_Closed)
 	    ret = PATH_FlattenPath(pPath);
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -2204,7 +2204,7 @@ BOOL WINAPI StrokeAndFillPath(HDC hdc)
        if(bRet) bRet = PATH_StrokePath(dc, &dc->path);
        if(bRet) PATH_EmptyPath(&dc->path);
    }
-   GDI_ReleaseObj( hdc );
+   DC_ReleaseDCPtr( dc );
    return bRet;
 }
 
@@ -2231,7 +2231,7 @@ BOOL WINAPI StrokePath(HDC hdc)
         bRet = PATH_StrokePath(dc, pPath);
         PATH_EmptyPath(pPath);
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return bRet;
 }
 
@@ -2252,6 +2252,6 @@ BOOL WINAPI WidenPath(HDC hdc)
       ret = dc->funcs->pWidenPath(dc->physDev);
    else
       ret = PATH_WidenPath(dc);
-   GDI_ReleaseObj( hdc );
+   DC_ReleaseDCPtr( dc );
    return ret;
 }

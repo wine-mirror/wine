@@ -201,7 +201,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
         heightSrc = dc->funcs->pStretchDIBits(dc->physDev, xDst, yDst, widthDst,
                                               heightDst, xSrc, ySrc, widthSrc,
                                               heightSrc, bits, info, wUsage, dwRop);
-        GDI_ReleaseObj( hdc );
+        DC_ReleaseDCPtr( dc );
     }
     else /* use StretchBlt */
     {
@@ -213,7 +213,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
         WORD planes, bpp;
         DWORD compr, size;
 
-        GDI_ReleaseObj( hdc );
+        DC_ReleaseDCPtr( dc );
 
         if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size ) == -1)
         {
@@ -311,7 +311,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
     if (!(bitmap = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
     {
-        GDI_ReleaseObj( hdc );
+        DC_ReleaseDCPtr( dc );
         return 0;
     }
 
@@ -325,7 +325,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
  done:
     GDI_ReleaseObj( hbitmap );
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return result;
 }
 
@@ -354,7 +354,7 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 	ret = 0;
     }
 
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -387,7 +387,7 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
     if (dc->funcs->pSetDIBColorTable)
         dc->funcs->pSetDIBColorTable(dc->physDev, startpos, entries, colors);
 
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return result;
 }
 
@@ -422,7 +422,7 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
             GDI_ReleaseObj( dc->hBitmap );
         }
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return result;
 }
 
@@ -570,7 +570,7 @@ INT WINAPI GetDIBits(
     }
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
     {
-        GDI_ReleaseObj( hdc );
+        DC_ReleaseDCPtr( dc );
 	return 0;
     }
 
@@ -622,7 +622,7 @@ INT WINAPI GetDIBits(
                 memset( palEntry, 0, sizeof(palEntry) );
                 if (!GetPaletteEntries( dc->hPalette, 0, 1 << bmp->bitmap.bmBitsPixel, palEntry ))
                 {
-                    GDI_ReleaseObj( hdc );
+                    DC_ReleaseDCPtr( dc );
                     GDI_ReleaseObj( hbitmap );
                     return 0;
                 }
@@ -1019,7 +1019,7 @@ INT WINAPI GetDIBits(
     }
     TRACE("biWidth = %d, biHeight = %d\n", width, height);
 
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     GDI_ReleaseObj( hbitmap );
     return lines;
 }
@@ -1072,7 +1072,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
                 DeleteObject( handle );
                 handle = 0;
             }
-            GDI_ReleaseObj( hdc );
+            DC_ReleaseDCPtr( dc );
         }
     }
 
@@ -1337,7 +1337,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         }
     }
 
-    GDI_ReleaseObj(hdc);
+    DC_ReleaseDCPtr( dc );
     if (bDesktopDC) DeleteDC( hdc );
     if (ret && bits) *bits = dib->dsBm.bmBits;
     return ret;

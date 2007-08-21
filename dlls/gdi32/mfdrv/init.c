@@ -170,7 +170,7 @@ static DC *MFDRV_AllocMetaFile(void)
     physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev)
     {
-        GDI_FreeObject( dc->hSelf, dc );
+        DC_FreeDCPtr( dc );
         return NULL;
     }
     dc->physDev = (PHYSDEV)physDev;
@@ -180,7 +180,7 @@ static DC *MFDRV_AllocMetaFile(void)
     if (!(physDev->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev->mh) )))
     {
         HeapFree( GetProcessHeap(), 0, physDev );
-        GDI_FreeObject( dc->hSelf, dc );
+        DC_FreeDCPtr( dc );
         return NULL;
     }
 
@@ -217,7 +217,7 @@ static BOOL MFDRV_DeleteDC( PHYSDEV dev )
     HeapFree( GetProcessHeap(), 0, physDev->handles );
     HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
-    GDI_FreeObject( dc->hSelf, dc );
+    DC_FreeDCPtr( dc );
     return TRUE;
 }
 
@@ -269,7 +269,7 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
 
     TRACE("returning %p\n", dc->hSelf);
     ret = dc->hSelf;
-    GDI_ReleaseObj( dc->hSelf );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -308,7 +308,12 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 
     TRACE("(%p)\n", hdc );
 
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ))) return 0;
+    if (!(dc = DC_GetDCPtr( hdc ))) return NULL;
+    if (GDIMAGIC(dc->header.wMagic) != METAFILE_DC_MAGIC)
+    {
+        DC_ReleaseDCPtr( dc );
+        return NULL;
+    }
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
 
     /* Construct the end of metafile record - this is documented

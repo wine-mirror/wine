@@ -172,7 +172,7 @@ static BOOL EMFDRV_DeleteDC( PHYSDEV dev )
     HeapFree( GetProcessHeap(), 0, physDev->handles );
     HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
-    GDI_FreeObject( dc->hSelf, dc );
+    DC_FreeDCPtr( dc );
     return TRUE;
 }
 
@@ -319,7 +319,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev) {
-        GDI_FreeObject( dc->hSelf, dc );
+        DC_FreeDCPtr( dc );
         return 0;
     }
     dc->physDev = (PHYSDEV)physDev;
@@ -336,7 +336,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     if (!(physDev->emh = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size))) {
         HeapFree( GetProcessHeap(), 0, physDev );
-        GDI_FreeObject( dc->hSelf, dc );
+        DC_FreeDCPtr( dc );
         return 0;
     }
 
@@ -417,7 +417,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     TRACE("returning %p\n", dc->hSelf);
     ret = dc->hSelf;
-    GDI_ReleaseObj( dc->hSelf );
+    DC_ReleaseDCPtr( dc );
 
     if( !hdc )
       DeleteDC( hRefDC );
@@ -438,7 +438,12 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 
     TRACE("(%p)\n", hdc );
 
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, ENHMETAFILE_DC_MAGIC ))) return 0;
+    if (!(dc = DC_GetDCPtr( hdc ))) return NULL;
+    if (GDIMAGIC(dc->header.wMagic) != ENHMETAFILE_DC_MAGIC)
+    {
+        DC_ReleaseDCPtr( dc );
+        return NULL;
+    }
     physDev = (EMFDRV_PDEVICE *)dc->physDev;
 
     if(dc->saveLevel)

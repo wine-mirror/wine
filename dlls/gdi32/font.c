@@ -609,7 +609,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
         ret = dc->hFont;
         dc->hFont = handle;
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -695,7 +695,7 @@ static INT CALLBACK FONT_EnumInstance16( const LOGFONTW *plf, const TEXTMETRICW 
         FONT_EnumLogFontExWTo16((const ENUMLOGFONTEXW *)plf, pfe->lpLogFont);
         FONT_NewTextMetricExWTo16((const NEWTEXTMETRICEXW *)ptm, pfe->lpTextMetric);
         pfe->dwFlags |= ENUM_CALLED;
-        GDI_ReleaseObj( pfe->hdc );  /* release the GDI lock */
+        DC_ReleaseDCPtr( pfe->dc );  /* release the GDI lock */
 
         args[6] = SELECTOROF(pfe->segLogFont);
         args[5] = OFFSETOF(pfe->segLogFont);
@@ -711,8 +711,9 @@ static INT CALLBACK FONT_EnumInstance16( const LOGFONTW *plf, const TEXTMETRICW 
         dc = DC_GetDCPtr( pfe->hdc );
         if (!dc || dc != pfe->dc || dc->physDev != pfe->physDev)
         {
-            if (dc) GDI_ReleaseObj( pfe->hdc );
+            if (dc) DC_ReleaseDCPtr( dc );
             pfe->hdc = 0;  /* make sure we don't try to release it later on */
+            pfe->dc = NULL;
             ret = 0;
         }
     }
@@ -749,7 +750,7 @@ static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *p
             plf = (LOGFONTW *)&logfont.elfLogFont;
             ptm = (TEXTMETRICW *)&tmA;
         }
-        GDI_ReleaseObj( pfe->hdc );  /* release the GDI lock */
+        DC_ReleaseDCPtr( pfe->dc );  /* release the GDI lock */
 
         ret = pfe->lpEnumFunc( plf, ptm, fType, pfe->lpData );
 
@@ -757,8 +758,9 @@ static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *p
         dc = DC_GetDCPtr( pfe->hdc );
         if (!dc || dc != pfe->dc || dc->physDev != pfe->physDev)
         {
-            if (dc) GDI_ReleaseObj( pfe->hdc );
+            if (dc) DC_ReleaseDCPtr( dc );
             pfe->hdc = 0;  /* make sure we don't try to release it later on */
+            pfe->dc = NULL;
             ret = 0;
         }
     }
@@ -814,7 +816,7 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
 done:
     UnMapLS( fe16.segTextMetric );
     UnMapLS( fe16.segLogFont );
-    if (fe16.hdc) GDI_ReleaseObj( fe16.hdc );
+    if (fe16.dc) DC_ReleaseDCPtr( fe16.dc );
     return ret;
 }
 
@@ -859,7 +861,7 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf,
 	    ret = ret2;
     }
  done:
-    if (fe32.hdc) GDI_ReleaseObj( fe32.hdc );
+    if (fe32.dc) DC_ReleaseDCPtr( fe32.dc );
     return ret;
 }
 
@@ -980,7 +982,7 @@ INT WINAPI GetTextCharacterExtra( HDC hdc )
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return 0x80000000;
     ret = dc->charExtra;
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -1000,7 +1002,7 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
         prev = dc->charExtra;
         dc->charExtra = extra;
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return prev;
 }
 
@@ -1030,7 +1032,7 @@ BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
             dc->breakRem   = 0;
         }
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -1079,7 +1081,7 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
         else ret = strlenW(font->logfont.lfFaceName) + 1;
         GDI_ReleaseObj( dc->hFont );
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -1158,7 +1160,7 @@ BOOL WINAPI GetTextExtentPointI(
                                                 count, 0, NULL, NULL, size );
     }
 
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
 
     TRACE("(%p %p %d %p): returning %d x %d\n",
           hdc, indices, count, size, size->cx, size->cy );
@@ -1278,7 +1280,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
 	dxs = alpDx ? alpDx : HeapAlloc(GetProcessHeap(), 0, count * sizeof alpDx[0]);
 	if (! dxs)
 	{
-	    GDI_ReleaseObj(hdc);
+	    DC_ReleaseDCPtr(dc);
 	    SetLastError(ERROR_OUTOFMEMORY);
 	    return FALSE;
 	}
@@ -1347,7 +1349,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     if (! alpDx)
         HeapFree(GetProcessHeap(), 0, dxs);
 
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
 
     TRACE("returning %d %d x %d\n",nFit,size->cx,size->cy);
     return ret;
@@ -1426,7 +1428,7 @@ BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
           metrics->tmDescent,
           metrics->tmHeight );
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -1717,7 +1719,7 @@ UINT WINAPI GetOutlineTextMetricsW(
 	    }
 	}
     }
-    GDI_ReleaseObj(hdc);
+    DC_ReleaseDCPtr(dc);
     return ret;
 }
 
@@ -1746,7 +1748,7 @@ BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
             *buffer = INTERNAL_XDSTOWS(dc, *buffer);
         ret = TRUE;
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -1889,7 +1891,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
     if (!dc->funcs->pExtTextOut && !PATH_IsPathOpen(dc->path))
     {
-        GDI_ReleaseObj( hdc );
+        DC_ReleaseDCPtr( dc );
         return ret;
     }
 
@@ -1897,7 +1899,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     if(type == OBJ_METADC || type == OBJ_ENHMETADC)
     {
         ret = dc->funcs->pExtTextOut(dc->physDev, x, y, flags, lprect, str, count, lpDx);
-        GDI_ReleaseObj( hdc );
+        DC_ReleaseDCPtr( dc );
         return ret;
     }
 
@@ -2196,7 +2198,7 @@ done:
     if(reordered_str != str)
         HeapFree(GetProcessHeap(), 0, reordered_str);
 
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
 
     if (ret && (lf.lfUnderline || lf.lfStrikeOut))
     {
@@ -2378,7 +2380,7 @@ DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
     }
     else
         FIXME("(%p, 0x%08x): stub - harmless\n", hDC, dwFlag);
-    GDI_ReleaseObj( hDC );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -2482,7 +2484,7 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
         ret = TRUE;
     }
 
-    GDI_ReleaseObj(hdc);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -2531,7 +2533,7 @@ BOOL WINAPI GetCharABCWidthsI( HDC hdc, UINT firstChar, UINT count,
         ret = TRUE;
     }
 
-    GDI_ReleaseObj(hdc);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -2589,7 +2591,7 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
     else
       ret = GDI_ERROR;
 
-    GDI_ReleaseObj(hdc);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -2728,7 +2730,7 @@ DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
     if (dc->gdiFont)
         ret = WineEngGetKerningPairs(dc->gdiFont, cPairs, lpKerningPairs);
 
-    GDI_ReleaseObj(hDC);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -2851,7 +2853,7 @@ DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset,
     if(dc->gdiFont)
       ret = WineEngGetFontData(dc->gdiFont, table, offset, buffer, length);
 
-    GDI_ReleaseObj(hdc);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -2892,7 +2894,7 @@ DWORD WINAPI GetGlyphIndicesW(HDC hdc, LPCWSTR lpstr, INT count,
     if(dc->gdiFont)
 	ret = WineEngGetGlyphIndices(dc->gdiFont, lpstr, count, pgi, flags);
 
-    GDI_ReleaseObj(hdc);
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
@@ -3261,7 +3263,7 @@ UINT WINAPI GetTextCharsetInfo(HDC hdc, LPFONTSIGNATURE fs, DWORD flags)
         if (dc->gdiFont)
             ret = WineEngGetTextCharsetInfo(dc->gdiFont, fs, flags);
 
-        GDI_ReleaseObj(hdc);
+        DC_ReleaseDCPtr( dc );
     }
 
     if (ret == DEFAULT_CHARSET && fs)

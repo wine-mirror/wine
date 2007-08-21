@@ -225,7 +225,7 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
     if (dc->funcs->pSelectPen) handle = dc->funcs->pSelectPen( dc->physDev, handle );
     if (handle) dc->hPen = handle;
     else ret = 0;
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 

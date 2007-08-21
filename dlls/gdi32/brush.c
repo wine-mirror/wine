@@ -346,7 +346,7 @@ BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
     }
     dc->brushOrgX = x;
     dc->brushOrgY = y;
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return TRUE;
 }
 
@@ -383,7 +383,7 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
     if (dc->funcs->pSelectBrush) handle = dc->funcs->pSelectBrush( dc->physDev, handle );
     if (handle) dc->hBrush = handle;
     else ret = 0;
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 

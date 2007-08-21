@@ -1115,7 +1115,7 @@ HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
     	FIXME("(%p,%d): unknown type.\n",hdc,type);
 	    break;
         }
-        GDI_ReleaseObj( hdc );
+        DC_ReleaseDCPtr( dc );
     }
     return ret;
 }
@@ -1149,7 +1149,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
         SetLastError( ERROR_INVALID_HANDLE );
     else
     {
-        GDI_ReleaseObj( hdc );
+        DC_ReleaseDCPtr( dc );
 
         header = GDI_GetObjPtr( hObj, MAGIC_DONTCARE );
         if (header)
@@ -1449,7 +1449,7 @@ BOOL WINAPI GdiComment(HDC hdc, UINT cbSize, const BYTE *lpData)
         if (dc->funcs->pGdiComment)
             ret = dc->funcs->pGdiComment( dc->physDev, cbSize, lpData );
     }
-    GDI_ReleaseObj( hdc );
+    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
