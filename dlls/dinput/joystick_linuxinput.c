@@ -119,6 +119,14 @@ LONG joystick_map_axis(ObjProps *props, int val)
 #define WINE_JOYSTICK_MAX_POVS    4
 #define WINE_JOYSTICK_MAX_BUTTONS 128
 
+struct wine_input_absinfo {
+    LONG value;
+    LONG minimum;
+    LONG maximum;
+    LONG fuzz;
+    LONG flat;
+};
+
 typedef struct EffectListItem EffectListItem;
 struct EffectListItem
 {
@@ -150,7 +158,7 @@ struct JoyDev {
 	BYTE				ffbits[(FF_MAX+7)/8];	
 
 	/* data returned by the EVIOCGABS() ioctl */
-        struct input_absinfo            axes[ABS_MAX];
+        struct wine_input_absinfo       axes[ABS_MAX];
 };
 
 struct JoystickImpl
