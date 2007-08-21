@@ -2097,9 +2097,13 @@ static BOOL CDecodeSignedMsg_VerifySignature(CDecodeMsg *msg, PCERT_INFO info)
         ret = CertCompareCertificateName(X509_ASN_ENCODING,
          &msg->u.signed_data.info->rgSignerInfo[i].Issuer, &info->Issuer);
         if (ret)
+        {
             ret = CertCompareIntegerBlob(
              &msg->u.signed_data.info->rgSignerInfo[i].SerialNumber,
              &info->SerialNumber);
+            if (ret)
+                break;
+        }
     }
     if (ret)
     {
