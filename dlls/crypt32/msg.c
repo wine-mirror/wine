@@ -956,8 +956,8 @@ static BOOL CRYPT_AppendAttribute(CRYPT_ATTRIBUTES *out,
     return ret;
 }
 
-static BOOL CSignedEncodeMsg_AppendMessageDigestAttribute(CSignedEncodeMsg *msg,
- DWORD signerIndex)
+static BOOL CSignedMsgData_AppendMessageDigestAttribute(
+ CSignedMsgData *msg_data, DWORD signerIndex)
 {
     BOOL ret;
     DWORD size;
@@ -967,13 +967,13 @@ static BOOL CSignedEncodeMsg_AppendMessageDigestAttribute(CSignedEncodeMsg *msg,
 
     size = sizeof(DWORD);
     ret = CryptGetHashParam(
-     msg->msg_data.signerHandles[signerIndex].contentHash, HP_HASHSIZE,
+     msg_data->signerHandles[signerIndex].contentHash, HP_HASHSIZE,
      (LPBYTE)&hash.cbData, &size, 0);
     if (ret)
     {
         hash.pbData = CryptMemAlloc(hash.cbData);
         ret = CryptGetHashParam(
-         msg->msg_data.signerHandles[signerIndex].contentHash, HP_HASHVAL,
+         msg_data->signerHandles[signerIndex].contentHash, HP_HASHVAL,
          hash.pbData, &hash.cbData, 0);
         if (ret)
         {
@@ -982,7 +982,7 @@ static BOOL CSignedEncodeMsg_AppendMessageDigestAttribute(CSignedEncodeMsg *msg,
             if (ret)
             {
                 ret = CRYPT_AppendAttribute(
-                 &msg->msg_data.info->rgSignerInfo[signerIndex].AuthAttrs,
+                 &msg_data->info->rgSignerInfo[signerIndex].AuthAttrs,
                  &messageDigestAttr);
                 LocalFree(encodedHash.pbData);
             }
@@ -992,17 +992,17 @@ static BOOL CSignedEncodeMsg_AppendMessageDigestAttribute(CSignedEncodeMsg *msg,
     return ret;
 }
 
-static BOOL CSignedEncodeMsg_UpdateAuthenticatedAttributes(
- CSignedEncodeMsg *msg)
+static BOOL CSignedMsgData_UpdateAuthenticatedAttributes(
+ CSignedMsgData *msg_data)
 {
     DWORD i;
     BOOL ret = TRUE;
 
-    TRACE("(%p)\n", msg);
+    TRACE("(%p)\n", msg_data);
 
-    for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
+    for (i = 0; ret && i < msg_data->info->cSignerInfo; i++)
     {
-        if (msg->msg_data.info->rgSignerInfo[i].AuthAttrs.cAttr)
+        if (msg_data->info->rgSignerInfo[i].AuthAttrs.cAttr)
         {
             BYTE oid_rsa_data_encoded[] = { 0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,
              0x0d,0x01,0x07,0x01 };
@@ -1013,21 +1013,21 @@ static BOOL CSignedEncodeMsg_UpdateAuthenticatedAttributes(
 
             /* FIXME: does this depend on inner OID? */
             ret = CRYPT_AppendAttribute(
-             &msg->msg_data.info->rgSignerInfo[i].AuthAttrs, &contentTypeAttr);
+             &msg_data->info->rgSignerInfo[i].AuthAttrs, &contentTypeAttr);
             if (ret)
-                ret = CSignedEncodeMsg_AppendMessageDigestAttribute(msg, i);
+                ret = CSignedMsgData_AppendMessageDigestAttribute(msg_data, i);
             if (ret)
             {
                 LPBYTE encodedAttrs;
                 DWORD size;
 
                 ret = CryptEncodeObjectEx(X509_ASN_ENCODING, PKCS_ATTRIBUTES,
-                 &msg->msg_data.info->rgSignerInfo[i].AuthAttrs,
+                 &msg_data->info->rgSignerInfo[i].AuthAttrs,
                  CRYPT_ENCODE_ALLOC_FLAG, NULL, (LPBYTE)&encodedAttrs, &size);
                 if (ret)
                 {
                     ret = CryptHashData(
-                     msg->msg_data.signerHandles[i].authAttrHash, encodedAttrs,
+                     msg_data->signerHandles[i].authAttrHash, encodedAttrs,
                      size, 0);
                     LocalFree(encodedAttrs);
                 }
@@ -1051,36 +1051,36 @@ static void CRYPT_ReverseBytes(CRYPT_HASH_BLOB *hash)
     }
 }
 
-static BOOL CSignedEncodeMsg_Sign(CSignedEncodeMsg *msg)
+static BOOL CSignedMsgData_Sign(CSignedMsgData *msg_data)
 {
     DWORD i;
     BOOL ret = TRUE;
 
-    TRACE("(%p)\n", msg);
+    TRACE("(%p)\n", msg_data);
 
-    for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
+    for (i = 0; ret && i < msg_data->info->cSignerInfo; i++)
     {
         HCRYPTHASH hash;
 
-        if (msg->msg_data.info->rgSignerInfo[i].AuthAttrs.cAttr)
-            hash = msg->msg_data.signerHandles[i].authAttrHash;
+        if (msg_data->info->rgSignerInfo[i].AuthAttrs.cAttr)
+            hash = msg_data->signerHandles[i].authAttrHash;
         else
-            hash = msg->msg_data.signerHandles[i].contentHash;
+            hash = msg_data->signerHandles[i].contentHash;
         ret = CryptSignHashW(hash, AT_SIGNATURE, NULL, 0, NULL,
-         &msg->msg_data.info->rgSignerInfo[i].EncryptedHash.cbData);
+         &msg_data->info->rgSignerInfo[i].EncryptedHash.cbData);
         if (ret)
         {
-            msg->msg_data.info->rgSignerInfo[i].EncryptedHash.pbData =
+            msg_data->info->rgSignerInfo[i].EncryptedHash.pbData =
              CryptMemAlloc(
-             msg->msg_data.info->rgSignerInfo[i].EncryptedHash.cbData);
-            if (msg->msg_data.info->rgSignerInfo[i].EncryptedHash.pbData)
+             msg_data->info->rgSignerInfo[i].EncryptedHash.cbData);
+            if (msg_data->info->rgSignerInfo[i].EncryptedHash.pbData)
             {
                 ret = CryptSignHashW(hash, AT_SIGNATURE, NULL, 0,
-                 msg->msg_data.info->rgSignerInfo[i].EncryptedHash.pbData,
-                 &msg->msg_data.info->rgSignerInfo[i].EncryptedHash.cbData);
+                 msg_data->info->rgSignerInfo[i].EncryptedHash.pbData,
+                 &msg_data->info->rgSignerInfo[i].EncryptedHash.cbData);
                 if (ret)
                     CRYPT_ReverseBytes(
-                     &msg->msg_data.info->rgSignerInfo[i].EncryptedHash);
+                     &msg_data->info->rgSignerInfo[i].EncryptedHash);
             }
             else
                 ret = FALSE;
@@ -1100,9 +1100,10 @@ static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
         ret = CSignedMsgData_UpdateHash(&msg->msg_data, pbData, cbData);
         if (ret && fFinal)
         {
-            ret = CSignedEncodeMsg_UpdateAuthenticatedAttributes(msg);
+            ret = CSignedMsgData_UpdateAuthenticatedAttributes(
+             &msg->msg_data);
             if (ret)
-                ret = CSignedEncodeMsg_Sign(msg);
+                ret = CSignedMsgData_Sign(&msg->msg_data);
         }
         if (msg->base.streamed)
             FIXME("streamed partial stub\n");
@@ -1128,9 +1129,10 @@ static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             if (ret)
                 ret = CSignedMsgData_UpdateHash(&msg->msg_data, pbData, cbData);
             if (ret)
-                ret = CSignedEncodeMsg_UpdateAuthenticatedAttributes(msg);
+                ret = CSignedMsgData_UpdateAuthenticatedAttributes(
+                 &msg->msg_data);
             if (ret)
-                ret = CSignedEncodeMsg_Sign(msg);
+                ret = CSignedMsgData_Sign(&msg->msg_data);
         }
     }
     return ret;
