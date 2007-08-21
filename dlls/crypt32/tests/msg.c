@@ -2347,6 +2347,43 @@ static void test_msg_control(void)
     /* FIXME: need to test with a message with a valid signature and signer */
 }
 
+static void test_msg_get_signer_count(void)
+{
+    LONG count;
+
+    SetLastError(0xdeadbeef);
+    count = CryptGetMessageSignerCount(0, NULL, 0);
+    ok(count == -1, "Expected -1, got %d\n", count);
+    ok(GetLastError() == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n",
+     GetLastError());
+    SetLastError(0xdeadbeef);
+    count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING, NULL, 0);
+    ok(count == -1, "Expected -1, got %d\n", count);
+    ok(GetLastError() == CRYPT_E_ASN1_EOD,
+     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
+     dataEmptyBareContent, sizeof(dataEmptyBareContent));
+    ok(count == -1, "Expected -1, got %d\n", count);
+    ok(GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
+     dataEmptyContent, sizeof(dataEmptyContent));
+    ok(count == -1, "Expected -1, got %d\n", count);
+    ok(GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
+     signedEmptyBareContent, sizeof(signedEmptyBareContent));
+    ok(count == -1, "Expected -1, got %d\n", count);
+    ok(GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
+     signedEmptyContent, sizeof(signedEmptyContent));
+    ok(count == 1, "Expected 1, got %d\n", count);
+}
+
 START_TEST(msg)
 {
      init_function_pointers();
@@ -2363,4 +2400,7 @@ START_TEST(msg)
     test_hash_msg();
     test_signed_msg();
     test_decode_msg();
+
+    /* simplified message functions */
+    test_msg_get_signer_count();
 }

@@ -2286,3 +2286,25 @@ HCERTSTORE WINAPI CryptGetMessageCertificates(DWORD dwMsgAndCertEncodingType,
     return CertOpenStore(CERT_STORE_PROV_PKCS7, dwMsgAndCertEncodingType,
      hCryptProv, dwFlags, &blob);
 }
+
+LONG WINAPI CryptGetMessageSignerCount(DWORD dwMsgEncodingType,
+ const BYTE *pbSignedBlob, DWORD cbSignedBlob)
+{
+    HCRYPTMSG msg;
+    LONG count = -1;
+
+    TRACE("(%08x, %p, %d)\n", dwMsgEncodingType, pbSignedBlob, cbSignedBlob);
+
+    msg = CryptMsgOpenToDecode(dwMsgEncodingType, 0, 0, 0, NULL, NULL);
+    if (msg)
+    {
+        if (CryptMsgUpdate(msg, pbSignedBlob, cbSignedBlob, TRUE))
+        {
+            DWORD size = sizeof(count);
+
+            CryptMsgGetParam(msg, CMSG_SIGNER_COUNT_PARAM, 0, &count, &size);
+        }
+        CryptMsgClose(msg);
+    }
+    return count;
+}

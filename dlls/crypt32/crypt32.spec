@@ -123,7 +123,7 @@
 @ stdcall CryptGetDefaultOIDDllList(long long ptr ptr)
 @ stdcall CryptGetDefaultOIDFunctionAddress(long long wstr long ptr ptr)
 @ stdcall CryptGetMessageCertificates(long ptr long ptr long)
-@ stub CryptGetMessageSignerCount
+@ stdcall CryptGetMessageSignerCount(long ptr long)
 @ stdcall CryptGetOIDFunctionAddress(long long str long ptr ptr)
 @ stdcall CryptGetOIDFunctionValue(long str str wstr ptr ptr ptr)
 @ stdcall CryptHashCertificate(long long long ptr long ptr ptr)
