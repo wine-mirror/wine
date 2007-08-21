@@ -788,6 +788,11 @@ static void test_hash_msg_get_param(void)
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    /* For an encoded hash message, the hash data aren't available */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_HASH_DATA_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     /* The hash is also available. */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
@@ -801,6 +806,11 @@ static void test_hash_msg_get_param(void)
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(!ret && GetLastError() == NTE_BAD_HASH_STATE,
      "Expected NTE_BAD_HASH_STATE, got %x\n", GetLastError());
+    /* Even after a final update, the hash data aren't available */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_HASH_DATA_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     /* The version is also available, and should be zero for this message. */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, NULL, &size);

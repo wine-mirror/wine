@@ -464,7 +464,7 @@ static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         }
         break;
     default:
-        ret = FALSE;
+        SetLastError(CRYPT_E_INVALID_MSG_TYPE);
     }
     return ret;
 }
