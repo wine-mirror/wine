@@ -2273,3 +2273,16 @@ BOOL WINAPI CryptMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
      pvCtrlPara);
     return msg->control(hCryptMsg, dwFlags, dwCtrlType, pvCtrlPara);
 }
+
+HCERTSTORE WINAPI CryptGetMessageCertificates(DWORD dwMsgAndCertEncodingType,
+ HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags, const BYTE* pbSignedBlob,
+ DWORD cbSignedBlob)
+{
+    CRYPT_DATA_BLOB blob = { cbSignedBlob, (LPBYTE)pbSignedBlob };
+
+    TRACE("(%08x, %ld, %d08x %p, %d)\n", dwMsgAndCertEncodingType, hCryptProv,
+     dwFlags, pbSignedBlob, cbSignedBlob);
+
+    return CertOpenStore(CERT_STORE_PROV_PKCS7, dwMsgAndCertEncodingType,
+     hCryptProv, dwFlags, &blob);
+}
