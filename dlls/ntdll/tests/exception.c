@@ -537,7 +537,7 @@ static void test_exceptions(void)
 
     if (!pNtGetContextThread || !pNtSetContextThread)
     {
-        trace( "NtGetContextThread/NtSetContextThread not found, skipping tests\n" );
+        skip( "NtGetContextThread/NtSetContextThread not found\n" );
         return;
     }
 
@@ -797,19 +797,21 @@ static void test_simd_exceptions(void)
 START_TEST(exception)
 {
 #ifdef __i386__
-    pNtCurrentTeb = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtCurrentTeb" );
-    pNtGetContextThread  = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtGetContextThread" );
-    pNtSetContextThread  = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtSetContextThread" );
-    pNtReadVirtualMemory = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtReadVirtualMemory" );
-    pRtlRaiseException   = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "RtlRaiseException" );
-    pNtTerminateProcess  = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtTerminateProcess" );
-    pRtlAddVectoredExceptionHandler    = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"),
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+
+    pNtCurrentTeb        = (void *)GetProcAddress( hntdll, "NtCurrentTeb" );
+    pNtGetContextThread  = (void *)GetProcAddress( hntdll, "NtGetContextThread" );
+    pNtSetContextThread  = (void *)GetProcAddress( hntdll, "NtSetContextThread" );
+    pNtReadVirtualMemory = (void *)GetProcAddress( hntdll, "NtReadVirtualMemory" );
+    pRtlRaiseException   = (void *)GetProcAddress( hntdll, "RtlRaiseException" );
+    pNtTerminateProcess  = (void *)GetProcAddress( hntdll, "NtTerminateProcess" );
+    pRtlAddVectoredExceptionHandler    = (void *)GetProcAddress( hntdll,
                                                                  "RtlAddVectoredExceptionHandler" );
-    pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"),
+    pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll,
                                                                  "RtlRemoveVectoredExceptionHandler" );
     if (!pNtCurrentTeb)
     {
-        trace( "NtCurrentTeb not found, skipping tests\n" );
+        skip( "NtCurrentTeb not found\n" );
         return;
     }
 
