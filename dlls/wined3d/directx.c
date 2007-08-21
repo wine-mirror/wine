@@ -1889,7 +1889,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                       WINED3DPRASTERCAPS_ZFOG      |
                                       WINED3DPRASTERCAPS_FOGVERTEX |
                                       WINED3DPRASTERCAPS_FOGTABLE  |
-                                      WINED3DPRASTERCAPS_FOGRANGE  |
                                       WINED3DPRASTERCAPS_STIPPLE   |
                                       WINED3DPRASTERCAPS_SUBPIXEL  |
                                       WINED3DPRASTERCAPS_ZTEST     |
@@ -1901,6 +1900,9 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
       *pCaps->RasterCaps |= WINED3DPRASTERCAPS_ANISOTROPY    |
                             WINED3DPRASTERCAPS_ZBIAS         |
                             WINED3DPRASTERCAPS_MIPMAPLODBIAS;
+    }
+    if(GL_SUPPORT(NV_FOG_DISTANCE)) {
+        *pCaps->RasterCaps         |= WINED3DPRASTERCAPS_FOGRANGE;
     }
                         /* FIXME Add:
 			   WINED3DPRASTERCAPS_COLORPERSPECTIVE
