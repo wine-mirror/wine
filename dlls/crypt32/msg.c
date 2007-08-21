@@ -819,6 +819,18 @@ static void CSignedMsgData_CloseHandles(CSignedMsgData *msg_data)
     CryptMemFree(msg_data->signerHandles);
 }
 
+static BOOL CSignedMsgData_UpdateHash(CSignedMsgData *msg_data,
+ const BYTE *pbData, DWORD cbData)
+{
+    DWORD i;
+    BOOL ret = TRUE;
+
+    for (i = 0; ret && i < msg_data->info->cSignerInfo; i++)
+        ret = CryptHashData(msg_data->signerHandles[i].contentHash, pbData,
+         cbData, 0);
+    return ret;
+}
+
 static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
 {
     CSignedEncodeMsg *msg = (CSignedEncodeMsg *)hCryptMsg;
@@ -925,20 +937,6 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     default:
         SetLastError(CRYPT_E_INVALID_MSG_TYPE);
     }
-    return ret;
-}
-
-static BOOL CSignedEncodeMsg_UpdateHash(CSignedEncodeMsg *msg,
- const BYTE *pbData, DWORD cbData)
-{
-    DWORD i;
-    BOOL ret = TRUE;
-
-    TRACE("(%p, %p, %d)\n", msg, pbData, cbData);
-
-    for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
-        ret = CryptHashData(msg->msg_data.signerHandles[i].contentHash, pbData,
-         cbData, 0);
     return ret;
 }
 
@@ -1099,7 +1097,7 @@ static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 
     if (msg->base.streamed || (msg->base.open_flags & CMSG_DETACHED_FLAG))
     {
-        ret = CSignedEncodeMsg_UpdateHash(msg, pbData, cbData);
+        ret = CSignedMsgData_UpdateHash(&msg->msg_data, pbData, cbData);
         if (ret && fFinal)
         {
             ret = CSignedEncodeMsg_UpdateAuthenticatedAttributes(msg);
@@ -1128,7 +1126,7 @@ static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             else
                 ret = TRUE;
             if (ret)
-                ret = CSignedEncodeMsg_UpdateHash(msg, pbData, cbData);
+                ret = CSignedMsgData_UpdateHash(&msg->msg_data, pbData, cbData);
             if (ret)
                 ret = CSignedEncodeMsg_UpdateAuthenticatedAttributes(msg);
             if (ret)
