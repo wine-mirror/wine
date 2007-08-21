@@ -5505,7 +5505,8 @@ static void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWOR
         IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture_impl);
     }
 
-    GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, texttarget, surface_impl->glDescription.textureName, 0));
+    GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, texttarget,
+            surface_impl->glDescription.textureName, surface_impl->glDescription.level));
 
     checkGLcall("attach_surface_fbo");
 }
@@ -5742,7 +5743,8 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
                 IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture_impl);
             }
 
-            GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, texttarget, depth_stencil_impl->glDescription.textureName, 0));
+            GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, texttarget,
+                    depth_stencil_impl->glDescription.textureName, depth_stencil_impl->glDescription.level));
             checkGLcall("glFramebufferTexture2DEXT()");
         }
     } else {
