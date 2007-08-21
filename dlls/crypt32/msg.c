@@ -722,23 +722,38 @@ static BOOL CRYPT_ConstructAttributes(CRYPT_ATTRIBUTES *out,
     return ret;
 }
 
+/* Constructs a CSignerHandles with a copy of crypt_prov (not add-ref'ed - the
+ * caller must do this if necessary), a hash handle based on HashAlgorithm, and
+ * an authenticated attributes hash handle if hasAuthAttrs is TRUE.
+ */
+static BOOL CSignerHandles_Construct(CSignerHandles *handles,
+ HCRYPTPROV crypt_prov, CRYPT_ALGORITHM_IDENTIFIER *HashAlgorithm,
+ BOOL hasAuthAttrs)
+{
+    ALG_ID algID;
+    BOOL ret;
+
+    handles->prov = crypt_prov;
+    algID = CertOIDToAlgId(HashAlgorithm->pszObjId);
+    ret = CryptCreateHash(handles->prov, algID, 0, 0, &handles->contentHash);
+    if (ret && hasAuthAttrs)
+        ret = CryptCreateHash(handles->prov, algID, 0, 0,
+         &handles->authAttrHash);
+    return ret;
+}
+
 /* Constructs both a CSignerHandles and a CMSG_SIGNER_INFO from a
  * CMSG_SIGNER_ENCODE_INFO_WITH_CMS.
  */
 static BOOL CSignerInfo_Construct(CSignerHandles *handles,
  CMSG_SIGNER_INFO *info, CMSG_SIGNER_ENCODE_INFO_WITH_CMS *in, DWORD open_flags)
 {
-    ALG_ID algID;
     BOOL ret;
 
-    handles->prov = in->hCryptProv;
     if (!(open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG))
-        CryptContextAddRef(handles->prov, NULL, 0);
-    algID = CertOIDToAlgId(in->HashAlgorithm.pszObjId);
-    ret = CryptCreateHash(handles->prov, algID, 0, 0, &handles->contentHash);
-    if (ret && in->cAuthAttr)
-        ret = CryptCreateHash(handles->prov, algID, 0, 0,
-         &handles->authAttrHash);
+        CryptContextAddRef(in->hCryptProv, NULL, 0);
+    ret = CSignerHandles_Construct(handles, in->hCryptProv, &in->HashAlgorithm,
+     in->cAuthAttr > 0);
     if (ret)
     {
         /* Note: needs to change if CMS fields are supported */
