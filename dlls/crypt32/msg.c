@@ -1278,8 +1278,8 @@ typedef struct _CDecodeMsg
     DWORD                  type;
     HCRYPTPROV             crypt_prov;
     union {
-        HCRYPTHASH             hash;
-        CRYPT_SIGNED_INFO     *signedInfo;
+        HCRYPTHASH     hash;
+        CSignedMsgData signed_data;
     } u;
     CRYPT_DATA_BLOB        msg_data;
     PCONTEXT_PROPERTY_LIST properties;
@@ -1298,7 +1298,8 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
             CryptDestroyHash(msg->u.hash);
         break;
     case CMSG_SIGNED:
-        LocalFree(msg->u.signedInfo);
+        if (msg->u.signed_data.info)
+            LocalFree(msg->u.signed_data.info);
         break;
     }
     CryptMemFree(msg->msg_data.pbData);
@@ -1433,7 +1434,7 @@ static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
      CRYPT_DECODE_ALLOC_FLAG, NULL, (CRYPT_SIGNED_INFO *)&signedInfo,
      &size);
     if (ret)
-        msg->u.signedInfo = signedInfo;
+        msg->u.signed_data.info = signedInfo;
     return ret;
 }
 /* Decodes the content in blob as the type given, and updates the value
@@ -1778,16 +1779,17 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
         ret = CRYPT_CopyParam(pvData, pcbData, &msg->type, sizeof(msg->type));
         break;
     case CMSG_CONTENT_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
         {
-            if (!strcmp(msg->u.signedInfo->content.pszObjId, szOID_RSA_data))
+            if (!strcmp(msg->u.signed_data.info->content.pszObjId,
+             szOID_RSA_data))
             {
                 CRYPT_DATA_BLOB *blob;
                 DWORD size;
 
                 ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
-                 msg->u.signedInfo->content.Content.pbData,
-                 msg->u.signedInfo->content.Content.cbData,
+                 msg->u.signed_data.info->content.Content.pbData,
+                 msg->u.signed_data.info->content.Content.cbData,
                  CRYPT_DECODE_ALLOC_FLAG, NULL, (LPBYTE)&blob, &size);
                 if (ret)
                 {
@@ -1798,93 +1800,93 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
             }
             else
                 ret = CRYPT_CopyParam(pvData, pcbData,
-                 msg->u.signedInfo->content.Content.pbData,
-                 msg->u.signedInfo->content.Content.cbData);
+                 msg->u.signed_data.info->content.Content.pbData,
+                 msg->u.signed_data.info->content.Content.cbData);
         }
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_INNER_CONTENT_TYPE_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
             ret = CRYPT_CopyParam(pvData, pcbData,
-             msg->u.signedInfo->content.pszObjId,
-             strlen(msg->u.signedInfo->content.pszObjId) + 1);
+             msg->u.signed_data.info->content.pszObjId,
+             strlen(msg->u.signed_data.info->content.pszObjId) + 1);
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_SIGNER_COUNT_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
             ret = CRYPT_CopyParam(pvData, pcbData,
-             &msg->u.signedInfo->cSignerInfo, sizeof(DWORD));
+             &msg->u.signed_data.info->cSignerInfo, sizeof(DWORD));
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_SIGNER_INFO_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
         {
-            if (dwIndex >= msg->u.signedInfo->cSignerInfo)
+            if (dwIndex >= msg->u.signed_data.info->cSignerInfo)
                 SetLastError(CRYPT_E_INVALID_INDEX);
             else
                 ret = CRYPT_CopySignerInfo(pvData, pcbData,
-                 &msg->u.signedInfo->rgSignerInfo[dwIndex]);
+                 &msg->u.signed_data.info->rgSignerInfo[dwIndex]);
         }
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_SIGNER_CERT_INFO_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
         {
-            if (dwIndex >= msg->u.signedInfo->cSignerInfo)
+            if (dwIndex >= msg->u.signed_data.info->cSignerInfo)
                 SetLastError(CRYPT_E_INVALID_INDEX);
             else
                 ret = CRYPT_CopySignerCertInfo(pvData, pcbData,
-                 &msg->u.signedInfo->rgSignerInfo[dwIndex]);
+                 &msg->u.signed_data.info->rgSignerInfo[dwIndex]);
         }
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_CERT_COUNT_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
             ret = CRYPT_CopyParam(pvData, pcbData,
-             &msg->u.signedInfo->cCertEncoded, sizeof(DWORD));
+             &msg->u.signed_data.info->cCertEncoded, sizeof(DWORD));
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_CERT_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
         {
-            if (dwIndex >= msg->u.signedInfo->cCertEncoded)
+            if (dwIndex >= msg->u.signed_data.info->cCertEncoded)
                 SetLastError(CRYPT_E_INVALID_INDEX);
             else
                 ret = CRYPT_CopyParam(pvData, pcbData,
-                 msg->u.signedInfo->rgCertEncoded[dwIndex].pbData,
-                 msg->u.signedInfo->rgCertEncoded[dwIndex].cbData);
+                 msg->u.signed_data.info->rgCertEncoded[dwIndex].pbData,
+                 msg->u.signed_data.info->rgCertEncoded[dwIndex].cbData);
         }
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_CRL_COUNT_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
             ret = CRYPT_CopyParam(pvData, pcbData,
-             &msg->u.signedInfo->cCrlEncoded, sizeof(DWORD));
+             &msg->u.signed_data.info->cCrlEncoded, sizeof(DWORD));
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_CRL_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
         {
-            if (dwIndex >= msg->u.signedInfo->cCrlEncoded)
+            if (dwIndex >= msg->u.signed_data.info->cCrlEncoded)
                 SetLastError(CRYPT_E_INVALID_INDEX);
             else
                 ret = CRYPT_CopyParam(pvData, pcbData,
-                 msg->u.signedInfo->rgCrlEncoded[dwIndex].pbData,
-                 msg->u.signedInfo->rgCrlEncoded[dwIndex].cbData);
+                 msg->u.signed_data.info->rgCrlEncoded[dwIndex].pbData,
+                 msg->u.signed_data.info->rgCrlEncoded[dwIndex].cbData);
         }
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_ATTR_CERT_COUNT_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
         {
             DWORD attrCertCount = 0;
 
@@ -1895,7 +1897,7 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_ATTR_CERT_PARAM:
-        if (msg->u.signedInfo)
+        if (msg->u.signed_data.info)
             SetLastError(CRYPT_E_INVALID_INDEX);
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
