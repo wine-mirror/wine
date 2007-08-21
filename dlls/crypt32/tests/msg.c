@@ -2132,7 +2132,6 @@ static void test_msg_control(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
-        todo_wine
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
     }
@@ -2141,7 +2140,6 @@ static void test_msg_control(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
-        todo_wine
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
     }
@@ -2157,7 +2155,6 @@ static void test_msg_control(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
-        todo_wine
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
     }
@@ -2167,7 +2164,6 @@ static void test_msg_control(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
-        todo_wine
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
     }
@@ -2182,7 +2178,6 @@ static void test_msg_control(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
-        todo_wine
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
     }
@@ -2192,7 +2187,6 @@ static void test_msg_control(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
-        todo_wine
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
     }
@@ -2247,13 +2241,13 @@ static void test_msg_control(void)
      TRUE);
     /* Oddly enough, this fails */
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
-    todo_wine
     ok(!ret, "Expected failure\n");
     CryptMsgClose(msg);
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
      NULL);
     CryptMsgUpdate(msg, hashBareContent, sizeof(hashBareContent), TRUE);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+    todo_wine
     ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
     /* Can't decrypt an indeterminate-type message */
     SetLastError(0xdeadbeef);

@@ -38,6 +38,17 @@ typedef BOOL (*CryptMsgGetParamFunc)(HCRYPTMSG hCryptMsg, DWORD dwParamType,
 typedef BOOL (*CryptMsgUpdateFunc)(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal);
 
+typedef BOOL (*CryptMsgControlFunc)(HCRYPTMSG hCryptMsg, DWORD dwFlags,
+ DWORD dwCtrlType, const void *pvCtrlPara);
+
+BOOL CRYPT_DefaultMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
+ DWORD dwCtrlType, const void *pvCtrlPara)
+{
+    TRACE("(%p, %08x, %d, %p)\n", hCryptMsg, dwFlags, dwCtrlType, pvCtrlPara);
+    SetLastError(E_INVALIDARG);
+    return FALSE;
+}
+
 typedef enum _CryptMsgState {
     MsgStateInit,
     MsgStateUpdated,
@@ -54,11 +65,13 @@ typedef struct _CryptMsgBase
     CryptMsgCloseFunc    close;
     CryptMsgUpdateFunc   update;
     CryptMsgGetParamFunc get_param;
+    CryptMsgControlFunc  control;
 } CryptMsgBase;
 
 static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags,
  PCMSG_STREAM_INFO pStreamInfo, CryptMsgCloseFunc close,
- CryptMsgGetParamFunc get_param, CryptMsgUpdateFunc update)
+ CryptMsgGetParamFunc get_param, CryptMsgUpdateFunc update,
+ CryptMsgControlFunc control)
 {
     msg->ref = 1;
     msg->open_flags = dwFlags;
@@ -75,6 +88,7 @@ static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags,
     msg->close = close;
     msg->get_param = get_param;
     msg->update = update;
+    msg->control = control;
     msg->state = MsgStateInit;
 }
 
@@ -313,7 +327,8 @@ static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
     if (msg)
     {
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
-         CDataEncodeMsg_Close, CDataEncodeMsg_GetParam, CDataEncodeMsg_Update);
+         CDataEncodeMsg_Close, CDataEncodeMsg_GetParam, CDataEncodeMsg_Update,
+         CRYPT_DefaultMsgControl);
         msg->bare_content_len = sizeof(empty_data_content);
         msg->bare_content = (LPBYTE)empty_data_content;
     }
@@ -522,7 +537,8 @@ static HCRYPTMSG CHashEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
     if (msg)
     {
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
-         CHashEncodeMsg_Close, CHashEncodeMsg_GetParam, CHashEncodeMsg_Update);
+         CHashEncodeMsg_Close, CHashEncodeMsg_GetParam, CHashEncodeMsg_Update,
+         CRYPT_DefaultMsgControl);
         msg->prov = prov;
         msg->data.cbData = 0;
         msg->data.pbData = NULL;
@@ -1132,7 +1148,7 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
 
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
          CSignedEncodeMsg_Close, CSignedEncodeMsg_GetParam,
-         CSignedEncodeMsg_Update);
+         CSignedEncodeMsg_Update, CRYPT_DefaultMsgControl);
         msg->data.cbData = 0;
         msg->data.pbData = NULL;
         memset(&msg->info, 0, sizeof(msg->info));
@@ -1928,7 +1944,8 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
     if (msg)
     {
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
-         CDecodeMsg_Close, CDecodeMsg_GetParam, CDecodeMsg_Update);
+         CDecodeMsg_Close, CDecodeMsg_GetParam, CDecodeMsg_Update,
+         CRYPT_DefaultMsgControl);
         msg->type = dwMsgType;
         if (hCryptProv)
             msg->crypt_prov = hCryptProv;
@@ -2010,7 +2027,9 @@ BOOL WINAPI CryptMsgGetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
 BOOL WINAPI CryptMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
  DWORD dwCtrlType, const void *pvCtrlPara)
 {
-    FIXME("(%p, %08x, %d, %p): stub\n", hCryptMsg, dwFlags, dwCtrlType,
+    CryptMsgBase *msg = (CryptMsgBase *)hCryptMsg;
+
+    TRACE("(%p, %08x, %d, %p)\n", hCryptMsg, dwFlags, dwCtrlType,
      pvCtrlPara);
-    return TRUE;
+    return msg->control(hCryptMsg, dwFlags, dwCtrlType, pvCtrlPara);
 }
