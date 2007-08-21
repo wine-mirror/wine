@@ -980,9 +980,6 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCaps(
 	}
 
 	caps->dwFlags = device->dsbd.dwFlags;
-	if (device->hwbuf) caps->dwFlags |= DSBCAPS_LOCHARDWARE;
-	else caps->dwFlags |= DSBCAPS_LOCSOFTWARE;
-
 	caps->dwBufferBytes = device->buflen;
 
 	/* Windows reports these as zero */

@@ -1594,6 +1594,10 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
             *ppdsb = (LPDIRECTSOUNDBUFFER)(device->primary);
         } else {
            device->dsbd = *dsbd;
+           device->dsbd.dwFlags &= ~(DSBCAPS_LOCHARDWARE | DSBCAPS_LOCSOFTWARE);
+           if (device->hwbuf)
+               device->dsbd.dwFlags |= DSBCAPS_LOCHARDWARE;
+           else device->dsbd.dwFlags |= DSBCAPS_LOCSOFTWARE;
            hres = PrimaryBufferImpl_Create(device, (PrimaryBufferImpl**)&(device->primary), &(device->dsbd));
            if (device->primary) {
                IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(device->primary));
