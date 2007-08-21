@@ -583,48 +583,55 @@ static unsigned short get_joystick_index(REFGUID guid)
 
 static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
 {
-  unsigned short index;
+    unsigned short index;
 
-  if ((index = get_joystick_index(rguid)) < MAX_JOYSTICKS) {
-    if ((riid == NULL) ||
-	IsEqualGUID(&IID_IDirectInputDeviceA,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
-      return alloc_device(rguid, &JoystickAvt, dinput, pdev, index);
-    } else {
-      WARN("no interface\n");
-      *pdev = 0;
-      return DIERR_NOINTERFACE;
+    find_joystick_devices();
+    *pdev = NULL;
+
+    if ((index = get_joystick_index(rguid)) < MAX_JOYSTICKS &&
+        joystick_devices_count && index < joystick_devices_count)
+    {
+        if ((riid == NULL) ||
+	    IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
+	    IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
+	    IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
+	    IsEqualGUID(&IID_IDirectInputDevice8A, riid))
+        {
+            return alloc_device(rguid, &JoystickAvt, dinput, pdev, index);
+        }
+
+        WARN("no interface\n");
+        return DIERR_NOINTERFACE;
     }
-  }
 
-  WARN("invalid device GUID\n");
-  *pdev = 0;
-  return DIERR_DEVICENOTREG;
+    WARN("invalid device GUID\n");
+    return DIERR_DEVICENOTREG;
 }
 
 static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEW* pdev)
 {
-  unsigned short index;
+    unsigned short index;
 
-  if ((index = get_joystick_index(rguid)) < MAX_JOYSTICKS) {
-    if ((riid == NULL) ||
-	IsEqualGUID(&IID_IDirectInputDeviceW,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice2W,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice7W,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
-      return alloc_device(rguid, &JoystickWvt, dinput, (LPDIRECTINPUTDEVICEA *)pdev, index);
-    } else {
-      WARN("no interface\n");
-      *pdev = 0;
-      return DIERR_NOINTERFACE;
+    find_joystick_devices();
+    *pdev = NULL;
+
+    if ((index = get_joystick_index(rguid)) < MAX_JOYSTICKS &&
+        joystick_devices_count && index < joystick_devices_count)
+    {
+        if ((riid == NULL) ||
+	    IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
+	    IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
+	    IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
+	    IsEqualGUID(&IID_IDirectInputDevice8W, riid))
+        {
+            return alloc_device(rguid, &JoystickWvt, dinput, (LPDIRECTINPUTDEVICEA *)pdev, index);
+        }
+        WARN("no interface\n");
+        return DIERR_NOINTERFACE;
     }
-  }
 
-  WARN("invalid device GUID\n");
-  *pdev = 0;
-  return DIERR_DEVICENOTREG;
+    WARN("invalid device GUID\n");
+    return DIERR_DEVICENOTREG;
 }
 
 #undef MAX_JOYSTICKS
