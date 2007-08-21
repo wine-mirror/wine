@@ -772,7 +772,6 @@ static void CSignerInfo_Free(CMSG_SIGNER_INFO *info)
 
 typedef struct _CSignerHandles
 {
-    HCRYPTPROV prov;
     HCRYPTHASH contentHash;
     HCRYPTHASH authAttrHash;
     HCRYPTKEY  key;
@@ -791,8 +790,7 @@ typedef struct _CSignedEncodeMsg
     CSignedMsgData  msg_data;
 } CSignedEncodeMsg;
 
-/* Constructs a CSignerHandles with a copy of crypt_prov (not add-ref'ed - the
- * caller must do this if necessary), a hash handle based on HashAlgorithm, and
+/* Constructs a CSignerHandles with a hash handle based on HashAlgorithm, and
  * an authenticated attributes hash handle if hasAuthAttrs is TRUE.
  */
 static BOOL CSignerHandles_Construct(CSignerHandles *handles,
@@ -802,12 +800,10 @@ static BOOL CSignerHandles_Construct(CSignerHandles *handles,
     ALG_ID algID;
     BOOL ret;
 
-    handles->prov = crypt_prov;
     algID = CertOIDToAlgId(HashAlgorithm->pszObjId);
-    ret = CryptCreateHash(handles->prov, algID, 0, 0, &handles->contentHash);
+    ret = CryptCreateHash(crypt_prov, algID, 0, 0, &handles->contentHash);
     if (ret && hasAuthAttrs)
-        ret = CryptCreateHash(handles->prov, algID, 0, 0,
-         &handles->authAttrHash);
+        ret = CryptCreateHash(crypt_prov, algID, 0, 0, &handles->authAttrHash);
     return ret;
 }
 
@@ -820,7 +816,6 @@ static void CSignedMsgData_CloseHandles(CSignedMsgData *msg_data)
         CryptDestroyKey(msg_data->signerHandles[i].key);
         CryptDestroyHash(msg_data->signerHandles[i].contentHash);
         CryptDestroyHash(msg_data->signerHandles[i].authAttrHash);
-        CryptReleaseContext(msg_data->signerHandles[i].prov, 0);
     }
     CryptMemFree(msg_data->signerHandles);
 }
@@ -1214,14 +1209,14 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
                      &info->rgSigners[i]);
                     if (ret)
                     {
-                        if (!(dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG))
-                            CryptContextAddRef(info->rgSigners[i].hCryptProv,
-                             NULL, 0);
                         ret = CSignerHandles_Construct(
                          &msg->msg_data.signerHandles[i],
                          info->rgSigners[i].hCryptProv,
                          &info->rgSigners[i].HashAlgorithm,
                          info->rgSigners[i].cAuthAttr > 0);
+                        if (dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
+                            CryptReleaseContext(info->rgSigners[i].hCryptProv,
+                             0);
                     }
                 }
             }
