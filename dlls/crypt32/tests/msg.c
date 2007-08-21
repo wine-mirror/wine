@@ -2098,6 +2098,253 @@ static void test_decode_msg(void)
     test_decode_msg_get_param();
 }
 
+static BYTE aKey[] = { 0,1,2,3,4,5,6,7,8,9,0xa,0xb,0xc,0xd,0xe,0xf };
+/* aKey encoded as a X509_PUBLIC_KEY_INFO */
+static BYTE encodedPubKey[] = {
+0x30,0x1f,0x30,0x0a,0x06,0x06,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x05,0x00,0x03,
+0x11,0x00,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,
+0x0d,0x0e,0x0f };
+/* a weird modulus encoded as RSA_CSP_PUBLICKEYBLOB */
+static BYTE mod_encoded[] = {
+ 0x30,0x10,0x02,0x09,0x00,0x80,0x00,0x00,0x01,0x01,0x01,0x01,0x01,0x02,0x03,
+ 0x01,0x00,0x01 };
+
+static void test_msg_control(void)
+{
+    static char oid_rsa_rsa[] = szOID_RSA_RSA;
+    BOOL ret;
+    HCRYPTMSG msg;
+    DWORD i;
+    CERT_INFO certInfo = { 0 };
+    CMSG_HASHED_ENCODE_INFO hashInfo = { 0 };
+    CMSG_SIGNED_ENCODE_INFO signInfo = { sizeof(signInfo), 0 };
+    CMSG_CTRL_DECRYPT_PARA decryptPara = { sizeof(decryptPara), 0 };
+
+    /* Crashes
+    ret = CryptMsgControl(NULL, 0, 0, NULL);
+    */
+
+    /* Data encode messages don't allow any sort of control.. */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
+     NULL);
+    /* either with no prior update.. */
+    for (i = 1; i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO; i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, i, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    }
+    /* or after an update. */
+    for (i = 1; i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO; i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, i, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    }
+    CryptMsgClose(msg);
+
+    /* Hash encode messages don't allow any sort of control.. */
+    hashInfo.cbSize = sizeof(hashInfo);
+    hashInfo.HashAlgorithm.pszObjId = oid_rsa_md5;
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, NULL);
+    /* either with no prior update.. */
+    for (i = 1; i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO; i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, i, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    }
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    /* or after an update. */
+    for (i = 1; i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO; i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, i, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    }
+    CryptMsgClose(msg);
+
+    /* Signed encode messages likewise don't allow any sort of control.. */
+    signInfo.cbSize = sizeof(signInfo);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    /* either before an update.. */
+    for (i = 1; i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO; i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, i, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    }
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    /* or after an update. */
+    for (i = 1; i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO; i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, i, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    }
+    CryptMsgClose(msg);
+
+    /* Decode messages behave a bit differently. */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    /* Bad control type */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_CONTROL_TYPE,
+     "Expected CRYPT_E_CONTROL_TYPE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 1, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_CONTROL_TYPE,
+     "Expected CRYPT_E_CONTROL_TYPE, got %08x\n", GetLastError());
+    /* Can't verify the hash of an indeterminate-type message */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    /* Crashes
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, NULL);
+     */
+    /* Can't decrypt an indeterminate-type message */
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
+     NULL);
+    /* Can't verify the hash of an empty message */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    /* Crashes
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, NULL);
+     */
+    /* Can't verify the signature of a hash message */
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    CryptMsgUpdate(msg, hashEmptyBareContent, sizeof(hashEmptyBareContent),
+     TRUE);
+    /* Oddly enough, this fails */
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+    todo_wine
+    ok(!ret, "Expected failure\n");
+    CryptMsgClose(msg);
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
+     NULL);
+    CryptMsgUpdate(msg, hashBareContent, sizeof(hashBareContent), TRUE);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+    ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
+    /* Can't decrypt an indeterminate-type message */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, 0, NULL,
+     NULL);
+    /* Can't verify the hash of a signed message */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    /* Can't decrypt a signed message */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    /* Crash
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, NULL);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+     */
+    CryptMsgUpdate(msg, signedWithCertBareContent,
+     sizeof(signedWithCertBareContent), TRUE);
+    /* With an empty cert info, the signer can't be found in the message (and
+     * the signature can't be verified.
+     */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_SIGNER_NOT_FOUND,
+     "Expected CRYPT_E_SIGNER_NOT_FOUND, got %08x\n", GetLastError());
+    /* The cert info is expected to have an issuer, serial number, and public
+     * key info set.
+     */
+    certInfo.SerialNumber.cbData = sizeof(serialNum);
+    certInfo.SerialNumber.pbData = serialNum;
+    certInfo.Issuer.cbData = sizeof(encodedCommonName);
+    certInfo.Issuer.pbData = encodedCommonName;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* This cert has a public key, but it's not in a usable form */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, 0, NULL,
+     NULL);
+    CryptMsgUpdate(msg, signedWithCertWithPubKeyBareContent,
+     sizeof(signedWithCertWithPubKeyBareContent), TRUE);
+    /* Again, cert info needs to have a public key set */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    /* The public key is supposed to be in encoded form.. */
+    certInfo.SubjectPublicKeyInfo.Algorithm.pszObjId = oid_rsa_rsa;
+    certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(aKey);
+    certInfo.SubjectPublicKeyInfo.PublicKey.pbData = aKey;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    /* but not as a X509_PUBLIC_KEY_INFO.. */
+    certInfo.SubjectPublicKeyInfo.Algorithm.pszObjId = NULL;
+    certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(encodedPubKey);
+    certInfo.SubjectPublicKeyInfo.PublicKey.pbData = encodedPubKey;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    /* This decodes successfully, but it doesn't match any key in the message */
+    certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(mod_encoded);
+    certInfo.SubjectPublicKeyInfo.PublicKey.pbData = mod_encoded;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+    todo_wine
+    ok(!ret && GetLastError() == NTE_BAD_SIGNATURE,
+     "Expected NTE_BAD_SIGNATURE, got %08x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* FIXME: need to test with a message with a valid signature and signer */
+}
+
 START_TEST(msg)
 {
      init_function_pointers();
@@ -2107,6 +2354,7 @@ START_TEST(msg)
     test_msg_open_to_decode();
     test_msg_get_param();
     test_msg_close();
+    test_msg_control();
 
     /* Message-type specific tests */
     test_data_msg();
