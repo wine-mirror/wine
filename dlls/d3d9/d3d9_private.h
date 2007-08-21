@@ -155,6 +155,8 @@ typedef struct IDirect3D9Impl
 
 } IDirect3D9Impl;
 
+void filter_caps(D3DCAPS9* pCaps);
+
 /* ---------------- */
 /* IDirect3DDevice9 */
 /* ---------------- */

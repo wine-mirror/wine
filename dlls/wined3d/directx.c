@@ -1974,8 +1974,12 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                            WINED3DPTEXTURECAPS_BORDER             |
                            WINED3DPTEXTURECAPS_MIPMAP             |
                            WINED3DPTEXTURECAPS_PROJECTED          |
-                           WINED3DPTEXTURECAPS_PERSPECTIVE        |
-                           WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL;
+                           WINED3DPTEXTURECAPS_PERSPECTIVE;
+
+    if( !GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {
+        *pCaps->TextureCaps |= WINED3DPTEXTURECAPS_POW2 |
+                                WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL;
+    }
 
     if( GL_SUPPORT(EXT_TEXTURE3D)) {
         *pCaps->TextureCaps |=  WINED3DPTEXTURECAPS_VOLUMEMAP      |
