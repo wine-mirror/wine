@@ -1963,6 +1963,41 @@ static BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
     return TRUE;
 }
 
+static inline void clear_unused_channels(IWineD3DSurfaceImpl *This) {
+    GLboolean oldwrite[4];
+
+    /* Some formats have only some color channels, and the others are 1.0.
+     * since our rendering renders to all channels, and those pixel formats
+     * are emulated by using a full texture with the other channels set to 1.0
+     * manually, clear the unused channels.
+     *
+     * This could be done with hacking colorwriteenable to mask the colors,
+     * but before drawing the buffer would have to be cleared too, so there's
+     * no gain in that
+     */
+    switch(This->resource.format) {
+        case WINED3DFMT_R16F:
+        case WINED3DFMT_R32F:
+            TRACE("R16F or R32F format, clearing green, blue and alpha to 1.0\n");
+            /* Do not activate a context, the correct drawable is active already
+             * though just the read buffer is set, make sure to have the correct draw
+             * buffer too
+             */
+            glDrawBuffer(This->resource.wineD3DDevice->offscreenBuffer);
+            glDisable(GL_SCISSOR_TEST);
+            glGetBooleanv(GL_COLOR_WRITEMASK, oldwrite);
+            glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
+            glClearColor(0.0, 1.0, 1.0, 1.0);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glColorMask(oldwrite[0], oldwrite[1], oldwrite[2], oldwrite[3]);
+            if(!This->resource.wineD3DDevice->render_offscreen) glDrawBuffer(GL_BACK);
+            checkGLcall("Unused channel clear\n");
+            break;
+
+        default: break;
+    }
+}
+
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BOOL srgb_mode) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
@@ -2026,6 +2061,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
                 surface_allocate_surface(This, internal, This->pow2Width,
                                          This->pow2Height, format, type);
             }
+
+            clear_unused_channels(This);
 
             glCopyTexSubImage2D(This->glDescription.target,
                                 This->glDescription.level,
