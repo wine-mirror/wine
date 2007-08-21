@@ -166,11 +166,12 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
         /* if year is 0 then date is in day-of-week format, otherwise
          * it's absolute date.
          */
-        if (pTZinfo->StandardDate.wYear == 0 &&
+        if (pTZinfo->StandardDate.wMonth == 0 ||
+            (pTZinfo->StandardDate.wYear == 0 &&
             (pTZinfo->StandardDate.wDay<1 ||
             pTZinfo->StandardDate.wDay>5 ||
             pTZinfo->DaylightDate.wDay<1 ||
-            pTZinfo->DaylightDate.wDay>5))
+            pTZinfo->DaylightDate.wDay>5)))
         {
             SetLastError(ERROR_INVALID_PARAMETER);
             return TIME_ZONE_ID_INVALID;
