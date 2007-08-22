@@ -528,15 +528,9 @@ static DWORD get_dpi( void )
  *
  * Increment the reference count of a GDI object.
  */
-static inline void inc_ref_count( HGDIOBJ handle )
+static inline void inc_ref_count( GDIOBJHDR *header )
 {
-    GDIOBJHDR *header;
-
-    if ((header = GDI_GetObjPtr( handle, MAGIC_DONTCARE )))
-    {
-        header->dwCount++;
-        GDI_ReleaseObj( handle );
-    }
+    header->dwCount++;
 }
 
 
@@ -829,7 +823,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
         {
             if(dc->funcs->pDeleteObject)
                 dc->funcs->pDeleteObject( dc->physDev, obj );
-            GDI_ReleaseObj( header->hdcs->hdc );
+            DC_ReleaseDCPtr( dc );
         }
         tmp = header->hdcs;
         header->hdcs = header->hdcs->next;
@@ -1159,7 +1153,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
                 ret = header->funcs->pSelectObject( hObj, header, hdc );
                 if (ret && ret != hObj && HandleToULong(ret) > COMPLEXREGION)
                 {
-                    inc_ref_count( hObj );
+                    inc_ref_count( header );
                     dec_ref_count( ret );
                 }
             }

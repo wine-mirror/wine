@@ -200,7 +200,7 @@ BOOL DC_FreeDCPtr( DC *dc )
  */
 static BOOL DC_DeleteObject( HGDIOBJ handle, void *obj )
 {
-    DC_ReleaseDCPtr( obj );
+    GDI_ReleaseObj( handle );
     return DeleteDC( handle );
 }
 
@@ -740,25 +740,23 @@ HDC WINAPI CreateICW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 HDC WINAPI CreateCompatibleDC( HDC hdc )
 {
     DC *dc, *origDC;
-    const DC_FUNCTIONS *funcs;
-    PHYSDEV physDev;
+    const DC_FUNCTIONS *funcs = NULL;
+    PHYSDEV physDev = NULL;
 
     GDI_CheckNotLock();
 
-    if ((origDC = GDI_GetObjPtr( hdc, DC_MAGIC )))
+    if ((origDC = DC_GetDCPtr( hdc )))
     {
-        funcs = origDC->funcs;
-        physDev = origDC->physDev;
+        if (GetObjectType( hdc ) == OBJ_DC)
+        {
+            funcs = origDC->funcs;
+            physDev = origDC->physDev;
+        }
         DC_ReleaseDCPtr( origDC ); /* can't hold the lock while loading the driver */
-        funcs = DRIVER_get_driver( funcs );
-    }
-    else
-    {
-        funcs = DRIVER_load_driver( displayW );
-        physDev = NULL;
+        if (funcs) funcs = DRIVER_get_driver( funcs );
     }
 
-    if (!funcs) return 0;
+    if (!funcs && !(funcs = DRIVER_load_driver( displayW ))) return 0;
 
     if (!(dc = DC_AllocDC( funcs, MEMORY_DC_MAGIC ))) goto error;
 
