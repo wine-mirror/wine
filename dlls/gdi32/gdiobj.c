@@ -1448,8 +1448,8 @@ BOOL WINAPI GdiComment(HDC hdc, UINT cbSize, const BYTE *lpData)
     {
         if (dc->funcs->pGdiComment)
             ret = dc->funcs->pGdiComment( dc->physDev, cbSize, lpData );
+        DC_ReleaseDCPtr( dc );
     }
-    DC_ReleaseDCPtr( dc );
     return ret;
 }
 
