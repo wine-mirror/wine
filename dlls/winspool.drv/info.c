@@ -470,31 +470,35 @@ static BOOL add_printer_driver(const char *name)
 {
     DRIVER_INFO_3A di3a;
 
-    static char driver_path[]       = "wineps16",
-                data_file[]         = "<datafile?>",
-                config_file[]       = "wineps16",
-                help_file[]         = "<helpfile?>",
-                dep_file[]          = "<dependent files?>\0",
-                monitor_name[]      = "<monitor name?>",
+    static char driver_9x[]         = "wineps16.drv",
+                driver_nt[]         = "wineps.drv",
+                env_9x[]            = "Windows 4.0",
+                env_nt[]            = "Windows NT x86",
+                data_file[]         = "generic.ppd",
                 default_data_type[] = "RAW";
 
-    di3a.cVersion = (GetVersion() & 0x80000000) ? 0 : 3; /* FIXME: add 1, 2 */
+    ZeroMemory(&di3a, sizeof(DRIVER_INFO_3A));
+    di3a.cVersion         = 3;
     di3a.pName            = (char *)name;
-    di3a.pEnvironment     = NULL;      /* NULL means auto */
-    di3a.pDriverPath      = driver_path;
+    di3a.pEnvironment     = env_nt;
+    di3a.pDriverPath      = driver_nt;
     di3a.pDataFile        = data_file;
-    di3a.pConfigFile      = config_file;
-    di3a.pHelpFile        = help_file;
-    di3a.pDependentFiles  = dep_file;
-    di3a.pMonitorName     = monitor_name;
+    di3a.pConfigFile      = driver_nt;
     di3a.pDefaultDataType = default_data_type;
 
-    if (!AddPrinterDriverA(NULL, 3, (LPBYTE)&di3a))
+    if (AddPrinterDriverA(NULL, 3, (LPBYTE)&di3a))
     {
-        ERR("Failed adding driver (%d)\n", GetLastError());
-        return FALSE;
+        di3a.cVersion     = 0;
+        di3a.pEnvironment = env_9x;
+        di3a.pDriverPath  = driver_9x;
+        di3a.pConfigFile  = driver_9x;
+        if (AddPrinterDriverA(NULL, 3, (LPBYTE)&di3a))
+        {
+            return TRUE;
+        }
     }
-    return TRUE;
+    ERR("Failed adding driver %s: %u\n", debugstr_a(di3a.pDriverPath), GetLastError());
+    return FALSE;
 }
 
 #ifdef SONAME_LIBCUPS
