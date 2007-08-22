@@ -51,6 +51,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
+static int init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi);
+
 static RTL_CRITICAL_SECTION TIME_tz_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -239,26 +241,27 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
  * RETURNS
  *   The bias for the current timezone.
  */
-static int TIME_GetBias(time_t utc, int *pdaylight)
+static LONG TIME_GetBias(void)
 {
-    struct tm *ptm;
     static time_t last_utc;
-    static int last_bias;
-    static int last_daylight;
-    int ret;
+    static LONG last_bias;
+    LONG ret;
+    time_t utc;
+
+    utc = time( NULL );
 
     RtlEnterCriticalSection( &TIME_tz_section );
     if (utc != last_utc)
     {
-        ptm = localtime(&utc);
-	last_daylight = ptm->tm_isdst; /* daylight for local timezone */
-	ptm = gmtime(&utc);
-	ptm->tm_isdst = last_daylight; /* use local daylight, not that of Greenwich */
+        RTL_TIME_ZONE_INFORMATION tzi;
+        int is_dst = init_tz_info( &tzi );
+
 	last_utc = utc;
-	last_bias = (int)(utc - mktime(ptm));
+        last_bias = tzi.Bias;
+        last_bias += is_dst ? tzi.DaylightBias : tzi.StandardBias;
+        last_bias *= SECSPERMIN;
     }
 
-    *pdaylight = last_daylight;
     ret = last_bias;
 
     RtlLeaveCriticalSection( &TIME_tz_section );
@@ -281,15 +284,12 @@ static int TIME_GetBias(time_t utc, int *pdaylight)
 NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
                                           PLARGE_INTEGER SystemTime)
 {
-    time_t gmt;
-    int bias, daylight;
+    LONG bias;
 
     TRACE("(%p, %p)\n", LocalTime, SystemTime);
 
-    gmt = time(NULL);
-    bias = TIME_GetBias(gmt, &daylight);
-
-    SystemTime->QuadPart = LocalTime->QuadPart - bias * (LONGLONG)TICKSPERSEC;
+    bias = TIME_GetBias();
+    SystemTime->QuadPart = LocalTime->QuadPart + bias * (LONGLONG)TICKSPERSEC;
     return STATUS_SUCCESS;
 }
 
@@ -309,15 +309,12 @@ NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
 NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
                                           PLARGE_INTEGER LocalTime )
 {
-    time_t gmt;
-    int bias, daylight;
+    LONG bias;
 
     TRACE("(%p, %p)\n", SystemTime, LocalTime);
 
-    gmt = time(NULL);
-    bias = TIME_GetBias(gmt, &daylight);
-
-    LocalTime->QuadPart = SystemTime->QuadPart + bias * (LONGLONG)TICKSPERSEC;
+    bias = TIME_GetBias();
+    LocalTime->QuadPart = SystemTime->QuadPart - bias * (LONGLONG)TICKSPERSEC;
     return STATUS_SUCCESS;
 }
 
@@ -731,21 +728,31 @@ static time_t find_dst_change(unsigned long min, unsigned long max, int *is_dst)
     return min;
 }
 
-static void init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi, int *valid_year)
+static int init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi)
 {
+    static RTL_TIME_ZONE_INFORMATION cached_tzi;
+    static int current_year = -1;
     struct tm *tm;
     time_t year_start, year_end, tmp, dlt = 0, std = 0;
-    int is_dst;
+    int is_dst, current_is_dst;
+
+    RtlEnterCriticalSection( &TIME_tz_section );
 
     year_start = time(NULL);
     tm = localtime(&year_start);
 
-    if (*valid_year == tm->tm_year) return;
+    current_is_dst = tm->tm_isdst;
+    if (current_year == tm->tm_year)
+    {
+        *tzi = cached_tzi;
+        RtlLeaveCriticalSection( &TIME_tz_section );
+        return current_is_dst;
+    }
 
     memset(tzi, 0, sizeof(*tzi));
 
     TRACE("tz data will be valid through year %d\n", tm->tm_year + 1900);
-    *valid_year = tm->tm_year;
+    current_year = tm->tm_year;
 
     tm->tm_isdst = 0;
     tm->tm_mday = 1;
@@ -781,8 +788,9 @@ static void init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi, int *valid_year)
 
     if (dlt == std || !dlt || !std)
     {
+        RtlLeaveCriticalSection( &TIME_tz_section );
         TRACE("there is no daylight saving rules in this time zone\n");
-        return;
+        return 0;
     }
 
     tmp = dlt - tzi->Bias * 60;
@@ -828,6 +836,11 @@ static void init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi, int *valid_year)
         tzi->StandardBias);
 
     find_reg_tz_info(tzi);
+    cached_tzi = *tzi;
+
+    RtlLeaveCriticalSection( &TIME_tz_section );
+
+    return current_is_dst;
 }
 
 /***********************************************************************
@@ -844,18 +857,7 @@ static void init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi, int *valid_year)
  */
 NTSTATUS WINAPI RtlQueryTimeZoneInformation(RTL_TIME_ZONE_INFORMATION *tzinfo)
 {
-    static RTL_TIME_ZONE_INFORMATION *cached_tzi;
-    static int current_year = -1;
-
-    RtlEnterCriticalSection(&TIME_tz_section);
-
-    if (!cached_tzi)
-        cached_tzi = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*cached_tzi));
-
-    init_tz_info(cached_tzi, &current_year);
-    *tzinfo = *cached_tzi;
-
-    RtlLeaveCriticalSection(&TIME_tz_section);
+    init_tz_info( tzinfo );
 
     return STATUS_SUCCESS;
 }
@@ -894,41 +896,23 @@ NTSTATUS WINAPI RtlSetTimeZoneInformation( const RTL_TIME_ZONE_INFORMATION *tzin
  */
 NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *OldTime)
 {
-    TIME_FIELDS tf;
     struct timeval tv;
-    struct timezone tz;
-    struct tm t;
-    time_t sec, oldsec;
-    int dst, bias;
+    time_t tm_t;
+    DWORD sec, oldsec;
+    LARGE_INTEGER tm;
     int err;
 
     /* Return the old time if necessary */
-    if(OldTime)
-        NtQuerySystemTime(OldTime);
+    if (!OldTime) OldTime = &tm;
 
-    RtlTimeToTimeFields(NewTime, &tf);
+    NtQuerySystemTime( OldTime );
+    RtlTimeToSecondsSince1970( OldTime, &oldsec );
 
-    /* call gettimeofday to get the current timezone */
-    gettimeofday(&tv, &tz);
-    oldsec = tv.tv_sec;
-    /* get delta local time from utc */
-    bias = TIME_GetBias(oldsec, &dst);
-
-    /* get the number of seconds */
-    t.tm_sec = tf.Second;
-    t.tm_min = tf.Minute;
-    t.tm_hour = tf.Hour;
-    t.tm_mday = tf.Day;
-    t.tm_mon = tf.Month - 1;
-    t.tm_year = tf.Year - 1900;
-    t.tm_isdst = dst;
-    sec = mktime (&t);
-    /* correct for timezone and daylight */
-    sec += bias;
+    RtlTimeToSecondsSince1970( NewTime, &sec );
 
     /* set the new time */
     tv.tv_sec = sec;
-    tv.tv_usec = tf.Milliseconds * 1000;
+    tv.tv_usec = 0;
 
     /* error and sanity check*/
     if(sec == (time_t)-1 || abs((int)(sec-oldsec)) > SETTIME_MAX_ADJUST) {
@@ -943,8 +927,9 @@ NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *Old
 #endif
     }
 
-    ERR("Cannot set time to %d/%d/%d %d:%d:%d Time adjustment %ld %s\n",
-            tf.Year, tf.Month, tf.Day, tf.Hour, tf.Minute, tf.Second,
+    tm_t = sec;
+    ERR("Cannot set time to %s Time adjustment %ld %s\n",
+        ctime( &tm_t ),
             (long)(sec-oldsec),
             err == -1 ? "No Permission"
                       : sec == (time_t)-1 ? "" : "is too large." );
