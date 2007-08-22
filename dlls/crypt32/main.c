@@ -235,15 +235,3 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void* pvObject,
            phCertStore, phMsg, ppvContext);
     return FALSE;
 }
-
-BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
-          DWORD dwSignerIndex, const BYTE* pbSignedBlob, DWORD cbSignedBlob,
-          BYTE* pbDecoded, DWORD* pcbDecoded, PCCERT_CONTEXT* ppSignerCert)
-{
-    FIXME("stub: %p, %d, %p, %d, %p, %p, %p\n",
-        pVerifyPara, dwSignerIndex, pbSignedBlob, cbSignedBlob,
-        pbDecoded, pcbDecoded, ppSignerCert);
-    if (ppSignerCert)
-        *ppSignerCert = NULL;
-    return FALSE;
-}
