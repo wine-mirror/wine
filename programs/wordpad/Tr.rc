@@ -70,16 +70,11 @@ BEGIN
     POPUP "&Biçim"
     BEGIN
         MENUITEM "&Bullet points"                ID_BULLET
+        MENUITEM "&Paragraph . . ."              ID_PARAFORMAT
         POPUP "&Arkaplan"
         BEGIN
             MENUITEM "S&istem\tCtrl+1",         ID_BACK_1
             MENUITEM "&Sarýmtýrak\tCtrl+2",     ID_BACK_2
-        END
-        POPUP "&Hizalama"
-        BEGIN
-            MENUITEM "S&ol\tCtrl+L",          ID_ALIGN_LEFT
-            MENUITEM "O&rta\tCtrl+E",         ID_ALIGN_CENTER
-            MENUITEM "S&að\tCtrl+R",          ID_ALIGN_RIGHT
         END
     END
 END
@@ -106,12 +101,37 @@ BEGIN
     PUSHBUTTON   "&Cancel",IDCANCEL,97,26,40,12
 END
 
+IDD_PARAFORMAT DIALOG DISCARDABLE 30, 20, 200, 110
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+Caption "Paragraph format"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "Indentation", 0, 10, 10, 120, 68
+    LTEXT "Left", 0, 15, 22, 40, 13
+    EDITTEXT IDC_PARA_LEFT, 55, 20, 60, 13
+    LTEXT "Right", 0, 15, 40, 40, 13
+    EDITTEXT IDC_PARA_RIGHT, 55, 38, 60, 13
+    LTEXT "First line", 0, 15, 58, 40, 13
+    EDITTEXT IDC_PARA_FIRST, 55, 56, 60, 13
+    LTEXT "Alignment", 0, 15, 87, 40, 13
+    COMBOBOX IDC_PARA_ALIGN, 55, 85, 60, 13, CBS_DROPDOWNLIST
+    PUSHBUTTON "&OK", IDOK, 137, 15, 50, 15
+    PUSHBUTTON "&Cancel", IDCANCEL, 137, 33, 50, 15
+END
+
 STRINGTABLE DISCARDABLE
 BEGIN
     STRING_RICHTEXT_FILES_RTF,     "Rich text format (*.rtf)"
     STRING_TEXT_FILES_TXT,         "Text documents (*.txt)"
     STRING_TEXT_FILES_UNICODE_TXT, "Unicode text document (*.txt)"
     STRING_ALL_FILES,              "All documents (*.*)"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_ALIGN_LEFT,            "Left"
+    STRING_ALIGN_RIGHT,           "Right"
+    STRING_ALIGN_CENTER,          "Center"
 END
 
 STRINGTABLE DISCARDABLE
@@ -123,6 +143,11 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
+STRING_UNITS_CM,             "cm"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
     STRING_DEFAULT_FILENAME,     "Document"
     STRING_PROMPT_SAVE_CHANGES,  "Save changes to '%s'?"
     STRING_SEARCH_FINISHED,      "Finished searching the document."
@@ -130,4 +155,5 @@ BEGIN
     STRING_SAVE_LOSEFORMATTING,  "You have chosen to save in plain text format, " \
                                  "which will cause all formatting to be lost. " \
                                  "Are you sure that you wish to do this?"
+    STRING_INVALID_NUMBER,       "Invalid number format"
 END

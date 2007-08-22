@@ -34,6 +34,8 @@
 #include <commdlg.h>
 #include <shlobj.h>
 #include <shellapi.h>
+#include <math.h>
+#include <errno.h>
 
 #include "resource.h"
 
@@ -66,6 +68,8 @@ static UINT ID_FINDMSGSTRING;
 static WCHAR wszFilter[MAX_STRING_LEN*4+6*3+5];
 static WCHAR wszDefaultFileName[MAX_STRING_LEN];
 static WCHAR wszSaveChanges[MAX_STRING_LEN];
+
+static char units_cmA[MAX_STRING_LEN];
 
 static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam );
 
@@ -101,6 +105,8 @@ static void DoLoadStrings(void)
 
     p = wszSaveChanges;
     LoadStringW(hInstance, STRING_PROMPT_SAVE_CHANGES, p, MAX_STRING_LEN);
+
+    LoadStringA(hInstance, STRING_UNITS_CM, units_cmA, MAX_STRING_LEN);
 }
 
 static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
@@ -474,6 +480,45 @@ static void registry_set_filelist(LPCWSTR newFile)
     }
     RegCloseKey(hKey);
     registry_read_filelist(hMainWnd);
+}
+
+static BOOL validate_endptr(LPCSTR endptr, BOOL units)
+{
+    if(!endptr || !*endptr)
+        return TRUE;
+
+    while(*endptr == ' ')
+        endptr++;
+
+    if(!units)
+        return *endptr != '\0';
+
+    /* FIXME: Allow other units and convert between them */
+    if(!lstrcmpA(endptr, units_cmA))
+        endptr += 2;
+
+    return *endptr != '\0';
+}
+
+static BOOL number_from_string(LPCWSTR string, float *num, BOOL units)
+{
+    double ret;
+    char buffer[MAX_STRING_LEN];
+    char *endptr = buffer;
+
+    WideCharToMultiByte(CP_ACP, 0, string, -1, buffer, MAX_STRING_LEN, NULL, NULL);
+    *num = 0;
+    errno = 0;
+    ret = strtod(buffer, &endptr);
+
+    if((ret == 0 && errno != 0) || endptr == buffer || validate_endptr(endptr, units))
+    {
+        return FALSE;
+    } else
+    {
+        *num = (float)ret;
+        return TRUE;
+    }
 }
 
 static void clear_formatting(void)
@@ -1030,6 +1075,22 @@ static void registry_set_options(void)
     registry_set_options_format(reg_formatindex(SF_TEXT), key_text);
 }
 
+static int current_units_to_twips(float number)
+{
+    int twips = (int)(number * 567);
+    return twips;
+}
+
+static void number_with_units(LPWSTR buffer, int number)
+{
+    float converted = (float)number / 567;
+    char string[MAX_STRING_LEN];
+
+    sprintf(string, "%.2f ", converted);
+    lstrcatA(string, units_cmA);
+    MultiByteToWideChar(CP_ACP, 0, string, -1, buffer, MAX_STRING_LEN);
+}
+
 BOOL CALLBACK datetime_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
@@ -1118,6 +1179,102 @@ BOOL CALLBACK newfile_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 
                 case IDCANCEL:
                     EndDialog(hWnd, MAKELONG(ID_NEWFILE_ABORT,0));
+                    return TRUE;
+            }
+    }
+    return FALSE;
+}
+
+static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch(message)
+    {
+        case WM_INITDIALOG:
+            {
+                HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd,
+                                                                  GWLP_HINSTANCE);
+                WCHAR buffer[MAX_STRING_LEN];
+                HWND hListWnd = GetDlgItem(hWnd, IDC_PARA_ALIGN);
+                HWND hLeftWnd = GetDlgItem(hWnd, IDC_PARA_LEFT);
+                HWND hRightWnd = GetDlgItem(hWnd, IDC_PARA_RIGHT);
+                HWND hFirstWnd = GetDlgItem(hWnd, IDC_PARA_FIRST);
+                PARAFORMAT2 pf;
+                int index = 0;
+
+                LoadStringW(hInstance, STRING_ALIGN_LEFT, buffer,
+                            MAX_STRING_LEN);
+                SendMessageW(hListWnd, CB_ADDSTRING, 0, (LPARAM)buffer);
+                LoadStringW(hInstance, STRING_ALIGN_RIGHT, buffer,
+                            MAX_STRING_LEN);
+                SendMessageW(hListWnd, CB_ADDSTRING, 0, (LPARAM)buffer);
+                LoadStringW(hInstance, STRING_ALIGN_CENTER, buffer,
+                            MAX_STRING_LEN);
+                SendMessageW(hListWnd, CB_ADDSTRING, 0, (LPARAM)buffer);
+
+                pf.cbSize = sizeof(pf);
+                pf.dwMask = PFM_ALIGNMENT | PFM_OFFSET | PFM_RIGHTINDENT |
+                            PFM_OFFSETINDENT;
+                SendMessageW(hEditorWnd, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+
+                if(pf.wAlignment == PFA_RIGHT)
+                    index ++;
+                else if(pf.wAlignment == PFA_CENTER)
+                    index += 2;
+
+                SendMessageW(hListWnd, CB_SETCURSEL, index, 0);
+
+                number_with_units(buffer, pf.dxOffset);
+                SetWindowTextW(hLeftWnd, buffer);
+                number_with_units(buffer, pf.dxRightIndent);
+                SetWindowTextW(hRightWnd, buffer);
+                number_with_units(buffer, pf.dxStartIndent - pf.dxOffset);
+                SetWindowTextW(hFirstWnd, buffer);
+            }
+            break;
+
+        case WM_COMMAND:
+            switch(LOWORD(wParam))
+            {
+                case IDOK:
+                    {
+                        HWND hLeftWnd = GetDlgItem(hWnd, IDC_PARA_LEFT);
+                        HWND hRightWnd = GetDlgItem(hWnd, IDC_PARA_RIGHT);
+                        HWND hFirstWnd = GetDlgItem(hWnd, IDC_PARA_FIRST);
+                        WCHAR buffer[MAX_STRING_LEN];
+                        float num;
+                        int ret = 0;
+                        PARAFORMAT pf;
+
+                        GetWindowTextW(hLeftWnd, buffer, MAX_STRING_LEN);
+                        if(number_from_string(buffer, &num, TRUE))
+                            ret++;
+                        pf.dxOffset = current_units_to_twips(num);
+                        GetWindowTextW(hRightWnd, buffer, MAX_STRING_LEN);
+                        if(number_from_string(buffer, &num, TRUE))
+                            ret++;
+                        pf.dxRightIndent = current_units_to_twips(num);
+                        GetWindowTextW(hFirstWnd, buffer, MAX_STRING_LEN);
+                        if(number_from_string(buffer, &num, TRUE))
+                            ret++;
+                        pf.dxStartIndent = current_units_to_twips(num);
+
+                        if(ret != 3)
+                        {
+                            MessageBoxW(hMainWnd, MAKEINTRESOURCEW(STRING_INVALID_NUMBER),
+                                        wszAppTitle, MB_OK | MB_ICONASTERISK);
+                            return FALSE;
+                        } else
+                        {
+                            pf.dxStartIndent = pf.dxStartIndent + pf.dxOffset;
+                            pf.cbSize = sizeof(pf);
+                            pf.dwMask = PFM_OFFSET | PFM_OFFSETINDENT | PFM_RIGHTINDENT;
+                            SendMessageW(hEditorWnd, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
+                        }
+                    }
+                    /* Fall through */
+
+                case IDCANCEL:
+                    EndDialog(hWnd, wParam);
                     return TRUE;
             }
     }
@@ -1612,6 +1769,14 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_DATETIME), hWnd, (DLGPROC)datetime_proc);
         break;
         }
+
+    case ID_PARAFORMAT:
+        {
+            HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
+            DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_PARAFORMAT), hWnd,
+                       paraformat_proc);
+        }
+        break;
 
     default:
         SendMessageW(hwndEditor, WM_COMMAND, wParam, lParam);
