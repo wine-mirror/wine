@@ -661,7 +661,7 @@ static BOOL prompt_save_changes(void)
         if(!wszFileName[0])
             displayFileName = wszDefaultFileName;
         else
-            displayFileName = wszFileName;
+            displayFileName = file_basename(wszFileName);
 
         text = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                          (lstrlenW(displayFileName)+lstrlenW(wszSaveChanges))*sizeof(WCHAR));
