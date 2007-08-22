@@ -84,7 +84,7 @@ static INT_PTR fdi_open(char *pszFile, int oflag, int pmode)
     HANDLE handle;
     DWORD dwAccess = 0;
     DWORD dwShareMode = 0;
-    DWORD dwCreateDisposition = OPEN_EXISTING;
+    DWORD dwCreateDisposition;
 
     switch (oflag & _O_ACCMODE)
     {
@@ -102,10 +102,17 @@ static INT_PTR fdi_open(char *pszFile, int oflag, int pmode)
             break;
     }
 
-    if (GetFileAttributesA(pszFile) != INVALID_FILE_ATTRIBUTES)
-        dwCreateDisposition = OPEN_EXISTING;
+    if (oflag & _O_CREAT)
+    {
+        dwCreateDisposition = OPEN_ALWAYS;
+        if (oflag & _O_EXCL) dwCreateDisposition = CREATE_NEW;
+        else if (oflag & _O_TRUNC) dwCreateDisposition = CREATE_ALWAYS;
+    }
     else
-        dwCreateDisposition = CREATE_NEW;
+    {
+        dwCreateDisposition = OPEN_EXISTING;
+        if (oflag & _O_TRUNC) dwCreateDisposition = TRUNCATE_EXISTING;
+    }
 
     handle = CreateFileA(pszFile, dwAccess, dwShareMode, NULL,
                          dwCreateDisposition, 0, NULL);
