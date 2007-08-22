@@ -420,7 +420,17 @@ DECL_HANDLER(set_hook)
     }
     else
     {
-        module = NULL;
+        /* module is optional only if hook is in current process */
+        if (!module_size)
+        {
+            module = NULL;
+            if (thread->process != current->process)
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                goto done;
+            }
+        }
+        else if (!(module = memdup( get_req_data(), module_size ))) goto done;
         global = 0;
     }
 
