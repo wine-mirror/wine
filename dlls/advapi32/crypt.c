@@ -2134,12 +2134,7 @@ BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH hHash, CONST BYTE *pbSignature, DW
 	TRACE("(0x%lx, %p, %d, 0x%lx, %s, %08x)\n", hHash, pbSignature,
 			dwSigLen, hPubKey, debugstr_w(sDescription), dwFlags);
 
-	if (!hash || !key)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-	if (!pbSignature || !dwSigLen || 
+	if (!hash || !key ||
 	    !hash->pProvider || hash->pProvider->dwMagic != MAGIC_CRYPTPROV ||
 	    !key->pProvider || key->pProvider->dwMagic != MAGIC_CRYPTPROV)
 	{
