@@ -28,8 +28,10 @@ BEGIN
         MENUITEM "&Aç...\tCtrl+O",        ID_FILE_OPEN
         MENUITEM "&Kaydet\tCtrl+S",       ID_FILE_SAVE
         MENUITEM "&Farklý Kaydet...",     ID_FILE_SAVEAS
+        MENUITEM "Pag&e setup . . .",     ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "&Print . . .\tCtrl+P",  ID_PRINT
+        MENUITEM "Pag&e setup . . .",     ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "&Çýk",          ID_FILE_EXIT
     END

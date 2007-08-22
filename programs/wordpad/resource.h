@@ -30,9 +30,10 @@
 
 #define ID_PRINT 1010
 #define ID_PREVIEW 1011
+#define ID_PRINTSETUP 1012
 
-#define ID_FIND 1012
-#define ID_FIND_NEXT 1013
+#define ID_FIND 1013
+#define ID_FIND_NEXT 1014
 
 #define ID_ALIGN_LEFT 1100
 #define ID_ALIGN_CENTER 1101

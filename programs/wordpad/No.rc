@@ -28,6 +28,7 @@ BEGIN
         MENUITEM "Lagre &som . . .",          ID_FILE_SAVEAS
         MENUITEM SEPARATOR
         MENUITEM "&Skriv ut . . .\tCtrl+P",   ID_PRINT
+        MENUITEM "&Utskriftformat . . .",     ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "&Avslutt",                  ID_FILE_EXIT
     END

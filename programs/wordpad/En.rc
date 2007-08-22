@@ -28,6 +28,7 @@ BEGIN
         MENUITEM "Save &as . . .",        ID_FILE_SAVEAS
         MENUITEM SEPARATOR
         MENUITEM "&Print . . .\tCtrl+P",  ID_PRINT
+        MENUITEM "Pag&e setup . . .",     ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "E&xit",         ID_FILE_EXIT
     END

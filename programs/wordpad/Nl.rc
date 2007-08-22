@@ -28,6 +28,7 @@ BEGIN
         MENUITEM "Ops&laan als...",       ID_FILE_SAVEAS
         MENUITEM SEPARATOR
         MENUITEM "&Print . . .\tCtrl+P",  ID_PRINT
+        MENUITEM "Pag&e setup . . .",     ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "&Afsluiten",    ID_FILE_EXIT
     END

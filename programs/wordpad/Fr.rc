@@ -28,6 +28,7 @@ BEGIN
         MENUITEM "Enregistrer &sous...",    ID_FILE_SAVEAS
         MENUITEM SEPARATOR
         MENUITEM "&Print . . .\tCtrl+P",    ID_PRINT
+        MENUITEM "Page setup . . .",        ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "&Quitter",        ID_FILE_EXIT
     END

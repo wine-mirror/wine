@@ -29,6 +29,7 @@ BEGIN
         MENUITEM "Z&apisz jako...",         ID_FILE_SAVEAS
         MENUITEM SEPARATOR
         MENUITEM "&Print . . .\tCtrl+P",    ID_PRINT
+        MENUITEM "Pag&e setup . . .",       ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "Za&koñcz",         ID_FILE_EXIT
     END

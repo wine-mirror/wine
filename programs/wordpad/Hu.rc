@@ -28,6 +28,7 @@ BEGIN
         MENUITEM "Mentés má&sként...",        ID_FILE_SAVEAS
         MENUITEM SEPARATOR
         MENUITEM "&Print . . .\tCtrl+P",  ID_PRINT
+        MENUITEM "Page setup . . .",      ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "&Kilépés",      ID_FILE_EXIT
     END

@@ -915,6 +915,15 @@ static LONG devunits_to_twips(int units, int dpi)
     return (LONG)ret;
 }
 
+static int centmm_to_twips(int mm)
+{
+    return MulDiv(mm, 567, 1000);
+}
+
+static RECT margins;
+
+static HGLOBAL devMode;
+
 static void print(LPPRINTDLGW pd)
 {
     FORMATRANGE fr;
@@ -929,10 +938,10 @@ static void print(LPPRINTDLGW pd)
     width = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALWIDTH), dpiX);
     height = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALHEIGHT), dpiY);
 
-    fr.rc.left = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALOFFSETX), dpiX);
-    fr.rc.right = width - (fr.rc.left * 2);
-    fr.rc.top = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALOFFSETY), dpiY);
-    fr.rc.bottom = height - (fr.rc.top * 2);
+    fr.rc.left = centmm_to_twips(margins.left);
+    fr.rc.right = width - centmm_to_twips(margins.right);
+    fr.rc.top = centmm_to_twips(margins.top);
+    fr.rc.bottom = height - centmm_to_twips(margins.bottom);
     fr.rcPage.left = 0;
     fr.rcPage.right = width;
     fr.rcPage.top = 0;
@@ -978,6 +987,32 @@ static void print(LPPRINTDLGW pd)
     SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE, 0);
 }
 
+static void registry_read_margins(void)
+{
+    margins.top = 2500;
+    margins.bottom = 2500;
+    margins.left = 3100;
+    margins.right = 3100;
+}
+
+static void dialog_printsetup(void)
+{
+    PAGESETUPDLGW ps;
+
+    ZeroMemory(&ps, sizeof(ps));
+    ps.lStructSize = sizeof(ps);
+    ps.hwndOwner = hMainWnd;
+    ps.Flags = PSD_INHUNDREDTHSOFMILLIMETERS | PSD_MARGINS;
+    ps.rtMargin = margins;
+    ps.hDevMode = devMode;
+
+    if(PageSetupDlgW(&ps))
+    {
+        margins = ps.rtMargin;
+        devMode = ps.hDevMode;
+    }
+}
+
 static void dialog_print(void)
 {
     PRINTDLGW pd;
@@ -990,13 +1025,17 @@ static void dialog_print(void)
     pd.Flags = PD_RETURNDC | PD_USEDEVMODECOPIESANDCOLLATE;
     pd.nMinPage = 1;
     pd.nMaxPage = 1;
+    pd.hDevMode = devMode;
 
     SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
     if(from == to)
         pd.Flags |= PD_NOSELECTION;
 
     if(PrintDlgW(&pd))
+    {
+        devMode = pd.hDevMode;
         print(&pd);
+    }
 }
 
 static void HandleCommandLine(LPWSTR cmdline)
@@ -1660,6 +1699,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     registry_read_filelist(hWnd);
     registry_read_options();
+    registry_read_margins();
     DragAcceptFiles(hWnd, TRUE);
 
     return 0;
@@ -1832,6 +1872,10 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
                                                       'i','m','p','l','e','m','e','n','t','e','d','\0'};
             MessageBoxW(hWnd, wszNotImplemented, wszAppTitle, MB_OK);
         }
+        break;
+
+    case ID_PRINTSETUP:
+        dialog_printsetup();
         break;
 
     case ID_FORMAT_BOLD:
