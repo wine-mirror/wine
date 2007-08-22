@@ -53,11 +53,10 @@ static const WCHAR key_options[] = {'O','p','t','i','o','n','s',0};
 static const WCHAR key_rtf[] = {'R','T','F',0};
 static const WCHAR key_text[] = {'T','e','x','t',0};
 
-
 static const WCHAR var_file[] = {'F','i','l','e','%','d',0};
 static const WCHAR var_framerect[] = {'F','r','a','m','e','R','e','c','t',0};
 static const WCHAR var_barstate0[] = {'B','a','r','S','t','a','t','e','0',0};
-
+static const WCHAR var_pagemargin[] = {'P','a','g','e','M','a','r','g','i','n',0};
 
 static HWND hMainWnd;
 static HWND hEditorWnd;
@@ -270,7 +269,9 @@ static LRESULT registry_get_handle(HKEY *hKey, LPDWORD action, LPCWSTR subKey)
     return ret;
 }
 
-static void registry_set_winrect(void)
+static RECT margins;
+
+static void registry_set_options(void)
 {
     HKEY hKey;
     DWORD action;
@@ -282,6 +283,8 @@ static void registry_set_winrect(void)
         GetWindowRect(hMainWnd, &rc);
 
         RegSetValueExW(hKey, var_framerect, 0, REG_BINARY, (LPBYTE)&rc, sizeof(RECT));
+
+        RegSetValueExW(hKey, var_pagemargin, 0, REG_BINARY, (LPBYTE)&margins, sizeof(RECT));
     }
 }
 
@@ -920,7 +923,10 @@ static int centmm_to_twips(int mm)
     return MulDiv(mm, 567, 1000);
 }
 
-static RECT margins;
+static int twips_to_centmm(int twips)
+{
+    return MulDiv(twips, 1000, 567);
+}
 
 static HGLOBAL devMode;
 
@@ -938,10 +944,10 @@ static void print(LPPRINTDLGW pd)
     width = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALWIDTH), dpiX);
     height = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALHEIGHT), dpiY);
 
-    fr.rc.left = centmm_to_twips(margins.left);
-    fr.rc.right = width - centmm_to_twips(margins.right);
-    fr.rc.top = centmm_to_twips(margins.top);
-    fr.rc.bottom = height - centmm_to_twips(margins.bottom);
+    fr.rc.left = margins.left;
+    fr.rc.right = width - margins.right;
+    fr.rc.top = margins.top;
+    fr.rc.bottom = height - margins.bottom;
     fr.rcPage.left = 0;
     fr.rcPage.right = width;
     fr.rcPage.top = 0;
@@ -987,14 +993,6 @@ static void print(LPPRINTDLGW pd)
     SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE, 0);
 }
 
-static void registry_read_margins(void)
-{
-    margins.top = 2500;
-    margins.bottom = 2500;
-    margins.left = 3100;
-    margins.right = 3100;
-}
-
 static void dialog_printsetup(void)
 {
     PAGESETUPDLGW ps;
@@ -1003,12 +1001,18 @@ static void dialog_printsetup(void)
     ps.lStructSize = sizeof(ps);
     ps.hwndOwner = hMainWnd;
     ps.Flags = PSD_INHUNDREDTHSOFMILLIMETERS | PSD_MARGINS;
-    ps.rtMargin = margins;
+    ps.rtMargin.left = twips_to_centmm(margins.left);
+    ps.rtMargin.right = twips_to_centmm(margins.right);
+    ps.rtMargin.top = twips_to_centmm(margins.top);
+    ps.rtMargin.bottom = twips_to_centmm(margins.bottom);
     ps.hDevMode = devMode;
 
     if(PageSetupDlgW(&ps))
     {
-        margins = ps.rtMargin;
+        margins.left = centmm_to_twips(ps.rtMargin.left);
+        margins.right = centmm_to_twips(ps.rtMargin.right);
+        margins.top = centmm_to_twips(ps.rtMargin.top);
+        margins.bottom = centmm_to_twips(ps.rtMargin.bottom);
         devMode = ps.hDevMode;
     }
 }
@@ -1190,7 +1194,25 @@ static void dialog_find(LPFINDREPLACEW fr)
     hFindWnd = FindTextW(fr);
 }
 
-static void registry_read_options_format(int index, LPCWSTR key)
+static void registry_read_options(void)
+{
+    HKEY hKey;
+    DWORD size = sizeof(RECT);
+
+    if(registry_get_handle(&hKey, 0, key_options) != ERROR_SUCCESS ||
+       RegQueryValueExW(hKey, var_pagemargin, 0, NULL, (LPBYTE)&margins,
+                        &size) != ERROR_SUCCESS || size != sizeof(RECT))
+    {
+        margins.top = 1417;
+        margins.bottom = 1417;
+        margins.left = 1757;
+        margins.right = 1757;
+    }
+
+    RegCloseKey(hKey);
+}
+
+static void registry_read_formatopts(int index, LPCWSTR key)
 {
     HKEY hKey;
     DWORD action = 0;
@@ -1215,13 +1237,13 @@ static void registry_read_options_format(int index, LPCWSTR key)
     RegCloseKey(hKey);
 }
 
-static void registry_read_options(void)
+static void registry_read_formatopts_all(void)
 {
-    registry_read_options_format(reg_formatindex(SF_RTF), key_rtf);
-    registry_read_options_format(reg_formatindex(SF_TEXT), key_text);
+    registry_read_formatopts(reg_formatindex(SF_RTF), key_rtf);
+    registry_read_formatopts(reg_formatindex(SF_TEXT), key_text);
 }
 
-static void registry_set_options_format(int index, LPCWSTR key)
+static void registry_set_formatopts(int index, LPCWSTR key)
 {
     HKEY hKey;
     DWORD action = 0;
@@ -1235,10 +1257,10 @@ static void registry_set_options_format(int index, LPCWSTR key)
     }
 }
 
-static void registry_set_options(void)
+static void registry_set_formatopts_all(void)
 {
-    registry_set_options_format(reg_formatindex(SF_RTF), key_rtf);
-    registry_set_options_format(reg_formatindex(SF_TEXT), key_text);
+    registry_set_formatopts(reg_formatindex(SF_RTF), key_rtf);
+    registry_set_formatopts(reg_formatindex(SF_TEXT), key_text);
 }
 
 static int current_units_to_twips(float number)
@@ -1698,8 +1720,8 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     ID_FINDMSGSTRING = RegisterWindowMessageW(FINDMSGSTRINGW);
 
     registry_read_filelist(hWnd);
+    registry_read_formatopts_all();
     registry_read_options();
-    registry_read_margins();
     DragAcceptFiles(hWnd, TRUE);
 
     return 0;
@@ -2235,8 +2257,8 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_CLOSE:
         if(prompt_save_changes())
         {
-            registry_set_winrect();
             registry_set_options();
+            registry_set_formatopts_all();
             PostQuitMessage(0);
         }
         break;
