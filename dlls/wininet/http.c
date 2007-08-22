@@ -2800,8 +2800,6 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 
     assert( hIC->hdr.htype == WH_HINIT );
 
-    hIC->hdr.dwContext = dwContext;
-    
     lpwhs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETHTTPSESSIONW));
     if (NULL == lpwhs)
     {

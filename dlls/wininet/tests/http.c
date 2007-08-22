@@ -458,7 +458,7 @@ abort:
       if (flags & INTERNET_FLAG_ASYNC)
           Sleep(100);
     }
-    todo_wine CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
+    CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     if (hor != 0x0) todo_wine
     {
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
@@ -719,7 +719,7 @@ abort:
       ok ((rc != 0), "InternetCloseHandle of handle opened by InternetOpenA failed\n");
       if (flags & INTERNET_FLAG_ASYNC)
           Sleep(100);
-      todo_wine CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
+      CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     }
     CloseHandle(hCompleteEvent);
     first_connection_to_test_url = FALSE;
