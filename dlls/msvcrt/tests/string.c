@@ -23,15 +23,34 @@
 #include <string.h>
 #include <mbstring.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <mbctype.h>
+#include <locale.h>
+
+static char *buf_to_string(const unsigned char *bin, int len, int nr)
+{
+    static char buf[2][1024];
+    char *w = buf[nr];
+    int i;
+
+    for (i = 0; i < len; i++)
+    {
+        sprintf(w, "%02x ", (unsigned char)bin[i]);
+        w += strlen(w);
+    }
+    return buf[nr];
+}
 
 #define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
+#define expect_bin(buf, value, len) { ok(memcmp((buf), value, len) == 0, "Binary buffer mismatch - expected %s, got %s\n", buf_to_string((unsigned char *)value, len, 1), buf_to_string((buf), len, 0)); }
 
 static void* (*pmemcpy)(void *, const void *, size_t n);
 static int* (*pmemcmp)(void *, const void *, size_t n);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
+
+HMODULE hMsvcrt;
 
 static void test_swab( void ) {
     char original[]  = "BADCFEHGJILKNMPORQTSVUXWZY@#";
@@ -167,7 +186,8 @@ static void test_mbcp(void)
     int curr_mbcp = _getmbcp();
     unsigned char *mbstring = (unsigned char *)"\xb0\xb1\xb2 \xb3\xb4 \xb5"; /* incorrect string */
     unsigned char *mbstring2 = (unsigned char *)"\xb0\xb1\xb2\xb3Q\xb4\xb5"; /* correct string */
-    unsigned char *mbsonlylead = (unsigned char *)"\xb0";
+    unsigned char *mbsonlylead = (unsigned char *)"\xb0\0\xb1\xb2";
+    unsigned char buf[16];
 
     /* some two single-byte code pages*/
     test_codepage(1252);
@@ -201,6 +221,40 @@ static void test_mbcp(void)
     expect_eq(_mbslen(mbsonlylead), 0, int, "%d");          /* lead + NUL not counted as character */
     expect_eq(_mbslen(mbstring), 4, int, "%d");             /* lead + invalid trail counted */
 
+    /* _mbccpy/_mbsncpy */
+    memset(buf, 0xff, sizeof(buf));
+    _mbccpy(buf, mbstring);
+    expect_bin(buf, "\xb0\xb1\xff", 3);
+
+    memset(buf, 0xff, sizeof(buf));
+    _mbsncpy(buf, mbstring, 1);
+    expect_bin(buf, "\xb0\xb1\xff", 3);
+    memset(buf, 0xff, sizeof(buf));
+    _mbsncpy(buf, mbstring, 2);
+    expect_bin(buf, "\xb0\xb1\xb2 \xff", 5);
+    memset(buf, 0xff, sizeof(buf));
+    _mbsncpy(buf, mbstring, 3);
+    expect_bin(buf, "\xb0\xb1\xb2 \xb3\xb4\xff", 7);
+    memset(buf, 0xff, sizeof(buf));
+    _mbsncpy(buf, mbstring, 4);
+    expect_bin(buf, "\xb0\xb1\xb2 \xb3\xb4 \xff", 8);
+    memset(buf, 0xff, sizeof(buf));
+    _mbsncpy(buf, mbstring, 5);
+    expect_bin(buf, "\xb0\xb1\xb2 \xb3\xb4 \0\0\xff", 10);
+    memset(buf, 0xff, sizeof(buf));
+    _mbsncpy(buf, mbsonlylead, 6);
+    expect_bin(buf, "\0\0\0\0\0\0\0\xff", 8);
+
+    memset(buf, 0xff, sizeof(buf));
+    _mbsnbcpy(buf, mbstring2, 2);
+    expect_bin(buf, "\xb0\xb1\xff", 3);
+    _mbsnbcpy(buf, mbstring2, 3);
+    expect_bin(buf, "\xb0\xb1\0\xff", 4);
+    _mbsnbcpy(buf, mbstring2, 4);
+    expect_bin(buf, "\xb0\xb1\xb2\xb3\xff", 5);
+    memset(buf, 0xff, sizeof(buf));
+    _mbsnbcpy(buf, mbsonlylead, 5);
+    expect_bin(buf, "\0\0\0\0\0\xff", 6);
 
     /* functions that depend on locale codepage, not mbcp.
      * we hope the current locale to be SBCS because setlocale(LC_ALL, ".1252") seems not to work yet
@@ -263,7 +317,6 @@ START_TEST(string)
     void *mem;
     static const char xilstring[]="c:/xilinx";
     int nLen;
-    HMODULE hMsvcrt;
 
     hMsvcrt = GetModuleHandleA("msvcrt.dll");
     if (!hMsvcrt)

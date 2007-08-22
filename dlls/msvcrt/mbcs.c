@@ -31,6 +31,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 unsigned char MSVCRT_mbctype[257];
+static int g_mbcp_is_multibyte = 0;
+
 int MSVCRT___mb_cur_max = 1;
 extern int MSVCRT___lc_collate_cp;
 
@@ -207,6 +209,8 @@ int CDECL _setmbcp(int cp)
   {
     /* trail bytes not available through kernel32 but stored in a structure in msvcrt */
     struct cp_extra_info_t *cpextra = g_cpextrainfo;
+
+    g_mbcp_is_multibyte = 1;
     while (TRUE)
     {
       if (cpextra->cp == 0 || cpextra->cp == newcp)
@@ -226,6 +230,8 @@ int CDECL _setmbcp(int cp)
       cpextra++;
     }
   }
+  else
+    g_mbcp_is_multibyte = 0;
 
   /* we can't use GetStringTypeA directly because we don't have a locale - only a code page
    */
@@ -385,26 +391,39 @@ MSVCRT_size_t CDECL _mbslen(const unsigned char* str)
 void CDECL _mbccpy(unsigned char* dest, const unsigned char* src)
 {
   *dest = *src;
-  if(MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(*src))
+  if(_ismbblead(*src))
     *++dest = *++src; /* MB char */
 }
 
 /*********************************************************************
  *		_mbsncpy(MSVCRT.@)
+ * REMARKS
+ *  The parameter n is the number or characters to copy, not the size of
+ *  the buffer. Use _mbsnbcpy for a function analogical to strncpy
  */
 unsigned char* CDECL _mbsncpy(unsigned char* dst, const unsigned char* src, MSVCRT_size_t n)
 {
   unsigned char* ret = dst;
   if(!n)
     return dst;
-  if(MSVCRT___mb_cur_max > 1)
+  if (g_mbcp_is_multibyte)
   {
     while (*src && n)
     {
       n--;
-      *dst++ = *src;
-      if (MSVCRT_isleadbyte(*src++))
-          *dst++ = *src++;
+      if (_ismbblead(*src))
+      {
+        if (!*(src+1))
+        {
+            *dst++ = 0;
+            *dst++ = 0;
+            break;
+        }
+
+        *dst++ = *src++;
+      }
+
+      *dst++ = *src++;
     }
   }
   else
@@ -421,32 +440,27 @@ unsigned char* CDECL _mbsncpy(unsigned char* dst, const unsigned char* src, MSVC
 
 /*********************************************************************
  *              _mbsnbcpy(MSVCRT.@)
+ * REMARKS
+ *  Like strncpy this function doesn't enforce the string to be
+ *  NUL-terminated
  */
 unsigned char* CDECL _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSVCRT_size_t n)
 {
   unsigned char* ret = dst;
   if(!n)
     return dst;
-  if(MSVCRT___mb_cur_max > 1)
+  if(g_mbcp_is_multibyte)
   {
-    while (*src && (n > 1))
+    int is_lead = 0;
+    while (*src && n)
     {
+      is_lead = (!is_lead && _ismbblead(*src));
       n--;
-      *dst++ = *src;
-      if (MSVCRT_isleadbyte(*src++))
-      {
-        *dst++ = *src++;
-        n--;
-      }
+      *dst++ = *src++;
     }
-    if (*src && n && !MSVCRT_isleadbyte(*src))
-    {
-      /* If the last character is a multi-byte character then
-       * we cannot copy it since we have only one byte left
-       */
-      *dst++ = *src;
-      n--;
-    }
+
+    if (is_lead) /* if string ends with a lead, remove it */
+	*(dst - 1) = 0;
   }
   else
   {
