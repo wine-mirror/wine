@@ -69,6 +69,7 @@ BEGIN
     BEGIN
         MENUITEM "&Punktmerking"                ID_BULLET
         MENUITEM "&Avsnitt . . ."               ID_PARAFORMAT
+        MENUITEM "&Tabulatorer . . ."           ID_TABSTOPS
         POPUP "&Bakgrunn"
         BEGIN
             MENUITEM "&System\tCtrl+1",         ID_BACK_1
@@ -115,6 +116,20 @@ BEGIN
     COMBOBOX IDC_PARA_ALIGN, 55, 85, 60, 13, CBS_DROPDOWNLIST
     PUSHBUTTON "&OK", IDOK, 137, 15, 50, 15
     PUSHBUTTON "&Avbryt", IDCANCEL, 137, 33, 50, 15
+END
+
+IDD_TABSTOPS DIALOG DISCARDABLE 30, 20, 200, 110
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+Caption "Tabulatorer"
+FONT 8, "MS SHell DLg"
+BEGIN
+    GROUPBOX "Tabulatorstopp", 0, 10, 10, 120, 90
+    COMBOBOX IDC_TABSTOPS, 20, 20, 100, 60, CBS_SIMPLE | CBS_SORT
+    DEFPUSHBUTTON "&Legg til", ID_TAB_ADD, 20, 80, 45, 15
+    PUSHBUTTON "&Fjern", ID_TAB_DEL, 72, 80, 45, 15
+    PUSHBUTTON "&OK", IDOK, 137, 15, 50, 15
+    PUSHBUTTON "&Avbryt", IDCANCEL, 137, 33, 50, 15
+    PUSHBUTTON "Fjern all&e", ID_TAB_EMPTY, 137, 51, 50, 15
 END
 
 STRINGTABLE DISCARDABLE

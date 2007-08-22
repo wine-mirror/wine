@@ -68,6 +68,7 @@ static UINT ID_FINDMSGSTRING;
 static WCHAR wszFilter[MAX_STRING_LEN*4+6*3+5];
 static WCHAR wszDefaultFileName[MAX_STRING_LEN];
 static WCHAR wszSaveChanges[MAX_STRING_LEN];
+static WCHAR units_cmW[MAX_STRING_LEN];
 
 static char units_cmA[MAX_STRING_LEN];
 
@@ -107,6 +108,7 @@ static void DoLoadStrings(void)
     LoadStringW(hInstance, STRING_PROMPT_SAVE_CHANGES, p, MAX_STRING_LEN);
 
     LoadStringA(hInstance, STRING_UNITS_CM, units_cmA, MAX_STRING_LEN);
+    LoadStringW(hInstance, STRING_UNITS_CM, units_cmW, MAX_STRING_LEN);
 }
 
 static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
@@ -1081,6 +1083,13 @@ static int current_units_to_twips(float number)
     return twips;
 }
 
+static void append_current_units(LPWSTR buffer)
+{
+    static const WCHAR space[] = {' '};
+    lstrcatW(buffer, space);
+    lstrcatW(buffer, units_cmW);
+}
+
 static void number_with_units(LPWSTR buffer, int number)
 {
     float converted = (float)number / 567;
@@ -1273,6 +1282,135 @@ static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, 
                     }
                     /* Fall through */
 
+                case IDCANCEL:
+                    EndDialog(hWnd, wParam);
+                    return TRUE;
+            }
+    }
+    return FALSE;
+}
+
+static INT_PTR CALLBACK tabstops_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch(message)
+    {
+        case WM_INITDIALOG:
+            {
+                HWND hTabWnd = GetDlgItem(hWnd, IDC_TABSTOPS);
+                PARAFORMAT pf;
+                WCHAR buffer[MAX_STRING_LEN];
+                int i;
+
+                pf.cbSize = sizeof(pf);
+                pf.dwMask = PFM_TABSTOPS;
+                SendMessageW(hEditorWnd, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+                SendMessageW(hTabWnd, CB_LIMITTEXT, MAX_STRING_LEN-1, 0);
+
+                for(i = 0; i < pf.cTabCount; i++)
+                {
+                    number_with_units(buffer, pf.rgxTabs[i]);
+                    SendMessageW(hTabWnd, CB_ADDSTRING, 0, (LPARAM)&buffer);
+                }
+                SetFocus(hTabWnd);
+            }
+            break;
+
+        case WM_COMMAND:
+            switch(LOWORD(wParam))
+            {
+                case IDC_TABSTOPS:
+                    {
+                        HWND hTabWnd = (HWND)lParam;
+                        HWND hAddWnd = GetDlgItem(hWnd, ID_TAB_ADD);
+                        HWND hDelWnd = GetDlgItem(hWnd, ID_TAB_DEL);
+                        HWND hEmptyWnd = GetDlgItem(hWnd, ID_TAB_EMPTY);
+
+                        if(GetWindowTextLengthW(hTabWnd))
+                            EnableWindow(hAddWnd, TRUE);
+                        else
+                            EnableWindow(hAddWnd, FALSE);
+
+                        if(SendMessageW(hTabWnd, CB_GETCOUNT, 0, 0))
+                        {
+                            EnableWindow(hEmptyWnd, TRUE);
+
+                            if(SendMessageW(hTabWnd, CB_GETCURSEL, 0, 0) == CB_ERR)
+                                EnableWindow(hDelWnd, FALSE);
+                            else
+                                EnableWindow(hDelWnd, TRUE);
+                        } else
+                        {
+                            EnableWindow(hEmptyWnd, FALSE);
+                        }
+                    }
+                    break;
+
+                case ID_TAB_ADD:
+                    {
+                        HWND hTabWnd = GetDlgItem(hWnd, IDC_TABSTOPS);
+                        WCHAR buffer[MAX_STRING_LEN];
+
+                        GetWindowTextW(hTabWnd, buffer, MAX_STRING_LEN);
+                        append_current_units(buffer);
+
+                        if(SendMessageW(hTabWnd, CB_FINDSTRINGEXACT, -1, (LPARAM)&buffer) == CB_ERR)
+                        {
+                            float number = 0;
+
+                            if(!number_from_string(buffer, &number, TRUE))
+                            {
+                                MessageBoxW(hWnd, MAKEINTRESOURCEW(STRING_INVALID_NUMBER),
+                                             wszAppTitle, MB_OK | MB_ICONINFORMATION);
+                            } else
+                            {
+                                SendMessageW(hTabWnd, CB_ADDSTRING, 0, (LPARAM)&buffer);
+                                SetWindowTextW(hTabWnd, 0);
+                            }
+                        }
+                        SetFocus(hTabWnd);
+                    }
+                    break;
+
+                case ID_TAB_DEL:
+                    {
+                        HWND hTabWnd = GetDlgItem(hWnd, IDC_TABSTOPS);
+                        LRESULT ret;
+                        ret = SendMessageW(hTabWnd, CB_GETCURSEL, 0, 0);
+                        if(ret != CB_ERR)
+                            SendMessageW(hTabWnd, CB_DELETESTRING, ret, 0);
+                    }
+                    break;
+
+                case ID_TAB_EMPTY:
+                    {
+                        HWND hTabWnd = GetDlgItem(hWnd, IDC_TABSTOPS);
+                        SendMessageW(hTabWnd, CB_RESETCONTENT, 0, 0);
+                        SetFocus(hTabWnd);
+                    }
+                    break;
+
+                case IDOK:
+                    {
+                        HWND hTabWnd = GetDlgItem(hWnd, IDC_TABSTOPS);
+                        int i;
+                        WCHAR buffer[MAX_STRING_LEN];
+                        PARAFORMAT pf;
+                        float number;
+
+                        pf.cbSize = sizeof(pf);
+                        pf.dwMask = PFM_TABSTOPS;
+
+                        for(i = 0; SendMessageW(hTabWnd, CB_GETLBTEXT, i,
+                                                (LPARAM)&buffer) != CB_ERR &&
+                                                        i < MAX_TAB_STOPS; i++)
+                        {
+                            number_from_string(buffer, &number, TRUE);
+                            pf.rgxTabs[i] = current_units_to_twips(number);
+                        }
+                        pf.cTabCount = i;
+                        SendMessageW(hEditorWnd, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
+                    }
+                    /* Fall through */
                 case IDCANCEL:
                     EndDialog(hWnd, wParam);
                     return TRUE;
@@ -1775,6 +1913,13 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
             HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
             DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_PARAFORMAT), hWnd,
                        paraformat_proc);
+        }
+        break;
+
+    case ID_TABSTOPS:
+        {
+            HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
+            DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_TABSTOPS), hWnd, tabstops_proc);
         }
         break;
 
