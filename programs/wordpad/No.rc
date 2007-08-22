@@ -27,6 +27,8 @@ BEGIN
         MENUITEM "&Lagre\tCtrl+S",            ID_FILE_SAVE
         MENUITEM "Lagre &som . . .",          ID_FILE_SAVEAS
         MENUITEM SEPARATOR
+        MENUITEM "&Skriv ut . . .\tCtrl+P",   ID_PRINT
+        MENUITEM SEPARATOR
         MENUITEM "&Avslutt",                  ID_FILE_EXIT
     END
     POPUP "R&ediger"
@@ -152,6 +154,11 @@ BEGIN
     STRING_ALIGN_LEFT,            "Venstrestilt"
     STRING_ALIGN_RIGHT,           "Høyrestilt"
     STRING_ALIGN_CENTER,          "Midtstilt"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_PRINTER_FILES_PRN,        "Skriverfiler (*.PRN)"
 END
 
 STRINGTABLE DISCARDABLE

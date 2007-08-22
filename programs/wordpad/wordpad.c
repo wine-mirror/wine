@@ -68,6 +68,7 @@ static UINT ID_FINDMSGSTRING;
 static WCHAR wszFilter[MAX_STRING_LEN*4+6*3+5];
 static WCHAR wszDefaultFileName[MAX_STRING_LEN];
 static WCHAR wszSaveChanges[MAX_STRING_LEN];
+static WCHAR wszPrintFilter[MAX_STRING_LEN*2+6+4+1];
 static WCHAR units_cmW[MAX_STRING_LEN];
 
 static char units_cmA[MAX_STRING_LEN];
@@ -81,6 +82,7 @@ static void DoLoadStrings(void)
     static const WCHAR files_rtf[] = {'*','.','r','t','f','\0'};
     static const WCHAR files_txt[] = {'*','.','t','x','t','\0'};
     static const WCHAR files_all[] = {'*','.','*','\0'};
+    static const WCHAR files_prn[] = {'*','.','P','R','N',0};
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
 
     LoadStringW(hInstance, STRING_RICHTEXT_FILES_RTF, p, MAX_STRING_LEN);
@@ -100,6 +102,17 @@ static void DoLoadStrings(void)
     lstrcpyW(p, files_all);
     p += lstrlenW(p) + 1;
     *p = '\0';
+
+    p = wszPrintFilter;
+    LoadStringW(hInstance, STRING_PRINTER_FILES_PRN, p, MAX_STRING_LEN);
+    p += lstrlenW(p) + 1;
+    lstrcpyW(p, files_prn);
+    p += lstrlenW(p) + 1;
+    LoadStringW(hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
+    p += lstrlenW(p) + 1;
+    lstrcpyW(p, files_all);
+    p += lstrlenW(p) + 1;
+    *p = 0;
 
     p = wszDefaultFileName;
     LoadStringW(hInstance, STRING_DEFAULT_FILENAME, p, MAX_STRING_LEN);
@@ -872,6 +885,118 @@ static void DialogOpenFile(void)
         if(prompt_save_changes())
             DoOpenFile(ofn.lpstrFile);
     }
+}
+
+static LPWSTR dialog_print_to_file(void)
+{
+    OPENFILENAMEW ofn;
+    static WCHAR file[MAX_PATH] = {'O','U','T','P','U','T','.','P','R','N',0};
+    static const WCHAR defExt[] = {'P','R','N',0};
+
+    ZeroMemory(&ofn, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+    ofn.hwndOwner = hMainWnd;
+    ofn.lpstrFilter = (LPWSTR)wszPrintFilter;
+    ofn.lpstrFile = (LPWSTR)file;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrDefExt = (LPWSTR)defExt;
+
+    if(GetSaveFileNameW(&ofn))
+        return (LPWSTR)file;
+    else
+        return FALSE;
+}
+
+static LONG devunits_to_twips(int units, int dpi)
+{
+    float ret = ((float)units / (float)dpi) * (float)567 * 2.54;
+    return (LONG)ret;
+}
+
+static void print(LPPRINTDLGW pd)
+{
+    FORMATRANGE fr;
+    DOCINFOW di;
+    int dpiY, dpiX, width, height;
+
+    fr.hdc = pd->hDC;
+    fr.hdcTarget = pd->hDC;
+
+    dpiY = GetDeviceCaps(fr.hdc, LOGPIXELSY);
+    dpiX = GetDeviceCaps(fr.hdc, LOGPIXELSX);
+    width = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALWIDTH), dpiX);
+    height = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALHEIGHT), dpiY);
+
+    fr.rc.left = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALOFFSETX), dpiX);
+    fr.rc.right = width - (fr.rc.left * 2);
+    fr.rc.top = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALOFFSETY), dpiY);
+    fr.rc.bottom = height - (fr.rc.top * 2);
+    fr.rcPage.left = 0;
+    fr.rcPage.right = width;
+    fr.rcPage.top = 0;
+    fr.rcPage.bottom = height;
+
+    ZeroMemory(&di, sizeof(di));
+    di.cbSize = sizeof(di);
+    di.lpszDocName = (LPWSTR)wszFileName;
+
+    if(pd->Flags & PD_PRINTTOFILE)
+    {
+        di.lpszOutput = dialog_print_to_file();
+        if(!di.lpszOutput)
+            return;
+    }
+
+    if(pd->Flags & PD_SELECTION)
+    {
+        SendMessageW(hEditorWnd, EM_EXGETSEL, 0, (LPARAM)&fr.chrg);
+    } else
+    {
+        GETTEXTLENGTHEX gt;
+        gt.flags = GTL_DEFAULT;
+        gt.codepage = 1200;
+        fr.chrg.cpMin = 0;
+        fr.chrg.cpMax = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
+    }
+
+    StartDocW(fr.hdc, &di);
+    do
+    {
+        if(StartPage(fr.hdc) <= 0)
+            break;
+
+        fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)&fr);
+
+        if(EndPage(fr.hdc) <= 0)
+            break;
+    }
+    while(fr.chrg.cpMin < fr.chrg.cpMax);
+
+    EndDoc(fr.hdc);
+    SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE, 0);
+}
+
+static void dialog_print(void)
+{
+    PRINTDLGW pd;
+    int from = 0;
+    int to = 0;
+
+    ZeroMemory(&pd, sizeof(pd));
+    pd.lStructSize = sizeof(pd);
+    pd.hwndOwner = hMainWnd;
+    pd.Flags = PD_RETURNDC | PD_USEDEVMODECOPIESANDCOLLATE;
+    pd.nMinPage = 1;
+    pd.nMaxPage = 1;
+
+    SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
+    if(from == to)
+        pd.Flags |= PD_NOSELECTION;
+
+    if(PrintDlgW(&pd))
+        print(&pd);
 }
 
 static void HandleCommandLine(LPWSTR cmdline)
@@ -1698,6 +1823,9 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case ID_PRINT:
+        dialog_print();
+        break;
+
     case ID_PREVIEW:
         {
             static const WCHAR wszNotImplemented[] = {'N','o','t',' ',

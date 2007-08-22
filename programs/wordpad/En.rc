@@ -27,6 +27,8 @@ BEGIN
         MENUITEM "&Save\tCtrl+S",         ID_FILE_SAVE
         MENUITEM "Save &as . . .",        ID_FILE_SAVEAS
         MENUITEM SEPARATOR
+        MENUITEM "&Print . . .\tCtrl+P",  ID_PRINT
+        MENUITEM SEPARATOR
         MENUITEM "E&xit",         ID_FILE_EXIT
     END
     POPUP "&Edit"
@@ -157,7 +159,12 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-STRING_UNITS_CM,             "cm"
+    STRING_PRINTER_FILES_PRN,        "Printer files (*.PRN)"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_UNITS_CM,             "cm"
 END
 
 STRINGTABLE DISCARDABLE

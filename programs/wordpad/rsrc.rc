@@ -41,6 +41,7 @@ BEGIN
     "N",          ID_FILE_NEW,        VIRTKEY, CONTROL    
     "O",          ID_FILE_OPEN,       VIRTKEY, CONTROL    
     "S",          ID_FILE_SAVE,       VIRTKEY, CONTROL    
+    "P",          ID_PRINT,           VIRTKEY, CONTROL
 END
 
 /* BINRES toolbar.bmp */
