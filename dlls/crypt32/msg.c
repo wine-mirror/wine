@@ -2114,15 +2114,21 @@ static BOOL CDecodeSignedMsg_VerifySignature(CDecodeMsg *msg, PCERT_INFO info)
         if (ret)
         {
             HCRYPTHASH hash;
+            CRYPT_HASH_BLOB reversedHash;
 
             if (msg->u.signed_data.info->rgSignerInfo[i].AuthAttrs.cAttr)
                 hash = msg->u.signed_data.signerHandles[i].authAttrHash;
             else
                 hash = msg->u.signed_data.signerHandles[i].contentHash;
-            ret = CryptVerifySignatureW(hash,
-             msg->u.signed_data.info->rgSignerInfo[i].EncryptedHash.pbData,
-             msg->u.signed_data.info->rgSignerInfo[i].EncryptedHash.cbData,
-             key, NULL, 0);
+            ret = CRYPT_ConstructBlob(&reversedHash,
+             &msg->u.signed_data.info->rgSignerInfo[i].EncryptedHash);
+            if (ret)
+            {
+                CRYPT_ReverseBytes(&reversedHash);
+                ret = CryptVerifySignatureW(hash, reversedHash.pbData,
+                 reversedHash.cbData, key, NULL, 0);
+                CryptMemFree(reversedHash.pbData);
+            }
             CryptDestroyKey(key);
         }
     }
