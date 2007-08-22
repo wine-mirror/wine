@@ -345,7 +345,7 @@ static const struct test *find_test( const char *name )
 {
     const struct test *test;
     const char *p;
-    int len;
+    size_t len;
 
     if ((p = strrchr( name, '/' ))) name = p + 1;
     if ((p = strrchr( name, '\\' ))) name = p + 1;
