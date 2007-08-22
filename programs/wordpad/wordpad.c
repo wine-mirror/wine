@@ -47,9 +47,13 @@ static const WCHAR wszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a',
 static const WCHAR key_recentfiles[] = {'R','e','c','e','n','t',' ','f','i','l','e',
                                         ' ','l','i','s','t',0};
 static const WCHAR key_options[] = {'O','p','t','i','o','n','s',0};
+static const WCHAR key_rtf[] = {'R','T','F',0};
+static const WCHAR key_text[] = {'T','e','x','t',0};
+
 
 static const WCHAR var_file[] = {'F','i','l','e','%','d',0};
 static const WCHAR var_framerect[] = {'F','r','a','m','e','R','e','c','t',0};
+static const WCHAR var_barstate0[] = {'B','a','r','S','t','a','t','e','0',0};
 
 
 static HWND hMainWnd;
@@ -481,6 +485,11 @@ static void clear_formatting(void)
     SendMessageW(hEditorWnd, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
 }
 
+static int reg_formatindex(WPARAM format)
+{
+    return (format & SF_TEXT) ? 1 : 0;
+}
+
 static int fileformat_number(WPARAM format)
 {
     int number = 0;
@@ -502,9 +511,82 @@ static WPARAM fileformat_flags(int format)
     return flags[format];
 }
 
+static void update_window(void)
+{
+    RECT rect;
+
+    GetWindowRect(hMainWnd, &rect);
+
+    (void) OnSize(hMainWnd, SIZE_RESTORED, MAKELONG(rect.bottom, rect.right));
+}
+
+static DWORD barState[2];
+
+static BOOL is_bar_visible(int bandId)
+{
+    return barState[reg_formatindex(fileFormat)] & (1 << bandId);
+}
+
+static void store_bar_state(int bandId, BOOL show)
+{
+    int formatIndex = reg_formatindex(fileFormat);
+
+    if(show)
+        barState[formatIndex] |= (1 << bandId);
+    else
+        barState[formatIndex] &= ~(1 << bandId);
+}
+
+static void set_toolbar_state(int bandId, BOOL show)
+{
+    HWND hwndReBar = GetDlgItem(hMainWnd, IDC_REBAR);
+
+    SendMessageW(hwndReBar, RB_SHOWBAND, SendMessageW(hwndReBar, RB_IDTOINDEX, bandId, 0), show);
+
+    if(bandId == BANDID_TOOLBAR)
+    {
+        REBARBANDINFOW rbbinfo;
+        int index = SendMessageW(hwndReBar, RB_IDTOINDEX, BANDID_FORMATBAR, 0);
+
+        rbbinfo.cbSize = sizeof(rbbinfo);
+        rbbinfo.fMask = RBBIM_STYLE;
+
+        SendMessageW(hwndReBar, RB_GETBANDINFO, index, (LPARAM)&rbbinfo);
+
+        if(!show)
+            rbbinfo.fStyle &= ~RBBS_BREAK;
+        else
+            rbbinfo.fStyle |= RBBS_BREAK;
+
+        SendMessageW(hwndReBar, RB_SETBANDINFO, index, (LPARAM)&rbbinfo);
+    }
+
+    if(bandId == BANDID_TOOLBAR || bandId == BANDID_FORMATBAR)
+        store_bar_state(bandId, show);
+}
+
+static void set_statusbar_state(BOOL show)
+{
+    HWND hStatusWnd = GetDlgItem(hMainWnd, IDC_STATUSBAR);
+
+    ShowWindow(hStatusWnd, show ? SW_SHOW : SW_HIDE);
+    store_bar_state(BANDID_STATUSBAR, show);
+}
+
+static void set_bar_states(void)
+{
+    set_toolbar_state(BANDID_TOOLBAR, is_bar_visible(BANDID_TOOLBAR));
+    set_toolbar_state(BANDID_FORMATBAR, is_bar_visible(BANDID_FORMATBAR));
+    set_statusbar_state(is_bar_visible(BANDID_STATUSBAR));
+
+    update_window();
+}
+
 static void set_fileformat(WPARAM format)
 {
     fileFormat = format;
+
+    set_bar_states();
 }
 
 static void DoOpenFile(LPCWSTR szOpenFileName)
@@ -887,47 +969,55 @@ static void DoDefaultFont(void)
     SendMessageW(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
 }
 
-static void update_window(void)
+static void registry_read_options_format(int index, LPCWSTR key)
 {
-    RECT rect;
+    HKEY hKey;
+    DWORD action = 0;
+    BOOL fetched = FALSE;
+    barState[index] = 0;
 
-    GetWindowRect(hMainWnd, &rect);
-
-    (void) OnSize(hMainWnd, SIZE_RESTORED, MAKELONG(rect.bottom, rect.right));
-}
-
-static void toggle_toolbar(int bandId)
-{
-    HWND hwndReBar = GetDlgItem(hMainWnd, IDC_REBAR);
-    REBARBANDINFOW rbbinfo;
-    BOOL hide = TRUE;
-
-    if(!hwndReBar)
+    if(registry_get_handle(&hKey, &action, key) != ERROR_SUCCESS)
         return;
 
-    rbbinfo.cbSize = sizeof(rbbinfo);
-    rbbinfo.fMask = RBBIM_STYLE | RBBIM_SIZE;
-
-    SendMessageW(hwndReBar, RB_GETBANDINFO, bandId, (LPARAM)&rbbinfo);
-
-    if(rbbinfo.fStyle & RBBS_HIDDEN)
-        hide = FALSE;
-
-    SendMessageW(hwndReBar, RB_SHOWBAND, bandId, hide ? 0 : 1);
-
-    if(bandId == BANDID_TOOLBAR)
+    if(action == REG_OPENED_EXISTING_KEY)
     {
-        rbbinfo.fMask ^= RBBIM_SIZE;
+        DWORD size = sizeof(DWORD);
 
-        SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_FORMATBAR, (LPARAM)&rbbinfo);
-
-        if(hide)
-            rbbinfo.fStyle ^= RBBS_BREAK;
-        else
-            rbbinfo.fStyle |= RBBS_BREAK;
-
-        SendMessageW(hwndReBar, RB_SETBANDINFO, BANDID_FORMATBAR, (LPARAM)&rbbinfo);
+        if(RegQueryValueExW(hKey, var_barstate0, 0, NULL, (LPBYTE)&barState[index],
+                         &size) == ERROR_SUCCESS)
+            fetched = TRUE;
     }
+
+    if(!fetched)
+        barState[index] = (1 << BANDID_TOOLBAR) | (1 << BANDID_FORMATBAR) | (1 << BANDID_RULER) | (1 << BANDID_STATUSBAR);
+
+    RegCloseKey(hKey);
+}
+
+static void registry_read_options(void)
+{
+    registry_read_options_format(reg_formatindex(SF_RTF), key_rtf);
+    registry_read_options_format(reg_formatindex(SF_TEXT), key_text);
+}
+
+static void registry_set_options_format(int index, LPCWSTR key)
+{
+    HKEY hKey;
+    DWORD action = 0;
+
+    if(registry_get_handle(&hKey, &action, key) == ERROR_SUCCESS)
+    {
+        RegSetValueExW(hKey, var_barstate0, 0, REG_DWORD, (LPBYTE)&barState[index],
+                       sizeof(DWORD));
+
+        RegCloseKey(hKey);
+    }
+}
+
+static void registry_set_options(void)
+{
+    registry_set_options_format(reg_formatindex(SF_RTF), key_rtf);
+    registry_set_options_format(reg_formatindex(SF_TEXT), key_text);
 }
 
 BOOL CALLBACK datetime_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -1078,14 +1168,15 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     SendMessageW(hToolBarWnd, TB_AUTOSIZE, 0, 0);
 
     rbb.cbSize = sizeof(rbb);
-    rbb.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_CHILD | RBBIM_STYLE;
+    rbb.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_CHILD | RBBIM_STYLE | RBBIM_ID;
     rbb.fStyle = RBBS_CHILDEDGE | RBBS_BREAK | RBBS_NOGRIPPER;
     rbb.cx = 0;
     rbb.hwndChild = hToolBarWnd;
     rbb.cxMinChild = 0;
     rbb.cyChild = rbb.cyMinChild = HIWORD(SendMessageW(hToolBarWnd, TB_GETBUTTONSIZE, 0, 0));
+    rbb.wID = BANDID_TOOLBAR;
 
-    SendMessageW(hReBarWnd, RB_INSERTBAND, BANDID_TOOLBAR, (LPARAM)&rbb);
+    SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
 
     hFormatBarWnd = CreateToolbarEx(hReBarWnd,
          CCS_NOPARENTALIGN | CCS_NOMOVEY | WS_VISIBLE | TBSTYLE_TOOLTIPS | TBSTYLE_BUTTON,
@@ -1104,8 +1195,9 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     SendMessageW(hFormatBarWnd, TB_AUTOSIZE, 0, 0);
 
     rbb.hwndChild = hFormatBarWnd;
+    rbb.wID = BANDID_FORMATBAR;
 
-    SendMessageW(hReBarWnd, RB_INSERTBAND, BANDID_FORMATBAR, (LPARAM)&rbb);
+    SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
 
     hDLL = LoadLibraryW(wszRichEditDll);
     if(!hDLL)
@@ -1137,6 +1229,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     ID_FINDMSGSTRING = RegisterWindowMessageW(FINDMSGSTRINGW);
 
     registry_read_filelist(hWnd);
+    registry_read_options();
 
     return 0;
 }
@@ -1219,7 +1312,6 @@ static LRESULT OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam)
 static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
-    HWND hwndStatus = GetDlgItem(hWnd, IDC_STATUSBAR);
     static FINDREPLACEW findreplace;
 
     if ((HWND)lParam == hwndEditor)
@@ -1489,17 +1581,17 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case ID_TOGGLE_TOOLBAR:
-        toggle_toolbar(BANDID_TOOLBAR);
+        set_toolbar_state(BANDID_TOOLBAR, !is_bar_visible(BANDID_TOOLBAR));
         update_window();
         break;
 
     case ID_TOGGLE_FORMATBAR:
-        toggle_toolbar(BANDID_FORMATBAR);
+        set_toolbar_state(BANDID_FORMATBAR, !is_bar_visible(BANDID_FORMATBAR));
         update_window();
         break;
 
     case ID_TOGGLE_STATUSBAR:
-        ShowWindow(hwndStatus, IsWindowVisible(hwndStatus) ? SW_HIDE : SW_SHOW);
+        set_statusbar_state(!is_bar_visible(BANDID_STATUSBAR));
         update_window();
         break;
 
@@ -1521,11 +1613,9 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
 {
     HMENU hMenu = (HMENU)wParam;
     HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
-    HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
     HWND hwndStatus = GetDlgItem(hWnd, IDC_STATUSBAR);
     PARAFORMAT pf;
     int nAlignment = -1;
-    REBARBANDINFOW rbbinfo;
     int selFrom, selTo;
     GETTEXTLENGTHEX gt;
     LRESULT textLength;
@@ -1556,17 +1646,11 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
     EnableMenuItem(hMenu, ID_EDIT_REDO, MF_BYCOMMAND|(SendMessageW(hwndEditor, EM_CANREDO, 0, 0)) ?
             MF_ENABLED : MF_GRAYED);
 
-    rbbinfo.cbSize = sizeof(rbbinfo);
-    rbbinfo.fMask = RBBIM_STYLE;
-    SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_TOOLBAR, (LPARAM)&rbbinfo);
+    CheckMenuItem(hMenu, ID_TOGGLE_TOOLBAR, MF_BYCOMMAND|(is_bar_visible(BANDID_TOOLBAR)) ?
+            MF_CHECKED : MF_UNCHECKED);
 
-    CheckMenuItem(hMenu, ID_TOGGLE_TOOLBAR, MF_BYCOMMAND|(rbbinfo.fStyle & RBBS_HIDDEN) ?
-            MF_UNCHECKED : MF_CHECKED);
-
-    SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_FORMATBAR, (LPARAM)&rbbinfo);
-
-    CheckMenuItem(hMenu, ID_TOGGLE_FORMATBAR, MF_BYCOMMAND|(rbbinfo.fStyle & RBBS_HIDDEN) ?
-            MF_UNCHECKED : MF_CHECKED);
+    CheckMenuItem(hMenu, ID_TOGGLE_FORMATBAR, MF_BYCOMMAND|(is_bar_visible(BANDID_FORMATBAR)) ?
+            MF_CHECKED : MF_UNCHECKED);
 
     CheckMenuItem(hMenu, ID_TOGGLE_STATUSBAR, MF_BYCOMMAND|IsWindowVisible(hwndStatus) ?
             MF_CHECKED : MF_UNCHECKED);
@@ -1594,7 +1678,6 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
     HWND hwndStatusBar = GetDlgItem(hWnd, IDC_STATUSBAR);
     HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
     int rebarHeight = 0;
-    REBARBANDINFOW rbbinfo;
     int rebarRows = 2;
 
     if (hwndStatusBar)
@@ -1611,15 +1694,10 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
     }
     if (hwndReBar)
     {
-        rbbinfo.cbSize = sizeof(rbbinfo);
-        rbbinfo.fMask = RBBIM_STYLE;
-
-        SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_TOOLBAR, (LPARAM)&rbbinfo);
-        if(rbbinfo.fStyle & RBBS_HIDDEN)
+        if(!is_bar_visible(BANDID_TOOLBAR))
             rebarRows--;
 
-        SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_FORMATBAR, (LPARAM)&rbbinfo);
-        if(rbbinfo.fStyle & RBBS_HIDDEN)
+        if(!is_bar_visible(BANDID_FORMATBAR))
             rebarRows--;
 
         rebarHeight = rebarRows ? SendMessageW(hwndReBar, RB_GETBARHEIGHT, 0, 0) : 0;
@@ -1665,6 +1743,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
         if(prompt_save_changes())
         {
             registry_set_winrect();
+            registry_set_options();
             PostQuitMessage(0);
         }
         break;
@@ -1719,6 +1798,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     ShowWindow(hMainWnd, SW_SHOWDEFAULT);
 
     set_caption(NULL);
+    set_bar_states();
 
     HandleCommandLine(GetCommandLineW());
 
