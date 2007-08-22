@@ -704,6 +704,8 @@ static void InternetReadFileExA_test(int flags)
 abort:
     SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     if (hor) {
+        SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
+        SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
         rc = InternetCloseHandle(hor);
         ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
         rc = InternetCloseHandle(hor);
@@ -720,6 +722,16 @@ abort:
       if (flags & INTERNET_FLAG_ASYNC)
           Sleep(100);
       CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
+    }
+    if (hor != 0x0) todo_wine
+    {
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+    }
+    else
+    {
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     }
     CloseHandle(hCompleteEvent);
     first_connection_to_test_url = FALSE;

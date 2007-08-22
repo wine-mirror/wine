@@ -1883,11 +1883,11 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
             req = &workRequest.u.InternetReadFileExA;
             req->lpBuffersOut = lpBuffersOut;
 
-            retval = INTERNET_AsyncCall(&workRequest);
-            if (!retval) return FALSE;
-
-            INTERNET_SetLastError(ERROR_IO_PENDING);
-            return FALSE;
+            if (!INTERNET_AsyncCall(&workRequest))
+                WININET_Release( lpwh );
+            else
+                INTERNET_SetLastError(ERROR_IO_PENDING);
+            goto end;
         }
     }
 
@@ -1903,6 +1903,7 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
                               sizeof(dwBytesReceived));
     }
 
+end:
     WININET_Release( lpwh );
 
     TRACE("-- %s (bytes read: %d)\n", retval ? "TRUE": "FALSE", lpBuffersOut->dwBufferLength);
