@@ -468,7 +468,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
         RegCloseKey(hkey);
     }
     if (!psCmd[0] && !strncmp("LPR:",pszOutput,4))
-        sprintf(psCmd,"|lpr -P%s",pszOutput+4);
+        sprintf(psCmd,"|lpr -P'%s'",pszOutput+4);
 
     TRACE("Got printerSpoolCommand '%s' for output device '%s'\n",
 	  psCmd, pszOutput);
