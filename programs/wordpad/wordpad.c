@@ -512,6 +512,30 @@ static WPARAM fileformat_flags(int format)
     return flags[format];
 }
 
+static void set_default_font(void)
+{
+    static const WCHAR richTextFont[] = {'T','i','m','e','s',' ','N','e','w',' ',
+                                         'R','o','m','a','n',0};
+    static const WCHAR plainTextFont[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
+    CHARFORMAT2W fmt;
+    LPCWSTR font;
+
+    ZeroMemory(&fmt, sizeof(fmt));
+
+    fmt.cbSize = sizeof(fmt);
+    fmt.dwMask = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE;
+    fmt.dwEffects = 0;
+
+    if(fileFormat & SF_RTF)
+        font = richTextFont;
+    else
+        font = plainTextFont;
+
+    lstrcpyW(fmt.szFaceName, font);
+
+    SendMessageW(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
+}
+
 static void update_window(void)
 {
     RECT rect;
@@ -588,6 +612,7 @@ static void set_fileformat(WPARAM format)
     fileFormat = format;
 
     set_bar_states();
+    set_default_font();
 }
 
 static void DoOpenFile(LPCWSTR szOpenFileName)
@@ -621,6 +646,7 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     es.pfnCallback = stream_in;
 
     clear_formatting();
+    set_fileformat(format);
     SendMessageW(hEditorWnd, EM_STREAMIN, format, (LPARAM)&es);
 
     CloseHandle(hFile);
@@ -953,23 +979,6 @@ static void dialog_find(LPFINDREPLACEW fr)
     hFindWnd = FindTextW(fr);
 }
 
-
-static void DoDefaultFont(void)
-{
-    static const WCHAR szFaceName[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
-    CHARFORMAT2W fmt;
-
-    ZeroMemory(&fmt, sizeof(fmt));
-
-    fmt.cbSize = sizeof(fmt);
-    fmt.dwMask = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE;
-    fmt.dwEffects = 0;
-
-    lstrcpyW(fmt.szFaceName, szFaceName);
-
-    SendMessageW(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
-}
-
 static void registry_read_options_format(int index, LPCWSTR key)
 {
     HKEY hKey;
@@ -1222,7 +1231,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     SetFocus(hEditorWnd);
     SendMessageW(hEditorWnd, EM_SETEVENTMASK, 0, ENM_SELCHANGE);
 
-    DoDefaultFont();
+    set_default_font();
 
     DoLoadStrings();
     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
