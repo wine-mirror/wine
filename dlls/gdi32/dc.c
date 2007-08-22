@@ -1617,8 +1617,11 @@ INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
 {
     INT ret = 0;
     DC *dc = DC_GetDCPtr( hdc );
-    if (dc) ret = dc->relAbsMode;
-    DC_ReleaseDCPtr( dc );
+    if (dc)
+    {
+        ret = dc->relAbsMode;
+        DC_ReleaseDCPtr( dc );
+    }
     return ret;
 }
 
