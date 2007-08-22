@@ -6653,7 +6653,8 @@ BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo, DW
     DWORD   len;
     DWORD   res = FALSE;
 
-    FIXME("(%s, %d, %p, 0x%x)\n", debugstr_a(pName), Level, pDriverInfo, dwFileCopyFlags);
+    TRACE("(%s, %d, %p, 0x%x)\n", debugstr_a(pName), Level, pDriverInfo, dwFileCopyFlags);
+
     diA = (DRIVER_INFO_8A  *) pDriverInfo;
     ZeroMemory(&diW, sizeof(diW));
 
@@ -6677,61 +6678,81 @@ BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo, DW
     /* common fields */
     diW.cVersion = diA->cVersion;
 
-    len = MultiByteToWideChar(CP_ACP, 0, diA->pName, -1, NULL, 0);
-    diW.pName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, diA->pName, -1, diW.pName, len);
+    if (diA->pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pName, -1, NULL, 0);
+        diW.pName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pName, -1, diW.pName, len);
+    }
 
-    len = MultiByteToWideChar(CP_ACP, 0, diA->pEnvironment, -1, NULL, 0);
-    diW.pEnvironment = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, diA->pEnvironment, -1, diW.pEnvironment, len);
+    if (diA->pEnvironment) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pEnvironment, -1, NULL, 0);
+        diW.pEnvironment = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pEnvironment, -1, diW.pEnvironment, len);
+    }
 
-    len = MultiByteToWideChar(CP_ACP, 0, diA->pDriverPath, -1, NULL, 0);
-    diW.pDriverPath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, diA->pDriverPath, -1, diW.pDriverPath, len);
+    if (diA->pDriverPath) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pDriverPath, -1, NULL, 0);
+        diW.pDriverPath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pDriverPath, -1, diW.pDriverPath, len);
+    }
 
-    len = MultiByteToWideChar(CP_ACP, 0, diA->pDataFile, -1, NULL, 0);
-    diW.pDataFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, diA->pDataFile, -1, diW.pDataFile, len);
+    if (diA->pDataFile) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pDataFile, -1, NULL, 0);
+        diW.pDataFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pDataFile, -1, diW.pDataFile, len);
+    }
 
-    len = MultiByteToWideChar(CP_ACP, 0, diA->pConfigFile, -1, NULL, 0);
-    diW.pConfigFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, diA->pConfigFile, -1, diW.pConfigFile, len);
+    if (diA->pConfigFile) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pConfigFile, -1, NULL, 0);
+        diW.pConfigFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pConfigFile, -1, diW.pConfigFile, len);
+    }
 
-    if (Level > 2) {
+    if ((Level > 2) && diA->pDependentFiles) {
         lenA = multi_sz_lenA(diA->pDependentFiles);
         len = MultiByteToWideChar(CP_ACP, 0, diA->pDependentFiles, lenA, NULL, 0);
         diW.pDependentFiles = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, diA->pDependentFiles, lenA, diW.pDependentFiles, len);
+    }
 
+    if ((Level > 2) && diA->pMonitorName) {
         len = MultiByteToWideChar(CP_ACP, 0, diA->pMonitorName, -1, NULL, 0);
         diW.pMonitorName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, diA->pMonitorName, -1, diW.pMonitorName, len);
     }
 
-    if (Level > 3) {
+    if ((Level > 3) && diA->pDefaultDataType) {
         len = MultiByteToWideChar(CP_ACP, 0, diA->pDefaultDataType, -1, NULL, 0);
         diW.pDefaultDataType = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, diA->pDefaultDataType, -1, diW.pDefaultDataType, len);
+    }
 
+    if ((Level > 3) && diA->pszzPreviousNames) {
         lenA = multi_sz_lenA(diA->pszzPreviousNames);
         len = MultiByteToWideChar(CP_ACP, 0, diA->pszzPreviousNames, lenA, NULL, 0);
         diW.pszzPreviousNames = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, diA->pszzPreviousNames, lenA, diW.pszzPreviousNames, len);
     }
 
-    if (Level > 5) {
+    if ((Level > 5) && diA->pszMfgName) {
         len = MultiByteToWideChar(CP_ACP, 0, diA->pszMfgName, -1, NULL, 0);
         diW.pszMfgName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, diA->pszMfgName, -1, diW.pszMfgName, len);
+    }
 
+    if ((Level > 5) && diA->pszOEMUrl) {
         len = MultiByteToWideChar(CP_ACP, 0, diA->pszOEMUrl, -1, NULL, 0);
         diW.pszOEMUrl = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, diA->pszOEMUrl, -1, diW.pszOEMUrl, len);
+    }
 
+    if ((Level > 5) && diA->pszHardwareID) {
         len = MultiByteToWideChar(CP_ACP, 0, diA->pszHardwareID, -1, NULL, 0);
         diW.pszHardwareID = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, diA->pszHardwareID, -1, diW.pszHardwareID, len);
+    }
 
+    if ((Level > 5) && diA->pszProvider) {
         len = MultiByteToWideChar(CP_ACP, 0, diA->pszProvider, -1, NULL, 0);
         diW.pszProvider = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, diA->pszProvider, -1, diW.pszProvider, len);
