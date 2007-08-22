@@ -29,6 +29,10 @@ typedef void* HPBUFFERARB;
 static const char* (WINAPI *pwglGetExtensionsStringARB)(HDC);
 static int (WINAPI *pwglReleasePbufferDCARB)(HPBUFFERARB, HDC);
 
+/* WGL_ARB_make_current_read */
+static BOOL (WINAPI *pwglMakeContextCurrentARB)(HDC hdraw, HDC hread, HGLRC hglrc);
+static HDC (WINAPI *pwglGetCurrentReadDCARB)();
+
 /* WGL_ARB_pixel_format */
 #define WGL_COLOR_BITS_ARB 0x2014
 #define WGL_RED_BITS_ARB   0x2015
@@ -57,6 +61,10 @@ static void init_functions(void)
 
     /* WGL_ARB_extensions_string */
     GET_PROC(wglGetExtensionsStringARB)
+
+    /* WGL_ARB_make_current_read */
+    GET_PROC(wglMakeContextCurrentARB);
+    GET_PROC(wglGetCurrentReadDCARB);
 
     /* WGL_ARB_pixel_format */
     GET_PROC(wglChoosePixelFormatARB)
@@ -257,6 +265,35 @@ static void test_gdi_dbuf(HDC hdc)
     }
 }
 
+static void test_make_current_read(HDC hdc)
+{
+    int res;
+    HDC hread;
+    HGLRC hglrc = wglCreateContext(hdc);
+
+    if(!hglrc)
+    {
+        skip("wglCreateContext failed!\n");
+        return;
+    }
+
+    res = wglMakeCurrent(hdc, hglrc);
+    if(!res)
+    {
+        skip("wglMakeCurrent failed!\n");
+        return;
+    }
+
+    /* Test what wglGetCurrentReadDCARB does for wglMakeCurrent as the spec doesn't mention it */
+    hread = pwglGetCurrentReadDCARB();
+    trace("hread %p, hdc %p\n", hread, hdc);
+    ok(hread == hdc, "wglGetCurrentReadDCARB failed for standard wglMakeCurrent\n");
+
+    pwglMakeContextCurrentARB(hdc, hdc, hglrc);
+    hread = pwglGetCurrentReadDCARB();
+    ok(hread == hdc, "wglGetCurrentReadDCARB failed for wglMakeContextCurrent\n");
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -310,6 +347,11 @@ START_TEST(opengl)
 
         wgl_extensions = pwglGetExtensionsStringARB(hdc);
         if(wgl_extensions == NULL) skip("Skipping opengl32 tests because this OpenGL implementation doesn't support WGL extensions!\n");
+
+        if(strstr(wgl_extensions, "WGL_ARB_make_current_read"))
+            test_make_current_read(hdc);
+        else
+            trace("WGL_ARB_make_current_read not supported, skipping test\n");
 
         if(strstr(wgl_extensions, "WGL_ARB_pbuffer"))
             test_pbuffers(hdc);

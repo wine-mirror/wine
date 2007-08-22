@@ -110,6 +110,7 @@ typedef struct wine_glcontext {
     GLXContext ctx;
     BOOL do_escape;
     X11DRV_PDEVICE *physDev;
+    X11DRV_PDEVICE *pReadDev;
     RECT viewport;
     RECT scissor;
     BOOL scissor_enabled;
@@ -552,22 +553,6 @@ static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
     if (!ctx) return NULL;
     for (ret = context_list; ret; ret = ret->next) if (ctx == ret->ctx) break;
     return ret;
-}
-
-/**
- * get_hdc_from_Drawable (internal)
- *
- * For use by wglGetCurrentReadDCARB.
- */
-static inline HDC get_hdc_from_Drawable(GLXDrawable d)
-{
-    Wine_GLContext *ret;
-    for (ret = context_list; ret; ret = ret->next) {
-        if (d == ret->physDev->drawable) {
-            return ret->hdc;
-        }
-    }
-    return NULL;
 }
 
 static inline BOOL is_valid_context( Wine_GLContext *ctx )
@@ -1532,17 +1517,14 @@ BOOL X11DRV_wglDeleteContext(HGLRC hglrc)
  */
 static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void) 
 {
-    GLXDrawable gl_d;
-    HDC ret;
+    HDC ret = 0;
+    Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+    X11DRV_PDEVICE *physDev = ctx ? ctx->pReadDev : NULL;
 
-    TRACE("()\n");
+    if(physDev)
+        ret = physDev->hdc;
 
-    wine_tsx11_lock();
-    gl_d = pglXGetCurrentReadDrawable();
-    ret = get_hdc_from_Drawable(gl_d);
-    wine_tsx11_unlock();
-
-    TRACE(" returning %p (GL drawable %lu)\n", ret, gl_d);
+    TRACE(" returning %p (GL drawable %lu)\n", ret, physDev ? physDev->drawable : 0);
     return ret;
 }
 
@@ -1681,6 +1663,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
         if(ret)
         {
             ctx->physDev = physDev;
+            ctx->pReadDev = physDev;
 
             if (type == OBJ_MEMDC)
             {
@@ -1703,10 +1686,10 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
  *
  * For OpenGL32 wglMakeContextCurrentARB
  */
-BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* hReadDev, HGLRC hglrc) 
+BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEVICE* pReadDev, HGLRC hglrc)
 {
     BOOL ret;
-    TRACE("(%p,%p,%p)\n", hDrawDev, hReadDev, hglrc);
+    TRACE("(%p,%p,%p)\n", pDrawDev, pReadDev, hglrc);
 
     if (!has_opengl()) {
         ERR("No libGL on this box - disabling OpenGL support !\n");
@@ -1722,13 +1705,15 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* h
             ret = FALSE;
         } else {
             Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-            Drawable d_draw = get_glxdrawable(hDrawDev);
-            Drawable d_read = get_glxdrawable(hReadDev);
+            Drawable d_draw = get_glxdrawable(pDrawDev);
+            Drawable d_read = get_glxdrawable(pReadDev);
 
             if (ctx->ctx == NULL) {
-                ctx->ctx = pglXCreateContext(gdi_display, ctx->vis, NULL, GetObjectType(hDrawDev->hdc) == OBJ_MEMDC ? False : True);
+                ctx->ctx = pglXCreateContext(gdi_display, ctx->vis, NULL, GetObjectType(pDrawDev->hdc) == OBJ_MEMDC ? False : True);
                 TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
             }
+            ctx->physDev = pDrawDev;
+            ctx->pReadDev = pReadDev;
             ret = pglXMakeContextCurrent(gdi_display, d_draw, d_read, ctx->ctx);
             NtCurrentTeb()->glContext = ctx;
         }
