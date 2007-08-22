@@ -678,7 +678,11 @@ static NTSTATUS CDROM_GetControl(int dev, CDROM_AUDIO_CONTROL* cac)
  */
 static NTSTATUS CDROM_GetDeviceNumber(int dev, STORAGE_DEVICE_NUMBER* devnum)
 {
-    return STATUS_NOT_SUPPORTED;
+    FIXME( "stub\n" );
+    devnum->DeviceType = FILE_DEVICE_DISK;
+    devnum->DeviceNumber = 1;
+    devnum->PartitionNumber = 1;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************
