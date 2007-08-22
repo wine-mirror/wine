@@ -155,6 +155,7 @@ static DWORD CALLBACK stream_out(DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG 
     return 0;
 }
 
+
 static LPWSTR file_basename(LPWSTR path)
 {
     LPWSTR pos = path + lstrlenW(path);
@@ -182,6 +183,8 @@ static void set_caption(LPCWSTR wszNewFileName)
 
     if(!wszNewFileName)
         wszNewFileName = wszDefaultFileName;
+    else
+        wszNewFileName = file_basename((LPWSTR)wszNewFileName);
 
     wszCaption = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                 lstrlenW(wszNewFileName)*sizeof(WCHAR)+sizeof(wszSeparator)+sizeof(wszAppTitle));
