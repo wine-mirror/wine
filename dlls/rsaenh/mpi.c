@@ -46,7 +46,7 @@ static const int KARATSUBA_MUL_CUTOFF = 88,  /* Min. number of digits before Kar
  * odd as per HAC Note 14.64 on pp. 610
  */
 int
-fast_mp_invmod (mp_int * a, mp_int * b, mp_int * c)
+fast_mp_invmod (const mp_int * a, mp_int * b, mp_int * c)
 {
   mp_int  x, y, u, v, B, D;
   int     res, neg;
@@ -176,7 +176,7 @@ __ERR:mp_clear_multi (&x, &y, &u, &v, &B, &D, NULL);
  * Based on Algorithm 14.32 on pp.601 of HAC.
 */
 int
-fast_mp_montgomery_reduce (mp_int * x, mp_int * n, mp_digit rho)
+fast_mp_montgomery_reduce (mp_int * x, const mp_int * n, mp_digit rho)
 {
   int     ix, res, olduse;
   mp_word W[MP_WARRAY];
@@ -336,7 +336,7 @@ fast_mp_montgomery_reduce (mp_int * x, mp_int * n, mp_digit rho)
  *
  */
 int
-fast_s_mp_mul_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
+fast_s_mp_mul_digs (const mp_int * a, const mp_int * b, mp_int * c, int digs)
 {
   int     olduse, res, pa, ix, iz;
   mp_digit W[MP_WARRAY];
@@ -415,7 +415,7 @@ fast_s_mp_mul_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
  * Based on Algorithm 14.12 on pp.595 of HAC.
  */
 int
-fast_s_mp_mul_high_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
+fast_s_mp_mul_high_digs (const mp_int * a, const mp_int * b, mp_int * c, int digs)
 {
   int     olduse, res, pa, ix, iz;
   mp_digit W[MP_WARRAY];
@@ -512,7 +512,7 @@ Remove W2 and don't memset W
 
 */
 
-int fast_s_mp_sqr (mp_int * a, mp_int * b)
+int fast_s_mp_sqr (const mp_int * a, mp_int * b)
 {
   int       olduse, res, pa, ix, iz;
   mp_digit   W[MP_WARRAY], *tmpx;
@@ -627,7 +627,7 @@ mp_2expt (mp_int * a, int b)
  * Simple function copies the input and fixes the sign to positive
  */
 int
-mp_abs (mp_int * a, mp_int * b)
+mp_abs (const mp_int * a, mp_int * b)
 {
   int     res;
 
@@ -824,7 +824,7 @@ void mp_clear_multi(mp_int *mp, ...)
 
 /* compare two ints (signed)*/
 int
-mp_cmp (mp_int * a, mp_int * b)
+mp_cmp (const mp_int * a, const mp_int * b)
 {
   /* compare based on sign */
   if (a->sign != b->sign) {
@@ -845,7 +845,7 @@ mp_cmp (mp_int * a, mp_int * b)
 }
 
 /* compare a digit */
-int mp_cmp_d(mp_int * a, mp_digit b)
+int mp_cmp_d(const mp_int * a, mp_digit b)
 {
   /* compare based on sign */
   if (a->sign == MP_NEG) {
@@ -868,7 +868,7 @@ int mp_cmp_d(mp_int * a, mp_digit b)
 }
 
 /* compare maginitude of two ints (unsigned) */
-int mp_cmp_mag (mp_int * a, mp_int * b)
+int mp_cmp_mag (const mp_int * a, const mp_int * b)
 {
   int     n;
   mp_digit *tmpa, *tmpb;
@@ -906,7 +906,7 @@ static const int lnz[16] = {
 };
 
 /* Counts the number of lsbs which are zero before the first zero bit */
-int mp_cnt_lsb(mp_int *a)
+int mp_cnt_lsb(const mp_int *a)
 {
    int x;
    mp_digit q, qq;
@@ -981,7 +981,7 @@ mp_copy (const mp_int * a, mp_int * b)
 
 /* returns the number of bits in an int */
 int
-mp_count_bits (mp_int * a)
+mp_count_bits (const mp_int * a)
 {
   int     r;
   mp_digit q;
@@ -1016,7 +1016,7 @@ mp_count_bits (mp_int * a)
  * The overall algorithm is as described as 
  * 14.20 from HAC but fixed to treat these cases.
 */
-int mp_div (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
+int mp_div (const mp_int * a, const mp_int * b, mp_int * c, mp_int * d)
 {
   mp_int  q, x, y, t1, t2;
   int     res, n, t, i, norm, neg;
@@ -1200,7 +1200,7 @@ __Q:mp_clear (&q);
 }
 
 /* b = a/2 */
-int mp_div_2(mp_int * a, mp_int * b)
+int mp_div_2(const mp_int * a, mp_int * b)
 {
   int     x, res, oldused;
 
@@ -1247,7 +1247,7 @@ int mp_div_2(mp_int * a, mp_int * b)
 }
 
 /* shift right by a certain bit count (store quotient in c, optional remainder in d) */
-int mp_div_2d (mp_int * a, int b, mp_int * c, mp_int * d)
+int mp_div_2d (const mp_int * a, int b, mp_int * c, mp_int * d)
 {
   mp_digit D, r, rr;
   int     x, res;
@@ -1336,7 +1336,7 @@ static int s_is_power_of_two(mp_digit b, int *p)
 }
 
 /* single digit division (based on routine from MPI) */
-int mp_div_d (mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
+int mp_div_d (const mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
 {
   mp_int  q;
   mp_word w;
@@ -1418,7 +1418,7 @@ int mp_div_d (mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
  * Input x must be in the range 0 <= x <= (n-1)**2
  */
 int
-mp_dr_reduce (mp_int * x, mp_int * n, mp_digit k)
+mp_dr_reduce (mp_int * x, const mp_int * n, mp_digit k)
 {
   int      err, i, m;
   mp_word  r;
@@ -1477,7 +1477,7 @@ top:
 }
 
 /* determines the setup value */
-void mp_dr_setup(mp_int *a, mp_digit *d)
+void mp_dr_setup(const mp_int *a, mp_digit *d)
 {
    /* the casts are required if DIGIT_BIT is one less than
     * the number of bits in a mp_digit [e.g. DIGIT_BIT==31]
@@ -1504,7 +1504,7 @@ mp_exch (mp_int * a, mp_int * b)
  * embedded in the normal function but that wasted a lot of stack space
  * for nothing (since 99% of the time the Montgomery code would be called)
  */
-int mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)
+int mp_exptmod (const mp_int * G, const mp_int * X, mp_int * P, mp_int * Y)
 {
   int dr;
 
@@ -1563,7 +1563,7 @@ int mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)
  */
 
 int
-mp_exptmod_fast (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode)
+mp_exptmod_fast (const mp_int * G, const mp_int * X, mp_int * P, mp_int * Y, int redmode)
 {
   mp_int  M[256], res;
   mp_digit buf, mp;
@@ -1573,7 +1573,7 @@ mp_exptmod_fast (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode)
    * one of many reduction algorithms without modding the guts of
    * the code with if statements everywhere.
    */
-  int     (*redux)(mp_int*,mp_int*,mp_digit);
+  int     (*redux)(mp_int*,const mp_int*,mp_digit);
 
   /* find window size */
   x = mp_count_bits (X);
@@ -1815,7 +1815,7 @@ __M:
 }
 
 /* Greatest Common Divisor using the binary method */
-int mp_gcd (mp_int * a, mp_int * b, mp_int * c)
+int mp_gcd (const mp_int * a, const mp_int * b, mp_int * c)
 {
   mp_int  u, v;
   int     k, u_lsb, v_lsb, res;
@@ -1907,7 +1907,7 @@ __U:mp_clear (&v);
 }
 
 /* get the lower 32-bits of an mp_int */
-unsigned long mp_get_int(mp_int * a) 
+unsigned long mp_get_int(const mp_int * a)
 {
   int i;
   unsigned long res;
@@ -2066,7 +2066,7 @@ int mp_init_size (mp_int * a, int size)
 }
 
 /* hac 14.61, pp608 */
-int mp_invmod (mp_int * a, mp_int * b, mp_int * c)
+int mp_invmod (const mp_int * a, mp_int * b, mp_int * c)
 {
   /* b cannot be negative */
   if (b->sign == MP_NEG || mp_iszero(b) == 1) {
@@ -2082,7 +2082,7 @@ int mp_invmod (mp_int * a, mp_int * b, mp_int * c)
 }
 
 /* hac 14.61, pp608 */
-int mp_invmod_slow (mp_int * a, mp_int * b, mp_int * c)
+int mp_invmod_slow (const mp_int * a, mp_int * b, mp_int * c)
 {
   mp_int  x, y, u, v, A, B, C, D;
   int     res;
@@ -2264,7 +2264,7 @@ __ERR:mp_clear_multi (&x, &y, &u, &v, &A, &B, &C, &D, NULL);
  * Generally though the overhead of this method doesn't pay off 
  * until a certain size (N ~ 80) is reached.
  */
-int mp_karatsuba_mul (mp_int * a, mp_int * b, mp_int * c)
+int mp_karatsuba_mul (const mp_int * a, const mp_int * b, mp_int * c)
 {
   mp_int  x0, x1, y0, y1, t1, x0y0, x1y1;
   int     B, err;
@@ -2388,7 +2388,7 @@ ERR:
  * is essentially the same algorithm but merely 
  * tuned to perform recursive squarings.
  */
-int mp_karatsuba_sqr (mp_int * a, mp_int * b)
+int mp_karatsuba_sqr (const mp_int * a, mp_int * b)
 {
   mp_int  x0, x1, t1, t2, x0x0, x1x1;
   int     B, err;
@@ -2482,7 +2482,7 @@ ERR:
 }
 
 /* computes least common multiple as |a*b|/(a, b) */
-int mp_lcm (mp_int * a, mp_int * b, mp_int * c)
+int mp_lcm (const mp_int * a, const mp_int * b, mp_int * c)
 {
   int     res;
   mp_int  t1, t2;
@@ -2568,7 +2568,7 @@ int mp_lshd (mp_int * a, int b)
 
 /* c = a mod b, 0 <= c < b */
 int
-mp_mod (mp_int * a, mp_int * b, mp_int * c)
+mp_mod (const mp_int * a, mp_int * b, mp_int * c)
 {
   mp_int  t;
   int     res;
@@ -2595,7 +2595,7 @@ mp_mod (mp_int * a, mp_int * b, mp_int * c)
 
 /* calc a value mod 2**b */
 int
-mp_mod_2d (mp_int * a, int b, mp_int * c)
+mp_mod_2d (const mp_int * a, int b, mp_int * c)
 {
   int     x, res;
 
@@ -2628,7 +2628,7 @@ mp_mod_2d (mp_int * a, int b, mp_int * c)
 }
 
 int
-mp_mod_d (mp_int * a, mp_digit b, mp_digit * c)
+mp_mod_d (const mp_int * a, mp_digit b, mp_digit * c)
 {
   return mp_div_d(a, b, NULL, c);
 }
@@ -2639,7 +2639,7 @@ mp_mod_d (mp_int * a, mp_digit b, mp_digit * c)
  * The method is slightly modified to shift B unconditionally up to just under
  * the leading bit of b.  This saves a lot of multiple precision shifting.
  */
-int mp_montgomery_calc_normalization (mp_int * a, mp_int * b)
+int mp_montgomery_calc_normalization (mp_int * a, const mp_int * b)
 {
   int     x, bits, res;
 
@@ -2674,7 +2674,7 @@ int mp_montgomery_calc_normalization (mp_int * a, mp_int * b)
 
 /* computes xR**-1 == x (mod N) via Montgomery Reduction */
 int
-mp_montgomery_reduce (mp_int * x, mp_int * n, mp_digit rho)
+mp_montgomery_reduce (mp_int * x, const mp_int * n, mp_digit rho)
 {
   int     ix, res, digs;
   mp_digit mu;
@@ -2771,7 +2771,7 @@ mp_montgomery_reduce (mp_int * x, mp_int * n, mp_digit rho)
 
 /* setups the montgomery reduction stuff */
 int
-mp_montgomery_setup (mp_int * n, mp_digit * rho)
+mp_montgomery_setup (const mp_int * n, mp_digit * rho)
 {
   mp_digit x, b;
 
@@ -2801,7 +2801,7 @@ mp_montgomery_setup (mp_int * n, mp_digit * rho)
 }
 
 /* high level multiplication (handles sign) */
-int mp_mul (mp_int * a, mp_int * b, mp_int * c)
+int mp_mul (const mp_int * a, const mp_int * b, mp_int * c)
 {
   int     res, neg;
   neg = (a->sign == b->sign) ? MP_ZPOS : MP_NEG;
@@ -2831,7 +2831,7 @@ int mp_mul (mp_int * a, mp_int * b, mp_int * c)
 }
 
 /* b = a*2 */
-int mp_mul_2(mp_int * a, mp_int * b)
+int mp_mul_2(const mp_int * a, mp_int * b)
 {
   int     x, res, oldused;
 
@@ -2892,7 +2892,7 @@ int mp_mul_2(mp_int * a, mp_int * b)
 }
 
 /* shift left by a certain bit count */
-int mp_mul_2d (mp_int * a, int b, mp_int * c)
+int mp_mul_2d (const mp_int * a, int b, mp_int * c)
 {
   mp_digit d;
   int      res;
@@ -2957,7 +2957,7 @@ int mp_mul_2d (mp_int * a, int b, mp_int * c)
 
 /* multiply by a digit */
 int
-mp_mul_d (mp_int * a, mp_digit b, mp_int * c)
+mp_mul_d (const mp_int * a, mp_digit b, mp_int * c)
 {
   mp_digit u, *tmpa, *tmpc;
   mp_word  r;
@@ -3014,7 +3014,7 @@ mp_mul_d (mp_int * a, mp_digit b, mp_int * c)
 
 /* d = a * b (mod c) */
 int
-mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
+mp_mulmod (const mp_int * a, const mp_int * b, mp_int * c, mp_int * d)
 {
   int     res;
   mp_int  t;
@@ -3037,7 +3037,7 @@ mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
  *
  * sets result to 0 if not, 1 if yes
  */
-int mp_prime_is_divisible (mp_int * a, int *result)
+int mp_prime_is_divisible (const mp_int * a, int *result)
 {
   int     err, ix;
   mp_digit res;
@@ -3130,7 +3130,7 @@ __B:mp_clear (&b);
  * Randomly the chance of error is no more than 1/4 and often 
  * very much lower.
  */
-int mp_prime_miller_rabin (mp_int * a, mp_int * b, int *result)
+int mp_prime_miller_rabin (mp_int * a, const mp_int * b, int *result)
 {
   mp_int  n1, y, r;
   int     s, j, err;
@@ -3371,7 +3371,7 @@ mp_read_unsigned_bin (mp_int * a, const unsigned char *b, int c)
  * From HAC pp.604 Algorithm 14.42
  */
 int
-mp_reduce (mp_int * x, mp_int * m, mp_int * mu)
+mp_reduce (mp_int * x, const mp_int * m, const mp_int * mu)
 {
   mp_int  q;
   int     res, um = m->used;
@@ -3437,7 +3437,7 @@ CLEANUP:
 
 /* reduces a modulo n where n is of the form 2**p - d */
 int
-mp_reduce_2k(mp_int *a, mp_int *n, mp_digit d)
+mp_reduce_2k(mp_int *a, const mp_int *n, mp_digit d)
 {
    mp_int q;
    int    p, res;
@@ -3477,7 +3477,7 @@ ERR:
 
 /* determines the setup value */
 int 
-mp_reduce_2k_setup(mp_int *a, mp_digit *d)
+mp_reduce_2k_setup(const mp_int *a, mp_digit *d)
 {
    int res, p;
    mp_int tmp;
@@ -3505,10 +3505,10 @@ mp_reduce_2k_setup(mp_int *a, mp_digit *d)
 /* pre-calculate the value required for Barrett reduction
  * For a given modulus "b" it calulates the value required in "a"
  */
-int mp_reduce_setup (mp_int * a, mp_int * b)
+int mp_reduce_setup (mp_int * a, const mp_int * b)
 {
   int     res;
-  
+
   if ((res = mp_2expt (a, b->used * 2 * DIGIT_BIT)) != MP_OKAY) {
     return res;
   }
@@ -3616,14 +3616,14 @@ int mp_shrink (mp_int * a)
 }
 
 /* get the size for an signed equivalent */
-int mp_signed_bin_size (mp_int * a)
+int mp_signed_bin_size (const mp_int * a)
 {
   return 1 + mp_unsigned_bin_size (a);
 }
 
 /* computes b = a*a */
 int
-mp_sqr (mp_int * a, mp_int * b)
+mp_sqr (const mp_int * a, mp_int * b)
 {
   int     res;
 
@@ -3645,7 +3645,7 @@ if (a->used >= KARATSUBA_SQR_CUTOFF) {
 
 /* c = a * a (mod b) */
 int
-mp_sqrmod (mp_int * a, mp_int * b, mp_int * c)
+mp_sqrmod (const mp_int * a, mp_int * b, mp_int * c)
 {
   int     res;
   mp_int  t;
@@ -3769,7 +3769,7 @@ mp_sub_d (mp_int * a, mp_digit b, mp_int * c)
 
 /* store in unsigned [big endian] format */
 int
-mp_to_unsigned_bin (mp_int * a, unsigned char *b)
+mp_to_unsigned_bin (const mp_int * a, unsigned char *b)
 {
   int     x, res;
   mp_int  t;
@@ -3793,7 +3793,7 @@ mp_to_unsigned_bin (mp_int * a, unsigned char *b)
 
 /* get the size for an unsigned equivalent */
 int
-mp_unsigned_bin_size (mp_int * a)
+mp_unsigned_bin_size (const mp_int * a)
 {
   int     size = mp_count_bits (a);
   return (size / 8 + ((size & 7) != 0 ? 1 : 0));
@@ -3952,7 +3952,7 @@ s_mp_add (mp_int * a, mp_int * b, mp_int * c)
   return MP_OKAY;
 }
 
-int s_mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)
+int s_mp_exptmod (const mp_int * G, const mp_int * X, mp_int * P, mp_int * Y)
 {
   mp_int  M[256], res, mu;
   mp_digit buf;
@@ -4164,7 +4164,7 @@ __M:
  * many digits of output are created.
  */
 int
-s_mp_mul_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
+s_mp_mul_digs (const mp_int * a, const mp_int * b, mp_int * c, int digs)
 {
   mp_int  t;
   int     res, pa, pb, ix, iy;
@@ -4233,7 +4233,7 @@ s_mp_mul_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
  * [meant to get the higher part of the product]
  */
 int
-s_mp_mul_high_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
+s_mp_mul_high_digs (const mp_int * a, const mp_int * b, mp_int * c, int digs)
 {
   mp_int  t;
   int     res, pa, pb, ix, iy;
@@ -4289,7 +4289,7 @@ s_mp_mul_high_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
 
 /* low level squaring, b = a*a, HAC pp.596-597, Algorithm 14.16 */
 int
-s_mp_sqr (mp_int * a, mp_int * b)
+s_mp_sqr (const mp_int * a, mp_int * b)
 {
   mp_int  t;
   int     res, ix, iy, pa;
@@ -4353,7 +4353,7 @@ s_mp_sqr (mp_int * a, mp_int * b)
 
 /* low level subtraction (assumes |a| > |b|), HAC pp.595 Algorithm 14.9 */
 int
-s_mp_sub (mp_int * a, mp_int * b, mp_int * c)
+s_mp_sub (const mp_int * a, const mp_int * b, mp_int * c)
 {
   int     olduse, res, min, max;
 
