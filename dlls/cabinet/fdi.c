@@ -2128,7 +2128,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
             TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
         
             /* try to get a handle to the cabfile */
-            cabhf = PFDI_OPEN(CAB(hfdi), fullpath, 32768, _S_IREAD | _S_IWRITE);
+            cabhf = PFDI_OPEN(CAB(hfdi), fullpath, _O_RDONLY|_O_BINARY, _S_IREAD | _S_IWRITE);
             if (cabhf == -1) {
               /* no file.  allow the user to try again */
               fdin.fdie = FDIERROR_CABINET_NOT_FOUND;
@@ -2492,7 +2492,7 @@ BOOL __cdecl FDICopy(
   TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
 
   /* get a handle to the cabfile */
-  cabhf = PFDI_OPEN(hfdi, fullpath, 32768, _S_IREAD | _S_IWRITE);
+  cabhf = PFDI_OPEN(hfdi, fullpath, _O_RDONLY|_O_BINARY, _S_IREAD | _S_IWRITE);
   if (cabhf == -1) {
     PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
     PFDI_INT(hfdi)->perf->erfType = ERROR_FILE_NOT_FOUND;

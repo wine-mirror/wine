@@ -37,13 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cabinet);
 
-/* the following defintions are copied from msvcrt/fcntl.h */
-
-#define _O_RDONLY      0
-#define _O_WRONLY      1
-#define _O_RDWR        2
-#define _O_ACCMODE     (_O_RDONLY|_O_WRONLY|_O_RDWR)
-
 
 /***********************************************************************
  * DllGetVersion (CABINET.2)
