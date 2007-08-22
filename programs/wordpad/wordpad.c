@@ -33,6 +33,7 @@
 #include <commctrl.h>
 #include <commdlg.h>
 #include <shlobj.h>
+#include <shellapi.h>
 
 #include "resource.h"
 
@@ -1230,6 +1231,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     registry_read_filelist(hWnd);
     registry_read_options();
+    DragAcceptFiles(hWnd, TRUE);
 
     return 0;
 }
@@ -1758,6 +1760,17 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 
     case WM_SIZE:
         return OnSize( hWnd, wParam, lParam );
+
+    case WM_DROPFILES:
+        {
+            WCHAR file[MAX_PATH];
+            DragQueryFileW((HDROP)wParam, 0, file, MAX_PATH);
+            DragFinish((HDROP)wParam);
+
+            if(prompt_save_changes())
+                DoOpenFile(file);
+        }
+        break;
 
     default:
         return DefWindowProcW(hWnd, msg, wParam, lParam);
