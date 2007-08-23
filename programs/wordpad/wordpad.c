@@ -1867,11 +1867,11 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
                     set_caption(NULL);
                     wszFileName[0] = '\0';
 
+                    clear_formatting();
+
                     st.flags = ST_DEFAULT;
                     st.codepage = 1200;
                     SendMessageW(hEditorWnd, EM_SETTEXTEX, (WPARAM)&st, 0);
-
-                    clear_formatting();
 
                     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
                     set_fileformat(ret);
