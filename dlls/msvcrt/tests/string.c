@@ -143,12 +143,9 @@ static int result_cp_949_mbctype[] = { 0x0,66, 0x18,26, 0x8,6, 0x28,26, 0x8,6, 0
   0,1 };
 static int result_cp_950_mbctype[] = { 0x0,65, 0x8,1, 0x18,26, 0x8,6, 0x28,26, 0x8,4,
   0x0,2, 0x4,32, 0xc,94, 0,1 };
-static int result_cp_20932_mbctype[] = { 0x0,2, 0x8,64, 0x18,26, 0x8,6, 0x28,26, 0x8,19,
-  0xc,1, 0x8,18, 0xc,94, 0,1 };
 
 static int todo_none[] = { -2 };
 static int todo_cp_932[] = { 254, -2 };
-static int todo_cp_20932[] = { 143, -2 };
 
 void test_cp_table(int cp, int *result, int *todo)
 {
@@ -197,7 +194,6 @@ static void test_mbcp(void)
     test_codepage(936);
     test_codepage(949);
     test_codepage(950);
-    test_codepage_todo(20932, todo_cp_20932);
 
     _setmbcp(936);
     ok(__mb_cur_max == mb_orig_max, "__mb_cur_max shouldn't be updated (is %d != %d)\n", __mb_cur_max, mb_orig_max);
