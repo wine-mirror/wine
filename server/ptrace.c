@@ -35,6 +35,10 @@
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
+#ifdef HAVE_SYS_THR_H
+# include <sys/ucontext.h>
+# include <sys/thr.h>
+#endif
 #include <unistd.h>
 
 #include "ntstatus.h"
@@ -206,9 +210,8 @@ static int wait4_thread( struct thread *thread, int signal )
 /* send a signal to a specific thread */
 static inline int tkill( int tgid, int pid, int sig )
 {
-    int ret = -ENOSYS;
-
 #ifdef __linux__
+    int ret = -ENOSYS;
 # ifdef __i386__
     __asm__( "pushl %%ebx\n\t"
              "movl %2,%%ebx\n\t"
@@ -227,11 +230,15 @@ static inline int tkill( int tgid, int pid, int sig )
     __asm__( "syscall" : "=a" (ret)
              : "0" (200) /*SYS_tkill*/, "D" (pid), "S" (sig) );
 # endif
-#endif  /* __linux__ */
-
     if (ret >= 0) return ret;
     errno = -ret;
     return -1;
+#elif defined(__FreeBSD__) && defined(HAVE_THR_KILL2)
+    return thr_kill2( tgid, pid, sig );
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
 }
 
 /* initialize the process tracing mechanism */
