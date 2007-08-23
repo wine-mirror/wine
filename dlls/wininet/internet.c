@@ -178,6 +178,9 @@ BOOL WININET_Release( LPWININETHANDLEHEADER info )
             TRACE( "closing connection %p\n", info);
             info->close_connection( info );
         }
+        INTERNET_SendCallback(info, info->dwContext,
+                              INTERNET_STATUS_HANDLE_CLOSING, &info->hInternet,
+                              sizeof(HINTERNET));
         TRACE( "destroying object %p\n", info);
         info->destroy( info );
     }
@@ -989,12 +992,6 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-
-    /* FIXME: native appears to send this from the equivalent of
-     * WININET_Release */
-    INTERNET_SendCallback(lpwh, lpwh->dwContext,
-                          INTERNET_STATUS_HANDLE_CLOSING, &hInternet,
-                          sizeof(HINTERNET));
 
     WININET_FreeHandle( hInternet );
     WININET_Release( lpwh );
