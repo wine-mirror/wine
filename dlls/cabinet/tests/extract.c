@@ -314,21 +314,26 @@ static void create_cab_file(void)
     ok(res, "Failed to destroy the cabinet\n");
 }
 
-static BOOL check_list(struct FILELIST *filelist, const char *filename, BOOL extracted)
+static BOOL check_list(struct FILELIST **node, const char *filename, BOOL extracted)
 {
-    struct FILELIST *fl;
+    if (!*node)
+        return FALSE;
 
-    for (fl = filelist; fl; fl = fl->next)
-        if (!lstrcmp(filename, fl->FileName))
-            return (extracted == fl->Extracted);
+    if (lstrcmpA((*node)->FileName, filename))
+        return FALSE;
 
-    return FALSE;
+    if ((*node)->Extracted != extracted)
+        return FALSE;
+
+    *node = (*node)->next;
+    return TRUE;
 }
 
 static void test_Extract(void)
 {
     SESSION session;
     HRESULT res;
+    struct FILELIST *node;
 
     /* native windows crashes if
     *   - invalid parameters are sent in
@@ -341,11 +346,9 @@ static void test_Extract(void)
     lstrcpyA(session.Destination, "dest");
     session.Operation = EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES;
     res = pExtract(&session, "extract.cab");
+    node = session.FileList;
     ok(res == S_OK, "Expected S_OK, got %d\n", res);
-    todo_wine
-    {
-        ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
-    }
+    ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
     ok(session.Error.erfOper == FDIERROR_NONE,
        "Expected FDIERROR_NONE, got %d\n", session.Error.erfOper);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
@@ -363,21 +366,19 @@ static void test_Extract(void)
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
     ok(DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to exist\n");
     ok(RemoveDirectoryA("dest\\testdir"), "Expected dest\\testdir to exist\n");
-    ok(check_list(session.FileList, "testdir\\d.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "testdir\\c.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "b.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "a.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\d.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "b.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "a.txt", FALSE), "list entry wrong\n");
 
     /* try fill file list operation */
     ZeroMemory(&session, sizeof(SESSION));
     lstrcpyA(session.Destination, "dest");
     session.Operation = EXTRACT_FILLFILELIST;
     res = pExtract(&session, "extract.cab");
+    node = session.FileList;
     ok(res == S_OK, "Expected S_OK, got %d\n", res);
-    todo_wine
-    {
-        ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
-    }
+    ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
     ok(session.Error.erfOper == FDIERROR_NONE,
        "Expected FDIERROR_NONE, got %d\n", session.Error.erfOper);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
@@ -392,22 +393,17 @@ static void test_Extract(void)
     ok(!session.FilterList, "Expected empty filter list\n");
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
-    todo_wine
-    {
-        ok(check_list(session.FileList, "testdir\\d.txt", TRUE), "list entry wrong\n");
-        ok(check_list(session.FileList, "testdir\\c.txt", TRUE), "list entry wrong\n");
-        ok(check_list(session.FileList, "b.txt", TRUE), "list entry wrong\n");
-        ok(check_list(session.FileList, "a.txt", TRUE), "list entry wrong\n");
-    }
+    ok(check_list(&node, "testdir\\d.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\c.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&node, "b.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&node, "a.txt", TRUE), "list entry wrong\n");
 
     /* try extract files operation once file list is filled */
     session.Operation = EXTRACT_EXTRACTFILES;
     res = pExtract(&session, "extract.cab");
+    node = session.FileList;
     ok(res == S_OK, "Expected S_OK, got %d\n", res);
-    todo_wine
-    {
-        ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
-    }
+    ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
     ok(session.Error.erfOper == FDIERROR_NONE,
        "Expected FDIERROR_NONE, got %d\n", session.Error.erfOper);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
@@ -426,18 +422,16 @@ static void test_Extract(void)
     ok(DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to exist\n");
     ok(RemoveDirectoryA("dest\\testdir"), "Expected dest\\testdir to exist\n");
     ok(RemoveDirectoryA("dest"), "Expected dest to exist\n");
-    ok(check_list(session.FileList, "testdir\\d.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "testdir\\c.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "b.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "a.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\d.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "b.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "a.txt", FALSE), "list entry wrong\n");
 
     /* Extract does not extract files if the dest dir does not exist */
     res = pExtract(&session, "extract.cab");
+    node = session.FileList;
     ok(res == S_OK, "Expected S_OK, got %d\n", res);
-    todo_wine
-    {
-        ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
-    }
+    ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
     ok(session.Error.erfOper == FDIERROR_NONE,
        "Expected FDIERROR_NONE, got %d\n", session.Error.erfOper);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
@@ -452,10 +446,10 @@ static void test_Extract(void)
     ok(!session.FilterList, "Expected empty filter list\n");
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
-    ok(check_list(session.FileList, "testdir\\d.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "testdir\\c.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "b.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "a.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\d.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "b.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "a.txt", FALSE), "list entry wrong\n");
 
     /* remove two of the files in the list */
     session.FileList->next = session.FileList->next->next;
@@ -463,11 +457,9 @@ static void test_Extract(void)
     session.FilterList = NULL;
     CreateDirectoryA("dest", NULL);
     res = pExtract(&session, "extract.cab");
+    node = session.FileList;
     ok(res == S_OK, "Expected S_OK, got %d\n", res);
-    todo_wine
-    {
-        ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
-    }
+    ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
     ok(session.Error.erfOper == FDIERROR_NONE,
        "Expected FDIERROR_NONE, got %d\n", session.Error.erfOper);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
@@ -480,26 +472,24 @@ static void test_Extract(void)
        "Expected dest\\testdir\\d.txt, got %s\n", session.CurrentFile);
     ok(!*session.Reserved, "Expected empty string, got %s\n", session.Reserved);
     ok(!session.FilterList, "Expected empty filter list\n");
-    ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
-    ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
-    ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
-    ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
-
-    todo_wine {
-    ok(check_list(session.FileList, "testdir\\d.txt", FALSE), "list entry wrong\n");
-    ok(!check_list(session.FileList, "testdir\\c.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "b.txt", FALSE), "list entry wrong\n");
-    ok(!check_list(session.FileList, "a.txt", FALSE), "list entry wrong\n");
+    todo_wine
+    {
+        ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
+        ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
+        ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
+        ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
     }
+    ok(check_list(&node, "testdir\\d.txt", FALSE), "list entry wrong\n");
+    ok(!check_list(&node, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "b.txt", FALSE), "list entry wrong\n");
+    ok(!check_list(&node, "a.txt", FALSE), "list entry wrong\n");
 
     session.Operation = EXTRACT_FILLFILELIST;
     session.FileList = NULL;
     res = pExtract(&session, "extract.cab");
+    node = session.FileList;
     ok(res == S_OK, "Expected S_OK, got %d\n", res);
-    todo_wine
-    {
-        ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
-    }
+    ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
     ok(session.Error.erfOper == FDIERROR_NONE,
        "Expected FDIERROR_NONE, got %d\n", session.Error.erfOper);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
@@ -516,21 +506,16 @@ static void test_Extract(void)
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
     ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
-
-    todo_wine {
-    ok(check_list(session.FileList, "testdir\\d.txt", TRUE), "list entry wrong\n");
-    ok(check_list(session.FileList, "testdir\\c.txt", TRUE), "list entry wrong\n");
-    ok(check_list(session.FileList, "b.txt", TRUE), "list entry wrong\n");
-    ok(check_list(session.FileList, "a.txt", TRUE), "list entry wrong\n");
-    }
+    ok(check_list(&node, "testdir\\d.txt", TRUE), "list entry wrong\n");
+    ok(!check_list(&node, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(!check_list(&node, "b.txt", FALSE), "list entry wrong\n");
+    ok(!check_list(&node, "a.txt", FALSE), "list entry wrong\n");
 
     session.Operation = 0;
     res = pExtract(&session, "extract.cab");
+    node = session.FileList;
     ok(res == S_OK, "Expected S_OK, got %d\n", res);
-    todo_wine
-    {
-        ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
-    }
+    ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
     ok(session.Error.erfOper == FDIERROR_NONE,
        "Expected FDIERROR_NONE, got %d\n", session.Error.erfOper);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
@@ -546,22 +531,17 @@ static void test_Extract(void)
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
     ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
     ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to exist\n");
-
-    todo_wine {
-    ok(check_list(session.FileList, "testdir\\d.txt", TRUE), "list entry wrong\n");
-    ok(check_list(session.FileList, "testdir\\c.txt", TRUE), "list entry wrong\n");
-    ok(check_list(session.FileList, "b.txt", TRUE), "list entry wrong\n");
-    ok(check_list(session.FileList, "a.txt", TRUE), "list entry wrong\n");
-    }
+    ok(check_list(&node, "testdir\\d.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\c.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&node, "b.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&node, "a.txt", TRUE), "list entry wrong\n");
 
     session.Operation = 0;
     session.FilterList = session.FileList;
     res = pExtract(&session, "extract.cab");
+    node = session.FileList;
     ok(res == S_OK, "Expected S_OK, got %d\n", res);
-    todo_wine
-    {
-        ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
-    }
+    ok(session.FileSize == 40, "Expected 40, got %d\n", session.FileSize);
     ok(session.Error.erfOper == FDIERROR_NONE,
        "Expected FDIERROR_NONE, got %d\n", session.Error.erfOper);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
@@ -576,21 +556,22 @@ static void test_Extract(void)
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
     ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
     ok(DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to exist\n");
-
-    ok(check_list(session.FileList, "testdir\\d.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "testdir\\c.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "b.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "a.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FilterList, "testdir\\d.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FilterList, "testdir\\c.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FilterList, "b.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FilterList, "a.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\d.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "b.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "a.txt", FALSE), "list entry wrong\n");
+    node = session.FilterList;
+    ok(check_list(&node, "testdir\\d.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "b.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "a.txt", FALSE), "list entry wrong\n");
 
     /* cabinet does not exist */
     ZeroMemory(&session, sizeof(SESSION));
     lstrcpyA(session.Destination, "dest");
     session.Operation = EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES;
     res = pExtract(&session, "nonexistent.cab");
+    node = session.FileList;
     todo_wine
     {
         ok(res == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
@@ -612,10 +593,10 @@ static void test_Extract(void)
     ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
-    ok(!check_list(session.FileList, "testdir\\d.txt", FALSE), "list entry should not exist\n");
-    ok(!check_list(session.FileList, "testdir\\c.txt", FALSE), "list entry should not exist\n");
-    ok(!check_list(session.FileList, "b.txt", FALSE), "list entry should not exist\n");
-    ok(!check_list(session.FileList, "a.txt", FALSE), "list entry should not exist\n");
+    ok(!check_list(&node, "testdir\\d.txt", FALSE), "list entry should not exist\n");
+    ok(!check_list(&node, "testdir\\c.txt", FALSE), "list entry should not exist\n");
+    ok(!check_list(&node, "b.txt", FALSE), "list entry should not exist\n");
+    ok(!check_list(&node, "a.txt", FALSE), "list entry should not exist\n");
 
     /* first file exists */
     createTestFile("dest\\a.txt");
@@ -624,6 +605,7 @@ static void test_Extract(void)
     lstrcpyA(session.Destination, "dest");
     session.Operation = EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES;
     res = pExtract(&session, "extract.cab");
+    node = session.FileList;
     todo_wine
     {
         ok(res == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
@@ -648,11 +630,11 @@ static void test_Extract(void)
         ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
         ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
         ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
-        ok(!check_list(session.FileList, "testdir\\d.txt", FALSE), "list entry should not exist\n");
-        ok(!check_list(session.FileList, "testdir\\c.txt", FALSE), "list entry should not exist\n");
-        ok(!check_list(session.FileList, "b.txt", FALSE), "list entry should not exist\n");
-        ok(!check_list(session.FileList, "a.txt", FALSE), "list entry should not exist\n");
+        ok(!check_list(&node, "testdir\\d.txt", FALSE), "list entry should not exist\n");
+        ok(!check_list(&node, "testdir\\c.txt", FALSE), "list entry should not exist\n");
+        ok(!check_list(&node, "b.txt", FALSE), "list entry should not exist\n");
     }
+    ok(!check_list(&node, "a.txt", FALSE), "list entry should not exist\n");
 
     SetFileAttributesA("dest\\a.txt", FILE_ATTRIBUTE_NORMAL);
     DeleteFileA("dest\\a.txt");
@@ -688,11 +670,11 @@ static void test_Extract(void)
     todo_wine
     {
         ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
-        ok(!check_list(session.FileList, "testdir\\d.txt", FALSE), "list entry should not exist\n");
-        ok(check_list(session.FileList, "testdir\\c.txt", TRUE), "list entry wrong\n");
     }
-    ok(check_list(session.FileList, "b.txt", FALSE), "list entry wrong\n");
-    ok(check_list(session.FileList, "a.txt", FALSE), "list entry wrong\n");
+    ok(!check_list(&node, "testdir\\d.txt", FALSE), "list entry should not exist\n");
+    ok(!check_list(&node, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(!check_list(&node, "b.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&node, "a.txt", TRUE), "list entry wrong\n");
 
     SetFileAttributesA("dest\\testdir\\c.txt", FILE_ATTRIBUTE_NORMAL);
     DeleteFileA("dest\\testdir\\c.txt");

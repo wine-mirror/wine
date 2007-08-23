@@ -163,12 +163,18 @@ static void fill_file_node(struct FILELIST *pNode, LPCSTR szFilename)
     lstrcpyA(pNode->FileName, szFilename);
 }
 
-static BOOL file_in_list(const struct FILELIST *pNode, LPCSTR szFilename)
+static BOOL file_in_list(struct FILELIST *pNode, LPCSTR szFilename,
+                         struct FILELIST **pOut)
 {
     while (pNode)
     {
         if (!lstrcmpiA(pNode->FileName, szFilename))
+        {
+            if (pOut)
+                *pOut = pNode;
+
             return TRUE;
+        }
 
         pNode = pNode->next;
     }
@@ -182,7 +188,7 @@ static INT_PTR fdi_notify_extract(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pf
     {
         case fdintCOPY_FILE:
         {
-            struct FILELIST **fileList;
+            struct FILELIST *fileList, *node;
             SESSION *pDestination = pfdin->pv;
             LPSTR szFullPath, szDirectory;
             HANDLE hFile = 0;
@@ -201,26 +207,26 @@ static INT_PTR fdi_notify_extract(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pf
             szDirectory = HeapAlloc(GetProcessHeap(), 0, dwSize);
             lstrcpynA(szDirectory, szFullPath, dwSize);
 
+            pDestination->FileSize += pfdin->cb;
+
             if (pDestination->Operation & EXTRACT_FILLFILELIST)
             {
-                fileList = &pDestination->FileList;
+                fileList = HeapAlloc(GetProcessHeap(), 0,
+                                     sizeof(struct FILELIST));
 
-                while (*fileList)
-                    fileList = &((*fileList)->next);
-
-                *fileList = HeapAlloc(GetProcessHeap(), 0,
-                                      sizeof(struct FILELIST));
-
-                fill_file_node(*fileList, pfdin->psz1);
+                fill_file_node(fileList, pfdin->psz1);
+                fileList->Extracted = TRUE;
+                fileList->next = pDestination->FileList;
+                pDestination->FileList = fileList;
                 lstrcpyA(pDestination->CurrentFile, szFullPath);
                 pDestination->FileCount++;
             }
 
             if ((pDestination->Operation & EXTRACT_EXTRACTFILES) ||
-                file_in_list(pDestination->FilterList, pfdin->psz1))
+                file_in_list(pDestination->FilterList, pfdin->psz1, NULL))
             {
                 /* skip this file if it is not in the file list */
-                if (!file_in_list(pDestination->FileList, pfdin->psz1))
+                if (!file_in_list(pDestination->FileList, pfdin->psz1, &node))
                     return 0;
 
                 /* create the destination directory if it doesn't exist */
@@ -232,6 +238,8 @@ static INT_PTR fdi_notify_extract(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pf
 
                 if (hFile == INVALID_HANDLE_VALUE)
                     hFile = 0;
+                else
+                    node->Extracted = FALSE;
             }
 
             HeapFree(GetProcessHeap(), 0, szFullPath);
@@ -344,6 +352,8 @@ HRESULT WINAPI Extract(SESSION *dest, LPCSTR szCabName)
         name = path;
         path = NULL;
     }
+
+    dest->FileSize = 0;
 
     if (!FDICopy(hfdi, name, path, 0,
          fdi_notify_extract, NULL, dest))
