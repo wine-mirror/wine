@@ -28,3 +28,5 @@
 #define IDC_IMPORTALL					1002
 #define IDC_EXIT                        1003
 #define IDC_BITMAP						1004
+#define IDC_FETCH						1005
+#define IDC_SKIP						1006

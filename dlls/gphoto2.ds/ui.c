@@ -31,6 +31,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "commctrl.h"
 #include "prsht.h"
 #include "twain.h"
@@ -38,11 +39,51 @@
 #include "wine/debug.h"
 #include "resource.h"
 
+LPCSTR settings_key = "Software\\Wine\\Gphoto2";
+LPCSTR settings_value = "SkipUI";
+static BOOL disable_dialog;
 static HBITMAP static_bitmap;
 
 static INT_PTR CALLBACK ConnectingProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	return FALSE;
+}
+
+static void on_disable_dialog_clicked(HWND dialog)
+{
+    if (IsDlgButtonChecked(dialog, IDC_SKIP) == BST_CHECKED)
+        disable_dialog = TRUE;
+    else
+        disable_dialog = FALSE;
+}
+
+static void UI_EndDialog(HWND hwnd, INT_PTR rc)
+{
+    if (disable_dialog)
+    {
+        HKEY key;
+        const DWORD data = 1;
+        if (RegCreateKeyExA(HKEY_CURRENT_USER, settings_key, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) == ERROR_SUCCESS)
+        {
+            RegSetValueExA(key, settings_value, 0, REG_DWORD, (const BYTE *)&data, sizeof(DWORD));
+            RegCloseKey(key);
+        }
+    }
+    EndDialog(hwnd, rc);
+}
+
+static int GetAllImages()
+{
+    struct gphoto2_file *file;
+    int has_images = 0;
+
+    LIST_FOR_EACH_ENTRY( file, &activeDS.files, struct gphoto2_file, entry)
+    {
+        if (strstr(file->filename,".JPG") || strstr(file->filename,".jpg"))
+            file->download = TRUE;
+            has_images = 1;
+    }
+    return has_images;
 }
 
 static void PopulateListView(HWND List)
@@ -120,14 +161,8 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 	{
 		case WM_INITDIALOG:
 			{
-				HIMAGELIST ilist = 0;
-				HWND list = GetDlgItem(hwnd,IDC_LIST1);
+				disable_dialog = FALSE;
 				EnableWindow(GetDlgItem(hwnd,IDC_IMPORT),FALSE);
-
-				PopulateImageList(&ilist,list);
-
-				SendMessageA(list, LVM_SETIMAGELIST,LVSIL_NORMAL,(LPARAM)ilist);
-				PopulateListView(list);
 			}
 			break;
 		case WM_NOTIFY:
@@ -144,8 +179,11 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		case WM_COMMAND:
 			switch LOWORD(wParam)
 			{
+				case IDC_SKIP:
+					on_disable_dialog_clicked(hwnd);
+					break;
 				case IDC_EXIT:
-					EndDialog(hwnd,0);
+					UI_EndDialog(hwnd,0);
 					break;
 				case IDC_IMPORT:
 					{
@@ -155,7 +193,7 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
 						if (count ==0)
 						{
-							EndDialog(hwnd,0);
+							UI_EndDialog(hwnd,0);
 							return FALSE;
 						}
 
@@ -184,38 +222,28 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 							}
 						}
 
-						EndDialog(hwnd,1);
+						UI_EndDialog(hwnd,1);
 					}
 					break;
 				case IDC_IMPORTALL:
 					{
-						HWND list = GetDlgItem(hwnd,IDC_LIST1);
-						int count = SendMessageA(list,LVM_GETITEMCOUNT,0,0);
-						int i;
-
-						if (count ==0)
+						if (!GetAllImages())
 						{
-							EndDialog(hwnd,0);
+							UI_EndDialog(hwnd,0);
 							return FALSE;
 						}
+						UI_EndDialog(hwnd,1);
+					}
+					break;
+				case IDC_FETCH:
+					{
+						HIMAGELIST ilist = 0;
+						HWND list = GetDlgItem(hwnd,IDC_LIST1);
+						PopulateImageList(&ilist,list);
 
-						for ( i = 0; i < count; i++)
-						{
-							LVITEMA item;
-							struct gphoto2_file *file;
-
-
-							item.mask = LVIF_PARAM;
-							item.iItem = i;
-							item.iSubItem = 0;
-
-							SendMessageA(list,LVM_GETITEMA,0,(LPARAM)&item);
-
-							file = (struct gphoto2_file*)item.lParam;
-							file->download = TRUE;
-						}
-
-						EndDialog(hwnd,1);
+						SendMessageA(list, LVM_SETIMAGELIST,LVSIL_NORMAL,(LPARAM)ilist);
+						PopulateListView(list);
+						EnableWindow(GetDlgItem(hwnd,IDC_FETCH),FALSE);
 					}
 					break;
 			}
@@ -226,6 +254,15 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
 BOOL DoCameraUI(void)
 {
+	HKEY key;
+	DWORD data = 0;
+	DWORD size = sizeof(data);
+	if (RegOpenKeyExA(HKEY_CURRENT_USER, settings_key, 0, KEY_READ, &key) == ERROR_SUCCESS) {
+		RegQueryValueExA(key, settings_value, NULL, NULL, (LPBYTE) &data, &size);
+		RegCloseKey(key);
+		if (data)
+			return GetAllImages();
+	}
 	return DialogBoxW(GPHOTO2_instance,
 			(LPWSTR)MAKEINTRESOURCE(IDD_CAMERAUI),NULL, DialogProc);
 }
