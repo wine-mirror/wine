@@ -28,7 +28,6 @@
 
 struct inner_data_user {
     /* the following fields are only user by the USER backend (should be hidden in user) */
-    HWND		hWnd;		/* handle to windows for rendering */
     HFONT		hFont;		/* font used for rendering, usually fixed */
     LONG                ext_leading;    /* external leading for hFont */
     HDC			hMemDC;		/* memory DC holding the bitmap below */

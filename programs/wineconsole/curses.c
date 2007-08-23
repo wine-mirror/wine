@@ -953,6 +953,7 @@ enum init_return WCCURSES_InitBackend(struct inner_data* data)
     data->fnScroll             = WCCURSES_Scroll;
     data->fnSetFont            = WCCURSES_SetFont;
     data->fnDeleteBackend      = WCCURSES_DeleteBackend;
+    data->hWnd                 = NULL;
 
     if (wine_server_fd_to_handle(0, GENERIC_READ|SYNCHRONIZE, 0,
                                  (obj_handle_t*)&PRIVATE(data)->hInput))

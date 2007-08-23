@@ -434,7 +434,7 @@ static BOOL  select_font(struct dialog_info* di)
 
     WCUSER_FillLogFont(&lf, di->font[size_idx].faceName,
                        di->font[size_idx].height, di->font[size_idx].weight);
-    hFont = WCUSER_CopyFont(&config, PRIVATE(di->data)->hWnd, &lf, NULL);
+    hFont = WCUSER_CopyFont(&config, di->data->hWnd, &lf, NULL);
     if (!hFont) return FALSE;
 
     if (config.cell_height != di->font[size_idx].height)
@@ -573,7 +573,7 @@ static INT_PTR WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPA
                 WCUSER_FillLogFont(&lf, di->font[val].faceName,
                                    di->font[val].height, di->font[val].weight);
                 DeleteObject(WCUSER_CopyFont(&di->config,
-                                             PRIVATE(di->data)->hWnd, &lf, NULL));
+                                             di->data->hWnd, &lf, NULL));
             }
 
             val = (GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0) << 4) |
@@ -831,7 +831,7 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
 
     psHead.pszCaption = buff;
     psHead.nPages = 3;
-    psHead.hwndParent = PRIVATE(data)->hWnd;
+    psHead.hwndParent = data->hWnd;
     psHead.u3.phpage = psPage;
 
     WINECON_DumpConfig("init", refcfg);
@@ -846,7 +846,7 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
     if (refcfg == &data->curcfg)
     {
         switch (DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SAVE_SETTINGS),
-                          PRIVATE(data)->hWnd, WCUSER_SaveDlgProc))
+                          data->hWnd, WCUSER_SaveDlgProc))
         {
         case IDC_SAV_SAVE:      save = TRUE; modify_session = TRUE; break;
         case IDC_SAV_SESSION:   modify_session = TRUE; break;
