@@ -79,6 +79,10 @@ BEGIN
             MENUITEM "&Geeltje\tCtrl+2",   ID_BACK_2
         END
     END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About Wine Wordpad"       ID_ABOUT
+    END
 END
 
 IDM_POPUP MENU DISCARDABLE

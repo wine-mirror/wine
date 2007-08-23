@@ -1095,6 +1095,13 @@ static void dialog_print(void)
     }
 }
 
+static void dialog_about(void)
+{
+    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
+    HICON icon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_WORDPAD));
+    ShellAboutW(hMainWnd, wszAppTitle, 0, icon);
+}
+
 static void HandleCommandLine(LPWSTR cmdline)
 {
     WCHAR delimiter;
@@ -2195,6 +2202,10 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
             HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
             DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_TABSTOPS), hWnd, tabstops_proc);
         }
+        break;
+
+    case ID_ABOUT:
+        dialog_about();
         break;
 
     default:
