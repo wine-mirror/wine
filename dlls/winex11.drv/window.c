@@ -341,7 +341,7 @@ static void systray_dock_window( Display *display, struct x11drv_win_data *data 
          * http://standards.freedesktop.org/xembed-spec/latest/ar01s04.html */
         
         SetWindowPos( data->hwnd, NULL, virtual_screen_rect.right + 1, virtual_screen_rect.bottom + 1,
-                      0, 0, SWP_NOZORDER | SWP_NOSIZE );
+                      0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE );
 
         /* set XEMBED protocol data on the window */
         info[0] = 0; /* protocol version */
