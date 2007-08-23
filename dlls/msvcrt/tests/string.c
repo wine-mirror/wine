@@ -185,6 +185,7 @@ static void test_mbcp(void)
     unsigned char *mbstring2 = (unsigned char *)"\xb0\xb1\xb2\xb3Q\xb4\xb5"; /* correct string */
     unsigned char *mbsonlylead = (unsigned char *)"\xb0\0\xb1\xb2";
     unsigned char buf[16];
+    int step;
 
     /* some two single-byte code pages*/
     test_codepage(1252);
@@ -251,6 +252,31 @@ static void test_mbcp(void)
     memset(buf, 0xff, sizeof(buf));
     _mbsnbcpy(buf, mbsonlylead, 5);
     expect_bin(buf, "\0\0\0\0\0\xff", 6);
+
+    /* _mbsinc/mbsdec */
+    step = _mbsinc(mbstring) - mbstring;
+    ok(step == 2, "_mbsinc adds %d (exp. 2)\n", step);
+    step = _mbsinc(&mbstring[2]) - &mbstring[2];  /* lead + invalid tail */
+    ok(step == 2, "_mbsinc adds %d (exp. 2)\n", step);
+
+    step = _mbsninc(mbsonlylead, 1) - mbsonlylead;
+    ok(step == 0, "_mbsninc adds %d (exp. 0)\n", step);
+    step = _mbsninc(mbsonlylead, 2) - mbsonlylead;  /* lead + NUL byte + lead + char */
+    ok(step == 0, "_mbsninc adds %d (exp. 0)\n", step);
+    step = _mbsninc(mbstring2, 0) - mbstring2;
+    ok(step == 0, "_mbsninc adds %d (exp. 2)\n", step);
+    step = _mbsninc(mbstring2, 1) - mbstring2;
+    ok(step == 2, "_mbsninc adds %d (exp. 2)\n", step);
+    step = _mbsninc(mbstring2, 2) - mbstring2;
+    ok(step == 4, "_mbsninc adds %d (exp. 4)\n", step);
+    step = _mbsninc(mbstring2, 3) - mbstring2;
+    ok(step == 5, "_mbsninc adds %d (exp. 5)\n", step);
+    step = _mbsninc(mbstring2, 4) - mbstring2;
+    ok(step == 7, "_mbsninc adds %d (exp. 7)\n", step);
+    step = _mbsninc(mbstring2, 5) - mbstring2;
+    ok(step == 7, "_mbsninc adds %d (exp. 7)\n", step);
+    step = _mbsninc(mbstring2, 17) - mbstring2;
+    ok(step == 7, "_mbsninc adds %d (exp. 7)\n", step);
 
     /* functions that depend on locale codepage, not mbcp.
      * we hope the current locale to be SBCS because setlocale(LC_ALL, ".1252") seems not to work yet

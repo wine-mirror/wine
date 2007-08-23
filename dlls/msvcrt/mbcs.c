@@ -27,6 +27,7 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "msvcrt/mbctype.h"
+#include "msvcrt/mbstring.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -335,10 +336,7 @@ unsigned char* CDECL _mbsdec(const unsigned char* start, const unsigned char* cu
  */
 unsigned char* CDECL _mbsinc(const unsigned char* str)
 {
-  if(MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(*str))
-    return (unsigned char*)str + 2; /* MB char */
-
-  return (unsigned char*)str + 1; /* ASCII CP or SB char */
+  return (unsigned char *)(str + _mbclen(str));
 }
 
 /*********************************************************************
@@ -346,15 +344,22 @@ unsigned char* CDECL _mbsinc(const unsigned char* str)
  */
 unsigned char* CDECL _mbsninc(const unsigned char* str, MSVCRT_size_t num)
 {
-  if(!str || num < 1)
+  if(!str)
     return NULL;
-  if(MSVCRT___mb_cur_max > 1)
+
+  while (num > 0 && *str)
   {
-    while(num--)
-      str = _mbsinc(str);
-    return (unsigned char*)str;
+    if (_ismbblead(*str))
+    {
+      if (!*(str+1))
+         break;
+      str++;
+    }
+    str++;
+    num--;
   }
-  return (unsigned char*)str + num; /* ASCII CP */
+
+  return (unsigned char*)str;
 }
 
 /*********************************************************************
@@ -1348,7 +1353,7 @@ MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* se
 /*********************************************************************
  *              _mbsspnp (MSVCRT.@)
  */
-const unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned char* set)
+unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned char* set)
 {
     const unsigned char *p, *q;
 
@@ -1376,7 +1381,7 @@ const unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned 
     }
     if (*p == '\0')
         return NULL;
-    return p;
+    return (unsigned char *)p;
 }
 
 /*********************************************************************
