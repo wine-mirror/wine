@@ -454,7 +454,8 @@ static BOOL service_handle_start(HANDLE pipe, service_data *service, DWORD count
 
     if (service->thread)
     {
-        ERR("service is not stopped\n");
+        WARN("service is not stopped\n");
+        result = ERROR_SERVICE_ALREADY_RUNNING;
         goto end;
     }
 
@@ -503,7 +504,14 @@ static BOOL service_send_start_message(HANDLE pipe, LPCWSTR *argv, DWORD argc)
 
     r = WriteFile(pipe, ssi, sizeof *ssi + len*sizeof(WCHAR), &count, NULL);
     if (r)
+    {
         r = ReadFile(pipe, &result, sizeof result, &count, NULL);
+        if (r && result)
+        {
+            SetLastError(result);
+            r = FALSE;
+        }
+    }
 
     HeapFree(GetProcessHeap(),0,ssi);
 
@@ -1764,11 +1772,14 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
         CloseHandle(handle);
     }
 
-    handle = service_open_pipe(hsvc->name);
-    if (handle != INVALID_HANDLE_VALUE)
+    if (r)
     {
-        service_set_processID(handle, dwProcessId, &dwResult);
-        CloseHandle(handle);
+        handle = service_open_pipe(hsvc->name);
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            service_set_processID(handle, dwProcessId, &dwResult);
+            CloseHandle(handle);
+        }
     }
 
     UnlockServiceDatabase( hLock );
