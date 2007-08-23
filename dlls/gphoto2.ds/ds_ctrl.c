@@ -63,7 +63,7 @@ load_filesystem(const char *folder) {
 	gpfile->folder = strdup(folder);
 	gpfile->filename = strdup(name);
 	gpfile->download = FALSE;
-	list_add_head( &activeDS.files, &gpfile->entry );
+	list_add_tail( &activeDS.files, &gpfile->entry );
     }
     gp_list_reset (list);
 
