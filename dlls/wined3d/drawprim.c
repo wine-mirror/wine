@@ -942,6 +942,94 @@ void blt_to_drawable(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *surface) {
     LEAVE_GL();
 }
 
+static inline void remove_vbos(IWineD3DDeviceImpl *This, WineDirect3DVertexStridedData *s) {
+    unsigned char i;
+    IWineD3DVertexBufferImpl *vb;
+
+    if(s->u.s.position.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.position.streamNo];
+        s->u.s.position.VBO = 0;
+        s->u.s.position.lpData = (BYTE *) ((unsigned long) s->u.s.position.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.blendWeights.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.blendWeights.streamNo];
+        s->u.s.blendWeights.VBO = 0;
+        s->u.s.blendWeights.lpData = (BYTE *) ((unsigned long) s->u.s.blendWeights.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.blendMatrixIndices.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.blendMatrixIndices.streamNo];
+        s->u.s.blendMatrixIndices.VBO = 0;
+        s->u.s.blendMatrixIndices.lpData = (BYTE *) ((unsigned long) s->u.s.blendMatrixIndices.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.normal.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.normal.streamNo];
+        s->u.s.normal.VBO = 0;
+        s->u.s.normal.lpData = (BYTE *) ((unsigned long) s->u.s.normal.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.pSize.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.pSize.streamNo];
+        s->u.s.pSize.VBO = 0;
+        s->u.s.pSize.lpData = (BYTE *) ((unsigned long) s->u.s.pSize.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.diffuse.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.diffuse.streamNo];
+        s->u.s.diffuse.VBO = 0;
+        s->u.s.diffuse.lpData = (BYTE *) ((unsigned long) s->u.s.diffuse.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.specular.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.specular.streamNo];
+        s->u.s.specular.VBO = 0;
+        s->u.s.specular.lpData = (BYTE *) ((unsigned long) s->u.s.specular.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    for(i = 0; i < WINED3DDP_MAXTEXCOORD; i++) {
+        if(s->u.s.texCoords[i].VBO) {
+            vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.texCoords[i].streamNo];
+            s->u.s.texCoords[i].VBO = 0;
+            s->u.s.texCoords[i].lpData = (BYTE *) ((unsigned long) s->u.s.texCoords[i].lpData + (unsigned long) vb->resource.allocatedMemory);
+        }
+    }
+    if(s->u.s.position2.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.position2.streamNo];
+        s->u.s.position2.VBO = 0;
+        s->u.s.position2.lpData = (BYTE *) ((unsigned long) s->u.s.position2.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.normal2.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.normal2.streamNo];
+        s->u.s.normal2.VBO = 0;
+        s->u.s.normal2.lpData = (BYTE *) ((unsigned long) s->u.s.normal2.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.tangent.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.tangent.streamNo];
+        s->u.s.tangent.VBO = 0;
+        s->u.s.tangent.lpData = (BYTE *) ((unsigned long) s->u.s.tangent.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.binormal.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.binormal.streamNo];
+        s->u.s.binormal.VBO = 0;
+        s->u.s.binormal.lpData = (BYTE *) ((unsigned long) s->u.s.binormal.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.tessFactor.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.tessFactor.streamNo];
+        s->u.s.tessFactor.VBO = 0;
+        s->u.s.tessFactor.lpData = (BYTE *) ((unsigned long) s->u.s.tessFactor.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.fog.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.fog.streamNo];
+        s->u.s.fog.VBO = 0;
+        s->u.s.fog.lpData = (BYTE *) ((unsigned long) s->u.s.fog.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.depth.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.depth.streamNo];
+        s->u.s.depth.VBO = 0;
+        s->u.s.depth.lpData = (BYTE *) ((unsigned long) s->u.s.depth.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+    if(s->u.s.sample.VBO) {
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[s->u.s.sample.streamNo];
+        s->u.s.sample.VBO = 0;
+        s->u.s.sample.lpData = (BYTE *) ((unsigned long) s->u.s.sample.lpData + (unsigned long) vb->resource.allocatedMemory);
+    }
+}
+
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void drawPrimitive(IWineD3DDevice *iface,
                    int PrimitiveType,
@@ -1052,34 +1140,9 @@ void drawPrimitive(IWineD3DDevice *iface,
             }
 
             if(emulation) {
-                IWineD3DVertexBufferImpl *vb;
-
                 strided = &stridedlcl;
                 memcpy(&stridedlcl, &This->strided_streams, sizeof(stridedlcl));
-
-#define FIXVBO(type) \
-if(stridedlcl.u.s.type.VBO) { \
-    vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[stridedlcl.u.s.type.streamNo]; \
-    stridedlcl.u.s.type.VBO = 0; \
-    stridedlcl.u.s.type.lpData = (BYTE *) ((unsigned long) stridedlcl.u.s.type.lpData + (unsigned long) vb->resource.allocatedMemory); \
-}
-                FIXVBO(position);
-                FIXVBO(blendWeights);
-                FIXVBO(blendMatrixIndices);
-                FIXVBO(normal);
-                FIXVBO(pSize);
-                FIXVBO(diffuse);
-                FIXVBO(specular);
-                for(i = 0; i < WINED3DDP_MAXTEXCOORD; i++) FIXVBO(texCoords[i]);
-                FIXVBO(position2);
-                FIXVBO(normal2);
-                FIXVBO(tangent);
-                FIXVBO(binormal);
-                FIXVBO(tessFactor);
-                FIXVBO(fog);
-                FIXVBO(depth);
-                FIXVBO(sample);
-#undef FIXVBO
+                remove_vbos(This, &stridedlcl);
             }
         }
 

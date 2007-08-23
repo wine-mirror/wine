@@ -1267,6 +1267,13 @@ typedef struct WineDirect3DStridedData {
 } WineDirect3DStridedData;
 
 typedef struct WineDirect3DVertexStridedData {
+    /* IMPORTANT:
+     *
+     * This structure can be accessed in two ways: Named access, and array
+     * access. Please note that named access is only valid with the fixed
+     * function vertex pipeline, and the arrays are only valid with the
+     * programmable vertex pipeline(vertex shaders)
+     */
     union {
         struct {
 
