@@ -443,9 +443,7 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
 
     dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE);
     if (!dll) {
-        xprintf ("%s:%s_dll_missing start 0 0\n", dllname, dllname);
-        xprintf ("%s_dll_missing: -1 tests executed (-1 marked as todo, -1 failures), -1 skipped.\n", dllname);
-        xprintf ("%s:%s_dll_missing done (0)\n", dllname, dllname);
+        xprintf ("    %s=dll is missing\n", dllname);
         return TRUE;
     }
     FreeLibrary(dll);
@@ -526,7 +524,7 @@ run_tests (char *logname)
     }
     xprintf ("Operating system version:\n");
     print_version ();
-    xprintf ("Test output:\n" );
+    xprintf ("Dll info:\n" );
 
     report (R_STATUS, "Counting tests");
     if (!EnumResourceNames (NULL, MAKEINTRESOURCE(TESTRES),
@@ -543,6 +541,8 @@ run_tests (char *logname)
                             extract_test_proc, (LPARAM)tempdir))
         report (R_FATAL, "Can't enumerate test files: %d",
                 GetLastError ());
+
+    xprintf ("Test output:\n" );
 
     report (R_DELTA, 0, "Extracting: Done");
 
