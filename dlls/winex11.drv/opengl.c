@@ -1662,6 +1662,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
         NtCurrentTeb()->glContext = ctx;
         if(ret)
         {
+            ctx->hdc = hdc;
             ctx->physDev = physDev;
             ctx->pReadDev = physDev;
 
@@ -1712,6 +1713,7 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEVICE* p
                 ctx->ctx = pglXCreateContext(gdi_display, ctx->vis, NULL, GetObjectType(pDrawDev->hdc) == OBJ_MEMDC ? False : True);
                 TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
             }
+            ctx->hdc = pDrawDev->hdc;
             ctx->physDev = pDrawDev;
             ctx->pReadDev = pReadDev;
             ret = pglXMakeContextCurrent(gdi_display, d_draw, d_read, ctx->ctx);
@@ -1749,7 +1751,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
             describeContext(org);
 
             if(org->vis)
-                org->ctx = pglXCreateContext(gdi_display, org->vis, NULL, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
+                org->ctx = pglXCreateContext(gdi_display, org->vis, NULL, GetObjectType(org->hdc) == OBJ_MEMDC ? False : True);
             else /* Create a GLX Context for a pbuffer */
                 org->ctx = pglXCreateNewContext(gdi_display, org->fmt->fbconfig, org->fmt->render_type, NULL, True);
             wine_tsx11_unlock();
@@ -1760,7 +1762,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
             describeContext(dest);
             /* Create the destination context with display lists shared */
             if(dest->vis)
-                dest->ctx = pglXCreateContext(gdi_display, dest->vis, org->ctx, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
+                dest->ctx = pglXCreateContext(gdi_display, dest->vis, org->ctx, GetObjectType(org->hdc) == OBJ_MEMDC ? False : True);
             else /* Create a GLX Context for a pbuffer */
                 dest->ctx = pglXCreateNewContext(gdi_display, dest->fmt->fbconfig, dest->fmt->render_type, org->ctx, True);
             wine_tsx11_unlock();
