@@ -80,8 +80,10 @@ static int GetAllImages()
     LIST_FOR_EACH_ENTRY( file, &activeDS.files, struct gphoto2_file, entry)
     {
         if (strstr(file->filename,".JPG") || strstr(file->filename,".jpg"))
+        {
             file->download = TRUE;
             has_images = 1;
+        }
     }
     return has_images;
 }
