@@ -34,50 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
-HRESULT WINAPI CorBindToRuntimeHost(LPCWSTR pwszVersion, LPCWSTR pwszBuildFlavor,
-                                    LPCWSTR pwszHostConfigFile, VOID *pReserved,
-                                    DWORD startupFlags, REFCLSID rclsid,
-                                    REFIID riid, LPVOID *ppv)
-{
-    FIXME("(%s, %s, %s, %p, %d, %p, %p, %p): stub!\n", debugstr_w(pwszVersion),
-          debugstr_w(pwszBuildFlavor), debugstr_w(pwszHostConfigFile), pReserved,
-          startupFlags, rclsid, riid, ppv);
-
-    return E_FAIL;
-}
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hinstDLL);
-        break;
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
-}
-
-BOOL WINAPI _CorDllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    FIXME("(%p, %d, %p): stub\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hinstDLL);
-        break;
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
-}
-
 static LPWSTR get_mono_exe(void)
 {
     static const WCHAR mono_exe[] = {'b','i','n','\\','m','o','n','o','.','e','x','e',' ',0};
@@ -124,6 +80,58 @@ static LPWSTR get_mono_exe(void)
     lstrcatW(ret, mono_exe);
 
     return ret;
+}
+
+HRESULT WINAPI CorBindToRuntimeHost(LPCWSTR pwszVersion, LPCWSTR pwszBuildFlavor,
+                                    LPCWSTR pwszHostConfigFile, VOID *pReserved,
+                                    DWORD startupFlags, REFCLSID rclsid,
+                                    REFIID riid, LPVOID *ppv)
+{
+    WCHAR *mono_exe;
+
+    FIXME("(%s, %s, %s, %p, %d, %p, %p, %p): semi-stub!\n", debugstr_w(pwszVersion),
+          debugstr_w(pwszBuildFlavor), debugstr_w(pwszHostConfigFile), pReserved,
+          startupFlags, rclsid, riid, ppv);
+
+    if (!(mono_exe = get_mono_exe()))
+    {
+        MESSAGE("wine: Install the Windows version of Mono to run .NET executables\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+
+    switch (fdwReason)
+    {
+    case DLL_WINE_PREATTACH:
+        return FALSE;  /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinstDLL);
+        break;
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
+}
+
+BOOL WINAPI _CorDllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    FIXME("(%p, %d, %p): stub\n", hinstDLL, fdwReason, lpvReserved);
+
+    switch (fdwReason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinstDLL);
+        break;
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
 }
 
 __int32 WINAPI _CorExeMain(void)
