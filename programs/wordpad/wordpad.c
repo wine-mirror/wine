@@ -929,6 +929,7 @@ static int twips_to_centmm(int twips)
 }
 
 static HGLOBAL devMode;
+static HGLOBAL devNames;
 
 static void print(LPPRINTDLGW pd)
 {
@@ -1006,6 +1007,7 @@ static void dialog_printsetup(void)
     ps.rtMargin.top = twips_to_centmm(margins.top);
     ps.rtMargin.bottom = twips_to_centmm(margins.bottom);
     ps.hDevMode = devMode;
+    ps.hDevNames = devNames;
 
     if(PageSetupDlgW(&ps))
     {
@@ -1014,7 +1016,38 @@ static void dialog_printsetup(void)
         margins.top = centmm_to_twips(ps.rtMargin.top);
         margins.bottom = centmm_to_twips(ps.rtMargin.bottom);
         devMode = ps.hDevMode;
+        devNames = ps.hDevNames;
     }
+}
+
+static void print_quick(void)
+{
+    PRINTDLGW pd;
+    ZeroMemory(&pd, sizeof(pd));
+
+    if(devMode && devNames)
+    {
+        LPDEVNAMES dn = GlobalLock(devNames);
+        LPDEVMODEW dm = GlobalLock(devMode);
+        pd.hDC = CreateDCW((LPWSTR)dn + dn->wDriverOffset,
+                           (LPWSTR)dn + dn->wDeviceOffset, 0, dm);
+        GlobalUnlock(dn);
+        GlobalUnlock(dm);
+    } else
+    {
+        ZeroMemory(&pd, sizeof(pd));
+        pd.lStructSize = sizeof(pd);
+        pd.Flags = PD_RETURNDC | PD_RETURNDEFAULT;
+        pd.hwndOwner = hMainWnd;
+        pd.hDevMode = (HGLOBAL)devMode;
+
+        PrintDlgW(&pd);
+
+        devMode = pd.hDevMode;
+        devNames = pd.hDevNames;
+    }
+
+    print(&pd);
 }
 
 static void dialog_print(void)
@@ -1030,6 +1063,7 @@ static void dialog_print(void)
     pd.nMinPage = 1;
     pd.nMaxPage = 1;
     pd.hDevMode = devMode;
+    pd.hDevNames = devNames;
 
     SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
     if(from == to)
@@ -1038,6 +1072,7 @@ static void dialog_print(void)
     if(PrintDlgW(&pd))
     {
         devMode = pd.hDevMode;
+        devNames = pd.hDevNames;
         print(&pd);
     }
 }
@@ -1643,7 +1678,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILEOPEN, ID_FILE_OPEN);
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILESAVE, ID_FILE_SAVE);
     AddSeparator(hToolBarWnd);
-    AddButton(hToolBarWnd, nStdBitmaps+STD_PRINT, ID_PRINT);
+    AddButton(hToolBarWnd, nStdBitmaps+STD_PRINT, ID_PRINT_QUICK);
     AddButton(hToolBarWnd, nStdBitmaps+STD_PRINTPRE, ID_PREVIEW);
     AddSeparator(hToolBarWnd);
     AddButton(hToolBarWnd, nStdBitmaps+STD_FIND, ID_FIND);
@@ -1886,6 +1921,10 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_PRINT:
         dialog_print();
+        break;
+
+    case ID_PRINT_QUICK:
+        print_quick();
         break;
 
     case ID_PREVIEW:
