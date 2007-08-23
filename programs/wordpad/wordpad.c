@@ -936,6 +936,7 @@ static void print(LPPRINTDLGW pd)
     FORMATRANGE fr;
     DOCINFOW di;
     int dpiY, dpiX, width, height;
+    int printedPages = 0;
 
     fr.hdc = pd->hDC;
     fr.hdcTarget = pd->hDC;
@@ -975,6 +976,18 @@ static void print(LPPRINTDLGW pd)
         gt.codepage = 1200;
         fr.chrg.cpMin = 0;
         fr.chrg.cpMax = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
+
+        if(pd->Flags & PD_PAGENUMS)
+        {
+            int i;
+            for(i = 1; i <= pd->nToPage; i++)
+            {
+                if(i == pd->nFromPage)
+                    break;
+
+                fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)&fr);
+            }
+        }
     }
 
     StartDocW(fr.hdc, &di);
@@ -986,6 +999,10 @@ static void print(LPPRINTDLGW pd)
         fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)&fr);
 
         if(EndPage(fr.hdc) <= 0)
+            break;
+
+        printedPages++;
+        if((pd->Flags & PD_PAGENUMS) && (printedPages > (pd->nToPage - pd->nFromPage)))
             break;
     }
     while(fr.chrg.cpMin < fr.chrg.cpMax);
@@ -1061,7 +1078,7 @@ static void dialog_print(void)
     pd.hwndOwner = hMainWnd;
     pd.Flags = PD_RETURNDC | PD_USEDEVMODECOPIESANDCOLLATE;
     pd.nMinPage = 1;
-    pd.nMaxPage = 1;
+    pd.nMaxPage = -1;
     pd.hDevMode = devMode;
     pd.hDevNames = devNames;
 
