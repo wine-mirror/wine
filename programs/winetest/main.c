@@ -62,6 +62,39 @@ static struct rev_info *rev_infos = NULL;
 static const char whitespace[] = " \t\r\n";
 static const char testexe[] = "_test.exe";
 
+static char * get_file_version(char * file_name)
+{
+    static char version[32];
+    DWORD size;
+    DWORD handle;
+
+    size = GetFileVersionInfoSizeA(file_name, &handle);
+    if (size) {
+        char * data = xmalloc(size);
+        if (data) {
+            if (GetFileVersionInfoA(file_name, handle, size, data)) {
+                static char backslash[] = "\\";
+                VS_FIXEDFILEINFO *pFixedVersionInfo;
+                UINT len;
+                if (VerQueryValueA(data, backslash, (LPVOID *)&pFixedVersionInfo, &len)) {
+                    sprintf(version, "%d.%d.%d.%d",
+                            pFixedVersionInfo->dwFileVersionMS >> 16,
+                            pFixedVersionInfo->dwFileVersionMS & 0xffff,
+                            pFixedVersionInfo->dwFileVersionLS >> 16,
+                            pFixedVersionInfo->dwFileVersionLS & 0xffff);
+                } else
+                    sprintf(version, "version not available");
+            } else
+                sprintf(version, "unknown");
+            free(data);
+        } else
+            sprintf(version, "failed");
+    } else
+        sprintf(version, "version not available");
+
+    return version;
+}
+
 static int running_under_wine (void)
 {
     HMODULE module = GetModuleHandleA("ntdll.dll");
@@ -447,6 +480,8 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
         return TRUE;
     }
     FreeLibrary(dll);
+
+    xprintf ("    %s=%s\n", dllname, get_file_version(dllname));
 
     get_subtests( tempdir, &wine_tests[nr_of_files], lpszName );
     nr_of_tests += wine_tests[nr_of_files].subtest_count;
