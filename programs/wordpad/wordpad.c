@@ -138,6 +138,36 @@ static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
     SendMessageW(hwndToolBar, TB_ADDBUTTONSW, 1, (LPARAM)&button);
 }
 
+static void AddTextButton(HWND hWnd, int string, int command, int id)
+{
+    REBARBANDINFOW rb;
+    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
+    static const WCHAR button[] = {'B','U','T','T','O','N',0};
+    WCHAR text[MAX_STRING_LEN];
+    HWND hButton;
+    RECT rc;
+
+    LoadStringW(hInstance, string, text, MAX_STRING_LEN);
+    hButton = CreateWindowW(button, text,
+                            WS_VISIBLE | WS_CHILD, 5, 5, 100, 15,
+                            hMainWnd, (HMENU)command, hInstance, NULL);
+
+    rb.cbSize = sizeof(rb);
+    rb.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_CHILD | RBBIM_IDEALSIZE | RBBIM_ID;
+    rb.fStyle = RBBS_NOGRIPPER | RBBS_VARIABLEHEIGHT;
+    rb.hwndChild = hButton;
+    rb.cyChild = rb.cyMinChild = 22;
+    rb.cx = rb.cxMinChild = 90;
+    rb.cxIdeal = 100;
+    rb.wID = id;
+
+    rc.bottom = 22;
+    rc.right = 90;
+
+    SendMessageW(hWnd, RB_INSERTBAND, -1, (LPARAM)&rb);
+    SetWindowPos(hButton, 0, 0, 0, 90, 22, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+}
+
 static void AddSeparator(HWND hwndToolBar)
 {
     TBBUTTON button;
@@ -696,6 +726,12 @@ static HDC make_dc(void)
     }
 }
 
+static LONG twips_to_pixels(int twips, int dpi)
+{
+    float ret = ((float)twips / ((float)567 * 2.54)) * (float)dpi;
+    return (LONG)ret;
+}
+
 static LONG devunits_to_twips(int units, int dpi)
 {
     float ret = ((float)units / (float)dpi) * (float)567 * 2.54;
@@ -1003,6 +1039,33 @@ static LPWSTR dialog_print_to_file(void)
         return FALSE;
 }
 
+static int get_num_pages(FORMATRANGE fr)
+{
+    int page = 0;
+
+    do
+    {
+        page++;
+        fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE,
+                                     (LPARAM)&fr);
+    } while(fr.chrg.cpMin < fr.chrg.cpMax);
+
+    return page;
+}
+
+static void char_from_pagenum(FORMATRANGE *fr, int page)
+{
+    int i;
+
+    for(i = 1; i <= page; i++)
+    {
+        if(i == page)
+            break;
+
+        fr->chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)fr);
+    }
+}
+
 static void print(LPPRINTDLGW pd)
 {
     FORMATRANGE fr;
@@ -1041,16 +1104,7 @@ static void print(LPPRINTDLGW pd)
         fr.chrg.cpMax = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
 
         if(pd->Flags & PD_PAGENUMS)
-        {
-            int i;
-            for(i = 1; i <= pd->nToPage; i++)
-            {
-                if(i == pd->nFromPage)
-                    break;
-
-                fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)&fr);
-            }
-        }
+            char_from_pagenum(&fr, pd->nToPage);
     }
 
     StartDocW(fr.hdc, &di);
@@ -1155,6 +1209,200 @@ static void dialog_print(void)
         print(&pd);
     }
 }
+
+typedef struct _previewinfo
+{
+    int page;
+    int pages;
+    HDC hdc;
+    HDC hdcSized;
+    RECT window;
+} previewinfo, *ppreviewinfo;
+
+static previewinfo preview;
+
+static void preview_bar_show(BOOL show)
+{
+    HWND hReBar = GetDlgItem(hMainWnd, IDC_REBAR);
+    int i;
+
+    if(show)
+    {
+        AddTextButton(hReBar, STRING_PREVIEW_PRINT, ID_PRINT, BANDID_PREVIEW_BTN1);
+        AddTextButton(hReBar, STRING_PREVIEW_NEXTPAGE, ID_PREVIEW_NEXTPAGE, BANDID_PREVIEW_BTN2);
+        AddTextButton(hReBar, STRING_PREVIEW_PREVPAGE, ID_PREVIEW_PREVPAGE, BANDID_PREVIEW_BTN3);
+        AddTextButton(hReBar, STRING_PREVIEW_CLOSE, ID_FILE_EXIT, BANDID_PREVIEW_BTN4);
+    } else
+    {
+        for(i = 0; i < PREVIEW_BUTTONS; i++)
+            SendMessageW(hReBar, RB_DELETEBAND, SendMessageW(hReBar, RB_IDTOINDEX, BANDID_PREVIEW_BTN1+i, 0), 0);
+    }
+}
+
+static void preview_exit(void)
+{
+    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
+    HMENU hMenu = LoadMenuW(hInstance, xszMainMenu);
+
+    set_bar_states();
+    preview.window.right = 0;
+    preview.window.bottom = 0;
+    preview.page = 0;
+    preview.pages = 0;
+    ShowWindow(hEditorWnd, TRUE);
+
+    preview_bar_show(FALSE);
+
+    SetMenu(hMainWnd, hMenu);
+    registry_read_filelist(hMainWnd);
+
+    update_window();
+}
+
+static LRESULT print_preview(void)
+{
+    FORMATRANGE fr;
+    GETTEXTLENGTHEX gt;
+    HDC hdc;
+    RECT window, background;
+    HBITMAP hBitmapCapture, hBitmapScaled;
+    int bmWidth, bmHeight, bmNewWidth, bmNewHeight;
+    float ratioWidth, ratioHeight, ratio;
+    int xOffset, yOffset;
+    int barheight;
+    HWND hReBar = GetDlgItem(hMainWnd, IDC_REBAR);
+    PAINTSTRUCT ps;
+
+    hdc = BeginPaint(hMainWnd, &ps);
+    GetClientRect(hMainWnd, &window);
+
+    fr.hdcTarget = make_dc();
+    fr.rc = get_print_rect(fr.hdcTarget);
+    fr.rcPage.left = 0;
+    fr.rcPage.top = 0;
+    fr.rcPage.bottom = fr.rc.bottom + margins.bottom;
+    fr.rcPage.right = fr.rc.right + margins.right;
+
+    bmWidth = twips_to_pixels(fr.rcPage.right, GetDeviceCaps(hdc, LOGPIXELSX));
+    bmHeight = twips_to_pixels(fr.rcPage.bottom, GetDeviceCaps(hdc, LOGPIXELSY));
+
+    hBitmapCapture = CreateCompatibleBitmap(hdc, bmWidth, bmHeight);
+
+    if(!preview.hdc)
+    {
+        RECT paper;
+
+        preview.hdc = CreateCompatibleDC(hdc);
+        fr.hdc = preview.hdc;
+        gt.flags = GTL_DEFAULT;
+        gt.codepage = 1200;
+        fr.chrg.cpMin = 0;
+        fr.chrg.cpMax = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
+
+        paper.left = 0;
+        paper.right = bmWidth;
+        paper.top = 0;
+        paper.bottom = bmHeight;
+
+        if(!preview.pages)
+            preview.pages = get_num_pages(fr);
+
+        SelectObject(preview.hdc, hBitmapCapture);
+
+        char_from_pagenum(&fr, preview.page);
+
+        FillRect(preview.hdc, &paper, GetStockObject(WHITE_BRUSH));
+        SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)&fr);
+        SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE, 0);
+
+        EnableWindow(GetDlgItem(hReBar, ID_PREVIEW_PREVPAGE), preview.page > 1);
+        EnableWindow(GetDlgItem(hReBar, ID_PREVIEW_NEXTPAGE), preview.page < preview.pages);
+    }
+
+    barheight = SendMessageW(hReBar, RB_GETBARHEIGHT, 0, 0);
+    ratioWidth = ((float)window.right - 20.0) / (float)bmHeight;
+    ratioHeight = ((float)window.bottom - 20.0 - (float)barheight) / (float)bmHeight;
+
+    if(ratioWidth > ratioHeight)
+        ratio = ratioHeight;
+    else
+        ratio = ratioWidth;
+
+    bmNewWidth = (int)((float)bmWidth * ratio);
+    bmNewHeight = (int)((float)bmHeight * ratio);
+    hBitmapScaled = CreateCompatibleBitmap(hdc, bmNewWidth, bmNewHeight);
+
+    xOffset = ((window.right - bmNewWidth) / 2);
+    yOffset = ((window.bottom - bmNewHeight + barheight) / 2);
+
+    if(window.right != preview.window.right || window.bottom != preview.window.bottom)
+    {
+        DeleteDC(preview.hdcSized),
+        preview.hdcSized = CreateCompatibleDC(hdc);
+        SelectObject(preview.hdcSized, hBitmapScaled);
+
+        StretchBlt(preview.hdcSized, 0, 0, bmNewWidth, bmNewHeight, preview.hdc, 0, 0, bmWidth, bmHeight, SRCCOPY);
+    }
+
+    window.top = barheight;
+    FillRect(hdc, &window, GetStockObject(GRAY_BRUSH));
+
+    SelectObject(hdc, hBitmapScaled);
+
+    background.left = xOffset - 2;
+    background.right = xOffset + bmNewWidth + 2;
+    background.top = yOffset - 2;
+    background.bottom = yOffset + bmNewHeight + 2;
+
+    FillRect(hdc, &background, GetStockObject(BLACK_BRUSH));
+
+    BitBlt(hdc, xOffset, yOffset, bmNewWidth, bmNewHeight, preview.hdcSized, 0, 0, SRCCOPY);
+
+    DeleteDC(fr.hdcTarget);
+    preview.window = window;
+
+    EndPaint(hMainWnd, &ps);
+
+    return 0;
+}
+
+static LRESULT preview_command(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+    switch(LOWORD(wParam))
+    {
+        case ID_FILE_EXIT:
+            PostMessageW(hMainWnd, WM_CLOSE, 0, 0);
+            break;
+
+        case ID_PREVIEW_NEXTPAGE:
+        case ID_PREVIEW_PREVPAGE:
+            {
+                HWND hReBar = GetDlgItem(hMainWnd, IDC_REBAR);
+                RECT rc;
+
+                if(LOWORD(wParam) == ID_PREVIEW_NEXTPAGE)
+                    preview.page++;
+                else
+                    preview.page--;
+
+                preview.hdc = 0;
+                preview.window.right = 0;
+
+                GetClientRect(hMainWnd, &rc);
+                rc.top += SendMessageW(hReBar, RB_GETBARHEIGHT, 0, 0);
+                InvalidateRect(hMainWnd, &rc, TRUE);
+            }
+            break;
+
+        case ID_PRINT:
+            dialog_print();
+            preview_exit();
+            break;
+    }
+
+    return 0;
+}
+
 
 static void dialog_about(void)
 {
@@ -2175,9 +2423,18 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_PREVIEW:
         {
-            static const WCHAR wszNotImplemented[] = {'N','o','t',' ',
-                                                      'i','m','p','l','e','m','e','n','t','e','d','\0'};
-            MessageBoxW(hWnd, wszNotImplemented, wszAppTitle, MB_OK);
+            int index = reg_formatindex(fileFormat);
+            DWORD tmp = barState[index];
+            barState[index] = 0;
+            set_bar_states();
+            barState[index] = tmp;
+            ShowWindow(hEditorWnd, FALSE);
+            preview_bar_show(TRUE);
+
+            preview.page = 1;
+            preview.hdc = 0;
+            SetMenu(hWnd, NULL);
+            InvalidateRect(0, 0, TRUE);
         }
         break;
 
@@ -2541,14 +2798,20 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
         return OnNotify( hWnd, wParam, lParam );
 
     case WM_COMMAND:
-        return OnCommand( hWnd, wParam, lParam );
+        if(preview.page)
+            return preview_command( hWnd, wParam, lParam );
+        else
+            return OnCommand( hWnd, wParam, lParam );
 
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
 
     case WM_CLOSE:
-        if(prompt_save_changes())
+        if(preview.page)
+        {
+            preview_exit();
+        } else if(prompt_save_changes())
         {
             registry_set_options();
             registry_set_formatopts_all();
@@ -2583,6 +2846,11 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
                 DoOpenFile(file);
         }
         break;
+    case WM_PAINT:
+        if(preview.page)
+            return print_preview();
+        else
+            return DefWindowProcW(hWnd, msg, wParam, lParam);
 
     default:
         return DefWindowProcW(hWnd, msg, wParam, lParam);

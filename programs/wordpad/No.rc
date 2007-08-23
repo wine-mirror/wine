@@ -28,6 +28,7 @@ BEGIN
         MENUITEM "Lagre &som . . .",          ID_FILE_SAVEAS
         MENUITEM SEPARATOR
         MENUITEM "&Skriv ut . . .\tCtrl+P",   ID_PRINT
+        MENUITEM "&Forhåndsvisning . . .",    ID_PREVIEW
         MENUITEM "&Utskriftformat . . .",     ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "&Avslutt",                  ID_FILE_EXIT
@@ -201,6 +202,14 @@ BEGIN
     STRING_VIEWPROPS_TITLE,          "Alternativer"
     STRING_VIEWPROPS_TEXT,           "Tekst"
     STRING_VIEWPROPS_RICHTEXT,       "Rik tekst"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_PREVIEW_PRINT,            "Skriv ut"
+    STRING_PREVIEW_NEXTPAGE,         "Neste side"
+    STRING_PREVIEW_PREVPAGE,         "Forrige side"
+    STRING_PREVIEW_CLOSE,            "Lukk"
 END
 
 STRINGTABLE DISCARDABLE

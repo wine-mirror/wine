@@ -28,6 +28,7 @@ BEGIN
         MENUITEM "Mentés má&sként...",        ID_FILE_SAVEAS
         MENUITEM SEPARATOR
         MENUITEM "&Print . . .\tCtrl+P",  ID_PRINT
+        MENUITEM "Print previe&w . . .",  ID_PREVIEW
         MENUITEM "Page setup . . .",      ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "&Kilépés",      ID_FILE_EXIT
@@ -201,6 +202,14 @@ BEGIN
     STRING_VIEWPROPS_TITLE,          "Options"
     STRING_VIEWPROPS_TEXT,           "Text"
     STRING_VIEWPROPS_RICHTEXT,       "Rich text"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_PREVIEW_PRINT,            "Print"
+    STRING_PREVIEW_NEXTPAGE,         "Next page"
+    STRING_PREVIEW_PREVPAGE,         "Previous page"
+    STRING_PREVIEW_CLOSE,            "Close"
 END
 
 STRINGTABLE DISCARDABLE
