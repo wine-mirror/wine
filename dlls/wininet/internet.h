@@ -146,6 +146,7 @@ struct _WININETHANDLEHEADER
     DWORD  dwError;
     DWORD  dwInternalFlags;
     DWORD  dwRefCount;
+    WININET_object_function close_connection;
     WININET_object_function destroy;
     INTERNET_STATUS_CALLBACK lpfnStatusCB;
 };

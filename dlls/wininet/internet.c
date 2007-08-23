@@ -173,6 +173,11 @@ BOOL WININET_Release( LPWININETHANDLEHEADER info )
     TRACE( "object %p refcount = %d\n", info, info->dwRefCount );
     if( !info->dwRefCount )
     {
+        if ( info->close_connection )
+        {
+            TRACE( "closing connection %p\n", info);
+            info->close_connection( info );
+        }
         TRACE( "destroying object %p\n", info);
         info->destroy( info );
     }
@@ -477,6 +482,7 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     lpwai->hdr.htype = WH_HINIT;
     lpwai->hdr.dwFlags = dwFlags;
     lpwai->hdr.dwRefCount = 1;
+    lpwai->hdr.close_connection = NULL;
     lpwai->hdr.destroy = INTERNET_CloseHandle;
     lpwai->dwAccessType = dwAccessType;
     lpwai->lpszProxyUsername = NULL;

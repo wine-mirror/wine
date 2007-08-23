@@ -103,6 +103,7 @@ struct HttpAuthInfo
     BOOL finished; /* finished authenticating */
 };
 
+static void HTTP_CloseConnection(LPWININETHANDLEHEADER hdr);
 static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr);
 static void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr);
 static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr);
@@ -1363,6 +1364,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     lpwhr->hdr.dwFlags = dwFlags;
     lpwhr->hdr.dwContext = dwContext;
     lpwhr->hdr.dwRefCount = 1;
+    lpwhr->hdr.close_connection = HTTP_CloseConnection;
     lpwhr->hdr.destroy = HTTP_CloseHTTPRequestHandle;
     lpwhr->hdr.lpfnStatusCB = lpwhs->hdr.lpfnStatusCB;
     lpwhr->hdr.dwInternalFlags = lpwhs->hdr.dwInternalFlags & INET_CALLBACKW;
@@ -2816,6 +2818,7 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwhs->hdr.dwContext = dwContext;
     lpwhs->hdr.dwInternalFlags = dwInternalFlags | (hIC->hdr.dwInternalFlags & INET_CALLBACKW);
     lpwhs->hdr.dwRefCount = 1;
+    lpwhs->hdr.close_connection = NULL;
     lpwhs->hdr.destroy = HTTP_CloseHTTPSessionHandle;
     lpwhs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
 
@@ -3319,8 +3322,9 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
  * Close socket connection
  *
  */
-static VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
+static void HTTP_CloseConnection(LPWININETHANDLEHEADER hdr)
 {
+    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
     LPWININETHTTPSESSIONW lpwhs = NULL;
     LPWININETAPPINFOW hIC = NULL;
 
@@ -3380,7 +3384,7 @@ BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
                              &dwBufferSize, NULL) ||
         strcmpiW(szConnectionResponse, szKeepAlive))
     {
-        HTTP_CloseConnection(lpwhr);
+        HTTP_CloseConnection(&lpwhr->hdr);
     }
 
     /* FIXME: store data in the URL cache here */
@@ -3402,8 +3406,6 @@ static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
     TRACE("\n");
 
     WININET_Release(&lpwhr->lpHttpSession->hdr);
-
-    HTTP_CloseConnection(lpwhr);
 
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);

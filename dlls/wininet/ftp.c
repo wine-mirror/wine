@@ -1121,6 +1121,7 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
         lpwh->hdr.dwFlags = dwFlags;
         lpwh->hdr.dwContext = dwContext;
         lpwh->hdr.dwRefCount = 1;
+        lpwh->hdr.close_connection = NULL;
         lpwh->hdr.destroy = FTP_CloseFileTransferHandle;
         lpwh->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
         lpwh->nDataSocket = nDataSocket;
@@ -1897,6 +1898,10 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwfs->hdr.dwContext = dwContext;
     lpwfs->hdr.dwInternalFlags = dwInternalFlags;
     lpwfs->hdr.dwRefCount = 1;
+    /* FIXME: Native sends INTERNET_STATUS_CLOSING_CONNECTION and
+     * INTERNET_STATUS_CONNECTION_CLOSED, need an equivalent FTP_CloseConnection
+     * function */
+    lpwfs->hdr.close_connection = NULL;
     lpwfs->hdr.destroy = FTP_CloseSessionHandle;
     lpwfs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
     lpwfs->download_in_progress = NULL;
@@ -3006,6 +3011,7 @@ static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LP
             lpwfn->hdr.htype = WH_HFTPFINDNEXT;
             lpwfn->hdr.dwContext = dwContext;
             lpwfn->hdr.dwRefCount = 1;
+            lpwfn->hdr.close_connection = NULL;
             lpwfn->hdr.destroy = FTP_CloseFindNextHandle;
             lpwfn->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
             lpwfn->index = 1; /* Next index is 1 since we return index 0 */
