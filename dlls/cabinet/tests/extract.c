@@ -597,10 +597,10 @@ static void test_Extract(void)
            "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", res);
         ok(session.Error.erfOper == FDIERROR_CABINET_NOT_FOUND,
            "Expected FDIERROR_CABINET_NOT_FOUND, got %d\n", session.Error.erfOper);
-        ok(session.Error.fError == TRUE, "Expected TRUE, got %d\n", session.Error.fError);
     }
     ok(session.FileSize == 0, "Expected 0, got %d\n", session.FileSize);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
+    ok(session.Error.fError == TRUE, "Expected TRUE, got %d\n", session.Error.fError);
     ok(session.FileCount == 0, "Expected 0, got %d\n", session.FileCount);
     ok(session.Operation == (EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES),
        "Expected EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES, got %d\n", session.Operation);

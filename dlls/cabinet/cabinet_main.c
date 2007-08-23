@@ -306,7 +306,6 @@ HRESULT WINAPI Extract(SESSION *dest, LPCSTR szCabName)
 {
     HRESULT res = S_OK;
     HFDI hfdi;
-    ERF erf;
     char *str, *path, *name;
 
     TRACE("(%p, %s)\n", dest, szCabName);
@@ -319,7 +318,7 @@ HRESULT WINAPI Extract(SESSION *dest, LPCSTR szCabName)
                      fdi_close,
                      fdi_seek,
                      cpuUNKNOWN,
-                     &erf);
+                     &dest->Error);
 
     if (!hfdi)
         return E_FAIL;
