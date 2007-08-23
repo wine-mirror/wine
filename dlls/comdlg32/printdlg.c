@@ -3167,12 +3167,15 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             EnableWindow(GetDlgItem(hDlg, edt7), FALSE);
 	}
         /* Set orientation radiobutton properly */
-        dm = GlobalLock(pda->dlga->hDevMode);
-        if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
-            CheckRadioButton(hDlg, rad1, rad2, rad2);
-	else /* this is default if papersize is not set */
-            CheckRadioButton(hDlg, rad1, rad2, rad1);
-        GlobalUnlock(pda->dlga->hDevMode);
+        if(pda->dlga->hDevMode)
+        {
+            dm = GlobalLock(pda->dlga->hDevMode);
+            if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
+                CheckRadioButton(hDlg, rad1, rad2, rad2);
+            else /* this is default if papersize is not set */
+                CheckRadioButton(hDlg, rad1, rad2, rad1);
+            GlobalUnlock(pda->dlga->hDevMode);
+        }
 
 	/* if orientation disabled */
 	if (pda->dlga->Flags & PSD_DISABLEORIENTATION) {
@@ -3280,13 +3283,17 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             EnableWindow(GetDlgItem(hDlg, edt7), FALSE);
 	}
 
-        dm = GlobalLock(pda->dlga->hDevMode);
-	/* Landscape orientation */
-	if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
-            CheckRadioButton(hDlg, rad1, rad2, rad2);
-	else /* this is default if papersize is not set */
-            CheckRadioButton(hDlg, rad1, rad2, rad1);
-        GlobalUnlock(pda->dlga->hDevMode);
+        if(pda->dlga->hDevMode)
+        {
+            dm = GlobalLock(pda->dlga->hDevMode);
+            /* Landscape orientation */
+            if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
+                CheckRadioButton(hDlg, rad1, rad2, rad2);
+            else /* this is default if papersize is not set */
+                CheckRadioButton(hDlg, rad1, rad2, rad1);
+            GlobalUnlock(pda->dlga->hDevMode);
+        }
+
 	if (pda->dlga->Flags & PSD_DISABLEORIENTATION) {
 	    EnableWindow(GetDlgItem(hDlg,rad1),FALSE);
 	    EnableWindow(GetDlgItem(hDlg,rad2),FALSE);
