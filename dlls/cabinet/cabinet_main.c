@@ -357,7 +357,7 @@ HRESULT WINAPI Extract(SESSION *dest, LPCSTR szCabName)
 
     if (!FDICopy(hfdi, name, path, 0,
          fdi_notify_extract, NULL, dest))
-        res = E_FAIL;
+        res = HRESULT_FROM_WIN32(GetLastError());
 
     HeapFree(GetProcessHeap(), 0, str);
 end:

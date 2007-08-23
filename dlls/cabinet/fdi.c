@@ -2495,7 +2495,6 @@ BOOL __cdecl FDICopy(
   cabhf = PFDI_OPEN(hfdi, fullpath, _O_RDONLY|_O_BINARY, _S_IREAD | _S_IWRITE);
   if (cabhf == -1) {
     PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
-    PFDI_INT(hfdi)->perf->erfType = ERROR_FILE_NOT_FOUND;
     PFDI_INT(hfdi)->perf->fError = TRUE;
     SetLastError(ERROR_FILE_NOT_FOUND);
     return FALSE;

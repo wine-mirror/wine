@@ -572,13 +572,10 @@ static void test_Extract(void)
     session.Operation = EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES;
     res = pExtract(&session, "nonexistent.cab");
     node = session.FileList;
-    todo_wine
-    {
-        ok(res == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-           "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", res);
-        ok(session.Error.erfOper == FDIERROR_CABINET_NOT_FOUND,
-           "Expected FDIERROR_CABINET_NOT_FOUND, got %d\n", session.Error.erfOper);
-    }
+    ok(res == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", res);
+    ok(session.Error.erfOper == FDIERROR_CABINET_NOT_FOUND,
+       "Expected FDIERROR_CABINET_NOT_FOUND, got %d\n", session.Error.erfOper);
     ok(session.FileSize == 0, "Expected 0, got %d\n", session.FileSize);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
     ok(session.Error.fError == TRUE, "Expected TRUE, got %d\n", session.Error.fError);
