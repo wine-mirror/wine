@@ -610,6 +610,7 @@ static void update_window(void)
 }
 
 static DWORD barState[2];
+static DWORD wordWrap[2];
 
 static BOOL is_bar_visible(int bandId)
 {
@@ -671,12 +672,102 @@ static void set_bar_states(void)
     update_window();
 }
 
+static HGLOBAL devMode;
+static HGLOBAL devNames;
+
+static HDC make_dc(void)
+{
+    if(devNames && devMode)
+    {
+        LPDEVNAMES dn = GlobalLock(devNames);
+        LPDEVMODEW dm = GlobalLock(devMode);
+        HDC ret;
+
+        ret = CreateDCW((LPWSTR)dn + dn->wDriverOffset,
+                        (LPWSTR)dn + dn->wDeviceOffset, 0, dm);
+
+        GlobalUnlock(dn);
+        GlobalUnlock(dm);
+
+        return ret;
+    } else
+    {
+        return 0;
+    }
+}
+
+static LONG devunits_to_twips(int units, int dpi)
+{
+    float ret = ((float)units / (float)dpi) * (float)567 * 2.54;
+    return (LONG)ret;
+}
+
+static LONG centmm_to_twips(int mm)
+{
+    return MulDiv(mm, 567, 1000);
+}
+
+static LONG twips_to_centmm(int twips)
+{
+    return MulDiv(twips, 1000, 567);
+}
+
+static RECT get_print_rect(HDC hdc)
+{
+    RECT rc;
+    int width, height;
+
+    if(hdc)
+    {
+        int dpiY = GetDeviceCaps(hdc, LOGPIXELSY);
+        int dpiX = GetDeviceCaps(hdc, LOGPIXELSX);
+        width = devunits_to_twips(GetDeviceCaps(hdc, PHYSICALWIDTH), dpiX);
+        height = devunits_to_twips(GetDeviceCaps(hdc, PHYSICALHEIGHT), dpiY);
+    } else
+    {
+        width = centmm_to_twips(18500);
+        height = centmm_to_twips(27000);
+    }
+
+    rc.left = margins.left;
+    rc.right = width - margins.right;
+    rc.top = margins.top;
+    rc.bottom = height - margins.bottom;
+
+    return rc;
+}
+
+static void target_device(void)
+{
+    HDC hdc = make_dc();
+    int width = 0;
+    int index = reg_formatindex(fileFormat);
+
+    if(wordWrap[index] == ID_WORDWRAP_MARGIN)
+    {
+        RECT rc = get_print_rect(hdc);
+        width = rc.right;
+    }
+
+    if(!hdc)
+    {
+        HDC hMaindc = GetDC(hMainWnd);
+        hdc = CreateCompatibleDC(hMaindc);
+        ReleaseDC(hMainWnd, hMaindc);
+    }
+
+    SendMessageW(hEditorWnd, EM_SETTARGETDEVICE, (WPARAM)hdc, width);
+
+    DeleteDC(hdc);
+}
+
 static void set_fileformat(WPARAM format)
 {
     fileFormat = format;
 
     set_bar_states();
     set_default_font();
+    target_device();
 }
 
 static void DoOpenFile(LPCWSTR szOpenFileName)
@@ -722,7 +813,6 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     lstrcpyW(wszFileName, szOpenFileName);
     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
     registry_set_filelist(szOpenFileName);
-    set_fileformat(format);
 }
 
 static void DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
@@ -913,48 +1003,20 @@ static LPWSTR dialog_print_to_file(void)
         return FALSE;
 }
 
-static LONG devunits_to_twips(int units, int dpi)
-{
-    float ret = ((float)units / (float)dpi) * (float)567 * 2.54;
-    return (LONG)ret;
-}
-
-static int centmm_to_twips(int mm)
-{
-    return MulDiv(mm, 567, 1000);
-}
-
-static int twips_to_centmm(int twips)
-{
-    return MulDiv(twips, 1000, 567);
-}
-
-static HGLOBAL devMode;
-static HGLOBAL devNames;
-
 static void print(LPPRINTDLGW pd)
 {
     FORMATRANGE fr;
     DOCINFOW di;
-    int dpiY, dpiX, width, height;
     int printedPages = 0;
 
     fr.hdc = pd->hDC;
     fr.hdcTarget = pd->hDC;
 
-    dpiY = GetDeviceCaps(fr.hdc, LOGPIXELSY);
-    dpiX = GetDeviceCaps(fr.hdc, LOGPIXELSX);
-    width = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALWIDTH), dpiX);
-    height = devunits_to_twips(GetDeviceCaps(fr.hdc, PHYSICALHEIGHT), dpiY);
-
-    fr.rc.left = margins.left;
-    fr.rc.right = width - margins.right;
-    fr.rc.top = margins.top;
-    fr.rc.bottom = height - margins.bottom;
+    fr.rc = get_print_rect(fr.hdc);
     fr.rcPage.left = 0;
-    fr.rcPage.right = width;
+    fr.rcPage.right = fr.rc.right + margins.right;
     fr.rcPage.top = 0;
-    fr.rcPage.bottom = height;
+    fr.rcPage.bottom = fr.rc.bottom + margins.bottom;
 
     ZeroMemory(&di, sizeof(di));
     di.cbSize = sizeof(di);
@@ -1010,6 +1072,7 @@ static void print(LPPRINTDLGW pd)
 
     EndDoc(fr.hdc);
     SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE, 0);
+    target_device();
 }
 
 static void dialog_printsetup(void)
@@ -1035,35 +1098,33 @@ static void dialog_printsetup(void)
         margins.bottom = centmm_to_twips(ps.rtMargin.bottom);
         devMode = ps.hDevMode;
         devNames = ps.hDevNames;
+        target_device();
     }
+}
+
+static void get_default_printer_opts(void)
+{
+    PRINTDLGW pd;
+    ZeroMemory(&pd, sizeof(pd));
+
+    ZeroMemory(&pd, sizeof(pd));
+    pd.lStructSize = sizeof(pd);
+    pd.Flags = PD_RETURNDC | PD_RETURNDEFAULT;
+    pd.hwndOwner = hMainWnd;
+    pd.hDevMode = devMode;
+
+    PrintDlgW(&pd);
+
+    devMode = pd.hDevMode;
+    devNames = pd.hDevNames;
 }
 
 static void print_quick(void)
 {
     PRINTDLGW pd;
+
     ZeroMemory(&pd, sizeof(pd));
-
-    if(devMode && devNames)
-    {
-        LPDEVNAMES dn = GlobalLock(devNames);
-        LPDEVMODEW dm = GlobalLock(devMode);
-        pd.hDC = CreateDCW((LPWSTR)dn + dn->wDriverOffset,
-                           (LPWSTR)dn + dn->wDeviceOffset, 0, dm);
-        GlobalUnlock(dn);
-        GlobalUnlock(dm);
-    } else
-    {
-        ZeroMemory(&pd, sizeof(pd));
-        pd.lStructSize = sizeof(pd);
-        pd.Flags = PD_RETURNDC | PD_RETURNDEFAULT;
-        pd.hwndOwner = hMainWnd;
-        pd.hDevMode = (HGLOBAL)devMode;
-
-        PrintDlgW(&pd);
-
-        devMode = pd.hDevMode;
-        devNames = pd.hDevNames;
-    }
+    pd.hDC = make_dc();
 
     print(&pd);
 }
@@ -1100,6 +1161,137 @@ static void dialog_about(void)
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
     HICON icon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_WORDPAD));
     ShellAboutW(hMainWnd, wszAppTitle, 0, icon);
+}
+
+static INT_PTR CALLBACK formatopts_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch(message)
+    {
+        case WM_INITDIALOG:
+            {
+                LPPROPSHEETPAGEW ps = (LPPROPSHEETPAGEW)lParam;
+                int wrap = -1;
+                char id[4];
+                HWND hIdWnd = GetDlgItem(hWnd, IDC_PAGEFMT_ID);
+
+                sprintf(id, "%d\n", (int)ps->lParam);
+                SetWindowTextA(hIdWnd, id);
+                if(wordWrap[ps->lParam] == ID_WORDWRAP_WINDOW)
+                    wrap = IDC_PAGEFMT_WW;
+                else if(wordWrap[ps->lParam] == ID_WORDWRAP_MARGIN)
+                    wrap = IDC_PAGEFMT_WM;
+
+                if(wrap != -1)
+                    CheckRadioButton(hWnd, IDC_PAGEFMT_WW,
+                                     IDC_PAGEFMT_WM, wrap);
+
+                if(barState[ps->lParam] & (1 << BANDID_TOOLBAR))
+                    CheckDlgButton(hWnd, IDC_PAGEFMT_TB, TRUE);
+                if(barState[ps->lParam] & (1 << BANDID_FORMATBAR))
+                    CheckDlgButton(hWnd, IDC_PAGEFMT_FB, TRUE);
+                if(barState[ps->lParam] & (BANDID_STATUSBAR))
+                    CheckDlgButton(hWnd, IDC_PAGEFMT_SB, TRUE);
+            }
+            break;
+
+        case WM_COMMAND:
+            switch(LOWORD(wParam))
+            {
+                case IDC_PAGEFMT_WW:
+                case IDC_PAGEFMT_WM:
+                    CheckRadioButton(hWnd, IDC_PAGEFMT_WW, IDC_PAGEFMT_WM,
+                                     LOWORD(wParam));
+                    break;
+
+                case IDC_PAGEFMT_TB:
+                case IDC_PAGEFMT_FB:
+                case IDC_PAGEFMT_SB:
+                    CheckDlgButton(hWnd, LOWORD(wParam),
+                                   !IsDlgButtonChecked(hWnd, LOWORD(wParam)));
+                    break;
+            }
+            break;
+        case WM_NOTIFY:
+            {
+                LPNMHDR header = (LPNMHDR)lParam;
+                if(header->code == PSN_APPLY)
+                {
+                    HWND hIdWnd = GetDlgItem(hWnd, IDC_PAGEFMT_ID);
+                    char sid[4];
+                    int id;
+
+                    GetWindowTextA(hIdWnd, sid, 4);
+                    id = atoi(sid);
+                    if(IsDlgButtonChecked(hWnd, IDC_PAGEFMT_WW))
+                        wordWrap[id] = ID_WORDWRAP_WINDOW;
+                    else if(IsDlgButtonChecked(hWnd, IDC_PAGEFMT_WM))
+                        wordWrap[id] = ID_WORDWRAP_MARGIN;
+
+                    if(IsDlgButtonChecked(hWnd, IDC_PAGEFMT_TB))
+                        barState[id] |= (1 << BANDID_TOOLBAR);
+                    else
+                        barState[id] &= ~(1 << BANDID_TOOLBAR);
+
+                    if(IsDlgButtonChecked(hWnd, IDC_PAGEFMT_FB))
+                        barState[id] |= (1 << BANDID_FORMATBAR);
+                    else
+                        barState[id] &= ~(1 << BANDID_FORMATBAR);
+
+                    if(IsDlgButtonChecked(hWnd, IDC_PAGEFMT_SB))
+                        barState[id] |= (1 << BANDID_STATUSBAR);
+                    else
+                        barState[id] &= ~(1 << BANDID_STATUSBAR);
+                }
+            }
+            break;
+    }
+    return FALSE;
+}
+
+static void dialog_viewproperties(void)
+{
+    PROPSHEETPAGEW psp[2];
+    PROPSHEETHEADERW psh;
+    int i;
+    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
+    LPCPROPSHEETPAGEW ppsp = (LPCPROPSHEETPAGEW)&psp;
+
+    psp[0].dwSize = sizeof(PROPSHEETPAGEW);
+    psp[0].dwFlags = PSP_USETITLE;
+    psp[0].pszTemplate = MAKEINTRESOURCEW(IDD_FORMATOPTS);
+    psp[0].pfnDlgProc = formatopts_proc;
+    psp[0].hInstance = hInstance;
+    psp[0].lParam = reg_formatindex(SF_TEXT);
+    psp[0].pfnCallback = NULL;
+    psp[0].pszTitle = MAKEINTRESOURCEW(STRING_VIEWPROPS_TEXT);
+    for(i = 1; i < sizeof(psp)/sizeof(psp[0]); i++)
+    {
+        psp[i].dwSize = psp[0].dwSize;
+        psp[i].dwFlags = psp[0].dwFlags;
+        psp[i].pszTemplate = psp[0].pszTemplate;
+        psp[i].pfnDlgProc = psp[0].pfnDlgProc;
+        psp[i].hInstance = psp[0].hInstance;
+        psp[i].lParam = reg_formatindex(SF_RTF);
+        psp[i].pfnCallback = psp[0].pfnCallback;
+        psp[i].pszTitle = MAKEINTRESOURCEW(STRING_VIEWPROPS_RICHTEXT);
+    }
+
+    psh.dwSize = sizeof(psh);
+    psh.dwFlags = PSH_USEICONID | PSH_PROPSHEETPAGE | PSH_NOAPPLYNOW;
+    psh.hwndParent = hMainWnd;
+    psh.hInstance = hInstance;
+    psh.pszCaption = MAKEINTRESOURCEW(STRING_VIEWPROPS_TITLE);
+    psh.nPages = sizeof(psp)/sizeof(psp[0]);
+    psh.ppsp = ppsp;
+    psh.pszIcon = MAKEINTRESOURCEW(IDI_WORDPAD);
+
+    if(fileFormat & SF_RTF)
+        psh.nStartPage = 1;
+    else
+        psh.nStartPage = 0;
+    PropertySheetW(&psh);
+    set_bar_states();
+    target_device();
 }
 
 static void HandleCommandLine(LPWSTR cmdline)
@@ -1278,6 +1470,7 @@ static void registry_read_formatopts(int index, LPCWSTR key)
     DWORD action = 0;
     BOOL fetched = FALSE;
     barState[index] = 0;
+    wordWrap[index] = 0;
 
     if(registry_get_handle(&hKey, &action, key) != ERROR_SUCCESS)
         return;
@@ -1293,6 +1486,11 @@ static void registry_read_formatopts(int index, LPCWSTR key)
 
     if(!fetched)
         barState[index] = (1 << BANDID_TOOLBAR) | (1 << BANDID_FORMATBAR) | (1 << BANDID_RULER) | (1 << BANDID_STATUSBAR);
+
+    if(index == reg_formatindex(SF_RTF))
+        wordWrap[index] = ID_WORDWRAP_WINDOW;
+    else if(index == reg_formatindex(SF_TEXT))
+        wordWrap[index] = ID_WORDWRAP_WINDOW; /* FIXME: should be ID_WORDWRAP_NONE once we support it */
 
     RegCloseKey(hKey);
 }
@@ -1782,7 +1980,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     }
 
     hEditorWnd = CreateWindowExW(WS_EX_CLIENTEDGE, wszRichEditClass, NULL,
-      WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_AUTOVSCROLL|ES_WANTRETURN|WS_VSCROLL,
+      WS_CHILD|WS_VISIBLE|ECO_SELECTIONBAR|ES_MULTILINE|ES_AUTOVSCROLL|ES_WANTRETURN|WS_VSCROLL,
       0, 0, 1000, 100, hWnd, (HMENU)IDC_EDITOR, hInstance, NULL);
 
     if (!hEditorWnd)
@@ -2208,6 +2406,10 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         dialog_about();
         break;
 
+    case ID_VIEWPROPERTIES:
+        dialog_viewproperties();
+        break;
+
     default:
         SendMessageW(hwndEditor, WM_COMMAND, wParam, lParam);
         break;
@@ -2423,6 +2625,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     set_caption(NULL);
     set_bar_states();
     hPopupMenu = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDM_POPUP));
+    get_default_printer_opts();
+    target_device();
 
     HandleCommandLine(GetCommandLineW());
 

@@ -63,6 +63,8 @@ BEGIN
         MENUITEM "Verk&tøylinje",     ID_TOGGLE_TOOLBAR
         MENUITEM "&Formatlinje",      ID_TOGGLE_FORMATBAR
         MENUITEM "&Statuslinje",      ID_TOGGLE_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Alternativer . . .", ID_VIEWPROPERTIES
     END
     POPUP "Sett &inn"
     BEGIN
@@ -152,6 +154,21 @@ BEGIN
     PUSHBUTTON "Fjern all&e", ID_TAB_EMPTY, 137, 51, 50, 15
 END
 
+IDD_FORMATOPTS DIALOG DISCARDABLE 0, 0, 280, 110
+STYLE DS_SYSMODAL
+Caption ""
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "Linjebryting", 0, 10, 10, 130, 85
+    RADIOBUTTON "Bryt tekst etter v&indusbredden", IDC_PAGEFMT_WW, 18, 25, 117, 15
+    RADIOBUTTON "Bryt tekst etter &margen", IDC_PAGEFMT_WM, 18, 45, 117, 15
+    GROUPBOX "Verktøylinjer", 0, 150, 10, 120, 85
+    CHECKBOX "&Verktøylinje", IDC_PAGEFMT_TB, 160, 20, 80, 15
+    CHECKBOX "&Formatlinje", IDC_PAGEFMT_FB, 160, 38, 80, 15
+    CHECKBOX "&Statuslinje", IDC_PAGEFMT_SB, 160, 56, 80, 15
+    LTEXT "", IDC_PAGEFMT_ID, 0,0,0,0
+END
+
 STRINGTABLE DISCARDABLE
 BEGIN
     STRING_RICHTEXT_FILES_RTF,     "Rikt tekstformat (*.rtf)"
@@ -177,6 +194,13 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     STRING_PRINTER_FILES_PRN,        "Skriverfiler (*.PRN)"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_VIEWPROPS_TITLE,          "Alternativer"
+    STRING_VIEWPROPS_TEXT,           "Tekst"
+    STRING_VIEWPROPS_RICHTEXT,       "Rik tekst"
 END
 
 STRINGTABLE DISCARDABLE
