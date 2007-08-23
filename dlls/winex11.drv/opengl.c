@@ -547,14 +547,6 @@ static inline void free_context(Wine_GLContext *context)
     HeapFree(GetProcessHeap(), 0, context);
 }
 
-static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
-{
-    Wine_GLContext *ret;
-    if (!ctx) return NULL;
-    for (ret = context_list; ret; ret = ret->next) if (ctx == ret->ctx) break;
-    return ret;
-}
-
 static inline BOOL is_valid_context( Wine_GLContext *ctx )
 {
     Wine_GLContext *ptr;
@@ -1979,8 +1971,7 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
     {
     case GL_DEPTH_BITS:
         {
-            GLXContext gl_ctx = pglXGetCurrentContext();
-            Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
+            Wine_GLContext *ctx = NtCurrentTeb()->glContext;
 
             pglGetIntegerv(pname, params);
             /**
@@ -1988,7 +1979,7 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
              * we only have the default wine desktop context,
              * so if we have only a 24 depth say we have 32
              */
-            if (NULL == ret && 24 == *params) {
+            if (!ctx && *params == 24) {
                 *params = 32;
             }
             TRACE("returns GL_DEPTH_BITS as '%d'\n", *params);
@@ -1996,10 +1987,9 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
         }
     case GL_ALPHA_BITS:
         {
-            GLXContext gl_ctx = pglXGetCurrentContext();
-            Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
+            Wine_GLContext *ctx = NtCurrentTeb()->glContext;
 
-            pglXGetFBConfigAttrib(gdi_display, ret->fmt->fbconfig, GLX_ALPHA_SIZE, params);
+            pglXGetFBConfigAttrib(gdi_display, ctx->fmt->fbconfig, GLX_ALPHA_SIZE, params);
             TRACE("returns GL_ALPHA_BITS as '%d'\n", *params);
             break;
         }
