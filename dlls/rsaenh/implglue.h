@@ -86,11 +86,11 @@ BOOL encrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContex
                         DWORD enc);
 BOOL encrypt_stream_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, BYTE *pbInOut, DWORD dwLen);
 
-BOOL export_public_key_impl(BYTE *pbDest, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, 
+BOOL export_public_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
                             DWORD *pdwPubExp);
 BOOL import_public_key_impl(CONST BYTE *pbSrc, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, 
                             DWORD dwPubExp);
-BOOL export_private_key_impl(BYTE *pbDest, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, 
+BOOL export_private_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
                              DWORD *pdwPubExp);
 BOOL import_private_key_impl(CONST BYTE* pbSrc, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, 
                              DWORD dwPubExp);

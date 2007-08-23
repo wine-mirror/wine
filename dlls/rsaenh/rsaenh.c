@@ -521,7 +521,7 @@ static inline void free_hmac_info(PHMAC_INFO hmac_info) {
  * NOTES
  *  See Internet RFC 2104 for details on the HMAC algorithm.
  */
-static BOOL copy_hmac_info(PHMAC_INFO *dst, PHMAC_INFO src) {
+static BOOL copy_hmac_info(PHMAC_INFO *dst, const HMAC_INFO *src) {
     if (!src) return FALSE;
     *dst = HeapAlloc(GetProcessHeap(), 0, sizeof(HMAC_INFO));
     if (!*dst) return FALSE;
@@ -974,7 +974,7 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
  *  Success: Handle to the new key container.
  *  Failure: INVALID_HANDLE_VALUE
  */
-static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, PVTableProvStruc pVTable)
+static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, const VTableProvStruc *pVTable)
 {
     KEYCONTAINER *pKeyContainer;
     HCRYPTPROV hKeyContainer;
@@ -1039,7 +1039,7 @@ static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, PVTabl
  *  Success: Handle to the key container read from the registry
  *  Failure: INVALID_HANDLE_VALUE
  */
-static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTableProvStruc pVTable)
+static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, const VTableProvStruc *pVTable)
 {
     CHAR szRSABase[MAX_PATH];
     BYTE *pbKey;

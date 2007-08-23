@@ -328,7 +328,7 @@ BOOL gen_rand_impl(BYTE *pbBuffer, DWORD dwLen)
     return SystemFunction036(pbBuffer, dwLen);
 }
 
-BOOL export_public_key_impl(BYTE *pbDest, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,DWORD *pdwPubExp)
+BOOL export_public_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,DWORD *pdwPubExp)
 {
     mp_to_unsigned_bin(&pKeyContext->rsa.N, pbDest);
     reverse_bytes(pbDest, dwKeyLen);
@@ -362,7 +362,7 @@ BOOL import_public_key_impl(CONST BYTE *pbSrc, KEY_CONTEXT *pKeyContext, DWORD d
     return TRUE;    
 }
 
-BOOL export_private_key_impl(BYTE *pbDest, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, 
+BOOL export_private_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
                              DWORD *pdwPubExp)
 {
     mp_to_unsigned_bin(&pKeyContext->rsa.N, pbDest);
