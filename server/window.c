@@ -1051,7 +1051,7 @@ static void validate_children( struct window *win )
 }
 
 
-/* validate the update region of a window on all parents; helper for redraw_window */
+/* validate the update region of a window on all parents; helper for get_update_region */
 static void validate_parents( struct window *child )
 {
     int offset_x = 0, offset_y = 0;
@@ -1135,12 +1135,6 @@ static void redraw_window( struct window *win, struct region *region, int frame,
     {
         win->paint_flags &= ~PAINT_INTERNAL;
         inc_window_paint_count( win, -1 );
-    }
-
-    if (flags & RDW_UPDATENOW)
-    {
-        validate_parents( win );
-        flags &= ~RDW_UPDATENOW;
     }
 
     /* now process children recursively */
@@ -1982,6 +1976,7 @@ DECL_HANDLER(get_update_region)
 
     if (reply->flags & (UPDATE_PAINT|UPDATE_INTERNALPAINT)) /* validate everything */
     {
+        validate_parents( win );
         validate_whole_window( win );
     }
     else

@@ -160,6 +160,9 @@ static BOOL redraw_window_rects( HWND hwnd, UINT flags, const RECT *rects, UINT 
 {
     BOOL ret;
 
+    if (!(flags & (RDW_INVALIDATE|RDW_VALIDATE|RDW_INTERNALPAINT|RDW_NOINTERNALPAINT)))
+        return TRUE;  /* nothing to do */
+
     SERVER_START_REQ( redraw_window )
     {
         req->window = hwnd;
