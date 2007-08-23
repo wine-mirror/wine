@@ -125,8 +125,16 @@ static void char_info_AtoW( CHAR_INFO *buffer, int count )
  */
 HWND WINAPI GetConsoleWindow(VOID)
 {
-    FIXME("stub\n");
-    return NULL;
+    HWND hWnd = NULL;
+
+    SERVER_START_REQ(get_console_input_info)
+    {
+        req->handle = 0;
+        if (!wine_server_call_err(req)) hWnd = reply->win;
+    }
+    SERVER_END_REQ;
+
+    return hWnd;
 }
 
 

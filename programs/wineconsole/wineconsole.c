@@ -642,16 +642,6 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     if (!ret) goto error;
     WINE_TRACE("using hConIn %p, hSynchro event %p\n", data->hConIn, data->hSynchro);
 
-    SERVER_START_REQ( set_console_input_info )
-    {
-        req->handle = data->hConIn;
-        req->mask = SET_CONSOLE_INPUT_INFO_TITLE;
-        wine_server_add_data( req, appname, lstrlenW(appname) * sizeof(WCHAR) );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    if (!ret) goto error;
-
     SERVER_START_REQ(create_console_output)
     {
         req->handle_in  = data->hConIn;
@@ -679,6 +669,18 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         WINECON_SetConfig(data, &cfg);
         data->curcfg.registry = cfg.registry;
         WINECON_DumpConfig("fint", &data->curcfg);
+        SERVER_START_REQ( set_console_input_info )
+        {
+            req->handle = data->hConIn;
+            req->win = data->hWnd;
+            req->mask = SET_CONSOLE_INPUT_INFO_TITLE |
+                        SET_CONSOLE_INPUT_INFO_WIN;
+            wine_server_add_data( req, appname, lstrlenW(appname) * sizeof(WCHAR) );
+            ret = !wine_server_call_err( req );
+        }
+        SERVER_END_REQ;
+        if (!ret) goto error;
+
         return data;
     case init_failed:
         break;

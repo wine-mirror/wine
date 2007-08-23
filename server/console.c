@@ -63,6 +63,7 @@ struct console_input
     int                          edition_mode;  /* index to edition mode flavors */
     int                          input_cp;      /* console input codepage */
     int                          output_cp;     /* console output codepage */
+    user_handle_t                win;           /* window handle if backend supports it */
     struct event                *event;         /* event to wait on for input queue */
 };
 
@@ -281,6 +282,7 @@ static struct object *create_console_input( struct thread* renderer )
     console_input->edition_mode  = 0;
     console_input->input_cp      = 0;
     console_input->output_cp     = 0;
+    console_input->win           = 0;
     console_input->event         = create_event( NULL, NULL, 0, 1, 0 );
 
     if (!console_input->history || !console_input->evt)
@@ -718,6 +720,10 @@ static int set_console_input_info( const struct set_console_input_info_request *
     if (req->mask & SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE)
     {
         console->output_cp = req->output_cp;
+    }
+    if (req->mask & SET_CONSOLE_INPUT_INFO_WIN)
+    {
+        console->win = req->win;
     }
     release_object( console );
     return 1;
@@ -1413,6 +1419,7 @@ DECL_HANDLER(get_console_input_info)
     reply->edition_mode  = console->edition_mode;
     reply->input_cp      = console->input_cp;
     reply->output_cp     = console->output_cp;
+    reply->win           = console->win;
 
     release_object( console );
 }

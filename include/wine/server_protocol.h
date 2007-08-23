@@ -1359,14 +1359,15 @@ struct set_console_mode_reply
 struct set_console_input_info_request
 {
     struct request_header __header;
-    obj_handle_t handle;
-    int          mask;
-    obj_handle_t active_sb;
-    int          history_mode;
-    int          history_size;
-    int          edition_mode;
-    int          input_cp;
-    int          output_cp;
+    obj_handle_t  handle;
+    int           mask;
+    obj_handle_t  active_sb;
+    int           history_mode;
+    int           history_size;
+    int           edition_mode;
+    int           input_cp;
+    int           output_cp;
+    user_handle_t win;
     /* VARARG(title,unicode_str); */
 };
 struct set_console_input_info_reply
@@ -1380,23 +1381,25 @@ struct set_console_input_info_reply
 #define SET_CONSOLE_INPUT_INFO_EDITION_MODE     0x10
 #define SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE   0x20
 #define SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE  0x40
+#define SET_CONSOLE_INPUT_INFO_WIN              0x80
 
 
 
 struct get_console_input_info_request
 {
     struct request_header __header;
-    obj_handle_t handle;
+    obj_handle_t  handle;
 };
 struct get_console_input_info_reply
 {
     struct reply_header __header;
-    int          history_mode;
-    int          history_size;
-    int          history_index;
-    int          edition_mode;
-    int          input_cp;
-    int          output_cp;
+    int           history_mode;
+    int           history_size;
+    int           history_index;
+    int           edition_mode;
+    int           input_cp;
+    int           output_cp;
+    user_handle_t win;
     /* VARARG(title,unicode_str); */
 };
 
@@ -4727,6 +4730,6 @@ union generic_reply
     struct make_process_system_reply make_process_system_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 307
+#define SERVER_PROTOCOL_VERSION 309
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
