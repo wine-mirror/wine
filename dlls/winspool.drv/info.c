@@ -4942,96 +4942,35 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
 
 /*****************************************************************************
  *          AddPrinterDriverA  [WINSPOOL.@]
+ *
+ * See AddPrinterDriverW.
+ *
  */
 BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 {
-    DRIVER_INFO_3A di3;
-    HKEY hkeyDrivers, hkeyName;
-    static CHAR empty[]    = "",
-                nullnull[] = "\0";
-
-    TRACE("(%s,%d,%p)\n",debugstr_a(pName),level,pDriverInfo);
-
-    if(level != 2 && level != 3) {
-        SetLastError(ERROR_INVALID_LEVEL);
-	return FALSE;
-    }
-    if ((pName) && (pName[0])) {
-        FIXME("pName= %s - unsupported\n", debugstr_a(pName));
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-    if(!pDriverInfo) {
-        WARN("pDriverInfo == NULL\n");
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-
-    if(level == 3)
-        di3 = *(DRIVER_INFO_3A *)pDriverInfo;
-    else {
-        memset(&di3, 0, sizeof(di3));
-	memcpy(&di3, pDriverInfo, sizeof(DRIVER_INFO_2A));
-    }
-
-    if(!di3.pName || !di3.pDriverPath || !di3.pConfigFile ||
-       !di3.pDataFile) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
-
-    if(!di3.pDefaultDataType) di3.pDefaultDataType = empty;
-    if(!di3.pDependentFiles) di3.pDependentFiles = nullnull;
-    if(!di3.pHelpFile) di3.pHelpFile = empty;
-    if(!di3.pMonitorName) di3.pMonitorName = empty;
-
-    hkeyDrivers = WINSPOOL_OpenDriverReg(di3.pEnvironment, FALSE);
-
-    if(!hkeyDrivers) {
-        ERR("Can't create Drivers key\n");
-	return FALSE;
-    }
-
-    if(level == 2) { /* apparently can't overwrite with level2 */
-        if(RegOpenKeyA(hkeyDrivers, di3.pName, &hkeyName) == ERROR_SUCCESS) {
-	    RegCloseKey(hkeyName);
-	    RegCloseKey(hkeyDrivers);
-	    WARN("Trying to create existing printer driver %s\n", debugstr_a(di3.pName));
-	    SetLastError(ERROR_PRINTER_DRIVER_ALREADY_INSTALLED);
-	    return FALSE;
-	}
-    }
-    if(RegCreateKeyA(hkeyDrivers, di3.pName, &hkeyName) != ERROR_SUCCESS) {
-	RegCloseKey(hkeyDrivers);
-	ERR("Can't create Name key\n");
-	return FALSE;
-    }
-    RegSetValueExA(hkeyName, "Configuration File", 0, REG_SZ, (LPBYTE) di3.pConfigFile,
-		   lstrlenA(di3.pConfigFile) + 1);
-    RegSetValueExA(hkeyName, "Data File", 0, REG_SZ, (LPBYTE) di3.pDataFile, lstrlenA(di3.pDataFile) + 1);
-    RegSetValueExA(hkeyName, "Driver", 0, REG_SZ, (LPBYTE) di3.pDriverPath, lstrlenA(di3.pDriverPath) + 1);
-    RegSetValueExA(hkeyName, "Version", 0, REG_DWORD, (LPBYTE) &di3.cVersion,
-		   sizeof(DWORD));
-    RegSetValueExA(hkeyName, "Datatype", 0, REG_SZ, (LPBYTE) di3.pDefaultDataType, lstrlenA(di3.pDefaultDataType));
-    RegSetValueExA(hkeyName, "Dependent Files", 0, REG_MULTI_SZ,
-                   (LPBYTE) di3.pDependentFiles, multi_sz_lenA(di3.pDependentFiles));
-    RegSetValueExA(hkeyName, "Help File", 0, REG_SZ, (LPBYTE) di3.pHelpFile, lstrlenA(di3.pHelpFile) + 1);
-    RegSetValueExA(hkeyName, "Monitor", 0, REG_SZ, (LPBYTE) di3.pMonitorName, lstrlenA(di3.pMonitorName) + 1);
-    RegCloseKey(hkeyName);
-    RegCloseKey(hkeyDrivers);
-
-    return TRUE;
+    TRACE("(%s, %d, %p)\n", debugstr_a(pName), level, pDriverInfo);
+    return AddPrinterDriverExA(pName, level, pDriverInfo, APD_COPY_NEW_FILES);
 }
 
-/*****************************************************************************
- *          AddPrinterDriverW  [WINSPOOL.@]
+/******************************************************************************
+ *  AddPrinterDriverW (WINSPOOL.@)
+ *
+ * Install a Printer Driver
+ *
+ * PARAMS
+ *  pName           [I] Servername or NULL (local Computer)
+ *  level           [I] Level for the supplied DRIVER_INFO_*W struct
+ *  pDriverInfo     [I] PTR to DRIVER_INFO_*W struct with the Driver Parameter
+ *
+ * RESULTS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
  */
-BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level,
-				   LPBYTE pDriverInfo)
+BOOL WINAPI AddPrinterDriverW(LPWSTR pName, DWORD level, LPBYTE pDriverInfo)
 {
-    FIXME("(%s,%d,%p): stub\n",debugstr_w(printerName),
-	  level,pDriverInfo);
-    return FALSE;
+    TRACE("(%s, %d, %p)\n", debugstr_w(pName), level, pDriverInfo);
+    return AddPrinterDriverExW(pName, level, pDriverInfo, APD_COPY_NEW_FILES);
 }
 
 /*****************************************************************************
