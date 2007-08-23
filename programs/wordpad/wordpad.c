@@ -61,6 +61,7 @@ static const WCHAR var_pagemargin[] = {'P','a','g','e','M','a','r','g','i','n',0
 static HWND hMainWnd;
 static HWND hEditorWnd;
 static HWND hFindWnd;
+static HMENU hPopupMenu;
 
 static UINT ID_FINDMSGSTRING;
 
@@ -1657,6 +1658,29 @@ static INT_PTR CALLBACK tabstops_proc(HWND hWnd, UINT message, WPARAM wParam, LP
     return FALSE;
 }
 
+static int context_menu(LPARAM lParam)
+{
+    int x = (int)(short)LOWORD(lParam);
+    int y = (int)(short)HIWORD(lParam);
+    HMENU hPop = GetSubMenu(hPopupMenu, 0);
+
+    if(x == -1)
+    {
+        int from = 0, to = 0;
+        POINTL pt;
+        SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
+        SendMessageW(hEditorWnd, EM_POSFROMCHAR, (WPARAM)&pt, (LPARAM)to);
+        ClientToScreen(hEditorWnd, (POINT*)&pt);
+        x = pt.x;
+        y = pt.y;
+    }
+
+    TrackPopupMenu(hPop, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
+                   x, y, 0, hMainWnd, 0);
+
+    return 0;
+}
+
 static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     HWND hToolBarWnd, hFormatBarWnd,  hReBarWnd;
@@ -2330,6 +2354,12 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_SIZE:
         return OnSize( hWnd, wParam, lParam );
 
+    case WM_CONTEXTMENU:
+        if((HWND)wParam == hEditorWnd)
+            return context_menu(lParam);
+        else
+            return DefWindowProcW(hWnd, msg, wParam, lParam);
+
     case WM_DROPFILES:
         {
             WCHAR file[MAX_PATH];
@@ -2381,6 +2411,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
 
     set_caption(NULL);
     set_bar_states();
+    hPopupMenu = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDM_POPUP));
 
     HandleCommandLine(GetCommandLineW());
 

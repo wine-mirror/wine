@@ -82,6 +82,19 @@ BEGIN
     END
 END
 
+IDM_POPUP MENU DISCARDABLE
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Wy&tnij",              ID_EDIT_CUT
+        MENUITEM "&Kopiuj",              ID_EDIT_COPY
+        MENUITEM "Wkl&ej",               ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Bullet points"        ID_BULLET
+        MENUITEM "&Paragraph . . ."      ID_PARAFORMAT
+    END
+END
+
 IDD_DATETIME DIALOG DISCARDABLE 30, 20, 130, 80
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Date and time"

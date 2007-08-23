@@ -40,6 +40,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Вырезать\tCtrl+X",           ID_EDIT_CUT
         MENUITEM "&Копировать\tCtrl+C",         ID_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
         MENUITEM SEPARATOR
         MENUITEM "&Find . . .\tCrtl+F",         ID_FIND
         MENUITEM "Find &next\tF3",              ID_FIND_NEXT
@@ -76,6 +77,19 @@ BEGIN
             MENUITEM "&Системный\tCtrl+1",              ID_BACK_1
             MENUITEM "&Желтоватый PostThat\tCtrl+2",    ID_BACK_2
         END
+    END
+END
+
+IDM_POPUP MENU DISCARDABLE
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "&Вырезать\tCtrl+X",   ID_EDIT_CUT
+        MENUITEM "&Копировать\tCtrl+C", ID_EDIT_COPY
+        MENUITEM "&Paste",              ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Bullet points"       ID_BULLET
+        MENUITEM "&Paragraph . . ."     ID_PARAFORMAT
     END
 END
 
