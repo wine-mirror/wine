@@ -631,29 +631,27 @@ static const cab_UWORD Zipmask[17] = {                                          
  0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff                    \
 }
 
-/* EXTRACTdest flags */
+/* SESSION Operation */
 #define EXTRACT_FILLFILELIST  0x00000001
 #define EXTRACT_EXTRACTFILES  0x00000002
 
-struct ExtractFileList {
-        LPSTR  filename;
-        struct ExtractFileList *next;
-        BOOL   flag;
-} ;
+struct FILELIST{
+    LPSTR FileName;
+    struct FILELIST *next;
+    BOOL Extracted;
+};
 
-/* the first parameter of the function extract */
 typedef struct {
-        long  result1;          /* 0x000 */
-        long  unknown1[3];      /* 0x004 */
-        struct ExtractFileList *filelist; /* 0x010 */
-        long  filecount;        /* 0x014 */
-        DWORD flags;            /* 0x018 */
-        char  directory[MAX_PATH]; /* 0x01c */
-        char  lastfile[MAX_PATH];  /* 0x120 */
-        char  unknown2[MAX_PATH];  /* 0x224 */
-        struct ExtractFileList *filterlist; /* 0x328 */
-} EXTRACTdest;
-
+    INT FileSize;
+    ERF Error;
+    struct FILELIST *FileList;
+    INT FileCount;
+    INT Operation;
+    CHAR Destination[MAX_PATH];
+    CHAR CurrentFile[MAX_PATH];
+    CHAR Reserved[MAX_PATH];
+    struct FILELIST *FilterList;
+} SESSION;
 
 /* from fdi.c */
 void QTMupdatemodel(struct QTMmodel *model, int sym);
