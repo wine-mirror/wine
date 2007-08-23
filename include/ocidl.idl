@@ -1244,6 +1244,7 @@ interface IEnumOleUndoUnits : IUnknown
 ]
 interface IOleUndoManager : IUnknown
 {
+cpp_quote("#define SID_SOleUndoManager IID_IOleUndoManager")
     typedef IOleUndoManager *LPOLEUNDOMANAGER;
 
     HRESULT Open( [in] IOleParentUndoUnit *pPUU );
