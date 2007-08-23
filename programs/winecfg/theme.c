@@ -496,9 +496,111 @@ static void apply_theme(HWND dialog)
     theme_dirty = FALSE;
 }
 
+static struct
+{
+    int sm_idx, color_idx;
+    const char *color_reg;
+    int size;
+    COLORREF color;
+    LOGFONTW lf;
+} metrics[] =
+{
+    {-1,                COLOR_BTNFACE,          "ButtonFace"    }, /* IDC_SYSPARAMS_BUTTON */
+    {-1,                COLOR_BTNTEXT,          "ButtonText"    }, /* IDC_SYSPARAMS_BUTTON_TEXT */
+    {-1,                COLOR_BACKGROUND,       "Background"    }, /* IDC_SYSPARAMS_DESKTOP */
+    {SM_CXMENUSIZE,     COLOR_MENU,             "Menu"          }, /* IDC_SYSPARAMS_MENU */
+    {-1,                COLOR_MENUTEXT,         "MenuText"      }, /* IDC_SYSPARAMS_MENU_TEXT */
+    {SM_CXVSCROLL,      COLOR_SCROLLBAR,        "Scrollbar"     }, /* IDC_SYSPARAMS_SCROLLBAR */
+    {-1,                COLOR_HIGHLIGHT,        "Hilight"       }, /* IDC_SYSPARAMS_SELECTION */
+    {-1,                COLOR_HIGHLIGHTTEXT,    "HilightText"   }, /* IDC_SYSPARAMS_SELECTION_TEXT */
+    {-1,                COLOR_INFOBK,           "InfoWindow"    }, /* IDC_SYSPARAMS_TOOLTIP */
+    {-1,                COLOR_INFOTEXT,         "InfoText"      }, /* IDC_SYSPARAMS_TOOLTIP_TEXT */
+    {-1,                COLOR_WINDOW,           "Window"        }, /* IDC_SYSPARAMS_WINDOW */
+    {-1,                COLOR_WINDOWTEXT,       "WindowText"    }, /* IDC_SYSPARAMS_WINDOW_TEXT */
+    {SM_CXSIZE,         COLOR_ACTIVECAPTION,    "ActiveTitle"   }, /* IDC_SYSPARAMS_ACTIVE_TITLE */
+    {-1,                COLOR_CAPTIONTEXT,      "TitleText"     }, /* IDC_SYSPARAMS_ACTIVE_TITLE_TEXT */
+    {-1,                COLOR_INACTIVECAPTION,  "InactiveTitle" }, /* IDC_SYSPARAMS_INACTIVE_TITLE */
+    {-1,                COLOR_INACTIVECAPTIONTEXT,"InactiveTitleText" }, /* IDC_SYSPARAMS_INACTIVE_TITLE_TEXT */
+    {-1,                -1,                     "MsgBoxText"    }, /* IDC_SYSPARAMS_MSGBOX_TEXT */
+};
+
+static void save_sys_color(int idx, COLORREF clr)
+{
+    char buffer[13];
+
+    sprintf(buffer, "%d %d %d",  GetRValue (clr), GetGValue (clr), GetBValue (clr));
+    set_reg_key(HKEY_CURRENT_USER, "Control Panel\\Colors", metrics[idx].color_reg, buffer);
+}
+
+static void set_color_from_theme(WCHAR *keyName, COLORREF color)
+{
+    char *keyNameA = NULL;
+    int keyNameSize=0, i=0;
+
+    keyNameSize = WideCharToMultiByte(CP_ACP, 0, keyName, -1, keyNameA, 0, NULL, NULL);
+    keyNameA = HeapAlloc(GetProcessHeap(), 0, keyNameSize);
+    WideCharToMultiByte(CP_ACP, 0, keyName, -1, keyNameA, -1, NULL, NULL);
+
+    for (i=0; i<sizeof(metrics)/sizeof(metrics[0]); i++)
+    {
+        if (strcmp(metrics[i].color_reg, keyNameA)==0)
+        {
+            metrics[i].color = color;
+            save_sys_color(i, color);
+            break;
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, keyNameA);
+}
+
+static void do_parse_theme(WCHAR *file)
+{
+    static const WCHAR colorSect[] = {
+        'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
+        'C','o','l','o','r','s',0};
+    WCHAR keyName[MAX_PATH], keyNameValue[MAX_PATH];
+    WCHAR *keyNamePtr = NULL;
+    char *keyNameValueA = NULL;
+    int keyNameValueSize = 0;
+    int red = 0, green = 0, blue = 0;
+    COLORREF color;
+
+    WINE_TRACE("%s\n", wine_dbgstr_w(file));
+
+    GetPrivateProfileStringW(colorSect, NULL, NULL, keyName,
+                             MAX_PATH*sizeof(WCHAR), file);
+
+    keyNamePtr = keyName;
+    while (*keyNamePtr!=0) {
+        GetPrivateProfileStringW(colorSect, keyNamePtr, NULL, keyNameValue,
+                                 MAX_PATH*sizeof(WCHAR), file);
+
+        keyNameValueSize = WideCharToMultiByte(CP_ACP, 0, keyNameValue, -1,
+                                               keyNameValueA, 0, NULL, NULL);
+        keyNameValueA = HeapAlloc(GetProcessHeap(), 0, keyNameValueSize);
+        WideCharToMultiByte(CP_ACP, 0, keyNameValue, -1, keyNameValueA, -1, NULL, NULL);
+
+        WINE_TRACE("parsing key: %s with value: %s\n",
+                   wine_dbgstr_w(keyNamePtr), wine_dbgstr_w(keyNameValue));
+
+        sscanf(keyNameValueA, "%d %d %d", &red, &green, &blue);
+
+        color = RGB((BYTE)red, (BYTE)blue, (BYTE)green);
+
+        HeapFree(GetProcessHeap(), 0, keyNameValueA);
+
+        set_color_from_theme(keyNamePtr, color);
+
+        keyNamePtr+=lstrlenW(keyNamePtr);
+        keyNamePtr++;
+    }
+}
+
 static void on_theme_install(HWND dialog)
 {
-  static const WCHAR filterMask[] = {0,'*','.','m','s','s','t','y','l','e','s',0,0};
+  static const WCHAR filterMask[] = {0,'*','.','m','s','s','t','y','l','e','s',';',
+      '*','.','t','h','e','m','e',0,0};
+  static const WCHAR themeExt[] = {'.','T','h','e','m','e',0};
   const int filterMaskLen = sizeof(filterMask)/sizeof(filterMask[0]);
   OPENFILENAMEW ofn;
   WCHAR filetitle[MAX_PATH];
@@ -545,6 +647,13 @@ static void on_theme_install(HWND dialog)
 
       if (FAILED (SHGetFolderPathW (NULL, CSIDL_RESOURCES|CSIDL_FLAG_CREATE, NULL, 
           SHGFP_TYPE_CURRENT, themeFilePath))) return;
+
+      if (lstrcmpiW(PathFindExtensionW(filetitle), themeExt)==0)
+      {
+          do_parse_theme(file);
+          SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
+          return;
+      }
 
       PathRemoveExtensionW (filetitle);
 
@@ -827,42 +936,6 @@ static void apply_shell_folder_changes(void) {
             }
         }
     }
-}
-
-static struct
-{
-    int sm_idx, color_idx;
-    const char *color_reg;
-    int size;
-    COLORREF color;
-    LOGFONTW lf;
-} metrics[] =
-{
-    {-1,                COLOR_BTNFACE,          "ButtonFace"    }, /* IDC_SYSPARAMS_BUTTON */
-    {-1,                COLOR_BTNTEXT,          "ButtonText"    }, /* IDC_SYSPARAMS_BUTTON_TEXT */
-    {-1,                COLOR_BACKGROUND,       "Background"    }, /* IDC_SYSPARAMS_DESKTOP */
-    {SM_CXMENUSIZE,     COLOR_MENU,             "Menu"          }, /* IDC_SYSPARAMS_MENU */
-    {-1,                COLOR_MENUTEXT,         "MenuText"      }, /* IDC_SYSPARAMS_MENU_TEXT */
-    {SM_CXVSCROLL,      COLOR_SCROLLBAR,        "Scrollbar"     }, /* IDC_SYSPARAMS_SCROLLBAR */
-    {-1,                COLOR_HIGHLIGHT,        "Hilight"       }, /* IDC_SYSPARAMS_SELECTION */
-    {-1,                COLOR_HIGHLIGHTTEXT,    "HilightText"   }, /* IDC_SYSPARAMS_SELECTION_TEXT */
-    {-1,                COLOR_INFOBK,           "InfoWindow"    }, /* IDC_SYSPARAMS_TOOLTIP */
-    {-1,                COLOR_INFOTEXT,         "InfoText"      }, /* IDC_SYSPARAMS_TOOLTIP_TEXT */
-    {-1,                COLOR_WINDOW,           "Window"        }, /* IDC_SYSPARAMS_WINDOW */
-    {-1,                COLOR_WINDOWTEXT,       "WindowText"    }, /* IDC_SYSPARAMS_WINDOW_TEXT */
-    {SM_CXSIZE,         COLOR_ACTIVECAPTION,    "ActiveTitle"   }, /* IDC_SYSPARAMS_ACTIVE_TITLE */
-    {-1,                COLOR_CAPTIONTEXT,      "TitleText"     }, /* IDC_SYSPARAMS_ACTIVE_TITLE_TEXT */
-    {-1,                COLOR_INACTIVECAPTION,  "InactiveTitle" }, /* IDC_SYSPARAMS_INACTIVE_TITLE */
-    {-1,                COLOR_INACTIVECAPTIONTEXT,"InactiveTitleText" }, /* IDC_SYSPARAMS_INACTIVE_TITLE_TEXT */
-    {-1,                -1,                     "MsgBoxText"    } /* IDC_SYSPARAMS_MSGBOX_TEXT */
-};
-
-static void save_sys_color(int idx, COLORREF clr)
-{
-    char buffer[13];
-
-    sprintf(buffer, "%d %d %d",  GetRValue (clr), GetGValue (clr), GetBValue (clr));
-    set_reg_key(HKEY_CURRENT_USER, "Control Panel\\Colors", metrics[idx].color_reg, buffer);
 }
 
 static void read_sysparams(HWND hDlg)
