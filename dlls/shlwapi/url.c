@@ -736,8 +736,9 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 		process_case = 4;
 		break;
 	    }
-	    /* case where scheme is followed by document path */
-	    process_case = 5;
+            /* replace either just location if base's location starts with a
+             * slash or otherwise everything */
+            process_case = (*base.pszSuffix == '/') ? 5 : 1;
 	    break;
 	}
         if ((*relative.pszSuffix == '/') && (*(relative.pszSuffix+1) == '/')) {

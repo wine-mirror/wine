@@ -205,6 +205,10 @@ const TEST_URL_COMBINE TEST_COMBINE[] = {
     {"xxx:@MSITStore:file.chm/file.html", "dir/file", 0, S_OK, "xxx:dir/file"},
     {"mk:@MSITStore:file.chm::/file.html", "/dir/file", 0, S_OK, "mk:@MSITStore:file.chm::/dir/file"},
     {"mk:@MSITStore:file.chm::/file.html", "mk:@MSITStore:file.chm::/dir/file", 0, S_OK, "mk:@MSITStore:file.chm::/dir/file"},
+    {"foo:today", "foo:calendar", 0, S_OK, "foo:calendar"},
+    {"foo:today", "bar:calendar", 0, S_OK, "bar:calendar"},
+    {"foo:/today", "foo:calendar", 0, S_OK, "foo:/calendar"},
+    {"foo:/today/", "foo:calendar", 0, S_OK, "foo:/today/calendar"},
 };
 
 struct {
