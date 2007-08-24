@@ -403,40 +403,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     BOOL        return_value = TRUE;
     int         i;
     HDC         hdc;
-    HMODULE     mod_gl;
-
-#ifdef USE_WIN32_OPENGL
-#define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, #pfn);
-    mod_gl = LoadLibraryA("opengl32.dll");
-    if(!mod_gl) {
-        ERR("Can't load opengl32.dll!\n");
-        return FALSE;
-    }
-#else
-#define USE_GL_FUNC(pfn) pfn = (void*)pwglGetProcAddress(#pfn);
-    /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 (glXGetProcAddress wrapper) instead of opengl32's */
-    mod_gl = GetModuleHandleA("gdi32.dll");
-#endif
-
-/* Load WGL core functions from opengl32.dll */
-#define USE_WGL_FUNC(pfn) p##pfn = (void*)GetProcAddress(mod_gl, #pfn);
-    WGL_FUNCS_GEN;
-#undef USE_WGL_FUNC
-
-    if(!pwglGetProcAddress) {
-        ERR("Unable to load wglGetProcAddress!\n");
-        return FALSE;
-    }
-
-/* Dynamicly load all GL core functions */
-    GL_FUNCS_GEN;
-#undef USE_GL_FUNC
-
-    /* Make sure that we've got a context */
-    /* TODO: CreateFakeGLContext should really take a display as a parameter  */
-    /* Only save the values obtained when a display is provided */
-    if (!WineD3D_CreateFakeGLContext() || wined3d_fake_gl_context_foreign)
-        return_value = FALSE;
 
     TRACE_(d3d_caps)("(%p)\n", gl_info);
 
@@ -850,12 +816,21 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
              * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
              */
             if(WINE_D3D9_CAPABLE(gl_info) && (gl_info->vs_nv_version == VS_VERSION_30)) {
-                if (strstr(gl_info->gl_renderer, "7800") ||
-                    strstr(gl_info->gl_renderer, "7900") ||
-                    strstr(gl_info->gl_renderer, "7950") ||
-                    strstr(gl_info->gl_renderer, "Quadro FX 4") ||
-                    strstr(gl_info->gl_renderer, "Quadro FX 5"))
-                        gl_info->gl_card = CARD_NVIDIA_GEFORCE_7800GT;
+                if (strstr(gl_info->gl_renderer, "8800"))
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_8800GTS;
+                else if(strstr(gl_info->gl_renderer, "8600") ||
+                        strstr(gl_info->gl_renderer, "8700"))
+                            gl_info->gl_card = CARD_NVIDIA_GEFORCE_8600GT;
+                else if(strstr(gl_info->gl_renderer, "8300") ||
+                        strstr(gl_info->gl_renderer, "8400") ||
+                        strstr(gl_info->gl_renderer, "8500"))
+                            gl_info->gl_card = CARD_NVIDIA_GEFORCE_8300GS;
+                else if(strstr(gl_info->gl_renderer, "7800") ||
+                        strstr(gl_info->gl_renderer, "7900") ||
+                        strstr(gl_info->gl_renderer, "7950") ||
+                        strstr(gl_info->gl_renderer, "Quadro FX 4") ||
+                        strstr(gl_info->gl_renderer, "Quadro FX 5"))
+                            gl_info->gl_card = CARD_NVIDIA_GEFORCE_7800GT;
                 else if(strstr(gl_info->gl_renderer, "6800") ||
                         strstr(gl_info->gl_renderer, "7600"))
                             gl_info->gl_card = CARD_NVIDIA_GEFORCE_6800;
@@ -1043,8 +1018,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
         }
     }
 
-
-    WineD3D_ReleaseFakeGLContext();
     return return_value;
 }
 #undef GLINFO_LOCATION
@@ -2489,6 +2462,7 @@ ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
 #define PUSH1(att)        attribs[nAttribs++] = (att);
 #define GLINFO_LOCATION (Adapters[0].gl_info)
 BOOL InitAdapters(void) {
+    static HMODULE mod_gl;
     BOOL ret;
     int ps_selected_mode, vs_selected_mode;
 
@@ -2498,8 +2472,44 @@ BOOL InitAdapters(void) {
     if(numAdapters > 0) return TRUE;
 
     TRACE("Initializing adapters\n");
+
+    if(!mod_gl) {
+#ifdef USE_WIN32_OPENGL
+#define USE_GL_FUNC(pfn) pfn = (void*)GetProcAddress(mod_gl, #pfn);
+        mod_gl = LoadLibraryA("opengl32.dll");
+        if(!mod_gl) {
+            ERR("Can't load opengl32.dll!\n");
+            return FALSE;
+        }
+#else
+#define USE_GL_FUNC(pfn) pfn = (void*)pwglGetProcAddress(#pfn);
+        /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 (glXGetProcAddress wrapper) instead of opengl32's */
+        mod_gl = GetModuleHandleA("gdi32.dll");
+#endif
+    }
+
+/* Load WGL core functions from opengl32.dll */
+#define USE_WGL_FUNC(pfn) p##pfn = (void*)GetProcAddress(mod_gl, #pfn);
+    WGL_FUNCS_GEN;
+#undef USE_WGL_FUNC
+
+    if(!pwglGetProcAddress) {
+        ERR("Unable to load wglGetProcAddress!\n");
+        return FALSE;
+    }
+
+/* Dynamicly load all GL core functions */
+    GL_FUNCS_GEN;
+#undef USE_GL_FUNC
+
     /* For now only one default adapter */
     {
+        int iPixelFormat;
+        int attribs[8];
+        int values[8];
+        int nAttribs = 0;
+        int res;
+        WineD3D_PixelFormat *cfgs;
         int attribute;
         DISPLAY_DEVICEW DisplayDevice;
 
@@ -2507,16 +2517,25 @@ BOOL InitAdapters(void) {
         Adapters[0].monitorPoint.x = -1;
         Adapters[0].monitorPoint.y = -1;
 
+        if (!WineD3D_CreateFakeGLContext()) {
+            ERR("Failed to get a gl context for default adapter\n");
+            HeapFree(GetProcessHeap(), 0, Adapters);
+            WineD3D_ReleaseFakeGLContext();
+            return FALSE;
+        }
+
         ret = IWineD3DImpl_FillGLCaps(&Adapters[0].gl_info);
         if(!ret) {
             ERR("Failed to initialize gl caps for default adapter\n");
             HeapFree(GetProcessHeap(), 0, Adapters);
+            WineD3D_ReleaseFakeGLContext();
             return FALSE;
         }
         ret = initPixelFormats(&Adapters[0].gl_info);
         if(!ret) {
             ERR("Failed to init gl formats\n");
             HeapFree(GetProcessHeap(), 0, Adapters);
+            WineD3D_ReleaseFakeGLContext();
             return FALSE;
         }
 
@@ -2529,46 +2548,37 @@ BOOL InitAdapters(void) {
         TRACE("DeviceName: %s\n", debugstr_w(DisplayDevice.DeviceName));
         strcpyW(Adapters[0].DeviceName, DisplayDevice.DeviceName);
 
-        if (WineD3D_CreateFakeGLContext()) {
-            int iPixelFormat;
-            int attribs[8];
-            int values[8];
-            int nAttribs = 0;
-            int res;
-            WineD3D_PixelFormat *cfgs;
+        attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
+        GL_EXTCALL(wglGetPixelFormatAttribivARB(wined3d_fake_gl_context_hdc, 0, 0, 1, &attribute, &Adapters[0].nCfgs));
 
-            attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
-            GL_EXTCALL(wglGetPixelFormatAttribivARB(wined3d_fake_gl_context_hdc, 0, 0, 1, &attribute, &Adapters[0].nCfgs));
+        Adapters[0].cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Adapters[0].nCfgs *sizeof(WineD3D_PixelFormat));
+        cfgs = Adapters[0].cfgs;
+        PUSH1(WGL_RED_BITS_ARB)
+        PUSH1(WGL_GREEN_BITS_ARB)
+        PUSH1(WGL_BLUE_BITS_ARB)
+        PUSH1(WGL_ALPHA_BITS_ARB)
+        PUSH1(WGL_DEPTH_BITS_ARB)
+        PUSH1(WGL_STENCIL_BITS_ARB)
 
-            Adapters[0].cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Adapters[0].nCfgs *sizeof(WineD3D_PixelFormat));
-            cfgs = Adapters[0].cfgs;
-            PUSH1(WGL_RED_BITS_ARB)
-            PUSH1(WGL_GREEN_BITS_ARB)
-            PUSH1(WGL_BLUE_BITS_ARB)
-            PUSH1(WGL_ALPHA_BITS_ARB)
-            PUSH1(WGL_DEPTH_BITS_ARB)
-            PUSH1(WGL_STENCIL_BITS_ARB)
+        for(iPixelFormat=1; iPixelFormat<=Adapters[0].nCfgs; iPixelFormat++) {
+            res = GL_EXTCALL(wglGetPixelFormatAttribivARB(wined3d_fake_gl_context_hdc, iPixelFormat, 0, nAttribs, attribs, values));
 
-            for(iPixelFormat=1; iPixelFormat<=Adapters[0].nCfgs; iPixelFormat++) {
-                res = GL_EXTCALL(wglGetPixelFormatAttribivARB(wined3d_fake_gl_context_hdc, iPixelFormat, 0, nAttribs, attribs, values));
+            if(!res)
+                continue;
 
-                if(!res)
-                    continue;
+            /* Cache the pixel format */
+            cfgs->iPixelFormat = iPixelFormat;
+            cfgs->redSize = values[0];
+            cfgs->greenSize = values[1];
+            cfgs->blueSize = values[2];
+            cfgs->alphaSize = values[3];
+            cfgs->depthSize = values[4];
+            cfgs->stencilSize = values[5];
 
-                /* Cache the pixel format */
-                cfgs->iPixelFormat = iPixelFormat;
-                cfgs->redSize = values[0];
-                cfgs->greenSize = values[1];
-                cfgs->blueSize = values[2];
-                cfgs->alphaSize = values[3];
-                cfgs->depthSize = values[4];
-                cfgs->stencilSize = values[5];
-
-                TRACE("iPixelFormat=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d\n", cfgs->iPixelFormat, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize);
-                cfgs++;
-            }
-            WineD3D_ReleaseFakeGLContext();
+            TRACE("iPixelFormat=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d\n", cfgs->iPixelFormat, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize);
+            cfgs++;
         }
+        WineD3D_ReleaseFakeGLContext();
 
         select_shader_mode(&Adapters[0].gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &Adapters[0].gl_info);
