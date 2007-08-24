@@ -284,6 +284,8 @@ static void test_LoadFunctionPointers(void)
     funcs.cbStruct = sizeof(funcs);
     ret = pWintrustLoadFunctionPointers(&action, &funcs);
     ok(ret, "WintrustLoadFunctionPointers failed: %d\n", GetLastError());
+    ok(funcs.pfnAlloc != NULL, "Expected a pointer\n");
+    ok(funcs.pfnFree != NULL, "Expected a pointer\n");
 }
 
 static void test_RegPolicyFlags(void)

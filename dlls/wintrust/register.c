@@ -812,6 +812,16 @@ error_close_key:
     return Func;
 }
 
+static void * WINAPI WINTRUST_Alloc(DWORD cb)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cb);
+}
+
+static void WINAPI WINTRUST_Free(void *p)
+{
+    HeapFree(GetProcessHeap(), 0, p);
+}
+
 /***********************************************************************
  *              WintrustLoadFunctionPointers (WINTRUST.@)
  */
@@ -834,8 +844,8 @@ BOOL WINAPI WintrustLoadFunctionPointers( GUID* pgActionID,
     WINTRUST_Guid2Wstr( pgActionID, GuidString);
 
     /* Get the function pointers from the registry, where applicable */
-    pPfns->pfnAlloc = NULL;
-    pPfns->pfnFree = NULL;
+    pPfns->pfnAlloc = WINTRUST_Alloc;
+    pPfns->pfnFree = WINTRUST_Free;
     pPfns->pfnAddStore2Chain = NULL;
     pPfns->pfnAddSgnr2Chain = NULL;
     pPfns->pfnAddCert2Chain = NULL;
