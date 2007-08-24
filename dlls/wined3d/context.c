@@ -131,6 +131,8 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
     TRACE("(%p): Creating a %s context for render target %p\n", This, create_pbuffer ? "offscreen" : "onscreen", target);
 
+#define PUSH1(att)        attribs[nAttribs++] = (att);
+#define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);
     if(create_pbuffer) {
         HDC hdc_parent = GetDC(win_handle);
         int iPixelFormat = 0;
@@ -144,9 +146,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         int nAttribs = 0;
         unsigned int nFormats;
 
-#define PUSH1(att)        attribs[nAttribs++] = (att);
-#define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);
-
         /* Retrieve the specifications for the pixelformat from the backbuffer / stencilbuffer */
         getColorBits(target->resource.format, &red, &green, &blue, &alphaBits, &colorBits);
         getDepthStencilBits(StencilBufferFormat, &depthBits, &stencilBits);
@@ -157,9 +156,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         PUSH2(WGL_DEPTH_BITS_ARB, depthBits);
         PUSH2(WGL_STENCIL_BITS_ARB, stencilBits);
         PUSH1(0); /* end the list */
-
-#undef PUSH1
-#undef PUSH2
 
         /* Try to find a pixelformat that matches exactly. If that fails let ChoosePixelFormat try to find a close match */
         if(!GL_EXTCALL(wglChoosePixelFormatARB(hdc_parent, (const int*)&attribs, NULL, 1, &iPixelFormat, &nFormats)))
@@ -205,10 +201,12 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     } else {
         PIXELFORMATDESCRIPTOR pfd;
         int iPixelFormat;
-        short red, green, blue, alpha;
-        short colorBits;
-        short depthBits, stencilBits;
+        short redBits, greenBits, blueBits, alphaBits, colorBits;
+        short depthBits=0, stencilBits=0;
         int res;
+        int attribs[256];
+        int nAttribs = 0;
+        unsigned int nFormats;
 
         hdc = GetDC(win_handle);
         if(hdc == NULL) {
@@ -217,36 +215,56 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         }
 
         /* PixelFormat selection */
-        /* TODO: fill cColorBits/cDepthBits with target->resource.format */
-        ZeroMemory(&pfd, sizeof(pfd));
-        pfd.nSize      = sizeof(pfd);
-        pfd.nVersion   = 1;
-        pfd.dwFlags    = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;/*PFD_GENERIC_ACCELERATED*/
-        pfd.iPixelType = PFD_TYPE_RGBA;
-        pfd.cColorBits = 32;
-        pfd.cDepthBits = 0;
-        pfd.cStencilBits = 0;
-        pfd.iLayerType = PFD_MAIN_PLANE;
+        PUSH2(WGL_DRAW_TO_WINDOW_ARB, GL_TRUE); /* We want to draw to a window */
+        PUSH2(WGL_DOUBLE_BUFFER_ARB, GL_TRUE);
+        PUSH2(WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB); /* Make sure we don't get a float or color index format */
 
-        /* Try to match the colorBits of the d3d format */
-        if(getColorBits(target->resource.format, &red, &green, &blue, &alpha, &colorBits))
-            pfd.cColorBits = colorBits;
+        if(!getColorBits(target->resource.format, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits)) {
+            ERR("Unable to get color bits for format %#x!\n", target->resource.format);
+            return FALSE;
+        }
+        PUSH2(WGL_COLOR_BITS_ARB, colorBits);
+        PUSH2(WGL_RED_BITS_ARB, redBits);
+        PUSH2(WGL_GREEN_BITS_ARB, greenBits);
+        PUSH2(WGL_BLUE_BITS_ARB, blueBits);
+        PUSH2(WGL_ALPHA_BITS_ARB, alphaBits);
 
         /* Retrieve the depth stencil format from the present parameters.
          * The choice of the proper format can give a nice performance boost
          * in case of GPU limited programs. */
         if(pPresentParms->EnableAutoDepthStencil) {
             TRACE("pPresentParms->EnableAutoDepthStencil=enabled; using AutoDepthStencilFormat=%s\n", debug_d3dformat(pPresentParms->AutoDepthStencilFormat));
-            if(getDepthStencilBits(pPresentParms->AutoDepthStencilFormat, &depthBits, &stencilBits)) {
-                pfd.cDepthBits = depthBits;
-                pfd.cStencilBits = stencilBits;
+            if(!getDepthStencilBits(pPresentParms->AutoDepthStencilFormat, &depthBits, &stencilBits)) {
+                ERR("Unable to get depth / stencil bits for AutoDepthStencilFormat %#x!\n", pPresentParms->AutoDepthStencilFormat);
+                return FALSE;
             }
+            PUSH2(WGL_DEPTH_BITS_ARB, depthBits);
+            PUSH2(WGL_STENCIL_BITS_ARB, stencilBits);
         }
 
+        PUSH1(0); /* end the list */
         iPixelFormat = ChoosePixelFormat(hdc, &pfd);
-        if(!iPixelFormat) {
-            /* If this happens something is very wrong as ChoosePixelFormat barely fails */
-            ERR("Can't find a suitable iPixelFormat\n");
+
+        /* In case of failure hope that standard ChooosePixelFormat will find something suitable */
+        if(!GL_EXTCALL(wglChoosePixelFormatARB(hdc, (const int*)&attribs, NULL, 1, &iPixelFormat, &nFormats)))
+        {
+            /* PixelFormat selection */
+            ZeroMemory(&pfd, sizeof(pfd));
+            pfd.nSize      = sizeof(pfd);
+            pfd.nVersion   = 1;
+            pfd.dwFlags    = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;/*PFD_GENERIC_ACCELERATED*/
+            pfd.iPixelType = PFD_TYPE_RGBA;
+            pfd.cAlphaBits = alphaBits;
+            pfd.cColorBits = colorBits;
+            pfd.cDepthBits = depthBits;
+            pfd.cStencilBits = stencilBits;
+            pfd.iLayerType = PFD_MAIN_PLANE;
+
+            iPixelFormat = ChoosePixelFormat(hdc, &pfd);
+            if(!iPixelFormat) {
+                /* If this happens something is very wrong as ChoosePixelFormat barely fails */
+                ERR("Can't find a suitable iPixelFormat\n");
+            }
         }
 
         DescribePixelFormat(hdc, iPixelFormat, sizeof(pfd), &pfd);
@@ -265,6 +283,8 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
             }
         }
     }
+#undef PUSH1
+#undef PUSH2
 
     ctx = pwglCreateContext(hdc);
     if(This->numContexts) pwglShareLists(This->contexts[0]->glCtx, ctx);
