@@ -130,10 +130,10 @@ START_TEST(devinst)
     if (pSetupDiCreateDeviceInfoListExW && pSetupDiDestroyDeviceInfoList)
         test_SetupDiCreateDeviceInfoListEx();
     else
-        trace("Needed calls for SetupDiCreateDeviceInfoListEx not all available, skipping test.\n");
+        skip("SetupDiCreateDeviceInfoListExW and/or SetupDiDestroyDeviceInfoList not available\n");
 
     if (pSetupDiOpenClassRegKeyExA)
         test_SetupDiOpenClassRegKeyExA();
     else
-        trace("Needed call for SetupDiOpenClassRegKeyExA not available, skipping test.\n");
+        skip("SetupDiOpenClassRegKeyExA is not available\n");
 }
