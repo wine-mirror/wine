@@ -2087,6 +2087,38 @@ static BOOL CDecodeHashMsg_VerifyHash(CDecodeMsg *msg)
     return ret;
 }
 
+static BOOL CDecodeSignedMsg_VerifySignatureWithKey(CDecodeMsg *msg,
+ HCRYPTPROV prov, DWORD signerIndex, PCERT_PUBLIC_KEY_INFO keyInfo)
+{
+    HCRYPTKEY key;
+    BOOL ret;
+
+    if (!prov)
+        prov = msg->crypt_prov;
+    ret = CryptImportPublicKeyInfo(prov, X509_ASN_ENCODING, keyInfo, &key);
+    if (ret)
+    {
+        HCRYPTHASH hash;
+        CRYPT_HASH_BLOB reversedHash;
+
+        if (msg->u.signed_data.info->rgSignerInfo[signerIndex].AuthAttrs.cAttr)
+            hash = msg->u.signed_data.signerHandles[signerIndex].authAttrHash;
+        else
+            hash = msg->u.signed_data.signerHandles[signerIndex].contentHash;
+        ret = CRYPT_ConstructBlob(&reversedHash,
+         &msg->u.signed_data.info->rgSignerInfo[signerIndex].EncryptedHash);
+        if (ret)
+        {
+            CRYPT_ReverseBytes(&reversedHash);
+            ret = CryptVerifySignatureW(hash, reversedHash.pbData,
+             reversedHash.cbData, key, NULL, 0);
+            CryptMemFree(reversedHash.pbData);
+        }
+        CryptDestroyKey(key);
+    }
+    return ret;
+}
+
 static BOOL CDecodeSignedMsg_VerifySignature(CDecodeMsg *msg, PCERT_INFO info)
 {
     BOOL ret = FALSE;
@@ -2106,35 +2138,45 @@ static BOOL CDecodeSignedMsg_VerifySignature(CDecodeMsg *msg, PCERT_INFO info)
         }
     }
     if (ret)
-    {
-        HCRYPTKEY key;
-
-        ret = CryptImportPublicKeyInfo(msg->crypt_prov, X509_ASN_ENCODING,
-         &info->SubjectPublicKeyInfo, &key);
-        if (ret)
-        {
-            HCRYPTHASH hash;
-            CRYPT_HASH_BLOB reversedHash;
-
-            if (msg->u.signed_data.info->rgSignerInfo[i].AuthAttrs.cAttr)
-                hash = msg->u.signed_data.signerHandles[i].authAttrHash;
-            else
-                hash = msg->u.signed_data.signerHandles[i].contentHash;
-            ret = CRYPT_ConstructBlob(&reversedHash,
-             &msg->u.signed_data.info->rgSignerInfo[i].EncryptedHash);
-            if (ret)
-            {
-                CRYPT_ReverseBytes(&reversedHash);
-                ret = CryptVerifySignatureW(hash, reversedHash.pbData,
-                 reversedHash.cbData, key, NULL, 0);
-                CryptMemFree(reversedHash.pbData);
-            }
-            CryptDestroyKey(key);
-        }
-    }
+        ret = CDecodeSignedMsg_VerifySignatureWithKey(msg, 0, i,
+         &info->SubjectPublicKeyInfo);
     else
         SetLastError(CRYPT_E_SIGNER_NOT_FOUND);
 
+    return ret;
+}
+
+static BOOL CDecodeSignedMsg_VerifySignatureEx(CDecodeMsg *msg,
+ PCMSG_CTRL_VERIFY_SIGNATURE_EX_PARA para)
+{
+    BOOL ret = FALSE;
+
+    if (para->cbSize != sizeof(CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA))
+        SetLastError(ERROR_INVALID_PARAMETER);
+    else if (para->dwSignerIndex >= msg->u.signed_data.info->cSignerInfo)
+        SetLastError(CRYPT_E_SIGNER_NOT_FOUND);
+    else
+    {
+        switch (para->dwSignerType)
+        {
+        case CMSG_VERIFY_SIGNER_PUBKEY:
+            ret = CDecodeSignedMsg_VerifySignatureWithKey(msg,
+             para->hCryptProv, para->dwSignerIndex,
+             (PCERT_PUBLIC_KEY_INFO)para->pvSigner);
+            break;
+        case CMSG_VERIFY_SIGNER_CERT:
+        {
+            PCCERT_CONTEXT cert = (PCCERT_CONTEXT)para->pvSigner;
+
+            ret = CDecodeSignedMsg_VerifySignatureWithKey(msg, para->hCryptProv,
+             para->dwSignerIndex, &cert->pCertInfo->SubjectPublicKeyInfo);
+            break;
+        }
+        default:
+            FIXME("unimplemented for signer type %d\n", para->dwSignerType);
+            SetLastError(CRYPT_E_SIGNER_NOT_FOUND);
+        }
+    }
     return ret;
 }
 
@@ -2168,6 +2210,17 @@ static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
         {
         case CMSG_HASHED:
             ret = CDecodeHashMsg_VerifyHash(msg);
+            break;
+        default:
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        }
+        break;
+    case CMSG_CTRL_VERIFY_SIGNATURE_EX:
+        switch (msg->type)
+        {
+        case CMSG_SIGNED:
+            ret = CDecodeSignedMsg_VerifySignatureEx(msg,
+             (PCMSG_CTRL_VERIFY_SIGNATURE_EX_PARA)pvCtrlPara);
             break;
         default:
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
