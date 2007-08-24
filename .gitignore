@@ -764,6 +764,8 @@ libs/wpp/ppl.yy.c
 libs/wpp/ppy.tab.c
 libs/wpp/ppy.tab.h
 loader/wine
+loader/wine-freebsd
+loader/wine-freebsd-installed
 loader/wine-glibc
 loader/wine-glibc-installed
 loader/wine-kthread

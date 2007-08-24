@@ -1224,6 +1224,9 @@ case $host_cpu in
       linux* | k*bsd*-gnu)
         AC_SUBST(MAIN_BINARY,"wine-glibc")
         AC_SUBST(EXTRA_BINARIES,"wine-kthread wine-pthread wine-preloader") ;;
+      freebsd*)
+        AC_SUBST(MAIN_BINARY,"wine-freebsd")
+        AC_SUBST(EXTRA_BINARIES,"wine-pthread") ;;
     esac
     ;;
 esac

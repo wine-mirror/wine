@@ -15623,6 +15623,11 @@ MAIN_BINARY="wine-pthread"
 
         EXTRA_BINARIES="wine-kthread wine-pthread wine-preloader"
  ;;
+      freebsd*)
+        MAIN_BINARY="wine-freebsd"
+
+        EXTRA_BINARIES="wine-pthread"
+ ;;
     esac
     ;;
 esac

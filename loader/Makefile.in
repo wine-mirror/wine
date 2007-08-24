@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = wine
 
 C_SRCS = \
+	freebsd.c \
 	glibc.c \
 	kthread.c \
 	main.c \
@@ -20,6 +21,8 @@ WINE_BINARIES  = $(MAIN_BINARY) $(EXTRA_BINARIES)
 
 PROGRAMS = \
 	wine \
+	wine-freebsd \
+	wine-freebsd-installed \
 	wine-glibc \
 	wine-glibc-installed \
 	wine-kthread \
@@ -39,6 +42,12 @@ all: $(WINE_BINARIES) $(WINE_BINARIES:%=%-installed) $(MODULE) $(MANPAGES)
 
 LIBPTHREAD  = @LIBPTHREAD@
 LDEXECFLAGS = @LDEXECFLAGS@
+
+wine-freebsd: freebsd.o Makefile.in
+	$(CC) -o $@ freebsd.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
+
+wine-freebsd-installed: freebsd.o Makefile.in
+	$(CC) -o $@ freebsd.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
 wine-glibc: glibc.o Makefile.in
 	$(CC) -o $@ glibc.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
