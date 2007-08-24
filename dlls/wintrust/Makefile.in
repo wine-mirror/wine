@@ -11,6 +11,7 @@ C_SRCS = \
 	asn.c \
 	crypt.c \
 	register.c \
+	softpub.c \
 	wintrust_main.c
 
 RC_SRCS = \

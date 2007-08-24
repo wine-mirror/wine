@@ -3,12 +3,13 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = wintrust.dll
-IMPORTS   = crypt32 user32 advapi32 kernel32
+IMPORTS   = wintrust crypt32 user32 advapi32 kernel32
 
 CTESTS = \
 	asn.c \
 	crypt.c \
-	register.c
+	register.c \
+	softpub.c
 
 @MAKE_TEST_RULES@
 
