@@ -178,6 +178,7 @@ void primitiveDeclarationConvertToStridedData(
         if (This->stateBlock->streamSource[element->Stream] == NULL)
             continue;
 
+        stride  = This->stateBlock->streamStride[element->Stream];
         if (This->stateBlock->streamIsUP) {
             TRACE("Stream is up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
             streamVBO = 0;
@@ -185,6 +186,22 @@ void primitiveDeclarationConvertToStridedData(
         } else {
             TRACE("Stream isn't up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
             data    = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[element->Stream], 0, &streamVBO);
+
+            /* Can't use vbo's if the base vertex index is negative. OpenGL doesn't accept negative offsets
+             * (or rather offsets bigger than the vbo, because the pointer is unsigned), so use system memory
+             * sources. In most sane cases the pointer - offset will still be > 0, otherwise it will wrap
+             * around to some big value. Hope that with the indices, the driver wraps it back internally. If
+             * not, drawStridedSlow is needed, including a vertex buffer path.
+             */
+            if(This->stateBlock->loadBaseVertexIndex < 0) {
+                WARN("loadBaseVertexIndex is < 0 (%d), not using vbos\n", This->stateBlock->loadBaseVertexIndex);
+                streamVBO = 0;
+                data = ((IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[element->Stream])->resource.allocatedMemory;
+                if(data + This->stateBlock->loadBaseVertexIndex * stride < 0) {
+                    FIXME("System memory vertex data load offset is negative!\n");
+                }
+            }
+
             if(fixup) {
                 if( streamVBO != 0) *fixup = TRUE;
                 else if(*fixup && !useVertexShaderFunction &&
@@ -195,7 +212,6 @@ void primitiveDeclarationConvertToStridedData(
                 }
             }
         }
-        stride  = This->stateBlock->streamStride[element->Stream];
         data += element->Offset;
         reg = element->Reg;
 
@@ -284,7 +300,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     DWORD specularColor = 0;               /* Specular Color             */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     UINT *streamOffset = This->stateBlock->streamOffset;
-    DWORD                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
+    long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
 
     BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
     BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;

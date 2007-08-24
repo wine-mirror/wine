@@ -405,8 +405,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD_(void, GetGammaRamp)(THIS_ UINT iSwapChain, WINED3DGAMMARAMP* pRamp) PURE;
     STDMETHOD(SetIndices)(THIS_ struct IWineD3DIndexBuffer * pIndexData) PURE;
     STDMETHOD(GetIndices)(THIS_ struct IWineD3DIndexBuffer ** ppIndexData) PURE;
-    STDMETHOD(SetBaseVertexIndex)(THIS_ UINT baseIndex);
-    STDMETHOD(GetBaseVertexIndex)(THIS_ UINT *baseIndex);
+    STDMETHOD(SetBaseVertexIndex)(THIS_ INT baseIndex);
+    STDMETHOD(GetBaseVertexIndex)(THIS_ INT *baseIndex);
     STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST WINED3DLIGHT * pLight) PURE;
     STDMETHOD(GetLight)(THIS_ DWORD  Index,WINED3DLIGHT * pLight) PURE;
     STDMETHOD(SetLightEnable)(THIS_ DWORD  Index,BOOL  Enable) PURE;

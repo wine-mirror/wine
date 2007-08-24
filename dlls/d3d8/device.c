@@ -1803,6 +1803,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, I
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
+    /* WineD3D takes an INT(due to d3d9), but d3d8 uses UINTs. Do I have to add a check here that
+     * the UINT doesn't cause an overflow in the INT? It seems rather unlikely because such large
+     * vertex buffers can't be created to address them with an index that requires the 32nd bit
+     * (4 Byte minimum vertex size * 2^31-1 -> 8 gb buffer. The index sign would be the least
+     * problem)
+     */
     IWineD3DDevice_SetBaseVertexIndex(This->WineD3DDevice, baseVertexIndex);
     hr = IWineD3DDevice_SetIndices(This->WineD3DDevice,
             pIndexData ? ((IDirect3DIndexBuffer8Impl *)pIndexData)->wineD3DIndexBuffer : NULL);
@@ -1822,7 +1828,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, I
     }
 
     EnterCriticalSection(&d3d8_cs);
-    IWineD3DDevice_GetBaseVertexIndex(This->WineD3DDevice, pBaseVertexIndex);
+    /* The case from UINT to INT is safe because d3d8 will never set negative values */
+    IWineD3DDevice_GetBaseVertexIndex(This->WineD3DDevice, (INT *) pBaseVertexIndex);
     rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData);
     if (SUCCEEDED(rc) && retIndexData) {
         IWineD3DIndexBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
