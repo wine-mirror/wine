@@ -2609,7 +2609,7 @@ BOOL WINAPI IsChild( HWND parent, HWND child )
     if (!list) return FALSE;
     parent = WIN_GetFullHandle( parent );
     for (i = 0; list[i]; i++) if (list[i] == parent) break;
-    ret = (list[i] != 0);
+    ret = list[i] && list[i+1];
     HeapFree( GetProcessHeap(), 0, list );
     return ret;
 }

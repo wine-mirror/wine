@@ -303,7 +303,7 @@ static inline BOOL is_mouse_message( UINT message )
 /* check whether message matches the specified hwnd filter */
 static inline BOOL check_hwnd_filter( const MSG *msg, HWND hwnd_filter )
 {
-    if (!hwnd_filter) return TRUE;
+    if (!hwnd_filter || hwnd_filter == GetDesktopWindow()) return TRUE;
     return (msg->hwnd == hwnd_filter || IsChild( hwnd_filter, msg->hwnd ));
 }
 

@@ -7476,9 +7476,7 @@ static void test_DestroyWindow(void)
     /* test owner/parent of the parent */
     test = GetParent(parent);
     ok(!test, "wrong parent %p\n", test);
-todo_wine {
     ok(!IsChild(GetDesktopWindow(), parent), "wrong parent/child %p/%p\n", GetDesktopWindow(), parent);
-}
     if(pGetAncestor) {
         test = pGetAncestor(parent, GA_PARENT);
         ok(test == GetDesktopWindow(), "wrong parent %p\n", test);

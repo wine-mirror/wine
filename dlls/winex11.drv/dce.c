@@ -391,7 +391,7 @@ void invalidate_dce( HWND hwnd, const RECT *rect )
 
             /* check if DCE window is within the z-order scope */
 
-            if (hwndScope == dce->hwnd || IsChild( hwndScope, dce->hwnd ))
+            if (hwndScope == dce->hwnd || hwndScope == GetDesktopWindow() || IsChild( hwndScope, dce->hwnd ))
             {
                 if (hwnd != dce->hwnd)
                 {

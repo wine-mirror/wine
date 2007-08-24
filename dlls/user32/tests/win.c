@@ -2758,27 +2758,21 @@ static void test_SetParent(void)
     check_parents(child3, child2, child2, child2, 0, child2, parent);
     check_parents(child4, desktop, child2, child2, child2, child4, parent);
 
-todo_wine {
     ok(!IsChild(desktop, parent), "wrong parent/child %p/%p\n", desktop, parent);
     ok(!IsChild(desktop, child1), "wrong parent/child %p/%p\n", desktop, child1);
     ok(!IsChild(desktop, child2), "wrong parent/child %p/%p\n", desktop, child2);
     ok(!IsChild(desktop, child3), "wrong parent/child %p/%p\n", desktop, child3);
     ok(!IsChild(desktop, child4), "wrong parent/child %p/%p\n", desktop, child4);
-}
 
     ok(IsChild(parent, child1), "wrong parent/child %p/%p\n", parent, child1);
-todo_wine {
     ok(!IsChild(desktop, child2), "wrong parent/child %p/%p\n", desktop, child2);
-}
     ok(!IsChild(parent, child2), "wrong parent/child %p/%p\n", parent, child2);
     ok(!IsChild(child1, child2), "wrong parent/child %p/%p\n", child1, child2);
     ok(!IsChild(parent, child3), "wrong parent/child %p/%p\n", parent, child3);
     ok(IsChild(child2, child3), "wrong parent/child %p/%p\n", child2, child3);
     ok(!IsChild(parent, child4), "wrong parent/child %p/%p\n", parent, child4);
     ok(!IsChild(child3, child4), "wrong parent/child %p/%p\n", child3, child4);
-todo_wine {
     ok(!IsChild(desktop, child4), "wrong parent/child %p/%p\n", desktop, child4);
-}
 
     if (!is_win9x) /* Win9x doesn't survive this test */
     {
