@@ -1336,6 +1336,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
            pPresentationParameters->BackBufferHeight = Rect.bottom;
            TRACE("Updating height to %d\n", pPresentationParameters->BackBufferHeight);
         }
+        if (pPresentationParameters->BackBufferFormat == WINED3DFMT_UNKNOWN) {
+           pPresentationParameters->BackBufferFormat = object->orig_fmt;
+           TRACE("Updating format to %s\n", debug_d3dformat(object->orig_fmt));
+        }
     }
 
     /* Put the correct figures in the presentation parameters */
