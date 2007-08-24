@@ -355,7 +355,7 @@
 @ stub _mbctombb #(long)
 @ cdecl _mbctoupper(long)
 @ extern _mbctype MSVCRT_mbctype
-@ stub _mbsbtype #(str long)
+@ cdecl _mbsbtype(str long)
 @ cdecl _mbscat(str str)
 @ cdecl _mbschr(str long)
 @ cdecl _mbscmp(str str)

@@ -239,6 +239,24 @@ static void test_mbcp(void)
     expect_eq(_ismbstrail(mbsonlylead, &mbsonlylead[4]), FALSE, int, "%d");
     expect_eq(_ismbstrail(mbsonlylead, &mbsonlylead[5]), FALSE, int, "%d");
 
+    /* _mbsbtype */
+    expect_eq(_mbsbtype(mbstring, 0), _MBC_LEAD, int, "%d");
+    expect_eq(_mbsbtype(mbstring, 1), _MBC_TRAIL, int, "%d");
+    expect_eq(_mbsbtype(mbstring, 2), _MBC_LEAD, int, "%d");
+    expect_eq(_mbsbtype(mbstring, 3), _MBC_ILLEGAL, int, "%d");
+    expect_eq(_mbsbtype(mbstring, 4), _MBC_LEAD, int, "%d");
+    expect_eq(_mbsbtype(mbstring, 5), _MBC_TRAIL, int, "%d");
+    expect_eq(_mbsbtype(mbstring, 6), _MBC_SINGLE, int, "%d");
+    expect_eq(_mbsbtype(mbstring, 7), _MBC_LEAD, int, "%d");
+    expect_eq(_mbsbtype(mbstring, 8), _MBC_ILLEGAL, int, "%d");
+
+    expect_eq(_mbsbtype(mbsonlylead, 0), _MBC_LEAD, int, "%d");
+    expect_eq(_mbsbtype(mbsonlylead, 1), _MBC_ILLEGAL, int, "%d");
+    expect_eq(_mbsbtype(mbsonlylead, 2), _MBC_ILLEGAL, int, "%d");
+    expect_eq(_mbsbtype(mbsonlylead, 3), _MBC_ILLEGAL, int, "%d");
+    expect_eq(_mbsbtype(mbsonlylead, 4), _MBC_ILLEGAL, int, "%d");
+    expect_eq(_mbsbtype(mbsonlylead, 5), _MBC_ILLEGAL, int, "%d");
+
     /* _mbsnextc */
     expect_eq(_mbsnextc(mbstring), 0xb0b1, int, "%x");
     expect_eq(_mbsnextc(&mbstring[2]), 0xb220, int, "%x");  /* lead + invalid tail */
