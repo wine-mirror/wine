@@ -4591,6 +4591,15 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         if (di) di->pDependentFiles = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
     }
+    else if (GetVersion() & 0x80000000) {
+        /* Powerpoint XP expects that pDependentFiles is always valid on win9x */
+        size = 2 * ((unicode) ? sizeof(WCHAR) : 1);
+        *pcbNeeded += size;
+        if ((*pcbNeeded <= cbBuf) && strPtr) ZeroMemory(strPtr, size);
+
+        if (di) di->pDependentFiles = (LPWSTR)strPtr;
+        strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
+    }
 
     /* .pMonitorName is the optional Language Monitor */
     if (WINSPOOL_GetStringFromReg(hkeyDriver, MonitorW, strPtr, 0, &size, unicode)) {
