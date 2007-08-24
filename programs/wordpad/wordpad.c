@@ -570,6 +570,24 @@ static BOOL number_from_string(LPCWSTR string, float *num, BOOL units)
     }
 }
 
+static void update_font_list(void)
+{
+    HWND hReBar = GetDlgItem(hMainWnd, IDC_REBAR);
+    HWND hFontList = GetDlgItem(hReBar, IDC_FONTLIST);
+    HWND hFontListEdit = (HWND)SendMessageW(hFontList, CBEM_GETEDITCONTROL, 0, 0);
+    WCHAR fontName[MAX_STRING_LEN];
+    CHARFORMAT2W fmt;
+
+    ZeroMemory(&fmt, sizeof(fmt));
+    fmt.cbSize = sizeof(fmt);
+
+    SendMessageW(hEditorWnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+    SendMessageW(hFontListEdit, WM_GETTEXT, MAX_PATH, (LPARAM)fontName);
+
+    if(lstrcmpW(fontName, fmt.szFaceName))
+        SendMessageW(hFontListEdit, WM_SETTEXT, 0, (LPARAM)fmt.szFaceName);
+}
+
 static void clear_formatting(void)
 {
     PARAFORMAT2 pf;
@@ -606,6 +624,20 @@ static WPARAM fileformat_flags(int format)
     return flags[format];
 }
 
+static void set_font(LPCWSTR wszFaceName)
+{
+    CHARFORMAT2W fmt;
+
+    ZeroMemory(&fmt, sizeof(fmt));
+
+    fmt.cbSize = sizeof(fmt);
+    fmt.dwMask = CFM_FACE;
+
+    lstrcpyW(fmt.szFaceName, wszFaceName);
+
+    SendMessageW(hEditorWnd, EM_SETCHARFORMAT,  SCF_SELECTION, (LPARAM)&fmt);
+}
+
 static void set_default_font(void)
 {
     static const WCHAR richTextFont[] = {'T','i','m','e','s',' ','N','e','w',' ',
@@ -628,6 +660,60 @@ static void set_default_font(void)
     lstrcpyW(fmt.szFaceName, font);
 
     SendMessageW(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
+}
+
+static void add_font(LPWSTR fontName, HWND hListWnd)
+{
+    COMBOBOXEXITEMW cbItem;
+    WCHAR buffer[MAX_PATH];
+
+    cbItem.mask = CBEIF_TEXT;
+    cbItem.pszText = buffer;
+    cbItem.cchTextMax = MAX_STRING_LEN;
+    cbItem.iItem = 0;
+
+    while(SendMessageW(hListWnd, CBEM_GETITEMW, 0, (LPARAM)&cbItem))
+    {
+        if(lstrcmpiW(cbItem.pszText, fontName) <= 0)
+            cbItem.iItem++;
+        else
+            break;
+    }
+    cbItem.pszText = fontName;
+    SendMessageW(hListWnd, CBEM_INSERTITEMW, 0, (LPARAM)&cbItem);
+}
+
+int CALLBACK enum_font_proc(const LOGFONTW *lpelfe, const TEXTMETRICW *lpntme,
+                                       DWORD FontType, LPARAM lParam)
+{
+    HWND hListWnd = (HWND) lParam;
+
+    if(SendMessageW(hListWnd, CB_FINDSTRINGEXACT, -1, (LPARAM)lpelfe->lfFaceName) == CB_ERR)
+    {
+        add_font((LPWSTR)lpelfe->lfFaceName, hListWnd);
+    }
+
+    return 1;
+}
+
+static void populate_font_list(HWND hListWnd)
+{
+    HDC hdc = GetDC(hMainWnd);
+    LOGFONTW fontinfo;
+    HWND hListEditWnd = (HWND)SendMessageW(hListWnd, CBEM_GETEDITCONTROL, 0, 0);
+    CHARFORMAT2W fmt;
+
+    fontinfo.lfCharSet = DEFAULT_CHARSET;
+    *fontinfo.lfFaceName = '\0';
+    fontinfo.lfPitchAndFamily = 0;
+
+    EnumFontFamiliesExW(hdc, &fontinfo, enum_font_proc,
+                        (LPARAM)hListWnd, 0);
+
+    ZeroMemory(&fmt, sizeof(fmt));
+    fmt.cbSize = sizeof(fmt);
+    SendMessageW(hEditorWnd, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&fmt);
+    SendMessageW(hListEditWnd, WM_SETTEXT, 0, (LPARAM)fmt.szFaceName);
 }
 
 static void update_window(void)
@@ -666,7 +752,7 @@ static void set_toolbar_state(int bandId, BOOL show)
     if(bandId == BANDID_TOOLBAR)
     {
         REBARBANDINFOW rbbinfo;
-        int index = SendMessageW(hwndReBar, RB_IDTOINDEX, BANDID_FORMATBAR, 0);
+        int index = SendMessageW(hwndReBar, RB_IDTOINDEX, BANDID_FONTLIST, 0);
 
         rbbinfo.cbSize = sizeof(rbbinfo);
         rbbinfo.fMask = RBBIM_STYLE;
@@ -696,6 +782,7 @@ static void set_statusbar_state(BOOL show)
 static void set_bar_states(void)
 {
     set_toolbar_state(BANDID_TOOLBAR, is_bar_visible(BANDID_TOOLBAR));
+    set_toolbar_state(BANDID_FONTLIST, is_bar_visible(BANDID_FORMATBAR));
     set_toolbar_state(BANDID_FORMATBAR, is_bar_visible(BANDID_FORMATBAR));
     set_statusbar_state(is_bar_visible(BANDID_STATUSBAR));
 
@@ -849,6 +936,7 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     lstrcpyW(wszFileName, szOpenFileName);
     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
     registry_set_filelist(szOpenFileName);
+    update_font_list();
 }
 
 static void DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
@@ -2136,7 +2224,7 @@ static int context_menu(LPARAM lParam)
 
 static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-    HWND hToolBarWnd, hFormatBarWnd,  hReBarWnd;
+    HWND hToolBarWnd, hFormatBarWnd,  hReBarWnd, hFontListWnd;
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
     HANDLE hDLL;
     TBADDBITMAP ab;
@@ -2198,6 +2286,16 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
 
+    hFontListWnd = CreateWindowExW(0, WC_COMBOBOXEXW, NULL,
+                      WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN | CBS_SORT,
+                      0, 0, 200, 150, hReBarWnd, (HMENU)IDC_FONTLIST, hInstance, NULL);
+
+    rbb.hwndChild = hFontListWnd;
+    rbb.cx = 200;
+    rbb.wID = BANDID_FONTLIST;
+
+    SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
+
     hFormatBarWnd = CreateToolbarEx(hReBarWnd,
          CCS_NOPARENTALIGN | CCS_NOMOVEY | WS_VISIBLE | TBSTYLE_TOOLTIPS | TBSTYLE_BUTTON,
          IDC_FORMATBAR, 7, hInstance, IDB_FORMATBAR, NULL, 0, 16, 16, 16, 16, sizeof(TBBUTTON));
@@ -2216,6 +2314,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     rbb.hwndChild = hFormatBarWnd;
     rbb.wID = BANDID_FORMATBAR;
+    rbb.fStyle ^= RBBS_BREAK;
 
     SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
 
@@ -2243,6 +2342,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     set_default_font();
 
+    populate_font_list(hFontListWnd);
     DoLoadStrings();
     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
 
@@ -2311,7 +2411,26 @@ static LRESULT OnUser( HWND hWnd, WPARAM wParam, LPARAM lParam)
 static LRESULT OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
+    HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
     NMHDR *pHdr = (NMHDR *)lParam;
+    HWND hwndFontList = GetDlgItem(hwndReBar, IDC_FONTLIST);
+
+    if (pHdr->hwndFrom == hwndFontList)
+    {
+        if (pHdr->code == CBEN_ENDEDITW)
+        {
+            CHARFORMAT2W format;
+            NMCBEENDEDIT *endEdit = (NMCBEENDEDIT *)lParam;
+
+            ZeroMemory(&format, sizeof(format));
+            format.cbSize = sizeof(format);
+            SendMessageW(hwndEditor, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
+
+            if(lstrcmpW(format.szFaceName, (LPWSTR)endEdit->szText))
+                set_font((LPCWSTR)endEdit->szText);
+        }
+        return 0;
+    }
 
     if (pHdr->hwndFrom != hwndEditor)
         return 0;
@@ -2320,6 +2439,8 @@ static LRESULT OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam)
     {
         SELCHANGE *pSC = (SELCHANGE *)lParam;
         char buf[128];
+
+        update_font_list();
 
         sprintf( buf,"selection = %d..%d, line count=%ld",
                  pSC->chrg.cpMin, pSC->chrg.cpMax,
@@ -2369,6 +2490,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
                     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
                     set_fileformat(ret);
+                    update_font_list();
                 }
             }
         }
@@ -2628,6 +2750,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case ID_TOGGLE_FORMATBAR:
+        set_toolbar_state(BANDID_FONTLIST, !is_bar_visible(BANDID_FORMATBAR));
         set_toolbar_state(BANDID_FORMATBAR, !is_bar_visible(BANDID_FORMATBAR));
         update_window();
         break;
@@ -2861,7 +2984,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdParagraph, int res)
 {
-    INITCOMMONCONTROLSEX classes = {8, ICC_BAR_CLASSES|ICC_COOL_CLASSES};
+    INITCOMMONCONTROLSEX classes = {8, ICC_BAR_CLASSES|ICC_COOL_CLASSES|ICC_USEREX_CLASSES};
     HACCEL hAccel;
     WNDCLASSW wc;
     MSG msg;
