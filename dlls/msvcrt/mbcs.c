@@ -27,7 +27,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "msvcrt/mbctype.h"
-#include "msvcrt/mbstring.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -332,6 +331,14 @@ unsigned char* CDECL _mbsdec(const unsigned char* start, const unsigned char* cu
 }
 
 /*********************************************************************
+ *		_mbclen(MSVCRT.@)
+ */
+unsigned int CDECL _mbclen(const unsigned char* str)
+{
+  return _ismbblead(*str) ? 2 : 1;
+}
+
+/*********************************************************************
  *		_mbsinc(MSVCRT.@)
  */
 unsigned char* CDECL _mbsinc(const unsigned char* str)
@@ -360,14 +367,6 @@ unsigned char* CDECL _mbsninc(const unsigned char* str, MSVCRT_size_t num)
   }
 
   return (unsigned char*)str;
-}
-
-/*********************************************************************
- *		_mbclen(MSVCRT.@)
- */
-unsigned int CDECL _mbclen(const unsigned char* str)
-{
-  return _ismbblead(*str) ? 2 : 1;
 }
 
 /*********************************************************************
