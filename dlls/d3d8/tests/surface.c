@@ -192,6 +192,28 @@ static void test_lockrect_invalid(IDirect3DDevice8 *device)
                 rect->right, rect->bottom, D3DERR_INVALIDCALL);
     }
 
+    hr = IDirect3DSurface8_LockRect(surface, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "LockRect failed (0x%08x) for rect NULL\n", hr);
+    hr = IDirect3DSurface8_LockRect(surface, &locked_rect, NULL, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Double LockRect returned 0x%08x for rect NULL\n", hr);
+    hr = IDirect3DSurface8_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "UnlockRect failed (0x%08x)\n", hr);
+
+    hr = IDirect3DSurface8_LockRect(surface, &locked_rect, &valid[0], 0);
+    ok(hr == D3D_OK, "LockRect failed (0x%08x) for rect [%d, %d]->[%d, %d]"
+            ", expected D3D_OK (0x%08x)\n", hr, valid[0].left, valid[0].top,
+            valid[0].right, valid[0].bottom, D3D_OK);
+    hr = IDirect3DSurface8_LockRect(surface, &locked_rect, &valid[0], 0);
+    ok(hr == D3DERR_INVALIDCALL, "Double LockRect failed (0x%08x) for rect [%d, %d]->[%d, %d]"
+            ", expected D3DERR_INVALIDCALL (0x%08x)\n", hr, valid[0].left, valid[0].top,
+            valid[0].right, valid[0].bottom,D3DERR_INVALIDCALL);
+    hr = IDirect3DSurface8_LockRect(surface, &locked_rect, &valid[1], 0);
+    ok(hr == D3DERR_INVALIDCALL, "Double LockRect failed (0x%08x) for rect [%d, %d]->[%d, %d]"
+            ", expected D3DERR_INVALIDCALL (0x%08x)\n", hr, valid[1].left, valid[1].top,
+            valid[1].right, valid[1].bottom, D3DERR_INVALIDCALL);
+    hr = IDirect3DSurface8_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "UnlockRect failed (0x%08x)\n", hr);
+
     IDirect3DSurface8_Release(surface);
 }
 

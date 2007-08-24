@@ -1630,6 +1630,33 @@ static void test_lockrect_invalid(void)
                     rect->right, rect->bottom, DDERR_INVALIDPARAMS);
         }
 
+        hr = IDirectDrawSurface_Lock(surface, NULL, &locked_desc, DDLOCK_WAIT, NULL);
+        ok(hr == DD_OK, "IDirectDrawSurface_Lock(rect = NULL) failed (0x%08x)\n", hr);
+        hr = IDirectDrawSurface_Lock(surface, NULL, &locked_desc, DDLOCK_WAIT, NULL);
+        ok(hr == DDERR_SURFACEBUSY, "Double lock(rect = NULL) returned 0x%08x\n", hr);
+        if(SUCCEEDED(hr)) {
+            hr = IDirectDrawSurface_Unlock(surface, NULL);
+            ok(SUCCEEDED(hr), "Unlock failed (0x%08x)\n", hr);
+        }
+        hr = IDirectDrawSurface_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Unlock failed (0x%08x)\n", hr);
+
+        memset(&locked_desc, 0, sizeof(locked_desc));
+        locked_desc.dwSize = sizeof(locked_desc);
+        hr = IDirectDrawSurface_Lock(surface, &valid[0], &locked_desc, DDLOCK_WAIT, NULL);
+        ok(hr == DD_OK, "IDirectDrawSurface_Lock(rect = [%d, %d]->[%d, %d]) failed (0x%08x)\n",
+           valid[0].left, valid[0].top, valid[0].right, valid[0].bottom, hr);
+        hr = IDirectDrawSurface_Lock(surface, &valid[0], &locked_desc, DDLOCK_WAIT, NULL);
+        ok(hr == DDERR_SURFACEBUSY, "Double lock(rect = [%d, %d]->[%d, %d]) failed (0x%08x)\n",
+           valid[0].left, valid[0].top, valid[0].right, valid[0].bottom, hr);
+
+        /* Locking a different rectangle returns DD_OK, but it seems to break the surface.
+         * Afterwards unlocking the surface fails(NULL rectangle, and both locked rectangles
+         */
+
+        hr = IDirectDrawSurface_Unlock(surface, NULL);
+        ok(hr == DD_OK, "Unlock returned (0x%08x)\n", hr);
+
         IDirectDrawSurface_Release(surface);
     }
 }

@@ -238,6 +238,7 @@ static void test_lockrect_invalid(IDirect3DDevice9 *device)
     BYTE *base;
     HRESULT hr;
 
+    const RECT test_rect_2 = { 0, 0, 8, 8 };
     const RECT test_data[] = {
         {60, 60, 68, 68},       /* Valid */
         {60, 60, 60, 68},       /* 0 height */
@@ -285,6 +286,28 @@ static void test_lockrect_invalid(IDirect3DDevice9 *device)
         hr = IDirect3DSurface9_UnlockRect(surface);
         ok(SUCCEEDED(hr), "UnlockRect failed (0x%08x)\n", hr);
     }
+
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "LockRect failed (0x%08x) for rect NULL\n", hr);
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Double LockRect for rect NULL returned 0x%08x\n", hr);
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "UnlockRect failed (0x%08x)\n", hr);
+
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, &test_data[0], 0);
+    ok(hr == D3D_OK, "LockRect failed (0x%08x) for rect [%d, %d]->[%d, %d]"
+            ", expected D3D_OK (0x%08x)\n", hr, test_data[0].left, test_data[0].top,
+            test_data[0].right, test_data[0].bottom, D3D_OK);
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, &test_data[0], 0);
+    ok(hr == D3DERR_INVALIDCALL, "Double LockRect failed (0x%08x) for rect [%d, %d]->[%d, %d]"
+            ", expected D3DERR_INVALIDCALL (0x%08x)\n", hr, test_data[0].left, test_data[0].top,
+            test_data[0].right, test_data[0].bottom, D3DERR_INVALIDCALL);
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, &test_rect_2, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Double LockRect failed (0x%08x) for rect [%d, %d]->[%d, %d]"
+            ", expected D3DERR_INVALIDCALL (0x%08x)\n", hr, test_rect_2.left, test_rect_2.top,
+            test_rect_2.right, test_rect_2.bottom, D3DERR_INVALIDCALL);
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "UnlockRect failed (0x%08x)\n", hr);
 
     IDirect3DSurface9_Release(surface);
 }

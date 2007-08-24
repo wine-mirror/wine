@@ -613,7 +613,17 @@ IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
     if(hr != D3D_OK)
     {
         LeaveCriticalSection(&ddraw_cs);
-        return hr;
+        switch(hr)
+        {
+            /* D3D8 and D3D9 return the general D3DERR_INVALIDCALL error, but ddraw has a more
+             * specific error. But since IWineD3DSurface::LockRect returns that error in this
+             * only occasion, keep d3d8 and d3d9 free from the return value override. There are
+             * many different places where d3d8/9 would have to catch the DDERR_SURFACEBUSY, it
+             * is much easier to do it in one place in ddraw
+             */
+            case WINED3DERR_INVALIDCALL:    return DDERR_SURFACEBUSY;
+            default:                        return hr;
+        }
     }
 
     /* Override the memory area. The pitch should be set already. Strangely windows
