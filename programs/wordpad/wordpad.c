@@ -2,6 +2,7 @@
  * Wordpad implementation
  *
  * Copyright 2004 by Krzysztof Foltman
+ * Copyright 2007 by Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -57,6 +58,8 @@ static const WCHAR var_file[] = {'F','i','l','e','%','d',0};
 static const WCHAR var_framerect[] = {'F','r','a','m','e','R','e','c','t',0};
 static const WCHAR var_barstate0[] = {'B','a','r','S','t','a','t','e','0',0};
 static const WCHAR var_pagemargin[] = {'P','a','g','e','M','a','r','g','i','n',0};
+
+static const WCHAR stringFormat[] = {'%','2','d','\0'};
 
 static HWND hMainWnd;
 static HWND hEditorWnd;
@@ -570,6 +573,88 @@ static BOOL number_from_string(LPCWSTR string, float *num, BOOL units)
     }
 }
 
+static void set_size(float size)
+{
+    CHARFORMAT2W fmt;
+
+    ZeroMemory(&fmt, sizeof(fmt));
+    fmt.cbSize = sizeof(fmt);
+    fmt.dwMask = CFM_SIZE;
+    fmt.yHeight = (int)(size * 20.0);
+    SendMessageW(hEditorWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+}
+
+static void add_size(HWND hSizeListWnd, unsigned size)
+{
+    WCHAR buffer[3];
+    COMBOBOXEXITEMW cbItem;
+    cbItem.mask = CBEIF_TEXT;
+    cbItem.iItem = -1;
+
+    wsprintfW(buffer, stringFormat, size);
+    cbItem.pszText = (LPWSTR)buffer;
+    SendMessageW(hSizeListWnd, CBEM_INSERTITEMW, 0, (LPARAM)&cbItem);
+}
+
+static void populate_size_list(HWND hSizeListWnd)
+{
+    HWND hReBarWnd = GetDlgItem(hMainWnd, IDC_REBAR);
+    HWND hFontListWnd = GetDlgItem(hReBarWnd, IDC_FONTLIST);
+    COMBOBOXEXITEMW cbFontItem;
+    CHARFORMAT2W fmt;
+    HWND hListEditWnd = (HWND)SendMessageW(hSizeListWnd, CBEM_GETEDITCONTROL, 0, 0);
+    HDC hdc = GetDC(hMainWnd);
+    static const unsigned choices[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
+    WCHAR buffer[3];
+    int i;
+    DWORD fontStyle;
+
+    ZeroMemory(&fmt, sizeof(fmt));
+    fmt.cbSize = sizeof(fmt);
+    SendMessageW(hEditorWnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+
+    cbFontItem.mask = CBEIF_LPARAM;
+    cbFontItem.iItem = SendMessageW(hFontListWnd, CB_FINDSTRINGEXACT, -1, (LPARAM)fmt.szFaceName);
+    SendMessageW(hFontListWnd, CBEM_GETITEMW, 0, (LPARAM)&cbFontItem);
+
+    fontStyle = (DWORD)LOWORD(cbFontItem.lParam);
+
+    SendMessageW(hSizeListWnd, CB_RESETCONTENT, 0, 0);
+
+    if((fontStyle & RASTER_FONTTYPE) && cbFontItem.iItem)
+    {
+        add_size(hSizeListWnd, (BYTE)MulDiv(HIWORD(cbFontItem.lParam), 72,
+                               GetDeviceCaps(hdc, LOGPIXELSY)));
+    } else
+    {
+        for(i = 0; i < sizeof(choices)/sizeof(choices[0]); i++)
+            add_size(hSizeListWnd, choices[i]);
+    }
+
+    wsprintfW(buffer, stringFormat, fmt.yHeight / 20);
+    SendMessageW(hListEditWnd, WM_SETTEXT, 0, (LPARAM)buffer);
+}
+
+static void update_size_list(void)
+{
+    HWND hReBar = GetDlgItem(hMainWnd, IDC_REBAR);
+    HWND hwndSizeList = GetDlgItem(hReBar, IDC_SIZELIST);
+    HWND hwndSizeListEdit = (HWND)SendMessageW(hwndSizeList, CBEM_GETEDITCONTROL, 0, 0);
+    WCHAR fontSize[MAX_STRING_LEN], sizeBuffer[MAX_STRING_LEN];
+    CHARFORMAT2W fmt;
+
+    ZeroMemory(&fmt, sizeof(fmt));
+    fmt.cbSize = sizeof(fmt);
+
+    SendMessageW(hEditorWnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+
+    SendMessageW(hwndSizeListEdit, WM_GETTEXT, MAX_PATH, (LPARAM)fontSize);
+    wsprintfW(sizeBuffer, stringFormat, fmt.yHeight / 20);
+
+    if(lstrcmpW(fontSize, sizeBuffer))
+        SendMessageW(hwndSizeListEdit, WM_SETTEXT, 0, (LPARAM)sizeBuffer);
+}
+
 static void update_font_list(void)
 {
     HWND hReBar = GetDlgItem(hMainWnd, IDC_REBAR);
@@ -585,7 +670,13 @@ static void update_font_list(void)
     SendMessageW(hFontListEdit, WM_GETTEXT, MAX_PATH, (LPARAM)fontName);
 
     if(lstrcmpW(fontName, fmt.szFaceName))
+    {
         SendMessageW(hFontListEdit, WM_SETTEXT, 0, (LPARAM)fmt.szFaceName);
+        populate_size_list(GetDlgItem(hReBar, IDC_SIZELIST));
+    } else
+    {
+        update_size_list();
+    }
 }
 
 static void clear_formatting(void)
@@ -626,6 +717,8 @@ static WPARAM fileformat_flags(int format)
 
 static void set_font(LPCWSTR wszFaceName)
 {
+    HWND hReBarWnd = GetDlgItem(hMainWnd, IDC_REBAR);
+    HWND hSizeListWnd = GetDlgItem(hReBarWnd, IDC_SIZELIST);
     CHARFORMAT2W fmt;
 
     ZeroMemory(&fmt, sizeof(fmt));
@@ -636,6 +729,8 @@ static void set_font(LPCWSTR wszFaceName)
     lstrcpyW(fmt.szFaceName, wszFaceName);
 
     SendMessageW(hEditorWnd, EM_SETCHARFORMAT,  SCF_SELECTION, (LPARAM)&fmt);
+
+    populate_size_list(hSizeListWnd);
 }
 
 static void set_default_font(void)
@@ -662,10 +757,11 @@ static void set_default_font(void)
     SendMessageW(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
 }
 
-static void add_font(LPWSTR fontName, HWND hListWnd)
+static void add_font(LPWSTR fontName, DWORD fontType, HWND hListWnd, NEWTEXTMETRICEXW *ntmc)
 {
     COMBOBOXEXITEMW cbItem;
     WCHAR buffer[MAX_PATH];
+    int fontHeight = 0;
 
     cbItem.mask = CBEIF_TEXT;
     cbItem.pszText = buffer;
@@ -680,6 +776,12 @@ static void add_font(LPWSTR fontName, HWND hListWnd)
             break;
     }
     cbItem.pszText = fontName;
+
+    cbItem.mask |= CBEIF_LPARAM;
+    if(fontType & RASTER_FONTTYPE)
+        fontHeight = ntmc->ntmTm.tmHeight - ntmc->ntmTm.tmInternalLeading;
+
+    cbItem.lParam = MAKELONG(fontType,fontHeight);
     SendMessageW(hListWnd, CBEM_INSERTITEMW, 0, (LPARAM)&cbItem);
 }
 
@@ -690,7 +792,8 @@ int CALLBACK enum_font_proc(const LOGFONTW *lpelfe, const TEXTMETRICW *lpntme,
 
     if(SendMessageW(hListWnd, CB_FINDSTRINGEXACT, -1, (LPARAM)lpelfe->lfFaceName) == CB_ERR)
     {
-        add_font((LPWSTR)lpelfe->lfFaceName, hListWnd);
+
+        add_font((LPWSTR)lpelfe->lfFaceName, FontType, hListWnd, (NEWTEXTMETRICEXW*)lpntme);
     }
 
     return 1;
@@ -783,6 +886,7 @@ static void set_bar_states(void)
 {
     set_toolbar_state(BANDID_TOOLBAR, is_bar_visible(BANDID_TOOLBAR));
     set_toolbar_state(BANDID_FONTLIST, is_bar_visible(BANDID_FORMATBAR));
+    set_toolbar_state(BANDID_SIZELIST, is_bar_visible(BANDID_FORMATBAR));
     set_toolbar_state(BANDID_FORMATBAR, is_bar_visible(BANDID_FORMATBAR));
     set_statusbar_state(is_bar_visible(BANDID_STATUSBAR));
 
@@ -2224,7 +2328,7 @@ static int context_menu(LPARAM lParam)
 
 static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-    HWND hToolBarWnd, hFormatBarWnd,  hReBarWnd, hFontListWnd;
+    HWND hToolBarWnd, hFormatBarWnd,  hReBarWnd, hFontListWnd, hSizeListWnd;
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
     HANDLE hDLL;
     TBADDBITMAP ab;
@@ -2296,6 +2400,17 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
 
+    hSizeListWnd = CreateWindowExW(0, WC_COMBOBOXEXW, NULL,
+                      WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN,
+                      0, 0, 50, 150, hReBarWnd, (HMENU)IDC_SIZELIST, hInstance, NULL);
+
+    rbb.hwndChild = hSizeListWnd;
+    rbb.cx = 50;
+    rbb.fStyle ^= RBBS_BREAK;
+    rbb.wID = BANDID_SIZELIST;
+
+    SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
+
     hFormatBarWnd = CreateToolbarEx(hReBarWnd,
          CCS_NOPARENTALIGN | CCS_NOMOVEY | WS_VISIBLE | TBSTYLE_TOOLTIPS | TBSTYLE_BUTTON,
          IDC_FORMATBAR, 7, hInstance, IDB_FORMATBAR, NULL, 0, 16, 16, 16, 16, sizeof(TBBUTTON));
@@ -2314,7 +2429,6 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     rbb.hwndChild = hFormatBarWnd;
     rbb.wID = BANDID_FORMATBAR;
-    rbb.fStyle ^= RBBS_BREAK;
 
     SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
 
@@ -2343,6 +2457,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     set_default_font();
 
     populate_font_list(hFontListWnd);
+    populate_size_list(hSizeListWnd);
     DoLoadStrings();
     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
 
@@ -2414,8 +2529,10 @@ static LRESULT OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam)
     HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
     NMHDR *pHdr = (NMHDR *)lParam;
     HWND hwndFontList = GetDlgItem(hwndReBar, IDC_FONTLIST);
+    HWND hwndSizeList = GetDlgItem(hwndReBar, IDC_SIZELIST);
+    WCHAR sizeBuffer[MAX_PATH];
 
-    if (pHdr->hwndFrom == hwndFontList)
+    if (pHdr->hwndFrom == hwndFontList || pHdr->hwndFrom == hwndSizeList)
     {
         if (pHdr->code == CBEN_ENDEDITW)
         {
@@ -2426,8 +2543,26 @@ static LRESULT OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam)
             format.cbSize = sizeof(format);
             SendMessageW(hwndEditor, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
 
-            if(lstrcmpW(format.szFaceName, (LPWSTR)endEdit->szText))
-                set_font((LPCWSTR)endEdit->szText);
+            if(pHdr->hwndFrom == hwndFontList)
+            {
+                if(lstrcmpW(format.szFaceName, (LPWSTR)endEdit->szText))
+                    set_font((LPCWSTR) endEdit->szText);
+            } else if (pHdr->hwndFrom == hwndSizeList)
+            {
+                wsprintfW(sizeBuffer, stringFormat, format.yHeight / 20);
+                if(lstrcmpW(sizeBuffer, (LPWSTR)endEdit->szText))
+                {
+                    float size = 0;
+                    if(number_from_string((LPWSTR)endEdit->szText, &size, FALSE))
+                    {
+                        set_size(size);
+                    } else
+                    {
+                        SetWindowTextW(hwndSizeList, sizeBuffer);
+                        MessageBoxW(hMainWnd, MAKEINTRESOURCEW(STRING_INVALID_NUMBER), wszAppTitle, MB_OK | MB_ICONINFORMATION);
+                    }
+                }
+            }
         }
         return 0;
     }
@@ -2751,6 +2886,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_TOGGLE_FORMATBAR:
         set_toolbar_state(BANDID_FONTLIST, !is_bar_visible(BANDID_FORMATBAR));
+        set_toolbar_state(BANDID_SIZELIST, !is_bar_visible(BANDID_FORMATBAR));
         set_toolbar_state(BANDID_FORMATBAR, !is_bar_visible(BANDID_FORMATBAR));
         update_window();
         break;

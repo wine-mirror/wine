@@ -1,5 +1,6 @@
 /*
  * Copyright 2004 by Krzysztof Foltman
+ * Copyright 2007 by Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -80,11 +81,12 @@
 #define BANDID_RULER 0
 #define BANDID_STATUSBAR 1
 #define BANDID_FONTLIST 4
+#define BANDID_SIZELIST 5
 
-#define BANDID_PREVIEW_BTN1 5
-#define BANDID_PREVIEW_BTN2 6
-#define BANDID_PREVIEW_BTN3 7
-#define BANDID_PREVIEW_BTN4 8
+#define BANDID_PREVIEW_BTN1 6
+#define BANDID_PREVIEW_BTN2 7
+#define BANDID_PREVIEW_BTN3 8
+#define BANDID_PREVIEW_BTN4 9
 
 #define ID_WORDWRAP_NONE 0
 #define ID_WORDWRAP_WINDOW 1
@@ -124,6 +126,7 @@
 #define IDC_PARA_ALIGN 2011
 #define IDC_TABSTOPS 2012
 #define IDC_FONTLIST 2013
+#define IDC_SIZELIST 2014
 
 #define IDD_DATETIME 2100
 #define IDD_NEWFILE 2101
