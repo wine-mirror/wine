@@ -183,7 +183,7 @@ static void test_mbcp(void)
     int curr_mbcp = _getmbcp();
     unsigned char *mbstring = (unsigned char *)"\xb0\xb1\xb2 \xb3\xb4 \xb5"; /* incorrect string */
     unsigned char *mbstring2 = (unsigned char *)"\xb0\xb1\xb2\xb3Q\xb4\xb5"; /* correct string */
-    unsigned char *mbsonlylead = (unsigned char *)"\xb0\0\xb1\xb2";
+    unsigned char *mbsonlylead = (unsigned char *)"\xb0\0\xb1\xb2 \xb3";
     unsigned char buf[16];
     int step;
 
@@ -204,6 +204,40 @@ static void test_mbcp(void)
     ok(_ismbblead(0x123420) == FALSE, "0x123420 should not be a lead byte\n");
     ok(_ismbbtrail('\xb0'), "\xa0 should be a trail byte\n");
     ok(_ismbbtrail(' ') == FALSE, "' ' should not be a trail byte\n");
+
+    /* _ismbslead */
+    expect_eq(_ismbslead(mbstring, &mbstring[0]), -1, int, "%d");
+    expect_eq(_ismbslead(mbstring, &mbstring[1]), FALSE, int, "%d");
+    expect_eq(_ismbslead(mbstring, &mbstring[2]), -1, int, "%d");
+    expect_eq(_ismbslead(mbstring, &mbstring[3]), FALSE, int, "%d");
+    expect_eq(_ismbslead(mbstring, &mbstring[4]), -1, int, "%d");
+    expect_eq(_ismbslead(mbstring, &mbstring[5]), FALSE, int, "%d");
+    expect_eq(_ismbslead(mbstring, &mbstring[6]), FALSE, int, "%d");
+    expect_eq(_ismbslead(mbstring, &mbstring[7]), -1, int, "%d");
+    expect_eq(_ismbslead(mbstring, &mbstring[8]), FALSE, int, "%d");
+
+    expect_eq(_ismbslead(mbsonlylead, &mbsonlylead[0]), -1, int, "%d");
+    expect_eq(_ismbslead(mbsonlylead, &mbsonlylead[1]), FALSE, int, "%d");
+    expect_eq(_ismbslead(mbsonlylead, &mbsonlylead[2]), FALSE, int, "%d");
+    expect_eq(_ismbslead(mbsonlylead, &mbsonlylead[5]), FALSE, int, "%d");
+
+    /* _ismbstrail */
+    expect_eq(_ismbstrail(mbstring, &mbstring[0]), FALSE, int, "%d");
+    expect_eq(_ismbstrail(mbstring, &mbstring[1]), -1, int, "%d");
+    expect_eq(_ismbstrail(mbstring, &mbstring[2]), FALSE, int, "%d");
+    expect_eq(_ismbstrail(mbstring, &mbstring[3]), -1, int, "%d");
+    expect_eq(_ismbstrail(mbstring, &mbstring[4]), FALSE, int, "%d");
+    expect_eq(_ismbstrail(mbstring, &mbstring[5]), -1, int, "%d");
+    expect_eq(_ismbstrail(mbstring, &mbstring[6]), FALSE, int, "%d");
+    expect_eq(_ismbstrail(mbstring, &mbstring[7]), FALSE, int, "%d");
+    expect_eq(_ismbstrail(mbstring, &mbstring[8]), -1, int, "%d");
+
+    expect_eq(_ismbstrail(mbsonlylead, &mbsonlylead[0]), FALSE, int, "%d");
+    expect_eq(_ismbstrail(mbsonlylead, &mbsonlylead[1]), -1, int, "%d");
+    expect_eq(_ismbstrail(mbsonlylead, &mbsonlylead[2]), FALSE, int, "%d");
+    expect_eq(_ismbstrail(mbsonlylead, &mbsonlylead[3]), FALSE, int, "%d");
+    expect_eq(_ismbstrail(mbsonlylead, &mbsonlylead[4]), FALSE, int, "%d");
+    expect_eq(_ismbstrail(mbsonlylead, &mbsonlylead[5]), FALSE, int, "%d");
 
     /* _mbsnextc */
     expect_eq(_mbsnextc(mbstring), 0xb0b1, int, "%x");

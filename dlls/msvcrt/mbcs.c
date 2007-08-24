@@ -1058,18 +1058,22 @@ int CDECL _ismbbtrail(unsigned int c)
  */
 int CDECL _ismbslead(const unsigned char* start, const unsigned char* str)
 {
-  /* Lead bytes can also be trail bytes if caller messed up
-   * iterating through the string...
-   */
-  if(MSVCRT___mb_cur_max > 1)
-  {
-    while(start < str)
-      start += MSVCRT_isleadbyte(*str) ? 2 : 1;
+  int lead = 0;
 
-    if(start == str)
-      return MSVCRT_isleadbyte(*str);
+  if(!g_mbcp_is_multibyte)
+    return 0;
+
+  /* Lead bytes can also be trail bytes so we need to analise the string
+   */
+  while (start <= str)
+  {
+    if (!*start)
+      return 0;
+    lead = !lead && _ismbblead(*start);
+    start++;
   }
-  return 0; /* Must have been a trail, we skipped it */
+
+  return lead ? -1 : 0;
 }
 
 /*********************************************************************
@@ -1077,8 +1081,11 @@ int CDECL _ismbslead(const unsigned char* start, const unsigned char* str)
  */
 int CDECL _ismbstrail(const unsigned char* start, const unsigned char* str)
 {
-  /* Must not be a lead, and must be preceded by one */
-  return !_ismbslead(start, str) && MSVCRT_isleadbyte(str[-1]);
+  /* Note: this function doesn't check _ismbbtrail */
+  if ((str > start) && _ismbslead(start, str-1))
+    return -1;
+  else
+    return 0;
 }
 
 /*********************************************************************
