@@ -774,6 +774,12 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 
     /* direct sound caps */
     ossdev->ds_caps.dwFlags = DSCAPS_CERTIFIED;
+    ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARY8BIT;
+    ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARY16BIT;
+    ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARYMONO;
+    ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARYSTEREO;
+    ossdev->ds_caps.dwFlags |= DSCAPS_CONTINUOUSRATE;
+
     ossdev->ds_caps.dwPrimaryBuffers = 1;
     ossdev->ds_caps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
     ossdev->ds_caps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
@@ -845,14 +851,6 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
         if ((arg & DSP_CAP_MULTI) &&
             (ossdev->out_caps.dwSupport & WAVECAPS_DIRECTSOUND)) {
             TRACE("hardware secondary buffer support available\n");
-            if (ossdev->ds_caps.dwFlags & DSCAPS_PRIMARY8BIT)
-                ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARY8BIT;
-            if (ossdev->ds_caps.dwFlags & DSCAPS_PRIMARY16BIT)
-                ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARY16BIT;
-            if (ossdev->ds_caps.dwFlags & DSCAPS_PRIMARYMONO)
-                ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARYMONO;
-            if (ossdev->ds_caps.dwFlags & DSCAPS_PRIMARYSTEREO)
-                ossdev->ds_caps.dwFlags |= DSCAPS_SECONDARYSTEREO;
 
             ossdev->ds_caps.dwMaxHwMixingAllBuffers = 16;
             ossdev->ds_caps.dwMaxHwMixingStaticBuffers = 0;
