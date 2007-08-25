@@ -325,6 +325,10 @@ static int ALSA_ComputeCaps(snd_ctl_t *ctl, snd_pcm_t *pcm,
         }
     }
 
+    *flags = DSCAPS_CERTIFIED | DSCAPS_CONTINUOUSRATE;
+    *flags |= DSCAPS_SECONDARYMONO | DSCAPS_SECONDARYSTEREO;
+    *flags |= DSCAPS_SECONDARY8BIT | DSCAPS_SECONDARY16BIT;
+
     if (*formats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
                                WAVE_FORMAT_4M08  | WAVE_FORMAT_48M08 |
                                WAVE_FORMAT_96M08 | WAVE_FORMAT_1M16  |
