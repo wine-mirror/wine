@@ -23,6 +23,8 @@
 #define DIALOG_PAGESETUP        0x202
 #define ID_ACCEL                0x203
 
+#define IDI_NOTEPAD             0x300
+
 /* Commands */
 #define CMD_NEW                 0x100
 #define CMD_OPEN                0x101

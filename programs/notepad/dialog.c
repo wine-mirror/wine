@@ -791,9 +791,10 @@ VOID DIALOG_HelpAboutWine(VOID)
 {
     static const WCHAR notepadW[] = { 'N','o','t','e','p','a','d','\n',0 };
     WCHAR szNotepad[MAX_STRING_LEN];
+    HICON icon = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(IDI_NOTEPAD));
 
     LoadString(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
-    ShellAbout(Globals.hMainWnd, szNotepad, notepadW, 0);
+    ShellAbout(Globals.hMainWnd, szNotepad, notepadW, icon);
 }
 
 
