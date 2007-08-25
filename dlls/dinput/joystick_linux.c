@@ -138,6 +138,7 @@ static INT find_joystick_devices(void)
 
     if (joystick_devices_count != -1) return joystick_devices_count;
 
+    joystick_devices_count = 0;
     for (i = 0; i < MAX_JOYSTICKS; i++)
     {
         CHAR device_name[MAX_PATH], *str;
@@ -154,7 +155,7 @@ static INT find_joystick_devices(void)
         if (!(str = HeapAlloc(GetProcessHeap(), 0, len))) break;
         memcpy(str, device_name, len);
 
-        joystick_devices[++joystick_devices_count] = str;
+        joystick_devices[joystick_devices_count++] = str;
     }
 
     return joystick_devices_count;
@@ -164,7 +165,7 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 {
     int fd = -1;
 
-    if (id > find_joystick_devices()) return FALSE;
+    if (id >= find_joystick_devices()) return FALSE;
 
     if (dwFlags & DIEDFL_FORCEFEEDBACK) {
         WARN("force feedback not supported\n");
@@ -215,7 +216,7 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
     char name[MAX_PATH];
     char friendly[32];
 
-    if (id > find_joystick_devices()) return FALSE;
+    if (id >= find_joystick_devices()) return FALSE;
 
     if (dwFlags & DIEDFL_FORCEFEEDBACK) {
         WARN("force feedback not supported\n");
