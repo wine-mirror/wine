@@ -190,6 +190,12 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
         ExitProcess(1);
     }
 
+    /* FIXME: there are lots of other commandline options we need to parse */
+    if(!strncasecmp(szCommandLine, "-nohome", 7)) {
+	FIXME("skipping -nohome option\n");
+	szCommandLine += 8;
+    }
+
     if(strcmp(szCommandLine, "-Embedding")) {
         LPWSTR url;
         DWORD len;
