@@ -1672,7 +1672,7 @@ static const IAdviseSinkVtbl DefaultHandler_IAdviseSink_VTable =
   DefaultHandler_IAdviseSink_OnClose
 };
 
-static const IPersistStorageVtbl DefaultHander_IPersistStorage_VTable =
+static const IPersistStorageVtbl DefaultHandler_IPersistStorage_VTable =
 {
   DefaultHandler_IPersistStorage_QueryInterface,
   DefaultHandler_IPersistStorage_AddRef,
@@ -1709,6 +1709,7 @@ static DefaultHandler* DefaultHandler_Construct(
   This->lpvtblIDataObject = &DefaultHandler_IDataObject_VTable;
   This->lpvtblIRunnableObject = &DefaultHandler_IRunnableObject_VTable;
   This->lpvtblIAdviseSink = &DefaultHandler_IAdviseSink_VTable;
+  This->lpvtblIPersistStorage = &DefaultHandler_IPersistStorage_VTable;
 
   /*
    * Start with one reference count. The caller of this function
