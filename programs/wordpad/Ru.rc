@@ -72,6 +72,7 @@ BEGIN
     END
     POPUP "‘ор&мат"
     BEGIN
+        MENUITEM "&Font . . .",                  ID_FONTSETTINGS
         MENUITEM "B&ullet points"                ID_BULLET
         MENUITEM "&Paragraph . . ."              ID_PARAFORMAT
         MENUITEM "&Tabs . . ."                   ID_TABSTOPS

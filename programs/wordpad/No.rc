@@ -73,6 +73,7 @@ BEGIN
     END
     POPUP "F&ormat"
     BEGIN
+        MENUITEM "&Skrift . . .",               ID_FONTSETTINGS
         MENUITEM "&Punktmerking"                ID_BULLET
         MENUITEM "&Avsnitt . . ."               ID_PARAFORMAT
         MENUITEM "&Tabulatorer . . ."           ID_TABSTOPS

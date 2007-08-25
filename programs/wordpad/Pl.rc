@@ -74,6 +74,7 @@ BEGIN
     END
     POPUP "F&ormat"
     BEGIN
+        MENUITEM "&Font . . .",                  ID_FONTSETTINGS
         MENUITEM "&Bullet points"                ID_BULLET
         MENUITEM "&Paragraph . . ."              ID_PARAFORMAT
         MENUITEM "Tab&s . . ."                   ID_TABSTOPS

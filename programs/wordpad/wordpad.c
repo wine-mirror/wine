@@ -719,6 +719,8 @@ static void set_font(LPCWSTR wszFaceName)
 {
     HWND hReBarWnd = GetDlgItem(hMainWnd, IDC_REBAR);
     HWND hSizeListWnd = GetDlgItem(hReBarWnd, IDC_SIZELIST);
+    HWND hFontListWnd = GetDlgItem(hReBarWnd, IDC_FONTLIST);
+    HWND hFontListEditWnd = (HWND)SendMessageW(hFontListWnd, CBEM_GETEDITCONTROL, 0, 0);
     CHARFORMAT2W fmt;
 
     ZeroMemory(&fmt, sizeof(fmt));
@@ -731,6 +733,8 @@ static void set_font(LPCWSTR wszFaceName)
     SendMessageW(hEditorWnd, EM_SETCHARFORMAT,  SCF_SELECTION, (LPARAM)&fmt);
 
     populate_size_list(hSizeListWnd);
+
+    SendMessageW(hFontListEditWnd, WM_SETTEXT, 0, (LPARAM)(LPWSTR)wszFaceName);
 }
 
 static void set_default_font(void)
@@ -785,8 +789,48 @@ static void add_font(LPWSTR fontName, DWORD fontType, HWND hListWnd, NEWTEXTMETR
     SendMessageW(hListWnd, CBEM_INSERTITEMW, 0, (LPARAM)&cbItem);
 }
 
+static void dialog_choose_font(void)
+{
+    CHOOSEFONTW cf;
+    LOGFONTW lf;
+    CHARFORMAT2W fmt;
+    HDC hDC = GetDC(hMainWnd);
+
+    ZeroMemory(&cf, sizeof(cf));
+    cf.lStructSize = sizeof(cf);
+    cf.hwndOwner = hMainWnd;
+    cf.lpLogFont = &lf;
+    cf.Flags = CF_SCREENFONTS | CF_NOSCRIPTSEL | CF_INITTOLOGFONTSTRUCT;
+
+    ZeroMemory(&fmt, sizeof(fmt));
+    fmt.cbSize = sizeof(fmt);
+
+    SendMessageW(hEditorWnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+    lstrcpyW(cf.lpLogFont->lfFaceName, fmt.szFaceName);
+    cf.lpLogFont->lfItalic = (fmt.dwEffects & CFE_ITALIC) ? TRUE : FALSE;
+    cf.lpLogFont->lfWeight = (fmt.dwEffects & CFE_BOLD) ? FW_BOLD : FW_NORMAL;
+    cf.lpLogFont->lfHeight = -MulDiv(fmt.yHeight / 20, GetDeviceCaps(hDC, LOGPIXELSY), 72);
+
+    if(ChooseFontW(&cf))
+    {
+        ZeroMemory(&fmt, sizeof(fmt));
+        fmt.cbSize = sizeof(fmt);
+        fmt.dwMask = CFM_BOLD | CFM_ITALIC | CFM_SIZE;
+        fmt.yHeight = cf.iPointSize * 2;
+
+        if(cf.nFontType & BOLD_FONTTYPE)
+            fmt.dwEffects |= CFE_BOLD;
+        if(cf.nFontType & ITALIC_FONTTYPE)
+            fmt.dwEffects |= CFE_ITALIC;
+
+        SendMessageW(hEditorWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+        set_font(cf.lpLogFont->lfFaceName);
+    }
+}
+
+
 int CALLBACK enum_font_proc(const LOGFONTW *lpelfe, const TEXTMETRICW *lpntme,
-                                       DWORD FontType, LPARAM lParam)
+                            DWORD FontType, LPARAM lParam)
 {
     HWND hListWnd = (HWND) lParam;
 
@@ -2668,6 +2712,10 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_FIND_NEXT:
         handle_findmsg(&findreplace);
+        break;
+
+    case ID_FONTSETTINGS:
+        dialog_choose_font();
         break;
 
     case ID_PRINT:

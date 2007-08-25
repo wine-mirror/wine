@@ -75,6 +75,7 @@ BEGIN
     POPUP "형식(&O)"
     BEGIN
         MENUITEM " 강조 점(&U)"                ID_BULLET
+        MENUITEM "&Font . . .",               ID_FONTSETTINGS
         MENUITEM "&Paragraph . . ."              ID_PARAFORMAT
         MENUITEM "&Tabs . . ."                   ID_TABSTOPS
         POPUP "배경(&B)"
