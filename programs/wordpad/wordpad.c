@@ -1034,7 +1034,16 @@ static void target_device(void)
 
 static void set_fileformat(WPARAM format)
 {
+    HICON hIcon;
+    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
     fileFormat = format;
+
+    if(format & SF_TEXT)
+        hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_TXT));
+    else
+        hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_RTF));
+
+    SendMessageW(hMainWnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
 
     set_bar_states();
     set_default_font();
@@ -3199,6 +3208,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
 
     set_caption(NULL);
     set_bar_states();
+    set_fileformat(SF_RTF);
     hPopupMenu = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDM_POPUP));
     get_default_printer_opts();
     target_device();
