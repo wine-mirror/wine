@@ -42,7 +42,7 @@ void WINAPI MD5Init( MD5_CTX *ctx );
 void WINAPI MD5Update( MD5_CTX *ctx, const unsigned char *buf, unsigned int len );
 void WINAPI MD5Final( MD5_CTX *ctx );
 
-void HMACMD5Init(HMAC_MD5_CTX *ctx, unsigned char *key, unsigned int key_len);
-void HMACMD5Update(HMAC_MD5_CTX *ctx, unsigned char *data, unsigned int data_len);
+void HMACMD5Init(HMAC_MD5_CTX *ctx, const unsigned char *key, unsigned int key_len);
+void HMACMD5Update(HMAC_MD5_CTX *ctx, const unsigned char *data, unsigned int data_len);
 void HMACMD5Final(HMAC_MD5_CTX *ctx, unsigned char *digest);
 #endif /*_HMAC_MD5_H_*/

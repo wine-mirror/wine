@@ -29,7 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
 static SECURITY_STATUS schan_QueryCredentialsAttributes(
- PCredHandle phCredential, ULONG ulAttribute, PVOID pBuffer)
+ PCredHandle phCredential, ULONG ulAttribute, const VOID *pBuffer)
 {
     SECURITY_STATUS ret;
 
@@ -111,7 +111,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryCredentialsAttributesW(
     return ret;
 }
 
-static SECURITY_STATUS schan_CheckCreds(PSCHANNEL_CRED schanCred)
+static SECURITY_STATUS schan_CheckCreds(const SCHANNEL_CRED *schanCred)
 {
     SECURITY_STATUS st;
 
@@ -149,7 +149,7 @@ static SECURITY_STATUS schan_CheckCreds(PSCHANNEL_CRED schanCred)
     return st;
 }
 
-static SECURITY_STATUS schan_AcquireClientCredentials(PSCHANNEL_CRED schanCred,
+static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schanCred,
  PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS st = SEC_E_OK;
@@ -177,7 +177,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(PSCHANNEL_CRED schanCred,
     return st;
 }
 
-static SECURITY_STATUS schan_AcquireServerCredentials(PSCHANNEL_CRED schanCred,
+static SECURITY_STATUS schan_AcquireServerCredentials(const SCHANNEL_CRED *schanCred,
  PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS st;
@@ -194,7 +194,7 @@ static SECURITY_STATUS schan_AcquireServerCredentials(PSCHANNEL_CRED schanCred,
 }
 
 static SECURITY_STATUS schan_AcquireCredentialsHandle(ULONG fCredentialUse,
- PSCHANNEL_CRED schanCred, PCredHandle phCredential, PTimeStamp ptsExpiry)
+ const SCHANNEL_CRED *schanCred, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
 

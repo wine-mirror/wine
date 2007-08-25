@@ -588,7 +588,7 @@ static void SECUR32_initializeProviders(void)
     }
 }
 
-SecurePackage *SECUR32_findPackageW(PWSTR packageName)
+SecurePackage *SECUR32_findPackageW(PCWSTR packageName)
 {
     SecurePackage *ret = NULL;
     BOOL matched = FALSE;
@@ -634,7 +634,7 @@ SecurePackage *SECUR32_findPackageW(PWSTR packageName)
     return ret;
 }
 
-SecurePackage *SECUR32_findPackageA(PSTR packageName)
+SecurePackage *SECUR32_findPackageA(PCSTR packageName)
 {
     SecurePackage *ret;
 
@@ -778,7 +778,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
  * structures) into an array of SecPkgInfoA structures, which it returns.
  */
 static PSecPkgInfoA thunk_PSecPkgInfoWToA(ULONG cPackages,
- const PSecPkgInfoW info)
+ const SecPkgInfoW *info)
 {
     PSecPkgInfoA ret;
 

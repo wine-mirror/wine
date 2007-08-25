@@ -112,11 +112,11 @@ void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
 /* Tries to find the package named packageName.  If it finds it, implicitly
  * loads the package if it isn't already loaded.
  */
-SecurePackage *SECUR32_findPackageW(PWSTR packageName);
+SecurePackage *SECUR32_findPackageW(PCWSTR packageName);
 
 /* Tries to find the package named packageName.  (Thunks to _findPackageW)
  */
-SecurePackage *SECUR32_findPackageA(PSTR packageName);
+SecurePackage *SECUR32_findPackageA(PCSTR packageName);
 
 /* A few string helpers; will return NULL if str is NULL.  Free return with
  * SECUR32_FREE */

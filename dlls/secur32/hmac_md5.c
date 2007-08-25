@@ -21,7 +21,7 @@
 
 #include "hmac_md5.h"
 
-void HMACMD5Init(HMAC_MD5_CTX *ctx, unsigned char *key, unsigned int key_len)
+void HMACMD5Init(HMAC_MD5_CTX *ctx, const unsigned char *key, unsigned int key_len)
 {
     int i;
     unsigned char inner_padding[64];
@@ -55,7 +55,7 @@ void HMACMD5Init(HMAC_MD5_CTX *ctx, unsigned char *key, unsigned int key_len)
     MD5Update(&(ctx->ctx), inner_padding, 64);
 }
 
-void HMACMD5Update(HMAC_MD5_CTX *ctx, unsigned char *data, unsigned int data_len)
+void HMACMD5Update(HMAC_MD5_CTX *ctx, const unsigned char *data, unsigned int data_len)
 {
     MD5Update(&(ctx->ctx), data, data_len);
 }
