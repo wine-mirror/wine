@@ -36,7 +36,7 @@ BEGIN
     POPUP "É&dition"
     BEGIN
         MENUITEM "&Annuler\tCtrl+Z",                ID_EDIT_UNDO
-        MENUITEM "&Répéter\tCtrl+Y",                ID_EDIT_REDO
+        MENUITEM "Ré&péter\tCtrl+Y",                ID_EDIT_REDO
         MENUITEM SEPARATOR
         MENUITEM "&Couper\tCtrl+X",                 ID_EDIT_CUT
         MENUITEM "Co&pier\tCtrl+C",                 ID_EDIT_COPY
@@ -46,6 +46,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Find . . .\tCrtl+F",             ID_FIND
         MENUITEM "Find &next\tF3",                  ID_FIND_NEXT
+        MENUITEM "&Replace . . .\tCtrl+H",          ID_REPLACE
         MENUITEM SEPARATOR
         MENUITEM "Lecture-&seule",                  ID_EDIT_READONLY
         MENUITEM "&Modifié",                        ID_EDIT_MODIFIED

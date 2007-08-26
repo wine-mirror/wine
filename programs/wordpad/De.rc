@@ -35,7 +35,7 @@ BEGIN
     END
     POPUP "&Bearbeiten"
     BEGIN
-        MENUITEM "&Rückgängig\tCtrl+Z",         ID_EDIT_UNDO
+        MENUITEM "Rü&ckgängig\tCtrl+Z",         ID_EDIT_UNDO
         MENUITEM "&Wiederholen\tCtrl+Y",        ID_EDIT_REDO
         MENUITEM SEPARATOR
         MENUITEM "Aus&schneiden\tCtrl+X",       ID_EDIT_CUT
@@ -46,6 +46,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Find . . .\tCrtl+F",         ID_FIND
         MENUITEM "Find &next\tF3",              ID_FIND_NEXT
+        MENUITEM "&Replace . . .\tCtrl+H",      ID_REPLACE
         MENUITEM SEPARATOR
         MENUITEM "Schreibgeschü&tzt",           ID_EDIT_READONLY
         MENUITEM "&Geändert",                   ID_EDIT_MODIFIED

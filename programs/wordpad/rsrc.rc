@@ -31,6 +31,7 @@ BEGIN
     "R",          ID_ALIGN_RIGHT,     VIRTKEY, CONTROL    
     "F",          ID_FIND,            VIRTKEY, CONTROL
     VK_F3,        ID_FIND_NEXT,       VIRTKEY
+    "H",          ID_REPLACE,         VIRTKEY, CONTROL
     "A",          ID_EDIT_SELECTALL,  VIRTKEY, CONTROL    
     "X",          ID_EDIT_CUT,        VIRTKEY, CONTROL    
     "C",          ID_EDIT_COPY,       VIRTKEY, CONTROL    

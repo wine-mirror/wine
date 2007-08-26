@@ -49,6 +49,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Find . . .\tCrtl+F",         ID_FIND
         MENUITEM "Find &next\tF3",              ID_FIND_NEXT
+        MENUITEM "&Replace . . .\tCtrl+H",      ID_REPLACE
         MENUITEM SEPARATOR
         MENUITEM "Salt-&okunur",                ID_EDIT_READONLY
         MENUITEM "&Deðiþmiþ",                   ID_EDIT_MODIFIED

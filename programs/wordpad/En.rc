@@ -36,7 +36,7 @@ BEGIN
     POPUP "&Edit"
     BEGIN
         MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
-        MENUITEM "&Redo\tCtrl+Y",               ID_EDIT_REDO
+        MENUITEM "R&edo\tCtrl+Y",               ID_EDIT_REDO
         MENUITEM SEPARATOR
         MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
@@ -46,11 +46,12 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Find . . .\tCrtl+F",         ID_FIND
         MENUITEM "Find &next\tF3",              ID_FIND_NEXT
+        MENUITEM "&Replace . . .\tCtrl+H",      ID_REPLACE
         MENUITEM SEPARATOR
         MENUITEM "Read-&only",                  ID_EDIT_READONLY
         MENUITEM "&Modified",                   ID_EDIT_MODIFIED
         MENUITEM SEPARATOR
-        POPUP "&Extras"
+        POPUP "E&xtras"
         BEGIN
             MENUITEM "Selection &info",             ID_EDIT_SELECTIONINFO
             MENUITEM "Character &format",           ID_EDIT_CHARFORMAT

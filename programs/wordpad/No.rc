@@ -46,8 +46,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Søk etter . . .\tCrtl+F",  ID_FIND
         MENUITEM "Søk etter &neste\tF3",      ID_FIND_NEXT
+        MENUITEM "E&rstatt . . .\tCtrl+H",    ID_REPLACE
         MENUITEM SEPARATOR
-        MENUITEM "Sk&rivebeskyttet",          ID_EDIT_READONLY
+        MENUITEM "S&krivebeskyttet",          ID_EDIT_READONLY
         MENUITEM "E&ndret",                   ID_EDIT_MODIFIED
         MENUITEM SEPARATOR
         POPUP "&Ekstra"

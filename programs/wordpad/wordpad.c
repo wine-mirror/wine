@@ -1844,7 +1844,9 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
         hFindWnd = 0;
         pFr->Flags = FR_FINDNEXT;
         return 0;
-    } else if(pFr->Flags & FR_FINDNEXT)
+    }
+
+    if(pFr->Flags & FR_FINDNEXT || pFr->Flags & FR_REPLACE || pFr->Flags & FR_REPLACEALL)
     {
         DWORD flags = FR_DOWN;
         FINDTEXTW ft;
@@ -1918,13 +1920,19 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
             cr.cpMin = end;
             SendMessageW(hEditorWnd, EM_SETSEL, (WPARAM)ret, (LPARAM)end);
             SendMessageW(hEditorWnd, EM_SCROLLCARET, 0, 0);
+
+            if(pFr->Flags & FR_REPLACE || pFr->Flags & FR_REPLACEALL)
+                SendMessageW(hEditorWnd, EM_REPLACESEL, TRUE, (LPARAM)pFr->lpstrReplaceWith);
+
+            if(pFr->Flags & FR_REPLACEALL)
+                handle_findmsg(pFr);
         }
     }
 
     return 0;
 }
 
-static void dialog_find(LPFINDREPLACEW fr)
+static void dialog_find(LPFINDREPLACEW fr, BOOL replace)
 {
     static WCHAR findBuffer[MAX_STRING_LEN];
 
@@ -1936,7 +1944,10 @@ static void dialog_find(LPFINDREPLACEW fr)
     fr->lCustData = -1;
     fr->wFindWhatLen = MAX_STRING_LEN*sizeof(WCHAR);
 
-    hFindWnd = FindTextW(fr);
+    if(replace)
+        hFindWnd = ReplaceTextW(fr);
+    else
+        hFindWnd = FindTextW(fr);
 }
 
 static void registry_read_options(void)
@@ -2716,11 +2727,15 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case ID_FIND:
-        dialog_find(&findreplace);
+        dialog_find(&findreplace, FALSE);
         break;
 
     case ID_FIND_NEXT:
         handle_findmsg(&findreplace);
+        break;
+
+    case ID_REPLACE:
+        dialog_find(&findreplace, TRUE);
         break;
 
     case ID_FONTSETTINGS:
@@ -3048,6 +3063,9 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
 
     EnableMenuItem(hMenu, ID_FIND_NEXT, MF_BYCOMMAND|((textLength && mi.dwItemData) ?
                    MF_ENABLED : MF_GRAYED));
+
+    EnableMenuItem(hMenu, ID_REPLACE, MF_BYCOMMAND|(textLength ? MF_ENABLED : MF_GRAYED));
+
     return 0;
 }
 

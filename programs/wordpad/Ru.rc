@@ -45,6 +45,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Find . . .\tCrtl+F",         ID_FIND
         MENUITEM "Find &next\tF3",              ID_FIND_NEXT
+        MENUITEM "&Replace . . .\tCtrl+H",      ID_REPLACE
         MENUITEM SEPARATOR
         MENUITEM "&Только для чтения",          ID_EDIT_READONLY
         MENUITEM "&Изменен",                    ID_EDIT_MODIFIED

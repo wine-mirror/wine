@@ -37,7 +37,7 @@ BEGIN
     POPUP "편집(&E)"
     BEGIN
         MENUITEM "되돌리기(&U)\tCtrl+Z",               ID_EDIT_UNDO
-        MENUITEM "다시 실행(&R)\tCtrl+Y",               ID_EDIT_REDO
+        MENUITEM "다시 실행(&E)\tCtrl+Y",               ID_EDIT_REDO
         MENUITEM SEPARATOR
         MENUITEM "잘라내기(&T)\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "복사(&C)\tCtrl+C",               ID_EDIT_COPY
@@ -47,11 +47,12 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "찾기(&F). . .\tCrtl+F",         ID_FIND
         MENUITEM "다음 찾기(&N)\tF3",              ID_FIND_NEXT
+        MENUITEM "&Replace . . .\tCtrl+H",      ID_REPLACE
         MENUITEM SEPARATOR
         MENUITEM "읽기 전용(&O)",                  ID_EDIT_READONLY
         MENUITEM "수정 가능(&M)",                   ID_EDIT_MODIFIED
         MENUITEM SEPARATOR
-        POPUP "기타(&E)"
+        POPUP "기타(&X)"
         BEGIN
             MENUITEM "선택 영역 정보(&I)",             ID_EDIT_SELECTIONINFO
             MENUITEM "문자 형식(&F)",           ID_EDIT_CHARFORMAT
