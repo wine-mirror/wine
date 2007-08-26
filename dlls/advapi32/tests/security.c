@@ -1406,8 +1406,10 @@ static void test_LookupAccountName(void)
     ok(ret, "Failed to lookup account name\n");
     todo_wine
     {
-        ok(!lstrcmp(account, "BUILTIN"), "Expected BUILTIN, got %s\n", account);
-        ok(!lstrcmp(domain, "BUILTIN"), "Expected BUILTIN, got %s\n", domain);
+        /* Using a fixed string will not work on different locales */
+        ok(!lstrcmp(account, domain),
+           "Got %s for account and %s for domain, these should be the same\n",
+           account, domain);
         ok(sid_use == SidTypeDomain, "Expected SidTypeDomain, got %d\n", SidTypeDomain);
     }
 
