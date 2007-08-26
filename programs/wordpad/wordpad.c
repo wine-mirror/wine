@@ -800,7 +800,7 @@ static void dialog_choose_font(void)
     cf.lStructSize = sizeof(cf);
     cf.hwndOwner = hMainWnd;
     cf.lpLogFont = &lf;
-    cf.Flags = CF_SCREENFONTS | CF_NOSCRIPTSEL | CF_INITTOLOGFONTSTRUCT;
+    cf.Flags = CF_SCREENFONTS | CF_NOSCRIPTSEL | CF_INITTOLOGFONTSTRUCT | CF_EFFECTS;
 
     ZeroMemory(&fmt, sizeof(fmt));
     fmt.cbSize = sizeof(fmt);
@@ -809,19 +809,28 @@ static void dialog_choose_font(void)
     lstrcpyW(cf.lpLogFont->lfFaceName, fmt.szFaceName);
     cf.lpLogFont->lfItalic = (fmt.dwEffects & CFE_ITALIC) ? TRUE : FALSE;
     cf.lpLogFont->lfWeight = (fmt.dwEffects & CFE_BOLD) ? FW_BOLD : FW_NORMAL;
+    cf.lpLogFont->lfUnderline = (fmt.dwEffects & CFE_UNDERLINE) ? TRUE : FALSE;
+    cf.lpLogFont->lfStrikeOut = (fmt.dwEffects & CFE_STRIKEOUT) ? TRUE : FALSE;
     cf.lpLogFont->lfHeight = -MulDiv(fmt.yHeight / 20, GetDeviceCaps(hDC, LOGPIXELSY), 72);
+    cf.rgbColors = fmt.crTextColor;
 
     if(ChooseFontW(&cf))
     {
         ZeroMemory(&fmt, sizeof(fmt));
         fmt.cbSize = sizeof(fmt);
-        fmt.dwMask = CFM_BOLD | CFM_ITALIC | CFM_SIZE;
+        fmt.dwMask = CFM_BOLD | CFM_ITALIC | CFM_SIZE | CFM_UNDERLINE | CFM_STRIKEOUT | CFM_COLOR;
         fmt.yHeight = cf.iPointSize * 2;
 
         if(cf.nFontType & BOLD_FONTTYPE)
             fmt.dwEffects |= CFE_BOLD;
         if(cf.nFontType & ITALIC_FONTTYPE)
             fmt.dwEffects |= CFE_ITALIC;
+        if(cf.lpLogFont->lfUnderline == TRUE)
+            fmt.dwEffects |= CFE_UNDERLINE;
+        if(cf.lpLogFont->lfStrikeOut == TRUE)
+            fmt.dwEffects |= CFE_STRIKEOUT;
+
+        fmt.crTextColor = cf.rgbColors;
 
         SendMessageW(hEditorWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
         set_font(cf.lpLogFont->lfFaceName);
