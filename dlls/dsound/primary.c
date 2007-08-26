@@ -81,15 +81,16 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 						  (LPVOID*)&(device->hwbuf));
 
 		if (err != DS_OK) {
-			WARN("IDsDriver_CreateSoundBuffer failed, falling back to waveout\n");
+			WARN("IDsDriver_CreateSoundBuffer failed (%08x), falling back to waveout\n", err);
 			/* Wine-only: close wine directsound driver, then reopen without WAVE_DIRECTSOUND */
-			device->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT;
 			IDsDriver_Close(device->driver);
-			waveOutClose(device->hwo);
+			if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
+				waveOutClose(device->hwo);
 			IDsDriver_Release(device->driver);
 			device->driver = NULL;
 			device->buffer = NULL;
 			device->hwo = 0;
+			device->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT;
 			err = mmErr(waveOutOpen(&(device->hwo), device->drvdesc.dnDevNode, device->pwfx, (DWORD_PTR)DSOUND_callback, (DWORD)device, CALLBACK_FUNCTION));
 			if (err != DS_OK)
 			{
@@ -207,8 +208,11 @@ static void DSOUND_PrimaryClose(DirectSoundDevice *device)
 		/* clear the queue */
 		device->pwqueue = 0;
 	} else {
-		if (IDsDriverBuffer_Release(device->hwbuf) == 0)
+		ULONG ref = IDsDriverBuffer_Release(device->hwbuf);
+		if (!ref)
 			device->hwbuf = 0;
+		else
+			ERR("Still %d references on primary buffer, refcount leak?\n", ref);
 	}
 }
 
