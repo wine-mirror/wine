@@ -134,8 +134,8 @@ FONT 8, "MS Shell Dlg"
     PUSHBUTTON      "&Bruk", psh3,218,40,40,14,WS_GROUP | WS_TABSTOP
     PUSHBUTTON      "&Hjelp" , pshHelp,218,57,40,14,WS_GROUP | WS_TABSTOP
     GROUPBOX        "Effekter",grp1,6,72,84,34,WS_GROUP
-    CHECKBOX	    "Gjennomstre&ket", chx1, 10,82,50,10, BS_AUTOCHECKBOX | WS_TABSTOP
-    CHECKBOX 	    "&Understreket", chx2, 10,94,50,10, BS_AUTOCHECKBOX
+    CHECKBOX	    "Gjennomstre&ket", chx1, 10,82,70,10, BS_AUTOCHECKBOX | WS_TABSTOP
+    CHECKBOX 	    "&Understreket", chx2, 10,94,70,10, BS_AUTOCHECKBOX
     LTEXT           "&Farge:", stc4 ,6,110,30,9
     COMBOBOX        cmb4,6,120,84,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
