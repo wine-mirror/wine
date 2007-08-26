@@ -82,3 +82,10 @@ HRESULT WINAPI DllUnregisterServer(void)
     FIXME("()\n");
     return S_OK;
 }
+
+BOOL WINAPI WinHttpCheckPlatform(void)
+{
+    FIXME("stub\n");
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}

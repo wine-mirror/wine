@@ -3,7 +3,7 @@
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
 @ stub WinHttpAddRequestHeaders
-@ stub WinHttpCheckPlatform
+@ stdcall WinHttpCheckPlatform()
 @ stub WinHttpCloseHandle
 @ stub WinHttpConnect
 @ stub WinHttpCrackUrl
