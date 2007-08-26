@@ -725,7 +725,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 	if (!p2)
 		x2 = 0;
 
-	if (x1 || x2)
+	if (!This->hwbuf && (x1 || x2))
 	{
 		RtlAcquireResourceShared(&This->device->buffer_list_lock, TRUE);
 		LIST_FOR_EACH_ENTRY(iter, &This->buffer->buffers, IDirectSoundBufferImpl, entry )
@@ -1021,8 +1021,16 @@ HRESULT IDirectSoundBufferImpl_Create(
 	if (wfex->wBitsPerSample==16) capf |= DSCAPS_SECONDARY16BIT;
 	else capf |= DSCAPS_SECONDARY8BIT;
 
-	use_hw = (device->drvcaps.dwFlags & capf) == capf;
-	TRACE("use_hw = 0x%08x, capf = 0x%08x, device->drvcaps.dwFlags = 0x%08x\n", use_hw, capf, device->drvcaps.dwFlags);
+	use_hw = !!(dsbd->dwFlags & DSBCAPS_LOCHARDWARE);
+	TRACE("use_hw = %d, capf = 0x%08x, device->drvcaps.dwFlags = 0x%08x\n", use_hw, capf, device->drvcaps.dwFlags);
+	if (use_hw && (device->drvcaps.dwFlags & capf) != capf)
+	{
+		WARN("Format not supported for hardware buffer\n");
+		HeapFree(GetProcessHeap(),0,dsb->pwfx);
+		HeapFree(GetProcessHeap(),0,dsb);
+		*pdsb = NULL;
+		return DSERR_BADFORMAT;
+	}
 
 	/* FIXME: check hardware sample rate mixing capabilities */
 	/* FIXME: check app hints for software/hardware buffer (STATIC, LOCHARDWARE, etc) */
@@ -1050,10 +1058,6 @@ HRESULT IDirectSoundBufferImpl_Create(
 			*pdsb = NULL;
 			return DSERR_OUTOFMEMORY;
 		}
-		dsb->buffer->ref = 1;
-		list_init(&dsb->buffer->buffers);
-		list_add_head(&dsb->buffer->buffers, &dsb->entry);
-		FillMemory(dsb->buffer->memory, dsb->buflen, dsbd->lpwfxFormat->wBitsPerSample == 8 ? 128 : 0);
 	}
 
 	/* Allocate the hardware buffer */
@@ -1061,28 +1065,23 @@ HRESULT IDirectSoundBufferImpl_Create(
 		err = IDsDriver_CreateSoundBuffer(device->driver,wfex,dsbd->dwFlags,0,
 						  &(dsb->buflen),&(dsb->buffer->memory),
 						  (LPVOID*)&(dsb->hwbuf));
-                /* fall back to software buffer on failure */
-		if (err != DS_OK) {
-			TRACE("IDsDriver_CreateSoundBuffer failed, falling back to software buffer\n");
-			use_hw = 0;
-			if (device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
-				dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
-				if (dsb->buffer->memory == NULL) {
-					WARN("out of memory\n");
-					HeapFree(GetProcessHeap(),0,dsb->buffer);
-					HeapFree(GetProcessHeap(),0,dsb->pwfx);
-					HeapFree(GetProcessHeap(),0,dsb);
-					*pdsb = NULL;
-					return DSERR_OUTOFMEMORY;
-				}
-				dsb->buffer->ref = 1;
-				list_init(&dsb->buffer->buffers);
-				list_add_head(&dsb->buffer->buffers, &dsb->entry);
-				FillMemory(dsb->buffer->memory, dsb->buflen, dsbd->lpwfxFormat->wBitsPerSample == 8 ? 128 : 0);
-			}
-			err = DS_OK;
+		if (FAILED(err))
+		{
+			WARN("Failed to create hardware secondary buffer: %08x\n", err);
+			if (device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY)
+				HeapFree(GetProcessHeap(),0,dsb->buffer->memory);
+			HeapFree(GetProcessHeap(),0,dsb->buffer);
+			HeapFree(GetProcessHeap(),0,dsb->pwfx);
+			HeapFree(GetProcessHeap(),0,dsb);
+			*pdsb = NULL;
+			return DSERR_GENERIC;
 		}
 	}
+
+	dsb->buffer->ref = 1;
+	list_init(&dsb->buffer->buffers);
+	list_add_head(&dsb->buffer->buffers, &dsb->entry);
+	FillMemory(dsb->buffer->memory, dsb->buflen, dsbd->lpwfxFormat->wBitsPerSample == 8 ? 128 : 0);
 
 	/* It's not necessary to initialize values to zero since */
 	/* we allocated this structure with HEAP_ZERO_MEMORY... */
@@ -1201,40 +1200,16 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
 
         hres = IDsDriver_DuplicateSoundBuffer(device->driver, pdsb->hwbuf,
                                               (LPVOID *)&dsb->hwbuf);
-        if (hres != DS_OK) {
-            TRACE("IDsDriver_DuplicateSoundBuffer failed, falling back to "
-                  "software buffer\n");
-            dsb->hwbuf = NULL;
-            /* allocate buffer */
-            if (device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
-                dsb->buffer = HeapAlloc(GetProcessHeap(),0,sizeof(*(dsb->buffer)));
-                if (dsb->buffer == NULL) {
-                    WARN("out of memory\n");
-                    HeapFree(GetProcessHeap(),0,dsb);
-                    *ppdsb = NULL;
-                    return DSERR_OUTOFMEMORY;
-                }
-
-                dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
-                if (dsb->buffer->memory == NULL) {
-                    WARN("out of memory\n");
-                    HeapFree(GetProcessHeap(),0,dsb->buffer);
-                    HeapFree(GetProcessHeap(),0,dsb);
-                    *ppdsb = NULL;
-                    return DSERR_OUTOFMEMORY;
-                }
-                dsb->buffer->ref = 1;
-                list_init(&dsb->buffer->buffers);
-                list_add_head(&dsb->buffer->buffers, &dsb->entry);
-                /* FIXME: copy buffer ? */
-            }
+        if (FAILED(hres)) {
+            WARN("IDsDriver_DuplicateSoundBuffer failed (%08x)\n", hres);
+            HeapFree(GetProcessHeap(),0,dsb);
+            *ppdsb = NULL;
+            return hres;
         }
-    } else {
-        dsb->hwbuf = NULL;
-        dsb->buffer->ref++;
-        list_add_head(&dsb->buffer->buffers, &dsb->entry);
     }
 
+    dsb->buffer->ref++;
+    list_add_head(&dsb->buffer->buffers, &dsb->entry);
     dsb->ref = 0;
     dsb->state = STATE_STOPPED;
     dsb->buf_mixpos = dsb->sec_mixpos = 0;
