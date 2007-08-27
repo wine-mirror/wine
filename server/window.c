@@ -1293,28 +1293,19 @@ static unsigned int get_window_update_flags( struct window *win, struct window *
 }
 
 
-/* expose a region of a window, looking for the top most parent that needs to be exposed */
+/* expose a region of a window on its parent */
 /* the region is in window coordinates */
-static void expose_window( struct window *win, struct window *top, struct region *region )
+static void expose_window( struct window *win, struct region *region )
 {
-    struct window *parent, *ptr;
-    int offset_x, offset_y;
+    struct window *parent = win;
+    int offset_x = win->window_rect.left - win->client_rect.left;
+    int offset_y = win->window_rect.top - win->client_rect.top;
 
-    /* find the top most parent that doesn't clip either siblings or children */
-    for (parent = ptr = win; ptr != top; ptr = ptr->parent)
+    if (win->parent && !is_desktop_window(win->parent))
     {
-        if (!(ptr->style & WS_CLIPCHILDREN)) parent = ptr;
-        if (!(ptr->style & WS_CLIPSIBLINGS)) parent = ptr->parent;
-    }
-    if (parent == win && parent != top && win->parent)
-        parent = win->parent;  /* always go up at least one level if possible */
-
-    offset_x = win->window_rect.left - win->client_rect.left;
-    offset_y = win->window_rect.top - win->client_rect.top;
-    for (ptr = win; ptr != parent && !is_desktop_window(ptr); ptr = ptr->parent)
-    {
-        offset_x += ptr->client_rect.left;
-        offset_y += ptr->client_rect.top;
+        offset_x += win->client_rect.left;
+        offset_y += win->client_rect.top;
+        parent = win->parent;
     }
     offset_region( region, offset_x, offset_y );
     redraw_window( parent, region, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
@@ -1370,7 +1361,7 @@ static void set_window_pos( struct window *win, struct window *previous,
         offset_region( old_vis_rgn, old_window_rect.left - window_rect->left,
                        old_window_rect.top - window_rect->top );
         if (xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ))
-            expose_window( win, top, new_vis_rgn );
+            expose_window( win, new_vis_rgn );
     }
     free_region( old_vis_rgn );
 
@@ -1455,7 +1446,7 @@ static void set_window_region( struct window *win, struct region *region, int re
     {
         /* expose anything revealed by the change */
         if (xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ))
-            expose_window( win, top, new_vis_rgn );
+            expose_window( win, new_vis_rgn );
         free_region( new_vis_rgn );
     }
 
