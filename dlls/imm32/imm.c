@@ -74,7 +74,7 @@ static UINT WM_MSIME_DOCUMENTFEED;
  */
 static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam);
-static void UpdateDataInDefaultIMEWindow(HWND hwnd);
+static void UpdateDataInDefaultIMEWindow(HWND hwnd, BOOL showable);
 static void ImmInternalPostIMEMessage(UINT, WPARAM, LPARAM);
 static void ImmInternalSetOpenStatus(BOOL fOpen);
 static HIMCC updateResultStr(HIMCC old, LPWSTR resultstr, DWORD len);
@@ -1672,7 +1672,7 @@ BOOL WINAPI ImmSetCompositionStringW(
         }
     }
 
-     UpdateDataInDefaultIMEWindow(hwndDefault);
+     UpdateDataInDefaultIMEWindow(hwndDefault,FALSE);
 
      ImmInternalPostIMEMessage(WM_IME_COMPOSITION, wParam, flags);
 
@@ -2033,9 +2033,24 @@ static void PaintDefaultIMEWnd(HWND hwnd)
     EndPaint(hwnd,&ps);
 }
 
-static void UpdateDataInDefaultIMEWindow(HWND hwnd)
+static void UpdateDataInDefaultIMEWindow(HWND hwnd, BOOL showable)
 {
+    LPCOMPOSITIONSTRING compstr;
+
+    if (root_context->IMC.hCompStr)
+        compstr = ImmLockIMCC(root_context->IMC.hCompStr);
+    else
+        compstr = NULL;
+
+    if (compstr == NULL || compstr->dwCompStrLen == 0)
+        ShowWindow(hwndDefault,SW_HIDE);
+    else if (showable)
+        ShowWindow(hwndDefault,SW_SHOWNOACTIVATE);
+
     RedrawWindow(hwnd,NULL,NULL,RDW_ERASENOW|RDW_INVALIDATE);
+
+    if (compstr != NULL)
+        ImmUnlockIMCC(root_context->IMC.hCompStr);
 }
 
 /*
@@ -2075,7 +2090,7 @@ static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT msg, WPARAM wParam,
             if (lParam & GCS_RESULTSTR)
                     IMM_PostResult(root_context);
             else
-                 UpdateDataInDefaultIMEWindow(hwnd);
+                 UpdateDataInDefaultIMEWindow(hwnd,TRUE);
             break;
         case WM_IME_STARTCOMPOSITION:
             TRACE("IME message %s, 0x%x, 0x%x\n",
