@@ -3073,6 +3073,7 @@ struct get_update_region_reply
 #define UPDATE_ALLCHILDREN     0x10
 #define UPDATE_NOCHILDREN      0x20
 #define UPDATE_NOREGION        0x40
+#define UPDATE_DELAYED_ERASE   0x80
 
 
 
@@ -4730,6 +4731,6 @@ union generic_reply
     struct make_process_system_reply make_process_system_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 309
+#define SERVER_PROTOCOL_VERSION 310
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

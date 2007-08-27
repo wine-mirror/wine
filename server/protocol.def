@@ -2256,6 +2256,7 @@ enum message_type
 #define UPDATE_ALLCHILDREN     0x10  /* force repaint of all children */
 #define UPDATE_NOCHILDREN      0x20  /* don't try to repaint any children */
 #define UPDATE_NOREGION        0x40  /* don't return a region, only the flags */
+#define UPDATE_DELAYED_ERASE   0x80  /* still needs erase after BeginPaint */
 
 
 /* Update the z order of a window so that a given rectangle is fully visible */

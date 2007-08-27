@@ -243,7 +243,7 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
 static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
                         RECT *clip_rect, HDC *hdc_ret )
 {
-    BOOL need_erase = FALSE;
+    BOOL need_erase = (flags & UPDATE_DELAYED_ERASE) != 0;
     HDC hdc = 0;
     RECT dummy;
 
@@ -263,12 +263,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
                 if (type != NULLREGION)
                     need_erase = !SendMessageW( hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0 );
             }
-            if (!hdc_ret)
-            {
-                if (need_erase && hwnd != GetDesktopWindow())  /* FIXME: mark it as needing erase again */
-                    RedrawWindow( hwnd, clip_rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
-                USER_Driver->pReleaseDC( hwnd, hdc, TRUE );
-            }
+            if (!hdc_ret) USER_Driver->pReleaseDC( hwnd, hdc, TRUE );
         }
 
         if (hdc_ret) *hdc_ret = hdc;
@@ -287,6 +282,7 @@ void erase_now( HWND hwnd, UINT rdw_flags )
 {
     HWND child = 0;
     HRGN hrgn;
+    BOOL need_erase = FALSE;
 
     /* loop while we find a child to repaint */
     for (;;)
@@ -295,12 +291,13 @@ void erase_now( HWND hwnd, UINT rdw_flags )
 
         if (rdw_flags & RDW_NOCHILDREN) flags |= UPDATE_NOCHILDREN;
         else if (rdw_flags & RDW_ALLCHILDREN) flags |= UPDATE_ALLCHILDREN;
+        if (need_erase) flags |= UPDATE_DELAYED_ERASE;
 
         if (!(hrgn = send_ncpaint( hwnd, &child, &flags ))) break;
-        send_erase( child, flags, hrgn, NULL, NULL );
+        need_erase = send_erase( child, flags, hrgn, NULL, NULL );
 
         if (!flags) break;  /* nothing more to do */
-        if (rdw_flags & RDW_NOCHILDREN) break;
+        if ((rdw_flags & RDW_NOCHILDREN) && !need_erase) break;
     }
 }
 
@@ -736,7 +733,11 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
         POINT offset;
 
         retval = CombineRgn( hrgn, update_rgn, 0, RGN_COPY );
-        send_erase( hwnd, flags, update_rgn, NULL, NULL );
+        if (send_erase( hwnd, flags, update_rgn, NULL, NULL ))
+        {
+            flags = UPDATE_DELAYED_ERASE;
+            get_update_flags( hwnd, NULL, &flags );
+        }
         /* map region to client coordinates */
         offset.x = offset.y = 0;
         ScreenToClient( hwnd, &offset );
@@ -753,6 +754,7 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 {
     UINT flags = UPDATE_NOCHILDREN;
     HRGN update_rgn;
+    BOOL need_erase;
 
     if (erase) flags |= UPDATE_NONCLIENT | UPDATE_ERASE;
 
@@ -768,10 +770,11 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
             ReleaseDC( hwnd, hdc );
         }
     }
-    send_erase( hwnd, flags, update_rgn, NULL, NULL );
+    need_erase = send_erase( hwnd, flags, update_rgn, NULL, NULL );
 
     /* check if we still have an update region */
     flags = UPDATE_PAINT | UPDATE_NOCHILDREN;
+    if (need_erase) flags |= UPDATE_DELAYED_ERASE;
     return (get_update_flags( hwnd, NULL, &flags ) && (flags & UPDATE_PAINT));
 }
 

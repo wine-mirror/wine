@@ -88,9 +88,10 @@ struct window
     char             extra_bytes[1];  /* extra bytes storage */
 };
 
-#define PAINT_INTERNAL  0x01  /* internal WM_PAINT pending */
-#define PAINT_ERASE     0x02  /* needs WM_ERASEBKGND */
-#define PAINT_NONCLIENT 0x04  /* needs WM_NCPAINT */
+#define PAINT_INTERNAL      0x01  /* internal WM_PAINT pending */
+#define PAINT_ERASE         0x02  /* needs WM_ERASEBKGND */
+#define PAINT_NONCLIENT     0x04  /* needs WM_NCPAINT */
+#define PAINT_DELAYED_ERASE 0x08  /* still needs erase after WM_ERASEBKGND */
 
 /* growable array of user handles */
 struct user_handle_array
@@ -978,7 +979,7 @@ static void set_update_region( struct window *win, struct region *region )
             inc_window_paint_count( win, -1 );
             free_region( win->update_region );
         }
-        win->paint_flags &= ~(PAINT_ERASE | PAINT_NONCLIENT);
+        win->paint_flags &= ~(PAINT_ERASE | PAINT_DELAYED_ERASE | PAINT_NONCLIENT);
         win->update_region = NULL;
         if (region) free_region( region );
     }
@@ -1122,7 +1123,7 @@ static void redraw_window( struct window *win, struct region *region, int frame,
                 set_update_region( win, tmp );
             }
             if (flags & RDW_NOFRAME) validate_non_client( win );
-            if (flags & RDW_NOERASE) win->paint_flags &= ~PAINT_ERASE;
+            if (flags & RDW_NOERASE) win->paint_flags &= ~(PAINT_ERASE | PAINT_DELAYED_ERASE);
         }
     }
 
@@ -1178,11 +1179,19 @@ static unsigned int get_update_flags( struct window *win, unsigned int flags )
     }
     if (flags & UPDATE_PAINT)
     {
-        if (win->update_region) ret |= UPDATE_PAINT;
+        if (win->update_region)
+        {
+            if (win->paint_flags & PAINT_DELAYED_ERASE) ret |= UPDATE_DELAYED_ERASE;
+            ret |= UPDATE_PAINT;
+        }
     }
     if (flags & UPDATE_INTERNALPAINT)
     {
-        if (win->paint_flags & PAINT_INTERNAL) ret |= UPDATE_INTERNALPAINT;
+        if (win->paint_flags & PAINT_INTERNAL)
+        {
+            ret |= UPDATE_INTERNALPAINT;
+            if (win->paint_flags & PAINT_DELAYED_ERASE) ret |= UPDATE_DELAYED_ERASE;
+        }
     }
     return ret;
 }
@@ -1943,6 +1952,12 @@ DECL_HANDLER(get_update_region)
         }
     }
 
+    if (flags & UPDATE_DELAYED_ERASE)  /* this means that the previous call didn't erase */
+    {
+        if (from_child) from_child->paint_flags |= PAINT_DELAYED_ERASE;
+        else win->paint_flags |= PAINT_DELAYED_ERASE;
+    }
+
     reply->flags = get_window_update_flags( win, from_child, flags, &win );
     reply->child = win->handle;
 
@@ -1975,7 +1990,7 @@ DECL_HANDLER(get_update_region)
         if (reply->flags & UPDATE_NONCLIENT) validate_non_client( win );
         if (reply->flags & UPDATE_ERASE)
         {
-            win->paint_flags &= ~PAINT_ERASE;
+            win->paint_flags &= ~(PAINT_ERASE | PAINT_DELAYED_ERASE);
             /* desktop window only gets erased, not repainted */
             if (is_desktop_window(win)) validate_whole_window( win );
         }
