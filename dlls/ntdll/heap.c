@@ -1461,7 +1461,8 @@ error:
  */
 ULONG WINAPI RtlCompactHeap( HANDLE heap, ULONG flags )
 {
-    FIXME( "stub\n" );
+    static BOOL reported;
+    if (!reported++) FIXME( "(%p, 0x%x) stub\n", heap, flags );
     return 0;
 }
 
