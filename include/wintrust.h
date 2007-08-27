@@ -533,6 +533,25 @@ typedef struct _CAT_MEMBERINFO
     DWORD  dwCertVersion;
 } CAT_MEMBERINFO, *PCAT_MEMBERINFO;
 
+/* PSDK protects the remaining defines with WT_DEFINE_ALL_APIS, but it's
+ * defined by default.  No need to protect against bad headers from old PSDKs.
+ */
+
+typedef struct _WIN_CERTIFICATE {
+  DWORD dwLength;
+  WORD  wRevision;                   /*  WIN_CERT_REVISON_xxx */
+  WORD  wCertificateType;            /*  WIN_CERT_TYPE_xxx */
+  BYTE  bCertificate[ANYSIZE_ARRAY];
+} WIN_CERTIFICATE, *LPWIN_CERTIFICATE;
+
+#define WIN_CERT_REVISION_1_0 0x0100
+#define WIN_CERT_REVISION_2_0 0x0200
+
+#define WIN_CERT_TYPE_X509             0x0001 /* X.509 Certificate */
+#define WIN_CERT_TYPE_PKCS_SIGNED_DATA 0x0002 /* PKCS SignedData */
+#define WIN_CERT_TYPE_RESERVED_1       0x0003 /* Reserved */
+#define WIN_CERT_TYPE_TS_STACK_SIGNED  0x0004
+
 #define WIN_SPUB_ACTION_PUBLISHED_SOFTWARE \
      { 0x64b9d180, 0x8da2, 0x11cf, { 0x87,0x36,0x00,0xaa,0x00,0xa4,0x85,0xeb }}
 

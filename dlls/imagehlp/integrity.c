@@ -144,7 +144,7 @@ static BOOL IMAGEHLP_GetCertificateOffset( HANDLE handle, DWORD num,
  */
 
 BOOL WINAPI ImageAddCertificate(
-  HANDLE FileHandle, PWIN_CERTIFICATE Certificate, PDWORD Index)
+  HANDLE FileHandle, LPWIN_CERTIFICATE Certificate, PDWORD Index)
 {
   FIXME("(%p, %p, %p): stub\n",
     FileHandle, Certificate, Index
@@ -220,7 +220,7 @@ BOOL WINAPI ImageEnumerateCertificates(
  */
 BOOL WINAPI ImageGetCertificateData(
                 HANDLE handle, DWORD Index,
-                PWIN_CERTIFICATE Certificate, PDWORD RequiredLength)
+                LPWIN_CERTIFICATE Certificate, PDWORD RequiredLength)
 {
     DWORD r, offset, ofs, size, count;
 
@@ -263,7 +263,7 @@ BOOL WINAPI ImageGetCertificateData(
  *		ImageGetCertificateHeader (IMAGEHLP.@)
  */
 BOOL WINAPI ImageGetCertificateHeader(
-    HANDLE handle, DWORD index, PWIN_CERTIFICATE pCert)
+    HANDLE handle, DWORD index, LPWIN_CERTIFICATE pCert)
 {
     DWORD r, offset, ofs, size, count;
     const size_t cert_hdr_size = sizeof *pCert - sizeof pCert->bCertificate;

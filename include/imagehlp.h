@@ -71,13 +71,6 @@ typedef enum _IMAGEHLP_STATUS_REASON {
 
 #define CERT_SECTION_TYPE_ANY 0xFF
 
-#define WIN_CERT_REVISION_1_0 0x0100
-#define WIN_CERT_REVISION_2_0 0x0200
-
-#define WIN_CERT_TYPE_X509             0x0001 /* X.509 Certificate */
-#define WIN_CERT_TYPE_PKCS_SIGNED_DATA 0x0002 /* PKCS SignedData */
-#define WIN_CERT_TYPE_RESERVED_1       0x0003 /* Reserved */
-
 #define SPLITSYM_REMOVE_PRIVATE    0x00000001
 #define SPLITSYM_EXTRACT_ALL       0x00000002
 #define SPLITSYM_SYMBOLPATH_IS_SRC 0x00000004
@@ -178,13 +171,6 @@ typedef struct _LOADED_IMAGE
     LIST_ENTRY                  Links;
     ULONG                       SizeOfImage;
 } LOADED_IMAGE, *PLOADED_IMAGE;
-
-typedef struct _WIN_CERTIFICATE {
-  DWORD dwLength;
-  WORD  wRevision;                   /*  WIN_CERT_REVISON_xxx */
-  WORD  wCertificateType;            /*  WIN_CERT_TYPE_xxx */
-  BYTE  bCertificate[ANYSIZE_ARRAY];
-} WIN_CERTIFICATE, *PWIN_CERTIFICATE;
 
 typedef struct _API_VERSION {
   USHORT  MajorVersion;
@@ -841,7 +827,7 @@ DWORD WINAPI GetTimestampForLoadedLibrary(
   HMODULE Module
 );
 BOOL WINAPI ImageAddCertificate(
-  HANDLE FileHandle, PWIN_CERTIFICATE Certificate, PDWORD Index
+  HANDLE FileHandle, LPWIN_CERTIFICATE Certificate, PDWORD Index
 );
 PVOID WINAPI ImageDirectoryEntryToData(
   PVOID Base, BOOLEAN MappedAsImage, USHORT DirectoryEntry, PULONG Size
@@ -852,11 +838,11 @@ BOOL WINAPI ImageEnumerateCertificates(
 );
 BOOL WINAPI ImageGetCertificateData(
   HANDLE FileHandle, DWORD CertificateIndex,
-  PWIN_CERTIFICATE Certificate, PDWORD RequiredLength
+  LPWIN_CERTIFICATE Certificate, PDWORD RequiredLength
 );
 BOOL WINAPI ImageGetCertificateHeader(
   HANDLE FileHandle, DWORD CertificateIndex,
-  PWIN_CERTIFICATE Certificateheader
+  LPWIN_CERTIFICATE Certificateheader
 );
 BOOL WINAPI ImageGetDigestStream(
   HANDLE FileHandle, DWORD DigestLevel,
