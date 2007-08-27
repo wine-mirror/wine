@@ -1413,52 +1413,15 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
     device->guid = devGUID;
     device->driver = NULL;
 
-    /* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
-    if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
-        waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&device->driver, 0);
-
-    /* Get driver description */
-    if (device->driver) {
-        hr = IDsDriver_GetDriverDesc(device->driver,&(device->drvdesc));
-        if (hr != DS_OK) {
-            WARN("IDsDriver_GetDriverDesc failed\n");
-            return hr;
-        }
-    } else {
-        /* if no DirectSound interface available, use WINMM API instead */
-        device->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT;
-    }
-
     device->drvdesc.dnDevNode = wod;
-
-    /* If the driver requests being opened through MMSYSTEM
-     * (which is recommended by the DDK), it is supposed to happen
-     * before the DirectSound interface is opened */
-    if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
+    hr = DSOUND_ReopenDevice(device, FALSE);
+    if (FAILED(hr))
     {
-        DWORD flags = CALLBACK_FUNCTION;
-
-        /* disable direct sound if requested */
-        if (device->driver)
-            flags |= WAVE_DIRECTSOUND;
-
-        hr = mmErr(waveOutOpen(&(device->hwo),
-                                device->drvdesc.dnDevNode, device->pwfx,
-                                (DWORD_PTR)DSOUND_callback, (DWORD)device,
-                                flags));
-        if (hr != DS_OK) {
-            WARN("waveOutOpen failed\n");
-            return hr;
-        }
+        WARN("DSOUND_ReopenDevice failed: %08x\n", hr);
+        return hr;
     }
 
     if (device->driver) {
-        hr = IDsDriver_Open(device->driver);
-        if (hr != DS_OK) {
-            WARN("IDsDriver_Open failed\n");
-            return hr;
-        }
-
         /* the driver is now open, so it's now allowed to call GetCaps */
         hr = IDsDriver_GetCaps(device->driver,&(device->drvcaps));
         if (hr != DS_OK) {

@@ -68,6 +68,67 @@ static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
 		device->writelead = (device->pwfx->nSamplesPerSec / 100) * nBlockAlign;
 }
 
+HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
+{
+	HRESULT hres = DS_OK;
+	if (device->driver)
+	{
+		IDsDriver_Close(device->driver);
+		if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
+			waveOutClose(device->hwo);
+		IDsDriver_Release(device->driver);
+		device->driver = NULL;
+		device->buffer = NULL;
+		device->hwo = 0;
+	}
+	else if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
+		waveOutClose(device->hwo);
+
+	/* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
+	if (ds_hw_accel != DS_HW_ACCEL_EMULATION && !forcewave)
+		waveOutMessage((HWAVEOUT)device->drvdesc.dnDevNode, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&device->driver, 0);
+
+	/* Get driver description */
+	if (device->driver) {
+		DWORD wod = device->drvdesc.dnDevNode;
+		hres = IDsDriver_GetDriverDesc(device->driver,&(device->drvdesc));
+		device->drvdesc.dnDevNode = wod;
+		if (FAILED(hres)) {
+			WARN("IDsDriver_GetDriverDesc failed: %08x\n", hres);
+			IDsDriver_Release(device->driver);
+			device->driver = NULL;
+		}
+        }
+
+        /* if no DirectSound interface available, use WINMM API instead */
+	if (!device->driver)
+		device->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT;
+
+	if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
+	{
+		DWORD flags = CALLBACK_FUNCTION;
+
+		if (device->driver)
+			flags |= WAVE_DIRECTSOUND;
+
+		hres = mmErr(waveOutOpen(&(device->hwo), device->drvdesc.dnDevNode, device->pwfx, (DWORD_PTR)DSOUND_callback, (DWORD)device, flags));
+		if (FAILED(hres)) {
+			WARN("waveOutOpen failed\n");
+			if (device->driver)
+			{
+				IDsDriver_Release(device->driver);
+				device->driver = NULL;
+			}
+			return hres;
+		}
+	}
+
+	if (device->driver)
+		hres = IDsDriver_Open(device->driver);
+
+	return hres;
+}
+
 static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 {
 	HRESULT err = DS_OK;
@@ -82,17 +143,8 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 
 		if (err != DS_OK) {
 			WARN("IDsDriver_CreateSoundBuffer failed (%08x), falling back to waveout\n", err);
-			/* Wine-only: close wine directsound driver, then reopen without WAVE_DIRECTSOUND */
-			IDsDriver_Close(device->driver);
-			if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
-				waveOutClose(device->hwo);
-			IDsDriver_Release(device->driver);
-			device->driver = NULL;
-			device->buffer = NULL;
-			device->hwo = 0;
-			device->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT;
-			err = mmErr(waveOutOpen(&(device->hwo), device->drvdesc.dnDevNode, device->pwfx, (DWORD_PTR)DSOUND_callback, (DWORD)device, CALLBACK_FUNCTION));
-			if (err != DS_OK)
+			err = DSOUND_ReopenDevice(device, TRUE);
+			if (FAILED(err))
 			{
 				WARN("Falling back to waveout failed too! Giving up\n");
 				return err;
@@ -284,9 +336,15 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 		err = IDsDriverBuffer_Stop(device->hwbuf);
 		if (err == DSERR_BUFFERLOST) {
 			DSOUND_PrimaryClose(device);
-			err = DSOUND_PrimaryOpen(device);
+			err = DSOUND_ReopenDevice(device, !device->driver);
 			if (FAILED(err))
-				WARN("DSOUND_PrimaryOpen failed\n");
+				ERR("DSOUND_ReopenDevice failed\n");
+			else
+			{
+				err = DSOUND_PrimaryOpen(device);
+				if (FAILED(err))
+					WARN("DSOUND_PrimaryOpen failed\n");
+			}
 		} else if (err != DS_OK) {
 			WARN("IDsDriverBuffer_Stop failed\n");
 		}
