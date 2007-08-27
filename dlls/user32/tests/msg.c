@@ -941,6 +941,7 @@ static const struct message WmDragThickBordersBarSeq[] = { /* FIXME: add */
 static const struct message WmResizingChildWithMoveWindowSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE },
     { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_ERASEBKGND, sent|parent|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE },
     { WM_MOVE, sent|defwinproc },
@@ -4020,8 +4021,10 @@ static void test_messages(void)
     /* test WM_SETREDRAW on a visible child window */
     test_WM_SETREDRAW(hchild);
 
+    log_all_parent_messages++;
     MoveWindow(hchild, 10, 10, 20, 20, TRUE);
     ok_sequence(WmResizingChildWithMoveWindowSeq, "MoveWindow:child", FALSE);
+    log_all_parent_messages--;
 
     ShowWindow(hchild, SW_HIDE);
     flush_sequence();

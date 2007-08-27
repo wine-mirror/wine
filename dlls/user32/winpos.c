@@ -1604,19 +1604,15 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
                             &newWindowRect, &newClientRect, orig_flags, valid_rects ))
         return FALSE;
 
-    /* erase parent if hiding child */
-    if (!(orig_flags & SWP_DEFERERASE))
+    /* erase parent when hiding or resizing child */
+    if (!(orig_flags & SWP_DEFERERASE) &&
+        ((orig_flags & SWP_HIDEWINDOW) ||
+         (!(orig_flags & SWP_SHOWWINDOW) &&
+          (winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOGEOMETRYCHANGE)))
     {
-        if (orig_flags & SWP_HIDEWINDOW)
-        {
-            HWND parent = GetAncestor( winpos->hwnd, GA_PARENT );
-            erase_now( parent, RDW_NOCHILDREN );
-        }
-        else if (!(orig_flags & SWP_SHOWWINDOW) &&
-                 (winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOGEOMETRYCHANGE)
-        {
-            erase_now( winpos->hwnd, 0 );
-        }
+        HWND parent = GetAncestor( winpos->hwnd, GA_PARENT );
+        if (!parent || parent == GetDesktopWindow()) parent = winpos->hwnd;
+        erase_now( parent, 0 );
     }
 
     if( winpos->flags & SWP_HIDEWINDOW )
