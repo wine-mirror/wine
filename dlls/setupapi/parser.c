@@ -175,7 +175,7 @@ static void *grow_array( void *array, unsigned int *count, size_t elem )
 
 
 /* get the directory of the inf file (as counted string, not null-terminated) */
-static const WCHAR *get_inf_dir( struct inf_file *file, unsigned int *len )
+static const WCHAR *get_inf_dir( const struct inf_file *file, unsigned int *len )
 {
     const WCHAR *p = strrchrW( file->filename, '\\' );
     *len = p ? (p + 1 - file->filename) : 0;
@@ -184,7 +184,7 @@ static const WCHAR *get_inf_dir( struct inf_file *file, unsigned int *len )
 
 
 /* find a section by name */
-static int find_section( struct inf_file *file, const WCHAR *name )
+static int find_section( const struct inf_file *file, const WCHAR *name )
 {
     unsigned int i;
 
@@ -303,7 +303,7 @@ static struct field *add_field( struct inf_file *file, const WCHAR *text )
 
 
 /* retrieve the string substitution for a directory id */
-static const WCHAR *get_dirid_subst( struct inf_file *file, int dirid, unsigned int *len )
+static const WCHAR *get_dirid_subst( const struct inf_file *file, int dirid, unsigned int *len )
 {
     const WCHAR *ret;
 
@@ -316,7 +316,7 @@ static const WCHAR *get_dirid_subst( struct inf_file *file, int dirid, unsigned 
 
 /* retrieve the string substitution for a given string, or NULL if not found */
 /* if found, len is set to the substitution length */
-static const WCHAR *get_string_subst( struct inf_file *file, const WCHAR *str, unsigned int *len,
+static const WCHAR *get_string_subst( const struct inf_file *file, const WCHAR *str, unsigned int *len,
                                       BOOL no_trailing_slash )
 {
     static const WCHAR percent = '%';
@@ -365,7 +365,7 @@ static const WCHAR *get_string_subst( struct inf_file *file, const WCHAR *str, u
 /* do string substitutions on the specified text */
 /* the buffer is assumed to be large enough */
 /* returns necessary length not including terminating null */
-unsigned int PARSER_string_substW( struct inf_file *file, const WCHAR *text, WCHAR *buffer,
+unsigned int PARSER_string_substW( const struct inf_file *file, const WCHAR *text, WCHAR *buffer,
                                    unsigned int size )
 {
     const WCHAR *start, *subst, *p;
@@ -418,7 +418,7 @@ unsigned int PARSER_string_substW( struct inf_file *file, const WCHAR *text, WCH
 /* do string substitutions on the specified text */
 /* the buffer is assumed to be large enough */
 /* returns necessary length not including terminating null */
-unsigned int PARSER_string_substA( struct inf_file *file, const WCHAR *text, char *buffer,
+unsigned int PARSER_string_substA( const struct inf_file *file, const WCHAR *text, char *buffer,
                                    unsigned int size )
 {
     WCHAR buffW[MAX_STRING_LEN+1];
@@ -471,14 +471,14 @@ static inline enum parser_state set_state( struct parser *parser, enum parser_st
 
 
 /* check if the pointer points to an end of file */
-static inline int is_eof( struct parser *parser, const WCHAR *ptr )
+static inline int is_eof( const struct parser *parser, const WCHAR *ptr )
 {
     return (ptr >= parser->end || *ptr == CONTROL_Z);
 }
 
 
 /* check if the pointer points to an end of line */
-static inline int is_eol( struct parser *parser, const WCHAR *ptr )
+static inline int is_eol( const struct parser *parser, const WCHAR *ptr )
 {
     return (ptr >= parser->end || *ptr == CONTROL_Z || *ptr == '\n');
 }
