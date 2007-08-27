@@ -2512,6 +2512,7 @@ BOOL InitAdapters(void) {
         WineD3D_PixelFormat *cfgs;
         int attribute;
         DISPLAY_DEVICEW DisplayDevice;
+        HDC hdc;
 
         TRACE("Initializing default adapter\n");
         Adapters[0].monitorPoint.x = -1;
@@ -2539,6 +2540,14 @@ BOOL InitAdapters(void) {
             return FALSE;
         }
 
+        hdc = pwglGetCurrentDC();
+        if(!ret) {
+            ERR("Failed to get gl HDC\n");
+            HeapFree(GetProcessHeap(), 0, Adapters);
+            WineD3D_ReleaseFakeGLContext();
+            return FALSE;
+        }
+
         Adapters[0].driver = "Display";
         Adapters[0].description = "Direct3D HAL";
 
@@ -2549,7 +2558,7 @@ BOOL InitAdapters(void) {
         strcpyW(Adapters[0].DeviceName, DisplayDevice.DeviceName);
 
         attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
-        GL_EXTCALL(wglGetPixelFormatAttribivARB(wined3d_fake_gl_context_hdc, 0, 0, 1, &attribute, &Adapters[0].nCfgs));
+        GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, 0, 0, 1, &attribute, &Adapters[0].nCfgs));
 
         Adapters[0].cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Adapters[0].nCfgs *sizeof(WineD3D_PixelFormat));
         cfgs = Adapters[0].cfgs;
@@ -2561,7 +2570,7 @@ BOOL InitAdapters(void) {
         PUSH1(WGL_STENCIL_BITS_ARB)
 
         for(iPixelFormat=1; iPixelFormat<=Adapters[0].nCfgs; iPixelFormat++) {
-            res = GL_EXTCALL(wglGetPixelFormatAttribivARB(wined3d_fake_gl_context_hdc, iPixelFormat, 0, nAttribs, attribs, values));
+            res = GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, nAttribs, attribs, values));
 
             if(!res)
                 continue;
