@@ -89,9 +89,9 @@ static void WINTRUST_InitRegStructs(void)
 {
 #define WINTRUST_INITREGENTRY( action, dllname, functionname ) \
     action.cbStruct = sizeof(CRYPT_TRUST_REG_ENTRY); \
-    action.pwszDLLName = HeapAlloc(GetProcessHeap(), 0, sizeof(dllname)); \
+    action.pwszDLLName = WINTRUST_Alloc(sizeof(dllname)); \
     lstrcpyW(action.pwszDLLName, dllname); \
-    action.pwszFunctionName = HeapAlloc(GetProcessHeap(), 0, sizeof(functionname)); \
+    action.pwszFunctionName = WINTRUST_Alloc(sizeof(functionname)); \
     lstrcpyW(action.pwszFunctionName, functionname);
 
     WINTRUST_INITREGENTRY(SoftpubInitialization, SP_POLICY_PROVIDER_DLL_NAME, SP_INIT_FUNCTION)
@@ -125,8 +125,8 @@ static void WINTRUST_InitRegStructs(void)
 static void WINTRUST_FreeRegStructs(void)
 {
 #define WINTRUST_FREEREGENTRY( action ) \
-    HeapFree(GetProcessHeap(), 0, action.pwszDLLName); \
-    HeapFree(GetProcessHeap(), 0, action.pwszFunctionName);
+    WINTRUST_Free(action.pwszDLLName); \
+    WINTRUST_Free(action.pwszFunctionName);
 
     WINTRUST_FREEREGENTRY(SoftpubInitialization);
     WINTRUST_FREEREGENTRY(SoftpubMessage);
@@ -380,11 +380,11 @@ static LONG WINTRUST_WriteSingleUsageEntry(LPCSTR OID,
 
     /* Turn OID into a wide-character string */
     Len = MultiByteToWideChar( CP_ACP, 0, OID, -1, NULL, 0 );
-    OIDW = HeapAlloc( GetProcessHeap(), 0, Len * sizeof(WCHAR) );
+    OIDW = WINTRUST_Alloc( Len * sizeof(WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, OID, -1, OIDW, Len );
 
     /* Allocate the needed space for UsageKey */
-    UsageKey = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(Trust) + lstrlenW(Usages) + Len) * sizeof(WCHAR));
+    UsageKey = WINTRUST_Alloc((lstrlenW(Trust) + lstrlenW(Usages) + Len) * sizeof(WCHAR));
     /* Create the key string */
     lstrcpyW(UsageKey, Trust);
     lstrcatW(UsageKey, Usages);
@@ -399,8 +399,8 @@ static LONG WINTRUST_WriteSingleUsageEntry(LPCSTR OID,
     }
     RegCloseKey(Key);
 
-    HeapFree(GetProcessHeap(), 0, OIDW);
-    HeapFree(GetProcessHeap(), 0, UsageKey);
+    WINTRUST_Free(OIDW);
+    WINTRUST_Free(UsageKey);
 
     return Res;
 }
@@ -586,7 +586,7 @@ static BOOL WINTRUST_RegisterHttpsProv(void)
                                             SoftpubLoadUsage,
                                             SoftpubFreeUsage };
 
-    DefUsage.pwszDllName = HeapAlloc(GetProcessHeap(), 0, sizeof(SP_POLICY_PROVIDER_DLL_NAME));
+    DefUsage.pwszDllName = WINTRUST_Alloc(sizeof(SP_POLICY_PROVIDER_DLL_NAME));
     lstrcpyW(DefUsage.pwszDllName, SP_POLICY_PROVIDER_DLL_NAME);
 
     if (!WintrustAddDefaultForUsage(szOID_PKIX_KP_SERVER_AUTH, &DefUsage))
@@ -598,7 +598,7 @@ static BOOL WINTRUST_RegisterHttpsProv(void)
     if (!WintrustAddDefaultForUsage(szOID_SGC_NETSCAPE, &DefUsage))
         RegisteredOK = FALSE;
 
-    HeapFree(GetProcessHeap(), 0, DefUsage.pwszDllName);
+    WINTRUST_Free(DefUsage.pwszDllName);
 
     if (!WintrustAddActionID(&ProvGUID, 0, &ProvInfo))
         RegisteredOK = FALSE;
@@ -739,26 +739,26 @@ BOOL WINAPI WintrustAddDefaultForUsage(const char *pszUsageOID,
         WCHAR* CallbackW;
 
         Len = MultiByteToWideChar( CP_ACP, 0, psDefUsage->pwszLoadCallbackDataFunctionName, -1, NULL, 0 );
-        CallbackW = HeapAlloc( GetProcessHeap(), 0, Len * sizeof(WCHAR) );
+        CallbackW = WINTRUST_Alloc( Len * sizeof(WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, psDefUsage->pwszLoadCallbackDataFunctionName, -1, CallbackW, Len );
 
         Res = WINTRUST_WriteSingleUsageEntry(pszUsageOID, CBAlloc, CallbackW);
         if (Res != ERROR_SUCCESS) WriteUsageError = Res;
 
-        HeapFree(GetProcessHeap(), 0, CallbackW);
+        WINTRUST_Free(CallbackW);
     }
     if (psDefUsage->pwszFreeCallbackDataFunctionName)
     {
         WCHAR* CallbackW;
 
         Len = MultiByteToWideChar( CP_ACP, 0, psDefUsage->pwszFreeCallbackDataFunctionName, -1, NULL, 0 );
-        CallbackW = HeapAlloc( GetProcessHeap(), 0, Len * sizeof(WCHAR) );
+        CallbackW = WINTRUST_Alloc( Len * sizeof(WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, psDefUsage->pwszFreeCallbackDataFunctionName, -1, CallbackW, Len );
 
         Res = WINTRUST_WriteSingleUsageEntry(pszUsageOID, CBFree, CallbackW);
         if (Res != ERROR_SUCCESS) WriteUsageError = Res;
 
-        HeapFree(GetProcessHeap(), 0, CallbackW);
+        WINTRUST_Free(CallbackW);
     }
 
     WINTRUST_Guid2Wstr(psDefUsage->pgActionID, GuidString);
@@ -876,7 +876,7 @@ static BOOL WINTRUST_SIPPAddProvider(GUID* Subject, WCHAR* MagicNumber)
     /* Clear and initialize the structure */
     memset(&NewProv, 0, sizeof(SIP_ADD_NEWPROVIDER));
     NewProv.cbStruct = sizeof(SIP_ADD_NEWPROVIDER);
-    NewProv.pwszDLLFileName = HeapAlloc(GetProcessHeap(), 0, sizeof(SP_POLICY_PROVIDER_DLL_NAME));
+    NewProv.pwszDLLFileName = WINTRUST_Alloc(sizeof(SP_POLICY_PROVIDER_DLL_NAME));
     /* Fill the structure */
     NewProv.pgSubject              = Subject;
     lstrcpyW(NewProv.pwszDLLFileName, SP_POLICY_PROVIDER_DLL_NAME);
@@ -891,7 +891,7 @@ static BOOL WINTRUST_SIPPAddProvider(GUID* Subject, WCHAR* MagicNumber)
 
     Ret = CryptSIPAddProvider(&NewProv);
 
-    HeapFree(GetProcessHeap(), 0, NewProv.pwszDLLFileName);
+    WINTRUST_Free(NewProv.pwszDLLFileName);
  
     return Ret;
 }
