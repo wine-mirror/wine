@@ -425,7 +425,7 @@ HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device);
 HRESULT DSOUND_PrimaryPlay(DirectSoundDevice *device);
 HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device);
 HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LPDWORD writepos);
-HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex);
+HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex, BOOL forced);
 HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave);
 
 /* duplex.c */

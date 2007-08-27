@@ -397,9 +397,9 @@ HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LP
 	return DS_OK;
 }
 
-HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
+HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex, BOOL forced)
 {
-	HRESULT err = DS_OK;
+	HRESULT err = DSERR_BUFFERLOST;
 	int i, alloc_size, cp_size;
 	DWORD nSamplesPerSec, bpp, chans;
 	TRACE("(%p,%p)\n", device, wfex);
@@ -440,29 +440,51 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 
 	if (!(device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT) && device->hwbuf) {
 		err = IDsDriverBuffer_SetFormat(device->hwbuf, device->pwfx);
+
+		/* On bad format, try to re-create, big chance it will work then, only do this if we <HAVE> to */
+		if (forced && (device->pwfx->nSamplesPerSec/100 != wfex->nSamplesPerSec/100 || err == DSERR_BADFORMAT))
+		{
+			err = DSERR_BUFFERLOST;
+		        CopyMemory(device->pwfx, wfex, cp_size);
+		}
+
 		if (err != DSERR_BUFFERLOST && FAILED(err)) {
 			WARN("IDsDriverBuffer_SetFormat failed\n");
+			if (!forced)
+				err = DS_OK;
 			goto done;
 		}
-		else DSOUND_RecalcPrimary(device);
+		if (err == S_FALSE)
+		{
+			/* ALSA specific: S_FALSE tells that recreation was succesful,
+			 * but size and location may be changed, and buffer has to be restarted
+			 * I put it here, so if frequency doesn't match error will be changed to DSERR_BUFFERLOST
+			 * and the entire re-initialization will occur anyway
+			 */
+			IDsDriverBuffer_Lock(device->hwbuf, (LPVOID *)&device->buffer, &device->buflen, NULL, NULL, 0, 0, DSBLOCK_ENTIREBUFFER);
+			IDsDriverBuffer_Unlock(device->hwbuf, device->buffer, 0, NULL, 0);
+
+			if (device->state == STATE_PLAYING) device->state = STATE_STARTING;
+			else if (device->state == STATE_STOPPING) device->state = STATE_STOPPED;
+			device->pwplay = device->pwqueue = device->playpos = device->mixpos = 0;
+			err = DS_OK;
+		}
+		DSOUND_RecalcPrimary(device);
 	}
 
-	if (err == DSERR_BUFFERLOST || device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT)
+	if (err == DSERR_BUFFERLOST)
 	{
 		DSOUND_PrimaryClose(device);
 
-		if (!device->driver)
+		if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT)
 		{
-			waveOutClose(device->hwo);
-			device->hwo = 0;
-			err = mmErr(waveOutOpen(&(device->hwo), device->drvdesc.dnDevNode, device->pwfx, (DWORD_PTR)DSOUND_callback, (DWORD)device, CALLBACK_FUNCTION));
+			err = DSOUND_ReopenDevice(device, FALSE);
 			if (FAILED(err))
 			{
-				WARN("waveOutOpen failed\n");
+				WARN("DSOUND_ReopenDevice failed: %08x\n", err);
 				goto done;
 			}
 		}
-
 		err = DSOUND_PrimaryOpen(device);
 		if (err != DS_OK) {
 			WARN("DSOUND_PrimaryOpen failed\n");
@@ -479,6 +501,7 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 			(*dsb)->freqAdjust = ((DWORD64)(*dsb)->freq << DSOUND_FREQSHIFT) / device->pwfx->nSamplesPerSec;
 			DSOUND_RecalcFormat((*dsb));
 			DSOUND_MixToTemporary((*dsb), 0, (*dsb)->buflen);
+			(*dsb)->primary_mixpos = 0;
 
 			RtlReleaseResource(&(*dsb)->lock);
 			/* **** */
@@ -502,8 +525,9 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
     LPDIRECTSOUNDBUFFER iface,
     LPCWAVEFORMATEX wfex)
 {
+    DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
     TRACE("(%p,%p)\n", iface, wfex);
-    return DSOUND_PrimarySetFormat(((PrimaryBufferImpl *)iface)->device, wfex);
+    return DSOUND_PrimarySetFormat(device, wfex, device->priolevel == DSSCL_WRITEPRIMARY);
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_SetVolume(

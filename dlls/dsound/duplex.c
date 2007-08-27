@@ -702,7 +702,7 @@ IDirectSoundFullDuplexImpl_Initialize(
     }
     This->renderer_device->priolevel = dwLevel;
 
-    hr = DSOUND_PrimarySetFormat(This->renderer_device, lpDsBufferDesc->lpwfxFormat);
+    hr = DSOUND_PrimarySetFormat(This->renderer_device, lpDsBufferDesc->lpwfxFormat, dwLevel == DSSCL_EXCLUSIVE);
     if (hr != DS_OK) {
         WARN("DSOUND_PrimarySetFormat() failed\n");
         *lplpDirectSoundCaptureBuffer8 = NULL;
