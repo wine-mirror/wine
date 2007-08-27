@@ -1032,6 +1032,61 @@ static void test_dispinfo(void)
     g_dwExpectedDispInfoMask = 0;
 }
 
+typedef struct
+{
+    int  nRows;
+    BOOL bLarger;
+    int  expectedRows;
+} tbrows_result_t;
+
+static tbrows_result_t tbrows_results[] =
+{
+    {1, TRUE,  1}, /* 0: Simple case 9 in a row */
+    {2, TRUE,  2}, /* 1: Another simple case 5 on one row, 4 on another*/
+    {3, FALSE, 3}, /* 2: 3 lines - should be 3 lines of 3 buttons */
+    {8, FALSE, 5}, /* 3: 8 lines - should be 5 lines of 2 buttons */
+    {8, TRUE,  9}, /* 4: 8 lines but grow - should be 9 lines */
+    {1, TRUE,  1}  /* 5: Back to simple case */
+};
+
+static void test_setrows(void)
+{
+    TBBUTTON buttons[9];
+    HWND hToolbar;
+    int i;
+
+    for (i=0; i<9; i++)
+        MakeButton(buttons+i, 1000+i, TBSTYLE_FLAT | TBSTYLE_CHECKGROUP, 0);
+
+    /* Test 1 - 9 buttons */
+    hToolbar = CreateToolbarEx(hMainWnd,
+        WS_VISIBLE | WS_CLIPCHILDREN | WS_CHILD | CCS_NORESIZE | CCS_NOPARENTALIGN
+        | CCS_NOMOVEY | CCS_TOP,
+        0,
+        0, NULL, (UINT)0,
+        buttons, sizeof(buttons)/sizeof(buttons[0]),
+        20, 20, 0, 0, sizeof(TBBUTTON));
+    ok(hToolbar != NULL, "Toolbar creation\n");
+    ok(SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0) == 0, "TB_AUTOSIZE failed\n");
+
+    /* test setting rows to each of 1-10 with bLarger true and false */
+    for (i=0; i<(sizeof(tbrows_results) / sizeof(tbrows_result_t)); i++) {
+        RECT rc;
+        int rows;
+
+        memset(&rc, 0xCC, sizeof(rc));
+        SendMessageA(hToolbar, TB_SETROWS,
+                     MAKELONG(tbrows_results[i].nRows, tbrows_results[i].bLarger),
+                     (LONG) &rc);
+
+        rows = SendMessageA(hToolbar, TB_GETROWS, MAKELONG(0,0), MAKELONG(0,0));
+        ok(rows == tbrows_results[i].expectedRows,
+                   "[%d] Unexpected number of rows %d (expected %d)\n", i, rows,
+                   tbrows_results[i].expectedRows);
+    }
+
+    DestroyWindow(hToolbar);
+}
 
 START_TEST(toolbar)
 {
@@ -1066,6 +1121,7 @@ START_TEST(toolbar)
     test_getbuttoninfo();
     test_createtoolbarex();
     test_dispinfo();
+    test_setrows();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
