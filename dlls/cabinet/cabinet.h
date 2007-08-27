@@ -638,7 +638,7 @@ static const cab_UWORD Zipmask[17] = {                                          
 struct FILELIST{
     LPSTR FileName;
     struct FILELIST *next;
-    BOOL Extracted;
+    BOOL DoExtract;
 };
 
 typedef struct {

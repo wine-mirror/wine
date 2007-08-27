@@ -157,7 +157,7 @@ static long fdi_seek(INT_PTR hf, long dist, int seektype)
 static void fill_file_node(struct FILELIST *pNode, LPCSTR szFilename)
 {
     pNode->next = NULL;
-    pNode->Extracted = FALSE;
+    pNode->DoExtract = FALSE;
 
     pNode->FileName = HeapAlloc(GetProcessHeap(), 0, strlen(szFilename) + 1);
     lstrcpyA(pNode->FileName, szFilename);
@@ -188,7 +188,7 @@ static INT_PTR fdi_notify_extract(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pf
     {
         case fdintCOPY_FILE:
         {
-            struct FILELIST *fileList, *node;
+            struct FILELIST *fileList, *node = NULL;
             SESSION *pDestination = pfdin->pv;
             LPSTR szFullPath, szDirectory;
             HANDLE hFile = 0;
@@ -215,7 +215,7 @@ static INT_PTR fdi_notify_extract(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pf
                                      sizeof(struct FILELIST));
 
                 fill_file_node(fileList, pfdin->psz1);
-                fileList->Extracted = TRUE;
+                fileList->DoExtract = TRUE;
                 fileList->next = pDestination->FileList;
                 pDestination->FileList = fileList;
                 lstrcpyA(pDestination->CurrentFile, szFullPath);
@@ -225,8 +225,10 @@ static INT_PTR fdi_notify_extract(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pf
             if ((pDestination->Operation & EXTRACT_EXTRACTFILES) ||
                 file_in_list(pDestination->FilterList, pfdin->psz1, NULL))
             {
-                /* skip this file if it is not in the file list */
-                if (!file_in_list(pDestination->FileList, pfdin->psz1, &node))
+		/* find the file node */
+                file_in_list(pDestination->FileList, pfdin->psz1, &node);
+
+                if (node && !node->DoExtract)
                     return 0;
 
                 /* create the destination directory if it doesn't exist */
@@ -238,8 +240,8 @@ static INT_PTR fdi_notify_extract(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pf
 
                 if (hFile == INVALID_HANDLE_VALUE)
                     hFile = 0;
-                else
-                    node->Extracted = FALSE;
+                else if (node)
+                    node->DoExtract = FALSE;
             }
 
             HeapFree(GetProcessHeap(), 0, szFullPath);
