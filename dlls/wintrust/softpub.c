@@ -299,3 +299,71 @@ error:
          GetLastError();
     return ret ? S_OK : S_FALSE;
 }
+
+HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
+{
+    BOOL ret;
+    DWORD signerCount, size;
+
+    TRACE("(%p)\n", data);
+
+    if (!data->padwTrustStepErrors)
+        return S_FALSE;
+
+    size = sizeof(signerCount);
+    ret = CryptMsgGetParam(data->hMsg, CMSG_SIGNER_COUNT_PARAM, 0,
+     &signerCount, &size);
+    if (ret)
+    {
+        DWORD i;
+
+        for (i = 0; ret && i < signerCount; i++)
+        {
+            ret = CryptMsgGetParam(data->hMsg, CMSG_SIGNER_CERT_INFO_PARAM,
+             i, NULL, &size);
+            if (ret)
+            {
+                CERT_INFO *certInfo = data->psPfns->pfnAlloc(size);
+
+                if (certInfo)
+                {
+                    ret = CryptMsgGetParam(data->hMsg,
+                     CMSG_SIGNER_CERT_INFO_PARAM, i, certInfo, &size);
+                    if (ret)
+                    {
+                        CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA para = {
+                         sizeof(para), 0, i, CMSG_VERIFY_SIGNER_CERT, NULL };
+
+                        para.pvSigner =
+                         (LPVOID)CertGetSubjectCertificateFromStore(
+                         data->pahStores[0], data->dwEncoding, certInfo);
+                        if (para.pvSigner)
+                        {
+                            ret = CryptMsgControl(data->hMsg, 0,
+                             CMSG_CTRL_VERIFY_SIGNATURE_EX, &para);
+                            if (!ret)
+                                SetLastError(TRUST_E_CERT_SIGNATURE);
+                        }
+                        else
+                        {
+                            SetLastError(TRUST_E_NO_SIGNER_CERT);
+                            ret = FALSE;
+                        }
+                    }
+                    data->psPfns->pfnFree(certInfo);
+                }
+                else
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    ret = FALSE;
+                }
+            }
+        }
+    }
+    else
+        SetLastError(TRUST_E_NOSIGNATURE);
+    if (!ret)
+        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] =
+         GetLastError();
+    return ret ? S_OK : S_FALSE;
+}

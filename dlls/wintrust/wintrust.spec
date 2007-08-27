@@ -67,7 +67,7 @@
 @ stdcall SoftpubInitialize(ptr)
 @ stub SoftpubLoadDefUsageCallData
 @ stdcall SoftpubLoadMessage(ptr)
-@ stub SoftpubLoadSignature
+@ stdcall SoftpubLoadSignature(ptr)
 @ stub TrustDecode
 @ stub TrustFindIssuerCertificate
 @ stub TrustFreeDecode
