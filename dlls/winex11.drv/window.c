@@ -66,7 +66,7 @@ static const char visual_id_prop[]    = "__wine_x11_visual_id";
  *
  * Check if a given window should be managed
  */
-BOOL is_window_managed( HWND hwnd, const RECT *window_rect )
+BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rect )
 {
     DWORD style, ex_style;
 
@@ -76,6 +76,9 @@ BOOL is_window_managed( HWND hwnd, const RECT *window_rect )
     /* child windows are not managed */
     style = GetWindowLongW( hwnd, GWL_STYLE );
     if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD) return FALSE;
+    /* activated windows are managed */
+    if (!(swp_flags & (SWP_NOACTIVATE|SWP_HIDEWINDOW))) return TRUE;
+    if (hwnd == GetActiveWindow()) return TRUE;
     /* windows with caption are managed */
     if ((style & WS_CAPTION) == WS_CAPTION) return TRUE;
     /* tool windows are not managed  */

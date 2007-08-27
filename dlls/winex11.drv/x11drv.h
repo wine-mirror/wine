@@ -684,7 +684,7 @@ typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void
 
 extern void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg );
 extern int X11DRV_check_error(void);
-extern BOOL is_window_managed( HWND hwnd, const RECT *window_rect );
+extern BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rect );
 extern void X11DRV_set_iconic_state( HWND hwnd );
 extern void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect );
 extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect );

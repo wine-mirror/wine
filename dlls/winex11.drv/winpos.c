@@ -252,9 +252,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         root_window == DefaultRootWindow( display ) &&
         data->whole_window != root_window)
     {
-        if (!(swp_flags & (SWP_NOACTIVATE|SWP_HIDEWINDOW)) ||
-            is_window_managed( hwnd, rectWindow ) ||
-            hwnd == GetActiveWindow())
+        if (is_window_managed( hwnd, swp_flags, rectWindow ))
         {
             TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
             make_managed = TRUE;
