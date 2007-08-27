@@ -117,8 +117,10 @@ SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
         helper->session_key = NULL;
         helper->neg_flags = 0;
         helper->pipe_in = pipe_in[0];
+        fcntl( pipe_in[0], F_SETFD, 1 );
         close(pipe_in[1]);
         helper->pipe_out = pipe_out[1];
+        fcntl( pipe_out[1], F_SETFD, 1 );
         close(pipe_out[0]);
     }
 
