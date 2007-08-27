@@ -3281,15 +3281,36 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 static HRESULT WINAPI IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx)
 {
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
+    float depth;
 
-    if (Flags & WINEDDBLT_DEPTHFILL)
+    if (Flags & WINEDDBLT_DEPTHFILL) {
+        switch(This->resource.format) {
+            case WINED3DFMT_D16:
+                depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x0000ffff;
+                break;
+            case WINED3DFMT_D15S1:
+                depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x0000fffe;
+                break;
+            case WINED3DFMT_D24S8:
+            case WINED3DFMT_D24X8:
+                depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x00ffffff;
+                break;
+            case WINED3DFMT_D32:
+                depth = (float) DDBltFx->u5.dwFillDepth / (float) 0xffffffff;
+                break;
+            default:
+                depth = 0.0;
+                ERR("Unexpected format for depth fill: %s\n", debug_d3dformat(This->resource.format));
+        }
+
         return IWineD3DDevice_Clear((IWineD3DDevice *) myDevice,
                                     DestRect == NULL ? 0 : 1,
                                     (WINED3DRECT *) DestRect,
                                     WINED3DCLEAR_ZBUFFER,
                                     0x00000000,
-                                    (float) DDBltFx->u5.dwFillDepth / (float) MAXDWORD,
+                                    depth,
                                     0x00000000);
+    }
 
     FIXME("(%p): Unsupp depthstencil blit\n", This);
     return WINED3DERR_INVALIDCALL;
