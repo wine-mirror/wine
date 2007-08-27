@@ -414,6 +414,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                 ptrToCoords = (float *)(texCoords[coordIdx] + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
                 if (texCoords[coordIdx] == NULL) {
                     TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
+                    glTexCoord4f(0, 0, 0, 1);
                     continue;
                 } else {
                     int texture_idx = This->texUnitMap[textureNo];

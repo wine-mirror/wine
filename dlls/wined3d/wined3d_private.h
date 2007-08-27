@@ -1532,7 +1532,7 @@ GLenum StencilOp(DWORD op);
 GLenum CompareFunc(DWORD func);
 void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 void   set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx);
-void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed);
+void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed, DWORD coordtype);
 
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height);
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain);

@@ -1859,6 +1859,13 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     DWORD texUnit = state - STATE_TRANSFORM(WINED3DTS_TEXTURE0);
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[texUnit];
 
+    /* Ignore this when a vertex shader is used, or if the streams aren't sorted out yet */
+    if(stateblock->vertexShader ||
+       isStateDirty(context, STATE_VDECL)) {
+        TRACE("Using a vertex shader, or stream sources not sorted out yet, skipping\n");
+        return;
+    }
+
     if (mapped_stage < 0) return;
 
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
@@ -1876,7 +1883,10 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     set_texture_matrix((float *)&stateblock->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
                         stateblock->textureState[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS],
                         (stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU,
-                        context->last_was_rhw);
+                        context->last_was_rhw,
+                        stateblock->wineD3DDevice->strided_streams.u.s.texCoords[texUnit].dwStride ?
+                            stateblock->wineD3DDevice->strided_streams.u.s.texCoords[texUnit].dwType:
+                            WINED3DDECLTYPE_UNUSED);
 
 }
 
@@ -3199,7 +3209,7 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
 }
 
 static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    BOOL useVertexShaderFunction = FALSE, updateFog = FALSE, updateTexMatrices = FALSE;
+    BOOL useVertexShaderFunction = FALSE, updateFog = FALSE;
     BOOL usePixelShaderFunction = stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE && stateblock->pixelShader
             && ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
     BOOL transformed;
@@ -3228,7 +3238,6 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
     if(transformed != context->last_was_rhw && !useVertexShaderFunction) {
         updateFog = TRUE;
-        updateTexMatrices = TRUE;
     }
 
     /* Reapply lighting if it is not scheduled for reapplication already */
@@ -3333,7 +3342,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     if(updateFog) {
         state_fog(STATE_RENDER(WINED3DRS_FOGENABLE), stateblock, context);
     }
-    if(updateTexMatrices) {
+    if(!useVertexShaderFunction) {
         int i;
         for(i = 0; i < MAX_TEXTURES; i++) {
             if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + i))) {
