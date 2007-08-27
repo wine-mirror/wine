@@ -31,7 +31,7 @@
 #include "wintrust.h"
 #include "softpub.h"
 #include "mssip.h"
-
+#include "wintrust_priv.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
@@ -810,16 +810,6 @@ error_close_key:
     RegCloseKey(Key);
 
     return Func;
-}
-
-static void * WINAPI WINTRUST_Alloc(DWORD cb)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cb);
-}
-
-static void WINAPI WINTRUST_Free(void *p)
-{
-    HeapFree(GetProcessHeap(), 0, p);
 }
 
 /***********************************************************************

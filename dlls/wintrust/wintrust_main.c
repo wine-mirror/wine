@@ -29,7 +29,7 @@
 #include "softpub.h"
 #include "mscat.h"
 #include "objbase.h"
-
+#include "wintrust_priv.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
@@ -213,4 +213,20 @@ BOOL WINAPI WintrustSetRegPolicyFlags( DWORD dwPolicyFlags)
     }
     if (r) SetLastError(r);
     return r == ERROR_SUCCESS;
+}
+
+/* Utility functions */
+void * WINAPI WINTRUST_Alloc(DWORD cb)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cb);
+}
+
+void * WINAPI WINTRUST_ReAlloc(void *ptr, DWORD cb)
+{
+    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ptr, cb);
+}
+
+void WINAPI WINTRUST_Free(void *p)
+{
+    HeapFree(GetProcessHeap(), 0, p);
 }
