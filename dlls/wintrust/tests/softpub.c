@@ -115,6 +115,95 @@ static void testInitialize(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
     }
 }
 
+static const BYTE v1CertWithPubKey[] = {
+0x30,0x81,0x95,0x02,0x01,0x01,0x30,0x02,0x06,0x00,0x30,0x15,0x31,0x13,0x30,
+0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,
+0x6e,0x67,0x00,0x30,0x22,0x18,0x0f,0x31,0x36,0x30,0x31,0x30,0x31,0x30,0x31,
+0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x18,0x0f,0x31,0x36,0x30,0x31,0x30,0x31,
+0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x30,0x15,0x31,0x13,0x30,0x11,
+0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,
+0x67,0x00,0x30,0x22,0x30,0x0d,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+0x01,0x01,0x05,0x00,0x03,0x11,0x00,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
+0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0xa3,0x16,0x30,0x14,0x30,0x12,0x06,
+0x03,0x55,0x1d,0x13,0x01,0x01,0xff,0x04,0x08,0x30,0x06,0x01,0x01,0xff,0x02,
+0x01,0x01 };
+
+static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
+{
+    HRESULT ret;
+    CRYPT_PROVIDER_DATA data = { 0 };
+    WINTRUST_DATA wintrust_data = { 0 };
+    WINTRUST_CERT_INFO certInfo = { sizeof(WINTRUST_CERT_INFO), 0 };
+    WINTRUST_FILE_INFO fileInfo = { sizeof(WINTRUST_FILE_INFO), 0 };
+
+    if (!funcs->pfnObjectTrust)
+    {
+        skip("missing pfnObjectTrust\n");
+        return;
+    }
+
+    /* Crashes
+    ret = funcs->pfnObjectTrust(NULL);
+     */
+    data.pWintrustData = &wintrust_data;
+    data.padwTrustStepErrors =
+     funcs->pfnAlloc(TRUSTERROR_MAX_STEPS * sizeof(DWORD));
+    if (data.padwTrustStepErrors)
+    {
+        static const WCHAR notepad[] = { '\\','n','o','t','e','p','a','d','.',
+         'e','x','e',0 };
+        WCHAR notepadPath[MAX_PATH];
+        PROVDATA_SIP provDataSIP = { 0 };
+        static const GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,
+         0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
+
+        ret = funcs->pfnObjectTrust(&data);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
+         ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %08x\n",
+         data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
+        wintrust_data.pCert = &certInfo;
+        wintrust_data.dwUnionChoice = WTD_CHOICE_CERT;
+        ret = funcs->pfnObjectTrust(&data);
+        ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
+        certInfo.psCertContext = (PCERT_CONTEXT)CertCreateCertificateContext(
+         X509_ASN_ENCODING, v1CertWithPubKey, sizeof(v1CertWithPubKey));
+        ret = funcs->pfnObjectTrust(&data);
+        ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
+        CertFreeCertificateContext(certInfo.psCertContext);
+        certInfo.psCertContext = NULL;
+        wintrust_data.dwUnionChoice = WTD_CHOICE_FILE;
+        wintrust_data.pFile = NULL;
+        ret = funcs->pfnObjectTrust(&data);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
+         ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %08x\n",
+         data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
+        wintrust_data.pFile = &fileInfo;
+        /* Crashes
+        ret = funcs->pfnObjectTrust(&data);
+         */
+        GetWindowsDirectoryW(notepadPath, MAX_PATH);
+        lstrcatW(notepadPath, notepad);
+        fileInfo.pcwszFilePath = notepadPath;
+        /* pfnObjectTrust now crashes unless both pPDSip and psPfns are set */
+        data.pPDSip = &provDataSIP;
+        data.psPfns = (CRYPT_PROVIDER_FUNCTIONS *)funcs;
+        ret = funcs->pfnObjectTrust(&data);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
+         TRUST_E_NOSIGNATURE, "Expected TRUST_E_NOSIGNATURE, got %08x\n",
+         data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
+        ok(!memcmp(&provDataSIP.gSubject, &unknown, sizeof(unknown)),
+         "Unexpected subject GUID\n");
+        ok(provDataSIP.pSip != NULL, "Expected a SIP\n");
+        ok(provDataSIP.psSipSubjectInfo != NULL, "Expected a subject info\n");
+        funcs->pfnFree(data.padwTrustStepErrors);
+    }
+}
+
 START_TEST(softpub)
 {
     static GUID generic_verify_v2 = WINTRUST_ACTION_GENERIC_VERIFY_V2;
@@ -128,5 +217,6 @@ START_TEST(softpub)
     else
     {
         testInitialize(&funcs, &generic_verify_v2);
+        testObjTrust(&funcs, &generic_verify_v2);
     }
 }
