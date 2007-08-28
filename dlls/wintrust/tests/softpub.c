@@ -91,6 +91,7 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
 {
     CRYPT_PROVIDER_DATA data = { 0 };
     HCERTSTORE store;
+    CRYPT_PROVIDER_SGNR sgnr = { 0 };
     BOOL ret;
 
     /* Crash
@@ -118,6 +119,44 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
     }
     else
         skip("CertOpenStore failed: %08x\n", GetLastError());
+
+    /* Crash
+    ret = funcs->pfnAddSgnr2Chain(NULL, FALSE, 0, NULL);
+    ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 0, NULL);
+     */
+    ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 0, &sgnr);
+    ok(ret, "pfnAddSgnr2Chain failed: %08x\n", GetLastError());
+    ok(data.csSigners == 1, "Expected 1 signer, got %d\n", data.csSigners);
+    ok(data.pasSigners != NULL, "Expected pasSigners to be allocated\n");
+    if (data.pasSigners)
+    {
+        ok(!memcmp(&data.pasSigners[0], &sgnr, sizeof(sgnr)),
+         "Unexpected data in signer\n");
+        /* Adds into the location specified by the index */
+        sgnr.cbStruct = sizeof(CRYPT_PROVIDER_SGNR);
+        sgnr.sftVerifyAsOf.dwLowDateTime = 0xdeadbeef;
+        ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 1, &sgnr);
+        ok(ret, "pfnAddSgnr2Chain failed: %08x\n", GetLastError());
+        ok(data.csSigners == 2, "Expected 2 signers, got %d\n", data.csSigners);
+        ok(!memcmp(&data.pasSigners[1], &sgnr, sizeof(sgnr)),
+         "Unexpected data in signer\n");
+        /* This also adds, but the data aren't copied */
+        sgnr.cbStruct = sizeof(DWORD);
+        ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 0, &sgnr);
+        ok(ret, "pfnAddSgnr2Chain failed: %08x\n", GetLastError());
+        ok(data.csSigners == 3, "Expected 3 signers, got %d\n", data.csSigners);
+        ok(data.pasSigners[0].cbStruct == 0, "Unexpected data size %d\n",
+         data.pasSigners[0].cbStruct);
+        ok(data.pasSigners[0].sftVerifyAsOf.dwLowDateTime == 0,
+         "Unexpected verify time %d\n",
+         data.pasSigners[0].sftVerifyAsOf.dwLowDateTime);
+        /* But too large a thing isn't added */
+        sgnr.cbStruct = sizeof(sgnr) + sizeof(DWORD);
+        SetLastError(0xdeadbeef);
+        ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 0, &sgnr);
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
 }
 
 static void testInitialize(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)

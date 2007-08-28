@@ -252,3 +252,54 @@ BOOL WINAPI WINTRUST_AddStore(CRYPT_PROVIDER_DATA *data, HCERTSTORE store)
         SetLastError(ERROR_OUTOFMEMORY);
     return ret;
 }
+
+BOOL WINAPI WINTRUST_AddSgnr(CRYPT_PROVIDER_DATA *data,
+ BOOL fCounterSigner, DWORD idxSigner, CRYPT_PROVIDER_SGNR *sgnr)
+{
+    BOOL ret = FALSE;
+
+    if (sgnr->cbStruct > sizeof(CRYPT_PROVIDER_SGNR))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (fCounterSigner)
+    {
+        FIXME("unimplemented for counter signers\n");
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (data->csSigners)
+        data->pasSigners = WINTRUST_ReAlloc(data->pasSigners,
+         (data->csSigners + 1) * sizeof(CRYPT_PROVIDER_SGNR));
+    else
+    {
+        data->pasSigners = WINTRUST_Alloc(sizeof(CRYPT_PROVIDER_SGNR));
+        data->csSigners = 0;
+    }
+    if (data->pasSigners)
+    {
+        if (idxSigner < data->csSigners)
+            memmove(&data->pasSigners[idxSigner],
+             &data->pasSigners[idxSigner + 1],
+             (data->csSigners - idxSigner) * sizeof(CRYPT_PROVIDER_SGNR));
+        ret = TRUE;
+        if (sgnr->cbStruct == sizeof(CRYPT_PROVIDER_SGNR))
+        {
+            /* The PSDK says psSigner should be allocated using pfnAlloc, but
+             * it doesn't say anything about ownership.  Since callers are
+             * internal, assume ownership is passed, and just store the
+             * pointer.
+             */
+            memcpy(&data->pasSigners[idxSigner], sgnr,
+             sizeof(CRYPT_PROVIDER_SGNR));
+        }
+        else
+            memset(&data->pasSigners[idxSigner], 0,
+             sizeof(CRYPT_PROVIDER_SGNR));
+        data->csSigners++;
+    }
+    else
+        SetLastError(ERROR_OUTOFMEMORY);
+    return ret;
+}
