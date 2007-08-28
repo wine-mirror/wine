@@ -5194,6 +5194,8 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
           This->parentStorage->base.rootPropertySetIndex,
           &rootProp);
       }
+      else
+        StorageImpl_SaveFileHeader(This->parentStorage);
     }
   }
 
