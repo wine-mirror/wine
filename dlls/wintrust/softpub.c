@@ -292,6 +292,34 @@ error:
     return ret ? S_OK : S_FALSE;
 }
 
+static CERT_INFO *WINTRUST_GetSignerCertInfo(CRYPT_PROVIDER_DATA *data,
+ DWORD signerIdx)
+{
+    BOOL ret;
+    CERT_INFO *certInfo = NULL;
+    DWORD size;
+
+    ret = CryptMsgGetParam(data->hMsg, CMSG_SIGNER_CERT_INFO_PARAM, signerIdx,
+     NULL, &size);
+    if (ret)
+    {
+        certInfo = data->psPfns->pfnAlloc(size);
+        if (certInfo)
+        {
+            ret = CryptMsgGetParam(data->hMsg, CMSG_SIGNER_CERT_INFO_PARAM,
+             signerIdx, certInfo, &size);
+            if (!ret)
+            {
+                data->psPfns->pfnFree(certInfo);
+                certInfo = NULL;
+            }
+        }
+        else
+            SetLastError(ERROR_OUTOFMEMORY);
+    }
+    return certInfo;
+}
+
 HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
@@ -311,45 +339,31 @@ HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
 
         for (i = 0; ret && i < signerCount; i++)
         {
-            ret = CryptMsgGetParam(data->hMsg, CMSG_SIGNER_CERT_INFO_PARAM,
-             i, NULL, &size);
-            if (ret)
+            CERT_INFO *certInfo = WINTRUST_GetSignerCertInfo(data, i);
+
+            if (certInfo)
             {
-                CERT_INFO *certInfo = data->psPfns->pfnAlloc(size);
+                CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA para = { sizeof(para), 0, i,
+                 CMSG_VERIFY_SIGNER_CERT, NULL };
 
-                if (certInfo)
+                para.pvSigner = (LPVOID)CertGetSubjectCertificateFromStore(
+                 data->pahStores[0], data->dwEncoding, certInfo);
+                if (para.pvSigner)
                 {
-                    ret = CryptMsgGetParam(data->hMsg,
-                     CMSG_SIGNER_CERT_INFO_PARAM, i, certInfo, &size);
-                    if (ret)
-                    {
-                        CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA para = {
-                         sizeof(para), 0, i, CMSG_VERIFY_SIGNER_CERT, NULL };
-
-                        para.pvSigner =
-                         (LPVOID)CertGetSubjectCertificateFromStore(
-                         data->pahStores[0], data->dwEncoding, certInfo);
-                        if (para.pvSigner)
-                        {
-                            ret = CryptMsgControl(data->hMsg, 0,
-                             CMSG_CTRL_VERIFY_SIGNATURE_EX, &para);
-                            if (!ret)
-                                SetLastError(TRUST_E_CERT_SIGNATURE);
-                        }
-                        else
-                        {
-                            SetLastError(TRUST_E_NO_SIGNER_CERT);
-                            ret = FALSE;
-                        }
-                    }
-                    data->psPfns->pfnFree(certInfo);
+                    ret = CryptMsgControl(data->hMsg, 0,
+                     CMSG_CTRL_VERIFY_SIGNATURE_EX, &para);
+                    if (!ret)
+                        SetLastError(TRUST_E_CERT_SIGNATURE);
                 }
                 else
                 {
-                    SetLastError(ERROR_OUTOFMEMORY);
+                    SetLastError(TRUST_E_NO_SIGNER_CERT);
                     ret = FALSE;
                 }
+                data->psPfns->pfnFree(certInfo);
             }
+            else
+                ret = FALSE;
         }
     }
     else
