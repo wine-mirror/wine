@@ -230,3 +230,25 @@ void WINAPI WINTRUST_Free(void *p)
 {
     HeapFree(GetProcessHeap(), 0, p);
 }
+
+BOOL WINAPI WINTRUST_AddStore(CRYPT_PROVIDER_DATA *data, HCERTSTORE store)
+{
+    BOOL ret = FALSE;
+
+    if (data->chStores)
+        data->pahStores = WINTRUST_ReAlloc(data->pahStores,
+         (data->chStores + 1) * sizeof(HCERTSTORE));
+    else
+    {
+        data->pahStores = WINTRUST_Alloc(sizeof(HCERTSTORE));
+        data->chStores = 0;
+    }
+    if (data->pahStores)
+    {
+        data->pahStores[data->chStores++] = CertDuplicateStore(store);
+        ret = TRUE;
+    }
+    else
+        SetLastError(ERROR_OUTOFMEMORY);
+    return ret;
+}

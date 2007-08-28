@@ -21,5 +21,6 @@
 void * WINAPI WINTRUST_Alloc(DWORD cb);
 void * WINAPI WINTRUST_ReAlloc(void *ptr, DWORD cb);
 void WINAPI WINTRUST_Free(void *p);
+BOOL WINAPI WINTRUST_AddStore(CRYPT_PROVIDER_DATA *data, HCERTSTORE store);
 
 #endif /* ndef __WINTRUST_PRIV_H__ */

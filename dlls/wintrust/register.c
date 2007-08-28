@@ -836,7 +836,7 @@ BOOL WINAPI WintrustLoadFunctionPointers( GUID* pgActionID,
     /* Get the function pointers from the registry, where applicable */
     pPfns->pfnAlloc = WINTRUST_Alloc;
     pPfns->pfnFree = WINTRUST_Free;
-    pPfns->pfnAddStore2Chain = NULL;
+    pPfns->pfnAddStore2Chain = WINTRUST_AddStore;
     pPfns->pfnAddSgnr2Chain = NULL;
     pPfns->pfnAddCert2Chain = NULL;
     pPfns->pfnAddPrivData2Chain = NULL;
