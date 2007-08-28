@@ -641,6 +641,7 @@ void LOCALE_InitRegistry(void)
     static const WCHAR lc_timeW[] = { 'L','C','_','T','I','M','E',0 };
     static const WCHAR lc_measurementW[] = { 'L','C','_','M','E','A','S','U','R','E','M','E','N','T',0 };
     static const WCHAR lc_telephoneW[] = { 'L','C','_','T','E','L','E','P','H','O','N','E',0 };
+    static const WCHAR lc_paperW[] = { 'L','C','_','P','A','P','E','R',0};
     static const struct
     {
         LPCWSTR name;
@@ -659,13 +660,20 @@ void LOCALE_InitRegistry(void)
       LOCALE_ICURRENCY,
       LOCALE_INEGCURR,
       LOCALE_ICURRDIGITS,
-      LOCALE_ILZERO };
+      LOCALE_ILZERO,
+      LOCALE_SMONDECIMALSEP,
+      LOCALE_SMONGROUPING,
+      LOCALE_SMONTHOUSANDSEP };
     static const LCTYPE lc_numeric_values[] = {
       LOCALE_SDECIMAL,
       LOCALE_STHOUSAND,
       LOCALE_IDIGITS,
       LOCALE_IDIGITSUBSTITUTION,
-      LOCALE_SNATIVEDIGITS };
+      LOCALE_SNATIVEDIGITS,
+      LOCALE_INEGNUMBER,
+      LOCALE_SNEGATIVESIGN,
+      LOCALE_SPOSITIVESIGN,
+      LOCALE_SGROUPING };
     static const LCTYPE lc_time_values[] = {
       LOCALE_S1159,
       LOCALE_S2359,
@@ -676,9 +684,15 @@ void LOCALE_InitRegistry(void)
       LOCALE_SLONGDATE,
       LOCALE_SDATE,
       LOCALE_ITIMEMARKPOSN,
-      LOCALE_ICALENDARTYPE };
+      LOCALE_ICALENDARTYPE,
+      LOCALE_IFIRSTDAYOFWEEK,
+      LOCALE_IFIRSTWEEKOFYEAR,
+      LOCALE_STIMEFORMAT,
+      LOCALE_SYEARMONTH,
+      LOCALE_IDATE };
     static const LCTYPE lc_measurement_values[] = { LOCALE_IMEASURE };
     static const LCTYPE lc_telephone_values[] = { LOCALE_ICOUNTRY };
+    static const LCTYPE lc_paper_values[] = { LOCALE_IPAPERSIZE };
 
     UNICODE_STRING nameW;
     WCHAR bufferW[80];
@@ -701,6 +715,8 @@ void LOCALE_InitRegistry(void)
                             sizeof(lc_measurement_values)/sizeof(lc_measurement_values[0]) );
     locale_update_registry( hkey, lc_telephoneW, lcid_LC_TELEPHONE, lc_telephone_values,
                             sizeof(lc_telephone_values)/sizeof(lc_telephone_values[0]) );
+    locale_update_registry( hkey, lc_paperW, lcid_LC_PAPER, lc_paper_values,
+                            sizeof(lc_paper_values)/sizeof(lc_paper_values[0]) );
 
     if (locale_update_registry( hkey, lc_ctypeW, lcid_LC_CTYPE, NULL, 0 ))
     {
