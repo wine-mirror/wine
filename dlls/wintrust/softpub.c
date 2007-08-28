@@ -292,6 +292,51 @@ error:
     return ret ? S_OK : S_FALSE;
 }
 
+static CMSG_SIGNER_INFO *WINTRUST_GetSigner(CRYPT_PROVIDER_DATA *data,
+ DWORD signerIdx)
+{
+    BOOL ret;
+    CMSG_SIGNER_INFO *signerInfo = NULL;
+    DWORD size;
+
+    ret = CryptMsgGetParam(data->hMsg, CMSG_SIGNER_INFO_PARAM, signerIdx,
+     NULL, &size);
+    if (ret)
+    {
+        signerInfo = data->psPfns->pfnAlloc(size);
+        if (signerInfo)
+        {
+            ret = CryptMsgGetParam(data->hMsg, CMSG_SIGNER_INFO_PARAM,
+             signerIdx, signerInfo, &size);
+            if (!ret)
+            {
+                data->psPfns->pfnFree(signerInfo);
+                signerInfo = NULL;
+            }
+        }
+        else
+            SetLastError(ERROR_OUTOFMEMORY);
+    }
+    return signerInfo;
+}
+
+static BOOL WINTRUST_SaveSigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
+{
+    BOOL ret;
+    CMSG_SIGNER_INFO *signerInfo = WINTRUST_GetSigner(data, signerIdx);
+
+    if (signerInfo)
+    {
+        CRYPT_PROVIDER_SGNR sgnr = { sizeof(sgnr), { 0 } };
+
+        sgnr.psSigner = signerInfo;
+        ret = data->psPfns->pfnAddSgnr2Chain(data, FALSE, signerIdx, &sgnr);
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
 static CERT_INFO *WINTRUST_GetSignerCertInfo(CRYPT_PROVIDER_DATA *data,
  DWORD signerIdx)
 {
@@ -320,6 +365,37 @@ static CERT_INFO *WINTRUST_GetSignerCertInfo(CRYPT_PROVIDER_DATA *data,
     return certInfo;
 }
 
+static BOOL WINTRUST_VerifySigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
+{
+    BOOL ret;
+    CERT_INFO *certInfo = WINTRUST_GetSignerCertInfo(data, signerIdx);
+
+    if (certInfo)
+    {
+        CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA para = { sizeof(para), 0, signerIdx,
+         CMSG_VERIFY_SIGNER_CERT, NULL };
+
+        para.pvSigner = (LPVOID)CertGetSubjectCertificateFromStore(
+         data->pahStores[0], data->dwEncoding, certInfo);
+        if (para.pvSigner)
+        {
+            ret = CryptMsgControl(data->hMsg, 0, CMSG_CTRL_VERIFY_SIGNATURE_EX,
+             &para);
+            if (!ret)
+                SetLastError(TRUST_E_CERT_SIGNATURE);
+        }
+        else
+        {
+            SetLastError(TRUST_E_NO_SIGNER_CERT);
+            ret = FALSE;
+        }
+        data->psPfns->pfnFree(certInfo);
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
 HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
@@ -339,31 +415,8 @@ HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
 
         for (i = 0; ret && i < signerCount; i++)
         {
-            CERT_INFO *certInfo = WINTRUST_GetSignerCertInfo(data, i);
-
-            if (certInfo)
-            {
-                CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA para = { sizeof(para), 0, i,
-                 CMSG_VERIFY_SIGNER_CERT, NULL };
-
-                para.pvSigner = (LPVOID)CertGetSubjectCertificateFromStore(
-                 data->pahStores[0], data->dwEncoding, certInfo);
-                if (para.pvSigner)
-                {
-                    ret = CryptMsgControl(data->hMsg, 0,
-                     CMSG_CTRL_VERIFY_SIGNATURE_EX, &para);
-                    if (!ret)
-                        SetLastError(TRUST_E_CERT_SIGNATURE);
-                }
-                else
-                {
-                    SetLastError(TRUST_E_NO_SIGNER_CERT);
-                    ret = FALSE;
-                }
-                data->psPfns->pfnFree(certInfo);
-            }
-            else
-                ret = FALSE;
+            if ((ret = WINTRUST_SaveSigner(data, i)))
+                ret = WINTRUST_VerifySigner(data, i);
         }
     }
     else
