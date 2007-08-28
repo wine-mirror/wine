@@ -340,20 +340,25 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
         }
         if (ret)
         {
-            PCCERT_CONTEXT root = chain->rgpElement[chain->cElement - 1]->
-             pCertContext;
+            PCERT_CHAIN_ELEMENT rootElement =
+             chain->rgpElement[chain->cElement - 1];
+            PCCERT_CONTEXT root = rootElement->pCertContext;
 
             if (!(ret = CRYPT_IsCertificateSelfSigned(root)))
                 TRACE("Last certificate is not self-signed\n");
             else
             {
-                chain->rgpElement[chain->cElement - 1]->TrustStatus.dwInfoStatus
-                 |= CERT_TRUST_IS_SELF_SIGNED;
+                rootElement->TrustStatus.dwInfoStatus |=
+                 CERT_TRUST_IS_SELF_SIGNED;
                 if (!(ret = CryptVerifyCertificateSignatureEx(0,
                  root->dwCertEncodingType, CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT,
                  (void *)root, CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)root,
                  0, NULL)))
+                {
                     TRACE("Last certificate's signature is invalid\n");
+                    rootElement->TrustStatus.dwErrorStatus |=
+                     CERT_TRUST_IS_NOT_SIGNATURE_VALID;
+                }
             }
             if (ret)
             {
@@ -367,11 +372,15 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
                 trustedRoot = CertFindCertificateInStore(engine->hRoot,
                  root->dwCertEncodingType, 0, CERT_FIND_SHA1_HASH, &blob, NULL);
                 if (!trustedRoot)
-                    chain->TrustStatus.dwErrorStatus |=
+                    rootElement->TrustStatus.dwErrorStatus |=
                      CERT_TRUST_IS_UNTRUSTED_ROOT;
                 else
                     CertFreeCertificateContext(trustedRoot);
             }
+            chain->TrustStatus.dwErrorStatus |=
+             rootElement->TrustStatus.dwErrorStatus;
+            chain->TrustStatus.dwInfoStatus |=
+             rootElement->TrustStatus.dwInfoStatus & ~CERT_TRUST_IS_SELF_SIGNED;
         }
         if (!ret)
         {
