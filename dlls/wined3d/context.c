@@ -136,7 +136,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     if(create_pbuffer) {
         HDC hdc_parent = GetDC(win_handle);
         int iPixelFormat = 0;
-        short red, green, blue, alphaBits, colorBits;
+        short redBits, greenBits, blueBits, alphaBits, colorBits;
         short depthBits, stencilBits;
 
         IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
@@ -147,11 +147,14 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         unsigned int nFormats;
 
         /* Retrieve the specifications for the pixelformat from the backbuffer / stencilbuffer */
-        getColorBits(target->resource.format, &red, &green, &blue, &alphaBits, &colorBits);
+        getColorBits(target->resource.format, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits);
         getDepthStencilBits(StencilBufferFormat, &depthBits, &stencilBits);
         PUSH2(WGL_DRAW_TO_PBUFFER_ARB, 1); /* We need pbuffer support; doublebuffering isn't needed */
         PUSH2(WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB); /* Make sure we don't get a float or color index format */
         PUSH2(WGL_COLOR_BITS_ARB, colorBits);
+        PUSH2(WGL_RED_BITS_ARB, redBits);
+        PUSH2(WGL_GREEN_BITS_ARB, greenBits);
+        PUSH2(WGL_BLUE_BITS_ARB, blueBits);
         PUSH2(WGL_ALPHA_BITS_ARB, alphaBits);
         PUSH2(WGL_DEPTH_BITS_ARB, depthBits);
         PUSH2(WGL_STENCIL_BITS_ARB, stencilBits);
