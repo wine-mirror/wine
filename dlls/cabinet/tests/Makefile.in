@@ -6,7 +6,8 @@ TESTDLL   = cabinet.dll
 IMPORTS   = cabinet user32 kernel32
 
 CTESTS = \
-       extract.c
+	extract.c \
+	fdi.c
 
 @MAKE_TEST_RULES@
 
