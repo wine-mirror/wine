@@ -1556,7 +1556,7 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
         }
     }
 
-    ERR("(%s) - not found\n", lpszProc);
+    WARN("(%s) - not found\n", lpszProc);
     return NULL;
 }
 
