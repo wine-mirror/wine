@@ -426,3 +426,143 @@ HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
          GetLastError();
     return ret ? S_OK : S_FALSE;
 }
+
+BOOL WINAPI SoftpubCheckCert(CRYPT_PROVIDER_DATA *data, DWORD idxSigner,
+ BOOL fCounterSignerChain, DWORD idxCounterSigner)
+{
+    BOOL ret;
+
+    TRACE("(%p, %d, %d, %d)\n", data, idxSigner, fCounterSignerChain,
+     idxCounterSigner);
+
+    if (fCounterSignerChain)
+    {
+        FIXME("unimplemented for counter signers\n");
+        ret = FALSE;
+    }
+    else
+    {
+        PCERT_SIMPLE_CHAIN simpleChain =
+         data->pasSigners[idxSigner].pChainContext->rgpChain[0];
+        DWORD i;
+
+        ret = TRUE;
+        for (i = 0; i < simpleChain->cElement; i++)
+        {
+            /* Set confidence */
+            data->pasSigners[idxSigner].pasCertChain[i].dwConfidence = 0;
+            /* The last element in the chain doesn't have an issuer, so it
+             * can't have a valid time (with respect to its issuer)
+             */
+            if (i != simpleChain->cElement - 1 &&
+             !(simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
+             CERT_TRUST_IS_NOT_TIME_VALID))
+                data->pasSigners[idxSigner].pasCertChain[i].dwConfidence
+                 |= CERT_CONFIDENCE_TIME;
+            if (!(simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
+             CERT_TRUST_IS_NOT_TIME_NESTED))
+                data->pasSigners[idxSigner].pasCertChain[i].dwConfidence
+                 |= CERT_CONFIDENCE_TIMENEST;
+            if (!(simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
+             CERT_TRUST_IS_NOT_SIGNATURE_VALID))
+                data->pasSigners[idxSigner].pasCertChain[i].dwConfidence
+                 |= CERT_CONFIDENCE_SIG;
+            /* Set additional flags */
+            if (!(simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
+             CERT_TRUST_IS_UNTRUSTED_ROOT))
+                data->pasSigners[idxSigner].pasCertChain[i].fTrustedRoot = TRUE;
+            if (simpleChain->rgpElement[i]->TrustStatus.dwInfoStatus &
+             CERT_TRUST_IS_SELF_SIGNED)
+                data->pasSigners[idxSigner].pasCertChain[i].fSelfSigned = TRUE;
+            if (simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
+             CERT_TRUST_IS_CYCLIC)
+                data->pasSigners[idxSigner].pasCertChain[i].fIsCyclic = TRUE;
+        }
+    }
+    return ret;
+}
+
+static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
+{
+    BOOL ret;
+    PCERT_SIMPLE_CHAIN simpleChain =
+     data->pasSigners[signerIdx].pChainContext->rgpChain[0];
+    DWORD i;
+
+    data->pasSigners[signerIdx].pasCertChain[0].pChainElement =
+     simpleChain->rgpElement[0];
+    ret = TRUE;
+    for (i = 1; ret && i < simpleChain->cElement; i++)
+    {
+        ret = data->psPfns->pfnAddCert2Chain(data, signerIdx, FALSE, 0,
+         simpleChain->rgpElement[i]->pCertContext);
+        if (ret)
+            data->pasSigners[signerIdx].pasCertChain[i].pChainElement =
+             simpleChain->rgpElement[i];
+    }
+    return ret;
+}
+
+HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
+{
+    BOOL ret;
+
+    if (!data->csSigners)
+    {
+        ret = FALSE;
+        SetLastError(TRUST_E_NOSIGNATURE);
+    }
+    else
+    {
+        DWORD i;
+
+        ret = TRUE;
+        for (i = 0; i < data->csSigners; i++)
+        {
+            CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
+            DWORD flags;
+
+            if (data->pRequestUsage)
+                memcpy(&chainPara.RequestedUsage, data->pRequestUsage,
+                 sizeof(CERT_USAGE_MATCH));
+            if (data->dwProvFlags & CPD_REVOCATION_CHECK_END_CERT)
+                flags = CERT_CHAIN_REVOCATION_CHECK_END_CERT;
+            else if (data->dwProvFlags & CPD_REVOCATION_CHECK_CHAIN)
+                flags = CERT_CHAIN_REVOCATION_CHECK_CHAIN;
+            else if (data->dwProvFlags & CPD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT)
+                flags = CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
+            else
+                flags = 0;
+            /* Expect the end certificate for each signer to be the only
+             * cert in the chain:
+             */
+            if (data->pasSigners[i].csCertChain)
+            {
+                /* Create a certificate chain for each signer */
+                ret = CertGetCertificateChain(NULL,
+                 data->pasSigners[i].pasCertChain[0].pCert,
+                 NULL, /* FIXME: use data->pasSigners[i].sftVerifyAsOf? */
+                 data->chStores ? data->pahStores[0] : NULL,
+                 &chainPara, flags, NULL, &data->pasSigners[i].pChainContext);
+                if (ret)
+                {
+                    if (data->pasSigners[i].pChainContext->cChain != 1)
+                    {
+                        FIXME("unimplemented for more than 1 simple chain\n");
+                        ret = FALSE;
+                    }
+                    else
+                    {
+                        if ((ret = WINTRUST_CopyChain(data, i)))
+                            ret = data->psPfns->pfnCertCheckPolicy(data, i,
+                             FALSE, 0);
+                    }
+                }
+            }
+        }
+    }
+    if (!ret)
+        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV] =
+         GetLastError();
+    return ret ? S_OK : S_FALSE;
+}

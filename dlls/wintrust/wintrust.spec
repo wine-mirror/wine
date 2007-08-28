@@ -57,7 +57,7 @@
 @ stub OfficeInitializePolicy
 @ stub OpenPersonalTrustDBDialog
 @ stub SoftpubAuthenticode
-@ stub SoftpubCheckCert
+@ stdcall SoftpubCheckCert(ptr long long long)
 @ stub SoftpubCleanup
 @ stub SoftpubDefCertInit
 @ stdcall SoftpubDllRegisterServer()
@@ -112,7 +112,7 @@
 @ stdcall WinVerifyTrustEx(long ptr ptr)
 @ stdcall WintrustAddActionID(ptr long ptr)
 @ stdcall WintrustAddDefaultForUsage(ptr ptr)
-@ stub WintrustCertificateTrust
+@ stdcall WintrustCertificateTrust(ptr)
 @ stub WintrustGetDefaultForUsage
 @ stdcall WintrustGetRegPolicyFlags(ptr)
 @ stdcall WintrustLoadFunctionPointers(ptr ptr)
