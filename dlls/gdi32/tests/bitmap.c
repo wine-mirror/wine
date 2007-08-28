@@ -31,6 +31,8 @@
 
 #include "wine/test.h"
 
+#define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
+
 static BOOL is_win9x;
 
 static INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
@@ -1830,6 +1832,68 @@ static void test_get16dibits(void)
     ReleaseDC(NULL, screen_dc);
 }
 
+void test_GdiAlphaBlend()
+{
+    /* test out-of-bound parameters for GdiAlphaBlend */
+    HDC hdcNull = GetDC(NULL);
+
+    HDC hdcDst = CreateCompatibleDC(hdcNull);
+    HBITMAP bmpDst = CreateCompatibleBitmap(hdcNull, 100, 100);
+    HBITMAP oldDst;
+
+    BITMAPINFO bmi;
+    HDC hdcSrc = CreateCompatibleDC(hdcNull);
+    HBITMAP bmpSrc;
+    HBITMAP oldSrc;
+    LPVOID bits;
+
+    BLENDFUNCTION blend;
+
+    memset(&bmi, 0, sizeof(bmi));  /* as of Wine 0.9.44 we require the src to be a DIB section */
+    bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+    bmi.bmiHeader.biHeight = 20;
+    bmi.bmiHeader.biWidth = 20;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    bmpSrc = CreateDIBSection(hdcDst, &bmi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
+
+    oldDst = (HBITMAP)SelectObject(hdcDst, bmpDst);
+    oldSrc = (HBITMAP)SelectObject(hdcSrc, bmpSrc);
+
+    blend.BlendOp = AC_SRC_OVER;
+    blend.BlendFlags = 0;
+    blend.SourceConstantAlpha = 128;
+    blend.AlphaFormat = 0;
+
+    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend), TRUE, BOOL, "%d");
+    SetLastError(0xdeadbeef);
+    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 10, 10, blend), FALSE, BOOL, "%d");
+    expect_eq(GetLastError(), ERROR_INVALID_PARAMETER, int, "%d");
+    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 10, 10, blend), FALSE, BOOL, "%d");
+    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 15, 0, 10, 10, blend), FALSE, BOOL, "%d");
+    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 10, 10, -2, 3, blend), FALSE, BOOL, "%d");
+    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 10, 10, -2, 3, blend), FALSE, BOOL, "%d");
+
+    SetWindowOrgEx(hdcSrc, -10, -10, NULL);
+    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 10, 10, blend), TRUE, BOOL, "%d");
+    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 10, 10, blend), TRUE, BOOL, "%d");
+    SetMapMode(hdcSrc, MM_ANISOTROPIC);
+    ScaleWindowExtEx(hdcSrc, 10, 1, 10, 1, NULL);
+    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 30, 30, blend), TRUE, BOOL, "%d");
+    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 30, 30, blend), TRUE, BOOL, "%d");
+
+    SelectObject(hdcDst, oldDst);
+    SelectObject(hdcSrc, oldSrc);
+    DeleteObject(bmpSrc);
+    DeleteObject(bmpDst);
+    DeleteDC(hdcDst);
+    DeleteDC(hdcSrc);
+
+    ReleaseDC(NULL, hdcNull);
+
+}
 
 START_TEST(bitmap)
 {
@@ -1848,6 +1912,7 @@ START_TEST(bitmap)
     test_GetDIBits();
     test_select_object();
     test_CreateBitmap();
+    test_GdiAlphaBlend();
     test_bitmapinfoheadersize();
     test_get16dibits();
 }

@@ -1572,6 +1572,14 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
         return FALSE;
     }
 
+    if (xSrc < 0 || ySrc < 0 || widthSrc < 0 || heightSrc < 0 || xSrc + widthSrc > dib.dsBmih.biWidth
+        || ySrc + heightSrc > abs(dib.dsBmih.biHeight))
+    {
+        WARN("Invalid src coords: (%d,%d), size %dx%d\n", xSrc, ySrc, widthSrc, heightSrc);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     if(dib.dsBm.bmBitsPixel != 32) {
         FIXME("not a 32 bpp dibsection\n");
         return FALSE;
