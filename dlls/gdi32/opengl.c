@@ -285,7 +285,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
     if(!func)
 	return NULL;
 
-    TRACE("func: '%p'\n", func);
+    TRACE("func: '%s'\n", func);
 
     /* Retrieve the global hDC to get access to the driver.  */
     dc = OPENGL_GetDefaultDC();
