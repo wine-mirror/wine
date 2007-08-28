@@ -1361,7 +1361,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 
     if (pPresentationParameters->Windowed &&
         ((pPresentationParameters->BackBufferWidth == 0) ||
-         (pPresentationParameters->BackBufferHeight == 0))) {
+         (pPresentationParameters->BackBufferHeight == 0) ||
+         (pPresentationParameters->BackBufferFormat == WINED3DFMT_UNKNOWN))) {
 
         RECT Rect;
         GetClientRect(object->win_handle, &Rect);
