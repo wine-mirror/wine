@@ -852,6 +852,13 @@ static int encode_type(
         *encoded_type = default_type;
         break;
 
+    case VT_LPSTR:
+    case VT_LPWSTR:
+        *encoded_type = 0xfffe0000 | vt;
+        *width = 4;
+        *alignment = 4;
+        break;
+
     case VT_PTR:
       {
         int next_vt;

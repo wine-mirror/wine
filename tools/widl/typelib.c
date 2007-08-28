@@ -126,8 +126,9 @@ static int kw_cmp_func(const void *s1, const void *s2)
         return strcmp(KWP(s1)->kw, KWP(s2)->kw);
 }
 
-static unsigned short builtin_vt(const char *kw)
+static unsigned short builtin_vt(const type_t *t)
 {
+  const char *kw = t->name;
   struct oatype key, *kwp;
   key.kw = kw;
 #ifdef KW_BSEARCH
@@ -145,6 +146,13 @@ static unsigned short builtin_vt(const char *kw)
   if (kwp) {
     return kwp->vt;
   }
+  if (is_string_type (t->attrs, t))
+    switch (t->ref->type)
+      {
+      case RPC_FC_CHAR: return VT_LPSTR;
+      case RPC_FC_WCHAR: return VT_LPWSTR;
+      default: break;
+      }
   return 0;
 }
 
@@ -160,7 +168,7 @@ unsigned short get_type_vt(type_t *t)
 
   chat("get_type_vt: %p type->name %s\n", t, t->name);
   if (t->name) {
-    vt = builtin_vt(t->name);
+    vt = builtin_vt(t);
     if (vt) return vt;
   }
 
