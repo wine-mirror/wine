@@ -2541,7 +2541,7 @@ BOOL InitAdapters(void) {
         }
 
         hdc = pwglGetCurrentDC();
-        if(!ret) {
+        if(!hdc) {
             ERR("Failed to get gl HDC\n");
             HeapFree(GetProcessHeap(), 0, Adapters);
             WineD3D_ReleaseFakeGLContext();
