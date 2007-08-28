@@ -328,8 +328,14 @@ BOOL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR devi
     if(!pi) return FALSE;
 
     if(!pi->Fonts) {
-        MESSAGE("To use WINEPS you need to install some AFM files.\n");
-	return FALSE;
+        RASTERIZER_STATUS status;
+        if(!GetRasterizerCaps(&status, sizeof(status)) ||
+           !(status.wFlags & TT_AVAILABLE) ||
+           !(status.wFlags & TT_ENABLED)) {
+            MESSAGE("Disabling printer %s since it has no builtin fonts and there are no TrueType fonts available.\n",
+                    debugstr_w(device));
+            return FALSE;
+        }
     }
 
     physDev = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*physDev) );
