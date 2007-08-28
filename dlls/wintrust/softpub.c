@@ -168,16 +168,8 @@ static BOOL SOFTPUB_CreateStoreFromMessage(CRYPT_PROVIDER_DATA *data)
      data->hProv, CERT_STORE_NO_CRYPT_RELEASE_FLAG, data->hMsg);
     if (store)
     {
-        data->pahStores = data->psPfns->pfnAlloc(sizeof(HCERTSTORE));
-        if (data->pahStores)
-        {
-            data->chStores = 1;
-            data->pahStores[0] = CertDuplicateStore(store);
-            CertCloseStore(store, 0);
-            ret = TRUE;
-        }
-        else
-            SetLastError(ERROR_OUTOFMEMORY);
+        ret = data->psPfns->pfnAddStore2Chain(data, store);
+        CertCloseStore(store, 0);
     }
     TRACE("returning %d\n", ret);
     return ret;
