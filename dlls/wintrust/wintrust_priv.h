@@ -24,5 +24,7 @@ void WINAPI WINTRUST_Free(void *p);
 BOOL WINAPI WINTRUST_AddStore(CRYPT_PROVIDER_DATA *data, HCERTSTORE store);
 BOOL WINAPI WINTRUST_AddSgnr(CRYPT_PROVIDER_DATA *data,
  BOOL fCounterSigner, DWORD idxSigner, CRYPT_PROVIDER_SGNR *sgnr);
+BOOL WINAPI WINTRUST_AddCert(CRYPT_PROVIDER_DATA *data, DWORD idxSigner,
+ BOOL fCounterSigner, DWORD idxCounterSigner, PCCERT_CONTEXT pCert2Add);
 
 #endif /* ndef __WINTRUST_PRIV_H__ */

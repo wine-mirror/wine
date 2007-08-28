@@ -130,6 +130,8 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
     ok(data.pasSigners != NULL, "Expected pasSigners to be allocated\n");
     if (data.pasSigners)
     {
+        PCCERT_CONTEXT cert;
+
         ok(!memcmp(&data.pasSigners[0], &sgnr, sizeof(sgnr)),
          "Unexpected data in signer\n");
         /* Adds into the location specified by the index */
@@ -156,6 +158,32 @@ static void test_utils(SAFE_PROVIDER_FUNCTIONS *funcs)
         ret = funcs->pfnAddSgnr2Chain(&data, FALSE, 0, &sgnr);
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+        /* Crash
+        ret = funcs->pfnAddCert2Chain(NULL, 0, FALSE, 0, NULL);
+        ret = funcs->pfnAddCert2Chain(&data, 0, FALSE, 0, NULL);
+         */
+        cert = CertCreateCertificateContext(X509_ASN_ENCODING, v1CertWithPubKey,
+         sizeof(v1CertWithPubKey));
+        if (cert)
+        {
+            /* Notes on behavior that are hard to test:
+             * 1. If pasSigners is invalid, pfnAddCert2Chain crashes
+             * 2. An invalid signer index isn't checked.
+             */
+            ret = funcs->pfnAddCert2Chain(&data, 0, FALSE, 0, cert);
+            ok(ret, "pfnAddCert2Chain failed: %08x\n", GetLastError());
+            ok(data.pasSigners[0].csCertChain == 1, "Expected 1 cert, got %d\n",
+             data.pasSigners[0].csCertChain);
+            ok(data.pasSigners[0].pasCertChain != NULL,
+             "Expected pasCertChain to be allocated\n");
+            if (data.pasSigners[0].pasCertChain)
+                ok(data.pasSigners[0].pasCertChain[0].pCert == cert,
+                 "Unexpected cert\n");
+            CertFreeCertificateContext(cert);
+        }
+        else
+            skip("CertCreateCertificateContext failed: %08x\n", GetLastError());
     }
 }
 

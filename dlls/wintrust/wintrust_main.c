@@ -303,3 +303,40 @@ BOOL WINAPI WINTRUST_AddSgnr(CRYPT_PROVIDER_DATA *data,
         SetLastError(ERROR_OUTOFMEMORY);
     return ret;
 }
+
+BOOL WINAPI WINTRUST_AddCert(CRYPT_PROVIDER_DATA *data, DWORD idxSigner,
+ BOOL fCounterSigner, DWORD idxCounterSigner, PCCERT_CONTEXT pCert2Add)
+{
+    BOOL ret = FALSE;
+
+    if (fCounterSigner)
+    {
+        FIXME("unimplemented for counter signers\n");
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (data->pasSigners[idxSigner].csCertChain)
+        data->pasSigners[idxSigner].pasCertChain =
+         WINTRUST_ReAlloc(data->pasSigners[idxSigner].pasCertChain,
+         (data->pasSigners[idxSigner].csCertChain + 1) *
+         sizeof(CRYPT_PROVIDER_CERT));
+    else
+    {
+        data->pasSigners[idxSigner].pasCertChain =
+         WINTRUST_Alloc(sizeof(CRYPT_PROVIDER_CERT));
+        data->pasSigners[idxSigner].csCertChain = 0;
+    }
+    if (data->pasSigners[idxSigner].pasCertChain)
+    {
+        CRYPT_PROVIDER_CERT *cert = &data->pasSigners[idxSigner].pasCertChain[
+         data->pasSigners[idxSigner].csCertChain];
+
+        cert->cbStruct = sizeof(CRYPT_PROVIDER_CERT);
+        cert->pCert = CertDuplicateCertificateContext(pCert2Add);
+        data->pasSigners[idxSigner].csCertChain++;
+        ret = TRUE;
+    }
+    else
+        SetLastError(ERROR_OUTOFMEMORY);
+    return ret;
+}
