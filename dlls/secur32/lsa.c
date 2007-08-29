@@ -69,6 +69,13 @@ NTSTATUS WINAPI LsaFreeReturnBuffer(PVOID Buffer)
     return STATUS_SUCCESS;
 }
 
+NTSTATUS WINAPI LsaGetLogonSessionData(PLUID LogonId,
+        PSECURITY_LOGON_SESSION_DATA* ppLogonSessionData)
+{
+    FIXME("%p %p stub\n", LogonId, ppLogonSessionData);
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS WINAPI LsaLookupAuthenticationPackage(HANDLE LsaHandle,
         PLSA_STRING PackageName, PULONG AuthenticationPackage)
 {

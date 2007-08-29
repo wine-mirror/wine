@@ -235,6 +235,21 @@ typedef struct _POLICY_MODIFICATION_INFO
     LARGE_INTEGER DatabaseCreationTime;
 } POLICY_MODIFICATION_INFO, *PPOLICY_MODIFICATION_INFO;
 
+typedef struct _SECURITY_LOGON_SESSION_DATA {
+    ULONG Size;
+    LUID LogonId;
+    LSA_UNICODE_STRING UserName;
+    LSA_UNICODE_STRING LogonDomain;
+    LSA_UNICODE_STRING AuthenticationPackage;
+    ULONG LogonType;
+    ULONG Session;
+    PSID Sid;
+    LARGE_INTEGER LogonTime;
+    LSA_UNICODE_STRING LogonServer;
+    LSA_UNICODE_STRING DnsDomainName;
+    LSA_UNICODE_STRING Upn;
+} SECURITY_LOGON_SESSION_DATA, *PSECURITY_LOGON_SESSION_DATA;
+
 typedef struct
 {
     SID_NAME_USE Use;

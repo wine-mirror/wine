@@ -37,7 +37,7 @@
 @ stdcall LsaDeregisterLogonProcess(long)
 @ stdcall LsaEnumerateLogonSessions(ptr ptr)
 @ stdcall LsaFreeReturnBuffer(ptr)
-@ stub LsaGetLogonSessionData
+@ stdcall LsaGetLogonSessionData(ptr ptr)
 @ stub LsaLogonUser
 @ stdcall LsaLookupAuthenticationPackage(ptr ptr ptr)
 @ stub LsaRegisterLogonProcess
