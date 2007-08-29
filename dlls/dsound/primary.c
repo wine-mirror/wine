@@ -456,9 +456,9 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex,
 		}
 		if (err == S_FALSE)
 		{
-			/* ALSA specific: S_FALSE tells that recreation was succesful,
+			/* ALSA specific: S_FALSE tells that recreation was successful,
 			 * but size and location may be changed, and buffer has to be restarted
-			 * I put it here, so if frequency doesn't match error will be changed to DSERR_BUFFERLOST
+			 * I put it here, so if frequency doesn't match the error will be changed to DSERR_BUFFERLOST
 			 * and the entire re-initialization will occur anyway
 			 */
 			IDsDriverBuffer_Lock(device->hwbuf, (LPVOID *)&device->buffer, &device->buflen, NULL, NULL, 0, 0, DSBLOCK_ENTIREBUFFER);

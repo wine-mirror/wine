@@ -321,7 +321,7 @@ static const struct
  { "a=%big%%big%%big%%big%%big%%big%%big%%big%%big%%big%%big%\n" STR_SECTION,   "a", { A4097 /*MAX_INF_STRING_LENGTH+1*/ } },
 
  /* Prove expansion of system entries removes extra \'s and string
-    replacements doesnt                                            */
+    replacements doesn't                                            */
  { "ab=\"%24%\"\n" STR_SECTION,           "ab", { "C:\\" } },
  { "ab=\"%mydrive%\"\n" STR_SECTION,      "ab", { "C:\\" } },
  { "ab=\"%24%\\fred\"\n" STR_SECTION,     "ab", { "C:\\fred" } },

@@ -1566,7 +1566,7 @@ static void release_buffer_test(IDirect3DDevice9 *device)
     };
     short indices[] = {3, 4, 5};
 
-    /* Index and vertex buffers should always be createable */
+    /* Index and vertex buffers should always be creatable */
     hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad), 0, D3DFVF_XYZ | D3DFVF_DIFFUSE,
                                               D3DPOOL_MANAGED, &vb, NULL);
     ok(hr == D3D_OK, "CreateVertexBuffer failed with %s\n", DXGetErrorString9(hr));

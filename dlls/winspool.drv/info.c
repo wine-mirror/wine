@@ -6447,7 +6447,7 @@ BOOL WINAPI AddPrinterDriverExW( LPWSTR pName, DWORD level, LPBYTE pDriverInfo, 
     ptr = get_servername_from_name(pName);
     HeapFree(GetProcessHeap(), 0, ptr);
     if (ptr) {
-        FIXME("not suported for server: %s\n", debugstr_w(pName));
+        FIXME("not supported for server: %s\n", debugstr_w(pName));
         SetLastError(ERROR_ACCESS_DENIED);
         return FALSE;
     }

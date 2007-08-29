@@ -1632,7 +1632,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_R16F:
-            /* Simmilar to R32F */
+            /* Similar to R32F */
             *convert = CONVERT_R16F;
             *format = GL_RGB;
             *internal = GL_RGB16F_ARB;

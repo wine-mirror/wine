@@ -2498,7 +2498,7 @@ BOOL InitAdapters(void) {
         return FALSE;
     }
 
-/* Dynamicly load all GL core functions */
+/* Dynamically load all GL core functions */
     GL_FUNCS_GEN;
 #undef USE_GL_FUNC
 

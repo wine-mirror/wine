@@ -1062,7 +1062,7 @@ int CDECL _ismbslead(const unsigned char* start, const unsigned char* str)
   if(!g_mbcp_is_multibyte)
     return 0;
 
-  /* Lead bytes can also be trail bytes so we need to analise the string
+  /* Lead bytes can also be trail bytes so we need to analyse the string
    */
   while (start <= str)
   {
