@@ -177,6 +177,7 @@ public:
     REAL Height;
 };
 
+/* FIXME: missing the methods. */
 class Rect
 {
 public:

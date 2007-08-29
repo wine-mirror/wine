@@ -69,12 +69,12 @@ typedef FillMode GpFillMode;
 typedef PathData GpPathData;
 typedef LineCap GpLineCap;
 typedef RectF GpRectF;
+typedef Rect GpRect;
 typedef LineJoin GpLineJoin;
 typedef DashCap GpDashCap;
 typedef DashStyle GpDashStyle;
 typedef MatrixOrder GpMatrixOrder;
 typedef Point GpPoint;
 typedef WrapMode GpWrapMode;
-typedef Rect GpRect;
 
 #endif

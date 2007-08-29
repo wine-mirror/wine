@@ -1231,7 +1231,7 @@ GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
 }
 
 GpStatus WINGDIPAPI GdipDrawRectangles(GpGraphics *graphics, GpPen *pen,
-    GpRectF* rects, INT count)
+    GDIPCONST GpRectF* rects, INT count)
 {
     GpPointF *ptf;
     POINT *pti;

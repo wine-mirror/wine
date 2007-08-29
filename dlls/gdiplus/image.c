@@ -34,8 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
-typedef void ImageItemData;
-
 #define PIXELFORMATBPP(x) ((x) ? ((x) >> 8) & 255 : 24)
 
 static INT ipicture_pixel_height(IPicture *pic)

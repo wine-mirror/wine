@@ -54,6 +54,18 @@ public:
     UINT_PTR Reserved;
 };
 
+class ImageItemData
+{
+public:
+    UINT  Size;
+    UINT  Position;
+    VOID* Desc;
+    UINT  DescSize;
+    VOID* Data;
+    UINT  DataSize;
+    UINT  Cookie;
+};
+
 #else /* end of c++ typedefs */
 
 typedef enum ImageLockMode ImageLockMode;
@@ -80,7 +92,18 @@ typedef struct BitmapData
     PixelFormat PixelFormat;
     VOID* Scan0;
     UINT_PTR Reserved; /* undocumented: stores the lock mode */
-}BitmapData;
+} BitmapData;
+
+typedef struct ImageItemData
+{
+    UINT  Size;
+    UINT  Position;
+    VOID* Desc;
+    UINT  DescSize;
+    VOID* Data;
+    UINT  DataSize;
+    UINT  Cookie;
+} ImageItemData;
 
 #endif /* end of c typedefs */
 
