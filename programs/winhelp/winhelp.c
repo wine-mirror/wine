@@ -551,6 +551,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     BOOL bPrimary;
     BOOL bPopup;
     LPSTR name;
+    DWORD ex_style;
 
     bPrimary = !lstrcmpi(wi->name, "main");
     bPopup = wi->win_style & WS_POPUP;
@@ -623,7 +624,9 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
         }
     }
 
-    hWnd = CreateWindow(bPopup ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
+    ex_style = 0;
+    if (bPopup) ex_style = WS_EX_TOOLWINDOW;
+    hWnd = CreateWindowEx(ex_style, bPopup ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
                         wi->caption, 
                         bPrimary ? WS_OVERLAPPEDWINDOW : wi->win_style,
                         wi->origin.x, wi->origin.y, wi->size.cx, wi->size.cy,
@@ -983,7 +986,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             new_window_size.cy = old_window_size.cy - old_client_size.cy + new_client_size.cy;
 
             win->hShadowWnd =
-                CreateWindow(SHADOW_WIN_CLASS_NAME, "", WS_POPUP,
+                CreateWindowEx(WS_EX_TOOLWINDOW, SHADOW_WIN_CLASS_NAME, "", WS_POPUP,
                              origin.x + SHADOW_DX, origin.y + SHADOW_DY,
                              new_window_size.cx, new_window_size.cy,
                              0, 0, Globals.hInstance, 0);
