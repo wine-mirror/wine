@@ -2499,6 +2499,8 @@ struct get_message_request
     unsigned int    get_first;
     unsigned int    get_last;
     unsigned int    hw_id;
+    unsigned int    wake_mask;
+    unsigned int    changed_mask;
 };
 struct get_message_reply
 {
@@ -4731,6 +4733,6 @@ union generic_reply
     struct make_process_system_reply make_process_system_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 311
+#define SERVER_PROTOCOL_VERSION 312
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

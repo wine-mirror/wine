@@ -2304,7 +2304,9 @@ static void dump_get_message_request( const struct get_message_request *req )
     fprintf( stderr, " get_win=%p,", req->get_win );
     fprintf( stderr, " get_first=%08x,", req->get_first );
     fprintf( stderr, " get_last=%08x,", req->get_last );
-    fprintf( stderr, " hw_id=%08x", req->hw_id );
+    fprintf( stderr, " hw_id=%08x,", req->hw_id );
+    fprintf( stderr, " wake_mask=%08x,", req->wake_mask );
+    fprintf( stderr, " changed_mask=%08x", req->changed_mask );
 }
 
 static void dump_get_message_reply( const struct get_message_reply *req )

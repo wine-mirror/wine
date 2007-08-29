@@ -1828,6 +1828,8 @@ DECL_HANDLER(get_message)
         return;
     }
 
+    queue->wake_mask = req->wake_mask;
+    queue->changed_mask = req->changed_mask;
     set_error( STATUS_PENDING );  /* FIXME */
 }
 

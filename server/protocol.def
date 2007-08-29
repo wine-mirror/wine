@@ -1859,6 +1859,8 @@ enum message_type
     unsigned int    get_first; /* first message code to get */
     unsigned int    get_last;  /* last message code to get */
     unsigned int    hw_id;     /* id of the previous hardware message (or 0) */
+    unsigned int    wake_mask; /* wakeup bits mask */
+    unsigned int    changed_mask; /* changed bits mask */
 @REPLY
     user_handle_t   win;       /* window handle */
     int             type;      /* message type */

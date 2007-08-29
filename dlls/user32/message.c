@@ -2017,9 +2017,12 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
     ULONG_PTR extra_info = 0;
     struct user_thread_info *thread_info = get_user_thread_info();
     struct received_message_info info, *old_info;
+    unsigned int wake_mask, changed_mask = HIWORD(flags);
     unsigned int hw_id = 0;  /* id of previous hardware message */
 
     if (!first && !last) last = ~0;
+    if (!changed_mask) changed_mask = QS_ALLINPUT;
+    wake_mask = changed_mask & (QS_SENDMESSAGE | QS_SMRESULT);
 
     for (;;)
     {
@@ -2038,6 +2041,8 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 req->get_first = first;
                 req->get_last  = last;
                 req->hw_id     = hw_id;
+                req->wake_mask = wake_mask;
+                req->changed_mask = changed_mask;
                 if (buffer_size) wine_server_set_reply( req, buffer, buffer_size );
                 if (!(res = wine_server_call( req )))
                 {
@@ -2933,35 +2938,14 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
         if ((first <= WM_SYSTIMER) && (last >= WM_SYSTIMER)) mask |= QS_TIMER;
         if ((first <= WM_PAINT) && (last >= WM_PAINT)) mask |= QS_PAINT;
     }
-    else mask |= QS_MOUSE | QS_KEY | QS_TIMER | QS_PAINT;
+    else mask = QS_ALLINPUT;
 
-    while (!PeekMessageW( msg, hwnd, first, last, PM_REMOVE ))
+    while (!PeekMessageW( msg, hwnd, first, last, PM_REMOVE | PM_NOYIELD | (mask << 16) ))
     {
-        /* wait until one of the bits is set */
-        unsigned int wake_bits = 0, changed_bits = 0;
         DWORD dwlc;
 
-        SERVER_START_REQ( set_queue_mask )
-        {
-            req->wake_mask    = QS_SENDMESSAGE;
-            req->changed_mask = mask;
-            req->skip_wait    = 1;
-            if (!wine_server_call( req ))
-            {
-                wake_bits    = reply->wake_bits;
-                changed_bits = reply->changed_bits;
-            }
-        }
-        SERVER_END_REQ;
-
-        if (changed_bits & mask) continue;
-        if (wake_bits & QS_SENDMESSAGE) continue;
-
-        TRACE( "(%04x) mask=%08x, bits=%08x, changed=%08x, waiting\n",
-               GetCurrentThreadId(), mask, wake_bits, changed_bits );
-
         ReleaseThunkLock( &dwlc );
-        USER_Driver->pMsgWaitForMultipleObjectsEx( 1, &server_queue, INFINITE, QS_ALLINPUT, 0 );
+        USER_Driver->pMsgWaitForMultipleObjectsEx( 1, &server_queue, INFINITE, mask, 0 );
         if (dwlc) RestoreThunkLock( dwlc );
     }
 
