@@ -317,8 +317,8 @@ static IBindStatusCallback *create_callback(DocHost *This, PBYTE post_data,
     return BINDSC(ret);
 }
 
-static void on_before_navigate2(DocHost *This, LPWSTR url, PBYTE post_data, ULONG post_data_len,
-                                LPWSTR headers, VARIANT_BOOL *cancel)
+static void on_before_navigate2(DocHost *This, LPCWSTR url, const BYTE *post_data,
+                                ULONG post_data_len, LPWSTR headers, VARIANT_BOOL *cancel)
 {
     VARIANT var_url, var_flags, var_frame_name, var_post_data, var_post_data2, var_headers;
     DISPPARAMS dispparams;
@@ -514,8 +514,8 @@ static HRESULT bind_url_to_object(DocHost *This, LPCWSTR url, PBYTE post_data, U
     return hres;
 }
 
-HRESULT navigate_url(DocHost *This, BSTR url, VARIANT *Flags, VARIANT *TargetFrameName,
-        VARIANT *PostData, VARIANT *Headers)
+HRESULT navigate_url(DocHost *This, BSTR url, const VARIANT *Flags,
+                     const VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
 {
     PBYTE post_data = NULL;
     ULONG post_data_len = 0;
