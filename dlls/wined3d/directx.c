@@ -2204,12 +2204,23 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
             *pCaps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
         else
             *pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
-        /* FIXME: The following line is card dependent. -1.0 to 1.0 is a safe default clamp range for now */
-        *pCaps->PixelShader1xMaxValue = 1.0;
+        /* FIXME: The following line is card dependent. -8.0 to 8.0 is the
+         * Direct3D minimum requirement.
+         *
+         * Both GL_ARB_fragment_program and GLSL require a "maximum representable magnitude"
+         * of colors to be 2^10, and 2^32 for other floats. Should we use 1024 here?
+         *
+         * The problem is that the refrast clamps temporary results in the shader to
+         * [-MaxValue;+MaxValue]. If the card's max value is bigger than the one we advertize here,
+         * then applications may miss the clamping behavior. On the other hand, if it is smaller,
+         * the shader will generate incorrect results too. Unfortunately, GL deliberately doesn't
+         * offer a way to query this.
+         */
+        *pCaps->PixelShader1xMaxValue = 8.0;
         TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (GLSL)\n");
     } else if (ps_selected_mode == SHADER_ARB) {
         *pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
-        *pCaps->PixelShader1xMaxValue = 1.0;
+        *pCaps->PixelShader1xMaxValue = 8.0;
         TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
     } else {
         *pCaps->PixelShaderVersion    = 0;
