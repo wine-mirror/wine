@@ -40,7 +40,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "user_private.h"
 #include "controls.h"

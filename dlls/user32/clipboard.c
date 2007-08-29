@@ -46,7 +46,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "user_private.h"
 #include "win.h"

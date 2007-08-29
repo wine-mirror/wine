@@ -31,7 +31,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
-#include "wine/winuser16.h"
 #include "wine/server.h"
 #include "controls.h"
 #include "user_private.h"
