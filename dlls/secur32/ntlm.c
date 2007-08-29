@@ -1868,6 +1868,9 @@ void SECUR32_initNTLMSP(void)
 	    MIN_NTLM_AUTH_MAJOR_VERSION,
 	    MIN_NTLM_AUTH_MINOR_VERSION,
 	    MIN_NTLM_AUTH_MICRO_VERSION);
+        ERR("Usually, you can find it in the winbind package of your "
+            "distribution.\n");
+
     }
     cleanup_helper(helper);
 }
