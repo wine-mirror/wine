@@ -787,53 +787,51 @@ static int init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi)
     TRACE("dlt: %s", ctime(&dlt));
 
     if (dlt == std || !dlt || !std)
-    {
-        RtlLeaveCriticalSection( &TIME_tz_section );
         TRACE("there is no daylight saving rules in this time zone\n");
-        return 0;
+    else
+    {
+        tmp = dlt - tzi->Bias * 60;
+        tm = gmtime(&tmp);
+        TRACE("dlt gmtime: %s", asctime(tm));
+
+        tzi->DaylightBias = -60;
+        tzi->DaylightDate.wYear = tm->tm_year + 1900;
+        tzi->DaylightDate.wMonth = tm->tm_mon + 1;
+        tzi->DaylightDate.wDayOfWeek = tm->tm_wday;
+        tzi->DaylightDate.wDay = tm->tm_mday;
+        tzi->DaylightDate.wHour = tm->tm_hour;
+        tzi->DaylightDate.wMinute = tm->tm_min;
+        tzi->DaylightDate.wSecond = tm->tm_sec;
+        tzi->DaylightDate.wMilliseconds = 0;
+
+        TRACE("daylight (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
+            tzi->DaylightDate.wDay, tzi->DaylightDate.wMonth,
+            tzi->DaylightDate.wYear, tzi->DaylightDate.wDayOfWeek,
+            tzi->DaylightDate.wHour, tzi->DaylightDate.wMinute,
+            tzi->DaylightDate.wSecond, tzi->DaylightDate.wMilliseconds,
+            tzi->DaylightBias);
+
+        tmp = std - tzi->Bias * 60 - tzi->DaylightBias * 60;
+        tm = gmtime(&tmp);
+        TRACE("std gmtime: %s", asctime(tm));
+
+        tzi->StandardBias = 0;
+        tzi->StandardDate.wYear = tm->tm_year + 1900;
+        tzi->StandardDate.wMonth = tm->tm_mon + 1;
+        tzi->StandardDate.wDayOfWeek = tm->tm_wday;
+        tzi->StandardDate.wDay = tm->tm_mday;
+        tzi->StandardDate.wHour = tm->tm_hour;
+        tzi->StandardDate.wMinute = tm->tm_min;
+        tzi->StandardDate.wSecond = tm->tm_sec;
+        tzi->StandardDate.wMilliseconds = 0;
+
+        TRACE("standard (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
+            tzi->StandardDate.wDay, tzi->StandardDate.wMonth,
+            tzi->StandardDate.wYear, tzi->StandardDate.wDayOfWeek,
+            tzi->StandardDate.wHour, tzi->StandardDate.wMinute,
+            tzi->StandardDate.wSecond, tzi->StandardDate.wMilliseconds,
+            tzi->StandardBias);
     }
-
-    tmp = dlt - tzi->Bias * 60;
-    tm = gmtime(&tmp);
-    TRACE("dlt gmtime: %s", asctime(tm));
-
-    tzi->DaylightBias = -60;
-    tzi->DaylightDate.wYear = tm->tm_year + 1900;
-    tzi->DaylightDate.wMonth = tm->tm_mon + 1;
-    tzi->DaylightDate.wDayOfWeek = tm->tm_wday;
-    tzi->DaylightDate.wDay = tm->tm_mday;
-    tzi->DaylightDate.wHour = tm->tm_hour;
-    tzi->DaylightDate.wMinute = tm->tm_min;
-    tzi->DaylightDate.wSecond = tm->tm_sec;
-    tzi->DaylightDate.wMilliseconds = 0;
-
-    TRACE("daylight (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
-        tzi->DaylightDate.wDay, tzi->DaylightDate.wMonth,
-        tzi->DaylightDate.wYear, tzi->DaylightDate.wDayOfWeek,
-        tzi->DaylightDate.wHour, tzi->DaylightDate.wMinute,
-        tzi->DaylightDate.wSecond, tzi->DaylightDate.wMilliseconds,
-        tzi->DaylightBias);
-
-    tmp = std - tzi->Bias * 60 - tzi->DaylightBias * 60;
-    tm = gmtime(&tmp);
-    TRACE("std gmtime: %s", asctime(tm));
-
-    tzi->StandardBias = 0;
-    tzi->StandardDate.wYear = tm->tm_year + 1900;
-    tzi->StandardDate.wMonth = tm->tm_mon + 1;
-    tzi->StandardDate.wDayOfWeek = tm->tm_wday;
-    tzi->StandardDate.wDay = tm->tm_mday;
-    tzi->StandardDate.wHour = tm->tm_hour;
-    tzi->StandardDate.wMinute = tm->tm_min;
-    tzi->StandardDate.wSecond = tm->tm_sec;
-    tzi->StandardDate.wMilliseconds = 0;
-
-    TRACE("standard (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
-        tzi->StandardDate.wDay, tzi->StandardDate.wMonth,
-        tzi->StandardDate.wYear, tzi->StandardDate.wDayOfWeek,
-        tzi->StandardDate.wHour, tzi->StandardDate.wMinute,
-        tzi->StandardDate.wSecond, tzi->StandardDate.wMilliseconds,
-        tzi->StandardBias);
 
     find_reg_tz_info(tzi);
     cached_tzi = *tzi;

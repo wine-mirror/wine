@@ -21,6 +21,7 @@
 
 #include "wine/test.h"
 #include "winbase.h"
+#include "winnls.h"
 
 static BOOL (WINAPI *pTzSpecificLocalTimeToSystemTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
 static BOOL (WINAPI *pSystemTimeToTzSpecificLocalTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
@@ -221,6 +222,7 @@ static LONG get_tz_bias(const TIME_ZONE_INFORMATION *tzinfo, DWORD tz_id)
  
 static void test_GetTimeZoneInformation(void)
 {
+    char std_name[32], dlt_name[32];
     TIME_ZONE_INFORMATION tzinfo, tzinfo1;
     BOOL res;
     DWORD tz_id;
@@ -252,7 +254,9 @@ static void test_GetTimeZoneInformation(void)
           (tz_id == TIME_ZONE_ID_UNKNOWN ? "TIME_ZONE_ID_UNKNOWN" :
           "TIME_ZONE_ID_INVALID")));
 
-    trace("bias %d\n", tzinfo.Bias);
+    WideCharToMultiByte(CP_ACP, 0, tzinfo.StandardName, -1, std_name, sizeof(std_name), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, tzinfo.DaylightName, -1, dlt_name, sizeof(dlt_name), NULL, NULL);
+    trace("bias %d, %s - %s\n", tzinfo.Bias, std_name, dlt_name);
     trace("standard (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
         tzinfo.StandardDate.wDay, tzinfo.StandardDate.wMonth,
         tzinfo.StandardDate.wYear, tzinfo.StandardDate.wDayOfWeek,
