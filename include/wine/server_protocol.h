@@ -2523,7 +2523,7 @@ struct get_message_reply
 struct reply_message_request
 {
     struct request_header __header;
-    unsigned int    result;
+    unsigned long   result;
     int             remove;
     /* VARARG(data,bytes); */
 };
@@ -2556,7 +2556,7 @@ struct get_message_reply_request
 struct get_message_reply_reply
 {
     struct reply_header __header;
-    unsigned int    result;
+    unsigned long   result;
     /* VARARG(data,bytes); */
 };
 
@@ -4731,6 +4731,6 @@ union generic_reply
     struct make_process_system_reply make_process_system_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 310
+#define SERVER_PROTOCOL_VERSION 311
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

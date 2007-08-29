@@ -1878,7 +1878,7 @@ enum message_type
 
 /* Reply to a sent message */
 @REQ(reply_message)
-    unsigned int    result;    /* message result */
+    unsigned long   result;    /* message result */
     int             remove;    /* should we remove the message? */
     VARARG(data,bytes);        /* message data for sent messages */
 @END
@@ -1896,7 +1896,7 @@ enum message_type
 @REQ(get_message_reply)
     int             cancel;    /* cancel message if not ready? */
 @REPLY
-    unsigned int    result;    /* message result */
+    unsigned long   result;    /* message result */
     VARARG(data,bytes);        /* message data for sent messages */
 @END
 

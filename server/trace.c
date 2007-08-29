@@ -2327,7 +2327,7 @@ static void dump_get_message_reply( const struct get_message_reply *req )
 
 static void dump_reply_message_request( const struct reply_message_request *req )
 {
-    fprintf( stderr, " result=%08x,", req->result );
+    fprintf( stderr, " result=%lx,", req->result );
     fprintf( stderr, " remove=%d,", req->remove );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
@@ -2347,7 +2347,7 @@ static void dump_get_message_reply_request( const struct get_message_reply_reque
 
 static void dump_get_message_reply_reply( const struct get_message_reply_reply *req )
 {
-    fprintf( stderr, " result=%08x,", req->result );
+    fprintf( stderr, " result=%lx,", req->result );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
 }
