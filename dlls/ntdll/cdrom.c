@@ -305,27 +305,28 @@ static int CDROM_MediaChanged(int dev)
 
 
 /******************************************************************
- *		open_parent_device
+ *		get_parent_device
  *
- * On Mac OS, open the device for the whole disk from a fd that points to a partition.
+ * On Mac OS, get the device for the whole disk from a fd that points to a partition.
  * This is ugly and inefficient, but we have no choice since the partition fd doesn't
  * support the eject ioctl.
  */
 #ifdef __APPLE__
-static int open_parent_device( int fd )
+static NTSTATUS get_parent_device( int fd, char *name, size_t len )
 {
+    NTSTATUS status = STATUS_NO_SUCH_FILE;
     struct stat st;
-    int i, parent_fd = -1;
+    int i;
     io_service_t service;
     CFMutableDictionaryRef dict;
     CFTypeRef val;
 
-    if (fstat( fd, &st ) == -1) return -1;
-    if (!S_ISCHR( st.st_mode )) return -1;
+    if (fstat( fd, &st ) == -1) return FILE_GetNtStatus();
+    if (!S_ISCHR( st.st_mode )) return STATUS_OBJECT_TYPE_MISMATCH;
 
     /* create a dictionary with the right major/minor numbers */
 
-    if (!(dict = IOServiceMatching( kIOMediaClass ))) return -1;
+    if (!(dict = IOServiceMatching( kIOMediaClass ))) return STATUS_NO_MEMORY;
 
     i = major( st.st_rdev );
     val = CFNumberCreate( NULL, kCFNumberIntType, &i );
@@ -360,11 +361,10 @@ static int open_parent_device( int fd )
 
         if ((str = IORegistryEntryCreateCFProperty( service, CFSTR("BSD Name"), NULL, 0 )))
         {
-            char name[100];
             strcpy( name, "/dev/r" );
-            CFStringGetCString( str, name + 6, sizeof(name) - 6, kCFStringEncodingUTF8 );
+            CFStringGetCString( str, name + 6, len - 6, kCFStringEncodingUTF8 );
             CFRelease( str );
-            parent_fd = open( name, O_RDONLY );
+            status = STATUS_SUCCESS;
         }
         IOObjectRelease( service );
         break;
@@ -374,7 +374,7 @@ next:
         IOObjectRelease( service );
         service = parent;
     }
-    return parent_fd;
+    return status;
 }
 #endif
 
@@ -2181,17 +2181,23 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         else
         {
 #ifdef __APPLE__
-            int parent_fd = open_parent_device( fd );
-            if (parent_fd != -1)
+            char name[100];
+
+            /* This is ugly as hell, but Mac OS is unable to eject from the device fd,
+             * it wants an fd for the whole device, and it also requires the device fd
+             * to be closed first, so we have to close the handle that the caller gave us.
+             * Also for some reason it wants the fd to be closed before we even open the parent.
+             */
+            if ((status = get_parent_device( fd, name, sizeof(name) ))) break;
+            NtClose( hDevice );
+            if (needs_close) close( fd );
+            TRACE("opening parent %s\n", name );
+            if ((fd = open( name, O_RDONLY )) == -1)
             {
-                /* This is ugly as hell, but Mac OS is unable to eject from the device fd,
-                 * it wants an fd for the whole device, and it also requires the device fd
-                 * to be closed first, so we have to close the handle that the caller gave us */
-                NtClose( hDevice );
-                if (needs_close) close( fd );
-                fd = parent_fd;
-                needs_close = 1;
+                status = FILE_GetNtStatus();
+                break;
             }
+            needs_close = 1;
 #endif
             status = CDROM_SetTray(fd, TRUE);
         }
