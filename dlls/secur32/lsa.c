@@ -76,6 +76,21 @@ NTSTATUS WINAPI LsaGetLogonSessionData(PLUID LogonId,
     return STATUS_SUCCESS;
 }
 
+NTSTATUS WINAPI LsaLogonUser(HANDLE LsaHandle, PLSA_STRING OriginName,
+        SECURITY_LOGON_TYPE LogonType, ULONG AuthenticationPackage,
+        PVOID AuthenticationInformation, ULONG AuthenticationInformationLength,
+        PTOKEN_GROUPS LocalGroups, PTOKEN_SOURCE SourceContext,
+        PVOID* ProfileBuffer, PULONG ProfileBufferLength, PLUID LogonId,
+        PHANDLE Token, PQUOTA_LIMITS Quotas, PNTSTATUS SubStatus)
+{
+    FIXME("%p %p %d %d %p %d %p %p %p %p %p %p %p %p stub\n", LsaHandle,
+            OriginName, LogonType, AuthenticationPackage,
+            AuthenticationInformation, AuthenticationInformationLength,
+            LocalGroups, SourceContext, ProfileBuffer, ProfileBufferLength,
+            LogonId, Token, Quotas, SubStatus);
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS WINAPI LsaLookupAuthenticationPackage(HANDLE LsaHandle,
         PLSA_STRING PackageName, PULONG AuthenticationPackage)
 {
