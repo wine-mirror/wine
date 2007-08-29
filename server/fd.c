@@ -802,14 +802,12 @@ static int is_device_removable( dev_t dev, int unix_fd )
     struct statfs stfs;
 
     if (fstatfs( unix_fd, &stfs ) == -1) return 0;
-    return (!strncmp("cd9660", stfs.f_fstypename, sizeof(stfs.f_fstypename)) ||
-            !strncmp("udf", stfs.f_fstypename, sizeof(stfs.f_fstypename)));
+    return (!strcmp("cd9660", stfs.f_fstypename) || !strcmp("udf", stfs.f_fstypename));
 #elif defined(__NetBSD__)
     struct statvfs stfs;
 
     if (fstatvfs( unix_fd, &stfs ) == -1) return 0;
-    return (!strncmp("cd9660", stfs.f_fstypename, sizeof(stfs.f_fstypename)) ||
-            !strncmp("udf", stfs.f_fstypename, sizeof(stfs.f_fstypename)));
+    return (!strcmp("cd9660", stfs.f_fstypename) || !strcmp("udf", stfs.f_fstypename));
 #elif defined(sun)
 # include <sys/dkio.h>
 # include <sys/vtoc.h>

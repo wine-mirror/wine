@@ -1736,24 +1736,21 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__APPLE__)
 /* helper for FILE_GetDeviceInfo to hide some platform differences in fstatfs */
 static inline void get_device_info_fstatfs( FILE_FS_DEVICE_INFORMATION *info, const char *fstypename,
-                                            size_t fstypesize, unsigned int flags )
+                                            unsigned int flags )
 {
-    if (!strncmp("cd9660", fstypename, fstypesize) ||
-        !strncmp("udf", fstypename, fstypesize))
+    if (!strcmp("cd9660", fstypename) || !strcmp("udf", fstypename))
     {
         info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
         /* Don't assume read-only, let the mount options set it below */
         info->Characteristics |= FILE_REMOVABLE_MEDIA;
     }
-    else if (!strncmp("nfs", fstypename, fstypesize) ||
-             !strncmp("nwfs", fstypename, fstypesize) ||
-             !strncmp("smbfs", fstypename, fstypesize) ||
-             !strncmp("afpfs", fstypename, fstypesize))
+    else if (!strcmp("nfs", fstypename) || !strcmp("nwfs", fstypename) ||
+             !strcmp("smbfs", fstypename) || !strcmp("afpfs", fstypename))
     {
         info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
         info->Characteristics |= FILE_REMOTE_DEVICE;
     }
-    else if (!strncmp("procfs", fstypename, fstypesize))
+    else if (!strcmp("procfs", fstypename))
         info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
     else
         info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
@@ -1849,16 +1846,14 @@ static NTSTATUS get_device_info( int fd, FILE_FS_DEVICE_INFORMATION *info )
         if (fstatfs( fd, &stfs ) < 0)
             info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
         else
-            get_device_info_fstatfs( info, stfs.f_fstypename,
-                                     sizeof(stfs.f_fstypename), stfs.f_flags );
+            get_device_info_fstatfs( info, stfs.f_fstypename, stfs.f_flags );
 #elif defined(__NetBSD__)
         struct statvfs stfs;
 
         if (fstatvfs( fd, &stfs) < 0)
             info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
         else
-            get_device_info_fstatfs( info, stfs.f_fstypename,
-                                     sizeof(stfs.f_fstypename), stfs.f_flag );
+            get_device_info_fstatfs( info, stfs.f_fstypename, stfs.f_flag );
 #elif defined(sun)
         /* Use dkio to work out device types */
         {
