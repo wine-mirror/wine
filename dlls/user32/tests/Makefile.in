@@ -21,6 +21,7 @@ CTESTS = \
 	monitor.c \
 	msg.c \
 	resource.c \
+	static.c \
 	sysparams.c \
 	text.c \
 	win.c \
