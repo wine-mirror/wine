@@ -287,6 +287,7 @@ static HIMCC updateCompStr(HIMCC old, LPWSTR compstr, DWORD len)
                                      &new_one->dwCompReadStrOffset, TRUE);
 
         /* new CompAttr, CompClause, CompStr, dwCursorPos */
+        new_one->dwDeltaStart = 0;
 
         current_offset = updateField(lpcs->dwResultReadClauseLen,
                                      lpcs->dwResultReadClauseOffset,
@@ -438,6 +439,7 @@ static HIMCC updateResultStr(HIMCC old, LPWSTR resultstr, DWORD len)
                                      &new_one->dwCompStrOffset, TRUE);
 
         new_one->dwCursorPos = lpcs->dwCursorPos;
+        new_one->dwDeltaStart = 0;
 
         current_offset = updateField(lpcs->dwResultReadClauseLen,
                                      lpcs->dwResultReadClauseOffset,
@@ -861,6 +863,11 @@ LONG WINAPI ImmGetCompositionStringA(
         TRACE("GSC_CURSORPOS\n");
         rc = compstr->dwCursorPos;
     }
+    else if (dwIndex == GCS_DELTASTART)
+    {
+        TRACE("GCS_DELTASTART\n");
+        rc = compstr->dwDeltaStart;
+    }
     else
     {
         FIXME("Unhandled index 0x%x\n",dwIndex);
@@ -954,6 +961,11 @@ LONG WINAPI ImmGetCompositionStringW(
     {
         TRACE("GSC_CURSORPOS\n");
         rc = compstr->dwCursorPos;
+    }
+    else if (dwIndex == GCS_DELTASTART)
+    {
+        TRACE("GCS_DELTASTART\n");
+        rc = compstr->dwDeltaStart;
     }
     else
     {
@@ -1662,7 +1674,7 @@ BOOL WINAPI ImmSetCompositionStringW(
             root_context->IMC.hCompStr = newCompStr;
 
              wParam = ((const WCHAR*)lpComp)[0];
-             flags |= GCS_COMPCLAUSE | GCS_COMPATTR;
+             flags |= GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART;
         }
         else
         {
