@@ -751,6 +751,7 @@ LONG     WINAPI QueryRegistryValue(HKEY, PCWSTR, PBYTE *, PDWORD, PDWORD);
 DWORD    WINAPI RetreiveFileSecurity(PCWSTR, PSECURITY_DESCRIPTOR *);
 BOOL     WINAPI SetupCloseFileQueue( HSPFILEQ );
 void     WINAPI SetupCloseInfFile( HINF hinf );
+void     WINAPI SetupCloseLog(void);
 BOOL     WINAPI SetupCommitFileQueueA( HWND, HSPFILEQ, PSP_FILE_CALLBACK_A, PVOID );
 BOOL     WINAPI SetupCommitFileQueueW( HWND, HSPFILEQ, PSP_FILE_CALLBACK_W, PVOID );
 #define         SetupCommitFileQueue WINELIB_NAME_AW(SetupCommitFileQueue)
@@ -892,6 +893,9 @@ BOOL     WINAPI SetupInstallFromInfSectionW(HWND,HINF,PCWSTR,UINT,HKEY,PCWSTR,UI
 BOOL     WINAPI SetupIterateCabinetA(PCSTR, DWORD, PSP_FILE_CALLBACK_A, PVOID);
 BOOL     WINAPI SetupIterateCabinetW(PCWSTR, DWORD, PSP_FILE_CALLBACK_W, PVOID);
 #define         SetupIterateCabinet WINELIB_NAME_AW(SetupIterateCabinet)
+BOOL     WINAPI SetupLogErrorA(LPCSTR,LogSeverity);
+BOOL     WINAPI SetupLogErrorW(LPCWSTR,LogSeverity);
+#define         SetupLogError WINELIB_NAME_AW(SetupLogError)
 BOOL     WINAPI SetupOpenAppendInfFileA( PCSTR, HINF, UINT * );
 BOOL     WINAPI SetupOpenAppendInfFileW( PCWSTR, HINF, UINT * );
 #define         SetupOpenAppendInfFile WINELIB_NAME_AW(SetupOpenAppendInfFile)
@@ -899,6 +903,7 @@ HSPFILEQ WINAPI SetupOpenFileQueue(void);
 HINF     WINAPI SetupOpenInfFileA( PCSTR name, PCSTR pszclass, DWORD style, UINT *error );
 HINF     WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR pszclass, DWORD style, UINT *error );
 #define         SetupOpenInfFile WINELIB_NAME_AW(SetupOpenInfFile)
+BOOL     WINAPI SetupOpenLog(BOOL);
 HINF     WINAPI SetupOpenMasterInf( VOID );
 INT      WINAPI SetupPromptReboot( HSPFILEQ, HWND, BOOL);
 BOOL     WINAPI SetupQueryInfFileInformationA(PSP_INF_INFORMATION, UINT, PSTR, DWORD, PDWORD);

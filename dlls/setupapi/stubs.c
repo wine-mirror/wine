@@ -158,7 +158,7 @@ void WINAPI SetupCloseLog(void)
 /***********************************************************************
  *      SetupLogErrorW(SETUPAPI.@)
  */
-BOOL WINAPI SetupLogErrorW(PCWSTR MessageString, LogSeverity Severity)
+BOOL WINAPI SetupLogErrorW(LPCWSTR MessageString, LogSeverity Severity)
 {
     FIXME("(%s, %d) stub\n", debugstr_w(MessageString), Severity);
     return TRUE;
