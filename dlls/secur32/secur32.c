@@ -1050,29 +1050,6 @@ BOOLEAN WINAPI GetUserNameExW(
     return FALSE;
 }
 
-NTSTATUS WINAPI LsaCallAuthenticationPackage(
-  HANDLE LsaHandle, ULONG AuthenticationPackage, PVOID ProtocolSubmitBuffer,
-  ULONG SubmitBufferLength, PVOID* ProtocolReturnBuffer, PULONG ReturnBufferLength,
-  PNTSTATUS ProtocolStatus)
-{
-    FIXME("%p %d %p %d %p %p %p\n", LsaHandle, AuthenticationPackage,
-          ProtocolSubmitBuffer, SubmitBufferLength, ProtocolReturnBuffer,
-          ReturnBufferLength, ProtocolStatus);
-    return 0;
-}
-
-NTSTATUS WINAPI LsaConnectUntrusted(PHANDLE LsaHandle)
-{
-    FIXME("%p\n", LsaHandle);
-    return 0;
-}
-
-NTSTATUS WINAPI LsaDeregisterLogonProcess(HANDLE LsaHandle)
-{
-    FIXME("%p\n", LsaHandle);
-    return 0;
-}
-
 BOOLEAN WINAPI TranslateNameA(
   LPCSTR lpAccountName, EXTENDED_NAME_FORMAT AccountNameFormat,
   EXTENDED_NAME_FORMAT DesiredNameFormat, LPSTR lpTranslatedName,

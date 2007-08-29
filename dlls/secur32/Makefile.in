@@ -11,6 +11,7 @@ C_SRCS = \
 	base64_codec.c \
 	dispatcher.c \
 	hmac_md5.c \
+	lsa.c \
 	negotiate.c \
 	ntlm.c \
 	schannel.c \

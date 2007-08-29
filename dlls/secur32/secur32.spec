@@ -39,7 +39,7 @@
 @ stub LsaFreeReturnBuffer
 @ stub LsaGetLogonSessionData
 @ stub LsaLogonUser
-@ stub LsaLookupAuthenticationPackage
+@ stdcall LsaLookupAuthenticationPackage(ptr ptr ptr)
 @ stub LsaRegisterLogonProcess
 @ stub LsaRegisterPolicyChangeNotification
 @ stub LsaUnregisterPolicyChangeNotification
