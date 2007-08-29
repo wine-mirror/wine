@@ -53,6 +53,16 @@ NTSTATUS WINAPI LsaDeregisterLogonProcess(HANDLE LsaHandle)
     return STATUS_SUCCESS;
 }
 
+NTSTATUS WINAPI LsaEnumerateLogonSessions(PULONG LogonSessionCount,
+        PLUID* LogonSessionList)
+{
+    FIXME("%p %p stub\n", LogonSessionCount, LogonSessionList);
+    *LogonSessionCount = 0;
+    *LogonSessionList = NULL;
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS WINAPI LsaLookupAuthenticationPackage(HANDLE LsaHandle,
         PLSA_STRING PackageName, PULONG AuthenticationPackage)
 {

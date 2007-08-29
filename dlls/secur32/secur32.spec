@@ -35,7 +35,7 @@
 @ stdcall LsaCallAuthenticationPackage(long long ptr long ptr ptr ptr)
 @ stdcall LsaConnectUntrusted(long)
 @ stdcall LsaDeregisterLogonProcess(long)
-@ stub LsaEnumerateLogonSessions
+@ stdcall LsaEnumerateLogonSessions(ptr ptr)
 @ stub LsaFreeReturnBuffer
 @ stub LsaGetLogonSessionData
 @ stub LsaLogonUser
