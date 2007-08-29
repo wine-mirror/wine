@@ -90,10 +90,9 @@ static DWORD get_logged_pid(const char* logfile)
 static void doCrash(int argc,  char** argv)
 {
     char* p;
-    const char* logfile;
 
-    logfile=(argc >= 4 ? argv[3] : NULL);
-    log_pid(logfile, GetCurrentProcessId());
+    if (argc >= 4)
+        log_pid(argv[3], GetCurrentProcessId());
 
     /* Just crash */
     trace("child: crashing...\n");
@@ -188,6 +187,36 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* debugger)
     assert(DeleteFileA(childlog) != 0);
 }
 
+static void crash_and_winedbg(HKEY hkey, const char* argv0)
+{
+    DWORD ret;
+    char* cmd;
+    PROCESS_INFORMATION	info;
+    STARTUPINFOA startup;
+    DWORD exit_code;
+
+    ret=RegSetValueExA(hkey, "auto", 0, REG_SZ, (BYTE*)"1", 2);
+    ok(ret == ERROR_SUCCESS, "unable to set AeDebug/auto: ret=%d\n", ret);
+
+    cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+15+1);
+    sprintf(cmd, "%s debugger crash", argv0);
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    ret=CreateProcessA(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
+    ok(ret, "CreateProcess: err=%d\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, cmd);
+    CloseHandle(info.hThread);
+
+    trace("waiting for child exit...\n");
+    ok(WaitForSingleObject(info.hProcess, 60000) == WAIT_OBJECT_0, "Timed out waiting for the child to crash\n");
+    ok(GetExitCodeProcess(info.hProcess, &exit_code), "GetExitCodeProcess failed: err=%d\n", GetLastError());
+    todo_wine ok(exit_code == STATUS_ACCESS_VIOLATION, "exit code = %08x\n", exit_code);
+    CloseHandle(info.hProcess);
+}
+
 static void test_ExitCode(void)
 {
     static const char* AeDebug="Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug";
@@ -238,6 +267,10 @@ static void test_ExitCode(void)
         ok(0, "could not open the AeDebug key: %d\n", ret);
         return;
     }
+
+    if (debugger_val && debugger_type == REG_SZ &&
+        strstr((char*)debugger_val, "winedbg --auto"))
+        crash_and_winedbg(hkey, test_exe);
 
     crash_and_debug(hkey, test_exe, "dbgevent");
     crash_and_debug(hkey, test_exe, "dbgnoevent");
