@@ -301,6 +301,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     UINT *streamOffset = This->stateBlock->streamOffset;
     long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
+    BOOL                      pixelShader = use_ps(This);
 
     BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
     BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
@@ -397,9 +398,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
             }
 
             /* Query tex coords */
-            if (This->stateBlock->textures[textureNo] != NULL) {
+            if (This->stateBlock->textures[textureNo] != NULL || pixelShader) {
 
                 int    coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
+                int texture_idx = This->texUnitMap[textureNo];
                 float *ptrToCoords = NULL;
                 float  s = 0.0, t = 0.0, r = 0.0, q = 0.0;
 
@@ -414,10 +416,13 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                 ptrToCoords = (float *)(texCoords[coordIdx] + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
                 if (texCoords[coordIdx] == NULL) {
                     TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
-                    glTexCoord4f(0, 0, 0, 1);
+                    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                        GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
+                    } else {
+                        glTexCoord4f(0, 0, 0, 1);
+                    }
                     continue;
                 } else {
-                    int texture_idx = This->texUnitMap[textureNo];
                     int coordsToUse = sd->u.s.texCoords[coordIdx].dwType + 1; /* 0 == WINED3DDECLTYPE_FLOAT1 etc */
 
                     if (texture_idx == -1) continue;
