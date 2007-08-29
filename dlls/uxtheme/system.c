@@ -842,7 +842,7 @@ HRESULT WINAPI GetThemeDocumentationProperty(LPCWSTR pszThemeName,
  * RETURNS
  *     some kind of status flag
  */
-DWORD WINAPI QueryThemeServices()
+DWORD WINAPI QueryThemeServices(void)
 {
     FIXME("stub\n");
     return 3; /* This is what is returned under XP in most cases */

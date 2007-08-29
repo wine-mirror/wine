@@ -579,7 +579,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 /***********************************************************************
  *		__wine_call_from_16_regs (KERNEL32.@)
  */
-void __wine_call_from_16_regs()
+void __wine_call_from_16_regs(void)
 {
     assert( FALSE );
 }

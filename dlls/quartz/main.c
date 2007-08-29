@@ -201,7 +201,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 /***********************************************************************
  *              DllCanUnloadNow (QUARTZ.@)
  */
-HRESULT WINAPI DllCanUnloadNow()
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     return dll_ref != 0 ? S_FALSE : S_OK;
 }

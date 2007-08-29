@@ -26,7 +26,7 @@
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 #define TABLE_LEN (23)
 
-static void test_constructor_destructor()
+static void test_constructor_destructor(void)
 {
     GpStatus stat;
     GpGraphics *graphics = NULL;
@@ -91,7 +91,7 @@ end:
     expect(0, dups);
 }
 
-static void test_save_restore()
+static void test_save_restore(void)
 {
     GpStatus stat;
     GraphicsState state_a, state_b, state_c;

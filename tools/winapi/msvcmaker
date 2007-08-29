@@ -1139,7 +1139,7 @@ sub _generate_winetest_c($) {
     print OUT "/* Automatically generated file; DO NOT EDIT!! */\n\n";
 
     print OUT "/* Force the linker to generate a .lib file */\n";
-    print OUT "void __wine_dummy_lib_function()\n{\n}\n\n";
+    print OUT "void __wine_dummy_lib_function(void)\n{\n}\n\n";
 }
 
 if ($options->wine) {

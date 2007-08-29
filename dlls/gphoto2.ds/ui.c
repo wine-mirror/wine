@@ -72,7 +72,7 @@ static void UI_EndDialog(HWND hwnd, INT_PTR rc)
     EndDialog(hwnd, rc);
 }
 
-static int GetAllImages()
+static int GetAllImages(void)
 {
     struct gphoto2_file *file;
     int has_images = 0;

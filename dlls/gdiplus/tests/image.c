@@ -24,7 +24,7 @@
 
 #define expect(expected, got) ok(((UINT)got) == ((UINT)expected), "Expected %.8x, got %.8x\n", (UINT)expected, (UINT)got)
 
-static void test_Scan0()
+static void test_Scan0(void)
 {
     GpBitmap *bm;
     GpStatus stat;

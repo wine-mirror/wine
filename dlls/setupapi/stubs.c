@@ -150,7 +150,7 @@ BOOL WINAPI RegistryDelnode(DWORD x, DWORD y)
 /***********************************************************************
  *      SetupCloseLog(SETUPAPI.@)
  */
-void WINAPI SetupCloseLog()
+void WINAPI SetupCloseLog(void)
 {
     FIXME("() stub\n");
 }

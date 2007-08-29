@@ -646,7 +646,7 @@ void VGA_SetWindowStart(int start)
  * Get start of 64k window at 0xa0000 in bytes.
  * Value is -1 in color plane modes.
  */
-int VGA_GetWindowStart()
+int VGA_GetWindowStart(void)
 {
     return vga_fb_window;
 }

@@ -56,7 +56,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *
  */
 #if 0
-HRESULT WINAPI DPNHPAST_DirectPlayNATHelpCreate()
+HRESULT WINAPI DPNHPAST_DirectPlayNATHelpCreate(void)
 {
 	/* @stub in .spec */
 }

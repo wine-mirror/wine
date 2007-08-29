@@ -395,7 +395,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
     return ret;
 }
 
-static BOOL register_parent_wnd_class()
+static BOOL register_parent_wnd_class(void)
 {
     WNDCLASSA cls;
 

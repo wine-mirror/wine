@@ -172,7 +172,7 @@ static BSTR _bstr_(const char *str)
     return alloced_bstrs[alloced_bstrs_count++];
 }
 
-static void free_bstrs()
+static void free_bstrs(void)
 {
     int i;
     for (i = 0; i < alloced_bstrs_count; i++)
@@ -1457,7 +1457,7 @@ static void test_IXMLDOMDocument2(void)
     free_bstrs();
 }
 
-static void test_XPath()
+static void test_XPath(void)
 {
     HRESULT r;
     VARIANT var;

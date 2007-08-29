@@ -27,7 +27,7 @@
 
 static HWND hMainWnd;
 
-void test_cbsize()
+void test_cbsize(void)
 {
     NOTIFYICONDATAW nidW;
     NOTIFYICONDATAA nidA;

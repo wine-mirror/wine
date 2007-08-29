@@ -269,7 +269,7 @@ BOOL WINAPI cdtAnimate(HDC hdc, int cardback, int x, int y, int frame)
 /***********************************************************************
  * Frees resources reserved by cdtInitialize.
  */
-void WINAPI cdtTerm()
+void WINAPI cdtTerm(void)
 {
 	int i;
 

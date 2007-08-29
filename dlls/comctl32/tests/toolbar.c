@@ -948,7 +948,7 @@ static void test_getbuttoninfo(void)
     DestroyWindow(hToolbar);
 }
 
-static void test_createtoolbarex()
+static void test_createtoolbarex(void)
 {
     HWND hToolbar;
     TBBUTTON btns[3];

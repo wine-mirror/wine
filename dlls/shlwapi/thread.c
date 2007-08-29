@@ -184,7 +184,7 @@ HRESULT WINAPI SHSetThreadRef(IUnknown *lpUnknown)
  *   Success: S_OK. The threads object reference is released.
  *   Failure: An HRESULT error code.
  */
-HRESULT WINAPI SHReleaseThreadRef()
+HRESULT WINAPI SHReleaseThreadRef(void)
 {
   FIXME("() - stub!\n");
   return S_OK;

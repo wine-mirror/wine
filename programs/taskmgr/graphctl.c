@@ -111,7 +111,7 @@ static void GraphCtrl_Init(TGraphCtrl* this)
 }
 
 #if 0
-TGraphCtrl::~TGraphCtrl()
+TGraphCtrl::~TGraphCtrl(void)
 {
     /*  just to be picky restore the bitmaps for the two memory dc's */
     /*  (these dc's are being destroyed so there shouldn't be any leaks) */
@@ -515,7 +515,7 @@ void GraphCtrl_Resize(TGraphCtrl* this)
 }
 
 #if 0
-void TGraphCtrl::Reset()
+void TGraphCtrl::Reset(void)
 {
     /*  to clear the existing data (in the form of a bitmap) */
     /*  simply invalidate the entire control */

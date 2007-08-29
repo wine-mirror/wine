@@ -574,7 +574,7 @@ HRESULT WINAPI GetActiveObject(REFCLSID rcid,LPVOID preserved,LPUNKNOWN *ppunk)
  * Currently the versions returned are 2.20 for Win3.1, 2.30 for Win95 & NT 3.51,
  * and 2.40 for all later versions. The build number is maximum, i.e. 0xffff.
  */
-ULONG WINAPI OaBuildVersion()
+ULONG WINAPI OaBuildVersion(void)
 {
     switch(GetVersion() & 0x8000ffff)  /* mask off build number */
     {
