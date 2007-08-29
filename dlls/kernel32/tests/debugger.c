@@ -55,7 +55,7 @@ static void get_events(const char* name, HANDLE *start_event, HANDLE *done_event
     HeapFree(GetProcessHeap(), 0, event_name);
 }
 
-static void log_pid(const char* logfile, DWORD pid)
+static void save_blackbox(const char* logfile, void* blackbox, int size)
 {
     HANDLE hFile;
     DWORD written;
@@ -63,14 +63,14 @@ static void log_pid(const char* logfile, DWORD pid)
     hFile=CreateFileA(logfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     if (hFile == INVALID_HANDLE_VALUE)
         return;
-    WriteFile(hFile, &pid, sizeof(pid), &written, NULL);
+    WriteFile(hFile, blackbox, size, &written, NULL);
     CloseHandle(hFile);
 }
 
-static DWORD get_logged_pid(const char* logfile)
+static int load_blackbox(const char* logfile, void* blackbox, int size)
 {
     HANDLE hFile;
-    DWORD pid, read;
+    DWORD read;
     BOOL ret;
 
     hFile=CreateFileA(logfile, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
@@ -79,20 +79,27 @@ static DWORD get_logged_pid(const char* logfile)
         ok(0, "unable to open '%s'\n", logfile);
         return 0;
     }
-    pid=0;
-    read=sizeof(pid);
-    ret=ReadFile(hFile, &pid, sizeof(pid), &read, NULL);
-    ok(read == sizeof(pid), "wrong size for '%s': read=%d\n", logfile, read);
+    ret=ReadFile(hFile, blackbox, size, &read, NULL);
+    ok(read == size, "wrong size for '%s': read=%d\n", logfile, read);
     CloseHandle(hFile);
-    return pid;
+    return 1;
 }
+
+typedef struct
+{
+    DWORD pid;
+} crash_blackbox_t;
 
 static void doCrash(int argc,  char** argv)
 {
     char* p;
 
     if (argc >= 4)
-        log_pid(argv[3], GetCurrentProcessId());
+    {
+        crash_blackbox_t blackbox;
+        blackbox.pid=GetCurrentProcessId();
+        save_blackbox(argv[3], &blackbox, sizeof(blackbox));
+    }
 
     /* Just crash */
     trace("child: crashing...\n");
@@ -100,22 +107,33 @@ static void doCrash(int argc,  char** argv)
     *p=0;
 }
 
+typedef struct
+{
+    int argc;
+    DWORD pid;
+    BOOL debug_rc;
+    DWORD debug_err;
+} debugger_blackbox_t;
+
 static void doDebugger(int argc, char** argv)
 {
     const char* logfile;
+    debugger_blackbox_t blackbox;
     HANDLE start_event, done_event, debug_event;
-    DWORD pid;
 
-    ok(argc == 6, "wrong debugger argument count: %d\n", argc);
+    blackbox.argc=argc;
     logfile=(argc >= 4 ? argv[3] : NULL);
-    pid=(argc >= 5 ? atol(argv[4]) : 0);
+    blackbox.pid=(argc >= 5 ? atol(argv[4]) : 0);
     debug_event=(argc >= 6 ? (HANDLE)atol(argv[5]) : NULL);
     if (debug_event && strcmp(myARGV[2], "dbgnoevent") != 0)
     {
-        ok(SetEvent(debug_event), "debugger: SetEvent(debug_event) failed\n");
+        blackbox.debug_rc=SetEvent(debug_event);
+        if (!blackbox.debug_rc)
+            blackbox.debug_err=GetLastError();
     }
+    else
+        blackbox.debug_rc=TRUE;
 
-    log_pid(logfile, pid);
     get_events(logfile, &start_event, &done_event);
     if (strcmp(myARGV[2], "dbgnoevent") != 0)
     {
@@ -123,8 +141,9 @@ static void doDebugger(int argc, char** argv)
         WaitForSingleObject(start_event, INFINITE);
     }
 
-    ok(SetEvent(done_event), "debugger: SetEvent(done_event) failed\n");
+    save_blackbox(logfile, &blackbox, sizeof(blackbox));
     trace("debugger: done debugging...\n");
+    SetEvent(done_event);
 
     /* Just exit with a known value */
     ExitProcess(0xdeadbeef);
@@ -140,7 +159,8 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* debugger)
     PROCESS_INFORMATION	info;
     STARTUPINFOA startup;
     DWORD exit_code;
-    DWORD pid1, pid2;
+    crash_blackbox_t crash_blackbox;
+    debugger_blackbox_t dbg_blackbox;
 
     ret=RegSetValueExA(hkey, "auto", 0, REG_SZ, (BYTE*)"1", 2);
     ok(ret == ERROR_SUCCESS, "unable to set AeDebug/auto: ret=%d\n", ret);
@@ -180,9 +200,13 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* debugger)
     trace("waiting for the debugger...\n");
     ok(WaitForSingleObject(done_event, 60000) == WAIT_OBJECT_0, "Timed out waiting for the debugger\n");
 
-    pid1=get_logged_pid(dbglog);
-    pid2=get_logged_pid(childlog);
-    ok(pid1 == pid2, "the child and debugged pids don't match: %d != %d\n", pid1, pid2);
+    assert(load_blackbox(childlog, &crash_blackbox, sizeof(crash_blackbox)));
+    assert(load_blackbox(dbglog, &dbg_blackbox, sizeof(dbg_blackbox)));
+
+    ok(dbg_blackbox.argc == 6, "wrong debugger argument count: %d\n", dbg_blackbox.argc);
+    ok(dbg_blackbox.pid == crash_blackbox.pid, "the child and debugged pids don't match: %d != %d\n", crash_blackbox.pid, dbg_blackbox.pid);
+    ok(dbg_blackbox.debug_rc, "debugger: SetEvent(debug_event) failed err=%d\n", dbg_blackbox.debug_err);
+
     assert(DeleteFileA(dbglog) != 0);
     assert(DeleteFileA(childlog) != 0);
 }
