@@ -1927,13 +1927,22 @@ DECL_HANDLER(set_win_timer)
     else
     {
         queue = get_current_queue();
-        /* find a free id for it */
-        do
+        /* look for a timer with this id */
+        if (id && (timer = find_timer( queue, NULL, req->msg, id )))
         {
-            id = queue->next_timer_id;
-            if (++queue->next_timer_id >= 0x10000) queue->next_timer_id = 1;
+            /* free and reuse id */
+            free_timer( queue, timer );
         }
-        while (find_timer( queue, 0, req->msg, id ));
+        else
+        {
+            /* find a free id for it */
+            do
+            {
+                id = queue->next_timer_id;
+                if (++queue->next_timer_id >= 0x10000) queue->next_timer_id = 1;
+            }
+            while (find_timer( queue, 0, req->msg, id ));
+        }
     }
 
     if ((timer = set_timer( queue, req->rate )))

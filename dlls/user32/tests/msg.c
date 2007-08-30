@@ -6780,6 +6780,39 @@ static void test_timers(void)
     ok(DestroyWindow(info.hWnd), "failed to destroy window\n");
 }
 
+static int count = 0;
+static VOID CALLBACK callback_count(
+    HWND hwnd,
+    UINT uMsg,
+    UINT_PTR idEvent,
+    DWORD dwTime
+)
+{
+    count++;
+}
+
+static void test_timers_no_wnd(void)
+{
+    UINT_PTR id, id2;
+    MSG msg;
+
+    count = 0;
+    id = SetTimer(NULL, 0, 100, callback_count);
+    ok(id != 0, "did not get id from SetTimer.\n");
+    id2 = SetTimer(NULL, id, 200, callback_count);
+    ok(id2 == id, "did not get same id from SetTimer when replacing (%li expected %li).\n", id2, id);
+    Sleep(150);
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    ok(count == 0, "did not get zero count as expected (%i).\n", count);
+    Sleep(150);
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    ok(count == 1, "did not get one count as expected (%i).\n", count);
+    KillTimer(NULL, id);
+    Sleep(250);
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    ok(count == 1, "killing replaced timer did not work (%i).\n", count);
+}
+
 /* Various win events with arbitrary parameters */
 static const struct message WmWinEventsSeq[] = {
     { EVENT_SYSTEM_SOUND, winevent_hook|wparam|lparam, OBJID_WINDOW, 0 },
@@ -9617,6 +9650,7 @@ START_TEST(msg)
     test_message_conversion();
     test_accelerators();
     test_timers();
+    test_timers_no_wnd();
     test_set_hook();
     test_DestroyWindow();
     test_DispatchMessage();
