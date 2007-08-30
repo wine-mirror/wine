@@ -451,7 +451,7 @@ static int debugger_attach( struct process *process, struct thread *debugger )
 /* detach a process from a debugger thread (and resume it ?) */
 int debugger_detach( struct process *process, struct thread *debugger )
 {
-    struct debug_event *event;
+    struct debug_event *event, *next;
     struct debug_ctx *debug_ctx;
 
     if (!process->debugger || process->debugger != debugger)
@@ -464,23 +464,18 @@ int debugger_detach( struct process *process, struct thread *debugger )
     /* send continue indication for all events */
     debug_ctx = debugger->debug_ctx;
 
-    /* find the event in the queue
-     * FIXME: could loop on process' threads and look the debug_event field */
-    LIST_FOR_EACH_ENTRY( event, &debug_ctx->event_queue, struct debug_event, entry )
+    /* free all events from this process */
+    LIST_FOR_EACH_ENTRY_SAFE( event, next, &debug_ctx->event_queue, struct debug_event, entry )
     {
-        if (event->state != EVENT_QUEUED) continue;
+        if (event->sender->process != process) continue;
 
-        if (event->sender->process == process)
-        {
-            assert( event->sender->debug_event == event );
-            event->status = DBG_CONTINUE;
-            event->state  = EVENT_CONTINUED;
-            wake_up( &event->obj, 0 );
-            unlink_event( debug_ctx, event );
-            /* from queued debug event */
-            resume_process( process );
-            break;
-        }
+        assert( event->state != EVENT_CONTINUED );
+        event->status = DBG_CONTINUE;
+        event->state  = EVENT_CONTINUED;
+        wake_up( &event->obj, 0 );
+        unlink_event( debug_ctx, event );
+        /* from queued debug event */
+        resume_process( process );
     }
 
     /* remove relationships between process and its debugger */
