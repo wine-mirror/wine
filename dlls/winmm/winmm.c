@@ -2817,7 +2817,7 @@ static DWORD WINAPI mmTaskRun(void* pmt)
 /******************************************************************
  *		mmTaskCreate (WINMM.@)
  */
-MMRESULT WINAPI mmTaskCreate(LPTASKCALLBACK cb, HANDLE* ph, DWORD client)
+UINT     WINAPI mmTaskCreate(LPTASKCALLBACK cb, HANDLE* ph, DWORD_PTR client)
 {
     HANDLE               hThread;
     HANDLE               hEvent = 0;
@@ -2846,7 +2846,7 @@ MMRESULT WINAPI mmTaskCreate(LPTASKCALLBACK cb, HANDLE* ph, DWORD client)
 /******************************************************************
  *		mmTaskBlock (WINMM.@)
  */
-void     WINAPI mmTaskBlock(HANDLE tid)
+VOID     WINAPI mmTaskBlock(DWORD tid)
 {
     MSG		msg;
 
@@ -2860,20 +2860,20 @@ void     WINAPI mmTaskBlock(HANDLE tid)
 /******************************************************************
  *		mmTaskSignal (WINMM.@)
  */
-BOOL     WINAPI mmTaskSignal(HANDLE tid)
+BOOL     WINAPI mmTaskSignal(DWORD tid)
 {
-    return PostThreadMessageW((DWORD)tid, WM_USER, 0, 0);
+    return PostThreadMessageW(tid, WM_USER, 0, 0);
 }
 
 /******************************************************************
  *		mmTaskYield (WINMM.@)
  */
-void     WINAPI mmTaskYield(void) {}
+VOID     WINAPI mmTaskYield(VOID) {}
 
 /******************************************************************
  *		mmGetCurrentTask (WINMM.@)
  */
-HANDLE   WINAPI mmGetCurrentTask(void)
+DWORD    WINAPI mmGetCurrentTask(VOID)
 {
-    return (HANDLE)GetCurrentThreadId();
+    return GetCurrentThreadId();
 }
