@@ -571,11 +571,11 @@ static void set_button_state(XID deviceid)
             {
                 int loop2;
                 XButtonState *button_state =  (XButtonState*)class;
-                for (loop2 = 1; loop2 <= button_state->num_buttons; loop2++)
+                for (loop2 = 0; loop2 < button_state->num_buttons; loop2++)
                 {
                     if (button_state->buttons[loop2 / 8] & (1 << (loop2 % 8)))
                     {
-                        rc |= (1<<(loop2-1));
+                        rc |= (1<<loop2);
                     }
                 }
             }
