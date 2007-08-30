@@ -103,7 +103,7 @@ int is_array(const type_t *t)
 /* List of oleauto types that should be recognized by name.
  * (most of) these seem to be intrinsic types in mktyplib. */
 
-static struct oatype {
+static const struct oatype {
   const char *kw;
   unsigned short vt;
 } oatypes[] = {
@@ -129,7 +129,8 @@ static int kw_cmp_func(const void *s1, const void *s2)
 static unsigned short builtin_vt(const type_t *t)
 {
   const char *kw = t->name;
-  struct oatype key, *kwp;
+  struct oatype key;
+  const struct oatype *kwp;
   key.kw = kw;
 #ifdef KW_BSEARCH
   kwp = bsearch(&key, oatypes, NTYPES, sizeof(oatypes[0]), kw_cmp_func);
