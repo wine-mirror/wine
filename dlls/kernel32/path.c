@@ -879,12 +879,14 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
                      NULL, OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
     {
         WARN("Unable to open source %s\n", debugstr_w(source));
+        HeapFree( GetProcessHeap(), 0, buffer );
         return FALSE;
     }
 
     if (!GetFileInformationByHandle( h1, &info ))
     {
         WARN("GetFileInformationByHandle returned error for %s\n", debugstr_w(source));
+        HeapFree( GetProcessHeap(), 0, buffer );
         CloseHandle( h1 );
         return FALSE;
     }
@@ -894,6 +896,7 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
                              info.dwFileAttributes, h1 )) == INVALID_HANDLE_VALUE)
     {
         WARN("Unable to open dest %s\n", debugstr_w(dest));
+        HeapFree( GetProcessHeap(), 0, buffer );
         CloseHandle( h1 );
         return FALSE;
     }
