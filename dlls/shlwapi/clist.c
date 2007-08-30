@@ -425,7 +425,7 @@ BOOL WINAPI SHRemoveDataBlock(LPDBLIST* lppList, DWORD dwSignature)
  * NOTES
  *  See SHWriteDataBlockList.
  */
-LPDATABLOCK_HEADER WINAPI SHFindDataBlock(LPDBLIST lpList, DWORD dwSignature)
+DATABLOCK_HEADER* WINAPI SHFindDataBlock(LPDBLIST lpList, DWORD dwSignature)
 {
   TRACE("(%p,%d)\n", lpList, dwSignature);
 
