@@ -26,6 +26,10 @@
 #include <mmsystem.h>
 #include <winbase.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_MIDIINDRV 	(16)
 /* For now I'm making 16 the maximum number of midi devices one can
  * have. This should be more than enough for everybody. But as a purist,
@@ -464,5 +468,9 @@ HANDLE   WINAPI mmGetCurrentTask(void);
 #endif
 
 #include <poppack.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MMDDK_H */
