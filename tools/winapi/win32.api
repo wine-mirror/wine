@@ -5928,6 +5928,18 @@ VOID
 BOOL
 HWND
 
+%%winscard.dll
+
+%long
+
+DWORD
+LONG
+
+%ptr
+
+LPCVOID
+LPSCARDCONTEXT
+
 %%winspool.drv
 
 %long
