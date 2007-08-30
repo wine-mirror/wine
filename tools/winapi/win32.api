@@ -5733,6 +5733,12 @@ RGBQUAD *
 void *
 void **
 
+%%winhttp.dll
+
+%long
+
+BOOL
+
 %%wininet.dll
 
 %double
