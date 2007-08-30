@@ -992,6 +992,7 @@ static void get_desktop_xwin( Display *display, struct x11drv_win_data *data )
         {
             data->managed = TRUE;
             SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
+            set_initial_wm_hints( display, data );
         }
     }
 }
