@@ -174,7 +174,7 @@ int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
 /********************************************************************
  *		_atoldbl (MSVCRT.@)
  */
-int CDECL MSVCRT__atoldbl(_LDOUBLE * value, char * str)
+int CDECL MSVCRT__atoldbl(MSVCRT__LDOUBLE * value, char * str)
 {
   /* FIXME needs error checking for huge/small values */
 #ifdef HAVE_STRTOLD

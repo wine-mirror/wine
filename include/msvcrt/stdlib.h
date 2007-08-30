@@ -28,6 +28,22 @@ typedef unsigned short wchar_t;
 #endif
 #endif
 
+
+typedef struct
+{
+    float f;
+} _CRT_FLOAT;
+
+typedef struct
+{
+    double x;
+} _CRT_DOUBLE;
+
+typedef struct
+{
+    unsigned char ld[10];
+} _LDOUBLE;
+
 #if defined(__x86_64__) && !defined(_WIN64)
 #define _WIN64
 #endif
@@ -128,8 +144,11 @@ extern int*           _errno(void);
 typedef int (*_onexit_t)(void);
 
 
+int         _atodbl(_CRT_DOUBLE*,char*);
+int         _atoflt(_CRT_FLOAT*,char*);
 __int64     _atoi64(const char*);
 long double _atold(const char*);
+int         _atoldbl(_LDOUBLE*,char*);
 void        _beep(unsigned int,unsigned int);
 char*       _ecvt(double,int,int*,int*);
 char*       _fcvt(double,int,int*,int*);
