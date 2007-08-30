@@ -585,15 +585,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
             INIT_GUID(DSOUND_renderer_guids[i], 0xbd6dd71a, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
             INIT_GUID(DSOUND_capture_guids[i],  0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
         }
+        DisableThreadLibraryCalls(hInstDLL);
+        /* Increase refcount on dsound by 1 */
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)hInstDLL, &hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
         TRACE("DLL_PROCESS_DETACH\n");
-        break;
-    case DLL_THREAD_ATTACH:
-        TRACE("DLL_THREAD_ATTACH\n");
-        break;
-    case DLL_THREAD_DETACH:
-        TRACE("DLL_THREAD_DETACH\n");
         break;
     default:
         TRACE("UNKNOWN REASON\n");

@@ -970,6 +970,14 @@ START_TEST(dsound)
     hDsound = LoadLibrary("dsound.dll");
     if (hDsound)
     {
+        ok( FreeLibrary(hDsound), "FreeLibrary(1) returned %d\n", GetLastError());
+        ok( FreeLibrary(hDsound), "FreeLibrary(2) returned %d\n", GetLastError());
+        ok(!FreeLibrary(hDsound), "DirectSound DLL still loaded\n");
+    }
+
+    hDsound = LoadLibrary("dsound.dll");
+    if (hDsound)
+    {
         trace("DLL Version: %s\n", get_file_version("dsound.dll"));
 
         pDirectSoundEnumerateA = (void*)GetProcAddress(hDsound,
