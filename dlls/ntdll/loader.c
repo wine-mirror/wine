@@ -945,6 +945,7 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
 
     /* Tag current MODREF to prevent recursive loop */
     wm->ldr.Flags |= LDR_LOAD_IN_PROGRESS;
+    if (lpReserved) wm->ldr.LoadCount = -1;  /* pin it if imported by the main exe */
     if (wm->ldr.ActivationContext) RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
 
     /* Recursively attach all DLLs this one depends on */
@@ -1006,7 +1007,6 @@ static void attach_implicitly_loaded_dlls( LPVOID reserved )
             if (mod->Flags & (LDR_LOAD_IN_PROGRESS | LDR_PROCESS_ATTACHED)) continue;
             TRACE( "found implicitly loaded %s, attaching to it\n",
                    debugstr_w(mod->BaseDllName.Buffer));
-            mod->LoadCount = -1;  /* we can't unload it anyway */
             process_attach( CONTAINING_RECORD(mod, WINE_MODREF, ldr), reserved );
             break;  /* restart the search from the start */
         }
@@ -2295,7 +2295,6 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
         ERR("%s is a dll, not an executable\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
         exit(1);
     }
-    wm->ldr.LoadCount = -1;  /* can't unload main exe */
 
     peb->ProcessParameters->ImagePathName = wm->ldr.FullDllName;
     version_init( wm->ldr.FullDllName.Buffer );
