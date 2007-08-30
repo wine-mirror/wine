@@ -41,7 +41,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "dosexe.h"
 #include "wine/debug.h"
 

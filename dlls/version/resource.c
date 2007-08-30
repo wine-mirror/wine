@@ -39,7 +39,6 @@
 
 #include "wine/unicode.h"
 #include "wine/winbase16.h"
-#include "wine/winuser16.h"
 
 #include "wine/debug.h"
 

@@ -42,7 +42,6 @@
 #include "shlwapi.h"
 
 #include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "shell32_main.h"
 
 #include "wine/debug.h"

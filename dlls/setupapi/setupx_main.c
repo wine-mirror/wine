@@ -63,7 +63,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
-#include "wine/winuser16.h"
 #include "wownt32.h"
 #include "winuser.h"
 #include "winnls.h"
