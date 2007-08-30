@@ -174,9 +174,9 @@ int getopt (int argc, char *const *argv, const char *optstring);
 static void cleanup_files(void);
 static void segvhandler(int sig);
 
-static const char* short_options = 
+static const char short_options[] =
 	"D:Ef:F:hi:I:J:l:o:O:rU:v";
-static struct option long_options[] = {
+static const struct option long_options[] = {
 	{ "debug", 1, 0, 6 },
 	{ "define", 1, 0, 'D' },
 	{ "endianess", 1, 0, 7 },
