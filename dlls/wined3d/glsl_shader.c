@@ -1605,8 +1605,17 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     } else {
         glsl_src_param_t coord_param;
         shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], mask, &coord_param);
-        shader_addline(arg->buffer, "%s(Psampler%u, %s)%s);\n",
-                sample_function.name, sampler_idx, coord_param.param_str, dst_swizzle);
+        if(arg->opcode_token & WINED3DSI_TEXLD_BIAS) {
+            glsl_src_param_t bias;
+            shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, &bias);
+
+            shader_addline(arg->buffer, "%s(Psampler%u, %s, %s)%s);\n",
+                    sample_function.name, sampler_idx, coord_param.param_str,
+                    bias.param_str, dst_swizzle);
+        } else {
+            shader_addline(arg->buffer, "%s(Psampler%u, %s)%s);\n",
+                    sample_function.name, sampler_idx, coord_param.param_str, dst_swizzle);
+        }
     }
 }
 
