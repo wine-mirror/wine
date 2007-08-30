@@ -87,7 +87,7 @@
  * for normal character strings and 1 for unicode strings.
  */
 
-static char str_header[] =
+static const char str_header[] =
 	"/* This file is generated with wmc version " PACKAGE_VERSION ". Do not edit! */\n"
 	"/* Source : %s */\n"
 	"/* Cmdline: %s */\n"

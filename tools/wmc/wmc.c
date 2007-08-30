@@ -31,7 +31,7 @@
 #include "lang.h"
 #include "write.h"
 
-static char usage[] =
+static const char usage[] =
 	"Usage: wmc [options...] [inputfile.mc]\n"
 	"   -B x        Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
 	"               (default is n[ative] which equals "
@@ -58,7 +58,7 @@ static char usage[] =
 	"bytes read, which should be 0x0000..0x00ff.\n"
 	;
 
-static char version_string[] =
+static const char version_string[] =
 	"Wine Message Compiler version " PACKAGE_VERSION "\n"
 	"Copyright 2000 Bertho A. Stultiens\n"
 	;
