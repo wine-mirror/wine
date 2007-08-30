@@ -1481,6 +1481,145 @@ void
 LPCWSTR
 LPWSTR
 
+%%gdiplus.dll
+
+%long
+
+ARGB
+BOOL
+ColorAdjustType
+ColorMatrixFlags
+CompositingMode
+CompositingQuality
+EmfType
+GpDashCap
+GpDashStyle
+GpFillMode
+GpLineCap
+GpLineJoin
+GpMatrixOrder
+GpStatus
+GpUnit
+GpWrapMode
+GraphicsState
+HDC
+HENHMETAFILE
+HMETAFILE
+HWND
+INT
+InterpolationMode
+LANGID
+LinearGradientMode
+PixelFormat
+PixelOffsetMode
+PROPID
+SIZE_T
+SmoothingMode
+Status
+StringAlignment
+StringTrimming
+TextRenderingHint
+UINT
+WrapMode
+
+%long --pointer
+
+ULONG_PTR
+
+%float
+
+REAL
+
+%ptr
+
+ARGB *
+BitmapData *
+BOOL *
+BYTE *
+CLSID *
+ColorMatrix *
+ColorPalette *
+CompositingMode *
+CompositingQuality *
+DrawImageAbort
+EncoderParameters *
+GpBitmap *
+GpBitmap **
+GpBrush *
+GpBrush **
+GpBrushType *
+GpCustomLineCap *
+GpCustomLineCap **
+GpDashStyle *
+GpFillMode *
+GpFont *
+GpFont **
+GpGraphics *
+GpGraphics **
+GpImage *
+GpImage **
+GpImageAttributes *
+GpImageAttributes **
+GpLineGradient *
+GpLineGradient **
+GpMatrix *
+GpMatrix **
+GpMetafile *
+GpMetafile **
+GpPath *
+GpPath **
+GpPathGradient *
+GpPathGradient **
+GpPathIterator *
+GpPathIterator **
+GpPen *
+GpPen **
+GpPoint *
+GpPointF *
+GpRect *
+GpRectF *
+GpSolidFill *
+GpSolidFill **
+GpStringFormat *
+GpStringFormat **
+GpTexture *
+GpTexture **
+GpUnit *
+GraphicsState *
+GUID *
+ImageItemData *
+ImageType *
+INT *
+InterpolationMode *
+IStream *
+IStream **
+LOGFONTA *
+LOGFONTW *
+MetafileHeader *
+PixelFormat *
+PixelOffsetMode *
+REAL *
+RectF *
+SmoothingMode *
+StringAlignment *
+StringTrimming *
+TextRenderingHint *
+UINT *
+ULONG_PTR *
+VOID *
+WmfPlaceableFileHeader *
+struct GdiplusStartupInput *
+struct GdiplusStartupOutput *
+void *
+
+%wstr
+
+WCHAR *
+
+%void
+
+void
+
 %%glu32.dll
 
 %double
