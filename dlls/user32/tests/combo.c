@@ -69,6 +69,29 @@ static int is_font_installed(const char *name)
     return ret;
 }
 
+static void test_setitemheight(DWORD style)
+{
+    HWND hCombo = build_combo(style);
+    RECT r;
+    int i;
+
+    trace("Style %x\n", style);
+    GetClientRect(hCombo, &r);
+    expect_rect(r, 0, 0, 100, 24);
+    SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
+    MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
+    todo_wine expect_rect(r, 5, 5, 105, 105);
+
+    for (i = 1; i < 30; i++)
+    {
+        SendMessage(hCombo, CB_SETITEMHEIGHT, -1, i);
+        GetClientRect(hCombo, &r);
+        expect_eq(r.bottom - r.top, i + 6, int, "%d");
+    }
+
+    DestroyWindow(hCombo);
+}
+
 static void test_setfont(DWORD style)
 {
     HWND hCombo = build_combo(style);
@@ -224,6 +247,8 @@ START_TEST(combo)
 
     test_setfont(CBS_DROPDOWN);
     test_setfont(CBS_DROPDOWNLIST);
+    test_setitemheight(CBS_DROPDOWN);
+    test_setitemheight(CBS_DROPDOWNLIST);
     test_CBN_SELCHANGE();
 
     DestroyWindow(hMainWnd);
