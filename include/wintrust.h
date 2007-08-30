@@ -420,6 +420,8 @@ BOOL      WINAPI WintrustSetRegPolicyFlags(DWORD);
 LONG      WINAPI WinVerifyTrust(HWND,GUID*,LPVOID);
 HRESULT   WINAPI WinVerifyTrustEx(HWND,GUID*,WINTRUST_DATA*);
 
+CRYPT_PROVIDER_CERT * WINAPI WTHelperGetProvCertFromChain(
+ CRYPT_PROVIDER_SGNR *pSgnr, DWORD idxCert);
 CRYPT_PROVIDER_SGNR * WINAPI WTHelperGetProvSignerFromChain(
  CRYPT_PROVIDER_DATA *pProvData, DWORD idxSigner, BOOL fCounterSigner,
  DWORD idxCounterSigner);
