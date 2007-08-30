@@ -89,7 +89,7 @@ HANDLE WINAPI CreateActCtxA(PCACTCTXA pActCtx)
             MultiByteToWideChar(CP_ACP, 0, pActCtx->lpResourceName, -1, resname, len);
             actw.lpResourceName = resname;
         }
-        else actw.lpResourceName = (LPWSTR)pActCtx->lpResourceName;
+        else actw.lpResourceName = (LPCWSTR)pActCtx->lpResourceName;
     }
     if (actw.dwFlags & ACTCTX_FLAG_APPLICATION_NAME_VALID)
     {
