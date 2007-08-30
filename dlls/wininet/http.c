@@ -753,13 +753,13 @@ static void HTTP_DrainContent(LPWININETHTTPREQW lpwhr)
  *
  */
 BOOL WINAPI HttpEndRequestA(HINTERNET hRequest, 
-        LPINTERNET_BUFFERSA lpBuffersOut, DWORD dwFlags, DWORD dwContext)
+        LPINTERNET_BUFFERSA lpBuffersOut, DWORD dwFlags, DWORD_PTR dwContext)
 {
     LPINTERNET_BUFFERSA ptr;
     LPINTERNET_BUFFERSW lpBuffersOutW,ptrW;
     BOOL rc = FALSE;
 
-    TRACE("(%p, %p, %08x, %08x): stub\n", hRequest, lpBuffersOut, dwFlags,
+    TRACE("(%p, %p, %08x, %08lx): stub\n", hRequest, lpBuffersOut, dwFlags,
             dwContext);
 
     ptr = lpBuffersOut;
@@ -817,7 +817,7 @@ BOOL WINAPI HttpEndRequestA(HINTERNET hRequest,
  *
  */
 BOOL WINAPI HttpEndRequestW(HINTERNET hRequest, 
-        LPINTERNET_BUFFERSW lpBuffersOut, DWORD dwFlags, DWORD dwContext)
+        LPINTERNET_BUFFERSW lpBuffersOut, DWORD dwFlags, DWORD_PTR dwContext)
 {
     BOOL rc = FALSE;
     LPWININETHTTPREQW lpwhr;
@@ -898,12 +898,12 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
 HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
 	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
-	DWORD dwFlags, DWORD dwContext)
+	DWORD dwFlags, DWORD_PTR dwContext)
 {
     LPWININETHTTPSESSIONW lpwhs;
     HINTERNET handle = NULL;
 
-    TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08x)\n", hHttpSession,
+    TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
           debugstr_w(lpszVerb), debugstr_w(lpszObjectName),
           debugstr_w(lpszVersion), debugstr_w(lpszReferrer), lpszAcceptTypes,
           dwFlags, dwContext);
@@ -952,14 +952,14 @@ lend:
 HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 	LPCSTR lpszVerb, LPCSTR lpszObjectName, LPCSTR lpszVersion,
 	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes,
-	DWORD dwFlags, DWORD dwContext)
+	DWORD dwFlags, DWORD_PTR dwContext)
 {
     LPWSTR szVerb = NULL, szObjectName = NULL;
     LPWSTR szVersion = NULL, szReferrer = NULL, *szAcceptTypes = NULL;
     INT len;
     INT acceptTypesCount;
     HINTERNET rc = FALSE;
-    TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08x)\n", hHttpSession,
+    TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
           debugstr_a(lpszVerb), debugstr_a(lpszObjectName),
           debugstr_a(lpszVersion), debugstr_a(lpszReferrer), lpszAcceptTypes,
           dwFlags, dwContext);
@@ -1337,7 +1337,7 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
 HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
-	DWORD dwFlags, DWORD dwContext)
+	DWORD dwFlags, DWORD_PTR dwContext)
 {
     LPWININETAPPINFOW hIC = NULL;
     LPWININETHTTPREQW lpwhr;
@@ -2059,14 +2059,14 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 			       LPINTERNET_BUFFERSA lpBuffersIn,
 			       LPINTERNET_BUFFERSA lpBuffersOut,
-			       DWORD dwFlags, DWORD dwContext)
+			       DWORD dwFlags, DWORD_PTR dwContext)
 {
     INTERNET_BUFFERSW BuffersInW;
     BOOL rc = FALSE;
     DWORD headerlen;
     LPWSTR header = NULL;
 
-    TRACE("(%p, %p, %p, %08x, %08x): stub\n", hRequest, lpBuffersIn,
+    TRACE("(%p, %p, %p, %08x, %08lx): stub\n", hRequest, lpBuffersIn,
 	    lpBuffersOut, dwFlags, dwContext);
 
     if (lpBuffersIn)
@@ -2115,14 +2115,14 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
                    LPINTERNET_BUFFERSW lpBuffersIn,
                    LPINTERNET_BUFFERSW lpBuffersOut,
-                   DWORD dwFlags, DWORD dwContext)
+                   DWORD dwFlags, DWORD_PTR dwContext)
 {
     BOOL ret;
     LPWININETHTTPREQW lpwhr;
     LPWININETHTTPSESSIONW lpwhs;
     LPWININETAPPINFOW hIC;
 
-    TRACE("(%p, %p, %p, %08x, %08x)\n", hRequest, lpBuffersIn,
+    TRACE("(%p, %p, %p, %08x, %08lx)\n", hRequest, lpBuffersIn,
             lpBuffersOut, dwFlags, dwContext);
 
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
@@ -2791,7 +2791,7 @@ lend:
  */
 HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
-	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
+	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
 	DWORD dwInternalFlags)
 {
     BOOL bSuccess = FALSE;

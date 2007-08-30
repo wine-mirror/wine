@@ -209,7 +209,7 @@ static const char *get_callback_name(DWORD dwInternetStatus) {
     return "Unknown";
 }
 
-VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
+VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext,
                            DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                            DWORD dwStatusInfoLength)
 {
@@ -252,7 +252,7 @@ VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
         }
     }
     
-    TRACE(" callback(%p) (%p (%p), %08x, %d (%s), %p, %d)\n",
+    TRACE(" callback(%p) (%p (%p), %08lx, %d (%s), %p, %d)\n",
 	  hdr->lpfnStatusCB, hdr->hInternet, hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
 	  lpvNewInfo, dwStatusInfoLength);
     
@@ -279,11 +279,11 @@ static void SendAsyncCallbackProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpvStatusInfo);
 }
 
-VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
+VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext,
                        DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                        DWORD dwStatusInfoLength)
 {
-    TRACE("(%p, %08x, %d (%s), %p, %d): %sasync call with callback %p\n",
+    TRACE("(%p, %08lx, %d (%s), %p, %d): %sasync call with callback %p\n",
 	  hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
 	  lpvStatusInfo, dwStatusInfoLength,
 	  hdr->dwFlags & INTERNET_FLAG_ASYNC ? "" : "non ",

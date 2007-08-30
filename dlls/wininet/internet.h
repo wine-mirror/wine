@@ -142,7 +142,7 @@ struct _WININETHANDLEHEADER
     WH_TYPE htype;
     HINTERNET hInternet;
     DWORD  dwFlags;
-    DWORD  dwContext;
+    DWORD_PTR dwContext;
     DWORD  dwError;
     DWORD  dwInternalFlags;
     DWORD  dwRefCount;
@@ -261,7 +261,7 @@ struct WORKREQ_FTPPUTFILEW
     LPWSTR lpszLocalFile;
     LPWSTR lpszNewRemoteFile;
     DWORD  dwFlags;
-    DWORD  dwContext;
+    DWORD_PTR dwContext;
 };
 
 struct WORKREQ_FTPSETCURRENTDIRECTORYW
@@ -279,7 +279,7 @@ struct WORKREQ_FTPFINDFIRSTFILEW
     LPWSTR lpszSearchFile;
     LPWIN32_FIND_DATAW lpFindFileData;
     DWORD  dwFlags;
-    DWORD  dwContext;
+    DWORD_PTR dwContext;
 };
 
 struct WORKREQ_FTPGETCURRENTDIRECTORYW
@@ -293,7 +293,7 @@ struct WORKREQ_FTPOPENFILEW
     LPWSTR lpszFilename;
     DWORD  dwAccess;
     DWORD  dwFlags;
-    DWORD  dwContext;
+    DWORD_PTR dwContext;
 };
 
 struct WORKREQ_FTPGETFILEW
@@ -303,7 +303,7 @@ struct WORKREQ_FTPGETFILEW
     BOOL   fFailIfExists;
     DWORD  dwLocalFlagsAttribute;
     DWORD  dwFlags;
-    DWORD  dwContext;
+    DWORD_PTR dwContext;
 };
 
 struct WORKREQ_FTPDELETEFILEW
@@ -339,7 +339,7 @@ struct WORKREQ_HTTPSENDREQUESTW
 
 struct WORKREQ_SENDCALLBACK
 {
-    DWORD     dwContext;
+    DWORD_PTR dwContext;
     DWORD     dwInternetStatus;
     LPVOID    lpvStatusInfo;
     DWORD     dwStatusInfoLength;
@@ -352,7 +352,7 @@ struct WORKREQ_INTERNETOPENURLW
     LPWSTR     lpszHeaders;
     DWORD     dwHeadersLength;
     DWORD     dwFlags;
-    DWORD     dwContext;
+    DWORD_PTR dwContext;
 };
 
 struct WORKREQ_INTERNETREADFILEEXA
@@ -395,12 +395,12 @@ time_t ConvertTimeString(LPCWSTR asctime);
 
 HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
-	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
+	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
 	DWORD dwInternalFlags);
 
 HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
-	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
+	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
 	DWORD dwInternalFlags);
 
 BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
@@ -416,11 +416,11 @@ BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
                        BOOL bWait, BOOL bSendCompletionStatus);
 
 BOOLAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
-    LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD dwContext);
+    LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD_PTR dwContext);
 BOOLAPI FTP_FtpSetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
 BOOLAPI FTP_FtpCreateDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
 INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
-    LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD dwContext);
+    LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD_PTR dwContext);
 BOOL WINAPI FTP_FindNextFileW(LPWININETFTPFINDNEXTW lpwh, LPVOID lpvFindData);
 BOOLAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszCurrentDirectory,
 	LPDWORD lpdwCurrentDirectory);
@@ -429,10 +429,10 @@ BOOL FTP_FtpRenameFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszSrc, LPCWSTR lps
 BOOL FTP_FtpRemoveDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
 BOOL FTP_FtpDeleteFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName);
 HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName,
-	DWORD fdwAccess, DWORD dwFlags, DWORD dwContext);
+	DWORD fdwAccess, DWORD dwFlags, DWORD_PTR dwContext);
 BOOLAPI FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
 	BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
-	DWORD dwContext);
+	DWORD_PTR dwContext);
 
 BOOLAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
@@ -440,14 +440,14 @@ BOOLAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
-	DWORD dwFlags, DWORD dwContext);
+	DWORD dwFlags, DWORD_PTR dwContext);
 BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr);
 
-VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
+VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext,
                        DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                        DWORD dwStatusInfoLength);
 
-VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
+VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext,
                            DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                            DWORD dwStatusInfoLength);
 

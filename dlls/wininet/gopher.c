@@ -108,7 +108,7 @@ HINTERNET WINAPI GopherFindFirstFileA(
  LPGOPHER_FIND_DATAA
            lpFindData,
  DWORD     dwFlags,
- DWORD     dwContext
+ DWORD_PTR dwContext
 )
 {
     FIXME("stub\n");
@@ -127,7 +127,7 @@ HINTERNET WINAPI GopherFindFirstFileW(
  LPGOPHER_FIND_DATAW
            lpFindData,
  DWORD     dwFlags,
- DWORD     dwContext
+ DWORD_PTR dwContext
 )
 {
     FIXME("stub\n");
@@ -152,7 +152,7 @@ BOOL WINAPI GopherGetAttributeA(
  LPDWORD   lpdwCharactersReturned,
  GOPHER_ATTRIBUTE_ENUMERATORA
            lpfnEnumerator,
- DWORD     dwContext
+ DWORD_PTR dwContext
 )
 {
     FIXME("stub\n");
@@ -173,7 +173,7 @@ BOOL WINAPI GopherGetAttributeW(
  LPDWORD   lpdwCharactersReturned,
  GOPHER_ATTRIBUTE_ENUMERATORW
            lpfnEnumerator,
- DWORD     dwContext
+ DWORD_PTR dwContext
 )
 {
     FIXME("stub\n");
@@ -231,7 +231,7 @@ HINTERNET WINAPI GopherOpenFileA(
  LPCSTR    lpszLocator,
  LPCSTR    lpszView,
  DWORD     dwFlags,
- DWORD     dwContext
+ DWORD_PTR dwContext
 )
 {
     FIXME("stub\n");
@@ -248,7 +248,7 @@ HINTERNET WINAPI GopherOpenFileW(
  LPCWSTR   lpszLocator,
  LPCWSTR   lpszView,
  DWORD     dwFlags,
- DWORD     dwContext
+ DWORD_PTR dwContext
 )
 {
     FIXME("stub\n");

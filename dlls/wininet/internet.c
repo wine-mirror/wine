@@ -80,7 +80,7 @@ typedef struct
 
 static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr);
 HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUrl,
-              LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
+              LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext);
 
 static DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
 static HMODULE WININET_hModule;
@@ -766,12 +766,12 @@ BOOL WINAPI InternetGetConnectedStateExA(LPDWORD lpdwStatus, LPSTR lpszConnectio
 HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
     LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
     LPCWSTR lpszUserName, LPCWSTR lpszPassword,
-    DWORD dwService, DWORD dwFlags, DWORD dwContext)
+    DWORD dwService, DWORD dwFlags, DWORD_PTR dwContext)
 {
     LPWININETAPPINFOW hIC;
     HINTERNET rc = NULL;
 
-    TRACE("(%p, %s, %i, %s, %s, %i, %i, %i)\n", hInternet, debugstr_w(lpszServerName),
+    TRACE("(%p, %s, %i, %s, %s, %i, %i, %lx)\n", hInternet, debugstr_w(lpszServerName),
 	  nServerPort, debugstr_w(lpszUserName), debugstr_w(lpszPassword),
 	  dwService, dwFlags, dwContext);
 
@@ -828,7 +828,7 @@ lend:
 HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
     LPCSTR lpszServerName, INTERNET_PORT nServerPort,
     LPCSTR lpszUserName, LPCSTR lpszPassword,
-    DWORD dwService, DWORD dwFlags, DWORD dwContext)
+    DWORD dwService, DWORD dwFlags, DWORD_PTR dwContext)
 {
     HINTERNET rc = (HINTERNET)NULL;
     INT len = 0;
@@ -1633,7 +1633,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
  *           InternetSetFilePointer (WININET.@)
  */
 DWORD WINAPI InternetSetFilePointer(HINTERNET hFile, LONG lDistanceToMove,
-    PVOID pReserved, DWORD dwMoveContext, DWORD dwContext)
+    PVOID pReserved, DWORD dwMoveContext, DWORD_PTR dwContext)
 {
     FIXME("stub\n");
     return FALSE;
@@ -1840,12 +1840,12 @@ void AsyncInternetReadFileExProc(WORKREQUEST *workRequest)
 }
 
 BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOut,
-	DWORD dwFlags, DWORD dwContext)
+	DWORD dwFlags, DWORD_PTR dwContext)
 {
     BOOL retval = FALSE;
     LPWININETHANDLEHEADER lpwh;
 
-    TRACE("(%p %p 0x%x 0x%x)\n", hFile, lpBuffersOut, dwFlags, dwContext);
+    TRACE("(%p %p 0x%x 0x%lx)\n", hFile, lpBuffersOut, dwFlags, dwContext);
 
     if (dwFlags & ~(IRF_ASYNC|IRF_NO_WAIT))
         FIXME("these dwFlags aren't implemented: 0x%x\n", dwFlags & ~(IRF_ASYNC|IRF_NO_WAIT));
@@ -1932,9 +1932,9 @@ end:
  *
  */
 BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
-	DWORD dwFlags, DWORD dwContext)
+	DWORD dwFlags, DWORD_PTR dwContext)
 {
-  ERR("(%p, %p, 0x%x, 0x%x): not implemented in native\n", hFile, lpBuffer, dwFlags, dwContext);
+  ERR("(%p, %p, 0x%x, 0x%lx): not implemented in native\n", hFile, lpBuffer, dwFlags, dwContext);
 
   INTERNET_SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
@@ -2837,14 +2837,14 @@ BOOL WINAPI InternetCheckConnectionA(LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRese
  *   handle of connection or NULL on failure
  */
 HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUrl,
-    LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
+    LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext)
 {
     URL_COMPONENTSW urlComponents;
     WCHAR protocol[32], hostName[MAXHOSTNAME], userName[1024];
     WCHAR password[1024], path[2048], extra[1024];
     HINTERNET client = NULL, client1 = NULL;
     
-    TRACE("(%p, %s, %s, %08x, %08x, %08x)\n", hIC, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
+    TRACE("(%p, %s, %s, %08x, %08x, %08lx)\n", hIC, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
 	  dwHeadersLength, dwFlags, dwContext);
     
     urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
@@ -2957,13 +2957,13 @@ static void AsyncInternetOpenUrlProc(WORKREQUEST *workRequest)
 }
 
 HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
-    LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
+    LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext)
 {
     HINTERNET ret = NULL;
     LPWININETAPPINFOW hIC = NULL;
 
     if (TRACE_ON(wininet)) {
-	TRACE("(%p, %s, %s, %08x, %08x, %08x)\n", hInternet, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
+	TRACE("(%p, %s, %s, %08x, %08x, %08lx)\n", hInternet, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
 	      dwHeadersLength, dwFlags, dwContext);
 	TRACE("  flags :");
 	dump_INTERNET_FLAGS(dwFlags);
@@ -3023,7 +3023,7 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
  *   handle of connection or NULL on failure
  */
 HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
-    LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
+    LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext)
 {
     HINTERNET rc = (HINTERNET)NULL;
 
@@ -3300,7 +3300,7 @@ void AsyncInternetQueryDataAvailableProc(WORKREQUEST *workRequest)
 
 BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
                                 LPDWORD lpdwNumberOfBytesAvailble,
-                                DWORD dwFlags, DWORD dwConext)
+                                DWORD dwFlags, DWORD_PTR dwContext)
 {
     LPWININETHTTPREQW lpwhr;
     BOOL retval = FALSE;
@@ -3878,7 +3878,7 @@ DWORD WINAPI InternetConfirmZoneCrossingW( HWND hWnd, LPWSTR szUrlPrev, LPWSTR s
 }
 
 DWORD WINAPI InternetDialA( HWND hwndParent, LPSTR lpszConnectoid, DWORD dwFlags,
-                            LPDWORD lpdwConnection, DWORD dwReserved )
+                            DWORD_PTR* lpdwConnection, DWORD dwReserved )
 {
     FIXME("(%p, %p, 0x%08x, %p, 0x%08x) stub\n", hwndParent, lpszConnectoid, dwFlags,
           lpdwConnection, dwReserved);
@@ -3886,7 +3886,7 @@ DWORD WINAPI InternetDialA( HWND hwndParent, LPSTR lpszConnectoid, DWORD dwFlags
 }
 
 DWORD WINAPI InternetDialW( HWND hwndParent, LPWSTR lpszConnectoid, DWORD dwFlags,
-                            LPDWORD lpdwConnection, DWORD dwReserved )
+                            DWORD_PTR* lpdwConnection, DWORD dwReserved )
 {
     FIXME("(%p, %p, 0x%08x, %p, 0x%08x) stub\n", hwndParent, lpszConnectoid, dwFlags,
           lpdwConnection, dwReserved);
@@ -3905,9 +3905,9 @@ BOOL WINAPI InternetGoOnlineW( LPWSTR lpszURL, HWND hwndParent, DWORD dwReserved
     return TRUE;
 }
 
-DWORD WINAPI InternetHangUp( DWORD dwConnection, DWORD dwReserved )
+DWORD WINAPI InternetHangUp( DWORD_PTR dwConnection, DWORD dwReserved )
 {
-    FIXME("(0x%08x, 0x%08x) stub\n", dwConnection, dwReserved);
+    FIXME("(0x%08lx, 0x%08x) stub\n", dwConnection, dwReserved);
     return ERROR_SUCCESS;
 }
 
