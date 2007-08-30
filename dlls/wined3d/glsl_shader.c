@@ -2037,10 +2037,22 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
 /** Process the WINED3DSIO_TEXKILL instruction in GLSL.
  * If any of the first 3 components are < 0, discard this pixel */
 void pshader_glsl_texkill(SHADER_OPCODE_ARG* arg) {
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD hex_version = This->baseShader.hex_version;
     glsl_dst_param_t dst_param;
 
+    /* The argument is a destination parameter, and no writemasks are allowed */
     shader_glsl_add_dst_param(arg, arg->dst, 0, &dst_param);
-    shader_addline(arg->buffer, "if (any(lessThan(%s.xyz, vec3(0.0)))) discard;\n", dst_param.reg_name);
+    if((hex_version >= WINED3DPS_VERSION(2,0))) {
+        /* 2.0 shaders compare all 4 components in texkill */
+        shader_addline(arg->buffer, "if (any(lessThan(%s.xyzw, vec4(0.0)))) discard;\n", dst_param.reg_name);
+    } else {
+        /* 1.X shaders only compare the first 3 components, propably due to the nature of the texkill
+         * instruction as a tex* instruction, and phase, which kills all a / w components. Even if all
+         * 4 components are defined, only the first 3 are used
+         */
+        shader_addline(arg->buffer, "if (any(lessThan(%s.xyz, vec3(0.0)))) discard;\n", dst_param.reg_name);
+    }
 }
 
 /** Process the WINED3DSIO_DP2ADD instruction in GLSL.

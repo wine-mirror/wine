@@ -218,7 +218,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     /* Texture */
     {WINED3DSIO_TEXCOORD, "texcoord", "undefined", 1, 1, pshader_hw_texcoord, pshader_glsl_texcoord, 0, WINED3DPS_VERSION(1,3)},
     {WINED3DSIO_TEXCOORD, "texcrd",   "undefined", 1, 2, pshader_hw_texcoord, pshader_glsl_texcoord, WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
-    {WINED3DSIO_TEXKILL,  "texkill",  "KIL",       1, 1, pshader_hw_map2gl, pshader_glsl_texkill, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(3,0)},
+    {WINED3DSIO_TEXKILL,  "texkill",  "KIL",       1, 1, pshader_hw_texkill, pshader_glsl_texkill, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(3,0)},
     {WINED3DSIO_TEX,      "tex",      "undefined", 1, 1, pshader_hw_tex, pshader_glsl_tex, 0, WINED3DPS_VERSION(1,3)},
     {WINED3DSIO_TEX,      "texld",    "undefined", 1, 2, pshader_hw_tex, pshader_glsl_tex, WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
     {WINED3DSIO_TEX,      "texld",    "undefined", 1, 3, pshader_hw_tex, pshader_glsl_tex, WINED3DPS_VERSION(2,0), -1},

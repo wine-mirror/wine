@@ -2571,6 +2571,155 @@ static void texdepth_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
 }
 
+static void texkill_test(IDirect3DDevice9 *device)
+{
+    IDirect3DPixelShader9 *shader;
+    HRESULT hr;
+    DWORD color;
+
+    const float vertex[] = {
+    /*                          bottom  top    right    left */
+        -1.0,   -1.0,   1.0,   -0.1,    0.9,    0.9,   -0.1,
+         1.0,   -1.0,   0.0,    0.9,   -0.1,    0.9,   -0.1,
+        -1.0,    1.0,   1.0,   -0.1,    0.9,   -0.1,    0.9,
+         1.0,    1.0,   0.0,    0.9,   -0.1,   -0.1,    0.9,
+    };
+
+    DWORD shader_code_11[] = {
+    0xffff0101,                                                             /* ps_1_1                     */
+    0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 1.0, 0.0, 0.0, 1.0 */
+    0x00000041, 0xb00f0000,                                                 /* texkill t0                 */
+    0x00000001, 0x800f0000, 0xa0e40000,                                     /* mov r0, c0                 */
+    0x0000ffff                                                              /* end                        */
+    };
+    DWORD shader_code_20[] = {
+    0xffff0200,                                                             /* ps_2_0                     */
+    0x0200001f, 0x80000000, 0xb00f0000,                                     /* dcl t0                     */
+    0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, /* def c0, 0.0, 0.0, 1.0, 1.0 */
+    0x01000041, 0xb00f0000,                                                 /* texkill t0                 */
+    0x02000001, 0x800f0800, 0xa0e40000,                                     /* mov oC0, c0                */
+    0x0000ffff                                                              /* end                        */
+    };
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_11, &shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetPixelShader(device, shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEXCOORDSIZE4(0) | D3DFVF_TEX1);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, vertex, 7 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+    color = getPixelColor(device, 63, 46);
+    ok(color == 0x0000ff00, "Pixel 63/46 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 66, 46);
+    ok(color == 0x0000ff00, "Pixel 66/64 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 63, 49);
+    ok(color == 0x0000ff00, "Pixel 63/49 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 66, 49);
+    ok(color == 0x00ff0000, "Pixel 66/49 has color %08x, expected 0x00ff0000\n", color);
+
+    color = getPixelColor(device, 578, 46);
+    ok(color == 0x0000ff00, "Pixel 578/46 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 575, 46);
+    ok(color == 0x0000ff00, "Pixel 575/64 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 578, 49);
+    ok(color == 0x0000ff00, "Pixel 578/49 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 575, 49);
+    ok(color == 0x00ff0000, "Pixel 575/49 has color %08x, expected 0x00ff0000\n", color);
+
+    color = getPixelColor(device, 63, 430);
+    ok(color == 0x0000ff00, "Pixel 578/46 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 63, 433);
+    ok(color == 0x0000ff00, "Pixel 575/64 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 66, 433);
+    ok(color == 0x00ff0000, "Pixel 578/49 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 66, 430);
+    ok(color == 0x00ff0000, "Pixel 575/49 has color %08x, expected 0x00ff0000\n", color);
+
+    color = getPixelColor(device, 578, 430);
+    ok(color == 0x0000ff00, "Pixel 578/46 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 578, 433);
+    ok(color == 0x0000ff00, "Pixel 575/64 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 575, 433);
+    ok(color == 0x00ff0000, "Pixel 578/49 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 575, 430);
+    ok(color == 0x00ff0000, "Pixel 575/49 has color %08x, expected 0x00ff0000\n", color);
+
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+    IDirect3DPixelShader9_Release(shader);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffff00, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_20, &shader);
+    if(FAILED(hr)) {
+        skip("Failed to create 2.0 test shader, most likely not supported\n");
+        return;
+    }
+
+    hr = IDirect3DDevice9_SetPixelShader(device, shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, vertex, 7 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+    color = getPixelColor(device, 63, 46);
+    ok(color == 0x00ffff00, "Pixel 63/46 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 66, 46);
+    ok(color == 0x00ffff00, "Pixel 66/64 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 63, 49);
+    ok(color == 0x00ffff00, "Pixel 63/49 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 66, 49);
+    ok(color == 0x000000ff, "Pixel 66/49 has color %08x, expected 0x000000ff\n", color);
+
+    color = getPixelColor(device, 578, 46);
+    ok(color == 0x00ffff00, "Pixel 578/46 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 575, 46);
+    ok(color == 0x00ffff00, "Pixel 575/64 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 578, 49);
+    ok(color == 0x00ffff00, "Pixel 578/49 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 575, 49);
+    ok(color == 0x000000ff, "Pixel 575/49 has color %08x, expected 0x000000ff\n", color);
+
+    color = getPixelColor(device, 63, 430);
+    ok(color == 0x00ffff00, "Pixel 578/46 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 63, 433);
+    ok(color == 0x00ffff00, "Pixel 575/64 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 66, 433);
+    ok(color == 0x00ffff00, "Pixel 578/49 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 66, 430);
+    ok(color == 0x000000ff, "Pixel 575/49 has color %08x, expected 0x000000ff\n", color);
+
+    color = getPixelColor(device, 578, 430);
+    ok(color == 0x00ffff00, "Pixel 578/46 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 578, 433);
+    ok(color == 0x00ffff00, "Pixel 575/64 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 575, 433);
+    ok(color == 0x00ffff00, "Pixel 578/49 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 575, 430);
+    ok(color == 0x000000ff, "Pixel 575/49 has color %08x, expected 0x000000ff\n", color);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -2666,6 +2815,7 @@ START_TEST(visual)
     {
         texbem_test(device_ptr);
         texdepth_test(device_ptr);
+        texkill_test(device_ptr);
     }
     else skip("No ps_1_1 support\n");
 

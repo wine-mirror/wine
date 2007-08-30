@@ -652,8 +652,31 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
       }
 }
 
-void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
+void pshader_hw_texkill(SHADER_OPCODE_ARG* arg) {
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD hex_version = This->baseShader.hex_version;
+    SHADER_BUFFER* buffer = arg->buffer;
+    char reg_dest[40];
 
+    /* No swizzles are allowed in d3d's texkill. PS 1.x ignores the 4th component as documented,
+     * but >= 2.0 honors it(undocumented, but tested by the d3d9 testsuit)
+     */
+    pshader_get_register_name(arg->dst, reg_dest);
+
+    if(hex_version >= WINED3DPS_VERSION(2,0)) {
+        /* The arb backend doesn't claim ps 2.0 support, but try to eat what the app feeds to us */
+        shader_addline(buffer, "KIL %s;\n", reg_dest);
+    } else {
+        /* ARB fp doesn't like swizzles on the parameter of the KIL instruction. To mask the 4th component,
+         * copy the register into our general purpose TMP variable, overwrite .w and pass TMP to KIL
+         */
+        shader_addline(buffer, "MOV TMP, %s;\n", reg_dest);
+        shader_addline(buffer, "MOV TMP.w, one.w;\n", reg_dest);
+        shader_addline(buffer, "KIL TMP;\n", reg_dest);
+    }
+}
+
+void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
 
     DWORD dst = arg->dst;
