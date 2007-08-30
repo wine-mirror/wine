@@ -1524,7 +1524,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     XImage *image;
     GC gc;
     XGCValues gcv;
-    BYTE *dstbits, *data;
+    DWORD *dstbits, *data;
     int y, y2;
     POINT pts[2];
     BOOL top_down = FALSE;
@@ -1580,6 +1580,9 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
         return FALSE;
     }
 
+    if ((blendfn.AlphaFormat & AC_SRC_ALPHA) && blendfn.SourceConstantAlpha != 0xff)
+        FIXME("Ignoring SourceConstantAlpha %d for AC_SRC_ALPHA\n", blendfn.SourceConstantAlpha);
+
     if(dib.dsBm.bmBitsPixel != 32) {
         FIXME("not a 32 bpp dibsection\n");
         return FALSE;
@@ -1588,7 +1591,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
 
     if(dib.dsBmih.biHeight < 0) { /* top-down dib */
         top_down = TRUE;
-        dstbits += widthSrc * (heightSrc - 1) * 4;
+        dstbits += widthSrc * (heightSrc - 1);
         y2 = ySrc;
         y = y2 + heightSrc - 1;
     }
@@ -1597,10 +1600,34 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
         y = dib.dsBmih.biHeight - ySrc - 1;
         y2 = y - heightSrc + 1;
     }
-    for(; y >= y2; y--) {
-        memcpy(dstbits, (char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes + xSrc * 4,
-               widthSrc * 4);
-        dstbits += (top_down ? -1 : 1) * widthSrc * 4;
+
+    if (blendfn.AlphaFormat & AC_SRC_ALPHA)
+    {
+        for(; y >= y2; y--)
+        {
+            memcpy(dstbits, (char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes + xSrc * 4,
+                   widthSrc * 4);
+            dstbits += (top_down ? -1 : 1) * widthSrc;
+        }
+    }
+    else
+    {
+        DWORD source_alpha = (DWORD)blendfn.SourceConstantAlpha << 24;
+        int x;
+
+        for(; y >= y2; y--)
+        {
+            DWORD *srcbits = (DWORD *)((char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes) + xSrc;
+            for (x = 0; x < widthSrc; x++)
+            {
+                DWORD argb = *srcbits++;
+                argb = (argb & 0xffffff) | source_alpha;
+                *dstbits++ = argb;
+            }
+            if (top_down)  /* we traversed the row forward so we should go back by two rows */
+                dstbits -= 2 * widthSrc;
+        }
+
     }
 
     wine_tsx11_lock();
