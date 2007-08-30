@@ -98,3 +98,10 @@ NTSTATUS WINAPI LsaLookupAuthenticationPackage(HANDLE LsaHandle,
     AuthenticationPackage = NULL;
     return STATUS_SUCCESS;
 }
+
+NTSTATUS WINAPI LsaRegisterLogonProcess(PLSA_STRING LogonProcessName,
+        PHANDLE LsaHandle, PLSA_OPERATIONAL_MODE SecurityMode)
+{
+    FIXME("%p %p %p stub\n", LogonProcessName, LsaHandle, SecurityMode);
+    return STATUS_SUCCESS;
+}

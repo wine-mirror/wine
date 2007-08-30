@@ -40,7 +40,7 @@
 @ stdcall LsaGetLogonSessionData(ptr ptr)
 @ stdcall LsaLogonUser(ptr ptr long long ptr long ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall LsaLookupAuthenticationPackage(ptr ptr ptr)
-@ stub LsaRegisterLogonProcess
+@ stdcall LsaRegisterLogonProcess(ptr ptr ptr)
 @ stub LsaRegisterPolicyChangeNotification
 @ stub LsaUnregisterPolicyChangeNotification
 @ stdcall MakeSignature(ptr long ptr long)
