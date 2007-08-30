@@ -20,10 +20,9 @@
 
 #include <stdarg.h>
 
-#define COBJMACROS
-
 #include "windef.h"
 #include "winbase.h"
+#include "winhttp.h"
 
 #include "wine/debug.h"
 
