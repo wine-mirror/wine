@@ -250,7 +250,7 @@ static BOOL CRYPT_AddCertToSimpleChain(PCERT_SIMPLE_CHAIN chain,
         {
             memset(element, 0, sizeof(CERT_CHAIN_ELEMENT));
             element->cbSize = sizeof(CERT_CHAIN_ELEMENT);
-            element->pCertContext = cert;
+            element->pCertContext = CertDuplicateCertificateContext(cert);
             if (dwFlags & CERT_STORE_REVOCATION_FLAG &&
              !(dwFlags & CERT_STORE_NO_CRL_FLAG))
                 element->TrustStatus.dwErrorStatus |= CERT_TRUST_IS_REVOKED;
@@ -288,12 +288,18 @@ static BOOL CRYPT_AddCertToSimpleChain(PCERT_SIMPLE_CHAIN chain,
     return ret;
 }
 
+static void CRYPT_FreeChainElement(PCERT_CHAIN_ELEMENT element)
+{
+    CertFreeCertificateContext(element->pCertContext);
+    CryptMemFree(element);
+}
+
 static void CRYPT_FreeSimpleChain(PCERT_SIMPLE_CHAIN chain)
 {
     DWORD i;
 
     for (i = 0; i < chain->cElement; i++)
-        CryptMemFree(chain->rgpElement[i]);
+        CRYPT_FreeChainElement(chain->rgpElement[i]);
     CryptMemFree(chain->rgpElement);
     CryptMemFree(chain);
 }
