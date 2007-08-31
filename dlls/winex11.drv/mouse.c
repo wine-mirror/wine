@@ -763,6 +763,7 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
             pixmapBits = XCreateBitmapFromData( display, root_window, (char *)pXorBits, xmax, ymax );
             if (!pixmapBits)
             {
+                HeapFree( GetProcessHeap(), 0, bitMask32 );
                 XFreePixmap( display, pixmapAll );
                 XFreeGC( display, gc );
                 image->data = NULL;
