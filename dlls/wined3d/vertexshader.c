@@ -353,6 +353,13 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
          *  (this is handled in drawPrim() when it sets the MODELVIEW and PROJECTION matrices)
          */
         shader_addline(&buffer, "gl_Position.y = gl_Position.y * posFixup[1];\n");
+        /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
+         *
+         * Basically we want(in homogenous coordinates) z = z * 2 - 1. However, shaders are run
+         * before the homogenous divide, so we have to take the w into account: z = ((z / w) * 2 - 1) * w,
+         * which is the same as z = z / 2 - w.
+         */
+        shader_addline(&buffer, "gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;\n");
 
         shader_addline(&buffer, "}\n");
 
@@ -368,6 +375,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
 
         /*  Create the hw ARB shader */
         shader_addline(&buffer, "!!ARBvp1.0\n");
+        shader_addline(&buffer, "PARAM zfixup = { 2.0, -1.0, 0.0, 0.0 };\n");
 
         /* Mesa supports only 95 constants */
         if (GL_VEND(MESA) || GL_VEND(WINE))
@@ -399,6 +407,10 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
          *  (this is handled in drawPrim() when it sets the MODELVIEW and PROJECTION matrices)
          */
         shader_addline(&buffer, "MUL TMP_OUT.y, TMP_OUT.y, posFixup.y;\n");
+        /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
+         * and the glsl equivalent
+         */
+        shader_addline(&buffer, "MAD TMP_OUT.z, TMP_OUT.z, zfixup.x, -TMP_OUT.w;\n");
 
         shader_addline(&buffer, "MOV result.position, TMP_OUT;\n");
         

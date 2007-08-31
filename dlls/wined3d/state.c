@@ -2615,7 +2615,23 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
             /* Transformed vertices are supposed to bypass the whole transform pipeline including
              * frustum clipping. This can't be done in opengl, so this code adjusts the Z range to
              * suppress depth clipping. This can be done because it is an orthogonal projection and
-             * the Z coordinate does not affect the size of the primitives
+             * the Z coordinate does not affect the size of the primitives. Half Life 1 and Prince of
+             * Persia 3D need this.
+             *
+             * Note that using minZ and maxZ here doesn't entirely fix the problem, since view frustum
+             * clipping is still enabled, but it seems to fix it for all apps tested so far. A minor
+             * problem can be witnessed in half-life 1 engine based games, the weapon is clipped close
+             * to the viewer.
+             *
+             * Also note that this breaks z comparison against z values filled in with clear,
+             * but no app depending on that and disabled clipping has been found yet. Comparing
+             * primitives against themselves works, so the Z buffer is still intact for normal hidden
+             * surface removal.
+             *
+             * We could disable clipping entirely by setting the near to infinity and far to -infinity,
+             * but this would break Z buffer operation. Raising the range to something less than
+             * infinity would help a bit at the cost of Z precision, but it wouldn't eliminate the
+             * problem either.
              */
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
             if(stateblock->wineD3DDevice->render_offscreen) {
@@ -2633,9 +2649,9 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
              */
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, 1.0, -1.0);
             if(stateblock->wineD3DDevice->render_offscreen) {
-                glOrtho(X, X + width, -Y, -Y - height, 1.0, -1.0);
+                glOrtho(X, X + width, -Y, -Y - height, 0.0, -1.0);
             } else {
-                glOrtho(X, X + width, Y + height, Y, 1.0, -1.0);
+                glOrtho(X, X + width, Y + height, Y, 0.0, -1.0);
             }
         }
         checkGLcall("glOrtho");
@@ -2661,9 +2677,16 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
             1.0 / Width is used because the coord range goes from -1.0 to 1.0, then we
             divide by the Width/Height, so we need the half range(1.0) to translate by
             half a pixel.
+
+            The other fun is that d3d's output z range after the transformation is [0;1],
+            but opengl's is [-1;1]. Since the z buffer is in range [0;1] for both, gl
+            scales [-1;1] to [0;1]. This would mean that we end up in [0.5;1] and loose a lot
+            of Z buffer precision and the clear values do not match in the z test. Thus scale
+            [0;1] to [-1;1], so when gl undoes that we utilize the full z range
          */
-        glTranslatef(1.0 / stateblock->viewport.Width, -1.0/ stateblock->viewport.Height, 0);
-        checkGLcall("glTranslatef (1.0 / width, -1.0 / height, 0)");
+        glTranslatef(1.0 / stateblock->viewport.Width, -1.0/ stateblock->viewport.Height, -1.0);
+        checkGLcall("glTranslatef (1.0 / width, -1.0 / height, -1.0)");
+        glScalef(1.0, 1.0, 2.0);
 
         /* D3D texture coordinates are flipped compared to OpenGL ones, so
             * render everything upside down when rendering offscreen. */
