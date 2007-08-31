@@ -257,8 +257,7 @@ static inline BOOL CRYPT_IsSimpleChainCyclic(PCERT_SIMPLE_CHAIN chain)
 static PCCERT_CONTEXT CRYPT_GetIssuerFromStore(HCERTSTORE store,
  PCCERT_CONTEXT cert, PDWORD pdwFlags)
 {
-    *pdwFlags = CERT_STORE_REVOCATION_FLAG | CERT_STORE_SIGNATURE_FLAG |
-     CERT_STORE_TIME_VALIDITY_FLAG;
+    *pdwFlags = CERT_STORE_REVOCATION_FLAG | CERT_STORE_SIGNATURE_FLAG;
     return CertGetIssuerCertificateFromStore(store, cert, NULL, pdwFlags);
 }
 
@@ -297,22 +296,6 @@ static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
             if (dwFlags & CERT_STORE_SIGNATURE_FLAG)
                 element->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_IS_NOT_SIGNATURE_VALID;
-            if (dwFlags & CERT_STORE_TIME_VALIDITY_FLAG)
-                element->TrustStatus.dwErrorStatus |=
-                 CERT_TRUST_IS_NOT_TIME_VALID;
-            if (chain->cElement)
-            {
-                PCERT_CHAIN_ELEMENT prevElement =
-                 chain->rgpElement[chain->cElement - 1];
-
-                /* This cert is the issuer of the previous one in the chain, so
-                 * retroactively check the previous one's time validity nesting.
-                 */
-                if (!CertVerifyValidityNesting(
-                 prevElement->pCertContext->pCertInfo, cert->pCertInfo))
-                    prevElement->TrustStatus.dwErrorStatus |=
-                     CERT_TRUST_IS_NOT_TIME_NESTED;
-            }
             /* FIXME: check valid usages and name constraints */
             /* FIXME: initialize the rest of element */
             chain->rgpElement[chain->cElement++] = element;
