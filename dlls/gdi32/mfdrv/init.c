@@ -314,6 +314,12 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
         DC_ReleaseDCPtr( dc );
         return NULL;
     }
+    if (dc->refcount != 1)
+    {
+        FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
+        DC_ReleaseDCPtr( dc );
+        return NULL;
+    }
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
 
     /* Construct the end of metafile record - this is documented

@@ -58,8 +58,6 @@ void CLIPPING_UpdateGCRegion( DC * dc )
         exit(1);
     }
 
-    if (dc->flags & DC_DIRTY) ERR( "DC is dirty. Please report this.\n" );
-
     /* update the intersection of meta and clip regions */
     if (dc->hMetaRgn && dc->hClipRgn)
     {
@@ -177,7 +175,7 @@ INT16 WINAPI SelectVisRgn16( HDC16 hdc16, HRGN16 hrgn )
 
     TRACE("%p %04x\n", hdc, hrgn );
 
-    dc->flags &= ~DC_DIRTY;
+    dc->dirty = 0;
 
     retval = CombineRgn( dc->hVisRgn, HRGN_32(hrgn), 0, RGN_COPY );
     CLIPPING_UpdateGCRegion( dc );
@@ -547,7 +545,6 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
     dc->saved_visrgn = saved->next;
     DeleteObject( saved->hrgn );
     HeapFree( GetProcessHeap(), 0, saved );
-    dc->flags &= ~DC_DIRTY;
     CLIPPING_UpdateGCRegion( dc );
  done:
     DC_ReleaseDCPtr( dc );

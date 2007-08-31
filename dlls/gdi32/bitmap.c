@@ -587,7 +587,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
     if (handle)
     {
         dc->hBitmap = handle;
-        dc->flags &= ~DC_DIRTY;
+        dc->dirty = 0;
         SetRectRgn( dc->hVisRgn, 0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight);
         DC_InitDC( dc );
     }

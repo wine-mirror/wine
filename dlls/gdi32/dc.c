@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,6 +51,25 @@ static const struct gdi_obj_funcs dc_funcs =
     DC_DeleteObject   /* pDeleteObject */
 };
 
+
+static inline DC *get_dc_obj( HDC hdc )
+{
+    DC *dc = GDI_GetObjPtr( hdc, MAGIC_DONTCARE );
+    if (!dc) return NULL;
+
+    if ((GDIMAGIC(dc->header.wMagic) != DC_MAGIC) &&
+        (GDIMAGIC(dc->header.wMagic) != MEMORY_DC_MAGIC) &&
+        (GDIMAGIC(dc->header.wMagic) != METAFILE_DC_MAGIC) &&
+        (GDIMAGIC(dc->header.wMagic) != ENHMETAFILE_DC_MAGIC))
+    {
+        GDI_ReleaseObj( hdc );
+        SetLastError( ERROR_INVALID_HANDLE );
+        dc = NULL;
+    }
+    return dc;
+}
+
+
 /***********************************************************************
  *           DC_AllocDC
  */
@@ -63,6 +83,9 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->hSelf               = hdc;
     dc->funcs               = funcs;
     dc->physDev             = NULL;
+    dc->thread              = GetCurrentThreadId();
+    dc->refcount            = 1;
+    dc->dirty               = 0;
     dc->saveLevel           = 0;
     dc->saved_dc            = 0;
     dc->dwHookData          = 0;
@@ -136,16 +159,22 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
  */
 DC *DC_GetDCPtr( HDC hdc )
 {
-    GDIOBJHDR *ptr = GDI_GetObjPtr( hdc, MAGIC_DONTCARE );
-    if (!ptr) return NULL;
-    if ((GDIMAGIC(ptr->wMagic) == DC_MAGIC) ||
-        (GDIMAGIC(ptr->wMagic) == MEMORY_DC_MAGIC) ||
-        (GDIMAGIC(ptr->wMagic) == METAFILE_DC_MAGIC) ||
-        (GDIMAGIC(ptr->wMagic) == ENHMETAFILE_DC_MAGIC))
-        return (DC *)ptr;
-    GDI_ReleaseObj( hdc );
-    SetLastError( ERROR_INVALID_HANDLE );
-    return NULL;
+    DC *dc = get_dc_obj( hdc );
+    if (!dc) return NULL;
+
+    if (!InterlockedCompareExchange( &dc->refcount, 1, 0 ))
+    {
+        dc->thread = GetCurrentThreadId();
+    }
+    else if (dc->thread != GetCurrentThreadId())
+    {
+        GDI_ReleaseObj( hdc );
+        SetLastError( ERROR_ACCESS_DENIED );
+        return NULL;
+    }
+    else InterlockedIncrement( &dc->refcount );
+
+    return dc;
 }
 
 /***********************************************************************
@@ -159,10 +188,9 @@ DC *DC_GetDCUpdate( HDC hdc )
 {
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return NULL;
-    while (dc->flags & DC_DIRTY)
+    while (InterlockedExchange( &dc->dirty, 0 ))
     {
         DCHOOKPROC proc = dc->hookThunk;
-        dc->flags &= ~DC_DIRTY;
         if (proc)
         {
             DWORD_PTR data = dc->dwHookData;
@@ -181,6 +209,7 @@ DC *DC_GetDCUpdate( HDC hdc )
  */
 void DC_ReleaseDCPtr( DC *dc )
 {
+    release_dc_ptr( dc );
     GDI_ReleaseObj( dc->hSelf );
 }
 
@@ -190,7 +219,63 @@ void DC_ReleaseDCPtr( DC *dc )
  */
 BOOL DC_FreeDCPtr( DC *dc )
 {
+    assert( dc->refcount == 1 );
     return GDI_FreeObject( dc->hSelf, dc );
+}
+
+
+/***********************************************************************
+ *           get_dc_ptr
+ *
+ * Retrieve a DC pointer but release the GDI lock.
+ */
+DC *get_dc_ptr( HDC hdc )
+{
+    DC *dc = get_dc_obj( hdc );
+    if (!dc) return NULL;
+
+    if (!InterlockedCompareExchange( &dc->refcount, 1, 0 ))
+    {
+        dc->thread = GetCurrentThreadId();
+    }
+    else if (dc->thread != GetCurrentThreadId())
+    {
+        WARN( "dc %p belongs to thread %04x\n", hdc, dc->thread );
+        GDI_ReleaseObj( hdc );
+        return NULL;
+    }
+    else InterlockedIncrement( &dc->refcount );
+
+    GDI_ReleaseObj( hdc );
+    return dc;
+}
+
+
+/***********************************************************************
+ *           release_dc_ptr
+ */
+void release_dc_ptr( DC *dc )
+{
+    LONG ref;
+
+    dc->thread = 0;
+    ref = InterlockedDecrement( &dc->refcount );
+    assert( ref >= 0 );
+    if (ref) dc->thread = GetCurrentThreadId();  /* we still own it */
+}
+
+
+/***********************************************************************
+ *           update_dc
+ *
+ * Make sure the DC vis region is up to date.
+ * This function may call up to USER so the GDI lock should _not_
+ * be held when calling it.
+ */
+void update_dc( DC *dc )
+{
+    if (InterlockedExchange( &dc->dirty, 0 ) && dc->hookThunk)
+        dc->hookThunk( dc->hSelf, DCHC_INVALIDVISRGN, dc->dwHookData, 0 );
 }
 
 
@@ -355,6 +440,8 @@ HDC WINAPI GetDCState( HDC hdc )
     newdc->BoundsRect       = dc->BoundsRect;
 
     newdc->hSelf = (HDC)handle;
+    newdc->thread    = GetCurrentThreadId();
+    newdc->refcount  = 1;
     newdc->saveLevel = 0;
     newdc->saved_dc  = 0;
 
@@ -415,7 +502,7 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
     }
     TRACE("%p %p\n", hdc, hdcs );
 
-    dc->flags            = dcs->flags & ~(DC_SAVED | DC_DIRTY);
+    dc->flags            = dcs->flags & ~DC_SAVED;
     dc->layout           = dcs->layout;
     dc->hDevice          = dcs->hDevice;
     dc->ROPmode          = dcs->ROPmode;
@@ -801,6 +888,12 @@ BOOL WINAPI DeleteDC( HDC hdc )
     GDI_CheckNotLock();
 
     if (!(dc = DC_GetDCPtr( hdc ))) return FALSE;
+    if (dc->refcount != 1)
+    {
+        FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
+        DC_ReleaseDCPtr( dc );
+        return FALSE;
+    }
 
     /* Call hook procedure to check whether is it OK to delete this DC */
     if (dc->hookThunk)
@@ -1419,25 +1512,22 @@ DWORD WINAPI GetDCHook16( HDC16 hdc16, FARPROC16 *phookProc )
 WORD WINAPI SetHookFlags16(HDC16 hdc16, WORD flags)
 {
     HDC hdc = HDC_32( hdc16 );
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_obj( hdc );  /* not get_dc_ptr, this needs to work from any thread */
+    LONG ret = 0;
 
-    if( dc )
-    {
-        WORD wRet = dc->flags & DC_DIRTY;
+    if (!dc) return 0;
 
-        /* "Undocumented Windows" info is slightly confusing.
-         */
+    /* "Undocumented Windows" info is slightly confusing. */
 
-        TRACE("hDC %p, flags %04x\n",hdc,flags);
+    TRACE("hDC %p, flags %04x\n",hdc,flags);
 
-        if( flags & DCHF_INVALIDATEVISRGN )
-            dc->flags |= DC_DIRTY;
-        else if( flags & DCHF_VALIDATEVISRGN || !flags )
-            dc->flags &= ~DC_DIRTY;
-        DC_ReleaseDCPtr( dc );
-        return wRet;
-    }
-    return 0;
+    if (flags & DCHF_INVALIDATEVISRGN)
+        ret = InterlockedExchange( &dc->dirty, 1 );
+    else if (flags & DCHF_VALIDATEVISRGN || !flags)
+        ret = InterlockedExchange( &dc->dirty, 0 );
+
+    GDI_ReleaseObj( dc );
+    return ret;
 }
 
 /***********************************************************************

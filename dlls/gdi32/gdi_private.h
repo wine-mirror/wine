@@ -269,6 +269,9 @@ typedef struct tagDC
     HDC          hSelf;            /* Handle to this DC */
     const struct tagDC_FUNCS *funcs; /* DC function table */
     PHYSDEV      physDev;         /* Physical device (driver-specific) */
+    DWORD        thread;          /* thread owning the DC */
+    LONG         refcount;        /* thread refcount */
+    LONG         dirty;           /* dirty flag */
     INT          saveLevel;
     HDC          saved_dc;
     DWORD_PTR    dwHookData;
@@ -335,7 +338,6 @@ typedef struct tagDC
 
   /* DC flags */
 #define DC_SAVED         0x0002   /* It is a saved DC */
-#define DC_DIRTY         0x0004   /* hVisRgn has to be updated */
 #define DC_BOUNDS_ENABLE 0x0008   /* Bounding rectangle tracking is enabled */
 #define DC_BOUNDS_SET    0x0010   /* Bounding rectangle has been set */
 
@@ -397,6 +399,9 @@ extern DC * DC_GetDCUpdate( HDC hdc );
 extern DC * DC_GetDCPtr( HDC hdc );
 extern void DC_ReleaseDCPtr( DC *dc );
 extern BOOL DC_FreeDCPtr( DC *dc );
+extern DC *get_dc_ptr( HDC hdc );
+extern void release_dc_ptr( DC *dc );
+extern void update_dc( DC *dc );
 extern void DC_InitDC( DC * dc );
 extern void DC_UpdateXforms( DC * dc );
 

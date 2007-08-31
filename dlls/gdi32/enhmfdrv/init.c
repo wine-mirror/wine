@@ -444,6 +444,12 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
         DC_ReleaseDCPtr( dc );
         return NULL;
     }
+    if (dc->refcount != 1)
+    {
+        FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
+        DC_ReleaseDCPtr( dc );
+        return NULL;
+    }
     physDev = (EMFDRV_PDEVICE *)dc->physDev;
 
     if(dc->saveLevel)
