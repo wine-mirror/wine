@@ -4966,6 +4966,37 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided(IWineD3DDev
     return WINED3D_OK;
 }
 
+static HRESULT IWineD3DDeviceImpl_UpdateVolume(IWineD3DDevice *iface, IWineD3DVolume *pSourceVolume, IWineD3DVolume *pDestinationVolume) {
+    /* This is a helper function for UpdateTexture, there is no public UpdateVolume method in d3d. Since it's
+     * not callable by the app directly no parameter validation checks are needed here.
+     */
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    WINED3DLOCKED_BOX src;
+    WINED3DLOCKED_BOX dst;
+    HRESULT hr;
+    TRACE("(%p)->(%p, %p)\n", This, pSourceVolume, pDestinationVolume);
+
+    /* TODO: Implement direct loading into the gl volume instead of using memcpy and
+     * dirtification to improve loading performance.
+     */
+    hr = IWineD3DVolume_LockBox(pSourceVolume, &src, NULL, WINED3DLOCK_READONLY);
+    if(FAILED(hr)) return hr;
+    hr = IWineD3DVolume_LockBox(pDestinationVolume, &dst, NULL, WINED3DLOCK_DISCARD);
+    if(FAILED(hr)) {
+    IWineD3DVolume_UnlockBox(pSourceVolume);
+            return hr;
+    }
+
+    memcpy(dst.pBits, src.pBits, ((IWineD3DVolumeImpl *) pDestinationVolume)->resource.size);
+
+    hr = IWineD3DVolume_UnlockBox(pDestinationVolume);
+    if(FAILED(hr)) {
+        IWineD3DVolume_UnlockBox(pSourceVolume);
+    } else {
+        hr = IWineD3DVolume_UnlockBox(pSourceVolume);
+    }
+    return hr;
+}
 
 /* Yet another way to update a texture, some apps use this to load default textures instead of using surface/texture lock/unlock */
 static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3DBaseTexture *pSourceTexture,  IWineD3DBaseTexture *pDestinationTexture){
@@ -5066,18 +5097,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, I
                 }
             }
             break;
-#if 0 /* TODO: Add support for volume textures */
+
         case WINED3DRTYPE_VOLUMETEXTURE:
             {
-                IWineD3DVolume  srcVolume  = NULL;
-                IWineD3DSurface destVolume = NULL;
+                IWineD3DVolume  *srcVolume  = NULL;
+                IWineD3DVolume  *destVolume = NULL;
 
                 for (i = 0 ; i < levels ; ++i) {
-                    IWineD3DVolumeTexture_GetVolume((IWineD3DVolumeTexture *)pSourceTexture,      i, &srcVolume);
-                    IWineD3DVolumeTexture_GetVolume((IWineD3DVolumeTexture *)pDestinationTexture, i, &destVolume);
-                    hr =  IWineD3DFoo_UpdateVolume(iface, srcVolume, NULL, destVolume, NULL);
-                    IWineD3DVolume_Release(srcSurface);
-                    IWineD3DVolume_Release(destSurface);
+                    IWineD3DVolumeTexture_GetVolumeLevel((IWineD3DVolumeTexture *)pSourceTexture,      i, &srcVolume);
+                    IWineD3DVolumeTexture_GetVolumeLevel((IWineD3DVolumeTexture *)pDestinationTexture, i, &destVolume);
+                    hr =  IWineD3DDeviceImpl_UpdateVolume(iface, srcVolume, destVolume);
+                    IWineD3DVolume_Release(srcVolume);
+                    IWineD3DVolume_Release(destVolume);
                     if (WINED3D_OK != hr) {
                         WARN("(%p) : Call to update volume failed\n", This);
                         return hr;
@@ -5085,7 +5116,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, I
                 }
             }
             break;
-#endif
+
         default:
             FIXME("(%p) : Unsupported source and destination type\n", This);
             hr = WINED3DERR_INVALIDCALL;
