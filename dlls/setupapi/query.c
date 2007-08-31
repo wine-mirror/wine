@@ -241,6 +241,7 @@ BOOL WINAPI SetupQueryInfFileInformationA(PSP_INF_INFORMATION InfInformation,
 
     if (!ReturnBuffer)
     {
+        HeapFree(GetProcessHeap(), 0, filenameW);
         if (ReturnBufferSize)
         {
             SetLastError(ERROR_INVALID_PARAMETER);
@@ -252,6 +253,7 @@ BOOL WINAPI SetupQueryInfFileInformationA(PSP_INF_INFORMATION InfInformation,
 
     if (size > ReturnBufferSize)
     {
+        HeapFree(GetProcessHeap(), 0, filenameW);
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
