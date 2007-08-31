@@ -238,7 +238,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {WINED3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL, 1, 2, NULL, pshader_glsl_texm3x2depth, WINED3DPS_VERSION(1,3), WINED3DPS_VERSION(1,3)},
     {WINED3DSIO_TEXDP3,   "texdp3",   GLNAME_REQUIRE_GLSL, 1, 2, NULL, pshader_glsl_texdp3, WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(1,3)},
     {WINED3DSIO_TEXM3x3,  "texm3x3",  GLNAME_REQUIRE_GLSL, 1, 2, NULL, pshader_glsl_texm3x3, WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXDEPTH, "texdepth", GLNAME_REQUIRE_GLSL, 1, 1, NULL, pshader_glsl_texdepth, WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
+    {WINED3DSIO_TEXDEPTH, "texdepth", NULL, 1, 1, pshader_hw_texdepth, pshader_glsl_texdepth, WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
     {WINED3DSIO_BEM,      "bem",      "undefined",         1, 3, pshader_hw_bem, pshader_glsl_bem, WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
     {WINED3DSIO_DSX,      "dsx",      NULL, 1, 2, NULL, shader_glsl_map2gl, WINED3DPS_VERSION(2,1), -1},
     {WINED3DSIO_DSY,      "dsy",      NULL, 1, 2, NULL, shader_glsl_map2gl, WINED3DPS_VERSION(2,1), -1},

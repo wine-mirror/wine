@@ -884,6 +884,32 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     current_state->current_row = 0;
 }
 
+void pshader_hw_texdepth(SHADER_OPCODE_ARG* arg) {
+    SHADER_BUFFER* buffer = arg->buffer;
+    char dst_name[50];
+
+    /* texdepth has an implicit destination, the fragment depth value. It's only parameter,
+     * which is essentially an input, is the destiantion register because it is the first
+     * param. According to the msdn, this must be register r5, but let's keep it more flexible
+     * here
+     */
+    pshader_get_register_name(arg->dst, dst_name);
+
+    /* According to the msdn, the source register(must be r5) is unusable after
+     * the texdepth instruction, so we're free to modify it
+     */
+    shader_addline(buffer, "MIN %s.g, %s.g, one.g;\n", dst_name, dst_name);
+
+    /* How to deal with the special case dst_name.g == 0? if r != 0, then
+     * the r * (1 / 0) will give infinity, which is clamped to 1.0, the correct
+     * result. But if r = 0.0, then 0 * inf = 0, which is incorrect.
+     */
+    shader_addline(buffer, "RCP %s.g, %s.g;\n", dst_name, dst_name);
+    shader_addline(buffer, "MUL TMP.x, %s.r, %s.g;\n", dst_name, dst_name);
+    shader_addline(buffer, "MIN TMP.x, TMP.x, one.r;\n", dst_name, dst_name);
+    shader_addline(buffer, "MAX result.depth, TMP.x, 0.0;\n", dst_name, dst_name);
+}
+
 /** Handles transforming all WINED3DSIO_M?x? opcodes for
     Vertex shaders to ARB_vertex_program codes */
 void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {

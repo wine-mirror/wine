@@ -1733,7 +1733,13 @@ void pshader_glsl_texdepth(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_add_dst_param(arg, arg->dst, 0, &dst_param);
 
-    shader_addline(arg->buffer, "gl_FragDepth = %s.x / %s.y;\n", dst_param.reg_name, dst_param.reg_name);
+    /* Tests show that texdepth never returns anything below 0.0, and that r5.y is clamped to 1.0.
+     * Negative input is accepted, -0.25 / -0.5 returns 0.5. GL should clamp gl_FragDepth to [0;1], but
+     * this doesn't always work, so clamp the results manually. Wether or not the x value is clamped at 1
+     * too is irrelevant, since if x = 0, any y value < 1.0(and > 1.0 is not allowed) results in a result
+     * >= 1.0 or < 0.0
+     */
+    shader_addline(arg->buffer, "gl_FragDepth = (%s.y == 0.0) ? 1.0 : clamp((%s.x / min(%s.y, 1.0)), 0.0, 1.0);\n", dst_param.reg_name, dst_param.reg_name, dst_param.reg_name);
 }
 
 /** Process the WINED3DSIO_TEXM3X2DEPTH instruction in GLSL:

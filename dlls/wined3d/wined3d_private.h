@@ -1785,6 +1785,7 @@ extern void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texdepth(SHADER_OPCODE_ARG* arg);
 
 /* ARB vertex shader prototypes */
 extern void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
