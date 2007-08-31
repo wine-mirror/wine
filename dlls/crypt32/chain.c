@@ -212,6 +212,45 @@ static inline BOOL CRYPT_IsCertificateSelfSigned(PCCERT_CONTEXT cert)
      &cert->pCertInfo->Subject, &cert->pCertInfo->Issuer);
 }
 
+static void CRYPT_FreeChainElement(PCERT_CHAIN_ELEMENT element)
+{
+    CertFreeCertificateContext(element->pCertContext);
+    CryptMemFree(element);
+}
+
+static void CRYPT_CheckSimpleChainForCycles(PCERT_SIMPLE_CHAIN chain)
+{
+    DWORD i, j, cyclicCertIndex = 0;
+
+    /* O(n^2) - I don't think there's a faster way */
+    for (i = 0; !cyclicCertIndex && i < chain->cElement; i++)
+        for (j = i + 1; !cyclicCertIndex && j < chain->cElement; j++)
+            if (CertCompareCertificate(X509_ASN_ENCODING,
+             chain->rgpElement[i]->pCertContext->pCertInfo,
+             chain->rgpElement[j]->pCertContext->pCertInfo))
+                cyclicCertIndex = j;
+    if (cyclicCertIndex)
+    {
+        chain->rgpElement[cyclicCertIndex]->TrustStatus.dwErrorStatus
+         |= CERT_TRUST_IS_CYCLIC;
+        /* Release remaining certs */
+        for (i = cyclicCertIndex + 1; i < chain->cElement; i++)
+            CRYPT_FreeChainElement(chain->rgpElement[i]);
+        /* Truncate chain */
+        chain->cElement = cyclicCertIndex + 1;
+    }
+}
+
+/* Checks whether the chain is cyclic by examining the last element's status */
+static inline BOOL CRYPT_IsSimpleChainCyclic(PCERT_SIMPLE_CHAIN chain)
+{
+    if (chain->cElement)
+        return chain->rgpElement[chain->cElement - 1]->TrustStatus.dwErrorStatus
+         & CERT_TRUST_IS_CYCLIC;
+    else
+        return FALSE;
+}
+
 /* Gets cert's issuer from store, and returns the validity flags associated
  * with it.  Returns NULL if no issuer whose public key matches cert's
  * signature could be found.
@@ -233,8 +272,8 @@ static PCCERT_CONTEXT CRYPT_GetIssuerFromStore(HCERTSTORE store,
     return issuer;
 }
 
-static BOOL CRYPT_AddCertToSimpleChain(PCERT_SIMPLE_CHAIN chain,
- PCCERT_CONTEXT cert, DWORD dwFlags)
+static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
+ PCERT_SIMPLE_CHAIN chain, PCCERT_CONTEXT cert, DWORD dwFlags)
 {
     BOOL ret = FALSE;
     PCERT_CHAIN_ELEMENT element = CryptMemAlloc(sizeof(CERT_CHAIN_ELEMENT));
@@ -273,25 +312,21 @@ static BOOL CRYPT_AddCertToSimpleChain(PCERT_SIMPLE_CHAIN chain,
                     prevElement->TrustStatus.dwErrorStatus |=
                      CERT_TRUST_IS_NOT_TIME_NESTED;
             }
-            /* FIXME: check valid usages, name constraints, and for cycles */
+            /* FIXME: check valid usages and name constraints */
             /* FIXME: initialize the rest of element */
+            chain->rgpElement[chain->cElement++] = element;
+            if (chain->cElement % engine->CycleDetectionModulus)
+                CRYPT_CheckSimpleChainForCycles(chain);
             chain->TrustStatus.dwErrorStatus |=
              element->TrustStatus.dwErrorStatus;
             chain->TrustStatus.dwInfoStatus |=
              element->TrustStatus.dwInfoStatus;
-            chain->rgpElement[chain->cElement++] = element;
             ret = TRUE;
         }
         else
             CryptMemFree(element);
     }
     return ret;
-}
-
-static void CRYPT_FreeChainElement(PCERT_CHAIN_ELEMENT element)
-{
-    CertFreeCertificateContext(element->pCertContext);
-    CryptMemFree(element);
 }
 
 static void CRYPT_FreeSimpleChain(PCERT_SIMPLE_CHAIN chain)
@@ -327,8 +362,9 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
     {
         memset(chain, 0, sizeof(CERT_SIMPLE_CHAIN));
         chain->cbSize = sizeof(CERT_SIMPLE_CHAIN);
-        ret = CRYPT_AddCertToSimpleChain(chain, cert, 0);
-        while (ret && !CRYPT_IsCertificateSelfSigned(cert))
+        ret = CRYPT_AddCertToSimpleChain(engine, chain, cert, 0);
+        while (ret && !CRYPT_IsSimpleChainCyclic(chain) &&
+         !CRYPT_IsCertificateSelfSigned(cert))
         {
             DWORD flags;
             PCCERT_CONTEXT issuer = CRYPT_GetIssuerFromStore(world, cert,
@@ -336,7 +372,7 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
 
             if (issuer)
             {
-                ret = CRYPT_AddCertToSimpleChain(chain, issuer, flags);
+                ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer, flags);
                 cert = issuer;
             }
             else

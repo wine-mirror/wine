@@ -1529,14 +1529,13 @@ static ChainCheck chainCheck[] = {
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus8 },
    TODO_ERROR | TODO_INFO },
- /* This (cyclic) chain never completes in Wine, so don't test it yet
+ /* This (cyclic) chain fails in Wine */
  { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT |
        CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_CYCLIC, 0 },
      1, simpleStatus9 },
-   TODO_ERROR | TODO_INFO },
-  */
+   TODO_CHAIN | TODO_ERROR | TODO_INFO },
  { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus10 },
