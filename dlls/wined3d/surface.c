@@ -1576,6 +1576,20 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             *target_bpp = 3;
             break;
 
+        case WINED3DFMT_L6V5U5:
+            *convert = CONVERT_L6V5U5;
+            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                *target_bpp = 3;
+                /* Use format and types from table */
+            } else {
+                /* Load it into unsigned R5G6B5, swap L and V channels, and revert that in the shader */
+                *target_bpp = 2;
+                *format = GL_RGB;
+                *internal = GL_RGB5;
+                *type = GL_UNSIGNED_SHORT_5_6_5;
+            }
+            break;
+
         case WINED3DFMT_X8L8V8U8:
             *convert = CONVERT_X8L8V8U8;
             *target_bpp = 4;
@@ -1834,6 +1848,46 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                     /* A */ Dest[3] = ((color >> 24) & 0xff) + 128; /* Q */
                     Dest += 4;
                 }
+            }
+            break;
+        }
+
+        case CONVERT_L6V5U5:
+        {
+            unsigned int x, y;
+            WORD *Source;
+            unsigned char *Dest;
+
+            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                /* This makes the gl surface bigger(24 bit instead of 16), but it works with
+                 * fixed function and shaders without further conversion once the surface is
+                 * loaded
+                 */
+                for(y = 0; y < height; y++) {
+                    Source = (WORD *) (src + y * pitch);
+                    Dest = (unsigned char *) (dst + y * outpitch);
+                    for (x = 0; x < width; x++ ) {
+                        short color = (*Source++);
+                        unsigned char l = ((color >> 10) & 0xfc);
+                                  char v = ((color >>  5) & 0x3e);
+                                  char u = ((color      ) & 0x1f);
+
+                        /* 8 bits destination, 6 bits source, 8th bit is the sign. gl ignores the sign
+                         * and doubles the positive range. Thus shift left only once, gl does the 2nd
+                         * shift. GL reads a signed value and converts it into an unsigned value.
+                         */
+                        /* M */ Dest[2] = l << 1;
+
+                        /* Those are read as signed, but kept signed. Just left-shift 3 times to scale
+                         * from 5 bit values to 8 bit values.
+                         */
+                        /* V */ Dest[1] = v << 3;
+                        /* U */ Dest[0] = u << 3;
+                        Dest += 3;
+                    }
+                }
+            } else {
+                FIXME("Add D3DFMT_L6V5U5 emulation using standard unsigned RGB and shaders\n");
             }
             break;
         }

@@ -169,7 +169,7 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     {WINED3DFMT_A4L4           ,GL_LUMINANCE4_ALPHA4             ,GL_LUMINANCE4_ALPHA4                   ,GL_LUMINANCE_ALPHA        ,GL_UNSIGNED_BYTE               },
     /* Bump mapping stuff */
     {WINED3DFMT_V8U8           ,GL_DSDT8_NV                      ,GL_DSDT8_NV                            ,GL_DSDT_NV                ,GL_BYTE                        },
-    {WINED3DFMT_L6V5U5         ,GL_COLOR_INDEX8_EXT              ,GL_COLOR_INDEX8_EXT                    ,GL_COLOR_INDEX            ,GL_UNSIGNED_SHORT_5_5_5_1      },
+    {WINED3DFMT_L6V5U5         ,GL_DSDT8_MAG8_NV                 ,GL_DSDT8_MAG8_NV                       ,GL_DSDT_MAG_NV            ,GL_BYTE                        },
     {WINED3DFMT_X8L8V8U8       ,GL_DSDT8_MAG8_INTENSITY8_NV      ,GL_DSDT8_MAG8_INTENSITY8_NV            ,GL_DSDT_MAG_VIB_NV       ,GL_UNSIGNED_INT_8_8_S8_S8_REV_NV},
     {WINED3DFMT_Q8W8V8U8       ,GL_SIGNED_RGBA8_NV               ,GL_SIGNED_RGBA8_NV                     ,GL_RGBA                   ,GL_BYTE                        },
     {WINED3DFMT_V16U16         ,GL_SIGNED_HILO16_NV              ,GL_SIGNED_HILO16_NV                    ,GL_HILO_NV                ,GL_SHORT                       },
