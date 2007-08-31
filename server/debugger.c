@@ -542,7 +542,7 @@ void debug_exit_thread( struct thread *thread )
         if (thread->debug_ctx->kill_on_exit)
         {
             /* kill all debugged processes */
-            kill_debugged_processes( thread, thread->exit_code );
+            kill_debugged_processes( thread, STATUS_DEBUGGER_INACTIVE );
         }
         else
         {

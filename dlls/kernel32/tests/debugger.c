@@ -25,6 +25,10 @@
 #include <winreg.h>
 #include "wine/test.h"
 
+#ifndef STATUS_DEBUGGER_INACTIVE
+#define STATUS_DEBUGGER_INACTIVE         ((NTSTATUS) 0xC0000354)
+#endif
+
 static int    myARGC;
 static char** myARGV;
 
@@ -113,6 +117,8 @@ typedef struct
     DWORD pid;
     BOOL debug_rc;
     DWORD debug_err;
+    BOOL attach_rc;
+    DWORD attach_err;
 } debugger_blackbox_t;
 
 static void doDebugger(int argc, char** argv)
@@ -124,8 +130,18 @@ static void doDebugger(int argc, char** argv)
     blackbox.argc=argc;
     logfile=(argc >= 4 ? argv[3] : NULL);
     blackbox.pid=(argc >= 5 ? atol(argv[4]) : 0);
+
+    if (strstr(myARGV[2], "attach"))
+    {
+        blackbox.attach_rc=DebugActiveProcess(blackbox.pid);
+        if (!blackbox.attach_rc)
+            blackbox.attach_err=GetLastError();
+    }
+    else
+        blackbox.attach_rc=TRUE;
+
     debug_event=(argc >= 6 ? (HANDLE)atol(argv[5]) : NULL);
-    if (debug_event && strcmp(myARGV[2], "dbgnoevent") != 0)
+    if (debug_event && strstr(myARGV[2], "event"))
     {
         blackbox.debug_rc=SetEvent(debug_event);
         if (!blackbox.debug_rc)
@@ -135,7 +151,7 @@ static void doDebugger(int argc, char** argv)
         blackbox.debug_rc=TRUE;
 
     get_events(logfile, &start_event, &done_event);
-    if (strcmp(myARGV[2], "dbgnoevent") != 0)
+    if (strstr(myARGV[2], "order"))
     {
         trace("debugger: waiting for the start signal...\n");
         WaitForSingleObject(start_event, INFINITE);
@@ -149,7 +165,7 @@ static void doDebugger(int argc, char** argv)
     ExitProcess(0xdeadbeef);
 }
 
-static void crash_and_debug(HKEY hkey, const char* argv0, const char* debugger)
+static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
 {
     DWORD ret;
     HANDLE start_event, done_event;
@@ -167,8 +183,8 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* debugger)
 
     get_file_name(dbglog);
     get_events(dbglog, &start_event, &done_event);
-    cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+10+strlen(debugger)+1+strlen(dbglog)+34+1);
-    sprintf(cmd, "%s debugger %s %s %%ld %%ld", argv0, debugger, dbglog);
+    cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+10+strlen(dbgtasks)+1+strlen(dbglog)+34+1);
+    sprintf(cmd, "%s debugger %s %s %%ld %%ld", argv0, dbgtasks, dbglog);
     ret=RegSetValueExA(hkey, "debugger", 0, REG_SZ, (BYTE*)cmd, strlen(cmd)+1);
     ok(ret == ERROR_SUCCESS, "unable to set AeDebug/debugger: ret=%d\n", ret);
     HeapFree(GetProcessHeap(), 0, cmd);
@@ -190,11 +206,22 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* debugger)
     trace("waiting for child exit...\n");
     ok(WaitForSingleObject(info.hProcess, 60000) == WAIT_OBJECT_0, "Timed out waiting for the child to crash\n");
     ok(GetExitCodeProcess(info.hProcess, &exit_code), "GetExitCodeProcess failed: err=%d\n", GetLastError());
-    ok(exit_code == STATUS_ACCESS_VIOLATION, "exit code = %08x\n", exit_code);
+    if (strstr(dbgtasks, "code2"))
+    {
+        /* If, after attaching to the debuggee, the debugger exits without
+         * detaching, then the debuggee gets a special exit code.
+         */
+        ok(exit_code == 0xffffffff || /* Win 9x */
+           exit_code == 0x80 || /* NT4 */
+           exit_code == STATUS_DEBUGGER_INACTIVE, /* Win >= XP */
+           "wrong exit code : %08x\n", exit_code);
+    }
+    else
+        ok(exit_code == STATUS_ACCESS_VIOLATION, "exit code = %08x instead of STATUS_ACCESS_VIOLATION\n", exit_code);
     CloseHandle(info.hProcess);
 
     /* ...before the debugger */
-    if (strcmp(debugger, "dbgnoevent") != 0)
+    if (strstr(dbgtasks, "order"))
         ok(SetEvent(start_event), "SetEvent(start_event) failed\n");
 
     trace("waiting for the debugger...\n");
@@ -206,6 +233,7 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* debugger)
     ok(dbg_blackbox.argc == 6, "wrong debugger argument count: %d\n", dbg_blackbox.argc);
     ok(dbg_blackbox.pid == crash_blackbox.pid, "the child and debugged pids don't match: %d != %d\n", crash_blackbox.pid, dbg_blackbox.pid);
     ok(dbg_blackbox.debug_rc, "debugger: SetEvent(debug_event) failed err=%d\n", dbg_blackbox.debug_err);
+    ok(dbg_blackbox.attach_rc, "DebugActiveProcess(%d) failed err=%d\n", dbg_blackbox.pid, dbg_blackbox.attach_err);
 
     assert(DeleteFileA(dbglog) != 0);
     assert(DeleteFileA(childlog) != 0);
@@ -296,8 +324,9 @@ static void test_ExitCode(void)
         strstr((char*)debugger_val, "winedbg --auto"))
         crash_and_winedbg(hkey, test_exe);
 
-    crash_and_debug(hkey, test_exe, "dbgevent");
-    crash_and_debug(hkey, test_exe, "dbgnoevent");
+    crash_and_debug(hkey, test_exe, "dbg,none");
+    crash_and_debug(hkey, test_exe, "dbg,event,order");
+    crash_and_debug(hkey, test_exe, "dbg,attach,event,code2");
 
     if (disposition == REG_CREATED_NEW_KEY)
     {
@@ -333,9 +362,7 @@ START_TEST(debugger)
     {
         doCrash(myARGC, myARGV);
     }
-    else if (myARGC >= 3 &&
-             (strcmp(myARGV[2], "dbgevent") == 0 ||
-              strcmp(myARGV[2], "dbgnoevent") == 0))
+    else if (myARGC >= 3 && strncmp(myARGV[2], "dbg,", 4) == 0)
     {
         doDebugger(myARGC, myARGV);
     }
