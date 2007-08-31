@@ -78,6 +78,7 @@ SRCDIR_INCLUDES = \
 	axextend.idl \
 	basetsd.h \
 	basetyps.h \
+	bcrypt.h \
 	cderr.h \
 	cfgmgr32.h \
 	cguid.h \

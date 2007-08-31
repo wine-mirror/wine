@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-/* FIXME: #include <bcrypt.h> */
+#include <bcrypt.h>
 /* FIXME: #include <ncrypt.h> */
 
 /* some typedefs for function parameters */
