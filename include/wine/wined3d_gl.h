@@ -2833,6 +2833,13 @@ typedef void (WINE_GLAPI * PGLFNGETTEXBUMPPARAMETERFVATIPROC) (GLenum, GLfloat *
 typedef int (WINE_GLAPI * PGLXFNGETVIDEOSYNCSGIPROC) (unsigned int *);
 typedef int (WINE_GLAPI * PGLXFNWAITVIDEOSYNCSGIPROC) (int, int, unsigned int *);
 
+/* GL_SGIS_generate_mipmap */
+#ifndef GLX_SGIS_generate_mipmap
+#define GL_GENERATE_MIPMAP_SGIS             0x8191
+#define GL_GENERATE_MIPMAP_HINT_SGIS        0x8192
+#define GLX_SGIS_generate_mipmap
+#endif
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -3181,6 +3188,7 @@ typedef enum _GL_SupportedExt {
   APPLE_CLIENT_STORAGE,
   /* SGI */
   SGI_VIDEO_SYNC,
+  SGIS_GENERATE_MIPMAP,
 
   /* WGL extensions */
   WGL_ARB_PBUFFER,

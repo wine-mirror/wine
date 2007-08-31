@@ -882,7 +882,17 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     TRACE(" xf(%f) yf(%f)\n", object->pow2scalingFactorX, object->pow2scalingFactorY);
 
     /* Calculate levels for mip mapping */
-    if (Levels == 0) {
+    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
+        if(!GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
+            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+        if(Levels > 1) {
+            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+        object->baseTexture.levels = 1;
+    } else if (Levels == 0) {
         TRACE("calculating levels %d\n", object->baseTexture.levels);
         object->baseTexture.levels++;
         tmpW = Width;
@@ -956,7 +966,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     object->depth  = Depth;
 
     /* Calculate levels for mip mapping */
-    if (Levels == 0) {
+    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
+        if(!GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
+            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+        if(Levels > 1) {
+            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+        Levels = 1;
+    } else if (Levels == 0) {
         object->baseTexture.levels++;
         tmpW = Width;
         tmpH = Height;
@@ -1076,7 +1096,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     object->pow2scalingFactor    = ((float)EdgeLength) / ((float)pow2EdgeLength);
 
     /* Calculate levels for mip mapping */
-    if (Levels == 0) {
+    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
+        if(!GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
+            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+        if(Levels > 1) {
+            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+        Levels = 1;
+    } else if (Levels == 0) {
         object->baseTexture.levels++;
         tmpW = EdgeLength;
         while (tmpW > 1) {

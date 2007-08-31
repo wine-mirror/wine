@@ -117,6 +117,9 @@ static const struct {
     {"GL_NV_vertex_program1_1",             NV_VERTEX_PROGRAM1_1},
     {"GL_NV_vertex_program2",               NV_VERTEX_PROGRAM2},
     {"GL_NV_vertex_program3",               NV_VERTEX_PROGRAM3},
+
+    /* SGI */
+    {"GL_SGIS_generate_mipmap",             SGIS_GENERATE_MIPMAP},
 };
 
 /**********************************************************
@@ -1474,6 +1477,13 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 return WINED3DERR_NOTAVAILABLE;
             default:
                 break;
+        }
+    }
+
+    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
+        if(!GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
+            TRACE_(d3d_caps)("[FAILED] - No mipmap generation support\n");
+            return WINED3DERR_NOTAVAILABLE;
         }
     }
 

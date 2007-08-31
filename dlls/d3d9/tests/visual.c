@@ -2822,6 +2822,115 @@ static void x8l8v8u8_test(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(texture);
 }
 
+static void autogen_mipmap_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3D9 *d3d;
+    IDirect3DTexture9 *texture = NULL;
+    IDirect3DSurface9 *surface;
+    DWORD color;
+    const RECT r1 = {256, 256, 512, 512};
+    const RECT r2 = {512, 256, 768, 512};
+    const RECT r3 = {256, 512, 512, 768};
+    const RECT r4 = {512, 512, 768, 768};
+    unsigned int x, y;
+    D3DLOCKED_RECT lr;
+    memset(&lr, 0, sizeof(lr));
+
+    IDirect3DDevice9_GetDirect3D(device, &d3d);
+    if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+       D3DUSAGE_AUTOGENMIPMAP,  D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8) != D3D_OK) {
+        skip("No autogenmipmap support\n");
+        IDirect3D9_Release(d3d);
+        return;
+    }
+    IDirect3D9_Release(d3d);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffff00, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+
+    /* Make the mipmap big, so that a smaller mipmap is used
+     */
+    hr = IDirect3DDevice9_CreateTexture(device, 1024, 1024, 0, D3DUSAGE_AUTOGENMIPMAP,
+                                        D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &texture, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+    ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, 0);
+    ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %s\n", DXGetErrorString9(hr));
+    for(y = 0; y < 1024; y++) {
+        for(x = 0; x < 1024; x++) {
+            DWORD *dst = (DWORD *) (((BYTE *) lr.pBits) + y * lr.Pitch + x * 4);
+            POINT pt;
+
+            pt.x = x;
+            pt.y = y;
+            if(PtInRect(&r1, pt)) {
+                *dst = 0xffff0000;
+            } else if(PtInRect(&r2, pt)) {
+                *dst = 0xff00ff00;
+            } else if(PtInRect(&r3, pt)) {
+                *dst = 0xff0000ff;
+            } else if(PtInRect(&r4, pt)) {
+                *dst = 0xff000000;
+            } else {
+                *dst = 0xffffffff;
+            }
+        }
+    }
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(hr == D3D_OK, "IDirect3DSurface9_UnlockRect returned %s\n", DXGetErrorString9(hr));
+    IDirect3DSurface9_Release(surface);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr)) {
+        const float quad[] =  {
+           -0.5,   -0.5,    0.1,    0.0,    0.0,
+           -0.5,    0.5,    0.1,    0.0,    1.0,
+            0.5,   -0.5,    0.1,    1.0,    0.0,
+            0.5,    0.5,    0.1,    1.0,    1.0
+        };
+
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DTexture9_Release(texture);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+    color = getPixelColor(device, 200, 200);
+    ok(color == 0x00ffffff, "pixel 200/200 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 280, 200);
+    ok(color == 0x000000ff, "pixel 280/200 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 360, 200);
+    ok(color == 0x00000000, "pixel 360/200 has color %08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 440, 200);
+    ok(color == 0x00ffffff, "pixel 440/200 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 200, 270);
+    ok(color == 0x00ffffff, "pixel 200/270 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 280, 270);
+    ok(color == 0x00ff0000, "pixel 280/270 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 360, 270);
+    ok(color == 0x0000ff00, "pixel 360/270 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 440, 270);
+    ok(color == 0x00ffffff, "pixel 440/200 has color %08x, expected 0x00ffffff\n", color);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -2899,6 +3008,7 @@ START_TEST(visual)
     release_buffer_test(device_ptr);
     float_texture_test(device_ptr);
     texture_transform_flags_test(device_ptr);
+    autogen_mipmap_test(device_ptr);
 
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0))
