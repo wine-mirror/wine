@@ -206,7 +206,7 @@ typedef struct _CertificateChain
     LONG ref;
 } CertificateChain, *PCertificateChain;
 
-static inline BOOL WINAPI CRYPT_IsCertificateSelfSigned(PCCERT_CONTEXT cert)
+static inline BOOL CRYPT_IsCertificateSelfSigned(PCCERT_CONTEXT cert)
 {
     return CertCompareCertificateName(cert->dwCertEncodingType,
      &cert->pCertInfo->Subject, &cert->pCertInfo->Issuer);
