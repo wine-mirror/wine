@@ -161,6 +161,7 @@ SRCDIR_INCLUDES = \
 	dxerr9.h \
 	dxfile.h \
 	dyngraph.idl \
+	errorrep.h \
 	errors.h \
 	evcode.h \
 	evntrace.h \
