@@ -262,6 +262,17 @@ static PCCERT_CONTEXT CRYPT_GetIssuerFromStore(HCERTSTORE store,
     return CertGetIssuerCertificateFromStore(store, cert, NULL, pdwFlags);
 }
 
+static inline void CRYPT_CombineTrustStatus(CERT_TRUST_STATUS *chainStatus,
+ CERT_TRUST_STATUS *elementStatus)
+{
+    /* Any error that applies to an element also applies to a chain.. */
+    chainStatus->dwErrorStatus |= elementStatus->dwErrorStatus;
+    /* but the bottom nibble of an element's info status doesn't apply to the
+     * chain.
+     */
+    chainStatus->dwInfoStatus |= (elementStatus->dwInfoStatus & 0xfffffff0);
+}
+
 static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
  PCERT_SIMPLE_CHAIN chain, PCCERT_CONTEXT cert, DWORD dwFlags)
 {
@@ -307,10 +318,8 @@ static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
             chain->rgpElement[chain->cElement++] = element;
             if (chain->cElement % engine->CycleDetectionModulus)
                 CRYPT_CheckSimpleChainForCycles(chain);
-            chain->TrustStatus.dwErrorStatus |=
-             element->TrustStatus.dwErrorStatus;
-            chain->TrustStatus.dwInfoStatus |=
-             element->TrustStatus.dwInfoStatus;
+            CRYPT_CombineTrustStatus(&chain->TrustStatus,
+             &element->TrustStatus);
             ret = TRUE;
         }
         else
@@ -412,10 +421,8 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
                 }
                 CRYPT_CheckTrustedStatus(engine->hRoot, rootElement);
             }
-            chain->TrustStatus.dwErrorStatus |=
-             rootElement->TrustStatus.dwErrorStatus;
-            chain->TrustStatus.dwInfoStatus |=
-             rootElement->TrustStatus.dwInfoStatus & ~CERT_TRUST_IS_SELF_SIGNED;
+            CRYPT_CombineTrustStatus(&chain->TrustStatus,
+             &rootElement->TrustStatus);
         }
         if (!ret)
         {
