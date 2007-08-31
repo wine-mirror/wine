@@ -25,6 +25,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+#define DEFAULT_CYCLE_MODULUS 7
+
 static HCERTCHAINENGINE CRYPT_defaultChainEngine;
 
 /* This represents a subset of a certificate chain engine:  it doesn't include
@@ -149,7 +151,10 @@ BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
             engine->dwUrlRetrievalTimeout = pConfig->dwUrlRetrievalTimeout;
             engine->MaximumCachedCertificates =
              pConfig->MaximumCachedCertificates;
-            engine->CycleDetectionModulus = pConfig->CycleDetectionModulus;
+            if (pConfig->CycleDetectionModulus)
+                engine->CycleDetectionModulus = pConfig->CycleDetectionModulus;
+            else
+                engine->CycleDetectionModulus = DEFAULT_CYCLE_MODULUS;
             *phChainEngine = (HCERTCHAINENGINE)engine;
             ret = TRUE;
         }
