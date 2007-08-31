@@ -692,7 +692,7 @@ static void initAudioDlg (HWND hDlg)
     for (i = 0; NULL != DSound_Rates[i]; ++i) {
       SendDlgItemMessage(hDlg, IDC_DSOUND_RATES, CB_ADDSTRING, 0, (LPARAM) DSound_Rates[i]);
     }
-    buf = get_reg_key(config_key, keypath("DirectSound"), "DefaultSampleRate", "22050");
+    buf = get_reg_key(config_key, keypath("DirectSound"), "DefaultSampleRate", "44100");
     for (i = 0; NULL != DSound_Rates[i]; ++i) {
       if (strcmp(buf, DSound_Rates[i]) == 0) {
 	SendDlgItemMessage(hDlg, IDC_DSOUND_RATES, CB_SETCURSEL, i, 0);
@@ -704,7 +704,7 @@ static void initAudioDlg (HWND hDlg)
     for (i = 0; NULL != DSound_Bits[i]; ++i) {
       SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_ADDSTRING, 0, (LPARAM) DSound_Bits[i]);
     }
-    buf = get_reg_key(config_key, keypath("DirectSound"), "DefaultBitsPerSample", "8");
+    buf = get_reg_key(config_key, keypath("DirectSound"), "DefaultBitsPerSample", "16");
     for (i = 0; NULL != DSound_Bits[i]; ++i) {
       if (strcmp(buf, DSound_Bits[i]) == 0) {
 	SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_SETCURSEL, i, 0);

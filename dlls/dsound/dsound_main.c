@@ -96,8 +96,8 @@ int ds_snd_queue_min = DS_SND_QUEUE_MIN;
 int ds_hw_accel = DS_HW_ACCEL_FULL;
 int ds_default_playback = 0;
 int ds_default_capture = 0;
-int ds_default_sample_rate = 22050;
-int ds_default_bits_per_sample = 8;
+int ds_default_sample_rate = 44100;
+int ds_default_bits_per_sample = 16;
 
 /*
  * Get a config key from either the app-specific or the default config
@@ -203,10 +203,10 @@ void setup_dsound_options(void)
 	WARN("ds_default_playback = %d (default=0)\n",ds_default_playback);
     if (ds_default_capture != 0)
 	WARN("ds_default_capture = %d (default=0)\n",ds_default_playback);
-    if (ds_default_sample_rate != 22050)
-        WARN("ds_default_sample_rate = %d (default=22050)\n",ds_default_sample_rate);
-    if (ds_default_bits_per_sample != 8)
-        WARN("ds_default_bits_per_sample = %d (default=8)\n",ds_default_bits_per_sample);
+    if (ds_default_sample_rate != 44100)
+        WARN("ds_default_sample_rate = %d (default=44100)\n",ds_default_sample_rate);
+    if (ds_default_bits_per_sample != 16)
+        WARN("ds_default_bits_per_sample = %d (default=16)\n",ds_default_bits_per_sample);
 }
 
 static const char * get_device_id(LPCGUID pGuid)
