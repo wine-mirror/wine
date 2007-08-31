@@ -473,9 +473,9 @@ static void CRYPT_FreeChainContext(PCertificateChain chain)
 {
     DWORD i;
 
-    /* Note the chain's rgpLowerQualityChainContext isn't freed, but
-     * it's never set, either.
-     */
+    for (i = 0; i < chain->context.cLowerQualityChainContext; i++)
+        CertFreeCertificateChain(chain->context.rgpLowerQualityChainContext[i]);
+    CryptMemFree(chain->context.rgpLowerQualityChainContext);
     for (i = 0; i < chain->context.cChain; i++)
         CRYPT_FreeSimpleChain(chain->context.rgpChain[i]);
     CryptMemFree(chain->context.rgpChain);
