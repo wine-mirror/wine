@@ -237,7 +237,7 @@ static void crash_and_winedbg(HKEY hkey, const char* argv0)
     trace("waiting for child exit...\n");
     ok(WaitForSingleObject(info.hProcess, 60000) == WAIT_OBJECT_0, "Timed out waiting for the child to crash\n");
     ok(GetExitCodeProcess(info.hProcess, &exit_code), "GetExitCodeProcess failed: err=%d\n", GetLastError());
-    todo_wine ok(exit_code == STATUS_ACCESS_VIOLATION, "exit code = %08x\n", exit_code);
+    ok(exit_code == STATUS_ACCESS_VIOLATION, "exit code = %08x\n", exit_code);
     CloseHandle(info.hProcess);
 }
 
