@@ -604,7 +604,7 @@ int main(int argc, char** argv)
     parser_handle(hFile);
 
     while (dbg_process_list)
-        dbg_process_list->process_io->close_process(dbg_process_list, TRUE);
+        dbg_process_list->process_io->close_process(dbg_process_list, FALSE);
 
     dbg_save_internal_vars();
 
