@@ -367,7 +367,7 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
                      CERT_TRUST_IS_NOT_SIGNATURE_VALID;
                 }
             }
-            if (ret)
+            if (CRYPT_IsCertificateSelfSigned(root))
             {
                 BYTE hash[20];
                 DWORD size = sizeof(hash);
