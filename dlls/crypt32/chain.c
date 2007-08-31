@@ -366,12 +366,20 @@ static BOOL CRYPT_CheckRootCert(HCERTCHAINENGINE hRoot,
     return ret;
 }
 
-static BOOL CRYPT_CanCertBeCA(PCCERT_CONTEXT cert, BOOL defaultIfNotSpecified)
+/* Decodes a cert's basic constraints extension (either szOID_BASIC_CONSTRAINTS
+ * or szOID_BASIC_CONSTRAINTS2, whichever is present) into a
+ * CERT_BASIC_CONSTRAINTS2_INFO.  If it neither extension is present, sets
+ * constraints->fCA to defaultIfNotSpecified.
+ * Returns FALSE if the extension is present but couldn't be decoded.
+ */
+static BOOL CRYPT_DecodeBasicConstraints(PCCERT_CONTEXT cert,
+ CERT_BASIC_CONSTRAINTS2_INFO *constraints, BOOL defaultIfNotSpecified)
 {
-    BOOL ret;
+    BOOL ret = TRUE;
     PCERT_EXTENSION ext = CertFindExtension(szOID_BASIC_CONSTRAINTS,
      cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
 
+    constraints->fPathLenConstraint = FALSE;
     if (ext)
     {
         CERT_BASIC_CONSTRAINTS_INFO *info;
@@ -383,7 +391,8 @@ static BOOL CRYPT_CanCertBeCA(PCCERT_CONTEXT cert, BOOL defaultIfNotSpecified)
         if (ret)
         {
             if (info->SubjectType.cbData == 1)
-                ret = info->SubjectType.pbData[0] & CERT_CA_SUBJECT_FLAG;
+                constraints->fCA =
+                 info->SubjectType.pbData[0] & CERT_CA_SUBJECT_FLAG;
             LocalFree(info);
         }
     }
@@ -393,32 +402,80 @@ static BOOL CRYPT_CanCertBeCA(PCCERT_CONTEXT cert, BOOL defaultIfNotSpecified)
          cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
         if (ext)
         {
-            CERT_BASIC_CONSTRAINTS2_INFO *info;
-            DWORD size = 0;
+            DWORD size = sizeof(CERT_BASIC_CONSTRAINTS2_INFO);
 
             ret = CryptDecodeObjectEx(X509_ASN_ENCODING,
              szOID_BASIC_CONSTRAINTS2, ext->Value.pbData, ext->Value.cbData,
-             CRYPT_DECODE_ALLOC_FLAG, NULL, (LPBYTE)&info, &size);
-            if (ret)
-            {
-                ret = info->fCA;
-                LocalFree(info);
-            }
+             0, NULL, constraints, &size);
         }
         else
-            ret = defaultIfNotSpecified;
+            constraints->fCA = defaultIfNotSpecified;
     }
     return ret;
+}
+
+/* Checks element's basic constraints to see if it can act as a CA, with
+ * remainingCAs CAs left in this chain.  Updates chainConstraints with the
+ * element's constraints, if:
+ * 1. chainConstraints doesn't have a path length constraint, or
+ * 2. element's path length constraint is smaller than chainConstraints's
+ * Sets *pathLengthConstraintViolated to TRUE if a path length violation
+ * occurs.
+ * Returns TRUE if the element can be a CA, and the length of the remaining
+ * chain is valid.
+ */
+static BOOL CRYPT_CheckBasicConstraintsForCA(PCCERT_CONTEXT cert,
+ CERT_BASIC_CONSTRAINTS2_INFO *chainConstraints, DWORD remainingCAs,
+ BOOL *pathLengthConstraintViolated)
+{
+    BOOL validBasicConstraints;
+    CERT_BASIC_CONSTRAINTS2_INFO constraints;
+
+    if ((validBasicConstraints = CRYPT_DecodeBasicConstraints(cert,
+     &constraints, TRUE)))
+    {
+        if (!constraints.fCA)
+        {
+            TRACE("chain element %d can't be a CA\n", remainingCAs + 1);
+            validBasicConstraints = FALSE;
+        }
+        else if (constraints.fPathLenConstraint)
+        {
+            /* If the element has path length constraints, they apply to the
+             * entire remaining chain.
+             */
+            if (!chainConstraints->fPathLenConstraint ||
+             constraints.dwPathLenConstraint <
+             chainConstraints->dwPathLenConstraint)
+            {
+                TRACE("setting path length constraint to %d\n",
+                 chainConstraints->dwPathLenConstraint);
+                chainConstraints->fPathLenConstraint = TRUE;
+                chainConstraints->dwPathLenConstraint =
+                 constraints.dwPathLenConstraint;
+            }
+        }
+    }
+    if (chainConstraints->fPathLenConstraint &&
+     remainingCAs > chainConstraints->dwPathLenConstraint)
+    {
+        TRACE("remaining CAs %d exceed max path length %d\n", remainingCAs,
+         chainConstraints->dwPathLenConstraint);
+        validBasicConstraints = FALSE;
+        *pathLengthConstraintViolated = TRUE;
+    }
+    return validBasicConstraints;
 }
 
 static BOOL CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
  PCERT_SIMPLE_CHAIN chain, LPFILETIME time)
 {
     PCERT_CHAIN_ELEMENT rootElement = chain->rgpElement[chain->cElement - 1];
-    DWORD i;
-    BOOL ret = TRUE;
+    int i;
+    BOOL ret = TRUE, pathLengthConstraintViolated = FALSE;
+    CERT_BASIC_CONSTRAINTS2_INFO constraints = { TRUE, FALSE, 0 };
 
-    for (i = 0; i < chain->cElement; i++)
+    for (i = chain->cElement - 1; i >= 0; i--)
     {
         if (CertVerifyTimeValidity(time,
          chain->rgpElement[i]->pCertContext->pCertInfo) != 0)
@@ -426,12 +483,23 @@ static BOOL CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
              CERT_TRUST_IS_NOT_TIME_VALID;
         if (i != 0)
         {
-            BOOL ca;
-
-            ca = CRYPT_CanCertBeCA(chain->rgpElement[i]->pCertContext, TRUE);
-            if (!ca)
+            /* Once a path length constraint has been violated, every remaining
+             * CA cert's basic constraints is considered invalid.
+             */
+            if (pathLengthConstraintViolated)
                 chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
+            else if (!CRYPT_CheckBasicConstraintsForCA(
+             chain->rgpElement[i]->pCertContext, &constraints, i - 1,
+             &pathLengthConstraintViolated))
+                chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+                 CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
+            else if (constraints.fPathLenConstraint &&
+             constraints.dwPathLenConstraint)
+            {
+                /* This one's valid - decrement max length */
+                constraints.dwPathLenConstraint--;
+            }
         }
         /* FIXME: check valid usages and name constraints */
         CRYPT_CombineTrustStatus(&chain->TrustStatus,
