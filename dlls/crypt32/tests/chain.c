@@ -1485,7 +1485,7 @@ static ChainCheck chainCheck[] = {
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus0 },
-   TODO_ERROR | TODO_INFO },
+   TODO_INFO },
  { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_SIGNATURE_VALID |
@@ -1496,7 +1496,7 @@ static ChainCheck chainCheck[] = {
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus2 },
-   TODO_ERROR | TODO_INFO },
+   TODO_INFO },
  { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
@@ -1518,11 +1518,11 @@ static ChainCheck chainCheck[] = {
  { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus6 },
-   TODO_ERROR | TODO_INFO },
+   TODO_INFO },
  { { sizeof(chain7) / sizeof(chain7[0]), chain7 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus7 },
-   TODO_ERROR | TODO_INFO },
+   TODO_INFO },
  { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
@@ -1547,7 +1547,7 @@ static ChainCheck chainCheck[] = {
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_NOT_TIME_VALID | CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },
      1, selfSignedSimpleStatus },
-   TODO_ERROR | TODO_INFO },
+   TODO_INFO },
  /* The iTunes chain may or may not have its root trusted, so ignore the
   * error
   */

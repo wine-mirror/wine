@@ -296,7 +296,6 @@ static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
             if (dwFlags & CERT_STORE_SIGNATURE_FLAG)
                 element->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_IS_NOT_SIGNATURE_VALID;
-            /* FIXME: check valid usages and name constraints */
             /* FIXME: initialize the rest of element */
             chain->rgpElement[chain->cElement++] = element;
             if (chain->cElement % engine->CycleDetectionModulus)
@@ -339,6 +338,50 @@ static void CRYPT_CheckTrustedStatus(HCERTSTORE hRoot,
          CERT_TRUST_IS_UNTRUSTED_ROOT;
     else
         CertFreeCertificateContext(trustedRoot);
+}
+
+static BOOL CRYPT_CheckRootCert(HCERTCHAINENGINE hRoot,
+ PCERT_CHAIN_ELEMENT rootElement)
+{
+    PCCERT_CONTEXT root = rootElement->pCertContext;
+    BOOL ret;
+
+    if (!(ret = CryptVerifyCertificateSignatureEx(0, root->dwCertEncodingType,
+     CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT, (void *)root,
+     CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)root, 0, NULL)))
+    {
+        TRACE("Last certificate's signature is invalid\n");
+        rootElement->TrustStatus.dwErrorStatus |=
+         CERT_TRUST_IS_NOT_SIGNATURE_VALID;
+    }
+    CRYPT_CheckTrustedStatus(hRoot, rootElement);
+    return ret;
+}
+
+static BOOL CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
+ PCERT_SIMPLE_CHAIN chain, LPFILETIME time)
+{
+    PCERT_CHAIN_ELEMENT rootElement = chain->rgpElement[chain->cElement - 1];
+    DWORD i;
+    BOOL ret = TRUE;
+
+    for (i = 0; i < chain->cElement; i++)
+    {
+        if (CertVerifyTimeValidity(time,
+         chain->rgpElement[i]->pCertContext->pCertInfo) != 0)
+            chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+             CERT_TRUST_IS_NOT_TIME_VALID;
+        /* FIXME: check valid usages and name constraints */
+        CRYPT_CombineTrustStatus(&chain->TrustStatus,
+         &chain->rgpElement[i]->TrustStatus);
+    }
+    if (CRYPT_IsCertificateSelfSigned(rootElement->pCertContext))
+    {
+        rootElement->TrustStatus.dwInfoStatus |= CERT_TRUST_IS_SELF_SIGNED;
+        ret = CRYPT_CheckRootCert(engine->hRoot, rootElement);
+    }
+    CRYPT_CombineTrustStatus(&chain->TrustStatus, &rootElement->TrustStatus);
+    return ret;
 }
 
 static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
@@ -384,29 +427,7 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
             }
         }
         if (ret)
-        {
-            PCERT_CHAIN_ELEMENT rootElement =
-             chain->rgpElement[chain->cElement - 1];
-            PCCERT_CONTEXT root = rootElement->pCertContext;
-
-            if (CRYPT_IsCertificateSelfSigned(root))
-            {
-                rootElement->TrustStatus.dwInfoStatus |=
-                 CERT_TRUST_IS_SELF_SIGNED;
-                if (!(ret = CryptVerifyCertificateSignatureEx(0,
-                 root->dwCertEncodingType, CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT,
-                 (void *)root, CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)root,
-                 0, NULL)))
-                {
-                    TRACE("Last certificate's signature is invalid\n");
-                    rootElement->TrustStatus.dwErrorStatus |=
-                     CERT_TRUST_IS_NOT_SIGNATURE_VALID;
-                }
-                CRYPT_CheckTrustedStatus(engine->hRoot, rootElement);
-            }
-            CRYPT_CombineTrustStatus(&chain->TrustStatus,
-             &rootElement->TrustStatus);
-        }
+            ret = CRYPT_CheckSimpleChain(engine, chain, pTime);
         if (!ret)
         {
             CRYPT_FreeSimpleChain(chain);
