@@ -339,6 +339,26 @@ static void CRYPT_FreeSimpleChain(PCERT_SIMPLE_CHAIN chain)
     CryptMemFree(chain);
 }
 
+static void CRYPT_CheckTrustedStatus(HCERTSTORE hRoot,
+ PCERT_CHAIN_ELEMENT rootElement)
+{
+    BYTE hash[20];
+    DWORD size = sizeof(hash);
+    CRYPT_HASH_BLOB blob = { sizeof(hash), hash };
+    PCCERT_CONTEXT trustedRoot;
+
+    CertGetCertificateContextProperty(rootElement->pCertContext,
+     CERT_HASH_PROP_ID, hash, &size);
+    trustedRoot = CertFindCertificateInStore(hRoot,
+     rootElement->pCertContext->dwCertEncodingType, 0, CERT_FIND_SHA1_HASH,
+     &blob, NULL);
+    if (!trustedRoot)
+        rootElement->TrustStatus.dwErrorStatus |=
+         CERT_TRUST_IS_UNTRUSTED_ROOT;
+    else
+        CertFreeCertificateContext(trustedRoot);
+}
+
 static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
  PCCERT_CONTEXT cert, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
  PCERT_SIMPLE_CHAIN *ppChain)
@@ -387,9 +407,7 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
              chain->rgpElement[chain->cElement - 1];
             PCCERT_CONTEXT root = rootElement->pCertContext;
 
-            if (!(ret = CRYPT_IsCertificateSelfSigned(root)))
-                TRACE("Last certificate is not self-signed\n");
-            else
+            if (CRYPT_IsCertificateSelfSigned(root))
             {
                 rootElement->TrustStatus.dwInfoStatus |=
                  CERT_TRUST_IS_SELF_SIGNED;
@@ -402,23 +420,7 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
                     rootElement->TrustStatus.dwErrorStatus |=
                      CERT_TRUST_IS_NOT_SIGNATURE_VALID;
                 }
-            }
-            if (CRYPT_IsCertificateSelfSigned(root))
-            {
-                BYTE hash[20];
-                DWORD size = sizeof(hash);
-                CRYPT_HASH_BLOB blob = { sizeof(hash), hash };
-                PCCERT_CONTEXT trustedRoot;
-
-                CertGetCertificateContextProperty(root, CERT_HASH_PROP_ID, hash,
-                 &size);
-                trustedRoot = CertFindCertificateInStore(engine->hRoot,
-                 root->dwCertEncodingType, 0, CERT_FIND_SHA1_HASH, &blob, NULL);
-                if (!trustedRoot)
-                    rootElement->TrustStatus.dwErrorStatus |=
-                     CERT_TRUST_IS_UNTRUSTED_ROOT;
-                else
-                    CertFreeCertificateContext(trustedRoot);
+                CRYPT_CheckTrustedStatus(engine->hRoot, rootElement);
             }
             chain->TrustStatus.dwErrorStatus |=
              rootElement->TrustStatus.dwErrorStatus;
