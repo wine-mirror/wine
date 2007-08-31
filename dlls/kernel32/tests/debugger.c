@@ -32,6 +32,8 @@
 static int    myARGC;
 static char** myARGV;
 
+static BOOL (WINAPI *pDebugActiveProcessStop)(DWORD);
+static BOOL (WINAPI *pDebugSetProcessKillOnExit)(BOOL);
 
 /* Copied from the process test */
 static void get_file_name(char* buf)
@@ -119,6 +121,10 @@ typedef struct
     DWORD debug_err;
     BOOL attach_rc;
     DWORD attach_err;
+    BOOL nokill_rc;
+    DWORD nokill_err;
+    BOOL detach_rc;
+    DWORD detach_err;
 } debugger_blackbox_t;
 
 static void doDebugger(int argc, char** argv)
@@ -156,6 +162,24 @@ static void doDebugger(int argc, char** argv)
         trace("debugger: waiting for the start signal...\n");
         WaitForSingleObject(start_event, INFINITE);
     }
+
+    if (strstr(myARGV[2], "nokill"))
+    {
+        blackbox.nokill_rc=pDebugSetProcessKillOnExit(FALSE);
+        if (!blackbox.nokill_rc)
+            blackbox.nokill_err=GetLastError();
+    }
+    else
+        blackbox.nokill_rc=TRUE;
+
+    if (strstr(myARGV[2], "detach"))
+    {
+        blackbox.detach_rc=pDebugActiveProcessStop(blackbox.pid);
+        if (!blackbox.detach_rc)
+            blackbox.detach_err=GetLastError();
+    }
+    else
+        blackbox.detach_rc=TRUE;
 
     save_blackbox(logfile, &blackbox, sizeof(blackbox));
     trace("debugger: done debugging...\n");
@@ -234,6 +258,8 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     ok(dbg_blackbox.pid == crash_blackbox.pid, "the child and debugged pids don't match: %d != %d\n", crash_blackbox.pid, dbg_blackbox.pid);
     ok(dbg_blackbox.debug_rc, "debugger: SetEvent(debug_event) failed err=%d\n", dbg_blackbox.debug_err);
     ok(dbg_blackbox.attach_rc, "DebugActiveProcess(%d) failed err=%d\n", dbg_blackbox.pid, dbg_blackbox.attach_err);
+    ok(dbg_blackbox.nokill_rc, "DebugSetProcessKillOnExit(FALSE) failed err=%d\n", dbg_blackbox.nokill_err);
+    ok(dbg_blackbox.detach_rc, "DebugActiveProcessStop(%d) failed err=%d\n", dbg_blackbox.pid, dbg_blackbox.detach_err);
 
     assert(DeleteFileA(dbglog) != 0);
     assert(DeleteFileA(childlog) != 0);
@@ -327,6 +353,10 @@ static void test_ExitCode(void)
     crash_and_debug(hkey, test_exe, "dbg,none");
     crash_and_debug(hkey, test_exe, "dbg,event,order");
     crash_and_debug(hkey, test_exe, "dbg,attach,event,code2");
+    if (pDebugSetProcessKillOnExit)
+        crash_and_debug(hkey, test_exe, "dbg,attach,event,nokill");
+    if (pDebugActiveProcessStop)
+        crash_and_debug(hkey, test_exe, "dbg,attach,event,detach");
 
     if (disposition == REG_CREATED_NEW_KEY)
     {
@@ -355,9 +385,13 @@ static void test_ExitCode(void)
 
 START_TEST(debugger)
 {
+    HMODULE hdll;
+
+    hdll=GetModuleHandle("kernel32.dll");
+    pDebugActiveProcessStop=(void*)GetProcAddress(hdll, "DebugActiveProcessStop");
+    pDebugSetProcessKillOnExit=(void*)GetProcAddress(hdll, "DebugSetProcessKillOnExit");
 
     myARGC=winetest_get_mainargs(&myARGV);
-
     if (myARGC >= 3 && strcmp(myARGV[2], "crash") == 0)
     {
         doCrash(myARGC, myARGV);
