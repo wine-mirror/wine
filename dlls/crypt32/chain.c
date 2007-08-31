@@ -255,10 +255,6 @@ static BOOL CRYPT_AddCertToSimpleChain(PCERT_SIMPLE_CHAIN chain,
             if (dwFlags & CERT_STORE_TIME_VALIDITY_FLAG)
                 element->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_IS_NOT_TIME_VALID;
-            /* It appears, from every example certificate chain I've found,
-             * that this flag is always set:
-             */
-            element->TrustStatus.dwInfoStatus = CERT_TRUST_HAS_PREFERRED_ISSUER;
             if (chain->cElement)
             {
                 PCERT_CHAIN_ELEMENT prevElement =
