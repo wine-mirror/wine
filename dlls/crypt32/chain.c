@@ -287,17 +287,25 @@ static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
              (chain->cElement + 1) * sizeof(PCERT_CHAIN_ELEMENT));
         if (chain->rgpElement)
         {
+            chain->rgpElement[chain->cElement++] = element;
             memset(element, 0, sizeof(CERT_CHAIN_ELEMENT));
             element->cbSize = sizeof(CERT_CHAIN_ELEMENT);
             element->pCertContext = CertDuplicateCertificateContext(cert);
-            if (dwFlags & CERT_STORE_REVOCATION_FLAG &&
-             !(dwFlags & CERT_STORE_NO_CRL_FLAG))
-                element->TrustStatus.dwErrorStatus |= CERT_TRUST_IS_REVOKED;
-            if (dwFlags & CERT_STORE_SIGNATURE_FLAG)
-                element->TrustStatus.dwErrorStatus |=
-                 CERT_TRUST_IS_NOT_SIGNATURE_VALID;
+            /* Flags, if set, refer to the element this cert issued, so set
+             * the preceding element's error accordingly
+             */
+            if (chain->cElement > 1)
+            {
+                if (dwFlags & CERT_STORE_REVOCATION_FLAG &&
+                 !(dwFlags & CERT_STORE_NO_CRL_FLAG))
+                    chain->rgpElement[chain->cElement - 2]->TrustStatus.
+                     dwErrorStatus |= CERT_TRUST_IS_REVOKED;
+                if (dwFlags & CERT_STORE_SIGNATURE_FLAG)
+                    chain->rgpElement[chain->cElement - 2]->TrustStatus.
+                     dwErrorStatus |=
+                     CERT_TRUST_IS_NOT_SIGNATURE_VALID;
+            }
             /* FIXME: initialize the rest of element */
-            chain->rgpElement[chain->cElement++] = element;
             if (chain->cElement % engine->CycleDetectionModulus)
                 CRYPT_CheckSimpleChainForCycles(chain);
             CRYPT_CombineTrustStatus(&chain->TrustStatus,
