@@ -217,7 +217,7 @@ void DoOpenFile(LPCWSTR szFileName)
 	OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if(hFile == INVALID_HANDLE_VALUE)
     {
-	ShowLastError();
+	AlertFileNotFound(szFileName);
 	return;
     }
 
@@ -318,12 +318,8 @@ VOID DIALOG_FileOpen(VOID)
     openfilename.lpstrDefExt       = szDefaultExt;
 
 
-    if (GetOpenFileName(&openfilename)) {
-        if (FileExists(openfilename.lpstrFile))
-            DoOpenFile(openfilename.lpstrFile);
-        else
-            AlertFileNotFound(openfilename.lpstrFile);
-    }
+    if (GetOpenFileName(&openfilename))
+        DoOpenFile(openfilename.lpstrFile);
 }
 
 
