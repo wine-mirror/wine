@@ -1502,7 +1502,7 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus3 },
-   TODO_ERROR | TODO_INFO },
+   TODO_INFO },
  { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |

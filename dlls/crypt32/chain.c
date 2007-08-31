@@ -358,6 +358,51 @@ static BOOL CRYPT_CheckRootCert(HCERTCHAINENGINE hRoot,
     return ret;
 }
 
+static BOOL CRYPT_CanCertBeCA(PCCERT_CONTEXT cert, BOOL defaultIfNotSpecified)
+{
+    BOOL ret;
+    PCERT_EXTENSION ext = CertFindExtension(szOID_BASIC_CONSTRAINTS,
+     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+
+    if (ext)
+    {
+        CERT_BASIC_CONSTRAINTS_INFO *info;
+        DWORD size = 0;
+
+        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, szOID_BASIC_CONSTRAINTS,
+         ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG,
+         NULL, (LPBYTE)&info, &size);
+        if (ret)
+        {
+            if (info->SubjectType.cbData == 1)
+                ret = info->SubjectType.pbData[0] & CERT_CA_SUBJECT_FLAG;
+            LocalFree(info);
+        }
+    }
+    else
+    {
+        ext = CertFindExtension(szOID_BASIC_CONSTRAINTS2,
+         cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+        if (ext)
+        {
+            CERT_BASIC_CONSTRAINTS2_INFO *info;
+            DWORD size = 0;
+
+            ret = CryptDecodeObjectEx(X509_ASN_ENCODING,
+             szOID_BASIC_CONSTRAINTS2, ext->Value.pbData, ext->Value.cbData,
+             CRYPT_DECODE_ALLOC_FLAG, NULL, (LPBYTE)&info, &size);
+            if (ret)
+            {
+                ret = info->fCA;
+                LocalFree(info);
+            }
+        }
+        else
+            ret = defaultIfNotSpecified;
+    }
+    return ret;
+}
+
 static BOOL CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
  PCERT_SIMPLE_CHAIN chain, LPFILETIME time)
 {
@@ -371,6 +416,15 @@ static BOOL CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
          chain->rgpElement[i]->pCertContext->pCertInfo) != 0)
             chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
              CERT_TRUST_IS_NOT_TIME_VALID;
+        if (i != 0)
+        {
+            BOOL ca;
+
+            ca = CRYPT_CanCertBeCA(chain->rgpElement[i]->pCertContext, TRUE);
+            if (!ca)
+                chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+                 CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
+        }
         /* FIXME: check valid usages and name constraints */
         CRYPT_CombineTrustStatus(&chain->TrustStatus,
          &chain->rgpElement[i]->TrustStatus);
