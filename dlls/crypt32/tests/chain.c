@@ -1491,7 +1491,7 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_SIGNATURE_VALID |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus1 },
-   TODO_CHAIN | TODO_ERROR | TODO_INFO },
+   TODO_ERROR | TODO_INFO },
  { { sizeof(chain2) / sizeof(chain2[0]), chain2 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_TIME_VALID, 0 },

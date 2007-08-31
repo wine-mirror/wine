@@ -252,24 +252,14 @@ static inline BOOL CRYPT_IsSimpleChainCyclic(PCERT_SIMPLE_CHAIN chain)
 }
 
 /* Gets cert's issuer from store, and returns the validity flags associated
- * with it.  Returns NULL if no issuer whose public key matches cert's
- * signature could be found.
+ * with it.  Returns NULL if no issuer signature could be found.
  */
 static PCCERT_CONTEXT CRYPT_GetIssuerFromStore(HCERTSTORE store,
  PCCERT_CONTEXT cert, PDWORD pdwFlags)
 {
-    PCCERT_CONTEXT issuer = NULL;
-
-    /* There might be more than issuer with the same name, so keep looking until
-     * one produces the correct signature for this cert.
-     */
-    do {
-        *pdwFlags = CERT_STORE_REVOCATION_FLAG | CERT_STORE_SIGNATURE_FLAG |
-         CERT_STORE_TIME_VALIDITY_FLAG;
-        issuer = CertGetIssuerCertificateFromStore(store, cert, issuer,
-         pdwFlags);
-    } while (issuer && (*pdwFlags & CERT_STORE_SIGNATURE_FLAG));
-    return issuer;
+    *pdwFlags = CERT_STORE_REVOCATION_FLAG | CERT_STORE_SIGNATURE_FLAG |
+     CERT_STORE_TIME_VALIDITY_FLAG;
+    return CertGetIssuerCertificateFromStore(store, cert, NULL, pdwFlags);
 }
 
 static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
