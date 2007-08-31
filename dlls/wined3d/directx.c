@@ -1688,7 +1688,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             return WINED3D_OK;
 
         /*****
-         *  Not supported for now: Bump mapping formats
+         *  Not supported everywhere(depends on GL_ATI_envmap_bumpmap or
+         *  GL_NV_texture_shader), but advertized to make apps happy.
          *  Enable some because games often fail when they are not available
          *  and are still playable even without bump mapping
          */
@@ -1697,10 +1698,18 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         case WINED3DFMT_L6V5U5:
         case WINED3DFMT_X8L8V8U8:
         case WINED3DFMT_Q8W8V8U8:
-        case WINED3DFMT_W11V11U10:
-        case WINED3DFMT_A2W10V10U10:
             WARN_(d3d_caps)("[Not supported, but pretended to do]\n");
             return WINED3D_OK;
+
+        /* Those are not advertized by the nvidia windows driver, and not
+         * supported natively by GL_NV_texture_shader or GL_ATI_envmap_bumpmap.
+         * WINED3DFMT_A2W10V10U10 could be loaded into shaders using the unsigned
+         * ARGB format if needed
+         */
+        case WINED3DFMT_W11V11U10:
+        case WINED3DFMT_A2W10V10U10:
+            WARN_(d3d_caps)("[FAILED]\n");
+            return WINED3DERR_NOTAVAILABLE;
 
         /*****
          *  DXTN Formats: Handled above
