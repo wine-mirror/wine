@@ -26,6 +26,7 @@
 @ stdcall CertDeleteCertificateFromStore(ptr)
 @ stdcall CertDuplicateCRLContext(ptr)
 @ stdcall CertDuplicateCTLContext(ptr)
+@ stdcall CertDuplicateCertificateChain(ptr)
 @ stdcall CertDuplicateCertificateContext(ptr)
 @ stdcall CertDuplicateStore(ptr)
 @ stdcall CertEnumCRLContextProperties(ptr long)

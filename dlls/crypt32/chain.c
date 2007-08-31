@@ -482,6 +482,18 @@ static void CRYPT_FreeChainContext(PCertificateChain chain)
     CryptMemFree(chain);
 }
 
+PCCERT_CHAIN_CONTEXT WINAPI CertDuplicateCertificateChain(
+ PCCERT_CHAIN_CONTEXT pChainContext)
+{
+    PCertificateChain chain = (PCertificateChain)pChainContext;
+
+    TRACE("(%p)\n", pChainContext);
+
+    if (chain)
+        InterlockedIncrement(&chain->ref);
+    return pChainContext;
+}
+
 void WINAPI CertFreeCertificateChain(PCCERT_CHAIN_CONTEXT pChainContext)
 {
     PCertificateChain chain = (PCertificateChain)pChainContext;
