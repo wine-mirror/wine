@@ -389,7 +389,25 @@ void shader_glsl_load_constants(
             pos = GL_EXTCALL(glGetUniformLocationARB(programId, "bumpenvmat"));
             checkGLcall("glGetUniformLocationARB");
             GL_EXTCALL(glUniformMatrix2fvARB(pos, 1, 0, data));
-            checkGLcall("glUniform4fvARB");
+            checkGLcall("glUniformMatrix2fvARB");
+
+            /* texbeml needs the luminance scale and offset too. If texbeml is used, needsbumpmat
+             * is set too, so we can check that in the needsbumpmat check
+             */
+            if(((IWineD3DPixelShaderImpl *) pshader)->baseShader.reg_maps.luminanceparams != -1) {
+                int stage = ((IWineD3DPixelShaderImpl *) pshader)->baseShader.reg_maps.luminanceparams;
+                GLfloat *scale = (GLfloat *) &stateBlock->textureState[stage][WINED3DTSS_BUMPENVLSCALE];
+                GLfloat *offset = (GLfloat *) &stateBlock->textureState[stage][WINED3DTSS_BUMPENVLOFFSET];
+
+                pos = GL_EXTCALL(glGetUniformLocationARB(programId, "luminancescale"));
+                checkGLcall("glGetUniformLocationARB");
+                GL_EXTCALL(glUniform1fvARB(pos, 1, scale));
+                checkGLcall("glUniform1fvARB");
+                pos = GL_EXTCALL(glGetUniformLocationARB(programId, "luminanceoffset"));
+                checkGLcall("glGetUniformLocationARB");
+                GL_EXTCALL(glUniform1fvARB(pos, 1, offset));
+                checkGLcall("glUniform1fvARB");
+            }
         }
     }
 }
@@ -429,8 +447,13 @@ void shader_generate_glsl_declarations(
 
     if(!pshader)
         shader_addline(buffer, "uniform vec4 posFixup;\n");
-    else if(reg_maps->bumpmat != -1)
+    else if(reg_maps->bumpmat != -1) {
         shader_addline(buffer, "uniform mat2 bumpenvmat;\n");
+        if(reg_maps->luminanceparams) {
+            shader_addline(buffer, "uniform float luminancescale;\n");
+            shader_addline(buffer, "uniform float luminanceoffset;\n");
+        }
+    }
 
     /* Declare texture samplers */ 
     for (i = 0; i < This->baseShader.limits.sampler; i++) {
@@ -1974,8 +1997,16 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0|WINED3DSP_WRITEMASK_1, &coord_param);
-    shader_addline(arg->buffer, "%s(Psampler%u, T%u%s + vec4(bumpenvmat * %s, 0.0, 0.0)%s )%s);\n",
-                   sample_function.name, sampler_idx, sampler_idx, coord_mask, coord_param.param_str, coord_mask, dst_swizzle);
+    if(arg->opcode->opcode == WINED3DSIO_TEXBEML) {
+        glsl_src_param_t luminance_param;
+        shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_2, &luminance_param);
+        shader_addline(arg->buffer, "(%s(Psampler%u, T%u%s + vec4(bumpenvmat * %s, 0.0, 0.0)%s )*(%s * luminancescale + luminanceoffset))%s);\n",
+                       sample_function.name, sampler_idx, sampler_idx, coord_mask, coord_param.param_str, coord_mask,
+                       luminance_param.param_str, dst_swizzle);
+    } else {
+        shader_addline(arg->buffer, "%s(Psampler%u, T%u%s + vec4(bumpenvmat * %s, 0.0, 0.0)%s )%s);\n",
+                       sample_function.name, sampler_idx, sampler_idx, coord_mask, coord_param.param_str, coord_mask, dst_swizzle);
+    }
 }
 
 void pshader_glsl_bem(SHADER_OPCODE_ARG* arg) {

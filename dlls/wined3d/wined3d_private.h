@@ -1657,7 +1657,7 @@ typedef struct shader_reg_maps {
     /* Sampler usage tokens 
      * Use 0 as default (bit 31 is always 1 on a valid token) */
     DWORD samplers[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
-    char bumpmat;
+    char bumpmat, luminanceparams;
 
     /* Whether or not a loop is used in this shader */
     char loop;

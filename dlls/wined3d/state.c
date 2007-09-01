@@ -2139,12 +2139,37 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     }
 }
 
+static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+
+    /* Vertex and pixel shader states will call a shader upload, don't do anything as long one of them
+     * has an update pending
+     */
+    if(isStateDirty(context, STATE_VDECL) ||
+       isStateDirty(context, STATE_PIXELSHADER)) {
+       return;
+    }
+
+    device->shader_backend->shader_load_constants((IWineD3DDevice *) device, use_ps(device), use_vs(device));
+}
+
 static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     union {
         DWORD d;
         float f;
     } tmpvalue;
+
+    if(stateblock->pixelShader && stage != 0 &&
+       ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.luminanceparams == stage) {
+        /* The pixel shader has to know the luminance scale. Do a constants update if it
+         * isn't scheduled anyway
+         */
+        if(!isStateDirty(context, STATE_PIXELSHADERCONSTANT) &&
+           !isStateDirty(context, STATE_PIXELSHADER)) {
+            shaderconstant(STATE_PIXELSHADERCONSTANT, stateblock, context);
+        }
+    }
 
     tmpvalue.d = stateblock->textureState[stage][WINED3DTSS_BUMPENVLSCALE];
     if(tmpvalue.f != 0.0) {
@@ -2158,6 +2183,17 @@ static void tex_bumpenvloffset(DWORD state, IWineD3DStateBlockImpl *stateblock, 
         DWORD d;
         float f;
     } tmpvalue;
+
+    if(stateblock->pixelShader && stage != 0 &&
+       ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.luminanceparams == stage) {
+        /* The pixel shader has to know the luminance offset. Do a constants update if it
+         * isn't scheduled anyway
+         */
+        if(!isStateDirty(context, STATE_PIXELSHADERCONSTANT) &&
+           !isStateDirty(context, STATE_PIXELSHADER)) {
+            shaderconstant(STATE_PIXELSHADERCONSTANT, stateblock, context);
+        }
+    }
 
     tmpvalue.d = stateblock->textureState[stage][WINED3DTSS_BUMPENVLOFFSET];
     if(tmpvalue.f != 0.0) {
@@ -2276,20 +2312,6 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
         glBindTexture(GL_TEXTURE_2D, stateblock->wineD3DDevice->dummyTextureName[sampler]);
         checkGLcall("glBindTexture(GL_TEXTURE_2D, stateblock->wineD3DDevice->dummyTextureName[sampler])");
     }
-}
-
-static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
-
-    /* Vertex and pixel shader states will call a shader upload, don't do anything as long one of them
-     * has an update pending
-     */
-    if(isStateDirty(context, STATE_VDECL) ||
-       isStateDirty(context, STATE_PIXELSHADER)) {
-       return;
-    }
-    
-    device->shader_backend->shader_load_constants((IWineD3DDevice *) device, use_ps(device), use_vs(device));
 }
 
 static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
