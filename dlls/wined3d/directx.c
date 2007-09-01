@@ -1487,6 +1487,60 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         }
     }
 
+    if(RType == WINED3DRTYPE_VOLUMETEXTURE) {
+        if(!GL_SUPPORT(EXT_TEXTURE3D)) {
+            TRACE_(d3d_caps)("[FAILED] - No volume texture support\n");
+            return WINED3DERR_NOTAVAILABLE;
+        }
+        /* Filter formats that need conversion; For one part, this conversion is unimplemented,
+         * and volume textures are huge, so it would be a big performance hit. Unless we hit an
+         * app needing one of those formats, don't advertize them to avoid leading apps into
+         * temptation. The windows drivers don't support most of those formats on volumes anyway,
+         * except of R32F.
+         */
+        switch(CheckFormat) {
+            case WINED3DFMT_P8:
+            case WINED3DFMT_A4L4:
+            case WINED3DFMT_R32F:
+            case WINED3DFMT_R16F:
+            case WINED3DFMT_X8L8V8U8:
+            case WINED3DFMT_L6V5U5:
+                TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
+                return WINED3DERR_NOTAVAILABLE;
+
+            case WINED3DFMT_Q8W8V8U8:
+            case WINED3DFMT_V16U16:
+            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+            break;
+
+            case WINED3DFMT_V8U8:
+            if(!GL_SUPPORT(NV_TEXTURE_SHADER) || !GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+                TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+            break;
+
+            case WINED3DFMT_DXT1:
+            case WINED3DFMT_DXT2:
+            case WINED3DFMT_DXT3:
+            case WINED3DFMT_DXT4:
+            case WINED3DFMT_DXT5:
+                /* The GL_EXT_texture_compression_s3tc spec requires that loading an s3tc
+                 * compressed texture results in an error. While the D3D refrast does
+                 * support s3tc volumes, at least the nvidia windows driver does not, so
+                 * we're free not to support this format.
+                 */
+                TRACE_(d3d_caps)("[FAILED] - DXTn does not support 3D textures\n");
+                return WINED3DERR_NOTAVAILABLE;
+
+            default:
+                /* Do nothing, continue with checking the format below */
+                break;
+        }
+    }
     /* TODO: Check support against more of the WINED3DUSAGE_QUERY_* constants
      * See http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/IDirect3D9__CheckDeviceFormat.asp
      * and http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/D3DUSAGE_QUERY.asp */
