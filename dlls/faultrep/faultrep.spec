@@ -1,5 +1,5 @@
-@ stub AddERExcludedApplicationA
-@ stub AddERExcludedApplicationW
+@ stdcall AddERExcludedApplicationA(str)
+@ stdcall AddERExcludedApplicationW(wstr)
 @ stub CreateMinidumpA
 @ stub CreateMinidumpW
 @ stub ReportEREvent

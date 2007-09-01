@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = faultrep.dll
-IMPORTS   = kernel32
+IMPORTS   = advapi32 kernel32
 
 C_SRCS = faultrep.c
 

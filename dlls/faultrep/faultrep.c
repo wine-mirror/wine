@@ -21,9 +21,86 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
+#include "winreg.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
+
+#include "errorrep.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(faultrep);
+
+static const WCHAR SZ_EXCLUSIONLIST_KEY[] = {
+    'S','o','f','t','w','a','r','e','\\',
+    'M','i','c','r','o','s','o','f','t','\\',
+    'P','C','H','e','a','l','t','h','\\',
+    'E','r','r','o','r','R','e','p','o','r','t','i','n','g','\\',
+    'E','x','c','l','u','s','i','o','n','L','i','s','t', 0};
+
+/*************************************************************************
+ * AddERExcludedApplicationW  [FAULTREP.@]
+ *
+ * Adds an application to a list of applications for which fault reports
+ * shouldn't be genereated
+ *
+ * PARAMS
+ * lpAppFileName  [I] The filename of the application executable
+ *
+ * RETURNS
+ * TRUE on success, FALSE of failure
+ *
+ * NOTES
+ * Wine doesn't use this data but stores it in the registry (in the same place
+ * as Windows would) in case it will be useful in a future version
+ *
+ * According to MSDN this function should succeed even if the user have no write
+ * access to HKLM. This probably means that there is no error checking.
+ */
+BOOL WINAPI AddERExcludedApplicationW(LPCWSTR lpAppFileName)
+{
+    WCHAR *bslash;
+    DWORD value = 1;
+    HKEY hkey;
+
+    TRACE("(%s)\n", wine_dbgstr_w(lpAppFileName));
+    bslash = strrchrW(lpAppFileName, '\\');
+    if (bslash != NULL)
+        lpAppFileName = bslash + 1;
+    if (*lpAppFileName == '\0')
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!RegCreateKeyW(HKEY_LOCAL_MACHINE, SZ_EXCLUSIONLIST_KEY, &hkey))
+    {
+        RegSetValueExW(hkey, lpAppFileName, 0, REG_DWORD, (LPBYTE)&value, sizeof(value));
+        RegCloseKey(hkey);
+    }
+
+    return TRUE;
+}
+
+/*************************************************************************
+ * AddERExcludedApplicationA  [FAULTREP.@]
+ *
+ * See AddERExcludedApplicationW
+ */
+BOOL WINAPI AddERExcludedApplicationA(LPCSTR lpAppFileName)
+{
+    int len = MultiByteToWideChar(CP_ACP, 0, lpAppFileName, -1, NULL, 0);
+    WCHAR *wstr;
+    BOOL ret;
+
+    TRACE("(%s)\n", wine_dbgstr_a(lpAppFileName));
+    if (len == 0)
+        return FALSE;
+    wstr = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len);
+    MultiByteToWideChar(CP_ACP, 0, lpAppFileName, -1, wstr, len);
+    ret = AddERExcludedApplicationW(wstr);
+    HeapFree(GetProcessHeap(), 0, wstr);
+    return ret;
+}
 
 /***********************************************************************
  * DllMain.
