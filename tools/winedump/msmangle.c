@@ -195,7 +195,7 @@ int symbol_demangle (parsed_symbol *sym)
       free (function_name);
       return -1;
     }
-    class_name = str_substring (class_name, name - 2);
+    class_name = str_substring (class_name, name - 2); /* Allocates a new string */
   }
 
   /* Function/Data type and access level */
@@ -218,6 +218,7 @@ int symbol_demangle (parsed_symbol *sym)
       if (VERBOSE)
         printf ("/*FIXME: %s: unknown data*/\n", sym->symbol);
       free (function_name);
+      free (class_name);
       return -1;
     }
     sym->flags |= SYM_DATA;
@@ -227,6 +228,7 @@ int symbol_demangle (parsed_symbol *sym)
     sym->arg_text[0] = str_create (3, ct.expression, " ", sym->arg_name[0]);
     FREE_CT (ct);
     free (function_name);
+    free (class_name);
     return 0;
 
   case '6' : /* compiler generated static */
@@ -242,9 +244,11 @@ int symbol_demangle (parsed_symbol *sym)
       if (VERBOSE)
         puts ("Demangled symbol OK [vtable]");
       free (function_name);
+      free (class_name);
       return 0;
     }
     free (function_name);
+    free (class_name);
     return -1;
 
   /* Functions */
@@ -289,6 +293,7 @@ int symbol_demangle (parsed_symbol *sym)
   /* FIXME: G,H / O,P / W,X are private / protected / public thunks */
   default:
     free (function_name);
+    free (class_name);
     return -1;
   }
 
@@ -303,6 +308,7 @@ int symbol_demangle (parsed_symbol *sym)
    case 'D': is_const = (CT_CONST | CT_VOLATILE); break;
    default:
     free (function_name);
+    free (class_name);
      return -1;
    }
   }
@@ -334,6 +340,7 @@ int symbol_demangle (parsed_symbol *sym)
     break;
   default:
     free (function_name);
+    free (class_name);
     return -1;
   }
 
@@ -349,6 +356,7 @@ int symbol_demangle (parsed_symbol *sym)
     INIT_CT (ct);
     if (!demangle_datatype (&name, &ct, sym)) {
       free (function_name);
+      free (class_name);
       return -1;
     }
     sym->return_text = ct.expression;
@@ -366,6 +374,7 @@ int symbol_demangle (parsed_symbol *sym)
       INIT_CT (ct);
       if (!demangle_datatype(&name, &ct, sym)) {
         free (function_name);
+        free (class_name);
         return -1;
       }
 
@@ -394,6 +403,7 @@ int symbol_demangle (parsed_symbol *sym)
    */
   if (*name != 'Z') {
     free (function_name);
+    free (class_name);
     return -1;
   }
 
