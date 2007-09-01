@@ -4295,6 +4295,19 @@ LPSTR
 
 LPCWSTR
 
+%%schannel.dll
+
+%long
+
+NTSTATUS
+ULONG
+
+%ptr
+
+PSECPKG_FUNCTION_TABLE *
+PSECPKG_USER_FUNCTION_TABLE *
+PULONG
+
 %%secur32.dll
 
 %long
