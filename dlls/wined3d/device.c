@@ -1871,6 +1871,63 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DW
     return WINED3D_OK;
 }
 
+static void IWineD3DDeviceImpl_LoadLogo(IWineD3DDeviceImpl *This, const char *filename) {
+    HBITMAP hbm;
+    BITMAP bm;
+    HRESULT hr;
+    HDC dcb = NULL, dcs = NULL;
+    WINEDDCOLORKEY colorkey;
+
+    hbm = (HBITMAP) LoadImageA(NULL, filename, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+    if(hbm)
+    {
+        GetObjectA(hbm, sizeof(BITMAP), &bm);
+        dcb = CreateCompatibleDC(NULL);
+        if(!dcb) goto out;
+        SelectObject(dcb, hbm);
+    }
+    else
+    {
+        /* Create a 32x32 white surface to indicate that wined3d is used, but the specified image
+         * couldn't be loaded
+         */
+        memset(&bm, 0, sizeof(bm));
+        bm.bmWidth = 32;
+        bm.bmHeight = 32;
+    }
+
+    hr = IWineD3DDevice_CreateSurface((IWineD3DDevice *) This, bm.bmWidth, bm.bmHeight, WINED3DFMT_R5G6B5,
+                                      TRUE, FALSE, 0, &This->logo_surface, WINED3DRTYPE_SURFACE, 0,
+                                      WINED3DPOOL_DEFAULT, WINED3DMULTISAMPLE_NONE, 0, NULL, SURFACE_OPENGL, NULL);
+    if(FAILED(hr)) {
+        ERR("Wine logo requested, but failed to create surface\n");
+        goto out;
+    }
+
+    if(dcb) {
+        hr = IWineD3DSurface_GetDC(This->logo_surface, &dcs);
+        if(FAILED(hr)) goto out;
+        BitBlt(dcs, 0, 0, bm.bmWidth, bm.bmHeight, dcb, 0, 0, SRCCOPY);
+        IWineD3DSurface_ReleaseDC(This->logo_surface, dcs);
+
+        colorkey.dwColorSpaceLowValue = 0;
+        colorkey.dwColorSpaceHighValue = 0;
+        IWineD3DSurface_SetColorKey(This->logo_surface, WINEDDCKEY_SRCBLT, &colorkey);
+    } else {
+        /* Fill the surface with a white color to show that wined3d is there */
+        IWineD3DDevice_ColorFill((IWineD3DDevice *) This, This->logo_surface, NULL, 0xffffffff);
+    }
+
+    out:
+    if(dcb) {
+        DeleteDC(dcb);
+    }
+    if(hbm) {
+        DeleteObject(hbm);
+    }
+    return;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain;
@@ -2007,6 +2064,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
                           0x00, 1.0, 0);
 
     This->d3d_initialized = TRUE;
+
+    if(wined3d_settings.logo) {
+        IWineD3DDeviceImpl_LoadLogo(This, wined3d_settings.logo);
+    }
     return WINED3D_OK;
 }
 
@@ -2022,6 +2083,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
      * it was created. Thus make sure a context is active for the glDelete* calls
      */
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
+    if(This->logo_surface) IWineD3DSurface_Release(This->logo_surface);
 
     TRACE("Deleting high order patches\n");
     for(i = 0; i < PATCHMAP_SIZE; i++) {

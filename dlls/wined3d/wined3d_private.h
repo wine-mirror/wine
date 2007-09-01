@@ -197,6 +197,7 @@ typedef struct wined3d_settings_s {
   int rendertargetlock_mode;
 /* Memory tracking and object counting */
   unsigned int emulated_textureram;
+  char *logo;
 } wined3d_settings_t;
 
 extern wined3d_settings_t wined3d_settings;
@@ -727,6 +728,9 @@ struct IWineD3DDeviceImpl
     GLuint                  cursorTexture;
     BOOL                    haveHardwareCursor;
     HCURSOR                 hardwareCursor;
+
+    /* The Wine logo surface */
+    IWineD3DSurface        *logo_surface;
 
     /* Textures for when no other textures are mapped */
     UINT                          dummyTextureName[MAX_TEXTURES];

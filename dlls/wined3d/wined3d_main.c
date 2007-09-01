@@ -42,7 +42,8 @@ wined3d_settings_t wined3d_settings =
     FALSE,          /* Use of GLSL disabled by default */
     ORM_BACKBUFFER, /* Use the backbuffer to do offscreen rendering */
     RTL_AUTO,       /* Automatically determine best locking method */
-    64*1024*1024    /* 64MB texture memory by default */
+    64*1024*1024,   /* 64MB texture memory by default */
+    NULL            /* No wine logo by default */
 };
 
 WineD3DGlobalStatistics *wineD3DGlobalStatistics = NULL;
@@ -273,6 +274,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                 }
                 else
                     ERR("VideoMemorySize is %i but must be >0\n", TmpVideoMemorySize);
+            }
+            if ( !get_config_key( hkey, appkey, "WineLogo", buffer, size) )
+            {
+                wined3d_settings.logo = HeapAlloc(GetProcessHeap(), 0, strlen(buffer) + 1);
+                if(wined3d_settings.logo) strcpy(wined3d_settings.logo, buffer);
             }
        }
        if (wined3d_settings.vs_mode == VS_HW)
