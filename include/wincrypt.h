@@ -3537,7 +3537,7 @@ BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
 
 BOOL WINAPI CertResyncCertificateChainEngine(HCERTCHAINENGINE hChainEngine);
 
-void WINAPI CertFreeCertificateChainEngine(HCERTCHAINENGINE hChainEngine);
+VOID WINAPI CertFreeCertificateChainEngine(HCERTCHAINENGINE hChainEngine);
 
 BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
  PCCERT_CONTEXT pCertContext, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
@@ -3547,7 +3547,7 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
 PCCERT_CHAIN_CONTEXT WINAPI CertDuplicateCertificateChain(
  PCCERT_CHAIN_CONTEXT pChainContext);
 
-void WINAPI CertFreeCertificateChain(PCCERT_CHAIN_CONTEXT pChainContext);
+VOID WINAPI CertFreeCertificateChain(PCCERT_CHAIN_CONTEXT pChainContext);
 
 PCCERT_CHAIN_CONTEXT WINAPI CertFindChainInStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, DWORD dwFindFlags, DWORD dwFindType,
