@@ -762,7 +762,7 @@ static BOOL WINAPI VersionInfo32_QueryValue( const VS_VERSION_INFO_STRUCT32 *inf
  *           VerQueryValueA              [VERSION.@]
  */
 BOOL WINAPI VerQueryValueA( LPCVOID pBlock, LPCSTR lpSubBlock,
-                               LPVOID *lplpBuffer, UINT *puLen )
+                               LPVOID *lplpBuffer, PUINT puLen )
 {
     static const char rootA[] = "\\";
     static const char varfileinfoA[] = "\\VarFileInfo\\Translation";
@@ -815,7 +815,7 @@ BOOL WINAPI VerQueryValueA( LPCVOID pBlock, LPCSTR lpSubBlock,
  *           VerQueryValueW              [VERSION.@]
  */
 BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
-                               LPVOID *lplpBuffer, UINT *puLen )
+                               LPVOID *lplpBuffer, PUINT puLen )
 {
     static const WCHAR rootW[] = { '\\', 0 };
     static const WCHAR varfileinfoW[] = { '\\','V','a','r','F','i','l','e','I','n','f','o',

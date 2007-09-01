@@ -2140,7 +2140,7 @@ BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum, DWORD dwFlags )
  *  Failure: 0. Use GetLastError() to determine the cause.
  *
  */
-DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
+DWORD WINAPI VerLanguageNameA( DWORD wLang, LPSTR szLang, DWORD nSize )
 {
     return GetLocaleInfoA( MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize );
 }
@@ -2151,7 +2151,7 @@ DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
  *
  * See VerLanguageNameA.
  */
-DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
+DWORD WINAPI VerLanguageNameW( DWORD wLang, LPWSTR szLang, DWORD nSize )
 {
     return GetLocaleInfoW( MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize );
 }
