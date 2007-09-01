@@ -5316,6 +5316,18 @@ LPDWORD
 LPOVERLAPPED
 LPVOID
 
+%%vdmdbg.dll
+
+%long
+
+DWORD
+INT
+LPARAM
+
+%ptr
+
+TASKENUMPROC
+
 %%version.dll
 
 %long
