@@ -4096,6 +4096,26 @@ LPVOID *
 REFCLSID
 REFIID
 
+%%query.dll
+
+%long
+
+HRESULT
+ULONG
+
+%ptr
+
+CI_STATE *
+ULONG *
+
+%str
+
+CHAR *
+
+%wstr
+
+WCHAR *
+
 %%rasapi32.dll
 
 %long
