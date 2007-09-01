@@ -1573,13 +1573,21 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_X8L8V8U8:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
             *convert = CONVERT_X8L8V8U8;
-            *format = GL_BGRA;
-            *internal = GL_RGBA8;
-            *type = GL_UNSIGNED_BYTE;
             *target_bpp = 4;
-            /* Not supported by GL_ATI_envmap_bumpmap */
+            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                /* Use formats from gl table. It is a bit unfortunate, but the conversion
+                 * is needed to set the X format to 255 to get 1.0 for alpha when sampling
+                 * the texture. OpenGL can't use GL_DSDT8_MAG8_NV as internal format with
+                 * the needed type and format parameter, so the internal format contains a
+                 * 4th component, which is returned as alpha
+                 */
+            } else {
+                /* Not supported by GL_ATI_envmap_bumpmap */
+                *format = GL_BGRA;
+                *internal = GL_RGBA8;
+                *type = GL_UNSIGNED_BYTE;
+            }
             break;
 
         case WINED3DFMT_Q8W8V8U8:
@@ -1647,9 +1655,9 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     return WINED3D_OK;
 }
 
-HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf) {
+HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *This) {
     BYTE *source, *dest;
-    TRACE("(%p)->(%p),(%d,%d,%d,%d,%p)\n", src, dst, pitch, height, outpitch, convert, surf);
+    TRACE("(%p)->(%p),(%d,%d,%d,%d,%p)\n", src, dst, pitch, height, outpitch, convert,This);
 
     switch (convert) {
         case NO_CONVERSION:
@@ -1660,7 +1668,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
         case CONVERT_PALETTED:
         case CONVERT_PALETTED_CK:
         {
-            IWineD3DPaletteImpl* pal = surf->palette;
+            IWineD3DPaletteImpl* pal = This->palette;
             BYTE table[256][4];
             unsigned int i;
             unsigned int x, y;
@@ -1673,14 +1681,14 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                 /* Still no palette? Use the device's palette */
                 /* Get the surface's palette */
                 for (i = 0; i < 256; i++) {
-                    IWineD3DDeviceImpl *device = surf->resource.wineD3DDevice;
+                    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
                     table[i][0] = device->palettes[device->currentPalette][i].peRed;
                     table[i][1] = device->palettes[device->currentPalette][i].peGreen;
                     table[i][2] = device->palettes[device->currentPalette][i].peBlue;
                     if ((convert == CONVERT_PALETTED_CK) &&
-                        (i >= surf->SrcBltCKey.dwColorSpaceLowValue) &&
-                        (i <= surf->SrcBltCKey.dwColorSpaceHighValue)) {
+                        (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
+                        (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
                         /* We should maybe here put a more 'neutral' color than the standard bright purple
                           one often used by application to prevent the nice purple borders when bi-linear
                           filtering is on */
@@ -1697,8 +1705,8 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                     table[i][1] = pal->palents[i].peGreen;
                     table[i][2] = pal->palents[i].peBlue;
                     if ((convert == CONVERT_PALETTED_CK) &&
-                        (i >= surf->SrcBltCKey.dwColorSpaceLowValue) &&
-                        (i <= surf->SrcBltCKey.dwColorSpaceHighValue)) {
+                        (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
+                        (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
                         /* We should maybe here put a more 'neutral' color than the standard bright purple
                           one often used by application to prevent the nice purple borders when bi-linear
                           filtering is on */
@@ -1751,8 +1759,8 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
                     *Dest = ((color & 0xFFC0) | ((color & 0x1F) << 1));
-                    if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
-                        (color > surf->SrcBltCKey.dwColorSpaceHighValue)) {
+                    if ((color < This->SrcBltCKey.dwColorSpaceLowValue) ||
+                        (color > This->SrcBltCKey.dwColorSpaceHighValue)) {
                         *Dest |= 0x0001;
                     }
                     Dest++;
@@ -1774,8 +1782,8 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
 		    *Dest = color;
-                    if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
-                        (color > surf->SrcBltCKey.dwColorSpaceHighValue)) {
+                    if ((color < This->SrcBltCKey.dwColorSpaceLowValue) ||
+                        (color > This->SrcBltCKey.dwColorSpaceHighValue)) {
                         *Dest |= (1 << 15);
                     }
                     else {
@@ -1822,6 +1830,38 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                     /* A */ Dest[3] = ((color >> 24) & 0xff) + 128; /* Q */
                     Dest += 4;
                 }
+            }
+            break;
+        }
+
+        case CONVERT_X8L8V8U8:
+        {
+            unsigned int x, y;
+            DWORD *Source;
+            unsigned char *Dest;
+
+            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                /* This implementation works with the fixed function pipeline and shaders
+                 * without further modification after converting the surface.
+                 */
+                for(y = 0; y < height; y++) {
+                    Source = (DWORD *) (src + y * pitch);
+                    Dest = (unsigned char *) (dst + y * outpitch);
+                    for (x = 0; x < width; x++ ) {
+                        long color = (*Source++);
+                        /* L */ Dest[2] = ((color >> 16) & 0xff);   /* L */
+                        /* V */ Dest[1] = ((color >> 8 ) & 0xff);   /* V */
+                        /* U */ Dest[0] = (color         & 0xff);   /* U */
+                        /* I */ Dest[3] = 255;                      /* X */
+                        Dest += 4;
+                    }
+                }
+            } else {
+                /* Doesn't work correctly with the fixed function pipeline, but can work in
+                 * shaders if the shader is adjusted. (There's no use for this format in gl's
+                 * standard fixed function pipeline anyway).
+                 */
+                FIXME("Implement CONVERT_X8L8V8U8 with standard unsigned GL_RGB\n");
             }
             break;
         }
