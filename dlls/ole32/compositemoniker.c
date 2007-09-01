@@ -1786,8 +1786,10 @@ CompositeMonikerImpl_Construct(IMoniker** ppMoniker,
     This->tabLastIndex=0;
 
     This->tabMoniker=HeapAlloc(GetProcessHeap(),0,This->tabSize*sizeof(IMoniker));
-    if (This->tabMoniker==NULL)
+    if (This->tabMoniker==NULL) {
+        HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
+    }
 
     if (!pmkFirst && !pmkRest)
     {
