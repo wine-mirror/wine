@@ -4823,6 +4823,24 @@ SnmpVarBind *
 SnmpVarBindList *
 UINT *
 
+%%spoolss.dll
+
+%long
+
+BOOL
+DWORD
+HANDLE
+
+%ptr
+
+LPBYTE
+LPVOID
+
+%wstr
+
+LPCWSTR
+LPWSTR
+
 %%sti.dll
 
 %long
