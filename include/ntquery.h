@@ -19,6 +19,8 @@
 #ifndef __WINE_NTQUERY_H__
 #define __WINE_NTQUERY_H__
 
+/* FIXME: #include <stgprop.h> */
+
 #include <pshpack4.h>
 
 typedef struct _CI_STATE
@@ -42,8 +44,6 @@ typedef struct _CI_STATE
 
 #include <poppack.h>
 
-STDAPI CIState(WCHAR const *, WCHAR const *, CI_STATE *);
-
 #define PSGUID_STORAGE {0xb725f130, 0x47ef, 0x101a, {0xa5, 0xf1, 0x02, 0x60, 0x8c, 0x9e, 0xeb, 0xac}}
 #define PID_STG_DIRECTORY      ((PROPID)0x02)
 #define PID_STG_CLASSID        ((PROPID)0x03)
@@ -64,5 +64,19 @@ STDAPI CIState(WCHAR const *, WCHAR const *, CI_STATE *);
 #define PID_STG_CONTENTS       ((PROPID)0x13)
 #define PID_STG_SHORTNAME      ((PROPID)0x14)
 #define PID_STG_MAX            PID_STG_SHORTNAME
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+STDAPI CIState(WCHAR const *, WCHAR const *, CI_STATE *);
+STDAPI LocateCatalogsA(CHAR const *, ULONG, CHAR *, ULONG *, CHAR *, ULONG *);
+STDAPI LocateCatalogsW(WCHAR const *, ULONG, WCHAR *, ULONG *, WCHAR *, ULONG *);
+#define LocateCatalogs WINELIB_NAME_AW(LocateCatalogs)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
