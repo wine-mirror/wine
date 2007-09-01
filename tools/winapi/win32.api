@@ -4245,6 +4245,8 @@ UUID_VECTOR *
 ULONG *
 struct IRpcChannelBuffer *
 struct IRpcStubBuffer *
+char *
+char **
 twr_t *
 twr_t **
 unsigned char *
