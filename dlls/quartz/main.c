@@ -273,7 +273,7 @@ LONG WINAPI DBToAmpFactor(LONG db)
 /***********************************************************************
  *              AMGetErrorTextA (QUARTZ.@)
  */
-DWORD WINAPI AMGetErrorTextA(HRESULT hr, char *buffer, DWORD maxlen)
+DWORD WINAPI AMGetErrorTextA(HRESULT hr, LPSTR buffer, DWORD maxlen)
 {
     int len;
     static const char format[] = "Error: 0x%x";
@@ -291,7 +291,7 @@ DWORD WINAPI AMGetErrorTextA(HRESULT hr, char *buffer, DWORD maxlen)
 /***********************************************************************
  *              AMGetErrorTextW (QUARTZ.@)
  */
-DWORD WINAPI AMGetErrorTextW(HRESULT hr, WCHAR *buffer, DWORD maxlen)
+DWORD WINAPI AMGetErrorTextW(HRESULT hr, LPWSTR buffer, DWORD maxlen)
 {
     int len;
     static const WCHAR format[] = {'E','r','r','o','r',':',' ','0','x','%','l','x',0};
