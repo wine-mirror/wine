@@ -23,14 +23,19 @@
 extern "C" {
 #endif
 
+#define AMOVIEAPI
+
 #define VFW_FIRST_CODE      0x200
 #define MAX_ERROR_TEXT_LEN  160
 
 #include <vfwmsgs.h>
 
-DWORD WINAPI AMGetErrorTextA(HRESULT hr, char *buffer, DWORD maxlen);
-DWORD WINAPI AMGetErrorTextW(HRESULT hr, WCHAR *buffer, DWORD maxlen);
+typedef BOOL (WINAPI* AMGETERRORTEXTPROCA)(HRESULT,char*,DWORD);
+typedef BOOL (WINAPI* AMGETERRORTEXTPROCW)(HRESULT,WCHAR*,DWORD);
+DECL_WINELIB_TYPE_AW(AMGETERRORTEXTPROC)
 
+DWORD WINAPI AMGetErrorTextA(HRESULT,LPSTR,DWORD);
+DWORD WINAPI AMGetErrorTextW(HRESULT,LPWSTR,DWORD);
 #define AMGetErrorText WINELIB_NAME_AW(AMGetErrorText)
 
 #ifdef __cplusplus
