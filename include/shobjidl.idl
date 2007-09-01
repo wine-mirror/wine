@@ -22,12 +22,18 @@
 import "objidl.idl";
 import "oleidl.idl";
 import "oaidl.idl";
+import "docobj.idl";
 import "shtypes.idl";
 import "servprov.idl";
 import "comcat.idl";
 import "propidl.idl";
-/*import "prsht.idl";*/
-/*import "msxml.idl";*/
+/* FIXME: import "prsht.idl";*/
+import "msxml.idl";
+import "wtypes.idl";
+/* FIXME: import "propsys.idl"; */
+/* FIXME: import "structuredquery.idl"; */
+
+cpp_quote("/* FIXME: #include <sherrors.h> */")
 
 
 /*****************************************************************************
