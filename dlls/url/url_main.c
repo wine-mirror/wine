@@ -23,6 +23,7 @@
 #include "winerror.h"
 #include "shellapi.h"
 #include "shlwapi.h"
+#include "intshcut.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(url);
@@ -47,9 +48,9 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
  * InetIsOffline    (URL.@)
  *
  */
-BOOL WINAPI InetIsOffline(void)
+BOOL WINAPI InetIsOffline(DWORD flags)
 {
-    FIXME("stub!\n");
+    FIXME("(%08x): stub!\n", flags);
 
     return FALSE;
 }

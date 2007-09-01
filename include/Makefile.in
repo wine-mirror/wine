@@ -188,6 +188,7 @@ SRCDIR_INCLUDES = \
 	imagehlp.h \
 	imm.h \
 	initguid.h \
+	intshcut.h \
 	ipexport.h \
 	iphlpapi.h \
 	ipifcons.h \

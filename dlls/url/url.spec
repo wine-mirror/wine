@@ -6,7 +6,7 @@
 @ stub DummyEntryPointA
 @ stdcall FileProtocolHandler(long str long) FileProtocolHandlerA
 @ stdcall FileProtocolHandlerA(long str long)
-@ stdcall InetIsOffline()
+@ stdcall InetIsOffline(long)
 @ stub MIMEAssociationDialogA
 @ stub MIMEAssociationDialogW
 @ stub MailToProtocolHandler
