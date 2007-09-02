@@ -516,7 +516,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(PIDSCDRIVERBUFFER i
     hw_wptr = This->mmap_pos;
 
     if (lpdwCappos)
-        *lpdwCappos = realpos_to_fakepos(This, hw_wptr);
+        *lpdwCappos = realpos_to_fakepos(This, hw_pptr);
     if (lpdwReadpos)
         *lpdwReadpos = realpos_to_fakepos(This, hw_wptr);
 
