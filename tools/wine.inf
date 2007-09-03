@@ -2204,6 +2204,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,ntdll.dll
 11,,ole32.dll
 11,,oleaut32.dll
+11,,oledlg.dll
 11,,olepro32.dll
 11,,opengl32.dll
 11,,progman.exe
