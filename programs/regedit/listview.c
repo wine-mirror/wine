@@ -61,7 +61,10 @@ static LPTSTR get_item_text(HWND hwndLV, int item)
 
     curStr = HeapAlloc(GetProcessHeap(), 0, maxLen);
     if (!curStr) return NULL;
-    if (item == 0) return NULL; /* first item is ALWAYS a default */
+    if (item == 0) { /* first item is ALWAYS a default */
+        HeapFree(GetProcessHeap(), 0, curStr);
+        return NULL;
+    }
     do {
         ListView_GetItemText(hwndLV, item, 0, curStr, maxLen);
 	if (_tcslen(curStr) < maxLen - 1) return curStr;
