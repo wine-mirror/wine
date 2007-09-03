@@ -2417,7 +2417,12 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         {
             if(desc2.dwFlags & DDSD_MIPMAPCOUNT)
             {
-                /* Mipmap count is given, nothing to do */
+                /* Mipmap count is given, should not be 0 */
+                if( desc2.u2.dwMipMapCount == 0 )
+                {
+                    LeaveCriticalSection(&ddraw_cs);
+                    return DDERR_INVALIDPARAMS;
+                }
             }
             else
             {

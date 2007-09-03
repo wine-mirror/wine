@@ -183,6 +183,25 @@ static void MipMapCreationTest(void)
 
     /* Destroy the surface. */
     IDirectDrawSurface_Release(lpDDSMipMapTest);
+
+
+    /* Fifth mipmap creation test: try to create a surface with
+       DDSCAPS_COMPLEX, DDSCAPS_MIPMAP, DDSD_MIPMAPCOUNT,
+       where dwMipMapCount = 0. This should fail. */
+
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_MIPMAPCOUNT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    U2(ddsd).dwMipMapCount = 0;
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 32;
+    rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
+    ok(rc==DDERR_INVALIDPARAMS,"CreateSurface returned: %x\n",rc);
+
+    /* Destroy the surface. */
+    if( rc == DD_OK )
+        IDirectDrawSurface_Release(lpDDSMipMapTest);
+
 }
 
 static void SrcColorKey32BlitTest(void)
