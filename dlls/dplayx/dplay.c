@@ -5292,7 +5292,6 @@ static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
 	    {
 		HeapFree(GetProcessHeap(), 0, descriptionA);
 		max_sizeOfDescriptionA = sizeOfDescription;
-		descriptionA = HeapAlloc(GetProcessHeap(), 0, max_sizeOfDescriptionA);
 	    }
 	    descriptionA = HeapAlloc(GetProcessHeap(), 0, sizeOfDescription);
 	    RegQueryValueExA(hkServiceProvider, "DescriptionA",
@@ -5315,7 +5314,6 @@ static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
 	    {
 		HeapFree(GetProcessHeap(), 0, descriptionW);
 		max_sizeOfDescriptionW = sizeOfDescription;
-		descriptionW = HeapAlloc(GetProcessHeap(), 0, max_sizeOfDescriptionW);
 	    }
 	    descriptionW = HeapAlloc(GetProcessHeap(), 0, sizeOfDescription);
 	    RegQueryValueExW(hkServiceProvider, descW,
