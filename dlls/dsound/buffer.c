@@ -1023,13 +1023,16 @@ HRESULT IDirectSoundBufferImpl_Create(
 
 	use_hw = !!(dsbd->dwFlags & DSBCAPS_LOCHARDWARE);
 	TRACE("use_hw = %d, capf = 0x%08x, device->drvcaps.dwFlags = 0x%08x\n", use_hw, capf, device->drvcaps.dwFlags);
-	if (use_hw && (device->drvcaps.dwFlags & capf) != capf)
+	if (use_hw && ((device->drvcaps.dwFlags & capf) != capf || !device->driver))
 	{
-		WARN("Format not supported for hardware buffer\n");
+		if (device->driver)
+			WARN("Format not supported for hardware buffer\n");
 		HeapFree(GetProcessHeap(),0,dsb->pwfx);
 		HeapFree(GetProcessHeap(),0,dsb);
 		*pdsb = NULL;
-		return DSERR_BADFORMAT;
+		if ((device->drvcaps.dwFlags & capf) != capf)
+			return DSERR_BADFORMAT;
+		return DSERR_GENERIC;
 	}
 
 	/* FIXME: check hardware sample rate mixing capabilities */
