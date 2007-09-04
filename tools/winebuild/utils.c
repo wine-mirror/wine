@@ -336,6 +336,8 @@ DLLSPEC *alloc_dll_spec(void)
     spec->characteristics    = IMAGE_FILE_EXECUTABLE_IMAGE;
     if (get_ptr_size() > 4)
         spec->characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
+    else
+        spec->characteristics |= IMAGE_FILE_32BIT_MACHINE;
     spec->dll_characteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
     spec->subsystem          = 0;
     spec->subsystem_major    = 4;
