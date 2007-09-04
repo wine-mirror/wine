@@ -182,6 +182,7 @@ static const struct message getset_cur_focus_seq[] = {
 static const struct message getset_cur_sel_seq[] = {
     { TCM_SETCURSEL, sent|lparam, 0 },
     { TCM_GETCURSEL, sent|wparam|lparam, 0, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_SETCURSEL, sent|lparam, 0 },
     { TCM_GETCURSEL, sent|wparam|lparam, 0, 0 },
     { TCM_SETCURSEL, sent|lparam, 0 },
@@ -673,9 +674,7 @@ static void test_getters_setters(INT nTabs)
 
         SendMessage(hTab, TCM_SETCURFOCUS, nTabs+1, 0);
         focusIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
-        todo_wine{
             expect(1, focusIndex);
-        }
 
         ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_focus_seq, "Getset curFoc test sequence", FALSE);
     }
@@ -683,6 +682,7 @@ static void test_getters_setters(INT nTabs)
     /* Testing CurSel */
     {
         INT selectionIndex;
+        INT focusIndex;
 
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -691,6 +691,10 @@ static void test_getters_setters(INT nTabs)
             expect(1, selectionIndex);
         selectionIndex = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
             expect(nTabs-1, selectionIndex);
+
+        /* Focus should switch with selection */
+        focusIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
+            expect(nTabs-1, focusIndex);
 
         /* Testing CurSel with negative value */
         SendMessage(hTab, TCM_SETCURSEL, -10, 0);
@@ -704,9 +708,7 @@ static void test_getters_setters(INT nTabs)
         selectionIndex = SendMessage(hTab, TCM_SETCURSEL, nTabs+1, 0);
             expect(-1, selectionIndex);
         selectionIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
-        todo_wine{
             expect(1, selectionIndex);
-        }
 
         ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_sel_seq, "Getset curSel test sequence", FALSE);
         ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Getset curSel test parent sequence", FALSE);
