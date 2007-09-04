@@ -4211,10 +4211,12 @@ static void test_gettext(void)
 
 static void test_GetUpdateRect(void)
 {
+    MSG msg;
+    BOOL ret, parent_wm_paint, grandparent_wm_paint;
     RECT rc1, rc2;
     HWND hgrandparent, hparent, hchild;
     WNDCLASSA cls;
-    const char* classNameA = "GetUpdateRectClass";
+    static const char classNameA[] = "GetUpdateRectClass";
 
     hgrandparent = CreateWindowA("static", "grandparent", WS_OVERLAPPEDWINDOW,
                                  0, 0, 100, 100, NULL, NULL, 0, NULL);
@@ -4230,16 +4232,32 @@ static void test_GetUpdateRect(void)
 
     ShowWindow(hchild, SW_HIDE);
     SetRect(&rc2, 0, 0, 0, 0);
-    GetUpdateRect(hgrandparent, &rc1, FALSE);
+    ret = GetUpdateRect(hgrandparent, &rc1, FALSE);
+    ok(!ret, "GetUpdateRect returned not empty region\n");
     ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d,%d,%d) / (%d,%d,%d,%d)\n",
        rc1.left, rc1.top, rc1.right, rc1.bottom,
        rc2.left, rc2.top, rc2.right, rc2.bottom);
 
     SetRect(&rc2, 10, 10, 40, 40);
-    GetUpdateRect(hparent, &rc1, FALSE);
+    ret = GetUpdateRect(hparent, &rc1, FALSE);
+    ok(ret, "GetUpdateRect returned empty region\n");
     ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d,%d,%d) / (%d,%d,%d,%d)\n",
             rc1.left, rc1.top, rc1.right, rc1.bottom,
             rc2.left, rc2.top, rc2.right, rc2.bottom);
+
+    parent_wm_paint = FALSE;
+    grandparent_wm_paint = FALSE;
+    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        if (msg.message == WM_PAINT)
+        {
+            if (msg.hwnd == hgrandparent) grandparent_wm_paint = TRUE;
+            if (msg.hwnd == hparent) parent_wm_paint = TRUE;
+        }
+        DispatchMessage(&msg);
+    }
+    ok(parent_wm_paint, "WM_PAINT should have been recieved in parent\n");
+    ok(!grandparent_wm_paint, "WM_PAINT should NOT have been recieved in grandparent\n");
 
     DestroyWindow(hgrandparent);
 
@@ -4259,7 +4277,7 @@ static void test_GetUpdateRect(void)
        return;
     }
 
-    hgrandparent = CreateWindowA("static", "grandparent", WS_OVERLAPPEDWINDOW,
+    hgrandparent = CreateWindowA(classNameA, "grandparent", WS_OVERLAPPEDWINDOW,
                                  0, 0, 100, 100, NULL, NULL, 0, NULL);
 
     hparent = CreateWindowA(classNameA, "parent", WS_CHILD|WS_VISIBLE,
@@ -4271,18 +4289,38 @@ static void test_GetUpdateRect(void)
     ShowWindow(hgrandparent, SW_SHOW);
     UpdateWindow(hgrandparent);
 
+    ret = GetUpdateRect(hgrandparent, &rc1, FALSE);
+    ok(!ret, "GetUpdateRect returned not empty region\n");
+
     ShowWindow(hchild, SW_HIDE);
+
     SetRect(&rc2, 0, 0, 0, 0);
-    GetUpdateRect(hgrandparent, &rc1, FALSE);
+    ret = GetUpdateRect(hgrandparent, &rc1, FALSE);
+    ok(!ret, "GetUpdateRect returned not empty region\n");
     ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d,%d,%d) / (%d,%d,%d,%d)\n",
        rc1.left, rc1.top, rc1.right, rc1.bottom,
        rc2.left, rc2.top, rc2.right, rc2.bottom);
 
     SetRect(&rc2, 10, 10, 40, 40);
-    GetUpdateRect(hparent, &rc1, FALSE);
+    ret = GetUpdateRect(hparent, &rc1, FALSE);
+    ok(ret, "GetUpdateRect returned empty region\n");
     ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d,%d,%d) / (%d,%d,%d,%d)\n",
             rc1.left, rc1.top, rc1.right, rc1.bottom,
             rc2.left, rc2.top, rc2.right, rc2.bottom);
+
+    parent_wm_paint = FALSE;
+    grandparent_wm_paint = FALSE;
+    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        if (msg.message == WM_PAINT)
+        {
+            if (msg.hwnd == hgrandparent) grandparent_wm_paint = TRUE;
+            if (msg.hwnd == hparent) parent_wm_paint = TRUE;
+        }
+        DispatchMessage(&msg);
+    }
+    ok(parent_wm_paint, "WM_PAINT should have been recieved in parent\n");
+    ok(!grandparent_wm_paint, "WM_PAINT should NOT have been recieved in grandparent\n");
 
     DestroyWindow(hgrandparent);
 }
