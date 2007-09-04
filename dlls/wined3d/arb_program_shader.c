@@ -316,10 +316,15 @@ static const char * const shift_tab[] = {
     "coefdiv.x"  /* 15 (d2)   */
 };
 
-static void shader_arb_get_write_mask(const DWORD param, char *write_mask) {
+static void shader_arb_get_write_mask(SHADER_OPCODE_ARG* arg, const DWORD param, char *write_mask) {
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) arg->shader;
     char *ptr = write_mask;
+    char vshader = shader_is_vshader_version(This->baseShader.hex_version);
 
-    if ((param & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
+    if(vshader && shader_get_regtype(param) == WINED3DSPR_ADDR) {
+        *ptr++ = '.';
+        *ptr++ = 'x';
+    } else if ((param & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
         *ptr++ = '.';
         if (param & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
         if (param & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
@@ -472,7 +477,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
 
   if (!is_input) {
     char write_mask[6];
-    shader_arb_get_write_mask(param, write_mask);
+    shader_arb_get_write_mask(arg, param, write_mask);
     strcat(hwLine, write_mask);
   } else {
     char swizzle[6];
@@ -585,7 +590,7 @@ static void shader_arb_color_correction(SHADER_OPCODE_ARG* arg) {
     }
 
     pshader_get_register_name(arg->dst, reg);
-    shader_arb_get_write_mask(arg->dst, writemask);
+    shader_arb_get_write_mask(arg, arg->dst, writemask);
     if(strlen(writemask) == 0) strcpy(writemask, ".xyzw");
 
     switch(fmt) {
@@ -786,7 +791,7 @@ void pshader_hw_bem(SHADER_OPCODE_ARG* arg) {
     char dst_wmask[20];
 
     pshader_get_register_name(arg->dst, dst_name);
-    shader_arb_get_write_mask(arg->dst, dst_wmask);
+    shader_arb_get_write_mask(arg, arg->dst, dst_wmask);
     strcat(dst_name, dst_wmask);
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0]);
@@ -817,7 +822,7 @@ void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
 
     /* Handle output register */
     pshader_get_register_name(arg->dst, dst_name);
-    shader_arb_get_write_mask(arg->dst, dst_wmask);
+    shader_arb_get_write_mask(arg, arg->dst, dst_wmask);
     strcat(dst_name, dst_wmask);
 
     /* Generate input register names (with modifiers) */
@@ -846,7 +851,7 @@ void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
 
     /* Handle output register */
     pshader_get_register_name(arg->dst, dst_name);
-    shader_arb_get_write_mask(arg->dst, dst_wmask);
+    shader_arb_get_write_mask(arg, arg->dst, dst_wmask);
     strcat(dst_name, dst_wmask);
 
     /* Generate input register names (with modifiers) */
@@ -906,7 +911,7 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
           /* Handle output register */
           pshader_get_register_name(dst, output_rname);
           strcpy(operands[0], output_rname);
-          shader_arb_get_write_mask(dst, output_wmask);
+          shader_arb_get_write_mask(arg, dst, output_wmask);
           strcat(operands[0], output_wmask);
 
           if (saturate && (shift == 0))
@@ -992,7 +997,7 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
     DWORD hex_version = This->baseShader.hex_version;
 
     char tmp[20];
-    shader_arb_get_write_mask(dst, tmp);
+    shader_arb_get_write_mask(arg, dst, tmp);
     if (hex_version != WINED3DPS_VERSION(1,4)) {
         DWORD reg = dst & WINED3DSP_REGNUM_MASK;
         shader_addline(buffer, "MOV_SAT T%u%s, fragment.texcoord[%u];\n", reg, tmp, reg);
