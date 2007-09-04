@@ -73,6 +73,7 @@ interface IServer
   void square_out(int x, [out] int *y);
   void square_ref([in, out] int *x);
   int str_length([string] const char *s);
+  int cstr_length([string, size_is(n)] const char *s, int n);
   int dot_self(vector_t *v);
   double square_half(double x, [out] double *y);
   float square_half_float(float x, [out] float *y);

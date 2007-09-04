@@ -85,6 +85,15 @@ s_str_length(const char *s)
 }
 
 int
+s_cstr_length(const char *s, int n)
+{
+  int len = 0;
+  while (0 < n-- && *s++)
+    ++len;
+  return len;
+}
+
+int
 s_dot_self(vector_t *v)
 {
   return s_square(v->x) + s_square(v->y) + s_square(v->z);
@@ -616,6 +625,7 @@ pointer_tests(void)
 static void
 array_tests(void)
 {
+  static const char str1[25] = "Hello";
   static int m[2][3][4] =
   {
     {{1, 2, 3, 4}, {-1, -3, -5, -7}, {0, 2, 4, 6}},
@@ -627,6 +637,8 @@ array_tests(void)
   cpsc_t cpsc;
   cs_t *cs;
   int n;
+
+  ok(cstr_length(str1, sizeof str1) == strlen(str1), "RPC cstr_length\n");
 
   ok(sum_fixed_int_3d(m) == 4116, "RPC sum_fixed_int_3d\n");
 
