@@ -486,10 +486,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
   }
 }
 
-static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const char *dst_str, const char *coord_reg, BOOL projective) {
-    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
-
+static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const char *dst_str, const char *coord_reg, BOOL projected) {
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     const char *tex_type;
@@ -516,7 +513,7 @@ static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const ch
             tex_type = "";
     }
 
-    if (projective && deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED) {
+    if (projected) {
         shader_addline(buffer, "TXP %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
     } else {
         shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
@@ -962,11 +959,13 @@ void pshader_hw_texkill(SHADER_OPCODE_ARG* arg) {
 
 void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
 
     DWORD dst = arg->dst;
     DWORD* src = arg->src;
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD hex_version = This->baseShader.hex_version;
+    BOOL projected = FALSE;
 
     char reg_dest[40];
     char reg_coord[40];
@@ -991,7 +990,32 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
   else
      reg_sampler_code = src[1] & WINED3DSP_REGNUM_MASK;
 
-  shader_hw_sample(arg, reg_sampler_code, reg_dest, reg_coord, TRUE);
+  /* projection flag:
+   * 1.1, 1.2, 1.3: Use WINED3DTSS_TEXTURETRANSFORMFLAGS
+   * 1.4: Use WINED3DSPSM_DZ or WINED3DSPSM_DW on src[0]
+   * 2.0+: Use WINED3DSI_TEXLD_PROJECT on the opcode
+   */
+  if(hex_version < WINED3DPS_VERSION(1,4)) {
+      DWORD flags = 0;
+      if(reg_sampler_code < MAX_TEXTURES) {
+        flags = deviceImpl->stateBlock->textureState[reg_sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+      }
+      if (flags & WINED3DTTFF_PROJECTED) {
+          projected = TRUE;
+      }
+  } else if(hex_version < WINED3DPS_VERSION(2,0)) {
+      DWORD src_mod = arg->src[0] & WINED3DSP_SRCMOD_MASK;
+      if (src_mod == WINED3DSPSM_DZ) {
+          projected = TRUE;
+      } else if(src_mod == WINED3DSPSM_DW) {
+          projected = TRUE;
+      }
+  } else {
+      if(arg->opcode_token & WINED3DSI_TEXLD_PROJECT) {
+          projected = TRUE;
+      }
+  }
+  shader_hw_sample(arg, reg_sampler_code, reg_dest, reg_coord, projected);
 }
 
 void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
@@ -1018,6 +1042,9 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
 void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
 
      SHADER_BUFFER* buffer = arg->buffer;
+     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+     DWORD flags;
 
      DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
      DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
@@ -1026,12 +1053,16 @@ void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
      sprintf(dst_str, "T%u", reg1);
      shader_addline(buffer, "MOV TMP.r, T%u.a;\n", reg2);
      shader_addline(buffer, "MOV TMP.g, T%u.r;\n", reg2);
-     shader_hw_sample(arg, reg1, dst_str, "TMP", TRUE);
+     flags = reg1 < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg1][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+     shader_hw_sample(arg, reg1, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED);
 }
 
 void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
 
      SHADER_BUFFER* buffer = arg->buffer;
+     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+     DWORD flags;
 
      DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
      DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
@@ -1040,7 +1071,8 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
      sprintf(dst_str, "T%u", reg1);
      shader_addline(buffer, "MOV TMP.r, T%u.g;\n", reg2);
      shader_addline(buffer, "MOV TMP.g, T%u.b;\n", reg2);
-     shader_hw_sample(arg, reg1, dst_str, "TMP", TRUE);
+     flags = reg1 < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg1][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+     shader_hw_sample(arg, reg1, dst_str, "TMP", FALSE);
 }
 
 void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
@@ -1080,8 +1112,14 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
 
         shader_hw_sample(arg, reg_dest_code, reg_coord, "TMP", FALSE);
     } else {
+        DWORD tf;
+        if(reg_dest_code < MAX_TEXTURES) {
+            tf = ((IWineD3DDeviceImpl*) This->baseShader.device)->stateBlock->textureState[reg_dest_code][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+        } else {
+            tf = 0;
+        }
         /* Without a bump matrix loaded, just sample with the unmodified coordinates */
-        shader_hw_sample(arg, reg_dest_code, reg_coord, reg_coord, TRUE);
+        shader_hw_sample(arg, reg_dest_code, reg_coord, reg_coord, tf & WINED3DTTFF_PROJECTED);
     }
 }
 
@@ -1097,6 +1135,9 @@ void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 
 void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    DWORD flags;
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     char dst_str[8];
@@ -1105,7 +1146,8 @@ void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
     sprintf(dst_str, "T%u", reg);
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 TMP.y, T%u, %s;\n", reg, src0_name);
-    shader_hw_sample(arg, reg, dst_str, "TMP", TRUE);
+    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+    shader_hw_sample(arg, reg, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED);
 }
 
 void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
@@ -1124,6 +1166,8 @@ void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
 void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    DWORD flags;
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
@@ -1135,13 +1179,16 @@ void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
 
     /* Sample the texture using the calculated coordinates */
     sprintf(dst_str, "T%u", reg);
-    shader_hw_sample(arg, reg, dst_str, "TMP", TRUE);
+    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+    shader_hw_sample(arg, reg, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED);
     current_state->current_row = 0;
 }
 
 void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    DWORD flags;
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
@@ -1168,13 +1215,16 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
     /* Sample the texture using the calculated coordinates */
     sprintf(dst_str, "T%u", reg);
-    shader_hw_sample(arg, reg, dst_str, "TMP", TRUE);
+    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+    shader_hw_sample(arg, reg, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED);
     current_state->current_row = 0;
 }
 
 void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    DWORD flags;
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     DWORD reg3 = arg->src[1] & WINED3DSP_REGNUM_MASK;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
@@ -1202,7 +1252,8 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     /* Sample the texture using the calculated coordinates */
     sprintf(dst_str, "T%u", reg);
-    shader_hw_sample(arg, reg, dst_str, "TMP", TRUE);
+    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+    shader_hw_sample(arg, reg, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED);
     current_state->current_row = 0;
 }
 
