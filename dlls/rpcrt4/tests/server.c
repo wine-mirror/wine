@@ -226,6 +226,16 @@ s_sum_cps(cps_t *cps)
 }
 
 int
+s_sum_cpsc(cpsc_t *cpsc)
+{
+  int sum = 0;
+  int i;
+  for (i = 0; i < (cpsc->c ? cpsc->a : cpsc->b); ++i)
+    sum += cpsc->ca[i];
+  return sum;
+}
+
+int
 s_square_puint(puint_t p)
 {
   int n = atoi(p);
@@ -296,6 +306,27 @@ s_square_encue(encue_t *eue)
   default:
     return 0.0;
   }
+}
+
+int
+s_sum_toplev_conf_2n(int *x, int n)
+{
+  int sum = 0;
+  int i;
+  for (i = 0; i < 2 * n; ++i)
+    sum += x[i];
+  return sum;
+}
+
+int
+s_sum_toplev_conf_cond(int *x, int a, int b, int c)
+{
+  int sum = 0;
+  int n = c ? a : b;
+  int i;
+  for (i = 0; i < n; ++i)
+    sum += x[i];
+  return sum;
 }
 
 void
@@ -584,6 +615,7 @@ array_tests(void)
   static int c[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   static vector_t vs[2] = {{1, -2, 3}, {4, -5, -6}};
   cps_t cps;
+  cpsc_t cpsc;
   cs_t *cs;
   int n;
 
@@ -616,6 +648,21 @@ array_tests(void)
   cps.n = 3;
   cps.ca2 = &c[3];
   ok(sum_cps(&cps) == 53, "RPC sum_cps\n");
+
+  cpsc.a = 4;
+  cpsc.b = 5;
+  cpsc.c = 1;
+  cpsc.ca = c;
+  ok(sum_cpsc(&cpsc) == 6, "RPC sum_cpsc\n");
+  cpsc.a = 4;
+  cpsc.b = 5;
+  cpsc.c = 0;
+  cpsc.ca = c;
+  ok(sum_cpsc(&cpsc) == 10, "RPC sum_cpsc\n");
+
+  ok(sum_toplev_conf_2n(c, 3) == 15, "RPC sum_toplev_conf_2n\n");
+  ok(sum_toplev_conf_cond(c, 5, 6, 1) == 10, "RPC sum_toplev_conf_cond\n");
+  ok(sum_toplev_conf_cond(c, 5, 6, 0) == 15, "RPC sum_toplev_conf_cond\n");
 }
 
 static void

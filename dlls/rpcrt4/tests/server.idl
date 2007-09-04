@@ -127,8 +127,17 @@ interface IServer
     int n;
   } cps_t;
 
+  typedef struct
+  {
+    [size_is(c ? a : b)] int *ca;
+    int a;
+    int b;
+    int c;
+  } cpsc_t;
+
   int sum_cs(cs_t *cs);
   int sum_cps(cps_t *cps);
+  int sum_cpsc(cpsc_t *cpsc);
 
   typedef [wire_marshal(int)] void *puint_t;
   int square_puint(puint_t p);
@@ -176,5 +185,9 @@ interface IServer
   int sum_pcarr([size_is(n)] int *a[], int n);
   int enum_ord(e_t e);
   double square_encue(encue_t *eue);
+
+  int sum_toplev_conf_2n([size_is(n * 2)] int *x, int n);
+  int sum_toplev_conf_cond([size_is(c ? a : b)] int *x, int a, int b, int c);
+
   void stop(void);
 }
