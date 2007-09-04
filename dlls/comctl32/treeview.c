@@ -946,6 +946,8 @@ TREEVIEW_RecalculateVisibleOrder(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *start)
     for (item = start; item != NULL;
          item = TREEVIEW_GetNextListItem(infoPtr, item))
     {
+	if (!ISVISIBLE(item) && order > 0)
+		TREEVIEW_ComputeItemInternalMetrics(infoPtr, item);
 	item->visibleOrder = order;
 	order += item->iIntegral;
     }
