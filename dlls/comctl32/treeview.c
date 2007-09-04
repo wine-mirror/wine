@@ -2033,7 +2033,10 @@ TREEVIEW_GetItemRect(const TREEVIEW_INFO *infoPtr, BOOL fTextRect, LPRECT lpRect
 	lpRect->bottom = wineItem->rect.bottom;
 
 	lpRect->left = wineItem->textOffset;
-	lpRect->right = wineItem->textOffset + wineItem->textWidth;
+	if (!wineItem->textWidth)
+		TREEVIEW_ComputeTextWidth(infoPtr, wineItem, 0);
+
+	lpRect->right = wineItem->textOffset + wineItem->textWidth + 4;
     }
     else
     {
