@@ -762,7 +762,10 @@ static int sock_get_error( int err )
 #ifdef EREMOTE
         case EREMOTE:           return WSAEREMOTE;
 #endif
-    default: errno=err; perror("sock_set_error"); return WSAEFAULT;
+        default:
+            errno = err;
+            perror("wineserver: sock_get_error() can't map error");
+            return WSAEFAULT;
     }
 }
 
