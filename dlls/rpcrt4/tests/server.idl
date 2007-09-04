@@ -189,5 +189,15 @@ interface IServer
   int sum_toplev_conf_2n([size_is(n * 2)] int *x, int n);
   int sum_toplev_conf_cond([size_is(c ? a : b)] int *x, int a, int b, int c);
 
+  typedef struct
+  {
+    char c;
+    int i;
+    short s;
+    double d;
+  } aligns_t;
+
+  double sum_aligns(aligns_t *a);
+
   void stop(void);
 }

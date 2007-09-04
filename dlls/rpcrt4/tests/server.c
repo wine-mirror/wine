@@ -329,6 +329,12 @@ s_sum_toplev_conf_cond(int *x, int a, int b, int c)
   return sum;
 }
 
+double
+s_sum_aligns(aligns_t *a)
+{
+  return a->c + a->i + a->s + a->d;
+}
+
 void
 s_stop(void)
 {
@@ -374,6 +380,7 @@ basic_tests(void)
   static pvectors_t pvecs = {&vec1, &pvec2};
   static sp_inner_t spi = {42};
   static sp_t sp = {-13, &spi};
+  static aligns_t aligns = {3, 4, 5, 6.0};
   pints_t pints;
   ptypes_t ptypes;
   int i1, i2, i3, *pi2, *pi3, **ppi3;
@@ -447,6 +454,8 @@ basic_tests(void)
   ok(enum_ord(E2) == 2, "RPC enum_ord\n");
   ok(enum_ord(E3) == 3, "RPC enum_ord\n");
   ok(enum_ord(E4) == 4, "RPC enum_ord\n");
+
+  ok(sum_aligns(&aligns) == 18.0, "RPC sum_aligns\n");
 }
 
 static void
