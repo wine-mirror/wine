@@ -170,8 +170,8 @@
  179 stdcall -noname SHGetNewLinkInfoA(str str ptr long long)
  180 stdcall -noname SHGetNewLinkInfoW(wstr wstr ptr long long)
  181 stdcall -noname RegisterShellHook(long long)
- 182 varargs -noname ShellMessageBoxW(long long long str long)
- 183 varargs -noname ShellMessageBoxA(long long long str long)
+ 182 varargs -noname ShellMessageBoxW(long long wstr wstr long)
+ 183 varargs -noname ShellMessageBoxA(long long str str long)
  184 stdcall -noname ArrangeWindows(long long long long long)
  185 stub SHHandleDiskFull
  186 stdcall -noname ILGetDisplayNameEx(ptr ptr ptr long)
