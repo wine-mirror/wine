@@ -173,7 +173,7 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 			buflen = ds_hel_buflen;
 		else /* In case we move from hw accelerated to waveout */
 			buflen = device->buflen;
-		buflen -= ds_hel_buflen % device->pwfx->nBlockAlign;
+		buflen -= buflen % device->pwfx->nBlockAlign;
 
 		TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
 
@@ -223,11 +223,13 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 			}
 		}
 
-		overshot = device->buflen % device->helfrags;
+		overshot = device->buflen % device->fraglen;
 		/* sanity */
 		if(overshot)
 		{
-			WARN("helfrags (%d x %d) doesn't fit entirely in buflen (%d) overshot: %d\n", device->helfrags, device->fraglen, device->buflen, overshot);
+			overshot -= overshot % device->pwfx->nBlockAlign;
+			if (overshot)
+				WARN("helfrags (%d x %d) doesn't fit entirely in buflen (%d) overshot: %d\n", device->helfrags, device->fraglen, device->buflen, overshot);
 			device->pwave[device->helfrags - 1].dwBufferLength += overshot;
 		}
 
