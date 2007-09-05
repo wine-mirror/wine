@@ -73,7 +73,6 @@ struct IDsDriverImpl
     /* IDsDriverImpl fields */
     IDsDriverBufferImpl* primary;
     UINT wDevID;
-    DWORD forceformat;
 };
 
 struct IDsDriverBufferImpl
@@ -396,8 +395,6 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx)
     {
         if (errno != EBUSY || !This->pcm)
         {
-            /* **** */
-            LeaveCriticalSection(&This->pcm_crst);
             WARN("Cannot open sound device: %s\n", snd_strerror(err));
             return DSERR_GENERIC;
         }
@@ -407,8 +404,6 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx)
         err = snd_pcm_open(&pcm, WOutDev[This->drv->wDevID].pcmname, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
         if (err < 0)
         {
-            /* **** */
-            LeaveCriticalSection(&This->pcm_crst);
             WARN("Cannot open sound device: %s\n", snd_strerror(err));
             return DSERR_BUFFERLOST;
         }
@@ -433,12 +428,7 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx)
     err = snd_pcm_hw_params_set_rate_near(pcm, hw_params, &rate, NULL);
     if (err < 0) { rate = pwfx->nSamplesPerSec; WARN("Could not set rate\n"); goto err; }
 
-    if (!ALSA_NearMatch(rate, pwfx->nSamplesPerSec) && (This->drv->forceformat++))
-    {
-        WARN("Could not set exact rate %d, instead %d, bombing out\n", pwfx->nSamplesPerSec, rate);
-        goto err;
-    }
-    else if (!ALSA_NearMatch(rate, pwfx->nSamplesPerSec))
+    if (!ALSA_NearMatch(rate, pwfx->nSamplesPerSec))
     {
         WARN("Could not set sound rate to %d, but instead to %d\n", pwfx->nSamplesPerSec, rate);
         pwfx->nSamplesPerSec = rate;
@@ -496,7 +486,6 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetFormat(PIDSDRIVERBUFFER iface, LPWA
 
     /* **** */
     EnterCriticalSection(&This->pcm_crst);
-    This->drv->forceformat = FALSE;
     hr = SetFormat(This, pwfx);
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
