@@ -2078,6 +2078,7 @@ typedef struct IWineD3DPixelShaderImpl {
     /* Some information about the shader behavior */
     char                        needsbumpmat;
     UINT                        bumpenvmatconst;
+    UINT                        luminanceconst;
     char                        srgb_enabled;
     char                        srgb_mode_hardcoded;
     UINT                        srgb_low_const;
