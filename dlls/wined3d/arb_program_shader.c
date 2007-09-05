@@ -1449,8 +1449,8 @@ void pshader_hw_texm3x2depth(SHADER_OPCODE_ARG* arg) {
 }
 
 /** Handles transforming all WINED3DSIO_M?x? opcodes for
-    Vertex shaders to ARB_vertex_program codes */
-void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
+    Vertex/Pixel shaders to ARB_vertex_program codes */
+void shader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
 
     int i;
     int nComponents = 0;

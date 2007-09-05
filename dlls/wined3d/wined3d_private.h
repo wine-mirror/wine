@@ -1793,10 +1793,10 @@ extern void pshader_hw_texreg2rgb(SHADER_OPCODE_ARG* arg);
 /* ARB vertex / pixel shader common prototypes */
 extern void shader_hw_nrm(SHADER_OPCODE_ARG* arg);
 extern void shader_hw_sincos(SHADER_OPCODE_ARG* arg);
+extern void shader_hw_mnxn(SHADER_OPCODE_ARG* arg);
 
 /* ARB vertex shader prototypes */
 extern void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
-extern void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg);
 extern void vshader_hw_rsq_rcp(SHADER_OPCODE_ARG* arg);
 
 /* GLSL helper functions */
