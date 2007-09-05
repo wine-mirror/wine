@@ -108,8 +108,8 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {WINED3DSIO_DST,    "dst",  "DST", 1, 3, vshader_hw_map2gl,   shader_glsl_dst, 0, 0},
     {WINED3DSIO_LRP,    "lrp",  "LRP", 1, 4, NULL,                shader_glsl_lrp, 0, 0},
     {WINED3DSIO_FRC,    "frc",  "FRC", 1, 2, vshader_hw_map2gl,   shader_glsl_map2gl, 0, 0},
-    {WINED3DSIO_POW,    "pow",  "POW", 1, 3, NULL,                shader_glsl_pow, 0, 0},
-    {WINED3DSIO_CRS,    "crs",  "XPS", 1, 3, NULL,                shader_glsl_cross, 0, 0},
+    {WINED3DSIO_POW,    "pow",  "POW", 1, 3, vshader_hw_map2gl,   shader_glsl_pow, 0, 0},
+    {WINED3DSIO_CRS,    "crs",  "XPD", 1, 3, vshader_hw_map2gl,   shader_glsl_cross, 0, 0},
     /* TODO: sng can possibly be performed a  s
         RCP tmp, vec
         MUL out, tmp, vec*/
