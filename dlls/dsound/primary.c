@@ -71,6 +71,8 @@ static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
 HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 {
 	HRESULT hres = DS_OK;
+	TRACE("(%p, %d)\n", device, forcewave);
+
 	if (device->driver)
 	{
 		IDsDriver_Close(device->driver);
@@ -336,7 +338,7 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 		err = IDsDriverBuffer_Stop(device->hwbuf);
 		if (err == DSERR_BUFFERLOST) {
 			DSOUND_PrimaryClose(device);
-			err = DSOUND_ReopenDevice(device, !device->driver);
+			err = DSOUND_ReopenDevice(device, FALSE);
 			if (FAILED(err))
 				ERR("DSOUND_ReopenDevice failed\n");
 			else
@@ -454,6 +456,7 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex,
 				err = DS_OK;
 			goto done;
 		}
+
 		if (err == S_FALSE)
 		{
 			/* ALSA specific: S_FALSE tells that recreation was successful,
@@ -476,19 +479,27 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex,
 	{
 		DSOUND_PrimaryClose(device);
 
-		if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT)
+		err = DSOUND_ReopenDevice(device, FALSE);
+		if (FAILED(err))
 		{
-			err = DSOUND_ReopenDevice(device, FALSE);
-			if (FAILED(err))
-			{
-				WARN("DSOUND_ReopenDevice failed: %08x\n", err);
-				goto done;
-			}
+			WARN("DSOUND_ReopenDevice failed: %08x\n", err);
+			goto done;
 		}
 		err = DSOUND_PrimaryOpen(device);
 		if (err != DS_OK) {
 			WARN("DSOUND_PrimaryOpen failed\n");
 			goto done;
+		}
+
+		if (wfex->nSamplesPerSec/100 != device->pwfx->nSamplesPerSec/100 && forced && device->buffer)
+		{
+			DSOUND_PrimaryClose(device);
+			device->pwfx->nSamplesPerSec = wfex->nSamplesPerSec;
+			err = DSOUND_ReopenDevice(device, TRUE);
+			if (FAILED(err))
+				WARN("DSOUND_ReopenDevice(2) failed: %08x\n", err);
+			else if (FAILED((err = DSOUND_PrimaryOpen(device))))
+				WARN("DSOUND_PrimaryOpen(2) failed: %08x\n", err);
 		}
 	}
 
