@@ -857,21 +857,25 @@ void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
     char dst_wmask[20];
     char dst_name[50];
     char src_name[3][50];
+    DWORD shift = (arg->dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
+    BOOL sat = (arg->dst & WINED3DSP_DSTMOD_MASK) & WINED3DSPDM_SATURATE;
 
     /* FIXME: support output modifiers */
 
     /* Handle output register */
     pshader_get_register_name(arg->dst, dst_name);
     shader_arb_get_write_mask(arg, arg->dst, dst_wmask);
-    strcat(dst_name, dst_wmask);
 
     /* Generate input register names (with modifiers) */
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0]);
     pshader_gen_input_modifier_line(buffer, arg->src[1], 1, src_name[1]);
     pshader_gen_input_modifier_line(buffer, arg->src[2], 2, src_name[2]);
 
-    shader_addline(buffer, "CMP %s, %s, %s, %s;\n", dst_name,
-        src_name[0], src_name[2], src_name[1]);
+    shader_addline(buffer, "CMP%s %s%s, %s, %s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask,
+                   src_name[0], src_name[2], src_name[1]);
+
+    if (shift != 0)
+        pshader_gen_output_modifier_line(buffer, FALSE, dst_wmask, shift, dst_name);
 }
 
 /* Map the opcode 1-to-1 to the GL code */
