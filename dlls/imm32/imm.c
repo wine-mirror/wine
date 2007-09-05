@@ -1981,6 +1981,7 @@ static void PaintDefaultIMEWnd(HWND hwnd)
     LPBYTE compdata = NULL;
     HMONITOR monitor;
     MONITORINFO mon_info;
+    INT offX=0, offY=0;
 
     GetClientRect(hwnd,&rect);
     FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
@@ -2005,24 +2006,30 @@ static void PaintDefaultIMEWnd(HWND hwnd)
         pt.y = size.cy;
         LPtoDP(hdc,&pt,1);
 
-        if (root_context->IMC.cfCompForm.dwStyle == CFS_POINT ||
-            root_context->IMC.cfCompForm.dwStyle == CFS_FORCE_POSITION)
+        /*
+         * How this works based on tests on windows:
+         * CFS_POINT: then we start our window at the point and grow it as large
+         *    as it needs to be for the string.
+         * CFS_RECT:  we still use the ptCurrentPos as a starting point and our
+         *    window is only as large as we need for the string, but we do not
+         *    grow such that our window exceeds the given rect.  Wrapping if
+         *    needed and possible.   If our ptCurrentPos is outside of our rect
+         *    then no window is displayed.
+         * CFS_FORCE_POSITION: appears to behave just like CFS_POINT
+         *    maybe becase the default MSIME does not do any IME adjusting.
+         */
+        if (root_context->IMC.cfCompForm.dwStyle != CFS_DEFAULT)
         {
             POINT cpt = root_context->IMC.cfCompForm.ptCurrentPos;
             ClientToScreen(root_context->IMC.hWnd,&cpt);
             rect.left = cpt.x;
             rect.top = cpt.y;
-            rect.right = rect.left + pt.x + 20;
-            rect.bottom = rect.top + pt.y + 20;
+            rect.right = rect.left + pt.x;
+            rect.bottom = rect.top + pt.y;
+            offX=offY=10;
             monitor = MonitorFromPoint(cpt, MONITOR_DEFAULTTOPRIMARY);
         }
-        else if (root_context->IMC.cfCompForm.dwStyle == CFS_RECT)
-        {
-            rect = root_context->IMC.cfCompForm.rcArea;
-            MapWindowPoints( root_context->IMC.hWnd, 0, (POINT *)&rect, 2 );
-            monitor = MonitorFromRect(&rect, MONITOR_DEFAULTTOPRIMARY);
-        }
-        else
+        else /* CFS_DEFAULT */
         {
             /* Windows places the default IME window in the bottom left */
             HWND target = root_context->IMC.hWnd;
@@ -2032,34 +2039,47 @@ static void PaintDefaultIMEWnd(HWND hwnd)
             rect.top = rect.bottom;
             rect.right = rect.left + pt.x + 20;
             rect.bottom = rect.top + pt.y + 20;
+            offX=offY=10;
             monitor = MonitorFromWindow(target, MONITOR_DEFAULTTOPRIMARY);
         }
 
-        /* make sure we are on the desktop */
-        mon_info.cbSize = sizeof(mon_info);
-        GetMonitorInfoW(monitor, &mon_info);
+        if (root_context->IMC.cfCompForm.dwStyle == CFS_RECT)
+        {
+            RECT client;
+            client =root_context->IMC.cfCompForm.rcArea;
+            MapWindowPoints( root_context->IMC.hWnd, 0, (POINT *)&client, 2 );
+            IntersectRect(&rect,&rect,&client);
+            /* TODO:  Wrap the input if needed */
+        }
 
-        if (rect.bottom > mon_info.rcWork.bottom)
+        if (root_context->IMC.cfCompForm.dwStyle == CFS_DEFAULT)
         {
-            int shift = rect.bottom - mon_info.rcWork.bottom;
-            rect.top -= shift;
-            rect.bottom -= shift;
-        }
-        if (rect.left < 0)
-        {
-            rect.right -= rect.left;
-            rect.left = 0;
-        }
-        if (rect.right > mon_info.rcWork.right)
-        {
-            int shift = rect.right - mon_info.rcWork.right;
-            rect.left -= shift;
-            rect.right -= shift;
+            /* make sure we are on the desktop */
+            mon_info.cbSize = sizeof(mon_info);
+            GetMonitorInfoW(monitor, &mon_info);
+
+            if (rect.bottom > mon_info.rcWork.bottom)
+            {
+                int shift = rect.bottom - mon_info.rcWork.bottom;
+                rect.top -= shift;
+                rect.bottom -= shift;
+            }
+            if (rect.left < 0)
+            {
+                rect.right -= rect.left;
+                rect.left = 0;
+            }
+            if (rect.right > mon_info.rcWork.right)
+            {
+                int shift = rect.right - mon_info.rcWork.right;
+                rect.left -= shift;
+                rect.right -= shift;
+            }
         }
 
         SetWindowPos(hwnd, HWND_TOPMOST, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOACTIVATE);
 
-        TextOutW(hdc, 10,10, CompString, compstr->dwCompStrLen);
+        TextOutW(hdc, offX,offY, CompString, compstr->dwCompStrLen);
 
         if (oldfont)
             SelectObject(hdc,oldfont);
