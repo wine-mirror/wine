@@ -381,6 +381,9 @@ HRESULT shader_get_registers_used(
                     }
                 }
             }
+            if(WINED3DSIO_NRM  == curOpcode->opcode) {
+                reg_maps->usesnrm = 1;
+            }
 
             /* This will loop over all the registers and try to
              * make a bitmask of the ones we're interested in. 
@@ -416,7 +419,7 @@ HRESULT shader_get_registers_used(
 
                 else if (WINED3DSPR_RASTOUT == regtype && reg == 1)
                     reg_maps->fog = 1;
-             }
+            }
         }
     }
 

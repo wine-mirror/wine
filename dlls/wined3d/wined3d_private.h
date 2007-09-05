@@ -1652,6 +1652,7 @@ typedef struct shader_reg_maps {
      * Use 0 as default (bit 31 is always 1 on a valid token) */
     DWORD samplers[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     char bumpmat, luminanceparams;
+    char usesnrm;
 
     /* Whether or not a loop is used in this shader */
     char loop;
@@ -1787,6 +1788,9 @@ extern void pshader_hw_texdp3(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_texm3x3(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_texm3x2depth(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_dp2add(SHADER_OPCODE_ARG* arg);
+
+/* ARB vertex / pixel shader common prototypes */
+extern void shader_hw_nrm(SHADER_OPCODE_ARG* arg);
 
 /* ARB vertex shader prototypes */
 extern void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
