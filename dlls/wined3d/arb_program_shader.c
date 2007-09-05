@@ -878,6 +878,33 @@ void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
         pshader_gen_output_modifier_line(buffer, FALSE, dst_wmask, shift, dst_name);
 }
 
+/** Process the WINED3DSIO_DP2ADD instruction in ARB.
+ * dst = dot2(src0, src1) + src2 */
+void pshader_hw_dp2add(SHADER_OPCODE_ARG* arg) {
+    SHADER_BUFFER* buffer = arg->buffer;
+    char dst_wmask[20];
+    char dst_name[50];
+    char src_name[3][50];
+    DWORD shift = (arg->dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
+    BOOL sat = (arg->dst & WINED3DSP_DSTMOD_MASK) & WINED3DSPDM_SATURATE;
+
+    pshader_get_register_name(arg->dst, dst_name);
+    shader_arb_get_write_mask(arg, arg->dst, dst_wmask);
+
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0]);
+    pshader_gen_input_modifier_line(buffer, arg->src[1], 1, src_name[1]);
+    pshader_gen_input_modifier_line(buffer, arg->src[2], 2, src_name[2]);
+
+    /* Emulate a DP2 with a DP3 and 0.0 */
+    shader_addline(buffer, "MOV TMP, %s;\n", src_name[0]);
+    shader_addline(buffer, "MOV TMP.z, 0.0;\n");
+    shader_addline(buffer, "DP3 TMP2, TMP, %s;\n", src_name[1]);
+    shader_addline(buffer, "ADD%s %s%s, TMP2, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask, src_name[2]);
+
+    if (shift != 0)
+        pshader_gen_output_modifier_line(buffer, FALSE, dst_wmask, shift, dst_name);
+}
+
 /* Map the opcode 1-to-1 to the GL code */
 void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 
