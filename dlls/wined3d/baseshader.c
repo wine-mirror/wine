@@ -315,14 +315,6 @@ HRESULT shader_get_registers_used(
             reg_maps->labels[snum] = 1;
             pToken += curOpcode->num_params;
 
-        } else if(WINED3DSIO_BEM == curOpcode->opcode) {
-            DWORD regnum = *pToken & WINED3DSP_REGNUM_MASK;
-            if(reg_maps->bumpmat != -1 && reg_maps->bumpmat != regnum) {
-                FIXME("Pixel shader uses bem or texbem instruction on more than 1 sampler\n");
-            } else {
-                reg_maps->bumpmat = regnum;
-            }
-
         /* Set texture, address, temporary registers */
         } else {
             int i, limit;
@@ -383,6 +375,13 @@ HRESULT shader_get_registers_used(
             }
             if(WINED3DSIO_NRM  == curOpcode->opcode) {
                 reg_maps->usesnrm = 1;
+            } else if(WINED3DSIO_BEM == curOpcode->opcode) {
+                DWORD regnum = *pToken & WINED3DSP_REGNUM_MASK;
+                if(reg_maps->bumpmat != -1 && reg_maps->bumpmat != regnum) {
+                    FIXME("Pixel shader uses bem or texbem instruction on more than 1 sampler\n");
+                } else {
+                    reg_maps->bumpmat = regnum;
+                }
             }
 
             /* This will loop over all the registers and try to
