@@ -824,13 +824,14 @@ void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
     char dst_wmask[20];
     char dst_name[50];
     char src_name[3][50];
+    BOOL sat = (arg->dst & WINED3DSP_DSTMOD_MASK) & WINED3DSPDM_SATURATE;
+    DWORD shift = (arg->dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
 
     /* FIXME: support output modifiers */
 
     /* Handle output register */
     pshader_get_register_name(arg->dst, dst_name);
     shader_arb_get_write_mask(arg, arg->dst, dst_wmask);
-    strcat(dst_name, dst_wmask);
 
     /* Generate input register names (with modifiers) */
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0]);
@@ -840,11 +841,14 @@ void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
     /* The coissue flag changes the semantic of the cnd instruction in <= 1.3 shaders */
     if (shader->baseShader.hex_version <= WINED3DPS_VERSION(1, 3) &&
         arg->opcode_token & WINED3DSI_COISSUE) {
-        shader_addline(buffer, "MOV %s, %s;\n", dst_name, src_name[1]);
+        shader_addline(buffer, "MOV%s %s%s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask, src_name[1]);
     } else {
         shader_addline(buffer, "ADD TMP, -%s, coefdiv.x;\n", src_name[0]);
-        shader_addline(buffer, "CMP %s, TMP, %s, %s;\n", dst_name, src_name[1], src_name[2]);
+        shader_addline(buffer, "CMP%s %s%s, TMP, %s, %s;\n",
+                                sat ? "_SAT" : "", dst_name, dst_wmask, src_name[1], src_name[2]);
     }
+    if (shift != 0)
+        pshader_gen_output_modifier_line(buffer, FALSE, dst_wmask, shift, dst_name);
 }
 
 void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
