@@ -1090,12 +1090,13 @@ void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
      DWORD flags;
 
      DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
-     DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
      char dst_str[8];
+     char src_str[50];
 
      sprintf(dst_str, "T%u", reg1);
-     shader_addline(buffer, "MOV TMP.r, T%u.a;\n", reg2);
-     shader_addline(buffer, "MOV TMP.g, T%u.r;\n", reg2);
+     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_str);
+     shader_addline(buffer, "MOV TMP.r, %s.a;\n", src_str);
+     shader_addline(buffer, "MOV TMP.g, %s.r;\n", src_str);
      flags = reg1 < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg1][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
      shader_hw_sample(arg, reg1, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED, FALSE);
 }
@@ -1108,12 +1109,13 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
      DWORD flags;
 
      DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
-     DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
      char dst_str[8];
+     char src_str[50];
 
      sprintf(dst_str, "T%u", reg1);
-     shader_addline(buffer, "MOV TMP.r, T%u.g;\n", reg2);
-     shader_addline(buffer, "MOV TMP.g, T%u.b;\n", reg2);
+     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_str);
+     shader_addline(buffer, "MOV TMP.r, %s.g;\n", src_str);
+     shader_addline(buffer, "MOV TMP.g, %s.b;\n", src_str);
      flags = reg1 < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg1][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
      shader_hw_sample(arg, reg1, dst_str, "TMP", FALSE, FALSE);
 }
