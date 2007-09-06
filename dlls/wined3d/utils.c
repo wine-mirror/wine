@@ -2534,6 +2534,8 @@ BOOL getColorBits(WINED3DFORMAT fmt, short *redSize, short *greenSize, short *bl
         case WINED3DFMT_X1R5G5B5:
         case WINED3DFMT_A1R5G5B5:
         case WINED3DFMT_R5G6B5:
+        case WINED3DFMT_X4R4G4B4:
+        case WINED3DFMT_A4R4G4B4:
         case WINED3DFMT_R3G3B2:
         case WINED3DFMT_A8P8:
         case WINED3DFMT_P8:
