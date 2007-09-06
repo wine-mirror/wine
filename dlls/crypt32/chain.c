@@ -203,6 +203,7 @@ void default_chain_engine_free(void)
 typedef struct _CertificateChain
 {
     CERT_CHAIN_CONTEXT context;
+    HCERTSTORE world;
     LONG ref;
 } CertificateChain, *PCertificateChain;
 
@@ -585,6 +586,7 @@ static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
         if (chain)
         {
             chain->ref = 1;
+            chain->world = world;
             chain->context.cbSize = sizeof(CERT_CHAIN_CONTEXT);
             memcpy(&chain->context.TrustStatus, &simpleChain->TrustStatus,
              sizeof(CERT_TRUST_STATUS));
@@ -600,7 +602,6 @@ static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
             ret = FALSE;
         *ppChain = chain;
     }
-    CertCloseStore(world, 0);
     return ret;
 }
 
@@ -663,6 +664,7 @@ static void CRYPT_FreeChainContext(PCertificateChain chain)
     for (i = 0; i < chain->context.cChain; i++)
         CRYPT_FreeSimpleChain(chain->context.rgpChain[i]);
     CryptMemFree(chain->context.rgpChain);
+    CertCloseStore(chain->world, 0);
     CryptMemFree(chain);
 }
 
