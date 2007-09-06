@@ -569,42 +569,13 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
     return ret;
 }
 
-typedef struct _CERT_CHAIN_PARA_NO_EXTRA_FIELDS {
-    DWORD            cbSize;
-    CERT_USAGE_MATCH RequestedUsage;
-} CERT_CHAIN_PARA_NO_EXTRA_FIELDS, *PCERT_CHAIN_PARA_NO_EXTRA_FIELDS;
-
-typedef struct _CERT_CHAIN_PARA_EXTRA_FIELDS {
-    DWORD            cbSize;
-    CERT_USAGE_MATCH RequestedUsage;
-    CERT_USAGE_MATCH RequestedIssuancePolicy;
-    DWORD            dwUrlRetrievalTimeout;
-    BOOL             fCheckRevocationFreshnessTime;
-    DWORD            dwRevocationFreshnessTime;
-} CERT_CHAIN_PARA_EXTRA_FIELDS, *PCERT_CHAIN_PARA_EXTRA_FIELDS;
-
-BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
+static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
  PCCERT_CONTEXT pCertContext, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
- PCERT_CHAIN_PARA pChainPara, DWORD dwFlags, LPVOID pvReserved,
- PCCERT_CHAIN_CONTEXT* ppChainContext)
+ PCertificateChain *ppChain)
 {
     PCERT_SIMPLE_CHAIN simpleChain = NULL;
     BOOL ret;
 
-    TRACE("(%p, %p, %p, %p, %p, %08x, %p, %p)\n", hChainEngine, pCertContext,
-     pTime, hAdditionalStore, pChainPara, dwFlags, pvReserved, ppChainContext);
-
-    if (!pChainPara)
-    {
-        SetLastError(E_INVALIDARG);
-        return FALSE;
-    }
-    if (ppChainContext)
-        *ppChainContext = NULL;
-    if (!hChainEngine)
-        hChainEngine = CRYPT_GetDefaultChainEngine();
-    /* FIXME: what about HCCE_LOCAL_MACHINE? */
-    /* FIXME: pChainPara is for now ignored */
     /* FIXME: only simple chains are supported for now, as CTLs aren't
      * supported yet.
      */
@@ -629,6 +600,51 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         }
         else
             ret = FALSE;
+        *ppChain = chain;
+    }
+    return ret;
+}
+
+typedef struct _CERT_CHAIN_PARA_NO_EXTRA_FIELDS {
+    DWORD            cbSize;
+    CERT_USAGE_MATCH RequestedUsage;
+} CERT_CHAIN_PARA_NO_EXTRA_FIELDS, *PCERT_CHAIN_PARA_NO_EXTRA_FIELDS;
+
+typedef struct _CERT_CHAIN_PARA_EXTRA_FIELDS {
+    DWORD            cbSize;
+    CERT_USAGE_MATCH RequestedUsage;
+    CERT_USAGE_MATCH RequestedIssuancePolicy;
+    DWORD            dwUrlRetrievalTimeout;
+    BOOL             fCheckRevocationFreshnessTime;
+    DWORD            dwRevocationFreshnessTime;
+} CERT_CHAIN_PARA_EXTRA_FIELDS, *PCERT_CHAIN_PARA_EXTRA_FIELDS;
+
+BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
+ PCCERT_CONTEXT pCertContext, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
+ PCERT_CHAIN_PARA pChainPara, DWORD dwFlags, LPVOID pvReserved,
+ PCCERT_CHAIN_CONTEXT* ppChainContext)
+{
+    BOOL ret;
+    PCertificateChain chain;
+
+    TRACE("(%p, %p, %p, %p, %p, %08x, %p, %p)\n", hChainEngine, pCertContext,
+     pTime, hAdditionalStore, pChainPara, dwFlags, pvReserved, ppChainContext);
+
+    if (!pChainPara)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (ppChainContext)
+        *ppChainContext = NULL;
+    if (!hChainEngine)
+        hChainEngine = CRYPT_GetDefaultChainEngine();
+    /* FIXME: what about HCCE_LOCAL_MACHINE? */
+    /* FIXME: pChainPara is for now ignored */
+    ret = CRYPT_BuildCandidateChainFromCert(hChainEngine, pCertContext, pTime,
+     hAdditionalStore, &chain);
+    if (ret)
+    {
         if (ppChainContext)
             *ppChainContext = (PCCERT_CHAIN_CONTEXT)chain;
         else
