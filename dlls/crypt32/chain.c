@@ -572,8 +572,6 @@ static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
     world = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     CertAddStoreToCollection(world, engine->hWorld, 0, 0);
-    if (cert->hCertStore)
-        CertAddStoreToCollection(world, cert->hCertStore, 0, 0);
     if (hAdditionalStore)
         CertAddStoreToCollection(world, hAdditionalStore, 0, 0);
     /* FIXME: only simple chains are supported for now, as CTLs aren't

@@ -1583,7 +1583,7 @@ static ChainCheck chainCheckNoStore[] = {
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus8NoStore },
-   TODO_ELEMENTS | TODO_ERROR | TODO_INFO },
+   TODO_CHAIN | TODO_ERROR | TODO_INFO },
 };
 
 /* Wednesday, Oct 1, 2007 */
