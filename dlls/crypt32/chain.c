@@ -602,6 +602,312 @@ static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
     return ret;
 }
 
+/* Makes and returns a copy of chain, up to and including element iElement. */
+static PCERT_SIMPLE_CHAIN CRYPT_CopySimpleChainToElement(
+ PCERT_SIMPLE_CHAIN chain, DWORD iElement)
+{
+    PCERT_SIMPLE_CHAIN copy = CryptMemAlloc(sizeof(CERT_SIMPLE_CHAIN));
+
+    if (copy)
+    {
+        memset(copy, 0, sizeof(CERT_SIMPLE_CHAIN));
+        copy->cbSize = sizeof(CERT_SIMPLE_CHAIN);
+        copy->rgpElement =
+         CryptMemAlloc((iElement + 1) * sizeof(PCERT_CHAIN_ELEMENT));
+        if (copy->rgpElement)
+        {
+            DWORD i;
+            BOOL ret = TRUE;
+
+            memset(copy->rgpElement, 0,
+             (iElement + 1) * sizeof(PCERT_CHAIN_ELEMENT));
+            for (i = 0; ret && i <= iElement; i++)
+            {
+                PCERT_CHAIN_ELEMENT element =
+                 CryptMemAlloc(sizeof(CERT_CHAIN_ELEMENT));
+
+                if (element)
+                {
+                    memcpy(element, chain->rgpElement[i],
+                     sizeof(CERT_CHAIN_ELEMENT));
+                    element->pCertContext = CertDuplicateCertificateContext(
+                     chain->rgpElement[i]->pCertContext);
+                    /* Reset the trust status of the copied element, it'll get
+                     * rechecked after the new chain is done.
+                     */
+                    memset(&element->TrustStatus, 0, sizeof(CERT_TRUST_STATUS));
+                    copy->rgpElement[copy->cElement++] = element;
+                }
+                else
+                    ret = FALSE;
+            }
+            if (!ret)
+            {
+                for (i = 0; i <= iElement; i++)
+                    CryptMemFree(copy->rgpElement[i]);
+                CryptMemFree(copy->rgpElement);
+                CryptMemFree(copy);
+                copy = NULL;
+            }
+        }
+        else
+        {
+            CryptMemFree(copy);
+            copy = NULL;
+        }
+    }
+    return copy;
+}
+
+static void CRYPT_FreeLowerQualityChains(PCertificateChain chain)
+{
+    DWORD i;
+
+    for (i = 0; i < chain->context.cLowerQualityChainContext; i++)
+        CertFreeCertificateChain(chain->context.rgpLowerQualityChainContext[i]);
+    CryptMemFree(chain->context.rgpLowerQualityChainContext);
+}
+
+static void CRYPT_FreeChainContext(PCertificateChain chain)
+{
+    DWORD i;
+
+    CRYPT_FreeLowerQualityChains(chain);
+    for (i = 0; i < chain->context.cChain; i++)
+        CRYPT_FreeSimpleChain(chain->context.rgpChain[i]);
+    CryptMemFree(chain->context.rgpChain);
+    CertCloseStore(chain->world, 0);
+    CryptMemFree(chain);
+}
+
+/* Makes and returns a copy of chain, up to and including element iElement of
+ * simple chain iChain.
+ */
+static PCertificateChain CRYPT_CopyChainToElement(PCertificateChain chain,
+ DWORD iChain, DWORD iElement)
+{
+    PCertificateChain copy = CryptMemAlloc(sizeof(CertificateChain));
+
+    if (copy)
+    {
+        copy->ref = 1;
+        copy->world = CertDuplicateStore(chain->world);
+        copy->context.cbSize = sizeof(CERT_CHAIN_CONTEXT);
+        /* Leave the trust status of the copied chain unset, it'll get
+         * rechecked after the new chain is done.
+         */
+        memset(&copy->context.TrustStatus, 0, sizeof(CERT_TRUST_STATUS));
+        copy->context.cLowerQualityChainContext = 0;
+        copy->context.rgpLowerQualityChainContext = NULL;
+        copy->context.fHasRevocationFreshnessTime = FALSE;
+        copy->context.dwRevocationFreshnessTime = 0;
+        copy->context.rgpChain = CryptMemAlloc(
+         (iChain + 1) * sizeof(PCERT_SIMPLE_CHAIN));
+        if (copy->context.rgpChain)
+        {
+            BOOL ret = TRUE;
+            DWORD i;
+
+            memset(copy->context.rgpChain, 0,
+             (iChain + 1) * sizeof(PCERT_SIMPLE_CHAIN));
+            if (iChain)
+            {
+                for (i = 0; ret && iChain && i < iChain - 1; i++)
+                {
+                    copy->context.rgpChain[i] =
+                     CRYPT_CopySimpleChainToElement(chain->context.rgpChain[i],
+                     chain->context.rgpChain[i]->cElement - 1);
+                    if (!copy->context.rgpChain[i])
+                        ret = FALSE;
+                }
+            }
+            else
+                i = 0;
+            if (ret)
+            {
+                copy->context.rgpChain[i] =
+                 CRYPT_CopySimpleChainToElement(chain->context.rgpChain[i],
+                 iElement);
+                if (!copy->context.rgpChain[i])
+                    ret = FALSE;
+            }
+            if (!ret)
+            {
+                CRYPT_FreeChainContext(copy);
+                copy = NULL;
+            }
+            else
+                copy->context.cChain = iChain + 1;
+        }
+        else
+        {
+            CryptMemFree(copy);
+            copy = NULL;
+        }
+    }
+    return copy;
+}
+
+static PCertificateChain CRYPT_BuildAlternateContextFromChain(
+ HCERTCHAINENGINE hChainEngine, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
+ PCertificateChain chain)
+{
+    PCertificateChainEngine engine = (PCertificateChainEngine)hChainEngine;
+    PCertificateChain alternate;
+
+    TRACE("(%p, %p, %p, %p)\n", hChainEngine, pTime, hAdditionalStore, chain);
+
+    /* Always start with the last "lower quality" chain to ensure a consistent
+     * order of alternate creation:
+     */
+    if (chain->context.cLowerQualityChainContext)
+        chain = (PCertificateChain)chain->context.rgpLowerQualityChainContext[
+         chain->context.cLowerQualityChainContext - 1];
+    /* A chain with only one element can't have any alternates */
+    if (chain->context.cChain <= 1 && chain->context.rgpChain[0]->cElement <= 1)
+        alternate = NULL;
+    else
+    {
+        DWORD i, j, flags;
+        PCCERT_CONTEXT alternateIssuer = NULL;
+
+        alternate = NULL;
+        for (i = 0; !alternateIssuer && i < chain->context.cChain; i++)
+            for (j = 0; !alternateIssuer &&
+             j < chain->context.rgpChain[i]->cElement - 1; j++)
+            {
+                PCCERT_CONTEXT subject =
+                 chain->context.rgpChain[i]->rgpElement[j]->pCertContext;
+                PCCERT_CONTEXT prevIssuer = CertDuplicateCertificateContext(
+                 chain->context.rgpChain[i]->rgpElement[j + 1]->pCertContext);
+
+                flags = CERT_STORE_REVOCATION_FLAG | CERT_STORE_SIGNATURE_FLAG;
+                alternateIssuer = CertGetIssuerCertificateFromStore(
+                 prevIssuer->hCertStore, subject, prevIssuer, &flags);
+            }
+        if (alternateIssuer)
+        {
+            i--;
+            j--;
+            alternate = CRYPT_CopyChainToElement(chain, i, j);
+            if (alternate)
+            {
+                BOOL ret = CRYPT_AddCertToSimpleChain(engine,
+                 alternate->context.rgpChain[i], alternateIssuer);
+
+                if (ret)
+                {
+                    ret = CRYPT_BuildSimpleChain(engine, alternate->world,
+                     alternate->context.rgpChain[i]);
+                    if (ret)
+                        CRYPT_CheckSimpleChain(engine,
+                         alternate->context.rgpChain[i], pTime);
+                    CRYPT_CombineTrustStatus(&alternate->context.TrustStatus,
+                     &alternate->context.rgpChain[i]->TrustStatus);
+                }
+                if (!ret)
+                {
+                    CRYPT_FreeChainContext(alternate);
+                    alternate = NULL;
+                }
+            }
+        }
+    }
+    TRACE("%p\n", alternate);
+    return alternate;
+}
+
+#define CHAIN_QUALITY_SIGNATURE_VALID 8
+#define CHAIN_QUALITY_TIME_VALID      4
+#define CHAIN_QUALITY_COMPLETE_CHAIN  2
+#define CHAIN_QUALITY_TRUSTED_ROOT    1
+
+#define CHAIN_QUALITY_HIGHEST \
+ CHAIN_QUALITY_SIGNATURE_VALID | CHAIN_QUALITY_TIME_VALID | \
+ CHAIN_QUALITY_COMPLETE_CHAIN | CHAIN_QUALITY_TRUSTED_ROOT
+
+#define IS_TRUST_ERROR_SET(TrustStatus, bits) \
+ (TrustStatus)->dwErrorStatus & (bits)
+
+static DWORD CRYPT_ChainQuality(PCertificateChain chain)
+{
+    DWORD quality = CHAIN_QUALITY_HIGHEST;
+
+    if (IS_TRUST_ERROR_SET(&chain->context.TrustStatus,
+     CERT_TRUST_IS_UNTRUSTED_ROOT))
+        quality &= ~CHAIN_QUALITY_TRUSTED_ROOT;
+    if (IS_TRUST_ERROR_SET(&chain->context.TrustStatus,
+     CERT_TRUST_IS_PARTIAL_CHAIN))
+    if (chain->context.TrustStatus.dwErrorStatus & CERT_TRUST_IS_PARTIAL_CHAIN)
+        quality &= ~CHAIN_QUALITY_COMPLETE_CHAIN;
+    if (IS_TRUST_ERROR_SET(&chain->context.TrustStatus,
+     CERT_TRUST_IS_NOT_TIME_VALID | CERT_TRUST_IS_NOT_TIME_NESTED))
+        quality &= ~CHAIN_QUALITY_TIME_VALID;
+    if (IS_TRUST_ERROR_SET(&chain->context.TrustStatus,
+     CERT_TRUST_IS_NOT_SIGNATURE_VALID))
+        quality &= ~CHAIN_QUALITY_SIGNATURE_VALID;
+    return quality;
+}
+
+/* Chooses the highest quality chain among chain and its "lower quality"
+ * alternate chains.  Returns the highest quality chain, with all other
+ * chains as lower quality chains of it.
+ */
+static PCertificateChain CRYPT_ChooseHighestQualityChain(
+ PCertificateChain chain)
+{
+    DWORD i;
+
+    /* There are always only two chains being considered:  chain, and an
+     * alternate at chain->rgpLowerQualityChainContext[i].  If the alternate
+     * has a higher quality than chain, the alternate gets assigned the lower
+     * quality contexts, with chain taking the alternate's place among the
+     * lower quality contexts.
+     */
+    for (i = 0; i < chain->context.cLowerQualityChainContext; i++)
+    {
+        PCertificateChain alternate =
+         (PCertificateChain)chain->context.rgpLowerQualityChainContext[i];
+
+        if (CRYPT_ChainQuality(alternate) > CRYPT_ChainQuality(chain))
+        {
+            alternate->context.cLowerQualityChainContext =
+             chain->context.cLowerQualityChainContext;
+            alternate->context.rgpLowerQualityChainContext =
+             chain->context.rgpLowerQualityChainContext;
+            alternate->context.rgpLowerQualityChainContext[i] =
+             (PCCERT_CHAIN_CONTEXT)chain;
+            chain = alternate;
+        }
+    }
+    return chain;
+}
+
+static BOOL CRYPT_AddAlternateChainToChain(PCertificateChain chain,
+ PCertificateChain alternate)
+{
+    BOOL ret;
+
+    if (chain->context.cLowerQualityChainContext)
+        chain->context.rgpLowerQualityChainContext =
+         CryptMemRealloc(chain->context.rgpLowerQualityChainContext,
+         (chain->context.cLowerQualityChainContext + 1) *
+         sizeof(PCCERT_CHAIN_CONTEXT));
+    else
+        chain->context.rgpLowerQualityChainContext =
+         CryptMemAlloc(sizeof(PCCERT_CHAIN_CONTEXT));
+    if (chain->context.rgpLowerQualityChainContext)
+    {
+        chain->context.rgpLowerQualityChainContext[
+         chain->context.cLowerQualityChainContext++] =
+         (PCCERT_CHAIN_CONTEXT)alternate;
+        ret = TRUE;
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
 typedef struct _CERT_CHAIN_PARA_NO_EXTRA_FIELDS {
     DWORD            cbSize;
     CERT_USAGE_MATCH RequestedUsage;
@@ -647,6 +953,26 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
      hAdditionalStore, &chain);
     if (ret)
     {
+        PCertificateChain alternate = NULL;
+
+        do {
+            alternate = CRYPT_BuildAlternateContextFromChain(hChainEngine,
+             pTime, hAdditionalStore, chain);
+
+            /* Alternate contexts are added as "lower quality" contexts of
+             * chain, to avoid loops in alternate chain creation.
+             * The highest-quality chain is chosen at the end.
+             */
+            if (alternate)
+                ret = CRYPT_AddAlternateChainToChain(chain, alternate);
+        } while (ret && alternate);
+        chain = CRYPT_ChooseHighestQualityChain(chain);
+        if (!(dwFlags & CERT_CHAIN_RETURN_LOWER_QUALITY_CONTEXTS))
+        {
+            CRYPT_FreeLowerQualityChains(chain);
+            chain->context.cLowerQualityChainContext = 0;
+            chain->context.rgpLowerQualityChainContext = NULL;
+        }
         if (ppChainContext)
             *ppChainContext = (PCCERT_CHAIN_CONTEXT)chain;
         else
@@ -654,20 +980,6 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
     }
     TRACE("returning %d\n", ret);
     return ret;
-}
-
-static void CRYPT_FreeChainContext(PCertificateChain chain)
-{
-    DWORD i;
-
-    for (i = 0; i < chain->context.cLowerQualityChainContext; i++)
-        CertFreeCertificateChain(chain->context.rgpLowerQualityChainContext[i]);
-    CryptMemFree(chain->context.rgpLowerQualityChainContext);
-    for (i = 0; i < chain->context.cChain; i++)
-        CRYPT_FreeSimpleChain(chain->context.rgpChain[i]);
-    CryptMemFree(chain->context.rgpChain);
-    CertCloseStore(chain->world, 0);
-    CryptMemFree(chain);
 }
 
 PCCERT_CHAIN_CONTEXT WINAPI CertDuplicateCertificateChain(
