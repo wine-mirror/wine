@@ -1668,13 +1668,17 @@ static void testGetCertChain(void)
      */
 
     /* Tests with an invalid cert (one whose signature is bad) */
+    SetLastError(0xdeadbeef);
     ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
      &chain);
-    ok(!ret, "Expected failure\n");
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %d\n", GetLastError());
     para.cbSize = sizeof(para);
+    SetLastError(0xdeadbeef);
     ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
      &chain);
-    ok(!ret, "Expected failure\n");
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %d\n", GetLastError());
     CertFreeCertificateContext(cert);
 
     for (i = 0; i < sizeof(chainCheck) / sizeof(chainCheck[0]); i++)

@@ -651,6 +651,11 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
+    if (!pCertContext->pCertInfo->SignatureAlgorithm.pszObjId)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     if (!hChainEngine)
         hChainEngine = CRYPT_GetDefaultChainEngine();
     /* FIXME: what about HCCE_LOCAL_MACHINE? */
