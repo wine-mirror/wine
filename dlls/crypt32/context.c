@@ -244,7 +244,7 @@ void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace)
             list->contextInterface->free(toReplace);
         }
         else
-            list_add_tail(&list->contexts, entry);
+            list_add_head(&list->contexts, entry);
         LeaveCriticalSection(&list->cs);
     }
     return context;
