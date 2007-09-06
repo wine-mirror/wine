@@ -544,8 +544,8 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
             }
             else
             {
-                TRACE("Couldn't find issuer, aborting chain creation\n");
-                ret = FALSE;
+                TRACE("Couldn't find issuer, halting chain creation\n");
+                break;
             }
         }
         if (ret)
