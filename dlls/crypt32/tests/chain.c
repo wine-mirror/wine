@@ -1660,7 +1660,6 @@ static void testGetCertChain(void)
      */
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
      sizeof(bigCert));
-    todo_wine
     ret = CertGetCertificateChain(NULL, cert, NULL, NULL, NULL, 0, NULL, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
