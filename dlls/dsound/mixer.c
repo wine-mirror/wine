@@ -802,18 +802,24 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 	TRACE("wave_fragpos = %i, wave_writepos = %i, pwqueue = %i, prebuf = %i\n",
 		wave_fragpos, wave_writepos, device->pwqueue, device->prebuf);
 
-	if(force == FALSE){
+	if (!force)
+	{
 		/* check remaining prebuffered frags */
-		prebuf_frags = DSOUND_BufPtrDiff(device->buflen, device->mixpos, wave_writepos);
-		prebuf_frags = prebuf_frags / device->fraglen;
+		prebuf_frags = device->mixpos / device->fraglen;
+		if (prebuf_frags == device->helfrags)
+			--prebuf_frags;
+		TRACE("wave_fragpos = %d, mixpos_frags = %d\n", wave_fragpos, prebuf_frags);
+		if (prebuf_frags < wave_fragpos)
+			prebuf_frags += device->helfrags;
+		prebuf_frags -= wave_fragpos;
+		TRACE("wanted prebuf_frags = %d\n", prebuf_frags);
 	}
-	else{
+	else
 		/* buffer the maximum amount of frags */
 		prebuf_frags = device->prebuf;
-	}
 
 	/* limit to the queue we have left */
-	if((prebuf_frags + device->pwqueue) > device->prebuf)
+	if ((prebuf_frags + device->pwqueue) > device->prebuf)
 		prebuf_frags = device->prebuf - device->pwqueue;
 
 	TRACE("prebuf_frags = %i\n", prebuf_frags);
@@ -846,7 +852,6 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
  */
 static void DSOUND_PerformMix(DirectSoundDevice *device)
 {
-
 	TRACE("(%p)\n", device);
 
 	/* **** */
@@ -907,6 +912,8 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 		/* calc maximum prebuff */
 		prebuff_max = (device->prebuf * device->fraglen);
+		if (!device->hwbuf && playpos + prebuff_max >= device->helfrags * device->fraglen)
+			prebuff_max += device->buflen - device->helfrags * device->fraglen;
 
 		/* check how close we are to an underrun. It occurs when the writepos overtakes the mixpos */
 		prebuff_left = DSOUND_BufPtrDiff(device->buflen, device->mixpos, playpos);
@@ -964,9 +971,8 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		if (prebuff_left >= device->fraglen){
 
 			/* update the wave queue if using wave system */
-			if(device->hwbuf == NULL){
-				DSOUND_WaveQueue(device,TRUE);
-			}
+			if (!device->hwbuf)
+				DSOUND_WaveQueue(device, FALSE);
 
 			/* buffers are full. start playing if applicable */
 			if(device->state == STATE_STARTING){
@@ -1005,7 +1011,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 	} else {
 
 		/* update the wave queue if using wave system */
-		if(device->hwbuf == NULL)
+		if (!device->hwbuf)
 			DSOUND_WaveQueue(device, TRUE);
 		else
 			/* Keep alsa happy, which needs GetPosition called once every 10 ms */

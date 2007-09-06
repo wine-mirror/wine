@@ -381,23 +381,19 @@ HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LP
 			return err;
 		}
 	} else {
+		TRACE("pwplay=%i, pwqueue=%i\n", device->pwplay, device->pwqueue);
 
 		/* check if playpos was requested */
-		if (playpos) {
+		if (playpos)
 			/* use the cached play position */
 			*playpos = device->pwplay * device->fraglen;
-		}
 
 		/* check if writepos was requested */
-		if (writepos) {
-			TRACE("pwplay=%i, pwqueue=%i\n", device->pwplay, device->pwqueue);
-
+		if (writepos)
 			/* the writepos is the first non-queued position */
-			*writepos = (device->pwplay + device->pwqueue) * device->fraglen;
-			*writepos %= device->buflen;
-		}
+			*writepos = ((device->pwplay + device->pwqueue) % device->helfrags) * device->fraglen;
 	}
-	TRACE("playpos = %d, writepos = %d (%p, time=%d)\n", playpos?*playpos:0, writepos?*writepos:0, device, GetTickCount());
+	TRACE("playpos = %d, writepos = %d (%p, time=%d)\n", playpos?*playpos:-1, writepos?*writepos:-1, device, GetTickCount());
 	return DS_OK;
 }
 
