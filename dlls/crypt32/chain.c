@@ -349,22 +349,20 @@ static void CRYPT_CheckTrustedStatus(HCERTSTORE hRoot,
         CertFreeCertificateContext(trustedRoot);
 }
 
-static BOOL CRYPT_CheckRootCert(HCERTCHAINENGINE hRoot,
+static void CRYPT_CheckRootCert(HCERTCHAINENGINE hRoot,
  PCERT_CHAIN_ELEMENT rootElement)
 {
     PCCERT_CONTEXT root = rootElement->pCertContext;
-    BOOL ret;
 
-    if (!(ret = CryptVerifyCertificateSignatureEx(0, root->dwCertEncodingType,
+    if (!CryptVerifyCertificateSignatureEx(0, root->dwCertEncodingType,
      CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT, (void *)root,
-     CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)root, 0, NULL)))
+     CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)root, 0, NULL))
     {
         TRACE("Last certificate's signature is invalid\n");
         rootElement->TrustStatus.dwErrorStatus |=
          CERT_TRUST_IS_NOT_SIGNATURE_VALID;
     }
     CRYPT_CheckTrustedStatus(hRoot, rootElement);
-    return ret;
 }
 
 /* Decodes a cert's basic constraints extension (either szOID_BASIC_CONSTRAINTS
@@ -468,12 +466,12 @@ static BOOL CRYPT_CheckBasicConstraintsForCA(PCCERT_CONTEXT cert,
     return validBasicConstraints;
 }
 
-static BOOL CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
+static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
  PCERT_SIMPLE_CHAIN chain, LPFILETIME time)
 {
     PCERT_CHAIN_ELEMENT rootElement = chain->rgpElement[chain->cElement - 1];
     int i;
-    BOOL ret = TRUE, pathLengthConstraintViolated = FALSE;
+    BOOL pathLengthConstraintViolated = FALSE;
     CERT_BASIC_CONSTRAINTS2_INFO constraints = { TRUE, FALSE, 0 };
 
     for (i = chain->cElement - 1; i >= 0; i--)
@@ -509,10 +507,9 @@ static BOOL CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
     if (CRYPT_IsCertificateSelfSigned(rootElement->pCertContext))
     {
         rootElement->TrustStatus.dwInfoStatus |= CERT_TRUST_IS_SELF_SIGNED;
-        ret = CRYPT_CheckRootCert(engine->hRoot, rootElement);
+        CRYPT_CheckRootCert(engine->hRoot, rootElement);
     }
     CRYPT_CombineTrustStatus(&chain->TrustStatus, &rootElement->TrustStatus);
-    return ret;
 }
 
 /* Builds a simple chain by finding an issuer for the last cert in the chain,
@@ -563,7 +560,7 @@ static BOOL CRYPT_GetSimpleChainForCert(PCertificateChainEngine engine,
         {
             ret = CRYPT_BuildSimpleChain(engine, world, chain);
             if (ret)
-                ret = CRYPT_CheckSimpleChain(engine, chain, pTime);
+                CRYPT_CheckSimpleChain(engine, chain, pTime);
         }
         if (!ret)
         {
