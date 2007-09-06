@@ -412,26 +412,6 @@ static long FDI_getoffset(HFDI hfdi, INT_PTR hf)
 }
 
 /**********************************************************************
- * FDI_realloc (internal)
- *
- * we can't use _msize; the user might not be using malloc, so we require
- * an explicit specification of the previous size.  inefficient.
- */
-static void *FDI_realloc(HFDI hfdi, void *mem, size_t prevsize, size_t newsize)
-{
-  void *rslt = NULL;
-  char *irslt, *imem;
-  size_t copysize = (prevsize < newsize) ? prevsize : newsize;
-  if (prevsize == newsize) return mem;
-  rslt = PFDI_ALLOC(hfdi, newsize); 
-  if (rslt)
-    for (irslt = (char *)rslt, imem = (char *)mem; (copysize); copysize--)
-      *irslt++ = *imem++;
-  PFDI_FREE(hfdi, mem);
-  return rslt;
-}
-
-/**********************************************************************
  * FDI_read_string (internal)
  *
  * allocate and read an arbitrarily long string from the cabinet
@@ -439,19 +419,17 @@ static void *FDI_realloc(HFDI hfdi, void *mem, size_t prevsize, size_t newsize)
 static char *FDI_read_string(HFDI hfdi, INT_PTR hf, long cabsize)
 {
   size_t len=256,
-         oldlen = 0,
          base = FDI_getoffset(hfdi, hf),
          maxlen = cabsize - base;
   BOOL ok = FALSE;
   unsigned int i;
   cab_UBYTE *buf = NULL;
 
-  TRACE("(hfdi == ^%p, hf == %ld)\n", hfdi, hf);
+  TRACE("(hfdi == ^%p, hf == %ld, cabsize == %ld)\n", hfdi, hf, cabsize);
 
   do {
     if (len > maxlen) len = maxlen;
-    if (!(buf = FDI_realloc(hfdi, buf, oldlen, len))) break;
-    oldlen = len;
+    if (!(buf = PFDI_ALLOC(hfdi, len))) break;
     if (!PFDI_READ(hfdi, hf, buf, len)) break;
 
     /* search for a null terminator in what we've just read */
@@ -464,8 +442,13 @@ static char *FDI_read_string(HFDI hfdi, INT_PTR hf, long cabsize)
         ERR("cabinet is truncated\n");
         break;
       }
-      len += 256;
+      /* The buffer is too small for the string. Reset the file to the point
+       * were we started, free the buffer and increase the size for the next try
+       */
       PFDI_SEEK(hfdi, hf, base, SEEK_SET);
+      PFDI_FREE(hfdi, buf);
+      buf = NULL;
+      len *= 2;
     }
   } while (!ok);
 
