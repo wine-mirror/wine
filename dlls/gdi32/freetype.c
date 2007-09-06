@@ -281,8 +281,7 @@ typedef struct tagHFONTLIST {
 
 typedef struct {
     struct list entry;
-    char *file_name;
-    INT index;
+    Face *face;
     GdiFont *font;
 } CHILD_FONT;
 
@@ -735,24 +734,6 @@ static Family *find_family_from_name(const WCHAR *name)
             return family;
     }
 
-    return NULL;
-}
-
-static Face *find_face_from_path_index(const CHAR *file_name, const INT index)
-{
-    Family *family;
-    Face *face;
-
-    TRACE("looking for file %s index %i\n", debugstr_a(file_name), index);
-
-    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
-    {
-        LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
-        {
-            if(!strcasecmp(face->file, file_name) && face->face_index == index)
-                return face;
-	}
-    }
     return NULL;
 }
 
@@ -1372,12 +1353,11 @@ static BOOL init_system_links(void)
                 }
 
                 child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
-                child_font->file_name = strdupA(face->file);
-                child_font->index = face->face_index;
+                child_font->face = face;
                 child_font->font = NULL;
                 fs.fsCsb[0] |= face->fs.fsCsb[0];
                 fs.fsCsb[1] |= face->fs.fsCsb[1];
-                TRACE("Adding file %s index %d\n", child_font->file_name, child_font->index);
+                TRACE("Adding file %s index %ld\n", child_font->face->file, child_font->face->face_index);
                 list_add_tail(&font_link->links, &child_font->entry);
             }
             family = find_family_from_name(font_link->font_name);
@@ -1409,10 +1389,9 @@ static BOOL init_system_links(void)
     if(face)
     {
         child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
-        child_font->file_name = strdupA(face->file);
-        child_font->index = face->face_index;
+        child_font->face = face;
         child_font->font = NULL;
-        TRACE("Found Tahoma in %s index %d\n", child_font->file_name, child_font->index);
+        TRACE("Found Tahoma in %s index %ld\n", child_font->face->file, child_font->face->face_index);
         list_add_tail(&system_font_link->links, &child_font->entry);
     }
     LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
@@ -1424,8 +1403,7 @@ static BOOL init_system_links(void)
             {
                 CHILD_FONT *new_child;
                 new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
-                new_child->file_name = strdupA(font_link_entry->file_name);
-                new_child->index = font_link_entry->index;
+                new_child->face = font_link_entry->face;
                 new_child->font = NULL;
                 list_add_tail(&system_font_link->links, &new_child->entry);
             }
@@ -2361,7 +2339,6 @@ static void free_font(GdiFont *font)
             HeapFree(GetProcessHeap(), 0, hfontlist);
             free_font(child->font);
         }
-        HeapFree(GetProcessHeap(), 0, child->file_name);
         HeapFree(GetProcessHeap(), 0, child);
     }
 
@@ -2633,11 +2610,10 @@ static BOOL create_child_font_list(GdiFont *font)
             LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
             {
                 new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
-                new_child->file_name = strdupA(font_link_entry->file_name);
-                new_child->index = font_link_entry->index;
+                new_child->face = font_link_entry->face;
                 new_child->font = NULL;
                 list_add_tail(&font->child_fonts, &new_child->entry);
-                TRACE("font %s %d\n", debugstr_a(new_child->file_name), new_child->index); 
+                TRACE("font %s %ld\n", debugstr_a(new_child->face->file), new_child->face->face_index);
             }
             ret = TRUE;
             break;
@@ -2773,17 +2749,13 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
                 TRACE("found entry in system list\n");
                 LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
                 {
-                    face = find_face_from_path_index(font_link_entry->file_name,
-                                font_link_entry->index);
-                    if (face)
+                    face = font_link_entry->face;
+                    family = face->family;
+                    if(csi.fs.fsCsb[0] &
+                        (face->fs.fsCsb[0] | face->fs_links.fsCsb[0]) || !csi.fs.fsCsb[0])
                     {
-                        family = face->family;
-                        if(csi.fs.fsCsb[0] &
-                            (face->fs.fsCsb[0] | face->fs_links.fsCsb[0]) || !csi.fs.fsCsb[0])
-                        {
-                            if(face->scalable || can_use_bitmap)
-                                goto found;
-                        }
+                        if(face->scalable || can_use_bitmap)
+                            goto found;
                     }
                 }
             }
@@ -4161,7 +4133,7 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
 {
     HFONTLIST *hfontlist;
     child->font = alloc_font();
-    child->font->ft_face = OpenFontFile(child->font, child->file_name, child->index, 0, -font->ppem);
+    child->font->ft_face = OpenFontFile(child->font, child->face->file, child->face->face_index, 0, -font->ppem);
     if(!child->font->ft_face)
     {
         free_font(child->font);
