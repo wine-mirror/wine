@@ -1131,16 +1131,18 @@ typedef struct _CONST_BLOB_ARRAY
     CONST_DATA_BLOB *rgBlob;
 } CONST_BLOB_ARRAY;
 
-#define TODO_CHAIN 1
-#define TODO_ERROR 2
-#define TODO_INFO  4
+#define TODO_CHAIN    1
+#define TODO_ERROR    2
+#define TODO_INFO     4
+#define TODO_ELEMENTS 8
 
 /* Gets a certificate chain built from a store containing all the certs in
  * certArray, where the last certificate in the chain is expected to be the
  * end certificate (the one from which the chain is built.)
  */
 static PCCERT_CHAIN_CONTEXT getChain(const CONST_BLOB_ARRAY *certArray,
- DWORD flags, LPSYSTEMTIME checkTime, DWORD todo, DWORD testIndex)
+ DWORD flags, BOOL includeStore, LPSYSTEMTIME checkTime, DWORD todo,
+ DWORD testIndex)
 {
     HCERTSTORE store;
     PCCERT_CHAIN_CONTEXT chain = NULL;
@@ -1178,8 +1180,8 @@ static PCCERT_CHAIN_CONTEXT getChain(const CONST_BLOB_ARRAY *certArray,
             FILETIME fileTime;
 
             SystemTimeToFileTime(checkTime, &fileTime);
-            ret = CertGetCertificateChain(NULL, endCert, &fileTime, store,
-             &chainPara, flags, NULL, &chain);
+            ret = CertGetCertificateChain(NULL, endCert, &fileTime,
+             includeStore ? store : NULL, &chainPara, flags, NULL, &chain);
             if (todo & TODO_CHAIN)
                 todo_wine ok(ret, "Chain %d: CertGetCertificateChain failed: %08x\n",
                  testIndex, GetLastError());
@@ -1203,9 +1205,14 @@ static void checkSimpleChainStatus(const CERT_SIMPLE_CHAIN *simpleChain,
  const SimpleChainStatusCheck *simpleChainStatus,
  const CERT_TRUST_STATUS *ignore, DWORD todo, DWORD testIndex, DWORD chainIndex)
 {
-    ok(simpleChain->cElement == simpleChainStatus->cElement,
-     "Chain %d: expected %d elements, got %d\n", testIndex,
-     simpleChainStatus->cElement, simpleChain->cElement);
+    if (todo & TODO_ELEMENTS)
+        todo_wine ok(simpleChain->cElement == simpleChainStatus->cElement,
+         "Chain %d: expected %d elements, got %d\n", testIndex,
+         simpleChainStatus->cElement, simpleChain->cElement);
+    else
+        ok(simpleChain->cElement == simpleChainStatus->cElement,
+         "Chain %d: expected %d elements, got %d\n", testIndex,
+         simpleChainStatus->cElement, simpleChain->cElement);
     if (simpleChain->cElement == simpleChainStatus->cElement)
     {
         DWORD i;
@@ -1558,6 +1565,27 @@ static ChainCheck chainCheck[] = {
    TODO_INFO },
 };
 
+static const CERT_TRUST_STATUS elementStatus8NoStore[] = {
+ { CERT_TRUST_NO_ERROR, CERT_TRUST_HAS_NAME_MATCH_ISSUER },
+};
+static const SimpleChainStatusCheck simpleStatus8NoStore[] = {
+ { sizeof(elementStatus8NoStore) / sizeof(elementStatus8NoStore[0]),
+   elementStatus8NoStore },
+};
+static ChainCheck chainCheckNoStore[] = {
+ { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
+   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+     { CERT_TRUST_IS_NOT_TIME_VALID | CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },
+     1, selfSignedSimpleStatus },
+   TODO_ERROR | TODO_INFO },
+ { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
+   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+     { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
+       CERT_TRUST_IS_NOT_TIME_VALID, 0 },
+     1, simpleStatus8NoStore },
+   TODO_ELEMENTS | TODO_ERROR | TODO_INFO },
+};
+
 /* Wednesday, Oct 1, 2007 */
 static SYSTEMTIME oct2007 = { 2007, 10, 1, 1, 0, 0, 0, 0 };
 
@@ -1604,12 +1632,24 @@ static void testGetCertChain(void)
 
     for (i = 0; i < sizeof(chainCheck) / sizeof(chainCheck[0]); i++)
     {
-        chain = getChain(&chainCheck[i].certs, 0, &oct2007, chainCheck[i].todo,
-         i);
+        chain = getChain(&chainCheck[i].certs, 0, TRUE, &oct2007,
+         chainCheck[i].todo, i);
         if (chain)
         {
             checkChainStatus(chain, &chainCheck[i].status, chainCheck[i].todo,
              i);
+            CertFreeCertificateChain(chain);
+        }
+    }
+    for (i = 0; i < sizeof(chainCheckNoStore) / sizeof(chainCheckNoStore[0]);
+     i++)
+    {
+        chain = getChain(&chainCheckNoStore[i].certs, 0, FALSE, &oct2007,
+         chainCheckNoStore[i].todo, i);
+        if (chain)
+        {
+            checkChainStatus(chain, &chainCheckNoStore[i].status,
+             chainCheckNoStore[i].todo, i);
             CertFreeCertificateChain(chain);
         }
     }
