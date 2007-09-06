@@ -644,13 +644,13 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
     TRACE("(%p, %p, %p, %p, %p, %08x, %p, %p)\n", hChainEngine, pCertContext,
      pTime, hAdditionalStore, pChainPara, dwFlags, pvReserved, ppChainContext);
 
+    if (ppChainContext)
+        *ppChainContext = NULL;
     if (!pChainPara)
     {
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
-    if (ppChainContext)
-        *ppChainContext = NULL;
     if (!hChainEngine)
         hChainEngine = CRYPT_GetDefaultChainEngine();
     /* FIXME: what about HCCE_LOCAL_MACHINE? */
