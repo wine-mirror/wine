@@ -258,7 +258,7 @@ static inline BOOL CRYPT_IsSimpleChainCyclic(PCERT_SIMPLE_CHAIN chain)
 static PCCERT_CONTEXT CRYPT_GetIssuerFromStore(HCERTSTORE store,
  PCCERT_CONTEXT cert, PDWORD pdwFlags)
 {
-    *pdwFlags = CERT_STORE_REVOCATION_FLAG | CERT_STORE_SIGNATURE_FLAG;
+    *pdwFlags = CERT_STORE_SIGNATURE_FLAG;
     return CertGetIssuerCertificateFromStore(store, cert, NULL, pdwFlags);
 }
 
@@ -509,6 +509,7 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
         rootElement->TrustStatus.dwInfoStatus |= CERT_TRUST_IS_SELF_SIGNED;
         CRYPT_CheckRootCert(engine->hRoot, rootElement);
     }
+    /* FIXME: check revocation of every cert with CertVerifyRevocation */
     CRYPT_CombineTrustStatus(&chain->TrustStatus, &rootElement->TrustStatus);
 }
 
