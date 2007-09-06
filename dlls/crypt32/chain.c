@@ -252,16 +252,6 @@ static inline BOOL CRYPT_IsSimpleChainCyclic(PCERT_SIMPLE_CHAIN chain)
         return FALSE;
 }
 
-/* Gets cert's issuer from store, and returns the validity flags associated
- * with it.  Returns NULL if no issuer signature could be found.
- */
-static PCCERT_CONTEXT CRYPT_GetIssuerFromStore(HCERTSTORE store,
- PCCERT_CONTEXT cert, PDWORD pdwFlags)
-{
-    *pdwFlags = CERT_STORE_SIGNATURE_FLAG;
-    return CertGetIssuerCertificateFromStore(store, cert, NULL, pdwFlags);
-}
-
 static inline void CRYPT_CombineTrustStatus(CERT_TRUST_STATUS *chainStatus,
  CERT_TRUST_STATUS *elementStatus)
 {
@@ -482,6 +472,14 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
              CERT_TRUST_IS_NOT_TIME_VALID;
         if (i != 0)
         {
+            /* Check the signature of the cert this issued */
+            if (!CryptVerifyCertificateSignatureEx(0, X509_ASN_ENCODING,
+             CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT,
+             (void *)chain->rgpElement[i - 1]->pCertContext,
+             CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT,
+             (void *)chain->rgpElement[i]->pCertContext, 0, NULL))
+                chain->rgpElement[i - 1]->TrustStatus.dwErrorStatus |=
+                 CERT_TRUST_IS_NOT_SIGNATURE_VALID;
             /* Once a path length constraint has been violated, every remaining
              * CA cert's basic constraints is considered invalid.
              */
@@ -525,8 +523,9 @@ static BOOL CRYPT_BuildSimpleChain(PCertificateChainEngine engine,
     while (ret && !CRYPT_IsSimpleChainCyclic(chain) &&
      !CRYPT_IsCertificateSelfSigned(cert))
     {
-        DWORD flags;
-        PCCERT_CONTEXT issuer = CRYPT_GetIssuerFromStore(world, cert, &flags);
+        DWORD flags = 0;
+        PCCERT_CONTEXT issuer =
+         CertGetIssuerCertificateFromStore(world, cert, NULL, &flags);
 
         if (issuer)
         {
