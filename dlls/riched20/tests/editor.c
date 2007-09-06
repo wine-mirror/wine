@@ -1456,6 +1456,27 @@ static void test_EM_EXSETSEL(void)
     DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_REPLACESEL(void)
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    char buffer[1024] = {0};
+    int r;
+
+    /* sending some text to the window */
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "testing selection");
+    /*                                                 01234567890123456*/
+    /*                                                          10      */
+
+    /* FIXME add more tests */
+    SendMessage(hwndRichEdit, EM_SETSEL, 7, 17);
+    SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) NULL);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    r = strcmp(buffer, "testing");
+    ok(0 == r, "expected %d, got %d\n", 0, r);
+
+    DestroyWindow(hwndRichEdit);
+}
+
 static void test_WM_PASTE(void)
 {
     int result;
@@ -1922,6 +1943,7 @@ START_TEST( editor )
   test_EM_FORMATRANGE();
   test_unicode_conversions();
   test_EM_GETTEXTLENGTHEX();
+  test_EM_REPLACESEL();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

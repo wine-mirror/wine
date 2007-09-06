@@ -1822,8 +1822,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     int from, to;
     ME_Style *style;
-    LPWSTR wszText = ME_ToUnicode(unicode, (void *)lParam);
-    size_t len = lstrlenW(wszText);
+    LPWSTR wszText = lParam ? ME_ToUnicode(unicode, (void *)lParam) : NULL;
+    size_t len = wszText ? lstrlenW(wszText) : 0;
     TRACE("EM_REPLACESEL - %s\n", debugstr_w(wszText));
 
     ME_GetSelection(editor, &from, &to);
