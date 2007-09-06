@@ -197,7 +197,9 @@ static void sc_handle_destroy_service(struct sc_handle *handle)
 }
 
 /******************************************************************************
- * String management functions
+ * String management functions (same behaviour as strdup)
+ * NOTE: the caller of those functions is responsible for calling HeapFree
+ * in order to release the memory allocated by those functions.
  */
 static inline LPWSTR SERV_dup( LPCSTR str )
 {
@@ -229,11 +231,6 @@ static inline LPWSTR SERV_dupmulti(LPCSTR str)
     wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, str, n, wstr, len );
     return wstr;
-}
-
-static inline VOID SERV_free( LPWSTR wstr )
-{
-    HeapFree( GetProcessHeap(), 0, wstr );
 }
 
 /******************************************************************************
@@ -345,7 +342,7 @@ static HANDLE service_open_pipe(LPCWSTR service)
         if (GetLastError() != ERROR_PIPE_BUSY)
             break;
     } while (WaitNamedPipeW(szPipe, NMPWAIT_WAIT_FOREVER));
-    SERV_free(szPipe);
+    HeapFree(GetProcessHeap(), 0, szPipe);
 
     return handle;
 }
@@ -366,7 +363,7 @@ static HANDLE service_get_event_handle(LPCWSTR service)
     strcpyW(name, prefix);
     strcatW(name, service);
     handle = CreateEventW(NULL, TRUE, FALSE, name);
-    SERV_free(name);
+    HeapFree(GetProcessHeap(), 0, name);
     return handle;
 }
 
@@ -458,7 +455,7 @@ static BOOL service_handle_start(HANDLE pipe, service_data *service, DWORD count
         goto end;
     }
 
-    SERV_free(service->args);
+    HeapFree(GetProcessHeap(), 0, service->args);
     service->args = args;
     args = NULL;
     service->thread = CreateThread( NULL, 0, service_thread,
@@ -688,7 +685,7 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
     name = service_get_pipe_name(service->name);
     pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX,
                   PIPE_TYPE_BYTE|PIPE_WAIT, 1, 256, 256, 10000, NULL );
-    SERV_free(name);
+    HeapFree(GetProcessHeap(), 0, name);
 
     /* let the process who started us know we've tried to create a pipe */
     event = service_get_event_handle(service->name);
@@ -921,7 +918,7 @@ RegisterServiceCtrlHandlerA( LPCSTR lpServiceName, LPHANDLER_FUNCTION lpfHandler
 
     lpServiceNameW = SERV_dup(lpServiceName);
     ret = RegisterServiceCtrlHandlerW( lpServiceNameW, lpfHandler );
-    SERV_free(lpServiceNameW);
+    HeapFree(GetProcessHeap(), 0, lpServiceNameW);
     return ret;
 }
 
@@ -1011,8 +1008,8 @@ SC_HANDLE WINAPI OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
     lpMachineNameW = SERV_dup(lpMachineName);
     lpDatabaseNameW = SERV_dup(lpDatabaseName);
     ret = OpenSCManagerW(lpMachineNameW, lpDatabaseNameW, dwDesiredAccess);
-    SERV_free(lpDatabaseNameW);
-    SERV_free(lpMachineNameW);
+    HeapFree(GetProcessHeap(), 0, lpDatabaseNameW);
+    HeapFree(GetProcessHeap(), 0, lpMachineNameW);
     return ret;
 }
 
@@ -1195,7 +1192,7 @@ SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
     lpServiceNameW = SERV_dup(lpServiceName);
     ret = OpenServiceW( hSCManager, lpServiceNameW, dwDesiredAccess);
-    SERV_free(lpServiceNameW);
+    HeapFree(GetProcessHeap(), 0, lpServiceNameW);
     return ret;
 }
 
@@ -1494,13 +1491,13 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
             lpBinaryPathNameW, lpLoadOrderGroupW, lpdwTagId,
             lpDependenciesW, lpServiceStartNameW, lpPasswordW );
 
-    SERV_free( lpServiceNameW );
-    SERV_free( lpDisplayNameW );
-    SERV_free( lpBinaryPathNameW );
-    SERV_free( lpLoadOrderGroupW );
-    SERV_free( lpDependenciesW );
-    SERV_free( lpServiceStartNameW );
-    SERV_free( lpPasswordW );
+    HeapFree( GetProcessHeap(), 0, lpServiceNameW );
+    HeapFree( GetProcessHeap(), 0, lpDisplayNameW );
+    HeapFree( GetProcessHeap(), 0, lpBinaryPathNameW );
+    HeapFree( GetProcessHeap(), 0, lpLoadOrderGroupW );
+    HeapFree( GetProcessHeap(), 0, lpDependenciesW );
+    HeapFree( GetProcessHeap(), 0, lpServiceStartNameW );
+    HeapFree( GetProcessHeap(), 0, lpPasswordW );
 
     return r;
 }
@@ -1591,7 +1588,7 @@ BOOL WINAPI StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
     if (dwNumServiceArgs)
     {
         for(i=0; i<dwNumServiceArgs; i++)
-            SERV_free(lpwstr[i]);
+            HeapFree(GetProcessHeap(), 0, lpwstr[i]);
         HeapFree(GetProcessHeap(), 0, lpwstr);
     }
 
@@ -2270,7 +2267,7 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     *lpcchBuffer = size;
 
     HeapFree(GetProcessHeap(), 0, lpDisplayNameW);
-    SERV_free(lpServiceNameW);
+    HeapFree(GetProcessHeap(), 0, lpServiceNameW);
 
     SetLastError(GLE);
     return ret;
@@ -2443,12 +2440,12 @@ BOOL WINAPI ChangeServiceConfigA( SC_HANDLE hService, DWORD dwServiceType,
             wLoadOrderGroup, lpdwTagId, wDependencies,
             wServiceStartName, wPassword, wDisplayName);
 
-    SERV_free( wBinaryPathName );
-    SERV_free( wLoadOrderGroup );
-    SERV_free( wDependencies );
-    SERV_free( wServiceStartName );
-    SERV_free( wPassword );
-    SERV_free( wDisplayName );
+    HeapFree( GetProcessHeap(), 0, wBinaryPathName );
+    HeapFree( GetProcessHeap(), 0, wLoadOrderGroup );
+    HeapFree( GetProcessHeap(), 0, wDependencies );
+    HeapFree( GetProcessHeap(), 0, wServiceStartName );
+    HeapFree( GetProcessHeap(), 0, wPassword );
+    HeapFree( GetProcessHeap(), 0, wDisplayName );
 
     return r;
 }
@@ -2472,7 +2469,7 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
 
         r = ChangeServiceConfig2W( hService, dwInfoLevel, &sdw );
 
-        SERV_free( sdw.lpDescription );
+        HeapFree( GetProcessHeap(), 0, sdw.lpDescription );
     }
     else if (dwInfoLevel == SERVICE_CONFIG_FAILURE_ACTIONS)
     {
@@ -2487,8 +2484,8 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
 
         r = ChangeServiceConfig2W( hService, dwInfoLevel, &faw );
 
-        SERV_free( faw.lpRebootMsg );
-        SERV_free( faw.lpCommand );
+        HeapFree( GetProcessHeap(), 0, faw.lpRebootMsg );
+        HeapFree( GetProcessHeap(), 0, faw.lpCommand );
     }
     else
         SetLastError( ERROR_INVALID_PARAMETER );
