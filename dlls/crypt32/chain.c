@@ -264,7 +264,7 @@ static inline void CRYPT_CombineTrustStatus(CERT_TRUST_STATUS *chainStatus,
 }
 
 static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
- PCERT_SIMPLE_CHAIN chain, PCCERT_CONTEXT cert, DWORD dwFlags)
+ PCERT_SIMPLE_CHAIN chain, PCCERT_CONTEXT cert)
 {
     BOOL ret = FALSE;
     PCERT_CHAIN_ELEMENT element = CryptMemAlloc(sizeof(CERT_CHAIN_ELEMENT));
@@ -282,20 +282,6 @@ static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
             memset(element, 0, sizeof(CERT_CHAIN_ELEMENT));
             element->cbSize = sizeof(CERT_CHAIN_ELEMENT);
             element->pCertContext = CertDuplicateCertificateContext(cert);
-            /* Flags, if set, refer to the element this cert issued, so set
-             * the preceding element's error accordingly
-             */
-            if (chain->cElement > 1)
-            {
-                if (dwFlags & CERT_STORE_REVOCATION_FLAG &&
-                 !(dwFlags & CERT_STORE_NO_CRL_FLAG))
-                    chain->rgpElement[chain->cElement - 2]->TrustStatus.
-                     dwErrorStatus |= CERT_TRUST_IS_REVOKED;
-                if (dwFlags & CERT_STORE_SIGNATURE_FLAG)
-                    chain->rgpElement[chain->cElement - 2]->TrustStatus.
-                     dwErrorStatus |=
-                     CERT_TRUST_IS_NOT_SIGNATURE_VALID;
-            }
             /* FIXME: initialize the rest of element */
             if (chain->cElement % engine->CycleDetectionModulus)
                 CRYPT_CheckSimpleChainForCycles(chain);
@@ -529,7 +515,7 @@ static BOOL CRYPT_BuildSimpleChain(PCertificateChainEngine engine,
 
         if (issuer)
         {
-            ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer, flags);
+            ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer);
             cert = issuer;
         }
         else
@@ -555,7 +541,7 @@ static BOOL CRYPT_GetSimpleChainForCert(PCertificateChainEngine engine,
     {
         memset(chain, 0, sizeof(CERT_SIMPLE_CHAIN));
         chain->cbSize = sizeof(CERT_SIMPLE_CHAIN);
-        ret = CRYPT_AddCertToSimpleChain(engine, chain, cert, 0);
+        ret = CRYPT_AddCertToSimpleChain(engine, chain, cert);
         if (ret)
         {
             ret = CRYPT_BuildSimpleChain(engine, world, chain);
