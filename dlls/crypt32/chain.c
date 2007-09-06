@@ -515,15 +515,43 @@ static BOOL CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
     return ret;
 }
 
-static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
+/* Builds a simple chain by finding an issuer for the last cert in the chain,
+ * until reaching a self-signed cert, or until no issuer can be found.
+ */
+static BOOL CRYPT_BuildSimpleChain(PCertificateChainEngine engine,
+ HCERTSTORE world, PCERT_SIMPLE_CHAIN chain)
+{
+    BOOL ret = TRUE;
+    PCCERT_CONTEXT cert = chain->rgpElement[chain->cElement - 1]->pCertContext;
+
+    while (ret && !CRYPT_IsSimpleChainCyclic(chain) &&
+     !CRYPT_IsCertificateSelfSigned(cert))
+    {
+        DWORD flags;
+        PCCERT_CONTEXT issuer = CRYPT_GetIssuerFromStore(world, cert, &flags);
+
+        if (issuer)
+        {
+            ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer, flags);
+            cert = issuer;
+        }
+        else
+        {
+            TRACE("Couldn't find issuer, halting chain creation\n");
+            break;
+        }
+    }
+    return ret;
+}
+
+static BOOL CRYPT_GetSimpleChainForCert(PCertificateChainEngine engine,
  HCERTSTORE world, PCCERT_CONTEXT cert, LPFILETIME pTime,
  PCERT_SIMPLE_CHAIN *ppChain)
 {
     BOOL ret = FALSE;
-    PCertificateChainEngine engine = (PCertificateChainEngine)hChainEngine;
     PCERT_SIMPLE_CHAIN chain;
 
-    TRACE("(%p, %p, %p, %p)\n", hChainEngine, world, cert, pTime);
+    TRACE("(%p, %p, %p, %p)\n", engine, world, cert, pTime);
 
     chain = CryptMemAlloc(sizeof(CERT_SIMPLE_CHAIN));
     if (chain)
@@ -531,26 +559,12 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
         memset(chain, 0, sizeof(CERT_SIMPLE_CHAIN));
         chain->cbSize = sizeof(CERT_SIMPLE_CHAIN);
         ret = CRYPT_AddCertToSimpleChain(engine, chain, cert, 0);
-        while (ret && !CRYPT_IsSimpleChainCyclic(chain) &&
-         !CRYPT_IsCertificateSelfSigned(cert))
-        {
-            DWORD flags;
-            PCCERT_CONTEXT issuer = CRYPT_GetIssuerFromStore(world, cert,
-             &flags);
-
-            if (issuer)
-            {
-                ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer, flags);
-                cert = issuer;
-            }
-            else
-            {
-                TRACE("Couldn't find issuer, halting chain creation\n");
-                break;
-            }
-        }
         if (ret)
-            ret = CRYPT_CheckSimpleChain(engine, chain, pTime);
+        {
+            ret = CRYPT_BuildSimpleChain(engine, world, chain);
+            if (ret)
+                ret = CRYPT_CheckSimpleChain(engine, chain, pTime);
+        }
         if (!ret)
         {
             CRYPT_FreeSimpleChain(chain);
@@ -578,7 +592,7 @@ static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
     /* FIXME: only simple chains are supported for now, as CTLs aren't
      * supported yet.
      */
-    if ((ret = CRYPT_BuildSimpleChain(hChainEngine, world, cert, pTime,
+    if ((ret = CRYPT_GetSimpleChainForCert(engine, world, cert, pTime,
      &simpleChain)))
     {
         PCertificateChain chain = CryptMemAlloc(sizeof(CertificateChain));
