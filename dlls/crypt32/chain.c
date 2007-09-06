@@ -515,23 +515,15 @@ static BOOL CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
 }
 
 static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
- PCCERT_CONTEXT cert, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
+ HCERTSTORE world, PCCERT_CONTEXT cert, LPFILETIME pTime,
  PCERT_SIMPLE_CHAIN *ppChain)
 {
     BOOL ret = FALSE;
     PCertificateChainEngine engine = (PCertificateChainEngine)hChainEngine;
     PCERT_SIMPLE_CHAIN chain;
-    HCERTSTORE world;
 
-    TRACE("(%p, %p, %p, %p)\n", hChainEngine, cert, pTime, hAdditionalStore);
+    TRACE("(%p, %p, %p, %p)\n", hChainEngine, world, cert, pTime);
 
-    world = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
-     CERT_STORE_CREATE_NEW_FLAG, NULL);
-    CertAddStoreToCollection(world, engine->hWorld, 0, 0);
-    if (cert->hCertStore)
-        CertAddStoreToCollection(world, cert->hCertStore, 0, 0);
-    if (hAdditionalStore)
-        CertAddStoreToCollection(world, hAdditionalStore, 0, 0);
     chain = CryptMemAlloc(sizeof(CERT_SIMPLE_CHAIN));
     if (chain)
     {
@@ -565,22 +557,30 @@ static BOOL CRYPT_BuildSimpleChain(HCERTCHAINENGINE hChainEngine,
         }
         *ppChain = chain;
     }
-    CertCloseStore(world, 0);
     return ret;
 }
 
 static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
- PCCERT_CONTEXT pCertContext, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
+ PCCERT_CONTEXT cert, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
  PCertificateChain *ppChain)
 {
+    PCertificateChainEngine engine = (PCertificateChainEngine)hChainEngine;
     PCERT_SIMPLE_CHAIN simpleChain = NULL;
+    HCERTSTORE world;
     BOOL ret;
 
+    world = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    CertAddStoreToCollection(world, engine->hWorld, 0, 0);
+    if (cert->hCertStore)
+        CertAddStoreToCollection(world, cert->hCertStore, 0, 0);
+    if (hAdditionalStore)
+        CertAddStoreToCollection(world, hAdditionalStore, 0, 0);
     /* FIXME: only simple chains are supported for now, as CTLs aren't
      * supported yet.
      */
-    if ((ret = CRYPT_BuildSimpleChain(hChainEngine, pCertContext, pTime,
-     hAdditionalStore, &simpleChain)))
+    if ((ret = CRYPT_BuildSimpleChain(hChainEngine, world, cert, pTime,
+     &simpleChain)))
     {
         PCertificateChain chain = CryptMemAlloc(sizeof(CertificateChain));
 
@@ -602,6 +602,7 @@ static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
             ret = FALSE;
         *ppChain = chain;
     }
+    CertCloseStore(world, 0);
     return ret;
 }
 
@@ -625,7 +626,7 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
  PCCERT_CHAIN_CONTEXT* ppChainContext)
 {
     BOOL ret;
-    PCertificateChain chain;
+    PCertificateChain chain = NULL;
 
     TRACE("(%p, %p, %p, %p, %p, %08x, %p, %p)\n", hChainEngine, pCertContext,
      pTime, hAdditionalStore, pChainPara, dwFlags, pvReserved, ppChainContext);
