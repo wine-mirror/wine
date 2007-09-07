@@ -1775,29 +1775,29 @@ HRESULT WINAPI IUnknown_TranslateAcceleratorOCS(IUnknown *lpUnknown, LPMSG lpMsg
 /*************************************************************************
  * @  [SHLWAPI.189]
  *
- * Call IOleControlSite_GetExtendedControl() on an object.
+ * Call IOleControlSite_OnFocus() on an object.
  *
  * PARAMS
  *  lpUnknown [I] Object supporting the IOleControlSite interface.
- *  lppDisp   [O] Destination for resulting IDispatch.
+ *  fGotFocus [I] Whether focus was gained (TRUE) or lost (FALSE).
  *
  * RETURNS
  *  Success: S_OK.
  *  Failure: An HRESULT error code, or E_FAIL if lpUnknown is NULL.
  */
-DWORD WINAPI IUnknown_OnFocusOCS(IUnknown *lpUnknown, IDispatch** lppDisp)
+HRESULT WINAPI IUnknown_OnFocusOCS(IUnknown *lpUnknown, BOOL fGotFocus)
 {
   IOleControlSite* lpCSite = NULL;
   HRESULT hRet = E_FAIL;
 
-  TRACE("(%p,%p)\n", lpUnknown, lppDisp);
+  TRACE("(%p,%s)\n", lpUnknown, fGotFocus ? "TRUE" : "FALSE");
   if (lpUnknown)
   {
     hRet = IUnknown_QueryInterface(lpUnknown, &IID_IOleControlSite,
                                    (void**)&lpCSite);
     if (SUCCEEDED(hRet) && lpCSite)
     {
-      hRet = IOleControlSite_GetExtendedControl(lpCSite, lppDisp);
+      hRet = IOleControlSite_OnFocus(lpCSite, fGotFocus);
       IOleControlSite_Release(lpCSite);
     }
   }
