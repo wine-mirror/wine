@@ -243,6 +243,7 @@ typedef struct tagFace {
     BOOL Bold;
     FONTSIGNATURE fs;
     FONTSIGNATURE fs_links;
+    DWORD ntmFlags;  /* Only some bits stored here. Others are computed on the fly */
     FT_Fixed font_version;
     BOOL scalable;
     Bitmap_Size size;     /* set if face is a bitmap */
@@ -307,6 +308,7 @@ struct tagGdiFont {
     SHORT yMax;
     SHORT yMin;
     OUTLINETEXTMETRICW *potm;
+    DWORD ntmFlags;
     DWORD total_kern_pairs;
     KERNINGPAIR *kern_pairs;
     FONTSIGNATURE fs;
@@ -1042,6 +1044,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
         bitmap_num = 0;
         do {
             My_FT_Bitmap_Size *size = NULL;
+            FT_ULong tmp_size;
 
             if(!FT_IS_SCALABLE(ft_face))
                 size = (My_FT_Bitmap_Size *)ft_face->available_sizes + bitmap_num;
@@ -1189,6 +1192,16 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                 face->size.internal_leading = internal_leading;
                 face->scalable = FALSE;
             }
+
+            /* check for the presence of the 'CFF ' table to check if the font is Type1 */
+            tmp_size = 0;
+            if (pFT_Load_Sfnt_Table && !pFT_Load_Sfnt_Table(ft_face, 0x43464620, 0, NULL, &tmp_size))
+            {
+                TRACE("Font %s/%p is OTF Type1\n", wine_dbgstr_a(file), font_data_ptr);
+                face->ntmFlags = NTM_PS_OPENTYPE;
+            }
+            else
+                face->ntmFlags = 0;
 
             TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
                   face->fs.fsCsb[0], face->fs.fsCsb[1],
@@ -2982,6 +2995,8 @@ found:
         return 0;
     }
 
+    ret->ntmFlags = face->ntmFlags;
+
     if (ret->charset == SYMBOL_CHARSET && 
         !pFT_Select_Charmap(ret->ft_face, FT_ENCODING_MS_SYMBOL)) {
         /* No ops */
@@ -3116,6 +3131,7 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     }
 
     font->name = strdupW(face->family->FamilyName);
+    font->ntmFlags = face->ntmFlags;
 
     memset(&pelf->elfLogFont, 0, sizeof(LOGFONTW));
 
@@ -3154,13 +3170,18 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     pelf->elfLogFont.lfClipPrecision = CLIP_STROKE_PRECIS;
     pelf->elfLogFont.lfQuality = DRAFT_QUALITY;
 
-    *ptype = ptm->tmPitchAndFamily & TMPF_TRUETYPE ? TRUETYPE_FONTTYPE : 0;
+    *ptype = 0;
+    if (ptm->tmPitchAndFamily & TMPF_TRUETYPE)
+        *ptype |= TRUETYPE_FONTTYPE;
+    if (ptm->tmPitchAndFamily & TMPF_DEVICE)
+        *ptype |= DEVICE_FONTTYPE;
     if(!(ptm->tmPitchAndFamily & TMPF_VECTOR))
         *ptype |= RASTER_FONTTYPE;
 
     pntm->ntmTm.ntmFlags = ptm->tmItalic ? NTM_ITALIC : 0;
     if(ptm->tmWeight > 550) pntm->ntmTm.ntmFlags |= NTM_BOLD;
     if(pntm->ntmTm.ntmFlags == 0) pntm->ntmTm.ntmFlags = NTM_REGULAR;
+    pntm->ntmTm.ntmFlags |= face->ntmFlags;
 
     pntm->ntmTm.ntmCellHeight = pntm->ntmTm.tmHeight;
     pntm->ntmTm.ntmAvgWidth = pntm->ntmTm.tmAveCharWidth;
@@ -4127,8 +4148,14 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
 
     if(FT_IS_SCALABLE(ft_face))
         TM.tmPitchAndFamily |= TMPF_VECTOR;
+
     if(FT_IS_SFNT(ft_face))
-        TM.tmPitchAndFamily |= TMPF_TRUETYPE;
+    {
+        if (font->ntmFlags & NTM_PS_OPENTYPE)
+            TM.tmPitchAndFamily |= TMPF_DEVICE;
+        else
+            TM.tmPitchAndFamily |= TMPF_TRUETYPE;
+    }
 
     TM.tmCharSet = font->charset;
 #undef TM
@@ -4216,6 +4243,7 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
         return FALSE;
     }
 
+    child->font->ntmFlags = child->face->ntmFlags;
     child->font->orientation = font->orientation;
     hfontlist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hfontlist));
     hfontlist->hfont = CreateFontIndirectW(&font->font_desc.lf);
