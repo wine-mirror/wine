@@ -368,6 +368,7 @@ static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 {
     switch(msg) {
     case WM_INITDIALOG:
+        ShowWindow(GetDlgItem(hwnd, ID_DWL_PROGRESS), SW_HIDE);
         install_dialog = hwnd;
         return TRUE;
 
@@ -378,6 +379,7 @@ static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
             return FALSE;
 
         case ID_DWL_INSTALL:
+            ShowWindow(GetDlgItem(hwnd, ID_DWL_PROGRESS), SW_SHOW);
             EnableWindow(GetDlgItem(hwnd, ID_DWL_INSTALL), 0);
             EnableWindow(GetDlgItem(hwnd, IDCANCEL), 0); /* FIXME */
             CreateThread(NULL, 0, download_proc, NULL, 0, NULL);
