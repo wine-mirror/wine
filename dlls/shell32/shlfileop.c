@@ -1694,3 +1694,77 @@ INT WINAPI RealDriveType(INT drive, BOOL bQueryNet)
     root[0] += (char)drive;
     return GetDriveTypeA(root);
 }
+
+/***********************************************************************
+ *              SHPathPrepareForWriteA (SHELL32.@)
+ */
+HRESULT WINAPI SHPathPrepareForWriteA(HWND hwnd, IUnknown *modless, LPCSTR path, DWORD flags)
+{
+    WCHAR wpath[MAX_PATH];
+    MultiByteToWideChar( CP_ACP, 0, path, -1, wpath, MAX_PATH);
+    return SHPathPrepareForWriteW(hwnd, modless, wpath, flags);
+}
+
+/***********************************************************************
+ *              SHPathPrepareForWriteW (SHELL32.@)
+ */
+HRESULT WINAPI SHPathPrepareForWriteW(HWND hwnd, IUnknown *modless, LPCWSTR path, DWORD flags)
+{
+    HRESULT res;
+    DWORD err;
+    LPCWSTR realpath;
+    int len;
+    WCHAR* last_slash;
+    WCHAR* temppath=NULL;
+
+    TRACE("%p %p %s 0x%80x\n", hwnd, modless, debugstr_w(path), flags);
+
+    if (flags & ~(SHPPFW_DIRCREATE|SHPPFW_ASKDIRCREATE|SHPPFW_IGNOREFILENAME))
+        FIXME("unimplemented flags 0x%08x\n", flags);
+
+    /* cut off filename if necessary */
+    if (flags & SHPPFW_IGNOREFILENAME)
+    {
+        last_slash = StrRChrW(path, NULL, '\\');
+        if (last_slash == NULL)
+            len = 1;
+        else
+            len = last_slash - path + 1;
+        temppath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!temppath)
+            return E_OUTOFMEMORY;
+        StrCpyNW(temppath, path, len);
+        realpath = temppath;
+    }
+    else
+    {
+        realpath = path;
+    }
+
+    /* try to create the directory if asked to */
+    if (flags & (SHPPFW_DIRCREATE|SHPPFW_ASKDIRCREATE))
+    {
+        if (flags & SHPPFW_ASKDIRCREATE)
+            FIXME("treating SHPPFW_ASKDIRCREATE as SHPPFW_DIRCREATE\n");
+
+        SHCreateDirectoryExW(0, realpath, NULL);
+    }
+
+    /* check if we can access the directory */
+    res = GetFileAttributesW(realpath);
+
+    if (temppath)
+        HeapFree(GetProcessHeap(), 0, temppath);
+
+    if (res == INVALID_FILE_ATTRIBUTES)
+    {
+        err = GetLastError();
+        if (err == ERROR_FILE_NOT_FOUND)
+            return HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
+        return HRESULT_FROM_WIN32(err);
+    }
+    else if (res & FILE_ATTRIBUTE_DIRECTORY)
+        return S_OK;
+    else
+        return HRESULT_FROM_WIN32(ERROR_DIRECTORY);
+}
