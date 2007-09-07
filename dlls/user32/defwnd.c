@@ -325,6 +325,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
 
     case WM_LBUTTONDBLCLK:
+        return NC_HandleNCLButtonDblClk( hwnd, HTCLIENT, lParam );
+
     case WM_NCLBUTTONDBLCLK:
         return NC_HandleNCLButtonDblClk( hwnd, wParam, lParam );
 
