@@ -1302,7 +1302,8 @@ static int get_num_pages(FORMATRANGE fr)
         page++;
         fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE,
                                      (LPARAM)&fr);
-    } while(fr.chrg.cpMin < fr.chrg.cpMax);
+    }
+    while(fr.chrg.cpMin && fr.chrg.cpMin < fr.chrg.cpMax);
 
     return page;
 }
@@ -1376,7 +1377,7 @@ static void print(LPPRINTDLGW pd)
         if((pd->Flags & PD_PAGENUMS) && (printedPages > (pd->nToPage - pd->nFromPage)))
             break;
     }
-    while(fr.chrg.cpMin < fr.chrg.cpMax);
+    while(fr.chrg.cpMin && fr.chrg.cpMin < fr.chrg.cpMax);
 
     EndDoc(fr.hdc);
     SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE, 0);
