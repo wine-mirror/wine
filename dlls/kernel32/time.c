@@ -52,8 +52,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(time);
 
-/* maximum time adjustment in seconds for SetLocalTime and SetSystemTime */
-#define SETTIME_MAX_ADJUST 120
 #define CALINFO_MAX_YEAR 2029
 
 #define LL2FILETIME( ll, pft )\
