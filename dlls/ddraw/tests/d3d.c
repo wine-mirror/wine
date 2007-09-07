@@ -33,6 +33,14 @@ static LPDIRECT3DVERTEXBUFFER7 lpVBufSrc = NULL;
 static LPDIRECT3DVERTEXBUFFER7 lpVBufDest1 = NULL;
 static LPDIRECT3DVERTEXBUFFER7 lpVBufDest2 = NULL;
 
+typedef struct {
+    int total;
+    int rgb;
+    int hal;
+    int tnlhal;
+    int unk;
+} D3D7ETest;
+
 /* To compare bad floating point numbers. Not the ideal way to do it,
  * but it should be enough for here */
 #define comparefloat(a, b) ( (((a) - (b)) < 0.0001) && (((a) - (b)) > -0.0001) )
@@ -789,6 +797,51 @@ static HRESULT WINAPI enumDevicesCallback(GUID *Guid,LPSTR DeviceDescription,LPS
     return DDENUMRET_OK;
 }
 
+static HRESULT WINAPI enumDevicesCallbackTest7(LPSTR DeviceDescription, LPSTR DeviceName, LPD3DDEVICEDESC7 lpdd7, LPVOID Context)
+{
+    D3D7ETest *d3d7et = (D3D7ETest*)Context;
+    if(IsEqualGUID(&lpdd7->deviceGUID, &IID_IDirect3DRGBDevice))
+        d3d7et->rgb++;
+    else if(IsEqualGUID(&lpdd7->deviceGUID, &IID_IDirect3DHALDevice))
+        d3d7et->hal++;
+    else if(IsEqualGUID(&lpdd7->deviceGUID, &IID_IDirect3DTnLHalDevice))
+        d3d7et->tnlhal++;
+    else
+        d3d7et->unk++;
+
+    d3d7et->total++;
+
+    return DDENUMRET_OK;
+}
+
+
+/*  Check the deviceGUID of devices enumerated by
+    IDirect3D7_EnumDevices. */
+static void D3D7EnumTest(void)
+{
+    D3D7ETest d3d7et;
+
+    if (!lpD3D) {
+        skip("No Direct3D7 interface.\n");
+        return;
+    }
+
+    memset(&d3d7et, 0, sizeof(d3d7et));
+    IDirect3D7_EnumDevices(lpD3D, enumDevicesCallbackTest7, (LPVOID) &d3d7et);
+
+
+    /* A couple of games (Delta Force LW and TFD) rely on this behaviour */
+    ok(d3d7et.tnlhal < d3d7et.total, "TnLHal device enumerated as only device.\n");
+
+    /* We make two additional assumptions. */
+    ok(d3d7et.rgb, "No RGB Device enumerated.\n");
+
+    if(d3d7et.tnlhal)
+        ok(d3d7et.hal, "TnLHal device enumerated, but no Hal device found.\n");
+
+    return;
+}
+
 static void CapsTest(void)
 {
     IDirect3D3 *d3d3;
@@ -1221,6 +1274,7 @@ START_TEST(d3d)
     StateTest();
     SceneTest();
     LimitTest();
+    D3D7EnumTest();
     CapsTest();
     ReleaseDirect3D();
     Direct3D1Test();

@@ -230,7 +230,7 @@ IDirect3DImpl_1_Initialize(IDirect3D *iface,
  * IDirect3D7::EnumDevices
  *
  * The EnumDevices method for IDirect3D7. It enumerates all supported
- * D3D7 devices. Currently there's only one.
+ * D3D7 devices. Currently the T&L, HAL and RGB devices are enumerated.
  *
  * Params:
  *  Callback: Function to call for each enumerated device
@@ -246,8 +246,12 @@ IDirect3DImpl_7_EnumDevices(IDirect3D7 *iface,
                           void *Context)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
-    char interface_name[] = "WINE Direct3D7 using WineD3D";
-    char device_name[] = "Wine D3D7 device";
+    char interface_name_tnl[] = "WINE Direct3D7 Hardware Transform and Lighting acceleration using WineD3D";
+    char device_name_tnl[] = "Wine D3D7 T&L HAL";
+    char interface_name_hal[] = "WINE Direct3D7 Hardware acceleration using WineD3D";
+    char device_name_hal[] = "Wine D3D7 HAL";
+    char interface_name_rgb[] = "WINE Direct3D7 RGB Software Emulation using WineD3D";
+    char device_name_rgb[] = "Wine D3D7 RGB";
     D3DDEVICEDESC7 ddesc;
     D3DDEVICEDESC oldDesc;
     HRESULT hr;
@@ -262,7 +266,13 @@ IDirect3DImpl_7_EnumDevices(IDirect3D7 *iface,
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
-    Callback(interface_name, device_name, &ddesc, Context);
+    Callback(interface_name_tnl, device_name_tnl, &ddesc, Context);
+
+    ddesc.deviceGUID = IID_IDirect3DHALDevice;
+    Callback(interface_name_hal, device_name_hal, &ddesc, Context);
+
+    ddesc.deviceGUID = IID_IDirect3DRGBDevice;
+    Callback(interface_name_rgb, device_name_rgb, &ddesc, Context);
 
     TRACE("(%p) End of enumeration\n", This);
     LeaveCriticalSection(&ddraw_cs);
