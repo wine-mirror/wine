@@ -40,12 +40,16 @@ static const WCHAR UNICODE_PATH[] = {'c',':','\\',0x00c4,'\0','\0'};
 static HMODULE hshell32;
 static int (WINAPI *pSHCreateDirectoryExA)(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
 static int (WINAPI *pSHCreateDirectoryExW)(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
+static int (WINAPI *pSHPathPrepareForWriteA)(HWND, IUnknown*, LPCSTR, DWORD);
+static int (WINAPI *pSHPathPrepareForWriteW)(HWND, IUnknown*, LPCWSTR, DWORD);
 
 static void InitFunctionPointers(void)
 {
     hshell32 = GetModuleHandleA("shell32.dll");
     pSHCreateDirectoryExA = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExA");
     pSHCreateDirectoryExW = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExW");
+    pSHPathPrepareForWriteA = (void*)GetProcAddress(hshell32, "SHPathPrepareForWriteA");
+    pSHPathPrepareForWriteW = (void*)GetProcAddress(hshell32, "SHPathPrepareForWriteW");
 }
 
 /* creates a file with the specified name for tests */
@@ -1002,6 +1006,113 @@ static void test_sh_create_dir(void)
     ok(file_exists("c:\\testdir3"), "The directory is not created\n");
 }
 
+static void test_sh_path_prepare(void)
+{
+    HRESULT res;
+    CHAR path[MAX_PATH];
+
+    if(!pSHPathPrepareForWriteA)
+    {
+	trace("skipping SHPathPrepareForWriteA tests\n");
+	    return;
+    }
+
+    /* directory exists, SHPPFW_NONE */
+    set_curr_dir_path(path, "\0");
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
+    ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
+
+    /* directory exists, SHPPFW_IGNOREFILENAME */
+    set_curr_dir_path(path, "nonexistent\0");
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME);
+    ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
+
+    /* directory exists, SHPPFW_DIRCREATE */
+    set_curr_dir_path(path, "\0");
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
+    ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
+
+    /* directory exists, SHPPFW_IGNOREFILENAME|SHPPFW_DIRCREATE */
+    set_curr_dir_path(path, "nonexistent\0");
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME|SHPPFW_DIRCREATE);
+    ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
+    ok(!file_exists("nonexistent\\"), "nonexistent\\ exists but shouldn't\n");
+
+    /* file exists, SHPPFW_NONE */
+    set_curr_dir_path(path, "test1.txt\0");
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
+    todo_wine ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_DIRECTORY)\n", res);
+
+    /* file exists, SHPPFW_DIRCREATE */
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
+    todo_wine ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_DIRECTORY)\n", res);
+
+    /* file exists, SHPPFW_NONE, trailing \ */
+    set_curr_dir_path(path, "test1.txt\\\0");
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
+    todo_wine ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_DIRECTORY)\n", res);
+
+    /* relative path exists, SHPPFW_DIRCREATE */
+    res = pSHPathPrepareForWriteA(0, 0, ".\\testdir2", SHPPFW_DIRCREATE);
+    ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
+
+    /* relative path doesn't exist, SHPPFW_DIRCREATE -- Windows does not create the directory in this case */
+    res = pSHPathPrepareForWriteA(0, 0, ".\\testdir2\\test4.txt", SHPPFW_DIRCREATE);
+    todo_wine ok(res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)\n", res);
+    ok(!file_exists(".\\testdir2\\test4.txt\\"), ".\\testdir2\\test4.txt\\ exists but shouldn't\n");
+
+    /* directory doesn't exist, SHPPFW_NONE */
+    set_curr_dir_path(path, "nonexistent\0");
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
+    todo_wine ok(res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)\n", res);
+
+    /* directory doesn't exist, SHPPFW_IGNOREFILENAME */
+    set_curr_dir_path(path, "nonexistent\\notreal\0");
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME);
+    todo_wine ok(res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)\n", res);
+    ok(!file_exists("nonexistent\\notreal"), "nonexistent\\notreal exists but shouldn't\n");
+    ok(!file_exists("nonexistent\\"), "nonexistent\\ exists but shouldn't\n");
+
+    /* directory doesn't exist, SHPPFW_IGNOREFILENAME|SHPPFW_DIRCREATE */
+    set_curr_dir_path(path, "testdir2\\test4.txt\\\0");
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME|SHPPFW_DIRCREATE);
+    ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
+    todo_wine ok(file_exists("testdir2\\test4.txt\\"), "testdir2\\test4.txt doesn't exist but should\n");
+
+    /* nested directory doesn't exist, SHPPFW_DIRCREATE */
+    set_curr_dir_path(path, "nonexistent\\notreal\0");
+    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
+    ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
+    todo_wine ok(file_exists("nonexistent\\notreal"), "nonexistent\\notreal doesn't exist but should\n");
+
+    /* SHPPFW_ASKDIRCREATE, SHPPFW_NOWRITECHECK, and SHPPFW_MEDIACHECKONLY are untested */
+
+    if(!pSHPathPrepareForWriteW)
+    {
+        skip("Skipping SHPathPrepareForWriteW tests\n");
+        return;
+    }
+    /* unicode directory doesn't exist, SHPPFW_NONE */
+    res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_NONE);
+    todo_wine ok(res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "res == %08x, expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)\n", res);
+    ok(!file_existsW(UNICODE_PATH), "unicode path was created but shouldn't be\n");
+    RemoveDirectoryW(UNICODE_PATH);
+
+    /* unicode directory doesn't exist, SHPPFW_DIRCREATE */
+    res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_DIRCREATE);
+    ok(res == S_OK, "res == %08x, expected S_OK\n", res);
+    todo_wine ok(file_existsW(UNICODE_PATH), "unicode path should've been created\n");
+
+    /* unicode directory exists, SHPPFW_NONE */
+    res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_NONE);
+    ok(res == S_OK, "ret == %08x, expected S_OK\n", res);
+
+    /* unicode directory exists, SHPPFW_DIRCREATE */
+    res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_DIRCREATE);
+    ok(res == S_OK, "ret == %08x, expected S_OK\n", res);
+    RemoveDirectoryW(UNICODE_PATH);
+}
+
 static void test_unicode(void)
 {
     SHFILEOPSTRUCTW shfoW;
@@ -1096,6 +1207,10 @@ START_TEST(shlfileop)
     clean_after_shfo_tests();
 
     test_sh_create_dir();
+    clean_after_shfo_tests();
+
+    init_shfo_tests();
+    test_sh_path_prepare();
     clean_after_shfo_tests();
 
     test_unicode();
