@@ -335,6 +335,7 @@ ALL_MAKEFILES = \
 	dlls/oledlg/Makefile \
 	dlls/olepro32/Makefile \
 	dlls/olesvr32/Makefile \
+	dlls/olethk32/Makefile \
 	dlls/opengl32/Makefile \
 	dlls/opengl32/tests/Makefile \
 	dlls/pdh/Makefile \
@@ -702,6 +703,7 @@ dlls/olecli32/Makefile: dlls/olecli32/Makefile.in dlls/Makedll.rules
 dlls/oledlg/Makefile: dlls/oledlg/Makefile.in dlls/Makedll.rules
 dlls/olepro32/Makefile: dlls/olepro32/Makefile.in dlls/Makedll.rules
 dlls/olesvr32/Makefile: dlls/olesvr32/Makefile.in dlls/Makedll.rules
+dlls/olethk32/Makefile: dlls/olethk32/Makefile.in dlls/Makedll.rules
 dlls/opengl32/Makefile: dlls/opengl32/Makefile.in dlls/Makedll.rules
 dlls/opengl32/tests/Makefile: dlls/opengl32/tests/Makefile.in dlls/Maketest.rules
 dlls/pdh/Makefile: dlls/pdh/Makefile.in dlls/Makedll.rules

@@ -433,6 +433,7 @@ dlls/olepro32/libolepro32.def
 dlls/olepro32/version.res
 dlls/olesvr.dll16
 dlls/olesvr32/libolesvr32.def
+dlls/olethk32/version.res
 dlls/opengl32/libopengl32.def
 dlls/opengl32/tests/*.ok
 dlls/opengl32/tests/opengl32_crosstest.exe

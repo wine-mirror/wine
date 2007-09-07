@@ -149,6 +149,7 @@ BASEDIRS = \
 	oledlg \
 	olepro32 \
 	olesvr32 \
+	olethk32 \
 	pdh \
 	powrprof \
 	printui \
