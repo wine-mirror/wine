@@ -38,6 +38,6 @@ FONT 8, "MS Shell Dlg"
           " de Mozilla) esté instalado para mostrar la página. Pulse Instalar si desea que Wine " \
           "descargue e instale automáticamente Gecko.", ID_DWL_STATUS, 10, 10, 240, 40, SS_LEFT
     CONTROL "Progreso", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 50, 240, 12
-    PUSHBUTTON "Cancelar", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "Instalar", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
+    DEFPUSHBUTTON "&Instalar", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Cancelar", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
 }

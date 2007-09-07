@@ -37,6 +37,6 @@ FONT 8, "MS Shell Dlg"
     "Gecko (Mozilla HTML 엔진)를 설치할 것입니다. Wine이 자동으로 Gecko를 다운로드하고 설치하기를 원한다면 " \
    "[설치]버튼을 클릭하십시오", ID_DWL_STATUS, 10, 10, 240, 30, SS_LEFT
    CONTROL "Progress", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
+   DEFPUSHBUTTON "설치", ID_DWL_INSTALL, 200, 60, 50, 15, WS_GROUP | WS_TABSTOP
    PUSHBUTTON "취소", IDCANCEL, 140, 60, 50, 15, WS_GROUP | WS_TABSTOP
-   PUSHBUTTON "설치", ID_DWL_INSTALL, 200, 60, 50, 15, WS_GROUP | WS_TABSTOP
 }

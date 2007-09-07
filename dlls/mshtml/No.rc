@@ -36,6 +36,6 @@ STRINGTABLE DISCARDABLE
     "(Mozillas HTML-motor) for å vise denne siden. Velg «Installer» hvis " \
     "du vil at Wine skal laste ned og installere Gecko automatisk.", ID_DWL_STATUS, 10, 10, 240, 30, SS_LEFT
     CONTROL "Progress", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
-    PUSHBUTTON "Avbryt", IDCANCEL, 140, 60, 50, 15, WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "Installer", ID_DWL_INSTALL, 200, 60, 50, 15, WS_GROUP | WS_TABSTOP
+    DEFPUSHBUTTON "&Installer", ID_DWL_INSTALL, 200, 60, 50, 15, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Avbryt", IDCANCEL, 140, 60, 50, 15, WS_GROUP | WS_TABSTOP
 }

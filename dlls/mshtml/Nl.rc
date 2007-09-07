@@ -39,6 +39,6 @@ FONT 8, "MS Shell Dlg"
           "weer te kunnen geven. Klik op Installeren, om Gecko automatisch " \
           "te downloaden en te installeren.", ID_DWL_STATUS, 10, 10, 240, 40, SS_LEFT
     CONTROL "Voortgang", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 50, 240, 12
-    PUSHBUTTON "Afbreken", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "Installeren", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
+    DEFPUSHBUTTON "&Installeren", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Afbreken", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
 }
