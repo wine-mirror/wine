@@ -62,8 +62,6 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static RTL_CRITICAL_SECTION TIME_tz_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-#define SETTIME_MAX_ADJUST 120
-
 #define TICKSPERSEC        10000000
 #define TICKSPERMSEC       10000
 #define SECSPERDAY         86400
@@ -898,7 +896,6 @@ NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *Old
     time_t tm_t;
     DWORD sec, oldsec;
     LARGE_INTEGER tm;
-    int err;
 
     /* Return the old time if necessary */
     if (!OldTime) OldTime = &tm;
@@ -912,30 +909,20 @@ NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *Old
     tv.tv_sec = sec;
     tv.tv_usec = 0;
 
-    /* error and sanity check*/
-    if(sec == (time_t)-1 || abs((int)(sec-oldsec)) > SETTIME_MAX_ADJUST) {
-        err = 2;
-    } else {
 #ifdef HAVE_SETTIMEOFDAY
-        err = settimeofday(&tv, NULL); /* 0 is OK, -1 is error */
-        if(err == 0)
-            return STATUS_SUCCESS;
-#else
-        err = 1;
-#endif
-    }
-
+    if (!settimeofday(&tv, NULL)) /* 0 is OK, -1 is error */
+        return STATUS_SUCCESS;
     tm_t = sec;
-    ERR("Cannot set time to %s Time adjustment %ld %s\n",
-        ctime( &tm_t ),
-            (long)(sec-oldsec),
-            err == -1 ? "No Permission"
-                      : sec == (time_t)-1 ? "" : "is too large." );
-
-    if(err == 2)
-        return STATUS_INVALID_PARAMETER;
-    else if(err == -1)
+    ERR("Cannot set time to %s, time adjustment %ld: %s\n",
+        ctime(&tm_t), (long)(sec-oldsec), strerror(errno));
+    if (errno == EPERM)
         return STATUS_PRIVILEGE_NOT_HELD;
     else
-        return STATUS_NOT_IMPLEMENTED;
+        return STATUS_INVALID_PARAMETER;
+#else
+    tm_t = sec;
+    FIXME("setting time to %s not implemented for missing settimeofday\n",
+        ctime(&tm_t));
+    return STATUS_NOT_IMPLEMENTED;
+#endif
 }
