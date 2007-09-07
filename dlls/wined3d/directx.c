@@ -1810,7 +1810,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                       WINED3DCAPS2_FULLSCREENGAMMA |
                                       WINED3DCAPS2_DYNAMICTEXTURES;
     *pCaps->Caps3                   = WINED3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD;
-    *pCaps->PresentationIntervals   = WINED3DPRESENT_INTERVAL_IMMEDIATE;
+    *pCaps->PresentationIntervals   = WINED3DPRESENT_INTERVAL_IMMEDIATE  |
+                                      WINED3DPRESENT_INTERVAL_ONE;
 
     *pCaps->CursorCaps              = WINED3DCURSORCAPS_COLOR            |
                                       WINED3DCURSORCAPS_LOWRES;
