@@ -1483,13 +1483,25 @@ static void preview_bar_show(BOOL show)
 
     if(show)
     {
+        REBARBANDINFOW rb;
+
         AddTextButton(hReBar, STRING_PREVIEW_PRINT, ID_PRINT, BANDID_PREVIEW_BTN1);
         AddTextButton(hReBar, STRING_PREVIEW_NEXTPAGE, ID_PREVIEW_NEXTPAGE, BANDID_PREVIEW_BTN2);
         AddTextButton(hReBar, STRING_PREVIEW_PREVPAGE, ID_PREVIEW_PREVPAGE, BANDID_PREVIEW_BTN3);
         AddTextButton(hReBar, STRING_PREVIEW_CLOSE, ID_FILE_EXIT, BANDID_PREVIEW_BTN4);
+
+        rb.cbSize = sizeof(rb);
+        rb.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_CHILD | RBBIM_IDEALSIZE | RBBIM_ID;
+        rb.fStyle = RBBS_NOGRIPPER | RBBS_VARIABLEHEIGHT;
+        rb.cyChild = rb.cyMinChild = 22;
+        rb.cx = rb.cxMinChild = 90;
+        rb.cxIdeal = 100;
+        rb.wID = BANDID_PREVIEW_BUFFER;
+
+        SendMessageW(hReBar, RB_INSERTBAND, -1, (LPARAM)&rb);
     } else
     {
-        for(i = 0; i < PREVIEW_BUTTONS; i++)
+        for(i = 0; i <= PREVIEW_BUTTONS; i++)
             SendMessageW(hReBar, RB_DELETEBAND, SendMessageW(hReBar, RB_IDTOINDEX, BANDID_PREVIEW_BTN1+i, 0), 0);
     }
 }
@@ -3110,6 +3122,8 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
             rebarRows--;
 
         rebarHeight = rebarRows ? SendMessageW(hwndReBar, RB_GETBARHEIGHT, 0, 0) : 0;
+
+        MoveWindow(hwndReBar, 0, 0, LOWORD(lParam), rebarHeight, TRUE);
     }
     if (hwndEditor)
     {
