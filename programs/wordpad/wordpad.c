@@ -2798,18 +2798,26 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_FORMAT_UNDERLINE:
         {
         CHARFORMAT2W fmt;
-        int mask = CFM_BOLD;
-        if (LOWORD(wParam) == ID_FORMAT_ITALIC) mask = CFM_ITALIC;
-        if (LOWORD(wParam) == ID_FORMAT_UNDERLINE) mask = CFM_UNDERLINE;
+        int effects = CFE_BOLD;
 
         ZeroMemory(&fmt, sizeof(fmt));
         fmt.cbSize = sizeof(fmt);
         SendMessageW(hwndEditor, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
-        if (!(fmt.dwMask&mask))
-            fmt.dwEffects |= mask;
-        else
-            fmt.dwEffects ^= mask;
-        fmt.dwMask = mask;
+
+        fmt.dwMask = CFM_BOLD;
+
+        if (LOWORD(wParam) == ID_FORMAT_ITALIC)
+        {
+            effects = CFE_ITALIC;
+            fmt.dwMask = CFM_ITALIC;
+        } else if (LOWORD(wParam) == ID_FORMAT_UNDERLINE)
+        {
+            effects = CFE_UNDERLINE;
+            fmt.dwMask = CFM_UNDERLINE;
+        }
+
+        fmt.dwEffects ^= effects;
+
         SendMessageW(hwndEditor, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
         break;
         }
