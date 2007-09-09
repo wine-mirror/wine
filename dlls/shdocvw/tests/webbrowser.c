@@ -80,6 +80,7 @@ DEFINE_EXPECT(GetHostInfo);
 DEFINE_EXPECT(GetOptionKeyPath);
 DEFINE_EXPECT(GetOverridesKeyPath);
 DEFINE_EXPECT(SetStatusText);
+DEFINE_EXPECT(UpdateUI);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
 
@@ -678,7 +679,7 @@ static HRESULT WINAPI DocHostUIHandler_HideUI(IDocHostUIHandler2 *iface)
 
 static HRESULT WINAPI DocHostUIHandler_UpdateUI(IDocHostUIHandler2 *iface)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(UpdateUI);
     return E_NOTIMPL;
 }
 
