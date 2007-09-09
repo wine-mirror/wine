@@ -95,7 +95,7 @@
 @ cdecl EndClipboardUpdate() X11DRV_EndClipboardUpdate
 @ cdecl EnumClipboardFormats(long) X11DRV_EnumClipboardFormats
 @ cdecl GetClipboardData(long ptr ptr) X11DRV_GetClipboardData
-@ cdecl GetClipboardFormatName(long str long) X11DRV_GetClipboardFormatName
+@ cdecl GetClipboardFormatName(long ptr long) X11DRV_GetClipboardFormatName
 @ cdecl GetDCEx(long long long) X11DRV_GetDCEx
 @ cdecl IsClipboardFormatAvailable(long) X11DRV_IsClipboardFormatAvailable
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) X11DRV_MsgWaitForMultipleObjectsEx
