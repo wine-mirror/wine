@@ -77,6 +77,16 @@ static int string_to_nscmptype(LPCWSTR str)
     return -1;
 }
 
+static PRUint16 get_node_type(nsIDOMNode *node)
+{
+    PRUint16 type = 0xfff;
+
+    if(node)
+        nsIDOMNode_GetNodeType(node, &type);
+
+    return type;
+}
+
 #define HTMLTXTRANGE_THIS(iface) DEFINE_THIS(HTMLTxtRange, HTMLTxtRange, iface)
 
 static HRESULT WINAPI HTMLTxtRange_QueryInterface(IHTMLTxtRange *iface, REFIID riid, void **ppv)
@@ -280,8 +290,31 @@ static HRESULT WINAPI HTMLTxtRange_get_text(IHTMLTxtRange *iface, BSTR *p)
 static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElement **parent)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, parent);
-    return E_NOTIMPL;
+    nsIDOMNode *nsnode, *tmp;
+    HTMLDOMNode *node;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, parent);
+
+    nsIDOMRange_GetCommonAncestorContainer(This->nsrange, &nsnode);
+    while(nsnode && get_node_type(nsnode) != ELEMENT_NODE) {
+        nsIDOMNode_GetParentNode(nsnode, &tmp);
+        nsIDOMNode_Release(nsnode);
+        nsnode = tmp;
+    }
+
+    if(!nsnode) {
+        *parent = NULL;
+        return S_OK;
+    }
+
+    node = get_node(This->doc, nsnode);
+    nsIDOMNode_Release(nsnode);
+
+    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)parent);
+
+    IHTMLDOMNode_Release(HTMLDOMNODE(node));
+    return hres;
 }
 
 static HRESULT WINAPI HTMLTxtRange_duplicate(IHTMLTxtRange *iface, IHTMLTxtRange **Duplicate)
