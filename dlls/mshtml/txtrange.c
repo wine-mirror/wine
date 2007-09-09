@@ -366,8 +366,31 @@ static HRESULT WINAPI HTMLTxtRange_isEqual(IHTMLTxtRange *iface, IHTMLTxtRange *
         VARIANT_BOOL *IsEqual)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%p %p)\n", This, Range, IsEqual);
-    return E_NOTIMPL;
+    HTMLTxtRange *src_range;
+    PRInt16 nsret = 0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p %p)\n", This, Range, IsEqual);
+
+    *IsEqual = VARIANT_FALSE;
+
+    src_range = get_range_object(This->doc, Range);
+    if(!src_range)
+        return E_FAIL;
+
+    nsres = nsIDOMRange_CompareBoundaryPoints(This->nsrange, NS_START_TO_START,
+            src_range->nsrange, &nsret);
+    if(NS_SUCCEEDED(nsres) && !nsret) {
+        nsres = nsIDOMRange_CompareBoundaryPoints(This->nsrange, NS_END_TO_END,
+                src_range->nsrange, &nsret);
+        if(NS_SUCCEEDED(nsres) && !nsret)
+            *IsEqual = VARIANT_TRUE;
+    }
+
+    if(NS_FAILED(nsres))
+        ERR("CompareBoundaryPoints failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_scrollIntoView(IHTMLTxtRange *iface, VARIANT_BOOL fStart)
