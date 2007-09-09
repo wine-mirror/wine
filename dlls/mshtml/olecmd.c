@@ -873,7 +873,8 @@ void show_context_menu(HTMLDocument *This, DWORD dwID, POINT *ppt)
             ppt->x, ppt->y, 0, This->hwnd, NULL);
     DestroyMenu(menu_res);
 
-    IOleCommandTarget_Exec(CMDTARGET(This), &CGID_MSHTML, cmdid, 0, NULL, NULL);
+    if(cmdid)
+        IOleCommandTarget_Exec(CMDTARGET(This), &CGID_MSHTML, cmdid, 0, NULL, NULL);
 }
 
 void HTMLDocument_OleCmd_Init(HTMLDocument *This)
