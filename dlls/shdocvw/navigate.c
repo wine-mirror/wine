@@ -610,6 +610,15 @@ static HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
     return navigate(This, mon, bindctx);
 }
 
+HRESULT go_home(DocHost *This)
+{
+    static const WCHAR wszAboutBlank[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
+    FIXME("stub\n");
+
+    return navigate_url(This, wszAboutBlank, NULL, NULL, NULL, NULL);
+}
+
 #define HLINKFRAME_THIS(iface) DEFINE_THIS(WebBrowser, HlinkFrame, iface)
 
 static HRESULT WINAPI HlinkFrame_QueryInterface(IHlinkFrame *iface, REFIID riid, void **ppv)

@@ -195,6 +195,7 @@ void create_doc_view_hwnd(DocHost*);
 void deactivate_document(DocHost*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 HRESULT navigate_url(DocHost*,LPCWSTR,const VARIANT*,const VARIANT*,VARIANT*,VARIANT*);
+HRESULT go_home(DocHost*);
 
 HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**);
 void InternetExplorer_WebBrowser_Init(InternetExplorer*);

@@ -210,8 +210,8 @@ static HRESULT WINAPI WebBrowser_GoForward(IWebBrowser2 *iface)
 static HRESULT WINAPI WebBrowser_GoHome(IWebBrowser2 *iface)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", This);
+    return go_home(&This->doc_host);
 }
 
 static HRESULT WINAPI WebBrowser_GoSearch(IWebBrowser2 *iface)
