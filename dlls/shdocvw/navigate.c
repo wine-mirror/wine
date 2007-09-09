@@ -514,7 +514,7 @@ static HRESULT bind_url_to_object(DocHost *This, LPCWSTR url, PBYTE post_data, U
     return hres;
 }
 
-HRESULT navigate_url(DocHost *This, BSTR url, const VARIANT *Flags,
+HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
                      const VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
 {
     PBYTE post_data = NULL;
