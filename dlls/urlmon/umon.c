@@ -500,7 +500,6 @@ static HRESULT WINAPI URLMonikerImpl_BindToObject(IMoniker* iface,
  ******************************************************************************/
 static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
 						   IBindCtx* pbc,
-						   IMoniker* pmkToLeft,
 						   REFIID riid,
 						   VOID** ppvObject)
 {
@@ -511,13 +510,8 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
     Binding *bind;
     int len;
 
-    WARN("(%s %p %p %s %p)\n", debugstr_w(URLName), pbc, pmkToLeft, debugstr_guid(riid),
-            ppvObject);
+    WARN("(%s %p %s %p)\n", debugstr_w(URLName), pbc, debugstr_guid(riid), ppvObject);
 
-    if(pmkToLeft) {
-	FIXME("pmkToLeft != NULL\n");
-	return E_NOTIMPL;
-    }
     if(!IsEqualIID(&IID_IStream, riid)) {
 	FIXME("unsupported iid\n");
 	return E_NOTIMPL;
@@ -743,6 +737,9 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
     URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW), schema,
         sizeof(schema)/sizeof(WCHAR), 0, NULL, 0, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0};
 
+    if(pmkToLeft)
+	FIXME("Unsupported pmkToLeft\n");
+
     bret = InternetCrackUrlW(This->URLName, 0, ICU_ESCAPE, &url);
     if(!bret) {
         ERR("InternetCrackUrl failed: %u\n", GetLastError());
@@ -752,7 +749,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
     if(url.nScheme== INTERNET_SCHEME_HTTPS
        || url.nScheme== INTERNET_SCHEME_FTP
        || url.nScheme == INTERNET_SCHEME_GOPHER)
-        return URLMonikerImpl_BindToStorage_hack(This->URLName, pbc, pmkToLeft, riid, ppvObject);
+        return URLMonikerImpl_BindToStorage_hack(This->URLName, pbc, riid, ppvObject);
 
     TRACE("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppvObject);
 
