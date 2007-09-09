@@ -335,8 +335,31 @@ static HRESULT WINAPI HTMLTxtRange_inRange(IHTMLTxtRange *iface, IHTMLTxtRange *
         VARIANT_BOOL *InRange)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%p %p)\n", This, Range, InRange);
-    return E_NOTIMPL;
+    HTMLTxtRange *src_range;
+    PRInt16 nsret = 0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p %p)\n", This, Range, InRange);
+
+    *InRange = VARIANT_FALSE;
+
+    src_range = get_range_object(This->doc, Range);
+    if(!src_range)
+        return E_FAIL;
+
+    nsres = nsIDOMRange_CompareBoundaryPoints(This->nsrange, NS_START_TO_START,
+            src_range->nsrange, &nsret);
+    if(NS_SUCCEEDED(nsres) && nsret <= 0) {
+        nsres = nsIDOMRange_CompareBoundaryPoints(This->nsrange, NS_END_TO_END,
+                src_range->nsrange, &nsret);
+        if(NS_SUCCEEDED(nsres) && nsret >= 0)
+            *InRange = VARIANT_TRUE;
+    }
+
+    if(NS_FAILED(nsres))
+        ERR("CompareBoundaryPoints failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_isEqual(IHTMLTxtRange *iface, IHTMLTxtRange *Range,
