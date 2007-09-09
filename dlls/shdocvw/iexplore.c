@@ -120,10 +120,9 @@ static void create_frame_hwnd(InternetExplorer *This)
             NULL, NULL /* FIXME */, shdocvw_hinstance, This);
 }
 
-static IWebBrowser2 *create_ie_window(LPCWSTR url)
+static IWebBrowser2 *create_ie_window(LPCSTR cmdline)
 {
     IWebBrowser2 *wb = NULL;
-    VARIANT var_url;
 
     InternetExplorer_Create(NULL, &IID_IWebBrowser2, (void**)&wb);
     if(!wb)
@@ -131,13 +130,26 @@ static IWebBrowser2 *create_ie_window(LPCWSTR url)
 
     IWebBrowser2_put_Visible(wb, VARIANT_TRUE);
 
-    V_VT(&var_url) = VT_BSTR;
-    V_BSTR(&var_url) = SysAllocString(url);
+    if(!*cmdline) {
+        IWebBrowser2_GoHome(wb);
+    }else {
+        VARIANT var_url;
+        DWORD len;
 
-    /* navigate to the first page */
-    IWebBrowser2_Navigate2(wb, &var_url, NULL, NULL, NULL, NULL);
+        if(!strncasecmp(cmdline, "-nohome", 7))
+            cmdline += 7;
 
-    SysFreeString(V_BSTR(&var_url));
+        V_VT(&var_url) = VT_BSTR;
+
+        len = MultiByteToWideChar(CP_ACP, 0, cmdline, -1, NULL, 0);
+        V_BSTR(&var_url) = SysAllocStringLen(NULL, len);
+        MultiByteToWideChar(CP_ACP, 0, cmdline, -1, V_BSTR(&var_url), len);
+
+        /* navigate to the first page */
+        IWebBrowser2_Navigate2(wb, &var_url, NULL, NULL, NULL, NULL);
+
+        SysFreeString(V_BSTR(&var_url));
+    }
 
     return wb;
 }
@@ -190,24 +202,8 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
         ExitProcess(1);
     }
 
-    /* FIXME: there are lots of other commandline options we need to parse */
-    if(!strncasecmp(szCommandLine, "-nohome", 7)) {
-	FIXME("skipping -nohome option\n");
-	szCommandLine += 8;
-    }
-
-    if(strcmp(szCommandLine, "-Embedding")) {
-        LPWSTR url;
-        DWORD len;
-
-        len = MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, NULL, 0);
-        url = shdocvw_alloc(len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, url, len);
-
-        wb = create_ie_window(url);
-
-        shdocvw_free(url);
-    }
+    if(strcasecmp(szCommandLine, "-embedding"))
+        wb = create_ie_window(szCommandLine);
 
     /* run the message loop for this thread */
     while (GetMessageW(&msg, 0, 0, 0))
