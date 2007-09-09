@@ -1346,6 +1346,27 @@ void shader_glsl_pow(SHADER_OPCODE_ARG *arg) {
     }
 }
 
+/* Process the WINED3DSIO_LOG instruction in GLSL (dst = log2(|src0|))
+ * Src0 is a scalar. Note that D3D uses the absolute of src0, while
+ * GLSL uses the value as-is. */
+void shader_glsl_log(SHADER_OPCODE_ARG *arg) {
+    SHADER_BUFFER *buffer = arg->buffer;
+    glsl_src_param_t src0_param;
+    DWORD dst_write_mask;
+    size_t dst_size;
+
+    dst_write_mask = shader_glsl_append_dst(buffer, arg);
+    dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
+
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, &src0_param);
+
+    if (dst_size > 1) {
+        shader_addline(buffer, "vec%d(log2(abs(%s))));\n", dst_size, src0_param.param_str);
+    } else {
+        shader_addline(buffer, "log2(abs(%s)));\n", src0_param.param_str);
+    }
+}
+
 /* Map the opcode 1-to-1 to the GL code (arg->dst = instruction(src0, src1, ...) */
 void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
