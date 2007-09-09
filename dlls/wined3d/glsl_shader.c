@@ -1513,6 +1513,17 @@ void shader_glsl_cmp(SHADER_OPCODE_ARG* arg) {
     glsl_src_param_t src2_param;
     DWORD write_mask, cmp_channel = 0;
     unsigned int i, j;
+    char mask_char[6];
+    BOOL temp_destination = FALSE;
+
+    DWORD src0reg = arg->src[0] & WINED3DSP_REGNUM_MASK;
+    DWORD src1reg = arg->src[1] & WINED3DSP_REGNUM_MASK;
+    DWORD src2reg = arg->src[2] & WINED3DSP_REGNUM_MASK;
+    DWORD src0regtype = shader_get_regtype(arg->src[0]);
+    DWORD src1regtype = shader_get_regtype(arg->src[1]);
+    DWORD src2regtype = shader_get_regtype(arg->src[2]);
+    DWORD dstreg = arg->dst & WINED3DSP_REGNUM_MASK;
+    DWORD dstregtype = shader_get_regtype(arg->dst);
 
     /* Cycle through all source0 channels */
     for (i=0; i<4; i++) {
@@ -1524,16 +1535,38 @@ void shader_glsl_cmp(SHADER_OPCODE_ARG* arg) {
                 cmp_channel = WINED3DSP_WRITEMASK_0 << j;
             }
         }
-        write_mask = shader_glsl_append_dst_ext(arg->buffer, arg, arg->dst & (~WINED3DSP_SWIZZLE_MASK | write_mask));
-        if (!write_mask) continue;
+
+        /* Splitting the cmp instruction up in multiple lines imposes a problem:
+         * The first lines may overwrite source parameters of the following lines.
+         * Deal with that by using a temporary destination register if needed
+         */
+        if((src0reg == dstreg && src0regtype == dstregtype) ||
+           (src1reg == dstreg && src1regtype == dstregtype) ||
+           (src2reg == dstreg && src2regtype == dstregtype)) {
+
+            write_mask = shader_glsl_get_write_mask(arg->dst & (~WINED3DSP_SWIZZLE_MASK | write_mask), mask_char);
+            if (!write_mask) continue;
+            shader_addline(arg->buffer, "tmp0%s = (", mask_char);
+            temp_destination = TRUE;
+        } else {
+            write_mask = shader_glsl_append_dst_ext(arg->buffer, arg, arg->dst & (~WINED3DSP_SWIZZLE_MASK | write_mask));
+            if (!write_mask) continue;
+        }
 
         shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], cmp_channel, &src0_param);
         shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, &src1_param);
         shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, &src2_param);
 
-        shader_addline(arg->buffer, "%s >= 0.0 ? %s : %s);\n",
-                src0_param.param_str, src1_param.param_str, src2_param.param_str);
+            shader_addline(arg->buffer, "%s >= 0.0 ? %s : %s);\n",
+                           src0_param.param_str, src1_param.param_str, src2_param.param_str);
     }
+
+    if(temp_destination) {
+        shader_glsl_get_write_mask(arg->dst, mask_char);
+        shader_glsl_append_dst_ext(arg->buffer, arg, arg->dst);
+        shader_addline(arg->buffer, "tmp0%s);\n", mask_char);
+    }
+
 }
 
 /** Process the CND opcode in GLSL (dst = (src0 > 0.5) ? src1 : src2) */
