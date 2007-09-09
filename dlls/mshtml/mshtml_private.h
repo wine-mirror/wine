@@ -124,6 +124,8 @@ struct HTMLDocument {
     IOleInPlaceFrame *frame;
     IOleInPlaceUIWindow *ip_window;
 
+    IOleUndoManager *undomgr;
+
     BSCallback *bscallback;
     IMoniker *mon;
     BSTR url;

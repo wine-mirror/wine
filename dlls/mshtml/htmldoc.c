@@ -160,6 +160,8 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
             IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
         if(This->ipsite)
             IOleDocumentView_SetInPlaceSite(DOCVIEW(This), NULL);
+        if(This->undomgr)
+            IOleUndoManager_Release(This->undomgr);
 
         set_document_bscallback(This, NULL);
         set_current_mon(This, NULL);

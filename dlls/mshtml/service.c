@@ -34,6 +34,175 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+typedef struct {
+    const IOleUndoManagerVtbl  *lpOleUndoManagerVtbl;
+
+    LONG ref;
+} UndoManager;
+
+#define UNDOMGR(x)  ((IOleUndoManager*)  &(x)->lpOleUndoManagerVtbl)
+
+#define UNDOMGR_THIS(iface) DEFINE_THIS(UndoManager, OleUndoManager, iface)
+
+static HRESULT WINAPI OleUndoManager_QueryInterface(IOleUndoManager *iface, REFIID riid, void **ppv)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = UNDOMGR(This);
+    }else if(IsEqualGUID(riid, &IID_IOleUndoManager)) {
+        TRACE("(%p)->(IID_IOleUndoManager %p)\n", This, ppv);
+        *ppv = UNDOMGR(This);
+    }
+
+
+    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI OleUndoManager_AddRef(IOleUndoManager *iface)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI OleUndoManager_Release(IOleUndoManager *iface)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        mshtml_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI OleUndoManager_Open(IOleUndoManager *iface, IOleParentUndoUnit *pPUU)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pPUU);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleUndoManager_Close(IOleUndoManager *iface, IOleParentUndoUnit *pPUU,
+        BOOL fCommit)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p %x)\n", This, pPUU, fCommit);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleUndoManager_Add(IOleUndoManager *iface, IOleUndoUnit *pUU)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pUU);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleUndoManager_GetOpenParentState(IOleUndoManager *iface, DWORD *pdwState)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pdwState);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleUndoManager_DiscardFrom(IOleUndoManager *iface, IOleUndoUnit *pUU)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pUU);
+    return S_OK;
+}
+
+static HRESULT WINAPI OleUndoManager_UndoTo(IOleUndoManager *iface, IOleUndoUnit *pUU)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pUU);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleUndoManager_RedoTo(IOleUndoManager *iface, IOleUndoUnit *pUU)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pUU);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleUndoManager_EnumUndoable(IOleUndoManager *iface,
+        IEnumOleUndoUnits **ppEnum)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleUndoManager_EnumRedoable(IOleUndoManager *iface,
+        IEnumOleUndoUnits **ppEnum)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleUndoManager_GetLastUndoDescription(IOleUndoManager *iface, BSTR *pBstr)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pBstr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleUndoManager_GetLastRedoDescription(IOleUndoManager *iface, BSTR *pBstr)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pBstr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleUndoManager_Enable(IOleUndoManager *iface, BOOL fEnable)
+{
+    UndoManager *This = UNDOMGR_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, fEnable);
+    return E_NOTIMPL;
+}
+
+#undef UNDOMGR_THIS
+
+static const IOleUndoManagerVtbl OleUndoManagerVtbl = {
+    OleUndoManager_QueryInterface,
+    OleUndoManager_AddRef,
+    OleUndoManager_Release,
+    OleUndoManager_Open,
+    OleUndoManager_Close,
+    OleUndoManager_Add,
+    OleUndoManager_GetOpenParentState,
+    OleUndoManager_DiscardFrom,
+    OleUndoManager_UndoTo,
+    OleUndoManager_RedoTo,
+    OleUndoManager_EnumUndoable,
+    OleUndoManager_EnumRedoable,
+    OleUndoManager_GetLastUndoDescription,
+    OleUndoManager_GetLastRedoDescription,
+    OleUndoManager_Enable
+};
+
+static IOleUndoManager *create_undomgr(void)
+{
+    UndoManager *ret = mshtml_alloc(sizeof(UndoManager));
+
+    ret->lpOleUndoManagerVtbl = &OleUndoManagerVtbl;
+    ret->ref = 1;
+
+    return UNDOMGR(ret);
+}
+
 /**********************************************************
  * IServiceProvider impementation
  */
@@ -69,6 +238,17 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
         return E_NOINTERFACE;
     }
 
+    if(IsEqualGUID(&IID_IOleUndoManager, riid)) {
+        TRACE("(%p)->(IID_IOleUndoManager %p)\n", This, ppv);
+
+        if(!This->undomgr)
+            This->undomgr = create_undomgr();
+
+        IOleUndoManager_AddRef(This->undomgr);
+        *ppv = This->undomgr;
+        return S_OK;
+    }
+
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
     
     return E_UNEXPECTED;
@@ -84,4 +264,6 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 void HTMLDocument_Service_Init(HTMLDocument *This)
 {
     This->lpServiceProviderVtbl = &ServiceProviderVtbl;
+
+    This->undomgr = NULL;
 }
