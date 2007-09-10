@@ -268,14 +268,10 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
     return (PWINECRYPT_CERTSTORE)store;
 }
 
-/* FIXME: this isn't complete for the Root store, in which the top-level
- * self-signed CA certs reside.  Adding a cert to the Root store should present
- * the user with a dialog indicating the consequences of doing so, and asking
- * the user to confirm whether the cert should be added.
- */
 static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
+    static const WCHAR rootW[] = { 'R','o','o','t',0 };
     static const WCHAR fmt[] = { '%','s','\\','%','s',0 };
     LPCWSTR storeName = (LPCWSTR)pvPara;
     LPWSTR storePath;
@@ -292,6 +288,8 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
         SetLastError(E_INVALIDARG);
         return NULL;
     }
+    if (!lstrcmpiW(storeName, rootW))
+        return CRYPT_RootOpenStore(hCryptProv, dwFlags);
 
     ret = TRUE;
     switch (dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK)

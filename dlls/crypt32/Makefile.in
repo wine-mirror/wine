@@ -24,6 +24,7 @@ C_SRCS = \
 	protectdata.c \
 	provstore.c \
 	regstore.c \
+	rootstore.c \
 	serialize.c \
 	sip.c \
 	store.c \
