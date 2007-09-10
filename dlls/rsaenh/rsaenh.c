@@ -2707,6 +2707,7 @@ BOOL WINAPI RSAENH_CPSetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
 
         case KP_IV:
             memcpy(pCryptKey->abInitVector, pbData, pCryptKey->dwBlockLen);
+            setup_key(pCryptKey);
             return TRUE;
 
         case KP_SCHANNEL_ALG:
