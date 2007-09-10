@@ -42,6 +42,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(localspl);
 
 /*****************************************************/
 
+static CRITICAL_SECTION port_handles_cs;
+static CRITICAL_SECTION_DEBUG port_handles_cs_debug =
+{
+    0, 0, &port_handles_cs,
+    { &port_handles_cs_debug.ProcessLocksList, &port_handles_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": port_handles_cs") }
+};
+static CRITICAL_SECTION port_handles_cs = { &port_handles_cs_debug, -1, 0, 0, 0, 0 };
+
+
 static CRITICAL_SECTION xcv_handles_cs;
 static CRITICAL_SECTION_DEBUG xcv_handles_cs_debug =
 {
@@ -55,10 +65,17 @@ static CRITICAL_SECTION xcv_handles_cs = { &xcv_handles_cs_debug, -1, 0, 0, 0, 0
 
 typedef struct {
     struct list entry;
+    DWORD   type;
+    WCHAR   nameW[1];
+} port_t;
+
+typedef struct {
+    struct list entry;
     ACCESS_MASK GrantedAccess;
     WCHAR       nameW[1];
 } xcv_t;
 
+static struct list port_handles = LIST_INIT( port_handles );
 static struct list xcv_handles = LIST_INIT( xcv_handles );
 
 /* ############################### */
@@ -299,6 +316,45 @@ static DWORD get_type_from_name(LPCWSTR name)
     return PORT_IS_UNKNOWN;
 }
 
+/*****************************************************
+ * get_type_from_local_name (internal)
+ *
+ */
+
+static DWORD get_type_from_local_name(LPCWSTR nameW)
+{
+    LPPORT_INFO_1W  pi;
+    LPWSTR  myname = NULL;
+    DWORD   needed = 0;
+    DWORD   numentries = 0;
+    DWORD   id = 0;
+
+    TRACE("(%s)\n", debugstr_w(myname));
+
+    needed = get_ports_from_reg(1, NULL, 0, &numentries);
+    pi = spl_alloc(needed);
+    if (pi)
+        needed = get_ports_from_reg(1, (LPBYTE) pi, needed, &numentries);
+
+    if (pi && needed && numentries > 0) {
+        /* we got a number of valid ports. */
+
+        while ((myname == NULL) && (id < numentries))
+        {
+            if (lstrcmpiW(nameW, pi[id].pName) == 0) {
+                TRACE("(%u) found %s\n", id, debugstr_w(pi[id].pName));
+                myname = pi[id].pName;
+            }
+            id++;
+        }
+    }
+
+    id = (myname) ? get_type_from_name(myname) : PORT_IS_UNKNOWN;
+
+    spl_free(pi);
+    return id;
+
+}
 /******************************************************************************
  *   localmon_AddPortExW [exported through MONITOREX]
  *
@@ -354,6 +410,31 @@ static BOOL WINAPI localmon_AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer
     if (res != ERROR_SUCCESS) SetLastError(ERROR_INVALID_PARAMETER);
     TRACE("=> %u with %u\n", (res == ERROR_SUCCESS), GetLastError());
     return (res == ERROR_SUCCESS);
+}
+
+/*****************************************************
+ * localmon_ClosePort [exported through MONITOREX]
+ *
+ * Close a
+ *
+ * PARAMS
+ *  hPort  [i] The Handle to close
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+static BOOL WINAPI localmon_ClosePort(HANDLE hPort)
+{
+    port_t * port = (port_t *) hPort;
+
+    TRACE("(%p)\n", port);
+    EnterCriticalSection(&port_handles_cs);
+    list_remove(&port->entry);
+    LeaveCriticalSection(&port_handles_cs);
+    spl_free(port);
+    return TRUE;
 }
 
 /*****************************************************
@@ -413,6 +494,51 @@ cleanup:
             res, GetLastError(), needed, numentries);
 
     return (res);
+}
+
+/*****************************************************
+ * localmon_OpenPort [exported through MONITOREX]
+ *
+ * Open a Data-Channel for a Port
+ *
+ * PARAMS
+ *  pName     [i] Name of selected Object
+ *  phPort    [o] The resulting Handle is stored here
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+static BOOL WINAPI localmon_OpenPortW(LPWSTR pName, PHANDLE phPort)
+{
+    port_t * port;
+    DWORD   len;
+    DWORD   type;
+
+    TRACE("%s, %p)\n", debugstr_w(pName), phPort);
+
+    /* an empty name is invalid */
+    if (!pName[0]) return FALSE;
+
+    /* does the port exist? */
+    type = get_type_from_local_name(pName);
+    if (!type) return FALSE;
+
+    len = (lstrlenW(pName) + 1) * sizeof(WCHAR);
+    port = spl_alloc(sizeof(port_t) + len);
+    if (!port) return FALSE;
+
+    port->type = type;
+    memcpy(&port->nameW, pName, len);
+    *phPort = (HANDLE) port;
+
+    EnterCriticalSection(&port_handles_cs);
+    list_add_tail(&port_handles, &port->entry);
+    LeaveCriticalSection(&port_handles_cs);
+
+    TRACE("=> %p\n", port);
+    return TRUE;
 }
 
 /*****************************************************
@@ -658,13 +784,13 @@ LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
         sizeof(MONITOREX) - sizeof(DWORD),
         {
             localmon_EnumPortsW,
-            NULL,       /* localmon_OpenPortW */ 
+            localmon_OpenPortW,
             NULL,       /* localmon_OpenPortExW */ 
             NULL,       /* localmon_StartDocPortW */
             NULL,       /* localmon_WritePortW */
             NULL,       /* localmon_ReadPortW */
             NULL,       /* localmon_EndDocPortW */
-            NULL,       /* localmon_ClosePortW */
+            localmon_ClosePort,
             NULL,       /* Use AddPortUI in localui.dll */
             localmon_AddPortExW,
             NULL,       /* Use ConfigurePortUI in localui.dll */
