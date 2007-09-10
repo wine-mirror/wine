@@ -1126,6 +1126,22 @@ static BOOL WINAPI verify_authenticode_policy(LPCSTR szPolicyOID,
     return ret;
 }
 
+static BOOL WINAPI verify_basic_constraints_policy(LPCSTR szPolicyOID,
+ PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
+ PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
+{
+    pPolicyStatus->lChainIndex = pPolicyStatus->lElementIndex = -1;
+    if (pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_INVALID_BASIC_CONSTRAINTS)
+    {
+        pPolicyStatus->dwError = TRUST_E_BASIC_CONSTRAINTS;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_INVALID_BASIC_CONSTRAINTS, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
+    return TRUE;
+}
+
 typedef BOOL (WINAPI *CertVerifyCertificateChainPolicyFunc)(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus);
@@ -1151,6 +1167,9 @@ BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
             break;
         case (int)CERT_CHAIN_POLICY_AUTHENTICODE:
             verifyPolicy = verify_authenticode_policy;
+            break;
+        case (int)CERT_CHAIN_POLICY_BASIC_CONSTRAINTS:
+            verifyPolicy = verify_basic_constraints_policy;
             break;
         default:
             FIXME("unimplemented for %d\n", LOWORD(szPolicyOID));
