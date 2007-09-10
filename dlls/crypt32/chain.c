@@ -1020,3 +1020,12 @@ void WINAPI CertFreeCertificateChain(PCCERT_CHAIN_CONTEXT pChainContext)
             CRYPT_FreeChainContext(chain);
     }
 }
+
+BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
+ PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
+ PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
+{
+    FIXME("(%s, %p, %p, %p): stub\n", debugstr_a(szPolicyOID), pChainContext,
+     pPolicyPara, pPolicyStatus);
+    return FALSE;
+}
