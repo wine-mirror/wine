@@ -547,13 +547,11 @@ VOID WINAPI GetSystemTimeAsFileTime(
  *          2) Time is relative. There is no 'starting date', so there is
  *             no need for offset correction, like in UnixTimeToFileTime
  */
-#ifndef CLK_TCK
-# define CLK_TCK CLOCKS_PER_SEC
-#endif
 static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
 {
+    long clocksPerSec = sysconf(_SC_CLK_TCK);
     ULONGLONG secs = RtlEnlargedUnsignedMultiply( unix_time, 10000000 );
-    secs = RtlExtendedLargeIntegerDivide( secs, CLK_TCK, NULL );
+    secs = RtlExtendedLargeIntegerDivide( secs, clocksPerSec, NULL );
     filetime->dwLowDateTime  = (DWORD)secs;
     filetime->dwHighDateTime = (DWORD)(secs >> 32);
 }
