@@ -396,8 +396,7 @@ int main(int argc,char *argv[])
     fprintf(idfile, "from %s - Do not edit ***/\n\n", input_name);
     fprintf(idfile, "#include <rpc.h>\n");
     fprintf(idfile, "#include <rpcndr.h>\n\n");
-    fprintf(idfile, "#define INITGUID\n");
-    fprintf(idfile, "#include <guiddef.h>\n\n");
+    fprintf(idfile, "#include <initguid.h>\n\n");
     fprintf(idfile, "#ifdef __cplusplus\n");
     fprintf(idfile, "extern \"C\" {\n");
     fprintf(idfile, "#endif\n\n");
