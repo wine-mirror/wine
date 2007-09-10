@@ -921,7 +921,7 @@ static DWORD WINAPI hook_thread_proc(void *param)
                 EnterCriticalSection( &dinput->crit );
                 LIST_FOR_EACH_ENTRY( dev, &dinput->devices_list, IDirectInputDevice2AImpl, entry )
                 {
-                    if (!dev->acquired) continue;
+                    if (!dev->acquired || !dev->event_proc) continue;
 
                     if (IsEqualGUID( &dev->guid, &GUID_SysKeyboard ) ||
                         IsEqualGUID( &dev->guid, &DInput_Wine_Keyboard_GUID ))
