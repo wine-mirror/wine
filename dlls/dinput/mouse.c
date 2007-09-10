@@ -74,6 +74,17 @@ const GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 */
     0x9e573ed8, 0x7734, 0x11d2, {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
 };
 
+void _dump_mouse_state(DIMOUSESTATE2 *m_state)
+{
+    int i;
+
+    if (!TRACE_ON(dinput)) return;
+
+    TRACE("(X: %d Y: %d Z: %d", m_state->lX, m_state->lY, m_state->lZ);
+    for (i = 0; i < 5; i++) TRACE(" B%d: %02x", i, m_state->rgbButtons[i]);
+    TRACE(")\n");
+}
+
 static void fill_mouse_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD version) {
     DWORD dwSize;
     DIDEVICEINSTANCEA ddi;
@@ -259,6 +270,8 @@ static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARA
     DWORD dwCoop;
     int wdata = 0, inst_id = -1;
 
+    TRACE("msg %lx @ (%d %d)\n", wparam, hook->pt.x, hook->pt.y);
+
     EnterCriticalSection(&This->base.crit);
     dwCoop = This->base.dwCoopLevel;
 
@@ -334,18 +347,13 @@ static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARA
             break;
     }
 
-    if (TRACE_ON(dinput))
-    {
-        int i;
 
-        TRACE("msg %lx @ (%d %d): (X: %d Y: %d Z: %d", wparam, hook->pt.x, hook->pt.y,
-              This->m_state.lX, This->m_state.lY, This->m_state.lZ);
-        for (i = 0; i < 5; i++) TRACE(" B%d: %02x", i, This->m_state.rgbButtons[i]);
-        TRACE(")\n");
-    }
     if (inst_id != -1)
+    {
+        _dump_mouse_state(&This->m_state);
         queue_event((LPDIRECTINPUTDEVICE8A)This, id_to_offset(&This->base.data_format, inst_id),
                     wdata, hook->time, This->base.dinput->evsequence++);
+    }
 
     LeaveCriticalSection(&This->base.crit);
 }
@@ -464,9 +472,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     if(This->base.acquired == 0) return DIERR_NOTACQUIRED;
 
     TRACE("(this=%p,0x%08x,%p):\n", This, len, ptr);
-    TRACE("(X: %d - Y: %d - Z: %d  L: %02x M: %02x R: %02x)\n",
-	  This->m_state.lX, This->m_state.lY, This->m_state.lZ,
-	  This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
+    _dump_mouse_state(&This->m_state);
 
     EnterCriticalSection(&This->base.crit);
     /* Copy the current mouse state */
