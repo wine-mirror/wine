@@ -104,12 +104,48 @@ static BOOL CRYPT_CheckRestrictedRoot(HCERTSTORE store)
     return ret;
 }
 
-BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
- HCERTCHAINENGINE *phChainEngine)
+HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root,
+ PCERT_CHAIN_ENGINE_CONFIG pConfig)
 {
     static const WCHAR caW[] = { 'C','A',0 };
     static const WCHAR myW[] = { 'M','y',0 };
     static const WCHAR trustW[] = { 'T','r','u','s','t',0 };
+    PCertificateChainEngine engine =
+     CryptMemAlloc(sizeof(CertificateChainEngine));
+
+    if (engine)
+    {
+        HCERTSTORE worldStores[4];
+
+        engine->ref = 1;
+        engine->hRoot = root;
+        engine->hWorld = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
+        worldStores[0] = CertDuplicateStore(engine->hRoot);
+        worldStores[1] = CertOpenSystemStoreW(0, caW);
+        worldStores[2] = CertOpenSystemStoreW(0, myW);
+        worldStores[3] = CertOpenSystemStoreW(0, trustW);
+        CRYPT_AddStoresToCollection(engine->hWorld,
+         sizeof(worldStores) / sizeof(worldStores[0]), worldStores);
+        CRYPT_AddStoresToCollection(engine->hWorld,
+         pConfig->cAdditionalStore, pConfig->rghAdditionalStore);
+        CRYPT_CloseStores(sizeof(worldStores) / sizeof(worldStores[0]),
+         worldStores);
+        engine->dwFlags = pConfig->dwFlags;
+        engine->dwUrlRetrievalTimeout = pConfig->dwUrlRetrievalTimeout;
+        engine->MaximumCachedCertificates =
+         pConfig->MaximumCachedCertificates;
+        if (pConfig->CycleDetectionModulus)
+            engine->CycleDetectionModulus = pConfig->CycleDetectionModulus;
+        else
+            engine->CycleDetectionModulus = DEFAULT_CYCLE_MODULUS;
+    }
+    return (HCERTCHAINENGINE)engine;
+}
+
+BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
+ HCERTCHAINENGINE *phChainEngine)
+{
     BOOL ret;
 
     TRACE("(%p, %p)\n", pConfig, phChainEngine);
@@ -123,39 +159,17 @@ BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
     ret = CRYPT_CheckRestrictedRoot(pConfig->hRestrictedRoot);
     if (ret)
     {
-        PCertificateChainEngine engine =
-         CryptMemAlloc(sizeof(CertificateChainEngine));
+        HCERTSTORE root;
+        HCERTCHAINENGINE engine;
 
+        if (pConfig->hRestrictedRoot)
+            root = CertDuplicateStore(pConfig->hRestrictedRoot);
+        else
+            root = CertOpenSystemStoreW(0, rootW);
+        engine = CRYPT_CreateChainEngine(root, pConfig);
         if (engine)
         {
-            HCERTSTORE worldStores[4];
-
-            engine->ref = 1;
-            if (pConfig->hRestrictedRoot)
-                engine->hRoot = CertDuplicateStore(pConfig->hRestrictedRoot);
-            else
-                engine->hRoot = CertOpenSystemStoreW(0, rootW);
-            engine->hWorld = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
-             CERT_STORE_CREATE_NEW_FLAG, NULL);
-            worldStores[0] = CertDuplicateStore(engine->hRoot);
-            worldStores[1] = CertOpenSystemStoreW(0, caW);
-            worldStores[2] = CertOpenSystemStoreW(0, myW);
-            worldStores[3] = CertOpenSystemStoreW(0, trustW);
-            CRYPT_AddStoresToCollection(engine->hWorld,
-             sizeof(worldStores) / sizeof(worldStores[0]), worldStores);
-            CRYPT_AddStoresToCollection(engine->hWorld,
-             pConfig->cAdditionalStore, pConfig->rghAdditionalStore);
-            CRYPT_CloseStores(sizeof(worldStores) / sizeof(worldStores[0]),
-             worldStores);
-            engine->dwFlags = pConfig->dwFlags;
-            engine->dwUrlRetrievalTimeout = pConfig->dwUrlRetrievalTimeout;
-            engine->MaximumCachedCertificates =
-             pConfig->MaximumCachedCertificates;
-            if (pConfig->CycleDetectionModulus)
-                engine->CycleDetectionModulus = pConfig->CycleDetectionModulus;
-            else
-                engine->CycleDetectionModulus = DEFAULT_CYCLE_MODULUS;
-            *phChainEngine = (HCERTCHAINENGINE)engine;
+            *phChainEngine = engine;
             ret = TRUE;
         }
         else
