@@ -696,36 +696,19 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         This->Flags &= ~SFLAG_INSYSMEM; /* This is the marker that surface data has to be downloaded */
     }
 
-    /* Calculate the correct start address to report */
+    /* Calculate the dimensions of the locked rect */
     if (NULL == pRect) {
-        pLockedRect->pBits = This->resource.allocatedMemory;
         This->lockedRect.left   = 0;
         This->lockedRect.top    = 0;
         This->lockedRect.right  = This->currentDesc.Width;
         This->lockedRect.bottom = This->currentDesc.Height;
         TRACE("Locked Rect (%p) = l %d, t %d, r %d, b %d\n", &This->lockedRect, This->lockedRect.left, This->lockedRect.top, This->lockedRect.right, This->lockedRect.bottom);
     } else {
-        TRACE("Lock Rect (%p) = l %d, t %d, r %d, b %d\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
-
-        /* DXTn textures are based on compressed blocks of 4x4 pixels, each
-         * 16 bytes large (8 bytes in case of DXT1). Because of that Pitch has
-         * slightly different meaning compared to regular textures. For DXTn
-         * textures Pitch is the size of a row of blocks, 4 high and "width"
-         * long. The x offset is calculated differently as well, since moving 4
-         * pixels to the right actually moves an entire 4x4 block to right, ie
-         * 16 bytes (8 in case of DXT1). */
-        if (This->resource.format == WINED3DFMT_DXT1) {
-            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top / 4) + (pRect->left * 2);
-        } else if (This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3
-                || This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
-            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top / 4) + (pRect->left * 4);
-        } else {
-            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
-        }
         This->lockedRect.left   = pRect->left;
         This->lockedRect.top    = pRect->top;
         This->lockedRect.right  = pRect->right;
         This->lockedRect.bottom = pRect->bottom;
+        TRACE("Locked Rect (%p) = l %d, t %d, r %d, b %d\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
     }
 
     if (This->Flags & SFLAG_NONPOW2) {
@@ -872,6 +855,27 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     }
 
 lock_end:
+    /* Calculate the correct start address to report */
+    if (NULL == pRect) {
+        pLockedRect->pBits = This->resource.allocatedMemory;
+    } else {
+        /* DXTn textures are based on compressed blocks of 4x4 pixels, each
+         * 16 bytes large (8 bytes in case of DXT1). Because of that Pitch has
+         * slightly different meaning compared to regular textures. For DXTn
+         * textures Pitch is the size of a row of blocks, 4 high and "width"
+         * long. The x offset is calculated differently as well, since moving 4
+         * pixels to the right actually moves an entire 4x4 block to right, ie
+         * 16 bytes (8 in case of DXT1). */
+        if (This->resource.format == WINED3DFMT_DXT1) {
+            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top / 4) + (pRect->left * 2);
+        } else if (This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3
+                || This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
+            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top / 4) + (pRect->left * 4);
+        } else {
+            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
+        }
+    }
+
     if (Flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)) {
         /* Don't dirtify */
     } else {
