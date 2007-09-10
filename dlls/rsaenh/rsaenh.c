@@ -1907,16 +1907,16 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
             *pdwDataLen = dwEncryptedLen;
             return TRUE;
         }
-
-        for (i=*pdwDataLen; i<dwEncryptedLen && i<dwBufLen; i++) pbData[i] = dwEncryptedLen - *pdwDataLen;
-        *pdwDataLen = dwEncryptedLen; 
-
-        if (*pdwDataLen > dwBufLen) 
-        {
+        else if (dwEncryptedLen > dwBufLen) {
+            *pdwDataLen = dwEncryptedLen;
             SetLastError(ERROR_MORE_DATA);
             return FALSE;
         }
-    
+
+        /* Pad final block with length bytes */
+        for (i=*pdwDataLen; i<dwEncryptedLen; i++) pbData[i] = dwEncryptedLen - *pdwDataLen;
+        *pdwDataLen = dwEncryptedLen;
+
         for (i=0, in=pbData; i<*pdwDataLen; i+=pCryptKey->dwBlockLen, in+=pCryptKey->dwBlockLen) {
             switch (pCryptKey->dwMode) {
                 case CRYPT_MODE_ECB:
