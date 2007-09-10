@@ -1,7 +1,7 @@
 /* 
  * Unit test suite for localspl API functions: local print monitor
  *
- * Copyright 2006 Detlef Riekenberg
+ * Copyright 2006-2007 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -96,9 +96,11 @@ static WCHAR num_999999W[] = {'9','9','9','9','9','9',0};
 static CHAR  num_1000000A[] = "1000000";
 static WCHAR num_1000000W[] = {'1','0','0','0','0','0','0',0};
 
+static WCHAR portname_comW[]  = {'C','O','M',0};
 static WCHAR portname_com1W[] = {'C','O','M','1',':',0};
 static WCHAR portname_com2W[] = {'C','O','M','2',':',0};
 static WCHAR portname_fileW[] = {'F','I','L','E',':',0};
+static WCHAR portname_lptW[]  = {'L','P','T',0};
 static WCHAR portname_lpt1W[] = {'L','P','T','1',':',0};
 static WCHAR portname_lpt2W[] = {'L','P','T','2',':',0};
 static WCHAR server_does_not_existW[] = {'\\','\\','d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
@@ -116,6 +118,12 @@ static WCHAR wineW[] = {'W','i','n','e',0};
 static WCHAR tempdirW[MAX_PATH];
 static WCHAR tempfileW[MAX_PATH];
 
+#define PORTNAME_PREFIX  3
+#define PORTNAME_MINSIZE 5
+#define PORTNAME_MAXSIZE 10
+static WCHAR have_com[PORTNAME_MAXSIZE];
+static WCHAR have_lpt[PORTNAME_MAXSIZE];
+static WCHAR have_file[PORTNAME_MAXSIZE];
 
 /* ########################### */
 
@@ -131,6 +139,61 @@ static DWORD delete_port(LPWSTR portname)
         res = pXcvDataPort(hXcv, cmd_DeletePortW, (PBYTE) portname, (lstrlenW(portname) + 1) * sizeof(WCHAR), NULL, 0, NULL);
     }
     return res;
+}
+
+/* ########################### */
+
+static void find_installed_ports(void)
+{
+    PORT_INFO_1W * pi = NULL;
+    WCHAR   nameW[PORTNAME_MAXSIZE];
+    DWORD   needed;
+    DWORD   returned;
+    DWORD   res;
+    DWORD   id;
+
+    have_com[0] = '\0';
+    have_lpt[0] = '\0';
+    have_file[0] = '\0';
+
+    if (!pEnumPorts) return;
+
+    res = pEnumPorts(NULL, 1, NULL, 0, &needed, &returned);
+    if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        pi = HeapAlloc(GetProcessHeap(), 0, needed);
+    }
+    res = pEnumPorts(NULL, 1, (LPBYTE) pi, needed, &needed, &returned);
+
+    if (!res) {
+        skip("no ports found\n");
+        return;
+    }
+
+    id = 0;
+    while (id < returned) {
+        res = lstrlenW(pi[id].pName);
+        if ((res >= PORTNAME_MINSIZE) && (res < PORTNAME_MAXSIZE) &&
+            (pi[id].pName[res-1] == ':')) {
+            /* copy only the prefix ("LPT" or "COM") */
+            memcpy(&nameW, pi[id].pName, PORTNAME_PREFIX * sizeof(WCHAR));
+            nameW[PORTNAME_PREFIX] = '\0';
+
+            if (!have_com[0] && (lstrcmpiW(nameW, portname_comW) == 0)) {
+                memcpy(&have_com, pi[id].pName, (res+1) * sizeof(WCHAR));
+            }
+
+            if (!have_lpt[0] && (lstrcmpiW(nameW, portname_lptW) == 0)) {
+                memcpy(&have_lpt, pi[id].pName, (res+1) * sizeof(WCHAR));
+            }
+
+            if (!have_file[0] && (lstrcmpiW(pi[id].pName, portname_fileW) == 0)) {
+                memcpy(&have_file, pi[id].pName, (res+1) * sizeof(WCHAR));
+            }
+        }
+        id++;
+    }
+
+    HeapFree(GetProcessHeap(), 0, pi);
 }
 
 /* ########################### */
@@ -271,6 +334,103 @@ static void test_AddPortEx(void)
 
     /* cleanup */
     delete_port(tempfileW);
+}
+
+/* ########################### */
+
+static void test_ClosePort()
+{
+    HANDLE  hPort;
+    HANDLE  hPort2;
+    LPWSTR  nameW = NULL;
+    DWORD   res;
+    DWORD   res2;
+
+
+    if (!pOpenPort || !pClosePort) return;
+
+    if (have_com[0]) {
+        nameW = have_com;
+
+        hPort = (HANDLE) 0xdeadbeef;
+        res = pOpenPort(nameW, &hPort);
+        hPort2 = (HANDLE) 0xdeadbeef;
+        res2 = pOpenPort(nameW, &hPort2);
+
+        if (res2 && (hPort2 != hPort)) {
+            SetLastError(0xdeadbeef);
+            res2 = pClosePort(hPort2);
+            ok(res2, "got %u with %u (expected '!= 0')\n", res2, GetLastError());
+        }
+
+        if (res) {
+            SetLastError(0xdeadbeef);
+            res = pClosePort(hPort);
+            ok(res, "got %u with %u (expected '!= 0')\n", res, GetLastError());
+        }
+    }
+
+
+    if (have_lpt[0]) {
+        nameW = have_lpt;
+
+        hPort = (HANDLE) 0xdeadbeef;
+        res = pOpenPort(nameW, &hPort);
+        hPort2 = (HANDLE) 0xdeadbeef;
+        res2 = pOpenPort(nameW, &hPort2);
+
+        if (res2 && (hPort2 != hPort)) {
+            SetLastError(0xdeadbeef);
+            res2 = pClosePort(hPort2);
+            ok(res2, "got %u with %u (expected '!= 0')\n", res2, GetLastError());
+        }
+
+        if (res) {
+            SetLastError(0xdeadbeef);
+            res = pClosePort(hPort);
+            ok(res, "got %u with %u (expected '!= 0')\n", res, GetLastError());
+        }
+    }
+
+
+    if (have_file[0]) {
+        nameW = have_file;
+
+        hPort = (HANDLE) 0xdeadbeef;
+        res = pOpenPort(nameW, &hPort);
+        hPort2 = (HANDLE) 0xdeadbeef;
+        res2 = pOpenPort(nameW, &hPort2);
+
+        if (res2 && (hPort2 != hPort)) {
+            SetLastError(0xdeadbeef);
+            res2 = pClosePort(hPort2);
+            ok(res2, "got %u with %u (expected '!= 0')\n", res2, GetLastError());
+        }
+
+        if (res) {
+            SetLastError(0xdeadbeef);
+            res = pClosePort(hPort);
+            ok(res, "got %u with %u (expected '!= 0')\n", res, GetLastError());
+        }
+
+    }
+
+    if (0) {
+        /* an invalid HANDLE crash native localspl.dll */
+
+        SetLastError(0xdeadbeef);
+        res = pClosePort(NULL);
+        trace("got %u with %u\n", res, GetLastError());
+
+        SetLastError(0xdeadbeef);
+        res = pClosePort( (HANDLE) 0xdeadbeef);
+        trace("got %u with %u\n", res, GetLastError());
+
+        SetLastError(0xdeadbeef);
+        res = pClosePort(INVALID_HANDLE_VALUE);
+        trace("got %u with %u\n", res, GetLastError());
+    }
+
 }
 
 /* ########################### */
@@ -463,6 +623,117 @@ static void test_InitializePrintMonitor(void)
     res = pInitializePrintMonitor(Monitors_LocalPortW);
     ok( res == pm,
         "returned %p with %u (expected %p)\n", res, GetLastError(), pm);
+}
+
+
+/* ########################### */
+
+static void test_OpenPort()
+{
+    HANDLE  hPort;
+    HANDLE  hPort2;
+    LPWSTR  nameW = NULL;
+    DWORD   res;
+    DWORD   res2;
+
+    if (!pOpenPort || !pClosePort) return;
+
+    if (have_com[0]) {
+        nameW = have_com;
+
+        hPort = (HANDLE) 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res = pOpenPort(nameW, &hPort);
+        ok( res, "got %u with %u and %p (expected '!= 0')\n",
+            res, GetLastError(), hPort);
+
+        /* the same HANDLE is returned for a second OpenPort in native localspl */
+        hPort2 = (HANDLE) 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res2 = pOpenPort(nameW, &hPort2);
+        ok( res2, "got %u with %u and %p (expected '!= 0')\n",
+            res2, GetLastError(), hPort2);
+
+        if (res) pClosePort(hPort);
+        if (res2 && (hPort2 != hPort)) pClosePort(hPort2);
+    }
+
+    if (have_lpt[0]) {
+        nameW = have_lpt;
+
+        hPort = (HANDLE) 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res = pOpenPort(nameW, &hPort);
+        ok( res || (GetLastError() == ERROR_ACCESS_DENIED),
+            "got %u with %u and %p (expected '!= 0' or '0' with ERROR_ACCESS_DENIED)\n",
+            res, GetLastError(), hPort);
+
+        /* the same HANDLE is returned for a second OpenPort in native localspl */
+        hPort2 = (HANDLE) 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res2 = pOpenPort(nameW, &hPort2);
+        ok( res2 || (GetLastError() == ERROR_ACCESS_DENIED),
+            "got %u with %u and %p (expected '!= 0' or '0' with ERROR_ACCESS_DENIED)\n",
+            res2, GetLastError(), hPort2);
+
+        if (res) pClosePort(hPort);
+        if (res2 && (hPort2 != hPort)) pClosePort(hPort2);
+    }
+
+    if (have_file[0]) {
+        nameW = have_file;
+
+        hPort = (HANDLE) 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res = pOpenPort(nameW, &hPort);
+        ok( res, "got %u with %u and %p (expected '!= 0')\n",
+            res, GetLastError(), hPort);
+
+        /* a different HANDLE is returned for a second OpenPort */
+        hPort2 = (HANDLE) 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res2 = pOpenPort(nameW, &hPort2);
+        ok( res2 && (hPort2 != hPort),
+            "got %u with %u and %p (expected '!= 0' and '!= %p')\n",
+            res2, GetLastError(), hPort2, hPort);
+
+        if (res) pClosePort(hPort);
+        if (res2 && (hPort2 != hPort)) pClosePort(hPort2);
+    }
+
+    if (0) {
+        /* this test crash native localspl (w2k+xp) */
+        if (nameW) {
+            hPort = (HANDLE) 0xdeadbeef;
+            SetLastError(0xdeadbeef);
+            res = pOpenPort(nameW, NULL);
+            trace("got %u with %u and %p\n", res, GetLastError(), hPort);
+        }
+    }
+
+    hPort = (HANDLE) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pOpenPort(does_not_existW, &hPort);
+    ok (!res && (hPort == (HANDLE) 0xdeadbeef),
+        "got %u with 0x%x and %p (expectet '0' and 0xdeadbeef)\n", res, GetLastError(), hPort);
+    if (res) pClosePort(hPort);
+
+    hPort = (HANDLE) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pOpenPort(emptyW, &hPort);
+    ok (!res && (hPort == (HANDLE) 0xdeadbeef),
+        "got %u with 0x%x and %p (expectet '0' and 0xdeadbeef)\n", res, GetLastError(), hPort);
+    if (res) pClosePort(hPort);
+
+
+    /* NULL as name crash native localspl (w2k+xp) */
+    if (0) {
+        hPort = (HANDLE) 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res = pOpenPort(NULL, &hPort);
+        trace("got %u with %u and %p\n", res, GetLastError(), hPort);
+    }
+
 }
 
 /* ########################### */
@@ -1151,11 +1422,16 @@ START_TEST(localmon)
 
     test_InitializePrintMonitor();
 
+    find_installed_ports();
+
     test_AddPort();
     test_AddPortEx();
+    test_ClosePort();
     test_ConfigurePort();
     test_DeletePort();
     test_EnumPorts();
+    test_OpenPort();
+
     if ( !hXcv ) {
         skip("Xcv not supported\n");
     }
