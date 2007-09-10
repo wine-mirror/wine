@@ -917,7 +917,7 @@ static const IPersistFolder2Vtbl vt_PersistFolder2 =
     ICPanel_PersistFolder2_GetCurFolder
 };
 
-HRESULT CPanel_GetIconLocationW(LPITEMIDLIST pidl,
+HRESULT CPanel_GetIconLocationW(LPCITEMIDLIST pidl,
                LPWSTR szIconFile, UINT cchMax, int* piIndex)
 {
     PIDLCPanelStruct* pcpanel = _ILGetCPanelPointer(pidl);

@@ -105,7 +105,7 @@ static const char * DumpEvent( LONG event )
 #undef DUMPEV
 }
 
-static const char * NodeName(LPNOTIFICATIONLIST item)
+static const char * NodeName(const NOTIFICATIONLIST *item)
 {
     const char *str;
     WCHAR path[MAX_PATH];

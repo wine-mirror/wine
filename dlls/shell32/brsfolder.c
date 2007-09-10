@@ -179,7 +179,7 @@ static void InitializeTreeView( browse_info *info )
     IShellFolder_Release(lpsfParent);
 }
 
-static int GetIcon(LPITEMIDLIST lpi, UINT uFlags)
+static int GetIcon(LPCITEMIDLIST lpi, UINT uFlags)
 {
     SHFILEINFOW sfi;
     SHGetFileInfoW((LPCWSTR)lpi, 0 ,&sfi, sizeof(SHFILEINFOW), uFlags);
