@@ -366,7 +366,7 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
              * the primary render target exists. Otherwise lastActiveRenderTarget is garbage, see above.
              * When destroying the primary rt, Uninit3D will activate a context before doing anything
              */
-            if(device->render_targets[0]) {
+            if(device->render_targets && device->render_targets[0]) {
                 ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
             }
 
