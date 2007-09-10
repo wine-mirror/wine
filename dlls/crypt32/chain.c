@@ -1021,11 +1021,93 @@ void WINAPI CertFreeCertificateChain(PCCERT_CHAIN_CONTEXT pChainContext)
     }
 }
 
+static void find_element_with_error(PCCERT_CHAIN_CONTEXT chain, DWORD error,
+ LONG *iChain, LONG *iElement)
+{
+    DWORD i, j;
+
+    for (i = 0; i < chain->cChain; i++)
+        for (j = 0; j < chain->rgpChain[i]->cElement; j++)
+            if (chain->rgpChain[i]->rgpElement[j]->TrustStatus.dwErrorStatus &
+             error)
+            {
+                *iChain = i;
+                *iElement = j;
+                return;
+            }
+}
+
+static BOOL WINAPI verify_base_policy(LPCSTR szPolicyOID,
+ PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
+ PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
+{
+    pPolicyStatus->lChainIndex = pPolicyStatus->lElementIndex = -1;
+    if (pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_IS_NOT_SIGNATURE_VALID)
+    {
+        pPolicyStatus->dwError = TRUST_E_CERT_SIGNATURE;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_IS_NOT_SIGNATURE_VALID, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
+    else if (pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_IS_UNTRUSTED_ROOT)
+    {
+        pPolicyStatus->dwError = CERT_E_UNTRUSTEDROOT;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_IS_UNTRUSTED_ROOT, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
+    else if (pChainContext->TrustStatus.dwErrorStatus & CERT_TRUST_IS_CYCLIC)
+    {
+        pPolicyStatus->dwError = CERT_E_CHAINING;
+        find_element_with_error(pChainContext, CERT_TRUST_IS_CYCLIC,
+         &pPolicyStatus->lChainIndex, &pPolicyStatus->lElementIndex);
+        /* For a cyclic chain, which element is a cycle isn't meaningful */
+        pPolicyStatus->lElementIndex = -1;
+    }
+    return TRUE;
+}
+
+typedef BOOL (WINAPI *CertVerifyCertificateChainPolicyFunc)(LPCSTR szPolicyOID,
+ PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
+ PCERT_CHAIN_POLICY_STATUS pPolicyStatus);
+
 BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
 {
-    FIXME("(%s, %p, %p, %p): stub\n", debugstr_a(szPolicyOID), pChainContext,
+    static HCRYPTOIDFUNCSET set = NULL;
+    BOOL ret = FALSE;
+    CertVerifyCertificateChainPolicyFunc verifyPolicy = NULL;
+    HCRYPTOIDFUNCADDR hFunc = NULL;
+
+    TRACE("(%s, %p, %p, %p)\n", debugstr_a(szPolicyOID), pChainContext,
      pPolicyPara, pPolicyStatus);
-    return FALSE;
+
+    if (!HIWORD(szPolicyOID))
+    {
+        switch (LOWORD(szPolicyOID))
+        {
+        case (int)CERT_CHAIN_POLICY_BASE:
+            verifyPolicy = verify_base_policy;
+            break;
+        default:
+            FIXME("unimplemented for %d\n", LOWORD(szPolicyOID));
+        }
+    }
+    if (!verifyPolicy)
+    {
+        if (!set)
+            set = CryptInitOIDFunctionSet(
+             CRYPT_OID_VERIFY_CERTIFICATE_CHAIN_POLICY_FUNC, 0);
+        CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING, szPolicyOID, 0,
+         (void **)&verifyPolicy, hFunc);
+    }
+    if (verifyPolicy)
+        ret = verifyPolicy(szPolicyOID, pChainContext, pPolicyPara,
+         pPolicyStatus);
+    if (hFunc)
+        CryptFreeOIDFunctionAddress(hFunc, 0);
+    return ret;
 }

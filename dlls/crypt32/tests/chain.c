@@ -1717,6 +1717,39 @@ typedef struct _ChainPolicyCheck
 
 static ChainPolicyCheck basePolicyCheck[] = {
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+ { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
+   { 0, TRUST_E_CERT_SIGNATURE, 0, 0, NULL }, 0 },
+ { { sizeof(chain2) / sizeof(chain2[0]), chain2 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+ { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+ { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, 0 },
+ { { sizeof(chain5) / sizeof(chain5[0]), chain5 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+ { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+ { { sizeof(chain7) / sizeof(chain7[0]), chain7 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+ { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, 0 },
+ { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
+   { 0, CERT_E_CHAINING, 0, -1, NULL }, 0 },
+ { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+ { { sizeof(chain11) / sizeof(chain11[0]), chain11 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+ { { sizeof(chain12) / sizeof(chain12[0]), chain12 },
+   { 0, TRUST_E_CERT_SIGNATURE, 0, 1, NULL }, 0 },
+ { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, 0 },
+ { { sizeof(iTunesChain) / sizeof(iTunesChain[0]), iTunesChain },
+   { 0, 0, -1, -1, NULL }, 0 },
+};
+
+static ChainPolicyCheck authenticodePolicyCheck[] = {
+ { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
    { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL },
    TODO_POLICY },
  { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
@@ -1881,7 +1914,6 @@ static void testVerifyCertChainPolicy(void)
      */
     SetLastError(0xdeadbeef);
     ret = CertVerifyCertificateChainPolicy(NULL, NULL, NULL, &policyStatus);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
     /* Crashes
@@ -1902,9 +1934,7 @@ static void testVerifyCertChainPolicy(void)
     /* Size of policy status is apparently ignored, as is pChainPolicyPara */
     ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain, NULL,
      &policyStatus);
-    todo_wine
     ok(ret, "CertVerifyCertificateChainPolicy failed: %08x\n", GetLastError());
-    todo_wine
     ok(policyStatus.dwError == CERT_E_UNTRUSTEDROOT,
      "Expected CERT_E_UNTRUSTEDROOT, got %08x\n", policyStatus.dwError);
     ok(policyStatus.lChainIndex == 0 && policyStatus.lElementIndex == 0,
@@ -1912,9 +1942,7 @@ static void testVerifyCertChainPolicy(void)
      policyStatus.lElementIndex);
     ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain,
      &policyPara, &policyStatus);
-    todo_wine
     ok(ret, "CertVerifyCertificateChainPolicy failed: %08x\n", GetLastError());
-    todo_wine
     ok(policyStatus.dwError == CERT_E_UNTRUSTEDROOT,
      "Expected CERT_E_UNTRUSTEDROOT, got %08x\n", policyStatus.dwError);
     ok(policyStatus.lChainIndex == 0 && policyStatus.lElementIndex == 0,
@@ -1930,9 +1958,9 @@ static void testVerifyCertChainPolicy(void)
      * of these chains is.
      */
     for (i = 0; i <
-     sizeof(basePolicyCheck) / sizeof(basePolicyCheck[0]); i++)
+     sizeof(authenticodePolicyCheck) / sizeof(authenticodePolicyCheck[0]); i++)
         checkChainPolicyStatus(CERT_CHAIN_POLICY_AUTHENTICODE,
-         &basePolicyCheck[i], i);
+         &authenticodePolicyCheck[i], i);
     for (i = 0; i <
      sizeof(basicConstraintsPolicyCheck) / sizeof(basicConstraintsPolicyCheck[0]);
      i++)
