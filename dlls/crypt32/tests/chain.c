@@ -1167,6 +1167,8 @@ typedef struct _CONST_BLOB_ARRAY
 #define TODO_ERROR    2
 #define TODO_INFO     4
 #define TODO_ELEMENTS 8
+#define TODO_CHAINS   16
+#define TODO_POLICY   32
 
 /* Gets a certificate chain built from a store containing all the certs in
  * certArray, where the last certificate in the chain is expected to be the
@@ -1706,8 +1708,241 @@ static void testGetCertChain(void)
     }
 }
 
+typedef struct _ChainPolicyCheck
+{
+    CONST_BLOB_ARRAY         certs;
+    CERT_CHAIN_POLICY_STATUS status;
+    DWORD                    todo;
+} ChainPolicyCheck;
+
+static ChainPolicyCheck basePolicyCheck[] = {
+ { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
+   { 0, TRUST_E_CERT_SIGNATURE, 0, 0, NULL },
+   TODO_POLICY },
+ { { sizeof(chain2) / sizeof(chain2[0]), chain2 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL },
+   TODO_POLICY },
+ { { sizeof(chain5) / sizeof(chain5[0]), chain5 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain7) / sizeof(chain7[0]), chain7 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL },
+   TODO_POLICY },
+ { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
+   { 0, CERT_E_CHAINING, 0, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain11) / sizeof(chain11[0]), chain11 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain12) / sizeof(chain12[0]), chain12 },
+   { 0, TRUST_E_CERT_SIGNATURE, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL },
+   TODO_POLICY },
+ { { sizeof(iTunesChain) / sizeof(iTunesChain[0]), iTunesChain },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+};
+
+static ChainPolicyCheck basicConstraintsPolicyCheck[] = {
+ { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain2) / sizeof(chain2[0]), chain2 },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain5) / sizeof(chain5[0]), chain5 },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain7) / sizeof(chain7[0]), chain7 },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain11) / sizeof(chain11[0]), chain11 },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(chain12) / sizeof(chain12[0]), chain12 },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+ { { sizeof(iTunesChain) / sizeof(iTunesChain[0]), iTunesChain },
+   { 0, 0, -1, -1, NULL },
+   TODO_POLICY },
+};
+
+static void checkChainPolicyStatus(LPCSTR policy, ChainPolicyCheck *check,
+ DWORD testIndex)
+{
+    PCCERT_CHAIN_CONTEXT chain = getChain(&check->certs, 0, TRUE, &oct2007,
+     check->todo, testIndex);
+
+    if (chain)
+    {
+        CERT_CHAIN_POLICY_STATUS policyStatus = { 0 };
+        BOOL ret = CertVerifyCertificateChainPolicy(policy, chain, NULL,
+         &policyStatus);
+
+        if (check->todo & TODO_POLICY)
+            todo_wine ok(ret, "%d: CertVerifyCertificateChainPolicy failed: %08x\n",
+             testIndex, GetLastError());
+        else
+            ok(ret, "%d: CertVerifyCertificateChainPolicy failed: %08x\n",
+             testIndex, GetLastError());
+        if (ret)
+        {
+            if (check->todo & TODO_ERROR)
+                todo_wine ok(policyStatus.dwError == check->status.dwError,
+                 "%d: expected %08x, got %08x\n", testIndex,
+                 check->status.dwError, policyStatus.dwError);
+            else
+                ok(policyStatus.dwError == check->status.dwError,
+                 "%d: expected %08x, got %08x\n", testIndex,
+                 check->status.dwError, policyStatus.dwError);
+            if (check->todo & TODO_CHAINS)
+                todo_wine ok(policyStatus.lChainIndex ==
+                 check->status.lChainIndex, "%d: expected %d, got %d\n",
+                 testIndex, check->status.lChainIndex,
+                 policyStatus.lChainIndex);
+            else
+                ok(policyStatus.lChainIndex == check->status.lChainIndex,
+                 "%d: expected %d, got %d\n", testIndex,
+                 check->status.lChainIndex, policyStatus.lChainIndex);
+            if (check->todo & TODO_ELEMENTS)
+                todo_wine ok(policyStatus.lElementIndex ==
+                 check->status.lElementIndex,
+                 "%d: expected %d, got %d\n", testIndex,
+                 check->status.lElementIndex, policyStatus.lElementIndex);
+            else
+                ok(policyStatus.lElementIndex == check->status.lElementIndex,
+                 "%d: expected %d, got %d\n", testIndex,
+                 check->status.lElementIndex, policyStatus.lElementIndex);
+        }
+        CertFreeCertificateChain(chain);
+    }
+}
+
+static void testVerifyCertChainPolicy(void)
+{
+    BOOL ret;
+    PCCERT_CONTEXT cert;
+    CERT_CHAIN_PARA chainPara = { sizeof(CERT_CHAIN_PARA), { 0 } };
+    PCCERT_CHAIN_CONTEXT chain;
+    CERT_CHAIN_POLICY_STATUS policyStatus = { 0 };
+    CERT_CHAIN_POLICY_PARA policyPara = { 0 };
+    DWORD i;
+
+    /* Crash
+    ret = CertVerifyCertificateChainPolicy(NULL, NULL, NULL, NULL);
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, NULL, NULL,
+     NULL);
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, NULL,
+     &chainPara, NULL);
+     */
+    SetLastError(0xdeadbeef);
+    ret = CertVerifyCertificateChainPolicy(NULL, NULL, NULL, &policyStatus);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    /* Crashes
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, NULL, NULL,
+     &policyStatus);
+     */
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, selfSignedCert,
+     sizeof(selfSignedCert));
+    CertGetCertificateChain(NULL, cert, NULL, NULL, &chainPara, 0, NULL,
+     &chain);
+    /* Crash
+    ret = CertVerifyCertificateChainPolicy(NULL, chain, NULL, NULL);
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain, NULL,
+     NULL);
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain,
+     &chainPara, NULL);
+     */
+    /* Size of policy status is apparently ignored, as is pChainPolicyPara */
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain, NULL,
+     &policyStatus);
+    todo_wine
+    ok(ret, "CertVerifyCertificateChainPolicy failed: %08x\n", GetLastError());
+    todo_wine
+    ok(policyStatus.dwError == CERT_E_UNTRUSTEDROOT,
+     "Expected CERT_E_UNTRUSTEDROOT, got %08x\n", policyStatus.dwError);
+    ok(policyStatus.lChainIndex == 0 && policyStatus.lElementIndex == 0,
+     "Expected both indexes 0, got %d, %d\n", policyStatus.lChainIndex,
+     policyStatus.lElementIndex);
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain,
+     &policyPara, &policyStatus);
+    todo_wine
+    ok(ret, "CertVerifyCertificateChainPolicy failed: %08x\n", GetLastError());
+    todo_wine
+    ok(policyStatus.dwError == CERT_E_UNTRUSTEDROOT,
+     "Expected CERT_E_UNTRUSTEDROOT, got %08x\n", policyStatus.dwError);
+    ok(policyStatus.lChainIndex == 0 && policyStatus.lElementIndex == 0,
+     "Expected both indexes 0, got %d, %d\n", policyStatus.lChainIndex,
+     policyStatus.lElementIndex);
+    CertFreeCertificateChain(chain);
+
+    for (i = 0;
+     i < sizeof(basePolicyCheck) / sizeof(basePolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, &basePolicyCheck[i], i);
+    /* The authenticode policy doesn't seem to check anything beyond the base
+     * policy.  It might check for chains signed by the MS test cert, but none
+     * of these chains is.
+     */
+    for (i = 0; i <
+     sizeof(basePolicyCheck) / sizeof(basePolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_AUTHENTICODE,
+         &basePolicyCheck[i], i);
+    for (i = 0; i <
+     sizeof(basicConstraintsPolicyCheck) / sizeof(basicConstraintsPolicyCheck[0]);
+     i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_BASIC_CONSTRAINTS,
+         &basicConstraintsPolicyCheck[i], i);
+}
+
 START_TEST(chain)
 {
     testCreateCertChainEngine();
+    testVerifyCertChainPolicy();
     testGetCertChain();
 }
