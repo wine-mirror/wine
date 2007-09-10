@@ -71,6 +71,9 @@ RC_BINARIES = \
 IDL_H_SRCS = \
 	dcom.idl
 
+IDL_C_SRCS = \
+	irot.idl
+
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -4,12 +4,16 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rpcss.exe
 APPMODE   = -mconsole
-IMPORTS   = kernel32 ntdll
+IMPORTS   = rpcrt4 kernel32 ntdll
 
 C_SRCS = \
        epmap_server.c \
+       irotp.c \
        np_server.c \
        rpcss_main.c
+
+IDL_S_SRCS = \
+	irot.idl
 
 @MAKE_PROG_RULES@
 

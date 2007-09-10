@@ -409,6 +409,8 @@ dlls/ole32/dcom.h
 dlls/ole32/drag_copy.cur
 dlls/ole32/drag_link.cur
 dlls/ole32/drag_move.cur
+dlls/ole32/irot.h
+dlls/ole32/irot_c.c
 dlls/ole32/libole32.def
 dlls/ole32/nodrop.cur
 dlls/ole32/ole32res.res
@@ -815,6 +817,8 @@ programs/regedit/rsrc.res
 programs/regedit/string.ico
 programs/regsvr32/regsvr32
 programs/regsvr32/regsvr32.res
+programs/rpcss/irot.h
+programs/rpcss/irot_s.c
 programs/rpcss/rpcss
 programs/rundll32/rundll32
 programs/spoolsv/spoolsv

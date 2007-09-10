@@ -104,6 +104,7 @@ my @ignore_srcs = (
 my %private_headers = (
     "thread.h" => 1,
     "win.h" => 1,
+    "wine/irot.idl" => 1,
     "wine/list.h" => 1,
     "wine/mmsystem16.h" => 1,
     "wine/mscvpdb.h" => 1,

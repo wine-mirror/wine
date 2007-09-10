@@ -61,6 +61,7 @@
 #define NONAMELESSSTRUCT
 #include "rpcss.h"
 #include "winnt.h"
+#include "irot.h"
 
 #include "wine/debug.h"
 
@@ -83,6 +84,10 @@ static BOOL RPCSS_work(HANDLE exit_event)
 
 static BOOL RPCSS_Initialize(void)
 {
+  static unsigned short irot_protseq[] = IROT_PROTSEQ;
+  static unsigned short irot_endpoint[] = IROT_ENDPOINT;
+  RPC_STATUS status;
+
   WINE_TRACE("\n");
 
   exit_event = __wine_make_process_system();
@@ -102,7 +107,16 @@ static BOOL RPCSS_Initialize(void)
     return FALSE;
   }
 
-  return TRUE;
+  status = RpcServerUseProtseqEpW(irot_protseq, RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
+                                  irot_endpoint, NULL);
+  if (status == RPC_S_OK)
+      status = RpcServerRegisterIf(Irot_v0_2_s_ifspec, NULL, NULL);
+  if (status == RPC_S_OK)
+      status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
+  else
+      RpcServerUnregisterIf(Irot_v0_2_s_ifspec, NULL, FALSE);
+
+  return status == RPC_S_OK;
 }
 
 /* returns false if we discover at the last moment that we
@@ -116,6 +130,9 @@ static BOOL RPCSS_Shutdown(void)
     WINE_WARN("Failed to release master mutex\n");
 
   master_mutex = NULL;
+
+  RpcMgmtStopServerListening(NULL);
+  RpcServerUnregisterIf(Irot_v0_2_s_ifspec, NULL, TRUE);
 
   CloseHandle(exit_event);
 
