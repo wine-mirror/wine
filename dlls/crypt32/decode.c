@@ -893,28 +893,32 @@ static BOOL WINAPI CRYPT_AsnDecodeCert(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
-    BOOL ret = TRUE;
+    BOOL ret = FALSE;
 
     TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
      pDecodePara, pvStructInfo, *pcbStructInfo);
 
     __TRY
     {
-        PCERT_SIGNED_CONTENT_INFO signedCert = NULL;
         DWORD size = 0;
 
-        /* First try to decode it as a signed cert. */
-        ret = CRYPT_AsnDecodeCertSignedContent(dwCertEncodingType, X509_CERT,
-         pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
-         (BYTE *)&signedCert, &size);
-        if (ret)
+        /* Unless told not to, first try to decode it as a signed cert. */
+        if (!(dwFlags & CRYPT_DECODE_TO_BE_SIGNED_FLAG))
         {
-            size = 0;
-            ret = CRYPT_AsnDecodeCertInfo(dwCertEncodingType,
-             X509_CERT_TO_BE_SIGNED, signedCert->ToBeSigned.pbData,
-             signedCert->ToBeSigned.cbData, dwFlags, pDecodePara, pvStructInfo,
-             pcbStructInfo);
-            LocalFree(signedCert);
+            PCERT_SIGNED_CONTENT_INFO signedCert = NULL;
+
+            ret = CRYPT_AsnDecodeCertSignedContent(dwCertEncodingType,
+             X509_CERT, pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
+             (BYTE *)&signedCert, &size);
+            if (ret)
+            {
+                size = 0;
+                ret = CRYPT_AsnDecodeCertInfo(dwCertEncodingType,
+                 X509_CERT_TO_BE_SIGNED, signedCert->ToBeSigned.pbData,
+                 signedCert->ToBeSigned.cbData, dwFlags, pDecodePara,
+                 pvStructInfo, pcbStructInfo);
+                LocalFree(signedCert);
+            }
         }
         /* Failing that, try it as an unsigned cert */
         if (!ret)
@@ -928,7 +932,6 @@ static BOOL WINAPI CRYPT_AsnDecodeCert(DWORD dwCertEncodingType,
     __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
-        ret = FALSE;
     }
     __ENDTRY
 
@@ -1026,28 +1029,32 @@ static BOOL WINAPI CRYPT_AsnDecodeCRL(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
-    BOOL ret = TRUE;
+    BOOL ret = FALSE;
 
     TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
      pDecodePara, pvStructInfo, *pcbStructInfo);
 
     __TRY
     {
-        PCERT_SIGNED_CONTENT_INFO signedCrl = NULL;
         DWORD size = 0;
 
-        /* First try to decode it as a signed crl. */
-        ret = CRYPT_AsnDecodeCertSignedContent(dwCertEncodingType, X509_CERT,
-         pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
-         (BYTE *)&signedCrl, &size);
-        if (ret)
+        /* Unless told not to, first try to decode it as a signed crl. */
+        if (!(dwFlags & CRYPT_DECODE_TO_BE_SIGNED_FLAG))
         {
-            size = 0;
-            ret = CRYPT_AsnDecodeCRLInfo(dwCertEncodingType,
-             X509_CERT_CRL_TO_BE_SIGNED, signedCrl->ToBeSigned.pbData,
-             signedCrl->ToBeSigned.cbData, dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo);
-            LocalFree(signedCrl);
+            PCERT_SIGNED_CONTENT_INFO signedCrl = NULL;
+
+            ret = CRYPT_AsnDecodeCertSignedContent(dwCertEncodingType,
+             X509_CERT, pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
+             (BYTE *)&signedCrl, &size);
+            if (ret)
+            {
+                size = 0;
+                ret = CRYPT_AsnDecodeCRLInfo(dwCertEncodingType,
+                 X509_CERT_CRL_TO_BE_SIGNED, signedCrl->ToBeSigned.pbData,
+                 signedCrl->ToBeSigned.cbData, dwFlags, pDecodePara,
+                 pvStructInfo, pcbStructInfo);
+                LocalFree(signedCrl);
+            }
         }
         /* Failing that, try it as an unsigned crl */
         if (!ret)
@@ -1061,7 +1068,6 @@ static BOOL WINAPI CRYPT_AsnDecodeCRL(DWORD dwCertEncodingType,
     __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
-        ret = FALSE;
     }
     __ENDTRY
 
