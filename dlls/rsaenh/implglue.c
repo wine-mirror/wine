@@ -166,8 +166,8 @@ BOOL free_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext)
     return TRUE;
 }
 
-BOOL setup_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, DWORD dwSaltLen, 
-                    BYTE *abKeyValue) 
+BOOL setup_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
+                    DWORD dwEffectiveKeyLen, DWORD dwSaltLen, BYTE *abKeyValue)
 {
     switch (aiAlgid) 
     {
@@ -178,7 +178,8 @@ BOOL setup_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, DW
             break;
         
         case CALG_RC2:
-            rc2_setup(abKeyValue, dwKeyLen + dwSaltLen, dwKeyLen << 3, 0, &pKeyContext->rc2);
+            rc2_setup(abKeyValue, dwKeyLen + dwSaltLen, dwEffectiveKeyLen ?
+                      dwEffectiveKeyLen : dwKeyLen << 3, 0, &pKeyContext->rc2);
             break;
         
         case CALG_3DES:

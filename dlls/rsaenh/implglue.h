@@ -76,8 +76,8 @@ BOOL duplicate_hash_impl(ALG_ID aiAlgid, CONST HASH_CONTEXT *pSrcHashContext,
 
 BOOL new_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen);
 BOOL free_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext);
-BOOL setup_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, DWORD dwSaltLen, 
-                    BYTE *abKeyValue);
+BOOL setup_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
+                    DWORD dwEffectiveKeyLen, DWORD dwSaltLen, BYTE *abKeyValue);
 BOOL duplicate_key_impl(ALG_ID aiAlgid, CONST KEY_CONTEXT *pSrcKeyContext, 
                         KEY_CONTEXT *pDestKeyContext);
 

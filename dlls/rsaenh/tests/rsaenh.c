@@ -498,6 +498,9 @@ static void test_rc2(void)
     static const BYTE rc2encrypted[16] = { 
         0x02, 0x34, 0x7d, 0xf6, 0x1d, 0xc5, 0x9b, 0x8b, 
         0x2e, 0x0d, 0x63, 0x80, 0x72, 0xc1, 0xc2, 0xb1 };
+    static const BYTE rc2_128_encrypted[] = {
+        0x82,0x81,0xf7,0xff,0xdd,0xd7,0x88,0x8c,0x2a,0x2a,0xc0,0xce,0x4c,0x89,
+        0xb6,0x66 };
     HCRYPTHASH hHash;
     HCRYPTKEY hKey;
     BOOL result;
@@ -575,6 +578,69 @@ static void test_rc2(void)
 
         result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwDataLen);
         ok(result, "%08x\n", GetLastError());
+
+        result = CryptDestroyKey(hKey);
+        ok(result, "%08x\n", GetLastError());
+    }
+
+    /* Again, but test setting the effective key len */
+    for (i=0; i<2000; i++) pbData[i] = (unsigned char)i;
+
+    result = CryptCreateHash(hProv, CALG_MD2, 0, 0, &hHash);
+    if (!result) {
+        ok(GetLastError()==NTE_BAD_ALGID, "%08x\n", GetLastError());
+    } else {
+        result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+        ok(result, "%08x\n", GetLastError());
+
+        dwLen = 16;
+        result = CryptGetHashParam(hHash, HP_HASHVAL, pbHashValue, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+
+        result = CryptDeriveKey(hProv, CALG_RC2, hHash, 56 << 16, &hKey);
+        ok(result, "%08x\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        result = CryptSetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, NULL, 0);
+        ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%08x\n", GetLastError());
+        dwKeyLen = 0;
+        SetLastError(0xdeadbeef);
+        result = CryptSetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (LPBYTE)&dwKeyLen, 0);
+        ok(!result && GetLastError()==NTE_BAD_DATA, "%08x\n", GetLastError());
+        dwKeyLen = 1025;
+        SetLastError(0xdeadbeef);
+        result = CryptSetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (LPBYTE)&dwKeyLen, 0);
+
+        dwLen = sizeof(dwKeyLen);
+        CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
+        CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
+
+        dwKeyLen = 128;
+        result = CryptSetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (LPBYTE)&dwKeyLen, 0);
+        ok(result, "%d\n", GetLastError());
+
+        dwLen = sizeof(dwKeyLen);
+        CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
+        CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        ok(dwKeyLen == 128, "%d (%08x)\n", dwKeyLen, GetLastError());
+
+        result = CryptDestroyHash(hHash);
+        ok(result, "%08x\n", GetLastError());
+
+        dwDataLen = 13;
+        result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwDataLen, 24);
+        ok(result, "%08x\n", GetLastError());
+
+        ok(!memcmp(pbData, rc2_128_encrypted, sizeof(rc2_128_encrypted)),
+                "RC2 encryption failed!\n");
+
+        /* Oddly enough this succeeds, though it should have no effect */
+        dwKeyLen = 40;
+        result = CryptSetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (LPBYTE)&dwKeyLen, 0);
+        ok(result, "%d\n", GetLastError());
 
         result = CryptDestroyKey(hKey);
         ok(result, "%08x\n", GetLastError());
