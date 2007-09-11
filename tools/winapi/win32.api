@@ -4279,7 +4279,6 @@ UUID_VECTOR *
 ULONG *
 struct IRpcChannelBuffer *
 struct IRpcStubBuffer *
-char *
 char **
 twr_t *
 twr_t **
@@ -4295,6 +4294,7 @@ void
 %str
 
 RPC_CSTR
+char *
 
 %wstr
 
