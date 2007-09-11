@@ -1374,22 +1374,6 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
   if (TRACE_ON(opengl)) {
     int gl_test = 0;
 
-    /*
-     * How to test if hdc current drawable is compatible (visual/FBConfig) ?
-     *
-     * in case of root window created HDCs we crash here :(
-     *
-    Drawable drawable =  get_drawable( physDev->hdc );
-    TRACE(" drawable (%p,%p) have :\n", drawable, root_window);
-    pglXQueryDrawable(gdi_display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &value);
-    TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
-    pglXQueryDrawable(gdi_display, drawable, GLX_VISUAL_ID, (unsigned int*) &value);
-    TRACE(" - VISUAL_ID as 0x%x\n", tmp);
-    pglXQueryDrawable(gdi_display, drawable, GLX_WIDTH, (unsigned int*) &value);
-    TRACE(" - WIDTH as %d\n", tmp);
-    pglXQueryDrawable(gdi_display, drawable, GLX_HEIGHT, (unsigned int*) &value);
-    TRACE(" - HEIGHT as %d\n", tmp);
-    */
     gl_test = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_FBCONFIG_ID, &value);
     if (gl_test) {
       ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
