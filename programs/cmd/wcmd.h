@@ -2,6 +2,7 @@
  * CMD - Wine-compatible command line interface.
  *
  * Copyright (C) 1999 D A Pickles
+ * Copyright (C) 2007 J Edmeades
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +33,7 @@
 
 typedef struct _CMD_LIST {
   WCHAR              *command;     /* Command string to execute                */
+  WCHAR              *redirects;   /* Redirects in place                       */
   struct _CMD_LIST   *nextcommand; /* Next command string to execute           */
   BOOL                isAmphersand;/* Whether follows &&                       */
   int                 bracketDepth;/* How deep bracketing have we got to       */
@@ -103,7 +105,8 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
 WCHAR    *WCMD_ReadAndParseLine(WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
 CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket, WCHAR *var, WCHAR *val);
 void      WCMD_free_commands(CMD_LIST *cmds);
-void      WCMD_execute (WCHAR *orig_command, WCHAR *parameter, WCHAR *substitution, CMD_LIST **cmdList);
+void      WCMD_execute (WCHAR *orig_command, WCHAR *redirects, WCHAR *parameter,
+                        WCHAR *substitution, CMD_LIST **cmdList);
 
 /*	Data structure to hold context when executing batch files */
 

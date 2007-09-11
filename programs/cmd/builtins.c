@@ -2,6 +2,7 @@
  * CMD - Wine-compatible command line interface - built-in functions.
  *
  * Copyright (C) 1999 D A Pickles
+ * Copyright (C) 2007 J Edmeades
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -832,7 +833,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
           if (*itemStart == '`' || *itemStart == '\'') {
 
               WCHAR temp_path[MAX_PATH], temp_cmd[MAXSTRING];
-              static const WCHAR redirOut[] = {'%','s',' ','>',' ','%','s','\0'};
+              static const WCHAR redirOut[] = {'>','%','s','\0'};
               static const WCHAR cmdW[]     = {'C','M','D','\0'};
 
               /* Remove trailing character */
@@ -844,7 +845,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
               /* Execute program and redirect output */
               wsprintf (temp_cmd, redirOut, (itemStart+1), temp_file);
-              WCMD_execute (temp_cmd, NULL, NULL, NULL);
+              WCMD_execute (itemStart, temp_cmd, NULL, NULL, NULL);
 
               /* Open the file, read line by line and process */
               input = CreateFile (temp_file, GENERIC_READ, FILE_SHARE_READ,
@@ -977,7 +978,7 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
   /* Process the first command, if there is one */
   if (conditionTRUE && firstcmd && *firstcmd) {
     WCHAR *command = WCMD_strdupW(firstcmd);
-    WCMD_execute (firstcmd, variable, value, cmdList);
+    WCMD_execute (firstcmd, (*cmdList)->redirects, variable, value, cmdList);
     free (command);
   }
 
@@ -1005,7 +1006,8 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
       /* Execute any appended to the statement with &&'s */
       if ((*cmdList)->isAmphersand) {
         if (processThese) {
-          WCMD_execute ((*cmdList)->command, variable, value, cmdList);
+          WCMD_execute ((*cmdList)->command, (*cmdList)->redirects, variable,
+                        value, cmdList);
         }
         if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
 
@@ -1033,7 +1035,7 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
             /* Skip leading whitespace between condition and the command */
             while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
             if (*cmd) {
-              WCMD_execute (cmd, variable, value, cmdList);
+              WCMD_execute (cmd, (*cmdList)->redirects, variable, value, cmdList);
             }
           }
           if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
