@@ -1035,6 +1035,8 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
                 bestFormat = i;
                 continue;
             }
+            if(bestDBuffer != -1 && (dwFlags & PFD_DOUBLEBUFFER) != bestDBuffer)
+                continue;
         }
 
         /* Stereo, see the comments above. */
@@ -1052,6 +1054,8 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
                 bestFormat = i;
                 continue;
             }
+            if(bestStereo != -1 && (dwFlags & PFD_STEREO) != bestStereo)
+                continue;
         }
 
         /* Below we will do a number of checks to select the 'best' pixelformat.
