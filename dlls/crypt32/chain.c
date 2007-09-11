@@ -279,7 +279,7 @@ static inline void CRYPT_CombineTrustStatus(CERT_TRUST_STATUS *chainStatus,
 }
 
 static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
- PCERT_SIMPLE_CHAIN chain, PCCERT_CONTEXT cert)
+ PCERT_SIMPLE_CHAIN chain, PCCERT_CONTEXT cert, DWORD subjectInfoStatus)
 {
     BOOL ret = FALSE;
     PCERT_CHAIN_ELEMENT element = CryptMemAlloc(sizeof(CERT_CHAIN_ELEMENT));
@@ -297,6 +297,9 @@ static BOOL CRYPT_AddCertToSimpleChain(PCertificateChainEngine engine,
             memset(element, 0, sizeof(CERT_CHAIN_ELEMENT));
             element->cbSize = sizeof(CERT_CHAIN_ELEMENT);
             element->pCertContext = CertDuplicateCertificateContext(cert);
+            if (chain->cElement > 1)
+                chain->rgpElement[chain->cElement - 2]->TrustStatus.dwInfoStatus
+                 = subjectInfoStatus;
             /* FIXME: initialize the rest of element */
             if (chain->cElement % engine->CycleDetectionModulus)
                 CRYPT_CheckSimpleChainForCycles(chain);
@@ -632,7 +635,7 @@ static BOOL CRYPT_BuildSimpleChain(PCertificateChainEngine engine,
 
         if (issuer)
         {
-            ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer);
+            ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer, 0);
             cert = issuer;
         }
         else
@@ -658,7 +661,7 @@ static BOOL CRYPT_GetSimpleChainForCert(PCertificateChainEngine engine,
     {
         memset(chain, 0, sizeof(CERT_SIMPLE_CHAIN));
         chain->cbSize = sizeof(CERT_SIMPLE_CHAIN);
-        ret = CRYPT_AddCertToSimpleChain(engine, chain, cert);
+        ret = CRYPT_AddCertToSimpleChain(engine, chain, cert, 0);
         if (ret)
         {
             ret = CRYPT_BuildSimpleChain(engine, world, chain);
@@ -909,7 +912,7 @@ static PCertificateChain CRYPT_BuildAlternateContextFromChain(
             if (alternate)
             {
                 BOOL ret = CRYPT_AddCertToSimpleChain(engine,
-                 alternate->context.rgpChain[i], alternateIssuer);
+                 alternate->context.rgpChain[i], alternateIssuer, 0);
 
                 if (ret)
                 {
