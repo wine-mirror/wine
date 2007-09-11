@@ -2080,7 +2080,16 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
             }
             memcpy(in, out, pCryptKey->dwBlockLen);
         }
-        if (Final) *pdwDataLen -= pbData[*pdwDataLen-1]; 
+        if (Final) {
+            if (pbData[*pdwDataLen-1] &&
+             pbData[*pdwDataLen-1] <= pCryptKey->dwBlockLen &&
+             pbData[*pdwDataLen-1] < *pdwDataLen)
+                *pdwDataLen -= pbData[*pdwDataLen-1];
+            else {
+                SetLastError(NTE_BAD_DATA);
+                return FALSE;
+            }
+        }
 
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_STREAM) {
         encrypt_stream_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, *pdwDataLen);
