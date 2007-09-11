@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #include <stdarg.h>
+
+#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "wintrust.h"
@@ -37,7 +40,7 @@ HRESULT WINAPI SoftpubInitialize(CRYPT_PROVIDER_DATA *data)
     return ret;
 }
 
-/* Assumes data->pWintrustData->pFile exists.  Makes sure a file handle is
+/* Assumes data->pWintrustData->u.pFile exists.  Makes sure a file handle is
  * open for the file.
  */
 static BOOL SOFTPUB_OpenFile(CRYPT_PROVIDER_DATA *data)
@@ -48,13 +51,13 @@ static BOOL SOFTPUB_OpenFile(CRYPT_PROVIDER_DATA *data)
      * typically have hFile as NULL rather than INVALID_HANDLE_VALUE.  Check
      * for both.
      */
-    if (!data->pWintrustData->pFile->hFile ||
-     data->pWintrustData->pFile->hFile == INVALID_HANDLE_VALUE)
+    if (!data->pWintrustData->u.pFile->hFile ||
+     data->pWintrustData->u.pFile->hFile == INVALID_HANDLE_VALUE)
     {
-        data->pWintrustData->pFile->hFile =
-         CreateFileW(data->pWintrustData->pFile->pcwszFilePath, GENERIC_READ,
+        data->pWintrustData->u.pFile->hFile =
+            CreateFileW(data->pWintrustData->u.pFile->pcwszFilePath, GENERIC_READ,
           FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (data->pWintrustData->pFile->hFile != INVALID_HANDLE_VALUE)
+        if (data->pWintrustData->u.pFile->hFile != INVALID_HANDLE_VALUE)
             data->fOpenedFile = TRUE;
         else
             ret = FALSE;
@@ -63,40 +66,40 @@ static BOOL SOFTPUB_OpenFile(CRYPT_PROVIDER_DATA *data)
     return ret;
 }
 
-/* Assumes data->pWintrustData->pFile exists.  Sets data->pPDSip->gSubject to
+/* Assumes data->pWintrustData->u.pFile exists.  Sets data->pPDSip->gSubject to
  * the file's subject GUID.
  */
 static BOOL SOFTPUB_GetFileSubject(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
 
-    if (!data->pWintrustData->pFile->pgKnownSubject)
+    if (!data->pWintrustData->u.pFile->pgKnownSubject)
     {
         ret = CryptSIPRetrieveSubjectGuid(
-         data->pWintrustData->pFile->pcwszFilePath,
-         data->pWintrustData->pFile->hFile,
-         &data->pPDSip->gSubject);
+         data->pWintrustData->u.pFile->pcwszFilePath,
+         data->pWintrustData->u.pFile->hFile,
+         &data->u.pPDSip->gSubject);
     }
     else
     {
-        memcpy(&data->pPDSip->gSubject,
-         data->pWintrustData->pFile->pgKnownSubject, sizeof(GUID));
+        memcpy(&data->u.pPDSip->gSubject,
+         data->pWintrustData->u.pFile->pgKnownSubject, sizeof(GUID));
         ret = TRUE;
     }
     TRACE("returning %d\n", ret);
     return ret;
 }
 
-/* Assumes data->pPDSip exists, and its gSubject member set.
- * Allocates data->pPDSip->pSip and loads it, if possible.
+/* Assumes data->u.pPDSip exists, and its gSubject member set.
+ * Allocates data->u.pPDSip->pSip and loads it, if possible.
  */
 static BOOL SOFTPUB_GetSIP(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
 
-    data->pPDSip->pSip = data->psPfns->pfnAlloc(sizeof(SIP_DISPATCH_INFO));
-    if (data->pPDSip->pSip)
-        ret = CryptSIPLoad(&data->pPDSip->gSubject, 0, data->pPDSip->pSip);
+    data->u.pPDSip->pSip = data->psPfns->pfnAlloc(sizeof(SIP_DISPATCH_INFO));
+    if (data->u.pPDSip->pSip)
+        ret = CryptSIPLoad(&data->u.pPDSip->gSubject, 0, data->u.pPDSip->pSip);
     else
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -106,8 +109,8 @@ static BOOL SOFTPUB_GetSIP(CRYPT_PROVIDER_DATA *data)
     return ret;
 }
 
-/* Assumes data->pPDSip has been loaded, and data->pPDSip->pSip allocated.
- * Calls data->pPDSip->pSip->pfGet to construct data->hMsg.
+/* Assumes data->u.pPDSip has been loaded, and data->u.pPDSip->pSip allocated.
+ * Calls data->u.pPDSip->pSip->pfGet to construct data->hMsg.
  */
 static BOOL SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data)
 {
@@ -115,21 +118,21 @@ static BOOL SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data)
     LPBYTE buf = NULL;
     DWORD size = 0;
 
-    data->pPDSip->psSipSubjectInfo =
+    data->u.pPDSip->psSipSubjectInfo =
      data->psPfns->pfnAlloc(sizeof(SIP_SUBJECTINFO));
-    if (!data->pPDSip->psSipSubjectInfo)
+    if (!data->u.pPDSip->psSipSubjectInfo)
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
 
-    data->pPDSip->psSipSubjectInfo->cbSize = sizeof(SIP_SUBJECTINFO);
-    data->pPDSip->psSipSubjectInfo->pgSubjectType = &data->pPDSip->gSubject;
-    data->pPDSip->psSipSubjectInfo->hFile = data->pWintrustData->pFile->hFile;
-    data->pPDSip->psSipSubjectInfo->pwsFileName =
-     data->pWintrustData->pFile->pcwszFilePath;
-    data->pPDSip->psSipSubjectInfo->hProv = data->hProv;
-    ret = data->pPDSip->pSip->pfGet(data->pPDSip->psSipSubjectInfo,
+    data->u.pPDSip->psSipSubjectInfo->cbSize = sizeof(SIP_SUBJECTINFO);
+    data->u.pPDSip->psSipSubjectInfo->pgSubjectType = &data->u.pPDSip->gSubject;
+    data->u.pPDSip->psSipSubjectInfo->hFile = data->pWintrustData->u.pFile->hFile;
+    data->u.pPDSip->psSipSubjectInfo->pwsFileName =
+     data->pWintrustData->u.pFile->pcwszFilePath;
+    data->u.pPDSip->psSipSubjectInfo->hProv = data->hProv;
+    ret = data->u.pPDSip->pSip->pfGet(data->u.pPDSip->psSipSubjectInfo,
      &data->dwEncoding, 0, &size, 0);
     if (!ret)
     {
@@ -144,7 +147,7 @@ static BOOL SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data)
         return FALSE;
     }
 
-    ret = data->pPDSip->pSip->pfGet(data->pPDSip->psSipSubjectInfo,
+    ret = data->u.pPDSip->pSip->pfGet(data->u.pPDSip->psSipSubjectInfo,
      &data->dwEncoding, 0, &size, buf);
     if (ret)
     {
@@ -217,8 +220,8 @@ static DWORD SOFTPUB_DecodeInnerContent(CRYPT_PROVIDER_DATA *data)
          SPC_INDIRECT_DATA_CONTENT_STRUCT, buf, size, 0, NULL, &size);
         if (!ret)
             goto error;
-        data->pPDSip->psIndirectData = data->psPfns->pfnAlloc(size);
-        if (!data->pPDSip->psIndirectData)
+        data->u.pPDSip->psIndirectData = data->psPfns->pfnAlloc(size);
+        if (!data->u.pPDSip->psIndirectData)
         {
             SetLastError(ERROR_OUTOFMEMORY);
             ret = FALSE;
@@ -226,7 +229,7 @@ static DWORD SOFTPUB_DecodeInnerContent(CRYPT_PROVIDER_DATA *data)
         }
         ret = CryptDecodeObject(data->dwEncoding,
          SPC_INDIRECT_DATA_CONTENT_STRUCT, buf, size, 0,
-         data->pPDSip->psIndirectData, &size);
+         data->u.pPDSip->psIndirectData, &size);
     }
     else
     {
@@ -256,7 +259,7 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
         ret = TRUE;
         break;
     case WTD_CHOICE_FILE:
-        if (!data->pWintrustData->pFile)
+        if (!data->pWintrustData->u.pFile)
         {
             SetLastError(ERROR_INVALID_PARAMETER);
             ret = FALSE;

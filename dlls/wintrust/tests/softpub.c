@@ -263,7 +263,7 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
          ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %08x\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
-        wintrust_data.pCert = &certInfo;
+        U(wintrust_data).pCert = &certInfo;
         wintrust_data.dwUnionChoice = WTD_CHOICE_CERT;
         ret = funcs->pfnObjectTrust(&data);
         ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
@@ -274,14 +274,14 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         CertFreeCertificateContext(certInfo.psCertContext);
         certInfo.psCertContext = NULL;
         wintrust_data.dwUnionChoice = WTD_CHOICE_FILE;
-        wintrust_data.pFile = NULL;
+        U(wintrust_data).pFile = NULL;
         ret = funcs->pfnObjectTrust(&data);
         ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
         ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
          ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %08x\n",
          data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
-        wintrust_data.pFile = &fileInfo;
+        U(wintrust_data).pFile = &fileInfo;
         /* Crashes
         ret = funcs->pfnObjectTrust(&data);
          */
@@ -289,7 +289,7 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         lstrcatW(notepadPath, notepad);
         fileInfo.pcwszFilePath = notepadPath;
         /* pfnObjectTrust now crashes unless both pPDSip and psPfns are set */
-        data.pPDSip = &provDataSIP;
+        U(data).pPDSip = &provDataSIP;
         data.psPfns = (CRYPT_PROVIDER_FUNCTIONS *)funcs;
         ret = funcs->pfnObjectTrust(&data);
         ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);

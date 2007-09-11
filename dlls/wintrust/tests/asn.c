@@ -68,7 +68,7 @@ static void test_encodeSPCLink(void)
         LocalFree(buf);
     }
     /* With an invalid char: */
-    link.pwszUrl = (LPWSTR)nihongoURL;
+    U(link).pwszUrl = (LPWSTR)nihongoURL;
     size = 1;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
@@ -79,7 +79,7 @@ static void test_encodeSPCLink(void)
      * index of the first invalid character.
      */
     ok(size == 0, "Expected size 0, got %d\n", size);
-    link.pwszUrl = url;
+    U(link).pwszUrl = url;
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -90,7 +90,7 @@ static void test_encodeSPCLink(void)
         LocalFree(buf);
     }
     link.dwLinkChoice = SPC_FILE_LINK_CHOICE;
-    link.pwszFile = (LPWSTR)nihongoURL;
+    U(link).pwszFile = (LPWSTR)nihongoURL;
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -101,7 +101,7 @@ static void test_encodeSPCLink(void)
         LocalFree(buf);
     }
     link.dwLinkChoice = SPC_MONIKER_LINK_CHOICE;
-    memset(&link.Moniker, 0, sizeof(link.Moniker));
+    memset(&U(link).Moniker, 0, sizeof(U(link).Moniker));
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -111,9 +111,9 @@ static void test_encodeSPCLink(void)
         ok(!memcmp(buf, emptyMonikerSPCLink, size), "Unexpected value\n");
         LocalFree(buf);
     }
-    memset(&link.Moniker.ClassId, 0xea, sizeof(link.Moniker.ClassId));
-    link.Moniker.SerializedData.pbData = data;
-    link.Moniker.SerializedData.cbData = sizeof(data);
+    memset(&U(link).Moniker.ClassId, 0xea, sizeof(U(link).Moniker.ClassId));
+    U(link).Moniker.SerializedData.pbData = data;
+    U(link).Moniker.SerializedData.cbData = sizeof(data);
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -145,7 +145,7 @@ static void test_decodeSPCLink(void)
         link = (SPC_LINK *)buf;
         ok(link->dwLinkChoice == SPC_URL_LINK_CHOICE,
          "Expected SPC_URL_LINK_CHOICE, got %d\n", link->dwLinkChoice);
-        ok(lstrlenW(link->pwszUrl) == 0, "Expected empty string\n");
+        ok(lstrlenW(U(*link).pwszUrl) == 0, "Expected empty string\n");
         LocalFree(buf);
     }
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
@@ -157,7 +157,7 @@ static void test_decodeSPCLink(void)
         link = (SPC_LINK *)buf;
         ok(link->dwLinkChoice == SPC_URL_LINK_CHOICE,
          "Expected SPC_URL_LINK_CHOICE, got %d\n", link->dwLinkChoice);
-        ok(!lstrcmpW(link->pwszUrl, url), "Unexpected URL\n");
+        ok(!lstrcmpW(U(*link).pwszUrl, url), "Unexpected URL\n");
         LocalFree(buf);
     }
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
@@ -169,7 +169,7 @@ static void test_decodeSPCLink(void)
         link = (SPC_LINK *)buf;
         ok(link->dwLinkChoice == SPC_FILE_LINK_CHOICE,
          "Expected SPC_FILE_LINK_CHOICE, got %d\n", link->dwLinkChoice);
-        ok(!lstrcmpW(link->pwszFile, nihongoURL), "Unexpected file\n");
+        ok(!lstrcmpW(U(*link).pwszFile, nihongoURL), "Unexpected file\n");
         LocalFree(buf);
     }
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
@@ -183,9 +183,9 @@ static void test_decodeSPCLink(void)
         link = (SPC_LINK *)buf;
         ok(link->dwLinkChoice == SPC_MONIKER_LINK_CHOICE,
          "Expected SPC_MONIKER_LINK_CHOICE, got %d\n", link->dwLinkChoice);
-        ok(!memcmp(&link->Moniker.ClassId, &emptyMoniker.ClassId,
+        ok(!memcmp(&U(*link).Moniker.ClassId, &emptyMoniker.ClassId,
          sizeof(emptyMoniker.ClassId)), "Unexpected value\n");
-        ok(link->Moniker.SerializedData.cbData == 0,
+        ok(U(*link).Moniker.SerializedData.cbData == 0,
          "Expected no serialized data\n");
         LocalFree(buf);
     }
@@ -201,11 +201,11 @@ static void test_decodeSPCLink(void)
         ok(link->dwLinkChoice == SPC_MONIKER_LINK_CHOICE,
          "Expected SPC_MONIKER_LINK_CHOICE, got %d\n", link->dwLinkChoice);
         memset(&id, 0xea, sizeof(id));
-        ok(!memcmp(&link->Moniker.ClassId, &id, sizeof(id)),
+        ok(!memcmp(&U(*link).Moniker.ClassId, &id, sizeof(id)),
          "Unexpected value\n");
-        ok(link->Moniker.SerializedData.cbData == sizeof(data),
-         "Unexpected data size %d\n", link->Moniker.SerializedData.cbData);
-        ok(!memcmp(link->Moniker.SerializedData.pbData, data, sizeof(data)),
+        ok(U(*link).Moniker.SerializedData.cbData == sizeof(data),
+           "Unexpected data size %d\n", U(*link).Moniker.SerializedData.cbData);
+        ok(!memcmp(U(*link).Moniker.SerializedData.pbData, data, sizeof(data)),
          "Unexpected value\n");
         LocalFree(buf);
     }
@@ -311,7 +311,7 @@ static void test_encodeSPCPEImage(void)
         LocalFree(buf);
     }
     /* Finally, a non-empty file: */
-    link.pwszFile = (LPWSTR)nihongoURL;
+    U(link).pwszFile = (LPWSTR)nihongoURL;
     ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -374,7 +374,7 @@ static void test_decodeSPCPEImage(void)
             ok(imageData->pFile->dwLinkChoice == SPC_FILE_LINK_CHOICE,
              "Expected SPC_FILE_LINK_CHOICE, got %d\n",
              imageData->pFile->dwLinkChoice);
-            ok(!lstrcmpW(imageData->pFile->pwszFile, emptyString),
+            ok(!lstrcmpW(U(*imageData->pFile).pwszFile, emptyString),
              "Unexpected file\n");
         }
         LocalFree(buf);
@@ -397,7 +397,7 @@ static void test_decodeSPCPEImage(void)
             ok(imageData->pFile->dwLinkChoice == SPC_FILE_LINK_CHOICE,
              "Expected SPC_FILE_LINK_CHOICE, got %d\n",
              imageData->pFile->dwLinkChoice);
-            ok(!lstrcmpW(imageData->pFile->pwszFile, emptyString),
+            ok(!lstrcmpW(U(*imageData->pFile).pwszFile, emptyString),
              "Unexpected file\n");
         }
         LocalFree(buf);
@@ -420,7 +420,7 @@ static void test_decodeSPCPEImage(void)
             ok(imageData->pFile->dwLinkChoice == SPC_FILE_LINK_CHOICE,
              "Expected SPC_FILE_LINK_CHOICE, got %d\n",
              imageData->pFile->dwLinkChoice);
-            ok(!lstrcmpW(imageData->pFile->pwszFile, nihongoURL),
+            ok(!lstrcmpW(U(*imageData->pFile).pwszFile, nihongoURL),
              "Unexpected file\n");
         }
         LocalFree(buf);
