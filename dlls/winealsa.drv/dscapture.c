@@ -73,6 +73,8 @@ typedef struct IDsCaptureDriverNotifyImpl
     const IDsDriverNotifyVtbl *lpVtbl;
     LONG ref;
     IDsCaptureDriverBufferImpl *buffer;
+    DSBPOSITIONNOTIFY *notifies;
+    DWORD nrofnotifies;
 } IDsCaptureDriverNotifyImpl;
 
 struct IDsCaptureDriverBufferImpl
@@ -94,6 +96,31 @@ struct IDsCaptureDriverBufferImpl
     snd_pcm_sw_params_t *sw_params;
     snd_pcm_uframes_t mmap_buflen_frames, mmap_pos;
 };
+
+static void Capture_CheckNotify(IDsCaptureDriverNotifyImpl *This, DWORD from, DWORD len)
+{
+    unsigned i;
+    for (i = 0; i < This->nrofnotifies; ++i) {
+        LPDSBPOSITIONNOTIFY event = This->notifies + i;
+        DWORD offset = event->dwOffset;
+        TRACE("checking %d, position %d, event = %p\n", i, offset, event->hEventNotify);
+
+        if (offset == DSBPN_OFFSETSTOP) {
+            if (!from && !len) {
+                SetEvent(event->hEventNotify);
+                TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
+                return;
+            }
+            else return;
+        }
+
+        if (offset >= from && offset < (from + len))
+        {
+            TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
+            SetEvent(event->hEventNotify);
+        }
+    }
+}
 
 static HRESULT WINAPI IDsCaptureDriverNotifyImpl_QueryInterface(PIDSDRIVERNOTIFY iface, REFIID riid, LPVOID *ppobj)
 {
@@ -132,6 +159,7 @@ static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface)
 
     if (!refCount) {
         This->buffer->notify = NULL;
+        HeapFree(GetProcessHeap(), 0, This->notifies);
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
@@ -140,11 +168,46 @@ static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface)
 
 static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(PIDSDRIVERNOTIFY iface, DWORD howmuch, LPCDSBPOSITIONNOTIFY notify)
 {
+    DWORD len = howmuch * sizeof(DSBPOSITIONNOTIFY);
+    unsigned i;
+    LPVOID notifies;
     IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
     TRACE("(%p,0x%08x,%p)\n",This,howmuch,notify);
 
-    FIXME("stub\n");
-    return DSERR_UNSUPPORTED;
+    if (!notify) {
+        WARN("invalid parameter\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (TRACE_ON(dsalsa))
+        for (i=0;i<howmuch; ++i)
+            TRACE("notify at %d to %p\n", notify[i].dwOffset, notify[i].hEventNotify);
+
+    /* **** */
+    EnterCriticalSection(&This->buffer->pcm_crst);
+
+    /* Make an internal copy of the caller-supplied array.
+     * Replace the existing copy if one is already present. */
+    if (This->notifies)
+        notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->notifies, len);
+    else
+        notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+
+    if (!notifies)
+    {
+        LeaveCriticalSection(&This->buffer->pcm_crst);
+        /* **** */
+        return DSERR_OUTOFMEMORY;
+    }
+    This->notifies = notifies;
+    memcpy(This->notifies, notify, len);
+    This->nrofnotifies = howmuch;
+    IDsDriverBuffer_GetPosition((PIDSCDRIVERBUFFER)This->buffer, &This->playpos, NULL);
+
+    LeaveCriticalSection(&This->buffer->pcm_crst);
+    /* **** */
+
+    return S_OK;
 }
 
 static const IDsDriverNotifyVtbl dscdnvt =
@@ -660,6 +723,14 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(PIDSCDRIVERBUFFER iface, 
         FIXME("Non-looping buffers are not properly supported!\n");
     CommitAll(This, TRUE);
 
+    if (This->notify && This->notify->nrofnotifies && This->notify->notifies)
+    {
+        DWORD playpos = realpos_to_fakepos(This, This->mmap_pos);
+        if (playpos)
+            Capture_CheckNotify(This->notify, 0, playpos);
+        This->notify->playpos = playpos;
+    }
+
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
     return DS_OK;
@@ -675,6 +746,9 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Stop(PIDSCDRIVERBUFFER iface)
     This->play_looping = FALSE;
     snd_pcm_drop(This->pcm);
     snd_pcm_prepare(This->pcm);
+
+    if (This->notify && This->notify->notifies && This->notify->nrofnotifies)
+        Capture_CheckNotify(This->notify, 0, 0);
 
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
