@@ -415,7 +415,7 @@ static RPC_STATUS RPCRT4_SecurePacket(RpcConnection *Connection,
             sec_status = DecryptMessage(&Connection->ctx, &message, 0 /* FIXME */, 0);
             if (sec_status != SEC_E_OK)
             {
-                ERR("EncryptMessage failed with 0x%08x\n", sec_status);
+                ERR("DecryptMessage failed with 0x%08x\n", sec_status);
                 return RPC_S_SEC_PKG_ERROR;
             }
         }
