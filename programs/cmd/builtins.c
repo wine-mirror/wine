@@ -822,14 +822,41 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
       } else if (doFileset && *itemStart != '"') {
 
           HANDLE input;
+          WCHAR temp_file[MAX_PATH];
 
           WINE_TRACE("Processing for filespec from item %d '%s'\n", itemNum,
                      wine_dbgstr_w(item));
 
-          /* Open the file, read line by line and process */
-          input = CreateFile (item, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-                      FILE_ATTRIBUTE_NORMAL, NULL);
+          /* If backquote or single quote, we need to launch that command
+             and parse the results - use a temporary file                 */
+          if (*itemStart == '`' || *itemStart == '\'') {
 
+              WCHAR temp_path[MAX_PATH], temp_cmd[MAXSTRING];
+              static const WCHAR redirOut[] = {'%','s',' ','>',' ','%','s','\0'};
+              static const WCHAR cmdW[]     = {'C','M','D','\0'};
+
+              /* Remove trailing character */
+              itemStart[strlenW(itemStart)-1] = 0x00;
+
+              /* Get temp filename */
+              GetTempPath (sizeof(temp_path)/sizeof(WCHAR), temp_path);
+              GetTempFileName (temp_path, cmdW, 0, temp_file);
+
+              /* Execute program and redirect output */
+              wsprintf (temp_cmd, redirOut, (itemStart+1), temp_file);
+              WCMD_execute (temp_cmd, NULL, NULL, NULL);
+
+              /* Open the file, read line by line and process */
+              input = CreateFile (temp_file, GENERIC_READ, FILE_SHARE_READ,
+                                  NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+          } else {
+
+              /* Open the file, read line by line and process */
+              input = CreateFile (item, GENERIC_READ, FILE_SHARE_READ,
+                                  NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+          }
+
+          /* Process the input file */
           if (input == INVALID_HANDLE_VALUE) {
             WCMD_print_error ();
             WCMD_output (WCMD_LoadMessage(WCMD_READFAIL), item);
@@ -860,6 +887,11 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
             }
             CloseHandle (input);
+          }
+
+          /* Delete the temporary file */
+          if (*itemStart == '`' || *itemStart == '\'') {
+              DeleteFile (temp_file);
           }
 
       /* Filesets - A string literal */
