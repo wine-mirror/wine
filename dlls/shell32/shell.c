@@ -307,7 +307,7 @@ static LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 
 /**********************************************************************/
 
-SEGPTR WINAPI FindEnvironmentString16(LPSTR str)
+SEGPTR WINAPI FindEnvironmentString16(LPCSTR str)
 { SEGPTR  spEnv;
   LPSTR lpEnv,lpString;
   TRACE("\n");
