@@ -445,7 +445,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(PIDSCDRIVERBUFFER ifa
     }
 
     snd_pcm_hw_params_set_periods_integer(pcm, hw_params);
-    buffer_size = snd_pcm_bytes_to_frames(pcm, This->mmap_buflen_bytes);
+    buffer_size = This->mmap_buflen_bytes / pwfx->nBlockAlign;
     snd_pcm_hw_params_set_buffer_size_near(pcm, hw_params, &buffer_size);
     buffer_size = 5000;
     snd_pcm_hw_params_set_period_time_near(pcm, hw_params, (unsigned int*)&buffer_size, NULL);
