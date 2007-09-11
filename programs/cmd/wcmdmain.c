@@ -708,6 +708,8 @@ void WCMD_execute (WCHAR *command,
     }
     p = WCMD_strtrim_leading_spaces (&whichcmd[count]);
     WCMD_parse (p, quals, param1, param2);
+    WINE_TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
+
     switch (i) {
 
       case WCMD_ATTRIB:
@@ -1313,11 +1315,15 @@ int p = 0;
       case '\0':
         return;
       default:
-	while ((*s != '\0') && (*s != ' ') && (*s != '\t')) {
+	while ((*s != '\0') && (*s != ' ') && (*s != '\t')
+               && (*s != '=')  && (*s != ',') ) {
 	  if (p == 0) *p1++ = *s++;
 	  else if (p == 1) *p2++ = *s++;
 	  else s++;
 	}
+        /* Skip concurrent parms */
+	while ((*s == ' ') || (*s == '\t') || (*s == '=')  || (*s == ',') ) s++;
+
         if (p == 0) *p1 = '\0';
         if (p == 1) *p2 = '\0';
 	p++;

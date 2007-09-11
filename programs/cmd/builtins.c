@@ -1160,6 +1160,8 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
   else {
     strcpyW (condition, param1);
   }
+  WINE_TRACE("Condition: %s\n", wine_dbgstr_w(condition));
+
   if (!lstrcmpiW (condition, errlvlW)) {
     if (errorlevel >= atoiW(WCMD_parameter (p, 1+negate, NULL))) test = 1;
     WCMD_parameter (p, 2+negate, &command);
