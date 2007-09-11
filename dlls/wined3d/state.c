@@ -216,6 +216,16 @@ static void state_zfunc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     int glParm = CompareFunc(stateblock->renderState[WINED3DRS_ZFUNC]);
 
     if(glParm) {
+        if(glParm == GL_EQUAL || glParm == GL_NOTEQUAL) {
+            /* There are a few issues with this: First, our inability to
+             * select a proper Z depth, most of the time we're stuck with
+             * D24S8, even if the app selects D32 or D16. There seem to be
+             * some other precision problems which have to be debugged to
+             * make NOTEQUAL and EQUAL work properly
+             */
+            FIXME("D3DCMP_NOTEQUAL and D3DCMP_EQUAL do not work correctly yet\n");
+        }
+
         glDepthFunc(glParm);
         checkGLcall("glDepthFunc");
     }
