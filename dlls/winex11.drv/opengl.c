@@ -149,6 +149,7 @@ static int WineGLExtensionListSize;
 
 static WineGLPixelFormat *WineGLPixelFormatList;
 static int WineGLPixelFormatListSize = 0;
+static int WineGLPixelFormatOnScreenSize = 0;
 
 static void X11DRV_WineGL_LoadExtensions(void);
 static BOOL glxRequireVersion(int requiredVersion);
@@ -854,6 +855,7 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
     WineGLPixelFormatList[0].render_type = get_render_type_from_fbconfig(display, fbconfig);
     WineGLPixelFormatList[0].offscreenOnly = FALSE;
     WineGLPixelFormatListSize = 1;
+    WineGLPixelFormatOnScreenSize = 1;
 
     /* Fill the list with offscreen formats */
     for(i=0; i<nCfgs; i++) {
@@ -904,7 +906,7 @@ static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixe
     if(AllowOffscreen)
         *fmt_count = WineGLPixelFormatListSize;
     else
-        *fmt_count = 1;
+        *fmt_count = WineGLPixelFormatOnScreenSize;
 
     TRACE("Number of returned pixelformats=%d\n", *fmt_count);
 
