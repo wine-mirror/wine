@@ -56,6 +56,10 @@
 
 #ifdef HAVE_ALSA
 
+/* Notify timer checks every 10 ms with a resolution of 2 ms */
+#define DS_TIME_DEL 10
+#define DS_TIME_RES 2
+
 WINE_DEFAULT_DEBUG_CHANNEL(dsalsa);
 
 typedef struct IDsCaptureDriverBufferImpl IDsCaptureDriverBufferImpl;
@@ -74,7 +78,8 @@ typedef struct IDsCaptureDriverNotifyImpl
     LONG ref;
     IDsCaptureDriverBufferImpl *buffer;
     DSBPOSITIONNOTIFY *notifies;
-    DWORD nrofnotifies;
+    DWORD nrofnotifies, playpos;
+    UINT timerID;
 } IDsCaptureDriverNotifyImpl;
 
 struct IDsCaptureDriverBufferImpl
@@ -122,6 +127,35 @@ static void Capture_CheckNotify(IDsCaptureDriverNotifyImpl *This, DWORD from, DW
     }
 }
 
+static void CALLBACK Capture_Notify(UINT timerID, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
+{
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)dwUser;
+    DWORD last_playpos, playpos;
+    PIDSCDRIVERBUFFER iface = (PIDSCDRIVERBUFFER)This;
+
+    /* **** */
+    EnterCriticalSection(&This->pcm_crst);
+
+    IDsDriverBuffer_GetPosition(iface, &playpos, NULL);
+    last_playpos = This->notify->playpos;
+    This->notify->playpos = playpos;
+
+    if (snd_pcm_state(This->pcm) != SND_PCM_STATE_RUNNING || last_playpos == playpos || !This->notify->nrofnotifies || !This->notify->notifies)
+        goto done;
+
+    if (playpos < last_playpos)
+    {
+        Capture_CheckNotify(This->notify, last_playpos, This->mmap_buflen_bytes);
+        if (playpos)
+            Capture_CheckNotify(This->notify, 0, playpos);
+    }
+    else Capture_CheckNotify(This->notify, last_playpos, playpos - last_playpos);
+
+done:
+    LeaveCriticalSection(&This->pcm_crst);
+    /* **** */
+}
+
 static HRESULT WINAPI IDsCaptureDriverNotifyImpl_QueryInterface(PIDSDRIVERNOTIFY iface, REFIID riid, LPVOID *ppobj)
 {
     IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
@@ -159,6 +193,11 @@ static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface)
 
     if (!refCount) {
         This->buffer->notify = NULL;
+        if (This->timerID)
+        {
+            timeKillEvent(This->timerID);
+            timeEndPeriod(DS_TIME_RES);
+        }
         HeapFree(GetProcessHeap(), 0, This->notifies);
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
@@ -203,6 +242,12 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(PIDSDR
     memcpy(This->notifies, notify, len);
     This->nrofnotifies = howmuch;
     IDsDriverBuffer_GetPosition((PIDSCDRIVERBUFFER)This->buffer, &This->playpos, NULL);
+
+    if (!This->timerID)
+    {
+        timeBeginPeriod(DS_TIME_RES);
+        This->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, Capture_Notify, (DWORD_PTR)This->buffer, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
+    }
 
     LeaveCriticalSection(&This->buffer->pcm_crst);
     /* **** */
