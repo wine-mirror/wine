@@ -511,6 +511,17 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
     CRYPT_CombineTrustStatus(&chain->TrustStatus, &rootElement->TrustStatus);
 }
 
+static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
+ PCCERT_CONTEXT prevIssuer)
+{
+    PCCERT_CONTEXT issuer;
+    DWORD flags = 0;
+
+    issuer = CertGetIssuerCertificateFromStore(store, subject, prevIssuer,
+     &flags);
+    return issuer;
+}
+
 /* Builds a simple chain by finding an issuer for the last cert in the chain,
  * until reaching a self-signed cert, or until no issuer can be found.
  */
@@ -523,9 +534,7 @@ static BOOL CRYPT_BuildSimpleChain(PCertificateChainEngine engine,
     while (ret && !CRYPT_IsSimpleChainCyclic(chain) &&
      !CRYPT_IsCertificateSelfSigned(cert))
     {
-        DWORD flags = 0;
-        PCCERT_CONTEXT issuer =
-         CertGetIssuerCertificateFromStore(world, cert, NULL, &flags);
+        PCCERT_CONTEXT issuer = CRYPT_GetIssuer(world, cert, NULL);
 
         if (issuer)
         {
@@ -782,7 +791,7 @@ static PCertificateChain CRYPT_BuildAlternateContextFromChain(
         alternate = NULL;
     else
     {
-        DWORD i, j, flags;
+        DWORD i, j;
         PCCERT_CONTEXT alternateIssuer = NULL;
 
         alternate = NULL;
@@ -795,9 +804,8 @@ static PCertificateChain CRYPT_BuildAlternateContextFromChain(
                 PCCERT_CONTEXT prevIssuer = CertDuplicateCertificateContext(
                  chain->context.rgpChain[i]->rgpElement[j + 1]->pCertContext);
 
-                flags = CERT_STORE_REVOCATION_FLAG | CERT_STORE_SIGNATURE_FLAG;
-                alternateIssuer = CertGetIssuerCertificateFromStore(
-                 prevIssuer->hCertStore, subject, prevIssuer, &flags);
+                alternateIssuer = CRYPT_GetIssuer(prevIssuer->hCertStore,
+                 subject, prevIssuer);
             }
         if (alternateIssuer)
         {
