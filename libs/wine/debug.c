@@ -35,10 +35,12 @@ static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 #define MAX_DEBUG_OPTIONS 256
 
 static unsigned char default_flags = (1 << __WINE_DBCL_ERR) | (1 << __WINE_DBCL_FIXME);
-static unsigned int nb_debug_options = 0;
+static int nb_debug_options = -1;
 static struct __wine_debug_channel debug_options[MAX_DEBUG_OPTIONS];
 
 static struct __wine_debug_functions funcs;
+
+static void debug_init(void);
 
 static int cmp_name( const void *p1, const void *p2 )
 {
@@ -50,6 +52,8 @@ static int cmp_name( const void *p1, const void *p2 )
 /* get the flags to use for a given channel, possibly setting them too in case of lazy init */
 unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
 {
+    if (nb_debug_options == -1) debug_init();
+
     if (nb_debug_options)
     {
         struct __wine_debug_channel *opt = bsearch( channel->name, debug_options, nb_debug_options,
@@ -65,6 +69,8 @@ unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel
 int __wine_dbg_set_channel_flags( struct __wine_debug_channel *channel,
                                   unsigned char set, unsigned char clear )
 {
+    if (nb_debug_options == -1) debug_init();
+
     if (nb_debug_options)
     {
         struct __wine_debug_channel *opt = bsearch( channel->name, debug_options, nb_debug_options,
@@ -177,10 +183,12 @@ static void debug_usage(void)
 
 
 /* initialize all options at startup */
-void debug_init(void)
+static void debug_init(void)
 {
     char *wine_debug;
 
+    if (nb_debug_options != -1) return;  /* already initialized */
+    nb_debug_options = 0;
     if ((wine_debug = getenv("WINEDEBUG")))
     {
         if (!strcmp( wine_debug, "help" )) debug_usage();

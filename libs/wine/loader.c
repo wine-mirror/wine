@@ -88,7 +88,6 @@ static unsigned int nb_dll_paths;
 static int dll_path_maxlen;
 
 extern void mmap_init(void);
-extern void debug_init(void);
 extern const char *get_dlldir( const char **default_dlldir );
 
 /* build the dll load path from the WINEDLLPATH variable */
@@ -629,7 +628,6 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     __wine_main_argv = argv;
     __wine_main_environ = environ;
     mmap_init();
-    debug_init();
 
     for (path = first_dll_path( "ntdll.dll", 0, &context ); path; path = next_dll_path( &context ))
     {
