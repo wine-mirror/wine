@@ -286,6 +286,7 @@ void file_set_error(void)
 {
     switch (errno)
     {
+    case ETXTBSY:
     case EAGAIN:    set_error( STATUS_SHARING_VIOLATION ); break;
     case EBADF:     set_error( STATUS_INVALID_HANDLE ); break;
     case ENOSPC:    set_error( STATUS_DISK_FULL ); break;
