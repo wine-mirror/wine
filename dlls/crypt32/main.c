@@ -26,6 +26,7 @@
 #include "wincrypt.h"
 #include "winreg.h"
 #include "winuser.h"
+#include "i_cryptasn1tls.h"
 #include "crypt32_private.h"
 #include "wine/debug.h"
 
@@ -195,21 +196,27 @@ DWORD WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
     return ret;
 }
 
-BOOL WINAPI I_CryptInstallAsn1Module(void *x, DWORD y, DWORD z)
+BOOL WINAPI I_CryptInstallAsn1Module(ASN1module_t x, DWORD y, void* z)
 {
-    FIXME("%p %08x %08x\n", x, y, z);
+    FIXME("(%p %08x %p): stub\n", x, y, z);
     return TRUE;
 }
 
-BOOL WINAPI I_CryptUninstallAsn1Module(void *x)
+BOOL WINAPI I_CryptUninstallAsn1Module(HCRYPTASN1MODULE x)
 {
-    FIXME("%p\n", x);
+    FIXME("(%08x): stub\n", x);
     return TRUE;
 }
 
-void *WINAPI I_CryptGetAsn1Decoder(long x)
+ASN1decoding_t WINAPI I_CryptGetAsn1Decoder(HCRYPTASN1MODULE x)
 {
-    FIXME("%08lx\n", x);
+    FIXME("(%08x): stub\n", x);
+    return NULL;
+}
+
+ASN1encoding_t WINAPI I_CryptGetAsn1Encoder(HCRYPTASN1MODULE x)
+{
+    FIXME("(%08x): stub\n", x);
     return NULL;
 }
 

@@ -178,7 +178,7 @@ BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
     return ret;
 }
 
-void WINAPI CertFreeCertificateChainEngine(HCERTCHAINENGINE hChainEngine)
+VOID WINAPI CertFreeCertificateChainEngine(HCERTCHAINENGINE hChainEngine)
 {
     PCertificateChainEngine engine = (PCertificateChainEngine)hChainEngine;
 
@@ -1008,7 +1008,7 @@ PCCERT_CHAIN_CONTEXT WINAPI CertDuplicateCertificateChain(
     return pChainContext;
 }
 
-void WINAPI CertFreeCertificateChain(PCCERT_CHAIN_CONTEXT pChainContext)
+VOID WINAPI CertFreeCertificateChain(PCCERT_CHAIN_CONTEXT pChainContext)
 {
     PCertificateChain chain = (PCertificateChain)pChainContext;
 

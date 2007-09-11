@@ -183,6 +183,7 @@ SRCDIR_INCLUDES = \
 	guiddef.h \
 	hlguids.h \
 	htmlhelp.h \
+	i_cryptasn1tls.h \
 	icm.h \
 	icmpapi.h \
 	idispids.h \
