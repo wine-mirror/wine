@@ -17,6 +17,7 @@
  *
  */
 #include <stdarg.h>
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
@@ -514,11 +515,104 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
 static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
  PCCERT_CONTEXT prevIssuer)
 {
-    PCCERT_CONTEXT issuer;
-    DWORD flags = 0;
+    PCCERT_CONTEXT issuer = NULL;
+    PCERT_EXTENSION ext;
+    DWORD size;
 
-    issuer = CertGetIssuerCertificateFromStore(store, subject, prevIssuer,
-     &flags);
+    if ((ext = CertFindExtension(szOID_AUTHORITY_KEY_IDENTIFIER,
+     subject->pCertInfo->cExtension, subject->pCertInfo->rgExtension)))
+    {
+        CERT_AUTHORITY_KEY_ID_INFO *info;
+        BOOL ret;
+
+        ret = CryptDecodeObjectEx(subject->dwCertEncodingType,
+         X509_AUTHORITY_KEY_ID, ext->Value.pbData, ext->Value.cbData,
+         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+         &info, &size);
+        if (ret)
+        {
+            CERT_ID id;
+
+            if (info->CertIssuer.cbData && info->CertSerialNumber.cbData)
+            {
+                id.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+                memcpy(&id.u.IssuerSerialNumber.Issuer, &info->CertIssuer,
+                 sizeof(CERT_NAME_BLOB));
+                memcpy(&id.u.IssuerSerialNumber.SerialNumber,
+                 &info->CertSerialNumber, sizeof(CRYPT_INTEGER_BLOB));
+                issuer = CertFindCertificateInStore(store,
+                 subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
+                 prevIssuer);
+            }
+            else if (info->KeyId.cbData)
+            {
+                id.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
+                memcpy(&id.u.KeyId, &info->KeyId, sizeof(CRYPT_HASH_BLOB));
+                issuer = CertFindCertificateInStore(store,
+                 subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
+                 prevIssuer);
+            }
+            LocalFree(info);
+        }
+    }
+    else if ((ext = CertFindExtension(szOID_AUTHORITY_KEY_IDENTIFIER2,
+     subject->pCertInfo->cExtension, subject->pCertInfo->rgExtension)))
+    {
+        CERT_AUTHORITY_KEY_ID2_INFO *info;
+        BOOL ret;
+
+        ret = CryptDecodeObjectEx(subject->dwCertEncodingType,
+         X509_AUTHORITY_KEY_ID2, ext->Value.pbData, ext->Value.cbData,
+         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+         &info, &size);
+        if (ret)
+        {
+            CERT_ID id;
+
+            if (info->AuthorityCertIssuer.cAltEntry &&
+             info->AuthorityCertSerialNumber.cbData)
+            {
+                PCERT_ALT_NAME_ENTRY directoryName = NULL;
+                DWORD i;
+
+                for (i = 0; !directoryName &&
+                 i < info->AuthorityCertIssuer.cAltEntry; i++)
+                    if (info->AuthorityCertIssuer.rgAltEntry[i].dwAltNameChoice
+                     == CERT_ALT_NAME_DIRECTORY_NAME)
+                        directoryName =
+                         &info->AuthorityCertIssuer.rgAltEntry[i];
+                if (directoryName)
+                {
+                    id.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+                    memcpy(&id.u.IssuerSerialNumber.Issuer,
+                     &directoryName->u.DirectoryName, sizeof(CERT_NAME_BLOB));
+                    memcpy(&id.u.IssuerSerialNumber.SerialNumber,
+                     &info->AuthorityCertSerialNumber,
+                     sizeof(CRYPT_INTEGER_BLOB));
+                    issuer = CertFindCertificateInStore(store,
+                     subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
+                     prevIssuer);
+                }
+                else
+                    FIXME("no supported name type in authority key id2\n");
+            }
+            else if (info->KeyId.cbData)
+            {
+                id.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
+                memcpy(&id.u.KeyId, &info->KeyId, sizeof(CRYPT_HASH_BLOB));
+                issuer = CertFindCertificateInStore(store,
+                 subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
+                 prevIssuer);
+            }
+            LocalFree(info);
+        }
+    }
+    else
+    {
+        issuer = CertFindCertificateInStore(store,
+         subject->dwCertEncodingType, 0, CERT_FIND_SUBJECT_NAME,
+         &subject->pCertInfo->Issuer, prevIssuer);
+    }
     return issuer;
 }
 
