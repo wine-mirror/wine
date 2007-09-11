@@ -9,6 +9,7 @@
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Stefan Dösinger for CodeWeavers
  * Copyright 2007 Henri Verbeet
+ * Copyright 2006-2007 Roderick Colenbrander
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -71,9 +72,21 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         TRACE("(%p) : Calling glGetTexImage level %d, format %#x, type %#x, data %p\n", This, This->glDescription.level,
                 This->glDescription.glFormat, This->glDescription.glType, mem);
 
-        glGetTexImage(This->glDescription.target, This->glDescription.level, This->glDescription.glFormat,
-                This->glDescription.glType, mem);
-        checkGLcall("glGetTexImage()");
+        if(This->Flags & SFLAG_PBO) {
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
+            checkGLcall("glBindBufferARB");
+
+            glGetTexImage(This->glDescription.target, This->glDescription.level, This->glDescription.glFormat,
+                          This->glDescription.glType, NULL);
+            checkGLcall("glGetTexImage()");
+
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
+            checkGLcall("glBindBufferARB");
+        } else {
+            glGetTexImage(This->glDescription.target, This->glDescription.level, This->glDescription.glFormat,
+                          This->glDescription.glType, mem);
+            checkGLcall("glGetTexImage()");
+        }
 
         if (This->Flags & SFLAG_NONPOW2) {
             LPBYTE src_data, dst_data;
@@ -171,8 +184,23 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
     } else {
         TRACE("(%p) : Calling glTexSubImage2D w %d,  h %d, data, %p\n", This, width, height, data);
         ENTER_GL();
-        glTexSubImage2D(This->glDescription.target, This->glDescription.level, 0, 0, width, height, format, type, data);
-        checkGLcall("glTexSubImage2D");
+
+        if(This->Flags & SFLAG_PBO) {
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+            checkGLcall("glBindBufferARB");
+            TRACE("(%p) pbo: %#x, data: %p\n", This, This->pbo, data);
+
+            glTexSubImage2D(This->glDescription.target, This->glDescription.level, 0, 0, width, height, format, type, NULL);
+            checkGLcall("glTexSubImage2D");
+
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+            checkGLcall("glBindBufferARB");
+        }
+        else {
+            glTexSubImage2D(This->glDescription.target, This->glDescription.level, 0, 0, width, height, format, type, data);
+            checkGLcall("glTexSubImage2D");
+        }
+
         LEAVE_GL();
     }
 }
@@ -374,6 +402,11 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
             ENTER_GL();
             glDeleteTextures(1, &This->glDescription.textureName);
             LEAVE_GL();
+        }
+
+        if(This->Flags & SFLAG_PBO) {
+            /* Delete the PBO */
+            GL_EXTCALL(glDeleteBuffersARB(1, &This->pbo));
         }
 
         if(This->Flags & SFLAG_DIBSECTION) {
@@ -600,14 +633,35 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
             bpp = This->bytesPerPixel;
     }
 
+    if(This->Flags & SFLAG_PBO) {
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
+        checkGLcall("glBindBufferARB");
+    }
+
     glReadPixels(rect->left, rect->top,
                  rect->right - rect->left,
                  rect->bottom - rect->top,
                  fmt, type, mem);
     vcheckGLcall("glReadPixels");
 
-    /* TODO: Merge this with the palettization loop below for P8 targets */
+    if(This->Flags & SFLAG_PBO) {
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
+        checkGLcall("glBindBufferARB");
 
+        /* Check if we need to flip the image. If we need to flip use glMapBufferARB
+         * to get a pointer to it and perform the flipping in software. This is a lot
+         * faster than calling glReadPixels for each line. In case we want more speed
+         * we should rerender it flipped in a FBO and read the data back from the FBO. */
+        if(!srcUpsideDown) {
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+            checkGLcall("glBindBufferARB");
+
+            mem = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_READ_WRITE_ARB));
+            checkGLcall("glMapBufferARB");
+        }
+    }
+
+    /* TODO: Merge this with the palettization loop below for P8 targets */
     if(!srcUpsideDown) {
         UINT len, off;
         /* glReadPixels returns the image upside down, and there is no way to prevent this.
@@ -632,6 +686,12 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
             bottom -= pitch;
         }
         HeapFree(GetProcessHeap(), 0, row);
+
+        /* Unmap the temp PBO buffer */
+        if(This->Flags & SFLAG_PBO) {
+            GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        }
     }
 
     if(This->resource.format == WINED3DFMT_P8) {
@@ -692,11 +752,44 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
     /* Whatever surface we have, make sure that there is memory allocated for the downloaded copy */
     if(!This->resource.allocatedMemory) {
-        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
+        /* In case of PBOs allocatedMemory should be zero. */
+        if(!(This->Flags & SFLAG_PBO))
+            This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
+
         This->Flags &= ~SFLAG_INSYSMEM; /* This is the marker that surface data has to be downloaded */
     }
 
-    /* Calculate the dimensions of the locked rect */
+    /* Create a PBO for dynamicly locked surfaces but don't do it for converted or non-pow2 surfaces */
+    if(GL_SUPPORT(ARB_PIXEL_BUFFER_OBJECT) && (This->Flags & SFLAG_DYNLOCK) && !(This->Flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2)))  {
+        GLenum error;
+
+        ENTER_GL();
+
+        GL_EXTCALL(glGenBuffersARB(1, &This->pbo));
+        error = glGetError();
+        if(This->pbo == 0 || error != GL_NO_ERROR) {
+            ERR("Failed to bind the PBO with error %s (%#x)\n", debug_glerror(error), error);
+        }
+
+        TRACE("Attaching pbo=%#x to (%p)\n", This->pbo, This);
+
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+        checkGLcall("glBindBufferARB");
+
+        GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->resource.size + 4, This->resource.allocatedMemory, GL_STREAM_DRAW_ARB));
+        checkGLcall("glBufferDataARB");
+
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        checkGLcall("glBindBufferARB");
+
+        /* We don't need the system memory anymore and we can't even use it for PBOs */
+        if(This->resource.allocatedMemory) HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+        This->resource.allocatedMemory = NULL;
+        This->Flags |= SFLAG_PBO;
+        LEAVE_GL();
+    }
+
+    /* Calculate the correct start address to report */
     if (NULL == pRect) {
         This->lockedRect.left   = 0;
         This->lockedRect.top    = 0;
@@ -799,6 +892,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
                 FIXME("Reading from render target with a texture isn't implemented yet, falling back to framebuffer reading\n");
                 break;
         }
+
         LEAVE_GL();
 
         /* Mark the local copy up to date if a full download was done */
@@ -855,6 +949,27 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     }
 
 lock_end:
+    if(This->Flags & SFLAG_PBO) {
+        ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ENTER_GL();
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+        checkGLcall("glBindBufferARB");
+
+        /* This shouldn't happen but could occur if some other function didn't handle the PBO properly */
+        if(This->resource.allocatedMemory) {
+            ERR("The surface already has PBO memory allocated!\n");
+        }
+
+        This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_READ_WRITE_ARB));
+        checkGLcall("glMapBufferARB");
+
+        /* Make sure the pbo isn't set anymore in order not to break non-pbo calls */
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        checkGLcall("glBindBufferARB");
+
+        LEAVE_GL();
+    }
+
     /* Calculate the correct start address to report */
     if (NULL == pRect) {
         pLockedRect->pBits = This->resource.allocatedMemory;
@@ -941,7 +1056,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
      * be any interfering gdi accesses, because UnlockRect is called from
      * ReleaseDC, and the app won't use the dc any more afterwards.
      */
-    if(This->Flags & SFLAG_DIBSECTION) {
+    if((This->Flags & SFLAG_DIBSECTION) && !(This->Flags & SFLAG_PBO)) {
         volatile BYTE read;
         read = This->resource.allocatedMemory[0];
     }
@@ -1069,11 +1184,22 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
             bpp = This->bytesPerPixel;
     }
 
+    if(This->Flags & SFLAG_PBO) {
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+        checkGLcall("glBindBufferARB");
+    }
+
     glDrawPixels(This->lockedRect.right - This->lockedRect.left,
                  (This->lockedRect.bottom - This->lockedRect.top)-1,
                  fmt, type,
                  mem + bpp * This->lockedRect.left + pitch * This->lockedRect.top);
     checkGLcall("glDrawPixels");
+
+    if(This->Flags & SFLAG_PBO) {
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        checkGLcall("glBindBufferARB");
+    }
+
     glPixelZoom(1.0,1.0);
     vcheckGLcall("glPixelZoom");
 
@@ -1153,6 +1279,18 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     if (!(This->Flags & SFLAG_LOCKED)) {
         WARN("trying to Unlock an unlocked surf@%p\n", This);
         return WINED3DERR_INVALIDCALL;
+    }
+
+    if (This->Flags & SFLAG_PBO) {
+        TRACE("Freeing PBO memory\n");
+        ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ENTER_GL();
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+        GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        checkGLcall("glUnmapBufferARB");
+        LEAVE_GL();
+        This->resource.allocatedMemory = NULL;
     }
 
     TRACE("(%p) : dirtyfied(%d)\n", This, This->Flags & (SFLAG_INDRAWABLE | SFLAG_INTEXTURE) ? 0 : 1);
@@ -1376,20 +1514,23 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         }
 
         TRACE("DIBSection at : %p\n", This->dib.bitmap_data);
-
         /* copy the existing surface to the dib section */
         if(This->resource.allocatedMemory) {
-            memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, b_info->bmiHeader.biSizeImage);
+            /* In case of a PBO, allocatedMemory=NULL, it isn't NULL between a LockRect and a UnlockRect */
+            if(!(This->Flags & SFLAG_PBO))
+                memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, b_info->bmiHeader.biSizeImage);
             /* We won't need that any more */
         } else {
             /* This is to make LockRect read the gl Texture although memory is allocated */
             This->Flags &= ~SFLAG_INSYSMEM;
         }
+        This->dib.bitmap_size = b_info->bmiHeader.biSizeImage;
 
         HeapFree(GetProcessHeap(), 0, b_info);
 
-        /* Use the dib section from now on */
-        This->resource.allocatedMemory = This->dib.bitmap_data;
+        /* Use the dib section from now on if we are not using a PBO */
+        if(!(This->Flags & SFLAG_PBO))
+            This->resource.allocatedMemory = This->dib.bitmap_data;
 
         /* Now allocate a HDC */
         This->hDC = CreateCompatibleDC(0);
@@ -1412,6 +1553,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
                                   &lock,
                                   NULL,
                                   0);
+
+    if(This->Flags & SFLAG_PBO) {
+        /* Sync the DIB with the PBO. This can't be done earlier because LockRect activates the allocatedMemory */
+        memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, This->dib.bitmap_size);
+    }
+
     if(FAILED(hr)) {
         ERR("IWineD3DSurface_LockRect failed with hr = %08x\n", hr);
         /* keep the dib section */
@@ -1463,6 +1610,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
     if (This->hDC !=hDC) {
         WARN("Application tries to release an invalid DC(%p), surface dc is %p\n", hDC, This->hDC);
         return WINED3DERR_INVALIDCALL;
+    }
+
+    if((This->Flags & SFLAG_PBO) && This->resource.allocatedMemory) {
+        /* Copy the contents of the DIB over to the PBO */
+        memcpy(This->resource.allocatedMemory, This->dib.bitmap_data, This->dib.bitmap_size);
     }
 
     /* we locked first, so unlock now */
@@ -2226,7 +2378,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
         if(!(This->Flags & SFLAG_ALLOCATED)) {
             surface_allocate_surface(This, internal, This->pow2Width, This->pow2Height, format, type);
         }
-        if (mem) {
+        if (mem || (This->Flags & SFLAG_PBO)) {
             surface_upload_data(This, internal, This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
         }
     } else {
@@ -2236,7 +2388,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
         if(!(This->Flags & SFLAG_ALLOCATED)) {
             surface_allocate_surface(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type);
         }
-        if (mem) {
+        if (mem || (This->Flags & SFLAG_PBO)) {
             surface_upload_data(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type, mem);
         }
     }
@@ -2244,7 +2396,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
     /* Restore the default pitch */
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
-    if (mem != This->resource.allocatedMemory)
+    /* Don't delete PBO memory */
+    if((mem != This->resource.allocatedMemory) && !(This->Flags & SFLAG_PBO))
         HeapFree(GetProcessHeap(), 0, mem);
 
 #if 0

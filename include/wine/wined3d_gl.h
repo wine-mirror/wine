@@ -2353,6 +2353,13 @@ typedef GLhandleARB (WINE_GLAPI * WINED3D_PFNGLGETHANDLEARBPROC) (GLenum pname);
 typedef void (WINE_GLAPI * WINED3D_PFNGLGETSHADERSOURCEARBPROC) (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source);
 typedef void (WINE_GLAPI * WINED3D_PFNGLBINDATTRIBLOCATIONARBPROC) (GLhandleARB programObj, GLuint index, const GLcharARB *name);
 typedef GLint (WINE_GLAPI * WINED3D_PFNGLGETATTRIBLOCATIONARBPROC) (GLhandleARB programObj, const GLcharARB *name);
+/* GL_ARB_pixel_buffer_object */
+#ifndef GL_ARB_pixel_buffer_object
+#define GL_PIXEL_PACK_BUFFER_ARB          0x88EB
+#define GL_PIXEL_UNPACK_BUFFER_ARB        0x88EC
+#define GL_PIXEL_PACK_BUFFER_BINDING_ARB  0x88ED
+#define GL_PIXEL_UNPACK_BUFFER_BINDING_ARB 0x88EF
+#endif
 /* GL_EXT_texture */
 #ifndef GL_EXT_texture
 #define GL_EXT_texture 1

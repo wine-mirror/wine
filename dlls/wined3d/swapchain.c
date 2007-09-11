@@ -321,6 +321,25 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
                 back->resource.allocatedMemory = tmp;
             }
 
+            /* Flip the PBO */
+            {
+                DWORD tmp_flags = front->Flags;
+
+                GLuint tmp_pbo = front->pbo;
+                front->pbo = back->pbo;
+                back->pbo = tmp_pbo;
+
+                if(back->Flags & SFLAG_PBO)
+                    front->Flags |= SFLAG_PBO;
+                else
+                    front->Flags &= ~SFLAG_PBO;
+
+                if(tmp_flags & SFLAG_PBO)
+                    back->Flags |= SFLAG_PBO;
+                else
+                    back->Flags &= ~SFLAG_PBO;
+            }
+
             /* client_memory should not be different, but just in case */
             {
                 BOOL tmp;

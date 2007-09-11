@@ -1045,6 +1045,7 @@ typedef struct _WINED3DSURFACET_DESC
 typedef struct wineD3DSurface_DIB {
     HBITMAP DIBsection;
     void* bitmap_data;
+    UINT bitmap_size;
     HGDIOBJ holdbitmap;
     BOOL client_memory;
 } wineD3DSurface_DIB;
@@ -1094,6 +1095,9 @@ struct IWineD3DSurfaceImpl
 
     /* Oversized texture */
     RECT                      glRect;
+
+    /* PBO */
+    GLuint                    pbo;
 
 #if 0
     /* precalculated x and y scalings for texture coords */
@@ -1195,6 +1199,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DCl
 #define SFLAG_GLCKEY      0x00008000 /* The gl texture was created with a color key */
 #define SFLAG_CLIENT      0x00010000 /* GL_APPLE_client_storage is used on that texture */
 #define SFLAG_ALLOCATED   0x00020000 /* A gl texture is allocated for this surface */
+#define SFLAG_PBO         0x00040000 /* Has a PBO attached for speeding data transfer for dynamicly locked surfaces */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL
@@ -1203,6 +1208,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DCl
  * SFLAG_LOCKED: The app requires access to the surface data
  * SFLAG_DYNLOCK: Avoid freeing the data for performance
  * SFLAG_DYNCHANGE: Same reason as DYNLOCK
+ * SFLAG_PBO: PBOs don't use 'normal' memory. It is either allocated by the driver or must be NULL.
  * SFLAG_CLIENT: OpenGL uses our memory as backup
  */
 #define SFLAG_DONOTFREE  (SFLAG_OVERSIZE   | \
@@ -1212,6 +1218,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DCl
                           SFLAG_DYNLOCK    | \
                           SFLAG_DYNCHANGE  | \
                           SFLAG_USERPTR    | \
+                          SFLAG_PBO        | \
                           SFLAG_CLIENT)
 
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]);
