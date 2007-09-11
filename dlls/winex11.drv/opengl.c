@@ -1416,8 +1416,6 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
     WineGLPixelFormat *fmt;
     int hdcPF = physDev->current_pf;
     int fmt_count = 0;
-    int value = 0;
-    int gl_test = 0;
     HDC hdc = physDev->hdc;
 
     TRACE("(%p)->(PF:%d)\n", hdc, hdcPF);
@@ -1427,9 +1425,6 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
         return 0;
     }
 
-    /* First, get the visual in use by the X11DRV */
-    if (!gdi_display) return 0;
-
     fmt = ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, TRUE /* Offscreen */, &fmt_count);
     /* We can render using the iPixelFormat (1) of Wine's Main visual AND using some offscreen formats.
      * Note that standard WGL-calls don't recognize offscreen-only formats. For that reason pbuffers
@@ -1437,19 +1432,6 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
      * If this fails something is very wrong on the system. */
     if(!fmt) {
         ERR("Cannot get FB Config for iPixelFormat %d, expect problems!\n", hdcPF);
-        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-        return NULL;
-    }
-
-    if (fmt_count < hdcPF) {
-        ERR("(%p): unexpected pixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, hdcPF, fmt_count);
-        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-        return NULL;
-    }
-
-    gl_test = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_FBCONFIG_ID, &value);
-    if (gl_test) {
-        ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
     }
