@@ -770,10 +770,11 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
     /* Loop through all entries on the same line */
     WCHAR *item;
+    WCHAR *itemStart;
 
     WINE_TRACE("Processing for set %p\n", thisSet);
     i = 0;
-    while (*(item = WCMD_parameter (thisSet->command, i, NULL))) {
+    while (*(item = WCMD_parameter (thisSet->command, i, &itemStart))) {
 
       /*
        * If the parameter within the set has a wildcard then search for matching files
@@ -817,7 +818,8 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
           if (itemNum <=3) numbers[itemNum-1] = atolW(item);
           /* else ignore them! */
 
-      } else if (doFileset) {
+      /* Filesets - either a list of files, or a command to run and parse the output */
+      } else if (doFileset && *itemStart != '"') {
 
           HANDLE input;
 
@@ -847,6 +849,8 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
                          wine_dbgstr_w(buffer));
 
               if (where) {
+                  /* FIXME: The following should be moved into its own routine and
+                     reused for the string literal parsing below                  */
                   thisCmdStart = cmdStart;
                   WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
                   cmdEnd = thisCmdStart;
@@ -856,6 +860,25 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
             }
             CloseHandle (input);
+          }
+
+      /* Filesets - A string literal */
+      } else if (doFileset && *itemStart == '"') {
+          WCHAR buffer[MAXSTRING] = {'\0'};
+          WCHAR *where, *parm;
+
+          /* Skip blank lines, and re-extract parameter now string has quotes removed */
+          strcpyW(buffer, item);
+          parm = WCMD_parameter (buffer, 0, &where);
+          WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
+                       wine_dbgstr_w(buffer));
+
+          if (where) {
+              /* FIXME: The following should be moved into its own routine and
+                 reused for the string literal parsing below                  */
+              thisCmdStart = cmdStart;
+              WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
+              cmdEnd = thisCmdStart;
           }
       }
 
