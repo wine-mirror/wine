@@ -4987,6 +4987,21 @@ TW_UINT32
 TW_MEMREF
 pTW_IDENTITY
 
+%%url.dll
+
+%long
+
+BOOL
+DWORD
+HRESULT
+HWND
+int
+
+%str
+
+LPCSTR
+LPSTR
+
 %%urlmon.dll
 
 %long
