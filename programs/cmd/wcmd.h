@@ -65,7 +65,6 @@ void WCMD_pause (void);
 void WCMD_pipe (CMD_LIST **command, WCHAR *var, WCHAR *val);
 void WCMD_popd (void);
 void WCMD_print_error (void);
-void WCMD_process_command (WCHAR *command, CMD_LIST **cmdList);
 void WCMD_pushd (WCHAR *);
 int  WCMD_read_console (WCHAR *string, int str_len);
 void WCMD_remove_dir (WCHAR *command);
@@ -92,7 +91,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where);
 WCHAR *WCMD_strtrim_leading_spaces (WCHAR *string);
 void WCMD_strtrim_trailing_spaces (WCHAR *string);
 void WCMD_opt_s_strip_quotes(WCHAR *cmd);
-void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable);
+void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValue, BOOL justFors);
 BOOL WCMD_ask_confirm (WCHAR *message, BOOL showSureText, BOOL *optionAll);
 
 void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);

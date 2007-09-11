@@ -95,7 +95,7 @@ static char  *output_bufA = NULL;
 #define MAX_WRITECONSOLE_SIZE 65535
 BOOL unicodePipes = FALSE;
 
-static WCHAR *WCMD_expand_envvar(WCHAR *start);
+static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forvar, WCHAR *forVal);
 
 /*****************************************************************************
  * Main entry point. This is a console application so we have a main() not a
@@ -456,6 +456,87 @@ int wmain (int argc, WCHAR *argvW[])
   return 0;
 }
 
+/*****************************************************************************
+ * Expand the command. Native expands lines from batch programs as they are
+ * read in and not again, except for 'for' variable substitution.
+ * eg. As evidence, "echo %1 && shift && echo %1" or "echo %%path%%"
+ */
+void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR *forValue) {
+
+  /* For commands in a context (batch program):                  */
+  /*   Expand environment variables in a batch file %{0-9} first */
+  /*     including support for any ~ modifiers                   */
+  /* Additionally:                                               */
+  /*   Expand the DATE, TIME, CD, RANDOM and ERRORLEVEL special  */
+  /*     names allowing environment variable overrides           */
+  /* NOTE: To support the %PATH:xxx% syntax, also perform        */
+  /*   manual expansion of environment variables here            */
+
+  WCHAR *p = cmd;
+  WCHAR *s, *t;
+  int   i;
+
+  while ((p = strchrW(p, '%'))) {
+
+    WINE_TRACE("Translate command:%s %d (at: %s)\n",
+                   wine_dbgstr_w(cmd), justFors, wine_dbgstr_w(p));
+    i = *(p+1) - '0';
+
+    /* Don't touch %% unless its in Batch */
+    if (!justFors && *(p+1) == '%') {
+      if (context) {
+        s = WCMD_strdupW(p+1);
+        strcpyW (p, s);
+        free (s);
+      }
+      p+=1;
+
+    /* Replace %~ modifications if in batch program */
+    } else if (*(p+1) == '~') {
+      WCMD_HandleTildaModifiers(&p, forVariable, forValue, justFors);
+      p++;
+
+    /* Replace use of %0...%9 if in batch program*/
+    } else if (!justFors && context && (i >= 0) && (i <= 9)) {
+      s = WCMD_strdupW(p+2);
+      t = WCMD_parameter (context -> command, i + context -> shift_count[i], NULL);
+      strcpyW (p, t);
+      strcatW (p, s);
+      free (s);
+
+    /* Replace use of %* if in batch program*/
+    } else if (!justFors && context && *(p+1)=='*') {
+      WCHAR *startOfParms = NULL;
+      s = WCMD_strdupW(p+2);
+      t = WCMD_parameter (context -> command, 1, &startOfParms);
+      if (startOfParms != NULL) strcpyW (p, startOfParms);
+      else *p = 0x00;
+      strcatW (p, s);
+      free (s);
+
+    } else if (forVariable &&
+               (CompareString (LOCALE_USER_DEFAULT,
+                               SORT_STRINGSORT,
+                               p,
+                               strlenW(forVariable),
+                               forVariable, -1) == 2)) {
+      s = WCMD_strdupW(p + strlenW(forVariable));
+      strcpyW(p, forValue);
+      strcatW(p, s);
+      free(s);
+
+    } else if (!justFors) {
+      p = WCMD_expand_envvar(p, forVariable, forValue);
+
+    /* In a FOR loop, see if this is the variable to replace */
+    } else { /* Ignore %'s on second pass of batch program */
+      p++;
+    }
+  }
+
+  return;
+}
+
 
 /*****************************************************************************
  * Process one command. If the command is EXIT this routine does not return.
@@ -463,9 +544,11 @@ int wmain (int argc, WCHAR *argvW[])
  */
 
 
-void WCMD_process_command (WCHAR *command, CMD_LIST **cmdList)
+void WCMD_execute (WCHAR *command,
+                   WCHAR *forVariable, WCHAR *forValue,
+                   CMD_LIST **cmdList)
 {
-    WCHAR *cmd, *p, *s, *t, *redir;
+    WCHAR *cmd, *p, *redir;
     int status, i;
     DWORD count, creationDisposition;
     HANDLE h;
@@ -480,81 +563,24 @@ void WCMD_process_command (WCHAR *command, CMD_LIST **cmdList)
                                 STD_OUTPUT_HANDLE,
                                 STD_ERROR_HANDLE};
 
+    WINE_TRACE("command on entry:%s (%p), with '%s'='%s'\n",
+               wine_dbgstr_w(command), cmdList,
+               wine_dbgstr_w(forVariable), wine_dbgstr_w(forValue));
+
     /* Move copy of the command onto the heap so it can be expanded */
     new_cmd = HeapAlloc( GetProcessHeap(), 0, MAXSTRING * sizeof(WCHAR));
     strcpyW(new_cmd, command);
 
-    /* For commands in a context (batch program):                  */
-    /*   Expand environment variables in a batch file %{0-9} first */
-    /*     including support for any ~ modifiers                   */
-    /* Additionally:                                               */
-    /*   Expand the DATE, TIME, CD, RANDOM and ERRORLEVEL special  */
-    /*     names allowing environment variable overrides           */
-    /* NOTE: To support the %PATH:xxx% syntax, also perform        */
-    /*   manual expansion of environment variables here            */
-
-    p = new_cmd;
-    while ((p = strchrW(p, '%'))) {
-      i = *(p+1) - '0';
-
-      /* Don't touch %% */
-      if (*(p+1) == '%') {
-        p+=2;
-
-      /* Replace %~ modifications if in batch program */
-      } else if (context && *(p+1) == '~') {
-        WCMD_HandleTildaModifiers(&p, NULL);
-        p++;
-
-      /* Replace use of %0...%9 if in batch program*/
-      } else if (context && (i >= 0) && (i <= 9)) {
-        s = WCMD_strdupW(p+2);
-        t = WCMD_parameter (context -> command, i + context -> shift_count[i], NULL);
-        strcpyW (p, t);
-        strcatW (p, s);
-        free (s);
-
-      /* Replace use of %* if in batch program*/
-      } else if (context && *(p+1)=='*') {
-        WCHAR *startOfParms = NULL;
-        s = WCMD_strdupW(p+2);
-        t = WCMD_parameter (context -> command, 1, &startOfParms);
-        if (startOfParms != NULL) strcpyW (p, startOfParms);
-        else *p = 0x00;
-        strcatW (p, s);
-        free (s);
-
-      } else {
-        p = WCMD_expand_envvar(p);
-      }
-    }
+    /* Expand variables in command line mode only (batch mode will
+       be expanded as the line is read in, except for for loops)   */
+    handleExpansion(new_cmd, (context != NULL), forVariable, forValue);
     cmd = new_cmd;
 
-    /* In a batch program, unknown variables are replace by nothing */
-    /* so remove any remaining %var%                                */
-    if (context) {
-      p = cmd;
-      while ((p = strchrW(p, '%'))) {
-        if (*(p+1) == '%') {
-          p+=2;
-        } else {
-          s = strchrW(p+1, '%');
-          if (!s) {
-            *p=0x00;
-          } else {
-            t = WCMD_strdupW(s+1);
-            strcpyW(p, t);
-            free(t);
-          }
-        }
-      }
-
-      /* Show prompt before batch line IF echo is on and in batch program */
-      if (echo_mode && (cmd[0] != '@')) {
-        WCMD_show_prompt();
-        WCMD_output_asis ( cmd);
-        WCMD_output_asis ( newline);
-      }
+    /* Show prompt before batch line IF echo is on and in batch program */
+    if (context && echo_mode && (cmd[0] != '@')) {
+      WCMD_show_prompt();
+      WCMD_output_asis ( cmd);
+      WCMD_output_asis ( newline);
     }
 
 /*
@@ -1533,7 +1559,7 @@ void WCMD_pipe (CMD_LIST **cmdEntry, WCHAR *var, WCHAR *val) {
  *
  *	Expands environment variables, allowing for WCHARacter substitution
  */
-static WCHAR *WCMD_expand_envvar(WCHAR *start) {
+static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
     WCHAR *endOfVar = NULL, *s;
     WCHAR *colonpos = NULL;
     WCHAR thisVar[MAXSTRING];
@@ -1551,20 +1577,38 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start) {
     static const WCHAR CdP[]       = {'%','C','D','%','\0'};
     static const WCHAR Random[]    = {'R','A','N','D','O','M','\0'};
     static const WCHAR RandomP[]   = {'%','R','A','N','D','O','M','%','\0'};
+    static const WCHAR Delims[]    = {'%',' ',':','\0'};
+
+    WINE_TRACE("Expanding: %s (%s,%s)\n", wine_dbgstr_w(start),
+               wine_dbgstr_w(forVal), wine_dbgstr_w(forVar));
 
     /* Find the end of the environment variable, and extract name */
-    endOfVar = strchrW(start+1, '%');
-    if (endOfVar == NULL) {
+    endOfVar = strpbrkW(start+1, Delims);
+
+    if (endOfVar == NULL || *endOfVar==' ') {
+
       /* In batch program, missing terminator for % and no following
          ':' just removes the '%'                                   */
-      s = WCMD_strdupW(start + 1);
-      strcpyW (start, s);
-      free(s);
+      if (context) {
+        s = WCMD_strdupW(start + 1);
+        strcpyW (start, s);
+        free(s);
+        return start;
+      } else {
 
-      /* FIXME: Some other special conditions here depending on whether
-         in batch, complex or not, and whether env var exists or not! */
-      return start;
+        /* In command processing, just ignore it - allows command line
+           syntax like: for %i in (a.a) do echo %i                     */
+        return start+1;
+      }
     }
+
+    /* If ':' found, process remaining up until '%' (or stop at ':' if
+       a missing '%' */
+    if (*endOfVar==':') {
+        WCHAR *endOfVar2 = strchrW(endOfVar+1, '%');
+        if (endOfVar2 != NULL) endOfVar = endOfVar2;
+    }
+
     memcpy(thisVar, start, ((endOfVar - start) + 1) * sizeof(WCHAR));
     thisVar[(endOfVar - start)+1] = 0x00;
     colonpos = strchrW(thisVar+1, ':');
@@ -1625,6 +1669,16 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start) {
                 (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
       static const WCHAR fmt[] = {'%','d','\0'};
       wsprintf(thisVarContents, fmt, rand() % 32768);
+      len = strlenW(thisVarContents);
+
+    /* Look for a matching 'for' variable */
+    } else if (forVar &&
+               (CompareString (LOCALE_USER_DEFAULT,
+                               SORT_STRINGSORT,
+                               thisVar,
+                               (colonpos - thisVar) - 1,
+                               forVar, -1) == 2)) {
+      strcpyW(thisVarContents, forVal);
       len = strlenW(thisVarContents);
 
     } else {
@@ -1952,6 +2006,9 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
         WCMD_output_asis(newline);
     }
 
+    /* Replace env vars if in a batch context */
+    if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
+
     /* Start with an empty string */
     curLen = 0;
 
@@ -2234,6 +2291,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
           if (WCMD_fgets(extraSpace, MAXSTRING, readFrom) == NULL) break;
         }
         curPos = extraSpace;
+        if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
       }
     }
 

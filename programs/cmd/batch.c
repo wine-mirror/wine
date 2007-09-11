@@ -19,6 +19,9 @@
  */
 
 #include "wcmd.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 extern int echo_mode;
 extern WCHAR quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
@@ -301,7 +304,7 @@ void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHA
  *  Hence search forwards until find an invalid modifier, and then
  *  backwards until find for variable or 0-9
  */
-void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable) {
+void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValue, BOOL justFors) {
 
 #define NUMMODIFIERS 11
   static const WCHAR validmodifiers[NUMMODIFIERS] = {
@@ -324,10 +327,10 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable) {
   BOOL  skipFileParsing = FALSE;
   BOOL  doneModifier    = FALSE;
 
-  /* Search forwards until find invalid WCHARacter modifier */
+  /* Search forwards until find invalid character modifier */
   while (!finished) {
 
-    /* Work on the previous WCHARacter */
+    /* Work on the previous character */
     if (lastModifier != NULL) {
 
       for (i=0; i<NUMMODIFIERS; i++) {
@@ -355,27 +358,30 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable) {
     }
   }
 
-  /* Now make sure the position we stopped at is a valid parameter */
-  if (!(*lastModifier >= '0' || *lastModifier <= '9') &&
-      (forVariable != NULL) &&
-      (toupperW(*lastModifier) != toupperW(*forVariable)))  {
+  while (lastModifier > firstModifier) {
+    WINE_TRACE("Looking backwards for parameter id: %s / %s\n",
+               wine_dbgstr_w(lastModifier), wine_dbgstr_w(forVariable));
 
-    /* Its not... Step backwards until it matches or we get to the start */
-    while (toupperW(*lastModifier) != toupperW(*forVariable) &&
-          lastModifier > firstModifier) {
+    if (!justFors && context && (*lastModifier >= '0' || *lastModifier <= '9')) {
+      /* Its a valid parameter identifier - OK */
+      break;
+
+    } else if (forVariable && *lastModifier == *(forVariable+1)) {
+      /* Its a valid parameter identifier - OK */
+      break;
+
+    } else {
       lastModifier--;
     }
-    if (lastModifier == firstModifier) return; /* Invalid syntax */
   }
+  if (lastModifier == firstModifier) return; /* Invalid syntax */
 
   /* Extract the parameter to play with */
   if ((*lastModifier >= '0' && *lastModifier <= '9')) {
     strcpyW(outputparam, WCMD_parameter (context -> command,
                  *lastModifier-'0' + context -> shift_count[*lastModifier-'0'], NULL));
   } else {
-    /* FIXME: Retrieve 'for' variable %c\n", *lastModifier); */
-    /* Need to get 'for' loop variable into outputparam      */
-    return;
+    strcpyW(outputparam, forValue);
   }
 
   /* So now, firstModifier points to beginning of modifiers, lastModifier

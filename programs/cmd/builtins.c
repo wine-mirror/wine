@@ -992,40 +992,6 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
   return;
 }
 
-/*****************************************************************************
- * WCMD_Execute
- *
- *	Execute a command after substituting variable text for the supplied parameter
- */
-
-void WCMD_execute (WCHAR *orig_cmd, WCHAR *param, WCHAR *subst, CMD_LIST **cmdList) {
-
-  WCHAR *new_cmd, *p, *s, *dup;
-  int size;
-
-  if (param) {
-    size = (strlenW (orig_cmd) + 1) * sizeof(WCHAR);
-    new_cmd = (WCHAR *) LocalAlloc (LMEM_FIXED | LMEM_ZEROINIT, size);
-    dup = s = WCMD_strdupW(orig_cmd);
-
-    while ((p = strstrW (s, param))) {
-      *p = '\0';
-      size += strlenW (subst) * sizeof(WCHAR);
-      new_cmd = (WCHAR *) LocalReAlloc ((HANDLE)new_cmd, size, 0);
-      strcatW (new_cmd, s);
-      strcatW (new_cmd, subst);
-      s = p + strlenW (param);
-    }
-    strcatW (new_cmd, s);
-    WCMD_process_command (new_cmd, cmdList);
-    free (dup);
-    LocalFree ((HANDLE)new_cmd);
-  } else {
-    WCMD_process_command (orig_cmd, cmdList);
-  }
-}
-
-
 /**************************************************************************
  * WCMD_give_help
  *
@@ -1067,7 +1033,7 @@ void WCMD_goto (CMD_LIST **cmdList) {
   WCHAR string[MAX_PATH];
 
   /* Do not process any more parts of a processed multipart or multilines command */
-  *cmdList = NULL;
+  if (cmdList) *cmdList = NULL;
 
   if (param1[0] == 0x00) {
     WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
