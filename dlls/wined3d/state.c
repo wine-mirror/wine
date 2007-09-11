@@ -439,9 +439,17 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     if (stateblock->renderState[WINED3DRS_CLIPPING]) {
         enable  = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
         disable = ~stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
+        if(GL_SUPPORT(NV_DEPTH_CLAMP)) {
+            glDisable(GL_DEPTH_CLAMP_NV);
+            checkGLcall("glDisable(GL_DEPTH_CLAMP_NV)");
+        }
     } else {
         disable = 0xffffffff;
         enable  = 0x00;
+        if(GL_SUPPORT(NV_DEPTH_CLAMP)) {
+            glEnable(GL_DEPTH_CLAMP_NV);
+            checkGLcall("glEnable(GL_DEPTH_CLAMP_NV)");
+        }
     }
 
     if (enable & WINED3DCLIPPLANE0)  { glEnable(GL_CLIP_PLANE0);  checkGLcall("glEnable(clip plane 0)"); }

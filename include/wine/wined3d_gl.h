@@ -2847,6 +2847,11 @@ typedef int (WINE_GLAPI * PGLXFNWAITVIDEOSYNCSGIPROC) (int, int, unsigned int *)
 #define GLX_SGIS_generate_mipmap
 #endif
 
+/* GL_NV_depth_clamp */
+#ifndef GL_NV_depth_clamp
+#define GL_DEPTH_CLAMP_NV                   0x864F
+#endif
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -3184,6 +3189,7 @@ typedef enum _GL_SupportedExt {
   NV_VERTEX_PROGRAM2,
   NV_VERTEX_PROGRAM3,
   NV_FENCE,
+  NV_DEPTH_CLAMP,
   /* ATI */
   ATI_SEPARATE_STENCIL,
   ATI_TEXTURE_ENV_COMBINE3,

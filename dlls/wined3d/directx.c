@@ -117,6 +117,7 @@ static const struct {
     {"GL_NV_vertex_program1_1",             NV_VERTEX_PROGRAM1_1},
     {"GL_NV_vertex_program2",               NV_VERTEX_PROGRAM2},
     {"GL_NV_vertex_program3",               NV_VERTEX_PROGRAM3},
+    {"GL_NV_depth_clamp",                   NV_DEPTH_CLAMP},
 
     /* SGI */
     {"GL_SGIS_generate_mipmap",             SGIS_GENERATE_MIPMAP},
