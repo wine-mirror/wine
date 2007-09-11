@@ -134,7 +134,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
 /*******************************************************************
  * WCMD_parameter - extract a parameter from a command line.
  *
- *	Returns the 'n'th space-delimited parameter on the command line (zero-based).
+ *	Returns the 'n'th delimited parameter on the command line (zero-based).
  *	Parameter is in static storage overwritten on the next call.
  *	Parameters in quotes (and brackets) are handled.
  *	Also returns a pointer to the location of the parameter in the command line.
@@ -150,7 +150,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
   p = param;
   while (TRUE) {
     switch (*s) {
-      case ' ':
+      case ' ': /* Skip leading spaces */
 	s++;
 	break;
       case '"':
@@ -176,15 +176,20 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
       default:
         /* Only return where if it is for the right parameter */
         if (where != NULL && i==n) *where = s;
-	while ((*s != '\0') && (*s != ' ')) {
+	while ((*s != '\0') && (*s != ' ') && (*s != ',') && (*s != '=')) {
 	  *p++ = *s++;
 	}
-        if (i == n) {
+        if (i == n && (p!=param)) {
           *p = '\0';
           return param;
         }
+        /* Skip double delimiters, eg. dir a.a,,,,,b.b */
+        if (p != param) {
           param[0] = '\0';
           i++;
+        } else {
+          s++; /* Skip delimter */
+        }
         p = param;
     }
   }
