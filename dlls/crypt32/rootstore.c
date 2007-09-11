@@ -30,6 +30,7 @@
 #include <unistd.h>
 #endif
 #include <errno.h>
+#include <limits.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
