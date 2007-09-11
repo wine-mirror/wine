@@ -894,21 +894,17 @@ static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixe
     /* Check if the pixelformat is valid. Note that it is legal to pass an invalid
      * iPixelFormat in case of probing the number of pixelformats.
      */
-    if((iPixelFormat <= 0) || (iPixelFormat > WineGLPixelFormatListSize)) {
-        if(AllowOffscreen)
-            *fmt_count = WineGLPixelFormatListSize;
-        else
-            *fmt_count = 1; /* Only show the format of our main visual */
-    }
-    else if(iPixelFormat == 1) {
-        res = &WineGLPixelFormatList[0];
-        *fmt_count = 1; /* Only show the format of our main visual */
-    }
-    else if((WineGLPixelFormatList[iPixelFormat-1].offscreenOnly == TRUE) && AllowOffscreen) {
+    if((iPixelFormat > 0) && (iPixelFormat <= WineGLPixelFormatListSize) &&
+       ((WineGLPixelFormatList[iPixelFormat-1].offscreenOnly == FALSE) ||
+        AllowOffscreen)) {
         res = &WineGLPixelFormatList[iPixelFormat-1];
-        *fmt_count = WineGLPixelFormatListSize;
         TRACE("Returning FBConfig=%p for iPixelFormat=%d\n", res->fbconfig, iPixelFormat);
     }
+
+    if(AllowOffscreen)
+        *fmt_count = WineGLPixelFormatListSize;
+    else
+        *fmt_count = 1;
 
     TRACE("Number of returned pixelformats=%d\n", *fmt_count);
 
