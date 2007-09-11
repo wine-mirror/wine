@@ -58,25 +58,29 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsalsa);
 
-typedef struct IDsCaptureDriverImpl IDsCaptureDriverImpl;
 typedef struct IDsCaptureDriverBufferImpl IDsCaptureDriverBufferImpl;
 
-struct IDsCaptureDriverImpl
+typedef struct IDsCaptureDriverImpl
 {
-    /* IUnknown fields */
     const IDsCaptureDriverVtbl *lpVtbl;
     LONG ref;
-
-    /* IDsCaptureDriverImpl fields */
     IDsCaptureDriverBufferImpl* capture_buffer;
     UINT wDevID;
-};
+} IDsCaptureDriverImpl;
+
+typedef struct IDsCaptureDriverNotifyImpl
+{
+    const IDsDriverNotifyVtbl *lpVtbl;
+    LONG ref;
+    IDsCaptureDriverBufferImpl *buffer;
+} IDsCaptureDriverNotifyImpl;
 
 struct IDsCaptureDriverBufferImpl
 {
     const IDsCaptureDriverBufferVtbl *lpVtbl;
     LONG ref;
-    IDsCaptureDriverImpl* drv;
+    IDsCaptureDriverImpl *drv;
+    IDsCaptureDriverNotifyImpl *notify;
 
     CRITICAL_SECTION pcm_crst;
     LPBYTE mmap_buffer, presented_buffer;
@@ -89,6 +93,66 @@ struct IDsCaptureDriverBufferImpl
     snd_pcm_hw_params_t *hw_params;
     snd_pcm_sw_params_t *sw_params;
     snd_pcm_uframes_t mmap_buflen_frames, mmap_pos;
+};
+
+static HRESULT WINAPI IDsCaptureDriverNotifyImpl_QueryInterface(PIDSDRIVERNOTIFY iface, REFIID riid, LPVOID *ppobj)
+{
+    IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
+    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
+
+    if ( IsEqualGUID(riid, &IID_IUnknown) ||
+         IsEqualGUID(riid, &IID_IDsDriverNotify) ) {
+        IDsDriverNotify_AddRef(iface);
+        *ppobj = This;
+        return DS_OK;
+    }
+
+    FIXME( "Unknown IID %s\n", debugstr_guid(riid));
+
+    *ppobj = 0;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDsCaptureDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface)
+{
+    IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref was %d\n", This, refCount - 1);
+
+    return refCount;
+}
+
+static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface)
+{
+    IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref was %d\n", This, refCount + 1);
+
+    if (!refCount) {
+        This->buffer->notify = NULL;
+        HeapFree(GetProcessHeap(), 0, This);
+        TRACE("(%p) released\n", This);
+    }
+    return refCount;
+}
+
+static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(PIDSDRIVERNOTIFY iface, DWORD howmuch, LPCDSBPOSITIONNOTIFY notify)
+{
+    IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
+    TRACE("(%p,0x%08x,%p)\n",This,howmuch,notify);
+
+    FIXME("stub\n");
+    return DSERR_UNSUPPORTED;
+}
+
+static const IDsDriverNotifyVtbl dscdnvt =
+{
+    IDsCaptureDriverNotifyImpl_QueryInterface,
+    IDsCaptureDriverNotifyImpl_AddRef,
+    IDsCaptureDriverNotifyImpl_Release,
+    IDsCaptureDriverNotifyImpl_SetNotificationPositions,
 };
 
 #if 0
@@ -302,8 +366,37 @@ static int CreateMMAP(IDsCaptureDriverBufferImpl* pdbi)
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(PIDSCDRIVERBUFFER iface, REFIID riid, LPVOID *ppobj)
 {
-    /* IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface; */
-    FIXME("(): stub!\n");
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
+    if ( IsEqualGUID(riid, &IID_IUnknown) ||
+         IsEqualGUID(riid, &IID_IDsCaptureDriverBuffer) ) {
+        IDsCaptureDriverBuffer_AddRef(iface);
+        *ppobj = (LPVOID)iface;
+        return DS_OK;
+    }
+
+    if ( IsEqualGUID( &IID_IDsDriverNotify, riid ) ) {
+        if (!This->notify)
+        {
+            This->notify = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDsCaptureDriverNotifyImpl));
+            if (!This->notify)
+                return DSERR_OUTOFMEMORY;
+            This->notify->lpVtbl = &dscdnvt;
+            This->notify->buffer = This;
+
+            /* Keep a lock on IDsDriverNotify for ourself, so it is destroyed when the buffer is */
+            IDsDriverNotify_AddRef((PIDSDRIVERNOTIFY)This->notify);
+        }
+        IDsDriverNotify_AddRef((PIDSDRIVERNOTIFY)This->notify);
+        *ppobj = (LPVOID)This->notify;
+        return DS_OK;
+    }
+
+    if ( IsEqualGUID( &IID_IDsDriverPropertySet, riid ) ) {
+        FIXME("Unsupported interface IID_IDsDriverPropertySet\n");
+        return E_FAIL;
+    }
+
+    FIXME("(): Unknown interface %s\n", debugstr_guid(riid));
     return DSERR_UNSUPPORTED;
 }
 
@@ -327,6 +420,9 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
     if (refCount)
         return refCount;
 
+    EnterCriticalSection(&This->pcm_crst);
+    if (This->notify)
+        IDsDriverNotify_Release((PIDSDRIVERNOTIFY)This->notify);
     TRACE("mmap buffer %p destroyed\n", This->mmap_buffer);
 
     This->drv->capture_buffer = NULL;
@@ -563,6 +659,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(PIDSCDRIVERBUFFER iface, 
          * what it does right now is fill the buffer once.. ALSA size */
         FIXME("Non-looping buffers are not properly supported!\n");
     CommitAll(This, TRUE);
+
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
     return DS_OK;
@@ -578,6 +675,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Stop(PIDSCDRIVERBUFFER iface)
     This->play_looping = FALSE;
     snd_pcm_drop(This->pcm);
     snd_pcm_prepare(This->pcm);
+
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
     return DS_OK;
