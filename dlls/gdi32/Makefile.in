@@ -7,7 +7,7 @@ MODULE    = gdi32.dll
 IMPORTLIB = libgdi32.$(IMPLIBEXT)
 IMPORTS   = advapi32 kernel32 ntdll
 EXTRAINCL = @FREETYPEINCL@
-EXTRALIBS = @ICULIBS@ @CARBONLIB@
+EXTRALIBS = @CARBONLIB@
 
 SPEC_SRCS16 = \
 	dispdib.spec \

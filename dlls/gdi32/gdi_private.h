@@ -383,7 +383,6 @@ typedef struct tagBITMAPOBJ
 #define WINE_GCPW_DIR_MASK 3
 extern BOOL BIDI_Reorder( LPCWSTR lpString, INT uCount, DWORD dwFlags, DWORD dwWineGCP_Flags,
                           LPWSTR lpOutString, INT uCountOut, UINT *lpOrder );
-extern BOOL BidiAvail;
 
 /* bitmap.c */
 extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap );

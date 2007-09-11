@@ -743,7 +743,6 @@ gphoto2_devel
 gphoto2port_devel
 GPHOTO2LIBS
 GPHOTO2INCL
-ICULIBS
 RESOLVLIBS
 LCMSLIBS
 LDAPLIBS
@@ -6750,7 +6749,6 @@ done
 
 
 
-
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -6859,7 +6857,6 @@ for ac_header in \
 	sys/wait.h \
 	syscall.h \
 	termios.h \
-	unicode/ubidi.h \
 	unistd.h \
 	utime.h \
 	valgrind/memcheck.h
@@ -12509,86 +12506,6 @@ if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"; then
 Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)"
 fi
 
-
-
-if test "$ac_cv_header_unicode_ubidi_h" = "yes"
-then
-    saved_libs="$LIBS"
-    icu_libs="-lsicuuc -lsicudata -lstdc++ -lgcc_s"
-    if test -n "$ICU_LIB_DIR"
-    then
-        icu_libs="-L$ICU_LIB_DIR $icu_libs"
-    fi
-    { echo "$as_me:$LINENO: checking whether can link with ICU libraries" >&5
-echo $ECHO_N "checking whether can link with ICU libraries... $ECHO_C" >&6; }
-    LIBS="$saved_libs $icu_libs"
-    if test "$cross_compiling" = yes; then
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <unicode/ubidi.h>
-int
-main ()
-{
-ubidi_open()
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_ICU 1
-_ACEOF
-
-                 ICULIBS="$icu_libs"
-
-                 { echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6; }
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-{ echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-
-
-    LIBS="$saved_libs"
-fi
-if test "x$ICULIBS" = "x"; then
-  wine_notices="$wine_notices|libicu development files not found.
-Wine will be built without bidi (Right to Left) support. (gdi32.dll)"
-fi
 
 
 RESOLVLIBS=""
@@ -22141,7 +22058,6 @@ gphoto2_devel!$gphoto2_devel$ac_delim
 gphoto2port_devel!$gphoto2port_devel$ac_delim
 GPHOTO2LIBS!$GPHOTO2LIBS$ac_delim
 GPHOTO2INCL!$GPHOTO2INCL$ac_delim
-ICULIBS!$ICULIBS$ac_delim
 RESOLVLIBS!$RESOLVLIBS$ac_delim
 LCMSLIBS!$LCMSLIBS$ac_delim
 LDAPLIBS!$LDAPLIBS$ac_delim
@@ -22168,7 +22084,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 71; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 70; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

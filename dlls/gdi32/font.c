@@ -1907,7 +1907,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     if (!lprect)
         flags &= ~ETO_CLIPPED;
         
-    if( !(flags & (ETO_GLYPH_INDEX | ETO_IGNORELANGUAGE)) && BidiAvail && count > 0 )
+    if( !(flags & (ETO_GLYPH_INDEX | ETO_IGNORELANGUAGE)) && count > 0 )
     {
         reordered_str = HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
 
@@ -2997,7 +2997,7 @@ GetCharacterPlacementW(
 	/* return number of initialized fields */
 	lpResults->nGlyphs = nSet;
 
-	if((dwFlags&GCP_REORDER)==0 || !BidiAvail)
+	if((dwFlags&GCP_REORDER)==0 )
 	{
 		/* Treat the case where no special handling was requested in a fastpath way */
 		/* copy will do if the GCP_REORDER flag is not set */

@@ -22,10 +22,6 @@
 #include "config.h"
 
 #include <stdarg.h>
-#ifdef HAVE_UNICODE_UBIDI_H
-#include <unicode/ubidi.h>
-#endif
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -33,13 +29,6 @@
 #include "gdi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
-
-#ifdef HAVE_ICU
-BOOL BidiAvail = TRUE;
-#else
-BOOL BidiAvail = FALSE;
-#endif
-
 
 /*************************************************************
  *    BIDI_Reorder
@@ -54,62 +43,20 @@ BOOL BIDI_Reorder(
                 UINT *lpOrder /* [out] Logical -> Visual order map */
     )
 {
+    unsigned i;
     TRACE("%s, %d, 0x%08x lpOutString=%p, lpOrder=%p\n",
           debugstr_wn(lpString, uCount), uCount, dwFlags,
           lpOutString, lpOrder);
 
-#ifdef HAVE_ICU
-    if ((dwFlags & GCP_REORDER) != 0) {
-        UBiDi *bidi;
-        UErrorCode err=0;
-        UBiDiLevel level=0;
-
-        bidi=ubidi_open();
-        if( bidi==NULL ) {
-            WARN("Failed to allocate structure\n");
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            return FALSE;
-        }
-
-        switch( dwWineGCP_Flags&WINE_GCPW_DIR_MASK )
-        {
-        case WINE_GCPW_FORCE_LTR:
-            level=0;
-            break;
-        case WINE_GCPW_FORCE_RTL:
-            level=1;
-            break;
-        case WINE_GCPW_LOOSE_LTR:
-            level=UBIDI_DEFAULT_LTR;
-            break;
-        case WINE_GCPW_LOOSE_RTL:
-            level=UBIDI_DEFAULT_RTL;
-            break;
-        }
-
-        ubidi_setPara( bidi, lpString, uCount, level, NULL, &err );
-        if( lpOutString!=NULL ) {
-            ubidi_writeReordered( bidi, lpOutString, uCount,
-                    (dwFlags&GCP_SYMSWAPOFF)?0:UBIDI_DO_MIRRORING, &err );
-        }
-
-        if( lpOrder!=NULL ) {
-            ubidi_getLogicalMap( bidi, lpOrder, &err );
-        }
-
-        ubidi_close( bidi );
-
-        if( U_FAILURE(err) ) {
-            FIXME("ICU Library return error code %d.\n", err );
-            FIXME("Please report this error to wine-devel@winehq.org so we can place "
-                    "descriptive Windows error codes here\n");
-            SetLastError(ERROR_INVALID_LEVEL); /* This error is cryptic enough not to mean anything, I hope */
-
-            return FALSE;
-        }
+    if (!(dwFlags & GCP_REORDER))
+    {
+        FIXME("Asked to reorder without reorder flag set\n");
+        return FALSE;
     }
+    memcpy(lpOutString, lpString, uCount * sizeof(WCHAR));
+    if (lpOrder)
+        for (i = 0; i < uCount; ++i)
+            *(lpOrder++) = i;
+
     return TRUE;
-#else  /* HAVE_ICU */
-    return FALSE;
-#endif  /* HAVE_ICU */
 }

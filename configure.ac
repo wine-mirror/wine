@@ -263,7 +263,6 @@ AC_CHECK_HEADERS(\
 	sys/wait.h \
 	syscall.h \
 	termios.h \
-	unicode/ubidi.h \
 	unistd.h \
 	utime.h \
 	valgrind/memcheck.h
@@ -818,26 +817,6 @@ fi
 WINE_NOTICE_IF([test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"],[libgphoto2 development files not found.
 Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)])
 
-
-dnl **** Check for the ICU library ****
-if test "$ac_cv_header_unicode_ubidi_h" = "yes"
-then
-    saved_libs="$LIBS"
-    icu_libs="-lsicuuc -lsicudata -lstdc++ -lgcc_s"
-    if test -n "$ICU_LIB_DIR"
-    then
-        icu_libs="-L$ICU_LIB_DIR $icu_libs"
-    fi
-    AC_MSG_CHECKING(whether can link with ICU libraries)
-    LIBS="$saved_libs $icu_libs"
-    AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <unicode/ubidi.h>]],[[ubidi_open()]])],
-                [AC_DEFINE(HAVE_ICU,1,[Define to 1 if the ICU libraries are installed])
-                 AC_SUBST(ICULIBS,"$icu_libs")
-                 AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)],[AC_MSG_RESULT(no)])
-    LIBS="$saved_libs"
-fi
-WINE_NOTICE_IF([test "x$ICULIBS" = "x"],[libicu development files not found.
-Wine will be built without bidi (Right to Left) support. (gdi32.dll)])
 
 dnl **** Check for resolver library ***
 AC_SUBST(RESOLVLIBS,"")
