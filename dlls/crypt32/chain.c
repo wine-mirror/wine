@@ -508,7 +508,8 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
     }
     if (CRYPT_IsCertificateSelfSigned(rootElement->pCertContext))
     {
-        rootElement->TrustStatus.dwInfoStatus |= CERT_TRUST_IS_SELF_SIGNED;
+        rootElement->TrustStatus.dwInfoStatus |=
+         CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER;
         CRYPT_CheckRootCert(engine->hRoot, rootElement);
     }
     /* FIXME: check revocation of every cert with CertVerifyRevocation */
@@ -516,12 +517,13 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
 }
 
 static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
- PCCERT_CONTEXT prevIssuer)
+ PCCERT_CONTEXT prevIssuer, DWORD *infoStatus)
 {
     PCCERT_CONTEXT issuer = NULL;
     PCERT_EXTENSION ext;
     DWORD size;
 
+    *infoStatus = 0;
     if ((ext = CertFindExtension(szOID_AUTHORITY_KEY_IDENTIFIER,
      subject->pCertInfo->cExtension, subject->pCertInfo->rgExtension)))
     {
@@ -546,6 +548,8 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
                 issuer = CertFindCertificateInStore(store,
                  subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
                  prevIssuer);
+                if (issuer)
+                    *infoStatus = CERT_TRUST_HAS_EXACT_MATCH_ISSUER;
             }
             else if (info->KeyId.cbData)
             {
@@ -554,6 +558,8 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
                 issuer = CertFindCertificateInStore(store,
                  subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
                  prevIssuer);
+                if (issuer)
+                    *infoStatus = CERT_TRUST_HAS_KEY_MATCH_ISSUER;
             }
             LocalFree(info);
         }
@@ -595,6 +601,8 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
                     issuer = CertFindCertificateInStore(store,
                      subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
                      prevIssuer);
+                    if (issuer)
+                        *infoStatus = CERT_TRUST_HAS_EXACT_MATCH_ISSUER;
                 }
                 else
                     FIXME("no supported name type in authority key id2\n");
@@ -606,6 +614,8 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
                 issuer = CertFindCertificateInStore(store,
                  subject->dwCertEncodingType, 0, CERT_FIND_CERT_ID, &id,
                  prevIssuer);
+                if (issuer)
+                    *infoStatus = CERT_TRUST_HAS_KEY_MATCH_ISSUER;
             }
             LocalFree(info);
         }
@@ -615,6 +625,8 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
         issuer = CertFindCertificateInStore(store,
          subject->dwCertEncodingType, 0, CERT_FIND_SUBJECT_NAME,
          &subject->pCertInfo->Issuer, prevIssuer);
+        if (issuer)
+            *infoStatus = CERT_TRUST_HAS_NAME_MATCH_ISSUER;
     }
     return issuer;
 }
@@ -631,11 +643,12 @@ static BOOL CRYPT_BuildSimpleChain(PCertificateChainEngine engine,
     while (ret && !CRYPT_IsSimpleChainCyclic(chain) &&
      !CRYPT_IsCertificateSelfSigned(cert))
     {
-        PCCERT_CONTEXT issuer = CRYPT_GetIssuer(world, cert, NULL);
+        DWORD infoStatus;
+        PCCERT_CONTEXT issuer = CRYPT_GetIssuer(world, cert, NULL, &infoStatus);
 
         if (issuer)
         {
-            ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer, 0);
+            ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer, infoStatus);
             cert = issuer;
         }
         else
@@ -888,7 +901,7 @@ static PCertificateChain CRYPT_BuildAlternateContextFromChain(
         alternate = NULL;
     else
     {
-        DWORD i, j;
+        DWORD i, j, infoStatus;
         PCCERT_CONTEXT alternateIssuer = NULL;
 
         alternate = NULL;
@@ -902,7 +915,7 @@ static PCertificateChain CRYPT_BuildAlternateContextFromChain(
                  chain->context.rgpChain[i]->rgpElement[j + 1]->pCertContext);
 
                 alternateIssuer = CRYPT_GetIssuer(prevIssuer->hCertStore,
-                 subject, prevIssuer);
+                 subject, prevIssuer, &infoStatus);
             }
         if (alternateIssuer)
         {
@@ -912,7 +925,7 @@ static PCertificateChain CRYPT_BuildAlternateContextFromChain(
             if (alternate)
             {
                 BOOL ret = CRYPT_AddCertToSimpleChain(engine,
-                 alternate->context.rgpChain[i], alternateIssuer, 0);
+                 alternate->context.rgpChain[i], alternateIssuer, infoStatus);
 
                 if (ret)
                 {
