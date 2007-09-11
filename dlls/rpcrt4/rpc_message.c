@@ -828,12 +828,15 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
       if ((common_hdr.ptype != PKT_BIND) &&
           (common_hdr.ptype != PKT_BIND_ACK) &&
           (common_hdr.ptype != PKT_AUTH3))
+      {
         status = RPCRT4_SecurePacket(Connection, SECURE_PACKET_RECEIVE,
             *Header, hdr_length,
             (unsigned char *)pMsg->Buffer + buffer_length, data_length,
             (RpcAuthVerifier *)auth_data,
             (unsigned char *)auth_data + sizeof(RpcAuthVerifier),
             header_auth_len - sizeof(RpcAuthVerifier));
+        if (status != RPC_S_OK) goto fail;
+      }
     }
 
     buffer_length += data_length;
