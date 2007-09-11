@@ -545,6 +545,7 @@ static inline void free_context(Wine_GLContext *context)
     if (context->prev != NULL) context->prev->next = context->next;
     else context_list = context->next;
 
+    if (context->vis) XFree(context->vis);
     HeapFree(GetProcessHeap(), 0, context);
 }
 
