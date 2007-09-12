@@ -679,7 +679,17 @@ static HANDLE test_OpenComm(BOOL doOverlap)
     }
     if (hcom != INVALID_HANDLE_VALUE)
     {
-        ok(ClearCommError(hcom,&errors,&comstat), "Unexpected errors on open\n");
+        BOOL ret;
+
+        ret = ClearCommError(hcom, &errors, &comstat);
+        if (!ret && GetLastError() == ERROR_NOT_READY)
+        {
+            trace("%s doesn't respond, skipping the test\n", port_name);
+            CloseHandle(hcom);
+            return INVALID_HANDLE_VALUE;
+        }
+
+        ok(ret, "Unexpected error %u on open\n", GetLastError());
         ok(comstat.cbInQue == 0, "Unexpected %d chars in InQueue\n",comstat.cbInQue);
         ok(comstat.cbOutQue == 0, "Still pending %d charcters in OutQueue\n", comstat.cbOutQue);
         ok(errors == 0, "Unexpected errors 0x%08x\n", errors);
