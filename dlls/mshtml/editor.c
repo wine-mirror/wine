@@ -52,6 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_FONTFACE     "cmd_fontFace"
 #define NSCMD_INDENT       "cmd_indent"
 #define NSCMD_INSERTHR     "cmd_insertHR"
+#define NSCMD_INSERTLINKNOUI    "cmd_insertLinkNoUI"
 #define NSCMD_ITALIC       "cmd_italic"
 #define NSCMD_LINENEXT     "cmd_lineNext"
 #define NSCMD_LINEPREVIOUS "cmd_linePrevious"
@@ -1120,7 +1121,221 @@ static HRESULT query_edit_status(HTMLDocument *This, OLECMD *cmd)
         TRACE("CGID_MSHTML: IDM_OUTDENT\n");
         cmd->cmdf = query_ns_edit_status(This, NULL);
         break;
+    case IDM_HYPERLINK:
+        TRACE("CGID_MSHTML: IDM_HYPERLINK\n");
+        cmd->cmdf = query_ns_edit_status(This, NULL);
+        break;
     }
+
+    return S_OK;
+}
+
+static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    static const WCHAR wszOther[] = {'(','o','t','h','e','r',')',0};
+
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            static const WCHAR wszFile[] = {'f','i','l','e',':',0};
+            static const WCHAR wszFtp[] = {'f','t','p',':',0};
+            static const WCHAR wszHttp[] = {'h','t','t','p',':',0};
+            static const WCHAR wszHttps[] = {'h','t','t','p','s',':',0};
+            static const WCHAR wszMailto[] = {'m','a','i','l','t','o',':',0};
+            static const WCHAR wszNews[] = {'n','e','w','s',':',0};
+            INT def_idx;
+            HWND hwndCB = GetDlgItem(hwnd, IDC_TYPE);
+            HWND hwndURL = GetDlgItem(hwnd, IDC_URL);
+            INT len;
+
+            SetWindowLongPtrW(hwnd, DWLP_USER, lparam);
+
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszOther);
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszFile);
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszFtp);
+            def_idx = SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszHttp);
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszHttps);
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszMailto);
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszNews);
+            SendMessageW(hwndCB, CB_SETCURSEL, def_idx, 0);
+
+            /* force the updating of the URL edit box */
+            SendMessageW(hwnd, WM_COMMAND, MAKEWPARAM(IDC_TYPE, CBN_SELCHANGE), (LPARAM)hwndCB);
+
+            SetFocus(hwndURL);
+            len = SendMessageW(hwndURL, WM_GETTEXTLENGTH, 0, 0);
+            SendMessageW(hwndURL, EM_SETSEL, 0, len);
+
+            return FALSE;
+        }
+        case WM_COMMAND:
+            switch (wparam)
+            {
+                case MAKEWPARAM(IDCANCEL, BN_CLICKED):
+                    EndDialog(hwnd, wparam);
+                    return TRUE;
+                case MAKEWPARAM(IDOK, BN_CLICKED):
+                {
+                    BSTR *url = (BSTR *)GetWindowLongPtrW(hwnd, DWLP_USER);
+                    HWND hwndURL = GetDlgItem(hwnd, IDC_URL);
+                    INT len = GetWindowTextLengthW(hwndURL);
+                    *url = SysAllocStringLen(NULL, len + 1);
+                    GetWindowTextW(hwndURL, *url, len + 1);
+                    EndDialog(hwnd, wparam);
+                    return TRUE;
+                }
+                case MAKEWPARAM(IDC_TYPE, CBN_SELCHANGE):
+                {
+                    HWND hwndURL = GetDlgItem(hwnd, IDC_URL);
+                    INT item;
+                    INT len;
+                    LPWSTR type;
+                    LPWSTR url;
+                    LPWSTR p;
+                    static const WCHAR wszSlashSlash[] = {'/','/'};
+
+                    /* get string of currently selected hyperlink type */
+                    item = SendMessageW((HWND)lparam, CB_GETCURSEL, 0, 0);
+                    len = SendMessageW((HWND)lparam, CB_GETLBTEXTLEN, item, 0);
+                    type = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+                    SendMessageW((HWND)lparam, CB_GETLBTEXT, item, (LPARAM)type);
+
+                    if (!strcmpW(type, wszOther))
+                        *type = '\0';
+
+                    /* get current URL */
+                    len = GetWindowTextLengthW(hwndURL);
+                    url = HeapAlloc(GetProcessHeap(), 0, (len + strlenW(type) + 3) * sizeof(WCHAR));
+                    GetWindowTextW(hwndURL, url, len + 1);
+
+                    /* strip off old protocol */
+                    p = strchrW(url, ':');
+                    if (p && p[1] == '/' && p[2] == '/')
+                        p += 3;
+                    if (!p) p = url;
+                    memmove(url + (*type != '\0' ? strlenW(type) + 2 : 0), p, (len + 1 - (p - url)) * sizeof(WCHAR));
+
+                    /* add new protocol */
+                    if (*type != '\0')
+                    {
+                        memcpy(url, type, strlenW(type) * sizeof(WCHAR));
+                        memcpy(url + strlenW(type), wszSlashSlash, sizeof(wszSlashSlash));
+                    }
+
+                    SetWindowTextW(hwndURL, url);
+
+                    HeapFree(GetProcessHeap(), 0, url);
+                    HeapFree(GetProcessHeap(), 0, type);
+                    return TRUE;
+                }
+            }
+            return FALSE;
+        case WM_CLOSE:
+            EndDialog(hwnd, IDCANCEL);
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
+static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    BSTR url = NULL;
+    INT ret;
+    nsAString ns_url;
+    PRBool insert_link_at_caret;
+    nsISelection *nsselection;
+
+    FIXME("%p, 0x%x, %p, %p\n", This, cmdexecopt, in, out);
+
+    if (cmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER)
+    {
+        if (!in || V_VT(in) != VT_BSTR)
+        {
+            WARN("invalid arg\n");
+            return E_INVALIDARG;
+        }
+        url = V_BSTR(in);
+    }
+    else
+    {
+        ret = DialogBoxParamW(hInst, MAKEINTRESOURCEW(IDD_HYPERLINK), NULL /* FIXME */, hyperlink_dlgproc, (LPARAM)&url);
+        if (ret != IDOK)
+            return OLECMDERR_E_CANCELED;
+    }
+
+    nsselection = get_ns_selection(This);
+    if (!nsselection)
+        return E_FAIL;
+
+    nsAString_Init(&ns_url, url);
+
+    nsISelection_GetIsCollapsed(nsselection, &insert_link_at_caret);
+
+    if (insert_link_at_caret)
+    {
+        static const WCHAR wszA[] = {'a',0};
+        static const WCHAR wszHref[] = {'h','r','e','f',0};
+        nsIHTMLEditor *html_editor;
+        nsIDOMDocument *nsdoc;
+        nsIDOMNode *text_node;
+        nsIDOMElement *anchor_elem;
+        nsIDOMNode *unused_node;
+        nsAString a_str;
+        nsAString href_str;
+        nsresult nsres;
+
+        nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
+        if(NS_FAILED(nsres))
+            return E_FAIL;
+
+        nsAString_Init(&a_str, wszA);
+        nsAString_Init(&href_str, wszHref);
+
+        /* create an element for the link */
+        nsIDOMDocument_CreateElement(nsdoc, &a_str, &anchor_elem);
+        nsIDOMElement_SetAttribute(anchor_elem, &href_str, &ns_url);
+
+        nsAString_Finish(&href_str);
+        nsAString_Finish(&a_str);
+
+        /* create an element with text of URL */
+        nsIDOMDocument_CreateTextNode(nsdoc, &ns_url, (nsIDOMText **)&text_node);
+
+        /* wrap the <a> tags around the text element */
+        nsIDOMElement_AppendChild(anchor_elem, text_node, &unused_node);
+        nsIDOMNode_Release(text_node);
+        nsIDOMNode_Release(unused_node);
+
+        nsIEditor_QueryInterface(This->nscontainer->editor, &IID_nsIHTMLEditor, (void **)&html_editor);
+        if (html_editor)
+        {
+            /* add them to the document at the caret position */
+            nsres = nsIHTMLEditor_InsertElementAtSelection(html_editor, anchor_elem, FALSE);
+            nsIHTMLEditor_Release(html_editor);
+        }
+
+        nsISelection_SelectAllChildren(nsselection, (nsIDOMNode*)anchor_elem);
+
+        nsIDOMElement_Release(anchor_elem);
+        nsIDOMDocument_Release(nsdoc);
+    }
+    else
+    {
+        nsICommandParams *nsparam = create_nscommand_params();
+
+        nsICommandParams_SetStringValue(nsparam, NSSTATE_ATTRIBUTE, &ns_url);
+        do_ns_command(This->nscontainer, NSCMD_INSERTLINKNOUI, nsparam);
+        nsICommandParams_Release(nsparam);
+    }
+
+    nsAString_Finish(&ns_url);
+
+    nsISelection_Release(nsselection);
+
+    if (cmdexecopt != OLECMDEXECOPT_DONTPROMPTUSER)
+        SysFreeString(url);
 
     return S_OK;
 }
@@ -1151,6 +1366,7 @@ const cmdtable_t editmode_cmds[] = {
     {IDM_INDENT,          query_edit_status,    exec_indent},
     {IDM_OUTDENT,         query_edit_status,    exec_outdent},
     {IDM_COMPOSESETTINGS, NULL,                 exec_composesettings},
+    {IDM_HYPERLINK,       query_edit_status,    exec_hyperlink},
     {0,NULL,NULL}
 };
 

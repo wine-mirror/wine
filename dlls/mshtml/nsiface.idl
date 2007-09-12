@@ -1976,6 +1976,72 @@ interface nsIEditor  : nsISupports
     nsresult DebugUnitTests([out] PRInt32 *outNumTests, [out] PRInt32 *outNumTestsFailed);
 }
 
+[
+    object,
+    uuid(afc36593-5787-4420-93d9-b2c0ccbf0cad)
+]
+interface nsIHTMLEditor : nsISupports
+{
+    nsresult AddDefaultProperty([in] nsIAtom *aProperty, [in] nsAString *aAttribute, [in] nsAString *aValue);
+    nsresult RemoveDefaultProperty([in] nsIAtom *aProperty, [in] nsAString *aAttribute, [in] nsAString *aValue);
+    nsresult RemoveAllDefaultProperties();
+    nsresult SetCSSInlineProperty([in] nsIAtom *aProperty, [in] nsAString *aAttribute, [in] nsAString *aValue);
+    nsresult SetInlineProperty([in] nsIAtom *aProperty, [in] nsAString *aAttribute, [in] nsAString *aValue);
+    nsresult GetInlineProperty([in] nsIAtom *aProperty, [in] nsAString *aAttribute, [in] nsAString *aValue, [out] PRBool *aFirst, [out] PRBool *aAny, [out] PRBool *aAll);
+    nsresult GetInlinePropertyWithAttrValue([in] nsIAtom *aProperty, [in] nsAString *aAttribute, [in] nsAString *aValue, [out] PRBool *aFirst, [out] PRBool *aAny, [out] PRBool *aAll, [out] nsAString *_retval);
+    nsresult RemoveAllInlineProperties();
+    nsresult RemoveInlineProperty([in] nsIAtom *aProperty, [in] nsAString *aAttribute);
+    nsresult IncreaseFontSize();
+    nsresult DecreaseFontSize();
+    nsresult CanDrag([in] nsIDOMEvent *aEvent, [out] PRBool *_retval);
+    nsresult DoDrag([in] nsIDOMEvent *aEvent);
+    nsresult InsertFromDrop([in] nsIDOMEvent *aEvent);
+    nsresult NodeIsBlock([in] nsIDOMNode *node, PRBool *_retval);
+    nsresult InsertHTML([in] nsAString *aInputString);
+    nsresult PasteNoFormatting([in] PRInt32 aSelectionType);
+    nsresult RebuildDocumentFromSource([in] nsAString *aSourceString);
+    nsresult InsertHTMLWithContext([in] nsAString *aInputString, [in] nsAString *aContextStr, [in] nsAString *aInfoStr, [in] nsAString *aFlavor, [in] nsIDOMDocument *aSourceDoc, [in] nsIDOMNode *aDestinationNode, [in] PRInt32 aDestinationOffset, [in] PRBool aDeleteSelection);
+    nsresult InsertElementAtSelection([in] nsIDOMElement *aElement, [in] PRBool aDeleteSelection);
+    nsresult SetDocumentTitle([in] nsAString *aTitle);
+    nsresult UpdateBaseURL();
+    nsresult SelectElement([in] nsIDOMElement *aElement);
+    nsresult SetCaretAfterElement([in] nsIDOMElement *aElement);
+    nsresult SetParagraphFormat([in] nsAString *aParagraphFormat);
+    nsresult GetParagraphState([out] PRBool *aMixed, [out] nsAString *_retval);
+    nsresult GetFontFaceState([out] PRBool *aMixed, [out] nsAString *_retval);
+    nsresult GetFontColorState([out] PRBool *aMixed, [out] nsAString *_retval);
+    nsresult GetBackgroundColorState([out] PRBool *aMixed, [out] nsAString *_retval);
+    nsresult GetHighlightColorState([out] PRBool *aMixed, [out] nsAString *_retval);
+    nsresult GetListState([out] PRBool *aMixed, [out] PRBool *aOL, [out] PRBool *aUL, [out] PRBool *aDL);
+    nsresult GetListItemState([out] PRBool *aMixed, [out] PRBool *aLI, [out] PRBool *aDT, [out] PRBool *aDD);
+    nsresult GetAlignment([out] PRBool *aMixed, [out] PRInt16 *aAlign);
+    nsresult GetIndentState([out] PRBool *aCanIndent, [out] PRBool *aCanOutdent);
+    nsresult MakeOrChangeList([in] nsAString *aListType, [in] PRBool entireList, [in] nsAString *aBulletType);
+    nsresult RemoveList([in] nsAString *aListType);
+    nsresult Indent([in] nsAString *aIndent);
+    nsresult Align([in] nsAString *aAlign);
+    nsresult GetElementOrParentByTagName([in] nsAString *aTagName, [in] nsIDOMNode *aNode, [out] nsIDOMElement **_retval);
+    nsresult GetSelectedElement([in] nsAString *aTagName, [out] nsIDOMElement **_retval);
+    nsresult GetHeadContentsAsHTML([out] nsAString *_retval);
+    nsresult ReplaceHeadContentsWithHTML([in] nsAString *aSourceToInsert);
+    nsresult CreateElementWithDefaults([in] nsAString *aTagName, [out] nsIDOMElement **_retval);
+    nsresult InsertLinkAroundSelection([in] nsIDOMElement *aAnchorElement);
+    nsresult SetBackgroundColor([in] nsAString *aColor);
+    nsresult SetBodyAttribute([in] nsAString *aAttr, [in] nsAString *aValue);
+    nsresult IgnoreSpuriousDragEvent([in] PRBool aIgnoreSpuriousDragEvent);
+    nsresult GetLinkedObjects([out] nsISupportsArray **_retval);
+    nsresult GetIsCSSEnabled([out] PRBool *_retval);
+    nsresult SetIsCSSEnabled([in] PRBool prb);
+    nsresult AddInsertionListener([in] nsIContentFilter *inFilter);
+    nsresult RemoveInsertionListener([in] nsIContentFilter *inFilter);
+    nsresult CreateAnonymousElement([in] nsAString *aTag, [in] nsIDOMNode *aParentNode, [in] nsAString *aAnonClass, [in] PRBool aIsCreatedHidden, [out] nsIDOMElement **_retval);
+    nsresult GetSelectionContainer([out] nsIDOMElement **_retval);
+    nsresult CheckSelectionStateForAnonymousButtons([in] nsISelection *aSelection);
+    nsresult IsAnonymousElement([in] nsIDOMElement *aElement, [out] PRBool *_retval);
+    nsresult GetReturnInParagraphCreatesNewParagraph([out] PRBool *_retval);
+    nsresult SetReturnInParagraphCreatesNewParagraph([in] PRBool prb);
+}
+
 /*
  * NOTE:
  * This is a private Wine interface that is implemented by our implementation
