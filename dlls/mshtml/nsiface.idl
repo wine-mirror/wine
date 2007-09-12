@@ -72,6 +72,15 @@ interface nsILoadGroup;
 interface nsIDOMNode;
 interface nsIDOMDocument;
 interface nsIDOMEvent;
+interface nsIEditor;
+interface nsISelectionController;
+interface nsITransactionManager;
+interface nsITransaction;
+interface nsIInlineSpellChecker;
+interface nsIOutputStream;
+interface nsIEditorObserver;
+interface nsIEditActionListener;
+interface nsIDocumentStateListener;
 
 interface IMoniker;
 
@@ -105,7 +114,6 @@ typedef nsISupports nsIDOMEntityReference;
 typedef nsISupports nsIDOMHTMLFormElement;
 typedef nsISupports nsIDOMHTMLOptionsCollection;
 typedef nsISupports nsIDOMHTMLCollection;
-typedef nsISupports nsIEditor;
 typedef nsISupports nsIWebProgressListener;
 typedef nsISupports nsIDOMCSSValue;
 typedef nsISupports nsIDOMCSSRule;
@@ -113,6 +121,8 @@ typedef nsISupports nsIPrintSession;
 typedef nsISupports nsIControllerCommandTable;
 typedef nsISupports nsIPrincipal;
 typedef nsISupports nsIAtom;
+typedef nsISupports nsISupportsArray;
+typedef nsISupports nsIContentFilter;
 
 [
     object,
@@ -1882,6 +1892,88 @@ interface nsIScriptContainer : nsISupports
     nsresult BindEventHandler(nsISupports *aTarget, void *aScope, nsIAtom *aName, void *aHandler);
     nsresult HoldScriptObject(void *aObject);
     nsresult DropScriptObject(void *aObject);
+}
+
+[
+    object,
+    uuid(D4882FFB-E927-408b-96BE-D4391B456FA9)
+]
+interface nsIEditor  : nsISupports
+{
+    typedef void *nsIPresShellPtr;
+    typedef void *nsIContentPtr;
+
+    nsresult GetSelection([out] nsISelection *_retval);
+    nsresult Init([in] nsIDOMDocument *doc, [in] nsIPresShellPtr shell, [in] nsIContentPtr aRoot, [in] nsISelectionController *aSelCon, [in] PRUint32 aFlags);
+    nsresult SetAttributeOrEquivalent([in] nsIDOMElement *element, [in] const nsAString *sourceAttrName, [in] const nsAString *sourceAttrValue, [in] PRBool aSuppressTransaction);
+    nsresult RemoveAttributeOrEquivalent([in] nsIDOMElement *element, [in] const nsAString *sourceAttrName, [in] PRBool aSuppressTransaction);
+    nsresult PostCreate();
+    nsresult PreDestroy();
+    nsresult GetFlags([out] PRUint32 *_retval);
+    nsresult SetFlags([in] PRUint32 val);
+    nsresult GetContentsMIMEType([out] char **_retval);
+    nsresult SetContentsMIMEType([in] const char *val);
+    nsresult GetIsDocumentEditable([out] PRBool *_retval);
+    nsresult GetDocument([out] nsIDOMDocument **_retval);
+    nsresult GetRootElement([out] nsIDOMElement **_retval);
+    nsresult GetSelectionController([out] nsISelectionController **_retval);
+    nsresult DeleteSelection([in] PRInt16 action);
+    nsresult GetDocumentIsEmpty([out] PRBool *_retval);
+    nsresult GetDocumentModified([out] PRBool *_retval);
+    nsresult GetDocumentCharacterSet([out] nsACString *_retval);
+    nsresult SetDocumentCharacterSet([in] const nsACString *val);
+    nsresult ResetModificationCount();
+    nsresult GetModificationCount([out] PRInt32 *_retval);
+    nsresult IncrementModificationCount([in] long aModCount);
+    nsresult GetTransactionManager([out] nsITransactionManager **_retval);
+    nsresult DoTransaction([in] nsITransaction *txn);
+    nsresult EnableUndo([in] PRBool enable);
+    nsresult Undo([in] PRUint32 count);
+    nsresult CanUndo([out] PRBool *isEnabled, [out] PRBool *canUndo);
+    nsresult Redo([in] PRUint32 count);
+    nsresult CanRedo([out] PRBool *isEnabled, [out] PRBool *canRedo);
+    nsresult BeginTransaction();
+    nsresult EndTransaction();
+    nsresult BeginPlaceHolderTransaction([in] nsIAtom *name);
+    nsresult EndPlaceHolderTransaction();
+    nsresult ShouldTxnSetSelection([out] PRBool *_retval);
+    nsresult SetShouldTxnSetSelection([in] PRBool should);
+    nsresult GetInlineSpellChecker([out] nsIInlineSpellChecker **_retval);
+    nsresult Cut();
+    nsresult CanCut([out] PRBool *_retval);
+    nsresult Copy();
+    nsresult CanCopy([out] PRBool *_retval);
+    nsresult Paste([in] PRInt32 aSelectionType);
+    nsresult CanPaste([in] PRInt32 aSelectionType, [out] PRBool *_retval);
+    nsresult SelectAll();
+    nsresult BeginningOfDocument();
+    nsresult EndOfDocument();
+    nsresult CanDrag([in] nsIDOMEvent *aEvent, [out] PRBool *_retval);
+    nsresult DoDrag([in] nsIDOMEvent *aEvent);
+    nsresult InsertFromDrop([in] nsIDOMEvent *aEvent);
+    nsresult SetAttribute([in] nsIDOMElement *aElement, [in] const nsAString *attributestr, [in] const nsAString *attvalue);
+    nsresult GetAttributeValue([in] nsIDOMElement *aElement, [in] const nsAString *attributestr, [out] nsAString *resultValue, PRBool *_retval);
+    nsresult RemoveAttribute([in] nsIDOMElement *aElement, [in] const nsAString *aAttribute);
+    nsresult CloneAttribute([in] const nsAString *aAttribute, [in] nsIDOMNode *aDestNode, [in] nsIDOMNode *aSourceNode);
+    nsresult CloneAttributes([in] nsIDOMNode *destNode, [in] nsIDOMNode *sourceNode);
+    nsresult CreateNode([in] const nsAString *tag, [in] nsIDOMNode parent, [in] PRInt32 position, [out] nsIDOMNode **_retval);
+    nsresult InsertNode([in] nsIDOMNode *node, [in] nsIDOMNode *parent, [in] PRInt32 aPosition);
+    nsresult SplitNode([in] nsIDOMNode *existingRightNode, [in] PRInt32 offset, [out] nsIDOMNode **newLeftNode);
+    nsresult JoinNodes([in] nsIDOMNode *leftNode, [in] nsIDOMNode *rightNode, [in] nsIDOMNode *parent);
+    nsresult DeleteNode([in] nsIDOMNode *child);
+    nsresult MarkNodeDirty([in] nsIDOMNode *node);
+    nsresult SwitchTextDirection();
+    nsresult OutputToString([in] nsAString formatType, [in] PRUint32 flags, [out] nsAString *_retval);
+    nsresult OutputToStream([in] nsIOutputStream *aStream, [in] nsAString *formatType, [in] nsACString *charsetOverride, [in] PRUint32 flags);
+    nsresult AddEditorObserver([in] nsIEditorObserver *observer);
+    nsresult RemoveEditorObserver([in] nsIEditorObserver *observer);
+    nsresult AddEditActionListener([in] nsIEditActionListener *listener);
+    nsresult RemoveEditActionListener([in] nsIEditActionListener *listener);
+    nsresult AddDocumentStateListener([in] nsIDocumentStateListener *listener);
+    nsresult RemoveDocumentStateListener([in] nsIDocumentStateListener *listener);
+    nsresult DumpContentTree();
+    nsresult DebugDumpContent();
+    nsresult DebugUnitTests([out] PRInt32 *outNumTests, [out] PRInt32 *outNumTestsFailed);
 }
 
 /*

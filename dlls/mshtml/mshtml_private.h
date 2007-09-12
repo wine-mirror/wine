@@ -182,6 +182,7 @@ struct NSContainer {
     nsIBaseWindow *window;
     nsIWebBrowserFocus *focus;
 
+    nsIEditor *editor;
     nsIController *editor_controller;
 
     LONG ref;
@@ -396,7 +397,7 @@ nsICommandParams *create_nscommand_params(void);
 nsIMutableArray *create_nsarray(void);
 nsIWritableVariant *create_nsvariant(void);
 void nsnode_to_nsstring(nsIDOMNode*,nsAString*);
-nsIController *get_editor_controller(NSContainer*);
+void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
 
 BSCallback *create_bscallback(IMoniker*);

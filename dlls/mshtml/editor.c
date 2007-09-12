@@ -608,7 +608,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
 
 void handle_edit_load(HTMLDocument *This)
 {
-    This->nscontainer->editor_controller = get_editor_controller(This->nscontainer);
+    get_editor_controller(This->nscontainer);
 
     if(This->ui_active) {
         OLECHAR wszHTMLDocument[30];
