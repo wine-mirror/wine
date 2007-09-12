@@ -339,7 +339,7 @@ static const WCHAR defFixed[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0
 
 static const WCHAR RegularW[] = {'R','e','g','u','l','a','r','\0'};
 
-static const WCHAR fontsW[] = {'\\','F','o','n','t','s','\0'};
+static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\0'};
 static const WCHAR win9x_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
                                            'W','i','n','d','o','w','s','\\',
                                            'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
