@@ -2423,6 +2423,17 @@ static inline int is_size_needed_for_phase(enum remoting_phase phase)
     return (phase != PHASE_UNMARSHAL);
 }
 
+static int needs_freeing(const attr_list_t *attrs, const type_t *t, int out)
+{
+    return
+        (is_user_type(t)
+         || (is_ptr(t)
+             && (t->ref->type == RPC_FC_IP
+                 || is_ptr(t->ref))))
+        || (out && (is_string_type(attrs, t)
+                    || is_array(t)));
+}
+
 void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                               enum pass pass, enum remoting_phase phase)
 {
@@ -2453,17 +2464,23 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         if (!in_attr && !out_attr)
             in_attr = 1;
 
-        switch (pass)
+        if (phase == PHASE_FREE)
         {
-        case PASS_IN:
-            if (!in_attr) continue;
-            break;
-        case PASS_OUT:
-            if (!out_attr) continue;
-            break;
-        case PASS_RETURN:
-            break;
+            if (!needs_freeing(var->attrs, type, out_attr))
+                continue;
         }
+        else
+            switch (pass)
+            {
+            case PASS_IN:
+                if (!in_attr) continue;
+                break;
+            case PASS_OUT:
+                if (!out_attr) continue;
+                break;
+            case PASS_RETURN:
+                break;
+            }
 
         rtype = type->type;
 
