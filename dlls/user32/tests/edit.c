@@ -1047,6 +1047,63 @@ static void test_espassword(void)
     DestroyWindow (hwEdit);
 }
 
+static void test_undo(void)
+{
+    HWND hwEdit;
+    LONG r;
+    DWORD cpMin, cpMax;
+    char buffer[1024];
+    const char* text = "undo this";
+
+    hwEdit = create_editcontrol(0, 0);
+    r = get_edit_style(hwEdit);
+    ok(0 == r, "Wrong style expected 0x%x got: 0x%x\n", 0, r);
+
+    /* set text */
+    r = SendMessage(hwEdit , WM_SETTEXT, 0, (LPARAM) text);
+    ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
+
+    /* select all, */
+    cpMin = cpMax = 0xdeadbeef;
+    SendMessage(hwEdit, EM_SETSEL, 0, -1);
+    r = SendMessage(hwEdit, EM_GETSEL, (WPARAM) &cpMin, (LPARAM) &cpMax);
+    ok((strlen(text) << 16) == r, "Unexpected length %d\n", r);
+    ok(0 == cpMin, "Expected: %d, got %d\n", 0, cpMin);
+    ok(9 == cpMax, "Expected: %d, got %d\n", 9, cpMax);
+
+    /* cut (ctrl-x) */
+    r = SendMessage(hwEdit, WM_CHAR, 24, 0);
+    todo_wine { ok(1 == r, "Expected: %d, got: %d\n", 1, r); }
+
+    /* get text */
+    buffer[0] = 0;
+    r = SendMessage(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    ok(0 == r, "Expected: %d, got len %d\n", 0, r);
+    ok(0 == strcmp(buffer, ""), "expected %s, got %s\n", "", buffer);
+
+    /* undo (ctrl-z) */
+    r = SendMessage(hwEdit, WM_CHAR, 26, 0);
+    todo_wine { ok(1 == r, "Expected: %d, got: %d\n", 1, r); }
+
+    /* get text */
+    buffer[0] = 0;
+    r = SendMessage(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    ok(strlen(text) == r, "Unexpected length %d\n", r);
+    ok(0 == strcmp(buffer, text), "expected %s, got %s\n", text, buffer);
+
+    /* undo again (ctrl-z) */
+    r = SendMessage(hwEdit, WM_CHAR, 26, 0);
+    todo_wine { ok(1 == r, "Expected: %d, got: %d\n", 1, r); }
+
+    /* get text */
+    buffer[0] = 0;
+    r = SendMessage(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    ok(r == 0, "Expected: %d, got len %d\n", 0, r);
+    ok(0 == strcmp(buffer, ""), "expected %s, got %s\n", "", buffer);
+
+    DestroyWindow (hwEdit);
+}
+
 static BOOL RegisterWindowClasses (void)
 {
     WNDCLASSA test2;
@@ -1113,6 +1170,7 @@ START_TEST(edit)
     test_margins_font_change();
     test_text_position();
     test_espassword();
+    test_undo();
 
     UnregisterWindowClasses();
 }

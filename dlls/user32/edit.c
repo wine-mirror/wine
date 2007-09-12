@@ -4036,6 +4036,10 @@ static void EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 	        if (!((es->style & ES_READONLY) || (es->style & ES_PASSWORD)))
 		    SendMessageW(es->hwndSelf, WM_CUT, 0, 0);
 		break;
+	case 0x1A: /* ^Z */
+	        if (!(es->style & ES_READONLY))
+		    SendMessageW(es->hwndSelf, WM_UNDO, 0, 0);
+		break;
 
 	default:
 		/*If Edit control style is ES_NUMBER allow users to key in only numeric values*/
