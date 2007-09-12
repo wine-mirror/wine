@@ -2610,7 +2610,10 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 const var_t *iid;
                 if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
                     print_file( file, indent, "_StubMsg.MaxCount = (unsigned long)%s;\n", iid->name );
-                print_phase_function(file, indent, "Pointer", phase, var, start_offset);
+                if (var->type->ref->type == RPC_FC_IP)
+                    print_phase_function(file, indent, "InterfacePointer", phase, var, start_offset);
+                else
+                    print_phase_function(file, indent, "Pointer", phase, var, start_offset);
             }
         }
         fprintf(file, "\n");
