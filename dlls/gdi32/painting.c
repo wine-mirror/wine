@@ -351,7 +351,7 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
                             const PIXELFORMATDESCRIPTOR *ppfd)
 {
     INT bRet = FALSE;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
     TRACE("(%p,%d,%p)\n",hdc,iPixelFormat,ppfd);
 
@@ -360,7 +360,7 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
     if (!dc->funcs->pSetPixelFormat) FIXME(" :stub\n");
     else bRet = dc->funcs->pSetPixelFormat(dc->physDev,iPixelFormat,ppfd);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return bRet;
 }
 
