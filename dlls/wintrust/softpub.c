@@ -375,17 +375,22 @@ static BOOL WINTRUST_VerifySigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
 
     if (certInfo)
     {
-        CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA para = { sizeof(para), 0, signerIdx,
-         CMSG_VERIFY_SIGNER_CERT, NULL };
-
-        para.pvSigner = (LPVOID)CertGetSubjectCertificateFromStore(
+        PCCERT_CONTEXT subject = CertGetSubjectCertificateFromStore(
          data->pahStores[0], data->dwEncoding, certInfo);
-        if (para.pvSigner)
+
+        if (subject)
         {
+            CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA para = { sizeof(para), 0,
+             signerIdx, CMSG_VERIFY_SIGNER_CERT, (LPVOID)subject };
+
             ret = CryptMsgControl(data->hMsg, 0, CMSG_CTRL_VERIFY_SIGNATURE_EX,
              &para);
             if (!ret)
                 SetLastError(TRUST_E_CERT_SIGNATURE);
+            else
+                data->psPfns->pfnAddCert2Chain(data, signerIdx, FALSE, 0,
+                 subject);
+            CertFreeCertificateContext(subject);
         }
         else
         {
