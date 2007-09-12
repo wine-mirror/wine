@@ -1342,6 +1342,20 @@ BOOL *
 REFCLSID
 REFIID
 
+%%faultrep.dll
+
+%long
+
+BOOL
+
+%str
+
+LPCSTR
+
+%wstr
+
+LPCWSTR
+
 %%gdi32.dll
 
 %long
