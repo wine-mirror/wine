@@ -155,6 +155,17 @@ static void _test_range_move(unsigned line, IHTMLTxtRange *range, LPWSTR unit, l
     _test_range_text(line, range, NULL);
 }
 
+#define test_range_moveend(r,u,c,e) _test_range_moveend(__LINE__,r,u,c,e)
+static void _test_range_moveend(unsigned line, IHTMLTxtRange *range, LPWSTR unit, long cnt, long excnt)
+{
+    long c = 0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLTxtRange_moveEnd(range, unit, cnt, &c);
+    ok_(__FILE__,line) (hres == S_OK, "move failed: %08x\n", hres);
+    ok_(__FILE__,line) (c == excnt, "count=%ld, expected %ld\n", c, excnt);
+}
+
 #define test_range_inrange(r1,r2,b) _test_range_inrange(__LINE__,r1,r2,b)
 static void _test_range_inrange(unsigned line, IHTMLTxtRange *range1, IHTMLTxtRange *range2, VARIANT_BOOL exb)
 {
@@ -245,6 +256,17 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     test_range_text(range, "test abc 123\r\nit's text");
     test_range_move(range, characterW, 3, 3);
+    test_range_moveend(range, characterW, 1, 1);
+    test_range_text(range, "t");
+    test_range_moveend(range, characterW, 3, 3);
+    test_range_text(range, "t ab");
+    test_range_moveend(range, characterW, -2, -2);
+    test_range_text(range, "t ");
+    test_range_move(range, characterW, 6, 6);
+    test_range_moveend(range, characterW, 3, 3);
+    test_range_text(range, "123");
+    test_range_moveend(range, characterW, 2, 2);
+    test_range_text(range, "123\r\ni");
 
     IHTMLTxtRange_Release(range);
     IHTMLTxtRange_Release(body_range);

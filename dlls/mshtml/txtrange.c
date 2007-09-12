@@ -1095,8 +1095,48 @@ static HRESULT WINAPI HTMLTxtRange_moveEnd(IHTMLTxtRange *iface, BSTR Unit,
         long Count, long *ActualCount)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%s %ld %p)\n", This, debugstr_w(Unit), Count, ActualCount);
-    return E_NOTIMPL;
+    range_unit_t unit;
+
+    TRACE("(%p)->(%s %ld %p)\n", This, debugstr_w(Unit), Count, ActualCount);
+
+    unit = string_to_unit(Unit);
+    if(unit == RU_UNKNOWN)
+        return E_INVALIDARG;
+
+    if(!Count) {
+        *ActualCount = 0;
+        return S_OK;
+    }
+
+    switch(unit) {
+    case RU_CHAR: {
+        dompos_t cur_pos, new_pos;
+        PRBool collapsed;
+
+        get_cur_pos(This, FALSE, &cur_pos);
+        nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
+
+        if(Count > 0) {
+            *ActualCount = move_next_chars(Count, &cur_pos, collapsed, &new_pos);
+            set_range_pos(This, FALSE, &new_pos);
+        }else {
+            *ActualCount = -move_prev_chars(This, -Count, &cur_pos, TRUE,  &new_pos);
+            if(*ActualCount == Count)
+                set_range_pos(This, FALSE, &new_pos);
+            else
+                IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
+        }
+
+        dompos_release(&cur_pos);
+        dompos_release(&new_pos);
+        break;
+    }
+
+    default:
+        FIXME("unimplemented unit %s\n", debugstr_w(Unit));
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_select(IHTMLTxtRange *iface)
