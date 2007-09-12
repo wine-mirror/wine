@@ -34,6 +34,7 @@ INT EMFDRV_SaveDC( PHYSDEV dev )
 BOOL EMFDRV_RestoreDC( PHYSDEV dev, INT level )
 {
     EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
+    DC *dc = get_dc_ptr( physDev->hdc );
     EMRRESTOREDC emr;
 
     emr.emr.iType = EMR_RESTOREDC;
@@ -42,10 +43,11 @@ BOOL EMFDRV_RestoreDC( PHYSDEV dev, INT level )
     if (level < 0)
         emr.iRelative = level;
     else
-        emr.iRelative = level - physDev->dc->saveLevel - 1;
+        emr.iRelative = level - dc->saveLevel - 1;
 
     EMFDRV_WriteRecord( dev, &emr.emr );
 
+    release_dc_ptr( dc );
     return TRUE;
 }
 

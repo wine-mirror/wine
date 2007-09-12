@@ -33,7 +33,6 @@
 typedef struct
 {
     HDC          hdc;
-    DC          *dc;
     METAHEADER  *mh;           /* Pointer to metafile header */
     UINT       handles_size, cur_handles;
     HGDIOBJ   *handles;

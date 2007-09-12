@@ -33,7 +33,6 @@
 typedef struct
 {
     HDC             hdc;
-    DC             *dc;
     ENHMETAHEADER  *emh;           /* Pointer to enhanced metafile header */
     UINT       handles_size, cur_handles;
     HGDIOBJ   *handles;

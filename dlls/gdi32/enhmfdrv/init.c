@@ -159,10 +159,9 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
 /**********************************************************************
  *	     EMFDRV_DeleteDC
  */
-static BOOL EMFDRV_DeleteDC( PHYSDEV dev )
+static BOOL EMFDRV_DeleteDC( DC *dc )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
-    DC *dc = physDev->dc;
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dc->physDev;
     UINT index;
 
     if (physDev->emh) HeapFree( GetProcessHeap(), 0, physDev->emh );
@@ -324,7 +323,6 @@ HDC WINAPI CreateEnhMetaFileW(
     }
     dc->physDev = (PHYSDEV)physDev;
     physDev->hdc = dc->hSelf;
-    physDev->dc = dc;
 
     if(description) { /* App name\0Title\0\0 */
         length = lstrlenW(description);
@@ -405,11 +403,11 @@ HDC WINAPI CreateEnhMetaFileW(
     {
         if ((hFile = CreateFileW(filename, GENERIC_WRITE | GENERIC_READ, 0,
 				 NULL, CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
-            EMFDRV_DeleteDC( dc->physDev );
+            EMFDRV_DeleteDC( dc );
             return 0;
         }
         if (!WriteFile( hFile, (LPSTR)physDev->emh, size, NULL, NULL )) {
-            EMFDRV_DeleteDC( dc->physDev );
+            EMFDRV_DeleteDC( dc );
             return 0;
 	}
 	physDev->hFile = hFile;
@@ -479,7 +477,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
         if (SetFilePointer(physDev->hFile, 0, NULL, FILE_BEGIN) != 0)
         {
             CloseHandle( physDev->hFile );
-            EMFDRV_DeleteDC( dc->physDev );
+            EMFDRV_DeleteDC( dc );
             return 0;
         }
 
@@ -487,7 +485,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
                        sizeof(*physDev->emh), NULL, NULL))
         {
             CloseHandle( physDev->hFile );
-            EMFDRV_DeleteDC( dc->physDev );
+            EMFDRV_DeleteDC( dc );
             return 0;
         }
 	HeapFree( GetProcessHeap(), 0, physDev->emh );
@@ -502,6 +500,6 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 
     hmf = EMF_Create_HENHMETAFILE( physDev->emh, (physDev->hFile != 0) );
     physDev->emh = NULL;  /* So it won't be deleted */
-    EMFDRV_DeleteDC( dc->physDev );
+    EMFDRV_DeleteDC( dc );
     return hmf;
 }

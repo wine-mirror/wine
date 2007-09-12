@@ -175,7 +175,6 @@ static DC *MFDRV_AllocMetaFile(void)
     }
     dc->physDev = (PHYSDEV)physDev;
     physDev->hdc = dc->hSelf;
-    physDev->dc = dc;
 
     if (!(physDev->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev->mh) )))
     {
@@ -204,10 +203,9 @@ static DC *MFDRV_AllocMetaFile(void)
 /**********************************************************************
  *	     MFDRV_DeleteDC
  */
-static BOOL MFDRV_DeleteDC( PHYSDEV dev )
+static BOOL MFDRV_DeleteDC( DC *dc )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
-    DC *dc = physDev->dc;
+    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
     DWORD index;
 
     HeapFree( GetProcessHeap(), 0, physDev->mh );
@@ -251,12 +249,12 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
         physDev->mh->mtType = METAFILE_DISK;
         if ((hFile = CreateFileW(filename, GENERIC_WRITE, 0, NULL,
 				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
-            MFDRV_DeleteDC( dc->physDev );
+            MFDRV_DeleteDC( dc );
             return 0;
         }
         if (!WriteFile( hFile, physDev->mh, sizeof(*physDev->mh), NULL,
 			NULL )) {
-            MFDRV_DeleteDC( dc->physDev );
+            MFDRV_DeleteDC( dc );
             return 0;
 	}
 	physDev->hFile = hFile;
@@ -328,21 +326,21 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 
     if (!MFDRV_MetaParam0(dc->physDev, META_EOF))
     {
-        MFDRV_DeleteDC( dc->physDev );
+        MFDRV_DeleteDC( dc );
 	return 0;
     }
 
     if (physDev->mh->mtType == METAFILE_DISK)  /* disk based metafile */
     {
         if (SetFilePointer(physDev->hFile, 0, NULL, FILE_BEGIN) != 0) {
-            MFDRV_DeleteDC( dc->physDev );
+            MFDRV_DeleteDC( dc );
             return 0;
         }
 
 	physDev->mh->mtType = METAFILE_MEMORY; /* This is what windows does */
         if (!WriteFile(physDev->hFile, (LPSTR)physDev->mh,
                        sizeof(*physDev->mh), NULL, NULL)) {
-            MFDRV_DeleteDC( dc->physDev );
+            MFDRV_DeleteDC( dc );
             return 0;
         }
         CloseHandle(physDev->hFile);
@@ -394,7 +392,7 @@ HMETAFILE16 WINAPI CloseMetaFile16(HDC16 hdc)
     hmf = MF_Create_HMETAFILE16( physDev->mh );
 
     physDev->mh = NULL;  /* So it won't be deleted */
-    MFDRV_DeleteDC( dc->physDev );
+    MFDRV_DeleteDC( dc );
     return hmf;
 }
 
@@ -423,7 +421,7 @@ HMETAFILE WINAPI CloseMetaFile(HDC hdc)
     hmf = MF_Create_HMETAFILE( physDev->mh );
 
     physDev->mh = NULL;  /* So it won't be deleted */
-    MFDRV_DeleteDC( dc->physDev );
+    MFDRV_DeleteDC( dc );
     return hmf;
 }
 
