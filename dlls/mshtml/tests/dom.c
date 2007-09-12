@@ -33,6 +33,8 @@ static const char doc_str1[] = "<html><body>test</body></html>";
 static const char doc_str2[] =
     "<html><body>test a<font size=\"2\">bc 123<br />it's </font>text<br /></body></html>";
 
+static WCHAR wordW[] = {'w','o','r','d',0};
+
 static const char *dbgstr_w(LPCWSTR str)
 {
     static char buf[512];
@@ -127,6 +129,19 @@ static void _test_range_collapse(unsigned line, IHTMLTxtRange *range, BOOL b)
     _test_range_text(line, range, NULL);
 }
 
+#define test_range_expand(r,u,b,t) _test_range_expand(__LINE__,r,u,b,t)
+static void _test_range_expand(unsigned line, IHTMLTxtRange *range, LPWSTR unit,
+        VARIANT_BOOL exb, const char *extext)
+{
+    VARIANT_BOOL b = 0xe0e0;
+    HRESULT hres;
+
+    hres = IHTMLTxtRange_expand(range, unit, &b);
+    ok_(__FILE__,line) (hres == S_OK, "expand failed: %08x\n", hres);
+    ok_(__FILE__,line) (b == exb, "b=%x, expected %x\n", b, exb);
+    _test_range_text(line, range, extext);
+}
+
 #define test_range_inrange(r1,r2,b) _test_range_inrange(__LINE__,r1,r2,b)
 static void _test_range_inrange(unsigned line, IHTMLTxtRange *range1, IHTMLTxtRange *range2, VARIANT_BOOL exb)
 {
@@ -195,6 +210,9 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_inrange(range, range2, VARIANT_FALSE);
     test_range_inrange(range2, range, VARIANT_TRUE);
     IHTMLTxtRange_Release(range2);
+
+    test_range_expand(range, wordW, VARIANT_TRUE, "test ");
+    test_range_expand(range, wordW, VARIANT_FALSE, "test ");
 
     IHTMLTxtRange_Release(range);
     IHTMLTxtRange_Release(body_range);
