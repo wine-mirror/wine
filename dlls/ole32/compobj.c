@@ -182,12 +182,14 @@ struct apartment_loaded_dll
     struct list entry;
     OpenDll *dll;
     DWORD unload_time;
+    BOOL multi_threaded;
 };
 
 static const WCHAR wszAptWinClass[] = {'O','l','e','M','a','i','n','T','h','r','e','a','d','W','n','d','C','l','a','s','s',' ',
                                        '0','x','#','#','#','#','#','#','#','#',' ',0};
 static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
+                                        BOOL apartment_threaded,
                                         REFCLSID rclsid, REFIID riid, void **ppv);
 static void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay);
 
@@ -501,6 +503,7 @@ struct host_object_params
     HANDLE event; /* event signalling when ready for multi-threaded case */
     HRESULT hr; /* result for multi-threaded case */
     IStream *stream; /* stream that the object will be marshaled into */
+    BOOL apartment_threaded; /* is the component purely apartment-threaded? */
 };
 
 static HRESULT apartment_hostobject(struct apartment *apt,
@@ -520,7 +523,8 @@ static HRESULT apartment_hostobject(struct apartment *apt,
         return REGDB_E_CLASSNOTREG;
     }
 
-    hr = apartment_getclassobject(apt, dllpath, &params->clsid, &params->iid, (void **)&object);
+    hr = apartment_getclassobject(apt, dllpath, params->apartment_threaded,
+                                  &params->clsid, &params->iid, (void **)&object);
     if (FAILED(hr))
         return hr;
 
@@ -678,6 +682,7 @@ static HRESULT apartment_hostobject_in_hostapt(struct apartment *apt, BOOL multi
     hr = CreateStreamOnHGlobal(NULL, TRUE, &params.stream);
     if (FAILED(hr))
         return hr;
+    params.apartment_threaded = !multi_threaded;
     if (multi_threaded)
     {
         params.hr = S_OK;
@@ -743,6 +748,7 @@ void apartment_joinmta(void)
 }
 
 static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
+                                        BOOL apartment_threaded,
                                         REFCLSID rclsid, REFIID riid, void **ppv)
 {
     static const WCHAR wszOle32[] = {'o','l','e','3','2','.','d','l','l',0};
@@ -781,6 +787,7 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
         if (SUCCEEDED(hr))
         {
             apartment_loaded_dll->unload_time = 0;
+            apartment_loaded_dll->multi_threaded = FALSE;
             hr = COMPOBJ_DllList_Add( dllpath, &apartment_loaded_dll->dll );
             if (FAILED(hr))
                 HeapFree(GetProcessHeap(), 0, apartment_loaded_dll);
@@ -796,6 +803,11 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
 
     if (SUCCEEDED(hr))
     {
+        /* one component being multi-threaded overrides any number of
+         * apartment-threaded components */
+        if (!apartment_threaded)
+            apartment_loaded_dll->multi_threaded = TRUE;
+
         TRACE("calling DllGetClassObject %p\n", apartment_loaded_dll->dll->DllGetClassObject);
         /* OK: get the ClassObject */
         hr = apartment_loaded_dll->dll->DllGetClassObject(rclsid, riid, ppv);
@@ -815,14 +827,24 @@ static void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
     {
 	if (entry->dll->DllCanUnloadNow && (entry->dll->DllCanUnloadNow() == S_OK))
         {
-            if (!delay || (entry->unload_time && (entry->unload_time < GetTickCount())))
+            DWORD real_delay = delay;
+
+            if (real_delay == INFINITE)
+            {
+                if (entry->multi_threaded)
+                    real_delay = 10 * 60 * 1000; /* 10 minutes */
+                else
+                    real_delay = 0;
+            }
+
+            if (!real_delay || (entry->unload_time && (entry->unload_time < GetTickCount())))
             {
                 list_remove(&entry->entry);
                 COMPOBJ_DllList_ReleaseRef(entry->dll, TRUE);
                 HeapFree(GetProcessHeap(), 0, entry);
             }
             else
-                entry->unload_time = GetTickCount() + delay;
+                entry->unload_time = GetTickCount() + real_delay;
         }
         else if (entry->unload_time)
             entry->unload_time = 0;
@@ -2085,7 +2107,9 @@ static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll,
         return REGDB_E_CLASSNOTREG;
     }
 
-    return apartment_getclassobject(apt, dllpath, rclsid, riid, ppv);
+    return apartment_getclassobject(apt, dllpath,
+                                    !strcmpiW(threading_model, wszApartment),
+                                    rclsid, riid, ppv);
 }
 
 /***********************************************************************
@@ -2515,14 +2539,6 @@ void WINAPI CoFreeUnusedLibrariesEx(DWORD dwUnloadDelay, DWORD dwReserved)
     {
         ERR("apartment not initialised\n");
         return;
-    }
-
-    if (dwUnloadDelay == INFINITE)
-    {
-        if (apt->multi_threaded)
-            dwUnloadDelay = 10 * 60 * 1000; /* 10 minutes */
-        else
-            dwUnloadDelay = 0;
     }
 
     apartment_freeunusedlibraries(apt, dwUnloadDelay);
