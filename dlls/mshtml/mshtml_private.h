@@ -456,6 +456,7 @@ HRESULT editor_exec_copy(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
 HRESULT editor_exec_cut(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
 HRESULT editor_exec_paste(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
 void handle_edit_load(HTMLDocument *This);
+HRESULT editor_is_dirty(HTMLDocument*);
 
 extern DWORD mshtml_tls;
 

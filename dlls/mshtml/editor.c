@@ -1163,3 +1163,15 @@ void init_editor(HTMLDocument *This)
 
     set_ns_fontname(This->nscontainer, "Times New Roman");
 }
+
+HRESULT editor_is_dirty(HTMLDocument *This)
+{
+    PRBool modified;
+
+    if(!This->nscontainer || !This->nscontainer->editor)
+        return S_FALSE;
+
+    nsIEditor_GetDocumentModified(This->nscontainer->editor, &modified);
+
+    return modified ? S_OK : S_FALSE;
+}

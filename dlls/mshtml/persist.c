@@ -600,7 +600,7 @@ static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
     TRACE("(%p)\n", This);
 
     if(This->usermode == EDITMODE)
-        FIXME("Unimplemented in edit mode\n");
+        return editor_is_dirty(This);
 
     return S_FALSE;
 }
