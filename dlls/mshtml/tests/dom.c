@@ -166,6 +166,16 @@ static void _test_range_moveend(unsigned line, IHTMLTxtRange *range, LPWSTR unit
     ok_(__FILE__,line) (c == excnt, "count=%ld, expected %ld\n", c, excnt);
 }
 
+#define test_range_put_text(r,t) _test_range_put_text(__LINE__,r,t)
+static void _test_range_put_text(unsigned line, IHTMLTxtRange *range, LPCWSTR text)
+{
+    HRESULT hres;
+
+    hres = IHTMLTxtRange_put_text(range, (BSTR)text);
+    ok_(__FILE__,line) (hres == S_OK, "put_text failed: %08x\n", hres);
+    _test_range_text(line, range, NULL);
+}
+
 #define test_range_inrange(r1,r2,b) _test_range_inrange(__LINE__,r1,r2,b)
 static void _test_range_inrange(unsigned line, IHTMLTxtRange *range1, IHTMLTxtRange *range2, VARIANT_BOOL exb)
 {
@@ -268,6 +278,8 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_moveend(range, characterW, 2, 2);
     test_range_text(range, "123\r\ni");
 
+    IHTMLTxtRange_Release(range);
+
     hres = IHTMLTxtRange_duplicate(body_range, &range);
     ok(hres == S_OK, "duplicate failed: %08x\n", hres);
 
@@ -317,6 +329,16 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_move(range, characterW, -2, -2);
     test_range_moveend(range, characterW, 3, 2);
     test_range_text(range, "t");
+
+    IHTMLTxtRange_Release(range);
+
+    hres = IHTMLTxtRange_duplicate(body_range, &range);
+    ok(hres == S_OK, "duplicate failed: %08x\n", hres);
+
+    test_range_collapse(range, TRUE);
+    test_range_expand(range, wordW, VARIANT_TRUE, "test ");
+    test_range_put_text(range, wordW);
+    test_range_text(body_range, "wordabc 123\r\nit's text");
 
     IHTMLTxtRange_Release(range);
     IHTMLTxtRange_Release(body_range);
