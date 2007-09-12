@@ -56,7 +56,7 @@
 @ stub OfficeCleanupPolicy
 @ stub OfficeInitializePolicy
 @ stub OpenPersonalTrustDBDialog
-@ stub SoftpubAuthenticode
+@ stdcall SoftpubAuthenticode(ptr)
 @ stdcall SoftpubCheckCert(ptr long long long)
 @ stdcall SoftpubCleanup(ptr)
 @ stub SoftpubDefCertInit

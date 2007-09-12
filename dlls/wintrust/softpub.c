@@ -575,6 +575,55 @@ HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
     return ret ? S_OK : S_FALSE;
 }
 
+HRESULT WINAPI SoftpubAuthenticode(CRYPT_PROVIDER_DATA *data)
+{
+    BOOL ret;
+    CERT_CHAIN_POLICY_STATUS policyStatus = { sizeof(policyStatus), 0 };
+
+    if (data->pWintrustData->dwUIChoice != WTD_UI_NONE)
+        FIXME("unimplemented for UI choice %d\n",
+         data->pWintrustData->dwUIChoice);
+    if (!data->csSigners)
+    {
+        ret = FALSE;
+        policyStatus.dwError = TRUST_E_NOSIGNATURE;
+    }
+    else
+    {
+        DWORD i;
+
+        ret = TRUE;
+        for (i = 0; ret && i < data->csSigners; i++)
+        {
+            CERT_CHAIN_POLICY_PARA policyPara = { sizeof(policyPara), 0 };
+
+            if (data->dwRegPolicySettings & WTPF_TRUSTTEST)
+                policyPara.dwFlags |= CERT_CHAIN_POLICY_TRUST_TESTROOT_FLAG;
+            if (data->dwRegPolicySettings & WTPF_TESTCANBEVALID)
+                policyPara.dwFlags |= CERT_CHAIN_POLICY_ALLOW_TESTROOT_FLAG;
+            if (data->dwRegPolicySettings & WTPF_IGNOREEXPIRATION)
+                policyPara.dwFlags |=
+                 CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG |
+                 CERT_CHAIN_POLICY_IGNORE_CTL_NOT_TIME_VALID_FLAG |
+                 CERT_CHAIN_POLICY_IGNORE_NOT_TIME_NESTED_FLAG;
+            if (data->dwRegPolicySettings & WTPF_IGNOREREVOKATION)
+                policyPara.dwFlags |=
+                 CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG |
+                 CERT_CHAIN_POLICY_IGNORE_CTL_SIGNER_REV_UNKNOWN_FLAG |
+                 CERT_CHAIN_POLICY_IGNORE_CA_REV_UNKNOWN_FLAG |
+                 CERT_CHAIN_POLICY_IGNORE_ROOT_REV_UNKNOWN_FLAG;
+            CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_AUTHENTICODE,
+             data->pasSigners[i].pChainContext, &policyPara, &policyStatus);
+            if (policyStatus.dwError != NO_ERROR)
+                ret = FALSE;
+        }
+    }
+    if (!ret)
+        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_POLICYPROV] =
+         policyStatus.dwError;
+    return ret ? S_OK : S_FALSE;
+}
+
 HRESULT WINAPI SoftpubCleanup(CRYPT_PROVIDER_DATA *data)
 {
     DWORD i, j;
