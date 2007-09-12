@@ -487,7 +487,7 @@ static int write_base_type(FILE *file, const type_t *type, unsigned int *typestr
 }
 
 /* write conformance / variance descriptor */
-static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_t *structure,
+static size_t write_conf_or_var_desc(FILE *file, const type_t *structure,
                                      unsigned int baseoff, const expr_t *expr)
 {
     unsigned char operator_type = 0;
@@ -952,7 +952,7 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
             print_file(file, 0, "/* %d */\n", *tfsoff);
             print_file(file, 2, "0x%x,\t/* %s */\n", ft->type, string_of_type(ft->type));
             print_file(file, 2, "0x%x,\t/* FIXME: always FC_LONG */\n", RPC_FC_LONG);
-            write_conf_or_var_desc(file, current_func, current_structure, offset,
+            write_conf_or_var_desc(file, current_structure, offset,
                                    get_attrp(f->attrs, ATTR_SWITCHIS));
             print_file(file, 2, "NdrFcShort(%hd),\t/* Offset= %hd (%u) */\n",
                        reloff, reloff, absoff);
@@ -1381,7 +1381,7 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
         *typestring_offset += 2;
 
         *typestring_offset += write_conf_or_var_desc(
-            file, current_func, current_structure,
+            file, current_structure,
             (type->declarray && current_structure
              ? type_memsize(current_structure, &align)
              : 0),
@@ -1452,8 +1452,8 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
 
         if (is_conformant_array(type))
             *typestring_offset
-                += write_conf_or_var_desc(file, current_func, current_structure,
-                                          baseoff, size_is);
+                += write_conf_or_var_desc(file, current_structure, baseoff,
+                                          size_is);
 
         if (type->type == RPC_FC_SMVARRAY || type->type == RPC_FC_LGVARRAY)
         {
@@ -1477,8 +1477,8 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
 
         if (length_is)
             *typestring_offset
-                += write_conf_or_var_desc(file, current_func, current_structure,
-                                          baseoff, length_is);
+                += write_conf_or_var_desc(file, current_structure, baseoff,
+                                          length_is);
 
         if (has_pointer)
         {
@@ -1794,8 +1794,8 @@ static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     return start_offset;
 }
 
-static size_t write_ip_tfs(FILE *file, const func_t *func, const attr_list_t *attrs,
-                           type_t *type, unsigned int *typeformat_offset)
+static size_t write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *type,
+                           unsigned int *typeformat_offset)
 {
     size_t i;
     size_t start_offset = *typeformat_offset;
@@ -1811,7 +1811,7 @@ static size_t write_ip_tfs(FILE *file, const func_t *func, const attr_list_t *at
         expr.is_const = FALSE;
         print_file(file, 2, "0x2f,  /* FC_IP */\n");
         print_file(file, 2, "0x5c,  /* FC_PAD */\n");
-        *typeformat_offset += write_conf_or_var_desc(file, func, NULL, 0, &expr) + 2;
+        *typeformat_offset += write_conf_or_var_desc(file, NULL, 0, &expr) + 2;
     }
     else
     {
@@ -1920,7 +1920,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
 
         if (base->type == RPC_FC_IP)
         {
-            return write_ip_tfs(file, func, var->attrs, type, typeformat_offset);
+            return write_ip_tfs(file, var->attrs, type, typeformat_offset);
         }
 
         /* special case for pointers to base types */
@@ -1992,7 +1992,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
 
         if (ref->type == RPC_FC_IP)
         {
-            write_ip_tfs(file, NULL, attrs, type, tfsoff);
+            write_ip_tfs(file, attrs, type, tfsoff);
         }
         else
         {
