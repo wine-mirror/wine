@@ -83,7 +83,7 @@ static ULONG WINAPI HTMLInputElement_AddRef(IHTMLInputElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node->doc));
+    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node.doc));
 }
 
 static ULONG WINAPI HTMLInputElement_Release(IHTMLInputElement *iface)
@@ -92,7 +92,7 @@ static ULONG WINAPI HTMLInputElement_Release(IHTMLInputElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_Release(HTMLDOC(This->element->node->doc));
+    return IHTMLDocument2_Release(HTMLDOC(This->element->node.doc));
 }
 
 static HRESULT WINAPI HTMLInputElement_GetTypeInfoCount(IHTMLInputElement *iface, UINT *pctinfo)

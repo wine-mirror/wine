@@ -83,7 +83,7 @@ static ULONG WINAPI HTMLTextAreaElement_AddRef(IHTMLTextAreaElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node->doc));
+    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node.doc));
 }
 
 static ULONG WINAPI HTMLTextAreaElement_Release(IHTMLTextAreaElement *iface)
@@ -92,7 +92,7 @@ static ULONG WINAPI HTMLTextAreaElement_Release(IHTMLTextAreaElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_Release(HTMLDOC(This->element->node->doc));
+    return IHTMLDocument2_Release(HTMLDOC(This->element->node.doc));
 }
 
 static HRESULT WINAPI HTMLTextAreaElement_GetTypeInfoCount(IHTMLTextAreaElement *iface, UINT *pctinfo)

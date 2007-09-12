@@ -58,6 +58,8 @@ static void elem_vector_add(elem_vector *buf, HTMLElement *elem)
 
 #define HTMLELEM_THIS(iface) DEFINE_THIS(HTMLElement, HTMLElement, iface)
 
+#define HTMLELEM_NODE_THIS(node)  ((HTMLElement *) node)
+
 static HRESULT WINAPI HTMLElement_QueryInterface(IHTMLElement *iface,
                                                  REFIID riid, void **ppv)
 {
@@ -82,7 +84,7 @@ static ULONG WINAPI HTMLElement_AddRef(IHTMLElement *iface)
         return IUnknown_AddRef(This->impl);
 
     TRACE("(%p)\n", This);
-    return IHTMLDocument2_AddRef(HTMLDOC(This->node->doc));
+    return IHTMLDocument2_AddRef(HTMLDOC(This->node.doc));
 }
 
 static ULONG WINAPI HTMLElement_Release(IHTMLElement *iface)
@@ -93,7 +95,7 @@ static ULONG WINAPI HTMLElement_Release(IHTMLElement *iface)
         return IUnknown_Release(This->impl);
 
     TRACE("(%p)\n", This);
-    return IHTMLDocument2_Release(HTMLDOC(This->node->doc));
+    return IHTMLDocument2_Release(HTMLDOC(This->node.doc));
 }
 
 static HRESULT WINAPI HTMLElement_GetTypeInfoCount(IHTMLElement *iface, UINT *pctinfo)
@@ -199,7 +201,7 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
             WCHAR buffer[256];
             DWORD len;
             BSTR bstrBaseUrl;
-            hres = IHTMLDocument2_get_URL(HTMLDOC(This->node->doc), &bstrBaseUrl);
+            hres = IHTMLDocument2_get_URL(HTMLDOC(This->node.doc), &bstrBaseUrl);
             if(SUCCEEDED(hres)) {
                 hres = CoInternetCombineUrl(bstrBaseUrl, value,
                                             URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
@@ -763,7 +765,7 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(where), debugstr_w(html));
 
-    nsres = nsIWebNavigation_GetDocument(This->node->doc->nscontainer->navigation, &nsdoc);
+    nsres = nsIWebNavigation_GetDocument(This->node.doc->nscontainer->navigation, &nsdoc);
     if(NS_FAILED(nsres))
     {
         ERR("GetDocument failed: %08x\n", nsres);
@@ -825,7 +827,7 @@ static HRESULT WINAPI HTMLElement_insertAdjacentText(IHTMLElement *iface, BSTR w
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(where), debugstr_w(text));
 
-    nsres = nsIWebNavigation_GetDocument(This->node->doc->nscontainer->navigation, &nsdoc);
+    nsres = nsIWebNavigation_GetDocument(This->node.doc->nscontainer->navigation, &nsdoc);
     if(NS_FAILED(nsres) || !nsdoc)
     {
         ERR("GetDocument failed: %08x\n", nsres);
@@ -1034,7 +1036,7 @@ static void create_child_list(HTMLDocument *doc, HTMLElement *elem, elem_vector 
     HTMLDOMNode *node;
     nsresult nsres;
 
-    nsres = nsIDOMNode_GetChildNodes(elem->node->nsnode, &nsnode_list);
+    nsres = nsIDOMNode_GetChildNodes(elem->node.nsnode, &nsnode_list);
     if(NS_FAILED(nsres)) {
         ERR("GetChildNodes failed: %08x\n", nsres);
         return;
@@ -1058,7 +1060,7 @@ static void create_child_list(HTMLDocument *doc, HTMLElement *elem, elem_vector 
         if(node->node_type != NT_HTMLELEM)
             continue;
 
-        elem_vector_add(buf, (HTMLElement*)node->impl.elem);
+        elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
     }
 }
 
@@ -1069,7 +1071,7 @@ static HRESULT WINAPI HTMLElement_get_children(IHTMLElement *iface, IDispatch **
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    create_child_list(This->node->doc, This, &buf);
+    create_child_list(This->node.doc, This, &buf);
 
     return HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len, p);
 }
@@ -1082,7 +1084,7 @@ static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *b
     HTMLDOMNode *node;
     nsresult nsres;
 
-    nsres = nsIDOMNode_GetChildNodes(elem->node->nsnode, &nsnode_list);
+    nsres = nsIDOMNode_GetChildNodes(elem->node.nsnode, &nsnode_list);
     if(NS_FAILED(nsres)) {
         ERR("GetChildNodes failed: %08x\n", nsres);
         return;
@@ -1103,8 +1105,8 @@ static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *b
         if(node->node_type != NT_HTMLELEM)
             continue;
 
-        elem_vector_add(buf, (HTMLElement*)node->impl.elem);
-        create_all_list(doc, (HTMLElement*)node->impl.elem, buf);
+        elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
+        create_all_list(doc, HTMLELEM_NODE_THIS(node), buf);
     }
 }
 
@@ -1117,7 +1119,9 @@ static HRESULT WINAPI HTMLElement_get_all(IHTMLElement *iface, IDispatch **p)
 
     buf.buf = mshtml_alloc(buf.size*sizeof(HTMLElement**));
 
-    create_all_list(This->node->doc, This, &buf);
+    create_all_list(This->node.doc, This, &buf);
+
+    TRACE("ret\n");
 
     if(!buf.len) {
         mshtml_free(buf.buf);
@@ -1264,10 +1268,10 @@ HRESULT HTMLElement_QI(HTMLElement *This, REFIID riid, void **ppv)
         return S_OK;
     }
 
-    return HTMLDOMNode_QI(This->node, riid, ppv);
+    return HTMLDOMNode_QI(&This->node, riid, ppv);
 }
 
-void HTMLElement_Create(HTMLDOMNode *node)
+HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
 {
     HTMLElement *ret;
     nsAString class_name_str;
@@ -1282,19 +1286,18 @@ void HTMLElement_Create(HTMLDOMNode *node)
 
     ret = mshtml_alloc(sizeof(HTMLElement));
     ret->lpHTMLElementVtbl = &HTMLElementVtbl;
-    ret->node = node;
     ret->impl = NULL;
     ret->destructor = NULL;
 
-    node->node_type = NT_HTMLELEM;
-    node->impl.elem = HTMLELEM(ret);
-    node->destructor = HTMLElement_destructor;
+    ret->node.node_type = NT_HTMLELEM;
+    ret->node.impl.elem = HTMLELEM(ret);
+    ret->node.destructor = HTMLElement_destructor;
 
     HTMLElement2_Init(ret);
 
-    nsres = nsIDOMNode_QueryInterface(node->nsnode, &IID_nsIDOMHTMLElement, (void**)&ret->nselem);
+    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMHTMLElement, (void**)&ret->nselem);
     if(NS_FAILED(nsres))
-        return;
+        return NULL;
 
     nsAString_Init(&class_name_str, NULL);
     nsIDOMHTMLElement_GetTagName(ret->nselem, &class_name_str);
@@ -1313,6 +1316,8 @@ void HTMLElement_Create(HTMLDOMNode *node)
         HTMLTextAreaElement_Create(ret);
 
     nsAString_Finish(&class_name_str);
+
+    return ret;
 }
 
 typedef struct {

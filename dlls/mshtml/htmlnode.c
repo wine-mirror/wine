@@ -335,6 +335,33 @@ HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
     return E_NOINTERFACE;
 }
 
+static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
+{
+    HTMLDOMNode *ret;
+    PRUint16 node_type;
+
+    nsIDOMNode_GetNodeType(nsnode, &node_type);
+
+    switch(node_type) {
+    case ELEMENT_NODE:
+        ret = &HTMLElement_Create(nsnode)->node;
+        break;
+    default:
+        ret = mshtml_alloc(sizeof(HTMLDOMNode));
+        ret->node_type = NT_UNKNOWN;
+        ret->impl.unk = NULL;
+        ret->destructor = NULL;
+    }
+
+    ret->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
+    ret->doc = doc;
+
+    nsIDOMNode_AddRef(nsnode);
+    ret->nsnode = nsnode;
+
+    return ret;
+}
+
 /*
  * FIXME
  * List looks really ugly here. We should use a better data structure or
@@ -344,7 +371,6 @@ HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
 HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode)
 {
     HTMLDOMNode *iter = This->nodes, *ret;
-    PRUint16 node_type;
 
     while(iter) {
         if(iter->nsnode == nsnode)
@@ -355,23 +381,10 @@ HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode)
     if(iter)
         return iter;
 
-    ret = mshtml_alloc(sizeof(HTMLDOMNode));
-    ret->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
-    ret->node_type = NT_UNKNOWN;
-    ret->impl.unk = NULL;
-    ret->destructor = NULL;
-    ret->doc = This;
-
-    nsIDOMNode_AddRef(nsnode);
-    ret->nsnode = nsnode;
+    ret = create_node(This, nsnode);
 
     ret->next = This->nodes;
     This->nodes = ret;
-
-    nsIDOMNode_GetNodeType(nsnode, &node_type);
-
-    if(node_type == ELEMENT_NODE)
-        HTMLElement_Create(ret);
 
     return ret;
 }
@@ -385,9 +398,10 @@ void release_nodes(HTMLDocument *This)
 
     for(iter = This->nodes; iter; iter = next) {
         next = iter->next;
+        nsIDOMNode_Release(iter->nsnode);
         if(iter->destructor)
             iter->destructor(iter->impl.unk);
-        nsIDOMNode_Release(iter->nsnode);
-        mshtml_free(iter);
+        else
+            mshtml_free(iter);
     }
 }

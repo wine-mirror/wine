@@ -271,13 +271,14 @@ struct HTMLDOMNode {
 };
 
 typedef struct {
+    HTMLDOMNode node;
+
     const IHTMLElementVtbl *lpHTMLElementVtbl;
     const IHTMLElement2Vtbl *lpHTMLElement2Vtbl;
 
     void (*destructor)(IUnknown*);
 
     nsIDOMHTMLElement *nselem;
-    HTMLDOMNode *node;
 
     IUnknown *impl;
 } HTMLElement;
@@ -414,7 +415,7 @@ IHTMLStyleSheet *HTMLStyleSheet_Create(void);
 void detach_selection(HTMLDocument*);
 void detach_ranges(HTMLDocument*);
 
-void HTMLElement_Create(HTMLDOMNode*);
+HTMLElement *HTMLElement_Create(nsIDOMNode*);
 void HTMLAnchorElement_Create(HTMLElement*);
 void HTMLBodyElement_Create(HTMLElement*);
 void HTMLInputElement_Create(HTMLElement*);

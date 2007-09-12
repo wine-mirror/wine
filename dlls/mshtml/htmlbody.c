@@ -95,7 +95,7 @@ static ULONG WINAPI HTMLBodyElement_AddRef(IHTMLBodyElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node->doc));
+    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node.doc));
 }
 
 static ULONG WINAPI HTMLBodyElement_Release(IHTMLBodyElement *iface)
@@ -104,7 +104,7 @@ static ULONG WINAPI HTMLBodyElement_Release(IHTMLBodyElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_Release(HTMLDOC(This->element->node->doc));
+    return IHTMLDocument2_Release(HTMLDOC(This->element->node.doc));
 }
 
 static HRESULT WINAPI HTMLBodyElement_GetTypeInfoCount(IHTMLBodyElement *iface, UINT *pctinfo)
@@ -406,18 +406,18 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
 
     TRACE("(%p)->(%p)\n", This, range);
 
-    if(This->element->node->doc->nscontainer) {
+    if(This->element->node.doc->nscontainer) {
         nsIDOMDocument *nsdoc;
         nsIDOMDocumentRange *nsdocrange;
         nsresult nsres;
 
-        nsIWebNavigation_GetDocument(This->element->node->doc->nscontainer->navigation, &nsdoc);
+        nsIWebNavigation_GetDocument(This->element->node.doc->nscontainer->navigation, &nsdoc);
         nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentRange, (void**)&nsdocrange);
         nsIDOMDocument_Release(nsdoc);
 
         nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &nsrange);
         if(NS_SUCCEEDED(nsres)) {
-            nsres = nsIDOMRange_SelectNodeContents(nsrange, This->element->node->nsnode);
+            nsres = nsIDOMRange_SelectNodeContents(nsrange, This->element->node.nsnode);
             if(NS_FAILED(nsres))
                 ERR("SelectNodeContents failed: %08x\n", nsres);
         }else {
@@ -427,7 +427,7 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
         nsIDOMDocumentRange_Release(nsdocrange);
     }
 
-    *range = HTMLTxtRange_Create(This->element->node->doc, nsrange);
+    *range = HTMLTxtRange_Create(This->element->node.doc, nsrange);
     return S_OK;
 }
 

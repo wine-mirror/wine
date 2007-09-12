@@ -83,7 +83,7 @@ static ULONG WINAPI HTMLSelectElement_AddRef(IHTMLSelectElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node->doc));
+    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node.doc));
 }
 
 static ULONG WINAPI HTMLSelectElement_Release(IHTMLSelectElement *iface)
@@ -92,7 +92,7 @@ static ULONG WINAPI HTMLSelectElement_Release(IHTMLSelectElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_Release(HTMLDOC(This->element->node->doc));
+    return IHTMLDocument2_Release(HTMLDOC(This->element->node.doc));
 }
 
 static HRESULT WINAPI HTMLSelectElement_GetTypeInfoCount(IHTMLSelectElement *iface, UINT *pctinfo)
