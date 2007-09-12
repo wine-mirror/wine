@@ -33,6 +33,7 @@ static const char doc_str1[] = "<html><body>test</body></html>";
 static const char doc_str2[] =
     "<html><body>test a<font size=\"2\">bc 123<br />it's </font>text<br /></body></html>";
 
+static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
 static WCHAR wordW[] = {'w','o','r','d',0};
 
 static const char *dbgstr_w(LPCWSTR str)
@@ -142,6 +143,18 @@ static void _test_range_expand(unsigned line, IHTMLTxtRange *range, LPWSTR unit,
     _test_range_text(line, range, extext);
 }
 
+#define test_range_move(r,u,c,e) _test_range_move(__LINE__,r,u,c,e)
+static void _test_range_move(unsigned line, IHTMLTxtRange *range, LPWSTR unit, long cnt, long excnt)
+{
+    long c = 0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLTxtRange_move(range, unit, cnt, &c);
+    ok_(__FILE__,line) (hres == S_OK, "move failed: %08x\n", hres);
+    ok_(__FILE__,line) (c == excnt, "count=%ld, expected %ld\n", c, excnt);
+    _test_range_text(line, range, NULL);
+}
+
 #define test_range_inrange(r1,r2,b) _test_range_inrange(__LINE__,r1,r2,b)
 static void _test_range_inrange(unsigned line, IHTMLTxtRange *range1, IHTMLTxtRange *range2, VARIANT_BOOL exb)
 {
@@ -213,6 +226,25 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     test_range_expand(range, wordW, VARIANT_TRUE, "test ");
     test_range_expand(range, wordW, VARIANT_FALSE, "test ");
+    test_range_move(range, characterW, 2, 2);
+    test_range_expand(range, wordW, VARIANT_TRUE, "test ");
+
+    test_range_collapse(range, FALSE);
+    test_range_expand(range, wordW, VARIANT_TRUE, "abc ");
+
+    test_range_collapse(range, FALSE);
+    test_range_expand(range, wordW, VARIANT_TRUE, "123");
+    test_range_expand(range, wordW, VARIANT_FALSE, "123");
+    test_range_move(range, characterW, 2, 2);
+    test_range_expand(range, wordW, VARIANT_TRUE, "123");
+
+    IHTMLTxtRange_Release(range);
+
+    hres = IHTMLTxtRange_duplicate(body_range, &range);
+    ok(hres == S_OK, "duplicate failed: %08x\n", hres);
+
+    test_range_text(range, "test abc 123\r\nit's text");
+    test_range_move(range, characterW, 3, 3);
 
     IHTMLTxtRange_Release(range);
     IHTMLTxtRange_Release(body_range);
