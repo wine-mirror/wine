@@ -3,7 +3,7 @@
  * Portuguese Language Support
  *
  * Copyright 2003 Marcelo Duarte
- * Copyright 2006 Américo José Melo
+ * Copyright 2006-2007 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,7 +47,7 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 STRINGTABLE
 BEGIN
 IDS_EDIT,		"&Editar"
-IDS_DEFAULT,		"&Definir padrões"
+IDS_DEFAULT,		"&Definir predefinições"
 IDS_PROPERTIES,		"&Propriedades"
 IDS_MARK,		"&Marcar"
 IDS_COPY,		"&Copiar"
@@ -61,7 +61,7 @@ IDS_FNT_PREVIEW_2,	""
 IDS_DLG_TIT_DEFAULT,    "Configuração - configurações predefinidas"
 IDS_DLG_TIT_CURRENT,    "Configuração - configurações actuais"
 IDS_DLG_TIT_ERROR,	"Erro de configuração"
-IDS_DLG_ERR_SBWINSIZE,	"O tamanho do buffer do ecrã deve ser maior ou igual ao da janela"
+IDS_DLG_ERR_SBWINSIZE,	"O tamanho do 'buffer' do ecrã deve ser maior ou igual ao da janela"
 END
 
 
@@ -108,7 +108,7 @@ FONT 8, "MS Shell Dlg"
 	AUTOCHECKBOX "&Controlo", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
 	AUTOCHECKBOX "&Rotação", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
 	LTEXT "Edição rápida", -1, 79, 43, 50, 10
-	AUTOCHECKBOX "&Habilitado", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
+	AUTOCHECKBOX "&Activado", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
 
 	GROUPBOX "Histórico de comandos", -1, 10, 57, 190, 35, BS_GROUPBOX
 	LTEXT "&Número de comandos rechamados :", -1, 14, 67, 78, 18
@@ -192,7 +192,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Configuração "
 FONT 8, "MS Shell Dlg"
 {
-	GROUPBOX "Zona do buffer", -1, 10, 11, 100, 42, BS_GROUPBOX
+	GROUPBOX "Zona do 'buffer'", -1, 10, 11, 100, 42, BS_GROUPBOX
 	LTEXT "&Largura :", -1, 14, 25, 54, 9
 	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
@@ -209,7 +209,7 @@ FONT 8, "MS Shell Dlg"
 	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
 	GROUPBOX "Finalizar programa", -1, 115, 11, 80, 42, BS_GROUPBOX
-	AUTOCHECKBOX "&Fechar o console", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
+	AUTOCHECKBOX "&Fechar consola", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
 
 	GROUPBOX "Edição", -1, 115, 55, 80, 42
 	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 75, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP

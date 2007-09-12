@@ -1,7 +1,7 @@
 /*
  * Copyright 1998 Juergen Schmied
  * Copyright 2003 Marcelo Duarte
- * Copyright 2006 Américo José Melo
+ * Copyright 2006-2007 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -328,14 +328,14 @@ STRINGTABLE DISCARDABLE
 	IDS_SELECT		"Seleccionar"
 	IDS_OPEN		"Abrir"
 
-	IDS_CREATEFOLDER_DENIED "Não pode criar nova pasta: Permissão negada."
+	IDS_CREATEFOLDER_DENIED "Não é possível criar nova pasta: Permissão negada."
 	IDS_CREATEFOLDER_CAPTION "Erro durante a criação da nova pasta"
 	IDS_DELETEITEM_CAPTION "Confirmar exclusão do ficheiro"
 	IDS_DELETEFOLDER_CAPTION "Confirmar exclusão da pasta"
-	IDS_DELETEITEM_TEXT "Tem a certeza que deseja excluir '%1'?"
+	IDS_DELETEITEM_TEXT "Tem certeza que deseja excluir '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Tem certeza que deseja excluir estes %1 itens?"
-	IDS_OVERWRITEFILE_TEXT "Sobreescrever ficheiro %1?"
-	IDS_OVERWRITEFILE_CAPTION "Confirmar sobreescrição do ficheiro"
+	IDS_OVERWRITEFILE_TEXT "Substituir ficheiro %1?"
+	IDS_OVERWRITEFILE_CAPTION "Confirmar substituição de ficheiro"
 
         /* message box strings */
 	IDS_RESTART_TITLE       "Reiniciar"

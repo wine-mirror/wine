@@ -6,7 +6,7 @@
  * Portuguese translation by Gustavo Junior Alves <alves@correionet.com.br>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  * Copyright 2003 Marcelo Duarte
- * Copyright 2004 Américo José Melo
+ * Copyright 2004,2007 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -126,5 +126,5 @@ STID_HISTORY, 		"&Histórico"
 STID_TOPICS,		"&Tópicos"
 STID_ALL_FILES, 	"Todos os ficheiros (*.*)"
 STID_HELP_FILES_HLP, 	"Ficheiros de ajuda (*.hlp)"
-STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
+STID_FILE_NOT_FOUND_s	"Não é possível encontrar '%s'. Deseja procurar este ficheiro você mesmo?"
 }

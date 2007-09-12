@@ -3,7 +3,7 @@
  * Portuguese Language Support
  *
  * Copyright 2003 Marcelo Duarte
- * Copyright 2004 Américo José Melo
+ * Copyright 2004,2007 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -187,8 +187,8 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "&Gerar disco de sistema...", -1   /*TODO*/
 #endif
         MENUITEM SEPARATOR
-        MENUITEM "Conecta&r unidade de rede",   ID_CONNECT_NETWORK_DRIVE
-        MENUITEM "&Desconectar unidade de rede",ID_DISCONNECT_NETWORK_DRIVE
+        MENUITEM "Liga&r unidade de rede",   ID_CONNECT_NETWORK_DRIVE
+        MENUITEM "&Desligar unidade de rede",ID_DISCONNECT_NETWORK_DRIVE
         MENUITEM SEPARATOR
         MENUITEM "&Partilhar como...",          254
         MENUITEM "&Remover partilha...",        255
@@ -332,11 +332,11 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 STRINGTABLE
 {
     IDS_FONT_SEL_DLG_NAME   "A aplicar configurações do tipo de letra"
-    IDS_FONT_SEL_ERROR      "Erro ao selecciona novo tipo de letra."
+    IDS_FONT_SEL_ERROR      "Erro ao seleccionar novo tipo de letra."
 }
 
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE
 {
@@ -352,6 +352,21 @@ STRINGTABLE
  IDS_WINE_FILE              "Wine File"
 }
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+STRINGTABLE
+{
+ IDS_WINEFILE               "Winefile"
+ IDS_ERROR                  "Erro"
+ IDS_ROOT_FS                "root fs"
+ IDS_UNIXFS                 "unixfs"
+ IDS_DESKTOP                "Ecrã"
+ IDS_SHELL                  "Linha de Comandos"
+ IDS_TITLEFMT               "%s - %s"
+ IDS_NO_IMPL                "Ainda não implementado"
+ IDS_WINE                   "WINE"
+ IDS_WINE_FILE              "Ficheiro Wine"
+}
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
@@ -362,7 +377,7 @@ STRINGTABLE
  IDS_COL_CDATE              "CData"
  IDS_COL_ADATE              "AData"
  IDS_COL_MDATE              "MData"
- IDS_COL_IDX                "Index/Inode"
+ IDS_COL_IDX                "Índice/Inode"
  IDS_COL_LINKS              "Ligações"
  IDS_COL_ATTR               "Atributos"
  IDS_COL_SEC                "Segurança"

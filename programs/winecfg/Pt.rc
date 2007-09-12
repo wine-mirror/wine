@@ -3,7 +3,7 @@
  * Portuguese Language Support
  *
  * Copyright 2003 Marcelo Duarte
- * Copyright 2004 Américo José Melo
+ * Copyright 2004,2007 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,7 +47,7 @@ BEGIN
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE |
                     SS_REALSIZEIMAGE | WS_BORDER,15,17,157,111, WS_EX_TRANSPARENT
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    CTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
+    CTEXT           "Esta biblioteca é 'software' livre; pode-a redistribuir e/ou modificar nos termos da Licença Pública Geral Lesser GNU como publicada pela Fundação de 'Software' Livre; tanto a versão 2.1 da licença, ou (conforme a sua opinião) qualquer versão poetrior.",
                     IDC_STATIC,119,44,124,72
 END
 
@@ -124,16 +124,16 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    CONTROL	    "Os programas DirectX podem impedir que o mouse deixe a janela?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "Os programas DirectX podem impedir que o rato deixe a janela?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     
     GROUPBOX        " Configurações de janela ",IDC_STATIC,8,25,244,120
 
     /* FIXME: the wording of this explanation could be a lot better */
-    LTEXT           "Pode escolher emular uma área de trabalho, onde todas as janelas são confinadas a um 'ecrã virtual', ou pode ter uma janela colocada na sua área de trabalho predefinida.",
+    LTEXT           "Pode escolher emular um ecrã, onde todas as janelas são confinadas a um 'ecrã virtual', ou pode ter uma janela colocada no seu ecrã predefinido.",
                     IDC_STATIC,15,73,228,28
-    LTEXT           "Tamanho da área de trabalho:",IDC_DESKTOP_SIZE,15,115,100,8,WS_DISABLED
+    LTEXT           "Tamanho do ecrã:",IDC_DESKTOP_SIZE,15,115,100,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,164,115,8,8,WS_DISABLED
-    CONTROL         "Emular uma área de trabalho virtual",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL         "Emular um ecrã virtual",IDC_ENABLE_DESKTOP,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,100,228,10
 		    
     EDITTEXT        IDC_DESKTOP_WIDTH,120,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
@@ -171,19 +171,19 @@ IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Sobreescrever DLLs",IDC_STATIC,8,4,244,240
-    LTEXT           "As bibliotecas podem ser especificadas individualmente como 'builtin' ou 'native'. Uma entrada DLL como ""*"" é pertinente a todas as DLLs não especificadas explicitamente."
+    GROUPBOX        "Substituição de DLLs",IDC_STATIC,8,4,244,240
+    LTEXT           "As bibliotecas de ligações dinâmicas podem ser especificadas individualmente para serem embutidas (providenciadas pelo Wine) ou nativas (tiradas do Windows ou providenciadas pela aplicação)."
                     ,  IDC_STATIC,15,17,228,32
-    CONTROL         "Sobreescrever DLLs", IDC_TREE_DLLS, "SysTreeView32", WS_BORDER | WS_TABSTOP | TVS_LINESATROOT | TVS_HASLINES | TVS_SHOWSELALWAYS | TVS_HASBUTTONS, 15,50,142,187
+    CONTROL         "Substituir DLLs", IDC_TREE_DLLS, "SysTreeView32", WS_BORDER | WS_TABSTOP | TVS_LINESATROOT | TVS_HASLINES | TVS_SHOWSELALWAYS | TVS_HASBUTTONS, 15,50,142,187
     LTEXT           "Ordem de carga:",IDC_STATIC,163,50,60,8
     CONTROL         "Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,163,65,75,10
-    CONTROL         "Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,163,80,75,10
-    CONTROL         "Builtin, Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,163,95,75,10
-    CONTROL         "Native, Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,163,110,75,10
-    CONTROL         "Desabilitada",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,163,125,75,10
+    CONTROL         "Nativas (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,163,80,75,10
+    CONTROL         "Embutidas, Nativas",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,163,95,75,10
+    CONTROL         "Nativas, Embutidas",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,163,110,75,10
+    CONTROL         "Desactivada",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,163,125,75,10
     PUSHBUTTON	    "Adicionar aplicação...",IDC_DLLS_ADDAPP,163,144,82,14
     PUSHBUTTON	    "Remover aplicação",IDC_DLLS_REMOVEAPP, 163,164,82,14
-    PUSHBUTTON	    "Adicionar carga de DLL:",IDC_DLLS_ADDDLL, 163,184,82,14
+    PUSHBUTTON	    "Adicionar carga DLL:",IDC_DLLS_ADDDLL, 163,184,82,14
     COMBOBOX        IDC_DLLLIST,163,204,82,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON	    "Remover carga de DLL",IDC_DLLS_REMOVEDLL,163,224,82,14
 END

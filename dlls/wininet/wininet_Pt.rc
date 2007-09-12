@@ -1,6 +1,6 @@
 /*
  * Copyright 2003 Marcelo Duarte
- * Copyright 2006 Américo José Melo
+ * Copyright 2006-2007 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -67,4 +67,11 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 STRINGTABLE DISCARDABLE
 {
   IDS_LANCONNECTION "Conexão LAN"
+}
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+STRINGTABLE DISCARDABLE
+{
+  IDS_LANCONNECTION "Ligação LAN"
 }
