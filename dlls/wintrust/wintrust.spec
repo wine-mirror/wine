@@ -58,7 +58,7 @@
 @ stub OpenPersonalTrustDBDialog
 @ stub SoftpubAuthenticode
 @ stdcall SoftpubCheckCert(ptr long long long)
-@ stub SoftpubCleanup
+@ stdcall SoftpubCleanup(ptr)
 @ stub SoftpubDefCertInit
 @ stdcall SoftpubDllRegisterServer()
 @ stdcall SoftpubDllUnregisterServer()

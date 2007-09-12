@@ -569,3 +569,38 @@ HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
          GetLastError();
     return ret ? S_OK : S_FALSE;
 }
+
+HRESULT WINAPI SoftpubCleanup(CRYPT_PROVIDER_DATA *data)
+{
+    DWORD i, j;
+
+    for (i = 0; i < data->csSigners; i++)
+    {
+        for (j = 0; j < data->pasSigners[i].csCertChain; j++)
+            CertFreeCertificateContext(data->pasSigners[i].pasCertChain[j].pCert);
+        data->psPfns->pfnFree(data->pasSigners[i].pasCertChain);
+        data->psPfns->pfnFree(data->pasSigners[i].psSigner);
+        CertFreeCertificateChain(data->pasSigners[i].pChainContext);
+    }
+    data->psPfns->pfnFree(data->pasSigners);
+
+    for (i = 0; i < data->chStores; i++)
+        CertCloseStore(data->pahStores[i], 0);
+    data->psPfns->pfnFree(data->pahStores);
+
+    if (data->u.pPDSip)
+    {
+        data->psPfns->pfnFree(data->u.pPDSip->pSip);
+        data->psPfns->pfnFree(data->u.pPDSip->pCATSip);
+        data->psPfns->pfnFree(data->u.pPDSip->psSipSubjectInfo);
+        data->psPfns->pfnFree(data->u.pPDSip->psSipCATSubjectInfo);
+        data->psPfns->pfnFree(data->u.pPDSip->psIndirectData);
+    }
+
+    CryptMsgClose(data->hMsg);
+
+    if (data->fOpenedFile)
+        CloseHandle(data->pWintrustData->u.pFile->hFile);
+
+    return S_OK;
+}
