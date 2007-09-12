@@ -814,9 +814,10 @@ static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
 
 static BOOL init_formats(Display *display, int screen, Visual *visual)
 {
-    int fmt_id, tmp_vis_id, tmp_fmt_id, nCfgs, i;
+    int fmt_id, tmp_fmt_id, nCfgs, i;
     GLXFBConfig* cfgs;
     GLXFBConfig fbconfig = NULL;
+    XVisualInfo *visinfo;
     VisualID visualid = XVisualIDFromVisual(visual);
     int nOffscreenFormats = 0;
 
@@ -833,17 +834,16 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
 
     /* Count the number of offscreen formats to determine the size for our pixelformat list */
     for(i=0; i<nCfgs; i++) {
-        pglXGetFBConfigAttrib(display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
+        pglXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &tmp_fmt_id);
 
-        /* We have found Wine's main visual */
-        if(tmp_vis_id == visualid) {
+        visinfo = pglXGetVisualFromFBConfig(display, cfgs[i]);
+        /* Onscreen formats have a corresponding XVisual, offscreen ones don't */
+        if(!visinfo) {
+            nOffscreenFormats++;
+        } else if(visinfo && visinfo->visualid == visualid) {
             pglXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &fmt_id);
             fbconfig = cfgs[i];
-        }
-
-        /* We have found an offscreen rendering format :) */
-        if(tmp_vis_id == 0) {
-            nOffscreenFormats++;
+            XFree(visinfo);
         }
     }
     TRACE("Number of offscreen formats: %d\n", nOffscreenFormats);
@@ -860,11 +860,11 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
 
     /* Fill the list with offscreen formats */
     for(i=0; i<nCfgs; i++) {
-        pglXGetFBConfigAttrib(display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
         pglXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &tmp_fmt_id);
 
-        /* We have found an offscreen rendering format :) */
-        if(tmp_vis_id == 0) {
+        visinfo = pglXGetVisualFromFBConfig(display, cfgs[i]);
+        /* We have found an offscreen rendering format when there is no visualinfo :) */
+        if(!visinfo) {
             TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", tmp_fmt_id, WineGLPixelFormatListSize+1, i);
             WineGLPixelFormatList[WineGLPixelFormatListSize].iPixelFormat = WineGLPixelFormatListSize+1; /* The index starts at 1 */
             WineGLPixelFormatList[WineGLPixelFormatListSize].fbconfig = cfgs[i];
@@ -872,6 +872,8 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
             WineGLPixelFormatList[WineGLPixelFormatListSize].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
             WineGLPixelFormatList[WineGLPixelFormatListSize].offscreenOnly = TRUE;
             WineGLPixelFormatListSize++;
+        } else {
+	    XFree(visinfo);
         }
     }
 
