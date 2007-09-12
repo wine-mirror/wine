@@ -268,6 +268,56 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_moveend(range, characterW, 2, 2);
     test_range_text(range, "123\r\ni");
 
+    hres = IHTMLTxtRange_duplicate(body_range, &range);
+    ok(hres == S_OK, "duplicate failed: %08x\n", hres);
+
+    test_range_move(range, wordW, 1, 1);
+    test_range_moveend(range, characterW, 2, 2);
+    test_range_text(range, "ab");
+
+    test_range_move(range, characterW, -2, -2);
+    test_range_moveend(range, characterW, 2, 2);
+    test_range_text(range, "t ");
+
+    test_range_move(range, wordW, 3, 3);
+    test_range_move(range, wordW, -2, -2);
+    test_range_moveend(range, characterW, 2, 2);
+    test_range_text(range, "ab");
+
+    test_range_move(range, characterW, -6, -5);
+    test_range_moveend(range, characterW, -1, 0);
+    test_range_moveend(range, characterW, -6, 0);
+    test_range_move(range, characterW, 2, 2);
+    test_range_moveend(range, characterW, 2, 2);
+    test_range_text(range, "st");
+    test_range_moveend(range, characterW, -6, -4);
+    test_range_moveend(range, characterW, 2, 2);
+
+    IHTMLTxtRange_Release(range);
+
+    hres = IHTMLTxtRange_duplicate(body_range, &range);
+    ok(hres == S_OK, "duplicate failed: %08x\n", hres);
+
+    test_range_move(range, wordW, 2, 2);
+    test_range_moveend(range, characterW, 2, 2);
+    test_range_text(range, "12");
+
+    test_range_move(range, characterW, 15, 14);
+    test_range_move(range, characterW, -2, -2);
+    test_range_moveend(range, characterW, 3, 2);
+    test_range_text(range, "t");
+    test_range_moveend(range, characterW, -1, -1);
+    test_range_text(range, "t");
+    test_range_expand(range, wordW, VARIANT_TRUE, "text");
+    test_range_move(range, characterW, -2, -2);
+    test_range_moveend(range, characterW, 2, 2);
+    test_range_text(range, "s ");
+    test_range_move(range, characterW, 100, 7);
+    test_range_move(range, wordW, 1, 0);
+    test_range_move(range, characterW, -2, -2);
+    test_range_moveend(range, characterW, 3, 2);
+    test_range_text(range, "t");
+
     IHTMLTxtRange_Release(range);
     IHTMLTxtRange_Release(body_range);
 }

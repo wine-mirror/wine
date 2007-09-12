@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Jacek Caban for CodeWeavers
+ * Copyright 2006-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -689,6 +689,48 @@ static long find_prev_space(HTMLTxtRange *This, const dompos_t *pos, BOOL first_
     return TRUE;
 }
 
+static long move_next_words(long cnt, const dompos_t *pos, dompos_t *new_pos)
+{
+    dompos_t iter, tmp;
+    long ret = 0;
+
+    iter = *pos;
+    dompos_addref(&iter);
+
+    while(ret < cnt) {
+        if(!find_next_space(&iter, FALSE, &tmp))
+            break;
+
+        ret++;
+        dompos_release(&iter);
+        iter = tmp;
+    }
+
+    *new_pos = iter;
+    return ret;
+}
+
+static long move_prev_words(HTMLTxtRange *This, long cnt, const dompos_t *pos, dompos_t *new_pos)
+{
+    dompos_t iter, tmp;
+    long ret = 0;
+
+    iter = *pos;
+    dompos_addref(&iter);
+
+    while(ret < cnt) {
+        if(!find_prev_space(This, &iter, FALSE, &tmp))
+            break;
+
+        dompos_release(&iter);
+        iter = tmp;
+        ret++;
+    }
+
+    *new_pos = iter;
+    return ret;
+}
+
 #define HTMLTXTRANGE_THIS(iface) DEFINE_THIS(HTMLTxtRange, HTMLTxtRange, iface)
 
 static HRESULT WINAPI HTMLTxtRange_QueryInterface(IHTMLTxtRange *iface, REFIID riid, void **ppv)
@@ -1066,6 +1108,27 @@ static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
             dompos_release(&new_pos);
         }else {
             *ActualCount = -move_prev_chars(This, -Count, &cur_pos, FALSE, &new_pos);
+            set_range_pos(This, TRUE, &new_pos);
+            IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
+            dompos_release(&new_pos);
+        }
+
+        dompos_release(&cur_pos);
+        break;
+    }
+
+    case RU_WORD: {
+        dompos_t cur_pos, new_pos;
+
+        get_cur_pos(This, TRUE, &cur_pos);
+
+        if(Count > 0) {
+            *ActualCount = move_next_words(Count, &cur_pos, &new_pos);
+            set_range_pos(This, FALSE, &new_pos);
+            IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
+            dompos_release(&new_pos);
+        }else {
+            *ActualCount = -move_prev_words(This, -Count, &cur_pos, &new_pos);
             set_range_pos(This, TRUE, &new_pos);
             IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
             dompos_release(&new_pos);
