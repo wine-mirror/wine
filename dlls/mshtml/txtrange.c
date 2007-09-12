@@ -36,6 +36,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static const WCHAR brW[] = {'b','r',0};
+
 typedef struct {
     const IHTMLTxtRangeVtbl *lpHTMLTxtRangeVtbl;
 
@@ -48,6 +50,20 @@ typedef struct {
 } HTMLTxtRange;
 
 #define HTMLTXTRANGE(x)  ((IHTMLTxtRange*)  &(x)->lpHTMLTxtRangeVtbl)
+
+typedef struct {
+    WCHAR *buf;
+    DWORD len;
+    DWORD size;
+} wstrbuf_t;
+
+typedef struct {
+    PRUint16 type;
+    nsIDOMNode *node;
+    PRUint32 off;
+    nsAString str;
+    const PRUnichar *p;
+} dompos_t;
 
 static HTMLTxtRange *get_range_object(HTMLDocument *doc, IHTMLTxtRange *iface)
 {
@@ -85,6 +101,308 @@ static PRUint16 get_node_type(nsIDOMNode *node)
         nsIDOMNode_GetNodeType(node, &type);
 
     return type;
+}
+
+static BOOL is_br_node(nsIDOMNode *node)
+{
+    nsIDOMElement *elem;
+    nsAString tag_str;
+    const PRUnichar *tag;
+    BOOL ret = FALSE;
+    nsresult nsres;
+
+    nsres = nsIDOMNode_QueryInterface(node, &IID_nsIDOMElement, (void**)&elem);
+    if(NS_FAILED(nsres))
+        return FALSE;
+
+    nsAString_Init(&tag_str, NULL);
+    nsIDOMElement_GetTagName(elem, &tag_str);
+    nsIDOMElement_Release(elem);
+    nsAString_GetData(&tag_str, &tag, 0);
+
+    if(!strcmpiW(tag, brW))
+        ret = TRUE;
+
+    nsAString_Finish(&tag_str);
+
+    return ret;
+}
+
+static void inline wstrbuf_init(wstrbuf_t *buf)
+{
+    buf->len = 0;
+    buf->size = 16;
+    buf->buf = mshtml_alloc(buf->size * sizeof(WCHAR));
+    *buf->buf = 0;
+}
+
+static void inline wstrbuf_finish(wstrbuf_t *buf)
+{
+    mshtml_free(buf->buf);
+}
+
+static void wstrbuf_append_len(wstrbuf_t *buf, LPCWSTR str, int len)
+{
+    if(buf->len+len >= buf->size) {
+        buf->size = 2*buf->len+len;
+        buf->buf = mshtml_realloc(buf->buf, buf->size * sizeof(WCHAR));
+    }
+
+    memcpy(buf->buf+buf->len, str, len*sizeof(WCHAR));
+    buf->len += len;
+    buf->buf[buf->len] = 0;
+}
+
+static void inline wstrbuf_append(wstrbuf_t *buf, LPCWSTR str)
+{
+    wstrbuf_append_len(buf, str, strlenW(str));
+}
+
+static void wstrbuf_append_node(wstrbuf_t *buf, nsIDOMNode *node)
+{
+
+    switch(get_node_type(node)) {
+    case TEXT_NODE: {
+        nsIDOMText *nstext;
+        nsAString data_str;
+        const PRUnichar *data;
+
+        nsIDOMNode_QueryInterface(node, &IID_nsIDOMText, (void**)&nstext);
+
+        nsAString_Init(&data_str, NULL);
+        nsIDOMText_GetData(nstext, &data_str);
+        nsAString_GetData(&data_str, &data, NULL);
+        wstrbuf_append(buf, data);
+        nsAString_Finish(&data_str);
+
+       nsIDOMText_Release(nstext);
+
+        break;
+    }
+    case ELEMENT_NODE:
+        if(is_br_node(node)) {
+            static const WCHAR endlW[] = {'\r','\n'};
+            wstrbuf_append_len(buf, endlW, 2);
+        }
+    }
+}
+
+static BOOL fill_nodestr(dompos_t *pos)
+{
+    nsIDOMText *text;
+    nsresult nsres;
+
+    if(pos->type != TEXT_NODE)
+        return FALSE;
+
+    nsres = nsIDOMNode_QueryInterface(pos->node, &IID_nsIDOMText, (void**)&text);
+    if(NS_FAILED(nsres))
+        return FALSE;
+
+    nsAString_Init(&pos->str, NULL);
+    nsIDOMText_GetData(text, &pos->str);
+    nsIDOMText_Release(text);
+    nsAString_GetData(&pos->str, &pos->p, NULL);
+
+    return TRUE;
+}
+
+static nsIDOMNode *next_node(nsIDOMNode *iter)
+{
+    nsIDOMNode *ret, *tmp;
+    nsresult nsres;
+
+    if(!iter)
+        return NULL;
+
+    nsres = nsIDOMNode_GetFirstChild(iter, &ret);
+    if(NS_SUCCEEDED(nsres) && ret)
+        return ret;
+
+    nsIDOMNode_AddRef(iter);
+
+    do {
+        nsres = nsIDOMNode_GetNextSibling(iter, &ret);
+        if(NS_SUCCEEDED(nsres) && ret) {
+            nsIDOMNode_Release(iter);
+            return ret;
+        }
+
+        nsres = nsIDOMNode_GetParentNode(iter, &tmp);
+        nsIDOMNode_Release(iter);
+        iter = tmp;
+    }while(NS_SUCCEEDED(nsres) && iter);
+
+    return NULL;
+}
+
+static nsIDOMNode *prev_node(HTMLTxtRange *This, nsIDOMNode *iter)
+{
+    nsIDOMNode *ret, *tmp;
+    nsresult nsres;
+
+    if(!iter) {
+        nsIDOMHTMLDocument *nshtmldoc;
+        nsIDOMHTMLElement *nselem;
+        nsIDOMDocument *nsdoc;
+
+        nsIWebNavigation_GetDocument(This->doc->nscontainer->navigation, &nsdoc);
+        nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
+        nsIDOMDocument_Release(nsdoc);
+        nsIDOMHTMLDocument_GetBody(nshtmldoc, &nselem);
+        nsIDOMHTMLDocument_Release(nshtmldoc);
+
+        nsIDOMElement_GetLastChild(nselem, &tmp);
+        if(!tmp)
+            return (nsIDOMNode*)nselem;
+
+        while(tmp) {
+            ret = tmp;
+            nsIDOMNode_GetLastChild(ret, &tmp);
+        }
+
+        nsIDOMElement_Release(nselem);
+
+        return ret;
+    }
+
+    nsres = nsIDOMNode_GetLastChild(iter, &ret);
+    if(NS_SUCCEEDED(nsres) && ret)
+        return ret;
+
+    nsIDOMNode_AddRef(iter);
+
+    do {
+        nsres = nsIDOMNode_GetPreviousSibling(iter, &ret);
+        if(NS_SUCCEEDED(nsres) && ret) {
+            nsIDOMNode_Release(iter);
+            return ret;
+        }
+
+        nsres = nsIDOMNode_GetParentNode(iter, &tmp);
+        nsIDOMNode_Release(iter);
+        iter = tmp;
+    }while(NS_SUCCEEDED(nsres) && iter);
+
+    return NULL;
+}
+
+static nsIDOMNode *get_child_node(nsIDOMNode *node, PRUint32 off)
+{
+    nsIDOMNodeList *node_list;
+    nsIDOMNode *ret = NULL;
+
+    nsIDOMNode_GetChildNodes(node, &node_list);
+    nsIDOMNodeList_Item(node_list, off, &ret);
+    nsIDOMNodeList_Release(node_list);
+
+    return ret;
+}
+
+static void get_cur_pos(HTMLTxtRange *This, BOOL start, dompos_t *pos)
+{
+    nsIDOMNode *node;
+    PRInt32 off;
+
+    pos->p = NULL;
+
+    if(!start) {
+        PRBool collapsed;
+        nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
+        start = collapsed;
+    }
+
+    if(start) {
+        nsIDOMRange_GetStartContainer(This->nsrange, &node);
+        nsIDOMRange_GetStartOffset(This->nsrange, &off);
+    }else {
+        nsIDOMRange_GetEndContainer(This->nsrange, &node);
+        nsIDOMRange_GetEndOffset(This->nsrange, &off);
+    }
+
+    pos->type = get_node_type(node);
+    if(pos->type == ELEMENT_NODE) {
+        if(start) {
+            pos->node = get_child_node(node, off);
+            pos->off = 0;
+        }else {
+            pos->node = off ? get_child_node(node, off-1) : prev_node(This, node);
+            pos->off = -1;
+        }
+
+        pos->type = get_node_type(pos->node);
+        nsIDOMNode_Release(node);
+    }else if(start) {
+        pos->node = node;
+        pos->off = off;
+    }else if(off) {
+        pos->node = node;
+        pos->off = off-1;
+    }else {
+        pos->node = prev_node(This, node);
+        pos->off = -1;
+        nsIDOMNode_Release(node);
+    }
+
+    if(pos->type == TEXT_NODE)
+        fill_nodestr(pos);
+}
+
+static void inline dompos_release(dompos_t *pos)
+{
+    if(pos->node)
+        nsIDOMNode_Release(pos->node);
+
+    if(pos->p)
+        nsAString_Finish(&pos->str);
+}
+
+static void range_to_string(HTMLTxtRange *This, wstrbuf_t *buf)
+{
+    nsIDOMNode *iter, *tmp;
+    dompos_t start_pos, end_pos;
+    PRBool collapsed;
+
+    nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
+    if(collapsed) {
+        wstrbuf_finish(buf);
+        buf->buf = NULL;
+        buf->size = 0;
+        return;
+    }
+
+    get_cur_pos(This, FALSE, &end_pos);
+    get_cur_pos(This, TRUE, &start_pos);
+
+    if(start_pos.type == TEXT_NODE) {
+        if(start_pos.node == end_pos.node) {
+            wstrbuf_append_len(buf, start_pos.p+start_pos.off, end_pos.off-start_pos.off+1);
+            iter = start_pos.node;
+            nsIDOMNode_AddRef(iter);
+        }else {
+            wstrbuf_append(buf, start_pos.p+start_pos.off);
+            iter = next_node(start_pos.node);
+        }
+    }else {
+        iter = start_pos.node;
+        nsIDOMNode_AddRef(iter);
+    }
+
+    while(iter != end_pos.node) {
+        wstrbuf_append_node(buf, iter);
+        tmp = next_node(iter);
+        nsIDOMNode_Release(iter);
+        iter = tmp;
+    }
+
+    nsIDOMNode_AddRef(end_pos.node);
+
+    if(start_pos.node != end_pos.node && !is_br_node(end_pos.node))
+        wstrbuf_append_len(buf, end_pos.p, end_pos.off+1);
+
+    nsIDOMNode_Release(iter);
+    dompos_release(&start_pos);
+    dompos_release(&end_pos);
 }
 
 #define HTMLTXTRANGE_THIS(iface) DEFINE_THIS(HTMLTxtRange, HTMLTxtRange, iface)
@@ -255,35 +573,19 @@ static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
 static HRESULT WINAPI HTMLTxtRange_get_text(IHTMLTxtRange *iface, BSTR *p)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    wstrbuf_t buf;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = NULL;
+    wstrbuf_init(&buf);
+    range_to_string(This, &buf);
+    if(buf.buf)
+        *p = SysAllocString(buf.buf);
+    else
+        *p = NULL;
+    wstrbuf_finish(&buf);
 
-    if(This->nsrange) {
-        nsAString text_str;
-        nsresult nsres;
-
-        nsAString_Init(&text_str, NULL);
-
-        nsres = nsIDOMRange_ToString(This->nsrange, &text_str);
-        if(NS_SUCCEEDED(nsres)) {
-            const PRUnichar *nstext;
-
-            nsAString_GetData(&text_str, &nstext, NULL);
-            *p = SysAllocString(nstext);
-        }else {
-            ERR("ToString failed: %08x\n", nsres);
-        }
-
-        nsAString_Finish(&text_str);
-    }
-
-    if(!*p) {
-        static const WCHAR empty[] = {0};
-        *p = SysAllocString(empty);
-    }
-
+    TRACE("ret %s\n", debugstr_w(*p));
     return S_OK;
 }
 
