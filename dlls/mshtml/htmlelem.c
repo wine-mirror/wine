@@ -1274,6 +1274,7 @@ void HTMLElement_Create(HTMLDOMNode *node)
     const PRUnichar *class_name;
     nsresult nsres;
 
+    static const WCHAR wszA[]        = {'A',0};
     static const WCHAR wszBODY[]     = {'B','O','D','Y',0};
     static const WCHAR wszINPUT[]    = {'I','N','P','U','T',0};
     static const WCHAR wszSELECT[]   = {'S','E','L','E','C','T',0};
@@ -1300,7 +1301,9 @@ void HTMLElement_Create(HTMLDOMNode *node)
 
     nsAString_GetData(&class_name_str, &class_name, NULL);
 
-    if(!strcmpW(class_name, wszBODY))
+    if(!strcmpW(class_name, wszA))
+        HTMLAnchorElement_Create(ret);
+    else if(!strcmpW(class_name, wszBODY))
         HTMLBodyElement_Create(ret);
     else if(!strcmpW(class_name, wszINPUT))
         HTMLInputElement_Create(ret);

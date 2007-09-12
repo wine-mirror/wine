@@ -12,6 +12,7 @@ C_SRCS = \
 	conpoint.c \
 	editor.c \
 	hlink.c \
+	htmlanchor.c \
 	htmlbody.c \
 	htmldoc.c \
 	htmldoc3.c \

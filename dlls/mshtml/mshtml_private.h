@@ -415,6 +415,7 @@ void detach_selection(HTMLDocument*);
 void detach_ranges(HTMLDocument*);
 
 void HTMLElement_Create(HTMLDOMNode*);
+void HTMLAnchorElement_Create(HTMLElement*);
 void HTMLBodyElement_Create(HTMLElement*);
 void HTMLInputElement_Create(HTMLElement*);
 void HTMLSelectElement_Create(HTMLElement*);
