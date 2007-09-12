@@ -818,7 +818,6 @@ static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElem
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
     nsIDOMNode *nsnode, *tmp;
     HTMLDOMNode *node;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, parent);
 
@@ -837,10 +836,7 @@ static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElem
     node = get_node(This->doc, nsnode);
     nsIDOMNode_Release(nsnode);
 
-    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)parent);
-
-    IHTMLDOMNode_Release(HTMLDOMNODE(node));
-    return hres;
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)parent);
 }
 
 static HRESULT WINAPI HTMLTxtRange_duplicate(IHTMLTxtRange *iface, IHTMLTxtRange **Duplicate)
