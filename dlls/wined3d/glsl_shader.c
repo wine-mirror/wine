@@ -1899,10 +1899,8 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     /* Perform the last matrix multiply operation */
     shader_addline(buffer, "tmp0.z = dot(T%u.xyz, %s);\n", reg, src0_param.param_str);
-
-    /* Calculate reflection vector, 2*(tmp0.src1)*tmp0-src1
-     * This is equivalent to reflect(-src1, tmp0); */
-    shader_addline(buffer, "tmp0.xyz = reflect(-(%s), tmp0.xyz);\n", src1_param.param_str);
+    /* Reflection calculation */
+    shader_addline(buffer, "tmp0.xyz = -reflect((%s), normalize(tmp0.xyz));\n", src1_param.param_str);
 
     shader_glsl_append_dst(buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
@@ -1936,10 +1934,7 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     /* Construct the eye-ray vector from w coordinates */
     shader_addline(buffer, "tmp1.xyz = normalize(vec3(gl_TexCoord[%u].w, gl_TexCoord[%u].w, gl_TexCoord[%u].w));\n",
             current_state->texcoord_w[0], current_state->texcoord_w[1], reg);
-
-    /* Calculate reflection vector (Assume normal is normalized): RF = 2*(tmp0.tmp1)*tmp0-tmp1
-     * This is equivalent to reflect(-tmp1, tmp0); */
-    shader_addline(buffer, "tmp0.xyz = reflect(-tmp1.xyz, tmp0.xyz);\n");
+    shader_addline(buffer, "tmp0.xyz = -reflect(tmp1.xyz, normalize(tmp0.xyz));\n");
 
     shader_glsl_append_dst(buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);

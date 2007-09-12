@@ -872,8 +872,13 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "MOV TMP2.y, fragment.texcoord[%u].w;\n", current_state->texcoord_w[1]);
     shader_addline(buffer, "MOV TMP2.z, fragment.texcoord[%u].w;\n", reg);
 
-    /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
+    /* Calculate reflection vector
+     */
     shader_addline(buffer, "DP3 TMP.w, TMP, TMP2;\n");
+    /* The .w is ignored when sampling, so I can use TMP2.w to calculate dot(N, N) */
+    shader_addline(buffer, "DP3 TMP2.w, TMP, TMP;\n");
+    shader_addline(buffer, "RCP TMP2.w, TMP2.w;\n");
+    shader_addline(buffer, "MUL TMP.w, TMP.w, TMP2.w;\n");
     shader_addline(buffer, "MUL TMP, TMP.w, TMP;\n");
     shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -TMP2;\n");
 
@@ -896,8 +901,18 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", reg, src0_name);
 
-    /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
+    /* Calculate reflection vector.
+     *
+     *               dot(N, E)
+     * TMP.xyz = 2 * --------- * N - E
+     *               dot(N, N)
+     *
+     * Which normalizes the normal vector
+     */
     shader_addline(buffer, "DP3 TMP.w, TMP, C[%u];\n", reg3);
+    shader_addline(buffer, "DP3 TMP2.w, TMP, TMP;\n");
+    shader_addline(buffer, "RCP TMP2.w, TMP2.w;\n");
+    shader_addline(buffer, "MUL TMP.w, TMP.w, TMP2.w;\n");
     shader_addline(buffer, "MUL TMP, TMP.w, TMP;\n");
     shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -C[%u];\n", reg3);
 
