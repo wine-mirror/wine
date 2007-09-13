@@ -3228,6 +3228,180 @@ static void constant_clamp_ps_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(shader_11);
 }
 
+static void cnd_test(IDirect3DDevice9 *device)
+{
+    IDirect3DPixelShader9 *shader_11, *shader_12, *shader_13, *shader_14;
+    HRESULT hr;
+    DWORD color;
+    /* ps 1.x shaders are rather picky with writemasks and source swizzles. The dp3 is
+     * used to copy r0.r to all components of r1, then copy r1.a to c0.a. Essentially it
+     * does a mov r0.a, r0.r, which isn't allowed as-is in 1.x pixel shaders.
+     */
+    DWORD shader_code_11[] =  {
+        0xffff0101,                                                                 /* ps_1_1               */
+        0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000,     /* def c0, 1, 0, 0, 0   */
+        0x00000040, 0xb00f0000,                                                     /* texcoord t0          */
+        0x00000001, 0x800f0000, 0xb0e40000,                                         /* mov r0, ???(t0)      */
+        0x00000008, 0x800f0001, 0x80e40000, 0xa0e40000,                             /* dp3 r1, r0, c0       */
+        0x00000001, 0x80080000, 0x80ff0001,                                         /* mov r0.a, r1.a       */
+        0x00000050, 0x800f0000, 0x80ff0000, 0xa0e40001, 0xa0e40002,                 /* cnd r0, r0.a, c1, c2 */
+        0x0000ffff                                                                  /* end                  */
+    };
+
+    DWORD shader_code_12[] =  {
+        0xffff0102,                                                                 /* ps_1_2               */
+        0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000,     /* def c0, 1, 0, 0, 0   */
+        0x00000040, 0xb00f0000,                                                     /* texcoord t0          */
+        0x00000001, 0x800f0000, 0xb0e40000,                                         /* mov r0, t0           */
+        0x00000008, 0x800f0001, 0x80e40000, 0xa0e40000,                             /* dp3 r1, r0, c0       */
+        0x00000001, 0x80080000, 0x80ff0001,                                         /* mov r0.a, r1.a       */
+        0x00000050, 0x800f0000, 0x80ff0000, 0xa0e40001, 0xa0e40002,                 /* cnd r0, r0.a, c1, c2 */
+        0x0000ffff                                                                  /* end                  */
+    };
+
+    DWORD shader_code_13[] =  {
+        0xffff0103,                                                                 /* ps_1_3               */
+        0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000,     /* def c0, 1, 0, 0, 0   */
+        0x00000040, 0xb00f0000,                                                     /* texcoord t0          */
+        0x00000001, 0x800f0000, 0xb0e40000,                                         /* mov r0, t0           */
+        0x00000008, 0x800f0001, 0x80e40000, 0xa0e40000,                             /* dp3, r1, r0, c0      */
+        0x00000001, 0x80080000, 0x80ff0001,                                         /* mov r0.a, r1.a       */
+        0x00000050, 0x800f0000, 0x80ff0000, 0xa0e40001, 0xa0e40002,                 /* cnd r0, r0.a, c1, c2 */
+        0x0000ffff                                                                  /* end                  */
+    };
+    DWORD shader_code_14[] =  {
+        0xffff0104,                                                                 /* ps_1_3               */
+        0x00000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000,     /* def c0, 0, 0, 0, 1   */
+        0x00000040, 0x80070000, 0xb0e40000,                                         /* texcrd r0, t0        */
+        0x00000001, 0x80080000, 0xa0ff0000,                                         /* mov r0.a, c0.a       */
+        0x00000050, 0x800f0000, 0x80e40000, 0xa0e40001, 0xa0e40002,                 /* cnd r0, r0, c1, c2   */
+        0x0000ffff                                                                  /* end                  */
+    };
+    float quad1[] = {
+        -1.0,   -1.0,   0.1,     0.0,    0.0,    1.0,
+         0.0,   -1.0,   0.1,     1.0,    0.0,    1.0,
+        -1.0,    0.0,   0.1,     0.0,    1.0,    0.0,
+         0.0,    0.0,   0.1,     1.0,    1.0,    0.0
+    };
+    float quad2[] = {
+         0.0,   -1.0,   0.1,     0.0,    0.0,    1.0,
+         1.0,   -1.0,   0.1,     1.0,    0.0,    1.0,
+         0.0,    0.0,   0.1,     0.0,    1.0,    0.0,
+         1.0,    0.0,   0.1,     1.0,    1.0,    0.0
+    };
+    float quad3[] = {
+         0.0,    0.0,   0.1,     0.0,    0.0,    1.0,
+         1.0,    0.0,   0.1,     1.0,    0.0,    1.0,
+         0.0,    1.0,   0.1,     0.0,    1.0,    0.0,
+         1.0,    1.0,   0.1,     1.0,    1.0,    0.0
+    };
+    float quad4[] = {
+        -1.0,    0.0,   0.1,     0.0,    0.0,    1.0,
+         0.0,    0.0,   0.1,     1.0,    0.0,    1.0,
+        -1.0,    1.0,   0.1,     0.0,    1.0,    0.0,
+         0.0,    1.0,   0.1,     1.0,    1.0,    0.0
+    };
+    float test_data_c1[4] = {  0.0, 0.0, 0.0, 0.0};
+    float test_data_c2[4] = {  1.0, 1.0, 1.0, 1.0};
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ffff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_11, &shader_11);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_12, &shader_12);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_13, &shader_13);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_14, &shader_14);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 1, test_data_c1, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShaderConstantF returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 2, test_data_c2, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShaderConstantF returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_SetPixelShader(device, shader_11);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetPixelShader(device, shader_12);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetPixelShader(device, shader_13);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetPixelShader(device, shader_14);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %s\n", DXGetErrorString9(hr));
+
+    /* This is the 1.4 test. Each component(r, g, b) is tested separately against 0.5 */
+    color = getPixelColor(device, 158, 118);
+    ok(color == 0x00ff00ff, "pixel 158, 118 has color %08x, expected 0x00ff00ff\n", color);
+    color = getPixelColor(device, 162, 118);
+    ok(color == 0x000000ff, "pixel 162, 118 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 158, 122);
+    ok(color == 0x00ffffff, "pixel 162, 122 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 162, 122);
+    ok(color == 0x0000ffff, "pixel 162, 122 has color %08x, expected 0x0000ffff\n", color);
+
+    /* 1.1 shader. All 3 components get set, based on the .w comparison */
+    color = getPixelColor(device, 158, 358);
+    ok(color == 0x00ffffff, "pixel 158, 358 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 162, 358);
+    ok(color == 0x00000000, "pixel 162, 358 has color %08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 158, 362);
+    ok(color == 0x00ffffff, "pixel 158, 362 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 162, 362);
+    ok(color == 0x00000000, "pixel 162, 362 has color %08x, expected 0x00000000\n", color);
+
+    /* 1.2 shader */
+    color = getPixelColor(device, 478, 358);
+    ok(color == 0x00ffffff, "pixel 478, 358 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 482, 358);
+    ok(color == 0x00000000, "pixel 482, 358 has color %08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 478, 362);
+    ok(color == 0x00ffffff, "pixel 478, 362 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 482, 362);
+    ok(color == 0x00000000, "pixel 482, 362 has color %08x, expected 0x00000000\n", color);
+
+    /* 1.3 shader */
+    color = getPixelColor(device, 478, 118);
+    ok(color == 0x00ffffff, "pixel 478, 118 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 482, 118);
+    ok(color == 0x00000000, "pixel 482, 118 has color %08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 478, 122);
+    ok(color == 0x00ffffff, "pixel 478, 122 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 482, 122);
+    ok(color == 0x00000000, "pixel 482, 122 has color %08x, expected 0x00000000\n", color);
+
+    IDirect3DPixelShader9_Release(shader_14);
+    IDirect3DPixelShader9_Release(shader_13);
+    IDirect3DPixelShader9_Release(shader_12);
+    IDirect3DPixelShader9_Release(shader_11);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -3334,6 +3508,7 @@ START_TEST(visual)
         x8l8v8u8_test(device_ptr);
         if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 4)) {
             constant_clamp_ps_test(device_ptr);
+            cnd_test(device_ptr);
         }
     }
     else skip("No ps_1_1 support\n");
