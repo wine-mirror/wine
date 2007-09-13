@@ -2059,7 +2059,10 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 	GetPrinterDriverA(hprn, NULL, 3, NULL, 0, &needed);
 	dbuf = HeapAlloc(GetProcessHeap(),0,needed);
 	if (!GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
-            ERR("GetPrinterDriverA failed, le %d, fix your config for printer %s!\n",GetLastError(),pbuf->pPrinterName);
+	    ERR("GetPrinterDriverA failed, le %d, fix your config for printer %s!\n",
+	        GetLastError(),pbuf->pPrinterName);
+	    HeapFree(GetProcessHeap(), 0, dbuf);
+	    HeapFree(GetProcessHeap(), 0, pbuf);
 	    COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE);
 	    return FALSE;
 	}
@@ -2206,7 +2209,10 @@ BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
 	GetPrinterDriverW(hprn, NULL, 3, NULL, 0, &needed);
 	dbuf = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*needed);
 	if (!GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
-            ERR("GetPrinterDriverA failed, le %d, fix your config for printer %s!\n",GetLastError(),debugstr_w(pbuf->pPrinterName));
+	    ERR("GetPrinterDriverA failed, le %d, fix your config for printer %s!\n",
+	        GetLastError(),debugstr_w(pbuf->pPrinterName));
+	    HeapFree(GetProcessHeap(), 0, dbuf);
+	    HeapFree(GetProcessHeap(), 0, pbuf);
 	    COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE);
 	    return FALSE;
 	}
@@ -2615,6 +2621,8 @@ PRINTDLG_PS_ChangeActivePrinterA(LPSTR name, PageSetupDataA *pda){
 	lpDriverInfo  = HeapAlloc(GetProcessHeap(), 0, needed);
 	if(!GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)lpDriverInfo, needed, &needed)) {
 		ERR("GetPrinterDriverA failed for %s, fix your config!\n", lpPrinterInfo->pPrinterName);
+		HeapFree(GetProcessHeap(), 0, lpDriverInfo);
+		HeapFree(GetProcessHeap(), 0, lpPrinterInfo);
 		return FALSE;
 	}
 	ClosePrinter(hprn);
@@ -2622,6 +2630,8 @@ PRINTDLG_PS_ChangeActivePrinterA(LPSTR name, PageSetupDataA *pda){
 	needed = DocumentPropertiesA(0, 0, name, NULL, NULL, 0);
 	if(needed == -1) {
 		ERR("DocumentProperties fails on %s\n", debugstr_a(name));
+		HeapFree(GetProcessHeap(), 0, lpDriverInfo);
+		HeapFree(GetProcessHeap(), 0, lpPrinterInfo);
 		return FALSE;
 	}
 	pDevMode = HeapAlloc(GetProcessHeap(), 0, needed);
