@@ -284,7 +284,7 @@ DWORD WINAPI SHCLSIDFromStringW (LPCWSTR clsid, CLSID *id)
 	TRACE("(%p(%s) %p)\n", clsid, debugstr_w(clsid), id);
 	return CLSIDFromString((LPWSTR)clsid, id);
 }
-DWORD WINAPI SHCLSIDFromStringAW (LPVOID clsid, CLSID *id)
+DWORD WINAPI SHCLSIDFromStringAW (LPCVOID clsid, CLSID *id)
 {
 	if (SHELL_OsIsUnicode())
 	  return SHCLSIDFromStringW (clsid, id);
