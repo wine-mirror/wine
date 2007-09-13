@@ -2918,3 +2918,16 @@ enum message_type
 @REPLY
     obj_handle_t event;           /* event signaled when all user processes have exited */
 @END
+
+
+/* Get detailed fixed-size information about a token */
+@REQ(get_token_statistics)
+    obj_handle_t   handle;        /* handle to the object */
+@REPLY
+    luid_t         token_id;      /* locally-unique identifier of the token */
+    luid_t         modified_id;   /* locally-unique identifier of the modified version of the token */
+    int            primary;       /* is the token primary or impersonation? */
+    int            impersonation_level; /* level of impersonation */
+    int            group_count;   /* the number of groups the token is a member of */
+    int            privilege_count; /* the number of privileges the token has */
+@END

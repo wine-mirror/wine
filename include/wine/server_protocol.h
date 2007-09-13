@@ -4060,6 +4060,24 @@ struct make_process_system_reply
 };
 
 
+
+struct get_token_statistics_request
+{
+    struct request_header __header;
+    obj_handle_t   handle;
+};
+struct get_token_statistics_reply
+{
+    struct reply_header __header;
+    luid_t         token_id;
+    luid_t         modified_id;
+    int            primary;
+    int            impersonation_level;
+    int            group_count;
+    int            privilege_count;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -4281,6 +4299,7 @@ enum request
     REQ_delete_device,
     REQ_get_next_device_request,
     REQ_make_process_system,
+    REQ_get_token_statistics,
     REQ_NB_REQUESTS
 };
 
@@ -4507,6 +4526,7 @@ union generic_request
     struct delete_device_request delete_device_request;
     struct get_next_device_request_request get_next_device_request_request;
     struct make_process_system_request make_process_system_request;
+    struct get_token_statistics_request get_token_statistics_request;
 };
 union generic_reply
 {
@@ -4731,8 +4751,9 @@ union generic_reply
     struct delete_device_reply delete_device_reply;
     struct get_next_device_request_reply get_next_device_request_reply;
     struct make_process_system_reply make_process_system_reply;
+    struct get_token_statistics_reply get_token_statistics_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 312
+#define SERVER_PROTOCOL_VERSION 313
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

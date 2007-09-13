@@ -1048,7 +1048,6 @@ static DWORD get_privilege_count(HANDLE hToken)
     BOOL ret;
 
     ret = GetTokenInformation(hToken, TokenStatistics, &Statistics, Size, &Size);
-    todo_wine
     ok(ret, "GetTokenInformation(TokenStatistics)\n");
     if (!ret) return -1;
 

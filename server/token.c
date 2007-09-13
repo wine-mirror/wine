@@ -1424,6 +1424,25 @@ DECL_HANDLER(get_token_impersonation_level)
     }
 }
 
+DECL_HANDLER(get_token_statistics)
+{
+    struct token *token;
+
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                 TOKEN_QUERY,
+                                                 &token_ops )))
+    {
+        reply->token_id = token->token_id;
+        reply->modified_id = token->modified_id;
+        reply->primary = token->primary;
+        reply->impersonation_level = token->impersonation_level;
+        reply->group_count = list_count( &token->groups );
+        reply->privilege_count = list_count( &token->privileges );
+
+        release_object( token );
+    }
+}
+
 DECL_HANDLER(set_security_object)
 {
     data_size_t sd_size = get_req_data_size();

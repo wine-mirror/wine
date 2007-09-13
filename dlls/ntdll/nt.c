@@ -230,9 +230,9 @@ NTSTATUS WINAPI NtQueryInformationToken(
     case TokenImpersonationLevel:
         len = sizeof(SECURITY_IMPERSONATION_LEVEL);
         break;
-#if 0
     case TokenStatistics:
-#endif /* 0 */
+        len = sizeof(TOKEN_STATISTICS);
+        break;
     default:
         len = 0;
     }
@@ -372,6 +372,46 @@ NTSTATUS WINAPI NtQueryInformationToken(
             status = wine_server_call( req );
             if (status == STATUS_SUCCESS)
                 *impersonation_level = reply->impersonation_level;
+        }
+        SERVER_END_REQ;
+        break;
+    case TokenStatistics:
+        SERVER_START_REQ( get_token_statistics )
+        {
+            TOKEN_STATISTICS *statistics = tokeninfo;
+            req->handle = token;
+            status = wine_server_call( req );
+            if (status == STATUS_SUCCESS)
+            {
+                statistics->TokenId.LowPart  = reply->token_id.low_part;
+                statistics->TokenId.HighPart = reply->token_id.high_part;
+                statistics->AuthenticationId.LowPart  = 0; /* FIXME */
+                statistics->AuthenticationId.HighPart = 0; /* FIXME */
+                statistics->ExpirationTime.HighPart = 0x7fffffff;
+                statistics->ExpirationTime.LowPart  = 0xffffffff;
+                statistics->TokenType = reply->primary ? TokenPrimary : TokenImpersonation;
+                statistics->ImpersonationLevel = reply->impersonation_level;
+
+                /* kernel information not relevant to us */
+                statistics->DynamicCharged = 0;
+                statistics->DynamicAvailable = 0;
+
+                statistics->GroupCount = reply->group_count;
+                statistics->PrivilegeCount = reply->privilege_count;
+                statistics->ModifiedId.LowPart  = reply->modified_id.low_part;
+                statistics->ModifiedId.HighPart = reply->modified_id.high_part;
+            }
+        }
+        SERVER_END_REQ;
+        break;
+    case TokenType:
+        SERVER_START_REQ( get_token_statistics )
+        {
+            TOKEN_TYPE *token_type = tokeninfo;
+            req->handle = token;
+            status = wine_server_call( req );
+            if (status == STATUS_SUCCESS)
+                *token_type = reply->primary ? TokenPrimary : TokenImpersonation;
         }
         SERVER_END_REQ;
         break;

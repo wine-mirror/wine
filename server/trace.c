@@ -3548,6 +3548,25 @@ static void dump_make_process_system_reply( const struct make_process_system_rep
     fprintf( stderr, " event=%p", req->event );
 }
 
+static void dump_get_token_statistics_request( const struct get_token_statistics_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_token_statistics_reply( const struct get_token_statistics_reply *req )
+{
+    fprintf( stderr, " token_id=" );
+    dump_luid( &req->token_id );
+    fprintf( stderr, "," );
+    fprintf( stderr, " modified_id=" );
+    dump_luid( &req->modified_id );
+    fprintf( stderr, "," );
+    fprintf( stderr, " primary=%d,", req->primary );
+    fprintf( stderr, " impersonation_level=%d,", req->impersonation_level );
+    fprintf( stderr, " group_count=%d,", req->group_count );
+    fprintf( stderr, " privilege_count=%d", req->privilege_count );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -3768,6 +3787,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_delete_device_request,
     (dump_func)dump_get_next_device_request_request,
     (dump_func)dump_make_process_system_request,
+    (dump_func)dump_get_token_statistics_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -3990,6 +4010,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_get_next_device_request_reply,
     (dump_func)dump_make_process_system_reply,
+    (dump_func)dump_get_token_statistics_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4212,6 +4233,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "delete_device",
     "get_next_device_request",
     "make_process_system",
+    "get_token_statistics",
 };
 
 static const struct
@@ -4233,6 +4255,7 @@ static const struct
     { "CANCELLED",                   STATUS_CANCELLED },
     { "CANT_OPEN_ANONYMOUS",         STATUS_CANT_OPEN_ANONYMOUS },
     { "CHILD_MUST_BE_VOLATILE",      STATUS_CHILD_MUST_BE_VOLATILE },
+    { "DEBUGGER_INACTIVE",           STATUS_DEBUGGER_INACTIVE },
     { "DEVICE_BUSY",                 STATUS_DEVICE_BUSY },
     { "DIRECTORY_NOT_EMPTY",         STATUS_DIRECTORY_NOT_EMPTY },
     { "DISK_FULL",                   STATUS_DISK_FULL },
