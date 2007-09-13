@@ -1762,15 +1762,39 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
 void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
     glsl_src_param_t src0_param;
     char dst_mask[6];
+    glsl_sample_function_t sample_function;
     DWORD sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
+    DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
 
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, &src0_param);
 
     shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
-    shader_addline(arg->buffer, "texture2D(Psampler%u, vec2(dot(gl_TexCoord[%u].xyz, %s), 0.5))%s);\n",
-            sampler_idx, sampler_idx, src0_param.param_str, dst_mask);
+
+    /* Do I have to take care about the projected bit? I don't think so, since the dp3 returns only one
+     * scalar, and projected sampling would require 4
+     */
+    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
+
+    switch(count_bits(sample_function.coord_mask)) {
+        case 1:
+            shader_addline(arg->buffer, "%s(Psampler%u, dot(gl_TexCoord[%u].xyz, %s))%s);\n",
+                           sample_function.name, sampler_idx, sampler_idx, src0_param.param_str, dst_mask);
+            break;
+
+        case 2:
+            shader_addline(arg->buffer, "%s(Psampler%u, vec2(dot(gl_TexCoord[%u].xyz, %s), 0.0))%s);\n",
+                          sample_function.name, sampler_idx, sampler_idx, src0_param.param_str, dst_mask);
+            break;
+
+        case 3:
+            shader_addline(arg->buffer, "%s(Psampler%u, vec3(dot(gl_TexCoord[%u].xyz, %s), 0.0, 0.0))%s);\n",
+                           sample_function.name, sampler_idx, sampler_idx, src0_param.param_str, dst_mask);
+            break;
+        default:
+            FIXME("Unexpected mask bitcount %d\n", count_bits(sample_function.coord_mask));
+    }
 }
 
 /** Process the WINED3DSIO_TEXDP3 instruction in GLSL:
