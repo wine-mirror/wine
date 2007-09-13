@@ -134,7 +134,7 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL
     constants_entry *constant;
     local_constant* lconst;
     GLhandleARB tmp_loc;
-    DWORD i, j;
+    DWORD i, j, k;
     DWORD *idx;
 
     if (TRACE_ON(d3d_shader)) {
@@ -152,15 +152,49 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL
             }
         }
     }
-    LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
-        idx = constant->idx;
-        j = constant->count;
-        while (j--) {
-            i = *idx++;
-            tmp_loc = constant_locations[i];
-            if (tmp_loc != -1) {
-                /* We found this uniform name in the program - go ahead and send the data */
-                GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, constants + (i * 4)));
+
+    /* 1.X pshaders have the constants clamped to [-1;1] implicitly. */
+    if(WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
+       shader_is_pshader_version(This->baseShader.hex_version)) {
+        float lcl_const[4];
+
+        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
+            idx = constant->idx;
+            j = constant->count;
+            while (j--) {
+                i = *idx++;
+                tmp_loc = constant_locations[i];
+                if (tmp_loc != -1) {
+                    /* We found this uniform name in the program - go ahead and send the data */
+                    k = i * 4;
+                    if(constants[k + 0] < -1.0) lcl_const[0] = -1.0;
+                    else if(constants[k + 0] > 1.0) lcl_const[0] = 1.0;
+                    else lcl_const[0] = constants[k + 0];
+                    if(constants[k + 1] < -1.0) lcl_const[1] = -1.0;
+                    else if(constants[k + 1] > 1.0) lcl_const[1] = 1.0;
+                    else lcl_const[1] = constants[k + 1];
+                    if(constants[k + 2] < -1.0) lcl_const[2] = -1.0;
+                    else if(constants[k + 2] > 1.0) lcl_const[2] = 1.0;
+                    else lcl_const[2] = constants[k + 2];
+                    if(constants[k + 3] < -1.0) lcl_const[3] = -1.0;
+                    else if(constants[k + 3] > 1.0) lcl_const[3] = 1.0;
+                    else lcl_const[3] = constants[k + 3];
+
+                    GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, lcl_const));
+                }
+            }
+        }
+    } else {
+        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
+            idx = constant->idx;
+            j = constant->count;
+            while (j--) {
+                i = *idx++;
+                tmp_loc = constant_locations[i];
+                if (tmp_loc != -1) {
+                    /* We found this uniform name in the program - go ahead and send the data */
+                    GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, constants + (i * 4)));
+                }
             }
         }
     }
@@ -177,6 +211,7 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL
             }
         }
     }
+    /* Immediate constants are clamped to [-1;1] at shader creation time if needed */
     LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
         tmp_loc = constant_locations[lconst->idx];
         if (tmp_loc != -1) {

@@ -52,7 +52,7 @@ static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_
         unsigned int max_constants, float* constants, struct list *constant_list) {
     constants_entry *constant;
     local_constant* lconst;
-    DWORD i, j;
+    DWORD i, j, k;
     DWORD *idx;
 
     if (TRACE_ON(d3d_shader)) {
@@ -67,12 +67,43 @@ static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_
             }
         }
     }
-    LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
-        idx = constant->idx;
-        j = constant->count;
-        while (j--) {
-            i = *idx++;
-            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+    /* In 1.X pixel shaders constants are implicitly clamped in the range [-1;1] */
+    if(target_type == GL_FRAGMENT_PROGRAM_ARB &&
+       WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1) {
+        float lcl_const[4];
+        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
+            idx = constant->idx;
+            j = constant->count;
+            while (j--) {
+                i = *idx++;
+                k = i * 4;
+                if(constants[k + 0] > 1.0) lcl_const[0] = 1.0;
+                else if(constants[k + 0] < -1.0) lcl_const[0] = -1.0;
+                else lcl_const[0] = constants[k + 0];
+
+                if(constants[k + 1] > 1.0) lcl_const[1] = 1.0;
+                else if(constants[k + 1] < -1.0) lcl_const[1] = -1.0;
+                else lcl_const[1] = constants[k + 1];
+
+                if(constants[k + 2] > 1.0) lcl_const[2] = 1.0;
+                else if(constants[k + 2] < -1.0) lcl_const[2] = -1.0;
+                else lcl_const[2] = constants[k + 2];
+
+                if(constants[k + 3] > 1.0) lcl_const[3] = 1.0;
+                else if(constants[k + 3] < -1.0) lcl_const[3] = -1.0;
+                else lcl_const[3] = constants[k + 3];
+
+                GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, lcl_const));
+            }
+        }
+    } else {
+        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
+            idx = constant->idx;
+            j = constant->count;
+            while (j--) {
+                i = *idx++;
+                GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+            }
         }
     }
     checkGLcall("glProgramEnvParameter4fvARB()");
@@ -85,6 +116,7 @@ static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_
                     values[0], values[1], values[2], values[3]);
         }
     }
+    /* Immediate constants are clamped for 1.X shaders at loading times */
     LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
         GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, lconst->idx, (GLfloat*)lconst->value));
     }
