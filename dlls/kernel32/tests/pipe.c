@@ -961,21 +961,17 @@ static void test_ImpersonateNamedPipeClient(HANDLE hClientToken, DWORD security_
     ok(ret, "ReadFile failed with error %d\n", GetLastError());
 
     ret = ImpersonateNamedPipeClient(hPipeServer);
-    todo_wine
     ok(ret, "ImpersonateNamedPipeClient failed with error %d\n", GetLastError());
 
     ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &hToken);
-    todo_wine
     ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
 
     (*test_func)(0, hToken);
 
     ImpersonationLevel = 0xdeadbeef; /* to avoid false positives */
     ret = GetTokenInformation(hToken, TokenImpersonationLevel, &ImpersonationLevel, sizeof(ImpersonationLevel), &size);
-    todo_wine {
     ok(ret, "GetTokenInformation(TokenImpersonationLevel) failed with error %d\n", GetLastError());
     ok(ImpersonationLevel == SecurityImpersonation, "ImpersonationLevel should have been SecurityImpersonation(%d) instead of %d\n", SecurityImpersonation, ImpersonationLevel);
-    }
 
     CloseHandle(hToken);
 
@@ -988,11 +984,9 @@ static void test_ImpersonateNamedPipeClient(HANDLE hClientToken, DWORD security_
     ok(ret, "ReadFile failed with error %d\n", GetLastError());
 
     ret = ImpersonateNamedPipeClient(hPipeServer);
-    todo_wine
     ok(ret, "ImpersonateNamedPipeClient failed with error %d\n", GetLastError());
 
     ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &hToken);
-    todo_wine
     ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
 
     (*test_func)(1, hToken);
@@ -1007,7 +1001,6 @@ static void test_ImpersonateNamedPipeClient(HANDLE hClientToken, DWORD security_
     WaitForSingleObject(hThread, INFINITE);
 
     ret = ImpersonateNamedPipeClient(hPipeServer);
-    todo_wine
     ok(ret, "ImpersonateNamedPipeClient failed with error %d\n", GetLastError());
 
     RevertToSelf();
@@ -1135,7 +1128,6 @@ static void test_dynamic_context_no_token(int call_index, HANDLE hToken)
     switch (call_index)
     {
     case 0:
-        todo_wine
         ok(are_all_privileges_disabled(hToken), "token should be a copy of the process one\n");
         break;
     case 1:

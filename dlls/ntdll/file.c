@@ -1186,6 +1186,11 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         }
         break;
 
+    case FSCTL_PIPE_IMPERSONATE:
+        FIXME("FSCTL_PIPE_DISCONNECT: impersonating self\n");
+        status = RtlImpersonateSelf( SecurityImpersonation );
+        break;
+
     case FSCTL_LOCK_VOLUME:
     case FSCTL_UNLOCK_VOLUME:
         FIXME("stub! return success - Unsupported fsctl %x (device=%x access=%x func=%x method=%x)\n",
