@@ -949,6 +949,10 @@ void shader_trace_init(
                         shader_dump_param(iface, *(pToken + 2), 0, 1);
                         TRACE(") ");
                     }
+                    if (opcode_token & WINED3DSI_COISSUE) {
+                        /* PixWin marks instructions with the coissue flag with a '+' */
+                        TRACE("+");
+                    }
 
                     TRACE("%s", curOpcode->name);
 

@@ -3231,6 +3231,7 @@ static void constant_clamp_ps_test(IDirect3DDevice9 *device)
 static void cnd_test(IDirect3DDevice9 *device)
 {
     IDirect3DPixelShader9 *shader_11, *shader_12, *shader_13, *shader_14;
+    IDirect3DPixelShader9 *shader_11_coissue, *shader_12_coissue, *shader_13_coissue, *shader_14_coissue;
     HRESULT hr;
     DWORD color;
     /* ps 1.x shaders are rather picky with writemasks and source swizzles. The dp3 is
@@ -3247,7 +3248,6 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x00000050, 0x800f0000, 0x80ff0000, 0xa0e40001, 0xa0e40002,                 /* cnd r0, r0.a, c1, c2 */
         0x0000ffff                                                                  /* end                  */
     };
-
     DWORD shader_code_12[] =  {
         0xffff0102,                                                                 /* ps_1_2               */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000,     /* def c0, 1, 0, 0, 0   */
@@ -3258,7 +3258,6 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x00000050, 0x800f0000, 0x80ff0000, 0xa0e40001, 0xa0e40002,                 /* cnd r0, r0.a, c1, c2 */
         0x0000ffff                                                                  /* end                  */
     };
-
     DWORD shader_code_13[] =  {
         0xffff0103,                                                                 /* ps_1_3               */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000,     /* def c0, 1, 0, 0, 0   */
@@ -3276,6 +3275,72 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x00000001, 0x80080000, 0xa0ff0000,                                         /* mov r0.a, c0.a       */
         0x00000050, 0x800f0000, 0x80e40000, 0xa0e40001, 0xa0e40002,                 /* cnd r0, r0, c1, c2   */
         0x0000ffff                                                                  /* end                  */
+    };
+
+    /* Special fun: The coissue flag on cnd: Apparently cnd always selects the 2nd source,
+     * as if the src0 comparison against 0.5 always evaluates to true. The coissue flag isn't
+     * set by the compiler, it was added manually after compilation. It isn't always allowed,
+     * only if there's a mov r0.a, XXXX, and the cnd instruction writes to r0.xyz, otherwise
+     * native CreatePixelShader returns an error.
+     *
+     * The shader attempts to test the range [-1;1] against coissued cnd, which is a bit tricky.
+     * The input from t0 is [0;1]. 0.5 is substracted, then we have to multiply with 2. Since
+     * constants are clamped to [-1;1], a 2.0 is constructed by adding c0.r(=1.0) to c0.r into r1.r,
+     * then r1(2.0, 0.0, 0.0, 0.0) is passed to dp3(explained above).
+     */
+    DWORD shader_code_11_coissue[] =  {
+        0xffff0101,                                                             /* ps_1_1                   */
+        0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 1, 0, 0, 0       */
+        0x00000051, 0xa00f0003, 0x3f000000, 0x3f000000, 0x3f000000, 0x00000000, /* def c3, 0.5, 0.5, 0.5, 0 */
+        0x00000040, 0xb00f0000,                                                 /* texcoord t0              */
+        0x00000001, 0x800f0000, 0xb0e40000,                                     /* mov r0, t0               */
+        0x00000003, 0x800f0000, 0x80e40000, 0xa0e40003,                         /* sub r0, r0, c3           */
+        0x00000002, 0x800f0001, 0xa0e40000, 0xa0e40000,                         /* add r1, c0, c0           */
+        0x00000008, 0x800f0001, 0x80e40000, 0x80e40001,                         /* dp3, r1, r0, r1          */
+        0x00000001, 0x80080000, 0x80ff0001,                                     /* mov r0.a, r1.a           */
+        /* 0x40000000 = D3DSI_COISSUE */
+        0x40000050, 0x80070000, 0x80ff0000, 0xa0e40001, 0xa0e40002,             /* cnd r0.xyz, r0.a, c1, c2 */
+        0x0000ffff                                                              /* end                      */
+    };
+    DWORD shader_code_12_coissue[] =  {
+        0xffff0102,                                                             /* ps_1_2                   */
+        0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 1, 0, 0, 0       */
+        0x00000051, 0xa00f0003, 0x3f000000, 0x3f000000, 0x3f000000, 0x00000000, /* def c3, 0.5, 0.5, 0.5, 0 */
+        0x00000040, 0xb00f0000,                                                 /* texcoord t0              */
+        0x00000001, 0x800f0000, 0xb0e40000,                                     /* mov r0, t0               */
+        0x00000003, 0x800f0000, 0x80e40000, 0xa0e40003,                         /* sub r0, r0, c3           */
+        0x00000002, 0x800f0001, 0xa0e40000, 0xa0e40000,                         /* add r1, c0, c0           */
+        0x00000008, 0x800f0001, 0x80e40000, 0x80e40001,                         /* dp3, r1, r0, r1          */
+        0x00000001, 0x80080000, 0x80ff0001,                                     /* mov r0.a, r1.a           */
+        /* 0x40000000 = D3DSI_COISSUE */
+        0x40000050, 0x80070000, 0x80ff0000, 0xa0e40001, 0xa0e40002,             /* cnd r0.xyz, r0.a, c1, c2 */
+        0x0000ffff                                                              /* end                      */
+    };
+    DWORD shader_code_13_coissue[] =  {
+        0xffff0103,                                                             /* ps_1_3                   */
+        0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 1, 0, 0, 0       */
+        0x00000051, 0xa00f0003, 0x3f000000, 0x3f000000, 0x3f000000, 0x00000000, /* def c3, 0.5, 0.5, 0.5, 0 */
+        0x00000040, 0xb00f0000,                                                 /* texcoord t0              */
+        0x00000001, 0x800f0000, 0xb0e40000,                                     /* mov r0, t0               */
+        0x00000003, 0x800f0000, 0x80e40000, 0xa0e40003,                         /* sub r0, r0, c3           */
+        0x00000002, 0x800f0001, 0xa0e40000, 0xa0e40000,                         /* add r1, c0, c0           */
+        0x00000008, 0x800f0001, 0x80e40000, 0x80e40001,                         /* dp3, r1, r0, r1          */
+        0x00000001, 0x80080000, 0x80ff0001,                                     /* mov r0.a, r1.a           */
+        /* 0x40000000 = D3DSI_COISSUE */
+        0x40000050, 0x80070000, 0x80ff0000, 0xa0e40001, 0xa0e40002,             /* cnd r0.xyz, r0.a, c1, c2 */
+        0x0000ffff                                                              /* end                      */
+    };
+    /* ps_1_4 does not have a different cnd behavior, just pass the [0;1] texcrd result to cnd, it will
+     * compare against 0.5
+     */
+    DWORD shader_code_14_coissue[] =  {
+        0xffff0104,                                                             /* ps_1_4                   */
+        0x00000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 0, 0, 0, 1       */
+        0x00000040, 0x80070000, 0xb0e40000,                                     /* texcrd r0, t0            */
+        0x00000001, 0x80080000, 0xa0ff0000,                                     /* mov r0.a, c0.a           */
+        /* 0x40000000 = D3DSI_COISSUE */
+        0x40000050, 0x80070000, 0x80e40000, 0xa0e40001, 0xa0e40002,             /* cnd r0.xyz, r0, c1, c2   */
+        0x0000ffff                                                              /* end                      */
     };
     float quad1[] = {
         -1.0,   -1.0,   0.1,     0.0,    0.0,    1.0,
@@ -3303,6 +3368,8 @@ static void cnd_test(IDirect3DDevice9 *device)
     };
     float test_data_c1[4] = {  0.0, 0.0, 0.0, 0.0};
     float test_data_c2[4] = {  1.0, 1.0, 1.0, 1.0};
+    float test_data_c1_coi[4] = {  0.0, 1.0, 0.0, 0.0};
+    float test_data_c2_coi[4] = {  1.0, 0.0, 1.0, 1.0};
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
@@ -3314,6 +3381,14 @@ static void cnd_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_13, &shader_13);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_14, &shader_14);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_11_coissue, &shader_11_coissue);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_12_coissue, &shader_12_coissue);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_13_coissue, &shader_13_coissue);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_14_coissue, &shader_14_coissue);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
 
     hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 1, test_data_c1, 1);
@@ -3396,6 +3471,89 @@ static void cnd_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 482, 122);
     ok(color == 0x00000000, "pixel 482, 122 has color %08x, expected 0x00000000\n", color);
 
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ffff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 1, test_data_c1_coi, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShaderConstantF returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 2, test_data_c2_coi, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShaderConstantF returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_SetPixelShader(device, shader_11_coissue);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetPixelShader(device, shader_12_coissue);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetPixelShader(device, shader_13_coissue);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetPixelShader(device, shader_14_coissue);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, 6 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+    /* This is the 1.4 test. The coissue doesn't change the behavior here, but keep in mind
+     * that we swapped the values in c1 and c2 to make the other tests return some color
+     */
+    color = getPixelColor(device, 158, 118);
+    ok(color == 0x00ffffff, "pixel 158, 118 has color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 162, 118);
+    ok(color == 0x0000ffff, "pixel 162, 118 has color %08x, expected 0x0000ffff\n", color);
+    color = getPixelColor(device, 158, 122);
+    ok(color == 0x00ff00ff, "pixel 162, 122 has color %08x, expected 0x00ff00ff\n", color);
+    color = getPixelColor(device, 162, 122);
+    ok(color == 0x000000ff, "pixel 162, 122 has color %08x, expected 0x000000ff\n", color);
+
+    /* 1.1 shader. coissue flag changed the semantic of cnd, c1 is always selected */
+    color = getPixelColor(device, 158, 358);
+    ok(color == 0x0000ff00, "pixel 158, 358 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 162, 358);
+    ok(color == 0x0000ff00, "pixel 162, 358 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 158, 362);
+    ok(color == 0x0000ff00, "pixel 158, 362 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 162, 362);
+    ok(color == 0x0000ff00, "pixel 162, 362 has color %08x, expected 0x0000ff00\n", color);
+
+    /* 1.2 shader */
+    color = getPixelColor(device, 478, 358);
+    ok(color == 0x0000ff00, "pixel 478, 358 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 482, 358);
+    ok(color == 0x0000ff00, "pixel 482, 358 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 478, 362);
+    ok(color == 0x0000ff00, "pixel 478, 362 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 482, 362);
+    ok(color == 0x0000ff00, "pixel 482, 362 has color %08x, expected 0x0000ff00\n", color);
+
+    /* 1.3 shader */
+    color = getPixelColor(device, 478, 118);
+    ok(color == 0x0000ff00, "pixel 478, 118 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 482, 118);
+    ok(color == 0x0000ff00, "pixel 482, 118 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 478, 122);
+    ok(color == 0x0000ff00, "pixel 478, 122 has color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 482, 122);
+    ok(color == 0x0000ff00, "pixel 482, 122 has color %08x, expected 0x0000ff00\n", color);
+
+    IDirect3DPixelShader9_Release(shader_14_coissue);
+    IDirect3DPixelShader9_Release(shader_13_coissue);
+    IDirect3DPixelShader9_Release(shader_12_coissue);
+    IDirect3DPixelShader9_Release(shader_11_coissue);
     IDirect3DPixelShader9_Release(shader_14);
     IDirect3DPixelShader9_Release(shader_13);
     IDirect3DPixelShader9_Release(shader_12);

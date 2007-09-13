@@ -1303,8 +1303,14 @@ void shader_glsl_cnd(SHADER_OPCODE_ARG* arg) {
         shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, &src0_param);
         shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, &src1_param);
         shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, &src2_param);
-        shader_addline(arg->buffer, "%s > 0.5 ? %s : %s);\n",
-                src0_param.param_str, src1_param.param_str, src2_param.param_str);
+
+        /* Fun: The D3DSI_COISSUE flag changes the semantic of the cnd instruction for < 1.4 shaders */
+        if(arg->opcode_token & WINED3DSI_COISSUE) {
+            shader_addline(arg->buffer, "%s /* COISSUE! */);\n", src1_param.param_str);
+        } else {
+            shader_addline(arg->buffer, "%s > 0.5 ? %s : %s);\n",
+                    src0_param.param_str, src1_param.param_str, src2_param.param_str);
+        }
         return;
     }
     /* Cycle through all source0 channels */
