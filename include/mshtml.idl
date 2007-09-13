@@ -3057,6 +3057,140 @@ interface IHTMLBodyElement2 : IDispatch
     HRESULT onafterprint([retval, out] VARIANT *p);
 }
 
+/*****************************************************************************
+ *    IHTMLAnchorElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f1da-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLAnchorElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLANCHORELEMENT_HREF), displaybind, bindable]
+    HRESULT href([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_HREF), displaybind, bindable]
+    HRESULT href([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_TARGET), displaybind, bindable]
+    HRESULT target([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_TARGET), displaybind, bindable]
+    HRESULT target([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_REL), displaybind, bindable]
+    HRESULT rel([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_REL), displaybind, bindable]
+    HRESULT rel([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_REV), displaybind, bindable]
+    HRESULT rev([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_REV), displaybind, bindable]
+    HRESULT rev([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_URN), displaybind, bindable]
+    HRESULT urn([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_URN), displaybind, bindable]
+    HRESULT urn([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_METHODS), displaybind, bindable]
+    HRESULT Methods([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_METHODS), displaybind, bindable]
+    HRESULT Methods([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_NAME), displaybind, bindable]
+    HRESULT name([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_NAME), displaybind, bindable]
+    HRESULT name([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_HOST)]
+    HRESULT host([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_HOST)]
+    HRESULT host([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_HOSTNAME)]
+    HRESULT hostname([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_HOSTNAME)]
+    HRESULT hostname([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_PATHNAME)]
+    HRESULT pathname([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_PATHNAME)]
+    HRESULT pathname([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_PORT)]
+    HRESULT port([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_PORT)]
+    HRESULT port([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_PROTOCOL)]
+    HRESULT protocol([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_PROTOCOL)]
+    HRESULT protocol([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_SEARCH)]
+    HRESULT search([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_SEARCH)]
+    HRESULT search([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_HASH)]
+    HRESULT hash([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_HASH)]
+    HRESULT hash([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_ONBLUR), displaybind, bindable]
+    HRESULT onblur([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_ONBLUR), displaybind, bindable]
+    HRESULT onblur([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_ONFOCUS), displaybind, bindable]
+    HRESULT onfocus([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_ONFOCUS), displaybind, bindable]
+    HRESULT onfocus([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_ACCESSKEY), displaybind, bindable]
+    HRESULT accessKey([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_ACCESSKEY), displaybind, bindable]
+    HRESULT accessKey([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_PROTOCOLLONG)]
+    HRESULT protocolLong([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_MIMETYPE)]
+    HRESULT mimeType([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_NAMEPROP)]
+    HRESULT nameProp([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLANCHORELEMENT_TABINDEX), displaybind, bindable]
+    HRESULT tabIndex([in] short v);
+
+    [propget, id(DISPID_IHTMLANCHORELEMENT_TABINDEX), displaybind, bindable]
+    HRESULT tabIndex([retval, out] short *p);
+
+    [id(DISPID_IHTMLANCHORELEMENT_FOCUS)]
+    HRESULT focus();
+
+    [id(DISPID_IHTMLANCHORELEMENT_BLUR)]
+    HRESULT blur();
+}
 
 /*****************************************************************************
  *    IHTMLElementCollection interface
