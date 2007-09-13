@@ -421,6 +421,7 @@ extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk );
 
 /* freetype.c */
 extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID);
+extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD);
 extern GdiFont* WineEngCreateFontInstance(DC*, HFONT);
 extern BOOL WineEngDestroyFontInstance(HFONT handle);
 extern DWORD WineEngEnumFonts(LPLOGFONTW, FONTENUMPROCW, LPARAM);

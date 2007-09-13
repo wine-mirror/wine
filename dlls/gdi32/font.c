@@ -3214,8 +3214,7 @@ BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
  */
 HANDLE WINAPI AddFontMemResourceEx( PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD *pcFonts)
 {
-    FIXME("(%p,%08x,%p,%p): stub\n", pbFont, cbFont, pdv, pcFonts);
-    return NULL;
+    return WineEngAddFontMemResourceEx(pbFont, cbFont, pdv, pcFonts);
 }
 
 /***********************************************************************

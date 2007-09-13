@@ -3274,6 +3274,7 @@ INT         WINAPI AddFontResourceW(LPCWSTR);
 INT         WINAPI AddFontResourceExA(LPCSTR, DWORD, PVOID);
 INT         WINAPI AddFontResourceExW(LPCWSTR, DWORD, PVOID);
 #define     AddFontResourceEx WINELIB_NAME_AW(AddFontResourceEx)
+HANDLE      WINAPI AddFontMemResourceEx(PVOID, DWORD, PVOID, DWORD *);
 BOOL        WINAPI AlphaBlend(HDC,int,int,int,int,HDC,int,int,int,int,BLENDFUNCTION);
 BOOL        WINAPI AngleArc(HDC, INT, INT, DWORD, FLOAT, FLOAT);
 BOOL        WINAPI AnimatePalette(HPALETTE,UINT,UINT,const PALETTEENTRY*);
