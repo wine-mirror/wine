@@ -1267,10 +1267,12 @@ BOOL WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 
 BOOL WINAPI ImpersonateNamedPipeClient( HANDLE hNamedPipe )
 {
+    IO_STATUS_BLOCK io_block;
+
     TRACE("(%p)\n", hNamedPipe);
 
-    return set_ntstatus( NtFsControlFile(hNamedPipe, NULL, NULL, NULL, NULL,
-                         FSCTL_PIPE_IMPERSONATE, NULL, 0, NULL, 0) );
+    return set_ntstatus( NtFsControlFile(hNamedPipe, NULL, NULL, NULL,
+                         &io_block, FSCTL_PIPE_IMPERSONATE, NULL, 0, NULL, 0) );
 }
 
 /******************************************************************************
