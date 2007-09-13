@@ -1071,7 +1071,7 @@ void shader_glsl_cross(SHADER_OPCODE_ARG *arg) {
     shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, &src0_param);
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src_mask, &src1_param);
-    shader_addline(arg->buffer, "cross(%s, %s).%s);\n", src0_param.param_str, src1_param.param_str, dst_mask);
+    shader_addline(arg->buffer, "cross(%s, %s)%s);\n", src0_param.param_str, src1_param.param_str, dst_mask);
 }
 
 /* Process the WINED3DSIO_POW instruction in GLSL (dst = |src0|^src1)
