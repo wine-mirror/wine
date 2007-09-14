@@ -1679,6 +1679,9 @@ static int get_struct_type(var_list_t *fields)
   int has_variance = 0;
   var_t *field;
 
+  if (get_padding(fields))
+    return RPC_FC_BOGUS_STRUCT;
+
   if (fields) LIST_FOR_EACH_ENTRY( field, fields, var_t, entry )
   {
     type_t *t = field->type;

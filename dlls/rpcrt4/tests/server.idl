@@ -200,5 +200,13 @@ interface IServer
 
   double sum_aligns(aligns_t *a);
 
+  typedef struct
+  {
+    int i;
+    char c;
+  } padded_t;
+
+  int sum_padded(padded_t *p);
+
   void stop(void);
 }

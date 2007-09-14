@@ -726,6 +726,29 @@ static size_t union_memsize(const var_list_t *fields, unsigned int *pmaxa)
     return maxs;
 }
 
+int get_padding(const var_list_t *fields)
+{
+    unsigned short offset = 0;
+    int salign = -1;
+    const var_t *f;
+
+    if (!fields)
+        return 0;
+
+    LIST_FOR_EACH_ENTRY(f, fields, const var_t, entry)
+    {
+        type_t *ft = f->type;
+        unsigned int align = 0;
+        size_t size = type_memsize(ft, &align);
+        if (salign == -1)
+            salign = align;
+        offset = (offset + (align - 1)) & ~(align - 1);
+        offset += size;
+    }
+
+    return ((offset + (salign - 1)) & ~(salign - 1)) - offset;
+}
+
 size_t type_memsize(const type_t *t, unsigned int *align)
 {
     size_t size = 0;
@@ -1518,6 +1541,8 @@ static void write_struct_members(FILE *file, const type_t *type,
 {
     const var_t *field;
     unsigned short offset = 0;
+    int salign = -1;
+    int padding;
 
     if (type->fields) LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
     {
@@ -1526,6 +1551,8 @@ static void write_struct_members(FILE *file, const type_t *type,
         {
             unsigned int align = 0;
             size_t size = type_memsize(ft, &align);
+            if (salign == -1)
+                salign = align;
             if ((align - 1) & offset)
             {
                 unsigned char fc = 0;
@@ -1547,6 +1574,15 @@ static void write_struct_members(FILE *file, const type_t *type,
             write_member_type(file, ft, field, corroff, typestring_offset);
             offset += size;
         }
+    }
+
+    padding = ((offset + (salign - 1)) & ~(salign - 1)) - offset;
+    if (padding)
+    {
+        print_file(file, 2, "0x%x,\t/* FC_STRUCTPAD%d */\n",
+                   RPC_FC_STRUCTPAD1 + padding - 1,
+                   padding);
+        *typestring_offset += 1;
     }
 
     write_end(file, typestring_offset);

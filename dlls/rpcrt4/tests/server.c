@@ -344,6 +344,12 @@ s_sum_aligns(aligns_t *a)
   return a->c + a->i + a->s + a->d;
 }
 
+int
+s_sum_padded(padded_t *p)
+{
+  return p->i + p->c;
+}
+
 void
 s_stop(void)
 {
@@ -392,6 +398,7 @@ basic_tests(void)
   static aligns_t aligns = {3, 4, 5, 6.0};
   pints_t pints;
   ptypes_t ptypes;
+  padded_t padded;
   int i1, i2, i3, *pi2, *pi3, **ppi3;
   double u, v;
   float s, t;
@@ -465,6 +472,10 @@ basic_tests(void)
   ok(enum_ord(E4) == 4, "RPC enum_ord\n");
 
   ok(sum_aligns(&aligns) == 18.0, "RPC sum_aligns\n");
+
+  padded.i = -3;
+  padded.c = 8;
+  ok(sum_padded(&padded) == 5, "RPC sum_padded\n");
 }
 
 static void
