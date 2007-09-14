@@ -418,6 +418,9 @@ HRESULT shader_get_registers_used(
 
                 else if (WINED3DSPR_RASTOUT == regtype && reg == 1)
                     reg_maps->fog = 1;
+
+                else if (WINED3DSPR_MISCTYPE == regtype && reg == 0 && pshader)
+                    reg_maps->vpos = 1;
             }
         }
     }

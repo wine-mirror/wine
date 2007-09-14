@@ -592,6 +592,13 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
             WARN("Recompiling shader because srgb correction is different and hardcoded\n");
             goto recompile;
         }
+        if(This->baseShader.reg_maps.vpos && !This->vpos_uniform) {
+            if(This->render_offscreen != deviceImpl->render_offscreen ||
+               This->height != ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height) {
+                WARN("Recompiling shader because vpos is used, hard compiled and changed\n");
+                goto recompile;
+            }
+        }
 
         return WINED3D_OK;
 

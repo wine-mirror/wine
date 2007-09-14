@@ -1652,7 +1652,7 @@ typedef struct shader_reg_maps {
      * Use 0 as default (bit 31 is always 1 on a valid token) */
     DWORD samplers[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     char bumpmat, luminanceparams;
-    char usesnrm;
+    char usesnrm, vpos;
 
     /* Whether or not a loop is used in this shader */
     char loop;
@@ -2083,6 +2083,9 @@ typedef struct IWineD3DPixelShaderImpl {
     char                        srgb_mode_hardcoded;
     UINT                        srgb_low_const;
     UINT                        srgb_cmp_const;
+    char                        vpos_uniform;
+    BOOL                        render_offscreen;
+    UINT                        height;
 
 #if 0 /* needs reworking */
     PSHADERINPUTDATA input;

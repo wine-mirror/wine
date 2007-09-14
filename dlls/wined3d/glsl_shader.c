@@ -469,6 +469,20 @@ void shader_glsl_load_constants(
             checkGLcall("glGetUniformLocationARB");
             GL_EXTCALL(glUniform4fvARB(pos, 1, mul_low));
         }
+        if(((IWineD3DPixelShaderImpl *) pshader)->vpos_uniform) {
+            float correction_params[4];
+            pos = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
+            checkGLcall("glGetUniformLocationARB");
+            if(deviceImpl->render_offscreen) {
+                correction_params[0] = 0.0;
+                correction_params[1] = 1.0;
+            } else {
+                /* position is window relative, not viewport relative */
+                correction_params[0] = ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
+                correction_params[1] = -1.0;
+            }
+            GL_EXTCALL(glUniform4fvARB(pos, 1, correction_params));
+        }
     }
 }
 
@@ -528,6 +542,7 @@ void shader_generate_glsl_declarations(
                 shader_addline(buffer, "uniform vec4 srgb_mul_low;\n");
                 shader_addline(buffer, "uniform vec4 srgb_comparison;\n");
                 ps_impl->srgb_mode_hardcoded = 0;
+                extra_constants_needed++;
             } else {
                 ps_impl->srgb_mode_hardcoded = 1;
                 shader_addline(buffer, "const vec4 srgb_mul_low = {%f, %f, %f, %f};\n",
@@ -543,6 +558,22 @@ void shader_generate_glsl_declarations(
              */
             ps_impl->srgb_enabled = 0;
             ps_impl->srgb_mode_hardcoded = 1;
+        }
+        if(reg_maps->vpos) {
+            if(This->baseShader.limits.constant_float + extra_constants_needed + 1 < GL_LIMITS(pshader_constantsF)) {
+                shader_addline(buffer, "uniform vec4 ycorrection;\n");
+                ((IWineD3DPixelShaderImpl *) This)->vpos_uniform = 1;
+                extra_constants_needed++;
+            } else {
+                /* This happens because we do not have proper tracking of the constant registers that are
+                 * actually used, only the max limit of the shader version
+                 */
+                FIXME("Cannot find a free uniform for vpos correction params\n");
+                shader_addline(buffer, "const vec4 ycorrection = {%f, %f, 0.0, 0.0};\n",
+                               device->render_offscreen ? 0.0 : ((IWineD3DSurfaceImpl *) device->render_targets[0])->currentDesc.Height,
+                               device->render_offscreen ? 1.0 : -1.0);
+            }
+            shader_addline(buffer, "vec4 vpos;\n");
         }
     }
 
@@ -621,6 +652,9 @@ void shader_generate_glsl_declarations(
 
     /* Start the main program */
     shader_addline(buffer, "void main() {\n");
+    if(pshader && reg_maps->vpos) {
+        shader_addline(buffer, "vpos = vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1) - 0.5;\n");
+    }
 }
 
 /*****************************************************************************
@@ -836,7 +870,7 @@ static void shader_glsl_get_register_name(
     case WINED3DSPR_MISCTYPE:
         if (reg == 0) {
             /* vPos */
-            sprintf(tmpStr, "gl_FragCoord");
+            sprintf(tmpStr, "vpos");
         } else {
             /* gl_FrontFacing could be used for vFace, but note that
              * gl_FrontFacing is a bool, while vFace is a float for
