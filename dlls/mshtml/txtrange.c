@@ -155,7 +155,7 @@ static BOOL is_br_node(nsIDOMNode *node)
     return ret;
 }
 
-static void inline wstrbuf_init(wstrbuf_t *buf)
+static inline void wstrbuf_init(wstrbuf_t *buf)
 {
     buf->len = 0;
     buf->size = 16;
@@ -163,7 +163,7 @@ static void inline wstrbuf_init(wstrbuf_t *buf)
     *buf->buf = 0;
 }
 
-static void inline wstrbuf_finish(wstrbuf_t *buf)
+static inline void wstrbuf_finish(wstrbuf_t *buf)
 {
     mshtml_free(buf->buf);
 }
@@ -180,7 +180,7 @@ static void wstrbuf_append_len(wstrbuf_t *buf, LPCWSTR str, int len)
     buf->buf[buf->len] = 0;
 }
 
-static void inline wstrbuf_append(wstrbuf_t *buf, LPCWSTR str)
+static inline void wstrbuf_append(wstrbuf_t *buf, LPCWSTR str)
 {
     wstrbuf_append_len(buf, str, strlenW(str));
 }
@@ -395,7 +395,7 @@ static void set_range_pos(HTMLTxtRange *This, BOOL start, dompos_t *pos)
         ERR("failed: %p %08x\n", pos->node, nsres);
 }
 
-static void inline dompos_release(dompos_t *pos)
+static inline void dompos_release(dompos_t *pos)
 {
     if(pos->node)
         nsIDOMNode_Release(pos->node);
@@ -404,7 +404,7 @@ static void inline dompos_release(dompos_t *pos)
         nsAString_Finish(&pos->str);
 }
 
-static void inline dompos_addref(dompos_t *pos)
+static inline void dompos_addref(dompos_t *pos)
 {
     if(pos->node)
         nsIDOMNode_AddRef(pos->node);
