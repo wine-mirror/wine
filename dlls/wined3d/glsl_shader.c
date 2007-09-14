@@ -640,12 +640,12 @@ void shader_generate_glsl_declarations(
             shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
     }
 
-    /* Declare loop register aL */
-    if (reg_maps->loop) {
-        shader_addline(buffer, "int aL;\n");
-        shader_addline(buffer, "int tmpInt;\n");
+    /* Declare loop registers aLx */
+    for (i = 0; i < reg_maps->loop_depth; i++) {
+        shader_addline(buffer, "int aL%u;\n", i);
+        shader_addline(buffer, "int tmpInt%u;\n", i);
     }
-    
+
     /* Temporary variables for matrix operations */
     shader_addline(buffer, "vec4 tmp0;\n");
     shader_addline(buffer, "vec4 tmp1;\n");
@@ -829,7 +829,7 @@ static void shader_glsl_get_register_name(
         }
     break;
     case WINED3DSPR_LOOP:
-        sprintf(tmpStr, "aL");
+        sprintf(tmpStr, "aL%u", This->baseShader.cur_loop_regno - 1);
     break;
     case WINED3DSPR_SAMPLER:
         if (pshader)
@@ -1817,22 +1817,42 @@ void shader_glsl_sincos(SHADER_OPCODE_ARG* arg) {
 /* FIXME: I don't think nested loops will work correctly this way. */
 void shader_glsl_loop(SHADER_OPCODE_ARG* arg) {
     glsl_src_param_t src1_param;
+    IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
 
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_ALL, &src1_param);
-  
-    shader_addline(arg->buffer, "for (tmpInt = 0, aL = %s.y; tmpInt < %s.x; tmpInt++, aL += %s.z) {\n",
-            src1_param.reg_name, src1_param.reg_name, src1_param.reg_name);
+
+    shader_addline(arg->buffer, "for (tmpInt%u = 0, aL%u = %s.y; tmpInt%u < %s.x; tmpInt%u++, aL%u += %s.z) {\n",
+                   shader->baseShader.cur_loop_depth, shader->baseShader.cur_loop_regno,
+                   src1_param.reg_name, shader->baseShader.cur_loop_depth, src1_param.reg_name,
+                   shader->baseShader.cur_loop_depth, shader->baseShader.cur_loop_regno, src1_param.reg_name);
+
+    shader->baseShader.cur_loop_depth++;
+    shader->baseShader.cur_loop_regno++;
 }
 
 void shader_glsl_end(SHADER_OPCODE_ARG* arg) {
+    IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
+
     shader_addline(arg->buffer, "}\n");
+
+    if(arg->opcode->opcode == WINED3DSIO_ENDLOOP) {
+        shader->baseShader.cur_loop_depth--;
+        shader->baseShader.cur_loop_regno--;
+    }
+    if(arg->opcode->opcode == WINED3DSIO_ENDREP) {
+        shader->baseShader.cur_loop_depth--;
+    }
 }
 
 void shader_glsl_rep(SHADER_OPCODE_ARG* arg) {
+    IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
     glsl_src_param_t src0_param;
 
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, &src0_param);
-    shader_addline(arg->buffer, "for (tmpInt = 0; tmpInt < %s; tmpInt++) {\n", src0_param.param_str);
+    shader_addline(arg->buffer, "for (tmpInt%d = 0; tmpInt%d < %s; tmpInt%d++) {\n",
+                   shader->baseShader.cur_loop_depth, shader->baseShader.cur_loop_depth,
+                   src0_param.param_str, shader->baseShader.cur_loop_depth);
+    shader->baseShader.cur_loop_depth++;
 }
 
 void shader_glsl_if(SHADER_OPCODE_ARG* arg) {

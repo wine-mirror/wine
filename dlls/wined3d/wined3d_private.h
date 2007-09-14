@@ -1654,8 +1654,8 @@ typedef struct shader_reg_maps {
     char bumpmat, luminanceparams;
     char usesnrm, vpos;
 
-    /* Whether or not a loop is used in this shader */
-    char loop;
+    /* Whether or not loops are used in this shader, and nesting depth */
+    unsigned loop_depth;
 
     /* Whether or not this shader uses fog */
     char fog;
@@ -1885,6 +1885,7 @@ typedef struct IWineD3DBaseShaderClass
     UINT                            functionLength;
     GLuint                          prgId;
     BOOL                            is_compiled;
+    UINT                            cur_loop_depth, cur_loop_regno;
 
     /* Type of shader backend */
     int shader_mode;

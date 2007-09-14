@@ -193,6 +193,7 @@ HRESULT shader_get_registers_used(
     IWineD3DStateBlockImpl *stateBlock) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    unsigned int cur_loop_depth = 0, max_loop_depth = 0;
 
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
@@ -305,9 +306,15 @@ HRESULT shader_get_registers_used(
         /* If there's a loop in the shader */
         } else if (WINED3DSIO_LOOP == curOpcode->opcode ||
                    WINED3DSIO_REP == curOpcode->opcode) {
-            reg_maps->loop = 1;
+            cur_loop_depth++;
+            if(cur_loop_depth > max_loop_depth)
+                max_loop_depth = cur_loop_depth;
             pToken += curOpcode->num_params;
-   
+
+        } else if (WINED3DSIO_ENDLOOP == curOpcode->opcode ||
+                   WINED3DSIO_ENDREP == curOpcode->opcode) {
+            cur_loop_depth--;
+
         /* For subroutine prototypes */
         } else if (WINED3DSIO_LABEL == curOpcode->opcode) {
 
@@ -424,6 +431,7 @@ HRESULT shader_get_registers_used(
             }
         }
     }
+    reg_maps->loop_depth = max_loop_depth;
 
     return WINED3D_OK;
 }
