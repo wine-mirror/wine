@@ -750,12 +750,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     /* Mark the surface locked */
     This->Flags |= SFLAG_LOCKED;
 
-    /* Whatever surface we have, make sure that there is memory allocated for the downloaded copy */
-    if(!This->resource.allocatedMemory) {
-        /* In case of PBOs allocatedMemory should be zero. */
-        if(!(This->Flags & SFLAG_PBO))
-            This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
-
+    /* Whatever surface we have, make sure that there is memory allocated for the downloaded copy,
+     * or a pbo to map
+     */
+    if(!(This->resource.allocatedMemory || This->Flags & SFLAG_PBO)) {
+        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
         This->Flags &= ~SFLAG_INSYSMEM; /* This is the marker that surface data has to be downloaded */
     }
 
