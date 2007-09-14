@@ -671,7 +671,7 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *c
     if( !( func = CompareFunc(stateblock->renderState[WINED3DRS_STENCILFUNC]) ) )
         func = GL_ALWAYS;
     if( !( func_ccw = CompareFunc(stateblock->renderState[WINED3DRS_CCW_STENCILFUNC]) ) )
-        func = GL_ALWAYS;
+        func_ccw = GL_ALWAYS;
     ref = stateblock->renderState[WINED3DRS_STENCILREF];
     mask = stateblock->renderState[WINED3DRS_STENCILMASK];
     stencilFail = StencilOp(stateblock->renderState[WINED3DRS_STENCILFAIL]);
