@@ -692,8 +692,14 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *c
         glEnable(GL_STENCIL_TEST);
         checkGLcall("glEnable GL_STENCIL_TEST");
 
-        renderstate_stencil_twosided(stateblock, GL_FRONT, func, ref, mask, stencilFail, depthFail, stencilPass);
+        /* Apply back first, then front. This function calls glActiveStencilFaceEXT,
+         * which has an effect on the code below too. If we apply the front face
+         * afterwards, we are sure that the active stencil face is set to front,
+         * and other stencil functions which do not use two sided stencil do not have
+         * to set it back
+         */
         renderstate_stencil_twosided(stateblock, GL_BACK, func_ccw, ref, mask, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
+        renderstate_stencil_twosided(stateblock, GL_FRONT, func, ref, mask, stencilFail, depthFail, stencilPass);
     } else if(onesided_enable) {
         if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
             glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
