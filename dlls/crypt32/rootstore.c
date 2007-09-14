@@ -137,6 +137,7 @@ static BOOL import_base64_certs_from_fp(FILE *fp, HCERTSTORE store)
                     if (CertAddEncodedCertificateToStore(store,
                      X509_ASN_ENCODING, buf, size, CERT_STORE_ADD_NEW, NULL))
                         num_certs++;
+                    CryptMemFree(buf);
                 }
             }
         }

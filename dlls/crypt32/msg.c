@@ -2079,6 +2079,7 @@ static BOOL CDecodeHashMsg_VerifyHash(CDecodeMsg *msg)
                 if (ret)
                     ret = !memcmp(hashBlob.pbData, computedHash,
                      hashBlob.cbData);
+                CryptMemFree(computedHash);
             }
             else
                 ret = FALSE;
