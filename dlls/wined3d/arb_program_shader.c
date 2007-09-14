@@ -154,6 +154,7 @@ void shader_arb_load_constants(
     if (usePixelShader) {
 
         IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
+        IWineD3DPixelShaderImpl *psi = (IWineD3DPixelShaderImpl *) pshader;
 
         /* Load DirectX 9 float constants for pixel shader */
         shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB, 
@@ -165,9 +166,30 @@ void shader_arb_load_constants(
              * number of the constant to load the matrix into.
              * The state manager takes care that this function is always called if the bump env matrix changes
              */
-            IWineD3DPixelShaderImpl *psi = (IWineD3DPixelShaderImpl *) pshader;
             float *data = (float *) &stateBlock->textureState[(int) psi->needsbumpmat][WINED3DTSS_BUMPENVMAT00];
             GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->bumpenvmatconst, data));
+        }
+        if(((IWineD3DPixelShaderImpl *) pshader)->srgb_enabled &&
+           !((IWineD3DPixelShaderImpl *) pshader)->srgb_mode_hardcoded) {
+            float comparison[4];
+            float mul_low[4];
+
+            if(stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
+                comparison[0] = srgb_cmp; comparison[1] = srgb_cmp;
+                comparison[2] = srgb_cmp; comparison[3] = srgb_cmp;
+
+                mul_low[0] = srgb_mul_low; mul_low[1] = srgb_mul_low;
+                mul_low[2] = srgb_mul_low; mul_low[3] = srgb_mul_low;
+            } else {
+                comparison[0] = 1.0 / 0.0; comparison[1] = 1.0 / 0.0;
+                comparison[2] = 1.0 / 0.0; comparison[3] = 1.0 / 0.0;
+
+                mul_low[0] = 1.0; mul_low[1] = 1.0;
+                mul_low[2] = 1.0; mul_low[3] = 1.0;
+            }
+            GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->srgb_cmp_const, comparison));
+            GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->srgb_low_const, mul_low));
+            checkGLcall("Load sRGB correction constants\n");
         }
     }
 }
@@ -180,10 +202,12 @@ void shader_generate_arb_declarations(
     WineD3D_GL_Info* gl_info) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     DWORD i;
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
     unsigned max_constantsF = min(This->baseShader.limits.constant_float, 
             (pshader ? GL_LIMITS(pshader_constantsF) : GL_LIMITS(vshader_constantsF)));
+    UINT extra_constants_needed = 0;
 
     /* Temporary Output register */
     shader_addline(buffer, "TEMP TMP_OUT;\n");
@@ -220,6 +244,52 @@ void shader_generate_arb_declarations(
         } else {
             FIXME("No free constant found to load environemnt bump mapping matrix into the shader. texbem instruction will not apply bump mapping\n");
         }
+        extra_constants_needed += 1;
+    }
+    if(device->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE] && pshader) {
+        IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *) This;
+        /* If there are 2 constants left to use, use them to pass the sRGB correction values in. This way
+         * srgb write correction can be turned on and off dynamically without recompilation. Otherwise
+         * hardcode them. The drawback of hardcoding is that the shader needs recompilation to turn sRGB
+         * off again
+         */
+        if(max_constantsF + extra_constants_needed + 1 < GL_LIMITS(pshader_constantsF) && FALSE) {
+            /* The idea is that if srgb is enabled, then disabled, the constant loading code
+             * can effectively disabling sRGB correction by passing 1.0 and INF as the multiplication
+             * and comparison constants. If it disables it that way, the shader won't be recompiled
+             * and the code will stay in, so sRGB writing can be turned on again by setting the
+             * constants from the spec
+             */
+            ps_impl->srgb_mode_hardcoded = 0;
+            ps_impl->srgb_low_const = GL_LIMITS(pshader_constantsF) - extra_constants_needed;
+            ps_impl->srgb_cmp_const = GL_LIMITS(pshader_constantsF) - extra_constants_needed - 1;
+            shader_addline(buffer, "PARAM srgb_mul_low = program.env[%d];\n", ps_impl->srgb_low_const);
+            shader_addline(buffer, "PARAM srgb_comparison = program.env[%d];\n", ps_impl->srgb_cmp_const);
+        } else {
+            shader_addline(buffer, "PARAM srgb_mul_low = {%f, %f, %f, 1.0};\n",
+                           srgb_mul_low, srgb_mul_low, srgb_mul_low);
+            shader_addline(buffer, "PARAM srgb_comparison =  {%f, %f, %f, %f};\n",
+                           srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
+            ps_impl->srgb_mode_hardcoded = 1;
+        }
+        /* These can be hardcoded, they do not cause any harm because no fragment will enter the high
+         * path if the comparison value is set to INF
+         */
+        shader_addline(buffer, "PARAM srgb_pow =  {%f, %f, %f, 1.0};\n",
+                       srgb_pow, srgb_pow, srgb_pow);
+        shader_addline(buffer, "PARAM srgb_mul_hi =  {%f, %f, %f, 1.0};\n",
+                       srgb_mul_high, srgb_mul_high, srgb_mul_high);
+        shader_addline(buffer, "PARAM srgb_sub_hi =  {%f, %f, %f, 0.0};\n",
+                       srgb_sub_high, srgb_sub_high, srgb_sub_high);
+        ps_impl->srgb_enabled = 1;
+    } else if(pshader) {
+        IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *) This;
+
+        /* Do not write any srgb fixup into the shader to save shader size and processing time.
+         * As a consequence, we can't toggle srgb write on without recompilation
+         */
+        ps_impl->srgb_enabled = 0;
+        ps_impl->srgb_mode_hardcoded = 1;
     }
 
     /* Need to PARAM the environment parameters (constants) so we can use relative addressing */

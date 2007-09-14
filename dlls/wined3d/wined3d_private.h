@@ -2081,6 +2081,10 @@ typedef struct IWineD3DPixelShaderImpl {
     /* Some information about the shader behavior */
     char                        needsbumpmat;
     UINT                        bumpenvmatconst;
+    char                        srgb_enabled;
+    char                        srgb_mode_hardcoded;
+    UINT                        srgb_low_const;
+    UINT                        srgb_cmp_const;
 
 #if 0 /* needs reworking */
     PSHADERINPUTDATA input;
@@ -2090,6 +2094,13 @@ typedef struct IWineD3DPixelShaderImpl {
 
 extern const SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[];
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
+
+/* sRGB correction constants */
+static const float srgb_cmp = 0.0031308;
+static const float srgb_mul_low = 12.92;
+static const float srgb_pow = 0.41666;
+static const float srgb_mul_high = 1.055;
+static const float srgb_sub_high = 0.055;
 
 /*****************************************************************************
  * IWineD3DPalette implementation structure

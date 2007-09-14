@@ -443,6 +443,31 @@ void shader_glsl_load_constants(
                 GL_EXTCALL(glUniform1fvARB(pos, 1, offset));
                 checkGLcall("glUniform1fvARB");
             }
+        } else if(((IWineD3DPixelShaderImpl *) pshader)->srgb_enabled &&
+                  !((IWineD3DPixelShaderImpl *) pshader)->srgb_mode_hardcoded) {
+            float comparison[4];
+            float mul_low[4];
+
+            if(stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
+                comparison[0] = srgb_cmp; comparison[1] = srgb_cmp;
+                comparison[2] = srgb_cmp; comparison[3] = srgb_cmp;
+
+                mul_low[0] = srgb_mul_low; mul_low[1] = srgb_mul_low;
+                mul_low[2] = srgb_mul_low; mul_low[3] = srgb_mul_low;
+            } else {
+                comparison[0] = 1.0 / 0.0; comparison[1] = 1.0 / 0.0;
+                comparison[2] = 1.0 / 0.0; comparison[3] = 1.0 / 0.0;
+
+                mul_low[0] = 1.0; mul_low[1] = 1.0;
+                mul_low[2] = 1.0; mul_low[3] = 1.0;
+            }
+
+            pos = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_comparison"));
+            checkGLcall("glGetUniformLocationARB");
+            GL_EXTCALL(glUniform4fvARB(pos, 1, comparison));
+            pos = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_mul_low"));
+            checkGLcall("glGetUniformLocationARB");
+            GL_EXTCALL(glUniform4fvARB(pos, 1, mul_low));
         }
     }
 }
@@ -455,7 +480,9 @@ void shader_generate_glsl_declarations(
     WineD3D_GL_Info* gl_info) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     int i;
+    unsigned int extra_constants_needed = 0;
 
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
@@ -480,13 +507,42 @@ void shader_generate_glsl_declarations(
     if (This->baseShader.limits.constant_bool > 0)
         shader_addline(buffer, "uniform bool %cB[%u];\n", prefix, This->baseShader.limits.constant_bool);
 
-    if(!pshader)
+    if(!pshader) {
         shader_addline(buffer, "uniform vec4 posFixup;\n");
-    else if(reg_maps->bumpmat != -1) {
-        shader_addline(buffer, "uniform mat2 bumpenvmat;\n");
-        if(reg_maps->luminanceparams) {
-            shader_addline(buffer, "uniform float luminancescale;\n");
-            shader_addline(buffer, "uniform float luminanceoffset;\n");
+    } else {
+        IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *) This;
+
+        if(reg_maps->bumpmat != -1) {
+            shader_addline(buffer, "uniform mat2 bumpenvmat;\n");
+            if(reg_maps->luminanceparams) {
+                shader_addline(buffer, "uniform float luminancescale;\n");
+                shader_addline(buffer, "uniform float luminanceoffset;\n");
+                extra_constants_needed++;
+            }
+            extra_constants_needed++;
+        }
+
+        if(device->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
+            ps_impl->srgb_enabled = 1;
+            if(This->baseShader.limits.constant_float + extra_constants_needed + 1 < GL_LIMITS(pshader_constantsF)) {
+                shader_addline(buffer, "uniform vec4 srgb_mul_low;\n");
+                shader_addline(buffer, "uniform vec4 srgb_comparison;\n");
+                ps_impl->srgb_mode_hardcoded = 0;
+            } else {
+                ps_impl->srgb_mode_hardcoded = 1;
+                shader_addline(buffer, "const vec4 srgb_mul_low = {%f, %f, %f, %f};\n",
+                               srgb_mul_low, srgb_mul_low, srgb_mul_low, srgb_mul_low);
+                shader_addline(buffer, "const vec4 srgb_comparison = {%f, %f, %f, %f};\n",
+                               srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
+            }
+        } else {
+            IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *) This;
+
+            /* Do not write any srgb fixup into the shader to save shader size and processing time.
+             * As a consequence, we can't toggle srgb write on without recompilation
+             */
+            ps_impl->srgb_enabled = 0;
+            ps_impl->srgb_mode_hardcoded = 1;
         }
     }
 

@@ -399,6 +399,23 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
             else
                 shader_addline(&buffer, "gl_FragColor.xyz = mix(gl_Fog.color.xyz, gl_FragColor.xyz, Fog);\n");
         }
+        if(This->srgb_enabled) {
+            const char *fragcolor;
+
+            if(GL_SUPPORT(ARB_DRAW_BUFFERS)) {
+                fragcolor = "gl_FragData[0]";
+            } else {
+                fragcolor = "gl_FragColor";
+            }
+            shader_addline(&buffer, "tmp0.xyz = pow(%s.xyz, vec3(%f, %f, %f)) * vec3(%f, %f, %f) - vec3(%f, %f, %f);\n",
+                            fragcolor, srgb_pow, srgb_pow, srgb_pow, srgb_mul_high, srgb_mul_high, srgb_mul_high,
+                            srgb_sub_high, srgb_sub_high, srgb_sub_high);
+            shader_addline(&buffer, "tmp1.xyz = %s.xyz * srgb_mul_low.xyz;\n", fragcolor);
+            shader_addline(&buffer, "%s.x = %s.x < srgb_comparison.x ? tmp1.x : tmp0.x;\n", fragcolor, fragcolor);
+            shader_addline(&buffer, "%s.y = %s.y < srgb_comparison.y ? tmp1.y : tmp0.y;\n", fragcolor, fragcolor);
+            shader_addline(&buffer, "%s.z = %s.z < srgb_comparison.z ? tmp1.z : tmp0.z;\n", fragcolor, fragcolor);
+            shader_addline(&buffer, "%s = clamp(%s, 0.0, 1.0);\n", fragcolor, fragcolor);
+        }
 
         shader_addline(&buffer, "}\n");
 
@@ -440,12 +457,41 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
          * -1/(e-s) and e/(e-s) respectively.
          */
         shader_addline(&buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, state.fog.params.y, state.fog.params.z;\n");
-        if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
-            shader_addline(&buffer, "LRP result.color.rgb, TMP_FOG.x, R0, state.fog.color;\n");
-            shader_addline(&buffer, "MOV result.color.a, R0.a;\n");
+
+        if(This->srgb_enabled) {
+            if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
+                shader_addline(&buffer, "LRP TMP_COLOR.rgb, TMP_FOG.x, R0, state.fog.color;\n");
+                shader_addline(&buffer, "MOV result.color.a, R0.a;\n");
+            } else {
+                shader_addline(&buffer, "LRP TMP_COLOR.rgb, TMP_FOG.x, TMP_COLOR, state.fog.color;\n");
+                shader_addline(&buffer, "MOV result.color.a, TMP_COLOR.a;\n");
+            }
+            /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
+
+            /* Calculate the > 0.0031308 case */
+            shader_addline(&buffer, "POW TMP.x, TMP_COLOR.x, srgb_pow.x;\n");
+            shader_addline(&buffer, "POW TMP.y, TMP_COLOR.y, srgb_pow.y;\n");
+            shader_addline(&buffer, "POW TMP.z, TMP_COLOR.z, srgb_pow.z;\n");
+            shader_addline(&buffer, "MUL TMP, TMP, srgb_mul_hi;\n");
+            shader_addline(&buffer, "SUB TMP, TMP, srgb_sub_hi;\n");
+            /* Calculate the < case */
+            shader_addline(&buffer, "MUL TMP2, srgb_mul_low, TMP_COLOR;\n");
+            /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
+            shader_addline(&buffer, "SLT TA, srgb_comparison, TMP_COLOR;\n");
+            shader_addline(&buffer, "SGE TB, srgb_comparison, TMP_COLOR;\n");
+            /* Store the components > 0.0031308 in the destination */
+            shader_addline(&buffer, "MUL TMP_COLOR, TMP, TA;\n");
+            /* Add the components that are < 0.0031308 */
+            shader_addline(&buffer, "MAD result.color.xyz, TMP2, TB, TMP_COLOR;\n");
+            /* [0.0;1.0] clamping. Not needed, this is done implicitly */
         } else {
-            shader_addline(&buffer, "LRP result.color.rgb, TMP_FOG.x, TMP_COLOR, state.fog.color;\n");
-            shader_addline(&buffer, "MOV result.color.a, TMP_COLOR.a;\n");
+            if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
+                shader_addline(&buffer, "LRP result.color.rgb, TMP_FOG.x, R0, state.fog.color;\n");
+                shader_addline(&buffer, "MOV result.color.a, R0.a;\n");
+            } else {
+                shader_addline(&buffer, "LRP result.color.rgb, TMP_FOG.x, TMP_COLOR, state.fog.color;\n");
+                shader_addline(&buffer, "MOV result.color.a, TMP_COLOR.a;\n");
+            }
         }
 
         shader_addline(&buffer, "END\n"); 
@@ -536,6 +582,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
      * changed.
      */
     if (This->baseShader.is_compiled) {
+        char srgbenabled = deviceImpl->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE] ? 1 : 0;
         for(i = 0; i < This->baseShader.num_sampled_samplers; i++) {
             sampler = This->baseShader.sampled_samplers[i];
             texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler];
@@ -550,6 +597,11 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
 
         /* TODO: Check projected textures */
         /* TODO: Check texture types(2D, Cube, 3D) */
+
+        if(srgbenabled != This->srgb_enabled && This->srgb_mode_hardcoded) {
+            WARN("Recompiling shader because srgb correction is different and hardcoded\n");
+            goto recompile;
+        }
 
         return WINED3D_OK;
 
