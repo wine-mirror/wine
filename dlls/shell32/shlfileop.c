@@ -1753,8 +1753,7 @@ HRESULT WINAPI SHPathPrepareForWriteW(HWND hwnd, IUnknown *modless, LPCWSTR path
     /* check if we can access the directory */
     res = GetFileAttributesW(realpath);
 
-    if (temppath)
-        HeapFree(GetProcessHeap(), 0, temppath);
+    HeapFree(GetProcessHeap(), 0, temppath);
 
     if (res == INVALID_FILE_ATTRIBUTES)
     {

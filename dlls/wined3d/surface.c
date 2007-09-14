@@ -796,7 +796,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         checkGLcall("glBindBufferARB");
 
         /* We don't need the system memory anymore and we can't even use it for PBOs */
-        if(This->resource.allocatedMemory) HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+        HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
         This->resource.allocatedMemory = NULL;
         This->Flags |= SFLAG_PBO;
         LEAVE_GL();
