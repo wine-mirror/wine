@@ -77,9 +77,14 @@ static void test_connect(void)
 
     SetLastError(0xdeadbeef);
     hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", NULL, INTERNET_SERVICE_FTP, 0, 0);
-    ok ( hFtp == NULL, "Expected InternetConnect to fail\n");
-    ok ( GetLastError() == ERROR_INTERNET_LOGIN_FAILURE,
-        "Expected ERROR_INTERNET_LOGIN_FAILURE, got %d\n", GetLastError());
+    if (hFtp)  /* some servers accept an empty password */
+    {
+        ok ( GetLastError() == ERROR_SUCCESS, "ERROR_SUCCESS, got %d\n", GetLastError());
+        InternetCloseHandle(hFtp);
+    }
+    else
+        ok ( GetLastError() == ERROR_INTERNET_LOGIN_FAILURE,
+             "Expected ERROR_INTERNET_LOGIN_FAILURE, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, NULL, "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
