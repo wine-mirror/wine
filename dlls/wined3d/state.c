@@ -707,10 +707,24 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *c
 }
 
 static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    DWORD mask;
+
     if(stateblock->wineD3DDevice->stencilBufferTarget) {
-        glStencilMask(stateblock->renderState[WINED3DRS_STENCILWRITEMASK]);
+        mask = stateblock->renderState[WINED3DRS_STENCILWRITEMASK];
     } else {
-        glStencilMask(0);
+        mask = 0;
+    }
+
+    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
+        GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
+        checkGLcall("glActiveStencilFaceEXT(GL_BACK)");
+        glStencilMask(mask);
+        checkGLcall("glStencilMask");
+        GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
+        checkGLcall("glActiveStencilFaceEXT(GL_FRONT)");
+        glStencilMask(mask);
+    } else {
+        glStencilMask(mask);
     }
     checkGLcall("glStencilMask");
 }
