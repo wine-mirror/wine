@@ -694,18 +694,21 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *c
 
         renderstate_stencil_twosided(stateblock, GL_FRONT, func, ref, mask, stencilFail, depthFail, stencilPass);
         renderstate_stencil_twosided(stateblock, GL_BACK, func_ccw, ref, mask, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
-    } else {
-        if (onesided_enable) {
-            glEnable(GL_STENCIL_TEST);
-            checkGLcall("glEnable GL_STENCIL_TEST");
-            glStencilFunc(func, ref, mask);
-            checkGLcall("glStencilFunc(...)");
-            glStencilOp(stencilFail, depthFail, stencilPass);
-            checkGLcall("glStencilOp(...)");
-        } else {
-            glDisable(GL_STENCIL_TEST);
-            checkGLcall("glDisable GL_STENCIL_TEST");
+    } else if(onesided_enable) {
+        if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
+            glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+            checkGLcall("glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
         }
+
+        glEnable(GL_STENCIL_TEST);
+        checkGLcall("glEnable GL_STENCIL_TEST");
+        glStencilFunc(func, ref, mask);
+        checkGLcall("glStencilFunc(...)");
+        glStencilOp(stencilFail, depthFail, stencilPass);
+        checkGLcall("glStencilOp(...)");
+    } else {
+        glDisable(GL_STENCIL_TEST);
+        checkGLcall("glDisable GL_STENCIL_TEST");
     }
 }
 
