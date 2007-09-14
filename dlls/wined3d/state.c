@@ -688,7 +688,10 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *c
     func, stencilFail, depthFail, stencilPass,
     func_ccw, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
 
-    if (twosided_enable) {
+    if (twosided_enable && onesided_enable) {
+        glEnable(GL_STENCIL_TEST);
+        checkGLcall("glEnable GL_STENCIL_TEST");
+
         renderstate_stencil_twosided(stateblock, GL_FRONT, func, ref, mask, stencilFail, depthFail, stencilPass);
         renderstate_stencil_twosided(stateblock, GL_BACK, func_ccw, ref, mask, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
     } else {
