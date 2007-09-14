@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
 
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
-    if (!This->resource.allocatedMemory) This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, This->resource.size + 4);
+    if (!(This->resource.allocatedMemory || This->Flags & SFLAG_PBO)) This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, This->resource.size + 4);
     if (This->resource.format == WINED3DFMT_DXT1 ||
             This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
             This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
