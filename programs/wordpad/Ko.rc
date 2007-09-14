@@ -28,9 +28,9 @@ BEGIN
         MENUITEM "저장(&S)\tCtrl+S",         ID_FILE_SAVE
         MENUITEM "다른 이름으로 저장(&A)...", ID_FILE_SAVEAS
         MENUITEM SEPARATOR
-        MENUITEM "&Print . . .\tCtrl+P",    ID_PRINT
-        MENUITEM "Print previe&w . . .",    ID_PREVIEW
-        MENUITEM "Pag&e setup . . .",       ID_PRINTSETUP
+        MENUITEM "인쇄(&P) . . .\tCtrl+P",    ID_PRINT
+        MENUITEM "인쇄 미리보기(&W) . . .",    ID_PREVIEW
+        MENUITEM " 인쇄 설정(&E) . . .",       ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "나가기(&X)",         ID_FILE_EXIT
     END
@@ -47,7 +47,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "찾기(&F). . .\tCrtl+F",         ID_FIND
         MENUITEM "다음 찾기(&N)\tF3",              ID_FIND_NEXT
-        MENUITEM "&Replace . . .\tCtrl+H",      ID_REPLACE
+	MENUITEM " 바꾸기(&R) . . .\tCtrl+H",      ID_REPLACE
         MENUITEM SEPARATOR
         MENUITEM "읽기 전용(&O)",                  ID_EDIT_READONLY
         MENUITEM "수정 가능(&M)",                   ID_EDIT_MODIFIED
@@ -67,7 +67,7 @@ BEGIN
         MENUITEM "형식바(&F)",      ID_TOGGLE_FORMATBAR
         MENUITEM "상태바(&S)",      ID_TOGGLE_STATUSBAR
         MENUITEM SEPARATOR
-        MENUITEM "&Options . . .",  ID_VIEWPROPERTIES
+        MENUITEM " 옵션(&O) . . .",  ID_VIEWPROPERTIES
     END
     POPUP "집어넣기(&I)"
     BEGIN
@@ -75,19 +75,19 @@ BEGIN
     END
     POPUP "형식(&O)"
     BEGIN
+	MENUITEM "글꼴(&F) . . .",                  ID_FONTSETTINGS
         MENUITEM " 강조 점(&U)"                ID_BULLET
-        MENUITEM "&Font . . .",               ID_FONTSETTINGS
-        MENUITEM "&Paragraph . . ."              ID_PARAFORMAT
-        MENUITEM "&Tabs . . ."                   ID_TABSTOPS
+        MENUITEM "단락(&P) . . ."              ID_PARAFORMAT
+        MENUITEM "탭(&T) . . ."                   ID_TABSTOPS
         POPUP "배경(&B)"
         BEGIN
             MENUITEM "시스템(&S)\tCtrl+1",         ID_BACK_1
             MENUITEM "노랑색으로(&P)\tCtrl+2",           ID_BACK_2
         END
     END
-    POPUP "&Help"
+    POPUP "도움말(&H)"
     BEGIN
-        MENUITEM "&About Wine Wordpad"       ID_ABOUT
+        MENUITEM "워드패드 정보(&A)"       ID_ABOUT
     END
 END
 
@@ -99,8 +99,8 @@ BEGIN
         MENUITEM "복사(&C)",             ID_EDIT_COPY
         MENUITEM "붙여넣기(&P)",          ID_EDIT_PASTE
         MENUITEM SEPARATOR
-        MENUITEM "&Bullet points"        ID_BULLET
-        MENUITEM "&Paragraph . . ."      ID_PARAFORMAT
+        MENUITEM "강조점(&B)"        ID_BULLET
+        MENUITEM "단락(&P) . . ."      ID_PARAFORMAT
     END
 END
 
@@ -128,34 +128,34 @@ END
 
 IDD_PARAFORMAT DIALOG DISCARDABLE 30, 20, 200, 110
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-Caption "Paragraph format"
+Caption "단락 형식"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX "Indentation", 0, 10, 10, 120, 68
-    LTEXT "Left", 0, 15, 22, 40, 13
+    GROUPBOX "들여쓰기", 0, 10, 10, 120, 68
+    LTEXT "왼쪽", 0, 15, 22, 40, 13
     EDITTEXT IDC_PARA_LEFT, 55, 20, 60, 13
-    LTEXT "Right", 0, 15, 40, 40, 13
+    LTEXT "오른쪽", 0, 15, 40, 40, 13
     EDITTEXT IDC_PARA_RIGHT, 55, 38, 60, 13
-    LTEXT "First line", 0, 15, 58, 40, 13
+    LTEXT "첫째 줄", 0, 15, 58, 40, 13
     EDITTEXT IDC_PARA_FIRST, 55, 56, 60, 13
-    LTEXT "Alignment", 0, 15, 87, 40, 13
+    LTEXT "정렬", 0, 15, 87, 40, 13
     COMBOBOX IDC_PARA_ALIGN, 55, 85, 60, 13, CBS_DROPDOWNLIST
-    PUSHBUTTON "&OK", IDOK, 137, 15, 50, 15
-    PUSHBUTTON "&Cancel", IDCANCEL, 137, 33, 50, 15
+    PUSHBUTTON "확인(&O)", IDOK, 137, 15, 50, 15
+    PUSHBUTTON "취소(&C)", IDCANCEL, 137, 33, 50, 15
 END
 
 IDD_TABSTOPS DIALOG DISCARDABLE 30, 20, 200, 110
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-Caption "Tabs"
+Caption "탭"
 FONT 8, "MS SHell DLg"
 BEGIN
-    GROUPBOX "Tab stops", 0, 10, 10, 120, 90
+    GROUPBOX "탭 정지", 0, 10, 10, 120, 90
     COMBOBOX IDC_TABSTOPS, 20, 20, 100, 60, CBS_SIMPLE | CBS_SORT
-    DEFPUSHBUTTON "&Add", ID_TAB_ADD, 20, 80, 45, 15
-    PUSHBUTTON "&Remove", ID_TAB_DEL, 72, 80, 45, 15
-    PUSHBUTTON "&OK", IDOK, 137, 15, 50, 15
-    PUSHBUTTON "&Cancel", IDCANCEL, 137, 33, 50, 15
-    PUSHBUTTON "Remove al&l", ID_TAB_EMPTY, 137, 51, 50, 15
+    DEFPUSHBUTTON "더하기(&A)", ID_TAB_ADD, 20, 80, 45, 15
+    PUSHBUTTON "지우기(&R)", ID_TAB_DEL, 72, 80, 45, 15
+    PUSHBUTTON "확인(&O)", IDOK, 137, 15, 50, 15
+    PUSHBUTTON "취소(&C)", IDCANCEL, 137, 33, 50, 15
+    PUSHBUTTON "모두 지우기(&L)", ID_TAB_EMPTY, 137, 51, 50, 15
 END
 
 IDD_FORMATOPTS DIALOG DISCARDABLE 0, 0, 280, 110
@@ -163,13 +163,13 @@ STYLE DS_SYSMODAL
 Caption ""
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX "Line wrapping", 0, 10, 10, 130, 85
-    RADIOBUTTON "Wrap text by the &window border", IDC_PAGEFMT_WW, 18, 25, 117, 15
-    RADIOBUTTON "Wrap text by the &margin", IDC_PAGEFMT_WM, 18, 45, 117, 15
-    GROUPBOX "Toolbars", 0, 150, 10, 120, 85
-    CHECKBOX "&Toolbar", IDC_PAGEFMT_TB, 160, 20, 80, 15
-    CHECKBOX "&Formatbar", IDC_PAGEFMT_FB, 160, 38, 80, 15
-    CHECKBOX "&Statusbar", IDC_PAGEFMT_SB, 160, 56, 80, 15
+    GROUPBOX "줄 넘기기", 0, 10, 10, 130, 85
+    RADIOBUTTON "창 가장자리서  글 넘기기(&W)", IDC_PAGEFMT_WW, 18, 25, 117, 15
+    RADIOBUTTON "가장자리에서 줄 넘기기(&M)", IDC_PAGEFMT_WM, 18, 45, 117, 15
+    GROUPBOX " 도구바", 0, 150, 10, 120, 85
+    CHECKBOX "도구바(&T)", IDC_PAGEFMT_TB, 160, 20, 80, 15
+    CHECKBOX "형식바(&F)", IDC_PAGEFMT_FB, 160, 38, 80, 15
+    CHECKBOX "상태바(&S)", IDC_PAGEFMT_SB, 160, 56, 80, 15
     LTEXT "", IDC_PAGEFMT_ID, 0,0,0,0
 END
 
@@ -183,29 +183,29 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    STRING_ALIGN_LEFT,            "Left"
-    STRING_ALIGN_RIGHT,           "Right"
-    STRING_ALIGN_CENTER,          "Center"
+    STRING_ALIGN_LEFT,            "왼쪽"
+    STRING_ALIGN_RIGHT,           "오른쪽"
+    STRING_ALIGN_CENTER,          "가운데"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    STRING_PRINTER_FILES_PRN,        "Printer files (*.PRN)"
+    STRING_PRINTER_FILES_PRN,        "프린터 파일 (*.PRN)"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    STRING_VIEWPROPS_TITLE,          "Options"
-    STRING_VIEWPROPS_TEXT,           "Text"
-    STRING_VIEWPROPS_RICHTEXT,       "Rich text"
+    STRING_VIEWPROPS_TITLE,          "옵션"
+    STRING_VIEWPROPS_TEXT,           "텍스트"
+    STRING_VIEWPROPS_RICHTEXT,       "리치 텍스트"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    STRING_PREVIEW_PRINT,            "Print"
-    STRING_PREVIEW_NEXTPAGE,         "Next page"
-    STRING_PREVIEW_PREVPAGE,         "Previous page"
-    STRING_PREVIEW_CLOSE,            "Close"
+    STRING_PREVIEW_PRINT,            "인쇄"
+    STRING_PREVIEW_NEXTPAGE,         "다음 페이지"
+    STRING_PREVIEW_PREVPAGE,         "이전 페이지"
+    STRING_PREVIEW_CLOSE,            "닫기"
 END
 
 STRINGTABLE DISCARDABLE
@@ -222,5 +222,5 @@ BEGIN
     STRING_SAVE_LOSEFORMATTING,  "당신은 보통 텍스트 형식으로 저장하기를 선택했습니다, " \
                                  "이것은 특수한 꾸밈을 없엘 것입니다. " \
                                  "당신은 정말로 저장하기를 원합니까?"
-    STRING_INVALID_NUMBER,       "Invalid number format"
+    STRING_INVALID_NUMBER,       "올바르지 않은 수 형식"
 END
