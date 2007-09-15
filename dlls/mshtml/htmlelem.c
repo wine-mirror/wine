@@ -1298,6 +1298,8 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
         ret = HTMLAnchorElement_Create(nselem);
     else if(!strcmpW(class_name, wszBODY))
         ret = HTMLBodyElement_Create(nselem);
+    else if(!strcmpW(class_name, wszINPUT))
+        ret = HTMLInputElement_Create(nselem);
     else {
         ret = mshtml_alloc(sizeof(HTMLElement));
 
@@ -1305,9 +1307,7 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
         ret->destructor = NULL;
         ret->nselem = nselem;
 
-        if(!strcmpW(class_name, wszINPUT))
-            HTMLInputElement_Create(ret);
-        else if(!strcmpW(class_name, wszSELECT))
+        if(!strcmpW(class_name, wszSELECT))
             HTMLSelectElement_Create(ret);
         else if(!strcmpW(class_name, wszTEXTAREA))
             HTMLTextAreaElement_Create(ret);

@@ -36,9 +36,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
+    HTMLElement element;
+
     const IHTMLInputElementVtbl *lpHTMLInputElementVtbl;
 
-    HTMLElement *element;
     nsIDOMHTMLInputElement *nsinput;
 } HTMLInputElement;
 
@@ -70,7 +71,7 @@ static HRESULT WINAPI HTMLInputElement_QueryInterface(IHTMLInputElement *iface,
         return S_OK;
     }
 
-    hres = HTMLElement_QI(This->element, riid, ppv);
+    hres = HTMLElement_QI(&This->element, riid, ppv);
     if(FAILED(hres))
         WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -83,7 +84,7 @@ static ULONG WINAPI HTMLInputElement_AddRef(IHTMLInputElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node.doc));
+    return IHTMLDocument2_AddRef(HTMLDOC(This->element.node.doc));
 }
 
 static ULONG WINAPI HTMLInputElement_Release(IHTMLInputElement *iface)
@@ -92,7 +93,7 @@ static ULONG WINAPI HTMLInputElement_Release(IHTMLInputElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_Release(HTMLDOC(This->element->node.doc));
+    return IHTMLDocument2_Release(HTMLDOC(This->element.node.doc));
 }
 
 static HRESULT WINAPI HTMLInputElement_GetTypeInfoCount(IHTMLInputElement *iface, UINT *pctinfo)
@@ -737,19 +738,20 @@ static const IHTMLInputElementVtbl HTMLInputElementVtbl = {
     HTMLInputElement_get_start
 };
 
-void HTMLInputElement_Create(HTMLElement *element)
+HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLInputElement *ret = mshtml_alloc(sizeof(HTMLInputElement));
     nsresult nsres;
 
     ret->lpHTMLInputElementVtbl = &HTMLInputElementVtbl;
-    ret->element = element;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(element->nselem, &IID_nsIDOMHTMLInputElement,
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLInputElement,
                                              (void**)&ret->nsinput);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLInputElement interface: %08x\n", nsres);
 
-    element->impl = (IUnknown*)HTMLINPUT(ret);
-    element->destructor = HTMLInputElement_destructor;
+    ret->element.impl = (IUnknown*)HTMLINPUT(ret);
+    ret->element.destructor = HTMLInputElement_destructor;
+
+    return &ret->element;
 }

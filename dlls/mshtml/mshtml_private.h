@@ -418,7 +418,7 @@ void detach_ranges(HTMLDocument*);
 HTMLElement *HTMLElement_Create(nsIDOMNode*);
 HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement*);
-void HTMLInputElement_Create(HTMLElement*);
+HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement*);
 void HTMLSelectElement_Create(HTMLElement*);
 void HTMLTextAreaElement_Create(HTMLElement*);
 
