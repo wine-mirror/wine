@@ -52,6 +52,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 
 #define ASSERT(x) do { if (!(x)) FIXME("assert failed: %s\n", #x); } while(0)
+#define MAX_LEVEL 61
 
 /* HELPER FUNCTIONS AND DECLARATIONS */
 
@@ -237,6 +238,114 @@ static int resolveParagraphs(WORD *types, int cch)
     return ich;
 }
 
+/* RESOLVE EXPLICIT */
+
+static WORD GreaterEven(int i)
+{
+    return odd(i) ? i + 1 : i + 2;
+}
+
+static WORD GreaterOdd(int i)
+{
+    return odd(i) ? i + 2 : i + 1;
+}
+
+/*------------------------------------------------------------------------
+    Function: resolveExplicit
+
+    Recursively resolves explicit embedding levels and overrides.
+    Implements rules X1-X9, of the Unicode Bidirectional Algorithm.
+
+    Input: Base embedding level and direction
+           Character count
+
+    Output: Array of embedding levels
+
+    In/Out: Array of direction classes
+
+
+    Note: The function uses two simple counters to keep track of
+          matching explicit codes and PDF. Use the default argument for
+          the outermost call. The nesting counter counts the recursion
+          depth and not the embedding level.
+------------------------------------------------------------------------*/
+
+static int resolveExplicit(int level, int dir, WORD *pcls, WORD *plevel, int cch, int nNest)
+{
+    /* always called with a valid nesting level
+       nesting levels are != embedding levels */
+    int nLastValid = nNest;
+    int ich = 0;
+
+    /* check input values */
+    ASSERT(nNest >= 0 && level >= 0 && level <= MAX_LEVEL);
+
+    /* process the text */
+    for (; ich < cch; ich++)
+    {
+        WORD cls = pcls[ich];
+        switch (cls)
+        {
+        case LRO:
+        case LRE:
+            nNest++;
+            if (GreaterEven(level) <= MAX_LEVEL - (cls == LRO ? 2 : 0))
+            {
+                plevel[ich] = GreaterEven(level);
+                pcls[ich] = BN;
+                ich += resolveExplicit(plevel[ich], (cls == LRE ? N : L),
+                            &pcls[ich+1], &plevel[ich+1],
+                             cch - (ich+1), nNest);
+                nNest--;
+                continue;
+            }
+            cls = pcls[ich] = BN;
+            break;
+
+        case RLO:
+        case RLE:
+            nNest++;
+            if (GreaterOdd(level) <= MAX_LEVEL - (cls == RLO ? 2 : 0))
+            {
+                plevel[ich] = GreaterOdd(level);
+                pcls[ich] = BN;
+                ich += resolveExplicit(plevel[ich], (cls == RLE ? N : R),
+                                &pcls[ich+1], &plevel[ich+1],
+                                 cch - (ich+1), nNest);
+                nNest--;
+                continue;
+            }
+            cls = pcls[ich] = BN;
+            break;
+
+        case PDF:
+            cls = pcls[ich] = BN;
+            if (nNest)
+            {
+                if (nLastValid < nNest)
+                {
+                    nNest--;
+                }
+                else
+                {
+                    cch = ich; /* break the loop, but complete body */
+                }
+            }
+        }
+
+        /* Apply the override */
+        if (dir != N)
+        {
+            cls = dir;
+        }
+        plevel[ich] = level;
+        if (pcls[ich] != BN)
+            pcls[ich] = cls;
+    }
+
+    return ich;
+}
+
 /*************************************************************
  *    BIDI_Reorder
  */
@@ -326,10 +435,17 @@ BOOL BIDI_Reorder(
             }
         }
 
-        /* Temporary stub: Assume everything is in the direction we want */
-        memset(levels, baselevel, i * sizeof(WORD));
-        if (baselevel)
-            reverse(lpOutString, i);
+        /* resolve explicit */
+        resolveExplicit(baselevel, forcedir, chartype, levels, i, 0);
+
+        /* Temporary stub: Just reverse the odd levels */
+        for (j = lastgood = 0; j < i; ++j)
+            if (levels[j] != levels[lastgood])
+            {
+                if (odd(levels[lastgood]))
+                    reverse(lpOutString + done + lastgood, j - 1);
+                lastgood = j;
+            }
 
         if (lpOrder)
         {
