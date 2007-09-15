@@ -294,6 +294,29 @@ static void test_make_current_read(HDC hdc)
     ok(hread == hdc, "wglGetCurrentReadDCARB failed for wglMakeContextCurrent\n");
 }
 
+static void test_dc(HWND hwnd, HDC hdc)
+{
+    int pf1, pf2;
+    HDC hdc2;
+
+    /* Get another DC and make sure it has the same pixel format */
+    hdc2 = GetDC(hwnd);
+    if(hdc != hdc2)
+    {
+        pf1 = GetPixelFormat(hdc);
+        pf2 = GetPixelFormat(hdc2);
+        ok(pf1 == pf2, "Second DC does not have the same format (%d != %d)\n", pf1, pf2);
+    }
+    else
+        skip("Could not get a different DC for the window\n");
+
+    if(hdc2)
+    {
+        ReleaseDC(hwnd, hdc2);
+        hdc2 = NULL;
+    }
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -335,6 +358,8 @@ START_TEST(opengl)
 
         res = SetPixelFormat(hdc, iPixelFormat, &pfd);
         ok(res, "SetPixelformat failed: %x\n", GetLastError());
+
+        test_dc(hwnd, hdc);
 
         hglrc = wglCreateContext(hdc);
         res = wglMakeCurrent(hdc, hglrc);

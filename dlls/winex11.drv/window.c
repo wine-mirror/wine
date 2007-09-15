@@ -55,6 +55,7 @@ static XContext win_data_context;
 
 static const char whole_window_prop[] = "__wine_x11_whole_window";
 static const char icon_window_prop[]  = "__wine_x11_icon_window";
+static const char fbconfig_id_prop[]  = "__wine_x11_fbconfig_id";
 static const char managed_prop[]      = "__wine_x11_managed";
 static const char visual_id_prop[]    = "__wine_x11_visual_id";
 
@@ -162,6 +163,21 @@ void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data )
         XChangeWindowAttributes( display, data->whole_window, mask, &attr );
         wine_tsx11_unlock();
     }
+}
+
+
+/***********************************************************************
+ *              X11DRV_set_win_format
+ */
+BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
+{
+    struct x11drv_win_data *data;
+
+    if (!(data = X11DRV_get_win_data(hwnd))) return FALSE;
+
+    data->fbconfig_id = fbconfig_id;
+    SetPropA(hwnd, fbconfig_id_prop, (HANDLE)data->fbconfig_id);
+    return TRUE;
 }
 
 
@@ -937,6 +953,7 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
         data->hwnd          = hwnd;
         data->whole_window  = 0;
         data->icon_window   = 0;
+        data->fbconfig_id   = 0;
         data->xic           = 0;
         data->managed       = FALSE;
         data->dce           = NULL;
@@ -1225,6 +1242,21 @@ Window X11DRV_get_whole_window( HWND hwnd )
 
     if (!data) return (Window)GetPropA( hwnd, whole_window_prop );
     return data->whole_window;
+}
+
+
+/***********************************************************************
+ *              X11DRV_get_fbconfig_id
+ *
+ * Return the GLXFBConfig ID of the drawable used by the window for
+ * OpenGL rendering. This is 0 for windows without a pixel format set.
+ */
+XID X11DRV_get_fbconfig_id( HWND hwnd )
+{
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+
+    if (!data) return (XID)GetPropA( hwnd, fbconfig_id_prop );
+    return data->fbconfig_id;
 }
 
 

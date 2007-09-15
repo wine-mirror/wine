@@ -485,6 +485,7 @@ struct x11drv_escape_set_drawable
     int                      mode;         /* ClipByChildren or IncludeInferiors */
     RECT                     dc_rect;      /* DC rectangle relative to drawable */
     RECT                     drawable_rect;/* Drawable rectangle relative to screen */
+    XID                      fbconfig_id;  /* fbconfig id used by the GL drawable */
 };
 
 struct x11drv_escape_set_dce
@@ -633,7 +634,8 @@ extern DWORD EVENT_x11_time_to_win32_time(Time time);
 enum x11drv_window_messages
 {
     WM_X11DRV_ACQUIRE_SELECTION = 0x80001000,
-    WM_X11DRV_DELETE_WINDOW
+    WM_X11DRV_DELETE_WINDOW,
+    WM_X11DRV_SET_WIN_FORMAT
 };
 
 /* x11drv private window data */
@@ -642,6 +644,7 @@ struct x11drv_win_data
     HWND        hwnd;           /* hwnd that this private data belongs to */
     Window      whole_window;   /* X window for the complete window */
     Window      icon_window;    /* X window for the icon */
+    XID         fbconfig_id;    /* fbconfig id for the GL drawable this hwnd uses */
     RECT        window_rect;    /* USER window rectangle relative to parent */
     RECT        whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT        client_rect;    /* client area relative to whole window */
@@ -656,8 +659,12 @@ struct x11drv_win_data
 
 extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
+extern XID X11DRV_get_fbconfig_id( HWND hwnd );
 extern BOOL X11DRV_is_window_rect_mapped( const RECT *rect );
 extern XIC X11DRV_get_ic( HWND hwnd );
+extern BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig );
+
+extern int pixelformat_from_fbconfig_id( XID fbconfig_id );
 
 extern void alloc_window_dce( struct x11drv_win_data *data );
 extern void free_window_dce( struct x11drv_win_data *data );

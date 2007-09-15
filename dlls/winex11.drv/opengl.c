@@ -935,6 +935,20 @@ static WineGLPixelFormat* ConvertPixelFormatGLXtoWGL(Display *display, int fmt_i
     return NULL;
 }
 
+int pixelformat_from_fbconfig_id(XID fbconfig_id)
+{
+    WineGLPixelFormat *fmt;
+
+    if (!fbconfig_id) return 0;
+
+    fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fbconfig_id);
+    if(fmt)
+        return fmt->iPixelFormat;
+    /* This will happen on hwnds without a pixel format set; it's ok */
+    return 0;
+}
+
+
 /**
  * X11DRV_ChoosePixelFormat
  *
@@ -1349,6 +1363,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
   WineGLPixelFormat *fmt;
   int value;
+  HWND hwnd;
 
   TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
@@ -1370,6 +1385,21 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     ERR("Invalid iPixelFormat: %d\n", iPixelFormat);
     return 0;
   }
+
+    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
+
+    hwnd = WindowFromDC(physDev->hdc);
+    if(hwnd) {
+        if(!(value&GLX_WINDOW_BIT)) {
+            WARN("Pixel format %d is not compatible for window rendering\n", iPixelFormat);
+            return 0;
+        }
+
+        if(!SendMessageW(hwnd, WM_X11DRV_SET_WIN_FORMAT, (WPARAM)fmt->fmt_id, 0)) {
+            ERR("Couldn't set format of the window, returning failure\n");
+            return 0;
+        }
+    }
 
   physDev->current_pf = iPixelFormat;
 
@@ -3344,6 +3374,11 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
 }
 
 #else  /* no OpenGL includes */
+
+int pixelformat_from_fbconfig_id(XID fbconfig_id)
+{
+    return 0;
+}
 
 /***********************************************************************
  *		ChoosePixelFormat (X11DRV.@)

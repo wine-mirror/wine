@@ -148,9 +148,15 @@ static void update_visible_region( struct dce *dce )
 
     if (top == dce->hwnd && ((data = X11DRV_get_win_data( dce->hwnd )) != NULL) &&
          IsIconic( dce->hwnd ) && data->icon_window)
+    {
         escape.drawable = data->icon_window;
+        escape.fbconfig_id = 0;
+    }
     else
+    {
         escape.drawable = X11DRV_get_whole_window( top );
+        escape.fbconfig_id = X11DRV_get_fbconfig_id( dce->hwnd );
+    }
 
     escape.code = X11DRV_SET_DRAWABLE;
     escape.mode = IncludeInferiors;
@@ -185,6 +191,7 @@ static void release_dce( struct dce *dce )
     escape.drawable_rect = virtual_screen_rect;
     SetRect( &escape.dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
              virtual_screen_rect.bottom - virtual_screen_rect.top );
+    escape.fbconfig_id = 0;
     ExtEscape( dce->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
