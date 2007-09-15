@@ -205,6 +205,17 @@ static void reverse(LPWSTR psz, int cch)
     }
 }
 
+/* Set a run of cval values at locations all prior to, but not including */
+/* iStart, to the new value nval. */
+static void SetDeferredRun(WORD *pval, int cval, int iStart, int nval)
+{
+    int i = iStart - 1;
+    for (; i >= iStart - cval; i--)
+    {
+        pval[i] = nval;
+    }
+}
+
 /* THE PARAGRAPH LEVEL */
 
 /*------------------------------------------------------------------------
@@ -248,6 +259,11 @@ static WORD GreaterEven(int i)
 static WORD GreaterOdd(int i)
 {
     return odd(i) ? i + 2 : i + 1;
+}
+
+static WORD EmbeddingDirection(int level)
+{
+    return odd(level) ? R : L;
 }
 
 /*------------------------------------------------------------------------
@@ -346,6 +362,257 @@ static int resolveExplicit(int level, int dir, WORD *pcls, WORD *plevel, int cch
     return ich;
 }
 
+/* RESOLVE WEAK TYPES */
+
+enum states /* possible states */
+{
+    xa,        /*  arabic letter */
+    xr,        /*  right leter */
+    xl,        /*  left letter */
+
+    ao,        /*  arabic lett. foll by ON */
+    ro,        /*  right lett. foll by ON */
+    lo,        /*  left lett. foll by ON */
+
+    rt,        /*  ET following R */
+    lt,        /*  ET following L */
+
+    cn,        /*  EN, AN following AL */
+    ra,        /*  arabic number foll R */
+    re,        /*  european number foll R */
+    la,        /*  arabic number foll L */
+    le,        /*  european number foll L */
+
+    ac,        /*  CS following cn */
+    rc,        /*  CS following ra */
+    rs,        /*  CS,ES following re */
+    lc,        /*  CS following la */
+    ls,        /*  CS,ES following le */
+
+    ret,    /*  ET following re */
+    let,    /*  ET following le */
+} ;
+
+static const int stateWeak[][10] =
+{
+    /*    N,  L,  R, AN, EN, AL,NSM, CS, ES, ET */
+/*xa*/ { ao, xl, xr, cn, cn, xa, xa, ao, ao, ao }, /* arabic letter          */
+/*xr*/ { ro, xl, xr, ra, re, xa, xr, ro, ro, rt }, /* right letter           */
+/*xl*/ { lo, xl, xr, la, le, xa, xl, lo, lo, lt }, /* left letter            */
+
+/*ao*/ { ao, xl, xr, cn, cn, xa, ao, ao, ao, ao }, /* arabic lett. foll by ON*/
+/*ro*/ { ro, xl, xr, ra, re, xa, ro, ro, ro, rt }, /* right lett. foll by ON */
+/*lo*/ { lo, xl, xr, la, le, xa, lo, lo, lo, lt }, /* left lett. foll by ON  */
+
+/*rt*/ { ro, xl, xr, ra, re, xa, rt, ro, ro, rt }, /* ET following R         */
+/*lt*/ { lo, xl, xr, la, le, xa, lt, lo, lo, lt }, /* ET following L         */
+
+/*cn*/ { ao, xl, xr, cn, cn, xa, cn, ac, ao, ao }, /* EN, AN following AL    */
+/*ra*/ { ro, xl, xr, ra, re, xa, ra, rc, ro, rt }, /* arabic number foll R   */
+/*re*/ { ro, xl, xr, ra, re, xa, re, rs, rs,ret }, /* european number foll R */
+/*la*/ { lo, xl, xr, la, le, xa, la, lc, lo, lt }, /* arabic number foll L   */
+/*le*/ { lo, xl, xr, la, le, xa, le, ls, ls,let }, /* european number foll L */
+
+/*ac*/ { ao, xl, xr, cn, cn, xa, ao, ao, ao, ao }, /* CS following cn        */
+/*rc*/ { ro, xl, xr, ra, re, xa, ro, ro, ro, rt }, /* CS following ra        */
+/*rs*/ { ro, xl, xr, ra, re, xa, ro, ro, ro, rt }, /* CS,ES following re     */
+/*lc*/ { lo, xl, xr, la, le, xa, lo, lo, lo, lt }, /* CS following la        */
+/*ls*/ { lo, xl, xr, la, le, xa, lo, lo, lo, lt }, /* CS,ES following le     */
+
+/*ret*/{ ro, xl, xr, ra, re, xa,ret, ro, ro,ret }, /* ET following re        */
+/*let*/{ lo, xl, xr, la, le, xa,let, lo, lo,let }, /* ET following le        */
+};
+
+enum actions /* possible actions */
+{
+    /* primitives */
+    IX = 0x100,                    /* increment */
+    XX = 0xF,                    /* no-op */
+
+    /* actions */
+    xxx = (XX << 4) + XX,        /* no-op */
+    xIx = IX + xxx,                /* increment run */
+    xxN = (XX << 4) + ON,        /* set current to N */
+    xxE = (XX << 4) + EN,        /* set current to EN */
+    xxA = (XX << 4) + AN,        /* set current to AN */
+    xxR = (XX << 4) + R,        /* set current to R */
+    xxL = (XX << 4) + L,        /* set current to L */
+    Nxx = (ON << 4) + 0xF,        /* set run to neutral */
+    Axx = (AN << 4) + 0xF,        /* set run to AN */
+    ExE = (EN << 4) + EN,        /* set run to EN, set current to EN */
+    NIx = (ON << 4) + 0xF + IX, /* set run to N, increment */
+    NxN = (ON << 4) + ON,        /* set run to N, set current to N */
+    NxR = (ON << 4) + R,        /* set run to N, set current to R */
+    NxE = (ON << 4) + EN,        /* set run to N, set current to EN */
+
+    AxA = (AN << 4) + AN,        /* set run to AN, set current to AN */
+    NxL = (ON << 4) + L,        /* set run to N, set current to L */
+    LxL = (L << 4) + L,            /* set run to L, set current to L */
+}  ;
+
+static const int actionWeak[][10] =
+{
+       /*  N,   L,   R,  AN,  EN,  AL, NSM,  CS,  ES,  ET */
+/*xa*/ { xxx, xxx, xxx, xxx, xxA, xxR, xxR, xxN, xxN, xxN }, /* arabic letter           */
+/*xr*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxR, xxN, xxN, xIx }, /* right leter             */
+/*xl*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxL, xxN, xxN, xIx }, /* left letter             */
+
+/*ao*/ { xxx, xxx, xxx, xxx, xxA, xxR, xxN, xxN, xxN, xxN }, /* arabic lett. foll by ON */
+/*ro*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxN, xxN, xxN, xIx }, /* right lett. foll by ON  */
+/*lo*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxN, xxN, xxN, xIx }, /* left lett. foll by ON   */
+
+/*rt*/ { Nxx, Nxx, Nxx, Nxx, ExE, NxR, xIx, NxN, NxN, xIx }, /* ET following R         */
+/*lt*/ { Nxx, Nxx, Nxx, Nxx, LxL, NxR, xIx, NxN, NxN, xIx }, /* ET following L         */
+
+/*cn*/ { xxx, xxx, xxx, xxx, xxA, xxR, xxA, xIx, xxN, xxN }, /* EN, AN following  AL    */
+/*ra*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxA, xIx, xxN, xIx }, /* arabic number foll R   */
+/*re*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxE, xIx, xIx, xxE }, /* european number foll R */
+/*la*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxA, xIx, xxN, xIx }, /* arabic number foll L   */
+/*le*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxL, xIx, xIx, xxL }, /* european number foll L */
+
+/*ac*/ { Nxx, Nxx, Nxx, Axx, AxA, NxR, NxN, NxN, NxN, NxN }, /* CS following cn         */
+/*rc*/ { Nxx, Nxx, Nxx, Axx, NxE, NxR, NxN, NxN, NxN, NIx }, /* CS following ra         */
+/*rs*/ { Nxx, Nxx, Nxx, Nxx, ExE, NxR, NxN, NxN, NxN, NIx }, /* CS,ES following re      */
+/*lc*/ { Nxx, Nxx, Nxx, Axx, NxL, NxR, NxN, NxN, NxN, NIx }, /* CS following la         */
+/*ls*/ { Nxx, Nxx, Nxx, Nxx, LxL, NxR, NxN, NxN, NxN, NIx }, /* CS,ES following le      */
+
+/*ret*/{ xxx, xxx, xxx, xxx, xxE, xxR, xxE, xxN, xxN, xxE }, /* ET following re            */
+/*let*/{ xxx, xxx, xxx, xxx, xxL, xxR, xxL, xxN, xxN, xxL }, /* ET following le            */
+};
+
+static int GetDeferredType(int action)
+{
+    return (action >> 4) & 0xF;
+}
+
+static int GetResolvedType(int action)
+{
+    return action & 0xF;
+}
+
+/* Note on action table:
+
+  States can be of two kinds:
+     - Immediate Resolution State, where each input token
+       is resolved as soon as it is seen. These states havve
+       only single action codes (xxN) or the no-op (xxx)
+       for static input tokens.
+     - Deferred Resolution State, where input tokens either
+       either extend the run (xIx) or resolve its Type (e.g. Nxx).
+
+   Input classes are of three kinds
+     - Static Input Token, where the class of the token remains
+       unchanged on output (AN, L, N, R)
+     - Replaced Input Token, where the class of the token is
+       always replaced on output (AL, BN, NSM, CS, ES, ET)
+     - Conditional Input Token, where the class of the token is
+       changed on output in some, but not all, cases (EN)
+
+     Where tokens are subject to change, a double action
+     (e.g. NxA, or NxN) is _required_ after deferred states,
+     resolving both the deferred state and changing the current token.
+*/
+
+/*------------------------------------------------------------------------
+    Function: resolveWeak
+
+    Resolves the directionality of numeric and other weak character types
+
+    Implements rules X10 and W1-W6 of the Unicode Bidirectional Algorithm.
+
+    Input: Array of embedding levels
+           Character count
+
+    In/Out: Array of directional classes
+
+    Note: On input only these directional classes are expected
+          AL, HL, R, L,  ON, BN, NSM, AN, EN, ES, ET, CS,
+------------------------------------------------------------------------*/
+static void resolveWeak(int baselevel, WORD *pcls, WORD *plevel, int cch)
+{
+    int state = odd(baselevel) ? xr : xl;
+    int cls;
+
+    int level = baselevel;
+    int action, clsRun, clsNew;
+    int cchRun = 0;
+    int ich = 0;
+
+    for (; ich < cch; ich++)
+    {
+        /* ignore boundary neutrals */
+        if (pcls[ich] == BN)
+        {
+            /* must flatten levels unless at a level change; */
+            plevel[ich] = level;
+
+            /* lookahead for level changes */
+            if (ich + 1 == cch && level != baselevel)
+            {
+                /* have to fixup last BN before end of the loop, since
+                 * its fix-upped value will be needed below the assert */
+                pcls[ich] = EmbeddingDirection(level);
+            }
+            else if (ich + 1 < cch && level != plevel[ich+1] && pcls[ich+1] != BN)
+            {
+                /* fixup LAST BN in front / after a level run to make
+                 * it act like the SOR/EOR in rule X10 */
+                int newlevel = plevel[ich+1];
+                if (level > newlevel) {
+                    newlevel = level;
+                }
+                plevel[ich] = newlevel;
+
+                /* must match assigned level */
+                pcls[ich] = EmbeddingDirection(newlevel);
+                level = plevel[ich+1];
+            }
+            else
+            {
+                /* don't interrupt runs */
+                if (cchRun)
+                {
+                    cchRun++;
+                }
+                continue;
+            }
+        }
+
+        ASSERT(pcls[ich] <= BN);
+        cls = pcls[ich];
+
+        action = actionWeak[state][cls];
+
+        /* resolve the directionality for deferred runs */
+        clsRun = GetDeferredType(action);
+        if (clsRun != XX)
+        {
+            SetDeferredRun(pcls, cchRun, ich, clsRun);
+            cchRun = 0;
+        }
+
+        /* resolve the directionality class at the current location */
+        clsNew = GetResolvedType(action);
+        if (clsNew != XX)
+            pcls[ich] = clsNew;
+
+        /* increment a deferred run */
+        if (IX & action)
+            cchRun++;
+
+        state = stateWeak[state][cls];
+    }
+
+    /* resolve any deferred runs
+     * use the direction of the current level to emulate PDF */
+    cls = EmbeddingDirection(level);
+
+    /* resolve the directionality for deferred runs */
+    clsRun = GetDeferredType(actionWeak[state][cls]);
+    if (clsRun != XX)
+        SetDeferredRun(pcls, cchRun, ich, clsRun);
+}
+
 /*************************************************************
  *    BIDI_Reorder
  */
@@ -437,6 +704,9 @@ BOOL BIDI_Reorder(
 
         /* resolve explicit */
         resolveExplicit(baselevel, forcedir, chartype, levels, i, 0);
+
+        /* resolve weak */
+        resolveWeak(baselevel, chartype, levels, i);
 
         /* Temporary stub: Just reverse the odd levels */
         for (j = lastgood = 0; j < i; ++j)
