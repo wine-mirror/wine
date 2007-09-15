@@ -770,6 +770,50 @@ static void resolveNeutrals(int baselevel, WORD *pcls, const WORD *plevel, int c
         SetDeferredRun(pcls, cchRun, ich, clsRun);
 }
 
+/* RESOLVE IMPLICIT */
+
+/*------------------------------------------------------------------------
+    Function: resolveImplicit
+
+    Recursively resolves implicit embedding levels.
+    Implements rules I1 and I2 of the Unicode Bidirectional Algorithm.
+
+    Input: Array of direction classes
+           Character count
+           Base level
+
+    In/Out: Array of embedding levels
+
+    Note: levels may exceed 15 on output.
+          Accepted subset of direction classes
+          R, L, AN, EN
+------------------------------------------------------------------------*/
+static const WORD addLevel[][4] =
+{
+          /* L,  R, AN, EN */
+/* even */ { 0,  1,  2,  2, },
+/* odd  */ { 1,  0,  1,  1, }
+
+};
+
+static void resolveImplicit(const WORD * pcls, WORD *plevel, int cch)
+{
+    int ich = 0;
+    for (; ich < cch; ich++)
+    {
+        /* cannot resolve bn here, since some bn were resolved to strong
+         * types in resolveWeak. To remove these we need the original
+         * types, which are available again in resolveWhiteSpace */
+        if (pcls[ich] == BN)
+        {
+            continue;
+        }
+        ASSERT(pcls[ich] > 0); /* "No Neutrals allowed to survive here." */
+        ASSERT(pcls[ich] < 5); /* "Out of range." */
+        plevel[ich] += addLevel[odd(plevel[ich])][pcls[ich] - 1];
+    }
+}
+
 /*************************************************************
  *    BIDI_Reorder
  */
@@ -867,6 +911,9 @@ BOOL BIDI_Reorder(
 
         /* resolve neutrals */
         resolveNeutrals(baselevel, chartype, levels, i);
+
+        /* resolveImplicit */
+        resolveImplicit(chartype, levels, i);
 
         /* Temporary stub: Just reverse the odd levels */
         for (j = lastgood = 0; j < i; ++j)
