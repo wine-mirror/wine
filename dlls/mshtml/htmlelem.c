@@ -1273,6 +1273,7 @@ HRESULT HTMLElement_QI(HTMLElement *This, REFIID riid, void **ppv)
 
 HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
 {
+    nsIDOMHTMLElement *nselem;
     HTMLElement *ret;
     nsAString class_name_str;
     const PRUnichar *class_name;
@@ -1284,38 +1285,44 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
     static const WCHAR wszSELECT[]   = {'S','E','L','E','C','T',0};
     static const WCHAR wszTEXTAREA[] = {'T','E','X','T','A','R','E','A',0};
 
-    ret = mshtml_alloc(sizeof(HTMLElement));
-    ret->lpHTMLElementVtbl = &HTMLElementVtbl;
-    ret->impl = NULL;
-    ret->destructor = NULL;
-
-    ret->node.node_type = NT_HTMLELEM;
-    ret->node.impl.elem = HTMLELEM(ret);
-    ret->node.destructor = HTMLElement_destructor;
-
-    HTMLElement2_Init(ret);
-
-    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMHTMLElement, (void**)&ret->nselem);
+    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMHTMLElement, (void**)&nselem);
     if(NS_FAILED(nsres))
         return NULL;
 
     nsAString_Init(&class_name_str, NULL);
-    nsIDOMHTMLElement_GetTagName(ret->nselem, &class_name_str);
+    nsIDOMHTMLElement_GetTagName(nselem, &class_name_str);
 
     nsAString_GetData(&class_name_str, &class_name, NULL);
 
     if(!strcmpW(class_name, wszA))
-        HTMLAnchorElement_Create(ret);
-    else if(!strcmpW(class_name, wszBODY))
-        HTMLBodyElement_Create(ret);
-    else if(!strcmpW(class_name, wszINPUT))
-        HTMLInputElement_Create(ret);
-    else if(!strcmpW(class_name, wszSELECT))
-        HTMLSelectElement_Create(ret);
-    else if(!strcmpW(class_name, wszTEXTAREA))
-        HTMLTextAreaElement_Create(ret);
+        ret = HTMLAnchorElement_Create(nselem);
+    else {
+        ret = mshtml_alloc(sizeof(HTMLElement));
+
+        ret->impl = NULL;
+        ret->destructor = NULL;
+        ret->nselem = nselem;
+
+        if(!strcmpW(class_name, wszBODY))
+            HTMLBodyElement_Create(ret);
+        else if(!strcmpW(class_name, wszINPUT))
+            HTMLInputElement_Create(ret);
+        else if(!strcmpW(class_name, wszSELECT))
+            HTMLSelectElement_Create(ret);
+        else if(!strcmpW(class_name, wszTEXTAREA))
+            HTMLTextAreaElement_Create(ret);
+    }
 
     nsAString_Finish(&class_name_str);
+
+    ret->lpHTMLElementVtbl = &HTMLElementVtbl;
+    ret->nselem = nselem;
+
+    HTMLElement2_Init(ret);
+
+    ret->node.node_type = NT_HTMLELEM;
+    ret->node.impl.elem = HTMLELEM(ret);
+    ret->node.destructor = HTMLElement_destructor;
 
     return ret;
 }
