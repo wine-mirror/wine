@@ -758,10 +758,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         This->Flags &= ~SFLAG_INSYSMEM; /* This is the marker that surface data has to be downloaded */
     }
 
-    /* Create a PBO for dynamicly locked surfaces but don't do it for converted or non-pow2 surfaces */
-    if(GL_SUPPORT(ARB_PIXEL_BUFFER_OBJECT) && (This->Flags & SFLAG_DYNLOCK) && !(This->Flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2)))  {
+    /* Create a PBO for dynamicly locked surfaces but don't do it for converted or non-pow2 surfaces.
+     * Also don't create a PBO for systemmem surfaces. */
+    if(GL_SUPPORT(ARB_PIXEL_BUFFER_OBJECT) && (This->Flags & SFLAG_DYNLOCK) && !(This->Flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2)) && (This->resource.pool != WINED3DPOOL_SYSTEMMEM)) {
         GLenum error;
-
         ENTER_GL();
 
         GL_EXTCALL(glGenBuffersARB(1, &This->pbo));
