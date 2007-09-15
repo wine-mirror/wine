@@ -96,7 +96,10 @@ static void test_doc_elem(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_documentElement failed: %08x\n", hres);
 
     test_node_name((IUnknown*)elem, "HTML");
+    IHTMLElement_Release(elem);
 
+    hres = IHTMLDocument2_get_body(doc, &elem);
+    test_node_name((IUnknown*)elem, "BODY");
     IHTMLElement_Release(elem);
 }
 
