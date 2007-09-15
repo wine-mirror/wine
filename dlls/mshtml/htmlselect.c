@@ -36,9 +36,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
+    HTMLElement element;
+
     const IHTMLSelectElementVtbl *lpHTMLSelectElementVtbl;
 
-    HTMLElement *element;
     nsIDOMHTMLSelectElement *nsselect;
 } HTMLSelectElement;
 
@@ -70,7 +71,7 @@ static HRESULT WINAPI HTMLSelectElement_QueryInterface(IHTMLSelectElement *iface
         return S_OK;
     }
 
-    hres = HTMLElement_QI(This->element, riid, ppv);
+    hres = HTMLElement_QI(&This->element, riid, ppv);
     if(FAILED(hres))
         WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -83,7 +84,7 @@ static ULONG WINAPI HTMLSelectElement_AddRef(IHTMLSelectElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node.doc));
+    return IHTMLDocument2_AddRef(HTMLDOC(This->element.node.doc));
 }
 
 static ULONG WINAPI HTMLSelectElement_Release(IHTMLSelectElement *iface)
@@ -92,7 +93,7 @@ static ULONG WINAPI HTMLSelectElement_Release(IHTMLSelectElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_Release(HTMLDOC(This->element->node.doc));
+    return IHTMLDocument2_Release(HTMLDOC(This->element.node.doc));
 }
 
 static HRESULT WINAPI HTMLSelectElement_GetTypeInfoCount(IHTMLSelectElement *iface, UINT *pctinfo)
@@ -386,19 +387,20 @@ static const IHTMLSelectElementVtbl HTMLSelectElementVtbl = {
     HTMLSelectElement_tags
 };
 
-void HTMLSelectElement_Create(HTMLElement *element)
+HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLSelectElement *ret = mshtml_alloc(sizeof(HTMLSelectElement));
     nsresult nsres;
 
     ret->lpHTMLSelectElementVtbl = &HTMLSelectElementVtbl;
-    ret->element = element;
     
-    nsres = nsIDOMHTMLElement_QueryInterface(element->nselem, &IID_nsIDOMHTMLSelectElement,
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLSelectElement,
                                              (void**)&ret->nsselect);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLSelectElement interfce: %08x\n", nsres);
 
-    element->impl = (IUnknown*)HTMLSELECT(ret);
-    element->destructor = HTMLSelectElement_destructor;
+    ret->element.impl = (IUnknown*)HTMLSELECT(ret);
+    ret->element.destructor = HTMLSelectElement_destructor;
+
+    return &ret->element;
 }

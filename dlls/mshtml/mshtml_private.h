@@ -419,7 +419,7 @@ HTMLElement *HTMLElement_Create(nsIDOMNode*);
 HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement*);
-void HTMLSelectElement_Create(HTMLElement*);
+HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement*);
 void HTMLTextAreaElement_Create(HTMLElement*);
 
 void HTMLElement2_Init(HTMLElement*);
