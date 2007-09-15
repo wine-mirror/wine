@@ -814,6 +814,231 @@ static void resolveImplicit(const WORD * pcls, WORD *plevel, int cch)
     }
 }
 
+/* REORDER */
+/*------------------------------------------------------------------------
+    Function: resolveLines
+
+    Breaks a paragraph into lines
+
+    Input:  Character count
+    In/Out: Array of characters
+            Array of line break flags
+
+    Returns the count of characters on the first line
+
+    Note: This function only breaks lines at hard line breaks. Other
+    line breaks can be passed in. If pbrk[n] is TRUE, then a break
+    occurs after the character in pszInput[n]. Breaks before the first
+    character are not allowed.
+------------------------------------------------------------------------*/
+static int resolveLines(WCHAR * pszInput, BOOL * pbrk, int cch)
+{
+    /* skip characters not of type LS */
+    int ich = 0;
+    for(; ich < cch; ich++)
+    {
+        if (pszInput[ich] == (WCHAR)'\n' || (pbrk && pbrk[ich]))
+        {
+            ich++;
+            break;
+        }
+    }
+
+    return ich;
+}
+
+/*------------------------------------------------------------------------
+    Function: resolveWhiteSpace
+
+    Resolves levels for WS and S
+    Implements rule L1 of the Unicode bidi Algorithm.
+
+    Input:  Base embedding level
+            Character count
+            Array of direction classes (for one line of text)
+
+    In/Out: Array of embedding levels (for one line of text)
+
+    Note: this should be applied a line at a time. The default driver
+          code supplied in this file assumes a single line of text; for
+          a real implementation, cch and the initial pointer values
+          would have to be adjusted.
+------------------------------------------------------------------------*/
+static void resolveWhitespace(int baselevel, const WORD *pcls, WORD *plevel, int cch)
+{
+    int cchrun = 0;
+    int oldlevel = baselevel;
+
+    int ich = 0;
+    for (; ich < cch; ich++)
+    {
+        switch(pcls[ich])
+        {
+        default:
+            cchrun = 0; /* any other character breaks the run */
+            break;
+        case WS:
+            cchrun++;
+            break;
+
+        case RLE:
+        case LRE:
+        case LRO:
+        case RLO:
+        case PDF:
+        case BN:
+            plevel[ich] = oldlevel;
+            cchrun++;
+            break;
+
+        case S:
+        case B:
+            /* reset levels for WS before eot */
+            SetDeferredRun(plevel, cchrun, ich, baselevel);
+            cchrun = 0;
+            plevel[ich] = baselevel;
+            break;
+        }
+        oldlevel = plevel[ich];
+    }
+    /* reset level before eot */
+    SetDeferredRun(plevel, cchrun, ich, baselevel);
+}
+
+
+/*------------------------------------------------------------------------
+    Functions: reorder/reorderLevel
+
+    Recursively reorders the display string
+    "From the highest level down, reverse all characters at that level and
+    higher, down to the lowest odd level"
+
+    Implements rule L2 of the Unicode bidi Algorithm.
+
+    Input: Array of embedding levels
+           Character count
+           Flag enabling reversal (set to false by initial caller)
+
+    In/Out: Text to reorder
+
+    Note: levels may exceed 15 resp. 61 on input.
+
+    Rule L3 - reorder combining marks is not implemented here
+    Rule L4 - glyph mirroring is implemented as a display option below
+
+    Note: this should be applied a line at a time
+-------------------------------------------------------------------------*/
+static int reorderLevel(int level, LPWSTR pszText, const WORD* plevel, int cch, BOOL fReverse)
+{
+    int ich = 0;
+
+    /* true as soon as first odd level encountered */
+    fReverse = fReverse || odd(level);
+
+    for (; ich < cch; ich++)
+    {
+        if (plevel[ich] < level)
+        {
+            break;
+        }
+        else if (plevel[ich] > level)
+        {
+            ich += reorderLevel(level + 1, pszText + ich, plevel + ich,
+                cch - ich, fReverse) - 1;
+        }
+    }
+    if (fReverse)
+    {
+        reverse(pszText, ich);
+    }
+    return ich;
+}
+
+static int reorder(int baselevel, LPWSTR pszText, const WORD* plevel, int cch)
+{
+    int ich = 0;
+
+    while (ich < cch)
+    {
+        ich += reorderLevel(baselevel, pszText + ich, plevel + ich,
+            cch - ich, FALSE);
+    }
+    return ich;
+}
+
+/* DISPLAY OPTIONS */
+/*-----------------------------------------------------------------------
+   Function:    mirror
+
+    Crudely implements rule L4 of the Unicode Bidirectional Algorithm
+    Demonstrate mirrored brackets, braces and parens
+
+
+    Input:    Array of levels
+            Count of characters
+
+    In/Out:    Array of characters (should be array of glyph ids)
+
+    Note;
+    A full implementation would need to substitute mirrored glyphs even
+    for characters that are not paired (e.g. integral sign).
+-----------------------------------------------------------------------*/
+static void mirror(LPWSTR pszInput, const WORD* plevel, int cch)
+{
+    static int warn_once;
+    int i;
+
+    for (i = 0; i < cch; ++i)
+    {
+        if (!odd(plevel[i]))
+            continue;
+        /* This needs the data from http://www.unicode.org/Public/UNIDATA/BidiMirroring.txt */
+        if (!warn_once++)
+            FIXME("stub: mirroring of characters not yet implemented\n");
+        break;
+    }
+}
+
+/*------------------------------------------------------------------------
+    Function: BidiLines
+
+    Implements the Line-by-Line phases of the Unicode Bidi Algorithm
+
+      Input:     Count of characters
+             flag whether to mirror
+
+    Inp/Out: Input text
+             Array of character directions
+             Array of levels
+
+------------------------------------------------------------------------*/
+static void BidiLines(int baselevel, WCHAR * pszLine, WORD * pclsLine, WORD * plevelLine, int cchPara, int fMirror, BOOL * pbrk)
+{
+    int cchLine = 0;
+
+    do
+    {
+        /* break lines at LS */
+        cchLine = resolveLines(pszLine, pbrk, cchPara);
+
+        /* resolve whitespace */
+        resolveWhitespace(baselevel, pclsLine, plevelLine, cchLine);
+
+        if (fMirror)
+            mirror(pszLine, plevelLine, cchLine);
+
+        /* reorder each line in place */
+        reorder(baselevel, pszLine, plevelLine, cchLine);
+
+        pszLine += cchLine;
+        plevelLine += cchLine;
+        pbrk += pbrk ? cchLine : 0;
+        pclsLine += cchLine;
+        cchPara -= cchLine;
+
+    } while (cchPara);
+}
+
 /*************************************************************
  *    BIDI_Reorder
  */
@@ -915,14 +1140,10 @@ BOOL BIDI_Reorder(
         /* resolveImplicit */
         resolveImplicit(chartype, levels, i);
 
-        /* Temporary stub: Just reverse the odd levels */
-        for (j = lastgood = 0; j < i; ++j)
-            if (levels[j] != levels[lastgood])
-            {
-                if (odd(levels[lastgood]))
-                    reverse(lpOutString + done + lastgood, j - 1);
-                lastgood = j;
-            }
+        /* assign directional types again, but for WS, S this time */
+        classify(lpOutString + done, chartype, i);
+
+        BidiLines(baselevel, lpOutString + done, chartype, levels, i, !(dwFlags & GCP_SYMSWAPOFF), 0);
 
         if (lpOrder)
         {
