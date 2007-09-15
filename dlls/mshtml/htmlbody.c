@@ -36,7 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
-    HTMLElement element;
+    HTMLTextContainer textcont;
 
     const IHTMLBodyElementVtbl *lpHTMLBodyElementVtbl;
 
@@ -83,7 +83,7 @@ static HRESULT WINAPI HTMLBodyElement_QueryInterface(IHTMLBodyElement *iface,
         return S_OK;
     }
 
-    hres = HTMLElement_QI(&This->element, riid, ppv);
+    hres = HTMLElement_QI(&This->textcont.element, riid, ppv);
     if(FAILED(hres))
         WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -96,7 +96,7 @@ static ULONG WINAPI HTMLBodyElement_AddRef(IHTMLBodyElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_AddRef(HTMLDOC(This->element.node.doc));
+    return IHTMLDocument2_AddRef(HTMLDOC(This->textcont.element.node.doc));
 }
 
 static ULONG WINAPI HTMLBodyElement_Release(IHTMLBodyElement *iface)
@@ -105,7 +105,7 @@ static ULONG WINAPI HTMLBodyElement_Release(IHTMLBodyElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_Release(HTMLDOC(This->element.node.doc));
+    return IHTMLDocument2_Release(HTMLDOC(This->textcont.element.node.doc));
 }
 
 static HRESULT WINAPI HTMLBodyElement_GetTypeInfoCount(IHTMLBodyElement *iface, UINT *pctinfo)
@@ -407,18 +407,18 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
 
     TRACE("(%p)->(%p)\n", This, range);
 
-    if(This->element.node.doc->nscontainer) {
+    if(This->textcont.element.node.doc->nscontainer) {
         nsIDOMDocument *nsdoc;
         nsIDOMDocumentRange *nsdocrange;
         nsresult nsres;
 
-        nsIWebNavigation_GetDocument(This->element.node.doc->nscontainer->navigation, &nsdoc);
+        nsIWebNavigation_GetDocument(This->textcont.element.node.doc->nscontainer->navigation, &nsdoc);
         nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentRange, (void**)&nsdocrange);
         nsIDOMDocument_Release(nsdoc);
 
         nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &nsrange);
         if(NS_SUCCEEDED(nsres)) {
-            nsres = nsIDOMRange_SelectNodeContents(nsrange, This->element.node.nsnode);
+            nsres = nsIDOMRange_SelectNodeContents(nsrange, This->textcont.element.node.nsnode);
             if(NS_FAILED(nsres))
                 ERR("SelectNodeContents failed: %08x\n", nsres);
         }else {
@@ -428,7 +428,7 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
         nsIDOMDocumentRange_Release(nsdocrange);
     }
 
-    *range = HTMLTxtRange_Create(This->element.node.doc, nsrange);
+    *range = HTMLTxtRange_Create(This->textcont.element.node.doc, nsrange);
     return S_OK;
 }
 
@@ -493,7 +493,7 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
 
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
 
-    HTMLTextContainer_Init(&ret->text_container, &ret->element);
+    HTMLTextContainer_Init(&ret->text_container);
 
     ConnectionPoint_Init(&ret->cp_propnotif, CONPTCONT(&ret->cp_container),
             &IID_IPropertyNotifySink, NULL);
@@ -506,8 +506,8 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
     if(NS_FAILED(nsres))
         ERR("Could not get nsDOMHTMLBodyElement: %08x\n", nsres);
 
-    ret->element.impl = (IUnknown*)HTMLBODY(ret);
-    ret->element.destructor = HTMLBodyElement_destructor;
+    ret->textcont.element.impl = (IUnknown*)HTMLBODY(ret);
+    ret->textcont.element.destructor = HTMLBodyElement_destructor;
 
-    return &ret->element;
+    return &ret->textcont.element;
 }

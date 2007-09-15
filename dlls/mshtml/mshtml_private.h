@@ -284,9 +284,9 @@ typedef struct {
 } HTMLElement;
 
 typedef struct {
-    const IHTMLTextContainerVtbl *lpHTMLTextContainerVtbl;
+    HTMLElement element;
 
-    HTMLElement *element;
+    const IHTMLTextContainerVtbl *lpHTMLTextContainerVtbl;
 } HTMLTextContainer;
 
 #define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)
@@ -423,8 +423,7 @@ HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement*);
 
 void HTMLElement2_Init(HTMLElement*);
-
-void HTMLTextContainer_Init(HTMLTextContainer*,HTMLElement*);
+void HTMLTextContainer_Init(HTMLTextContainer*);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
 HRESULT HTMLElement_QI(HTMLElement*,REFIID,void**);
