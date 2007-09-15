@@ -613,6 +613,163 @@ static void resolveWeak(int baselevel, WORD *pcls, WORD *plevel, int cch)
         SetDeferredRun(pcls, cchRun, ich, clsRun);
 }
 
+/* RESOLVE NEUTRAL TYPES */
+
+/* action values */
+enum neutralactions
+{
+    /* action to resolve previous input */
+    nL = L,         /* resolve EN to L */
+    En = 3 << 4,    /* resolve neutrals run to embedding level direction */
+    Rn = R << 4,    /* resolve neutrals run to strong right */
+    Ln = L << 4,    /* resolved neutrals run to strong left */
+    In = (1<<8),    /* increment count of deferred neutrals */
+    LnL = (1<<4)+L, /* set run and EN to L */
+};
+
+static int GetDeferredNeutrals(int action, int level)
+{
+    action = (action >> 4) & 0xF;
+    if (action == (En >> 4))
+        return EmbeddingDirection(level);
+    else
+        return action;
+}
+
+static int GetResolvedNeutrals(int action)
+{
+    action = action & 0xF;
+    if (action == In)
+        return 0;
+    else
+        return action;
+}
+
+/* state values */
+enum resolvestates
+{
+    /* new temporary class */
+    r,  /* R and characters resolved to R */
+    l,  /* L and characters resolved to L */
+    rn, /* N preceded by right */
+    ln, /* N preceded by left */
+    a,  /* AN preceded by left (the abbrev 'la' is used up above) */
+    na, /* N preceeded by a */
+} ;
+
+
+/*------------------------------------------------------------------------
+  Notes:
+
+  By rule W7, whenever a EN is 'dominated' by an L (including start of
+  run with embedding direction = L) it is resolved to, and further treated
+  as L.
+
+  This leads to the need for 'a' and 'na' states.
+------------------------------------------------------------------------*/
+
+static const int actionNeutrals[][5] =
+{
+/*   N,  L,  R,  AN, EN = cls */
+  { In,  0,  0,  0,  0 }, /* r    right */
+  { In,  0,  0,  0,  L }, /* l    left */
+
+  { In, En, Rn, Rn, Rn }, /* rn   N preceded by right */
+  { In, Ln, En, En, LnL}, /* ln   N preceded by left */
+
+  { In,  0,  0,  0,  L }, /* a   AN preceded by left */
+  { In, En, Rn, Rn, En }, /* na   N  preceded by a */
+} ;
+
+static const int stateNeutrals[][5] =
+{
+/*   N, L,  R, AN, EN */
+  { rn, l,  r,  r,  r }, /* r   right */
+  { ln, l,  r,  a,  l }, /* l   left */
+
+  { rn, l,  r,  r,  r }, /* rn  N preceded by right */
+  { ln, l,  r,  a,  l }, /* ln  N preceded by left */
+
+  { na, l,  r,  a,  l }, /* a  AN preceded by left */
+  { na, l,  r,  a,  l }, /* na  N preceded by la */
+} ;
+
+/*------------------------------------------------------------------------
+    Function: resolveNeutrals
+
+    Resolves the directionality of neutral character types.
+
+    Implements rules W7, N1 and N2 of the Unicode Bidi Algorithm.
+
+    Input: Array of embedding levels
+           Character count
+           Baselevel
+
+    In/Out: Array of directional classes
+
+    Note: On input only these directional classes are expected
+          R,  L,  N, AN, EN and BN
+
+          W8 resolves a number of ENs to L
+------------------------------------------------------------------------*/
+static void resolveNeutrals(int baselevel, WORD *pcls, const WORD *plevel, int cch)
+{
+    /* the state at the start of text depends on the base level */
+    int state = odd(baselevel) ? r : l;
+    int cls;
+
+    int cchRun = 0;
+    int level = baselevel;
+
+    int action, clsRun, clsNew;
+    int ich = 0;
+    for (; ich < cch; ich++)
+    {
+        /* ignore boundary neutrals */
+        if (pcls[ich] == BN)
+        {
+            /* include in the count for a deferred run */
+            if (cchRun)
+                cchRun++;
+
+            /* skip any further processing */
+            continue;
+        }
+
+        ASSERT(pcls[ich] < 5); /* "Only N, L, R,  AN, EN are allowed" */
+        cls = pcls[ich];
+
+        action = actionNeutrals[state][cls];
+
+        /* resolve the directionality for deferred runs */
+        clsRun = GetDeferredNeutrals(action, level);
+        if (clsRun != N)
+        {
+            SetDeferredRun(pcls, cchRun, ich, clsRun);
+            cchRun = 0;
+        }
+
+        /* resolve the directionality class at the current location */
+        clsNew = GetResolvedNeutrals(action);
+        if (clsNew != N)
+            pcls[ich] = clsNew;
+
+        if (In & action)
+            cchRun++;
+
+        state = stateNeutrals[state][cls];
+        level = plevel[ich];
+    }
+
+    /* resolve any deferred runs */
+    cls = EmbeddingDirection(level);    /* eor has type of current level */
+
+    /* resolve the directionality for deferred runs */
+    clsRun = GetDeferredNeutrals(actionNeutrals[state][cls], level);
+    if (clsRun != N)
+        SetDeferredRun(pcls, cchRun, ich, clsRun);
+}
+
 /*************************************************************
  *    BIDI_Reorder
  */
@@ -707,6 +864,9 @@ BOOL BIDI_Reorder(
 
         /* resolve weak */
         resolveWeak(baselevel, chartype, levels, i);
+
+        /* resolve neutrals */
+        resolveNeutrals(baselevel, chartype, levels, i);
 
         /* Temporary stub: Just reverse the odd levels */
         for (j = lastgood = 0; j < i; ++j)
