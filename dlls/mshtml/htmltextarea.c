@@ -36,9 +36,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
+    HTMLElement element;
+
     const IHTMLTextAreaElementVtbl *lpHTMLTextAreaElementVtbl;
 
-    HTMLElement *element;
     nsIDOMHTMLTextAreaElement *nstextarea;
 } HTMLTextAreaElement;
 
@@ -70,7 +71,7 @@ static HRESULT WINAPI HTMLTextAreaElement_QueryInterface(IHTMLTextAreaElement *i
         return S_OK;
     }
 
-    hres = HTMLElement_QI(This->element, riid, ppv);
+    hres = HTMLElement_QI(&This->element, riid, ppv);
     if(FAILED(hres))
         WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -83,7 +84,7 @@ static ULONG WINAPI HTMLTextAreaElement_AddRef(IHTMLTextAreaElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_AddRef(HTMLDOC(This->element->node.doc));
+    return IHTMLDocument2_AddRef(HTMLDOC(This->element.node.doc));
 }
 
 static ULONG WINAPI HTMLTextAreaElement_Release(IHTMLTextAreaElement *iface)
@@ -92,7 +93,7 @@ static ULONG WINAPI HTMLTextAreaElement_Release(IHTMLTextAreaElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLDocument2_Release(HTMLDOC(This->element->node.doc));
+    return IHTMLDocument2_Release(HTMLDOC(This->element.node.doc));
 }
 
 static HRESULT WINAPI HTMLTextAreaElement_GetTypeInfoCount(IHTMLTextAreaElement *iface, UINT *pctinfo)
@@ -395,19 +396,20 @@ static const IHTMLTextAreaElementVtbl HTMLTextAreaElementVtbl = {
     HTMLTextAreaElement_createTextRange
 };
 
-void HTMLTextAreaElement_Create(HTMLElement *element)
+HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLTextAreaElement *ret = mshtml_alloc(sizeof(HTMLTextAreaElement));
     nsresult nsres;
 
     ret->lpHTMLTextAreaElementVtbl = &HTMLTextAreaElementVtbl;
-    ret->element = element;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(element->nselem, &IID_nsIDOMHTMLTextAreaElement,
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTextAreaElement,
                                              (void**)&ret->nstextarea);
     if(NS_FAILED(nsres))
         ERR("Could not get nsDOMHTMLInputElement: %08x\n", nsres);
 
-    element->impl = (IUnknown*)HTMLTXTAREA(ret);
-    element->destructor = HTMLTextAreaElement_destructor;
+    ret->element.impl = (IUnknown*)HTMLTXTAREA(ret);
+    ret->element.destructor = HTMLTextAreaElement_destructor;
+
+    return &ret->element;
 }

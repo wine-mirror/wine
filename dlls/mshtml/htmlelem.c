@@ -1274,7 +1274,7 @@ HRESULT HTMLElement_QI(HTMLElement *This, REFIID riid, void **ppv)
 HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
 {
     nsIDOMHTMLElement *nselem;
-    HTMLElement *ret;
+    HTMLElement *ret = NULL;
     nsAString class_name_str;
     const PRUnichar *class_name;
     nsresult nsres;
@@ -1302,15 +1302,14 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
         ret = HTMLInputElement_Create(nselem);
     if(!strcmpW(class_name, wszSELECT))
         ret = HTMLSelectElement_Create(nselem);
-    else {
+    else if(!strcmpW(class_name, wszTEXTAREA))
+        ret = HTMLTextAreaElement_Create(nselem);
+
+    if(!ret) {
         ret = mshtml_alloc(sizeof(HTMLElement));
 
         ret->impl = NULL;
         ret->destructor = NULL;
-        ret->nselem = nselem;
-
-        if(!strcmpW(class_name, wszTEXTAREA))
-            HTMLTextAreaElement_Create(ret);
     }
 
     nsAString_Finish(&class_name_str);

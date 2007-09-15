@@ -420,7 +420,7 @@ HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement*);
-void HTMLTextAreaElement_Create(HTMLElement*);
+HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement*);
 
 void HTMLElement2_Init(HTMLElement*);
 
