@@ -1550,6 +1550,17 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     return WINED3D_OK;
 }
 
+void WINAPI IWineGDISurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    FIXME("(%p) : Should not be called on a GDI surface. textureName %u, target %i\n", This, textureName, target);
+}
+
+void WINAPI IWineGDISurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    FIXME("(%p) : Should not be called on a GDI surface\n", This);
+    *glDescription = NULL;
+}
+
 /* FIXME: This vtable should not use any IWineD3DSurface* implementation functions,
  * only IWineD3DBaseSurface and IWineGDISurface ones.
  */
@@ -1600,8 +1611,8 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineGDISurfaceImpl_LoadTexture,
     IWineGDISurfaceImpl_SaveSnapshot,
     IWineD3DBaseSurfaceImpl_SetContainer,
-    IWineD3DSurfaceImpl_SetGlTextureDesc,
-    IWineD3DSurfaceImpl_GetGlDesc,
+    IWineGDISurfaceImpl_SetGlTextureDesc,
+    IWineGDISurfaceImpl_GetGlDesc,
     IWineD3DSurfaceImpl_GetData,
     IWineD3DSurfaceImpl_SetFormat,
     IWineGDISurfaceImpl_PrivateSetup

@@ -1173,8 +1173,6 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface);
 void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface);
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPixelFormat(IWineD3DSurface *iface, WINED3DFORMAT Format, BYTE *Surface, DWORD Size);
 extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RECT* pDirtyRect);
-void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target);
-void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription);
 const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface);
 HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format);
 HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC);
