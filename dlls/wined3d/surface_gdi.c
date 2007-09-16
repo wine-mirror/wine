@@ -1554,18 +1554,18 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
 {
     /* IUnknown */
     IWineD3DBaseSurfaceImpl_QueryInterface,
-    IWineD3DSurfaceImpl_AddRef,
+    IWineD3DBaseSurfaceImpl_AddRef,
     IWineD3DSurfaceImpl_Release,
     /* IWineD3DResource */
-    IWineD3DSurfaceImpl_GetParent,
-    IWineD3DSurfaceImpl_GetDevice,
-    IWineD3DSurfaceImpl_SetPrivateData,
-    IWineD3DSurfaceImpl_GetPrivateData,
-    IWineD3DSurfaceImpl_FreePrivateData,
-    IWineD3DSurfaceImpl_SetPriority,
-    IWineD3DSurfaceImpl_GetPriority,
+    IWineD3DBaseSurfaceImpl_GetParent,
+    IWineD3DBaseSurfaceImpl_GetDevice,
+    IWineD3DBaseSurfaceImpl_SetPrivateData,
+    IWineD3DBaseSurfaceImpl_GetPrivateData,
+    IWineD3DBaseSurfaceImpl_FreePrivateData,
+    IWineD3DBaseSurfaceImpl_SetPriority,
+    IWineD3DBaseSurfaceImpl_GetPriority,
     IWineGDISurfaceImpl_PreLoad,
-    IWineD3DSurfaceImpl_GetType,
+    IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
     IWineD3DSurfaceImpl_GetContainer,
     IWineD3DSurfaceImpl_GetDesc,

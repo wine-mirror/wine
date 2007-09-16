@@ -334,13 +334,6 @@ GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchai
     return GL_BACK;
 }
 
-ULONG WINAPI IWineD3DSurfaceImpl_AddRef(IWineD3DSurface *iface) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    ULONG ref = InterlockedIncrement(&This->resource.ref);
-    TRACE("(%p) : AddRef increasing from %d\n", This,ref - 1);
-    return ref;
-}
-
 ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->resource.ref);
@@ -434,29 +427,6 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
 /* ****************************************************
    IWineD3DSurface IWineD3DResource parts follow
    **************************************************** */
-HRESULT WINAPI IWineD3DSurfaceImpl_GetDevice(IWineD3DSurface *iface, IWineD3DDevice** ppDevice) {
-    return IWineD3DResourceImpl_GetDevice((IWineD3DResource *)iface, ppDevice);
-}
-
-HRESULT WINAPI IWineD3DSurfaceImpl_SetPrivateData(IWineD3DSurface *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    return IWineD3DResourceImpl_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
-}
-
-HRESULT WINAPI IWineD3DSurfaceImpl_GetPrivateData(IWineD3DSurface *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
-    return IWineD3DResourceImpl_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
-}
-
-HRESULT WINAPI IWineD3DSurfaceImpl_FreePrivateData(IWineD3DSurface *iface, REFGUID refguid) {
-    return IWineD3DResourceImpl_FreePrivateData((IWineD3DResource *)iface, refguid);
-}
-
-DWORD   WINAPI IWineD3DSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD PriorityNew) {
-    return IWineD3DResourceImpl_SetPriority((IWineD3DResource *)iface, PriorityNew);
-}
-
-DWORD   WINAPI IWineD3DSurfaceImpl_GetPriority(IWineD3DSurface *iface) {
-    return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
-}
 
 void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     /* TODO: check for locks */
@@ -501,16 +471,6 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     LEAVE_GL();
     }
     return;
-}
-
-WINED3DRESOURCETYPE WINAPI IWineD3DSurfaceImpl_GetType(IWineD3DSurface *iface) {
-    TRACE("(%p) : calling resourceimpl_GetType\n", iface);
-    return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
-}
-
-HRESULT WINAPI IWineD3DSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **pParent) {
-    TRACE("(%p) : calling resourceimpl_GetParent\n", iface);
-    return IWineD3DResourceImpl_GetParent((IWineD3DResource *)iface, pParent);
 }
 
 /* ******************************************************
@@ -4010,18 +3970,18 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
     IWineD3DBaseSurfaceImpl_QueryInterface,
-    IWineD3DSurfaceImpl_AddRef,
+    IWineD3DBaseSurfaceImpl_AddRef,
     IWineD3DSurfaceImpl_Release,
     /* IWineD3DResource */
-    IWineD3DSurfaceImpl_GetParent,
-    IWineD3DSurfaceImpl_GetDevice,
-    IWineD3DSurfaceImpl_SetPrivateData,
-    IWineD3DSurfaceImpl_GetPrivateData,
-    IWineD3DSurfaceImpl_FreePrivateData,
-    IWineD3DSurfaceImpl_SetPriority,
-    IWineD3DSurfaceImpl_GetPriority,
+    IWineD3DBaseSurfaceImpl_GetParent,
+    IWineD3DBaseSurfaceImpl_GetDevice,
+    IWineD3DBaseSurfaceImpl_SetPrivateData,
+    IWineD3DBaseSurfaceImpl_GetPrivateData,
+    IWineD3DBaseSurfaceImpl_FreePrivateData,
+    IWineD3DBaseSurfaceImpl_SetPriority,
+    IWineD3DBaseSurfaceImpl_GetPriority,
     IWineD3DSurfaceImpl_PreLoad,
-    IWineD3DSurfaceImpl_GetType,
+    IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
     IWineD3DSurfaceImpl_GetContainer,
     IWineD3DSurfaceImpl_GetDesc,

@@ -54,3 +54,47 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_QueryInterface(IWineD3DSurface *iface, RE
         *ppobj = NULL;
         return E_NOINTERFACE;
 }
+
+ULONG WINAPI IWineD3DBaseSurfaceImpl_AddRef(IWineD3DSurface *iface) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    ULONG ref = InterlockedIncrement(&This->resource.ref);
+    TRACE("(%p) : AddRef increasing from %d\n", This,ref - 1);
+    return ref;
+}
+
+/* ****************************************************
+   IWineD3DSurface IWineD3DResource parts follow
+   **************************************************** */
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDevice(IWineD3DSurface *iface, IWineD3DDevice** ppDevice) {
+    return IWineD3DResourceImpl_GetDevice((IWineD3DResource *)iface, ppDevice);
+}
+
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPrivateData(IWineD3DSurface *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
+    return IWineD3DResourceImpl_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
+}
+
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPrivateData(IWineD3DSurface *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
+    return IWineD3DResourceImpl_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
+}
+
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_FreePrivateData(IWineD3DSurface *iface, REFGUID refguid) {
+    return IWineD3DResourceImpl_FreePrivateData((IWineD3DResource *)iface, refguid);
+}
+
+DWORD   WINAPI IWineD3DBaseSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD PriorityNew) {
+    return IWineD3DResourceImpl_SetPriority((IWineD3DResource *)iface, PriorityNew);
+}
+
+DWORD   WINAPI IWineD3DBaseSurfaceImpl_GetPriority(IWineD3DSurface *iface) {
+    return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
+}
+
+WINED3DRESOURCETYPE WINAPI IWineD3DBaseSurfaceImpl_GetType(IWineD3DSurface *iface) {
+    TRACE("(%p) : calling resourceimpl_GetType\n", iface);
+    return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
+}
+
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **pParent) {
+    TRACE("(%p) : calling resourceimpl_GetParent\n", iface);
+    return IWineD3DResourceImpl_GetParent((IWineD3DResource *)iface, pParent);
+}
