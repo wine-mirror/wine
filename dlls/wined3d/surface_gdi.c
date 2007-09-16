@@ -1550,6 +1550,9 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     return WINED3D_OK;
 }
 
+/* FIXME: This vtable should not use any IWineD3DSurface* implementation functions,
+ * only IWineD3DBaseSurface and IWineGDISurface ones.
+ */
 const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
 {
     /* IUnknown */
@@ -1580,23 +1583,23 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_IsLost,
     IWineD3DBaseSurfaceImpl_Restore,
     IWineGDISurfaceImpl_BltFast,
-    IWineD3DSurfaceImpl_GetPalette,
-    IWineD3DSurfaceImpl_SetPalette,
-    IWineD3DSurfaceImpl_RealizePalette,
-    IWineD3DSurfaceImpl_SetColorKey,
-    IWineD3DSurfaceImpl_GetPitch,
+    IWineD3DBaseSurfaceImpl_GetPalette,
+    IWineD3DBaseSurfaceImpl_SetPalette,
+    IWineD3DBaseSurfaceImpl_RealizePalette,
+    IWineD3DBaseSurfaceImpl_SetColorKey,
+    IWineD3DBaseSurfaceImpl_GetPitch,
     IWineD3DSurfaceImpl_SetMem,
-    IWineD3DSurfaceImpl_SetOverlayPosition,
-    IWineD3DSurfaceImpl_GetOverlayPosition,
-    IWineD3DSurfaceImpl_UpdateOverlayZOrder,
-    IWineD3DSurfaceImpl_UpdateOverlay,
-    IWineD3DSurfaceImpl_SetClipper,
-    IWineD3DSurfaceImpl_GetClipper,
+    IWineD3DBaseSurfaceImpl_SetOverlayPosition,
+    IWineD3DBaseSurfaceImpl_GetOverlayPosition,
+    IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder,
+    IWineD3DBaseSurfaceImpl_UpdateOverlay,
+    IWineD3DBaseSurfaceImpl_SetClipper,
+    IWineD3DBaseSurfaceImpl_GetClipper,
     /* Internal use: */
     IWineD3DSurfaceImpl_AddDirtyRect,
     IWineGDISurfaceImpl_LoadTexture,
     IWineGDISurfaceImpl_SaveSnapshot,
-    IWineD3DSurfaceImpl_SetContainer,
+    IWineD3DBaseSurfaceImpl_SetContainer,
     IWineD3DSurfaceImpl_SetGlTextureDesc,
     IWineD3DSurfaceImpl_GetGlDesc,
     IWineD3DSurfaceImpl_GetData,
