@@ -872,6 +872,11 @@ static LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD si
 
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
+    if (info->cvinfo==NULL)
+    {
+        ERR("ICM_DECOMPRESS sent after ICM_DECOMPRESS_END\n");
+        return ICERR_BADPARAM;
+    }
 
     width  = icd->lpbiInput->biWidth;
     height = icd->lpbiInput->biHeight;
@@ -890,6 +895,11 @@ static LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWOR
 
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
+    if (info->cvinfo==NULL)
+    {
+        ERR("ICM_DECOMPRESSEX sent after ICM_DECOMPRESS_END\n");
+        return ICERR_BADPARAM;
+    }
 
     /* FIXME: flags are ignored */
 
