@@ -146,8 +146,8 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
     INT_PTR ret;
     struct cred_dialog_params params;
 
-    TRACE("(%p, %s, %p, %d, %p, %d, %p, %d, %p, 0x%08x)\n", pUIInfo,
-          debugstr_w(pszTargetName), Reserved, dwAuthError, pszUsername,
+    TRACE("(%p, %s, %p, %d, %s, %d, %p, %d, %p, 0x%08x)\n", pUIInfo,
+          debugstr_w(pszTargetName), Reserved, dwAuthError, debugstr_w(pszUsername),
           ulUsernameMaxChars, pszPassword, ulPasswordMaxChars, pfSave, dwFlags);
 
     params.pszTargetName = pszTargetName;
