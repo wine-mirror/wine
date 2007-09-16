@@ -141,7 +141,7 @@ dnl
 AC_DEFUN([WINE_CHECK_MINGW_PROG],
 [AC_CHECK_PROGS([$1],
    m4_foreach([ac_wine_prefix],
-              [i586-mingw32msvc, i386-mingw32msvc, i386-mingw32, mingw32, mingw],
+              [i586-mingw32msvc, i386-mingw32msvc, i686-mingw32, i386-mingw32, mingw32, mingw],
               [ac_wine_prefix-$2 ]),
    [$3],[$4])])
 

@@ -8876,7 +8876,7 @@ echo "${ECHO_T}$ac_cv_c_dll_hpux" >&6; }
 
     if test "$cross_compiling" = "no"
     then
-      for ac_prog in i586-mingw32msvc-gcc i386-mingw32msvc-gcc i386-mingw32-gcc mingw32-gcc mingw-gcc
+      for ac_prog in i586-mingw32msvc-gcc i386-mingw32msvc-gcc i686-mingw32-gcc i386-mingw32-gcc mingw32-gcc mingw-gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -8919,7 +8919,7 @@ fi
 done
 test -n "$CROSSCC" || CROSSCC="false"
 
-      for ac_prog in i586-mingw32msvc-dlltool i386-mingw32msvc-dlltool i386-mingw32-dlltool mingw32-dlltool mingw-dlltool
+      for ac_prog in i586-mingw32msvc-dlltool i386-mingw32msvc-dlltool i686-mingw32-dlltool i386-mingw32-dlltool mingw32-dlltool mingw-dlltool
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -8962,7 +8962,7 @@ fi
 done
 test -n "$DLLTOOL" || DLLTOOL="false"
 
-      for ac_prog in i586-mingw32msvc-windres i386-mingw32msvc-windres i386-mingw32-windres mingw32-windres mingw-windres
+      for ac_prog in i586-mingw32msvc-windres i386-mingw32msvc-windres i686-mingw32-windres i386-mingw32-windres mingw32-windres mingw-windres
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -9005,7 +9005,7 @@ fi
 done
 test -n "$CROSSWINDRES" || CROSSWINDRES="false"
 
-      for ac_prog in i586-mingw32msvc-ar i386-mingw32msvc-ar i386-mingw32-ar mingw32-ar mingw-ar
+      for ac_prog in i586-mingw32msvc-ar i386-mingw32msvc-ar i686-mingw32-ar i386-mingw32-ar mingw32-ar mingw-ar
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
