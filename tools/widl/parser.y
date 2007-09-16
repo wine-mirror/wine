@@ -1017,6 +1017,7 @@ static expr_t *make_expr(enum expr_type type)
   e->ref = NULL;
   e->u.lval = 0;
   e->is_const = FALSE;
+  e->cval = 0;
   return e;
 }
 
