@@ -250,6 +250,7 @@ void write_type_left(FILE *h, type_t *t)
       case RPC_FC_OP:
       case RPC_FC_CARRAY:
       case RPC_FC_CVARRAY:
+      case RPC_FC_BOGUS_ARRAY:
         write_type_left(h, t->ref);
         fprintf(h, "%s*", needs_space_after(t->ref) ? " " : "");
         break;

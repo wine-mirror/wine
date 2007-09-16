@@ -1363,6 +1363,10 @@ static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr)
       (*ptype)->type = RPC_FC_BOGUS_ARRAY;
     }
   }
+
+  /* if the structure is complex, then so must be the encompassing array */
+  if (is_array(v->type) && (v->type->ref->type == RPC_FC_BOGUS_STRUCT))
+    v->type->type = RPC_FC_BOGUS_ARRAY;
 }
 
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface)
@@ -1812,6 +1816,7 @@ static int get_struct_type(var_list_t *fields)
     case RPC_FC_PAD:
     case RPC_FC_EMBEDDED_COMPLEX:
     case RPC_FC_BOGUS_STRUCT:
+    case RPC_FC_BOGUS_ARRAY:
       return RPC_FC_BOGUS_STRUCT;
     }
   }
