@@ -710,21 +710,15 @@ static void test_UnpackDDElParam(void)
     hi = 0xbeef;
     ret = UnpackDDElParam(WM_DDE_ADVISE, (LPARAM)NULL, &lo, &hi);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    todo_wine
-    {
-        ok(lo == 0, "Expected 0, got %08lx\n", lo);
-        ok(hi == 0, "Expected 0, got %08lx\n", hi);
-    }
+    ok(lo == 0, "Expected 0, got %08lx\n", lo);
+    ok(hi == 0, "Expected 0, got %08lx\n", hi);
 
     lo = 0xdead;
     hi = 0xbeef;
     ret = UnpackDDElParam(WM_DDE_ADVISE, 0xcafebabe, &lo, &hi);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    todo_wine
-    {
-        ok(lo == 0, "Expected 0, got %08lx\n", lo);
-        ok(hi == 0, "Expected 0, got %08lx\n", hi);
-    }
+    ok(lo == 0, "Expected 0, got %08lx\n", lo);
+    ok(hi == 0, "Expected 0, got %08lx\n", hi);
 
     hglobal = GlobalAlloc(GMEM_DDESHARE, 2);
     ptr = GlobalLock(hglobal);
@@ -750,11 +744,8 @@ static void test_UnpackDDElParam(void)
     hi = 0xbeef;
     ret = UnpackDDElParam(WM_DDE_ACK, 0xcafebabe, &lo, &hi);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    todo_wine
-    {
-        ok(lo == 0, "Expected 0, got %08lx\n", lo);
-        ok(hi == 0, "Expected 0, got %08lx\n", hi);
-    }
+    ok(lo == 0, "Expected 0, got %08lx\n", lo);
+    ok(hi == 0, "Expected 0, got %08lx\n", hi);
 
     lo = 0xdead;
     hi = 0xbeef;
@@ -767,11 +758,8 @@ static void test_UnpackDDElParam(void)
     hi = 0xbeef;
     ret = UnpackDDElParam(WM_DDE_DATA, 0xcafebabe, &lo, &hi);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    todo_wine
-    {
-        ok(lo == 0, "Expected 0, got %08lx\n", lo);
-        ok(hi == 0, "Expected 0, got %08lx\n", hi);
-    }
+    ok(lo == 0, "Expected 0, got %08lx\n", lo);
+    ok(hi == 0, "Expected 0, got %08lx\n", hi);
 
     lo = 0xdead;
     hi = 0xbeef;
@@ -791,11 +779,8 @@ static void test_UnpackDDElParam(void)
     hi = 0xbeef;
     ret = UnpackDDElParam(WM_DDE_POKE, 0xcafebabe, &lo, &hi);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    todo_wine
-    {
-        ok(lo == 0, "Expected 0, got %08lx\n", lo);
-        ok(hi == 0, "Expected 0, got %08lx\n", hi);
-    }
+    ok(lo == 0, "Expected 0, got %08lx\n", lo);
+    ok(hi == 0, "Expected 0, got %08lx\n", hi);
 
     lo = 0xdead;
     hi = 0xbeef;

@@ -126,10 +126,10 @@ BOOL WINAPI UnpackDDElParam(UINT msg, LPARAM lParam,
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
     case WM_DDE_POKE:
-        if (!lParam) return FALSE;
-        if (!(params = GlobalLock( (HGLOBAL)lParam )))
+        if (!lParam || !(params = GlobalLock((HGLOBAL)lParam)))
         {
-            ERR("GlobalLock failed (%lx)\n", lParam);
+            if (uiLo) *uiLo = 0;
+            if (uiHi) *uiHi = 0;
             return FALSE;
         }
         TRACE("unpacked: low %08lx, high %08lx\n", params[0], params[1]);
