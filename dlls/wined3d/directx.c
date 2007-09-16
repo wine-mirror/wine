@@ -836,14 +836,15 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                         strstr(gl_info->gl_renderer, "Quadro FX 5"))
                             gl_info->gl_card = CARD_NVIDIA_GEFORCE_7800GT;
                 else if(strstr(gl_info->gl_renderer, "6800") ||
-                        strstr(gl_info->gl_renderer, "7600"))
+                        strstr(gl_info->gl_renderer, "7600") ||
+                        strstr(gl_info->gl_renderer, "7700"))
                             gl_info->gl_card = CARD_NVIDIA_GEFORCE_6800;
                 else if(strstr(gl_info->gl_renderer, "6600") ||
                         strstr(gl_info->gl_renderer, "6610") ||
                         strstr(gl_info->gl_renderer, "6700"))
                             gl_info->gl_card = CARD_NVIDIA_GEFORCE_6600GT;
                 else
-                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_6200; /* Geforce 6100/6150/6200/7300/7400 */
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_6200; /* Geforce 6100/6150/6200/7300/7400/7500 */
             } else if(WINE_D3D9_CAPABLE(gl_info)) {
                 if (strstr(gl_info->gl_renderer, "5800") ||
                     strstr(gl_info->gl_renderer, "5900") ||
@@ -880,18 +881,31 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             break;
         case VENDOR_ATI:
             if(WINE_D3D9_CAPABLE(gl_info)) {
+                /* Radeon R6xx HD2900 - highend */
+                if (strstr(gl_info->gl_renderer, "HD 2900"))
+                    gl_info->gl_card = CARD_ATI_RADEON_HD2900;
+                /* Radeon R6xx HD2600- midend */
+                else if (strstr(gl_info->gl_renderer, "HD 2600"))
+                    gl_info->gl_card = CARD_ATI_RADEON_HD2600;
+                /* Radeon R6xx HD2300/HD2400 - lowend */
+                else if (strstr(gl_info->gl_renderer, "HD 2300") ||
+                         strstr(gl_info->gl_renderer, "HD 2400"))
+                             gl_info->gl_card = CARD_ATI_RADEON_HD2300;
                 /* Radeon R5xx */
-                if (strstr(gl_info->gl_renderer, "X1600") ||
-                    strstr(gl_info->gl_renderer, "X1800") ||
-                    strstr(gl_info->gl_renderer, "X1900") ||
-                    strstr(gl_info->gl_renderer, "X1950"))
-                        gl_info->gl_card = CARD_ATI_RADEON_X1600;
-                /* Radeon R4xx + X1300/X1400 (lowend R5xx) */
+                else if (strstr(gl_info->gl_renderer, "X1600") ||
+                         strstr(gl_info->gl_renderer, "X1650") ||
+                         strstr(gl_info->gl_renderer, "X1800") ||
+                         strstr(gl_info->gl_renderer, "X1900") ||
+                         strstr(gl_info->gl_renderer, "X1950"))
+                             gl_info->gl_card = CARD_ATI_RADEON_X1600;
+                /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300 (lowend R5xx) */
                 else if(strstr(gl_info->gl_renderer, "X700") ||
                         strstr(gl_info->gl_renderer, "X800") ||
                         strstr(gl_info->gl_renderer, "X850") ||
                         strstr(gl_info->gl_renderer, "X1300") ||
-                        strstr(gl_info->gl_renderer, "X1400"))
+                        strstr(gl_info->gl_renderer, "X1400") ||
+                        strstr(gl_info->gl_renderer, "X1450") ||
+                        strstr(gl_info->gl_renderer, "X1550"))
                             gl_info->gl_card = CARD_ATI_RADEON_X700;
                 /* Radeon R3xx */ 
                 else
@@ -929,7 +943,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             if(WINE_D3D9_CAPABLE(gl_info))
                 gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5600;
             else if(WINE_D3D8_CAPABLE(gl_info))
-                gl_info->gl_card = CARD_NVIDIA_GEFORCE3;            
+                gl_info->gl_card = CARD_NVIDIA_GEFORCE3;
             else if(WINE_D3D7_CAPABLE(gl_info))
                 gl_info->gl_card = CARD_NVIDIA_GEFORCE;
             else if(WINE_D3D6_CAPABLE(gl_info))
