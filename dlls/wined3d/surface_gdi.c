@@ -1614,6 +1614,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineGDISurfaceImpl_SetGlTextureDesc,
     IWineGDISurfaceImpl_GetGlDesc,
     IWineD3DSurfaceImpl_GetData,
-    IWineD3DSurfaceImpl_SetFormat,
+    IWineD3DBaseSurfaceImpl_SetFormat,
     IWineGDISurfaceImpl_PrivateSetup
 };

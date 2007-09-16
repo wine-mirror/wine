@@ -2518,50 +2518,23 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    HRESULT hr;
     const GlPixelFormatDesc *glDesc;
-    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(format, &GLINFO_LOCATION, &glDesc);
+    getFormatDescEntry(format, &GLINFO_LOCATION, &glDesc);
 
-    if (This->resource.format != WINED3DFMT_UNKNOWN) {
-        FIXME("(%p) : The format of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
-        return WINED3DERR_INVALIDCALL;
+    TRACE("(%p) : Calling base function first\n", This);
+    hr = IWineD3DBaseSurfaceImpl_SetFormat(iface, format);
+    if(SUCCEEDED(hr)) {
+        /* Setup some glformat defaults */
+        This->glDescription.glFormat         = glDesc->glFormat;
+        This->glDescription.glFormatInternal = glDesc->glInternal;
+        This->glDescription.glType           = glDesc->glType;
+
+        This->Flags &= ~SFLAG_ALLOCATED;
+        TRACE("(%p) : glFormat %d, glFotmatInternal %d, glType %d\n", This,
+              This->glDescription.glFormat, This->glDescription.glFormatInternal, This->glDescription.glType);
     }
-
-    TRACE("(%p) : Setting texture format to (%d,%s)\n", This, format, debug_d3dformat(format));
-    if (format == WINED3DFMT_UNKNOWN) {
-        This->resource.size = 0;
-    } else if (format == WINED3DFMT_DXT1) {
-        /* DXT1 is half byte per pixel */
-        This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4)) >> 1;
-
-    } else if (format == WINED3DFMT_DXT2 || format == WINED3DFMT_DXT3 ||
-               format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5) {
-        This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4));
-    } else {
-        unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
-        This->resource.size = ((This->pow2Width * formatEntry->bpp) + alignment - 1) & ~(alignment - 1);
-        This->resource.size *= This->pow2Height;
-    }
-
-
-    /* Setup some glformat defaults */
-    This->glDescription.glFormat         = glDesc->glFormat;
-    This->glDescription.glFormatInternal = glDesc->glInternal;
-    This->glDescription.glType           = glDesc->glType;
-
-    if (format != WINED3DFMT_UNKNOWN) {
-        This->bytesPerPixel = formatEntry->bpp;
-    } else {
-        This->bytesPerPixel = 0;
-    }
-
-    This->Flags |= (WINED3DFMT_D16_LOCKABLE == format) ? SFLAG_LOCKABLE : 0;
-    This->Flags &= ~SFLAG_ALLOCATED;
-
-    This->resource.format = format;
-
-    TRACE("(%p) : Size %d, bytesPerPixel %d, glFormat %d, glFotmatInternal %d, glType %d\n", This, This->resource.size, This->bytesPerPixel, This->glDescription.glFormat, This->glDescription.glFormatInternal, This->glDescription.glType);
-
-    return WINED3D_OK;
+    return hr;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {

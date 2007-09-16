@@ -436,3 +436,43 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWin
 
     return WINED3D_OK;
 }
+
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(format, NULL, NULL);
+
+    if (This->resource.format != WINED3DFMT_UNKNOWN) {
+        FIXME("(%p) : The format of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    TRACE("(%p) : Setting texture format to (%d,%s)\n", This, format, debug_d3dformat(format));
+    if (format == WINED3DFMT_UNKNOWN) {
+        This->resource.size = 0;
+    } else if (format == WINED3DFMT_DXT1) {
+        /* DXT1 is half byte per pixel */
+        This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4)) >> 1;
+
+    } else if (format == WINED3DFMT_DXT2 || format == WINED3DFMT_DXT3 ||
+               format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5) {
+        This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4));
+    } else {
+        unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
+        This->resource.size = ((This->pow2Width * formatEntry->bpp) + alignment - 1) & ~(alignment - 1);
+        This->resource.size *= This->pow2Height;
+    }
+
+    if (format != WINED3DFMT_UNKNOWN) {
+        This->bytesPerPixel = formatEntry->bpp;
+    } else {
+        This->bytesPerPixel = 0;
+    }
+
+    This->Flags |= (WINED3DFMT_D16_LOCKABLE == format) ? SFLAG_LOCKABLE : 0;
+
+    This->resource.format = format;
+
+    TRACE("(%p) : Size %d, bytesPerPixel %d\n", This, This->resource.size, This->bytesPerPixel);
+
+    return WINED3D_OK;
+}
