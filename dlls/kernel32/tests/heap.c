@@ -189,6 +189,14 @@ START_TEST(heap)
     ok(GetLastError() == ERROR_INVALID_HANDLE,
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
+    gbl = GlobalAlloc(GMEM_DDESHARE, 100);
+
+    res = GlobalUnlock(gbl);
+    ok(res == 1, "Expected 1, got %d\n", res);
+
+    res = GlobalUnlock(gbl);
+    ok(res == 1, "Expected 1, got %d\n", res);
+
     /* ####################################### */
     /* Local*() functions */
     gbl = LocalAlloc(LMEM_MOVEABLE, 0);

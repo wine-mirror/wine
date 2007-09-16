@@ -480,7 +480,7 @@ BOOL WINAPI GlobalUnlock(HGLOBAL hmem)
     PGLOBAL32_INTERN pintern;
     BOOL locked;
 
-    if (ISPOINTER(hmem)) return FALSE;
+    if (ISPOINTER(hmem)) return TRUE;
 
     RtlLockHeap(GetProcessHeap());
     __TRY

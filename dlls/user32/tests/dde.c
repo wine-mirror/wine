@@ -492,10 +492,7 @@ static void test_PackDDElParam(void)
     ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
 
     ret = GlobalUnlock((HGLOBAL)lparam);
-    todo_wine
-    {
-        ok(ret == 1, "Expected 1, got %d\n", ret);
-    }
+    ok(ret == 1, "Expected 1, got %d\n", ret);
 
     lo = hi = 0;
     ret = UnpackDDElParam(WM_DDE_ADVISE, lparam, &lo, &hi);
@@ -534,10 +531,7 @@ static void test_PackDDElParam(void)
     ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
 
     ret = GlobalUnlock((HGLOBAL)lparam);
-    todo_wine
-    {
-        ok(ret == 1, "Expected 1, got %d\n", ret);
-    }
+    ok(ret == 1, "Expected 1, got %d\n", ret);
 
     lo = hi = 0;
     ret = UnpackDDElParam(WM_DDE_ACK, lparam, &lo, &hi);
@@ -560,10 +554,7 @@ static void test_PackDDElParam(void)
     ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
 
     ret = GlobalUnlock((HGLOBAL)lparam);
-    todo_wine
-    {
-        ok(ret == 1, "Expected 1, got %d\n", ret);
-    }
+    ok(ret == 1, "Expected 1, got %d\n", ret);
 
     lo = hi = 0;
     ret = UnpackDDElParam(WM_DDE_DATA, lparam, &lo, &hi);
@@ -602,10 +593,7 @@ static void test_PackDDElParam(void)
     ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
 
     ret = GlobalUnlock((HGLOBAL)lparam);
-    todo_wine
-    {
-        ok(ret == 1, "Expected 1, got %d\n", ret);
-    }
+    ok(ret == 1, "Expected 1, got %d\n", ret);
 
     lo = hi = 0;
     ret = UnpackDDElParam(WM_DDE_POKE, lparam, &lo, &hi);
