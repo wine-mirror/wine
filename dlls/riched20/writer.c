@@ -92,7 +92,7 @@ ME_StreamOutMove(ME_OutStream *pStream, const char *buffer, int len)
     int space = STREAMOUT_BUFFER_SIZE - pStream->pos;
     int fit = min(space, len);
 
-    TRACE("%u:%u:%.*s\n", pStream->pos, fit, fit, buffer);
+    TRACE("%u:%u:%s\n", pStream->pos, fit, debugstr_an(buffer,fit));
     memmove(pStream->buffer + pStream->pos, buffer, fit);
     len -= fit;
     buffer += fit;
