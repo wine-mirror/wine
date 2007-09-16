@@ -1553,7 +1553,7 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
 const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
 {
     /* IUnknown */
-    IWineD3DSurfaceImpl_QueryInterface,
+    IWineD3DBaseSurfaceImpl_QueryInterface,
     IWineD3DSurfaceImpl_AddRef,
     IWineD3DSurfaceImpl_Release,
     /* IWineD3DResource */

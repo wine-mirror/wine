@@ -334,27 +334,6 @@ GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchai
     return GL_BACK;
 }
 
-/* *******************************************
-   IWineD3DSurface IUnknown parts follow
-   ******************************************* */
-HRESULT WINAPI IWineD3DSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID riid, LPVOID *ppobj)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    /* Warn ,but be nice about things */
-    TRACE("(%p)->(%s,%p)\n", This,debugstr_guid(riid),ppobj);
-
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IWineD3DBase)
-        || IsEqualGUID(riid, &IID_IWineD3DResource)
-        || IsEqualGUID(riid, &IID_IWineD3DSurface)) {
-        IUnknown_AddRef((IUnknown*)iface);
-        *ppobj = This;
-        return S_OK;
-    }
-    *ppobj = NULL;
-    return E_NOINTERFACE;
-}
-
 ULONG WINAPI IWineD3DSurfaceImpl_AddRef(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
@@ -4030,7 +4009,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DCl
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
-    IWineD3DSurfaceImpl_QueryInterface,
+    IWineD3DBaseSurfaceImpl_QueryInterface,
     IWineD3DSurfaceImpl_AddRef,
     IWineD3DSurfaceImpl_Release,
     /* IWineD3DResource */

@@ -1140,7 +1140,7 @@ extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
 extern const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl;
 
 /* Predeclare the shared Surface functions */
-HRESULT WINAPI IWineD3DSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID riid, LPVOID *ppobj);
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID riid, LPVOID *ppobj);
 ULONG WINAPI IWineD3DSurfaceImpl_AddRef(IWineD3DSurface *iface);
 ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface);
 HRESULT WINAPI IWineD3DSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **pParent);
