@@ -741,7 +741,11 @@ HGLOBAL WINAPI GlobalFree(HGLOBAL hmem)
         hreturned = 0;
         if(ISPOINTER(hmem)) /* POINTER */
         {
-            if(!HeapFree(GetProcessHeap(), 0, (LPVOID) hmem)) hmem = 0;
+            if(!HeapFree(GetProcessHeap(), 0, (LPVOID) hmem))
+            {
+                SetLastError(ERROR_INVALID_HANDLE);
+                hreturned = hmem;
+            }
         }
         else  /* HANDLE */
         {

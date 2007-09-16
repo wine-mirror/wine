@@ -399,12 +399,9 @@ static void test_FreeDDElParam(void)
     ret = FreeDDElParam(WM_DDE_ADVISE, (LPARAM)hglobal);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     val = GlobalFree(hglobal);
-    todo_wine
-    {
-        ok(val == hglobal, "Expected hglobal, got %p\n", val);
-        ok(GetLastError() == ERROR_INVALID_HANDLE,
-           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
+    ok(val == hglobal, "Expected hglobal, got %p\n", val);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     hglobal = GlobalAlloc(GMEM_DDESHARE, 100);
     ret = FreeDDElParam(WM_DDE_UNADVISE, (LPARAM)hglobal);
@@ -416,23 +413,17 @@ static void test_FreeDDElParam(void)
     ret = FreeDDElParam(WM_DDE_ACK, (LPARAM)hglobal);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     val = GlobalFree(hglobal);
-    todo_wine
-    {
-        ok(val == hglobal, "Expected hglobal, got %p\n", val);
-        ok(GetLastError() == ERROR_INVALID_HANDLE,
-           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
+    ok(val == hglobal, "Expected hglobal, got %p\n", val);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     hglobal = GlobalAlloc(GMEM_DDESHARE, 100);
     ret = FreeDDElParam(WM_DDE_DATA, (LPARAM)hglobal);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     val = GlobalFree(hglobal);
-    todo_wine
-    {
-        ok(val == hglobal, "Expected hglobal, got %p\n", val);
-        ok(GetLastError() == ERROR_INVALID_HANDLE,
-           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
+    ok(val == hglobal, "Expected hglobal, got %p\n", val);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     hglobal = GlobalAlloc(GMEM_DDESHARE, 100);
     ret = FreeDDElParam(WM_DDE_REQUEST, (LPARAM)hglobal);
@@ -444,12 +435,9 @@ static void test_FreeDDElParam(void)
     ret = FreeDDElParam(WM_DDE_POKE, (LPARAM)hglobal);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     val = GlobalFree(hglobal);
-    todo_wine
-    {
-        ok(val == hglobal, "Expected hglobal, got %p\n", val);
-        ok(GetLastError() == ERROR_INVALID_HANDLE,
-           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
+    ok(val == hglobal, "Expected hglobal, got %p\n", val);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     hglobal = GlobalAlloc(GMEM_DDESHARE, 100);
     ret = FreeDDElParam(WM_DDE_EXECUTE, (LPARAM)hglobal);
@@ -519,12 +507,9 @@ static void test_PackDDElParam(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     hglobal = GlobalFree((HGLOBAL)lparam);
-    todo_wine
-    {
-        ok(hglobal == (HGLOBAL)lparam, "Expected lparam, got %d\n", ret);
-        ok(GetLastError() == ERROR_INVALID_HANDLE,
-           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
+    ok(hglobal == (HGLOBAL)lparam, "Expected lparam, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     lparam = PackDDElParam(WM_DDE_UNADVISE, 0xcafe, 0xbeef);
     ok(lparam == 0xbeefcafe, "Expected 0xbeefcafe, got %08lx\n", lparam);
@@ -564,12 +549,9 @@ static void test_PackDDElParam(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     hglobal = GlobalFree((HGLOBAL)lparam);
-    todo_wine
-    {
-        ok(hglobal == (HGLOBAL)lparam, "Expected lparam, got %d\n", ret);
-        ok(GetLastError() == ERROR_INVALID_HANDLE,
-           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
+    ok(hglobal == (HGLOBAL)lparam, "Expected lparam, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     lparam = PackDDElParam(WM_DDE_DATA, 0xcafe, 0xbeef);
     ptr = GlobalLock((HGLOBAL)lparam);
@@ -593,12 +575,9 @@ static void test_PackDDElParam(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     hglobal = GlobalFree((HGLOBAL)lparam);
-    todo_wine
-    {
-        ok(hglobal == (HGLOBAL)lparam, "Expected lparam, got %d\n", ret);
-        ok(GetLastError() == ERROR_INVALID_HANDLE,
-           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
+    ok(hglobal == (HGLOBAL)lparam, "Expected lparam, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     lparam = PackDDElParam(WM_DDE_REQUEST, 0xcafe, 0xbeef);
     ok(lparam == 0xbeefcafe, "Expected 0xbeefcafe, got %08lx\n", lparam);
@@ -638,12 +617,9 @@ static void test_PackDDElParam(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     hglobal = GlobalFree((HGLOBAL)lparam);
-    todo_wine
-    {
-        ok(hglobal == (HGLOBAL)lparam, "Expected lparam, got %d\n", ret);
-        ok(GetLastError() == ERROR_INVALID_HANDLE,
-           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    }
+    ok(hglobal == (HGLOBAL)lparam, "Expected lparam, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     lparam = PackDDElParam(WM_DDE_EXECUTE, 0xcafe, 0xbeef);
     ok(lparam == 0xbeef, "Expected 0xbeef, got %08lx\n", lparam);
