@@ -170,15 +170,29 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
                 This->Flags |= SFLAG_CLIENT;
             }
 
-            TRACE("(%p) : Calling glCompressedTexSubImage2D w %d, h %d, data %p\n", This, width, height, data);
-            ENTER_GL();
             /* glCompressedTexSubImage2D for uploading and glTexImage2D for allocating does not work well on some drivers(r200 dri, MacOS ATI driver)
              * glCompressedTexImage2D does not accept NULL pointers. So for compressed textures surface_allocate_surface does nothing, and this
              * function uses glCompressedTexImage2D instead of the SubImage call
              */
-            GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, internal,
-                       width, height, 0 /* border */, This->resource.size, data));
-            checkGLcall("glCompressedTexSubImage2D");
+            TRACE("(%p) : Calling glCompressedTexSubImage2D w %d, h %d, data %p\n", This, width, height, data);
+            ENTER_GL();
+
+            if(This->Flags & SFLAG_PBO) {
+                GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+                checkGLcall("glBindBufferARB");
+                TRACE("(%p) pbo: %#x, data: %p\n", This, This->pbo, data);
+
+                GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, internal,
+                        width, height, 0 /* border */, This->resource.size, NULL));
+                checkGLcall("glCompressedTexSubImage2D");
+
+                GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+                checkGLcall("glBindBufferARB");
+            } else {
+                GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, internal,
+                        width, height, 0 /* border */, This->resource.size, data));
+                checkGLcall("glCompressedTexSubImage2D");
+            }
             LEAVE_GL();
         }
     } else {
