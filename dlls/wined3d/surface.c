@@ -477,47 +477,6 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
    IWineD3DSurface IWineD3DSurface parts follow
    ****************************************************** */
 
-HRESULT WINAPI IWineD3DSurfaceImpl_GetContainer(IWineD3DSurface* iface, REFIID riid, void** ppContainer) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DBase *container = 0;
-
-    TRACE("(This %p, riid %s, ppContainer %p)\n", This, debugstr_guid(riid), ppContainer);
-
-    if (!ppContainer) {
-        ERR("Called without a valid ppContainer.\n");
-    }
-
-    /** From MSDN:
-     * If the surface is created using CreateImageSurface/CreateOffscreenPlainSurface, CreateRenderTarget,
-     * or CreateDepthStencilSurface, the surface is considered stand alone. In this case,
-     * GetContainer will return the Direct3D device used to create the surface.
-     */
-    if (This->container) {
-        container = This->container;
-    } else {
-        container = (IWineD3DBase *)This->resource.wineD3DDevice;
-    }
-
-    TRACE("Relaying to QueryInterface\n");
-    return IUnknown_QueryInterface(container, riid, ppContainer);
-}
-
-HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFACE_DESC *pDesc) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("(%p) : copying into %p\n", This, pDesc);
-    if(pDesc->Format != NULL)             *(pDesc->Format) = This->resource.format;
-    if(pDesc->Type != NULL)               *(pDesc->Type)   = This->resource.resourceType;
-    if(pDesc->Usage != NULL)              *(pDesc->Usage)              = This->resource.usage;
-    if(pDesc->Pool != NULL)               *(pDesc->Pool)               = This->resource.pool;
-    if(pDesc->Size != NULL)               *(pDesc->Size)               = This->resource.size;   /* dx8 only */
-    if(pDesc->MultiSampleType != NULL)    *(pDesc->MultiSampleType)    = This->currentDesc.MultiSampleType;
-    if(pDesc->MultiSampleQuality != NULL) *(pDesc->MultiSampleQuality) = This->currentDesc.MultiSampleQuality;
-    if(pDesc->Width != NULL)              *(pDesc->Width)              = This->currentDesc.Width;
-    if(pDesc->Height != NULL)             *(pDesc->Height)             = This->currentDesc.Height;
-    return WINED3D_OK;
-}
-
 void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     TRACE("(%p) : setting textureName %u, target %i\n", This, textureName, target);
@@ -3552,52 +3511,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *Dest
     return IWineGDISurfaceImpl_Blt(iface, DestRect, SrcSurface, SrcRect, Flags, DDBltFx, Filter);
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD Flags) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    TRACE("(%p)->(%x)\n", This, Flags);
-
-    switch (Flags)
-    {
-    case WINEDDGBS_CANBLT:
-    case WINEDDGBS_ISBLTDONE:
-        return WINED3D_OK;
-
-    default:
-        return WINED3DERR_INVALIDCALL;
-    }
-}
-
-HRESULT WINAPI IWineD3DSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD Flags) {
-    /* XXX: DDERR_INVALIDSURFACETYPE */
-
-    TRACE("(%p)->(%08x)\n",iface,Flags);
-    switch (Flags) {
-    case WINEDDGFS_CANFLIP:
-    case WINEDDGFS_ISFLIPDONE:
-        return WINED3D_OK;
-
-    default:
-        return WINED3DERR_INVALIDCALL;
-    }
-}
-
-HRESULT WINAPI IWineD3DSurfaceImpl_IsLost(IWineD3DSurface *iface) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    TRACE("(%p)\n", This);
-
-    /* D3D8 and 9 loose full devices, ddraw only surfaces */
-    return This->Flags & SFLAG_LOST ? WINED3DERR_DEVICELOST : WINED3D_OK;
-}
-
-HRESULT WINAPI IWineD3DSurfaceImpl_Restore(IWineD3DSurface *iface) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    TRACE("(%p)\n", This);
-
-    /* So far we don't lose anything :) */
-    This->Flags &= ~SFLAG_LOST;
-    return WINED3D_OK;
-}
-
 HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *srcImpl = (IWineD3DSurfaceImpl *) Source;
@@ -3983,18 +3896,18 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_PreLoad,
     IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
-    IWineD3DSurfaceImpl_GetContainer,
-    IWineD3DSurfaceImpl_GetDesc,
+    IWineD3DBaseSurfaceImpl_GetContainer,
+    IWineD3DBaseSurfaceImpl_GetDesc,
     IWineD3DSurfaceImpl_LockRect,
     IWineD3DSurfaceImpl_UnlockRect,
     IWineD3DSurfaceImpl_GetDC,
     IWineD3DSurfaceImpl_ReleaseDC,
     IWineD3DSurfaceImpl_Flip,
     IWineD3DSurfaceImpl_Blt,
-    IWineD3DSurfaceImpl_GetBltStatus,
-    IWineD3DSurfaceImpl_GetFlipStatus,
-    IWineD3DSurfaceImpl_IsLost,
-    IWineD3DSurfaceImpl_Restore,
+    IWineD3DBaseSurfaceImpl_GetBltStatus,
+    IWineD3DBaseSurfaceImpl_GetFlipStatus,
+    IWineD3DBaseSurfaceImpl_IsLost,
+    IWineD3DBaseSurfaceImpl_Restore,
     IWineD3DSurfaceImpl_BltFast,
     IWineD3DSurfaceImpl_GetPalette,
     IWineD3DSurfaceImpl_SetPalette,
