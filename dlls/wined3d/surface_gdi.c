@@ -129,6 +129,45 @@ x11_copy_to_screen(IWineD3DSurfaceImpl *This,
 }
 
 /*****************************************************************************
+ * IWineD3DSurface::Release, GDI version
+ *
+ * In general a normal COM Release method, but the GDI version doesn't have
+ * to destroy all the GL things.
+ *
+ *****************************************************************************/
+ULONG WINAPI IWineGDISurfaceImpl_Release(IWineD3DSurface *iface) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->resource.ref);
+    TRACE("(%p) : Releasing from %d\n", This, ref + 1);
+    if (ref == 0) {
+        IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
+        TRACE("(%p) : cleaning up\n", This);
+
+        if(This->Flags & SFLAG_DIBSECTION) {
+            /* Release the DC */
+            SelectObject(This->hDC, This->dib.holdbitmap);
+            DeleteDC(This->hDC);
+            /* Release the DIB section */
+            DeleteObject(This->dib.DIBsection);
+            This->dib.bitmap_data = NULL;
+            This->resource.allocatedMemory = NULL;
+        }
+        if(This->Flags & SFLAG_USERPTR) IWineD3DSurface_SetMem(iface, NULL);
+
+        HeapFree(GetProcessHeap(), 0, This->palette9);
+
+        IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
+        if(iface == device->ddraw_primary)
+            device->ddraw_primary = NULL;
+
+        TRACE("(%p) Released\n", This);
+        HeapFree(GetProcessHeap(), 0, This);
+
+    }
+    return ref;
+}
+
+/*****************************************************************************
  * IWineD3DSurface::PreLoad, GDI version
  *
  * This call is unsupported on GDI surfaces, if it's called something went
@@ -1698,7 +1737,7 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     /* IUnknown */
     IWineD3DBaseSurfaceImpl_QueryInterface,
     IWineD3DBaseSurfaceImpl_AddRef,
-    IWineD3DSurfaceImpl_Release,
+    IWineGDISurfaceImpl_Release,
     /* IWineD3DResource */
     IWineD3DBaseSurfaceImpl_GetParent,
     IWineD3DBaseSurfaceImpl_GetDevice,
