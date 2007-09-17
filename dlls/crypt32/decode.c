@@ -316,9 +316,9 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
                         if (ret)
                         {
                             /* Account for alignment padding */
-                            if (items[i].size % sizeof(DWORD))
-                                items[i].size += sizeof(DWORD) -
-                                 items[i].size % sizeof(DWORD);
+                            if (items[i].size % sizeof(DWORD_PTR))
+                                items[i].size += sizeof(DWORD_PTR) -
+                                 items[i].size % sizeof(DWORD_PTR);
                             TRACE("item %d size: %d\n", i, items[i].size);
                             if (nextData && items[i].hasPointer &&
                              items[i].size > items[i].minSize)
