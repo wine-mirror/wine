@@ -193,15 +193,15 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
     if (!bits || !info)
 	return 0;
 
-    dc = DC_GetDCUpdate( hdc );
-    if(!dc) return FALSE;
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
 
     if(dc->funcs->pStretchDIBits)
     {
+        update_dc( dc );
         heightSrc = dc->funcs->pStretchDIBits(dc->physDev, xDst, yDst, widthDst,
                                               heightDst, xSrc, ySrc, widthSrc,
                                               heightSrc, bits, info, wUsage, dwRop);
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
     }
     else /* use StretchBlt */
     {
@@ -213,7 +213,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
         WORD planes, bpp;
         DWORD compr, size;
 
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
 
         if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size ) == -1)
         {
@@ -303,29 +303,35 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     BITMAPOBJ *bitmap;
     INT result = 0;
 
-    if (!(dc = DC_GetDCUpdate( hdc )))
+    if (!(dc = get_dc_ptr( hdc )))
     {
         if (coloruse == DIB_RGB_COLORS) FIXME( "shouldn't require a DC for DIB_RGB_COLORS\n" );
         return 0;
     }
 
+    update_dc( dc );
+
     if (!(bitmap = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
     {
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return 0;
     }
 
     if (!bitmap->funcs && !BITMAP_SetOwnerDC( hbitmap, dc )) goto done;
 
-    if (bitmap->funcs && bitmap->funcs->pSetDIBits)
-        result = bitmap->funcs->pSetDIBits( dc->physDev, hbitmap, startscan, lines,
+    result = lines;
+    if (bitmap->funcs)
+    {
+        if (bitmap->funcs != dc->funcs)
+            ERR( "not supported: DDB bitmap %p not belonging to device %p\n", hbitmap, hdc );
+        else if (dc->funcs->pSetDIBits)
+            result = dc->funcs->pSetDIBits( dc->physDev, hbitmap, startscan, lines,
                                             bits, info, coloruse );
-    else
-        result = lines;
+    }
 
  done:
     GDI_ReleaseObj( hbitmap );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return result;
 }
 
@@ -343,18 +349,21 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 
     if (!bits) return 0;
 
-    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
 
     if(dc->funcs->pSetDIBitsToDevice)
+    {
+        update_dc( dc );
         ret = dc->funcs->pSetDIBitsToDevice( dc->physDev, xDest, yDest, cx, cy, xSrc,
 					     ySrc, startscan, lines, bits,
 					     info, coloruse );
+    }
     else {
         FIXME("unimplemented on hdc %p\n", hdc);
 	ret = 0;
     }
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -563,14 +572,15 @@ INT WINAPI GetDIBits(
         return 0;
     }
     core_header = (bitmap_type == 0);
-    if (!(dc = DC_GetDCUpdate( hdc )))
+    if (!(dc = get_dc_ptr( hdc )))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
+    update_dc( dc );
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
     {
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
 	return 0;
     }
 
@@ -622,7 +632,7 @@ INT WINAPI GetDIBits(
                 memset( palEntry, 0, sizeof(palEntry) );
                 if (!GetPaletteEntries( dc->hPalette, 0, 1 << bmp->bitmap.bmBitsPixel, palEntry ))
                 {
-                    DC_ReleaseDCPtr( dc );
+                    release_dc_ptr( dc );
                     GDI_ReleaseObj( hbitmap );
                     return 0;
                 }
@@ -1019,7 +1029,7 @@ INT WINAPI GetDIBits(
     }
     TRACE("biWidth = %d, biHeight = %d\n", width, height);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     GDI_ReleaseObj( hbitmap );
     return lines;
 }
