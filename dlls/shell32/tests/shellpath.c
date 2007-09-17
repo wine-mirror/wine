@@ -35,6 +35,11 @@
 #include "shlwapi.h"
 #include "wine/test.h"
 
+/* CSIDL_MYDOCUMENTS is now the same as CSIDL_PERSONAL, but what we want
+ * here is its original value.
+ */
+#define OLD_CSIDL_MYDOCUMENTS  0x000c
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) ( sizeof(x) / sizeof((x)[0]) )
 #endif
@@ -129,7 +134,7 @@ static const struct shellExpectedValues optionalShellValues[] = {
  { CSIDL_ADMINTOOLS, PT_FOLDER },
  { CSIDL_COMMON_APPDATA, PT_FOLDER },
  { CSIDL_LOCAL_APPDATA, PT_FOLDER },
- { CSIDL_MYDOCUMENTS, PT_FOLDER },
+ { OLD_CSIDL_MYDOCUMENTS, PT_FOLDER },
  { CSIDL_MYMUSIC, PT_FOLDER },
  { CSIDL_MYPICTURES, PT_FOLDER },
  { CSIDL_MYVIDEO, PT_FOLDER },
@@ -193,11 +198,6 @@ static void loadShell32(void)
 #ifndef CSIDL_PROFILES
 #define CSIDL_PROFILES		0x003e
 #endif
-
-/* CSIDL_MYDOCUMENTS is now the same as CSIDL_PERSONAL, but what we want
- * here is its original value.
- */
-#define OLD_CSIDL_MYDOCUMENTS  0x000c
 
 /* A couple utility printing functions */
 static const char *getFolderName(int folder)
