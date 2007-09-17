@@ -1427,10 +1427,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         TRACE("DIBSection at : %p\n", This->dib.bitmap_data);
         /* copy the existing surface to the dib section */
         if(This->resource.allocatedMemory) {
-            /* In case of a PBO, allocatedMemory=NULL, it isn't NULL between a LockRect and a UnlockRect */
-            if(!(This->Flags & SFLAG_PBO))
-                memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, b_info->bmiHeader.biSizeImage);
-            /* We won't need that any more */
+            memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, b_info->bmiHeader.biSizeImage);
         } else {
             /* This is to make LockRect read the gl Texture although memory is allocated */
             This->Flags &= ~SFLAG_INSYSMEM;
