@@ -536,7 +536,7 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
     {
         DWORD dataLen;
 
-        if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
+        if ((ret = CRYPT_GetLengthIndefinite(pbEncoded, cbEncoded, &dataLen)))
         {
             DWORD bytesNeeded, cItems = 0, decoded;
             BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
@@ -549,53 +549,76 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
             if (dataLen)
             {
                 const BYTE *ptr;
+                BOOL doneDecoding = FALSE;
 
-                for (ptr = pbEncoded + 1 + lenBytes; ret &&
-                 ptr - pbEncoded - 1 - lenBytes < dataLen; )
+                for (ptr = pbEncoded + 1 + lenBytes; ret && !doneDecoding; )
                 {
-                    DWORD itemLenBytes, itemDataLen, itemDecoded, size = 0;
+                    DWORD itemLenBytes;
 
                     itemLenBytes = GET_LEN_BYTES(ptr[1]);
-                    /* Each item decoded may not tolerate extraneous bytes, so
-                     * get the length of the next element and pass it directly.
-                     */
-                    ret = CRYPT_GetLen(ptr, cbEncoded - (ptr - pbEncoded),
-                     &itemDataLen);
-                    if (ret)
-                        ret = arrayDesc->decodeFunc(ptr,
-                         1 + itemLenBytes + itemDataLen,
-                         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &size,
-                         &itemDecoded);
-                    if (ret)
+                    if (dataLen == CMSG_INDEFINITE_LENGTH)
                     {
-                        DWORD nextLen;
+                        if (ptr[0] == 0)
+                        {
+                            doneDecoding = TRUE;
+                            if (itemLenBytes != 1 || ptr[1] != 0)
+                            {
+                                SetLastError(CRYPT_E_ASN1_CORRUPT);
+                                ret = FALSE;
+                            }
+                            else
+                                decoded += 2;
+                        }
+                    }
+                    else if (ptr - pbEncoded - 1 - lenBytes >= dataLen)
+                        doneDecoding = TRUE;
+                    if (!doneDecoding)
+                    {
+                        DWORD itemDataLen, itemDecoded, size = 0;
 
-                        cItems++;
-                        if (itemSizes != &itemSize)
-                            itemSizes = CryptMemRealloc(itemSizes,
-                             cItems * sizeof(struct AsnArrayItemSize));
-                        else if (cItems > 1)
+                        /* Each item decoded may not tolerate extraneous bytes,
+                         * so get the length of the next element and pass it
+                         * directly.
+                         */
+                        ret = CRYPT_GetLen(ptr, cbEncoded - (ptr - pbEncoded),
+                         &itemDataLen);
+                        if (ret)
+                            ret = arrayDesc->decodeFunc(ptr,
+                             1 + itemLenBytes + itemDataLen,
+                             dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &size,
+                             &itemDecoded);
+                        if (ret)
                         {
-                            itemSizes =
-                             CryptMemAlloc(
-                             cItems * sizeof(struct AsnArrayItemSize));
+                            DWORD nextLen;
+
+                            cItems++;
+                            if (itemSizes != &itemSize)
+                                itemSizes = CryptMemRealloc(itemSizes,
+                                 cItems * sizeof(struct AsnArrayItemSize));
+                            else if (cItems > 1)
+                            {
+                                itemSizes =
+                                 CryptMemAlloc(
+                                 cItems * sizeof(struct AsnArrayItemSize));
+                                if (itemSizes)
+                                    memcpy(itemSizes, &itemSize,
+                                     sizeof(itemSize));
+                            }
                             if (itemSizes)
-                                memcpy(itemSizes, &itemSize, sizeof(itemSize));
+                            {
+                                decoded += itemDecoded;
+                                itemSizes[cItems - 1].encodedLen =
+                                 1 + itemLenBytes + itemDataLen;
+                                itemSizes[cItems - 1].size = size;
+                                bytesNeeded += size;
+                                ret = CRYPT_GetLen(ptr,
+                                 cbEncoded - (ptr - pbEncoded), &nextLen);
+                                if (ret)
+                                    ptr += nextLen + 1 + GET_LEN_BYTES(ptr[1]);
+                            }
+                            else
+                                ret = FALSE;
                         }
-                        if (itemSizes)
-                        {
-                            decoded += itemDecoded;
-                            itemSizes[cItems - 1].encodedLen = 1 + itemLenBytes
-                             + itemDataLen;
-                            itemSizes[cItems - 1].size = size;
-                            bytesNeeded += size;
-                            ret = CRYPT_GetLen(ptr,
-                             cbEncoded - (ptr - pbEncoded), &nextLen);
-                            if (ret)
-                                ptr += nextLen + 1 + GET_LEN_BYTES(ptr[1]);
-                        }
-                        else
-                            ret = FALSE;
                     }
                 }
             }

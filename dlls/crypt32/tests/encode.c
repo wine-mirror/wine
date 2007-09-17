@@ -1015,7 +1015,6 @@ static void test_decodeName(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, X509_NAME, emptyIndefiniteSequence,
      sizeof(emptyIndefiniteSequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &bufSize);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
