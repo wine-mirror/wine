@@ -148,7 +148,7 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
 
         for (i = 0; i < This->baseTexture.levels; i++) {
             for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
-                IWineD3DSurfaceImpl_AddDirtyRect(This->surfaces[j][i], NULL);
+                IWineD3DSurface_AddDirtyRect(This->surfaces[j][i], NULL);
                 IWineD3DSurface_SetGlTextureDesc(This->surfaces[j][i], This->baseTexture.textureName, cube_targets[j]);
                 IWineD3DSurface_LoadTexture(This->surfaces[j][i], srgb_mode);
             }
