@@ -59,11 +59,6 @@ BISON_SRCS = \
 	sql.y
 
 RC_SRCS = msi.rc
-RC_BINSRC = msi.rc
-RC_BINARIES = \
-	instabsent.bmp \
-	instadvert.bmp \
-	instlocal.bmp
 
 @MAKE_DLL_RULES@
 

@@ -313,9 +313,6 @@ dlls/mshtml/tests/mshtml_crosstest.exe
 dlls/mshtml/tests/testlist.c
 dlls/msi/cond.tab.c
 dlls/msi/cond.tab.h
-dlls/msi/instabsent.bmp
-dlls/msi/instadvert.bmp
-dlls/msi/instlocal.bmp
 dlls/msi/libmsi.def
 dlls/msi/msi.res
 dlls/msi/msiserver.h
