@@ -2739,6 +2739,7 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
   CHAR *command = NULL;
   WCHAR hostW[1024];
   DWORD len;
+  INTERNET_PORT port;
   int status = -1;
 
   FIXME("\n");
@@ -2770,26 +2771,46 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
        goto End;
 
      TRACE("host name : %s\n",debugstr_w(components.lpszHostName));
+     port = components.nPort;
+     TRACE("port: %d\n", port);
   }
 
-  /*
-   * Build our ping command
-   */
-  len = WideCharToMultiByte(CP_UNIXCP, 0, hostW, -1, NULL, 0, NULL, NULL);
-  command = HeapAlloc( GetProcessHeap(), 0, strlen(ping)+len+strlen(redirect) );
-  strcpy(command,ping);
-  WideCharToMultiByte(CP_UNIXCP, 0, hostW, -1, command+strlen(ping), len, NULL, NULL);
-  strcat(command,redirect);
+  if (dwFlags & FLAG_ICC_FORCE_CONNECTION)
+  {
+      struct sockaddr_in sin;
+      int fd;
 
-  TRACE("Ping command is : %s\n",command);
+      if (!GetAddress(hostW, port, &sin))
+          goto End;
+      fd = socket(sin.sin_family, SOCK_STREAM, 0);
+      if (fd != -1)
+      {
+          if (connect(fd, (struct sockaddr *)&sin, sizeof(sin)) == 0)
+              rc = TRUE;
+          close(fd);
+      }
+  }
+  else
+  {
+      /*
+       * Build our ping command
+       */
+      len = WideCharToMultiByte(CP_UNIXCP, 0, hostW, -1, NULL, 0, NULL, NULL);
+      command = HeapAlloc( GetProcessHeap(), 0, strlen(ping)+len+strlen(redirect) );
+      strcpy(command,ping);
+      WideCharToMultiByte(CP_UNIXCP, 0, hostW, -1, command+strlen(ping), len, NULL, NULL);
+      strcat(command,redirect);
 
-  status = system(command);
+      TRACE("Ping command is : %s\n",command);
 
-  TRACE("Ping returned a code of %i\n",status);
+      status = system(command);
 
-  /* Ping return code of 0 indicates success */
-  if (status == 0)
-     rc = TRUE;
+      TRACE("Ping returned a code of %i\n",status);
+
+      /* Ping return code of 0 indicates success */
+      if (status == 0)
+         rc = TRUE;
+  }
 
 End:
 
