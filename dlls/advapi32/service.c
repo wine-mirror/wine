@@ -2538,17 +2538,26 @@ BOOL WINAPI QueryServiceObjectSecurity(SC_HANDLE hService,
        PSECURITY_DESCRIPTOR lpSecurityDescriptor,
        DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    PACL pACL = NULL;
+    SECURITY_DESCRIPTOR descriptor;
+    DWORD size;
+    BOOL succ;
+    ACL acl;
 
-    FIXME("%p %d %p %u %p\n", hService, dwSecurityInformation,
+    FIXME("%p %d %p %u %p - semi-stub\n", hService, dwSecurityInformation,
           lpSecurityDescriptor, cbBufSize, pcbBytesNeeded);
 
-    InitializeSecurityDescriptor(lpSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
+    if (dwSecurityInformation != DACL_SECURITY_INFORMATION)
+        FIXME("information %d not supported\n", dwSecurityInformation);
 
-    pACL = HeapAlloc( GetProcessHeap(), 0, sizeof(ACL) );
-    InitializeAcl(pACL, sizeof(ACL), ACL_REVISION);
-    SetSecurityDescriptorDacl(lpSecurityDescriptor, TRUE, pACL, TRUE);
-    return TRUE;
+    InitializeSecurityDescriptor(&descriptor, SECURITY_DESCRIPTOR_REVISION);
+
+    InitializeAcl(&acl, sizeof(ACL), ACL_REVISION);
+    SetSecurityDescriptorDacl(&descriptor, TRUE, &acl, TRUE);
+
+    size = cbBufSize;
+    succ = MakeSelfRelativeSD(&descriptor, lpSecurityDescriptor, &size);
+    *pcbBytesNeeded = size;
+    return succ;
 }
 
 /******************************************************************************
