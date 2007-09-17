@@ -3300,7 +3300,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *Dest
      * For RenderTargets this should be implemented OpenGL accelerated in BltOverride,
      * other Blts are rather rare
      */
-    return IWineGDISurfaceImpl_Blt(iface, DestRect, SrcSurface, SrcRect, Flags, DDBltFx, Filter);
+    return IWineD3DBaseSurfaceImpl_Blt(iface, DestRect, SrcSurface, SrcRect, Flags, DDBltFx, Filter);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans) {
@@ -3354,7 +3354,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, D
     }
 
 
-    return IWineGDISurfaceImpl_BltFast(iface, dstx, dsty, Source, rsrc, trans);
+    return IWineD3DBaseSurfaceImpl_BltFast(iface, dstx, dsty, Source, rsrc, trans);
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {

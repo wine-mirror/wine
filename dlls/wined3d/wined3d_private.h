@@ -1170,11 +1170,11 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetClipper(IWineD3DSurface *iface, IWineD
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DClipper **clipper);
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format);
 HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface);
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter);
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans);
 
 const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface);
 
-HRESULT WINAPI IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter);
-HRESULT WINAPI IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans);
 
 /* Surface flags: */
 #define SFLAG_OVERSIZE    0x00000001 /* Surface is bigger than gl size, blts only */
