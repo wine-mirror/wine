@@ -2232,6 +2232,8 @@ static BOOL CRYPT_AsnDecodeAltNameEntry(const BYTE *pbEncoded, DWORD cbEncoded,
         }
         if (ret)
         {
+            if (pcbDecoded)
+                *pcbDecoded = 1 + lenBytes + dataLen;
             if (!entry)
                 *pcbStructInfo = bytesNeeded;
             else if (*pcbStructInfo < bytesNeeded)
