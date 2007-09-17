@@ -144,7 +144,7 @@ struct sgv_data
     ULONG64                     frame_offset;   /* in      : frame for local & parameter variables look up */
 };
 
-static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
+static BOOL CALLBACK sgv_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
 {
     struct sgv_data*    sgv = (struct sgv_data*)ctx;
     unsigned            insp;
@@ -612,7 +612,7 @@ void symbol_print_local(const SYMBOL_INFO* sym, ULONG base,
     }
 }
 
-static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
+static BOOL CALLBACK info_locals_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
 {
     struct dbg_type     type;
 
@@ -644,7 +644,7 @@ int symbol_info_locals(void)
 
 }
 
-static BOOL CALLBACK symbols_info_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
+static BOOL CALLBACK symbols_info_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
 {
     struct dbg_type     type;
     IMAGEHLP_MODULE     mi;

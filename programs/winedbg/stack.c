@@ -215,7 +215,7 @@ struct sym_enum
     BOOL        first;
 };
 
-static BOOL WINAPI sym_enum_cb(SYMBOL_INFO* sym_info, ULONG size, void* user)
+static BOOL WINAPI sym_enum_cb(PSYMBOL_INFO sym_info, ULONG size, PVOID user)
 {
     struct sym_enum*    se = (struct sym_enum*)user;
 
