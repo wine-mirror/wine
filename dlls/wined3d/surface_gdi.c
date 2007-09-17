@@ -1490,6 +1490,76 @@ const char* filename)
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    WINED3DLOCKED_RECT lock;
+    HRESULT hr;
+    RGBQUAD col[256];
+
+    TRACE("(%p)->(%p)\n",This,pHDC);
+
+    if(This->Flags & SFLAG_USERPTR) {
+        ERR("Not supported on surfaces with an application-provided surfaces\n");
+        return WINEDDERR_NODC;
+    }
+
+    /* Give more detailed info for ddraw */
+    if (This->Flags & SFLAG_DCINUSE)
+        return WINEDDERR_DCALREADYCREATED;
+
+    /* Can't GetDC if the surface is locked */
+    if (This->Flags & SFLAG_LOCKED)
+        return WINED3DERR_INVALIDCALL;
+
+    memset(&lock, 0, sizeof(lock)); /* To be sure */
+
+    /* Should have a DIB section already */
+
+    /* Lock the surface */
+    hr = IWineD3DSurface_LockRect(iface,
+                                  &lock,
+                                  NULL,
+                                  0);
+    if(FAILED(hr)) {
+        ERR("IWineD3DSurface_LockRect failed with hr = %08x\n", hr);
+        /* keep the dib section */
+        return hr;
+    }
+
+    if(This->resource.format == WINED3DFMT_P8 ||
+       This->resource.format == WINED3DFMT_A8P8) {
+        unsigned int n;
+        if(This->palette) {
+            PALETTEENTRY ent[256];
+
+            GetPaletteEntries(This->palette->hpal, 0, 256, ent);
+            for (n=0; n<256; n++) {
+                col[n].rgbRed   = ent[n].peRed;
+                col[n].rgbGreen = ent[n].peGreen;
+                col[n].rgbBlue  = ent[n].peBlue;
+                col[n].rgbReserved = 0;
+            }
+        } else {
+            IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+            for (n=0; n<256; n++) {
+                col[n].rgbRed   = device->palettes[device->currentPalette][n].peRed;
+                col[n].rgbGreen = device->palettes[device->currentPalette][n].peGreen;
+                col[n].rgbBlue  = device->palettes[device->currentPalette][n].peBlue;
+                col[n].rgbReserved = 0;
+            }
+
+        }
+        SetDIBColorTable(This->hDC, 0, 256, col);
+    }
+
+    *pHDC = This->hDC;
+    TRACE("returning %p\n",*pHDC);
+    This->Flags |= SFLAG_DCINUSE;
+
+    return WINED3D_OK;
+}
+
 HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
@@ -1644,7 +1714,7 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetDesc,
     IWineGDISurfaceImpl_LockRect,
     IWineGDISurfaceImpl_UnlockRect,
-    IWineD3DSurfaceImpl_GetDC,
+    IWineGDISurfaceImpl_GetDC,
     IWineGDISurfaceImpl_ReleaseDC,
     IWineGDISurfaceImpl_Flip,
     IWineGDISurfaceImpl_Blt,
