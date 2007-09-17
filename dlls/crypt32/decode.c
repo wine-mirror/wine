@@ -124,7 +124,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUnsignedIntegerInternal(
  void *pvStructInfo, DWORD *pcbStructInfo);
 
 /* Gets the number of length bytes from the given (leading) length byte */
-#define GET_LEN_BYTES(b) ((b) <= 0x7f ? 1 : 1 + ((b) & 0x7f))
+#define GET_LEN_BYTES(b) ((b) <= 0x80 ? 1 : 1 + ((b) & 0x7f))
 
 /* Helper function to get the encoded length of the data starting at pbEncoded,
  * where pbEncoded[0] is the tag.  If the data are too short to contain a
