@@ -457,6 +457,8 @@ static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
                     bytesNeeded += items[i].size;
                     structSize += items[i].minSize;
                 }
+                if (ret && pcbDecoded)
+                    *pcbDecoded = 1 + lenBytes + cbDecoded;
                 if (!pvStructInfo)
                     *pcbStructInfo = bytesNeeded;
                 else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags,
@@ -474,8 +476,6 @@ static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
                     ret = CRYPT_AsnDecodeSequenceItems(dwFlags, items, cItem,
                      ptr, cbEncoded, dwFlags, pvStructInfo, nextData,
                      &cbDecoded);
-                    if (ret && pcbDecoded)
-                        *pcbDecoded = 1 + lenBytes + cbDecoded;
                 }
             }
         }
@@ -601,6 +601,8 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
             }
             if (ret)
             {
+                if (pcbDecoded)
+                    *pcbDecoded = decoded;
                 if (!pvStructInfo)
                     *pcbStructInfo = bytesNeeded;
                 else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags,
@@ -611,8 +613,6 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                     const BYTE *ptr;
                     struct GenericArray *array;
 
-                    if (pcbDecoded)
-                        *pcbDecoded = decoded;
                     if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
                         pvStructInfo = *(BYTE **)pvStructInfo;
                     array = (struct GenericArray *)pvStructInfo;
@@ -1157,6 +1157,8 @@ static BOOL CRYPT_AsnDecodeOidIgnoreTag(const BYTE *pbEncoded, DWORD cbEncoded,
                 }
             }
         }
+        if (pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
         if (!pvStructInfo)
             *pcbStructInfo = bytesNeeded;
         else if (*pcbStructInfo < bytesNeeded)
@@ -1198,8 +1200,6 @@ static BOOL CRYPT_AsnDecodeOidIgnoreTag(const BYTE *pbEncoded, DWORD cbEncoded,
             else
                 *(LPSTR *)pvStructInfo = NULL;
             *pcbStructInfo = bytesNeeded;
-            if (pcbDecoded)
-                *pcbDecoded = 1 + lenBytes + dataLen;
         }
     }
     return ret;
@@ -1837,6 +1837,8 @@ static BOOL CRYPT_AsnDecodeCopyBytesInternal(const BYTE *pbEncoded,
 
     if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
         bytesNeeded += cbEncoded;
+    if (pcbDecoded)
+        *pcbDecoded = cbEncoded;
     if (!pvStructInfo)
         *pcbStructInfo = bytesNeeded;
     else if (*pcbStructInfo < bytesNeeded)
@@ -1858,8 +1860,6 @@ static BOOL CRYPT_AsnDecodeCopyBytesInternal(const BYTE *pbEncoded,
             assert(blob->pbData);
             memcpy(blob->pbData, pbEncoded, blob->cbData);
         }
-        if (pcbDecoded)
-            *pcbDecoded = cbEncoded;
     }
     return ret;
 }
