@@ -315,13 +315,13 @@ static BOOL find_next_outermost_key(LPCWSTR source, DWORD len_remaining,
     INT total_count = 0;
     int i;
 
+    *nested = FALSE;
     *mark = scanW(source,'[',len_remaining);
     if (!*mark)
         return FALSE;
 
     count = 1;
     total_count = 1;
-    *nested = FALSE;
     for (i = 1; (*mark - source) + i < len_remaining && count > 0; i++)
     {
         if ((*mark)[i] == '[' && (*mark)[i-1] != '\\')
