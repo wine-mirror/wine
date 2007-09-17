@@ -53,25 +53,6 @@ C_SRCS = \
 	xdg.c
 
 RC_SRCS = shres.rc
-RC_BINSRC = shres.rc
-RC_BINARIES = \
-	cdrom.ico \
-	desktop.ico \
-	delete.ico \
-	document.ico \
-	drive.ico \
-	floppy.ico \
-	folder.ico \
-	folder_open.ico \
-	mycomputer.ico \
-	mydocs.ico \
-	netdrive.ico \
-	netdrive2.ico \
-	printer.ico \
-	ramdisk.ico \
-	searching.avi \
-	shortcut.ico \
-	trash_file.ico
 
 C_SRCS16  = shell.c
 RC_SRCS16 = version16.rc
