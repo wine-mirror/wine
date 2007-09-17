@@ -1836,6 +1836,8 @@ static BOOL CRYPT_AsnDecodeCopyBytesInternal(const BYTE *pbEncoded,
             assert(blob->pbData);
             memcpy(blob->pbData, pbEncoded, blob->cbData);
         }
+        if (pcbDecoded)
+            *pcbDecoded = cbEncoded;
     }
     return ret;
 }
