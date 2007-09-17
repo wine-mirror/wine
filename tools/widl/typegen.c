@@ -1341,11 +1341,13 @@ static int is_declptr(const type_t *t)
 }
 
 static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
-                               const type_t *type,
+                               type_t *type,
                                const char *name, unsigned int *typestring_offset)
 {
     size_t start_offset = *typestring_offset;
     unsigned char rtype;
+
+    update_tfsoff(type, start_offset, file);
 
     if (is_declptr(type))
     {
@@ -1365,7 +1367,7 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
         rtype = type->ref->type;
     }
     else
-        rtype = type->type;
+        rtype = type->ref->type;
 
     if ((rtype != RPC_FC_BYTE) && (rtype != RPC_FC_CHAR) && (rtype != RPC_FC_WCHAR))
     {
