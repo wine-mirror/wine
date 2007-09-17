@@ -53,4 +53,5 @@
 	0x00000000L		/* inactive caption text */
 }
 
+/* @makedep: resources/oic_hand.ico */
 1 ICON resources/oic_hand.ico
