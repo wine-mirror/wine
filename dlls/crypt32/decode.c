@@ -135,9 +135,11 @@ static BOOL WINAPI CRYPT_AsnDecodeUnsignedIntegerInternal(
 /* Helper function to get the encoded length of the data starting at pbEncoded,
  * where pbEncoded[0] is the tag.  If the data are too short to contain a
  * length or if the length is too large for cbEncoded, sets an appropriate
- * error code and returns FALSE.
+ * error code and returns FALSE.  If the encoded length is unknown due to
+ * indefinite length encoding, *len is set to CMSG_INDEFINITE_LENGTH.
  */
-static BOOL CRYPT_GetLen(const BYTE *pbEncoded, DWORD cbEncoded, DWORD *len)
+static BOOL CRYPT_GetLengthIndefinite(const BYTE *pbEncoded, DWORD cbEncoded,
+ DWORD *len)
 {
     BOOL ret;
 
@@ -161,9 +163,8 @@ static BOOL CRYPT_GetLen(const BYTE *pbEncoded, DWORD cbEncoded, DWORD *len)
     }
     else if (pbEncoded[1] == 0x80)
     {
-        FIXME("unimplemented for indefinite-length encoding\n");
-        SetLastError(CRYPT_E_ASN1_CORRUPT);
-        ret = FALSE;
+        *len = CMSG_INDEFINITE_LENGTH;
+        ret = TRUE;
     }
     else
     {
@@ -200,6 +201,20 @@ static BOOL CRYPT_GetLen(const BYTE *pbEncoded, DWORD cbEncoded, DWORD *len)
                 ret = TRUE;
             }
         }
+    }
+    return ret;
+}
+
+/* Like CRYPT_GetLengthIndefinite, but disallows indefinite-length encoding. */
+static BOOL CRYPT_GetLen(const BYTE *pbEncoded, DWORD cbEncoded, DWORD *len)
+{
+    BOOL ret;
+
+    if ((ret = CRYPT_GetLengthIndefinite(pbEncoded, cbEncoded, len)) &&
+     *len == CMSG_INDEFINITE_LENGTH)
+    {
+        SetLastError(CRYPT_E_ASN1_CORRUPT);
+        ret = FALSE;
     }
     return ret;
 }
