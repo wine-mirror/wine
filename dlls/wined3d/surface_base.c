@@ -476,3 +476,138 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3D
 
     return WINED3D_OK;
 }
+
+HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    int extraline = 0;
+    SYSTEM_INFO sysInfo;
+    void *oldmem = This->resource.allocatedMemory;
+    BITMAPINFO* b_info;
+    HDC ddc;
+    DWORD *masks;
+    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format, NULL, NULL);
+    UINT usage;
+
+    switch (This->bytesPerPixel) {
+        case 2:
+        case 4:
+            /* Allocate extra space to store the RGB bit masks. */
+            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD));
+            break;
+
+        case 3:
+            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER));
+            break;
+
+        default:
+            /* Allocate extra space for a palette. */
+            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                               sizeof(BITMAPINFOHEADER)
+                               + sizeof(RGBQUAD)
+                               * (1 << (This->bytesPerPixel * 8)));
+            break;
+    }
+
+    if (!b_info)
+        return E_OUTOFMEMORY;
+
+        /* Some apps access the surface in via DWORDs, and do not take the necessary care at the end of the
+    * surface. So we need at least extra 4 bytes at the end of the surface. Check against the page size,
+    * if the last page used for the surface has at least 4 spare bytes we're safe, otherwise
+    * add an extra line to the dib section
+        */
+    GetSystemInfo(&sysInfo);
+    if( ((This->resource.size + 3) % sysInfo.dwPageSize) < 4) {
+        extraline = 1;
+        TRACE("Adding an extra line to the dib section\n");
+    }
+
+    b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    /* TODO: Is there a nicer way to force a specific alignment? (8 byte for ddraw) */
+    b_info->bmiHeader.biWidth = IWineD3DSurface_GetPitch(iface) / This->bytesPerPixel;
+    b_info->bmiHeader.biHeight = -This->currentDesc.Height -extraline;
+    b_info->bmiHeader.biSizeImage = ( This->currentDesc.Height + extraline) * IWineD3DSurface_GetPitch(iface);
+    b_info->bmiHeader.biPlanes = 1;
+    b_info->bmiHeader.biBitCount = This->bytesPerPixel * 8;
+
+    b_info->bmiHeader.biXPelsPerMeter = 0;
+    b_info->bmiHeader.biYPelsPerMeter = 0;
+    b_info->bmiHeader.biClrUsed = 0;
+    b_info->bmiHeader.biClrImportant = 0;
+
+    /* Get the bit masks */
+    masks = (DWORD *) &(b_info->bmiColors);
+    switch (This->resource.format) {
+        case WINED3DFMT_R8G8B8:
+            usage = DIB_RGB_COLORS;
+            b_info->bmiHeader.biCompression = BI_RGB;
+            break;
+
+        case WINED3DFMT_X1R5G5B5:
+        case WINED3DFMT_A1R5G5B5:
+        case WINED3DFMT_A4R4G4B4:
+        case WINED3DFMT_X4R4G4B4:
+        case WINED3DFMT_R3G3B2:
+        case WINED3DFMT_A8R3G3B2:
+        case WINED3DFMT_A2B10G10R10:
+        case WINED3DFMT_A8B8G8R8:
+        case WINED3DFMT_X8B8G8R8:
+        case WINED3DFMT_A2R10G10B10:
+        case WINED3DFMT_R5G6B5:
+        case WINED3DFMT_A16B16G16R16:
+            usage = 0;
+            b_info->bmiHeader.biCompression = BI_BITFIELDS;
+            masks[0] = formatEntry->redMask;
+            masks[1] = formatEntry->greenMask;
+            masks[2] = formatEntry->blueMask;
+            break;
+
+        default:
+            /* Don't know palette */
+            b_info->bmiHeader.biCompression = BI_RGB;
+            usage = 0;
+            break;
+    }
+
+    ddc = GetDC(0);
+    if (ddc == 0) {
+        HeapFree(GetProcessHeap(), 0, b_info);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    TRACE("Creating a DIB section with size %dx%dx%d, size=%d\n", b_info->bmiHeader.biWidth, b_info->bmiHeader.biHeight, b_info->bmiHeader.biBitCount, b_info->bmiHeader.biSizeImage);
+    This->dib.DIBsection = CreateDIBSection(ddc, b_info, usage, &This->dib.bitmap_data, 0 /* Handle */, 0 /* Offset */);
+    ReleaseDC(0, ddc);
+
+    if (!This->dib.DIBsection) {
+        ERR("CreateDIBSection failed!\n");
+        HeapFree(GetProcessHeap(), 0, b_info);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    TRACE("DIBSection at : %p\n", This->dib.bitmap_data);
+    /* copy the existing surface to the dib section */
+    if(This->resource.allocatedMemory) {
+        memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, b_info->bmiHeader.biSizeImage);
+    } else {
+        /* This is to make LockRect read the gl Texture although memory is allocated */
+        This->Flags &= ~SFLAG_INSYSMEM;
+    }
+    This->dib.bitmap_size = b_info->bmiHeader.biSizeImage;
+
+    HeapFree(GetProcessHeap(), 0, b_info);
+
+    /* Now allocate a HDC */
+    This->hDC = CreateCompatibleDC(0);
+    This->dib.holdbitmap = SelectObject(This->hDC, This->dib.DIBsection);
+    TRACE("using wined3d palette %p\n", This->palette);
+    SelectPalette(This->hDC,
+                  This->palette ? This->palette->hpal : 0,
+                  FALSE);
+
+    This->Flags |= SFLAG_DIBSECTION;
+
+    HeapFree(GetProcessHeap(), 0, oldmem);
+
+    return WINED3D_OK;
+}

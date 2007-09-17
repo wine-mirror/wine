@@ -1532,8 +1532,6 @@ HRESULT WINAPI
 IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    HRESULT hr;
-    HDC hdc;
 
     if(This->resource.usage & WINED3DUSAGE_OVERLAY)
     {
@@ -1550,23 +1548,8 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     This->pow2Width = This->currentDesc.Width;
     This->pow2Height = This->currentDesc.Height;
 
-    /* Call GetDC to create a DIB section. We will use that
-     * DIB section for rendering
-     *
-     * Release the DC afterwards to allow the app to use it
-     */
-    hr = IWineD3DSurface_GetDC(iface, &hdc);
-    if(FAILED(hr))
-    {
-        ERR("(%p) IWineD3DSurface::GetDC failed with hr %08x\n", This, hr);
-        return hr;
-    }
-    hr = IWineD3DSurface_ReleaseDC(iface, hdc);
-    if(FAILED(hr))
-    {
-        ERR("(%p) IWineD3DSurface::ReleaseDC failed with hr %08x\n", This, hr);
-        return hr;
-    }
+    IWineD3DBaseSurfaceImpl_CreateDIBSection(iface);
+    This->resource.allocatedMemory = This->dib.bitmap_data;
 
     return WINED3D_OK;
 }
