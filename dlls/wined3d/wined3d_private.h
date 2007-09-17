@@ -1171,12 +1171,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format);
 
 ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface);
-void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface);
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPixelFormat(IWineD3DSurface *iface, WINED3DFORMAT Format, BYTE *Surface, DWORD Size);
 const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface);
 HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC);
 HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC);
-HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem);
 
 HRESULT WINAPI IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter);
 HRESULT WINAPI IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans);

@@ -1569,6 +1569,53 @@ HRESULT WINAPI IWineGDISurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RE
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+
+    /* Render targets depend on their hdc, and we can't create an hdc on a user pointer */
+    if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+        ERR("Not supported on render targets\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if(This->Flags & (SFLAG_LOCKED | SFLAG_DCINUSE)) {
+        WARN("Surface is locked or the HDC is in use\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if(Mem && Mem != This->resource.allocatedMemory) {
+        void *release = NULL;
+
+        /* Do I have to copy the old surface content? */
+        if(This->Flags & SFLAG_DIBSECTION) {
+                /* Release the DC. No need to hold the critical section for the update
+            * Thread because this thread runs only on front buffers, but this method
+            * fails for render targets in the check above.
+                */
+            SelectObject(This->hDC, This->dib.holdbitmap);
+            DeleteDC(This->hDC);
+            /* Release the DIB section */
+            DeleteObject(This->dib.DIBsection);
+            This->dib.bitmap_data = NULL;
+            This->resource.allocatedMemory = NULL;
+            This->hDC = NULL;
+            This->Flags &= ~SFLAG_DIBSECTION;
+        } else if(!(This->Flags & SFLAG_USERPTR)) {
+            release = This->resource.allocatedMemory;
+        }
+        This->resource.allocatedMemory = Mem;
+        This->Flags |= SFLAG_USERPTR | SFLAG_INSYSMEM;
+
+        /* Now free the old memory if any */
+        HeapFree(GetProcessHeap(), 0, release);
+    } else if(This->Flags & SFLAG_USERPTR) {
+        /* Lockrect and GetDC will re-create the dib section and allocated memory */
+        This->resource.allocatedMemory = NULL;
+        This->Flags &= ~SFLAG_USERPTR;
+    }
+    return WINED3D_OK;
+}
+
 /* FIXME: This vtable should not use any IWineD3DSurface* implementation functions,
  * only IWineD3DBaseSurface and IWineGDISurface ones.
  */
@@ -1607,7 +1654,7 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_RealizePalette,
     IWineD3DBaseSurfaceImpl_SetColorKey,
     IWineD3DBaseSurfaceImpl_GetPitch,
-    IWineD3DSurfaceImpl_SetMem,
+    IWineGDISurfaceImpl_SetMem,
     IWineD3DBaseSurfaceImpl_SetOverlayPosition,
     IWineD3DBaseSurfaceImpl_GetOverlayPosition,
     IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder,

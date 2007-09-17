@@ -2540,12 +2540,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
 HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
 
-    /* Render targets depend on their hdc, and we can't create an hdc on a user pointer */
-    if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
-        ERR("Not supported on render targets\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if(This->Flags & (SFLAG_LOCKED | SFLAG_DCINUSE)) {
         WARN("Surface is locked or the HDC is in use\n");
         return WINED3DERR_INVALIDCALL;
