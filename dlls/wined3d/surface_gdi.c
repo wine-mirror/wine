@@ -1490,6 +1490,27 @@ const char* filename)
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("(%p)->(%p)\n",This,hDC);
+
+    if (!(This->Flags & SFLAG_DCINUSE))
+        return WINED3DERR_INVALIDCALL;
+
+    if (This->hDC !=hDC) {
+        WARN("Application tries to release an invalid DC(%p), surface dc is %p\n", hDC, This->hDC);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* we locked first, so unlock now */
+    IWineD3DSurface_UnlockRect(iface);
+
+    This->Flags &= ~SFLAG_DCINUSE;
+
+    return WINED3D_OK;
+}
+
 /*****************************************************************************
  * IWineD3DSurface::PrivateSetup, GDI version
  *
@@ -1641,7 +1662,7 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineGDISurfaceImpl_LockRect,
     IWineGDISurfaceImpl_UnlockRect,
     IWineD3DSurfaceImpl_GetDC,
-    IWineD3DSurfaceImpl_ReleaseDC,
+    IWineGDISurfaceImpl_ReleaseDC,
     IWineGDISurfaceImpl_Flip,
     IWineGDISurfaceImpl_Blt,
     IWineD3DBaseSurfaceImpl_GetBltStatus,
