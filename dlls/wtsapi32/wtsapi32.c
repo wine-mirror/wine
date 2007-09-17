@@ -213,3 +213,12 @@ BOOL WINAPI WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
     FIXME("Stub %p 0x%08x\n", hWnd, dwFlags);
     return FALSE;
 }
+
+/************************************************************
+ *                WTSUnRegisterSessionNotification (WTSAPI32.@)
+ */
+BOOL WINAPI WTSUnRegisterSessionNotification(HWND hWnd)
+{
+    FIXME("Stub %p\n", hWnd);
+    return FALSE;
+}

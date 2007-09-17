@@ -23,6 +23,7 @@
 @ stub WTSSetUserConfigW
 @ stub WTSShutdownSystem
 @ stub WTSTerminateProcess
+@ stdcall WTSUnRegisterSessionNotification(long)
 @ stub WTSVirtualChannelClose
 @ stub WTSVirtualChannelOpen
 @ stub WTSVirtualChannelPurgeInput
