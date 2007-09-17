@@ -3101,6 +3101,8 @@ typedef enum _GL_Cards {
   CARD_INTEL_I915GM               = 0x2592
 } GL_Cards;
 
+#define WINE_DEFAULT_VIDMEM 64*1024*1024
+
 typedef enum _GL_VSVersion {
   VS_VERSION_NOT_SUPPORTED = 0x0,
   VS_VERSION_10 = 0x10,

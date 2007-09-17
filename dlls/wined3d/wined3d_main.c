@@ -42,7 +42,7 @@ wined3d_settings_t wined3d_settings =
     FALSE,          /* Use of GLSL disabled by default */
     ORM_BACKBUFFER, /* Use the backbuffer to do offscreen rendering */
     RTL_AUTO,       /* Automatically determine best locking method */
-    64*1024*1024,   /* 64MB texture memory by default */
+    0,              /* The default of memory is set in FillGLCaps */
     NULL            /* No wine logo by default */
 };
 
