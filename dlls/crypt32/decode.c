@@ -460,6 +460,8 @@ static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
                     ret = CRYPT_AsnDecodeSequenceItems(dwFlags, items, cItem,
                      ptr, cbEncoded, dwFlags, pvStructInfo, nextData,
                      &cbDecoded);
+                    if (ret && pcbDecoded)
+                        *pcbDecoded = 1 + lenBytes + cbDecoded;
                 }
             }
         }
