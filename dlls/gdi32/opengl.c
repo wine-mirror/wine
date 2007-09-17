@@ -65,16 +65,17 @@ static DC* OPENGL_GetDefaultDC(void)
 HGLRC WINAPI wglCreateContext(HDC hdc)
 {
     HGLRC ret = 0;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
     TRACE("(%p)\n",hdc);
 
     if (!dc) return 0;
 
+    update_dc( dc );
     if (!dc->funcs->pwglCreateContext) FIXME(" :stub\n");
     else ret = dc->funcs->pwglCreateContext(dc->physDev);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -195,21 +196,22 @@ static BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglr
     TRACE("hDrawDC: (%p), hReadDC: (%p) hglrc: (%p)\n", hDrawDC, hReadDC, hglrc);
 
     /* Both hDrawDC and hReadDC need to be valid */
-    DrawDC = DC_GetDCPtr( hDrawDC);
+    DrawDC = get_dc_ptr( hDrawDC );
     if (!DrawDC) return FALSE;
 
-    ReadDC = DC_GetDCPtr( hReadDC);
+    ReadDC = get_dc_ptr( hReadDC );
     if (!ReadDC) {
-        DC_ReleaseDCPtr(DrawDC);
+        release_dc_ptr( DrawDC );
         return FALSE;
     }
 
+    update_dc( DrawDC );
+    update_dc( ReadDC );
     if (!DrawDC->funcs->pwglMakeContextCurrentARB) FIXME(" :stub\n");
     else ret = DrawDC->funcs->pwglMakeContextCurrentARB(DrawDC->physDev, ReadDC->physDev, hglrc);
 
-    DC_ReleaseDCPtr(DrawDC);
-    DC_ReleaseDCPtr(ReadDC);
-
+    release_dc_ptr( DrawDC );
+    release_dc_ptr( ReadDC );
     return ret;
 }
 

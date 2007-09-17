@@ -394,16 +394,17 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
 INT WINAPI GetPixelFormat( HDC hdc )
 {
     INT ret = 0;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
     TRACE("(%p)\n",hdc);
 
     if (!dc) return 0;
 
+    update_dc( dc );
     if (!dc->funcs->pGetPixelFormat) FIXME(" :stub\n");
     else ret = dc->funcs->pGetPixelFormat(dc->physDev);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -460,12 +461,13 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
 BOOL WINAPI SwapBuffers( HDC hdc )
 {
     INT bRet = FALSE;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
     TRACE("(%p)\n",hdc);
 
     if (!dc) return TRUE;
 
+    update_dc( dc );
     if (!dc->funcs->pSwapBuffers)
     {
         FIXME(" :stub\n");
@@ -473,7 +475,7 @@ BOOL WINAPI SwapBuffers( HDC hdc )
     }
     else bRet = dc->funcs->pSwapBuffers(dc->physDev);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return bRet;
 }
 
