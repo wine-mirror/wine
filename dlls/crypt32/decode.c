@@ -550,7 +550,7 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                         if (itemSizes != &itemSize)
                             itemSizes = CryptMemRealloc(itemSizes,
                              cItems * sizeof(struct AsnArrayItemSize));
-                        else
+                        else if (cItems > 1)
                         {
                             itemSizes =
                              CryptMemAlloc(
