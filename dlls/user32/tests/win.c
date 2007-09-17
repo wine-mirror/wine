@@ -4229,6 +4229,7 @@ static void test_GetUpdateRect(void)
 
     ShowWindow(hgrandparent, SW_SHOW);
     UpdateWindow(hgrandparent);
+    flush_events();
 
     ShowWindow(hchild, SW_HIDE);
     SetRect(&rc2, 0, 0, 0, 0);
@@ -4288,6 +4289,7 @@ static void test_GetUpdateRect(void)
 
     ShowWindow(hgrandparent, SW_SHOW);
     UpdateWindow(hgrandparent);
+    flush_events();
 
     ret = GetUpdateRect(hgrandparent, &rc1, FALSE);
     ok(!ret, "GetUpdateRect returned not empty region\n");
