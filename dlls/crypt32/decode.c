@@ -524,12 +524,13 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
 
         if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
         {
-            DWORD bytesNeeded, cItems = 0;
+            DWORD bytesNeeded, cItems = 0, decoded;
             BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
             /* There can be arbitrarily many items, but there is often only one.
              */
             struct AsnArrayItemSize itemSize = { 0 }, *itemSizes = &itemSize;
 
+            decoded = 1 + lenBytes;
             bytesNeeded = sizeof(struct GenericArray);
             if (dataLen)
             {
@@ -538,7 +539,7 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                 for (ptr = pbEncoded + 1 + lenBytes; ret &&
                  ptr - pbEncoded - 1 - lenBytes < dataLen; )
                 {
-                    DWORD itemLenBytes, itemDataLen, size = 0;
+                    DWORD itemLenBytes, itemDataLen, itemDecoded, size = 0;
 
                     itemLenBytes = GET_LEN_BYTES(ptr[1]);
                     /* Each item decoded may not tolerate extraneous bytes, so
@@ -549,7 +550,8 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                     if (ret)
                         ret = arrayDesc->decodeFunc(ptr,
                          1 + itemLenBytes + itemDataLen,
-                         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &size, NULL);
+                         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &size,
+                         &itemDecoded);
                     if (ret)
                     {
                         DWORD nextLen;
@@ -568,6 +570,7 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                         }
                         if (itemSizes)
                         {
+                            decoded += itemDecoded;
                             itemSizes[cItems - 1].encodedLen = 1 + itemLenBytes
                              + itemDataLen;
                             itemSizes[cItems - 1].size = size;
@@ -594,6 +597,8 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                     const BYTE *ptr;
                     struct GenericArray *array;
 
+                    if (pcbDecoded)
+                        *pcbDecoded = decoded;
                     if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
                         pvStructInfo = *(BYTE **)pvStructInfo;
                     array = (struct GenericArray *)pvStructInfo;
