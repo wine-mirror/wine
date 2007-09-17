@@ -1879,7 +1879,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     BOOL done_extents = FALSE;
     INT width = 0, xwidth = 0, ywidth = 0;
     DWORD type;
-    DC * dc = DC_GetDCUpdate( hdc );
+    DC * dc = get_dc_ptr( hdc );
     INT breakRem;
 
     if (!dc) return FALSE;
@@ -1891,15 +1891,16 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
     if (!dc->funcs->pExtTextOut && !PATH_IsPathOpen(dc->path))
     {
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return ret;
     }
 
+    update_dc( dc );
     type = GetObjectType(hdc);
     if(type == OBJ_METADC || type == OBJ_ENHMETADC)
     {
         ret = dc->funcs->pExtTextOut(dc->physDev, x, y, flags, lprect, str, count, lpDx);
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return ret;
     }
 
@@ -2198,7 +2199,7 @@ done:
     if(reordered_str != str)
         HeapFree(GetProcessHeap(), 0, reordered_str);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
 
     if (ret && (lf.lfUnderline || lf.lfStrikeOut))
     {

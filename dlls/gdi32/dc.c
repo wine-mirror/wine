@@ -177,32 +177,6 @@ DC *DC_GetDCPtr( HDC hdc )
     return dc;
 }
 
-/***********************************************************************
- *           DC_GetDCUpdate
- *
- * Retrieve a DC ptr while making sure the visRgn is updated.
- * This function may call up to USER so the GDI lock should _not_
- * be held when calling it.
- */
-DC *DC_GetDCUpdate( HDC hdc )
-{
-    DC *dc = DC_GetDCPtr( hdc );
-    if (!dc) return NULL;
-    while (InterlockedExchange( &dc->dirty, 0 ))
-    {
-        DCHOOKPROC proc = dc->hookThunk;
-        if (proc)
-        {
-            DWORD_PTR data = dc->dwHookData;
-            DC_ReleaseDCPtr( dc );
-            proc( hdc, DCHC_INVALIDVISRGN, data, 0 );
-            if (!(dc = DC_GetDCPtr( hdc ))) break;
-            /* otherwise restart the loop in case it became dirty again in the meantime */
-        }
-    }
-    return dc;
-}
-
 
 /***********************************************************************
  *           DC_ReleaseDCPtr
@@ -488,20 +462,21 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
 {
     DC *dc, *dcs;
 
-    if (!(dc = DC_GetDCUpdate( hdc ))) return;
-    if (!(dcs = DC_GetDCPtr( hdcs )))
+    if (!(dc = get_dc_ptr( hdc ))) return;
+    if (!(dcs = get_dc_ptr( hdcs )))
     {
-      DC_ReleaseDCPtr( dc );
-      return;
+        release_dc_ptr( dc );
+        return;
     }
     if (!dcs->flags & DC_SAVED)
     {
-      DC_ReleaseDCPtr( dc );
-      DC_ReleaseDCPtr( dcs );
-      return;
+        release_dc_ptr( dc );
+        release_dc_ptr( dcs );
+        return;
     }
     TRACE("%p %p\n", hdc, hdcs );
 
+    update_dc( dc );
     dc->flags            = dcs->flags & ~DC_SAVED;
     dc->layout           = dcs->layout;
     dc->hDevice          = dcs->hDevice;
@@ -569,8 +544,8 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
     SetBkColor( hdc, dcs->backgroundColor);
     SetTextColor( hdc, dcs->textColor);
     GDISelectPalette( hdc, dcs->hPalette, FALSE );
-    DC_ReleaseDCPtr( dcs );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
+    release_dc_ptr( dcs );
 }
 
 
@@ -653,22 +628,23 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     BOOL success;
 
     TRACE("%p %d\n", hdc, level );
-    dc = DC_GetDCUpdate( hdc );
-    if(!dc) return FALSE;
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
 
     if(abs(level) > dc->saveLevel || level == 0)
     {
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return FALSE;
     }
-        
+
+    update_dc( dc );
+
     if(dc->funcs->pRestoreDC)
     {
         success = dc->funcs->pRestoreDC( dc->physDev, level );
         if(level < 0) level = dc->saveLevel + level + 1;
         if(success)
             dc->saveLevel = level - 1;
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return success;
     }
 
@@ -677,10 +653,10 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     while (dc->saveLevel >= level)
     {
         HDC hdcs = dc->saved_dc;
-	if (!(dcs = DC_GetDCPtr( hdcs )))
+	if (!(dcs = get_dc_ptr( hdcs )))
 	{
-	  DC_ReleaseDCPtr( dc );
-	  return FALSE;
+            success = FALSE;
+            break;
 	}
         dc->saved_dc = dcs->saved_dc;
         dcs->saved_dc = 0;
@@ -692,12 +668,10 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 		 * returning FALSE but still destroying the saved DC state */
 	        success=FALSE;
 	}
-        DC_ReleaseDCPtr( dcs );
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dcs );
 	DeleteDC( hdcs );
-        if (!(dc = DC_GetDCPtr( hdc ))) return FALSE;
     }
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return success;
 }
 

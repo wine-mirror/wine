@@ -55,8 +55,8 @@ static DC* OPENGL_GetDefaultDC(void)
 {
     if(!default_hdc)
         default_hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-        
-    return DC_GetDCPtr(default_hdc);
+
+    return get_dc_ptr(default_hdc);
 }
 
 /***********************************************************************
@@ -169,16 +169,17 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
     if(hglrc == NULL)
         dc = OPENGL_GetDefaultDC();
     else
-        dc = DC_GetDCUpdate( hdc );
+        dc = get_dc_ptr( hdc );
 
     TRACE("hdc: (%p), hglrc: (%p)\n", hdc, hglrc);
 
     if (!dc) return FALSE;
 
+    update_dc( dc );
     if (!dc->funcs->pwglMakeCurrent) FIXME(" :stub\n");
     else ret = dc->funcs->pwglMakeCurrent(dc->physDev,hglrc);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -294,7 +295,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
     if (!dc->funcs->pwglGetProcAddress) FIXME(" :stub\n");
     else ret = dc->funcs->pwglGetProcAddress(func);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
 
     /* At the moment we implement one WGL extension which requires a HDC. When we
      * are looking up this call and when the Extension is available (that is the case
