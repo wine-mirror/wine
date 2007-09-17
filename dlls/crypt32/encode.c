@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Juan Lang
+ * Copyright 2005-2007 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,8 +17,8 @@
  *
  * This file implements ASN.1 DER encoding of a limited set of types.
  * It isn't a full ASN.1 implementation.  Microsoft implements BER
- * encoding of many of the basic types in msasn1.dll, but that interface is
- * undocumented, so I implement them here.
+ * encoding of many of the basic types in msasn1.dll, but that interface isn't
+ * implemented, so I implement them here.
  *
  * References:
  * "A Layman's Guide to a Subset of ASN.1, BER, and DER", by Burton Kaliski
@@ -27,8 +27,7 @@
  *
  * RFC3280, http://www.faqs.org/rfcs/rfc3280.html
  *
- * MSDN, especially:
- * http://msdn.microsoft.com/library/en-us/seccrypto/security/constants_for_cryptencodeobject_and_cryptdecodeobject.asp
+ * MSDN, especially "Constants for CryptEncodeObject and CryptDecodeObject"
  */
 
 #include <assert.h>
