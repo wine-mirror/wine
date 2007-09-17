@@ -137,8 +137,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUnsignedIntegerInternal(
  * length or if the length is too large for cbEncoded, sets an appropriate
  * error code and returns FALSE.
  */
-static BOOL WINAPI CRYPT_GetLen(const BYTE *pbEncoded, DWORD cbEncoded,
- DWORD *len)
+static BOOL CRYPT_GetLen(const BYTE *pbEncoded, DWORD cbEncoded, DWORD *len)
 {
     BOOL ret;
 
