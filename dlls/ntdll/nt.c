@@ -27,6 +27,7 @@
 #include <string.h>
 #include <time.h>
 
+#define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "wine/debug.h"
@@ -387,8 +388,8 @@ NTSTATUS WINAPI NtQueryInformationToken(
                 statistics->TokenId.HighPart = reply->token_id.high_part;
                 statistics->AuthenticationId.LowPart  = 0; /* FIXME */
                 statistics->AuthenticationId.HighPart = 0; /* FIXME */
-                statistics->ExpirationTime.HighPart = 0x7fffffff;
-                statistics->ExpirationTime.LowPart  = 0xffffffff;
+                statistics->ExpirationTime.u.HighPart = 0x7fffffff;
+                statistics->ExpirationTime.u.LowPart  = 0xffffffff;
                 statistics->TokenType = reply->primary ? TokenPrimary : TokenImpersonation;
                 statistics->ImpersonationLevel = reply->impersonation_level;
 
