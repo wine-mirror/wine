@@ -28,20 +28,6 @@ C_SRCS16 = \
 SPEC_SRCS16 = commdlg.spec
 
 RC_SRCS = rsrc.rc
-RC_BINSRC = cdlg_xx.rc
-RC_BINARIES = \
-	800.bmp \
-	cdrom.ico \
-	floppy.ico \
-	folder.ico \
-	folder2.ico \
-	fontpics.bmp \
-	hdisk.ico \
-	network.ico \
-	pd32_collate.ico \
-	pd32_landscape.ico \
-	pd32_nocollate.ico \
-	pd32_portrait.ico 
 
 @MAKE_DLL_RULES@
 
