@@ -177,6 +177,7 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
 
     data->fbconfig_id = fbconfig_id;
     SetPropA(hwnd, fbconfig_id_prop, (HANDLE)data->fbconfig_id);
+    invalidate_dce( hwnd, &data->window_rect );
     return TRUE;
 }
 
