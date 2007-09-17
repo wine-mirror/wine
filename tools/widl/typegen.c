@@ -494,6 +494,12 @@ static size_t write_conf_or_var_desc(FILE *file, const type_t *structure,
     const char *operator_string = "no operators";
     const expr_t *subexpr;
 
+    if (!expr)
+    {
+        print_file(file, 2, "NdrFcLong(0xffffffff),\t/* -1 */\n");
+        return 4;
+    }
+
     if (!structure)
     {
         /* Top-level conformance calculations are done inline.  */
