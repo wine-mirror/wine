@@ -6869,6 +6869,37 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
 
             /* Cleanup any FBO attachments if d3d is enabled */
             if(This->d3d_initialized) {
+                if((IWineD3DSurface *)resource == This->lastActiveRenderTarget) {
+                    IWineD3DSwapChainImpl *swapchain = This->swapchains ? (IWineD3DSwapChainImpl *) This->swapchains[0] : NULL;
+
+                    TRACE("Last active render target destroyed\n");
+                    /* Find a replacement surface for the currently active back buffer. The context manager does not do NULL
+                     * checks, so switch to a valid target as long as the currently set surface is still valid. Use the
+                     * surface of the implicit swpchain. If that is the same as the destroyed surface the device is destroyed
+                     * and the lastActiveRenderTarget member shouldn't matter
+                     */
+                    if(swapchain) {
+                        if(swapchain->backBuffer && swapchain->backBuffer[0] != (IWineD3DSurface *)resource) {
+                            TRACE("Activating primary back buffer\n");
+                            ActivateContext(This, swapchain->backBuffer[0], CTXUSAGE_RESOURCELOAD);
+                        } else if(!swapchain->backBuffer && swapchain->frontBuffer != (IWineD3DSurface *)resource) {
+                            /* Single buffering environment */
+                            TRACE("Activating primary front buffer\n");
+                            ActivateContext(This, swapchain->frontBuffer, CTXUSAGE_RESOURCELOAD);
+                        } else {
+                            TRACE("Device is being destroyed, setting lastActiveRenderTarget = 0xdeadbabe\n");
+                            /* Implicit render target destroyed, that means the device is being destroyed
+                             * whatever we set here, it shouldn't matter
+                             */
+                            This->lastActiveRenderTarget = (IWineD3DSurface *) 0xdeadbabe;
+                        }
+                    } else {
+                        /* May happen during ddraw uninitialization */
+                        TRACE("Render target set, but swapchain does not exist!\n");
+                        This->lastActiveRenderTarget = (IWineD3DSurface *) 0xdeadcafe;
+                    }
+                }
+
                 for (i = 0; i < GL_LIMITS(buffers); ++i) {
                     if (This->fbo_color_attachments[i] == (IWineD3DSurface *)resource) {
                         bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);

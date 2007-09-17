@@ -343,37 +343,6 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         renderbuffer_entry_t *entry, *entry2;
         TRACE("(%p) : cleaning up\n", This);
 
-        if(iface == device->lastActiveRenderTarget) {
-            IWineD3DSwapChainImpl *swapchain = device->swapchains ? (IWineD3DSwapChainImpl *) device->swapchains[0] : NULL;
-
-            TRACE("Last active render target destroyed\n");
-            /* Find a replacement surface for the currently active back buffer. The context manager does not do NULL
-             * checks, so switch to a valid target as long as the currently set surface is still valid. Use the
-             * surface of the implicit swpchain. If that is the same as the destroyed surface the device is destroyed
-             * and the lastActiveRenderTarget member shouldn't matter
-             */
-            if(swapchain) {
-                if(swapchain->backBuffer && swapchain->backBuffer[0] != iface) {
-                    TRACE("Activating primary back buffer\n");
-                    ActivateContext(device, swapchain->backBuffer[0], CTXUSAGE_RESOURCELOAD);
-                } else if(!swapchain->backBuffer && swapchain->frontBuffer != iface) {
-                    /* Single buffering environment */
-                    TRACE("Activating primary front buffer\n");
-                    ActivateContext(device, swapchain->frontBuffer, CTXUSAGE_RESOURCELOAD);
-                } else {
-                    TRACE("Device is being destroyed, setting lastActiveRenderTarget = 0xdeadbabe\n");
-                    /* Implicit render target destroyed, that means the device is being destroyed
-                     * whatever we set here, it shouldn't matter
-                     */
-                    device->lastActiveRenderTarget = (IWineD3DSurface *) 0xdeadbabe;
-                }
-            } else {
-                /* May happen during ddraw uninitialization */
-                TRACE("Render target set, but swapchain does not exist!\n");
-                device->lastActiveRenderTarget = (IWineD3DSurface *) 0xdeadcafe;
-            }
-        }
-
         if (This->glDescription.textureName != 0) { /* release the openGL texture.. */
 
             /* Need a context to destroy the texture. Use the currently active render target, but only if
