@@ -30,10 +30,6 @@ CTESTS = \
 
 RC_SRCS = resource.rc
 
-RC_BINSRC = resource.rc
-RC_BINARIES = \
-	test_mono.bmp
-
 @MAKE_TEST_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -464,7 +464,6 @@ dlls/user32/resources/user32.res
 dlls/user32/resources/version16.res
 dlls/user32/tests/*.ok
 dlls/user32/tests/resource.res
-dlls/user32/tests/test_mono.bmp
 dlls/user32/tests/testlist.c
 dlls/user32/tests/user32_crosstest.exe
 dlls/usp10/libusp10.def
