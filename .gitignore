@@ -379,13 +379,9 @@ dlls/ole2nls.dll16
 dlls/ole2prox.dll16
 dlls/ole2thk.dll16
 dlls/ole32/dcom.h
-dlls/ole32/drag_copy.cur
-dlls/ole32/drag_link.cur
-dlls/ole32/drag_move.cur
 dlls/ole32/irot.h
 dlls/ole32/irot_c.c
 dlls/ole32/libole32.def
-dlls/ole32/nodrop.cur
 dlls/ole32/ole32res.res
 dlls/ole32/tests/*.ok
 dlls/ole32/tests/ole32_crosstest.exe

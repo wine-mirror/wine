@@ -61,12 +61,6 @@ SPEC_SRCS16 = \
 	storage.spec
 
 RC_SRCS = ole32res.rc
-RC_BINSRC = ole32res.rc
-RC_BINARIES = \
-	drag_copy.cur \
-	drag_link.cur \
-	drag_move.cur \
-	nodrop.cur 
 
 IDL_H_SRCS = \
 	dcom.idl
