@@ -226,7 +226,7 @@ typedef struct _ADDRESS {
     DWORD          Offset;
     WORD           Segment;
     ADDRESS_MODE Mode;
-} ADDRESS, *PADDRESS;
+} ADDRESS, *LPADDRESS;
 
 typedef struct _ADDRESS64 {
     DWORD64        Offset;
@@ -729,7 +729,7 @@ typedef BOOL (CALLBACK *DIGEST_FUNCTION)(
 );
 
 typedef BOOL (CALLBACK *PREAD_PROCESS_MEMORY_ROUTINE)(
-  HANDLE  hProcess, LPCVOID lpBaseAddress, PVOID lpBuffer,
+  HANDLE  hProcess, DWORD lpBaseAddress, PVOID lpBuffer,
   DWORD nSize, PDWORD lpNumberOfBytesRead
 );
 
@@ -753,7 +753,7 @@ typedef DWORD (CALLBACK *PGET_MODULE_BASE_ROUTINE64)(
   HANDLE hProcess, DWORD64 ReturnAddress);
 
 typedef DWORD (CALLBACK *PTRANSLATE_ADDRESS_ROUTINE)(
-  HANDLE hProcess, HANDLE hThread, PADDRESS lpaddr
+  HANDLE hProcess, HANDLE hThread, LPADDRESS lpaddr
 );
 
 typedef DWORD (CALLBACK *PTRANSLATE_ADDRESS_ROUTINE64)(
