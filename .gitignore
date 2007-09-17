@@ -185,7 +185,6 @@ dlls/iphlpapi/tests/testlist.c
 dlls/iphlpapi/version.res
 dlls/itss/rsrc.res
 dlls/itss/tests/*.ok
-dlls/itss/tests/data.chm
 dlls/itss/tests/itss_crosstest.exe
 dlls/itss/tests/rsrc.res
 dlls/itss/tests/testlist.c

@@ -10,8 +10,6 @@ CTESTS = \
 	protocol.c
 
 RC_SRCS = rsrc.rc
-RC_BINSRC = rsrc.rc
-RC_BINARIES = data.chm
 
 @MAKE_TEST_RULES@
 
