@@ -398,7 +398,8 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
 static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
  struct AsnDecodeSequenceItem items[], DWORD cItem, const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara,
- void *pvStructInfo, DWORD *pcbStructInfo, void *startingPointer)
+ void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded,
+ void *startingPointer)
 {
     BOOL ret;
 
@@ -756,7 +757,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCertSignedContent(DWORD dwCertEncodingType,
             items[2].decodeFunc = CRYPT_AsnDecodeBitsInternal;
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -803,7 +804,7 @@ static BOOL WINAPI CRYPT_AsnDecodeValidity(DWORD dwCertEncodingType,
 
     ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     return ret;
 }
 
@@ -869,7 +870,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCertInfo(DWORD dwCertEncodingType,
 
     ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     if (ret && pvStructInfo)
     {
         CERT_INFO *info;
@@ -964,7 +965,8 @@ static BOOL CRYPT_AsnDecodeCRLEntry(const BYTE *pbEncoded, DWORD cbEncoded,
 
     ret = CRYPT_AsnDecodeSequence(X509_ASN_ENCODING, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-     NULL, entry, pcbStructInfo, entry ? entry->SerialNumber.pbData : NULL);
+     NULL, entry, pcbStructInfo, pcbDecoded,
+     entry ? entry->SerialNumber.pbData : NULL);
     return ret;
 }
 
@@ -1022,7 +1024,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCRLInfo(DWORD dwCertEncodingType,
 
     ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
 
     TRACE("Returning %d (%08x)\n", ret, GetLastError());
     return ret;
@@ -1226,7 +1228,7 @@ static BOOL CRYPT_AsnDecodeExtension(const BYTE *pbEncoded, DWORD cbEncoded,
         TRACE("ext->pszObjId is %p\n", ext->pszObjId);
     ret = CRYPT_AsnDecodeSequence(X509_ASN_ENCODING, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags, NULL,
-     ext, pcbStructInfo, ext ? ext->pszObjId : NULL);
+     ext, pcbStructInfo, pcbDecoded, ext ? ext->pszObjId : NULL);
     if (ext)
         TRACE("ext->pszObjId is %p (%s)\n", ext->pszObjId,
          debugstr_a(ext->pszObjId));
@@ -1670,7 +1672,7 @@ static BOOL CRYPT_AsnDecodeRdnAttr(const BYTE *pbEncoded, DWORD cbEncoded,
         TRACE("attr->pszObjId is %p\n", attr->pszObjId);
     ret = CRYPT_AsnDecodeSequence(X509_ASN_ENCODING, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags, NULL,
-     attr, pcbStructInfo, attr ? attr->pszObjId : NULL);
+     attr, pcbStructInfo, pcbDecoded, attr ? attr->pszObjId : NULL);
     if (attr)
     {
         TRACE("attr->pszObjId is %p (%s)\n", attr->pszObjId,
@@ -1741,7 +1743,7 @@ static BOOL CRYPT_AsnDecodeUnicodeRdnAttr(const BYTE *pbEncoded,
         TRACE("attr->pszObjId is %p\n", attr->pszObjId);
     ret = CRYPT_AsnDecodeSequence(X509_ASN_ENCODING, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags, NULL,
-     attr, pcbStructInfo, attr ? attr->pszObjId : NULL);
+     attr, pcbStructInfo, pcbDecoded, attr ? attr->pszObjId : NULL);
     if (attr)
     {
         TRACE("attr->pszObjId is %p (%s)\n", attr->pszObjId,
@@ -1864,7 +1866,8 @@ static BOOL CRYPT_AsnDecodePKCSAttributeInternal(const BYTE *pbEncoded,
 
     ret = CRYPT_AsnDecodeSequence(X509_ASN_ENCODING, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, attr ? attr->pszObjId : NULL);
+     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
+     attr ? attr->pszObjId : NULL);
     TRACE("returning %d\n", ret);
     return ret;
 }
@@ -2037,7 +2040,8 @@ static BOOL WINAPI CRYPT_AsnDecodeAlgorithmId(DWORD dwCertEncodingType,
 
     ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, algo ? algo->pszObjId : NULL);
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL,
+     algo ? algo->pszObjId : NULL);
     if (ret && pvStructInfo)
     {
         TRACE("pszObjId is %p (%s)\n", algo->pszObjId,
@@ -2064,7 +2068,7 @@ static BOOL WINAPI CRYPT_AsnDecodePubKeyInfoInternal(DWORD dwCertEncodingType,
 
     ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, info ?
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL, info ?
      info->Algorithm.Parameters.pbData : NULL);
     return ret;
 }
@@ -2351,7 +2355,7 @@ static BOOL WINAPI CRYPT_AsnDecodeAuthorityKeyId(DWORD dwCertEncodingType,
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -2388,7 +2392,7 @@ static BOOL WINAPI CRYPT_AsnDecodeAuthorityKeyId2(DWORD dwCertEncodingType,
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -2451,7 +2455,8 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSContentInfoInternal(
 
     ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, info ? info->pszObjId : NULL);
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL,
+     info ? info->pszObjId : NULL);
     return ret;
 }
 
@@ -2520,7 +2525,7 @@ BOOL CRYPT_AsnDecodePKCSDigestedData(const BYTE *pbEncoded, DWORD cbEncoded,
 
     ret = CRYPT_AsnDecodeSequence(X509_ASN_ENCODING, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, digestedData, pcbDigestedData, NULL);
+     pDecodePara, digestedData, pcbDigestedData, NULL, NULL);
     return ret;
 }
 
@@ -2648,7 +2653,7 @@ static BOOL WINAPI CRYPT_AsnDecodeBasicConstraints(DWORD dwCertEncodingType,
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -2677,7 +2682,7 @@ static BOOL WINAPI CRYPT_AsnDecodeBasicConstraints2(DWORD dwCertEncodingType,
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -2717,7 +2722,7 @@ static BOOL WINAPI CRYPT_AsnDecodeRsaPubKey(DWORD dwCertEncodingType,
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded,
-         CRYPT_DECODE_ALLOC_FLAG, NULL, &decodedKey, &size, NULL);
+         CRYPT_DECODE_ALLOC_FLAG, NULL, &decodedKey, &size, NULL, NULL);
         if (ret)
         {
             DWORD bytesNeeded = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
@@ -3779,7 +3784,7 @@ static BOOL CRYPT_AsnDecodeDistPoint(const BYTE *pbEncoded, DWORD cbEncoded,
 
     ret = CRYPT_AsnDecodeSequence(X509_ASN_ENCODING, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded,
-     dwFlags, NULL, pvStructInfo, pcbStructInfo, NULL);
+     dwFlags, NULL, pvStructInfo, pcbStructInfo, pcbDecoded, NULL);
     return ret;
 }
 
@@ -3869,7 +3874,7 @@ static BOOL WINAPI CRYPT_AsnDecodeIssuingDistPoint(DWORD dwCertEncodingType,
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded,
-         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -3901,7 +3906,7 @@ static BOOL WINAPI CRYPT_AsnDecodeIssuerSerialNumber(DWORD dwCertEncodingType,
 
     ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded,
-     dwFlags, pDecodePara, pvStructInfo, pcbStructInfo,
+     dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL,
      issuerSerial ? issuerSerial->Issuer.pbData : NULL);
     if (ret && issuerSerial && !issuerSerial->SerialNumber.cbData)
     {
@@ -3949,7 +3954,7 @@ static BOOL CRYPT_AsnDecodePKCSSignerInfoInternal(const BYTE *pbEncoded,
 
     ret = CRYPT_AsnDecodeSequence(X509_ASN_ENCODING, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded,
-     dwFlags, NULL, pvStructInfo, pcbStructInfo,
+     dwFlags, NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
      info ? info->Issuer.pbData : NULL);
     return ret;
 }
@@ -4046,7 +4051,7 @@ BOOL CRYPT_AsnDecodePKCSSignedInfo(const BYTE *pbEncoded, DWORD cbEncoded,
 
     ret = CRYPT_AsnDecodeSequence(X509_ASN_ENCODING, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, signedInfo, pcbSignedInfo, NULL);
+     pDecodePara, signedInfo, pcbSignedInfo, NULL, NULL);
     TRACE("returning %d\n", ret);
     return ret;
 }
