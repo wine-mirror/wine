@@ -1008,9 +1008,28 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
 NTSTATUS WINAPI NtCreateIoCompletion( PHANDLE CompletionPort, ACCESS_MASK DesiredAccess,
                                       POBJECT_ATTRIBUTES ObjectAttributes, ULONG NumberOfConcurrentThreads )
 {
-    FIXME("(%p, %x, %p, %d)\n", CompletionPort, DesiredAccess,
+    NTSTATUS status;
+
+    TRACE("(%p, %x, %p, %d)\n", CompletionPort, DesiredAccess,
           ObjectAttributes, NumberOfConcurrentThreads);
-    return STATUS_NOT_IMPLEMENTED;
+
+    if (!CompletionPort)
+        return STATUS_INVALID_PARAMETER;
+
+    SERVER_START_REQ( create_completion )
+    {
+        req->access     = DesiredAccess;
+        req->attributes = ObjectAttributes ? ObjectAttributes->Attributes : 0;
+        req->rootdir    = ObjectAttributes ? ObjectAttributes->RootDirectory : NULL;
+        req->concurrent = NumberOfConcurrentThreads;
+        if (ObjectAttributes && ObjectAttributes->ObjectName)
+            wine_server_add_data( req, ObjectAttributes->ObjectName->Buffer,
+                                       ObjectAttributes->ObjectName->Length );
+        if (!(status = wine_server_call( req )))
+            *CompletionPort = reply->handle;
+    }
+    SERVER_END_REQ;
+    return status;
 }
 
 /******************************************************************
@@ -1028,11 +1047,24 @@ NTSTATUS WINAPI NtCreateIoCompletion( PHANDLE CompletionPort, ACCESS_MASK Desire
  */
 NTSTATUS WINAPI NtSetIoCompletion( HANDLE CompletionPort, ULONG_PTR CompletionKey,
                                    ULONG_PTR CompletionValue, NTSTATUS Status,
-                                   ULONG NumberOfBytesToTransfer )
+                                   ULONG NumberOfBytesTransferred )
 {
-    FIXME("(%p, %lx, %lx, %x, %d)\n", CompletionPort, CompletionKey,
-          CompletionValue, Status, NumberOfBytesToTransfer);
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+
+    TRACE("(%p, %lx, %lx, %x, %d)\n", CompletionPort, CompletionKey,
+          CompletionValue, Status, NumberOfBytesTransferred);
+
+    SERVER_START_REQ( add_completion )
+    {
+        req->handle      = CompletionPort;
+        req->ckey        = CompletionKey;
+        req->cvalue      = CompletionValue;
+        req->status      = Status;
+        req->information = NumberOfBytesTransferred;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return status;
 }
 
 /******************************************************************
@@ -1053,9 +1085,31 @@ NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE CompletionPort, PULONG_PTR Completi
                                       PULONG_PTR CompletionValue, PIO_STATUS_BLOCK iosb,
                                       PLARGE_INTEGER WaitTime )
 {
-    FIXME("(%p, %p, %p, %p, %p)\n", CompletionPort, CompletionKey,
+    NTSTATUS status;
+
+    TRACE("(%p, %p, %p, %p, %p)\n", CompletionPort, CompletionKey,
           CompletionValue, iosb, WaitTime);
-    return STATUS_NOT_IMPLEMENTED;
+
+    for(;;)
+    {
+        SERVER_START_REQ( remove_completion )
+        {
+            req->handle = CompletionPort;
+            if (!(status = wine_server_call( req )))
+            {
+                *CompletionKey    = reply->ckey;
+                *CompletionValue  = reply->cvalue;
+                iosb->Information = reply->information;
+                iosb->u.Status    = reply->status;
+            }
+        }
+        SERVER_END_REQ;
+        if (status != STATUS_PENDING) break;
+
+        status = NtWaitForSingleObject( CompletionPort, FALSE, WaitTime );
+        if (status != WAIT_OBJECT_0) break;
+    }
+    return status;
 }
 
 /******************************************************************
@@ -1073,8 +1127,24 @@ NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE CompletionPort, PULONG_PTR Completi
 NTSTATUS WINAPI NtOpenIoCompletion( PHANDLE CompletionPort, ACCESS_MASK DesiredAccess,
                                     POBJECT_ATTRIBUTES ObjectAttributes )
 {
-    FIXME("(%p, 0x%x, %p)\n", CompletionPort, DesiredAccess, ObjectAttributes);
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+
+    TRACE("(%p, 0x%x, %p)\n", CompletionPort, DesiredAccess, ObjectAttributes);
+
+    if (!CompletionPort || !ObjectAttributes || !ObjectAttributes->ObjectName)
+        return STATUS_INVALID_PARAMETER;
+
+    SERVER_START_REQ( open_completion )
+    {
+        req->access     = DesiredAccess;
+        req->rootdir    = ObjectAttributes->RootDirectory;
+        wine_server_add_data( req, ObjectAttributes->ObjectName->Buffer,
+                                   ObjectAttributes->ObjectName->Length );
+        if (!(status = wine_server_call( req )))
+            *CompletionPort = reply->handle;
+    }
+    SERVER_END_REQ;
+    return status;
 }
 
 /******************************************************************
@@ -1094,7 +1164,36 @@ NTSTATUS WINAPI NtOpenIoCompletion( PHANDLE CompletionPort, ACCESS_MASK DesiredA
 NTSTATUS WINAPI NtQueryIoCompletion( HANDLE CompletionPort, IO_COMPLETION_INFORMATION_CLASS InformationClass,
                                      PVOID CompletionInformation, ULONG BufferLength, PULONG RequiredLength )
 {
-    FIXME("(%p, %d, %p, 0x%x, %p)\n", CompletionPort, InformationClass, CompletionInformation,
-            BufferLength, RequiredLength);
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+
+    TRACE("(%p, %d, %p, 0x%x, %p)\n", CompletionPort, InformationClass, CompletionInformation,
+          BufferLength, RequiredLength);
+
+    if (!CompletionInformation) return STATUS_INVALID_PARAMETER;
+    switch( InformationClass )
+    {
+        case IoCompletionBasicInformation:
+            {
+                ULONG *info = (ULONG *)CompletionInformation;
+
+                if (RequiredLength) *RequiredLength = sizeof(*info);
+                if (BufferLength != sizeof(*info))
+                    status = STATUS_INFO_LENGTH_MISMATCH;
+                else
+                {
+                    SERVER_START_REQ( query_completion )
+                    {
+                        req->handle = CompletionPort;
+                        if (!(status = wine_server_call( req )))
+                            *info = reply->depth;
+                    }
+                    SERVER_END_REQ;
+                }
+            }
+            break;
+        default:
+            status = STATUS_INVALID_PARAMETER;
+            break;
+    }
+    return status;
 }

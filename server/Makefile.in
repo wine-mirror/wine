@@ -12,6 +12,7 @@ C_SRCS = \
 	change.c \
 	class.c \
 	clipboard.c \
+	completion.c \
 	console.c \
 	context_alpha.c \
 	context_i386.c \

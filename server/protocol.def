@@ -2931,3 +2931,55 @@ enum message_type
     int            group_count;   /* the number of groups the token is a member of */
     int            privilege_count; /* the number of privileges the token has */
 @END
+
+
+/* Create I/O completion port */
+@REQ(create_completion)
+    unsigned int access;          /* desired access to a port */
+    unsigned int attributes;      /* object attributes */
+    unsigned int concurrent;      /* max number of concurrent active threads */
+    obj_handle_t rootdir;         /* root directory */
+    VARARG(filename,string);      /* port name */
+@REPLY
+    obj_handle_t handle;          /* port handle */
+@END
+
+
+/* Open I/O completion port */
+@REQ(open_completion)
+    unsigned int access;          /* desired access to a port */
+    unsigned int attributes;      /* object attributes */
+    obj_handle_t rootdir;         /* root directory */
+    VARARG(filename,string);      /* port name */
+@REPLY
+    obj_handle_t handle;          /* port handle */
+@END
+
+
+/* add completion to completion port */
+@REQ(add_completion)
+    obj_handle_t  handle;         /* port handle */
+    unsigned long ckey;           /* completion key */
+    unsigned long cvalue;         /* completion value */
+    unsigned long information;    /* IO_STATUS_BLOCK Information */
+    unsigned int  status;         /* completion result */
+@END
+
+
+/* get completion from completion port queue */
+@REQ(remove_completion)
+    obj_handle_t handle;          /* port handle */
+@REPLY
+    unsigned long ckey;           /* completion key */
+    unsigned long cvalue;         /* completion value */
+    unsigned long information;    /* IO_STATUS_BLOCK Information */
+    unsigned int  status;         /* completion result */
+@END
+
+
+/* get completion queue depth */
+@REQ(query_completion)
+    obj_handle_t  handle;         /* port handle */
+@REPLY
+    unsigned int  depth;          /* completion queue depth */
+@END

@@ -3567,6 +3567,67 @@ static void dump_get_token_statistics_reply( const struct get_token_statistics_r
     fprintf( stderr, " privilege_count=%d", req->privilege_count );
 }
 
+static void dump_create_completion_request( const struct create_completion_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " concurrent=%08x,", req->concurrent );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
+    fprintf( stderr, " filename=" );
+    dump_varargs_string( cur_size );
+}
+
+static void dump_create_completion_reply( const struct create_completion_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_open_completion_request( const struct open_completion_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
+    fprintf( stderr, " filename=" );
+    dump_varargs_string( cur_size );
+}
+
+static void dump_open_completion_reply( const struct open_completion_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_add_completion_request( const struct add_completion_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " ckey=%lx,", req->ckey );
+    fprintf( stderr, " cvalue=%lx,", req->cvalue );
+    fprintf( stderr, " information=%lx,", req->information );
+    fprintf( stderr, " status=%08x", req->status );
+}
+
+static void dump_remove_completion_request( const struct remove_completion_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_remove_completion_reply( const struct remove_completion_reply *req )
+{
+    fprintf( stderr, " ckey=%lx,", req->ckey );
+    fprintf( stderr, " cvalue=%lx,", req->cvalue );
+    fprintf( stderr, " information=%lx,", req->information );
+    fprintf( stderr, " status=%08x", req->status );
+}
+
+static void dump_query_completion_request( const struct query_completion_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_query_completion_reply( const struct query_completion_reply *req )
+{
+    fprintf( stderr, " depth=%08x", req->depth );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -3788,6 +3849,11 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_next_device_request_request,
     (dump_func)dump_make_process_system_request,
     (dump_func)dump_get_token_statistics_request,
+    (dump_func)dump_create_completion_request,
+    (dump_func)dump_open_completion_request,
+    (dump_func)dump_add_completion_request,
+    (dump_func)dump_remove_completion_request,
+    (dump_func)dump_query_completion_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -4011,6 +4077,11 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_next_device_request_reply,
     (dump_func)dump_make_process_system_reply,
     (dump_func)dump_get_token_statistics_reply,
+    (dump_func)dump_create_completion_reply,
+    (dump_func)dump_open_completion_reply,
+    (dump_func)0,
+    (dump_func)dump_remove_completion_reply,
+    (dump_func)dump_query_completion_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4234,6 +4305,11 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_next_device_request",
     "make_process_system",
     "get_token_statistics",
+    "create_completion",
+    "open_completion",
+    "add_completion",
+    "remove_completion",
+    "query_completion",
 };
 
 static const struct

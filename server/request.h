@@ -330,6 +330,11 @@ DECL_HANDLER(delete_device);
 DECL_HANDLER(get_next_device_request);
 DECL_HANDLER(make_process_system);
 DECL_HANDLER(get_token_statistics);
+DECL_HANDLER(create_completion);
+DECL_HANDLER(open_completion);
+DECL_HANDLER(add_completion);
+DECL_HANDLER(remove_completion);
+DECL_HANDLER(query_completion);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -556,6 +561,11 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_next_device_request,
     (req_handler)req_make_process_system,
     (req_handler)req_get_token_statistics,
+    (req_handler)req_create_completion,
+    (req_handler)req_open_completion,
+    (req_handler)req_add_completion,
+    (req_handler)req_remove_completion,
+    (req_handler)req_query_completion,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 
