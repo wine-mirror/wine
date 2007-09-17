@@ -52,8 +52,6 @@ dlls/comcat/version.res
 dlls/comctl32/libcomctl32.def
 dlls/comctl32/rsrc.res
 dlls/comctl32/tests/*.ok
-dlls/comctl32/tests/bmp128x15.bmp
-dlls/comctl32/tests/bmp80x15.bmp
 dlls/comctl32/tests/comctl32_crosstest.exe
 dlls/comctl32/tests/rsrc.res
 dlls/comctl32/tests/testlist.c
