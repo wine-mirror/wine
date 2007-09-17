@@ -10,68 +10,7 @@ C_SRCS = \
 	cards.c
 
 RC_SRCS = \
-	cards.rc \
-	version.rc
-
-RC_BINSRC = cards.rc
-RC_BINARIES = \
-	b1fv.bmp \
-	b2fv.bmp \
-	c1.bmp \
-	c2.bmp \
-	c3.bmp \
-	c4.bmp \
-	c5.bmp \
-	c6.bmp \
-	c7.bmp \
-	c8.bmp \
-	c9.bmp \
-	c10.bmp \
-	cj.bmp \
-	ck.bmp \
-	cq.bmp \
-	d1.bmp \
-	d2.bmp \
-	d3.bmp \
-	d4.bmp \
-	d5.bmp \
-	d6.bmp \
-	d7.bmp \
-	d8.bmp \
-	d9.bmp \
-	d10.bmp \
-	dj.bmp \
-	dk.bmp \
-	dq.bmp \
-	free.bmp \
-	h1.bmp \
-	h2.bmp \
-	h3.bmp \
-	h4.bmp \
-	h5.bmp \
-	h6.bmp \
-	h7.bmp \
-	h8.bmp \
-	h9.bmp \
-	h10.bmp \
-	hj.bmp \
-	hk.bmp \
-	hq.bmp \
-	s1.bmp \
-	s2.bmp \
-	s3.bmp \
-	s4.bmp \
-	s5.bmp \
-	s6.bmp \
-	s7.bmp \
-	s8.bmp \
-	s9.bmp \
-	s10.bmp \
-	sj.bmp \
-	sk.bmp \
-	sq.bmp \
-	theo.bmp \
-	thex.bmp
+	cards.rc
 
 @MAKE_DLL_RULES@
 
