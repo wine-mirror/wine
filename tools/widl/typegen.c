@@ -2041,6 +2041,10 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
             retmask |= 1;
         }
     }
+    else if (last_array(type) && is_attr(attrs, ATTR_STRING))
+    {
+        write_string_tfs(file, attrs, type, name, tfsoff);
+    }
     else if (type->declarray && is_conformant_array(type))
         ;    /* conformant arrays and strings are handled specially */
     else if (is_array(type))
