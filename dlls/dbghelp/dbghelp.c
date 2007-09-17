@@ -211,7 +211,7 @@ BOOL WINAPI SymGetSearchPath(HANDLE hProcess, PSTR szSearchPath,
  * SymInitialize helper: loads in dbghelp all known (and loaded modules)
  * this assumes that hProcess is a handle on a valid process
  */
-static BOOL WINAPI process_invade_cb(char* name, DWORD base, DWORD size, void* user)
+static BOOL WINAPI process_invade_cb(PCSTR name, ULONG base, ULONG size, PVOID user)
 {
     char        tmp[MAX_PATH];
     HANDLE      hProcess = (HANDLE)user;
