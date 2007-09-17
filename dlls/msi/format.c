@@ -428,7 +428,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
     DWORD sz;
     LPBYTE newdata = NULL;
     const WCHAR* progress = NULL;
-    BOOL nested;
+    BOOL nested = FALSE;
 
     if (ptr==NULL)
     {
