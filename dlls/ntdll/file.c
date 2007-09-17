@@ -1187,7 +1187,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         break;
 
     case FSCTL_PIPE_IMPERSONATE:
-        FIXME("FSCTL_PIPE_DISCONNECT: impersonating self\n");
+        FIXME("FSCTL_PIPE_IMPERSONATE: impersonating self\n");
         status = RtlImpersonateSelf( SecurityImpersonation );
         break;
 
