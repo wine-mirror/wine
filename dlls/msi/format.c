@@ -626,8 +626,8 @@ UINT MSI_FormatRecordW( MSIPACKAGE* package, MSIRECORD* record, LPWSTR buffer,
 
     TRACE("(%s)\n",debugstr_w(rec));
 
-    len = deformat_string_internal(package,rec,&deformated,strlenW(rec),
-                                   record, NULL);
+    len = deformat_string_internal(package,rec,&deformated,
+                                   rec ? strlenW(rec) : 0, record, NULL);
 
     if (buffer)
     {

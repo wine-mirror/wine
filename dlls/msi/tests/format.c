@@ -388,6 +388,17 @@ static void test_formatrecord(void)
     r = MsiFormatRecord(0, 0, NULL, NULL );
     ok( r == ERROR_INVALID_HANDLE, "wrong error\n");
 
+    hrec = MsiCreateRecord(0);
+    ok( hrec, "failed to create record\n");
+
+    /* format an empty record on a record with no parameters */
+    sz = sizeof(buffer);
+    r = MsiFormatRecordA(0, hrec, buffer, &sz );
+    ok( r == ERROR_SUCCESS, "format failed\n");
+    ok( sz == 0, "size wrong\n");
+
+    MsiCloseHandle( hrec );
+
     hrec = MsiCreateRecord(4);
     ok( hrec, "failed to create record\n");
 
