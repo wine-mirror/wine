@@ -118,15 +118,16 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 {
     INT retval;
     RECT rect;
-    DC * dc = DC_GetDCUpdate( hdc );
+    DC * dc = get_dc_ptr( hdc );
     if (!dc) return ERROR;
 
     TRACE("%p %p %d\n", hdc, hrgn, fnMode );
 
+    update_dc( dc );
     if (dc->funcs->pExtSelectClipRgn)
     {
         retval = dc->funcs->pExtSelectClipRgn( dc->physDev, hrgn, fnMode );
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return retval;
     }
 
@@ -140,7 +141,7 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
         else
         {
             FIXME("Unimplemented: hrgn NULL in mode: %d\n", fnMode);
-            DC_ReleaseDCPtr( dc );
+            release_dc_ptr( dc );
             return ERROR;
         }
     }
@@ -156,7 +157,7 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
     }
 
     CLIPPING_UpdateGCRegion( dc );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
 
     return GetClipBox(hdc, &rect);
 }
@@ -190,11 +191,12 @@ INT16 WINAPI SelectVisRgn16( HDC16 hdc16, HRGN16 hrgn )
 INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 {
     INT ret = SIMPLEREGION;
-    DC *dc = DC_GetDCUpdate( hdc );
+    DC *dc = get_dc_ptr( hdc );
     if (!dc) return ERROR;
 
     TRACE("%p %d,%d\n", hdc, x, y );
 
+    update_dc( dc );
     if(dc->funcs->pOffsetClipRgn)
     {
         ret = dc->funcs->pOffsetClipRgn( dc->physDev, x, y );
@@ -205,7 +207,7 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
                          MulDiv( y, dc->vportExtY, dc->wndExtY ) );
 	CLIPPING_UpdateGCRegion( dc );
     }
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -217,12 +219,14 @@ INT16 WINAPI OffsetVisRgn16( HDC16 hdc16, INT16 x, INT16 y )
 {
     INT16 retval;
     HDC hdc = HDC_32( hdc16 );
-    DC * dc = DC_GetDCUpdate( hdc );
+    DC * dc = get_dc_ptr( hdc );
+
     if (!dc) return ERROR;
     TRACE("%p %d,%d\n", hdc, x, y );
+    update_dc( dc );
     retval = OffsetRgn( dc->hVisRgn, x, y );
     CLIPPING_UpdateGCRegion( dc );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return retval;
 }
 
@@ -235,11 +239,12 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
 {
     HRGN newRgn;
     INT ret;
-    DC *dc = DC_GetDCUpdate( hdc );
+    DC *dc = get_dc_ptr( hdc );
     if (!dc) return ERROR;
 
     TRACE("%p %dx%d,%dx%d\n", hdc, left, top, right, bottom );
 
+    update_dc( dc );
     if(dc->funcs->pExcludeClipRect)
     {
         ret = dc->funcs->pExcludeClipRect( dc->physDev, left, top, right, bottom );
@@ -264,7 +269,7 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
         }
         if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
     }
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -275,11 +280,12 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
 INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     INT ret;
-    DC *dc = DC_GetDCUpdate( hdc );
+    DC *dc = get_dc_ptr( hdc );
     if (!dc) return ERROR;
 
     TRACE("%p %d,%d - %d,%d\n", hdc, left, top, right, bottom );
 
+    update_dc( dc );
     if(dc->funcs->pIntersectClipRect)
     {
         ret = dc->funcs->pIntersectClipRect( dc->physDev, left, top, right, bottom );
@@ -314,7 +320,7 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom 
         }
         if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
     }
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -328,7 +334,7 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, 
     INT16 ret;
     POINT pt[2];
     HDC hdc = HDC_32( hdc16 );
-    DC * dc = DC_GetDCUpdate( hdc );
+    DC * dc = get_dc_ptr( hdc );
     if (!dc) return ERROR;
 
     pt[0].x = left;
@@ -343,11 +349,12 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, 
     if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
     else
     {
+        update_dc( dc );
         ret = CombineRgn( dc->hVisRgn, dc->hVisRgn, tempRgn, RGN_DIFF );
         DeleteObject( tempRgn );
     }
     if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -361,7 +368,7 @@ INT16 WINAPI IntersectVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right
     INT16 ret;
     POINT pt[2];
     HDC hdc = HDC_32( hdc16 );
-    DC * dc = DC_GetDCUpdate( hdc );
+    DC * dc = get_dc_ptr( hdc );
     if (!dc) return ERROR;
 
     pt[0].x = left;
@@ -373,15 +380,15 @@ INT16 WINAPI IntersectVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right
 
     TRACE("%p %d,%d - %d,%d\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
 
-
     if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
     else
     {
+        update_dc( dc );
         ret = CombineRgn( dc->hVisRgn, dc->hVisRgn, tempRgn, RGN_AND );
         DeleteObject( tempRgn );
     }
     if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -394,7 +401,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     POINT pt;
     BOOL ret;
     HRGN clip;
-    DC *dc = DC_GetDCUpdate( hdc );
+    DC *dc = get_dc_ptr( hdc );
 
     TRACE("%p %d,%d\n", hdc, x, y );
     if (!dc) return FALSE;
@@ -402,9 +409,10 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     pt.x = x;
     pt.y = y;
     LPtoDP( hdc, &pt, 1 );
+    update_dc( dc );
     ret = PtInRegion( dc->hVisRgn, pt.x, pt.y );
     if (ret && (clip = get_clip_region(dc))) ret = PtInRegion( clip, pt.x, pt.y );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -417,13 +425,14 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
     RECT tmpRect;
     BOOL ret;
     HRGN clip;
-    DC *dc = DC_GetDCUpdate( hdc );
+    DC *dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
     TRACE("%p %d,%dx%d,%d\n", hdc, rect->left, rect->top, rect->right, rect->bottom );
 
     tmpRect = *rect;
     LPtoDP( hdc, (POINT *)&tmpRect, 2 );
 
+    update_dc( dc );
     if ((clip = get_clip_region(dc)))
     {
         HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
@@ -432,7 +441,7 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
         DeleteObject( hrgn );
     }
     else ret = RectInRegion( dc->hVisRgn, &tmpRect );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -444,8 +453,10 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
 {
     INT ret;
     HRGN clip;
-    DC *dc = DC_GetDCUpdate( hdc );
+    DC *dc = get_dc_ptr( hdc );
     if (!dc) return ERROR;
+
+    update_dc( dc );
     if ((clip = get_clip_region(dc)))
     {
         HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
@@ -455,7 +466,7 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
     }
     else ret = GetRgnBox( dc->hVisRgn, rect );
     DPtoLP( hdc, (LPPOINT)rect, 2 );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -505,21 +516,22 @@ HRGN16 WINAPI SaveVisRgn16( HDC16 hdc16 )
 {
     struct saved_visrgn *saved;
     HDC hdc = HDC_32( hdc16 );
-    DC *dc = DC_GetDCUpdate( hdc );
+    DC *dc = get_dc_ptr( hdc );
 
     if (!dc) return 0;
     TRACE("%p\n", hdc );
 
+    update_dc( dc );
     if (!(saved = HeapAlloc( GetProcessHeap(), 0, sizeof(*saved) ))) goto error;
     if (!(saved->hrgn = CreateRectRgn( 0, 0, 0, 0 ))) goto error;
     CombineRgn( saved->hrgn, dc->hVisRgn, 0, RGN_COPY );
     saved->next = dc->saved_visrgn;
     dc->saved_visrgn = saved;
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return HRGN_16(saved->hrgn);
 
 error:
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     HeapFree( GetProcessHeap(), 0, saved );
     return 0;
 }
@@ -569,7 +581,7 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
 INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
 {
     HRGN rgn;
-    DC *dc = DC_GetDCPtr( hDC );
+    DC *dc = get_dc_ptr( hDC );
 
     if (!dc) return -1;
 
@@ -587,15 +599,16 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
         if(!rgn) rgn = dc->hMetaRgn;
         break;
     case SYSRGN: /* == 4 */
+        update_dc( dc );
         rgn = dc->hVisRgn;
         break;
     default:
         WARN("Unknown code %d\n", iCode);
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return -1;
     }
     if (rgn) CombineRgn( hRgn, rgn, 0, RGN_COPY );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
 
     /* On Windows NT/2000, the SYSRGN returned is in screen coordinates */
     if (iCode == SYSRGN && !(GetVersion() & 0x80000000))
