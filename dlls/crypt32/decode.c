@@ -510,7 +510,7 @@ struct AsnArrayItemSize
 static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo,
- void *startingPointer)
+ DWORD *pcbDecoded, void *startingPointer)
 {
     BOOL ret = TRUE;
 
@@ -989,7 +989,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCRLEntries(DWORD dwCertEncodingType,
      pDecodePara, pvStructInfo, *pcbStructInfo);
 
     ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo,
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL,
      entries ? entries->rgItems : NULL);
     TRACE("Returning %d (%08x)\n", ret, GetLastError());
     return ret;
@@ -1261,7 +1261,8 @@ static BOOL WINAPI CRYPT_AsnDecodeExtensionsInternal(DWORD dwCertEncodingType,
      pDecodePara, pvStructInfo, *pcbStructInfo);
 
     ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, exts ? exts->rgExtension : NULL);
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL,
+     exts ? exts->rgExtension : NULL);
     return ret;
 }
 
@@ -1704,7 +1705,8 @@ static BOOL CRYPT_AsnDecodeRdn(const BYTE *pbEncoded, DWORD cbEncoded,
     PCERT_RDN rdn = (PCERT_RDN)pvStructInfo;
 
     ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, rdn ? rdn->rgRDNAttr : NULL);
+     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
+     rdn ? rdn->rgRDNAttr : NULL);
     return ret;
 }
 
@@ -1721,7 +1723,7 @@ static BOOL WINAPI CRYPT_AsnDecodeName(DWORD dwCertEncodingType,
          offsetof(CERT_RDN, rgRDNAttr) };
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -1775,7 +1777,8 @@ static BOOL CRYPT_AsnDecodeUnicodeRdn(const BYTE *pbEncoded, DWORD cbEncoded,
     PCERT_RDN rdn = (PCERT_RDN)pvStructInfo;
 
     ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     NULL, pvStructInfo, pcbStructInfo, rdn ? rdn->rgRDNAttr : NULL);
+     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
+     rdn ? rdn->rgRDNAttr : NULL);
     return ret;
 }
 
@@ -1792,7 +1795,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUnicodeName(DWORD dwCertEncodingType,
          offsetof(CERT_RDN, rgRDNAttr) };
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -1855,7 +1858,8 @@ static BOOL WINAPI CRYPT_DecodeDERArray(DWORD dwCertEncodingType,
      pDecodePara, pvStructInfo, *pcbStructInfo);
 
     ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, array ? array->rgItems : NULL);
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL,
+     array ? array->rgItems : NULL);
     return ret;
 }
 
@@ -1941,7 +1945,7 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttributesInternal(
     BOOL ret;
 
     ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, attrs ? attrs->rgAttr :
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL, attrs ? attrs->rgAttr :
      NULL);
     return ret;
 }
@@ -2304,7 +2308,8 @@ static BOOL WINAPI CRYPT_AsnDecodeAltNameInternal(DWORD dwCertEncodingType,
     if (info)
         TRACE("info->rgAltEntry is %p\n", info->rgAltEntry);
     ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, info ? info->rgAltEntry : NULL);
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL,
+     info ? info->rgAltEntry : NULL);
     return ret;
 }
 
@@ -2559,7 +2564,7 @@ static BOOL WINAPI CRYPT_AsnDecodeAltName(DWORD dwCertEncodingType,
          offsetof(CERT_ALT_NAME_ENTRY, u.pwszURL) };
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -2638,7 +2643,7 @@ static BOOL WINAPI CRYPT_AsnDecodeSubtreeConstraints(DWORD dwCertEncodingType,
      pDecodePara, pvStructInfo, *pcbStructInfo);
 
     ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo,
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL,
      entries ? entries->rgItems : NULL);
     TRACE("Returning %d (%08x)\n", ret, GetLastError());
     return ret;
@@ -3741,7 +3746,7 @@ static BOOL WINAPI CRYPT_AsnDecodeDistPointName(DWORD dwCertEncodingType,
 
                 ret = CRYPT_AsnDecodeArray(&arrayDesc,
                  pbEncoded + 1 + lenBytes, cbEncoded - 1 - lenBytes,
-                 0, NULL, NULL, &nameLen, NULL);
+                 0, NULL, NULL, &nameLen, NULL, NULL);
                 bytesNeeded = sizeof(CRL_DIST_POINT_NAME) + nameLen;
             }
             else
@@ -3763,7 +3768,7 @@ static BOOL WINAPI CRYPT_AsnDecodeDistPointName(DWORD dwCertEncodingType,
                     name->dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
                     ret = CRYPT_AsnDecodeArray(&arrayDesc,
                      pbEncoded + 1 + lenBytes, cbEncoded - 1 - lenBytes,
-                     0, NULL, &name->u.FullName, pcbStructInfo,
+                     0, NULL, &name->u.FullName, pcbStructInfo, NULL,
                      name->u.FullName.rgAltEntry);
                 }
                 else
@@ -3818,7 +3823,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCRLDistPoints(DWORD dwCertEncodingType,
          offsetof(CRL_DIST_POINT, DistPointName.u.FullName.rgAltEntry) };
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -3844,7 +3849,7 @@ static BOOL WINAPI CRYPT_AsnDecodeEnhancedKeyUsage(DWORD dwCertEncodingType,
          CRYPT_AsnDecodeOidInternal, sizeof(LPSTR), TRUE, 0 };
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -4028,7 +4033,8 @@ static BOOL WINAPI CRYPT_DecodeSignerArray(DWORD dwCertEncodingType,
      pDecodePara, pvStructInfo, *pcbStructInfo);
 
     ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, pvStructInfo, pcbStructInfo, array ? array->rgItems : NULL);
+     pDecodePara, pvStructInfo, pcbStructInfo, NULL,
+     array ? array->rgItems : NULL);
     return ret;
 }
 
