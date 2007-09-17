@@ -2226,14 +2226,10 @@ static unsigned int get_required_buffer_size_type(
 
         case RPC_FC_SMVARRAY:
         case RPC_FC_LGVARRAY:
-            get_required_buffer_size_type(type->ref, name, alignment);
-            size = 0;
-            break;
-
         case RPC_FC_CARRAY:
         case RPC_FC_CVARRAY:
-            get_required_buffer_size_type(type->ref, name, alignment);
-            size = sizeof(void *);
+        case RPC_FC_BOGUS_ARRAY:
+            size = 0;
             break;
 
         default:
