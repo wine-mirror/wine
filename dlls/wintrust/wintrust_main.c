@@ -21,6 +21,8 @@
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -84,10 +86,10 @@ static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
         goto oom;
     provData->cdwTrustStepErrors = TRUSTERROR_MAX_STEPS;
 
-    provData->pPDSip = WINTRUST_Alloc(sizeof(PROVDATA_SIP));
-    if (!provData->pPDSip)
+    provData->u.pPDSip = WINTRUST_Alloc(sizeof(PROVDATA_SIP));
+    if (!provData->u.pPDSip)
         goto oom;
-    provData->pPDSip->cbStruct = sizeof(PROVDATA_SIP);
+    provData->u.pPDSip->cbStruct = sizeof(PROVDATA_SIP);
 
     provData->psPfns = WINTRUST_Alloc(sizeof(CRYPT_PROVIDER_FUNCTIONS));
     if (!provData->psPfns)
@@ -130,7 +132,7 @@ error:
     if (provData)
     {
         WINTRUST_Free(provData->padwTrustStepErrors);
-        WINTRUST_Free(provData->pPDSip);
+        WINTRUST_Free(provData->u.pPDSip);
         WINTRUST_Free(provData->psPfns);
         WINTRUST_Free(provData);
     }
@@ -151,7 +153,7 @@ static LONG WINTRUST_DefaultClose(HWND hwnd, GUID *actionID,
     {
         err = provData->psPfns->pfnCleanupPolicy(provData);
         WINTRUST_Free(provData->padwTrustStepErrors);
-        WINTRUST_Free(provData->pPDSip);
+        WINTRUST_Free(provData->u.pPDSip);
         WINTRUST_Free(provData->psPfns);
         WINTRUST_Free(provData);
         data->hWVTStateData = NULL;
@@ -180,7 +182,7 @@ static LONG WINTRUST_PublishedSoftware(HWND hwnd, GUID *actionID,
     /* Undocumented: the published software action is passed a path,
      * and pSIPClientData points to a WIN_TRUST_SUBJECT_FILE.
      */
-    LPCWSTR path = (LPCWSTR)data->pFile;
+    LPCWSTR path = (LPCWSTR)data->u.pFile;
     LPWIN_TRUST_SUBJECT_FILE subjectFile =
      (LPWIN_TRUST_SUBJECT_FILE)data->pSIPClientData;
     WINTRUST_FILE_INFO fileInfo = { sizeof(fileInfo), 0 };
@@ -189,7 +191,7 @@ static LONG WINTRUST_PublishedSoftware(HWND hwnd, GUID *actionID,
     TRACE("subjectFile->lpPath: %s\n", debugstr_w(subjectFile->lpPath));
     fileInfo.pcwszFilePath = path;
     fileInfo.hFile = subjectFile->hFile;
-    wintrust_data.pFile = &fileInfo;
+    wintrust_data.u.pFile = &fileInfo;
     wintrust_data.dwUnionChoice = WTD_CHOICE_FILE;
     wintrust_data.dwUIChoice = WTD_UI_NONE;
 
