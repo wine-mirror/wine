@@ -810,7 +810,7 @@ static DNS_STATUS dns_get_hostname_w( COMPUTER_NAME_FORMAT format,
  * DnsQueryConfig          [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PWSTR adapter,
+DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PCWSTR adapter,
                                   PVOID reserved, PVOID buffer, PDWORD len )
 {
     DNS_STATUS ret = ERROR_INVALID_PARAMETER;

@@ -1230,7 +1230,6 @@ PCSTR
 %wstr
 
 PCWSTR
-PWSTR
 
 %void
 
