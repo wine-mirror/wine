@@ -979,6 +979,7 @@ static void compareNames(const CERT_NAME_INFO *expected,
     }
 }
 
+static const BYTE emptyIndefiniteSequence[] = { 0x30,0x80,0x00,0x00 };
 static const BYTE twoRDNsExtraBytes[] = {
     0x30,0x23,0x31,0x21,0x30,0x0c,0x06,0x03,0x55,0x04,0x04,
     0x13,0x05,0x4c,0x61,0x6e,0x67,0x00,0x30,0x11,0x06,0x03,0x55,0x04,0x03,
@@ -1003,6 +1004,20 @@ static void test_decodeName(DWORD dwEncoding)
      * decoder works the same way, so only test the count.
      */
     if (buf)
+    {
+        ok(bufSize == sizeof(CERT_NAME_INFO), "Wrong bufSize %d\n", bufSize);
+        ok(((CERT_NAME_INFO *)buf)->cRDN == 0,
+         "Expected 0 RDNs in empty info, got %d\n",
+         ((CERT_NAME_INFO *)buf)->cRDN);
+        LocalFree(buf);
+    }
+    /* test empty name with indefinite-length encoding */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_NAME, emptyIndefiniteSequence,
+     sizeof(emptyIndefiniteSequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &bufSize);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
     {
         ok(bufSize == sizeof(CERT_NAME_INFO), "Wrong bufSize %d\n", bufSize);
         ok(((CERT_NAME_INFO *)buf)->cRDN == 0,
