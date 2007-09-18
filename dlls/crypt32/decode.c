@@ -2622,12 +2622,30 @@ static BOOL WINAPI CRYPT_AsnDecodeAltName(DWORD dwCertEncodingType,
 
     __TRY
     {
-        struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
-         CRYPT_AsnDecodeAltNameEntry, sizeof(CERT_ALT_NAME_ENTRY), TRUE,
-         offsetof(CERT_ALT_NAME_ENTRY, u.pwszURL) };
+        DWORD bytesNeeded;
 
-        ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
+        if ((ret = CRYPT_AsnDecodeAltNameInternal(dwCertEncodingType,
+         lpszStructType, pbEncoded, cbEncoded,
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded)))
+        {
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                CERT_ALT_NAME_INFO *name;
+
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                name = (CERT_ALT_NAME_INFO *)pvStructInfo;
+                name->rgAltEntry = (PCERT_ALT_NAME_ENTRY)
+                 ((BYTE *)pvStructInfo + sizeof(CERT_ALT_NAME_INFO));
+                ret = CRYPT_AsnDecodeAltNameInternal(dwCertEncodingType,
+                 lpszStructType, pbEncoded, cbEncoded,
+                 dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, pvStructInfo,
+                 &bytesNeeded);
+            }
+        }
     }
     __EXCEPT_PAGE_FAULT
     {
