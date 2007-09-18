@@ -752,7 +752,6 @@ programs/xcopy/xcopy
 server/wineserver
 server/wineserver-installed
 server/wineserver.man
-tools/bin2res
 tools/fnt2bdf
 tools/fnt2fon
 tools/make_ctests

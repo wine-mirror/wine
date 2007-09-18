@@ -8,7 +8,6 @@ EXTRAINCL = @FREETYPEINCL@
 FREETYPELIBS = @FREETYPELIBS@
 
 PROGRAMS = \
-	bin2res$(EXEEXT) \
 	fnt2bdf$(EXEEXT) \
 	fnt2fon$(EXEEXT) \
 	make_ctests$(EXEEXT) \
@@ -22,7 +21,6 @@ MANPAGES = \
 	wineprefixcreate.man
 
 C_SRCS = \
-	bin2res.c \
 	fnt2bdf.c \
 	fnt2fon.c \
 	make_ctests.c \
@@ -71,9 +69,6 @@ relpath$(EXEEXT): relpath.o
 
 sfnt2fnt$(EXEEXT): sfnt2fnt.o relpath$(EXEEXT)
 	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS) $(LDRPATH_LOCAL)
-
-bin2res$(EXEEXT): bin2res.o
-	$(CC) $(CFLAGS) -o $@ bin2res.o $(LIBPORT) $(LDFLAGS)
 
 wineprefixcreate: wineprefixcreate.in relpath$(EXEEXT)
 	sed -e "s,@bintodlldir\@,`$(RELPATH) $(bindir) $(dlldir)`,g" -e "s,@bintodatadir\@,`$(RELPATH) $(bindir) $(datadir)/wine`,g" $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)

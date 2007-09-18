@@ -67,7 +67,6 @@ WINEBUILD    = $(TOOLSDIR)/tools/winebuild/winebuild
 MAKEDEP      = $(TOOLSDIR)/tools/makedep
 MAKECTESTS   = $(TOOLSDIR)/tools/make_ctests
 WRC          = $(TOOLSDIR)/tools/wrc/wrc
-BIN2RES      = $(TOOLSDIR)/tools/bin2res
 WMC          = $(TOOLSDIR)/tools/wmc/wmc
 WIDL         = $(TOOLSDIR)/tools/widl/widl
 WINEGCC      = $(TOOLSDIR)/tools/winegcc/winegcc
@@ -196,10 +195,7 @@ filter: dummy
 
 # Rules for resources
 
-$(RC_BINARIES): $(BIN2RES) $(RC_BINSRC)
-	$(BIN2RES) -f -o $@ $(SRCDIR)/$(RC_BINSRC)
-
-$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC) $(RC_BINARIES) $(IDL_TLB_SRCS:.idl=.tlb)
+$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC) $(IDL_TLB_SRCS:.idl=.tlb)
 
 # Rule for linting
 
@@ -242,7 +238,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(CLEAN_TARGETS) $(PROGRAMS) $(RC_BINARIES) $(MANPAGES)
+	$(RM) $(CLEAN_FILES) $(CLEAN_TARGETS) $(PROGRAMS) $(MANPAGES)
 
 .PHONY: clean $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
 
