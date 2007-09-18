@@ -289,6 +289,7 @@ struct AsnDecodeSequenceItem
  * pvStructInfo.  nextData is a pointer to the memory location at which the
  * first decoded item with a dynamic pointer should point.
  * Upon decoding, *cbDecoded is the total number of bytes decoded.
+ * Each item decoder is never called with CRYPT_DECODE_ALLOC_FLAG set.
  */
 static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
  struct AsnDecodeSequenceItem items[], DWORD cItem, const BYTE *pbEncoded,
@@ -407,7 +408,6 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
  * startingPointer is an optional pointer to the first place where dynamic
  * data will be stored.  If you know the starting offset, you may pass it
  * here.  Otherwise, pass NULL, and one will be inferred from the items.
- * Each item decoder is never called with CRYPT_DECODE_ALLOC_FLAG set.
  */
 static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
  struct AsnDecodeSequenceItem items[], DWORD cItem, const BYTE *pbEncoded,
