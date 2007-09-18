@@ -3444,166 +3444,166 @@ static BOOL CRYPT_AsnDecodeTimeZone(const BYTE *pbEncoded, DWORD len,
 
 #define MIN_ENCODED_TIME_LENGTH 10
 
+static BOOL CRYPT_AsnDecodeUtcTimeInternal(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret = FALSE;
+
+    if (pbEncoded[0] == ASN_UTCTIME)
+    {
+        if (cbEncoded <= 1)
+            SetLastError(CRYPT_E_ASN1_EOD);
+        else if (pbEncoded[1] > 0x7f)
+        {
+            /* long-form date strings really can't be valid */
+            SetLastError(CRYPT_E_ASN1_CORRUPT);
+        }
+        else
+        {
+            SYSTEMTIME sysTime = { 0 };
+            BYTE len = pbEncoded[1];
+
+            if (len < MIN_ENCODED_TIME_LENGTH)
+                SetLastError(CRYPT_E_ASN1_CORRUPT);
+            else
+            {
+                ret = TRUE;
+                pbEncoded += 2;
+                CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wYear);
+                if (sysTime.wYear >= 50)
+                    sysTime.wYear += 1900;
+                else
+                    sysTime.wYear += 2000;
+                CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wMonth);
+                CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wDay);
+                CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wHour);
+                CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wMinute);
+                if (ret && len > 0)
+                {
+                    if (len >= 2 && isdigit(*pbEncoded) &&
+                     isdigit(*(pbEncoded + 1)))
+                        CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2,
+                         sysTime.wSecond);
+                    else if (isdigit(*pbEncoded))
+                        CRYPT_TIME_GET_DIGITS(pbEncoded, len, 1,
+                         sysTime.wSecond);
+                    if (ret)
+                        ret = CRYPT_AsnDecodeTimeZone(pbEncoded, len,
+                         &sysTime);
+                }
+                if (ret)
+                {
+                    if (!pvStructInfo)
+                        *pcbStructInfo = sizeof(FILETIME);
+                    else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL,
+                     pvStructInfo, pcbStructInfo, sizeof(FILETIME))))
+                        ret = SystemTimeToFileTime(&sysTime,
+                         (FILETIME *)pvStructInfo);
+                }
+            }
+        }
+    }
+    else
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnDecodeUtcTime(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
-    BOOL ret;
+    BOOL ret = FALSE;
 
-    if (!pvStructInfo)
-    {
-        *pcbStructInfo = sizeof(FILETIME);
-        return TRUE;
-    }
     __TRY
     {
-        ret = TRUE;
-        if (pbEncoded[0] == ASN_UTCTIME)
-        {
-            if (cbEncoded <= 1)
-            {
-                SetLastError(CRYPT_E_ASN1_EOD);
-                ret = FALSE;
-            }
-            else if (pbEncoded[1] > 0x7f)
-            {
-                /* long-form date strings really can't be valid */
-                SetLastError(CRYPT_E_ASN1_CORRUPT);
-                ret = FALSE;
-            }
-            else
-            {
-                SYSTEMTIME sysTime = { 0 };
-                BYTE len = pbEncoded[1];
+        DWORD bytesNeeded;
 
-                if (len < MIN_ENCODED_TIME_LENGTH)
-                {
-                    SetLastError(CRYPT_E_ASN1_CORRUPT);
-                    ret = FALSE;
-                }
-                else
-                {
-                    pbEncoded += 2;
-                    CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wYear);
-                    if (sysTime.wYear >= 50)
-                        sysTime.wYear += 1900;
-                    else
-                        sysTime.wYear += 2000;
-                    CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wMonth);
-                    CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wDay);
-                    CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wHour);
-                    CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wMinute);
-                    if (ret && len > 0)
-                    {
-                        if (len >= 2 && isdigit(*pbEncoded) &&
-                         isdigit(*(pbEncoded + 1)))
-                            CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2,
-                             sysTime.wSecond);
-                        else if (isdigit(*pbEncoded))
-                            CRYPT_TIME_GET_DIGITS(pbEncoded, len, 1,
-                             sysTime.wSecond);
-                        if (ret)
-                            ret = CRYPT_AsnDecodeTimeZone(pbEncoded, len,
-                             &sysTime);
-                    }
-                    if (ret && (ret = CRYPT_DecodeEnsureSpace(dwFlags,
-                     pDecodePara, pvStructInfo, pcbStructInfo,
-                     sizeof(FILETIME))))
-                    {
-                        if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                            pvStructInfo = *(BYTE **)pvStructInfo;
-                        ret = SystemTimeToFileTime(&sysTime,
-                         (FILETIME *)pvStructInfo);
-                    }
-                }
-            }
-        }
-        else
+        ret = CRYPT_AsnDecodeUtcTimeInternal(pbEncoded, cbEncoded,
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded, NULL);
+        if (ret)
         {
-            SetLastError(CRYPT_E_ASN1_BADTAG);
-            ret = FALSE;
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags,
+             pDecodePara, pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                ret = CRYPT_AsnDecodeUtcTimeInternal(pbEncoded, cbEncoded,
+                 dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
+                 &bytesNeeded, NULL);
+            }
         }
     }
     __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
-        ret = FALSE;
     }
     __ENDTRY
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnDecodeGeneralizedTime(DWORD dwCertEncodingType,
- LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
- PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+static BOOL CRYPT_AsnDecodeGeneralizedTime(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
 {
-    BOOL ret;
+    BOOL ret = FALSE;
 
-    if (!pvStructInfo)
+    if (pbEncoded[0] == ASN_GENERALTIME)
     {
-        *pcbStructInfo = sizeof(FILETIME);
-        return TRUE;
-    }
-    __TRY
-    {
-        ret = TRUE;
-        if (pbEncoded[0] == ASN_GENERALTIME)
+        if (cbEncoded <= 1)
+            SetLastError(CRYPT_E_ASN1_EOD);
+        else if (pbEncoded[1] > 0x7f)
         {
-            if (cbEncoded <= 1)
-            {
-                SetLastError(CRYPT_E_ASN1_EOD);
-                ret = FALSE;
-            }
-            else if (pbEncoded[1] > 0x7f)
-            {
-                /* long-form date strings really can't be valid */
+            /* long-form date strings really can't be valid */
+            SetLastError(CRYPT_E_ASN1_CORRUPT);
+        }
+        else
+        {
+            BYTE len = pbEncoded[1];
+
+            if (len < MIN_ENCODED_TIME_LENGTH)
                 SetLastError(CRYPT_E_ASN1_CORRUPT);
-                ret = FALSE;
-            }
             else
             {
-                BYTE len = pbEncoded[1];
+                SYSTEMTIME sysTime = { 0 };
 
-                if (len < MIN_ENCODED_TIME_LENGTH)
+                ret = TRUE;
+                pbEncoded += 2;
+                CRYPT_TIME_GET_DIGITS(pbEncoded, len, 4, sysTime.wYear);
+                CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wMonth);
+                CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wDay);
+                CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wHour);
+                if (ret && len > 0)
                 {
-                    SetLastError(CRYPT_E_ASN1_CORRUPT);
-                    ret = FALSE;
-                }
-                else
-                {
-                    SYSTEMTIME sysTime = { 0 };
-
-                    pbEncoded += 2;
-                    CRYPT_TIME_GET_DIGITS(pbEncoded, len, 4, sysTime.wYear);
-                    CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wMonth);
-                    CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wDay);
-                    CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wHour);
+                    CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2,
+                     sysTime.wMinute);
                     if (ret && len > 0)
-                    {
                         CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2,
-                         sysTime.wMinute);
-                        if (ret && len > 0)
-                            CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2,
-                             sysTime.wSecond);
-                        if (ret && len > 0 && (*pbEncoded == '.' ||
-                         *pbEncoded == ','))
-                        {
-                            BYTE digits;
+                         sysTime.wSecond);
+                    if (ret && len > 0 && (*pbEncoded == '.' ||
+                     *pbEncoded == ','))
+                    {
+                        BYTE digits;
 
-                            pbEncoded++;
-                            len--;
-                            /* workaround macro weirdness */
-                            digits = min(len, 3);
-                            CRYPT_TIME_GET_DIGITS(pbEncoded, len, digits,
-                             sysTime.wMilliseconds);
-                        }
-                        if (ret)
-                            ret = CRYPT_AsnDecodeTimeZone(pbEncoded, len,
-                             &sysTime);
+                        pbEncoded++;
+                        len--;
+                        /* workaround macro weirdness */
+                        digits = min(len, 3);
+                        CRYPT_TIME_GET_DIGITS(pbEncoded, len, digits,
+                         sysTime.wMilliseconds);
                     }
-                    if (ret && (ret = CRYPT_DecodeEnsureSpace(dwFlags,
-                     pDecodePara, pvStructInfo, pcbStructInfo,
-                     sizeof(FILETIME))))
+                    if (ret)
+                        ret = CRYPT_AsnDecodeTimeZone(pbEncoded, len,
+                         &sysTime);
+                }
+                if (ret)
+                {
+                    if (!pvStructInfo)
+                        *pcbStructInfo = sizeof(FILETIME);
+                    else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL,
+                     pvStructInfo, pcbStructInfo, sizeof(FILETIME))))
                     {
                         if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
                             pvStructInfo = *(BYTE **)pvStructInfo;
@@ -3613,18 +3613,31 @@ static BOOL WINAPI CRYPT_AsnDecodeGeneralizedTime(DWORD dwCertEncodingType,
                 }
             }
         }
-        else
-        {
-            SetLastError(CRYPT_E_ASN1_BADTAG);
-            ret = FALSE;
-        }
     }
-    __EXCEPT_PAGE_FAULT
+    else
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+    return ret;
+}
+
+static BOOL CRYPT_AsnDecodeChoiceOfTimeInternal(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret;
+    InternalDecodeFunc decode = NULL;
+
+    if (pbEncoded[0] == ASN_UTCTIME)
+        decode = CRYPT_AsnDecodeUtcTimeInternal;
+    else if (pbEncoded[0] == ASN_GENERALTIME)
+        decode = CRYPT_AsnDecodeGeneralizedTime;
+    if (decode)
+        ret = decode(pbEncoded, cbEncoded, dwFlags, pvStructInfo,
+         pcbStructInfo, pcbDecoded);
+    else
     {
-        SetLastError(STATUS_ACCESS_VIOLATION);
+        SetLastError(CRYPT_E_ASN1_BADTAG);
         ret = FALSE;
     }
-    __ENDTRY
     return ret;
 }
 
@@ -3636,18 +3649,23 @@ static BOOL WINAPI CRYPT_AsnDecodeChoiceOfTime(DWORD dwCertEncodingType,
 
     __TRY
     {
-        if (pbEncoded[0] == ASN_UTCTIME)
-            ret = CRYPT_AsnDecodeUtcTime(dwCertEncodingType, lpszStructType,
-             pbEncoded, cbEncoded, dwFlags, pDecodePara, pvStructInfo,
-             pcbStructInfo);
-        else if (pbEncoded[0] == ASN_GENERALTIME)
-            ret = CRYPT_AsnDecodeGeneralizedTime(dwCertEncodingType,
-             lpszStructType, pbEncoded, cbEncoded, dwFlags, pDecodePara,
-             pvStructInfo, pcbStructInfo);
-        else
+        DWORD bytesNeeded;
+
+        ret = CRYPT_AsnDecodeChoiceOfTimeInternal(pbEncoded, cbEncoded,
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded, NULL);
+        if (ret)
         {
-            SetLastError(CRYPT_E_ASN1_BADTAG);
-            ret = FALSE;
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                ret = CRYPT_AsnDecodeChoiceOfTimeInternal(pbEncoded, cbEncoded,
+                 dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
+                 &bytesNeeded, NULL);
+            }
         }
     }
     __EXCEPT_PAGE_FAULT
