@@ -114,7 +114,7 @@ DWORD WINAPI CM_Get_Device_ID_ListA(
 /***********************************************************************
  *		SetupInitializeFileLogW(SETUPAPI.@)
  */
-HANDLE WINAPI SetupInitializeFileLogW(LPWSTR LogFileName, DWORD Flags)
+HSPFILELOG WINAPI SetupInitializeFileLogW(LPCWSTR LogFileName, DWORD Flags)
 {
     FIXME("Stub %s, 0x%x\n",debugstr_w(LogFileName),Flags);
     return INVALID_HANDLE_VALUE;
@@ -123,7 +123,7 @@ HANDLE WINAPI SetupInitializeFileLogW(LPWSTR LogFileName, DWORD Flags)
 /***********************************************************************
  *		SetupInitializeFileLogA(SETUPAPI.@)
  */
-HANDLE WINAPI SetupInitializeFileLogA(LPSTR LogFileName, DWORD Flags)
+HSPFILELOG WINAPI SetupInitializeFileLogA(LPCSTR LogFileName, DWORD Flags)
 {
     FIXME("Stub %s, 0x%x\n",debugstr_a(LogFileName),Flags);
     return INVALID_HANDLE_VALUE;
