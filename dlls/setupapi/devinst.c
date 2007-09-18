@@ -1029,7 +1029,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(
         PVOID reserved)
 {
     FIXME("stub\n");
-    return FALSE;
+    return NULL;
 }
 
 /***********************************************************************
