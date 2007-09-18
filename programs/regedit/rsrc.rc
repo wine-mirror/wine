@@ -38,7 +38,35 @@ IDC_REGEDIT ACCELERATORS
     VK_F5,	ID_VIEW_REFRESH, VIRTKEY
 }
 
-#include "resource.rc"
+/* @makedep: folderopen.ico */
+IDI_OPEN_FILE ICON DISCARDABLE folderopen.ico
+
+/* @makedep: folder.ico */
+IDI_CLOSED_FILE ICON DISCARDABLE folder.ico
+
+/* @makedep: computer.ico */
+IDI_ROOT ICON DISCARDABLE computer.ico
+
+/* @makedep: string.ico */
+IDI_STRING ICON DISCARDABLE string.ico
+
+/* @makedep: bin.ico */
+IDI_BIN  ICON DISCARDABLE bin.ico
+
+/* @makedep: regedit.ico */
+IDI_REGEDIT ICON DISCARDABLE regedit.ico
+
+#define WINE_FILEDESCRIPTION_STR "Wine Registry Editor"
+#define WINE_FILENAME "REGEDIT"
+#define WINE_FILENAME_STR "REGEDIT.EXE"
+#define WINE_FILETYPE VFT_APP
+#define WINE_FILEVERSION 5,2,3790,0
+#define WINE_FILEVERSION_STR "5.2.3790.0"
+
+#define WINE_PRODUCTVERSION 5,2,3790,0
+#define WINE_PRODUCTVERSION_STR "5.2"
+
+#include "wine/wine_common_ver.rc"
 
 /* include localised resources */
 

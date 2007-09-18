@@ -632,14 +632,8 @@ programs/oleview/oleview
 programs/oleview/rsrc.res
 programs/progman/progman
 programs/progman/rsrc.res
-programs/regedit/bin.ico
-programs/regedit/computer.ico
-programs/regedit/folder.ico
-programs/regedit/folderopen.ico
 programs/regedit/regedit
-programs/regedit/regedit.ico
 programs/regedit/rsrc.res
-programs/regedit/string.ico
 programs/regsvr32/regsvr32
 programs/regsvr32/regsvr32.res
 programs/rpcss/irot.h

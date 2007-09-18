@@ -23,14 +23,6 @@ C_SRCS = \
 	treeview.c
 
 RC_SRCS = rsrc.rc
-RC_BINSRC = resource.rc
-RC_BINARIES = \
-	bin.ico \
-	computer.ico \
-	folder.ico \
-	folderopen.ico \
-	regedit.ico \
-	string.ico
 
 @MAKE_PROG_RULES@
 
