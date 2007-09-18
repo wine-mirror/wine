@@ -574,23 +574,25 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                         doneDecoding = TRUE;
                     if (!doneDecoding)
                     {
-                        DWORD itemDataLen, itemDecoded, size = 0;
+                        DWORD itemEncoded, itemDataLen, itemDecoded, size = 0;
 
                         /* Each item decoded may not tolerate extraneous bytes,
-                         * so get the length of the next element and pass it
-                         * directly.
+                         * so get the length of the next element if known.
                          */
-                        ret = CRYPT_GetLen(ptr, cbEncoded - (ptr - pbEncoded),
-                         &itemDataLen);
+                        if ((ret = CRYPT_GetLengthIndefinite(ptr,
+                         cbEncoded - (ptr - pbEncoded), &itemDataLen)))
+                        {
+                            if (itemDataLen == CMSG_INDEFINITE_LENGTH)
+                                itemEncoded = cbEncoded - (ptr - pbEncoded);
+                            else
+                                itemEncoded = 1 + itemLenBytes + itemDataLen;
+                        }
                         if (ret)
-                            ret = arrayDesc->decodeFunc(ptr,
-                             1 + itemLenBytes + itemDataLen,
+                            ret = arrayDesc->decodeFunc(ptr, itemEncoded,
                              dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &size,
                              &itemDecoded);
                         if (ret)
                         {
-                            DWORD nextLen;
-
                             cItems++;
                             if (itemSizes != &itemSize)
                                 itemSizes = CryptMemRealloc(itemSizes,
@@ -607,14 +609,10 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                             if (itemSizes)
                             {
                                 decoded += itemDecoded;
-                                itemSizes[cItems - 1].encodedLen =
-                                 1 + itemLenBytes + itemDataLen;
+                                itemSizes[cItems - 1].encodedLen = itemEncoded;
                                 itemSizes[cItems - 1].size = size;
                                 bytesNeeded += size;
-                                ret = CRYPT_GetLen(ptr,
-                                 cbEncoded - (ptr - pbEncoded), &nextLen);
-                                if (ret)
-                                    ptr += nextLen + 1 + GET_LEN_BYTES(ptr[1]);
+                                ptr += itemEncoded;
                             }
                             else
                                 ret = FALSE;
