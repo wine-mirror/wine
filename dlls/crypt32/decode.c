@@ -250,6 +250,27 @@ static BOOL CRYPT_DecodeEnsureSpace(DWORD dwFlags,
     return ret;
 }
 
+/* Helper function to check *pcbStructInfo and set it to the required size.
+ * Assumes pvStructInfo is not NULL.
+ */
+static BOOL CRYPT_DecodeCheckSpace(DWORD *pcbStructInfo, DWORD bytesNeeded)
+{
+    BOOL ret;
+
+    if (*pcbStructInfo < bytesNeeded)
+    {
+        *pcbStructInfo = bytesNeeded;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        *pcbStructInfo = bytesNeeded;
+        ret = TRUE;
+    }
+    return ret;
+}
+
 /* tag:
  *     The expected tag of the item.  If tag is 0, decodeFunc is called
  *     regardless of the tag value seen.
@@ -705,8 +726,7 @@ static BOOL WINAPI CRYPT_AsnDecodeDerBlob(DWORD dwCertEncodingType,
 
         if (!pvStructInfo)
             *pcbStructInfo = bytesNeeded;
-        else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara, 
-         pvStructInfo, pcbStructInfo, bytesNeeded)))
+        else if ((ret = CRYPT_DecodeCheckSpace(pcbStructInfo, bytesNeeded)))
         {
             CRYPT_DER_BLOB *blob;
 
@@ -3055,8 +3075,7 @@ static BOOL CRYPT_AsnDecodeIntInternal(const BYTE *pbEncoded, DWORD cbEncoded,
     {
         if (!pvStructInfo)
             *pcbStructInfo = sizeof(int);
-        else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL,
-         pvStructInfo, pcbStructInfo, sizeof(int))))
+        else if ((ret = CRYPT_DecodeCheckSpace(pcbStructInfo, sizeof(int))))
         {
             int val, i;
 
@@ -3515,8 +3534,8 @@ static BOOL CRYPT_AsnDecodeUtcTimeInternal(const BYTE *pbEncoded,
                 {
                     if (!pvStructInfo)
                         *pcbStructInfo = sizeof(FILETIME);
-                    else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL,
-                     pvStructInfo, pcbStructInfo, sizeof(FILETIME))))
+                    else if ((ret = CRYPT_DecodeCheckSpace(pcbStructInfo,
+                     sizeof(FILETIME))))
                         ret = SystemTimeToFileTime(&sysTime,
                          (FILETIME *)pvStructInfo);
                 }
@@ -3621,14 +3640,10 @@ static BOOL CRYPT_AsnDecodeGeneralizedTime(const BYTE *pbEncoded,
                 {
                     if (!pvStructInfo)
                         *pcbStructInfo = sizeof(FILETIME);
-                    else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, NULL,
-                     pvStructInfo, pcbStructInfo, sizeof(FILETIME))))
-                    {
-                        if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
-                            pvStructInfo = *(BYTE **)pvStructInfo;
+                    else if ((ret = CRYPT_DecodeCheckSpace(pcbStructInfo,
+                     sizeof(FILETIME))))
                         ret = SystemTimeToFileTime(&sysTime,
                          (FILETIME *)pvStructInfo);
-                    }
                 }
             }
         }
