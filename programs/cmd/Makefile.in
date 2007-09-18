@@ -14,8 +14,6 @@ C_SRCS = \
 	wcmdmain.c
 
 RC_SRCS = wcmdrc.rc
-RC_BINSRC = wcmdrc.rc
-RC_BINARIES = wcmd.ico
 
 @MAKE_PROG_RULES@
 

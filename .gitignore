@@ -611,7 +611,6 @@ programs/Makeprog.rules
 programs/clock/clock
 programs/clock/rsrc.res
 programs/cmd/cmd
-programs/cmd/wcmd.ico
 programs/cmd/wcmdrc.res
 programs/cmdlgtst/about.ico
 programs/cmdlgtst/cmdlgr.res
