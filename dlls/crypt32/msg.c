@@ -113,7 +113,7 @@ static WINAPI BOOL CRYPT_EncodeContentLength(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
-    const CDataEncodeMsg *msg = (const CDataEncodeMsg *)pvStructInfo;
+    DWORD dataLen = *(DWORD *)pvStructInfo;
     DWORD lenBytes;
     BOOL ret = TRUE;
 
@@ -121,9 +121,9 @@ static WINAPI BOOL CRYPT_EncodeContentLength(DWORD dwCertEncodingType,
      * the message isn't available yet.  The caller will use the length
      * reported here to encode its length.
      */
-    CRYPT_EncodeLen(msg->base.stream_info.cbContent, NULL, &lenBytes);
+    CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
     if (!pbEncoded)
-        *pcbEncoded = 1 + lenBytes + msg->base.stream_info.cbContent;
+        *pcbEncoded = 1 + lenBytes + dataLen;
     else
     {
         if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded,
@@ -132,7 +132,7 @@ static WINAPI BOOL CRYPT_EncodeContentLength(DWORD dwCertEncodingType,
             if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
                 pbEncoded = *(BYTE **)pbEncoded;
             *pbEncoded++ = ASN_OCTETSTRING;
-            CRYPT_EncodeLen(msg->base.stream_info.cbContent, pbEncoded,
+            CRYPT_EncodeLen(dataLen, pbEncoded,
              &lenBytes);
         }
     }
@@ -153,8 +153,8 @@ static BOOL CRYPT_EncodeDataContentInfoHeader(CDataEncodeMsg *msg,
     }
     else
     {
-        struct AsnConstructedItem constructed = { 0, msg,
-         CRYPT_EncodeContentLength };
+        struct AsnConstructedItem constructed = { 0,
+         &msg->base.stream_info.cbContent, CRYPT_EncodeContentLength };
         struct AsnEncodeSequenceItem items[2] = {
          { szOID_RSA_data, CRYPT_AsnEncodeOid, 0 },
          { &constructed,   CRYPT_AsnEncodeConstructed, 0 },
