@@ -351,6 +351,12 @@ s_sum_padded(padded_t *p)
 }
 
 int
+s_sum_padded2(padded_t ps[2])
+{
+  return s_sum_padded(&ps[0]) + s_sum_padded(&ps[1]);
+}
+
+int
 s_sum_bogus(bogus_t *b)
 {
   return *b->h.p1 + *b->p2 + *b->p3 + b->c;
@@ -405,6 +411,7 @@ basic_tests(void)
   pints_t pints;
   ptypes_t ptypes;
   padded_t padded;
+  padded_t padded2[2];
   bogus_t bogus;
   int i1, i2, i3, *pi2, *pi3, **ppi3;
   double u, v;
@@ -483,6 +490,11 @@ basic_tests(void)
   padded.i = -3;
   padded.c = 8;
   ok(sum_padded(&padded) == 5, "RPC sum_padded\n");
+  padded2[0].i = -5;
+  padded2[0].c = 1;
+  padded2[1].i = 3;
+  padded2[1].c = 7;
+  ok(sum_padded2(padded2) == 6, "RPC sum_padded2\n");
 
   i1 = 14;
   i2 = -7;

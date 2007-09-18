@@ -200,7 +200,7 @@ static type_t *get_user_type(const type_t *t, const char **pname)
     }
 }
 
-static int is_user_type(const type_t *t)
+int is_user_type(const type_t *t)
 {
     return get_user_type(t, NULL) != NULL;
 }
@@ -1448,6 +1448,11 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
     size_t start_offset;
     int has_pointer;
     int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
+    unsigned int baseoff
+        = type->declarray && current_structure
+        ? type_memsize(current_structure, &align)
+        : 0;
+
     if (!pointer_type)
         pointer_type = RPC_FC_RP;
 
@@ -1470,10 +1475,6 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
     if (type->type != RPC_FC_BOGUS_ARRAY)
     {
         unsigned char tc = type->type;
-        unsigned int baseoff
-            = type->declarray && current_structure
-            ? type_memsize(current_structure, &align)
-            : 0;
 
         if (tc == RPC_FC_LGFARRAY || tc == RPC_FC_LGVARRAY)
         {
@@ -1530,7 +1531,19 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
         write_end(file, typestring_offset);
     }
     else
-        error("%s: complex arrays unimplemented\n", name);
+    {
+        unsigned int dim = size_is ? 0 : type->dim;
+        print_file(file, 2, "NdrFcShort(0x%x),\t/* %u */\n", dim, dim);
+        *typestring_offset += 2;
+        *typestring_offset
+            += write_conf_or_var_desc(file, current_structure, baseoff,
+                                      size_is);
+        *typestring_offset
+            += write_conf_or_var_desc(file, current_structure, baseoff,
+                                      length_is);
+        write_member_type(file, type, NULL, type->ref, NULL, typestring_offset);
+        write_end(file, typestring_offset);
+    }
 
     return start_offset;
 }

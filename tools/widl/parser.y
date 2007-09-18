@@ -1365,9 +1365,28 @@ static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr)
     }
   }
 
-  /* if the structure is complex, then so must be the encompassing array */
-  if (is_array(v->type) && (v->type->ref->type == RPC_FC_BOGUS_STRUCT))
-    v->type->type = RPC_FC_BOGUS_ARRAY;
+  if (is_array(v->type))
+  {
+    const type_t *rt = v->type->ref;
+    switch (rt->type)
+    {
+    case RPC_FC_BOGUS_STRUCT:
+    case RPC_FC_NON_ENCAPSULATED_UNION:
+    case RPC_FC_ENCAPSULATED_UNION:
+    case RPC_FC_ENUM16:
+      v->type->type = RPC_FC_BOGUS_ARRAY;
+      break;
+    /* FC_RP should be above, but widl overuses these, and will break things.  */
+    case RPC_FC_UP:
+    case RPC_FC_RP:
+      if (rt->ref->type == RPC_FC_IP)
+        v->type->type = RPC_FC_BOGUS_ARRAY;
+      break;
+    default:
+      if (is_user_type(rt))
+        v->type->type = RPC_FC_BOGUS_ARRAY;
+    }
+  }
 }
 
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface)
