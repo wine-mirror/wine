@@ -643,14 +643,8 @@ programs/rundll32/rundll32
 programs/spoolsv/spoolsv
 programs/start/rsrc.res
 programs/start/start
-programs/taskmgr/font.bmp
 programs/taskmgr/taskmgr
-programs/taskmgr/taskmgr.ico
 programs/taskmgr/taskmgr.res
-programs/taskmgr/trayicon.bmp
-programs/taskmgr/traymask.bmp
-programs/taskmgr/window.ico
-programs/taskmgr/windowsm.ico
 programs/uninstaller/rsrc.res
 programs/uninstaller/uninstaller
 programs/uninstaller/uninstaller.ico

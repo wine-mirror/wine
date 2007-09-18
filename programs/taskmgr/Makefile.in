@@ -30,14 +30,6 @@ C_SRCS = \
 	trayicon.c
 
 RC_SRCS = taskmgr.rc
-RC_BINSRC = taskmgr.rc
-RC_BINARIES = \
-	font.bmp \
-	taskmgr.ico \
-	trayicon.bmp \
-	traymask.bmp \
-	window.ico \
-	windowsm.ico
 
 @MAKE_PROG_RULES@
 
