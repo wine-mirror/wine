@@ -246,7 +246,10 @@ void primitiveDeclarationConvertToStridedData(
      * once in there.
      */
     for(i=0; i < numPreloadStreams; i++) {
-        IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[streams[i]]);
+        IWineD3DVertexBuffer *vb = This->stateBlock->streamSource[streams[i]];
+        if(vb) {
+            IWineD3DVertexBuffer_PreLoad(vb);
+        }
     }
 }
 
