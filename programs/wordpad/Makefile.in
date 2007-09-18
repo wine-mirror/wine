@@ -13,14 +13,6 @@ C_SRCS = \
 	wordpad.c
 
 RC_SRCS = rsrc.rc
-RC_BINSRC = rsrc.rc
-RC_BINARIES = \
-	formatbar.bmp \
-	rtf.ico \
-	toolbar.bmp \
-	txt.ico \
-	wordpad.ico \
-	wri.ico
 
 @MAKE_PROG_RULES@
 

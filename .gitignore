@@ -743,14 +743,8 @@ programs/winhelp/macro.lex.yy.c
 programs/winhelp/rsrc.res
 programs/winhelp/winhelp
 programs/winver/winver
-programs/wordpad/formatbar.bmp
 programs/wordpad/rsrc.res
-programs/wordpad/rtf.ico
-programs/wordpad/toolbar.bmp
-programs/wordpad/txt.ico
 programs/wordpad/wordpad
-programs/wordpad/wordpad.ico
-programs/wordpad/wri.ico
 programs/write/rsrc.res
 programs/write/write
 programs/xcopy/rsrc.res
