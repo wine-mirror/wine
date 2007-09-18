@@ -1001,7 +1001,7 @@ ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo)
         {
             HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->User);
             HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->Domain);
-            HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->User);
+            HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->Password);
             HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity);
         }
         HeapFree(GetProcessHeap(), 0, AuthInfo);
