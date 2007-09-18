@@ -425,13 +425,15 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
     {
         DWORD dataLen;
 
-        if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
+        if ((ret = CRYPT_GetLengthIndefinite(pbEncoded, cbEncoded, &dataLen)))
         {
             DWORD lenBytes = GET_LEN_BYTES(pbEncoded[1]), cbDecoded;
             const BYTE *ptr = pbEncoded + 1 + lenBytes;
 
             cbEncoded -= 1 + lenBytes;
-            if (cbEncoded < dataLen)
+            if (dataLen == CMSG_INDEFINITE_LENGTH)
+                cbEncoded = dataLen;
+            else if (cbEncoded < dataLen)
             {
                 TRACE("dataLen %d exceeds cbEncoded %d, failing\n", dataLen,
                  cbEncoded);
@@ -439,11 +441,33 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
                 ret = FALSE;
             }
             else
+                cbEncoded = dataLen;
+            if (ret)
+            {
                 ret = CRYPT_AsnDecodeSequenceItems(items, cItem,
                  ptr, cbEncoded, dwFlags, NULL, NULL, &cbDecoded);
-            if (ret && cbDecoded != dataLen)
+                if (ret && dataLen == CMSG_INDEFINITE_LENGTH)
+                {
+                    if (cbDecoded > cbEncoded - 2)
+                    {
+                        /* Not enough space for 0 TLV */
+                        SetLastError(CRYPT_E_ASN1_CORRUPT);
+                        ret = FALSE;
+                    }
+                    else if (*(ptr + cbDecoded) != 0 ||
+                     *(ptr + cbDecoded + 1) != 0)
+                    {
+                        TRACE("expected 0 TLV\n");
+                        SetLastError(CRYPT_E_ASN1_CORRUPT);
+                        ret = FALSE;
+                    }
+                    else
+                        cbDecoded += 2;
+                }
+            }
+            if (ret && cbDecoded != cbEncoded)
             {
-                TRACE("expected %d decoded, got %d, failing\n", dataLen,
+                TRACE("expected %d decoded, got %d, failing\n", cbEncoded,
                  cbDecoded);
                 SetLastError(CRYPT_E_ASN1_CORRUPT);
                 ret = FALSE;
