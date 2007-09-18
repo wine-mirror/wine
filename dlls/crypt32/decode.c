@@ -397,7 +397,7 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
             ret = FALSE;
         }
     }
-    if (ret)
+    if (cbDecoded)
         *cbDecoded = decoded;
     TRACE("returning %d\n", ret);
     return ret;
@@ -702,6 +702,8 @@ static BOOL CRYPT_AsnDecodeDerBlob(const BYTE *pbEncoded, DWORD cbEncoded,
         if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
             bytesNeeded += 1 + lenBytes + dataLen;
 
+        if (pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
         if (!pvStructInfo)
             *pcbStructInfo = bytesNeeded;
         else if ((ret = CRYPT_DecodeCheckSpace(pcbStructInfo, bytesNeeded)))
@@ -810,7 +812,6 @@ static BOOL WINAPI CRYPT_AsnDecodeCertSignedContent(DWORD dwCertEncodingType,
     return ret;
 }
 
-/* Internal function */
 static BOOL CRYPT_AsnDecodeCertVersion(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
 {
@@ -822,7 +823,9 @@ static BOOL CRYPT_AsnDecodeCertVersion(const BYTE *pbEncoded, DWORD cbEncoded,
         BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
 
         ret = CRYPT_AsnDecodeIntInternal(pbEncoded + 1 + lenBytes, dataLen,
-         dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
+         dwFlags, pvStructInfo, pcbStructInfo, NULL);
+        if (pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
     }
     return ret;
 }
@@ -857,7 +860,9 @@ static BOOL CRYPT_AsnDecodeCertExtensions(const BYTE *pbEncoded,
         BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
 
         ret = CRYPT_AsnDecodeExtensionsInternal(pbEncoded + 1 + lenBytes,
-         dataLen, dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
+         dataLen, dwFlags, pvStructInfo, pcbStructInfo, NULL);
+        if (ret && pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
     }
     return ret;
 }
@@ -1409,6 +1414,8 @@ static BOOL CRYPT_AsnDecodeNameValueInternal(const BYTE *pbEncoded,
             return FALSE;
         }
 
+        if (pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
         if (!value)
             *pcbStructInfo = bytesNeeded;
         else if (*pcbStructInfo < bytesNeeded)
@@ -1581,6 +1588,8 @@ static BOOL CRYPT_AsnDecodeUnicodeNameValueInternal(const BYTE *pbEncoded,
             return FALSE;
         }
 
+        if (pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
         if (!value)
             *pcbStructInfo = bytesNeeded;
         else if (*pcbStructInfo < bytesNeeded)
@@ -2122,6 +2131,8 @@ static BOOL CRYPT_AsnDecodeBool(const BYTE *pbEncoded, DWORD cbEncoded,
         SetLastError(CRYPT_E_ASN1_CORRUPT);
         return FALSE;
     }
+    if (pcbDecoded)
+        *pcbDecoded = 3;
     if (!pvStructInfo)
     {
         *pcbStructInfo = sizeof(BOOL);
@@ -2413,7 +2424,9 @@ static BOOL CRYPT_AsnDecodePKCSContent(const BYTE *pbEncoded, DWORD cbEncoded,
         if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &innerLen)))
         {
             ret = CRYPT_AsnDecodeCopyBytes(pbEncoded, dataLen, dwFlags,
-             pvStructInfo, pcbStructInfo, pcbDecoded);
+             pvStructInfo, pcbStructInfo, NULL);
+            if (pcbDecoded)
+                *pcbDecoded = 1 + lenBytes + dataLen;
         }
     }
     return ret;
@@ -2590,7 +2603,7 @@ static BOOL CRYPT_AsnDecodePathLenConstraint(const BYTE *pbEncoded,
                 DWORD size = sizeof(constraint->dwPathLenConstraint);
 
                 ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, dwFlags,
-                 &constraint->dwPathLenConstraint, &size, NULL);
+                 &constraint->dwPathLenConstraint, &size, pcbDecoded);
                 if (ret)
                     constraint->fPathLenConstraint = TRUE;
                 TRACE("got an int, dwPathLenConstraint is %d\n",
@@ -2776,10 +2789,14 @@ static BOOL CRYPT_AsnDecodeOctetsInternal(const BYTE *pbEncoded,
 
     if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
     {
+        BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+
         if (dwFlags & CRYPT_DECODE_NOCOPY_FLAG)
             bytesNeeded = sizeof(CRYPT_DATA_BLOB);
         else
             bytesNeeded = dataLen + sizeof(CRYPT_DATA_BLOB);
+        if (pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
         if (!pvStructInfo)
             *pcbStructInfo = bytesNeeded;
         else if (*pcbStructInfo < bytesNeeded)
@@ -2791,7 +2808,6 @@ static BOOL CRYPT_AsnDecodeOctetsInternal(const BYTE *pbEncoded,
         else
         {
             CRYPT_DATA_BLOB *blob;
-            BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
 
             blob = (CRYPT_DATA_BLOB *)pvStructInfo;
             blob->cbData = dataLen;
@@ -2872,6 +2888,7 @@ static BOOL CRYPT_AsnDecodeBitsInternal(const BYTE *pbEncoded, DWORD cbEncoded,
     if (pbEncoded[0] == ASN_BITSTRING)
     {
         DWORD bytesNeeded, dataLen;
+        BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
 
         if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
         {
@@ -2879,6 +2896,8 @@ static BOOL CRYPT_AsnDecodeBitsInternal(const BYTE *pbEncoded, DWORD cbEncoded,
                 bytesNeeded = sizeof(CRYPT_BIT_BLOB);
             else
                 bytesNeeded = dataLen - 1 + sizeof(CRYPT_BIT_BLOB);
+            if (pcbDecoded)
+                *pcbDecoded = 1 + lenBytes + dataLen;
             if (!pvStructInfo)
                 *pcbStructInfo = bytesNeeded;
             else if (*pcbStructInfo < bytesNeeded)
@@ -2893,12 +2912,10 @@ static BOOL CRYPT_AsnDecodeBitsInternal(const BYTE *pbEncoded, DWORD cbEncoded,
 
                 blob = (CRYPT_BIT_BLOB *)pvStructInfo;
                 blob->cbData = dataLen - 1;
-                blob->cUnusedBits = *(pbEncoded + 1 +
-                 GET_LEN_BYTES(pbEncoded[1]));
+                blob->cUnusedBits = *(pbEncoded + 1 + lenBytes);
                 if (dwFlags & CRYPT_DECODE_NOCOPY_FLAG)
                 {
-                    blob->pbData = (BYTE *)pbEncoded + 2 +
-                     GET_LEN_BYTES(pbEncoded[1]);
+                    blob->pbData = (BYTE *)pbEncoded + 2 + lenBytes;
                 }
                 else
                 {
@@ -2907,8 +2924,8 @@ static BOOL CRYPT_AsnDecodeBitsInternal(const BYTE *pbEncoded, DWORD cbEncoded,
                     {
                         BYTE mask = 0xff << blob->cUnusedBits;
 
-                        memcpy(blob->pbData, pbEncoded + 2 +
-                         GET_LEN_BYTES(pbEncoded[1]), blob->cbData);
+                        memcpy(blob->pbData, pbEncoded + 2 + lenBytes,
+                         blob->cbData);
                         blob->pbData[blob->cbData - 1] &= mask;
                     }
                 }
@@ -3060,6 +3077,8 @@ static BOOL CRYPT_AsnDecodeIntegerInternal(const BYTE *pbEncoded,
         BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
 
         bytesNeeded = dataLen + sizeof(CRYPT_INTEGER_BLOB);
+        if (pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
         if (!pvStructInfo)
             *pcbStructInfo = bytesNeeded;
         else if (*pcbStructInfo < bytesNeeded)
@@ -3150,6 +3169,8 @@ static BOOL CRYPT_AsnDecodeUnsignedIntegerInternal(const BYTE *pbEncoded,
         {
             BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
 
+            if (pcbDecoded)
+                *pcbDecoded = 1 + lenBytes + dataLen;
             bytesNeeded = dataLen + sizeof(CRYPT_INTEGER_BLOB);
             if (!pvStructInfo)
                 *pcbStructInfo = bytesNeeded;
@@ -3405,6 +3426,8 @@ static BOOL CRYPT_AsnDecodeUtcTimeInternal(const BYTE *pbEncoded,
             else
             {
                 ret = TRUE;
+                if (pcbDecoded)
+                    *pcbDecoded = 2 + len;
                 pbEncoded += 2;
                 CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wYear);
                 if (sysTime.wYear >= 50)
@@ -3506,6 +3529,8 @@ static BOOL CRYPT_AsnDecodeGeneralizedTime(const BYTE *pbEncoded,
                 SYSTEMTIME sysTime = { 0 };
 
                 ret = TRUE;
+                if (pcbDecoded)
+                    *pcbDecoded = 2 + len;
                 pbEncoded += 2;
                 CRYPT_TIME_GET_DIGITS(pbEncoded, len, 4, sysTime.wYear);
                 CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, sysTime.wMonth);
@@ -3741,6 +3766,8 @@ static BOOL CRYPT_AsnDecodeDistPointName(const BYTE *pbEncoded,
             }
             else
                 bytesNeeded = sizeof(CRL_DIST_POINT_NAME);
+            if (pcbDecoded)
+                *pcbDecoded = 1 + lenBytes + dataLen;
             if (!pvStructInfo)
                 *pcbStructInfo = bytesNeeded;
             else if (*pcbStructInfo < bytesNeeded)
