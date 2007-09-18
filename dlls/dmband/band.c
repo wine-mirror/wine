@@ -463,6 +463,8 @@ static HRESULT IDirectMusicBandImpl_IPersistStream_ParseInstrument (LPPERSISTSTR
     hr = IDirectMusicObject_QueryInterface (pObject, &IID_IDirectMusicCollection, (void**) &pCol);
     if (FAILED(hr)) {
       ERR(": failed to get IDirectMusicCollection Interface from DMObject\n");
+      HeapFree(GetProcessHeap(), 0, pNewInstrument);
+
       return hr;
     }
     pNewInstrument->ppReferenceCollection = pCol;
