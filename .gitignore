@@ -666,12 +666,8 @@ programs/winefile/rsrc.res
 programs/winefile/winefile
 programs/winelauncher
 programs/winemenubuilder/winemenubuilder
-programs/winemine/faces.bmp
-programs/winemine/leds.bmp
-programs/winemine/mines.bmp
 programs/winemine/rsrc.res
 programs/winemine/winemine
-programs/winemine/winemine.ico
 programs/winepath/winepath
 programs/winetest/advapi32_test.exe
 programs/winetest/advpack_test.exe

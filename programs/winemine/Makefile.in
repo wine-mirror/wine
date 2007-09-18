@@ -11,12 +11,6 @@ C_SRCS = \
 	main.c
 
 RC_SRCS = rsrc.rc
-RC_BINSRC = rsrc.rc
-RC_BINARIES = \
-	faces.bmp \
-	leds.bmp \
-	mines.bmp \
-	winemine.ico
 
 @MAKE_PROG_RULES@
 
