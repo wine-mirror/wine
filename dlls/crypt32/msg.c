@@ -1756,8 +1756,8 @@ static inline void CRYPT_CopyAttributes(CRYPT_ATTRIBUTES *out,
     {
         DWORD i;
 
-        if ((*nextData - (LPBYTE)0) % sizeof(DWORD))
-            *nextData += (*nextData - (LPBYTE)0) % sizeof(DWORD);
+        if ((*nextData - (LPBYTE)0) % sizeof(DWORD_PTR))
+            *nextData += (*nextData - (LPBYTE)0) % sizeof(DWORD_PTR);
         out->rgAttr = (CRYPT_ATTRIBUTE *)*nextData;
         *nextData += in->cAttr * sizeof(CRYPT_ATTRIBUTE);
         for (i = 0; i < in->cAttr; i++)
@@ -1773,8 +1773,8 @@ static inline void CRYPT_CopyAttributes(CRYPT_ATTRIBUTES *out,
                 DWORD j;
 
                 out->rgAttr[i].cValue = in->rgAttr[i].cValue;
-                if ((*nextData - (LPBYTE)0) % sizeof(DWORD))
-                    *nextData += (*nextData - (LPBYTE)0) % sizeof(DWORD);
+                if ((*nextData - (LPBYTE)0) % sizeof(DWORD_PTR))
+                    *nextData += (*nextData - (LPBYTE)0) % sizeof(DWORD_PTR);
                 out->rgAttr[i].rgValue = (PCRYPT_DATA_BLOB)*nextData;
                 for (j = 0; j < in->rgAttr[i].cValue; j++)
                     CRYPT_CopyBlob(&out->rgAttr[i].rgValue[j],
@@ -1793,8 +1793,8 @@ static DWORD CRYPT_SizeOfAttributes(const CRYPT_ATTRIBUTES *attr)
         if (attr->rgAttr[i].pszObjId)
             size += strlen(attr->rgAttr[i].pszObjId) + 1;
         /* align pointer */
-        if (size % sizeof(DWORD))
-            size += size % sizeof(DWORD);
+        if (size % sizeof(DWORD_PTR))
+            size += size % sizeof(DWORD_PTR);
         size += attr->rgAttr[i].cValue * sizeof(CRYPT_DATA_BLOB);
         for (j = 0; j < attr->rgAttr[i].cValue; j++)
             size += attr->rgAttr[i].rgValue[j].cbData;
@@ -1818,8 +1818,8 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
     size += in->HashEncryptionAlgorithm.Parameters.cbData;
     size += in->EncryptedHash.cbData;
     /* align pointer */
-    if (size % sizeof(DWORD))
-        size += size % sizeof(DWORD);
+    if (size % sizeof(DWORD_PTR))
+        size += size % sizeof(DWORD_PTR);
     size += CRYPT_SizeOfAttributes(&in->AuthAttrs);
     size += CRYPT_SizeOfAttributes(&in->UnauthAttrs);
     if (!pvData)
@@ -1847,8 +1847,8 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
          &in->HashEncryptionAlgorithm, &nextData);
         CRYPT_CopyBlob(&out->EncryptedHash, &in->EncryptedHash, &nextData);
         /* align pointer */
-        if ((nextData - (LPBYTE)0) % sizeof(DWORD))
-            nextData += (nextData - (LPBYTE)0) % sizeof(DWORD);
+        if ((nextData - (LPBYTE)0) % sizeof(DWORD_PTR))
+            nextData += (nextData - (LPBYTE)0) % sizeof(DWORD_PTR);
         CRYPT_CopyAttributes(&out->AuthAttrs, &in->AuthAttrs, &nextData);
         CRYPT_CopyAttributes(&out->UnauthAttrs, &in->UnauthAttrs, &nextData);
         ret = TRUE;
