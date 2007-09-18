@@ -731,7 +731,6 @@ programs/winetest/user32_test.exe
 programs/winetest/usp10_test.exe
 programs/winetest/uxtheme_test.exe
 programs/winetest/version_test.exe
-programs/winetest/wine.ico
 programs/winetest/winetest
 programs/winetest/winetest.res
 programs/winetest/wininet_test.exe
