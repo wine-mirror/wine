@@ -2456,21 +2456,43 @@ static BOOL CRYPT_AsnDecodePKCSContent(const BYTE *pbEncoded, DWORD cbEncoded,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
     /* The caller has already checked the tag, no need to check it again.
-     * Check the outer length is valid by calling CRYPT_GetLen:
+     * Check the outer length is valid:
      */
-    if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
+    if ((ret = CRYPT_GetLengthIndefinite(pbEncoded, cbEncoded, &dataLen)))
     {
         BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
         DWORD innerLen;
 
         pbEncoded += 1 + lenBytes;
-        /* Check the inner length is valid by calling CRYPT_GetLen again: */
-        if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &innerLen)))
+        cbEncoded -= 1 + lenBytes;
+        if (dataLen == CMSG_INDEFINITE_LENGTH)
+            cbEncoded -= 2; /* space for 0 TLV */
+        /* Check the inner length is valid: */
+        if ((ret = CRYPT_GetLengthIndefinite(pbEncoded, cbEncoded, &innerLen)))
         {
-            ret = CRYPT_AsnDecodeCopyBytes(pbEncoded, dataLen, dwFlags,
-             pvStructInfo, pcbStructInfo, NULL);
-            if (pcbDecoded)
-                *pcbDecoded = 1 + lenBytes + dataLen;
+            DWORD decodedLen;
+
+            ret = CRYPT_AsnDecodeCopyBytes(pbEncoded, cbEncoded, dwFlags,
+             pvStructInfo, pcbStructInfo, &decodedLen);
+            if (dataLen == CMSG_INDEFINITE_LENGTH)
+            {
+                if (*(pbEncoded + decodedLen) != 0 ||
+                 *(pbEncoded + decodedLen + 1) != 0)
+                {
+                    TRACE("expected 0 TLV, got {%02x,%02x}\n",
+                     *(pbEncoded + decodedLen),
+                     *(pbEncoded + decodedLen + 1));
+                    SetLastError(CRYPT_E_ASN1_CORRUPT);
+                    ret = FALSE;
+                }
+                else
+                    decodedLen += 2;
+            }
+            if (ret && pcbDecoded)
+            {
+                *pcbDecoded = 1 + lenBytes + decodedLen;
+                TRACE("decoded %d bytes\n", *pcbDecoded);
+            }
         }
     }
     return ret;
