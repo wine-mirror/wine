@@ -98,8 +98,8 @@ const char *string_of_type(unsigned char type)
     case RPC_FC_CARRAY: return "FC_CARRAY";
     case RPC_FC_CVARRAY: return "FC_CVARRAY";
     case RPC_FC_BOGUS_ARRAY: return "FC_BOGUS_ARRAY";
-    case RPC_FC_ALIGNM4: return "RPC_FC_ALIGNM4";
-    case RPC_FC_ALIGNM8: return "RPC_FC_ALIGNM8";
+    case RPC_FC_ALIGNM4: return "FC_ALIGNM4";
+    case RPC_FC_ALIGNM8: return "FC_ALIGNM8";
     default:
         error("string_of_type: unknown type 0x%02x\n", type);
         return NULL;
