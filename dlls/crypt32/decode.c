@@ -2602,43 +2602,35 @@ static BOOL CRYPT_AsnDecodePathLenConstraint(const BYTE *pbEncoded,
  DWORD *pcbDecoded)
 {
     BOOL ret = TRUE;
+    DWORD bytesNeeded = sizeof(struct PATH_LEN_CONSTRAINT), size;
 
     TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, *pcbStructInfo, pcbDecoded);
 
-    if (cbEncoded)
+    if (!pvStructInfo)
     {
-        if (pbEncoded[0] == ASN_INTEGER)
-        {
-            DWORD bytesNeeded = sizeof(struct PATH_LEN_CONSTRAINT);
+        ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, dwFlags, NULL,
+         &size, pcbDecoded);
+        *pcbStructInfo = bytesNeeded;
+    }
+    else if (*pcbStructInfo < bytesNeeded)
+    {
+        SetLastError(ERROR_MORE_DATA);
+        *pcbStructInfo = bytesNeeded;
+        ret = FALSE;
+    }
+    else
+    {
+        struct PATH_LEN_CONSTRAINT *constraint =
+         (struct PATH_LEN_CONSTRAINT *)pvStructInfo;
 
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if (*pcbStructInfo < bytesNeeded)
-            {
-                SetLastError(ERROR_MORE_DATA);
-                *pcbStructInfo = bytesNeeded;
-                ret = FALSE;
-            }
-            else
-            {
-                struct PATH_LEN_CONSTRAINT *constraint =
-                 (struct PATH_LEN_CONSTRAINT *)pvStructInfo;
-                DWORD size = sizeof(constraint->dwPathLenConstraint);
-
-                ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, dwFlags,
-                 &constraint->dwPathLenConstraint, &size, pcbDecoded);
-                if (ret)
-                    constraint->fPathLenConstraint = TRUE;
-                TRACE("got an int, dwPathLenConstraint is %d\n",
-                 constraint->dwPathLenConstraint);
-            }
-        }
-        else
-        {
-            SetLastError(CRYPT_E_ASN1_CORRUPT);
-            ret = FALSE;
-        }
+        size = sizeof(constraint->dwPathLenConstraint);
+        ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, dwFlags,
+         &constraint->dwPathLenConstraint, &size, pcbDecoded);
+        if (ret)
+            constraint->fPathLenConstraint = TRUE;
+        TRACE("got an int, dwPathLenConstraint is %d\n",
+         constraint->dwPathLenConstraint);
     }
     TRACE("returning %d (%08x)\n", ret, GetLastError());
     return ret;
