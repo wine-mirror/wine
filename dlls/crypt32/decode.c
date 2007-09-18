@@ -3443,65 +3443,55 @@ static BOOL WINAPI CRYPT_AsnDecodeEnumerated(DWORD dwCertEncodingType,
 static BOOL CRYPT_AsnDecodeTimeZone(const BYTE *pbEncoded, DWORD len,
  SYSTEMTIME *sysTime)
 {
-    BOOL ret;
+    BOOL ret = TRUE;
 
-    __TRY
+    if (len >= 3 && (*pbEncoded == '+' || *pbEncoded == '-'))
     {
-        ret = TRUE;
-        if (len >= 3 && (*pbEncoded == '+' || *pbEncoded == '-'))
-        {
-            WORD hours, minutes = 0;
-            BYTE sign = *pbEncoded++;
+        WORD hours, minutes = 0;
+        BYTE sign = *pbEncoded++;
 
-            len--;
-            CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, hours);
-            if (ret && hours >= 24)
+        len--;
+        CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, hours);
+        if (ret && hours >= 24)
+        {
+            SetLastError(CRYPT_E_ASN1_CORRUPT);
+            ret = FALSE;
+        }
+        else if (len >= 2)
+        {
+            CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, minutes);
+            if (ret && minutes >= 60)
             {
                 SetLastError(CRYPT_E_ASN1_CORRUPT);
                 ret = FALSE;
             }
-            else if (len >= 2)
+        }
+        if (ret)
+        {
+            if (sign == '+')
             {
-                CRYPT_TIME_GET_DIGITS(pbEncoded, len, 2, minutes);
-                if (ret && minutes >= 60)
-                {
-                    SetLastError(CRYPT_E_ASN1_CORRUPT);
-                    ret = FALSE;
-                }
+                sysTime->wHour += hours;
+                sysTime->wMinute += minutes;
             }
-            if (ret)
+            else
             {
-                if (sign == '+')
+                if (hours > sysTime->wHour)
                 {
-                    sysTime->wHour += hours;
-                    sysTime->wMinute += minutes;
+                    sysTime->wDay--;
+                    sysTime->wHour = 24 - (hours - sysTime->wHour);
                 }
                 else
+                    sysTime->wHour -= hours;
+                if (minutes > sysTime->wMinute)
                 {
-                    if (hours > sysTime->wHour)
-                    {
-                        sysTime->wDay--;
-                        sysTime->wHour = 24 - (hours - sysTime->wHour);
-                    }
-                    else
-                        sysTime->wHour -= hours;
-                    if (minutes > sysTime->wMinute)
-                    {
-                        sysTime->wHour--;
-                        sysTime->wMinute = 60 - (minutes - sysTime->wMinute);
-                    }
-                    else
-                        sysTime->wMinute -= minutes;
+                    sysTime->wHour--;
+                    sysTime->wMinute = 60 - (minutes - sysTime->wMinute);
                 }
+                else
+                    sysTime->wMinute -= minutes;
             }
         }
     }
-    __EXCEPT_PAGE_FAULT
-    {
-        SetLastError(STATUS_ACCESS_VIOLATION);
-        ret = FALSE;
-    }
-    __ENDTRY
     return ret;
 }
 
