@@ -647,7 +647,6 @@ programs/taskmgr/taskmgr
 programs/taskmgr/taskmgr.res
 programs/uninstaller/rsrc.res
 programs/uninstaller/uninstaller
-programs/uninstaller/uninstaller.ico
 programs/view/view
 programs/view/viewrc.res
 programs/wineapploader
