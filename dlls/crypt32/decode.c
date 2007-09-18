@@ -315,10 +315,9 @@ struct AsnDecodeSequenceItem
  * Upon decoding, *cbDecoded is the total number of bytes decoded.
  * Each item decoder is never called with CRYPT_DECODE_ALLOC_FLAG set.
  */
-static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
- struct AsnDecodeSequenceItem items[], DWORD cItem, const BYTE *pbEncoded,
- DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, BYTE *nextData,
- DWORD *cbDecoded)
+static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
+ DWORD cItem, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ void *pvStructInfo, BYTE *nextData, DWORD *cbDecoded)
 {
     BOOL ret;
     DWORD i, decoded = 0;
@@ -353,7 +352,7 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
                             TRACE("decoding item %d\n", i);
                         else
                             TRACE("sizing item %d\n", i);
-                        ret = items[i].decodeFunc(dwCertEncodingType,
+                        ret = items[i].decodeFunc(X509_ASN_ENCODING,
                          NULL, ptr, 1 + nextItemLenBytes + nextItemLen,
                          dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL,
                          pvStructInfo ?  (BYTE *)pvStructInfo + items[i].offset
@@ -463,8 +462,8 @@ static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
                 ret = FALSE;
             }
             else
-                ret = CRYPT_AsnDecodeSequenceItems(dwFlags, items, cItem, ptr,
-                 cbEncoded, dwFlags, NULL, NULL, &cbDecoded);
+                ret = CRYPT_AsnDecodeSequenceItems(items, cItem,
+                 ptr, cbEncoded, dwFlags, NULL, NULL, &cbDecoded);
             if (ret && cbDecoded != dataLen)
             {
                 TRACE("expected %d decoded, got %d, failing\n", dataLen,
@@ -497,7 +496,7 @@ static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
                     else
                         nextData = (BYTE *)pvStructInfo + structSize;
                     memset(pvStructInfo, 0, structSize);
-                    ret = CRYPT_AsnDecodeSequenceItems(dwFlags, items, cItem,
+                    ret = CRYPT_AsnDecodeSequenceItems(items, cItem,
                      ptr, cbEncoded, dwFlags, pvStructInfo, nextData,
                      &cbDecoded);
                 }
