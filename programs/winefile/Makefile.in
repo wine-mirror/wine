@@ -13,12 +13,6 @@ C_SRCS = \
 	winefile.c
 
 RC_SRCS = rsrc.rc
-RC_BINSRC = resource.rc
-RC_BINARIES = \
-	drivebar.bmp \
-	images.bmp \
-	toolbar.bmp \
-	winefile.ico
 
 @MAKE_PROG_RULES@
 
