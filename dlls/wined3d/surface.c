@@ -246,7 +246,7 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
              */
             glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
             checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
-            This->Flags &= SFLAG_CLIENT;
+            This->Flags &= ~SFLAG_CLIENT;
             enable_client_storage = TRUE;
         } else {
             This->Flags |= SFLAG_CLIENT;
