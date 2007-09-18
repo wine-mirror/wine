@@ -630,7 +630,6 @@ programs/notepad/notepad
 programs/notepad/rsrc.res
 programs/oleview/oleview
 programs/oleview/rsrc.res
-programs/oleview/toolbar.bmp
 programs/progman/progman
 programs/progman/rsrc.res
 programs/regedit/bin.ico

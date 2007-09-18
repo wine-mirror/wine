@@ -17,8 +17,6 @@ C_SRCS = \
 	typelib.c
 
 RC_SRCS = rsrc.rc
-RC_BINSRC = rsrc.rc
-RC_BINARIES = toolbar.bmp
 
 @MAKE_PROG_RULES@
 
