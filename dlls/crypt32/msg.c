@@ -146,10 +146,18 @@ static BOOL CRYPT_EncodeDataContentInfoHeader(CDataEncodeMsg *msg,
 
     if (msg->base.streamed && msg->base.stream_info.cbContent == 0xffffffff)
     {
-        FIXME("unimplemented for indefinite-length encoding\n");
-        header->cbData = 0;
-        header->pbData = NULL;
-        ret = TRUE;
+        static const BYTE headerValue[] = { 0x30,0x80,0x06,0x09,0x2a,0x86,0x48,
+         0x86,0xf7,0x0d,0x01,0x07,0x01,0xa0,0x80,0x24,0x80 };
+
+        header->pbData = LocalAlloc(0, sizeof(headerValue));
+        if (header->pbData)
+        {
+            header->cbData = sizeof(headerValue);
+            memcpy(header->pbData, headerValue, sizeof(headerValue));
+            ret = TRUE;
+        }
+        else
+            ret = FALSE;
     }
     else
     {
@@ -195,6 +203,25 @@ static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
                      msg->base.stream_info.pvArg, header.pbData, header.cbData,
                      FALSE);
                     LocalFree(header.pbData);
+                }
+            }
+            /* Curiously, every indefinite-length streamed update appears to
+             * get its own tag and length, regardless of fFinal.
+             */
+            if (msg->base.stream_info.cbContent == 0xffffffff)
+            {
+                BYTE *header;
+                DWORD headerLen;
+
+                ret = CRYPT_EncodeContentLength(X509_ASN_ENCODING, NULL,
+                 &cbData, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&header,
+                 &headerLen);
+                if (ret)
+                {
+                    ret = msg->base.stream_info.pfnStreamOutput(
+                     msg->base.stream_info.pvArg, header, headerLen,
+                     FALSE);
+                    LocalFree(header);
                 }
             }
             if (!fFinal)

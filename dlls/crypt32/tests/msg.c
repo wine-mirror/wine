@@ -659,7 +659,6 @@ static void test_data_msg_encoding(void)
     CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
     CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     CryptMsgClose(msg);
-    todo_wine
     check_updates("data message with indefinite length", &a3, &accum);
     free_updates(&accum);
 }
