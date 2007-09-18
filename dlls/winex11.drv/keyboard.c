@@ -2094,25 +2094,32 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
         FIXME("keyboard layout %p is not supported\n", hkl);
 
 	switch(wMapType) {
-		case 0:	{ /* vkey-code to scan-code */
+		case MAPVK_VK_TO_VSC: /* vkey-code to scan-code */
+		case MAPVK_VK_TO_VSC_EX: /* FIXME: should differentiate between
+                                            left and right keys */
+		{
 			/* let's do vkey -> keycode -> scan */
 			int keyc;
 			for (keyc=min_keycode; keyc<=max_keycode; keyc++)
 				if ((keyc2vkey[keyc] & 0xFF) == wCode)
 					returnMVK (keyc2scan[keyc] & 0xFF);
 			TRACE("returning no scan-code.\n");
-		        return 0; }
-
-		case 1: { /* scan-code to vkey-code */
+		        return 0;
+		}
+		case MAPVK_VSC_TO_VK: /* scan-code to vkey-code */
+		case MAPVK_VSC_TO_VK_EX: /* FIXME: should differentiate between
+                                            left and right keys */
+		{
 			/* let's do scan -> keycode -> vkey */
 			int keyc;
 			for (keyc=min_keycode; keyc<=max_keycode; keyc++)
 				if ((keyc2scan[keyc] & 0xFF) == (wCode & 0xFF))
 					returnMVK (keyc2vkey[keyc] & 0xFF);
 			TRACE("returning no vkey-code.\n");
-		        return 0; }
-
-		case 2: { /* vkey-code to unshifted ANSI code */
+		        return 0;
+		}
+		case MAPVK_VK_TO_CHAR: /* vkey-code to unshifted ANSI code */
+		{
                         /* we still don't know what "unshifted" means. in windows VK_W (0x57)
                          * returns 0x57, which is upercase 'W'. So we have to return the uppercase
                          * key.. Looks like something is wrong with the MS docs?
@@ -2169,15 +2176,9 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 			TRACE("returning no ANSI.\n");
                         wine_tsx11_unlock();
 			return 0;
-			}
-
-		case 3:   /* **NT only** scan-code to vkey-code but distinguish between  */
-              		  /*             left and right  */
-		          FIXME(" stub for NT\n");
-                          return 0;
-
+		}
 		default: /* reserved */
-			WARN("Unknown wMapType %d !\n", wMapType);
+			FIXME("Unknown wMapType %d !\n", wMapType);
 			return 0;
 	}
 	return 0;

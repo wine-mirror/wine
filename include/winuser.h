@@ -3729,6 +3729,13 @@ typedef struct tagCOMPAREITEMSTRUCT
 #define VK_PA1              0xFD
 #define VK_OEM_CLEAR        0xFE
 
+/* MapVirtualKey translation types */
+#define MAPVK_VK_TO_VSC     0
+#define MAPVK_VSC_TO_VK     1
+#define MAPVK_VK_TO_CHAR    2
+#define MAPVK_VSC_TO_VK_EX  3
+#define MAPVK_VK_TO_VSC_EX  4
+
   /* Key status flags for mouse events */
 #define MK_LBUTTON	    0x0001
 #define MK_RBUTTON	    0x0002
