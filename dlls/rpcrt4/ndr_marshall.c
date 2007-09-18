@@ -5821,6 +5821,46 @@ void WINAPI NDRCContextMarshall(NDR_CCONTEXT CContext, void *pBuff)
     }
 }
 
+/***********************************************************************
+ *           RpcSmDestroyClientContext [RPCRT4.@]
+ */
+RPC_STATUS WINAPI RpcSmDestroyClientContext(void **ContextHandle)
+{
+    RPC_STATUS status = RPC_X_SS_CONTEXT_MISMATCH;
+    struct context_handle_entry *che = NULL;
+
+    TRACE("(%p)\n", ContextHandle);
+
+    EnterCriticalSection(&ndr_context_cs);
+    che = get_context_entry(*ContextHandle);
+    *ContextHandle = NULL;
+    if (che)
+    {
+        status = RPC_S_OK;
+        list_remove(&che->entry);
+    }
+
+    LeaveCriticalSection(&ndr_context_cs);
+
+    if (che)
+    {
+        RpcBindingFree(&che->handle);
+        HeapFree(GetProcessHeap(), 0, che);
+    }
+
+    return status;
+}
+
+/***********************************************************************
+ *           RpcSsDestroyClientContext [RPCRT4.@]
+ */
+void WINAPI RpcSsDestroyClientContext(void **ContextHandle)
+{
+    RPC_STATUS status = RpcSmDestroyClientContext(ContextHandle);
+    if (status != RPC_S_OK)
+        RpcRaiseException(status);
+}
+
 static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
                                       RPC_BINDING_HANDLE hBinding,
                                       const ndr_context_handle *chi)
