@@ -4891,7 +4891,6 @@ static void test_decodePKCSContentInfo(DWORD dwEncoding)
 
         ok(!strcmp(info->pszObjId, szOID_RSA_signedData),
          "Expected %s, got %s\n", szOID_RSA_signedData, info->pszObjId);
-        todo_wine
         ok(info->Content.cbData == 392, "Expected 392, got %d\n",
          info->Content.cbData);
         LocalFree(buf);

@@ -361,10 +361,26 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                             }
                             else
                             {
-                                ptr += itemDecoded;
-                                decoded += itemDecoded;
-                                TRACE("item %d: decoded %d bytes\n", i,
-                                 itemDecoded);
+                                if (itemLen == CMSG_INDEFINITE_LENGTH)
+                                {
+                                    if (itemDecoded > itemEncodedLen - 2 ||
+                                     *(ptr + itemDecoded) != 0 ||
+                                     *(ptr + itemDecoded + 1) != 0)
+                                    {
+                                        TRACE("expected 0 TLV\n");
+                                        SetLastError(CRYPT_E_ASN1_CORRUPT);
+                                        ret = FALSE;
+                                    }
+                                    else
+                                        itemDecoded += 2;
+                                }
+                                if (ret)
+                                {
+                                    ptr += itemDecoded;
+                                    decoded += itemDecoded;
+                                    TRACE("item %d: decoded %d bytes\n", i,
+                                     itemDecoded);
+                                }
                             }
                         }
                         else if (items[i].optional &&
@@ -1875,41 +1891,100 @@ static BOOL WINAPI CRYPT_AsnDecodeUnicodeName(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL CRYPT_FindEncodedLen(const BYTE *pbEncoded, DWORD cbEncoded,
+ DWORD *pcbDecoded)
+{
+    BOOL ret = TRUE, done = FALSE;
+    DWORD indefiniteNestingLevels = 0, decoded = 0;
+
+    TRACE("(%p, %d)\n", pbEncoded, cbEncoded);
+
+    do {
+        DWORD dataLen;
+
+        if (!cbEncoded)
+            done = TRUE;
+        else if ((ret = CRYPT_GetLengthIndefinite(pbEncoded, cbEncoded,
+         &dataLen)))
+        {
+            BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+
+            if (dataLen == CMSG_INDEFINITE_LENGTH)
+            {
+                indefiniteNestingLevels++;
+                pbEncoded += 1 + lenBytes;
+                cbEncoded -= 1 + lenBytes;
+                decoded += 1 + lenBytes;
+                TRACE("indefiniteNestingLevels = %d\n",
+                 indefiniteNestingLevels);
+            }
+            else
+            {
+                if (pbEncoded[0] == 0 && pbEncoded[1] == 0 &&
+                 indefiniteNestingLevels)
+                {
+                    indefiniteNestingLevels--;
+                    TRACE("indefiniteNestingLevels = %d\n",
+                     indefiniteNestingLevels);
+                }
+                pbEncoded += 1 + lenBytes + dataLen;
+                cbEncoded -= 1 + lenBytes + dataLen;
+                decoded += 1 + lenBytes + dataLen;
+                if (!indefiniteNestingLevels)
+                    done = TRUE;
+            }
+        }
+    } while (ret && !done);
+    /* If we haven't found all 0 TLVs, we haven't found the end */
+    if (ret && indefiniteNestingLevels)
+    {
+        SetLastError(CRYPT_E_ASN1_EOD);
+        ret = FALSE;
+    }
+    if (ret)
+        *pcbDecoded = decoded;
+    TRACE("returning %d (%d)\n", ret, ret ? *pcbDecoded : 0);
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodeCopyBytes(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
 {
     BOOL ret = TRUE;
-    DWORD bytesNeeded = sizeof(CRYPT_OBJID_BLOB);
+    DWORD bytesNeeded = sizeof(CRYPT_OBJID_BLOB), encodedLen = 0;
 
     TRACE("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, *pcbStructInfo);
 
-    if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
-        bytesNeeded += cbEncoded;
-    if (pcbDecoded)
-        *pcbDecoded = cbEncoded;
-    if (!pvStructInfo)
-        *pcbStructInfo = bytesNeeded;
-    else if (*pcbStructInfo < bytesNeeded)
+    if ((ret = CRYPT_FindEncodedLen(pbEncoded, cbEncoded, &encodedLen)))
     {
-        SetLastError(ERROR_MORE_DATA);
-        *pcbStructInfo = bytesNeeded;
-        ret = FALSE;
-    }
-    else
-    {
-        PCRYPT_OBJID_BLOB blob = (PCRYPT_OBJID_BLOB)pvStructInfo;
-
-        *pcbStructInfo = bytesNeeded;
-        blob->cbData = cbEncoded;
-        if (dwFlags & CRYPT_DECODE_NOCOPY_FLAG)
-            blob->pbData = (LPBYTE)pbEncoded;
+        if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+            bytesNeeded += encodedLen;
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if (*pcbStructInfo < bytesNeeded)
+        {
+            SetLastError(ERROR_MORE_DATA);
+            *pcbStructInfo = bytesNeeded;
+            ret = FALSE;
+        }
         else
         {
-            assert(blob->pbData);
-            memcpy(blob->pbData, pbEncoded, blob->cbData);
+            PCRYPT_OBJID_BLOB blob = (PCRYPT_OBJID_BLOB)pvStructInfo;
+
+            *pcbStructInfo = bytesNeeded;
+            blob->cbData = encodedLen;
+            if (dwFlags & CRYPT_DECODE_NOCOPY_FLAG)
+                blob->pbData = (LPBYTE)pbEncoded;
+            else
+            {
+                assert(blob->pbData);
+                memcpy(blob->pbData, pbEncoded, blob->cbData);
+            }
         }
+        if (pcbDecoded)
+            *pcbDecoded = encodedLen;
     }
     return ret;
 }
