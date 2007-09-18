@@ -132,11 +132,9 @@ static void state_zenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD
 }
 
 static void state_cullmode(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    /* TODO: Put this into the offscreen / onscreen rendering block due to device->render_offscreen */
-
-    /* If we are culling "back faces with clockwise vertices" then
-       set front faces to be counter clockwise and enable culling
-       of back faces                                               */
+    /* glFrontFace() is set in context.c at context init and on an offscreen / onscreen rendering
+     * switch
+     */
     switch ((WINED3DCULL) stateblock->renderState[WINED3DRS_CULLMODE]) {
         case WINED3DCULL_NONE:
             glDisable(GL_CULL_FACE);
@@ -145,26 +143,14 @@ static void state_cullmode(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
         case WINED3DCULL_CW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
-            if (stateblock->wineD3DDevice->render_offscreen) {
-                glFrontFace(GL_CW);
-                checkGLcall("glFrontFace GL_CW");
-            } else {
-                glFrontFace(GL_CCW);
-                checkGLcall("glFrontFace GL_CCW");
-            }
-            glCullFace(GL_BACK);
+            glCullFace(GL_FRONT);
+            checkGLcall("glCullFace(GL_FRONT)");
             break;
         case WINED3DCULL_CCW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
-            if (stateblock->wineD3DDevice->render_offscreen) {
-                glFrontFace(GL_CCW);
-                checkGLcall("glFrontFace GL_CCW");
-            } else {
-                glFrontFace(GL_CW);
-                checkGLcall("glFrontFace GL_CW");
-            }
             glCullFace(GL_BACK);
+            checkGLcall("glCullFace(GL_BACK)");
             break;
         default:
             FIXME("Unrecognized/Unhandled WINED3DCULL value %d\n", stateblock->renderState[WINED3DRS_CULLMODE]);
@@ -3605,6 +3591,16 @@ static void indexbuffer(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     }
 }
 
+static void frontface(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    if(stateblock->wineD3DDevice->render_offscreen) {
+        glFrontFace(GL_CCW);
+        checkGLcall("glFrontFace(GL_CCW)");
+    } else {
+        glFrontFace(GL_CW);
+        checkGLcall("glFrontFace(GL_CW)");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -4676,4 +4672,5 @@ const struct StateEntry StateTable[] =
     { /* STATE_CLIPPLANE(31)                        */      STATE_CLIPPLANE(31),                                clipplane           },
 
     { /* STATE_MATERIAL                             */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable},
+    { /* STATE_FRONTFACE                            */      STATE_FRONTFACE,                                    frontface           },
 };

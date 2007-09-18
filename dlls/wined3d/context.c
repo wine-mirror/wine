@@ -706,11 +706,11 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
         IWineD3DSwapChain_Release(swapchain);
 
         if(oldRenderOffscreen) {
-            Context_MarkStateDirty(context, WINED3DRS_CULLMODE);
             Context_MarkStateDirty(context, WINED3DTS_PROJECTION);
             Context_MarkStateDirty(context, STATE_VDECL);
             Context_MarkStateDirty(context, STATE_VIEWPORT);
             Context_MarkStateDirty(context, STATE_SCISSORRECT);
+            Context_MarkStateDirty(context, STATE_FRONTFACE);
         }
 
     } else {
@@ -794,11 +794,11 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
         }
 
         if(!oldRenderOffscreen) {
-            Context_MarkStateDirty(context, WINED3DRS_CULLMODE);
             Context_MarkStateDirty(context, WINED3DTS_PROJECTION);
             Context_MarkStateDirty(context, STATE_VDECL);
             Context_MarkStateDirty(context, STATE_VIEWPORT);
             Context_MarkStateDirty(context, STATE_SCISSORRECT);
+            Context_MarkStateDirty(context, STATE_FRONTFACE);
         }
     }
     if (readTexture) {

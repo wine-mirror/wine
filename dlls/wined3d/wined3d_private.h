@@ -481,7 +481,9 @@ typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 
 #define STATE_MATERIAL (STATE_CLIPPLANE(MAX_CLIPPLANES))
 
-#define STATE_HIGHEST (STATE_MATERIAL)
+#define STATE_FRONTFACE (STATE_MATERIAL + 1)
+
+#define STATE_HIGHEST (STATE_FRONTFACE)
 
 struct StateEntry
 {
