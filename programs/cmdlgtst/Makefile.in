@@ -10,8 +10,6 @@ C_SRCS = \
 	cmdlgtst.c
 
 RC_SRCS = cmdlgr.rc
-RC_BINSRC = cmdlgr.rc
-RC_BINARIES = about.ico
 
 @MAKE_PROG_RULES@
 
