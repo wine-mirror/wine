@@ -310,8 +310,8 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
         {
             DWORD nextItemLen;
 
-            if ((ret = CRYPT_GetLen(ptr, cbEncoded - (ptr - pbEncoded),
-             &nextItemLen)))
+            if ((ret = CRYPT_GetLengthIndefinite(ptr,
+             cbEncoded - (ptr - pbEncoded), &nextItemLen)))
             {
                 BYTE nextItemLenBytes = GET_LEN_BYTES(ptr[1]);
 
@@ -326,15 +326,21 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                     }
                     if (items[i].decodeFunc)
                     {
+                        DWORD nextItemEncodedLen, nextItemDecoded;
+
+                        if (nextItemLen == CMSG_INDEFINITE_LENGTH)
+                            nextItemEncodedLen = cbEncoded - (ptr - pbEncoded);
+                        else
+                            nextItemEncodedLen = 1 + nextItemLenBytes +
+                             nextItemLen;
                         if (pvStructInfo)
                             TRACE("decoding item %d\n", i);
                         else
                             TRACE("sizing item %d\n", i);
-                        ret = items[i].decodeFunc(ptr,
-                         1 + nextItemLenBytes + nextItemLen,
+                        ret = items[i].decodeFunc(ptr, nextItemEncodedLen,
                          dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
                          pvStructInfo ?  (BYTE *)pvStructInfo + items[i].offset
-                         : NULL, &items[i].size, NULL);
+                         : NULL, &items[i].size, &nextItemDecoded);
                         if (ret)
                         {
                             /* Account for alignment padding */
@@ -345,10 +351,20 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                             if (nextData && items[i].hasPointer &&
                              items[i].size > items[i].minSize)
                                 nextData += items[i].size - items[i].minSize;
-                            ptr += 1 + nextItemLenBytes + nextItemLen;
-                            decoded += 1 + nextItemLenBytes + nextItemLen;
-                            TRACE("item %d: decoded %d bytes\n", i,
-                             1 + nextItemLenBytes + nextItemLen);
+                            if (nextItemDecoded > nextItemEncodedLen)
+                            {
+                                WARN("decoded length %d exceeds encoded %d\n",
+                                 nextItemDecoded, nextItemEncodedLen);
+                                SetLastError(CRYPT_E_ASN1_CORRUPT);
+                                ret = FALSE;
+                            }
+                            else
+                            {
+                                ptr += nextItemDecoded;
+                                decoded += nextItemDecoded;
+                                TRACE("item %d: decoded %d bytes\n", i,
+                                 nextItemDecoded);
+                            }
                         }
                         else if (items[i].optional &&
                          GetLastError() == CRYPT_E_ASN1_BADTAG)
@@ -361,6 +377,12 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                         else
                             TRACE("item %d failed: %08x\n", i,
                              GetLastError());
+                    }
+                    else if (nextItemLen == CMSG_INDEFINITE_LENGTH)
+                    {
+                        ERR("can't use indefinite length encoding without a decoder\n");
+                        SetLastError(CRYPT_E_ASN1_CORRUPT);
+                        ret = FALSE;
                     }
                     else
                     {
