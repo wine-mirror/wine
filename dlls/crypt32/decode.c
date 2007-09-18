@@ -115,6 +115,8 @@ static BOOL WINAPI CRYPT_AsnDecodeBits(DWORD dwCertEncodingType,
 static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo);
+static BOOL CRYPT_AsnDecodeIntInternal(const BYTE *pbEncoded, DWORD cbEncoded,
+ DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded);
 /* Like CRYPT_AsnDecodeInteger, but assumes the CRYPT_INTEGER_BLOB's pbData
  * member has been initialized, doesn't do exception handling, and doesn't do
  * memory allocation.  Also doesn't check tag, assumes the caller has checked
@@ -844,9 +846,8 @@ static BOOL WINAPI CRYPT_AsnDecodeCertVersion(DWORD dwCertEncodingType,
     {
         BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
 
-        ret = CRYPT_AsnDecodeInt(dwCertEncodingType, X509_INTEGER,
-         pbEncoded + 1 + lenBytes, dataLen, dwFlags, pDecodePara,
-         pvStructInfo, pcbStructInfo);
+        ret = CRYPT_AsnDecodeIntInternal(pbEncoded + 1 + lenBytes, dataLen,
+         dwFlags, pvStructInfo, pcbStructInfo, NULL);
     }
     return ret;
 }
@@ -2670,9 +2671,8 @@ static BOOL WINAPI CRYPT_AsnDecodePathLenConstraint(DWORD dwCertEncodingType,
                  (struct PATH_LEN_CONSTRAINT *)pvStructInfo;
                 DWORD size = sizeof(constraint->dwPathLenConstraint);
 
-                ret = CRYPT_AsnDecodeInt(dwCertEncodingType, X509_INTEGER,
-                 pbEncoded, cbEncoded, 0, NULL,
-                 &constraint->dwPathLenConstraint, &size);
+                ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, 0,
+                 &constraint->dwPathLenConstraint, &size, NULL);
                 if (ret)
                     constraint->fPathLenConstraint = TRUE;
                 TRACE("got an int, dwPathLenConstraint is %d\n",
