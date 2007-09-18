@@ -308,15 +308,21 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
     {
         if (cbEncoded - (ptr - pbEncoded) != 0)
         {
-            DWORD nextItemLen;
+            DWORD itemLen;
 
             if ((ret = CRYPT_GetLengthIndefinite(ptr,
-             cbEncoded - (ptr - pbEncoded), &nextItemLen)))
+             cbEncoded - (ptr - pbEncoded), &itemLen)))
             {
-                BYTE nextItemLenBytes = GET_LEN_BYTES(ptr[1]);
+                BYTE itemLenBytes = GET_LEN_BYTES(ptr[1]);
 
                 if (ptr[0] == items[i].tag || !items[i].tag)
                 {
+                    DWORD itemEncodedLen;
+
+                    if (itemLen == CMSG_INDEFINITE_LENGTH)
+                        itemEncodedLen = cbEncoded - (ptr - pbEncoded);
+                    else
+                        itemEncodedLen = 1 + itemLenBytes + itemLen;
                     if (nextData && pvStructInfo && items[i].hasPointer)
                     {
                         TRACE("Setting next pointer to %p\n",
@@ -326,21 +332,16 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                     }
                     if (items[i].decodeFunc)
                     {
-                        DWORD nextItemEncodedLen, nextItemDecoded;
+                        DWORD itemDecoded;
 
-                        if (nextItemLen == CMSG_INDEFINITE_LENGTH)
-                            nextItemEncodedLen = cbEncoded - (ptr - pbEncoded);
-                        else
-                            nextItemEncodedLen = 1 + nextItemLenBytes +
-                             nextItemLen;
                         if (pvStructInfo)
                             TRACE("decoding item %d\n", i);
                         else
                             TRACE("sizing item %d\n", i);
-                        ret = items[i].decodeFunc(ptr, nextItemEncodedLen,
+                        ret = items[i].decodeFunc(ptr, itemEncodedLen,
                          dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
                          pvStructInfo ?  (BYTE *)pvStructInfo + items[i].offset
-                         : NULL, &items[i].size, &nextItemDecoded);
+                         : NULL, &items[i].size, &itemDecoded);
                         if (ret)
                         {
                             /* Account for alignment padding */
@@ -351,19 +352,19 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                             if (nextData && items[i].hasPointer &&
                              items[i].size > items[i].minSize)
                                 nextData += items[i].size - items[i].minSize;
-                            if (nextItemDecoded > nextItemEncodedLen)
+                            if (itemDecoded > itemEncodedLen)
                             {
                                 WARN("decoded length %d exceeds encoded %d\n",
-                                 nextItemDecoded, nextItemEncodedLen);
+                                 itemDecoded, itemEncodedLen);
                                 SetLastError(CRYPT_E_ASN1_CORRUPT);
                                 ret = FALSE;
                             }
                             else
                             {
-                                ptr += nextItemDecoded;
-                                decoded += nextItemDecoded;
+                                ptr += itemDecoded;
+                                decoded += itemDecoded;
                                 TRACE("item %d: decoded %d bytes\n", i,
-                                 nextItemDecoded);
+                                 itemDecoded);
                             }
                         }
                         else if (items[i].optional &&
@@ -378,7 +379,7 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                             TRACE("item %d failed: %08x\n", i,
                              GetLastError());
                     }
-                    else if (nextItemLen == CMSG_INDEFINITE_LENGTH)
+                    else if (itemLen == CMSG_INDEFINITE_LENGTH)
                     {
                         ERR("can't use indefinite length encoding without a decoder\n");
                         SetLastError(CRYPT_E_ASN1_CORRUPT);
@@ -386,10 +387,9 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                     }
                     else
                     {
-                        TRACE("item %d: decoded %d bytes\n", i,
-                         1 + nextItemLenBytes + nextItemLen);
-                        ptr += 1 + nextItemLenBytes + nextItemLen;
-                        decoded += 1 + nextItemLenBytes + nextItemLen;
+                        TRACE("item %d: decoded %d bytes\n", i, itemEncodedLen);
+                        ptr += itemEncodedLen;
+                        decoded += itemEncodedLen;
                         items[i].size = items[i].minSize;
                     }
                 }
