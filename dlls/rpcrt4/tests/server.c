@@ -350,6 +350,12 @@ s_sum_padded(padded_t *p)
   return p->i + p->c;
 }
 
+int
+s_sum_bogus(bogus_t *b)
+{
+  return *b->h.p1 + *b->p2 + *b->p3 + b->c;
+}
+
 void
 s_stop(void)
 {
@@ -399,6 +405,7 @@ basic_tests(void)
   pints_t pints;
   ptypes_t ptypes;
   padded_t padded;
+  bogus_t bogus;
   int i1, i2, i3, *pi2, *pi3, **ppi3;
   double u, v;
   float s, t;
@@ -476,6 +483,15 @@ basic_tests(void)
   padded.i = -3;
   padded.c = 8;
   ok(sum_padded(&padded) == 5, "RPC sum_padded\n");
+
+  i1 = 14;
+  i2 = -7;
+  i3 = -4;
+  bogus.h.p1 = &i1;
+  bogus.p2 = &i2;
+  bogus.p3 = &i3;
+  bogus.c = 9;
+  ok(sum_bogus(&bogus) == 12, "RPC sum_bogus\n");
 }
 
 static void

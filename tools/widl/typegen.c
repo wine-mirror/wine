@@ -100,6 +100,7 @@ const char *string_of_type(unsigned char type)
     case RPC_FC_BOGUS_ARRAY: return "FC_BOGUS_ARRAY";
     case RPC_FC_ALIGNM4: return "FC_ALIGNM4";
     case RPC_FC_ALIGNM8: return "FC_ALIGNM8";
+    case RPC_FC_POINTER: return "FC_POINTER";
     default:
         error("string_of_type: unknown type 0x%02x\n", type);
         return NULL;
@@ -918,7 +919,8 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     *tfsoff += 2;
 }
 
-static void write_member_type(FILE *file, type_t *type, const var_t *field,
+static void write_member_type(FILE *file, const type_t *cont,
+                              const attr_list_t *attrs, const type_t *type,
                               unsigned int *corroff, unsigned int *tfsoff)
 {
     if (is_embedded_complex(type))
@@ -926,7 +928,7 @@ static void write_member_type(FILE *file, type_t *type, const var_t *field,
         size_t absoff;
         short reloff;
 
-        if (is_union(type->type) && is_attr(field->attrs, ATTR_SWITCHIS))
+        if (is_union(type->type) && is_attr(attrs, ATTR_SWITCHIS))
         {
             absoff = *corroff;
             *corroff += 8;
@@ -946,7 +948,10 @@ static void write_member_type(FILE *file, type_t *type, const var_t *field,
     }
     else if (is_ptr(type))
     {
-        print_file(file, 2, "0x8,\t/* FC_LONG */\n");
+        unsigned char fc = (cont->type == RPC_FC_BOGUS_STRUCT
+                            ? RPC_FC_POINTER
+                            : RPC_FC_LONG);
+        print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
         *tfsoff += 1;
     }
     else if (!write_base_type(file, type, tfsoff))
@@ -1521,7 +1526,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
             *typestring_offset += 1;
         }
 
-        write_member_type(file, type->ref, NULL, NULL, typestring_offset);
+        write_member_type(file, type, NULL, type->ref, NULL, typestring_offset);
         write_end(file, typestring_offset);
     }
     else
@@ -1579,7 +1584,8 @@ static void write_struct_members(FILE *file, const type_t *type,
                 offset = (offset + (align - 1)) & ~(align - 1);
                 *typestring_offset += 1;
             }
-            write_member_type(file, ft, field, corroff, typestring_offset);
+            write_member_type(file, type, field->attrs, field->type, corroff,
+                              typestring_offset);
             offset += size;
         }
     }
@@ -1655,8 +1661,12 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
 
     if (type->type == RPC_FC_BOGUS_STRUCT)
     {
-
-        print_file(file, 2, "NdrFcShort(0x0),\t/* FIXME: pointer stuff */\n");
+        /* On the sizing pass, type->ptrdesc may be zero, but it's ok as
+           nothing is written to file yet.  On the actual writing pass,
+           this will have been updated.  */
+        short reloff = type->ptrdesc - *tfsoff;
+        print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
+                   reloff, reloff, type->ptrdesc);
         *tfsoff += 2;
     }
     else if ((type->type == RPC_FC_PSTRUCT) ||
@@ -1672,6 +1682,20 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
     }
 
     write_struct_members(file, type, &corroff, tfsoff);
+
+    if (type->type == RPC_FC_BOGUS_STRUCT)
+    {
+        const var_list_t *fs = type->fields;
+        const var_t *f;
+
+        type->ptrdesc = *tfsoff;
+        if (fs) LIST_FOR_EACH_ENTRY(f, fs, const var_t, entry)
+        {
+            type_t *ft = f->type;
+            if (is_ptr(ft))
+                write_pointer_tfs(file, ft, tfsoff);
+        }
+    }
 
     current_structure = save_current_structure;
     return start_offset;

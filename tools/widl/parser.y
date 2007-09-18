@@ -1249,6 +1249,7 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->size_is = NULL;
   t->length_is = NULL;
   t->typestring_offset = 0;
+  t->ptrdesc = 0;
   t->declarray = FALSE;
   t->ignore = (parse_only != 0);
   t->is_const = FALSE;

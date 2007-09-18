@@ -208,5 +208,20 @@ interface IServer
 
   int sum_padded(padded_t *p);
 
+  typedef struct
+  {
+    int *p1;
+  } bogus_helper_t;
+
+  typedef struct
+  {
+    bogus_helper_t h;
+    int *p2;
+    int *p3;
+    char c;
+  } bogus_t;
+
+  int sum_bogus(bogus_t *b);
+
   void stop(void);
 }

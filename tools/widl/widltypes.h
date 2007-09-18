@@ -214,6 +214,7 @@ struct _type_t {
   expr_t *size_is, *length_is;
   type_t *orig;                   /* dup'd types */
   unsigned int typestring_offset;
+  unsigned int ptrdesc;           /* used for complex structs */
   int typelib_idx;
   unsigned int declarray : 1;     /* if declared as an array */
   unsigned int ignore : 1;
