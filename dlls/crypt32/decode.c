@@ -454,7 +454,7 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
 
             cbEncoded -= 1 + lenBytes;
             if (dataLen == CMSG_INDEFINITE_LENGTH)
-                cbEncoded = dataLen;
+                dataLen = cbEncoded;
             else if (cbEncoded < dataLen)
             {
                 TRACE("dataLen %d exceeds cbEncoded %d, failing\n", dataLen,
@@ -462,12 +462,10 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
                 SetLastError(CRYPT_E_ASN1_CORRUPT);
                 ret = FALSE;
             }
-            else
-                cbEncoded = dataLen;
             if (ret)
             {
                 ret = CRYPT_AsnDecodeSequenceItems(items, cItem,
-                 ptr, cbEncoded, dwFlags, NULL, NULL, &cbDecoded);
+                 ptr, dataLen, dwFlags, NULL, NULL, &cbDecoded);
                 if (ret && dataLen == CMSG_INDEFINITE_LENGTH)
                 {
                     if (cbDecoded > cbEncoded - 2)
@@ -487,9 +485,9 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
                         cbDecoded += 2;
                 }
             }
-            if (ret && cbDecoded != cbEncoded)
+            if (ret && cbDecoded != dataLen)
             {
-                TRACE("expected %d decoded, got %d, failing\n", cbEncoded,
+                TRACE("expected %d decoded, got %d, failing\n", dataLen,
                  cbDecoded);
                 SetLastError(CRYPT_E_ASN1_CORRUPT);
                 ret = FALSE;
@@ -520,7 +518,7 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
                         nextData = (BYTE *)pvStructInfo + structSize;
                     memset(pvStructInfo, 0, structSize);
                     ret = CRYPT_AsnDecodeSequenceItems(items, cItem,
-                     ptr, cbEncoded, dwFlags, pvStructInfo, nextData,
+                     ptr, dataLen, dwFlags, pvStructInfo, nextData,
                      &cbDecoded);
                 }
             }
