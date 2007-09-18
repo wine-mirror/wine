@@ -1064,7 +1064,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCRLInfo(DWORD dwCertEncodingType,
 {
     struct AsnDecodeSequenceItem items[] = {
      { ASN_INTEGER, offsetof(CRL_INFO, dwVersion),
-       CRYPT_AsnDecodeInt, sizeof(DWORD), TRUE, FALSE, 0, 0 },
+       CRYPT_AsnDecodeIntInternal, sizeof(DWORD), TRUE, FALSE, 0, 0 },
      { ASN_SEQUENCEOF, offsetof(CRL_INFO, SignatureAlgorithm),
        CRYPT_AsnDecodeAlgorithmId, sizeof(CRYPT_ALGORITHM_IDENTIFIER),
        FALSE, TRUE, offsetof(CRL_INFO, SignatureAlgorithm.pszObjId), 0 },
@@ -2590,8 +2590,8 @@ BOOL CRYPT_AsnDecodePKCSDigestedData(const BYTE *pbEncoded, DWORD cbEncoded,
 {
     BOOL ret;
     struct AsnDecodeSequenceItem items[] = {
-     { ASN_INTEGER, offsetof(CRYPT_DIGESTED_DATA, version), CRYPT_AsnDecodeInt,
-       sizeof(DWORD), FALSE, FALSE, 0, 0 },
+     { ASN_INTEGER, offsetof(CRYPT_DIGESTED_DATA, version),
+       CRYPT_AsnDecodeIntInternal, sizeof(DWORD), FALSE, FALSE, 0, 0 },
      { ASN_SEQUENCEOF, offsetof(CRYPT_DIGESTED_DATA, DigestAlgorithm),
        CRYPT_AsnDecodeAlgorithmId, sizeof(CRYPT_ALGORITHM_IDENTIFIER),
        FALSE, TRUE, offsetof(CRYPT_DIGESTED_DATA, DigestAlgorithm.pszObjId),
@@ -2797,7 +2797,7 @@ static BOOL WINAPI CRYPT_AsnDecodeRsaPubKey(DWORD dwCertEncodingType,
            FALSE, TRUE, offsetof(struct DECODED_RSA_PUB_KEY, modulus.pbData),
            0 },
          { ASN_INTEGER, offsetof(struct DECODED_RSA_PUB_KEY, pubexp),
-           CRYPT_AsnDecodeInt, sizeof(DWORD), FALSE, FALSE, 0, 0 },
+           CRYPT_AsnDecodeIntInternal, sizeof(DWORD), FALSE, FALSE, 0, 0 },
         };
         struct DECODED_RSA_PUB_KEY *decodedKey = NULL;
         DWORD size = 0;
@@ -4042,7 +4042,7 @@ static BOOL CRYPT_AsnDecodePKCSSignerInfoInternal(const BYTE *pbEncoded,
     CMSG_SIGNER_INFO *info = (CMSG_SIGNER_INFO *)pvStructInfo;
     struct AsnDecodeSequenceItem items[] = {
      { ASN_INTEGER, offsetof(CMSG_SIGNER_INFO, dwVersion),
-       CRYPT_AsnDecodeInt, sizeof(DWORD), FALSE, FALSE, 0, 0 },
+       CRYPT_AsnDecodeIntInternal, sizeof(DWORD), FALSE, FALSE, 0, 0 },
      { ASN_SEQUENCEOF, offsetof(CMSG_SIGNER_INFO, Issuer),
        CRYPT_AsnDecodeIssuerSerialNumber, sizeof(CERT_ISSUER_SERIAL_NUMBER),
        FALSE, TRUE, offsetof(CMSG_SIGNER_INFO, Issuer.pbData), 0 },
@@ -4143,8 +4143,8 @@ BOOL CRYPT_AsnDecodePKCSSignedInfo(const BYTE *pbEncoded, DWORD cbEncoded,
 {
     BOOL ret = FALSE;
     struct AsnDecodeSequenceItem items[] = {
-     { ASN_INTEGER, offsetof(CRYPT_SIGNED_INFO, version), CRYPT_AsnDecodeInt,
-       sizeof(DWORD), FALSE, FALSE, 0, 0 },
+     { ASN_INTEGER, offsetof(CRYPT_SIGNED_INFO, version),
+       CRYPT_AsnDecodeIntInternal, sizeof(DWORD), FALSE, FALSE, 0, 0 },
      /* Placeholder for the hash algorithms - redundant with those in the
       * signers, so just ignore them.
       */
