@@ -213,10 +213,10 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PSP_DEVINSTALL_PARAMS)
    of a device information set) */
 typedef struct _SP_DEVINFO_DATA
 {
-   DWORD cbSize;
-   GUID  ClassGuid;
-   DWORD DevInst;   /* DEVINST handle */
-   DWORD Reserved;
+   DWORD     cbSize;
+   GUID      ClassGuid;
+   DWORD     DevInst;   /* DEVINST handle */
+   ULONG_PTR Reserved;
 } SP_DEVINFO_DATA, *PSP_DEVINFO_DATA;
 
 typedef struct _SP_DEVICE_INTERFACE_DATA
