@@ -11,9 +11,6 @@ C_SRCS = \
 	service.c
 
 RC_SRCS = rsrc.rc
-RC_BINSRC = rsrc.rc
-RC_BINARIES = \
-	msiexec.ico
 
 @MAKE_PROG_RULES@
 
