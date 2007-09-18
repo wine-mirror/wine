@@ -652,8 +652,6 @@ programs/view/viewrc.res
 programs/wineapploader
 programs/wineboot/wineboot
 programs/winebrowser/winebrowser
-programs/winecfg/idb_checkbox.bmp
-programs/winecfg/idb_wine.bmp
 programs/winecfg/winecfg
 programs/winecfg/winecfg.res
 programs/wineconsole/wineconsole

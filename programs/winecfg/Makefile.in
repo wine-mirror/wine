@@ -20,10 +20,6 @@ C_SRCS = \
 	x11drvdlg.c
 
 RC_SRCS = winecfg.rc
-RC_BINSRC = winecfg.rc
-RC_BINARIES = \
-	idb_checkbox.bmp \
-	idb_wine.bmp
 
 @MAKE_PROG_RULES@
 
