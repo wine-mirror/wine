@@ -63,7 +63,7 @@ int CDECL MSVCRT_rand(void)
 /*********************************************************************
  *		_sleep (MSVCRT.@)
  */
-void CDECL _sleep(unsigned long timeout)
+void CDECL MSVCRT__sleep(unsigned long timeout)
 {
   TRACE("_sleep for %ld milliseconds\n",timeout);
   Sleep((timeout)?timeout:1);

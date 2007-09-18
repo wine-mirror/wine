@@ -565,25 +565,25 @@ MSVCRT_FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
         break;
     }
   }
-  if (_pipe(fds, 0, textmode) == -1)
+  if (MSVCRT__pipe(fds, 0, textmode) == -1)
     return NULL;
 
   fdToDup = readPipe ? 1 : 0;
   fdToOpen = readPipe ? 0 : 1;
 
-  if ((fdStdHandle = _dup(fdToDup)) == -1)
+  if ((fdStdHandle = MSVCRT__dup(fdToDup)) == -1)
     goto error;
-  if (_dup2(fds[fdToDup], fdToDup) != 0)
+  if (MSVCRT__dup2(fds[fdToDup], fdToDup) != 0)
     goto error;
   if (readPipe)
   {
-    if ((fdStdErr = _dup(MSVCRT_STDERR_FILENO)) == -1)
+    if ((fdStdErr = MSVCRT__dup(MSVCRT_STDERR_FILENO)) == -1)
       goto error;
-    if (_dup2(fds[fdToDup], MSVCRT_STDERR_FILENO) != 0)
+    if (MSVCRT__dup2(fds[fdToDup], MSVCRT_STDERR_FILENO) != 0)
       goto error;
   }
 
-  _close(fds[fdToDup]);
+  MSVCRT__close(fds[fdToDup]);
 
   comSpecLen = GetEnvironmentVariableA(comSpec, NULL, 0);
   if (!comSpecLen)
@@ -596,30 +596,30 @@ MSVCRT_FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
   strcat(cmdcopy, command);
   if (msvcrt_spawn(MSVCRT__P_NOWAIT, NULL, cmdcopy, NULL) == -1)
   {
-    _close(fds[fdToOpen]);
+    MSVCRT__close(fds[fdToOpen]);
     ret = NULL;
   }
   else
   {
     ret = MSVCRT__fdopen(fds[fdToOpen], mode);
     if (!ret)
-      _close(fds[fdToOpen]);
+      MSVCRT__close(fds[fdToOpen]);
   }
   HeapFree(GetProcessHeap(), 0, cmdcopy);
-  _dup2(fdStdHandle, fdToDup);
-  _close(fdStdHandle);
+  MSVCRT__dup2(fdStdHandle, fdToDup);
+  MSVCRT__close(fdStdHandle);
   if (readPipe)
   {
-    _dup2(fdStdErr, MSVCRT_STDERR_FILENO);
-    _close(fdStdErr);
+    MSVCRT__dup2(fdStdErr, MSVCRT_STDERR_FILENO);
+    MSVCRT__close(fdStdErr);
   }
   return ret;
 
 error:
-  if (fdStdHandle != -1) _close(fdStdHandle);
-  if (fdStdErr != -1)    _close(fdStdErr);
-  _close(fds[0]);
-  _close(fds[1]);
+  if (fdStdHandle != -1) MSVCRT__close(fdStdHandle);
+  if (fdStdErr != -1)    MSVCRT__close(fdStdErr);
+  MSVCRT__close(fds[0]);
+  MSVCRT__close(fds[1]);
   return NULL;
 }
 

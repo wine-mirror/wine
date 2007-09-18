@@ -241,11 +241,11 @@ void CDECL MSVCRT_perror(const char* str)
 
     if (str && *str)
     {
-        _write( 2, str, strlen(str) );
-        _write( 2, ": ", 2 );
+        MSVCRT__write( 2, str, strlen(str) );
+        MSVCRT__write( 2, ": ", 2 );
     }
-    _write( 2, MSVCRT__sys_errlist[err], strlen(MSVCRT__sys_errlist[err]) );
-    _write( 2, "\n", 1 );
+    MSVCRT__write( 2, MSVCRT__sys_errlist[err], strlen(MSVCRT__sys_errlist[err]) );
+    MSVCRT__write( 2, "\n", 1 );
 }
 
 /******************************************************************************

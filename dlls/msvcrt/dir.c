@@ -131,7 +131,7 @@ static void msvcrt_wfttofdi64( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfindd
  * NOTES
  *  See SetCurrentDirectoryA.
  */
-int CDECL _chdir(const char * newdir)
+int CDECL MSVCRT__chdir(const char * newdir)
 {
   if (!SetCurrentDirectoryA(newdir))
   {
@@ -627,7 +627,7 @@ unsigned int CDECL MSVCRT__getdiskfree(unsigned int disk, struct MSVCRT__diskfre
  * NOTES
  *  See CreateDirectoryA.
  */
-int CDECL _mkdir(const char * newdir)
+int CDECL MSVCRT__mkdir(const char * newdir)
 {
   if (CreateDirectoryA(newdir,NULL))
     return 0;
@@ -663,7 +663,7 @@ int CDECL _wmkdir(const MSVCRT_wchar_t* newdir)
  * NOTES
  *  See RemoveDirectoryA.
  */
-int CDECL _rmdir(const char * dir)
+int CDECL MSVCRT__rmdir(const char * dir)
 {
   if (RemoveDirectoryA(dir))
     return 0;
