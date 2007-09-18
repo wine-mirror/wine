@@ -2176,16 +2176,14 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
 static unsigned int get_required_buffer_size_type(
     const type_t *type, const char *name, unsigned int *alignment)
 {
-    size_t size = 0;
-
     *alignment = 0;
     if (is_user_type(type))
     {
         const char *uname;
         const type_t *utype = get_user_type(type, &uname);
-        size = get_required_buffer_size_type(utype, uname, alignment);
+        return get_required_buffer_size_type(utype, uname, alignment);
     }
-    else if (!is_ptr(type))
+    else
     {
         switch (type->type)
         {
@@ -2194,16 +2192,14 @@ static unsigned int get_required_buffer_size_type(
         case RPC_FC_USMALL:
         case RPC_FC_SMALL:
             *alignment = 4;
-            size = 1;
-            break;
+            return 1;
 
         case RPC_FC_WCHAR:
         case RPC_FC_USHORT:
         case RPC_FC_SHORT:
         case RPC_FC_ENUM16:
             *alignment = 4;
-            size = 2;
-            break;
+            return 2;
 
         case RPC_FC_ULONG:
         case RPC_FC_LONG:
@@ -2211,14 +2207,12 @@ static unsigned int get_required_buffer_size_type(
         case RPC_FC_FLOAT:
         case RPC_FC_ERROR_STATUS_T:
             *alignment = 4;
-            size = 4;
-            break;
+            return 4;
 
         case RPC_FC_HYPER:
         case RPC_FC_DOUBLE:
             *alignment = 8;
-            size = 8;
-            break;
+            return 8;
 
         case RPC_FC_IGNORE:
         case RPC_FC_BIND_PRIMITIVE:
@@ -2227,6 +2221,7 @@ static unsigned int get_required_buffer_size_type(
         case RPC_FC_STRUCT:
         case RPC_FC_PSTRUCT:
         {
+            size_t size = 0;
             const var_t *field;
             if (!type->fields) return 0;
             LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
@@ -2235,33 +2230,23 @@ static unsigned int get_required_buffer_size_type(
                 size += get_required_buffer_size_type(field->type, field->name,
                                                       &alignment);
             }
-            break;
+            return size;
         }
 
         case RPC_FC_RP:
-            if (is_base_type( type->ref->type ) || type->ref->type == RPC_FC_STRUCT)
-                size = get_required_buffer_size_type( type->ref, name, alignment );
-            break;
+            return
+                is_base_type( type->ref->type ) || type->ref->type == RPC_FC_STRUCT
+                ? get_required_buffer_size_type( type->ref, name, alignment )
+                : 0;
 
         case RPC_FC_SMFARRAY:
         case RPC_FC_LGFARRAY:
-            size = type->dim * get_required_buffer_size_type(type->ref, name, alignment);
-            break;
-
-        case RPC_FC_SMVARRAY:
-        case RPC_FC_LGVARRAY:
-        case RPC_FC_CARRAY:
-        case RPC_FC_CVARRAY:
-        case RPC_FC_BOGUS_ARRAY:
-            size = 0;
-            break;
+            return type->dim * get_required_buffer_size_type(type->ref, name, alignment);
 
         default:
-            error("get_required_buffer_size: Unknown/unsupported type: %s (0x%02x)\n", name, type->type);
             return 0;
         }
     }
-    return size;
 }
 
 static unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment, enum pass pass)
