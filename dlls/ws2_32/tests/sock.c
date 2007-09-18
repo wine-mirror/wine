@@ -650,17 +650,17 @@ static void WINAPI event_client ( client_params *par )
     event = WSACreateEvent ();
     WSAEventSelect ( mem->s, event, FD_CONNECT );
     tmp = connect ( mem->s, (struct sockaddr*) &mem->addr, sizeof ( mem->addr ) );
-    if ( tmp != 0 && ( err = WSAGetLastError () ) != WSAEWOULDBLOCK )
-        ok ( 0, "event_client (%x): connect error: %d\n", id, err );
-
-    tmp = WaitForSingleObject ( event, INFINITE );
-    ok ( tmp == WAIT_OBJECT_0, "event_client (%x): wait for connect event failed: %d\n", id, tmp );
-    err = WSAEnumNetworkEvents ( mem->s, event, &wsa_events );
-    wsa_ok ( err, 0 ==, "event_client (%x): WSAEnumNetworkEvents error: %d\n" );
-
-    err = wsa_events.iErrorCode[ FD_CONNECT_BIT ];
-    ok ( err == 0, "event_client (%x): connect error: %d\n", id, err );
-    if ( err ) goto out;
+    if ( tmp != 0 ) {
+        err = WSAGetLastError ();
+        ok ( err == WSAEWOULDBLOCK, "event_client (%x): connect error: %d\n", id, err );
+        tmp = WaitForSingleObject ( event, INFINITE );
+        ok ( tmp == WAIT_OBJECT_0, "event_client (%x): wait for connect event failed: %d\n", id, tmp );
+        err = WSAEnumNetworkEvents ( mem->s, event, &wsa_events );
+        wsa_ok ( err, 0 ==, "event_client (%x): WSAEnumNetworkEvents error: %d\n" );
+        err = wsa_events.iErrorCode[ FD_CONNECT_BIT ];
+        ok ( err == 0, "event_client (%x): connect error: %d\n", id, err );
+        if ( err ) goto out;
+    }
 
     trace ( "event_client (%x) connected\n", id );
 
