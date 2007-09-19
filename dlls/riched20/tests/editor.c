@@ -2023,10 +2023,8 @@ static void test_eventMask(void)
     ok(ret == TRUE, "failed to set text\n");
     /* richedit should mask off ENM_CHANGE when it sends an EN_CHANGE
        notification in response to WM_SETTEXT */
-todo_wine {
     ok(queriedEventMask == (eventMask & ~ENM_CHANGE),
             "wrong event mask (0x%x) during WM_COMMAND\n", queriedEventMask);
-}
 
 }
 

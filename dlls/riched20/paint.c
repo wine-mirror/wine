@@ -120,7 +120,9 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
   /* send EN_CHANGE if the event mask asks for it */
   if(editor->nEventMask & ENM_CHANGE)
   {
+    editor->nEventMask &= ~ENM_CHANGE;
     ME_SendOldNotify(editor, EN_CHANGE);
+    editor->nEventMask |= ENM_CHANGE;
   }
   ME_Repaint(editor);
   ME_SendSelChange(editor);
