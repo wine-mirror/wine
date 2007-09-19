@@ -80,7 +80,7 @@
 @ cdecl __RTCastToVoid(ptr) MSVCRT___RTCastToVoid
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) MSVCRT___RTDynamicCast
 @ cdecl __RTtypeid(ptr) MSVCRT___RTtypeid
-@ stub __STRINGTOLD #(ptr ptr str long)
+@ cdecl __STRINGTOLD(ptr ptr str long)
 @ extern __argc MSVCRT___argc
 @ extern __argv MSVCRT___argv
 @ extern __badioinfo MSVCRT___badioinfo

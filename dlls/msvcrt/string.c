@@ -174,7 +174,7 @@ int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
 /********************************************************************
  *		_atoldbl (MSVCRT.@)
  */
-int CDECL MSVCRT__atoldbl(MSVCRT__LDOUBLE * value, char * str)
+int CDECL MSVCRT__atoldbl(MSVCRT__LDOUBLE *value, const char *str)
 {
   /* FIXME needs error checking for huge/small values */
 #ifdef HAVE_STRTOLD
@@ -184,4 +184,18 @@ int CDECL MSVCRT__atoldbl(MSVCRT__LDOUBLE * value, char * str)
   FIXME("stub, str %s value %p\n",str,value);
 #endif
   return 0;
+}
+
+/********************************************************************
+ *		__STRINGTOLD (MSVCRT.@)
+ */
+int CDECL __STRINGTOLD( MSVCRT__LDOUBLE *value, char **endptr, const char *str, int flags )
+{
+#ifdef HAVE_STRTOLD
+    FIXME("%p %p %s %x partial stub\n", value, endptr, str, flags );
+    value->x = strtold(str,endptr);
+#else
+    FIXME("%p %p %s %x stub\n", value, endptr, str, flags );
+#endif
+    return 0;
 }
