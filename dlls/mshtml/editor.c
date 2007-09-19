@@ -780,6 +780,13 @@ static HRESULT exec_fontsize(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     return S_OK;
 }
 
+static HRESULT exec_font(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+
+    FIXME("(%p)->(%p %p)\n", This, in, out);
+    return E_NOTIMPL;
+}
+
 static HRESULT exec_selectall(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     TRACE("(%p)\n", This);
@@ -1359,6 +1366,7 @@ const cmdtable_t editmode_cmds[] = {
     {IDM_JUSTIFYCENTER,   query_justify,        exec_justifycenter},
     {IDM_JUSTIFYRIGHT,    query_justify,        exec_justifyright},
     {IDM_JUSTIFYLEFT,     query_justify,        exec_justifyleft},
+    {IDM_FONT,            NULL,                 exec_font},
     {IDM_UNDERLINE,       query_edit_status,    exec_underline},
     {IDM_HORIZONTALLINE,  query_edit_status,    exec_horizontalline},
     {IDM_ORDERLIST,       query_edit_status,    exec_orderlist},
