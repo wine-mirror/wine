@@ -1033,7 +1033,7 @@ static void create_child_list(HTMLDocument *doc, HTMLElement *elem, elem_vector 
     nsIDOMNodeList *nsnode_list;
     nsIDOMNode *iter;
     PRUint32 list_len = 0, i;
-    HTMLDOMNode *node;
+    PRUint16 node_type;
     nsresult nsres;
 
     nsres = nsIDOMNode_GetChildNodes(elem->node.nsnode, &nsnode_list);
@@ -1056,11 +1056,9 @@ static void create_child_list(HTMLDocument *doc, HTMLElement *elem, elem_vector 
             continue;
         }
 
-        node = get_node(doc, iter);
-        if(node->node_type != NT_HTMLELEM)
-            continue;
-
-        elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
+        nsres = nsIDOMNode_GetNodeType(iter, &node_type);
+        if(NS_SUCCEEDED(nsres) && node_type == ELEMENT_NODE)
+            elem_vector_add(buf, HTMLELEM_NODE_THIS(get_node(doc, iter)));
     }
 }
 
@@ -1081,7 +1079,7 @@ static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *b
     nsIDOMNodeList *nsnode_list;
     nsIDOMNode *iter;
     PRUint32 list_len = 0, i;
-    HTMLDOMNode *node;
+    PRUint16 node_type;
     nsresult nsres;
 
     nsres = nsIDOMNode_GetChildNodes(elem->node.nsnode, &nsnode_list);
@@ -1101,12 +1099,13 @@ static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *b
             continue;
         }
 
-        node = get_node(doc, iter);
-        if(node->node_type != NT_HTMLELEM)
-            continue;
+        nsres = nsIDOMNode_GetNodeType(iter, &node_type);
+        if(NS_SUCCEEDED(nsres) && node_type == ELEMENT_NODE) {
+            HTMLDOMNode *node = get_node(doc, iter);
 
-        elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
-        create_all_list(doc, HTMLELEM_NODE_THIS(node), buf);
+            elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
+            create_all_list(doc, HTMLELEM_NODE_THIS(node), buf);
+        }
     }
 }
 
