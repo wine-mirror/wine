@@ -48,10 +48,16 @@ typedef struct {
 
 static const WCHAR attrBackgroundColor[] =
     {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
+static const WCHAR attrColor[] =
+    {'c','o','l','o','r',0};
 static const WCHAR attrFontFamily[] =
     {'f','o','n','t','-','f','a','m','i','l','y',0};
 static const WCHAR attrFontSize[] =
     {'f','o','n','t','-','s','i','z','e',0};
+static const WCHAR attrFontStyle[] =
+    {'f','o','n','t','-','s','t','y','l','e',0};
+static const WCHAR attrFontWeight[] =
+    {'f','o','n','t','-','w','e','i','g','h','t',0};
 
 static HRESULT set_style_attr(HTMLStyle *This, LPCWSTR name, LPCWSTR value)
 {
@@ -215,8 +221,10 @@ static HRESULT WINAPI HTMLStyle_put_fontStyle(IHTMLStyle *iface, BSTR v)
 static HRESULT WINAPI HTMLStyle_get_fontStyle(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, attrFontStyle, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_fontVariant(IHTMLStyle *iface, BSTR v)
@@ -243,8 +251,10 @@ static HRESULT WINAPI HTMLStyle_put_fontWeight(IHTMLStyle *iface, BSTR v)
 static HRESULT WINAPI HTMLStyle_get_fontWeight(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, attrFontWeight, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_fontSize(IHTMLStyle *iface, VARIANT v)
@@ -266,8 +276,11 @@ static HRESULT WINAPI HTMLStyle_put_fontSize(IHTMLStyle *iface, VARIANT v)
 static HRESULT WINAPI HTMLStyle_get_fontSize(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    V_VT(p) = VT_BSTR;
+    return get_style_attr(This, attrFontSize, &V_BSTR(p));
 }
 
 static HRESULT WINAPI HTMLStyle_put_font(IHTMLStyle *iface, BSTR v)
@@ -294,8 +307,11 @@ static HRESULT WINAPI HTMLStyle_put_color(IHTMLStyle *iface, VARIANT v)
 static HRESULT WINAPI HTMLStyle_get_color(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    V_VT(p) = VT_BSTR;
+    return get_style_attr(This, attrColor, &V_BSTR(p));
 }
 
 static HRESULT WINAPI HTMLStyle_put_background(IHTMLStyle *iface, BSTR v)
