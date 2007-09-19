@@ -851,6 +851,10 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                     rc = CopyTabletData(lpOutput, &gSysContext.lcPktRate,
                                         sizeof(UINT));
                     break;
+                case CTX_PKTDATA:
+                    rc = CopyTabletData(lpOutput, &gSysContext.lcPktData,
+                                        sizeof(WTPKT));
+                    break;
                 case CTX_PKTMODE:
                     rc = CopyTabletData(lpOutput, &gSysContext.lcPktMode,
                                         sizeof(WTPKT));
