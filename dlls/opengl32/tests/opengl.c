@@ -176,10 +176,12 @@ static void test_pbuffers(HDC hdc)
     else skip("Pbuffer test for offscreen pixelformat skipped as no offscreen-only format with pbuffer capabilities has been found\n");
 }
 
-static void test_setpixelformat(void)
+static void test_setpixelformat(HDC winhdc)
 {
     int res = 0;
+    int nCfgs;
     int pf;
+    int i;
     PIXELFORMATDESCRIPTOR pfd = {
         sizeof(PIXELFORMATDESCRIPTOR),
         1,                     /* version */
@@ -211,6 +213,17 @@ static void test_setpixelformat(void)
     /* SetPixelFormat on the main device context 'X root window' should fail */
     res = SetPixelFormat(hdc, pf, &pfd);
     ok(res == 0, "SetPixelFormat on main device context should fail\n");
+
+    /* Setting the same format that was set on the HDC is allowed; other
+       formats fail */
+    nCfgs = DescribePixelFormat(winhdc, 0, 0, NULL);
+    pf = GetPixelFormat(winhdc);
+    for(i = 1;i <= nCfgs;i++)
+    {
+        int res = SetPixelFormat(winhdc, i, NULL);
+        if(i == pf) ok(res, "Failed to set the same pixel format\n");
+        else ok(!res, "Unexpectedly set an alternate pixel format\n");
+    }
 }
 
 static void test_colorbits(HDC hdc)
@@ -366,7 +379,7 @@ START_TEST(opengl)
         ok(res, "wglMakeCurrent failed!\n");
         init_functions();
 
-        test_setpixelformat();
+        test_setpixelformat(hdc);
         test_colorbits(hdc);
         test_gdi_dbuf(hdc);
 

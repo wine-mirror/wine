@@ -1369,22 +1369,25 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 
   if (!has_opengl()) {
     ERR("No libGL on this box - disabling OpenGL support !\n");
-    return 0;
+    return FALSE;
   }
 
   /* SetPixelFormat is not allowed on the X root_window e.g. GetDC(0) */
   if(get_glxdrawable(physDev) == root_window)
   {
     ERR("Invalid operation on root_window\n");
-    return 0;
+    return FALSE;
   }
 
   /* Check if iPixelFormat is in our list of supported formats to see if it is supported. */
   fmt = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, FALSE /* Offscreen */, &value);
   if(!fmt) {
     ERR("Invalid iPixelFormat: %d\n", iPixelFormat);
-    return 0;
+    return FALSE;
   }
+
+    if(physDev->current_pf)  /* cannot change it if already set */
+        return (physDev->current_pf == iPixelFormat);
 
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
 
@@ -1392,12 +1395,12 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     if(hwnd) {
         if(!(value&GLX_WINDOW_BIT)) {
             WARN("Pixel format %d is not compatible for window rendering\n", iPixelFormat);
-            return 0;
+            return FALSE;
         }
 
         if(!SendMessageW(hwnd, WM_X11DRV_SET_WIN_FORMAT, (WPARAM)fmt->fmt_id, 0)) {
             ERR("Couldn't set format of the window, returning failure\n");
-            return 0;
+            return FALSE;
         }
     }
 
