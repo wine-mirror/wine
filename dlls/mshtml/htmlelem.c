@@ -80,22 +80,14 @@ static ULONG WINAPI HTMLElement_AddRef(IHTMLElement *iface)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
 
-    if(This->impl)
-        return IUnknown_AddRef(This->impl);
-
-    TRACE("(%p)\n", This);
-    return IHTMLDocument2_AddRef(HTMLDOC(This->node.doc));
+    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->node));
 }
 
 static ULONG WINAPI HTMLElement_Release(IHTMLElement *iface)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
 
-    if(This->impl)
-        return IUnknown_Release(This->impl);
-
-    TRACE("(%p)\n", This);
-    return IHTMLDocument2_Release(HTMLDOC(This->node.doc));
+    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->node));
 }
 
 static HRESULT WINAPI HTMLElement_GetTypeInfoCount(IHTMLElement *iface, UINT *pctinfo)

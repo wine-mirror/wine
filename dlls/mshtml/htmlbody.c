@@ -94,18 +94,14 @@ static ULONG WINAPI HTMLBodyElement_AddRef(IHTMLBodyElement *iface)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
 
-    TRACE("(%p)\n", This);
-
-    return IHTMLDocument2_AddRef(HTMLDOC(This->textcont.element.node.doc));
+    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->textcont.element.node));
 }
 
 static ULONG WINAPI HTMLBodyElement_Release(IHTMLBodyElement *iface)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
 
-    TRACE("(%p)\n", This);
-
-    return IHTMLDocument2_Release(HTMLDOC(This->textcont.element.node.doc));
+    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->textcont.element.node));
 }
 
 static HRESULT WINAPI HTMLBodyElement_GetTypeInfoCount(IHTMLBodyElement *iface, UINT *pctinfo)
