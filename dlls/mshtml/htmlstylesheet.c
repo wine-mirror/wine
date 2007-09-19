@@ -144,8 +144,15 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_get_length(IHTMLStyleSheetsColle
         long *p)
 {
     HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRUint32 len = 0;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->nslist)
+        nsIDOMStyleSheetList_GetLength(This->nslist, &len);
+
+    *p = len;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyleSheetsCollection_get__newEnum(IHTMLStyleSheetsCollection *iface,
