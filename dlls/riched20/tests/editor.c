@@ -1910,6 +1910,72 @@ static void test_EM_GETTEXTLENGTHEX(void)
     DestroyWindow(hwnd);
 }
 
+
+/* globals that parent and child access when checking event masks & notifications */
+static HWND eventMaskEditHwnd = 0;
+static int queriedEventMask;
+static int watchForEventMask = 0;
+
+/* parent proc that queries the edit's event mask when it gets a WM_COMMAND */
+static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if(message == WM_COMMAND && (watchForEventMask & (wParam >> 16)))
+    {
+      queriedEventMask = SendMessage(eventMaskEditHwnd, EM_GETEVENTMASK, 0, 0);
+    }
+    return DefWindowProcA(hwnd, message, wParam, lParam);
+}
+
+/* test event masks in combination with WM_COMMAND */
+static void test_eventMask(void)
+{
+    HWND parent;
+    int ret;
+    WNDCLASSA cls;
+    const char text[] = "foo bar\n";
+    int eventMask;
+
+    /* register class to capture WM_COMMAND */
+    cls.style = 0;
+    cls.lpfnWndProc = ParentMsgCheckProcA;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "EventMaskParentClass";
+    if(!RegisterClassA(&cls)) assert(0);
+
+    parent = CreateWindow(cls.lpszClassName, NULL, WS_POPUP|WS_VISIBLE,
+                          0, 0, 200, 60, NULL, NULL, NULL, NULL);
+    ok (parent != 0, "Failed to create parent window\n");
+
+    eventMaskEditHwnd = new_richedit(parent);
+    ok(eventMaskEditHwnd != 0, "Failed to create edit window\n");
+
+    eventMask = ENM_CHANGE | ENM_UPDATE;
+    ret = SendMessage(eventMaskEditHwnd, EM_SETEVENTMASK, 0, (LPARAM) eventMask);
+    ok(ret == ENM_NONE, "wrong event mask\n");
+    ret = SendMessage(eventMaskEditHwnd, EM_GETEVENTMASK, 0, 0);
+    ok(ret == eventMask, "failed to set event mask\n");
+
+    /* check what happens when we ask for EN_CHANGE and send WM_SETTEXT */
+    queriedEventMask = 0;  /* initialize to something other than we expect */
+    watchForEventMask = EN_CHANGE;
+    ret = SendMessage(eventMaskEditHwnd, WM_SETTEXT, 0, (LPARAM) text);
+    ok(ret == TRUE, "failed to set text\n");
+    /* richedit should mask off ENM_CHANGE when it sends an EN_CHANGE
+       notification in response to WM_SETTEXT */
+todo_wine {
+    ok(queriedEventMask == (eventMask & ~ENM_CHANGE),
+            "wrong event mask (0x%x) during WM_COMMAND\n", queriedEventMask);
+}
+
+}
+
+
 START_TEST( editor )
 {
   MSG msg;
@@ -1944,6 +2010,7 @@ START_TEST( editor )
   test_unicode_conversions();
   test_EM_GETTEXTLENGTHEX();
   test_EM_REPLACESEL();
+  test_eventMask();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
