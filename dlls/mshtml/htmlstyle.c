@@ -91,7 +91,7 @@ static HRESULT get_style_attr(HTMLStyle *This, LPCWSTR name, BSTR *p)
         ERR("SetProperty failed: %08x\n", nsres);
 
     nsAString_GetData(&str_value, &value, NULL);
-    *p = SysAllocString(value);
+    *p = *value ? SysAllocString(value) : NULL;
 
     nsAString_Finish(&str_name);
     nsAString_Finish(&str_value);
