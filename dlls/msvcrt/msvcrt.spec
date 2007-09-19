@@ -84,8 +84,9 @@
 @ extern __argc MSVCRT___argc
 @ extern __argv MSVCRT___argv
 @ extern __badioinfo MSVCRT___badioinfo
-@ stub __crtCompareStringA
-@ stub __crtGetLocaleInfoW
+@ cdecl __crtCompareStringA(long long str long str long)
+@ cdecl __crtCompareStringW(long long wstr long wstr long)
+@ cdecl __crtGetLocaleInfoW(long long ptr long)
 @ cdecl __crtLCMapStringA(long long str long ptr long long long)
 @ cdecl __dllonexit(ptr ptr ptr)
 @ cdecl __doserrno() MSVCRT___doserrno

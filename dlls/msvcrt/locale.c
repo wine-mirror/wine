@@ -543,6 +543,40 @@ int CDECL __crtLCMapStringA(
 }
 
 /*********************************************************************
+ *		__crtCompareStringA (MSVCRT.@)
+ */
+int CDECL __crtCompareStringA( LCID lcid, DWORD flags, const char *src1, int len1,
+                               const char *src2, int len2 )
+{
+    FIXME("(lcid %x, flags %x, %s(%d), %s(%d), partial stub\n",
+          lcid, flags, debugstr_a(src1), len1, debugstr_a(src2), len2 );
+    /* FIXME: probably not entirely right */
+    return CompareStringA( lcid, flags, src1, len1, src2, len2 );
+}
+
+/*********************************************************************
+ *		__crtCompareStringW (MSVCRT.@)
+ */
+int CDECL __crtCompareStringW( LCID lcid, DWORD flags, const MSVCRT_wchar_t *src1, int len1,
+                               const MSVCRT_wchar_t *src2, int len2 )
+{
+    FIXME("(lcid %x, flags %x, %s(%d), %s(%d), partial stub\n",
+          lcid, flags, debugstr_w(src1), len1, debugstr_w(src2), len2 );
+    /* FIXME: probably not entirely right */
+    return CompareStringW( lcid, flags, src1, len1, src2, len2 );
+}
+
+/*********************************************************************
+ *		__crtGetLocaleInfoW (MSVCRT.@)
+ */
+int CDECL __crtGetLocaleInfoW( LCID lcid, LCTYPE type, MSVCRT_wchar_t *buffer, int len )
+{
+    FIXME("(lcid %x, type %x, %p(%d), partial stub\n", lcid, type, buffer, len );
+    /* FIXME: probably not entirely right */
+    return GetLocaleInfoW( lcid, type, buffer, len );
+}
+
+/*********************************************************************
  *		localeconv (MSVCRT.@)
  */
 struct MSVCRT_lconv * CDECL MSVCRT_localeconv(void) {
