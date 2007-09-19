@@ -812,8 +812,8 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                 default:
                     FIXME("WTI_INTERFACE unhandled index %i\n",nIndex);
                     rc = 0;
-
             }
+            break;
         case WTI_DEFSYSCTX:
         case WTI_DDCTXS:
         case WTI_DEFCONTEXT:
