@@ -29,9 +29,12 @@
 #include "mshtml.h"
 #include "docobj.h"
 
+static const char doc_blank[] = "<html></html>";
 static const char doc_str1[] = "<html><body>test</body></html>";
 static const char doc_str2[] =
     "<html><body>test a<font size=\"2\">bc 123<br />it's </font>text<br /></body></html>";
+
+static const WCHAR noneW[] = {'N','o','n','e',0};
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
 static WCHAR wordW[] = {'w','o','r','d',0};
@@ -96,10 +99,7 @@ static void test_doc_elem(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_documentElement failed: %08x\n", hres);
 
     test_node_name((IUnknown*)elem, "HTML");
-    IHTMLElement_Release(elem);
 
-    hres = IHTMLDocument2_get_body(doc, &elem);
-    test_node_name((IUnknown*)elem, "BODY");
     IHTMLElement_Release(elem);
 }
 
@@ -347,6 +347,106 @@ static void test_txtrange(IHTMLDocument2 *doc)
     IHTMLTxtRange_Release(body_range);
 }
 
+static void test_default_style(IHTMLStyle *style)
+{
+    VARIANT_BOOL b;
+    VARIANT v;
+    BSTR str;
+    HRESULT hres;
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_fontFamily(style, &str);
+    ok(hres == S_OK, "get_fontFamily failed: %08x\n", hres);
+    ok(!str, "fontFamily = %s\n", dbgstr_w(str));
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_fontWeight(style, &str);
+    ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
+    ok(!str, "fontWeight = %s\n", dbgstr_w(str));
+
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLStyle_get_fontSize(style, &v);
+    ok(hres == S_OK, "get_fontSize failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(fontSize) = %d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(fontSize) = %s\n", dbgstr_w(V_BSTR(&v)));
+
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLStyle_get_color(style, &v);
+    ok(hres == S_OK, "get_color failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(color) = %d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(color) = %s\n", dbgstr_w(V_BSTR(&v)));
+
+    b = 0xfefe;
+    hres = IHTMLStyle_get_textDecorationUnderline(style, &b);
+    ok(hres == S_OK, "get_textDecorationUnderline failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "textDecorationUnderline = %x\n", b);
+
+    b = 0xfefe;
+    hres = IHTMLStyle_get_textDecorationLineThrough(style, &b);
+    ok(hres == S_OK, "get_textDecorationLineThrough failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "textDecorationLineThrough = %x\n", b);
+}
+
+static void test_default_selection(IHTMLDocument2 *doc)
+{
+    IHTMLSelectionObject *selection;
+    IHTMLTxtRange *range;
+    IDispatch *disp;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_selection(doc, &selection);
+    ok(hres == S_OK, "get_selection failed: %08x\n", hres);
+
+    hres = IHTMLSelectionObject_get_type(selection, &str);
+    ok(hres == S_OK, "get_type failed: %08x\n", hres);
+    ok(!lstrcmpW(str, noneW), "type = %s\n", dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLSelectionObject_createRange(selection, &disp);
+    IHTMLSelectionObject_Release(selection);
+    ok(hres == S_OK, "createRange failed: %08x\n", hres);
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLTxtRange, (void**)&range);
+    IDispatch_Release(disp);
+    ok(hres == S_OK, "Could not get IHTMLTxtRange interface: %08x\n", hres);
+
+    test_range_text(range, NULL);
+    IHTMLTxtRange_Release(range);
+}
+
+static void test_defaults(IHTMLDocument2 *doc)
+{
+    IHTMLStyleSheetsCollection *stylesheetcol;
+    IHTMLElement *elem;
+    IHTMLStyle *style;
+    long l;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_body(doc, &elem);
+    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+
+    hres = IHTMLElement_get_style(elem, &style);
+    IHTMLElement_Release(elem);
+    ok(hres == S_OK, "get_style failed: %08x\n", hres);
+
+    test_default_style(style);
+
+    IHTMLStyle_Release(style);
+
+    hres = IHTMLDocument2_get_styleSheets(doc, &stylesheetcol);
+    ok(hres == S_OK, "get_styleSheets failed: %08x\n", hres);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyleSheetsCollection_get_length(stylesheetcol, &l);
+    ok(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok(l == 0, "length = %ld\n", l);
+
+    IHTMLStyleSheetsCollection_Release(stylesheetcol);
+
+    test_default_selection(doc);
+}
+
 static IHTMLDocument2 *notif_doc;
 static BOOL doc_complete;
 
@@ -513,6 +613,7 @@ START_TEST(dom)
 
     run_domtest(doc_str1, test_doc_elem);
     run_domtest(doc_str2, test_txtrange);
+    run_domtest(doc_blank, test_defaults);
 
     CoUninitialize();
     gecko_installer_workaround(FALSE);
