@@ -416,6 +416,17 @@ static void test_MapViewOfFile(void)
 
     CloseHandle( file );
     DeleteFileA( testfile );
+
+    file = CreateFileMapping( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "Global\\Foo");
+    ok( file != 0, "CreateFileMapping PAGE_READWRITE failed\n" );
+
+    mapping = OpenFileMapping( FILE_MAP_READ, FALSE, "Global\\Foo" );
+    ok( mapping != 0, "OpenFileMapping FILE_MAP_READ failed\n" );
+    ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
+todo_wine ok( !ptr, "MapViewOfFile FILE_MAP_WRITE should fail\n" );
+    CloseHandle( mapping );
+
+    CloseHandle( file );
 }
 
 static DWORD (WINAPI *pNtMapViewOfSection)( HANDLE handle, HANDLE process, PVOID *addr_ptr,
