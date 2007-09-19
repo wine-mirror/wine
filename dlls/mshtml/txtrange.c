@@ -903,12 +903,14 @@ static HRESULT WINAPI HTMLTxtRange_get_text(IHTMLTxtRange *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    *p = NULL;
+    if(!This->nsrange)
+        return S_OK;
+
     wstrbuf_init(&buf);
     range_to_string(This, &buf);
     if(buf.buf)
         *p = SysAllocString(buf.buf);
-    else
-        *p = NULL;
     wstrbuf_finish(&buf);
 
     TRACE("ret %s\n", debugstr_w(*p));
