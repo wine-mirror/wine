@@ -348,7 +348,6 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
         break;
     default:
         ret = mshtml_alloc(sizeof(HTMLDOMNode));
-        ret->node_type = NT_UNKNOWN;
         ret->impl.unk = NULL;
         ret->destructor = NULL;
     }

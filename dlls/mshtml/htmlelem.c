@@ -1318,7 +1318,6 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
 
     HTMLElement2_Init(ret);
 
-    ret->node.node_type = NT_HTMLELEM;
     ret->node.impl.elem = HTMLELEM(ret);
     ret->node.destructor = HTMLElement_destructor;
 

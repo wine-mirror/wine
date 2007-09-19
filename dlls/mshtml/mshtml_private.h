@@ -254,11 +254,6 @@ struct HTMLDOMNode {
 
     void (*destructor)(IUnknown*);
 
-    enum {
-        NT_UNKNOWN,
-        NT_HTMLELEM
-    } node_type;
-
     union {
         IUnknown *unk;
         IHTMLElement *elem;
