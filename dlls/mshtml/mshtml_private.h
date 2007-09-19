@@ -406,6 +406,7 @@ IHTMLSelectionObject *HTMLSelectionObject_Create(HTMLDocument*,nsISelection*);
 IHTMLTxtRange *HTMLTxtRange_Create(HTMLDocument*,nsIDOMRange*);
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration*);
 IHTMLStyleSheet *HTMLStyleSheet_Create(void);
+IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList*);
 
 void detach_selection(HTMLDocument*);
 void detach_ranges(HTMLDocument*);

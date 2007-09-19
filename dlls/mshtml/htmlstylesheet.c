@@ -41,7 +41,157 @@ typedef struct {
     LONG ref;
 } HTMLStyleSheet;
 
-#define HTMLSTYLESHEET(x)  ((IHTMLStyleSheet*) &(x)->lpHTMLStyleSheetVtbl);
+typedef struct {
+    const IHTMLStyleSheetsCollectionVtbl *lpHTMLStyleSheetsCollectionVtbl;
+
+    LONG ref;
+
+    nsIDOMStyleSheetList *nslist;
+} HTMLStyleSheetsCollection;
+
+#define HTMLSTYLESHEET(x)      ((IHTMLStyleSheet*)             &(x)->lpHTMLStyleSheetVtbl);
+#define HTMLSTYLESHEETSCOL(x)  ((IHTMLStyleSheetsCollection*)  &(x)->lpHTMLStyleSheetsCollectionVtbl);
+
+#define HTMLSTYLESHEETSCOL_THIS(iface) \
+    DEFINE_THIS(HTMLStyleSheetsCollection, HTMLStyleSheetsCollection, iface)
+
+static HRESULT WINAPI HTMLStyleSheetsCollection_QueryInterface(IHTMLStyleSheetsCollection *iface,
+         REFIID riid, void **ppv)
+{
+    HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLSTYLESHEETSCOL(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = HTMLSTYLESHEETSCOL(This);
+    }else if(IsEqualGUID(&IID_IHTMLStyleSheetsCollection, riid)) {
+        TRACE("(%p)->(IID_IHTMLStyleSheetsCollection %p)\n", This, ppv);
+        *ppv = HTMLSTYLESHEETSCOL(This);
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    WARN("unsupported %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HTMLStyleSheetsCollection_AddRef(IHTMLStyleSheetsCollection *iface)
+{
+    HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLStyleSheetsCollection_Release(IHTMLStyleSheetsCollection *iface)
+{
+    HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        mshtml_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLStyleSheetsCollection_GetTypeInfoCount(IHTMLStyleSheetsCollection *iface,
+        UINT *pctinfo)
+{
+    HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetsCollection_GetTypeInfo(IHTMLStyleSheetsCollection *iface,
+        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetsCollection_GetIDsOfNames(IHTMLStyleSheetsCollection *iface,
+        REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetsCollection_Invoke(IHTMLStyleSheetsCollection *iface,
+        DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetsCollection_get_length(IHTMLStyleSheetsCollection *iface,
+        long *p)
+{
+    HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetsCollection_get__newEnum(IHTMLStyleSheetsCollection *iface,
+        IUnknown **p)
+{
+    HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetsCollection_item(IHTMLStyleSheetsCollection *iface,
+        VARIANT *pvarIndex, VARIANT *pvarResult)
+{
+    HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
+    FIXME("(%p)->(%p %p)\n", This, pvarIndex, pvarResult);
+    return E_NOTIMPL;
+}
+
+#undef HTMLSTYLESHEETSCOL_THIS
+
+static const IHTMLStyleSheetsCollectionVtbl HTMLStyleSheetsCollectionVtbl = {
+    HTMLStyleSheetsCollection_QueryInterface,
+    HTMLStyleSheetsCollection_AddRef,
+    HTMLStyleSheetsCollection_Release,
+    HTMLStyleSheetsCollection_GetTypeInfoCount,
+    HTMLStyleSheetsCollection_GetTypeInfo,
+    HTMLStyleSheetsCollection_GetIDsOfNames,
+    HTMLStyleSheetsCollection_Invoke,
+    HTMLStyleSheetsCollection_get_length,
+    HTMLStyleSheetsCollection_get__newEnum,
+    HTMLStyleSheetsCollection_item
+};
+
+IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList *nslist)
+{
+    HTMLStyleSheetsCollection *ret = mshtml_alloc(sizeof(HTMLStyleSheetsCollection));
+
+    ret->lpHTMLStyleSheetsCollectionVtbl = &HTMLStyleSheetsCollectionVtbl;
+    ret->ref = 1;
+
+    if(nslist)
+        nsIDOMStyleSheetList_AddRef(nslist);
+    ret->nslist = nslist;
+
+    return HTMLSTYLESHEETSCOL(ret);
+}
 
 #define HTMLSTYLESHEET_THIS(iface) DEFINE_THIS(HTMLStyleSheet, HTMLStyleSheet, iface)
 

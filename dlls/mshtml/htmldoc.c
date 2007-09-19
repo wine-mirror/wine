@@ -951,10 +951,40 @@ static HRESULT WINAPI HTMLDocument_get_parentWindow(IHTMLDocument2 *iface, IHTML
 }
 
 static HRESULT WINAPI HTMLDocument_get_styleSheets(IHTMLDocument2 *iface,
-                                                    IHTMLStyleSheetsCollection **p)
+                                                   IHTMLStyleSheetsCollection **p)
 {
-    FIXME("(%p)->(%p)\n", iface, p);
-    return E_NOTIMPL;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
+    nsIDOMStyleSheetList *nsstylelist;
+    nsIDOMDocumentStyle *nsdocstyle;
+    nsIDOMDocument *nsdoc;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = NULL;
+
+    if(!This->nscontainer)
+        return S_OK;
+
+    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return S_OK;
+    }
+
+    if(NS_FAILED(nsres) || !nsdoc)
+        return S_OK;
+
+    nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentStyle, (void**)&nsdocstyle);
+    nsIDOMDocument_Release(nsdoc);
+
+    nsIDOMDocumentStyle_GetStyleSheets(nsdocstyle, &nsstylelist);
+    nsIDOMDocumentStyle_Release(nsdocstyle);
+
+    *p = HTMLStyleSheetsCollection_Create(nsstylelist);
+    nsIDOMDocumentStyle_Release(nsstylelist);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_put_onbeforeupdate(IHTMLDocument2 *iface, VARIANT v)

@@ -123,6 +123,7 @@ typedef nsISupports nsIPrincipal;
 typedef nsISupports nsIAtom;
 typedef nsISupports nsISupportsArray;
 typedef nsISupports nsIContentFilter;
+typedef nsISupports nsIDOMStyleSheet;
 
 [
     object,
@@ -571,6 +572,17 @@ interface nsIDOMCSSStyleDeclaration : nsISupports
 
 [
     object,
+    uuid(a6cf9081-15b3-11d2-932e-00805f8add32)
+    /* FROZEN */
+]
+interface nsIDOMStyleSheetList : nsISupports
+{
+    nsresult GetLength(PRUint32 *aLength);
+    nsresult Item(PRUint32 index, nsIDOMStyleSheet **_retval);
+}
+
+[
+    object,
     uuid(a6cf907d-15b3-11d2-932e-00805f8add32)
     /* FROZEN */
 ]
@@ -820,6 +832,16 @@ interface nsIDOMHTMLDocument : nsIDOMDocument
     nsresult Write(const nsAString *text);
     nsresult Writeln(const nsAString *text);
     nsresult GetElementsByName(const nsAString *elementName, nsIDOMNodeList **_retval);
+}
+
+[
+    object,
+    uuid(3d9f4973-dd2e-48f5-b5f7-2634e09eadd9)
+    /* FROZEN */
+]
+interface nsIDOMDocumentStyle : nsISupports
+{
+    nsresult GetStyleSheets(nsIDOMStyleSheetList **aStyleSheets);
 }
 
 [
