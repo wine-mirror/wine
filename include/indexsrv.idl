@@ -16,7 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-import "unknwn.idl";
+import "objidl.idl";
+/* FIXME: import "filter.idl"; */
 
 /*
  * widl doesn't like the declaration of PFNFILLTEXTBUFFER, so work around it...
