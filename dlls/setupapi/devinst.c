@@ -97,7 +97,10 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId)
         devInfo->instanceId = HeapAlloc(GetProcessHeap(), 0,
                 (lstrlenW(instanceId) + 1) * sizeof(WCHAR));
         if (devInfo->instanceId)
+        {
             lstrcpyW(devInfo->instanceId, instanceId);
+            struprW(devInfo->instanceId);
+        }
         else
         {
             HeapFree(GetProcessHeap(), 0, devInfo);
@@ -886,7 +889,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
             SetLastError(ERROR_INVALID_DEVINST_NAME);
         else
         {
-            static const WCHAR newDeviceFmt[] = {'R','o','o','t','\\','%','s',
+            static const WCHAR newDeviceFmt[] = {'R','O','O','T','\\','%','s',
                 '\\','%','0','4','d',0};
             DWORD devId;
 
@@ -938,7 +941,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
             struct DeviceInfo *devInfo =
                 (struct DeviceInfo *)set->devices[i].Reserved;
 
-            if (!lstrcmpW(DeviceName, devInfo->instanceId))
+            if (!lstrcmpiW(DeviceName, devInfo->instanceId))
             {
                 SetLastError(ERROR_DEVINST_ALREADY_EXISTS);
                 ret = FALSE;
@@ -1050,8 +1053,16 @@ BOOL WINAPI SetupDiGetDeviceInstanceIdA(
 
             if (!len)
                 ret = FALSE;
-            else if (RequiredSize)
-                *RequiredSize = len;
+            else
+            {
+                if (len > DeviceInstanceIdSize)
+                {
+                    SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                    ret = FALSE;
+                }
+                if (RequiredSize)
+                    *RequiredSize = len;
+            }
         }
         HeapFree(GetProcessHeap(), 0, instanceId);
     }
@@ -1068,10 +1079,41 @@ BOOL WINAPI SetupDiGetDeviceInstanceIdW(
 	DWORD DeviceInstanceIdSize,
 	PDWORD RequiredSize)
 {
-    FIXME("%p %p %p %d %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstanceId,
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfo *devInfo;
+
+    TRACE("%p %p %p %d %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstanceId,
 	    DeviceInstanceIdSize, RequiredSize);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DeviceInfoData || DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA)
+            || !DeviceInfoData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
+    TRACE("instance ID: %s\n", debugstr_w(devInfo->instanceId));
+    if (DeviceInstanceIdSize < lstrlenW(devInfo->instanceId) + 1)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        if (RequiredSize)
+            *RequiredSize = lstrlenW(devInfo->instanceId) + 1;
+        return FALSE;
+    }
+    lstrcpyW(DeviceInstanceId, devInfo->instanceId);
+    if (RequiredSize)
+        *RequiredSize = lstrlenW(devInfo->instanceId) + 1;
+    return TRUE;
 }
 
 /***********************************************************************

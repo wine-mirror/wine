@@ -217,12 +217,10 @@ static void testGetDeviceInstanceId(void)
     }
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDeviceInstanceIdA(NULL, NULL, NULL, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
      "Expected ERROR_INVALID_HANDLEHANDLE, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDeviceInstanceIdA(NULL, &devInfo, NULL, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
      "Expected ERROR_INVALID_HANDLEHANDLE, got %08x\n", GetLastError());
     set = pSetupDiCreateDeviceInfoList(&guid, NULL);
@@ -235,23 +233,19 @@ static void testGetDeviceInstanceId(void)
 
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInstanceIdA(set, NULL, NULL, 0, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, &size);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
         devInfo.cbSize = sizeof(devInfo);
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, &size);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
@@ -259,14 +253,11 @@ static void testGetDeviceInstanceId(void)
         ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, &size);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
          "Expected ERROR_INSUFFICIENT_BUFFER, got %08x\n", GetLastError());
         ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, instanceID,
          sizeof(instanceID), NULL);
-        todo_wine
         ok(ret, "SetupDiGetDeviceInstanceIdA failed: %08x\n", GetLastError());
-        todo_wine
         ok(!lstrcmpA(instanceID, "ROOT\\LEGACY_BOGUS\\0000"),
          "Unexpected instance ID %s\n", instanceID);
         ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid,
@@ -274,9 +265,7 @@ static void testGetDeviceInstanceId(void)
         ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
         ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, instanceID,
          sizeof(instanceID), NULL);
-        todo_wine
         ok(ret, "SetupDiGetDeviceInstanceIdA failed: %08x\n", GetLastError());
-        todo_wine
         ok(!lstrcmpA(instanceID, "ROOT\\LEGACY_BOGUS\\0001"),
          "Unexpected instance ID %s\n", instanceID);
         pSetupDiDestroyDeviceInfoList(set);
