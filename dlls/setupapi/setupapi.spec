@@ -324,8 +324,8 @@
 @ stdcall SetupDiGetDeviceInfoListDetailW(ptr ptr)
 @ stdcall SetupDiGetDeviceInstallParamsA(ptr ptr ptr)
 @ stub SetupDiGetDeviceInstallParamsW
-@ stub SetupDiGetDeviceInstanceIdA
-@ stub SetupDiGetDeviceInstanceIdW
+@ stdcall SetupDiGetDeviceInstanceIdA(ptr ptr ptr long ptr)
+@ stdcall SetupDiGetDeviceInstanceIdW(ptr ptr ptr long ptr)
 @ stub SetupDiGetDeviceInterfaceAlias
 @ stdcall SetupDiGetDeviceInterfaceDetailA(long ptr ptr long ptr ptr)
 @ stdcall SetupDiGetDeviceInterfaceDetailW(long ptr ptr long ptr ptr)

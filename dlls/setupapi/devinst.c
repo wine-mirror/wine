@@ -777,6 +777,36 @@ BOOL WINAPI SetupDiEnumDeviceInfo(
 }
 
 /***********************************************************************
+ *		SetupDiGetDeviceInstanceIdA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDeviceInstanceIdA(
+	HDEVINFO DeviceInfoSet,
+	PSP_DEVINFO_DATA DeviceInfoData,
+	PSTR DeviceInstanceId,
+	DWORD DeviceInstanceIdSize,
+	PDWORD RequiredSize)
+{
+    FIXME("%p %p %p %d %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstanceId,
+	    DeviceInstanceIdSize, RequiredSize);
+    return FALSE;
+}
+
+/***********************************************************************
+ *		SetupDiGetDeviceInstanceIdW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDeviceInstanceIdW(
+	HDEVINFO DeviceInfoSet,
+	PSP_DEVINFO_DATA DeviceInfoData,
+	PWSTR DeviceInstanceId,
+	DWORD DeviceInstanceIdSize,
+	PDWORD RequiredSize)
+{
+    FIXME("%p %p %p %d %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstanceId,
+	    DeviceInstanceIdSize, RequiredSize);
+    return FALSE;
+}
+
+/***********************************************************************
  *		SetupDiGetActualSectionToInstallA (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiGetActualSectionToInstallA(
