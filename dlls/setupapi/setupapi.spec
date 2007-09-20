@@ -374,8 +374,8 @@
 @ stub SetupDiSetClassInstallParamsW
 @ stub SetupDiSetDeviceInstallParamsA
 @ stub SetupDiSetDeviceInstallParamsW
-@ stub SetupDiSetDeviceRegistryPropertyA
-@ stub SetupDiSetDeviceRegistryPropertyW
+@ stdcall SetupDiSetDeviceRegistryPropertyA(ptr ptr long ptr ptr)
+@ stdcall SetupDiSetDeviceRegistryPropertyW(ptr ptr long ptr ptr)
 @ stub SetupDiSetDriverInstallParamsA
 @ stub SetupDiSetDriverInstallParamsW
 @ stub SetupDiSetSelectedDevice

@@ -1647,6 +1647,102 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyW(
 }
 
 /***********************************************************************
+ *		SetupDiSetDeviceRegistryPropertyA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiSetDeviceRegistryPropertyA(
+	HDEVINFO DeviceInfoSet,
+	PSP_DEVINFO_DATA DeviceInfoData,
+	DWORD Property,
+	const BYTE *PropertyBuffer,
+	DWORD PropertyBufferSize)
+{
+    BOOL ret = FALSE;
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfo *devInfo;
+
+    TRACE("%p %p %d %p %d\n", DeviceInfoSet, DeviceInfoData, Property,
+        PropertyBuffer, PropertyBufferSize);
+
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DeviceInfoData || DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA)
+            || !DeviceInfoData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
+    if (Property < sizeof(PropertyMap) / sizeof(PropertyMap[0])
+        && PropertyMap[Property].nameA)
+    {
+        LONG l = RegSetValueExA(devInfo->key, PropertyMap[Property].nameA, 0,
+                PropertyMap[Property].regType, PropertyBuffer,
+                PropertyBufferSize);
+        if (!l)
+            ret = TRUE;
+        else
+            SetLastError(l);
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *		SetupDiSetDeviceRegistryPropertyW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiSetDeviceRegistryPropertyW(
+	HDEVINFO DeviceInfoSet,
+	PSP_DEVINFO_DATA DeviceInfoData,
+	DWORD Property,
+	const BYTE *PropertyBuffer,
+	DWORD PropertyBufferSize)
+{
+    BOOL ret = FALSE;
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfo *devInfo;
+
+    TRACE("%p %p %d %p %d\n", DeviceInfoSet, DeviceInfoData, Property,
+        PropertyBuffer, PropertyBufferSize);
+
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DeviceInfoData || DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA)
+            || !DeviceInfoData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
+    if (Property < sizeof(PropertyMap) / sizeof(PropertyMap[0])
+        && PropertyMap[Property].nameW)
+    {
+        LONG l = RegSetValueExW(devInfo->key, PropertyMap[Property].nameW, 0,
+                PropertyMap[Property].regType, PropertyBuffer,
+                PropertyBufferSize);
+        if (!l)
+            ret = TRUE;
+        else
+            SetLastError(l);
+    }
+    return ret;
+}
+
+/***********************************************************************
  *		SetupDiInstallClassA (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiInstallClassA(
