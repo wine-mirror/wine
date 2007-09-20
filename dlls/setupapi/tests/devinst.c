@@ -39,6 +39,7 @@ static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInfo)(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
+static BOOL     (WINAPI *pSetupDiGetDeviceInstanceIdA)(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
 
 static void init_function_pointers(void)
 {
@@ -49,6 +50,7 @@ static void init_function_pointers(void)
     pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
     pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
     pSetupDiEnumDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInfo");
+    pSetupDiGetDeviceInstanceIdA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInstanceIdA");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
 }
 
@@ -207,6 +209,90 @@ static void testCreateDeviceInfo(void)
     }
 }
 
+static void testGetDeviceInstanceId(void)
+{
+    BOOL ret;
+    HDEVINFO set;
+    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
+        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+    SP_DEVINFO_DATA devInfo = { 0 };
+
+    if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
+     !pSetupDiCreateDeviceInfoA || !pSetupDiGetDeviceInstanceIdA)
+    {
+        skip("No SetupDiGetDeviceInstanceIdA\n");
+        return;
+    }
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceInstanceIdA(NULL, NULL, NULL, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLEHANDLE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceInstanceIdA(NULL, &devInfo, NULL, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLEHANDLE, got %08x\n", GetLastError());
+    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %08x\n",
+     GetLastError());
+    if (set)
+    {
+        char instanceID[MAX_PATH];
+        DWORD size;
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDeviceInstanceIdA(set, NULL, NULL, 0, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, &size);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+        devInfo.cbSize = sizeof(devInfo);
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, &size);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+        ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
+         NULL, NULL, 0, &devInfo);
+        todo_wine
+        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, &size);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+         "Expected ERROR_INSUFFICIENT_BUFFER, got %08x\n", GetLastError());
+        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, instanceID,
+         sizeof(instanceID), NULL);
+        todo_wine
+        ok(ret, "SetupDiGetDeviceInstanceIdA failed: %08x\n", GetLastError());
+        todo_wine
+        ok(!lstrcmpA(instanceID, "ROOT\\LEGACY_BOGUS\\0000"),
+         "Unexpected instance ID %s\n", instanceID);
+        ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid,
+         NULL, NULL, DICD_GENERATE_ID, &devInfo);
+        todo_wine
+        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, instanceID,
+         sizeof(instanceID), NULL);
+        todo_wine
+        ok(ret, "SetupDiGetDeviceInstanceIdA failed: %08x\n", GetLastError());
+        todo_wine
+        ok(!lstrcmpA(instanceID, "ROOT\\LEGACY_BOGUS\\0001"),
+         "Unexpected instance ID %s\n", instanceID);
+        pSetupDiDestroyDeviceInfoList(set);
+    }
+}
+
 START_TEST(devinst)
 {
     init_function_pointers();
@@ -221,4 +307,5 @@ START_TEST(devinst)
     else
         skip("SetupDiOpenClassRegKeyExA is not available\n");
     testCreateDeviceInfo();
+    testGetDeviceInstanceId();
 }
