@@ -147,6 +147,18 @@ static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
     HeapFree(GetProcessHeap(), 0, devInfo);
 }
 
+static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
+{
+    static const WCHAR fmt[] = {'{','%','0','8','X','-','%','0','4','X','-',
+        '%','0','4','X','-','%','0','2','X','%','0','2','X','-','%','0','2',
+        'X','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','%',
+        '0','2','X','}',0};
+
+    sprintfW(guidStr, fmt, guid->Data1, guid->Data2, guid->Data3,
+        guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+        guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+}
+
 /* Adds a device with GUID guid and identifer devInst to set.  Allocates a
  * struct DeviceInfo, and points the returned device info's Reserved member
  * to it.
@@ -1984,7 +1996,6 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
         PCWSTR MachineName,
         PVOID Reserved)
 {
-    LPWSTR lpGuidString;
     WCHAR bracedGuidString[39];
     HKEY hClassesKey;
     HKEY hClassKey;
@@ -2023,16 +2034,7 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
     if (ClassGuid == NULL)
         return hClassesKey;
 
-    if (UuidToStringW((UUID*)ClassGuid, &lpGuidString) != RPC_S_OK)
-    {
-	RegCloseKey(hClassesKey);
-	return INVALID_HANDLE_VALUE;
-    }
-    bracedGuidString[0] = '{';
-    memcpy(&bracedGuidString[1], lpGuidString, 36*sizeof(WCHAR));
-    bracedGuidString[37] = '}';
-    bracedGuidString[38] = 0;
-    RpcStringFreeW(&lpGuidString);
+    SETUPDI_GuidToString(ClassGuid, bracedGuidString);
 
     if (RegOpenKeyExW(hClassesKey,
 		      bracedGuidString,
