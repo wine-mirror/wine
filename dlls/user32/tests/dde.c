@@ -302,6 +302,7 @@ static void test_DdeCreateStringHandleW(DWORD dde_inst, int codepage)
     HSZ str_handle;
     WCHAR bufW[256];
     char buf[256];
+    ATOM atom;
     int ret;
 
     str_handle = DdeCreateStringHandleW(dde_inst, dde_string, codepage);
@@ -348,6 +349,29 @@ static void test_DdeCreateStringHandleW(DWORD dde_inst, int codepage)
     {
         ok(ret == lstrlenA("DDE String"), "DdeQueryStringA returned wrong length %d\n", ret);
         ok(!lstrcmpW(dde_string, (LPCWSTR)buf), "DdeQueryStringW returned wrong string\n");
+    }
+
+    if (codepage == CP_WINANSI)
+    {
+        atom = FindAtomA((LPSTR)dde_string);
+        ok(atom != 0, "Expected a valid atom\n");
+
+        SetLastError(0xdeadbeef);
+        atom = GlobalFindAtomA((LPSTR)dde_string);
+        ok(atom == 0, "Expected 0, got %d\n", atom);
+        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+           "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    }
+    else
+    {
+        atom = FindAtomW(dde_string);
+        ok(atom != 0, "Expected a valid atom\n");
+
+        SetLastError(0xdeadbeef);
+        atom = GlobalFindAtomW(dde_string);
+        ok(atom == 0, "Expected 0, got %d\n", atom);
+        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+           "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     }
 
     ok(DdeFreeStringHandle(dde_inst, str_handle), "DdeFreeStringHandle failed\n");
