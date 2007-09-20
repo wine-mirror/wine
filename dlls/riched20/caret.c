@@ -441,7 +441,7 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
 {
   const WCHAR *pos;
   ME_Cursor *p = NULL;
-  int freeSpace;
+  int oldLen;
 
   /* FIXME really HERE ? */
   if (ME_IsSelection(editor))
@@ -449,7 +449,7 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
 
   /* FIXME: is this too slow? */
   /* Didn't affect performance for WM_SETTEXT (around 50sec/30K) */
-  freeSpace = editor->nTextLimit - ME_GetTextLength(editor);
+  oldLen = ME_GetTextLength(editor);
 
   /* text operations set modified state */
   editor->nModifyStep = 1;
@@ -459,7 +459,11 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
   assert(nCursor>=0 && nCursor<editor->nCursors);
   if (len == -1)
     len = lstrlenW(str);
-  len = min(len, freeSpace);
+
+  /* grow the text limit to fit our text */
+  if(editor->nTextLimit < oldLen +len)
+    editor->nTextLimit = oldLen + len;
+
   while (len)
   {
     pos = str;

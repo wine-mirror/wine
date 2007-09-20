@@ -2413,11 +2413,17 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     }
     if (((unsigned)wstr)>=' ' || wstr=='\r' || wstr=='\t') {
       /* FIXME maybe it would make sense to call EM_REPLACESEL instead ? */
-      ME_Style *style = ME_GetInsertStyle(editor, 0);
-      ME_SaveTempStyle(editor);
-      ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
-      ME_ReleaseStyle(style);
-      ME_CommitUndo(editor);
+      /* WM_CHAR is restricted to nTextLimit */
+      int from, to;
+      ME_GetSelection(editor, &from, &to);
+      if(editor->nTextLimit > ME_GetTextLength(editor) - (to-from))
+      {
+        ME_Style *style = ME_GetInsertStyle(editor, 0);
+        ME_SaveTempStyle(editor);
+        ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
+        ME_ReleaseStyle(style);
+        ME_CommitUndo(editor);
+      }
       ME_UpdateRepaint(editor);
     }
     return 0;

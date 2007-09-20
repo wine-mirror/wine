@@ -1116,26 +1116,18 @@ static void test_EM_EXLIMITTEXT(void)
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
   SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   i = strlen(buffer);
-todo_wine {
   ok(10 == i, "expected 10 chars\n");
-}
   i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
-todo_wine {
   ok(10 == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", 10, i);
-}
 
   /* try inserting more text at end */
   i = SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
   ok(0 == i, "WM_CHAR wasn't processed");
   SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   i = strlen(buffer);
-todo_wine {
   ok(10 == i, "expected 10 chars, got %i\n", i);
-}
   i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
-todo_wine {
   ok(10 == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", 10, i);
-}
 
   /* try inserting text at beginning */
   SendMessage(hwndRichEdit, EM_SETSEL, 0, 0);
@@ -1143,13 +1135,9 @@ todo_wine {
   ok(0 == i, "WM_CHAR wasn't processed");
   SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   i = strlen(buffer);
-todo_wine {
   ok(10 == i, "expected 10 chars, got %i\n", i);
-}
   i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
-todo_wine {
   ok(10 == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", 10, i);
-}
 
   /* WM_CHAR is limited */
   textlimit = 1;
