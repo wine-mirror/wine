@@ -128,3 +128,9 @@ BOOL WINAPI UnregisterGPNotification( HANDLE event )
     FIXME("%p\n", event );
     return TRUE;
 }
+
+BOOL WINAPI UnloadUserProfile( HANDLE hToken, HANDLE hProfile )
+{
+    FIXME("(%p, %p): stub\n", hToken, hProfile);
+    return FALSE;
+}

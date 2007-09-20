@@ -45,6 +45,7 @@ BOOL WINAPI LoadUserProfileA(HANDLE,LPPROFILEINFOA);
 BOOL WINAPI LoadUserProfileW(HANDLE,LPPROFILEINFOW);
 #define     LoadUserProfile WINELIB_NAME_AW(LoadUserProfile)
 BOOL WINAPI RegisterGPNotification(HANDLE,BOOL);
+BOOL WINAPI UnloadUserProfile(HANDLE,HANDLE);
 BOOL WINAPI UnregisterGPNotification(HANDLE);
 
 #ifdef __cplusplus

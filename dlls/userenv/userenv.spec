@@ -10,5 +10,5 @@
 @ stdcall LoadUserProfileA(ptr ptr)
 @ stub LoadUserProfileW
 @ stdcall RegisterGPNotification(long long)
-@ stub UnloadUserProfile
+@ stdcall UnloadUserProfile(ptr ptr)
 @ stdcall UnregisterGPNotification(long)
