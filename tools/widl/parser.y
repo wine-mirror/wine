@@ -1266,6 +1266,7 @@ static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr)
 {
   expr_list_t *sizes = get_attrp(v->attrs, ATTR_SIZEIS);
   expr_list_t *lengs = get_attrp(v->attrs, ATTR_LENGTHIS);
+  int ptr_type = get_attrv(v->attrs, ATTR_POINTERTYPE);
   int sizeless, has_varconf;
   expr_t *dim;
   type_t *atype, **ptype;
@@ -1273,7 +1274,25 @@ static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr)
   v->type = type;
 
   for ( ; 0 < ptr_level; --ptr_level)
+  {
     v->type = make_type(RPC_FC_RP, v->type);
+    if (ptr_level == 1 && ptr_type && !arr)
+    {
+      v->type->type = ptr_type;
+      ptr_type = 0;
+    }
+  }
+
+  if (ptr_type)
+  {
+    if (is_ptr(v->type))
+    {
+      v->type = duptype(v->type, 1);
+      v->type->type = ptr_type;
+    }
+    else if (!arr)
+      error("%s: pointer attribute applied to non-pointer type", v->name);
+  }
 
   sizeless = FALSE;
   if (arr) LIST_FOR_EACH_ENTRY_REV(dim, arr, expr_t, entry)

@@ -363,6 +363,12 @@ s_sum_bogus(bogus_t *b)
 }
 
 void
+s_check_null(int *null)
+{
+  ok(!null, "RPC check_null\n");
+}
+
+void
 s_stop(void)
 {
   ok(RPC_S_OK == RpcMgmtStopServerListening(NULL), "RpcMgmtStopServerListening\n");
@@ -504,6 +510,8 @@ basic_tests(void)
   bogus.p3 = &i3;
   bogus.c = 9;
   ok(sum_bogus(&bogus) == 12, "RPC sum_bogus\n");
+
+  check_null(NULL);
 }
 
 static void

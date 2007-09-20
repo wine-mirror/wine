@@ -223,6 +223,7 @@ interface IServer
   } bogus_t;
 
   int sum_bogus(bogus_t *b);
+  void check_null([unique] int *null);
 
   void stop(void);
 }
