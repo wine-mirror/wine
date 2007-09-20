@@ -1067,7 +1067,7 @@ BOOL BIDI_Reorder(
 
     if (uCountOut < uCount)
     {
-        FIXME("lpOutString too small");
+        FIXME("lpOutString too small\n");
         return FALSE;
     }
 
