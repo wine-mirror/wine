@@ -1060,11 +1060,35 @@ BOOL WINAPI SetupDiRegisterDeviceInfo(
         PVOID CompareContext,
         PSP_DEVINFO_DATA DupDeviceInfoData)
 {
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfo *devInfo;
+
     TRACE("%p %p %08x %p %p %p\n", DeviceInfoSet, DeviceInfoData, Flags,
             CompareProc, CompareContext, DupDeviceInfoData);
 
-    FIXME("\n");
-    return FALSE;
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DeviceInfoData || DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA)
+            || !DeviceInfoData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
+    if (devInfo->phantom)
+    {
+        devInfo->phantom = FALSE;
+        RegDeleteValueW(devInfo->key, Phantom);
+    }
+    return TRUE;
 }
 
 /***********************************************************************

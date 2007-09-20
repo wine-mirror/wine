@@ -289,7 +289,6 @@ static void testRegisterDeviceInfo(void)
     }
     SetLastError(0xdeadbeef);
     ret = pSetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
      "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
     ret = pSetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
@@ -301,18 +300,15 @@ static void testRegisterDeviceInfo(void)
 
         SetLastError(0xdeadbeef);
         ret = pSetupDiRegisterDeviceInfo(set, NULL, 0, NULL, NULL, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
         devInfo.cbSize = sizeof(devInfo);
         SetLastError(0xdeadbeef);
         ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
         ret = pSetupDiCreateDeviceInfoA(set, "USB\\BOGUS\\0000", &guid,
@@ -324,7 +320,6 @@ static void testRegisterDeviceInfo(void)
             /* If it already existed, registering it again will fail */
             ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL,
              NULL);
-            todo_wine
             ok(ret, "SetupDiCreateDeviceInfoA failed: %d\n", GetLastError());
         }
         /* FIXME: On Win2K+ systems, this is now persisted to registry in
