@@ -136,7 +136,7 @@ typedef struct tagWTPACKET {
 typedef struct tagOPENCONTEXT
 {
     HCTX        handle;
-    LOGCONTEXTA context;
+    LOGCONTEXTW context;
     HWND        hwndOwner;
     BOOL        enabled;
     INT         ActiveCursor;
