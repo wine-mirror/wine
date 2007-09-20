@@ -40,6 +40,7 @@ static BOOL     (WINAPI *pSetupDiEnumDeviceInfo)(HDEVINFO, DWORD, PSP_DEVINFO_DA
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInstanceIdA)(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
+static BOOL     (WINAPI *pSetupDiRegisterDeviceInfo)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PSP_DETSIG_CMPPROC, PVOID, PSP_DEVINFO_DATA);
 
 static void init_function_pointers(void)
 {
@@ -52,6 +53,7 @@ static void init_function_pointers(void)
     pSetupDiEnumDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInfo");
     pSetupDiGetDeviceInstanceIdA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInstanceIdA");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
+    pSetupDiRegisterDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiRegisterDeviceInfo");
 }
 
 static void test_SetupDiCreateDeviceInfoListEx(void) 
@@ -272,6 +274,68 @@ static void testGetDeviceInstanceId(void)
     }
 }
 
+static void testRegisterDeviceInfo(void)
+{
+    BOOL ret;
+    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
+        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+    HDEVINFO set;
+
+    if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
+     !pSetupDiRegisterDeviceInfo)
+    {
+        skip("No SetupDiRegisterDeviceInfo\n");
+        return;
+    }
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ret = pSetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
+    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %d\n", GetLastError());
+    if (set)
+    {
+        SP_DEVINFO_DATA devInfo = { 0 };
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiRegisterDeviceInfo(set, NULL, 0, NULL, NULL, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+        devInfo.cbSize = sizeof(devInfo);
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+        ret = pSetupDiCreateDeviceInfoA(set, "USB\\BOGUS\\0000", &guid,
+         NULL, NULL, 0, &devInfo);
+        ok(ret || GetLastError() == ERROR_DEVINST_ALREADY_EXISTS,
+                "SetupDiCreateDeviceInfoA failed: %d\n", GetLastError());
+        if (ret)
+        {
+            /* If it already existed, registering it again will fail */
+            ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL,
+             NULL);
+            todo_wine
+            ok(ret, "SetupDiCreateDeviceInfoA failed: %d\n", GetLastError());
+        }
+        /* FIXME: On Win2K+ systems, this is now persisted to registry in
+         * HKLM\System\CCS\Enum\USB\Bogus\0000.  I don't check because the
+         * Win9x location is different.
+         * FIXME: the key also becomes undeletable.  How to get rid of it?
+         */
+        pSetupDiDestroyDeviceInfoList(set);
+    }
+}
+
 START_TEST(devinst)
 {
     init_function_pointers();
@@ -287,4 +351,5 @@ START_TEST(devinst)
         skip("SetupDiOpenClassRegKeyExA is not available\n");
     testCreateDeviceInfo();
     testGetDeviceInstanceId();
+    testRegisterDeviceInfo();
 }
