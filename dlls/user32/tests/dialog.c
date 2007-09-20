@@ -676,7 +676,7 @@ static void IsDialogMessageWTest (void)
 }
 
 
-static LRESULT CALLBACK delayFocusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wParam,
+static INT_PTR CALLBACK delayFocusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wParam,
         LPARAM lParam)
 {
     switch (uiMsg)
@@ -716,7 +716,7 @@ static LRESULT CALLBACK delayFocusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wPar
     return FALSE;
 }
 
-static LRESULT CALLBACK focusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wParam,
+static INT_PTR CALLBACK focusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wParam,
         LPARAM lParam)
 {
     switch (uiMsg)
@@ -781,7 +781,7 @@ static void InitialFocusTest (void)
     g_styleInitialFocusT1 = -1;
     g_styleInitialFocusT2 = -1;
 
-    DialogBoxA(g_hinst, "RADIO_TEST_DIALOG", NULL, (DLGPROC)delayFocusDlgWinProc);
+    DialogBoxA(g_hinst, "RADIO_TEST_DIALOG", NULL, delayFocusDlgWinProc);
 
     ok (((g_styleInitialFocusT1 & WS_TABSTOP) == 0),
        "Error in wrc - Detected WS_TABSTOP as default style for GROUPBOX\n");
@@ -812,7 +812,7 @@ static void InitialFocusTest (void)
     g_styleInitialFocusT1 = -1;
     g_styleInitialFocusT2 = -1;
 
-    DialogBoxA(g_hinst, "RADIO_TEST_DIALOG", NULL, (DLGPROC)delayFocusDlgWinProc);
+    DialogBoxA(g_hinst, "RADIO_TEST_DIALOG", NULL, delayFocusDlgWinProc);
 
     ok ((g_hwndInitialFocusT1 == g_hwndButton2),
        "Error in initial focus when WM_INITDIALOG returned TRUE: "
@@ -839,7 +839,7 @@ static void InitialFocusTest (void)
         pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
 
         g_hwndInitialFocusT1 = 0;
-        hDlg = CreateDialogIndirectParamW(g_hinst, pTemplate, NULL, (DLGPROC)focusDlgWinProc,0);
+        hDlg = CreateDialogIndirectParamW(g_hinst, pTemplate, NULL, focusDlgWinProc, 0);
         ok (hDlg != 0, "Failed to create test dialog.\n");
 
         ok ((g_hwndInitialFocusT1 == 0),
