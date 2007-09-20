@@ -77,6 +77,8 @@ struct DeviceInfoSet
     DWORD magic;        /* if is equal to SETUP_DEVICE_INFO_SET_MAGIC struct is okay */
     GUID ClassGuid;
     HWND hwndParent;
+    DWORD cDevices;
+    SP_DEVINFO_DATA *devices;
 };
 
 /***********************************************************************
@@ -692,6 +694,8 @@ SetupDiCreateDeviceInfoListExW(const GUID *ClassGuid,
     memcpy(&list->ClassGuid,
             ClassGuid ? ClassGuid : &GUID_NULL,
             sizeof(list->ClassGuid));
+    list->cDevices = 0;
+    list->devices = NULL;
 
     return (HDEVINFO)list;
 }
@@ -1113,6 +1117,7 @@ BOOL WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO devinfo)
 
         if (list->magic == SETUP_DEVICE_INFO_SET_MAGIC)
         {
+            HeapFree(GetProcessHeap(), 0, list->devices);
             HeapFree(GetProcessHeap(), 0, list);
             ret = TRUE;
         }
