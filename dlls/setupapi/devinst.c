@@ -769,15 +769,38 @@ BOOL WINAPI SetupDiEnumDeviceInfo(
         DWORD  index,
         PSP_DEVINFO_DATA info)
 {
-    FIXME("%p %d %p\n", devinfo, index, info);
+    BOOL ret = FALSE;
+
+    TRACE("%p %d %p\n", devinfo, index, info);
 
     if(info==NULL)
         return FALSE;
     if(info->cbSize < sizeof(*info))
         return FALSE;
-
-    SetLastError(ERROR_NO_MORE_ITEMS);
-    return FALSE;
+    if (devinfo && devinfo != (HDEVINFO)INVALID_HANDLE_VALUE)
+    {
+        struct DeviceInfoSet *list = (struct DeviceInfoSet *)devinfo;
+        if (list->magic == SETUP_DEVICE_INFO_SET_MAGIC)
+        {
+            if (index < list->cDevices)
+            {
+                if (info->cbSize == sizeof(SP_DEVINFO_DATA))
+                {
+                    memcpy(info, &list->devices[index], info->cbSize);
+                    ret = TRUE;
+                }
+                else
+                    SetLastError(ERROR_INVALID_USER_BUFFER);
+            }
+            else
+                SetLastError(ERROR_NO_MORE_ITEMS);
+        }
+        else
+            SetLastError(ERROR_INVALID_HANDLE);
+    }
+    else
+        SetLastError(ERROR_INVALID_HANDLE);
+    return ret;
 }
 
 /***********************************************************************
