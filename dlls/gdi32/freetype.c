@@ -102,6 +102,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #ifdef HAVE_FREETYPE_TTTABLES_H
 #include <freetype/tttables.h>
 #endif
+#ifdef HAVE_FREETYPE_FTTYPES_H
+#include <freetype/fttypes.h>
+#endif
 #ifdef HAVE_FREETYPE_FTSNAMES_H
 #include <freetype/ftsnames.h>
 #else
@@ -194,6 +197,12 @@ MAKE_FUNCPTR(FcPatternGetString);
 #endif
 
 #undef MAKE_FUNCPTR
+
+#ifndef FT_MAKE_TAG
+#define FT_MAKE_TAG( ch0, ch1, ch2, ch3 ) \
+	( ((DWORD)(BYTE)(ch0) << 24) | ((DWORD)(BYTE)(ch1) << 16) | \
+	  ((DWORD)(BYTE)(ch2) << 8) | (DWORD)(BYTE)(ch3) )
+#endif
 
 #ifndef ft_encoding_none
 #define FT_ENCODING_NONE ft_encoding_none
@@ -587,7 +596,7 @@ static char **expand_mac_font(const char *path)
         unsigned short *num_faces_ptr, num_faces, face;
         AsscEntry *assoc;
         Handle fond;
-        ResType fond_res = 0x464f4e44; /* 'FOND' */
+        ResType fond_res = FT_MAKE_TAG('F','O','N','D');
 
         fond = Get1IndResource(fond_res, idx);
         if(!fond) break;
@@ -603,7 +612,7 @@ static char **expand_mac_font(const char *path)
         for(face = 0; face < num_faces; face++, assoc++)
         {
             Handle sfnt;
-            ResType sfnt_res = 0x73666e74; /* 'sfnt' */
+            ResType sfnt_res = FT_MAKE_TAG('s','f','n','t');
             unsigned short size, font_id;
             char *output;
 
@@ -1195,7 +1204,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 
             /* check for the presence of the 'CFF ' table to check if the font is Type1 */
             tmp_size = 0;
-            if (pFT_Load_Sfnt_Table && !pFT_Load_Sfnt_Table(ft_face, 0x43464620, 0, NULL, &tmp_size))
+            if (pFT_Load_Sfnt_Table && !pFT_Load_Sfnt_Table(ft_face, FT_MAKE_TAG('C','F','F',' '), 0, NULL, &tmp_size))
             {
                 TRACE("Font %s/%p is OTF Type1\n", wine_dbgstr_a(file), font_data_ptr);
                 face->ntmFlags = NTM_PS_OPENTYPE;

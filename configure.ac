@@ -872,6 +872,7 @@ then
 	AC_CHECK_HEADERS(ft2build.h \
                          freetype/freetype.h \
                          freetype/ftglyph.h \
+                         freetype/fttypes.h \
                          freetype/tttables.h \
                          freetype/ftnames.h \
                          freetype/ftsnames.h \

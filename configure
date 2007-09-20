@@ -13054,9 +13054,11 @@ fi
 
 
 
+
 for ac_header in ft2build.h \
                          freetype/freetype.h \
                          freetype/ftglyph.h \
+                         freetype/fttypes.h \
                          freetype/tttables.h \
                          freetype/ftnames.h \
                          freetype/ftsnames.h \

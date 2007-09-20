@@ -126,6 +126,9 @@
 /* Define if you have the <freetype/fttrigon.h> header file. */
 #undef HAVE_FREETYPE_FTTRIGON_H
 
+/* Define to 1 if you have the <freetype/fttypes.h> header file. */
+#undef HAVE_FREETYPE_FTTYPES_H
+
 /* Define to 1 if you have the <freetype/ftwinfnt.h> header file. */
 #undef HAVE_FREETYPE_FTWINFNT_H
 
