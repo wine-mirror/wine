@@ -357,6 +357,16 @@ s_sum_padded2(padded_t ps[2])
 }
 
 int
+s_sum_padded_conf(padded_t *ps, int n)
+{
+  int sum = 0;
+  int i;
+  for (i = 0; i < n; ++i)
+    sum += s_sum_padded(&ps[i]);
+  return sum;
+}
+
+int
 s_sum_bogus(bogus_t *b)
 {
   return *b->h.p1 + *b->p2 + *b->p3 + b->c;
@@ -501,6 +511,11 @@ basic_tests(void)
   padded2[1].i = 3;
   padded2[1].c = 7;
   ok(sum_padded2(padded2) == 6, "RPC sum_padded2\n");
+  padded2[0].i = -5;
+  padded2[0].c = 1;
+  padded2[1].i = 3;
+  padded2[1].c = 7;
+  ok(sum_padded_conf(padded2, 2) == 6, "RPC sum_padded_conf\n");
 
   i1 = 14;
   i2 = -7;

@@ -2580,11 +2580,9 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         else if (is_array(type))
         {
             unsigned char tc = type->type;
-            const char *array_type;
+            const char *array_type = "FixedArray";
 
-            if (tc == RPC_FC_SMFARRAY || tc == RPC_FC_LGFARRAY)
-                array_type = "FixedArray";
-            else if (tc == RPC_FC_SMVARRAY || tc == RPC_FC_LGVARRAY)
+            if (tc == RPC_FC_SMVARRAY || tc == RPC_FC_LGVARRAY)
             {
                 if (is_size_needed_for_phase(phase))
                 {
@@ -2605,22 +2603,28 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 }
                 array_type = "ConformantArray";
             }
-            else if (tc == RPC_FC_CVARRAY)
+            else if (tc == RPC_FC_CVARRAY || tc == RPC_FC_BOGUS_ARRAY)
             {
                 if (is_size_needed_for_phase(phase))
                 {
-                    print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                    write_expr(file, type->size_is, 1);
-                    fprintf(file, ";\n");
-                    print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
-                    print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
-                    write_expr(file, type->length_is, 1);
-                    fprintf(file, ";\n\n");
+                    if (type->size_is)
+                    {
+                        print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
+                        write_expr(file, type->size_is, 1);
+                        fprintf(file, ";\n");
+                    }
+                    if (type->length_is)
+                    {
+                        print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
+                        print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
+                        write_expr(file, type->length_is, 1);
+                        fprintf(file, ";\n\n");
+                    }
                 }
-                array_type = "ConformantVaryingArray";
+                array_type = (tc == RPC_FC_BOGUS_ARRAY
+                              ? "ComplexArray"
+                              : "ConformantVaryingArray");
             }
-            else
-                array_type = "ComplexArray";
 
             if (!in_attr && phase == PHASE_FREE)
             {

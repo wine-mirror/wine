@@ -208,6 +208,7 @@ interface IServer
 
   int sum_padded(padded_t *p);
   int sum_padded2(padded_t ps[2]);
+  int sum_padded_conf([size_is(n)] padded_t *ps, int n);
 
   typedef struct
   {
