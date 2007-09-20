@@ -22,18 +22,24 @@
 #include "wine/port.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
 #include "x11drv.h"
 #include "wine/library.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wintab.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
 
+#define WT_MAX_NAME_LEN 256
+
 typedef struct tagWTI_CURSORS_INFO
 {
-    CHAR   NAME[256];
+    WCHAR   NAME[WT_MAX_NAME_LEN];
         /* a displayable zero-terminated string containing the name of the
          * cursor.
          */
@@ -47,7 +53,8 @@ typedef struct tagWTI_CURSORS_INFO
         /* the number of buttons on this cursor. */
     BYTE    BUTTONBITS;
         /* the number of bits of raw button data returned by the hardware.*/
-    CHAR   BTNNAMES[1024]; /* FIXME: make this dynamic */
+    DWORD   cchBTNNAMES;
+    WCHAR   *BTNNAMES;
         /* a list of zero-terminated strings containing the names of the
          * cursor's buttons. The number of names in the list is the same as the
          * number of buttons on the cursor. The names are separated by a single
@@ -129,7 +136,7 @@ typedef struct tagWTI_CURSORS_INFO
 
 typedef struct tagWTI_DEVICES_INFO
 {
-    CHAR   NAME[256];
+    WCHAR   NAME[WT_MAX_NAME_LEN];
         /* a displayable null- terminated string describing the device,
          * manufacturer, and revision level.
          */
@@ -191,7 +198,7 @@ typedef struct tagWTI_DEVICES_INFO
         /* a 3-element array describing the tablet's rotation range and
          * resolution capabilities.
          */
-    CHAR   PNPID[256];
+    WCHAR   PNPID[WT_MAX_NAME_LEN];
         /* a null-terminated string containing the devices Plug and Play ID.*/
 }   WTI_DEVICES_INFO, *LPWTI_DEVICES_INFO;
 
@@ -233,7 +240,7 @@ static INT           button_state[10];
 
 #define             CURSORMAX 10
 
-static LOGCONTEXTA      gSysContext;
+static LOGCONTEXTW      gSysContext;
 static WTI_DEVICES_INFO gSysDevice;
 static WTI_CURSORS_INFO gSysCursor[CURSORMAX];
 static INT              gNumCursors;
@@ -281,6 +288,10 @@ static int Tablet_ErrorHandler(Display *dpy, XErrorEvent *event, void* arg)
 
 void X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
+    const WCHAR SZ_CONTEXT_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','C','o','n','t','e','x','t',0};
+    const WCHAR SZ_DEVICE_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','D','e','v','i','c','e',0};
+    const WCHAR SZ_NON_PLUGINPLAY[] = {'n','o','n','-','p','l','u','g','i','n','p','l','a','y',0};
+
     struct x11drv_thread_data *data = x11drv_thread_data();
     int num_devices;
     int loop;
@@ -305,8 +316,8 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     hwndTabletDefault = hwnddefault;
 
     /* Do base initializaion */
-    strcpy(gSysContext.lcName, "Wine Tablet Context");
-    strcpy(gSysDevice.NAME,"Wine Tablet Device");
+    strcpyW(gSysContext.lcName, SZ_CONTEXT_NAME);
+    strcpyW(gSysDevice.NAME, SZ_DEVICE_NAME);
 
     gSysContext.lcOptions = CXO_SYSTEM;
     gSysContext.lcLocks = CXL_INSIZE | CXL_INASPECT | CXL_MARGIN |
@@ -337,7 +348,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     gSysDevice.PKTDATA =
         PK_CONTEXT | PK_STATUS | PK_SERIAL_NUMBER| PK_TIME | PK_CURSOR |
         PK_BUTTONS |  PK_X | PK_Y | PK_NORMAL_PRESSURE | PK_ORIENTATION;
-    strcpy(gSysDevice.PNPID,"non-pluginplay");
+    strcpyW(gSysDevice.PNPID, SZ_NON_PLUGINPLAY);
 
     wine_tsx11_lock();
 
@@ -362,6 +373,13 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             cursor_target++;
             target = &devices[loop];
             cursor = &gSysCursor[cursor_target];
+
+            if (strlen(target->name) >= WT_MAX_NAME_LEN)
+            {
+                ERR("Input device '%s' name too long - skipping\n", wine_dbgstr_a(target->name));
+                cursor_target--;
+                continue;
+            }
 
             X11DRV_expect_error(data->display, Tablet_ErrorHandler, NULL);
             opendevice = pXOpenDevice(data->display,target->id);
@@ -394,8 +412,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                 cursor_target --;
                 continue;
             }
-
-            strcpy(cursor->NAME,target->name);
+            MultiByteToWideChar(CP_UNIXCP, 0, target->name, -1, cursor->NAME, WT_MAX_NAME_LEN);
 
             cursor->ACTIVE = 1;
             cursor->PKTDATA = PK_TIME | PK_CURSOR | PK_BUTTONS |  PK_X | PK_Y |
@@ -407,9 +424,9 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             cursor->NPBTNMARKS[0] = 0 ;
             cursor->NPBTNMARKS[1] = 1 ;
             cursor->CAPABILITIES = CRC_MULTIMODE;
-            if (strcasecmp(cursor->NAME,"stylus")==0)
+            if (strcasecmp(target->name,"stylus")==0)
                 cursor->TYPE = 0x4825;
-            if (strcasecmp(cursor->NAME,"eraser")==0)
+            if (strcasecmp(target->name,"eraser")==0)
                 cursor->TYPE = 0xc85a;
 
 
@@ -488,16 +505,29 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                         break;
                     case ButtonClass:
                     {
-                        CHAR *ptr = cursor->BTNNAMES;
+                        int cchBuf = 512;
+                        int cchPos = 0;
                         int i;
 
                         Button = (XButtonInfoPtr) any;
                         cursor->BUTTONS = Button->num_buttons;
+                        cursor->BTNNAMES = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*cchBuf);
                         for (i = 0; i < cursor->BUTTONS; i++)
                         {
-                            strcpy(ptr,cursor->NAME);
-                            ptr+=8;
+                            /* FIXME - these names are probably incorrect */
+                            int cch = strlenW(cursor->NAME) + 1;
+                            while (cch > cchBuf - cchPos - 1) /* we want one extra byte for the last NUL */
+                            {
+                                cchBuf *= 2;
+                                cursor->BTNNAMES = HeapReAlloc(GetProcessHeap(), 0, cursor->BTNNAMES, sizeof(WCHAR)*cchBuf);
+                            }
+
+                            strcpyW(cursor->BTNNAMES + cchPos, cursor->NAME);
+                            cchPos += cch;
                         }
+                        cursor->BTNNAMES[cchPos++] = 0;
+                        cursor->BTNNAMES = HeapReAlloc(GetProcessHeap(), 0, cursor->BTNNAMES, sizeof(WCHAR)*cchPos);
+                        cursor->cchBTNNAMES = cchPos;
                     }
                     break;
                 }
@@ -695,10 +725,13 @@ int X11DRV_AttachEventQueueToTablet(HWND hOwner)
     X11DRV_expect_error(data->display,Tablet_ErrorHandler,NULL);
     for (cur_loop=0; cur_loop < gNumCursors; cur_loop++)
     {
+        char   cursorNameA[WT_MAX_NAME_LEN];
         int    event_number=0;
 
+        /* the cursor name fits in the buffer because too long names are skipped */
+        WideCharToMultiByte(CP_UNIXCP, 0, gSysCursor[cur_loop].NAME, -1, cursorNameA, WT_MAX_NAME_LEN, NULL, NULL);
         for (loop=0; loop < num_devices; loop ++)
-            if (strcmp(devices[loop].name,gSysCursor[cur_loop].NAME)==0)
+            if (strcmp(devices[loop].name, cursorNameA) == 0)
                 target = &devices[loop];
 
         TRACE("Opening cursor %i id %i\n",cur_loop,(INT)target->id);
@@ -754,7 +787,7 @@ int X11DRV_GetCurrentPacket(LPWTPACKET *packet)
 }
 
 
-static inline int CopyTabletData(LPVOID target, LPVOID src, INT size)
+static inline int CopyTabletData(LPVOID target, LPCVOID src, INT size)
 {
     /*
      * It is valid to call CopyTabletData with NULL.
@@ -766,9 +799,9 @@ static inline int CopyTabletData(LPVOID target, LPVOID src, INT size)
 }
 
 /***********************************************************************
- *		X11DRV_WTInfoA (X11DRV.@)
+ *		X11DRV_WTInfoW (X11DRV.@)
  */
-UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
+UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
 {
     /*
      * It is valid to call WTInfoA with lpOutput == NULL, as per standard.
@@ -798,9 +831,11 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
             {
                 WORD version;
                 case IFC_WINTABID:
-                    strcpy(lpOutput,"Wine Wintab 1.1");
-                    rc = 16;
+                {
+                    static const WCHAR driver[] = {'W','i','n','e',' ','W','i','n','t','a','b',' ','1','.','1',0};
+                    rc = CopyTabletData(lpOutput, driver, (strlenW(driver) + 1) * sizeof(WCHAR));
                     break;
+                }
                 case IFC_SPECVERSION:
                     version = (0x01) | (0x01 << 8);
                     rc = CopyTabletData(lpOutput, &version,sizeof(WORD));
@@ -821,11 +856,11 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
             {
                 case 0:
                     rc = CopyTabletData(lpOutput, &gSysContext,
-                            sizeof(LOGCONTEXTA));
+                            sizeof(LOGCONTEXTW));
                     break;
                 case CTX_NAME:
                     rc = CopyTabletData(lpOutput, &gSysContext.lcName,
-                         strlen(gSysContext.lcName)+1);
+                         (strlenW(gSysContext.lcName)+1) * sizeof(WCHAR));
                     break;
                 case CTX_OPTIONS:
                     rc = CopyTabletData(lpOutput, &gSysContext.lcOptions,
@@ -979,7 +1014,7 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
             {
                 case CSR_NAME:
                     rc = CopyTabletData(lpOutput, &tgtcursor->NAME,
-                                        strlen(tgtcursor->NAME)+1);
+                                        (strlenW(tgtcursor->NAME)+1) * sizeof(WCHAR));
                     break;
                 case CSR_ACTIVE:
                     rc = CopyTabletData(lpOutput,&tgtcursor->ACTIVE,
@@ -1000,7 +1035,7 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                 case CSR_BTNNAMES:
                     FIXME("Button Names not returned correctly\n");
                     rc = CopyTabletData(lpOutput,&tgtcursor->BTNNAMES,
-                                        strlen(tgtcursor->BTNNAMES)+1);
+                                        tgtcursor->cchBTNNAMES*sizeof(WCHAR));
                     break;
                 case CSR_BUTTONMAP:
                     rc = CopyTabletData(lpOutput,&tgtcursor->BUTTONMAP,
@@ -1071,7 +1106,7 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
             {
                 case DVC_NAME:
                     rc = CopyTabletData(lpOutput,gSysDevice.NAME,
-                                        strlen(gSysDevice.NAME)+1);
+                                        (strlenW(gSysDevice.NAME)+1) * sizeof(WCHAR));
                     break;
                 case DVC_HARDWARE:
                     rc = CopyTabletData(lpOutput,&gSysDevice.HARDWARE,
@@ -1155,7 +1190,7 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                     break;
                 case DVC_PNPID:
                     rc = CopyTabletData(lpOutput,gSysDevice.PNPID,
-                                        strlen(gSysDevice.PNPID)+1);
+                                        (strlenW(gSysDevice.PNPID)+1)*sizeof(WCHAR));
                     break;
                 default:
                     FIXME("WTI_DEVICES unhandled index %i\n",nIndex);
@@ -1194,9 +1229,9 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
 }
 
 /***********************************************************************
- *		WTInfoA (X11DRV.@)
+ *		WTInfoW (X11DRV.@)
  */
-UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
+UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
 {
     return 0;
 }

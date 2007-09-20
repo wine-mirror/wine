@@ -39,7 +39,7 @@ CRITICAL_SECTION csTablet;
 int (*pLoadTabletInfo)(HWND hwnddefault) = NULL;
 int (*pGetCurrentPacket)(LPWTPACKET packet) = NULL;
 int (*pAttachEventQueueToTablet)(HWND hOwner) = NULL;
-UINT (*pWTInfoA)(UINT wCategory, UINT nIndex, LPVOID lpOutput) = NULL;
+UINT (*pWTInfoW)(UINT wCategory, UINT nIndex, LPVOID lpOutput) = NULL;
 
 static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam);
@@ -81,7 +81,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
                 pLoadTabletInfo = (void *)GetProcAddress(hx11drv, "LoadTabletInfo");
                 pAttachEventQueueToTablet = (void *)GetProcAddress(hx11drv, "AttachEventQueueToTablet");
                 pGetCurrentPacket = (void *)GetProcAddress(hx11drv, "GetCurrentPacket");
-                pWTInfoA = (void *)GetProcAddress(hx11drv, "WTInfoA");
+                pWTInfoW = (void *)GetProcAddress(hx11drv, "WTInfoW");
                 TABLET_Register();
                 hwndDefault = CreateWindowW(WC_TABLETCLASSNAME, name,
                                 WS_POPUPWINDOW,0,0,0,0,0,0,hInstDLL,0);

@@ -119,7 +119,7 @@
 @ cdecl AttachEventQueueToTablet(long) X11DRV_AttachEventQueueToTablet
 @ cdecl GetCurrentPacket(ptr) X11DRV_GetCurrentPacket
 @ cdecl LoadTabletInfo(long) X11DRV_LoadTabletInfo
-@ cdecl WTInfoA(long long ptr) X11DRV_WTInfoA
+@ cdecl WTInfoW(long long ptr) X11DRV_WTInfoW
 
 # X11 locks
 @ cdecl -norelay wine_tsx11_lock()
