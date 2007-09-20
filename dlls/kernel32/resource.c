@@ -1150,6 +1150,7 @@ static struct mapping_info *create_mapping( LPCWSTR name, BOOL rw )
     }
 
     unmap_file_from_memory( mi );
+    HeapFree( GetProcessHeap(), 0, mi );
 
     return NULL;
 }
