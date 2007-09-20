@@ -1050,6 +1050,24 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
 }
 
 /***********************************************************************
+ *		SetupDiRegisterDeviceInfo (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiRegisterDeviceInfo(
+        HDEVINFO DeviceInfoSet,
+        PSP_DEVINFO_DATA DeviceInfoData,
+        DWORD Flags,
+        PSP_DETSIG_CMPPROC CompareProc,
+        PVOID CompareContext,
+        PSP_DEVINFO_DATA DupDeviceInfoData)
+{
+    TRACE("%p %p %08x %p %p %p\n", DeviceInfoSet, DeviceInfoData, Flags,
+            CompareProc, CompareContext, DupDeviceInfoData);
+
+    FIXME("\n");
+    return FALSE;
+}
+
+/***********************************************************************
  *		SetupDiEnumDeviceInfo (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiEnumDeviceInfo(
