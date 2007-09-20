@@ -596,7 +596,7 @@ static void test_debugger(void)
         return;
     }
 
-    sprintf(cmdline, "%s %s %s", my_argv[0], my_argv[1], "debuggee");
+    sprintf(cmdline, "%s %s %s %p", my_argv[0], my_argv[1], "debuggee", &test_stage);
     ret = CreateProcess(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
     ok(ret, "could not create child process error: %u\n", GetLastError());
     if (!ret)
@@ -699,7 +699,7 @@ static void test_debugger(void)
                     }
                 }
                 else
-                    ok(FALSE, "unexpected stage %d\n", stage);
+                    ok(FALSE, "unexpected stage %x\n", stage);
 
                 status = pNtSetContextThread(pi.hThread, &ctx);
                 ok(!status, "NtSetContextThread failed with 0x%x\n", status);
@@ -828,8 +828,17 @@ START_TEST(exception)
     }
 
     my_argc = winetest_get_mainargs( &my_argv );
-    if (my_argc >= 3)
+    if (my_argc >= 4)
     {
+        void *addr;
+        sscanf( my_argv[3], "%p", &addr );
+
+        if (addr != &test_stage)
+        {
+            skip( "child process not mapped at same address (%p/%p)\n", &test_stage, addr);
+            return;
+        }
+
         /* child must be run under a debugger */
         if (!pNtCurrentTeb()->Peb->BeingDebugged)
         {
