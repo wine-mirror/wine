@@ -267,7 +267,7 @@ const char *debugstr_SP(const GUID *id) {
   if (!id) return "(null)";
   
   for (i = 0; i < sizeof(guids)/sizeof(guids[0]); i++) {
-    if (IsEqualGUID(id, &guids[i].guid))
+    if (IsEqualGUID(id, guids[i].guid))
       return guids[i].name;
   }
   /* if we didn't find it, act like standard debugstr_guid */	
