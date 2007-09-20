@@ -67,6 +67,22 @@ static const WCHAR DeviceClasses[] = {'S','y','s','t','e','m','\\',
                                   'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
                                   'C','o','n','t','r','o','l','\\',
                                   'D','e','v','i','c','e','C','l','a','s','s','e','s',0};
+static const WCHAR Enum[] = {'S','y','s','t','e','m','\\',
+                                  'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+				  'E','n','u','m',0};
+static const WCHAR DeviceDesc[] = {'D','e','v','i','c','e','D','e','s','c',0};
+static const WCHAR HardwareId[] = {'H','a','r','d','w','a','r','e','I','D',0};
+static const WCHAR CompatibleIDs[] = {'C','o','m','p','a','t','i','b','l','e','I','d','s',0};
+static const WCHAR Service[] = {'S','e','r','v','i','c','e',0};
+static const WCHAR Driver[] = {'D','r','i','v','e','r',0};
+static const WCHAR ConfigFlags[] = {'C','o','n','f','i','g','F','l','a','g','s',0};
+static const WCHAR Mfg[] = {'M','f','g',0};
+static const WCHAR FriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
+static const WCHAR LocationInformation[] = {'L','o','c','a','t','i','o','n','I','n','f','o','r','m','a','t','i','o','n',0};
+static const WCHAR Capabilities[] = {'C','a','p','a','b','i','l','i','t','i','e','s',0};
+static const WCHAR UINumber[] = {'U','I','N','u','m','b','e','r',0};
+static const WCHAR UpperFilters[] = {'U','p','p','e','r','F','i','l','t','e','r','s',0};
+static const WCHAR LowerFilters[] = {'L','o','w','e','r','F','i','l','t','e','r','s',0};
 
 /* is used to identify if a DeviceInfoSet pointer is
 valid or not */
@@ -84,6 +100,7 @@ struct DeviceInfoSet
 /* Pointed to by SP_DEVINFO_DATA's Reserved member */
 struct DeviceInfo
 {
+    HKEY   key;
     LPWSTR instanceId;
 };
 
@@ -98,8 +115,20 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId)
                 (lstrlenW(instanceId) + 1) * sizeof(WCHAR));
         if (devInfo->instanceId)
         {
+            HKEY enumKey;
+            LONG l;
+
+            devInfo->key = INVALID_HANDLE_VALUE;
             lstrcpyW(devInfo->instanceId, instanceId);
             struprW(devInfo->instanceId);
+            l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0,
+                    KEY_ALL_ACCESS, NULL, &enumKey, NULL);
+            if (!l)
+            {
+                RegCreateKeyExW(enumKey, devInfo->instanceId, 0, NULL, 0,
+                        KEY_ALL_ACCESS, NULL, &devInfo->key, NULL);
+                RegCloseKey(enumKey);
+            }
         }
         else
         {
@@ -112,6 +141,8 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId)
 
 static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
 {
+    if (devInfo->key != INVALID_HANDLE_VALUE)
+        RegCloseKey(devInfo->key);
     HeapFree(GetProcessHeap(), 0, devInfo->instanceId);
     HeapFree(GetProcessHeap(), 0, devInfo);
 }
@@ -1478,11 +1509,40 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
     return FALSE;
 }
 
+struct PropertyMapEntry
+{
+    DWORD   regType;
+    LPCSTR  nameA;
+    LPCWSTR nameW;
+};
+
+static struct PropertyMapEntry PropertyMap[] = {
+    { REG_SZ, "DeviceDesc", DeviceDesc },
+    { REG_MULTI_SZ, "HardwareId", HardwareId },
+    { REG_MULTI_SZ, "CompatibleIDs", CompatibleIDs },
+    { 0, NULL, NULL }, /* SPDRP_UNUSED0 */
+    { REG_SZ, "Service", Service },
+    { 0, NULL, NULL }, /* SPDRP_UNUSED1 */
+    { 0, NULL, NULL }, /* SPDRP_UNUSED2 */
+    { REG_SZ, "Class", Class },
+    { REG_SZ, "ClassGUID", ClassGUID },
+    { REG_SZ, "Driver", Driver },
+    { REG_DWORD, "ConfigFlags", ConfigFlags },
+    { REG_SZ, "Mfg", Mfg },
+    { REG_SZ, "FriendlyName", FriendlyName },
+    { REG_SZ, "LocationInformation", LocationInformation },
+    { 0, NULL, NULL }, /* SPDRP_PHYSICAL_DEVICE_OBJECT_NAME */
+    { REG_DWORD, "Capabilities", Capabilities },
+    { REG_DWORD, "UINumber", UINumber },
+    { REG_MULTI_SZ, "UpperFilters", UpperFilters },
+    { REG_MULTI_SZ, "LowerFilters", LowerFilters },
+};
+
 /***********************************************************************
  *		SetupDiGetDeviceRegistryPropertyA (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(
-        HDEVINFO  devinfo,
+        HDEVINFO  DeviceInfoSet,
         PSP_DEVINFO_DATA  DeviceInfoData,
         DWORD   Property,
         PDWORD  PropertyRegDataType,
@@ -1490,10 +1550,100 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(
         DWORD   PropertyBufferSize,
         PDWORD  RequiredSize)
 {
-    FIXME("%04x %p %d %p %p %d %p\n", (DWORD)devinfo, DeviceInfoData,
+    BOOL ret = FALSE;
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfo *devInfo;
+
+    TRACE("%04x %p %d %p %p %d %p\n", (DWORD)DeviceInfoSet, DeviceInfoData,
         Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize,
         RequiredSize);
-    return FALSE;
+
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DeviceInfoData || DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA)
+            || !DeviceInfoData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
+    if (Property < sizeof(PropertyMap) / sizeof(PropertyMap[0])
+        && PropertyMap[Property].nameA)
+    {
+        DWORD size = PropertyBufferSize;
+        LONG l = RegQueryValueExA(devInfo->key, PropertyMap[Property].nameA,
+                NULL, PropertyRegDataType, PropertyBuffer, &size);
+
+        if (RequiredSize)
+            *RequiredSize = size;
+        if (!l)
+            ret = TRUE;
+        else
+            SetLastError(l);
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *		SetupDiGetDeviceRegistryPropertyW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDeviceRegistryPropertyW(
+        HDEVINFO  DeviceInfoSet,
+        PSP_DEVINFO_DATA  DeviceInfoData,
+        DWORD   Property,
+        PDWORD  PropertyRegDataType,
+        PBYTE   PropertyBuffer,
+        DWORD   PropertyBufferSize,
+        PDWORD  RequiredSize)
+{
+    BOOL ret = FALSE;
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfo *devInfo;
+
+    TRACE("%04x %p %d %p %p %d %p\n", (DWORD)DeviceInfoSet, DeviceInfoData,
+        Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize,
+        RequiredSize);
+
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DeviceInfoData || DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA)
+            || !DeviceInfoData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
+    if (Property < sizeof(PropertyMap) / sizeof(PropertyMap[0])
+        && PropertyMap[Property].nameW)
+    {
+        DWORD size = PropertyBufferSize;
+        LONG l = RegQueryValueExW(devInfo->key, PropertyMap[Property].nameW,
+                NULL, PropertyRegDataType, PropertyBuffer, &size);
+
+        if (RequiredSize)
+            *RequiredSize = size;
+        if (!l)
+            ret = TRUE;
+        else
+            SetLastError(l);
+    }
+    return ret;
 }
 
 /***********************************************************************
