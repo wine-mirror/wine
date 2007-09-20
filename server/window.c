@@ -840,7 +840,7 @@ static inline struct window *get_top_clipping_window( struct window *win )
 
 
 /* compute the visible region of a window, in window coordinates */
-static struct region *get_visible_region( struct window *win, struct window *top, unsigned int flags )
+static struct region *get_visible_region( struct window *win, unsigned int flags )
 {
     struct region *tmp = NULL, *region;
     int offset_x, offset_y;
@@ -853,7 +853,7 @@ static struct region *get_visible_region( struct window *win, struct window *top
 
     /* create a region relative to the window itself */
 
-    if ((flags & DCX_PARENTCLIP) && win != top && win->parent)
+    if ((flags & DCX_PARENTCLIP) && win->parent && !is_desktop_window(win->parent))
     {
         set_region_client_rect( region, win->parent );
         offset_region( region, -win->parent->client_rect.left, -win->parent->client_rect.top );
@@ -891,11 +891,12 @@ static struct region *get_visible_region( struct window *win, struct window *top
         offset_y = win->window_rect.top;
     }
 
-    if (top && top != win && (tmp = create_empty_region()) != NULL)
+    if ((tmp = create_empty_region()) != NULL)
     {
-        while (win != top && win->parent)
+        while (win->parent)
         {
-            if (win->style & WS_CLIPSIBLINGS)
+            /* we don't clip out top-level siblings as that's up to the native windowing system */
+            if ((win->style & WS_CLIPSIBLINGS) && !is_desktop_window( win->parent ))
             {
                 if (!clip_children( win->parent, win, region, 0, 0 )) goto error;
                 if (is_region_empty( region )) break;
@@ -1332,12 +1333,11 @@ static void set_window_pos( struct window *win, struct window *previous,
     const rectangle_t old_window_rect = win->window_rect;
     const rectangle_t old_visible_rect = win->visible_rect;
     const rectangle_t old_client_rect = win->client_rect;
-    struct window *top = get_top_clipping_window( win );
     int visible = (win->style & WS_VISIBLE) || (swp_flags & SWP_SHOWWINDOW);
 
     if (win->parent && !is_visible( win->parent )) visible = 0;
 
-    if (visible && !(old_vis_rgn = get_visible_region( win, top, DCX_WINDOW ))) return;
+    if (visible && !(old_vis_rgn = get_visible_region( win, DCX_WINDOW ))) return;
 
     /* set the new window info before invalidating anything */
 
@@ -1356,7 +1356,7 @@ static void set_window_pos( struct window *win, struct window *previous,
     /* if the window is not visible, everything is easy */
     if (!visible) return;
 
-    if (!(new_vis_rgn = get_visible_region( win, top, DCX_WINDOW )))
+    if (!(new_vis_rgn = get_visible_region( win, DCX_WINDOW )))
     {
         free_region( old_vis_rgn );
         clear_error();  /* ignore error since the window info has been modified already */
@@ -1441,17 +1441,16 @@ done:
 static void set_window_region( struct window *win, struct region *region, int redraw )
 {
     struct region *old_vis_rgn = NULL, *new_vis_rgn;
-    struct window *top = get_top_clipping_window( win );
 
     /* no need to redraw if window is not visible */
     if (redraw && !is_visible( win )) redraw = 0;
 
-    if (redraw) old_vis_rgn = get_visible_region( win, top, DCX_WINDOW );
+    if (redraw) old_vis_rgn = get_visible_region( win, DCX_WINDOW );
 
     if (win->win_region) free_region( win->win_region );
     win->win_region = region;
 
-    if (old_vis_rgn && (new_vis_rgn = get_visible_region( win, top, DCX_WINDOW )))
+    if (old_vis_rgn && (new_vis_rgn = get_visible_region( win, DCX_WINDOW )))
     {
         /* expose anything revealed by the change */
         if (xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ))
@@ -1867,7 +1866,7 @@ DECL_HANDLER(get_visible_region)
     if (!win) return;
 
     top = get_top_clipping_window( win );
-    if ((region = get_visible_region( win, top, req->flags )))
+    if ((region = get_visible_region( win, req->flags )))
     {
         rectangle_t *data;
         map_win_region_to_screen( win, region );
