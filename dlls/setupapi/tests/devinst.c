@@ -169,27 +169,23 @@ static void testCreateDeviceInfo(void)
         /* Finally, with all three required parameters, this succeeds: */
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
          NULL, NULL, 0, NULL);
-        todo_wine
         ok(ret, "pSetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
         /* This fails because the device ID already exists.. */
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
          NULL, NULL, 0, &devInfo);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_DEVINST_ALREADY_EXISTS,
          "Expected ERROR_DEVINST_ALREADY_EXISTS, got %08x\n", GetLastError());
         /* whereas this "fails" because cbSize is wrong.. */
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL,
          DICD_GENERATE_ID, &devInfo);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
          "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
         devInfo.cbSize = sizeof(devInfo);
         ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL,
          DICD_GENERATE_ID, &devInfo);
         /* and this finally succeeds. */
-        todo_wine
         ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
         /* There were three devices added, however - the second failure just
          * resulted in the SP_DEVINFO_DATA not getting copied.
@@ -198,7 +194,6 @@ static void testCreateDeviceInfo(void)
         i = 0;
         while (pSetupDiEnumDeviceInfo(set, i, &devInfo))
             i++;
-        todo_wine
         ok(i == 3, "Expected 3 devices, got %d\n", i);
         ok(GetLastError() == ERROR_NO_MORE_ITEMS,
          "SetupDiEnumDeviceInfo failed: %08x\n", GetLastError());
@@ -261,7 +256,6 @@ static void testGetDeviceInstanceId(void)
          "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
          NULL, NULL, 0, &devInfo);
-        todo_wine
         ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, &size);
@@ -277,7 +271,6 @@ static void testGetDeviceInstanceId(void)
          "Unexpected instance ID %s\n", instanceID);
         ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid,
          NULL, NULL, DICD_GENERATE_ID, &devInfo);
-        todo_wine
         ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
         ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, instanceID,
          sizeof(instanceID), NULL);

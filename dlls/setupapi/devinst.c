@@ -81,6 +81,78 @@ struct DeviceInfoSet
     SP_DEVINFO_DATA *devices;
 };
 
+/* Pointed to by SP_DEVINFO_DATA's Reserved member */
+struct DeviceInfo
+{
+    LPWSTR instanceId;
+};
+
+static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId)
+{
+    struct DeviceInfo *devInfo = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(struct DeviceInfo));
+
+    if (devInfo)
+    {
+        devInfo->instanceId = HeapAlloc(GetProcessHeap(), 0,
+                (lstrlenW(instanceId) + 1) * sizeof(WCHAR));
+        if (devInfo->instanceId)
+            lstrcpyW(devInfo->instanceId, instanceId);
+        else
+        {
+            HeapFree(GetProcessHeap(), 0, devInfo);
+            devInfo = NULL;
+        }
+    }
+    return devInfo;
+}
+
+static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
+{
+    HeapFree(GetProcessHeap(), 0, devInfo->instanceId);
+    HeapFree(GetProcessHeap(), 0, devInfo);
+}
+
+/* Adds a device with GUID guid and identifer devInst to set.  Allocates a
+ * struct DeviceInfo, and points the returned device info's Reserved member
+ * to it.
+ * Returns a pointer to the newly allocated device info.
+ */
+static BOOL SETUPDI_AddDeviceToSet(struct DeviceInfoSet *set,
+        const GUID *guid,
+        DWORD devInst,
+        LPCWSTR instanceId,
+        SP_DEVINFO_DATA **dev)
+{
+    BOOL ret = FALSE;
+    struct DeviceInfo *devInfo = SETUPDI_AllocateDeviceInfo(instanceId);
+
+    if (devInfo)
+    {
+        if (set->devices)
+            set->devices = HeapReAlloc(GetProcessHeap(), 0, set->devices,
+                    (set->cDevices + 1) * sizeof(SP_DEVINFO_DATA));
+        else
+            set->devices = HeapAlloc(GetProcessHeap(), 0,
+                    sizeof(SP_DEVINFO_DATA));
+        if (set->devices)
+        {
+            *dev = &set->devices[set->cDevices++];
+            (*dev)->cbSize = sizeof(SP_DEVINFO_DATA);
+            memcpy(&(*dev)->ClassGuid, guid, sizeof(GUID));
+            (*dev)->DevInst = devInst;
+            (*dev)->Reserved = (ULONG_PTR)devInfo;
+            ret = TRUE;
+        }
+        else
+        {
+            HeapFree(GetProcessHeap(), 0, devInfo);
+            SetLastError(ERROR_OUTOFMEMORY);
+        }
+    }
+    return ret;
+}
+
 /***********************************************************************
  *              SetupDiBuildClassInfoList  (SETUPAPI.@)
  *
@@ -740,6 +812,28 @@ BOOL WINAPI SetupDiCreateDeviceInfoA(
     return ret;
 }
 
+static DWORD SETUPDI_DevNameToDevID(LPCWSTR devName)
+{
+    LPCWSTR ptr;
+    DWORD devNameLen = lstrlenW(devName), devInst = 0;
+    BOOL valid = TRUE;
+
+    TRACE("%s\n", debugstr_w(devName));
+    for (ptr = devName; valid && *ptr && ptr - devName < devNameLen; )
+    {
+	if (isdigitW(*ptr))
+	{
+	    devInst *= 10;
+	    devInst |= *ptr - '0';
+	    ptr++;
+	}
+	else
+	    valid = FALSE;
+    }
+    TRACE("%d\n", valid ? devInst : 0xffffffff);
+    return valid ? devInst : 0xffffffff;
+}
+
 /***********************************************************************
  *              SetupDiCreateDeviceInfoW (SETUPAPI.@)
  */
@@ -753,7 +847,8 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
        PSP_DEVINFO_DATA DeviceInfoData)
 {
     struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
-    BOOL ret = FALSE;
+    BOOL ret = FALSE, allocatedInstanceId = FALSE;
+    LPCWSTR instanceId = NULL;
 
     TRACE("%p %s %s %s %p %x %p\n", DeviceInfoSet, debugstr_w(DeviceName),
         debugstr_guid(ClassGuid), debugstr_w(DeviceDescription),
@@ -774,26 +869,101 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (set->magic == SETUP_DEVICE_INFO_SET_MAGIC)
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
-        if (IsEqualGUID(&set->ClassGuid, &GUID_NULL) ||
-            IsEqualGUID(ClassGuid, &set->ClassGuid))
-            ret = TRUE;
-        else
-            SetLastError(ERROR_CLASS_MISMATCH);
-        if ((CreationFlags & DICD_GENERATE_ID) && strchrW(DeviceName, '\\'))
-        {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!IsEqualGUID(&set->ClassGuid, &GUID_NULL) &&
+        !IsEqualGUID(ClassGuid, &set->ClassGuid))
+    {
+        SetLastError(ERROR_CLASS_MISMATCH);
+        return FALSE;
+    }
+    if ((CreationFlags & DICD_GENERATE_ID))
+    {
+        if (strchrW(DeviceName, '\\'))
             SetLastError(ERROR_INVALID_DEVINST_NAME);
-            ret = FALSE;
-        }
-        if (ret)
+        else
         {
-            FIXME("stub\n");
-            ret = FALSE;
+            static const WCHAR newDeviceFmt[] = {'R','o','o','t','\\','%','s',
+                '\\','%','0','4','d',0};
+            DWORD devId;
+
+            if (set->cDevices)
+            {
+                DWORD i, highestDevID = 0;
+
+                for (i = 0; i < set->cDevices; i++)
+                {
+                    struct DeviceInfo *devInfo =
+                        (struct DeviceInfo *)set->devices[i].Reserved;
+                    LPCWSTR devName = strrchrW(devInfo->instanceId, '\\');
+                    DWORD id;
+
+                    if (devName)
+                        devName++;
+                    else
+                        devName = devInfo->instanceId;
+                    id = SETUPDI_DevNameToDevID(devName);
+                    if (id != 0xffffffff && id > highestDevID)
+                        highestDevID = id;
+                }
+                devId = highestDevID + 1;
+            }
+            else
+                devId = 0;
+            /* 17 == lstrlenW(L"Root\\") + lstrlenW("\\") + 1 + %d max size */
+            instanceId = HeapAlloc(GetProcessHeap(), 0,
+                    (17 + lstrlenW(DeviceName)) * sizeof(WCHAR));
+            if (instanceId)
+            {
+                sprintfW((LPWSTR)instanceId, newDeviceFmt, DeviceName,
+                        devId);
+                allocatedInstanceId = TRUE;
+                ret = TRUE;
+            }
+            else
+                ret = FALSE;
         }
     }
     else
-        SetLastError(ERROR_INVALID_HANDLE);
+    {
+        DWORD i;
+
+        ret = TRUE;
+        instanceId = DeviceName;
+        for (i = 0; ret && i < set->cDevices; i++)
+        {
+            struct DeviceInfo *devInfo =
+                (struct DeviceInfo *)set->devices[i].Reserved;
+
+            if (!lstrcmpW(DeviceName, devInfo->instanceId))
+            {
+                SetLastError(ERROR_DEVINST_ALREADY_EXISTS);
+                ret = FALSE;
+            }
+        }
+    }
+    if (ret)
+    {
+        SP_DEVINFO_DATA *dev = NULL;
+
+        ret = SETUPDI_AddDeviceToSet(set, ClassGuid, 0 /* FIXME: DevInst */,
+                instanceId, &dev);
+        if (ret && DeviceInfoData)
+        {
+            if (DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA))
+            {
+                SetLastError(ERROR_INVALID_USER_BUFFER);
+                ret = FALSE;
+            }
+            else
+                memcpy(DeviceInfoData, dev, sizeof(SP_DEVINFO_DATA));
+        }
+    }
+    if (allocatedInstanceId)
+        HeapFree(GetProcessHeap(), 0, (LPWSTR)instanceId);
 
     return ret;
 }
@@ -1211,6 +1381,11 @@ BOOL WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO devinfo)
 
         if (list->magic == SETUP_DEVICE_INFO_SET_MAGIC)
         {
+            DWORD i;
+
+            for (i = 0; i < list->cDevices; i++)
+                SETUPDI_FreeDeviceInfo(
+                        (struct DeviceInfo *)list->devices[i].Reserved);
             HeapFree(GetProcessHeap(), 0, list->devices);
             HeapFree(GetProcessHeap(), 0, list);
             ret = TRUE;
