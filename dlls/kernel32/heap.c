@@ -807,7 +807,11 @@ SIZE_T WINAPI GlobalSize(HGLOBAL hmem)
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
 
-   if (!hmem) return 0;
+   if (!((ULONG_PTR)hmem >> 16))
+   {
+       SetLastError(ERROR_INVALID_HANDLE);
+       return 0;
+   }
 
    if(ISPOINTER(hmem))
    {

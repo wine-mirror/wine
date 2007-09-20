@@ -197,6 +197,13 @@ START_TEST(heap)
     res = GlobalUnlock(gbl);
     ok(res == 1, "Expected 1, got %d\n", res);
 
+    /* GlobalSize on an invalid handle */
+    SetLastError(MAGIC_DEAD);
+    size = GlobalSize((HGLOBAL)0xc042);
+    ok(size == 0, "Expected 0, got %ld\n", size);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
     /* ####################################### */
     /* Local*() functions */
     gbl = LocalAlloc(LMEM_MOVEABLE, 0);
