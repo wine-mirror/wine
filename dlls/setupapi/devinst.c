@@ -1325,8 +1325,52 @@ BOOL WINAPI SetupDiGetClassDescriptionExA(
         PCSTR MachineName,
         PVOID Reserved)
 {
-  FIXME("\n");
-  return FALSE;
+    HKEY hKey;
+    DWORD dwLength;
+
+    hKey = SetupDiOpenClassRegKeyExA(ClassGuid,
+                                     KEY_ALL_ACCESS,
+                                     DIOCR_INSTALLER,
+                                     MachineName,
+                                     Reserved);
+    if (hKey == INVALID_HANDLE_VALUE)
+    {
+	WARN("SetupDiOpenClassRegKeyExA() failed (Error %u)\n", GetLastError());
+	return FALSE;
+    }
+
+    if (RequiredSize != NULL)
+    {
+	dwLength = 0;
+	if (RegQueryValueExA(hKey,
+			     NULL,
+			     NULL,
+			     NULL,
+			     NULL,
+			     &dwLength))
+	{
+	    RegCloseKey(hKey);
+	    return FALSE;
+	}
+
+	*RequiredSize = dwLength;
+    }
+
+    dwLength = ClassDescriptionSize;
+    if (RegQueryValueExA(hKey,
+			 NULL,
+			 NULL,
+			 NULL,
+			 (LPBYTE)ClassDescription,
+			 &dwLength))
+    {
+	RegCloseKey(hKey);
+	return FALSE;
+    }
+
+    RegCloseKey(hKey);
+
+    return TRUE;
 }
 
 /***********************************************************************
