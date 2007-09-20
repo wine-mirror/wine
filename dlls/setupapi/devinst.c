@@ -83,6 +83,7 @@ static const WCHAR Capabilities[] = {'C','a','p','a','b','i','l','i','t','i','e'
 static const WCHAR UINumber[] = {'U','I','N','u','m','b','e','r',0};
 static const WCHAR UpperFilters[] = {'U','p','p','e','r','F','i','l','t','e','r','s',0};
 static const WCHAR LowerFilters[] = {'L','o','w','e','r','F','i','l','t','e','r','s',0};
+static const WCHAR Phantom[] = {'P','h','a','n','t','o','m',0};
 
 /* is used to identify if a DeviceInfoSet pointer is
 valid or not */
@@ -101,10 +102,12 @@ struct DeviceInfoSet
 struct DeviceInfo
 {
     HKEY   key;
+    BOOL   phantom;
     LPWSTR instanceId;
 };
 
-static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId)
+static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId,
+        BOOL phantom)
 {
     struct DeviceInfo *devInfo = HeapAlloc(GetProcessHeap(), 0,
             sizeof(struct DeviceInfo));
@@ -119,6 +122,7 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId)
             LONG l;
 
             devInfo->key = INVALID_HANDLE_VALUE;
+            devInfo->phantom = phantom;
             lstrcpyW(devInfo->instanceId, instanceId);
             struprW(devInfo->instanceId);
             l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0,
@@ -127,6 +131,9 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId)
             {
                 RegCreateKeyExW(enumKey, devInfo->instanceId, 0, NULL, 0,
                         KEY_ALL_ACCESS, NULL, &devInfo->key, NULL);
+                if (phantom)
+                    RegSetValueExW(devInfo->key, Phantom, 0, REG_DWORD,
+                            (LPBYTE)&phantom, sizeof(phantom));
                 RegCloseKey(enumKey);
             }
         }
@@ -143,6 +150,19 @@ static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
 {
     if (devInfo->key != INVALID_HANDLE_VALUE)
         RegCloseKey(devInfo->key);
+    if (devInfo->phantom)
+    {
+        HKEY enumKey;
+        LONG l;
+
+        l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0,
+                KEY_ALL_ACCESS, NULL, &enumKey, NULL);
+        if (!l)
+        {
+            RegDeleteTreeW(enumKey, devInfo->instanceId);
+            RegCloseKey(enumKey);
+        }
+    }
     HeapFree(GetProcessHeap(), 0, devInfo->instanceId);
     HeapFree(GetProcessHeap(), 0, devInfo);
 }
@@ -161,17 +181,19 @@ static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
 
 /* Adds a device with GUID guid and identifer devInst to set.  Allocates a
  * struct DeviceInfo, and points the returned device info's Reserved member
- * to it.
+ * to it.  "Phantom" devices are deleted from the registry when closed.
  * Returns a pointer to the newly allocated device info.
  */
 static BOOL SETUPDI_AddDeviceToSet(struct DeviceInfoSet *set,
         const GUID *guid,
         DWORD devInst,
         LPCWSTR instanceId,
+        BOOL phantom,
         SP_DEVINFO_DATA **dev)
 {
     BOOL ret = FALSE;
-    struct DeviceInfo *devInfo = SETUPDI_AllocateDeviceInfo(instanceId);
+    struct DeviceInfo *devInfo = SETUPDI_AllocateDeviceInfo(instanceId,
+            phantom);
 
     if (devInfo)
     {
@@ -1002,7 +1024,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
         SP_DEVINFO_DATA *dev = NULL;
 
         ret = SETUPDI_AddDeviceToSet(set, ClassGuid, 0 /* FIXME: DevInst */,
-                instanceId, &dev);
+                instanceId, TRUE, &dev);
         if (ret)
         {
             if (DeviceDescription)
