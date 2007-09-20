@@ -1108,6 +1108,61 @@ static void test_EM_EXLIMITTEXT(void)
   result = strcmp(buffer, "A");
   ok(0 == result, "got string = \"%s\"\n", buffer);
 
+  /* WM_SETTEXT not limited */
+  textlimit = 10;
+  memset(text, 'W', textlimit);
+  text[textlimit] = 0;
+  SendMessage(hwndRichEdit, EM_EXLIMITTEXT, 0, textlimit-5);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+  SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  i = strlen(buffer);
+todo_wine {
+  ok(10 == i, "expected 10 chars\n");
+}
+  i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+todo_wine {
+  ok(10 == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", 10, i);
+}
+
+  /* try inserting more text at end */
+  i = SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
+  ok(0 == i, "WM_CHAR wasn't processed");
+  SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  i = strlen(buffer);
+todo_wine {
+  ok(10 == i, "expected 10 chars, got %i\n", i);
+}
+  i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+todo_wine {
+  ok(10 == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", 10, i);
+}
+
+  /* try inserting text at beginning */
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, 0);
+  i = SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
+  ok(0 == i, "WM_CHAR wasn't processed");
+  SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  i = strlen(buffer);
+todo_wine {
+  ok(10 == i, "expected 10 chars, got %i\n", i);
+}
+  i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+todo_wine {
+  ok(10 == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", 10, i);
+}
+
+  /* WM_CHAR is limited */
+  textlimit = 1;
+  SendMessage(hwndRichEdit, EM_EXLIMITTEXT, 0, textlimit);
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, -1);  /* select everything */
+  i = SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
+  ok(0 == i, "WM_CHAR wasn't processed");
+  i = SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
+  ok(0 == i, "WM_CHAR wasn't processed");
+  SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  i = strlen(buffer);
+  ok(1 == i, "expected 1 chars, got %i instead\n", i);
+
   DestroyWindow(hwndRichEdit);
 }
 
