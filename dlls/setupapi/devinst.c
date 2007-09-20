@@ -997,15 +997,22 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
 
         ret = SETUPDI_AddDeviceToSet(set, ClassGuid, 0 /* FIXME: DevInst */,
                 instanceId, &dev);
-        if (ret && DeviceInfoData)
+        if (ret)
         {
-            if (DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA))
+            if (DeviceDescription)
+                SetupDiSetDeviceRegistryPropertyW(DeviceInfoSet,
+                    dev, SPDRP_DEVICEDESC, (const BYTE *)DeviceDescription,
+                    lstrlenW(DeviceDescription) * sizeof(WCHAR));
+            if (DeviceInfoData)
             {
-                SetLastError(ERROR_INVALID_USER_BUFFER);
-                ret = FALSE;
+                if (DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA))
+                {
+                    SetLastError(ERROR_INVALID_USER_BUFFER);
+                    ret = FALSE;
+                }
+                else
+                    memcpy(DeviceInfoData, dev, sizeof(SP_DEVINFO_DATA));
             }
-            else
-                memcpy(DeviceInfoData, dev, sizeof(SP_DEVINFO_DATA));
         }
     }
     if (allocatedInstanceId)
