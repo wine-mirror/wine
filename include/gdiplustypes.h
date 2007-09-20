@@ -21,9 +21,6 @@
 
 typedef float REAL;
 
-typedef BOOL (CALLBACK * ImageAbort)(VOID *);
-typedef ImageAbort DrawImageAbort;
-
 enum Status{
     Ok                          = 0,
     GenericError                = 1,
@@ -47,6 +44,20 @@ enum Status{
     PropertyNotFound            = 19,
     PropertyNotSupported        = 20
 };
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef BOOL (CALLBACK * ImageAbort)(VOID *);
+typedef ImageAbort DrawImageAbort;
+typedef ImageAbort GetThumbnailImageAbort;
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #ifdef __cplusplus
 
