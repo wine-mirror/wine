@@ -33,16 +33,22 @@
 
 /* function pointers */
 static HMODULE hSetupAPI;
+static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoList)(GUID*,HWND);
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
+static BOOL     (WINAPI *pSetupDiEnumDeviceInfo)(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
+static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 
 static void init_function_pointers(void)
 {
     hSetupAPI = GetModuleHandleA("setupapi.dll");
 
+    pSetupDiCreateDeviceInfoA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoA");
+    pSetupDiCreateDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoList");
     pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
     pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
+    pSetupDiEnumDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInfo");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
 }
 
@@ -123,6 +129,84 @@ static void test_SetupDiOpenClassRegKeyExA(void)
         trace("failed to open classes key\n");
 }
 
+static void testCreateDeviceInfo(void)
+{
+    BOOL ret;
+    HDEVINFO set;
+    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
+        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+
+    if (!pSetupDiCreateDeviceInfoList || !pSetupDiEnumDeviceInfo ||
+     !pSetupDiDestroyDeviceInfoList || !pSetupDiCreateDeviceInfoA)
+    {
+        skip("No SetupDiCreateDeviceInfoA\n");
+        return;
+    }
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiCreateDeviceInfoA(NULL, NULL, NULL, NULL, NULL, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_DEVINST_NAME,
+     "Expected ERROR_INVALID_DEVINST_NAME, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiCreateDeviceInfoA(NULL, "Root\\LEGACY_BOGUS\\0000", NULL,
+     NULL, NULL, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLEHANDLE, got %08x\n", GetLastError());
+    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %08x\n",
+     GetLastError());
+    if (set)
+    {
+        SP_DEVINFO_DATA devInfo = { 0 };
+        DWORD i;
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", NULL,
+         NULL, NULL, 0, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+            "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+        /* Finally, with all three required parameters, this succeeds: */
+        ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
+         NULL, NULL, 0, NULL);
+        todo_wine
+        ok(ret, "pSetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+        /* This fails because the device ID already exists.. */
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
+         NULL, NULL, 0, &devInfo);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_DEVINST_ALREADY_EXISTS,
+         "Expected ERROR_DEVINST_ALREADY_EXISTS, got %08x\n", GetLastError());
+        /* whereas this "fails" because cbSize is wrong.. */
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL,
+         DICD_GENERATE_ID, &devInfo);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
+         "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
+        devInfo.cbSize = sizeof(devInfo);
+        ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL,
+         DICD_GENERATE_ID, &devInfo);
+        /* and this finally succeeds. */
+        todo_wine
+        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+        /* There were three devices added, however - the second failure just
+         * resulted in the SP_DEVINFO_DATA not getting copied.
+         */
+        SetLastError(0xdeadbeef);
+        i = 0;
+        while (pSetupDiEnumDeviceInfo(set, i, &devInfo))
+            i++;
+        todo_wine
+        ok(i == 3, "Expected 3 devices, got %d\n", i);
+        ok(GetLastError() == ERROR_NO_MORE_ITEMS,
+         "SetupDiEnumDeviceInfo failed: %08x\n", GetLastError());
+        pSetupDiDestroyDeviceInfoList(set);
+    }
+}
+
 START_TEST(devinst)
 {
     init_function_pointers();
@@ -136,4 +220,5 @@ START_TEST(devinst)
         test_SetupDiOpenClassRegKeyExA();
     else
         skip("SetupDiOpenClassRegKeyExA is not available\n");
+    testCreateDeviceInfo();
 }
