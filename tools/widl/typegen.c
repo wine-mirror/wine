@@ -1677,9 +1677,10 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         /* On the sizing pass, type->ptrdesc may be zero, but it's ok as
            nothing is written to file yet.  On the actual writing pass,
            this will have been updated.  */
-        short reloff = type->ptrdesc - *tfsoff;
+        unsigned int absoff = type->ptrdesc ? type->ptrdesc : *tfsoff;
+        short reloff = absoff - *tfsoff;
         print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
-                   reloff, reloff, type->ptrdesc);
+                   reloff, reloff, absoff);
         *tfsoff += 2;
     }
     else if ((type->type == RPC_FC_PSTRUCT) ||
@@ -1708,6 +1709,8 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
             if (is_ptr(ft))
                 write_pointer_tfs(file, ft, tfsoff);
         }
+        if (type->ptrdesc == *tfsoff)
+            type->ptrdesc = 0;
     }
 
     current_structure = save_current_structure;
