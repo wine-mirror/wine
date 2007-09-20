@@ -146,13 +146,11 @@ static void testCreateDeviceInfo(void)
     }
     SetLastError(0xdeadbeef);
     ret = pSetupDiCreateDeviceInfoA(NULL, NULL, NULL, NULL, NULL, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_DEVINST_NAME,
      "Expected ERROR_INVALID_DEVINST_NAME, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pSetupDiCreateDeviceInfoA(NULL, "Root\\LEGACY_BOGUS\\0000", NULL,
      NULL, NULL, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
      "Expected ERROR_INVALID_HANDLEHANDLE, got %08x\n", GetLastError());
     set = pSetupDiCreateDeviceInfoList(&guid, NULL);
@@ -166,7 +164,6 @@ static void testCreateDeviceInfo(void)
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", NULL,
          NULL, NULL, 0, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
             "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
         /* Finally, with all three required parameters, this succeeds: */

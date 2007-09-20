@@ -752,13 +752,50 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
        DWORD CreationFlags,
        PSP_DEVINFO_DATA DeviceInfoData)
 {
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    BOOL ret = FALSE;
+
     TRACE("%p %s %s %s %p %x %p\n", DeviceInfoSet, debugstr_w(DeviceName),
         debugstr_guid(ClassGuid), debugstr_w(DeviceDescription),
         hwndParent, CreationFlags, DeviceInfoData);
 
-    FIXME("stub\n");
+    if (!DeviceName)
+    {
+        SetLastError(ERROR_INVALID_DEVINST_NAME);
+        return FALSE;
+    }
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!ClassGuid)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (set->magic == SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        if (IsEqualGUID(&set->ClassGuid, &GUID_NULL) ||
+            IsEqualGUID(ClassGuid, &set->ClassGuid))
+            ret = TRUE;
+        else
+            SetLastError(ERROR_CLASS_MISMATCH);
+        if ((CreationFlags & DICD_GENERATE_ID) && strchrW(DeviceName, '\\'))
+        {
+            SetLastError(ERROR_INVALID_DEVINST_NAME);
+            ret = FALSE;
+        }
+        if (ret)
+        {
+            FIXME("stub\n");
+            ret = FALSE;
+        }
+    }
+    else
+        SetLastError(ERROR_INVALID_HANDLE);
 
-    return FALSE;
+    return ret;
 }
 
 /***********************************************************************
