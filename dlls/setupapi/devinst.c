@@ -813,9 +813,42 @@ BOOL WINAPI SetupDiGetDeviceInstanceIdA(
 	DWORD DeviceInstanceIdSize,
 	PDWORD RequiredSize)
 {
-    FIXME("%p %p %p %d %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstanceId,
+    BOOL ret = FALSE;
+    DWORD size;
+    PWSTR instanceId;
+
+    TRACE("%p %p %p %d %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstanceId,
 	    DeviceInstanceIdSize, RequiredSize);
-    return FALSE;
+
+    SetupDiGetDeviceInstanceIdW(DeviceInfoSet,
+                                DeviceInfoData,
+                                NULL,
+                                0,
+                                &size);
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return FALSE;
+    instanceId = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+    if (instanceId)
+    {
+        ret = SetupDiGetDeviceInstanceIdW(DeviceInfoSet,
+                                          DeviceInfoData,
+                                          instanceId,
+                                          size,
+                                          &size);
+        if (ret)
+        {
+            int len = WideCharToMultiByte(CP_ACP, 0, instanceId, -1,
+                                          DeviceInstanceId,
+                                          DeviceInstanceIdSize, NULL, NULL);
+
+            if (!len)
+                ret = FALSE;
+            else if (RequiredSize)
+                *RequiredSize = len;
+        }
+        HeapFree(GetProcessHeap(), 0, instanceId);
+    }
+    return ret;
 }
 
 /***********************************************************************
@@ -830,6 +863,7 @@ BOOL WINAPI SetupDiGetDeviceInstanceIdW(
 {
     FIXME("%p %p %p %d %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstanceId,
 	    DeviceInstanceIdSize, RequiredSize);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
