@@ -843,7 +843,7 @@
 @ stub PsChargeProcessPagedPoolQuota
 @ stub PsChargeProcessPoolQuota
 @ stub PsCreateSystemProcess
-@ stub PsCreateSystemThread
+@ stdcall PsCreateSystemThread(ptr long ptr long ptr ptr ptr)
 @ stub PsDereferenceImpersonationToken
 @ stub PsDereferencePrimaryToken
 @ stub PsDisableImpersonation
