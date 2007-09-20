@@ -23,6 +23,15 @@
 #include <ras.h>
 /* FIXME: #include <in6addr.h> */
 
+#define MAX_DEVICE_NAME                 128
+#define MAX_DEVICETYPE_NAME              16
+#define MAX_INTERFACE_NAME_LEN          256
+#define MAX_MEDIA_NAME                   16
+#define MAX_PHONE_NUMBER_LEN            128
+#define MAX_PORT_NAME                    16
+#define MAX_TRANSPORT_NAME_LEN           40
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

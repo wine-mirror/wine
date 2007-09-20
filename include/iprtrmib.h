@@ -18,8 +18,7 @@
 #ifndef WINE_IPRTRMIB_H__
 #define WINE_IPRTRMIB_H__
 
-#define MAX_INTERFACE_NAME_LEN 256
-
+#include <mprapi.h>
 #include <ipifcons.h>
 
 #define MAXLEN_IFDESCR 256
