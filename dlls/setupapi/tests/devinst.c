@@ -42,6 +42,7 @@ static BOOL     (WINAPI *pSetupDiEnumDeviceInterfaces)(HDEVINFO, PSP_DEVINFO_DAT
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInstanceIdA)(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
+static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailA)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_A, DWORD, PDWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiRegisterDeviceInfo)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PSP_DETSIG_CMPPROC, PVOID, PSP_DEVINFO_DATA);
 
 static void init_function_pointers(void)
@@ -56,6 +57,7 @@ static void init_function_pointers(void)
     pSetupDiEnumDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInfo");
     pSetupDiEnumDeviceInterfaces = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInterfaces");
     pSetupDiGetDeviceInstanceIdA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInstanceIdA");
+    pSetupDiGetDeviceInterfaceDetailA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailA");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
     pSetupDiRegisterDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiRegisterDeviceInfo");
 }
@@ -408,6 +410,96 @@ static void testCreateDeviceInterface(void)
     }
 }
 
+static void testGetDeviceInterfaceDetail(void)
+{
+    BOOL ret;
+    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
+        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+    HDEVINFO set;
+
+    if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
+     !pSetupDiCreateDeviceInfoA || !pSetupDiCreateDeviceInterfaceA ||
+     !pSetupDiGetDeviceInterfaceDetailA)
+    {
+        skip("No SetupDiGetDeviceInterfaceDetailA\n");
+        return;
+    }
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceInterfaceDetailA(NULL, NULL, NULL, 0, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %d\n", GetLastError());
+    if (set)
+    {
+        SP_DEVINFO_DATA devInfo = { sizeof(devInfo), { 0 } };
+        SP_DEVICE_INTERFACE_DATA interfaceData = { sizeof(interfaceData),
+            { 0 } };
+        DWORD size = 0;
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDeviceInterfaceDetailA(set, NULL, NULL, 0, NULL,
+                NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+        ret = pSetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid,
+                NULL, NULL, 0, &devInfo);
+        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, NULL, 0,
+                &interfaceData);
+        ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, NULL,
+                0, NULL, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+         "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, NULL,
+                100, NULL, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
+         "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, NULL,
+                0, &size, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+         "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+        if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        {
+            LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size);
+            SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail =
+                (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)buf;
+
+            detail->cbSize = 0;
+            SetLastError(0xdeadbeef);
+            ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
+                    size, &size, NULL);
+            todo_wine
+            ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
+             "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
+            detail->cbSize = size;
+            SetLastError(0xdeadbeef);
+            ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
+                    size, &size, NULL);
+            todo_wine
+            ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
+             "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
+            detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+            ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
+                    size, &size, NULL);
+            todo_wine
+            ok(ret, "SetupDiGetDeviceInterfaceDetailA failed: %d\n",
+                    GetLastError());
+            HeapFree(GetProcessHeap(), 0, buf);
+        }
+        pSetupDiDestroyDeviceInfoList(set);
+    }
+}
+
 START_TEST(devinst)
 {
     init_function_pointers();
@@ -425,4 +517,5 @@ START_TEST(devinst)
     testGetDeviceInstanceId();
     testRegisterDeviceInfo();
     testCreateDeviceInterface();
+    testGetDeviceInterfaceDetail();
 }
