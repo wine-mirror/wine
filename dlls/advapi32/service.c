@@ -2319,7 +2319,7 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
             if (!RegOpenKeyW(hscm->hkey, lpServiceName, &hkey))
             {
-                INT len = lstrlenW(lpServiceName);
+                UINT len = lstrlenW(lpServiceName);
                 BOOL r = FALSE;
 
                 if ((*lpcchBuffer <= len) || (!lpDisplayName && *lpcchBuffer))

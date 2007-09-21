@@ -146,7 +146,7 @@ static inline BOOL CRYPT_UnicodeToANSI(LPCWSTR wstr, LPSTR* str, int strsize)
  */
 static inline BOOL CRYPT_ANSIToUnicode(LPCSTR str, LPWSTR* wstr, int wstrsize)
 {
-	int wcount;
+	unsigned int wcount;
 
 	if (!str)
 	{

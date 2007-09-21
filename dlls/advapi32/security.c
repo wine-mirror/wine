@@ -772,7 +772,7 @@ CreateWellKnownSid( WELL_KNOWN_SID_TYPE WellKnownSidType,
                     PSID pSid,
                     DWORD* cbSid)
 {
-    int i;
+    unsigned int i;
     TRACE("(%d, %s, %p, %p)\n", WellKnownSidType, debugstr_sid(DomainSid), pSid, cbSid);
 
     if (DomainSid != NULL) {
@@ -811,7 +811,7 @@ CreateWellKnownSid( WELL_KNOWN_SID_TYPE WellKnownSidType,
 BOOL WINAPI
 IsWellKnownSid( PSID pSid, WELL_KNOWN_SID_TYPE WellKnownSidType )
 {
-    int i;
+    unsigned int i;
     TRACE("(%s, %d)\n", debugstr_sid(pSid), WellKnownSidType);
 
     for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
@@ -1627,7 +1627,7 @@ LookupPrivilegeNameA( LPCSTR lpSystemName, PLUID lpLuid, LPSTR lpName,
         if (ret)
         {
             /* Windows crashes if cchName is NULL, so will I */
-            int len = WideCharToMultiByte(CP_ACP, 0, lpNameW, -1, lpName,
+            unsigned int len = WideCharToMultiByte(CP_ACP, 0, lpNameW, -1, lpName,
              *cchName, NULL, NULL);
 
             if (len == 0)
@@ -1870,7 +1870,7 @@ LookupAccountSidW(
 	IN OUT LPDWORD domainSize,
 	OUT PSID_NAME_USE name_use )
 {
-    int i, j;
+    unsigned int i, j;
     const WCHAR * ac = NULL;
     const WCHAR * dm = NULL;
     SID_NAME_USE use = 0;
@@ -3821,7 +3821,7 @@ static DWORD ComputeStringSidSize(LPCWSTR StringSid)
     }
     else /* String constant format  - Only available in winxp and above */
     {
-        int i;
+        unsigned int i;
 
         for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
             if (!strncmpW(WellKnownSids[i].wstr, StringSid, 2))
@@ -3915,7 +3915,7 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
     }
     else /* String constant format  - Only available in winxp and above */
     {
-        int i;
+        unsigned int i;
         pisid->Revision = SDDL_REVISION;
 
         for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)

@@ -194,7 +194,7 @@ NTSTATUS WINAPI SystemFunction004(const struct ustring *in,
          unsigned int  ui[2];
     } data;
     unsigned char deskey[7];
-    int crypt_len, ofs;
+    unsigned int crypt_len, ofs;
 
     if (key->Length<=0)
         return STATUS_INVALID_PARAMETER_2;
@@ -253,7 +253,7 @@ NTSTATUS WINAPI SystemFunction005(const struct ustring *in,
          unsigned int  ui[2];
     } data;
     unsigned char deskey[7];
-    int ofs, crypt_len;
+    unsigned int ofs, crypt_len;
 
     if (key->Length<=0)
         return STATUS_INVALID_PARAMETER_2;
