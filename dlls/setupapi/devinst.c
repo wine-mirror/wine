@@ -1108,7 +1108,10 @@ BOOL WINAPI SetupDiEnumDeviceInfo(
     TRACE("%p %d %p\n", devinfo, index, info);
 
     if(info==NULL)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
+    }
     if (devinfo && devinfo != (HDEVINFO)INVALID_HANDLE_VALUE)
     {
         struct DeviceInfoSet *list = (struct DeviceInfoSet *)devinfo;
