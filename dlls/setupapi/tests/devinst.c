@@ -364,6 +364,7 @@ static void testCreateDeviceInterface(void)
         SP_DEVINFO_DATA devInfo = { 0 };
         SP_DEVICE_INTERFACE_DATA interfaceData = { sizeof(interfaceData),
             { 0 } };
+        DWORD i;
 
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInterfaceA(set, NULL, NULL, NULL, 0, NULL);
@@ -395,8 +396,14 @@ static void testCreateDeviceInterface(void)
         ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
         ret = pSetupDiEnumDeviceInterfaces(set, &devInfo, &guid, 0,
                 &interfaceData);
-        todo_wine
         ok(ret, "SetupDiEnumDeviceInterfaces failed: %d\n", GetLastError());
+        i = 0;
+        while (pSetupDiEnumDeviceInterfaces(set, &devInfo, &guid, i,
+                    &interfaceData))
+            i++;
+        ok(i == 2, "expected 2 interfaces, got %d\n", i);
+        ok(GetLastError() == ERROR_NO_MORE_ITEMS,
+         "SetupDiEnumDeviceInterfaces failed: %08x\n", GetLastError());
         pSetupDiDestroyDeviceInfoList(set);
     }
 }

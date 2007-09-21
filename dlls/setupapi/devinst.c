@@ -2084,29 +2084,115 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
 
 /***********************************************************************
  *		SetupDiEnumDeviceInterfaces (SETUPAPI.@)
+ *
+ * PARAMS
+ *   DeviceInfoSet      [I]    Set of devices from which to enumerate
+ *                             interfaces
+ *   DeviceInfoData     [I]    (Optional) If specified, a specific device
+ *                             instance from which to enumerate interfaces.
+ *                             If it isn't specified, all interfaces for all
+ *                             devices in the set are enumerated.
+ *   InterfaceClassGuid [I]    The interface class to enumerate.
+ *   MemberIndex        [I]    An index of the interface instance to enumerate.
+ *                             A caller should start with MemberIndex set to 0,
+ *                             and continue until the function fails with
+ *                             ERROR_NO_MORE_ITEMS.
+ *   DeviceInterfaceData [I/O] Returns an enumerated interface.  Its cbSize
+ *                             member must be set to
+ *                             sizeof(SP_DEVICE_INTERFACE_DATA).
+ *
+ * RETURNS
+ *   Success: non-zero value.
+ *   Failure: FALSE.  Call GetLastError() for more info.
  */
 BOOL WINAPI SetupDiEnumDeviceInterfaces(
-       HDEVINFO devinfo,
+       HDEVINFO DeviceInfoSet,
        PSP_DEVINFO_DATA DeviceInfoData,
        CONST GUID * InterfaceClassGuid,
        DWORD MemberIndex,
        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
 {
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
     BOOL ret = FALSE;
 
-    FIXME("%p, %p, %s, 0x%08x, %p\n", devinfo, DeviceInfoData,
+    TRACE("%p, %p, %s, %d, %p\n", DeviceInfoSet, DeviceInfoData,
      debugstr_guid(InterfaceClassGuid), MemberIndex, DeviceInterfaceData);
 
-    if (devinfo && devinfo != (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE ||
+            set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
-        struct DeviceInfoSet *list = (struct DeviceInfoSet *)devinfo;
-        if (list->magic == SETUP_DEVICE_INFO_SET_MAGIC)
-            SetLastError(ERROR_NO_MORE_ITEMS);
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (DeviceInfoData && (DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA) ||
+                !DeviceInfoData->Reserved))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (!DeviceInterfaceData ||
+            DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (DeviceInfoData)
+    {
+        struct DeviceInfo *devInfo =
+            (struct DeviceInfo *)DeviceInfoData->Reserved;
+        DWORD i;
+
+        if ((ret = SETUPDI_FindInterface(devInfo, InterfaceClassGuid, &i)))
+        {
+            if (MemberIndex < devInfo->interfaces[i].cInstances)
+                memcpy(DeviceInterfaceData,
+                    &devInfo->interfaces[i].instances[MemberIndex],
+                    sizeof(SP_DEVICE_INTERFACE_DATA));
+            else
+            {
+                SetLastError(ERROR_NO_MORE_ITEMS);
+                ret = FALSE;
+            }
+        }
         else
-            SetLastError(ERROR_INVALID_HANDLE);
+            SetLastError(ERROR_NO_MORE_ITEMS);
     }
     else
-        SetLastError(ERROR_INVALID_HANDLE);
+    {
+        DWORD i, cEnumerated = 0;
+        BOOL found = FALSE;
+
+        for (i = 0; !found && cEnumerated < MemberIndex + 1 &&
+                i < set->cDevices; i++)
+        {
+            struct DeviceInfo *devInfo =
+                (struct DeviceInfo *)set->devices[i].Reserved;
+            DWORD interfaceIndex;
+
+            if (SETUPDI_FindInterface(devInfo, InterfaceClassGuid,
+                        &interfaceIndex))
+            {
+                struct InterfaceInstances *interface =
+                    &devInfo->interfaces[interfaceIndex];
+
+                if (cEnumerated + interface->cInstances < MemberIndex + 1)
+                    cEnumerated += interface->cInstances;
+                else
+                {
+                    DWORD instanceIndex = MemberIndex - cEnumerated;
+
+                    memcpy(DeviceInterfaceData,
+                            &interface->instances[instanceIndex],
+                            sizeof(SP_DEVICE_INTERFACE_DATA));
+                    cEnumerated += instanceIndex + 1;
+                    found = TRUE;
+                    ret = TRUE;
+                }
+            }
+        }
+        if (!found)
+            SetLastError(ERROR_NO_MORE_ITEMS);
+    }
     return ret;
 }
 
