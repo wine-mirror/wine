@@ -351,12 +351,10 @@ static void testCreateDeviceInterface(void)
     }
     SetLastError(0xdeadbeef);
     ret = pSetupDiCreateDeviceInterfaceA(NULL, NULL, NULL, NULL, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
      "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pSetupDiCreateDeviceInterfaceA(NULL, NULL, &guid, NULL, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
      "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
     set = pSetupDiCreateDeviceInfoList(&guid, NULL);
@@ -369,13 +367,11 @@ static void testCreateDeviceInterface(void)
 
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInterfaceA(set, NULL, NULL, NULL, 0, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, NULL, NULL, 0,
                 NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
         devInfo.cbSize = sizeof(devInfo);
@@ -385,7 +381,6 @@ static void testCreateDeviceInterface(void)
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, NULL, NULL, 0,
                 NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
          "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
         ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, NULL, 0,
