@@ -1373,6 +1373,7 @@ BOOL WINAPI SetupDiGetClassDescriptionExA(
 {
     HKEY hKey;
     DWORD dwLength;
+    BOOL ret;
 
     hKey = SetupDiOpenClassRegKeyExA(ClassGuid,
                                      KEY_ALL_ACCESS,
@@ -1385,38 +1386,12 @@ BOOL WINAPI SetupDiGetClassDescriptionExA(
 	return FALSE;
     }
 
-    if (RequiredSize != NULL)
-    {
-	dwLength = 0;
-	if (RegQueryValueExA(hKey,
-			     NULL,
-			     NULL,
-			     NULL,
-			     NULL,
-			     &dwLength))
-	{
-	    RegCloseKey(hKey);
-	    return FALSE;
-	}
-
-	*RequiredSize = dwLength;
-    }
-
     dwLength = ClassDescriptionSize;
-    if (RegQueryValueExA(hKey,
-			 NULL,
-			 NULL,
-			 NULL,
-			 (LPBYTE)ClassDescription,
-			 &dwLength))
-    {
-	RegCloseKey(hKey);
-	return FALSE;
-    }
-
+    ret = !RegQueryValueExA( hKey, NULL, NULL, NULL,
+                             (LPBYTE)ClassDescription, &dwLength );
+    if (RequiredSize) *RequiredSize = dwLength;
     RegCloseKey(hKey);
-
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
@@ -1432,6 +1407,7 @@ BOOL WINAPI SetupDiGetClassDescriptionExW(
 {
     HKEY hKey;
     DWORD dwLength;
+    BOOL ret;
 
     hKey = SetupDiOpenClassRegKeyExW(ClassGuid,
                                      KEY_ALL_ACCESS,
@@ -1444,38 +1420,12 @@ BOOL WINAPI SetupDiGetClassDescriptionExW(
 	return FALSE;
     }
 
-    if (RequiredSize != NULL)
-    {
-	dwLength = 0;
-	if (RegQueryValueExW(hKey,
-			     NULL,
-			     NULL,
-			     NULL,
-			     NULL,
-			     &dwLength))
-	{
-	    RegCloseKey(hKey);
-	    return FALSE;
-	}
-
-	*RequiredSize = dwLength / sizeof(WCHAR);
-    }
-
     dwLength = ClassDescriptionSize * sizeof(WCHAR);
-    if (RegQueryValueExW(hKey,
-			 NULL,
-			 NULL,
-			 NULL,
-			 (LPBYTE)ClassDescription,
-			 &dwLength))
-    {
-	RegCloseKey(hKey);
-	return FALSE;
-    }
-
+    ret = !RegQueryValueExW( hKey, NULL, NULL, NULL,
+                             (LPBYTE)ClassDescription, &dwLength );
+    if (RequiredSize) *RequiredSize = dwLength / sizeof(WCHAR);
     RegCloseKey(hKey);
-
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
