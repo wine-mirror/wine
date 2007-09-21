@@ -1767,12 +1767,26 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceA(
         DWORD CreationFlags,
         PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
 {
+    BOOL ret;
+    LPWSTR ReferenceStringW = NULL;
+
     TRACE("%p %p %s %s %08x %p\n", DeviceInfoSet, DeviceInfoData,
             debugstr_guid(InterfaceClassGuid), debugstr_a(ReferenceString),
             CreationFlags, DeviceInterfaceData);
 
-    FIXME("stub\n");
-    return FALSE;
+    if (ReferenceString)
+    {
+        ReferenceStringW = MultiByteToUnicode(ReferenceString, CP_ACP);
+        if (ReferenceStringW == NULL) return FALSE;
+    }
+
+    ret = SetupDiCreateDeviceInterfaceW(DeviceInfoSet, DeviceInfoData,
+            InterfaceClassGuid, ReferenceStringW, CreationFlags,
+            DeviceInterfaceData);
+
+    MyFree(ReferenceStringW);
+
+    return ret;
 }
 
 /***********************************************************************
