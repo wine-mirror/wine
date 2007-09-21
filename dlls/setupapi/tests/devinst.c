@@ -385,16 +385,13 @@ static void testCreateDeviceInterface(void)
          "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
         ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, NULL, 0,
                 NULL);
-        todo_wine
         ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
         /* Creating the same interface a second time succeeds */
         ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, NULL, 0,
                 NULL);
-        todo_wine
         ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
         ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, "Oogah", 0,
                 NULL);
-        todo_wine
         ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
         ret = pSetupDiEnumDeviceInterfaces(set, &devInfo, &guid, 0,
                 &interfaceData);

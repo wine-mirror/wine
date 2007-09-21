@@ -99,13 +99,239 @@ struct DeviceInfoSet
     SP_DEVINFO_DATA *devices;
 };
 
+/* Pointed to by SP_DEVICE_INTERFACE_DATA's Reserved member */
+struct InterfaceInfo
+{
+    LPWSTR referenceString;
+};
+
+/* A device may have multiple instances of the same interface, so this holds
+ * each instance belonging to a particular interface.
+ */
+struct InterfaceInstances
+{
+    GUID                      guid;
+    DWORD                     cInstances;
+    DWORD                     cInstancesAllocated;
+    SP_DEVICE_INTERFACE_DATA *instances;
+};
+
 /* Pointed to by SP_DEVINFO_DATA's Reserved member */
 struct DeviceInfo
 {
-    HKEY   key;
-    BOOL   phantom;
-    LPWSTR instanceId;
+    HKEY                       key;
+    BOOL                       phantom;
+    LPWSTR                     instanceId;
+    DWORD                      cInterfaces;
+    DWORD                      cInterfacesAllocated;
+    struct InterfaceInstances *interfaces;
 };
+
+static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
+{
+    DWORD i;
+
+    for (i = 0; i < instances->cInstances; i++)
+    {
+        struct InterfaceInfo *ifaceInfo =
+            (struct InterfaceInfo *)instances->instances[i].Reserved;
+
+        HeapFree(GetProcessHeap(), 0, ifaceInfo->referenceString);
+    }
+    HeapFree(GetProcessHeap(), 0, instances->instances);
+}
+
+/* Finds the interface with interface class InterfaceClassGuid in the device.
+ * Returns TRUE if found, and updates interfaceIndex to the index of the
+ * device's interfaces member where the given interface was found.
+ * Returns FALSE if not found.
+ */
+static BOOL SETUPDI_FindInterface(const struct DeviceInfo *devInfo,
+        const GUID *InterfaceClassGuid, DWORD *interfaceIndex)
+{
+    BOOL found = FALSE;
+    DWORD i;
+
+    TRACE("%s\n", debugstr_guid(InterfaceClassGuid));
+
+    for (i = 0; !found && i < devInfo->cInterfaces; i++)
+    {
+        if (IsEqualGUID(&devInfo->interfaces[i].guid, InterfaceClassGuid))
+        {
+            *interfaceIndex = i;
+            found = TRUE;
+        }
+    }
+    TRACE("returning %d (%d)\n", found, found ? *interfaceIndex : 0);
+    return found;
+}
+
+/* Finds the interface instance with reference string ReferenceString in the
+ * interface instance map.  Returns TRUE if found, and updates instanceIndex to
+ * the index of the interface instance's instances member
+ * where the given instance was found.  Returns FALSE if not found.
+ */
+static BOOL SETUPDI_FindInterfaceInstance(
+        const struct InterfaceInstances *instances,
+        LPCWSTR ReferenceString, DWORD *instanceIndex)
+{
+    BOOL found = FALSE;
+    DWORD i;
+
+    TRACE("%s\n", debugstr_w(ReferenceString));
+
+    for (i = 0; !found && i < instances->cInstances; i++)
+    {
+        SP_DEVICE_INTERFACE_DATA *ifaceData = &instances->instances[i];
+        struct InterfaceInfo *ifaceInfo =
+            (struct InterfaceInfo *)ifaceData->Reserved;
+
+        if (!ReferenceString && !ifaceInfo->referenceString)
+        {
+            *instanceIndex = i;
+            found = TRUE;
+        }
+        else if (ReferenceString && ifaceInfo->referenceString &&
+                !lstrcmpiW(ifaceInfo->referenceString, ReferenceString))
+        {
+            *instanceIndex = i;
+            found = TRUE;
+        }
+    }
+    TRACE("returning %d (%d)\n", found, found ? *instanceIndex : 0);
+    return found;
+}
+
+/* Adds an interface with the given interface class and reference string to
+ * the device, if it doesn't already exist in the device.  If iface is not
+ * NULL, returns a pointer to the newly added (or already existing) interface.
+ */
+static BOOL SETUPDI_AddInterfaceInstance(struct DeviceInfo *devInfo,
+        const GUID *InterfaceClassGuid, LPCWSTR ReferenceString,
+        SP_DEVICE_INTERFACE_DATA **ifaceData)
+{
+    BOOL newInterface = FALSE, ret;
+    DWORD interfaceIndex = 0;
+    struct InterfaceInstances *iface = NULL;
+
+    TRACE("%p %s %s %p\n", devInfo, debugstr_guid(InterfaceClassGuid),
+            debugstr_w(ReferenceString), iface);
+
+    if (!(ret = SETUPDI_FindInterface(devInfo, InterfaceClassGuid,
+                    &interfaceIndex)))
+    {
+        if (!devInfo->cInterfacesAllocated)
+        {
+            devInfo->interfaces = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    sizeof(struct InterfaceInstances));
+            if (devInfo->interfaces)
+            {
+                iface = &devInfo->interfaces[devInfo->cInterfacesAllocated++];
+                newInterface = TRUE;
+            }
+        }
+        else if (devInfo->cInterfaces == devInfo->cInterfacesAllocated)
+        {
+            devInfo->interfaces = HeapReAlloc(GetProcessHeap(),
+                    HEAP_ZERO_MEMORY, devInfo->interfaces,
+                    (devInfo->cInterfacesAllocated + 1) *
+                    sizeof(struct InterfaceInstances));
+            if (devInfo->interfaces)
+            {
+                iface = &devInfo->interfaces[devInfo->cInterfacesAllocated++];
+                newInterface = TRUE;
+            }
+        }
+        else
+            iface = &devInfo->interfaces[devInfo->cInterfaces];
+    }
+    else
+        iface = &devInfo->interfaces[interfaceIndex];
+    if (iface)
+    {
+        DWORD instanceIndex = 0;
+
+        if (!(ret = SETUPDI_FindInterfaceInstance(iface, ReferenceString,
+                        &instanceIndex)))
+        {
+            SP_DEVICE_INTERFACE_DATA *instance = NULL;
+
+            if (!iface->cInstancesAllocated)
+            {
+                iface->instances = HeapAlloc(GetProcessHeap(), 0,
+                        sizeof(SP_DEVICE_INTERFACE_DATA));
+                if (iface->instances)
+                    instance = &iface->instances[iface->cInstancesAllocated++];
+            }
+            else if (iface->cInstances == iface->cInstancesAllocated)
+            {
+                iface->instances = HeapReAlloc(GetProcessHeap(), 0,
+                        iface->instances,
+                        (iface->cInstancesAllocated + 1) *
+                        sizeof(SP_DEVICE_INTERFACE_DATA));
+                if (iface->instances)
+                    instance = &iface->instances[iface->cInstancesAllocated++];
+            }
+            else
+                instance = &iface->instances[iface->cInstances];
+            if (instance)
+            {
+                struct InterfaceInfo *ifaceInfo = HeapAlloc(GetProcessHeap(),
+                        0, sizeof(struct InterfaceInfo));
+
+                if (ifaceInfo)
+                {
+                    ret = TRUE;
+                    if (ReferenceString)
+                    {
+                        ifaceInfo->referenceString =
+                            HeapAlloc(GetProcessHeap(), 0,
+                                (lstrlenW(ReferenceString) + 1) *
+                                sizeof(WCHAR));
+                        if (ifaceInfo->referenceString)
+                            lstrcpyW(ifaceInfo->referenceString,
+                                    ReferenceString);
+                        else
+                            ret = FALSE;
+                    }
+                    else
+                        ifaceInfo->referenceString = NULL;
+                    if (ret)
+                    {
+                        iface->cInstances++;
+                        instance->cbSize =
+                            sizeof(SP_DEVICE_INTERFACE_DATA);
+                        memcpy(&instance->InterfaceClassGuid,
+                                InterfaceClassGuid, sizeof(GUID));
+                        instance->Flags = SPINT_ACTIVE; /* FIXME */
+                        instance->Reserved = (ULONG_PTR)ifaceInfo;
+                        if (newInterface)
+                        {
+                            memcpy(&iface->guid, InterfaceClassGuid,
+                                    sizeof(GUID));
+                            devInfo->cInterfaces++;
+                        }
+                        /* FIXME: now create this homeboy in the registry */
+                        if (ifaceData)
+                            *ifaceData = instance;
+                    }
+                    else
+                        HeapFree(GetProcessHeap(), 0, ifaceInfo);
+                }
+            }
+        }
+        else
+        {
+            if (ifaceData)
+                *ifaceData =
+                    &devInfo->interfaces[interfaceIndex].instances[instanceIndex];
+        }
+    }
+    else
+        ret = FALSE;
+    TRACE("returning %d\n", ret);
+    return ret;
+}
 
 static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId,
         BOOL phantom)
@@ -137,6 +363,8 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId,
                             (LPBYTE)&phantom, sizeof(phantom));
                 RegCloseKey(enumKey);
             }
+            devInfo->cInterfaces = devInfo->cInterfacesAllocated = 0;
+            devInfo->interfaces = NULL;
         }
         else
         {
@@ -149,6 +377,8 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId,
 
 static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
 {
+    DWORD i;
+
     if (devInfo->key != INVALID_HANDLE_VALUE)
         RegCloseKey(devInfo->key);
     if (devInfo->phantom)
@@ -165,6 +395,9 @@ static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
         }
     }
     HeapFree(GetProcessHeap(), 0, devInfo->instanceId);
+    for (i = 0; i < devInfo->cInterfaces; i++)
+        SETUPDI_FreeInterfaceInstances(&devInfo->interfaces[i]);
+    HeapFree(GetProcessHeap(), 0, devInfo->interfaces);
     HeapFree(GetProcessHeap(), 0, devInfo);
 }
 
@@ -1803,6 +2036,8 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
 {
     struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
     struct DeviceInfo *devInfo;
+    SP_DEVICE_INTERFACE_DATA *iface = NULL;
+    BOOL ret;
 
     TRACE("%p %p %s %s %08x %p\n", DeviceInfoSet, DeviceInfoData,
             debugstr_guid(InterfaceClassGuid), debugstr_w(ReferenceString),
@@ -1830,9 +2065,21 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
         return FALSE;
     }
     devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
-
-    FIXME("stub\n");
-    return FALSE;
+    if ((ret = SETUPDI_AddInterfaceInstance(devInfo, InterfaceClassGuid,
+                    ReferenceString, &iface)))
+    {
+        if (DeviceInterfaceData)
+        {
+            if (DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA))
+            {
+                SetLastError(ERROR_INVALID_USER_BUFFER);
+                ret = FALSE;
+            }
+            else
+                memcpy(DeviceInterfaceData, iface, sizeof(*iface));
+        }
+    }
+    return ret;
 }
 
 /***********************************************************************
