@@ -27,6 +27,9 @@
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
+#ifdef HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -97,6 +100,18 @@ static void check_vmsplit( void *stack )
     }
 }
 
+static void set_max_limit( int limit )
+{
+    struct rlimit rlimit;
+
+    if (!getrlimit( limit, &rlimit ))
+    {
+        rlimit.rlim_cur = rlimit.rlim_max;
+        setrlimit( limit, &rlimit );
+    }
+}
+
+
 /**********************************************************************
  *           main
  */
@@ -107,6 +122,9 @@ int main( int argc, char *argv[] )
     const char *new_argv0 = build_new_path( argv[0], threads );
 
     wine_init_argv0_path( new_argv0 );
+
+    /* set the address space limit before starting the preloader */
+    set_max_limit( RLIMIT_AS );
 
     if (loader)
     {
