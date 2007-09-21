@@ -1072,57 +1072,11 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
     return;
 }
 
-static void flush_to_framebuffer_texture(IWineD3DSurfaceImpl *This) {
-    float glTexCoord[4];
-
-    glTexCoord[0] = (float) This->lockedRect.left   / (float) This->pow2Width; /* left */
-    glTexCoord[1] = (float) This->lockedRect.right  / (float) This->pow2Width; /* right */
-    glTexCoord[2] = (float) This->lockedRect.top    / (float) This->pow2Height; /* top */
-    glTexCoord[3] = (float) This->lockedRect.bottom / (float) This->pow2Height; /* bottom */
-
-    IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
-
-    ENTER_GL();
-
-    glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
-    checkGLcall("glEnable glBindTexture");
-
-    /* No filtering for blts */
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    checkGLcall("glTexParameteri");
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    checkGLcall("glTexParameteri");
-
-    /* Start drawing a quad */
-    glBegin(GL_QUADS);
-
-    glColor3d(1.0f, 1.0f, 1.0f);
-    glTexCoord2f(glTexCoord[0], glTexCoord[2]);
-    glVertex3f(This->lockedRect.left, This->lockedRect.top, 0.0);
-
-    glTexCoord2f(glTexCoord[0], glTexCoord[3]);
-    glVertex3f(This->lockedRect.left, This->lockedRect.bottom, 0.0);
-
-    glTexCoord2f(glTexCoord[1], glTexCoord[3]);
-    glVertex3d(This->lockedRect.right, This->lockedRect.bottom, 0.0);
-
-    glTexCoord2f(glTexCoord[1], glTexCoord[2]);
-    glVertex3f(This->lockedRect.right, This->lockedRect.top, 0.0);
-
-    glEnd();
-    checkGLcall("glEnd");
-
-    /* Unbind the texture */
-    glBindTexture(GL_TEXTURE_2D, 0);
-    checkGLcall("glEnable glBindTexture");
-
-    LEAVE_GL();
-}
-
 static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *swapchain = NULL;
+    BOOL fullsurface;
 
     if (!(This->Flags & SFLAG_LOCKED)) {
         WARN("trying to Unlock an unlocked surf@%p\n", This);
@@ -1160,53 +1114,47 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             goto unlock_end;
         }
 
-        /* Activate the correct context for the render target */
-        ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
-        ENTER_GL();
-
-        if(!swapchain) {
-            /* Primary offscreen render target */
-            TRACE("Offscreen render target\n");
-            glDrawBuffer(myDevice->offscreenBuffer);
-            checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
+        if(This->dirtyRect.left   == 0 &&
+           This->dirtyRect.top    == 0 &&
+           This->dirtyRect.right  == This->currentDesc.Width &&
+           This->dirtyRect.bottom == This->currentDesc.Height) {
+            fullsurface = TRUE;
         } else {
-            GLenum buffer = surface_get_gl_buffer(iface, (IWineD3DSwapChain *)swapchain);
-            TRACE("Unlocking %#x buffer\n", buffer);
-            glDrawBuffer(buffer);
-            checkGLcall("glDrawBuffer");
-
-            IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+            /* TODO: Proper partial rectangle tracking */
+            fullsurface = FALSE;
+            This->Flags |= SFLAG_INSYSMEM;
         }
 
         switch(wined3d_settings.rendertargetlock_mode) {
+            case RTL_READTEX:
+            case RTL_TEXTEX:
+                /* drop through */
+                FIXME("Render target unlocking using textures temporarily disabled\n");
+#if 0
+                IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL /* partial texture loading not supported yet */);
+#endif
             case RTL_AUTO:
             case RTL_READDRAW:
             case RTL_TEXDRAW:
-                flush_to_framebuffer_drawpixels(This);
+                IWineD3DSurface_LoadLocation(iface, SFLAG_INDRAWABLE, fullsurface ? NULL : &This->dirtyRect);
                 break;
+        }
 
-            case RTL_READTEX:
-            case RTL_TEXTEX:
-                flush_to_framebuffer_texture(This);
-                break;
+        if(!fullsurface) {
+            /* Partial rectangle tracking is not commonly implemented, it is only done for render targets. Overwrite
+             * the flags to bring them back into a sane state. INSYSMEM was set before to tell LoadLocation where
+             * to read the rectangle from. Indrawable is set because all modifications from the partial sysmem copy
+             * are written back to the drawable, thus the surface is merged again in the drawable. The sysmem copy is
+             * not fully up to date because only a subrectangle was read in LockRect.
+             */
+            This->Flags &= ~SFLAG_INSYSMEM;
+            This->Flags |= SFLAG_INDRAWABLE;
         }
-        if(!swapchain) {
-            glDrawBuffer(myDevice->offscreenBuffer);
-            checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
-        } else if(swapchain->backBuffer) {
-            glDrawBuffer(GL_BACK);
-            checkGLcall("glDrawBuffer(GL_BACK)");
-        } else {
-            glDrawBuffer(GL_FRONT);
-            checkGLcall("glDrawBuffer(GL_FRONT)");
-        }
-        LEAVE_GL();
 
         This->dirtyRect.left   = This->currentDesc.Width;
         This->dirtyRect.top    = This->currentDesc.Height;
         This->dirtyRect.right  = 0;
         This->dirtyRect.bottom = 0;
-        This->Flags |= SFLAG_INDRAWABLE;
     } else if(iface == myDevice->stencilBufferTarget) {
         FIXME("Depth Stencil buffer locking is not implemented\n");
     } else {
@@ -3632,7 +3580,37 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         if(This->Flags & SFLAG_INTEXTURE) {
             /* Blit texture to drawable */
         } else {
-            /* Load drawable from sysmem */
+            /* Activate the correct context for the render target */
+            ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
+            ENTER_GL();
+
+            IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
+            if(!swapchain) {
+                /* Primary offscreen render target */
+                TRACE("Offscreen render target\n");
+                glDrawBuffer(myDevice->offscreenBuffer);
+                checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
+            } else {
+                GLenum buffer = surface_get_gl_buffer(iface, (IWineD3DSwapChain *)swapchain);
+                TRACE("Unlocking %#x buffer\n", buffer);
+                glDrawBuffer(buffer);
+                checkGLcall("glDrawBuffer");
+
+                IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+            }
+
+            flush_to_framebuffer_drawpixels(This);
+            if(!swapchain) {
+                glDrawBuffer(myDevice->offscreenBuffer);
+                checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
+            } else if(swapchain->backBuffer) {
+                glDrawBuffer(GL_BACK);
+                checkGLcall("glDrawBuffer(GL_BACK)");
+            } else {
+                glDrawBuffer(GL_FRONT);
+                checkGLcall("glDrawBuffer(GL_FRONT)");
+            }
+            LEAVE_GL();
         }
     } else /* if(flag == SFLAG_INTEXTURE) */ {
         if(This->Flags & SFLAG_INDRAWABLE) {
