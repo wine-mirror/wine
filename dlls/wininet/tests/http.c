@@ -447,10 +447,10 @@ abort:
             "Double close of handle should have set ERROR_INVALID_HANDLE instead of %u\n",
             GetLastError());
     }
-    if (hic != 0x0) {
-        rc = InternetCloseHandle(hic);
-        ok ((rc != 0), "InternetCloseHandle of handle opened by InternetConnectA failed\n");
-    }
+    /* We intentionally do not close the handle opened by InternetConnectA as this
+     * tickles bug #9479: native closes child internet handles when the parent handles
+     * are closed. This is verified below by checking that the number of
+     * INTERNET_STATUS_HANDLE_CLOSING notifications matches the number expected. */
     if (hi != 0x0) {
       SET_WINE_ALLOW(INTERNET_STATUS_HANDLE_CLOSING);
       rc = InternetCloseHandle(hi);
