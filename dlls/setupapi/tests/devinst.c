@@ -35,8 +35,10 @@
 static HMODULE hSetupAPI;
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoList)(GUID*,HWND);
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
+static BOOL     (WINAPI *pSetupDiCreateDeviceInterfaceA)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, PCSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
 static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInfo)(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
+static BOOL     (WINAPI *pSetupDiEnumDeviceInterfaces)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInstanceIdA)(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
@@ -49,8 +51,10 @@ static void init_function_pointers(void)
     pSetupDiCreateDeviceInfoA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoA");
     pSetupDiCreateDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoList");
     pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
+    pSetupDiCreateDeviceInterfaceA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInterfaceA");
     pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
     pSetupDiEnumDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInfo");
+    pSetupDiEnumDeviceInterfaces = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInterfaces");
     pSetupDiGetDeviceInstanceIdA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInstanceIdA");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
     pSetupDiRegisterDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiRegisterDeviceInfo");
@@ -331,6 +335,80 @@ static void testRegisterDeviceInfo(void)
     }
 }
 
+static void testCreateDeviceInterface(void)
+{
+    BOOL ret;
+    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
+        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+    HDEVINFO set;
+
+    if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
+     !pSetupDiCreateDeviceInfoA || !pSetupDiCreateDeviceInterfaceA ||
+     !pSetupDiEnumDeviceInterfaces)
+    {
+        skip("No SetupDiCreateDeviceInterfaceA\n");
+        return;
+    }
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiCreateDeviceInterfaceA(NULL, NULL, NULL, NULL, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiCreateDeviceInterfaceA(NULL, NULL, &guid, NULL, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %d\n", GetLastError());
+    if (set)
+    {
+        SP_DEVINFO_DATA devInfo = { 0 };
+        SP_DEVICE_INTERFACE_DATA interfaceData = { sizeof(interfaceData),
+            { 0 } };
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiCreateDeviceInterfaceA(set, NULL, NULL, NULL, 0, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, NULL, NULL, 0,
+                NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+        devInfo.cbSize = sizeof(devInfo);
+        ret = pSetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid,
+                NULL, NULL, 0, &devInfo);
+        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, NULL, NULL, 0,
+                NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
+         "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
+        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, NULL, 0,
+                NULL);
+        todo_wine
+        ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
+        /* Creating the same interface a second time succeeds */
+        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, NULL, 0,
+                NULL);
+        todo_wine
+        ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
+        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, "Oogah", 0,
+                NULL);
+        todo_wine
+        ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
+        ret = pSetupDiEnumDeviceInterfaces(set, &devInfo, &guid, 0,
+                &interfaceData);
+        todo_wine
+        ok(ret, "SetupDiEnumDeviceInterfaces failed: %d\n", GetLastError());
+        pSetupDiDestroyDeviceInfoList(set);
+    }
+}
+
 START_TEST(devinst)
 {
     init_function_pointers();
@@ -347,4 +425,5 @@ START_TEST(devinst)
     testCreateDeviceInfo();
     testGetDeviceInstanceId();
     testRegisterDeviceInfo();
+    testCreateDeviceInterface();
 }
