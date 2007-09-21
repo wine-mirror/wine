@@ -39,8 +39,6 @@
 #include "wine/debug.h"
 #include "internet.h"
 
-#include "wine/list.h"
-
 #define RESPONSE_TIMEOUT        30            /* FROM internet.c */
 
 

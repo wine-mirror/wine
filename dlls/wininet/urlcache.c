@@ -46,7 +46,6 @@
 #include "shlobj.h"
 
 #include "wine/unicode.h"
-#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);

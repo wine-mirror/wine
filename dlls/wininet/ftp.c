@@ -1128,6 +1128,7 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
 
         WININET_AddRef( &lpwfs->hdr );
         lpwh->lpFtpSession = lpwfs;
+        list_add_head( &lpwfs->hdr.children, &lpwh->hdr.entry );
 	
         handle = WININET_AllocHandle( &lpwh->hdr );
         if( !handle )
@@ -1904,6 +1905,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 
     WININET_AddRef( &hIC->hdr );
     lpwfs->lpAppInfo = hIC;
+    list_add_head( &hIC->hdr.children, &lpwfs->hdr.entry );
 
     handle = WININET_AllocHandle( &lpwfs->hdr );
     if( !handle )
@@ -3012,6 +3014,7 @@ static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LP
 
             WININET_AddRef( &lpwfs->hdr );
             lpwfn->lpFtpSession = lpwfs;
+            list_add_head( &lpwfs->hdr.children, &lpwfn->hdr.entry );
 
             handle = WININET_AllocHandle( &lpwfn->hdr );
         }

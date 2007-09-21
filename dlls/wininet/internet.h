@@ -28,6 +28,7 @@
 #endif
 
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 #include <time.h>
 #ifdef HAVE_NETDB_H
@@ -149,6 +150,8 @@ struct _WININETHANDLEHEADER
     WININET_object_function close_connection;
     WININET_object_function destroy;
     INTERNET_STATUS_CALLBACK lpfnStatusCB;
+    struct list entry;
+    struct list children;
 };
 
 

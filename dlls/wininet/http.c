@@ -1371,6 +1371,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 
     WININET_AddRef( &lpwhs->hdr );
     lpwhr->lpHttpSession = lpwhs;
+    list_add_head( &lpwhs->hdr.children, &lpwhr->hdr.entry );
 
     handle = WININET_AllocHandle( &lpwhr->hdr );
     if (NULL == handle)
@@ -2824,6 +2825,7 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 
     WININET_AddRef( &hIC->hdr );
     lpwhs->lpAppInfo = hIC;
+    list_add_head( &hIC->hdr.children, &lpwhs->hdr.entry );
 
     handle = WININET_AllocHandle( &lpwhs->hdr );
     if (NULL == handle)

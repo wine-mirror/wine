@@ -105,6 +105,8 @@ HINTERNET WININET_AllocHandle( LPWININETHANDLEHEADER info )
     LPWININETHANDLEHEADER *p;
     UINT handle = 0, num;
 
+    list_init( &info->children );
+
     EnterCriticalSection( &WININET_cs );
     if( !WININET_dwMaxHandles )
     {
@@ -182,6 +184,8 @@ BOOL WININET_Release( LPWININETHANDLEHEADER info )
                               INTERNET_STATUS_HANDLE_CLOSING, &info->hInternet,
                               sizeof(HINTERNET));
         TRACE( "destroying object %p\n", info);
+        if ( info->htype != WH_HINIT )
+            list_remove( &info->entry );
         info->destroy( info );
     }
     return TRUE;
@@ -191,7 +195,7 @@ BOOL WININET_FreeHandle( HINTERNET hinternet )
 {
     BOOL ret = FALSE;
     UINT handle = (UINT) hinternet;
-    LPWININETHANDLEHEADER info = NULL;
+    LPWININETHANDLEHEADER info = NULL, child, next;
 
     EnterCriticalSection( &WININET_cs );
 
@@ -212,7 +216,16 @@ BOOL WININET_FreeHandle( HINTERNET hinternet )
     LeaveCriticalSection( &WININET_cs );
 
     if( info )
+    {
+        /* Free all children as native does */
+        LIST_FOR_EACH_ENTRY_SAFE( child, next, &info->children, WININETHANDLEHEADER, entry )
+        {
+            TRACE( "freeing child handle %d for parent handle %d\n",
+                   (UINT)child->hInternet, handle+1);
+            WININET_FreeHandle( child->hInternet );
+        }
         WININET_Release( info );
+    }
 
     return ret;
 }
