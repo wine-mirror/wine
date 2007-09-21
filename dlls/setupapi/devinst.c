@@ -85,6 +85,7 @@ static const WCHAR UINumber[] = {'U','I','N','u','m','b','e','r',0};
 static const WCHAR UpperFilters[] = {'U','p','p','e','r','F','i','l','t','e','r','s',0};
 static const WCHAR LowerFilters[] = {'L','o','w','e','r','F','i','l','t','e','r','s',0};
 static const WCHAR Phantom[] = {'P','h','a','n','t','o','m',0};
+static const WCHAR SymbolicLink[] = {'S','y','m','b','o','l','i','c','L','i','n','k',0};
 
 /* is used to identify if a DeviceInfoSet pointer is
 valid or not */
@@ -103,6 +104,7 @@ struct DeviceInfoSet
 struct InterfaceInfo
 {
     LPWSTR referenceString;
+    LPWSTR symbolicLink;
 };
 
 /* A device may have multiple instances of the same interface, so this holds
@@ -137,6 +139,7 @@ static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
             (struct InterfaceInfo *)instances->instances[i].Reserved;
 
         HeapFree(GetProcessHeap(), 0, ifaceInfo->referenceString);
+        HeapFree(GetProcessHeap(), 0, ifaceInfo->symbolicLink);
     }
     HeapFree(GetProcessHeap(), 0, instances->instances);
 }
@@ -282,6 +285,7 @@ static BOOL SETUPDI_AddInterfaceInstance(struct DeviceInfo *devInfo,
                 if (ifaceInfo)
                 {
                     ret = TRUE;
+                    ifaceInfo->symbolicLink = NULL;
                     if (ReferenceString)
                     {
                         ifaceInfo->referenceString =
@@ -330,6 +334,26 @@ static BOOL SETUPDI_AddInterfaceInstance(struct DeviceInfo *devInfo,
     else
         ret = FALSE;
     TRACE("returning %d\n", ret);
+    return ret;
+}
+
+static BOOL SETUPDI_SetInterfaceSymbolicLink(SP_DEVICE_INTERFACE_DATA *iface,
+        LPCWSTR symbolicLink)
+{
+    struct InterfaceInfo *info = (struct InterfaceInfo *)iface->Reserved;
+    BOOL ret = FALSE;
+
+    if (info)
+    {
+        HeapFree(GetProcessHeap(), 0, info->symbolicLink);
+        info->symbolicLink = HeapAlloc(GetProcessHeap(), 0,
+                (lstrlenW(symbolicLink) + 1) * sizeof(WCHAR));
+        if (info->symbolicLink)
+        {
+            lstrcpyW(info->symbolicLink, symbolicLink);
+            ret = TRUE;
+        }
+    }
     return ret;
 }
 
@@ -1692,6 +1716,44 @@ end:
     return ret;
 }
 
+static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
+        const GUID *interface)
+{
+    struct DeviceInfo *devInfo = (struct DeviceInfo *)dev->Reserved;
+    DWORD i, len;
+    WCHAR subKeyName[MAX_PATH];
+    LONG l = ERROR_SUCCESS;
+
+    for (i = 0; !l; i++)
+    {
+        len = sizeof(subKeyName) / sizeof(subKeyName[0]);
+        l = RegEnumKeyExW(key, i, subKeyName, &len, NULL, NULL, NULL, NULL);
+        if (!l)
+        {
+            HKEY subKey;
+            SP_DEVICE_INTERFACE_DATA *iface = NULL;
+
+            /* The subkey name is the reference string, with a '#' prepended */
+            SETUPDI_AddInterfaceInstance(devInfo, interface, subKeyName + 1,
+                    &iface);
+            l = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
+            if (!l)
+            {
+                WCHAR symbolicLink[MAX_PATH];
+                DWORD dataType;
+
+                len = sizeof(symbolicLink);
+                l = RegQueryValueExW(subKey, SymbolicLink, NULL, &dataType,
+                        (BYTE *)symbolicLink, &len);
+                if (!l && dataType == REG_SZ)
+                    SETUPDI_SetInterfaceSymbolicLink(iface, symbolicLink);
+                RegCloseKey(subKey);
+            }
+        }
+    }
+    /* FIXME: find and add all the device's interfaces to the device */
+}
+
 static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
         HKEY key, const GUID *interface, LPCWSTR enumstr)
 {
@@ -1748,12 +1810,11 @@ static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
                                 deviceClassStr[37] = 0;
                                 UuidFromStringW(&deviceClassStr[1],
                                         &deviceClass);
-                                SETUPDI_AddDeviceToSet(set, &deviceClass,
+                                if (SETUPDI_AddDeviceToSet(set, &deviceClass,
                                         0 /* FIXME: DevInst */, deviceInst,
-                                        FALSE, &dev);
-                                /* FIXME: add this interface, and all the
-                                 * device's interfaces, to the device
-                                 */
+                                        FALSE, &dev))
+                                    SETUPDI_AddDeviceInterfaces(dev, subKey,
+                                            interface);
                             }
                             RegCloseKey(deviceKey);
                         }
