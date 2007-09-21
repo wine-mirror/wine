@@ -1109,8 +1109,6 @@ BOOL WINAPI SetupDiEnumDeviceInfo(
 
     if(info==NULL)
         return FALSE;
-    if(info->cbSize < sizeof(*info))
-        return FALSE;
     if (devinfo && devinfo != (HDEVINFO)INVALID_HANDLE_VALUE)
     {
         struct DeviceInfoSet *list = (struct DeviceInfoSet *)devinfo;
