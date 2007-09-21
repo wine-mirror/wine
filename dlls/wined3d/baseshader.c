@@ -718,6 +718,7 @@ void shader_generate_main(
     CONST DWORD* pFunction) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device; /* To access shader backend callbacks */
     const DWORD *pToken = pFunction;
     const SHADER_OPCODE *curOpcode = NULL;
     SHADER_HANDLER hw_fct = NULL;
@@ -806,6 +807,9 @@ void shader_generate_main(
 
                 /* Call appropriate function for output target */
                 hw_fct(&hw_arg);
+
+                /* Add color correction if needed */
+                device->shader_backend->shader_color_correction(&hw_arg);
 
                 /* Process instruction modifiers for GLSL apps ( _sat, etc. ) */
                 if (This->baseShader.shader_mode == SHADER_GLSL)

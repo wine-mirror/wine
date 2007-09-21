@@ -203,12 +203,14 @@ typedef struct wined3d_settings_s {
 extern wined3d_settings_t wined3d_settings;
 
 /* Shader backends */
+struct SHADER_OPCODE_ARG;
 
 typedef struct {
     void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
     void (*shader_select_depth_blt)(IWineD3DDevice *iface);
     void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
     void (*shader_cleanup)(IWineD3DDevice *iface);
+    void (*shader_color_correction)(struct SHADER_OPCODE_ARG *arg);
 } shader_backend_t;
 
 extern const shader_backend_t glsl_shader_backend;
@@ -1605,7 +1607,6 @@ unsigned int count_bits(unsigned int mask);
     /*** class static members ***/
     void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
 
-struct SHADER_OPCODE_ARG;
 typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
 
 /* Struct to maintain a list of GLSL shader programs and their associated pixel and

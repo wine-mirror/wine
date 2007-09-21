@@ -414,8 +414,6 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
 static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const char *dst_str, const char *coord_reg, BOOL projective) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
-    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler_idx];
-    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
 
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
@@ -448,18 +446,185 @@ static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const ch
     } else {
         shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
     }
+}
 
-    /* Signedness correction */
-    if(!GL_SUPPORT(NV_TEXTURE_SHADER3) /* Provides signed formats */ && texture) {
-        WINED3DFORMAT format = texture->resource.format;
+static void shader_arb_color_correction(SHADER_OPCODE_ARG* arg) {
+    IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) shader->baseShader.device;
+    WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
+    WINED3DFORMAT fmt;
+    WINED3DFORMAT conversion_group;
+    IWineD3DBaseTextureImpl *texture;
+    UINT i;
+    BOOL recorded = FALSE;
+    DWORD sampler_idx;
+    DWORD hex_version = shader->baseShader.hex_version;
+    char reg[256];
+    char writemask[6];
 
-        if((format == WINED3DFMT_V8U8 && !GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) ||
-            format == WINED3DFMT_Q8W8V8U8 ||
-            format == WINED3DFMT_V16U16) {
-            shader_addline(buffer, "MAD %s, %s, coefmul.x, -one;\n", dst_str, dst_str);
-        } else if(format == WINED3DFMT_X8L8V8U8) {
-            shader_addline(buffer, "MAD %s.rg, %s, coefmul.x, -one;\n", dst_str, dst_str);
+    switch(arg->opcode->opcode) {
+        case WINED3DSIO_TEX:
+            if (hex_version < WINED3DPS_VERSION(2,0)) {
+                sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+            } else {
+                sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
+            }
+            break;
+
+        case WINED3DSIO_TEXLDL:
+            FIXME("Add color fixup for vertex texture WINED3DSIO_TEXLDL\n");
+            return;
+
+        case WINED3DSIO_TEXDP3TEX:
+        case WINED3DSIO_TEXM3x3TEX:
+        case WINED3DSIO_TEXM3x3SPEC:
+        case WINED3DSIO_TEXM3x3VSPEC:
+        case WINED3DSIO_TEXBEM:
+        case WINED3DSIO_TEXREG2AR:
+        case WINED3DSIO_TEXREG2GB:
+        case WINED3DSIO_TEXREG2RGB:
+            sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+            break;
+
+        default:
+            /* Not a texture sampling instruction, nothing to do */
+            return;
+    };
+
+    texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler_idx];
+    if(texture) {
+        fmt = texture->resource.format;
+        conversion_group = texture->baseTexture.shader_conversion_group;
+    } else {
+        fmt = WINED3DFMT_UNKNOWN;
+        conversion_group = WINED3DFMT_UNKNOWN;
+    }
+
+    /* before doing anything, record the sampler with the format in the format conversion list,
+     * but check if it's not there already
+     */
+    for(i = 0; i < shader->baseShader.num_sampled_samplers; i++) {
+        if(shader->baseShader.sampled_samplers[i] == sampler_idx) {
+            recorded = TRUE;
         }
+    }
+    if(!recorded) {
+        shader->baseShader.sampled_samplers[shader->baseShader.num_sampled_samplers] = sampler_idx;
+        shader->baseShader.num_sampled_samplers++;
+        shader->baseShader.sampled_format[sampler_idx] = conversion_group;
+    }
+
+    pshader_get_register_name(arg->dst, reg);
+    shader_arb_get_write_mask(arg->dst, writemask);
+    if(strlen(writemask) == 0) strcpy(writemask, ".xyzw");
+
+    switch(fmt) {
+        case WINED3DFMT_V8U8:
+        case WINED3DFMT_V16U16:
+            if(GL_SUPPORT(NV_TEXTURE_SHADER) ||
+               (GL_SUPPORT(ATI_ENVMAP_BUMPMAP) && fmt == WINED3DFMT_V8U8)) {
+                /* The 3rd channel returns 1.0 in d3d, but 0.0 in gl. Fix this while we're at it :-) */
+                if(strlen(writemask) >= 4) {
+                    shader_addline(arg->buffer, "MOV %s.%c, one.z;\n", reg, writemask[3]);
+                }
+            } else {
+                /* Correct the sign, but leave the blue as it is - it was loaded correctly already
+                 * ARB shaders are a bit picky wrt writemasks and swizzles. If we're free to scale
+                 * all registers, do so, this saves an instruction.
+                 */
+                if(strlen(writemask) >= 5) {
+                    shader_addline(arg->buffer, "MAD %s, %s, coefmul.x, -one;\n", reg, reg);
+                } else if(strlen(writemask) >= 3) {
+                    shader_addline(arg->buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
+                                   reg, writemask[1],
+                                   reg, writemask[1]);
+                    shader_addline(arg->buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
+                                   reg, writemask[2],
+                                   reg, writemask[2]);
+                } else if(strlen(writemask) == 2) {
+                    shader_addline(arg->buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n", reg, writemask[1],
+                                   reg, writemask[1]);
+                }
+            }
+            break;
+
+        case WINED3DFMT_X8L8V8U8:
+            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                /* Red and blue are the signed channels, fix them up; Blue(=L) is correct already,
+                 * and a(X) is always 1.0. Cannot do a full conversion due to L(blue)
+                 */
+                if(strlen(writemask) >= 3) {
+                    shader_addline(arg->buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
+                                   reg, writemask[1],
+                                   reg, writemask[1]);
+                    shader_addline(arg->buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
+                                   reg, writemask[2],
+                                   reg, writemask[2]);
+                } else if(strlen(writemask) == 2) {
+                    shader_addline(arg->buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
+                                   reg, writemask[1],
+                                   reg, writemask[1]);
+                }
+            }
+            break;
+
+        case WINED3DFMT_L6V5U5:
+            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                if(strlen(writemask) >= 4) {
+                    /* Swap y and z (U and L), and do a sign conversion on x and the new y(V and U) */
+                    shader_addline(arg->buffer, "MOV TMP.g, %s.%c;\n",
+                                   reg, writemask[2]);
+                    shader_addline(arg->buffer, "MAD %s.%c%c, %s.%c%c, coefmul.x, -one;\n",
+                                   reg, writemask[1], writemask[1],
+                                   reg, writemask[1], writemask[3]);
+                    shader_addline(arg->buffer, "MOV %s.%c, TMP.g;\n", reg,
+                                   writemask[3]);
+                } else if(strlen(writemask) == 3) {
+                    /* This is bad: We have VL, but we need VU */
+                    FIXME("2 components sampled from a converted L6V5U5 texture\n");
+                } else {
+                    shader_addline(arg->buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
+                                   reg, writemask[1],
+                                   reg, writemask[1]);
+                }
+            }
+            break;
+
+        case WINED3DFMT_Q8W8V8U8:
+            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                /* Correct the sign in all channels */
+                switch(strlen(writemask)) {
+                    case 4:
+                        shader_addline(arg->buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
+                                       reg, writemask[3],
+                                       reg, writemask[3]);
+                        /* drop through */
+                    case 3:
+                        shader_addline(arg->buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
+                                       reg, writemask[2],
+                                       reg, writemask[2]);
+                        /* drop through */
+                    case 2:
+                        shader_addline(arg->buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
+                                       reg, writemask[1],
+                                       reg, writemask[1]);
+                        break;
+
+                        /* Should not occur, since it's at minimum '.' and a letter */
+                    case 1:
+                        ERR("Unexpected writemask: \"%s\"\n", writemask);
+                        break;
+
+                    case 5:
+                    default:
+                        shader_addline(arg->buffer, "MAD %s, %s, coefmul.x, -one;\n", reg, reg);
+                }
+            }
+            break;
+
+            /* stupid compiler */
+        default:
+            break;
     }
 }
 
@@ -1203,5 +1368,6 @@ const shader_backend_t arb_program_shader_backend = {
     &shader_arb_select,
     &shader_arb_select_depth_blt,
     &shader_arb_load_constants,
-    &shader_arb_cleanup
+    &shader_arb_cleanup,
+    &shader_arb_color_correction
 };

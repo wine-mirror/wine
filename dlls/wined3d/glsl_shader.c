@@ -969,7 +969,7 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, 
     }
 }
 
-static void shader_glsl_add_color_correction(SHADER_OPCODE_ARG* arg, DWORD sampler_idx) {
+static void shader_glsl_color_correction(SHADER_OPCODE_ARG* arg) {
     IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) shader->baseShader.device;
     WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
@@ -981,6 +981,37 @@ static void shader_glsl_add_color_correction(SHADER_OPCODE_ARG* arg, DWORD sampl
     DWORD mask, mask_size;
     UINT i;
     BOOL recorded = FALSE;
+    DWORD sampler_idx;
+    DWORD hex_version = shader->baseShader.hex_version;
+
+    switch(arg->opcode->opcode) {
+        case WINED3DSIO_TEX:
+            if (hex_version < WINED3DPS_VERSION(2,0)) {
+                sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+            } else {
+                sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
+            }
+            break;
+
+        case WINED3DSIO_TEXLDL:
+            FIXME("Add color fixup for vertex texture WINED3DSIO_TEXLDL\n");
+            return;
+
+        case WINED3DSIO_TEXDP3TEX:
+        case WINED3DSIO_TEXM3x3TEX:
+        case WINED3DSIO_TEXM3x3SPEC:
+        case WINED3DSIO_TEXM3x3VSPEC:
+        case WINED3DSIO_TEXBEM:
+        case WINED3DSIO_TEXREG2AR:
+        case WINED3DSIO_TEXREG2GB:
+        case WINED3DSIO_TEXREG2RGB:
+            sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+            break;
+
+        default:
+            /* Not a texture sampling instruction, nothing to do */
+            return;
+    };
 
     texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler_idx];
     if(texture) {
@@ -1809,8 +1840,6 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
                     sample_function.name, sampler_idx, coord_param.param_str, dst_swizzle);
         }
     }
-
-    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 void shader_glsl_texldl(SHADER_OPCODE_ARG* arg) {
@@ -1841,8 +1870,6 @@ void shader_glsl_texldl(SHADER_OPCODE_ARG* arg) {
         shader_addline(arg->buffer, "%sLod(Vsampler%u, %s, %s)%s);\n",
                 sample_function.name, sampler_idx, coord_param.param_str, lod_param.param_str, dst_swizzle);
     }
-
-    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
@@ -1933,8 +1960,6 @@ void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
         default:
             FIXME("Unexpected mask bitcount %d\n", count_bits(sample_function.coord_mask));
     }
-
-    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 /** Process the WINED3DSIO_TEXDP3 instruction in GLSL:
@@ -2057,8 +2082,6 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     shader_addline(arg->buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
 
     current_state->current_row = 0;
-
-    shader_glsl_add_color_correction(arg, reg);
 }
 
 /** Process the WINED3DSIO_TEXM3X3 instruction in GLSL
@@ -2111,8 +2134,6 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
 
     current_state->current_row = 0;
-
-    shader_glsl_add_color_correction(arg, reg);
 }
 
 /** Process the WINED3DSIO_TEXM3X3VSPEC instruction in GLSL 
@@ -2147,8 +2168,6 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
 
     current_state->current_row = 0;
-
-    shader_glsl_add_color_correction(arg, reg);
 }
 
 /** Process the WINED3DSIO_TEXBEM instruction in GLSL.
@@ -2207,8 +2226,6 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
         shader_addline(arg->buffer, "%s(Psampler%u, T%u%s + vec4(bumpenvmat * %s, 0.0, 0.0)%s )%s);\n",
                        sample_function.name, sampler_idx, sampler_idx, coord_mask, coord_param.param_str, coord_mask, dst_swizzle);
     }
-
-    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 void pshader_glsl_bem(SHADER_OPCODE_ARG* arg) {
@@ -2235,8 +2252,6 @@ void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
 
     shader_addline(arg->buffer, "texture2D(Psampler%u, %s.wx)%s);\n", sampler_idx, src0_param.reg_name, dst_mask);
-
-    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 /** Process the WINED3DSIO_TEXREG2GB instruction in GLSL
@@ -2251,8 +2266,6 @@ void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
 
     shader_addline(arg->buffer, "texture2D(Psampler%u, %s.yz)%s);\n", sampler_idx, src0_param.reg_name, dst_mask);
-
-    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 /** Process the WINED3DSIO_TEXREG2RGB instruction in GLSL
@@ -2270,8 +2283,6 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &src0_param);
 
     shader_addline(arg->buffer, "%s(Psampler%u, %s)%s);\n", sample_function.name, sampler_idx, src0_param.param_str, dst_mask);
-
-    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 /** Process the WINED3DSIO_TEXKILL instruction in GLSL.
@@ -2632,5 +2643,6 @@ const shader_backend_t glsl_shader_backend = {
     &shader_glsl_select,
     &shader_glsl_select_depth_blt,
     &shader_glsl_load_constants,
-    &shader_glsl_cleanup
+    &shader_glsl_cleanup,
+    &shader_glsl_color_correction
 };
