@@ -1757,6 +1757,44 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(
 }
 
 /***********************************************************************
+ *		SetupDiCreateDeviceInterfaceA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiCreateDeviceInterfaceA(
+        HDEVINFO DeviceInfoSet,
+        PSP_DEVINFO_DATA DeviceInfoData,
+        const GUID *InterfaceClassGuid,
+        PCSTR ReferenceString,
+        DWORD CreationFlags,
+        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
+{
+    TRACE("%p %p %s %s %08x %p\n", DeviceInfoSet, DeviceInfoData,
+            debugstr_guid(InterfaceClassGuid), debugstr_a(ReferenceString),
+            CreationFlags, DeviceInterfaceData);
+
+    FIXME("stub\n");
+    return FALSE;
+}
+
+/***********************************************************************
+ *		SetupDiCreateDeviceInterfaceW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiCreateDeviceInterfaceW(
+        HDEVINFO DeviceInfoSet,
+        PSP_DEVINFO_DATA DeviceInfoData,
+        const GUID *InterfaceClassGuid,
+        PCWSTR ReferenceString,
+        DWORD CreationFlags,
+        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
+{
+    TRACE("%p %p %s %s %08x %p\n", DeviceInfoSet, DeviceInfoData,
+            debugstr_guid(InterfaceClassGuid), debugstr_w(ReferenceString),
+            CreationFlags, DeviceInterfaceData);
+
+    FIXME("stub\n");
+    return FALSE;
+}
+
+/***********************************************************************
  *		SetupDiEnumDeviceInterfaces (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiEnumDeviceInterfaces(
