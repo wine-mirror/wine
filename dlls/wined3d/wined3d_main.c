@@ -113,8 +113,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
        DWORD len;
        WNDCLASSA wc;
 
-       wined3d_settings.emulated_textureram = 64*1024*1024;
-
        /* We need our own window class for a fake window which we use to retrieve GL capabilities */
        /* We might need CS_OWNDC in the future if we notice strange things on Windows.
         * Various articles/posts about OpenGL problems on Windows recommend this. */
