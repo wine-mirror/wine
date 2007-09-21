@@ -466,6 +466,8 @@ static void testGetDeviceInterfaceDetail(void)
          "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
         if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         {
+            static const char path[] =
+             "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
             LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size);
             SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail =
                 (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)buf;
@@ -488,6 +490,9 @@ static void testGetDeviceInterfaceDetail(void)
                     size, &size, NULL);
             ok(ret, "SetupDiGetDeviceInterfaceDetailA failed: %d\n",
                     GetLastError());
+            todo_wine
+            ok(!lstrcmpiA(path, detail->DevicePath), "Unexpected path %s\n",
+                    detail->DevicePath);
             HeapFree(GetProcessHeap(), 0, buf);
         }
         pSetupDiDestroyDeviceInfoList(set);
