@@ -129,6 +129,18 @@ struct DeviceInfo
     struct InterfaceInstances *interfaces;
 };
 
+static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
+{
+    static const WCHAR fmt[] = {'{','%','0','8','X','-','%','0','4','X','-',
+        '%','0','4','X','-','%','0','2','X','%','0','2','X','-','%','0','2',
+        'X','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','%',
+        '0','2','X','}',0};
+
+    sprintfW(guidStr, fmt, guid->Data1, guid->Data2, guid->Data3,
+        guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+        guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+}
+
 static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
 {
     DWORD i;
@@ -203,6 +215,41 @@ static BOOL SETUPDI_FindInterfaceInstance(
     }
     TRACE("returning %d (%d)\n", found, found ? *instanceIndex : 0);
     return found;
+}
+
+static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
+        const GUID *InterfaceClassGuid, LPCWSTR ReferenceString)
+{
+    static const WCHAR fmt[] = {'\\','\\','?','\\','%','s','#','%','s',0};
+    WCHAR guidStr[39];
+    DWORD len;
+    LPWSTR ret;
+
+    SETUPDI_GuidToString(InterfaceClassGuid, guidStr);
+    /* omit length of format specifiers, but include NULL terminator: */
+    len = lstrlenW(fmt) - 4 + 1;
+    len += lstrlenW(instanceId) + lstrlenW(guidStr);
+    if (ReferenceString)
+    {
+        /* space for a hash between string and reference string: */
+        len += lstrlenW(ReferenceString) + 1;
+    }
+    ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (ret)
+    {
+        int printed = sprintfW(ret, fmt, instanceId, guidStr);
+        LPWSTR ptr;
+
+        /* replace '\\' with '#' after the "\\\\?\\" beginning */
+        for (ptr = strchrW(ret + 4, '\\'); ptr; ptr = strchrW(ptr + 1, '\\'))
+            *ptr = '#';
+        if (ReferenceString)
+        {
+            ret[printed - 1] = '\\';
+            lstrcpyW(ret + printed, ReferenceString);
+        }
+    }
+    return ret;
 }
 
 /* Adds an interface with the given interface class and reference string to
@@ -285,7 +332,9 @@ static BOOL SETUPDI_AddInterfaceInstance(struct DeviceInfo *devInfo,
                 if (ifaceInfo)
                 {
                     ret = TRUE;
-                    ifaceInfo->symbolicLink = NULL;
+                    ifaceInfo->symbolicLink = SETUPDI_CreateSymbolicLinkPath(
+                            devInfo->instanceId, InterfaceClassGuid,
+                            ReferenceString);
                     if (ReferenceString)
                     {
                         ifaceInfo->referenceString =
@@ -423,18 +472,6 @@ static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
         SETUPDI_FreeInterfaceInstances(&devInfo->interfaces[i]);
     HeapFree(GetProcessHeap(), 0, devInfo->interfaces);
     HeapFree(GetProcessHeap(), 0, devInfo);
-}
-
-static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
-{
-    static const WCHAR fmt[] = {'{','%','0','8','X','-','%','0','4','X','-',
-        '%','0','4','X','-','%','0','2','X','%','0','2','X','-','%','0','2',
-        'X','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','%',
-        '0','2','X','}',0};
-
-    sprintfW(guidStr, fmt, guid->Data1, guid->Data2, guid->Data3,
-        guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-        guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 }
 
 /* Adds a device with GUID guid and identifer devInst to set.  Allocates a

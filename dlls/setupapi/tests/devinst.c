@@ -482,7 +482,6 @@ static void testGetDeviceInterfaceDetail(void)
             SetLastError(0xdeadbeef);
             ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
                     size, &size, NULL);
-            todo_wine
             ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
              "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
             detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
@@ -490,7 +489,6 @@ static void testGetDeviceInterfaceDetail(void)
                     size, &size, NULL);
             ok(ret, "SetupDiGetDeviceInterfaceDetailA failed: %d\n",
                     GetLastError());
-            todo_wine
             ok(!lstrcmpiA(path, detail->DevicePath), "Unexpected path %s\n",
                     detail->DevicePath);
             HeapFree(GetProcessHeap(), 0, buf);
