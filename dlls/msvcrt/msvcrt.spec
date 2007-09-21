@@ -559,10 +559,10 @@
 @ stub _wspawnle #(long wstr wstr) varargs
 @ stub _wspawnlp #(long wstr wstr) varargs
 @ stub _wspawnlpe #(long wstr wstr) varargs
-@ stub _wspawnv #(long wstr ptr)
-@ stub _wspawnve #(long wstr ptr ptr)
-@ stub _wspawnvp #(long wstr ptr)
-@ stub _wspawnvpe #(long wstr ptr ptr)
+@ stdcall _wspawnv(long wstr ptr)
+@ stdcall _wspawnve(long wstr ptr ptr)
+@ stdcall _wspawnvp(long wstr ptr)
+@ stdcall _wspawnvpe(long wstr ptr ptr)
 @ cdecl _wsplitpath(wstr wstr wstr wstr wstr)
 @ cdecl _wstat(wstr ptr) MSVCRT__wstat
 @ cdecl _wstati64(wstr ptr) MSVCRT__wstati64

@@ -152,7 +152,7 @@ extern void msvcrt_free_args(void);
 extern void msvcrt_init_signals(void);
 extern void msvcrt_free_signals(void);
 
-extern unsigned msvcrt_create_io_inherit_block(STARTUPINFOA*);
+extern unsigned msvcrt_create_io_inherit_block(WORD*, BYTE**);
 
 /* run-time error codes */
 #define _RT_STACK       0
@@ -652,6 +652,7 @@ int           MSVCRT__dup(int);
 int           MSVCRT__dup2(int, int);
 int           MSVCRT__pipe(int *, unsigned int, int);
 MSVCRT_wchar_t* _wgetenv(const MSVCRT_wchar_t*);
+void          _wsearchenv(const MSVCRT_wchar_t*, const MSVCRT_wchar_t*, MSVCRT_wchar_t*);
 #endif
 
 #endif /* __WINE_MSVCRT_H */
