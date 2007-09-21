@@ -2337,7 +2337,6 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
         PCWSTR MachineName,
         PVOID Reserved)
 {
-    WCHAR bracedGuidString[39];
     HKEY hClassesKey;
     HKEY hClassKey;
     LPCWSTR lpKeyName;
@@ -2363,33 +2362,46 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
         return INVALID_HANDLE_VALUE;
     }
 
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
-		      lpKeyName,
-		      0,
-		      KEY_ALL_ACCESS,
-		      &hClassesKey))
+    if (!ClassGuid)
     {
-	return INVALID_HANDLE_VALUE;
-    }
-
-    if (ClassGuid == NULL)
+        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+                          lpKeyName,
+                          0,
+                          samDesired,
+                          &hClassesKey))
+        {
+            return INVALID_HANDLE_VALUE;
+        }
         return hClassesKey;
-
-    SETUPDI_GuidToString(ClassGuid, bracedGuidString);
-
-    if (RegOpenKeyExW(hClassesKey,
-		      bracedGuidString,
-		      0,
-		      KEY_ALL_ACCESS,
-		      &hClassKey))
-    {
-	RegCloseKey(hClassesKey);
-	return INVALID_HANDLE_VALUE;
     }
+    else
+    {
+        WCHAR bracedGuidString[39];
 
-    RegCloseKey(hClassesKey);
+        SETUPDI_GuidToString(ClassGuid, bracedGuidString);
 
-    return hClassKey;
+        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+                          lpKeyName,
+                          0,
+                          samDesired,
+                          &hClassesKey))
+        {
+            return INVALID_HANDLE_VALUE;
+        }
+        if (RegOpenKeyExW(hClassesKey,
+                          bracedGuidString,
+                          0,
+                          samDesired,
+                          &hClassKey))
+        {
+            RegCloseKey(hClassesKey);
+            return INVALID_HANDLE_VALUE;
+        }
+
+        RegCloseKey(hClassesKey);
+
+        return hClassKey;
+    }
 }
 
 /***********************************************************************
