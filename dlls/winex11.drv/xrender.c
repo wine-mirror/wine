@@ -1130,7 +1130,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 {
     RGNDATA *data;
     XGCValues xgcval;
-    int render_op = PictOpOver;
     gsCacheEntry *entry;
     gsCacheEntryFormat *formatEntry;
     BOOL retv = FALSE;
@@ -1215,8 +1214,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         DeleteObject( clip_region );
     }
 
-    EnterCriticalSection(&xrender_cs);
-
     if(X11DRV_XRender_Installed) {
         if(!physDev->xrender->pict) {
 	    XRenderPictureAttributes pa;
@@ -1245,14 +1242,9 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    wine_tsx11_unlock();
 	    HeapFree( GetProcessHeap(), 0, data );
 	}
-
-        tile_pict = get_tile_pict(depth_type, physDev->textPixel);
-
-	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
-	 */
-	if((depth_type == mono_drawable) && (textPixel == 0))
-	    render_op = PictOpOutReverse; /* This gives us 'black' text */
     }
+
+    EnterCriticalSection(&xrender_cs);
 
     entry = glyphsetCache + physDev->xrender->cache_index;
     if( disable_antialias == FALSE )
@@ -1285,6 +1277,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         XGlyphElt16 *elts = HeapAlloc(GetProcessHeap(), 0, sizeof(XGlyphElt16) * count);
         INT offset = 0;
         POINT desired, current;
+        int render_op = PictOpOver;
 
         /* There's a bug in XRenderCompositeText that ignores the xDst and yDst parameters.
            So we pass zeros to the function and move to our starting position using the first
@@ -1293,6 +1286,13 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         desired.x = physDev->dc_rect.left + x;
         desired.y = physDev->dc_rect.top + y;
         current.x = current.y = 0;
+
+        tile_pict = get_tile_pict(depth_type, physDev->textPixel);
+
+	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
+	 */
+	if((depth_type == mono_drawable) && (textPixel == 0))
+	    render_op = PictOpOutReverse; /* This gives us 'black' text */
 
         for(idx = 0; idx < count; idx++)
         {
