@@ -67,6 +67,22 @@ static ULONG  WINAPI IWineD3DPixelShaderImpl_AddRef(IWineD3DPixelShader *iface) 
     return InterlockedIncrement(&This->ref);
 }
 
+static void destroy_glsl_pshader(IWineD3DPixelShaderImpl *This) {
+    struct list *linked_programs = &This->baseShader.linked_programs;
+
+    TRACE("Deleting linked programs\n");
+    if (linked_programs->next) {
+        struct glsl_shader_prog_link *entry, *entry2;
+        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, pshader_entry) {
+            delete_glsl_program_entry(This->baseShader.device, entry);
+        }
+    }
+
+    TRACE("Deleting shader object %u\n", This->baseShader.prgId);
+    GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
+    checkGLcall("glDeleteObjectARB");
+}
+
 static ULONG  WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     ULONG ref;
@@ -74,19 +90,7 @@ static ULONG  WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
-            struct list *linked_programs = &This->baseShader.linked_programs;
-
-            TRACE("Deleting linked programs\n");
-            if (linked_programs->next) {
-                struct glsl_shader_prog_link *entry, *entry2;
-                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, pshader_entry) {
-                    delete_glsl_program_entry(This->baseShader.device, entry);
-                }
-            }
-
-            TRACE("Deleting shader object %u\n", This->baseShader.prgId);
-            GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
-            checkGLcall("glDeleteObjectARB");
+            destroy_glsl_pshader(This);
         }
         shader_delete_constant_list(&This->baseShader.constantsF);
         shader_delete_constant_list(&This->baseShader.constantsB);
@@ -523,11 +527,43 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
     IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     CONST DWORD *function = This->baseShader.function;
+    UINT i, sampler;
+    IWineD3DBaseTextureImpl *texture;
 
     TRACE("(%p) : function %p\n", iface, function);
 
-    /* We're already compiled. */
-    if (This->baseShader.is_compiled) return WINED3D_OK;
+    /* We're already compiled, but check if any of the hardcoded stateblock assumptions
+     * changed.
+     */
+    if (This->baseShader.is_compiled) {
+        for(i = 0; i < This->baseShader.num_sampled_samplers; i++) {
+            sampler = This->baseShader.sampled_samplers[i];
+            texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler];
+            if(texture && texture->baseTexture.shader_conversion_group != This->baseShader.sampled_format[sampler]) {
+                WARN("Recompiling shader %p due to format change on sampler %d\n", This, sampler);
+                WARN("Old format group %s, new is %s\n",
+                     debug_d3dformat(This->baseShader.sampled_format[sampler]),
+                     debug_d3dformat(texture->baseTexture.shader_conversion_group));
+                goto recompile;
+            }
+        }
+
+        /* TODO: Check projected textures */
+        /* TODO: Check texture types(2D, Cube, 3D) */
+
+        return WINED3D_OK;
+
+        recompile:
+        if(This->baseShader.recompile_count > 50) {
+            FIXME("Shader %p recompiled more than 50 times\n", This);
+        } else {
+            This->baseShader.recompile_count++;
+        }
+
+        if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
+            destroy_glsl_pshader(This);
+        }
+    }
 
     /* We don't need to compile */
     if (!function) {
@@ -546,6 +582,9 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
         if (FAILED(hr)) return hr;
         /* FIXME: validate reg_maps against OpenGL */
     }
+
+    /* Reset fields tracking stateblock values beeing hardcoded in the shader */
+    This->baseShader.num_sampled_samplers = 0;
 
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);

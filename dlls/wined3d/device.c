@@ -846,6 +846,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     HRESULT hr;
     unsigned int pow2Width;
     unsigned int pow2Height;
+    const GlPixelFormatDesc *glDesc;
+    getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
 
 
     TRACE("(%p) : Width %d, Height %d, Levels %d, Usage %#x\n", This, Width, Height, Levels, Usage);
@@ -928,6 +930,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
         tmpW = max(1, tmpW >> 1);
         tmpH = max(1, tmpH >> 1);
     }
+    object->baseTexture.shader_conversion_group = glDesc->conversion_group;
 
     TRACE("(%p) : Created  texture %p\n", This, object);
     return WINED3D_OK;
@@ -947,6 +950,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     UINT                       tmpW;
     UINT                       tmpH;
     UINT                       tmpD;
+    const GlPixelFormatDesc *glDesc;
+    getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
 
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */
@@ -1017,6 +1022,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         tmpH = max(1, tmpH >> 1);
         tmpD = max(1, tmpD >> 1);
     }
+    object->baseTexture.shader_conversion_group = glDesc->conversion_group;
 
     *ppVolumeTexture = (IWineD3DVolumeTexture *) object;
     TRACE("(%p) : Created volume texture %p\n", This, object);
@@ -1066,6 +1072,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     UINT                     tmpW;
     HRESULT                  hr;
     unsigned int pow2EdgeLength  = EdgeLength;
+    const GlPixelFormatDesc *glDesc;
+    getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
 
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */
@@ -1149,6 +1157,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         }
         tmpW = max(1, tmpW >> 1);
     }
+    object->baseTexture.shader_conversion_group = glDesc->conversion_group;
 
     TRACE("(%p) : Created Cube Texture %p\n", This, object);
     *ppCubeTexture = (IWineD3DCubeTexture *) object;

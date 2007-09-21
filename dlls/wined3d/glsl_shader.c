@@ -976,14 +976,34 @@ static void shader_glsl_add_color_correction(SHADER_OPCODE_ARG* arg, DWORD sampl
     glsl_dst_param_t dst_param;
     glsl_dst_param_t dst_param2;
     WINED3DFORMAT fmt;
+    WINED3DFORMAT conversion_group;
     IWineD3DBaseTextureImpl *texture;
     DWORD mask, mask_size;
+    UINT i;
+    BOOL recorded = FALSE;
 
     texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler_idx];
     if(texture) {
         fmt = texture->resource.format;
+        conversion_group = texture->baseTexture.shader_conversion_group;
     } else {
         fmt = WINED3DFMT_UNKNOWN;
+        conversion_group = WINED3DFMT_UNKNOWN;
+    }
+
+    /* before doing anything, record the sampler with the format in the format conversion list,
+     * but check if it's not there already
+     */
+    for(i = 0; i < shader->baseShader.num_sampled_samplers; i++) {
+        if(shader->baseShader.sampled_samplers[i] == sampler_idx) {
+            recorded = TRUE;
+            break;
+        }
+    }
+    if(!recorded) {
+        shader->baseShader.sampled_samplers[shader->baseShader.num_sampled_samplers] = sampler_idx;
+        shader->baseShader.num_sampled_samplers++;
+        shader->baseShader.sampled_format[sampler_idx] = conversion_group;
     }
 
     switch(fmt) {
