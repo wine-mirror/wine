@@ -2308,13 +2308,63 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
       PDWORD RequiredSize,
       PSP_DEVINFO_DATA DeviceInfoData)
 {
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct InterfaceInfo *info;
+    DWORD bytesNeeded = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath)
+        + 1;
     BOOL ret = FALSE;
 
-    FIXME("(%p, %p, %p, %d, %p, %p)\n", DeviceInfoSet,
+    TRACE("(%p, %p, %p, %d, %p, %p)\n", DeviceInfoSet,
      DeviceInterfaceData, DeviceInterfaceDetailData,
      DeviceInterfaceDetailDataSize, RequiredSize, DeviceInfoData);
 
-    SetLastError(ERROR_INVALID_HANDLE);
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE ||
+            set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DeviceInterfaceData ||
+            DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
+            !DeviceInterfaceData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (DeviceInterfaceDetailData && (DeviceInterfaceDetailData->cbSize <
+            offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath) + sizeof(char) ||
+            DeviceInterfaceDetailData->cbSize > sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A)))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+    if (!DeviceInterfaceDetailData && DeviceInterfaceDetailDataSize)
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+    info = (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
+    if (info->symbolicLink)
+        bytesNeeded += WideCharToMultiByte(CP_ACP, 0, info->symbolicLink, -1,
+                NULL, 0, NULL, NULL);
+    if (DeviceInterfaceDetailDataSize >= bytesNeeded)
+    {
+        if (info->symbolicLink)
+            WideCharToMultiByte(CP_ACP, 0, info->symbolicLink, -1,
+                    DeviceInterfaceDetailData->DevicePath,
+                    DeviceInterfaceDetailDataSize -
+                    offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath),
+                    NULL, NULL);
+        else
+            DeviceInterfaceDetailData->DevicePath[0] = '\0';
+        ret = TRUE;
+    }
+    else
+    {
+        if (RequiredSize)
+            *RequiredSize = bytesNeeded;
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    }
     return ret;
 }
 
@@ -2329,10 +2379,59 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
       PDWORD RequiredSize,
       PSP_DEVINFO_DATA DeviceInfoData)
 {
-    FIXME("(%p, %p, %p, %d, %p, %p): stub\n", DeviceInfoSet,
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct InterfaceInfo *info;
+    DWORD bytesNeeded = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath)
+        + sizeof(WCHAR); /* include NULL terminator */
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %p, %p, %d, %p, %p)\n", DeviceInfoSet,
      DeviceInterfaceData, DeviceInterfaceDetailData,
      DeviceInterfaceDetailDataSize, RequiredSize, DeviceInfoData);
-    return FALSE;
+
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE ||
+            set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DeviceInterfaceData ||
+            DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
+            !DeviceInterfaceData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (DeviceInterfaceDetailData && (DeviceInterfaceDetailData->cbSize <
+            offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath) + sizeof(WCHAR) ||
+            DeviceInterfaceDetailData->cbSize > sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W)))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+    if (!DeviceInterfaceDetailData && DeviceInterfaceDetailDataSize)
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+    info = (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
+    if (info->symbolicLink)
+        bytesNeeded += lstrlenW(info->symbolicLink);
+    if (DeviceInterfaceDetailDataSize >= bytesNeeded)
+    {
+        if (info->symbolicLink)
+            lstrcpyW(DeviceInterfaceDetailData->DevicePath, info->symbolicLink);
+        else
+            DeviceInterfaceDetailData->DevicePath[0] = '\0';
+        ret = TRUE;
+    }
+    else
+    {
+        if (RequiredSize)
+            *RequiredSize = bytesNeeded;
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    }
+    return ret;
 }
 
 struct PropertyMapEntry

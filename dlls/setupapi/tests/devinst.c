@@ -440,7 +440,6 @@ static void testGetDeviceInterfaceDetail(void)
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInterfaceDetailA(set, NULL, NULL, 0, NULL,
                 NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
         ret = pSetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid,
@@ -453,19 +452,16 @@ static void testGetDeviceInterfaceDetail(void)
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, NULL,
                 0, NULL, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
          "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, NULL,
                 100, NULL, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
          "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, NULL,
                 0, &size, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
          "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
         if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
@@ -478,7 +474,6 @@ static void testGetDeviceInterfaceDetail(void)
             SetLastError(0xdeadbeef);
             ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
                     size, &size, NULL);
-            todo_wine
             ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
              "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
             detail->cbSize = size;
@@ -491,7 +486,6 @@ static void testGetDeviceInterfaceDetail(void)
             detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
             ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
                     size, &size, NULL);
-            todo_wine
             ok(ret, "SetupDiGetDeviceInterfaceDetailA failed: %d\n",
                     GetLastError());
             HeapFree(GetProcessHeap(), 0, buf);
