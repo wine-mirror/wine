@@ -2338,8 +2338,9 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
         PVOID Reserved)
 {
     HKEY hClassesKey;
-    HKEY hClassKey;
+    HKEY key;
     LPCWSTR lpKeyName;
+    LONG l;
 
     if (MachineName != NULL)
     {
@@ -2364,15 +2365,16 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
 
     if (!ClassGuid)
     {
-        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+        if ((l = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
                           lpKeyName,
                           0,
                           samDesired,
-                          &hClassesKey))
+                          &hClassesKey)))
         {
-            return INVALID_HANDLE_VALUE;
+            SetLastError(l);
+            hClassesKey = INVALID_HANDLE_VALUE;
         }
-        return hClassesKey;
+        key = hClassesKey;
     }
     else
     {
@@ -2380,28 +2382,30 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
 
         SETUPDI_GuidToString(ClassGuid, bracedGuidString);
 
-        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+        if (!(l = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
                           lpKeyName,
                           0,
                           samDesired,
-                          &hClassesKey))
+                          &hClassesKey)))
         {
-            return INVALID_HANDLE_VALUE;
-        }
-        if (RegOpenKeyExW(hClassesKey,
-                          bracedGuidString,
-                          0,
-                          samDesired,
-                          &hClassKey))
-        {
+            if ((l = RegOpenKeyExW(hClassesKey,
+                              bracedGuidString,
+                              0,
+                              samDesired,
+                              &key)))
+            {
+                SetLastError(l);
+                key = INVALID_HANDLE_VALUE;
+            }
             RegCloseKey(hClassesKey);
-            return INVALID_HANDLE_VALUE;
         }
-
-        RegCloseKey(hClassesKey);
-
-        return hClassKey;
+        else
+        {
+            SetLastError(l);
+            key = INVALID_HANDLE_VALUE;
+        }
     }
+    return key;
 }
 
 /***********************************************************************
