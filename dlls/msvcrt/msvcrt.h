@@ -651,6 +651,7 @@ int           MSVCRT__close(int);
 int           MSVCRT__dup(int);
 int           MSVCRT__dup2(int, int);
 int           MSVCRT__pipe(int *, unsigned int, int);
+MSVCRT_wchar_t* _wgetenv(const MSVCRT_wchar_t*);
 #endif
 
 #endif /* __WINE_MSVCRT_H */
