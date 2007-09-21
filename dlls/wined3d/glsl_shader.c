@@ -969,6 +969,114 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, 
     }
 }
 
+static void shader_glsl_add_color_correction(SHADER_OPCODE_ARG* arg, DWORD sampler_idx) {
+    IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) shader->baseShader.device;
+    WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
+    glsl_dst_param_t dst_param;
+    glsl_dst_param_t dst_param2;
+    WINED3DFORMAT fmt;
+    IWineD3DBaseTextureImpl *texture;
+    DWORD mask, mask_size;
+
+    texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler_idx];
+    if(texture) {
+        fmt = texture->resource.format;
+    } else {
+        fmt = WINED3DFMT_UNKNOWN;
+    }
+
+    switch(fmt) {
+        case WINED3DFMT_V8U8:
+        case WINED3DFMT_V16U16:
+            if(GL_SUPPORT(NV_TEXTURE_SHADER) ||
+              (GL_SUPPORT(ATI_ENVMAP_BUMPMAP) && fmt == WINED3DFMT_V8U8)) {
+                /* The 3rd channel returns 1.0 in d3d, but 0.0 in gl. Fix this while we're at it :-) */
+                mask = shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_2, &dst_param);
+                mask_size = shader_glsl_get_write_mask_size(mask);
+                if(mask_size >= 3) {
+                    shader_addline(arg->buffer, "%s.%c = 1.0;\n", dst_param.reg_name, dst_param.mask_str[3]);
+                }
+            } else {
+                /* Correct the sign, but leave the blue as it is - it was loaded correctly already */
+                mask = shader_glsl_add_dst_param(arg, arg->dst,
+                                          WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1,
+                                          &dst_param);
+                mask_size = shader_glsl_get_write_mask_size(mask);
+                if(mask_size >= 2) {
+                    shader_addline(arg->buffer, "%s.%c%c = %s.%c%c * 2.0 - 1.0;\n",
+                    dst_param.reg_name, dst_param.mask_str[1], dst_param.mask_str[2],
+                    dst_param.reg_name, dst_param.mask_str[1], dst_param.mask_str[2]);
+                } else if(mask_size == 1) {
+                    shader_addline(arg->buffer, "%s.%c = %s.%c * 2.0 - 1.0;\n", dst_param.reg_name, dst_param.mask_str[1],
+                    dst_param.reg_name, dst_param.mask_str[1]);
+                }
+            }
+            break;
+
+        case WINED3DFMT_X8L8V8U8:
+            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                /* Red and blue are the signed channels, fix them up; Blue(=L) is correct already,
+                 * and a(X) is always 1.0
+                 */
+                mask = shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &dst_param);
+                mask_size = shader_glsl_get_write_mask_size(mask);
+                if(mask_size >= 2) {
+                    shader_addline(arg->buffer, "%s.%c%c = %s.%c%c * 2.0 - 1.0;\n",
+                                   dst_param.reg_name, dst_param.mask_str[1], dst_param.mask_str[2],
+                                   dst_param.reg_name, dst_param.mask_str[1], dst_param.mask_str[2]);
+                } else if(mask_size == 1) {
+                    shader_addline(arg->buffer, "%s.%c = %s.%c * 2.0 - 1.0;\n",
+                                   dst_param.reg_name, dst_param.mask_str[1],
+                                   dst_param.reg_name, dst_param.mask_str[1]);
+                }
+            }
+            break;
+
+        case WINED3DFMT_L6V5U5:
+            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                mask = shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &dst_param);
+                mask_size = shader_glsl_get_write_mask_size(mask);
+                shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_2, &dst_param2);
+                if(mask_size >= 3) {
+                    /* Swap y and z (U and L), and do a sign conversion on x and the new y(V and U) */
+                    shader_addline(arg->buffer, "tmp0.g = %s.%c;\n",
+                                   dst_param.reg_name, dst_param.mask_str[2]);
+                    shader_addline(arg->buffer, "%s.%c%c = %s.%c%c * 2.0 - 1.0;\n",
+                                   dst_param.reg_name, dst_param.mask_str[2], dst_param.mask_str[1],
+                                   dst_param2.reg_name, dst_param.mask_str[1], dst_param.mask_str[3]);
+                    shader_addline(arg->buffer, "%s.%c = tmp0.g;\n", dst_param.reg_name,
+                                   dst_param.mask_str[3]);
+                } else if(mask_size == 2) {
+                    /* This is bad: We have VL, but we need VU */
+                    FIXME("2 components sampled from a converted L6V5U5 texture\n");
+                } else {
+                    shader_addline(arg->buffer, "%s.%c = %s.%c * 2.0 - 1.0;\n",
+                                   dst_param.reg_name, dst_param.mask_str[1],
+                                   dst_param2.reg_name, dst_param.mask_str[1]);
+                }
+            }
+            break;
+
+        case WINED3DFMT_Q8W8V8U8:
+            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                /* Correct the sign in all channels. The writemask just applies as-is, no
+                 * need for checking the mask size
+                 */
+                shader_glsl_add_dst_param(arg, arg->dst,
+                                          WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 |
+                                          WINED3DSP_WRITEMASK_2 | WINED3DSP_WRITEMASK_3,
+                                          &dst_param);
+                shader_addline(arg->buffer, "%s%s = %s%s * 2.0 - 1.0;\n", dst_param.reg_name, dst_param.mask_str,
+                               dst_param.reg_name, dst_param.mask_str);
+            }
+            break;
+
+            /* stupid compiler */
+        default:
+            break;
+    }
+}
 
 /*****************************************************************************
  * 
@@ -1593,6 +1701,7 @@ void shader_glsl_callnz(SHADER_OPCODE_ARG* arg) {
  ********************************************/
 void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     DWORD hex_version = This->baseShader.hex_version;
     char dst_swizzle[6];
     glsl_sample_function_t sample_function;
@@ -1607,7 +1716,6 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     /* 1.0-1.4: Use destination register as sampler source.
      * 2.0+: Use provided sampler source. */
     if (hex_version < WINED3DPS_VERSION(1,4)) {
-        IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
         DWORD flags;
 
         sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
@@ -1681,6 +1789,8 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
                     sample_function.name, sampler_idx, coord_param.param_str, dst_swizzle);
         }
     }
+
+    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 void shader_glsl_texldl(SHADER_OPCODE_ARG* arg) {
@@ -1711,6 +1821,8 @@ void shader_glsl_texldl(SHADER_OPCODE_ARG* arg) {
         shader_addline(arg->buffer, "%sLod(Vsampler%u, %s, %s)%s);\n",
                 sample_function.name, sampler_idx, coord_param.param_str, lod_param.param_str, dst_swizzle);
     }
+
+    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
@@ -1801,6 +1913,8 @@ void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
         default:
             FIXME("Unexpected mask bitcount %d\n", count_bits(sample_function.coord_mask));
     }
+
+    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 /** Process the WINED3DSIO_TEXDP3 instruction in GLSL:
@@ -1923,6 +2037,8 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     shader_addline(arg->buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
 
     current_state->current_row = 0;
+
+    shader_glsl_add_color_correction(arg, reg);
 }
 
 /** Process the WINED3DSIO_TEXM3X3 instruction in GLSL
@@ -1975,6 +2091,8 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
 
     current_state->current_row = 0;
+
+    shader_glsl_add_color_correction(arg, reg);
 }
 
 /** Process the WINED3DSIO_TEXM3X3VSPEC instruction in GLSL 
@@ -2009,6 +2127,8 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
 
     current_state->current_row = 0;
+
+    shader_glsl_add_color_correction(arg, reg);
 }
 
 /** Process the WINED3DSIO_TEXBEM instruction in GLSL.
@@ -2067,6 +2187,8 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
         shader_addline(arg->buffer, "%s(Psampler%u, T%u%s + vec4(bumpenvmat * %s, 0.0, 0.0)%s )%s);\n",
                        sample_function.name, sampler_idx, sampler_idx, coord_mask, coord_param.param_str, coord_mask, dst_swizzle);
     }
+
+    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 void pshader_glsl_bem(SHADER_OPCODE_ARG* arg) {
@@ -2083,6 +2205,7 @@ void pshader_glsl_bem(SHADER_OPCODE_ARG* arg) {
 /** Process the WINED3DSIO_TEXREG2AR instruction in GLSL
  * Sample 2D texture at dst using the alpha & red (wx) components of src as texture coordinates */
 void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg) {
+
     glsl_src_param_t src0_param;
     DWORD sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
     char dst_mask[6];
@@ -2092,6 +2215,8 @@ void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
 
     shader_addline(arg->buffer, "texture2D(Psampler%u, %s.wx)%s);\n", sampler_idx, src0_param.reg_name, dst_mask);
+
+    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 /** Process the WINED3DSIO_TEXREG2GB instruction in GLSL
@@ -2106,6 +2231,8 @@ void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
 
     shader_addline(arg->buffer, "texture2D(Psampler%u, %s.yz)%s);\n", sampler_idx, src0_param.reg_name, dst_mask);
+
+    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 /** Process the WINED3DSIO_TEXREG2RGB instruction in GLSL
@@ -2123,6 +2250,8 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &src0_param);
 
     shader_addline(arg->buffer, "%s(Psampler%u, %s)%s);\n", sample_function.name, sampler_idx, src0_param.param_str, dst_mask);
+
+    shader_glsl_add_color_correction(arg, sampler_idx);
 }
 
 /** Process the WINED3DSIO_TEXKILL instruction in GLSL.

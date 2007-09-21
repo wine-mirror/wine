@@ -1504,8 +1504,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             } else {
                 /* Not supported by GL_ATI_envmap_bumpmap */
                 *format = GL_BGRA;
-                *internal = GL_RGBA8;
-                *type = GL_UNSIGNED_BYTE;
+                *internal = GL_RGB8;
+                *type = GL_UNSIGNED_INT_8_8_8_8_REV;
             }
             break;
 
@@ -1523,8 +1523,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
             *convert = CONVERT_V16U16;
             *format = GL_BGR;
-            *internal = GL_RGB16;
-            *type = GL_SHORT;
+            *internal = GL_RGB16_EXT;
+            *type = GL_UNSIGNED_SHORT;
             *target_bpp = 6;
             /* What should I do here about GL_ATI_envmap_bumpmap?
              * Convert it or allow data loss by loading it into a 8 bit / channel texture?
@@ -1733,6 +1733,25 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
             break;
         }
 
+        case CONVERT_V16U16:
+        {
+            unsigned int x, y;
+            DWORD *Source;
+            unsigned short *Dest;
+            for(y = 0; y < height; y++) {
+                Source = (DWORD *) (src + y * pitch);
+                Dest = (unsigned short *) (dst + y * outpitch);
+                for (x = 0; x < width; x++ ) {
+                    DWORD color = (*Source++);
+                    /* B */ Dest[0] = 0xffff;
+                    /* G */ Dest[1] = (color >> 16) + 32768; /* V */
+                    /* R */ Dest[2] = (color      ) + 32768; /* U */
+                    Dest += 3;
+                }
+            }
+            break;
+        }
+
         case CONVERT_Q8W8V8U8:
         {
             unsigned int x, y;
@@ -1788,7 +1807,21 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                     }
                 }
             } else {
-                FIXME("Add D3DFMT_L6V5U5 emulation using standard unsigned RGB and shaders\n");
+                for(y = 0; y < height; y++) {
+                    unsigned short *Dest_s = (unsigned short *) (dst + y * outpitch);
+                    Source = (WORD *) (src + y * pitch);
+                    for (x = 0; x < width; x++ ) {
+                        short color = (*Source++);
+                        unsigned char l = ((color >> 10) & 0xfc);
+                                 short v = ((color >>  5) & 0x3e);
+                                 short u = ((color      ) & 0x1f);
+                        short v_conv = v + 16;
+                        short u_conv = u + 16;
+
+                        *Dest_s = ((v_conv << 11) & 0xf800) | ((l << 5) & 0x7e0) | (u_conv & 0x1f);
+                        Dest_s += 1;
+                    }
+                }
             }
             break;
         }
@@ -1820,7 +1853,17 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                  * shaders if the shader is adjusted. (There's no use for this format in gl's
                  * standard fixed function pipeline anyway).
                  */
-                FIXME("Implement CONVERT_X8L8V8U8 with standard unsigned GL_RGB\n");
+                for(y = 0; y < height; y++) {
+                    Source = (DWORD *) (src + y * pitch);
+                    Dest = (unsigned char *) (dst + y * outpitch);
+                    for (x = 0; x < width; x++ ) {
+                        long color = (*Source++);
+                        /* B */ Dest[0] = ((color >> 16) & 0xff);       /* L */
+                        /* G */ Dest[1] = ((color >> 8 ) & 0xff) + 128; /* V */
+                        /* R */ Dest[2] = (color         & 0xff) + 128;  /* U */
+                        Dest += 4;
+                    }
+                }
             }
             break;
         }
