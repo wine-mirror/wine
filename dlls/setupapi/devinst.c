@@ -336,6 +336,8 @@ static BOOL SETUPDI_AddInterfaceInstance(PSP_DEVINFO_DATA DeviceInfoData,
                         ifaceInfo->referenceString = NULL;
                     if (ret)
                     {
+                        HKEY key;
+
                         iface->cInstances++;
                         instance->cbSize =
                             sizeof(SP_DEVICE_INTERFACE_DATA);
@@ -346,7 +348,16 @@ static BOOL SETUPDI_AddInterfaceInstance(PSP_DEVINFO_DATA DeviceInfoData,
                         if (newInterface)
                             memcpy(&iface->guid, InterfaceClassGuid,
                                     sizeof(GUID));
-                        /* FIXME: now create this homeboy in the registry */
+                        key = SetupDiCreateDeviceInterfaceRegKeyW(devInfo->set,
+                                instance, 0, KEY_WRITE, NULL, NULL);
+                        if (key != INVALID_HANDLE_VALUE)
+                        {
+                            RegSetValueExW(key, SymbolicLink, 0, REG_SZ,
+                                    (BYTE *)ifaceInfo->symbolicLink,
+                                    lstrlenW(ifaceInfo->symbolicLink) *
+                                    sizeof(WCHAR));
+                            RegCloseKey(key);
+                        }
                         if (ifaceData)
                             *ifaceData = instance;
                     }
