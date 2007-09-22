@@ -152,6 +152,15 @@ static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
         struct InterfaceInfo *ifaceInfo =
             (struct InterfaceInfo *)instances->instances[i].Reserved;
 
+        if (ifaceInfo->device && ifaceInfo->device->Reserved)
+        {
+            struct DeviceInfo *devInfo =
+                (struct DeviceInfo *)ifaceInfo->device->Reserved;
+
+            if (devInfo->phantom)
+                SetupDiDeleteDeviceInterfaceRegKey(devInfo->set,
+                        &instances->instances[i], 0);
+        }
         HeapFree(GetProcessHeap(), 0, ifaceInfo->referenceString);
         HeapFree(GetProcessHeap(), 0, ifaceInfo->symbolicLink);
     }
