@@ -99,7 +99,7 @@ static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3
             *pp##type = NULL; \
             return WINED3DERR_OUTOFVIDEOMEMORY; \
         } \
-        globalChangeGlRam(_size); \
+        WineD3DAdapterChangeGLRam(This, _size); \
     } \
     object->resource.allocatedMemory = (0 == _size ? NULL : Pool == WINED3DPOOL_DEFAULT ? NULL : HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _size)); \
     if (object->resource.allocatedMemory == NULL && _size != 0 && Pool != WINED3DPOOL_DEFAULT) { \
@@ -2295,24 +2295,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice *iface, IWin
 }
 
 static UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *iface) {
-    /** NOTE: There's a probably  a hack-around for this one by putting as many pbuffers, VBOs (or whatever)
-    * into the video ram as possible and seeing how many fit
-    * you can also get the correct initial value from nvidia and ATI's driver via X
-    * texture memory is video memory + AGP memory
-    *******************/
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    static BOOL showfixmes = TRUE;
-    if (showfixmes) {
-        FIXME("(%p) : stub, simulating %dMB for now, returning %dMB left\n", This,
-         (wined3d_settings.emulated_textureram/(1024*1024)),
-         ((wined3d_settings.emulated_textureram - wineD3DGlobalStatistics->glsurfaceram) / (1024*1024)));
-         showfixmes = FALSE;
-    }
+
     TRACE("(%p) : simulating %dMB, returning %dMB left\n",  This,
-         (wined3d_settings.emulated_textureram/(1024*1024)),
-         ((wined3d_settings.emulated_textureram - wineD3DGlobalStatistics->glsurfaceram) / (1024*1024)));
+         (This->adapter->TextureRam/(1024*1024)),
+         ((This->adapter->TextureRam - This->adapter->UsedTextureRam) / (1024*1024)));
     /* return simulated texture memory left */
-    return (wined3d_settings.emulated_textureram - wineD3DGlobalStatistics->glsurfaceram);
+    return (This->adapter->TextureRam - This->adapter->UsedTextureRam);
 }
 
 

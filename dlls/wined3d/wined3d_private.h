@@ -326,23 +326,6 @@ typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 
-/* Tracking */
-
-/* TODO: Move some of this to the device */
-long globalChangeGlRam(long glram);
-
-/* Memory and object tracking */
-
-/*Structure for holding information on all direct3d objects
-useful for making sure tracking is ok and when release is called on a device!
-and probably quite handy for debugging and dumping states out
-*/
-typedef struct WineD3DGlobalStatistics {
-    int glsurfaceram; /* The aproximate amount of glTexture memory allocated for textures */
-} WineD3DGlobalStatistics;
-
-extern WineD3DGlobalStatistics* wineD3DGlobalStatistics;
-
 /* Global variables */
 extern const float identity[16];
 
@@ -597,10 +580,13 @@ struct WineD3DAdapter
     WCHAR                   DeviceName[CCHDEVICENAME]; /* DeviceName for use with e.g. ChangeDisplaySettings */
     int                     nCfgs;
     WineD3D_PixelFormat     *cfgs;
+    unsigned int            TextureRam; /* Amount of texture memory both video ram + AGP/TurboCache/HyperMemory/.. */
+    unsigned int            UsedTextureRam;
 };
 
 extern BOOL InitAdapters(void);
 extern BOOL initPixelFormats(WineD3D_GL_Info *gl_info);
+extern long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, long glram);
 
 /*****************************************************************************
  * High order patch management

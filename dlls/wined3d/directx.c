@@ -277,6 +277,14 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
     return FALSE;
 }
 
+/* Adjust the amount of used texture memory */
+long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, long glram){
+    UINT Adapter = D3DDevice->adapterNo;
+
+    Adapters[Adapter].UsedTextureRam += glram;
+    TRACE("Adjusted gl ram by %ld to %d\n", glram, Adapters[Adapter].UsedTextureRam);
+    return Adapters[Adapter].UsedTextureRam;
+}
 
 /**********************************************************
  * IUnknown parts follows
@@ -1034,16 +1042,11 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     }
     TRACE("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", gl_info->gl_vendor, gl_info->gl_card);
 
-    /* Unless VideoMemorySize is set in the registry, the default is 0
-     * TODO: put emulated_textureram in the device */
-    if(wined3d_settings.emulated_textureram == 0) {
-        /* If we have an estimate use it, else default to 64MB */
-        if(vidmem)
-            wined3d_settings.emulated_textureram = vidmem*1024*1024; /* convert from MBs to bytes */
-        else
-            wined3d_settings.emulated_textureram = WINE_DEFAULT_VIDMEM;
-        TRACE("Emulating %d MB of texture memory\n", wined3d_settings.emulated_textureram);
-    }
+    /* If we have an estimate use it, else default to 64MB;  */
+    if(vidmem)
+        gl_info->vidmem = vidmem*1024*1024; /* convert from MBs to bytes */
+    else
+        gl_info->vidmem = WINE_DEFAULT_VIDMEM;
 
     /* Load all the lookup tables
     TODO: It may be a good idea to make minLookup and maxLookup const and populate them in wined3d_private.h where they are declared */
@@ -2742,6 +2745,14 @@ BOOL InitAdapters(void) {
 
         Adapters[0].driver = "Display";
         Adapters[0].description = "Direct3D HAL";
+
+        /* Use the VideoRamSize registry setting when set */
+        if(wined3d_settings.emulated_textureram)
+            Adapters[0].TextureRam = wined3d_settings.emulated_textureram;
+        else
+            Adapters[0].TextureRam = Adapters[0].gl_info.vidmem;
+        Adapters[0].UsedTextureRam = 0;
+        TRACE("Emulating %dMB of texture ram\n", Adapters[0].TextureRam);
 
         /* Initialize the Adapter's DeviceName which is required for ChangeDisplaySettings and friends */
         DisplayDevice.cb = sizeof(DisplayDevice);

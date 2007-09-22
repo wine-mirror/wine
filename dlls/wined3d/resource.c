@@ -71,7 +71,7 @@ void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface){
     TRACE("(%p) Cleaning up resource\n", This);
     if (This->resource.pool == WINED3DPOOL_DEFAULT) {
         TRACE("Decrementing device memory pool by %u\n", This->resource.size);
-        globalChangeGlRam(-This->resource.size);
+        WineD3DAdapterChangeGLRam(This->resource.wineD3DDevice, -This->resource.size);
     }
 
     LIST_FOR_EACH_SAFE(e1, e2, &This->resource.privateData) {

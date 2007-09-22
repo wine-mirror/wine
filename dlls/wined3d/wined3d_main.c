@@ -46,19 +46,6 @@ wined3d_settings_t wined3d_settings =
     NULL            /* No wine logo by default */
 };
 
-WineD3DGlobalStatistics *wineD3DGlobalStatistics = NULL;
-
-long globalChangeGlRam(long glram){
-    /* FIXME: replace this function with object tracking */
-    int result;
-
-    wineD3DGlobalStatistics->glsurfaceram     += glram;
-    TRACE("Adjusted gl ram by %ld to %d\n", glram, wineD3DGlobalStatistics->glsurfaceram);
-    result = wineD3DGlobalStatistics->glsurfaceram;
-    return result;
-
-}
-
 IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *parent) {
     IWineD3DImpl* object;
 
@@ -75,13 +62,6 @@ IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *p
     object->dxVersion = dxVersion;
     object->ref = 1;
     object->parent = parent;
-
-    /*Create a structure for storing global data in*/
-    if(wineD3DGlobalStatistics == NULL){
-        TRACE("Creating global statistics store\n");
-        wineD3DGlobalStatistics = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wineD3DGlobalStatistics));
-
-    }
 
     TRACE("Created WineD3D object @ %p for d3d%d support\n", object, dxVersion);
 
