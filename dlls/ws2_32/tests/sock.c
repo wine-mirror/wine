@@ -1909,6 +1909,52 @@ end:
     CloseHandle(hEvent);
 }
 
+static void test_ipv6only(void)
+{
+    SOCKET v4 = INVALID_SOCKET,
+           v6 = INVALID_SOCKET;
+    struct sockaddr_in sin4;
+    struct sockaddr_in6 sin6;
+    int ret;
+
+    memset(&sin4, 0, sizeof(sin4));
+    sin4.sin_family = AF_INET;
+    sin4.sin_port = htons(SERVERPORT);
+
+    memset(&sin6, 0, sizeof(sin6));
+    sin6.sin6_family = AF_INET6;
+    sin6.sin6_port = htons(SERVERPORT);
+
+    v6 = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+    if (v6 == INVALID_SOCKET) {
+        skip("Could not create IPv6 socket (LastError: %d; %d expected if IPv6 not available).\n",
+            WSAGetLastError(), WSAEAFNOSUPPORT);
+        goto end;
+    }
+    ret = bind(v6, (struct sockaddr*)&sin6, sizeof(sin6));
+    if (ret) {
+        skip("Could not bind IPv6 address (LastError: %d).\n",
+            WSAGetLastError());
+        goto end;
+    }
+
+    v4 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (v4 == INVALID_SOCKET) {
+        skip("Could not create IPv4 socket (LastError: %d).\n",
+            WSAGetLastError());
+        goto end;
+    }
+    ret = bind(v4, (struct sockaddr*)&sin4, sizeof(sin4));
+    ok(!ret, "Could not bind IPv4 address (LastError: %d; %d expected if IPv6 binds to IPv4 as well).\n",
+        WSAGetLastError(), WSAEADDRINUSE);
+
+end:
+    if (v4 != INVALID_SOCKET)
+        closesocket(v4);
+    if (v6 != INVALID_SOCKET)
+        closesocket(v6);
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -1945,6 +1991,8 @@ START_TEST( sock )
 
     test_send();
     test_write_events();
+
+    test_ipv6only();
 
     Exit();
 }
