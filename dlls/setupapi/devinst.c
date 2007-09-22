@@ -33,6 +33,7 @@
 #include "winnls.h"
 #include "setupapi.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "wine/unicode.h"
 #include "cfgmgr32.h"
 #include "initguid.h"
@@ -116,17 +117,16 @@ struct InterfaceInstances
     DWORD                     cInstances;
     DWORD                     cInstancesAllocated;
     SP_DEVICE_INTERFACE_DATA *instances;
+    struct list               entry;
 };
 
 /* Pointed to by SP_DEVINFO_DATA's Reserved member */
 struct DeviceInfo
 {
-    HKEY                       key;
-    BOOL                       phantom;
-    LPWSTR                     instanceId;
-    DWORD                      cInterfaces;
-    DWORD                      cInterfacesAllocated;
-    struct InterfaceInstances *interfaces;
+    HKEY        key;
+    BOOL        phantom;
+    LPWSTR      instanceId;
+    struct list interfaces;
 };
 
 static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
@@ -157,27 +157,29 @@ static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
 }
 
 /* Finds the interface with interface class InterfaceClassGuid in the device.
- * Returns TRUE if found, and updates interfaceIndex to the index of the
- * device's interfaces member where the given interface was found.
+ * Returns TRUE if found, and updates *interface to point to device's
+ * interfaces member where the given interface was found.
  * Returns FALSE if not found.
  */
 static BOOL SETUPDI_FindInterface(const struct DeviceInfo *devInfo,
-        const GUID *InterfaceClassGuid, DWORD *interfaceIndex)
+        const GUID *InterfaceClassGuid, struct InterfaceInstances **interface)
 {
     BOOL found = FALSE;
-    DWORD i;
+    struct InterfaceInstances *iface;
 
     TRACE("%s\n", debugstr_guid(InterfaceClassGuid));
 
-    for (i = 0; !found && i < devInfo->cInterfaces; i++)
+    LIST_FOR_EACH_ENTRY(iface, &devInfo->interfaces, struct InterfaceInstances,
+            entry)
     {
-        if (IsEqualGUID(&devInfo->interfaces[i].guid, InterfaceClassGuid))
+        if (IsEqualGUID(&iface->guid, InterfaceClassGuid))
         {
-            *interfaceIndex = i;
+            *interface = iface;
             found = TRUE;
+            break;
         }
     }
-    TRACE("returning %d (%d)\n", found, found ? *interfaceIndex : 0);
+    TRACE("returning %d (%p)\n", found, found ? *interface : NULL);
     return found;
 }
 
@@ -261,42 +263,21 @@ static BOOL SETUPDI_AddInterfaceInstance(struct DeviceInfo *devInfo,
         SP_DEVICE_INTERFACE_DATA **ifaceData)
 {
     BOOL newInterface = FALSE, ret;
-    DWORD interfaceIndex = 0;
     struct InterfaceInstances *iface = NULL;
 
     TRACE("%p %s %s %p\n", devInfo, debugstr_guid(InterfaceClassGuid),
             debugstr_w(ReferenceString), iface);
 
-    if (!(ret = SETUPDI_FindInterface(devInfo, InterfaceClassGuid,
-                    &interfaceIndex)))
+    if (!(ret = SETUPDI_FindInterface(devInfo, InterfaceClassGuid, &iface)))
     {
-        if (!devInfo->cInterfacesAllocated)
+        iface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                sizeof(struct InterfaceInstances));
+        if (iface)
         {
-            devInfo->interfaces = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    sizeof(struct InterfaceInstances));
-            if (devInfo->interfaces)
-            {
-                iface = &devInfo->interfaces[devInfo->cInterfacesAllocated++];
-                newInterface = TRUE;
-            }
+            list_add_tail(&devInfo->interfaces, &iface->entry);
+            newInterface = TRUE;
         }
-        else if (devInfo->cInterfaces == devInfo->cInterfacesAllocated)
-        {
-            devInfo->interfaces = HeapReAlloc(GetProcessHeap(),
-                    HEAP_ZERO_MEMORY, devInfo->interfaces,
-                    (devInfo->cInterfacesAllocated + 1) *
-                    sizeof(struct InterfaceInstances));
-            if (devInfo->interfaces)
-            {
-                iface = &devInfo->interfaces[devInfo->cInterfacesAllocated++];
-                newInterface = TRUE;
-            }
-        }
-        else
-            iface = &devInfo->interfaces[devInfo->cInterfaces];
     }
-    else
-        iface = &devInfo->interfaces[interfaceIndex];
     if (iface)
     {
         DWORD instanceIndex = 0;
@@ -359,11 +340,8 @@ static BOOL SETUPDI_AddInterfaceInstance(struct DeviceInfo *devInfo,
                         instance->Flags = SPINT_ACTIVE; /* FIXME */
                         instance->Reserved = (ULONG_PTR)ifaceInfo;
                         if (newInterface)
-                        {
                             memcpy(&iface->guid, InterfaceClassGuid,
                                     sizeof(GUID));
-                            devInfo->cInterfaces++;
-                        }
                         /* FIXME: now create this homeboy in the registry */
                         if (ifaceData)
                             *ifaceData = instance;
@@ -376,8 +354,7 @@ static BOOL SETUPDI_AddInterfaceInstance(struct DeviceInfo *devInfo,
         else
         {
             if (ifaceData)
-                *ifaceData =
-                    &devInfo->interfaces[interfaceIndex].instances[instanceIndex];
+                *ifaceData = &iface->instances[instanceIndex];
         }
     }
     else
@@ -436,8 +413,7 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId,
                             (LPBYTE)&phantom, sizeof(phantom));
                 RegCloseKey(enumKey);
             }
-            devInfo->cInterfaces = devInfo->cInterfacesAllocated = 0;
-            devInfo->interfaces = NULL;
+            list_init(&devInfo->interfaces);
         }
         else
         {
@@ -450,7 +426,7 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(LPCWSTR instanceId,
 
 static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
 {
-    DWORD i;
+    struct InterfaceInstances *iface, *next;
 
     if (devInfo->key != INVALID_HANDLE_VALUE)
         RegCloseKey(devInfo->key);
@@ -468,9 +444,13 @@ static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
         }
     }
     HeapFree(GetProcessHeap(), 0, devInfo->instanceId);
-    for (i = 0; i < devInfo->cInterfaces; i++)
-        SETUPDI_FreeInterfaceInstances(&devInfo->interfaces[i]);
-    HeapFree(GetProcessHeap(), 0, devInfo->interfaces);
+    LIST_FOR_EACH_ENTRY_SAFE(iface, next, &devInfo->interfaces,
+            struct InterfaceInstances, entry)
+    {
+        list_remove(&iface->entry);
+        SETUPDI_FreeInterfaceInstances(iface);
+        HeapFree(GetProcessHeap(), 0, iface);
+    }
     HeapFree(GetProcessHeap(), 0, devInfo);
 }
 
@@ -2238,13 +2218,12 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(
     {
         struct DeviceInfo *devInfo =
             (struct DeviceInfo *)DeviceInfoData->Reserved;
-        DWORD i;
+        struct InterfaceInstances *iface;
 
-        if ((ret = SETUPDI_FindInterface(devInfo, InterfaceClassGuid, &i)))
+        if ((ret = SETUPDI_FindInterface(devInfo, InterfaceClassGuid, &iface)))
         {
-            if (MemberIndex < devInfo->interfaces[i].cInstances)
-                memcpy(DeviceInterfaceData,
-                    &devInfo->interfaces[i].instances[MemberIndex],
+            if (MemberIndex < iface->cInstances)
+                memcpy(DeviceInterfaceData, &iface->instances[MemberIndex],
                     sizeof(SP_DEVICE_INTERFACE_DATA));
             else
             {
@@ -2265,22 +2244,18 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(
         {
             struct DeviceInfo *devInfo =
                 (struct DeviceInfo *)set->devices[i].Reserved;
-            DWORD interfaceIndex;
+            struct InterfaceInstances *iface;
 
-            if (SETUPDI_FindInterface(devInfo, InterfaceClassGuid,
-                        &interfaceIndex))
+            if (SETUPDI_FindInterface(devInfo, InterfaceClassGuid, &iface))
             {
-                struct InterfaceInstances *interface =
-                    &devInfo->interfaces[interfaceIndex];
-
-                if (cEnumerated + interface->cInstances < MemberIndex + 1)
-                    cEnumerated += interface->cInstances;
+                if (cEnumerated + iface->cInstances < MemberIndex + 1)
+                    cEnumerated += iface->cInstances;
                 else
                 {
                     DWORD instanceIndex = MemberIndex - cEnumerated;
 
                     memcpy(DeviceInterfaceData,
-                            &interface->instances[instanceIndex],
+                            &iface->instances[instanceIndex],
                             sizeof(SP_DEVICE_INTERFACE_DATA));
                     cEnumerated += instanceIndex + 1;
                     found = TRUE;
