@@ -290,6 +290,8 @@
 @ stdcall SetupDiCreateDeviceInfoW(long wstr ptr wstr long long ptr)
 @ stdcall SetupDiCreateDeviceInterfaceA(ptr ptr ptr str long ptr)
 @ stdcall SetupDiCreateDeviceInterfaceW(ptr ptr ptr wstr long ptr)
+@ stdcall SetupDiCreateDeviceInterfaceRegKeyA(ptr ptr long long ptr ptr)
+@ stdcall SetupDiCreateDeviceInterfaceRegKeyW(ptr ptr long long ptr ptr)
 @ stub SetupDiDeleteDevRegKey
 @ stub SetupDiDeleteDeviceInfo
 @ stub SetupDiDeleteDeviceInterfaceData

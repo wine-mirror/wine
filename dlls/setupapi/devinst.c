@@ -2161,6 +2161,38 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
 }
 
 /***********************************************************************
+ *		SetupDiCreateDeviceInterfaceRegKeyA (SETUPAPI.@)
+ */
+HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyA(
+        HDEVINFO DeviceInfoSet,
+        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
+        DWORD Reserved,
+        REGSAM samDesired,
+        HINF InfHandle,
+        PCSTR InfSectionName)
+{
+    FIXME("%p %p %d %08x %p %p\n", DeviceInfoSet, DeviceInterfaceData, Reserved,
+            samDesired, InfHandle, InfSectionName);
+    return INVALID_HANDLE_VALUE;
+}
+
+/***********************************************************************
+ *		SetupDiCreateDeviceInterfaceRegKeyW (SETUPAPI.@)
+ */
+HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
+        HDEVINFO DeviceInfoSet,
+        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
+        DWORD Reserved,
+        REGSAM samDesired,
+        HINF InfHandle,
+        PCWSTR InfSectionName)
+{
+    FIXME("%p %p %d %08x %p %p\n", DeviceInfoSet, DeviceInterfaceData, Reserved,
+            samDesired, InfHandle, InfSectionName);
+    return INVALID_HANDLE_VALUE;
+}
+
+/***********************************************************************
  *		SetupDiEnumDeviceInterfaces (SETUPAPI.@)
  *
  * PARAMS
