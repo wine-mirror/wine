@@ -2171,9 +2171,27 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyA(
         HINF InfHandle,
         PCSTR InfSectionName)
 {
-    FIXME("%p %p %d %08x %p %p\n", DeviceInfoSet, DeviceInterfaceData, Reserved,
+    HKEY key;
+    PWSTR InfSectionNameW = NULL;
+
+    TRACE("%p %p %d %08x %p %p\n", DeviceInfoSet, DeviceInterfaceData, Reserved,
             samDesired, InfHandle, InfSectionName);
-    return INVALID_HANDLE_VALUE;
+    if (InfHandle)
+    {
+        if (!InfSectionName)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return INVALID_HANDLE_VALUE;
+        }
+        InfSectionNameW = MultiByteToUnicode(InfSectionName, CP_ACP);
+        if (!InfSectionNameW)
+            return INVALID_HANDLE_VALUE;
+    }
+    key = SetupDiCreateDeviceInterfaceRegKeyW(DeviceInfoSet,
+            DeviceInterfaceData, Reserved, samDesired, InfHandle,
+            InfSectionNameW);
+    MyFree(InfSectionNameW);
+    return key;
 }
 
 /***********************************************************************
@@ -2187,9 +2205,88 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
         HINF InfHandle,
         PCWSTR InfSectionName)
 {
-    FIXME("%p %p %d %08x %p %p\n", DeviceInfoSet, DeviceInterfaceData, Reserved,
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    HKEY key = INVALID_HANDLE_VALUE, interfacesKey;
+    LONG l;
+
+    TRACE("%p %p %d %08x %p %p\n", DeviceInfoSet, DeviceInterfaceData, Reserved,
             samDesired, InfHandle, InfSectionName);
-    return INVALID_HANDLE_VALUE;
+
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE ||
+            set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (!DeviceInterfaceData ||
+            DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
+            !DeviceInterfaceData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (InfHandle && !InfSectionName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (!(l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, DeviceClasses, 0, NULL, 0,
+                    samDesired, NULL, &interfacesKey, NULL)))
+    {
+        HKEY parent;
+        WCHAR bracedGuidString[39];
+
+        SETUPDI_GuidToString(&DeviceInterfaceData->InterfaceClassGuid,
+                bracedGuidString);
+        if (!(l = RegCreateKeyExW(interfacesKey, bracedGuidString, 0, NULL, 0,
+                        samDesired, NULL, &parent, NULL)))
+        {
+            static const WCHAR hash[] = {'#',0};
+            struct InterfaceInfo *ifaceInfo =
+                (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
+            LPCWSTR instancePath = NULL;
+            LPWSTR referencePath = NULL;
+
+            if (ifaceInfo->referenceString)
+            {
+                referencePath = HeapAlloc(GetProcessHeap(), 0,
+                        (lstrlenW(ifaceInfo->referenceString) + 2) *
+                        sizeof(WCHAR));
+                if (referencePath)
+                {
+                    lstrcpyW(referencePath, hash);
+                    lstrcatW(referencePath, ifaceInfo->referenceString);
+                    instancePath = referencePath;
+                }
+                else
+                    SetLastError(ERROR_OUTOFMEMORY);
+            }
+            else
+                instancePath = hash;
+            if (instancePath)
+            {
+                LONG l;
+
+                l = RegCreateKeyExW(parent, instancePath, 0, NULL, 0,
+                        samDesired, NULL, &key, NULL);
+                if (l)
+                {
+                    SetLastError(l);
+                    key = INVALID_HANDLE_VALUE;
+                }
+                else if (InfHandle)
+                    FIXME("INF section installation unsupported\n");
+            }
+            HeapFree(GetProcessHeap(), 0, referencePath);
+            RegCloseKey(parent);
+        }
+        else
+            SetLastError(l);
+        RegCloseKey(interfacesKey);
+    }
+    else
+        SetLastError(l);
+    return key;
 }
 
 /***********************************************************************
