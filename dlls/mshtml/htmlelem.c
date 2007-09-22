@@ -1291,7 +1291,7 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
         ret = HTMLBodyElement_Create(nselem);
     else if(!strcmpW(class_name, wszINPUT))
         ret = HTMLInputElement_Create(nselem);
-    if(!strcmpW(class_name, wszSELECT))
+    else if(!strcmpW(class_name, wszSELECT))
         ret = HTMLSelectElement_Create(nselem);
     else if(!strcmpW(class_name, wszTEXTAREA))
         ret = HTMLTextAreaElement_Create(nselem);
