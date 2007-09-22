@@ -208,13 +208,14 @@ BOOL WININET_FreeHandle( HINTERNET hinternet )
             TRACE( "destroying handle %d for object %p\n", handle+1, info);
             WININET_Handles[handle] = NULL;
             ret = TRUE;
-            if( WININET_dwNextHandle > handle )
-                WININET_dwNextHandle = handle;
         }
     }
 
     LeaveCriticalSection( &WININET_cs );
 
+    /* As on native when the equivalent of WININET_Release is called, the handle
+     * is already invalid, but if a new handle is created at this time it does
+     * not yet get assigned the freed handle number */
     if( info )
     {
         /* Free all children as native does */
@@ -226,6 +227,13 @@ BOOL WININET_FreeHandle( HINTERNET hinternet )
         }
         WININET_Release( info );
     }
+
+    EnterCriticalSection( &WININET_cs );
+
+    if( WININET_dwNextHandle > handle && !WININET_Handles[handle] )
+        WININET_dwNextHandle = handle;
+
+    LeaveCriticalSection( &WININET_cs );
 
     return ret;
 }
@@ -1006,8 +1014,8 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
         return FALSE;
     }
 
-    WININET_FreeHandle( hInternet );
     WININET_Release( lpwh );
+    WININET_FreeHandle( hInternet );
 
     return TRUE;
 }
