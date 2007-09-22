@@ -104,8 +104,9 @@ struct DeviceInfoSet
 /* Pointed to by SP_DEVICE_INTERFACE_DATA's Reserved member */
 struct InterfaceInfo
 {
-    LPWSTR referenceString;
-    LPWSTR symbolicLink;
+    LPWSTR           referenceString;
+    LPWSTR           symbolicLink;
+    PSP_DEVINFO_DATA device;
 };
 
 /* A device may have multiple instances of the same interface, so this holds
@@ -258,10 +259,11 @@ static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
  * the device, if it doesn't already exist in the device.  If iface is not
  * NULL, returns a pointer to the newly added (or already existing) interface.
  */
-static BOOL SETUPDI_AddInterfaceInstance(struct DeviceInfo *devInfo,
+static BOOL SETUPDI_AddInterfaceInstance(PSP_DEVINFO_DATA DeviceInfoData,
         const GUID *InterfaceClassGuid, LPCWSTR ReferenceString,
         SP_DEVICE_INTERFACE_DATA **ifaceData)
 {
+    struct DeviceInfo *devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
     BOOL newInterface = FALSE, ret;
     struct InterfaceInstances *iface = NULL;
 
@@ -313,6 +315,7 @@ static BOOL SETUPDI_AddInterfaceInstance(struct DeviceInfo *devInfo,
                 if (ifaceInfo)
                 {
                     ret = TRUE;
+                    ifaceInfo->device = DeviceInfoData;
                     ifaceInfo->symbolicLink = SETUPDI_CreateSymbolicLinkPath(
                             devInfo->instanceId, InterfaceClassGuid,
                             ReferenceString);
@@ -1736,7 +1739,6 @@ end:
 static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
         const GUID *interface)
 {
-    struct DeviceInfo *devInfo = (struct DeviceInfo *)dev->Reserved;
     DWORD i, len;
     WCHAR subKeyName[MAX_PATH];
     LONG l = ERROR_SUCCESS;
@@ -1751,7 +1753,7 @@ static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
             SP_DEVICE_INTERFACE_DATA *iface = NULL;
 
             /* The subkey name is the reference string, with a '#' prepended */
-            SETUPDI_AddInterfaceInstance(devInfo, interface, subKeyName + 1,
+            SETUPDI_AddInterfaceInstance(dev, interface, subKeyName + 1,
                     &iface);
             l = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
             if (!l)
@@ -2113,7 +2115,6 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
         PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
 {
     struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
-    struct DeviceInfo *devInfo;
     SP_DEVICE_INTERFACE_DATA *iface = NULL;
     BOOL ret;
 
@@ -2142,8 +2143,7 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
     }
-    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
-    if ((ret = SETUPDI_AddInterfaceInstance(devInfo, InterfaceClassGuid,
+    if ((ret = SETUPDI_AddInterfaceInstance(DeviceInfoData, InterfaceClassGuid,
                     ReferenceString, &iface)))
     {
         if (DeviceInterfaceData)
