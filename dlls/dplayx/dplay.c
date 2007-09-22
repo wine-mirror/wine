@@ -3727,8 +3727,10 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
       {
         ERR(": missing GUID registry data members\n" );
+        RegCloseKey(hkServiceProvider);
         continue;
       }
+      RegCloseKey(hkServiceProvider);
 
       /* FIXME: Check return types to ensure we're interpreting data right */
       MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
@@ -3822,8 +3824,10 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
       {
         ERR(": missing GUID registry data members\n" );
+        RegCloseKey(hkServiceProvider);
         continue;
       }
+      RegCloseKey(hkServiceProvider);
 
       /* FIXME: Check return types to ensure we're interpreting data right */
       MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
@@ -3861,6 +3865,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
                                      &dwAddressBufferSize, TRUE ) ) != DP_OK )
       {
         ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
+        HeapFree( GetProcessHeap(), 0, lpAddressBuffer );
         return hr;
       }
 
@@ -3868,8 +3873,10 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       if( !lpEnumCallback( &serviceProviderGUID, lpAddressBuffer, dwAddressBufferSize,
                            &dpName, DPCONNECTION_DIRECTPLAYLOBBY, lpContext ) )
       {
+         HeapFree( GetProcessHeap(), 0, lpAddressBuffer );
          return DP_OK;
       }
+      HeapFree( GetProcessHeap(), 0, lpAddressBuffer );
     }
   }
 

@@ -136,6 +136,7 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
   if( lpCacheNode->data == NULL )
   {
     ERR( "no memory for SESSIONDESC2\n" );
+    HeapFree( GetProcessHeap(), 0, lpCacheNode );
     return;
   }
 
