@@ -1405,6 +1405,20 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
             }
             else
             {
+#ifdef IPV6_V6ONLY
+                const struct sockaddr_in6 *in6 = (const struct sockaddr_in6*) &uaddr;
+                if (name->sa_family == WS_AF_INET6 &&
+                    !memcmp(&in6->sin6_addr, &in6addr_any, sizeof(struct in6_addr)))
+                {
+                    int enable = 1;
+                    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &enable, sizeof(enable)) == -1)
+                    {
+                        release_sock_fd( s, fd );
+                        SetLastError(WSAEAFNOSUPPORT);
+                        return INVALID_SOCKET;
+                    }
+                }
+#endif
                 if (bind(fd, &uaddr.addr, uaddrlen) < 0)
                 {
                     int loc_errno = errno;
