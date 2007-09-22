@@ -2224,6 +2224,33 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyA(
     return key;
 }
 
+static PWSTR SETUPDI_GetInstancePath(struct InterfaceInfo *ifaceInfo)
+{
+    static const WCHAR hash[] = {'#',0};
+    PWSTR instancePath = NULL;
+
+    if (ifaceInfo->referenceString)
+    {
+        instancePath = HeapAlloc(GetProcessHeap(), 0,
+                (lstrlenW(ifaceInfo->referenceString) + 2) * sizeof(WCHAR));
+        if (instancePath)
+        {
+            lstrcpyW(instancePath, hash);
+            lstrcatW(instancePath, ifaceInfo->referenceString);
+        }
+        else
+            SetLastError(ERROR_OUTOFMEMORY);
+    }
+    else
+    {
+        instancePath = HeapAlloc(GetProcessHeap(), 0,
+                (lstrlenW(hash) + 1) * sizeof(WCHAR));
+        if (instancePath)
+            lstrcpyW(instancePath, hash);
+    }
+    return instancePath;
+}
+
 /***********************************************************************
  *		SetupDiCreateDeviceInterfaceRegKeyW (SETUPAPI.@)
  */
@@ -2271,28 +2298,10 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
         if (!(l = RegCreateKeyExW(interfacesKey, bracedGuidString, 0, NULL, 0,
                         samDesired, NULL, &parent, NULL)))
         {
-            static const WCHAR hash[] = {'#',0};
             struct InterfaceInfo *ifaceInfo =
                 (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
-            LPCWSTR instancePath = NULL;
-            LPWSTR referencePath = NULL;
+            PWSTR instancePath = SETUPDI_GetInstancePath(ifaceInfo);
 
-            if (ifaceInfo->referenceString)
-            {
-                referencePath = HeapAlloc(GetProcessHeap(), 0,
-                        (lstrlenW(ifaceInfo->referenceString) + 2) *
-                        sizeof(WCHAR));
-                if (referencePath)
-                {
-                    lstrcpyW(referencePath, hash);
-                    lstrcatW(referencePath, ifaceInfo->referenceString);
-                    instancePath = referencePath;
-                }
-                else
-                    SetLastError(ERROR_OUTOFMEMORY);
-            }
-            else
-                instancePath = hash;
             if (instancePath)
             {
                 LONG l;
@@ -2307,7 +2316,7 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
                 else if (InfHandle)
                     FIXME("INF section installation unsupported\n");
             }
-            HeapFree(GetProcessHeap(), 0, referencePath);
+            HeapFree(GetProcessHeap(), 0, instancePath);
             RegCloseKey(parent);
         }
         else
@@ -2317,6 +2326,56 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
     else
         SetLastError(l);
     return key;
+}
+
+/***********************************************************************
+ *		SetupDiDeleteDeviceInterfaceRegKey (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(
+        HDEVINFO DeviceInfoSet,
+        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
+        DWORD Reserved)
+{
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    HKEY parent;
+    BOOL ret = FALSE;
+
+    TRACE("%p %p %d\n", DeviceInfoSet, DeviceInterfaceData, Reserved);
+
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE ||
+            set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DeviceInterfaceData ||
+            DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
+            !DeviceInterfaceData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    parent = SetupDiOpenClassRegKeyExW(&DeviceInterfaceData->InterfaceClassGuid,
+            KEY_ALL_ACCESS, DIOCR_INTERFACE, NULL, NULL);
+    if (parent != INVALID_HANDLE_VALUE)
+    {
+        struct InterfaceInfo *ifaceInfo =
+            (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
+        PWSTR instancePath = SETUPDI_GetInstancePath(ifaceInfo);
+
+        if (instancePath)
+        {
+            LONG l = RegDeleteKeyW(parent, instancePath);
+
+            if (l)
+                SetLastError(l);
+            else
+                ret = TRUE;
+            HeapFree(GetProcessHeap(), 0, instancePath);
+        }
+        RegCloseKey(parent);
+    }
+    return ret;
 }
 
 /***********************************************************************
