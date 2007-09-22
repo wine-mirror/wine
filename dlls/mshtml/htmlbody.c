@@ -40,8 +40,6 @@ typedef struct {
 
     const IHTMLBodyElementVtbl *lpHTMLBodyElementVtbl;
 
-    HTMLTextContainer text_container;
-
     ConnectionPointContainer cp_container;
     ConnectionPoint cp_propnotif;
     ConnectionPoint cp_txtcontevents;
@@ -71,8 +69,8 @@ static HRESULT WINAPI HTMLBodyElement_QueryInterface(IHTMLBodyElement *iface,
         TRACE("(%p)->(IID_IHTMLBodyElement %p)\n", This, ppv);
         *ppv = HTMLBODY(This);
     }else if(IsEqualGUID(&IID_IHTMLTextContainer, riid)) {
-        TRACE("(%p)->(IID_IHTMLTextContainer %p)\n", This, ppv);
-        *ppv = HTMLTEXTCONT(&This->text_container);
+        TRACE("(%p)->(IID_IHTMLTextContainer %p)\n", &This->textcont, ppv);
+        *ppv = HTMLTEXTCONT(&This->textcont);
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = CONPTCONT(&This->cp_container);
@@ -487,9 +485,11 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
     HTMLBodyElement *ret = mshtml_alloc(sizeof(HTMLBodyElement));
     nsresult nsres;
 
+    TRACE("(%p)->(%p)\n", ret, nselem);
+
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
 
-    HTMLTextContainer_Init(&ret->text_container);
+    HTMLTextContainer_Init(&ret->textcont);
 
     ConnectionPoint_Init(&ret->cp_propnotif, CONPTCONT(&ret->cp_container),
             &IID_IPropertyNotifySink, NULL);
