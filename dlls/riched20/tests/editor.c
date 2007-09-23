@@ -943,10 +943,8 @@ static void test_WM_SETTEXT()
 	"WM_GETTEXT returned %ld instead of expected %u\n",
 	result, strlen(buf));
   result = strcmp(TestItem2_after, buf);
-  todo_wine {
   ok(result == 0,
         "WM_SETTEXT round trip: strcmp = %ld\n", result);
-  }
 
   result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem3);
   ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result);
@@ -955,10 +953,8 @@ static void test_WM_SETTEXT()
 	"WM_GETTEXT returned %ld instead of expected %u\n",
 	result, strlen(buf));
   result = strcmp(TestItem3_after, buf);
-  todo_wine {
   ok(result == 0,
         "WM_SETTEXT round trip: strcmp = %ld\n", result);
-  }
 
   result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem3_after);
   ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result);
@@ -967,10 +963,8 @@ static void test_WM_SETTEXT()
 	"WM_GETTEXT returned %ld instead of expected %u\n",
 	result, strlen(buf));
   result = strcmp(TestItem3_after, buf);
-  todo_wine {
   ok(result == 0,
         "WM_SETTEXT round trip: strcmp = %ld\n", result);
-  }
 
   DestroyWindow(hwndRichEdit);
 }
@@ -1020,10 +1014,8 @@ static void test_EM_SETTEXTEX(void)
 
   /* However, WM_GETTEXT *does* see \r\n where EM_GETTEXTEX would see \r */
   SendMessage(hwndRichEdit, WM_GETTEXT, MAX_BUF_LEN, (LPARAM)buf);
-  todo_wine {
   ok(strcmp((const char *)buf, TestItem2_after) == 0,
       "WM_GETTEXT did *not* see \\r converted to \\r\\n pairs.\n");
-  }
 
   result = SendMessage(hwndRichEdit, EM_SETTEXTEX, 
                        (WPARAM)&setText, (LPARAM) NULL);
@@ -1616,8 +1608,9 @@ static void test_WM_PASTE(void)
     int result;
     char buffer[1024] = {0};
     const char* text1 = "testing paste\r";
+    const char* text1_after = "testing paste\r\n";
     const char* text2 = "testing paste\r\rtesting paste";
-    const char* text3 = "testing paste\rpaste\rtesting paste";
+    const char* text3 = "testing paste\r\npaste\r\ntesting paste";
     HWND hwndRichEdit = new_richedit(NULL);
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text1);
@@ -1627,7 +1620,7 @@ static void test_WM_PASTE(void)
     SendMessage(hwndRichEdit, WM_CHAR, 22, 0);  /* ctrl-v */
     SendMessage(hwndRichEdit, WM_CHAR, 26, 0);  /* ctrl-z */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-    result = strcmp(text1, buffer);
+    result = strcmp(text1_after, buffer);
     ok(result == 0,
         "test paste: strcmp = %i\n", result);
 

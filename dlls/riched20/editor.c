@@ -1983,11 +1983,14 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return ME_GetTextLengthEx(editor, (GETTEXTLENGTHEX *)wParam);
   case WM_GETTEXT:
   {
-    TEXTRANGEW tr; /* W and A differ only by rng->lpstrText */
-    tr.chrg.cpMin = 0;
-    tr.chrg.cpMax = wParam ? (wParam - 1) : 0;
-    tr.lpstrText = (WCHAR *)lParam;
-    return RichEditWndProc_common(hWnd, EM_GETTEXTRANGE, 0, (LPARAM)&tr, unicode);
+    GETTEXTEX ex;
+
+    ex.cb = wParam;
+    ex.flags = GT_USECRLF;
+    ex.codepage = unicode ? 1200 : CP_ACP;
+    ex.lpDefaultChar = NULL;
+    ex.lpUsedDefaultChar = NULL;
+    return RichEditWndProc_common(hWnd, EM_GETTEXTEX, (WPARAM)&ex, lParam, unicode);
   }
   case EM_GETTEXTEX:
   {
