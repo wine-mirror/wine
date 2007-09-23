@@ -910,6 +910,71 @@ static void test_ES_PASSWORD(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_WM_SETTEXT()
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  const char * TestItem1 = "TestSomeText";
+  const char * TestItem2 = "TestSomeText\r";
+  const char * TestItem2_after = "TestSomeText\r\n";
+  const char * TestItem3 = "TestSomeText\rSomeMoreText\r";
+  const char * TestItem3_after = "TestSomeText\r\nSomeMoreText\r\n";
+  char buf[1024] = {0};
+  LRESULT result;
+
+  /* This test attempts to show that WM_SETTEXT on a riched20 control causes
+     any solitary \r to be converted to \r\n on return. Properly paired
+     \r\n are not affected.
+   */
+
+  result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem1);
+  ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result);
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buf);
+  ok (result == strlen(buf),
+	"WM_GETTEXT returned %ld instead of expected %u\n",
+	result, strlen(buf));
+  result = strcmp(TestItem1, buf);
+  ok(result == 0,
+        "WM_SETTEXT round trip: strcmp = %ld\n", result);
+
+  result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem2);
+  ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result);
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buf);
+  ok (result == strlen(buf),
+	"WM_GETTEXT returned %ld instead of expected %u\n",
+	result, strlen(buf));
+  result = strcmp(TestItem2_after, buf);
+  todo_wine {
+  ok(result == 0,
+        "WM_SETTEXT round trip: strcmp = %ld\n", result);
+  }
+
+  result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem3);
+  ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result);
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buf);
+  ok (result == strlen(buf),
+	"WM_GETTEXT returned %ld instead of expected %u\n",
+	result, strlen(buf));
+  result = strcmp(TestItem3_after, buf);
+  todo_wine {
+  ok(result == 0,
+        "WM_SETTEXT round trip: strcmp = %ld\n", result);
+  }
+
+  result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem3_after);
+  ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result);
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buf);
+  ok (result == strlen(buf),
+	"WM_GETTEXT returned %ld instead of expected %u\n",
+	result, strlen(buf));
+  result = strcmp(TestItem3_after, buf);
+  todo_wine {
+  ok(result == 0,
+        "WM_SETTEXT round trip: strcmp = %ld\n", result);
+  }
+
+  DestroyWindow(hwndRichEdit);
+}
+
 static void test_EM_SETTEXTEX(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
@@ -918,6 +983,11 @@ static void test_EM_SETTEXTEX(void)
   WCHAR TestItem1[] = {'T', 'e', 's', 't', 
                        'S', 'o', 'm', 'e', 
                        'T', 'e', 'x', 't', 0}; 
+  WCHAR TestItem2[] = {'T', 'e', 's', 't',
+                       'S', 'o', 'm', 'e',
+                       'T', 'e', 'x', 't',
+		       '\r', 0};
+  const char * TestItem2_after = "TestSomeText\r\n";
 #define MAX_BUF_LEN 1024
   WCHAR buf[MAX_BUF_LEN];
   int result;
@@ -933,6 +1003,27 @@ static void test_EM_SETTEXTEX(void)
   SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
   ok(lstrcmpW(buf, TestItem1) == 0,
       "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
+
+  /* Unlike WM_SETTEXT/WM_GETTEXT pair, EM_SETTEXTEX/EM_GETTEXTEX does not
+     convert \r to \r\n on return
+   */
+  setText.codepage = 1200;  /* no constant for unicode */
+  getText.codepage = 1200;  /* no constant for unicode */
+  getText.cb = MAX_BUF_LEN;
+  getText.flags = GT_DEFAULT;
+
+  setText.flags = 0;
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM) TestItem2);
+  SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
+  ok(lstrcmpW(buf, TestItem2) == 0,
+      "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
+
+  /* However, WM_GETTEXT *does* see \r\n where EM_GETTEXTEX would see \r */
+  SendMessage(hwndRichEdit, WM_GETTEXT, MAX_BUF_LEN, (LPARAM)buf);
+  todo_wine {
+  ok(strcmp((const char *)buf, TestItem2_after) == 0,
+      "WM_GETTEXT did *not* see \\r converted to \\r\\n pairs.\n");
+  }
 
   result = SendMessage(hwndRichEdit, EM_SETTEXTEX, 
                        (WPARAM)&setText, (LPARAM) NULL);
@@ -2031,6 +2122,7 @@ START_TEST( editor )
   test_EM_GETLINE();
   test_EM_SCROLLCARET();
   test_EM_SCROLL();
+  test_WM_SETTEXT();
   test_EM_SETTEXTMODE();
   test_TM_PLAINTEXT();
   test_EM_SETOPTIONS();
