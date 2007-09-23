@@ -131,6 +131,7 @@ struct WebBrowser {
     VARIANT_BOOL address_bar;
     VARIANT_BOOL status_bar;
     VARIANT_BOOL tool_bar;
+    VARIANT_BOOL full_screen;
 
     DocHost doc_host;
 };

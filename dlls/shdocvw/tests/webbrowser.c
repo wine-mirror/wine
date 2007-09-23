@@ -1094,6 +1094,29 @@ static void test_ie_funcs(IUnknown *unk)
     hres = IWebBrowser2_put_ToolBar(wb, VARIANT_TRUE);
     ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
 
+    /* FullScreen */
+
+    hres = IWebBrowser2_get_FullScreen(wb, &b);
+    ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_FullScreen(wb, VARIANT_TRUE);
+    ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
+
+    hres = IWebBrowser2_get_FullScreen(wb, &b);
+    ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_FullScreen(wb, 100);
+    ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
+
+    hres = IWebBrowser2_get_FullScreen(wb, &b);
+    ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_FullScreen(wb, VARIANT_FALSE);
+    ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
+
     IWebBrowser2_Release(wb);
 }
 
