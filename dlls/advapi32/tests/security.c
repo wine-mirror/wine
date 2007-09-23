@@ -1848,19 +1848,16 @@ static void test_ConvertStringSecurityDescriptor(void)
     SetLastError(0xdeadbeef);
     ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;RPWPCCDCLCSWLODTCR;;;WD)", SDDL_REVISION_1, &pSD, NULL);
-    todo_wine
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
     SetLastError(0xdeadbeef);
     ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;FAFRFWFX;;;WD)", SDDL_REVISION_1, &pSD, NULL);
-    todo_wine
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
     SetLastError(0xdeadbeef);
     ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;KAKRKWKX;;;WD)", SDDL_REVISION_1, &pSD, NULL);
-    todo_wine
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
     SetLastError(0xdeadbeef);

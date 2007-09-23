@@ -35,6 +35,8 @@
 #include "sddl.h"
 #include "winsvc.h"
 #include "aclapi.h"
+#include "objbase.h"
+#include "iads.h"
 #include "advapi32_misc.h"
 
 #include "wine/debug.h"
@@ -246,6 +248,27 @@ static const WCHAR SDDL_READ_CONTROL[]     = {'R','C',0};
 static const WCHAR SDDL_WRITE_DAC[]        = {'W','D',0};
 static const WCHAR SDDL_WRITE_OWNER[]      = {'W','O',0};
 static const WCHAR SDDL_STANDARD_DELETE[]  = {'S','D',0};
+
+static const WCHAR SDDL_READ_PROPERTY[]    = {'R','P',0};
+static const WCHAR SDDL_WRITE_PROPERTY[]   = {'W','P',0};
+static const WCHAR SDDL_CREATE_CHILD[]     = {'C','C',0};
+static const WCHAR SDDL_DELETE_CHILD[]     = {'D','C',0};
+static const WCHAR SDDL_LIST_CHILDREN[]    = {'L','C',0};
+static const WCHAR SDDL_SELF_WRITE[]       = {'S','W',0};
+static const WCHAR SDDL_LIST_OBJECT[]      = {'L','O',0};
+static const WCHAR SDDL_DELETE_TREE[]      = {'D','T',0};
+static const WCHAR SDDL_CONTROL_ACCESS[]   = {'C','R',0};
+
+static const WCHAR SDDL_FILE_ALL[]         = {'F','A',0};
+static const WCHAR SDDL_FILE_READ[]        = {'F','R',0};
+static const WCHAR SDDL_FILE_WRITE[]       = {'F','W',0};
+static const WCHAR SDDL_FILE_EXECUTE[]     = {'F','X',0};
+
+static const WCHAR SDDL_KEY_ALL[]          = {'K','A',0};
+static const WCHAR SDDL_KEY_READ[]         = {'K','R',0};
+static const WCHAR SDDL_KEY_WRITE[]        = {'K','W',0};
+static const WCHAR SDDL_KEY_EXECUTE[]      = {'K','X',0};
+
 static const WCHAR SDDL_GENERIC_ALL[]      = {'G','A',0};
 static const WCHAR SDDL_GENERIC_READ[]     = {'G','R',0};
 static const WCHAR SDDL_GENERIC_WRITE[]    = {'G','W',0};
@@ -3107,10 +3130,31 @@ static const ACEFLAG AceRights[] =
     { SDDL_GENERIC_READ,    GENERIC_READ },
     { SDDL_GENERIC_WRITE,   GENERIC_WRITE },
     { SDDL_GENERIC_EXECUTE, GENERIC_EXECUTE },
+
     { SDDL_READ_CONTROL,    READ_CONTROL },
     { SDDL_STANDARD_DELETE, DELETE },
     { SDDL_WRITE_DAC,       WRITE_DAC },
     { SDDL_WRITE_OWNER,     WRITE_OWNER },
+
+    { SDDL_READ_PROPERTY,   ADS_RIGHT_DS_READ_PROP},
+    { SDDL_WRITE_PROPERTY,  ADS_RIGHT_DS_WRITE_PROP},
+    { SDDL_CREATE_CHILD,    ADS_RIGHT_DS_CREATE_CHILD},
+    { SDDL_DELETE_CHILD,    ADS_RIGHT_DS_DELETE_CHILD},
+    { SDDL_LIST_CHILDREN,   ADS_RIGHT_ACTRL_DS_LIST},
+    { SDDL_SELF_WRITE,      ADS_RIGHT_DS_SELF},
+    { SDDL_LIST_OBJECT,     ADS_RIGHT_DS_LIST_OBJECT},
+    { SDDL_DELETE_TREE,     ADS_RIGHT_DS_DELETE_TREE},
+    { SDDL_CONTROL_ACCESS,  ADS_RIGHT_DS_CONTROL_ACCESS},
+
+    { SDDL_FILE_ALL,        FILE_ALL_ACCESS },
+    { SDDL_FILE_READ,       FILE_GENERIC_READ },
+    { SDDL_FILE_WRITE,      FILE_GENERIC_WRITE },
+    { SDDL_FILE_EXECUTE,    FILE_GENERIC_EXECUTE },
+
+    { SDDL_KEY_ALL,         KEY_ALL_ACCESS },
+    { SDDL_KEY_READ,        KEY_READ },
+    { SDDL_KEY_WRITE,       KEY_WRITE },
+    { SDDL_KEY_EXECUTE,     KEY_EXECUTE },
     { NULL, 0 },
 };
 
