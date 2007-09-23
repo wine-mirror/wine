@@ -825,15 +825,21 @@ static HRESULT WINAPI WebBrowser_put_AddressBar(IWebBrowser2 *iface, VARIANT_BOO
 static HRESULT WINAPI WebBrowser_get_Resizable(IWebBrowser2 *iface, VARIANT_BOOL *Value)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, Value);
+
+    TRACE("(%p)->(%p)\n", This, Value);
+
+    /* It's InternetExplorer object's method. We have nothing to do here. */
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI WebBrowser_put_Resizable(IWebBrowser2 *iface, VARIANT_BOOL Value)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, Value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, Value);
+
+    /* It's InternetExplorer object's method. We have nothing to do here. */
+    return S_OK;
 }
 
 #undef WEBBROWSER_THIS
