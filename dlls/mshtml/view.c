@@ -577,7 +577,8 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
         }
 
         This->focus = TRUE;
-        nsIWebBrowserFocus_Activate(This->nscontainer->focus);
+        if(This->nscontainer)
+            nsIWebBrowserFocus_Activate(This->nscontainer->focus);
         notif_focus(This);
 
         update_doc(This, UPDATE_UI);
