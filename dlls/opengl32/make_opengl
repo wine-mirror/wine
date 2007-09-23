@@ -220,6 +220,8 @@ sub GenerateThunk($$$$$)
     return "" if $func_ref->[0] eq "glDisable";
     return "" if $func_ref->[0] eq "glScissor";
     return "" if $func_ref->[0] eq "glViewport";
+    return "" if $func_ref->[0] eq "glFinish";
+    return "" if $func_ref->[0] eq "glFlush";
 
     # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
     # Patrik says: Well I would be even happier if a (OPENGL32.@) was added as well. Done. :-)

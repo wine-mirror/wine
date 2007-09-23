@@ -1060,26 +1060,6 @@ void WINAPI wine_glFeedbackBuffer( GLsizei size, GLenum type, GLfloat* buffer ) 
 }
 
 /***********************************************************************
- *              glFinish (OPENGL32.@)
- */
-void WINAPI wine_glFinish( void ) {
-  TRACE("()\n");
-  ENTER_GL();
-  glFinish( );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glFlush (OPENGL32.@)
- */
-void WINAPI wine_glFlush( void ) {
-  TRACE("()\n");
-  ENTER_GL();
-  glFlush( );
-  LEAVE_GL();
-}
-
-/***********************************************************************
  *              glFogf (OPENGL32.@)
  */
 void WINAPI wine_glFogf( GLenum pname, GLfloat param ) {

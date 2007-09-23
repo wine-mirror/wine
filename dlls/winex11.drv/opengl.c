@@ -72,7 +72,7 @@ typedef struct wine_glextension {
     struct {
         const char *funcName;
         void *funcAddress;
-    } extEntryPoints[8];
+    } extEntryPoints[9];
 } WineGLExtension;
 
 struct WineGLInfo {
@@ -277,6 +277,8 @@ MAKE_FUNCPTR(glReadPixels)
 MAKE_FUNCPTR(glScissor)
 MAKE_FUNCPTR(glTexImage2D)
 MAKE_FUNCPTR(glViewport)
+MAKE_FUNCPTR(glFinish)
+MAKE_FUNCPTR(glFlush)
 #undef MAKE_FUNCPTR
 
 static BOOL X11DRV_WineGL_InitOpenglInfo(void)
@@ -428,6 +430,8 @@ LOAD_FUNCPTR(glReadPixels)
 LOAD_FUNCPTR(glScissor)
 LOAD_FUNCPTR(glTexImage2D)
 LOAD_FUNCPTR(glViewport)
+LOAD_FUNCPTR(glFinish)
+LOAD_FUNCPTR(glFlush)
 #undef LOAD_FUNCPTR
 
 /* It doesn't matter if these fail. They'll only be used if the driver reports
@@ -2054,6 +2058,20 @@ static void WINAPI X11DRV_wglViewport(GLint x, GLint y, GLsizei width, GLsizei h
     }
 }
 
+static void WINAPI X11DRV_wglFinish(void)
+{
+    wine_tsx11_lock();
+    pglFinish();
+    wine_tsx11_unlock();
+}
+
+static void WINAPI X11DRV_wglFlush(void)
+{
+    wine_tsx11_lock();
+    pglFlush();
+    wine_tsx11_unlock();
+}
+
 /**
  * X11DRV_wglGetExtensionsStringARB
  *
@@ -3093,6 +3111,8 @@ static const WineGLExtension WGL_internal_functions =
     { "wglIsEnabled", X11DRV_wglIsEnabled },
     { "wglScissor", X11DRV_wglScissor },
     { "wglViewport", X11DRV_wglViewport },
+    { "wglFinish", X11DRV_wglFinish },
+    { "wglFlush", X11DRV_wglFlush },
   }
 };
 

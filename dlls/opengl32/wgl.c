@@ -54,6 +54,8 @@ typedef struct wine_wgl_s {
     GLboolean WINAPI (*p_wglIsEnabled)(GLenum cap);
     void WINAPI  (*p_wglScissor)(GLint x, GLint y, GLsizei width, GLsizei height);
     void WINAPI  (*p_wglViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
+    void WINAPI  (*p_wglFinish)(void);
+    void WINAPI  (*p_wglFlush)(void);
 } wine_wgl_t;
 
 /** global wgl object */
@@ -614,6 +616,24 @@ void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
 }
 
 /***********************************************************************
+ *              glFinish (OPENGL32.@)
+ */
+void WINAPI wine_glFinish( void )
+{
+    TRACE("()\n");
+    wine_wgl.p_wglFinish();
+}
+
+/***********************************************************************
+ *              glFlush (OPENGL32.@)
+ */
+void WINAPI wine_glFlush( void )
+{
+    TRACE("()\n");
+    wine_wgl.p_wglFlush();
+}
+
+/***********************************************************************
  *              glGetString (OPENGL32.@)
  */
 const GLubyte * WINAPI wine_glGetString( GLenum name )
@@ -705,6 +725,8 @@ static BOOL process_attach(void)
   wine_wgl.p_wglIsEnabled = (void *)wine_wgl.p_wglGetProcAddress("wglIsEnabled");
   wine_wgl.p_wglScissor = (void *)wine_wgl.p_wglGetProcAddress("wglScissor");
   wine_wgl.p_wglViewport = (void *)wine_wgl.p_wglGetProcAddress("wglViewport");
+  wine_wgl.p_wglFinish = (void *)wine_wgl.p_wglGetProcAddress("wglFinish");
+  wine_wgl.p_wglFlush = (void *)wine_wgl.p_wglGetProcAddress("wglFlush");
 
   internal_gl_disabled_extensions[0] = 0;
   if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\OpenGL", &hkey)) {
