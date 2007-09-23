@@ -518,6 +518,7 @@ then
                       X11/extensions/shape.h \
                       X11/extensions/XInput.h \
                       X11/extensions/XShm.h \
+                      X11/extensions/Xcomposite.h \
                       X11/extensions/Xinerama.h \
                       X11/extensions/Xrandr.h \
                       X11/extensions/Xrender.h \
@@ -613,6 +614,14 @@ Wine will be built without XRandr support. (winex11.drv)])
         fi
         WINE_NOTICE_IF([test "x$ac_cv_lib_soname_Xinerama" = "x"],[Xinerama development files not found.
 Wine will be built without Xinerama support. (winex11.drv)])
+
+        dnl *** Check for X Composite extension
+        if test "$ac_cv_header_X11_extensions_Xcomposite_h" = "yes"
+        then
+            WINE_CHECK_SONAME(Xcomposite,XCompositeRedirectWindow,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+        fi
+        WINE_NOTICE_IF([test "x$ac_cv_lib_soname_Xcomposite" = "x"],[XComposite development files not found.
+Wine will be built without XComposite support. (winex11.drv)])
 
     dnl *** End of X11/Xlib.h check
 

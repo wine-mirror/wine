@@ -888,6 +888,9 @@
 /* Define to 1 if you have the <X11/extensions/shape.h> header file. */
 #undef HAVE_X11_EXTENSIONS_SHAPE_H
 
+/* Define to 1 if you have the <X11/extensions/Xcomposite.h> header file. */
+#undef HAVE_X11_EXTENSIONS_XCOMPOSITE_H
+
 /* Define to 1 if you have the <X11/extensions/xf86vmode.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XF86VMODE_H
 
@@ -1013,6 +1016,9 @@
 
 /* Define to the soname of the libX11 library. */
 #undef SONAME_LIBX11
+
+/* Define to the soname of the libXcomposite library. */
+#undef SONAME_LIBXCOMPOSITE
 
 /* Define to the soname of the libXcursor library. */
 #undef SONAME_LIBXCURSOR

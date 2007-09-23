@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <fcntl.h>
 #include <stdarg.h>
@@ -48,8 +49,10 @@
 #include "x11drv.h"
 #include "xvidmode.h"
 #include "xrandr.h"
+#include "xcomposite.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 WINE_DECLARE_DEBUG_CHANNEL(synchronous);
@@ -73,6 +76,7 @@ Window root_window;
 int dxgrab = 0;
 int usexvidmode = 1;
 int usexrandr = 1;
+int usexcomposite = 1;
 int use_xkb = 1;
 int use_take_focus = 1;
 int use_primary_selection = 0;
@@ -370,6 +374,70 @@ static void setup_options(void)
     if (hkey) RegCloseKey( hkey );
 }
 
+#ifdef SONAME_LIBXCOMPOSITE
+
+#define MAKE_FUNCPTR(f) typeof(f) * p##f;
+MAKE_FUNCPTR(XCompositeQueryExtension)
+MAKE_FUNCPTR(XCompositeQueryVersion)
+MAKE_FUNCPTR(XCompositeVersion)
+MAKE_FUNCPTR(XCompositeRedirectWindow)
+MAKE_FUNCPTR(XCompositeRedirectSubwindows)
+MAKE_FUNCPTR(XCompositeUnredirectWindow)
+MAKE_FUNCPTR(XCompositeUnredirectSubwindows)
+MAKE_FUNCPTR(XCompositeCreateRegionFromBorderClip)
+MAKE_FUNCPTR(XCompositeNameWindowPixmap)
+MAKE_FUNCPTR(XCompositeGetOverlayWindow)
+MAKE_FUNCPTR(XCompositeReleaseOverlayWindow)
+#undef MAKE_FUNCPTR
+
+static int xcomp_event_base;
+static int xcomp_error_base;
+
+static void X11DRV_XComposite_Init(void)
+{
+    void *xcomposite_handle = wine_dlopen(SONAME_LIBXCOMPOSITE, RTLD_NOW, NULL, 0);
+    if (!xcomposite_handle)
+    {
+        TRACE("Unable to open %s, XComposite disabled\n", SONAME_LIBXCOMPOSITE);
+        usexcomposite = 0;
+        return;
+    }
+
+#define LOAD_FUNCPTR(f) \
+    if((p##f = wine_dlsym(xcomposite_handle, #f, NULL, 0)) == NULL) \
+        goto sym_not_found;
+    LOAD_FUNCPTR(XCompositeQueryExtension)
+    LOAD_FUNCPTR(XCompositeQueryVersion)
+    LOAD_FUNCPTR(XCompositeVersion)
+    LOAD_FUNCPTR(XCompositeRedirectWindow)
+    LOAD_FUNCPTR(XCompositeRedirectSubwindows)
+    LOAD_FUNCPTR(XCompositeUnredirectWindow)
+    LOAD_FUNCPTR(XCompositeUnredirectSubwindows)
+    LOAD_FUNCPTR(XCompositeCreateRegionFromBorderClip)
+    LOAD_FUNCPTR(XCompositeNameWindowPixmap)
+    LOAD_FUNCPTR(XCompositeGetOverlayWindow)
+    LOAD_FUNCPTR(XCompositeReleaseOverlayWindow)
+#undef LOAD_FUNCPTR
+
+    if(!pXCompositeQueryExtension(gdi_display, &xcomp_event_base,
+                                  &xcomp_error_base)) {
+        TRACE("XComposite extension could not be queried; disabled\n");
+        wine_dlclose(xcomposite_handle, NULL, 0);
+        xcomposite_handle = NULL;
+        usexcomposite = 0;
+        return;
+    }
+    TRACE("XComposite is up and running error_base = %d\n", xcomp_error_base);
+    return;
+
+sym_not_found:
+    TRACE("Unable to load function pointers from %s, XComposite disabled\n", SONAME_LIBXCOMPOSITE);
+    wine_dlclose(xcomposite_handle, NULL, 0);
+    xcomposite_handle = NULL;
+    usexcomposite = 0;
+}
+#endif /* defined(SONAME_LIBXCOMPOSITE) */
+
 
 /***********************************************************************
  *           X11DRV process initialisation routine
@@ -441,6 +509,9 @@ static BOOL process_attach(void)
 #ifdef SONAME_LIBXRANDR
     /* initialize XRandR */
     X11DRV_XRandR_Init();
+#endif
+#ifdef SONAME_LIBXCOMPOSITE
+    X11DRV_XComposite_Init();
 #endif
 
     X11DRV_ClipCursor( NULL );
