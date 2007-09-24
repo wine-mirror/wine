@@ -940,10 +940,8 @@ DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
 
     /* the HAL isn't much better than the HEL if we can't do mmap() */
     if (!(WOutDev[wDevID].ossdev->duplex_out_caps.dwSupport & WAVECAPS_DIRECTSOUND)) {
-	ERR("DirectSound flag not set\n");
-	MESSAGE("This sound card's driver does not support direct access\n");
-	MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
-	return MMSYSERR_NOTSUPPORTED;
+        WARN("Warn DirectSound flag not set, falling back to HEL layer\n");
+        return MMSYSERR_NOTSUPPORTED;
     }
 
     *idrv = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsDriverImpl));

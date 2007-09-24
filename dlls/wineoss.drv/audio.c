@@ -2082,10 +2082,8 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     /* Check that fragsize is correct per our settings above */
     if ((info.fragsize > 1024) && (LOWORD(audio_fragment) <= 10)) {
-	/* we've tried to set 1K fragments or less, but it didn't work */
-	ERR("fragment size set failed, size is now %d\n", info.fragsize);
-	MESSAGE("Your Open Sound System driver did not let us configure small enough sound fragments.\n");
-	MESSAGE("This may cause delays and other problems in audio playback with certain applications.\n");
+        /* we've tried to set 1K fragments or less, but it didn't work */
+        WARN("fragment size set failed, size is now %d\n", info.fragsize);
     }
 
     /* Remember fragsize and total buffer size for future use */
