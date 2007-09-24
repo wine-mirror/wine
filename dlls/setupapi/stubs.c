@@ -50,24 +50,6 @@ DWORD WINAPI suErrorToIds16( WORD w1, WORD w2 )
 }
 
 /***********************************************************************
- *		SetupDiGetDeviceInfoListDetailA  (SETUPAPI.@)
- */
-BOOL WINAPI SetupDiGetDeviceInfoListDetailA(HDEVINFO devinfo, PSP_DEVINFO_LIST_DETAIL_DATA_A devinfo_data )
-{
-  FIXME("\n");
-  return FALSE;
-}
-
-/***********************************************************************
- *		SetupDiGetDeviceInfoListDetailW  (SETUPAPI.@)
- */
-BOOL WINAPI SetupDiGetDeviceInfoListDetailW(HDEVINFO devinfo, PSP_DEVINFO_LIST_DETAIL_DATA_W devinfo_data )
-{
-  FIXME("\n");
-  return FALSE;
-}
-
-/***********************************************************************
  *		  (SETUPAPI.@)
  *
  * NO WINAPI in description given

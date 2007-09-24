@@ -2103,6 +2103,72 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(
 }
 
 /***********************************************************************
+ *		SetupDiGetDeviceInfoListDetailA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDeviceInfoListDetailA(
+        HDEVINFO DeviceInfoSet,
+        PSP_DEVINFO_LIST_DETAIL_DATA_A DevInfoData )
+{
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+
+    TRACE("%p %p\n", DeviceInfoSet, DevInfoData);
+
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DevInfoData ||
+            DevInfoData->cbSize != sizeof(SP_DEVINFO_LIST_DETAIL_DATA_A))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    memcpy(&DevInfoData->ClassGuid, &set->ClassGuid, sizeof(GUID));
+    DevInfoData->RemoteMachineHandle = NULL;
+    DevInfoData->RemoteMachineName[0] = '\0';
+    return TRUE;
+}
+
+/***********************************************************************
+ *		SetupDiGetDeviceInfoListDetailW  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDeviceInfoListDetailW(
+        HDEVINFO DeviceInfoSet,
+        PSP_DEVINFO_LIST_DETAIL_DATA_W DevInfoData )
+{
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+
+    TRACE("%p %p\n", DeviceInfoSet, DevInfoData);
+
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DevInfoData ||
+            DevInfoData->cbSize != sizeof(SP_DEVINFO_LIST_DETAIL_DATA_W))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    memcpy(&DevInfoData->ClassGuid, &set->ClassGuid, sizeof(GUID));
+    DevInfoData->RemoteMachineHandle = NULL;
+    DevInfoData->RemoteMachineName[0] = '\0';
+    return TRUE;
+}
+
+/***********************************************************************
  *		SetupDiCreateDeviceInterfaceA (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiCreateDeviceInterfaceA(
