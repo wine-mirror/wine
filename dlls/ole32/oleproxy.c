@@ -402,9 +402,10 @@ static HRESULT WINAPI CFProxy_CreateInstance(
     hGlobal = GlobalAlloc(GMEM_MOVEABLE|GMEM_NODISCARD|GMEM_SHARE,msg.cbBuffer);
     memcpy(GlobalLock(hGlobal),msg.Buffer,msg.cbBuffer);
     hres = CreateStreamOnHGlobal(hGlobal,TRUE,&pStream);
-    if (hres) {
+    if (hres != S_OK) {
 	FIXME("CreateStreamOnHGlobal failed with %x\n",hres);
 	IRpcChannelBuffer_FreeBuffer(This->chanbuf,&msg);
+        GlobalFree(hGlobal);
 	return hres;
     }
     hres = IStream_Read(pStream, ppv, sizeof(*ppv), NULL);
