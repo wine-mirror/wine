@@ -796,6 +796,15 @@ static void WINAPI IWineGDISurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
     }
 }
 
+static HRESULT WINAPI IWineGDISurfaceImpl_LoadLocation(IWineD3DSurface *iface, DWORD flag, const RECT *rect) {
+    if(flag != SFLAG_INSYSMEM) {
+        ERR("GDI Surface requested to be copied to gl %s\n", flag == SFLAG_INTEXTURE ? "texture" : "drawable");
+    } else {
+        TRACE("Surface requested in surface memory\n");
+    }
+    return WINED3D_OK;
+}
+
 /* FIXME: This vtable should not use any IWineD3DSurface* implementation functions,
  * only IWineD3DBaseSurface and IWineGDISurface ones.
  */
@@ -851,5 +860,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DSurfaceImpl_GetData,
     IWineD3DBaseSurfaceImpl_SetFormat,
     IWineGDISurfaceImpl_PrivateSetup,
-    IWineGDISurfaceImpl_ModifyLocation
+    IWineGDISurfaceImpl_ModifyLocation,
+    IWineGDISurfaceImpl_LoadLocation
 };

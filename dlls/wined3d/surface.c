@@ -3549,6 +3549,51 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
     }
 }
 
+static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, DWORD flag, const RECT *rect) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    TRACE("(%p)->(%s, %p)\n", iface,
+          flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
+          rect);
+    if(rect) {
+        TRACE("Rectangle: (%d,%d)-(%d,%d)\n", rect->left, rect->top, rect->right, rect->bottom);
+    }
+
+    /* TODO: For fbo targets, texture == drawable */
+    if(This->Flags & flag) {
+        TRACE("Location already up to date\n");
+        return WINED3D_OK;
+    }
+
+    if(!(This->Flags & SFLAG_LOCATIONS)) {
+        ERR("Surface does not have any up to date location\n");
+        This->Flags |= SFLAG_LOST;
+        return WINED3DERR_DEVICELOST;
+    }
+
+    if(flag == SFLAG_INSYSMEM) {
+        /* Download the surface to system memory */
+        if(This->Flags & SFLAG_INTEXTURE) {
+            /* Download texture to sysmem */
+        } else {
+            /* Download drawable to sysmem */
+        }
+    } else if(flag == SFLAG_INDRAWABLE) {
+        if(This->Flags & SFLAG_INTEXTURE) {
+            /* Blit texture to drawable */
+        } else {
+            /* Load drawable from sysmem */
+        }
+    } else /* if(flag == SFLAG_INTEXTURE) */ {
+        if(This->Flags & SFLAG_INDRAWABLE) {
+            /* glCopyTexImage the drawable into the texture */
+        } else {
+            /* Load the texture from sysmem */
+        }
+    }
+
+    return WINED3D_OK;
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -3601,5 +3646,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_GetData,
     IWineD3DSurfaceImpl_SetFormat,
     IWineD3DSurfaceImpl_PrivateSetup,
-    IWineD3DSurfaceImpl_ModifyLocation
+    IWineD3DSurfaceImpl_ModifyLocation,
+    IWineD3DSurfaceImpl_LoadLocation
 };
