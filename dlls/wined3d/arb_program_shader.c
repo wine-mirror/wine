@@ -598,10 +598,15 @@ static void shader_arb_color_correction(SHADER_OPCODE_ARG* arg) {
         case WINED3DFMT_V16U16:
             if(GL_SUPPORT(NV_TEXTURE_SHADER) ||
                (GL_SUPPORT(ATI_ENVMAP_BUMPMAP) && fmt == WINED3DFMT_V8U8)) {
-                /* The 3rd channel returns 1.0 in d3d, but 0.0 in gl. Fix this while we're at it :-) */
+#if 0
+                /* The 3rd channel returns 1.0 in d3d, but 0.0 in gl. Fix this while we're at it :-)
+                 * disabled until an application that needs it is found because it causes unneeded
+                 * shader recompilation in some game
+                 */
                 if(strlen(writemask) >= 4) {
                     shader_addline(arg->buffer, "MOV %s.%c, one.z;\n", reg, writemask[3]);
                 }
+#endif
             } else {
                 /* Correct the sign, but leave the blue as it is - it was loaded correctly already
                  * ARB shaders are a bit picky wrt writemasks and swizzles. If we're free to scale

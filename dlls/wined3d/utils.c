@@ -230,18 +230,33 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         gl_info->gl_formats[dst].conversion_group= WINED3DFMT_UNKNOWN;
     }
 
-    /* V8U8 and V16U16 are always tidied up in the pixel shader - blue is set to 1.0.
-     * They can't be switched with other formats, but they can be switched with each other,
-     * except if GL_ATI_envmap_bumpmap is supported. In this case, V8U8 uses the gl native format,
-     * but V16U16 is converted.
+    /* V8U8 is supported natively by GL_ATI_envmap_bumpmap and GL_NV_texture_shader.
+     * V16U16 is only supported by GL_NV_texture_shader. The formats need fixup if
+     * their extensions are not available.
+     *
+     * In theory, V8U8 and V16U16 need a fixup of the undefined blue channel. OpenGL
+     * returns 0.0 when sampling from it, DirectX 1.0. This is disabled until we find
+     * an application that needs this because it causes performance problems due to
+     * shader recompiling in some games.
      */
-    dst = getFmtIdx(WINED3DFMT_V8U8);
-    gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
-    dst = getFmtIdx(WINED3DFMT_V16U16);
-    if(!GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+    if(!GL_SUPPORT(ATI_ENVMAP_BUMPMAP) && !GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+        /* signed -> unsigned fixup */
+        dst = getFmtIdx(WINED3DFMT_V8U8);
         gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
-    } else {
+        dst = getFmtIdx(WINED3DFMT_V16U16);
+        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
+    } else if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+        /* signed -> unsigned fixup */
+        dst = getFmtIdx(WINED3DFMT_V16U16);
         gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V16U16;
+    } else {
+        /* Blue = 1.0 fixup, disabled for now */
+#if 0
+        dst = getFmtIdx(WINED3DFMT_V8U8);
+        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
+        dst = getFmtIdx(WINED3DFMT_V16U16);
+        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
+#endif
     }
 
     if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
