@@ -970,7 +970,7 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
             Polyline(hdc, line_pts, num_pts);
 
         MoveToEx(hdc, line_pts[num_pts - 1].x, line_pts[num_pts - 1].y, NULL);
-
+        HeapFree(GetProcessHeap(), 0, line_pts);
         result = TRUE;
     }
 
