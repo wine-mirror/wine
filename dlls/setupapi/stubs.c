@@ -50,17 +50,6 @@ DWORD WINAPI suErrorToIds16( WORD w1, WORD w2 )
 }
 
 /***********************************************************************
- *		  (SETUPAPI.@)
- *
- * NO WINAPI in description given
- */
-HDEVINFO WINAPI SetupDiGetClassDevsExA(const GUID *class, PCSTR filter, HWND parent, DWORD flags, HDEVINFO deviceset, PCSTR machine, PVOID reserved)
-{
-  FIXME("filter %s machine %s\n",debugstr_a(filter),debugstr_a(machine));
-  return FALSE;
-}
-
-/***********************************************************************
  *		CM_Connect_MachineW  (SETUPAPI.@)
  */
 DWORD WINAPI CM_Connect_MachineW(LPCWSTR name, void * machine)

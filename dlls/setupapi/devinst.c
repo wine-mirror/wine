@@ -1769,6 +1769,53 @@ end:
     return ret;
 }
 
+/***********************************************************************
+ *		  SetupDiGetClassDevsExA (SETUPAPI.@)
+ */
+HDEVINFO WINAPI SetupDiGetClassDevsExA(
+        const GUID *class,
+        PCSTR enumstr,
+        HWND parent,
+        DWORD flags,
+        HDEVINFO deviceset,
+        PCSTR machine,
+        PVOID reserved)
+{
+    HDEVINFO ret;
+    LPWSTR enumstrW = NULL, machineW = NULL;
+
+    if (enumstr)
+    {
+        int len = MultiByteToWideChar(CP_ACP, 0, enumstr, -1, NULL, 0);
+        enumstrW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!enumstrW)
+        {
+            ret = (HDEVINFO)INVALID_HANDLE_VALUE;
+            goto end;
+        }
+        MultiByteToWideChar(CP_ACP, 0, enumstr, -1, enumstrW, len);
+    }
+    if (machine)
+    {
+        int len = MultiByteToWideChar(CP_ACP, 0, machine, -1, NULL, 0);
+        machineW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!machineW)
+        {
+            HeapFree(GetProcessHeap(), 0, enumstrW);
+            ret = (HDEVINFO)INVALID_HANDLE_VALUE;
+            goto end;
+        }
+        MultiByteToWideChar(CP_ACP, 0, machine, -1, machineW, len);
+    }
+    ret = SetupDiGetClassDevsExW(class, enumstrW, parent, flags, deviceset,
+            machineW, reserved);
+    HeapFree(GetProcessHeap(), 0, enumstrW);
+    HeapFree(GetProcessHeap(), 0, machineW);
+
+end:
+    return ret;
+}
+
 static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
         const GUID *interface)
 {
