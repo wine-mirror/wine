@@ -271,6 +271,7 @@ static void test_MapViewOfFile(void)
     static const char testfile[] = "testfile.xxx";
     HANDLE file, mapping;
     void *ptr;
+    MEMORY_BASIC_INFORMATION info;
 
     SetLastError(0xdeadbeef);
     file = CreateFileA( testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
@@ -457,6 +458,41 @@ static void test_MapViewOfFile(void)
     ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
 todo_wine ok( !ptr, "MapViewOfFile FILE_MAP_WRITE should fail\n" );
 todo_wine ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ok( VirtualQuery( ptr, &info, sizeof(info) ) == sizeof(info),
+        "VirtualQuery error %u\n", GetLastError() );
+    ok( info.BaseAddress == ptr, "%p != %p\n", info.BaseAddress, ptr );
+    ok( info.AllocationBase == ptr, "%p != %p\n", info.AllocationBase, ptr );
+todo_wine ok( info.AllocationProtect == PAGE_READONLY, "%x != PAGE_READONLY\n", info.AllocationProtect );
+    ok( info.RegionSize == 4096, "%lx != 4096\n", info.RegionSize );
+    ok( info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State );
+todo_wine ok( info.Protect == PAGE_READONLY, "%x != PAGE_READONLY\n", info.Protect );
+    UnmapViewOfFile( ptr );
+    CloseHandle( mapping );
+
+    SetLastError(0xdeadbeef);
+    mapping = OpenFileMapping( FILE_MAP_WRITE, FALSE, "Global\\Foo" );
+    ok( mapping != 0, "OpenFileMapping FILE_MAP_WRITE error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+todo_wine ok( !ptr, "MapViewOfFile FILE_MAP_READ should fail\n" );
+todo_wine ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_WRITE error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ok( VirtualQuery( ptr, &info, sizeof(info) ) == sizeof(info),
+        "VirtualQuery error %u\n", GetLastError() );
+    ok( info.BaseAddress == ptr, "%p != %p\n", info.BaseAddress, ptr );
+    ok( info.AllocationBase == ptr, "%p != %p\n", info.AllocationBase, ptr );
+    ok( info.AllocationProtect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.AllocationProtect );
+    ok( info.RegionSize == 4096, "%lx != 4096\n", info.RegionSize );
+    ok( info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State );
+    ok( info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect );
+    UnmapViewOfFile( ptr );
     CloseHandle( mapping );
 
     CloseHandle( file );
