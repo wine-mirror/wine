@@ -1761,7 +1761,8 @@ HDEVINFO WINAPI SetupDiGetClassDevsA(
         }
         MultiByteToWideChar(CP_ACP, 0, enumstr, -1, enumstrW, len);
     }
-    ret = SetupDiGetClassDevsW(class, enumstrW, parent, flags);
+    ret = SetupDiGetClassDevsExW(class, enumstrW, parent, flags, NULL, NULL,
+            NULL);
     HeapFree(GetProcessHeap(), 0, enumstrW);
 
 end:
