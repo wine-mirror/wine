@@ -71,7 +71,7 @@ static const char Printers[]          = "System\\CurrentControlSet\\Control\\Pri
 INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
 {
     INT ret = 0;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
 
     TRACE("DocName = %s Output = %s Datatype = %s\n",
           debugstr_w(doc->lpszDocName), debugstr_w(doc->lpszOutput),
@@ -80,7 +80,7 @@ INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
     if(!dc) return SP_ERROR;
 
     if (dc->funcs->pStartDoc) ret = dc->funcs->pStartDoc( dc->physDev, doc );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -136,11 +136,11 @@ INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 INT WINAPI EndDoc(HDC hdc)
 {
     INT ret = 0;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
     if(!dc) return SP_ERROR;
 
     if (dc->funcs->pEndDoc) ret = dc->funcs->pEndDoc( dc->physDev );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -152,14 +152,14 @@ INT WINAPI EndDoc(HDC hdc)
 INT WINAPI StartPage(HDC hdc)
 {
     INT ret = 1;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
     if(!dc) return SP_ERROR;
 
     if(dc->funcs->pStartPage)
         ret = dc->funcs->pStartPage( dc->physDev );
     else
         FIXME("stub\n");
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -170,19 +170,17 @@ INT WINAPI StartPage(HDC hdc)
  */
 INT WINAPI EndPage(HDC hdc)
 {
-    ABORTPROC abort_proc;
     INT ret = 0;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
     if(!dc) return SP_ERROR;
 
     if (dc->funcs->pEndPage) ret = dc->funcs->pEndPage( dc->physDev );
-    abort_proc = dc->pAbortProc;
-    DC_ReleaseDCPtr( dc );
-    if (abort_proc && !abort_proc( hdc, 0 ))
+    if (dc->pAbortProc && !dc->pAbortProc( hdc, 0 ))
     {
         EndDoc( hdc );
         ret = 0;
     }
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -193,11 +191,11 @@ INT WINAPI EndPage(HDC hdc)
 INT WINAPI AbortDoc(HDC hdc)
 {
     INT ret = 0;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
     if(!dc) return SP_ERROR;
 
     if (dc->funcs->pAbortDoc) ret = dc->funcs->pAbortDoc( dc->physDev );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -214,19 +212,14 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc16, INT16 reserved)
 {
     BOOL ret = TRUE;
     HDC hdc = HDC_32( hdc16 );
-    DC *dc = DC_GetDCPtr( hdc );
-    ABORTPROC abproc;
+    DC *dc = get_dc_ptr( hdc );
 
     if(!dc) {
         ERR("Invalid hdc %p\n", hdc);
 	return FALSE;
     }
-
-    abproc = dc->pAbortProc;
-    DC_ReleaseDCPtr( dc );
-
-    if (abproc)
-	ret = abproc(hdc, 0);
+    if (dc->pAbortProc) ret = dc->pAbortProc(hdc, 0);
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -237,11 +230,11 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc16, INT16 reserved)
 static BOOL CALLBACK call_abort_proc16( HDC hdc, INT code )
 {
     ABORTPROC16 proc16;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
 
     if (!dc) return FALSE;
     proc16 = dc->pAbortProc16;
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     if (proc16)
     {
         WORD args[2];
@@ -262,12 +255,13 @@ static BOOL CALLBACK call_abort_proc16( HDC hdc, INT code )
 INT16 WINAPI SetAbortProc16(HDC16 hdc16, ABORTPROC16 abrtprc)
 {
     HDC hdc = HDC_32( hdc16 );
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
 
     if (!dc) return FALSE;
     dc->pAbortProc16 = abrtprc;
-    DC_ReleaseDCPtr( dc );
-    return SetAbortProc( hdc, call_abort_proc16 );
+    dc->pAbortProc   = call_abort_proc16;
+    release_dc_ptr( dc );
+    return TRUE;
 }
 
 /**********************************************************************
@@ -276,11 +270,11 @@ INT16 WINAPI SetAbortProc16(HDC16 hdc16, ABORTPROC16 abrtprc)
  */
 INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
 {
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
 
     if (!dc) return FALSE;
     dc->pAbortProc = abrtprc;
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return TRUE;
 }
 
