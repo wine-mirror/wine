@@ -1283,6 +1283,84 @@ void pshader_hw_texdepth(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "MAX result.depth, TMP.x, 0.0;\n", dst_name, dst_name);
 }
 
+/** Process the WINED3DSIO_TEXDP3TEX instruction in ARB:
+ * Take a 3-component dot product of the TexCoord[dstreg] and src,
+ * then perform a 1D texture lookup from stage dstregnum, place into dst. */
+void pshader_hw_texdp3tex(SHADER_OPCODE_ARG* arg) {
+    SHADER_BUFFER* buffer = arg->buffer;
+    DWORD sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+    char src0[50];
+    char dst_str[8];
+
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0);
+    shader_addline(buffer, "MOV TMP, 0.0;\n");
+    shader_addline(buffer, "DP3 TMP.x, T%u, %s;\n", sampler_idx, src0);
+
+    sprintf(dst_str, "T%u", sampler_idx);
+    shader_hw_sample(arg, sampler_idx, dst_str, "TMP", FALSE /* Only one coord, can't be projected */);
+}
+
+/** Process the WINED3DSIO_TEXDP3 instruction in ARB:
+ * Take a 3-component dot product of the TexCoord[dstreg] and src. */
+void pshader_hw_texdp3(SHADER_OPCODE_ARG* arg) {
+    char src0[50];
+    char dst_str[50];
+    char dst_mask[6];
+    DWORD dstreg = arg->dst & WINED3DSP_REGNUM_MASK;
+    SHADER_BUFFER* buffer = arg->buffer;
+
+    /* Handle output register */
+    pshader_get_register_name(arg->dst, dst_str);
+    shader_arb_get_write_mask(arg, arg->dst, dst_mask);
+
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0);
+    shader_addline(buffer, "DP3 %s%s, T%u, %s;\n", dst_str, dst_mask, dstreg, src0);
+
+    /* TODO: Handle output modifiers */
+}
+
+/** Process the WINED3DSIO_TEXM3X3 instruction in ARB
+ * Perform the 3rd row of a 3x3 matrix multiply */
+void pshader_hw_texm3x3(SHADER_OPCODE_ARG* arg) {
+    SHADER_BUFFER* buffer = arg->buffer;
+    char dst_str[50];
+    char dst_mask[6];
+    char src0[50];
+    DWORD dst_reg = arg->dst & WINED3DSP_REGNUM_MASK;
+
+    pshader_get_register_name(arg->dst, dst_str);
+    shader_arb_get_write_mask(arg, arg->dst, dst_mask);
+
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0);
+    shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", dst_reg, src0);
+    shader_addline(buffer, "MOV %s%s, TMP;\n", dst_str, dst_mask);
+
+    /* TODO: Handle output modifiers */
+}
+
+/** Process the WINED3DSIO_TEXM3X2DEPTH instruction in ARB:
+ * Last row of a 3x2 matrix multiply, use the result to calculate the depth:
+ * Calculate tmp0.y = TexCoord[dstreg] . src.xyz;  (tmp0.x has already been calculated)
+ * depth = (tmp0.y == 0.0) ? 1.0 : tmp0.x / tmp0.y
+ */
+void pshader_hw_texm3x2depth(SHADER_OPCODE_ARG* arg) {
+    SHADER_BUFFER* buffer = arg->buffer;
+    DWORD dst_reg = arg->dst & WINED3DSP_REGNUM_MASK;
+    char src0[50];
+
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0);
+    shader_addline(buffer, "DP3 TMP.y, T%u, %s;\n", dst_reg, src0);
+
+    /* How to deal with the special case dst_name.g == 0? if r != 0, then
+     * the r * (1 / 0) will give infinity, which is clamped to 1.0, the correct
+     * result. But if r = 0.0, then 0 * inf = 0, which is incorrect.
+     */
+    shader_addline(buffer, "RCP TMP.y, TMP.y;\n");
+    shader_addline(buffer, "MUL TMP.x, TMP.x, TMP.y;\n");
+    shader_addline(buffer, "MIN TMP.x, TMP.x, one.r;\n");
+    shader_addline(buffer, "MAX result.depth, TMP.x, 0.0;\n");
+}
+
 /** Handles transforming all WINED3DSIO_M?x? opcodes for
     Vertex shaders to ARB_vertex_program codes */
 void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
