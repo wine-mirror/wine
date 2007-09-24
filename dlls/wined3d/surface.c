@@ -3502,6 +3502,27 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
     }
 }
 
+/*****************************************************************************
+ * IWineD3DSurface::LoadLocation
+ *
+ * Copies the current surface data from wherever it is to the requested
+ * location. The location is one of the surface flags, SFLAG_INSYSMEM,
+ * SFLAG_INTEXTURE and SFLAG_INDRAWABLE. When the surface is current in
+ * multiple locations, the gl texture is prefered over the drawable, which is
+ * prefered over system memory. The PBO counts as system memory. If rect is
+ * not NULL, only the specified rectangle is copied(only supported for
+ * sysmem<->drawable copies at the moment). If rect is NULL, the destination
+ * location is marked up to date after the copy.
+ *
+ * Parameters:
+ *  flag: Surface location flag to be updated
+ *  rect: rectangle to be copied
+ *
+ * Returns:
+ *  WINED3D_OK on success
+ *  WINED3DERR_DEVICELOST on an internal error
+ *
+ *****************************************************************************/
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, DWORD flag, const RECT *rect) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *myDevice;
