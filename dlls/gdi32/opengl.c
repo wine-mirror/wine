@@ -47,7 +47,7 @@ typedef struct opengl_context
 
 /* We route all wgl functions from opengl32.dll through gdi32.dll to
  * the display driver. Various wgl calls have a hDC as one of their parameters.
- * Using DC_GetDCPtr we get access to the functions exported by the driver.
+ * Using get_dc_ptr we get access to the functions exported by the driver.
  * Some functions don't receive a hDC. This function creates a global hdc and
  * if there's already a global hdc, it returns it.
  */
@@ -94,13 +94,13 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc)
         return FALSE;
 
     /* Retrieve the HDC associated with the context to access the display driver */
-    dc = DC_GetDCPtr(ctx->hdc);
+    dc = get_dc_ptr(ctx->hdc);
     if (!dc) return FALSE;
 
     if (!dc->funcs->pwglDeleteContext) FIXME(" :stub\n");
     else ret = dc->funcs->pwglDeleteContext(hglrc);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -139,7 +139,7 @@ static HDC WINAPI wglGetPbufferDCARB(void *pbuffer)
 
     /* Create a device context to associate with the pbuffer */
     HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-    DC *dc = DC_GetDCPtr(hdc);
+    DC *dc = get_dc_ptr(hdc);
 
     TRACE("(%p)\n", pbuffer);
 
@@ -152,8 +152,8 @@ static HDC WINAPI wglGetPbufferDCARB(void *pbuffer)
     else ret = dc->funcs->pwglGetPbufferDCARB(dc->physDev, pbuffer);
 
     TRACE("(%p), hdc=%p\n", pbuffer, ret);
-    
-    DC_ReleaseDCPtr( dc );
+
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -227,15 +227,15 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
     TRACE("hglrc1: (%p); hglrc: (%p)\n", hglrc1, hglrc2);
     if(ctx == NULL)
         return FALSE;
-    
+
     /* Retrieve the HDC associated with the context to access the display driver */
-    dc = DC_GetDCPtr(ctx->hdc);
+    dc = get_dc_ptr(ctx->hdc);
     if (!dc) return FALSE;
 
     if (!dc->funcs->pwglShareLists) FIXME(" :stub\n");
     else ret = dc->funcs->pwglShareLists(hglrc1, hglrc2);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -245,7 +245,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
 BOOL WINAPI wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)
 {
     BOOL ret = FALSE;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
     TRACE("(%p, %d, %d, %d)\n", hdc, first, count, listBase);
 
@@ -254,7 +254,7 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase
     if (!dc->funcs->pwglUseFontBitmapsA) FIXME(" :stub\n");
     else ret = dc->funcs->pwglUseFontBitmapsA(dc->physDev, first, count, listBase);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -264,7 +264,7 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase
 BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase)
 {
     BOOL ret = FALSE;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
     TRACE("(%p, %d, %d, %d)\n", hdc, first, count, listBase);
 
@@ -273,7 +273,7 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase
     if (!dc->funcs->pwglUseFontBitmapsW) FIXME(" :stub\n");
     else ret = dc->funcs->pwglUseFontBitmapsW(dc->physDev, first, count, listBase);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
