@@ -2098,8 +2098,36 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(
         PCWSTR machine,
         PVOID reserved)
 {
-    FIXME("stub\n");
-    return NULL;
+    static const DWORD unsupportedFlags = DIGCF_DEFAULT | DIGCF_PRESENT |
+        DIGCF_PROFILE;
+    HDEVINFO set;
+
+    TRACE("%s %s %p 0x%08x %p %s %p\n", debugstr_guid(class),
+            debugstr_w(enumstr), parent, flags, deviceset, debugstr_w(machine),
+            reserved);
+
+    if (!(flags & DIGCF_ALLCLASSES) && !class)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+    if (flags & unsupportedFlags)
+        WARN("unsupported flags %08x\n", flags & unsupportedFlags);
+    if (deviceset)
+        set = deviceset;
+    else
+        set = SetupDiCreateDeviceInfoListExW(class, parent, machine, reserved);
+    if (set)
+    {
+        if (machine)
+            FIXME("%s: unimplemented for remote machines\n",
+                    debugstr_w(machine));
+        else if (flags & DIGCF_DEVICEINTERFACE)
+            SETUPDI_EnumerateInterfaces(set, class, enumstr, flags);
+        else
+            SETUPDI_EnumerateDevices(set, class, enumstr, flags);
+    }
+    return set;
 }
 
 /***********************************************************************
