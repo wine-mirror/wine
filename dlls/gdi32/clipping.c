@@ -172,7 +172,7 @@ INT16 WINAPI SelectVisRgn16( HDC16 hdc16, HRGN16 hrgn )
     DC * dc;
 
     if (!hrgn) return ERROR;
-    if (!(dc = DC_GetDCPtr( hdc ))) return ERROR;
+    if (!(dc = get_dc_ptr( hdc ))) return ERROR;
 
     TRACE("%p %04x\n", hdc, hrgn );
 
@@ -180,7 +180,7 @@ INT16 WINAPI SelectVisRgn16( HDC16 hdc16, HRGN16 hrgn )
 
     retval = CombineRgn( dc->hVisRgn, HRGN_32(hrgn), 0, RGN_COPY );
     CLIPPING_UpdateGCRegion( dc );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return retval;
 }
 
@@ -478,14 +478,14 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
 {
     INT ret = -1;
     DC * dc;
-    if (hRgn && (dc = DC_GetDCPtr( hdc )))
+    if (hRgn && (dc = get_dc_ptr( hdc )))
     {
       if( dc->hClipRgn )
       {
           if( CombineRgn(hRgn, dc->hClipRgn, 0, RGN_COPY) != ERROR ) ret = 1;
       }
       else ret = 0;
-      DC_ReleaseDCPtr( dc );
+      release_dc_ptr( dc );
     }
     return ret;
 }
@@ -497,13 +497,13 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
 INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
 {
     INT ret = 0;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
     if (dc)
     {
         if (dc->hMetaRgn && CombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY ) != ERROR)
             ret = 1;
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
     }
     return ret;
 }
@@ -544,7 +544,7 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
 {
     struct saved_visrgn *saved;
     HDC hdc = HDC_32( hdc16 );
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
     INT16 ret = ERROR;
 
     if (!dc) return ERROR;
@@ -559,7 +559,7 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
     HeapFree( GetProcessHeap(), 0, saved );
     CLIPPING_UpdateGCRegion( dc );
  done:
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -628,7 +628,7 @@ INT WINAPI SetMetaRgn( HDC hdc )
 {
     INT ret;
     RECT dummy;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
 
     if (!dc) return ERROR;
 
@@ -651,6 +651,6 @@ INT WINAPI SetMetaRgn( HDC hdc )
     /* Note: no need to call CLIPPING_UpdateGCRegion, the overall clip region hasn't changed */
 
     ret = GetRgnBox( dc->hMetaRgn, &dummy );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
