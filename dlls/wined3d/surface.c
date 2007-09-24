@@ -624,7 +624,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
 static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
-    IWineD3DSwapChainImpl *swapchain = NULL;
+    IWineD3DSwapChain *swapchain = NULL;
 
     TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
 
@@ -734,70 +734,41 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
      */
     IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
     if(swapchain || iface == myDevice->render_targets[0]) {
-        BOOL srcIsUpsideDown;
+        RECT *read_rect;
 
-        if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
-            static BOOL warned = FALSE;
-            if(!warned) {
-                ERR("The application tries to lock the render target, but render target locking is disabled\n");
-                warned = TRUE;
-            }
-            if(swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-            return WINED3D_OK;
-        }
-
-        /* Activate the surface. Set it up for blitting now, although not necessarily needed for LockRect.
-         * Certain graphics drivers seem to dislike some enabled states when reading from opengl, the blitting usage
-         * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
-         * context->last_was_blit set on the unlock.
-         */
-        ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
-        ENTER_GL();
-
-        /* Select the correct read buffer, and give some debug output.
-         * There is no need to keep track of the current read buffer or reset it, every part of the code
-         * that reads sets the read buffer as desired.
-         */
-        if(!swapchain) {
-            /* Locking the primary render target which is not on a swapchain(=offscreen render target).
-             * Read from the back buffer
-             */
-            TRACE("Locking offscreen render target\n");
-            glReadBuffer(myDevice->offscreenBuffer);
-            srcIsUpsideDown = TRUE;
-        } else {
-            GLenum buffer = surface_get_gl_buffer(iface, (IWineD3DSwapChain *)swapchain);
-            TRACE("Locking %#x buffer\n", buffer);
-            glReadBuffer(buffer);
-            checkGLcall("glReadBuffer");
-
-            IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-            srcIsUpsideDown = FALSE;
-        }
-
-        switch(wined3d_settings.rendertargetlock_mode) {
-            case RTL_AUTO:
-            case RTL_READDRAW:
-            case RTL_READTEX:
-                read_from_framebuffer(This, &This->lockedRect, This->resource.allocatedMemory, pLockedRect->Pitch, srcIsUpsideDown);
-                break;
-
-            case RTL_TEXDRAW:
-            case RTL_TEXTEX:
-                read_from_framebuffer(This, &This->lockedRect, This->resource.allocatedMemory, pLockedRect->Pitch, srcIsUpsideDown);
-                FIXME("Reading from render target with a texture isn't implemented yet, falling back to framebuffer reading\n");
-                break;
-        }
-
-        LEAVE_GL();
-
-        /* Mark the local copy up to date if a full download was done */
         if(This->lockedRect.left == 0 &&
            This->lockedRect.top == 0 &&
            This->lockedRect.right == This->currentDesc.Width &&
            This->lockedRect.bottom == This->currentDesc.Height) {
-            This->Flags |= SFLAG_INSYSMEM;
+            read_rect = NULL;
+        } else {
+            read_rect = &This->lockedRect;
         }
+
+        switch(wined3d_settings.rendertargetlock_mode) {
+            case RTL_TEXDRAW:
+            case RTL_TEXTEX:
+                FIXME("Reading from render target with a texture isn't implemented yet, falling back to framebuffer reading\n");
+#if 0
+                /* Disabled for now. LoadLocation prefers the texture over the drawable as the source. So if we copy to the
+                 * texture first, then to sysmem, we'll avoid glReadPixels and use glCopyTexImage and glGetTexImage2D instead.
+                 * This may be faster on some cards
+                 */
+                IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL /* No partial texture copy yet */);
+#endif
+                /* drop through */
+
+            case RTL_AUTO:
+            case RTL_READDRAW:
+            case RTL_READTEX:
+                IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, read_rect);
+                break;
+
+            case RTL_DISABLE:
+                break;
+        }
+        if(swapchain) IWineD3DSwapChain_Release(swapchain);
+
     } else if(iface == myDevice->stencilBufferTarget) {
         /** the depth stencil in openGL has a format of GL_FLOAT
          * which should be good for WINED3DFMT_D16_LOCKABLE
@@ -3534,6 +3505,9 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, DWORD flag, const RECT *rect) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *myDevice;
+    IWineD3DSwapChainImpl *swapchain;
+    BOOL srcIsUpsideDown;
+    RECT local_rect;
 
     TRACE("(%p)->(%s, %p)\n", iface,
           flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
@@ -3567,7 +3541,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             }
 
             ENTER_GL();
-            /* Make sure that a proper texture unit is selected, bind the texture and dirtify the sampler to restore the texture on the next draw */
+            /* Make sure that a proper texture unit is selected, bind the texture
+             * and dirtify the sampler to restore the texture on the next draw
+             */
             if (GL_SUPPORT(ARB_MULTITEXTURE)) {
                 GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
                 checkGLcall("glActiveTextureARB");
@@ -3578,7 +3554,58 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             surface_download_data(This);
             LEAVE_GL();
         } else {
-            /* Download drawable to sysmem */
+            if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
+                static BOOL warned = FALSE;
+                if(!warned) {
+                    ERR("The application tries to lock the render target, but render target locking is disabled\n");
+                    warned = TRUE;
+                }
+                goto load_end;
+            }
+
+            IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
+            /* Activate the surface. Set it up for blitting now, although not necessarily needed for LockRect.
+             * Certain graphics drivers seem to dislike some enabled states when reading from opengl, the blitting usage
+             * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
+             * context->last_was_blit set on the unlock.
+             */
+            ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
+            ENTER_GL();
+
+            /* Select the correct read buffer, and give some debug output.
+             * There is no need to keep track of the current read buffer or reset it, every part of the code
+             * that reads sets the read buffer as desired.
+             */
+            if(!swapchain) {
+                /* Locking the primary render target which is not on a swapchain(=offscreen render target).
+                 * Read from the back buffer
+                 */
+                TRACE("Locking offscreen render target\n");
+                glReadBuffer(myDevice->offscreenBuffer);
+                srcIsUpsideDown = TRUE;
+            } else {
+                GLenum buffer = surface_get_gl_buffer(iface, (IWineD3DSwapChain *)swapchain);
+                TRACE("Locking %#x buffer\n", buffer);
+                glReadBuffer(buffer);
+                checkGLcall("glReadBuffer");
+
+                IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+                srcIsUpsideDown = FALSE;
+            }
+
+            /* TODO: Get rid of the extra rectangle comparison and construction of a full surface rectangle */
+            if(!rect) {
+                local_rect.left = 0;
+                local_rect.top = 0;
+                local_rect.right = This->currentDesc.Width;
+                local_rect.bottom = This->currentDesc.Height;
+            }
+            /* TODO: Get rid of the extra GetPitch call, LockRect does that too. Cache the pitch */
+            read_from_framebuffer(This, rect ? rect : &local_rect,
+                                  This->resource.allocatedMemory,
+                                  IWineD3DSurface_GetPitch(iface),
+                                  srcIsUpsideDown);
+            LEAVE_GL();
         }
     } else if(flag == SFLAG_INDRAWABLE) {
         if(This->Flags & SFLAG_INTEXTURE) {
@@ -3592,6 +3619,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         } else {
             /* Load the texture from sysmem */
         }
+    }
+
+    load_end:
+    if(rect == NULL) {
+        This->Flags |= flag;
     }
 
     return WINED3D_OK;
