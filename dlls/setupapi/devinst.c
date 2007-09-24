@@ -2061,29 +2061,8 @@ HDEVINFO WINAPI SetupDiGetClassDevsW(
        HWND parent,
        DWORD flags)
 {
-    static const DWORD unsupportedFlags = DIGCF_DEFAULT | DIGCF_PRESENT |
-        DIGCF_PROFILE;
-    HDEVINFO set;
-
-    TRACE("%s %s %p 0x%08x\n", debugstr_guid(class), debugstr_w(enumstr), parent, flags);
-
-    if (!(flags & DIGCF_ALLCLASSES) && !class)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return NULL;
-    }
-    if (flags & unsupportedFlags)
-        WARN("unsupported flags %08x\n", flags & unsupportedFlags);
-    /* WinXP always succeeds, returns empty list for unknown classes */
-    set = SetupDiCreateDeviceInfoList(class, parent);
-    if (set)
-    {
-        if (flags & DIGCF_DEVICEINTERFACE)
-            SETUPDI_EnumerateInterfaces(set, class, enumstr, flags);
-        else
-            SETUPDI_EnumerateDevices(set, class, enumstr, flags);
-    }
-    return set;
+    return SetupDiGetClassDevsExW(class, enumstr, parent, flags, NULL, NULL,
+            NULL);
 }
 
 /***********************************************************************
