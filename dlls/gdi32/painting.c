@@ -67,7 +67,7 @@ BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
 BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
     BOOL ret = TRUE;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
     if(!dc) return FALSE;
 
@@ -80,7 +80,7 @@ BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
 
     if(PATH_IsPathOpen(dc->path)) ret = PATH_MoveTo(dc);
     else if (dc->funcs->pMoveTo) ret = dc->funcs->pMoveTo(dc->physDev,x,y);
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -335,7 +335,7 @@ COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
 INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd )
 {
     INT ret = 0;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
     TRACE("(%p,%p)\n",hdc,ppfd);
 
@@ -344,7 +344,7 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd )
     if (!dc->funcs->pChoosePixelFormat) FIXME(" :stub\n");
     else ret = dc->funcs->pChoosePixelFormat(dc->physDev,ppfd);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -427,7 +427,7 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
                                 LPPIXELFORMATDESCRIPTOR ppfd )
 {
     INT ret = 0;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
     TRACE("(%p,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);
 
@@ -442,7 +442,7 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
     }
     else ret = dc->funcs->pDescribePixelFormat(dc->physDev,iPixelFormat,nBytes,ppfd);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
