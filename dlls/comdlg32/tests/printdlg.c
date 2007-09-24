@@ -1,7 +1,7 @@
 /* 
  * Unit test suite for comdlg32 API functions: printer dialogs
  *
- * Copyright 2006 Detlef Riekenberg
+ * Copyright 2006-2007 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,10 @@
 
 #include "wine/test.h"
 
+/* ######## */
+
+static const CHAR emptyA[] = "";
+static const CHAR PrinterPortsA[] = "PrinterPorts";
 
 /* ######## */
 
@@ -100,6 +104,12 @@ static void test_PrintDlgA(void)
 {
     DWORD       res;
     LPPRINTDLGA pDlg;
+    DEVNAMES    *pDevNames;
+    LPCSTR driver;
+    LPCSTR device;
+    LPCSTR port;
+    CHAR   buffer[MAX_PATH];
+    LPSTR  ptr;
 
 
     pDlg = HeapAlloc(GetProcessHeap(), 0, (sizeof(PRINTDLGA)) * 2);
@@ -140,6 +150,62 @@ static void test_PrintDlgA(void)
         "returned %d with 0x%x and 0x%x (expected '!= 0' or '0' and "
         "PDERR_NODEFAULTPRN)\n", res, GetLastError(), CommDlgExtendedError());
 
+    if (!res && (CommDlgExtendedError() == PDERR_NODEFAULTPRN)) {
+        skip("No printer configured.\n");
+        HeapFree(GetProcessHeap(), 0, pDlg);
+        return;
+    }
+
+    ok(pDlg->hDevNames != NULL, "(expected '!= NULL')\n");
+    pDevNames = GlobalLock(pDlg->hDevNames);
+    ok(pDevNames != NULL, "(expected '!= NULL')\n");
+
+    if (pDevNames) {
+        ok(pDevNames->wDriverOffset, "(expected '!= 0' for wDriverOffset)\n");
+        ok(pDevNames->wDeviceOffset, "(expected '!= 0' for wDeviceOffset)\n");
+        ok(pDevNames->wOutputOffset, "(expected '!= 0' for wOutputOffset)\n");
+        ok(pDevNames->wDefault == DN_DEFAULTPRN, "got 0x%x (expected DN_DEFAULTPRN)\n", pDevNames->wDefault);
+
+        driver = (LPCSTR)pDevNames + pDevNames->wDriverOffset;
+        device = (LPCSTR)pDevNames + pDevNames->wDeviceOffset;
+        port = (LPCSTR)pDevNames + pDevNames->wOutputOffset;
+        trace("driver '%s' device '%s' port '%s'\n", driver, device, port);
+
+        /* The Driver Entry does not include a Path */
+        ptr = strrchr(driver, '\\');
+        todo_wine {
+        ok( ptr == NULL, "got %p for '%s' (expected NULL for a simple name)\n", ptr, driver);
+        }
+
+        /* The Driver Entry does not have an extension (fixed to ".drv") */
+        ptr = strrchr(driver, '.');
+        todo_wine {
+        ok( ptr == NULL, "got %p for '%s' (expected NULL for no extension)\n", ptr, driver);
+        }
+
+
+        buffer[0] = '\0';
+        SetLastError(0xdeadbeef);
+        res = GetProfileStringA(PrinterPortsA, device, emptyA, buffer, sizeof(buffer));
+        ptr = strchr(buffer, ',');
+        todo_wine {
+        ok( (res > 1) && (ptr != NULL),
+            "got %u with %u and %p for '%s' (expected '>1' and '!= NULL')\n",
+            res, GetLastError(), ptr, buffer);
+        }
+
+        if (ptr) ptr[0] = '\0';
+        todo_wine {
+        ok( lstrcmpiA(driver, buffer) == 0,
+            "got driver '%s' (expected '%s')\n", driver, buffer);
+        }
+
+    }
+
+    GlobalUnlock(pDlg->hDevNames);
+
+    GlobalFree(pDlg->hDevMode);
+    GlobalFree(pDlg->hDevNames);
     HeapFree(GetProcessHeap(), 0, pDlg);
 
 }
