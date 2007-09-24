@@ -443,6 +443,59 @@ typedef struct tagINPUT
     } DUMMYUNIONNAME;
 } INPUT, *PINPUT, *LPINPUT;
 
+typedef HANDLE HRAWINPUT;
+
+typedef struct tagRAWINPUTDEVICELIST
+{
+    HANDLE hDevice;
+    DWORD dwType;
+} RAWINPUTDEVICELIST, *PRAWINPUTDEVICELIST;
+
+typedef struct tagRAWHID {
+    DWORD dwSizeHid;
+    DWORD dwCount;
+    BYTE bRawData;
+} RAWHID, *LPRAWHID;
+
+typedef struct tagRAWKEYBOARD {
+    USHORT MakeCode;
+    USHORT Flags;
+    USHORT Reserved;
+    USHORT VKey;
+    UINT Message;
+    ULONG ExtraInformation;
+} RAWKEYBOARD, *PRAWKEYBOARD, *LPRAWKEYBOARD;
+
+typedef struct tagRAWMOUSE {
+    USHORT usFlags;
+    union {
+        ULONG ulButtons;
+        struct {
+            USHORT usButtonFlags;
+            USHORT usButtonData;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    ULONG ulRawButtons;
+    LONG  lLastX;
+    LONG  lLastY;
+    ULONG ulExtraInformation;
+} RAWMOUSE, *PRAWMOUSE, *LPRAWMOUSE;
+
+typedef struct tagRAWINPUTHEADER {
+    DWORD dwType;
+    DWORD dwSize;
+    HANDLE hDevice;
+    WPARAM wParam;
+} RAWINPUTHEADER, *PRAWINPUTHEADER;
+
+typedef struct tagRAWINPUT {
+    RAWINPUTHEADER header;
+    union {
+        RAWMOUSE    mouse;
+        RAWKEYBOARD keyboard;
+        RAWHID      hid;
+    } data;
+} RAWINPUT, *PRAWINPUT, *LPRAWINPUT;
 
 typedef struct tagRAWINPUTDEVICE {
     USHORT usUsagePage;
@@ -4457,6 +4510,7 @@ LRESULT     WINAPI DefFrameProcW(HWND,HWND,UINT,WPARAM,LPARAM);
 LRESULT     WINAPI DefMDIChildProcA(HWND,UINT,WPARAM,LPARAM);
 LRESULT     WINAPI DefMDIChildProcW(HWND,UINT,WPARAM,LPARAM);
 #define     DefMDIChildProc WINELIB_NAME_AW(DefMDIChildProc)
+LRESULT     WINAPI DefRawInputProc(PRAWINPUT*,INT,UINT);
 LRESULT     WINAPI DefWindowProcA(HWND,UINT,WPARAM,LPARAM);
 LRESULT     WINAPI DefWindowProcW(HWND,UINT,WPARAM,LPARAM);
 #define     DefWindowProc WINELIB_NAME_AW(DefWindowProc)
@@ -4613,8 +4667,14 @@ BOOL        WINAPI GetKeyboardLayoutNameA(LPSTR);
 BOOL        WINAPI GetKeyboardLayoutNameW(LPWSTR);
 #define     GetKeyboardLayoutName WINELIB_NAME_AW(GetKeyboardLayoutName)
 SHORT       WINAPI GetKeyState(INT);
-HWND      WINAPI GetLastActivePopup(HWND);
-BOOL      WINAPI GetLastInputInfo(PLASTINPUTINFO);
+HWND        WINAPI GetLastActivePopup(HWND);
+BOOL        WINAPI GetLastInputInfo(PLASTINPUTINFO);
+UINT        WINAPI GetRawInputBuffer(PRAWINPUT,PUINT,UINT);
+INT         WINAPI GetRawInputData(HRAWINPUT,UINT,LPVOID,PUINT,UINT);
+UINT        WINAPI GetRawInputDeviceInfoA(HANDLE,UINT,LPVOID,PUINT);
+UINT        WINAPI GetRawInputDeviceInfoW(HANDLE,UINT,LPVOID,PUINT);
+#define            GetRawInputDeviceInfo WINELIB_NAME_AW(GetRawInputDeviceInfo)
+UINT        WINAPI GetRawInputDeviceList(PRAWINPUTDEVICELIST,PUINT,UINT);
 BOOL        WINAPI GetLayeredWindowAttributes(HWND,COLORREF*,BYTE*,DWORD*);
 HMENU     WINAPI GetMenu(HWND);
 INT       WINAPI GetMenuItemCount(HMENU);
@@ -4831,9 +4891,10 @@ ATOM        WINAPI RegisterClassW(const WNDCLASSW *);
 ATOM        WINAPI RegisterClassExA(const WNDCLASSEXA *);
 ATOM        WINAPI RegisterClassExW(const WNDCLASSEXW *);
 #define     RegisterClassEx WINELIB_NAME_AW(RegisterClassEx)
-UINT      WINAPI RegisterClipboardFormatA(LPCSTR);
-UINT      WINAPI RegisterClipboardFormatW(LPCWSTR);
+UINT        WINAPI RegisterClipboardFormatA(LPCSTR);
+UINT        WINAPI RegisterClipboardFormatW(LPCWSTR);
 #define     RegisterClipboardFormat WINELIB_NAME_AW(RegisterClipboardFormat)
+BOOL        WINAPI RegisterRawInputDevices(PRAWINPUTDEVICE,UINT,UINT);
 UINT        WINAPI RegisterWindowMessageA(LPCSTR);
 UINT        WINAPI RegisterWindowMessageW(LPCWSTR);
 #define     RegisterWindowMessage WINELIB_NAME_AW(RegisterWindowMessage)

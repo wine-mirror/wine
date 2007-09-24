@@ -340,6 +340,98 @@ BOOL WINAPI GetLastInputInfo(PLASTINPUTINFO plii)
 }
 
 
+/******************************************************************
+*		GetRawInputDeviceList (USER32.@)
+*/
+UINT WINAPI GetRawInputDeviceList(PRAWINPUTDEVICELIST pRawInputDeviceList, PUINT puiNumDevices, UINT cbSize)
+{
+    FIXME("(pRawInputDeviceList=%p, puiNumDevices=%p, cbSize=%d) stub!\n", pRawInputDeviceList, puiNumDevices, cbSize);
+
+    if(pRawInputDeviceList)
+        memset(pRawInputDeviceList, 0, sizeof *pRawInputDeviceList);
+    *puiNumDevices = 0;
+    return 0;
+}
+
+
+/******************************************************************
+*		RegisterRawInputDevices (USER32.@)
+*/
+BOOL WINAPI RegisterRawInputDevices(PRAWINPUTDEVICE pRawInputDevices, UINT uiNumDevices, UINT cbSize)
+{
+    FIXME("(pRawInputDevices=%p, uiNumDevices=%d, cbSize=%d) stub!\n", pRawInputDevices, uiNumDevices, cbSize);
+
+    return TRUE;
+}
+
+
+/******************************************************************
+*		GetRawInputData (USER32.@)
+*/
+INT WINAPI GetRawInputData(HRAWINPUT hRawInput, UINT uiCommand, LPVOID pData, PUINT pcbSize, UINT cbSizeHeader)
+{
+    FIXME("(hRawInput=%p, uiCommand=%d, pData=%p, pcbSize=%p, cbSizeHeader=%d) stub!\n",
+            hRawInput, uiCommand, pData, pcbSize, cbSizeHeader);
+
+    return 0;
+}
+
+
+/******************************************************************
+*		GetRawInputBuffer (USER32.@)
+*/
+UINT WINAPI GetRawInputBuffer(PRAWINPUT pData, PUINT pcbSize, UINT cbSizeHeader)
+{
+    FIXME("(pData=%p, pcbSize=%p, cbSizeHeader=%d) stub!\n", pData, pcbSize, cbSizeHeader);
+
+    return 0;
+}
+
+
+/******************************************************************
+*		GetRawInputDeviceInfoA (USER32.@)
+*/
+UINT WINAPI GetRawInputDeviceInfoA(HANDLE hDevice, UINT uiCommand, LPVOID pData, PUINT pcbSize)
+{
+    FIXME("(hDevice=%p, uiCommand=%d, pData=%p, pcbSize=%p) stub!\n", hDevice, uiCommand, pData, pcbSize);
+
+    return 0;
+}
+
+
+/******************************************************************
+*		GetRawInputDeviceInfoW (USER32.@)
+*/
+UINT WINAPI GetRawInputDeviceInfoW(HANDLE hDevice, UINT uiCommand, LPVOID pData, PUINT pcbSize)
+{
+    FIXME("(hDevice=%p, uiCommand=%d, pData=%p, pcbSize=%p) stub!\n", hDevice, uiCommand, pData, pcbSize);
+
+    return 0;
+}
+
+
+/******************************************************************
+*		GetRegisteredRawInputDevices (USER32.@)
+*/
+UINT WINAPI GetRegisteredRawInputDevices(PRAWINPUTDEVICE pRawInputDevices, PUINT puiNumDevices, UINT cbSize)
+{
+    FIXME("(pRawInputDevices=%p, puiNumDevices=%p, cbSize=%d) stub!\n", pRawInputDevices, puiNumDevices, cbSize);
+
+    return 0;
+}
+
+
+/******************************************************************
+*		DefRawInputProc (USER32.@)
+*/
+LRESULT WINAPI DefRawInputProc(PRAWINPUT *paRawInput, INT nInput, UINT cbSizeHeader)
+{
+    FIXME("(paRawInput=%p, nInput=%d, cbSizeHeader=%d) stub!\n", *paRawInput, nInput, cbSizeHeader);
+
+    return 0;
+}
+
+
 /**********************************************************************
  *		AttachThreadInput (USER32.@)
  *

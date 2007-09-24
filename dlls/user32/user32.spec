@@ -143,7 +143,7 @@
 @ stdcall DefFrameProcW(long long long long long)
 @ stdcall DefMDIChildProcA(long long long long)
 @ stdcall DefMDIChildProcW(long long long long)
-# @ stub DefRawInputProc
+@ stdcall DefRawInputProc(ptr long long)
 @ stdcall DefWindowProcA(long long long long)
 @ stdcall DefWindowProcW(long long long long)
 @ stdcall DeferWindowPos(long long long long long long long long)
@@ -341,13 +341,13 @@
 @ stdcall GetPropA(long str)
 @ stdcall GetPropW(long wstr)
 @ stdcall GetQueueStatus(long)
-# @ stub GetRawInputBuffer
-# @ stub GetRawInputData
-# @ stub GetRawInputDeviceInfoA
-# @ stub GetRawInputDeviceInfoW
-# @ stub GetRawInputDeviceList
+@ stdcall GetRawInputBuffer(ptr ptr long)
+@ stdcall GetRawInputData(ptr long ptr ptr long)
+@ stdcall GetRawInputDeviceInfoA(ptr long ptr ptr)
+@ stdcall GetRawInputDeviceInfoW(ptr long ptr ptr)
+@ stdcall GetRawInputDeviceList(ptr ptr long)
 # @ stub GetReasonTitleFromReasonCode
-# @ stub GetRegisteredRawInputDevices
+@ stdcall GetRegisteredRawInputDevices(ptr ptr long)
 @ stdcall GetScrollBarInfo(long long ptr)
 @ stdcall GetScrollInfo(long long ptr)
 @ stdcall GetScrollPos(long long)
@@ -562,7 +562,7 @@
 @ stdcall RegisterLogonProcess(long long)
 # @ stub RegisterMessagePumpHook
 @ stub RegisterNetworkCapabilities
-# @ stub RegisterRawInputDevices
+@ stdcall RegisterRawInputDevices(ptr long long)
 @ stub RegisterServicesProcess
 @ stdcall RegisterShellHookWindow (long)
 @ stdcall RegisterSystemThread(long long)
