@@ -727,7 +727,7 @@ static void test_sequence(void)
     static const CHAR servicename [] = "Winetest";
     static const CHAR displayname [] = "Winetest dummy service";
     static const CHAR pathname    [] = "we_dont_care.exe";
-    static const CHAR dependencies[] = "Master1\0Master2\0+MasterGroup1\0\0";
+    static const CHAR dependencies[] = "Master1\0Master2\0+MasterGroup1\0";
     static const CHAR password    [] = "";
     static const CHAR empty       [] = "";
     static const CHAR localsystem [] = "LocalSystem";
