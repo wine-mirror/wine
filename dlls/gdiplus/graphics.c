@@ -1418,6 +1418,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
             break;
     }
 
+    GdipFree(stringdup);
     DeleteObject(rgn);
     DeleteObject(gdifont);
 
@@ -1827,6 +1828,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     bounds->Width = (REAL)max_width;
     bounds->Height = (REAL) min(height, nheight);
 
+    GdipFree(stringdup);
     DeleteObject(SelectObject(graphics->hdc, oldfont));
 
     return Ok;
