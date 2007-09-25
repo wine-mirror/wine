@@ -229,16 +229,3 @@ BOOL WINAPI CryptFormatObject(DWORD dwCertEncodingType, DWORD dwFormatType,
      debugstr_a(lpszStructType), pbEncoded, cbEncoded, pbFormat, pcbFormat);
     return FALSE;
 }
-
-BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void* pvObject,
-    DWORD dwExpectedContentTypeFlags, DWORD dwExpectedFormatTypeFlags,
-    DWORD dwFlags, DWORD* pdwMsgAndCertEncodingType, DWORD* pdwContentType,
-    DWORD* pdwFormatType, HCERTSTORE* phCertStore, HCRYPTMSG* phMsg,
-    const void** ppvContext)
-{
-    FIXME( "%08x %p %08x %08x %08x %p %p %p %p %p %p\n", dwObjectType,
-           pvObject, dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
-           dwFlags, pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType,
-           phCertStore, phMsg, ppvContext);
-    return FALSE;
-}
