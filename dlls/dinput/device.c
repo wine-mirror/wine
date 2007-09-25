@@ -32,6 +32,7 @@
 #include "wine/unicode.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "dinput.h"
@@ -214,6 +215,21 @@ void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) {
 	TRACE("        "); _dump_EnumObjects_flags(df->rgodf[i].dwType); TRACE("\n");
         TRACE("      * dwFlags: 0x%08x\n", df->rgodf[i].dwFlags);
     }
+}
+
+/******************************************************************************
+ * Get a config key from either the app-specific or the default config
+ */
+DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
+                             char *buffer, DWORD size )
+{
+    if (appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE)buffer, &size ))
+        return 0;
+
+    if (defkey && !RegQueryValueExA( defkey, name, 0, NULL, (LPBYTE)buffer, &size ))
+        return 0;
+
+    return ERROR_FILE_NOT_FOUND;
 }
 
 /* Conversion between internal data buffer and external data buffer */

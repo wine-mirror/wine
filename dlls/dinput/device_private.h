@@ -72,6 +72,8 @@ struct IDirectInputDevice2AImpl
     DataFormat                  data_format; /* user data format and wine to user format converter */
 };
 
+extern DWORD get_config_key(HKEY, HKEY, const char*, char*, DWORD);
+
 /* Routines to do DataFormat / WineFormat conversions */
 extern void fill_DataFormat(void *out, const void *in, const DataFormat *df) ;
 extern HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format);
