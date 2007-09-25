@@ -575,7 +575,6 @@ static size_t write_conf_or_var_desc(FILE *file, const type_t *structure,
         const type_t *correlation_variable = NULL;
         unsigned char correlation_variable_type;
         unsigned char param_type = 0;
-        const char *param_type_string = NULL;
         size_t offset = 0;
         const var_t *var;
 
@@ -602,46 +601,34 @@ static size_t write_conf_or_var_desc(FILE *file, const type_t *structure,
         case RPC_FC_CHAR:
         case RPC_FC_SMALL:
             param_type = RPC_FC_SMALL;
-            param_type_string = "FC_SMALL";
             break;
         case RPC_FC_BYTE:
         case RPC_FC_USMALL:
             param_type = RPC_FC_USMALL;
-            param_type_string = "FC_USMALL";
             break;
         case RPC_FC_WCHAR:
         case RPC_FC_SHORT:
         case RPC_FC_ENUM16:
             param_type = RPC_FC_SHORT;
-            param_type_string = "FC_SHORT";
             break;
         case RPC_FC_USHORT:
             param_type = RPC_FC_USHORT;
-            param_type_string = "FC_USHORT";
             break;
         case RPC_FC_LONG:
         case RPC_FC_ENUM32:
             param_type = RPC_FC_LONG;
-            param_type_string = "FC_LONG";
             break;
         case RPC_FC_ULONG:
             param_type = RPC_FC_ULONG;
-            param_type_string = "FC_ULONG";
             break;
         case RPC_FC_RP:
         case RPC_FC_UP:
         case RPC_FC_OP:
         case RPC_FC_FP:
             if (sizeof(void *) == 4)  /* FIXME */
-            {
                 param_type = RPC_FC_LONG;
-                param_type_string = "FC_LONG";
-            }
             else
-            {
                 param_type = RPC_FC_HYPER;
-                param_type_string = "FC_HYPER";
-            }
             break;
         default:
             error("write_conf_or_var_desc: conformance variable type not supported 0x%x\n",
@@ -649,7 +636,7 @@ static size_t write_conf_or_var_desc(FILE *file, const type_t *structure,
         }
 
         print_file(file, 2, "0x%x, /* Corr desc: %s */\n",
-                   RPC_FC_NORMAL_CONFORMANCE | param_type, param_type_string);
+                   RPC_FC_NORMAL_CONFORMANCE | param_type, string_of_type(param_type));
         print_file(file, 2, "0x%x, /* %s */\n", operator_type, operator_string);
         print_file(file, 2, "NdrFcShort(0x%x), /* offset = %d */\n",
                    offset, offset);
