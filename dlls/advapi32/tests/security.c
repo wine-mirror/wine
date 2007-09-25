@@ -148,6 +148,7 @@ static void test_sid(void)
     const char noSubAuthStr[] = "S-1-5";
     unsigned int i;
     PSID psid = NULL;
+    SID *pisid;
     BOOL r;
     LPSTR str = NULL;
 
@@ -184,6 +185,13 @@ static void test_sid(void)
     ok( GetLastError() == ERROR_INVALID_SID,
      "expected GetLastError() is ERROR_INVALID_SID, got %d\n",
      GetLastError() );
+
+    ok(pConvertStringSidToSidA("S-1-5-21-93476-23408-4576", &psid), "ConvertStringSidToSidA failed\n");
+    pisid = (SID *)psid;
+    ok(pisid->SubAuthorityCount == 4, "Invalid sub authority count - expected 4, got %d\n", pisid->SubAuthorityCount);
+    ok(pisid->SubAuthority[0] == 21, "Invalid subauthority 0 - expceted 21, got %d\n", pisid->SubAuthority[0]);
+    ok(pisid->SubAuthority[3] == 4576, "Invalid subauthority 0 - expceted 4576, got %d\n", pisid->SubAuthority[3]);
+    LocalFree(str);
 
     for( i = 0; i < sizeof(refs) / sizeof(refs[0]); i++ )
     {

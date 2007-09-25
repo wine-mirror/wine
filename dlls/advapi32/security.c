@@ -3900,12 +3900,12 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
 
         while (*StringSid)
         {
+            pisid->SubAuthority[i++] = atoiW(StringSid);
+
             while (*StringSid && *StringSid != '-')
                 StringSid++;
             if (*StringSid == '-')
                 StringSid++;
-
-            pisid->SubAuthority[i++] = atoiW(StringSid);
         }
 
         if (i != pisid->SubAuthorityCount)
