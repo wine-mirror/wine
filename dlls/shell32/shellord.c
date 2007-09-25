@@ -1588,6 +1588,14 @@ UINT WINAPI SHAddFromPropSheetExtArray(HPSXA hpsxa, LPFNADDPROPSHEETPAGE lpfnAdd
  */
 HPSXA WINAPI SHCreatePropSheetExtArray(HKEY hKey, LPCWSTR pszSubKey, UINT max_iface)
 {
+    return SHCreatePropSheetExtArrayEx(hKey, pszSubKey, max_iface, NULL);
+}
+
+/*************************************************************************
+ *      SHCreatePropSheetExtArrayEx	[SHELL32.194]
+ */
+HPSXA WINAPI SHCreatePropSheetExtArrayEx(HKEY hKey, LPCWSTR pszSubKey, UINT max_iface, IDataObject *pDataObj)
+{
     static const WCHAR szPropSheetSubKey[] = {'s','h','e','l','l','e','x','\\','P','r','o','p','e','r','t','y','S','h','e','e','t','H','a','n','d','l','e','r','s',0};
     WCHAR szHandler[64];
     DWORD dwHandlerLen;
@@ -1652,7 +1660,7 @@ HPSXA WINAPI SHCreatePropSheetExtArray(HKEY hKey, LPCWSTR pszSubKey, UINT max_if
                         {
                             if (SUCCEEDED(pspsx->lpVtbl->QueryInterface(pspsx, &IID_IShellExtInit, (PVOID *)&psxi)))
                             {
-                                if (SUCCEEDED(psxi->lpVtbl->Initialize(psxi, NULL, NULL, hKey)))
+                                if (SUCCEEDED(psxi->lpVtbl->Initialize(psxi, NULL, pDataObj, hKey)))
                                 {
                                     /* Add the IShellPropSheetExt instance to the array */
                                     psxa->pspsx[psxa->uiCount++] = pspsx;
