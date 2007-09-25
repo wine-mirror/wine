@@ -216,7 +216,7 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     res = chm_resolve_object(chm_file, object_name, &chm_object);
     if(res != CHM_RESOLVE_SUCCESS) {
         WARN("Could not resolve chm object\n");
-        HeapFree(GetProcessHeap(), 0, object_name);
+        HeapFree(GetProcessHeap(), 0, file_name);
         chm_close(chm_file);
         return report_result(pOIProtSink, STG_E_FILENOTFOUND);
     }
