@@ -3308,6 +3308,8 @@ Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
             ret = physDev->bitmap->glxpixmap;
         }
     }
+    else if(physDev->gl_drawable)
+        ret = physDev->gl_drawable;
     else
         ret = physDev->drawable;
     return ret;

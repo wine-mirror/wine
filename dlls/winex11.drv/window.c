@@ -56,6 +56,7 @@ static XContext win_data_context;
 static const char whole_window_prop[] = "__wine_x11_whole_window";
 static const char icon_window_prop[]  = "__wine_x11_icon_window";
 static const char fbconfig_id_prop[]  = "__wine_x11_fbconfig_id";
+static const char gl_drawable_prop[]  = "__wine_x11_gl_drawable";
 static const char managed_prop[]      = "__wine_x11_managed";
 static const char visual_id_prop[]    = "__wine_x11_visual_id";
 
@@ -955,6 +956,7 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
         data->whole_window  = 0;
         data->icon_window   = 0;
         data->fbconfig_id   = 0;
+        data->gl_drawable   = 0;
         data->xic           = 0;
         data->managed       = FALSE;
         data->dce           = NULL;
@@ -1258,6 +1260,19 @@ XID X11DRV_get_fbconfig_id( HWND hwnd )
 
     if (!data) return (XID)GetPropA( hwnd, fbconfig_id_prop );
     return data->fbconfig_id;
+}
+
+/***********************************************************************
+ *              X11DRV_get_gl_drawable
+ *
+ * Return the GL drawable for this window.
+ */
+Drawable X11DRV_get_gl_drawable( HWND hwnd )
+{
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+
+    if (!data) return (Drawable)GetPropA( hwnd, gl_drawable_prop );
+    return data->gl_drawable;
 }
 
 
