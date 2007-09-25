@@ -72,6 +72,7 @@ struct IDirectInputDevice2AImpl
     DataFormat                  data_format; /* user data format and wine to user format converter */
 };
 
+extern BOOL get_app_key(HKEY*, HKEY*);
 extern DWORD get_config_key(HKEY, HKEY, const char*, char*, DWORD);
 
 /* Routines to do DataFormat / WineFormat conversions */
