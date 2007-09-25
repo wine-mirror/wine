@@ -4000,37 +4000,19 @@ BOOL WINAPI ConvertStringSidToSidA(LPCSTR StringSid, PSID* Sid)
  */
 BOOL WINAPI ConvertSidToStringSidW( PSID pSid, LPWSTR *pstr )
 {
-    DWORD sz, i;
-    LPWSTR str;
-    WCHAR fmt[] = { 'S','-','%','u','-','%','d',0 };
-    WCHAR subauthfmt[] = { '-','%','u',0 };
-    SID* pisid=pSid;
+    DWORD len = 0;
+    LPWSTR wstr, wptr;
 
     TRACE("%p %p\n", pSid, pstr );
 
-    if( !IsValidSid( pSid ) )
+    len = 0;
+    if (!DumpSidNumeric(pSid, NULL, &len))
         return FALSE;
+    wstr = wptr = LocalAlloc(0, (len+1) * sizeof(WCHAR));
+    DumpSidNumeric(pSid, &wptr, NULL);
+    *wptr = 0;
 
-    if (pisid->Revision != SDDL_REVISION)
-        return FALSE;
-    if (pisid->IdentifierAuthority.Value[0] ||
-     pisid->IdentifierAuthority.Value[1])
-    {
-        FIXME("not matching MS' bugs\n");
-        return FALSE;
-    }
-
-    sz = 14 + pisid->SubAuthorityCount * 11;
-    str = LocalAlloc( 0, sz*sizeof(WCHAR) );
-    sprintfW( str, fmt, pisid->Revision, MAKELONG(
-     MAKEWORD( pisid->IdentifierAuthority.Value[5],
-     pisid->IdentifierAuthority.Value[4] ),
-     MAKEWORD( pisid->IdentifierAuthority.Value[3],
-     pisid->IdentifierAuthority.Value[2] ) ) );
-    for( i=0; i<pisid->SubAuthorityCount; i++ )
-        sprintfW( str + strlenW(str), subauthfmt, pisid->SubAuthority[i] );
-    *pstr = str;
-
+    *pstr = wstr;
     return TRUE;
 }
 
