@@ -402,8 +402,8 @@
 @ stub RtlAddActionToRXact
 @ stdcall RtlAddAtomToAtomTable(ptr wstr ptr)
 @ stub RtlAddAttributeActionToRXact
-@ stdcall RtlAddAuditAccessAce(ptr long long ptr long long) 
-# @ stub RtlAddAuditAccessAceEx
+@ stdcall RtlAddAuditAccessAce(ptr long long ptr long long)
+@ stdcall RtlAddAuditAccessAceEx(ptr long long long ptr long long)
 # @ stub RtlAddAuditAccessObjectAce
 # @ stub RtlAddCompoundAce
 # @ stub RtlAddRange

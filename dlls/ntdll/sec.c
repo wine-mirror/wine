@@ -1213,17 +1213,16 @@ NTSTATUS WINAPI RtlAddAccessDeniedAceEx(
 /************************************************************************** 
  *  RtlAddAuditAccessAce     [NTDLL.@] 
  */ 
-NTSTATUS WINAPI RtlAddAuditAccessAce( 
+NTSTATUS WINAPI RtlAddAuditAccessAceEx(
     IN OUT PACL pAcl, 
     IN DWORD dwAceRevision, 
+    IN DWORD dwAceFlags,
     IN DWORD dwAccessMask, 
     IN PSID pSid, 
     IN BOOL bAuditSuccess, 
     IN BOOL bAuditFailure) 
 { 
-    DWORD dwAceFlags = 0;
-
-    TRACE("(%p,%d,%d,%p,%u,%u)\n",pAcl,dwAceRevision,dwAccessMask,
+    TRACE("(%p,%d,0x%08x,0x%08x,%p,%u,%u)\n",pAcl,dwAceRevision,dwAceFlags,dwAccessMask,
           pSid,bAuditSuccess,bAuditFailure);
 
     if (bAuditSuccess)
@@ -1235,6 +1234,20 @@ NTSTATUS WINAPI RtlAddAuditAccessAce(
     return add_access_ace(pAcl, dwAceRevision, dwAceFlags,
                           dwAccessMask, pSid, SYSTEM_AUDIT_ACE_TYPE);
 } 
+
+/**************************************************************************
+ *  RtlAddAuditAccessAce     [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlAddAuditAccessAce(
+    IN OUT PACL pAcl,
+    IN DWORD dwAceRevision,
+    IN DWORD dwAccessMask,
+    IN PSID pSid,
+    IN BOOL bAuditSuccess,
+    IN BOOL bAuditFailure)
+{
+    return RtlAddAuditAccessAceEx(pAcl, dwAceRevision, 0, dwAccessMask, pSid, bAuditSuccess, bAuditFailure);
+}
  
 /******************************************************************************
  *  RtlValidAcl		[NTDLL.@]
