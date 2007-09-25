@@ -173,6 +173,7 @@
 #define IDS_AUDIO_MISSING               1309
 #define IDC_DSOUND_RATES                1310
 #define IDC_DSOUND_BITS                 1311
+#define IDW_TESTSOUND                   1312
 #define IDS_ACCEL_FULL                  8300
 #define IDS_ACCEL_STANDARD              8301
 #define IDS_ACCEL_BASIC                 8302

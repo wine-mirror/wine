@@ -56,3 +56,6 @@ IDB_WINE BITMAP idb_wine.bmp
 
 /* @makedep: idb_checkbox.bmp */
 IDB_CHECKBOX BITMAP idb_checkbox.bmp
+
+/* @makedep: idw_testsound.wav */
+IDW_TESTSOUND WAVE idw_testsound.wav

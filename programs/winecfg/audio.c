@@ -730,7 +730,8 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	     configureAudioDriver(hDlg);
 	     break;
           case IDC_AUDIO_TEST:
-             MessageBox(NULL, "Audio Test not implemented yet!", "Fixme", MB_OK | MB_ICONERROR);
+	     if(!PlaySound(MAKEINTRESOURCE(IDW_TESTSOUND), NULL, SND_RESOURCE | SND_SYNC))
+                MessageBox(NULL, "Audio test failed!", "Error", MB_OK | MB_ICONERROR);
              break;
           case IDC_AUDIO_CONTROL_PANEL:
 	     MessageBox(NULL, "Launching audio control panel not implemented yet!", "Fixme", MB_OK | MB_ICONERROR);
