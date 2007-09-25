@@ -2283,6 +2283,22 @@ BOOL WINAPI AddAuditAccessAce(
 }
 
 /******************************************************************************
+ *  AddAuditAccessAce [ADVAPI32.@]
+ */
+BOOL WINAPI AddAuditAccessAceEx(
+    IN OUT PACL pAcl,
+    IN DWORD dwAceRevision,
+    IN DWORD dwAceFlags,
+    IN DWORD dwAccessMask,
+    IN PSID pSid,
+    IN BOOL bAuditSuccess,
+    IN BOOL bAuditFailure)
+{
+    return set_ntstatus( RtlAddAuditAccessAceEx(pAcl, dwAceRevision, dwAceFlags, dwAccessMask, pSid,
+                                              bAuditSuccess, bAuditFailure) );
+}
+
+/******************************************************************************
  * LookupAccountNameA [ADVAPI32.@]
  */
 BOOL WINAPI

@@ -22,7 +22,7 @@
 # @ stub AddAccessDeniedObjectAce
 @ stdcall AddAce(ptr long long ptr long)
 @ stdcall AddAuditAccessAce(ptr long long ptr long long)
-# @ stub AddAuditAccessAceEx
+@ stdcall AddAuditAccessAceEx(ptr long long long ptr long long)
 # @ stub AddAuditAccessObjectAce
 # @ stub AddUsersToEncryptedFile
 @ stdcall AdjustTokenGroups(long long ptr long ptr ptr)
