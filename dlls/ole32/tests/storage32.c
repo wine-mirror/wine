@@ -314,9 +314,6 @@ static void test_storage_stream(void)
     ok(r==S_OK, "failed to seek stream\n");
     r = IStream_SetSize(stm,p);
     ok(r==S_OK, "failed to set pos\n");
-    p.u.HighPart = 1;
-    r = IStream_SetSize(stm,p);
-    ok(r==STG_E_INVALIDFUNCTION, "setting to invalid pos should fail with STG_E_INVALIDFUNCTION instead of error 0x%08x\n", r);
     pos.QuadPart = 10;
     r = IStream_Seek(stm, pos, STREAM_SEEK_SET, &p );
     ok(r==S_OK, "failed to seek stream\n");
