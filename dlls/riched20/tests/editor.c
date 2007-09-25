@@ -366,7 +366,8 @@ static void test_EM_SETTEXTMODE(void)
 
   /*EM_SETCHARFORMAT is not yet fully implemented for all WPARAMs in wine;
   however, SCF_ALL has been implemented*/
-  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "wine");
 
   /*Select the string "wine"*/
@@ -379,7 +380,8 @@ static void test_EM_SETTEXTMODE(void)
 
   /*Reset the formatting to default*/
   cf2.dwEffects = CFE_ITALIC^cf2.dwEffects;
-  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
 
   /*Clear the text in the control*/
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "");
@@ -472,6 +474,7 @@ static void test_TM_PLAINTEXT(void)
   HWND hwndRichEdit = new_richedit(NULL);
   CHARFORMAT2 cf2, cf2test;
   CHARRANGE cr;
+  int rc = 0;
 
   /*Switch to plain text mode*/
 
@@ -494,7 +497,10 @@ static void test_TM_PLAINTEXT(void)
   cf2.dwMask = CFM_BOLD | cf2.dwMask;
   cf2.dwEffects = CFE_BOLD ^ cf2.dwEffects;
 
-  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2);
+  todo_wine {
+    ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
+  }
 
   /*Get the formatting of those characters*/
 
@@ -534,7 +540,8 @@ static void test_TM_PLAINTEXT(void)
   SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT, (LPARAM) &cf2);
   cf2.dwMask |= CFM_ITALIC;
   cf2.dwEffects ^= CFE_ITALIC;
-  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
 
   /*Set the text in the control to "wine", which will be bold and italicized*/
 
@@ -1472,6 +1479,8 @@ static void test_EM_GETMODIFY(void)
   cf2.dwMask = CFM_ITALIC | cf2.dwMask;
   cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
   SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  result = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  ok(result == 1, "EM_SETCHARFORMAT returned %ld instead of 1\n", result);
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
   ok (result != 0,
       "EM_GETMODIFY returned zero, instead of non-zero for EM_SETCHARFORMAT\n");

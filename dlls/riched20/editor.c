@@ -1748,7 +1748,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_CommitUndo(editor);
     if (bRepaint)
       ME_RewrapRepaint(editor);
-    return 0;
+    return 1;
   }
   case EM_GETCHARFORMAT:
   {
