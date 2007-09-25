@@ -58,6 +58,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "dinput.h"
 
 #include "dinput_private.h"
@@ -391,21 +392,35 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     JoystickImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     int i, idx = 0;
+    char buffer[MAX_PATH+16];
+    HKEY hkey, appkey;
+    LONG def_deadzone = -1;
 
     newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
     if (!newDevice) return NULL;
 
-  newDevice->base.lpVtbl = jvt;
-  newDevice->base.ref = 1;
-  memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
-  InitializeCriticalSection(&newDevice->base.crit);
-  newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
-  newDevice->joyfd = -1;
-  newDevice->base.dinput = dinput;
-  newDevice->joydev = &joydevs[index];
+    newDevice->base.lpVtbl = jvt;
+    newDevice->base.ref    = 1;
+    newDevice->base.guid   = *rguid;
+    newDevice->base.dinput = dinput;
+    newDevice->joyfd       = -1;
+    newDevice->joydev      = &joydevs[index];
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
-  newDevice->ff_state = FF_STATUS_STOPPED;
+    newDevice->ff_state    = FF_STATUS_STOPPED;
 #endif
+    InitializeCriticalSection(&newDevice->base.crit);
+    newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
+
+    /* get options */
+    get_app_key(&hkey, &appkey);
+
+    if (!get_config_key(hkey, appkey, "DefaultDeadZone", buffer, MAX_PATH))
+    {
+        def_deadzone = atoi(buffer);
+        TRACE("setting default deadzone to: %d\n", def_deadzone);
+    }
+    if (appkey) RegCloseKey(appkey);
+    if (hkey) RegCloseKey(hkey);
 
     /* Create copy of default data format */
     if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIJoystick2.dwSize))) goto failed;
@@ -427,7 +442,8 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
         newDevice->props[idx].lMin    = 0;
         newDevice->props[idx].lMax    = 0xffff;
         newDevice->props[idx].lSaturation = 0;
-        newDevice->props[idx].lDeadZone = MulDiv(newDevice->joydev->axes[i].flat, 0xffff,
+        newDevice->props[idx].lDeadZone = def_deadzone >= 0 ? def_deadzone :
+            MulDiv(newDevice->joydev->axes[i].flat, 0xffff,
              newDevice->props[idx].lDevMax - newDevice->props[idx].lDevMin);
 
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numAxes++) | DIDFT_ABSAXIS;
