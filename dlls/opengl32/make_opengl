@@ -215,11 +215,6 @@ sub GenerateThunk($$$$$)
 
     return "" if $func_ref->[0] eq "glGetString";
     return "" if $func_ref->[0] eq "glGetIntegerv";
-    return "" if $func_ref->[0] eq "glEnable";
-    return "" if $func_ref->[0] eq "glIsEnabled";
-    return "" if $func_ref->[0] eq "glDisable";
-    return "" if $func_ref->[0] eq "glScissor";
-    return "" if $func_ref->[0] eq "glViewport";
     return "" if $func_ref->[0] eq "glFinish";
     return "" if $func_ref->[0] eq "glFlush";
 

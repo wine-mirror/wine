@@ -810,6 +810,16 @@ void WINAPI wine_glDepthRange( GLclampd nearParam, GLclampd farParam ) {
 }
 
 /***********************************************************************
+ *              glDisable (OPENGL32.@)
+ */
+void WINAPI wine_glDisable( GLenum cap ) {
+  TRACE("(%d)\n", cap );
+  ENTER_GL();
+  glDisable( cap );
+  LEAVE_GL();
+}
+
+/***********************************************************************
  *              glDisableClientState (OPENGL32.@)
  */
 void WINAPI wine_glDisableClientState( GLenum array ) {
@@ -896,6 +906,16 @@ void WINAPI wine_glEdgeFlagv( GLboolean* flag ) {
   TRACE("(%p)\n", flag );
   ENTER_GL();
   glEdgeFlagv( flag );
+  LEAVE_GL();
+}
+
+/***********************************************************************
+ *              glEnable (OPENGL32.@)
+ */
+void WINAPI wine_glEnable( GLenum cap ) {
+  TRACE("(%d)\n", cap );
+  ENTER_GL();
+  glEnable( cap );
   LEAVE_GL();
 }
 
@@ -1701,6 +1721,18 @@ void WINAPI wine_glInterleavedArrays( GLenum format, GLsizei stride, GLvoid* poi
   ENTER_GL();
   glInterleavedArrays( format, stride, pointer );
   LEAVE_GL();
+}
+
+/***********************************************************************
+ *              glIsEnabled (OPENGL32.@)
+ */
+GLboolean WINAPI wine_glIsEnabled( GLenum cap ) {
+  GLboolean ret_value;
+  TRACE("(%d)\n", cap );
+  ENTER_GL();
+  ret_value = glIsEnabled( cap );
+  LEAVE_GL();
+  return ret_value;
 }
 
 /***********************************************************************
@@ -2810,6 +2842,16 @@ void WINAPI wine_glScalef( GLfloat x, GLfloat y, GLfloat z ) {
 }
 
 /***********************************************************************
+ *              glScissor (OPENGL32.@)
+ */
+void WINAPI wine_glScissor( GLint x, GLint y, GLsizei width, GLsizei height ) {
+  TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
+  ENTER_GL();
+  glScissor( x, y, width, height );
+  LEAVE_GL();
+}
+
+/***********************************************************************
  *              glSelectBuffer (OPENGL32.@)
  */
 void WINAPI wine_glSelectBuffer( GLsizei size, GLuint* buffer ) {
@@ -3666,5 +3708,15 @@ void WINAPI wine_glVertexPointer( GLint size, GLenum type, GLsizei stride, GLvoi
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   ENTER_GL();
   glVertexPointer( size, type, stride, pointer );
+  LEAVE_GL();
+}
+
+/***********************************************************************
+ *              glViewport (OPENGL32.@)
+ */
+void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
+  TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
+  ENTER_GL();
+  glViewport( x, y, width, height );
   LEAVE_GL();
 }

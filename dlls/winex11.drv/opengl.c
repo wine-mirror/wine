@@ -111,9 +111,6 @@ typedef struct wine_glcontext {
     BOOL do_escape;
     X11DRV_PDEVICE *physDev;
     X11DRV_PDEVICE *pReadDev;
-    RECT viewport;
-    RECT scissor;
-    BOOL scissor_enabled;
     struct wine_glcontext *next;
     struct wine_glcontext *prev;
 } Wine_GLContext;
@@ -263,20 +260,15 @@ MAKE_FUNCPTR(glBitmap)
 MAKE_FUNCPTR(glCopyTexSubImage1D)
 MAKE_FUNCPTR(glCopyTexImage2D)
 MAKE_FUNCPTR(glCopyTexSubImage2D)
-MAKE_FUNCPTR(glDisable)
 MAKE_FUNCPTR(glDrawBuffer)
-MAKE_FUNCPTR(glEnable)
 MAKE_FUNCPTR(glEndList)
 MAKE_FUNCPTR(glGetError)
 MAKE_FUNCPTR(glGetIntegerv)
 MAKE_FUNCPTR(glGetString)
-MAKE_FUNCPTR(glIsEnabled)
 MAKE_FUNCPTR(glNewList)
 MAKE_FUNCPTR(glPixelStorei)
 MAKE_FUNCPTR(glReadPixels)
-MAKE_FUNCPTR(glScissor)
 MAKE_FUNCPTR(glTexImage2D)
-MAKE_FUNCPTR(glViewport)
 MAKE_FUNCPTR(glFinish)
 MAKE_FUNCPTR(glFlush)
 #undef MAKE_FUNCPTR
@@ -416,20 +408,15 @@ LOAD_FUNCPTR(glBitmap)
 LOAD_FUNCPTR(glCopyTexSubImage1D)
 LOAD_FUNCPTR(glCopyTexImage2D)
 LOAD_FUNCPTR(glCopyTexSubImage2D)
-LOAD_FUNCPTR(glDisable)
 LOAD_FUNCPTR(glDrawBuffer)
-LOAD_FUNCPTR(glEnable)
 LOAD_FUNCPTR(glEndList)
 LOAD_FUNCPTR(glGetError)
 LOAD_FUNCPTR(glGetIntegerv)
 LOAD_FUNCPTR(glGetString)
-LOAD_FUNCPTR(glIsEnabled)
 LOAD_FUNCPTR(glNewList)
 LOAD_FUNCPTR(glPixelStorei)
 LOAD_FUNCPTR(glReadPixels)
-LOAD_FUNCPTR(glScissor)
 LOAD_FUNCPTR(glTexImage2D)
-LOAD_FUNCPTR(glViewport)
 LOAD_FUNCPTR(glFinish)
 LOAD_FUNCPTR(glFlush)
 #undef LOAD_FUNCPTR
@@ -1568,53 +1555,6 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
     return NULL;
 }
 
-/***********************************************************************
- *		sync_current_drawable
- *
- * Adjust the current viewport and scissor in order to position
- * and size the current drawable correctly on the parent window.
- */
-static void sync_current_drawable(BOOL updatedc)
-{
-    int dy;
-    int width;
-    int height;
-    RECT rc;
-    Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
-
-    TRACE("\n");
-
-    if (ctx && ctx->physDev)
-    {
-        if (updatedc)
-            GetClipBox(ctx->physDev->hdc, &rc); /* Make sure physDev is up to date */
-
-        dy = ctx->physDev->drawable_rect.bottom - ctx->physDev->drawable_rect.top -
-            ctx->physDev->dc_rect.bottom;
-        width = ctx->physDev->dc_rect.right - ctx->physDev->dc_rect.left;
-        height = ctx->physDev->dc_rect.bottom - ctx->physDev->dc_rect.top;
-
-        wine_tsx11_lock();
-
-        pglViewport(ctx->physDev->dc_rect.left + ctx->viewport.left,
-            dy + ctx->viewport.top,
-            ctx->viewport.right ? (ctx->viewport.right - ctx->viewport.left) : width,
-            ctx->viewport.bottom ? (ctx->viewport.bottom - ctx->viewport.top) : height);
-
-        pglEnable(GL_SCISSOR_TEST);
-
-        if (ctx->scissor_enabled)
-            pglScissor(ctx->physDev->dc_rect.left + min(width, max(0, ctx->scissor.left)),
-                dy + min(height, max(0, ctx->scissor.top)),
-                min(width, max(0, ctx->scissor.right - ctx->scissor.left)),
-                min(height, max(0, ctx->scissor.bottom - ctx->scissor.top)));
-        else
-            pglScissor(ctx->physDev->dc_rect.left, dy, width, height);
-
-        wine_tsx11_unlock();
-    }
-}
-
 /**
  * X11DRV_wglMakeCurrent
  *
@@ -1670,10 +1610,6 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
             {
                 ctx->do_escape = TRUE;
                 pglDrawBuffer(GL_FRONT_LEFT);
-            }
-            else
-            {
-                sync_current_drawable(FALSE);
             }
         }
     }
@@ -1941,40 +1877,6 @@ BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
      return TRUE;
 }
 
-static void WINAPI X11DRV_wglDisable(GLenum cap)
-{
-    if (cap == GL_SCISSOR_TEST)
-    {
-       Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
-
-       if (ctx)
-          ctx->scissor_enabled = FALSE;
-    }
-    else
-    {
-        wine_tsx11_lock();
-        pglDisable(cap);
-        wine_tsx11_unlock();
-    }
-}
-
-static void WINAPI X11DRV_wglEnable(GLenum cap)
-{
-    if (cap == GL_SCISSOR_TEST)
-    {
-       Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
-
-       if (ctx)
-           ctx->scissor_enabled = TRUE;
-    }
-    else
-    {
-        wine_tsx11_lock();
-        pglEnable(cap);
-        wine_tsx11_unlock();
-    }
-}
-
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */
 static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
 {
@@ -2010,56 +1912,6 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
         break;
     }
     wine_tsx11_unlock();
-}
-
-static GLboolean WINAPI X11DRV_wglIsEnabled(GLenum cap)
-{
-    GLboolean enabled = False;
-
-    if (cap == GL_SCISSOR_TEST)
-    {
-       Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
-
-       if (ctx)
-           enabled = ctx->scissor_enabled;
-    }
-    else
-    {
-        wine_tsx11_lock();
-        enabled = pglIsEnabled(cap);
-        wine_tsx11_unlock();
-    }
-    return enabled;
-}
-
-static void WINAPI X11DRV_wglScissor(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-    Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
-
-    if (ctx)
-    {
-        ctx->scissor.left = x;
-        ctx->scissor.top = y;
-        ctx->scissor.right = x + width;
-        ctx->scissor.bottom = y + height;
-
-        sync_current_drawable(TRUE);
-    }
-}
-
-static void WINAPI X11DRV_wglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-    Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
-
-    if (ctx)
-    {
-        ctx->viewport.left = x;
-        ctx->viewport.top = y;
-        ctx->viewport.right = x + width;
-        ctx->viewport.bottom = y + height;
-
-        sync_current_drawable(TRUE);
-    }
 }
 
 static void WINAPI X11DRV_wglFinish(void)
@@ -3109,12 +2961,7 @@ static const WineGLExtension WGL_internal_functions =
 {
   "",
   {
-    { "wglDisable", X11DRV_wglDisable },
-    { "wglEnable", X11DRV_wglEnable },
     { "wglGetIntegerv", X11DRV_wglGetIntegerv },
-    { "wglIsEnabled", X11DRV_wglIsEnabled },
-    { "wglScissor", X11DRV_wglScissor },
-    { "wglViewport", X11DRV_wglViewport },
     { "wglFinish", X11DRV_wglFinish },
     { "wglFlush", X11DRV_wglFlush },
   }
