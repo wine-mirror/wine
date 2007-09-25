@@ -1444,7 +1444,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     }
     SERVER_END_REQ;
 
-    if (TRACE_ON(snoop)) SNOOP_SetupDLL( module );
+    if ((wm->ldr.Flags & LDR_IMAGE_IS_DLL) && TRACE_ON(snoop)) SNOOP_SetupDLL( module );
 
     TRACE_(loaddll)( " Loaded module %s : native\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
 
