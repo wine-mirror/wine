@@ -53,6 +53,8 @@ typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorA)(LPCSTR, DWORD,
                                                                             PSECURITY_DESCRIPTOR*, PULONG );
+static BOOL (WINAPI *pConvertSecurityDescriptorToStringSecurityDescriptorA)(PSECURITY_DESCRIPTOR, DWORD,
+                                                                            SECURITY_INFORMATION, LPSTR *, PULONG );
 typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
                                           PSECURITY_DESCRIPTOR, DWORD, LPDWORD);
 static DWORD (WINAPI *pGetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
@@ -106,6 +108,8 @@ static void init(void)
     hmod = GetModuleHandle("advapi32.dll");
     pConvertStringSecurityDescriptorToSecurityDescriptorA =
         (void *)GetProcAddress(hmod, "ConvertStringSecurityDescriptorToSecurityDescriptorA" );
+    pConvertSecurityDescriptorToStringSecurityDescriptorA =
+        (void *)GetProcAddress(hmod, "ConvertSecurityDescriptorToStringSecurityDescriptorA" );
     pGetNamedSecurityInfoA = (void *)GetProcAddress(hmod, "GetNamedSecurityInfoA");
     pSetEntriesInAclW = (void *)GetProcAddress(hmod, "SetEntriesInAclW");
 
@@ -1899,6 +1903,102 @@ static void test_ConvertStringSecurityDescriptor(void)
         GetLastError());
 }
 
+static void test_ConvertSecurityDescriptorToString()
+{
+    SECURITY_DESCRIPTOR desc;
+    SECURITY_INFORMATION sec_info = OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION|SACL_SECURITY_INFORMATION;
+    LPSTR string;
+    DWORD size;
+    PSID psid, psid2;
+    PACL pacl;
+    char sid_buf[256];
+    char acl_buf[8192];
+    ULONG len;
+
+    if (!pConvertSecurityDescriptorToStringSecurityDescriptorA)
+    {
+        skip("ConvertSecurityDescriptorToStringSecurityDescriptor is not available\n");
+        return;
+    }
+
+/* It seems Windows XP add an extra character to the length of the string for each ACE in an ACL. We
+ * don't replicate this feature so we only test len >= strlen+1. */
+#define CHECK_RESULT_AND_FREE(exp_str) \
+    ok(strcmp(string, (exp_str)) == 0, "String mismatch (expected \"%s\", got \"%s\")\n", (exp_str), string); \
+    ok(len >= (strlen(exp_str) + 1), "Length mismatch (expected %d, got %d)\n", strlen(exp_str) + 1, len); \
+    LocalFree(string);
+
+    InitializeSecurityDescriptor(&desc, SECURITY_DESCRIPTOR_REVISION);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("");
+
+    size = 4096;
+    CreateWellKnownSid(WinLocalSid, NULL, sid_buf, &size);
+    SetSecurityDescriptorOwner(&desc, (PSID)sid_buf, FALSE);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:S-1-2-0");
+
+    SetSecurityDescriptorOwner(&desc, (PSID)sid_buf, TRUE);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:S-1-2-0");
+
+    size = sizeof(sid_buf);
+    CreateWellKnownSid(WinLocalSystemSid, NULL, sid_buf, &size);
+    SetSecurityDescriptorOwner(&desc, (PSID)sid_buf, TRUE);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SY");
+
+    ConvertStringSidToSid("S-1-5-21-93476-23408-4576", &psid);
+    SetSecurityDescriptorGroup(&desc, psid, TRUE);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576");
+
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, GROUP_SECURITY_INFORMATION, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("G:S-1-5-21-93476-23408-4576");
+
+    pacl = (PACL)acl_buf;
+    InitializeAcl(pacl, sizeof(acl_buf), ACL_REVISION);
+    SetSecurityDescriptorDacl(&desc, TRUE, pacl, TRUE);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:");
+
+    SetSecurityDescriptorDacl(&desc, TRUE, pacl, FALSE);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:");
+
+    ConvertStringSidToSid("S-1-5-6", &psid2);
+    AddAccessAllowedAceEx(pacl, ACL_REVISION, NO_PROPAGATE_INHERIT_ACE, 0xf0000000, psid2);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:(A;NP;GAGXGWGR;;;SU)");
+
+    AddAccessAllowedAceEx(pacl, ACL_REVISION, INHERIT_ONLY_ACE|INHERITED_ACE, 0x00000003, psid2);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)");
+
+    AddAccessDeniedAceEx(pacl, ACL_REVISION, OBJECT_INHERIT_ACE|CONTAINER_INHERIT_ACE, 0xffffffff, psid);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)");
+
+
+    pacl = (PACL)acl_buf;
+    InitializeAcl(pacl, sizeof(acl_buf), ACL_REVISION);
+    SetSecurityDescriptorSacl(&desc, TRUE, pacl, FALSE);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:S:");
+
+    SetSecurityDescriptorDacl(&desc, TRUE, NULL, FALSE);
+    AddAuditAccessAceEx(pacl, ACL_REVISION, VALID_INHERIT_FLAGS, KEY_READ|KEY_WRITE, psid2, TRUE, TRUE);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)");
+
+    AddAuditAccessAceEx(pacl, ACL_REVISION, NO_PROPAGATE_INHERIT_ACE, FILE_GENERIC_READ|FILE_GENERIC_WRITE, psid2, TRUE, FALSE);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)");
+
+
+#undef CHECK_RESULT_AND_FREE
+}
+
 START_TEST(security)
 {
     init();
@@ -1922,4 +2022,5 @@ START_TEST(security)
     test_SetEntriesInAcl();
     test_GetNamedSecurityInfoA();
     test_ConvertStringSecurityDescriptor();
+    test_ConvertSecurityDescriptorToString();
 }

@@ -75,8 +75,8 @@
 # @ stub ConvertSecurityDescriptorToAccessNamedA
 # @ stub ConvertSecurityDescriptorToAccessNamedW
 # @ stub ConvertSecurityDescriptorToAccessW
-# @ stub ConvertSecurityDescriptorToStringSecurityDescriptorA
-# @ stub ConvertSecurityDescriptorToStringSecurityDescriptorW
+@ stdcall ConvertSecurityDescriptorToStringSecurityDescriptorA(ptr long long ptr ptr)
+@ stdcall ConvertSecurityDescriptorToStringSecurityDescriptorW(ptr long long ptr ptr)
 @ stdcall ConvertSidToStringSidA(ptr ptr)
 @ stdcall ConvertSidToStringSidW(ptr ptr)
 # @ stub ConvertStringSDToSDDomainA
