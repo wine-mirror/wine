@@ -133,8 +133,18 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 
 static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 {
+	DWORD buflen;
 	HRESULT err = DS_OK;
 	TRACE("(%p)\n", device);
+
+	/* on original windows, the buffer it set to a fixed size, no matter what the settings are.
+	   on windows this size is always fixed (tested on win-xp) */
+	if (!device->buflen)
+		buflen = ds_hel_buflen;
+	else /* In case we move from hw accelerated to waveout */
+		buflen = device->buflen;
+	buflen -= buflen % device->pwfx->nBlockAlign;
+	device->buflen = buflen;
 
 	if (device->driver)
 	{
@@ -152,6 +162,21 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 				return err;
 			}
 		}
+		DSOUND_RecalcPrimary(device);
+		device->prebuf = ds_snd_queue_max;
+		if (device->helfrags < ds_snd_queue_min)
+		{
+			WARN("Too little sound buffer to be effective (%d/%d) falling back to waveout\n", device->buflen, ds_snd_queue_min * device->fraglen);
+			device->buflen = buflen;
+			err = DSOUND_ReopenDevice(device, TRUE);
+			if (FAILED(err))
+			{
+				WARN("Falling back to waveout failed too! Giving up\n");
+				return err;
+			}
+		}
+		else if (device->helfrags < ds_snd_queue_max)
+			device->prebuf = device->helfrags;
 	}
 
 	if (device->state == STATE_PLAYING) device->state = STATE_STARTING;
@@ -161,27 +186,19 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 	if (!device->driver) {
 		LPBYTE newbuf;
 		LPWAVEHDR headers = NULL;
-		DWORD buflen, overshot, oldbuflen;
+		DWORD overshot;
 		unsigned int c;
 
 		/* Start in pause mode, to allow buffers to get filled */
 		waveOutPause(device->hwo);
 
-		/* on original windows, the buffer it set to a fixed size, no matter what the settings are.
-		   on windows this size is always fixed (tested on win-xp) */
-		if (!device->buflen)
-			buflen = ds_hel_buflen;
-		else /* In case we move from hw accelerated to waveout */
-			buflen = device->buflen;
-		buflen -= buflen % device->pwfx->nBlockAlign;
-
 		TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
 
 		/* reallocate emulated primary buffer */
 		if (device->buffer)
-			newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer,buflen);
+			newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer, buflen);
 		else
-			newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
+			newbuf = HeapAlloc(GetProcessHeap(),0, buflen);
 
 		if (!newbuf) {
 			ERR("failed to allocate primary buffer\n");
@@ -189,8 +206,6 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 			/* but the old buffer might still exist and must be re-prepared */
 		}
 
-		oldbuflen = device->buflen;
-		device->buflen = buflen;
 		DSOUND_RecalcPrimary(device);
 		if (device->pwave)
 			headers = HeapReAlloc(GetProcessHeap(),0,device->pwave, device->helfrags * sizeof(WAVEHDR));
@@ -200,7 +215,6 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 		if (!headers) {
 			ERR("failed to allocate wave headers\n");
 			HeapFree(GetProcessHeap(), 0, newbuf);
-			device->buflen = oldbuflen;
 			DSOUND_RecalcPrimary(device);
 			return DSERR_OUTOFMEMORY;
 		}
@@ -228,17 +242,13 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 		if(overshot)
 		{
 			overshot -= overshot % device->pwfx->nBlockAlign;
-			if (overshot)
-				WARN("helfrags (%d x %d) doesn't fit entirely in buflen (%d) overshot: %d\n", device->helfrags, device->fraglen, device->buflen, overshot);
 			device->pwave[device->helfrags - 1].dwBufferLength += overshot;
 		}
 
-		TRACE("fraglen=%d\n", device->fraglen);
+		TRACE("fraglen=%d, overshot=%d\n", device->fraglen, overshot);
 	}
 	FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
 	device->pwplay = device->pwqueue = device->playpos = device->mixpos = 0;
-	DSOUND_RecalcPrimary(device);
-
 	return err;
 }
 
