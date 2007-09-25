@@ -335,6 +335,28 @@ HKLM,System\CurrentControlSet\Control\VMM32Files,,,""
 HKCU,Software\Wine\MSHTML,"GeckoUrl",,"http://source.winehq.org/winegecko.php"
 HKLM,HARDWARE\DEVICEMAP\PARALLEL PORTS,,,""
 HKLM,HARDWARE\DEVICEMAP\SERIALCOMM,,,""
+; Some apps requires at least four subkeys of Active Setup\Installed Components
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA855-CC51-11CF-AAFA-00AA00B6015F},,2,"DirectDrawEx"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA855-CC51-11CF-AAFA-00AA00B6015F},"ComponentID",2,"DirectDrawEx"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA855-CC51-11CF-AAFA-00AA00B6015F},"IsInstalled",2,1
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA855-CC51-11CF-AAFA-00AA00B6015F},"Locale",2,"*"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA855-CC51-11CF-AAFA-00AA00B6015F},"Version",2,"4,71,1113,0"
+
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{7131646D-CD3C-40F4-97B9-CD9E4E6262EF},,2,".NET Framework"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{7131646D-CD3C-40F4-97B9-CD9E4E6262EF},"ComponentID",2,".NETFramework"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{7131646D-CD3C-40F4-97B9-CD9E4E6262EF},"Locale",2,""
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{7131646D-CD3C-40F4-97B9-CD9E4E6262EF},"Version",2,"2,0,50727,0"
+
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{CB2F7EDD-9D1F-43C1-90FC-4F52EAE172A1},,2,".NET Framework"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{CB2F7EDD-9D1F-43C1-90FC-4F52EAE172A1},"ComponentID",2,".NETFramework"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{CB2F7EDD-9D1F-43C1-90FC-4F52EAE172A1},"Locale",2,""
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{CB2F7EDD-9D1F-43C1-90FC-4F52EAE172A1},"Version",2,"1,0,4322,1"
+
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{de5aed00-a4bf-11d1-9948-00c04f98bbc9},,2,"HTML Help"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{de5aed00-a4bf-11d1-9948-00c04f98bbc9},"ComponentID",2,"HTMLHelp"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{de5aed00-a4bf-11d1-9948-00c04f98bbc9},"IsInstalled",2,1
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{de5aed00-a4bf-11d1-9948-00c04f98bbc9},"Locale",2,"*"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{de5aed00-a4bf-11d1-9948-00c04f98bbc9},"Version",2,"4,74,9273,0"
 
 [Nls]
 HKLM,System\CurrentControlSet\Control\Nls\Codepage,"37",,""
