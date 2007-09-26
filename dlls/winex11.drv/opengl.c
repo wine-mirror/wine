@@ -1393,6 +1393,8 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
             ERR("Couldn't set format of the window, returning failure\n");
             return FALSE;
         }
+
+        physDev->gl_drawable = X11DRV_get_gl_drawable(hwnd);
     }
 
   physDev->current_pf = iPixelFormat;
@@ -1914,10 +1916,32 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
     wine_tsx11_unlock();
 }
 
+static inline void update_drawable(X11DRV_PDEVICE *physDev)
+{
+    int w, h;
+
+    if(!physDev->gl_drawable)
+        return;
+
+    w = physDev->dc_rect.right - physDev->dc_rect.left;
+    h = physDev->dc_rect.bottom - physDev->dc_rect.top;
+
+    if(w > 0 && h > 0) {
+        /* The GL drawable may be lagged behind if we don't flush first, so
+         * flush the display make sure we copy up-to-date data */
+        XFlush(gdi_display);
+        XCopyArea(gdi_display, physDev->gl_drawable, physDev->drawable,
+                  physDev->gc, 0, 0, w, h, physDev->dc_rect.left,
+                  physDev->dc_rect.top);
+    }
+}
+
+
 static void WINAPI X11DRV_wglFinish(void)
 {
     wine_tsx11_lock();
     pglFinish();
+    update_drawable(((Wine_GLContext*)NtCurrentTeb()->glContext)->physDev);
     wine_tsx11_unlock();
 }
 
@@ -1925,6 +1949,7 @@ static void WINAPI X11DRV_wglFlush(void)
 {
     wine_tsx11_lock();
     pglFlush();
+    update_drawable(((Wine_GLContext*)NtCurrentTeb()->glContext)->physDev);
     wine_tsx11_unlock();
 }
 
@@ -3188,6 +3213,7 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
   drawable = get_glxdrawable(physDev);
   wine_tsx11_lock();
   pglXSwapBuffers(gdi_display, drawable);
+  update_drawable(physDev);
   wine_tsx11_unlock();
 
   /* FPS support */
@@ -3247,6 +3273,16 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
         WARN("No suitable visual found\n");
 
     return visual;
+}
+
+XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
+{
+    WineGLPixelFormat *fmt;
+
+    fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fbconfig_id);
+    if(fmt == NULL)
+        return NULL;
+    return pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
 }
 
 #else  /* no OpenGL includes */
@@ -3403,6 +3439,11 @@ Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
 BOOL destroy_glxpixmap(XID glxpixmap)
 {
     return FALSE;
+}
+
+XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
+{
+    return NULL;
 }
 
 #endif /* defined(HAVE_OPENGL) */

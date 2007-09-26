@@ -669,6 +669,7 @@ extern XIC X11DRV_get_ic( HWND hwnd );
 extern BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig );
 
 extern int pixelformat_from_fbconfig_id( XID fbconfig_id );
+extern XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id );
 
 extern void alloc_window_dce( struct x11drv_win_data *data );
 extern void free_window_dce( struct x11drv_win_data *data );
