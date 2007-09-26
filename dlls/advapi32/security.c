@@ -3611,7 +3611,7 @@ static BOOL DumpSid(PSID psid, WCHAR **pwptr, ULONG *plen)
     return DumpSidNumeric(psid, pwptr, plen);
 }
 
-const static LPCWSTR AceRightBitNames[32] = {
+static const LPCWSTR AceRightBitNames[32] = {
         SDDL_CREATE_CHILD,        /*  0 */
         SDDL_DELETE_CHILD,
         SDDL_LIST_CHILDREN,
@@ -3648,7 +3648,7 @@ const static LPCWSTR AceRightBitNames[32] = {
 
 static void DumpRights(DWORD mask, WCHAR **pwptr, ULONG *plen)
 {
-    const static WCHAR fmtW[] = {'0','x','%','x',0};
+    static const WCHAR fmtW[] = {'0','x','%','x',0};
     WCHAR buf[15];
     int i;
 
@@ -3688,9 +3688,9 @@ static void DumpRights(DWORD mask, WCHAR **pwptr, ULONG *plen)
 static BOOL DumpAce(LPVOID pace, WCHAR **pwptr, ULONG *plen)
 {
     ACCESS_ALLOWED_ACE *piace; /* all the supported ACEs have the same memory layout */
-    const static WCHAR openbr = '(';
-    const static WCHAR closebr = ')';
-    const static WCHAR semicolon = ';';
+    static const WCHAR openbr = '(';
+    static const WCHAR closebr = ')';
+    static const WCHAR semicolon = ';';
 
     if (((PACE_HEADER)pace)->AceType > SYSTEM_ALARM_ACE_TYPE || ((PACE_HEADER)pace)->AceSize < sizeof(ACCESS_ALLOWED_ACE))
     {
@@ -3777,7 +3777,7 @@ static BOOL DumpAcl(PACL pacl, WCHAR **pwptr, ULONG *plen, BOOL protected, BOOL 
 
 static BOOL DumpOwner(PSECURITY_DESCRIPTOR SecurityDescriptor, WCHAR **pwptr, ULONG *plen)
 {
-    const static WCHAR prefix[] = {'O',':',0};
+    static const WCHAR prefix[] = {'O',':',0};
     BOOL bDefaulted;
     PSID psid;
 
@@ -3795,7 +3795,7 @@ static BOOL DumpOwner(PSECURITY_DESCRIPTOR SecurityDescriptor, WCHAR **pwptr, UL
 
 static BOOL DumpGroup(PSECURITY_DESCRIPTOR SecurityDescriptor, WCHAR **pwptr, ULONG *plen)
 {
-    const static WCHAR prefix[] = {'G',':',0};
+    static const WCHAR prefix[] = {'G',':',0};
     BOOL bDefaulted;
     PSID psid;
 
