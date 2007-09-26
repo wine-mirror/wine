@@ -1884,7 +1884,11 @@ static HRESULT EnumRfc1766_create(MLang_impl* mlang, LANGID LangId,
     data.total = 0;
     data.allocated = 32;
     data.info = HeapAlloc(GetProcessHeap(), 0, data.allocated * sizeof(RFC1766INFO));
-    if (!data.info) return S_FALSE;
+    if (!data.info)
+    {
+        HeapFree(GetProcessHeap(), 0, rfc);
+        return S_FALSE;
+    }
 
     TlsSetValue(MLANG_tls_index, &data);
     EnumSystemLocalesW(enum_locales_proc, 0/*LOCALE_SUPPORTED*/);
@@ -1892,7 +1896,12 @@ static HRESULT EnumRfc1766_create(MLang_impl* mlang, LANGID LangId,
 
     TRACE("enumerated %d rfc1766 structures\n", data.total);
 
-    if (!data.total) return FALSE;
+    if (!data.total)
+    {
+        HeapFree(GetProcessHeap(), 0, data.info);
+        HeapFree(GetProcessHeap(), 0, rfc);
+        return FALSE;
+    }
 
     rfc->info = data.info;
     rfc->total = data.total;
