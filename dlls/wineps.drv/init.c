@@ -177,7 +177,7 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 	        break;
 	}
 
-	if(!page) {
+	if(&page->entry == &physDev->pi->ppd->PageSizes) {
 	    FIXME("Can't find page\n");
 	    physDev->ImageableArea.left = 0;
 	    physDev->ImageableArea.right = 0;
