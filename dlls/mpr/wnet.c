@@ -731,7 +731,7 @@ DWORD WINAPI WNetOpenEnumW( DWORD dwScope, DWORD dwType, DWORD dwUsage,
                         if (index != BAD_PROVIDER_INDEX)
                         {
                             if (providerTable->table[index].openEnum &&
-                             providerTable->table[index].dwEnumScopes & dwScope)
+                             providerTable->table[index].dwEnumScopes & WNNC_ENUM_GLOBAL)
                             {
                                 HANDLE handle;
 
@@ -964,6 +964,7 @@ static DWORD _globalEnumeratorAdvance(PWNetEnumerator enumerator)
 
     if (enumerator->providerDone)
     {
+        DWORD dwEnum = 0;
         enumerator->providerDone = FALSE;
         if (enumerator->handle)
         {
@@ -972,10 +973,15 @@ static DWORD _globalEnumeratorAdvance(PWNetEnumerator enumerator)
             enumerator->handle = NULL;
             enumerator->providerIndex++;
         }
+        if (enumerator->dwScope == RESOURCE_CONNECTED)
+            dwEnum = WNNC_ENUM_LOCAL;
+        else if (enumerator->dwScope == RESOURCE_GLOBALNET)
+            dwEnum = WNNC_ENUM_GLOBAL;
+        else if (enumerator->dwScope == RESOURCE_CONTEXT)
+            dwEnum = WNNC_ENUM_CONTEXT;
         for (; enumerator->providerIndex < providerTable->numProviders &&
-         !(enumerator->dwScope & providerTable->table
-         [enumerator->providerIndex].dwEnumScopes);
-         enumerator->providerIndex++)
+         !(providerTable->table[enumerator->providerIndex].dwEnumScopes
+         & dwEnum); enumerator->providerIndex++)
             ;
     }
     return enumerator->providerIndex < providerTable->numProviders ?

@@ -48,6 +48,7 @@
 #define WNNC_ENUMERATION           0x0000000b
 #define WNNC_ENUM_GLOBAL           0x00000001
 #define WNNC_ENUM_LOCAL            0x00000002
+#define WNNC_ENUM_CONTEXT          0x00000004
 
 #define WNNC_START                 0x0000000c
 #define WNNC_WAIT_FOR_START        0x00000001
