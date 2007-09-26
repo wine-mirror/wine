@@ -101,6 +101,10 @@ const char *string_of_type(unsigned char type)
     case RPC_FC_ALIGNM4: return "FC_ALIGNM4";
     case RPC_FC_ALIGNM8: return "FC_ALIGNM8";
     case RPC_FC_POINTER: return "FC_POINTER";
+    case RPC_FC_C_CSTRING: return "FC_C_CSTRING";
+    case RPC_FC_C_WSTRING: return "FC_C_WSTRING";
+    case RPC_FC_CSTRING: return "FC_CSTRING";
+    case RPC_FC_WSTRING: return "FC_WSTRING";
     default:
         error("string_of_type: unknown type 0x%02x\n", type);
         return NULL;
@@ -826,12 +830,30 @@ static unsigned int write_nonsimple_pointer(FILE *file, const type_t *type, size
     return 4;
 }
 
+static unsigned char conf_string_type_of_char_type(unsigned char t)
+{
+    switch (t)
+    {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+        return RPC_FC_C_CSTRING;
+    case RPC_FC_WCHAR:
+        return RPC_FC_C_WSTRING;
+    }
+
+    error("string_type_of_char_type: unrecognized type %d", t);
+    return 0;
+}
+
 static unsigned int write_simple_pointer(FILE *file, const type_t *type)
 {
+    unsigned char fc
+        = is_string_type(type->attrs, type)
+        ? conf_string_type_of_char_type(type->ref->type)
+        : type->ref->type;
     print_file(file, 2, "0x%02x, 0x8,\t/* %s [simple_pointer] */\n",
                type->type, string_of_type(type->type));
-    print_file(file, 2, "0x%02x,\t/* %s */\n", type->ref->type,
-               string_of_type(type->ref->type));
+    print_file(file, 2, "0x%02x,\t/* %s */\n", fc, string_of_type(fc));
     print_file(file, 2, "0x5c,\t/* FC_PAD */\n");
     return 4;
 }

@@ -390,6 +390,18 @@ s_check_null(int *null)
   ok(!null, "RPC check_null\n");
 }
 
+int
+s_str_struct_len(str_struct_t *s)
+{
+  return lstrlenA(s->s);
+}
+
+int
+s_wstr_struct_len(wstr_struct_t *s)
+{
+  return lstrlenW(s->s);
+}
+
 void
 s_stop(void)
 {
@@ -428,7 +440,8 @@ run_client(const char *test)
 static void
 basic_tests(void)
 {
-  static char string[] = "I am a string";
+  char string[] = "I am a string";
+  WCHAR wstring[] = {'I',' ','a','m',' ','a',' ','w','s','t','r','i','n','g', 0};
   static int f[5] = {1, 3, 0, -2, -4};
   static vector_t a = {1, 3, 7};
   static vector_t vec1 = {4, -2, 1}, vec2 = {-5, 2, 3}, *pvec2 = &vec2;
@@ -448,6 +461,8 @@ basic_tests(void)
   short h;
   char c;
   int x;
+  str_struct_t ss = {string};
+  wstr_struct_t ws = {wstring};
 
   ok(int_return() == INT_CODE, "RPC int_return\n");
 
@@ -464,6 +479,9 @@ basic_tests(void)
 
   ok(str_length(string) == strlen(string), "RPC str_length\n");
   ok(dot_self(&a) == 59, "RPC dot_self\n");
+
+  ok(str_struct_len(&ss) == lstrlenA(string), "RPC str_struct_len\n");
+  ok(wstr_struct_len(&ws) == lstrlenW(wstring), "RPC str_struct_len\n");
 
   v = 0.0;
   u = square_half(3.0, &v);

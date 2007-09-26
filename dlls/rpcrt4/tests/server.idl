@@ -33,6 +33,13 @@ typedef struct tag_vector
 ]
 interface IServer
 {
+cpp_quote("#if 0")
+  typedef wchar_t WCHAR;
+cpp_quote("#endif")
+
+  typedef [string] char *str_t;
+  typedef [string] WCHAR *wstr_t;
+
   typedef struct
   {
     int *pi;
@@ -227,6 +234,19 @@ interface IServer
 
   int sum_bogus(bogus_t *b);
   void check_null([unique] int *null);
+
+  typedef struct
+  {
+    str_t s;
+  } str_struct_t;
+
+  typedef struct
+  {
+    wstr_t s;
+  } wstr_struct_t;
+
+  int str_struct_len(str_struct_t *s);
+  int wstr_struct_len(wstr_struct_t *s);
 
   void stop(void);
 }
