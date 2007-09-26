@@ -3187,10 +3187,10 @@ Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
     return ret;
 }
 
-BOOL destroy_glxpixmap(XID glxpixmap)
+BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
 {
     wine_tsx11_lock(); 
-    pglXDestroyGLXPixmap(gdi_display, glxpixmap);
+    pglXDestroyGLXPixmap(display, glxpixmap);
     wine_tsx11_unlock(); 
     return TRUE;
 }
@@ -3436,7 +3436,7 @@ Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
     return 0;
 }
 
-BOOL destroy_glxpixmap(XID glxpixmap)
+BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
 {
     return FALSE;
 }

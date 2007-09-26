@@ -431,7 +431,8 @@ BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
         if (GetObjectW( hbitmap, sizeof(dib), &dib ) == sizeof(dib))
             X11DRV_DIB_DeleteDIBSection( physBitmap, &dib );
 
-        if (physBitmap->glxpixmap) destroy_glxpixmap(physBitmap->glxpixmap); 
+        if (physBitmap->glxpixmap)
+            destroy_glxpixmap( gdi_display, physBitmap->glxpixmap );
         wine_tsx11_lock();
         if (physBitmap->pixmap) XFreePixmap( gdi_display, physBitmap->pixmap );
         XDeleteContext( gdi_display, (XID)hbitmap, bitmap_context );

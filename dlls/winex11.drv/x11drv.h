@@ -273,7 +273,7 @@ extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 
 extern XVisualInfo *X11DRV_setup_opengl_visual(Display *display);
 extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev);
-extern BOOL destroy_glxpixmap(XID glxpixmap);
+extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap);
 
 /* XIM support */
 extern XIC X11DRV_CreateIC(XIM xim, Display *display, Window win);
