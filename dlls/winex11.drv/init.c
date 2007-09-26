@@ -342,6 +342,7 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                     physDev->drawable_rect = data->drawable_rect;
                     physDev->current_pf = pixelformat_from_fbconfig_id( data->fbconfig_id );
                     physDev->gl_drawable = data->gl_drawable;
+                    physDev->pixmap = data->pixmap;
                     wine_tsx11_lock();
                     XSetSubwindowMode( gdi_display, physDev->gc, data->mode );
                     wine_tsx11_unlock();

@@ -972,6 +972,12 @@ static inline void sync_context(Wine_GLContext *context)
 }
 
 
+Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
+{
+    return pglXCreateGLXPixmap(display, vis, parent);
+}
+
+
 /**
  * X11DRV_ChoosePixelFormat
  *
@@ -1965,12 +1971,14 @@ static inline void update_drawable(X11DRV_PDEVICE *physDev)
     h = physDev->dc_rect.bottom - physDev->dc_rect.top;
 
     if(w > 0 && h > 0) {
+        Drawable src = physDev->pixmap;
+        if(!src) src = physDev->gl_drawable;
+
         /* The GL drawable may be lagged behind if we don't flush first, so
          * flush the display make sure we copy up-to-date data */
         XFlush(gdi_display);
-        XCopyArea(gdi_display, physDev->gl_drawable, physDev->drawable,
-                  physDev->gc, 0, 0, w, h, physDev->dc_rect.left,
-                  physDev->dc_rect.top);
+        XCopyArea(gdi_display, src, physDev->drawable, physDev->gc, 0, 0, w, h,
+                  physDev->dc_rect.left, physDev->dc_rect.top);
     }
 }
 
@@ -3189,7 +3197,7 @@ static void X11DRV_WineGL_LoadExtensions(void)
 }
 
 
-static XID create_glxpixmap(X11DRV_PDEVICE *physDev)
+static XID create_bitmap_glxpixmap(X11DRV_PDEVICE *physDev)
 {
     GLXPixmap ret;
     XVisualInfo *vis;
@@ -3220,7 +3228,7 @@ Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
         else
         {
             if(!physDev->bitmap->glxpixmap)
-                physDev->bitmap->glxpixmap = create_glxpixmap(physDev);
+                physDev->bitmap->glxpixmap = create_bitmap_glxpixmap(physDev);
             ret = physDev->bitmap->glxpixmap;
         }
     }
@@ -3342,6 +3350,11 @@ int pixelformat_from_fbconfig_id(XID fbconfig_id)
 
 void mark_drawable_dirty(Drawable old, Drawable new)
 {
+}
+
+Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
+{
+    return 0;
 }
 
 /***********************************************************************

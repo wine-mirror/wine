@@ -58,6 +58,7 @@ static const char whole_window_prop[] = "__wine_x11_whole_window";
 static const char icon_window_prop[]  = "__wine_x11_icon_window";
 static const char fbconfig_id_prop[]  = "__wine_x11_fbconfig_id";
 static const char gl_drawable_prop[]  = "__wine_x11_gl_drawable";
+static const char pixmap_prop[]       = "__wine_x11_pixmap";
 static const char managed_prop[]      = "__wine_x11_managed";
 static const char visual_id_prop[]    = "__wine_x11_visual_id";
 
@@ -241,7 +242,27 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
             XMapWindow(display, data->gl_drawable);
         }
     }
+    else
 #endif
+    {
+        WARN("XComposite is not available, using GLXPixmap hack\n");
+
+        data->pixmap = XCreatePixmap(display, parent, w, h, vis->depth);
+        if(!data->pixmap)
+        {
+            ERR("Failed to create pixmap for offscreen rendering\n");
+            XFree(vis);
+            wine_tsx11_unlock();
+            return FALSE;
+        }
+
+        data->gl_drawable = create_glxpixmap(display, vis, data->pixmap);
+        if(!data->gl_drawable)
+        {
+            XFreePixmap(display, data->pixmap);
+            data->pixmap = 0;
+        }
+    }
 
     if(!data->gl_drawable)
     {
@@ -263,6 +284,7 @@ done:
     data->fbconfig_id = fbconfig_id;
     SetPropA(hwnd, fbconfig_id_prop, (HANDLE)data->fbconfig_id);
     SetPropA(hwnd, gl_drawable_prop, (HANDLE)data->gl_drawable);
+    SetPropA(hwnd, pixmap_prop, (HANDLE)data->pixmap);
     invalidate_dce( hwnd, &data->window_rect );
     return TRUE;
 }
@@ -271,6 +293,11 @@ static void update_gl_drawable(Display *display, struct x11drv_win_data *data, c
 {
     int w = data->client_rect.right - data->client_rect.left;
     int h = data->client_rect.bottom - data->client_rect.top;
+    XVisualInfo *vis;
+    Drawable parent;
+    HWND next_hwnd;
+    Drawable glxp;
+    Pixmap pix;
 
     if((w == old_client_rect->right - old_client_rect->left &&
         h == old_client_rect->bottom - old_client_rect->top) ||
@@ -290,6 +317,60 @@ static void update_gl_drawable(Display *display, struct x11drv_win_data *data, c
         return;
     }
 #endif
+
+    parent = data->whole_window;
+    next_hwnd = data->hwnd;
+    while(!parent)
+    {
+        next_hwnd = GetAncestor(next_hwnd, GA_PARENT);
+        if(!next_hwnd)
+        {
+            ERR("Could not find parent HWND with a drawable!\n");
+            return;
+        }
+        parent = X11DRV_get_whole_window(next_hwnd);
+    }
+
+    wine_tsx11_lock();
+
+    vis = visual_from_fbconfig_id(data->fbconfig_id);
+    if(!vis) return;
+
+    pix = XCreatePixmap(display, parent, w, h, vis->depth);
+    if(!pix)
+    {
+        ERR("Failed to create pixmap for offscreen rendering\n");
+        XFree(vis);
+        wine_tsx11_unlock();
+        return;
+    }
+
+    glxp = create_glxpixmap(display, vis, pix);
+    if(!glxp)
+    {
+        ERR("Failed to create drawable for offscreen rendering\n");
+        XFreePixmap(display, pix);
+        XFree(vis);
+        wine_tsx11_unlock();
+        return;
+    }
+
+    XFree(vis);
+
+    mark_drawable_dirty(data->gl_drawable, glxp);
+
+    XFreePixmap(display, data->pixmap);
+    destroy_glxpixmap(display, data->gl_drawable);
+
+    data->pixmap = pix;
+    data->gl_drawable = glxp;
+
+    XFlush(display);
+    wine_tsx11_unlock();
+
+    SetPropA(data->hwnd, gl_drawable_prop, (HANDLE)data->gl_drawable);
+    SetPropA(data->hwnd, pixmap_prop, (HANDLE)data->pixmap);
+    invalidate_dce( data->hwnd, &data->window_rect );
 }
 
 
@@ -1046,7 +1127,14 @@ void X11DRV_DestroyWindow( HWND hwnd )
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
-    if (data->gl_drawable)
+    if (data->pixmap)
+    {
+        destroy_glxpixmap(display, data->gl_drawable);
+        wine_tsx11_lock();
+        XFreePixmap(display, data->pixmap);
+        wine_tsx11_unlock();
+    }
+    else if (data->gl_drawable)
     {
         wine_tsx11_lock();
         XDestroyWindow(display, data->gl_drawable);
@@ -1079,6 +1167,7 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
         data->icon_window   = 0;
         data->fbconfig_id   = 0;
         data->gl_drawable   = 0;
+        data->pixmap        = 0;
         data->xic           = 0;
         data->managed       = FALSE;
         data->dce           = NULL;
@@ -1395,6 +1484,19 @@ Drawable X11DRV_get_gl_drawable( HWND hwnd )
 
     if (!data) return (Drawable)GetPropA( hwnd, gl_drawable_prop );
     return data->gl_drawable;
+}
+
+/***********************************************************************
+ *              X11DRV_get_gl_pixmap
+ *
+ * Return the Pixmap associated with the GL drawable (if any) for this window.
+ */
+Pixmap X11DRV_get_gl_pixmap( HWND hwnd )
+{
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+
+    if (!data) return (Pixmap)GetPropA( hwnd, pixmap_prop );
+    return data->pixmap;
 }
 
 

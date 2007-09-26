@@ -140,6 +140,7 @@ typedef struct
     struct dce   *dce;         /* opaque pointer to DCE */
     int           current_pf;
     Drawable      gl_drawable;
+    Pixmap        pixmap;      /* Pixmap for a GLXPixmap gl_drawable */
     XRENDERINFO   xrender;
 } X11DRV_PDEVICE;
 
@@ -488,6 +489,7 @@ struct x11drv_escape_set_drawable
     RECT                     drawable_rect;/* Drawable rectangle relative to screen */
     XID                      fbconfig_id;  /* fbconfig id used by the GL drawable */
     Drawable                 gl_drawable;  /* GL drawable */
+    Pixmap                   pixmap;       /* Pixmap for a GLXPixmap gl_drawable */
 };
 
 struct x11drv_escape_set_dce
@@ -648,6 +650,7 @@ struct x11drv_win_data
     Window      icon_window;    /* X window for the icon */
     XID         fbconfig_id;    /* fbconfig id for the GL drawable this hwnd uses */
     Drawable    gl_drawable;    /* Optional GL drawable for rendering the client area */
+    Pixmap      pixmap;         /* Base pixmap for if gl_drawable is a GLXPixmap */
     RECT        window_rect;    /* USER window rectangle relative to parent */
     RECT        whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT        client_rect;    /* client area relative to whole window */
@@ -664,6 +667,7 @@ extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
 extern XID X11DRV_get_fbconfig_id( HWND hwnd );
 extern Drawable X11DRV_get_gl_drawable( HWND hwnd );
+extern Pixmap X11DRV_get_gl_pixmap( HWND hwnd );
 extern BOOL X11DRV_is_window_rect_mapped( const RECT *rect );
 extern XIC X11DRV_get_ic( HWND hwnd );
 extern BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig );
@@ -671,6 +675,7 @@ extern BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig );
 extern int pixelformat_from_fbconfig_id( XID fbconfig_id );
 extern XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id );
 extern void mark_drawable_dirty( Drawable old, Drawable new );
+extern Drawable create_glxpixmap( Display *display, XVisualInfo *vis, Pixmap parent );
 
 extern void alloc_window_dce( struct x11drv_win_data *data );
 extern void free_window_dce( struct x11drv_win_data *data );
