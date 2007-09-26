@@ -652,6 +652,7 @@ programs/view/view
 programs/view/viewrc.res
 programs/wineapploader
 programs/wineboot/wineboot
+programs/wineboot/wineboot.res
 programs/winebrowser/winebrowser
 programs/winecfg/winecfg
 programs/winecfg/winecfg.res

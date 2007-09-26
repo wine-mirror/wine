@@ -23,9 +23,15 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "tlhelp32.h"
+
 #include "wine/debug.h"
 
+#include "resource.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
+
+#define MESSAGE_TIMEOUT     5000
+#define PROCQUIT_TIMEOUT    20000
 
 struct window_info
 {
@@ -80,36 +86,203 @@ static BOOL get_all_windows(void)
     return TRUE;
 }
 
-/* send WM_QUERYENDSESSION and WM_ENDSESSION to all windows of a given process */
-/* FIXME: should display a confirmation dialog if process doesn't respond to the messages */
-static DWORD_PTR send_end_session_messages( struct window_info *win, UINT count, UINT flags )
+struct callback_data
+{
+    UINT window_count;
+    BOOL timed_out;
+    LRESULT result;
+};
+
+static void CALLBACK end_session_message_callback( HWND hwnd, UINT msg, ULONG_PTR data, LRESULT lresult )
+{
+    struct callback_data *cb_data = (struct callback_data *)data;
+
+    WINE_TRACE( "received response %s hwnd %p lresult %ld\n",
+                msg == WM_QUERYENDSESSION ? "WM_QUERYENDSESSION" : (msg == WM_ENDSESSION ? "WM_ENDSESSION" : "Unknown"),
+                hwnd, lresult );
+
+    /* we only care if a WM_QUERYENDSESSION response is FALSE */
+    cb_data->result = cb_data->result && lresult;
+
+    /* cheap way of ref-counting callback_data whilst freeing memory at correct
+     * time */
+    if (!(cb_data->window_count--) && cb_data->timed_out)
+        HeapFree( GetProcessHeap(), 0, cb_data );
+}
+
+struct endtask_dlg_data
+{
+    struct window_info *win;
+    BOOL cancelled;
+};
+
+static INT_PTR CALLBACK endtask_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    struct endtask_dlg_data *data;
+    HANDLE handle;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        SetWindowLongPtrW( hwnd, DWLP_USER, lparam );
+        data = (struct endtask_dlg_data *)lparam;
+        ShowWindow( hwnd, SW_SHOWNORMAL );
+        return TRUE;
+    case WM_COMMAND:
+        data = (struct endtask_dlg_data *)GetWindowLongPtrW( hwnd, DWLP_USER );
+        switch (wparam)
+        {
+        case MAKEWPARAM(IDOK, BN_CLICKED):
+            handle = OpenProcess( PROCESS_TERMINATE, FALSE, data->win[0].pid );
+            if (handle)
+            {
+                WINE_TRACE( "terminating process %04x\n", data->win[0].pid );
+                TerminateProcess( handle, 0 );
+                CloseHandle( handle );
+            }
+            return TRUE;
+        case MAKEWPARAM(IDCANCEL, BN_CLICKED):
+            data->cancelled = TRUE;
+            return TRUE;
+        }
+        break;
+    }
+    return FALSE;
+}
+
+/* Sends a message to a set of windows, displaying a dialog if the window
+ * doesn't respond to the message within a set amount of time.
+ * If the process has already been terminated, the function returns -1.
+ * If the user or application cancels the process, the function returns 0.
+ * Otherwise the function returns 0. */
+static LRESULT send_messages_with_timeout_dialog(
+    struct window_info *win, UINT count, HANDLE process_handle,
+    UINT msg, WPARAM wparam, LPARAM lparam )
 {
     unsigned int i;
-    DWORD_PTR result, ret = 1;
+    DWORD ret;
+    DWORD start_time;
+    struct callback_data *cb_data;
+    HWND hwnd_endtask = NULL;
+    struct endtask_dlg_data dlg_data;
+    LRESULT result;
+
+    cb_data = HeapAlloc( GetProcessHeap(), 0, sizeof(*cb_data) );
+    if (!cb_data)
+        return 1;
+
+    cb_data->result = TRUE; /* we only care if a WM_QUERYENDSESSION response is FALSE */
+    cb_data->timed_out = FALSE;
+    cb_data->window_count = count;
+
+    dlg_data.win = win;
+    dlg_data.cancelled = FALSE;
+
+    for (i = 0; i < count; i++)
+    {
+        if (!SendMessageCallbackW( win[i].hwnd, msg, wparam, lparam,
+                                   end_session_message_callback, (ULONG_PTR)cb_data ))
+            cb_data->window_count --;
+    }
+
+    start_time = GetTickCount();
+    while (TRUE)
+    {
+        DWORD current_time = GetTickCount();
+
+        ret = MsgWaitForMultipleObjects( 1, &process_handle, FALSE,
+                                         MESSAGE_TIMEOUT - (current_time - start_time),
+                                         QS_ALLINPUT );
+        if (ret == WAIT_OBJECT_0) /* process exited */
+        {
+            HeapFree( GetProcessHeap(), 0, cb_data );
+            result = 1;
+            goto cleanup;
+        }
+        else if (ret == WAIT_OBJECT_0 + 1) /* window message */
+        {
+            MSG msg;
+            while(PeekMessageW( &msg, NULL, 0, 0, PM_REMOVE ))
+            {
+                if (!hwnd_endtask || !IsDialogMessageW( hwnd_endtask, &msg ))
+                {
+                    TranslateMessage( &msg );
+                    DispatchMessageW( &msg );
+                }
+            }
+            if (!cb_data->window_count)
+            {
+                result = cb_data->result;
+                HeapFree( GetProcessHeap(), 0, cb_data );
+                if (!result)
+                    goto cleanup;
+                break;
+            }
+            if (dlg_data.cancelled)
+            {
+                cb_data->timed_out = TRUE;
+                result = 0;
+                goto cleanup;
+            }
+        }
+        else if ((ret == WAIT_TIMEOUT) && !hwnd_endtask)
+        {
+            hwnd_endtask = CreateDialogParamW( GetModuleHandle(NULL),
+                                               MAKEINTRESOURCEW(IDD_ENDTASK),
+                                               NULL, endtask_dlg_proc,
+                                               (LPARAM)&dlg_data );
+        }
+        else break;
+    }
+
+    result = 1;
+
+cleanup:
+    if (hwnd_endtask) DestroyWindow( hwnd_endtask );
+    return result;
+}
+
+/* send WM_QUERYENDSESSION and WM_ENDSESSION to all windows of a given process */
+static DWORD_PTR send_end_session_messages( struct window_info *win, UINT count, UINT flags )
+{
+    LRESULT result, end_session;
+    HANDLE process_handle;
+    DWORD ret;
 
     /* don't kill the desktop process */
     if (win[0].pid == desktop_pid) return 1;
 
-    for (i = 0; ret && i < count; i++)
+    process_handle = OpenProcess( SYNCHRONIZE, FALSE, win[0].pid );
+    if (!process_handle)
+        return 1;
+
+    end_session = send_messages_with_timeout_dialog( win, count, process_handle,
+                                                     WM_QUERYENDSESSION, 0, 0 );
+    if (end_session == -1)
     {
-        if (SendMessageTimeoutW( win[i].hwnd, WM_QUERYENDSESSION, 0, 0, flags, 0, &result ))
-        {
-            WINE_TRACE( "sent MW_QUERYENDSESSION hwnd %p pid %04x result %ld\n",
-                        win[i].hwnd, win[i].pid, result );
-            ret = result;
-        }
-        else win[i].hwnd = 0;  /* ignore this window */
+        CloseHandle( process_handle );
+        return 1;
     }
 
-    for (i = 0; i < count; i++)
+    result = send_messages_with_timeout_dialog( win, count, process_handle,
+                                                WM_ENDSESSION, end_session, 0 );
+    if (end_session == 0)
     {
-        if (!win[i].hwnd) continue;
-        WINE_TRACE( "sending WM_ENDSESSION hwnd %p pid %04x wp %ld\n", win[i].hwnd, win[i].pid, ret );
-        SendMessageTimeoutW( win[i].hwnd, WM_ENDSESSION, ret, 0, flags, 0, &result );
+        CloseHandle( process_handle );
+        return 0;
+    }
+    if (result == -1)
+    {
+        CloseHandle( process_handle );
+        return 1;
     }
 
-    if (ret)
+    /* wait for app to quit on its own for a while */
+    ret = WaitForSingleObject( process_handle, PROCQUIT_TIMEOUT );
+    CloseHandle( process_handle );
+    if (ret == WAIT_TIMEOUT)
     {
+        /* it didn't quit by itself in time, so terminate it with extreme prejudice */
         HANDLE handle = OpenProcess( PROCESS_TERMINATE, FALSE, win[0].pid );
         if (handle)
         {
@@ -118,7 +291,7 @@ static DWORD_PTR send_end_session_messages( struct window_info *win, UINT count,
             CloseHandle( handle );
         }
     }
-    return ret;
+    return 1;
 }
 
 /* close all top-level windows and terminate processes cleanly */
