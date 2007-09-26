@@ -311,7 +311,7 @@ static inline ENCODING PROFILE_DetectTextEncoding(const void * buffer, int * len
  */
 static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
 {
-    void *pBuffer;
+    void *buffer_base, *pBuffer;
     WCHAR * szFile;
     const WCHAR *szLineStart, *szLineEnd;
     const WCHAR *szValueStart, *szEnd, *next_line;
@@ -327,20 +327,20 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     if (dwFileSize == INVALID_FILE_SIZE)
         return NULL;
 
-    pBuffer = HeapAlloc(GetProcessHeap(), 0 , dwFileSize);
-    if (!pBuffer) return NULL;
+    buffer_base = HeapAlloc(GetProcessHeap(), 0 , dwFileSize);
+    if (!buffer_base) return NULL;
     
-    if (!ReadFile(hFile, pBuffer, dwFileSize, &dwFileSize, NULL))
+    if (!ReadFile(hFile, buffer_base, dwFileSize, &dwFileSize, NULL))
     {
-        HeapFree(GetProcessHeap(), 0, pBuffer);
+        HeapFree(GetProcessHeap(), 0, buffer_base);
         WARN("Error %d reading file\n", GetLastError());
         return NULL;
     }
     len = dwFileSize;
-    *pEncoding = PROFILE_DetectTextEncoding(pBuffer, &len);
+    *pEncoding = PROFILE_DetectTextEncoding(buffer_base, &len);
     /* len is set to the number of bytes in the character marker.
      * we want to skip these bytes */
-    pBuffer = (char *)pBuffer + len;
+    pBuffer = (char *)buffer_base + len;
     dwFileSize -= len;
     switch (*pEncoding)
     {
@@ -351,7 +351,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
         szFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if (!szFile)
         {
-            HeapFree(GetProcessHeap(), 0, pBuffer);
+            HeapFree(GetProcessHeap(), 0, buffer_base);
             return NULL;
         }
         MultiByteToWideChar(CP_ACP, 0, (char *)pBuffer, dwFileSize, szFile, len);
@@ -364,7 +364,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
         szFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if (!szFile)
         {
-            HeapFree(GetProcessHeap(), 0, pBuffer);
+            HeapFree(GetProcessHeap(), 0, buffer_base);
             return NULL;
         }
         MultiByteToWideChar(CP_UTF8, 0, (char *)pBuffer, dwFileSize, szFile, len);
@@ -383,7 +383,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
         break;
     default:
         FIXME("encoding type %d not implemented\n", *pEncoding);
-        HeapFree(GetProcessHeap(), 0, pBuffer);
+        HeapFree(GetProcessHeap(), 0, buffer_base);
         return NULL;
     }
 
@@ -392,7 +392,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     {
         if (szFile != pBuffer)
             HeapFree(GetProcessHeap(), 0, szFile);
-        HeapFree(GetProcessHeap(), 0, pBuffer);
+        HeapFree(GetProcessHeap(), 0, buffer_base);
         return NULL;
     }
     first_section->name[0] = 0;
@@ -489,7 +489,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     }
     if (szFile != pBuffer)
         HeapFree(GetProcessHeap(), 0, szFile);
-    HeapFree(GetProcessHeap(), 0, pBuffer);
+    HeapFree(GetProcessHeap(), 0, buffer_base);
     return first_section;
 }
 
