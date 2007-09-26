@@ -466,6 +466,6 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
          dwExpectedContentTypeFlags, pdwMsgAndCertEncodingType, pdwContentType,
          phCertStore, phMsg);
     }
-    TRACE("returning %d\n");
+    TRACE("returning %d\n", ret);
     return ret;
 }
