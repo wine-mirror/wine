@@ -39,6 +39,54 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+#define USER_AGENT "User-Agent:"
+#define CONTENT_TYPE "Content-Type:"
+
+static int fix_headers(char *buf, DWORD post_len)
+{
+    char *ptr = NULL;
+
+    if(!strncasecmp(USER_AGENT, buf, sizeof(USER_AGENT)-1)) {
+        ptr = buf;
+    }else {
+        ptr = strstr(buf, "\r\n" USER_AGENT);
+        if(ptr)
+            ptr += 2;
+    }
+
+    if(ptr) {
+        const char *ptr2;
+
+        FIXME("Ignoring User-Agent header\n");
+
+        ptr2 = strstr(ptr, "\r\n");
+        if(ptr2)
+            memmove(ptr, ptr2, strlen(ptr2)+1);
+    }
+
+    if(!post_len) {
+        if(!strncasecmp(CONTENT_TYPE, buf, sizeof(CONTENT_TYPE)-1)) {
+            ptr = buf;
+        }else {
+            ptr = strstr(buf, "\r\n" CONTENT_TYPE);
+            if(ptr)
+                ptr += 2;
+        }
+
+        if(ptr) {
+            const char *ptr2;
+
+            TRACE("Ignoring Content-Type header\n");
+
+            ptr2 = strstr(ptr, "\r\n");
+            if(ptr2)
+                memmove(ptr, ptr2, strlen(ptr2)+1);
+        }
+    }
+
+    return strlen(buf);
+}
+
 static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
 {
     nsIInputStream *ret = NULL;
@@ -84,7 +132,7 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
         post_len = bindinfo.cbstgmedData;
 
     if(headers_len || post_len) {
-        int len = headers_len ? headers_len-1 : 0;
+        int len = 0;
 
         static const char content_length[] = "Content-Length: %u\r\n\r\n";
 
@@ -93,9 +141,13 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
         if(headers_len) {
             WideCharToMultiByte(CP_ACP, 0, headers, -1, data, -1, NULL, NULL);
             CoTaskMemFree(headers);
+            len = fix_headers(data, post_len);
         }
 
         if(post_len) {
+            if(len >= 4 && !strcmp(data+len-4, "\r\n\r\n"))
+                len -= 2;
+
             sprintf(data+len, content_length, post_len);
             len = strlen(data);
 
