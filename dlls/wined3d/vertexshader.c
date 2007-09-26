@@ -115,8 +115,8 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
         MUL out, tmp, vec*/
     {WINED3DSIO_SGN,  "sgn",  NULL,  1, 2, NULL,                shader_glsl_map2gl, 0, 0},
     {WINED3DSIO_NRM,    "nrm",      NULL, 1, 2, shader_hw_nrm, shader_glsl_map2gl, 0, 0},
-    {WINED3DSIO_SINCOS, "sincos",   NULL, 1, 4, NULL, shader_glsl_sincos, WINED3DVS_VERSION(2,0), WINED3DVS_VERSION(2,1)},
-    {WINED3DSIO_SINCOS, "sincos",   NULL, 1, 2, NULL, shader_glsl_sincos, WINED3DVS_VERSION(3,0), -1},
+    {WINED3DSIO_SINCOS, "sincos",   NULL, 1, 4, shader_hw_sincos, shader_glsl_sincos, WINED3DVS_VERSION(2,0), WINED3DVS_VERSION(2,1)},
+    {WINED3DSIO_SINCOS, "sincos",  "SCS", 1, 2, shader_hw_sincos, shader_glsl_sincos, WINED3DVS_VERSION(3,0), -1},
     /* Matrix */
     {WINED3DSIO_M4x4,   "m4x4", "undefined", 1, 3, vshader_hw_mnxn, shader_glsl_mnxn, 0, 0},
     {WINED3DSIO_M4x3,   "m4x3", "undefined", 1, 3, vshader_hw_mnxn, shader_glsl_mnxn, 0, 0},

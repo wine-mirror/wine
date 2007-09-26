@@ -1791,6 +1791,7 @@ extern void pshader_hw_dp2add(SHADER_OPCODE_ARG* arg);
 
 /* ARB vertex / pixel shader common prototypes */
 extern void shader_hw_nrm(SHADER_OPCODE_ARG* arg);
+extern void shader_hw_sincos(SHADER_OPCODE_ARG* arg);
 
 /* ARB vertex shader prototypes */
 extern void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);

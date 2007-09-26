@@ -1499,6 +1499,30 @@ void shader_hw_nrm(SHADER_OPCODE_ARG* arg) {
         pshader_gen_output_modifier_line(buffer, FALSE, dst_wmask, shift, dst_name);
 }
 
+void shader_hw_sincos(SHADER_OPCODE_ARG* arg) {
+    /* This instruction exists in ARB, but the d3d instruction takes two extra parameters which
+     * must contain fixed constants. So we need a separate functin to filter those constants and
+     * can't use map2gl
+     */
+    SHADER_BUFFER* buffer = arg->buffer;
+    char dst_name[50];
+    char src_name[50];
+    char dst_wmask[20];
+    DWORD shift = (arg->dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
+    BOOL sat = (arg->dst & WINED3DSP_DSTMOD_MASK) & WINED3DSPDM_SATURATE;
+
+    pshader_get_register_name(arg->dst, dst_name);
+    shader_arb_get_write_mask(arg, arg->dst, dst_wmask);
+
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name);
+    shader_addline(buffer, "SCS%s %s%s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask,
+                   src_name);
+
+    if (shift != 0)
+        pshader_gen_output_modifier_line(buffer, FALSE, dst_wmask, shift, dst_name);
+
+}
+
 /* TODO: merge with pixel shader */
 /* Map the opcode 1-to-1 to the GL code */
 void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
