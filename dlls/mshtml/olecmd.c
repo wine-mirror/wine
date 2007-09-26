@@ -61,21 +61,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 void do_ns_command(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
 {
     nsICommandManager *cmdmgr;
-    nsIInterfaceRequestor *iface_req;
     nsresult nsres;
 
     TRACE("(%p)\n", This);
 
-    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
-            &IID_nsIInterfaceRequestor, (void**)&iface_req);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
-        return;
-    }
-
-    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsICommandManager,
-                                               (void**)&cmdmgr);
-    nsIInterfaceRequestor_Release(iface_req);
+    nsres = get_nsinterface((nsISupports*)This->webbrowser, &IID_nsICommandManager, (void**)&cmdmgr);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsICommandManager: %08x\n", nsres);
         return;
@@ -241,7 +231,6 @@ static void set_default_templates(nsIPrintSettings *settings)
 
 static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    nsIInterfaceRequestor *iface_req;
     nsIWebBrowserPrint *nsprint;
     nsIPrintSettings *settings;
     nsresult nsres;
@@ -254,16 +243,8 @@ static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
     if(!This->nscontainer)
         return S_OK;
 
-    nsres = nsIWebBrowser_QueryInterface(This->nscontainer->webbrowser,
-            &IID_nsIInterfaceRequestor, (void**)&iface_req);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
-        return S_OK;
-    }
-
-    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsIWebBrowserPrint,
+    nsres = get_nsinterface((nsISupports*)This->nscontainer->webbrowser, &IID_nsIWebBrowserPrint,
             (void**)&nsprint);
-    nsIInterfaceRequestor_Release(iface_req);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIWebBrowserPrint: %08x\n", nsres);
         return S_OK;
