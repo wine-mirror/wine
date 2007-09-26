@@ -292,8 +292,8 @@ static void SetStyle(IShellViewImpl * This, DWORD dwAdd, DWORD dwRemove)
 
 	TRACE("(%p)\n", This);
 
-	tmpstyle = GetWindowLongA(This->hWndList, GWL_STYLE);
-	SetWindowLongA(This->hWndList, GWL_STYLE, dwAdd | (tmpstyle & ~dwRemove));
+	tmpstyle = GetWindowLongW(This->hWndList, GWL_STYLE);
+	SetWindowLongW(This->hWndList, GWL_STYLE, dwAdd | (tmpstyle & ~dwRemove));
 }
 
 /**********************************************************
@@ -528,11 +528,11 @@ static int LV_FindItemByPidl(
 	IShellViewImpl * This,
 	LPCITEMIDLIST pidl)
 {
-	LVITEMA lvItem;
+	LVITEMW lvItem;
 	lvItem.iSubItem = 0;
 	lvItem.mask = LVIF_PARAM;
 	for(lvItem.iItem = 0;
-		SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
+		SendMessageW(This->hWndList, LVM_GETITEMW, 0, (LPARAM) &lvItem);
 		lvItem.iItem++)
 	{
 	  LPITEMIDLIST currentpidl = (LPITEMIDLIST) lvItem.lParam;
@@ -550,7 +550,7 @@ static int LV_FindItemByPidl(
 */
 static BOOLEAN LV_AddItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
 {
-	LVITEMA	lvItem;
+	LVITEMW	lvItem;
 
 	TRACE("(%p)(pidl=%p)\n", This, pidl);
 
@@ -558,9 +558,9 @@ static BOOLEAN LV_AddItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
 	lvItem.iItem = ListView_GetItemCount(This->hWndList);	/*add the item to the end of the list*/
 	lvItem.iSubItem = 0;
 	lvItem.lParam = (LPARAM) ILClone(ILFindLastID(pidl));				/*set the item's data*/
-	lvItem.pszText = LPSTR_TEXTCALLBACKA;			/*get text on a callback basis*/
+	lvItem.pszText = LPSTR_TEXTCALLBACKW;			/*get text on a callback basis*/
 	lvItem.iImage = I_IMAGECALLBACK;			/*get the image on a callback basis*/
-	return (-1==ListView_InsertItemA(This->hWndList, &lvItem))? FALSE: TRUE;
+	return (-1==ListView_InsertItemW(This->hWndList, &lvItem))? FALSE: TRUE;
 }
 
 /**********************************************************
@@ -582,7 +582,7 @@ static BOOLEAN LV_DeleteItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
 static BOOLEAN LV_RenameItem(IShellViewImpl * This, LPCITEMIDLIST pidlOld, LPCITEMIDLIST pidlNew )
 {
 	int nItem;
-	LVITEMA lvItem;
+	LVITEMW lvItem;
 
 	TRACE("(%p)(pidlold=%p pidlnew=%p)\n", This, pidlOld, pidlNew);
 
@@ -591,14 +591,14 @@ static BOOLEAN LV_RenameItem(IShellViewImpl * This, LPCITEMIDLIST pidlOld, LPCIT
 	{
 	  lvItem.mask = LVIF_PARAM;		/* only the pidl */
 	  lvItem.iItem = nItem;
-	  SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
+	  SendMessageW(This->hWndList, LVM_GETITEMW, 0, (LPARAM) &lvItem);
 
 	  SHFree((LPITEMIDLIST)lvItem.lParam);
 	  lvItem.mask = LVIF_PARAM;
 	  lvItem.iItem = nItem;
 	  lvItem.lParam = (LPARAM) ILClone(ILFindLastID(pidlNew));	/* set the item's data */
-	  SendMessageA(This->hWndList, LVM_SETITEMA, 0, (LPARAM) &lvItem);
-	  SendMessageA(This->hWndList, LVM_UPDATE, nItem, 0);
+	  SendMessageW(This->hWndList, LVM_SETITEMW, 0, (LPARAM) &lvItem);
+	  SendMessageW(This->hWndList, LVM_UPDATE, nItem, 0);
 	  return TRUE;					/* FIXME: better handling */
 	}
 	return FALSE;
@@ -721,8 +721,8 @@ static LRESULT ShellView_OnCreate(IShellViewImpl * This)
 * ShellView_BuildFileMenu()
 */
 static HMENU ShellView_BuildFileMenu(IShellViewImpl * This)
-{	CHAR	szText[MAX_PATH];
-	MENUITEMINFOA	mii;
+{	WCHAR	szText[MAX_PATH];
+	MENUITEMINFOW	mii;
 	int	nTools,i;
 	HMENU	hSubMenu;
 
@@ -736,7 +736,7 @@ static HMENU ShellView_BuildFileMenu(IShellViewImpl * This)
 	  /*add the menu items*/
 	  for(i = 0; i < nTools; i++)
 	  {
-	    LoadStringA(shell32_hInstance, Tools[i].idMenuString, szText, MAX_PATH);
+	    LoadStringW(shell32_hInstance, Tools[i].idMenuString, szText, MAX_PATH);
 
 	    ZeroMemory(&mii, sizeof(mii));
 	    mii.cbSize = sizeof(mii);
@@ -754,7 +754,7 @@ static HMENU ShellView_BuildFileMenu(IShellViewImpl * This)
 	      mii.fType = MFT_SEPARATOR;
 	    }
 	    /* tack This item onto the end of the menu */
-	    InsertMenuItemA(hSubMenu, (UINT)-1, TRUE, &mii);
+	    InsertMenuItemW(hSubMenu, (UINT)-1, TRUE, &mii);
 	  }
 	}
 	TRACE("-- return (menu=%p)\n",hSubMenu);
@@ -810,7 +810,7 @@ static void ShellView_MergeViewMenu(IShellViewImpl * This, HMENU hSubMenu)
 */
 static UINT ShellView_GetSelections(IShellViewImpl * This)
 {
-	LVITEMA	lvItem;
+	LVITEMW	lvItem;
 	UINT	i = 0;
 
 	SHFree(This->apidl);
@@ -829,7 +829,7 @@ static UINT ShellView_GetSelections(IShellViewImpl * This)
 	  lvItem.iItem = 0;
 	  lvItem.iSubItem = 0;
 
-	  while(ListView_GetItemA(This->hWndList, &lvItem) && (i < This->cidl))
+	  while(ListView_GetItemW(This->hWndList, &lvItem) && (i < This->cidl))
 	  {
 	    if(lvItem.state & LVIS_SELECTED)
 	    {
@@ -1980,7 +1980,7 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 
 	if (i != -1)
 	{
-	  LVITEMA lvItem;
+	  LVITEMW lvItem;
 
 	  if(uFlags & SVSI_ENSUREVISIBLE)
 	    SendMessageW(This->hWndList, LVM_ENSUREVISIBLE, i, 0);
@@ -1990,7 +1990,7 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 	  lvItem.iItem = 0;
 	  lvItem.iSubItem = 0;
 
-          while(SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem))
+          while(SendMessageW(This->hWndList, LVM_GETITEMW, 0, (LPARAM) &lvItem))
 	  {
 	    if (lvItem.iItem == i)
 	    {
@@ -2007,7 +2007,7 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 	      if (uFlags & SVSI_DESELECTOTHERS)
 	        lvItem.state &= ~LVIS_SELECTED;
 	    }
-	    SendMessageA(This->hWndList, LVM_SETITEMA, 0, (LPARAM) &lvItem);
+	    SendMessageW(This->hWndList, LVM_SETITEMW, 0, (LPARAM) &lvItem);
 	    lvItem.iItem++;
 	  }
 
@@ -2213,7 +2213,7 @@ static HRESULT drag_notify_subitem(IShellViewImpl *This, DWORD grfKeyState, POIN
     DWORD *pdwEffect)
 {
     LVHITTESTINFO htinfo;
-    LVITEMA lvItem;
+    LVITEMW lvItem;
     LONG lResult;
     HRESULT hr;
     RECT clientRect;
@@ -2271,7 +2271,7 @@ static HRESULT drag_notify_subitem(IShellViewImpl *This, DWORD grfKeyState, POIN
         lvItem.mask = LVIF_PARAM;
         lvItem.iItem = lResult;
         lvItem.iSubItem = 0;
-        SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
+        SendMessageW(This->hWndList, LVM_GETITEMW, 0, (LPARAM) &lvItem);
 
         /* ... and bind pCurDropTarget to the IDropTarget interface of an UIObject of this object */
         hr = IShellFolder_GetUIObjectOf(This->pSFParent, This->hWndList, 1,
