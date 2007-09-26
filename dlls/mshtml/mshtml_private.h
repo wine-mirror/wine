@@ -441,6 +441,8 @@ typedef struct {
 
 extern const cmdtable_t editmode_cmds[];
 
+void do_ns_command(NSContainer*,const char*,nsICommandParams*);
+
 /* timer */
 #define UPDATE_UI       0x0001
 #define UPDATE_TITLE    0x0002

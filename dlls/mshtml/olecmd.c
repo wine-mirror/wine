@@ -42,6 +42,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define NSCMD_BOLD "cmd_bold"
+#define NSCMD_COPY "cmd_copy"
 #define NSCMD_ITALIC "cmd_italic"
 #define NSCMD_UNDERLINE "cmd_underline"
 #define NSCMD_ALIGN "cmd_align"
@@ -56,6 +57,36 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSALIGN_CENTER "center"
 #define NSALIGN_LEFT   "left"
 #define NSALIGN_RIGHT  "right"
+
+void do_ns_command(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
+{
+    nsICommandManager *cmdmgr;
+    nsIInterfaceRequestor *iface_req;
+    nsresult nsres;
+
+    TRACE("(%p)\n", This);
+
+    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
+            &IID_nsIInterfaceRequestor, (void**)&iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
+        return;
+    }
+
+    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsICommandManager,
+                                               (void**)&cmdmgr);
+    nsIInterfaceRequestor_Release(iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsICommandManager: %08x\n", nsres);
+        return;
+    }
+
+    nsres = nsICommandManager_DoCommand(cmdmgr, cmd, nsparam, NULL);
+    if(NS_FAILED(nsres))
+        ERR("DoCommand(%s) failed: %08x\n", debugstr_a(cmd), nsres);
+
+    nsICommandManager_Release(cmdmgr);
+}
 
 /**********************************************************
  * IOleCommandTarget implementation
@@ -474,8 +505,8 @@ static HRESULT exec_mshtml_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *i
     if(This->usermode == EDITMODE)
         return editor_exec_copy(This, cmdexecopt, in, out);
 
-    FIXME("Unimplemented in browse mode\n");
-    return E_NOTIMPL;
+    do_ns_command(This->nscontainer, NSCMD_COPY, NULL);
+    return S_OK;
 }
 
 static HRESULT query_mshtml_cut(HTMLDocument *This, OLECMD *cmd)
