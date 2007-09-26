@@ -111,6 +111,8 @@ typedef struct wine_glcontext {
     BOOL do_escape;
     X11DRV_PDEVICE *physDev;
     X11DRV_PDEVICE *pReadDev;
+    Drawable drawables[2];
+    BOOL refresh_drawables;
     struct wine_glcontext *next;
     struct wine_glcontext *prev;
 } Wine_GLContext;
@@ -940,6 +942,36 @@ int pixelformat_from_fbconfig_id(XID fbconfig_id)
 }
 
 
+/* Mark any allocated context using the glx drawable 'old' to use 'new' */
+void mark_drawable_dirty(Drawable old, Drawable new)
+{
+    Wine_GLContext *ctx;
+    for (ctx = context_list; ctx; ctx = ctx->next) {
+        if (old == ctx->drawables[0]) {
+            ctx->drawables[0] = new;
+            ctx->refresh_drawables = TRUE;
+        }
+        if (old == ctx->drawables[1]) {
+            ctx->drawables[1] = new;
+            ctx->refresh_drawables = TRUE;
+        }
+    }
+}
+
+/* Given the current context, make sure its drawable is sync'd */
+static inline void sync_context(Wine_GLContext *context)
+{
+    if(context && context->refresh_drawables) {
+        if (glxRequireVersion(3))
+            pglXMakeContextCurrent(gdi_display, context->drawables[0],
+                                   context->drawables[1], context->ctx);
+        else
+            pglXMakeCurrent(gdi_display, context->drawables[0], context->ctx);
+        context->refresh_drawables = FALSE;
+    }
+}
+
+
 /**
  * X11DRV_ChoosePixelFormat
  *
@@ -1607,6 +1639,9 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
             ctx->hdc = hdc;
             ctx->physDev = physDev;
             ctx->pReadDev = physDev;
+            ctx->drawables[0] = drawable;
+            ctx->drawables[1] = drawable;
+            ctx->refresh_drawables = FALSE;
 
             if (type == OBJ_MEMDC)
             {
@@ -1656,6 +1691,9 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEVICE* p
             ctx->hdc = pDrawDev->hdc;
             ctx->physDev = pDrawDev;
             ctx->pReadDev = pReadDev;
+            ctx->drawables[0] = d_draw;
+            ctx->drawables[1] = d_read;
+            ctx->refresh_drawables = FALSE;
             ret = pglXMakeContextCurrent(gdi_display, d_draw, d_read, ctx->ctx);
             NtCurrentTeb()->glContext = ctx;
         }
@@ -1939,17 +1977,23 @@ static inline void update_drawable(X11DRV_PDEVICE *physDev)
 
 static void WINAPI X11DRV_wglFinish(void)
 {
+    Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+
     wine_tsx11_lock();
+    sync_context(ctx);
     pglFinish();
-    update_drawable(((Wine_GLContext*)NtCurrentTeb()->glContext)->physDev);
+    update_drawable(ctx->physDev);
     wine_tsx11_unlock();
 }
 
 static void WINAPI X11DRV_wglFlush(void)
 {
+    Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+
     wine_tsx11_lock();
+    sync_context(ctx);
     pglFlush();
-    update_drawable(((Wine_GLContext*)NtCurrentTeb()->glContext)->physDev);
+    update_drawable(ctx->physDev);
     wine_tsx11_unlock();
 }
 
@@ -3203,6 +3247,8 @@ BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
 BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
 {
   GLXDrawable drawable;
+  Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+
   if (!has_opengl()) {
     ERR("No libGL on this box - disabling OpenGL support !\n");
     return 0;
@@ -3211,7 +3257,9 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
   TRACE_(opengl)("(%p)\n", physDev);
 
   drawable = get_glxdrawable(physDev);
+
   wine_tsx11_lock();
+  sync_context(ctx);
   pglXSwapBuffers(gdi_display, drawable);
   update_drawable(physDev);
   wine_tsx11_unlock();
@@ -3290,6 +3338,10 @@ XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
 int pixelformat_from_fbconfig_id(XID fbconfig_id)
 {
     return 0;
+}
+
+void mark_drawable_dirty(Drawable old, Drawable new)
+{
 }
 
 /***********************************************************************
