@@ -187,7 +187,7 @@ LRESULT OSS_MidiInit(void)
 	return 0;
 
     TRACE("Initializing the MIDI variables.\n");
-    bInitDone = 0;
+    bInitDone = TRUE;
 
     /* try to open device */
     if (midiOpenSeq() == -1) {
