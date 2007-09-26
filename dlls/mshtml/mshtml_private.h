@@ -97,6 +97,7 @@ struct ConnectionPoint {
 struct HTMLDocument {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
+    const IHTMLDocument5Vtbl              *lpHTMLDocument5Vtbl;
     const IPersistMonikerVtbl             *lpPersistMonikerVtbl;
     const IPersistFileVtbl                *lpPersistFileVtbl;
     const IMonikerPropVtbl                *lpMonikerPropVtbl;
@@ -288,6 +289,7 @@ typedef struct {
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
 #define HTMLDOC3(x)      ((IHTMLDocument3*)               &(x)->lpHTMLDocument3Vtbl)
+#define HTMLDOC5(x)      ((IHTMLDocument5*)               &(x)->lpHTMLDocument5Vtbl)
 #define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)
 #define PERSISTMON(x)    ((IPersistMoniker*)              &(x)->lpPersistMonikerVtbl)
 #define PERSISTFILE(x)   ((IPersistFile*)                 &(x)->lpPersistFileVtbl)
@@ -343,6 +345,7 @@ HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
 void setup_nswindow(HTMLWindow*);
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);
+void HTMLDocument_HTMLDocument5_Init(HTMLDocument*);
 void HTMLDocument_Persist_Init(HTMLDocument*);
 void HTMLDocument_OleCmd_Init(HTMLDocument*);
 void HTMLDocument_OleObj_Init(HTMLDocument*);
