@@ -522,7 +522,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
         MultiByteToWideChar(CP_ACP, 0, psCmdP, -1, psCmdPW, MAX_PATH);
         if ((buffer = wine_get_unix_file_name(psCmdPW)))
         {
-            if ((fd = open(buffer, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
+            if ((fd = open(buffer, O_CREAT | O_TRUNC | O_WRONLY, 0666)) < 0)
             {
                 ERR("Failed to create spool file '%s' ('%s'). (error %s)\n",
                     buffer, psCmdP, strerror(errno));
