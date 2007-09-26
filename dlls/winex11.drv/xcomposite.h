@@ -37,8 +37,6 @@ MAKE_FUNCPTR(XCompositeUnredirectWindow)
 MAKE_FUNCPTR(XCompositeUnredirectSubwindows)
 MAKE_FUNCPTR(XCompositeCreateRegionFromBorderClip)
 MAKE_FUNCPTR(XCompositeNameWindowPixmap)
-MAKE_FUNCPTR(XCompositeGetOverlayWindow)
-MAKE_FUNCPTR(XCompositeReleaseOverlayWindow)
 #undef MAKE_FUNCPTR
 
 #endif /* defined(SONAME_LIBXCOMPOSITE) */

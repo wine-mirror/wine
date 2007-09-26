@@ -386,8 +386,6 @@ MAKE_FUNCPTR(XCompositeUnredirectWindow)
 MAKE_FUNCPTR(XCompositeUnredirectSubwindows)
 MAKE_FUNCPTR(XCompositeCreateRegionFromBorderClip)
 MAKE_FUNCPTR(XCompositeNameWindowPixmap)
-MAKE_FUNCPTR(XCompositeGetOverlayWindow)
-MAKE_FUNCPTR(XCompositeReleaseOverlayWindow)
 #undef MAKE_FUNCPTR
 
 static int xcomp_event_base;
@@ -415,8 +413,6 @@ static void X11DRV_XComposite_Init(void)
     LOAD_FUNCPTR(XCompositeUnredirectSubwindows)
     LOAD_FUNCPTR(XCompositeCreateRegionFromBorderClip)
     LOAD_FUNCPTR(XCompositeNameWindowPixmap)
-    LOAD_FUNCPTR(XCompositeGetOverlayWindow)
-    LOAD_FUNCPTR(XCompositeReleaseOverlayWindow)
 #undef LOAD_FUNCPTR
 
     if(!pXCompositeQueryExtension(gdi_display, &xcomp_event_base,
