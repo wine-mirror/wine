@@ -104,7 +104,7 @@
 # @ stub NtAllocateUserPhysicalPages
 @ stdcall NtAllocateUuids(ptr ptr ptr)
 @ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long)
-@ stub NtAreMappedFilesTheSame
+@ stdcall NtAreMappedFilesTheSame(ptr ptr)
 # @ stub NtAssignProcessToJobObject
 @ stub NtCallbackReturn
 # @ stub NtCancelDeviceWakeupRequest
@@ -948,7 +948,7 @@
 # @ stub ZwAllocateUserPhysicalPages
 @ stdcall ZwAllocateUuids(ptr ptr ptr) NtAllocateUuids
 @ stdcall ZwAllocateVirtualMemory(long ptr ptr ptr long long) NtAllocateVirtualMemory
-@ stub ZwAreMappedFilesTheSame
+@ stdcall ZwAreMappedFilesTheSame(ptr ptr) NtAreMappedFilesTheSame
 # @ stub ZwAssignProcessToJobObject
 @ stub ZwCallbackReturn
 # @ stub ZwCancelDeviceWakeupRequest

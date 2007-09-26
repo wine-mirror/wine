@@ -2213,3 +2213,15 @@ NTSTATUS WINAPI NtWriteVirtualMemory( HANDLE process, void *addr, const void *bu
     if (bytes_written) *bytes_written = size;
     return status;
 }
+
+
+/***********************************************************************
+ *             NtAreMappedFilesTheSame   (NTDLL.@)
+ *             ZwAreMappedFilesTheSame   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAreMappedFilesTheSame(PVOID addr1, PVOID addr2)
+{
+    TRACE("%p %p\n", addr1, addr2);
+
+    return STATUS_NOT_SAME_DEVICE;
+}
