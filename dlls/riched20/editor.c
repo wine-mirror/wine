@@ -1733,13 +1733,19 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     BOOL bRepaint = TRUE;
     p = ME_ToCF2W(&buf, (CHARFORMAT2W *)lParam);
     if (p == NULL) return 0;
-    if (!wParam || (editor->mode & TM_PLAINTEXT))
+    if (!wParam)
       ME_SetDefaultCharFormat(editor, p);
-    else if (wParam == (SCF_WORD | SCF_SELECTION))
+    else if (wParam == (SCF_WORD | SCF_SELECTION)) {
       FIXME("EM_SETCHARFORMAT: word selection not supported\n");
-    else if (wParam == SCF_ALL)
-      ME_SetCharFormat(editor, 0, ME_GetTextLength(editor), p);
-    else {
+      return 0;
+    } else if (wParam == SCF_ALL) {
+      if (editor->mode & TM_PLAINTEXT)
+        ME_SetDefaultCharFormat(editor, p);
+      else
+        ME_SetCharFormat(editor, 0, ME_GetTextLength(editor), p);
+    } else if (editor->mode & TM_PLAINTEXT) {
+      return 0;
+    } else {
       int from, to;
       ME_GetSelection(editor, &from, &to);
       bRepaint = (from != to);

@@ -572,9 +572,13 @@ static void test_TM_PLAINTEXT(void)
   cf2.dwEffects = CFE_BOLD ^ cf2.dwEffects;
 
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2);
-  todo_wine {
-    ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
-  }
+  ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
+
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_WORD | SCF_SELECTION, (LPARAM) &cf2);
+  ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
+
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM)&cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
 
   /*Get the formatting of those characters*/
 
