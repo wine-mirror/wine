@@ -2231,49 +2231,40 @@ BOOL WINAPI QueryServiceLockStatusW( SC_HANDLE hSCManager,
 BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
   LPSTR lpDisplayName, LPDWORD lpcchBuffer)
 {
-    LPWSTR lpServiceNameW, lpDisplayNameW = NULL;
-    DWORD size, sizeW, GLE;
-    BOOL ret;
+    LPWSTR lpServiceNameW, lpDisplayNameW;
+    DWORD sizeW;
+    BOOL ret = FALSE;
 
     TRACE("%p %s %p %p\n", hSCManager,
           debugstr_a(lpServiceName), lpDisplayName, lpcchBuffer);
 
     lpServiceNameW = SERV_dup(lpServiceName);
-    lpDisplayNameW = HeapAlloc(GetProcessHeap(), 0, *lpcchBuffer * sizeof(WCHAR));
+    if (lpDisplayName)
+        lpDisplayNameW = HeapAlloc(GetProcessHeap(), 0, *lpcchBuffer * sizeof(WCHAR));
+    else
+        lpDisplayNameW = NULL;
 
-    size = sizeW = *lpcchBuffer;
-    ret = GetServiceDisplayNameW(hSCManager, lpServiceNameW,
-                                 lpDisplayName ? lpDisplayNameW : NULL,
-                                 &sizeW);
-    /* Last error will be set by GetServiceDisplayNameW and must be preserved */
-    GLE = GetLastError();
-
-    if (!lpDisplayName && *lpcchBuffer && !ret && (GLE == ERROR_INSUFFICIENT_BUFFER))
+    sizeW = *lpcchBuffer;
+    if (!GetServiceDisplayNameW(hSCManager, lpServiceNameW, lpDisplayNameW, &sizeW))
     {
-        /* Request for buffersize.
-         *
-         * Only set the size for ERROR_INSUFFICIENT_BUFFER
-         */
-        size = sizeW * 2;
-    }
-    else if (lpDisplayName && *lpcchBuffer && !ret)
-    {
-        /* Request for displayname.
-         *
-         * size only has to be set if this fails
-         */
-        size = sizeW * 2;
+        *lpcchBuffer = sizeW*2;  /* we can only provide an upper estimation of string length */
+        goto cleanup;
     }
 
-    WideCharToMultiByte(CP_ACP, 0, lpDisplayNameW, (sizeW + 1), lpDisplayName,
-                        *lpcchBuffer, NULL, NULL );
+    if (!WideCharToMultiByte(CP_ACP, 0, lpDisplayNameW, (sizeW + 1), lpDisplayName,
+                        *lpcchBuffer, NULL, NULL ))
+    {
+        *lpcchBuffer = WideCharToMultiByte(CP_ACP, 0, lpDisplayNameW, -1, NULL, 0, NULL, NULL);
+        goto cleanup;
+    }
 
-    *lpcchBuffer = size;
+    /* probably due to a bug GetServiceDisplayNameA doesn't modify lpcchBuffer on success.
+     * (but if the function succeeded it means that is a good upper estimation of the size) */
+    ret = TRUE;
 
+cleanup:
     HeapFree(GetProcessHeap(), 0, lpDisplayNameW);
     HeapFree(GetProcessHeap(), 0, lpServiceNameW);
-
-    SetLastError(GLE);
     return ret;
 }
 

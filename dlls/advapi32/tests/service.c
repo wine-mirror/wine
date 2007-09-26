@@ -444,10 +444,17 @@ static void test_get_displayname(void)
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    tempsize = displaysize;
+
+    displaysize = 0;
+    ret = GetServiceDisplayNameA(scm_handle, spooler, NULL, &displaysize);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(displaysize == tempsize, "Buffer size mismatch (%d vs %d)\n", tempsize, displaysize);
 
     /* Buffer is too small */
     SetLastError(0xdeadbeef);
-    tempsize = displaysize;
     displaysize = (tempsize / 2);
     ret = GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
     ok(!ret, "Expected failure\n");
