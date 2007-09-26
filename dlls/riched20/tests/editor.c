@@ -333,6 +333,80 @@ static void test_EM_SCROLLCARET(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_SETCHARFORMAT(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  CHARFORMAT2 cf2;
+  int rc = 0;
+
+  /* Invalid flags, CHARFORMAT2 structure blanked out */
+  memset(&cf2, 0, sizeof(cf2));
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) 0xfffffff0,
+             (LPARAM) &cf2);
+  ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
+
+  /* A valid flag, CHARFORMAT2 structure blanked out */
+  memset(&cf2, 0, sizeof(cf2));
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_DEFAULT,
+             (LPARAM) &cf2);
+  ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
+
+  /* A valid flag, CHARFORMAT2 structure blanked out */
+  memset(&cf2, 0, sizeof(cf2));
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_SELECTION,
+             (LPARAM) &cf2);
+  ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
+
+  /* A valid flag, CHARFORMAT2 structure blanked out */
+  memset(&cf2, 0, sizeof(cf2));
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_WORD,
+             (LPARAM) &cf2);
+  ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
+
+  /* A valid flag, CHARFORMAT2 structure blanked out */
+  memset(&cf2, 0, sizeof(cf2));
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL,
+             (LPARAM) &cf2);
+  ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
+
+  /* Invalid flags, CHARFORMAT2 structure minimally filled */
+  memset(&cf2, 0, sizeof(cf2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) 0xfffffff0,
+             (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+
+  /* A valid flag, CHARFORMAT2 structure minimally filled */
+  memset(&cf2, 0, sizeof(cf2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_DEFAULT,
+             (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+
+  /* A valid flag, CHARFORMAT2 structure minimally filled */
+  memset(&cf2, 0, sizeof(cf2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_SELECTION,
+             (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+
+  /* A valid flag, CHARFORMAT2 structure minimally filled */
+  memset(&cf2, 0, sizeof(cf2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_WORD,
+             (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+
+  /* A valid flag, CHARFORMAT2 structure minimally filled */
+  memset(&cf2, 0, sizeof(cf2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL,
+             (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+
+  DestroyWindow(hwndRichEdit);
+}
+
 static void test_EM_SETTEXTMODE(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
@@ -2125,6 +2199,7 @@ START_TEST( editor )
   test_EM_SCROLLCARET();
   test_EM_SCROLL();
   test_WM_SETTEXT();
+  test_EM_SETCHARFORMAT();
   test_EM_SETTEXTMODE();
   test_TM_PLAINTEXT();
   test_EM_SETOPTIONS();

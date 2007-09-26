@@ -60,8 +60,7 @@ CHARFORMAT2W *ME_ToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from)
     return to;
   }
 
-  assert(from->cbSize >= sizeof(CHARFORMAT2W));  
-  return from;
+  return (from->cbSize >= sizeof(CHARFORMAT2W)) ? from : NULL;
 }
 
 void ME_CopyToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from)

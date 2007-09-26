@@ -1732,6 +1732,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     CHARFORMAT2W buf, *p;
     BOOL bRepaint = TRUE;
     p = ME_ToCF2W(&buf, (CHARFORMAT2W *)lParam);
+    if (p == NULL) return 0;
     if (!wParam || (editor->mode & TM_PLAINTEXT))
       ME_SetDefaultCharFormat(editor, p);
     else if (wParam == (SCF_WORD | SCF_SELECTION))
