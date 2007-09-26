@@ -4634,28 +4634,17 @@ static DWORD get_font_unicode_ranges(FT_Face face, GLYPHSET *gs)
     return num_ranges;
 }
 
-DWORD WineEngGetFontUnicodeRanges(HDC hdc, LPGLYPHSET glyphset)
+DWORD WineEngGetFontUnicodeRanges(GdiFont *font, LPGLYPHSET glyphset)
 {
     DWORD size = 0;
-    DC *dc = DC_GetDCPtr(hdc);
+    DWORD num_ranges = get_font_unicode_ranges(font->ft_face, glyphset);
 
-    TRACE("(%p, %p)\n", hdc, glyphset);
-
-    if (!dc) return 0;
-
-    if (dc->gdiFont)
+    size = sizeof(GLYPHSET) + sizeof(WCRANGE) * (num_ranges - 1);
+    if (glyphset)
     {
-        DWORD num_ranges = get_font_unicode_ranges(dc->gdiFont->ft_face, glyphset);
-
-        size = sizeof(GLYPHSET) + sizeof(WCRANGE) * (num_ranges - 1);
-        if (glyphset)
-        {
-            glyphset->cbThis = size;
-            glyphset->cRanges = num_ranges;
-        }
+        glyphset->cbThis = size;
+        glyphset->cRanges = num_ranges;
     }
-
-    DC_ReleaseDCPtr(dc);
     return size;
 }
 
@@ -5079,7 +5068,7 @@ BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
     return FALSE;
 }
 
-DWORD WineEngGetFontUnicodeRanges(HDC hdc, LPGLYPHSET glyphset)
+DWORD WineEngGetFontUnicodeRanges(GdiFont *font, LPGLYPHSET glyphset)
 {
     FIXME("(%p, %p): stub\n", hdc, glyphset);
     return 0;

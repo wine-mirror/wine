@@ -430,7 +430,7 @@ extern BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar,
                                     UINT count, LPWORD pgi, LPABC buffer);
 extern BOOL WineEngGetCharWidth(GdiFont*, UINT, UINT, LPINT);
 extern DWORD WineEngGetFontData(GdiFont*, DWORD, DWORD, LPVOID, DWORD);
-extern DWORD WineEngGetFontUnicodeRanges(HDC, LPGLYPHSET);
+extern DWORD WineEngGetFontUnicodeRanges(GdiFont *, LPGLYPHSET);
 extern DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
                                     LPWORD pgi, DWORD flags);
 extern DWORD WineEngGetGlyphOutline(GdiFont*, UINT glyph, UINT format,
