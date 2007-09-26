@@ -1016,6 +1016,8 @@ enum init_return WCCURSES_InitBackend(struct inner_data* data)
 #else
 enum init_return WCCURSES_InitBackend(struct inner_data* data)
 {
+    WINE_ERR("(n)curses was not found at configuration time.\n"
+             "If you want (n)curses support, please install relevant packages.\n");
     return init_not_supported;
 }
 #endif

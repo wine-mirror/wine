@@ -656,9 +656,18 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     WINE_TRACE("using hConOut %p\n", data->hConOut);
 
     /* filling data->curcfg from cfg */
- retry:
     switch ((*backend)(data))
     {
+    case init_not_supported:
+        if (backend == WCCURSES_InitBackend)
+        {
+            if (WCUSER_InitBackend( data ) != init_success) break;
+        }
+        else if (backend == WCUSER_InitBackend)
+        {
+            if (WCCURSES_InitBackend( data ) != init_success) break;
+        }
+        /* fall through */
     case init_success:
         WINECON_GetServerConfig(data);
         data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -683,16 +692,6 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
 
         return data;
     case init_failed:
-        break;
-    case init_not_supported:
-        if (backend == WCCURSES_InitBackend)
-        {
-            WINE_ERR("(n)curses was not found at configuration time.\n"
-                     "If you want (n)curses support, please install relevant packages.\n"
-                     "Now forcing user backend instead of (n)curses.\n");
-            backend = WCUSER_InitBackend;
-            goto retry;
-        }
         break;
     }
 
@@ -768,7 +767,7 @@ static UINT WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
     memset(wci, 0, sizeof(*wci));
     wci->ptr = lpCmdLine;
     wci->mode = from_process_name;
-    wci->backend = WCCURSES_InitBackend;
+    wci->backend = WCUSER_InitBackend;
 
     for (;;)
     {
@@ -792,6 +791,7 @@ static UINT WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
             }
             else if (strncmp(wci->ptr + 10, "curses", 6) == 0)
             {
+                wci->backend = WCCURSES_InitBackend;
                 wci->ptr += 16;
             }
             else
