@@ -149,7 +149,6 @@ typedef struct
 */
 
 typedef GUID SHELLVIEWID;
-#define SV_CLASS_NAME   ("SHELLDLL_DefView")
 
 #define FCIDM_SHVIEWFIRST       0x0000
 /* undocumented */
