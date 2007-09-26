@@ -14,7 +14,7 @@
 18 stub HlinkParseDisplayName
 20 stdcall HlinkQueryCreateFromData(ptr)
 21 stub HlinkSetSpecialReference
-22 stub HlinkGetSpecialReference
+22 stdcall HlinkGetSpecialReference(long ptr)
 23 stub HlinkCreateShortcut
 24 stub HlinkResolveShortcut
 25 stdcall HlinkIsShortcut(wstr)

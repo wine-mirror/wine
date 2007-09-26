@@ -276,6 +276,12 @@ HRESULT WINAPI HlinkIsShortcut(LPCWSTR pwzFileName)
     return strcmpiW(pwzFileName+len, url_ext) ? S_FALSE : S_OK;
 }
 
+HRESULT WINAPI HlinkGetSpecialReference(ULONG uReference, LPWSTR *ppwzReference)
+{
+    FIXME("(%u %p) stub\n", uReference, ppwzReference);
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI HlinkTranslateURL(LPCWSTR pwzURL, DWORD grfFlags, LPWSTR *ppwzTranslatedURL)
 {
     FIXME("(%s %08x %p)\n", debugstr_w(pwzURL), grfFlags, ppwzTranslatedURL);
