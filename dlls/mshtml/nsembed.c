@@ -647,7 +647,6 @@ void nsnode_to_nsstring(nsIDOMNode *nsdoc, nsAString *str)
 void get_editor_controller(NSContainer *This)
 {
     nsIEditingSession *editing_session = NULL;
-    nsIInterfaceRequestor *iface_req;
     nsIControllerContext *ctrlctx;
     nsresult nsres;
 
@@ -661,16 +660,8 @@ void get_editor_controller(NSContainer *This)
         This->editor_controller = NULL;
     }
 
-    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
-            &IID_nsIInterfaceRequestor, (void**)&iface_req);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
-        return;
-    }
-
-    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsIEditingSession,
-                                               (void**)&editing_session);
-    nsIInterfaceRequestor_Release(iface_req);
+    nsres = get_nsinterface((nsISupports*)This->webbrowser, &IID_nsIEditingSession,
+            (void**)&editing_session);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIEditingSession: %08x\n", nsres);
         return;
@@ -702,22 +693,13 @@ void get_editor_controller(NSContainer *This)
 
 void set_ns_editmode(NSContainer *This)
 {
-    nsIInterfaceRequestor *iface_req;
     nsIEditingSession *editing_session = NULL;
     nsIURIContentListener *listener = NULL;
     nsIDOMWindow *dom_window = NULL;
     nsresult nsres;
 
-    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
-            &IID_nsIInterfaceRequestor, (void**)&iface_req);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
-        return;
-    }
-
-    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsIEditingSession,
-                                               (void**)&editing_session);
-    nsIInterfaceRequestor_Release(iface_req);
+    nsres = get_nsinterface((nsISupports*)This->webbrowser, &IID_nsIEditingSession,
+            (void**)&editing_session);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIEditingSession: %08x\n", nsres);
         return;
