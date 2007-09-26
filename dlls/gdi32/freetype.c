@@ -4651,17 +4651,9 @@ DWORD WineEngGetFontUnicodeRanges(GdiFont *font, LPGLYPHSET glyphset)
 /*************************************************************
  *     FontIsLinked
  */
-BOOL WINAPI FontIsLinked(HDC hdc)
+BOOL WineEngFontIsLinked(GdiFont *font)
 {
-    DC *dc = DC_GetDCPtr(hdc);
-    BOOL ret = FALSE;
-
-    if(!dc) return FALSE;
-    if(dc->gdiFont && !list_empty(&dc->gdiFont->child_fonts))
-        ret = TRUE;
-    DC_ReleaseDCPtr(dc);
-    TRACE("returning %d\n", ret);
-    return ret;
+    return !list_empty(&font->child_fonts);
 }
 
 static BOOL is_hinting_enabled(void)
@@ -5074,7 +5066,7 @@ DWORD WineEngGetFontUnicodeRanges(GdiFont *font, LPGLYPHSET glyphset)
     return 0;
 }
 
-BOOL WINAPI FontIsLinked(HDC hdc)
+BOOL WineEngFontIsLinked(GdiFont *font)
 {
     return FALSE;
 }

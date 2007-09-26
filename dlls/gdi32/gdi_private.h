@@ -444,6 +444,7 @@ extern BOOL WineEngGetTextExtentExPoint(GdiFont*, LPCWSTR, INT, INT, LPINT, LPIN
 extern BOOL WineEngGetTextExtentPointI(GdiFont*, const WORD *, INT, LPSIZE);
 extern INT  WineEngGetTextFace(GdiFont*, INT, LPWSTR);
 extern BOOL WineEngGetTextMetrics(GdiFont*, LPTEXTMETRICW);
+extern BOOL WineEngFontIsLinked(GdiFont*);
 extern BOOL WineEngInit(void);
 extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID);
 

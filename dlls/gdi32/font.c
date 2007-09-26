@@ -3422,3 +3422,19 @@ DWORD WINAPI GetFontUnicodeRanges(HDC hdc, LPGLYPHSET lpgs)
     DC_ReleaseDCPtr(dc);
     return ret;
 }
+
+
+/*************************************************************
+ *           FontIsLinked    (GDI32.@)
+ */
+BOOL WINAPI FontIsLinked(HDC hdc)
+{
+    DC *dc = DC_GetDCPtr(hdc);
+    BOOL ret = FALSE;
+
+    if (!dc) return FALSE;
+    if (dc->gdiFont) ret = WineEngFontIsLinked(dc->gdiFont);
+    DC_ReleaseDCPtr(dc);
+    TRACE("returning %d\n", ret);
+    return ret;
+}
