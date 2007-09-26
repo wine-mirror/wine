@@ -256,6 +256,9 @@ static BOOL  (*pglXDrawableAttribATI)(Display *dpy, GLXDrawable draw, const int 
 static void* (*pglXAllocateMemoryNV)(GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority);
 static void  (*pglXFreeMemoryNV)(GLvoid *pointer);
 
+/* MESA GLX Extensions */
+static void (*pglXCopySubBufferMESA)(Display *dpy, GLXDrawable drawable, int x, int y, int width, int height);
+
 /* Standard OpenGL */
 MAKE_FUNCPTR(glBindTexture)
 MAKE_FUNCPTR(glBitmap)
@@ -506,6 +509,10 @@ LOAD_FUNCPTR(glXFreeMemoryNV)
         pglXBindTexImageATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXBindTexImageATI");
         pglXReleaseTexImageATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXReleaseTexImageATI");
         pglXDrawableAttribATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXDrawableAttribATI");
+    }
+
+    if(glxRequireExtension("GLX_MESA_copy_sub_buffer")) {
+        pglXCopySubBufferMESA = (void*)pglXGetProcAddressARB((const GLubyte *) "glXCopySubBufferMESA");
     }
 
     X11DRV_WineGL_LoadExtensions();
@@ -3268,7 +3275,23 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
 
   wine_tsx11_lock();
   sync_context(ctx);
-  pglXSwapBuffers(gdi_display, drawable);
+  if(physDev->pixmap) {
+      if(pglXCopySubBufferMESA) {
+          int w = physDev->dc_rect.right - physDev->dc_rect.left;
+          int h = physDev->dc_rect.bottom - physDev->dc_rect.top;
+
+          /* (glX)SwapBuffers has an implicit glFlush effect, however
+           * GLX_MESA_copy_sub_buffer doesn't. Make sure GL is flushed before
+           * copying */
+          pglFlush();
+          if(w > 0 && h > 0)
+              pglXCopySubBufferMESA(gdi_display, drawable, 0, 0, w, h);
+      }
+      else
+          pglXSwapBuffers(gdi_display, drawable);
+  }
+  else
+      pglXSwapBuffers(gdi_display, drawable);
   update_drawable(physDev);
   wine_tsx11_unlock();
 
