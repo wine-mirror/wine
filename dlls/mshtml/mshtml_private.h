@@ -398,6 +398,7 @@ nsIWritableVariant *create_nsvariant(void);
 void nsnode_to_nsstring(nsIDOMNode*,nsAString*);
 void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
+nsresult get_nsinterface(nsISupports*,REFIID,void**);
 
 BSCallback *create_bscallback(IMoniker*);
 HRESULT start_binding(BSCallback*);

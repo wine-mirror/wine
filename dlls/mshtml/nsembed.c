@@ -523,6 +523,21 @@ nsICommandParams *create_nscommand_params(void)
     return ret;
 }
 
+nsresult get_nsinterface(nsISupports *iface, REFIID riid, void **ppv)
+{
+    nsIInterfaceRequestor *iface_req;
+    nsresult nsres;
+
+    nsres = nsISupports_QueryInterface(iface, &IID_nsIInterfaceRequestor, (void**)&iface_req);
+    if(NS_FAILED(nsres))
+        return nsres;
+
+    nsres = nsIInterfaceRequestor_GetInterface(iface_req, riid, ppv);
+    nsIInterfaceRequestor_Release(iface_req);
+
+    return nsres;
+}
+
 static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode *nsnode, nsAString *str)
 {
     nsIDOMNodeList *node_list = NULL;

@@ -114,19 +114,9 @@ static void do_ns_editor_command(NSContainer *This, const char *cmd)
 static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
 {
     nsICommandManager *cmdmgr;
-    nsIInterfaceRequestor *iface_req;
     nsresult nsres;
 
-    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
-            &IID_nsIInterfaceRequestor, (void**)&iface_req);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
-        return nsres;
-    }
-
-    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsICommandManager,
-                                               (void**)&cmdmgr);
-    nsIInterfaceRequestor_Release(iface_req);
+    nsres = get_nsinterface((nsISupports*)This->webbrowser, &IID_nsICommandManager, (void**)&cmdmgr);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsICommandManager: %08x\n", nsres);
         return nsres;
