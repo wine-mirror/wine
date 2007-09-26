@@ -836,6 +836,50 @@ interface nsIDOMHTMLDocument : nsIDOMDocument
 
 [
     object,
+    uuid(79beb289-3644-4b54-9432-9fb993945629)
+    /* NOT_FROZEN */
+]
+interface nsIDOMNSHTMLDocument : nsISupports
+{
+    nsresult GetWidth(PRInt32 *aWidth);
+    nsresult GetHeight(PRInt32 *aHeight);
+    nsresult GetAlinkColor(nsAString *aAlinkColor);
+    nsresult SetAlinkColor(const nsAString *aAlinkColor);
+    nsresult GetLinkColor(nsAString *aLinkColor);
+    nsresult SetLinkColor(const nsAString *aLinkColor);
+    nsresult GetVlinkColor(nsAString *aVlinkColor);
+    nsresult SetVlinkColor(const nsAString *aVlinkColor);
+    nsresult GetBgColor(nsAString *aBgColor);
+    nsresult SetBgColor(const nsAString *aBgColor);
+    nsresult GetFgColor(nsAString *aFgColor);
+    nsresult SetFgColor(const nsAString *aFgColor);
+    nsresult GetDomain(nsAString *aDomain);
+    nsresult SetDomain(const nsAString *aDomain);
+    nsresult GetEmbeds(nsIDOMHTMLCollection **aEmbeds);
+    nsresult GetSelection(nsAString *_retval);
+    nsresult Open(nsIDOMDocument **_retval);
+    nsresult Write();
+    nsresult Writeln();
+    nsresult Clear();
+    nsresult CaptureEvents(PRInt32 eventFlags);
+    nsresult ReleaseEvents(PRInt32 eventFlags);
+    nsresult RouteEvent(nsIDOMEvent *evt);
+    nsresult GetCompatMode(nsAString *aCompatMode);
+    nsresult GetPlugins(nsIDOMHTMLCollection **aPlugins);
+    nsresult GetDesignMode(nsAString *aDesignMode);
+    nsresult SetDesignMode(const nsAString *aDesignMode);
+    nsresult ExecCommand(const nsAString *commandID, PRBool doShowUI, const nsAString *value, PRBool *_retval);
+    nsresult ExecCommandShowHelp(const nsAString *commandID, PRBool *_retval);
+    nsresult QueryCommandEnabled(const nsAString *commandID, PRBool *_retval);
+    nsresult QueryCommandIndeterm(const nsAString *commandID, PRBool *_retval);
+    nsresult QueryCommandState(const nsAString *commandID, PRBool *_retval);
+    nsresult QueryCommandSupported(const nsAString *commandID, PRBool *_retval);
+    nsresult QueryCommandText(const nsAString *commandID, nsAString *_retval);
+    nsresult QueryCommandValue(const nsAString *commandID, nsAString *_retval);
+}
+
+[
+    object,
     uuid(3d9f4973-dd2e-48f5-b5f7-2634e09eadd9)
     /* FROZEN */
 ]

@@ -347,6 +347,24 @@ static void test_txtrange(IHTMLDocument2 *doc)
     IHTMLTxtRange_Release(body_range);
 }
 
+static void test_compatmode(IHTMLDocument2 *doc)
+{
+    IHTMLDocument5 *doc5;
+    BSTR mode;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
+    ok(hres == S_OK, "Could not get IHTMLDocument5 interface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLDocument5_get_compatMode(doc5, &mode);
+    IHTMLDocument5_Release(doc5);
+    ok(hres == S_OK, "get_compatMode failed: %08x\n", hres);
+    ok(!strcmp_wa(mode, "BackCompat"), "compatMode=%s\n", dbgstr_w(mode));
+    SysFreeString(mode);
+}
+
 static void test_default_style(IHTMLStyle *style)
 {
     VARIANT_BOOL b;
@@ -431,6 +449,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_style failed: %08x\n", hres);
 
     test_default_style(style);
+    test_compatmode(doc);
 
     IHTMLStyle_Release(style);
 
