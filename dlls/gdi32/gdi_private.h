@@ -393,11 +393,11 @@ extern INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp );
 extern void CLIPPING_UpdateGCRegion( DC * dc );
 
 /* dc.c */
-extern DC * DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic );
+extern DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic );
 extern DC * DC_GetDCUpdate( HDC hdc );
 extern DC * DC_GetDCPtr( HDC hdc );
 extern void DC_ReleaseDCPtr( DC *dc );
-extern BOOL DC_FreeDCPtr( DC *dc );
+extern BOOL free_dc_ptr( DC *dc );
 extern DC *get_dc_ptr( HDC hdc );
 extern void release_dc_ptr( DC *dc );
 extern void update_dc( DC *dc );

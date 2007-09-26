@@ -165,12 +165,12 @@ static DC *MFDRV_AllocMetaFile(void)
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
 
-    if (!(dc = DC_AllocDC( &MFDRV_Funcs, METAFILE_DC_MAGIC ))) return NULL;
+    if (!(dc = alloc_dc_ptr( &MFDRV_Funcs, METAFILE_DC_MAGIC ))) return NULL;
 
     physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev)
     {
-        DC_FreeDCPtr( dc );
+        free_dc_ptr( dc );
         return NULL;
     }
     dc->physDev = (PHYSDEV)physDev;
@@ -179,7 +179,7 @@ static DC *MFDRV_AllocMetaFile(void)
     if (!(physDev->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev->mh) )))
     {
         HeapFree( GetProcessHeap(), 0, physDev );
-        DC_FreeDCPtr( dc );
+        free_dc_ptr( dc );
         return NULL;
     }
 
@@ -215,7 +215,7 @@ static BOOL MFDRV_DeleteDC( DC *dc )
     HeapFree( GetProcessHeap(), 0, physDev->handles );
     HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
-    DC_FreeDCPtr( dc );
+    free_dc_ptr( dc );
     return TRUE;
 }
 
@@ -267,7 +267,7 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
 
     TRACE("returning %p\n", dc->hSelf);
     ret = dc->hSelf;
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -306,16 +306,16 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 
     TRACE("(%p)\n", hdc );
 
-    if (!(dc = DC_GetDCPtr( hdc ))) return NULL;
+    if (!(dc = get_dc_ptr( hdc ))) return NULL;
     if (GDIMAGIC(dc->header.wMagic) != METAFILE_DC_MAGIC)
     {
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return NULL;
     }
     if (dc->refcount != 1)
     {
         FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return NULL;
     }
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;

@@ -71,9 +71,9 @@ static inline DC *get_dc_obj( HDC hdc )
 
 
 /***********************************************************************
- *           DC_AllocDC
+ *           alloc_dc_ptr
  */
-DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
+DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
 {
     HDC hdc;
     DC *dc;
@@ -149,6 +149,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->BoundsRect.bottom   = 0;
     dc->saved_visrgn        = NULL;
     PATH_InitGdiPath(&dc->path);
+    GDI_ReleaseObj( dc->hSelf );
     return dc;
 }
 
@@ -189,11 +190,13 @@ void DC_ReleaseDCPtr( DC *dc )
 
 
 /***********************************************************************
- *           DC_FreeDCPtr
+ *           free_dc_ptr
  */
-BOOL DC_FreeDCPtr( DC *dc )
+BOOL free_dc_ptr( DC *dc )
 {
     assert( dc->refcount == 1 );
+    /* grab the gdi lock again */
+    if (!GDI_GetObjPtr( dc->hSelf, MAGIC_DONTCARE )) return FALSE;  /* shouldn't happen */
     return GDI_FreeObject( dc->hSelf, dc );
 }
 
@@ -704,7 +707,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;
     }
-    if (!(dc = DC_AllocDC( funcs, DC_MAGIC ))) goto error;
+    if (!(dc = alloc_dc_ptr( funcs, DC_MAGIC ))) goto error;
     hdc = dc->hSelf;
 
     dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
@@ -724,12 +727,12 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
                 GetDeviceCaps( hdc, DESKTOPHORZRES ), GetDeviceCaps( hdc, DESKTOPVERTRES ) );
 
     DC_InitDC( dc );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return hdc;
 
 error:
     if (dc && dc->hVisRgn) DeleteObject( dc->hVisRgn );
-    if (dc) DC_FreeDCPtr( dc );
+    if (dc) free_dc_ptr( dc );
     DRIVER_release_driver( funcs );
     return 0;
 }
@@ -805,20 +808,20 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     GDI_CheckNotLock();
 
-    if ((origDC = DC_GetDCPtr( hdc )))
+    if ((origDC = get_dc_ptr( hdc )))
     {
         if (GetObjectType( hdc ) == OBJ_DC)
         {
             funcs = origDC->funcs;
             physDev = origDC->physDev;
         }
-        DC_ReleaseDCPtr( origDC ); /* can't hold the lock while loading the driver */
+        release_dc_ptr( origDC );
         if (funcs) funcs = DRIVER_get_driver( funcs );
     }
 
     if (!funcs && !(funcs = DRIVER_load_driver( displayW ))) return 0;
 
-    if (!(dc = DC_AllocDC( funcs, MEMORY_DC_MAGIC ))) goto error;
+    if (!(dc = alloc_dc_ptr( funcs, MEMORY_DC_MAGIC ))) goto error;
 
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
@@ -838,12 +841,12 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     }
 
     DC_InitDC( dc );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return dc->hSelf;
 
 error:
     if (dc && dc->hVisRgn) DeleteObject( dc->hVisRgn );
-    if (dc) DC_FreeDCPtr( dc );
+    if (dc) free_dc_ptr( dc );
     DRIVER_release_driver( funcs );
     return 0;
 }
@@ -861,29 +864,26 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
     GDI_CheckNotLock();
 
-    if (!(dc = DC_GetDCPtr( hdc ))) return FALSE;
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
     if (dc->refcount != 1)
     {
         FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return FALSE;
     }
 
     /* Call hook procedure to check whether is it OK to delete this DC */
-    if (dc->hookThunk)
+    if (dc->hookThunk && !dc->hookThunk( hdc, DCHC_DELETEDC, dc->dwHookData, 0 ))
     {
-        DCHOOKPROC proc = dc->hookThunk;
-        DWORD_PTR data = dc->dwHookData;
-        DC_ReleaseDCPtr( dc );
-        if (!proc( hdc, DCHC_DELETEDC, data, 0 )) return FALSE;
-        if (!(dc = DC_GetDCPtr( hdc ))) return TRUE;  /* deleted by the hook */
+        release_dc_ptr( dc );
+        return FALSE;
     }
 
     while (dc->saveLevel)
     {
         DC * dcs;
         HDC hdcs = dc->saved_dc;
-        if (!(dcs = DC_GetDCPtr( hdcs ))) break;
+        if (!(dcs = get_dc_ptr( hdcs ))) break;
         dc->saved_dc = dcs->saved_dc;
         dc->saveLevel--;
         if (dcs->hClipRgn) DeleteObject( dcs->hClipRgn );
@@ -891,7 +891,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
         if (dcs->hMetaClipRgn) DeleteObject( dcs->hMetaClipRgn );
         if (dcs->hVisRgn) DeleteObject( dcs->hVisRgn );
         PATH_DestroyGdiPath(&dcs->path);
-        DC_FreeDCPtr( dcs );
+        free_dc_ptr( dcs );
     }
 
     if (!(dc->flags & DC_SAVED))
@@ -918,7 +918,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     PATH_DestroyGdiPath(&dc->path);
 
-    DC_FreeDCPtr( dc );
+    free_dc_ptr( dc );
     if (funcs) DRIVER_release_driver( funcs );  /* do that after releasing the GDI lock */
     return TRUE;
 }

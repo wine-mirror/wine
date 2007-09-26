@@ -171,7 +171,7 @@ static BOOL EMFDRV_DeleteDC( DC *dc )
     HeapFree( GetProcessHeap(), 0, physDev->handles );
     HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
-    DC_FreeDCPtr( dc );
+    free_dc_ptr( dc );
     return TRUE;
 }
 
@@ -314,11 +314,11 @@ HDC WINAPI CreateEnhMetaFileW(
 
     TRACE("%s\n", debugstr_w(filename) );
 
-    if (!(dc = DC_AllocDC( &EMFDRV_Funcs, ENHMETAFILE_DC_MAGIC ))) return 0;
+    if (!(dc = alloc_dc_ptr( &EMFDRV_Funcs, ENHMETAFILE_DC_MAGIC ))) return 0;
 
     physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev) {
-        DC_FreeDCPtr( dc );
+        free_dc_ptr( dc );
         return 0;
     }
     dc->physDev = (PHYSDEV)physDev;
@@ -334,7 +334,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     if (!(physDev->emh = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size))) {
         HeapFree( GetProcessHeap(), 0, physDev );
-        DC_FreeDCPtr( dc );
+        free_dc_ptr( dc );
         return 0;
     }
 
@@ -415,7 +415,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     TRACE("returning %p\n", dc->hSelf);
     ret = dc->hSelf;
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
 
     if( !hdc )
       DeleteDC( hRefDC );
@@ -436,16 +436,16 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 
     TRACE("(%p)\n", hdc );
 
-    if (!(dc = DC_GetDCPtr( hdc ))) return NULL;
+    if (!(dc = get_dc_ptr( hdc ))) return NULL;
     if (GDIMAGIC(dc->header.wMagic) != ENHMETAFILE_DC_MAGIC)
     {
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return NULL;
     }
     if (dc->refcount != 1)
     {
         FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return NULL;
     }
     physDev = (EMFDRV_PDEVICE *)dc->physDev;
