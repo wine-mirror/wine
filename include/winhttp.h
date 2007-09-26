@@ -84,12 +84,21 @@ typedef struct
 typedef WINHTTP_PROXY_INFO WINHTTP_PROXY_INFOW;
 typedef LPWINHTTP_PROXY_INFO LPWINHTTP_PROXY_INFOW;
 
+typedef struct
+{
+    BOOL   fAutoDetect;
+    LPWSTR lpszAutoConfigUrl;
+    LPWSTR lpszProxy;
+    LPWSTR lpszProxyBypass;
+} WINHTTP_CURRENT_USER_IE_PROXY_CONFIG;
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 BOOL        WINAPI WinHttpCheckPlatform(void);
+BOOL        WINAPI WinHttpGetIEProxyConfigForCurrentUser(WINHTTP_CURRENT_USER_IE_PROXY_CONFIG* config);
 
 #ifdef __cplusplus
 }

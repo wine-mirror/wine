@@ -10,7 +10,7 @@
 @ stub WinHttpCreateUrl
 @ stub WinHttpDetectAutoProxyConfigUrl
 @ stub WinHttpGetDefaultProxyConfiguration
-@ stub WinHttpGetIEProxyConfigForCurrentUser
+@ stdcall WinHttpGetIEProxyConfigForCurrentUser(ptr)
 @ stub WinHttpGetProxyForUrl
 @ stub WinHttpOpen
 @ stub WinHttpOpenRequest
