@@ -634,10 +634,9 @@ HRESULT WINAPI ConvertINetString(
 
         pDstStrW = HeapAlloc(GetProcessHeap(), 0, cDstSizeW * sizeof(WCHAR));
         hr = ConvertINetMultiByteToUnicode(pdwMode, dwSrcEncoding, pSrcStr, pcSrcSize, pDstStrW, &cDstSizeW);
-        if (hr != S_OK)
-            return hr;
+        if (hr == S_OK)
+            hr = ConvertINetUnicodeToMultiByte(pdwMode, dwDstEncoding, pDstStrW, &cDstSizeW, pDstStr, pcDstSize);
 
-        hr = ConvertINetUnicodeToMultiByte(pdwMode, dwDstEncoding, pDstStrW, &cDstSizeW, pDstStr, pcDstSize);
         HeapFree(GetProcessHeap(), 0, pDstStrW);
         return hr;
     }
