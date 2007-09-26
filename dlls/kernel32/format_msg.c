@@ -154,6 +154,12 @@ DWORD WINAPI FormatMessageA(
         &&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
            || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
 
+    if (!lpBuffer)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return 0;
+    }
+
     if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
         FIXME("line wrapping (%u) not supported.\n", width);
     from = NULL;
@@ -367,6 +373,12 @@ DWORD WINAPI FormatMessageW(
     if ((dwFlags & FORMAT_MESSAGE_FROM_STRING)
         &&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
            || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
+
+    if (!lpBuffer)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
     if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
         FIXME("line wrapping not supported.\n");

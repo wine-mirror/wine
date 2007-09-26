@@ -220,7 +220,25 @@ static void test_message_from_string(void)
     ok(r==2,"failed: r=%d\n",r);
 }
 
+static void test_message_null_buffer(void)
+{
+    DWORD ret, error;
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, 0, 0, NULL, 0, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageA returned %u\n", ret);
+    ok(error == ERROR_NOT_ENOUGH_MEMORY, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, 0, 0, NULL, 0, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageW returned %u\n", ret);
+    ok(error == ERROR_INVALID_PARAMETER, "last error %u\n", error);
+}
+
 START_TEST(format_msg)
 {
     test_message_from_string();
+    test_message_null_buffer();
 }
