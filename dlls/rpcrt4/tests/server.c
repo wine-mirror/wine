@@ -199,6 +199,18 @@ s_sum_conf_array(int x[], int n)
 }
 
 int
+s_sum_unique_conf_array(int x[], int n)
+{
+  return s_sum_conf_array(x, n);
+}
+
+int
+s_sum_unique_conf_ptr(int *x, int n)
+{
+  return x ? s_sum_conf_array(x, n) : 0;
+}
+
+int
 s_sum_var_array(int x[20], int n)
 {
   ok(0 <= n, "RPC sum_var_array\n");
@@ -699,6 +711,7 @@ array_tests(void)
   cpsc_t cpsc;
   cs_t *cs;
   int n;
+  int ca[5] = {1, -2, 3, -4, 5};
 
   ok(cstr_length(str1, sizeof str1) == strlen(str1), "RPC cstr_length\n");
 
@@ -708,6 +721,10 @@ array_tests(void)
   ok(sum_conf_array(&c[5], 2) == 11, "RPC sum_conf_array\n");
   ok(sum_conf_array(&c[7], 1) == 7, "RPC sum_conf_array\n");
   ok(sum_conf_array(&c[2], 0) == 0, "RPC sum_conf_array\n");
+
+  ok(sum_unique_conf_array(ca, 4) == -2, "RPC sum_unique_conf_array\n");
+  ok(sum_unique_conf_ptr(ca, 5) == 3, "RPC sum_unique_conf_array\n");
+  ok(sum_unique_conf_ptr(NULL, 10) == 0, "RPC sum_unique_conf_array\n");
 
   ok(sum_var_array(c, 10) == 45, "RPC sum_conf_array\n");
   ok(sum_var_array(&c[5], 2) == 11, "RPC sum_conf_array\n");

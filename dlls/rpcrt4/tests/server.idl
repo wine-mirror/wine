@@ -111,6 +111,8 @@ interface IServer
   int test_list_length(test_list_t *ls);
   int sum_fixed_int_3d(int m[2][3][4]);
   int sum_conf_array([size_is(n)] int x[], int n);
+  int sum_unique_conf_array([size_is(n), unique] int x[], int n);
+  int sum_unique_conf_ptr([size_is(n), unique] int *x, int n);
   int sum_var_array([length_is(n)] int x[20], int n);
   int dot_two_vectors(vector_t vs[2]);
 

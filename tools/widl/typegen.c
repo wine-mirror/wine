@@ -1954,7 +1954,23 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
         return write_string_tfs(file, var->attrs, type, var->name, typeformat_offset);
 
     if (is_array(type))
-        return write_array_tfs(file, var->attrs, type, var->name, typeformat_offset);
+    {
+        size_t off;
+        off = write_array_tfs(file, var->attrs, type, var->name, typeformat_offset);
+        if (pointer_type != RPC_FC_RP)
+        {
+            unsigned int absoff = type->typestring_offset;
+            short reloff = absoff - (*typeformat_offset + 2);
+            off = *typeformat_offset;
+            print_file(file, 0, "/* %d */\n", off);
+            print_file(file, 2, "0x%x, 0x0,\t/* %s */\n", pointer_type,
+                       string_of_type(pointer_type));
+            print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
+                       reloff, reloff, absoff);
+            *typeformat_offset += 4;
+        }
+        return off;
+    }
 
     if (!is_ptr(type))
     {
@@ -2621,10 +2637,8 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             }
             else if (phase != PHASE_FREE)
             {
-                if (pointer_type == RPC_FC_UP)
-                    print_phase_function(file, indent, "Pointer", phase, var, start_offset);
-                else
-                    print_phase_function(file, indent, array_type, phase, var, start_offset);
+                const char *t = pointer_type == RPC_FC_RP ? array_type : "Pointer";
+                print_phase_function(file, indent, t, phase, var, start_offset);
             }
         }
         else if (!is_ptr(var->type) && is_base_type(rtype))
