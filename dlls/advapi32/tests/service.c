@@ -815,8 +815,8 @@ static void test_sequence(void)
     todo_wine
     {
     ok(!memcmp(config->lpDependencies, dependencies, sizeof(dependencies)), "Wrong string\n");
-    ok(!strcmp(config->lpServiceStartName, localsystem), "Expected 'LocalSystem', got '%s'\n", config->lpServiceStartName);
     }
+    ok(!strcmp(config->lpServiceStartName, localsystem), "Expected 'LocalSystem', got '%s'\n", config->lpServiceStartName);
     ok(!strcmp(config->lpDisplayName, displayname), "Expected '%s', got '%s'\n", displayname, config->lpDisplayName);
     
     SetLastError(0xdeadbeef);

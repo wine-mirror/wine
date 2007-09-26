@@ -39,6 +39,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 
+static const WCHAR szLocalSystem[] = {'L','o','c','a','l','S','y','s','t','e','m',0};
 static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
       'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
       'S','e','r','v','i','c','e','s',0 };
@@ -1341,6 +1342,9 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
     }
+
+    if (!lpServiceStartName && (dwServiceType & SERVICE_WIN32))
+            lpServiceStartName = szLocalSystem;
 
     /* StartType can only be a single value (if several values are mixed the result is probably not what was intended) */
     if (dwStartType > SERVICE_DISABLED)
