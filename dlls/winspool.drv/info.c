@@ -1672,7 +1672,7 @@ void WINSPOOL_LoadSystemPrinters(void)
     if(!done) /* If we have any CUPS based printers, skip looking for printcap printers */
         PRINTCAP_LoadPrinters();
 
-    /* Now enumerate the list again and delete any printers that a still tagged */
+    /* Now enumerate the list again and delete any printers that are still tagged */
     EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num);
     if(needed) {
         PRINTER_INFO_5A* pi = HeapAlloc(GetProcessHeap(), 0, needed);
@@ -4592,7 +4592,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
     }
     else if (GetVersion() & 0x80000000) {
-        /* Powerpoint XP expects that pDependentFiles is always valid on win9x */
+        /* PowerPoint XP expects that pDependentFiles is always valid on win9x */
         size = 2 * ((unicode) ? sizeof(WCHAR) : 1);
         *pcbNeeded += size;
         if ((*pcbNeeded <= cbBuf) && strPtr) ZeroMemory(strPtr, size);

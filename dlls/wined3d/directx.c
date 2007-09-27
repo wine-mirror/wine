@@ -994,14 +994,14 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                 /* Radeon R3xx */ 
                 else {
                     gl_info->gl_card = CARD_ATI_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
-                    vidmem = 64; /* Radeon 9500 uses 64MB, higher models use upto 256MB */
+                    vidmem = 64; /* Radeon 9500 uses 64MB, higher models use up to 256MB */
                 }
             } else if(WINE_D3D8_CAPABLE(gl_info)) {
                 gl_info->gl_card = CARD_ATI_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
                 vidmem = 64; /* 8500/9000 cards use mostly 64MB, though there are 32MB and 128MB models */
             } else if(WINE_D3D7_CAPABLE(gl_info)) {
                 gl_info->gl_card = CARD_ATI_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
-                vidmem = 32; /* There are models with upto 64MB */
+                vidmem = 32; /* There are models with up to 64MB */
             } else
                 gl_info->gl_card = CARD_ATI_RAGE_128PRO;
                 vidmem = 16; /* There are 16-32MB models */

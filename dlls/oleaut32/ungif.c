@@ -642,17 +642,17 @@ DGifDecompressLine(GifFileType * GifFile,
             Private->MaxCode1 = 1 << Private->RunningBits;
             LastCode = Private->LastCode = NO_SUCH_CODE;
         } else {
-            /* Its regular code - if in pixel range simply add it to output
+            /* It's a regular code - if in pixel range simply add it to output
              * stream, otherwise trace to codes linked list until the prefix
              * is in pixel range: */
             if (CrntCode < ClearCode) {
                 /* This is simple - its pixel scalar, so add it to output: */
                 Line[i++] = CrntCode;
             } else {
-                /* Its a code to needed to be traced: trace the linked list
+                /* It's a code to be traced: trace the linked list
                  * until the prefix is a pixel, while pushing the suffix
                  * pixels on our stack. If we done, pop the stack in reverse
-                 * (thats what stack is good for!) order to output.  */
+                 * order (that's what stack is good for!) for output.  */
                 if (Prefix[CrntCode] == NO_SUCH_CODE) {
                     /* Only allowed if CrntCode is exactly the running code:
                      * In that case CrntCode = XXXCode, CrntCode or the

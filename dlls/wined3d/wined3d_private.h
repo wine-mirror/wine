@@ -1186,7 +1186,7 @@ const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface);
 #define SFLAG_GLCKEY      0x00008000 /* The gl texture was created with a color key */
 #define SFLAG_CLIENT      0x00010000 /* GL_APPLE_client_storage is used on that texture */
 #define SFLAG_ALLOCATED   0x00020000 /* A gl texture is allocated for this surface */
-#define SFLAG_PBO         0x00040000 /* Has a PBO attached for speeding data transfer for dynamicly locked surfaces */
+#define SFLAG_PBO         0x00040000 /* Has a PBO attached for speeding up data transfers for dynamically locked surfaces */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL

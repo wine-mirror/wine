@@ -573,7 +573,7 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
     strcpyW(new_cmd, command);
 
     /* Expand variables in command line mode only (batch mode will
-       be expanded as the line is read in, except for for loops)   */
+       be expanded as the line is read in, except for 'for' loops)   */
     handleExpansion(new_cmd, (context != NULL), forVariable, forValue);
     cmd = new_cmd;
 

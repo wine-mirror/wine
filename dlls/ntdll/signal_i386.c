@@ -1250,7 +1250,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 
         rec->ExceptionCode = STATUS_FLOAT_MULTIPLE_TRAPS;
         rec->NumberParameters = 1;
-        /* no idea what meaning is actually behind this but thats what native does */
+        /* no idea what meaning is actually behind this but that's what native does */
         rec->ExceptionInformation[0] = 0;
         break;
     default:

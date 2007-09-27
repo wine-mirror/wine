@@ -4257,8 +4257,8 @@ static void test_GetUpdateRect(void)
         }
         DispatchMessage(&msg);
     }
-    ok(parent_wm_paint, "WM_PAINT should have been recieved in parent\n");
-    ok(!grandparent_wm_paint, "WM_PAINT should NOT have been recieved in grandparent\n");
+    ok(parent_wm_paint, "WM_PAINT should have been received in parent\n");
+    ok(!grandparent_wm_paint, "WM_PAINT should NOT have been received in grandparent\n");
 
     DestroyWindow(hgrandparent);
 
@@ -4321,8 +4321,8 @@ static void test_GetUpdateRect(void)
         }
         DispatchMessage(&msg);
     }
-    ok(parent_wm_paint, "WM_PAINT should have been recieved in parent\n");
-    ok(!grandparent_wm_paint, "WM_PAINT should NOT have been recieved in grandparent\n");
+    ok(parent_wm_paint, "WM_PAINT should have been received in parent\n");
+    ok(!grandparent_wm_paint, "WM_PAINT should NOT have been received in grandparent\n");
 
     DestroyWindow(hgrandparent);
 }

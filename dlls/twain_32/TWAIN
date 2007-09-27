@@ -53,7 +53,7 @@ ICAP_XRESOLUTION
 ICAP_YRESOLUTION
 All Sources must implement the advertised features supported by their devices. They must
 make these features available to applications via the TWAIN protocol. For example, a Source
-thats connected to a device that has an ADF must support DG_CONTROL /
+that's connected to a device that has an ADF must support DG_CONTROL /
 DAT_CAPABILITY / MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT on:
 CAP_FEEDERENABLED
 CAP_FEEDERLOADED

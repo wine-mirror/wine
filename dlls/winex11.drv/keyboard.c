@@ -2135,7 +2135,7 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 
 			e.state = LockMask;
 			/* LockMask should behave exactly like caps lock - upercase
-			 * the letter keys and thats about it. */
+			 * the letter keys and that's about it. */
 
                         wine_tsx11_lock();
 

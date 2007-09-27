@@ -255,7 +255,7 @@ void shader_generate_arb_declarations(
          */
         if(max_constantsF + extra_constants_needed + 1 < GL_LIMITS(pshader_constantsF) && FALSE) {
             /* The idea is that if srgb is enabled, then disabled, the constant loading code
-             * can effectively disabling sRGB correction by passing 1.0 and INF as the multiplication
+             * can effectively disable sRGB correction by passing 1.0 and INF as the multiplication
              * and comparison constants. If it disables it that way, the shader won't be recompiled
              * and the code will stay in, so sRGB writing can be turned on again by setting the
              * constants from the spec

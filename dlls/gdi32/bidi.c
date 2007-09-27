@@ -653,8 +653,8 @@ enum resolvestates
     l,  /* L and characters resolved to L */
     rn, /* N preceded by right */
     ln, /* N preceded by left */
-    a,  /* AN preceded by left (the abbrev 'la' is used up above) */
-    na, /* N preceeded by a */
+    a,  /* AN preceded by left (the abbreviation 'la' is used up above) */
+    na, /* N preceded by a */
 } ;
 
 
