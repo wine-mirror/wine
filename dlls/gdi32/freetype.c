@@ -5062,7 +5062,7 @@ BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
 
 DWORD WineEngGetFontUnicodeRanges(GdiFont *font, LPGLYPHSET glyphset)
 {
-    FIXME("(%p, %p): stub\n", hdc, glyphset);
+    FIXME("(%p, %p): stub\n", font, glyphset);
     return 0;
 }
 
