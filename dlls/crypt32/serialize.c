@@ -533,6 +533,72 @@ static BOOL WINAPI CRYPT_SerializeCTLNoHash(PCCTL_CONTEXT pCtlContext,
      CERT_CTL_PROP_ID, pCTLInterface, dwFlags, TRUE, pbElement, pcbElement);
 }
 
+static BOOL CRYPT_SerializeContextsToStream(SerializedOutputFunc output,
+ void *handle, const WINE_CONTEXT_INTERFACE *contextInterface, HCERTSTORE store)
+{
+    const void *context = NULL;
+    BOOL ret;
+
+    do {
+        context = contextInterface->enumContextsInStore(store, context);
+        if (context)
+        {
+            DWORD size = 0;
+            LPBYTE buf = NULL;
+
+            ret = contextInterface->serialize(context, 0, NULL, &size);
+            if (size)
+                buf = CryptMemAlloc(size);
+            if (buf)
+            {
+                ret = contextInterface->serialize(context, 0, buf, &size);
+                if (ret)
+                    ret = output(handle, buf, size);
+            }
+            CryptMemFree(buf);
+        }
+        else
+            ret = TRUE;
+    } while (ret && context != NULL);
+    if (context)
+        contextInterface->free(context);
+    return ret;
+}
+
+BOOL CRYPT_WriteSerializedStoreToStream(HCERTSTORE store,
+ SerializedOutputFunc output, void *handle)
+{
+    static const BYTE fileTrailer[12] = { 0 };
+    WINE_CONTEXT_INTERFACE interface;
+    BOOL ret;
+
+    ret = output(handle, fileHeader, sizeof(fileHeader));
+    if (ret)
+    {
+        memcpy(&interface, pCertInterface, sizeof(interface));
+        interface.serialize = (SerializeElementFunc)CRYPT_SerializeCertNoHash;
+        ret = CRYPT_SerializeContextsToStream(output, handle, &interface,
+         store);
+    }
+    if (ret)
+    {
+        memcpy(&interface, pCRLInterface, sizeof(interface));
+        interface.serialize = (SerializeElementFunc)CRYPT_SerializeCRLNoHash;
+        ret = CRYPT_SerializeContextsToStream(output, handle, &interface,
+         store);
+    }
+    if (ret)
+    {
+        memcpy(&interface, pCTLInterface, sizeof(interface));
+        interface.serialize = (SerializeElementFunc)CRYPT_SerializeCTLNoHash;
+        ret = CRYPT_SerializeContextsToStream(output, handle, &interface,
+         store);
+    }
+    if (ret)
+        ret = output(handle, fileTrailer, sizeof(fileTrailer));
+    return ret;
+}
+
 static BOOL CRYPT_SerializeContextsToFile(HANDLE file,
  const WINE_CONTEXT_INTERFACE *contextInterface, HCERTSTORE store)
 {
