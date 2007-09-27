@@ -360,13 +360,16 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
 
                     wine_tsx11_lock();
                     XSetGraphicsExposures( gdi_display, physDev->gc, False );
+                    wine_tsx11_unlock();
                     if (physDev->exposures)
                     {
                         for (;;)
                         {
                             XEvent event;
 
+                            wine_tsx11_lock();
                             XWindowEvent( gdi_display, physDev->drawable, ~0, &event );
+                            wine_tsx11_unlock();
                             if (event.type == NoExpose) break;
                             if (event.type == GraphicsExpose)
                             {
@@ -398,7 +401,6 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                         }
                         if (tmp) DeleteObject( tmp );
                     }
-                    wine_tsx11_unlock();
                     *(HRGN *)out_data = hrgn;
                     return TRUE;
                 }

@@ -3501,6 +3501,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
             return lines;
         }
     }
+    wine_tsx11_unlock();
 
     TRACE("Dib: depth=%d r=%x g=%x b=%x\n",
           descr->infoBpp,descr->rMask,descr->gMask,descr->bMask);
@@ -3573,6 +3574,8 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
      descr->drawable, descr->gc, bmpImage,
      descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
      descr->width, descr->height);
+
+    wine_tsx11_lock();
 #ifdef HAVE_LIBXXSHM
     if (descr->image && descr->useShm)
     {
@@ -3656,6 +3659,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
                       descr->width, lines, AllPlanes, ZPixmap,
                       bmpImage, descr->xDest, descr->yDest );
     }
+    wine_tsx11_unlock();
 
     TRACE("Dib: depth=%2d r=%x g=%x b=%x\n",
           descr->infoBpp,descr->rMask,descr->gMask,descr->bMask);
@@ -3724,8 +3728,12 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         break;
     }
 
-    if (!descr->image) XDestroyImage( bmpImage );
-    wine_tsx11_unlock();
+    if (!descr->image)
+    {
+        wine_tsx11_lock();
+        XDestroyImage( bmpImage );
+        wine_tsx11_unlock();
+    }
     return lines;
 }
 
@@ -3743,6 +3751,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     LONG width, height;
     BOOL top_down;
     POINT pt;
+    int rop = X11DRV_XROPfunction[GetROP2(physDev->hdc) - 1];
 
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
 			   &descr.infoBpp, &descr.compression ) == -1)
@@ -3795,7 +3804,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
 
     X11DRV_SetupGCForText( physDev );  /* To have the correct colors */
     wine_tsx11_lock();
-    XSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[GetROP2(physDev->hdc) - 1]);
+    XSetFunction(gdi_display, physDev->gc, rop);
     wine_tsx11_unlock();
 
     switch (descr.infoBpp)

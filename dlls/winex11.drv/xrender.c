@@ -1630,6 +1630,8 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
 
     }
 
+    rgndata = X11DRV_GetRegionData( devDst->region, 0 );
+
     wine_tsx11_lock();
     image = XCreateImage(gdi_display, visual, 32, ZPixmap, 0,
                          (char*) data, widthSrc, heightSrc, 32, widthSrc * 4);
@@ -1664,7 +1666,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
                                      CPSubwindowMode, &pa);
     TRACE("src_pict %08lx\n", src_pict);
 
-    if ((rgndata = X11DRV_GetRegionData( devDst->region, 0 )))
+    if (rgndata)
     {
         pXRenderSetPictureClipRectangles( gdi_display, dst_pict,
                                           devDst->dc_rect.left, devDst->dc_rect.top,

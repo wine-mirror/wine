@@ -717,6 +717,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
         xoff = ((widthDst << 16) - (xinc * widthSrc)) / 2;
     }
 
+    wine_tsx11_lock();
     if (vstretch)
     {
         yinc = ((int)heightSrc << 16) / heightDst;
@@ -836,6 +837,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
                         widthDst*sizeof(int) );
         }
     }
+    wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, rowSrc );
 }
 
@@ -873,6 +875,7 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
     rectDst.bottom -= yDst;
 
     get_colors(physDevDst, physDevSrc, &fg, &bg);
+    wine_tsx11_lock();
     /* FIXME: avoid BadMatch errors */
     imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
                           physDevSrc->dc_rect.left + visRectSrc->left,
@@ -880,6 +883,8 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
                           visRectSrc->right - visRectSrc->left,
                           visRectSrc->bottom - visRectSrc->top,
                           AllPlanes, ZPixmap );
+    wine_tsx11_unlock();
+
     imageDst = X11DRV_DIB_CreateXImage( rectDst.right - rectDst.left,
                                         rectDst.bottom - rectDst.top, physDevDst->depth );
     BITBLT_StretchImage( imageSrc, imageDst, widthSrc, heightSrc,
@@ -887,10 +892,12 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
                          fg, physDevDst->depth != 1 ?
                          bg : physDevSrc->backgroundPixel,
                          GetStretchBltMode(physDevDst->hdc) );
+    wine_tsx11_lock();
     XPutImage( gdi_display, pixmap, gc, imageDst, 0, 0, 0, 0,
                rectDst.right - rectDst.left, rectDst.bottom - rectDst.top );
     XDestroyImage( imageSrc );
     XDestroyImage( imageDst );
+    wine_tsx11_unlock();
     return 0;  /* no exposure events generated */
 }
 
@@ -910,9 +917,11 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
     INT width  = visRectSrc->right - visRectSrc->left;
     INT height = visRectSrc->bottom - visRectSrc->top;
     int fg, bg;
+    BOOL memdc = (GetObjectType(physDevSrc->hdc) == OBJ_MEMDC);
 
     if (physDevSrc->depth == physDevDst->depth)
     {
+        wine_tsx11_lock();
         if (!X11DRV_PALETTE_XPixelToPalette ||
             (physDevDst->depth == 1))  /* monochrome -> monochrome */
         {
@@ -938,7 +947,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
         }
         else  /* color -> color */
         {
-            if (GetObjectType(physDevSrc->hdc) == OBJ_MEMDC)
+            if (memdc)
                 imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
                                       physDevSrc->dc_rect.left + visRectSrc->left,
                                       physDevSrc->dc_rect.top + visRectSrc->top,
@@ -962,6 +971,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
                        0, 0, 0, 0, width, height );
             XDestroyImage( imageSrc );
         }
+        wine_tsx11_unlock();
     }
     else
     {
@@ -969,6 +979,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
         {
 	    get_colors(physDevDst, physDevSrc, &fg, &bg);
 
+            wine_tsx11_lock();
             if (X11DRV_PALETTE_XPixelToPalette)
             {
                 XSetBackground( gdi_display, gc,
@@ -986,9 +997,11 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
                         physDevSrc->dc_rect.top + visRectSrc->top,
                         width, height, 0, 0, 1 );
             exposures++;
+            wine_tsx11_unlock();
         }
         else  /* color -> monochrome */
         {
+            wine_tsx11_lock();
             /* FIXME: avoid BadMatch error */
             imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
                                   physDevSrc->dc_rect.left + visRectSrc->left,
@@ -996,12 +1009,14 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
                                   width, height, AllPlanes, ZPixmap );
             if (!imageSrc)
             {
+                wine_tsx11_unlock();
                 return exposures;
             }
             imageDst = X11DRV_DIB_CreateXImage( width, height, physDevDst->depth );
-            if (!imageDst) 
+            if (!imageDst)
             {
                 XDestroyImage(imageSrc);
+                wine_tsx11_unlock();
                 return exposures;
             }
             for (y = 0; y < height; y++)
@@ -1012,6 +1027,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
                        0, 0, 0, 0, width, height );
             XDestroyImage( imageSrc );
             XDestroyImage( imageDst );
+            wine_tsx11_unlock();
         }
     }
     return exposures;
@@ -1029,6 +1045,9 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, RECT
     int exposures = 0;
     INT width  = visRectDst->right - visRectDst->left;
     INT height = visRectDst->bottom - visRectDst->top;
+    BOOL memdc = (GetObjectType( physDev->hdc ) == OBJ_MEMDC);
+
+    wine_tsx11_lock();
 
     if (!X11DRV_PALETTE_XPixelToPalette || (physDev->depth == 1) ||
 	(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) )
@@ -1043,7 +1062,7 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, RECT
         register INT x, y;
         XImage *image;
 
-        if (GetObjectType( physDev->hdc ) == OBJ_MEMDC)
+        if (memdc)
             image = XGetImage( gdi_display, physDev->drawable,
                                physDev->dc_rect.left + visRectDst->left,
                                physDev->dc_rect.top + visRectDst->top,
@@ -1059,13 +1078,18 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, RECT
             image = XGetImage( gdi_display, pixmap, 0, 0, width, height,
                                AllPlanes, ZPixmap );
         }
-        for (y = 0; y < height; y++)
-            for (x = 0; x < width; x++)
-                XPutPixel( image, x, y,
-                           X11DRV_PALETTE_XPixelToPalette[XGetPixel( image, x, y )]);
-        XPutImage( gdi_display, pixmap, gc, image, 0, 0, 0, 0, width, height );
-	XDestroyImage( image );
+        if (image)
+        {
+            for (y = 0; y < height; y++)
+                for (x = 0; x < width; x++)
+                    XPutPixel( image, x, y,
+                               X11DRV_PALETTE_XPixelToPalette[XGetPixel( image, x, y )]);
+            XPutImage( gdi_display, pixmap, gc, image, 0, 0, 0, 0, width, height );
+            XDestroyImage( image );
+        }
     }
+
+    wine_tsx11_unlock();
     return exposures;
 }
 
@@ -1435,16 +1459,19 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
     }
 
     wine_tsx11_lock();
-
     tmpGC = XCreateGC( gdi_display, physDevDst->drawable, 0, NULL );
     XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
     XSetGraphicsExposures( gdi_display, tmpGC, False );
     pixmaps[DST] = XCreatePixmap( gdi_display, root_window, width, height,
                                   physDevDst->depth );
+    wine_tsx11_unlock();
+
     if (useSrc)
     {
+        wine_tsx11_lock();
         pixmaps[SRC] = XCreatePixmap( gdi_display, root_window, width, height,
                                       physDevDst->depth );
+        wine_tsx11_unlock();
         if (fStretch)
             BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC,
                                       xSrc, ySrc, widthSrc, heightSrc,
@@ -1460,6 +1487,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
     else fNullBrush = FALSE;
     destUsed = FALSE;
 
+    wine_tsx11_lock();
     for (opcode = BITBLT_Opcodes[(rop >> 16) & 0xff]; *opcode; opcode++)
     {
         if (OP_DST(*opcode) == DST) destUsed = TRUE;
