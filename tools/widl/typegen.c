@@ -1469,6 +1469,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
     if (write_embedded_types(file, attrs, type->ref, name, FALSE, typestring_offset))
         has_pointer = TRUE;
 
+    align = 0;
     size = type_memsize(type, &align);
     if (size == 0)              /* conformant array */
         size = type_memsize(type->ref, &align);
