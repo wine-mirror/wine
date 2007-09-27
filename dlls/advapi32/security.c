@@ -3239,6 +3239,8 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
     DWORD val;
     DWORD sidlen;
     DWORD length = sizeof(ACL);
+    DWORD acesize = 0;
+    DWORD acecount = 0;
     PACCESS_ALLOWED_ACE pAce = NULL; /* pointer to current ACE */
 
     TRACE("%s\n", debugstr_w(StringAcl));
@@ -3308,10 +3310,32 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
             goto lerr;
         StringAcl++;
 
-	length += sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD) + sidlen;
+        acesize = sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD) + sidlen;
+        length += acesize;
+        if (pAce)
+        {
+            pAce->Header.AceSize = acesize;
+            pAce = (PACCESS_ALLOWED_ACE)((LPBYTE)pAce + acesize);
+        }
+        acecount++;
     }
 
     *cBytes = length;
+
+    if (length > 0xffff)
+    {
+        ERR("ACL too large\n");
+        goto lerr;
+    }
+
+    if (pAcl)
+    {
+        pAcl->AclRevision = ACL_REVISION;
+        pAcl->Sbz1 = 0;
+        pAcl->AclSize = length;
+        pAcl->AceCount = acecount++;
+        pAcl->Sbz2 = 0;
+    }
     return TRUE;
 
 lerr:
