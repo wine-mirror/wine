@@ -3628,6 +3628,13 @@ static void dump_query_completion_reply( const struct query_completion_reply *re
     fprintf( stderr, " depth=%08x", req->depth );
 }
 
+static void dump_set_completion_info_request( const struct set_completion_info_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " chandle=%p,", req->chandle );
+    fprintf( stderr, " ckey=%lx", req->ckey );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -3854,6 +3861,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_add_completion_request,
     (dump_func)dump_remove_completion_request,
     (dump_func)dump_query_completion_request,
+    (dump_func)dump_set_completion_info_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -4082,6 +4090,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_remove_completion_reply,
     (dump_func)dump_query_completion_reply,
+    (dump_func)0,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4310,6 +4319,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "add_completion",
     "remove_completion",
     "query_completion",
+    "set_completion_info",
 };
 
 static const struct

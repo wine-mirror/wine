@@ -4156,6 +4156,20 @@ struct query_completion_reply
 };
 
 
+
+struct set_completion_info_request
+{
+    struct request_header __header;
+    obj_handle_t  handle;
+    obj_handle_t  chandle;
+    unsigned long ckey;
+};
+struct set_completion_info_reply
+{
+    struct reply_header __header;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -4383,6 +4397,7 @@ enum request
     REQ_add_completion,
     REQ_remove_completion,
     REQ_query_completion,
+    REQ_set_completion_info,
     REQ_NB_REQUESTS
 };
 
@@ -4615,6 +4630,7 @@ union generic_request
     struct add_completion_request add_completion_request;
     struct remove_completion_request remove_completion_request;
     struct query_completion_request query_completion_request;
+    struct set_completion_info_request set_completion_info_request;
 };
 union generic_reply
 {
@@ -4845,8 +4861,9 @@ union generic_reply
     struct add_completion_reply add_completion_reply;
     struct remove_completion_reply remove_completion_reply;
     struct query_completion_reply query_completion_reply;
+    struct set_completion_info_reply set_completion_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 314
+#define SERVER_PROTOCOL_VERSION 315
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

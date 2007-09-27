@@ -1658,6 +1658,23 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
         }
         break;
 
+    case FileCompletionInformation:
+        if (len >= sizeof(FILE_COMPLETION_INFORMATION))
+        {
+            FILE_COMPLETION_INFORMATION *info = (FILE_COMPLETION_INFORMATION *)ptr;
+
+            SERVER_START_REQ( set_completion_info )
+            {
+                req->handle   = handle;
+                req->chandle  = info->CompletionPort;
+                req->ckey     = info->CompletionKey;
+                io->u.Status  = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        } else
+            io->u.Status = STATUS_INVALID_PARAMETER_3;
+        break;
+
     default:
         FIXME("Unsupported class (%d)\n", class);
         io->u.Status = STATUS_NOT_IMPLEMENTED;

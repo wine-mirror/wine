@@ -25,6 +25,7 @@
 
 struct fd;
 struct async_queue;
+struct completion;
 
 typedef unsigned __int64 file_pos_t;
 
@@ -119,6 +120,10 @@ extern void file_set_error(void);
 extern void do_change_notify( int unix_fd );
 extern void sigio_callback(void);
 extern struct object *create_dir_obj( struct fd *fd );
+
+/* completion */
+
+struct completion *get_completion_obj( struct process *process, obj_handle_t handle, unsigned int access );
 
 /* serial port functions */
 

@@ -39,6 +39,7 @@
 
 #include "wine/unicode.h"
 #include "object.h"
+#include "file.h"
 #include "handle.h"
 #include "request.h"
 
@@ -124,7 +125,7 @@ static struct completion *create_completion( struct directory *root, const struc
     return completion;
 }
 
-static struct completion *get_completion_obj( struct process *process, obj_handle_t handle, unsigned int access )
+struct completion *get_completion_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct completion *) get_handle_obj( process, handle, access, &completion_ops );
 }

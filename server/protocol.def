@@ -2983,3 +2983,11 @@ enum message_type
 @REPLY
     unsigned int  depth;          /* completion queue depth */
 @END
+
+
+/* associate object with completion port */
+@REQ(set_completion_info)
+    obj_handle_t  handle;         /* object handle */
+    obj_handle_t  chandle;        /* port handle */
+    unsigned long ckey;           /* completion key */
+@END

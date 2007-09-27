@@ -335,6 +335,7 @@ DECL_HANDLER(open_completion);
 DECL_HANDLER(add_completion);
 DECL_HANDLER(remove_completion);
 DECL_HANDLER(query_completion);
+DECL_HANDLER(set_completion_info);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -566,6 +567,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_add_completion,
     (req_handler)req_remove_completion,
     (req_handler)req_query_completion,
+    (req_handler)req_set_completion_info,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

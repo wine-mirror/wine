@@ -180,6 +180,8 @@ struct fd
     struct async_queue  *read_q;      /* async readers of this fd */
     struct async_queue  *write_q;     /* async writers of this fd */
     struct async_queue  *wait_q;      /* other async waiters of this fd */
+    struct completion   *completion;  /* completion object attached to this fd */
+    unsigned long        comp_key;    /* completion key to set in completion events */
 };
 
 static void fd_dump( struct object *obj, int verbose );
@@ -1329,6 +1331,7 @@ static void fd_destroy( struct object *obj )
     free_async_queue( fd->write_q );
     free_async_queue( fd->wait_q );
 
+    if (fd->completion) release_object( fd->completion );
     remove_fd_locks( fd );
     list_remove( &fd->inode_entry );
     if (fd->poll_index != -1) remove_poll_user( fd, fd->poll_index );
@@ -1406,6 +1409,7 @@ static struct fd *alloc_fd_object(void)
     fd->read_q     = NULL;
     fd->write_q    = NULL;
     fd->wait_q     = NULL;
+    fd->completion = NULL;
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
 
@@ -1438,6 +1442,7 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     fd->read_q     = NULL;
     fd->write_q    = NULL;
     fd->wait_q     = NULL;
+    fd->completion = NULL;
     fd->no_fd_status = STATUS_BAD_DEVICE_TYPE;
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
@@ -2006,6 +2011,23 @@ DECL_HANDLER(cancel_async)
     if (fd)
     {
         if (get_unix_fd( fd ) != -1) fd->fd_ops->cancel_async( fd );
+        release_object( fd );
+    }
+}
+
+/* attach completion object to a fd */
+DECL_HANDLER(set_completion_info)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+
+    if (fd)
+    {
+        if (!fd->completion)
+        {
+            fd->completion = get_completion_obj( current->process, req->chandle, IO_COMPLETION_MODIFY_STATE );
+            fd->comp_key = req->ckey;
+        }
+        else set_error( STATUS_INVALID_PARAMETER );
         release_object( fd );
     }
 }
