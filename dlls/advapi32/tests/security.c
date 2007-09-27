@@ -35,6 +35,8 @@
 
 #include "wine/test.h"
 
+#define expect_eq(expr, value, type, format) { type ret = expr; ok((value) == ret, #expr " expected " format "  got " format "\n", (value), (ret)); }
+
 typedef VOID (WINAPI *fnBuildTrusteeWithSidA)( PTRUSTEEA pTrustee, PSID pSid );
 typedef VOID (WINAPI *fnBuildTrusteeWithNameA)( PTRUSTEEA pTrustee, LPSTR pName );
 typedef VOID (WINAPI *fnBuildTrusteeWithObjectsAndNameA)( PTRUSTEEA pTrustee,
@@ -49,6 +51,7 @@ typedef VOID (WINAPI *fnBuildTrusteeWithObjectsAndSidA)( PTRUSTEEA pTrustee,
                                                          GUID* pInheritedObjectGuid,
                                                          PSID pSid );
 typedef LPSTR (WINAPI *fnGetTrusteeNameA)( PTRUSTEEA pTrustee );
+typedef BOOL (WINAPI *fnMakeSelfRelativeSD)( PSECURITY_DESCRIPTOR, PSECURITY_DESCRIPTOR, LPDWORD );
 typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorA)(LPCSTR, DWORD,
@@ -81,6 +84,7 @@ fnBuildTrusteeWithNameA  pBuildTrusteeWithNameA;
 fnBuildTrusteeWithObjectsAndNameA pBuildTrusteeWithObjectsAndNameA;
 fnBuildTrusteeWithObjectsAndSidA pBuildTrusteeWithObjectsAndSidA;
 fnGetTrusteeNameA pGetTrusteeNameA;
+fnMakeSelfRelativeSD pMakeSelfRelativeSD;
 fnConvertSidToStringSidA pConvertSidToStringSidA;
 fnConvertStringSidToSidA pConvertStringSidToSidA;
 fnGetFileSecurityA pGetFileSecurityA;
@@ -110,6 +114,7 @@ static void init(void)
         (void *)GetProcAddress(hmod, "ConvertStringSecurityDescriptorToSecurityDescriptorA" );
     pConvertSecurityDescriptorToStringSecurityDescriptorA =
         (void *)GetProcAddress(hmod, "ConvertSecurityDescriptorToStringSecurityDescriptorA" );
+    pMakeSelfRelativeSD = (void *)GetProcAddress(hmod, "MakeSelfRelativeSD");
     pGetNamedSecurityInfoA = (void *)GetProcAddress(hmod, "GetNamedSecurityInfoA");
     pSetEntriesInAclW = (void *)GetProcAddress(hmod, "SetEntriesInAclW");
 
@@ -1443,6 +1448,46 @@ static void test_LookupAccountName(void)
     HeapFree(GetProcessHeap(), 0, domain);
 }
 
+static void test_security_descriptor(void)
+{
+    SECURITY_DESCRIPTOR sd;
+    char buf[8192];
+    DWORD size;
+    BOOL isDefault, isPresent;
+    PACL pacl;
+    PSID psid;
+
+    InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+    ok(GetSecurityDescriptorOwner(&sd, &psid, &isDefault), "GetSecurityDescriptorOwner failed\n");
+    expect_eq(psid, NULL, PSID, "%p");
+    todo_wine expect_eq(isDefault, FALSE, BOOL, "%d");
+    sd.Control |= SE_DACL_PRESENT | SE_SACL_PRESENT;
+
+    SetLastError(0xdeadbeef);
+    size = 5;
+    expect_eq(MakeSelfRelativeSD(&sd, buf, &size), FALSE, BOOL, "%d");
+    expect_eq(GetLastError(), ERROR_INSUFFICIENT_BUFFER, DWORD, "%u");
+    ok(size > 5, "Size not increased\n");
+    if (size <= 8192)
+    {
+        expect_eq(MakeSelfRelativeSD(&sd, buf, &size), TRUE, BOOL, "%d");
+        ok(GetSecurityDescriptorOwner(&sd, &psid, &isDefault), "GetSecurityDescriptorOwner failed\n");
+        expect_eq(psid, NULL, PSID, "%p");
+        todo_wine expect_eq(isDefault, FALSE, BOOL, "%d");
+        ok(GetSecurityDescriptorGroup(&sd, &psid, &isDefault), "GetSecurityDescriptorOwner failed\n");
+        expect_eq(psid, NULL, PSID, "%p");
+        todo_wine expect_eq(isDefault, FALSE, BOOL, "%d");
+        ok(GetSecurityDescriptorDacl(&sd, &isPresent, &pacl, &isDefault), "GetSecurityDescriptorOwner failed\n");
+        expect_eq(isPresent, TRUE, BOOL, "%d");
+        expect_eq(psid, NULL, PSID, "%p");
+        expect_eq(isDefault, FALSE, BOOL, "%d");
+        ok(GetSecurityDescriptorSacl(&sd, &isPresent, &pacl, &isDefault), "GetSecurityDescriptorOwner failed\n");
+        expect_eq(isPresent, TRUE, BOOL, "%d");
+        expect_eq(psid, NULL, PSID, "%p");
+        expect_eq(isDefault, FALSE, BOOL, "%d");
+    }
+}
+
 #define TEST_GRANTED_ACCESS(a,b) test_granted_access(a,b,__LINE__)
 static void test_granted_access(HANDLE handle, ACCESS_MASK access, int line)
 {
@@ -2017,6 +2062,7 @@ START_TEST(security)
     test_token_attr();
     test_LookupAccountSid();
     test_LookupAccountName();
+    test_security_descriptor();
     test_process_security();
     test_impersonation_level();
     test_SetEntriesInAcl();

@@ -848,30 +848,44 @@ NTSTATUS WINAPI RtlMakeSelfRelativeSD(
     pRel->Control = pAbs->Control | SE_SELF_RELATIVE;
 
     offsetRel = sizeof(SECURITY_DESCRIPTOR);
-    pRel->Owner = (PSID) offsetRel;
-    length = RtlLengthSid(pAbs->Owner);
-    memcpy((LPBYTE)pRel + offsetRel, pAbs->Owner, length);
-
-    offsetRel += length;
-    pRel->Group = (PSID) offsetRel;
-    length = RtlLengthSid(pAbs->Group);
-    memcpy((LPBYTE)pRel + offsetRel, pAbs->Group, length);
-
-    if (pRel->Control & SE_SACL_PRESENT)
+    if (pAbs->Owner)
     {
+        pRel->Owner = (PSID) offsetRel;
+        length = RtlLengthSid(pAbs->Owner);
+        memcpy((LPBYTE)pRel + offsetRel, pAbs->Owner, length);
         offsetRel += length;
+    }
+    else
+    {
+        pRel->Owner = NULL;
+    }
+
+    if (pAbs->Group)
+    {
+        pRel->Group = (PSID) offsetRel;
+        length = RtlLengthSid(pAbs->Group);
+        memcpy((LPBYTE)pRel + offsetRel, pAbs->Group, length);
+        offsetRel += length;
+    }
+    else
+    {
+        pRel->Group = NULL;
+    }
+
+    if (pAbs->Sacl)
+    {
         pRel->Sacl = (PACL) offsetRel;
         length = pAbs->Sacl->AclSize;
         memcpy((LPBYTE)pRel + offsetRel, pAbs->Sacl, length);
+        offsetRel += length;
     }
     else
     {
         pRel->Sacl = NULL;
     }
 
-    if (pRel->Control & SE_DACL_PRESENT)
+    if (pAbs->Dacl)
     {
-        offsetRel += length;
         pRel->Dacl = (PACL) offsetRel;
         length = pAbs->Dacl->AclSize;
         memcpy((LPBYTE)pRel + offsetRel, pAbs->Dacl, length);
