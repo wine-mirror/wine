@@ -373,14 +373,16 @@ typedef struct tagBITMAPOBJ
 
 /* Wine_GCPW Flags */
 /* Directionality -
- * LOOSE means that the paragraph dir is only set if there is no strong character.
- * FORCE means override the characters in the paragraph.
+ * LOOSE means taking the directionality of the first strong character, if there is found one.
+ * FORCE means the paragraph direction is forced. (RLE/LRE)
  */
 #define WINE_GCPW_FORCE_LTR 0
 #define WINE_GCPW_FORCE_RTL 1
 #define WINE_GCPW_LOOSE_LTR 2
 #define WINE_GCPW_LOOSE_RTL 3
 #define WINE_GCPW_DIR_MASK 3
+#define WINE_GCPW_LOOSE_MASK 2
+
 extern BOOL BIDI_Reorder( LPCWSTR lpString, INT uCount, DWORD dwFlags, DWORD dwWineGCP_Flags,
                           LPWSTR lpOutString, INT uCountOut, UINT *lpOrder );
 
