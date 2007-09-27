@@ -249,7 +249,7 @@
 253 stub MsiDeterminePatchSequenceA
 254 stub MsiDeterminePatchSequenceW
 255 stub MsiSourceListAddSourceExA
-256 stub MsiSourceListAddSourceExW
+256 stdcall MsiSourceListAddSourceExW(wstr wstr long long wstr long)
 257 stub MsiSourceListClearSourceA
 258 stub MsiSourceListClearSourceW
 259 stub MsiSourceListClearAllExA
@@ -259,15 +259,15 @@
 263 stdcall MsiSourceListEnumSourcesA(str str long long long ptr ptr)
 264 stub MsiSourceListEnumSourcesW
 265 stdcall MsiSourceListGetInfoA(str str long long str ptr ptr)
-266 stub MsiSourceListGetInfoW
+266 stdcall MsiSourceListGetInfoW(wstr wstr long long wstr ptr ptr)
 267 stub MsiSourceListSetInfoA
-268 stub MsiSourceListSetInfoW
+268 stdcall MsiSourceListSetInfoW(wstr wstr long long wstr wstr)
 269 stub MsiEnumPatchesExA
 270 stub MsiEnumPatchesExW
 271 stub MsiSourceListEnumMediaDisksA
 272 stub MsiSourceListEnumMediaDisksW
 273 stub MsiSourceListAddMediaDiskA
-274 stub MsiSourceListAddMediaDiskW
+274 stdcall MsiSourceListAddMediaDiskW(wstr wstr long long long wstr wstr)
 275 stub MsiSourceListClearMediaDiskA
 276 stub MsiSourceListClearMediaDiskW
 277 stub MsiDetermineApplicablePatchesA

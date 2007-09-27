@@ -721,7 +721,7 @@ UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid,
 }
 
 /******************************************************************
- *  MsiSourceListAddSourceExA (MSI.@)
+ *  MsiSourceListClearAllA (MSI.@)
  */
 UINT WINAPI MsiSourceListClearAllA( LPCSTR szProduct, LPCSTR szUserName, DWORD dwReserved )
 {
@@ -730,7 +730,7 @@ UINT WINAPI MsiSourceListClearAllA( LPCSTR szProduct, LPCSTR szUserName, DWORD d
 }
 
 /******************************************************************
- *  MsiSourceListAddSourceExW (MSI.@)
+ *  MsiSourceListClearAllW (MSI.@)
  */
 UINT WINAPI MsiSourceListClearAllW( LPCWSTR szProduct, LPCWSTR szUserName, DWORD dwReserved )
 {
