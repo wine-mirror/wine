@@ -1244,10 +1244,8 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     BOOL    iconic = style & WS_MINIMIZE;
     BOOL    moved = FALSE;
     DWORD     dwPoint = GetMessagePos ();
-    BOOL DragFullWindows = FALSE;
-    BOOL grab;
+    BOOL DragFullWindows = TRUE;
     Window parent_win, whole_win;
-    Display *old_gdi_display = NULL;
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     struct x11drv_win_data *data;
 
@@ -1264,8 +1262,6 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     /* if we are managed then we let the WM do all the work */
     if (data->managed && X11DRV_WMMoveResizeWindow( hwnd, pt.x, pt.y, wParam )) return;
-
-    SystemParametersInfoA(SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0);
 
     if (syscommand == SC_MOVE)
     {
@@ -1344,20 +1340,11 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     SendMessageW( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
     set_movesize_capture( hwnd );
 
-    /* grab the server only when moving top-level windows without desktop */
-    grab = (!DragFullWindows && !parent && (root_window == DefaultRootWindow(gdi_display)));
+    /* we only allow disabling the full window drag for child windows, or in desktop mode */
+    /* otherwise we'd need to grab the server and we want to avoid that */
+    if (parent || (root_window != DefaultRootWindow(gdi_display)))
+        SystemParametersInfoA(SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0);
 
-    if (grab)
-    {
-        wine_tsx11_lock();
-        XSync( gdi_display, False );
-        XGrabServer( thread_data->display );
-        XSync( thread_data->display, False );
-        /* switch gdi display to the thread display, since the server is grabbed */
-        old_gdi_display = gdi_display;
-        gdi_display = thread_data->display;
-        wine_tsx11_unlock();
-    }
     whole_win = X11DRV_get_whole_window( GetAncestor(hwnd,GA_ROOT) );
     parent_win = parent ? X11DRV_get_whole_window( GetAncestor(parent,GA_ROOT) ) : root_window;
 
@@ -1467,13 +1454,6 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     wine_tsx11_lock();
     XUngrabPointer( thread_data->display, CurrentTime );
-    if (grab)
-    {
-        XSync( thread_data->display, False );
-        XUngrabServer( thread_data->display );
-        XSync( thread_data->display, False );
-        gdi_display = old_gdi_display;
-    }
     wine_tsx11_unlock();
     thread_data->grab_window = None;
 
