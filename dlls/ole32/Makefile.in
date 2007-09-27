@@ -62,6 +62,8 @@ SPEC_SRCS16 = \
 
 RC_SRCS = ole32res.rc
 
+RC_SRCS16 = version16.rc
+
 IDL_H_SRCS = \
 	dcom.idl
 
@@ -69,5 +71,11 @@ IDL_C_SRCS = \
 	irot.idl
 
 @MAKE_DLL_RULES@
+
+ole2nls.spec.o: ole2nls.spec version16.res
+	$(WINEBUILD) $(WINEBUILDFLAGS) --dll -o $@ --dll-name ole2nls --main-module $(MODULE) --res version16.res --export $(SRCDIR)/ole2nls.spec
+
+version16.res: version16.rc
+	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/version16.rc
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

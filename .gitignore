@@ -322,6 +322,7 @@ dlls/ole32/ole32res.res
 dlls/ole32/tests/*.ok
 dlls/ole32/tests/ole32_crosstest.exe
 dlls/ole32/tests/testlist.c
+dlls/ole32/version16.res
 dlls/oleacc/liboleacc.def
 dlls/oleaut32/liboleaut32.def
 dlls/oleaut32/oleaut32.res
