@@ -1156,9 +1156,9 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
         header = GDI_GetObjPtr( hObj, MAGIC_DONTCARE );
         if (header)
         {
-            if (header->funcs && header->funcs->pSelectObject)
-                ret = header->funcs->pSelectObject( hObj, hdc );
-	    GDI_ReleaseObj( hObj );
+            const struct gdi_obj_funcs *funcs = header->funcs;
+            GDI_ReleaseObj( hObj );
+            if (funcs && funcs->pSelectObject) ret = funcs->pSelectObject( hObj, hdc );
         }
     }
     return ret;
