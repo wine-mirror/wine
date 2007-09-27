@@ -250,7 +250,7 @@ static BOOL CRYPT_QuerySerializedStoreObject(DWORD dwObjectType,
         HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
          CERT_STORE_CREATE_NEW_FLAG, NULL);
 
-        ret = CRYPT_ReadSerializedFile(file, store);
+        ret = CRYPT_ReadSerializedStoreFromFile(file, store);
         if (ret)
         {
             if (pdwMsgAndCertEncodingType)

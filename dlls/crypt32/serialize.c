@@ -421,7 +421,7 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement, DWORD cbElement,
 
 static const BYTE fileHeader[] = { 0, 0, 0, 0, 'C','E','R','T' };
 
-BOOL CRYPT_ReadSerializedFile(HANDLE file, HCERTSTORE store)
+BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store)
 {
     BYTE fileHeaderBuf[sizeof(fileHeader)];
     DWORD read;
@@ -565,7 +565,7 @@ static BOOL CRYPT_SerializeContextsToFile(HANDLE file,
     return ret;
 }
 
-BOOL CRYPT_WriteSerializedFile(HANDLE file, HCERTSTORE store)
+BOOL CRYPT_WriteSerializedStoreToFile(HANDLE file, HCERTSTORE store)
 {
     static const BYTE fileTrailer[12] = { 0 };
     WINE_CONTEXT_INTERFACE interface;

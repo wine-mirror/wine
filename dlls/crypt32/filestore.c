@@ -39,7 +39,7 @@ static void WINAPI CRYPT_FileCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 
     TRACE("(%p, %08x)\n", store, dwFlags);
     if (store->dirty)
-        CRYPT_WriteSerializedFile(store->file, store->memStore);
+        CRYPT_WriteSerializedStoreToFile(store->file, store->memStore);
     CertCloseStore(store->memStore, dwFlags);
     CloseHandle(store->file);
     CryptMemFree(store);
@@ -98,7 +98,7 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
     {
     case CERT_STORE_CTRL_RESYNC:
         CRYPT_EmptyStore(store->memStore);
-        CRYPT_ReadSerializedFile(store->file, store);
+        CRYPT_ReadSerializedStoreFromFile(store->file, store);
         ret = TRUE;
         break;
     case CERT_STORE_CTRL_COMMIT:
@@ -108,7 +108,7 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
             ret = FALSE;
         }
         else if (store->dirty)
-            ret = CRYPT_WriteSerializedFile(store->file, store->memStore);
+            ret = CRYPT_WriteSerializedStoreToFile(store->file, store->memStore);
         else
             ret = TRUE;
         break;
@@ -171,7 +171,7 @@ PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
          CERT_STORE_CREATE_NEW_FLAG, NULL);
         if (memStore)
         {
-            if (CRYPT_ReadSerializedFile(file, memStore))
+            if (CRYPT_ReadSerializedStoreFromFile(file, memStore))
             {
                 PWINE_FILESTOREINFO info = CryptMemAlloc(
                  sizeof(WINE_FILESTOREINFO));
