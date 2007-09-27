@@ -365,25 +365,28 @@ static BOOL CRYPT_QueryEmbeddedMessageObject(DWORD dwObjectType,
      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (file != INVALID_HANDLE_VALUE)
     {
-        CERT_BLOB blob;
+        DWORD len;
 
-        ret = ImageGetCertificateData(file, 0, NULL, &blob.cbData);
+        ret = ImageGetCertificateData(file, 0, NULL, &len);
         if (ret)
         {
-            blob.pbData = HeapAlloc(GetProcessHeap(), 0, blob.cbData);
-            if (blob.pbData)
+            WIN_CERTIFICATE *winCert = HeapAlloc(GetProcessHeap(), 0, len);
+
+            if (winCert)
             {
-                ret = ImageGetCertificateData(file, 0,
-                 (WIN_CERTIFICATE *)blob.pbData, &blob.cbData);
+                ret = ImageGetCertificateData(file, 0, winCert, &len);
                 if (ret)
                 {
+                    CERT_BLOB blob = { winCert->dwLength,
+                     winCert->bCertificate };
+
                     ret = CRYPT_QueryMessageObject(CERT_QUERY_OBJECT_BLOB,
                      &blob, CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
                      pdwMsgAndCertEncodingType, NULL, phCertStore, phMsg);
                     if (ret && pdwContentType)
                         *pdwContentType = CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED;
                 }
-                HeapFree(GetProcessHeap(), 0, blob.pbData);
+                HeapFree(GetProcessHeap(), 0, winCert);
             }
         }
         CloseHandle(file);
