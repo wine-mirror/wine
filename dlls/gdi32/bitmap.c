@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
 
-static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc );
+static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT BITMAP_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static BOOL BITMAP_DeleteObject( HGDIOBJ handle, void *obj );
@@ -554,17 +554,23 @@ BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc )
 /***********************************************************************
  *           BITMAP_SelectObject
  */
-static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
+static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
 {
     HGDIOBJ ret;
-    BITMAPOBJ *bitmap = obj;
-    DC *dc = DC_GetDCPtr( hdc );
+    BITMAPOBJ *bitmap;
+    DC *dc;
 
-    if (!dc) return 0;
+    if (!(bitmap = GDI_GetObjPtr( handle, BITMAP_MAGIC ))) return 0;
+
+    if (!(dc = get_dc_ptr( hdc )))
+    {
+        GDI_ReleaseObj( handle );
+        return 0;
+    }
     if (GetObjectType( hdc ) != OBJ_MEMDC)
     {
-        DC_ReleaseDCPtr( dc );
-        return 0;
+        ret = 0;
+        goto done;
     }
     ret = dc->hBitmap;
     if (handle == dc->hBitmap) goto done;  /* nothing to do */
@@ -572,14 +578,14 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
     if (bitmap->header.dwCount && (handle != GetStockObject(DEFAULT_BITMAP)))
     {
         WARN( "Bitmap already selected in another DC\n" );
-        DC_ReleaseDCPtr( dc );
-        return 0;
+        ret = 0;
+        goto done;
     }
 
     if (!bitmap->funcs && !BITMAP_SetOwnerDC( handle, dc ))
     {
-        DC_ReleaseDCPtr( dc );
-        return 0;
+        ret = 0;
+        goto done;
     }
 
     if (dc->funcs->pSelectBitmap) handle = dc->funcs->pSelectBitmap( dc->physDev, handle );
@@ -594,7 +600,8 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
     else ret = 0;
 
  done:
-    DC_ReleaseDCPtr( dc );
+    GDI_ReleaseObj( handle );
+    release_dc_ptr( dc );
     return ret;
 }
 

@@ -1150,7 +1150,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
         {
             if (header->funcs && header->funcs->pSelectObject)
             {
-                ret = header->funcs->pSelectObject( hObj, header, hdc );
+                ret = header->funcs->pSelectObject( hObj, hdc );
                 if (ret && ret != hObj && HandleToULong(ret) > COMPLEXREGION)
                 {
                     inc_ref_count( header );

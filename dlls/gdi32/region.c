@@ -120,7 +120,7 @@ typedef struct
 } RGNOBJ;
 
 
-static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, void *obj, HDC hdc );
+static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, HDC hdc );
 static BOOL REGION_DeleteObject( HGDIOBJ handle, void *obj );
 
 static const struct gdi_obj_funcs region_funcs =
@@ -549,7 +549,7 @@ static BOOL REGION_DeleteObject( HGDIOBJ handle, void *obj )
 /***********************************************************************
  *           REGION_SelectObject
  */
-static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
+static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, HDC hdc )
 {
     return ULongToHandle(SelectClipRgn( hdc, handle ));
 }

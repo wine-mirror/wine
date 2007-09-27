@@ -42,7 +42,7 @@ typedef struct
 } PENOBJ;
 
 
-static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, void *obj, HDC hdc );
+static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT PEN_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 
@@ -215,7 +215,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
 /***********************************************************************
  *           PEN_SelectObject
  */
-static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
+static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
 {
     HGDIOBJ ret;
     DC *dc = DC_GetDCPtr( hdc );

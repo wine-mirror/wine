@@ -86,7 +86,7 @@ static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
     return pt[1].y - pt[0].y;
 }
 
-static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, void *obj, HDC hdc );
+static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT FONT_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static INT FONT_GetObjectA( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static INT FONT_GetObjectW( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
@@ -585,7 +585,7 @@ HFONT WINAPI CreateFontW( INT height, INT width, INT esc,
  * drivers that don't support vector fonts they must supply their own
  * font.
  */
-static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
+static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
 {
     HGDIOBJ ret = 0;
     DC *dc = DC_GetDCPtr( hdc );
