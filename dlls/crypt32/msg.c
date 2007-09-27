@@ -1808,6 +1808,8 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
     DWORD size = sizeof(CMSG_SIGNER_INFO);
     BOOL ret;
 
+    TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
+
     size += in->Issuer.cbData;
     size += in->SerialNumber.cbData;
     if (in->HashAlgorithm.pszObjId)
@@ -1853,6 +1855,7 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
         CRYPT_CopyAttributes(&out->UnauthAttrs, &in->UnauthAttrs, &nextData);
         ret = TRUE;
     }
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -1861,6 +1864,8 @@ static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
 {
     DWORD size = sizeof(CERT_INFO);
     BOOL ret;
+
+    TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
 
     size += in->Issuer.cbData;
     size += in->SerialNumber.cbData;
@@ -1885,6 +1890,7 @@ static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
         CRYPT_CopyBlob(&out->SerialNumber, &in->SerialNumber, &nextData);
         ret = TRUE;
     }
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
