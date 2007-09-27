@@ -155,6 +155,7 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
     IO_STATUS_BLOCK *ios;
     NTSTATUS status;
     BOOL ret = TRUE;
+    LPVOID cvalue = NULL;
 
     TRACE("%p %p %08x %d %08x %p %p %p\n", handle, buffer, len, subtree, filter,
            returned, overlapped, completion );
@@ -166,12 +167,15 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
         pov = &ov;
     }
     else
+    {
         pov = overlapped;
+        if (!completion && ((ULONG_PTR)overlapped->hEvent & 1) == 0) cvalue = overlapped;
+    }
 
     ios = (PIO_STATUS_BLOCK) pov;
     ios->u.Status = STATUS_PENDING;
 
-    status = NtNotifyChangeDirectoryFile( handle, pov->hEvent, NULL, NULL,
+    status = NtNotifyChangeDirectoryFile( handle, pov->hEvent, NULL, cvalue,
                                           ios, buffer, len, filter, subtree );
     if (status == STATUS_PENDING)
     {

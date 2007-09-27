@@ -402,6 +402,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     PIO_STATUS_BLOCK    io_status = &iosb;
     HANDLE              hEvent = 0;
     NTSTATUS            status;
+    LPVOID              cvalue = NULL;
 
     TRACE("%p %p %d %p %p\n", hFile, buffer, bytesToRead,
           bytesRead, overlapped );
@@ -419,11 +420,12 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         poffset = &offset;
         hEvent = overlapped->hEvent;
         io_status = (PIO_STATUS_BLOCK)overlapped;
+        if (((ULONG_PTR)hEvent & 1) == 0) cvalue = overlapped;
     }
     io_status->u.Status = STATUS_PENDING;
     io_status->Information = 0;
 
-    status = NtReadFile(hFile, hEvent, NULL, NULL, io_status, buffer, bytesToRead, poffset, NULL);
+    status = NtReadFile(hFile, hEvent, NULL, cvalue, io_status, buffer, bytesToRead, poffset, NULL);
 
     if (status == STATUS_PENDING && !overlapped)
     {
@@ -488,6 +490,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     NTSTATUS status;
     IO_STATUS_BLOCK iosb;
     PIO_STATUS_BLOCK piosb = &iosb;
+    LPVOID cvalue = NULL;
 
     TRACE("%p %p %d %p %p\n", hFile, buffer, bytesToWrite, bytesWritten, overlapped );
 
@@ -501,17 +504,18 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         poffset = &offset;
         hEvent = overlapped->hEvent;
         piosb = (PIO_STATUS_BLOCK)overlapped;
+        if (((ULONG_PTR)hEvent & 1) == 0) cvalue = overlapped;
     }
     piosb->u.Status = STATUS_PENDING;
     piosb->Information = 0;
 
-    status = NtWriteFile(hFile, hEvent, NULL, NULL, piosb,
+    status = NtWriteFile(hFile, hEvent, NULL, cvalue, piosb,
                          buffer, bytesToWrite, poffset, NULL);
 
     /* FIXME: NtWriteFile does not always cause page faults, generate them now */
     if (status == STATUS_INVALID_USER_BUFFER && !IsBadReadPtr( buffer, bytesToWrite ))
     {
-        status = NtWriteFile(hFile, hEvent, NULL, NULL, piosb,
+        status = NtWriteFile(hFile, hEvent, NULL, cvalue, piosb,
                              buffer, bytesToWrite, poffset, NULL);
         if (status != STATUS_INVALID_USER_BUFFER)
             FIXME("Could not access memory (%p,%d) at first, now OK. Protected by DIBSection code?\n",
@@ -1052,9 +1056,9 @@ BOOL WINAPI LockFile( HANDLE hFile, DWORD offset_low, DWORD offset_high,
     offset.u.LowPart = offset_low;
     offset.u.HighPart = offset_high;
 
-    status = NtLockFile( hFile, 0, NULL, NULL, 
+    status = NtLockFile( hFile, 0, NULL, NULL,
                          NULL, &offset, &count, NULL, TRUE, TRUE );
-    
+
     if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
@@ -1077,6 +1081,7 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
 {
     NTSTATUS status;
     LARGE_INTEGER count, offset;
+    LPVOID   cvalue = NULL;
 
     if (reserved)
     {
@@ -1093,11 +1098,13 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
     offset.u.LowPart = overlapped->u.s.Offset;
     offset.u.HighPart = overlapped->u.s.OffsetHigh;
 
-    status = NtLockFile( hFile, overlapped->hEvent, NULL, NULL, 
-                         NULL, &offset, &count, NULL, 
+    if (((ULONG_PTR)overlapped->hEvent & 1) == 0) cvalue = overlapped;
+
+    status = NtLockFile( hFile, overlapped->hEvent, NULL, cvalue,
+                         NULL, &offset, &count, NULL,
                          flags & LOCKFILE_FAIL_IMMEDIATELY,
                          flags & LOCKFILE_EXCLUSIVE_LOCK );
-    
+
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }

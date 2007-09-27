@@ -1328,6 +1328,7 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
 {
     NTSTATUS status;
     IO_STATUS_BLOCK status_block;
+    LPVOID   cvalue = NULL;
 
     TRACE("(%p,%p)\n", hPipe, overlapped);
 
@@ -1335,9 +1336,10 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
     {
         overlapped->Internal = STATUS_PENDING;
         overlapped->InternalHigh = 0;
+        if (((ULONG_PTR)overlapped->hEvent & 1) == 0) cvalue = overlapped;
     }
 
-    status = NtFsControlFile(hPipe, overlapped ? overlapped->hEvent : NULL, NULL, NULL,
+    status = NtFsControlFile(hPipe, overlapped ? overlapped->hEvent : NULL, NULL, cvalue,
                              overlapped ? (IO_STATUS_BLOCK *)overlapped : &status_block,
                              FSCTL_PIPE_LISTEN, NULL, 0, NULL, 0);
 

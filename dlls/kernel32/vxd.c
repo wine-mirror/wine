@@ -351,16 +351,17 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 
     if (lpOverlapped)
     {
+        LPVOID cvalue = ((ULONG_PTR)lpOverlapped->hEvent & 1) ? NULL : lpOverlapped;
         lpOverlapped->Internal = STATUS_PENDING;
         lpOverlapped->InternalHigh = 0;
         if (HIWORD(dwIoControlCode) == FILE_DEVICE_FILE_SYSTEM)
             status = NtFsControlFile(hDevice, lpOverlapped->hEvent,
-                                     NULL, NULL, (PIO_STATUS_BLOCK)lpOverlapped,
+                                     NULL, cvalue, (PIO_STATUS_BLOCK)lpOverlapped,
                                      dwIoControlCode, lpvInBuffer, cbInBuffer,
                                      lpvOutBuffer, cbOutBuffer);
         else
             status = NtDeviceIoControlFile(hDevice, lpOverlapped->hEvent,
-                                           NULL, NULL, (PIO_STATUS_BLOCK)lpOverlapped,
+                                           NULL, cvalue, (PIO_STATUS_BLOCK)lpOverlapped,
                                            dwIoControlCode, lpvInBuffer, cbInBuffer,
                                            lpvOutBuffer, cbOutBuffer);
         if (lpcbBytesReturned) *lpcbBytesReturned = lpOverlapped->InternalHigh;
