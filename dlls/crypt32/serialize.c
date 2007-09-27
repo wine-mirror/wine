@@ -599,68 +599,16 @@ BOOL CRYPT_WriteSerializedStoreToStream(HCERTSTORE store,
     return ret;
 }
 
-static BOOL CRYPT_SerializeContextsToFile(HANDLE file,
- const WINE_CONTEXT_INTERFACE *contextInterface, HCERTSTORE store)
+static BOOL CRYPT_FileOutputFunc(void *handle, const void *buffer, DWORD size)
 {
-    const void *context = NULL;
-    BOOL ret;
-
-    do {
-        context = contextInterface->enumContextsInStore(store, context);
-        if (context)
-        {
-            DWORD size = 0;
-            LPBYTE buf = NULL;
-
-            ret = contextInterface->serialize(context, 0, NULL, &size);
-            if (size)
-                buf = CryptMemAlloc(size);
-            if (buf)
-            {
-                ret = contextInterface->serialize(context, 0, buf, &size);
-                if (ret)
-                    ret = WriteFile(file, buf, size, &size, NULL);
-            }
-            CryptMemFree(buf);
-        }
-        else
-            ret = TRUE;
-    } while (ret && context != NULL);
-    if (context)
-        contextInterface->free(context);
-    return ret;
+    return WriteFile(handle, buffer, size, &size, NULL);
 }
 
 BOOL CRYPT_WriteSerializedStoreToFile(HANDLE file, HCERTSTORE store)
 {
-    static const BYTE fileTrailer[12] = { 0 };
-    WINE_CONTEXT_INTERFACE interface;
-    BOOL ret;
-    DWORD size;
-
     SetFilePointer(file, 0, NULL, FILE_BEGIN);
-    ret = WriteFile(file, fileHeader, sizeof(fileHeader), &size, NULL);
-    if (ret)
-    {
-        memcpy(&interface, pCertInterface, sizeof(interface));
-        interface.serialize = (SerializeElementFunc)CRYPT_SerializeCertNoHash;
-        ret = CRYPT_SerializeContextsToFile(file, &interface, store);
-    }
-    if (ret)
-    {
-        memcpy(&interface, pCRLInterface, sizeof(interface));
-        interface.serialize = (SerializeElementFunc)CRYPT_SerializeCRLNoHash;
-        ret = CRYPT_SerializeContextsToFile(file, &interface, store);
-    }
-    if (ret)
-    {
-        memcpy(&interface, pCTLInterface, sizeof(interface));
-        interface.serialize = (SerializeElementFunc)CRYPT_SerializeCTLNoHash;
-        ret = CRYPT_SerializeContextsToFile(file, &interface, store);
-    }
-    if (ret)
-        ret = WriteFile(file, fileTrailer, sizeof(fileTrailer), &size, NULL);
-    return ret;
+    return CRYPT_WriteSerializedStoreToStream(store, CRYPT_FileOutputFunc,
+     file);
 }
 
 BOOL WINAPI CertAddSerializedElementToStore(HCERTSTORE hCertStore,
