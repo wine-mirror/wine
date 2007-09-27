@@ -20,6 +20,10 @@
 #ifndef _WINNETWK_H_
 #define _WINNETWK_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Network types
  */
@@ -401,5 +405,8 @@ UINT WINAPI WNetEnumCachedPasswords( LPSTR, WORD, BYTE, ENUMPASSWORDPROC, DWORD)
 DWORD WINAPI WNetGetCachedPassword( LPSTR, WORD, LPSTR, LPWORD, BYTE );
 DWORD WINAPI WNetCachePassword( LPSTR, WORD, LPSTR, WORD, BYTE, WORD );
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _WINNETWK_H_ */

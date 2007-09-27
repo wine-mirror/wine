@@ -27,8 +27,17 @@ typedef DWORD CONFIGRET;
 #define MAX_GUID_STRING_LEN 39
 #define MAX_PROFILE_LEN     80
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 CONFIGRET WINAPI CM_Get_Device_ID_ListA( PCSTR, PCHAR, ULONG, ULONG );
 CONFIGRET WINAPI CM_Get_Device_ID_ListW( PCWSTR, PWCHAR, ULONG, ULONG );
 #define     CM_Get_Device_ID_List WINELIB_NAME_AW(CM_Get_Device_ID_List)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _CFGMGR32_H_ */

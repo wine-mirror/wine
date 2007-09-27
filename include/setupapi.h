@@ -22,6 +22,10 @@
 
 #include <commctrl.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* setupapi doesn't use the normal convention, it adds an underscore before A/W */
 #ifdef __WINESRC__
 # define DECL_WINELIB_SETUPAPI_TYPE_AW(type)  /* nothing */
@@ -1817,6 +1821,10 @@ DWORD    WINAPI TakeOwnershipOfFile(PCWSTR);
 PSTR     WINAPI UnicodeToMultiByte(PCWSTR lpUnicodeStr, UINT uCodePage);
 BOOL     WINAPI UnmapAndCloseFile(HANDLE, HANDLE, PVOID);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #undef DECL_WINELIB_SETUPAPI_TYPE_AW
 

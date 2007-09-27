@@ -39,7 +39,16 @@ typedef struct _MANAGEDAPPLICATION
     BOOL bInstalled;
 } MANAGEDAPPLICATION, *PMANAGEDAPPLICATION;
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 DWORD WINAPI CommandLineFromMsiDescriptor(WCHAR*,WCHAR*,DWORD*);
 DWORD WINAPI GetManagedApplications(GUID*,DWORD,DWORD,LPDWORD,PMANAGEDAPPLICATION*);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _APPMGMT_H */

@@ -19,6 +19,10 @@
 #ifndef __WINE_RPCDCEP_H
 #define __WINE_RPCDCEP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _RPC_VERSION {
     unsigned short MajorVersion;
     unsigned short MinorVersion;
@@ -180,6 +184,10 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI UINT RPC_ENTRY
   I_RpcWindowProc( void* hWnd, unsigned int Message, unsigned int wParam, unsigned long lParam );
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /*__WINE_RPCDCEP_H */

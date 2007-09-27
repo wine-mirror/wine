@@ -142,6 +142,11 @@ typedef enum tagMSIDBSTATE
     MSIDBSTATE_WRITE = 1
 } MSIDBSTATE;
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* view manipulation */
 UINT WINAPI MsiViewFetch(MSIHANDLE,MSIHANDLE*);
 UINT WINAPI MsiViewExecute(MSIHANDLE,MSIHANDLE);
@@ -306,5 +311,9 @@ LANGID WINAPI MsiGetLanguage(MSIHANDLE);
 UINT WINAPI MsiSetInstallLevel(MSIHANDLE, int);
 
 MSIHANDLE WINAPI MsiGetLastErrorRecord(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WINE_MSIQUERY_H */
