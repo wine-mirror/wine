@@ -483,7 +483,7 @@ void WINAPI MmFreeNonCachedMemory( void *addr, SIZE_T size )
 NTSTATUS WINAPI PsCreateSystemThread(PHANDLE ThreadHandle, ULONG DesiredAccess,
 				     POBJECT_ATTRIBUTES ObjectAttributes,
 			             HANDLE ProcessHandle, PCLIENT_ID ClientId,
-                                     PVOID StartRoutine, PVOID StartContext)
+                                     PKSTART_ROUTINE StartRoutine, PVOID StartContext)
 {
     if (!ProcessHandle) ProcessHandle = GetCurrentProcess();
     return RtlCreateUserThread(ProcessHandle, 0, FALSE, 0, 0,
