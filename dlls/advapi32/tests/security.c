@@ -2044,10 +2044,64 @@ static void test_ConvertSecurityDescriptorToString()
     AddAuditAccessAceEx(pacl, ACL_REVISION, NO_PROPAGATE_INHERIT_ACE, FILE_GENERIC_READ|FILE_GENERIC_WRITE, psid2, TRUE, FALSE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
     CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)");
-
-
-#undef CHECK_RESULT_AND_FREE
 }
+
+static void test_PrivateObjectSecurity(void)
+{
+    SECURITY_INFORMATION sec_info = OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION|SACL_SECURITY_INFORMATION;
+    SECURITY_DESCRIPTOR_CONTROL ctrl;
+    PSECURITY_DESCRIPTOR sec;
+    DWORD dwDescSize;
+    DWORD dwRevision;
+    DWORD retSize;
+    LPSTR string;
+    ULONG len;
+    PSECURITY_DESCRIPTOR buf;
+
+    ok(ConvertStringSecurityDescriptorToSecurityDescriptorA(
+        "O:SY"
+        "G:S-1-5-21-93476-23408-4576"
+        "D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)"
+        "S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)", SDDL_REVISION_1, &sec, &dwDescSize), "Creating descriptor failed\n");
+    buf = HeapAlloc(GetProcessHeap(), 0, dwDescSize);
+    SetSecurityDescriptorControl(sec, SE_DACL_PROTECTED, SE_DACL_PROTECTED);
+    GetSecurityDescriptorControl(sec, &ctrl, &dwRevision);
+    todo_wine expect_eq(ctrl, 0x9014, int, "%x");
+
+    ok(GetPrivateObjectSecurity(sec, GROUP_SECURITY_INFORMATION, buf, dwDescSize, &retSize),
+        "GetPrivateObjectSecurity failed (err=%u)\n", GetLastError());
+    ok(retSize <= dwDescSize, "Buffer too small (%d vs %d)\n", retSize, dwDescSize);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(buf, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("G:S-1-5-21-93476-23408-4576");
+    GetSecurityDescriptorControl(buf, &ctrl, &dwRevision);
+    expect_eq(ctrl, 0x8000, int, "%x");
+
+    ok(GetPrivateObjectSecurity(sec, GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION, buf, dwDescSize, &retSize),
+        "GetPrivateObjectSecurity failed (err=%u)\n", GetLastError());
+    ok(retSize <= dwDescSize, "Buffer too small (%d vs %d)\n", retSize, dwDescSize);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(buf, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed err=%u\n", GetLastError());
+    CHECK_RESULT_AND_FREE("G:S-1-5-21-93476-23408-4576D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)");
+    GetSecurityDescriptorControl(buf, &ctrl, &dwRevision);
+    expect_eq(ctrl, 0x8004, int, "%x");
+
+    ok(GetPrivateObjectSecurity(sec, sec_info, buf, dwDescSize, &retSize),
+        "GetPrivateObjectSecurity failed (err=%u)\n", GetLastError());
+    ok(retSize == dwDescSize, "Buffer too small (%d vs %d)\n", retSize, dwDescSize);
+    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(buf, SDDL_REVISION_1, sec_info, &string, &len), "Convertion failed\n");
+    CHECK_RESULT_AND_FREE("O:SY"
+        "G:S-1-5-21-93476-23408-4576"
+        "D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)"
+        "S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)");
+    GetSecurityDescriptorControl(buf, &ctrl, &dwRevision);
+    expect_eq(ctrl, 0x8014, int, "%x");
+
+    SetLastError(0xdeadbeef);
+    ok(GetPrivateObjectSecurity(sec, sec_info, buf, 5, &retSize) == FALSE, "GetPrivateObjectSecurity should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected error ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
+
+    LocalFree(sec);
+}
+#undef CHECK_RESULT_AND_FREE
 
 START_TEST(security)
 {
@@ -2074,4 +2128,5 @@ START_TEST(security)
     test_GetNamedSecurityInfoA();
     test_ConvertStringSecurityDescriptor();
     test_ConvertSecurityDescriptorToString();
+    test_PrivateObjectSecurity();
 }

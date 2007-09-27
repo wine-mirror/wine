@@ -1123,11 +1123,51 @@ BOOL WINAPI GetPrivateObjectSecurity(
         DWORD DescriptorLength,
         PDWORD ReturnLength )
 {
+    SECURITY_DESCRIPTOR desc;
+    BOOL defaulted, present;
+    PACL pacl;
+    PSID psid;
+
     TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", ObjectDescriptor, SecurityInformation,
           ResultantDescriptor, DescriptorLength, ReturnLength);
 
-    return set_ntstatus( NtQuerySecurityObject(ObjectDescriptor, SecurityInformation,
-                                               ResultantDescriptor, DescriptorLength, ReturnLength ));
+    if (!InitializeSecurityDescriptor(&desc, SECURITY_DESCRIPTOR_REVISION))
+        return FALSE;
+
+    if (SecurityInformation & OWNER_SECURITY_INFORMATION)
+    {
+        if (!GetSecurityDescriptorOwner(ObjectDescriptor, &psid, &defaulted))
+            return FALSE;
+        SetSecurityDescriptorOwner(&desc, psid, defaulted);
+    }
+
+    if (SecurityInformation & GROUP_SECURITY_INFORMATION)
+    {
+        if (!GetSecurityDescriptorGroup(ObjectDescriptor, &psid, &defaulted))
+            return FALSE;
+        SetSecurityDescriptorGroup(&desc, psid, defaulted);
+    }
+
+    if (SecurityInformation & DACL_SECURITY_INFORMATION)
+    {
+        if (!GetSecurityDescriptorDacl(ObjectDescriptor, &present, &pacl, &defaulted))
+            return FALSE;
+        SetSecurityDescriptorDacl(&desc, present, pacl, defaulted);
+    }
+
+    if (SecurityInformation & SACL_SECURITY_INFORMATION)
+    {
+        if (!GetSecurityDescriptorSacl(ObjectDescriptor, &present, &pacl, &defaulted))
+            return FALSE;
+        SetSecurityDescriptorSacl(&desc, present, pacl, defaulted);
+    }
+
+    *ReturnLength = DescriptorLength;
+    if (!MakeSelfRelativeSD(&desc, ResultantDescriptor, ReturnLength))
+        return FALSE;
+    GetSecurityDescriptorOwner(ResultantDescriptor, &psid, &defaulted);
+    FIXME("%p, sid=%p\n", &desc, psid);
+    return TRUE;
 }
 
 /******************************************************************************
