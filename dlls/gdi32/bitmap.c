@@ -593,9 +593,11 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
     if (handle)
     {
         dc->hBitmap = handle;
+        GDI_inc_ref_count( handle );
         dc->dirty = 0;
         SetRectRgn( dc->hVisRgn, 0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight);
         DC_InitDC( dc );
+        GDI_dec_ref_count( ret );
     }
     else ret = 0;
 

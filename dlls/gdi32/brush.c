@@ -381,10 +381,14 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
         if (brush->logbrush.lbStyle == BS_PATTERN)
             BITMAP_SetOwnerDC( (HBITMAP)brush->logbrush.lbHatch, dc );
 
-        ret = dc->hBrush;
         if (dc->funcs->pSelectBrush) handle = dc->funcs->pSelectBrush( dc->physDev, handle );
-        if (handle) dc->hBrush = handle;
-        else ret = 0;
+        if (handle)
+        {
+            ret = dc->hBrush;
+            dc->hBrush = handle;
+            GDI_inc_ref_count( handle );
+            GDI_dec_ref_count( ret );
+        }
         GDI_ReleaseObj( handle );
     }
     release_dc_ptr( dc );

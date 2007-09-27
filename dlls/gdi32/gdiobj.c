@@ -524,22 +524,29 @@ static DWORD get_dpi( void )
 
 
 /***********************************************************************
- *           inc_ref_count
+ *           GDI_inc_ref_count
  *
  * Increment the reference count of a GDI object.
  */
-static inline void inc_ref_count( GDIOBJHDR *header )
+BOOL GDI_inc_ref_count( HGDIOBJ handle )
 {
-    header->dwCount++;
+    GDIOBJHDR *header;
+
+    if ((header = GDI_GetObjPtr( handle, MAGIC_DONTCARE )))
+    {
+        header->dwCount++;
+        GDI_ReleaseObj( handle );
+    }
+    return header != NULL;
 }
 
 
 /***********************************************************************
- *           dec_ref_count
+ *           GDI_dec_ref_count
  *
  * Decrement the reference count of a GDI object.
  */
-static inline void dec_ref_count( HGDIOBJ handle )
+BOOL GDI_dec_ref_count( HGDIOBJ handle )
 {
     GDIOBJHDR *header;
 
@@ -556,6 +563,7 @@ static inline void dec_ref_count( HGDIOBJ handle )
             DeleteObject( handle );
         }
     }
+    return header != NULL;
 }
 
 
@@ -1149,14 +1157,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
         if (header)
         {
             if (header->funcs && header->funcs->pSelectObject)
-            {
                 ret = header->funcs->pSelectObject( hObj, hdc );
-                if (ret && ret != hObj && HandleToULong(ret) > COMPLEXREGION)
-                {
-                    inc_ref_count( header );
-                    dec_ref_count( ret );
-                }
-            }
 	    GDI_ReleaseObj( hObj );
         }
     }

@@ -456,6 +456,8 @@ extern BOOL GDI_FreeObject( HGDIOBJ, void *obj );
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD );
 extern void GDI_ReleaseObj( HGDIOBJ );
 extern void GDI_CheckNotLock(void);
+extern BOOL GDI_inc_ref_count( HGDIOBJ handle );
+extern BOOL GDI_dec_ref_count( HGDIOBJ handle );
 extern BOOL GDI_hdc_using_object(HGDIOBJ obj, HDC hdc);
 extern BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc);
 

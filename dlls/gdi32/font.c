@@ -608,6 +608,8 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
     {
         ret = dc->hFont;
         dc->hFont = handle;
+        GDI_inc_ref_count( handle );
+        GDI_dec_ref_count( ret );
     }
     DC_ReleaseDCPtr( dc );
     return ret;
