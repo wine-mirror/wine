@@ -39,7 +39,8 @@ static void WINAPI CRYPT_FileCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 
     TRACE("(%p, %08x)\n", store, dwFlags);
     if (store->dirty)
-        CRYPT_WriteSerializedStoreToFile(store->file, store->memStore);
+        CertSaveStore(store->memStore, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+         CERT_STORE_SAVE_AS_STORE, CERT_STORE_SAVE_TO_FILE, store->file, 0);
     CertCloseStore(store->memStore, dwFlags);
     CloseHandle(store->file);
     CryptMemFree(store);
@@ -108,7 +109,9 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
             ret = FALSE;
         }
         else if (store->dirty)
-            ret = CRYPT_WriteSerializedStoreToFile(store->file, store->memStore);
+            ret = CertSaveStore(store->memStore,
+             X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+             CERT_STORE_SAVE_AS_STORE, CERT_STORE_SAVE_TO_FILE, store->file, 0);
         else
             ret = TRUE;
         break;
