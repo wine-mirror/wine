@@ -442,13 +442,13 @@ basic_tests(void)
 {
   char string[] = "I am a string";
   WCHAR wstring[] = {'I',' ','a','m',' ','a',' ','w','s','t','r','i','n','g', 0};
-  static int f[5] = {1, 3, 0, -2, -4};
-  static vector_t a = {1, 3, 7};
-  static vector_t vec1 = {4, -2, 1}, vec2 = {-5, 2, 3}, *pvec2 = &vec2;
-  static pvectors_t pvecs = {&vec1, &pvec2};
-  static sp_inner_t spi = {42};
-  static sp_t sp = {-13, &spi};
-  static aligns_t aligns = {3, 4, 5, 6.0};
+  int f[5] = {1, 3, 0, -2, -4};
+  vector_t a = {1, 3, 7};
+  vector_t vec1 = {4, -2, 1}, vec2 = {-5, 2, 3}, *pvec2 = &vec2;
+  pvectors_t pvecs = {&vec1, &pvec2};
+  sp_inner_t spi = {42};
+  sp_t sp = {-13, &spi};
+  aligns_t aligns = {3, 4, 5, 6.0};
   pints_t pints;
   ptypes_t ptypes;
   padded_t padded;
@@ -690,15 +690,15 @@ us_t_UserFree(ULONG *flags, us_t *pus)
 static void
 pointer_tests(void)
 {
-  static int a[] = {1, 2, 3, 4};
-  static char p1[] = "11";
+  int a[] = {1, 2, 3, 4};
+  char p1[] = "11";
   test_list_t *list = make_list(make_list(make_list(null_list())));
-  static test_us_t tus = {{p1}};
+  test_us_t tus = {{p1}};
   int *pa[4];
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
-  ok(square_test_us(&tus) == 121, "RPC square_test_us\n");
+  todo_wine ok(square_test_us(&tus) == 121, "RPC square_test_us\n");
 
   pa[0] = &a[0];
   pa[1] = &a[1];
@@ -717,14 +717,14 @@ pointer_tests(void)
 static void
 array_tests(void)
 {
-  static const char str1[25] = "Hello";
-  static int m[2][3][4] =
+  const char str1[25] = "Hello";
+  int m[2][3][4] =
   {
     {{1, 2, 3, 4}, {-1, -3, -5, -7}, {0, 2, 4, 6}},
     {{1, -2, 3, -4}, {2, 3, 5, 7}, {-4, -1, -14, 4114}}
   };
-  static int c[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-  static vector_t vs[2] = {{1, -2, 3}, {4, -5, -6}};
+  int c[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  vector_t vs[2] = {{1, -2, 3}, {4, -5, -6}};
   cps_t cps;
   cpsc_t cpsc;
   cs_t *cs;
@@ -765,18 +765,18 @@ array_tests(void)
   cps.ca1 = &c[2];
   cps.n = 3;
   cps.ca2 = &c[3];
-  ok(sum_cps(&cps) == 53, "RPC sum_cps\n");
+  todo_wine ok(sum_cps(&cps) == 53, "RPC sum_cps\n");
 
   cpsc.a = 4;
   cpsc.b = 5;
   cpsc.c = 1;
   cpsc.ca = c;
-  ok(sum_cpsc(&cpsc) == 6, "RPC sum_cpsc\n");
+  todo_wine ok(sum_cpsc(&cpsc) == 6, "RPC sum_cpsc\n");
   cpsc.a = 4;
   cpsc.b = 5;
   cpsc.c = 0;
   cpsc.ca = c;
-  ok(sum_cpsc(&cpsc) == 10, "RPC sum_cpsc\n");
+  todo_wine ok(sum_cpsc(&cpsc) == 10, "RPC sum_cpsc\n");
 
   ok(sum_toplev_conf_2n(c, 3) == 15, "RPC sum_toplev_conf_2n\n");
   ok(sum_toplev_conf_cond(c, 5, 6, 1) == 10, "RPC sum_toplev_conf_cond\n");
