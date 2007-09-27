@@ -1290,7 +1290,7 @@ static void test_EM_EXLIMITTEXT(void)
 
   /* try inserting more text at end */
   i = SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
-  ok(0 == i, "WM_CHAR wasn't processed");
+  ok(0 == i, "WM_CHAR wasn't processed\n");
   SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   i = strlen(buffer);
   ok(10 == i, "expected 10 chars, got %i\n", i);
@@ -1300,7 +1300,7 @@ static void test_EM_EXLIMITTEXT(void)
   /* try inserting text at beginning */
   SendMessage(hwndRichEdit, EM_SETSEL, 0, 0);
   i = SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
-  ok(0 == i, "WM_CHAR wasn't processed");
+  ok(0 == i, "WM_CHAR wasn't processed\n");
   SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   i = strlen(buffer);
   ok(10 == i, "expected 10 chars, got %i\n", i);
@@ -1312,9 +1312,9 @@ static void test_EM_EXLIMITTEXT(void)
   SendMessage(hwndRichEdit, EM_EXLIMITTEXT, 0, textlimit);
   SendMessage(hwndRichEdit, EM_SETSEL, 0, -1);  /* select everything */
   i = SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
-  ok(0 == i, "WM_CHAR wasn't processed");
+  ok(0 == i, "WM_CHAR wasn't processed\n");
   i = SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
-  ok(0 == i, "WM_CHAR wasn't processed");
+  ok(0 == i, "WM_CHAR wasn't processed\n");
   SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   i = strlen(buffer);
   ok(1 == i, "expected 1 chars, got %i instead\n", i);
