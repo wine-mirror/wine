@@ -1922,6 +1922,11 @@ static void test_ConvertStringSecurityDescriptor(void)
         "D:(A;;0xFFFFFFFF;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
+    SetLastError(0xdeadbeef);
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+        "S:(AU;;0xFFFFFFFF;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
 
     /* test ACE string access right error case */
     SetLastError(0xdeadbeef);
