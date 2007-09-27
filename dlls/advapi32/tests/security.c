@@ -1460,7 +1460,7 @@ static void test_security_descriptor(void)
     InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
     ok(GetSecurityDescriptorOwner(&sd, &psid, &isDefault), "GetSecurityDescriptorOwner failed\n");
     expect_eq(psid, NULL, PSID, "%p");
-    todo_wine expect_eq(isDefault, FALSE, BOOL, "%d");
+    expect_eq(isDefault, FALSE, BOOL, "%d");
     sd.Control |= SE_DACL_PRESENT | SE_SACL_PRESENT;
 
     SetLastError(0xdeadbeef);
@@ -1473,10 +1473,10 @@ static void test_security_descriptor(void)
         expect_eq(MakeSelfRelativeSD(&sd, buf, &size), TRUE, BOOL, "%d");
         ok(GetSecurityDescriptorOwner(&sd, &psid, &isDefault), "GetSecurityDescriptorOwner failed\n");
         expect_eq(psid, NULL, PSID, "%p");
-        todo_wine expect_eq(isDefault, FALSE, BOOL, "%d");
+        expect_eq(isDefault, FALSE, BOOL, "%d");
         ok(GetSecurityDescriptorGroup(&sd, &psid, &isDefault), "GetSecurityDescriptorOwner failed\n");
         expect_eq(psid, NULL, PSID, "%p");
-        todo_wine expect_eq(isDefault, FALSE, BOOL, "%d");
+        expect_eq(isDefault, FALSE, BOOL, "%d");
         ok(GetSecurityDescriptorDacl(&sd, &isPresent, &pacl, &isDefault), "GetSecurityDescriptorOwner failed\n");
         expect_eq(isPresent, TRUE, BOOL, "%d");
         expect_eq(psid, NULL, PSID, "%p");

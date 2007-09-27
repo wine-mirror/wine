@@ -713,6 +713,11 @@ NTSTATUS WINAPI RtlGetOwnerSecurityDescriptor(
 	if ( !lpsd  || !Owner || !OwnerDefaulted )
 		return STATUS_INVALID_PARAMETER;
 
+        if ( lpsd->Control & SE_OWNER_DEFAULTED )
+            *OwnerDefaulted = TRUE;
+        else
+            *OwnerDefaulted = FALSE;
+
 	if (lpsd->Owner != NULL)
 	{
             if (lpsd->Control & SE_SELF_RELATIVE)
@@ -720,10 +725,6 @@ NTSTATUS WINAPI RtlGetOwnerSecurityDescriptor(
             else
                 *Owner = lpsd->Owner;
 
-            if ( lpsd->Control & SE_OWNER_DEFAULTED )
-                *OwnerDefaulted = TRUE;
-            else
-                *OwnerDefaulted = FALSE;
         }
 	else
 	    *Owner = NULL;
@@ -790,17 +791,17 @@ NTSTATUS WINAPI RtlGetGroupSecurityDescriptor(
 	if ( !lpsd || !Group || !GroupDefaulted )
 		return STATUS_INVALID_PARAMETER;
 
+        if ( lpsd->Control & SE_GROUP_DEFAULTED )
+            *GroupDefaulted = TRUE;
+        else
+            *GroupDefaulted = FALSE;
+
 	if (lpsd->Group != NULL)
 	{
             if (lpsd->Control & SE_SELF_RELATIVE)
                 *Group = (PSID)((LPBYTE)lpsd + (ULONG_PTR)lpsd->Group);
             else
                 *Group = lpsd->Group;
-
-            if ( lpsd->Control & SE_GROUP_DEFAULTED )
-                *GroupDefaulted = TRUE;
-            else
-                *GroupDefaulted = FALSE;
 	}
 	else
 	    *Group = NULL;
