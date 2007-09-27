@@ -268,18 +268,6 @@ HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root,
 const void *CRYPT_ReadSerializedElement(const BYTE *pbElement,
  DWORD cbElement, DWORD dwContextTypeFlags, DWORD *pdwContentType);
 
-typedef BOOL (*SerializedOutputFunc)(void *handle, const void *buffer,
- DWORD size);
-
-/* Writes contexts from the memory store to the output function, passing handle
- * as the handle parameter to the output function.
- */
-BOOL CRYPT_WriteSerializedStoreToStream(HCERTSTORE store,
- SerializedOutputFunc output, void *handle);
-
-/* Writes contexts from the memory store to the file. */
-BOOL CRYPT_WriteSerializedStoreToFile(HANDLE file, HCERTSTORE store);
-
 /* Reads contexts serialized in the file into the memory store.  Returns FALSE
  * if the file is not of the expected format.
  */
