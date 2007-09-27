@@ -19,10 +19,6 @@
 #ifndef __WINE_MSIDEFS_H
 #define __WINE_MSIDEFS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 enum msidbUpgradeAttributes {
     msidbUpgradeAttributesMigrateFeatures = 0x0000001,
     msidbUpgradeAttributesOnlyDetect = 0x00000002,
@@ -242,9 +238,5 @@ enum msidbServiceControlEvent
 #define PID_MSIVERSION PID_PAGECOUNT
 #define PID_MSISOURCE PID_WORDCOUNT
 #define PID_MSIRESTRICT PID_CHARCOUNT
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __WINE_MSIDEFS_H */
