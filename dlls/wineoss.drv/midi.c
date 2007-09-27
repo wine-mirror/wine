@@ -42,6 +42,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -77,8 +78,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 #endif
 
 #ifdef HAVE_OSS_MIDI
-
-#define MIDI_SEQ "/dev/sequencer"
 
 typedef struct {
     int			state;                  /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
@@ -455,13 +454,16 @@ static int midi_warn = 1;
 static int midiOpenSeq(void)
 {
     if (numOpenMidiSeq == 0) {
-	midiSeqFD = open(MIDI_SEQ, O_RDWR, 0);
+	const char* device;
+	device=getenv("MIDIDEV");
+	if (!device) device="/dev/sequencer";
+	midiSeqFD = open(device, O_RDWR, 0);
 	if (midiSeqFD == -1) {
 	    if (midi_warn)
 	    {
 		WARN("Can't open MIDI device '%s' ! (%s). If your "
                         "program needs this (probably not): %s\n",
-			MIDI_SEQ, strerror(errno),
+			device, strerror(errno),
 			errno == ENOENT ?
 			"create it ! (\"man MAKEDEV\" ?)" :
 			errno == ENODEV ?
