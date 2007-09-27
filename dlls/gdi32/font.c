@@ -588,14 +588,24 @@ HFONT WINAPI CreateFontW( INT height, INT width, INT esc,
 static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
 {
     HGDIOBJ ret = 0;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
 
     if (!dc) return 0;
+
+    if (!GDI_inc_ref_count( handle ))
+    {
+        release_dc_ptr( dc );
+        return 0;
+    }
 
     if (dc->hFont != handle || dc->gdiFont == NULL)
     {
         if(GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_VA_ABLE)
+        {
+            FONTOBJ *font = GDI_GetObjPtr( handle, FONT_MAGIC );  /* to grab the GDI lock (FIXME) */
             dc->gdiFont = WineEngCreateFontInstance(dc, handle);
+            if (font) GDI_ReleaseObj( handle );
+        }
     }
 
     if (dc->funcs->pSelectFont) ret = dc->funcs->pSelectFont( dc->physDev, handle, dc->gdiFont );
@@ -603,15 +613,17 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
     if (ret && dc->gdiFont) dc->gdiFont = 0;
 
     if (ret == HGDI_ERROR)
+    {
+        GDI_dec_ref_count( handle );
         ret = 0; /* SelectObject returns 0 on error */
+    }
     else
     {
         ret = dc->hFont;
         dc->hFont = handle;
-        GDI_inc_ref_count( handle );
         GDI_dec_ref_count( ret );
     }
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
