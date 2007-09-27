@@ -2144,6 +2144,16 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 /* CertFindChainInStore dwFindType types */
 #define CERT_CHAIN_FIND_BY_ISSUER 1
 
+/* CertSaveStore dwSaveAs values */
+#define CERT_STORE_SAVE_AS_STORE 1
+#define CERT_STORE_SAVE_AS_PKCS7 2
+/* CertSaveStore dwSaveTo values */
+#define CERT_STORE_SAVE_TO_FILE       1
+#define CERT_STORE_SAVE_TO_MEMORY     2
+#define CERT_STORE_SAVE_TO_FILENAME_A 3
+#define CERT_STORE_SAVE_TO_FILENAME_W 4
+#define CERT_STORE_SAVE_TO_FILENAME   CERT_STORE_SAVE_TO_FILENAME_W
+
 /* CERT_INFO versions/flags */
 #define CERT_V1 0
 #define CERT_V2 1
