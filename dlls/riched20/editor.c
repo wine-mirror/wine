@@ -1908,8 +1908,18 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         TRACE("WM_SETTEXT - %s\n", debugstr_w(wszText)); /* debugstr_w() */
         if (lstrlenW(wszText) > 0)
         {
+          int len = -1;
+
           /* uses default style! */
-          ME_InsertTextFromCursor(editor, 0, wszText, -1, editor->pBuffer->pDefaultStyle);
+          if (!(GetWindowLongW(hWnd, GWL_STYLE) & ES_MULTILINE))
+          {
+            WCHAR * p;
+
+            p = wszText;
+            while (*p != '\0' && *p != '\r' && *p != '\n') p++;
+            len = p - wszText;
+          }
+          ME_InsertTextFromCursor(editor, 0, wszText, len, editor->pBuffer->pDefaultStyle);
         }
         ME_EndToUnicode(unicode, wszText);
       }

@@ -2064,6 +2064,9 @@ static void test_EM_GETTEXTLENGTHEX(void)
     HWND hwnd;
     GETTEXTLENGTHEX gtl;
     int ret;
+    const char * test_string = "a\nb\n\n\r\n";
+    const char * test_string_after = "a";
+    char buffer[64] = {0};
 
     /* single line */
     hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
@@ -2080,17 +2083,21 @@ static void test_EM_GETTEXTLENGTHEX(void)
     ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
     ok(ret == 0, "ret %d\n",ret);
 
-    SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) "a\nb\n\n\r\n");
+    SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) test_string);
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
     gtl.codepage = CP_ACP;
     ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
-    todo_wine ok(ret == 1, "ret %d\n",ret);
+    ok(ret == 1, "ret %d\n",ret);
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
     gtl.codepage = CP_ACP;
     ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
-    todo_wine ok(ret == 1, "ret %d\n",ret);
+    ok(ret == 1, "ret %d\n",ret);
+
+    SendMessage(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    ret = strcmp(buffer, test_string_after);
+    ok(ret == 0, "WM_GETTEXT recovered incorrect string!\n");
 
     DestroyWindow(hwnd);
 
@@ -2109,7 +2116,7 @@ static void test_EM_GETTEXTLENGTHEX(void)
     ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
     ok(ret == 0, "ret %d\n",ret);
 
-    SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) "a\nb\n\n\r\n");
+    SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) test_string);
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
     gtl.codepage = CP_ACP;
