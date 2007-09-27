@@ -299,7 +299,55 @@ static BOOL CRYPT_QueryMessageObject(DWORD dwObjectType, const void *pvObject,
         return FALSE;
 
     ret = FALSE;
-    if (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED)
+    /* Try it first as a PKCS content info */
+    if ((dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED) ||
+     (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_PKCS7_UNSIGNED))
+    {
+        msg = CryptMsgOpenToDecode(encodingType, 0, 0, 0, NULL, NULL);
+        if (msg)
+        {
+            ret = CryptMsgUpdate(msg, blob->pbData, blob->cbData, TRUE);
+            if (ret)
+            {
+                DWORD type, len = sizeof(type);
+
+                ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &type, &len);
+                if (ret)
+                {
+                    if ((dwExpectedContentTypeFlags &
+                     CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED))
+                    {
+                        if (type != CMSG_SIGNED)
+                        {
+                            SetLastError(ERROR_INVALID_DATA);
+                            ret = FALSE;
+                        }
+                        else if (pdwContentType)
+                            *pdwContentType = CERT_QUERY_CONTENT_PKCS7_SIGNED;
+                    }
+                    else if ((dwExpectedContentTypeFlags &
+                     CERT_QUERY_CONTENT_FLAG_PKCS7_UNSIGNED))
+                    {
+                        if (type != CMSG_DATA)
+                        {
+                            SetLastError(ERROR_INVALID_DATA);
+                            ret = FALSE;
+                        }
+                        else if (pdwContentType)
+                            *pdwContentType = CERT_QUERY_CONTENT_PKCS7_UNSIGNED;
+                    }
+                }
+            }
+            if (!ret)
+            {
+                CryptMsgClose(msg);
+                msg = NULL;
+            }
+        }
+    }
+    /* Failing that, try explicitly typed messages */
+    if (!ret &&
+     (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED))
     {
         msg = CryptMsgOpenToDecode(encodingType, 0, CMSG_SIGNED, 0, NULL, NULL);
         if (msg)
