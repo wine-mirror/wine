@@ -222,6 +222,7 @@ LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID, LPVOID ActionData )
      0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
     static const GUID published_software = WIN_SPUB_ACTION_PUBLISHED_SOFTWARE;
     static const GUID generic_verify_v2 = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+    static const GUID generic_cert_verify = WINTRUST_ACTION_GENERIC_CERT_VERIFY;
     LONG err = ERROR_SUCCESS;
     WINTRUST_DATA *actionData = (WINTRUST_DATA *)ActionData;
 
@@ -234,7 +235,8 @@ LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID, LPVOID ActionData )
     {
         /* Check known actions to warn of possible problems */
         if (!IsEqualGUID(ActionID, &unknown) &&
-         !IsEqualGUID(ActionID, &generic_verify_v2))
+         !IsEqualGUID(ActionID, &generic_verify_v2) &&
+         !IsEqualGUID(ActionID, &generic_cert_verify))
             WARN("unknown action %s, default behavior may not be right\n",
              debugstr_guid(ActionID));
         switch (actionData->dwStateAction)
