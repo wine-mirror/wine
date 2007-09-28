@@ -73,4 +73,13 @@ static inline int is_string_type(const attr_list_t *attrs, const type_t *type)
     return is_attr(attrs, ATTR_STRING) && (last_ptr(type) || last_array(type));
 }
 
+static inline int is_context_handle(const type_t *type)
+{
+    const type_t *t;
+    for (t = type; is_ptr(t); t = t->ref)
+        if (is_attr(t->attrs, ATTR_CONTEXTHANDLE))
+            return 1;
+    return 0;
+}
+
 #endif

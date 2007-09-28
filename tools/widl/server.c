@@ -184,10 +184,19 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                     first_arg = 0;
                 else
                     fprintf(server, ",\n");
-                print_server("");
-                if (var->type->declarray)
-                    fprintf(server, "*");
-                write_name(server, var);
+                if (is_context_handle(var->type))
+                {
+                    print_server("(");
+                    write_type_left(server, var->type);
+                    fprintf(server, ")%sNDRSContextValue(%s)", is_ptr(var->type) ? "" : "*", var->name);
+                }
+                else
+                {
+                    print_server("");
+                    if (var->type->declarray)
+                        fprintf(server, "*");
+                    write_name(server, var);
+                }
             }
             fprintf(server, ");\n");
             indent--;

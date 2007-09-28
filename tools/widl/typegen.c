@@ -216,6 +216,16 @@ static int is_embedded_complex(const type_t *type)
         || (is_ptr(type) && type->ref->type == RPC_FC_IP);
 }
 
+static const char *get_context_handle_type_name(const type_t *type)
+{
+    const type_t *t;
+    for (t = type; is_ptr(t); t = t->ref)
+        if (is_attr(t->attrs, ATTR_CONTEXTHANDLE))
+            return t->name;
+    assert(0);
+    return NULL;
+}
+
 static int compare_expr(const expr_t *a, const expr_t *b)
 {
     int ret;
@@ -1933,6 +1943,50 @@ static size_t write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *type,
     return start_offset;
 }
 
+static size_t write_contexthandle_tfs(FILE *file, const type_t *type,
+                                      const var_t *var,
+                                      unsigned int *typeformat_offset)
+{
+    size_t start_offset = *typeformat_offset;
+    unsigned char flags = 0x08 /* strict */;
+
+    if (is_ptr(type))
+    {
+        flags |= 0x80;
+        if (type->type != RPC_FC_RP)
+            flags |= 0x01;
+    }
+    if (is_attr(var->attrs, ATTR_IN))
+        flags |= 0x40;
+    if (is_attr(var->attrs, ATTR_OUT))
+        flags |= 0x20;
+
+    WRITE_FCTYPE(file, FC_BIND_CONTEXT, *typeformat_offset);
+    print_file(file, 2, "0x%x,\t/* Context flags: ", flags);
+    if (((flags & 0x21) != 0x21) && (flags & 0x01))
+        print_file(file, 0, "can't be null, ");
+    if (flags & 0x02)
+        print_file(file, 0, "serialize, ");
+    if (flags & 0x04)
+        print_file(file, 0, "no serialize, ");
+    if (flags & 0x08)
+        print_file(file, 0, "strict, ");
+    if ((flags & 0x21) == 0x20)
+        print_file(file, 0, "out, ");
+    if ((flags & 0x21) == 0x21)
+        print_file(file, 0, "return, ");
+    if (flags & 0x40)
+        print_file(file, 0, "in, ");
+    if (flags & 0x80)
+        print_file(file, 0, "via ptr, ");
+    print_file(file, 0, "*/\n");
+    print_file(file, 2, "0, /* FIXME: rundown routine index*/\n");
+    print_file(file, 2, "0, /* FIXME: param num */\n");
+    *typeformat_offset += 4;
+
+    return start_offset;
+}
+
 static int get_ptr_attr(const type_t *t, int def_type)
 {
     while (TRUE)
@@ -1952,6 +2006,9 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
 {
     int pointer_type;
     size_t offset;
+
+    if (is_context_handle(type))
+        return write_contexthandle_tfs(file, type, var, typeformat_offset);
 
     if (is_user_type(type))
     {
@@ -2295,11 +2352,19 @@ static unsigned int get_required_buffer_size(const var_t *var, unsigned int *ali
 {
     int in_attr = is_attr(var->attrs, ATTR_IN);
     int out_attr = is_attr(var->attrs, ATTR_OUT);
+    const type_t *t;
 
     if (!in_attr && !out_attr)
         in_attr = 1;
 
     *alignment = 0;
+
+    for (t = var->type; is_ptr(t); t = t->ref)
+        if (is_attr(t->attrs, ATTR_CONTEXTHANDLE))
+        {
+            *alignment = 4;
+            return 20;
+        }
 
     if (pass == PASS_OUT)
     {
@@ -2579,7 +2644,39 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
 
         rtype = type->type;
 
-        if (is_user_type(var->type))
+        if (is_context_handle(type))
+        {
+            if (phase == PHASE_MARSHAL)
+            {
+                if (pass == PASS_IN)
+                {
+                    print_file(file, indent, "NdrClientContextMarshall(\n");
+                    print_file(file, indent + 1, "&_StubMsg,\n");
+                    print_file(file, indent + 1, "(NDR_CCONTEXT)%s%s,\n", is_ptr(type) ? "*" : "", var->name);
+                    print_file(file, indent + 1, "%s);\n", in_attr && out_attr ? "1" : "0");
+                }
+                else
+                {
+                    print_file(file, indent, "NdrServerContextMarshall(\n");
+                    print_file(file, indent + 1, "&_StubMsg,\n");
+                    print_file(file, indent + 1, "(NDR_SCONTEXT)%s,\n", var->name);
+                    print_file(file, indent + 1, "(NDR_RUNDOWN)%s_rundown);\n", get_context_handle_type_name(var->type));
+                }
+            }
+            else if (phase == PHASE_UNMARSHAL)
+            {
+                if (pass == PASS_OUT)
+                {
+                    print_file(file, indent, "NdrClientContextUnmarshall(\n");
+                    print_file(file, indent + 1, "&_StubMsg,\n");
+                    print_file(file, indent + 1, "(NDR_CCONTEXT *)%s,\n", var->name);
+                    print_file(file, indent + 1, "_Handle);\n");
+                }
+                else
+                    print_file(file, indent, "%s = NdrServerContextUnmarshall(&_StubMsg);\n", var->name);
+            }
+        }
+        else if (is_user_type(var->type))
         {
             print_phase_function(file, indent, "UserMarshal", phase, var, start_offset);
         }
@@ -2906,28 +3003,33 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
         if (!out_attr && !in_attr)
             in_attr = 1;
 
-        if (!in_attr && !var->type->size_is && !is_string)
+        if (is_context_handle(var->type))
+            print_file(file, indent, "NDR_SCONTEXT %s;\n", var->name);
+        else
         {
+            if (!in_attr && !var->type->size_is && !is_string)
+            {
+                print_file(file, indent, "");
+                write_type(file, var->type->ref, FALSE, "_W%u", i++);
+                fprintf(file, ";\n");
+            }
+
             print_file(file, indent, "");
-            write_type(file, var->type->ref, FALSE, "_W%u", i++);
+            write_type_left(file, var->type);
+            fprintf(file, " ");
+            if (var->type->declarray) {
+                fprintf(file, "( *");
+                write_name(file, var);
+                fprintf(file, " )");
+            } else
+                write_name(file, var);
+            write_type_right(file, var->type, FALSE);
             fprintf(file, ";\n");
+
+            if (decl_indirect(var->type))
+                print_file(file, indent, "void *_p_%s = &%s;\n",
+                           var->name, var->name);
         }
-
-        print_file(file, indent, "");
-        write_type_left(file, var->type);
-        fprintf(file, " ");
-        if (var->type->declarray) {
-            fprintf(file, "( *");
-            write_name(file, var);
-            fprintf(file, " )");
-        } else
-            write_name(file, var);
-        write_type_right(file, var->type, FALSE);
-        fprintf(file, ";\n");
-
-        if (decl_indirect(var->type))
-            print_file(file, indent, "void *_p_%s = &%s;\n",
-                       var->name, var->name);
     }
 }
 
