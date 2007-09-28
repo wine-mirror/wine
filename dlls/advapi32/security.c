@@ -1163,11 +1163,7 @@ BOOL WINAPI GetPrivateObjectSecurity(
     }
 
     *ReturnLength = DescriptorLength;
-    if (!MakeSelfRelativeSD(&desc, ResultantDescriptor, ReturnLength))
-        return FALSE;
-    GetSecurityDescriptorOwner(ResultantDescriptor, &psid, &defaulted);
-    FIXME("%p, sid=%p\n", &desc, psid);
-    return TRUE;
+    return MakeSelfRelativeSD(&desc, ResultantDescriptor, ReturnLength);
 }
 
 /******************************************************************************
