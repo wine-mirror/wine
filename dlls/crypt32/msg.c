@@ -1776,6 +1776,7 @@ static inline void CRYPT_CopyAttributes(CRYPT_ATTRIBUTES *out,
                 if ((*nextData - (LPBYTE)0) % sizeof(DWORD_PTR))
                     *nextData += (*nextData - (LPBYTE)0) % sizeof(DWORD_PTR);
                 out->rgAttr[i].rgValue = (PCRYPT_DATA_BLOB)*nextData;
+                *nextData += in->rgAttr[i].cValue * sizeof(CRYPT_DATA_BLOB);
                 for (j = 0; j < in->rgAttr[i].cValue; j++)
                     CRYPT_CopyBlob(&out->rgAttr[i].rgValue[j],
                      &in->rgAttr[i].rgValue[j], nextData);
