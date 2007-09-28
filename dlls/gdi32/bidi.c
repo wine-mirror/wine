@@ -1091,13 +1091,13 @@ BOOL BIDI_Reorder(
         classify(lpOutString + done, chartype, uCount - done);
         /* limit text to first block */
         i = resolveParagraphs(chartype, uCount - done);
-        for (j = 0; j < i - 1; ++j)
+        for (j = 0; j < i; ++j)
             switch(chartype[j])
             {
                 case B:
                 case S:
                 case WS:
-                case ON: chartype[i] = N;
+                case ON: chartype[j] = N;
                 default: continue;
             }
 
@@ -1113,7 +1113,7 @@ BOOL BIDI_Reorder(
                     baselevel = 0;
                     break;
                 }
-                else if (chartype[j] == R)
+                else if (chartype[j] == R || chartype[j] == AL)
                 {
                     baselevel = 1;
                     break;
