@@ -30,6 +30,7 @@ typedef struct _WINE_FILESTOREINFO
     DWORD      dwOpenFlags;
     HCERTSTORE memStore;
     HANDLE     file;
+    DWORD      type;
     BOOL       dirty;
 } WINE_FILESTOREINFO, *PWINE_FILESTOREINFO;
 
@@ -40,7 +41,7 @@ static void WINAPI CRYPT_FileCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     TRACE("(%p, %08x)\n", store, dwFlags);
     if (store->dirty)
         CertSaveStore(store->memStore, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-         CERT_STORE_SAVE_AS_STORE, CERT_STORE_SAVE_TO_FILE, store->file, 0);
+         store->type, CERT_STORE_SAVE_TO_FILE, store->file, 0);
     CertCloseStore(store->memStore, dwFlags);
     CloseHandle(store->file);
     CryptMemFree(store);
@@ -100,7 +101,19 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
     case CERT_STORE_CTRL_RESYNC:
         CRYPT_EmptyStore(store->memStore);
         store->dirty = FALSE;
-        ret = CRYPT_ReadSerializedStoreFromFile(store->file, store->memStore);
+        if (store->type == CERT_STORE_SAVE_AS_STORE)
+            ret = CRYPT_ReadSerializedStoreFromFile(store->file,
+             store->memStore);
+        else if (store->type == CERT_STORE_SAVE_AS_PKCS7)
+        {
+            FIXME("unimplemented for PKCS stores\n");
+            ret = FALSE;
+        }
+        else
+        {
+            WARN("unknown type %d\n", store->type);
+            ret = FALSE;
+        }
         break;
     case CERT_STORE_CTRL_COMMIT:
         if (!(store->dwOpenFlags & CERT_FILE_STORE_COMMIT_ENABLE_FLAG))
@@ -111,7 +124,7 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
         else if (store->dirty)
             ret = CertSaveStore(store->memStore,
              X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-             CERT_STORE_SAVE_AS_STORE, CERT_STORE_SAVE_TO_FILE, store->file, 0);
+             store->type, CERT_STORE_SAVE_TO_FILE, store->file, 0);
         else
             ret = TRUE;
         break;
@@ -140,7 +153,7 @@ static void *fileProvFuncs[] = {
 };
 
 static PWINECRYPT_CERTSTORE CRYPT_CreateFileStore(DWORD dwFlags,
- HCERTSTORE memStore, HANDLE file)
+ HCERTSTORE memStore, HANDLE file, DWORD type)
 {
     PWINECRYPT_CERTSTORE store = NULL;
     PWINE_FILESTOREINFO info = CryptMemAlloc(sizeof(WINE_FILESTOREINFO));
@@ -152,6 +165,7 @@ static PWINECRYPT_CERTSTORE CRYPT_CreateFileStore(DWORD dwFlags,
         info->dwOpenFlags = dwFlags;
         info->memStore = memStore;
         info->file = file;
+        info->type = type;
         info->dirty = FALSE;
         provInfo.cbSize = sizeof(provInfo);
         provInfo.cStoreProvFunc = sizeof(fileProvFuncs) /
@@ -200,7 +214,8 @@ PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
         {
             if (CRYPT_ReadSerializedStoreFromFile(file, memStore))
             {
-                store = CRYPT_CreateFileStore(dwFlags, memStore, file);
+                store = CRYPT_CreateFileStore(dwFlags, memStore, file,
+                 CERT_STORE_SAVE_AS_STORE);
                 /* File store doesn't need crypto provider, so close it */
                 if (hCryptProv &&
                  !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
@@ -255,7 +270,8 @@ PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
         {
             if (CRYPT_ReadSerializedStoreFromFile(file, memStore))
             {
-                store = CRYPT_CreateFileStore(dwFlags, memStore, file);
+                store = CRYPT_CreateFileStore(dwFlags, memStore, file,
+                 CERT_STORE_SAVE_AS_STORE);
                 /* File store doesn't need crypto provider, so close it */
                 if (hCryptProv &&
                  !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
