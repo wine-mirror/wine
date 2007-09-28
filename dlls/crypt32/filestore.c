@@ -227,6 +227,12 @@ PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
         SetLastError(ERROR_PATH_NOT_FOUND);
         return NULL;
     }
+    if ((dwFlags & CERT_STORE_READONLY_FLAG) &&
+     (dwFlags & CERT_FILE_STORE_COMMIT_ENABLE_FLAG))
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
 
     access = GENERIC_READ;
     if (dwFlags & CERT_FILE_STORE_COMMIT_ENABLE_FLAG)
@@ -241,12 +247,27 @@ PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
      FILE_ATTRIBUTE_NORMAL, NULL);
     if (file != INVALID_HANDLE_VALUE)
     {
-        /* FIXME: need to check whether it's a serialized store; if not, fall
-         * back to a PKCS#7 signed message, then to a single serialized cert.
-         */
-        store = CertOpenStore(CERT_STORE_PROV_FILE, 0, hCryptProv, dwFlags,
-         file);
-        CloseHandle(file);
+        HCERTSTORE memStore;
+
+        memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
+        if (memStore)
+        {
+            if (CRYPT_ReadSerializedStoreFromFile(file, memStore))
+            {
+                store = CRYPT_CreateFileStore(dwFlags, memStore, file);
+                /* File store doesn't need crypto provider, so close it */
+                if (hCryptProv &&
+                 !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
+                    CryptReleaseContext(hCryptProv, 0);
+            }
+            else
+            {
+                /* FIXME: fall back to a PKCS#7 signed message, then to a
+                 * single serialized cert.
+                 */
+            }
+        }
     }
     return (PWINECRYPT_CERTSTORE)store;
 }
