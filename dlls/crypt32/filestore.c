@@ -99,8 +99,8 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
     {
     case CERT_STORE_CTRL_RESYNC:
         CRYPT_EmptyStore(store->memStore);
-        CRYPT_ReadSerializedStoreFromFile(store->file, store);
-        ret = TRUE;
+        store->dirty = FALSE;
+        ret = CRYPT_ReadSerializedStoreFromFile(store->file, store->memStore);
         break;
     case CERT_STORE_CTRL_COMMIT:
         if (!(store->dwOpenFlags & CERT_FILE_STORE_COMMIT_ENABLE_FLAG))
@@ -139,6 +139,30 @@ static void *fileProvFuncs[] = {
     CRYPT_FileControl,
 };
 
+static PWINECRYPT_CERTSTORE CRYPT_CreateFileStore(DWORD dwFlags,
+ HCERTSTORE memStore, HANDLE file)
+{
+    PWINECRYPT_CERTSTORE store = NULL;
+    PWINE_FILESTOREINFO info = CryptMemAlloc(sizeof(WINE_FILESTOREINFO));
+
+    if (info)
+    {
+        CERT_STORE_PROV_INFO provInfo = { 0 };
+
+        info->dwOpenFlags = dwFlags;
+        info->memStore = memStore;
+        info->file = file;
+        info->dirty = FALSE;
+        provInfo.cbSize = sizeof(provInfo);
+        provInfo.cStoreProvFunc = sizeof(fileProvFuncs) /
+         sizeof(fileProvFuncs[0]);
+        provInfo.rgpvStoreProvFunc = fileProvFuncs;
+        provInfo.hStoreProv = info;
+        store = CRYPT_ProvCreateStore(dwFlags, memStore, &provInfo);
+    }
+    return store;
+}
+
 PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
  const void *pvPara)
 {
@@ -168,7 +192,7 @@ PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
      GetCurrentProcess(), &file, dwFlags & CERT_STORE_READONLY_FLAG ?
      GENERIC_READ : GENERIC_READ | GENERIC_WRITE, TRUE, 0))
     {
-        PWINECRYPT_CERTSTORE memStore;
+        HCERTSTORE memStore;
 
         memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
          CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -176,28 +200,11 @@ PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
         {
             if (CRYPT_ReadSerializedStoreFromFile(file, memStore))
             {
-                PWINE_FILESTOREINFO info = CryptMemAlloc(
-                 sizeof(WINE_FILESTOREINFO));
-
-                if (info)
-                {
-                    CERT_STORE_PROV_INFO provInfo = { 0 };
-
-                    info->dwOpenFlags = dwFlags;
-                    info->memStore = memStore;
-                    info->file = file;
-                    info->dirty = FALSE;
-                    provInfo.cbSize = sizeof(provInfo);
-                    provInfo.cStoreProvFunc = sizeof(fileProvFuncs) /
-                     sizeof(fileProvFuncs[0]);
-                    provInfo.rgpvStoreProvFunc = fileProvFuncs;
-                    provInfo.hStoreProv = info;
-                    store = CRYPT_ProvCreateStore(dwFlags, memStore, &provInfo);
-                    /* File store doesn't need crypto provider, so close it */
-                    if (hCryptProv &&
-                     !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
-                        CryptReleaseContext(hCryptProv, 0);
-                }
+                store = CRYPT_CreateFileStore(dwFlags, memStore, file);
+                /* File store doesn't need crypto provider, so close it */
+                if (hCryptProv &&
+                 !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
+                    CryptReleaseContext(hCryptProv, 0);
             }
         }
     }
