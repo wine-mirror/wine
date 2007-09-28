@@ -27,6 +27,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
 
+HRESULT WINAPI SoftpubDefCertInit(CRYPT_PROVIDER_DATA *data)
+{
+    HRESULT ret = S_FALSE;
+
+    TRACE("(%p)\n", data);
+
+    if (data->padwTrustStepErrors &&
+     !data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_WVTINIT])
+        ret = S_OK;
+    TRACE("returning %08x\n", ret);
+    return ret;
+}
+
 HRESULT WINAPI SoftpubInitialize(CRYPT_PROVIDER_DATA *data)
 {
     HRESULT ret = S_FALSE;
