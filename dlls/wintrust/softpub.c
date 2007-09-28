@@ -268,8 +268,38 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
     switch (data->pWintrustData->dwUnionChoice)
     {
     case WTD_CHOICE_CERT:
-        /* Do nothing!?  See the tests */
-        ret = TRUE;
+        if (data->pWintrustData->u.pCert &&
+         data->pWintrustData->u.pCert->cbStruct == sizeof(WINTRUST_CERT_INFO))
+        {
+            if (data->psPfns)
+            {
+                CRYPT_PROVIDER_SGNR signer = { sizeof(signer), { 0 } };
+                DWORD i;
+
+                /* Add empty signer, so we can add a cert to it */
+                ret = data->psPfns->pfnAddSgnr2Chain(data, FALSE, 0, &signer);
+                if (!ret)
+                    goto error;
+                ret = data->psPfns->pfnAddCert2Chain(data, 0, FALSE, 0,
+                 data->pWintrustData->u.pCert->psCertContext);
+                if (!ret)
+                    goto error;
+                for (i = 0; ret && i < data->pWintrustData->u.pCert->chStores;
+                 i++)
+                    ret = data->psPfns->pfnAddStore2Chain(data,
+                     data->pWintrustData->u.pCert->pahStores[i]);
+            }
+            else
+            {
+                /* Do nothing!?  See the tests */
+                ret = TRUE;
+            }
+        }
+        else
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            ret = FALSE;
+        }
         break;
     case WTD_CHOICE_FILE:
         if (!data->pWintrustData->u.pFile)
@@ -305,6 +335,8 @@ error:
     if (!ret)
         data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] =
          GetLastError();
+    TRACE("returning %d (%08x)\n", ret ? S_OK : S_FALSE,
+     data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
     return ret ? S_OK : S_FALSE;
 }
 
