@@ -124,6 +124,7 @@ BASEDIRS = \
 	msisys.ocx \
 	msnet32 \
 	msrle32 \
+	msvcirt \
 	msvcrt \
 	msvcrt20 \
 	msvcrt40 \
