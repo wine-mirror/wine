@@ -261,14 +261,14 @@ static const struct message WmSwitchChild[] = {
     { WM_NCACTIVATE, sent|wparam|defwinproc, 1 }, /* in the 1st MDI child */
     { HCBT_SETFOCUS, hook },
     { WM_KILLFOCUS, sent|defwinproc }, /* in the 2nd MDI child */
-    { WM_IME_SETCONTEXT, sent|wparam|defwinproc, 0 },/* in the 1st MDI child */
-    { WM_IME_SETCONTEXT, sent|wparam, 1 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 0 },/* in the 1st MDI child */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent },/* in the MDI client */
     { HCBT_SETFOCUS, hook },
     { WM_KILLFOCUS, sent },/* in the MDI client */
-    { WM_IME_SETCONTEXT, sent|wparam, 0 }, /* in MDI client */
-    { WM_IME_SETCONTEXT, sent|wparam|defwinproc, 1 }, /* in the 1st MDI child */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 }, /* in the 1st MDI child */
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|defwinproc }, /* in the 1st MDI child */
     { WM_MDIACTIVATE, sent|defwinproc },/* in the 1st MDI child */
