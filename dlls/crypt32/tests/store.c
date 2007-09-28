@@ -1244,7 +1244,7 @@ static void testFileNameStore(void)
         ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
 
         cert = CertEnumCertificatesInStore(store, NULL);
-        todo_wine ok(cert != NULL, "CertEnumCertificatesInStore failed: %08x\n",
+        ok(cert != NULL, "CertEnumCertificatesInStore failed: %08x\n",
          GetLastError());
         cert = CertEnumCertificatesInStore(store, cert);
         ok(!cert, "Expected only one cert\n");

@@ -21,6 +21,7 @@
 #include "wincrypt.h"
 #include "winnls.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -87,6 +88,24 @@ static BOOL WINAPI CRYPT_FileDeleteCRL(HCERTSTORE hCertStore,
     return TRUE;
 }
 
+static BOOL CRYPT_ReadBlobFromFile(HANDLE file, PCERT_BLOB blob)
+{
+    BOOL ret = TRUE;
+
+    blob->cbData = GetFileSize(file, NULL);
+    if (blob->cbData)
+    {
+        blob->pbData = CryptMemAlloc(blob->cbData);
+        if (blob->pbData)
+        {
+            DWORD read;
+
+            ret = ReadFile(file, blob->pbData, blob->cbData, &read, NULL);
+        }
+    }
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
  DWORD dwCtrlType, void const *pvCtrlPara)
 {
@@ -106,8 +125,37 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
              store->memStore);
         else if (store->type == CERT_STORE_SAVE_AS_PKCS7)
         {
-            FIXME("unimplemented for PKCS stores\n");
-            ret = FALSE;
+            CERT_BLOB blob = { 0, NULL };
+
+            ret = CRYPT_ReadBlobFromFile(store->file, &blob);
+            if (ret)
+            {
+                HCERTSTORE messageStore;
+
+                ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
+                 CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
+                 CERT_QUERY_FORMAT_FLAG_BINARY, 0, NULL, NULL, NULL,
+                 &messageStore, NULL, NULL);
+                if (ret)
+                {
+                    PCCERT_CONTEXT cert = NULL;
+                    PCCRL_CONTEXT crl = NULL;
+
+                    do {
+                        cert = CertEnumCertificatesInStore(messageStore, cert);
+                        if (cert)
+                            CertAddCertificateContextToStore(store->memStore,
+                             cert, CERT_STORE_ADD_ALWAYS, NULL);
+                    } while (cert);
+                    do {
+                        crl = CertEnumCRLsInStore(messageStore, crl);
+                        if (crl)
+                            CertAddCRLContextToStore(store->memStore, crl,
+                             CERT_STORE_ADD_ALWAYS, NULL);
+                    } while (crl);
+                }
+                CryptMemFree(blob.pbData);
+            }
         }
         else
         {
@@ -262,27 +310,57 @@ PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
      FILE_ATTRIBUTE_NORMAL, NULL);
     if (file != INVALID_HANDLE_VALUE)
     {
-        HCERTSTORE memStore;
+        HCERTSTORE memStore = NULL;
+        DWORD size = GetFileSize(file, NULL), type = 0;
 
-        memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
-         CERT_STORE_CREATE_NEW_FLAG, NULL);
+        /* If the file isn't empty, try to get the type from the file itself */
+        if (size)
+        {
+            DWORD contentType;
+            BOOL ret;
+
+            /* Close the file so CryptQueryObject can succeed.. */
+            CloseHandle(file);
+            ret = CryptQueryObject(CERT_QUERY_OBJECT_FILE, fileName,
+             CERT_QUERY_CONTENT_FLAG_CERT |
+             CERT_QUERY_CONTENT_FLAG_SERIALIZED_STORE |
+             CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
+             CERT_QUERY_FORMAT_FLAG_BINARY, 0, NULL, &contentType, NULL,
+             &memStore, NULL, NULL);
+            if (ret)
+            {
+                if (contentType == CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED)
+                    type = CERT_STORE_SAVE_AS_PKCS7;
+                else
+                    type = CERT_STORE_SAVE_AS_STORE;
+                /* and reopen the file. */
+                file = CreateFileW(fileName, access, FILE_SHARE_READ, NULL,
+                 create, FILE_ATTRIBUTE_NORMAL, NULL);
+            }
+        }
+        else
+        {
+            static const WCHAR spc[] = { 's','p','c',0 };
+            static const WCHAR p7c[] = { 'p','7','c',0 };
+            LPCWSTR ext = strrchrW(fileName, '.');
+
+            if (ext)
+            {
+                ext++;
+                if (!lstrcmpiW(ext, spc) || !lstrcmpiW(ext, p7c))
+                    type = CERT_STORE_SAVE_AS_PKCS7;
+            }
+            if (!type)
+                type = CERT_STORE_SAVE_AS_STORE;
+            memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+             CERT_STORE_CREATE_NEW_FLAG, NULL);
+        }
         if (memStore)
         {
-            if (CRYPT_ReadSerializedStoreFromFile(file, memStore))
-            {
-                store = CRYPT_CreateFileStore(dwFlags, memStore, file,
-                 CERT_STORE_SAVE_AS_STORE);
-                /* File store doesn't need crypto provider, so close it */
-                if (hCryptProv &&
-                 !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
-                    CryptReleaseContext(hCryptProv, 0);
-            }
-            else
-            {
-                /* FIXME: fall back to a PKCS#7 signed message, then to a
-                 * single serialized cert.
-                 */
-            }
+            store = CRYPT_CreateFileStore(dwFlags, memStore, file, type);
+            /* File store doesn't need crypto provider, so close it */
+            if (hCryptProv && !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
+                CryptReleaseContext(hCryptProv, 0);
         }
     }
     return (PWINECRYPT_CERTSTORE)store;
