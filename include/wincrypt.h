@@ -39,6 +39,7 @@ typedef void *HCRYPTMSG;
 typedef void *HCERTSTOREPROV;
 typedef void *HCRYPTOIDFUNCSET;
 typedef void *HCRYPTOIDFUNCADDR;
+typedef void *HCRYPTDEFAULTCONTEXT;
 
 /* CSP Structs */
 
@@ -2269,6 +2270,10 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define CERT_ACCESS_STATE_SYSTEM_STORE_FLAG    0x2
 #define CERT_ACCESS_STATE_LM_SYSTEM_STORE_FLAG 0x4
 
+/* CertSetCertificateContextProperty flags */
+#define CERT_SET_PROPERTY_INHIBIT_PERSIST_FLAG      0x40000000
+#define CERT_SET_PROPERTY_IGNORE_PERSIST_ERROR_FLAG 0x80000000
+
 /* CERT_RDN attribute dwValueType types */
 #define CERT_RDN_TYPE_MASK 0x000000ff
 #define CERT_RDN_ANY_TYPE         0
@@ -2299,6 +2304,10 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 
 #define IS_CERT_RDN_CHAR_STRING(x) \
  (((x) & CERT_RDN_TYPE_MASK) >= CERT_RDN_NUMERIC_STRING)
+
+/* CertIsRDNAttrsInCertificateName flags */
+#define CERT_UNICODE_IS_RDN_ATTRS_FLAG          0x1
+#define CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG 0x2
 
 /* CRL reason codes */
 #define CRL_REASON_UNSPECIFIED            0
@@ -3398,6 +3407,18 @@ typedef struct _CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA {
 #define CMSG_ENVELOPED_DATA_PKCS_1_5_VERSION CMSG_ENVELOPED_DATA_V0
 #define CMSG_ENVELOPED_DATA_CMS_VERSION      CMSG_ENVELOPED_DATA_V2
 
+/* CryptMsgGetAndVerifySigner flags */
+#define CMSG_TRUSTED_SIGNER_FLAG   0x1
+#define CMSG_SIGNER_ONLY_FLAG      0x2
+#define CMSG_USE_SIGNER_INDEX_FLAG 0x4
+
+/* CryptMsgSignCTL flags */
+#define CMSG_CMS_ENCAPSULATED_CTL_FLAG 0x00008000
+
+/* CryptMsgEncodeAndSignCTL flags */
+#define CMSG_ENCODED_SORTED_CTL_FLAG               0x1
+#define CMSG_ENCODE_HASHED_SUBJECT_IDENTIFIER_FLAG 0x2
+
 /* function declarations */
 /* advapi32.dll */
 BOOL WINAPI CryptAcquireContextA(HCRYPTPROV *phProv, LPCSTR pszContainer,
@@ -3524,6 +3545,11 @@ BOOL WINAPI CryptFreeOIDFunctionAddress(HCRYPTOIDFUNCADDR hFuncAddr,
 BOOL WINAPI CryptInstallOIDFunctionAddress(HMODULE hModule,
  DWORD dwEncodingType, LPCSTR pszFuncName, DWORD cFuncEntry,
  const CRYPT_OID_FUNC_ENTRY rgFuncEntry[], DWORD dwFlags);
+BOOL WINAPI CryptInstallDefaultContext(HCRYPTPROV hCryptProv,
+ DWORD dwDefaultType, const void *pvDefaultPara, DWORD dwFlags,
+ void *pvReserved, HCRYPTDEFAULTCONTEXT *phDefaultContext);
+BOOL WINAPI CryptUninstallDefaultContext(HCRYPTDEFAULTCONTEXT hDefaultContext,
+ DWORD dwFlags, void *pvReserved);
 
 BOOL WINAPI CryptEnumOIDInfo(DWORD dwGroupId, DWORD dwFlags, void *pvArg,
  PFN_CRYPT_ENUM_OID_INFO pfnEnumOIDInfo);
@@ -3617,6 +3643,10 @@ BOOL WINAPI CertSetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
 
 DWORD WINAPI CertEnumCTLContextProperties(PCCTL_CONTEXT pCTLContext,
  DWORD dwPropId);
+
+BOOL WINAPI CertEnumSubjectInSortedCTL(PCCTL_CONTEXT pCTLContext,
+ void **ppvNextSubject, PCRYPT_DER_BLOB pSubjectIdentifier,
+ PCRYPT_DER_BLOB pEncodedAttributes);
 
 BOOL WINAPI CertGetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
  DWORD dwPropId, void *pvData, DWORD *pcbData);
@@ -3827,6 +3857,13 @@ PCERT_EXTENSION WINAPI CertFindExtension(LPCSTR pszObjId, DWORD cExtensions,
  CERT_EXTENSION rgExtensions[]);
 PCERT_RDN_ATTR WINAPI CertFindRDNAttr(LPCSTR pszObjId, PCERT_NAME_INFO pName);
 
+BOOL WINAPI CertFindSubjectInSortedCTL(PCRYPT_DATA_BLOB pSubjectIdentifier,
+ PCCTL_CONTEXT pCtlContext, DWORD dwFlags, void *pvReserved,
+ PCRYPT_DER_BLOB pEncodedAttributes);
+
+BOOL WINAPI CertIsRDNAttrsInCertificateName(DWORD dwCertEncodingType,
+ DWORD dwFlags, PCERT_NAME_BLOB pCertName, PCERT_RDN pRDN);
+
 BOOL WINAPI CertIsValidCRLForCertificate(PCCERT_CONTEXT pCert,
  PCCRL_CONTEXT pCrl, DWORD dwFlags, void *pvReserved);
 BOOL WINAPI CertFindCertificateInCRL(PCCERT_CONTEXT pCert,
@@ -3922,6 +3959,14 @@ BOOL WINAPI CryptMsgCountersignEncoded(DWORD dwEncodingType, PBYTE pbSignerInfo,
 
 HCRYPTMSG WINAPI CryptMsgDuplicate(HCRYPTMSG hCryptMsg);
 
+BOOL WINAPI CryptMsgEncodeAndSignCTL(DWORD dwMsgEncodingType,
+ PCTL_INFO pCtlInfo, PCMSG_SIGNED_ENCODE_INFO pSignInfo, DWORD dwFlags,
+ BYTE *pbEncoded, DWORD *pcbEncoded);
+
+BOOL WINAPI CryptMsgGetAndVerifySigner(HCRYPTMSG hCryptMsg, DWORD cSignerStore,
+ HCERTSTORE *rghSignerStore, DWORD dwFlags, PCCERT_CONTEXT *ppSigner,
+ DWORD *pdwSignerIndex);
+
 BOOL WINAPI CryptMsgGetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData);
 
@@ -3932,6 +3977,10 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
 HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
  DWORD dwMsgType, const void *pvMsgEncodeInfo, LPSTR pszInnerContentObjID,
  PCMSG_STREAM_INFO pStreamInfo);
+
+BOOL WINAPI CryptMsgSignCTL(DWORD dwMsgEncodingType, BYTE *pbCtlContent,
+ DWORD cbCtlContent, PCMSG_SIGNED_ENCODE_INFO pSignInfo, DWORD dwFlags,
+ BYTE *pbEncoded, DWORD *pcbEncoded);
 
 BOOL WINAPI CryptMsgUpdate(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal);
