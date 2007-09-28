@@ -431,7 +431,11 @@ BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store)
     ret = ReadFile(file, fileHeaderBuf, sizeof(fileHeaderBuf), &read, NULL);
     if (ret)
     {
-        if (!memcmp(fileHeaderBuf, fileHeader, read))
+        if (!read)
+            ; /* an empty file is okay */
+        else if (read != sizeof(fileHeaderBuf))
+            ret = FALSE;
+        else if (!memcmp(fileHeaderBuf, fileHeader, read))
         {
             WINE_CERT_PROP_HEADER propHdr;
             const void *context = NULL;
@@ -503,6 +507,8 @@ BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store)
             CryptMemFree(buf);
             ret = TRUE;
         }
+        else
+            ret = FALSE;
     }
     else
         ret = TRUE;
