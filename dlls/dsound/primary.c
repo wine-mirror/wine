@@ -36,36 +36,44 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
+/** Calculate how long a fragment length of about 10 ms should be in frames
+ *
+ * nSamplesPerSec: Frequency rate in samples per second
+ * nBlockAlign: Size of a single blockalign
+ *
+ * Returns:
+ * Size in bytes of a single fragment
+ */
+DWORD DSOUND_fraglen(DWORD nSamplesPerSec, DWORD nBlockAlign)
+{
+    DWORD fraglen = 512 * nBlockAlign;
+
+    /* Compensate for only being roughly accurate */
+    if (nSamplesPerSec <= 26000)
+        fraglen /= 2;
+
+    if (nSamplesPerSec <= 12000)
+        fraglen /= 2;
+
+    if (nSamplesPerSec >= 80000)
+        fraglen *= 2;
+
+    return fraglen;
+}
+
 static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
 {
-	DWORD nBlockAlign;
-	DWORD fraglen;
-	TRACE("(%p)\n", device);
+    TRACE("(%p)\n", device);
 
-	nBlockAlign = device->pwfx->nBlockAlign;
-	/* Alsa doesn't have continuous buffers, instead it has buffers with power of 2,
-	 * If DS_TIME_DEL is about 10 ms, 512 * nBlockAlign is roughly correct */
-	fraglen = 512 * nBlockAlign;
+    device->fraglen = DSOUND_fraglen(device->pwfx->nSamplesPerSec, device->pwfx->nBlockAlign);
+    device->helfrags = device->buflen / device->fraglen;
+    TRACE("fraglen=%d helfrags=%d\n", device->fraglen, device->helfrags);
 
-	/* Compensate for only being roughly accurate */
-	if (device->pwfx->nSamplesPerSec <= 26000)
-		fraglen /= 2;
-
-	if (device->pwfx->nSamplesPerSec <= 12000)
-		fraglen /= 2;
-
-	if (device->pwfx->nSamplesPerSec >= 80000)
-		fraglen *= 2;
-
-	device->fraglen = fraglen;
-	device->helfrags = device->buflen / fraglen;
-	TRACE("fraglen=%d helfrags=%d\n", device->fraglen, device->helfrags);
-
-	if (device->hwbuf && device->drvdesc.dwFlags & DSDDESC_DONTNEEDWRITELEAD)
-		device->writelead = 0;
-	else
-	/* calculate the 10ms write lead */
-		device->writelead = (device->pwfx->nSamplesPerSec / 100) * nBlockAlign;
+    if (device->hwbuf && device->drvdesc.dwFlags & DSDDESC_DONTNEEDWRITELEAD)
+        device->writelead = 0;
+    else
+        /* calculate the 10ms write lead */
+        device->writelead = (device->pwfx->nSamplesPerSec / 100) * device->pwfx->nBlockAlign;
 }
 
 HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)

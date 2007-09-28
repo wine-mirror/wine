@@ -253,7 +253,6 @@ struct DirectSoundCaptureDevice
     /* more stuff */
     LPBYTE                             buffer;
     DWORD                              buflen;
-    DWORD                              read_position;
 
     PWAVEFORMATEX                      pwfx;
 
@@ -420,6 +419,7 @@ HRESULT DSOUND_Create8(REFIID riid, LPDIRECTSOUND8 *ppDS);
 
 /* primary.c */
 
+DWORD DSOUND_fraglen(DWORD nSamplesPerSec, DWORD nBlockAlign);
 HRESULT DSOUND_PrimaryCreate(DirectSoundDevice *device);
 HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device);
 HRESULT DSOUND_PrimaryPlay(DirectSoundDevice *device);
