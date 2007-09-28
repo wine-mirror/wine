@@ -47,8 +47,17 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
             TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p\n", This, This->glDescription.level,
                 This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
 
-            GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target, This->glDescription.level, This->resource.allocatedMemory));
-            checkGLcall("glGetCompressedTexImageARB()");
+            if(This->Flags & SFLAG_PBO) {
+                GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
+                checkGLcall("glBindBufferARB");
+                GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target, This->glDescription.level, NULL));
+                checkGLcall("glGetCompressedTexImageARB()");
+                GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
+                checkGLcall("glBindBufferARB");
+            } else {
+                GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target, This->glDescription.level, This->resource.allocatedMemory));
+                checkGLcall("glGetCompressedTexImageARB()");
+            }
         }
     } else {
         void *mem;
