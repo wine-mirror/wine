@@ -2021,6 +2021,6 @@ static void check_all_user_types(ifref_list_t *ifrefs)
   {
     const func_list_t *fs = ifref->iface->funcs;
     if (fs) LIST_FOR_EACH_ENTRY(f, fs, const func_t, entry)
-      check_for_user_types(f->args);
+      check_for_user_types_and_context_handles(f->args);
   }
 }

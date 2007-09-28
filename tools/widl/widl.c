@@ -409,6 +409,7 @@ int main(int argc,char *argv[])
     fprintf(header, "/* Begin additional prototypes for all interfaces */\n");
     fprintf(header, "\n");
     write_user_types();
+    write_context_handle_rundowns();
     fprintf(header, "\n");
     fprintf(header, "/* End additional prototypes */\n");
     fprintf(header, "\n");

@@ -38,6 +38,8 @@
 #include "header.h"
 
 static int indentation = 0;
+user_type_list_t user_type_list = LIST_INIT(user_type_list);
+static context_handle_list_t context_handle_list = LIST_INIT(context_handle_list);
 
 static void indent(FILE *h, int delta)
 {
@@ -286,8 +288,6 @@ void write_type(FILE *h, type_t *t, int is_field, const char *fmt, ...)
   write_type_right(h, t, is_field);
 }
 
-user_type_list_t user_type_list = LIST_INIT(user_type_list);
-
 static int user_type_registered(const char *name)
 {
   user_type_t *ut;
@@ -297,7 +297,16 @@ static int user_type_registered(const char *name)
   return 0;
 }
 
-void check_for_user_types(const var_list_t *list)
+static int context_handle_registered(const char *name)
+{
+  context_handle_t *ch;
+  LIST_FOR_EACH_ENTRY(ch, &context_handle_list, context_handle_t, entry)
+    if (!strcmp(name, ch->name))
+      return 1;
+  return 0;
+}
+
+void check_for_user_types_and_context_handles(const var_list_t *list)
 {
   const var_t *v;
 
@@ -309,6 +318,16 @@ void check_for_user_types(const var_list_t *list)
       const char *name = type->name;
       if (type->user_types_registered) continue;
       type->user_types_registered = 1;
+      if (is_attr(type->attrs, ATTR_CONTEXTHANDLE)) {
+        if (!context_handle_registered(name))
+        {
+          context_handle_t *ch = xmalloc(sizeof(*ch));
+          ch->name = xstrdup(name);
+          list_add_tail(&context_handle_list, &ch->entry);
+        }
+        /* don't carry on parsing fields within this type */
+        break;
+      }
       if (is_attr(type->attrs, ATTR_WIREMARSHAL)) {
         if (!user_type_registered(name))
         {
@@ -322,7 +341,7 @@ void check_for_user_types(const var_list_t *list)
       }
       else
       {
-        check_for_user_types(type->fields);
+        check_for_user_types_and_context_handles(type->fields);
       }
     }
   }
@@ -338,6 +357,16 @@ void write_user_types(void)
     fprintf(header, "unsigned char * __RPC_USER %s_UserMarshal  (ULONG *, unsigned char *, %s *);\n", name, name);
     fprintf(header, "unsigned char * __RPC_USER %s_UserUnmarshal(ULONG *, unsigned char *, %s *);\n", name, name);
     fprintf(header, "void            __RPC_USER %s_UserFree     (ULONG *, %s *);\n", name, name);
+  }
+}
+
+void write_context_handle_rundowns(void)
+{
+  context_handle_t *ch;
+  LIST_FOR_EACH_ENTRY(ch, &context_handle_list, context_handle_t, entry)
+  {
+    const char *name = ch->name;
+    fprintf(header, "void __RPC_USER %s_rundown(%s);\n", name, name);
   }
 }
 
