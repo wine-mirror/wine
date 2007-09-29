@@ -192,13 +192,11 @@ static void WineD3D_ReleaseFakeGLContext(void) {
     assert(wined3d_fake_gl_context_ref >= 0);
 
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
-    LEAVE_GL();
 }
 
 static BOOL WineD3D_CreateFakeGLContext(void) {
     HGLRC glCtx = NULL;
 
-    ENTER_GL();
     EnterCriticalSection(&wined3d_fake_gl_context_cs);
 
     TRACE("getting context...\n");
@@ -273,7 +271,6 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
     wined3d_fake_gl_context_hwnd = NULL;
     if(glCtx) pwglDeleteContext(glCtx);
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
-    LEAVE_GL();
     return FALSE;
 }
 
@@ -418,6 +415,8 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     unsigned int vidmem=0;
 
     TRACE_(d3d_caps)("(%p)\n", gl_info);
+
+    ENTER_GL();
 
     gl_string = (const char *) glGetString(GL_RENDERER);
     if (NULL == gl_string)
@@ -1130,6 +1129,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             }
         }
     }
+    LEAVE_GL();
 
     return return_value;
 }
