@@ -858,6 +858,11 @@ static void test_PdhCollectQueryDataEx(void)
 
 START_TEST(pdh)
 {
+    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
+    {
+        skip("non-english locale\n");
+        return;
+    }
     init_function_ptrs();
 
     test_PdhOpenQueryA();
