@@ -324,6 +324,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         goto out;
     }
 
+    ENTER_GL();
     TRACE("Setting up the screen\n");
     /* Clear the screen */
     glClearColor(1.0, 0.0, 0.0, 0.0);
@@ -389,6 +390,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
             checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n");
         }
     }
+    LEAVE_GL();
 
     if(oldDrawable && oldCtx) {
         pwglMakeCurrent(oldDrawable, oldCtx);

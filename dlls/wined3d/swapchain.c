@@ -132,7 +132,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
 
     ActivateContext(This->wineD3DDevice, This->backBuffer[0], CTXUSAGE_RESOURCELOAD);
-    ENTER_GL();
 
     /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
     if(This->wineD3DDevice->bCursorVisible && This->wineD3DDevice->cursorTexture) {
@@ -244,7 +243,9 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 #if defined(SHOW_FRAME_MAKEUP)
             FIXME("Singe Frame snapshots Starting\n");
             isDumpingFrames = TRUE;
+            ENTER_GL();
             glClear(GL_COLOR_BUFFER_BIT);
+            LEAVE_GL();
 #endif
 
 #if defined(SINGLE_FRAME_DEBUGGING)
@@ -271,8 +272,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     }
 }
 #endif
-
-    LEAVE_GL();
 
     if (This->presentParms.SwapEffect == WINED3DSWAPEFFECT_DISCARD) {
         TRACE("Clearing the color buffer with pink color\n");

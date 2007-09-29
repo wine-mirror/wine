@@ -1456,10 +1456,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 	return E_OUTOFMEMORY;
     object->num_contexts = 1;
 
-    ENTER_GL();
     object->context[0] = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, object->win_handle, FALSE /* pbuffer */, pPresentationParameters);
-    LEAVE_GL();
-
     if (!object->context[0]) {
         ERR("Failed to create a new context\n");
         hr = WINED3DERR_NOTAVAILABLE;
