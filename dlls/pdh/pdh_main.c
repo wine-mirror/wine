@@ -37,6 +37,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(pdh);
 
+static CRITICAL_SECTION pdh_handle_cs;
+static CRITICAL_SECTION_DEBUG pdh_handle_cs_debug =
+{
+    0, 0, &pdh_handle_cs,
+    { &pdh_handle_cs_debug.ProcessLocksList,
+      &pdh_handle_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": pdh_handle_cs") }
+};
+static CRITICAL_SECTION pdh_handle_cs = { &pdh_handle_cs_debug, -1, 0, 0, 0, 0 };
+
 static inline void *pdh_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
@@ -88,7 +98,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 struct counter
 {
-    struct list     entry;
+    DWORD           magic;                          /* signature */
+    struct list     entry;                          /* list entry */
     WCHAR          *path;                           /* identifier */
     DWORD           type;                           /* counter type */
     DWORD           status;                         /* update status */
@@ -113,12 +124,25 @@ struct counter
     } two;                                          /* second value */
 };
 
+#define PDH_MAGIC_COUNTER   0x50444831 /* 'PDH1' */
+
 static struct counter *create_counter( void )
 {
     struct counter *counter;
 
-    if ((counter = pdh_alloc_zero( sizeof(struct counter) ))) return counter;
+    if ((counter = pdh_alloc_zero( sizeof(struct counter) )))
+    {
+        counter->magic = PDH_MAGIC_COUNTER;
+        return counter;
+    }
     return NULL;
+}
+
+static void destroy_counter( struct counter *counter )
+{
+    counter->magic = 0;
+    pdh_free( counter->path );
+    pdh_free( counter );
 }
 
 #define PDH_MAGIC_QUERY     0x50444830 /* 'PDH0' */
@@ -141,6 +165,12 @@ static struct query *create_query( void )
         return query;
     }
     return NULL;
+}
+
+static void destroy_query( struct query *query )
+{
+    query->magic = 0;
+    pdh_free( query );
 }
 
 struct source
@@ -230,7 +260,13 @@ PDH_STATUS WINAPI PdhAddCounterW( PDH_HQUERY hquery, LPCWSTR path,
     TRACE("%p %s %lx %p\n", hquery, debugstr_w(path), userdata, hcounter);
 
     if (!path  || !hcounter) return PDH_INVALID_ARGUMENT;
-    if (!query || (query->magic != PDH_MAGIC_QUERY)) return PDH_INVALID_HANDLE;
+
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!query || query->magic != PDH_MAGIC_QUERY)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
 
     *hcounter = NULL;
     for (i = 0; i < sizeof(counter_sources) / sizeof(counter_sources[0]); i++)
@@ -248,13 +284,16 @@ PDH_STATUS WINAPI PdhAddCounterW( PDH_HQUERY hquery, LPCWSTR path,
                 counter->user         = userdata;
 
                 list_add_tail( &query->counters, &counter->entry );
-
                 *hcounter = counter;
+
+                LeaveCriticalSection( &pdh_handle_cs );
                 return ERROR_SUCCESS;
             }
+            LeaveCriticalSection( &pdh_handle_cs );
             return PDH_MEMORY_ALLOCATION_FAILURE;
         }
     }
+    LeaveCriticalSection( &pdh_handle_cs );
     return PDH_CSTATUS_NO_COUNTER;
 }
 
@@ -286,35 +325,31 @@ PDH_STATUS WINAPI PdhCloseQuery( PDH_HQUERY handle )
 
     TRACE("%p\n", handle);
 
-    if (!query || (query->magic != PDH_MAGIC_QUERY)) return PDH_INVALID_HANDLE;
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!query || query->magic != PDH_MAGIC_QUERY)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
 
     LIST_FOR_EACH_SAFE( item, next, &query->counters )
     {
         struct counter *counter = LIST_ENTRY( item, struct counter, entry );
 
         list_remove( &counter->entry );
-
-        pdh_free( counter->path );
-        pdh_free( counter );
+        destroy_counter( counter );
     }
 
-    query->magic = 0;
-    pdh_free( query );
+    destroy_query( query );
 
+    LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;
 }
 
-/***********************************************************************
- *              PdhCollectQueryData   (PDH.@)
- */
-PDH_STATUS WINAPI PdhCollectQueryData( PDH_HQUERY handle )
+/* caller must hold query lock */
+static void collect_query_data( struct query *query )
 {
-    struct query *query = handle;
     struct list *item;
-
-    TRACE("%p\n", handle);
-
-    if (!query || (query->magic != PDH_MAGIC_QUERY)) return PDH_INVALID_HANDLE;
 
     LIST_FOR_EACH( item, &query->counters )
     {
@@ -326,6 +361,33 @@ PDH_STATUS WINAPI PdhCollectQueryData( PDH_HQUERY handle )
         GetLocalTime( &time );
         SystemTimeToFileTime( &time, &counter->stamp );
     }
+}
+
+/***********************************************************************
+ *              PdhCollectQueryData   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhCollectQueryData( PDH_HQUERY handle )
+{
+    struct query *query = handle;
+
+    TRACE("%p\n", handle);
+
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!query || query->magic != PDH_MAGIC_QUERY)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
+
+    if (list_empty( &query->counters ))
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_NO_DATA;
+    }
+
+    collect_query_data( query );
+
+    LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;
 }
 
@@ -334,24 +396,33 @@ PDH_STATUS WINAPI PdhCollectQueryData( PDH_HQUERY handle )
  */
 PDH_STATUS WINAPI PdhCollectQueryDataWithTime( PDH_HQUERY handle, LONGLONG *timestamp )
 {
-    PDH_STATUS ret;
     struct query *query = handle;
 
     TRACE("%p %p\n", handle, timestamp);
 
-    if (!query || (query->magic != PDH_MAGIC_QUERY)) return PDH_INVALID_HANDLE;
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!query || query->magic != PDH_MAGIC_QUERY)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
+    if (list_empty( &query->counters ))
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_NO_DATA;
+    }
 
-    if (list_empty( &query->counters )) return PDH_NO_DATA;
+    collect_query_data( query );
 
-    ret = PdhCollectQueryData( query );
-    if (!ret && timestamp)
+    if (timestamp)
     {
         struct list *item = list_head( &query->counters );
         struct counter *counter = LIST_ENTRY( item, struct counter, entry );
 
         *timestamp = ((LONGLONG)counter->stamp.dwHighDateTime << 32) | counter->stamp.dwLowDateTime;
     }
-    return ret;
+    LeaveCriticalSection( &pdh_handle_cs );
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -363,12 +434,21 @@ PDH_STATUS WINAPI PdhGetCounterInfoA( PDH_HCOUNTER handle, BOOLEAN text, LPDWORD
 
     TRACE("%p %d %p %p\n", handle, text, size, info);
 
-    if (!counter) return PDH_INVALID_HANDLE;
-    if (!size)    return PDH_INVALID_ARGUMENT;
-
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!counter || counter->magic != PDH_MAGIC_COUNTER)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
+    if (!size)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_ARGUMENT;
+    }
     if (*size < sizeof(PDH_COUNTER_INFO_A))
     {
         *size = sizeof(PDH_COUNTER_INFO_A);
+        LeaveCriticalSection( &pdh_handle_cs );
         return PDH_MORE_DATA;
     }
 
@@ -382,6 +462,8 @@ PDH_STATUS WINAPI PdhGetCounterInfoA( PDH_HCOUNTER handle, BOOLEAN text, LPDWORD
     info->dwQueryUserData = counter->queryuser;
 
     *size = sizeof(PDH_COUNTER_INFO_A);
+
+    LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;
 }
 
@@ -394,12 +476,21 @@ PDH_STATUS WINAPI PdhGetCounterInfoW( PDH_HCOUNTER handle, BOOLEAN text, LPDWORD
 
     TRACE("%p %d %p %p\n", handle, text, size, info);
 
-    if (!counter) return PDH_INVALID_HANDLE;
-    if (!size)    return PDH_INVALID_ARGUMENT;
-
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!counter || counter->magic != PDH_MAGIC_COUNTER)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
+    if (!size)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_ARGUMENT;
+    }
     if (*size < sizeof(PDH_COUNTER_INFO_W))
     {
         *size = sizeof(PDH_COUNTER_INFO_W);
+        LeaveCriticalSection( &pdh_handle_cs );
         return PDH_MORE_DATA;
     }
 
@@ -413,6 +504,8 @@ PDH_STATUS WINAPI PdhGetCounterInfoW( PDH_HCOUNTER handle, BOOLEAN text, LPDWORD
     info->dwQueryUserData = counter->queryuser;
 
     *size = sizeof(PDH_COUNTER_INFO_W);
+
+    LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;
 }
 
@@ -425,10 +518,18 @@ PDH_STATUS WINAPI PdhGetCounterTimeBase( PDH_HCOUNTER handle, LONGLONG *base )
 
     TRACE("%p %p\n", handle, base);
 
-    if (!base)    return PDH_INVALID_ARGUMENT;
-    if (!counter) return PDH_INVALID_HANDLE;
+    if (!base) return PDH_INVALID_ARGUMENT;
+
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!counter || counter->magic != PDH_MAGIC_COUNTER)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
 
     *base = counter->base;
+
+    LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;
 }
 
@@ -443,10 +544,19 @@ PDH_STATUS WINAPI PdhGetFormattedCounterValue( PDH_HCOUNTER handle, DWORD format
 
     TRACE("%p %x %p %p\n", handle, format, type, value);
 
-    if (!value)   return PDH_INVALID_ARGUMENT;
-    if (!counter) return PDH_INVALID_HANDLE;
+    if (!value) return PDH_INVALID_ARGUMENT;
 
-    if (counter->status) return PDH_INVALID_DATA;
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!counter || counter->magic != PDH_MAGIC_COUNTER)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
+    if (counter->status)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_DATA;
+    }
 
     factor = counter->scale ? counter->scale : counter->defaultscale;
     if (format & PDH_FMT_LONG)
@@ -467,11 +577,13 @@ PDH_STATUS WINAPI PdhGetFormattedCounterValue( PDH_HCOUNTER handle, DWORD format
     else
     {
         WARN("unknown format %x\n", format);
+        LeaveCriticalSection( &pdh_handle_cs );
         return PDH_INVALID_ARGUMENT;
     }
     value->CStatus = ERROR_SUCCESS;
-
     if (type) *type = counter->type;
+
+    LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;
 }
 
@@ -485,8 +597,14 @@ PDH_STATUS WINAPI PdhGetRawCounterValue( PDH_HCOUNTER handle, LPDWORD type,
 
     TRACE("%p %p %p\n", handle, type, value);
 
-    if (!value)   return PDH_INVALID_ARGUMENT;
-    if (!counter) return PDH_INVALID_HANDLE;
+    if (!value) return PDH_INVALID_ARGUMENT;
+
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!counter || counter->magic != PDH_MAGIC_COUNTER)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
 
     value->CStatus                  = counter->status;
     value->TimeStamp.dwLowDateTime  = counter->stamp.dwLowDateTime;
@@ -496,6 +614,8 @@ PDH_STATUS WINAPI PdhGetRawCounterValue( PDH_HCOUNTER handle, LPDWORD type,
     value->MultiCount               = 1; /* FIXME */
 
     if (type) *type = counter->type;
+
+    LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;
 }
 
@@ -675,13 +795,17 @@ PDH_STATUS WINAPI PdhRemoveCounter( PDH_HCOUNTER handle )
 
     TRACE("%p\n", handle);
 
-    if (!counter) return PDH_INVALID_HANDLE;
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!counter || counter->magic != PDH_MAGIC_COUNTER)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
 
     list_remove( &counter->entry );
+    destroy_counter( counter );
 
-    pdh_free( counter->path );
-    pdh_free( counter );
-
+    LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;
 }
 
@@ -694,10 +818,21 @@ PDH_STATUS WINAPI PdhSetCounterScaleFactor( PDH_HCOUNTER handle, LONG factor )
 
     TRACE("%p\n", handle);
 
-    if (!counter) return PDH_INVALID_HANDLE;
-    if (factor < PDH_MIN_SCALE || factor > PDH_MAX_SCALE) return PDH_INVALID_ARGUMENT;
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!counter || counter->magic != PDH_MAGIC_COUNTER)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
+    if (factor < PDH_MIN_SCALE || factor > PDH_MAX_SCALE)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_ARGUMENT;
+    }
 
     counter->scale = factor;
+
+    LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;
 }
 
