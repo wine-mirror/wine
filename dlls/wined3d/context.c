@@ -851,7 +851,6 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
 
-    ENTER_GL();
     if(This->lastActiveRenderTarget != target || tid != This->lastThread) {
         context = FindContext(This, target, tid);
         This->lastActiveRenderTarget = target;
@@ -865,15 +864,15 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     if(context != This->activeContext) {
         BOOL ret;
         TRACE("Switching gl ctx to %p, hdc=%p ctx=%p\n", context, context->hdc, context->glCtx);
-        LEAVE_GL();
         ret = pwglMakeCurrent(context->hdc, context->glCtx);
-        ENTER_GL();
         if(ret == FALSE) {
             ERR("Failed to activate the new context\n");
         }
         This->activeContext = context;
     }
 
+    /* We only need ENTER_GL for the gl calls made below and for the helper functions which make GL calls */
+    ENTER_GL();
     switch(usage) {
         case CTXUSAGE_RESOURCELOAD:
             /* This does not require any special states to be set up */
