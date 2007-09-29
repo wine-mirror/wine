@@ -41,22 +41,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-#define NSCMD_BOLD "cmd_bold"
 #define NSCMD_COPY "cmd_copy"
-#define NSCMD_ITALIC "cmd_italic"
-#define NSCMD_UNDERLINE "cmd_underline"
-#define NSCMD_ALIGN "cmd_align"
-#define NSCMD_INDENT "cmd_indent"
-#define NSCMD_OUTDENT "cmd_outdent"
-#define NSCMD_INSERTHR "cmd_insertHR"
-#define NSCMD_UL "cmd_ul"
-#define NSCMD_OL "cmd_ol"
-
-#define NSSTATE_ATTRIBUTE "state_attribute"
-
-#define NSALIGN_CENTER "center"
-#define NSALIGN_LEFT   "left"
-#define NSALIGN_RIGHT  "right"
 
 void do_ns_command(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
 {
