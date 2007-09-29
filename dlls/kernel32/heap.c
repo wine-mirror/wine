@@ -1206,7 +1206,8 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     FILE *f;
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     unsigned long val;
-    int size_sys, mib[2];
+    int mib[2];
+    size_t size_sys;
 #elif defined(__APPLE__)
     unsigned int val;
     int mib[2];
