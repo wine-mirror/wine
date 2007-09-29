@@ -93,12 +93,19 @@ static BOOL exec_shldocvw_67(HTMLDocument *doc, LPCWSTR url)
     return TRUE;
 }
 
-static BOOL handle_uri(NSContainer *container, nsChannel *channel, LPCWSTR uri)
+static BOOL before_async_open(nsChannel *channel, NSContainer *container)
 {
     IServiceProvider *service_provider;
     HTMLDocument *doc = container->doc;
     DWORD hlnf = 0;
+    LPCWSTR uri;
     HRESULT hres;
+
+    nsIWineURI_GetWineURL(channel->uri, &uri);
+    if(!uri) {
+        ERR("GetWineURL returned NULL\n");
+        return TRUE;
+    }
 
     if(!doc) {
         NSContainer *container_iter = container;
@@ -129,29 +136,6 @@ static BOOL handle_uri(NSContainer *container, nsChannel *channel, LPCWSTR uri)
     }
 
     return TRUE;
-}
-
-static BOOL before_async_open(nsChannel *channel, NSContainer *container)
-{
-    nsACString uri_str;
-    const char *uria;
-    LPWSTR uri;
-    DWORD len;
-    BOOL ret;
-
-    nsACString_Init(&uri_str, NULL);
-    nsIWineURI_GetSpec(channel->uri, &uri_str);
-    nsACString_GetData(&uri_str, &uria, NULL);
-    len = MultiByteToWideChar(CP_ACP, 0, uria, -1, NULL, 0);
-    uri = mshtml_alloc(len*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, uria, -1, uri, len);
-    nsACString_Finish(&uri_str);
-
-    ret = handle_uri(container, channel, uri);
-
-    mshtml_free(uri);
-
-    return ret;
 }
 
 #define NSCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, HttpChannel, iface)
