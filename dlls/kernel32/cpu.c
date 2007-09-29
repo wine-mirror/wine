@@ -641,7 +641,8 @@ VOID WINAPI GetSystemInfo(
         }
 #elif defined(__FreeBSD__)
 	{
-	int ret, len, num;
+	int ret, num;
+	unsigned len;
 
         get_cpuinfo( &cachedsi );
 
