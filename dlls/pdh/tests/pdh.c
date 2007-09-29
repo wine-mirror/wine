@@ -211,11 +211,14 @@ static void test_PdhAddEnglishCounterA( void )
     ret = PdhOpenQueryA( NULL, 0, &query );
     ok(ret == ERROR_SUCCESS, "PdhOpenQueryA failed 0x%08x\n", ret);
 
+    ret = PdhCollectQueryData( query );
+    ok(ret == PDH_NO_DATA, "PdhCollectQueryData failed 0x%08x\n", ret);
+
     ret = pPdhAddEnglishCounterA( NULL, "\\System\\System Up Time", 0, NULL );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
 
     ret = pPdhAddEnglishCounterA( NULL, "\\System\\System Up Time", 0, &counter );
-    ok(ret == PDH_INVALID_HANDLE, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
 
     ret = pPdhAddEnglishCounterA( query, NULL, 0, &counter );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
@@ -249,11 +252,14 @@ static void test_PdhAddEnglishCounterW( void )
     ret = PdhOpenQueryW( NULL, 0, &query );
     ok(ret == ERROR_SUCCESS, "PdhOpenQueryW failed 0x%08x\n", ret);
 
+    ret = PdhCollectQueryData( query );
+    ok(ret == PDH_NO_DATA, "PdhCollectQueryData failed 0x%08x\n", ret);
+
     ret = pPdhAddEnglishCounterW( NULL, system_uptime, 0, NULL );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
 
     ret = pPdhAddEnglishCounterW( NULL, system_uptime, 0, &counter );
-    ok(ret == PDH_INVALID_HANDLE, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
 
     ret = pPdhAddEnglishCounterW( query, NULL, 0, &counter );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
@@ -288,14 +294,17 @@ static void test_PdhCollectQueryDataWithTime( void )
     ret = PdhOpenQueryA( NULL, 0, &query );
     ok(ret == ERROR_SUCCESS, "PdhOpenQueryA failed 0x%08x\n", ret);
 
+    ret = PdhCollectQueryData( query );
+    ok(ret == PDH_NO_DATA, "PdhCollectQueryData failed 0x%08x\n", ret);
+
     ret = PdhAddCounterA( query, "\\System\\System Up Time", 0, &counter );
     ok(ret == ERROR_SUCCESS, "PdhAddCounterA failed 0x%08x\n", ret);
 
     ret = pPdhCollectQueryDataWithTime( NULL, NULL );
-    ok(ret == PDH_INVALID_HANDLE, "PdhCollectQueryDataWithTime failed 0x%08x\n", ret);
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhCollectQueryDataWithTime failed 0x%08x\n", ret);
 
     ret = pPdhCollectQueryDataWithTime( query, NULL );
-    ok(ret == ERROR_SUCCESS, "PdhCollectQueryDataWithTime failed 0x%08x\n", ret);
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhCollectQueryDataWithTime failed 0x%08x\n", ret);
 
     ret = pPdhCollectQueryDataWithTime( NULL, &time );
     ok(ret == PDH_INVALID_HANDLE, "PdhCollectQueryDataWithTime failed 0x%08x\n", ret);

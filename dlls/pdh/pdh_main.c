@@ -304,6 +304,9 @@ PDH_STATUS WINAPI PdhAddCounterW( PDH_HQUERY hquery, LPCWSTR path,
 PDH_STATUS WINAPI PdhAddEnglishCounterA( PDH_HQUERY query, LPCSTR path,
                                          DWORD_PTR userdata, PDH_HCOUNTER *counter )
 {
+    TRACE("%p %s %lx %p\n", query, debugstr_a(path), userdata, counter);
+
+    if (!query) return PDH_INVALID_ARGUMENT;
     return PdhAddCounterA( query, path, userdata, counter );
 }
 
@@ -313,6 +316,9 @@ PDH_STATUS WINAPI PdhAddEnglishCounterA( PDH_HQUERY query, LPCSTR path,
 PDH_STATUS WINAPI PdhAddEnglishCounterW( PDH_HQUERY query, LPCWSTR path,
                                          DWORD_PTR userdata, PDH_HCOUNTER *counter )
 {
+    TRACE("%p %s %lx %p\n", query, debugstr_w(path), userdata, counter);
+
+    if (!query) return PDH_INVALID_ARGUMENT;
     return PdhAddCounterW( query, path, userdata, counter );
 }
 
@@ -543,8 +549,12 @@ PDH_STATUS WINAPI PdhCollectQueryDataEx( PDH_HQUERY handle, DWORD interval, HAND
 PDH_STATUS WINAPI PdhCollectQueryDataWithTime( PDH_HQUERY handle, LONGLONG *timestamp )
 {
     struct query *query = handle;
+    struct counter *counter;
+    struct list *item;
 
     TRACE("%p %p\n", handle, timestamp);
+
+    if (!timestamp) return PDH_INVALID_ARGUMENT;
 
     EnterCriticalSection( &pdh_handle_cs );
     if (!query || query->magic != PDH_MAGIC_QUERY)
@@ -560,13 +570,11 @@ PDH_STATUS WINAPI PdhCollectQueryDataWithTime( PDH_HQUERY handle, LONGLONG *time
 
     collect_query_data( query );
 
-    if (timestamp)
-    {
-        struct list *item = list_head( &query->counters );
-        struct counter *counter = LIST_ENTRY( item, struct counter, entry );
+    item = list_head( &query->counters );
+    counter = LIST_ENTRY( item, struct counter, entry );
 
-        *timestamp = ((LONGLONG)counter->stamp.dwHighDateTime << 32) | counter->stamp.dwLowDateTime;
-    }
+    *timestamp = ((LONGLONG)counter->stamp.dwHighDateTime << 32) | counter->stamp.dwLowDateTime;
+
     LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;
 }
