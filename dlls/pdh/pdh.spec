@@ -16,7 +16,7 @@
 @ stdcall PdhCloseQuery(ptr)
 @ stdcall PdhCollectQueryData(ptr)
 @ stdcall PdhCollectQueryDataWithTime(ptr ptr)
-@ stub PdhCollectQueryDataEx
+@ stdcall PdhCollectQueryDataEx(ptr long ptr)
 @ stub PdhComputeCounterStatistics
 @ stub PdhConnectMachineA
 @ stub PdhConnectMachineW

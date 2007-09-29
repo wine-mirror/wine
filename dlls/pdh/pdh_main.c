@@ -151,6 +151,10 @@ struct query
 {
     DWORD       magic;      /* signature */
     DWORD_PTR   user;       /* user data */
+    HANDLE      thread;     /* collect thread */
+    DWORD       interval;   /* collect interval */
+    HANDLE      wait;       /* wait event */
+    HANDLE      stop;       /* stop event */
     struct list counters;   /* counter list */
 };
 
@@ -315,6 +319,18 @@ PDH_STATUS WINAPI PdhAddEnglishCounterW( PDH_HQUERY query, LPCWSTR path,
     return PdhAddCounterW( query, path, userdata, counter );
 }
 
+/* caller must hold query lock */
+static void shutdown_query_thread( struct query *query )
+{
+    SetEvent( query->stop );
+    WaitForSingleObject( query->thread, INFINITE );
+
+    CloseHandle( query->stop );
+    CloseHandle( query->thread );
+
+    query->thread = NULL;
+}
+
 /***********************************************************************
  *              PdhCloseQuery   (PDH.@)
  */
@@ -331,6 +347,8 @@ PDH_STATUS WINAPI PdhCloseQuery( PDH_HQUERY handle )
         LeaveCriticalSection( &pdh_handle_cs );
         return PDH_INVALID_HANDLE;
     }
+
+    if (query->thread) shutdown_query_thread( query );
 
     LIST_FOR_EACH_SAFE( item, next, &query->counters )
     {
@@ -386,6 +404,79 @@ PDH_STATUS WINAPI PdhCollectQueryData( PDH_HQUERY handle )
     }
 
     collect_query_data( query );
+
+    LeaveCriticalSection( &pdh_handle_cs );
+    return ERROR_SUCCESS;
+}
+
+static DWORD CALLBACK collect_query_thread( void *arg )
+{
+    struct query *query = arg;
+    DWORD interval = query->interval;
+    HANDLE stop = query->stop;
+
+    SetEvent( stop );
+    for (;;)
+    {
+        if (WaitForSingleObject( stop, interval ) != WAIT_TIMEOUT) ExitThread( 0 );
+
+        EnterCriticalSection( &pdh_handle_cs );
+        if (!query || query->magic != PDH_MAGIC_QUERY)
+        {
+            LeaveCriticalSection( &pdh_handle_cs );
+            ExitThread( PDH_INVALID_HANDLE );
+        }
+
+        collect_query_data( query );
+
+        if (!SetEvent( query->wait ))
+        {
+            LeaveCriticalSection( &pdh_handle_cs );
+            ExitThread( 0 );
+        }
+        LeaveCriticalSection( &pdh_handle_cs );
+    }
+}
+
+/***********************************************************************
+ *              PdhCollectQueryDataEx   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhCollectQueryDataEx( PDH_HQUERY handle, DWORD interval, HANDLE event )
+{
+    PDH_STATUS ret;
+    struct query *query = handle;
+
+    TRACE("%p %d %p\n", handle, interval, event);
+
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!query || query->magic != PDH_MAGIC_QUERY)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
+    if (list_empty( &query->counters ))
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_NO_DATA;
+    }
+    if (query->thread) shutdown_query_thread( query );
+    if (!(query->stop = CreateEventW( NULL, FALSE, FALSE, NULL )))
+    {
+        ret = GetLastError();
+        LeaveCriticalSection( &pdh_handle_cs );
+        return ret;
+    }
+    query->wait = event;
+    query->interval = interval * 1000;
+    if (!(query->thread = CreateThread( NULL, 0, collect_query_thread, query, 0, NULL )))
+    {
+        ret = GetLastError();
+        CloseHandle( query->stop );
+
+        LeaveCriticalSection( &pdh_handle_cs );
+        return ret;
+    }
+    WaitForSingleObject( query->stop, INFINITE );
 
     LeaveCriticalSection( &pdh_handle_cs );
     return ERROR_SUCCESS;

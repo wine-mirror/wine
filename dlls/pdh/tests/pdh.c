@@ -797,6 +797,56 @@ static void test_PdhValidatePathExW( void )
     ok(ret == ERROR_SUCCESS, "PdhValidatePathExW failed 0x%08x\n", ret);
 }
 
+static void test_PdhCollectQueryDataEx(void)
+{
+    PDH_STATUS status;
+    PDH_HQUERY query;
+    PDH_HCOUNTER counter;
+    HANDLE event;
+    BOOL ret;
+    UINT i;
+
+    status = PdhOpenQueryA( NULL, 0, &query );
+    ok(status == ERROR_SUCCESS, "PdhOpenQuery failed 0x%08x\n", status);
+
+    event = CreateEventA( NULL, FALSE, FALSE, "winetest" );
+    ok(event != NULL, "CreateEvent failed\n");
+
+    status = PdhAddCounterA( query, "\\System\\System Up Time", 0, &counter );
+    ok(status == ERROR_SUCCESS, "PdhAddCounterA failed 0x%08x\n", status);
+
+    status = PdhCollectQueryDataEx( NULL, 1, event );
+    ok(status == PDH_INVALID_HANDLE, "PdhCollectQueryDataEx failed 0x%08x\n", status);
+
+    status = PdhCollectQueryDataEx( query, 1, NULL );
+    ok(status == ERROR_SUCCESS, "PdhCollectQueryDataEx failed 0x%08x\n", status);
+
+    status = PdhCollectQueryDataEx( query, 1, event );
+    ok(status == ERROR_SUCCESS, "PdhCollectQueryDataEx failed 0x%08x\n", status);
+
+    status = PdhCollectQueryData( query );
+    ok(status == ERROR_SUCCESS, "PdhCollectQueryData failed 0x%08x\n", status);
+
+    for (i = 0; i < 3; i++)
+    {
+        if (WaitForSingleObject( event, INFINITE ) == WAIT_OBJECT_0)
+        {
+            PDH_FMT_COUNTERVALUE value;
+
+            status = PdhGetFormattedCounterValue( counter, PDH_FMT_LARGE, NULL, &value );
+            ok(status == ERROR_SUCCESS, "PdhGetFormattedCounterValue failed 0x%08x\n", status);
+
+            trace( "uptime %x%08x\n", (DWORD)(value.largeValue >> 32), (DWORD)value.largeValue );
+        }
+    }
+
+    ret = CloseHandle( event );
+    ok(ret, "CloseHandle failed\n");
+
+    status = PdhCloseQuery( query );
+    ok(status == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", status);
+}
+
 START_TEST(pdh)
 {
     init_function_ptrs();
@@ -830,4 +880,6 @@ START_TEST(pdh)
 
     if (pPdhValidatePathExA) test_PdhValidatePathExA();
     if (pPdhValidatePathExW) test_PdhValidatePathExW();
+
+    test_PdhCollectQueryDataEx();
 }
