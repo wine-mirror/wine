@@ -244,7 +244,7 @@ BOOL get_app_key(HKEY *defkey, HKEY *appkey)
             if ((p = strrchr(appname, '\\'))) appname = p + 1;
             strcat(appname, "\\DirectInput");
 
-            if (RegOpenKeyA(tmpkey, appname, appkey)) appkey = 0;
+            if (RegOpenKeyA(tmpkey, appname, appkey)) *appkey = 0;
             RegCloseKey(tmpkey);
         }
     }
