@@ -700,3 +700,77 @@ PDH_STATUS WINAPI PdhSetCounterScaleFactor( PDH_HCOUNTER handle, LONG factor )
     counter->scale = factor;
     return ERROR_SUCCESS;
 }
+
+/***********************************************************************
+ *              PdhValidatePathA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhValidatePathA( LPCSTR path )
+{
+    PDH_STATUS ret;
+    WCHAR *pathW;
+
+    TRACE("%s\n", debugstr_a(path));
+
+    if (!path) return PDH_INVALID_ARGUMENT;
+    if (!(pathW = pdh_strdup_aw( path ))) return PDH_MEMORY_ALLOCATION_FAILURE;
+
+    ret = PdhValidatePathW( pathW );
+
+    pdh_free( pathW );
+    return ret;
+}
+
+static PDH_STATUS validate_path( LPCWSTR path )
+{
+    if (!path || !*path) return PDH_INVALID_ARGUMENT;
+    if (*path++ != '\\' || !strchrW( path, '\\' )) return PDH_CSTATUS_BAD_COUNTERNAME;
+    return ERROR_SUCCESS;
+ }
+
+/***********************************************************************
+ *              PdhValidatePathW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhValidatePathW( LPCWSTR path )
+{
+    PDH_STATUS ret;
+    unsigned int i;
+
+    TRACE("%s\n", debugstr_w(path));
+
+    if ((ret = validate_path( path ))) return ret;
+
+    for (i = 0; i < sizeof(counter_sources) / sizeof(counter_sources[0]); i++)
+        if (pdh_match_path( counter_sources[i].path, path )) return ERROR_SUCCESS;
+
+    return PDH_CSTATUS_NO_COUNTER;
+}
+
+/***********************************************************************
+ *              PdhValidatePathExA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhValidatePathExA( PDH_HLOG source, LPCSTR path )
+{
+    TRACE("%p %s\n", source, debugstr_a(path));
+
+    if (source)
+    {
+        FIXME("log file data source not supported\n");
+        return ERROR_SUCCESS;
+    }
+    return PdhValidatePathA( path );
+}
+
+/***********************************************************************
+ *              PdhValidatePathExW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhValidatePathExW( PDH_HLOG source, LPCWSTR path )
+{
+    TRACE("%p %s\n", source, debugstr_w(path));
+
+    if (source)
+    {
+        FIXME("log file data source not supported\n");
+        return ERROR_SUCCESS;
+    }
+    return PdhValidatePathW( path );
+}

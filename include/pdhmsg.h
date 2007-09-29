@@ -30,6 +30,7 @@
 #define PDH_MEMORY_ALLOCATION_FAILURE   0xc0000bbb
 #define PDH_INVALID_HANDLE              0xc0000bbc
 #define PDH_INVALID_ARGUMENT            0xc0000bbd
+#define PDH_CSTATUS_BAD_COUNTERNAME     0xc0000bc0
 #define PDH_INSUFFICIENT_BUFFER         0xc0000bc2
 #define PDH_INVALID_DATA                0xc0000bc6
 #define PDH_STRING_NOT_FOUND            0xc0000bd4

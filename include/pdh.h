@@ -35,6 +35,7 @@ extern "C" {
 typedef LONG   PDH_STATUS;
 typedef HANDLE PDH_HQUERY;
 typedef HANDLE PDH_HCOUNTER;
+typedef HANDLE PDH_HLOG;
 
 #define PDH_MAX_SCALE 7
 #define PDH_MIN_SCALE (-7)
@@ -190,6 +191,12 @@ PDH_STATUS WINAPI PdhOpenQueryW(LPCWSTR, DWORD_PTR, PDH_HQUERY *);
 #define    PdhOpenQuery WINELIB_NAME_AW(PdhOpenQuery)
 PDH_STATUS WINAPI PdhRemoveCounter(PDH_HCOUNTER);
 PDH_STATUS WINAPI PdhSetCounterScaleFactor(PDH_HCOUNTER, LONG);
+PDH_STATUS WINAPI PdhValidatePathA(LPCSTR);
+PDH_STATUS WINAPI PdhValidatePathW(LPCWSTR);
+#define    PdhValidatePath WINELIB_NAME_AW(PdhValidatePath)
+PDH_STATUS WINAPI PdhValidatePathExA(PDH_HLOG, LPCSTR);
+PDH_STATUS WINAPI PdhValidatePathExW(PDH_HLOG, LPCWSTR);
+#define    PdhValidatePathEx WINELIB_NAME_AW(PdhValidatePathEx)
 
 #ifdef __cplusplus
 }

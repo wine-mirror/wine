@@ -137,10 +137,10 @@
 @ stub PdhUpdateLogA
 @ stub PdhUpdateLogFileCatalog
 @ stub PdhUpdateLogW
-@ stub PdhValidatePathA
-@ stub PdhValidatePathExA
-@ stub PdhValidatePathExW
-@ stub PdhValidatePathW
+@ stdcall PdhValidatePathA(str)
+@ stdcall PdhValidatePathExA(ptr str)
+@ stdcall PdhValidatePathExW(ptr wstr)
+@ stdcall PdhValidatePathW(wstr)
 @ stub PdhVbAddCounter
 @ stub PdhVbCreateCounterPathList
 @ stub PdhVbGetCounterPathElements
