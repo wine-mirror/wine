@@ -36,12 +36,13 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-static BOOL X11DRV_XRender_Installed = FALSE;
 int using_client_side_fonts = FALSE;
 
 WINE_DEFAULT_DEBUG_CHANNEL(xrender);
 
 #ifdef SONAME_LIBXRENDER
+
+static BOOL X11DRV_XRender_Installed = FALSE;
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
