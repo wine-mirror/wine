@@ -32,6 +32,8 @@ static HMODULE pdh;
 static PDH_STATUS   (WINAPI *pPdhAddEnglishCounterA)(PDH_HQUERY, LPCSTR, DWORD_PTR, PDH_HCOUNTER *);
 static PDH_STATUS   (WINAPI *pPdhAddEnglishCounterW)(PDH_HQUERY, LPCWSTR, DWORD_PTR, PDH_HCOUNTER *);
 static PDH_STATUS   (WINAPI *pPdhCollectQueryDataWithTime)(PDH_HQUERY, LONGLONG *);
+static PDH_STATUS   (WINAPI *pPdhValidatePathExA)(PDH_HLOG, LPCSTR);
+static PDH_STATUS   (WINAPI *pPdhValidatePathExW)(PDH_HLOG, LPCWSTR);
 
 #define GETFUNCPTR(func) p##func = (void *)GetProcAddress( pdh, #func );
 
@@ -41,6 +43,8 @@ static void init_function_ptrs( void )
     GETFUNCPTR( PdhAddEnglishCounterA )
     GETFUNCPTR( PdhAddEnglishCounterW )
     GETFUNCPTR( PdhCollectQueryDataWithTime )
+    GETFUNCPTR( PdhValidatePathExA )
+    GETFUNCPTR( PdhValidatePathExW )
 }
 
 static const WCHAR processor_time[] =
@@ -695,6 +699,104 @@ static void test_PdhLookupPerfNameByIndexW( void )
     ok(size == sizeof(uptime) / sizeof(WCHAR), "PdhLookupPerfNameByIndexW failed %d\n", size);
 }
 
+static void test_PdhValidatePathA( void )
+{
+    PDH_STATUS ret;
+
+    ret = PdhValidatePathA( NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathA failed 0x%08x\n", ret);
+
+    ret = PdhValidatePathA( "" );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathA failed 0x%08x\n", ret);
+
+    ret = PdhValidatePathA( "\\System" );
+    ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathA failed 0x%08x\n", ret);
+
+    ret = PdhValidatePathA( "System Up Time" );
+    ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathA failed 0x%08x\n", ret);
+
+    ret = PdhValidatePathA( "\\System\\System Down Time" );
+    ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhValidatePathA failed 0x%08x\n", ret);
+
+    ret = PdhValidatePathA( "\\System\\System Up Time" );
+    ok(ret == ERROR_SUCCESS, "PdhValidatePathA failed 0x%08x\n", ret);
+}
+
+static void test_PdhValidatePathW( void )
+{
+    PDH_STATUS ret;
+
+    static const WCHAR empty[] = {0};
+    static const WCHAR system[] = {'\\','S','y','s','t','e','m',0};
+
+    ret = PdhValidatePathW( NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathW failed 0x%08x\n", ret);
+
+    ret = PdhValidatePathW( empty );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathW failed 0x%08x\n", ret);
+
+    ret = PdhValidatePathW( system );
+    ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathW failed 0x%08x\n", ret);
+
+    ret = PdhValidatePathW( uptime );
+    ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathW failed 0x%08x\n", ret);
+
+    ret = PdhValidatePathW( system_downtime );
+    ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhValidatePathW failed 0x%08x\n", ret);
+
+    ret = PdhValidatePathW( system_uptime );
+    ok(ret == ERROR_SUCCESS, "PdhValidatePathW failed 0x%08x\n", ret);
+}
+
+static void test_PdhValidatePathExA( void )
+{
+    PDH_STATUS ret;
+
+    ret = pPdhValidatePathExA( NULL, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathExA failed 0x%08x\n", ret);
+
+    ret = pPdhValidatePathExA( NULL, "" );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathExA failed 0x%08x\n", ret);
+
+    ret = pPdhValidatePathExA( NULL, "\\System" );
+    ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathExA failed 0x%08x\n", ret);
+
+    ret = pPdhValidatePathExA( NULL, "System Up Time" );
+    ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathExA failed 0x%08x\n", ret);
+
+    ret = pPdhValidatePathExA( NULL, "\\System\\System Down Time" );
+    ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhValidatePathExA failed 0x%08x\n", ret);
+
+    ret = pPdhValidatePathExA( NULL, "\\System\\System Up Time" );
+    ok(ret == ERROR_SUCCESS, "PdhValidatePathExA failed 0x%08x\n", ret);
+}
+
+static void test_PdhValidatePathExW( void )
+{
+    PDH_STATUS ret;
+
+    static const WCHAR empty[] = {0};
+    static const WCHAR system[] = {'\\','S','y','s','t','e','m',0};
+
+    ret = pPdhValidatePathExW( NULL, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathExW failed 0x%08x\n", ret);
+
+    ret = pPdhValidatePathExW( NULL, empty );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathExW failed 0x%08x\n", ret);
+
+    ret = pPdhValidatePathExW( NULL, system );
+    ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathExW failed 0x%08x\n", ret);
+
+    ret = pPdhValidatePathExW( NULL, uptime );
+    ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathExW failed 0x%08x\n", ret);
+
+    ret = pPdhValidatePathExW( NULL, system_downtime );
+    ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhValidatePathExW failed 0x%08x\n", ret);
+
+    ret = pPdhValidatePathExW( NULL, system_uptime );
+    ok(ret == ERROR_SUCCESS, "PdhValidatePathExW failed 0x%08x\n", ret);
+}
+
 START_TEST(pdh)
 {
     init_function_ptrs();
@@ -722,4 +824,10 @@ START_TEST(pdh)
 
     test_PdhLookupPerfNameByIndexA();
     test_PdhLookupPerfNameByIndexW();
+
+    test_PdhValidatePathA();
+    test_PdhValidatePathW();
+
+    if (pPdhValidatePathExA) test_PdhValidatePathExA();
+    if (pPdhValidatePathExW) test_PdhValidatePathExW();
 }
