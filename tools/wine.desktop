@@ -1,8 +1,7 @@
 [Desktop Entry]
 Type=Application
-Encoding=UTF-8
 Name=Wine Windows Emulator
 Name[de]=Wine Windows-Emulator
 Exec=wine %f
-MimeType=application/x-ms-dos-executable;application/x-msdos-program;application/x-msdownload;application/exe;application/x-exe;application/dos-exe;vms/exe;application/x-winexe;application/msdos-windows;application/x-msdos-program;application/x-zip-compressed;application/x-executable
+MimeType=application/x-ms-dos-executable;application/x-msdos-program;application/x-msdownload;application/exe;application/x-exe;application/dos-exe;vms/exe;application/x-winexe;application/msdos-windows;application/x-zip-compressed;application/x-executable;
 NoDisplay=true
