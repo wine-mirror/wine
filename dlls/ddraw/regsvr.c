@@ -34,6 +34,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
+static typeof(RegDeleteTreeW) * pRegDeleteTreeW;
+static typeof(RegDeleteTreeA) * pRegDeleteTreeA;
+
 /*
  * Near the bottom of this file are the exported DllRegisterServer and
  * DllUnregisterServer, which make all this worthwhile.
@@ -193,7 +196,7 @@ static HRESULT unregister_interfaces(struct regsvr_interface const *list)
 	WCHAR buf[39];
 
 	StringFromGUID2(list->iid, buf, 39);
-	res = RegDeleteTreeW(interface_key, buf);
+	res = pRegDeleteTreeW(interface_key, buf);
 	if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
     }
 
@@ -304,12 +307,12 @@ static HRESULT unregister_coclasses(struct regsvr_coclass const *list)
 	WCHAR buf[39];
 
 	StringFromGUID2(list->clsid, buf, 39);
-	res = RegDeleteTreeW(coclass_key, buf);
+	res = pRegDeleteTreeW(coclass_key, buf);
 	if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
 	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
 
 	if (list->progid) {
-	    res = RegDeleteTreeA(HKEY_CLASSES_ROOT, list->progid);
+	    res = pRegDeleteTreeA(HKEY_CLASSES_ROOT, list->progid);
 	    if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
 	    if (res != ERROR_SUCCESS) goto error_close_coclass_key;
 	}
@@ -421,6 +424,12 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI DllUnregisterServer(void)
 {
     HRESULT hr;
+
+    HMODULE advapi32 = GetModuleHandleA("advapi32");
+    if (!advapi32) return E_FAIL;
+    pRegDeleteTreeA = (typeof(RegDeleteTreeA)*) GetProcAddress(advapi32, "RegDeleteTreeA");
+    pRegDeleteTreeW = (typeof(RegDeleteTreeW)*) GetProcAddress(advapi32, "RegDeleteTreeW");
+    if (!pRegDeleteTreeA || !pRegDeleteTreeW) return E_FAIL;
 
     TRACE("\n");
 
