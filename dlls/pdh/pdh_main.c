@@ -96,6 +96,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+union value
+{
+    LONG     longvalue;
+    double   doublevalue;
+    LONGLONG largevalue;
+};
+
 struct counter
 {
     DWORD           magic;                          /* signature */
@@ -110,18 +117,8 @@ struct counter
     LONGLONG        base;                           /* samples per second */
     FILETIME        stamp;                          /* time stamp */
     void (CALLBACK *collect)( struct counter * );   /* collect callback */
-    union
-    {
-        LONG     longvalue;
-        double   doublevalue;
-        LONGLONG largevalue;
-    } one;                                          /* first value */
-    union
-    {
-        LONG     longvalue;
-        double   doublevalue;
-        LONGLONG largevalue;
-    } two;                                          /* second value */
+    union value     one;                            /* first value */
+    union value     two;                            /* second value */
 };
 
 #define PDH_MAGIC_COUNTER   0x50444831 /* 'PDH1' */
@@ -317,6 +314,64 @@ PDH_STATUS WINAPI PdhAddEnglishCounterW( PDH_HQUERY query, LPCWSTR path,
                                          DWORD_PTR userdata, PDH_HCOUNTER *counter )
 {
     return PdhAddCounterW( query, path, userdata, counter );
+}
+
+/* caller must hold counter lock */
+static PDH_STATUS format_value( struct counter *counter, DWORD format, union value *raw1,
+                                union value *raw2, PDH_FMT_COUNTERVALUE *value )
+{
+    LONG factor;
+
+    factor = counter->scale ? counter->scale : counter->defaultscale;
+    if (format & PDH_FMT_LONG)
+    {
+        if (format & PDH_FMT_1000) value->u.longValue = raw2->longvalue * 1000;
+        else value->u.longValue = raw2->longvalue * pow( 10, factor );
+    }
+    else if (format & PDH_FMT_LARGE)
+    {
+        if (format & PDH_FMT_1000) value->u.largeValue = raw2->largevalue * 1000;
+        else value->u.largeValue = raw2->largevalue * pow( 10, factor );
+    }
+    else if (format & PDH_FMT_DOUBLE)
+    {
+        if (format & PDH_FMT_1000) value->u.doubleValue = raw2->doublevalue * 1000;
+        else value->u.doubleValue = raw2->doublevalue * pow( 10, factor );
+    }
+    else
+    {
+        WARN("unknown format %x\n", format);
+        return PDH_INVALID_ARGUMENT;
+    }
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *              PdhCalculateCounterFromRawValue   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhCalculateCounterFromRawValue( PDH_HCOUNTER handle, DWORD format,
+                                                   PPDH_RAW_COUNTER raw1, PPDH_RAW_COUNTER raw2,
+                                                   PPDH_FMT_COUNTERVALUE value )
+{
+    PDH_STATUS ret;
+    struct counter *counter = handle;
+
+    TRACE("%p 0x%08x %p %p %p\n", handle, format, raw1, raw2, value);
+
+    if (!value) return PDH_INVALID_ARGUMENT;
+
+    EnterCriticalSection( &pdh_handle_cs );
+    if (!counter || counter->magic != PDH_MAGIC_COUNTER)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
+
+    ret = format_value( counter, format, (union value *)&raw1->SecondValue,
+                                         (union value *)&raw2->SecondValue, value );
+
+    LeaveCriticalSection( &pdh_handle_cs );
+    return ret;
 }
 
 /* caller must hold query lock */
@@ -630,7 +685,7 @@ PDH_STATUS WINAPI PdhGetCounterTimeBase( PDH_HCOUNTER handle, LONGLONG *base )
 PDH_STATUS WINAPI PdhGetFormattedCounterValue( PDH_HCOUNTER handle, DWORD format,
                                                LPDWORD type, PPDH_FMT_COUNTERVALUE value )
 {
-    LONG factor;
+    PDH_STATUS ret;
     struct counter *counter = handle;
 
     TRACE("%p %x %p %p\n", handle, format, type, value);
@@ -648,34 +703,14 @@ PDH_STATUS WINAPI PdhGetFormattedCounterValue( PDH_HCOUNTER handle, DWORD format
         LeaveCriticalSection( &pdh_handle_cs );
         return PDH_INVALID_DATA;
     }
-
-    factor = counter->scale ? counter->scale : counter->defaultscale;
-    if (format & PDH_FMT_LONG)
+    if (!(ret = format_value( counter, format, &counter->one, &counter->two, value )))
     {
-        if (format & PDH_FMT_1000) value->u.longValue = counter->two.longvalue * 1000;
-        else value->u.longValue = counter->two.longvalue * pow( 10, factor );
+        value->CStatus = ERROR_SUCCESS;
+        if (type) *type = counter->type;
     }
-    else if (format & PDH_FMT_LARGE)
-    {
-        if (format & PDH_FMT_1000) value->u.largeValue = counter->two.largevalue * 1000;
-        else value->u.largeValue = counter->two.largevalue * pow( 10, factor );
-    }
-    else if (format & PDH_FMT_DOUBLE)
-    {
-        if (format & PDH_FMT_1000) value->u.doubleValue = counter->two.doublevalue * 1000;
-        else value->u.doubleValue = counter->two.doublevalue * pow( 10, factor );
-    }
-    else
-    {
-        WARN("unknown format %x\n", format);
-        LeaveCriticalSection( &pdh_handle_cs );
-        return PDH_INVALID_ARGUMENT;
-    }
-    value->CStatus = ERROR_SUCCESS;
-    if (type) *type = counter->type;
 
     LeaveCriticalSection( &pdh_handle_cs );
-    return ERROR_SUCCESS;
+    return ret;
 }
 
 /***********************************************************************

@@ -11,7 +11,7 @@
 @ stub PdhBrowseCountersHA
 @ stub PdhBrowseCountersHW
 @ stub PdhBrowseCountersW
-@ stub PdhCalculateCounterFromRawValue
+@ stdcall PdhCalculateCounterFromRawValue(ptr long ptr ptr ptr)
 @ stub PdhCloseLog
 @ stdcall PdhCloseQuery(ptr)
 @ stdcall PdhCollectQueryData(ptr)
