@@ -196,7 +196,7 @@ DEFINE_GUID(IID_IWineD3DClipper,
 /*****************************************************************************
  * Callback functions required for predefining surfaces / stencils
  */
-typedef HRESULT WINAPI (*D3DCB_CREATERENDERTARGETFN) (IUnknown *pDevice,
+typedef HRESULT (WINAPI *D3DCB_CREATERENDERTARGETFN) (IUnknown *pDevice,
                                                IUnknown   *pSuperior,
                                                UINT       Width,
                                                UINT       Height,
@@ -207,7 +207,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATERENDERTARGETFN) (IUnknown *pDevice,
                                                struct IWineD3DSurface **ppSurface,
                                                HANDLE    *pSharedHandle);
 
-typedef HRESULT WINAPI (*D3DCB_CREATESURFACEFN) (IUnknown *pDevice,
+typedef HRESULT (WINAPI *D3DCB_CREATESURFACEFN) (IUnknown *pDevice,
                                                IUnknown   *pSuperior,
                                                UINT       Width,
                                                UINT       Height,
@@ -219,7 +219,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATESURFACEFN) (IUnknown *pDevice,
                                                struct IWineD3DSurface **ppSurface,
                                                HANDLE    *pSharedHandle);
 
-typedef HRESULT WINAPI (*D3DCB_CREATEDEPTHSTENCILSURFACEFN) (IUnknown *pDevice,
+typedef HRESULT (WINAPI *D3DCB_CREATEDEPTHSTENCILSURFACEFN) (IUnknown *pDevice,
                                                IUnknown   *pSuperior,
                                                UINT       Width,
                                                UINT       Height,
@@ -231,7 +231,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATEDEPTHSTENCILSURFACEFN) (IUnknown *pDevice,
                                                HANDLE    *pSharedHandle);
 
 
-typedef HRESULT WINAPI (*D3DCB_CREATEVOLUMEFN) (IUnknown *pDevice,
+typedef HRESULT (WINAPI *D3DCB_CREATEVOLUMEFN) (IUnknown *pDevice,
                                                IUnknown   *pSuperior,
                                                UINT       Width,
                                                UINT       Height,
@@ -242,7 +242,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATEVOLUMEFN) (IUnknown *pDevice,
                                                struct IWineD3DVolume **ppVolume,
                                                HANDLE    *pSharedHandle);
 
-typedef HRESULT WINAPI (*D3DCB_CREATEADDITIONALSWAPCHAIN) (IUnknown *pDevice,
+typedef HRESULT (WINAPI *D3DCB_CREATEADDITIONALSWAPCHAIN) (IUnknown *pDevice,
                                                WINED3DPRESENT_PARAMETERS *pPresentationParameters,
                                                struct IWineD3DSwapChain **pSwapChain
                                                );
@@ -250,11 +250,11 @@ typedef HRESULT WINAPI (*D3DCB_CREATEADDITIONALSWAPCHAIN) (IUnknown *pDevice,
 /*****************************************************************************
  * Callback functions for custom implicit object destruction.
  */
-typedef ULONG WINAPI (*D3DCB_DESTROYSWAPCHAINFN) (struct IWineD3DSwapChain *pSwapChain);
+typedef ULONG (WINAPI *D3DCB_DESTROYSWAPCHAINFN) (struct IWineD3DSwapChain *pSwapChain);
 
-typedef ULONG WINAPI (*D3DCB_DESTROYSURFACEFN) (struct IWineD3DSurface *pSurface);
+typedef ULONG (WINAPI *D3DCB_DESTROYSURFACEFN) (struct IWineD3DSurface *pSurface);
 
-typedef ULONG WINAPI (*D3DCB_DESTROYVOLUMEFN) (struct IWineD3DVolume *pVolume);
+typedef ULONG (WINAPI *D3DCB_DESTROYVOLUMEFN) (struct IWineD3DVolume *pVolume);
 
 /*****************************************************************************
  * IWineD3DBase interface
