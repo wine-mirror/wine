@@ -3852,6 +3852,41 @@ static const struct message WmSetIcon_2[] = {
     { 0 }
 };
 
+/* Sending undocumented 0x3B message with wparam = 0x8000000b */
+static const struct message WmInitEndSession[] = {
+    { 0x003B, sent },
+    { WM_QUERYENDSESSION, sent|defwinproc|wparam|lparam, 0, ENDSESSION_LOGOFF },
+    { 0 }
+};
+
+/* Sending undocumented 0x3B message with wparam = 0x0000000b */
+static const struct message WmInitEndSession_2[] = {
+    { 0x003B, sent },
+    { WM_QUERYENDSESSION, sent|defwinproc|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+/* Sending undocumented 0x3B message with wparam = 0x80000008 */
+static const struct message WmInitEndSession_3[] = {
+    { 0x003B, sent },
+    { WM_ENDSESSION, sent|defwinproc|wparam|lparam, 0, ENDSESSION_LOGOFF },
+    { 0 }
+};
+
+/* Sending undocumented 0x3B message with wparam = 0x00000008 */
+static const struct message WmInitEndSession_4[] = {
+    { 0x003B, sent },
+    { WM_ENDSESSION, sent|defwinproc|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+/* Sending undocumented 0x3B message with wparam = 0x80000001 */
+static const struct message WmInitEndSession_5[] = {
+    { 0x003B, sent },
+    { WM_ENDSESSION, sent|defwinproc|wparam|lparam, 1, ENDSESSION_LOGOFF },
+    { 0 }
+};
+
 static void test_MsgWaitForMultipleObjects(HWND hwnd)
 {
     DWORD ret;
@@ -3902,6 +3937,7 @@ static void test_messages(void)
     HWND hchild2, hbutton;
     HMENU hmenu;
     MSG msg;
+    LRESULT res;
 
     flush_sequence();
 
@@ -4275,6 +4311,41 @@ static void test_messages(void)
     flush_sequence();
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(0, IDI_APPLICATION));
     ok_sequence(WmSetIcon_2, "WM_SETICON for hidden window without caption", FALSE);
+
+    flush_sequence();
+    res = SendMessage(hwnd, 0x3B, 0x8000000b, 0);
+    ok_sequence(WmInitEndSession, "Handling of undocumented 0x3B message by DefWindowProc wparam=0x8000000b", TRUE);
+    todo_wine
+    ok(res == 1, "SendMessage(hwnd, 0x3B, 0x8000000b, 0) should have returned 1 instead of %ld\n", res);
+    res = SendMessage(hwnd, 0x3B, 0x0000000b, 0);
+    ok_sequence(WmInitEndSession_2, "Handling of undocumented 0x3B message by DefWindowProc wparam=0x0000000b", TRUE);
+    todo_wine
+    ok(res == 1, "SendMessage(hwnd, 0x3B, 0x0000000b, 0) should have returned 1 instead of %ld\n", res);
+    res = SendMessage(hwnd, 0x3B, 0x0000000f, 0);
+    ok_sequence(WmInitEndSession_2, "Handling of undocumented 0x3B message by DefWindowProc wparam=0x0000000f", TRUE);
+    todo_wine
+    ok(res == 1, "SendMessage(hwnd, 0x3B, 0x0000000f, 0) should have returned 1 instead of %ld\n", res);
+
+    flush_sequence();
+    res = SendMessage(hwnd, 0x3B, 0x80000008, 0);
+    ok_sequence(WmInitEndSession_3, "Handling of undocumented 0x3B message by DefWindowProc wparam=0x80000008", TRUE);
+    todo_wine
+    ok(res == 2, "SendMessage(hwnd, 0x3B, 0x80000008, 0) should have returned 2 instead of %ld\n", res);
+    res = SendMessage(hwnd, 0x3B, 0x00000008, 0);
+    ok_sequence(WmInitEndSession_4, "Handling of undocumented 0x3B message by DefWindowProc wparam=0x00000008", TRUE);
+    todo_wine
+    ok(res == 2, "SendMessage(hwnd, 0x3B, 0x00000008, 0) should have returned 2 instead of %ld\n", res);
+
+    res = SendMessage(hwnd, 0x3B, 0x80000004, 0);
+    ok_sequence(WmInitEndSession_3, "Handling of undocumented 0x3B message by DefWindowProc wparam=0x80000004", TRUE);
+    todo_wine
+    ok(res == 2, "SendMessage(hwnd, 0x3B, 0x80000004, 0) should have returned 2 instead of %ld\n", res);
+
+    res = SendMessage(hwnd, 0x3B, 0x80000001, 0);
+    ok_sequence(WmInitEndSession_5, "Handling of undocumented 0x3B message by DefWindowProc wparam=0x80000001", TRUE);
+    todo_wine
+    ok(res == 2, "SendMessage(hwnd, 0x3B, 0x80000001, 0) should have returned 2 instead of %ld\n", res);
+
     DestroyWindow(hwnd);
     flush_sequence();
 }
