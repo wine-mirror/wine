@@ -439,6 +439,8 @@ DSOUND_capture_callback(
 		capture_CheckNotify(Moi, 0, 0);
 	    } else {
 		if (This->state == STATE_CAPTURING) {
+		    waveInUnprepareHeader(hwi, &(This->pwave[index]), sizeof(WAVEHDR));
+		    waveInPrepareHeader(hwi, &(This->pwave[index]), sizeof(WAVEHDR));
 		    waveInAddBuffer(hwi, &(This->pwave[index]), sizeof(WAVEHDR));
 	        } else if (This->state == STATE_STOPPING) {
 		    TRACE("stopping\n");
