@@ -4,7 +4,7 @@
 @ stub CreateMinidumpW
 @ stub ReportEREvent
 @ stub ReportEREventDW
-@ stub ReportFault
+@ stdcall ReportFault(ptr long)
 @ stub ReportFaultDWM
 @ stub ReportFaultFromQueue
 @ stub ReportFaultToQueue
