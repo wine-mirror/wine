@@ -44,10 +44,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(heap);
 
-/* Note: the heap data structures are based on what Pietrek describes in his
- * book 'Windows 95 System Programming Secrets'. The layout is not exactly
- * the same, but could be easily adapted if it turns out some programs
- * require it.
+/* Note: the heap data structures are losely based on what Pietrek describes in his
+ * book 'Windows 95 System Programming Secrets', with some adaptations for
+ * better compatibility with NT.
  */
 
 /* FIXME: use SIZE_T for 'size' structure members, but we need to make sure
@@ -108,9 +107,9 @@ typedef struct tagSUBHEAP
     void               *base;       /* Base address of the sub-heap memory block */
     SIZE_T              size;       /* Size of the whole sub-heap */
     SIZE_T              commitSize; /* Committed size of the sub-heap */
-    DWORD               headerSize; /* Size of the heap header */
     struct list         entry;      /* Entry in sub-heap list */
     struct tagHEAP     *heap;       /* Main heap structure */
+    DWORD               headerSize; /* Size of the heap header */
     DWORD               magic;      /* Magic number */
 } SUBHEAP;
 
@@ -118,13 +117,15 @@ typedef struct tagSUBHEAP
 
 typedef struct tagHEAP
 {
+    DWORD            unknown[3];
+    DWORD            flags;         /* Heap flags */
+    DWORD            force_flags;   /* Forced heap flags for debugging */
     SUBHEAP          subheap;       /* First sub-heap */
     struct list      entry;         /* Entry in process heap list */
     struct list      subheap_list;  /* Sub-heap list */
+    DWORD            magic;         /* Magic number */
     RTL_CRITICAL_SECTION critSection; /* Critical section for serialization */
     FREE_LIST_ENTRY  freeList[HEAP_NB_FREE_LISTS];  /* Free lists */
-    DWORD            flags;         /* Heap flags */
-    DWORD            magic;         /* Magic number */
 } HEAP;
 
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
@@ -1097,6 +1098,8 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
     {
         processHeap = subheap->heap;  /* assume the first heap we create is the process main heap */
         list_init( &processHeap->entry );
+        /* make sure structure alignment is correct */
+        assert( (ULONG_PTR)&processHeap->freeList % ALIGNMENT == 0 );
     }
 
     return (HANDLE)subheap->heap;
