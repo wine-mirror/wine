@@ -95,7 +95,7 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
         cmd = GlobalLock((HGLOBAL)hi);
 
-        if (!cmd || (lstrcmpW((LPCWSTR)cmd, exec_cmdW) && lstrcmpA(cmd, exec_cmdA)))
+        if (!cmd || (lstrcmpA(cmd, exec_cmdA) && lstrcmpW((LPCWSTR)cmd, exec_cmdW)))
         {
             trace("ignoring unknown WM_DDE_EXECUTE command\n");
             /* We have to send a negative acknowledge even if we don't
