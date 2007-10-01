@@ -137,7 +137,7 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL qu
 /* mark a block of memory as free for debugging purposes */
 static inline void mark_block_free( void *ptr, SIZE_T size )
 {
-    if (TRACE_ON(heap)) memset( ptr, ARENA_FREE_FILLER, size );
+    if (TRACE_ON(heap) || WARN_ON(heap)) memset( ptr, ARENA_FREE_FILLER, size );
 #ifdef VALGRIND_MAKE_NOACCESS
     VALGRIND_DISCARD( VALGRIND_MAKE_NOACCESS( ptr, size ));
 #endif
@@ -157,7 +157,7 @@ static inline void mark_block_uninitialized( void *ptr, SIZE_T size )
 #ifdef VALGRIND_MAKE_WRITABLE
     VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
 #endif
-    if (TRACE_ON(heap))
+    if (TRACE_ON(heap) || WARN_ON(heap))
     {
         memset( ptr, ARENA_INUSE_FILLER, size );
 #ifdef VALGRIND_MAKE_WRITABLE
