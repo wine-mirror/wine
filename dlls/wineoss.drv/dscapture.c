@@ -356,7 +356,7 @@ static HRESULT DSCDB_MapBuffer(IDsCaptureDriverBufferImpl *dscdb)
 {
     if (!dscdb->mapping) {
         dscdb->mapping = mmap(NULL, dscdb->maplen, PROT_READ, MAP_SHARED,
-                              WInDev[dscdb->drv->wDevID].ossdev->fd, 0);
+                              WInDev[dscdb->drv->wDevID].ossdev.fd, 0);
         if (dscdb->mapping == (LPBYTE)-1) {
             TRACE("(%p): Could not map sound device for direct access (%s)\n",
                   dscdb, strerror(errno));
@@ -462,7 +462,7 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
 
         DSCDB_UnmapBuffer(This);
 
-        OSS_CloseDevice(wwi->ossdev);
+        OSS_CloseDevice(&wwi->ossdev);
         wwi->state = WINE_WS_CLOSED;
         wwi->dwFragmentSize = 0;
         This->drv->capture_buffer = NULL;
@@ -619,28 +619,28 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(
     if (dwFlags & DSCBSTART_LOOPING)
         This->is_looping = TRUE;
 
-    WInDev[This->drv->wDevID].ossdev->bInputEnabled = TRUE;
-    enable = getEnables(WInDev[This->drv->wDevID].ossdev);
-    if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+    WInDev[This->drv->wDevID].ossdev.bInputEnabled = TRUE;
+    enable = getEnables(&WInDev[This->drv->wDevID].ossdev);
+    if (ioctl(WInDev[This->drv->wDevID].ossdev.fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
         if (errno == EINVAL) {
             /* Don't give up yet. OSS trigger support is inconsistent. */
-            if (WInDev[This->drv->wDevID].ossdev->open_count == 1) {
+            if (WInDev[This->drv->wDevID].ossdev.open_count == 1) {
                 /* try the opposite output enable */
-                if (WInDev[This->drv->wDevID].ossdev->bOutputEnabled == FALSE)
-                    WInDev[This->drv->wDevID].ossdev->bOutputEnabled = TRUE;
+                if (WInDev[This->drv->wDevID].ossdev.bOutputEnabled == FALSE)
+                    WInDev[This->drv->wDevID].ossdev.bOutputEnabled = TRUE;
                 else
-                    WInDev[This->drv->wDevID].ossdev->bOutputEnabled = FALSE;
+                    WInDev[This->drv->wDevID].ossdev.bOutputEnabled = FALSE;
                 /* try it again */
-                enable = getEnables(WInDev[This->drv->wDevID].ossdev);
-                if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) >= 0) {
+                enable = getEnables(&WInDev[This->drv->wDevID].ossdev);
+                if (ioctl(WInDev[This->drv->wDevID].ossdev.fd, SNDCTL_DSP_SETTRIGGER, &enable) >= 0) {
                     This->is_capturing = TRUE;
                     return DS_OK;
                 }
             }
         }
         ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",
-            WInDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
-        WInDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
+            WInDev[This->drv->wDevID].ossdev.dev_name, strerror(errno));
+        WInDev[This->drv->wDevID].ossdev.bInputEnabled = FALSE;
         return DSERR_GENERIC;
     }
 
@@ -658,11 +658,11 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Stop(PIDSCDRIVERBUFFER iface)
         return DS_OK;
 
     /* no more capturing */
-    WInDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
-    enable = getEnables(WInDev[This->drv->wDevID].ossdev);
-    if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+    WInDev[This->drv->wDevID].ossdev.bInputEnabled = FALSE;
+    enable = getEnables(&WInDev[This->drv->wDevID].ossdev);
+    if (ioctl(WInDev[This->drv->wDevID].ossdev.fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
         ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",
-            WInDev[This->drv->wDevID].ossdev->dev_name,  strerror(errno));
+            WInDev[This->drv->wDevID].ossdev.dev_name,  strerror(errno));
         return DSERR_GENERIC;
     }
 
@@ -769,7 +769,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(
     }
 
     /* copy version from driver */
-    memcpy(pDesc, &(WInDev[This->wDevID].ossdev->ds_desc), sizeof(DSDRIVERDESC));
+    memcpy(pDesc, &(WInDev[This->wDevID].ossdev.ds_desc), sizeof(DSDRIVERDESC));
 
     pDesc->dnDevNode            = WInDev[This->wDevID].waveDesc.dnDevNode;
     pDesc->wVxdId               = 0;
@@ -809,7 +809,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetCaps(
 {
     IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     TRACE("(%p,%p)\n",This,pCaps);
-    memcpy(pCaps, &(WInDev[This->wDevID].ossdev->dsc_caps), sizeof(DSCDRIVERCAPS));
+    memcpy(pCaps, &(WInDev[This->wDevID].ossdev.dsc_caps), sizeof(DSCDRIVERCAPS));
     return DS_OK;
 }
 
@@ -902,7 +902,7 @@ static DWORD CALLBACK DSCDB_Thread(LPVOID lpParameter)
             /* get the current DMA position */
             if (ioctl(This->fd, SNDCTL_DSP_GETIPTR, &info) < 0) {
                 ERR("ioctl(%s, SNDCTL_DSP_GETIPTR) failed (%s)\n",
-                    WInDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
+                    WInDev[This->drv->wDevID].ossdev.dev_name, strerror(errno));
                 return DSERR_GENERIC;
             }
 
@@ -1044,9 +1044,9 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     if (wwi->state == WINE_WS_CLOSED) {
         unsigned int frag_size;
 
-        if (wwi->ossdev->open_count > 0) {
+        if (wwi->ossdev.open_count > 0) {
             /* opened already so use existing fragment size */
-            audio_fragment = wwi->ossdev->audio_fragment;
+            audio_fragment = wwi->ossdev.audio_fragment;
         } else {
             /* calculate a fragment size */
             unsigned int mask = 0xffffffff;
@@ -1107,7 +1107,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
               audio_fragment >> 16, frag_size, frag_size * (audio_fragment >> 16),
               (frag_size * 1000) / pwfx->nAvgBytesPerSec);
 
-        ret = OSS_OpenDevice(wwi->ossdev, O_RDWR, &audio_fragment, 1,
+        ret = OSS_OpenDevice(&wwi->ossdev, O_RDWR, &audio_fragment, 1,
                              pwfx->nSamplesPerSec,
                              (pwfx->nChannels > 1) ? 1 : 0,
                              (pwfx->wBitsPerSample == 16)
@@ -1123,10 +1123,10 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
         wwi->state = WINE_WS_STOPPED;
 
         /* find out what fragment and buffer sizes OSS gave us */
-        if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
+        if (ioctl(wwi->ossdev.fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
              ERR("ioctl(%s, SNDCTL_DSP_GETISPACE) failed (%s)\n",
-                 wwi->ossdev->dev_name, strerror(errno));
-             OSS_CloseDevice(wwi->ossdev);
+                 wwi->ossdev.dev_name, strerror(errno));
+             OSS_CloseDevice(&wwi->ossdev);
              wwi->state = WINE_WS_CLOSED;
              HeapFree(GetProcessHeap(),0,*ippdscdb);
              *ippdscdb = NULL;
@@ -1152,11 +1152,11 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
             TRACE("same buffer length but different fragment size\n");
         }
     }
-    (*ippdscdb)->fd = WInDev[This->wDevID].ossdev->fd;
+    (*ippdscdb)->fd = WInDev[This->wDevID].ossdev.fd;
 
     if (pipe((*ippdscdb)->pipe_fd) < 0) {
         TRACE("pipe() failed (%s)\n", strerror(errno));
-        OSS_CloseDevice(wwi->ossdev);
+        OSS_CloseDevice(&wwi->ossdev);
         wwi->state = WINE_WS_CLOSED;
         HeapFree(GetProcessHeap(),0,*ippdscdb);
         *ippdscdb = NULL;
@@ -1164,10 +1164,10 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     }
 
     /* check how big the DMA buffer is now */
-    if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
+    if (ioctl(wwi->ossdev.fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
         ERR("ioctl(%s, SNDCTL_DSP_GETISPACE) failed (%s)\n",
-            wwi->ossdev->dev_name, strerror(errno));
-        OSS_CloseDevice(wwi->ossdev);
+            wwi->ossdev.dev_name, strerror(errno));
+        OSS_CloseDevice(&wwi->ossdev);
         wwi->state = WINE_WS_CLOSED;
         close((*ippdscdb)->pipe_fd[0]);
         close((*ippdscdb)->pipe_fd[1]);
@@ -1184,7 +1184,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     /* map the DMA buffer */
     err = DSCDB_MapBuffer(*ippdscdb);
     if (err != DS_OK) {
-        OSS_CloseDevice(wwi->ossdev);
+        OSS_CloseDevice(&wwi->ossdev);
         wwi->state = WINE_WS_CLOSED;
         close((*ippdscdb)->pipe_fd[0]);
         close((*ippdscdb)->pipe_fd[1]);
@@ -1198,7 +1198,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
         (*ippdscdb)->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,(*ippdscdb)->buflen);
 
     if ((*ippdscdb)->buffer == NULL) {
-        OSS_CloseDevice(wwi->ossdev);
+        OSS_CloseDevice(&wwi->ossdev);
         wwi->state = WINE_WS_CLOSED;
         close((*ippdscdb)->pipe_fd[0]);
         close((*ippdscdb)->pipe_fd[1]);
@@ -1284,7 +1284,7 @@ DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
     TRACE("(%d,%p)\n",wDevID,drv);
 
     /* the HAL isn't much better than the HEL if we can't do mmap() */
-    if (!(WInDev[wDevID].ossdev->in_caps_support & WAVECAPS_DIRECTSOUND)) {
+    if (!(WInDev[wDevID].ossdev.in_caps_support & WAVECAPS_DIRECTSOUND)) {
         ERR("DirectSoundCapture flag not set\n");
         MESSAGE("This sound card's driver does not support direct access\n");
         MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
@@ -1304,7 +1304,7 @@ DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
 
 DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 {
-    memcpy(desc, &(WInDev[wDevID].ossdev->ds_desc), sizeof(DSDRIVERDESC));
+    memcpy(desc, &(WInDev[wDevID].ossdev.ds_desc), sizeof(DSDRIVERDESC));
     return MMSYSERR_NOERROR;
 }
 

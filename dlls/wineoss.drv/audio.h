@@ -110,7 +110,7 @@ typedef struct tagOSS_DEVICE {
 } OSS_DEVICE;
 
 typedef struct {
-    OSS_DEVICE*                 ossdev;
+    OSS_DEVICE ossdev;
     volatile int		state;			/* one of the WINE_WS_ manifest constants */
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
@@ -143,7 +143,7 @@ typedef struct {
 } WINE_WAVEOUT;
 
 typedef struct {
-    OSS_DEVICE*                 ossdev;
+    OSS_DEVICE ossdev;
     volatile int		state;
     DWORD			dwFragmentSize;		/* OpenSound '/dev/dsp' give us that size */
     WAVEOPENDESC		waveDesc;
@@ -160,7 +160,6 @@ typedef struct {
     OSS_MSG_RING		msgRing;
 } WINE_WAVEIN;
 
-extern OSS_DEVICE       OSS_Devices[MAX_WAVEDRV];
 extern WINE_WAVEOUT	WOutDev[MAX_WAVEDRV];
 extern WINE_WAVEIN	WInDev[MAX_WAVEDRV];
 extern unsigned         numOutDev;
