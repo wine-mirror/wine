@@ -967,6 +967,7 @@ deserialize_param(
 		    hres = xbuf_get(buf,(LPBYTE)str,len*sizeof(WCHAR));
 		    if (hres) {
 			ERR("Failed to read BSTR.\n");
+			HeapFree(GetProcessHeap(),0,str);
 			return hres;
 		    }
                     *bstr = CoTaskMemAlloc(sizeof(BSTR *));
@@ -997,6 +998,7 @@ deserialize_param(
 		    hres = xbuf_get(buf,(LPBYTE)str,len*sizeof(WCHAR));
 		    if (hres) {
 			ERR("Failed to read BSTR.\n");
+			HeapFree(GetProcessHeap(),0,str);
 			return hres;
 		    }
 		    *arg = (DWORD)SysAllocStringLen(str,len);
