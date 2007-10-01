@@ -529,9 +529,15 @@ HRESULT WINAPI GetAcceptLanguagesA( LPSTR langbuf, LPDWORD buflen)
     langbufW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * buflenW);
     retval = GetAcceptLanguagesW(langbufW, &buflenW);
 
-    /* FIXME: this is wrong, the string may not be null-terminated */
-    convlen = WideCharToMultiByte(CP_ACP, 0, langbufW, -1, langbuf,
-                                  *buflen, NULL, NULL);
+    if (retval == S_OK)
+    {
+        convlen = WideCharToMultiByte(CP_ACP, 0, langbufW, -1, langbuf, *buflen, NULL, NULL);
+    }
+    else  /* copy partial string anyway */
+    {
+        convlen = WideCharToMultiByte(CP_ACP, 0, langbufW, *buflen, langbuf, *buflen, NULL, NULL);
+        if (convlen < *buflen) langbuf[convlen] = 0;
+    }
     *buflen = buflenW ? convlen : 0;
 
     HeapFree(GetProcessHeap(), 0, langbufW);
