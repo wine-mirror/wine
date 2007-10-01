@@ -64,28 +64,28 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Window Settings ",IDC_STATIC,8,4,244,184
 
-    CONTROL         "Allow DirectX apps to stop the mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
+    CONTROL         "Allow DirectX apps to stop the &mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
     
-    CONTROL	        "Allow the window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
+    CONTROL	        "Allow the &window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     LTEXT           "If windows are managed by your window manager, then they will have the standard borders, they will respect your virtual desktop and appear in your window list. \n\nIf the windows are unmanaged, they will be disconnected from your window manager. This will mean the windows do not integrate as closely with your desktop, but the emulation will be more accurate so it can help some programs to work better.",
 		           IDC_STATIC,19,51,225,80
 
-    CONTROL         "Emulate a virtual desktop",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL         "Emulate a virtual &desktop",IDC_ENABLE_DESKTOP,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
     LTEXT           "You can either choose to have all Windows applications confined to a single window acting as a virtual desktop, or to have them behave like your other applications.",
                     IDC_STATIC,19,138,225,28
-    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
+    LTEXT           "Desktop &size:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,109,168,8,8,WS_DISABLED
     EDITTEXT        IDC_DESKTOP_WIDTH,64,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT        IDC_DESKTOP_HEIGHT,117,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
     GROUPBOX        " Direct3D ",IDC_STATIC,8,190,244,48
 
-    LTEXT           "Vertex Shader Support: ",IDC_STATIC,15,203,80,32
+    LTEXT           "&Vertex Shader Support: ",IDC_STATIC,15,203,80,32
     COMBOBOX        IDC_D3D_VSHADER_MODE,100,201,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL         "Allow Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,219,230,10
-    GROUPBOX        " Screen Resolution ",IDC_STATIC,8,242,244,25
+    CONTROL         "Allow &Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,219,230,10
+    GROUPBOX        " Screen &Resolution ",IDC_STATIC,8,242,244,25
     CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
     EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT           "dpi",IDC_STATIC,235,252,10,8
@@ -98,10 +98,10 @@ BEGIN
     GROUPBOX        " DLL Overrides ",IDC_STATIC,8,4,244,240
     LTEXT           "Dynamic Link Libraries can be specified individually to be either builtin (provided by Wine) or native (taken from Windows or provided by the application)."
                     ,IDC_STATIC,16,16,220,32
-    LTEXT           "New override for library:",IDC_STATIC,16,58,100,8
+    LTEXT           "&New override for library:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "&Add",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
-    LTEXT           "Existing overrides:",IDC_STATIC,16,86,100,8
+    LTEXT           "Existing &overrides:",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "&Edit",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "&Remove",IDC_DLLS_REMOVEDLL,164,114,82,14 
@@ -126,7 +126,7 @@ IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Drive mappings ",IDC_STATIC,8,4,244,240
+    GROUPBOX        " Drive &mappings ",IDC_STATIC,8,4,244,240
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Add...",IDC_BUTTON_ADD,15,98,37,14
@@ -143,7 +143,7 @@ BEGIN
     
     LTEXT           "Label and serial number",IDC_LABELSERIAL_STATIC,15,155,95,10
     
-    PUSHBUTTON      "&Show Advanced",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
+    PUSHBUTTON      "Show &Advanced",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
     CONTROL         "Autodetect &from Device:",IDC_RADIO_AUTODETECT,"Button",
                     BS_AUTORADIOBUTTON,15,166,93,10
     EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
@@ -156,7 +156,7 @@ BEGIN
     LTEXT           "S&erial:",IDC_STATIC_SERIAL,33,225,29,12
     EDITTEXT        IDC_EDIT_SERIAL,63,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "Show dot files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+    CONTROL         "Show &dot files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
 END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -166,16 +166,16 @@ BEGIN
     GROUPBOX        " Driver Selection ",IDC_STATIC,8,4,244,195
     LTEXT           "Select a sound driver by checking the box of the desired driver.  Disable sound by not selecting any driver. Selection of multiple drivers is not recommended. Configure a driver by right-clicking on it.",IDC_STATIC,15,20,227,30
     CONTROL         "Devices",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140 
-    PUSHBUTTON      "Test Sound",IDC_AUDIO_TEST,170,50,59,14
-    PUSHBUTTON	    "Control Panel",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
+    PUSHBUTTON      "&Test Sound",IDC_AUDIO_TEST,170,50,59,14
+    PUSHBUTTON	    "&Control Panel",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
-    LTEXT	    "Hardware Acceleration: ",IDC_STATIC,15,215,90,10
+    LTEXT	    "&Hardware Acceleration: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Default Sample Rate:",IDC_STATIC,15,232,70,8
+    LTEXT           "Default &Sample Rate:",IDC_STATIC,15,232,70,8
     COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Default Bits Per Sample:",IDC_STATIC,137,232,80,8
+    LTEXT           "Default &Bits Per Sample:",IDC_STATIC,137,232,80,8
     COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Driver Emulation",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
+    CONTROL         "Driver &Emulation",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
@@ -183,27 +183,27 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
-    LTEXT           "Theme:",IDC_STATIC,15,16,130,8
+    LTEXT           "&Theme:",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Install theme...",IDC_THEME_INSTALL,152,23,93,14
-    LTEXT           "Color:",IDC_THEME_COLORTEXT,15,40,112,8
+    PUSHBUTTON      "&Install theme...",IDC_THEME_INSTALL,152,23,93,14
+    LTEXT           "&Color:",IDC_THEME_COLORTEXT,15,40,112,8
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Size:",IDC_THEME_SIZETEXT,135,40,110,8
+    LTEXT           "&Size:",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Item:",IDC_STATIC,15,64,112,8
+    LTEXT           "It&em:",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
-    LTEXT           "Color:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    LTEXT           "C&olor:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
-    LTEXT           "Size:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    LTEXT           "Si&ze:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
-    PUSHBUTTON      "Font",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
-    GROUPBOX        " Shell Folder ",IDC_STATIC,8,114,244,100
+    PUSHBUTTON      "&Font",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " S&hell Folder ",IDC_STATIC,8,114,244,100
     CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    CONTROL         "&Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "Browse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "B&rowse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -213,8 +213,8 @@ BEGIN
     IDS_TAB_DLLS            "Libraries"
     IDS_TAB_DRIVES          "Drives"
     IDS_CHOOSE_PATH         "Select the unix target directory, please."
-    IDS_HIDE_ADVANCED       "Hide Advanced"
-    IDS_SHOW_ADVANCED       "Show Advanced"
+    IDS_HIDE_ADVANCED       "Hide &Advanced"
+    IDS_SHOW_ADVANCED       "Show &Advanced"
     IDS_NOTHEME             "(No Theme)"
     IDS_TAB_GRAPHICS        "Graphics"
     IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
