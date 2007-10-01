@@ -20,6 +20,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #define COBJMACROS
 #define CONST_VTABLE
@@ -67,6 +68,11 @@
 
 DEFINE_EXPECT(QueryInterface_IServiceProvider);
 DEFINE_EXPECT(QueryInterface_IHttpNegotiate);
+DEFINE_EXPECT(QueryInterface_IBindStatusCallback);
+DEFINE_EXPECT(QueryInterface_IBindStatusCallbackHolder);
+DEFINE_EXPECT(QueryInterface_IInternetBindInfo);
+DEFINE_EXPECT(QueryInterface_IAuthenticate);
+DEFINE_EXPECT(QueryInterface_IInternetProtocol);
 DEFINE_EXPECT(BeginningTransaction);
 DEFINE_EXPECT(OnResponse);
 DEFINE_EXPECT(QueryInterface_IHttpNegotiate2);
@@ -113,6 +119,8 @@ static BOOL stopped_binding = FALSE, emulate_protocol = FALSE,
 static DWORD read = 0, bindf = 0;
 static CHAR mime_type[512];
 
+extern IID IID_IBindStatusCallbackHolder;
+
 static LPCWSTR urls[] = {
     WINE_ABOUT_URL,
     ABOUT_BLANK,
@@ -134,6 +142,18 @@ static enum {
     DOWNLOADING,
     END_DOWNLOAD
 } download_state;
+
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
 
 static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
 {
@@ -478,6 +498,7 @@ static IHttpNegotiate2 HttpNegotiate = { &HttpNegotiateVtbl };
 static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
+        CHECK_EXPECT2(QueryInterface_IInternetProtocol);
         if(emulate_protocol) {
             *ppv = &Protocol;
             return S_OK;
@@ -488,6 +509,7 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFII
     else if (IsEqualGUID(&IID_IServiceProvider, riid))
     {
         CHECK_EXPECT(QueryInterface_IServiceProvider);
+        return E_NOINTERFACE;
     }
     else if (IsEqualGUID(&IID_IHttpNegotiate, riid))
     {
@@ -500,6 +522,31 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFII
         CHECK_EXPECT(QueryInterface_IHttpNegotiate2);
         *ppv = &HttpNegotiate;
         return S_OK;
+    }
+    else if (IsEqualGUID(&IID_IAuthenticate, riid))
+    {
+        CHECK_EXPECT(QueryInterface_IAuthenticate);
+        return E_NOINTERFACE;
+    }
+    else if(IsEqualGUID(&IID_IBindStatusCallback, riid))
+    {
+        CHECK_EXPECT2(QueryInterface_IBindStatusCallback);
+        *ppv = iface;
+        return S_OK;
+    }
+    else if(IsEqualGUID(&IID_IBindStatusCallbackHolder, riid))
+    {
+        CHECK_EXPECT2(QueryInterface_IBindStatusCallbackHolder);
+        return E_NOINTERFACE;
+    }
+    else if(IsEqualGUID(&IID_IInternetBindInfo, riid))
+    {
+        /* TODO */
+        CHECK_EXPECT(QueryInterface_IInternetBindInfo);
+    }
+    else
+    {
+        ok(0, "unexpected interface %s\n", debugstr_guid(riid));
     }
 
     return E_NOINTERFACE;
@@ -851,8 +898,8 @@ static void test_BindToStorage(int protocol, BOOL emul)
     ok(hres == S_OK, "GetDisplayName failed %08x\n", hres);
     ok(!lstrcmpW(display_name, urls[test_protocol]), "GetDisplayName got wrong name\n");
 
-    SET_EXPECT(QueryInterface_IServiceProvider);
     SET_EXPECT(GetBindInfo);
+    SET_EXPECT(QueryInterface_IInternetProtocol);
     SET_EXPECT(OnStartBinding);
     if(emulate_protocol) {
         SET_EXPECT(Start);
@@ -903,8 +950,8 @@ static void test_BindToStorage(int protocol, BOOL emul)
         DispatchMessage(&msg);
     }
 
-    CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
     CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(QueryInterface_IInternetProtocol);
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {
         CHECK_CALLED(Start);
