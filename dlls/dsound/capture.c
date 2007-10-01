@@ -919,25 +919,22 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
 	if (hres != DS_OK)
 	    WARN("IDsCaptureDriverBuffer_GetPosition failed\n");
     } else if (This->device->hwi) {
-	DWORD pos;
+        DWORD pos;
 
-	EnterCriticalSection(&This->device->lock);
-	pos = (DWORD_PTR)This->device->pwave[This->device->index].lpData - (DWORD_PTR)This->device->buffer;
-	TRACE("old This->device->state=%s\n",captureStateString[This->device->state]);
+        EnterCriticalSection(&This->device->lock);
+        pos = (DWORD_PTR)This->device->pwave[This->device->index].lpData - (DWORD_PTR)This->device->buffer;
         if (lpdwCapturePosition)
-            *lpdwCapturePosition = pos;
+            *lpdwCapturePosition = (This->device->pwave[This->device->index].dwBufferLength + pos) % This->device->buflen;
+        if (lpdwReadPosition)
+            *lpdwReadPosition = pos;
+        LeaveCriticalSection(&This->device->lock);
 
-	if (lpdwReadPosition)
-            *lpdwReadPosition = (This->device->pwave[This->device->index].dwBufferLength + pos) % This->device->buflen;
-	LeaveCriticalSection(&This->device->lock);
-
-	if (lpdwCapturePosition) TRACE("*lpdwCapturePosition=%d\n",*lpdwCapturePosition);
-	if (lpdwReadPosition) TRACE("*lpdwReadPosition=%d\n",*lpdwReadPosition);
     } else {
         WARN("no driver\n");
         hres = DSERR_NODRIVER;
     }
 
+    TRACE("cappos=%d readpos=%d\n", (lpdwCapturePosition?*lpdwCapturePosition:-1), (lpdwReadPosition?*lpdwReadPosition:-1));
     TRACE("returning %08x\n", hres);
     return hres;
 }
