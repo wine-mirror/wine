@@ -175,7 +175,7 @@ void set_current_mon(HTMLDocument *This, IMoniker *mon)
     }
 
     if(This->url) {
-        SysFreeString(This->url);
+        CoTaskMemFree(This->url);
         This->url = NULL;
     }
 
