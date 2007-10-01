@@ -2230,6 +2230,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,olepro32.dll
 11,,opengl32.dll
 11,,progman.exe
+11,,psapi.dll
 11,,quartz.dll
 11,,regsvr32.exe
 11,,riched20.dll
