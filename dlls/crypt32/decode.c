@@ -467,10 +467,14 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
         {
             DWORD lenBytes = GET_LEN_BYTES(pbEncoded[1]), cbDecoded;
             const BYTE *ptr = pbEncoded + 1 + lenBytes;
+            BOOL indefinite = FALSE;
 
             cbEncoded -= 1 + lenBytes;
             if (dataLen == CMSG_INDEFINITE_LENGTH)
+            {
                 dataLen = cbEncoded;
+                indefinite = TRUE;
+            }
             else if (cbEncoded < dataLen)
             {
                 TRACE("dataLen %d exceeds cbEncoded %d, failing\n", dataLen,
@@ -501,7 +505,7 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
                         cbDecoded += 2;
                 }
             }
-            if (ret && cbDecoded != dataLen)
+            if (ret && !indefinite && cbDecoded != dataLen)
             {
                 TRACE("expected %d decoded, got %d, failing\n", dataLen,
                  cbDecoded);
