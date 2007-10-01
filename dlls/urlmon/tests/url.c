@@ -73,6 +73,8 @@ DEFINE_EXPECT(QueryInterface_IBindStatusCallbackHolder);
 DEFINE_EXPECT(QueryInterface_IInternetBindInfo);
 DEFINE_EXPECT(QueryInterface_IAuthenticate);
 DEFINE_EXPECT(QueryInterface_IInternetProtocol);
+DEFINE_EXPECT(QueryService_IAuthenticate);
+DEFINE_EXPECT(QueryService_IInternetProtocol);
 DEFINE_EXPECT(BeginningTransaction);
 DEFINE_EXPECT(OnResponse);
 DEFINE_EXPECT(QueryInterface_IHttpNegotiate2);
@@ -110,7 +112,7 @@ static const WCHAR ITS_URL[] =
 static const WCHAR MK_URL[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
     't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
 
-
+static WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
 
 static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
 
@@ -473,6 +475,9 @@ static HRESULT WINAPI HttpNegotiate_GetRootSecurityId(IHttpNegotiate2 *iface,
     ok(pbSecurityId != NULL, "pbSecurityId == NULL\n");
     ok(pcbSecurityId != NULL, "pcbSecurityId == NULL\n");
 
+    if(pbSecurityId == (void*)0xdeadbeef)
+        return E_NOTIMPL;
+
     if(pcbSecurityId) {
         ok(*pcbSecurityId == 512, "*pcbSecurityId=%d, expected 512\n", *pcbSecurityId);
         *pcbSecurityId = sizeof(sec_id);
@@ -495,6 +500,48 @@ static IHttpNegotiate2Vtbl HttpNegotiateVtbl = {
 
 static IHttpNegotiate2 HttpNegotiate = { &HttpNegotiateVtbl };
 
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
+        REFGUID guidService, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IAuthenticate, guidService)) {
+        CHECK_EXPECT(QueryService_IAuthenticate);
+        return E_NOTIMPL;
+    }
+
+    if(IsEqualGUID(&IID_IInternetProtocol, guidService)) {
+        CHECK_EXPECT2(QueryService_IInternetProtocol);
+        return E_NOTIMPL;
+    }
+
+    ok(0, "unexpected service %s\n", debugstr_guid(guidService));
+    return E_NOINTERFACE;
+}
+
+static IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService
+};
+
+static IServiceProvider ServiceProvider = { &ServiceProviderVtbl };
+
 static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
@@ -508,8 +555,9 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFII
     }
     else if (IsEqualGUID(&IID_IServiceProvider, riid))
     {
-        CHECK_EXPECT(QueryInterface_IServiceProvider);
-        return E_NOINTERFACE;
+        CHECK_EXPECT2(QueryInterface_IServiceProvider);
+        *ppv = &ServiceProvider;
+        return S_OK;
     }
     else if (IsEqualGUID(&IID_IHttpNegotiate, riid))
     {
@@ -571,6 +619,10 @@ static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface, DWORD
     CHECK_EXPECT(OnStartBinding);
 
     ok(pib != NULL, "pib should not be NULL\n");
+    ok(dwReserved == 0xff, "dwReserved=%x\n", dwReserved);
+
+    if(pib == (void*)0xdeadbeef)
+        return S_OK;
 
     hres = IBinding_QueryInterface(pib, &IID_IMoniker, (void**)&mon);
     ok(hres == E_NOINTERFACE, "IBinding should not have IMoniker interface\n");
@@ -760,7 +812,7 @@ static void test_CreateAsyncBindCtx(void)
 
     SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
-    ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n", hres);
+    ok(hres == S_OK, "CreateAsyncBindCtx failed: %08x\n", hres);
     CHECK_CALLED(QueryInterface_IServiceProvider);
 
     bindopts.cbStruct = sizeof(bindopts);
@@ -846,6 +898,198 @@ static void test_CreateAsyncBindCtxEx(void)
         IBindCtx_Release(bctx);
 }
 
+static void test_bscholder(IBindStatusCallback *holder)
+{
+    IServiceProvider *serv_prov;
+    IHttpNegotiate *http_negotiate, *http_negotiate_serv;
+    IHttpNegotiate2 *http_negotiate2, *http_negotiate2_serv;
+    IAuthenticate *authenticate, *authenticate_serv;
+    IInternetProtocol *protocol;
+    BINDINFO bindinfo = {sizeof(bindinfo)};
+    LPWSTR wstr;
+    DWORD dw;
+    HRESULT hres;
+
+    static const WCHAR emptyW[] = {0};
+
+    hres = IBindStatusCallback_QueryInterface(holder, &IID_IServiceProvider, (void**)&serv_prov);
+    ok(hres == S_OK, "Could not get IServiceProvider interface: %08x\n", hres);
+
+    dw = 0xdeadbeef;
+    SET_EXPECT(GetBindInfo);
+    hres = IBindStatusCallback_GetBindInfo(holder, &dw, &bindinfo);
+    ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
+    CHECK_CALLED(GetBindInfo);
+
+    SET_EXPECT(OnStartBinding);
+    hres = IBindStatusCallback_OnStartBinding(holder, 0, (void*)0xdeadbeef);
+    ok(hres == S_OK, "OnStartBinding failed: %08x\n", hres);
+    CHECK_CALLED(OnStartBinding);
+
+    hres = IBindStatusCallback_QueryInterface(holder, &IID_IHttpNegotiate, (void**)&http_negotiate);
+    ok(hres == S_OK, "Could not get IHttpNegotiate interface: %08x\n", hres);
+
+    wstr = (void*)0xdeadbeef;
+    hres = IHttpNegotiate_BeginningTransaction(http_negotiate, urls[test_protocol], (void*)0xdeadbeef, 0xff, &wstr);
+    ok(hres == S_OK, "BeginningTransaction failed: %08x\n", hres);
+    ok(wstr == NULL, "wstr = %p\n", wstr);
+
+    SET_EXPECT(QueryInterface_IHttpNegotiate);
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IHttpNegotiate, &IID_IHttpNegotiate,
+                                         (void**)&http_negotiate_serv);
+    ok(hres == S_OK, "Could not get IHttpNegotiate service: %08x\n", hres);
+    CHECK_CALLED(QueryInterface_IHttpNegotiate);
+
+    ok(http_negotiate == http_negotiate_serv, "http_negotiate != http_negotiate_serv\n");
+
+    wstr = (void*)0xdeadbeef;
+    SET_EXPECT(BeginningTransaction);
+    hres = IHttpNegotiate_BeginningTransaction(http_negotiate_serv, urls[test_protocol], emptyW, 0, &wstr);
+    CHECK_CALLED(BeginningTransaction);
+    ok(hres == S_OK, "BeginningTransaction failed: %08x\n", hres);
+    ok(wstr == NULL, "wstr = %p\n", wstr);
+
+    IHttpNegotiate_Release(http_negotiate_serv);
+
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IHttpNegotiate, &IID_IHttpNegotiate,
+                                         (void**)&http_negotiate_serv);
+    ok(hres == S_OK, "Could not get IHttpNegotiate service: %08x\n", hres);
+    ok(http_negotiate == http_negotiate_serv, "http_negotiate != http_negotiate_serv\n");
+    IHttpNegotiate_Release(http_negotiate_serv);
+
+    hres = IBindStatusCallback_QueryInterface(holder, &IID_IHttpNegotiate2, (void**)&http_negotiate2);
+    ok(hres == S_OK, "Could not get IHttpNegotiate2 interface: %08x\n", hres);
+
+    hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
+    ok(hres == E_FAIL, "GetRootSecurityId failed: %08x\n", hres);
+
+    IHttpNegotiate_Release(http_negotiate2);
+
+    SET_EXPECT(QueryInterface_IHttpNegotiate2);
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IHttpNegotiate2, &IID_IHttpNegotiate2,
+                                         (void**)&http_negotiate2_serv);
+    ok(hres == S_OK, "Could not get IHttpNegotiate2 service: %08x\n", hres);
+    CHECK_CALLED(QueryInterface_IHttpNegotiate2);
+    ok(http_negotiate2 == http_negotiate2_serv, "http_negotiate != http_negotiate_serv\n");
+
+    SET_EXPECT(GetRootSecurityId);
+    hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
+    ok(hres == E_NOTIMPL, "GetRootSecurityId failed: %08x\n", hres);
+    CHECK_CALLED(GetRootSecurityId);
+
+    IHttpNegotiate_Release(http_negotiate2_serv);
+
+    SET_EXPECT(OnProgress_FINDINGRESOURCE);
+    hres = IBindStatusCallback_OnProgress(holder, 0, 0, BINDSTATUS_FINDINGRESOURCE, NULL);
+    ok(hres == S_OK, "OnProgress failed: %08x\n", hres);
+    CHECK_CALLED(OnProgress_FINDINGRESOURCE);
+
+    SET_EXPECT(OnResponse);
+    wstr = (void*)0xdeadbeef;
+    hres = IHttpNegotiate_OnResponse(http_negotiate, 200, emptyW, NULL, NULL);
+    ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
+    CHECK_CALLED(OnResponse);
+
+    IHttpNegotiate_Release(http_negotiate);
+
+    hres = IBindStatusCallback_QueryInterface(holder, &IID_IAuthenticate, (void**)&authenticate);
+    ok(hres == S_OK, "Could not get IAuthenticate interface: %08x\n", hres);
+
+    SET_EXPECT(QueryInterface_IAuthenticate);
+    SET_EXPECT(QueryService_IAuthenticate);
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IAuthenticate, &IID_IAuthenticate,
+                                         (void**)&authenticate_serv);
+    ok(hres == S_OK, "Could not get IAuthenticate service: %08x\n", hres);
+    CHECK_CALLED(QueryInterface_IAuthenticate);
+    CHECK_CALLED(QueryService_IAuthenticate);
+    ok(authenticate == authenticate_serv, "authenticate != authenticate_serv\n");
+    IAuthenticate_Release(authenticate_serv);
+
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IAuthenticate, &IID_IAuthenticate,
+                                         (void**)&authenticate_serv);
+    ok(hres == S_OK, "Could not get IAuthenticate service: %08x\n", hres);
+    ok(authenticate == authenticate_serv, "authenticate != authenticate_serv\n");
+
+    IAuthenticate_Release(authenticate);
+    IAuthenticate_Release(authenticate_serv);
+
+    SET_EXPECT(OnStopBinding);
+    hres = IBindStatusCallback_OnStopBinding(holder, S_OK, NULL);
+    ok(hres == S_OK, "OnStopBinding failed: %08x\n", hres);
+    CHECK_CALLED(OnStopBinding);
+
+    SET_EXPECT(QueryInterface_IInternetProtocol);
+    SET_EXPECT(QueryService_IInternetProtocol);
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IInternetProtocol, &IID_IInternetProtocol,
+                                         (void**)&protocol);
+    ok(hres == E_NOINTERFACE, "QueryService(IInternetProtocol) failed: %08x\n", hres);
+    CHECK_CALLED(QueryInterface_IInternetProtocol);
+    CHECK_CALLED(QueryService_IInternetProtocol);
+
+    IServiceProvider_Release(serv_prov);
+}
+
+static void test_RegisterBindStatusCallback(void)
+{
+    IBindStatusCallback *prevbsc, *clb;
+    IBindCtx *bindctx;
+    IUnknown *unk;
+    HRESULT hres;
+
+    hres = CreateBindCtx(0, &bindctx);
+    ok(hres == S_OK, "BindCtx failed: %08x\n", hres);
+
+    SET_EXPECT(QueryInterface_IServiceProvider);
+
+    hres = IBindCtx_RegisterObjectParam(bindctx, BSCBHolder, (IUnknown*)&bsc);
+    ok(hres == S_OK, "RegisterObjectParam failed: %08x\n", hres);
+
+    SET_EXPECT(QueryInterface_IBindStatusCallback);
+    SET_EXPECT(QueryInterface_IBindStatusCallbackHolder);
+    prevbsc = (void*)0xdeadbeef;
+    hres = RegisterBindStatusCallback(bindctx, &bsc, &prevbsc, 0);
+    ok(hres == S_OK, "RegisterBindStatusCallback failed: %08x\n", hres);
+    ok(prevbsc == &bsc, "prevbsc=%p\n", prevbsc);
+    CHECK_CALLED(QueryInterface_IBindStatusCallback);
+    CHECK_CALLED(QueryInterface_IBindStatusCallbackHolder);
+
+    CHECK_CALLED(QueryInterface_IServiceProvider);
+
+    hres = IBindCtx_GetObjectParam(bindctx, BSCBHolder, &unk);
+    ok(hres == S_OK, "GetObjectParam failed: %08x\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IBindStatusCallback, (void**)&clb);
+    IUnknown_Release(unk);
+    ok(hres == S_OK, "QueryInterface(IID_IBindStatusCallback) failed: %08x\n", hres);
+    ok(clb != &bsc, "bsc == clb\n");
+
+    test_bscholder(clb);
+
+    IBindStatusCallback_Release(clb);
+
+    hres = RevokeBindStatusCallback(bindctx, &bsc);
+    ok(hres == S_OK, "RevokeBindStatusCallback failed: %08x\n", hres);
+
+    unk = (void*)0xdeadbeef;
+    hres = IBindCtx_GetObjectParam(bindctx, BSCBHolder, &unk);
+    ok(hres == E_FAIL, "GetObjectParam failed: %08x\n", hres);
+    ok(unk == NULL, "unk != NULL\n");
+
+    if(unk)
+        IUnknown_Release(unk);
+
+    hres = RevokeBindStatusCallback(bindctx, (void*)0xdeadbeef);
+    ok(hres == S_OK, "RevokeBindStatusCallback failed: %08x\n", hres);
+
+    hres = RevokeBindStatusCallback(NULL, (void*)0xdeadbeef);
+    ok(hres == E_INVALIDARG, "RevokeBindStatusCallback failed: %08x\n", hres);
+
+    hres = RevokeBindStatusCallback(bindctx, NULL);
+    ok(hres == E_INVALIDARG, "RevokeBindStatusCallback failed: %08x\n", hres);
+
+    IBindCtx_Release(bindctx);
+}
+
 static void test_BindToStorage(int protocol, BOOL emul)
 {
     IMoniker *mon;
@@ -900,6 +1144,8 @@ static void test_BindToStorage(int protocol, BOOL emul)
 
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(QueryInterface_IInternetProtocol);
+    if(!emulate_protocol)
+        SET_EXPECT(QueryService_IInternetProtocol);
     SET_EXPECT(OnStartBinding);
     if(emulate_protocol) {
         SET_EXPECT(Start);
@@ -952,6 +1198,8 @@ static void test_BindToStorage(int protocol, BOOL emul)
 
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(QueryInterface_IInternetProtocol);
+    if(!emulate_protocol)
+        CHECK_CALLED(QueryService_IInternetProtocol);
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {
         CHECK_CALLED(Start);
@@ -1053,6 +1301,7 @@ START_TEST(url)
     test_create();
     test_CreateAsyncBindCtx();
     test_CreateAsyncBindCtxEx();
+    test_RegisterBindStatusCallback();
 
     trace("synchronous http test...\n");
     test_BindToStorage(HTTP_TEST, FALSE);
