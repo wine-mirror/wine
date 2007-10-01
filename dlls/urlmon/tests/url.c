@@ -714,7 +714,7 @@ static void test_CreateAsyncBindCtx(void)
     SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
     ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n", hres);
-    todo_wine CHECK_CALLED(QueryInterface_IServiceProvider);
+    CHECK_CALLED(QueryInterface_IServiceProvider);
 
     bindopts.cbStruct = sizeof(bindopts);
     hres = IBindCtx_GetBindOptions(bctx, &bindopts);
@@ -788,7 +788,7 @@ static void test_CreateAsyncBindCtxEx(void)
     SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtxEx(NULL, 0, &bsc, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
-    todo_wine CHECK_CALLED(QueryInterface_IServiceProvider);
+    CHECK_CALLED(QueryInterface_IServiceProvider);
 
     hres = IBindCtx_QueryInterface(bctx, &IID_IAsyncBindCtx, (void**)&unk);
     ok(hres == S_OK, "QueryInterface(IID_IAsyncBindCtx) failed: %08x\n", hres);
@@ -819,16 +819,16 @@ static void test_BindToStorage(int protocol, BOOL emul)
 
     SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
-    ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n\n", hres);
+    ok(hres == S_OK, "CreateAsyncBindCtx failed: %08x\n\n", hres);
+    CHECK_CALLED(QueryInterface_IServiceProvider);
     if(FAILED(hres))
         return;
-    todo_wine CHECK_CALLED(QueryInterface_IServiceProvider);
 
     SET_EXPECT(QueryInterface_IServiceProvider);
     hres = RegisterBindStatusCallback(bctx, &bsc, &previousclb, 0);
-    ok(SUCCEEDED(hres), "RegisterBindStatusCallback failed: %08x\n", hres);
+    ok(hres == S_OK, "RegisterBindStatusCallback failed: %08x\n", hres);
     ok(previousclb == &bsc, "previousclb(%p) != sclb(%p)\n", previousclb, &bsc);
-    todo_wine CHECK_CALLED(QueryInterface_IServiceProvider);
+    CHECK_CALLED(QueryInterface_IServiceProvider);
     if(previousclb)
         IBindStatusCallback_Release(previousclb);
 
@@ -903,7 +903,7 @@ static void test_BindToStorage(int protocol, BOOL emul)
         DispatchMessage(&msg);
     }
 
-    todo_wine CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
+    CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {

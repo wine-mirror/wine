@@ -738,7 +738,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
         sizeof(schema)/sizeof(WCHAR), 0, NULL, 0, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0};
 
     if(pmkToLeft)
-	FIXME("Unsupported pmkToLeft\n");
+        FIXME("Unsupported pmkToLeft\n");
 
     bret = InternetCrackUrlW(This->URLName, 0, ICU_ESCAPE, &url);
     if(!bret) {
@@ -1205,85 +1205,6 @@ HRESULT WINAPI BindAsyncMoniker(IMoniker *pmk, DWORD grfOpt, IBindStatusCallback
             IBindCtx_Release(pbc);
         }
     }
-    return hr;
-}
-
-/***********************************************************************
- *           RegisterBindStatusCallback (URLMON.@)
- *
- * Register a bind status callback.
- *
- * PARAMS
- *  pbc           [I] Binding context
- *  pbsc          [I] Callback to register
- *  ppbscPrevious [O] Destination for previous callback
- *  dwReserved    [I] Reserved, must be 0.
- *
- * RETURNS
- *    Success: S_OK.
- *    Failure: E_INVALIDARG, if any argument is invalid, or
- *             E_OUTOFMEMORY if memory allocation fails.
- */
-HRESULT WINAPI RegisterBindStatusCallback(
-    IBindCtx *pbc,
-    IBindStatusCallback *pbsc,
-    IBindStatusCallback **ppbscPrevious,
-    DWORD dwReserved)
-{
-    IBindStatusCallback *prev;
-
-    TRACE("(%p,%p,%p,%u)\n", pbc, pbsc, ppbscPrevious, dwReserved);
-
-    if (pbc == NULL || pbsc == NULL)
-        return E_INVALIDARG;
-
-    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, BSCBHolder, (IUnknown **)&prev)))
-    {
-        IBindCtx_RevokeObjectParam(pbc, BSCBHolder);
-        if (ppbscPrevious)
-            *ppbscPrevious = prev;
-        else
-            IBindStatusCallback_Release(prev);
-    }
-
-    return IBindCtx_RegisterObjectParam(pbc, BSCBHolder, (IUnknown *)pbsc);
-}
-
-/***********************************************************************
- *           RevokeBindStatusCallback (URLMON.@)
- *
- * Unregister a bind status callback.
- *
- *  pbc           [I] Binding context
- *  pbsc          [I] Callback to unregister
- *
- * RETURNS
- *    Success: S_OK.
- *    Failure: E_INVALIDARG, if any argument is invalid, or
- *             E_FAIL if pbsc wasn't registered with pbc.
- */
-HRESULT WINAPI RevokeBindStatusCallback(
-    IBindCtx *pbc,
-    IBindStatusCallback *pbsc)
-{
-    IBindStatusCallback *callback;
-    HRESULT hr = E_FAIL;
-
-	TRACE("(%p,%p)\n", pbc, pbsc);
-
-    if (pbc == NULL || pbsc == NULL)
-        return E_INVALIDARG;
-
-    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, BSCBHolder, (IUnknown **)&callback)))
-    {
-        if (callback == pbsc)
-        {
-            IBindCtx_RevokeObjectParam(pbc, BSCBHolder);
-            hr = S_OK;
-        }
-        IBindStatusCallback_Release(pbsc);
-    }
-
     return hr;
 }
 
