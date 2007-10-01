@@ -70,6 +70,8 @@ typedef DWORD (APIENTRY *PF_NPOpenEnum)(DWORD dwScope, DWORD dwType, DWORD dwUsa
 typedef DWORD (APIENTRY *PF_NPEnumResource)(HANDLE hEnum, LPDWORD lpcCount,
  LPVOID lpBuffer, LPDWORD lpBufferSize);
 typedef DWORD (APIENTRY *PF_NPCloseEnum)(HANDLE hEnum);
+typedef DWORD (APIENTRY *PF_NPGetResourceInformation)(LPNETRESOURCEW lpNetResource,
+ LPVOID lpBuffer, LPDWORD lpcbBuffer, LPWSTR* lplpSystem);
 
 /* connection-related */
 typedef DWORD (APIENTRY *PF_NPAddConnection)(LPNETRESOURCEW lpNetResource,
