@@ -2096,8 +2096,29 @@ SetFileSecurityW( LPCWSTR lpFileName,
                     SECURITY_INFORMATION RequestedInformation,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor )
 {
-  FIXME("(%s) : stub\n", debugstr_w(lpFileName) );
-  return TRUE;
+    HANDLE file;
+    DWORD access = 0;
+    NTSTATUS status;
+
+    TRACE("(%s, 0x%x, %p)\n", debugstr_w(lpFileName), RequestedInformation,
+          pSecurityDescriptor );
+
+    if (RequestedInformation & OWNER_SECURITY_INFORMATION ||
+        RequestedInformation & GROUP_SECURITY_INFORMATION)
+        access |= WRITE_OWNER;
+    if (RequestedInformation & SACL_SECURITY_INFORMATION)
+        access |= ACCESS_SYSTEM_SECURITY;
+    if (RequestedInformation & DACL_SECURITY_INFORMATION)
+        access |= WRITE_DAC;
+
+    file = CreateFileW( lpFileName, access, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                        NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
+    if (file == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    status = NtSetSecurityObject( file, RequestedInformation, pSecurityDescriptor );
+    CloseHandle( file );
+    return set_ntstatus( status );
 }
 
 /******************************************************************************
