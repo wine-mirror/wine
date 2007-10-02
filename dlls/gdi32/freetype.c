@@ -2112,7 +2112,7 @@ BOOL WineEngInit(void)
     if (data_dir && (unixname = HeapAlloc(GetProcessHeap(), 0, strlen(data_dir) + sizeof("/fonts/")))) {
         strcpy(unixname, data_dir);
         strcat(unixname, "/fonts/");
-        ReadFontDir(unixname, FALSE);
+        ReadFontDir(unixname, TRUE);
         HeapFree(GetProcessHeap(), 0, unixname);
     }
 
