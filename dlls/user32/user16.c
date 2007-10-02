@@ -927,6 +927,15 @@ void WINAPI ControlPanelInfo16( INT16 nInfoType, WORD wData, LPSTR lpBuffer )
 
 
 /***********************************************************************
+ *           OldSetDeskPattern   (USER.279)
+ */
+BOOL16 WINAPI SetDeskPattern16(void)
+{
+    return SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
+}
+
+
+/***********************************************************************
  *		GetSysColorBrush (USER.281)
  */
 HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )

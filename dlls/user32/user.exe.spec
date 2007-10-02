@@ -276,7 +276,7 @@
 276 stub LockMyTask
 277 pascal -ret16 GetDlgCtrlID(word) GetDlgCtrlID16
 278 pascal -ret16 GetDesktopHwnd() GetDesktopHwnd16
-279 pascal -ret16 OldSetDeskPattern() SetDeskPattern
+279 pascal -ret16 OldSetDeskPattern() SetDeskPattern16
 280 pascal -ret16 SetSystemMenu(word word) SetSystemMenu16
 281 pascal -ret16 GetSysColorBrush(word) GetSysColorBrush16
 282 pascal -ret16 SelectPalette(word word word) SelectPalette16
