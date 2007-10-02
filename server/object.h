@@ -127,6 +127,7 @@ extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_signal( struct object *obj, unsigned int access );
 extern struct fd *no_get_fd( struct object *obj );
 extern unsigned int no_map_access( struct object *obj, unsigned int access );
+extern void set_object_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
 extern struct object *no_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attributes );
 extern struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
                                     unsigned int options );

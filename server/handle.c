@@ -588,3 +588,30 @@ DECL_HANDLER(get_object_info)
     reply->ref_count = obj->refcount;
     release_object( obj );
 }
+
+DECL_HANDLER(set_security_object)
+{
+    data_size_t sd_size = get_req_data_size();
+    const struct security_descriptor *sd = get_req_data();
+    struct object *obj;
+    unsigned int access = 0;
+
+    if (!sd_is_valid( sd, sd_size ))
+    {
+        set_error( STATUS_ACCESS_VIOLATION );
+        return;
+    }
+
+    if (req->security_info & OWNER_SECURITY_INFORMATION ||
+        req->security_info & GROUP_SECURITY_INFORMATION)
+        access |= WRITE_OWNER;
+    if (req->security_info & SACL_SECURITY_INFORMATION)
+        access |= ACCESS_SYSTEM_SECURITY;
+    if (req->security_info & DACL_SECURITY_INFORMATION)
+        access |= WRITE_DAC;
+
+    if (!(obj = get_handle_obj( current->process, req->handle, access, NULL ))) return;
+
+    set_object_sd( obj, sd, req->security_info );
+    release_object( obj );
+}

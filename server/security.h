@@ -41,6 +41,9 @@ extern const LUID SeCreateGlobalPrivilege;
 
 extern const PSID security_interactive_sid;
 
+
+/* token functions */
+
 extern struct token *token_create_admin(void);
 extern struct token *token_duplicate( struct token *src_token, unsigned primary,
                                       SECURITY_IMPERSONATION_LEVEL impersonation_level );
@@ -48,6 +51,9 @@ extern int token_check_privileges( struct token *token, int all_required,
                                    const LUID_AND_ATTRIBUTES *reqprivs,
                                    unsigned int count, LUID_AND_ATTRIBUTES *usedprivs);
 extern const ACL *token_get_default_dacl( struct token *token );
+extern const SID *token_get_user( struct token *token );
+extern const SID *token_get_primary_group( struct token *token );
+
 extern void security_set_thread_token( struct thread *thread, obj_handle_t handle );
 extern int check_object_access( struct object *obj, unsigned int *access );
 
@@ -59,4 +65,51 @@ static inline int thread_single_check_privilege( struct thread *thread, const LU
     if (!token) return FALSE;
 
     return token_check_privileges( token, TRUE, &privs, 1, NULL );
+}
+
+
+/* security descriptor helper functions */
+
+extern int sd_is_valid( const struct security_descriptor *sd, data_size_t size );
+
+/* gets the discretionary access control list from a security descriptor */
+static inline const ACL *sd_get_dacl( const struct security_descriptor *sd, int *present )
+{
+    *present = (sd->control & SE_DACL_PRESENT ? TRUE : FALSE);
+
+    if (sd->dacl_len)
+        return (const ACL *)((const char *)(sd + 1) +
+            sd->owner_len + sd->group_len + sd->sacl_len);
+    else
+        return NULL;
+}
+
+/* gets the system access control list from a security descriptor */
+static inline const ACL *sd_get_sacl( const struct security_descriptor *sd, int *present )
+{
+    *present = (sd->control & SE_SACL_PRESENT ? TRUE : FALSE);
+
+    if (sd->sacl_len)
+        return (const ACL *)((const char *)(sd + 1) +
+            sd->owner_len + sd->group_len);
+    else
+        return NULL;
+}
+
+/* gets the owner from a security descriptor */
+static inline const SID *sd_get_owner( const struct security_descriptor *sd )
+{
+    if (sd->owner_len)
+        return (const SID *)(sd + 1);
+    else
+        return NULL;
+}
+
+/* gets the primary group from a security descriptor */
+static inline const SID *sd_get_group( const struct security_descriptor *sd )
+{
+    if (sd->group_len)
+        return (const SID *)((const char *)(sd + 1) + sd->owner_len);
+    else
+        return NULL;
 }
