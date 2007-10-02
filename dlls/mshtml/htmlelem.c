@@ -279,8 +279,24 @@ static HRESULT WINAPI HTMLElement_get_id(IHTMLElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLElement_get_tagName(IHTMLElement *iface, BSTR *p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    const PRUnichar *tag;
+    nsAString tag_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&tag_str, NULL);
+    nsres = nsIDOMHTMLElement_GetTagName(This->nselem, &tag_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&tag_str, &tag, NULL);
+        *p = SysAllocString(tag);
+    }else {
+        ERR("GetTagName failed: %08x\n", nsres);
+        *p = NULL;
+    }
+    nsAString_Finish(&tag_str);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_parentElement(IHTMLElement *iface, IHTMLElement **p)

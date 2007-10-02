@@ -80,9 +80,27 @@ static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
     hres = IHTMLDOMNode_get_nodeName(node, &name);
     IHTMLDOMNode_Release(node);
     ok_(__FILE__, line) (hres == S_OK, "get_nodeName failed: %08x\n", hres);
-    ok_(__FILE__, line) (!strcmp_wa(name, exname), "got name: %s, expected HTML\n", dbgstr_w(name));
+    ok_(__FILE__, line) (!strcmp_wa(name, exname), "got name: %s, expected %s\n", dbgstr_w(name), exname);
 
     SysFreeString(name);
+}
+
+#define test_elem_tag(u,n) _test_elem_tag(__LINE__,u,n)
+static void _test_elem_tag(unsigned line, IUnknown *unk, const char *extag)
+{
+    IHTMLElement *elem;
+    BSTR tag;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement, (void**)&elem);
+    ok_(__FILE__, line) (hres == S_OK, "QueryInterface(IID_IHTMLElement) failed: %08x\n", hres);
+
+    hres = IHTMLElement_get_tagName(elem, &tag);
+    IHTMLElement_Release(elem);
+    ok_(__FILE__, line) (hres == S_OK, "get_tagName failed: %08x\n", hres);
+    ok_(__FILE__, line) (!strcmp_wa(tag, extag), "got tag: %s, expected %s\n", dbgstr_w(tag), extag);
+
+    SysFreeString(tag);
 }
 
 static void test_doc_elem(IHTMLDocument2 *doc)
@@ -99,6 +117,7 @@ static void test_doc_elem(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_documentElement failed: %08x\n", hres);
 
     test_node_name((IUnknown*)elem, "HTML");
+    test_elem_tag((IUnknown*)elem, "HTML");
 
     IHTMLElement_Release(elem);
 }
