@@ -130,9 +130,6 @@ static const struct object_ops named_pipe_ops =
     named_pipe_destroy            /* destroy */
 };
 
-/* functions common to server and client */
-static unsigned int pipe_map_access( struct object *obj, unsigned int access );
-
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
 static struct fd *pipe_server_get_fd( struct object *obj );
@@ -152,7 +149,7 @@ static const struct object_ops pipe_server_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_server_get_fd,           /* get_fd */
-    pipe_map_access,              /* map_access */
+    default_fd_map_access,        /* map_access */
     no_lookup_name,               /* lookup_name */
     no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
@@ -188,7 +185,7 @@ static const struct object_ops pipe_client_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_client_get_fd,           /* get_fd */
-    pipe_map_access,              /* map_access */
+    default_fd_map_access,        /* map_access */
     no_lookup_name,               /* lookup_name */
     no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
@@ -355,15 +352,6 @@ static void do_disconnect( struct pipe_server *server )
     shutdown( get_unix_fd( server->fd ), SHUT_RDWR );
     release_object( server->fd );
     server->fd = NULL;
-}
-
-static unsigned int pipe_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
-    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
-    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
-    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void pipe_server_destroy( struct object *obj)

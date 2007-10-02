@@ -130,7 +130,7 @@ static const struct object_ops device_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     device_get_fd,                    /* get_fd */
-    no_map_access,                    /* map_access */
+    default_fd_map_access,            /* map_access */
     no_lookup_name,                   /* lookup_name */
     device_open_file,                 /* open_file */
     no_close_handle,                  /* close_handle */

@@ -1710,6 +1710,16 @@ int default_fd_signaled( struct object *obj, struct thread *thread )
     return ret;
 }
 
+/* default map_access() routine for objects that behave like an fd */
+unsigned int default_fd_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
+    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
+    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
+    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
 int default_fd_get_poll_events( struct fd *fd )
 {
     int events = 0;

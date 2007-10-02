@@ -157,7 +157,6 @@ struct dir
 };
 
 static struct fd *dir_get_fd( struct object *obj );
-static unsigned int dir_map_access( struct object *obj, unsigned int access );
 static void dir_dump( struct object *obj, int verbose );
 static void dir_destroy( struct object *obj );
 
@@ -171,7 +170,7 @@ static const struct object_ops dir_ops =
     no_satisfied,             /* satisfied */
     no_signal,                /* signal */
     dir_get_fd,               /* get_fd */
-    dir_map_access,           /* map_access */
+    default_fd_map_access,    /* map_access */
     no_lookup_name,           /* lookup_name */
     no_open_file,             /* open_file */
     fd_close_handle,          /* close_handle */
@@ -287,15 +286,6 @@ static struct fd *dir_get_fd( struct object *obj )
     struct dir *dir = (struct dir *)obj;
     assert( obj->ops == &dir_ops );
     return (struct fd *)grab_object( dir->fd );
-}
-
-static unsigned int dir_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
-    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
-    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
-    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static struct change_record *get_first_change_record( struct dir *dir )

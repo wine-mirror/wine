@@ -58,7 +58,6 @@
 
 static void serial_dump( struct object *obj, int verbose );
 static struct fd *serial_get_fd( struct object *obj );
-static unsigned int serial_map_access( struct object *obj, unsigned int access );
 static void serial_destroy(struct object *obj);
 
 static enum server_fd_type serial_get_fd_type( struct fd *fd );
@@ -94,7 +93,7 @@ static const struct object_ops serial_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     serial_get_fd,                /* get_fd */
-    serial_map_access,            /* map_access */
+    default_fd_map_access,        /* map_access */
     no_lookup_name,               /* lookup_name */
     no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
@@ -143,15 +142,6 @@ static struct fd *serial_get_fd( struct object *obj )
 {
     struct serial *serial = (struct serial *)obj;
     return (struct fd *)grab_object( serial->fd );
-}
-
-static unsigned int serial_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
-    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
-    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
-    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void serial_destroy( struct object *obj)

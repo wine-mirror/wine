@@ -75,6 +75,7 @@ extern void unlock_fd( struct fd *fd, file_pos_t offset, file_pos_t count );
 extern void set_fd_signaled( struct fd *fd, int signaled );
 
 extern int default_fd_signaled( struct object *obj, struct thread *thread );
+extern unsigned int default_fd_map_access( struct object *obj, unsigned int access );
 extern int default_fd_get_poll_events( struct fd *fd );
 extern void default_poll_event( struct fd *fd, int event );
 extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );

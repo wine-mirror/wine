@@ -36,7 +36,7 @@
 #include "handle.h"
 #include "request.h"
 #include "process.h"
-#include "object.h"
+#include "file.h"
 #include "unicode.h"
 
 #define HASH_SIZE 7  /* default hash size */
@@ -48,7 +48,6 @@ struct directory
 };
 
 static void directory_dump( struct object *obj, int verbose );
-static unsigned int directory_map_access( struct object *obj, unsigned int access );
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
                                              unsigned int attr );
 static void directory_destroy( struct object *obj );
@@ -63,7 +62,7 @@ static const struct object_ops directory_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
-    directory_map_access,         /* map_access */
+    default_fd_map_access,        /* map_access */
     directory_lookup_name,        /* lookup_name */
     no_open_file,                 /* open_file */
     no_close_handle,              /* close_handle */
@@ -121,15 +120,6 @@ static struct object *directory_lookup_name( struct object *obj, struct unicode_
             set_error( STATUS_OBJECT_PATH_NOT_FOUND );
     }
     return NULL;
-}
-
-static unsigned int directory_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
-    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
-    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
-    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void directory_destroy( struct object *obj )

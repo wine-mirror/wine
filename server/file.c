@@ -65,7 +65,6 @@ static unsigned int generic_file_map_access( unsigned int access );
 
 static void file_dump( struct object *obj, int verbose );
 static struct fd *file_get_fd( struct object *obj );
-static unsigned int file_map_access( struct object *obj, unsigned int access );
 static void file_destroy( struct object *obj );
 
 static int file_get_poll_events( struct fd *fd );
@@ -82,7 +81,7 @@ static const struct object_ops file_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     file_get_fd,                  /* get_fd */
-    file_map_access,              /* map_access */
+    default_fd_map_access,        /* map_access */
     no_lookup_name,               /* lookup_name */
     no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
@@ -122,7 +121,7 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
     if ((file = alloc_object( &file_ops )))
     {
         file->mode = st.st_mode;
-        file->access = file_map_access( &file->obj, access );
+        file->access = default_fd_map_access( &file->obj, access );
         if (!(file->fd = create_anonymous_fd( &file_fd_ops, fd, &file->obj,
                                               FILE_SYNCHRONOUS_IO_NONALERT )))
         {
@@ -266,11 +265,6 @@ static unsigned int generic_file_map_access( unsigned int access )
     if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
     if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
-}
-
-static unsigned int file_map_access( struct object *obj, unsigned int access )
-{
-    return generic_file_map_access( access );
 }
 
 static void file_destroy( struct object *obj )
