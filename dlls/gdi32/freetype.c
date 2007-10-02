@@ -170,6 +170,7 @@ MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
 MAKE_FUNCPTR(FT_Select_Charmap);
+MAKE_FUNCPTR(FT_Set_Charmap);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 MAKE_FUNCPTR(FT_Vector_Transform);
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
@@ -2045,6 +2046,7 @@ BOOL WineEngInit(void)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FT_Outline_Translate)
     LOAD_FUNCPTR(FT_Select_Charmap)
+    LOAD_FUNCPTR(FT_Set_Charmap)
     LOAD_FUNCPTR(FT_Set_Pixel_Sizes)
     LOAD_FUNCPTR(FT_Vector_Transform)
 
@@ -2720,6 +2722,61 @@ static BOOL create_child_font_list(GdiFont *font)
     return ret;
 }
 
+static BOOL select_charmap(FT_Face ft_face, FT_Encoding encoding)
+{
+    FT_Error ft_err = FT_Err_Invalid_CharMap_Handle;
+
+    if (pFT_Set_Charmap)
+    {
+        FT_Int i;
+        FT_CharMap cmap0, cmap1, cmap2, cmap3, cmap_def;
+
+        cmap0 = cmap1 = cmap2 = cmap3 = cmap_def = NULL;
+
+        for (i = 0; i < ft_face->num_charmaps; i++)
+        {
+            if (ft_face->charmaps[i]->encoding == encoding)
+            {
+                TRACE("found cmap with platform_id %u, encoding_id %u\n",
+                       ft_face->charmaps[i]->platform_id, ft_face->charmaps[i]->encoding_id);
+
+                switch (ft_face->charmaps[i]->platform_id)
+                {
+                    default:
+                        cmap_def = ft_face->charmaps[i];
+                        break;
+                    case 0: /* Apple Unicode */
+                        cmap0 = ft_face->charmaps[i];
+                        break;
+                    case 1: /* Macintosh */
+                        cmap1 = ft_face->charmaps[i];
+                        break;
+                    case 2: /* ISO */
+                        cmap2 = ft_face->charmaps[i];
+                        break;
+                    case 3: /* Microsoft */
+                        cmap3 = ft_face->charmaps[i];
+                        break;
+                }
+            }
+
+            if (cmap3) /* prefer Microsoft cmap table */
+                ft_err = pFT_Set_Charmap(ft_face, cmap3);
+            else if (cmap1)
+                ft_err = pFT_Set_Charmap(ft_face, cmap1);
+            else if (cmap2)
+                ft_err = pFT_Set_Charmap(ft_face, cmap2);
+            else if (cmap0)
+                ft_err = pFT_Set_Charmap(ft_face, cmap0);
+            else if (cmap_def)
+                ft_err = pFT_Set_Charmap(ft_face, cmap_def);
+        }
+        return ft_err == FT_Err_Ok;
+    }
+
+    return pFT_Select_Charmap(ft_face, encoding) == FT_Err_Ok;
+}
+
 /*************************************************************
  * WineEngCreateFontInstance
  *
@@ -3007,14 +3064,14 @@ found:
     ret->ntmFlags = face->ntmFlags;
 
     if (ret->charset == SYMBOL_CHARSET && 
-        !pFT_Select_Charmap(ret->ft_face, FT_ENCODING_MS_SYMBOL)) {
+        select_charmap(ret->ft_face, FT_ENCODING_MS_SYMBOL)) {
         /* No ops */
     }
-    else if (!pFT_Select_Charmap(ret->ft_face, FT_ENCODING_UNICODE)) {
+    else if (select_charmap(ret->ft_face, FT_ENCODING_UNICODE)) {
         /* No ops */
     }
     else {
-        pFT_Select_Charmap(ret->ft_face, FT_ENCODING_APPLE_ROMAN);
+        select_charmap(ret->ft_face, FT_ENCODING_APPLE_ROMAN);
     }
 
     ret->orientation = FT_IS_SCALABLE(ret->ft_face) ? lf.lfOrientation : 0;
