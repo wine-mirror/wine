@@ -51,6 +51,23 @@
 #define WND_POPUP_ID		2
 #define WND_CHILD_ID		3
 
+/* encoded DRAWITEMSTRUCT into an LPARAM */
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            UINT type    : 4;  /* ODT_* flags */
+            UINT ctl_id  : 4;  /* Control ID */
+            UINT item_id : 4;  /* Menu item ID */
+            UINT action  : 4;  /* ODA_* flags */
+            UINT state   : 16; /* ODS_* flags */
+        } item;
+        LPARAM lp;
+    };
+} DRAW_ITEM_STRUCT;
+
 static BOOL test_DestroyWindow_flag;
 static HWINEVENTHOOK hEvent_hook;
 
@@ -6235,6 +6252,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
         message == WM_PARENTNOTIFY || message == WM_CANCELMODE ||
 	message == WM_SETFOCUS || message == WM_KILLFOCUS ||
 	message == WM_ENABLE ||	message == WM_ENTERIDLE ||
+        message == WM_DRAWITEM ||
 	message == WM_IME_SETCONTEXT)
     {
         switch (message)
@@ -6273,6 +6291,25 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
                 wParam = winpos->flags & 0xffff;
                 /* We are not interested in the flags that don't match under XP and Win9x */
                 wParam &= ~(SWP_NOZORDER);
+                break;
+            }
+
+            case WM_DRAWITEM:
+            {
+                /* encode DRAWITEMSTRUCT into an LPARAM */
+                DRAW_ITEM_STRUCT di;
+                DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)lParam;
+
+                trace("WM_DRAWITEM: type %x, ctl_id %x, item_id %x, action %x, state %x\n",
+                      dis->CtlType, dis->CtlID, dis->itemID, dis->itemAction, dis->itemState);
+
+                di.item.type = dis->CtlType;
+                di.item.ctl_id = dis->CtlID;
+                di.item.item_id = dis->itemID;
+                di.item.action = dis->itemAction;
+                di.item.state = dis->itemState;
+
+                lParam = di.lp;
                 break;
             }
         }
@@ -6604,6 +6641,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    !lstrcmpiA(buf, "my_button_class") ||
 	    !lstrcmpiA(buf, "my_edit_class") ||
 	    !lstrcmpiA(buf, "static") ||
+	    !lstrcmpiA(buf, "ListBox") ||
 	    !lstrcmpiA(buf, "MyDialogClass") ||
 	    !lstrcmpiA(buf, "#32770"))
 	{
@@ -6651,6 +6689,7 @@ static void CALLBACK win_event_proc(HWINEVENTHOOK hevent,
 	    !lstrcmpiA(buf, "my_button_class") ||
 	    !lstrcmpiA(buf, "my_edit_class") ||
 	    !lstrcmpiA(buf, "static") ||
+	    !lstrcmpiA(buf, "ListBox") ||
 	    !lstrcmpiA(buf, "MyDialogClass") ||
 	    !lstrcmpiA(buf, "#32770"))
 	{
@@ -9702,6 +9741,113 @@ static void test_dbcs_wm_char(void)
     DestroyWindow(hwnd);
 }
 
+#define ID_LISTBOX 0x000f
+
+static const struct message wm_lb_setcursel_0[] =
+{
+    { LB_SETCURSEL, sent|wparam|lparam, 0, 0 },
+    { WM_CTLCOLORLISTBOX, sent|parent },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x00120f2 },
+    { 0 }
+};
+static const struct message wm_lb_setcursel_1[] =
+{
+    { LB_SETCURSEL, sent|wparam|lparam, 1, 0 },
+    { WM_CTLCOLORLISTBOX, sent|parent },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x00020f2 },
+    { WM_CTLCOLORLISTBOX, sent|parent },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x00121f2 },
+    { 0 }
+};
+
+#define check_lb_state(a1, a2, a3, a4, a5) check_lb_state_dbg(a1, a2, a3, a4, a5, __LINE__)
+
+static LRESULT (WINAPI *listbox_orig_proc)(HWND, UINT, WPARAM, LPARAM);
+
+static LRESULT WINAPI listbox_hook_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    struct message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_NCPAINT &&
+        message != WM_SYNCPAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCHITTEST &&
+        message != WM_GETTEXT &&
+        message != WM_GETICON &&
+        message != WM_DEVICECHANGE)
+    {
+        trace("listbox: %p, %04x, %08lx, %08lx\n", hwnd, message, wp, lp);
+
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        msg.wParam = wp;
+        msg.lParam = lp;
+        add_message(&msg);
+    }
+
+    return CallWindowProcA(listbox_orig_proc, hwnd, message, wp, lp);
+}
+
+static void check_lb_state_dbg(HWND listbox, int count, int cur_sel,
+                               int caret_index, int top_index, int line)
+{
+    LRESULT ret;
+
+    ret = SendMessage(listbox, LB_GETCOUNT, 0, 0);
+    ok_(__FILE__, line)(ret == count, "expected count %d, got %ld\n", count, ret);
+    ret = SendMessage(listbox, LB_GETCURSEL, 0, 0);
+    ok_(__FILE__, line)(ret == cur_sel, "expected cur sel %d, got %ld\n", cur_sel, ret);
+    ret = SendMessage(listbox, LB_GETCARETINDEX, 0, 0);
+    ok_(__FILE__, line)(ret == caret_index, "expected caret index %d, got %ld\n", caret_index, ret);
+    ret = SendMessage(listbox, LB_GETTOPINDEX, 0, 0);
+    ok_(__FILE__, line)(ret == top_index, "expected top index %d, got %ld\n", top_index, ret);
+}
+
+static void test_listbox(void)
+{
+    HWND parent, listbox;
+    LRESULT ret;
+
+    parent = CreateWindowExA(0, "TestParentClass", NULL, WS_OVERLAPPEDWINDOW  | WS_VISIBLE,
+                             100, 100, 200, 200, 0, 0, 0, NULL);
+    listbox = CreateWindowExA(WS_EX_NOPARENTNOTIFY, "ListBox", NULL,
+                              WS_CHILD | LBS_NOTIFY | LBS_OWNERDRAWVARIABLE | LBS_HASSTRINGS | WS_VISIBLE,
+                              10, 10, 80, 20, parent, (HMENU)ID_LISTBOX, 0, NULL);
+    listbox_orig_proc = (WNDPROC)SetWindowLongPtrA(listbox, GWLP_WNDPROC, (ULONG_PTR)listbox_hook_proc);
+
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+
+    ret = SendMessage(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ret = SendMessage(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
+    ok(ret == 1, "expected 1, got %ld\n", ret);
+    ret = SendMessage(listbox, LB_ADDSTRING, 0, (LPARAM)"item 3");
+    ok(ret == 2, "expected 2, got %ld\n", ret);
+
+    check_lb_state(listbox, 3, LB_ERR, 0, 0);
+
+    flush_sequence();
+
+    log_all_parent_messages++;
+
+    trace("selecting item 0\n");
+    SendMessage(listbox, LB_SETCURSEL, 0, 0);
+    ok_sequence(wm_lb_setcursel_0, "LB_SETCURSEL 0", FALSE );
+    check_lb_state(listbox, 3, 0, 0, 0);
+    flush_sequence();
+
+    trace("selecting item 1\n");
+    SendMessage(listbox, LB_SETCURSEL, 1, 0);
+    ok_sequence(wm_lb_setcursel_1, "LB_SETCURSEL 1", FALSE );
+    check_lb_state(listbox, 3, 1, 1, 0);
+
+    log_all_parent_messages--;
+
+    DestroyWindow(parent);
+}
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -9779,6 +9925,7 @@ START_TEST(msg)
     test_nullCallback();
     test_SetForegroundWindow();
     test_dbcs_wm_char();
+    test_listbox();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)

@@ -1417,7 +1417,8 @@ static LRESULT LISTBOX_SelectItemRange( LB_DESCR *descr, INT first,
 static LRESULT LISTBOX_SetSelection( LB_DESCR *descr, INT index,
                                      BOOL on, BOOL send_notify )
 {
-    TRACE( "index=%d notify=%s\n", index, send_notify ? "YES" : "NO" );
+    TRACE( "cur_sel=%d index=%d notify=%s\n",
+           descr->selected_item, index, send_notify ? "YES" : "NO" );
 
     if (descr->style & LBS_NOSEL)
     {
@@ -2899,7 +2900,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         /* fall through */
     case LB_SETCURSEL:
         if (IS_MULTISELECT(descr)) return LB_ERR;
-        LISTBOX_SetCaretIndex( descr, wParam, TRUE );
+        LISTBOX_SetCaretIndex( descr, wParam, FALSE );
         ret = LISTBOX_SetSelection( descr, wParam, TRUE, FALSE );
 	if (lphc && ret != LB_ERR) ret = descr->selected_item;
 	return ret;
