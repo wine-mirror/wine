@@ -362,7 +362,7 @@ NSContainer *NSContainer_Create(HTMLDocument*,NSContainer*);
 void NSContainer_Release(NSContainer*);
 
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
-void show_context_menu(HTMLDocument*,DWORD,POINT*);
+void show_context_menu(HTMLDocument*,DWORD,POINT*,IDispatch*);
 void notif_focus(HTMLDocument*);
 
 void show_tooltip(HTMLDocument*,DWORD,DWORD,LPCWSTR);

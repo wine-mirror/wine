@@ -852,14 +852,14 @@ static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     OleCommandTarget_Exec
 };
 
-void show_context_menu(HTMLDocument *This, DWORD dwID, POINT *ppt)
+void show_context_menu(HTMLDocument *This, DWORD dwID, POINT *ppt, IDispatch *elem)
 {
     HMENU menu_res, menu;
     DWORD cmdid;
     HRESULT hres;
 
     hres = IDocHostUIHandler_ShowContextMenu(This->hostui, dwID, ppt,
-            (IUnknown*)CMDTARGET(This), (IDispatch*)HTMLDOC(This));
+            (IUnknown*)CMDTARGET(This), elem);
     if(hres == S_OK)
         return;
 
