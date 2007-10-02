@@ -3500,7 +3500,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     DWORD width, height, pitch, needed = 0;
     FT_Bitmap ft_bitmap;
     FT_Error err;
-    INT left, right, top = 0, bottom = 0;
+    INT left, right, top = 0, bottom = 0, adv, lsb, bbx;
     FT_Angle angle = 0;
     FT_Int load_flags = FT_LOAD_DEFAULT | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
     float widthRatio = 1.0;
@@ -3551,9 +3551,9 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     left = (INT)(ft_face->glyph->metrics.horiBearingX * widthRatio) & -64;
     right = (INT)((ft_face->glyph->metrics.horiBearingX + ft_face->glyph->metrics.width) * widthRatio + 63) & -64;
 
-    FONT_GM(font,glyph_index)->adv = (INT)((ft_face->glyph->metrics.horiAdvance * widthRatio) + 63) >> 6;
-    FONT_GM(font,glyph_index)->lsb = left >> 6;
-    FONT_GM(font,glyph_index)->bbx = (right - left) >> 6;
+    adv = (INT)((ft_face->glyph->metrics.horiAdvance * widthRatio) + 63) >> 6;
+    lsb = left >> 6;
+    bbx = (right - left) >> 6;
 
     /* Scaling transform */
     if(font->aveWidth) {
@@ -3609,7 +3609,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 	top = (ft_face->glyph->metrics.horiBearingY + 63) & -64;
 	bottom = (ft_face->glyph->metrics.horiBearingY -
 		  ft_face->glyph->metrics.height) & -64;
-	lpgm->gmCellIncX = FONT_GM(font,glyph_index)->adv;
+	lpgm->gmCellIncX = adv;
 	lpgm->gmCellIncY = 0;
     } else {
         INT xc, yc;
@@ -3650,8 +3650,14 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     lpgm->gmptGlyphOrigin.x = left >> 6;
     lpgm->gmptGlyphOrigin.y = top >> 6;
 
-    FONT_GM(font,glyph_index)->gm = *lpgm;
-    FONT_GM(font,glyph_index)->init = TRUE;
+    if(format == GGO_METRICS || format == GGO_BITMAP)
+    {
+        FONT_GM(font,glyph_index)->gm = *lpgm;
+        FONT_GM(font,glyph_index)->adv = adv;
+        FONT_GM(font,glyph_index)->lsb = lsb;
+        FONT_GM(font,glyph_index)->bbx = bbx;
+        FONT_GM(font,glyph_index)->init = TRUE;
+    }
 
     if(format == GGO_METRICS)
         return 1; /* FIXME */
