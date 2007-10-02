@@ -27,6 +27,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(spoolss);
 
+/* ################################ */
+
+static HMODULE hwinspool;
+static const WCHAR winspooldrvW[] = {'w','i','n','s','p','o','o','l','.','d','r','v',0};
 
 /******************************************************************
  *
@@ -160,4 +164,48 @@ HANDLE WINAPI RevertToPrinterSelf(void)
 {
     FIXME("() stub\n");
     return NULL;
+}
+
+/******************************************************************
+ *   SplInitializeWinSpoolDrv   [SPOOLSS.@]
+ *
+ * Dynamic load "winspool.drv" and fill an array with some function-pointer
+ *
+ * PARAMS
+ *  table  [I] array of function-pointer to fill
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  Native "spoolss.dll" from w2k fill the table with 11 Function-Pointer.
+ *  We implement the XP-Version (The table has only 9 Pointer)
+ *
+ */
+BOOL WINAPI SplInitializeWinSpoolDrv(LPVOID * table)
+{
+    DWORD res;
+
+    TRACE("(%p)\n", table);
+
+    hwinspool = LoadLibraryW(winspooldrvW);
+    if (!hwinspool) return FALSE;
+
+    table[0] = (void *) GetProcAddress(hwinspool, "OpenPrinterW");
+    table[1] = (void *) GetProcAddress(hwinspool, "ClosePrinter");
+    table[2] = (void *) GetProcAddress(hwinspool, "SpoolerDevQueryPrintW");
+    table[3] = (void *) GetProcAddress(hwinspool, "SpoolerPrinterEvent");
+    table[4] = (void *) GetProcAddress(hwinspool, "DocumentPropertiesW");
+    table[5] = (void *) GetProcAddress(hwinspool, (LPSTR) 212);  /* LoadPrinterDriver */
+    table[6] = (void *) GetProcAddress(hwinspool, (LPSTR) 213);  /* RefCntLoadDriver */
+    table[7] = (void *) GetProcAddress(hwinspool, (LPSTR) 214);  /* RefCntUnloadDriver */
+    table[8] = (void *) GetProcAddress(hwinspool, (LPSTR) 215);  /* ForceUnloadDriver */
+
+    for (res = 0; res < 9; res++) {
+        if (table[res] == NULL) return FALSE;
+    }
+
+    return TRUE;
+
 }
