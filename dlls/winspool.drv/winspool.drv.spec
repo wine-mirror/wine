@@ -166,6 +166,7 @@
 @ stdcall SetPrinterW(long long ptr long)
 @ stub SpoolerDevQueryPrintW
 @ stub SpoolerInit
+@ stub SpoolerPrinterEvent
 @ stdcall StartDocDlgA(ptr ptr)
 @ stdcall StartDocDlgW(ptr ptr)
 @ stdcall StartDocPrinterA(long long ptr)
