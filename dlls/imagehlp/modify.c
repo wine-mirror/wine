@@ -327,7 +327,7 @@ BOOL WINAPI SplitSymbols(
  */
 BOOL WINAPI UpdateDebugInfoFile(
   PCSTR ImageFileName, PCSTR SymbolPath,
-  PSTR DebugFilePath, PIMAGE_NT_HEADERS NtHeaders)
+  PSTR DebugFilePath, PIMAGE_NT_HEADERS32 NtHeaders)
 {
   FIXME("(%s, %s, %s, %p): stub\n",
     debugstr_a(ImageFileName), debugstr_a(SymbolPath),
