@@ -1,0 +1,40 @@
+/*
+ * NET.EXE - Wine-compatible net program
+ * Russian language support
+ *
+ * Copyright (C) 2007 Konstantin Kondratyuk (Etersoft)
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    STRING_USAGE, "Использование:\n\nNET [ HELP | START | STOP ]\n"
+    STRING_START_USAGE, "Укажите запускаемую службу.\n"
+    STRING_STOP_USAGE, "Укажите останавливаемую службу.\n"
+    STRING_STOP_DEP, "Остановка зависимой службы: %s\n"
+    STRING_CANT_STOP, "Невозможно остановить службу %s\n"
+    STRING_NO_SCM, "Невозможно получить доступ к диспетчеру служб.\n"
+    STRING_NO_SVCHANDLE, "Невозможно получить доступ к службе.\n"
+    STRING_START_SVC, "Запуск службы %s.\n"
+    STRING_START_SVC_SUCCESS, "Служба %s успешно запущена.\n"
+    STRING_START_SVC_FAIL, "Ошибка при запуске службы %s.\n"
+    STRING_STOP_SVC, "Остановка службы %s.\n"
+    STRING_STOP_SVC_SUCCESS, "Служба %s успешно остановлена.\n"
+    STRING_STOP_SVC_FAIL, "Ошибка при остановке службы %s.\n"
+    STRING_HELP_USAGE, "Использование:\n\nNET HELP команда\n    -или-\nNET команда /HELP\n\n   Доступные команды:\n   NET HELP    NET START     NET STOP\n"
+}
