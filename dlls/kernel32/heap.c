@@ -356,11 +356,10 @@ HGLOBAL WINAPI GlobalAlloc(
    else
       hpflags=0;
 
-   TRACE("() flags=%04x\n",  flags );
-
    if((flags & GMEM_MOVEABLE)==0) /* POINTER */
    {
       palloc=HeapAlloc(GetProcessHeap(), hpflags, size);
+      TRACE( "(flags=%04x) returning %p\n",  flags, palloc );
       return (HGLOBAL) palloc;
    }
    else  /* HANDLE */
@@ -399,7 +398,10 @@ HGLOBAL WINAPI GlobalAlloc(
       }
 
       RtlUnlockHeap(GetProcessHeap());
-      return pintern ? INTERN_TO_HANDLE(pintern) : 0;
+      if (!pintern) return 0;
+      TRACE( "(flags=%04x) returning handle %p pointer %p\n",
+             flags, INTERN_TO_HANDLE(pintern), pintern->Pointer );
+      return INTERN_TO_HANDLE(pintern);
    }
 }
 
