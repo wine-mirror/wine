@@ -636,7 +636,7 @@ static void test_defwndproc(void)
     ok(IsWindowUnicode(hwnd), "Windows should have remained Unicode\n");
     ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcW, "Invalid ANSI winproc\n");
     ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcA, "Invalid Unicode winproc\n");
-    SetWindowLongPtrA(hwnd, GWL_WNDPROC, (LONG_PTR)ClassTest_WndProc);
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)ClassTest_WndProc);
     ok(IsWindowUnicode(hwnd) == FALSE, "SetWindowLongPtrA should have switched window to ANSI\n");
 
     DestroyWindow(hwnd);
@@ -654,9 +654,9 @@ static void test_defwndproc(void)
     hwnd = CreateWindowExW(0, classW, NULL, WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, GetModuleHandleA(NULL), 0);
     ok(IsWindowUnicode(hwnd) == FALSE, "Window should be ANSI\n");
-    SetWindowLongPtrW(hwnd, GWL_WNDPROC, (LONG_PTR)ClassTest_WndProc);
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)ClassTest_WndProc);
     ok(IsWindowUnicode(hwnd), "SetWindowLongPtrW should have changed window to Unicode\n");
-    SetWindowLongPtrA(hwnd, GWL_WNDPROC, (LONG_PTR)ClassTest_WndProc);
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)ClassTest_WndProc);
     ok(IsWindowUnicode(hwnd) == FALSE, "SetWindowLongPtrA should have changed window to ANSI\n");
 
     DestroyWindow(hwnd);
