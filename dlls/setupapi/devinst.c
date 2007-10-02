@@ -1986,7 +1986,7 @@ static void SETUPDI_EnumerateInterfaces(HDEVINFO DeviceInfoSet,
 static void SETUPDI_EnumerateMatchingDevices(HDEVINFO DeviceInfoSet,
         LPCWSTR parent, HKEY key, const GUID *class, DWORD flags)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)set;
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
     DWORD i, len;
     WCHAR subKeyName[MAX_PATH];
     LONG l = ERROR_SUCCESS;
