@@ -4,7 +4,7 @@
 @ stub GetPrintProcessorCapabilities
 @ stdcall InitializePrintMonitor(wstr)
 # "Providor" is no typo here
-@ stub InitializePrintProvidor
+@ stdcall InitializePrintProvidor(ptr long wstr)
 @ stub OpenPrintProcessor
 @ stub PrintDocumentOnPrintProcessor
 @ stub PrintProcLogEvent

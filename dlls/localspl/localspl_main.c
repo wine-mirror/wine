@@ -26,7 +26,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "winuser.h"
+#include "winreg.h"
+#include "winspool.h"
+#include "ddk/winsplp.h"
 
 #include "wine/debug.h"
 #include "localspl_private.h"
@@ -52,5 +54,37 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             LOCALSPL_hInstance = hinstDLL;
             break;
     }
+    return TRUE;
+}
+
+
+/*****************************************************
+ * InitializePrintProvidor     (localspl.@)
+ *
+ * Initialize the Printprovider
+ *
+ * PARAMS
+ *  pPrintProvidor    [I] Buffer to fill with a struct PRINTPROVIDOR
+ *  cbPrintProvidor   [I] Size of Buffer in Bytes
+ *  pFullRegistryPath [I] Registry-Path for the Printprovidor
+ *
+ * RETURNS
+ *  Success: TRUE and pPrintProvidor filled
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  The RegistryPath should be:
+ *  "System\CurrentControlSet\Control\Print\Providers\<providername>",
+ *  but this Parameter is ignored in "localspl.dll".
+ *
+ */
+
+BOOL WINAPI InitializePrintProvidor(LPPRINTPROVIDOR pPrintProvidor,
+                                    DWORD cbPrintProvidor, LPWSTR pFullRegistryPath)
+{
+
+    TRACE("(%p, %u, %s)\n", pPrintProvidor, cbPrintProvidor, debugstr_w(pFullRegistryPath));
+    ZeroMemory(pPrintProvidor, (cbPrintProvidor < sizeof(PRINTPROVIDOR)) ? cbPrintProvidor : sizeof(PRINTPROVIDOR));
+
     return TRUE;
 }
