@@ -3533,7 +3533,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     if (!font->gm[glyph_index / GM_BLOCK_SIZE])
         font->gm[glyph_index / GM_BLOCK_SIZE] = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(GM) * GM_BLOCK_SIZE);
 
-    if(font->orientation || (format != GGO_METRICS && format != GGO_BITMAP) || font->aveWidth || lpmat)
+    if(font->orientation || (format != GGO_METRICS && format != GGO_BITMAP && format != WINE_GGO_GRAY16_BITMAP) || font->aveWidth || lpmat)
         load_flags |= FT_LOAD_NO_BITMAP;
 
     err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
@@ -3650,7 +3650,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     lpgm->gmptGlyphOrigin.x = left >> 6;
     lpgm->gmptGlyphOrigin.y = top >> 6;
 
-    if(format == GGO_METRICS || format == GGO_BITMAP)
+    if(format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP)
     {
         FONT_GM(font,glyph_index)->gm = *lpgm;
         FONT_GM(font,glyph_index)->adv = adv;
@@ -3662,7 +3662,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     if(format == GGO_METRICS)
         return 1; /* FIXME */
 
-    if(ft_face->glyph->format != ft_glyph_format_outline && format != GGO_BITMAP) {
+    if(ft_face->glyph->format != ft_glyph_format_outline && format != GGO_BITMAP && format != WINE_GGO_GRAY16_BITMAP) {
         TRACE("loaded a bitmap\n");
 	return GDI_ERROR;
     }
@@ -3728,34 +3728,55 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 	needed = pitch * height;
 
 	if(!buf || !buflen) break;
-	ft_bitmap.width = width;
-	ft_bitmap.rows = height;
-	ft_bitmap.pitch = pitch;
-	ft_bitmap.pixel_mode = ft_pixel_mode_grays;
-	ft_bitmap.buffer = buf;
 
-	if(needsTransform) {
-		pFT_Outline_Transform(&ft_face->glyph->outline, &transMat);
-	}
+	switch(ft_face->glyph->format) {
+	case ft_glyph_format_bitmap:
+	  {
+            BYTE *src = ft_face->glyph->bitmap.buffer, *dst = buf;
+            INT h = ft_face->glyph->bitmap.rows;
+            INT x;
+            while(h--) {
+                for(x = 0; x < pitch; x++)
+                    dst[x] = (src[x / 8] & (1 << ( (7 - (x % 8))))) ? 0xff : 0;
+                src += ft_face->glyph->bitmap.pitch;
+                dst += pitch;
+            }
+            return needed;
+	  }
+        case ft_glyph_format_outline:
+          {
+            ft_bitmap.width = width;
+            ft_bitmap.rows = height;
+            ft_bitmap.pitch = pitch;
+            ft_bitmap.pixel_mode = ft_pixel_mode_grays;
+            ft_bitmap.buffer = buf;
 
-	pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
+            if(needsTransform)
+                pFT_Outline_Transform(&ft_face->glyph->outline, &transMat);
 
-	memset(ft_bitmap.buffer, 0, buflen);
+            pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
-	pFT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
+            memset(ft_bitmap.buffer, 0, buflen);
 
-	if(format == GGO_GRAY2_BITMAP)
-	    mult = 4;
-	else if(format == GGO_GRAY4_BITMAP)
-	    mult = 16;
-	else if(format == GGO_GRAY8_BITMAP)
-	    mult = 64;
-	else if(format == WINE_GGO_GRAY16_BITMAP)
-	    break;
-	else {
-	    assert(0);
-	    break;
-	}
+            pFT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
+
+            if(format == GGO_GRAY2_BITMAP)
+                mult = 4;
+            else if(format == GGO_GRAY4_BITMAP)
+                mult = 16;
+            else if(format == GGO_GRAY8_BITMAP)
+                mult = 64;
+            else if(format == WINE_GGO_GRAY16_BITMAP)
+                return needed;
+            else {
+                assert(0);
+                break;
+            }
+          }
+        default:
+            FIXME("loaded glyph format %x\n", ft_face->glyph->format);
+            return GDI_ERROR;
+        }
 
 	start = buf;
 	for(row = 0; row < height; row++) {
