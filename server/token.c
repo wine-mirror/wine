@@ -544,7 +544,7 @@ static ACL *create_default_dacl( const SID *user )
     default_dacl = mem_alloc( default_dacl_size );
     if (!default_dacl) return NULL;
 
-    default_dacl->AclRevision = MAX_ACL_REVISION;
+    default_dacl->AclRevision = ACL_REVISION;
     default_dacl->Sbz1 = 0;
     default_dacl->AclSize = default_dacl_size;
     default_dacl->AceCount = 2;
