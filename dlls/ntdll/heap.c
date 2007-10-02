@@ -44,7 +44,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(heap);
 
-/* Note: the heap data structures are losely based on what Pietrek describes in his
+/* Note: the heap data structures are loosely based on what Pietrek describes in his
  * book 'Windows 95 System Programming Secrets', with some adaptations for
  * better compatibility with NT.
  */
