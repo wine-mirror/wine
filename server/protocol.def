@@ -2768,6 +2768,14 @@ enum message_type
     VARARG(sd,security_descriptor); /* security descriptor to set */
 @END
 
+@REQ(get_security_object)
+    obj_handle_t    handle;       /* handle to the object */
+    unsigned int    security_info; /* which parts of security descriptor to get */
+@REPLY
+    unsigned int    sd_len;         /* buffer size needed for sd */
+    VARARG(sd,security_descriptor); /* retrieved security descriptor */
+@END
+
 /* Create a mailslot */
 @REQ(create_mailslot)
     unsigned int   access;        /* wanted access rights */

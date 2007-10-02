@@ -162,152 +162,84 @@ NTSTATUS WINAPI NtSetInformationObject(IN HANDLE handle,
  *
  * An ntdll analogue to GetKernelObjectSecurity().
  *
- * NOTES
- *  only the lowest 4 bit of SecurityObjectInformationClass are used
- *  0x7-0xf returns STATUS_ACCESS_DENIED (even running with system privileges)
- *
- * FIXME
- *  We are constructing a fake sid (Administrators:Full, System:Full, Everyone:Read)
  */
 NTSTATUS WINAPI
 NtQuerySecurityObject(
 	IN HANDLE Object,
 	IN SECURITY_INFORMATION RequestedInformation,
-	OUT PSECURITY_DESCRIPTOR pSecurityDesriptor,
+	OUT PSECURITY_DESCRIPTOR pSecurityDescriptor,
 	IN ULONG Length,
 	OUT PULONG ResultLength)
 {
-	static const SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
-	static const SID_IDENTIFIER_AUTHORITY worldSidAuthority = {SECURITY_WORLD_SID_AUTHORITY};
-	BYTE Buffer[256];
-	PISECURITY_DESCRIPTOR_RELATIVE psd = (PISECURITY_DESCRIPTOR_RELATIVE)Buffer;
-	UINT BufferIndex = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+    PISECURITY_DESCRIPTOR_RELATIVE psd = pSecurityDescriptor;
+    NTSTATUS status;
+    unsigned int buffer_size = 512;
+    BOOLEAN need_more_memory = FALSE;
 
-	FIXME("(%p,0x%08x,%p,0x%08x,%p) stub!\n",
-	Object, RequestedInformation, pSecurityDesriptor, Length, ResultLength);
+    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n",
+	Object, RequestedInformation, pSecurityDescriptor, Length, ResultLength);
 
-	RequestedInformation &= 0x0000000f;
+    do
+    {
+        char *buffer = RtlAllocateHeap(GetProcessHeap(), 0, buffer_size);
+        if (!buffer)
+            return STATUS_NO_MEMORY;
 
-	ZeroMemory(Buffer, 256);
-	RtlCreateSecurityDescriptor((PSECURITY_DESCRIPTOR)psd, SECURITY_DESCRIPTOR_REVISION);
-	psd->Control = SE_SELF_RELATIVE |
-	  ((RequestedInformation & DACL_SECURITY_INFORMATION) ? SE_DACL_PRESENT:0);
+        SERVER_START_REQ( get_security_object )
+        {
+            req->handle = Object;
+            req->security_info = RequestedInformation;
+            wine_server_set_reply( req, buffer, buffer_size );
+            status = wine_server_call( req );
+            if (status == STATUS_SUCCESS)
+            {
+                struct security_descriptor *sd = (struct security_descriptor *)buffer;
+                if (reply->sd_len)
+                {
+                    *ResultLength = sizeof(SECURITY_DESCRIPTOR_RELATIVE) +
+                        sd->owner_len + sd->group_len + sd->sacl_len + sd->dacl_len;
+                    if (Length >= *ResultLength)
+                    {
+                        psd->Revision = SECURITY_DESCRIPTOR_REVISION;
+                        psd->Sbz1 = 0;
+                        psd->Control = sd->control | SE_SELF_RELATIVE;
+                        psd->Owner = sd->owner_len ? sizeof(SECURITY_DESCRIPTOR_RELATIVE) : 0;
+                        psd->Group = sd->group_len ? sizeof(SECURITY_DESCRIPTOR_RELATIVE) + sd->owner_len : 0;
+                        psd->Sacl = sd->sacl_len ? sizeof(SECURITY_DESCRIPTOR_RELATIVE) + sd->owner_len + sd->group_len : 0;
+                        psd->Dacl = sd->dacl_len ? sizeof(SECURITY_DESCRIPTOR_RELATIVE) + sd->owner_len + sd->group_len + sd->sacl_len : 0;
+                        /* owner, group, sacl and dacl are the same type as in the server
+                         * and in the same order so we copy the memory in one block */
+                        memcpy((char *)pSecurityDescriptor + sizeof(SECURITY_DESCRIPTOR_RELATIVE),
+                               buffer + sizeof(struct security_descriptor),
+                               sd->owner_len + sd->group_len + sd->sacl_len + sd->dacl_len);
+                    }
+                    else
+                        status = STATUS_BUFFER_TOO_SMALL;
+                }
+                else
+                {
+                    *ResultLength = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+                    if (Length >= *ResultLength)
+                    {
+                        memset(psd, 0, sizeof(*psd));
+                        psd->Revision = SECURITY_DESCRIPTOR_REVISION;
+                        psd->Control = SE_SELF_RELATIVE;
+                    }
+                    else
+                        status = STATUS_BUFFER_TOO_SMALL;
+                }
+            }
+            else if (status == STATUS_BUFFER_TOO_SMALL)
+            {
+                buffer_size = reply->sd_len;
+                need_more_memory = TRUE;
+            }
+        }
+        SERVER_END_REQ;
+        RtlFreeHeap(GetProcessHeap(), 0, buffer);
+    } while (need_more_memory);
 
-	/* owner: administrator S-1-5-20-220*/
-	if (OWNER_SECURITY_INFORMATION & RequestedInformation)
-	{
-	  SID* psid = (SID*)&(Buffer[BufferIndex]);
-
-	  psd->Owner = BufferIndex;
-	  BufferIndex += RtlLengthRequiredSid(2);
-
-	  psid->Revision = SID_REVISION;
-	  psid->SubAuthorityCount = 2;
-	  psid->IdentifierAuthority = localSidAuthority;
-	  psid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
-	  psid->SubAuthority[1] = DOMAIN_ALIAS_RID_ADMINS;
-	}
-
-	/* group: built in domain S-1-5-12 */
-	if (GROUP_SECURITY_INFORMATION & RequestedInformation)
-	{
-	  SID* psid = (SID*) &(Buffer[BufferIndex]);
-
-	  psd->Group = BufferIndex;
-	  BufferIndex += RtlLengthRequiredSid(1);
-
-	  psid->Revision = SID_REVISION;
-	  psid->SubAuthorityCount = 1;
-	  psid->IdentifierAuthority = localSidAuthority;
-	  psid->SubAuthority[0] = SECURITY_LOCAL_SYSTEM_RID;
-	}
-
-	/* discretionary ACL */
-	if (DACL_SECURITY_INFORMATION & RequestedInformation)
-	{
-	  /* acl header */
-	  PACL pacl = (PACL)&(Buffer[BufferIndex]);
-	  PACCESS_ALLOWED_ACE pace;
-	  SID* psid;
-
-	  psd->Dacl = BufferIndex;
-
-	  pacl->AclRevision = MIN_ACL_REVISION;
-	  pacl->AceCount = 3;
-	  pacl->AclSize = BufferIndex; /* storing the start index temporary */
-
-	  BufferIndex += sizeof(ACL);
-
-	  /* ACE System - full access */
-	  pace = (PACCESS_ALLOWED_ACE)&(Buffer[BufferIndex]);
-	  BufferIndex += sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD);
-
-	  pace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-	  pace->Header.AceFlags = CONTAINER_INHERIT_ACE;
-	  pace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD) + RtlLengthRequiredSid(1);
-          pace->Mask = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
-	  pace->SidStart = BufferIndex;
-
-	  /* SID S-1-5-12 (System) */
-	  psid = (SID*)&(Buffer[BufferIndex]);
-
-	  BufferIndex += RtlLengthRequiredSid(1);
-
-	  psid->Revision = SID_REVISION;
-	  psid->SubAuthorityCount = 1;
-	  psid->IdentifierAuthority = localSidAuthority;
-	  psid->SubAuthority[0] = SECURITY_LOCAL_SYSTEM_RID;
-
-	  /* ACE Administrators - full access*/
-	  pace = (PACCESS_ALLOWED_ACE) &(Buffer[BufferIndex]);
-	  BufferIndex += sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD);
-
-	  pace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-	  pace->Header.AceFlags = CONTAINER_INHERIT_ACE;
-	  pace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD) + RtlLengthRequiredSid(2);
-          pace->Mask = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
-	  pace->SidStart = BufferIndex;
-
-	  /* S-1-5-12 (Administrators) */
-	  psid = (SID*)&(Buffer[BufferIndex]);
-
-	  BufferIndex += RtlLengthRequiredSid(2);
-
-	  psid->Revision = SID_REVISION;
-	  psid->SubAuthorityCount = 2;
-	  psid->IdentifierAuthority = localSidAuthority;
-	  psid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
-	  psid->SubAuthority[1] = DOMAIN_ALIAS_RID_ADMINS;
-
-	  /* ACE Everyone - read access */
-	  pace = (PACCESS_ALLOWED_ACE)&(Buffer[BufferIndex]);
-	  BufferIndex += sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD);
-
-	  pace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-	  pace->Header.AceFlags = CONTAINER_INHERIT_ACE;
-	  pace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD) + RtlLengthRequiredSid(1);
-	  pace->Mask = READ_CONTROL| 0x19;
-	  pace->SidStart = BufferIndex;
-
-	  /* SID S-1-1-0 (Everyone) */
-	  psid = (SID*)&(Buffer[BufferIndex]);
-
-	  BufferIndex += RtlLengthRequiredSid(1);
-
-	  psid->Revision = SID_REVISION;
-	  psid->SubAuthorityCount = 1;
-	  psid->IdentifierAuthority = worldSidAuthority;
-	  psid->SubAuthority[0] = 0;
-
-	  /* calculate used bytes */
-	  pacl->AclSize = BufferIndex - pacl->AclSize;
-	}
-	*ResultLength = BufferIndex;
-	TRACE("len=%u\n", *ResultLength);
-	if (Length < *ResultLength) return STATUS_BUFFER_TOO_SMALL;
-	memcpy(pSecurityDesriptor, Buffer, *ResultLength);
-
-	return STATUS_SUCCESS;
+    return status;
 }
 
 

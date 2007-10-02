@@ -3832,6 +3832,19 @@ struct set_security_object_reply
     struct reply_header __header;
 };
 
+struct get_security_object_request
+{
+    struct request_header __header;
+    obj_handle_t    handle;
+    unsigned int    security_info;
+};
+struct get_security_object_reply
+{
+    struct reply_header __header;
+    unsigned int    sd_len;
+    /* VARARG(sd,security_descriptor); */
+};
+
 
 struct create_mailslot_request
 {
@@ -4376,6 +4389,7 @@ enum request
     REQ_get_token_user,
     REQ_get_token_groups,
     REQ_set_security_object,
+    REQ_get_security_object,
     REQ_create_mailslot,
     REQ_set_mailslot_info,
     REQ_create_directory,
@@ -4609,6 +4623,7 @@ union generic_request
     struct get_token_user_request get_token_user_request;
     struct get_token_groups_request get_token_groups_request;
     struct set_security_object_request set_security_object_request;
+    struct get_security_object_request get_security_object_request;
     struct create_mailslot_request create_mailslot_request;
     struct set_mailslot_info_request set_mailslot_info_request;
     struct create_directory_request create_directory_request;
@@ -4840,6 +4855,7 @@ union generic_reply
     struct get_token_user_reply get_token_user_reply;
     struct get_token_groups_reply get_token_groups_reply;
     struct set_security_object_reply set_security_object_reply;
+    struct get_security_object_reply get_security_object_reply;
     struct create_mailslot_reply create_mailslot_reply;
     struct set_mailslot_info_reply set_mailslot_info_reply;
     struct create_directory_reply create_directory_reply;
@@ -4864,6 +4880,6 @@ union generic_reply
     struct set_completion_info_reply set_completion_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 315
+#define SERVER_PROTOCOL_VERSION 316
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

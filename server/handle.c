@@ -615,3 +615,68 @@ DECL_HANDLER(set_security_object)
     set_object_sd( obj, sd, req->security_info );
     release_object( obj );
 }
+
+DECL_HANDLER(get_security_object)
+{
+    const struct security_descriptor *sd;
+    struct object *obj;
+    unsigned int access = READ_CONTROL;
+    struct security_descriptor req_sd;
+    int present;
+    const SID *owner, *group;
+    const ACL *sacl, *dacl;
+
+    if (req->security_info & SACL_SECURITY_INFORMATION)
+        access |= ACCESS_SYSTEM_SECURITY;
+
+    if (!(obj = get_handle_obj( current->process, req->handle, access, NULL ))) return;
+
+    sd = obj->sd;
+    if (sd)
+    {
+        req_sd.control = sd->control & ~SE_SELF_RELATIVE;
+
+        owner = sd_get_owner( sd );
+        if (req->security_info & OWNER_SECURITY_INFORMATION)
+            req_sd.owner_len = sd->owner_len;
+
+        group = sd_get_group( sd );
+        if (req->security_info & GROUP_SECURITY_INFORMATION)
+            req_sd.group_len = sd->group_len;
+
+        req_sd.control |= SE_SACL_PRESENT;
+        sacl = sd_get_sacl( sd, &present );
+        if (req->security_info & SACL_SECURITY_INFORMATION && present)
+            req_sd.sacl_len = sd->sacl_len;
+        else
+            req_sd.sacl_len = 0;
+
+        req_sd.control |= SE_DACL_PRESENT;
+        dacl = sd_get_dacl( sd, &present );
+        if (req->security_info & DACL_SECURITY_INFORMATION && present)
+            req_sd.dacl_len = sd->dacl_len;
+        else
+            req_sd.dacl_len = 0;
+
+        reply->sd_len = sizeof(req_sd) + req_sd.owner_len + req_sd.group_len +
+            req_sd.sacl_len + req_sd.dacl_len;
+        if (reply->sd_len <= get_reply_max_size())
+        {
+            char *ptr = set_reply_data_size(reply->sd_len);
+
+            memcpy( ptr, &req_sd, sizeof(req_sd) );
+            ptr += sizeof(req_sd);
+            memcpy( ptr, owner, req_sd.owner_len );
+            ptr += req_sd.owner_len;
+            memcpy( ptr, group, req_sd.group_len );
+            ptr += req_sd.group_len;
+            memcpy( ptr, sacl, req_sd.sacl_len );
+            ptr += req_sd.sacl_len;
+            memcpy( ptr, dacl, req_sd.dacl_len );
+        }
+        else
+            set_error(STATUS_BUFFER_TOO_SMALL);
+    }
+
+    release_object( obj );
+}

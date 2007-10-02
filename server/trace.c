@@ -3350,6 +3350,19 @@ static void dump_set_security_object_request( const struct set_security_object_r
     dump_varargs_security_descriptor( cur_size );
 }
 
+static void dump_get_security_object_request( const struct get_security_object_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " security_info=%08x", req->security_info );
+}
+
+static void dump_get_security_object_reply( const struct get_security_object_reply *req )
+{
+    fprintf( stderr, " sd_len=%08x,", req->sd_len );
+    fprintf( stderr, " sd=" );
+    dump_varargs_security_descriptor( cur_size );
+}
+
 static void dump_create_mailslot_request( const struct create_mailslot_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
@@ -3840,6 +3853,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_token_user_request,
     (dump_func)dump_get_token_groups_request,
     (dump_func)dump_set_security_object_request,
+    (dump_func)dump_get_security_object_request,
     (dump_func)dump_create_mailslot_request,
     (dump_func)dump_set_mailslot_info_request,
     (dump_func)dump_create_directory_request,
@@ -4069,6 +4083,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_token_user_reply,
     (dump_func)dump_get_token_groups_reply,
     (dump_func)0,
+    (dump_func)dump_get_security_object_reply,
     (dump_func)dump_create_mailslot_reply,
     (dump_func)dump_set_mailslot_info_reply,
     (dump_func)dump_create_directory_reply,
@@ -4298,6 +4313,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_token_user",
     "get_token_groups",
     "set_security_object",
+    "get_security_object",
     "create_mailslot",
     "set_mailslot_info",
     "create_directory",
