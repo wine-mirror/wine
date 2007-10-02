@@ -1375,7 +1375,7 @@ static void test_null_stream(void)
     IDirect3D9 *d3d9;
     HWND hwnd;
     HRESULT hr;
-    IDirect3DVertexShader9 *shader;
+    IDirect3DVertexShader9 *shader = NULL;
     IDirect3DVertexDeclaration9 *decl;
     DWORD shader_code[] = {
         0xfffe0101,                             /* vs_1_1           */
