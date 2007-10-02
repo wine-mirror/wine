@@ -1319,7 +1319,7 @@ DWORD WINAPI WNetGetResourceInformationA( LPNETRESOURCEA lpNetResource,
         }
         if (ret == WN_SUCCESS)
         {
-            LPWSTR lpSystemW;
+            LPWSTR lpSystemW = NULL;
             LPVOID lpBufferW;
             size = 1024;
             lpBufferW = HeapAlloc(GetProcessHeap(), 0, size);
