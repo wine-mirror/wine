@@ -1819,8 +1819,15 @@ GetFileSecurityW( LPCWSTR lpFileName,
 {
     HANDLE hfile;
     NTSTATUS status;
+    DWORD access = 0;
 
-    hfile = CreateFileW( lpFileName, GENERIC_READ, FILE_SHARE_READ,
+    if (RequestedInformation & (OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|
+                                DACL_SECURITY_INFORMATION))
+        access |= READ_CONTROL;
+    if (RequestedInformation & SACL_SECURITY_INFORMATION)
+        access |= ACCESS_SYSTEM_SECURITY;
+
+    hfile = CreateFileW( lpFileName, access, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
                          NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
     if ( hfile == INVALID_HANDLE_VALUE )
         return FALSE;
