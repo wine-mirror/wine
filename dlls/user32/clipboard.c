@@ -486,35 +486,6 @@ BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 
 
 /**************************************************************************
- *		SetClipboardData (USER.141)
- */
-HANDLE16 WINAPI SetClipboardData16(UINT16 wFormat, HANDLE16 hData)
-{
-    CLIPBOARDINFO cbinfo;
-    HANDLE16 hResult = 0;
-
-    TRACE("(%04X, %04x) !\n", wFormat, hData);
-
-    /* If it's not owned, data can only be set if the format doesn't exists
-       and its rendering is not delayed */
-    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
-        (!(cbinfo.flags & CB_OWNER) && !hData))
-    {
-        WARN("Clipboard not owned by calling task. Operation failed.\n");
-        return 0;
-    }
-
-    if (USER_Driver->pSetClipboardData(wFormat, hData, 0, cbinfo.flags & CB_OWNER))
-    {
-        hResult = hData;
-        bCBHasChanged = TRUE;
-    }
-
-    return hResult;
-}
-
-
-/**************************************************************************
  *		SetClipboardData (USER32.@)
  */
 HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
@@ -582,28 +553,6 @@ BOOL WINAPI IsClipboardFormatAvailable(UINT wFormat)
     BOOL bret = USER_Driver->pIsClipboardFormatAvailable(wFormat);
     TRACE("%04x, returning %d\n", wFormat, bret);
     return bret;
-}
-
-
-/**************************************************************************
- *		GetClipboardData (USER.142)
- */
-HANDLE16 WINAPI GetClipboardData16(UINT16 wFormat)
-{
-    HANDLE16 hData = 0;
-    CLIPBOARDINFO cbinfo;
-
-    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
-        (~cbinfo.flags & CB_OPEN))
-    {
-        WARN("Clipboard not opened by calling task.\n");
-        SetLastError(ERROR_CLIPBOARD_NOT_OPEN);
-        return 0;
-    }
-
-    if (!USER_Driver->pGetClipboardData(wFormat, &hData, NULL)) hData = 0;
-
-    return hData;
 }
 
 
