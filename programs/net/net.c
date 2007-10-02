@@ -99,8 +99,8 @@ static BOOL net_service(int operation, char *service_name)
         output_string(STRING_START_SVC, service_display_name);
         result = StartService(serviceHandle, 0, NULL);
 
-        if(result) output_string(STRING_START_SVC_SUCCESS);
-        else output_string(STRING_START_SVC_FAIL);
+        if(result) output_string(STRING_START_SVC_SUCCESS, service_display_name);
+        else output_string(STRING_START_SVC_FAIL, service_display_name);
         break;
     case NET_STOP:
         output_string(STRING_STOP_SVC, service_display_name);
