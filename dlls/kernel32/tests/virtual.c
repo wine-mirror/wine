@@ -559,6 +559,15 @@ static void test_NtMapViewOfSection(void)
     DeleteFileA( testfile );
 }
 
+static void test_BadPtr(void)
+{
+    void *ptr = (void*)1;
+    /* We assume address 1 is not mapped. */
+    ok(IsBadReadPtr(ptr,1),"IsBadReadPtr(1) failed.\n");
+    ok(IsBadWritePtr(ptr,1),"IsBadWritePtr(1) failed.\n");
+    ok(IsBadCodePtr(ptr),"IsBadCodePtr(1) failed.\n");
+}
+
 START_TEST(virtual)
 {
     int argc;
@@ -595,4 +604,5 @@ START_TEST(virtual)
     test_VirtualAlloc();
     test_MapViewOfFile();
     test_NtMapViewOfSection();
+    test_BadPtr();
 }
