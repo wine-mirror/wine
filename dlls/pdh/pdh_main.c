@@ -482,7 +482,7 @@ static DWORD CALLBACK collect_query_thread( void *arg )
         if (WaitForSingleObject( stop, interval ) != WAIT_TIMEOUT) ExitThread( 0 );
 
         EnterCriticalSection( &pdh_handle_cs );
-        if (!query || query->magic != PDH_MAGIC_QUERY)
+        if (query->magic != PDH_MAGIC_QUERY)
         {
             LeaveCriticalSection( &pdh_handle_cs );
             ExitThread( PDH_INVALID_HANDLE );
