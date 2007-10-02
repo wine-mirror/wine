@@ -719,6 +719,7 @@ static void test_AccessCheck(void)
     if(!res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
         skip("ACLs not implemented - skipping tests\n");
+        HeapFree(GetProcessHeap(), 0, Acl);
         return;
     }
     ok(res, "InitializeAcl failed with error %d\n", GetLastError());
@@ -1540,6 +1541,7 @@ static void test_process_security(void)
     if (!res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
         skip("ACLs not implemented - skipping tests\n");
+        HeapFree(GetProcessHeap(), 0, Acl);
         return;
     }
     ok(res, "InitializeAcl failed with error %d\n", GetLastError());
@@ -1547,7 +1549,11 @@ static void test_process_security(void)
     /* get owner from the token we might be running as a user not admin */
     res = OpenProcessToken( GetCurrentProcess(), MAXIMUM_ALLOWED, &token );
     ok(res, "OpenProcessToken failed with error %d\n", GetLastError());
-    if (!res) return;
+    if (!res)
+    {
+        HeapFree(GetProcessHeap(), 0, Acl);
+        return;
+    }
 
     res = GetTokenInformation( token, TokenOwner, owner, sizeof(owner), &tmp );
     ok(res, "GetTokenInformation failed with error %d\n", GetLastError());
@@ -1557,7 +1563,11 @@ static void test_process_security(void)
     UsersSid = ((TOKEN_PRIMARY_GROUP*)group)->PrimaryGroup;
 
     CloseHandle( token );
-    if (!res) return;
+    if (!res)
+    {
+        HeapFree(GetProcessHeap(), 0, Acl);
+        return;
+    }
 
     res = AddAccessDeniedAce(Acl, ACL_REVISION, PROCESS_VM_READ, AdminSid);
     ok(res, "AddAccessDeniedAce failed with error %d\n", GetLastError());
@@ -2100,6 +2110,7 @@ static void test_PrivateObjectSecurity(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected error ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
 
     LocalFree(sec);
+    HeapFree(GetProcessHeap(), 0, buf);
 }
 #undef CHECK_RESULT_AND_FREE
 
