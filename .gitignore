@@ -437,6 +437,9 @@ dlls/snmpapi/tests/snmpapi_crosstest.exe
 dlls/snmpapi/tests/testlist.c
 dlls/sound.drv16
 dlls/spoolss/libspoolss.def
+dlls/spoolss/tests/*.ok
+dlls/spoolss/tests/spoolss_crosstest.exe
+dlls/spoolss/tests/testlist.c
 dlls/stdole2.tlb/rsrc.res
 dlls/stdole2.tlb/std_ole_v2.tlb
 dlls/stdole32.tlb/rsrc.res
@@ -728,6 +731,7 @@ programs/winetest/shdocvw_test.exe
 programs/winetest/shell32_test.exe
 programs/winetest/shlwapi_test.exe
 programs/winetest/snmpapi_test.exe
+programs/winetest/spoolss_test.exe
 programs/winetest/urlmon_test.exe
 programs/winetest/user32_test.exe
 programs/winetest/usp10_test.exe
