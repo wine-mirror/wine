@@ -457,7 +457,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         TRACE("First time in ISC()\n");
 
         if(!phCredential)
-            return SEC_E_INVALID_HANDLE;
+        {
+            ret = SEC_E_INVALID_HANDLE;
+            goto isc_end;
+        }
 
         /* As the server side of sspi never calls this, make sure that
          * the handler is a client handler.
@@ -466,7 +469,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         if(ntlm_cred->mode != NTLM_CLIENT)
         {
             TRACE("Cred mode = %d\n", ntlm_cred->mode);
-            return SEC_E_INVALID_HANDLE;
+            ret = SEC_E_INVALID_HANDLE;
+            goto isc_end;
         }
 
         client_argv[0] = ntlm_auth;
@@ -657,7 +661,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         }
 
         if(!phContext)
-            return SEC_E_INVALID_HANDLE;
+        {
+            ret = SEC_E_INVALID_HANDLE;
+            goto isc_end;
+        }
 
         /* As the server side of sspi never calls this, make sure that
          * the handler is a client handler.
@@ -666,7 +673,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         if(helper->mode != NTLM_CLIENT)
         {
             TRACE("Helper mode = %d\n", helper->mode);
-            return SEC_E_INVALID_HANDLE;
+            ret = SEC_E_INVALID_HANDLE;
+            goto isc_end;
         }
 
         if (!pInput->pBuffers[input_token_idx].pvBuffer)
