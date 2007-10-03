@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -66,6 +67,7 @@ const LUID SeCreateGlobalPrivilege         = { 30, 0 };
 static const SID world_sid = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY }, { SECURITY_WORLD_RID } };
 static const SID local_sid = { SID_REVISION, 1, { SECURITY_LOCAL_SID_AUTHORITY }, { SECURITY_LOCAL_RID } };
 static const SID interactive_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_INTERACTIVE_RID } };
+static const SID anonymous_logon_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_ANONYMOUS_LOGON_RID } };
 static const SID authenticated_user_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_AUTHENTICATED_USER_RID } };
 static const SID local_system_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_LOCAL_SYSTEM_RID } };
 static const PSID security_world_sid = (PSID)&world_sid;
@@ -194,6 +196,15 @@ void security_set_thread_token( struct thread *thread, obj_handle_t handle )
 static const ACE_HEADER *ace_next( const ACE_HEADER *ace )
 {
     return (const ACE_HEADER *)((const char *)ace + ace->AceSize);
+}
+
+const SID *security_unix_uid_to_sid( uid_t uid )
+{
+    /* very simple mapping: either the current user or not the current user */
+    if (uid == getuid())
+        return &interactive_sid;
+    else
+        return &anonymous_logon_sid;
 }
 
 static int acl_is_valid( const ACL *acl, data_size_t size )
@@ -639,9 +650,7 @@ struct token *token_create_admin( void )
             { logon_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_LOGON_ID },
         };
         static const TOKEN_SOURCE admin_source = {"SeMgr", {0, 0}};
-        /* note: we just set the user sid to be the interactive builtin sid -
-         * we should really translate the UNIX user id to a sid */
-        token = create_token( TRUE, &interactive_sid,
+        token = create_token( TRUE, security_unix_uid_to_sid( getuid() ),
                             admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
                             admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]),
                             default_dacl, admin_source, NULL, -1 );
