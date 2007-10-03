@@ -607,6 +607,8 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
   int drawattrib = 0;
   int nvfloatattrib = GLX_DONT_CARE;
   int pixelattrib = 0;
+  int supportgdi = -1;
+  int doublebuf = -1;
 
   /* The list of WGL attributes is allowed to be NULL. We don't return here for NULL
    * because we need to do fixups for GLX_DRAWABLE_TYPE/GLX_RENDER_TYPE/GLX_FLOAT_COMPONENTS_NV. */
@@ -653,6 +655,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_DOUBLEBUFFER, pop);
       TRACE("pAttr[%d] = GLX_DOUBLEBUFFER: %d\n", cur, pop);
+      doublebuf = pop;
       break;
 
     case WGL_PIXEL_TYPE_ARB:
@@ -673,6 +676,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_X_RENDERABLE, pop);
       TRACE("pAttr[%d] = WGL_SUPPORT_GDI_ARB: %d\n", cur, pop);
+      supportgdi = pop;
       break;
 
     case WGL_DRAW_TO_BITMAP_ARB:
@@ -770,6 +774,15 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       break;
     }
     ++cur;
+  }
+
+  if(supportgdi > 0) {
+    if(doublebuf > 0) {
+      WARN("Attempting double-buffered gdi format\n");
+      return -1;
+    }
+    if(doublebuf < 0)
+      PUSH2(oGLXAttr, GLX_DOUBLEBUFFER, False);
   }
 
   /* Apply the OR'd drawable type bitmask now EVEN when WGL_DRAW_TO* is unset.
