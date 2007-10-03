@@ -447,6 +447,13 @@ static struct regsvr_coclass const coclass_list[] = {
         "browseui.dll",
         "Apartment"
     },
+    {
+        &CLSID_ProgressDialog,
+        "Progress Dialog",
+        NULL,
+        "browseui.dll",
+        "Both"
+    },
     { NULL }			/* list terminator */
 };
 

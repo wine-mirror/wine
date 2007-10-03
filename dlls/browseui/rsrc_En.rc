@@ -1,6 +1,4 @@
 /*
- * Internal header for browseui.dll
- *
  * Copyright 2007 Mikolaj Zalewski
  *
  * This library is free software; you can redistribute it and/or
@@ -18,13 +16,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_BROWSEUI_H
-#define __WINE_BROWSEUI_H
 
-extern LONG BROWSEUI_refCount;
-extern HINSTANCE BROWSEUI_hinstance;
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-HRESULT WINAPI ACLMulti_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
-HRESULT WINAPI ProgressDialog_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
+STRINGTABLE
+{
+    IDS_CANCELLING    "Cancelling..."
+}
 
-#endif /* __WINE_SHDOCVW_H */
+IDD_PROGRESS_DLG DIALOG 0, 0, 260, 85
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU
+CAPTION ""
+FONT 8, "MS Shell Dlg"
+{
+    CONTROL "", IDC_ANIMATION, ANIMATE_CLASSA, 0, 12, 10, 236, 25 /* TODO: style */
+    LTEXT "", IDC_TEXT_LINE, 7, 45, 250, 10, SS_LEFT|SS_NOPREFIX
+    LTEXT "", IDC_TEXT_LINE + 1, 7, 55, 250, 10, SS_LEFT|SS_NOPREFIX
+    CONTROL "", IDC_PROGRESS_BAR, PROGRESS_CLASSA, WS_BORDER, 7, 65, 190, 8
+    PUSHBUTTON "&Cancel", IDCANCEL, 205, 65, 40, 15, WS_GROUP | WS_TABSTOP | WS_VISIBLE
+    LTEXT "", IDC_TEXT_LINE + 2, 7, 75, 190, 10, SS_LEFT|SS_NOPREFIX
+}

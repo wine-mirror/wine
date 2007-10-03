@@ -1,6 +1,4 @@
 /*
- * Internal header for browseui.dll
- *
  * Copyright 2007 Mikolaj Zalewski
  *
  * This library is free software; you can redistribute it and/or
@@ -18,13 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_BROWSEUI_H
-#define __WINE_BROWSEUI_H
+#define IDS_CANCELLING      16
 
-extern LONG BROWSEUI_refCount;
-extern HINSTANCE BROWSEUI_hinstance;
+#define IDC_ANIMATION           100
+#define IDC_PROGRESS_BAR        102
+#define IDC_TEXT_LINE           103
 
-HRESULT WINAPI ACLMulti_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
-HRESULT WINAPI ProgressDialog_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
-
-#endif /* __WINE_SHDOCVW_H */
+#define IDD_PROGRESS_DLG        100

@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(browseui);
 
 LONG BROWSEUI_refCount = 0;
 
-HINSTANCE browseui_hinstance = 0;
+HINSTANCE BROWSEUI_hinstance = 0;
 
 typedef HRESULT (WINAPI *LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
 
@@ -50,6 +50,7 @@ static const struct {
     LPFNCONSTRUCTOR ctor;
 } ClassesTable[] = {
     {&CLSID_ACLMulti, ACLMulti_Constructor},
+    {&CLSID_ProgressDialog, ProgressDialog_Constructor},
     {NULL, NULL}
 };
 
@@ -161,7 +162,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
             return FALSE;   /* prefer native version */
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hinst);
-            browseui_hinstance = hinst;
+            BROWSEUI_hinstance = hinst;
             break;
     }
     return TRUE;

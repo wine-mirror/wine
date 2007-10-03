@@ -31,10 +31,10 @@ dlls/avicap32/libavicap32.def
 dlls/avifil32/libavifil32.def
 dlls/avifil32/rsrc.res
 dlls/avifile.dll16
+dlls/browseui/rsrc.res
 dlls/browseui/tests/*.ok
 dlls/browseui/tests/browseui_crosstest.exe
 dlls/browseui/tests/testlist.c
-dlls/browseui/version.res
 dlls/cabinet/cabinet.res
 dlls/cabinet/libcabinet.def
 dlls/cabinet/tests/*.ok
