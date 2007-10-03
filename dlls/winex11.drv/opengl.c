@@ -984,21 +984,19 @@ Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
 }
 
 
-static XID create_bitmap_glxpixmap(X11DRV_PDEVICE *physDev)
+static XID create_bitmap_glxpixmap(X11DRV_PDEVICE *physDev, WineGLPixelFormat *fmt)
 {
-    GLXPixmap ret;
+    GLXPixmap ret = 0;
     XVisualInfo *vis;
-    XVisualInfo template;
-    int num;
 
     wine_tsx11_lock();
 
-    /* Retrieve the visualid from our main visual which is the only visual we can use */
-    template.visualid =  XVisualIDFromVisual(visual);
-    vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
-
-    ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
-    XFree(vis);
+    vis = pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
+    if(vis) {
+        if(vis->depth == physDev->bitmap->pixmap_depth)
+            ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
+        XFree(vis);
+    }
     wine_tsx11_unlock();
     TRACE("return %lx\n", ret);
     return ret;
@@ -1466,7 +1464,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
             return FALSE;
         }
 
-        physDev->bitmap->glxpixmap = create_bitmap_glxpixmap(physDev);
+        physDev->bitmap->glxpixmap = create_bitmap_glxpixmap(physDev, fmt);
         if(!physDev->bitmap->glxpixmap) {
             WARN("Couldn't create glxpixmap for pixel format %d\n", iPixelFormat);
             return FALSE;
