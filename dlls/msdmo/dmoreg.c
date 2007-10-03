@@ -76,6 +76,12 @@ static const WCHAR szCat2Fmt[] =
     '%','s','\\','%','s',0
 };
 
+static const WCHAR szToGuidFmt[] =
+{
+    '{','%','s','}',0
+};
+
+
 typedef struct
 {
     const IEnumDMOVtbl         *lpVtbl;
@@ -439,6 +445,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
     FILETIME ft;
     HKEY hkey;
     WCHAR szNextKey[MAX_PATH];
+    WCHAR szGuidKey[64];
     WCHAR szKey[MAX_PATH];
     WCHAR szValue[MAX_PATH];
     DWORD len;
@@ -447,7 +454,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
     IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
 
-    TRACE("%d\n", cItemsToFetch);
+    TRACE("--> (%p) %d %p %p %p\n", iface, cItemsToFetch, pCLSID, Names, pcItemsFetched);
 
     if (!pCLSID || !Names || !pcItemsFetched)
         return E_POINTER;
@@ -556,7 +563,8 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 	    if (Names[count])
                 strcmpW(Names[count], szValue);
 	}
-        CLSIDFromString(szNextKey, &pCLSID[count]);
+        wsprintfW(szGuidKey,szToGuidFmt,szNextKey);
+        CLSIDFromString(szGuidKey, &pCLSID[count]);
 
         TRACE("found match %s %s\n", debugstr_w(szValue), debugstr_w(szNextKey));
         RegCloseKey(hkey);
@@ -567,6 +575,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
     if (*pcItemsFetched < cItemsToFetch)
         hres = S_FALSE;
 
+    TRACE("<-- %i found\n",count);
     return hres;
 }
  
@@ -650,11 +659,113 @@ static const IEnumDMOVtbl edmovt =
 };
 
 
-HRESULT WINAPI DMOGetTypes(REFCLSID a, ULONG b, ULONG* c,
-			   DMO_PARTIAL_MEDIATYPE* d, ULONG e,
-			   ULONG* f, DMO_PARTIAL_MEDIATYPE* g)
+HRESULT build_types(HKEY root, LPCWSTR key, ULONG *supplied, ULONG requested, DMO_PARTIAL_MEDIATYPE* types )
 {
-  FIXME("(%p,%u,%p,%p,%u,%p,%p),stub!\n",a,b,c,d,e,f,g);
+    HRESULT ret = S_OK;
+    HKEY hkey;
+    WCHAR szGuidKey[64];
 
-  return E_NOTIMPL;
+    *supplied = 0;
+    if (ERROR_SUCCESS == RegOpenKeyExW(root, key, 0, KEY_READ, &hkey))
+    {
+      int index = 0;
+      WCHAR szNextKey[MAX_PATH];
+      DWORD len;
+      LONG rc = ERROR_SUCCESS;
+
+      len = MAX_PATH;
+      while (rc == ERROR_SUCCESS)
+      {
+        len = MAX_PATH;
+        rc = RegEnumKeyExW(hkey, index, szNextKey, &len, NULL, NULL, NULL, NULL);
+        if (rc == ERROR_SUCCESS)
+        {
+          HKEY subk;
+          int sub_index = 0;
+          LONG rcs = ERROR_SUCCESS;
+          WCHAR szSubKey[MAX_PATH];
+
+          RegOpenKeyExW(hkey, szNextKey, 0, KEY_READ, &subk);
+          while (rcs == ERROR_SUCCESS)
+          {
+            len = MAX_PATH;
+            rcs = RegEnumKeyExW(subk, sub_index, szSubKey, &len, NULL, NULL, NULL, NULL);
+            if (rcs == ERROR_SUCCESS)
+            {
+              if (*supplied >= requested)
+              {
+                /* Bailing */
+                ret = S_FALSE;
+                rc = ERROR_MORE_DATA;
+                rcs = ERROR_MORE_DATA;
+                break;
+              }
+
+              wsprintfW(szGuidKey,szToGuidFmt,szNextKey);
+              CLSIDFromString(szGuidKey, &types[*supplied].type);
+              wsprintfW(szGuidKey,szToGuidFmt,szSubKey);
+              CLSIDFromString(szGuidKey, &types[*supplied].subtype);
+              TRACE("Adding type %s subtype %s at index %i\n",
+                debugstr_guid(&types[*supplied].type),
+                debugstr_guid(&types[*supplied].subtype),
+                *supplied);
+              (*supplied)++;
+            }
+            sub_index++;
+          }
+          index++;
+        }
+      }
+      RegCloseKey(hkey);
+    }
+    return ret;
+}
+
+
+HRESULT WINAPI DMOGetTypes(REFCLSID clsidDMO,
+               ULONG ulInputTypesRequested,
+               ULONG* pulInputTypesSupplied,
+               DMO_PARTIAL_MEDIATYPE* pInputTypes,
+               ULONG ulOutputTypesRequested,
+               ULONG* pulOutputTypesSupplied,
+               DMO_PARTIAL_MEDIATYPE* pOutputTypes)
+{
+  HKEY root,hkey;
+  HRESULT ret = S_OK;
+  WCHAR szguid[64];
+
+  TRACE ("(%s,%u,%p,%p,%u,%p,%p),stub!\n", debugstr_guid(clsidDMO),
+        ulInputTypesRequested, pulInputTypesSupplied, pInputTypes,
+        ulOutputTypesRequested, pulOutputTypesSupplied, pOutputTypes);
+
+  if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0,
+                                     KEY_READ, &root))
+    return E_FAIL;
+
+  if (ERROR_SUCCESS != RegOpenKeyExW(root,GUIDToString(szguid,clsidDMO) , 0,
+                                     KEY_READ, &hkey))
+  {
+    RegCloseKey(root);
+    return E_FAIL;
+  }
+
+  if (ulInputTypesRequested > 0)
+  {
+    ret = build_types(hkey, szDMOInputType, pulInputTypesSupplied, ulInputTypesRequested, pInputTypes );
+  }
+  else
+    *pulInputTypesSupplied = 0;
+
+  if (ulOutputTypesRequested > 0)
+  {
+    HRESULT ret2;
+    ret2 = build_types(hkey, szDMOOutputType, pulOutputTypesSupplied, ulOutputTypesRequested, pOutputTypes );
+
+    if (ret == S_OK)
+        ret = ret2;
+  }
+  else
+    *pulOutputTypesSupplied = 0;
+
+  return ret;
 }
