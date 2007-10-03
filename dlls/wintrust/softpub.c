@@ -526,11 +526,7 @@ BOOL WINAPI SoftpubCheckCert(CRYPT_PROVIDER_DATA *data, DWORD idxSigner,
         {
             /* Set confidence */
             data->pasSigners[idxSigner].pasCertChain[i].dwConfidence = 0;
-            /* The last element in the chain doesn't have an issuer, so it
-             * can't have a valid time (with respect to its issuer)
-             */
-            if (i != simpleChain->cElement - 1 &&
-             !(simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
+            if (!(simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
              CERT_TRUST_IS_NOT_TIME_VALID))
                 data->pasSigners[idxSigner].pasCertChain[i].dwConfidence
                  |= CERT_CONFIDENCE_TIME;
