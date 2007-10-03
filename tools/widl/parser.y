@@ -1291,7 +1291,7 @@ static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr)
       v->type->type = ptr_type;
     }
     else if (!arr)
-      error("%s: pointer attribute applied to non-pointer type", v->name);
+      error("%s: pointer attribute applied to non-pointer type\n", v->name);
   }
 
   sizeless = FALSE;
@@ -1309,7 +1309,7 @@ static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr)
         error("%s: array dimension must be positive\n", v->name);
 
       if (0xffffffffuL / size < (unsigned long) dim->cval)
-        error("%s: total array size is too large", v->name);
+        error("%s: total array size is too large\n", v->name);
       else if (0xffffuL < size * dim->cval)
         v->type = make_type(RPC_FC_LGFARRAY, v->type);
       else

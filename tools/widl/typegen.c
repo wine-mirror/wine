@@ -1611,7 +1611,7 @@ static void write_struct_members(FILE *file, const type_t *type,
                     fc = RPC_FC_ALIGNM8;
                     break;
                 default:
-                    error("write_struct_members: cannot align type %d", ft->type);
+                    error("write_struct_members: cannot align type %d\n", ft->type);
                 }
                 print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
                 offset = (offset + (align - 1)) & ~(align - 1);
