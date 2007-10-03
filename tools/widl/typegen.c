@@ -1994,24 +1994,10 @@ static size_t write_contexthandle_tfs(FILE *file, const type_t *type,
     return start_offset;
 }
 
-static int get_ptr_attr(const type_t *t, int def_type)
-{
-    while (TRUE)
-    {
-        int ptr_attr = get_attrv(t->attrs, ATTR_POINTERTYPE);
-        if (ptr_attr)
-            return ptr_attr;
-        if (t->kind != TKIND_ALIAS)
-            return def_type;
-        t = t->orig;
-    }
-}
-
 static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *func,
                                          type_t *type, const var_t *var,
                                          unsigned int *typeformat_offset)
 {
-    int pointer_type;
     size_t offset;
 
     if (is_context_handle(type))
@@ -2023,35 +2009,23 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
         return type->typestring_offset;
     }
 
-    if (type == var->type)      /* top-level pointers */
-    {
-        int pointer_attr = get_attrv(var->attrs, ATTR_POINTERTYPE);
-        if (pointer_attr != 0 && !is_ptr(type) && !is_array(type))
-            error("'%s': pointer attribute applied to non-pointer type\n", var->name);
-
-        if (pointer_attr == 0)
-            pointer_attr = get_ptr_attr(type, RPC_FC_RP);
-
-        pointer_type = pointer_attr;
-    }
-    else
-        pointer_type = get_ptr_attr(type, RPC_FC_UP);
-
     if ((last_ptr(type) || last_array(type)) && is_ptrchain_attr(var, ATTR_STRING))
         return write_string_tfs(file, var->attrs, type, var->name, typeformat_offset);
 
     if (is_array(type))
     {
+        int ptr_type;
         size_t off;
         off = write_array_tfs(file, var->attrs, type, var->name, typeformat_offset);
-        if (pointer_type != RPC_FC_RP)
+        ptr_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
+        if (ptr_type && ptr_type != RPC_FC_RP)
         {
             unsigned int absoff = type->typestring_offset;
             short reloff = absoff - (*typeformat_offset + 2);
             off = *typeformat_offset;
             print_file(file, 0, "/* %d */\n", off);
-            print_file(file, 2, "0x%x, 0x0,\t/* %s */\n", pointer_type,
-                       string_of_type(pointer_type));
+            print_file(file, 2, "0x%x, 0x0,\t/* %s */\n", ptr_type,
+                       string_of_type(ptr_type));
             print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
                        reloff, reloff, absoff);
             *typeformat_offset += 4;
@@ -2101,8 +2075,8 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
         if (is_base_type(base->type))
         {
             print_file(file, indent, "0x%x, 0x%x,    /* %s %s[simple_pointer] */\n",
-                       pointer_type, (!in_attr && out_attr) ? 0x0C : 0x08,
-                       string_of_type(pointer_type),
+                       type->type, (!in_attr && out_attr) ? 0x0C : 0x08,
+                       string_of_type(type->type),
                        (!in_attr && out_attr) ? "[allocated_on_stack] " : "");
             print_file(file, indent, "0x%02x,    /* %s */\n", base->type, string_of_type(base->type));
             print_file(file, indent, "0x5c,          /* FC_PAD */\n");
@@ -2116,7 +2090,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
     offset = write_typeformatstring_var(file, indent, func, type->ref, var, typeformat_offset);
     if (file)
         fprintf(file, "/* %2u */\n", *typeformat_offset);
-    return write_pointer_only_tfs(file, var->attrs, pointer_type,
+    return write_pointer_only_tfs(file, var->attrs, type->type,
                            !last_ptr(type) ? 0x10 : 0,
                            offset, typeformat_offset);
 }

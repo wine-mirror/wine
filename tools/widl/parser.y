@@ -65,6 +65,8 @@
 # endif
 #endif
 
+unsigned char pointer_default = RPC_FC_UP;
+
 typedef struct list typelist_t;
 struct typenode {
   type_t *type;
@@ -92,7 +94,7 @@ static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, exp
 static type_t *make_type(unsigned char type, type_t *ref);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static array_dims_t *append_array(array_dims_t *list, expr_t *expr);
-static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr);
+static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr, int top);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
 static var_list_t *append_var(var_list_t *list, var_t *var);
@@ -380,21 +382,21 @@ args:	  arg					{ check_arg($1); $$ = append_var( NULL, $1 ); }
 /* split into two rules to get bison to resolve a tVOID conflict */
 arg:	  attributes type pident array		{ $$ = $3->var;
 						  $$->attrs = $1;
-						  set_type($$, $2, $3->ptr_level, $4);
+						  set_type($$, $2, $3->ptr_level, $4, TRUE);
 						  free($3);
 						}
 	| type pident array			{ $$ = $2->var;
-						  set_type($$, $1, $2->ptr_level, $3);
+						  set_type($$, $1, $2->ptr_level, $3, TRUE);
 						  free($2);
 						}
 	| attributes type pident '(' m_args ')'	{ $$ = $3->var;
 						  $$->attrs = $1;
-						  set_type($$, $2, $3->ptr_level - 1, NULL);
+						  set_type($$, $2, $3->ptr_level - 1, NULL, TRUE);
 						  free($3);
 						  $$->args = $5;
 						}
 	| type pident '(' m_args ')'		{ $$ = $2->var;
-						  set_type($$, $1, $2->ptr_level - 1, NULL);
+						  set_type($$, $1, $2->ptr_level - 1, NULL, TRUE);
 						  free($2);
 						  $$->args = $4;
 						}
@@ -523,7 +525,7 @@ case:	  tCASE expr ':' field			{ attr_t *a = make_attrp(ATTR_CASE, append_expr( 
 	;
 
 constdef: tCONST type ident '=' expr_const	{ $$ = reg_const($3);
-						  set_type($$, $2, 0, NULL);
+						  set_type($$, $2, 0, NULL, FALSE);
 						  $$->eval = $5;
 						}
 	;
@@ -616,7 +618,7 @@ expr_const: expr				{ $$ = $1;
 	;
 
 externdef: tEXTERN tCONST type ident		{ $$ = $4;
-						  set_type($$, $3, 0, NULL);
+						  set_type($$, $3, 0, NULL, FALSE);
 						}
 	;
 
@@ -632,7 +634,7 @@ field:	  s_field ';'				{ $$ = $1; }
 
 s_field:  m_attributes type pident array	{ $$ = $3->var;
 						  $$->attrs = $1;
-						  set_type($$, $2, $3->ptr_level, $4);
+						  set_type($$, $2, $3->ptr_level, $4, FALSE);
 						  free($3);
 						}
 	;
@@ -641,7 +643,7 @@ funcdef:
 	  m_attributes type callconv pident
 	  '(' m_args ')'			{ var_t *v = $4->var;
 						  v->attrs = $1;
-						  set_type(v, $2, $4->ptr_level, NULL);
+						  set_type(v, $2, $4->ptr_level, NULL, FALSE);
 						  free($4);
 						  $$ = make_func(v, $6);
 						  if (is_attr(v->attrs, ATTR_IN)) {
@@ -1262,20 +1264,25 @@ static type_t *make_type(unsigned char type, type_t *ref)
   return t;
 }
 
-static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr)
+static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr,
+                     int top)
 {
   expr_list_t *sizes = get_attrp(v->attrs, ATTR_SIZEIS);
   expr_list_t *lengs = get_attrp(v->attrs, ATTR_LENGTHIS);
-  int ptr_type = get_attrv(v->attrs, ATTR_POINTERTYPE);
+  int ptr_attr = get_attrv(v->attrs, ATTR_POINTERTYPE);
+  int ptr_type = ptr_attr;
   int sizeless, has_varconf;
   expr_t *dim;
   type_t *atype, **ptype;
 
   v->type = type;
 
+  if (!ptr_type && top)
+    ptr_type = RPC_FC_RP;
+
   for ( ; 0 < ptr_level; --ptr_level)
   {
-    v->type = make_type(RPC_FC_RP, v->type);
+    v->type = make_type(pointer_default, v->type);
     if (ptr_level == 1 && ptr_type && !arr)
     {
       v->type->type = ptr_type;
@@ -1287,10 +1294,13 @@ static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr)
   {
     if (is_ptr(v->type))
     {
-      v->type = duptype(v->type, 1);
-      v->type->type = ptr_type;
+      if (v->type->type != ptr_type)
+      {
+        v->type = duptype(v->type, 1);
+        v->type->type = ptr_type;
+      }
     }
-    else if (!arr)
+    else if (!arr && ptr_attr)
       error("%s: pointer attribute applied to non-pointer type\n", v->name);
   }
 
@@ -1504,7 +1514,7 @@ static type_t *make_safearray(type_t *type)
 {
   type_t *sa = duptype(find_type("SAFEARRAY", 0), 1);
   sa->ref = type;
-  return make_type(RPC_FC_FP, sa);
+  return make_type(pointer_default, sa);
 }
 
 #define HASHMAX 64
@@ -1628,7 +1638,7 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
       int cptr = pident->ptr_level;
       if (cptr > ptrc) {
         while (cptr > ptrc) {
-          cur = ptr = make_type(RPC_FC_RP, cur);
+          cur = ptr = make_type(pointer_default, cur);
           ptrc++;
         }
       } else {
