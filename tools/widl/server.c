@@ -187,7 +187,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                 if (is_context_handle(var->type))
                 {
                     print_server("(");
-                    write_type_left(server, var->type);
+                    write_type_decl_left(server, var->type);
                     fprintf(server, ")%sNDRSContextValue(%s)", is_ptr(var->type) ? "" : "*", var->name);
                 }
                 else

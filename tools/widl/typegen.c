@@ -2548,7 +2548,7 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
     if (phase == PHASE_MARSHAL)
     {
         print_file(file, indent, "*(");
-        write_type(file, is_ptr(type) ? type->ref : type, FALSE, NULL);
+        write_type_decl(file, is_ptr(type) ? type->ref : type, NULL);
         if (is_ptr(type))
             fprintf(file, " *)_StubMsg.Buffer = *");
         else
@@ -2567,12 +2567,12 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
             fprintf(file, " = (");
         else
             fprintf(file, " = *(");
-        write_type(file, is_ptr(type) ? type->ref : type, FALSE, NULL);
+        write_type_decl(file, is_ptr(type) ? type->ref : type, NULL);
         fprintf(file, " *)_StubMsg.Buffer;\n");
     }
 
     print_file(file, indent, "_StubMsg.Buffer += sizeof(");
-    write_type(file, var->type, FALSE, NULL);
+    write_type_decl(file, var->type, NULL);
     fprintf(file, ");\n");
 }
 
@@ -2930,13 +2930,13 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
             break;
         case EXPR_CAST:
             fprintf(h, "(");
-            write_type(h, e->u.tref, FALSE, NULL);
+            write_type_decl(h, e->u.tref, NULL);
             fprintf(h, ")");
             write_struct_expr(h, e->ref, 1, fields, structvar);
             break;
         case EXPR_SIZEOF:
             fprintf(h, "sizeof(");
-            write_type(h, e->u.tref, FALSE, NULL);
+            write_type_decl(h, e->u.tref, NULL);
             fprintf(h, ")");
             break;
         case EXPR_SHL:
@@ -2987,7 +2987,7 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
     if (!is_void(def->type))
     {
         print_file(file, indent, "");
-        write_type_left(file, def->type);
+        write_type_decl_left(file, def->type);
         fprintf(file, " _RetVal;\n");
     }
 
@@ -3010,12 +3010,12 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
             if (!in_attr && !var->type->size_is && !is_string)
             {
                 print_file(file, indent, "");
-                write_type(file, var->type->ref, FALSE, "_W%u", i++);
+                write_type_decl(file, var->type->ref, "_W%u", i++);
                 fprintf(file, ";\n");
             }
 
             print_file(file, indent, "");
-            write_type_left(file, var->type);
+            write_type_decl_left(file, var->type);
             fprintf(file, " ");
             if (var->type->declarray) {
                 fprintf(file, "( *");

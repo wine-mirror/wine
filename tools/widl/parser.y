@@ -325,20 +325,20 @@ statement: ';'					{}
 	| constdef ';'				{ if (!parse_only && do_header) { write_constdef($1); } }
 	| cppquote				{}
 	| enumdef ';'				{ if (!parse_only && do_header) {
-						    write_type(header, $1, FALSE, NULL);
+						    write_type_def_or_decl(header, $1, FALSE, NULL);
 						    fprintf(header, ";\n\n");
 						  }
 						}
 	| externdef ';'				{ if (!parse_only && do_header) { write_externdef($1); } }
 	| import				{}
 	| structdef ';'				{ if (!parse_only && do_header) {
-						    write_type(header, $1, FALSE, NULL);
+						    write_type_def_or_decl(header, $1, FALSE, NULL);
 						    fprintf(header, ";\n\n");
 						  }
 						}
 	| typedef ';'				{}
 	| uniondef ';'				{ if (!parse_only && do_header) {
-						    write_type(header, $1, FALSE, NULL);
+						    write_type_def_or_decl(header, $1, FALSE, NULL);
 						    fprintf(header, ";\n\n");
 						  }
 						}

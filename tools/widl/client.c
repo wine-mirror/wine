@@ -109,7 +109,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             }
         }
 
-        write_type_left(client, def->type);
+        write_type_decl_left(client, def->type);
         if (needs_space_after(def->type))
           fprintf(client, " ");
         write_prefix_name(client, prefix_client, def);
@@ -130,7 +130,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         if (!is_void(def->type))
         {
             print_client("");
-            write_type_left(client, def->type);
+            write_type_decl_left(client, def->type);
             fprintf(client, " _RetVal;\n");
         }
 
