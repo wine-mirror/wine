@@ -1992,6 +1992,9 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     *pCaps->Caps2                   = WINED3DCAPS2_CANRENDERWINDOWED |
                                       WINED3DCAPS2_FULLSCREENGAMMA |
                                       WINED3DCAPS2_DYNAMICTEXTURES;
+    if(GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
+        *pCaps->Caps2 |= WINED3DCAPS2_CANAUTOGENMIPMAP;
+    }
     *pCaps->Caps3                   = WINED3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD;
     *pCaps->PresentationIntervals   = WINED3DPRESENT_INTERVAL_IMMEDIATE  |
                                       WINED3DPRESENT_INTERVAL_ONE;
