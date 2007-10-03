@@ -111,6 +111,8 @@ static const struct object_ops handle_table_ops =
     no_signal,                       /* signal */
     no_get_fd,                       /* get_fd */
     no_map_access,                   /* map_access */
+    default_get_sd,                  /* get_sd */
+    default_set_sd,                  /* set_sd */
     no_lookup_name,                  /* lookup_name */
     no_open_file,                    /* open_file */
     no_close_handle,                 /* close_handle */
@@ -612,7 +614,7 @@ DECL_HANDLER(set_security_object)
 
     if (!(obj = get_handle_obj( current->process, req->handle, access, NULL ))) return;
 
-    set_object_sd( obj, sd, req->security_info );
+    obj->ops->set_sd( obj, sd, req->security_info );
     release_object( obj );
 }
 
@@ -631,7 +633,7 @@ DECL_HANDLER(get_security_object)
 
     if (!(obj = get_handle_obj( current->process, req->handle, access, NULL ))) return;
 
-    sd = obj->sd;
+    sd = obj->ops->get_sd( obj );
     if (sd)
     {
         req_sd.control = sd->control & ~SE_SELF_RELATIVE;

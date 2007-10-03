@@ -74,6 +74,10 @@ struct object_ops
     struct fd *(*get_fd)(struct object *);
     /* map access rights to the specific rights for this object */
     unsigned int (*map_access)(struct object *, unsigned int);
+    /* returns the security descriptor of the object */
+    struct security_descriptor *(*get_sd)( struct object * );
+    /* sets the security descriptor of the object */
+    int (*set_sd)( struct object *, const struct security_descriptor *, unsigned int );
     /* lookup a name if an object has a namespace */
     struct object *(*lookup_name)(struct object *, struct unicode_str *,unsigned int);
     /* open a file object to access this object */
@@ -127,7 +131,8 @@ extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_signal( struct object *obj, unsigned int access );
 extern struct fd *no_get_fd( struct object *obj );
 extern unsigned int no_map_access( struct object *obj, unsigned int access );
-extern void set_object_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
+extern struct security_descriptor *default_get_sd( struct object *obj );
+extern int default_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
 extern struct object *no_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attributes );
 extern struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
                                     unsigned int options );

@@ -124,6 +124,8 @@ static const struct object_ops named_pipe_ops =
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
     named_pipe_map_access,        /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
     named_pipe_open_file,         /* open_file */
     no_close_handle,              /* close_handle */
@@ -150,6 +152,8 @@ static const struct object_ops pipe_server_ops =
     no_signal,                    /* signal */
     pipe_server_get_fd,           /* get_fd */
     default_fd_map_access,        /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
     no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
@@ -186,6 +190,8 @@ static const struct object_ops pipe_client_ops =
     no_signal,                    /* signal */
     pipe_client_get_fd,           /* get_fd */
     default_fd_map_access,        /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
     no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
@@ -226,6 +232,8 @@ static const struct object_ops named_pipe_device_ops =
     no_signal,                        /* signal */
     named_pipe_device_get_fd,         /* get_fd */
     no_map_access,                    /* map_access */
+    default_get_sd,                   /* get_sd */
+    default_set_sd,                   /* set_sd */
     named_pipe_device_lookup_name,    /* lookup_name */
     named_pipe_device_open_file,      /* open_file */
     fd_close_handle,                  /* close_handle */

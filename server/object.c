@@ -367,7 +367,12 @@ unsigned int no_map_access( struct object *obj, unsigned int access )
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
-void set_object_sd( struct object *obj, const struct security_descriptor *sd,
+struct security_descriptor *default_get_sd( struct object *obj )
+{
+    return obj->sd;
+}
+
+int default_set_sd( struct object *obj, const struct security_descriptor *sd,
                     unsigned int set_info )
 {
     struct security_descriptor new_sd, *new_sd_ptr;
@@ -376,7 +381,7 @@ void set_object_sd( struct object *obj, const struct security_descriptor *sd,
     const ACL *sacl, *dacl;
     char *ptr;
 
-    if (!set_info) return;
+    if (!set_info) return 1;
 
     new_sd.control = sd->control & ~SE_SELF_RELATIVE;
 
@@ -437,7 +442,7 @@ void set_object_sd( struct object *obj, const struct security_descriptor *sd,
 
     ptr = mem_alloc( sizeof(new_sd) + new_sd.owner_len + new_sd.group_len +
                      new_sd.sacl_len + new_sd.dacl_len );
-    if (!ptr) return;
+    if (!ptr) return 0;
     new_sd_ptr = (struct security_descriptor*)ptr;
 
     memcpy( ptr, &new_sd, sizeof(new_sd) );
@@ -452,6 +457,7 @@ void set_object_sd( struct object *obj, const struct security_descriptor *sd,
 
     free( obj->sd );
     obj->sd = new_sd_ptr;
+    return 1;
 }
 
 struct object *no_lookup_name( struct object *obj, struct unicode_str *name,

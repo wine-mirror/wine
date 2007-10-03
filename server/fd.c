@@ -198,6 +198,8 @@ static const struct object_ops fd_ops =
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
     no_map_access,            /* map_access */
+    default_get_sd,           /* get_sd */
+    default_set_sd,           /* set_sd */
     no_lookup_name,           /* lookup_name */
     no_open_file,             /* open_file */
     no_close_handle,          /* close_handle */
@@ -232,6 +234,8 @@ static const struct object_ops device_ops =
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
     no_map_access,            /* map_access */
+    default_get_sd,           /* get_sd */
+    default_set_sd,           /* set_sd */
     no_lookup_name,           /* lookup_name */
     no_open_file,             /* open_file */
     no_close_handle,          /* close_handle */
@@ -265,6 +269,8 @@ static const struct object_ops inode_ops =
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
     no_map_access,            /* map_access */
+    default_get_sd,           /* get_sd */
+    default_set_sd,           /* set_sd */
     no_lookup_name,           /* lookup_name */
     no_open_file,             /* open_file */
     no_close_handle,          /* close_handle */
@@ -300,6 +306,8 @@ static const struct object_ops file_lock_ops =
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
     no_map_access,              /* map_access */
+    default_get_sd,             /* get_sd */
+    default_set_sd,             /* set_sd */
     no_lookup_name,             /* lookup_name */
     no_open_file,               /* open_file */
     no_close_handle,            /* close_handle */

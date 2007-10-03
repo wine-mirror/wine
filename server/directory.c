@@ -63,6 +63,8 @@ static const struct object_ops directory_ops =
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
     default_fd_map_access,        /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
     directory_lookup_name,        /* lookup_name */
     no_open_file,                 /* open_file */
     no_close_handle,              /* close_handle */
