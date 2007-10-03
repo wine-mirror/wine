@@ -581,8 +581,8 @@ static void HEAP_ShrinkBlock(SUBHEAP *subheap, ARENA_INUSE *pArena, SIZE_T size)
 /***********************************************************************
  *           HEAP_InitSubHeap
  */
-static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
-                              SIZE_T commitSize, SIZE_T totalSize )
+static SUBHEAP *HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
+                                  SIZE_T commitSize, SIZE_T totalSize )
 {
     SUBHEAP *subheap;
     FREE_LIST_ENTRY *pEntry;
@@ -596,7 +596,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
                                  &commitSize, MEM_COMMIT, get_protection_type( flags ) ))
     {
         WARN("Could not commit %08lx bytes for sub-heap %p\n", commitSize, address );
-        return FALSE;
+        return NULL;
     }
 
     if (heap)
@@ -677,7 +677,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
     HEAP_CreateFreeBlock( subheap, (LPBYTE)subheap->base + subheap->headerSize,
                           subheap->size - subheap->headerSize );
 
-    return TRUE;
+    return subheap;
 }
 
 /***********************************************************************
@@ -690,6 +690,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, void *base, DWORD flags,
                                     SIZE_T commitSize, SIZE_T totalSize )
 {
     LPVOID address = base;
+    SUBHEAP *ret;
 
     /* round-up sizes on a 64K boundary */
     totalSize  = (totalSize + 0xffff) & 0xffff0000;
@@ -710,14 +711,12 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, void *base, DWORD flags,
 
     /* Initialize subheap */
 
-    if (!HEAP_InitSubHeap( heap, address, flags, commitSize, totalSize ))
+    if (!(ret = HEAP_InitSubHeap( heap, address, flags, commitSize, totalSize )))
     {
         SIZE_T size = 0;
         if (!base) NtFreeVirtualMemory( NtCurrentProcess(), &address, &size, MEM_RELEASE );
-        return NULL;
     }
-
-    return (SUBHEAP *)address;
+    return ret;
 }
 
 
