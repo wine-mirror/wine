@@ -27,7 +27,7 @@
 
 #define COBJMACROS
 
-#include <wine/test.h>
+#include "wine/test.h"
 #include <windef.h>
 #include <winbase.h>
 #include <winuser.h>
@@ -39,6 +39,15 @@
 #include <wtypes.h>
 #include <olectl.h>
 #include <objidl.h>
+
+#define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
+
+#define ole_expect(expr, expect) { \
+    HRESULT r = expr; \
+    ok(r == (expect), #expr " returned %x, expected %s (%x)\n", r, #expect, expect); \
+}
+
+#define ole_check(expr) ole_expect(expr, S_OK);
 
 static HMODULE hOleaut32;
 
@@ -101,6 +110,15 @@ static const unsigned char gif4pixel[42] = {
 0x47,0x49,0x46,0x38,0x37,0x61,0x02,0x00,0x02,0x00,0xa1,0x00,0x00,0x00,0x00,0x00,
 0x39,0x62,0xfc,0xff,0x1a,0xe5,0xff,0xff,0xff,0x2c,0x00,0x00,0x00,0x00,0x02,0x00,
 0x02,0x00,0x00,0x02,0x03,0x14,0x16,0x05,0x00,0x3b
+};
+
+/* APM with an empty metafile with some padding zeros - looks like under Window the
+ * metafile data should be at least 20 bytes */
+static const unsigned char apmdata[] = {
+0xd7,0xcd,0xc6,0x9a, 0x00,0x00,0x00,0x00, 0x00,0x00,0xee,0x02, 0xb1,0x03,0xa0,0x05,
+0x00,0x00,0x00,0x00, 0xee,0x53,0x01,0x00, 0x09,0x00,0x00,0x03, 0x13,0x00,0x00,0x00,
+0x01,0x00,0x05,0x00, 0x00,0x00,0x00,0x00, 0x03,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00
 };
 
 struct NoStatStreamImpl
@@ -424,6 +442,44 @@ static void test_OleCreatePictureIndirect(void)
     IPicture_Release(pict);
 }
 
+static void test_apm()
+{
+    OLE_HANDLE handle;
+    LPSTREAM stream;
+    IPicture *pict;
+    HGLOBAL hglob;
+    LPBYTE *data;
+    LONG cxy;
+    BOOL keep;
+    short type;
+
+    hglob = GlobalAlloc (0, sizeof(apmdata));
+    data = GlobalLock(hglob);
+    memcpy(data, apmdata, sizeof(apmdata));
+
+    ole_check(CreateStreamOnHGlobal(hglob, TRUE, &stream));
+    ole_check(OleLoadPictureEx(stream, sizeof(apmdata), TRUE, &IID_IPicture, 100, 100, 0, (LPVOID *)&pict));
+
+    ole_check(IPicture_get_Handle(pict, &handle));
+    ok(handle != 0, "handle is null\n");
+
+    ole_check(IPicture_get_Type(pict, &type));
+    expect_eq(type, PICTYPE_METAFILE, short, "%d");
+
+    ole_check(IPicture_get_Height(pict, &cxy));
+    expect_eq(cxy,  1667, LONG, "%d");
+
+    ole_check(IPicture_get_Width(pict, &cxy));
+    expect_eq(cxy,  1323, LONG, "%d");
+
+    ole_check(IPicture_get_KeepOriginalFormat(pict, &keep));
+    todo_wine expect_eq(keep, FALSE, LONG, "%d");
+
+    ole_expect(IPicture_get_hPal(pict, &handle), E_FAIL);
+    IPicture_Release(pict);
+    IStream_Release(stream);
+}
+
 START_TEST(olepicture)
 {
 	hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -444,6 +500,7 @@ START_TEST(olepicture)
 	if (0) test_pic(pngimage, sizeof(pngimage));
 	test_empty_image();
 	test_empty_image_2();
+        test_apm();
 
 	test_Invoke();
         test_OleCreatePictureIndirect();

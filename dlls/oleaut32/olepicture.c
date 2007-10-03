@@ -90,6 +90,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #include "pshpack1.h"
 
+/* Header for Aldus Placable Metafiles - a standard metafile follows */
+typedef struct _APM_HEADER
+{
+    DWORD key;
+    WORD handle;
+    SHORT left;
+    SHORT top;
+    SHORT right;
+    SHORT bottom;
+    WORD inch;
+    DWORD reserved;
+    WORD checksum;
+} APM_HEADER;
+
 typedef struct {
     BYTE bWidth;
     BYTE bHeight;
@@ -554,8 +568,10 @@ static HRESULT WINAPI OLEPictureImpl_get_hPal(IPicture *iface,
       *phandle = (OLE_HANDLE)This->desc.u.bmp.hpal;
       hres = S_OK;
       break;
-    case PICTYPE_ICON:
     case PICTYPE_METAFILE:
+      hres = E_FAIL;
+      break;
+    case PICTYPE_ICON:
     case PICTYPE_ENHMETAFILE:
     default:
       FIXME("unimplemented for type %d. Returning 0 palette.\n",
@@ -1690,6 +1706,25 @@ static HRESULT OLEPictureImpl_LoadMetafile(OLEPictureImpl *This,
     return S_OK;
 }
 
+static HRESULT OLEPictureImpl_LoadAPM(OLEPictureImpl *This,
+                                      const BYTE *data, ULONG size)
+{
+    APM_HEADER *header = (APM_HEADER *)data;
+    HRESULT hr;
+
+    if (size < sizeof(APM_HEADER))
+        return E_FAIL;
+    if (header->key != 0x9ac6cdd7)
+        return E_FAIL;
+
+    if ((hr = OLEPictureImpl_LoadMetafile(This, data + sizeof(APM_HEADER), size - sizeof(*header))) != S_OK)
+        return hr;
+
+    This->himetricWidth = MulDiv((INT)header->right - header->left, 2540, header->inch);
+    This->himetricHeight = MulDiv((INT)header->bottom - header->top, 2540, header->inch);
+    return S_OK;
+}
+
 /************************************************************************
  * OLEPictureImpl_IPersistStream_Load (IUnknown)
  *
@@ -1847,6 +1882,9 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     break;
   case 0x5089: /* PNG */
     hr = OLEPictureImpl_LoadPNG(This, xbuf, xread);
+    break;
+  case 0xcdd7: /* APM */
+    hr = OLEPictureImpl_LoadAPM(This, xbuf, xread);
     break;
   case 0x0000: { /* ICON , first word is dwReserved */
     hr = OLEPictureImpl_LoadIcon(This, xbuf, xread);
