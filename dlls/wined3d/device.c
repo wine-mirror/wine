@@ -1379,7 +1379,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         object->win_handle = This->createParms.hFocusWindow;
     }
 
-    object->win_handle = GetAncestor(object->win_handle, GA_ROOT);
     hDc                = GetDC(object->win_handle);
     TRACE("Using hDc %p\n", hDc);
 
