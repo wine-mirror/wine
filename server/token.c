@@ -70,11 +70,11 @@ static const SID interactive_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY },
 static const SID anonymous_logon_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_ANONYMOUS_LOGON_RID } };
 static const SID authenticated_user_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_AUTHENTICATED_USER_RID } };
 static const SID local_system_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_LOCAL_SYSTEM_RID } };
-static const PSID security_world_sid = (PSID)&world_sid;
+const PSID security_world_sid = (PSID)&world_sid;
 static const PSID security_local_sid = (PSID)&local_sid;
 const PSID security_interactive_sid = (PSID)&interactive_sid;
 static const PSID security_authenticated_user_sid = (PSID)&authenticated_user_sid;
-static const PSID security_local_system_sid = (PSID)&local_system_sid;
+const PSID security_local_system_sid = (PSID)&local_system_sid;
 
 static luid_t prev_luid_value = { 1000, 0 };
 
@@ -166,12 +166,6 @@ static SID *security_sid_alloc( const SID_IDENTIFIER_AUTHORITY *idauthority, int
     return sid;
 }
 
-static inline int security_equal_sid( const SID *sid1, const SID *sid2 )
-{
-    return ((sid1->SubAuthorityCount == sid2->SubAuthorityCount) &&
-        !memcmp( sid1, sid2, FIELD_OFFSET(SID, SubAuthority[sid1->SubAuthorityCount]) ));
-}
-
 void security_set_thread_token( struct thread *thread, obj_handle_t handle )
 {
     if (!handle)
@@ -193,11 +187,6 @@ void security_set_thread_token( struct thread *thread, obj_handle_t handle )
             thread->token = token;
         }
     }
-}
-
-static const ACE_HEADER *ace_next( const ACE_HEADER *ace )
-{
-    return (const ACE_HEADER *)((const char *)ace + ace->AceSize);
 }
 
 const SID *security_unix_uid_to_sid( uid_t uid )

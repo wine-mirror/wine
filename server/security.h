@@ -39,7 +39,9 @@ extern const LUID SeManageVolumePrivilege;
 extern const LUID SeImpersonatePrivilege;
 extern const LUID SeCreateGlobalPrivilege;
 
+extern const PSID security_world_sid;
 extern const PSID security_interactive_sid;
+extern const PSID security_local_system_sid;
 
 
 /* token functions */
@@ -53,6 +55,17 @@ extern int token_check_privileges( struct token *token, int all_required,
 extern const ACL *token_get_default_dacl( struct token *token );
 extern const SID *token_get_user( struct token *token );
 extern const SID *token_get_primary_group( struct token *token );
+
+static inline const ACE_HEADER *ace_next( const ACE_HEADER *ace )
+{
+    return (const ACE_HEADER *)((const char *)ace + ace->AceSize);
+}
+
+static inline int security_equal_sid( const SID *sid1, const SID *sid2 )
+{
+    return ((sid1->SubAuthorityCount == sid2->SubAuthorityCount) &&
+            !memcmp( sid1, sid2, FIELD_OFFSET(SID, SubAuthority[sid1->SubAuthorityCount]) ));
+}
 
 extern void security_set_thread_token( struct thread *thread, obj_handle_t handle );
 extern const SID *security_unix_uid_to_sid( uid_t uid );
