@@ -276,7 +276,19 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
                 CRYPT_PROVIDER_SGNR signer = { sizeof(signer), { 0 } };
                 DWORD i;
 
-                /* Add empty signer, so we can add a cert to it */
+                /* Add a signer with nothing but the time to verify, so we can
+                 * add a cert to it
+                 */
+                if (data->pWintrustData->u.pCert->psftVerifyAsOf)
+                    memcpy(&data->sftSystemTime, &signer.sftVerifyAsOf,
+                     sizeof(FILETIME));
+                else
+                {
+                    SYSTEMTIME sysTime;
+
+                    GetSystemTime(&sysTime);
+                    SystemTimeToFileTime(&sysTime, &signer.sftVerifyAsOf);
+                }
                 ret = data->psPfns->pfnAddSgnr2Chain(data, FALSE, 0, &signer);
                 if (!ret)
                     goto error;
