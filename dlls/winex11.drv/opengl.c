@@ -984,6 +984,26 @@ Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
 }
 
 
+static XID create_bitmap_glxpixmap(X11DRV_PDEVICE *physDev)
+{
+    GLXPixmap ret;
+    XVisualInfo *vis;
+    XVisualInfo template;
+    int num;
+
+    wine_tsx11_lock();
+
+    /* Retrieve the visualid from our main visual which is the only visual we can use */
+    template.visualid =  XVisualIDFromVisual(visual);
+    vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
+
+    ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
+    XFree(vis);
+    wine_tsx11_unlock();
+    TRACE("return %lx\n", ret);
+    return ret;
+}
+
 /**
  * X11DRV_ChoosePixelFormat
  *
@@ -1439,6 +1459,21 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
         }
 
         physDev->gl_drawable = X11DRV_get_gl_drawable(hwnd);
+    }
+    else if(physDev->bitmap) {
+        if(!(value&GLX_PIXMAP_BIT)) {
+            WARN("Pixel format %d is not compatible for bitmap rendering\n", iPixelFormat);
+            return FALSE;
+        }
+
+        physDev->bitmap->glxpixmap = create_bitmap_glxpixmap(physDev);
+        if(!physDev->bitmap->glxpixmap) {
+            WARN("Couldn't create glxpixmap for pixel format %d\n", iPixelFormat);
+            return FALSE;
+        }
+    }
+    else {
+        FIXME("called on a non-window, non-bitmap object?");
     }
 
   physDev->current_pf = iPixelFormat;
@@ -3202,26 +3237,6 @@ static void X11DRV_WineGL_LoadExtensions(void)
 }
 
 
-static XID create_bitmap_glxpixmap(X11DRV_PDEVICE *physDev)
-{
-    GLXPixmap ret;
-    XVisualInfo *vis;
-    XVisualInfo template;
-    int num;
-
-    wine_tsx11_lock();
-
-    /* Retrieve the visualid from our main visual which is the only visual we can use */
-    template.visualid =  XVisualIDFromVisual(visual);
-    vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
-
-    ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
-    XFree(vis);
-    wine_tsx11_unlock(); 
-    TRACE("return %lx\n", ret);
-    return ret;
-}
-
 Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
 {
     Drawable ret;
@@ -3231,11 +3246,7 @@ Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
         if (physDev->bitmap->hbitmap == BITMAP_stock_phys_bitmap.hbitmap)
             ret = physDev->drawable; /* PBuffer */
         else
-        {
-            if(!physDev->bitmap->glxpixmap)
-                physDev->bitmap->glxpixmap = create_bitmap_glxpixmap(physDev);
             ret = physDev->bitmap->glxpixmap;
-        }
     }
     else if(physDev->gl_drawable)
         ret = physDev->gl_drawable;
