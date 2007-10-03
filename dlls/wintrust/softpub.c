@@ -612,7 +612,7 @@ HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
                 /* Create a certificate chain for each signer */
                 ret = CertGetCertificateChain(NULL,
                  data->pasSigners[i].pasCertChain[0].pCert,
-                 NULL, /* FIXME: use data->pasSigners[i].sftVerifyAsOf? */
+                 &data->pasSigners[i].sftVerifyAsOf,
                  data->chStores ? data->pahStores[0] : NULL,
                  &chainPara, flags, NULL, &data->pasSigners[i].pChainContext);
                 if (ret)
