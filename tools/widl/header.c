@@ -195,6 +195,8 @@ int needs_space_after(type_t *t)
 
 void write_type_left(FILE *h, type_t *t, int declonly)
 {
+  if (!h) return;
+
   if (t->is_const) fprintf(h, "const ");
 
   if (t->kind == TKIND_ALIAS) fprintf(h, "%s", t->name);
@@ -214,7 +216,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
           indent(h, -1);
           fprintf(h, "}");
         }
-        else fprintf(h, "enum %s", t->name);
+        else fprintf(h, "enum %s", t->name ? t->name : "");
         break;
       case RPC_FC_STRUCT:
       case RPC_FC_CVSTRUCT:
@@ -232,7 +234,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
           indent(h, -1);
           fprintf(h, "}");
         }
-        else fprintf(h, "struct %s", t->name);
+        else fprintf(h, "struct %s", t->name ? t->name : "");
         break;
       case RPC_FC_NON_ENCAPSULATED_UNION:
         if (!declonly && t->defined && !t->written && !t->ignore) {
@@ -244,7 +246,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
           indent(h, -1);
           fprintf(h, "}");
         }
-        else fprintf(h, "union %s", t->name);
+        else fprintf(h, "union %s", t->name ? t->name : "");
         break;
       case RPC_FC_RP:
       case RPC_FC_UP:
@@ -264,6 +266,8 @@ void write_type_left(FILE *h, type_t *t, int declonly)
 
 void write_type_right(FILE *h, type_t *t, int is_field)
 {
+  if (!h) return;
+
   if (t->declarray) {
     if (is_conformant_array(t)) {
       fprintf(h, "[%s]", is_field ? "1" : "");
@@ -277,6 +281,8 @@ void write_type_right(FILE *h, type_t *t, int is_field)
 void write_type_v(FILE *h, type_t *t, int is_field, int declonly,
                   const char *fmt, va_list args)
 {
+  if (!h) return;
+
   write_type_left(h, t, declonly);
   if (fmt) {
     if (needs_space_after(t))

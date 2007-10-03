@@ -868,11 +868,18 @@ static unsigned int write_simple_pointer(FILE *file, const type_t *type)
     return 4;
 }
 
+static void print_start_tfs_comment(FILE *file, type_t *t, unsigned int tfsoff)
+{
+    print_file(file, 0, "/* %u (", tfsoff);
+    write_type_decl(file, t, NULL);
+    print_file(file, 0, ") */\n");
+}
+
 static size_t write_pointer_tfs(FILE *file, type_t *type, unsigned int *typestring_offset)
 {
     unsigned int offset = *typestring_offset;
 
-    print_file(file, 0, "/* %d */\n", offset);
+    print_start_tfs_comment(file, type, offset);
     update_tfsoff(type, offset, file);
 
     if (type->ref->typestring_offset)
@@ -904,7 +911,7 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     if (is_base_type(utype->type))
     {
         absoff = *tfsoff;
-        print_file(file, 0, "/* %d */\n", absoff);
+        print_start_tfs_comment(file, utype, absoff);
         print_file(file, 2, "0x%x,\t/* %s */\n", utype->type, string_of_type(utype->type));
         print_file(file, 2, "0x5c,\t/* FC_PAD */\n");
         *tfsoff += 2;
@@ -925,7 +932,7 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
 
     start = *tfsoff;
     update_tfsoff(type, start, file);
-    print_file(file, 0, "/* %d */\n", start);
+    print_start_tfs_comment(file, type, start);
     print_file(file, 2, "0x%x,\t/* FC_USER_MARSHAL */\n", RPC_FC_USER_MARSHAL);
     print_file(file, 2, "0x%x,\t/* Alignment= %d, Flags= %02x */\n",
                flags | (align - 1), align - 1, flags);
@@ -1486,7 +1493,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
 
     start_offset = *typestring_offset;
     update_tfsoff(type, start_offset, file);
-    print_file(file, 0, "/* %lu */\n", start_offset);
+    print_start_tfs_comment(file, type, start_offset);
     print_file(file, 2, "0x%02x,\t/* %s */\n", type->type, string_of_type(type->type));
     print_file(file, 2, "0x%x,\t/* %d */\n", align - 1, align - 1);
     *typestring_offset += 2;
@@ -1672,7 +1679,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
 
     start_offset = *tfsoff;
     update_tfsoff(type, start_offset, file);
-    print_file(file, 0, "/* %d */\n", start_offset);
+    print_start_tfs_comment(file, type, start_offset);
     print_file(file, 2, "0x%x,\t/* %s */\n", type->type, string_of_type(type->type));
     print_file(file, 2, "0x%x,\t/* %d */\n", align - 1, align - 1);
     print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", total_size, total_size);
@@ -1825,7 +1832,7 @@ static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
 
     start_offset = *tfsoff;
     update_tfsoff(type, start_offset, file);
-    print_file(file, 0, "/* %d */\n", start_offset);
+    print_start_tfs_comment(file, type, start_offset);
     if (type->type == RPC_FC_ENCAPSULATED_UNION)
     {
         const var_t *sv = LIST_ENTRY(list_head(type->fields), const var_t, entry);
@@ -1926,7 +1933,7 @@ static size_t write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *type,
             error("%s: interface %s missing UUID\n", __FUNCTION__, base->name);
 
         update_tfsoff(type, start_offset, file);
-        print_file(file, 0, "/* %d */\n", start_offset);
+        print_start_tfs_comment(file, type, start_offset);
         print_file(file, 2, "0x2f,\t/* FC_IP */\n");
         print_file(file, 2, "0x5a,\t/* FC_CONSTANT_IID */\n");
         print_file(file, 2, "NdrFcLong(0x%08lx),\n", uuid->Data1);
