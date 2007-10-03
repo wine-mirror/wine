@@ -75,6 +75,9 @@ static BOOL SOFTPUB_OpenFile(CRYPT_PROVIDER_DATA *data)
         else
             ret = FALSE;
     }
+    if (ret)
+        GetFileTime(data->pWintrustData->u.pFile->hFile, &data->sftSystemTime,
+         NULL, NULL);
     TRACE("returning %d\n", ret);
     return ret;
 }
@@ -390,6 +393,7 @@ static BOOL WINTRUST_SaveSigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
         CRYPT_PROVIDER_SGNR sgnr = { sizeof(sgnr), { 0 } };
 
         sgnr.psSigner = signerInfo;
+        memcpy(&sgnr.sftVerifyAsOf, &data->sftSystemTime, sizeof(FILETIME));
         ret = data->psPfns->pfnAddSgnr2Chain(data, FALSE, signerIdx, &sgnr);
     }
     else
