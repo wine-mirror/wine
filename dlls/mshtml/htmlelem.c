@@ -1087,7 +1087,7 @@ static HRESULT WINAPI HTMLElement_get_children(IHTMLElement *iface, IDispatch **
     return S_OK;
 }
 
-static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *buf)
+static void create_all_list(HTMLDocument *doc, HTMLDOMNode *elem, elem_vector *buf)
 {
     nsIDOMNodeList *nsnode_list;
     nsIDOMNode *iter;
@@ -1095,7 +1095,7 @@ static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *b
     PRUint16 node_type;
     nsresult nsres;
 
-    nsres = nsIDOMNode_GetChildNodes(elem->node.nsnode, &nsnode_list);
+    nsres = nsIDOMNode_GetChildNodes(elem->nsnode, &nsnode_list);
     if(NS_FAILED(nsres)) {
         ERR("GetChildNodes failed: %08x\n", nsres);
         return;
@@ -1117,7 +1117,7 @@ static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *b
             HTMLDOMNode *node = get_node(doc, iter);
 
             elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
-            create_all_list(doc, HTMLELEM_NODE_THIS(node), buf);
+            create_all_list(doc, node, buf);
         }
     }
 }
@@ -1131,7 +1131,7 @@ static HRESULT WINAPI HTMLElement_get_all(IHTMLElement *iface, IDispatch **p)
 
     buf.buf = mshtml_alloc(buf.size*sizeof(HTMLElement**));
 
-    create_all_list(This->node.doc, This, &buf);
+    create_all_list(This->node.doc, &This->node, &buf);
     elem_vector_normalize(&buf);
 
     *p = (IDispatch*)HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len);
@@ -1594,6 +1594,19 @@ static const IHTMLElementCollectionVtbl HTMLElementCollectionVtbl = {
     HTMLElementCollection_item,
     HTMLElementCollection_tags
 };
+
+IHTMLElementCollection *create_all_collection(HTMLDOMNode *node)
+{
+    elem_vector buf = {NULL, 0, 8};
+
+    buf.buf = mshtml_alloc(buf.size*sizeof(HTMLElement**));
+
+    elem_vector_add(&buf, HTMLELEM_NODE_THIS(node));
+    create_all_list(node->doc, node, &buf);
+    elem_vector_normalize(&buf);
+
+    return HTMLElementCollection_Create((IUnknown*)HTMLDOMNODE(node), buf.buf, buf.len);
+}
 
 static IHTMLElementCollection *HTMLElementCollection_Create(IUnknown *ref_unk,
             HTMLElement **elems, DWORD len)

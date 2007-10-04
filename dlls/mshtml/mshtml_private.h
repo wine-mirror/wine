@@ -430,6 +430,8 @@ void HTMLElement_destructor(HTMLDOMNode*);
 HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
 void release_nodes(HTMLDocument*);
 
+IHTMLElementCollection *create_all_collection(HTMLDOMNode*);
+
 BOOL install_wine_gecko(void);
 
 /* commands */
