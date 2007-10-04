@@ -2036,6 +2036,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
     }
     else
     {
+        *cNumOIDs = validUsages.cUsageIdentifier;
         if (!rghOIDs)
             *pcbOIDs = cbOIDs;
         else if (*pcbOIDs < cbOIDs)
@@ -2050,7 +2051,6 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
              validUsages.cUsageIdentifier * sizeof(LPSTR));
 
             *pcbOIDs = cbOIDs;
-            *cNumOIDs = validUsages.cUsageIdentifier;
             for (i = 0; i < validUsages.cUsageIdentifier; i++)
             {
                 rghOIDs[i] = nextOID;
