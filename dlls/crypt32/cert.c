@@ -1922,6 +1922,42 @@ BOOL WINAPI CertRemoveEnhancedKeyUsageIdentifier(PCCERT_CONTEXT pCertContext,
     return ret;
 }
 
+struct BitField
+{
+    DWORD  cIndexes;
+    DWORD *indexes;
+};
+
+#define BITS_PER_DWORD (sizeof(DWORD) * 8)
+
+static void CRYPT_SetBitInField(struct BitField *field, DWORD bit)
+{
+    DWORD indexIndex = bit / BITS_PER_DWORD;
+
+    if (indexIndex + 1 > field->cIndexes)
+    {
+        if (field->cIndexes)
+            field->indexes = CryptMemRealloc(field->indexes,
+             (indexIndex + 1) * sizeof(DWORD));
+        else
+            field->indexes = CryptMemAlloc(sizeof(DWORD));
+        if (field->indexes)
+            field->cIndexes = indexIndex + 1;
+    }
+    if (field->indexes)
+        field->indexes[indexIndex] |= 1 << (bit % BITS_PER_DWORD);
+}
+
+static BOOL CRYPT_IsBitInFieldSet(struct BitField *field, DWORD bit)
+{
+    BOOL set = FALSE;
+    DWORD indexIndex = bit / BITS_PER_DWORD;
+
+    assert(field->cIndexes);
+    set = field->indexes[indexIndex] & (1 << (bit % BITS_PER_DWORD));
+    return set;
+}
+
 BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
  int *cNumOIDs, LPSTR *rghOIDs, DWORD *pcbOIDs)
 {
@@ -1978,7 +2014,8 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
                     }
                     else
                     {
-                        DWORD j, k, validIndexes = 0, numRemoved = 0;
+                        struct BitField validIndexes = { 0, NULL };
+                        DWORD j, k, numRemoved = 0;
 
                         /* Merge: build a bitmap of all the indexes of
                          * validUsages.rgpszUsageIdentifier that are in pUsage.
@@ -1990,7 +2027,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
                                 if (!strcmp(pUsage->rgpszUsageIdentifier[j],
                                  validUsages.rgpszUsageIdentifier[k]))
                                 {
-                                    validIndexes |= (1 << k);
+                                    CRYPT_SetBitInField(&validIndexes, k);
                                     break;
                                 }
                             }
@@ -2000,7 +2037,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
                          */
                         for (j = 0; j < validUsages.cUsageIdentifier; j++)
                         {
-                            if (!(validIndexes & (1 << j)))
+                            if (!CRYPT_IsBitInFieldSet(&validIndexes, j))
                             {
                                 if (j < validUsages.cUsageIdentifier - 1)
                                 {
@@ -2019,6 +2056,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
                                     validUsages.cUsageIdentifier--;
                             }
                         }
+                        CryptMemFree(validIndexes.indexes);
                     }
                 }
                 CryptMemFree(pUsage);
