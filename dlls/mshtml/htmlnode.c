@@ -43,16 +43,8 @@ static HRESULT WINAPI HTMLDOMNode_QueryInterface(IHTMLDOMNode *iface,
                                                  REFIID riid, void **ppv)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    HRESULT hres;
 
-    if(This->impl.unk)
-        return IUnknown_QueryInterface(This->impl.unk, riid, ppv);
-
-    hres = HTMLDOMNode_QI(This, riid, ppv);
-    if(FAILED(hres))
-        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-
-    return hres;
+    return This->vtbl->qi(This, riid, ppv);
 }
 
 static ULONG WINAPI HTMLDOMNode_AddRef(IHTMLDOMNode *iface)
@@ -328,6 +320,7 @@ HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
         return S_OK;
     }
 
+    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
 }
 
@@ -338,6 +331,7 @@ void HTMLDOMNode_destructor(HTMLDOMNode *This)
 }
 
 static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
+    HTMLDOMNode_QI,
     HTMLDOMNode_destructor
 };
 
@@ -355,7 +349,6 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
     default:
         ret = mshtml_alloc(sizeof(HTMLDOMNode));
         ret->vtbl = &HTMLDOMNodeImplVtbl;
-        ret->impl.unk = NULL;
     }
 
     ret->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;

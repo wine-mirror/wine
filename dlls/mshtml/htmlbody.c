@@ -55,37 +55,8 @@ static HRESULT WINAPI HTMLBodyElement_QueryInterface(IHTMLBodyElement *iface,
                                                      REFIID riid, void **ppv)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    HRESULT hres;
 
-    *ppv = NULL;
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLBODY(This);
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLBODY(This);
-    }else if(IsEqualGUID(&IID_IHTMLBodyElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLBodyElement %p)\n", This, ppv);
-        *ppv = HTMLBODY(This);
-    }else if(IsEqualGUID(&IID_IHTMLTextContainer, riid)) {
-        TRACE("(%p)->(IID_IHTMLTextContainer %p)\n", &This->textcont, ppv);
-        *ppv = HTMLTEXTCONT(&This->textcont);
-    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
-        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
-        *ppv = CONPTCONT(&This->cp_container);
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    hres = HTMLElement_QI(&This->textcont.element, riid, ppv);
-    if(FAILED(hres))
-        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-
-    return hres;
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->textcont.element.node), riid, ppv);
 }
 
 static ULONG WINAPI HTMLBodyElement_AddRef(IHTMLBodyElement *iface)
@@ -475,6 +446,37 @@ static const IHTMLBodyElementVtbl HTMLBodyElementVtbl = {
 
 #define HTMLBODY_NODE_THIS(iface) DEFINE_THIS2(HTMLBodyElement, textcont.element.node, iface)
 
+static HRESULT HTMLBodyElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+{
+    HTMLBodyElement *This = HTMLBODY_NODE_THIS(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLBODY(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = HTMLBODY(This);
+    }else if(IsEqualGUID(&IID_IHTMLBodyElement, riid)) {
+        TRACE("(%p)->(IID_IHTMLBodyElement %p)\n", This, ppv);
+        *ppv = HTMLBODY(This);
+    }else if(IsEqualGUID(&IID_IHTMLTextContainer, riid)) {
+        TRACE("(%p)->(IID_IHTMLTextContainer %p)\n", &This->textcont, ppv);
+        *ppv = HTMLTEXTCONT(&This->textcont);
+    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
+        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
+        *ppv = CONPTCONT(&This->cp_container);
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    return HTMLElement_QI(&This->textcont.element.node, riid, ppv);
+}
+
 static void HTMLBodyElement_destructor(HTMLDOMNode *iface)
 {
     HTMLBodyElement *This = HTMLBODY_NODE_THIS(iface);
@@ -488,6 +490,7 @@ static void HTMLBodyElement_destructor(HTMLDOMNode *iface)
 #undef HTMLBODY_NODE_THIS
 
 static const NodeImplVtbl HTMLBodyElementImplVtbl = {
+    HTMLBodyElement_QI,
     HTMLBodyElement_destructor
 };
 
@@ -513,8 +516,6 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
                                              (void**)&ret->nsbody);
     if(NS_FAILED(nsres))
         ERR("Could not get nsDOMHTMLBodyElement: %08x\n", nsres);
-
-    ret->textcont.element.impl = (IUnknown*)HTMLBODY(ret);
 
     return &ret->textcont.element;
 }

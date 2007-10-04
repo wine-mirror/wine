@@ -64,16 +64,8 @@ static HRESULT WINAPI HTMLElement_QueryInterface(IHTMLElement *iface,
                                                  REFIID riid, void **ppv)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    HRESULT hres;
 
-    if(This->impl)
-        return IUnknown_QueryInterface(This->impl, riid, ppv);
-
-    hres = HTMLElement_QI(This, riid, ppv);
-    if(FAILED(hres))
-        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-
-    return hres;
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->node), riid, ppv);
 }
 
 static ULONG WINAPI HTMLElement_AddRef(IHTMLElement *iface)
@@ -1239,8 +1231,10 @@ static const IHTMLElementVtbl HTMLElementVtbl = {
     HTMLElement_get_all
 };
 
-HRESULT HTMLElement_QI(HTMLElement *This, REFIID riid, void **ppv)
+HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
+    HTMLElement *This = HTMLELEM_NODE_THIS(iface);
+
     *ppv =  NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
@@ -1276,6 +1270,7 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLElementImplVtbl = {
+    HTMLElement_QI,
     HTMLElement_destructor
 };
 
@@ -1316,8 +1311,6 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
     if(!ret) {
         ret = mshtml_alloc(sizeof(HTMLElement));
         ret->node.vtbl = &HTMLElementImplVtbl;
-
-        ret->impl = NULL;
     }
 
     nsAString_Finish(&class_name_str);
@@ -1326,8 +1319,6 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
     ret->nselem = nselem;
 
     HTMLElement2_Init(ret);
-
-    ret->node.impl.elem = HTMLELEM(ret);
 
     return ret;
 }

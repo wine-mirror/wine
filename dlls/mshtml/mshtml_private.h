@@ -251,17 +251,13 @@ struct BSCallback {
 };
 
 typedef struct {
+    HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);
     void (*destructor)(HTMLDOMNode*);
 } NodeImplVtbl;
 
 struct HTMLDOMNode {
     const IHTMLDOMNodeVtbl *lpHTMLDOMNodeVtbl;
     const NodeImplVtbl *vtbl;
-
-    union {
-        IUnknown *unk;
-        IHTMLElement *elem;
-    } impl;
 
     nsIDOMNode *nsnode;
     HTMLDocument *doc;
@@ -276,8 +272,6 @@ typedef struct {
     const IHTMLElement2Vtbl  *lpHTMLElement2Vtbl;
 
     nsIDOMHTMLElement *nselem;
-
-    IUnknown *impl;
 } HTMLElement;
 
 typedef struct {
@@ -430,7 +424,7 @@ void HTMLTextContainer_Init(HTMLTextContainer*);
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
 void HTMLDOMNode_destructor(HTMLDOMNode*);
 
-HRESULT HTMLElement_QI(HTMLElement*,REFIID,void**);
+HRESULT HTMLElement_QI(HTMLDOMNode*,REFIID,void**);
 void HTMLElement_destructor(HTMLDOMNode*);
 
 HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);

@@ -51,31 +51,8 @@ static HRESULT WINAPI HTMLInputElement_QueryInterface(IHTMLInputElement *iface,
                                                          REFIID riid, void **ppv)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    HRESULT hres;
 
-    *ppv = NULL;
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLINPUT(This);
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLINPUT(This);
-    }else if(IsEqualGUID(&IID_IHTMLInputElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLInputElement %p)\n", This, ppv);
-        *ppv = HTMLINPUT(This);
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    hres = HTMLElement_QI(&This->element, riid, ppv);
-    if(FAILED(hres))
-        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-
-    return hres;
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
 }
 
 static ULONG WINAPI HTMLInputElement_AddRef(IHTMLInputElement *iface)
@@ -728,6 +705,31 @@ static const IHTMLInputElementVtbl HTMLInputElementVtbl = {
 
 #define HTMLINPUT_NODE_THIS(iface) DEFINE_THIS2(HTMLInputElement, element.node, iface)
 
+static HRESULT HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+{
+    HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLINPUT(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = HTMLINPUT(This);
+    }else if(IsEqualGUID(&IID_IHTMLInputElement, riid)) {
+        TRACE("(%p)->(IID_IHTMLInputElement %p)\n", This, ppv);
+        *ppv = HTMLINPUT(This);
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    return HTMLElement_QI(&This->element.node, riid, ppv);
+}
+
 static void HTMLInputElement_destructor(HTMLDOMNode *iface)
 {
     HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
@@ -740,6 +742,7 @@ static void HTMLInputElement_destructor(HTMLDOMNode *iface)
 #undef HTMLINPUT_NODE_THIS
 
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
+    HTMLInputElement_QI,
     HTMLInputElement_destructor
 };
 
@@ -755,8 +758,6 @@ HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
                                              (void**)&ret->nsinput);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLInputElement interface: %08x\n", nsres);
-
-    ret->element.impl = (IUnknown*)HTMLINPUT(ret);
 
     return &ret->element;
 }

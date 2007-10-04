@@ -51,31 +51,8 @@ static HRESULT WINAPI HTMLSelectElement_QueryInterface(IHTMLSelectElement *iface
                                                          REFIID riid, void **ppv)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    HRESULT hres;
 
-    *ppv = NULL;
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLSELECT(This);
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLSELECT(This);
-    }else if(IsEqualGUID(&IID_IHTMLSelectElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLSelectElement %p)\n", This, ppv);
-        *ppv = HTMLSELECT(This);
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    hres = HTMLElement_QI(&This->element, riid, ppv);
-    if(FAILED(hres))
-        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-
-    return hres;
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
 }
 
 static ULONG WINAPI HTMLSelectElement_AddRef(IHTMLSelectElement *iface)
@@ -379,6 +356,31 @@ static const IHTMLSelectElementVtbl HTMLSelectElementVtbl = {
 
 #define HTMLSELECT_NODE_THIS(iface) DEFINE_THIS2(HTMLSelectElement, element.node, iface)
 
+static HRESULT HTMLSelectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+{
+    HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLSELECT(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = HTMLSELECT(This);
+    }else if(IsEqualGUID(&IID_IHTMLSelectElement, riid)) {
+        TRACE("(%p)->(IID_IHTMLSelectElement %p)\n", This, ppv);
+        *ppv = HTMLSELECT(This);
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    return HTMLElement_QI(&This->element.node, riid, ppv);
+}
+
 static void HTMLSelectElement_destructor(HTMLDOMNode *iface)
 {
     HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
@@ -391,6 +393,7 @@ static void HTMLSelectElement_destructor(HTMLDOMNode *iface)
 #undef HTMLSELECT_NODE_THIS
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
+    HTMLSelectElement_QI,
     HTMLSelectElement_destructor
 };
 
@@ -406,8 +409,6 @@ HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement *nselem)
                                              (void**)&ret->nsselect);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLSelectElement interfce: %08x\n", nsres);
-
-    ret->element.impl = (IUnknown*)HTMLSELECT(ret);
 
     return &ret->element;
 }
