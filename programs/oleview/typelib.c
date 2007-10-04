@@ -895,14 +895,18 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
         AddToTLDataStrW(pTLData, wszSpace);
 
         ITypeInfo_GetRefTypeOfImplType(pTypeInfo, 0, &hRefType);
-        ITypeInfo_GetRefTypeInfo(pTypeInfo, hRefType, &pRefTypeInfo);
-        ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrName,
+        if (SUCCEEDED(ITypeInfo_GetRefTypeInfo(pTypeInfo, hRefType, &pRefTypeInfo)))
+        {
+            ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrName,
                 NULL, NULL, NULL);
-        AddToTLDataStrW(pTLData, bstrName);
-        AddToTLDataStrW(pTLData, wszSpace);
+            AddToTLDataStrW(pTLData, bstrName);
+            AddToTLDataStrW(pTLData, wszSpace);
 
-        SysFreeString(bstrName);
-        ITypeInfo_Release(pRefTypeInfo);
+            SysFreeString(bstrName);
+            ITypeInfo_Release(pRefTypeInfo);
+        }
+        else
+            AddToTLDataStrW(pTLData, wszFailed);
     }
     AddToTLDataStrW(pTLData, wszOpenBrackets3);
     AddToTLDataStrW(pTLData, wszNewLine);
