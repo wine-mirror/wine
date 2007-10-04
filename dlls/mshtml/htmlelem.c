@@ -1469,6 +1469,35 @@ static HRESULT WINAPI HTMLElementCollection_get__newEnum(IHTMLElementCollection 
     return E_NOTIMPL;
 }
 
+static BOOL is_elem_name(HTMLElement *elem, LPCWSTR name)
+{
+    const PRUnichar *str;
+    nsAString nsstr, nsname;
+    BOOL ret = FALSE;
+    nsresult nsres;
+
+    static const PRUnichar nameW[] = {'n','a','m','e',0};
+
+    nsAString_Init(&nsstr, NULL);
+    nsIDOMHTMLElement_GetId(elem->nselem, &nsstr);
+    nsAString_GetData(&nsstr, &str, NULL);
+    if(!strcmpiW(str, name)) {
+        nsAString_Finish(&nsstr);
+        return TRUE;
+    }
+
+    nsAString_Init(&nsname, nameW);
+    nsres =  nsIDOMHTMLElement_GetAttribute(elem->nselem, &nsname, &nsstr);
+    nsAString_Finish(&nsname);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&nsstr, &str, NULL);
+        ret = !strcmpiW(str, name);
+    }
+
+    nsAString_Finish(&nsstr);
+    return ret;
+}
+
 static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
         VARIANT name, VARIANT index, IDispatch **pdisp)
 {
@@ -1476,12 +1505,15 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
 
     TRACE("(%p)->(v(%d) v(%d) %p)\n", This, V_VT(&name), V_VT(&index), pdisp);
 
+    *pdisp = NULL;
+
     if(V_VT(&name) == VT_I4) {
         TRACE("name is VT_I4: %d\n", V_I4(&name));
-        if(V_I4(&name) < 0 || V_I4(&name) >= This->len) {
-            ERR("Invalid name! name=%d\n", V_I4(&name));
+
+        if(V_I4(&name) < 0)
             return E_INVALIDARG;
-        }
+        if(V_I4(&name) >= This->len)
+            return S_OK;
 
         *pdisp = (IDispatch*)This->elems[V_I4(&name)];
         IDispatch_AddRef(*pdisp);
@@ -1491,48 +1523,52 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
 
     if(V_VT(&name) == VT_BSTR) {
         DWORD i;
-        nsAString tag_str;
-        const PRUnichar *tag;
-        elem_vector buf = {NULL, 0, 8};
 
         TRACE("name is VT_BSTR: %s\n", debugstr_w(V_BSTR(&name)));
 
-        nsAString_Init(&tag_str, NULL);
-        buf.buf = mshtml_alloc(buf.size*sizeof(HTMLElement*));
+        if(V_VT(&index) == VT_I4) {
+            LONG idx = V_I4(&index);
 
-        for(i=0; i<This->len; i++) {
-            if(!This->elems[i]->nselem) continue;
+            TRACE("index = %d\n", idx);
 
-            nsIDOMHTMLElement_GetId(This->elems[i]->nselem, &tag_str);
-            nsAString_GetData(&tag_str, &tag, NULL);
+            if(idx < 0)
+                return E_INVALIDARG;
 
-            if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, tag, -1,
-                                V_BSTR(&name), -1) == CSTR_EQUAL) {
-                TRACE("Found name. elem=%d\n", i);
-                if (V_VT(&index) == VT_I4)
-                    if (buf.len == V_I4(&index)) {
-                        nsAString_Finish(&tag_str);
-                        mshtml_free(buf.buf);
-                        buf.buf = NULL;
-                        *pdisp = (IDispatch*)This->elems[i];
-                        TRACE("Returning element %d pdisp=%p\n", i, pdisp);
-                        IDispatch_AddRef(*pdisp);
-                        return S_OK;
-                    }
-                elem_vector_add(&buf, This->elems[i]);
+            for(i=0; i<This->len; i++) {
+                if(is_elem_name(This->elems[i], V_BSTR(&name)) && !idx--)
+                    break;
             }
+
+            if(i != This->len) {
+                *pdisp = (IDispatch*)HTMLELEM(This->elems[i]);
+                IDispatch_AddRef(*pdisp);
+            }
+
+            return S_OK;
+        }else {
+            elem_vector buf = {NULL, 0, 8};
+
+            buf.buf = mshtml_alloc(buf.size*sizeof(HTMLElement*));
+
+            for(i=0; i<This->len; i++) {
+                if(is_elem_name(This->elems[i], V_BSTR(&name)))
+                    elem_vector_add(&buf, This->elems[i]);
+            }
+
+            if(buf.len > 1) {
+                elem_vector_normalize(&buf);
+                *pdisp = (IDispatch*)HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len);
+            }else {
+                if(buf.len == 1) {
+                    *pdisp = (IDispatch*)HTMLELEM(buf.buf[0]);
+                    IDispatch_AddRef(*pdisp);
+                }
+
+                mshtml_free(buf.buf);
+            }
+
+            return S_OK;
         }
-        nsAString_Finish(&tag_str);
-        if (V_VT(&index) == VT_I4) {
-            mshtml_free(buf.buf);
-            buf.buf = NULL;
-            ERR("Invalid index. index=%d >= buf.len=%d\n",V_I4(&index), buf.len);
-            return E_INVALIDARG;
-        }
-        elem_vector_normalize(&buf);
-        TRACE("Returning %d element(s).\n", buf.len);
-        *pdisp = (IDispatch*)HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len);
-        return S_OK;
     }
 
     FIXME("unsupported arguments\n");
