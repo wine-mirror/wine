@@ -8545,6 +8545,107 @@ todo_wine {
     DestroyWindow(info.hwnd);
 }
 
+static void wait_move_event(HWND hwnd, int x, int y)
+{
+    MSG msg;
+    DWORD time;
+    BOOL  ret;
+    int go = 0;
+
+    time = GetTickCount();
+    while (GetTickCount() - time < 200 && !go) {
+	ret = PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_NOREMOVE);
+	go  = ret && msg.pt.x > x && msg.pt.y > y;
+    }
+}
+
+#define STEP 20
+static void test_PeekMessage2(void)
+{
+    HWND hwnd;
+    BOOL ret;
+    MSG msg;
+    UINT message;
+    DWORD time1, time2, time3;
+    int x1, y1, x2, y2, x3, y3;
+    POINT pos;
+
+    time1 = time2 = time3 = 0;
+    x1 = y1 = x2 = y2 = x3 = y3 = 0;
+
+    /* Initialise window and make sure it is ready for events */
+    hwnd = CreateWindow("TestWindowClass", "PeekMessage2", WS_OVERLAPPEDWINDOW,
+                        10, 10, 800, 800, NULL, NULL, NULL, NULL);
+    assert(hwnd);
+    trace("Window for test_PeekMessage2 %p\n", hwnd);
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
+    SetFocus(hwnd);
+    GetCursorPos(&pos);
+    SetCursorPos(100, 100);
+    mouse_event(MOUSEEVENTF_MOVE, -STEP, -STEP, 0, 0);
+    flush_events();
+
+    /* Do initial mousemove, wait until we can see it
+       and then do our test peek with PM_NOREMOVE. */
+    mouse_event(MOUSEEVENTF_MOVE, STEP, STEP, 0, 0);
+    wait_move_event(hwnd, 80, 80);
+
+    ret = PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_NOREMOVE);
+    ok(ret, "no message available\n");
+    if (ret) {
+	trace("1st move event: %04x %x %d %d\n", msg.message, msg.time, msg.pt.x, msg.pt.y);
+	message = msg.message;
+	time1 = msg.time;
+	x1 = msg.pt.x;
+	y1 = msg.pt.y;
+        ok(message == WM_MOUSEMOVE, "message not WM_MOUSEMOVE, %04x instead\n", message);
+    }
+
+    /* Allow time to advance a bit, and then simulate the user moving their
+     * mouse around. After that we peek again with PM_NOREMOVE.
+     * Although the previous mousemove message was never removed, the
+     * mousemove we now peek should reflect the recent mouse movements
+     * because the input queue will merge the move events. */
+    Sleep(2);
+    mouse_event(MOUSEEVENTF_MOVE, STEP, STEP, 0, 0);
+    wait_move_event(hwnd, x1, y1);
+
+    ret = PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_NOREMOVE);
+    ok(ret, "no message available\n");
+    if (ret) {
+	trace("2nd move event: %04x %x %d %d\n", msg.message, msg.time, msg.pt.x, msg.pt.y);
+	message = msg.message;
+	time2 = msg.time;
+	x2 = msg.pt.x;
+	y2 = msg.pt.y;
+        ok(message == WM_MOUSEMOVE, "message not WM_MOUSEMOVE, %04x instead\n", message);
+	ok(time2 > time1, "message time not advanced: %x %x\n", time1, time2);
+	ok(x2 != x1 && y2 != y1, "coords not changed: (%d %d) (%d %d)\n", x1, y1, x2, y2);
+    }
+
+    /* Have another go, to drive the point home */
+    Sleep(2);
+    mouse_event(MOUSEEVENTF_MOVE, STEP, STEP, 0, 0);
+    wait_move_event(hwnd, x2, y2);
+
+    ret = PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_NOREMOVE);
+    ok(ret, "no message available\n");
+    if (ret) {
+	trace("3rd move event: %04x %x %d %d\n", msg.message, msg.time, msg.pt.x, msg.pt.y);
+	message = msg.message;
+	time3 = msg.time;
+	x3 = msg.pt.x;
+	y3 = msg.pt.y;
+        ok(message == WM_MOUSEMOVE, "message not WM_MOUSEMOVE, %04x instead\n", message);
+	ok(time3 > time2, "message time not advanced: %x %x\n", time2, time3);
+	ok(x3 != x2 && y3 != y2, "coords not changed: (%d %d) (%d %d)\n", x2, y2, x3, y3);
+    }
+
+    DestroyWindow(hwnd);
+    SetCursorPos(pos.x, pos.y);
+    flush_events();
+}
 
 static void test_quit_message(void)
 {
@@ -9894,6 +9995,7 @@ START_TEST(msg)
 
     test_ShowWindow();
     test_PeekMessage();
+    test_PeekMessage2();
     test_scrollwindowex();
     test_messages();
     test_showwindow();

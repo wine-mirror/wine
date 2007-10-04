@@ -406,7 +406,6 @@ static int merge_message( struct thread_input *input, const struct message *msg 
 
     if (!ptr) return 0;
     prev = LIST_ENTRY( ptr, struct message, entry );
-    if (prev->unique_id) return 0;
     if (prev->result) return 0;
     if (prev->win != msg->win) return 0;
     if (prev->msg != msg->msg) return 0;
