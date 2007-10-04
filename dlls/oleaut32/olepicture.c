@@ -694,8 +694,23 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
     break;
 
   case PICTYPE_METAFILE:
-    PlayMetaFile(hdc, This->desc.u.wmf.hmeta);
+  {
+    POINT prevOrg;
+    SIZE prevExt;
+    int oldmode;
+
+    oldmode = SetMapMode(hdc, MM_ANISOTROPIC);
+    SetViewportOrgEx(hdc, x, y, &prevOrg);
+    SetViewportExtEx(hdc, cx, cy, &prevExt);
+
+    if (!PlayMetaFile(hdc, This->desc.u.wmf.hmeta))
+        ERR("PlayMetaFile failed!\n");
+
+    SetViewportExtEx(hdc, prevExt.cx, prevExt.cy, NULL);
+    SetViewportOrgEx(hdc, prevOrg.x, prevOrg.y, NULL);
+    SetMapMode(hdc, oldmode);
     break;
+  }
 
   case PICTYPE_ENHMETAFILE:
   {
