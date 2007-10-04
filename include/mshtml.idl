@@ -3615,6 +3615,90 @@ interface IHTMLInputElement : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLInputTextElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f2a6-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLInputTextElement : IDispatch
+{
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_TYPE)]
+    HRESULT type([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_VALUE), displaybind, bindable]
+    HRESULT value([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_VALUE), displaybind, bindable]
+    HRESULT value([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_NAME), displaybind, bindable]
+    HRESULT name([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_NAME), displaybind, bindable]
+    HRESULT name([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_STATUS)]
+    HRESULT status([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_STATUS)]
+    HRESULT status([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_DISABLED), displaybind, bindable]
+    HRESULT disabled([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_DISABLED), displaybind, bindable]
+    HRESULT disabled([retval, out] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_FORM)]
+    HRESULT form([retval, out] IHTMLFormElement **p);
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_DEFAULTVALUE), displaybind, bindable, hidden]
+    HRESULT defaultValue([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_DEFAULTVALUE), displaybind, bindable, hidden]
+    HRESULT defaultValue([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_SIZE), displaybind, bindable]
+    HRESULT size([in] long v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_SIZE), displaybind, bindable]
+    HRESULT size([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_MAXLENGTH), displaybind, bindable]
+    HRESULT maxLength([in] long v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_MAXLENGTH), displaybind, bindable]
+    HRESULT maxLength([retval, out] long *p);
+
+    [id(DISPID_IHTMLINPUTTEXTELEMENT_SELECT)]
+    HRESULT select();
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_ONCHANGE), displaybind, bindable]
+    HRESULT onchange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_ONCHANGE), displaybind, bindable]
+    HRESULT onchange([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_ONSELECT), displaybind, bindable]
+    HRESULT onselect([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_ONSELECT), displaybind, bindable]
+    HRESULT onselect([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_READONLY), displaybind, bindable]
+    HRESULT readOnly([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_READONLY), displaybind, bindable]
+    HRESULT readOnly([retval, out] VARIANT_BOOL *p);
+
+    [id(DISPID_IHTMLINPUTTEXTELEMENT_CREATETEXTRANGE)]
+    HRESULT createTextRange([retval, out] IHTMLTxtRange **range);
+}
+
+/*****************************************************************************
  *    IHTMLTextAreaElement interface
  */
 [
