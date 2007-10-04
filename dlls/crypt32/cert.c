@@ -1930,7 +1930,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
     BOOL allUsagesValid = TRUE;
     CERT_ENHKEY_USAGE validUsages = { 0, NULL };
 
-    TRACE("(%d, %p, %p, %p, %d)\n", cCerts, *rghCerts, cNumOIDs,
+    TRACE("(%d, %p, %d, %p, %d)\n", cCerts, rghCerts, *cNumOIDs,
      rghOIDs, *pcbOIDs);
 
     for (i = 0; ret && i < cCerts; i++)
@@ -2060,6 +2060,8 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
         }
     }
     CryptMemFree(validUsages.rgpszUsageIdentifier);
+    TRACE("cNumOIDs: %d\n", *cNumOIDs);
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
