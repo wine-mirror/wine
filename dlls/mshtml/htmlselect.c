@@ -291,8 +291,19 @@ static HRESULT WINAPI HTMLSelectElement_put_length(IHTMLSelectElement *iface, lo
 static HRESULT WINAPI HTMLSelectElement_get_length(IHTMLSelectElement *iface, long *p)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRUint32 length = 0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLSelectElement_GetLength(This->nsselect, &length);
+    if(NS_FAILED(nsres))
+        ERR("GetLength failed: %08x\n", nsres);
+
+    *p = length;
+
+    TRACE("ret %ld\n", *p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_get__newEnum(IHTMLSelectElement *iface, IUnknown **p)
