@@ -404,6 +404,7 @@ static BOOL StartLinkProcessor( LPCOLESTR szLink )
     LPWSTR buffer;
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
+    BOOL ret;
 
     len = sizeof(szFormat) + lstrlenW( szLink ) * sizeof(WCHAR);
     buffer = HeapAlloc( GetProcessHeap(), 0, len );
@@ -416,11 +417,18 @@ static BOOL StartLinkProcessor( LPCOLESTR szLink )
 
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
-    if (!CreateProcessW( NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) return FALSE;
-    CloseHandle( pi.hProcess );
-    CloseHandle( pi.hThread );
 
-    return TRUE;
+    ret = CreateProcessW( NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
+
+    HeapFree( GetProcessHeap(), 0, buffer );
+
+    if (ret)
+    {
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
+    }
+
+    return ret;
 }
 
 static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFileName, BOOL fRemember)
