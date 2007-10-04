@@ -426,14 +426,7 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
     return S_OK;
 }
 
-static void HTMLBodyElement_destructor(IUnknown *iface)
-{
-    HTMLBodyElement *This = HTMLBODY_THIS(iface);
-
-    ConnectionPointContainer_Destroy(&This->cp_container);
-    nsIDOMHTMLBodyElement_Release(This->nsbody);
-    mshtml_free(This);
-}
+#undef HTMLBODY_THIS
 
 static const IHTMLBodyElementVtbl HTMLBodyElementVtbl = {
     HTMLBodyElement_QueryInterface,
@@ -479,6 +472,19 @@ static const IHTMLBodyElementVtbl HTMLBodyElementVtbl = {
     HTMLBodyElement_get_onbeforeunload,
     HTMLBodyElement_createTextRange
 };
+
+#define HTMLBODY_NODE_THIS(iface) DEFINE_THIS2(HTMLBodyElement, textcont.element.node, iface)
+
+static void HTMLBodyElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLBodyElement *This = HTMLBODY_NODE_THIS(iface);
+
+    ConnectionPointContainer_Destroy(&This->cp_container);
+    nsIDOMHTMLBodyElement_Release(This->nsbody);
+    mshtml_free(This);
+}
+
+#undef HTMLBODY_NODE_THIS
 
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
 {

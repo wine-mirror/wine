@@ -1270,7 +1270,7 @@ static void HTMLElement_destructor(HTMLDOMNode *iface)
     HTMLElement *This = HTMLELEM_NODE_THIS(iface);
 
     if(This->destructor)
-        This->destructor(This->impl);
+        This->destructor(&This->node);
 
     if(This->nselem)
         nsIDOMHTMLElement_Release(This->nselem);

@@ -412,12 +412,6 @@ static HRESULT WINAPI HTMLAnchorElement_blur(IHTMLAnchorElement *iface)
     return E_NOTIMPL;
 }
 
-static void HTMLAnchorElement_destructor(IUnknown *iface)
-{
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
-    mshtml_free(This);
-}
-
 static const IHTMLAnchorElementVtbl HTMLAnchorElementVtbl = {
     HTMLAnchorElement_QueryInterface,
     HTMLAnchorElement_AddRef,
@@ -468,6 +462,16 @@ static const IHTMLAnchorElementVtbl HTMLAnchorElementVtbl = {
     HTMLAnchorElement_focus,
     HTMLAnchorElement_blur
 };
+
+#define HTMLANCHOR_NODE_THIS(iface) DEFINE_THIS2(HTMLAnchorElement, element.node, iface)
+
+static void HTMLAnchorElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLAnchorElement *This = HTMLANCHOR_NODE_THIS(iface);
+    mshtml_free(This);
+}
+
+#undef HTMLANCHOR_NODE_THIS
 
 HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement *nselem)
 {

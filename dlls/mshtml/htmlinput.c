@@ -649,14 +649,6 @@ static HRESULT WINAPI HTMLInputElement_get_start(IHTMLInputElement *iface, BSTR 
     return E_NOTIMPL;
 }
 
-static void HTMLInputElement_destructor(IUnknown *iface)
-{
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
-
-    nsIDOMHTMLInputElement_Release(This->nsinput);
-    mshtml_free(This);
-}
-
 #undef HTMLINPUT_THIS
 
 static const IHTMLInputElementVtbl HTMLInputElementVtbl = {
@@ -733,6 +725,18 @@ static const IHTMLInputElementVtbl HTMLInputElementVtbl = {
     HTMLInputElement_put_start,
     HTMLInputElement_get_start
 };
+
+#define HTMLINPUT_NODE_THIS(iface) DEFINE_THIS2(HTMLInputElement, element.node, iface)
+
+static void HTMLInputElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
+
+    nsIDOMHTMLInputElement_Release(This->nsinput);
+    mshtml_free(This);
+}
+
+#undef HTMLINPUT_NODE_THIS
 
 HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
 {

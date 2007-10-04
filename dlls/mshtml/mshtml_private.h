@@ -272,7 +272,7 @@ typedef struct {
     const IHTMLElementVtbl *lpHTMLElementVtbl;
     const IHTMLElement2Vtbl *lpHTMLElement2Vtbl;
 
-    void (*destructor)(IUnknown*);
+    void (*destructor)(HTMLDOMNode*);
 
     nsIDOMHTMLElement *nselem;
 

@@ -346,14 +346,6 @@ static HRESULT WINAPI HTMLTextAreaElement_createTextRange(IHTMLTextAreaElement *
     return E_NOTIMPL;
 }
 
-static void HTMLTextAreaElement_destructor(IUnknown *iface)
-{
-    HTMLTextAreaElement *This = HTMLTXTAREA_THIS(iface);
-
-    nsIDOMHTMLTextAreaElement_Release(This->nstextarea);
-    mshtml_free(This);
-}
-
 #undef HTMLTXTAREA_THIS
 
 static const IHTMLTextAreaElementVtbl HTMLTextAreaElementVtbl = {
@@ -391,6 +383,18 @@ static const IHTMLTextAreaElementVtbl HTMLTextAreaElementVtbl = {
     HTMLTextAreaElement_get_wrap,
     HTMLTextAreaElement_createTextRange
 };
+
+#define HTMLTXTAREA_NODE_THIS(iface) DEFINE_THIS2(HTMLTextAreaElement, element.node, iface)
+
+static void HTMLTextAreaElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLTextAreaElement *This = HTMLTXTAREA_NODE_THIS(iface);
+
+    nsIDOMHTMLTextAreaElement_Release(This->nstextarea);
+    mshtml_free(This);
+}
+
+#undef HTMLTXTAREA_NODE_THIS
 
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement *nselem)
 {

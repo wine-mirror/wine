@@ -43,7 +43,7 @@ typedef struct {
     nsIDOMHTMLSelectElement *nsselect;
 } HTMLSelectElement;
 
-#define HTMLSELECT(x)  ((IHTMLSelectElement*)  &(x)->lpHTMLSelectElementVtbl)
+#define HTMLSELECT(x)      ((IHTMLSelectElement*)         &(x)->lpHTMLSelectElementVtbl)
 
 #define HTMLSELECT_THIS(iface) DEFINE_THIS(HTMLSelectElement, HTMLSelectElement, iface)
 
@@ -341,13 +341,7 @@ static HRESULT WINAPI HTMLSelectElement_tags(IHTMLSelectElement *iface, VARIANT 
     return E_NOTIMPL;
 }
 
-static void HTMLSelectElement_destructor(IUnknown *iface)
-{
-    HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-
-    nsIDOMHTMLSelectElement_Release(This->nsselect);
-    mshtml_free(This);
-}
+#undef HTMLSELECT_THIS
 
 static const IHTMLSelectElementVtbl HTMLSelectElementVtbl = {
     HTMLSelectElement_QueryInterface,
@@ -382,6 +376,18 @@ static const IHTMLSelectElementVtbl HTMLSelectElementVtbl = {
     HTMLSelectElement_item,
     HTMLSelectElement_tags
 };
+
+#define HTMLSELECT_NODE_THIS(iface) DEFINE_THIS2(HTMLSelectElement, element.node, iface)
+
+static void HTMLSelectElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
+
+    nsIDOMHTMLSelectElement_Release(This->nsselect);
+    mshtml_free(This);
+}
+
+#undef HTMLSELECT_NODE_THIS
 
 HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement *nselem)
 {
