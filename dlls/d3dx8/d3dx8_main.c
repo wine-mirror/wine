@@ -90,3 +90,21 @@ HRESULT WINAPI D3DXAssembleShaderFromFileW(LPSTR pSrcFile, DWORD Flags,
   FIXME("(void): stub\n");
   return D3D_OK;
 }
+
+/***********************************************************************
+ * DllMain.
+ */
+BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
+{
+    switch(reason)
+    {
+    case DLL_WINE_PREATTACH:
+        return FALSE; /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(inst);
+        break;
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
+}
