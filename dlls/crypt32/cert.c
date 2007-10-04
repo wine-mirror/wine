@@ -1923,14 +1923,14 @@ BOOL WINAPI CertRemoveEnhancedKeyUsageIdentifier(PCCERT_CONTEXT pCertContext,
 }
 
 BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
- int *cNumOIDSs, LPSTR *rghOIDs, DWORD *pcbOIDs)
+ int *cNumOIDs, LPSTR *rghOIDs, DWORD *pcbOIDs)
 {
     BOOL ret = TRUE;
     DWORD i, cbOIDs = 0;
     BOOL allUsagesValid = TRUE;
     CERT_ENHKEY_USAGE validUsages = { 0, NULL };
 
-    TRACE("(%d, %p, %p, %p, %d)\n", cCerts, *rghCerts, cNumOIDSs,
+    TRACE("(%d, %p, %p, %p, %d)\n", cCerts, *rghCerts, cNumOIDs,
      rghOIDs, *pcbOIDs);
 
     for (i = 0; ret && i < cCerts; i++)
@@ -2032,7 +2032,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
     {
         if (allUsagesValid)
         {
-            *cNumOIDSs = -1;
+            *cNumOIDs = -1;
             *pcbOIDs = 0;
         }
         else
@@ -2049,7 +2049,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
                  validUsages.cUsageIdentifier * sizeof(LPSTR));
 
                 *pcbOIDs = cbOIDs;
-                *cNumOIDSs = validUsages.cUsageIdentifier;
+                *cNumOIDs = validUsages.cUsageIdentifier;
                 for (i = 0; i < validUsages.cUsageIdentifier; i++)
                 {
                     rghOIDs[i] = nextOID;
