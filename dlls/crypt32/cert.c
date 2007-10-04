@@ -1933,7 +1933,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
     TRACE("(%d, %p, %d, %p, %d)\n", cCerts, rghCerts, *cNumOIDs,
      rghOIDs, *pcbOIDs);
 
-    for (i = 0; ret && i < cCerts; i++)
+    for (i = 0; i < cCerts; i++)
     {
         CERT_ENHKEY_USAGE usage;
         DWORD size = sizeof(usage);
@@ -2028,36 +2028,34 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
                 ret = FALSE;
         }
     }
-    if (ret)
+    ret = TRUE;
+    if (allUsagesValid)
     {
-        if (allUsagesValid)
+        *cNumOIDs = -1;
+        *pcbOIDs = 0;
+    }
+    else
+    {
+        if (!rghOIDs)
+            *pcbOIDs = cbOIDs;
+        else if (*pcbOIDs < cbOIDs)
         {
-            *cNumOIDs = -1;
-            *pcbOIDs = 0;
+            *pcbOIDs = cbOIDs;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
         }
         else
         {
-            if (!rghOIDs)
-                *pcbOIDs = cbOIDs;
-            else if (*pcbOIDs < cbOIDs)
-            {
-                *pcbOIDs = cbOIDs;
-                SetLastError(ERROR_MORE_DATA);
-                ret = FALSE;
-            }
-            else
-            {
-                LPSTR nextOID = (LPSTR)((LPBYTE)rghOIDs +
-                 validUsages.cUsageIdentifier * sizeof(LPSTR));
+            LPSTR nextOID = (LPSTR)((LPBYTE)rghOIDs +
+             validUsages.cUsageIdentifier * sizeof(LPSTR));
 
-                *pcbOIDs = cbOIDs;
-                *cNumOIDs = validUsages.cUsageIdentifier;
-                for (i = 0; i < validUsages.cUsageIdentifier; i++)
-                {
-                    rghOIDs[i] = nextOID;
-                    lstrcpyA(nextOID, validUsages.rgpszUsageIdentifier[i]);
-                    nextOID += lstrlenA(nextOID) + 1;
-                }
+            *pcbOIDs = cbOIDs;
+            *cNumOIDs = validUsages.cUsageIdentifier;
+            for (i = 0; i < validUsages.cUsageIdentifier; i++)
+            {
+                rghOIDs[i] = nextOID;
+                lstrcpyA(nextOID, validUsages.rgpszUsageIdentifier[i]);
+                nextOID += lstrlenA(nextOID) + 1;
             }
         }
     }
