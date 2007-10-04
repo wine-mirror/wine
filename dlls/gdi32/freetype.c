@@ -3768,10 +3768,9 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
                 mult = 64;
             else if(format == WINE_GGO_GRAY16_BITMAP)
                 return needed;
-            else {
+            else
                 assert(0);
-                break;
-            }
+            break;
           }
         default:
             FIXME("loaded glyph format %x\n", ft_face->glyph->format);
