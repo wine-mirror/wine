@@ -2012,6 +2012,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
                                     cbOIDs -= lstrlenA(
                                      validUsages.rgpszUsageIdentifier[j]) + 1 +
                                      sizeof(LPSTR);
+                                    validUsages.cUsageIdentifier--;
                                     numRemoved++;
                                 }
                                 else
