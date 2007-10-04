@@ -38,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-static HRESULT HTMLElementCollection_Create(IUnknown*,HTMLElement**,DWORD,IDispatch**);
+static IHTMLElementCollection *HTMLElementCollection_Create(IUnknown*,HTMLElement**,DWORD);
 
 typedef struct {
     HTMLElement **buf;
@@ -1083,7 +1083,8 @@ static HRESULT WINAPI HTMLElement_get_children(IHTMLElement *iface, IDispatch **
 
     create_child_list(This->node.doc, This, &buf);
 
-    return HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len, p);
+    *p = (IDispatch*)HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len);
+    return S_OK;
 }
 
 static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *buf)
@@ -1133,7 +1134,8 @@ static HRESULT WINAPI HTMLElement_get_all(IHTMLElement *iface, IDispatch **p)
     create_all_list(This->node.doc, This, &buf);
     elem_vector_normalize(&buf);
 
-    return HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len, p);
+    *p = (IDispatch*)HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len);
+    return S_OK;
 }
 
 #undef HTMLELEM_THIS
@@ -1526,7 +1528,8 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
         }
         elem_vector_normalize(&buf);
         TRACE("Returning %d element(s).\n", buf.len);
-        return HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len, pdisp);
+        *pdisp = (IDispatch*)HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len);
+        return S_OK;
     }
 
     FIXME("unsupported arguments\n");
@@ -1570,7 +1573,8 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
 
     TRACE("fount %d tags\n", buf.len);
 
-    return HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len, pdisp);
+    *pdisp = (IDispatch*)HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len);
+    return S_OK;
 }
 
 #undef ELEMCOL_THIS
@@ -1591,8 +1595,8 @@ static const IHTMLElementCollectionVtbl HTMLElementCollectionVtbl = {
     HTMLElementCollection_tags
 };
 
-static HRESULT HTMLElementCollection_Create(IUnknown *ref_unk, HTMLElement **elems, DWORD len,
-                                            IDispatch **p)
+static IHTMLElementCollection *HTMLElementCollection_Create(IUnknown *ref_unk,
+            HTMLElement **elems, DWORD len)
 {
     HTMLElementCollection *ret = mshtml_alloc(sizeof(HTMLElementCollection));
 
@@ -1606,6 +1610,5 @@ static HRESULT HTMLElementCollection_Create(IUnknown *ref_unk, HTMLElement **ele
 
     TRACE("ret=%p len=%d\n", ret, len);
 
-    *p = (IDispatch*)ret;
-    return S_OK;
+    return HTMLELEMCOL(ret);
 }
