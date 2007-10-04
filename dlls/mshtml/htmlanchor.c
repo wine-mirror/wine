@@ -468,19 +468,23 @@ static const IHTMLAnchorElementVtbl HTMLAnchorElementVtbl = {
 static void HTMLAnchorElement_destructor(HTMLDOMNode *iface)
 {
     HTMLAnchorElement *This = HTMLANCHOR_NODE_THIS(iface);
-    mshtml_free(This);
+    HTMLElement_destructor(&This->element.node);
 }
 
 #undef HTMLANCHOR_NODE_THIS
+
+static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
+    HTMLAnchorElement_destructor
+};
 
 HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLAnchorElement *ret = mshtml_alloc(sizeof(HTMLAnchorElement));
 
     ret->lpHTMLAnchorElementVtbl = &HTMLAnchorElementVtbl;
+    ret->element.node.vtbl = &HTMLAnchorElementImplVtbl;
 
     ret->element.impl = (IUnknown*)HTMLANCHOR(ret);
-    ret->element.destructor = HTMLAnchorElement_destructor;
 
     return &ret->element;
 }

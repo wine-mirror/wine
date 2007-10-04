@@ -733,10 +733,15 @@ static void HTMLInputElement_destructor(HTMLDOMNode *iface)
     HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
 
     nsIDOMHTMLInputElement_Release(This->nsinput);
-    mshtml_free(This);
+
+    HTMLElement_destructor(&This->element.node);
 }
 
 #undef HTMLINPUT_NODE_THIS
+
+static const NodeImplVtbl HTMLInputElementImplVtbl = {
+    HTMLInputElement_destructor
+};
 
 HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
 {
@@ -744,6 +749,7 @@ HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
     nsresult nsres;
 
     ret->lpHTMLInputElementVtbl = &HTMLInputElementVtbl;
+    ret->element.node.vtbl = &HTMLInputElementImplVtbl;
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLInputElement,
                                              (void**)&ret->nsinput);
@@ -751,7 +757,6 @@ HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
         ERR("Could not get nsIDOMHTMLInputElement interface: %08x\n", nsres);
 
     ret->element.impl = (IUnknown*)HTMLINPUT(ret);
-    ret->element.destructor = HTMLInputElement_destructor;
 
     return &ret->element;
 }

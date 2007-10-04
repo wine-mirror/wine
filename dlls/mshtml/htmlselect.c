@@ -384,10 +384,15 @@ static void HTMLSelectElement_destructor(HTMLDOMNode *iface)
     HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
 
     nsIDOMHTMLSelectElement_Release(This->nsselect);
-    mshtml_free(This);
+
+    HTMLElement_destructor(&This->element.node);
 }
 
 #undef HTMLSELECT_NODE_THIS
+
+static const NodeImplVtbl HTMLSelectElementImplVtbl = {
+    HTMLSelectElement_destructor
+};
 
 HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement *nselem)
 {
@@ -395,6 +400,7 @@ HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement *nselem)
     nsresult nsres;
 
     ret->lpHTMLSelectElementVtbl = &HTMLSelectElementVtbl;
+    ret->element.node.vtbl = &HTMLSelectElementImplVtbl;
     
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLSelectElement,
                                              (void**)&ret->nsselect);
@@ -402,7 +408,6 @@ HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement *nselem)
         ERR("Could not get nsIDOMHTMLSelectElement interfce: %08x\n", nsres);
 
     ret->element.impl = (IUnknown*)HTMLSELECT(ret);
-    ret->element.destructor = HTMLSelectElement_destructor;
 
     return &ret->element;
 }

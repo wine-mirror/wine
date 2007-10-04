@@ -391,10 +391,15 @@ static void HTMLTextAreaElement_destructor(HTMLDOMNode *iface)
     HTMLTextAreaElement *This = HTMLTXTAREA_NODE_THIS(iface);
 
     nsIDOMHTMLTextAreaElement_Release(This->nstextarea);
-    mshtml_free(This);
+
+    HTMLElement_destructor(&This->element.node);
 }
 
 #undef HTMLTXTAREA_NODE_THIS
+
+static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
+    HTMLTextAreaElement_destructor
+};
 
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement *nselem)
 {
@@ -402,6 +407,7 @@ HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement *nselem)
     nsresult nsres;
 
     ret->lpHTMLTextAreaElementVtbl = &HTMLTextAreaElementVtbl;
+    ret->element.node.vtbl = &HTMLTextAreaElementImplVtbl;
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTextAreaElement,
                                              (void**)&ret->nstextarea);
@@ -409,7 +415,6 @@ HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement *nselem)
         ERR("Could not get nsDOMHTMLInputElement: %08x\n", nsres);
 
     ret->element.impl = (IUnknown*)HTMLTXTAREA(ret);
-    ret->element.destructor = HTMLTextAreaElement_destructor;
 
     return &ret->element;
 }

@@ -250,10 +250,13 @@ struct BSCallback {
     nsProtocolStream *nsstream;
 };
 
+typedef struct {
+    void (*destructor)(HTMLDOMNode*);
+} NodeImplVtbl;
+
 struct HTMLDOMNode {
     const IHTMLDOMNodeVtbl *lpHTMLDOMNodeVtbl;
-
-    void (*destructor)(HTMLDOMNode*);
+    const NodeImplVtbl *vtbl;
 
     union {
         IUnknown *unk;
@@ -269,10 +272,8 @@ struct HTMLDOMNode {
 typedef struct {
     HTMLDOMNode node;
 
-    const IHTMLElementVtbl *lpHTMLElementVtbl;
-    const IHTMLElement2Vtbl *lpHTMLElement2Vtbl;
-
-    void (*destructor)(HTMLDOMNode*);
+    const IHTMLElementVtbl   *lpHTMLElementVtbl;
+    const IHTMLElement2Vtbl  *lpHTMLElement2Vtbl;
 
     nsIDOMHTMLElement *nselem;
 
@@ -427,7 +428,10 @@ void HTMLElement2_Init(HTMLElement*);
 void HTMLTextContainer_Init(HTMLTextContainer*);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
+void HTMLDOMNode_destructor(HTMLDOMNode*);
+
 HRESULT HTMLElement_QI(HTMLElement*,REFIID,void**);
+void HTMLElement_destructor(HTMLDOMNode*);
 
 HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
 void release_nodes(HTMLDocument*);

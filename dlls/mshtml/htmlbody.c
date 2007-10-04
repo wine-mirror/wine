@@ -481,10 +481,15 @@ static void HTMLBodyElement_destructor(HTMLDOMNode *iface)
 
     ConnectionPointContainer_Destroy(&This->cp_container);
     nsIDOMHTMLBodyElement_Release(This->nsbody);
-    mshtml_free(This);
+
+    HTMLElement_destructor(&This->textcont.element.node);
 }
 
 #undef HTMLBODY_NODE_THIS
+
+static const NodeImplVtbl HTMLBodyElementImplVtbl = {
+    HTMLBodyElement_destructor
+};
 
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
 {
@@ -494,6 +499,7 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
     TRACE("(%p)->(%p)\n", ret, nselem);
 
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
+    ret->textcont.element.node.vtbl = &HTMLBodyElementImplVtbl;
 
     HTMLTextContainer_Init(&ret->textcont);
 
@@ -509,7 +515,6 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
         ERR("Could not get nsDOMHTMLBodyElement: %08x\n", nsres);
 
     ret->textcont.element.impl = (IUnknown*)HTMLBODY(ret);
-    ret->textcont.element.destructor = HTMLBodyElement_destructor;
 
     return &ret->textcont.element;
 }

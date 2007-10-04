@@ -1265,18 +1265,19 @@ HRESULT HTMLElement_QI(HTMLElement *This, REFIID riid, void **ppv)
     return HTMLDOMNode_QI(&This->node, riid, ppv);
 }
 
-static void HTMLElement_destructor(HTMLDOMNode *iface)
+void HTMLElement_destructor(HTMLDOMNode *iface)
 {
     HTMLElement *This = HTMLELEM_NODE_THIS(iface);
-
-    if(This->destructor)
-        This->destructor(&This->node);
 
     if(This->nselem)
         nsIDOMHTMLElement_Release(This->nselem);
 
-    mshtml_free(This);
+    HTMLDOMNode_destructor(&This->node);
 }
+
+static const NodeImplVtbl HTMLElementImplVtbl = {
+    HTMLElement_destructor
+};
 
 HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
 {
@@ -1314,9 +1315,9 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
 
     if(!ret) {
         ret = mshtml_alloc(sizeof(HTMLElement));
+        ret->node.vtbl = &HTMLElementImplVtbl;
 
         ret->impl = NULL;
-        ret->destructor = NULL;
     }
 
     nsAString_Finish(&class_name_str);
@@ -1327,7 +1328,6 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
     HTMLElement2_Init(ret);
 
     ret->node.impl.elem = HTMLELEM(ret);
-    ret->node.destructor = HTMLElement_destructor;
 
     return ret;
 }
