@@ -39,11 +39,13 @@ typedef struct {
     HTMLElement element;
 
     const IHTMLInputElementVtbl *lpHTMLInputElementVtbl;
+    const IHTMLInputTextElementVtbl *lpHTMLInputTextElementVtbl;
 
     nsIDOMHTMLInputElement *nsinput;
 } HTMLInputElement;
 
-#define HTMLINPUT(x)  ((IHTMLInputElement*)  &(x)->lpHTMLInputElementVtbl)
+#define HTMLINPUT(x)      ((IHTMLInputElement*)      &(x)->lpHTMLInputElementVtbl)
+#define HTMLINPUTTEXT(x)  ((IHTMLInputTextElement*)  &(x)->lpHTMLInputTextElementVtbl)
 
 #define HTMLINPUT_THIS(iface) DEFINE_THIS(HTMLInputElement, HTMLInputElement, iface)
 
@@ -703,6 +705,312 @@ static const IHTMLInputElementVtbl HTMLInputElementVtbl = {
     HTMLInputElement_get_start
 };
 
+#define HTMLINPUTTEXT_THIS(iface) DEFINE_THIS(HTMLInputElement, HTMLInputTextElement, iface)
+
+static HRESULT WINAPI HTMLInputTextElement_QueryInterface(IHTMLInputTextElement *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+}
+
+static ULONG WINAPI HTMLInputTextElement_AddRef(IHTMLInputTextElement *iface)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+}
+
+static ULONG WINAPI HTMLInputTextElement_Release(IHTMLInputTextElement *iface)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+}
+
+static HRESULT WINAPI HTMLInputTextElement_GetTypeInfoCount(IHTMLInputTextElement *iface, UINT *pctinfo)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLInputTextElement_GetTypeInfo(IHTMLInputTextElement *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLInputTextElement_GetIDsOfNames(IHTMLInputTextElement *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+                                        lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLInputTextElement_Invoke(IHTMLInputTextElement *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_type(IHTMLInputTextElement *iface, BSTR *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputElement_get_type(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_put_value(IHTMLInputTextElement *iface, BSTR v)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return IHTMLInputElement_put_value(HTMLINPUT(This), v);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_value(IHTMLInputTextElement *iface, BSTR *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputTextElement_get_value(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_put_name(IHTMLInputTextElement *iface, BSTR v)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return IHTMLInputElement_put_name(HTMLINPUT(This), v);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_name(IHTMLInputTextElement *iface, BSTR *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputElement_get_name(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_put_status(IHTMLInputTextElement *iface, VARIANT v)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+    FIXME("(%p)->(v)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_status(IHTMLInputTextElement *iface, VARIANT *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+    TRACE("(%p)->(v)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLInputTextElement_put_disabled(IHTMLInputTextElement *iface, VARIANT_BOOL v)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    return IHTMLInputElement_put_disabled(HTMLINPUT(This), v);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_disabled(IHTMLInputTextElement *iface, VARIANT_BOOL *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputElement_get_disabled(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_form(IHTMLInputTextElement *iface, IHTMLFormElement **p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputElement_get_form(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_put_defaultValue(IHTMLInputTextElement *iface, BSTR v)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return IHTMLInputElement_put_defaultValue(HTMLINPUT(This), v);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_defaultValue(IHTMLInputTextElement *iface, BSTR *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputElement_get_defaultValue(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_put_size(IHTMLInputTextElement *iface, long v)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%ld)\n", This, v);
+
+    return IHTMLInputElement_put_size(HTMLINPUT(This), v);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_size(IHTMLInputTextElement *iface, long *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputElement_get_size(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_put_maxLength(IHTMLInputTextElement *iface, long v)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%ld)\n", This, v);
+
+    return IHTMLInputElement_put_maxLength(HTMLINPUT(This), v);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_maxLength(IHTMLInputTextElement *iface, long *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputElement_get_maxLength(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_select(IHTMLInputTextElement *iface)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)\n", This);
+
+    return IHTMLInputElement_select(HTMLINPUT(This));
+}
+
+static HRESULT WINAPI HTMLInputTextElement_put_onchange(IHTMLInputTextElement *iface, VARIANT v)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->()\n", This);
+
+    return IHTMLInputElement_put_onchange(HTMLINPUT(This), v);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_onchange(IHTMLInputTextElement *iface, VARIANT *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputElement_get_onchange(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_put_onselect(IHTMLInputTextElement *iface, VARIANT v)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->()\n", This);
+
+    return IHTMLInputElement_put_onselect(HTMLINPUT(This), v);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_onselect(IHTMLInputTextElement *iface, VARIANT *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputElement_get_onselect(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_put_readOnly(IHTMLInputTextElement *iface, VARIANT_BOOL v)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    return IHTMLInputElement_put_readOnly(HTMLINPUT(This), v);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_get_readOnly(IHTMLInputTextElement *iface, VARIANT_BOOL *p)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLInputElement_get_readOnly(HTMLINPUT(This), p);
+}
+
+static HRESULT WINAPI HTMLInputTextElement_createTextRange(IHTMLInputTextElement *iface, IHTMLTxtRange **range)
+{
+    HTMLInputElement *This = HTMLINPUTTEXT_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, range);
+
+    return IHTMLInputElement_createTextRange(HTMLINPUT(This), range);
+}
+
+#undef HTMLINPUT_THIS
+
+static const IHTMLInputTextElementVtbl HTMLInputTextElementVtbl = {
+    HTMLInputTextElement_QueryInterface,
+    HTMLInputTextElement_AddRef,
+    HTMLInputTextElement_Release,
+    HTMLInputTextElement_GetTypeInfoCount,
+    HTMLInputTextElement_GetTypeInfo,
+    HTMLInputTextElement_GetIDsOfNames,
+    HTMLInputTextElement_Invoke,
+    HTMLInputTextElement_get_type,
+    HTMLInputTextElement_put_value,
+    HTMLInputTextElement_get_value,
+    HTMLInputTextElement_put_name,
+    HTMLInputTextElement_get_name,
+    HTMLInputTextElement_put_status,
+    HTMLInputTextElement_get_status,
+    HTMLInputTextElement_put_disabled,
+    HTMLInputTextElement_get_disabled,
+    HTMLInputTextElement_get_form,
+    HTMLInputTextElement_put_defaultValue,
+    HTMLInputTextElement_get_defaultValue,
+    HTMLInputTextElement_put_size,
+    HTMLInputTextElement_get_size,
+    HTMLInputTextElement_put_maxLength,
+    HTMLInputTextElement_get_maxLength,
+    HTMLInputTextElement_select,
+    HTMLInputTextElement_put_onchange,
+    HTMLInputTextElement_get_onchange,
+    HTMLInputTextElement_put_onselect,
+    HTMLInputTextElement_get_onselect,
+    HTMLInputTextElement_put_readOnly,
+    HTMLInputTextElement_get_readOnly,
+    HTMLInputTextElement_createTextRange
+};
+
 #define HTMLINPUT_NODE_THIS(iface) DEFINE_THIS2(HTMLInputElement, element.node, iface)
 
 static HRESULT HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
@@ -719,6 +1027,9 @@ static HRESULT HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = HTMLINPUT(This);
     }else if(IsEqualGUID(&IID_IHTMLInputElement, riid)) {
         TRACE("(%p)->(IID_IHTMLInputElement %p)\n", This, ppv);
+        *ppv = HTMLINPUT(This);
+    }else if(IsEqualGUID(&IID_IHTMLInputTextElement, riid)) {
+        TRACE("(%p)->(IID_IHTMLInputTextElement %p)\n", This, ppv);
         *ppv = HTMLINPUT(This);
     }
 
