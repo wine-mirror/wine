@@ -1975,8 +1975,6 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
                                 nextOID += lstrlenA(nextOID) + 1;
                             }
                         }
-                        else
-                            ret = FALSE;
                     }
                     else
                     {
@@ -2024,8 +2022,6 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
                 }
                 CryptMemFree(pUsage);
             }
-            else
-                ret = FALSE;
         }
     }
     ret = TRUE;
