@@ -2037,7 +2037,9 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
         }
         else
         {
-            if (!rghOIDs || *pcbOIDs < cbOIDs)
+            if (!rghOIDs)
+                *pcbOIDs = cbOIDs;
+            else if (*pcbOIDs < cbOIDs)
             {
                 *pcbOIDs = cbOIDs;
                 SetLastError(ERROR_MORE_DATA);
