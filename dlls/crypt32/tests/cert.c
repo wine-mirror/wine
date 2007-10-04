@@ -2211,6 +2211,146 @@ static void testKeyUsage(void)
     }
 }
 
+static const BYTE cert2WithUsage[] = {
+0x30,0x81,0x89,0x02,0x01,0x01,0x30,0x02,0x06,0x00,0x30,0x15,0x31,0x13,0x30,
+0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,
+0x6e,0x67,0x00,0x30,0x22,0x18,0x0f,0x31,0x36,0x30,0x31,0x30,0x31,0x30,0x31,
+0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x18,0x0f,0x31,0x36,0x30,0x31,0x30,0x31,
+0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x30,0x15,0x31,0x13,0x30,0x11,
+0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,
+0x67,0x00,0x30,0x07,0x30,0x02,0x06,0x00,0x03,0x01,0x00,0xa3,0x25,0x30,0x23,
+0x30,0x21,0x06,0x03,0x55,0x1d,0x25,0x01,0x01,0xff,0x04,0x17,0x30,0x15,0x06,
+0x08,0x2b,0x06,0x01,0x05,0x05,0x07,0x03,0x02,0x06,0x09,0x2a,0x86,0x48,0x86,
+0xf7,0x0d,0x01,0x01,0x01 };
+
+static void testGetValidUsages(void)
+{
+    static const LPCSTR expectedOIDs[] = {
+     "1.3.6.1.5.5.7.3.3",
+     "1.3.6.1.5.5.7.3.2",
+     "1.2.840.113549.1.1.1",
+    };
+    static const LPCSTR expectedOIDs2[] = {
+     "1.3.6.1.5.5.7.3.2",
+     "1.2.840.113549.1.1.1",
+    };
+    BOOL ret;
+    int numOIDs;
+    DWORD size;
+    LPSTR *oids = NULL;
+    PCCERT_CONTEXT contexts[3];
+
+    /* Crash
+    ret = CertGetValidUsages(0, NULL, NULL, NULL, NULL);
+    ret = CertGetValidUsages(0, NULL, NULL, NULL, &size);
+     */
+    contexts[0] = NULL;
+    numOIDs = size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = CertGetValidUsages(1, &contexts[0], &numOIDs, NULL, &size);
+    ok(ret, "CertGetValidUsages failed: %d\n", GetLastError());
+    ok(numOIDs == -1, "Expected -1, got %d\n", numOIDs);
+    ok(size == 0, "Expected size 0, got %d\n", size);
+    contexts[0] = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
+     sizeof(bigCert));
+    contexts[1] = CertCreateCertificateContext(X509_ASN_ENCODING, certWithUsage,
+     sizeof(certWithUsage));
+    contexts[2] = CertCreateCertificateContext(X509_ASN_ENCODING,
+     cert2WithUsage, sizeof(cert2WithUsage));
+    numOIDs = size = 0xdeadbeef;
+    ret = CertGetValidUsages(0, NULL, &numOIDs, NULL, &size);
+    ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
+    ok(numOIDs == -1, "Expected -1, got %d\n", numOIDs);
+    ok(size == 0, "Expected size 0, got %d\n", size);
+    numOIDs = size = 0xdeadbeef;
+    ret = CertGetValidUsages(1, contexts, &numOIDs, NULL, &size);
+    ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
+    ok(numOIDs == -1, "Expected -1, got %d\n", numOIDs);
+    ok(size == 0, "Expected size 0, got %d\n", size);
+    ret = CertGetValidUsages(1, &contexts[1], &numOIDs, NULL, &size);
+    ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
+    ok(numOIDs == 3, "Expected 3, got %d\n", numOIDs);
+    ok(size, "Expected non-zero size\n");
+    oids = HeapAlloc(GetProcessHeap(), 0, size);
+    if (oids)
+    {
+        int i;
+        DWORD smallSize = 1;
+
+        SetLastError(0xdeadbeef);
+        ret = CertGetValidUsages(1, &contexts[1], &numOIDs, oids, &smallSize);
+        ok(!ret && GetLastError() == ERROR_MORE_DATA,
+         "Expected ERROR_MORE_DATA, got %d\n", GetLastError());
+        ret = CertGetValidUsages(1, &contexts[1], &numOIDs, oids, &size);
+        ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
+        for (i = 0; i < numOIDs; i++)
+            ok(!lstrcmpA(oids[i], expectedOIDs[i]), "unexpected OID %s\n",
+             oids[i]);
+        HeapFree(GetProcessHeap(), 0, oids);
+    }
+    numOIDs = size = 0xdeadbeef;
+    /* Oddly enough, this crashes when the number of contexts is not 1:
+    ret = CertGetValidUsages(2, contexts, &numOIDs, NULL, &size);
+     * but setting size to 0 allows it to succeed:
+     */
+    size = 0;
+    ret = CertGetValidUsages(2, contexts, &numOIDs, NULL, &size);
+    ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
+    ok(numOIDs == 3, "Expected 3, got %d\n", numOIDs);
+    ok(size, "Expected non-zero size\n");
+    oids = HeapAlloc(GetProcessHeap(), 0, size);
+    if (oids)
+    {
+        int i;
+
+        ret = CertGetValidUsages(1, &contexts[1], &numOIDs, oids, &size);
+        ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
+        for (i = 0; i < numOIDs; i++)
+            ok(!lstrcmpA(oids[i], expectedOIDs[i]), "unexpected OID %s\n",
+             oids[i]);
+        HeapFree(GetProcessHeap(), 0, oids);
+    }
+    numOIDs = 0xdeadbeef;
+    size = 0;
+    ret = CertGetValidUsages(1, &contexts[2], &numOIDs, NULL, &size);
+    ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
+    ok(numOIDs == 2, "Expected 2, got %d\n", numOIDs);
+    ok(size, "Expected non-zero size\n");
+    oids = HeapAlloc(GetProcessHeap(), 0, size);
+    if (oids)
+    {
+        int i;
+
+        ret = CertGetValidUsages(1, &contexts[2], &numOIDs, oids, &size);
+        ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
+        for (i = 0; i < numOIDs; i++)
+            ok(!lstrcmpA(oids[i], expectedOIDs2[i]), "unexpected OID %s\n",
+             oids[i]);
+        HeapFree(GetProcessHeap(), 0, oids);
+    }
+    numOIDs = 0xdeadbeef;
+    size = 0;
+    ret = CertGetValidUsages(3, contexts, &numOIDs, NULL, &size);
+    ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
+    ok(numOIDs == 2, "Expected 2, got %d\n", numOIDs);
+    ok(size, "Expected non-zero size\n");
+    oids = HeapAlloc(GetProcessHeap(), 0, size);
+    if (oids)
+    {
+        int i;
+
+        ret = CertGetValidUsages(3, contexts, &numOIDs, oids, &size);
+        ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
+        for (i = 0; i < numOIDs; i++)
+            ok(!lstrcmpA(oids[i], expectedOIDs2[i]), "unexpected OID %s\n",
+             oids[i]);
+        HeapFree(GetProcessHeap(), 0, oids);
+    }
+    CertFreeCertificateContext(contexts[0]);
+    CertFreeCertificateContext(contexts[1]);
+    CertFreeCertificateContext(contexts[2]);
+}
+
 static void testCompareCertName(void)
 {
     static BYTE bogus[] = { 1, 2, 3, 4 };
@@ -2788,6 +2928,7 @@ START_TEST(cert)
     testSignAndEncodeCert();
     testCreateSelfSignCert();
     testKeyUsage();
+    testGetValidUsages();
     testCompareCertName();
     testCompareIntegerBlob();
     testComparePublicKeyInfo();
