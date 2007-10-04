@@ -49,7 +49,8 @@ BITMAP_FONTS  = \
 
 TRUETYPE_FONTS = \
 	marlett.ttf \
-	tahoma.ttf
+	tahoma.ttf \
+	tahomabd.ttf
 
 FONTS = \
 	$(BITMAP_FONTS) \
