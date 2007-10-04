@@ -1291,6 +1291,7 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
     static const WCHAR wszA[]        = {'A',0};
     static const WCHAR wszBODY[]     = {'B','O','D','Y',0};
     static const WCHAR wszINPUT[]    = {'I','N','P','U','T',0};
+    static const WCHAR wszOPTION[]   = {'O','P','T','I','O','N',0};
     static const WCHAR wszSELECT[]   = {'S','E','L','E','C','T',0};
     static const WCHAR wszTEXTAREA[] = {'T','E','X','T','A','R','E','A',0};
 
@@ -1309,6 +1310,8 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
         ret = HTMLBodyElement_Create(nselem);
     else if(!strcmpW(class_name, wszINPUT))
         ret = HTMLInputElement_Create(nselem);
+    else if(!strcmpW(class_name, wszOPTION))
+        ret = HTMLOptionElement_Create(nselem);
     else if(!strcmpW(class_name, wszSELECT))
         ret = HTMLSelectElement_Create(nselem);
     else if(!strcmpW(class_name, wszTEXTAREA))

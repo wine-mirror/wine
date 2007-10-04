@@ -21,6 +21,7 @@ C_SRCS = \
 	htmlelem2.c \
 	htmlinput.c \
 	htmlnode.c \
+	htmloption.c \
 	htmlselect.c \
 	htmlstyle.c \
 	htmlstylesheet.c \
