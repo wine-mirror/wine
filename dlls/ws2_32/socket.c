@@ -1924,6 +1924,10 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             }
             release_sock_fd( s, fd );
             return ret;
+        case WS_IP_DONTFRAGMENT:
+            FIXME("WS_IP_DONTFRAGMENT is always false!\n");
+            *(BOOL*)optval = FALSE;
+            return 0;
         }
         FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
         return SOCKET_ERROR;
@@ -3008,6 +3012,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IP_TTL:
             convert_sockopt(&level, &optname);
             break;
+        case WS_IP_DONTFRAGMENT:
+            FIXME("IP_DONTFRAGMENT is silently ignored!\n");
+            return 0;
         default:
             FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
             return SOCKET_ERROR;
