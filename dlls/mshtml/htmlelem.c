@@ -58,7 +58,7 @@ static void elem_vector_add(elem_vector *buf, HTMLElement *elem)
 
 #define HTMLELEM_THIS(iface) DEFINE_THIS(HTMLElement, HTMLElement, iface)
 
-#define HTMLELEM_NODE_THIS(node)  ((HTMLElement *) node)
+#define HTMLELEM_NODE_THIS(iface) DEFINE_THIS2(HTMLElement, node, iface)
 
 static HRESULT WINAPI HTMLElement_QueryInterface(IHTMLElement *iface,
                                                  REFIID riid, void **ppv)
@@ -1140,19 +1140,6 @@ static HRESULT WINAPI HTMLElement_get_all(IHTMLElement *iface, IDispatch **p)
     return HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len, p);
 }
 
-static void HTMLElement_destructor(IUnknown *iface)
-{
-    HTMLElement *This = HTMLELEM_THIS(iface);
-
-    if(This->destructor)
-        This->destructor(This->impl);
-
-    if(This->nselem)
-        nsIDOMHTMLElement_Release(This->nselem);
-
-    mshtml_free(This);
-}
-
 #undef HTMLELEM_THIS
 
 static const IHTMLElementVtbl HTMLElementVtbl = {
@@ -1276,6 +1263,19 @@ HRESULT HTMLElement_QI(HTMLElement *This, REFIID riid, void **ppv)
     }
 
     return HTMLDOMNode_QI(&This->node, riid, ppv);
+}
+
+static void HTMLElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLElement *This = HTMLELEM_NODE_THIS(iface);
+
+    if(This->destructor)
+        This->destructor(This->impl);
+
+    if(This->nselem)
+        nsIDOMHTMLElement_Release(This->nselem);
+
+    mshtml_free(This);
 }
 
 HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)

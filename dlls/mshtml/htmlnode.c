@@ -395,7 +395,7 @@ void release_nodes(HTMLDocument *This)
         next = iter->next;
         nsIDOMNode_Release(iter->nsnode);
         if(iter->destructor)
-            iter->destructor(iter->impl.unk);
+            iter->destructor(iter);
         else
             mshtml_free(iter);
     }
