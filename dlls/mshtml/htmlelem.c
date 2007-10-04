@@ -56,6 +56,18 @@ static void elem_vector_add(elem_vector *buf, HTMLElement *elem)
     buf->buf[buf->len++] = elem;
 }
 
+static void elem_vector_normalize(elem_vector *buf)
+{
+    if(!buf->len) {
+        mshtml_free(buf->buf);
+        buf->buf = NULL;
+    }else if(buf->size > buf->len) {
+        buf->buf = mshtml_realloc(buf->buf, buf->len*sizeof(HTMLElement**));
+    }
+
+    buf->size = buf->len;
+}
+
 #define HTMLELEM_THIS(iface) DEFINE_THIS(HTMLElement, HTMLElement, iface)
 
 #define HTMLELEM_NODE_THIS(iface) DEFINE_THIS2(HTMLElement, node, iface)
@@ -1119,15 +1131,7 @@ static HRESULT WINAPI HTMLElement_get_all(IHTMLElement *iface, IDispatch **p)
     buf.buf = mshtml_alloc(buf.size*sizeof(HTMLElement**));
 
     create_all_list(This->node.doc, This, &buf);
-
-    TRACE("ret\n");
-
-    if(!buf.len) {
-        mshtml_free(buf.buf);
-        buf.buf = NULL;
-    }else if(buf.size > buf.len) {
-        buf.buf = mshtml_realloc(buf.buf, buf.len*sizeof(HTMLElement**));
-    }
+    elem_vector_normalize(&buf);
 
     return HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len, p);
 }
@@ -1520,12 +1524,7 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
             ERR("Invalid index. index=%d >= buf.len=%d\n",V_I4(&index), buf.len);
             return E_INVALIDARG;
         }
-        if(!buf.len) {
-            mshtml_free(buf.buf);
-            buf.buf = NULL;
-        } else if(buf.size > buf.len) {
-            buf.buf = mshtml_realloc(buf.buf, buf.len*sizeof(HTMLElement*));
-        }
+        elem_vector_normalize(&buf);
         TRACE("Returning %d element(s).\n", buf.len);
         return HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len, pdisp);
     }
@@ -1567,15 +1566,9 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
     }
 
     nsAString_Finish(&tag_str);
+    elem_vector_normalize(&buf);
 
     TRACE("fount %d tags\n", buf.len);
-
-    if(!buf.len) {
-        mshtml_free(buf.buf);
-        buf.buf = NULL;
-    }else if(buf.size > buf.len) {
-        buf.buf = mshtml_realloc(buf.buf, buf.len*sizeof(HTMLElement*));
-    }
 
     return HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len, pdisp);
 }
