@@ -871,10 +871,12 @@ static void shader_glsl_get_register_name(
         if (reg == 0) {
             /* vPos */
             sprintf(tmpStr, "vpos");
+        } else if (reg == 1){
+            /* Note that gl_FrontFacing is a bool, while vFace is
+             * a float for which the sign determines front/back
+             */
+            sprintf(tmpStr, "(gl_FrontFacing ? 1.0 : -1.0)");
         } else {
-            /* gl_FrontFacing could be used for vFace, but note that
-             * gl_FrontFacing is a bool, while vFace is a float for
-             * which the sign determines front/back */
             FIXME("Unhandled misctype register %d\n", reg);
             sprintf(tmpStr, "unrecognized_register");
         }
