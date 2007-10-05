@@ -1174,6 +1174,26 @@ done:
 #elif defined HAVE_GETDIRENTRIES
 
 /***********************************************************************
+ *           wine_getdirentries
+ *
+ * Wrapper for the BSD getdirentries system call to fix a bug in the
+ * Mac OS X version.  For some file systems (at least Apple Filing
+ * Protocol a.k.a. AFP), getdirentries resets the file position to 0
+ * when it's about to return 0 (no more entries).  So, a subsequent
+ * getdirentries call starts over at the beginning again, causing an
+ * infinite loop.
+ */
+static inline int wine_getdirentries(int fd, char *buf, int nbytes, long *basep)
+{
+    int res = getdirentries(fd, buf, nbytes, basep);
+#ifdef __APPLE__
+    if (res == 0)
+        lseek(fd, *basep, SEEK_SET);
+#endif
+    return res;
+}
+
+/***********************************************************************
  *           read_directory_getdirentries
  *
  * Read a directory using the BSD getdirentries system call; helper for NtQueryDirectoryFile.
@@ -1203,7 +1223,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
     io->u.Status = STATUS_SUCCESS;
 
     /* FIXME: should make sure size is larger than filesystem block size */
-    res = getdirentries( fd, data, size, &restart_pos );
+    res = wine_getdirentries( fd, data, size, &restart_pos );
     if (res == -1)
     {
         io->u.Status = FILE_GetNtStatus();
@@ -1306,7 +1326,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
         restart_last_info = last_info;
         restart_info_pos = io->Information;
     restart:
-        res = getdirentries( fd, data, size, &restart_pos );
+        res = wine_getdirentries( fd, data, size, &restart_pos );
         de = (struct dirent *)data;
     }
 
