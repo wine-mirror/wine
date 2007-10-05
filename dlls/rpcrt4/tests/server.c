@@ -698,7 +698,7 @@ pointer_tests(void)
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
-  todo_wine ok(square_test_us(&tus) == 121, "RPC square_test_us\n");
+  ok(square_test_us(&tus) == 121, "RPC square_test_us\n");
 
   pa[0] = &a[0];
   pa[1] = &a[1];

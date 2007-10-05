@@ -1740,6 +1740,9 @@ static int get_struct_type(var_list_t *fields)
   {
     type_t *t = field->type;
 
+    if (is_user_type(t))
+      return RPC_FC_BOGUS_STRUCT;
+
     if (is_ptr(t))
     {
         do
