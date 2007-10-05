@@ -248,7 +248,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         }
 
         PUSH1(0); /* end the list */
-        iPixelFormat = ChoosePixelFormat(hdc, &pfd);
 
         /* In case of failure hope that standard ChooosePixelFormat will find something suitable */
         if(!GL_EXTCALL(wglChoosePixelFormatARB(hdc, (const int*)&attribs, NULL, 1, &iPixelFormat, &nFormats)))
