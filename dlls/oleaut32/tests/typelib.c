@@ -23,6 +23,7 @@
 
 #include <wine/test.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -30,6 +31,25 @@
 #include "ocidl.h"
 #include "shlwapi.h"
 #include "tmarshal.h"
+
+#define expect_eq(expr, value, type, format) { type _ret = (expr); ok((value) == _ret, #expr " expected " format " got " format "\n", value, _ret); }
+#define expect_int(expr, value) expect_eq(expr, (int)value, int, "%d")
+#define expect_hex(expr, value) expect_eq(expr, (int)value, int, "0x%x")
+#define expect_null(expr) expect_eq(expr, NULL, const void *, "%p")
+
+#define expect_wstr_utf8val(expr, value) \
+    { \
+        CHAR buf[260]; \
+        expect_eq(!WideCharToMultiByte(CP_UTF8, 0, (expr), -1, buf, 260, NULL, NULL), 0, int, "%d"); \
+        ok(lstrcmp(value, buf) == 0, #expr " expected \"%s\" got \"%s\"\n", value, buf); \
+    }
+
+#define ole_expect(expr, expect) { \
+    HRESULT r = expr; \
+    ok(r == (expect), #expr " returned %x, expected %s (%x)\n", r, #expect, expect); \
+}
+
+#define ole_check(expr) ole_expect(expr, S_OK);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 
@@ -826,6 +846,433 @@ if(use_midl_tlb) {
     return;
 }
 
+#if 0       /* use this to generate more tests */
+
+#define OLE_CHECK(x) { HRESULT hr = x; if (FAILED(hr)) { printf(#x "failed - %x\n", hr); return; } }
+
+static char *dump_string(LPWSTR wstr)
+{
+    int size = lstrlenW(wstr)+3;
+    char *out = CoTaskMemAlloc(size);
+    WideCharToMultiByte(20127, 0, wstr, -1, out+1, size, NULL, NULL);
+    out[0] = '\"';
+    strcat(out, "\"");
+    return out;
+}
+
+struct map_entry
+{
+    DWORD value;
+    const char *name;
+};
+
+#define MAP_ENTRY(x) { x, #x }
+static const struct map_entry tkind_map[] = {
+    MAP_ENTRY(TKIND_ENUM),
+    MAP_ENTRY(TKIND_RECORD),
+    MAP_ENTRY(TKIND_MODULE),
+    MAP_ENTRY(TKIND_INTERFACE),
+    MAP_ENTRY(TKIND_DISPATCH),
+    MAP_ENTRY(TKIND_COCLASS),
+    MAP_ENTRY(TKIND_ALIAS),
+    MAP_ENTRY(TKIND_UNION),
+    MAP_ENTRY(TKIND_MAX),
+    {0, NULL}
+};
+
+static const struct map_entry funckind_map[] = {
+    MAP_ENTRY(FUNC_VIRTUAL),
+    MAP_ENTRY(FUNC_PUREVIRTUAL),
+    MAP_ENTRY(FUNC_NONVIRTUAL),
+    MAP_ENTRY(FUNC_STATIC),
+    MAP_ENTRY(FUNC_DISPATCH),
+    {0, NULL}
+};
+
+static const struct map_entry invkind_map[] = {
+    MAP_ENTRY(INVOKE_FUNC),
+    MAP_ENTRY(INVOKE_PROPERTYGET),
+    MAP_ENTRY(INVOKE_PROPERTYPUT),
+    MAP_ENTRY(INVOKE_PROPERTYPUTREF),
+    {0, NULL}
+};
+
+#undef MAP_ENTRY
+
+static const char *map_value(DWORD val, const struct map_entry *map)
+{
+    static int map_id;
+    static char bufs[16][256];
+    char *buf;
+
+    while (map->name)
+    {
+        if (map->value == val)
+            return map->name;
+        map++;
+    }
+
+    buf = bufs[(map_id++)%16];
+    sprintf(buf, "0x%x", val);
+    return buf;
+}
+
+static void test_dump_typelib(const char *name)
+{
+    WCHAR wszString[260];
+    ITypeInfo *info;
+    ITypeLib *lib;
+    int count;
+    int i;
+
+    MultiByteToWideChar(CP_ACP, 0, name, -1, wszString, 260);
+    OLE_CHECK(LoadTypeLib(wszString, &lib));
+    count = ITypeLib_GetTypeInfoCount(lib);
+    printf("/* interfaces count: %d */\n", count);
+    for (i = 0; i < count; i++)
+    {
+        TYPEATTR *attr;
+        BSTR name;
+        int f = 0;
+
+        OLE_CHECK(ITypeLib_GetDocumentation(lib, i, &name, NULL, NULL, NULL));
+        printf("{\n"
+               "  %s,\n", dump_string(name));
+        SysFreeString(name);
+
+        OLE_CHECK(ITypeLib_GetTypeInfo(lib, i, &info));
+        ITypeInfo_GetTypeAttr(info, &attr);
+        printf("  /*kind*/ %s, /*flags*/ 0x%x, /*align*/ %d, /*size*/ %d,\n"
+               "  /*#vtbl*/ %d, /*#func*/ %d,\n"
+               "  {\n",
+            map_value(attr->typekind, tkind_map), attr->wTypeFlags, attr->cbAlignment, attr->cbSizeInstance, attr->cbSizeVft,
+            attr->cFuncs);
+        ITypeInfo_ReleaseTypeAttr(info, attr);
+        while (1)
+        {
+            FUNCDESC *desc;
+            BSTR tab[256];
+            UINT cNames;
+            int p;
+
+            if (FAILED(ITypeInfo_GetFuncDesc(info, f, &desc)))
+                break;
+            printf("    {\n"
+                   "      0x%x, /*func*/ %s, /*inv*/ %s, /*call*/ 0x%x,\n",
+                desc->memid, map_value(desc->funckind, funckind_map), map_value(desc->invkind, invkind_map),
+                desc->callconv);
+            printf("      /*#param*/ %d, /*#opt*/ %d, /*vtbl*/ %d, /*#scodes*/ %d, /*flags*/ 0x%x,\n",
+                desc->cParams, desc->cParamsOpt, desc->oVft, desc->cScodes, desc->wFuncFlags);
+            printf("      {%d, %x}, /* ret */\n", desc->elemdescFunc.tdesc.vt, desc->elemdescFunc.paramdesc.wParamFlags);
+            printf("      { /* params */\n");
+            for (p = 0; p < desc->cParams; p++)
+            {
+                ELEMDESC e = desc->lprgelemdescParam[p];
+                printf("        {%d, %x},\n", e.tdesc.vt, e.paramdesc.wParamFlags);
+            }
+            printf("        {-1, -1}\n");
+            printf("      },\n");
+            printf("      { /* names */\n");
+            OLE_CHECK(ITypeInfo_GetNames(info, desc->memid, tab, 256, &cNames));
+            for (p = 0; p < cNames; p++)
+            {
+                printf("        %s,\n", dump_string(tab[p]));
+                SysFreeString(tab[p]);
+            }
+            printf("        NULL,\n");
+            printf("      },\n");
+            printf("    },\n");
+            ITypeInfo_ReleaseFuncDesc(info, desc);
+            f++;
+        }
+        printf("  }\n");
+        printf("},\n");
+        ITypeInfo_Release(info);
+    }
+    ITypeLib_Release(lib);
+}
+
+#else
+
+typedef struct _element_info
+{
+    VARTYPE vt;
+    USHORT wParamFlags;
+} element_info;
+
+typedef struct _function_info
+{
+    MEMBERID memid;
+    FUNCKIND funckind;
+    INVOKEKIND invkind;
+    CALLCONV callconv;
+    short cParams;
+    short cParamsOpt;
+    short oVft;
+    short cScodes;
+    WORD wFuncFlags;
+    element_info ret_type;
+    element_info params[15];
+    LPCSTR names[15];
+} function_info;
+
+typedef struct _interface_info
+{
+    LPCSTR name;
+    TYPEKIND type;
+    WORD wTypeFlags;
+    USHORT cbAlignment;
+    USHORT cbSizeInstance;
+    USHORT cbSizeVft;
+    USHORT cFuncs;
+    function_info funcs[20];
+} interface_info;
+
+static const interface_info info[] = {
+/* interfaces count: 2 */
+{
+  "IDualIface",
+  /*kind*/ TKIND_DISPATCH, /*flags*/ 0x1040, /*align*/ 4, /*size*/ 4,
+  /*#vtbl*/ 28, /*#func*/ 8,
+  {
+    {
+      0x60000000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      /*#param*/ 2, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0x1,
+      {24, 0}, /* ret */
+      { /* params */
+        {26, 1},
+        {26, 2},
+        {-1, -1}
+      },
+      { /* names */
+        "QueryInterface",
+        "riid",
+        "ppvObj",
+        NULL,
+      },
+    },
+    {
+      0x60000001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 4, /*#scodes*/ 0, /*flags*/ 0x1,
+      {19, 0}, /* ret */
+      { /* params */
+        {-1, -1}
+      },
+      { /* names */
+        "AddRef",
+        NULL,
+      },
+    },
+    {
+      0x60000002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 8, /*#scodes*/ 0, /*flags*/ 0x1,
+      {19, 0}, /* ret */
+      { /* params */
+        {-1, -1}
+      },
+      { /* names */
+        "Release",
+        NULL,
+      },
+    },
+    {
+      0x60010000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 12, /*#scodes*/ 0, /*flags*/ 0x1,
+      {24, 0}, /* ret */
+      { /* params */
+        {26, 2},
+        {-1, -1}
+      },
+      { /* names */
+        "GetTypeInfoCount",
+        "pctinfo",
+        NULL,
+      },
+    },
+    {
+      0x60010001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      /*#param*/ 3, /*#opt*/ 0, /*vtbl*/ 16, /*#scodes*/ 0, /*flags*/ 0x1,
+      {24, 0}, /* ret */
+      { /* params */
+        {23, 1},
+        {19, 1},
+        {26, 2},
+        {-1, -1}
+      },
+      { /* names */
+        "GetTypeInfo",
+        "itinfo",
+        "lcid",
+        "pptinfo",
+        NULL,
+      },
+    },
+    {
+      0x60010002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      /*#param*/ 5, /*#opt*/ 0, /*vtbl*/ 20, /*#scodes*/ 0, /*flags*/ 0x1,
+      {24, 0}, /* ret */
+      { /* params */
+        {26, 1},
+        {26, 1},
+        {23, 1},
+        {19, 1},
+        {26, 2},
+        {-1, -1}
+      },
+      { /* names */
+        "GetIDsOfNames",
+        "riid",
+        "rgszNames",
+        "cNames",
+        "lcid",
+        "rgdispid",
+        NULL,
+      },
+    },
+    {
+      0x60010003, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      /*#param*/ 8, /*#opt*/ 0, /*vtbl*/ 24, /*#scodes*/ 0, /*flags*/ 0x1,
+      {24, 0}, /* ret */
+      { /* params */
+        {3, 1},
+        {26, 1},
+        {19, 1},
+        {18, 1},
+        {26, 1},
+        {26, 2},
+        {26, 2},
+        {26, 2},
+        {-1, -1}
+      },
+      { /* names */
+        "Invoke",
+        "dispidMember",
+        "riid",
+        "lcid",
+        "wFlags",
+        "pdispparams",
+        "pvarResult",
+        "pexcepinfo",
+        "puArgErr",
+        NULL,
+      },
+    },
+    {
+      0x60020000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 28, /*#scodes*/ 0, /*flags*/ 0x0,
+      {24, 0}, /* ret */
+      { /* params */
+        {-1, -1}
+      },
+      { /* names */
+        "Test",
+        NULL,
+      },
+    },
+  }
+},
+{
+  "ISimpleIface",
+  /*kind*/ TKIND_INTERFACE, /*flags*/ 0x1000, /*align*/ 4, /*size*/ 4,
+  /*#vtbl*/ 32, /*#func*/ 1,
+  {
+    {
+      0x60020000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 28, /*#scodes*/ 0, /*flags*/ 0x0,
+      {25, 0}, /* ret */
+      { /* params */
+        {-1, -1}
+      },
+      { /* names */
+        "Test",
+        NULL,
+      },
+    },
+  }
+},
+};
+
+#define check_type(elem, info) { \
+    expect_int((elem)->tdesc.vt, (info)->vt); \
+    expect_hex((elem)->paramdesc.wParamFlags, (info)->wParamFlags); \
+  }
+
+static void test_dump_typelib(const char *name)
+{
+    WCHAR wszName[MAX_PATH];
+    ITypeLib *typelib;
+    int ifcount = sizeof(info)/sizeof(info[0]);
+    int iface, func;
+
+    MultiByteToWideChar(CP_UTF8, 0, name, -1, wszName, MAX_PATH);
+    ole_check(LoadTypeLibEx(wszName, REGKIND_NONE, &typelib));
+    expect_eq(ITypeLib_GetTypeInfoCount(typelib), ifcount, UINT, "%d");
+    for (iface = 0; iface < ifcount; iface++)
+    {
+        const interface_info *if_info = &info[iface];
+        ITypeInfo *typeinfo;
+        TYPEATTR *typeattr;
+        BSTR bstrIfName;
+
+        trace("Interface %s\n", if_info->name);
+        ole_check(ITypeLib_GetTypeInfo(typelib, iface, &typeinfo));
+        ole_check(ITypeLib_GetDocumentation(typelib, iface, &bstrIfName, NULL, NULL, NULL));
+        expect_wstr_utf8val(bstrIfName, if_info->name);
+        SysFreeString(bstrIfName);
+
+        ole_check(ITypeInfo_GetTypeAttr(typeinfo, &typeattr));
+        expect_int(typeattr->typekind, if_info->type);
+        expect_hex(typeattr->wTypeFlags, if_info->wTypeFlags);
+        expect_int(typeattr->cbAlignment, if_info->cbAlignment);
+        expect_int(typeattr->cbSizeInstance, if_info->cbSizeInstance);
+        expect_int(typeattr->cbSizeVft, if_info->cbSizeVft);
+        expect_int(typeattr->cFuncs, if_info->cFuncs);
+
+        for (func = 0; func < typeattr->cFuncs; func++)
+        {
+            function_info *fn_info = (function_info *)&if_info->funcs[func];
+            FUNCDESC *desc;
+            BSTR namesTab[256];
+            UINT cNames;
+            int i;
+
+            trace("Function %s\n", fn_info->names[0]);
+            ole_check(ITypeInfo_GetFuncDesc(typeinfo, func, &desc));
+            expect_int(desc->memid, fn_info->memid);
+            expect_int(desc->funckind, fn_info->funckind);
+            expect_int(desc->invkind, fn_info->invkind);
+            expect_int(desc->callconv, fn_info->callconv);
+            expect_int(desc->cParams, fn_info->cParams);
+            expect_int(desc->cParamsOpt, fn_info->cParamsOpt);
+            expect_int(desc->oVft, fn_info->oVft);
+            expect_int(desc->cScodes, fn_info->cScodes);
+            expect_int(desc->wFuncFlags, fn_info->wFuncFlags);
+            ole_check(ITypeInfo_GetNames(typeinfo, desc->memid, namesTab, 256, &cNames));
+            for (i = 0; i < cNames; i++)
+            {
+                expect_wstr_utf8val(namesTab[i], fn_info->names[i]);
+                SysFreeString(namesTab[i]);
+            }
+            expect_null(fn_info->names[cNames]);
+
+            check_type(&desc->elemdescFunc, &fn_info->ret_type);
+            for (i = 0 ; i < desc->cParams; i++)
+            {
+                check_type(&desc->lprgelemdescParam[i], &fn_info->params[i]);
+            }
+            expect_int(fn_info->params[desc->cParams].vt, (VARTYPE)-1);
+
+            ITypeInfo_ReleaseFuncDesc(typeinfo, desc);
+        }
+
+        ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+        ITypeInfo_Release(typeinfo);
+    }
+    ITypeLib_Release(typelib);
+}
+
+#endif
+
 START_TEST(typelib)
 {
     ref_count_test(wszStdOle2);
@@ -834,4 +1281,5 @@ START_TEST(typelib)
     test_TypeInfo();
     test_QueryPathOfRegTypeLib();
     test_inheritance();
+    test_dump_typelib("test_tlb.tlb");
 }

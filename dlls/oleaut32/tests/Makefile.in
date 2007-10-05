@@ -20,7 +20,10 @@ CTESTS = \
 RC_SRCS = tmarshal.rc
 
 IDL_I_SRCS = tmarshal.idl
-IDL_TLB_SRCS = tmarshal.idl
+
+IDL_TLB_SRCS = \
+	test_tlb.idl \
+	tmarshal.idl
 
 @MAKE_TEST_RULES@
 

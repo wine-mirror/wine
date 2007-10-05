@@ -4674,6 +4674,8 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
     if (!dest) return E_OUTOFMEMORY;
 
     memcpy(dest, src, sizeof(FUNCDESC));
+    if (dispinterface)    /* overwrite funckind */
+        dest->funckind = FUNC_DISPATCH;
     buffer = (char *)(dest + 1);
 
     dest->lprgscode = (SCODE *)buffer;
