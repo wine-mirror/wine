@@ -287,6 +287,23 @@ static void test_asciimode(void)
     ok((fread(buf, 1, sizeof(buf), fp) == 2) && (0 == strcmp(buf, "\r\n")), "CR CR LF not read as CR LF\n");
     fclose(fp);
     unlink("ascii.tst");
+
+    /* Simple test of foo ^Z [more than one block] bar handling */
+    fp = fopen("ascii.tst", "wb");
+    fputs("foo\032", fp);  /* foo, logical EOF, ... */
+    fseek(fp, 65536L, SEEK_SET); /* ... more than MSVCRT_BUFSIZ, ... */
+    fputs("bar", fp); /* ... bar */
+    fclose(fp);
+    fp = fopen("ascii.tst", "rt");
+    ok(fgets(buf, sizeof(buf), fp) != NULL, "fgets foo\n");
+    ok(0 == strcmp(buf, "foo"), "foo ^Z not read as foo by fgets\n");
+    ok(fgets(buf, sizeof(buf), fp) == NULL, "fgets after logical EOF\n");
+    rewind(fp);
+    ok((fread(buf, 1, sizeof(buf), fp) == 3) && (0 == strcmp(buf, "foo")), "foo ^Z not read as foo by fread\n");
+    ok((fread(buf, 1, sizeof(buf), fp) == 0), "fread after logical EOF\n");
+    fclose(fp);
+
+    unlink("ascii.tst");
 }
 
 static WCHAR* AtoW( const char* p )
