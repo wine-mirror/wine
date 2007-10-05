@@ -1639,15 +1639,21 @@ int CDECL _rmtmp(void)
 /*********************************************************************
  * (internal) remove_cr
  *
- *    Remove all \r inplace.
+ * Translate all \r\n to \n inplace.
  * return the number of \r removed
+ * Corner cases required by some apps:
+ *   \r\r\n -> \r\n
+ * BUG: should save state across calls somehow, so CR LF that
+ * straddles buffer boundary gets recognized properly?
  */
 static unsigned int remove_cr(char *buf, unsigned int count)
 {
     unsigned int i, j;
 
-    for (i = 0; i < count; i++) if (buf[i] == '\r') break;
-    for (j = i + 1; j < count; j++) if (buf[j] != '\r') buf[i++] = buf[j];
+    for (i=0, j=0; j < count; j++)
+        if ((buf[j] != '\r') || ((j+1) < count && buf[j+1] != '\n'))
+	    buf[i++] = buf[j];
+
     return count - i;
 }
 
@@ -2210,8 +2216,9 @@ int CDECL MSVCRT_fgetc(MSVCRT_FILE* file)
       j = *i;
     } else
       j = MSVCRT__filbuf(file);
-    if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT) || (j != '\r'))
-      return j;
+    if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT)
+    || ((j != '\r') || (file->_cnt && ((char *)file->_ptr)[0] != '\n')))
+        return j;
   } while(1);
 }
 

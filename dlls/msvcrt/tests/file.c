@@ -271,6 +271,23 @@ static void test_readmode( BOOL ascii_mode )
     unlink ("fdopen.tst");
 }
 
+static void test_asciimode(void)
+{
+    FILE *fp;
+    char buf[64];
+
+    /* Simple test of CR CR LF handling.  Test both fgets and fread code paths, they're different! */
+    fp = fopen("ascii.tst", "wb");
+    fputs("\r\r\n", fp);
+    fclose(fp);
+    fp = fopen("ascii.tst", "rt");
+    ok(fgets(buf, sizeof(buf), fp) != NULL, "fgets\n");
+    ok(0 == strcmp(buf, "\r\n"), "CR CR LF not read as CR LF\n");
+    rewind(fp);
+    ok((fread(buf, 1, sizeof(buf), fp) == 2) && (0 == strcmp(buf, "\r\n")), "CR CR LF not read as CR LF\n");
+    fclose(fp);
+    unlink("ascii.tst");
+}
 
 static WCHAR* AtoW( const char* p )
 {
@@ -996,6 +1013,7 @@ START_TEST(file)
     test_fdopen();
     test_fopen_fclose_fcloseall();
     test_fileops();
+    test_asciimode();
     test_readmode(FALSE); /* binary mode */
     test_readmode(TRUE);  /* ascii mode */
     test_fgetc();
