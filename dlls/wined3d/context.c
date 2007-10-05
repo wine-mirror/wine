@@ -221,6 +221,8 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         PUSH2(WGL_DRAW_TO_WINDOW_ARB, GL_TRUE); /* We want to draw to a window */
         PUSH2(WGL_DOUBLE_BUFFER_ARB, GL_TRUE);
         PUSH2(WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB); /* Make sure we don't get a float or color index format */
+        PUSH2(WGL_SUPPORT_OPENGL_ARB, GL_TRUE);
+        PUSH2(WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB); /* Make sure we receive an accelerated format. On windows (at least on ATI) this is not always the case */
 
         if(!getColorBits(target->resource.format, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits)) {
             ERR("Unable to get color bits for format %#x!\n", target->resource.format);
