@@ -29,7 +29,9 @@ typedef struct tag_vector
 
 [
   uuid(00000000-4114-0704-2301-000000000000),
+#ifndef __midl
   implicit_handle(handle_t IServer_IfHandle)
+#endif
 ]
 interface IServer
 {
