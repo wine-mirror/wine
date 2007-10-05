@@ -104,7 +104,9 @@ SRCDIR_INCLUDES = \
 	d3drmdef.h \
 	d3dtypes.h \
 	d3dvec.inl \
+	d3dx8.h \
 	d3dx8core.h \
+	d3dx8math.h \
 	dbghelp.h \
 	dbinit.idl \
 	dbprop.idl \
