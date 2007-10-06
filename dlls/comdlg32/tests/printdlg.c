@@ -74,7 +74,7 @@ static void test_PageSetupDlgA(void)
 
     ZeroMemory(pDlg, sizeof(PAGESETUPDLGA));
     pDlg->lStructSize = sizeof(PAGESETUPDLGA);
-    pDlg->Flags = PSD_RETURNDEFAULT;
+    pDlg->Flags = PSD_RETURNDEFAULT | PSD_NOWARNING;
     SetLastError(0xdeadbeef);
     res = PageSetupDlgA(pDlg);
     ok( res || (CommDlgExtendedError() == PDERR_NODEFAULTPRN),
