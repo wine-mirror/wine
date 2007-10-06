@@ -205,7 +205,7 @@ static void create_inf_file(void)
     append_str(&ptr, "49030=DestC\n");
     append_str(&ptr, "[ProgramFilesDir]\n");
     append_str(&ptr, "HKLM,\"Software\\Microsoft\\Windows\\CurrentVersion\",");
-    append_str(&ptr, "\"ProgramFilesDir\",,\"%%24%%\\%%LProgramF%%\"\n");
+    append_str(&ptr, "\"ProgramFilesDir\",,\"%%24%%\\%%16422%%\"\n");
     append_str(&ptr, "[section]\n");
     append_str(&ptr, "NotACustomDestination=Version\n");
     append_str(&ptr, "CustomDestination=CustInstDestSection\n");
@@ -218,9 +218,8 @@ static void create_inf_file(void)
     append_str(&ptr, "CustomHDestination=CustInstDestSection\n");
     append_str(&ptr, "[Strings]\n");
     append_str(&ptr, "DefaultAppPath=\"Application Name\"\n");
-    append_str(&ptr, "LProgramF=\"Program Files\"\n");
     append_str(&ptr, "[DestA]\n");
-    append_str(&ptr, "HKLM,\"Software\\Garbage\",\"ProgramFilesDir\",,'%%24%%\\%%LProgramF%%'\n");
+    append_str(&ptr, "HKLM,\"Software\\Garbage\",\"ProgramFilesDir\",,'%%16422%%'\n");
     append_str(&ptr, "[DestB]\n");
     append_str(&ptr, "'HKLM','Software\\Microsoft\\Windows\\CurrentVersion',");
     append_str(&ptr, "'ProgramFilesDir',,\"%%24%%\"\n");
