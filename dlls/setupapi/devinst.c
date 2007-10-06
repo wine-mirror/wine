@@ -796,8 +796,6 @@ BOOL WINAPI SetupDiClassGuidsFromNameExA(
     LPWSTR MachineNameW = NULL;
     BOOL bResult;
 
-    FIXME("\n");
-
     ClassNameW = MultiByteToUnicode(ClassName, CP_ACP);
     if (ClassNameW == NULL)
         return FALSE;
