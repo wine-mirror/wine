@@ -462,6 +462,26 @@ static void testTimeEncoding(DWORD dwEncoding, LPCSTR structType,
          "Expected CRYPT_E_BAD_ENCODE, got 0x%08x\n", GetLastError());
 }
 
+static const char *printSystemTime(const SYSTEMTIME *st)
+{
+    static char buf[22];
+
+    sprintf(buf, "%02d-%02d-%04d %02d:%02d:%02d.%03d", st->wMonth, st->wDay,
+     st->wYear, st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
+    return buf;
+}
+
+static const char *printFileTime(const FILETIME *ft)
+{
+    static char buf[22];
+    SYSTEMTIME st;
+
+    FileTimeToSystemTime(ft, &st);
+    sprintf(buf, "%02d-%02d-%04d %02d:%02d:%02d.%03d", st.wMonth, st.wDay,
+     st.wYear, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+    return buf;
+}
+
 static void testTimeDecoding(DWORD dwEncoding, LPCSTR structType,
  const struct encodedFiletime *time)
 {
@@ -482,7 +502,8 @@ static void testTimeDecoding(DWORD dwEncoding, LPCSTR structType,
         ok(ret, "CryptDecodeObjectEx failed: %d (0x%08x)\n", GetLastError(),
          GetLastError());
         ok(!memcmp(&ft1, &ft2, sizeof(ft1)),
-         "Got unexpected value for time decoding\n");
+         "Got unexpected value for time decoding:\nexpected %s, got %s\n",
+         printSystemTime(&time->sysTime), printFileTime(&ft2));
     }
     else
         ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
