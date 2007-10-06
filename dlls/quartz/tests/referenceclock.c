@@ -66,8 +66,9 @@ static void test_IReferenceClock_methods(const char * clockdesc, IReferenceClock
     ok (hr == S_OK, "%s - Expected S_OK, got 0x%08x\n", clockdesc, hr);
 
     /* FIXME: How much deviation should be allowed after a sleep? */
+    /* 0.3% is common, and 0.4% is sometimes observed.  Let's try 0.6%. */
     diff = time2 - time1;
-    ok (9980000 <= diff && diff <= 10020000, "%s - Expected difference around 10000000, got %lu\n", clockdesc, diff);
+    ok (9940000 <= diff && diff <= 10060000, "%s - Expected difference around 10000000, got %lu\n", clockdesc, diff);
 
 }
 
