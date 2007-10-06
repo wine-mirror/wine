@@ -406,10 +406,6 @@ static int file_set_sd( struct object *obj, const struct security_descriptor *sd
 
     assert( obj->ops == &file_ops );
 
-    /* only DACL translation is currently supported */
-    if (!(set_info & DACL_SECURITY_INFORMATION))
-        return 1;
-
     unix_fd = get_file_unix_fd( file );
 
     if (unix_fd == -1) return 1;
@@ -431,6 +427,8 @@ static int file_set_sd( struct object *obj, const struct security_descriptor *sd
         owner = sd_get_owner( obj->sd );
     else
         owner = token_get_user( current->process->token );
+
+    /* group and sacl not supported */
 
     /* keep the bits that we don't map to access rights in the ACL */
     new_mode = file->mode & (S_ISUID|S_ISGID|S_ISVTX|S_IRWXG);
