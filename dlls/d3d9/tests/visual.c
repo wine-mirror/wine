@@ -1356,6 +1356,7 @@ static void z_range_test(IDirect3DDevice9 *device)
     DWORD color;
     IDirect3DVertexShader9 *shader;
     IDirect3DVertexDeclaration9 *decl;
+    D3DCAPS9 caps;
     const DWORD shader_code[] = {
         0xfffe0101,                                     /* vs_1_1           */
         0x0000001f, 0x80000000, 0x900f0000,             /* dcl_position v0  */
@@ -1453,12 +1454,15 @@ static void z_range_test(IDirect3DDevice9 *device)
     ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
 
     /* Test the shader path */
-    hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
-    if(FAILED(hr)) {
-        skip("Can't create test vertex shader, most likely shaders not supported\n");
+    IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(1, 1)) {
+        skip("Vertex shaders not supported\n");
         goto out;
     }
+    hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %s\n", DXGetErrorString9(hr));
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.4, 0);
 
