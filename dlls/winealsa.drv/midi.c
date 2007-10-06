@@ -1018,6 +1018,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     default:
 	WARN("Technology not supported (yet) %d !\n",
 	     MidiOutDev[wDevID].caps.wTechnology);
+	HeapFree(GetProcessHeap(), 0, lpNewData);
 	return MMSYSERR_NOTENABLED;
     }
 
