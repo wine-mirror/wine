@@ -1138,6 +1138,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
 
         TRACE("Reply from ntlm_auth: %s\n", debugstr_a(buffer));
 
+        /* At this point, we get a NA if the user didn't authenticate, but a BH
+         * if ntlm_auth could not connect to winbindd. Apart from running Wine
+         * as root, there is no way to fix this for now, so just handle this as
+         * a failed login. */
         if(strncmp(buffer, "AF ", 3) != 0)
         {
             if(strncmp(buffer, "NA ", 3) == 0)
@@ -1147,7 +1151,18 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
             }
             else
             {
-                ret = SEC_E_INTERNAL_ERROR;
+                size_t ntlm_pipe_err_len = strlen("BH NT_STATUS_ACCESS_DENIED");
+
+                if( (buffer_len >= ntlm_pipe_err_len) &&
+                    (strncmp(buffer, "BH NT_STATUS_ACCESS_DENIED",
+                             ntlm_pipe_err_len) == 0))
+                {
+                    TRACE("Connection to winbindd failed\n");
+                    ret = SEC_E_LOGON_DENIED;
+                }
+                else
+                    ret = SEC_E_INTERNAL_ERROR;
+
                 goto asc_end;
             }
         }
