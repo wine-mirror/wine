@@ -648,7 +648,7 @@ static void test_ddeml_client(void)
 
     lstrcpyA(str, "[Command(Var)]");
     hdata = DdeCreateDataHandle(client_pid, (LPBYTE)str, lstrlenA(str) + 1,
-                                0, (HSZ)NULL, CF_TEXT, 0);
+                                0, NULL, CF_TEXT, 0);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
 
     /* XTYP_EXECUTE, correct params */
