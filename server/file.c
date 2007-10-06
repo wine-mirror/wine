@@ -503,13 +503,16 @@ static int file_set_sd( struct object *obj, const struct security_descriptor *sd
             /* no ACL means full access rights to anyone */
             new_mode |= S_IRWXU | S_IRWXO;
 
-        if (fchmod( unix_fd, new_mode & ~denied_mode ) == -1)
+        if (file->mode != (new_mode & ~denied_mode))
         {
-            file_set_error();
-            return 0;
-        }
+            if (fchmod( unix_fd, new_mode & ~denied_mode ) == -1)
+            {
+                file_set_error();
+                return 0;
+            }
 
-        file->mode = new_mode & ~denied_mode;
+            file->mode = new_mode & ~denied_mode;
+        }
     }
     return 1;
 }
