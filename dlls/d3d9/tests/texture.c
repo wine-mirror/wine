@@ -146,6 +146,7 @@ static void test_mipmap_gen(IDirect3DDevice9 *device)
     if(FAILED(hr))
     {
         skip("No mipmap generation support\n");
+        return;
     }
 
     hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, D3DUSAGE_AUTOGENMIPMAP,
