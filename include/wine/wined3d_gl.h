@@ -3222,9 +3222,9 @@ typedef enum _GL_SupportedExt {
     /** ARB Extensions **/ \
     /* GL_ARB_draw_buffers */ \
     USE_GL_FUNC(PGLFNDRAWBUFFERSARBPROC, glDrawBuffersARB); \
-    /* GL_ARB_imaging */ \
-    USE_GL_FUNC(PGLFNBLENDCOLORPROC,                 glBlendColor); \
-    USE_GL_FUNC(PGLFNBLENDEQUATIONPROC,              glBlendEquation); \
+    /* GL_ARB_imaging, GL_EXT_blend_minmax */ \
+    USE_GL_FUNC(PGLFNBLENDCOLORPROC,                 glBlendColorEXT); \
+    USE_GL_FUNC(PGLFNBLENDEQUATIONPROC,              glBlendEquationEXT); \
     /* GL_ARB_multisample */ \
     USE_GL_FUNC(WINED3D_PFNGLSAMPLECOVERAGEARBPROC,  glSampleCoverageARB); \
     /* GL_ARB_multitexture */ \

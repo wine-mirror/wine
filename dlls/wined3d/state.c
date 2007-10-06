@@ -332,7 +332,7 @@ static void state_blendfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
     TRACE("Setting BlendFactor to %d\n", stateblock->renderState[WINED3DRS_BLENDFACTOR]);
     D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_BLENDFACTOR], col);
-    GL_EXTCALL(glBlendColor (col[0],col[1],col[2],col[3]));
+    GL_EXTCALL(glBlendColorEXT (col[0],col[1],col[2],col[3]));
     checkGLcall("glBlendColor");
 }
 
@@ -481,7 +481,7 @@ static void state_blendop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD
     }
 
     TRACE("glBlendEquation(%x)\n", glParm);
-    GL_EXTCALL(glBlendEquation(glParm));
+    GL_EXTCALL(glBlendEquationEXT(glParm));
     checkGLcall("glBlendEquation");
 }
 
