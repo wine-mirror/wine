@@ -73,6 +73,6 @@
 1119 stdcall GetServiceA(long ptr ptr long ptr ptr ptr)
 1120 stdcall GetServiceW(long ptr ptr long ptr ptr ptr)
 #1130 stub NPLoadNameSpaces
-#1140 stub TransmitFile
-#1141 stub AcceptEx
-#1142 stub GetAcceptExSockaddrs
+1140 stub TransmitFile
+1141 stub AcceptEx
+1142 stub GetAcceptExSockaddrs
