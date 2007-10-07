@@ -284,7 +284,7 @@ HRESULT WINAPI RegisterDragDrop(
   if (!COM_CurrentApt())
   {
     ERR("COM not initialized\n");
-    return CO_E_NOTINITIALIZED;
+    return E_OUTOFMEMORY;
   }
 
   if (!pDropTarget)

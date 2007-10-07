@@ -113,7 +113,7 @@ START_TEST(dragdrop)
     HRESULT hr;
 
     hr = RegisterDragDrop(GetDesktopWindow(), &DropTarget);
-    ok(hr == CO_E_NOTINITIALIZED, "RegisterDragDrop without OLE initialized should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
+    ok(hr == E_OUTOFMEMORY, "RegisterDragDrop without OLE initialized should have returned E_OUTOFMEMORY instead of 0x%08x\n", hr);
 
     OleInitialize(NULL);
 
