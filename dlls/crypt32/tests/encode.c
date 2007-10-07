@@ -464,7 +464,7 @@ static void testTimeEncoding(DWORD dwEncoding, LPCSTR structType,
 
 static const char *printSystemTime(const SYSTEMTIME *st)
 {
-    static char buf[22];
+    static char buf[25];
 
     sprintf(buf, "%02d-%02d-%04d %02d:%02d:%02d.%03d", st->wMonth, st->wDay,
      st->wYear, st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
@@ -473,7 +473,7 @@ static const char *printSystemTime(const SYSTEMTIME *st)
 
 static const char *printFileTime(const FILETIME *ft)
 {
-    static char buf[22];
+    static char buf[25];
     SYSTEMTIME st;
 
     FileTimeToSystemTime(ft, &st);
