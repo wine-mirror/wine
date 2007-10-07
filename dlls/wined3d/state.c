@@ -203,13 +203,17 @@ static void state_zfunc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
     if(glParm) {
         if(glParm == GL_EQUAL || glParm == GL_NOTEQUAL) {
+            static BOOL once = FALSE;
             /* There are a few issues with this: First, our inability to
              * select a proper Z depth, most of the time we're stuck with
              * D24S8, even if the app selects D32 or D16. There seem to be
              * some other precision problems which have to be debugged to
              * make NOTEQUAL and EQUAL work properly
              */
-            FIXME("D3DCMP_NOTEQUAL and D3DCMP_EQUAL do not work correctly yet\n");
+            if(!once) {
+                once = TRUE;
+                FIXME("D3DCMP_NOTEQUAL and D3DCMP_EQUAL do not work correctly yet\n");
+            }
         }
 
         glDepthFunc(glParm);
@@ -2553,8 +2557,12 @@ static void state_vertexblend(DWORD state, IWineD3DStateBlockImpl *stateblock, W
                     stateblock->wineD3DDevice->vertexBlendUsed = TRUE;
                 }
             } else {
-                /* TODO: Implement vertex blending in drawStridedSlow */
-                FIXME("Vertex blending enabled, but not supported by hardware\n");
+                static BOOL once = FALSE;
+                if(!once) {
+                    once = TRUE;
+                    /* TODO: Implement vertex blending in drawStridedSlow */
+                    FIXME("Vertex blending enabled, but not supported by hardware\n");
+                }
             }
             break;
 
