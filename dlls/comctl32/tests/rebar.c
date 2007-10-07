@@ -45,6 +45,23 @@ static HWND hRebar;
 
 #define expect_eq(expr, value, type, format) { type ret = expr; ok((value) == ret, #expr " expected " format "  got " format "\n", (value), (ret)); }
 
+static INT CALLBACK is_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
+{
+    return 0;
+}
+
+static BOOL is_font_installed(const char *name)
+{
+    HDC hdc = GetDC(0);
+    BOOL ret = FALSE;
+
+    if(!EnumFontFamiliesA(hdc, name, is_font_installed_proc, 0))
+        ret = TRUE;
+
+    ReleaseDC(0, hdc);
+    return ret;
+}
+
 static void rebuild_rebar(HWND *hRebar)
 {
     if (*hRebar)
@@ -797,8 +814,14 @@ START_TEST(rebar)
     ShowWindow(hMainWnd, SW_SHOW);
 
     bandinfo_test();
-    layout_test();
-    resize_test();
+
+    if(is_font_installed("System") && is_font_installed("Tahoma"))
+    {
+        layout_test();
+        resize_test();
+    } else
+        skip("Missing System or Tahoma font\n");
+
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
         TranslateMessage(&msg);
