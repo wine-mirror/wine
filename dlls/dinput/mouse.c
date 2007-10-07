@@ -410,7 +410,18 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     
     /* Install our mouse hook */
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
+    {
+      RECT rc;
+
       ShowCursor(FALSE); /* hide cursor */
+      if (GetWindowRect(This->base.win, &rc))
+      {
+        FIXME("Clipping cursor to %s\n", wine_dbgstr_rect( &rc ));
+        ClipCursor(&rc);
+      }
+      else
+        ERR("Failed to get RECT: %d\n", GetLastError());
+    }
     
     /* Get the window dimension and find the center */
     GetWindowRect(This->base.win, &rect);
@@ -446,7 +457,10 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     if ((res = IDirectInputDevice2AImpl_Unacquire(iface)) != DI_OK) return res;
 
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
+    {
+        ClipCursor(NULL);
         ShowCursor(TRUE); /* show cursor */
+    }
 
     /* And put the mouse cursor back where it was at acquire time */
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
