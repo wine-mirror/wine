@@ -211,6 +211,62 @@ static void test_timer(DWORD flags)
         CHECK_CALLED(Exec_SETTITLE);
 }
 
+static HRESULT WINAPI External_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Dispatch_AddRef(IDispatch *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Dispatch_Release(IDispatch *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI External_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IDispatchVtbl ExternalVtbl = {
+    External_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    External_Invoke
+};
+
+static IDispatch External = { &ExternalVtbl };
+
 static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid)) {
@@ -1863,7 +1919,7 @@ static HRESULT WINAPI DocHostUIHandler_GetDropTarget(IDocHostUIHandler2 *iface,
 static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface, IDispatch **ppDispatch)
 {
     CHECK_EXPECT(GetExternal);
-    *ppDispatch = (void*)1;
+    *ppDispatch = &External;
     return S_FALSE;
 }
 
@@ -2098,36 +2154,6 @@ static IOleCommandTarget OleCommandTarget = { &OleCommandTargetVtbl };
 static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
 {
     return QueryInterface(riid, ppv);
-}
-
-static ULONG WINAPI Dispatch_AddRef(IDispatch *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI Dispatch_Release(IDispatch *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
-        ITypeInfo **ppTInfo)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
-        UINT cNames, LCID lcid, DISPID *rgDispId)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
@@ -3468,7 +3494,7 @@ static void test_external(IUnknown *unk, BOOL initialized)
     if(initialized) {
         ok(hres == S_FALSE, "get_external failed: %08x\n", hres);
         CHECK_CALLED(GetExternal);
-        ok(external == (void*)1, "external != NULL\n");
+        ok(external != NULL, "external == NULL\n");
     }else {
         ok(hres == S_OK, "get_external failed: %08x\n", hres);
         ok(external == NULL, "external != NULL\n");
