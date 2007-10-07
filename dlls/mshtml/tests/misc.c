@@ -69,7 +69,7 @@ static void test_HTMLLoadOptions(void)
     memset(buf, 0xdd, sizeof(buf));
     hres = IHtmlLoadOptions_QueryOption(loadopts, HTMLLOADOPTION_CODEPAGE, buf, &size);
     ok(hres == E_FAIL, "QueryOption failed: %08x\n", hres);
-    ok(size == sizeof(data), "size = %d\n", size);
+    ok(size == sizeof(data) || !size, "size = %d\n", size);
     ok(buf[0] == 0xdd, "buf changed\n");
 
     data = 100;
