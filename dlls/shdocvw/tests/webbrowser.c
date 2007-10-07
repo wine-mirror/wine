@@ -1075,7 +1075,7 @@ static void test_ie_funcs(IUnknown *unk)
 
     hres = IWebBrowser2_get_ToolBar(wb, &i);
     ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
-    ok(i == VARIANT_TRUE, "i=%x\n", i);
+    ok(i, "i=%x\n", i);
 
     hres = IWebBrowser2_put_ToolBar(wb, VARIANT_FALSE);
     ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
@@ -1089,7 +1089,7 @@ static void test_ie_funcs(IUnknown *unk)
 
     hres = IWebBrowser2_get_ToolBar(wb, &i);
     ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
-    ok(i == VARIANT_TRUE, "i=%x\n", i);
+    ok(i, "i=%x\n", i);
 
     hres = IWebBrowser2_put_ToolBar(wb, VARIANT_TRUE);
     ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
