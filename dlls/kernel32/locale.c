@@ -3508,8 +3508,37 @@ GEOID WINAPI GetUserGeoID( GEOCLASS GeoClass )
  */
 BOOL WINAPI SetUserGeoID( GEOID GeoID )
 {
-    FIXME("%d\n",GeoID);
-    return FALSE;
+    static const WCHAR geoW[] = {'G','e','o',0};
+    static const WCHAR nationW[] = {'N','a','t','i','o','n',0};
+    static const WCHAR formatW[] = {'%','i',0};
+    UNICODE_STRING nameW,keyW;
+    WCHAR bufferW[10];
+    OBJECT_ATTRIBUTES attr;
+    HANDLE hkey;
+
+    if(!(hkey = create_registry_key())) return FALSE;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, geoW );
+    RtlInitUnicodeString( &keyW, nationW );
+
+    if (NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) != STATUS_SUCCESS)
+
+    {
+        NtClose(attr.RootDirectory);
+        return FALSE;
+    }
+
+    sprintfW(bufferW, formatW, GeoID);
+    NtSetValueKey(hkey, &keyW, 0, REG_SZ, bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR));
+    NtClose(attr.RootDirectory);
+    NtClose(hkey);
+    return TRUE;
 }
 
 typedef struct
