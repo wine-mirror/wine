@@ -583,7 +583,35 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 
     update_doc(This, UPDATE_UI);
 
-    return IPersistMoniker_Load(PERSISTMON(This), TRUE, mon, NULL, 0);
+    hres = IPersistMoniker_Load(PERSISTMON(This), TRUE, mon, NULL, 0);
+    IMoniker_Release(mon);
+    if(FAILED(hres))
+        return hres;
+
+    if(This->ui_active) {
+        OLECHAR wszHTMLDocument[30];
+        RECT rcBorderWidths;
+
+        if(This->ip_window)
+            IOleInPlaceUIWindow_SetActiveObject(This->ip_window, NULL, NULL);
+        if(This->hostui)
+            IDocHostUIHandler_HideUI(This->hostui);
+
+        if(This->hostui)
+            IDocHostUIHandler_ShowUI(This->hostui, DOCHOSTUITYPE_AUTHOR, ACTOBJ(This), CMDTARGET(This),
+                This->frame, This->ip_window);
+
+        LoadStringW(hInst, IDS_HTMLDOCUMENT, wszHTMLDocument,
+                    sizeof(wszHTMLDocument)/sizeof(WCHAR));
+
+        if(This->ip_window)
+            IOleInPlaceUIWindow_SetActiveObject(This->ip_window, ACTOBJ(This), wszHTMLDocument);
+
+        memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
+        IOleInPlaceFrame_SetBorderSpace(This->frame, &rcBorderWidths);
+    }
+
+    return S_OK;
 }
 
 static HRESULT exec_htmleditmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
