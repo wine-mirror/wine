@@ -251,8 +251,10 @@ static HRESULT WINAPI SecManagerImpl_MapUrlToZone(IInternetSecurityManager *ifac
             return hres;
     }
 
-    if(!pwszUrl)
+    if(!pwszUrl) {
+        *pdwZone = -1;
         return E_INVALIDARG;
+    }
 
     if(dwFlags)
         FIXME("not supported flags: %08x\n", dwFlags);

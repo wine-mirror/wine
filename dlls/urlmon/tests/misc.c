@@ -691,7 +691,7 @@ static void test_SecurityManager(void)
     zone = 100;
     hres = IInternetSecurityManager_MapUrlToZone(secmgr, NULL, &zone, 0);
     ok(hres == E_INVALIDARG, "MapUrlToZone failed: %08x, expected E_INVALIDARG\n", hres);
-    ok(zone == 100, "zone=%d\n", zone);
+    ok(zone == 100 || zone == -1, "zone=%d\n", zone);
 
     size = sizeof(buf);
     hres = IInternetSecurityManager_GetSecurityId(secmgr, NULL, buf, &size, 0);
