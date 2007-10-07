@@ -72,7 +72,7 @@ struct file_info
     WCHAR              *info;
 };
 
-struct version
+struct assembly_version
 {
     USHORT              major;
     USHORT              minor;
@@ -87,7 +87,7 @@ struct assembly_identity
     WCHAR                *public_key;
     WCHAR                *language;
     WCHAR                *type;
-    struct version        version;
+    struct assembly_version version;
     BOOL                  optional;
 };
 
@@ -272,7 +272,7 @@ static inline const char* debugstr_xmlstr(const xmlstr_t* str)
     return debugstr_wn(str->ptr, str->len);
 }
 
-static inline const char* debugstr_version(const struct version *ver)
+static inline const char* debugstr_version(const struct assembly_version *ver)
 {
     return wine_dbg_sprintf("%u.%u.%u.%u", ver->major, ver->minor, ver->build, ver->revision);
 }
@@ -743,7 +743,7 @@ static BOOL parse_text_content(xmlbuf_t* xmlbuf, xmlstr_t* content)
     return TRUE;
 }
 
-static BOOL parse_version(const xmlstr_t *str, struct version *version)
+static BOOL parse_version(const xmlstr_t *str, struct assembly_version *version)
 {
     unsigned int ver[4];
     unsigned int pos;
