@@ -211,52 +211,6 @@ static HRESULT remove_value(HKEY root, const WCHAR *subkey, const WCHAR *name)
     return S_OK;
 }
 
-/* removes the requested subkey from the registry, assuming it exists */
-static LONG remove_path(HKEY root, WCHAR *section) {
-    HKEY branch_key;
-    DWORD max_sub_key_len;
-    DWORD subkeys;
-    DWORD curr_len;
-    LONG ret = ERROR_SUCCESS;
-    long int i;
-    WCHAR *buffer;
-
-    WINE_TRACE("section=%s\n", wine_dbgstr_w(section));
-
-    if ((ret = RegOpenKeyW(root, section, &branch_key)) != ERROR_SUCCESS)
-        return ret;
-
-    /* get size information and resize the buffers if necessary */
-    if ((ret = RegQueryInfoKeyW(branch_key, NULL, NULL, NULL,
-                               &subkeys, &max_sub_key_len,
-                               NULL, NULL, NULL, NULL, NULL, NULL
-                              )) != ERROR_SUCCESS)
-        return ret;
-
-    curr_len = lstrlenW(section);
-    buffer = HeapAlloc(GetProcessHeap(), 0, (max_sub_key_len + curr_len + 1)*sizeof(WCHAR));
-    lstrcpyW(buffer, section);
-
-    buffer[curr_len] = '\\';
-    for (i = subkeys - 1; i >= 0; i--)
-    {
-        DWORD buf_len = max_sub_key_len - curr_len - 1;
-
-        ret = RegEnumKeyExW(branch_key, i, buffer + curr_len + 1,
-                           &buf_len, NULL, NULL, NULL, NULL);
-        if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA &&
-            ret != ERROR_NO_MORE_ITEMS)
-            break;
-        else
-            remove_path(root, buffer);
-    }
-    HeapFree(GetProcessHeap(), 0, buffer);
-    RegCloseKey(branch_key);
-
-    return RegDeleteKeyW(root, section);
-}
-
-
 /* ========================================================================= */
 
 /* This code exists for the following reasons:
@@ -682,7 +636,7 @@ static void process_setting(struct setting *s)
     {
         /* NULL name means remove that path/section entirely */
 	if (s->path && s->name) remove_value(s->root, s->path, s->name);
-        else if (s->path && !s->name) remove_path(s->root, s->path);
+        else if (s->path && !s->name) RegDeleteTreeW(s->root, s->path);
     }
 }
 
