@@ -141,7 +141,7 @@ static const struct message TestGetSetItemHeightSeq[] = {
     { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0x00000000, 0x00000000 },
     { TVM_SETITEMHEIGHT, sent|wparam|lparam, 0xffffffff, 0x00000000 },
     { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0x00000000, 0x00000000 },
-    { TVM_SETITEMHEIGHT, sent|wparam|lparam, 0x00000020, 0x00000000 },
+    { TVM_SETITEMHEIGHT, sent|lparam, 0xcccccccc, 0x00000000 },
     { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0x00000000, 0x00000000 },
     { TVM_SETITEMHEIGHT, sent|wparam|lparam, 0x00000009, 0x00000000 },
     { WM_WINDOWPOSCHANGING, sent|defwinproc },
