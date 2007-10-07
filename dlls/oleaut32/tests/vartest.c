@@ -3107,6 +3107,7 @@ static void test_VarRound(void)
     HRESULT hres;
     VARIANT v, exp, vDst;
     CY *pcy = &V_CY(&v);
+    char buff[8];
 
     CHECKPTR(VarRound);
 
@@ -3138,8 +3139,14 @@ static void test_VarRound(void)
      * compare the first few digits. */
     VARROUND(DATE,1.451,1,DATE,1.5);
     VARROUND(DATE,-1.45,1,DATE,-1.4);
-    VARROUND(BSTR,(BSTR)szNumMin,1,R8,-1.40);
-    if (0) { VARROUND(BSTR,(BSTR)szNum,1,R8,1.50); }
+    GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
+    if (buff[0] != '.' || buff[1])
+        skip("Skipping VarRound(BSTR) as decimal separator is '%s'\n", buff);
+    else
+    {
+        VARROUND(BSTR,(BSTR)szNumMin,1,R8,-1.40);
+        if (0) { VARROUND(BSTR,(BSTR)szNum,1,R8,1.50); }
+    }
 
     VARROUND(R4,1.23456f,0,R4,1.0f);
     VARROUND(R4,1.23456f,1,R4,1.2f);
