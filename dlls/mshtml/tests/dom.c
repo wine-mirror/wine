@@ -597,8 +597,10 @@ typedef void (*domtest_t)(IHTMLDocument2*);
 static void run_domtest(const char *str, domtest_t test)
 {
     IHTMLDocument2 *doc;
+    IHTMLElement *body = NULL;
     ULONG ref;
     MSG msg;
+    HRESULT hres;
 
     doc = create_doc_with_string(str);
     do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
@@ -608,7 +610,15 @@ static void run_domtest(const char *str, domtest_t test)
         DispatchMessage(&msg);
     }
 
-    test(doc);
+    hres = IHTMLDocument2_get_body(doc, &body);
+    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+
+    if(body) {
+        IHTMLElement_Release(body);
+        test(doc);
+    }else {
+        skip("Could not get document body. Assuming no Gecko installed.\n");
+    }
 
     ref = IHTMLDocument2_Release(doc);
     ok(!ref, "ref = %d\n", ref);
