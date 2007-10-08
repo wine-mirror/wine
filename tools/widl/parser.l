@@ -78,7 +78,7 @@ int import_stack_ptr = 0;
 
 static void pop_import(void);
 
-static UUID* parse_uuid(const char*u)
+UUID *parse_uuid(const char *u)
 {
   UUID* uuid = xmalloc(sizeof(UUID));
   char b[3];

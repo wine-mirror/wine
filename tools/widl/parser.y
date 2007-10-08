@@ -265,6 +265,7 @@ static void check_all_user_types(ifref_list_t *ifaces);
 %type <type> coclass coclasshdr coclassdef
 %type <num> pointer_type version
 %type <str> libraryhdr
+%type <uuid> uuid_string
 
 %left ','
 %right '?' ':'
@@ -498,13 +499,19 @@ attribute:					{ $$ = NULL; }
 	| tSWITCHIS '(' expr ')'		{ $$ = make_attrp(ATTR_SWITCHIS, $3); }
 	| tSWITCHTYPE '(' type ')'		{ $$ = make_attrp(ATTR_SWITCHTYPE, $3); }
 	| tTRANSMITAS '(' type ')'		{ $$ = make_attrp(ATTR_TRANSMITAS, $3); }
-	| tUUID '(' aUUID ')'			{ $$ = make_attrp(ATTR_UUID, $3); }
+	| tUUID '(' uuid_string ')'		{ $$ = make_attrp(ATTR_UUID, $3); }
 	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
 	| tVARARG				{ $$ = make_attr(ATTR_VARARG); }
 	| tVERSION '(' version ')'		{ $$ = make_attrv(ATTR_VERSION, $3); }
 	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_WIREMARSHAL, $3); }
 	| pointer_type				{ $$ = make_attrv(ATTR_POINTERTYPE, $1); }
 	;
+
+uuid_string:
+	  aUUID
+	| aSTRING				{ if (!is_valid_uuid($1))
+						    yyerror("invalid UUID: %s", $1);
+						  $$ = parse_uuid($1); }
 
 callconv:
 	| tSTDCALL
@@ -2036,4 +2043,21 @@ static void check_all_user_types(ifref_list_t *ifrefs)
     if (fs) LIST_FOR_EACH_ENTRY(f, fs, const func_t, entry)
       check_for_user_types_and_context_handles(f->args);
   }
+}
+
+int is_valid_uuid(const char *s)
+{
+  int i;
+
+  for (i = 0; i < 36; ++i)
+    if (i == 8 || i == 13 || i == 18 || i == 23)
+    {
+      if (s[i] != '-')
+        return FALSE;
+    }
+    else
+      if (!isxdigit(s[i]))
+        return FALSE;
+
+  return s[i] == '\0';
 }

@@ -42,4 +42,7 @@ void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));
 
 char *dup_basename(const char *name, const char *ext);
 
+UUID *parse_uuid(const char *u);
+int is_valid_uuid(const char *s);
+
 #endif
