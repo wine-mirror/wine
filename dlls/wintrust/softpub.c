@@ -23,6 +23,7 @@
 #include "winbase.h"
 #include "wintrust.h"
 #include "mssip.h"
+#include "softpub.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
@@ -574,6 +575,28 @@ static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
     return ret;
 }
 
+static void WINTRUST_CreateChainPolicyCreateInfo(
+ const CRYPT_PROVIDER_DATA *data, PWTD_GENERIC_CHAIN_POLICY_CREATE_INFO info,
+ PCERT_CHAIN_PARA chainPara)
+{
+    chainPara->cbSize = sizeof(CERT_CHAIN_PARA);
+    if (data->pRequestUsage)
+        memcpy(&chainPara->RequestedUsage, data->pRequestUsage,
+         sizeof(CERT_USAGE_MATCH));
+    info->u.cbSize = sizeof(WTD_GENERIC_CHAIN_POLICY_CREATE_INFO);
+    info->hChainEngine = NULL;
+    info->pChainPara = chainPara;
+    if (data->dwProvFlags & CPD_REVOCATION_CHECK_END_CERT)
+        info->dwFlags = CERT_CHAIN_REVOCATION_CHECK_END_CERT;
+    else if (data->dwProvFlags & CPD_REVOCATION_CHECK_CHAIN)
+        info->dwFlags = CERT_CHAIN_REVOCATION_CHECK_CHAIN;
+    else if (data->dwProvFlags & CPD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT)
+        info->dwFlags = CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
+    else
+        info->dwFlags = 0;
+    info->pvReserved = NULL;
+}
+
 HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
@@ -586,35 +609,25 @@ HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
     else
     {
         DWORD i;
+        WTD_GENERIC_CHAIN_POLICY_CREATE_INFO createInfo;
+        CERT_CHAIN_PARA chainPara;
 
+        WINTRUST_CreateChainPolicyCreateInfo(data, &createInfo, &chainPara);
         ret = TRUE;
         for (i = 0; i < data->csSigners; i++)
         {
-            CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
-            DWORD flags;
-
-            if (data->pRequestUsage)
-                memcpy(&chainPara.RequestedUsage, data->pRequestUsage,
-                 sizeof(CERT_USAGE_MATCH));
-            if (data->dwProvFlags & CPD_REVOCATION_CHECK_END_CERT)
-                flags = CERT_CHAIN_REVOCATION_CHECK_END_CERT;
-            else if (data->dwProvFlags & CPD_REVOCATION_CHECK_CHAIN)
-                flags = CERT_CHAIN_REVOCATION_CHECK_CHAIN;
-            else if (data->dwProvFlags & CPD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT)
-                flags = CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
-            else
-                flags = 0;
             /* Expect the end certificate for each signer to be the only
              * cert in the chain:
              */
             if (data->pasSigners[i].csCertChain)
             {
                 /* Create a certificate chain for each signer */
-                ret = CertGetCertificateChain(NULL,
+                ret = CertGetCertificateChain(createInfo.hChainEngine,
                  data->pasSigners[i].pasCertChain[0].pCert,
                  &data->pasSigners[i].sftVerifyAsOf,
                  data->chStores ? data->pahStores[0] : NULL,
-                 &chainPara, flags, NULL, &data->pasSigners[i].pChainContext);
+                 &chainPara, createInfo.dwFlags, createInfo.pvReserved,
+                 &data->pasSigners[i].pChainContext);
                 if (ret)
                 {
                     if (data->pasSigners[i].pChainContext->cChain != 1)
