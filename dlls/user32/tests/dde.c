@@ -507,6 +507,7 @@ static void test_ddeml_client(void)
     DWORD client_pid;
     HCONV conversation;
 
+    client_pid = 0;
     ret = DdeInitializeA(&client_pid, client_ddeml_callback, APPCMD_CLIENTONLY, 0);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
 
