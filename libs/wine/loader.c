@@ -352,8 +352,8 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     /* Build the DOS and NT headers */
 
     dos->e_magic    = IMAGE_DOS_SIGNATURE;
-    dos->e_cblp     = sizeof(*dos);
-    dos->e_cp       = 1;
+    dos->e_cblp     = 0x90;
+    dos->e_cp       = 3;
     dos->e_cparhdr  = (sizeof(*dos)+0xf)/0x10;
     dos->e_minalloc = 0;
     dos->e_maxalloc = 0xffff;
