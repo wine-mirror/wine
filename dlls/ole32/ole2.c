@@ -2515,7 +2515,7 @@ BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
 
     hr = IOleObject_QueryInterface(pObject, &IID_IRunnableObject, (void **)&pRunnable);
     if (FAILED(hr))
-        return FALSE;
+        return TRUE;
     running = IRunnableObject_IsRunning(pRunnable);
     IRunnableObject_Release(pRunnable);
     return running;

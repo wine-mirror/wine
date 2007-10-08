@@ -46,6 +46,9 @@ static const CLSID CLSID_WineTest =
 
 static char const * const *expected_method_list;
 
+BOOL g_showRunnable = TRUE;
+BOOL g_isRunning = TRUE;
+
 #define CHECK_EXPECTED_METHOD(method_name) \
     do { \
         trace("%s\n", method_name); \
@@ -70,7 +73,7 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
         *ppv = &OleObjectPersistStg;
     else if (IsEqualIID(riid, &IID_IOleCache))
         *ppv = cache;
-    else if (IsEqualIID(riid, &IID_IRunnableObject))
+    else if (IsEqualIID(riid, &IID_IRunnableObject) && g_showRunnable)
         *ppv = runnable;
 
     if(*ppv) {
@@ -616,7 +619,7 @@ static HRESULT WINAPI OleObjectRunnable_Run(
 static BOOL WINAPI OleObjectRunnable_IsRunning(IRunnableObject *iface)
 {
     CHECK_EXPECTED_METHOD("OleObjectRunnable_IsRunning");
-    return TRUE;
+    return g_isRunning;
 }
 
 static HRESULT WINAPI OleObjectRunnable_LockRunning(
@@ -1453,6 +1456,43 @@ static void test_default_handler(void)
     IOleObject_Release(pObject);
 }
 
+void test_runnable(void)
+{
+    static const char *methods_query_runnable[] =
+    {
+        "OleObject_QueryInterface",
+        "OleObjectRunnable_AddRef",
+        "OleObjectRunnable_IsRunning",
+        "OleObjectRunnable_Release",
+        NULL
+    };
+
+    static const char *methods_no_runnable[] =
+    {
+        "OleObject_QueryInterface",
+        NULL
+    };
+
+    IOleObject *object = (IOleObject *)&OleObject;
+
+    expected_method_list = methods_query_runnable;
+    ok(OleIsRunning(object), "Object should be running\n");
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+
+    g_isRunning = FALSE;
+    expected_method_list = methods_query_runnable;
+    ok(OleIsRunning(object) == FALSE, "Object should not be running\n");
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+
+    g_showRunnable = FALSE;  /* QueryInterface(IID_IRunnableObject, ...) will fail */
+    expected_method_list = methods_no_runnable;
+    ok(OleIsRunning(object), "Object without IRunnableObject should be running\n");
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+
+    g_isRunning = TRUE;
+    g_showRunnable = TRUE;
+}
+
 START_TEST(ole2)
 {
     DWORD dwRegister;
@@ -1483,6 +1523,7 @@ START_TEST(ole2)
 
     test_data_cache();
     test_default_handler();
+    test_runnable();
 
     CoUninitialize();
 }
