@@ -761,6 +761,101 @@ HRESULT WINAPI SoftpubAuthenticode(CRYPT_PROVIDER_DATA *data)
     return ret ? S_OK : S_FALSE;
 }
 
+static HRESULT WINAPI WINTRUST_DefaultPolicy(CRYPT_PROVIDER_DATA *pProvData,
+ DWORD dwStepError, DWORD dwRegPolicySettings, DWORD cSigner,
+ PWTD_GENERIC_CHAIN_POLICY_SIGNER_INFO rgpSigner, void *pvPolicyArg)
+{
+    DWORD i;
+    CERT_CHAIN_POLICY_STATUS policyStatus = { sizeof(policyStatus), 0 };
+
+    for (i = 0; !policyStatus.dwError && i < cSigner; i++)
+    {
+        CERT_CHAIN_POLICY_PARA policyPara = { sizeof(policyPara), 0 };
+
+        if (dwRegPolicySettings & WTPF_IGNOREEXPIRATION)
+            policyPara.dwFlags |=
+             CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG |
+             CERT_CHAIN_POLICY_IGNORE_CTL_NOT_TIME_VALID_FLAG |
+             CERT_CHAIN_POLICY_IGNORE_NOT_TIME_NESTED_FLAG;
+        if (dwRegPolicySettings & WTPF_IGNOREREVOKATION)
+            policyPara.dwFlags |=
+             CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG |
+             CERT_CHAIN_POLICY_IGNORE_CTL_SIGNER_REV_UNKNOWN_FLAG |
+             CERT_CHAIN_POLICY_IGNORE_CA_REV_UNKNOWN_FLAG |
+             CERT_CHAIN_POLICY_IGNORE_ROOT_REV_UNKNOWN_FLAG;
+        CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE,
+         rgpSigner[i].pChainContext, &policyPara, &policyStatus);
+    }
+    return policyStatus.dwError;
+}
+
+HRESULT WINAPI GenericChainFinalProv(CRYPT_PROVIDER_DATA *data)
+{
+    HRESULT err = NO_ERROR; /* not a typo, MS confused the types */
+    WTD_GENERIC_CHAIN_POLICY_DATA *policyData =
+     (WTD_GENERIC_CHAIN_POLICY_DATA *)data->pWintrustData->pPolicyCallbackData;
+
+    TRACE("(%p)\n", data);
+
+    if (data->pWintrustData->dwUIChoice != WTD_UI_NONE)
+        FIXME("unimplemented for UI choice %d\n",
+         data->pWintrustData->dwUIChoice);
+    if (!data->csSigners)
+        err = TRUST_E_NOSIGNATURE;
+    else
+    {
+        PFN_WTD_GENERIC_CHAIN_POLICY_CALLBACK policyCallback;
+        void *policyArg;
+        WTD_GENERIC_CHAIN_POLICY_SIGNER_INFO *signers = NULL;
+
+        if (policyData)
+        {
+            policyCallback = policyData->pfnPolicyCallback;
+            policyArg = policyData->pvPolicyArg;
+        }
+        else
+        {
+            policyCallback = WINTRUST_DefaultPolicy;
+            policyArg = NULL;
+        }
+        if (data->csSigners)
+        {
+            DWORD i;
+
+            signers = data->psPfns->pfnAlloc(
+             data->csSigners * sizeof(WTD_GENERIC_CHAIN_POLICY_SIGNER_INFO));
+            if (signers)
+            {
+                for (i = 0; i < data->csSigners; i++)
+                {
+                    signers[i].u.cbSize =
+                     sizeof(WTD_GENERIC_CHAIN_POLICY_SIGNER_INFO);
+                    signers[i].pChainContext =
+                     data->pasSigners[i].pChainContext;
+                    signers[i].dwSignerType = data->pasSigners[i].dwSignerType;
+                    signers[i].pMsgSignerInfo = data->pasSigners[i].psSigner;
+                    signers[i].dwError = data->pasSigners[i].dwError;
+                    if (data->pasSigners[i].csCounterSigners)
+                        FIXME("unimplemented for counter signers\n");
+                    signers[i].cCounterSigner = 0;
+                    signers[i].rgpCounterSigner = NULL;
+                }
+            }
+            else
+                err = ERROR_OUTOFMEMORY;
+        }
+        if (!err)
+            err = policyCallback(data, TRUSTERROR_STEP_FINAL_POLICYPROV,
+             data->dwRegPolicySettings, data->csSigners, signers, policyArg);
+        data->psPfns->pfnFree(signers);
+    }
+    if (err)
+        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_POLICYPROV] = err;
+    TRACE("returning %d (%08x)\n", !err ? S_OK : S_FALSE,
+     data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_POLICYPROV]);
+    return err == NO_ERROR ? S_OK : S_FALSE;
+}
+
 HRESULT WINAPI SoftpubCleanup(CRYPT_PROVIDER_DATA *data)
 {
     DWORD i, j;
