@@ -307,6 +307,8 @@ struct _user_type_t {
     const char *name;
 };
 
+extern unsigned char pointer_default;
+
 extern user_type_list_t user_type_list;
 void check_for_user_types_and_context_handles(const var_list_t *list);
 

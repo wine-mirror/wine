@@ -155,6 +155,7 @@ static void check_all_user_types(ifref_list_t *ifaces);
 	UUID *uuid;
 	unsigned int num;
 	double dbl;
+	interface_info_t ifinfo;
 }
 
 %token <str> aIDENTIFIER
@@ -247,7 +248,8 @@ static void check_all_user_types(ifref_list_t *ifaces);
 %type <expr> m_expr expr expr_const
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_const
 %type <array_dims> array array_list
-%type <type> inherit interface interfacehdr interfacedef interfacedec
+%type <ifinfo> interfacehdr
+%type <type> inherit interface interfacedef interfacedec
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
 %type <type> module modulehdr moduledef
 %type <type> base_type int_std
@@ -795,32 +797,37 @@ interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(RPC_FC_IP, $2, 0); $$->kind =
 	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(RPC_FC_IP, $2, 0); $$->kind = TKIND_INTERFACE; }
 	;
 
-interfacehdr: attributes interface		{ $$ = $2;
-						  if ($$->defined) yyerror("multiple definition error");
-						  $$->attrs = $1;
-						  $$->defined = TRUE;
-						  if (!parse_only && do_header) write_forward($$);
+interfacehdr: attributes interface		{ $$.interface = $2;
+						  $$.old_pointer_default = pointer_default;
+						  if (is_attr($1, ATTR_POINTERDEFAULT))
+						    pointer_default = get_attrv($1, ATTR_POINTERDEFAULT);
+						  if ($2->defined) yyerror("multiple definition error");
+						  $2->attrs = $1;
+						  $2->defined = TRUE;
+						  if (!parse_only && do_header) write_forward($2);
 						}
 	;
 
 interfacedef: interfacehdr inherit
-	  '{' int_statements '}'		{ $$ = $1;
+	  '{' int_statements '}'		{ $$ = $1.interface;
 						  $$->ref = $2;
 						  $$->funcs = $4;
 						  compute_method_indexes($$);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && do_idfile) write_iid($$);
+						  pointer_default = $1.old_pointer_default;
 						}
 /* MIDL is able to import the definition of a base class from inside the
  * definition of a derived class, I'll try to support it with this rule */
 	| interfacehdr ':' aIDENTIFIER
-	  '{' import int_statements '}'		{ $$ = $1;
+	  '{' import int_statements '}'		{ $$ = $1.interface;
 						  $$->ref = find_type2($3, 0);
 						  if (!$$->ref) yyerror("base class '%s' not found in import", $3);
 						  $$->funcs = $6;
 						  compute_method_indexes($$);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && do_idfile) write_iid($$);
+						  pointer_default = $1.old_pointer_default;
 						}
 	| dispinterfacedef			{ $$ = $1; }
 	;

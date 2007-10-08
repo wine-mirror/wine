@@ -252,6 +252,9 @@ void start_typelib(char *name, attr_list_t *attrs)
     typelib->attrs = attrs;
     list_init( &typelib->entries );
     list_init( &typelib->importlibs );
+
+    if (is_attr(attrs, ATTR_POINTERDEFAULT))
+        pointer_default = get_attrv(attrs, ATTR_POINTERDEFAULT);
 }
 
 void end_typelib(void)
@@ -260,6 +263,7 @@ void end_typelib(void)
     if (!typelib) return;
 
     create_msft_typelib(typelib);
+    pointer_default = RPC_FC_UP;
     return;
 }
 
