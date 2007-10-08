@@ -1249,9 +1249,30 @@ static array_dims_t *append_array(array_dims_t *list, expr_t *expr)
     return list;
 }
 
+static struct list type_pool = LIST_INIT(type_pool);
+typedef struct
+{
+  type_t data;
+  struct list link;
+} type_pool_node_t;
+
+type_t *alloc_type(void)
+{
+  type_pool_node_t *node = xmalloc(sizeof *node);
+  list_add_tail(&type_pool, &node->link);
+  return &node->data;
+}
+
+void set_all_tfswrite(int val)
+{
+  type_pool_node_t *node;
+  LIST_FOR_EACH_ENTRY(node, &type_pool, type_pool_node_t, link)
+    node->data.tfswrite = val;
+}
+
 static type_t *make_type(unsigned char type, type_t *ref)
 {
-  type_t *t = xmalloc(sizeof(type_t));
+  type_t *t = alloc_type();
   t->name = NULL;
   t->kind = TKIND_PRIMITIVE;
   t->type = type;

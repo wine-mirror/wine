@@ -52,7 +52,7 @@ static typelib_t *typelib;
 
 type_t *duptype(type_t *t, int dupname)
 {
-  type_t *d = xmalloc(sizeof *d);
+  type_t *d = alloc_type();
 
   *d = *t;
   if (dupname && t->name)

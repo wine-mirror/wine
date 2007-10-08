@@ -2095,36 +2095,6 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
                            offset, typeformat_offset);
 }
 
-static void set_tfswrite(type_t *type, int val)
-{
-    while (type->tfswrite != val)
-    {
-        type_t *utype = get_user_type(type, NULL);
-
-        type->tfswrite = val;
-
-        if (utype)
-            set_tfswrite(utype, val);
-
-        if (type->kind == TKIND_ALIAS)
-            type = type->orig;
-        else if (is_ptr(type) || is_array(type))
-            type = type->ref;
-        else
-        {
-            if (type->fields)
-            {
-                var_t *v;
-                LIST_FOR_EACH_ENTRY( v, type->fields, var_t, entry )
-                    if (v->type)
-                        set_tfswrite(v->type, val);
-            }
-
-            return;
-        }
-    }
-}
-
 static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
                                 const char *name, int write_ptr, unsigned int *tfsoff)
 {
@@ -2180,21 +2150,6 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     return retmask;
 }
 
-static void set_all_tfswrite(const ifref_list_t *ifaces, int val)
-{
-    const ifref_t * iface;
-    const func_t *func;
-    const var_t *var;
-
-    if (ifaces)
-        LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
-            if (iface->iface->funcs)
-                LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
-                    if (func->args)
-                        LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-                            set_tfswrite(var->type, val);
-}
-
 static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, int for_objects)
 {
     const var_t *var;
@@ -2242,7 +2197,7 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
     indent++;
     print_file(file, indent, "NdrFcShort(0x0),\n");
 
-    set_all_tfswrite(ifaces, TRUE);
+    set_all_tfswrite(TRUE);
     process_tfs(file, ifaces, for_objects);
 
     print_file(file, indent, "0x0\n");
@@ -2859,7 +2814,7 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
 
 size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
 {
-    set_all_tfswrite(ifaces, FALSE);
+    set_all_tfswrite(FALSE);
     return process_tfs(NULL, ifaces, for_objects);
 }
 
