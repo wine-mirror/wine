@@ -1800,6 +1800,9 @@ static DWORD CRYPT_SizeOfAttributes(const CRYPT_ATTRIBUTES *attr)
         for (j = 0; j < attr->rgAttr[i].cValue; j++)
             size += attr->rgAttr[i].rgValue[j].cbData;
     }
+    /* align pointer again to be conservative */
+    if (size % sizeof(DWORD_PTR))
+        size += size % sizeof(DWORD_PTR);
     return size;
 }
 
