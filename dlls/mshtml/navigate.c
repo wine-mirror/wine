@@ -220,6 +220,10 @@ static HRESULT read_stream_data(BSCallback *This, IStream *stream)
                     (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
             if(NS_FAILED(nsres))
                 FIXME("OnStartRequest failed: %08x\n", nsres);
+
+            /* events are reset when a new document URI is loaded, so re-initialise them here */
+            if(This->doc && This->doc->nscontainer)
+                init_nsevents(This->doc->nscontainer);
         }
 
         This->readed += This->nsstream->buf_size;
@@ -818,10 +822,6 @@ HRESULT start_binding(BSCallback *bscallback)
 
     IMoniker_Release(bscallback->mon);
     bscallback->mon = NULL;
-
-    /* events are reset when a new document URI is loaded, so re-initialise them here */
-    if(bscallback->doc && bscallback->doc->nscontainer)
-        init_nsevents(bscallback->doc->nscontainer);
 
     return S_OK;
 }
