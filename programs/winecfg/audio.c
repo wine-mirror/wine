@@ -82,12 +82,12 @@ static const char* DSound_Bits[] = {
 
 static const AUDIO_DRIVER sAudioDrivers[] = {
   {IDS_DRIVER_ALSA,      "alsa"},
-  {IDS_DRIVER_ESOUND,    "esd"},
   {IDS_DRIVER_OSS,       "oss"},
+  {IDS_DRIVER_COREAUDIO, "coreaudio"},
   {IDS_DRIVER_JACK,      "jack"},
   {IDS_DRIVER_NAS,       "nas"},
+  {IDS_DRIVER_ESOUND,    "esd"},
   {IDS_DRIVER_AUDIOIO,   "audioio"},
-  {IDS_DRIVER_COREAUDIO, "coreaudio"},
   {0, ""}
 };
 
@@ -623,41 +623,13 @@ static void initAudioDlg (HWND hDlg)
     buf = get_reg_key(config_key, "Drivers", "Audio", NULL);
 
     /* check for first time install and set a default driver
-     * select in this order: oss, alsa, first available driver, none
+     * select first available driver, and if that fails: none
      */
     if (buf == NULL)
     {
-        const AUDIO_DRIVER *pAudioDrv = NULL;
-
-        /* select oss if available */
-        for (pAudioDrv = loadedAudioDrv; pAudioDrv->nameID; pAudioDrv++)
-        {
-            if (strcmp(pAudioDrv->szDriver, "oss") == 0)
-            {
-                selectDriver(hDlg, "oss");
-                break;
-            }
-        }
-
-        if (strlen(curAudioDriver) == 0)
-        {
-            /* select alsa if available */
-            for (pAudioDrv = loadedAudioDrv; pAudioDrv->nameID; pAudioDrv++)
-            {
-                if (strcmp(pAudioDrv->szDriver, "alsa") == 0)
-                {
-                    selectDriver(hDlg, "alsa");
-                    break;
-                }
-            }
-        }
-
-        if (strlen(curAudioDriver) == 0)
-        {
-            /* select first available driver */
-            if (*loadedAudioDrv->szDriver)
-                selectDriver(hDlg, loadedAudioDrv->szDriver);
-        }
+        /* select first available driver */
+        if (*loadedAudioDrv->szDriver)
+            selectDriver(hDlg, loadedAudioDrv->szDriver);
     }
     else /* make a local copy of the current registry setting */
         strcpy(curAudioDriver, buf);

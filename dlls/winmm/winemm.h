@@ -25,7 +25,7 @@
 #include "winbase.h"
 #include "mmddk.h"
 
-#define WINE_DEFAULT_WINMM_DRIVER     "oss"
+#define WINE_DEFAULT_WINMM_DRIVER     "alsa,oss,coreaudio"
 #define WINE_DEFAULT_WINMM_MAPPER     "msacm32.drv"
 #define WINE_DEFAULT_WINMM_MIDI       "midimap.dll"
 
