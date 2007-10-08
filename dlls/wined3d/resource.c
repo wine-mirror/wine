@@ -137,6 +137,7 @@ HRESULT WINAPI IWineD3DResourceImpl_SetPrivateData(IWineD3DResource *iface, REFG
     if (Flags & WINED3DSPD_IUNKNOWN) {
         if(SizeOfData != sizeof(IUnknown *)) {
             WARN("IUnknown data with size %d, returning WINED3DERR_INVALIDCALL\n", SizeOfData);
+            HeapFree(GetProcessHeap(), 0, data);
             return WINED3DERR_INVALIDCALL;
         }
         data->ptr.object = (LPUNKNOWN)pData;
