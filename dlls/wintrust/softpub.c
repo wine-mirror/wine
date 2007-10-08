@@ -597,6 +597,42 @@ static void WINTRUST_CreateChainPolicyCreateInfo(
     info->pvReserved = NULL;
 }
 
+static BOOL WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
+ DWORD signer, PWTD_GENERIC_CHAIN_POLICY_CREATE_INFO createInfo,
+ PCERT_CHAIN_PARA chainPara)
+{
+    BOOL ret = TRUE;
+
+    /* Expect the end certificate for each signer to be the only cert in the
+     * chain:
+     */
+    if (data->pasSigners[signer].csCertChain)
+    {
+        /* Create a certificate chain for each signer */
+        ret = CertGetCertificateChain(createInfo->hChainEngine,
+         data->pasSigners[signer].pasCertChain[0].pCert,
+         &data->pasSigners[signer].sftVerifyAsOf,
+         data->chStores ? data->pahStores[0] : NULL,
+         chainPara, createInfo->dwFlags, createInfo->pvReserved,
+         &data->pasSigners[signer].pChainContext);
+        if (ret)
+        {
+            if (data->pasSigners[signer].pChainContext->cChain != 1)
+            {
+                FIXME("unimplemented for more than 1 simple chain\n");
+                ret = FALSE;
+            }
+            else
+            {
+                if ((ret = WINTRUST_CopyChain(data, signer)))
+                    ret = data->psPfns->pfnCertCheckPolicy(data, signer, FALSE,
+                     0);
+            }
+        }
+    }
+    return ret;
+}
+
 HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
@@ -615,35 +651,8 @@ HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
         WINTRUST_CreateChainPolicyCreateInfo(data, &createInfo, &chainPara);
         ret = TRUE;
         for (i = 0; i < data->csSigners; i++)
-        {
-            /* Expect the end certificate for each signer to be the only
-             * cert in the chain:
-             */
-            if (data->pasSigners[i].csCertChain)
-            {
-                /* Create a certificate chain for each signer */
-                ret = CertGetCertificateChain(createInfo.hChainEngine,
-                 data->pasSigners[i].pasCertChain[0].pCert,
-                 &data->pasSigners[i].sftVerifyAsOf,
-                 data->chStores ? data->pahStores[0] : NULL,
-                 &chainPara, createInfo.dwFlags, createInfo.pvReserved,
-                 &data->pasSigners[i].pChainContext);
-                if (ret)
-                {
-                    if (data->pasSigners[i].pChainContext->cChain != 1)
-                    {
-                        FIXME("unimplemented for more than 1 simple chain\n");
-                        ret = FALSE;
-                    }
-                    else
-                    {
-                        if ((ret = WINTRUST_CopyChain(data, i)))
-                            ret = data->psPfns->pfnCertCheckPolicy(data, i,
-                             FALSE, 0);
-                    }
-                }
-            }
-        }
+            ret = WINTRUST_CreateChainForSigner(data, i, &createInfo,
+             &chainPara);
     }
     if (!ret)
         data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV] =
