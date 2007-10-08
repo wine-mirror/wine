@@ -248,25 +248,28 @@ static BOOL pe_load_export_debug_info(const struct process* pcs,
         ordinals  = RtlImageRvaToVa(nth, (void*)mapping, exports->AddressOfNameOrdinals, NULL);
         names     = RtlImageRvaToVa(nth, (void*)mapping, exports->AddressOfNames, NULL);
 
-        for (i = 0; i < exports->NumberOfNames; i++) 
+        if (functions && ordinals && names)
         {
-            if (!names[i]) continue;
-            symt_new_public(module, NULL, 
-                            RtlImageRvaToVa(nth, (void*)mapping, names[i], NULL),
-                            base + functions[ordinals[i]], 
-                            1, TRUE /* FIXME */, TRUE /* FIXME */);
-        }
-	    
-        for (i = 0; i < exports->NumberOfFunctions; i++) 
-        {
-            if (!functions[i]) continue;
-            /* Check if we already added it with a name */
-            for (j = 0; j < exports->NumberOfNames; j++)
-                if ((ordinals[j] == i) && names[j]) break;
-            if (j < exports->NumberOfNames) continue;
-            snprintf(buffer, sizeof(buffer), "%d", i + exports->Base);
-            symt_new_public(module, NULL, buffer, base + (DWORD)functions[i], 1,
-                            TRUE /* FIXME */, TRUE /* FIXME */);
+            for (i = 0; i < exports->NumberOfNames; i++)
+            {
+                if (!names[i]) continue;
+                symt_new_public(module, NULL,
+                                RtlImageRvaToVa(nth, (void*)mapping, names[i], NULL),
+                                base + functions[ordinals[i]],
+                                1, TRUE /* FIXME */, TRUE /* FIXME */);
+            }
+
+            for (i = 0; i < exports->NumberOfFunctions; i++)
+            {
+                if (!functions[i]) continue;
+                /* Check if we already added it with a name */
+                for (j = 0; j < exports->NumberOfNames; j++)
+                    if ((ordinals[j] == i) && names[j]) break;
+                if (j < exports->NumberOfNames) continue;
+                snprintf(buffer, sizeof(buffer), "%d", i + exports->Base);
+                symt_new_public(module, NULL, buffer, base + (DWORD)functions[i], 1,
+                                TRUE /* FIXME */, TRUE /* FIXME */);
+            }
         }
     }
     /* no real debug info, only entry points */
