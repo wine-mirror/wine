@@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
+static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE (*table)[4], BOOL colorkey);
 
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
     if (!(This->resource.allocatedMemory || This->Flags & SFLAG_PBO)) This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, This->resource.size + 4);
@@ -1589,54 +1590,13 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
         {
             IWineD3DPaletteImpl* pal = This->palette;
             BYTE table[256][4];
-            unsigned int i;
             unsigned int x, y;
 
             if( pal == NULL) {
                 /* TODO: If we are a sublevel, try to get the palette from level 0 */
             }
 
-            if (pal == NULL) {
-                /* Still no palette? Use the device's palette */
-                /* Get the surface's palette */
-                for (i = 0; i < 256; i++) {
-                    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-
-                    table[i][0] = device->palettes[device->currentPalette][i].peRed;
-                    table[i][1] = device->palettes[device->currentPalette][i].peGreen;
-                    table[i][2] = device->palettes[device->currentPalette][i].peBlue;
-                    if ((convert == CONVERT_PALETTED_CK) &&
-                        (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
-                        (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
-                        /* We should maybe here put a more 'neutral' color than the standard bright purple
-                          one often used by application to prevent the nice purple borders when bi-linear
-                          filtering is on */
-                        table[i][3] = 0x00;
-                    } else {
-                        table[i][3] = 0xFF;
-                    }
-                }
-            } else {
-                TRACE("Using surface palette %p\n", pal);
-                /* Get the surface's palette */
-                for (i = 0; i < 256; i++) {
-                    table[i][0] = pal->palents[i].peRed;
-                    table[i][1] = pal->palents[i].peGreen;
-                    table[i][2] = pal->palents[i].peBlue;
-                    if ((convert == CONVERT_PALETTED_CK) &&
-                        (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
-                        (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
-                        /* We should maybe here put a more 'neutral' color than the standard bright purple
-                          one often used by application to prevent the nice purple borders when bi-linear
-                          filtering is on */
-                        table[i][3] = 0x00;
-                    } else if(pal->Flags & WINEDDPCAPS_ALPHA) {
-                        table[i][3] = pal->palents[i].peFlags;
-                    } else {
-                        table[i][3] = 0xFF;
-                    }
-                }
-            }
+            d3dfmt_p8_init_palette(This, table, (convert == CONVERT_PALETTED_CK));
 
             for (y = 0; y < height; y++)
             {
@@ -1930,14 +1890,8 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
     return WINED3D_OK;
 }
 
-/* This function is used in case of 8bit paletted textures to upload the palette.
-   For now it only supports GL_EXT_paletted_texture extension but support for other
-   extensions like ARB_fragment_program and ATI_fragment_shaders will be added as well.
-*/
-static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES convert) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE (*table)[4], BOOL colorkey) {
     IWineD3DPaletteImpl* pal = This->palette;
-    BYTE table[256][4];
     int i;
 
     if (pal == NULL) {
@@ -1949,7 +1903,7 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
             table[i][0] = device->palettes[device->currentPalette][i].peRed;
             table[i][1] = device->palettes[device->currentPalette][i].peGreen;
             table[i][2] = device->palettes[device->currentPalette][i].peBlue;
-            if ((convert == CONVERT_PALETTED_CK) &&
+            if (colorkey &&
                 (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
                 (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
                 /* We should maybe here put a more 'neutral' color than the standard bright purple
@@ -1967,7 +1921,7 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
             table[i][0] = pal->palents[i].peRed;
             table[i][1] = pal->palents[i].peGreen;
             table[i][2] = pal->palents[i].peBlue;
-            if ((convert == CONVERT_PALETTED_CK) &&
+            if (colorkey &&
                 (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
                 (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
                 /* We should maybe here put a more 'neutral' color than the standard bright purple
@@ -1981,6 +1935,17 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
             }
         }
     }
+}
+
+/* This function is used in case of 8bit paletted textures to upload the palette.
+   For now it only supports GL_EXT_paletted_texture extension but support for other
+   extensions like ARB_fragment_program and ATI_fragment_shaders will be added as well.
+*/
+static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES convert) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    BYTE table[256][4];
+
+    d3dfmt_p8_init_palette(This, table, (convert == CONVERT_PALETTED_CK));
     GL_EXTCALL(glColorTableEXT(GL_TEXTURE_2D,GL_RGBA,256,GL_RGBA,GL_UNSIGNED_BYTE, table));
 }
 
