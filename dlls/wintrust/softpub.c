@@ -660,6 +660,58 @@ HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
     return ret ? S_OK : S_FALSE;
 }
 
+HRESULT WINAPI GenericChainCertificateTrust(CRYPT_PROVIDER_DATA *data)
+{
+    BOOL ret;
+    WTD_GENERIC_CHAIN_POLICY_DATA *policyData =
+     (WTD_GENERIC_CHAIN_POLICY_DATA *)data->pWintrustData->pPolicyCallbackData;
+
+    TRACE("(%p)\n", data);
+
+    if (policyData && policyData->u.cbSize !=
+     sizeof(WTD_GENERIC_CHAIN_POLICY_CREATE_INFO))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        ret = FALSE;
+        goto end;
+    }
+    if (!data->csSigners)
+    {
+        ret = FALSE;
+        SetLastError(TRUST_E_NOSIGNATURE);
+    }
+    else
+    {
+        DWORD i;
+        WTD_GENERIC_CHAIN_POLICY_CREATE_INFO createInfo, *pCreateInfo;
+        CERT_CHAIN_PARA chainPara, *pChainPara;
+
+        if (policyData)
+        {
+            pCreateInfo = policyData->pSignerChainInfo;
+            pChainPara = pCreateInfo->pChainPara;
+        }
+        else
+        {
+            WINTRUST_CreateChainPolicyCreateInfo(data, &createInfo, &chainPara);
+            pChainPara = &chainPara;
+            pCreateInfo = &createInfo;
+        }
+        ret = TRUE;
+        for (i = 0; i < data->csSigners; i++)
+            ret = WINTRUST_CreateChainForSigner(data, i, pCreateInfo,
+             pChainPara);
+    }
+
+end:
+    if (!ret)
+        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV] =
+         GetLastError();
+    TRACE("returning %d (%08x)\n", ret ? S_OK : S_FALSE,
+     data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV]);
+    return ret ? S_OK : S_FALSE;
+}
+
 HRESULT WINAPI SoftpubAuthenticode(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;

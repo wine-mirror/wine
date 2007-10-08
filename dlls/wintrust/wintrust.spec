@@ -46,7 +46,7 @@
 @ stub DriverFinalPolicy
 @ stub DriverInitializePolicy
 @ stub FindCertsByIssuer
-@ stub GenericChainCertificateTrust
+@ stdcall GenericChainCertificateTrust(ptr)
 @ stub GenericChainFinalProv
 @ stub HTTPSCertificateTrust
 @ stub HTTPSFinalProv
