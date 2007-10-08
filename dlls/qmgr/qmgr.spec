@@ -1,0 +1,2 @@
+@ stub DllRegisterServer
+@ stub DllUnregisterServer
