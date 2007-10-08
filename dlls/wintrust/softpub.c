@@ -637,6 +637,8 @@ HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
 
+    TRACE("(%p)\n", data);
+
     if (!data->csSigners)
     {
         ret = FALSE;
@@ -657,6 +659,8 @@ HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
     if (!ret)
         data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV] =
          GetLastError();
+    TRACE("returning %d (%08x)\n", ret ? S_OK : S_FALSE,
+     data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV]);
     return ret ? S_OK : S_FALSE;
 }
 
@@ -717,6 +721,8 @@ HRESULT WINAPI SoftpubAuthenticode(CRYPT_PROVIDER_DATA *data)
     BOOL ret;
     CERT_CHAIN_POLICY_STATUS policyStatus = { sizeof(policyStatus), 0 };
 
+    TRACE("(%p)\n", data);
+
     if (data->pWintrustData->dwUIChoice != WTD_UI_NONE)
         FIXME("unimplemented for UI choice %d\n",
          data->pWintrustData->dwUIChoice);
@@ -758,6 +764,8 @@ HRESULT WINAPI SoftpubAuthenticode(CRYPT_PROVIDER_DATA *data)
     if (!ret)
         data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_POLICYPROV] =
          policyStatus.dwError;
+    TRACE("returning %d (%08x)\n", ret ? S_OK : S_FALSE,
+     data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_POLICYPROV]);
     return ret ? S_OK : S_FALSE;
 }
 
