@@ -93,9 +93,8 @@ static BOOL CreateDirect3D(void)
     ddsd.dwWidth = 256;
     ddsd.dwHeight = 256;
     rc = IDirectDraw7_CreateSurface(lpDD, &ddsd, &lpDDS, NULL);
-    ok(rc==DD_OK, "CreateSurface returned: %x\n", rc);
     if (!SUCCEEDED(rc))
-	return FALSE;
+        return FALSE;
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
