@@ -710,7 +710,16 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
 
 void WINAPI IWineGDISurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    FIXME("(%p) : Should not be called on a GDI surface. textureName %u, target %i\n", This, textureName, target);
+
+    /* Ignore 0 textureName and target. D3D textures can be created with gdi surfaces as plain
+     * containers, but they're useless until the app creates a d3d device from a d3d point of
+     * view, it's not an implementation limitation. This avoids false warnings when the texture
+     * is destroyed and sets the description back to 0/0
+     */
+    if(textureName != 0 || target != 0) {
+        FIXME("(%p) : Should not be called on a GDI surface. textureName %u, target %i\n", This, textureName, target);
+        DebugBreak();
+    }
 }
 
 void WINAPI IWineGDISurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription) {
