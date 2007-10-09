@@ -1952,15 +1952,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
                                          NULL);
     if (WINED3D_OK != hr) {   /* Note: No parent needed for initial internal stateblock */
         WARN("Failed to create stateblock\n");
-        return hr;
+        goto err_out;
     }
     TRACE("(%p) : Created stateblock (%p)\n", This, This->stateBlock);
     This->updateStateBlock = This->stateBlock;
     IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)This->updateStateBlock);
 
     hr = allocate_shader_constants(This->updateStateBlock);
-    if (WINED3D_OK != hr)
-        return hr;
+    if (WINED3D_OK != hr) {
+        goto err_out;
+    }
 
     This->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
     This->fbo_color_attachments = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
@@ -1982,15 +1983,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     hr=D3DCB_CreateAdditionalSwapChain((IUnknown *) This->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
     if (FAILED(hr) || !swapchain) {
         WARN("Failed to create implicit swapchain\n");
-        return hr;
+        goto err_out;
     }
 
     This->NumberOfSwapChains = 1;
     This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->NumberOfSwapChains * sizeof(IWineD3DSwapChain *));
     if(!This->swapchains) {
         ERR("Out of memory!\n");
-        IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
-        return E_OUTOFMEMORY;
+        goto err_out;
     }
     This->swapchains[0] = (IWineD3DSwapChain *) swapchain;
 
@@ -2074,6 +2074,22 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
         IWineD3DDeviceImpl_LoadLogo(This, wined3d_settings.logo);
     }
     return WINED3D_OK;
+
+    err_out:
+    HeapFree(GetProcessHeap(), 0, This->render_targets);
+    HeapFree(GetProcessHeap(), 0, This->fbo_color_attachments);
+    HeapFree(GetProcessHeap(), 0, This->draw_buffers);
+    HeapFree(GetProcessHeap(), 0, This->swapchains);
+    This->NumberOfSwapChains = 0;
+    if(swapchain) {
+        IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
+    }
+    This->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GLenum) * GL_LIMITS(buffers));
+    if(This->stateBlock) {
+        IWineD3DStateBlock_Release((IWineD3DStateBlock *) This->stateBlock);
+        This->stateBlock = NULL;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyDepthStencilSurface, D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain) {
