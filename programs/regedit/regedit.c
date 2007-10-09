@@ -138,25 +138,34 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
 
             while(filename[0]) {
                 char* realname = NULL;
-                int size;
-                size=SearchPath(NULL,filename,NULL,0,NULL,NULL);
-                if (size>0)
+
+                if (strcmp(filename, "-") == 0)
                 {
-                    realname=HeapAlloc(GetProcessHeap(),0,size);
-                    size=SearchPath(NULL,filename,NULL,size,realname,NULL);
+                    reg_file=stdin;
                 }
-                if (size==0)
+                else
                 {
-                    fprintf(stderr,"%s: File not found \"%s\" (%d)\n",
-                            getAppName(),filename,GetLastError());
-                    exit(1);
-                }
-                reg_file = fopen(realname, "r");
-                if (reg_file==NULL)
-                {
-                    perror("");
-                    fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), filename);
-                    exit(1);
+                    int size;
+
+                    size=SearchPath(NULL, filename, NULL,0, NULL, NULL);
+                    if (size>0)
+                    {
+                        realname=HeapAlloc(GetProcessHeap(), 0, size);
+                        size=SearchPath(NULL, filename, NULL, size, realname, NULL);
+                    }
+                    if (size==0)
+                    {
+                        fprintf(stderr, "%s: File not found \"%s\" (%d)\n",
+                                getAppName(), filename, GetLastError());
+                        exit(1);
+                    }
+                    reg_file = fopen(realname, "r");
+                    if (reg_file==NULL)
+                    {
+                        perror("");
+                        fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), filename);
+                        exit(1);
+                    }
                 }
                 processRegLines(reg_file);
                 if (realname)
@@ -240,6 +249,12 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
 
         s++;
         ch = *s;
+        if (!ch || isspace(ch))
+        {
+            /* '-' is a file name. It indicates we should use stdin */
+            s--;
+            break;
+        }
         ch2 = *(s+1);
         chu = toupper(ch);
         if (!ch2 || isspace(ch2)) {
