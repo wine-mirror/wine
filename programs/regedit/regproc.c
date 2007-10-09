@@ -832,11 +832,18 @@ static void export_hkey(FILE *file, HKEY key,
  */
 static FILE *REGPROC_open_export_file(CHAR *file_name)
 {
-    FILE *file = fopen(file_name, "w");
-    if (!file) {
-        perror("");
-        fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), file_name);
-        exit(1);
+    FILE *file;
+
+    if (strcmp(file_name,"-")==0)
+        file=stdout;
+    else
+    {
+        file = fopen(file_name, "w");
+        if (!file) {
+            perror("");
+            fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), file_name);
+            exit(1);
+        }
     }
     fputs("REGEDIT4\n", file);
     return file;
