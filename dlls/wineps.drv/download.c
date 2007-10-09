@@ -242,15 +242,17 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
         RECT bbox;
         UINT emsize;
 
+        if (!get_bbox(physDev, &bbox, &emsize)) {
+	    HeapFree(GetProcessHeap(), 0, potm);
+	    return FALSE;
+	}
+        if(!is_room_for_font(physDev))
+            PSDRV_EmptyDownloadList(physDev, TRUE);
+
         pdl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pdl));
 	pdl->ps_name = HeapAlloc(GetProcessHeap(), 0, strlen(ps_name)+1);
 	strcpy(pdl->ps_name, ps_name);
 	pdl->next = NULL;
-
-        if (!get_bbox(physDev, &bbox, &emsize))
-		return FALSE;
-        if(!is_room_for_font(physDev))
-            PSDRV_EmptyDownloadList(physDev, TRUE);
 
         if(physDev->pi->ppd->TTRasterizer == RO_Type42) {
 	    pdl->typeinfo.Type42 = T42_download_header(physDev, ps_name, &bbox, emsize);
