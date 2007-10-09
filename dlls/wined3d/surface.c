@@ -690,40 +690,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
     TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
 
+    /* This is also done in the base class, but we have to verify this before loading any data from
+     * gl into the sysmem copy. The PBO may be mapped, a different rectangle locked, the discard flag
+     * may interfere, and all other bad things may happen
+     */
     if (This->Flags & SFLAG_LOCKED) {
         WARN("Surface is already locked, returning D3DERR_INVALIDCALL\n");
         return WINED3DERR_INVALIDCALL;
-    }
-    if (!(This->Flags & SFLAG_LOCKABLE)) {
-        /* Note: UpdateTextures calls CopyRects which calls this routine to populate the
-              texture regions, and since the destination is an unlockable region we need
-              to tolerate this                                                           */
-        TRACE("Warning: trying to lock unlockable surf@%p\n", This);
-        /*return WINED3DERR_INVALIDCALL; */
-    }
-
-    pLockedRect->Pitch = IWineD3DSurface_GetPitch(iface);
-
-    /* Mark the surface locked */
-    This->Flags |= SFLAG_LOCKED;
-
-    /* Calculate the correct start address to report */
-    if (NULL == pRect) {
-        This->lockedRect.left   = 0;
-        This->lockedRect.top    = 0;
-        This->lockedRect.right  = This->currentDesc.Width;
-        This->lockedRect.bottom = This->currentDesc.Height;
-        TRACE("Locked Rect (%p) = l %d, t %d, r %d, b %d\n", &This->lockedRect, This->lockedRect.left, This->lockedRect.top, This->lockedRect.right, This->lockedRect.bottom);
-    } else {
-        This->lockedRect.left   = pRect->left;
-        This->lockedRect.top    = pRect->top;
-        This->lockedRect.right  = pRect->right;
-        This->lockedRect.bottom = pRect->bottom;
-        TRACE("Locked Rect (%p) = l %d, t %d, r %d, b %d\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
-    }
-
-    if (This->Flags & SFLAG_NONPOW2) {
-        TRACE("Locking non-power 2 texture\n");
     }
 
     if (Flags & WINED3DLOCK_DISCARD) {
@@ -744,15 +717,17 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
      */
     IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
     if(swapchain || iface == myDevice->render_targets[0]) {
-        RECT *read_rect;
+        const RECT *pass_rect = pRect;
 
-        if(This->lockedRect.left == 0 &&
-           This->lockedRect.top == 0 &&
-           This->lockedRect.right == This->currentDesc.Width &&
-           This->lockedRect.bottom == This->currentDesc.Height) {
-            read_rect = NULL;
-        } else {
-            read_rect = &This->lockedRect;
+        /* IWineD3DSurface_LoadLocation does not check if the rectangle specifies the full surfaces
+         * because most caller functions do not need that. So do that here
+         */
+        if(pRect &&
+           pRect->top    == 0 &&
+           pRect->left   == 0 &&
+           pRect->right  == This->currentDesc.Width &&
+           pRect->bottom == This->currentDesc.Height) {
+            pass_rect = NULL;
         }
 
         switch(wined3d_settings.rendertargetlock_mode) {
@@ -771,7 +746,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             case RTL_AUTO:
             case RTL_READDRAW:
             case RTL_READTEX:
-                IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, read_rect);
+                IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, pRect);
                 break;
 
             case RTL_DISABLE:
@@ -828,27 +803,6 @@ lock_end:
         LEAVE_GL();
     }
 
-    /* Calculate the correct start address to report */
-    if (NULL == pRect) {
-        pLockedRect->pBits = This->resource.allocatedMemory;
-    } else {
-        /* DXTn textures are based on compressed blocks of 4x4 pixels, each
-         * 16 bytes large (8 bytes in case of DXT1). Because of that Pitch has
-         * slightly different meaning compared to regular textures. For DXTn
-         * textures Pitch is the size of a row of blocks, 4 high and "width"
-         * long. The x offset is calculated differently as well, since moving 4
-         * pixels to the right actually moves an entire 4x4 block to right, ie
-         * 16 bytes (8 in case of DXT1). */
-        if (This->resource.format == WINED3DFMT_DXT1) {
-            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top / 4) + (pRect->left * 2);
-        } else if (This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3
-                || This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
-            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top / 4) + (pRect->left * 4);
-        } else {
-            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
-        }
-    }
-
     if (Flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)) {
         /* Don't dirtify */
     } else {
@@ -869,9 +823,7 @@ lock_end:
         }
     }
 
-    TRACE("returning memory@%p, pitch(%d) dirtyfied(%d)\n", pLockedRect->pBits, pLockedRect->Pitch,
-          This->Flags & (SFLAG_INDRAWABLE | SFLAG_INTEXTURE) ? 0 : 1);
-    return WINED3D_OK;
+    return IWineD3DBaseSurfaceImpl_LockRect(iface, pLockedRect, pRect, Flags);
 }
 
 static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {

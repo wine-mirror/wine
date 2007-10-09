@@ -205,80 +205,15 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
-    /* Already locked? */
-    if(This->Flags & SFLAG_LOCKED)
-    {
-        ERR("(%p) Surface already locked\n", This);
-        /* What should I return here? */
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (!(This->Flags & SFLAG_LOCKABLE))
-    {
-        /* This is some GL specific thing, see the OpenGL version of
-         * this method, but check for the flag and write a trace
-         */
-        TRACE("Warning: trying to lock unlockable surf@%p\n", This);
-    }
-
-    TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n",
-          This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-
     if(!This->resource.allocatedMemory) {
-        HDC hdc;
-        HRESULT hr;
         /* This happens on gdi surfaces if the application set a user pointer and resets it.
          * Recreate the DIB section
          */
-        hr = IWineD3DSurface_GetDC(iface, &hdc);  /* will recursively call lockrect, do not set the LOCKED flag to this line */
-        if(hr != WINED3D_OK) return hr;
-        hr = IWineD3DSurface_ReleaseDC(iface, hdc);
-        if(hr != WINED3D_OK) return hr;
+        IWineD3DBaseSurfaceImpl_CreateDIBSection(iface);
+        This->resource.allocatedMemory = This->dib.bitmap_data;
     }
 
-    pLockedRect->Pitch = IWineD3DSurface_GetPitch(iface);
-
-    if (NULL == pRect)
-    {
-        pLockedRect->pBits = This->resource.allocatedMemory;
-        This->lockedRect.left   = 0;
-        This->lockedRect.top    = 0;
-        This->lockedRect.right  = This->currentDesc.Width;
-        This->lockedRect.bottom = This->currentDesc.Height;
-
-        TRACE("Locked Rect (%p) = l %d, t %d, r %d, b %d\n",
-        &This->lockedRect, This->lockedRect.left, This->lockedRect.top,
-        This->lockedRect.right, This->lockedRect.bottom);
-    }
-    else
-    {
-        TRACE("Lock Rect (%p) = l %d, t %d, r %d, b %d\n",
-              pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
-
-        if (This->resource.format == WINED3DFMT_DXT1)
-        {
-            /* DXT1 is half byte per pixel */
-            pLockedRect->pBits = This->resource.allocatedMemory +
-                                  (pLockedRect->Pitch * pRect->top) +
-                                  ((pRect->left * This->bytesPerPixel / 2));
-        }
-        else
-        {
-            pLockedRect->pBits = This->resource.allocatedMemory +
-                                 (pLockedRect->Pitch * pRect->top) +
-                                 (pRect->left * This->bytesPerPixel);
-        }
-        This->lockedRect.left   = pRect->left;
-        This->lockedRect.top    = pRect->top;
-        This->lockedRect.right  = pRect->right;
-        This->lockedRect.bottom = pRect->bottom;
-    }
-
-    /* No dirtifying is needed for this surface implementation */
-    TRACE("returning memory@%p, pitch(%d)\n", pLockedRect->pBits, pLockedRect->Pitch);
-
-    This->Flags |= SFLAG_LOCKED;
-    return WINED3D_OK;
+    return IWineD3DBaseSurfaceImpl_LockRect(iface, pLockedRect, pRect, Flags);
 }
 
 /*****************************************************************************
