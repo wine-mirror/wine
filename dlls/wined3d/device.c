@@ -1441,6 +1441,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
                              &object->frontBuffer,
                              NULL /* pShared (always null)*/);
     if (object->frontBuffer != NULL) {
+        IWineD3DSurface_ModifyLocation(object->frontBuffer, SFLAG_INDRAWABLE, TRUE);
         IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
     } else {
         ERR("Failed to create the front buffer\n");
@@ -4841,12 +4842,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     /* Dirtify the target surface for now. If the surface is locked regularly, and an up to date sysmem copy exists,
      * it is most likely more efficient to perform a clear on the sysmem copy too instead of downloading it
      */
+    IWineD3DSurface_ModifyLocation(This->lastActiveRenderTarget, SFLAG_INDRAWABLE, TRUE);
+    /* TODO: Move the fbo logic into ModifyLocation() */
     if(This->render_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         target->Flags |= SFLAG_INTEXTURE;
-        target->Flags &= ~SFLAG_INSYSMEM;
-    } else {
-        target->Flags |= SFLAG_INDRAWABLE;
-        target->Flags &= ~(SFLAG_INTEXTURE | SFLAG_INSYSMEM);
     }
     return WINED3D_OK;
 }
@@ -5540,8 +5539,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
     LEAVE_GL();
 
-    ((IWineD3DSurfaceImpl *)pDestinationSurface)->Flags &= ~SFLAG_INSYSMEM;
-    ((IWineD3DSurfaceImpl *)pDestinationSurface)->Flags |= SFLAG_INTEXTURE;
+    IWineD3DSurface_ModifyLocation(pDestinationSurface, SFLAG_INTEXTURE, TRUE);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(0));
 
     return WINED3D_OK;

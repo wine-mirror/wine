@@ -301,7 +301,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
             FIXME("Palette changed with surface that does not have an up to date system memory copy\n");
         }
         TRACE("Dirtifying surface\n");
-        This->Flags &= ~(SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
+        IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
     }
 
     if(This->Flags & SFLAG_DIBSECTION) {

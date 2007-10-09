@@ -783,6 +783,19 @@ HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
     return WINED3D_OK;
 }
 
+/***************************
+ *
+ ***************************/
+static void WINAPI IWineGDISurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DWORD flag, BOOL persistent) {
+    TRACE("(%p)->(%s, %s)\n", iface,
+          flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
+          persistent ? "TRUE" : "FALSE");
+    /* GDI surfaces can be in system memory only */
+    if(flag != SFLAG_INSYSMEM) {
+        ERR("GDI Surface requested in gl %s memory\n", flag == SFLAG_INDRAWABLE ? "drawable" : "texture");
+    }
+}
+
 /* FIXME: This vtable should not use any IWineD3DSurface* implementation functions,
  * only IWineD3DBaseSurface and IWineGDISurface ones.
  */
@@ -837,5 +850,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineGDISurfaceImpl_GetGlDesc,
     IWineD3DSurfaceImpl_GetData,
     IWineD3DBaseSurfaceImpl_SetFormat,
-    IWineGDISurfaceImpl_PrivateSetup
+    IWineGDISurfaceImpl_PrivateSetup,
+    IWineGDISurfaceImpl_ModifyLocation
 };

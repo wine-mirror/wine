@@ -355,8 +355,8 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
             if(backuptodate) front->Flags |= SFLAG_INSYSMEM;
             else front->Flags &= ~SFLAG_INSYSMEM;
         } else {
-            back->Flags &= ~SFLAG_INSYSMEM;
-            front->Flags &= ~SFLAG_INSYSMEM;
+            IWineD3DSurface_ModifyLocation((IWineD3DSurface *) front, SFLAG_INDRAWABLE, TRUE);
+            IWineD3DSurface_ModifyLocation((IWineD3DSurface *) back, SFLAG_INDRAWABLE, TRUE);
         }
     }
 

@@ -1078,29 +1078,27 @@ void drawPrimitive(IWineD3DDevice *iface,
                     blt_to_drawable(This, target);
                 }
 
+                /* TODO: Move fbo logic to ModifyLocation */
+                IWineD3DSurface_ModifyLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, TRUE);
                 if(swapchain) {
                     /* Onscreen target. Invalidate system memory copy and texture copy */
-                    target->Flags &= ~(SFLAG_INSYSMEM | SFLAG_INTEXTURE);
-                    target->Flags |= SFLAG_INDRAWABLE;
                     IWineD3DSwapChain_Release(swapchain);
                 } else if(wined3d_settings.offscreen_rendering_mode != ORM_FBO) {
                     /* Non-FBO target: Invalidate system copy, texture copy and dirtify the container */
+                    /* TODO: Move container dirtification to ModifyLocation */
                     IWineD3DSurface_GetContainer((IWineD3DSurface *) target, &IID_IWineD3DBaseTexture, (void **)&texture);
 
                     if(texture) {
                         IWineD3DBaseTexture_SetDirty(texture, TRUE);
                         IWineD3DTexture_Release(texture);
                     }
-
-                    target->Flags &= ~(SFLAG_INSYSMEM | SFLAG_INTEXTURE);
-                    target->Flags |= SFLAG_INDRAWABLE;
                 } else {
-                    /* FBO offscreen target. Invalidate system memory copy */
-                    target->Flags &= ~SFLAG_INSYSMEM;
+                    /* FBO offscreen target. Texture == Drawable */
+                    target->Flags |= SFLAG_INTEXTURE;
                 }
             } else {
                 /* Must be an fbo render target */
-                target->Flags &= ~SFLAG_INSYSMEM;
+                IWineD3DSurface_ModifyLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, TRUE);
                 target->Flags |=  SFLAG_INTEXTURE;
             }
         }

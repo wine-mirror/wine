@@ -451,7 +451,7 @@ void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT te
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     TRACE("(%p) : setting textureName %u, target %i\n", This, textureName, target);
     if (This->glDescription.textureName == 0 && textureName != 0) {
-        This->Flags &= ~SFLAG_INTEXTURE;
+        IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
         IWineD3DSurface_AddDirtyRect(iface, NULL);
     }
     This->glDescription.textureName = textureName;
@@ -650,7 +650,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
      */
     if(!(This->resource.allocatedMemory || This->Flags & SFLAG_PBO)) {
         This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
-        This->Flags &= ~SFLAG_INSYSMEM; /* This is the marker that surface data has to be downloaded */
+        if(This->Flags & SFLAG_INSYSMEM) {
+            ERR("Surface without memory or pbo has SFLAG_INSYSMEM set!\n");
+        }
     }
 
     /* Create a PBO for dynamically locked surfaces but don't do it for converted or non-pow2 surfaces.
@@ -2267,7 +2269,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
     if (!(This->Flags & SFLAG_DONOTFREE)) {
         HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
         This->resource.allocatedMemory = NULL;
-        This->Flags &= ~SFLAG_INSYSMEM;
+        IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, FALSE);
     }
 
     return WINED3D_OK;
@@ -2427,7 +2429,7 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
     if (!(This->Flags & SFLAG_INSYSMEM) && (This->Flags & SFLAG_INTEXTURE))
         surface_download_data(This);
 
-    This->Flags &= ~(SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
+    IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
     if (NULL != pDirtyRect) {
         This->dirtyRect.left   = min(This->dirtyRect.left,   pDirtyRect->left);
         This->dirtyRect.top    = min(This->dirtyRect.top,    pDirtyRect->top);
@@ -2503,7 +2505,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
         This->Flags |= SFLAG_USERPTR | SFLAG_INSYSMEM;
 
         /* Now the surface memory is most up do date. Invalidate drawable and texture */
-        This->Flags &= ~(SFLAG_INDRAWABLE | SFLAG_INTEXTURE);
+        IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
 
         /* For client textures opengl has to be notified */
         if(This->Flags & SFLAG_CLIENT) {
@@ -3087,7 +3089,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* The texture is now most up to date - If the surface is a render target and has a drawable, this
          * path is never entered
          */
-        This->Flags |= SFLAG_INTEXTURE;
+        IWineD3DSurface_ModifyLocation((IWineD3DSurface *) This, SFLAG_INTEXTURE, TRUE);
 
         return WINED3D_OK;
     } else if(Src) {
@@ -3231,14 +3233,12 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         LEAVE_GL();
 
         /* TODO: If the surface is locked often, perform the Blt in software on the memory instead */
-        This->Flags &= ~SFLAG_INSYSMEM;
         /* The surface is now in the drawable. On onscreen surfaces or without fbos the texture
          * is outdated now
          */
-        if(dstSwapchain || wined3d_settings.offscreen_rendering_mode != ORM_FBO) {
-            This->Flags |= SFLAG_INDRAWABLE;
-            This->Flags &= ~SFLAG_INTEXTURE;
-        } else {
+        IWineD3DSurface_ModifyLocation((IWineD3DSurface *) This, SFLAG_INDRAWABLE, TRUE);
+        /* TODO: This should be moved to ModifyLocation() */
+        if(!(dstSwapchain || wined3d_settings.offscreen_rendering_mode != ORM_FBO)) {
             This->Flags |= SFLAG_INTEXTURE;
         }
 
@@ -3533,6 +3533,22 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
+static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DWORD flag, BOOL persistent) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+
+    TRACE("(%p)->(%s, %s)\n", iface,
+          flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
+          persistent ? "TRUE" : "FALSE");
+
+    /* TODO: For offscreen textures with fbo offscreen rendering the drawable is the same as the texture.*/
+    if(persistent) {
+        This->Flags &= ~SFLAG_LOCATIONS;
+        This->Flags |= flag;
+    } else {
+        This->Flags &= ~flag;
+    }
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -3584,5 +3600,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_GetGlDesc,
     IWineD3DSurfaceImpl_GetData,
     IWineD3DSurfaceImpl_SetFormat,
-    IWineD3DSurfaceImpl_PrivateSetup
+    IWineD3DSurfaceImpl_PrivateSetup,
+    IWineD3DSurfaceImpl_ModifyLocation
 };

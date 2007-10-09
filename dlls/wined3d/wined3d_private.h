@@ -1209,6 +1209,9 @@ const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface);
                           SFLAG_PBO        | \
                           SFLAG_CLIENT)
 
+#define SFLAG_LOCATIONS  (SFLAG_INSYSMEM   | \
+                          SFLAG_INTEXTURE  | \
+                          SFLAG_INDRAWABLE)
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]);
 
 typedef enum {

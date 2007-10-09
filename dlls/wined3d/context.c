@@ -819,7 +819,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
         IWineD3DSurface_PreLoad(This->lastActiveRenderTarget);
 
         /* Assume that the drawable will be modified by some other things now */
-        ((IWineD3DSurfaceImpl *) This->lastActiveRenderTarget)->Flags &= ~SFLAG_INDRAWABLE;
+        IWineD3DSurface_ModifyLocation(This->lastActiveRenderTarget, SFLAG_INDRAWABLE, FALSE);
 
         This->isInDraw = oldInDraw;
     }

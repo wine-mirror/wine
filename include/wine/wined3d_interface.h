@@ -1141,6 +1141,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD_(CONST void *, GetData)(THIS) PURE;
     STDMETHOD(SetFormat)(THIS_ WINED3DFORMAT format) PURE;
     STDMETHOD(PrivateSetup)(THIS) PURE;
+    STDMETHOD_(void,ModifyLocation)(THIS_ DWORD flag, BOOL persistent);
 };
 #undef INTERFACE
 
@@ -1196,6 +1197,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_GetData(p)                   (p)->lpVtbl->GetData(p)
 #define IWineD3DSurface_SetFormat(p,a)               (p)->lpVtbl->SetFormat(p,a)
 #define IWineD3DSurface_PrivateSetup(p)              (p)->lpVtbl->PrivateSetup(p)
+#define IWineD3DSurface_ModifyLocation(p,a,b)        (p)->lpVtbl->ModifyLocation(p,a,b)
 #endif
 
 /*****************************************************************************
