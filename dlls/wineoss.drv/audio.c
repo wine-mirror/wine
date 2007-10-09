@@ -1151,7 +1151,8 @@ LRESULT OSS_WaveInit(void)
     char* str;
     int i;
 
-    FIXME("() stub\n");
+    /* FIXME: Remove unneeded members of WOutDev and WInDev */
+    TRACE("()\n");
 
     str=getenv("AUDIODEV");
     if (str!=NULL)
