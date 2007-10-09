@@ -176,6 +176,8 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 		{
 			WARN("Too little sound buffer to be effective (%d/%d) falling back to waveout\n", device->buflen, ds_snd_queue_min * device->fraglen);
 			device->buflen = buflen;
+			IDsDriverBuffer_Release(device->hwbuf);
+			device->hwbuf = NULL;
 			err = DSOUND_ReopenDevice(device, TRUE);
 			if (FAILED(err))
 			{
