@@ -273,6 +273,7 @@ const IDirect3DTexture2Vtbl IDirect3DTexture2_Vtbl;
 const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl;
 
 HRESULT WINAPI IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurfaceImpl *This, IDirectDrawSurfaceImpl *Surf);
+void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This);
 
 /* Get the number of bytes per pixel for a given surface */
 #define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:((pf.dwRGBBitCount+7)/8))

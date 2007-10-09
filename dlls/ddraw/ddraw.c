@@ -2519,10 +2519,6 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         return hr;
     }
 
-    /* Addref the ddraw interface to keep an reference for each surface */
-    IDirectDraw7_AddRef(iface);
-    object->ifaceToRelease = (IUnknown *) iface;
-
     /* If the implementation is OpenGL and there's no d3ddevice, attach a d3ddevice
      * But attach the d3ddevice only if the currently created surface was
      * a primary surface (2D app in 3D mode) or a 3DDEVICE surface (3D app)
@@ -2555,9 +2551,31 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         hr = IDirectDrawImpl_AttachD3DDevice(This, target);
         if(hr != D3D_OK)
         {
+            IDirectDrawSurfaceImpl *release_surf;
             ERR("IDirectDrawImpl_AttachD3DDevice failed, hr = %x\n", hr);
+            *Surf = NULL;
+
+            /* The before created surface structures are in an incomplete state here.
+             * WineD3D holds the reference on the IParents, and it released them on the failure
+             * already. So the regular release method implementation would fail on the attempt
+             * to destroy either the IParents or the swapchain. So free the surface here.
+             * The surface structure here is a list, not a tree, because onscreen targets
+             * cannot be cube textures
+             */
+            while(object)
+            {
+                release_surf = object;
+                object = object->complex_array[0];
+                IDirectDrawSurfaceImpl_Destroy(release_surf);
+            }
+            LeaveCriticalSection(&ddraw_cs);
+            return hr;
         }
     }
+
+    /* Addref the ddraw interface to keep an reference for each surface */
+    IDirectDraw7_AddRef(iface);
+    object->ifaceToRelease = (IUnknown *) iface;
 
     /* Create a WineD3DTexture if a texture was requested */
     if(desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
@@ -3077,7 +3095,8 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
                                D3D7CB_CreateAdditionalSwapChain);
     if(FAILED(hr))
     {
-        This->wineD3DDevice = NULL;
+        This->d3d_target = NULL;
+        This->d3d_initialized = FALSE;
         return hr;
     }
 

@@ -178,7 +178,7 @@ IDirectDrawSurfaceImpl_AddRef(IDirectDrawSurface7 *iface)
  *  This: Surface to free
  *
  *****************************************************************************/
-static void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This)
+void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This)
 {
     TRACE("(%p)\n", This);
 
