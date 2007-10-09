@@ -361,7 +361,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
     HWND window;
     HRESULT hr;
 
-    FIXME("(%p)->(%p,%08x)\n",This,hwnd,cooplevel);
+    TRACE("(%p)->(%p,%08x)\n",This,hwnd,cooplevel);
     DDRAW_dump_cooperativelevel(cooplevel);
 
     EnterCriticalSection(&ddraw_cs);
