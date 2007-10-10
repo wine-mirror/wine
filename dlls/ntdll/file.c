@@ -2095,10 +2095,8 @@ NTSTATUS WINAPI NtLockFile( HANDLE hFile, HANDLE lock_granted_event,
         SERVER_START_REQ( lock_file )
         {
             req->handle      = hFile;
-            req->offset_low  = offset->u.LowPart;
-            req->offset_high = offset->u.HighPart;
-            req->count_low   = count->u.LowPart;
-            req->count_high  = count->u.HighPart;
+            req->offset      = offset->QuadPart;
+            req->count       = count->QuadPart;
             req->shared      = !exclusive;
             req->wait        = !dont_wait;
             ret = wine_server_call( req );
@@ -2158,11 +2156,9 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE hFile, PIO_STATUS_BLOCK io_status,
 
     SERVER_START_REQ( unlock_file )
     {
-        req->handle      = hFile;
-        req->offset_low  = offset->u.LowPart;
-        req->offset_high = offset->u.HighPart;
-        req->count_low   = count->u.LowPart;
-        req->count_high  = count->u.HighPart;
+        req->handle = hFile;
+        req->offset = offset->QuadPart;
+        req->count  = count->QuadPart;
         status = wine_server_call( req );
     }
     SERVER_END_REQ;

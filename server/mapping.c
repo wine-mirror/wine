@@ -47,7 +47,6 @@ struct mapping
     int             header_size;     /* size of headers (for PE image mapping) */
     void           *base;            /* default base addr (for PE image mapping) */
     struct file    *shared_file;     /* temp file for shared PE mapping */
-    int             shared_size;     /* shared mapping total size */
     struct list     shared_entry;    /* entry in global shared PE mappings list */
 };
 
@@ -141,7 +140,8 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
                                  IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
 {
     unsigned int i;
-    size_t file_size, map_size, max_size, total_size;
+    file_pos_t total_size;
+    size_t file_size, map_size, max_size;
     off_t shared_pos, read_pos, write_pos;
     char *buffer = NULL;
     int shared_fd;
@@ -160,7 +160,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
             total_size += map_size;
         }
     }
-    if (!(mapping->shared_size = total_size)) return 1;  /* nothing to do */
+    if (!total_size) return 1;  /* nothing to do */
 
     if ((mapping->shared_file = get_shared_file( mapping ))) return 1;
 
@@ -296,7 +296,6 @@ static struct object *create_mapping( struct directory *root, const struct unico
     mapping->header_size = 0;
     mapping->base        = NULL;
     mapping->shared_file = NULL;
-    mapping->shared_size = 0;
 
     if (protect & VPROT_READ) access |= FILE_READ_DATA;
     if (protect & VPROT_WRITE) access |= FILE_WRITE_DATA;
@@ -348,10 +347,10 @@ static void mapping_dump( struct object *obj, int verbose )
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
     fprintf( stderr, "Mapping size=%08x%08x prot=%08x file=%p header_size=%08x base=%p "
-             "shared_file=%p shared_size=%08x ",
+             "shared_file=%p ",
              (unsigned int)(mapping->size >> 32), (unsigned int)mapping->size,
              mapping->protect, mapping->file, mapping->header_size,
-             mapping->base, mapping->shared_file, mapping->shared_size );
+             mapping->base, mapping->shared_file );
     dump_object_name( &mapping->obj );
     fputc( '\n', stderr );
 }
@@ -395,14 +394,13 @@ DECL_HANDLER(create_mapping)
     struct object *obj;
     struct unicode_str name;
     struct directory *root = NULL;
-    file_pos_t size = ((file_pos_t)req->size_high << 32) | req->size_low;
 
     reply->handle = 0;
     get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
         return;
 
-    if ((obj = create_mapping( root, &name, req->attributes, size, req->protect, req->file_handle )))
+    if ((obj = create_mapping( root, &name, req->attributes, req->size, req->protect, req->file_handle )))
     {
         reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
         release_object( obj );
@@ -440,13 +438,11 @@ DECL_HANDLER(get_mapping_info)
     if ((mapping = (struct mapping *)get_handle_obj( current->process, req->handle,
                                                      0, &mapping_ops )))
     {
-        reply->size_high   = (unsigned int)(mapping->size >> 32);
-        reply->size_low    = (unsigned int)mapping->size;
+        reply->size        = mapping->size;
         reply->protect     = mapping->protect;
         reply->header_size = mapping->header_size;
         reply->base        = mapping->base;
         reply->shared_file = 0;
-        reply->shared_size = mapping->shared_size;
         if ((fd = get_obj_fd( &mapping->obj )))
         {
             if (!is_fd_removable(fd))

@@ -38,6 +38,7 @@ typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
+typedef unsigned __int64 file_pos_t;
 
 struct request_header
 {
@@ -333,8 +334,7 @@ typedef union
         obj_handle_t     handle;    /* mapping handle */
         void            *addr;      /* requested address */
         unsigned long    size;      /* allocation size */
-        unsigned int     offset_low;/* file offset */
-        unsigned int     offset_high;
+        file_pos_t       offset;    /* file offset */
         unsigned int     zero_bits; /* allocation alignment */
         unsigned int     alloc_type;/* allocation type */
         unsigned int     prot;      /* memory protection flags */
@@ -906,10 +906,8 @@ enum server_fd_type
 /* Lock a region of a file */
 @REQ(lock_file)
     obj_handle_t handle;        /* handle to the file */
-    unsigned int offset_low;    /* offset of start of lock */
-    unsigned int offset_high;   /* offset of start of lock */
-    unsigned int count_low;     /* count of bytes to lock */
-    unsigned int count_high;    /* count of bytes to lock */
+    file_pos_t   offset;        /* offset of start of lock */
+    file_pos_t   count;         /* count of bytes to lock */
     int          shared;        /* shared or exclusive lock? */
     int          wait;          /* do we want to wait? */
 @REPLY
@@ -921,10 +919,8 @@ enum server_fd_type
 /* Unlock a region of a file */
 @REQ(unlock_file)
     obj_handle_t handle;        /* handle to the file */
-    unsigned int offset_low;    /* offset of start of unlock */
-    unsigned int offset_high;   /* offset of start of unlock */
-    unsigned int count_low;     /* count of bytes to unlock */
-    unsigned int count_high;    /* count of bytes to unlock */
+    file_pos_t   offset;        /* offset of start of unlock */
+    file_pos_t   count;         /* count of bytes to unlock */
 @END
 
 
@@ -1310,8 +1306,7 @@ enum char_info_mode
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
     obj_handle_t rootdir;       /* root directory */
-    int          size_high;     /* mapping size */
-    int          size_low;      /* mapping size */
+    file_pos_t   size;          /* mapping size */
     int          protect;       /* protection flags (see below) */
     obj_handle_t file_handle;   /* file handle */
     VARARG(name,unicode_str);   /* object name */
@@ -1344,14 +1339,12 @@ enum char_info_mode
 @REQ(get_mapping_info)
     obj_handle_t handle;        /* handle to the mapping */
 @REPLY
-    int          size_high;     /* mapping size */
-    int          size_low;      /* mapping size */
+    file_pos_t   size;          /* mapping size */
     int          protect;       /* protection flags */
     int          header_size;   /* header size (for VPROT_IMAGE mapping) */
     void*        base;          /* default base addr (for VPROT_IMAGE mapping) */
     obj_handle_t mapping;       /* duplicate mapping handle unless removable */
     obj_handle_t shared_file;   /* shared mapping file handle */
-    int          shared_size;   /* shared mapping size */
 @END
 
 

@@ -1877,8 +1877,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
         req->attributes  = (attr) ? attr->Attributes : 0;
         req->rootdir     = attr ? attr->RootDirectory : 0;
         req->file_handle = file;
-        req->size_high   = size ? size->u.HighPart : 0;
-        req->size_low    = size ? size->u.LowPart : 0;
+        req->size        = size ? size->QuadPart : 0;
         req->protect     = vprot;
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
@@ -1922,13 +1921,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
     NTSTATUS res;
+    ULONGLONG full_size;
     SIZE_T size = 0;
     SIZE_T mask = get_mask( zero_bits );
     int unix_handle = -1, needs_close;
     int prot;
     void *base;
     struct file_view *view;
-    DWORD size_low, size_high, header_size, shared_size;
+    DWORD header_size;
     HANDLE dup_mapping, shared_file;
     LARGE_INTEGER offset;
     sigset_t sigset;
@@ -1952,8 +1952,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         call.map_view.handle      = handle;
         call.map_view.addr        = *addr_ptr;
         call.map_view.size        = *size_ptr;
-        call.map_view.offset_low  = offset.u.LowPart;
-        call.map_view.offset_high = offset.u.HighPart;
+        call.map_view.offset      = offset.QuadPart;
         call.map_view.zero_bits   = zero_bits;
         call.map_view.alloc_type  = alloc_type;
         call.map_view.prot        = protect;
@@ -1974,19 +1973,18 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         res = wine_server_call( req );
         prot        = reply->protect;
         base        = reply->base;
-        size_low    = reply->size_low;
-        size_high   = reply->size_high;
+        full_size   = reply->size;
         header_size = reply->header_size;
         dup_mapping = reply->mapping;
         shared_file = reply->shared_file;
-        shared_size = reply->shared_size;
     }
     SERVER_END_REQ;
     if (res) return res;
 
-    size = ((ULONGLONG)size_high << 32) | size_low;
-    if (sizeof(size) == sizeof(size_low) && size_high)
-        ERR( "Sizes larger than 4Gb (%x%08x) not supported on this platform\n", size_high, size_low );
+    size = full_size;
+    if (sizeof(size) < sizeof(full_size) && (size != full_size))
+        ERR( "Sizes larger than 4Gb (%x%08x) not supported on this platform\n",
+             (DWORD)(full_size >> 32), (DWORD)full_size );
 
     if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
 

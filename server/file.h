@@ -27,8 +27,6 @@ struct fd;
 struct async_queue;
 struct completion;
 
-typedef unsigned __int64 file_pos_t;
-
 /* operations valid on file descriptor objects */
 struct fd_ops
 {

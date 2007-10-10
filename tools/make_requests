@@ -47,6 +47,7 @@ my %formats =
     "async_data_t"  => "&dump_async_data",
     "luid_t"        => "&dump_luid",
     "ioctl_code_t"  => "&dump_ioctl_code",
+    "file_pos_t"    => "&dump_file_pos",
 );
 
 my @requests = ();

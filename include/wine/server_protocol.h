@@ -22,6 +22,7 @@ typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
+typedef unsigned __int64 file_pos_t;
 
 struct request_header
 {
@@ -317,8 +318,7 @@ typedef union
         obj_handle_t     handle;
         void            *addr;
         unsigned long    size;
-        unsigned int     offset_low;
-        unsigned int     offset_high;
+        file_pos_t       offset;
         unsigned int     zero_bits;
         unsigned int     alloc_type;
         unsigned int     prot;
@@ -1094,10 +1094,8 @@ struct lock_file_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    unsigned int offset_low;
-    unsigned int offset_high;
-    unsigned int count_low;
-    unsigned int count_high;
+    file_pos_t   offset;
+    file_pos_t   count;
     int          shared;
     int          wait;
 };
@@ -1114,10 +1112,8 @@ struct unlock_file_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    unsigned int offset_low;
-    unsigned int offset_high;
-    unsigned int count_low;
-    unsigned int count_high;
+    file_pos_t   offset;
+    file_pos_t   count;
 };
 struct unlock_file_reply
 {
@@ -1665,8 +1661,7 @@ struct create_mapping_request
     unsigned int access;
     unsigned int attributes;
     obj_handle_t rootdir;
-    int          size_high;
-    int          size_low;
+    file_pos_t   size;
     int          protect;
     obj_handle_t file_handle;
     /* VARARG(name,unicode_str); */
@@ -1712,14 +1707,12 @@ struct get_mapping_info_request
 struct get_mapping_info_reply
 {
     struct reply_header __header;
-    int          size_high;
-    int          size_low;
+    file_pos_t   size;
     int          protect;
     int          header_size;
     void*        base;
     obj_handle_t mapping;
     obj_handle_t shared_file;
-    int          shared_size;
 };
 
 
@@ -4880,6 +4873,6 @@ union generic_reply
     struct set_completion_info_reply set_completion_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 316
+#define SERVER_PROTOCOL_VERSION 317
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

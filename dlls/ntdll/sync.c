@@ -754,8 +754,7 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         result->type = call->type;
         result->map_view.addr   = call->map_view.addr;
         result->map_view.size   = call->map_view.size;
-        offset.u.LowPart        = call->map_view.offset_low;
-        offset.u.HighPart       = call->map_view.offset_high;
+        offset.QuadPart         = call->map_view.offset;
         result->map_view.status = NtMapViewOfSection( call->map_view.handle, NtCurrentProcess(),
                                                       &result->map_view.addr, call->map_view.zero_bits,
                                                       0, &offset, &result->map_view.size, ViewShare,
