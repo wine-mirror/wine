@@ -109,8 +109,7 @@ typedef struct wine_glcontext {
     WineGLPixelFormat *fmt;
     GLXContext ctx;
     BOOL do_escape;
-    X11DRV_PDEVICE *physDev;
-    X11DRV_PDEVICE *pReadDev;
+    HDC read_hdc;
     Drawable drawables[2];
     BOOL refresh_drawables;
     struct wine_glcontext *next;
@@ -1498,7 +1497,6 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
     ret = alloc_context();
     wine_tsx11_unlock();
     ret->hdc = hdc;
-    ret->physDev = physDev;
     ret->fmt = fmt;
 
     /*ret->vis = vis;*/
@@ -1553,12 +1551,10 @@ static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void)
 {
     HDC ret = 0;
     Wine_GLContext *ctx = NtCurrentTeb()->glContext;
-    X11DRV_PDEVICE *physDev = ctx ? ctx->pReadDev : NULL;
 
-    if(physDev)
-        ret = physDev->hdc;
+    if (ctx) ret = ctx->read_hdc;
 
-    TRACE(" returning %p (GL drawable %lu)\n", ret, physDev ? physDev->drawable : 0);
+    TRACE(" returning %p (GL drawable %lu)\n", ret, ctx ? ctx->drawables[1] : 0);
     return ret;
 }
 
@@ -1650,8 +1646,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
         if(ret)
         {
             ctx->hdc = hdc;
-            ctx->physDev = physDev;
-            ctx->pReadDev = physDev;
+            ctx->read_hdc = hdc;
             ctx->drawables[0] = drawable;
             ctx->drawables[1] = drawable;
             ctx->refresh_drawables = FALSE;
@@ -1702,8 +1697,7 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEVICE* p
                 TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
             }
             ctx->hdc = pDrawDev->hdc;
-            ctx->physDev = pDrawDev;
-            ctx->pReadDev = pReadDev;
+            ctx->read_hdc = pReadDev->hdc;
             ctx->drawables[0] = d_draw;
             ctx->drawables[1] = d_read;
             ctx->refresh_drawables = FALSE;
