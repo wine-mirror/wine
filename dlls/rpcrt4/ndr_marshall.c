@@ -1156,8 +1156,7 @@ static unsigned char * EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
   unsigned char *Mark = pStubMsg->BufferMark;
-  unsigned long Offset = pStubMsg->Offset;
-  unsigned ofs, rep, count, stride, xofs;
+  unsigned rep, count, stride;
   unsigned i;
   unsigned char *saved_buffer = NULL;
 
@@ -1180,32 +1179,26 @@ static unsigned char * EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_NO_REPEAT:
       rep = 1;
       stride = 0;
-      ofs = 0;
       count = 1;
-      xofs = 0;
       pFormat += 2;
       break;
     case RPC_FC_FIXED_REPEAT:
       rep = *(const WORD*)&pFormat[2];
       stride = *(const WORD*)&pFormat[4];
-      ofs = *(const WORD*)&pFormat[6];
       count = *(const WORD*)&pFormat[8];
-      xofs = 0;
       pFormat += 10;
       break;
     case RPC_FC_VARIABLE_REPEAT:
       rep = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? pStubMsg->ActualCount : pStubMsg->MaxCount;
       stride = *(const WORD*)&pFormat[2];
-      ofs = *(const WORD*)&pFormat[4];
       count = *(const WORD*)&pFormat[6];
-      xofs = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? Offset * stride : 0;
       pFormat += 8;
       break;
     }
     for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = pMemory + ofs + (i * stride);
-      unsigned char *bufbase = Mark + ofs + (i * stride);
+      unsigned char *membase = pMemory + (i * stride);
+      unsigned char *bufbase = Mark + (i * stride);
       unsigned u;
 
       for (u=0; u<count; u++,info+=8) {
@@ -1241,8 +1234,7 @@ static unsigned char * EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  unsigned char fMustAlloc)
 {
   unsigned char *Mark = pStubMsg->BufferMark;
-  unsigned long Offset = pStubMsg->Offset;
-  unsigned ofs, rep, count, stride, xofs;
+  unsigned rep, count, stride;
   unsigned i;
   unsigned char *saved_buffer = NULL;
 
@@ -1266,33 +1258,26 @@ static unsigned char * EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_NO_REPEAT:
       rep = 1;
       stride = 0;
-      ofs = 0;
       count = 1;
-      xofs = 0;
       pFormat += 2;
       break;
     case RPC_FC_FIXED_REPEAT:
       rep = *(const WORD*)&pFormat[2];
       stride = *(const WORD*)&pFormat[4];
-      ofs = *(const WORD*)&pFormat[6];
       count = *(const WORD*)&pFormat[8];
-      xofs = 0;
       pFormat += 10;
       break;
     case RPC_FC_VARIABLE_REPEAT:
       rep = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? pStubMsg->ActualCount : pStubMsg->MaxCount;
       stride = *(const WORD*)&pFormat[2];
-      ofs = *(const WORD*)&pFormat[4];
       count = *(const WORD*)&pFormat[6];
-      xofs = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? Offset * stride : 0;
       pFormat += 8;
       break;
     }
-    /* ofs doesn't seem to matter in this context */
     for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = *ppMemory + ofs + (i * stride);
-      unsigned char *bufbase = Mark + ofs + (i * stride);
+      unsigned char *membase = *ppMemory + (i * stride);
+      unsigned char *bufbase = Mark + (i * stride);
       unsigned u;
 
       for (u=0; u<count; u++,info+=8) {
@@ -1320,8 +1305,7 @@ static void EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                       unsigned char *pMemory,
                                       PFORMAT_STRING pFormat)
 {
-  unsigned long Offset = pStubMsg->Offset;
-  unsigned ofs, rep, count, stride, xofs;
+  unsigned rep, count, stride;
   unsigned i;
   ULONG saved_buffer_length = 0;
 
@@ -1346,31 +1330,25 @@ static void EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_NO_REPEAT:
       rep = 1;
       stride = 0;
-      ofs = 0;
       count = 1;
-      xofs = 0;
       pFormat += 2;
       break;
     case RPC_FC_FIXED_REPEAT:
       rep = *(const WORD*)&pFormat[2];
       stride = *(const WORD*)&pFormat[4];
-      ofs = *(const WORD*)&pFormat[6];
       count = *(const WORD*)&pFormat[8];
-      xofs = 0;
       pFormat += 10;
       break;
     case RPC_FC_VARIABLE_REPEAT:
       rep = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? pStubMsg->ActualCount : pStubMsg->MaxCount;
       stride = *(const WORD*)&pFormat[2];
-      ofs = *(const WORD*)&pFormat[4];
       count = *(const WORD*)&pFormat[6];
-      xofs = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? Offset * stride : 0;
       pFormat += 8;
       break;
     }
     for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = pMemory + ofs + (i * stride);
+      unsigned char *membase = pMemory + (i * stride);
       unsigned u;
 
       for (u=0; u<count; u++,info+=8) {
@@ -1398,9 +1376,8 @@ static void EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 static unsigned long EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
-  unsigned long Offset = pStubMsg->Offset;
   unsigned char *Mark = pStubMsg->BufferMark;
-  unsigned ofs, rep, count, stride, xofs;
+  unsigned rep, count, stride;
   unsigned i;
 
   TRACE("(%p,%p)\n", pStubMsg, pFormat);
@@ -1419,32 +1396,25 @@ static unsigned long EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_NO_REPEAT:
       rep = 1;
       stride = 0;
-      ofs = 0;
       count = 1;
-      xofs = 0;
       pFormat += 2;
       break;
     case RPC_FC_FIXED_REPEAT:
       rep = *(const WORD*)&pFormat[2];
       stride = *(const WORD*)&pFormat[4];
-      ofs = *(const WORD*)&pFormat[6];
       count = *(const WORD*)&pFormat[8];
-      xofs = 0;
       pFormat += 10;
       break;
     case RPC_FC_VARIABLE_REPEAT:
       rep = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? pStubMsg->ActualCount : pStubMsg->MaxCount;
       stride = *(const WORD*)&pFormat[2];
-      ofs = *(const WORD*)&pFormat[4];
       count = *(const WORD*)&pFormat[6];
-      xofs = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? Offset * stride : 0;
       pFormat += 8;
       break;
     }
-    /* ofs doesn't seem to matter in this context */
     for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *bufbase = Mark + ofs + (i * stride);
+      unsigned char *bufbase = Mark + (i * stride);
       unsigned u;
       for (u=0; u<count; u++,info+=8) {
         unsigned char *bufptr = bufbase + *(const SHORT*)&info[2];
@@ -1464,8 +1434,7 @@ static void EmbeddedPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-  unsigned long Offset = pStubMsg->Offset;
-  unsigned ofs, rep, count, stride, xofs;
+  unsigned rep, count, stride;
   unsigned i;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
@@ -1479,25 +1448,19 @@ static void EmbeddedPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_NO_REPEAT:
       rep = 1;
       stride = 0;
-      ofs = 0;
       count = 1;
-      xofs = 0;
       pFormat += 2;
       break;
     case RPC_FC_FIXED_REPEAT:
       rep = *(const WORD*)&pFormat[2];
       stride = *(const WORD*)&pFormat[4];
-      ofs = *(const WORD*)&pFormat[6];
       count = *(const WORD*)&pFormat[8];
-      xofs = 0;
       pFormat += 10;
       break;
     case RPC_FC_VARIABLE_REPEAT:
       rep = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? pStubMsg->ActualCount : pStubMsg->MaxCount;
       stride = *(const WORD*)&pFormat[2];
-      ofs = *(const WORD*)&pFormat[4];
       count = *(const WORD*)&pFormat[6];
-      xofs = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? Offset * stride : 0;
       pFormat += 8;
       break;
     }

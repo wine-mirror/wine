@@ -402,6 +402,35 @@ s_wstr_struct_len(wstr_struct_t *s)
   return lstrlenW(s->s);
 }
 
+int
+s_sum_doub_carr(doub_carr_t *dc)
+{
+  int i, j;
+  int sum = 0;
+  for (i = 0; i < dc->n; ++i)
+    for (j = 0; j < dc->a[i]->n; ++j)
+      sum += dc->a[i]->a[j];
+  return sum;
+}
+
+void
+s_make_pyramid_doub_carr(unsigned char n, doub_carr_t **dc)
+{
+  doub_carr_t *t;
+  int i, j;
+  t = MIDL_user_allocate(FIELD_OFFSET(doub_carr_t, a[n]));
+  t->n = n;
+  for (i = 0; i < n; ++i)
+  {
+    int v = i + 1;
+    t->a[i] = MIDL_user_allocate(FIELD_OFFSET(doub_carr_1_t, a[v]));
+    t->a[i]->n = v;
+    for (j = 0; j < v; ++j)
+      t->a[i]->a[j] = j + 1;
+  }
+  *dc = t;
+}
+
 void
 s_stop(void)
 {
@@ -714,6 +743,25 @@ pointer_tests(void)
   free_list(list);
 }
 
+static int
+check_pyramid_doub_carr(doub_carr_t *dc)
+{
+  int i, j;
+  for (i = 0; i < dc->n; ++i)
+    for (j = 0; j < dc->a[i]->n; ++j)
+      if (dc->a[i]->a[j] != j + 1)
+        return FALSE;
+  return TRUE;
+}
+
+static void
+free_pyramid_doub_carr(doub_carr_t *dc)
+{
+  int i;
+  for (i = 0; i < dc->n; ++i)
+    MIDL_user_free(dc->a[i]);
+}
+
 static void
 array_tests(void)
 {
@@ -730,6 +778,7 @@ array_tests(void)
   cs_t *cs;
   int n;
   int ca[5] = {1, -2, 3, -4, 5};
+  doub_carr_t *dc;
 
   ok(cstr_length(str1, sizeof str1) == strlen(str1), "RPC cstr_length\n");
 
@@ -765,22 +814,43 @@ array_tests(void)
   cps.ca1 = &c[2];
   cps.n = 3;
   cps.ca2 = &c[3];
-  todo_wine ok(sum_cps(&cps) == 53, "RPC sum_cps\n");
+  ok(sum_cps(&cps) == 53, "RPC sum_cps\n");
 
   cpsc.a = 4;
   cpsc.b = 5;
   cpsc.c = 1;
   cpsc.ca = c;
-  todo_wine ok(sum_cpsc(&cpsc) == 6, "RPC sum_cpsc\n");
+  ok(sum_cpsc(&cpsc) == 6, "RPC sum_cpsc\n");
   cpsc.a = 4;
   cpsc.b = 5;
   cpsc.c = 0;
   cpsc.ca = c;
-  todo_wine ok(sum_cpsc(&cpsc) == 10, "RPC sum_cpsc\n");
+  ok(sum_cpsc(&cpsc) == 10, "RPC sum_cpsc\n");
 
   ok(sum_toplev_conf_2n(c, 3) == 15, "RPC sum_toplev_conf_2n\n");
   ok(sum_toplev_conf_cond(c, 5, 6, 1) == 10, "RPC sum_toplev_conf_cond\n");
   ok(sum_toplev_conf_cond(c, 5, 6, 0) == 15, "RPC sum_toplev_conf_cond\n");
+
+  dc = malloc(FIELD_OFFSET(doub_carr_t, a[2]));
+  dc->n = 2;
+  dc->a[0] = malloc(FIELD_OFFSET(doub_carr_1_t, a[3]));
+  dc->a[0]->n = 3;
+  dc->a[0]->a[0] = 5;
+  dc->a[0]->a[1] = 1;
+  dc->a[0]->a[2] = 8;
+  dc->a[1] = malloc(FIELD_OFFSET(doub_carr_1_t, a[2]));
+  dc->a[1]->n = 2;
+  dc->a[1]->a[0] = 2;
+  dc->a[1]->a[1] = 3;
+  ok(sum_doub_carr(dc) == 19, "RPC sum_doub_carr\n");
+  free(dc->a[0]);
+  free(dc->a[1]);
+  free(dc);
+
+  dc = NULL;
+  make_pyramid_doub_carr(4, &dc);
+  ok(check_pyramid_doub_carr(dc), "RPC make_pyramid_doub_carr\n");
+  free_pyramid_doub_carr(dc);
 }
 
 static void
