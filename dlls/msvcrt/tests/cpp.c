@@ -979,6 +979,8 @@ static void test_demangle(void)
 {"?$aaa@Vbbb@ccc@@Vddd@2@", "aaa<class ccc::bbb,class ccc::ddd>"},
 { "??0?$Foo@P6GHPAX0@Z@@QAE@PAD@Z", "public: __thiscall Foo<int (__stdcall*)(void *,void *)>::Foo<int (__stdcall*)(void *,void *)>(char *)"},
 { "??0?$Foo@P6GHPAX0@Z@@QAE@PAD@Z", "__thiscall Foo<int (__stdcall*)(void *,void *)>::Foo<int (__stdcall*)(void *,void *)>(char *)", 0x880},
+{ "?Qux@Bar@@0PAP6AHPAV1@AAH1PAH@ZA", "private: static int (__cdecl** Bar::Qux)(class Bar *,int &,int &,int *)" },
+{ "?Qux@Bar@@0PAP6AHPAV1@AAH1PAH@ZA", "Bar::Qux", 0x1800},
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));
     char* name;
@@ -987,7 +989,9 @@ static void test_demangle(void)
     {
 	name = p__unDName(0, test[i].in, 0, pmalloc, pfree, test[i].flags);
         ok(name != NULL && !strcmp_space(test[i].out, name),
-                "Got name \"%s\" for %d\n", name, i);
+           "Got name \"%s\" for %d\n", name, i );
+        ok(name != NULL && !strcmp_space(test[i].out, name),
+           "Expected \"%s\"\n", test[i].out );
         pfree(name);
     }
 }

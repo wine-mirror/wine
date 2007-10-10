@@ -180,7 +180,7 @@ static void str_array_init(struct array* a)
  *		str_array_push
  * Adding a new string to an array
  */
-static void str_array_push(struct parsed_symbol* sym, const char* ptr, size_t len, 
+static void str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
                            struct array* a)
 {
     assert(ptr);
@@ -366,10 +366,10 @@ static BOOL get_modifier(char ch, const char** ret)
     return TRUE;
 }
 
-static const char* get_modified_type(struct parsed_symbol* sym, char modif)
+static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
+                              struct array *pmt_ref, char modif)
 {
     const char* modifier;
-    const char* ret = NULL;
     const char* str_modif;
 
     switch (modif)
@@ -381,7 +381,7 @@ static const char* get_modified_type(struct parsed_symbol* sym, char modif)
     case 'R': str_modif = " * volatile"; break;
     case 'S': str_modif = " * const volatile"; break;
     case '?': str_modif = ""; break;
-    default: return NULL;
+    default: return FALSE;
     }
 
     if (get_modifier(*sym->current++, &modifier))
@@ -390,14 +390,21 @@ static const char* get_modified_type(struct parsed_symbol* sym, char modif)
         struct datatype_t   sub_ct;
 
         /* Recurse to get the referred-to type */
-        if (!demangle_datatype(sym, &sub_ct, NULL, FALSE))
-            return NULL;
-        ret = str_printf(sym, "%s%s%s%s%s", 
-                         sub_ct.left, sub_ct.left && modifier ? " " : NULL, 
-                         modifier, sub_ct.right, str_modif);
+        if (!demangle_datatype(sym, &sub_ct, pmt_ref, FALSE))
+            return FALSE;
+        if (modifier)
+            ct->left = str_printf(sym, "%s %s%s", sub_ct.left, modifier, str_modif );
+        else
+        {
+            /* don't insert a space between duplicate '*' */
+            if (str_modif[0] && str_modif[1] == '*' && sub_ct.left[strlen(sub_ct.left)-1] == '*')
+                str_modif++;
+            ct->left = str_printf(sym, "%s%s", sub_ct.left, str_modif );
+        }
+        ct->right = sub_ct.right;
         sym->stack.num = mark;
     }
-    return ret;
+    return TRUE;
 }
 
 /******************************************************************
@@ -707,16 +714,16 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
         break;
     case '?':
         /* not all the time is seems */
-        if (!(ct->left = get_modified_type(sym, '?'))) goto done;
+        if (!get_modified_type(ct, sym, pmt_ref, '?')) goto done;
         break;
     case 'A': /* reference */
     case 'B': /* volatile reference */
-        if (!(ct->left = get_modified_type(sym, dt))) goto done;
+        if (!get_modified_type(ct, sym, pmt_ref, dt)) goto done;
         break;
     case 'Q': /* const pointer */
     case 'R': /* volatile pointer */
     case 'S': /* const volatile pointer */
-        if (!(ct->left = get_modified_type(sym, in_args ? dt : 'P'))) goto done;
+        if (!get_modified_type(ct, sym, pmt_ref, in_args ? dt : 'P')) goto done;
         break;
     case 'P': /* Pointer */
         if (isdigit(*sym->current))
@@ -746,7 +753,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
             }
             else goto done;
 	}
-	else if (!(ct->left = get_modified_type(sym, 'P'))) goto done;
+	else if (!get_modified_type(ct, sym, pmt_ref, 'P')) goto done;
         break;
     case 'W':
         if (*sym->current == '4')
@@ -765,7 +772,9 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
         /* Referring back to previously parsed type */
-        ct->left = str_array_get_ref(pmt_ref, dt - '0');
+        /* left and right are pushed as two separate strings */
+        ct->left = str_array_get_ref(pmt_ref, (dt - '0') * 2);
+        ct->right = str_array_get_ref(pmt_ref, (dt - '0') * 2 + 1);
         if (!ct->left) goto done;
         add_pmt = FALSE;
         break;
@@ -804,8 +813,11 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
         break;
     }
     if (add_pmt && pmt_ref && in_args)
-        str_array_push(sym, str_printf(sym, "%s%s", ct->left, ct->right), 
-                       -1, pmt_ref);
+    {
+        /* left and right are pushed as two separate strings */
+        str_array_push(sym, ct->left ? ct->left : "", -1, pmt_ref);
+        str_array_push(sym, ct->right ? ct->right : "", -1, pmt_ref);
+    }
 done:
     
     return ct->left != NULL;
