@@ -314,9 +314,6 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 				      t42->glyph_sent_size * sizeof(*(t42->glyph_sent)));
     }
 
-    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(glyph_def) +
-		    strlen(pdl->ps_name) + 100);
-
     if(!get_glyf_pos(t42, index, &start, &end)) return FALSE;
     TRACE("start = %x end = %x\n", start, end);
 
@@ -352,6 +349,10 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 
     for(i = 1; t42->glyf_blocks[i]; i++)
         if(start < t42->glyf_blocks[i]) break;
+
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(glyph_def) +
+		    strlen(pdl->ps_name) + 100);
+
     /* we don't have a string for the gdir and glyf tables, but we do have a 
        string for the TT header.  So the offset we need is tables - 2 */
     sprintf(buf, "%d %d\n", t42->num_of_written_tables - 2 + i, start - t42->glyf_blocks[i-1]);
