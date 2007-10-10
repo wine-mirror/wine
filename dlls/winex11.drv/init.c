@@ -436,6 +436,9 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                     return TRUE;
                 }
                 return FALSE;
+            case X11DRV_FLUSH_GL_DRAWABLE:
+                flush_gl_drawable(physDev);
+                return TRUE;
             }
         }
         break;

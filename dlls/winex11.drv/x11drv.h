@@ -477,7 +477,8 @@ enum x11drv_escape_codes
     X11DRV_GET_DCE,          /* get the DCE pointer */
     X11DRV_SET_DCE,          /* set the DCE pointer */
     X11DRV_GET_GLX_DRAWABLE, /* get current glx drawable for a DC */
-    X11DRV_SYNC_PIXMAP       /* sync the dibsection to its pixmap */
+    X11DRV_SYNC_PIXMAP,      /* sync the dibsection to its pixmap */
+    X11DRV_FLUSH_GL_DRAWABLE /* flush changes made to the gl drawable */
 };
 
 struct x11drv_escape_set_drawable
@@ -676,6 +677,7 @@ extern int pixelformat_from_fbconfig_id( XID fbconfig_id );
 extern XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id );
 extern void mark_drawable_dirty( Drawable old, Drawable new );
 extern Drawable create_glxpixmap( Display *display, XVisualInfo *vis, Pixmap parent );
+extern void flush_gl_drawable( X11DRV_PDEVICE *physDev );
 
 extern void alloc_window_dce( struct x11drv_win_data *data );
 extern void free_window_dce( struct x11drv_win_data *data );

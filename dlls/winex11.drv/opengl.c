@@ -1967,7 +1967,7 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
     wine_tsx11_unlock();
 }
 
-static inline void update_drawable(X11DRV_PDEVICE *physDev)
+void flush_gl_drawable(X11DRV_PDEVICE *physDev)
 {
     int w, h;
 
@@ -1983,9 +1983,11 @@ static inline void update_drawable(X11DRV_PDEVICE *physDev)
 
         /* The GL drawable may be lagged behind if we don't flush first, so
          * flush the display make sure we copy up-to-date data */
+        wine_tsx11_lock();
         XFlush(gdi_display);
         XCopyArea(gdi_display, src, physDev->drawable, physDev->gc, 0, 0, w, h,
                   physDev->dc_rect.left, physDev->dc_rect.top);
+        wine_tsx11_unlock();
     }
 }
 
@@ -1993,23 +1995,25 @@ static inline void update_drawable(X11DRV_PDEVICE *physDev)
 static void WINAPI X11DRV_wglFinish(void)
 {
     Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+    enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
 
     wine_tsx11_lock();
     sync_context(ctx);
     pglFinish();
-    update_drawable(ctx->physDev);
     wine_tsx11_unlock();
+    ExtEscape(ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 }
 
 static void WINAPI X11DRV_wglFlush(void)
 {
     Wine_GLContext *ctx = NtCurrentTeb()->glContext;
+    enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
 
     wine_tsx11_lock();
     sync_context(ctx);
     pglFlush();
-    update_drawable(ctx->physDev);
     wine_tsx11_unlock();
+    ExtEscape(ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 }
 
 /**
@@ -3292,7 +3296,8 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
   }
   else
       pglXSwapBuffers(gdi_display, drawable);
-  update_drawable(physDev);
+
+  flush_gl_drawable(physDev);
   wine_tsx11_unlock();
 
   /* FPS support */
@@ -3372,6 +3377,10 @@ int pixelformat_from_fbconfig_id(XID fbconfig_id)
 }
 
 void mark_drawable_dirty(Drawable old, Drawable new)
+{
+}
+
+void flush_gl_drawable(X11DRV_PDEVICE *physDev)
 {
 }
 
