@@ -27,7 +27,69 @@
 
 #include "wine/test.h"
 
-static void InternetQueryOptionA_test(void)
+/* ############################### */
+
+static void test_InternetCanonicalizeUrlA(void)
+{
+    CHAR    buffer[256];
+    LPCSTR  url;
+    DWORD   urllen;
+    DWORD   dwSize;
+    DWORD   res;
+
+    /* Acrobat Updater 5 calls this for Adobe Reader 8.1 */
+    url = "http://swupmf.adobe.com/manifest/50/win/AdobeUpdater.upd";
+    urllen = lstrlenA(url);
+
+    memset(buffer, '#', sizeof(buffer)-1);
+    buffer[sizeof(buffer)-1] = '\0';
+    dwSize = 1; /* Acrobat Updater use this size */
+    SetLastError(0xdeadbeef);
+    res = InternetCanonicalizeUrlA(url, buffer, &dwSize, 0);
+    todo_wine
+    ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER) && (dwSize == (urllen+1)),
+        "got %u and %u with size %u for '%s' (%d)\n",
+        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+
+
+    /* buffer has no space for the terminating '\0' */
+    memset(buffer, '#', sizeof(buffer)-1);
+    buffer[sizeof(buffer)-1] = '\0';
+    dwSize = urllen;
+    SetLastError(0xdeadbeef);
+    res = InternetCanonicalizeUrlA(url, buffer, &dwSize, 0);
+    /* dwSize is nr. of needed bytes with the terminating '\0' */
+    todo_wine
+    ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER) && (dwSize == (urllen+1)),
+        "got %u and %u with size %u for '%s' (%d)\n",
+        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+
+    /* buffer has the required size */
+    memset(buffer, '#', sizeof(buffer)-1);
+    buffer[sizeof(buffer)-1] = '\0';
+    dwSize = urllen+1;
+    SetLastError(0xdeadbeef);
+    res = InternetCanonicalizeUrlA(url, buffer, &dwSize, 0);
+    /* dwSize is nr. of copied bytes without the terminating '\0' */
+    ok( res && (dwSize == urllen) && (lstrcmpA(url, buffer) == 0),
+        "got %u and %u with size %u for '%s' (%d)\n",
+        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+
+    /* buffer is larger as the required size */
+    memset(buffer, '#', sizeof(buffer)-1);
+    buffer[sizeof(buffer)-1] = '\0';
+    dwSize = urllen+2;
+    SetLastError(0xdeadbeef);
+    res = InternetCanonicalizeUrlA(url, buffer, &dwSize, 0);
+    /* dwSize is nr. of copied bytes without the terminating '\0' */
+    ok( res && (dwSize == urllen) && (lstrcmpA(url, buffer) == 0),
+        "got %u and %u with size %u for '%s' (%d)\n",
+        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+}
+
+/* ############################### */
+
+static void test_InternetQueryOptionA(void)
 {
   HINTERNET hinet,hurl;
   DWORD len;
@@ -221,9 +283,12 @@ static void test_null(void)
 
 }
 
+/* ############################### */
+
 START_TEST(internet)
 {
-  InternetQueryOptionA_test();
+  test_InternetCanonicalizeUrlA();
+  test_InternetQueryOptionA();
   test_get_cookie();
   test_null();
 }
