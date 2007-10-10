@@ -2567,8 +2567,11 @@ static void texdepth_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 638, 240);
     ok(color == 0x000000ff, "Pixel 638(100%% + 2 pixel) has color %08x, expected 0x000000ff\n", color);
 
+    /* Cleanup */
     hr = IDirect3DDevice9_SetPixelShader(device, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed (%08x)\n", hr);
+    IDirect3DPixelShader9_Release(shader);
+
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
@@ -2722,6 +2725,11 @@ static void texkill_test(IDirect3DDevice9 *device)
     ok(color == 0x00ffff00, "Pixel 578/49 has color %08x, expected 0x00ffff00\n", color);
     color = getPixelColor(device, 575, 430);
     ok(color == 0x000000ff, "Pixel 575/49 has color %08x, expected 0x000000ff\n", color);
+
+    /* Cleanup */
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(SUCCEEDED(hr), "SetPixelShader failed (%08x)\n", hr);
+    IDirect3DPixelShader9_Release(shader);
 }
 
 static void x8l8v8u8_test(IDirect3DDevice9 *device)
