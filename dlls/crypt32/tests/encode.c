@@ -482,17 +482,31 @@ static const char *printFileTime(const FILETIME *ft)
     return buf;
 }
 
+static void compareTime(const SYSTEMTIME *expected, const FILETIME *got)
+{
+    SYSTEMTIME st;
+
+    FileTimeToSystemTime(got, &st);
+    ok(expected->wYear == st.wYear &&
+     expected->wMonth == st.wMonth &&
+     expected->wDay == st.wDay &&
+     expected->wHour == st.wHour &&
+     expected->wMinute == st.wMinute &&
+     expected->wSecond == st.wSecond &&
+     abs(expected->wMilliseconds - st.wMilliseconds) <= 1,
+     "Got unexpected value for time decoding:\nexpected %s, got %s\n",
+     printSystemTime(expected), printFileTime(got));
+}
+
 static void testTimeDecoding(DWORD dwEncoding, LPCSTR structType,
  const struct encodedFiletime *time)
 {
-    FILETIME ft1 = { 0 }, ft2 = { 0 };
-    DWORD size = sizeof(ft2);
+    FILETIME ft = { 0 };
+    DWORD size = sizeof(ft);
     BOOL ret;
 
-    ret = SystemTimeToFileTime(&time->sysTime, &ft1);
-    ok(ret, "SystemTimeToFileTime failed: %d\n", GetLastError());
     ret = CryptDecodeObjectEx(dwEncoding, structType, time->encodedTime,
-     time->encodedTime[1] + 2, 0, NULL, &ft2, &size);
+     time->encodedTime[1] + 2, 0, NULL, &ft, &size);
     /* years other than 1950-2050 are not allowed for encodings other than
      * X509_CHOICE_OF_TIME.
      */
@@ -501,9 +515,7 @@ static void testTimeDecoding(DWORD dwEncoding, LPCSTR structType,
     {
         ok(ret, "CryptDecodeObjectEx failed: %d (0x%08x)\n", GetLastError(),
          GetLastError());
-        ok(!memcmp(&ft1, &ft2, sizeof(ft1)),
-         "Got unexpected value for time decoding:\nexpected %s, got %s\n",
-         printSystemTime(&time->sysTime), printFileTime(&ft2));
+        compareTime(&time->sysTime, &ft);
     }
     else
         ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
