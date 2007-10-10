@@ -3395,7 +3395,10 @@ static void compareAltNameEntry(const CERT_ALT_NAME_ENTRY *expected,
         case CERT_ALT_NAME_URL:
         case CERT_ALT_NAME_REGISTERED_ID:
             ok((!U(*expected).pwszURL && !U(*got).pwszURL) ||
-               !lstrcmpW(U(*expected).pwszURL, U(*got).pwszURL), "Unexpected name\n");
+             (!U(*expected).pwszURL && !lstrlenW(U(*got).pwszURL)) ||
+             (!U(*got).pwszURL && !lstrlenW(U(*expected).pwszURL)) ||
+             !lstrcmpW(U(*expected).pwszURL, U(*got).pwszURL),
+             "Unexpected name\n");
             break;
         case CERT_ALT_NAME_X400_ADDRESS:
         case CERT_ALT_NAME_DIRECTORY_NAME:
