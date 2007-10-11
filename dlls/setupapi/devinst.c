@@ -518,16 +518,18 @@ static BOOL SETUPDI_AddDeviceToSet(struct DeviceInfoSet *set,
         if (set->devices)
         {
             WCHAR classGuidStr[39];
+            SP_DEVINFO_DATA *DeviceInfoData = &set->devices[set->cDevices++];
 
-            *dev = &set->devices[set->cDevices++];
-            (*dev)->cbSize = sizeof(SP_DEVINFO_DATA);
-            memcpy(&(*dev)->ClassGuid, guid, sizeof(GUID));
-            (*dev)->DevInst = devInst;
-            (*dev)->Reserved = (ULONG_PTR)devInfo;
+            DeviceInfoData->cbSize = sizeof(SP_DEVINFO_DATA);
+            memcpy(&DeviceInfoData->ClassGuid, guid, sizeof(GUID));
+            DeviceInfoData->DevInst = devInst;
+            DeviceInfoData->Reserved = (ULONG_PTR)devInfo;
             SETUPDI_GuidToString(guid, classGuidStr);
             SetupDiSetDeviceRegistryPropertyW((HDEVINFO)set,
-                *dev, SPDRP_CLASSGUID, (const BYTE *)classGuidStr,
+                DeviceInfoData, SPDRP_CLASSGUID, (const BYTE *)classGuidStr,
                 lstrlenW(classGuidStr) * sizeof(WCHAR));
+            if (dev)
+                *dev = DeviceInfoData;
             ret = TRUE;
         }
         else
@@ -2090,12 +2092,10 @@ static void SETUPDI_EnumerateMatchingDevices(HDEVINFO DeviceInfoSet,
                                 * sizeof(WCHAR));
                             if (instanceId)
                             {
-                                SP_DEVINFO_DATA *dev;
-
                                 sprintfW(instanceId, fmt, parent, subKeyName);
                                 SETUPDI_AddDeviceToSet(set, &deviceClass,
                                         0 /* FIXME: DevInst */, instanceId,
-                                        FALSE, &dev);
+                                        FALSE, NULL);
                                 HeapFree(GetProcessHeap(), 0, instanceId);
                             }
                         }
