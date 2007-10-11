@@ -424,6 +424,32 @@ static HKEY SETUPDI_CreateDevKey(struct DeviceInfo *devInfo)
     return key;
 }
 
+static HKEY SETUPDI_CreateDrvKey(struct DeviceInfo *devInfo)
+{
+    static const WCHAR slash[] = { '\\',0 };
+    WCHAR classKeyPath[MAX_PATH];
+    HKEY classKey, key = INVALID_HANDLE_VALUE;
+    LONG l;
+
+    lstrcpyW(classKeyPath, ControlClass);
+    lstrcatW(classKeyPath, slash);
+    SETUPDI_GuidToString(&devInfo->set->ClassGuid,
+            classKeyPath + lstrlenW(classKeyPath));
+    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, classKeyPath, 0, NULL, 0,
+            KEY_ALL_ACCESS, NULL, &classKey, NULL);
+    if (!l)
+    {
+        static const WCHAR fmt[] = { '%','0','4','d',0 };
+        WCHAR devId[5];
+
+        sprintfW(devId, fmt, devInfo->devId);
+        RegCreateKeyExW(classKey, devId, 0, NULL, 0, KEY_READ | KEY_WRITE,
+                NULL, &key, NULL);
+        RegCloseKey(classKey);
+    }
+    return key;
+}
+
 static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(struct DeviceInfoSet *set,
         DWORD devId, LPCWSTR instanceId, BOOL phantom)
 {
@@ -1209,9 +1235,58 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(
         HINF InfHandle,
         PCWSTR InfSectionName)
 {
-    FIXME("%p %p %d %d %d %p %s\n", DeviceInfoSet, DeviceInfoData, Scope,
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfo *devInfo;
+    HKEY key = INVALID_HANDLE_VALUE;
+
+    TRACE("%p %p %d %d %d %p %s\n", DeviceInfoSet, DeviceInfoData, Scope,
             HwProfile, KeyType, InfHandle, debugstr_w(InfSectionName));
-    return INVALID_HANDLE_VALUE;
+
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (!DeviceInfoData || DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA)
+            || !DeviceInfoData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
+    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
+    if (devInfo->set != set)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (devInfo->phantom)
+    {
+        SetLastError(ERROR_DEVINFO_NOT_REGISTERED);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (Scope != DICS_FLAG_GLOBAL)
+        FIXME("unimplemented for scope %d\n", Scope);
+    switch (KeyType)
+    {
+        case DIREG_DEV:
+            key = SETUPDI_CreateDevKey(devInfo);
+            break;
+        case DIREG_DRV:
+            key = SETUPDI_CreateDrvKey(devInfo);
+            break;
+        default:
+            WARN("unknown KeyType %d\n", KeyType);
+    }
+    if (InfHandle)
+        SetupInstallFromInfSectionW(NULL, InfHandle, InfSectionName, SPINST_ALL,
+                NULL, NULL, SP_COPY_NEWER_ONLY, NULL, NULL, DeviceInfoSet,
+                DeviceInfoData);
+    return key;
 }
 
 /***********************************************************************
