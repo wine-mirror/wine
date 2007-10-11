@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include "wincrypt.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -460,6 +461,267 @@ static BOOL CRYPT_CheckBasicConstraintsForCA(PCCERT_CONTEXT cert,
     return validBasicConstraints;
 }
 
+static BOOL url_matches(LPCWSTR constraint, LPCWSTR name,
+ DWORD *trustErrorStatus)
+{
+    BOOL match = FALSE;
+
+    TRACE("%s, %s\n", debugstr_w(constraint), debugstr_w(name));
+
+    if (!constraint)
+        *trustErrorStatus |= CERT_TRUST_INVALID_NAME_CONSTRAINTS;
+    else if (!name)
+        ; /* no match */
+    else if (constraint[0] == '.')
+    {
+        if (lstrlenW(name) > lstrlenW(constraint))
+            match = !lstrcmpiW(name + lstrlenW(name) - lstrlenW(constraint),
+             constraint);
+    }
+    else
+        match = !lstrcmpiW(constraint, name);
+    return match;
+}
+
+static BOOL rfc822_name_matches(LPCWSTR constraint, LPCWSTR name,
+ DWORD *trustErrorStatus)
+{
+    BOOL match = FALSE;
+    LPCWSTR at;
+
+    TRACE("%s, %s\n", debugstr_w(constraint), debugstr_w(name));
+
+    if (!constraint)
+        *trustErrorStatus |= CERT_TRUST_INVALID_NAME_CONSTRAINTS;
+    else if (!name)
+        ; /* no match */
+    else if ((at = strchrW(constraint, '@')))
+        match = !lstrcmpiW(constraint, name);
+    else
+    {
+        if ((at = strchrW(name, '@')))
+            match = url_matches(constraint, at + 1, trustErrorStatus);
+        else
+            match = !lstrcmpiW(constraint, name);
+    }
+    return match;
+}
+
+static BOOL dns_name_matches(LPCWSTR constraint, LPCWSTR name,
+ DWORD *trustErrorStatus)
+{
+    BOOL match = FALSE;
+
+    TRACE("%s, %s\n", debugstr_w(constraint), debugstr_w(name));
+
+    if (!constraint)
+        *trustErrorStatus |= CERT_TRUST_INVALID_NAME_CONSTRAINTS;
+    else if (!name)
+        ; /* no match */
+    else if (lstrlenW(name) >= lstrlenW(constraint))
+        match = !lstrcmpiW(name + lstrlenW(name) - lstrlenW(constraint),
+         constraint);
+    else
+        ; /* name is too short, no match */
+    return match;
+}
+
+static BOOL ip_address_matches(const CRYPT_DATA_BLOB *constraint,
+ const CRYPT_DATA_BLOB *name, DWORD *trustErrorStatus)
+{
+    BOOL match = FALSE;
+
+    TRACE("(%d, %p), (%d, %p)\n", constraint->cbData, constraint->pbData,
+     name->cbData, name->pbData);
+
+    if (constraint->cbData != sizeof(DWORD) * 2)
+        *trustErrorStatus |= CERT_TRUST_INVALID_NAME_CONSTRAINTS;
+    else if (name->cbData == sizeof(DWORD))
+    {
+        DWORD subnet, mask, addr;
+
+        memcpy(&subnet, constraint->pbData, sizeof(subnet));
+        memcpy(&mask, constraint->pbData + sizeof(subnet), sizeof(mask));
+        memcpy(&addr, name->pbData, sizeof(addr));
+        /* These are really in big-endian order, but for equality matching we
+         * don't need to swap to host order
+         */
+        match = (subnet & mask) == (addr & mask);
+    }
+    else
+        ; /* name is wrong size, no match */
+    return match;
+}
+
+static void CRYPT_FindMatchingNameEntry(const CERT_ALT_NAME_ENTRY *constraint,
+ const CERT_ALT_NAME_INFO *subjectName, DWORD *trustErrorStatus,
+ DWORD errorIfFound, DWORD errorIfNotFound)
+{
+    DWORD i;
+    BOOL defined = FALSE, match = FALSE;
+
+    for (i = 0; i < subjectName->cAltEntry; i++)
+    {
+        if (subjectName->rgAltEntry[i].dwAltNameChoice ==
+         constraint->dwAltNameChoice)
+        {
+            defined = TRUE;
+            switch (constraint->dwAltNameChoice)
+            {
+            case CERT_ALT_NAME_RFC822_NAME:
+                match = rfc822_name_matches(constraint->u.pwszURL,
+                 subjectName->rgAltEntry[i].u.pwszURL, trustErrorStatus);
+                break;
+            case CERT_ALT_NAME_DNS_NAME:
+                match = dns_name_matches(constraint->u.pwszURL,
+                 subjectName->rgAltEntry[i].u.pwszURL, trustErrorStatus);
+                break;
+            case CERT_ALT_NAME_URL:
+                match = url_matches(constraint->u.pwszURL,
+                 subjectName->rgAltEntry[i].u.pwszURL, trustErrorStatus);
+                break;
+            case CERT_ALT_NAME_IP_ADDRESS:
+                match = ip_address_matches(&constraint->u.IPAddress,
+                 &subjectName->rgAltEntry[i].u.IPAddress, trustErrorStatus);
+                break;
+            case CERT_ALT_NAME_DIRECTORY_NAME:
+            default:
+                ERR("name choice %d unsupported in this context\n",
+                 constraint->dwAltNameChoice);
+                *trustErrorStatus |=
+                 CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT;
+            }
+        }
+    }
+    /* Microsoft's implementation of name constraint checking appears at odds
+     * with RFC 3280:
+     * According to MSDN, CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT is set
+     * when a name constraint is present, but that name form is not defined in
+     * the end certificate.  According to RFC 3280, "if no name of the type is
+     * in the certificate, the name is acceptable."
+     * I follow Microsoft here.
+     */
+    if (!defined)
+        *trustErrorStatus |= CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT;
+    *trustErrorStatus |= match ? errorIfFound : errorIfNotFound;
+}
+
+static void CRYPT_CheckNameConstraints(
+ const CERT_NAME_CONSTRAINTS_INFO *nameConstraints, const CERT_INFO *cert,
+ DWORD *trustErrorStatus)
+{
+    /* If there aren't any existing constraints, don't bother checking */
+    if (nameConstraints->cPermittedSubtree || nameConstraints->cExcludedSubtree)
+    {
+        CERT_EXTENSION *ext;
+
+        if ((ext = CertFindExtension(szOID_SUBJECT_ALT_NAME, cert->cExtension,
+         cert->rgExtension)))
+        {
+            CERT_ALT_NAME_INFO *subjectName;
+            DWORD size;
+
+            if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ALTERNATE_NAME,
+             ext->Value.pbData, ext->Value.cbData,
+             CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+             &subjectName, &size))
+            {
+                DWORD i;
+
+                for (i = 0; i < nameConstraints->cExcludedSubtree; i++)
+                    CRYPT_FindMatchingNameEntry(
+                     &nameConstraints->rgExcludedSubtree[i].Base, subjectName,
+                     trustErrorStatus,
+                     CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT, 0);
+                for (i = 0; i < nameConstraints->cPermittedSubtree; i++)
+                    CRYPT_FindMatchingNameEntry(
+                     &nameConstraints->rgPermittedSubtree[i].Base, subjectName,
+                     trustErrorStatus,
+                     0, CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT);
+                LocalFree(subjectName);
+            }
+        }
+        else
+        {
+            /* See above comment on CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT.
+             * I match Microsoft's implementation here as well.
+             */
+            *trustErrorStatus |= CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT;
+            if (nameConstraints->cPermittedSubtree)
+                *trustErrorStatus |=
+                 CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
+            if (nameConstraints->cExcludedSubtree)
+                *trustErrorStatus |=
+                 CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT;
+        }
+    }
+}
+
+/* Gets cert's name constraints, if any.  Free with LocalFree. */
+static CERT_NAME_CONSTRAINTS_INFO *CRYPT_GetNameConstraints(CERT_INFO *cert)
+{
+    CERT_NAME_CONSTRAINTS_INFO *info = NULL;
+
+    CERT_EXTENSION *ext;
+
+    if ((ext = CertFindExtension(szOID_NAME_CONSTRAINTS, cert->cExtension,
+     cert->rgExtension)))
+    {
+        DWORD size;
+
+        CryptDecodeObjectEx(X509_ASN_ENCODING, X509_NAME_CONSTRAINTS,
+         ext->Value.pbData, ext->Value.cbData,
+         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL, &info,
+         &size);
+    }
+    return info;
+}
+
+static void CRYPT_CheckChainNameConstraints(PCERT_SIMPLE_CHAIN chain)
+{
+    int i, j;
+
+    /* Microsoft's implementation appears to violate RFC 3280:  according to
+     * MSDN, the various CERT_TRUST_*_NAME_CONSTRAINT errors are set if a CA's
+     * name constraint is violated in the end cert.  According to RFC 3280,
+     * the constraints should be checked against every subsequent certificate
+     * in the chain, not just the end cert.
+     * Microsoft's implementation also sets the name constraint errors on the
+     * certs whose constraints were violated, not on the certs that violated
+     * them.
+     * In order to be error-compatible with Microsoft's implementation, while
+     * still adhering to RFC 3280, I use a O(n ^ 2) algorithm to check name
+     * constraints.
+     */
+    for (i = chain->cElement - 1; i > 0; i--)
+    {
+        CERT_NAME_CONSTRAINTS_INFO *nameConstraints;
+
+        if ((nameConstraints = CRYPT_GetNameConstraints(
+         chain->rgpElement[i]->pCertContext->pCertInfo)))
+        {
+            for (j = i - 1; j >= 0; j--)
+            {
+                DWORD errorStatus = 0;
+
+                /* According to RFC 3280, self-signed certs don't have name
+                 * constraints checked unless they're the end cert.
+                 */
+                if (j == 0 || !CRYPT_IsCertificateSelfSigned(
+                 chain->rgpElement[j]->pCertContext))
+                {
+                    CRYPT_CheckNameConstraints(nameConstraints,
+                     chain->rgpElement[i]->pCertContext->pCertInfo,
+                     &errorStatus);
+                    chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
+                     errorStatus;
+                }
+            }
+            LocalFree(nameConstraints);
+        }
+    }
+}
+
 static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
  PCERT_SIMPLE_CHAIN chain, LPFILETIME time)
 {
@@ -502,10 +764,11 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
                 constraints.dwPathLenConstraint--;
             }
         }
-        /* FIXME: check valid usages and name constraints */
+        /* FIXME: check valid usages */
         CRYPT_CombineTrustStatus(&chain->TrustStatus,
          &chain->rgpElement[i]->TrustStatus);
     }
+    CRYPT_CheckChainNameConstraints(chain);
     if (CRYPT_IsCertificateSelfSigned(rootElement->pCertContext))
     {
         rootElement->TrustStatus.dwInfoStatus |=

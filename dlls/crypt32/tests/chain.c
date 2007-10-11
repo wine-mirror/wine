@@ -1488,8 +1488,7 @@ static ChainCheck chainCheck[] = {
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT |
        CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT |
-       CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus5 },
-   TODO_ERROR },
+       CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus5 }, 0 },
  { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus6 }, 0 },
