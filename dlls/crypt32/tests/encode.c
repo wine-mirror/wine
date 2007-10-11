@@ -5653,7 +5653,6 @@ static void test_decodeNameConstraints(DWORD dwEncoding)
          encodedNameConstraints[i].encoded.pbData,
          encodedNameConstraints[i].encoded.cbData,
          CRYPT_DECODE_ALLOC_FLAG, NULL, &constraints, &size);
-        todo_wine
         ok(ret, "%d: CryptDecodeObjectEx failed: %08x\n", i, GetLastError());
         if (ret)
         {
