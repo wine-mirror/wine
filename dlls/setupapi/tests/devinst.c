@@ -20,7 +20,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
-
+#include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -39,6 +39,7 @@ static BOOL     (WINAPI *pSetupDiCreateDeviceInterfaceA)(HDEVINFO, PSP_DEVINFO_D
 static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInfo)(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInterfaces)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);
+static BOOL     (WINAPI *pSetupDiInstallClassA)(HWND, PCSTR, DWORD, HSPFILEQ);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInstanceIdA)(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
@@ -58,6 +59,7 @@ static void init_function_pointers(void)
     pSetupDiEnumDeviceInterfaces = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInterfaces");
     pSetupDiGetDeviceInstanceIdA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInstanceIdA");
     pSetupDiGetDeviceInterfaceDetailA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailA");
+    pSetupDiInstallClassA = (void *)GetProcAddress(hSetupAPI, "SetupDiInstallClassA");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
     pSetupDiRegisterDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiRegisterDeviceInfo");
 }
@@ -137,6 +139,91 @@ static void test_SetupDiOpenClassRegKeyExA(void)
     }
     else
         trace("failed to open classes key\n");
+}
+
+static void append_str(char **str, const char *data)
+{
+    sprintf(*str, data);
+    *str += strlen(*str);
+}
+
+static void create_inf_file(LPCSTR filename)
+{
+    char data[1024];
+    char *ptr = data;
+    DWORD dwNumberOfBytesWritten;
+    HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
+                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    append_str(&ptr, "[Version]\n");
+    append_str(&ptr, "Signature=\"$Chicago$\"\n");
+    append_str(&ptr, "Class=Bogus\n");
+    append_str(&ptr, "ClassGUID={6a55b5a4-3f65-11db-b704-0011955c2bdb}\n");
+    append_str(&ptr, "[ClassInstall32]\n");
+    append_str(&ptr, "AddReg=BogusClass.NT.AddReg\n");
+    append_str(&ptr, "[BogusClass.NT.AddReg]\n");
+    append_str(&ptr, "HKR,,,,\"Wine test devices\"\n");
+
+    WriteFile(hf, data, ptr - data, &dwNumberOfBytesWritten, NULL);
+    CloseHandle(hf);
+}
+
+static void get_temp_filename(LPSTR path)
+{
+    static char curr[MAX_PATH] = { 0 };
+    char temp[MAX_PATH];
+    LPSTR ptr;
+
+    if (!*curr)
+        GetCurrentDirectoryA(MAX_PATH, curr);
+    GetTempFileNameA(curr, "set", 0, temp);
+    ptr = strrchr(temp, '\\');
+
+    lstrcpyA(path, ptr + 1);
+}
+
+static void testInstallClass(void)
+{
+    static const WCHAR classKey[] = {'S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'C','o','n','t','r','o','l','\\','C','l','a','s','s','\\',
+     '{','6','a','5','5','b','5','a','4','-','3','f','6','5','-',
+     '1','1','d','b','-','b','7','0','4','-',
+     '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
+    char tmpfile[MAX_PATH], dstfile[MAX_PATH * 2];
+    BOOL ret;
+
+    if (!pSetupDiInstallClassA)
+    {
+        skip("No SetupDiInstallClassA\n");
+        return;
+    }
+    tmpfile[0] = '.';
+    tmpfile[1] = '\\';
+    get_temp_filename(tmpfile + 2);
+    create_inf_file(tmpfile + 2);
+
+    ret = pSetupDiInstallClassA(NULL, NULL, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    ret = pSetupDiInstallClassA(NULL, NULL, DI_NOVCP, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    ret = pSetupDiInstallClassA(NULL, tmpfile + 2, DI_NOVCP, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    ret = pSetupDiInstallClassA(NULL, tmpfile + 2, 0, NULL);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    ret = pSetupDiInstallClassA(NULL, tmpfile, 0, NULL);
+    ok(ret, "SetupDiInstallClassA failed: %08x\n", GetLastError());
+    RegDeleteKeyW(HKEY_LOCAL_MACHINE, classKey);
+    GetWindowsDirectoryA(dstfile, MAX_PATH);
+    lstrcatA(dstfile, "inf\\");
+    lstrcatA(dstfile, tmpfile + 2);
+    DeleteFile(dstfile);
+    DeleteFile(tmpfile);
 }
 
 static void testCreateDeviceInfo(void)
@@ -510,6 +597,7 @@ START_TEST(devinst)
         test_SetupDiOpenClassRegKeyExA();
     else
         skip("SetupDiOpenClassRegKeyExA is not available\n");
+    testInstallClass();
     testCreateDeviceInfo();
     testGetDeviceInstanceId();
     testRegisterDeviceInfo();
