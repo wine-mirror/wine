@@ -3056,6 +3056,7 @@ BOOL WINAPI SetupDiInstallClassA(
 
 static HKEY CreateClassKey(HINF hInf)
 {
+    static const WCHAR slash[] = { '\\',0 };
     WCHAR FullBuffer[MAX_PATH];
     WCHAR Buffer[MAX_PATH];
     DWORD RequiredSize;
@@ -3073,6 +3074,7 @@ static HKEY CreateClassKey(HINF hInf)
     }
 
     lstrcpyW(FullBuffer, ControlClass);
+    lstrcatW(FullBuffer, slash);
     lstrcatW(FullBuffer, Buffer);
 
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
