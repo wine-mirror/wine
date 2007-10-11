@@ -1148,6 +1148,40 @@ SetupDiCreateDeviceInfoListExW(const GUID *ClassGuid,
 }
 
 /***********************************************************************
+ *              SetupDiCreateDevRegKeyA (SETUPAPI.@)
+ */
+HKEY WINAPI SetupDiCreateDevRegKeyA(
+        HDEVINFO DeviceInfoSet,
+        PSP_DEVINFO_DATA DeviceInfoData,
+        DWORD Scope,
+        DWORD HwProfile,
+        DWORD KeyType,
+        HINF InfHandle,
+        PCSTR InfSectionName)
+{
+    FIXME("%p %p %d %d %d %p %s\n", DeviceInfoSet, DeviceInfoData, Scope,
+            HwProfile, KeyType, InfHandle, debugstr_a(InfSectionName));
+    return INVALID_HANDLE_VALUE;
+}
+
+/***********************************************************************
+ *              SetupDiCreateDevRegKeyW (SETUPAPI.@)
+ */
+HKEY WINAPI SetupDiCreateDevRegKeyW(
+        HDEVINFO DeviceInfoSet,
+        PSP_DEVINFO_DATA DeviceInfoData,
+        DWORD Scope,
+        DWORD HwProfile,
+        DWORD KeyType,
+        HINF InfHandle,
+        PCWSTR InfSectionName)
+{
+    FIXME("%p %p %d %d %d %p %s\n", DeviceInfoSet, DeviceInfoData, Scope,
+            HwProfile, KeyType, InfHandle, debugstr_w(InfSectionName));
+    return INVALID_HANDLE_VALUE;
+}
+
+/***********************************************************************
  *              SetupDiCreateDeviceInfoA (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiCreateDeviceInfoA(
