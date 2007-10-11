@@ -3168,9 +3168,7 @@ BOOL WINAPI SetupDiInstallClassW(
 
 
     /* Try to append a layout file */
-#if 0
     SetupOpenAppendInfFileW(NULL, hInf, NULL);
-#endif
 
     /* Retrieve the actual section name */
     SetupDiGetActualSectionToInstallW(hInf,
