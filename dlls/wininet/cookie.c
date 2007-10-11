@@ -369,12 +369,16 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     {
         szCookieData = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
         if( !szCookieData )
-            return FALSE;
+        {
+            r = FALSE;
+        }
+        else
+        {
+            r = InternetGetCookieW( szUrl, szCookieName, szCookieData, &len );
 
-        r = InternetGetCookieW( szUrl, szCookieName, szCookieData, &len );
-
-        *lpdwSize = WideCharToMultiByte( CP_ACP, 0, szCookieData, len,
-                                lpCookieData, *lpdwSize, NULL, NULL );
+            *lpdwSize = WideCharToMultiByte( CP_ACP, 0, szCookieData, len,
+                                    lpCookieData, *lpdwSize, NULL, NULL );
+        }
     }
 
     HeapFree( GetProcessHeap(), 0, szCookieData );
