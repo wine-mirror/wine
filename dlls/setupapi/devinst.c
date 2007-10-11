@@ -127,6 +127,7 @@ struct DeviceInfo
     struct DeviceInfoSet *set;
     HKEY                  key;
     BOOL                  phantom;
+    DWORD                 devId;
     LPWSTR                instanceId;
     struct list           interfaces;
 };
@@ -424,7 +425,7 @@ static HKEY SETUPDI_CreateDevKey(struct DeviceInfo *devInfo)
 }
 
 static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(struct DeviceInfoSet *set,
-        LPCWSTR instanceId, BOOL phantom)
+        DWORD devId, LPCWSTR instanceId, BOOL phantom)
 {
     struct DeviceInfo *devInfo = HeapAlloc(GetProcessHeap(), 0,
             sizeof(struct DeviceInfo));
@@ -432,6 +433,7 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(struct DeviceInfoSet *set,
     if (devInfo)
     {
         devInfo->set = set;
+        devInfo->devId = devId;
         devInfo->instanceId = HeapAlloc(GetProcessHeap(), 0,
                 (lstrlenW(instanceId) + 1) * sizeof(WCHAR));
         if (devInfo->instanceId)
@@ -501,8 +503,8 @@ static BOOL SETUPDI_AddDeviceToSet(struct DeviceInfoSet *set,
         SP_DEVINFO_DATA **dev)
 {
     BOOL ret = FALSE;
-    struct DeviceInfo *devInfo = SETUPDI_AllocateDeviceInfo(set, instanceId,
-            phantom);
+    struct DeviceInfo *devInfo = SETUPDI_AllocateDeviceInfo(set, set->cDevices,
+            instanceId, phantom);
 
     TRACE("%p, %s, %d, %s, %d\n", set, debugstr_guid(guid), devInst,
             debugstr_w(instanceId), phantom);
