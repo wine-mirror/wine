@@ -65,7 +65,7 @@ typedef struct
             UINT state   : 16; /* ODS_* flags */
         } item;
         LPARAM lp;
-    };
+    } u;
 } DRAW_ITEM_STRUCT;
 
 static BOOL test_DestroyWindow_flag;
@@ -6303,13 +6303,13 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
                 trace("WM_DRAWITEM: type %x, ctl_id %x, item_id %x, action %x, state %x\n",
                       dis->CtlType, dis->CtlID, dis->itemID, dis->itemAction, dis->itemState);
 
-                di.item.type = dis->CtlType;
-                di.item.ctl_id = dis->CtlID;
-                di.item.item_id = dis->itemID;
-                di.item.action = dis->itemAction;
-                di.item.state = dis->itemState;
+                di.u.item.type = dis->CtlType;
+                di.u.item.ctl_id = dis->CtlID;
+                di.u.item.item_id = dis->itemID;
+                di.u.item.action = dis->itemAction;
+                di.u.item.state = dis->itemState;
 
-                lParam = di.lp;
+                lParam = di.u.lp;
                 break;
             }
         }
