@@ -3198,7 +3198,7 @@ BOOL WINAPI SetupDiInstallClassW(
     SetupInstallFromInfSectionW(NULL,
 				hInf,
 				SectionName,
-				SPINST_REGISTRY,
+				SPINST_COPYINF | SPINST_FILES | SPINST_REGISTRY,
 				hClassKey,
 				NULL,
 				0,
