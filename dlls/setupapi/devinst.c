@@ -407,6 +407,22 @@ static BOOL SETUPDI_SetInterfaceSymbolicLink(SP_DEVICE_INTERFACE_DATA *iface,
     return ret;
 }
 
+static HKEY SETUPDI_CreateDevKey(struct DeviceInfo *devInfo)
+{
+    HKEY enumKey, key = INVALID_HANDLE_VALUE;
+    LONG l;
+
+    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0, KEY_ALL_ACCESS,
+            NULL, &enumKey, NULL);
+    if (!l)
+    {
+        RegCreateKeyExW(enumKey, devInfo->instanceId, 0, NULL, 0,
+                KEY_READ | KEY_WRITE, NULL, &key, NULL);
+        RegCloseKey(enumKey);
+    }
+    return key;
+}
+
 static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(struct DeviceInfoSet *set,
         LPCWSTR instanceId, BOOL phantom)
 {
@@ -420,23 +436,16 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(struct DeviceInfoSet *set,
                 (lstrlenW(instanceId) + 1) * sizeof(WCHAR));
         if (devInfo->instanceId)
         {
-            HKEY enumKey;
-            LONG l;
-
             devInfo->key = INVALID_HANDLE_VALUE;
             devInfo->phantom = phantom;
             lstrcpyW(devInfo->instanceId, instanceId);
             struprW(devInfo->instanceId);
-            l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0,
-                    KEY_ALL_ACCESS, NULL, &enumKey, NULL);
-            if (!l)
+            devInfo->key = SETUPDI_CreateDevKey(devInfo);
+            if (devInfo->key != INVALID_HANDLE_VALUE)
             {
-                RegCreateKeyExW(enumKey, devInfo->instanceId, 0, NULL, 0,
-                        KEY_ALL_ACCESS, NULL, &devInfo->key, NULL);
                 if (phantom)
                     RegSetValueExW(devInfo->key, Phantom, 0, REG_DWORD,
                             (LPBYTE)&phantom, sizeof(phantom));
-                RegCloseKey(enumKey);
             }
             list_init(&devInfo->interfaces);
         }
