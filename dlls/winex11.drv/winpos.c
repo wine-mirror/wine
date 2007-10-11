@@ -181,9 +181,11 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
     static const unsigned int state_atoms[NB_WM_STATES] =
     {
         XATOM__NET_WM_STATE_FULLSCREEN,
+        XATOM__NET_WM_STATE_SKIP_PAGER,
+        XATOM__NET_WM_STATE_SKIP_TASKBAR
     };
 
-    DWORD i, new_state = 0;
+    DWORD i, ex_style, new_state = 0;
     XEvent xev;
 
     if (!data->managed) return;
@@ -191,6 +193,10 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
     if (data->client_rect.left <= 0 && data->client_rect.right >= screen_width &&
         data->client_rect.top <= 0 && data->client_rect.bottom >= screen_height)
         new_state |= (1 << WM_STATE_FULLSCREEN);
+
+    ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
+    if (ex_style & WS_EX_TOOLWINDOW)
+        new_state |= (1 << WM_STATE_SKIP_TASKBAR) | (1 << WM_STATE_SKIP_PAGER);
 
     xev.xclient.type = ClientMessage;
     xev.xclient.window = data->whole_window;
