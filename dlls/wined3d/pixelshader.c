@@ -632,7 +632,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
         /* FIXME: validate reg_maps against OpenGL */
     }
 
-    /* Reset fields tracking stateblock values beeing hardcoded in the shader */
+    /* Reset fields tracking stateblock values being hardcoded in the shader */
     This->baseShader.num_sampled_samplers = 0;
 
     /* Generate the HW shader */

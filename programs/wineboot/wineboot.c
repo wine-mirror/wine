@@ -19,7 +19,7 @@
 /* Wine "bootup" handler application
  *
  * This app handles the various "hooks" windows allows for applications to perform
- * as part of the bootstrap process. Theses are roughly devided into three types.
+ * as part of the bootstrap process. These are roughly divided into three types.
  * Knowledge base articles that explain this are 137367, 179365, 232487 and 232509.
  * Also, 119941 has some info on grpconv.exe
  * The operations performed are (by order of execution):

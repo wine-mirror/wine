@@ -1981,7 +1981,7 @@ static void test_ConvertSecurityDescriptorToString()
         return;
     }
 
-/* It seems Windows XP add an extra character to the length of the string for each ACE in an ACL. We
+/* It seems Windows XP adds an extra character to the length of the string for each ACE in an ACL. We
  * don't replicate this feature so we only test len >= strlen+1. */
 #define CHECK_RESULT_AND_FREE(exp_str) \
     ok(strcmp(string, (exp_str)) == 0, "String mismatch (expected \"%s\", got \"%s\")\n", (exp_str), string); \
