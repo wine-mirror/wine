@@ -34,10 +34,7 @@ typedef struct D3DXVECTOR2
     FLOAT x, y;
 } D3DXVECTOR2, *LPD3DXVECTOR2;
 
-typedef struct D3DXVECTOR3
-{
-    FLOAT x, y, z;
-} D3DXVECTOR3, *LPD3DXVECTOR3;
+typedef struct _D3DVECTOR D3DXVECTOR3, *LPD3DXVECTOR3;
 
 typedef struct D3DXVECTOR4
 {
