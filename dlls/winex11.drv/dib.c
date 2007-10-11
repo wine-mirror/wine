@@ -510,7 +510,6 @@ static void X11DRV_DIB_SetImageBits_1( int lines, const BYTE *srcbits,
     /* ==== pal 1 dib -> any bmp format ==== */
     for (h = lines-1; h >=0; h--) {
         srcbyte=srcbits;
-        /* FIXME: should avoid putting x<left pixels (minor speed issue) */
         for (i = width/8, x = left; i > 0; i--) {
             srcval=*srcbyte++;
             XPutPixel( bmpImage, x++, h, colors[ srcval >> 7] );
