@@ -1159,9 +1159,29 @@ HKEY WINAPI SetupDiCreateDevRegKeyA(
         HINF InfHandle,
         PCSTR InfSectionName)
 {
-    FIXME("%p %p %d %d %d %p %s\n", DeviceInfoSet, DeviceInfoData, Scope,
+    PWSTR InfSectionNameW = NULL;
+    HKEY key;
+
+    TRACE("%p %p %d %d %d %p %s\n", DeviceInfoSet, DeviceInfoData, Scope,
             HwProfile, KeyType, InfHandle, debugstr_a(InfSectionName));
-    return INVALID_HANDLE_VALUE;
+
+    if (InfHandle)
+    {
+        if (!InfSectionName)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return INVALID_HANDLE_VALUE;
+        }
+        else
+        {
+            InfSectionNameW = MultiByteToUnicode(InfSectionName, CP_ACP);
+            if (InfSectionNameW == NULL) return INVALID_HANDLE_VALUE;
+        }
+    }
+    key = SetupDiCreateDevRegKeyW(DeviceInfoSet, DeviceInfoData, Scope,
+            HwProfile, KeyType, InfHandle, InfSectionNameW);
+    MyFree(InfSectionNameW);
+    return key;
 }
 
 /***********************************************************************
