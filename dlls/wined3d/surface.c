@@ -487,24 +487,32 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
     {
         case WINED3DFMT_P8:
         {
-            /* GL can't return palettized data, so read ARGB pixels into a
-             * separate block of memory and convert them into palettized format
-             * in software. Slow, but if the app means to use palettized render
-             * targets and locks it...
-             *
-             * Use GL_RGB, GL_UNSIGNED_BYTE to read the surface for performance reasons
-             * Don't use GL_BGR as in the WINED3DFMT_R8G8B8 case, instead watch out
-             * for the color channels when palettizing the colors.
-             */
-            fmt = GL_RGB;
-            type = GL_UNSIGNED_BYTE;
-            pitch *= 3;
-            mem = HeapAlloc(GetProcessHeap(), 0, This->resource.size * 3);
-            if(!mem) {
-                ERR("Out of memory\n");
-                return;
+            if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+                /* In case of P8 render targets the index is stored in the alpha component */
+                fmt = GL_ALPHA;
+                type = GL_UNSIGNED_BYTE;
+                mem = dest;
+                bpp = This->bytesPerPixel;
+            } else {
+                /* GL can't return palettized data, so read ARGB pixels into a
+                 * separate block of memory and convert them into palettized format
+                 * in software. Slow, but if the app means to use palettized render
+                 * targets and locks it...
+                 *
+                 * Use GL_RGB, GL_UNSIGNED_BYTE to read the surface for performance reasons
+                 * Don't use GL_BGR as in the WINED3DFMT_R8G8B8 case, instead watch out
+                 * for the color channels when palettizing the colors.
+                 */
+                fmt = GL_RGB;
+                type = GL_UNSIGNED_BYTE;
+                pitch *= 3;
+                mem = HeapAlloc(GetProcessHeap(), 0, This->resource.size * 3);
+                if(!mem) {
+                    ERR("Out of memory\n");
+                    return;
+                }
+                bpp = This->bytesPerPixel * 3;
             }
-            bpp = This->bytesPerPixel * 3;
         }
         break;
 
@@ -576,7 +584,12 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         }
     }
 
-    if(This->resource.format == WINED3DFMT_P8) {
+    /* For P8 textures we need to perform an inverse palette lookup. This is done by searching for a palette
+     * index which matches the RGB value. Note this isn't guaranteed to work when there are multiple entries for
+     * the same color but we have no choice.
+     * In case of render targets, the index is stored in the alpha component so no conversion is needed.
+     */
+    if((This->resource.format == WINED3DFMT_P8) && !(This->resource.usage & WINED3DUSAGE_RENDERTARGET)) {
         PALETTEENTRY *pal;
         DWORD width = pitch / 3;
         int x, y, c;
@@ -1892,18 +1905,33 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
 
 static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE (*table)[4], BOOL colorkey) {
     IWineD3DPaletteImpl* pal = This->palette;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    BOOL index_in_alpha = FALSE;
     int i;
+
+    /* Old games like StarCraft, C&C, Red Alert and others use P8 render targets.
+    * Reading back the RGB output each lockrect (each frame as they lock the whole screen)
+    * is slow. Further RGB->P8 conversion is not possible because palettes can have
+    * duplicate entries. Store the color key in the unused alpha component to speed the
+    * download up and to make conversion unneeded. */
+    if (device->render_targets && device->render_targets[0]) {
+        IWineD3DSurfaceImpl* render_target = (IWineD3DSurfaceImpl*)device->render_targets[0];
+
+        if(render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
+            index_in_alpha = TRUE;
+    }
 
     if (pal == NULL) {
         /* Still no palette? Use the device's palette */
         /* Get the surface's palette */
         for (i = 0; i < 256; i++) {
-            IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-
             table[i][0] = device->palettes[device->currentPalette][i].peRed;
             table[i][1] = device->palettes[device->currentPalette][i].peGreen;
             table[i][2] = device->palettes[device->currentPalette][i].peBlue;
-            if (colorkey &&
+
+            if(index_in_alpha) {
+                table[i][3] = i;
+            } else if (colorkey &&
                 (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
                 (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
                 /* We should maybe here put a more 'neutral' color than the standard bright purple
@@ -1921,7 +1949,11 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE (*table)[4], 
             table[i][0] = pal->palents[i].peRed;
             table[i][1] = pal->palents[i].peGreen;
             table[i][2] = pal->palents[i].peBlue;
-            if (colorkey &&
+
+            if(index_in_alpha) {
+                table[i][3] = i;
+            }
+            else if (colorkey &&
                 (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
                 (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
                 /* We should maybe here put a more 'neutral' color than the standard bright purple
