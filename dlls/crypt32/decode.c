@@ -3118,6 +3118,7 @@ static BOOL WINAPI CRYPT_AsnDecodeBits(DWORD dwCertEncodingType,
     return ret;
 }
 
+/* Ignores tag.  Only allows integers 4 bytes or smaller in size. */
 static BOOL CRYPT_AsnDecodeIntInternal(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
 {
@@ -3127,14 +3128,8 @@ static BOOL CRYPT_AsnDecodeIntInternal(const BYTE *pbEncoded, DWORD cbEncoded,
     DWORD size = sizeof(buf);
 
     blob->pbData = buf + sizeof(CRYPT_INTEGER_BLOB);
-    if (pbEncoded[0] != ASN_INTEGER)
-    {
-        SetLastError(CRYPT_E_ASN1_BADTAG);
-        ret = FALSE;
-    }
-    else
-        ret = CRYPT_AsnDecodeIntegerInternal(pbEncoded, cbEncoded, 0, &buf,
-         &size, pcbDecoded);
+    ret = CRYPT_AsnDecodeIntegerInternal(pbEncoded, cbEncoded, 0, &buf,
+     &size, pcbDecoded);
     if (ret)
     {
         if (!pvStructInfo)
@@ -3173,8 +3168,19 @@ static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
     {
         DWORD bytesNeeded;
 
-        ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded,
-         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded, NULL);
+        if (!cbEncoded)
+        {
+            SetLastError(CRYPT_E_ASN1_CORRUPT);
+            ret = FALSE;
+        }
+        else if (pbEncoded[0] != ASN_INTEGER)
+        {
+            SetLastError(CRYPT_E_ASN1_BADTAG);
+            ret = FALSE;
+        }
+        else
+            ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded,
+             dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded, NULL);
         if (ret)
         {
             if (!pvStructInfo)
