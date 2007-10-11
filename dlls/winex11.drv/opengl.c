@@ -1484,7 +1484,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
         }
     }
     else {
-        FIXME("called on a non-window, non-bitmap object?");
+        FIXME("called on a non-window, non-bitmap object?\n");
     }
 
   physDev->current_pf = iPixelFormat;
