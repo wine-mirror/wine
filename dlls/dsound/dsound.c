@@ -1166,23 +1166,11 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     }
 
     device->ref            = 1;
-    device->driver         = NULL;
     device->priolevel      = DSSCL_NORMAL;
-    device->fraglen        = 0;
-    device->hwbuf          = NULL;
-    device->buffer         = NULL;
-    device->buflen         = 0;
-    device->writelead      = 0;
     device->state          = STATE_STOPPED;
-    device->nrofbuffers    = 0;
-    device->buffers        = NULL;
-    device->primary        = NULL;
     device->speaker_config = DSSPEAKER_STEREO | (DSSPEAKER_GEOMETRY_NARROW << 16);
-    device->tmp_buffer     = NULL;
-    device->tmp_buffer_len = 0;
 
     /* 3D listener initial parameters */
-    device->listener       = NULL;
     device->ds3dl.dwSize   = sizeof(DS3DLISTENER);
     device->ds3dl.vPosition.x = 0.0;
     device->ds3dl.vPosition.y = 0.0;
@@ -1200,8 +1188,8 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     device->ds3dl.flRolloffFactor = DS3D_DEFAULTROLLOFFFACTOR;
     device->ds3dl.flDopplerFactor = DS3D_DEFAULTDOPPLERFACTOR;
 
-    device->prebuf         = ds_snd_queue_max;
-    device->guid           = GUID_NULL;
+    device->prebuf = ds_snd_queue_max;
+    device->guid = GUID_NULL;
 
     /* Set default wave format (may need it for waveOutOpen) */
     device->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEX));
