@@ -1309,7 +1309,7 @@ static void test_customdraw(void)
     GetClientRect(hWndHeader, &rect);
     ok(rect.right - rect.left == 670 && rect.bottom - rect.top == 18,
         "Tests will fail as header size is %dx%d instead of 670x18\n",
-        rect.right - rect.left == 670, rect.bottom - rect.top == 18);
+        rect.right - rect.left, rect.bottom - rect.top);
 
     for (i = 0; i < 3; i++)
     {
