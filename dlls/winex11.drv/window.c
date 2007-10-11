@@ -147,8 +147,6 @@ static unsigned long get_mwm_decorations( DWORD style, DWORD ex_style )
     if (ex_style & WS_EX_DLGMODALFRAME) ret |= MWM_DECOR_BORDER;
     else if (style & WS_THICKFRAME) ret |= MWM_DECOR_BORDER | MWM_DECOR_RESIZEH;
     else if ((style & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) ret |= MWM_DECOR_BORDER;
-    else if (style & WS_BORDER) ret |= MWM_DECOR_BORDER;
-    else if (!(style & (WS_CHILD|WS_POPUP))) ret |= MWM_DECOR_BORDER;
     return ret;
 }
 
