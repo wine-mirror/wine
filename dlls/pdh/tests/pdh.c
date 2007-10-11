@@ -845,7 +845,7 @@ static void test_PdhCollectQueryDataEx(void)
             status = PdhGetFormattedCounterValue( counter, PDH_FMT_LARGE, NULL, &value );
             ok(status == ERROR_SUCCESS, "PdhGetFormattedCounterValue failed 0x%08x\n", status);
 
-            trace( "uptime %x%08x\n", (DWORD)(value.largeValue >> 32), (DWORD)value.largeValue );
+            trace( "uptime %x%08x\n", (DWORD)(U(value).largeValue >> 32), (DWORD)U(value).largeValue );
         }
     }
 
