@@ -699,6 +699,7 @@ struct IWineD3DDeviceImpl
     /* palettes texture management */
     PALETTEENTRY            palettes[MAX_PALETTES][256];
     UINT                    currentPalette;
+    UINT                    paletteConversionShader;
 
     /* For rendering to a texture using glCopyTexImage */
     BOOL                    render_offscreen;

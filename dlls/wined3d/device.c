@@ -2117,6 +2117,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
         }
     }
 
+    /* Delete the palette conversion shader if it is around */
+    if(This->paletteConversionShader) {
+        GL_EXTCALL(glDeleteProgramsARB(1, &This->paletteConversionShader));
+    }
+
     /* Delete the pbuffer context if there is any */
     if(This->pbufferContext) DestroyContext(This, This->pbufferContext);
 
