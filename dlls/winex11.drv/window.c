@@ -1170,6 +1170,7 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
         data->pixmap        = 0;
         data->xic           = 0;
         data->managed       = FALSE;
+        data->wm_state      = 0;
         data->dce           = NULL;
         data->lock_changes  = 0;
         data->hWMIconBitmap = 0;

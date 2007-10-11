@@ -174,61 +174,53 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 
 
 /***********************************************************************
- *     update_fullscreen_state
- *
- * Use the NETWM protocol to set the fullscreen state.
- * This only works for mapped windows.
+ *     update_wm_states
  */
-static void update_fullscreen_state( Display *display, Window win, BOOL new_fs_state )
+static void update_wm_states( Display *display, struct x11drv_win_data *data, BOOL force )
 {
+    static const unsigned int state_atoms[NB_WM_STATES] =
+    {
+        XATOM__NET_WM_STATE_FULLSCREEN,
+    };
+
+    DWORD i, new_state = 0;
     XEvent xev;
 
-    TRACE("setting fullscreen state for window %lx to %s\n", win, new_fs_state ? "true" : "false");
+    if (!data->managed) return;
+
+    if (data->client_rect.left <= 0 && data->client_rect.right >= screen_width &&
+        data->client_rect.top <= 0 && data->client_rect.bottom >= screen_height)
+        new_state |= (1 << WM_STATE_FULLSCREEN);
 
     xev.xclient.type = ClientMessage;
-    xev.xclient.window = win;
+    xev.xclient.window = data->whole_window;
     xev.xclient.message_type = x11drv_atom(_NET_WM_STATE);
     xev.xclient.serial = 0;
     xev.xclient.display = display;
     xev.xclient.send_event = True;
     xev.xclient.format = 32;
-    xev.xclient.data.l[0] = new_fs_state ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
-    xev.xclient.data.l[1] = x11drv_atom(_NET_WM_STATE_FULLSCREEN);
     xev.xclient.data.l[2] = 0;
-    wine_tsx11_lock();
-    XSendEvent(display, root_window, False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
-    wine_tsx11_unlock();
-}
+    xev.xclient.data.l[3] = 1;
 
-/***********************************************************************
- *     fullscreen_state_changed
- *
- * Check if the fullscreen state of a given window has changed
- */
-static BOOL fullscreen_state_changed( const struct x11drv_win_data *data,
-                                      const RECT *old_client_rect, const RECT *old_screen_rect,
-                                      BOOL *new_fs_state )
-{
-    BOOL old_fs_state = FALSE;
+    for (i = 0; i < NB_WM_STATES; i++)
+    {
+        if (!((data->wm_state ^ new_state) & (1 << i)))  /* unchanged */
+        {
+            /* if forced, we only add states, we don't remove them */
+            if (!force || !(new_state & (1 << i))) continue;
+        }
 
-    *new_fs_state = FALSE;
+        TRACE( "setting wm state %u for window %p/%lx to %u prev %u\n",
+               i, data->hwnd, data->whole_window,
+               (new_state & (1 << i)) != 0, (data->wm_state & (1 << i)) != 0 );
 
-    if (old_client_rect->left <= 0 && old_client_rect->right >= old_screen_rect->right &&
-        old_client_rect->top <= 0 && old_client_rect->bottom >= old_screen_rect->bottom)
-        old_fs_state = TRUE;
-
-    if (data->client_rect.left <= 0 && data->client_rect.right >= screen_width &&
-        data->client_rect.top <= 0 && data->client_rect.bottom >= screen_height)
-        *new_fs_state = TRUE;
-
-#if 0 /* useful to debug fullscreen state problems */
-    TRACE("hwnd %p, old rect %s, new rect %s, old screen %s, new screen (0,0-%d,%d)\n",
-           data->hwnd,
-           wine_dbgstr_rect(old_client_rect), wine_dbgstr_rect(&data->client_rect),
-           wine_dbgstr_rect(old_screen_rect), screen_width, screen_height);
-    TRACE("old fs state %d\n, new fs state = %d\n", old_fs_state, *new_fs_state);
-#endif
-    return *new_fs_state != old_fs_state;
+        xev.xclient.data.l[0] = (new_state & (1 << i)) ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+        xev.xclient.data.l[1] = X11DRV_Atoms[state_atoms[i] - FIRST_XATOM];
+        wine_tsx11_lock();
+        XSendEvent( display, root_window, False, SubstructureRedirectMask | SubstructureNotifyMask, &xev );
+        wine_tsx11_unlock();
+    }
+    data->wm_state = new_state;
 }
 
 
@@ -240,7 +232,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 {
     Display *display = thread_display();
     struct x11drv_win_data *data;
-    RECT new_whole_rect, old_client_rect, old_screen_rect;
+    RECT new_whole_rect, old_client_rect;
     WND *win;
     DWORD old_style, new_style;
     BOOL ret, make_managed = FALSE;
@@ -386,7 +378,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 
         if (data->whole_window && !data->lock_changes)
         {
-            BOOL new_fs_state, mapped = FALSE;
+            BOOL mapped = FALSE;
 
             if ((new_style & WS_VISIBLE) && !(new_style & WS_MINIMIZE) &&
                 X11DRV_is_window_rect_mapped( rectWindow ))
@@ -415,9 +407,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                     XFlush( display );
                     wine_tsx11_unlock();
                 }
-                SetRect( &old_screen_rect, 0, 0, screen_width, screen_height );
-                if (fullscreen_state_changed( data, &old_client_rect, &old_screen_rect, &new_fs_state ) || mapped)
-                    update_fullscreen_state( display, data->whole_window, new_fs_state );
+                update_wm_states( display, data, mapped );
             }
         }
     }
@@ -847,10 +837,8 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
 
     if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)
     {
-        BOOL new_fs_state;
-
-        if (fullscreen_state_changed( data, &data->client_rect, &resize_data->old_screen_rect, &new_fs_state ))
-            update_fullscreen_state( display, data->whole_window, new_fs_state );
+        /* update the full screen state */
+        update_wm_states( display, data, FALSE );
     }
 
     if (resize_data->old_virtual_rect.left != virtual_screen_rect.left) mask |= CWX;

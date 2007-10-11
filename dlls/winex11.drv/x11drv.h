@@ -643,6 +643,13 @@ enum x11drv_window_messages
     WM_X11DRV_SET_WIN_FORMAT
 };
 
+/* _NET_WM_STATE properties that we keep track of */
+enum x11drv_wm_state
+{
+    WM_STATE_FULLSCREEN,
+    NB_WM_STATES
+};
+
 /* x11drv private window data */
 struct x11drv_win_data
 {
@@ -658,6 +665,7 @@ struct x11drv_win_data
     XIC         xic;            /* X input context */
     XWMHints   *wm_hints;       /* window manager hints */
     BOOL        managed;        /* is window managed? */
+    DWORD       wm_state;       /* bit mask of active x11drv_wm_state values */
     struct dce *dce;            /* DCE for CS_OWNDC or CS_CLASSDC windows */
     unsigned int lock_changes;  /* lock count for X11 change requests */
     HBITMAP     hWMIconBitmap;
