@@ -1897,7 +1897,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[texUnit];
 
     /* Ignore this when a vertex shader is used, or if the streams aren't sorted out yet */
-    if(stateblock->vertexShader ||
+    if(use_vs(stateblock->wineD3DDevice) ||
        isStateDirty(context, STATE_VDECL)) {
         TRACE("Using a vertex shader, or stream sources not sorted out yet, skipping\n");
         return;
