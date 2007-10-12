@@ -2137,25 +2137,26 @@ static void SETUPDI_EnumerateInterfaces(HDEVINFO DeviceInfoSet,
     }
 }
 
-static void SETUPDI_EnumerateMatchingDevices(HDEVINFO DeviceInfoSet,
-        LPCWSTR parent, HKEY key, const GUID *class, DWORD flags)
+static void SETUPDI_EnumerateMatchingDeviceInstances(struct DeviceInfoSet *set,
+        LPCWSTR enumerator, LPCWSTR deviceName, HKEY deviceKey,
+        const GUID *class, DWORD flags)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
     DWORD i, len;
-    WCHAR subKeyName[MAX_PATH];
+    WCHAR deviceInstance[MAX_PATH];
     LONG l = ERROR_SUCCESS;
 
-    TRACE("%s\n", debugstr_w(parent));
+    TRACE("%s %s\n", debugstr_w(enumerator), debugstr_w(deviceName));
 
     for (i = 0; !l; i++)
     {
-        len = sizeof(subKeyName) / sizeof(subKeyName[0]);
-        l = RegEnumKeyExW(key, i, subKeyName, &len, NULL, NULL, NULL, NULL);
+        len = sizeof(deviceInstance) / sizeof(deviceInstance[0]);
+        l = RegEnumKeyExW(deviceKey, i, deviceInstance, &len, NULL, NULL, NULL,
+                NULL);
         if (!l)
         {
             HKEY subKey;
 
-            l = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
+            l = RegOpenKeyExW(deviceKey, deviceInstance, 0, KEY_READ, &subKey);
             if (!l)
             {
                 WCHAR classGuid[40];
@@ -2179,11 +2180,12 @@ static void SETUPDI_EnumerateMatchingDevices(HDEVINFO DeviceInfoSet,
                             LPWSTR instanceId;
 
                             instanceId = HeapAlloc(GetProcessHeap(), 0,
-                                (lstrlenW(parent) + lstrlenW(subKeyName) + 2)
-                                * sizeof(WCHAR));
+                                (lstrlenW(deviceName) +
+                                lstrlenW(deviceInstance) + 2) * sizeof(WCHAR));
                             if (instanceId)
                             {
-                                sprintfW(instanceId, fmt, parent, subKeyName);
+                                sprintfW(instanceId, fmt, deviceName,
+                                        deviceInstance);
                                 SETUPDI_AddDeviceToSet(set, &deviceClass,
                                         0 /* FIXME: DevInst */, instanceId,
                                         FALSE, NULL);
@@ -2200,46 +2202,80 @@ static void SETUPDI_EnumerateMatchingDevices(HDEVINFO DeviceInfoSet,
     }
 }
 
+static void SETUPDI_EnumerateMatchingDevices(HDEVINFO DeviceInfoSet,
+        LPCWSTR parent, HKEY key, const GUID *class, DWORD flags)
+{
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    DWORD i, len;
+    WCHAR subKeyName[MAX_PATH];
+    LONG l = ERROR_SUCCESS;
+
+    TRACE("%s\n", debugstr_w(parent));
+
+    for (i = 0; !l; i++)
+    {
+        len = sizeof(subKeyName) / sizeof(subKeyName[0]);
+        l = RegEnumKeyExW(key, i, subKeyName, &len, NULL, NULL, NULL, NULL);
+        if (!l)
+        {
+            HKEY subKey;
+
+            l = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
+            if (!l)
+            {
+                TRACE("%s\n", debugstr_w(subKeyName));
+                SETUPDI_EnumerateMatchingDeviceInstances(set, parent,
+                        subKeyName, subKey, class, flags);
+                RegCloseKey(subKey);
+            }
+            /* Allow enumeration to continue */
+            l = ERROR_SUCCESS;
+        }
+    }
+}
+
 static void SETUPDI_EnumerateDevices(HDEVINFO DeviceInfoSet, const GUID *class,
         LPCWSTR enumstr, DWORD flags)
 {
-    HKEY classesKey = SetupDiOpenClassRegKeyExW(class, KEY_READ,
-            DIOCR_INSTALLER, NULL, NULL);
+    HKEY enumKey;
+    LONG l;
 
     TRACE("%p, %s, %s, %08x\n", DeviceInfoSet, debugstr_guid(class),
             debugstr_w(enumstr), flags);
 
-    if (classesKey != INVALID_HANDLE_VALUE)
+    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0, KEY_READ, NULL,
+            &enumKey, NULL);
+    if (enumKey != INVALID_HANDLE_VALUE)
     {
         if (enumstr)
         {
-            HKEY enumKey;
-            LONG l = RegOpenKeyExW(classesKey, enumstr, 0, KEY_READ,
-                    &enumKey);
+            HKEY enumStrKey;
 
+            l = RegOpenKeyExW(enumKey, enumstr, 0, KEY_READ,
+                    &enumStrKey);
             if (!l)
             {
                 SETUPDI_EnumerateMatchingDevices(DeviceInfoSet, enumstr,
-                        enumKey, class, flags);
-                RegCloseKey(enumKey);
+                        enumStrKey, class, flags);
+                RegCloseKey(enumStrKey);
             }
         }
         else
         {
             DWORD i, len;
             WCHAR subKeyName[MAX_PATH];
-            LONG l = ERROR_SUCCESS;
 
+            l = ERROR_SUCCESS;
             for (i = 0; !l; i++)
             {
                 len = sizeof(subKeyName) / sizeof(subKeyName[0]);
-                l = RegEnumKeyExW(classesKey, i, subKeyName, &len, NULL,
+                l = RegEnumKeyExW(enumKey, i, subKeyName, &len, NULL,
                         NULL, NULL, NULL);
                 if (!l)
                 {
                     HKEY subKey;
 
-                    l = RegOpenKeyExW(classesKey, subKeyName, 0, KEY_READ,
+                    l = RegOpenKeyExW(enumKey, subKeyName, 0, KEY_READ,
                             &subKey);
                     if (!l)
                     {
@@ -2252,7 +2288,7 @@ static void SETUPDI_EnumerateDevices(HDEVINFO DeviceInfoSet, const GUID *class,
                 }
             }
         }
-        RegCloseKey(classesKey);
+        RegCloseKey(enumKey);
     }
 }
 
