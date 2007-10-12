@@ -944,6 +944,58 @@ static WCHAR *get_familyname(FT_Face ft_face)
 }
 
 
+/*****************************************************************
+ *  load_sfnt_table
+ *
+ * Wrapper around FT_Load_Sfnt_Table to cope with older versions
+ * of FreeType that don't export this function.
+ *
+ */
+static FT_Error load_sfnt_table(FT_Face ft_face, FT_ULong table, FT_Long offset, FT_Byte *buf, FT_ULong *len)
+{
+
+    FT_Error err;
+
+    /* If the FT_Load_Sfnt_Table function is there we'll use it */
+    if(pFT_Load_Sfnt_Table)
+    {
+        err = pFT_Load_Sfnt_Table(ft_face, table, offset, buf, len);
+    }
+#ifdef HAVE_FREETYPE_INTERNAL_SFNT_H
+    else  /* Do it the hard way */
+    {
+        TT_Face tt_face = (TT_Face) ft_face;
+        SFNT_Interface *sfnt;
+        if (FT_Version.major==2 && FT_Version.minor==0)
+        {
+            /* 2.0.x */
+            sfnt = *(SFNT_Interface**)((char*)tt_face + 528);
+        }
+        else
+        {
+            /* A field was added in the middle of the structure in 2.1.x */
+            sfnt = *(SFNT_Interface**)((char*)tt_face + 532);
+        }
+        err = sfnt->load_any(tt_face, table, offset, buf, len);
+    }
+#else
+    else
+    {
+        static int msg;
+        if(!msg)
+        {
+            MESSAGE("This version of Wine was compiled with freetype headers later than 2.2.0\n"
+                    "but is being run with a freetype library without the FT_Load_Sfnt_Table function.\n"
+                    "Please upgrade your freetype library.\n");
+            msg++;
+        }
+        err = FT_Err_Unimplemented_Feature;
+    }
+#endif
+    return err;
+}
+
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_size, char *fake_family, const WCHAR *target_family, DWORD flags)
@@ -4564,50 +4616,15 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
 	  (table >> 8 & 0xff00) | (table << 8 & 0xff0000);
     }
 
-    /* If the FT_Load_Sfnt_Table function is there we'll use it */
-    if(pFT_Load_Sfnt_Table) {
-        /* make sure value of len is the value freetype says it needs */ 
-        if( buf && len) {
-            FT_ULong needed = 0;
-            err = pFT_Load_Sfnt_Table(ft_face, table, offset, NULL, &needed);
-            if( !err && needed < len) len = needed;
-        }
-        err = pFT_Load_Sfnt_Table(ft_face, table, offset, buf, &len);
+    /* make sure value of len is the value freetype says it needs */
+    if(buf && len)
+    {
+        FT_ULong needed = 0;
+        err = load_sfnt_table(ft_face, table, offset, NULL, &needed);
+        if( !err && needed < len) len = needed;
     }
-#ifdef HAVE_FREETYPE_INTERNAL_SFNT_H
-    else { /* Do it the hard way */
-        TT_Face tt_face = (TT_Face) ft_face;
-        SFNT_Interface *sfnt;
-        if (FT_Version.major==2 && FT_Version.minor==0)
-        {
-            /* 2.0.x */
-            sfnt = *(SFNT_Interface**)((char*)tt_face + 528);
-        }
-        else
-        {
-            /* A field was added in the middle of the structure in 2.1.x */
-            sfnt = *(SFNT_Interface**)((char*)tt_face + 532);
-        }
-        /* make sure value of len is the value freetype says it needs */ 
-        if( buf && len) {
-            FT_ULong needed = 0;
-            err = sfnt->load_any(tt_face, table, offset, NULL, &needed);
-            if( !err && needed < len) len = needed;
-        }
-        err = sfnt->load_any(tt_face, table, offset, buf, &len);
-    }
-#else
-    else {
-        static int msg;
-        if(!msg) {
-            MESSAGE("This version of Wine was compiled with freetype headers later than 2.2.0\n"
-                    "but is being run with a freetype library without the FT_Load_Sfnt_Table function.\n"
-                    "Please upgrade your freetype library.\n");
-            msg++;
-        }
-        err = FT_Err_Unimplemented_Feature;
-    }
-#endif
+    err = load_sfnt_table(ft_face, table, offset, buf, &len);
+
     if(err) {
         TRACE("Can't find table %c%c%c%c\n",
               /* bytes were reversed */
