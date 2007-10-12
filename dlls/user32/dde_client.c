@@ -1163,7 +1163,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	pXAct = WDML_ClientQueueUnadvise(pConv, wFmt, hszItem);
 	break;
     case XTYP_REQUEST:
-	if (pData)
+	if (pData || !hszItem)
 	{
 	    pConv->instance->lastError = DMLERR_INVALIDPARAMETER;
             return 0;

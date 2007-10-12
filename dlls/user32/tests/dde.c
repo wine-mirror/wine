@@ -353,10 +353,7 @@ static void test_ddeml_client(void)
     ret = DdeGetLastError(client_pid);
     ok(hdata == NULL, "Expected NULL hdata, got %p\n", hdata);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %08x\n", res);
-    todo_wine
-    {
-        ok(ret == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", ret);
-    }
+    ok(ret == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", ret);
 
     DdeFreeStringHandle(client_pid, item);
 
