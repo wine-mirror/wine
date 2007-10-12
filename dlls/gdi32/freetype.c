@@ -1071,14 +1071,32 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 	    return 0;
 	}
 
-	if(FT_IS_SFNT(ft_face) && (!pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2) ||
-	   !pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea) ||
-           !(pHeader = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_head)))) {
-	    TRACE("Font %s/%p lacks either an OS2, HHEA or HEAD table.\n"
-		  "Skipping this font.\n", debugstr_a(file), font_data_ptr);
-	    pFT_Done_Face(ft_face);
-	    return 0;
-	}
+        if(FT_IS_SFNT(ft_face))
+        {
+            if(!(pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2)) ||
+               !pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea) ||
+               !(pHeader = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_head)))
+            {
+                TRACE("Font %s/%p lacks either an OS2, HHEA or HEAD table.\n"
+                      "Skipping this font.\n", debugstr_a(file), font_data_ptr);
+                pFT_Done_Face(ft_face);
+                return 0;
+            }
+
+            /* Wine uses ttfs as an intermediate step in building its bitmap fonts;
+               we don't want to load these. */
+            if(!memcmp(pOS2->achVendID, "Wine", sizeof(pOS2->achVendID)))
+            {
+                FT_ULong len = 0;
+
+                if(!load_sfnt_table(ft_face, FT_MAKE_TAG('E','B','S','C'), 0, NULL, &len))
+                {
+                    TRACE("Skipping Wine bitmap-only TrueType font %s\n", debugstr_a(file));
+                    pFT_Done_Face(ft_face);
+                    return 0;
+                }
+            }
+        }
 
         if(!ft_face->family_name || !ft_face->style_name) {
             TRACE("Font %s/%p lacks either a family or style name\n", debugstr_a(file), font_data_ptr);
