@@ -268,11 +268,11 @@ HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized,
 	LPDWORD pcchCanonicalized, DWORD dwFlags)
 {
     LPWSTR base, canonical;
-    DWORD ret, len, len2;
+    HRESULT ret;
+    DWORD   len, len2;
 
-    TRACE("(%s %p %p 0x%08x) using W version\n",
-	  debugstr_a(pszUrl), pszCanonicalized,
-	  pcchCanonicalized, dwFlags);
+    TRACE("(%s, %p, %p, 0x%08x) *pcchCanonicalized: %d\n", debugstr_a(pszUrl), pszCanonicalized,
+        pcchCanonicalized, dwFlags, pcchCanonicalized ? *pcchCanonicalized : -1);
 
     if(!pszUrl || !pszCanonicalized || !pcchCanonicalized)
 	return E_INVALIDARG;
@@ -286,19 +286,19 @@ HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized,
 
     ret = UrlCanonicalizeW(base, canonical, &len, dwFlags);
     if (ret != S_OK) {
-	HeapFree(GetProcessHeap(), 0, base);
-	return ret;
+        *pcchCanonicalized = len * 2;
+        HeapFree(GetProcessHeap(), 0, base);
+        return ret;
     }
 
-    len2 = WideCharToMultiByte(0, 0, canonical, len, 0, 0, 0, 0);
+    len2 = WideCharToMultiByte(0, 0, canonical, -1, 0, 0, 0, 0);
     if (len2 > *pcchCanonicalized) {
-	*pcchCanonicalized = len;
-	HeapFree(GetProcessHeap(), 0, base);
-	return E_POINTER;
+        *pcchCanonicalized = len2;
+        HeapFree(GetProcessHeap(), 0, base);
+        return E_POINTER;
     }
-    WideCharToMultiByte(0, 0, canonical, len+1, pszCanonicalized,
-			*pcchCanonicalized, 0, 0);
-    *pcchCanonicalized = len2;
+    WideCharToMultiByte(0, 0, canonical, -1, pszCanonicalized, *pcchCanonicalized, 0, 0);
+    *pcchCanonicalized = len;
     HeapFree(GetProcessHeap(), 0, base);
     return S_OK;
 }
@@ -320,8 +320,8 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 
     static const WCHAR wszFile[] = {'f','i','l','e',':'};
 
-    TRACE("(%s %p %p 0x%08x)\n", debugstr_w(pszUrl), pszCanonicalized,
-	  pcchCanonicalized, dwFlags);
+    TRACE("(%s, %p, %p, 0x%08x) *pcchCanonicalized: %d\n", debugstr_w(pszUrl), pszCanonicalized,
+        pcchCanonicalized, dwFlags, pcchCanonicalized ? *pcchCanonicalized : -1);
 
     if(!pszUrl || !pszCanonicalized || !pcchCanonicalized)
 	return E_INVALIDARG;
