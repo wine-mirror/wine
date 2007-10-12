@@ -23,6 +23,7 @@ OS2WinAscent: 0
 OS2WinAOffset: 1
 OS2WinDescent: 0
 OS2WinDOffset: 1
+OS2Vendor: 'Wine'
 HheadAscent: 0
 HheadAOffset: 1
 HheadDescent: 0
