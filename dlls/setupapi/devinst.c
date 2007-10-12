@@ -3558,6 +3558,46 @@ BOOL WINAPI SetupDiGetDeviceInstallParamsA(
     return FALSE;
 }
 
+static HKEY SETUPDI_OpenDevKey(struct DeviceInfo *devInfo, REGSAM samDesired)
+{
+    HKEY enumKey, key = INVALID_HANDLE_VALUE;
+    LONG l;
+
+    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0, KEY_ALL_ACCESS,
+            NULL, &enumKey, NULL);
+    if (!l)
+    {
+        RegOpenKeyExW(enumKey, devInfo->instanceId, 0, samDesired, &key);
+        RegCloseKey(enumKey);
+    }
+    return key;
+}
+
+static HKEY SETUPDI_OpenDrvKey(struct DeviceInfo *devInfo, REGSAM samDesired)
+{
+    static const WCHAR slash[] = { '\\',0 };
+    WCHAR classKeyPath[MAX_PATH];
+    HKEY classKey, key = INVALID_HANDLE_VALUE;
+    LONG l;
+
+    lstrcpyW(classKeyPath, ControlClass);
+    lstrcatW(classKeyPath, slash);
+    SETUPDI_GuidToString(&devInfo->set->ClassGuid,
+            classKeyPath + lstrlenW(classKeyPath));
+    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, classKeyPath, 0, NULL, 0,
+            KEY_ALL_ACCESS, NULL, &classKey, NULL);
+    if (!l)
+    {
+        static const WCHAR fmt[] = { '%','0','4','u',0 };
+        WCHAR devId[10];
+
+        sprintfW(devId, fmt, devInfo->devId);
+        RegOpenKeyExW(classKey, devId, 0, samDesired, &key);
+        RegCloseKey(classKey);
+    }
+    return key;
+}
+
 /***********************************************************************
  *		SetupDiOpenDevRegKey (SETUPAPI.@)
  */
@@ -3569,7 +3609,62 @@ HKEY WINAPI SetupDiOpenDevRegKey(
        DWORD KeyType,
        REGSAM samDesired)
 {
-    FIXME("%p %p %d %d %d %x\n", DeviceInfoSet, DeviceInfoData,
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfo *devInfo;
+    HKEY key = INVALID_HANDLE_VALUE;
+
+    TRACE("%p %p %d %d %d %x\n", DeviceInfoSet, DeviceInfoData,
           Scope, HwProfile, KeyType, samDesired);
-    return INVALID_HANDLE_VALUE;
+
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (!DeviceInfoData || DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA)
+            || !DeviceInfoData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (Scope != DICS_FLAG_GLOBAL && Scope != DICS_FLAG_CONFIGSPECIFIC)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (KeyType != DIREG_DEV && KeyType != DIREG_DRV)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return INVALID_HANDLE_VALUE;
+    }
+    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
+    if (devInfo->set != set)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (devInfo->phantom)
+    {
+        SetLastError(ERROR_DEVINFO_NOT_REGISTERED);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (Scope != DICS_FLAG_GLOBAL)
+        FIXME("unimplemented for scope %d\n", Scope);
+    switch (KeyType)
+    {
+        case DIREG_DEV:
+            key = SETUPDI_OpenDevKey(devInfo, samDesired);
+            break;
+        case DIREG_DRV:
+            key = SETUPDI_OpenDrvKey(devInfo, samDesired);
+            break;
+        default:
+            WARN("unknown KeyType %d\n", KeyType);
+    }
+    return key;
 }

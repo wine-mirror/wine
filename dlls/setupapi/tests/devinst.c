@@ -618,39 +618,33 @@ static void testDevRegKey(void)
         ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         key = pSetupDiOpenDevRegKey(NULL, NULL, 0, 0, 0, 0);
-        todo_wine
         ok(key == INVALID_HANDLE_VALUE &&
          GetLastError() == ERROR_INVALID_HANDLE,
          "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         key = pSetupDiOpenDevRegKey(set, NULL, 0, 0, 0, 0);
-        todo_wine
         ok(key == INVALID_HANDLE_VALUE &&
          GetLastError() == ERROR_INVALID_PARAMETER,
          "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         key = pSetupDiOpenDevRegKey(set, &devInfo, 0, 0, 0, 0);
-        todo_wine
         ok(key == INVALID_HANDLE_VALUE &&
          GetLastError() == ERROR_INVALID_FLAGS,
          "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0, 0, 0);
-        todo_wine
         ok(key == INVALID_HANDLE_VALUE &&
          GetLastError() == ERROR_INVALID_FLAGS,
          "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
          DIREG_BOTH, 0);
-        todo_wine
         ok(key == INVALID_HANDLE_VALUE &&
          GetLastError() == ERROR_INVALID_FLAGS,
          "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
          DIREG_DRV, 0);
-        todo_wine
         ok(key == INVALID_HANDLE_VALUE &&
          GetLastError() == ERROR_DEVINFO_NOT_REGISTERED,
          "Expected ERROR_DEVINFO_NOT_REGISTERED, got %08x\n", GetLastError());
@@ -687,7 +681,6 @@ static void testDevRegKey(void)
          "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
         key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
          DIREG_DRV, KEY_READ);
-        todo_wine
         ok(key != INVALID_HANDLE_VALUE, "SetupDiOpenDevRegKey failed: %08x\n",
          GetLastError());
         ret = pSetupDiCallClassInstaller(DIF_REMOVE, set, &devInfo);
