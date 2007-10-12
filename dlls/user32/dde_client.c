@@ -1141,8 +1141,13 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	pXAct = WDML_ClientQueueExecute(pConv, pData, cbData);
 	break;
     case XTYP_POKE:
-	pXAct = WDML_ClientQueuePoke(pConv, pData, cbData, wFmt, hszItem);
-	break;
+        if (!hszItem)
+        {
+            pConv->instance->lastError = DMLERR_INVALIDPARAMETER;
+            return 0;
+        }
+        pXAct = WDML_ClientQueuePoke(pConv, pData, cbData, wFmt, hszItem);
+        break;
     case XTYP_ADVSTART|XTYPF_NODATA:
     case XTYP_ADVSTART|XTYPF_NODATA|XTYPF_ACKREQ:
     case XTYP_ADVSTART:
