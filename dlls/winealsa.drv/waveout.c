@@ -698,7 +698,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         IsEqualGUID(&wwo->format.SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) {
         format = (wwo->format.Format.wBitsPerSample == 8) ? SND_PCM_FORMAT_U8 :
                  (wwo->format.Format.wBitsPerSample == 16) ? SND_PCM_FORMAT_S16_LE :
-                 (wwo->format.Format.wBitsPerSample == 24) ? SND_PCM_FORMAT_S24_LE :
+                 (wwo->format.Format.wBitsPerSample == 24) ? SND_PCM_FORMAT_S24_3LE :
                  (wwo->format.Format.wBitsPerSample == 32) ? SND_PCM_FORMAT_S32_LE : -1;
     } else if ((wwo->format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) &&
         IsEqualGUID(&wwo->format.SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)){

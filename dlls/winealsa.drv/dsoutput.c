@@ -385,7 +385,7 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx)
     {
         case  8: format = SND_PCM_FORMAT_U8; break;
         case 16: format = SND_PCM_FORMAT_S16_LE; break;
-        case 24: format = SND_PCM_FORMAT_S24_LE; break;
+        case 24: format = SND_PCM_FORMAT_S24_3LE; break;
         case 32: format = SND_PCM_FORMAT_S32_LE; break;
         default: FIXME("Unsupported bpp: %d\n", pwfx->wBitsPerSample); return DSERR_GENERIC;
     }
