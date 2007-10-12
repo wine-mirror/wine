@@ -361,6 +361,9 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_expand(range, wordW, VARIANT_TRUE, "test ");
     test_range_put_text(range, wordW);
     test_range_text(body_range, "wordabc 123\r\nit's text");
+    test_range_text(range, NULL);
+    test_range_moveend(range, characterW, 3, 3);
+    test_range_text(range, "abc");
 
     IHTMLTxtRange_Release(range);
     IHTMLTxtRange_Release(body_range);

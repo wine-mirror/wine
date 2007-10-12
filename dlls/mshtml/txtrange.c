@@ -893,7 +893,11 @@ static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
     if(NS_FAILED(nsres))
         ERR("InsertNode failed: %08x\n", nsres);
 
-    return S_OK;
+    nsres = nsIDOMRange_SetEndAfter(This->nsrange, (nsIDOMNode*)text_node);
+    if(NS_FAILED(nsres))
+        ERR("SetEndAfter failed: %08x\n", nsres);
+
+    return IHTMLTxtRange_collapse(HTMLTXTRANGE(This), VARIANT_FALSE);
 }
 
 static HRESULT WINAPI HTMLTxtRange_get_text(IHTMLTxtRange *iface, BSTR *p)
