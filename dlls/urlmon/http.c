@@ -204,6 +204,9 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
         else
             IInternetProtocol_Continue((IInternetProtocol *)This, &data);
         return;
+    case INTERNET_STATUS_HANDLE_CREATED:
+        IInternetProtocol_AddRef((IInternetProtocol *)This);
+        return;
     case INTERNET_STATUS_HANDLE_CLOSING:
         if (This->protocol_sink)
         {
@@ -215,6 +218,7 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
             ReleaseBindInfo(&This->bind_info);
             memset(&This->bind_info, 0, sizeof(This->bind_info));
         }
+        IInternetProtocol_Release((IInternetProtocol *)This);
         return;
     default:
         WARN("Unhandled Internet status callback %d\n", dwInternetStatus);
