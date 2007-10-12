@@ -1454,6 +1454,197 @@ static void test_DdeCreateStringHandleW(DWORD dde_inst, int codepage)
     ok(DdeFreeStringHandle(dde_inst, str_handle), "DdeFreeStringHandle failed\n");
 }
 
+static void test_DdeCreateDataHandle(void)
+{
+    HDDEDATA hdata;
+    DWORD dde_inst;
+    DWORD size;
+    UINT res, err;
+    BOOL ret;
+    HSZ item;
+    LPBYTE ptr;
+
+    dde_inst = 0;
+    res = DdeInitializeA(&dde_inst, client_ddeml_callback, APPCMD_CLIENTONLY, 0);
+    ok(res == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", res);
+
+    item = DdeCreateStringHandleA(dde_inst, "item", CP_WINANSI);
+    ok(item != NULL, "Expected non-NULL hsz\n");
+
+    /* invalid instance id */
+    DdeGetLastError(dde_inst);
+    hdata = DdeCreateDataHandle(0xdeadbeef, (LPBYTE)"data", MAX_PATH, 0, item, CF_TEXT, 0);
+    err = DdeGetLastError(dde_inst);
+    todo_wine
+    {
+        ok(hdata == NULL, "Expected NULL, got %p\n", hdata);
+        ok(err == DMLERR_INVALIDPARAMETER,
+           "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
+    }
+
+    /* 0 instance id */
+    DdeGetLastError(dde_inst);
+    hdata = DdeCreateDataHandle(0, (LPBYTE)"data", MAX_PATH, 0, item, CF_TEXT, 0);
+    err = DdeGetLastError(dde_inst);
+    todo_wine
+    {
+        ok(hdata == NULL, "Expected NULL, got %p\n", hdata);
+        ok(err == DMLERR_INVALIDPARAMETER,
+           "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
+    }
+
+    /* NULL pSrc */
+    DdeGetLastError(dde_inst);
+    hdata = DdeCreateDataHandle(dde_inst, NULL, MAX_PATH, 0, item, CF_TEXT, 0);
+    err = DdeGetLastError(dde_inst);
+    ok(hdata != NULL, "Expected non-NULL hdata\n");
+    ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
+
+    ptr = GlobalLock(hdata);
+    todo_wine
+    {
+        ok(ptr == NULL, "Expected NULL, got %p\n", ptr);
+    }
+
+    ptr = DdeAccessData(hdata, &size);
+    ok(ptr != NULL, "Expected non-NULL ptr\n");
+    ok(lstrlenA((LPSTR)ptr) == 0, "Expected 0, got %d\n", lstrlenA((LPSTR)ptr));
+    ok(size == 260, "Expected 260, got %d\n", size);
+
+    ret = DdeUnaccessData(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    ret = DdeFreeDataHandle(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    /* cb is zero */
+    DdeGetLastError(dde_inst);
+    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", 0, 0, item, CF_TEXT, 0);
+    err = DdeGetLastError(dde_inst);
+    ok(hdata != NULL, "Expected non-NULL hdata\n");
+    ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
+
+    ptr = GlobalLock(hdata);
+    todo_wine
+    {
+        ok(ptr == NULL, "Expected NULL, got %p\n", ptr);
+    }
+
+    ptr = DdeAccessData(hdata, &size);
+    ok(ptr != NULL, "Expected non-NULL ptr\n");
+    ok(lstrlenA((LPSTR)ptr) != 0, "Expected non-empty string\n");
+    ok(lstrcmpA((LPSTR)ptr, "data"), "Did not expect data\n");
+    ok(size == 0, "Expected 0, got %d\n", size);
+
+    ret = DdeUnaccessData(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    ret = DdeFreeDataHandle(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    /* cbOff is non-zero */
+    DdeGetLastError(dde_inst);
+    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", MAX_PATH, 2, item, CF_TEXT, 0);
+    err = DdeGetLastError(dde_inst);
+    ok(hdata != NULL, "Expected non-NULL hdata\n");
+    ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
+
+    ptr = GlobalLock(hdata);
+    todo_wine
+    {
+        ok(ptr == NULL, "Expected NULL, got %p\n", ptr);
+    }
+
+    ptr = DdeAccessData(hdata, &size);
+    ok(ptr != NULL, "Expected non-NULL ptr\n");
+    ok(size == 262, "Expected 262, got %d\n", size);
+    todo_wine
+    {
+        ok(lstrlenA((LPSTR)ptr) == 0, "Expected 0, got %d\n", lstrlenA((LPSTR)ptr));
+    }
+
+    ret = DdeUnaccessData(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    ret = DdeFreeDataHandle(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    /* NULL item */
+    DdeGetLastError(dde_inst);
+    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", MAX_PATH, 0, 0, CF_TEXT, 0);
+    err = DdeGetLastError(dde_inst);
+    ok(hdata != NULL, "Expected non-NULL hdata\n");
+    ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
+
+    ptr = GlobalLock(hdata);
+    todo_wine
+    {
+        ok(ptr == NULL, "Expected NULL, got %p\n", ptr);
+    }
+
+    ptr = DdeAccessData(hdata, &size);
+    ok(ptr != NULL, "Expected non-NULL ptr\n");
+    ok(!lstrcmpA((LPSTR)ptr, "data"), "Expected data, got %s\n", ptr);
+    ok(size == 260, "Expected 260, got %d\n", size);
+
+    ret = DdeUnaccessData(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    ret = DdeFreeDataHandle(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    /* NULL item */
+    DdeGetLastError(dde_inst);
+    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", MAX_PATH, 0, (HSZ)0xdeadbeef, CF_TEXT, 0);
+    err = DdeGetLastError(dde_inst);
+    ok(hdata != NULL, "Expected non-NULL hdata\n");
+    ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
+
+    ptr = GlobalLock(hdata);
+    todo_wine
+    {
+        ok(ptr == NULL, "Expected NULL, got %p\n", ptr);
+    }
+
+    ptr = DdeAccessData(hdata, &size);
+    ok(ptr != NULL, "Expected non-NULL ptr\n");
+    ok(!lstrcmpA((LPSTR)ptr, "data"), "Expected data, got %s\n", ptr);
+    ok(size == 260, "Expected 260, got %d\n", size);
+
+    ret = DdeUnaccessData(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    ret = DdeFreeDataHandle(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    /* invalid clipboard format */
+    DdeGetLastError(dde_inst);
+    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", MAX_PATH, 0, item, 0xdeadbeef, 0);
+    err = DdeGetLastError(dde_inst);
+    ok(hdata != NULL, "Expected non-NULL hdata\n");
+    ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
+
+    ptr = GlobalLock(hdata);
+    todo_wine
+    {
+        ok(ptr == NULL, "Expected NULL, got %p\n", ptr);
+    }
+
+    ptr = DdeAccessData(hdata, &size);
+    ok(ptr != NULL, "Expected non-NULL ptr\n");
+    ok(!lstrcmpA((LPSTR)ptr, "data"), "Expected data, got %s\n", ptr);
+    ok(size == 260, "Expected 260, got %d\n", size);
+
+    ret = DdeUnaccessData(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    ret = DdeFreeDataHandle(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+
+    ret = DdeUninitialize(dde_inst);
+    ok(res == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", res);
+}
+
 static void test_DdeCreateStringHandle(void)
 {
     DWORD dde_inst, ret;
@@ -1900,6 +2091,7 @@ START_TEST(dde)
 
     test_dde_aw_transaction();
 
+    test_DdeCreateDataHandle();
     test_DdeCreateStringHandle();
     test_FreeDDElParam();
     test_PackDDElParam();
