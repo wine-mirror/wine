@@ -760,6 +760,7 @@ free_pyramid_doub_carr(doub_carr_t *dc)
   int i;
   for (i = 0; i < dc->n; ++i)
     MIDL_user_free(dc->a[i]);
+  MIDL_user_free(dc);
 }
 
 static void
