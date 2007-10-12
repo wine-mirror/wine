@@ -2179,6 +2179,7 @@ BOOL WineEngInit(void)
 
     /* load the system truetype fonts */
     data_dir = wine_get_data_dir();
+    if (!data_dir) data_dir = wine_get_build_dir();
     if (data_dir && (unixname = HeapAlloc(GetProcessHeap(), 0, strlen(data_dir) + sizeof("/fonts/")))) {
         strcpy(unixname, data_dir);
         strcat(unixname, "/fonts/");
