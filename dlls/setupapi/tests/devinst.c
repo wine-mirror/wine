@@ -36,11 +36,14 @@ static HMODULE hSetupAPI;
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoList)(GUID*,HWND);
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInterfaceA)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, PCSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
+static BOOL     (WINAPI *pSetupDiCallClassInstaller)(DI_FUNCTION, HDEVINFO, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInfo)(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInterfaces)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);
 static BOOL     (WINAPI *pSetupDiInstallClassA)(HWND, PCSTR, DWORD, HSPFILEQ);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
+static HKEY     (WINAPI *pSetupDiOpenDevRegKey)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, REGSAM);
+static HKEY     (WINAPI *pSetupDiCreateDevRegKeyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, HINF, PCWSTR);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInstanceIdA)(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
 static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailA)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_A, DWORD, PDWORD, PSP_DEVINFO_DATA);
@@ -55,12 +58,15 @@ static void init_function_pointers(void)
     pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
     pSetupDiCreateDeviceInterfaceA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInterfaceA");
     pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
+    pSetupDiCallClassInstaller = (void *)GetProcAddress(hSetupAPI, "SetupDiCallClassInstaller");
     pSetupDiEnumDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInfo");
     pSetupDiEnumDeviceInterfaces = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInterfaces");
     pSetupDiGetDeviceInstanceIdA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInstanceIdA");
     pSetupDiGetDeviceInterfaceDetailA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailA");
     pSetupDiInstallClassA = (void *)GetProcAddress(hSetupAPI, "SetupDiInstallClassA");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
+    pSetupDiOpenDevRegKey = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenDevRegKey");
+    pSetupDiCreateDevRegKeyW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDevRegKeyW");
     pSetupDiRegisterDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiRegisterDeviceInfo");
 }
 
@@ -579,6 +585,117 @@ static void testGetDeviceInterfaceDetail(void)
     }
 }
 
+static void testDevRegKey(void)
+{
+    static const WCHAR classKey[] = {'S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'C','o','n','t','r','o','l','\\','C','l','a','s','s','\\',
+     '{','6','a','5','5','b','5','a','4','-','3','f','6','5','-',
+     '1','1','d','b','-','b','7','0','4','-',
+     '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
+    BOOL ret;
+    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
+        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+    HDEVINFO set;
+
+    if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
+     !pSetupDiCreateDeviceInfoA || !pSetupDiOpenDevRegKey ||
+     !pSetupDiRegisterDeviceInfo || !pSetupDiCreateDevRegKeyW ||
+     !pSetupDiCallClassInstaller)
+    {
+        skip("No SetupDiOpenDevRegKey\n");
+        return;
+    }
+    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %d\n", GetLastError());
+    if (set)
+    {
+        SP_DEVINFO_DATA devInfo = { sizeof(devInfo), { 0 } };
+        HKEY key = INVALID_HANDLE_VALUE;
+
+        ret = pSetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid,
+                NULL, NULL, 0, &devInfo);
+        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        key = pSetupDiOpenDevRegKey(NULL, NULL, 0, 0, 0, 0);
+        todo_wine
+        ok(key == INVALID_HANDLE_VALUE &&
+         GetLastError() == ERROR_INVALID_HANDLE,
+         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        key = pSetupDiOpenDevRegKey(set, NULL, 0, 0, 0, 0);
+        todo_wine
+        ok(key == INVALID_HANDLE_VALUE &&
+         GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        key = pSetupDiOpenDevRegKey(set, &devInfo, 0, 0, 0, 0);
+        todo_wine
+        ok(key == INVALID_HANDLE_VALUE &&
+         GetLastError() == ERROR_INVALID_FLAGS,
+         "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0, 0, 0);
+        todo_wine
+        ok(key == INVALID_HANDLE_VALUE &&
+         GetLastError() == ERROR_INVALID_FLAGS,
+         "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
+         DIREG_BOTH, 0);
+        todo_wine
+        ok(key == INVALID_HANDLE_VALUE &&
+         GetLastError() == ERROR_INVALID_FLAGS,
+         "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
+         DIREG_DRV, 0);
+        todo_wine
+        ok(key == INVALID_HANDLE_VALUE &&
+         GetLastError() == ERROR_DEVINFO_NOT_REGISTERED,
+         "Expected ERROR_DEVINFO_NOT_REGISTERED, got %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL, NULL);
+        ok(ret, "SetupDiRegisterDeviceInfo failed: %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
+         DIREG_DRV, 0);
+        /* The software key isn't created by default */
+        todo_wine
+        ok(key == INVALID_HANDLE_VALUE &&
+         GetLastError() == ERROR_KEY_DOES_NOT_EXIST,
+         "Expected ERROR_KEY_DOES_NOT_EXIST_EXIST, got %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
+         DIREG_DEV, 0);
+        todo_wine
+        ok(key == INVALID_HANDLE_VALUE &&
+         GetLastError() == ERROR_KEY_DOES_NOT_EXIST,
+         "Expected ERROR_KEY_DOES_NOT_EXIST_EXIST, got %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        key = pSetupDiCreateDevRegKeyW(set, &devInfo, DICS_FLAG_GLOBAL, 0,
+         DIREG_DRV, NULL, NULL);
+        ok(key != INVALID_HANDLE_VALUE, "SetupDiCreateDevRegKey failed: %08x\n",
+         GetLastError());
+        RegCloseKey(key);
+        SetLastError(0xdeadbeef);
+        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
+         DIREG_DRV, 0);
+        todo_wine
+        ok(key == INVALID_HANDLE_VALUE &&
+         GetLastError() == ERROR_INVALID_DATA,
+         "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
+        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
+         DIREG_DRV, KEY_READ);
+        todo_wine
+        ok(key != INVALID_HANDLE_VALUE, "SetupDiOpenDevRegKey failed: %08x\n",
+         GetLastError());
+        ret = pSetupDiCallClassInstaller(DIF_REMOVE, set, &devInfo);
+        pSetupDiDestroyDeviceInfoList(set);
+    }
+    RegDeleteTreeW(HKEY_LOCAL_MACHINE, classKey);
+}
+
 START_TEST(devinst)
 {
     init_function_pointers();
@@ -598,4 +715,5 @@ START_TEST(devinst)
     testRegisterDeviceInfo();
     testCreateDeviceInterface();
     testGetDeviceInterfaceDetail();
+    testDevRegKey();
 }
