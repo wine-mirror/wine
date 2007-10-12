@@ -2164,7 +2164,7 @@ INT WINAPI WSAIoctl(SOCKET s,
 
                         addr = inet_addr(ptr->IpAddressList.IpAddress.String);
                         mask = inet_addr(ptr->IpAddressList.IpMask.String);
-                        bcast = addr | (addr & !mask);
+                        bcast = addr | ~mask;
                         intArray->iiAddress.AddressIn.sin_family = AF_INET;
                         intArray->iiAddress.AddressIn.sin_port = 0;
                         intArray->iiAddress.AddressIn.sin_addr.WS_s_addr =
