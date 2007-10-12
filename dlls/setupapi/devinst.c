@@ -1998,6 +1998,8 @@ static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
                     SETUPDI_SetInterfaceSymbolicLink(iface, symbolicLink);
                 RegCloseKey(subKey);
             }
+            /* Allow enumeration to continue */
+            l = ERROR_SUCCESS;
         }
     }
     /* FIXME: find and add all the device's interfaces to the device */
@@ -2071,6 +2073,8 @@ static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
                 }
                 RegCloseKey(subKey);
             }
+            /* Allow enumeration to continue */
+            l = ERROR_SUCCESS;
         }
     }
     if (enumKey != INVALID_HANDLE_VALUE)
@@ -2190,6 +2194,8 @@ static void SETUPDI_EnumerateMatchingDevices(HDEVINFO DeviceInfoSet,
                 }
                 RegCloseKey(subKey);
             }
+            /* Allow enumeration to continue */
+            l = ERROR_SUCCESS;
         }
     }
 }
@@ -2241,6 +2247,8 @@ static void SETUPDI_EnumerateDevices(HDEVINFO DeviceInfoSet, const GUID *class,
                                 subKeyName, subKey, class, flags);
                         RegCloseKey(subKey);
                     }
+                    /* Allow enumeration to continue */
+                    l = ERROR_SUCCESS;
                 }
             }
         }
