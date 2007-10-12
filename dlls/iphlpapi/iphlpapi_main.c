@@ -1450,13 +1450,33 @@ DWORD WINAPI GetNumberOfInterfaces(PDWORD pdwNumIf)
  *  Failure: error code from winerror.h
  *
  * FIXME
- *  Stub, returns ERROR_NOT_SUPPORTED.
+ *  Stub, returns empty IP_PER_ADAPTER_INFO in every case.
  */
 DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterInfo, PULONG pOutBufLen)
 {
+  ULONG bytesNeeded = sizeof(IP_PER_ADAPTER_INFO);
+  DWORD ret;
+
   TRACE("(IfIndex %d, pPerAdapterInfo %p, pOutBufLen %p)\n", IfIndex,
    pPerAdapterInfo, pOutBufLen);
-  return ERROR_NOT_SUPPORTED;
+  if (!pOutBufLen)
+    ret = ERROR_INVALID_PARAMETER;
+  else if (!pPerAdapterInfo)
+  {
+    *pOutBufLen = bytesNeeded;
+    ret = NO_ERROR;
+  }
+  else if (*pOutBufLen < bytesNeeded)
+  {
+    *pOutBufLen = bytesNeeded;
+    ret = ERROR_BUFFER_OVERFLOW;
+  }
+  else
+  {
+    memset(pPerAdapterInfo, 0, bytesNeeded);
+    ret = NO_ERROR;
+  }
+  return ret;
 }
 
 
