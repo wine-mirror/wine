@@ -514,6 +514,7 @@ uuid_string:
 	| aSTRING				{ if (!is_valid_uuid($1))
 						    yyerror("invalid UUID: %s", $1);
 						  $$ = parse_uuid($1); }
+        ;
 
 callconv:
 	| tSTDCALL
