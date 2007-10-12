@@ -83,6 +83,36 @@ static void test_InternetCanonicalizeUrlA(void)
     ok( res && (dwSize == urllen) && (lstrcmpA(url, buffer) == 0),
         "got %u and %u with size %u for '%s' (%d)\n",
         res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+
+
+    /* check NULL pointers */
+    memset(buffer, '#', urllen + 4);
+    buffer[urllen + 4] = '\0';
+    dwSize = urllen+1;
+    SetLastError(0xdeadbeef);
+    res = InternetCanonicalizeUrlA(NULL, buffer, &dwSize, 0);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "got %u and %u with size %u for '%s' (%d)\n",
+        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+
+    memset(buffer, '#', urllen + 4);
+    buffer[urllen + 4] = '\0';
+    dwSize = urllen+1;
+    SetLastError(0xdeadbeef);
+    res = InternetCanonicalizeUrlA(url, NULL, &dwSize, 0);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "got %u and %u with size %u for '%s' (%d)\n",
+        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+
+    memset(buffer, '#', urllen + 4);
+    buffer[urllen + 4] = '\0';
+    dwSize = urllen+1;
+    SetLastError(0xdeadbeef);
+    res = InternetCanonicalizeUrlA(url, buffer, NULL, 0);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "got %u and %u with size %u for '%s' (%d)\n",
+        res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
+
 }
 
 /* ############################### */
