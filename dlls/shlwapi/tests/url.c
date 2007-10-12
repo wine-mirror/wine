@@ -1,6 +1,7 @@
 /* Unit test suite for Path functions
  *
  * Copyright 2002 Matthew Mastracci
+ * Copyright 2007 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,10 +29,14 @@
 #include "wininet.h"
 
 /* ################ */
+static HMODULE hShlwapi;
+static HRESULT (WINAPI *pUrlCanonicalizeW)(LPCWSTR, LPWSTR, LPDWORD, DWORD);
 
 const char* TEST_URL_1 = "http://www.winehq.org/tests?date=10/10/1923";
 const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1923";
 const char* TEST_URL_3 = "http://foo:bar@localhost:21/internal.php?query=x&return=y";
+const WCHAR winehqW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
+const  CHAR winehqA[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
 
 /* ################ */
 
@@ -469,7 +474,50 @@ static void test_UrlCanonicalizeA(void)
     unsigned int i;
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
     DWORD dwSize;
+    DWORD urllen;
     HRESULT hr;
+
+    urllen = lstrlenA(winehqA);
+
+    /* buffer has no space for the result */
+    dwSize=urllen-1;
+    memset(szReturnUrl, '#', urllen+4);
+    szReturnUrl[urllen+4] = '\0';
+    SetLastError(0xdeadbeef);
+    hr = UrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY  | URL_ESCAPE_UNSAFE);
+    ok( (hr == E_POINTER) && (dwSize == (urllen + 1)),
+        "got 0x%x with %u and size %u for '%s' and %u (expected 'E_POINTER' and size %u)\n",
+        hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), urllen+1);
+
+    /* buffer has no space for the terminating '\0' */
+    dwSize=urllen;
+    memset(szReturnUrl, '#', urllen+4);
+    szReturnUrl[urllen+4] = '\0';
+    SetLastError(0xdeadbeef);
+    hr = UrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    ok( (hr == E_POINTER) && (dwSize == (urllen + 1)),
+        "got 0x%x with %u and size %u for '%s' and %u (expected 'E_POINTER' and size %u)\n",
+        hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), urllen+1);
+
+    /* buffer has the required size */
+    dwSize=urllen+1;
+    memset(szReturnUrl, '#', urllen+4);
+    szReturnUrl[urllen+4] = '\0';
+    SetLastError(0xdeadbeef);
+    hr = UrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    ok( (hr == S_OK) && (dwSize == urllen),
+        "got 0x%x with %u and size %u for '%s' and %u (expected 'S_OK' and size %u)\n",
+        hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), urllen);
+
+    /* buffer is larger as the required size */
+    dwSize=urllen+2;
+    memset(szReturnUrl, '#', urllen+4);
+    szReturnUrl[urllen+4] = '\0';
+    SetLastError(0xdeadbeef);
+    hr = UrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    ok( (hr == S_OK) && (dwSize == urllen),
+        "got 0x%x with %u and size %u for '%s' and %u (expected 'S_OK' and size %u)\n",
+        hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), urllen);
 
 
     /* test url-modification */
@@ -486,6 +534,65 @@ static void test_UrlCanonicalizeA(void)
     todo_wine {
         ok(strcmp(szReturnUrl,"/uri-res/N2R?urn:sha1:B3K")==0, "UrlCanonicalizeA got \"%s\"  instead of \"/uri-res/N2R?urn:sha1:B3K\"\n", szReturnUrl);
     }
+
+}
+
+/* ########################### */
+
+static void test_UrlCanonicalizeW(void)
+{
+    WCHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
+    DWORD dwSize;
+    DWORD urllen;
+    HRESULT hr;
+
+
+    if (!pUrlCanonicalizeW) {
+        skip("UrlCanonicalizeW\n");
+        return;
+    }
+    urllen = lstrlenW(winehqW);
+
+    /* buffer has no space for the result */
+    dwSize = (urllen-1);
+    memset(szReturnUrl, '#', (urllen+4) * sizeof(WCHAR));
+    szReturnUrl[urllen+4] = '\0';
+    SetLastError(0xdeadbeef);
+    hr = pUrlCanonicalizeW(winehqW, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    ok( (hr == E_POINTER) && (dwSize == (urllen + 1)),
+        "got 0x%x with %u and size %u for %u (expected 'E_POINTER' and size %u)\n",
+        hr, GetLastError(), dwSize, lstrlenW(szReturnUrl), urllen+1);
+
+
+    /* buffer has no space for the terminating '\0' */
+    dwSize = urllen;
+    memset(szReturnUrl, '#', (urllen+4) * sizeof(WCHAR));
+    szReturnUrl[urllen+4] = '\0';
+    SetLastError(0xdeadbeef);
+    hr = pUrlCanonicalizeW(winehqW, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    ok( (hr == E_POINTER) && (dwSize == (urllen + 1)),
+        "got 0x%x with %u and size %u for %u (expected 'E_POINTER' and size %u)\n",
+        hr, GetLastError(), dwSize, lstrlenW(szReturnUrl), urllen+1);
+
+    /* buffer has the required size */
+    dwSize = urllen +1;
+    memset(szReturnUrl, '#', (urllen+4) * sizeof(WCHAR));
+    szReturnUrl[urllen+4] = '\0';
+    SetLastError(0xdeadbeef);
+    hr = pUrlCanonicalizeW(winehqW, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    ok( (hr == S_OK) && (dwSize == urllen),
+        "got 0x%x with %u and size %u for %u (expected 'S_OK' and size %u)\n",
+        hr, GetLastError(), dwSize, lstrlenW(szReturnUrl), urllen);
+
+    /* buffer is larger as the required size */
+    dwSize = (urllen+2);
+    memset(szReturnUrl, '#', (urllen+4) * sizeof(WCHAR));
+    szReturnUrl[urllen+4] = '\0';
+    SetLastError(0xdeadbeef);
+    hr = pUrlCanonicalizeW(winehqW, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    ok( (hr == S_OK) && (dwSize == urllen),
+        "got 0x%x with %u and size %u for %u (expected 'S_OK' and size %u)\n",
+        hr, GetLastError(), dwSize, lstrlenW(szReturnUrl), urllen);
 
 }
 
@@ -674,9 +781,13 @@ static void test_UrlUnescape(void)
 START_TEST(url)
 {
 
+  hShlwapi = GetModuleHandleA("shlwapi.dll");
+  pUrlCanonicalizeW = (void *) GetProcAddress(hShlwapi, "UrlCanonicalizeW");
+
   test_UrlHash();
   test_UrlGetPart();
   test_UrlCanonicalizeA();
+  test_UrlCanonicalizeW();
   test_UrlEscape();
   test_UrlCombine();
   test_UrlCreateFromPath();
