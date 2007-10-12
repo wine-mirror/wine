@@ -171,12 +171,9 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         poke = GlobalLock((HGLOBAL)lo);
         ok(poke != NULL, "Expected non-NULL poke\n");
         ok(poke->fReserved == 0, "Expected 0, got %d\n", poke->fReserved);
-        if (msg_index == 6) todo_wine
-        {
-            ok(poke->unused == 0, "Expected 0, got %d\n", poke->unused);
-            ok(poke->fRelease == TRUE, "Expected TRUE, got %d\n", poke->fRelease);
-            ok(poke->cfFormat == CF_TEXT, "Expected CF_TEXT, got %d\n", poke->cfFormat);
-        }
+        ok(poke->unused == 0, "Expected 0, got %d\n", poke->unused);
+        ok(poke->fRelease == TRUE, "Expected TRUE, got %d\n", poke->fRelease);
+        ok(poke->cfFormat == CF_TEXT, "Expected CF_TEXT, got %d\n", poke->cfFormat);
 
         if (msg_index == 5)
             ok(lstrcmpA((LPSTR)poke->Value, "poke data\r\n"),

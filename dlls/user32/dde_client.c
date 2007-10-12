@@ -697,8 +697,11 @@ static WDML_QUEUE_STATE WDML_HandleExecuteReply(WDML_CONV* pConv, MSG* msg, WDML
 static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPVOID pData, DWORD cbData,
 					     UINT wFmt, HSZ hszItem)
 {
-    WDML_XACT*	pXAct;
-    ATOM	atom;
+    DDE_DATAHANDLE_HEAD *dh;
+    WDML_XACT *pXAct;
+    DDEPOKE *ddePoke;
+    HGLOBAL hglobal;
+    ATOM atom;
 
     TRACE("XTYP_POKE transaction\n");
 
@@ -708,28 +711,32 @@ static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPVOID pData, DWORD cbD
     pXAct = WDML_AllocTransaction(pConv->instance, WM_DDE_POKE, wFmt, hszItem);
     if (!pXAct)
     {
-	GlobalDeleteAtom(atom);
-	return NULL;
+        GlobalDeleteAtom(atom);
+        return NULL;
     }
 
     if (cbData == (DWORD)-1)
     {
-	pXAct->hMem = (HDDEDATA)pData;
+        hglobal = (HGLOBAL)pData;
+        dh = (DDE_DATAHANDLE_HEAD *)GlobalLock(hglobal);
+        cbData = GlobalSize(hglobal) - sizeof(DDE_DATAHANDLE_HEAD);
+        pData = (LPVOID)(dh + 1);
+        GlobalUnlock(hglobal);
     }
-    else
-    {
-	DDEPOKE*	ddePoke;
 
-	pXAct->hMem = GlobalAlloc(GHND | GMEM_DDESHARE, sizeof(DDEPOKE) + cbData);
-	ddePoke = GlobalLock(pXAct->hMem);
-	if (ddePoke)
-	{
-	    memcpy(ddePoke->Value, pData, cbData);
-	    ddePoke->fRelease = TRUE;
-	    ddePoke->cfFormat = wFmt;
-	    GlobalUnlock(pXAct->hMem);
-	}
+    pXAct->hMem = GlobalAlloc(GHND | GMEM_DDESHARE, sizeof(DDEPOKE) + cbData);
+    ddePoke = GlobalLock(pXAct->hMem);
+    if (!ddePoke)
+    {
+        pConv->instance->lastError = DMLERR_MEMORY_ERROR;
+        return NULL;
     }
+
+    ddePoke->unused = 0;
+    ddePoke->fRelease = TRUE;
+    ddePoke->cfFormat = wFmt;
+    memcpy(ddePoke->Value, pData, cbData);
+    GlobalUnlock(pXAct->hMem);
 
     pXAct->lParam = PackDDElParam(WM_DDE_POKE, (UINT_PTR)pXAct->hMem, atom);
 
