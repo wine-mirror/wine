@@ -1980,8 +1980,7 @@ const char *fragment_palette_conversion =
     "TEMP index;\n"
     "PARAM constants = { 0.996, 0.00195, 0, 0 };\n" /* { 255/256, 0.5/255*255/256, 0, 0 } */
     "TEX index.x, fragment.texcoord[0], texture[0], 2D;\n" /* store the red-component of the current pixel */
-    "MUL index.x, index.x, constants.x;\n" /* Scale the index by 255/256 */
-    "ADD index.x, index.x, constants.y;\n" /* Add a bias of '0.5' in order to sample in the middle */
+    "MAD index.x, index.x, constants.x, constants.y;\n" /* Scale the index by 255/256 and add a bias of '0.5' in order to sample in the middle */
     "TEX result.color, index, texture[1], 1D;\n" /* use the red-component as a index in the palette to get the final color */
     "END";
 
