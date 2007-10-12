@@ -190,7 +190,7 @@ static void testInstallClass(void)
      '{','6','a','5','5','b','5','a','4','-','3','f','6','5','-',
      '1','1','d','b','-','b','7','0','4','-',
      '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
-    char tmpfile[MAX_PATH], dstfile[MAX_PATH * 2];
+    char tmpfile[MAX_PATH];
     BOOL ret;
 
     if (!pSetupDiInstallClassA)
@@ -219,10 +219,6 @@ static void testInstallClass(void)
     ret = pSetupDiInstallClassA(NULL, tmpfile, 0, NULL);
     ok(ret, "SetupDiInstallClassA failed: %08x\n", GetLastError());
     RegDeleteKeyW(HKEY_LOCAL_MACHINE, classKey);
-    GetWindowsDirectoryA(dstfile, MAX_PATH);
-    lstrcatA(dstfile, "inf\\");
-    lstrcatA(dstfile, tmpfile + 2);
-    DeleteFile(dstfile);
     DeleteFile(tmpfile);
 }
 
