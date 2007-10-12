@@ -439,8 +439,8 @@ static HKEY SETUPDI_CreateDrvKey(struct DeviceInfo *devInfo)
             KEY_ALL_ACCESS, NULL, &classKey, NULL);
     if (!l)
     {
-        static const WCHAR fmt[] = { '%','0','4','d',0 };
-        WCHAR devId[5];
+        static const WCHAR fmt[] = { '%','0','4','u',0 };
+        WCHAR devId[10];
 
         sprintfW(devId, fmt, devInfo->devId);
         RegCreateKeyExW(classKey, devId, 0, NULL, 0, KEY_READ | KEY_WRITE,
@@ -3677,4 +3677,125 @@ HKEY WINAPI SetupDiOpenDevRegKey(
             WARN("unknown KeyType %d\n", KeyType);
     }
     return key;
+}
+
+static BOOL SETUPDI_DeleteDevKey(struct DeviceInfo *devInfo)
+{
+    HKEY enumKey;
+    BOOL ret = FALSE;
+    LONG l;
+
+    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0, KEY_ALL_ACCESS,
+            NULL, &enumKey, NULL);
+    if (!l)
+    {
+        ret = RegDeleteTreeW(enumKey, devInfo->instanceId);
+        RegCloseKey(enumKey);
+    }
+    else
+        SetLastError(l);
+    return ret;
+}
+
+static BOOL SETUPDI_DeleteDrvKey(struct DeviceInfo *devInfo)
+{
+    static const WCHAR slash[] = { '\\',0 };
+    WCHAR classKeyPath[MAX_PATH];
+    HKEY classKey;
+    LONG l;
+    BOOL ret = FALSE;
+
+    lstrcpyW(classKeyPath, ControlClass);
+    lstrcatW(classKeyPath, slash);
+    SETUPDI_GuidToString(&devInfo->set->ClassGuid,
+            classKeyPath + lstrlenW(classKeyPath));
+    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, classKeyPath, 0, NULL, 0,
+            KEY_ALL_ACCESS, NULL, &classKey, NULL);
+    if (!l)
+    {
+        static const WCHAR fmt[] = { '%','0','4','u',0 };
+        WCHAR devId[10];
+
+        sprintfW(devId, fmt, devInfo->devId);
+        ret = RegDeleteTreeW(classKey, devId);
+        RegCloseKey(classKey);
+    }
+    else
+        SetLastError(l);
+    return ret;
+}
+
+/***********************************************************************
+ *		SetupDiOpenDevRegKey (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiDeleteDevRegKey(
+       HDEVINFO DeviceInfoSet,
+       PSP_DEVINFO_DATA DeviceInfoData,
+       DWORD Scope,
+       DWORD HwProfile,
+       DWORD KeyType)
+{
+    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfo *devInfo;
+    BOOL ret = FALSE;
+
+    TRACE("%p %p %d %d %d\n", DeviceInfoSet, DeviceInfoData, Scope, HwProfile,
+            KeyType);
+
+    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!DeviceInfoData || DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA)
+            || !DeviceInfoData->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (Scope != DICS_FLAG_GLOBAL && Scope != DICS_FLAG_CONFIGSPECIFIC)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+    if (KeyType != DIREG_DEV && KeyType != DIREG_DRV)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
+    if (devInfo->set != set)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (devInfo->phantom)
+    {
+        SetLastError(ERROR_DEVINFO_NOT_REGISTERED);
+        return FALSE;
+    }
+    if (Scope != DICS_FLAG_GLOBAL)
+        FIXME("unimplemented for scope %d\n", Scope);
+    switch (KeyType)
+    {
+        case DIREG_DEV:
+            ret = SETUPDI_DeleteDevKey(devInfo);
+            break;
+        case DIREG_DRV:
+            ret = SETUPDI_DeleteDrvKey(devInfo);
+            break;
+        case DIREG_BOTH:
+            ret = SETUPDI_DeleteDevKey(devInfo);
+            if (ret)
+                ret = SETUPDI_DeleteDrvKey(devInfo);
+            break;
+        default:
+            WARN("unknown KeyType %d\n", KeyType);
+    }
+    return ret;
 }
