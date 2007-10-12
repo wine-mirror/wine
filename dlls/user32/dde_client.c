@@ -533,7 +533,7 @@ static WDML_QUEUE_STATE WDML_HandleRequestReply(WDML_CONV* pConv, MSG* msg, WDML
 	}
 	if (wdh.fAckReq)
 	{
-	    WDML_PostAck(pConv, WDML_CLIENT_SIDE, 0, FALSE, TRUE, uiHi, msg->lParam, WM_DDE_DATA);
+	    pConv->instance->lastError = DMLERR_MEMORY_ERROR;
 	}
 	else
 	{

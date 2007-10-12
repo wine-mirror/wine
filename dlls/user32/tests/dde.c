@@ -109,7 +109,6 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
     case WM_DDE_REQUEST:
     {
-        if (msg_index == 5) todo_wine
         ok((msg_index >= 2 && msg_index <= 4) ||
            (msg_index >= 7 && msg_index <= 8),
            "Expected 2, 3, 4, 7 or 8, got %d\n", msg_index);
@@ -161,7 +160,6 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
     case WM_DDE_POKE:
     {
-        if (msg_index == 7) todo_wine
         ok(msg_index == 5 || msg_index == 6, "Expected 5 or 6, got %d\n", msg_index);
         ok(wparam == (WPARAM)client, "Expected client hwnd, got %08lx\n", wparam);
 
@@ -173,7 +171,7 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         poke = GlobalLock((HGLOBAL)lo);
         ok(poke != NULL, "Expected non-NULL poke\n");
         ok(poke->fReserved == 0, "Expected 0, got %d\n", poke->fReserved);
-        if (msg_index == 7) todo_wine
+        if (msg_index == 6) todo_wine
         {
             ok(poke->unused == 0, "Expected 0, got %d\n", poke->unused);
             ok(poke->fRelease == TRUE, "Expected TRUE, got %d\n", poke->fRelease);
@@ -183,11 +181,9 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         if (msg_index == 5)
             ok(lstrcmpA((LPSTR)poke->Value, "poke data\r\n"),
                "Expected 'poke data\\r\\n', got %s\n", poke->Value);
-        else if (msg_index == 6) todo_wine
-        {
+        else
             ok(!lstrcmpA((LPSTR)poke->Value, "poke data\r\n"),
                "Expected 'poke data\\r\\n', got %s\n", poke->Value);
-        }
 
         GlobalUnlock((HGLOBAL)lo);
 
@@ -199,10 +195,7 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
     case WM_DDE_EXECUTE:
     {
-        todo_wine
-        {
-            ok(msg_index == 7, "Expected 7, got %d\n", msg_index);
-        }
+        ok(msg_index == 7, "Expected 7, got %d\n", msg_index);
         ok(wparam == (WPARAM)client, "Expected client hwnd, got %08lx\n", wparam);
 
         ptr = GlobalLock((HGLOBAL)lparam);
@@ -219,10 +212,7 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
     case WM_DDE_TERMINATE:
     {
-        todo_wine
-        {
-            ok(msg_index == 9, "Expected 9, got %d\n", msg_index);
-        }
+        ok(msg_index == 9, "Expected 9, got %d\n", msg_index);
         ok(wparam == (WPARAM)client, "Expected client hwnd, got %08lx\n", wparam);
         ok(lparam == 0, "Expected 0, got %08lx\n", lparam);
 
@@ -232,10 +222,7 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     }
 
     default:
-        todo_wine
-        {
-            ok(FALSE, "Unhandled msg: %08x\n", msg);
-        }
+        ok(FALSE, "Unhandled msg: %08x\n", msg);
     }
 
     return DefWindowProcA(hwnd, msg, wparam, lparam);
@@ -467,11 +454,8 @@ static void test_ddeml_client(void)
     }
 
     str = (LPSTR)DdeAccessData(hdata, &size);
-    todo_wine
-    {
-        ok(!lstrcmpA(str, "command executed\r\n"), "Expected 'command executed\\r\\n', got %s\n", str);
-        ok(size == 21, "Expected 21, got %d\n", size);
-    }
+    ok(!lstrcmpA(str, "command executed\r\n"), "Expected 'command executed\\r\\n', got %s\n", str);
+    ok(size == 21, "Expected 21, got %d\n", size);
 
     ret = DdeUnaccessData(hdata);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
