@@ -1506,32 +1506,41 @@ BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
 	LPDWORD lpdwBufferLength, DWORD dwFlags)
 {
     HRESULT hr;
-    DWORD dwURLFlags= 0x80000000; /* Don't know what this means */
+    DWORD dwURLFlags = URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE;
+
+    TRACE("(%s, %p, %p, 0x%08x) bufferlength: %d\n", debugstr_a(lpszUrl), lpszBuffer,
+        lpdwBufferLength, lpdwBufferLength ? *lpdwBufferLength : -1, dwFlags);
+
     if(dwFlags & ICU_DECODE)
     {
-	dwURLFlags |= URL_UNESCAPE;
-	dwFlags &= ~ICU_DECODE;
+        dwURLFlags |= URL_UNESCAPE;
+        dwFlags &= ~ICU_DECODE;
     }
 
     if(dwFlags & ICU_ESCAPE)
     {
-	dwURLFlags |= URL_UNESCAPE;
-	dwFlags &= ~ICU_ESCAPE;
+        dwURLFlags |= URL_UNESCAPE;
+        dwFlags &= ~ICU_ESCAPE;
     }
+
     if(dwFlags & ICU_BROWSER_MODE)
     {
         dwURLFlags |= URL_BROWSER_MODE;
         dwFlags &= ~ICU_BROWSER_MODE;
     }
-    if(dwFlags)
-	FIXME("Unhandled flags 0x%08x\n", dwFlags);
-    TRACE("%s %p %p %08x\n", debugstr_a(lpszUrl), lpszBuffer,
-        lpdwBufferLength, dwURLFlags);
 
-    /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
-    dwFlags ^= ICU_NO_ENCODE;
+    if(dwFlags & ICU_NO_ENCODE)
+    {
+        /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
+        dwURLFlags ^= URL_ESCAPE_UNSAFE;
+        dwFlags &= ~ICU_NO_ENCODE;
+    }
+
+    if (dwFlags) FIXME("Unhandled flags 0x%08x\n", dwFlags);
 
     hr = UrlCanonicalizeA(lpszUrl, lpszBuffer, lpdwBufferLength, dwURLFlags);
+    if (hr == E_POINTER) SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    if (hr == E_INVALIDARG) SetLastError(ERROR_INVALID_PARAMETER);
 
     return (hr == S_OK) ? TRUE : FALSE;
 }
@@ -1550,35 +1559,46 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
     LPDWORD lpdwBufferLength, DWORD dwFlags)
 {
     HRESULT hr;
-    DWORD dwURLFlags= 0x80000000; /* Don't know what this means */
+    DWORD dwURLFlags = URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE;
+
+    TRACE("(%s, %p, %p, 0x%08x) bufferlength: %d\n", debugstr_w(lpszUrl), lpszBuffer,
+        lpdwBufferLength, lpdwBufferLength ? *lpdwBufferLength : -1, dwFlags);
+
     if(dwFlags & ICU_DECODE)
     {
-	dwURLFlags |= URL_UNESCAPE;
-	dwFlags &= ~ICU_DECODE;
+        dwURLFlags |= URL_UNESCAPE;
+        dwFlags &= ~ICU_DECODE;
     }
 
     if(dwFlags & ICU_ESCAPE)
     {
-	dwURLFlags |= URL_UNESCAPE;
-	dwFlags &= ~ICU_ESCAPE;
+        dwURLFlags |= URL_UNESCAPE;
+        dwFlags &= ~ICU_ESCAPE;
     }
+
     if(dwFlags & ICU_BROWSER_MODE)
     {
         dwURLFlags |= URL_BROWSER_MODE;
         dwFlags &= ~ICU_BROWSER_MODE;
     }
-    if(dwFlags)
-	FIXME("Unhandled flags 0x%08x\n", dwFlags);
-    TRACE("%s %p %p %08x\n", debugstr_w(lpszUrl), lpszBuffer,
-        lpdwBufferLength, dwURLFlags);
 
-    /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
-    dwFlags ^= ICU_NO_ENCODE;
+    if(dwFlags & ICU_NO_ENCODE)
+    {
+        /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
+        dwURLFlags ^= URL_ESCAPE_UNSAFE;
+        dwFlags &= ~ICU_NO_ENCODE;
+    }
+
+    if (dwFlags) FIXME("Unhandled flags 0x%08x\n", dwFlags);
 
     hr = UrlCanonicalizeW(lpszUrl, lpszBuffer, lpdwBufferLength, dwURLFlags);
+    if (hr == E_POINTER) SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    if (hr == E_INVALIDARG) SetLastError(ERROR_INVALID_PARAMETER);
 
     return (hr == S_OK) ? TRUE : FALSE;
 }
+
+/* #################################################### */
 
 static INTERNET_STATUS_CALLBACK set_status_callback(
     LPWININETHANDLEHEADER lpwh, INTERNET_STATUS_CALLBACK callback, BOOL unicode)

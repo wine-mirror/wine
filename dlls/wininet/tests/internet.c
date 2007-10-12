@@ -46,7 +46,6 @@ static void test_InternetCanonicalizeUrlA(void)
     dwSize = 1; /* Acrobat Updater use this size */
     SetLastError(0xdeadbeef);
     res = InternetCanonicalizeUrlA(url, buffer, &dwSize, 0);
-    todo_wine
     ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER) && (dwSize == (urllen+1)),
         "got %u and %u with size %u for '%s' (%d)\n",
         res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
@@ -59,7 +58,6 @@ static void test_InternetCanonicalizeUrlA(void)
     SetLastError(0xdeadbeef);
     res = InternetCanonicalizeUrlA(url, buffer, &dwSize, 0);
     /* dwSize is nr. of needed bytes with the terminating '\0' */
-    todo_wine
     ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER) && (dwSize == (urllen+1)),
         "got %u and %u with size %u for '%s' (%d)\n",
         res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
