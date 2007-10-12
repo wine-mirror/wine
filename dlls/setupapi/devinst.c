@@ -1264,6 +1264,16 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(
         SetLastError(ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
     }
+    if (Scope != DICS_FLAG_GLOBAL && Scope != DICS_FLAG_CONFIGSPECIFIC)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return INVALID_HANDLE_VALUE;
+    }
+    if (KeyType != DIREG_DEV && KeyType != DIREG_DRV)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return INVALID_HANDLE_VALUE;
+    }
     if (devInfo->phantom)
     {
         SetLastError(ERROR_DEVINFO_NOT_REGISTERED);
