@@ -1219,24 +1219,24 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
     /* allocated the 'extended' data based on the type of query requested */
     switch(Type){
     case WINED3DQUERYTYPE_OCCLUSION:
+        object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryOcclusionData));
+        ((WineQueryOcclusionData *)(object->extendedData))->ctx = This->activeContext;
+
         if(GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
             TRACE("(%p) Allocating data for an occlusion query\n", This);
-            object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryOcclusionData));
             GL_EXTCALL(glGenQueriesARB(1, &((WineQueryOcclusionData *)(object->extendedData))->queryId));
-            ((WineQueryOcclusionData *)(object->extendedData))->ctx = This->activeContext;
             break;
         }
     case WINED3DQUERYTYPE_EVENT:
+        object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryEventData));
+        ((WineQueryEventData *)(object->extendedData))->ctx = This->activeContext;
+
         if(GL_SUPPORT(APPLE_FENCE)) {
-            object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryEventData));
             GL_EXTCALL(glGenFencesAPPLE(1, &((WineQueryEventData *)(object->extendedData))->fenceId));
             checkGLcall("glGenFencesAPPLE");
-            ((WineQueryEventData *)(object->extendedData))->ctx = This->activeContext;
         } else if(GL_SUPPORT(NV_FENCE)) {
-            object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryEventData));
             GL_EXTCALL(glGenFencesNV(1, &((WineQueryEventData *)(object->extendedData))->fenceId));
             checkGLcall("glGenFencesNV");
-            ((WineQueryEventData *)(object->extendedData))->ctx = This->activeContext;
         }
         break;
 
