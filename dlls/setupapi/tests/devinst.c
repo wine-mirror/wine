@@ -204,7 +204,6 @@ static void testInstallClass(void)
     create_inf_file(tmpfile + 2);
 
     ret = pSetupDiInstallClassA(NULL, NULL, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
     ret = pSetupDiInstallClassA(NULL, NULL, DI_NOVCP, NULL);

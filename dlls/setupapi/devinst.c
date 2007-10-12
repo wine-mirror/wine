@@ -3181,6 +3181,11 @@ BOOL WINAPI SetupDiInstallClassA(
     UNICODE_STRING FileNameW;
     BOOL Result;
 
+    if (!InfFileName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     if (!RtlCreateUnicodeStringFromAsciiz(&FileNameW, InfFileName))
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -3283,6 +3288,11 @@ BOOL WINAPI SetupDiInstallClassW(
 
     FIXME("\n");
 
+    if (!InfFileName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     if ((Flags & DI_NOVCP) && (FileQueue == NULL || FileQueue == INVALID_HANDLE_VALUE))
     {
 	SetLastError(ERROR_INVALID_PARAMETER);
