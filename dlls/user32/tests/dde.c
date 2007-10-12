@@ -176,12 +176,8 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         if (msg_index == 7) todo_wine
         {
             ok(poke->unused == 0, "Expected 0, got %d\n", poke->unused);
-            ok(poke->cfFormat == CF_TEXT, "Expected CF_TEXT, got %d\n", poke->cfFormat);
-        }
-
-        todo_wine
-        {
             ok(poke->fRelease == TRUE, "Expected TRUE, got %d\n", poke->fRelease);
+            ok(poke->cfFormat == CF_TEXT, "Expected CF_TEXT, got %d\n", poke->cfFormat);
         }
 
         if (msg_index == 5)

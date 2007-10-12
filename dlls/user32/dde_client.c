@@ -725,7 +725,7 @@ static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPVOID pData, DWORD cbD
 	if (ddePoke)
 	{
 	    memcpy(ddePoke->Value, pData, cbData);
-	    ddePoke->fRelease = FALSE; /* FIXME: app owned ? */
+	    ddePoke->fRelease = TRUE;
 	    ddePoke->cfFormat = wFmt;
 	    GlobalUnlock(pXAct->hMem);
 	}
