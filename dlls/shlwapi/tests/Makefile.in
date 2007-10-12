@@ -13,7 +13,8 @@ CTESTS = \
 	ordinal.c \
 	path.c \
 	shreg.c \
-	string.c
+	string.c \
+	url.c
 
 @MAKE_TEST_RULES@
 
