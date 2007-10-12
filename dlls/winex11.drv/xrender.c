@@ -1162,7 +1162,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     XChangeGC( gdi_display, physDev->gc, GCFunction | GCBackground | GCFillStyle, &xgcval );
     wine_tsx11_unlock();
 
-    X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
+    X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
 
     if(physDev->depth == 1) {
         if((physDev->textPixel & 0xffffff) == 0) {

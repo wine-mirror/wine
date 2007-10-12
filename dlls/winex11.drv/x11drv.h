@@ -421,8 +421,8 @@ typedef struct {
 extern const dib_conversions dib_normal, dib_src_byteswap, dib_dst_byteswap;
 
 extern INT X11DRV_DIB_MaskToShift(DWORD mask);
-extern INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
-extern INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
+extern INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev,INT);
+extern INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev,INT);
 extern void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev,BOOL);
 
 extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib);

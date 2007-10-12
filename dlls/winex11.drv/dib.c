@@ -97,8 +97,8 @@ enum Rle_EscapeCodes
 };
 
 
-static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *,INT,BOOL);
-static INT X11DRV_DIB_Lock(X_PHYSBITMAP *,INT,BOOL);
+static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *,INT);
+static INT X11DRV_DIB_Lock(X_PHYSBITMAP *,INT);
 static void X11DRV_DIB_Unlock(X_PHYSBITMAP *,BOOL);
 
 /* 
@@ -3799,7 +3799,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     if (!cx || !cy) return lines;
 
     /* Update the pixmap from the DIB section */
-    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
+    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod);
 
     X11DRV_SetupGCForText( physDev );  /* To have the correct colors */
     wine_tsx11_lock();
@@ -3939,7 +3939,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   descr.height    = lines;
   descr.useShm    = FALSE;
   descr.dibpitch  = ((descr.infoWidth * descr.infoBpp + 31) &~31) / 8;
-  X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod, FALSE );
+  X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod );
   result = X11DRV_DIB_SetImageBits( &descr );
   X11DRV_DIB_Unlock( physBitmap, TRUE );
 
@@ -4069,7 +4069,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   descr.dibpitch = (obj_size == sizeof(DIBSECTION)) ? dib.dsBm.bmWidthBytes
 		       : (((descr.infoWidth * descr.infoBpp + 31) &~31) / 8);
 
-  X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod, FALSE );
+  X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod );
   X11DRV_DIB_GetImageBits( &descr );
   X11DRV_DIB_Unlock( physBitmap, TRUE );
 
@@ -4292,13 +4292,13 @@ static LONG CALLBACK X11DRV_DIB_FaultHandler( PEXCEPTION_POINTERS ep )
 
     if (!found) return EXCEPTION_CONTINUE_SEARCH;
 
-    X11DRV_DIB_Lock( physBitmap, DIB_Status_None, FALSE );
+    X11DRV_DIB_Lock( physBitmap, DIB_Status_None );
     if (ep->ExceptionRecord->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT) {
         /* the app tried to write the DIB bits */
-        X11DRV_DIB_Coerce( physBitmap, DIB_Status_AppMod, FALSE );
+        X11DRV_DIB_Coerce( physBitmap, DIB_Status_AppMod);
     } else {
         /* the app tried to read the DIB bits */
-        X11DRV_DIB_Coerce( physBitmap, DIB_Status_InSync, FALSE );
+        X11DRV_DIB_Coerce( physBitmap, DIB_Status_InSync);
     }
     X11DRV_DIB_Unlock( physBitmap, TRUE );
 
@@ -4308,7 +4308,7 @@ static LONG CALLBACK X11DRV_DIB_FaultHandler( PEXCEPTION_POINTERS ep )
 /***********************************************************************
  *           X11DRV_DIB_Coerce
  */
-static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
+static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req)
 {
     INT ret = DIB_Status_None;
 
@@ -4340,11 +4340,9 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
 
         case DIB_Status_AppMod:
 	  TRACE("GdiMod requested in status AppMod\n" );
-	  if (!lossy) {
-	    /* make it readonly to avoid app changing data while we copy */
-	    X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READONLY );
-	    X11DRV_DIB_DoUpdateDIBSection( physBitmap, FALSE );
-	  }
+	  /* make it readonly to avoid app changing data while we copy */
+	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READONLY );
+	  X11DRV_DIB_DoUpdateDIBSection( physBitmap, FALSE );
 	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_NOACCESS );
 	  physBitmap->p_status = DIB_Status_AppMod;
 	  physBitmap->status = DIB_Status_GdiMod;
@@ -4364,10 +4362,8 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
 
 	case DIB_Status_GdiMod:
 	  TRACE("InSync requested in status GdiMod\n" );
-	  if (!lossy) {
-	    X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
-	    X11DRV_DIB_DoUpdateDIBSection( physBitmap, TRUE );
-	  }
+	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
+	  X11DRV_DIB_DoUpdateDIBSection( physBitmap, TRUE );
 	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READONLY );
 	  physBitmap->status = DIB_Status_InSync;
 	  break;
@@ -4398,7 +4394,7 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
 	case DIB_Status_GdiMod:
 	  TRACE("AppMod requested in status GdiMod\n" );
 	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
-	  if (!lossy) X11DRV_DIB_DoUpdateDIBSection( physBitmap, TRUE );
+	  X11DRV_DIB_DoUpdateDIBSection( physBitmap, TRUE );
 	  physBitmap->status = DIB_Status_AppMod;
 	  break;
 
@@ -4425,7 +4421,7 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
 /***********************************************************************
  *           X11DRV_DIB_Lock
  */
-static INT X11DRV_DIB_Lock(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
+static INT X11DRV_DIB_Lock(X_PHYSBITMAP *physBitmap, INT req)
 {
     INT ret = DIB_Status_None;
 
@@ -4434,7 +4430,7 @@ static INT X11DRV_DIB_Lock(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
     EnterCriticalSection(&physBitmap->lock);
     ret = physBitmap->status;
     if (req != DIB_Status_None)
-      X11DRV_DIB_Coerce(physBitmap, req, lossy);
+      X11DRV_DIB_Coerce(physBitmap, req);
     return ret;
 }
 
@@ -4499,19 +4495,19 @@ static void X11DRV_DIB_Unlock(X_PHYSBITMAP *physBitmap, BOOL commit)
 /***********************************************************************
  *           X11DRV_CoerceDIBSection
  */
-INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
+INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev, INT req)
 {
     if (!physDev || !physDev->bitmap) return DIB_Status_None;
-    return X11DRV_DIB_Coerce(physDev->bitmap, req, lossy);
+    return X11DRV_DIB_Coerce(physDev->bitmap, req);
 }
 
 /***********************************************************************
  *           X11DRV_LockDIBSection
  */
-INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
+INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev, INT req)
 {
     if (!physDev || !physDev->bitmap) return DIB_Status_None;
-    return X11DRV_DIB_Lock(physDev->bitmap, req, lossy);
+    return X11DRV_DIB_Lock(physDev->bitmap, req);
 }
 
 /***********************************************************************
@@ -4656,7 +4652,7 @@ void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib)
   }
 
   if (dib->dshSection)
-      X11DRV_DIB_Coerce(physBitmap, DIB_Status_InSync, FALSE);
+      X11DRV_DIB_Coerce(physBitmap, DIB_Status_InSync);
 
   if (physBitmap->image)
   {
@@ -4704,7 +4700,7 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
          * FIXME we need to recalculate the pen, brush, text and bkgnd pixels here,
          * at least for a 1 bpp dibsection
          */
-        X11DRV_DIB_Lock( physBitmap, DIB_Status_AppMod, FALSE );
+        X11DRV_DIB_Lock( physBitmap, DIB_Status_AppMod );
         X11DRV_DIB_GenColorMap( physDev, physBitmap->colorMap, DIB_RGB_COLORS,
                                 dib.dsBm.bmBitsPixel,
                                 TRUE, colors, start, end );

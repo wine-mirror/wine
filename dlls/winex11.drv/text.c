@@ -75,7 +75,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
     if (flags & ETO_OPAQUE)
     {
-        X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
+        X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
         dibUpdateFlag = TRUE;
         wine_tsx11_lock();
         XSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
@@ -105,7 +105,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
     if (!dibUpdateFlag)
     {
-        X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
+        X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
         dibUpdateFlag = TRUE;
     }
 

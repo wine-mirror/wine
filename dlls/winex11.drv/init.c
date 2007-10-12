@@ -432,7 +432,7 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
             case X11DRV_SYNC_PIXMAP:
                 if(physDev->bitmap)
                 {
-                    X11DRV_CoerceDIBSection(physDev, DIB_Status_GdiMod, FALSE);
+                    X11DRV_CoerceDIBSection(physDev, DIB_Status_GdiMod);
                     return TRUE;
                 }
                 return FALSE;

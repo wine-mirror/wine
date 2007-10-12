@@ -1542,7 +1542,7 @@ BOOL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top, INT width, INT h
 {
     BOOL result;
 
-    X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
+    X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
     result = BITBLT_InternalStretchBlt( physDev, left, top, width, height, NULL, 0, 0, 0, 0, rop );
     X11DRV_UnlockDIBSection( physDev, TRUE );
     return result;
@@ -1689,9 +1689,9 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
        * which may avoid a copy in some situations */
     }
 
-    sDst = X11DRV_LockDIBSection( physDevDst, DIB_Status_None, FALSE );
+    sDst = X11DRV_LockDIBSection( physDevDst, DIB_Status_None );
     if (physDevDst != physDevSrc)
-        sSrc = X11DRV_LockDIBSection( physDevSrc, DIB_Status_None, FALSE );
+        sSrc = X11DRV_LockDIBSection( physDevSrc, DIB_Status_None );
     else
         sSrc = sDst;
 
@@ -1740,7 +1740,7 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
           goto END;
         /* fall back to X server copying */
       }
-      X11DRV_CoerceDIBSection( physDevDst, DIB_Status_GdiMod, FALSE );
+      X11DRV_CoerceDIBSection( physDevDst, DIB_Status_GdiMod );
 
       wine_tsx11_lock();
       XSetFunction( gdi_display, physDevDst->gc, GXcopy );
@@ -1751,9 +1751,9 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
       goto END;
     }
 
-    X11DRV_CoerceDIBSection( physDevDst, DIB_Status_GdiMod, FALSE );
+    X11DRV_CoerceDIBSection( physDevDst, DIB_Status_GdiMod );
     if (physDevDst != physDevSrc)
-      X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod, FALSE );
+      X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
 
     result = BITBLT_InternalStretchBlt( physDevDst, xDst, yDst, width, height,
                                         physDevSrc, xSrc, ySrc, width, height, rop );
@@ -1777,9 +1777,9 @@ BOOL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
 {
     BOOL result;
 
-    X11DRV_LockDIBSection( physDevDst, DIB_Status_GdiMod, FALSE );
+    X11DRV_LockDIBSection( physDevDst, DIB_Status_GdiMod );
     if (physDevDst != physDevSrc)
-      X11DRV_LockDIBSection( physDevSrc, DIB_Status_GdiMod, FALSE );
+      X11DRV_LockDIBSection( physDevSrc, DIB_Status_GdiMod );
 
     result = BITBLT_InternalStretchBlt( physDevDst, xDst, yDst, widthDst, heightDst,
                                         physDevSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
