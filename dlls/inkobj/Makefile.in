@@ -3,9 +3,10 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = inkobj.dll
-IMPORTS   = kernel32
+IMPORTS   = ole32 kernel32
 
 C_SRCS = \
+	inkcollector.c \
 	inkobj.c
 
 @MAKE_DLL_RULES@

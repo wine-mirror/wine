@@ -23,6 +23,11 @@
 #include "winbase.h"
 #include "winerror.h"
 
+#define COBJMACROS
+#include "winuser.h"
+#include "ole2.h"
+#include "msinkaut.h"
+
 #include "wine/debug.h"
 
 extern LONG INKOBJ_refCount;
