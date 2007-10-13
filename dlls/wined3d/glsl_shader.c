@@ -559,7 +559,7 @@ void shader_generate_glsl_declarations(
             ps_impl->srgb_enabled = 0;
             ps_impl->srgb_mode_hardcoded = 1;
         }
-        if(reg_maps->vpos) {
+        if(reg_maps->vpos || reg_maps->usesdsy) {
             if(This->baseShader.limits.constant_float + extra_constants_needed + 1 < GL_LIMITS(pshader_constantsF)) {
                 shader_addline(buffer, "uniform vec4 ycorrection;\n");
                 ((IWineD3DPixelShaderImpl *) This)->vpos_uniform = 1;
@@ -1392,7 +1392,7 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
         case WINED3DSIO_EXP: instruction = "exp2"; break;
         case WINED3DSIO_SGN: instruction = "sign"; break;
         case WINED3DSIO_DSX: instruction = "dFdx"; break;
-        case WINED3DSIO_DSY: instruction = "dFdy"; break;
+        case WINED3DSIO_DSY: instruction = "ycorrection.y * dFdy"; break;
         default: instruction = "";
             FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
             break;

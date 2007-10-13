@@ -599,6 +599,12 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
                 goto recompile;
             }
         }
+        if(This->baseShader.reg_maps.usesdsy && !This->vpos_uniform) {
+            if(This->render_offscreen ? 0 : 1 != deviceImpl->render_offscreen ? 0 : 1) {
+                WARN("Recompiling shader because dsy is used, hard compiled and render_offscreen changed\n");
+                goto recompile;
+            }
+        }
 
         return WINED3D_OK;
 

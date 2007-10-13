@@ -389,6 +389,8 @@ HRESULT shader_get_registers_used(
                 } else {
                     reg_maps->bumpmat = regnum;
                 }
+            } else if(WINED3DSIO_DSY  == curOpcode->opcode) {
+                reg_maps->usesdsy = 1;
             }
 
             /* This will loop over all the registers and try to
