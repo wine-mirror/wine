@@ -58,4 +58,6 @@ typedef struct D3DXCOLOR
     FLOAT r, g, b, a;
 } D3DXCOLOR, *LPD3DXCOLOR;
 
+FLOAT D3DXVec2Length(CONST D3DXVECTOR2 *pv);
+
 #endif /* __D3DX8MATH_H__ */
