@@ -50,6 +50,8 @@ static const WCHAR attrBackgroundColor[] =
     {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
 static const WCHAR attrColor[] =
     {'c','o','l','o','r',0};
+static const WCHAR attrDisplay[] =
+    {'d','i','s','p','l','a','y',0};
 static const WCHAR attrFontFamily[] =
     {'f','o','n','t','-','f','a','m','i','l','y',0};
 static const WCHAR attrFontSize[] =
@@ -60,6 +62,8 @@ static const WCHAR attrFontWeight[] =
     {'f','o','n','t','-','w','e','i','g','h','t',0};
 static const WCHAR attrTextDecoration[] =
     {'t','e','x','t','-','d','e','c','o','r','a','t','i','o','n',0};
+static const WCHAR attrVisibility[] =
+    {'v','i','s','i','b','i','l','i','t','y',0};
 
 static const WCHAR valLineThrough[] =
     {'l','i','n','e','-','t','h','r','o','u','g','h',0};
@@ -1145,29 +1149,37 @@ static HRESULT WINAPI HTMLStyle_get_clear(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_display(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, attrDisplay, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_display(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, attrDisplay, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_visibility(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, attrVisibility, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_visibility(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, attrVisibility, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_listStyleType(IHTMLStyle *iface, BSTR v)
