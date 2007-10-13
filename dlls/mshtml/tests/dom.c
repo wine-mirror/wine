@@ -33,11 +33,124 @@ static const char doc_blank[] = "<html></html>";
 static const char doc_str1[] = "<html><body>test</body></html>";
 static const char doc_str2[] =
     "<html><body>test a<font size=\"2\">bc 123<br />it's </font>text<br /></body></html>";
+static const char doc_str3[] =
+    "<html><head><title>test</title><body>"
+    "<a href=\"http://test\" name=\"x\">link</a><input />"
+    "<select id=\"s\"><option id=\"x\">opt1</option><option id=\"y\">opt2</option></select>"
+    "<textarea id=\"X\">text text</textarea>"
+    "</body></html>";
 
 static const WCHAR noneW[] = {'N','o','n','e',0};
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
 static WCHAR wordW[] = {'w','o','r','d',0};
+
+typedef enum {
+    ET_NONE,
+    ET_HTML,
+    ET_HEAD,
+    ET_TITLE,
+    ET_BODY,
+    ET_A,
+    ET_INPUT,
+    ET_SELECT,
+    ET_TEXTAREA,
+    ET_OPTION
+} elem_type_t;
+
+static const REFIID none_iids[] = {
+    &IID_IUnknown,
+    NULL
+};
+
+static const REFIID html_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    NULL
+};
+
+static const REFIID head_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    NULL
+};
+
+static const REFIID title_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    NULL
+};
+
+static const REFIID body_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLTextContainer,
+    &IID_IHTMLBodyElement,
+    NULL
+};
+
+static const REFIID anchor_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLAnchorElement,
+    NULL
+};
+
+static const REFIID input_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLInputElement,
+    &IID_IHTMLInputTextElement,
+    NULL
+};
+
+static const REFIID select_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLSelectElement,
+    NULL
+};
+
+static const REFIID textarea_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLTextAreaElement,
+    NULL
+};
+
+static const REFIID option_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLOptionElement,
+    NULL
+};
+
+typedef struct {
+    const char *tag;
+    REFIID *iids;
+} elem_type_info_t;
+
+static const elem_type_info_t elem_type_infos[] = {
+    {"",          none_iids},
+    {"HTML",      html_iids},
+    {"HEAD",      head_iids},
+    {"TITLE",     title_iids},
+    {"BODY",      body_iids},
+    {"A",         anchor_iids},
+    {"INPUT",     input_iids},
+    {"SELECT",    select_iids},
+    {"TEXTAREA",  textarea_iids},
+    {"OPTION",    option_iids}
+};
 
 static const char *dbgstr_w(LPCWSTR str)
 {
@@ -48,11 +161,35 @@ static const char *dbgstr_w(LPCWSTR str)
     return buf;
 }
 
+static const char *dbgstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
+
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     WCHAR buf[512];
     MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
     return lstrcmpW(strw, buf);
+}
+
+static BSTR a2bstr(const char *str)
+{
+    BSTR ret;
+    int len;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len);
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
 }
 
 static IHTMLDocument2 *create_document(void)
@@ -65,6 +202,21 @@ static IHTMLDocument2 *create_document(void)
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
 
     return doc;
+}
+
+#define test_ifaces(i,ids) _test_ifaces(__LINE__,i,ids)
+static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
+{
+    const IID * const *piid;
+    IUnknown *unk;
+    HRESULT hres;
+
+     for(piid = iids; *piid; piid++) {
+        hres = IDispatch_QueryInterface(iface, *piid, (void**)&unk);
+        ok_(__FILE__,line) (hres == S_OK, "Could not get %s interface: %08x\n", dbgstr_guid(*piid), hres);
+        if(SUCCEEDED(hres))
+            IUnknown_Release(unk);
+    }
 }
 
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
@@ -103,6 +255,13 @@ static void _test_elem_tag(unsigned line, IUnknown *unk, const char *extag)
     SysFreeString(tag);
 }
 
+#define test_elem_type(ifc,t) _test_elem_type(__LINE__,ifc,t)
+static void _test_elem_type(unsigned line, IUnknown *unk, elem_type_t type)
+{
+    _test_elem_tag(line, unk, elem_type_infos[type].tag);
+    _test_ifaces(line, unk, elem_type_infos[type].iids);
+}
+
 static void test_doc_elem(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem;
@@ -120,6 +279,142 @@ static void test_doc_elem(IHTMLDocument2 *doc)
     test_elem_tag((IUnknown*)elem, "HTML");
 
     IHTMLElement_Release(elem);
+}
+
+#define get_doc_elem(d) _get_doc_elem(__LINE__,d)
+static IHTMLElement *_get_doc_elem(unsigned line, IHTMLDocument2 *doc)
+{
+    IHTMLElement *elem;
+    IHTMLDocument3 *doc3;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDocument3 interface: %08x\n", hres);
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    ok_(__FILE__,line) (hres == S_OK, "get_documentElement failed: %08x\n", hres);
+    IHTMLDocument3_Release(doc3);
+
+    return elem;
+}
+
+#define test_option_text(o,t) _test_option_text(__LINE__,o,t)
+static void _test_option_text(unsigned line, IHTMLOptionElement *option, const char *text)
+{
+    BSTR bstr;
+    HRESULT hres;
+
+    hres = IHTMLOptionElement_get_text(option, &bstr);
+    ok_(__FILE__,line) (hres == S_OK, "get_text failed: %08x\n", hres);
+    ok_(__FILE__,line) (!strcmp_wa(bstr, text), "text=%s\n", dbgstr_w(bstr));
+    SysFreeString(bstr);
+}
+
+#define test_option_put_text(o,t) _test_option_put_text(__LINE__,o,t)
+static void _test_option_put_text(unsigned line, IHTMLOptionElement *option, const char *text)
+{
+    BSTR bstr;
+    HRESULT hres;
+
+    bstr = a2bstr(text);
+    hres = IHTMLOptionElement_put_text(option, bstr);
+    SysFreeString(bstr);
+    ok(hres == S_OK, "put_text failed: %08x\n", hres);
+
+    _test_option_text(line, option, text);
+}
+
+#define test_option_value(o,t) _test_option_value(__LINE__,o,t)
+static void _test_option_value(unsigned line, IHTMLOptionElement *option, const char *value)
+{
+    BSTR bstr;
+    HRESULT hres;
+
+    hres = IHTMLOptionElement_get_value(option, &bstr);
+    ok_(__FILE__,line) (hres == S_OK, "get_value failed: %08x\n", hres);
+    ok_(__FILE__,line) (!strcmp_wa(bstr, value), "value=%s\n", dbgstr_w(bstr));
+    SysFreeString(bstr);
+}
+
+#define test_option_put_value(o,t) _test_option_put_value(__LINE__,o,t)
+static void _test_option_put_value(unsigned line, IHTMLOptionElement *option, const char *value)
+{
+    BSTR bstr;
+    HRESULT hres;
+
+    bstr = a2bstr(value);
+    hres = IHTMLOptionElement_put_value(option, bstr);
+    SysFreeString(bstr);
+    ok(hres == S_OK, "put_value failed: %08x\n", hres);
+
+    _test_option_value(line, option, value);
+}
+
+#define create_option_elem(d,t,v) _create_option_elem(__LINE__,d,t,v)
+static IHTMLOptionElement *_create_option_elem(unsigned line, IHTMLDocument2 *doc,
+        const char *txt, const char *val)
+{
+    IHTMLOptionElementFactory *factory;
+    IHTMLOptionElement *option;
+    IHTMLWindow2 *window;
+    VARIANT text, value, empty;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok_(__FILE__,line) (hres == S_OK, "get_parentElement failed: %08x\n", hres);
+
+    hres = IHTMLWindow2_get_Option(window, &factory);
+    IHTMLWindow2_Release(window);
+    ok_(__FILE__,line) (hres == S_OK, "get_Option failed: %08x\n", hres);
+
+    V_VT(&text) = VT_BSTR;
+    V_BSTR(&text) = a2bstr(txt);
+    V_VT(&value) = VT_BSTR;
+    V_BSTR(&value) = a2bstr(val);
+    V_VT(&empty) = VT_EMPTY;
+
+    hres = IHTMLOptionElementFactory_create(factory, text, value, empty, empty, &option);
+    ok_(__FILE__,line) (hres == S_OK, "create failed: %08x\n", hres);
+
+    IHTMLOptionElementFactory_Release(factory);
+    VariantClear(&text);
+    VariantClear(&value);
+
+    _test_option_text(line, option, txt);
+    _test_option_value(line, option, val);
+
+    return option;
+}
+
+#define test_select_length(s,l) _test_select_length(__LINE__,s,l)
+static void _test_select_length(unsigned line, IHTMLSelectElement *select, long length)
+{
+    long len = 0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_get_length(select, &len);
+    ok_(__FILE__,line) (hres == S_OK, "get_length failed: %08x\n", hres);
+    ok_(__FILE__,line) (len == length, "len=%ld, expected %ld\n", len, length);
+}
+
+#define test_select_selidx(s,i) _test_select_selidx(__LINE__,s,i)
+static void _test_select_selidx(unsigned line, IHTMLSelectElement *select, long index)
+{
+    long idx = 0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_get_selectedIndex(select, &idx);
+    ok_(__FILE__,line) (hres == S_OK, "get_selectedIndex failed: %08x\n", hres);
+    ok_(__FILE__,line) (idx == index, "idx=%ld, expected %ld\n", idx, index);
+}
+
+#define test_select_put_selidx(s,i) _test_select_put_selidx(__LINE__,s,i)
+static void _test_select_put_selidx(unsigned line, IHTMLSelectElement *select, long index)
+{
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_put_selectedIndex(select, index);
+    ok_(__FILE__,line) (hres == S_OK, "get_selectedIndex failed: %08x\n", hres);
+    _test_select_selidx(line, select, index);
 }
 
 #define test_range_text(r,t) _test_range_text(__LINE__,r,t)
@@ -230,6 +525,157 @@ static void _test_range_isequal(unsigned line, IHTMLTxtRange *range1, IHTMLTxtRa
         test_range_inrange(range1, range2, VARIANT_TRUE);
         test_range_inrange(range2, range1, VARIANT_TRUE);
     }
+}
+
+static void test_elem_collection(IHTMLElementCollection *col, const elem_type_t *elem_types, long exlen)
+{
+    long len;
+    DWORD i;
+    VARIANT name, index;
+    IDispatch *disp;
+    HRESULT hres;
+
+    hres = IHTMLElementCollection_get_length(col, &len);
+    ok(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok(len == exlen, "len=%ld, expected %ld\n", len, exlen);
+
+    V_VT(&index) = VT_EMPTY;
+    V_VT(&name) = VT_I4;
+
+    for(i=0; i<len; i++) {
+        V_I4(&name) = i;
+        disp = (void*)0xdeadbeef;
+        hres = IHTMLElementCollection_item(col, name, index, &disp);
+        ok(hres == S_OK, "item(%d) failed: %08x\n", i, hres);
+        ok(disp != NULL, "item returned NULL\n");
+        if(FAILED(hres) || !disp)
+            continue;
+
+        test_elem_type((IUnknown*)disp, elem_types[i]);
+        IDispatch_Release(disp);
+    }
+
+    V_I4(&name) = len;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    ok(disp == NULL, "disp != NULL\n");
+
+    V_I4(&name) = -1;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
+    ok(disp == NULL, "disp != NULL\n");
+}
+
+static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
+        const elem_type_t *elem_types, long len)
+{
+    IHTMLElementCollection *elcol;
+    IDispatch *disp;
+    VARIANT name, index;
+    DWORD i;
+    HRESULT hres;
+
+    V_VT(&index) = VT_EMPTY;
+    V_VT(&name) = VT_BSTR;
+    V_BSTR(&name) = SysAllocString(n);
+
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLElementCollection, (void**)&elcol);
+    IDispatch_Release(disp);
+    ok(hres == S_OK, "Could not get IHTMLElementCollection interface: %08x\n", hres);
+    test_elem_collection(elcol, elem_types, len);
+    IHTMLElementCollection_Release(elcol);
+
+    V_VT(&index) = VT_I4;
+
+    for(i=0; i<len; i++) {
+        V_I4(&index) = i;
+        disp = (void*)0xdeadbeef;
+        hres = IHTMLElementCollection_item(col, name, index, &disp);
+        ok(hres == S_OK, "item failed: %08x\n", hres);
+        ok(disp != NULL, "disp == NULL\n");
+        if(FAILED(hres) || !disp)
+            continue;
+
+        test_elem_type((IUnknown*)disp, elem_types[i]);
+
+        IDispatch_Release(disp);
+    }
+
+    V_I4(&index) = len;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    ok(disp == NULL, "disp != NULL\n");
+
+    V_I4(&index) = -1;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
+    ok(disp == NULL, "disp != NULL\n");
+
+    SysFreeString(V_BSTR(&name));
+}
+
+static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, LPCWSTR id, BOOL expect_success)
+{
+    IHTMLElementCollection *col;
+    IHTMLElement *elem;
+    IDispatch *disp = (void*)0xdeadbeef;
+    VARIANT name, index;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_all(doc, &col);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+    ok(col != NULL, "col == NULL\n");
+    if(FAILED(hres) || !col)
+        return NULL;
+
+    V_VT(&index) = VT_EMPTY;
+    V_VT(&name) = VT_BSTR;
+    V_BSTR(&name) = SysAllocString(id);
+
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    IHTMLElementCollection_Release(col);
+    SysFreeString(V_BSTR(&name));
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    if(!expect_success) {
+        ok(disp == NULL, "disp != NULL\n");
+        return NULL;
+    }
+
+    ok(disp != NULL, "disp == NULL\n");
+    if(!disp)
+        return NULL;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLElement, (void**)&elem);
+    IDispatch_Release(disp);
+    ok(hres == S_OK, "Could not get IHTMLElement interface: %08x\n", hres);
+
+    return elem;
+}
+
+static void test_select_elem(IHTMLSelectElement *select)
+{
+    test_select_length(select, 2);
+    test_select_selidx(select, 0);
+    test_select_put_selidx(select, 1);
+}
+
+static void test_create_option_elem(IHTMLDocument2 *doc)
+{
+    IHTMLOptionElement *option;
+
+    option = create_option_elem(doc, "test text", "test value");
+
+    test_option_put_text(option, "new text");
+    test_option_put_value(option, "new value");
+
+    IHTMLOptionElement_Release(option);
 }
 
 static void test_txtrange(IHTMLDocument2 *doc)
@@ -404,6 +850,16 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
     ok(!str, "fontWeight = %s\n", dbgstr_w(str));
 
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_display(style, &str);
+    ok(hres == S_OK, "get_display failed: %08x\n", hres);
+    ok(!str, "display = %s\n", dbgstr_w(str));
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_visibility(style, &str);
+    ok(hres == S_OK, "get_visibility failed: %08x\n", hres);
+    ok(!str, "visibility = %s\n", dbgstr_w(str));
+
     V_VT(&v) = VT_NULL;
     hres = IHTMLStyle_get_fontSize(style, &v);
     ok(hres == S_OK, "get_fontSize failed: %08x\n", hres);
@@ -486,6 +942,71 @@ static void test_defaults(IHTMLDocument2 *doc)
     IHTMLStyleSheetsCollection_Release(stylesheetcol);
 
     test_default_selection(doc);
+}
+
+static void test_elems(IHTMLDocument2 *doc)
+{
+    IHTMLElementCollection *col;
+    IHTMLElement *elem;
+    IDispatch *disp;
+    HRESULT hres;
+
+    static const WCHAR xW[] = {'x',0};
+    static const WCHAR sW[] = {'s',0};
+    static const WCHAR xxxW[] = {'x','x','x',0};
+
+    static const elem_type_t all_types[] = {
+        ET_HTML,
+        ET_HEAD,
+        ET_TITLE,
+        ET_BODY,
+        ET_A,
+        ET_INPUT,
+        ET_SELECT,
+        ET_OPTION,
+        ET_OPTION,
+        ET_TEXTAREA
+    };
+
+    static const elem_type_t item_types[] = {
+        ET_A,
+        ET_OPTION,
+        ET_TEXTAREA
+    };
+
+    hres = IHTMLDocument2_get_all(doc, &col);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+    test_elem_collection(col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    test_elem_col_item(col, xW, item_types, sizeof(item_types)/sizeof(item_types[0]));
+    IHTMLElementCollection_Release(col);
+
+    elem = get_doc_elem(doc);
+    ok(hres == S_OK, "get_documentElement failed: %08x\n", hres);
+    hres = IHTMLElement_get_all(elem, &disp);
+    IHTMLElement_Release(elem);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLElementCollection, (void**)&col);
+    IDispatch_Release(disp);
+    ok(hres == S_OK, "Could not get IHTMLElementCollection: %08x\n", hres);
+    test_elem_collection(col, all_types+1, sizeof(all_types)/sizeof(all_types[0])-1);
+    IHTMLElementCollection_Release(col);
+
+    get_elem_by_id(doc, xxxW, FALSE);
+    elem = get_elem_by_id(doc, sW, TRUE);
+    if(elem) {
+        IHTMLSelectElement *select;
+
+        hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLSelectElement, (void**)&select);
+        ok(hres == S_OK, "Could not get IHTMLSelectElement interface: %08x\n", hres);
+
+        test_select_elem(select);
+
+        IHTMLSelectElement_Release(select);
+        IHTMLElement_Release(elem);
+    }
+
+    test_create_option_elem(doc);
 }
 
 static IHTMLDocument2 *notif_doc;
@@ -664,6 +1185,7 @@ START_TEST(dom)
 
     run_domtest(doc_str1, test_doc_elem);
     run_domtest(doc_str2, test_txtrange);
+    run_domtest(doc_str3, test_elems);
     run_domtest(doc_blank, test_defaults);
 
     CoUninitialize();
