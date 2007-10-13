@@ -442,8 +442,55 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
         IHTMLOptionElement **optelem)
 {
     HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
-    FIXME("(%p)->(v v v v %p)\n", This, optelem);
-    return E_NOTIMPL;
+    nsIDOMDocument *nsdoc;
+    nsIDOMElement *nselem;
+    nsAString option_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    static const PRUnichar optionW[] = {'O','P','T','I','O','N',0};
+
+    TRACE("(%p)->(v v v v %p)\n", This, optelem);
+
+    *optelem = NULL;
+    if(!This->doc->nscontainer)
+        return E_FAIL;
+
+    nsres = nsIWebNavigation_GetDocument(This->doc->nscontainer->navigation, &nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsAString_Init(&option_str, optionW);
+    nsres = nsIDOMDocument_CreateElement(nsdoc, &option_str, &nselem);
+    nsIDOMDocument_Release(nsdoc);
+    nsAString_Finish(&option_str);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateElement failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(get_node(This->doc, (nsIDOMNode*)nselem)),
+            &IID_IHTMLOptionElement, (void**)optelem);
+    nsIDOMElement_Release(nselem);
+
+    if(V_VT(&text) == VT_BSTR)
+        IHTMLOptionElement_put_text(*optelem, V_BSTR(&text));
+    else if(V_VT(&text) != VT_EMPTY)
+        FIXME("Unsupported text vt=%d\n", V_VT(&text));
+
+    if(V_VT(&value) == VT_BSTR)
+        IHTMLOptionElement_put_value(*optelem, V_BSTR(&value));
+    else if(V_VT(&value) != VT_EMPTY)
+        FIXME("Unsupported value vt=%d\n", V_VT(&value));
+
+    if(V_VT(&defaultselected) != VT_EMPTY)
+        FIXME("Unsupported defaultselected vt=%d\n", V_VT(&defaultselected));
+    if(V_VT(&selected) != VT_EMPTY)
+        FIXME("Unsupported selected vt=%d\n", V_VT(&selected));
+
+    return S_OK;
 }
 
 #undef HTMLOPTFACTORY_THIS
