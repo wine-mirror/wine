@@ -39,6 +39,8 @@ typedef struct {
     HTMLElement element;
 
     const IHTMLOptionElementVtbl *lpHTMLOptionElementVtbl;
+
+    nsIDOMHTMLOptionElement *nsoption;
 } HTMLOptionElement;
 
 #define HTMLOPTION(x)  ((IHTMLOptionElement*)  &(x)->lpHTMLOptionElementVtbl)
@@ -126,8 +128,24 @@ static HRESULT WINAPI HTMLOptionElement_put_value(IHTMLOptionElement *iface, BST
 static HRESULT WINAPI HTMLOptionElement_get_value(IHTMLOptionElement *iface, BSTR *p)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString value_str;
+    const PRUnichar *value;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&value_str, NULL);
+    nsres = nsIDOMHTMLOptionElement_GetValue(This->nsoption, &value_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&value_str, &value, NULL);
+        *p = SysAllocString(value);
+    }else {
+        ERR("GetValue failed: %08x\n", nsres);
+        *p = NULL;
+    }
+    nsAString_Finish(&value_str);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLOptionElement_put_defaultSelected(IHTMLOptionElement *iface, VARIANT_BOOL v)
@@ -232,6 +250,10 @@ static HRESULT HTMLOptionElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 static void HTMLOptionElement_destructor(HTMLDOMNode *iface)
 {
     HTMLOptionElement *This = HTMLOPTION_NODE_THIS(iface);
+
+    if(This->nsoption)
+        nsIDOMHTMLOptionElement_Release(This->nsoption);
+
     HTMLElement_destructor(&This->element.node);
 }
 
@@ -245,9 +267,14 @@ static const NodeImplVtbl HTMLOptionElementImplVtbl = {
 HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLOptionElement *ret = mshtml_alloc(sizeof(HTMLOptionElement));
+    nsresult nsres;
 
     ret->lpHTMLOptionElementVtbl = &HTMLOptionElementVtbl;
     ret->element.node.vtbl = &HTMLOptionElementImplVtbl;
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIDOMHTMLOptionElement interface: %08x\n", nsres);
 
     return &ret->element;
 }

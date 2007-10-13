@@ -1078,6 +1078,28 @@ interface nsIDOMHTMLInputElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(a6cf9092-15b3-11d2-932e-00805f8add32)
+    /* FROZEN */
+]
+interface nsIDOMHTMLOptionElement : nsIDOMHTMLElement
+{
+    nsresult GetForm(nsIDOMHTMLFormElement **aForm);
+    nsresult GetDefaultSelected(PRBool *aDefaultSelected);
+    nsresult SetDefaultSelected(PRBool aDefaultSelected);
+    nsresult GetText(nsAString *aText);
+    nsresult GetIndex(PRInt32 *aIndex);
+    nsresult GetDisabled(PRBool *aDisabled);
+    nsresult SetDisabled(PRBool aDisabled);
+    nsresult GetLabel(nsAString *aLabel);
+    nsresult SetLabel(const nsAString *aLabel);
+    nsresult GetSelected(PRBool *aSelected);
+    nsresult SetSelected(PRBool aSelected);
+    nsresult GetValue(nsAString *aValue);
+    nsresult SetValue(const nsAString *aValue);
+}
+
+[
+    object,
     uuid(a6cf9090-15b3-11d2-932e-00805f8add32)
     /* FROZEN */
 ]
