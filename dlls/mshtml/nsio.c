@@ -568,7 +568,9 @@ static nsresult NSAPI nsChannel_Open(nsIHttpChannel *iface, nsIInputStream **_re
 
 static BOOL do_load_from_moniker_hack(nsChannel *This)
 {
-    PRBool b = FALSE;
+    nsACString scheme_str;
+    nsresult nsres;
+    BOOL ret = TRUE;
 
     /* 
      * We should always load the page from IMoniker, but Wine is not yet
@@ -581,12 +583,18 @@ static BOOL do_load_from_moniker_hack(nsChannel *This)
     if(!This->channel)
         return TRUE;
 
-    /* Load about protocol from moniker */
-    nsIWineURI_SchemeIs(This->uri, "about", &b);
-    if(b)
-        return TRUE;
+    nsACString_Init(&scheme_str, NULL);
+    nsres = nsIWineURI_GetScheme(This->uri, &scheme_str);
 
-    return FALSE;
+    if(NS_SUCCEEDED(nsres)) {
+        const char *scheme;
+
+        nsACString_GetData(&scheme_str, &scheme, NULL);
+        ret = !strcmp(scheme, "wine");
+    }
+
+    nsACString_Finish(&scheme_str);
+    return ret;
 }
 
 static HRESULT create_mon_for_nschannel(nsChannel *channel, IMoniker **mon)
