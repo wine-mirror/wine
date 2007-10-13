@@ -241,8 +241,24 @@ static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR
 static HRESULT WINAPI HTMLOptionElement_get_text(IHTMLOptionElement *iface, BSTR *p)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString text_str;
+    const PRUnichar *text;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&text_str, NULL);
+    nsres = nsIDOMHTMLOptionElement_GetText(This->nsoption, &text_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&text_str, &text, NULL);
+        *p = SysAllocString(text);
+    }else {
+        ERR("GetText failed: %08x\n", nsres);
+        *p = NULL;
+    }
+    nsAString_Finish(&text_str);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLOptionElement_get_form(IHTMLOptionElement *iface, IHTMLFormElement **p)
