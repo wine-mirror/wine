@@ -171,7 +171,7 @@ void WCMD_copy (void) {
   if (outpath[strlenW(outpath) - 1] == '\\')
       outpath[strlenW(outpath) - 1] = '\0';
   attribs = GetFileAttributes(outpath);
-  if (attribs & FILE_ATTRIBUTE_DIRECTORY) {
+  if (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY)) {
     strcatW (outpath, slashW);
     copyToDir = TRUE;
   }
