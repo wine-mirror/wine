@@ -2394,16 +2394,20 @@ static	LPWINE_DRIVER	DRIVER_OpenDriver16(LPCWSTR fn, LPCWSTR sn, LPARAM lParam2)
     if (lpDrv->d.d16.hDriver16 == 0) {cause = "Not a 16 bit driver"; goto exit;}
     lpDrv->dwFlags = WINE_GDF_16BIT;
 
-    TRACE("=> %p\n", lpDrv);
-    return lpDrv;
-
 exit:
-    HeapFree(GetProcessHeap(), 0, lpDrv);
     HeapFree(GetProcessHeap(), 0, fnA);
     HeapFree(GetProcessHeap(), 0, snA);
-    TRACE("Unable to load 16 bit module %s[%s]: %s\n", 
-          debugstr_w(fn), debugstr_w(sn), cause);
-    return NULL;
+
+    if (cause)
+    {
+        TRACE("Unable to load 16 bit module %s[%s]: %s\n",
+            debugstr_w(fn), debugstr_w(sn), cause);
+        HeapFree(GetProcessHeap(), 0, lpDrv);
+        return NULL;
+    }
+
+    TRACE("=> %p\n", lpDrv);
+    return lpDrv;
 }
 
 /******************************************************************
