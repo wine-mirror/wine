@@ -435,6 +435,11 @@ static LPBYTE DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, DWORD writepos,
 	TRACE("left = %x, right = %x\n", dsb->volpan.dwTotalLeftAmpFactor,
 		dsb->volpan.dwTotalRightAmpFactor);
 
+	if ((!(dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) || (dsb->volpan.lPan == 0)) &&
+	    (!(dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME) || (dsb->volpan.lVolume == 0)) &&
+	     !(dsb->dsbd.dwFlags & DSBCAPS_CTRL3D))
+		return NULL; /* Nothing to do */
+
 	if (nChannels != 1 && nChannels != 2)
 	{
 		FIXME("There is no support for %d channels\n", nChannels);
@@ -446,11 +451,6 @@ static LPBYTE DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, DWORD writepos,
 		FIXME("There is no support for %d bpp\n", dsb->device->pwfx->wBitsPerSample);
 		return NULL;
 	}
-
-	if ((!(dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) || (dsb->volpan.lPan == 0)) &&
-	    (!(dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME) || (dsb->volpan.lVolume == 0)) &&
-	     !(dsb->dsbd.dwFlags & DSBCAPS_CTRL3D))
-		return NULL; /* Nothing to do */
 
 	if (dsb->device->tmp_buffer_len < len || !dsb->device->tmp_buffer)
 	{
