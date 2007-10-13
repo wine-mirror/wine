@@ -880,6 +880,7 @@ static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
 
     nsAString_Init(&text_str, v);
     nsres = nsIDOMDocument_CreateTextNode(nsdoc, &text_str, &text_node);
+    nsIDOMDocument_Release(nsdoc);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateTextNode failed: %08x\n", nsres);
