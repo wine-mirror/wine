@@ -726,6 +726,10 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_expand(range, wordW, VARIANT_FALSE, "123");
     test_range_move(range, characterW, 2, 2);
     test_range_expand(range, wordW, VARIANT_TRUE, "123");
+    test_range_moveend(range, characterW, -5, -5);
+    test_range_text(range, NULL);
+    test_range_moveend(range, characterW, 3, 3);
+    test_range_text(range, "c 1");
 
     IHTMLTxtRange_Release(range);
 

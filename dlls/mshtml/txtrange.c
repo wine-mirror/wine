@@ -413,6 +413,11 @@ static inline void dompos_addref(dompos_t *pos)
         fill_nodestr(pos);
 }
 
+static inline BOOL dompos_cmp(const dompos_t *pos1, const dompos_t *pos2)
+{
+    return pos1->node == pos2->node && pos1->off == pos2->off;
+}
+
 static void range_to_string(HTMLTxtRange *This, wstrbuf_t *buf)
 {
     nsIDOMNode *iter, *tmp;
@@ -601,11 +606,15 @@ static long move_next_chars(long cnt, const dompos_t *pos, BOOL col, dompos_t *n
     return ret;
 }
 
-static long move_prev_chars(HTMLTxtRange *This, long cnt, const dompos_t *pos, BOOL end, dompos_t *new_pos)
+static long move_prev_chars(HTMLTxtRange *This, long cnt, const dompos_t *pos, BOOL end,
+        const dompos_t *bound_pos, BOOL *bounded, dompos_t *new_pos)
 {
     dompos_t iter, tmp;
     long ret = 0;
     WCHAR c;
+
+    if(bounded)
+        *bounded = FALSE;
 
     c = prev_char(This, pos, &iter);
     if(c)
@@ -620,8 +629,12 @@ static long move_prev_chars(HTMLTxtRange *This, long cnt, const dompos_t *pos, B
                 ret++;
             break;
         }
+
         ret++;
         dompos_release(&tmp);
+
+        if(bound_pos && dompos_cmp(&iter, bound_pos))
+            *bounded = TRUE;
     }
 
     *new_pos = iter;
@@ -1114,7 +1127,7 @@ static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
             IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
             dompos_release(&new_pos);
         }else {
-            *ActualCount = -move_prev_chars(This, -Count, &cur_pos, FALSE, &new_pos);
+            *ActualCount = -move_prev_chars(This, -Count, &cur_pos, FALSE, NULL, NULL, &new_pos);
             set_range_pos(This, TRUE, &new_pos);
             IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
             dompos_release(&new_pos);
@@ -1180,24 +1193,27 @@ static HRESULT WINAPI HTMLTxtRange_moveEnd(IHTMLTxtRange *iface, BSTR Unit,
 
     switch(unit) {
     case RU_CHAR: {
-        dompos_t cur_pos, new_pos;
+        dompos_t start_pos, end_pos, new_pos;
         PRBool collapsed;
 
-        get_cur_pos(This, FALSE, &cur_pos);
+        get_cur_pos(This, TRUE, &start_pos);
+        get_cur_pos(This, FALSE, &end_pos);
         nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
 
         if(Count > 0) {
-            *ActualCount = move_next_chars(Count, &cur_pos, collapsed, &new_pos);
+            *ActualCount = move_next_chars(Count, &end_pos, collapsed, &new_pos);
             set_range_pos(This, FALSE, &new_pos);
         }else {
-            *ActualCount = -move_prev_chars(This, -Count, &cur_pos, TRUE,  &new_pos);
-            if(*ActualCount == Count)
-                set_range_pos(This, FALSE, &new_pos);
-            else
+            BOOL bounded;
+
+            *ActualCount = -move_prev_chars(This, -Count, &end_pos, TRUE, &start_pos, &bounded, &new_pos);
+            set_range_pos(This, bounded, &new_pos);
+            if(bounded)
                 IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
         }
 
-        dompos_release(&cur_pos);
+        dompos_release(&start_pos);
+        dompos_release(&end_pos);
         dompos_release(&new_pos);
         break;
     }
