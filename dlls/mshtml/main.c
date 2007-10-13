@@ -454,6 +454,9 @@ static HRESULT register_server(BOOL do_register)
     if(FAILED(hres))
         ERR("typelib registration failed: %08x\n", hres);
 
+    if(do_register && SUCCEEDED(hres))
+        load_gecko(TRUE);
+
     return hres;
 }
 

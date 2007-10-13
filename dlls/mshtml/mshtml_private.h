@@ -382,9 +382,11 @@ HRESULT get_client_disp_property(IOleClientSite*,DISPID,VARIANT*);
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 
+BOOL load_gecko(BOOL);
 void close_gecko(void);
 void register_nsservice(nsIComponentRegistrar*,nsIServiceManager*);
 void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
+BOOL install_wine_gecko(BOOL);
 
 void hlink_frame_navigate(HTMLDocument*,IHlinkFrame*,LPCWSTR,nsIInputStream*,DWORD);
 
@@ -447,8 +449,6 @@ HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
 void release_nodes(HTMLDocument*);
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*);
-
-BOOL install_wine_gecko(void);
 
 /* commands */
 typedef struct {

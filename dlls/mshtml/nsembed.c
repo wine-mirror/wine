@@ -361,7 +361,7 @@ static CRITICAL_SECTION_DEBUG cs_load_gecko_dbg =
 };
 static CRITICAL_SECTION cs_load_gecko = { &cs_load_gecko_dbg, -1, 0, 0, 0, 0 };
 
-static BOOL load_gecko(void)
+BOOL load_gecko(BOOL silent)
 {
     PRUnichar gre_path[MAX_PATH];
     BOOL ret = FALSE;
@@ -380,7 +380,7 @@ static BOOL load_gecko(void)
         loading_thread = GetCurrentThreadId();
 
         if(load_wine_gecko(gre_path)
-           || (install_wine_gecko() && load_wine_gecko(gre_path)))
+           || (install_wine_gecko(silent) && load_wine_gecko(gre_path)))
             ret = init_xpcom(gre_path);
         else
            MESSAGE("Could not load Mozilla. HTML rendering will be disabled.\n");
@@ -1495,7 +1495,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     NSContainer *ret;
     nsresult nsres;
 
-    if(!load_gecko())
+    if(!load_gecko(FALSE))
         return NULL;
 
     ret = mshtml_alloc(sizeof(NSContainer));

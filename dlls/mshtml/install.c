@@ -498,7 +498,7 @@ static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
     return FALSE;
 }
 
-BOOL install_wine_gecko(void)
+BOOL install_wine_gecko(BOOL silent)
 {
     HANDLE hsem;
 
@@ -516,7 +516,7 @@ BOOL install_wine_gecko(void)
          */
         if(!install_from_registered_dir()
            && !install_from_default_dir()
-           && (url = get_url()))
+           && !silent && (url = get_url()))
             DialogBoxW(hInst, MAKEINTRESOURCEW(ID_DWL_DIALOG), 0, installer_proc);
     }
 
