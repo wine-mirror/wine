@@ -678,8 +678,11 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
       else {
         InterfaceIndexTable *table = NULL;
         PMIB_IPADDRTABLE ipAddrTable = NULL;
+        PMIB_IPFORWARDTABLE routeTable = NULL;
 
         ret = getIPAddrTable(&ipAddrTable, GetProcessHeap(), 0);
+        if (!ret)
+          ret = getRouteTable(&routeTable, GetProcessHeap(), 0);
         if (!ret)
           table = getNonLoopbackInterfaceIndexTable();
         if (table) {
@@ -753,6 +756,14 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
                   }
                 }
               }
+              /* Find first router through this interface, which we'll assume
+               * is the default gateway for this adapter */
+              for (i = 0; i < routeTable->dwNumEntries; i++)
+                if (routeTable->table[i].dwForwardIfIndex == ptr->Index
+                 && routeTable->table[i].dwForwardType ==
+                 MIB_IPROUTE_TYPE_INDIRECT)
+                  toIPAddressString(routeTable->table[i].dwForwardNextHop,
+                   ptr->GatewayList.IpAddress.String);
               if (winsEnabled) {
                 ptr->HaveWins = TRUE;
                 memcpy(ptr->PrimaryWinsServer.IpAddress.String,
@@ -771,6 +782,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
         }
         else
           ret = ERROR_OUTOFMEMORY;
+        HeapFree(GetProcessHeap(), 0, routeTable);
         HeapFree(GetProcessHeap(), 0, ipAddrTable);
       }
     }
