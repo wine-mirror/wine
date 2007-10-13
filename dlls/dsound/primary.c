@@ -148,9 +148,8 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 	/* on original windows, the buffer it set to a fixed size, no matter what the settings are.
 	   on windows this size is always fixed (tested on win-xp) */
 	if (!device->buflen)
-		buflen = ds_hel_buflen;
-	else /* In case we move from hw accelerated to waveout */
-		buflen = device->buflen;
+		device->buflen = ds_hel_buflen;
+	buflen = device->buflen;
 	buflen -= buflen % device->pwfx->nBlockAlign;
 	device->buflen = buflen;
 
