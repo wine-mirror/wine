@@ -2162,6 +2162,7 @@ EnumServicesStatusExA(SC_HANDLE hSCManager, SC_ENUM_TYPE InfoLevel, DWORD dwServ
     FIXME("%p level=%d type=%x state=%x %p %x %p %p %p %s\n", hSCManager, InfoLevel,
           dwServiceType, dwServiceState, lpServices, cbBufSize,
           pcbBytesNeeded, lpServicesReturned,  lpResumeHandle, debugstr_a(pszGroupName));
+    *lpServicesReturned = 0;
     SetLastError (ERROR_ACCESS_DENIED);
     return FALSE;
 }
