@@ -625,15 +625,22 @@ DWORD WINAPI FlushIpNetTable(DWORD dwIfIndex)
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
- *
- * FIXME
- *  Stub, returns ERROR_NOT_SUPPORTED.
  */
 DWORD WINAPI GetAdapterIndex(LPWSTR AdapterName, PULONG IfIndex)
 {
-  FIXME("(AdapterName %p, IfIndex %p): stub\n", AdapterName, IfIndex);
-  /* FIXME: implement using getInterfaceIndexByName */
-  return ERROR_NOT_SUPPORTED;
+  char adapterName[MAX_ADAPTER_NAME];
+  int i;
+  DWORD ret;
+
+  TRACE("(AdapterName %p, IfIndex %p)\n", AdapterName, IfIndex);
+  /* The adapter name is guaranteed not to have any unicode characters, so
+   * this translation is never lossy */
+  for (i = 0; i < sizeof(adapterName) - 1 && AdapterName[i]; i++)
+    adapterName[i] = (char)AdapterName[i];
+  adapterName[i] = '\0';
+  ret = getInterfaceIndexByName(adapterName, IfIndex);
+  TRACE("returning %d\n", ret);
+  return ret;
 }
 
 
