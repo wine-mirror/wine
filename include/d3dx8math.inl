@@ -25,4 +25,10 @@ extern inline FLOAT D3DXVec2Length(CONST D3DXVECTOR2 *pv)
     return sqrt( (pv->x) * (pv->x) + (pv->y) * (pv->y) );
 }
 
+extern inline FLOAT D3DXVec2LengthSq(CONST D3DXVECTOR2 *pv)
+{
+    if (!pv) return 0.0f;
+    return( (pv->x) * (pv->x) + (pv->y) * (pv->y) );
+}
+
 #endif

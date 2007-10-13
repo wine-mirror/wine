@@ -39,7 +39,19 @@ static void D3X8Vector2Test(void)
     expected=0.0f;
     got= D3DXVec2Length(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+
+
+/*_______________D3DXVec2LengthSq________________________*/
+   expected = 25.0f;
+   got = D3DXVec2LengthSq(&u);
+   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   /* Tests the case NULL */
+    expected=0.0f;
+    got= D3DXVec2LengthSq(NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+
 }
+
 START_TEST(math)
 {
     D3X8Vector2Test();
