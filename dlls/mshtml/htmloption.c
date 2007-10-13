@@ -189,8 +189,53 @@ static HRESULT WINAPI HTMLOptionElement_get_index(IHTMLOptionElement *iface, LON
 static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR v)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsIDOMDocument *nsdoc;
+    nsIDOMText *text_node;
+    nsAString text_str;
+    nsIDOMNode *tmp;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    while(1) {
+        nsIDOMNode *child;
+
+        nsres = nsIDOMHTMLOptionElement_GetFirstChild(This->nsoption, &child);
+        if(NS_FAILED(nsres) || !child)
+            break;
+
+        nsres = nsIDOMHTMLOptionElement_RemoveChild(This->nsoption, child, &tmp);
+        nsIDOMNode_Release(child);
+        if(NS_SUCCEEDED(nsres)) {
+            nsIDOMNode_Release(tmp);
+        }else {
+            ERR("RemoveChild failed: %08x\n", nsres);
+            break;
+        }
+    }
+
+    nsres = nsIWebNavigation_GetDocument(This->element.node.doc->nscontainer->navigation, &nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return S_OK;
+    }
+
+    nsAString_Init(&text_str, v);
+    nsres = nsIDOMDocument_CreateTextNode(nsdoc, &text_str, &text_node);
+    nsIDOMDocument_Release(nsdoc);
+    nsAString_Finish(&text_str);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateTextNode failed: %08x\n", nsres);
+        return S_OK;
+    }
+
+    nsres = nsIDOMHTMLOptionElement_AppendChild(This->nsoption, (nsIDOMNode*)text_node, &tmp);
+    if(NS_SUCCEEDED(nsres))
+        nsIDOMNode_Release(tmp);
+    else
+        ERR("AppendChild failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLOptionElement_get_text(IHTMLOptionElement *iface, BSTR *p)
