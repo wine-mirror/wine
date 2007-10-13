@@ -195,15 +195,31 @@ static HRESULT WINAPI HTMLSelectElement_get_onchange(IHTMLSelectElement *iface, 
 static HRESULT WINAPI HTMLSelectElement_put_selectedIndex(IHTMLSelectElement *iface, long v)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, v);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%ld)\n", This, v);
+
+    nsres = nsIDOMHTMLSelectElement_SetSelectedIndex(This->nsselect, v);
+    if(NS_FAILED(nsres))
+        ERR("SetSelectedIndex failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_get_selectedIndex(IHTMLSelectElement *iface, long *p)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRInt32 idx = 0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLSelectElement_GetSelectedIndex(This->nsselect, &idx);
+    if(NS_FAILED(nsres))
+        ERR("GetSelectedIndex failed: %08x\n", nsres);
+
+    *p = idx;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_get_type(IHTMLSelectElement *iface, BSTR *p)
