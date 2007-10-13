@@ -174,6 +174,11 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
         if(This->hwnd)
             DestroyWindow(This->hwnd);
 
+        if(This->option_factory) {
+            This->option_factory->doc = NULL;
+            IHTMLOptionElementFactory_Release(HTMLOPTFACTORY(This->option_factory));
+        }
+
         if(This->window)
             IHTMLWindow2_Release(HTMLWINDOW2(This->window));
 
@@ -736,7 +741,7 @@ static HRESULT WINAPI HTMLDocument_execCommandShowHelp(IHTMLDocument2 *iface, BS
 }
 
 static HRESULT WINAPI HTMLDocument_createElement(IHTMLDocument2 *iface, BSTR eTag,
-                                                    IHTMLElement **newElem)
+                                                 IHTMLElement **newElem)
 {
     FIXME("(%p)->(%s %p)\n", iface, debugstr_w(eTag), newElem);
     return E_NOTIMPL;
@@ -1175,6 +1180,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->nodes = NULL;
     ret->readystate = READYSTATE_UNINITIALIZED;
     ret->window = NULL;
+    ret->option_factory = NULL;
 
     list_init(&ret->selection_list);
     list_init(&ret->range_list);

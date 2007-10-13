@@ -251,3 +251,124 @@ HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
 
     return &ret->element;
 }
+
+#define HTMLOPTFACTORY_THIS(iface) DEFINE_THIS(HTMLOptionElementFactory, HTMLOptionElementFactory, iface)
+
+static HRESULT WINAPI HTMLOptionElementFactory_QueryInterface(IHTMLOptionElementFactory *iface,
+                                                              REFIID riid, void **ppv)
+{
+    HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLOPTFACTORY(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = HTMLOPTFACTORY(This);
+    }else if(IsEqualGUID(&IID_IHTMLOptionElementFactory, riid)) {
+        TRACE("(%p)->(IID_IHTMLOptionElementFactory %p)\n", This, ppv);
+        *ppv = HTMLOPTFACTORY(This);
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HTMLOptionElementFactory_AddRef(IHTMLOptionElementFactory *iface)
+{
+    HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLOptionElementFactory_Release(IHTMLOptionElementFactory *iface)
+{
+    HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        mshtml_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLOptionElementFactory_GetTypeInfoCount(IHTMLOptionElementFactory *iface, UINT *pctinfo)
+{
+    HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLOptionElementFactory_GetTypeInfo(IHTMLOptionElementFactory *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLOptionElementFactory_GetIDsOfNames(IHTMLOptionElementFactory *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+                                        lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLOptionElementFactory_Invoke(IHTMLOptionElementFactory *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory *iface,
+        VARIANT text, VARIANT value, VARIANT defaultselected, VARIANT selected,
+        IHTMLOptionElement **optelem)
+{
+    HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
+    FIXME("(%p)->(v v v v %p)\n", This, optelem);
+    return E_NOTIMPL;
+}
+
+#undef HTMLOPTFACTORY_THIS
+
+static const IHTMLOptionElementFactoryVtbl HTMLOptionElementFactoryVtbl = {
+    HTMLOptionElementFactory_QueryInterface,
+    HTMLOptionElementFactory_AddRef,
+    HTMLOptionElementFactory_Release,
+    HTMLOptionElementFactory_GetTypeInfoCount,
+    HTMLOptionElementFactory_GetTypeInfo,
+    HTMLOptionElementFactory_GetIDsOfNames,
+    HTMLOptionElementFactory_Invoke,
+    HTMLOptionElementFactory_create
+};
+
+HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLDocument *doc)
+{
+    HTMLOptionElementFactory *ret;
+
+    ret = mshtml_alloc(sizeof(HTMLOptionElementFactory));
+    ret->lpHTMLOptionElementFactoryVtbl = &HTMLOptionElementFactoryVtbl;
+    ret->ref = 1;
+    ret->doc = doc;
+
+    return ret;
+}

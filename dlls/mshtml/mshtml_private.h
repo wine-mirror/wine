@@ -94,6 +94,14 @@ struct ConnectionPoint {
     ConnectionPoint *next;
 };
 
+typedef struct {
+    const IHTMLOptionElementFactoryVtbl *lpHTMLOptionElementFactoryVtbl;
+
+    LONG ref;
+
+    HTMLDocument *doc;
+} HTMLOptionElementFactory;
+
 struct HTMLDocument {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
@@ -151,6 +159,8 @@ struct HTMLDocument {
     ConnectionPoint cp_htmldocevents;
     ConnectionPoint cp_htmldocevents2;
     ConnectionPoint cp_propnotif;
+
+    HTMLOptionElementFactory *option_factory;
 
     struct list selection_list;
     struct list range_list;
@@ -330,6 +340,8 @@ typedef struct {
 
 #define HTMLTEXTCONT(x)  ((IHTMLTextContainer*)           &(x)->lpHTMLTextContainerVtbl)
 
+#define HTMLOPTFACTORY(x)  ((IHTMLOptionElementFactory*)  &(x)->lpHTMLOptionElementFactoryVtbl)
+
 #define DEFINE_THIS2(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,ifc)))
 #define DEFINE_THIS(cls,ifc,iface) DEFINE_THIS2(cls,lp ## ifc ## Vtbl,iface)
 
@@ -338,6 +350,7 @@ HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
 
 HTMLWindow *HTMLWindow_Create(HTMLDocument*);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
+HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLDocument*);
 void setup_nswindow(HTMLWindow*);
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);

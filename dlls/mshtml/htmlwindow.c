@@ -534,8 +534,16 @@ static HRESULT WINAPI HTMLWindow2_get_screen(IHTMLWindow2 *iface, IHTMLScreen **
 static HRESULT WINAPI HTMLWindow2_get_Option(IHTMLWindow2 *iface, IHTMLOptionElementFactory **p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->doc->option_factory)
+        This->doc->option_factory = HTMLOptionElementFactory_Create(This->doc);
+
+    *p = HTMLOPTFACTORY(This->doc->option_factory);
+    IHTMLOptionElementFactory_AddRef(*p);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_focus(IHTMLWindow2 *iface)
