@@ -722,19 +722,14 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
             }
             for (ndx = 0; ndx < table->numIndexes; ndx++) {
               PIP_ADAPTER_INFO ptr = &pAdapterInfo[ndx];
-              DWORD addrLen = sizeof(ptr->Address), type, i;
+              DWORD i;
               PIP_ADDR_STRING currentIPAddr = &ptr->IpAddressList;
               BOOL firstIPAddr = TRUE;
 
               /* on Win98 this is left empty, but whatever */
               getInterfaceNameByIndex(table->indexes[ndx], ptr->AdapterName);
-              getInterfacePhysicalByIndex(table->indexes[ndx], &addrLen,
-               ptr->Address, &type);
-              /* MS defines address length and type as UINT in some places and
-                 DWORD in others, **sigh**.  Don't want to assume that PUINT and
-                 PDWORD are equiv (64-bit?) */
-              ptr->AddressLength = addrLen;
-              ptr->Type = type;
+              getInterfacePhysicalByIndex(table->indexes[ndx],
+               &ptr->AddressLength, ptr->Address, &ptr->Type);
               ptr->Index = table->indexes[ndx];
               for (i = 0; i < ipAddrTable->dwNumEntries; i++) {
                 if (ipAddrTable->table[i].dwIndex == ptr->Index) {
