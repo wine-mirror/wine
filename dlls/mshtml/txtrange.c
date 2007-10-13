@@ -573,11 +573,15 @@ static WCHAR prev_char(HTMLTxtRange *This, const dompos_t *pos, dompos_t *new_po
     return 0;
 }
 
-static long move_next_chars(long cnt, const dompos_t *pos, BOOL col, dompos_t *new_pos)
+static long move_next_chars(long cnt, const dompos_t *pos, BOOL col, const dompos_t *bound_pos,
+        BOOL *bounded, dompos_t *new_pos)
 {
     dompos_t iter, tmp;
     long ret = 0;
     WCHAR c;
+
+    if(bounded)
+        *bounded = FALSE;
 
     if(col)
         ret++;
@@ -600,6 +604,10 @@ static long move_next_chars(long cnt, const dompos_t *pos, BOOL col, dompos_t *n
         }
         ret++;
         dompos_release(&tmp);
+        if(bound_pos && dompos_cmp(&tmp, bound_pos)) {
+            *bounded = TRUE;
+            ret++;
+        }
     }
 
     *new_pos = iter;
@@ -1122,7 +1130,7 @@ static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
         get_cur_pos(This, TRUE, &cur_pos);
 
         if(Count > 0) {
-            *ActualCount = move_next_chars(Count, &cur_pos, TRUE, &new_pos);
+            *ActualCount = move_next_chars(Count, &cur_pos, TRUE, NULL, NULL, &new_pos);
             set_range_pos(This, FALSE, &new_pos);
             IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
             dompos_release(&new_pos);
@@ -1170,8 +1178,51 @@ static HRESULT WINAPI HTMLTxtRange_moveStart(IHTMLTxtRange *iface, BSTR Unit,
         long Count, long *ActualCount)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%s %ld %p)\n", This, debugstr_w(Unit), Count, ActualCount);
-    return E_NOTIMPL;
+    range_unit_t unit;
+
+    TRACE("(%p)->(%s %ld %p)\n", This, debugstr_w(Unit), Count, ActualCount);
+
+    unit = string_to_unit(Unit);
+    if(unit == RU_UNKNOWN)
+        return E_INVALIDARG;
+
+    if(!Count) {
+        *ActualCount = 0;
+        return S_OK;
+    }
+
+    switch(unit) {
+    case RU_CHAR: {
+        dompos_t start_pos, end_pos, new_pos;
+        PRBool collapsed;
+
+        get_cur_pos(This, TRUE, &start_pos);
+        get_cur_pos(This, FALSE, &end_pos);
+        nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
+
+        if(Count > 0) {
+            BOOL bounded;
+
+            *ActualCount = move_next_chars(Count, &start_pos, collapsed, &end_pos, &bounded, &new_pos);
+            set_range_pos(This, !bounded, &new_pos);
+            if(bounded)
+                IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
+        }else {
+            *ActualCount = -move_prev_chars(This, -Count, &start_pos, FALSE, NULL, NULL, &new_pos);
+            set_range_pos(This, TRUE, &new_pos);
+        }
+
+        dompos_release(&start_pos);
+        dompos_release(&end_pos);
+        dompos_release(&new_pos);
+        break;
+    }
+
+    default:
+        FIXME("unimplemented unit %s\n", debugstr_w(Unit));
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_moveEnd(IHTMLTxtRange *iface, BSTR Unit,
@@ -1201,7 +1252,7 @@ static HRESULT WINAPI HTMLTxtRange_moveEnd(IHTMLTxtRange *iface, BSTR Unit,
         nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
 
         if(Count > 0) {
-            *ActualCount = move_next_chars(Count, &end_pos, collapsed, &new_pos);
+            *ActualCount = move_next_chars(Count, &end_pos, collapsed, NULL, NULL, &new_pos);
             set_range_pos(This, FALSE, &new_pos);
         }else {
             BOOL bounded;
