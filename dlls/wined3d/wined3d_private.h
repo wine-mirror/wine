@@ -1107,6 +1107,7 @@ struct IWineD3DSurfaceImpl
 #define MAXLOCKCOUNT          50 /* After this amount of locks do not free the sysmem copy */
 
     glDescriptor              glDescription;
+    BOOL                      srgb;
 
     /* For GetDC */
     wineD3DSurface_DIB        dib;

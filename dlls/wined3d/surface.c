@@ -1997,12 +1997,6 @@ static inline void clear_unused_channels(IWineD3DSurfaceImpl *This) {
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BOOL srgb_mode) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-    GLenum format, internal, type;
-    CONVERT_TYPES convert;
-    int bpp;
-    int width, pitch, outpitch;
-    BYTE *mem;
 
     if (!(This->Flags & SFLAG_INTEXTURE)) {
         TRACE("Reloading because surface is dirty\n");
@@ -2015,137 +2009,32 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
                 (This->glCKey.dwColorSpaceLowValue != This->SrcBltCKey.dwColorSpaceLowValue) ||
                 (This->glCKey.dwColorSpaceHighValue != This->SrcBltCKey.dwColorSpaceHighValue)))) {
         TRACE("Reloading because of color keying\n");
+        /* To perform the color key conversion we need a sysmem copy of
+         * the surface. Make sure we have it
+         */
+        IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
     } else if(palette9_changed(This)) {
         TRACE("Reloading surface because the d3d8/9 palette was changed\n");
+        /* TODO: This is not necessarily needed with hw palettized texture support */
+        IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
     } else {
         TRACE("surface is already in texture\n");
         return WINED3D_OK;
     }
 
-    This->Flags |= SFLAG_INTEXTURE;
-
     /* Resources are placed in system RAM and do not need to be recreated when a device is lost.
-    *  These resources are not bound by device size or format restrictions. Because of this,
-    *  these resources cannot be accessed by the Direct3D device nor set as textures or render targets.
-    *  However, these resources can always be created, locked, and copied.
-    */
+     *  These resources are not bound by device size or format restrictions. Because of this,
+     *  these resources cannot be accessed by the Direct3D device nor set as textures or render targets.
+     *  However, these resources can always be created, locked, and copied.
+     */
     if (This->resource.pool == WINED3DPOOL_SCRATCH )
     {
         FIXME("(%p) Operation not supported for scratch textures\n",This);
         return WINED3DERR_INVALIDCALL;
     }
 
-    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, srgb_mode);
-
-    if (This->Flags & SFLAG_INDRAWABLE) {
-        if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8 ||
-                 This->resource.format == WINED3DFMT_DXT1 || This->resource.format == WINED3DFMT_DXT2 ||
-                 This->resource.format == WINED3DFMT_DXT3 || This->resource.format == WINED3DFMT_DXT4 ||
-                 This->resource.format == WINED3DFMT_DXT5)
-            FIXME("Format %d not supported\n", This->resource.format);
-        else {
-            GLint prevRead;
-
-            ENTER_GL();
-            glGetIntegerv(GL_READ_BUFFER, &prevRead);
-            vcheckGLcall("glGetIntegerv");
-            glReadBuffer(This->resource.wineD3DDevice->offscreenBuffer);
-            vcheckGLcall("glReadBuffer");
-
-            if(!(This->Flags & SFLAG_ALLOCATED)) {
-                surface_allocate_surface(This, internal, This->pow2Width,
-                                         This->pow2Height, format, type);
-            }
-
-            clear_unused_channels(This);
-
-            glCopyTexSubImage2D(This->glDescription.target,
-                                This->glDescription.level,
-                                0, 0, 0, 0,
-                                This->currentDesc.Width,
-                                This->currentDesc.Height);
-            checkGLcall("glCopyTexSubImage2D");
-
-            glReadBuffer(prevRead);
-            vcheckGLcall("glReadBuffer");
-
-            LEAVE_GL();
-
-            TRACE("Updated target %d\n", This->glDescription.target);
-        }
-        return WINED3D_OK;
-    } else
-        /* The only place where LoadTexture() might get called when isInDraw=1
-         * is ActivateContext where lastActiveRenderTarget is preloaded.
-         */
-        if(iface == device->lastActiveRenderTarget && device->isInDraw)
-            ERR("Reading back render target but SFLAG_INDRAWABLE not set\n");
-
-    /* Otherwise: System memory copy must be most up to date */
-
-    if(This->CKeyFlags & WINEDDSD_CKSRCBLT) {
-        This->Flags |= SFLAG_GLCKEY;
-        This->glCKey = This->SrcBltCKey;
-    }
-    else This->Flags &= ~SFLAG_GLCKEY;
-
-    /* The width is in 'length' not in bytes */
-    width = This->currentDesc.Width;
-    pitch = IWineD3DSurface_GetPitch(iface);
-
-    if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
-        int height = This->currentDesc.Height;
-
-        /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
-        outpitch = width * bpp;
-        outpitch = (outpitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
-
-        mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
-        if(!mem) {
-            ERR("Out of memory %d, %d!\n", outpitch, height);
-            return WINED3DERR_OUTOFVIDEOMEMORY;
-        }
-        d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, width, height, outpitch, convert, This);
-
-        This->Flags |= SFLAG_CONVERTED;
-    } else if( (This->resource.format == WINED3DFMT_P8) && (GL_SUPPORT(EXT_PALETTED_TEXTURE) || GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) ) {
-        d3dfmt_p8_upload_palette(iface, convert);
-        This->Flags &= ~SFLAG_CONVERTED;
-        mem = This->resource.allocatedMemory;
-    } else {
-        This->Flags &= ~SFLAG_CONVERTED;
-        mem = This->resource.allocatedMemory;
-    }
-
-    /* Make sure the correct pitch is used */
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-
-    if ((This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE)) {
-        TRACE("non power of two support\n");
-        if(!(This->Flags & SFLAG_ALLOCATED)) {
-            surface_allocate_surface(This, internal, This->pow2Width, This->pow2Height, format, type);
-        }
-        if (mem || (This->Flags & SFLAG_PBO)) {
-            surface_upload_data(This, internal, This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
-        }
-    } else {
-        /* When making the realloc conditional, keep in mind that GL_APPLE_client_storage may be in use, and This->resource.allocatedMemory
-         * changed. So also keep track of memory changes. In this case the texture has to be reallocated
-         */
-        if(!(This->Flags & SFLAG_ALLOCATED)) {
-            surface_allocate_surface(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type);
-        }
-        if (mem || (This->Flags & SFLAG_PBO)) {
-            surface_upload_data(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type, mem);
-        }
-    }
-
-    /* Restore the default pitch */
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-
-    /* Don't delete PBO memory */
-    if((mem != This->resource.allocatedMemory) && !(This->Flags & SFLAG_PBO))
-        HeapFree(GetProcessHeap(), 0, mem);
+    This->srgb = srgb_mode;
+    IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL /* no partial locking for textures yet */);
 
 #if 0
     {
@@ -3473,10 +3362,16 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
  *****************************************************************************/
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, DWORD flag, const RECT *rect) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     IWineD3DDeviceImpl *myDevice;
     IWineD3DSwapChainImpl *swapchain;
     BOOL srcIsUpsideDown;
     RECT local_rect;
+    GLenum format, internal, type;
+    CONVERT_TYPES convert;
+    int bpp;
+    int width, pitch, outpitch;
+    BYTE *mem;
 
     TRACE("(%p)->(%s, %p)\n", iface,
           flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
@@ -3613,10 +3508,117 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             LEAVE_GL();
         }
     } else /* if(flag == SFLAG_INTEXTURE) */ {
-        if(This->Flags & SFLAG_INDRAWABLE) {
-            /* glCopyTexImage the drawable into the texture */
+        d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
+
+        if (This->Flags & SFLAG_INDRAWABLE) {
+            if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8 ||
+                This->resource.format == WINED3DFMT_DXT1 || This->resource.format == WINED3DFMT_DXT2 ||
+                This->resource.format == WINED3DFMT_DXT3 || This->resource.format == WINED3DFMT_DXT4 ||
+                This->resource.format == WINED3DFMT_DXT5)
+                FIXME("Format %d not supported\n", This->resource.format);
+            else {
+                GLint prevRead;
+
+                ENTER_GL();
+                glGetIntegerv(GL_READ_BUFFER, &prevRead);
+                vcheckGLcall("glGetIntegerv");
+                glReadBuffer(This->resource.wineD3DDevice->offscreenBuffer);
+                vcheckGLcall("glReadBuffer");
+
+                if(!(This->Flags & SFLAG_ALLOCATED)) {
+                    surface_allocate_surface(This, internal, This->pow2Width,
+                                             This->pow2Height, format, type);
+                }
+
+                clear_unused_channels(This);
+
+                glCopyTexSubImage2D(This->glDescription.target,
+                                    This->glDescription.level,
+                                    0, 0, 0, 0,
+                                    This->currentDesc.Width,
+                                    This->currentDesc.Height);
+                checkGLcall("glCopyTexSubImage2D");
+
+                glReadBuffer(prevRead);
+                vcheckGLcall("glReadBuffer");
+
+                LEAVE_GL();
+
+                TRACE("Updated target %d\n", This->glDescription.target);
+            }
+            return WINED3D_OK;
         } else {
-            /* Load the texture from sysmem */
+            /* The only place where LoadTexture() might get called when isInDraw=1
+             * is ActivateContext where lastActiveRenderTarget is preloaded.
+             */
+            if(iface == device->lastActiveRenderTarget && device->isInDraw)
+                ERR("Reading back render target but SFLAG_INDRAWABLE not set\n");
+
+            /* Otherwise: System memory copy must be most up to date */
+
+            if(This->CKeyFlags & WINEDDSD_CKSRCBLT) {
+                This->Flags |= SFLAG_GLCKEY;
+                This->glCKey = This->SrcBltCKey;
+            }
+            else This->Flags &= ~SFLAG_GLCKEY;
+
+            /* The width is in 'length' not in bytes */
+            width = This->currentDesc.Width;
+            pitch = IWineD3DSurface_GetPitch(iface);
+
+            if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
+                int height = This->currentDesc.Height;
+
+                /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
+                outpitch = width * bpp;
+                outpitch = (outpitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
+
+                mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
+                if(!mem) {
+                    ERR("Out of memory %d, %d!\n", outpitch, height);
+                    return WINED3DERR_OUTOFVIDEOMEMORY;
+                }
+                d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, width, height, outpitch, convert, This);
+
+                This->Flags |= SFLAG_CONVERTED;
+            } else if( (This->resource.format == WINED3DFMT_P8) && (GL_SUPPORT(EXT_PALETTED_TEXTURE) || GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) ) {
+                d3dfmt_p8_upload_palette(iface, convert);
+                This->Flags &= ~SFLAG_CONVERTED;
+                mem = This->resource.allocatedMemory;
+            } else {
+                This->Flags &= ~SFLAG_CONVERTED;
+                mem = This->resource.allocatedMemory;
+            }
+
+            /* Make sure the correct pitch is used */
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+
+            if ((This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE)) {
+                TRACE("non power of two support\n");
+                if(!(This->Flags & SFLAG_ALLOCATED)) {
+                    surface_allocate_surface(This, internal, This->pow2Width, This->pow2Height, format, type);
+                }
+                if (mem || (This->Flags & SFLAG_PBO)) {
+                    surface_upload_data(This, internal, This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
+                }
+            } else {
+                /* When making the realloc conditional, keep in mind that GL_APPLE_client_storage may be in use, and This->resource.allocatedMemory
+                 * changed. So also keep track of memory changes. In this case the texture has to be reallocated
+                 */
+                if(!(This->Flags & SFLAG_ALLOCATED)) {
+                    surface_allocate_surface(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type);
+                }
+                if (mem || (This->Flags & SFLAG_PBO)) {
+                    surface_upload_data(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type, mem);
+                }
+            }
+
+            /* Restore the default pitch */
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
+            /* Don't delete PBO memory */
+            if((mem != This->resource.allocatedMemory) && !(This->Flags & SFLAG_PBO))
+                HeapFree(GetProcessHeap(), 0, mem);
         }
     }
 
