@@ -121,8 +121,18 @@ static HRESULT WINAPI HTMLOptionElement_get_selected(IHTMLOptionElement *iface, 
 static HRESULT WINAPI HTMLOptionElement_put_value(IHTMLOptionElement *iface, BSTR v)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString value_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_Init(&value_str, v);
+    nsres = nsIDOMHTMLOptionElement_SetValue(This->nsoption, &value_str);
+    nsAString_Finish(&value_str);
+    if(NS_FAILED(nsres))
+        ERR("SetValue failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLOptionElement_get_value(IHTMLOptionElement *iface, BSTR *p)
