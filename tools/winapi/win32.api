@@ -1348,6 +1348,12 @@ REFIID
 %long
 
 BOOL
+DWORD
+EFaultRepRetVal
+
+%ptr
+
+LPEXCEPTION_POINTERS
 
 %str
 
@@ -1739,6 +1745,7 @@ void
 DWORD
 HRESULT
 HWND
+ULONG
 
 %ptr
 
@@ -2201,9 +2208,15 @@ WCHAR *
 
 %%localspl.dll
 
+%long
+
+BOOL
+DWORD
+
 %ptr
 
 LPMONITOREX
+LPPRINTPROVIDOR
 
 %wstr
 
@@ -3975,8 +3988,10 @@ void
 
 BOOLEAN
 DWORD
+HANDLE
 LONG
 PDH_HCOUNTER
+PDH_HLOG
 PDH_HQUERY
 PDH_STATUS
 
@@ -4921,6 +4936,7 @@ HANDLE
 
 LPBYTE
 LPVOID
+LPVOID *
 
 %wstr
 
@@ -5889,6 +5905,10 @@ void **
 
 BOOL
 
+%ptr
+
+WINHTTP_CURRENT_USER_IE_PROXY_CONFIG *
+
 %%wininet.dll
 
 %double
@@ -6448,6 +6468,7 @@ LPWSTR
 BOOL
 DWORD
 HANDLE
+HWND
 WTS_INFO_CLASS
 
 %ptr
