@@ -548,6 +548,7 @@ include/config.h
 include/control.h
 include/d3d10.h
 include/ddstream.h
+include/dimm.h
 include/dispex.h
 include/docobj.h
 include/downloadmgr.h

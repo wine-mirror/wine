@@ -13,6 +13,7 @@ IDL_H_SRCS = \
 	control.idl \
 	d3d10.idl \
 	ddstream.idl \
+	dimm.idl \
 	dispex.idl \
 	docobj.idl \
 	downloadmgr.idl \
