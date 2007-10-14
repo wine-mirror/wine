@@ -51,4 +51,12 @@ extern inline FLOAT D3DXVec2LengthSq(CONST D3DXVECTOR2 *pv)
     return( (pv->x) * (pv->x) + (pv->y) * (pv->y) );
 }
 
+extern inline D3DXVECTOR2* D3DXVec2Subtract(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
+{
+    if ( !pout || !pv1 || !pv2) return NULL;
+    pout->x = pv1->x - pv2->x;
+    pout->y = pv1->y - pv2->y;
+    return pout;
+}
+
 #endif
