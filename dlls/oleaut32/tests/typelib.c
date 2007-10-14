@@ -1193,8 +1193,8 @@ static const interface_info info[] = {
 };
 
 #define check_type(elem, info) { \
-    expect_int((elem)->tdesc.vt, (info)->vt); \
-    expect_hex((elem)->paramdesc.wParamFlags, (info)->wParamFlags); \
+      expect_int((elem)->tdesc.vt, (info)->vt);                     \
+      expect_hex(U(*(elem)).paramdesc.wParamFlags, (info)->wParamFlags); \
   }
 
 static void test_dump_typelib(const char *name)
