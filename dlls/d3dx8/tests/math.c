@@ -30,10 +30,11 @@ static void D3X8Vector2Test(void)
 {
     D3DXVECTOR2 expectedvec, gotvec, u, v;
     LPD3DXVECTOR2 funcpointer;
-    FLOAT expected, got;
+    FLOAT expected, got, scale;
 
     u.x=3.0f; u.y=4.0f;
     v.x=-7.0f; v.y=9.0f;
+    scale = -6.5f;
 
 /*_______________D3DXVec2Add__________________________*/
    expectedvec.x = -4.0f; expectedvec.y = 13.0f;
@@ -89,7 +90,6 @@ static void D3X8Vector2Test(void)
 
 /*_______________D3DXVec2Maximize__________________________*/
    expectedvec.x = 3.0f; expectedvec.y = 9.0f;
-   /*gotvec.x=0.0f; gotvec.y=0.0f;*/
    D3DXVec2Maximize(&gotvec,&u,&v);
    expect_vec(expectedvec,gotvec);
    /* Tests the case NULL */
@@ -100,13 +100,22 @@ static void D3X8Vector2Test(void)
 
 /*_______________D3DXVec2Minimize__________________________*/
    expectedvec.x = -7.0f; expectedvec.y = 4.0f;
-   /*vecgot.x=0.0f; vecgot.y=0.0f;*/
    D3DXVec2Minimize(&gotvec,&u,&v);
    expect_vec(expectedvec,gotvec);
    /* Tests the case NULL */
     funcpointer = D3DXVec2Minimize(&gotvec,NULL,&v);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXVec2Minimize(NULL,NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXVec2Scale____________________________*/
+    expectedvec.x = -19.5f; expectedvec.y = -26.0f;
+    D3DXVec2Scale(&gotvec,&u,scale);
+    expect_vec(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec2Scale(&gotvec,NULL,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec2Scale(NULL,NULL,scale);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
 /*_______________D3DXVec2Subtract__________________________*/

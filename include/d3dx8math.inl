@@ -66,6 +66,13 @@ extern inline D3DXVECTOR2* D3DXVec2Minimize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2
     pout->y = min(pv1->y , pv2->y);
     return pout;
 }
+extern inline D3DXVECTOR2* D3DXVec2Scale(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv, FLOAT s)
+{
+    if ( !pout || !pv) return NULL;
+    pout->x = s * (pv->x);
+    pout->y = s * (pv->y);
+    return pout;
+}
 
 extern inline D3DXVECTOR2* D3DXVec2Subtract(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
