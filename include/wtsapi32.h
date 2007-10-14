@@ -152,8 +152,10 @@ BOOL WINAPI WTSQueryUserConfigW(LPWSTR,LPWSTR,WTS_CONFIG_CLASS,LPWSTR*,DWORD*);
 #define     WTSQueryUserConfig WINELIB_NAME_AW(WTSQueryUserConfig)
 BOOL WINAPI WTSQueryUserToken(ULONG, PHANDLE);
 BOOL WINAPI WTSRegisterSessionNotification(HWND, DWORD);
+BOOL WINAPI WTSRegisterSessionNotificationEx(HANDLE, HWND, DWORD);
 BOOL WINAPI WTSTerminateProcess(HANDLE, DWORD, DWORD);
 BOOL WINAPI WTSUnRegisterSessionNotification(HWND);
+BOOL WINAPI WTSUnRegisterSessionNotificationEx(HANDLE, HWND);
 BOOL WINAPI WTSWaitSystemEvent(HANDLE, DWORD, DWORD*);
 
 #ifdef __cplusplus
