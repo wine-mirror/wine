@@ -552,17 +552,17 @@
 @ cdecl _wrename(wstr wstr)
 @ cdecl _write(long ptr long) MSVCRT__write
 @ cdecl _wrmdir(wstr)
-@ stdcall _wsearchenv(wstr wstr ptr)
+@ cdecl _wsearchenv(wstr wstr ptr)
 @ cdecl _wsetlocale(long wstr) MSVCRT__wsetlocale
 @ varargs _wsopen (wstr long long) MSVCRT__wsopen
 @ stub _wspawnl #(long wstr wstr) varargs
 @ stub _wspawnle #(long wstr wstr) varargs
 @ stub _wspawnlp #(long wstr wstr) varargs
 @ stub _wspawnlpe #(long wstr wstr) varargs
-@ stdcall _wspawnv(long wstr ptr)
-@ stdcall _wspawnve(long wstr ptr ptr)
-@ stdcall _wspawnvp(long wstr ptr)
-@ stdcall _wspawnvpe(long wstr ptr ptr)
+@ cdecl _wspawnv(long wstr ptr)
+@ cdecl _wspawnve(long wstr ptr ptr)
+@ cdecl _wspawnvp(long wstr ptr)
+@ cdecl _wspawnvpe(long wstr ptr ptr)
 @ cdecl _wsplitpath(wstr wstr wstr wstr wstr)
 @ cdecl _wstat(wstr ptr) MSVCRT__wstat
 @ cdecl _wstati64(wstr ptr) MSVCRT__wstati64
