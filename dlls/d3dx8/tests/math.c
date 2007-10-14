@@ -88,6 +88,16 @@ static void D3X8Vector2Test(void)
     got = D3DXVec2LengthSq(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
+/*_______________D3DXVec2Lerp__________________________*/
+   expectedvec.x = 68.0f; expectedvec.y = -28.5f;
+   D3DXVec2Lerp(&gotvec,&u,&v,scale);
+   expect_vec(expectedvec,gotvec);
+   /* Tests the case NULL */
+    funcpointer = D3DXVec2Lerp(&gotvec,NULL,&v,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec2Lerp(NULL,NULL,NULL,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
 /*_______________D3DXVec2Maximize__________________________*/
    expectedvec.x = 3.0f; expectedvec.y = 9.0f;
    D3DXVec2Maximize(&gotvec,&u,&v);
