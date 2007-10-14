@@ -3837,10 +3837,9 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
                 mult = 16;
             else if(format == GGO_GRAY8_BITMAP)
                 mult = 64;
-            else if(format == WINE_GGO_GRAY16_BITMAP)
+            else /* format == WINE_GGO_GRAY16_BITMAP */
                 return needed;
-            else
-                assert(0);
+
             break;
           }
         default:
