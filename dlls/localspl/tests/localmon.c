@@ -715,14 +715,14 @@ static void test_OpenPort()
     SetLastError(0xdeadbeef);
     res = pOpenPort(does_not_existW, &hPort);
     ok (!res && (hPort == (HANDLE) 0xdeadbeef),
-        "got %u with 0x%x and %p (expectet '0' and 0xdeadbeef)\n", res, GetLastError(), hPort);
+        "got %u with 0x%x and %p (expected '0' and 0xdeadbeef)\n", res, GetLastError(), hPort);
     if (res) pClosePort(hPort);
 
     hPort = (HANDLE) 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = pOpenPort(emptyW, &hPort);
     ok (!res && (hPort == (HANDLE) 0xdeadbeef),
-        "got %u with 0x%x and %p (expectet '0' and 0xdeadbeef)\n", res, GetLastError(), hPort);
+        "got %u with 0x%x and %p (expected '0' and 0xdeadbeef)\n", res, GetLastError(), hPort);
     if (res) pClosePort(hPort);
 
 
