@@ -5541,7 +5541,7 @@ static void test_encodeNameConstraints(DWORD dwEncoding)
          "Unexpected value\n");
         LocalFree(buf);
     }
-    excluded.Base.pwszURL = (LPWSTR)url;
+    U(excluded.Base).pwszURL = (LPWSTR)url;
     ret = CryptEncodeObjectEx(dwEncoding, X509_NAME_CONSTRAINTS, &constraints,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -5553,8 +5553,8 @@ static void test_encodeNameConstraints(DWORD dwEncoding)
         LocalFree(buf);
     }
     permitted.Base.dwAltNameChoice = CERT_ALT_NAME_IP_ADDRESS;
-    permitted.Base.IPAddress.cbData = sizeof(encodedIPAddr);
-    permitted.Base.IPAddress.pbData = (LPBYTE)encodedIPAddr;
+    U(permitted.Base).IPAddress.cbData = sizeof(encodedIPAddr);
+    U(permitted.Base).IPAddress.pbData = (LPBYTE)encodedIPAddr;
     constraints.cPermittedSubtree = 1;
     ret = CryptEncodeObjectEx(dwEncoding, X509_NAME_CONSTRAINTS, &constraints,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
@@ -5636,13 +5636,13 @@ static void test_decodeNameConstraints(DWORD dwEncoding)
     DWORD i;
     CERT_NAME_CONSTRAINTS_INFO *constraints;
 
-    DNSSubtree.Base.pwszURL = (LPWSTR)url;
-    IPAddressSubtree.Base.IPAddress.cbData = sizeof(encodedIPAddr);
-    IPAddressSubtree.Base.IPAddress.pbData = (LPBYTE)encodedIPAddr;
-    IPAddressWithMinSubtree.Base.IPAddress.cbData = sizeof(encodedIPAddr);
-    IPAddressWithMinSubtree.Base.IPAddress.pbData = (LPBYTE)encodedIPAddr;
-    IPAddressWithMinMaxSubtree.Base.IPAddress.cbData = sizeof(encodedIPAddr);
-    IPAddressWithMinMaxSubtree.Base.IPAddress.pbData = (LPBYTE)encodedIPAddr;
+    U(DNSSubtree.Base).pwszURL = (LPWSTR)url;
+    U(IPAddressSubtree.Base).IPAddress.cbData = sizeof(encodedIPAddr);
+    U(IPAddressSubtree.Base).IPAddress.pbData = (LPBYTE)encodedIPAddr;
+    U(IPAddressWithMinSubtree.Base).IPAddress.cbData = sizeof(encodedIPAddr);
+    U(IPAddressWithMinSubtree.Base).IPAddress.pbData = (LPBYTE)encodedIPAddr;
+    U(IPAddressWithMinMaxSubtree.Base).IPAddress.cbData = sizeof(encodedIPAddr);
+    U(IPAddressWithMinMaxSubtree.Base).IPAddress.pbData = (LPBYTE)encodedIPAddr;
     for (i = 0;
      i < sizeof(encodedNameConstraints) / sizeof(encodedNameConstraints[0]);
      i++)
