@@ -26,10 +26,23 @@
 
 static void D3X8Vector2Test(void)
 {
-    D3DXVECTOR2 u;
+    D3DXVECTOR2 u,v;
     FLOAT expected, got;
 
     u.x=3.0f; u.y=4.0f;
+    v.x=-7.0f; v.y=9.0f;
+
+/*_______________D3DXVec2Dot__________________________*/
+   expected = 15.0f;
+   got = D3DXVec2Dot(&u,&v);
+   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXVec2Dot(NULL,&v);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    expected=0.0f;
+    got = D3DXVec2Dot(NULL,NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec2Length__________________________*/
    expected = 5.0f;
@@ -37,9 +50,8 @@ static void D3X8Vector2Test(void)
    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
    /* Tests the case NULL */
     expected=0.0f;
-    got= D3DXVec2Length(NULL);
+    got = D3DXVec2Length(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
-
 
 /*_______________D3DXVec2LengthSq________________________*/
    expected = 25.0f;
@@ -47,7 +59,7 @@ static void D3X8Vector2Test(void)
    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
    /* Tests the case NULL */
     expected=0.0f;
-    got= D3DXVec2LengthSq(NULL);
+    got = D3DXVec2LengthSq(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 }
