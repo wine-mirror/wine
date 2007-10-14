@@ -270,6 +270,8 @@ struct HTMLDOMNode {
     const IHTMLDOMNodeVtbl *lpHTMLDOMNodeVtbl;
     const NodeImplVtbl *vtbl;
 
+    LONG ref;
+
     nsIDOMNode *nsnode;
     HTMLDocument *doc;
 

@@ -50,19 +50,26 @@ static HRESULT WINAPI HTMLDOMNode_QueryInterface(IHTMLDOMNode *iface,
 static ULONG WINAPI HTMLDOMNode_AddRef(IHTMLDOMNode *iface)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p) ref=%d\n", This, ref);
 
-    return IHTMLDocument2_AddRef(HTMLDOC(This->doc));
+    return ref;
 }
 
 static ULONG WINAPI HTMLDOMNode_Release(IHTMLDOMNode *iface)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p) ref=%d\n", This, ref);
 
-    return IHTMLDocument2_Release(HTMLDOC(This->doc));
+    if(!ref) {
+        This->vtbl->destructor(This);
+        mshtml_free(This);
+    }
+
+    return ref;
 }
 
 static HRESULT WINAPI HTMLDOMNode_GetTypeInfoCount(IHTMLDOMNode *iface, UINT *pctinfo)
@@ -352,6 +359,7 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
     }
 
     ret->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
+    ret->ref = 1;
     ret->doc = doc;
 
     nsIDOMNode_AddRef(nsnode);
@@ -396,7 +404,7 @@ void release_nodes(HTMLDocument *This)
 
     for(iter = This->nodes; iter; iter = next) {
         next = iter->next;
-        iter->vtbl->destructor(iter);
-        mshtml_free(iter);
+        iter->doc = NULL;
+        IHTMLDOMNode_Release(HTMLDOMNODE(iter));
     }
 }
