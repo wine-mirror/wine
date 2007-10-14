@@ -243,6 +243,7 @@ static inline int mmap_reserve( void *addr, size_t size )
  *
  * Reserve as much memory as possible in the given area.
  */
+#if defined(__i386__) && !defined(__FreeBSD__) && !defined(__FreeBSD_kernel__)  /* commented out until FreeBSD gets fixed */
 static void reserve_area( void *addr, void *end )
 {
     size_t size = (char *)end - (char *)addr;
@@ -285,6 +286,7 @@ static void reserve_area( void *addr, void *end )
     }
 #endif
 }
+#endif
 
 
 /***********************************************************************
