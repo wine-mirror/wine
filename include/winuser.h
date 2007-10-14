@@ -443,7 +443,7 @@ typedef struct tagINPUT
     } DUMMYUNIONNAME;
 } INPUT, *PINPUT, *LPINPUT;
 
-typedef HANDLE HRAWINPUT;
+DECLARE_HANDLE(HRAWINPUT);
 
 typedef struct tagRAWINPUTDEVICELIST
 {
@@ -4670,7 +4670,7 @@ SHORT       WINAPI GetKeyState(INT);
 HWND        WINAPI GetLastActivePopup(HWND);
 BOOL        WINAPI GetLastInputInfo(PLASTINPUTINFO);
 UINT        WINAPI GetRawInputBuffer(PRAWINPUT,PUINT,UINT);
-INT         WINAPI GetRawInputData(HRAWINPUT,UINT,LPVOID,PUINT,UINT);
+UINT        WINAPI GetRawInputData(HRAWINPUT,UINT,LPVOID,PUINT,UINT);
 UINT        WINAPI GetRawInputDeviceInfoA(HANDLE,UINT,LPVOID,PUINT);
 UINT        WINAPI GetRawInputDeviceInfoW(HANDLE,UINT,LPVOID,PUINT);
 #define            GetRawInputDeviceInfo WINELIB_NAME_AW(GetRawInputDeviceInfo)

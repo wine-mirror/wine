@@ -368,7 +368,7 @@ BOOL WINAPI RegisterRawInputDevices(PRAWINPUTDEVICE pRawInputDevices, UINT uiNum
 /******************************************************************
 *		GetRawInputData (USER32.@)
 */
-INT WINAPI GetRawInputData(HRAWINPUT hRawInput, UINT uiCommand, LPVOID pData, PUINT pcbSize, UINT cbSizeHeader)
+UINT WINAPI GetRawInputData(HRAWINPUT hRawInput, UINT uiCommand, LPVOID pData, PUINT pcbSize, UINT cbSizeHeader)
 {
     FIXME("(hRawInput=%p, uiCommand=%d, pData=%p, pcbSize=%p, cbSizeHeader=%d) stub!\n",
             hRawInput, uiCommand, pData, pcbSize, cbSizeHeader);
