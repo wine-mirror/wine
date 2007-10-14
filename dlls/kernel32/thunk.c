@@ -462,7 +462,7 @@ void WINAPI __regs_QT_Thunk( CONTEXT86 *context )
     context16.Eip   = LOWORD(context->Edx);
     /* point EBP to the STACK16FRAME on the stack
      * for the call_to_16 to set up the register content on calling */
-    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
+    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
 
     /*
      * used to be (problematic):
@@ -594,7 +594,7 @@ void WINAPI __regs_FT_Thunk( CONTEXT86 *context )
     context16.SegGs = wine_get_gs();
     context16.SegCs = HIWORD(callTarget);
     context16.Eip   = LOWORD(callTarget);
-    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
+    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
 
     argsize  = context->Ebp-context->Esp-0x40;
     if (argsize > sizeof(newstack)) argsize = sizeof(newstack);
@@ -760,7 +760,7 @@ void WINAPI __regs_Common32ThkLS( CONTEXT86 *context )
     context16.Edi   = LOWORD(context->Ecx);
     context16.SegCs = HIWORD(context->Eax);
     context16.Eip   = LOWORD(context->Eax);
-    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
+    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
 
     argsize = HIWORD(context->Edx) * 4;
 
@@ -820,7 +820,7 @@ void WINAPI __regs_OT_32ThkLSF( CONTEXT86 *context )
     context16.SegGs = wine_get_gs();
     context16.SegCs = HIWORD(context->Edx);
     context16.Eip   = LOWORD(context->Edx);
-    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
+    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
 
     argsize = 2 * *(WORD *)context->Esp + 2;
 
