@@ -24,13 +24,26 @@
 
 #define admitted_error 0.00001f
 
+#define expect_vec(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error),"Expected Vector= (%f, %f)\n , Got Vector= (%f, %f)\n", expectedvec.x, expectedvec.y, gotvec.x, gotvec.y);
+
 static void D3X8Vector2Test(void)
 {
-    D3DXVECTOR2 u,v;
+    D3DXVECTOR2 expectedvec, gotvec, u, v;
+    LPD3DXVECTOR2 funcpointer;
     FLOAT expected, got;
 
     u.x=3.0f; u.y=4.0f;
     v.x=-7.0f; v.y=9.0f;
+
+/*_______________D3DXVec2Add__________________________*/
+   expectedvec.x = -4.0f; expectedvec.y = 13.0f;
+   D3DXVec2Add(&gotvec,&u,&v);
+   expect_vec(expectedvec,gotvec);
+   /* Tests the case NULL */
+    funcpointer = D3DXVec2Add(&gotvec,NULL,&v);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec2Add(NULL,NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
 /*_______________D3DXVec2CCW__________________________*/
    expected = 55.0f;
