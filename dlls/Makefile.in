@@ -121,6 +121,7 @@ BASEDIRS = \
 	mshtml.tlb \
 	msi \
 	msimg32 \
+	msimtf \
 	msisys.ocx \
 	msnet32 \
 	msrle32 \

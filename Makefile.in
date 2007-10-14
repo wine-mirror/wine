@@ -298,6 +298,7 @@ ALL_MAKEFILES = \
 	dlls/msi/Makefile \
 	dlls/msi/tests/Makefile \
 	dlls/msimg32/Makefile \
+	dlls/msimtf/Makefile \
 	dlls/msisys.ocx/Makefile \
 	dlls/msnet32/Makefile \
 	dlls/msrle32/Makefile \
@@ -669,6 +670,7 @@ dlls/mshtml/tests/Makefile: dlls/mshtml/tests/Makefile.in dlls/Maketest.rules
 dlls/msi/Makefile: dlls/msi/Makefile.in dlls/Makedll.rules
 dlls/msi/tests/Makefile: dlls/msi/tests/Makefile.in dlls/Maketest.rules
 dlls/msimg32/Makefile: dlls/msimg32/Makefile.in dlls/Makedll.rules
+dlls/msimtf/Makefile: dlls/msimtf/Makefile.in dlls/Makedll.rules
 dlls/msisys.ocx/Makefile: dlls/msisys.ocx/Makefile.in dlls/Makedll.rules
 dlls/msnet32/Makefile: dlls/msnet32/Makefile.in dlls/Makedll.rules
 dlls/msrle32/Makefile: dlls/msrle32/Makefile.in dlls/Makedll.rules
