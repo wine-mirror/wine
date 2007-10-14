@@ -2664,7 +2664,7 @@ ULONG *
 %wstr
 
 LPCWSTR
-WCHAR *
+WCHAR[80]
 
 %%msg711.acm
 

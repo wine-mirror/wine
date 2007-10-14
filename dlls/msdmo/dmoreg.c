@@ -291,7 +291,7 @@ lend:
  *
  * Get DMP Name from the registry
  */
-HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR* szName)
+HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR szName[80])
 {
     WCHAR szguid[64];
     HRESULT hres;
@@ -311,7 +311,7 @@ HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR* szName)
     if (ERROR_SUCCESS != hres)
         goto lend;
 
-    count = 80 * sizeof(WCHAR); /* 80 by API definition */
+    count = sizeof(szName);
     hres = RegQueryValueExW(hkey, NULL, NULL, NULL, 
         (LPBYTE) szName, &count); 
 
