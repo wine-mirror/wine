@@ -2095,7 +2095,15 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     WINE_SPI_FIXME(SPI_GETSHOWIMEUI);		/*    110  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETSHOWIMEUI);		/*    111  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_GETMOUSESPEED);          /*    112  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+
+    case SPI_GETMOUSESPEED:             /*    112  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    {
+        int buf[3];
+        ret = SystemParametersInfoW (SPI_GETMOUSE, 0, buf, fWinIni);
+        *(INT *)pvParam = buf[2];
+        break;
+    }
+
     WINE_SPI_FIXME(SPI_SETMOUSESPEED);          /*    113  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
 
     case SPI_GETSCREENSAVERRUNNING:
