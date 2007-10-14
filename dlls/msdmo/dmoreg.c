@@ -157,7 +157,7 @@ static HRESULT write_types(HKEY hkey, LPCWSTR name, const DMO_PARTIAL_MEDIATYPE*
 }
 
 /***************************************************************
- * DMORegister
+ * DMORegister (MSDMO.@)
  *
  * Register a DirectX Media Object.
  */
@@ -245,7 +245,7 @@ lend:
 
 
 /***************************************************************
- * DMOUnregister
+ * DMOUnregister (MSDMO.@)
  *
  * Unregister a DirectX Media Object.
  */
@@ -287,7 +287,7 @@ lend:
 
 
 /***************************************************************
- * DMOGetName
+ * DMOGetName (MSDMO.@)
  *
  * Get DMP Name from the registry
  */
@@ -668,7 +668,7 @@ static HRESULT WINAPI IEnumDMO_fnClone(IEnumDMO * iface, IEnumDMO **ppEnum)
 
 
 /***************************************************************
- * DMOEnum
+ * DMOEnum (MSDMO.@)
  *
  * Enumerate DirectX Media Objects in the registry.
  */
@@ -778,7 +778,9 @@ HRESULT read_types(HKEY root, LPCWSTR key, ULONG *supplied, ULONG requested, DMO
     return ret;
 }
 
-
+/***************************************************************
+ * DMOGetTypes (MSDMO.@)
+ */
 HRESULT WINAPI DMOGetTypes(REFCLSID clsidDMO,
                ULONG ulInputTypesRequested,
                ULONG* pulInputTypesSupplied,
