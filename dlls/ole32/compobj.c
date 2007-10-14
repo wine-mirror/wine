@@ -1197,7 +1197,7 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 
 /******************************************************************************
  *		CoCreateGuid [OLE32.@]
- *		CoCreateGuid [COMPOBJ.17]
+ *		CoCreateGuid [COMPOBJ.73]
  *
  * Simply forwards to UuidCreate in RPCRT4.
  *
