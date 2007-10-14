@@ -19,6 +19,12 @@
 #ifndef __D3DX8MATH_INL__
 #define __D3DX8MATH_INL__
 
+extern inline FLOAT D3DXVec2CCW(CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
+{
+    if ( !pv1 || !pv2) return 0.0f;
+    return ( (pv1->x) * (pv2->y) - (pv1->y) * (pv2->x) );
+}
+
 extern inline FLOAT D3DXVec2Dot(CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
     if ( !pv1 || !pv2) return 0.0f;

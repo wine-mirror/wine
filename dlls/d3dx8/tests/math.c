@@ -32,6 +32,18 @@ static void D3X8Vector2Test(void)
     u.x=3.0f; u.y=4.0f;
     v.x=-7.0f; v.y=9.0f;
 
+/*_______________D3DXVec2CCW__________________________*/
+   expected = 55.0f;
+   got = D3DXVec2CCW(&u,&v);
+   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXVec2CCW(NULL,&v);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    expected=0.0f;
+    got = D3DXVec2CCW(NULL,NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+
 /*_______________D3DXVec2Dot__________________________*/
    expected = 15.0f;
    got = D3DXVec2Dot(&u,&v);
