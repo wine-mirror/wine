@@ -1582,6 +1582,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
     if (Usage & WINED3DUSAGE_QUERY_FILTER) {
         switch (CheckFormat) {
             /* Filtering not supported */
+            case WINED3DFMT_R32F:
             case WINED3DFMT_A32B32G32R32F:
                 TRACE_(d3d_caps)("[FAILED]\n");
                 return WINED3DERR_NOTAVAILABLE;
