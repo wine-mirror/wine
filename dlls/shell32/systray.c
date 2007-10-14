@@ -169,7 +169,11 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         GetBitmapBits(iconinfo.hbmMask, cbMaskBits, buffer);
         buffer += cbMaskBits;
         GetBitmapBits(iconinfo.hbmColor, cbColourBits, buffer);
-        buffer += cbColourBits;
+
+        /* Reset pointer to allocated block so it can be freed later.
+         * Note that cds.lpData cannot be passed to HeapFree since it
+         * points to nid when no icon info is found. */
+        buffer = cds.lpData;
 
         DeleteObject(iconinfo.hbmMask);
         DeleteObject(iconinfo.hbmColor);
