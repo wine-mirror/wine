@@ -3488,101 +3488,101 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
     {
         switch (LOWORD(lpszStructType))
         {
-        case (WORD)X509_CERT:
+        case LOWORD(X509_CERT):
             encodeFunc = CRYPT_AsnEncodeCert;
             break;
-        case (WORD)X509_CERT_TO_BE_SIGNED:
+        case LOWORD(X509_CERT_TO_BE_SIGNED):
             encodeFunc = CRYPT_AsnEncodeCertInfo;
             break;
-        case (WORD)X509_CERT_CRL_TO_BE_SIGNED:
+        case LOWORD(X509_CERT_CRL_TO_BE_SIGNED):
             encodeFunc = CRYPT_AsnEncodeCRLInfo;
             break;
-        case (WORD)X509_EXTENSIONS:
+        case LOWORD(X509_EXTENSIONS):
             encodeFunc = CRYPT_AsnEncodeExtensions;
             break;
-        case (WORD)X509_NAME_VALUE:
+        case LOWORD(X509_NAME_VALUE):
             encodeFunc = CRYPT_AsnEncodeNameValue;
             break;
-        case (WORD)X509_NAME:
+        case LOWORD(X509_NAME):
             encodeFunc = CRYPT_AsnEncodeName;
             break;
-        case (WORD)X509_PUBLIC_KEY_INFO:
+        case LOWORD(X509_PUBLIC_KEY_INFO):
             encodeFunc = CRYPT_AsnEncodePubKeyInfo;
             break;
-        case (WORD)X509_AUTHORITY_KEY_ID:
+        case LOWORD(X509_AUTHORITY_KEY_ID):
             encodeFunc = CRYPT_AsnEncodeAuthorityKeyId;
             break;
-        case (WORD)X509_ALTERNATE_NAME:
+        case LOWORD(X509_ALTERNATE_NAME):
             encodeFunc = CRYPT_AsnEncodeAltName;
             break;
-        case (WORD)X509_BASIC_CONSTRAINTS:
+        case LOWORD(X509_BASIC_CONSTRAINTS):
             encodeFunc = CRYPT_AsnEncodeBasicConstraints;
             break;
-        case (WORD)X509_BASIC_CONSTRAINTS2:
+        case LOWORD(X509_BASIC_CONSTRAINTS2):
             encodeFunc = CRYPT_AsnEncodeBasicConstraints2;
             break;
-        case (WORD)RSA_CSP_PUBLICKEYBLOB:
+        case LOWORD(RSA_CSP_PUBLICKEYBLOB):
             encodeFunc = CRYPT_AsnEncodeRsaPubKey;
             break;
-        case (WORD)X509_UNICODE_NAME:
+        case LOWORD(X509_UNICODE_NAME):
             encodeFunc = CRYPT_AsnEncodeUnicodeName;
             break;
-        case (WORD)PKCS_CONTENT_INFO:
+        case LOWORD(PKCS_CONTENT_INFO):
             encodeFunc = CRYPT_AsnEncodePKCSContentInfo;
             break;
-        case (WORD)PKCS_ATTRIBUTE:
+        case LOWORD(PKCS_ATTRIBUTE):
             encodeFunc = CRYPT_AsnEncodePKCSAttribute;
             break;
-        case (WORD)X509_UNICODE_NAME_VALUE:
+        case LOWORD(X509_UNICODE_NAME_VALUE):
             encodeFunc = CRYPT_AsnEncodeUnicodeNameValue;
             break;
-        case (WORD)X509_OCTET_STRING:
+        case LOWORD(X509_OCTET_STRING):
             encodeFunc = CRYPT_AsnEncodeOctets;
             break;
-        case (WORD)X509_BITS:
-        case (WORD)X509_KEY_USAGE:
+        case LOWORD(X509_BITS):
+        case LOWORD(X509_KEY_USAGE):
             encodeFunc = CRYPT_AsnEncodeBits;
             break;
-        case (WORD)X509_INTEGER:
+        case LOWORD(X509_INTEGER):
             encodeFunc = CRYPT_AsnEncodeInt;
             break;
-        case (WORD)X509_MULTI_BYTE_INTEGER:
+        case LOWORD(X509_MULTI_BYTE_INTEGER):
             encodeFunc = CRYPT_AsnEncodeInteger;
             break;
-        case (WORD)X509_MULTI_BYTE_UINT:
+        case LOWORD(X509_MULTI_BYTE_UINT):
             encodeFunc = CRYPT_AsnEncodeUnsignedInteger;
             break;
-        case (WORD)X509_ENUMERATED:
+        case LOWORD(X509_ENUMERATED):
             encodeFunc = CRYPT_AsnEncodeEnumerated;
             break;
-        case (WORD)X509_CHOICE_OF_TIME:
+        case LOWORD(X509_CHOICE_OF_TIME):
             encodeFunc = CRYPT_AsnEncodeChoiceOfTime;
             break;
-        case (WORD)X509_AUTHORITY_KEY_ID2:
+        case LOWORD(X509_AUTHORITY_KEY_ID2):
             encodeFunc = CRYPT_AsnEncodeAuthorityKeyId2;
             break;
-        case (WORD)X509_SEQUENCE_OF_ANY:
+        case LOWORD(X509_SEQUENCE_OF_ANY):
             encodeFunc = CRYPT_AsnEncodeSequenceOfAny;
             break;
-        case (WORD)PKCS_UTC_TIME:
+        case LOWORD(PKCS_UTC_TIME):
             encodeFunc = CRYPT_AsnEncodeUtcTime;
             break;
-        case (WORD)X509_CRL_DIST_POINTS:
+        case LOWORD(X509_CRL_DIST_POINTS):
             encodeFunc = CRYPT_AsnEncodeCRLDistPoints;
             break;
-        case (WORD)X509_ENHANCED_KEY_USAGE:
+        case LOWORD(X509_ENHANCED_KEY_USAGE):
             encodeFunc = CRYPT_AsnEncodeEnhancedKeyUsage;
             break;
-        case (WORD)PKCS_ATTRIBUTES:
+        case LOWORD(PKCS_ATTRIBUTES):
             encodeFunc = CRYPT_AsnEncodePKCSAttributes;
             break;
-        case (WORD)X509_ISSUING_DIST_POINT:
+        case LOWORD(X509_ISSUING_DIST_POINT):
             encodeFunc = CRYPT_AsnEncodeIssuingDistPoint;
             break;
-        case (WORD)X509_NAME_CONSTRAINTS:
+        case LOWORD(X509_NAME_CONSTRAINTS):
             encodeFunc = CRYPT_AsnEncodeNameConstraints;
             break;
-        case (WORD)PKCS7_SIGNER_INFO:
+        case LOWORD(PKCS7_SIGNER_INFO):
             encodeFunc = CRYPT_AsnEncodePKCSSignerInfo;
             break;
         }
