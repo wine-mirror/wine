@@ -1,0 +1,72 @@
+/*
+ * Clock (Swedish resources)
+ *
+ * Copyright 2007 Daniel Nylander
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_SWEDISH, SUBLANG_DEFAULT
+
+MAIN_MENU MENU
+{
+ POPUP "&Egenskaper" {
+  MENUITEM "Ana&log", IDM_ANALOG
+  MENUITEM "Digi&tal", IDM_DIGITAL
+  MENUITEM SEPARATOR
+  MENUITEM "&Typsnitt...", IDM_FONT
+  MENUITEM SEPARATOR
+  MENUITEM "&Utan titellist", IDM_NOTITLE
+  MENUITEM SEPARATOR
+  MENUITEM "&Sekunder", IDM_SECONDS
+  MENUITEM "&Datum", IDM_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "&Alltid överst", IDM_ONTOP
+ }
+ POPUP "Inf&o" {
+  MENUITEM "&Licens...", IDM_LICENSE
+  MENUITEM "&INGEN GARANTI...", IDM_NOWARRANTY
+  MENUITEM "&Om Clock...", IDM_ABOUT
+ }
+}
+
+STRINGTABLE DISCARDABLE
+{
+IDS_CLOCK, "Clock"
+}
+
+STRINGTABLE DISCARDABLE LANGUAGE LANG_SWEDISH, SUBLANG_DEFAULT
+{
+IDS_LICENSE_CAPTION,            "LICENS"
+IDS_LICENSE,
+"This library is free software; you can redistribute it and/or \
+modify it under the terms of the GNU Lesser General Public \
+License as published by the Free Software Foundation; either \
+version 2.1 of the License, or (at your option) any later version.\n\
+This library is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details.\n\
+You should have received a copy of the GNU Lesser General Public \
+License along with this library; if not, write to the Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
+
+IDS_WARRANTY_CAPTION, "INGEN GARANTI"
+IDS_WARRANTY,
+"This library is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details."
+}
