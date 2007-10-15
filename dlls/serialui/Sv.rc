@@ -1,0 +1,41 @@
+/*
+ * Copyright 2007 Daniel Nylander
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_SWEDISH, SUBLANG_DEFAULT
+
+IDD_SERIALUICONFIG DIALOG DISCARDABLE 0, 0, 160, 159
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE
+CAPTION "Egenskaper för "
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT         "Baudfrekvens", 0,5,20,55,10
+  COMBOBOX      IDC_BAUD, 60, 20, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
+  LTEXT         "Paritet", 0,5,40,55,10
+  COMBOBOX      IDC_PARITY, 60, 40, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
+  LTEXT         "Flödeskontroll", 0,5,60,55,10
+  COMBOBOX      IDC_FLOW, 60, 60, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
+  LTEXT         "Databitar", 0,5,80,55,10
+  COMBOBOX      IDC_DATA, 60, 80, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
+  LTEXT         "Stoppbitar", 0,5,100,55,10
+  COMBOBOX      IDC_STOP, 60, 100, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
+  DEFPUSHBUTTON "OK",     IDOK,30,138,50,14
+  PUSHBUTTON    "Avbryt", IDCANCEL,85,138,50,14
+  /* these two buttons are for testing Get/SetDefaultCommConfig */
+  /* PUSHBUTTON    "GetDefault", ID_GETDEFAULT,30,115,50,14 */
+  /* PUSHBUTTON    "SetDefault", ID_SETDEFAULT,85,115,50,14 */
+END
