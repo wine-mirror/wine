@@ -39,10 +39,12 @@ static WCHAR exec_cmdW[] = {'u','n','i','c','o','d','e',' ','d','d','e',' ','c',
 
 static WNDPROC old_dde_client_wndproc;
 
+static const DWORD default_timeout = 200;
+
 static void flush_events(void)
 {
     MSG msg;
-    int diff = 100;
+    int diff = default_timeout;
     DWORD time = GetTickCount() + diff;
 
     while (diff > 0)
@@ -247,15 +249,18 @@ static void test_msg_server(HANDLE hproc)
 {
     MSG msg;
     HWND hwnd;
+    DWORD res;
 
     create_dde_window(&hwnd, "dde_server", dde_server_wndproc);
 
-    do
+    while (MsgWaitForMultipleObjects( 1, &hproc, FALSE, INFINITE, QS_ALLINPUT ) != 0)
     {
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    } while (WaitForSingleObject(hproc, 500) == WAIT_TIMEOUT);
+    }
 
-   DestroyWindow(hwnd);
+    DestroyWindow(hwnd);
+    GetExitCodeProcess( hproc, &res );
+    ok( !res, "client failed with %u error(s)\n", res );
 }
 
 static HDDEDATA CALLBACK client_ddeml_callback(UINT uType, UINT uFmt, HCONV hconv,
@@ -298,7 +303,7 @@ static void test_ddeml_client(void)
     /* XTYP_REQUEST, fRelease = TRUE */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, 2000, &res);
+    hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %08x\n", res);
     todo_wine
@@ -310,7 +315,7 @@ static void test_ddeml_client(void)
     /* XTYP_REQUEST, fAckReq = TRUE */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, 2000, &res);
+    hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
     todo_wine
@@ -329,7 +334,7 @@ static void test_ddeml_client(void)
     /* XTYP_REQUEST, all params normal */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, 2000, &res);
+    hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
@@ -348,7 +353,7 @@ static void test_ddeml_client(void)
     /* XTYP_REQUEST, no item */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    hdata = DdeClientTransaction(NULL, 0, conversation, 0, CF_TEXT, XTYP_REQUEST, 2000, &res);
+    hdata = DdeClientTransaction(NULL, 0, conversation, 0, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(hdata == NULL, "Expected NULL hdata, got %p\n", hdata);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %08x\n", res);
@@ -369,7 +374,7 @@ static void test_ddeml_client(void)
     /* XTYP_POKE, no item */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction((LPBYTE)hdata, -1, conversation, 0, CF_TEXT, XTYP_POKE, 2000, &res);
+    op = DdeClientTransaction((LPBYTE)hdata, -1, conversation, 0, CF_TEXT, XTYP_POKE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -381,7 +386,7 @@ static void test_ddeml_client(void)
     /* XTYP_POKE, no data */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, 0, CF_TEXT, XTYP_POKE, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, 0, CF_TEXT, XTYP_POKE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -393,7 +398,7 @@ static void test_ddeml_client(void)
     /* XTYP_POKE, wrong size */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction((LPBYTE)hdata, 0, conversation, item, CF_TEXT, XTYP_POKE, 2000, &res);
+    op = DdeClientTransaction((LPBYTE)hdata, 0, conversation, item, CF_TEXT, XTYP_POKE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", op);
     ok(res == DDE_FACK, "Expected DDE_FACK, got %d\n", res);
@@ -402,7 +407,7 @@ static void test_ddeml_client(void)
     /* XTYP_POKE, correct params */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction((LPBYTE)hdata, -1, conversation, item, CF_TEXT, XTYP_POKE, 2000, &res);
+    op = DdeClientTransaction((LPBYTE)hdata, -1, conversation, item, CF_TEXT, XTYP_POKE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", op);
     ok(res == DDE_FACK, "Expected DDE_FACK, got %d\n", res);
@@ -418,7 +423,7 @@ static void test_ddeml_client(void)
     /* XTYP_EXECUTE, correct params */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction((LPBYTE)hdata, -1, conversation, NULL, 0, XTYP_EXECUTE, 2000, &res);
+    op = DdeClientTransaction((LPBYTE)hdata, -1, conversation, NULL, 0, XTYP_EXECUTE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
     todo_wine
@@ -430,7 +435,7 @@ static void test_ddeml_client(void)
     /* XTYP_EXECUTE, no data */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, NULL, 0, XTYP_EXECUTE, 2000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, NULL, 0, XTYP_EXECUTE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -442,7 +447,7 @@ static void test_ddeml_client(void)
     /* XTYP_EXECUTE, no data, -1 size */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, -1, conversation, NULL, 0, XTYP_EXECUTE, 2000, &res);
+    op = DdeClientTransaction(NULL, -1, conversation, NULL, 0, XTYP_EXECUTE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -459,7 +464,7 @@ static void test_ddeml_client(void)
     /* verify the execute */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, 2000, &res);
+    hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
@@ -482,7 +487,7 @@ static void test_ddeml_client(void)
 
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_ADVREQ, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_ADVREQ, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -490,7 +495,7 @@ static void test_ddeml_client(void)
 
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_CONNECT, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_CONNECT, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -498,7 +503,7 @@ static void test_ddeml_client(void)
 
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_CONNECT_CONFIRM, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_CONNECT_CONFIRM, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -506,7 +511,7 @@ static void test_ddeml_client(void)
 
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_DISCONNECT, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_DISCONNECT, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -514,7 +519,7 @@ static void test_ddeml_client(void)
 
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_ERROR, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_ERROR, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -522,7 +527,7 @@ static void test_ddeml_client(void)
 
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_MONITOR, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_MONITOR, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -530,7 +535,7 @@ static void test_ddeml_client(void)
 
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REGISTER, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REGISTER, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -538,7 +543,7 @@ static void test_ddeml_client(void)
 
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_UNREGISTER, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_UNREGISTER, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -546,7 +551,7 @@ static void test_ddeml_client(void)
 
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_WILDCONNECT, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_WILDCONNECT, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -554,7 +559,7 @@ static void test_ddeml_client(void)
 
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
-    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_XACT_COMPLETE, 1000, &res);
+    op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_XACT_COMPLETE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
@@ -803,13 +808,14 @@ static void test_ddeml_server(HANDLE hproc)
     hdata = DdeNameService(server_pid, server, 0, DNS_REGISTER);
     ok(hdata == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", hdata);
 
-    do
+    while (MsgWaitForMultipleObjects( 1, &hproc, FALSE, INFINITE, QS_ALLINPUT ) != 0)
     {
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    } while (WaitForSingleObject(hproc, 500) == WAIT_TIMEOUT);
-
+    }
     ret = DdeUninitialize(server_pid);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    GetExitCodeProcess( hproc, &res );
+    ok( !res, "client failed with %u error(s)\n", res );
 }
 
 static HWND client_hwnd, server_hwnd;
@@ -1045,28 +1051,24 @@ static void test_msg_client()
     lparam = PackDDElParam(WM_DDE_REQUEST, 0xdeadbeef, item);
     PostMessageA(server_hwnd, WM_DDE_REQUEST, (WPARAM)client_hwnd, lparam);
 
-    Sleep(1000);
     flush_events();
 
     /* WM_DDE_REQUEST, no item */
     lparam = PackDDElParam(WM_DDE_REQUEST, CF_TEXT, 0);
     PostMessageA(server_hwnd, WM_DDE_REQUEST, (WPARAM)client_hwnd, lparam);
 
-    Sleep(1000);
     flush_events();
 
     /* WM_DDE_REQUEST, no client hwnd */
     lparam = PackDDElParam(WM_DDE_REQUEST, CF_TEXT, item);
     PostMessageA(server_hwnd, WM_DDE_REQUEST, 0, lparam);
 
-    Sleep(1000);
     flush_events();
 
     /* WM_DDE_REQUEST, correct params */
     lparam = PackDDElParam(WM_DDE_REQUEST, CF_TEXT, item);
     PostMessageA(server_hwnd, WM_DDE_REQUEST, (WPARAM)client_hwnd, lparam);
 
-    Sleep(1000);
     flush_events();
 
     GlobalDeleteAtom(item);
@@ -1079,14 +1081,12 @@ static void test_msg_client()
     lparam = PackDDElParam(WM_DDE_POKE, 0, item);
     PostMessageA(server_hwnd, WM_DDE_POKE, (WPARAM)client_hwnd, lparam);
 
-    Sleep(1000);
     flush_events();
 
     /* WM_DDE_POKE, no item */
     lparam = PackDDElParam(WM_DDE_POKE, (UINT_PTR)hglobal, 0);
     PostMessageA(server_hwnd, WM_DDE_POKE, (WPARAM)client_hwnd, lparam);
 
-    Sleep(1000);
     flush_events();
 
     hglobal = create_poke();
@@ -1095,14 +1095,12 @@ static void test_msg_client()
     lparam = PackDDElParam(WM_DDE_POKE, (UINT_PTR)hglobal, item);
     PostMessageA(server_hwnd, WM_DDE_POKE, 0, lparam);
 
-    Sleep(1000);
     flush_events();
 
     /* WM_DDE_POKE, all params correct */
     lparam = PackDDElParam(WM_DDE_POKE, (UINT_PTR)hglobal, item);
     PostMessageA(server_hwnd, WM_DDE_POKE, (WPARAM)client_hwnd, lparam);
 
-    Sleep(1000);
     flush_events();
 
     execute_hglobal = create_execute("[Command(Var)]");
@@ -1110,28 +1108,24 @@ static void test_msg_client()
     /* WM_DDE_EXECUTE, no lparam */
     PostMessageA(server_hwnd, WM_DDE_EXECUTE, (WPARAM)client_hwnd, 0);
 
-    Sleep(1000);
     flush_events();
 
     /* WM_DDE_EXECUTE, no hglobal */
     lparam = PackDDElParam(WM_DDE_EXECUTE, 0, 0);
     PostMessageA(server_hwnd, WM_DDE_EXECUTE, (WPARAM)client_hwnd, lparam);
 
-    Sleep(1000);
     flush_events();
 
     /* WM_DDE_EXECUTE, no client hwnd */
     lparam = PackDDElParam(WM_DDE_EXECUTE, 0, (UINT_PTR)execute_hglobal);
     PostMessageA(server_hwnd, WM_DDE_EXECUTE, 0, lparam);
 
-    Sleep(1000);
     flush_events();
 
     /* WM_DDE_EXECUTE, all params correct */
     lparam = PackDDElParam(WM_DDE_EXECUTE, 0, (UINT_PTR)execute_hglobal);
     PostMessageA(server_hwnd, WM_DDE_EXECUTE, (WPARAM)client_hwnd, lparam);
 
-    Sleep(1000);
     flush_events();
 
     GlobalFree(execute_hglobal);
@@ -1141,7 +1135,6 @@ static void test_msg_client()
     lparam = PackDDElParam(WM_DDE_EXECUTE, 0, (UINT_PTR)execute_hglobal);
     PostMessageA(server_hwnd, WM_DDE_EXECUTE, (WPARAM)client_hwnd, lparam);
 
-    Sleep(1000);
     flush_events();
 
     DestroyWindow(client_hwnd);
