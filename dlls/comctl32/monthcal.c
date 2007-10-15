@@ -1475,8 +1475,12 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   }
   if(hit == MCHT_TODAYLINK) {
+    infoPtr->curSelDay = infoPtr->todaysDate.wDay;
+    infoPtr->firstSelDay = infoPtr->todaysDate.wDay;
     infoPtr->currentMonth=infoPtr->todaysDate.wMonth;
     infoPtr->currentYear=infoPtr->todaysDate.wYear;
+    MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->minSel);
+    MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->maxSel);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return TRUE;
   }
