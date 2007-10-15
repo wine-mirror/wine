@@ -38,5 +38,6 @@
 #include "wineconsole_Pl.rc"
 #include "wineconsole_Pt.rc"
 #include "wineconsole_Ru.rc"
+#include "wineconsole_Sv.rc"
 #include "wineconsole_Tr.rc"
 #include "wineconsole_Zh.rc"

@@ -1,0 +1,134 @@
+/*
+ * Copyright 2007 Daniel Nylander
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_SWEDISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+BEGIN
+IDS_EDIT,		"R&edigera"
+IDS_DEFAULT,		"Ställ in s&tandardvärden"
+IDS_PROPERTIES,		"&Egenskaper"
+IDS_MARK,		"&Markera"
+IDS_COPY,		"&Kopiera"
+IDS_PASTE,		"Klistra &in"
+IDS_SELECTALL,		"&Markera allt"
+IDS_SCROLL,		"R&ulla"
+IDS_SEARCH,		"S&ök"
+IDS_FNT_DISPLAY,	"Varje bokstav är %ld bildpunkter bred och %ld bildpunkter hög"
+IDS_FNT_PREVIEW_1,	"Det här är ett test"
+IDS_FNT_PREVIEW_2,	""
+IDS_DLG_TIT_DEFAULT,    "Setup - Standardinställningar"
+IDS_DLG_TIT_CURRENT,    "Setup - Aktuella inställningar"
+IDS_DLG_TIT_ERROR,	"Konfigurationsfel"
+IDS_DLG_ERR_SBWINSIZE,	"Screen buffer size must be greater or equal to the window's one"
+
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: Couldn't parse event id\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole: Invalid backend\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: Unrecognized command line option\n"
+IDS_CMD_ABOUT              "Startar ett program i en Wine-konsoll\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: Start av programmet %s misslyckades.\n"\
+                           "Kommandot är ogiltigt.\n"
+
+IDS_USAGE_HEADER           "\nAnvändning:\n  wineconsole [flaggor] <kommando>\n\nFlaggor:\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Välj user för att starta ett nytt fönster,\n"\
+                           "                            curses för att ange aktuell terminal som en Wine-konsoll\n"
+IDS_USAGE_COMMAND          "  <kommando>                Wine-program att starta i konsollen\n"
+IDS_USAGE_FOOTER           "\nExempel:\n  wineconsole kmd\nStartar Wines kommandoprompt i en Wine-konsoll\n\n"
+
+END
+
+IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " Alternativ "
+FONT 8, "MS Shell Dlg"
+{
+	GROUPBOX "Cursor size", -1, 10, 11, 60, 44, BS_GROUPBOX
+	AUTORADIOBUTTON "&Liten", IDC_OPT_CURSOR_SMALL, 14, 23, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&Medel", IDC_OPT_CURSOR_MEDIUM, 14, 33, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&Stor", IDC_OPT_CURSOR_LARGE, 14, 43, 44, 10, WS_TABSTOP
+
+	GROUPBOX "Control", -1, 75, 11, 125, 44, BS_GROUPBOX
+	LTEXT "Popup menu", -1, 79, 23, 40, 10
+	AUTOCHECKBOX "&Control", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
+	AUTOCHECKBOX "S&hift", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
+	LTEXT "Quick edit", -1, 79, 43, 50, 10
+	AUTOCHECKBOX "&enable", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
+
+	GROUPBOX "Kommandohistorik", -1, 10, 57, 190, 35, BS_GROUPBOX
+	LTEXT "&Number of recalled commands :", -1, 14, 67, 78, 18
+	EDITTEXT IDC_OPT_HIST_SIZE, 92, 69, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	AUTOCHECKBOX "&Remove doubles", IDC_OPT_HIST_NODOUBLE, 130, 67, 50, 18, WS_TABSTOP|BS_MULTILINE
+}
+
+IDD_FONT DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " Typsnitt "
+FONT 8, "MS Shell Dlg"
+{
+	LTEXT "&Typsnitt", -1, 5, 5, 24, 8
+	LISTBOX IDC_FNT_LIST_FONT, 5, 18, 90, 42, LBS_SORT|WS_VSCROLL
+	LTEXT "&Färg", -1, 100, 5, 50, 8
+	CONTROL "", IDC_FNT_COLOR_FG, "WineConColorPreview", 0L, 100, 18, 48, 16
+	CONTROL "", IDC_FNT_COLOR_BK, "WineConColorPreview", 0L, 100, 40, 48, 16
+	LTEXT "&Storlek", -1, 158, 5, 40, 8
+	LISTBOX IDC_FNT_LIST_SIZE, 158, 18, 40, 60, WS_VSCROLL
+	CONTROL "", IDC_FNT_PREVIEW, "WineConFontPreview", 0L, 5, 60, 109, 40
+	LTEXT "", IDC_FNT_FONT_INFO, 128, 76, 80, 18
+}
+
+IDD_CONFIG DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " Konfiguration "
+FONT 8, "MS Shell Dlg"
+{
+	GROUPBOX "Buffer zone", -1, 10, 11, 100, 42, BS_GROUPBOX
+	LTEXT "&Bredd :", -1, 14, 25, 54, 9
+	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	LTEXT "&Höjd :", -1, 14, 39, 54, 9
+	EDITTEXT IDC_CNF_SB_HEIGHT, 68, 37, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_SB_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+
+	GROUPBOX "Fönsterstorlek", -1, 10, 55, 100, 42
+	LTEXT "B&redd :", -1, 14, 69, 54, 9
+	EDITTEXT IDC_CNF_WIN_WIDTH, 68, 67, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_WIN_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	LTEXT "H&öjd :", -1, 14, 83, 54, 9
+	EDITTEXT IDC_CNF_WIN_HEIGHT, 68, 81, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+
+	GROUPBOX "End of program", -1, 115, 11, 80, 42, BS_GROUPBOX
+	AUTOCHECKBOX "&Close console", IDC_CNF_CLOSE_EXIT, 119, 25, 72, 20, WS_TABSTOP
+
+	GROUPBOX "Edition", -1, 115, 55, 80, 42
+	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 72, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
+}
+
+IDD_SAVE_SETTINGS DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 170, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Konsollparametrar"
+FONT 8, "MS Shell Dlg"
+{
+	GROUPBOX "", -1, 10, 10, 150, 31, BS_GROUPBOX
+	AUTORADIOBUTTON "Retain these settings for later sessions", IDC_SAV_SAVE, 14, 15, 140, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Modify only current session", IDC_SAV_SESSION, 14, 27, 140, 10, WS_TABSTOP
+
+	PUSHBUTTON "OK", IDOK, 35, 45, 35, 12
+	PUSHBUTTON "Avbryt", IDCANCEL, 80, 45, 35, 12
+}
