@@ -43,3 +43,4 @@
 #include "ui_Ko.rc"
 #include "ui_No.rc"
 #include "ui_Pl.rc"
+#include "ui_Sv.rc"
