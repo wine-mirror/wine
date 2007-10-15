@@ -44,7 +44,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Upp&datera",                      _IDM_REFRESH
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
-        MENUITEM "&Egenskapar",                     IDM_PROPERTIES
+        MENUITEM "&Egenskaper",                     IDM_PROPERTIES
     }
 
     POPUP "Bild"
@@ -198,12 +198,12 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Dump DisplayTree",   IDM_DUMPDISPLAYTREE
         MENUITEM "Dump FormatCaches",  IDM_DUMPFORMATCACHES
         MENUITEM "Dump LayoutRects",   IDM_DUMPLAYOUTRECTS
-        MENUITEM "Memory Monitor",     IDM_MEMORYMONITOR
-        MENUITEM "Performance Meters", IDM_PERFORMANCEMETERS
-        MENUITEM "Save HTML",          IDM_SAVEHTML
+        MENUITEM "Minnesmätare",     IDM_MEMORYMONITOR
+        MENUITEM "Prestandamätare", IDM_PERFORMANCEMETERS
+        MENUITEM "Spara HTML",          IDM_SAVEHTML
         MENUITEM SEPARATOR
-        MENUITEM "&Browse View",       IDM_BROWSEMODE
-        MENUITEM "&Edit View",         IDM_EDITMODE
+        MENUITEM "&Bläddra vy",       IDM_BROWSEMODE
+        MENUITEM "R&edigera vy",         IDM_EDITMODE
     }
 
     POPUP "Vertikal rullningslist"
