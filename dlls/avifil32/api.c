@@ -550,7 +550,7 @@ HRESULT WINAPI AVIStreamInfoW(PAVISTREAM pstream, LPAVISTREAMINFOW asi,
  *		AVIStreamFindSample	(AVIFIL32.@)
  *		AVIStreamFindSample	(AVIFILE.163)
  */
-HRESULT WINAPI AVIStreamFindSample(PAVISTREAM pstream, LONG pos, DWORD flags)
+LONG WINAPI AVIStreamFindSample(PAVISTREAM pstream, LONG pos, LONG flags)
 {
   TRACE("(%p,%d,0x%X)\n", pstream, pos, flags);
 
