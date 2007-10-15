@@ -633,6 +633,9 @@
 /* Define to 1 if you have the `strcasecmp' function. */
 #undef HAVE_STRCASECMP
 
+/* Define to 1 if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
 /* Define to 1 if you have the `strerror' function. */
 #undef HAVE_STRERROR
 
@@ -944,6 +947,9 @@
 
 /* Define to 1 if you have the `_spawnvp' function. */
 #undef HAVE__SPAWNVP
+
+/* Define to 1 if you have the `_strdup' function. */
+#undef HAVE__STRDUP
 
 /* Define to 1 if you have the `_stricmp' function. */
 #undef HAVE__STRICMP

@@ -15703,11 +15703,14 @@ esac
 
 
 
+
+
 for ac_func in \
 	_pclose \
 	_popen \
 	_snprintf \
 	_spawnvp \
+	_strdup \
 	_stricmp \
 	_strnicmp \
 	_vsnprintf \
@@ -15756,6 +15759,7 @@ for ac_func in \
 	statfs \
 	statvfs \
 	strcasecmp \
+	strdup \
 	strerror \
 	strncasecmp \
 	strtold \

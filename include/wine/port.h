@@ -126,6 +126,10 @@ struct statvfs
 #define pclose _pclose
 #endif
 
+#if !defined(HAVE_STRDUP) && defined(HAVE__STRDUP)
+#define strdup _strdup
+#endif
+
 #if !defined(HAVE_SNPRINTF) && defined(HAVE__SNPRINTF)
 #define snprintf _snprintf
 #endif

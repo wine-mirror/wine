@@ -1227,6 +1227,7 @@ AC_CHECK_FUNCS(\
 	_popen \
 	_snprintf \
 	_spawnvp \
+	_strdup \
 	_stricmp \
 	_strnicmp \
 	_vsnprintf \
@@ -1275,6 +1276,7 @@ AC_CHECK_FUNCS(\
 	statfs \
 	statvfs \
 	strcasecmp \
+	strdup \
 	strerror \
 	strncasecmp \
 	strtold \
