@@ -39,4 +39,5 @@
 #include "mpr_No.rc"
 #include "mpr_Pl.rc"
 #include "mpr_Pt.rc"
+#include "mpr_Sv.rc"
 #include "mpr_Tr.rc"
