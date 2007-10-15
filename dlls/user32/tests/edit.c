@@ -706,6 +706,36 @@ static void test_edit_control_5(void)
     DestroyWindow(hWnd);
 }
 
+static void test_edit_control_limittext(void)
+{
+    HWND hwEdit;
+    DWORD r;
+
+    /* Test default limit for single-line control */
+    trace("EDIT: buffer limit for single-line\n");
+    hwEdit = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
+    r = SendMessage(hwEdit, EM_GETLIMITTEXT, 0, 0);
+    ok(r == 30000, "Incorrect default text limit, expected 30000 got %u\n", r);
+    SendMessage(hwEdit, EM_SETLIMITTEXT, 0, 0);
+    r = SendMessage(hwEdit, EM_GETLIMITTEXT, 0, 0);
+    /* Win9x+ME: 32766; WinNT: 2147483646UL */
+    ok( (r == 32766) || (r == 2147483646UL),
+        "got limit %u (expected 32766 or 2147483646)\n", r);
+    DestroyWindow(hwEdit);
+
+    /* Test default limit for multi-line control */
+    trace("EDIT: buffer limit for multi-line\n");
+    hwEdit = create_editcontrol(ES_MULTILINE | WS_VSCROLL | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
+    r = SendMessage(hwEdit, EM_GETLIMITTEXT, 0, 0);
+    ok(r == 30000, "Incorrect default text limit, expected 30000 got %u\n", r);
+    SendMessage(hwEdit, EM_SETLIMITTEXT, 0, 0);
+    r = SendMessage(hwEdit, EM_GETLIMITTEXT, 0, 0);
+    /* Win9x+ME: 65535; WinNT: 4294967295UL */
+    ok( (r == 65535) || (r == 4294967295UL),
+        "got limit %u (expected 65535 or 4294967295)\n", r);
+    DestroyWindow(hwEdit);
+}
+
 static void test_margins(void)
 {
     HWND hwEdit;
@@ -1139,7 +1169,7 @@ static BOOL RegisterWindowClasses (void)
     text_position.cbWndExtra = 0;
     text_position.hInstance = hinst;
     text_position.hIcon = NULL;
-    text_position.hCursor = LoadCursorA(NULL, MAKEINTRESOURCEA(IDC_ARROW));
+    text_position.hCursor = LoadCursorA(NULL, IDC_ARROW);
     text_position.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
     text_position.lpszMenuName = NULL;
     text_position.lpszClassName = szEditTextPositionClass;
@@ -1166,6 +1196,7 @@ START_TEST(edit)
     test_edit_control_3();
     test_edit_control_4();
     test_edit_control_5();
+    test_edit_control_limittext();
     test_margins();
     test_margins_font_change();
     test_text_position();
