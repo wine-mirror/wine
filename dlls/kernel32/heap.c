@@ -1220,13 +1220,18 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     int rval;
 #endif
 
+    if (lpmemex->dwLength != sizeof(*lpmemex))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
     if (time(NULL)==cache_lastchecked) {
 	memcpy(lpmemex,&cached_memstatus,sizeof(*lpmemex));
 	return TRUE;
     }
     cache_lastchecked = time(NULL);
 
-    lpmemex->dwLength         = sizeof(*lpmemex);
     lpmemex->dwMemoryLoad     = 0;
     lpmemex->ullTotalPhys     = 16*1024*1024;
     lpmemex->ullAvailPhys     = 16*1024*1024;
@@ -1366,10 +1371,12 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
 {
     MEMORYSTATUSEX memstatus;
     OSVERSIONINFOW osver;
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( GetModuleHandleW(0) );
 
     /* Because GlobalMemoryStatus is identical to GlobalMemoryStatusEX save
        for one extra field in the struct, and the lack of a bug, we simply
        call GlobalMemoryStatusEx and copy the values across. */
+    memstatus.dwLength = sizeof(memstatus);
     GlobalMemoryStatusEx(&memstatus);
 
     lpBuffer->dwLength = sizeof(*lpBuffer);
@@ -1377,7 +1384,6 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
 
     /* Windows 2000 and later report -1 when values are greater than 4 Gb.
      * NT reports values modulo 4 Gb.
-     * Values between 2 Gb and 4 Gb are rounded down to 2 Gb.
      */
 
     osver.dwOSVersionInfoSize = sizeof(osver);
@@ -1385,33 +1391,32 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
 
     if ( osver.dwMajorVersion >= 5 )
     {
-        lpBuffer->dwTotalPhys = (memstatus.ullTotalPhys > MAXDWORD) ? MAXDWORD :
-                                (memstatus.ullTotalPhys > MAXLONG) ? MAXLONG : memstatus.ullTotalPhys;
-        lpBuffer->dwAvailPhys = (memstatus.ullAvailPhys > MAXDWORD) ? MAXDWORD :
-                                (memstatus.ullAvailPhys > MAXLONG) ? MAXLONG : memstatus.ullAvailPhys; 
-        lpBuffer->dwTotalPageFile = (memstatus.ullTotalPageFile > MAXDWORD) ? MAXDWORD :
-                                    (memstatus.ullTotalPageFile > MAXLONG) ? MAXLONG : memstatus.ullTotalPageFile;
-        lpBuffer->dwAvailPageFile = (memstatus.ullAvailPageFile > MAXDWORD) ? MAXDWORD :
-                                    (memstatus.ullAvailPageFile > MAXLONG) ? MAXLONG : memstatus.ullAvailPageFile;
-        lpBuffer->dwTotalVirtual = (memstatus.ullTotalVirtual > MAXDWORD) ? MAXDWORD :
-                                   (memstatus.ullTotalVirtual > MAXLONG)  ? MAXLONG : memstatus.ullTotalVirtual;
-        lpBuffer->dwAvailVirtual = (memstatus.ullAvailVirtual > MAXDWORD) ? MAXDWORD :
-                                   (memstatus.ullAvailVirtual > MAXLONG) ? MAXLONG : memstatus.ullAvailVirtual;
+        lpBuffer->dwTotalPhys = min( memstatus.ullTotalPhys, MAXDWORD );
+        lpBuffer->dwAvailPhys = min( memstatus.ullAvailPhys, MAXDWORD );
+        lpBuffer->dwTotalPageFile = min( memstatus.ullTotalPageFile, MAXDWORD );
+        lpBuffer->dwAvailPageFile = min( memstatus.ullAvailPageFile, MAXDWORD );
+        lpBuffer->dwTotalVirtual = min( memstatus.ullTotalVirtual, MAXDWORD );
+        lpBuffer->dwAvailVirtual = min( memstatus.ullAvailVirtual, MAXDWORD );
+
     }
     else	/* duplicate NT bug */
     {
-        lpBuffer->dwTotalPhys = (memstatus.ullTotalPhys > MAXDWORD) ? memstatus.ullTotalPhys :
-                                (memstatus.ullTotalPhys > MAXLONG) ? MAXLONG : memstatus.ullTotalPhys;
-        lpBuffer->dwAvailPhys = (memstatus.ullAvailPhys > MAXDWORD) ? memstatus.ullAvailPhys :
-                                (memstatus.ullAvailPhys > MAXLONG) ? MAXLONG : memstatus.ullAvailPhys;
-        lpBuffer->dwTotalPageFile = (memstatus.ullTotalPageFile > MAXDWORD) ? memstatus.ullTotalPageFile : 
-                                    (memstatus.ullTotalPageFile > MAXLONG) ? MAXLONG : memstatus.ullTotalPageFile;
-        lpBuffer->dwAvailPageFile = (memstatus.ullAvailPageFile > MAXDWORD) ? memstatus.ullAvailPageFile : 
-                                    (memstatus.ullAvailPageFile > MAXLONG) ? MAXLONG : memstatus.ullAvailPageFile;
-        lpBuffer->dwTotalVirtual = (memstatus.ullTotalVirtual > MAXDWORD) ? memstatus.ullTotalVirtual : 
-                                   (memstatus.ullTotalVirtual > MAXLONG)  ? MAXLONG : memstatus.ullTotalVirtual;
-        lpBuffer->dwAvailVirtual = (memstatus.ullAvailVirtual > MAXDWORD) ? memstatus.ullAvailVirtual :
-                                   (memstatus.ullAvailVirtual > MAXLONG) ? MAXLONG : memstatus.ullAvailVirtual;
+        lpBuffer->dwTotalPhys = memstatus.ullTotalPhys;
+        lpBuffer->dwAvailPhys = memstatus.ullAvailPhys;
+        lpBuffer->dwTotalPageFile = memstatus.ullTotalPageFile;
+        lpBuffer->dwAvailPageFile = memstatus.ullAvailPageFile;
+        lpBuffer->dwTotalVirtual = memstatus.ullTotalVirtual;
+        lpBuffer->dwAvailVirtual = memstatus.ullAvailVirtual;
+    }
+
+    /* values are limited to 2Gb unless the app has the IMAGE_FILE_LARGE_ADDRESS_AWARE flag */
+    /* page file sizes are not limited (Adobe Illustrator 8 depends on this) */
+    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE))
+    {
+        if (lpBuffer->dwTotalPhys > MAXLONG) lpBuffer->dwTotalPhys = MAXLONG;
+        if (lpBuffer->dwAvailPhys > MAXLONG) lpBuffer->dwAvailPhys = MAXLONG;
+        if (lpBuffer->dwTotalVirtual > MAXLONG) lpBuffer->dwTotalVirtual = MAXLONG;
+        if (lpBuffer->dwAvailVirtual > MAXLONG) lpBuffer->dwAvailVirtual = MAXLONG;
     }
 
     /* work around for broken photoshop 4 installer */
