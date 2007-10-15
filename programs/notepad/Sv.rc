@@ -28,19 +28,19 @@ MAIN_MENU MENU
   MENUITEM "&Ny\tCtrl+N",            CMD_NEW
   MENUITEM "Ö&ppna...\tCtrl+O",            CMD_OPEN
   MENUITEM "&Spara\tCtrl+S",            CMD_SAVE
-  MENUITEM "Spara &som...",     CMD_SAVE_AS
+  MENUITEM "Spara s&om...",     CMD_SAVE_AS
   MENUITEM "&Skriv ut...\tCtrl+P",         CMD_PRINT
-  MENUITEM "Sid La&yout...",    CMD_PAGE_SETUP
-  MENUITEM "Skrivar &inställningar...", CMD_PRINTER_SETUP
+  MENUITEM "Sidla&yout...",    CMD_PAGE_SETUP
+  MENUITEM "Skrivar&konfiguration...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
   MENUITEM "&Avsluta",          CMD_EXIT
  }
 POPUP "&Redigera" {
-  MENUITEM "&Undo\tCtrl+Z",     CMD_UNDO
+  MENUITEM "&Ångra\tCtrl+Z",     CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "Klippa\tCtrl+X",    CMD_CUT
+  MENUITEM "Klipp &ut\tCtrl+X",    CMD_CUT
   MENUITEM "&Kopiera\tCtrl+C",  CMD_COPY
-  MENUITEM "&Klistra in\tCtrl+V",       CMD_PASTE
+  MENUITEM "Klistra &in\tCtrl+V",       CMD_PASTE
   MENUITEM "&Ta bort\tDel",     CMD_DELETE
   MENUITEM SEPARATOR
   MENUITEM "Markera &allt",     CMD_SELECT_ALL
@@ -55,7 +55,7 @@ POPUP "&Sök" {
 POPUP "&Hjälp" {
   MENUITEM "&Innehåll",         CMD_HELP_CONTENTS
   MENUITEM "&Sök...",           CMD_HELP_SEARCH
-  MENUITEM "Användningen &av hjälp",    CMD_HELP_ON_HELP
+  MENUITEM "Användning &av hjälp",    CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   POPUP "Inf&ormation" {
    MENUITEM "&Licens...",          CMD_LICENSE
@@ -70,11 +70,11 @@ POPUP "&Hjälp" {
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "MS Shell Dlg"
-CAPTION "Sid Layout"
+CAPTION "Sidlayout"
 {
-LTEXT    "&Huvudnot:",  0x140,   10, 07, 40, 15
+LTEXT    "&Sidhuvud:",  0x140,   10, 07, 40, 15
 EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
-LTEXT    "&Fotnot:",  0x142,   10, 24, 40, 15
+LTEXT    "&Sidfot:",  0x142,   10, 24, 40, 15
 EDITTEXT IDC_PAGESETUP_FOOTERVALUE,   60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
 GROUPBOX "Kanter:",      0x144,     10, 43,160, 45
@@ -95,29 +95,29 @@ PUSHBUTTON    "&Hjälp",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
 STRINGTABLE DISCARDABLE
 {
 STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Page &p"
+STRING_PAGESETUP_FOOTERVALUE,   "Sida &p"
 
 STRING_NOTEPAD,                                 "Anteckningar"
 STRING_ERROR,                                   "FEL"
 STRING_WARNING,                                 "WARNING"
 STRING_INFO,                                    "Information"
 
-STRING_UNTITLED,                                "(untitled)"
+STRING_UNTITLED,                                "(namnlös)"
 
 STRING_ALL_FILES,                               "Alla filer (*.*)"
-STRING_TEXT_FILES_TXT,                  "Text filer (*.txt)"
+STRING_TEXT_FILES_TXT,                  "Textfiler (*.txt)"
 
 STRING_TOOLARGE,                                "Filen '%s' är för stor för notepad.\n \
-Använd en annan editor."
+Använd en annan redigerare."
 STRING_NOTEXT,                                  "Du skrev inte in någon text. \
 \nSkriv något och försök sedan igen"
-STRING_DOESNOTEXIST,                            "File '%s'\ndoes not exist\n\n \
-Do you want to create a new file ?"
-STRING_NOTSAVED,                                "File '%s'\nhas been modified\n\n \
-Would you like to save the changes ?"
+STRING_DOESNOTEXIST,                            "Filen '%s'\nfinns inte\n\n \
+Vill du skapa en ny fil?"
+STRING_NOTSAVED,                                "Filen '%s'\nhar ändrats\n\n \
+Vill du spara ändringarna?"
 STRING_NOTFOUND,                                        "'%s' hittades inte."
-STRING_OUT_OF_MEMORY,                   "Inte tillräkligt med minne för att slutföra \
-den här uppgiften. \nAvsluta ett eller flera program för att öka mängden \nfritt \
+STRING_OUT_OF_MEMORY,                   "Inte tillräckligt med minne för att slutföra \
+den här uppgiften. \nAvsluta ett eller flera program för att öka mängden \nledigt \
 minne."
 
 }
