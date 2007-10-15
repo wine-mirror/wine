@@ -872,7 +872,13 @@ typedef struct _HTTPSPolicyCallbackData {
     DWORD  dwAuthType;
     DWORD  fdwChecks;
     WCHAR *pwszServerName;
-} HTTPSPolicyCallbackData, *PHTTPSPolicyCallbackData;
+} HTTPSPolicyCallbackData, *PHTTPSPolicyCallbackData,
+ SSL_EXTRA_CERT_CHAIN_POLICY_PARA, *PSSL_EXTRA_CERT_CHAIN_POLICY_PARA;
+
+/* Values for HTTPSPolicyCallbackData's dwAuthType */
+#define AUTHTYPE_CLIENT 1
+#define AUTHTYPE_SERVER 2
+/* Values for HTTPSPolicyCallbackData's fdwChecks are defined in wininet.h */
 
 #define BASIC_CONSTRAINTS_CERT_CHAIN_POLICY_CA_FLAG         0x80000000
 #define BASIC_CONSTRAINTS_CERT_CHAIN_POLICY_END_ENTITY_FLAG 0x40000000
