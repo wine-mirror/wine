@@ -1475,6 +1475,8 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   }
   if(hit == MCHT_TODAYLINK) {
+    NMSELCHANGE nmsc;
+
     infoPtr->curSelDay = infoPtr->todaysDate.wDay;
     infoPtr->firstSelDay = infoPtr->todaysDate.wDay;
     infoPtr->currentMonth=infoPtr->todaysDate.wMonth;
@@ -1482,6 +1484,16 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->minSel);
     MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->maxSel);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+
+    nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
+    nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
+    nmsc.nmhdr.code     = MCN_SELCHANGE;
+    MONTHCAL_CopyTime(&infoPtr->minSel, &nmsc.stSelStart);
+    MONTHCAL_CopyTime(&infoPtr->maxSel, &nmsc.stSelEnd);
+    SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, (WPARAM)nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
+
+    nmsc.nmhdr.code     = MCN_SELECT;
+    SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, (WPARAM)nmsc.nmhdr.idFrom,(LPARAM)&nmsc);
     return 0;
   }
   if(hit == MCHT_CALENDARDATE) {
