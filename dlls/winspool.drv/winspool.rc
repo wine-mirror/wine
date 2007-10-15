@@ -52,4 +52,5 @@
 #include "No.rc"
 #include "Pl.rc"
 #include "Ru.rc"
+#include "Sv.rc"
 #include "Tr.rc"
