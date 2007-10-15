@@ -2,6 +2,7 @@
 Type=Application
 Name=Wine Windows Emulator
 Name[de]=Wine Windows-Emulator
+Name[sv]=Windows-emulatorn Wine
 Name[ru]=Wine Эмулятор Windows
 Exec=wine %f
 MimeType=application/x-ms-dos-executable;application/x-msdos-program;application/x-msdownload;application/exe;application/x-exe;application/dos-exe;vms/exe;application/x-winexe;application/msdos-windows;application/x-zip-compressed;application/x-executable;
