@@ -661,7 +661,7 @@ void write_proxies(ifref_list_t *ifaces)
   c = 0;
   if (ifaces)
       LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
-          if(cur->iface->ref)
+          if(cur->iface->ref && cur->iface->funcs && need_proxy(cur->iface))
           {
               fprintf(proxy, "    if (!_%s_CHECK_IID(%d))\n", file_id, c);
               fprintf(proxy, "    {\n");
