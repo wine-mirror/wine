@@ -209,3 +209,12 @@ BOOL WINAPI SplInitializeWinSpoolDrv(LPVOID * table)
     return TRUE;
 
 }
+
+/******************************************************************
+ *   SplIsUpgrade   [SPOOLSS.@]
+ */
+BOOL WINAPI SplIsUpgrade(void)
+{
+    FIXME("() stub\n");
+    return FALSE;
+}

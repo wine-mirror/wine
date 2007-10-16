@@ -122,7 +122,7 @@
 @ stub SplDriverUnloadComplete
 @ stub SplGetSpoolFileInfo
 @ stdcall SplInitializeWinSpoolDrv(ptr)
-@ stub SplIsUpgrade
+@ stdcall SplIsUpgrade()
 @ stub SplProcessPnPEvent
 @ stub SplReadPrinter
 @ stub SplRegisterForDeviceEvents
