@@ -21,6 +21,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -35,6 +37,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msimtf);
 
 static HINSTANCE msimtf_instance;
+
+static HRESULT CActiveIMM_Create(IUnknown *outer, REFIID riid, void **ppv)
+{
+    FIXME("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
 
 /******************************************************************
  *              DllMain (msimtf.@)
@@ -55,11 +63,81 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
+typedef struct {
+    const IClassFactoryVtbl *lpClassFactoryVtbl;
+
+    HRESULT (*cf)(IUnknown*,REFIID,void**);
+} ClassFactory;
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface,
+        REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(IID_IUnknown %p)\n", ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IClassFactory, riid)) {
+        TRACE("IID_IClassFactory %p)\n", ppv);
+        *ppv = iface;
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%s %p)\n", debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface,
+        IUnknown *pOuter, REFIID riid, void **ppv)
+{
+    ClassFactory *This = (ClassFactory*)iface;
+    return This->cf(pOuter, riid, ppv);
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    FIXME("(%d)\n", dolock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ClassFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
 /******************************************************************
  *		DllGetClassObject (msimtf.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
+    if(IsEqualGUID(&CLSID_CActiveIMM, rclsid)) {
+        static ClassFactory cf = {
+            &ClassFactoryVtbl,
+            CActiveIMM_Create
+        };
+
+        TRACE("CLSID_CActiveIMM\n");
+
+        return IClassFactory_QueryInterface((IClassFactory*)&cf, riid, ppv);
+    }
+
     FIXME("(%s %s %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
