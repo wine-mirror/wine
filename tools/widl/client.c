@@ -390,18 +390,18 @@ void write_client(ifref_list_t *ifaces)
 
     if (!do_client)
         return;
-    if (do_everything && !ifaces)
+    if (do_everything && !need_stub_files(ifaces))
         return;
 
     init_client();
     if (!client)
         return;
 
-    write_formatstringsdecl(client, indent, ifaces, 0);
+    write_formatstringsdecl(client, indent, ifaces, need_stub);
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, ifref_t, entry )
     {
-        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+        if (!need_stub(iface->iface))
             continue;
 
         fprintf(client, "/*****************************************************************************\n");
@@ -435,8 +435,8 @@ void write_client(ifref_list_t *ifaces)
 
     fprintf(client, "\n");
 
-    write_procformatstring(client, ifaces, 0);
-    write_typeformatstring(client, ifaces, 0);
+    write_procformatstring(client, ifaces, need_stub);
+    write_typeformatstring(client, ifaces, need_stub);
 
     fclose(client);
 }

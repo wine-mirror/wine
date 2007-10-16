@@ -403,18 +403,18 @@ void write_server(ifref_list_t *ifaces)
 
     if (!do_server)
         return;
-    if (do_everything && !ifaces)
+    if (do_everything && !need_stub_files(ifaces))
         return;
 
     init_server();
     if (!server)
         return;
 
-    write_formatstringsdecl(server, indent, ifaces, 0);
+    write_formatstringsdecl(server, indent, ifaces, need_stub);
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, ifref_t, entry )
     {
-        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+        if (!need_stub(iface->iface))
             continue;
 
         fprintf(server, "/*****************************************************************************\n");
@@ -449,8 +449,8 @@ void write_server(ifref_list_t *ifaces)
 
     fprintf(server, "\n");
 
-    write_procformatstring(server, ifaces, 0);
-    write_typeformatstring(server, ifaces, 0);
+    write_procformatstring(server, ifaces, need_stub);
+    write_typeformatstring(server, ifaces, need_stub);
 
     fclose(server);
 }

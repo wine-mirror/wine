@@ -334,13 +334,13 @@ static void write_formatdesc(FILE *f, int indent, const char *str)
     print_file(f, indent, "\n");
 }
 
-void write_formatstringsdecl(FILE *f, int indent, ifref_list_t *ifaces, int for_objects)
+void write_formatstringsdecl(FILE *f, int indent, ifref_list_t *ifaces, type_pred_t pred)
 {
     print_file(f, indent, "#define TYPE_FORMAT_STRING_SIZE %d\n",
-               get_size_typeformatstring(ifaces, for_objects));
+               get_size_typeformatstring(ifaces, pred));
 
     print_file(f, indent, "#define PROC_FORMAT_STRING_SIZE %d\n",
-               get_size_procformatstring(ifaces, for_objects));
+               get_size_procformatstring(ifaces, pred));
 
     fprintf(f, "\n");
     write_formatdesc(f, indent, "TYPE");
@@ -439,7 +439,7 @@ static size_t write_procformatstring_var(FILE *file, int indent,
     return size;
 }
 
-void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_objects)
+void write_procformatstring(FILE *file, const ifref_list_t *ifaces, type_pred_t pred)
 {
     const ifref_t *iface;
     int indent = 0;
@@ -454,7 +454,7 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
-        if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+        if (!pred(iface->iface))
             continue;
 
         if (iface->iface->funcs)
@@ -2162,7 +2162,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     return retmask;
 }
 
-static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, int for_objects)
+static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, type_pred_t pred)
 {
     const var_t *var;
     const ifref_t *iface;
@@ -2170,7 +2170,7 @@ static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, int for_object
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
-        if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+        if (!pred(iface->iface))
             continue;
 
         if (iface->iface->funcs)
@@ -2197,7 +2197,7 @@ static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, int for_object
 }
 
 
-void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_objects)
+void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, type_pred_t pred)
 {
     int indent = 0;
 
@@ -2210,7 +2210,7 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
     print_file(file, indent, "NdrFcShort(0x0),\n");
 
     set_all_tfswrite(TRUE);
-    process_tfs(file, ifaces, for_objects);
+    process_tfs(file, ifaces, pred);
 
     print_file(file, indent, "0x0\n");
     indent--;
@@ -2805,7 +2805,7 @@ size_t get_size_procformatstring_func(const func_t *func)
     return size;
 }
 
-size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
+size_t get_size_procformatstring(const ifref_list_t *ifaces, type_pred_t pred)
 {
     const ifref_t *iface;
     size_t size = 1;
@@ -2813,7 +2813,7 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
-        if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+        if (!pred(iface->iface))
             continue;
 
         if (iface->iface->funcs)
@@ -2824,10 +2824,10 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
     return size;
 }
 
-size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
+size_t get_size_typeformatstring(const ifref_list_t *ifaces, type_pred_t pred)
 {
     set_all_tfswrite(FALSE);
-    return process_tfs(NULL, ifaces, for_objects);
+    return process_tfs(NULL, ifaces, pred);
 }
 
 static void write_struct_expr(FILE *h, const expr_t *e, int brackets,

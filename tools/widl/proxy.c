@@ -110,7 +110,7 @@ static void init_proxy(ifref_list_t *ifaces)
   print_proxy( "\n");
   print_proxy( "#include \"%s\"\n", header_name);
   print_proxy( "\n");
-  write_formatstringsdecl(proxy, indent, ifaces, 1);
+  write_formatstringsdecl(proxy, indent, ifaces, need_proxy);
   write_stubdescproto();
 }
 
@@ -563,6 +563,38 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "\n");
 }
 
+static int does_any_iface(const ifref_list_t *ifaces, type_pred_t pred)
+{
+  ifref_t *ir;
+
+  if (ifaces)
+    LIST_FOR_EACH_ENTRY(ir, ifaces, ifref_t, entry)
+      if (pred(ir->iface))
+        return TRUE;
+
+  return FALSE;
+}
+
+int need_proxy(const type_t *iface)
+{
+  return is_object(iface->attrs) && !is_local(iface->attrs);
+}
+
+int need_stub(const type_t *iface)
+{
+  return !is_object(iface->attrs) && !is_local(iface->attrs);
+}
+
+int need_proxy_file(const ifref_list_t *ifaces)
+{
+  return does_any_iface(ifaces, need_proxy);
+}
+
+int need_stub_files(const ifref_list_t *ifaces)
+{
+  return does_any_iface(ifaces, need_stub);
+}
+
 void write_proxies(ifref_list_t *ifaces)
 {
   ifref_t *cur;
@@ -571,14 +603,14 @@ void write_proxies(ifref_list_t *ifaces)
   unsigned int proc_offset = 0;
 
   if (!do_proxies) return;
-  if (do_everything && !ifaces) return;
+  if (do_everything && !need_proxy_file(ifaces)) return;
 
   init_proxy(ifaces);
   if(!proxy) return;
 
   if (ifaces)
       LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
-          if (is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
+          if (need_proxy(cur->iface))
               write_proxy(cur->iface, &proc_offset);
 
   write_user_quad_list(proxy);
@@ -588,15 +620,14 @@ void write_proxies(ifref_list_t *ifaces)
   print_proxy( "#error Currently only Wine and WIN32 are supported.\n");
   print_proxy( "#endif\n");
   print_proxy( "\n");
-  write_procformatstring(proxy, ifaces, 1);
-  write_typeformatstring(proxy, ifaces, 1);
+  write_procformatstring(proxy, ifaces, need_proxy);
+  write_typeformatstring(proxy, ifaces, need_proxy);
 
   fprintf(proxy, "static const CInterfaceProxyVtbl* const _%s_ProxyVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
   if (ifaces)
       LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
-          if(cur->iface->ref && cur->iface->funcs &&
-             is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
+          if(cur->iface->ref && cur->iface->funcs && need_proxy(cur->iface))
               fprintf(proxy, "    (const CInterfaceProxyVtbl*)&_%sProxyVtbl,\n", cur->iface->name);
 
   fprintf(proxy, "    0\n");
@@ -607,8 +638,7 @@ void write_proxies(ifref_list_t *ifaces)
   fprintf(proxy, "{\n");
   if (ifaces)
       LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
-          if(cur->iface->ref && cur->iface->funcs &&
-             is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
+          if(cur->iface->ref && cur->iface->funcs && need_proxy(cur->iface))
               fprintf(proxy, "    (const CInterfaceStubVtbl*)&_%sStubVtbl,\n", cur->iface->name);
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
@@ -618,8 +648,7 @@ void write_proxies(ifref_list_t *ifaces)
   fprintf(proxy, "{\n");
   if (ifaces)
       LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
-          if(cur->iface->ref && cur->iface->funcs &&
-             is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
+          if(cur->iface->ref && cur->iface->funcs && need_proxy(cur->iface))
               fprintf(proxy, "    \"%s\",\n", cur->iface->name);
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
