@@ -42,6 +42,7 @@ static const char *msifile2 = "winetest2.msi";
 static const char *mstfile = "winetest.mst";
 static CHAR CURR_DIR[MAX_PATH];
 static CHAR PROG_FILES_DIR[MAX_PATH];
+static CHAR COMMON_FILES_DIR[MAX_PATH];
 
 /* msi database data */
 
@@ -995,10 +996,10 @@ static void create_cab_file(const CHAR *name, DWORD max_size, const CHAR *files)
     ok(res, "Failed to destroy the cabinet\n");
 }
 
-static BOOL get_program_files_dir(LPSTR buf)
+static BOOL get_program_files_dir(LPSTR buf, LPSTR buf2)
 {
     HKEY hkey;
-    DWORD type = REG_EXPAND_SZ, size;
+    DWORD type, size;
 
     if (RegOpenKey(HKEY_LOCAL_MACHINE,
                    "Software\\Microsoft\\Windows\\CurrentVersion", &hkey))
@@ -1006,6 +1007,10 @@ static BOOL get_program_files_dir(LPSTR buf)
 
     size = MAX_PATH;
     if (RegQueryValueEx(hkey, "ProgramFilesDir", 0, &type, (LPBYTE)buf, &size))
+        return FALSE;
+
+    size = MAX_PATH;
+    if (RegQueryValueEx(hkey, "CommonFilesDir", 0, &type, (LPBYTE)buf2, &size))
         return FALSE;
 
     RegCloseKey(hkey);
@@ -1055,6 +1060,20 @@ static BOOL delete_pf(const CHAR *rel_path, BOOL is_file)
     CHAR path[MAX_PATH];
 
     lstrcpyA(path, PROG_FILES_DIR);
+    lstrcatA(path, "\\");
+    lstrcatA(path, rel_path);
+
+    if (is_file)
+        return DeleteFileA(path);
+    else
+        return RemoveDirectoryA(path);
+}
+
+static BOOL delete_cf(const CHAR *rel_path, BOOL is_file)
+{
+    CHAR path[MAX_PATH];
+
+    lstrcpyA(path, COMMON_FILES_DIR);
     lstrcatA(path, "\\");
     lstrcatA(path, rel_path);
 
@@ -1620,8 +1639,8 @@ static void test_setdirproperty(void)
 
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    ok(delete_pf("Common Files\\msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("Common Files\\msitest", FALSE), "File not installed\n");
+    ok(delete_cf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_cf("msitest", FALSE), "File not installed\n");
 
     /* Delete the files in the temp (current) folder */
     DeleteFile(msifile);
@@ -2889,7 +2908,7 @@ START_TEST(install)
     if(len && (CURR_DIR[len - 1] == '\\'))
         CURR_DIR[len - 1] = 0;
 
-    get_program_files_dir(PROG_FILES_DIR);
+    get_program_files_dir(PROG_FILES_DIR, COMMON_FILES_DIR);
 
     test_MsiInstallProduct();
     test_MsiSetComponentState();
