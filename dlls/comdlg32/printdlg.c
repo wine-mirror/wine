@@ -133,8 +133,9 @@ INT PRINTDLG_SetUpPrinterListComboA(HWND hDlg, UINT id, LPCSTR name)
 
         char buf[260];
         DWORD dwBufLen = sizeof(buf);
-        FIXME("Can't find '%s' in printer list so trying to find default\n",
-	      name);
+        if (name != NULL)
+            WARN("Can't find %s in printer list so trying to find default\n",
+	        debugstr_a(name));
 	if(!GetDefaultPrinterA(buf, &dwBufLen))
 	    return num;
 	i = SendDlgItemMessageA(hDlg, id, CB_FINDSTRINGEXACT, -1, (LPARAM)buf);
@@ -165,8 +166,9 @@ static INT PRINTDLG_SetUpPrinterListComboW(HWND hDlg, UINT id, LPCWSTR name)
 				(LPARAM)name)) == CB_ERR) {
         WCHAR buf[260];
         DWORD dwBufLen = sizeof(buf)/sizeof(buf[0]);
-        TRACE("Can't find '%s' in printer list so trying to find default\n",
-	      debugstr_w(name));
+        if (name != NULL)
+            WARN("Can't find %s in printer list so trying to find default\n",
+	        debugstr_w(name));
 	if(!GetDefaultPrinterW(buf, &dwBufLen))
 	    return num;
 	i = SendDlgItemMessageW(hDlg, id, CB_FINDSTRINGEXACT, -1, (LPARAM)buf);
