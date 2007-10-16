@@ -65,9 +65,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(edit);
 WINE_DECLARE_DEBUG_CHANNEL(combo);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-#define BUFLIMIT_MULTI		65534	/* maximum buffer size (not including '\0')
-					   FIXME: BTW, new specs say 65535 (do you dare ???) */
-#define BUFLIMIT_SINGLE		32766	/* maximum buffer size (not including '\0') */
+#define BUFLIMIT_INITIAL    30000   /* initial buffer size */
 #define GROWLENGTH		32	/* buffers granularity in bytes: must be power of 2 */
 #define ROUND_TO_GROW(size)	(((size) + (GROWLENGTH - 1)) & ~(GROWLENGTH - 1))
 #define HSCROLL_FRACTION	3	/* scroll window by 1/3 width */
@@ -247,7 +245,7 @@ static LRESULT	EDIT_EM_Scroll(EDITSTATE *es, INT action);
 static void	EDIT_EM_ScrollCaret(EDITSTATE *es);
 static void	EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc);
 static void	EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc);
-static void	EDIT_EM_SetLimitText(EDITSTATE *es, INT limit);
+static void	EDIT_EM_SetLimitText(EDITSTATE *es, UINT limit);
 static void	EDIT_EM_SetMargins(EDITSTATE *es, INT action, WORD left, WORD right, BOOL repaint);
 static void	EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c);
 static void	EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap);
@@ -650,7 +648,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 
 	case EM_LIMITTEXT16:
 	case EM_SETLIMITTEXT:
-		EDIT_EM_SetLimitText(es, (INT)wParam);
+		EDIT_EM_SetLimitText(es, wParam);
 		break;
 
 	case EM_CANUNDO16:
@@ -3203,7 +3201,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 
 	/* Issue the EN_MAXTEXT notification and continue with replacing text
 	 * such that buffer limit is honored. */
-	if ((honor_limit) && (es->buffer_limit > 0) && (size > es->buffer_limit)) {
+	if ((honor_limit) && (size > es->buffer_limit)) {
 		EDIT_NOTIFY_PARENT(es, EN_MAXTEXT);
 		strl = es->buffer_limit - (tl - (e-s));
 	}
@@ -3649,27 +3647,14 @@ static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc)
  *
  *	EM_SETLIMITTEXT
  *
- *	FIXME: in WinNT maxsize is 0x7FFFFFFF / 0xFFFFFFFF
- *	However, the windows version is not complied to yet in all of edit.c
+ *	NOTE: this version currently implements WinNT limits
  *
- *  Additionally as the wrapper for RichEdit controls we need larger buffers
- *  at present -1 will represent nolimit
  */
-static void EDIT_EM_SetLimitText(EDITSTATE *es, INT limit)
+static void EDIT_EM_SetLimitText(EDITSTATE *es, UINT limit)
 {
-    if (limit == 0xFFFFFFFF)
-        es->buffer_limit = -1;
-    else if (es->style & ES_MULTILINE) {
-		if (limit)
-			es->buffer_limit = min(limit, BUFLIMIT_MULTI);
-		else
-			es->buffer_limit = BUFLIMIT_MULTI;
-	} else {
-		if (limit)
-			es->buffer_limit = min(limit, BUFLIMIT_SINGLE);
-		else
-			es->buffer_limit = BUFLIMIT_SINGLE;
-	}
+    if (!limit) limit = ~0u;
+    if (!(es->style & ES_MULTILINE)) limit = min(limit, 0x7ffffffe);
+    es->buffer_limit = limit;
 }
 
 
@@ -4792,7 +4777,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
                 es->style &= ~ES_UPPERCASE;
         }
 	if (es->style & ES_MULTILINE) {
-		es->buffer_limit = BUFLIMIT_MULTI;
+		es->buffer_limit = BUFLIMIT_INITIAL;
 		if (es->style & WS_VSCROLL)
 			es->style |= ES_AUTOVSCROLL;
 		if (es->style & WS_HSCROLL)
@@ -4806,7 +4791,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 			es->style &= ~ES_AUTOHSCROLL;
 		}
 	} else {
-		es->buffer_limit = BUFLIMIT_SINGLE;
+		es->buffer_limit = BUFLIMIT_INITIAL;
 		if ((es->style & ES_RIGHT) && (es->style & ES_CENTER))
 			es->style &= ~ES_CENTER;
 		es->style &= ~WS_HSCROLL;
