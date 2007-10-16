@@ -4,8 +4,10 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msimtf.dll
 IMPORTS   = kernel32
+EXTRALIBS = -luuid
 
 C_SRCS	  = main.c
+RC_SRCS   = rsrc.rc
 
 @MAKE_DLL_RULES@
 
