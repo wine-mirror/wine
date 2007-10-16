@@ -1538,9 +1538,9 @@ NtAccessCheck(
         RtlGetGroupSecurityDescriptor( SecurityDescriptor, &group, &defaulted );
         sd.group_len = RtlLengthSid( group );
         RtlGetSaclSecurityDescriptor( SecurityDescriptor, &present, &sacl, &defaulted );
-        sd.sacl_len = (present ? sacl->AclSize : 0);
+        sd.sacl_len = ((present && sacl) ? sacl->AclSize : 0);
         RtlGetDaclSecurityDescriptor( SecurityDescriptor, &present, &dacl, &defaulted );
-        sd.dacl_len = (present ? dacl->AclSize : 0);
+        sd.dacl_len = ((present && dacl) ? dacl->AclSize : 0);
 
         wine_server_add_data( req, &sd, sizeof(sd) );
         wine_server_add_data( req, owner, sd.owner_len );
