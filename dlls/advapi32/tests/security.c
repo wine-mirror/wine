@@ -2012,6 +2012,11 @@ static void test_ConvertSecurityDescriptorToString()
         skip("ConvertSecurityDescriptorToStringSecurityDescriptor is not available\n");
         return;
     }
+    if (!pCreateWellKnownSid)
+    {
+        skip("CreateWellKnownSid is not available\n");
+        return;
+    }
 
 /* It seems Windows XP adds an extra character to the length of the string for each ACE in an ACL. We
  * don't replicate this feature so we only test len >= strlen+1. */
@@ -2025,7 +2030,7 @@ static void test_ConvertSecurityDescriptorToString()
     CHECK_RESULT_AND_FREE("");
 
     size = 4096;
-    CreateWellKnownSid(WinLocalSid, NULL, sid_buf, &size);
+    pCreateWellKnownSid(WinLocalSid, NULL, sid_buf, &size);
     SetSecurityDescriptorOwner(&desc, (PSID)sid_buf, FALSE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("O:S-1-2-0");
@@ -2035,7 +2040,7 @@ static void test_ConvertSecurityDescriptorToString()
     CHECK_RESULT_AND_FREE("O:S-1-2-0");
 
     size = sizeof(sid_buf);
-    CreateWellKnownSid(WinLocalSystemSid, NULL, sid_buf, &size);
+    pCreateWellKnownSid(WinLocalSystemSid, NULL, sid_buf, &size);
     SetSecurityDescriptorOwner(&desc, (PSID)sid_buf, TRUE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("O:SY");
