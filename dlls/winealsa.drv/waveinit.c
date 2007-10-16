@@ -697,13 +697,8 @@ static int ALSA_ScanDevices(int directhw,
         ** Try to open a ctl handle; Wine doesn't absolutely require one,
         **  but it does allow for volume control and for device scanning
         **------------------------------------------------------------------*/
-        sprintf(ctlname, "default:%d", fixedctlcard == -1 ? card : fixedctlcard);
+        sprintf(ctlname, "hw:%d", fixedctlcard == -1 ? card : fixedctlcard);
         rc = snd_ctl_open(&ctl, ctlname, SND_CTL_NONBLOCK);
-        if (rc < 0)
-        {
-            sprintf(ctlname, "hw:%d", fixedctlcard == -1 ? card : fixedctlcard);
-            rc = snd_ctl_open(&ctl, ctlname, SND_CTL_NONBLOCK);
-        }
         if (rc < 0)
         {
             ctl = NULL;
