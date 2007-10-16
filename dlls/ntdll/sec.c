@@ -626,8 +626,9 @@ NTSTATUS WINAPI RtlSetDaclSecurityDescriptor (
 		return STATUS_INVALID_SECURITY_DESCR;
 
 	if (!daclpresent)
-	{	lpsd->Control &= ~SE_DACL_PRESENT;
-		return TRUE;
+	{
+		lpsd->Control &= ~SE_DACL_PRESENT;
+		return STATUS_SUCCESS;
 	}
 
 	lpsd->Control |= SE_DACL_PRESENT;

@@ -784,7 +784,6 @@ static void test_AccessCheck(void)
 
     /* sd with no dacl present */
     ret = SetSecurityDescriptorDacl(SecurityDescriptor, FALSE, NULL, FALSE);
-    todo_wine
     ok(ret, "SetSecurityDescriptorDacl failed with error %d\n", GetLastError());
     ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
