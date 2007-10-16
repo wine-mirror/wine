@@ -40,8 +40,8 @@ static UINT (WINAPI *pMsiSourceListGetInfoA)
 static const char *msifile = "msitest.msi";
 static const char *msifile2 = "winetest2.msi";
 static const char *mstfile = "winetest.mst";
-CHAR CURR_DIR[MAX_PATH];
-CHAR PROG_FILES_DIR[MAX_PATH];
+static CHAR CURR_DIR[MAX_PATH];
+static CHAR PROG_FILES_DIR[MAX_PATH];
 
 /* msi database data */
 
