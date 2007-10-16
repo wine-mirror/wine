@@ -9848,16 +9848,63 @@ static const struct message wm_lb_setcursel_0[] =
 {
     { LB_SETCURSEL, sent|wparam|lparam, 0, 0 },
     { WM_CTLCOLORLISTBOX, sent|parent },
-    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x00120f2 },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000120f2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
     { 0 }
 };
 static const struct message wm_lb_setcursel_1[] =
 {
     { LB_SETCURSEL, sent|wparam|lparam, 1, 0 },
     { WM_CTLCOLORLISTBOX, sent|parent },
-    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x00020f2 },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000020f2 },
     { WM_CTLCOLORLISTBOX, sent|parent },
-    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x00121f2 },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000121f2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
+    { 0 }
+};
+static const struct message wm_lb_setcursel_2[] =
+{
+    { LB_SETCURSEL, sent|wparam|lparam, 2, 0 },
+    { WM_CTLCOLORLISTBOX, sent|parent },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000021f2 },
+    { WM_CTLCOLORLISTBOX, sent|parent },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000122f2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
+    { 0 }
+};
+static const struct message wm_lb_click_0[] =
+{
+    { WM_LBUTTONDOWN, sent|wparam|lparam, 0, MAKELPARAM(1,1) },
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent|parent },
+    { WM_IME_SETCONTEXT, sent|wparam|optional|parent, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_SETFOCUS, sent },
+
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x001142f2 },
+    { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_LISTBOX, LBN_SETFOCUS) },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
+    { WM_LBTRACKPOINT, sent|wparam|lparam|parent, 0, MAKELPARAM(1,1) },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000142f2 },
+    { WM_CTLCOLORLISTBOX, sent|parent },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000022f2 },
+    { WM_CTLCOLORLISTBOX, sent|parent },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000120f2 },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x001140f2 },
+
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
+
+    { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_CAPTURECHANGED, sent|wparam|lparam, 0, 0 },
+    { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_LISTBOX, LBN_SELCHANGE) },
     { 0 }
 };
 
@@ -9896,13 +9943,14 @@ static void check_lb_state_dbg(HWND listbox, int count, int cur_sel,
 {
     LRESULT ret;
 
-    ret = SendMessage(listbox, LB_GETCOUNT, 0, 0);
+    /* calling an orig proc helps to avoid unnecessary message logging */
+    ret = CallWindowProcA(listbox_orig_proc, listbox, LB_GETCOUNT, 0, 0);
     ok_(__FILE__, line)(ret == count, "expected count %d, got %ld\n", count, ret);
-    ret = SendMessage(listbox, LB_GETCURSEL, 0, 0);
+    ret = CallWindowProcA(listbox_orig_proc, listbox, LB_GETCURSEL, 0, 0);
     ok_(__FILE__, line)(ret == cur_sel, "expected cur sel %d, got %ld\n", cur_sel, ret);
-    ret = SendMessage(listbox, LB_GETCARETINDEX, 0, 0);
+    ret = CallWindowProcA(listbox_orig_proc, listbox, LB_GETCARETINDEX, 0, 0);
     ok_(__FILE__, line)(ret == caret_index, "expected caret index %d, got %ld\n", caret_index, ret);
-    ret = SendMessage(listbox, LB_GETTOPINDEX, 0, 0);
+    ret = CallWindowProcA(listbox_orig_proc, listbox, LB_GETTOPINDEX, 0, 0);
     ok_(__FILE__, line)(ret == top_index, "expected top index %d, got %ld\n", top_index, ret);
 }
 
@@ -9915,16 +9963,16 @@ static void test_listbox(void)
                              100, 100, 200, 200, 0, 0, 0, NULL);
     listbox = CreateWindowExA(WS_EX_NOPARENTNOTIFY, "ListBox", NULL,
                               WS_CHILD | LBS_NOTIFY | LBS_OWNERDRAWVARIABLE | LBS_HASSTRINGS | WS_VISIBLE,
-                              10, 10, 80, 20, parent, (HMENU)ID_LISTBOX, 0, NULL);
+                              10, 10, 80, 80, parent, (HMENU)ID_LISTBOX, 0, NULL);
     listbox_orig_proc = (WNDPROC)SetWindowLongPtrA(listbox, GWLP_WNDPROC, (ULONG_PTR)listbox_hook_proc);
 
     check_lb_state(listbox, 0, LB_ERR, 0, 0);
 
-    ret = SendMessage(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
+    ret = SendMessage(listbox, LB_ADDSTRING, 0, (LPARAM)"item 0");
     ok(ret == 0, "expected 0, got %ld\n", ret);
-    ret = SendMessage(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
+    ret = SendMessage(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
     ok(ret == 1, "expected 1, got %ld\n", ret);
-    ret = SendMessage(listbox, LB_ADDSTRING, 0, (LPARAM)"item 3");
+    ret = SendMessage(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
     ok(ret == 2, "expected 2, got %ld\n", ret);
 
     check_lb_state(listbox, 3, LB_ERR, 0, 0);
@@ -9934,15 +9982,32 @@ static void test_listbox(void)
     log_all_parent_messages++;
 
     trace("selecting item 0\n");
-    SendMessage(listbox, LB_SETCURSEL, 0, 0);
+    ret = SendMessage(listbox, LB_SETCURSEL, 0, 0);
+    ok(ret == 0, "expected 0, got %ld\n", ret);
     ok_sequence(wm_lb_setcursel_0, "LB_SETCURSEL 0", FALSE );
     check_lb_state(listbox, 3, 0, 0, 0);
     flush_sequence();
 
     trace("selecting item 1\n");
-    SendMessage(listbox, LB_SETCURSEL, 1, 0);
+    ret = SendMessage(listbox, LB_SETCURSEL, 1, 0);
+    ok(ret == 1, "expected 1, got %ld\n", ret);
     ok_sequence(wm_lb_setcursel_1, "LB_SETCURSEL 1", FALSE );
     check_lb_state(listbox, 3, 1, 1, 0);
+
+    trace("selecting item 2\n");
+    ret = SendMessage(listbox, LB_SETCURSEL, 2, 0);
+    ok(ret == 2, "expected 2, got %ld\n", ret);
+    ok_sequence(wm_lb_setcursel_2, "LB_SETCURSEL 2", FALSE );
+    check_lb_state(listbox, 3, 2, 2, 0);
+
+    trace("clicking on item 0\n");
+    ret = SendMessage(listbox, WM_LBUTTONDOWN, 0, MAKELPARAM(1, 1));
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %ld\n", ret);
+    ret = SendMessage(listbox, WM_LBUTTONUP, 0, 0);
+    ok(ret == LB_OKAY, "expected LB_OKAY, got %ld\n", ret);
+    ok_sequence(wm_lb_click_0, "WM_LBUTTONDOWN 0", FALSE );
+    check_lb_state(listbox, 3, 0, 0, 0);
+    flush_sequence();
 
     log_all_parent_messages--;
 

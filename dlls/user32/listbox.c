@@ -300,6 +300,9 @@ static void LISTBOX_UpdateScroll( LB_DESCR *descr )
 static LRESULT LISTBOX_SetTopItem( LB_DESCR *descr, INT index, BOOL scroll )
 {
     INT max = LISTBOX_GetMaxTopIndex( descr );
+
+    TRACE("setting top item %d, scroll %d\n", index, scroll);
+
     if (index > max) index = max;
     if (index < 0) index = 0;
     if (descr->style & LBS_MULTICOLUMN) index -= index % descr->page_size;
@@ -472,6 +475,8 @@ static LRESULT LISTBOX_GetItemRect( LB_DESCR *descr, INT index, RECT *rect )
         rect->bottom = rect->top + descr->item_height;
         rect->right += descr->horz_pos;
     }
+
+    TRACE("item %d, rect %s\n", index, wine_dbgstr_rect(rect));
 
     return ((rect->left < descr->width) && (rect->right > 0) &&
             (rect->top < descr->height) && (rect->bottom > 0));
@@ -680,9 +685,36 @@ static void LISTBOX_RepaintItem( LB_DESCR *descr, INT index, UINT action )
     if (!IsWindowEnabled(descr->self))
         SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
     SetWindowOrgEx( hdc, descr->horz_pos, 0, NULL );
-    LISTBOX_PaintItem( descr, hdc, &rect, index, action, FALSE );
+    LISTBOX_PaintItem( descr, hdc, &rect, index, action, TRUE );
     if (oldFont) SelectObject( hdc, oldFont );
     if (oldBrush) SelectObject( hdc, oldBrush );
+    ReleaseDC( descr->self, hdc );
+}
+
+
+/***********************************************************************
+ *           LISTBOX_DrawFocusRect
+ */
+static void LISTBOX_DrawFocusRect( LB_DESCR *descr, BOOL on )
+{
+    HDC hdc;
+    RECT rect;
+    HFONT oldFont = 0;
+
+    /* Do not repaint the item if the item is not visible */
+    if (!IsWindowVisible(descr->self)) return;
+
+    if (descr->focus_item == -1) return;
+    if (!descr->caret_on || !descr->in_focus) return;
+
+    if (LISTBOX_GetItemRect( descr, descr->focus_item, &rect ) != 1) return;
+    if (!(hdc = GetDCEx( descr->self, 0, DCX_CACHE ))) return;
+    if (descr->font) oldFont = SelectObject( hdc, descr->font );
+    if (!IsWindowEnabled(descr->self))
+        SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
+    SetWindowOrgEx( hdc, descr->horz_pos, 0, NULL );
+    LISTBOX_PaintItem( descr, hdc, &rect, descr->focus_item, ODA_FOCUS, on ? FALSE : TRUE );
+    if (oldFont) SelectObject( hdc, oldFont );
     ReleaseDC( descr->self, hdc );
 }
 
@@ -1317,6 +1349,8 @@ static void LISTBOX_MakeItemVisible( LB_DESCR *descr, INT index, BOOL fully )
 {
     INT top;
 
+    TRACE("current top item %d, index %d, fully %d\n", descr->top_item, index, fully);
+
     if (index <= descr->top_item) top = index;
     else if (descr->style & LBS_MULTICOLUMN)
     {
@@ -1354,16 +1388,17 @@ static LRESULT LISTBOX_SetCaretIndex( LB_DESCR *descr, INT index, BOOL fully_vis
 {
     INT oldfocus = descr->focus_item;
 
+    TRACE("old focus %d, index %d\n", oldfocus, index);
+
     if (descr->style & LBS_NOSEL) return LB_ERR;
     if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
     if (index == oldfocus) return LB_OKAY;
+
+    LISTBOX_DrawFocusRect( descr, FALSE );
     descr->focus_item = index;
-    if ((oldfocus != -1) && descr->caret_on && (descr->in_focus))
-        LISTBOX_RepaintItem( descr, oldfocus, ODA_FOCUS );
 
     LISTBOX_MakeItemVisible( descr, index, fully_visible );
-    if (descr->caret_on && (descr->in_focus))
-        LISTBOX_RepaintItem( descr, index, ODA_FOCUS );
+    LISTBOX_DrawFocusRect( descr, TRUE );
 
     return LB_OKAY;
 }
@@ -1439,8 +1474,8 @@ static LRESULT LISTBOX_SetSelection( LB_DESCR *descr, INT index,
         if (index == oldsel) return LB_OKAY;
         if (oldsel != -1) descr->items[oldsel].selected = FALSE;
         if (index != -1) descr->items[index].selected = TRUE;
-        descr->selected_item = index;
         if (oldsel != -1) LISTBOX_RepaintItem( descr, oldsel, ODA_SELECT );
+        descr->selected_item = index;
         if (index != -1) LISTBOX_RepaintItem( descr, index, ODA_SELECT );
         if (send_notify && descr->nb_items) SEND_NOTIFICATION( descr,
                                (index != -1) ? LBN_SELCHANGE : LBN_SELCANCEL );
@@ -1459,7 +1494,7 @@ static LRESULT LISTBOX_SetSelection( LB_DESCR *descr, INT index,
  */
 static void LISTBOX_MoveCaret( LB_DESCR *descr, INT index, BOOL fully_visible )
 {
-    INT oldfocus = descr->focus_item;
+    TRACE("old focus %d, index %d\n", descr->focus_item, index);
 
     if ((index <  0) || (index >= descr->nb_items))
         return;
@@ -1472,9 +1507,7 @@ static void LISTBOX_MoveCaret( LB_DESCR *descr, INT index, BOOL fully_visible )
        4. Set the focus to 'index' and repaint the item */
 
     /* 1. remove the focus and repaint the item */
-    descr->focus_item = -1;
-    if ((oldfocus != -1) && descr->caret_on && (descr->in_focus))
-        LISTBOX_RepaintItem( descr, oldfocus, ODA_FOCUS );
+    LISTBOX_DrawFocusRect( descr, FALSE );
 
     /* 2. then turn off the previous selection */
     /* 3. repaint the new selected item */
@@ -1499,8 +1532,7 @@ static void LISTBOX_MoveCaret( LB_DESCR *descr, INT index, BOOL fully_visible )
     /* 4. repaint the new item with the focus */
     descr->focus_item = index;
     LISTBOX_MakeItemVisible( descr, index, fully_visible );
-    if (descr->caret_on && (descr->in_focus))
-        LISTBOX_RepaintItem( descr, index, ODA_FOCUS );
+    LISTBOX_DrawFocusRect( descr, TRUE );
 }
 
 
@@ -2005,7 +2037,10 @@ static LRESULT LISTBOX_HandleMouseWheel(LB_DESCR *descr, SHORT delta )
 static LRESULT LISTBOX_HandleLButtonDown( LB_DESCR *descr, DWORD keys, INT x, INT y )
 {
     INT index = LISTBOX_GetItemFromPoint( descr, x, y );
-    TRACE("[%p]: lbuttondown %d,%d item %d\n", descr->self, x, y, index );
+
+    TRACE("[%p]: lbuttondown %d,%d item %d, focus item %d\n",
+          descr->self, x, y, index, descr->focus_item);
+
     if (!descr->caret_on && (descr->in_focus)) return 0;
 
     if (!descr->in_focus)
@@ -2015,6 +2050,16 @@ static LRESULT LISTBOX_HandleLButtonDown( LB_DESCR *descr, DWORD keys, INT x, IN
     }
 
     if (index == -1) return 0;
+
+    if (!descr->lphc)
+    {
+        if (descr->style & LBS_NOTIFY )
+            SendMessageW( descr->owner, WM_LBTRACKPOINT, index,
+                            MAKELPARAM( x, y ) );
+    }
+
+    descr->captured = TRUE;
+    SetCapture( descr->self );
 
     if (descr->style & (LBS_EXTENDEDSEL | LBS_MULTIPLESEL))
     {
@@ -2058,14 +2103,8 @@ static LRESULT LISTBOX_HandleLButtonDown( LB_DESCR *descr, DWORD keys, INT x, IN
                               TRUE, (descr->style & LBS_NOTIFY) != 0 );
     }
 
-    descr->captured = TRUE;
-    SetCapture( descr->self );
-
     if (!descr->lphc)
     {
-        if (descr->style & LBS_NOTIFY )
-            SendMessageW( descr->owner, WM_LBTRACKPOINT, index,
-                            MAKELPARAM( x, y ) );
         if (GetWindowLongW( descr->self, GWL_EXSTYLE ) & WS_EX_DRAGDETECT)
         {
             POINT pt;
@@ -2902,7 +2941,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         if (IS_MULTISELECT(descr)) return LB_ERR;
         LISTBOX_SetCaretIndex( descr, wParam, FALSE );
         ret = LISTBOX_SetSelection( descr, wParam, TRUE, FALSE );
-	if (lphc && ret != LB_ERR) ret = descr->selected_item;
+	if (ret != LB_ERR) ret = descr->selected_item;
 	return ret;
 
     case LB_GETSELCOUNT16:
@@ -3063,7 +3102,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         descr->in_focus = TRUE;
         descr->caret_on = TRUE;
         if (descr->focus_item != -1)
-            LISTBOX_RepaintItem( descr, descr->focus_item, ODA_FOCUS );
+            LISTBOX_DrawFocusRect( descr, TRUE );
         SEND_NOTIFICATION( descr, LBN_SETFOCUS );
         return 0;
     case WM_KILLFOCUS:
