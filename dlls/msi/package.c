@@ -1477,7 +1477,7 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
         r = msi_strcpy_to_awstring( value, szValueBuf, pchValueBuf );
 
         /* Bug required by Adobe installers */
-        if (!szValueBuf->unicode)
+        if (!szValueBuf->unicode && !szValueBuf->str.a)
             *pchValueBuf *= sizeof(WCHAR);
 
 done:
