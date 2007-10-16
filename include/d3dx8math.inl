@@ -19,7 +19,7 @@
 #ifndef __D3DX8MATH_INL__
 #define __D3DX8MATH_INL__
 
-extern inline D3DXVECTOR2* D3DXVec2Add(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
+static inline D3DXVECTOR2* D3DXVec2Add(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
     pout->x = pv1->x + pv2->x;
@@ -27,31 +27,31 @@ extern inline D3DXVECTOR2* D3DXVec2Add(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1
     return pout;
 }
 
-extern inline FLOAT D3DXVec2CCW(CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
+static inline FLOAT D3DXVec2CCW(CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
     if ( !pv1 || !pv2) return 0.0f;
     return ( (pv1->x) * (pv2->y) - (pv1->y) * (pv2->x) );
 }
 
-extern inline FLOAT D3DXVec2Dot(CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
+static inline FLOAT D3DXVec2Dot(CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
     if ( !pv1 || !pv2) return 0.0f;
     return ( (pv1->x * pv2->x + pv1->y * pv2->y) );
 }
 
-extern inline FLOAT D3DXVec2Length(CONST D3DXVECTOR2 *pv)
+static inline FLOAT D3DXVec2Length(CONST D3DXVECTOR2 *pv)
 {
     if (!pv) return 0.0f;
     return sqrt( (pv->x) * (pv->x) + (pv->y) * (pv->y) );
 }
 
-extern inline FLOAT D3DXVec2LengthSq(CONST D3DXVECTOR2 *pv)
+static inline FLOAT D3DXVec2LengthSq(CONST D3DXVECTOR2 *pv)
 {
     if (!pv) return 0.0f;
     return( (pv->x) * (pv->x) + (pv->y) * (pv->y) );
 }
 
-extern inline D3DXVECTOR2* D3DXVec2Lerp(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2, FLOAT s)
+static inline D3DXVECTOR2* D3DXVec2Lerp(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2, FLOAT s)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
     pout->x = (1-s) * (pv1->x) + s * (pv2->x);
@@ -59,7 +59,7 @@ extern inline D3DXVECTOR2* D3DXVec2Lerp(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv
     return pout;
 }
 
-extern inline D3DXVECTOR2* D3DXVec2Maximize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
+static inline D3DXVECTOR2* D3DXVec2Maximize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
     pout->x = max(pv1->x , pv2->x);
@@ -67,7 +67,7 @@ extern inline D3DXVECTOR2* D3DXVec2Maximize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2
     return pout;
 }
 
-extern inline D3DXVECTOR2* D3DXVec2Minimize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
+static inline D3DXVECTOR2* D3DXVec2Minimize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
     pout->x = min(pv1->x , pv2->x);
@@ -75,7 +75,7 @@ extern inline D3DXVECTOR2* D3DXVec2Minimize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2
     return pout;
 }
 
-extern inline D3DXVECTOR2* D3DXVec2Scale(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv, FLOAT s)
+static inline D3DXVECTOR2* D3DXVec2Scale(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv, FLOAT s)
 {
     if ( !pout || !pv) return NULL;
     pout->x = s * (pv->x);
@@ -83,7 +83,7 @@ extern inline D3DXVECTOR2* D3DXVec2Scale(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *p
     return pout;
 }
 
-extern inline D3DXVECTOR2* D3DXVec2Subtract(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
+static inline D3DXVECTOR2* D3DXVec2Subtract(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
     pout->x = pv1->x - pv2->x;
