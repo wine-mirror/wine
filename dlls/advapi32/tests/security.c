@@ -735,12 +735,6 @@ static void test_AccessCheck(void)
         DOMAIN_ALIAS_RID_USERS, 0, 0, 0, 0, 0, 0, &UsersSid);
     ok(res, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
 
-    res = AddAccessAllowedAce(Acl, ACL_REVISION, KEY_READ, EveryoneSid);
-    ok(res, "AddAccessAllowedAceEx failed with error %d\n", GetLastError());
-
-    res = AddAccessDeniedAce(Acl, ACL_REVISION, KEY_SET_VALUE, AdminSid);
-    ok(res, "AddAccessDeniedAce failed with error %d\n", GetLastError());
-
     SecurityDescriptor = HeapAlloc(GetProcessHeap(), 0, SECURITY_DESCRIPTOR_MIN_LENGTH);
 
     res = InitializeSecurityDescriptor(SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
@@ -788,6 +782,46 @@ static void test_AccessCheck(void)
     ok(Access == 0xdeadbeef && AccessStatus == 0xdeadbeef,
        "Access and/or AccessStatus were changed!\n");
 
+    /* sd with no dacl present */
+    ret = SetSecurityDescriptorDacl(SecurityDescriptor, FALSE, NULL, FALSE);
+    todo_wine
+    ok(ret, "SetSecurityDescriptorDacl failed with error %d\n", GetLastError());
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    ok(ret, "AccessCheck failed with error %d\n", GetLastError());
+    ok(AccessStatus && (Access == KEY_READ),
+        "AccessCheck failed to grant access with error %d\n",
+        GetLastError());
+
+    /* sd with NULL dacl */
+    ret = SetSecurityDescriptorDacl(SecurityDescriptor, TRUE, NULL, FALSE);
+    ok(ret, "SetSecurityDescriptorDacl failed with error %d\n", GetLastError());
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    ok(ret, "AccessCheck failed with error %d\n", GetLastError());
+    todo_wine
+    ok(AccessStatus && (Access == KEY_READ),
+        "AccessCheck failed to grant access with error %d\n",
+        GetLastError());
+
+    /* sd with blank dacl */
+    ret = SetSecurityDescriptorDacl(SecurityDescriptor, TRUE, Acl, FALSE);
+    ok(ret, "SetSecurityDescriptorDacl failed with error %d\n", GetLastError());
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    ok(ret, "AccessCheck failed with error %d\n", GetLastError());
+    err = GetLastError();
+    ok(!AccessStatus && err == ERROR_ACCESS_DENIED, "AccessCheck should have failed "
+       "with ERROR_ACCESS_DENIED, instead of %d\n", err);
+    ok(!Access, "Should have failed to grant any access, got 0x%08x\n", Access);
+
+    res = AddAccessAllowedAce(Acl, ACL_REVISION, KEY_READ, EveryoneSid);
+    ok(res, "AddAccessAllowedAceEx failed with error %d\n", GetLastError());
+
+    res = AddAccessDeniedAce(Acl, ACL_REVISION, KEY_SET_VALUE, AdminSid);
+    ok(res, "AddAccessDeniedAce failed with error %d\n", GetLastError());
+
+    /* sd with dacl */
     ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
     ok(ret, "AccessCheck failed with error %d\n", GetLastError());
