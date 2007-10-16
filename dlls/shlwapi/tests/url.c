@@ -32,11 +32,11 @@
 static HMODULE hShlwapi;
 static HRESULT (WINAPI *pUrlCanonicalizeW)(LPCWSTR, LPWSTR, LPDWORD, DWORD);
 
-const char* TEST_URL_1 = "http://www.winehq.org/tests?date=10/10/1923";
-const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1923";
-const char* TEST_URL_3 = "http://foo:bar@localhost:21/internal.php?query=x&return=y";
-const WCHAR winehqW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
-const  CHAR winehqA[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
+static const char* TEST_URL_1 = "http://www.winehq.org/tests?date=10/10/1923";
+static const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1923";
+static const char* TEST_URL_3 = "http://foo:bar@localhost:21/internal.php?query=x&return=y";
+static const WCHAR winehqW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
+static const  CHAR winehqA[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
 
 /* ################ */
 
@@ -47,7 +47,7 @@ typedef struct _TEST_URL_CANONICALIZE {
     const char *expecturl;
 } TEST_URL_CANONICALIZE;
 
-const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
+static const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     /*FIXME {"http://www.winehq.org/tests/../tests/../..", 0, S_OK, "http://www.winehq.org/"},*/
     {"http://www.winehq.org/tests/../tests", 0, S_OK, "http://www.winehq.org/tests"},
     {"http://www.winehq.org/tests\n", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY|URL_ESCAPE_UNSAFE, S_OK, "http://www.winehq.org/tests"},
@@ -100,7 +100,7 @@ typedef struct _TEST_URL_ESCAPE {
     const char *expecturl;
 } TEST_URL_ESCAPE;
 
-const TEST_URL_ESCAPE TEST_ESCAPE[] = {
+static const TEST_URL_ESCAPE TEST_ESCAPE[] = {
     {"http://www.winehq.org/tests0", 0, 0, S_OK, "http://www.winehq.org/tests0"},
     {"http://www.winehq.org/tests1\n", 0, 0, S_OK, "http://www.winehq.org/tests1%0A"},
     {"http://www.winehq.org/tests2\r", 0, 0, S_OK, "http://www.winehq.org/tests2%0D"},
@@ -191,7 +191,7 @@ typedef struct _TEST_URL_COMBINE {
     const char *expecturl;
 } TEST_URL_COMBINE;
 
-const TEST_URL_COMBINE TEST_COMBINE[] = {
+static const TEST_URL_COMBINE TEST_COMBINE[] = {
     {"http://www.winehq.org/tests", "tests1", 0, S_OK, "http://www.winehq.org/tests1"},
     {"http://www.%77inehq.org/tests", "tests1", 0, S_OK, "http://www.%77inehq.org/tests1"},
     /*FIXME {"http://www.winehq.org/tests", "../tests2", 0, S_OK, "http://www.winehq.org/tests2"},*/
@@ -220,7 +220,7 @@ const TEST_URL_COMBINE TEST_COMBINE[] = {
 
 /* ################ */
 
-struct {
+static const struct {
     const char *path;
     const char *url;
     DWORD ret;
@@ -242,7 +242,7 @@ struct {
 
 /* ################ */
 
-struct {
+static const struct {
     char url[30];
     const char *expect;
 } TEST_URL_UNESCAPE[] = {
@@ -252,7 +252,7 @@ struct {
 
 /* ################ */
 
-static struct {
+static const  struct {
     const char *path;
     BOOL expect;
 } TEST_PATH_IS_URL[] = {
@@ -267,7 +267,7 @@ static struct {
 
 /* ################ */
 
-struct {
+static const struct {
     const char *url;
     BOOL expectOpaque;
     BOOL expectFile;
