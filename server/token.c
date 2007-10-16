@@ -811,17 +811,11 @@ static unsigned int token_access_check( struct token *token,
     }
 
     /* 1: Grant desired access if the object is unprotected */
-    if (!dacl_present)
+    if (!dacl_present || !dacl)
     {
         *priv_count = 0;
         *granted_access = desired_access;
         return *status = STATUS_SUCCESS;
-    }
-    if (!dacl)
-    {
-        *priv_count = 0;
-        *status = STATUS_ACCESS_DENIED;
-        return STATUS_SUCCESS;
     }
 
     /* 2: Check if caller wants access to system security part. Note: access

@@ -798,7 +798,6 @@ static void test_AccessCheck(void)
     ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
     ok(ret, "AccessCheck failed with error %d\n", GetLastError());
-    todo_wine
     ok(AccessStatus && (Access == KEY_READ),
         "AccessCheck failed to grant access with error %d\n",
         GetLastError());
