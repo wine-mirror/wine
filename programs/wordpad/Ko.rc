@@ -223,4 +223,5 @@ BEGIN
                                  "이것은 특수한 꾸밈을 없엘 것입니다. " \
                                  "당신은 정말로 저장하기를 원합니까?"
     STRING_INVALID_NUMBER,       "올바르지 않은 수 형식"
+    STRING_OLE_STORAGE_NOT_SUPPORTED, "OLE storage documents are not supported"
 END

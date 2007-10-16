@@ -1092,8 +1092,17 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     } else if(readOut >= 5)
     {
         static const char header[] = "{\\rtf";
+        static const BYTE STG_magic[] = { 0xd0,0xcf,0x11,0xe0 };
+
         if(!memcmp(header, fileStart, 5))
             format = SF_RTF;
+        else if (!memcmp(STG_magic, fileStart, sizeof(STG_magic)))
+        {
+            CloseHandle(hFile);
+            MessageBoxW(hMainWnd, MAKEINTRESOURCEW(STRING_OLE_STORAGE_NOT_SUPPORTED), wszAppTitle,
+                        MB_OK | MB_ICONEXCLAMATION);
+            return;
+        }
     }
 
     es.dwCookie = (DWORD_PTR)hFile;
