@@ -1447,6 +1447,8 @@ static BOOL WINAPI verify_base_policy(LPCSTR szPolicyOID,
         /* For a cyclic chain, which element is a cycle isn't meaningful */
         pPolicyStatus->lElementIndex = -1;
     }
+    else
+        pPolicyStatus->dwError = NO_ERROR;
     return TRUE;
 }
 
@@ -1520,6 +1522,8 @@ static BOOL WINAPI verify_basic_constraints_policy(LPCSTR szPolicyOID,
          CERT_TRUST_INVALID_BASIC_CONSTRAINTS, &pPolicyStatus->lChainIndex,
          &pPolicyStatus->lElementIndex);
     }
+    else
+        pPolicyStatus->dwError = NO_ERROR;
     return TRUE;
 }
 
