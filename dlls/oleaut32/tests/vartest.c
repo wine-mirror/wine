@@ -1777,7 +1777,7 @@ static HRESULT (WINAPI *pVarAbs)(LPVARIANT,LPVARIANT);
 
 static void test_VarAbs(void)
 {
-    static const WCHAR szNum[] = {'-','1','.','1','\0' };
+    static WCHAR szNum[] = {'-','1','.','1','\0' };
     char buff[8];
     HRESULT hres;
     VARIANT v, vDst, exp;
@@ -1851,10 +1851,12 @@ static void test_VarAbs(void)
     ok(hres == S_OK && V_VT(&vDst) == VT_CY && V_CY(&vDst).int64 == 10000,
        "VarAbs(CY): expected 0x0 got 0x%X\n", hres);
     GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
-    if (buff[0] != '.' || buff[1])
+    if (buff[1])
     {
         trace("Skipping VarAbs(BSTR) as decimal separator is '%s'\n", buff);
         return;
+    } else {
+	szNum[2] = buff[0];
     }
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = (BSTR)szNum;
@@ -3102,8 +3104,8 @@ static void test_Round( int line, VARIANT *arg, int deci, VARIANT *expected )
 
 static void test_VarRound(void)
 {
-    static const WCHAR szNumMin[] = {'-','1','.','4','5','\0' };
-    static const WCHAR szNum[] = {'1','.','4','5','\0' };
+    static WCHAR szNumMin[] = {'-','1','.','4','5','\0' };
+    static WCHAR szNum[] = {'1','.','4','5','\0' };
     HRESULT hres;
     VARIANT v, exp, vDst;
     CY *pcy = &V_CY(&v);
@@ -3139,13 +3141,16 @@ static void test_VarRound(void)
      * compare the first few digits. */
     VARROUND(DATE,1.451,1,DATE,1.5);
     VARROUND(DATE,-1.45,1,DATE,-1.4);
+
+    /* replace the decimal seperator */
     GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
-    if (buff[0] != '.' || buff[1])
-        skip("Skipping VarRound(BSTR) as decimal separator is '%s'\n", buff);
-    else
-    {
+    if (!buff[1]) {
+        szNumMin[2] = buff[0];
+        szNum[1] = buff[0];
         VARROUND(BSTR,(BSTR)szNumMin,1,R8,-1.40);
         if (0) { VARROUND(BSTR,(BSTR)szNum,1,R8,1.50); }
+    } else {
+        skip("Skipping VarRound(BSTR) as decimal separator is '%s'\n", buff);
     }
 
     VARROUND(R4,1.23456f,0,R4,1.0f);
