@@ -711,12 +711,18 @@ static void dump_inline_security_descriptor( const struct security_descriptor *s
         fprintf( stderr, ",owner=" );
         if ((sd->owner_len > FIELD_OFFSET(SID, SubAuthority[255])) || (offset + sd->owner_len > size))
             return;
-        dump_inline_sid( (const SID *)((const char *)sd + offset), sd->owner_len );
+        if (sd->owner_len)
+            dump_inline_sid( (const SID *)((const char *)sd + offset), sd->owner_len );
+        else
+            fprintf( stderr, "<not present>" );
         offset += sd->owner_len;
         fprintf( stderr, ",group=" );
         if ((sd->group_len > FIELD_OFFSET(SID, SubAuthority[255])) || (offset + sd->group_len > size))
             return;
-        dump_inline_sid( (const SID *)((const char *)sd + offset), sd->group_len );
+        if (sd->group_len)
+            dump_inline_sid( (const SID *)((const char *)sd + offset), sd->group_len );
+        else
+            fprintf( stderr, "<not present>" );
         offset += sd->group_len;
         fprintf( stderr, ",sacl=" );
         if ((sd->sacl_len >= MAX_ACL_LEN) || (offset + sd->sacl_len > size))
