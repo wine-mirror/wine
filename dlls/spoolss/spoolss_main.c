@@ -175,7 +175,7 @@ BOOL WINAPI ImpersonatePrinterClient(HANDLE hToken)
 HANDLE WINAPI RevertToPrinterSelf(void)
 {
     FIXME("() stub\n");
-    return NULL;
+    return (HANDLE) 0xdead0947;
 }
 
 /******************************************************************
