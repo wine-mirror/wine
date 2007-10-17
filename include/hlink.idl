@@ -277,6 +277,10 @@ interface IHlinkBrowseContext : IUnknown
         [in, unique] IMoniker *pimk,
         [out] DWORD *pdwRegister);
 
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef GetObject")
+cpp_quote("#endif")
+
     HRESULT GetObject(
         [in, unique] IMoniker *pimk,
         [in] BOOL fBindIfRootRegistered,
