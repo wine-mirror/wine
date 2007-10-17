@@ -80,6 +80,18 @@ LPWSTR WINAPI AllocSplStr(LPCWSTR pwstr)
 }
 
 /******************************************************************
+ *   BuildOtherNamesFromMachineName   [SPOOLSS.@]
+ */
+BOOL WINAPI BuildOtherNamesFromMachineName(LPVOID * ptr1, LPVOID * ptr2)
+{
+    FIXME("(%p, %p) stub\n", ptr1, ptr2);
+
+    *ptr1 = NULL;
+    *ptr2 = NULL;
+    return FALSE;
+}
+
+/******************************************************************
  *   DllAllocSplMem   [SPOOLSS.@]
  *
  * Allocate cleared memory from the spooler heap

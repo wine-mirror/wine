@@ -14,7 +14,7 @@
 @ stub AddPrinterW
 @ stdcall AllocSplStr(wstr)
 @ stub AppendPrinterNotifyInfoData
-@ stub BuildOtherNamesFromMachineName
+@ stdcall BuildOtherNamesFromMachineName(ptr ptr)
 @ stub CallDrvDevModeConversion
 @ stub CallRouterFindFirstPrinterChangeNotification
 @ stub ClosePrinter
