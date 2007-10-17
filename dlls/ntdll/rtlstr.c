@@ -1610,6 +1610,9 @@ BOOLEAN WINAPI RtlIsTextUnicode( LPCVOID buf, INT len, INT *pf )
     /* Check for an odd length ... pass if even. */
     if (len & 1) out_flags |= IS_TEXT_UNICODE_ODD_LENGTH;
 
+    if (((char *)buf)[len - 1] == 0)
+        len--;  /* Windows seems to do something like that to avoid e.g. false IS_TEXT_UNICODE_NULL_BYTES  */
+
     len /= sizeof(WCHAR);
     /* Windows only checks the first 256 characters */
     if (len > 256) len = 256;

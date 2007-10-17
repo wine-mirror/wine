@@ -1677,7 +1677,7 @@ static void test_RtlIsTextUnicode(void)
     int flags;
     int i;
 
-    todo_wine ok(!pRtlIsTextUnicode(ascii, sizeof(ascii), NULL), "ASCII text detected as Unicode\n");
+    ok(!pRtlIsTextUnicode(ascii, sizeof(ascii), NULL), "ASCII text detected as Unicode\n");
 
     ok(pRtlIsTextUnicode(unicode, sizeof(unicode), NULL), "Text should be Unicode\n");
     ok(!pRtlIsTextUnicode(unicode, sizeof(unicode) - 1, NULL), "Text should be Unicode\n");
