@@ -3500,8 +3500,36 @@ BOOL WINAPI InvalidateNLSCache(void)
  */
 GEOID WINAPI GetUserGeoID( GEOCLASS GeoClass )
 {
-    FIXME("%d\n",GeoClass);
-    return GEOID_NOT_AVAILABLE;
+    GEOID ret = GEOID_NOT_AVAILABLE;
+    static const WCHAR geoW[] = {'G','e','o',0};
+    static const WCHAR nationW[] = {'N','a','t','i','o','n',0};
+    WCHAR bufferW[40], *end;
+    DWORD count;
+    HANDLE hkey, hSubkey = 0;
+    UNICODE_STRING keyW;
+    const KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)bufferW;
+    RtlInitUnicodeString( &keyW, nationW );
+    count = sizeof(bufferW);
+
+    if(!(hkey = create_registry_key())) return ret;
+
+    switch( GeoClass ){
+    case GEOCLASS_NATION:
+        if ((hSubkey = NLS_RegOpenKey(hkey, geoW)))
+        {
+            if((NtQueryValueKey(hSubkey, &keyW, KeyValuePartialInformation,
+                                (LPBYTE)bufferW, count, &count) == STATUS_SUCCESS ) && info->DataLength)
+                ret = strtolW((LPCWSTR)info->Data, &end, 10);
+        }
+        break;
+    case GEOCLASS_REGION:
+        FIXME("GEOCLASS_REGION not handled yet\n");
+        break;
+    }
+
+    NtClose(hkey);
+    if (hSubkey) NtClose(hSubkey);
+    return ret;
 }
 
 /******************************************************************************
