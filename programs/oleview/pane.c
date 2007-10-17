@@ -151,7 +151,11 @@ BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst)
     pane = HeapAlloc(GetProcessHeap(), 0, sizeof(PANE));
     *hWndCreated = CreateWindow(wszPaneClass, NULL, WS_CHILD|WS_VISIBLE,
             CW_USEDEFAULT, CW_USEDEFAULT, 0, 0,    hWnd, (HMENU)pane, hInst, NULL);
-    if(!hWndCreated) return FALSE;
+    if(!hWndCreated)
+    {
+        HeapFree(GetProcessHeap(), 0, pane);
+        return FALSE;
+    }
 
     pane->left = NULL;
     pane->right = NULL;
