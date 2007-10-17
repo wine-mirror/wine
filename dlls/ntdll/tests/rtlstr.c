@@ -62,6 +62,7 @@ static NTSTATUS (WINAPI *pRtlUpperString)(STRING *, const STRING *);
 static NTSTATUS (WINAPI *pRtlValidateUnicodeString)(long, UNICODE_STRING *);
 static NTSTATUS (WINAPI *pRtlGUIDFromString)(const UNICODE_STRING*,GUID*);
 static NTSTATUS (WINAPI *pRtlStringFromGUID)(const GUID*, UNICODE_STRING*);
+static BOOLEAN (WINAPI *pRtlIsTextUnicode)(LPVOID, INT, INT *);
 
 /*static VOID (WINAPI *pRtlFreeOemString)(PSTRING);*/
 /*static VOID (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);*/
@@ -82,7 +83,6 @@ static NTSTATUS (WINAPI *pRtlStringFromGUID)(const GUID*, UNICODE_STRING*);
 /*static NTSTATUS (WINAPI *pRtlUpcaseUnicodeToOemN)(LPSTR, DWORD, LPDWORD, LPCWSTR, DWORD);*/
 /*static UINT (WINAPI *pRtlOemToUnicodeSize)(const STRING *);*/
 /*static DWORD (WINAPI *pRtlAnsiStringToUnicodeSize)(const STRING *);*/
-/*static DWORD (WINAPI *pRtlIsTextUnicode)(LPVOID, DWORD, DWORD *);*/
 
 
 static WCHAR* AtoW( const char* p )
@@ -130,6 +130,7 @@ static void InitFunctionPtrs(void)
 	pRtlValidateUnicodeString = (void *)GetProcAddress(hntdll, "RtlValidateUnicodeString");
 	pRtlGUIDFromString = (void *)GetProcAddress(hntdll, "RtlGUIDFromString");
 	pRtlStringFromGUID = (void *)GetProcAddress(hntdll, "RtlStringFromGUID");
+	pRtlIsTextUnicode = (void *)GetProcAddress(hntdll, "RtlIsTextUnicode");
     }
 }
 
@@ -1668,6 +1669,49 @@ static void test_RtlIntegerToChar(void)
        int2str[0].value, int2str[0].base, int2str[0].MaximumLength, result, STATUS_ACCESS_VIOLATION);
 }
 
+static void test_RtlIsTextUnicode(void)
+{
+    char ascii[] = "A simple string";
+    WCHAR unicode[] = {'A',' ','U','n','i','c','o','d','e',' ','s','t','r','i','n','g',0};
+    WCHAR *be_unicode;
+    int flags;
+    int i;
+
+    todo_wine ok(!pRtlIsTextUnicode(ascii, sizeof(ascii), NULL), "ASCII text detected as Unicode\n");
+
+    ok(pRtlIsTextUnicode(unicode, sizeof(unicode), NULL), "Text should be Unicode\n");
+    ok(!pRtlIsTextUnicode(unicode, sizeof(unicode) - 1, NULL), "Text should be Unicode\n");
+
+    flags =  IS_TEXT_UNICODE_UNICODE_MASK;
+    ok(pRtlIsTextUnicode(unicode, sizeof(unicode), &flags), "Text should not pass a Unicode\n");
+    todo_wine ok(flags == 0x6, "Expected flags 0x6, obtained %d\n", flags);
+
+    flags =  IS_TEXT_UNICODE_REVERSE_MASK;
+    ok(!pRtlIsTextUnicode(unicode, sizeof(unicode), &flags), "Text should not pass reverse Unicode tests\n");
+    ok(flags == 0, "Expected flags 0, obtained %d\n", flags);
+
+    flags = IS_TEXT_UNICODE_ODD_LENGTH;
+    ok(!pRtlIsTextUnicode(unicode, sizeof(unicode) - 1, &flags), "Odd length test should have passed\n");
+    ok(flags == IS_TEXT_UNICODE_ODD_LENGTH, "Expected flags 0x200, obtained %d\n", flags);
+
+    be_unicode = HeapAlloc(GetProcessHeap(), 0, sizeof(unicode) + sizeof(WCHAR));
+    be_unicode[0] = 0xfffe;
+    for (i = 0; i < sizeof(unicode)/sizeof(unicode[0]); i++)
+    {
+        be_unicode[i + 1] = (unicode[i] >> 8) | ((unicode[i] & 0xff) << 8);
+    }
+    ok(!pRtlIsTextUnicode(be_unicode, sizeof(unicode) + 2, NULL), "Reverse endian should not be Unicode\n");
+    todo_wine ok(!pRtlIsTextUnicode(&be_unicode[1], sizeof(unicode), NULL), "Reverse endian should not be Unicode\n");
+
+    flags = IS_TEXT_UNICODE_REVERSE_MASK;
+    ok(!pRtlIsTextUnicode(&be_unicode[1], sizeof(unicode), &flags), "Reverse endian should be Unicode\n");
+    todo_wine ok(flags == 0x70, "Expected flags 0x70, obtained %x\n", flags);
+
+    flags = IS_TEXT_UNICODE_REVERSE_MASK;
+    ok(!pRtlIsTextUnicode(be_unicode, sizeof(unicode) + 2, &flags), "Reverse endian should be Unicode\n");
+    todo_wine ok(flags == 0xc0, "Expected flags 0x70, obtained %x\n", flags);
+}
+
 static const WCHAR szGuid[] = { '{','0','1','0','2','0','3','0','4','-',
   '0','5','0','6','-'  ,'0','7','0','8','-','0','9','0','A','-',
   '0','B','0','C','0','D','0','E','0','F','0','A','}','\0' };
@@ -1740,6 +1784,8 @@ START_TEST(rtlstr)
         test_RtlGUIDFromString();
     if (pRtlStringFromGUID)
         test_RtlStringFromGUID();
+    if (pRtlIsTextUnicode)
+        test_RtlIsTextUnicode();
     if(0)
     {
 	test_RtlUpcaseUnicodeChar();
