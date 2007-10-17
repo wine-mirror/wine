@@ -5040,11 +5040,12 @@ static INT LISTVIEW_FindItemA(const LISTVIEW_INFO *infoPtr, INT nStart,
     BOOL hasText = lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL);
     LVFINDINFOW fiw;
     INT res;
+    LPWSTR strW;
 
     memcpy(&fiw, lpFindInfo, sizeof(fiw));
-    if (hasText) fiw.psz = textdupTtoW((LPCWSTR)lpFindInfo->psz, FALSE);
+    if (hasText) fiw.psz = strW = textdupTtoW((LPCWSTR)lpFindInfo->psz, FALSE);
     res = LISTVIEW_FindItemW(infoPtr, nStart, &fiw);
-    if (hasText) textfreeT((LPWSTR)fiw.psz, FALSE);
+    if (hasText) textfreeT(strW, FALSE);
     return res;
 }
 
