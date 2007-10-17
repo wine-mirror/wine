@@ -216,7 +216,7 @@ static BOOL create_manifest_file(const char *filename, const char *manifest, int
     return TRUE;
 }
 
-static BOOL create_wide_manifest(const char *filename, const char *manifest, BOOL fBOM)
+static BOOL create_wide_manifest(const char *filename, const char *manifest, BOOL fBOM, BOOL fReverse)
 {
     WCHAR *wmanifest = HeapAlloc(GetProcessHeap(), 0, (strlen(manifest)+2) * sizeof(WCHAR));
     BOOL ret;
@@ -224,6 +224,12 @@ static BOOL create_wide_manifest(const char *filename, const char *manifest, BOO
 
     MultiByteToWideChar(CP_ACP, 0, manifest, -1, &wmanifest[1], (strlen(manifest)+1) * sizeof(WCHAR));
     wmanifest[0] = 0xfeff;
+    if (fReverse)
+    {
+        int i;
+        for (i = 0; i < strlen(manifest)+1; i++)
+            wmanifest[i] = (wmanifest[i] << 8) | ((wmanifest[i] >> 8) & 0xff);
+    }
     ret = create_manifest_file(filename, (char *)&wmanifest[offset], (strlen(manifest)+1-offset) * sizeof(WCHAR), NULL, NULL);
     HeapFree(GetProcessHeap(), 0, wmanifest);
     return ret;
@@ -625,7 +631,7 @@ static void test_create_wide_and_fail(const char *manifest, BOOL fBOM)
     actctx.cbSize = sizeof(ACTCTXW);
     actctx.lpSource = path;
 
-    create_wide_manifest("bad.manifest", manifest, fBOM);
+    create_wide_manifest("bad.manifest", manifest, fBOM, FALSE);
     handle = pCreateActCtxW(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "handle != INVALID_HANDLE_VALUE\n");
     ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "GetLastError == %u\n", GetLastError());
@@ -1021,7 +1027,21 @@ static void test_actctx(void)
     RemoveDirectoryW(work_dir_subdir);
 
     trace("UTF-16 manifest1, with BOM\n");
-    if(!create_wide_manifest("test1.manifest", manifest1, TRUE)) {
+    if(!create_wide_manifest("test1.manifest", manifest1, TRUE, FALSE)) {
+        skip("Could not create manifest file\n");
+        return;
+    }
+
+    handle = test_create("test1.manifest", manifest1);
+    DeleteFileA("test1.manifest");
+    if (handle != INVALID_HANDLE_VALUE) {
+        test_detailed_info(handle, &detailed_info1);
+        test_info_in_assembly(handle, 1, &manifest1_info);
+        pReleaseActCtx(handle);
+    }
+
+    trace("UTF-16 manifest1, reverse endian, with BOM\n");
+    if(!create_wide_manifest("test1.manifest", manifest1, TRUE, TRUE)) {
         skip("Could not create manifest file\n");
         return;
     }
