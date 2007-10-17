@@ -21,7 +21,7 @@
 #include <olectl.h>
 
 import "ocidl.idl";
-/* import "dimm.idl"; */
+import "dimm.idl";
 
 cpp_quote("#include <olectl.h>")
 

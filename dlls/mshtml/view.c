@@ -26,7 +26,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "wingdi.h"
 #include "commctrl.h"
 #include "ole2.h"
 #include "resource.h"
