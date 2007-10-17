@@ -663,7 +663,8 @@ BOOL WINAPI CryptUnregisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
     LPSTR szKey;
     LONG rc;
 
-    TRACE("%x %s %s\n", dwEncodingType, pszFuncName, pszOID);
+    TRACE("%x %s %s\n", dwEncodingType, debugstr_a(pszFuncName),
+     debugstr_a(pszOID));
 
     if (!GET_CERT_ENCODING_TYPE(dwEncodingType))
         return TRUE;
@@ -934,8 +935,8 @@ BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD dwEncodingType,
     LPCWSTR existing;
     BOOL ret = FALSE;
 
-    TRACE("(%x, %s, %x, %s)\n", dwEncodingType, pszFuncName, dwIndex,
-     debugstr_w(pwszDll));
+    TRACE("(%x, %s, %d, %s)\n", dwEncodingType, debugstr_a(pszFuncName),
+     dwIndex, debugstr_w(pwszDll));
 
     if (!pwszDll)
     {
