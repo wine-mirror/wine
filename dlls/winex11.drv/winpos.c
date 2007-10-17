@@ -1353,7 +1353,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     {
         int dx = 0, dy = 0;
 
-        if (!GetMessageW( &msg, 0, WM_KEYFIRST, WM_MOUSELAST )) break;
+        if (!GetMessageW( &msg, 0, 0, 0 )) break;
         if (CallMsgFilterW( &msg, MSGF_SIZE )) continue;
 
         /* Exit on button-up, Return, or Esc */
@@ -1362,7 +1362,11 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
              ((msg.wParam == VK_RETURN) || (msg.wParam == VK_ESCAPE)))) break;
 
         if ((msg.message != WM_KEYDOWN) && (msg.message != WM_MOUSEMOVE))
+        {
+            TranslateMessage( &msg );
+            DispatchMessageW( &msg );
             continue;  /* We are not interested in other messages */
+        }
 
         pt = msg.pt;
 
