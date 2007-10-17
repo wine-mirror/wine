@@ -208,7 +208,7 @@ BOOL WINAPI CryptGetDefaultOIDDllList(HCRYPTOIDFUNCSET hFuncSet,
         else
         {
             /* No value, return an empty list */
-            if (*pcchDllList)
+            if (pwszDllList && *pcchDllList)
                 *pwszDllList = '\0';
             *pcchDllList = 1;
         }
@@ -216,8 +216,10 @@ BOOL WINAPI CryptGetDefaultOIDDllList(HCRYPTOIDFUNCSET hFuncSet,
     }
     else
     {
-        SetLastError(rc);
-        ret = FALSE;
+        /* No value, return an empty list */
+        if (pwszDllList && *pcchDllList)
+            *pwszDllList = '\0';
+        *pcchDllList = 1;
     }
     CryptMemFree(keyName);
 
