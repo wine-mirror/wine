@@ -1041,10 +1041,11 @@ static UINT get_tablecolumns( MSIDATABASE *db,
 static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
 {
     MSITABLE *table;
-    UINT size, offset;
+    UINT size, offset, old_count;
     int n;
 
     table = find_cached_table( db, name );
+    old_count = table->col_count;
     msi_free( table->colinfo );
     table_get_column_info( db, name, &table->colinfo, &table->col_count );
 
@@ -1054,7 +1055,8 @@ static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
     for ( n = 0; n < table->row_count; n++ )
     {
         table->data[n] = msi_realloc( table->data[n], size );
-        table->data[n][offset] = (BYTE)MSI_NULL_INTEGER;
+        if (old_count < table->col_count)
+            memset( &table->data[n][offset], 0, size - offset );
     }
 }
 
