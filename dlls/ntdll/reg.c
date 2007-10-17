@@ -1031,7 +1031,7 @@ static NTSTATUS RTL_GetKeyHandle(ULONG RelativeTo, PCWSTR Path, PHANDLE handle)
 
     static const WCHAR empty[] = {0};
     static const WCHAR control[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e',
-    '\\','S','y','s','t','e','m','\\','C','u','r','r','e','n','t',' ','C','o','n','t','r','o','l','S','e','t','\\',
+    '\\','S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
     'C','o','n','t','r','o','l','\\',0};
 
     static const WCHAR devicemap[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\',
