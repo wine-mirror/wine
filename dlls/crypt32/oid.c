@@ -275,6 +275,11 @@ BOOL WINAPI CryptInstallOIDFunctionAddress(HMODULE hModule,
     return ret;
 }
 
+struct FuncAddr
+{
+    HMODULE lib;
+};
+
 static BOOL CRYPT_GetFuncFromReg(DWORD dwEncodingType, LPCSTR pszOID,
  LPCSTR szFuncName, LPVOID *ppvFuncAddr, HCRYPTOIDFUNCADDR *phFuncAddr)
 {
@@ -322,8 +327,20 @@ static BOOL CRYPT_GetFuncFromReg(DWORD dwEncodingType, LPCSTR pszOID,
                         *ppvFuncAddr = GetProcAddress(lib, funcName);
                         if (*ppvFuncAddr)
                         {
-                            *phFuncAddr = (HCRYPTOIDFUNCADDR)lib;
-                            ret = TRUE;
+                            struct FuncAddr *addr =
+                             CryptMemAlloc(sizeof(struct FuncAddr));
+
+                            if (addr)
+                            {
+                                addr->lib = lib;
+                                *phFuncAddr = addr;
+                                ret = TRUE;
+                            }
+                            else
+                            {
+                                *phFuncAddr = NULL;
+                                FreeLibrary(lib);
+                            }
                         }
                         else
                         {
@@ -409,7 +426,13 @@ BOOL WINAPI CryptFreeOIDFunctionAddress(HCRYPTOIDFUNCADDR hFuncAddr,
      * and only unload it if it can be unloaded.  Also need to implement ref
      * counting on the functions.
      */
-    FreeLibrary((HMODULE)hFuncAddr);
+    if (hFuncAddr)
+    {
+        struct FuncAddr *addr = (struct FuncAddr *)hFuncAddr;
+
+        FreeLibrary(addr->lib);
+        CryptMemFree(addr);
+    }
     return TRUE;
 }
 
