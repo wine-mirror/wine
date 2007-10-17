@@ -264,6 +264,8 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 
     old_client_rect = data->client_rect;
 
+    if (!data->whole_window) swp_flags |= SWP_NOCOPYBITS;  /* we can't rely on X11 to move the bits */
+
     if (!(win = WIN_GetPtr( hwnd ))) return FALSE;
     if (win == WND_OTHER_PROCESS)
     {
