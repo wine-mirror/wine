@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <wine/test.h>
+#include "wine/test.h"
 #include <winbase.h>
 #include <windef.h>
 #include <winnt.h>
@@ -835,9 +835,12 @@ static void test_actctx(void)
         test_detailed_info(handle, &detailed_info1);
         test_info_in_assembly(handle, 1, &manifest1_info);
 
-        b = CloseHandle(handle);
-        ok(!b, "CloseHandle succeeded\n");
-        ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() == %u\n", GetLastError());
+        if (!IsDebuggerPresent())  /* CloseHandle will generate an exception if a debugger is present */
+        {
+            b = CloseHandle(handle);
+            ok(!b, "CloseHandle succeeded\n");
+            ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() == %u\n", GetLastError());
+        }
 
         pReleaseActCtx(handle);
     }
