@@ -1303,23 +1303,51 @@ static unsigned int get_window_update_flags( struct window *win, struct window *
 }
 
 
-/* expose a region of a window on its parent */
-/* the region is in window coordinates */
-static void expose_window( struct window *win, struct region *region )
+/* expose the areas revealed by a vis region change on the window parent */
+/* returns the region exposed on the window itself (in client coordinates) */
+static struct region *expose_window( struct window *win, const rectangle_t *old_window_rect,
+                                     struct region *old_vis_rgn )
 {
     struct window *parent = win;
-    int offset_x = win->window_rect.left - win->client_rect.left;
-    int offset_y = win->window_rect.top - win->client_rect.top;
+    struct region *new_vis_rgn, *exposed_rgn;
 
-    if (win->parent && !is_desktop_window(win->parent))
+    if (!(new_vis_rgn = get_visible_region( win, DCX_WINDOW ))) return NULL;
+
+    if ((exposed_rgn = create_empty_region()))
     {
-        offset_x += win->client_rect.left;
-        offset_y += win->client_rect.top;
-        parent = win->parent;
+        if (subtract_region( exposed_rgn, new_vis_rgn, old_vis_rgn ) && !is_region_empty( exposed_rgn ))
+        {
+            /* make it relative to the new client area */
+            offset_region( exposed_rgn, win->window_rect.left - win->client_rect.left,
+                           win->window_rect.top - win->client_rect.top );
+        }
+        else
+        {
+            free_region( exposed_rgn );
+            exposed_rgn = NULL;
+        }
     }
-    offset_region( region, offset_x, offset_y );
-    redraw_window( parent, region, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
-    offset_region( region, -offset_x, -offset_y );
+
+    /* make it relative to the old window pos for subtracting */
+    offset_region( new_vis_rgn, win->window_rect.left - old_window_rect->left,
+                   win->window_rect.top - old_window_rect->top  );
+
+    if (subtract_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ) && !is_region_empty( new_vis_rgn ))
+    {
+        /* make it relative to new client rect again */
+        int offset_x = old_window_rect->left - win->client_rect.left;
+        int offset_y = old_window_rect->top - win->client_rect.top;
+        if (win->parent && !is_desktop_window(win->parent))
+        {
+            offset_x += win->client_rect.left;
+            offset_y += win->client_rect.top;
+            parent = win->parent;
+        }
+        offset_region( new_vis_rgn, offset_x, offset_y );
+        redraw_window( parent, new_vis_rgn, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
+    }
+    free_region( new_vis_rgn );
+    return exposed_rgn;
 }
 
 
@@ -1329,7 +1357,7 @@ static void set_window_pos( struct window *win, struct window *previous,
                             const rectangle_t *client_rect, const rectangle_t *visible_rect,
                             const rectangle_t *valid_rects )
 {
-    struct region *old_vis_rgn = NULL, *new_vis_rgn;
+    struct region *old_vis_rgn = NULL, *exposed_rgn = NULL;
     const rectangle_t old_window_rect = win->window_rect;
     const rectangle_t old_visible_rect = win->visible_rect;
     const rectangle_t old_client_rect = win->client_rect;
@@ -1357,23 +1385,10 @@ static void set_window_pos( struct window *win, struct window *previous,
     /* if the window is not visible, everything is easy */
     if (!visible) return;
 
-    if (!(new_vis_rgn = get_visible_region( win, DCX_WINDOW )))
-    {
-        free_region( old_vis_rgn );
-        clear_error();  /* ignore error since the window info has been modified already */
-        return;
-    }
-
     /* expose anything revealed by the change */
 
     if (!(swp_flags & SWP_NOREDRAW))
-    {
-        offset_region( old_vis_rgn, old_window_rect.left - window_rect->left,
-                       old_window_rect.top - window_rect->top );
-        if (xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ))
-            expose_window( win, new_vis_rgn );
-    }
-    free_region( old_vis_rgn );
+        exposed_rgn = expose_window( win, &old_window_rect, old_vis_rgn );
 
     if (!(win->style & WS_VISIBLE))
     {
@@ -1443,19 +1458,28 @@ static void set_window_pos( struct window *win, struct window *previous,
             else if (valid_rects)
                 set_region_rect( tmp, &valid_rects[0] );
 
-            set_region_rect( new_vis_rgn, window_rect );
-            if (subtract_region( tmp, new_vis_rgn, tmp ))
+            set_region_rect( old_vis_rgn, window_rect );
+            if (!subtract_region( tmp, old_vis_rgn, tmp )) free_region( tmp );
+            else
             {
                 if (!is_desktop_window(win))
                     offset_region( tmp, -client_rect->left, -client_rect->top );
-                redraw_window( win, tmp, 1, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
+                if (exposed_rgn)
+                {
+                    union_region( exposed_rgn, exposed_rgn, tmp );
+                    free_region( tmp );
+                }
+                else exposed_rgn = tmp;
             }
-            free_region( tmp );
         }
     }
 
+    if (exposed_rgn)
+        redraw_window( win, exposed_rgn, 1, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
+
 done:
-    free_region( new_vis_rgn );
+    free_region( old_vis_rgn );
+    if (exposed_rgn) free_region( exposed_rgn );
     clear_error();  /* we ignore out of memory errors once the new rects have been set */
 }
 
@@ -1463,7 +1487,7 @@ done:
 /* set the window region, updating the update region if necessary */
 static void set_window_region( struct window *win, struct region *region, int redraw )
 {
-    struct region *old_vis_rgn = NULL, *new_vis_rgn;
+    struct region *old_vis_rgn = NULL, *exposed_rgn;
 
     /* no need to redraw if window is not visible */
     if (redraw && !is_visible( win )) redraw = 0;
@@ -1473,12 +1497,11 @@ static void set_window_region( struct window *win, struct region *region, int re
     if (win->win_region) free_region( win->win_region );
     win->win_region = region;
 
-    if (old_vis_rgn && (new_vis_rgn = get_visible_region( win, DCX_WINDOW )))
+    /* expose anything revealed by the change */
+    if (old_vis_rgn && ((exposed_rgn = expose_window( win, &win->window_rect, old_vis_rgn ))))
     {
-        /* expose anything revealed by the change */
-        if (xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ))
-            expose_window( win, new_vis_rgn );
-        free_region( new_vis_rgn );
+        redraw_window( win, exposed_rgn, 1, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
+        free_region( exposed_rgn );
     }
 
     if (old_vis_rgn) free_region( old_vis_rgn );
