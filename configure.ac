@@ -1047,6 +1047,19 @@ dnl **** Check for fontconfig ****
 if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
 then
     WINE_CHECK_SONAME(fontconfig,FcInit)
+elif test -n "$X_CFLAGS"
+then
+    dnl fontconfig is in the X directory on Mac OS X
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+    $as_unset ac_cv_header_fontconfig_fontconfig_h
+    AC_CHECK_HEADERS([fontconfig/fontconfig.h])
+    CPPFLAGS="$ac_save_CPPFLAGS"
+    if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
+    then
+        AC_SUBST(FONTCONFIGINCL,"$X_CFLAGS")
+        WINE_CHECK_SONAME(fontconfig,FcInit,,,[$X_LIBS])
+    fi
 fi
 WINE_NOTICE_IF([test "x$ac_cv_lib_soname_fontconfig" = "x"],[fontconfig development files not found.
 Wine will be built without fontconfig support.])
