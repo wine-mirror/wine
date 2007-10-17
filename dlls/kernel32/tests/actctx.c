@@ -995,7 +995,7 @@ static void run_child_process(void)
 
     si.cb = sizeof(si);
     winetest_get_mainargs( &argv );
-    sprintf(cmdline, "%s %s manifest1", argv[0], argv[1]);
+    sprintf(cmdline, "\"%s\" %s manifest1", argv[0], argv[1]);
     ok(CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL,
                      &si, &pi) != 0, "Could not create process: %u\n", GetLastError());
     CloseHandle(pi.hThread);
