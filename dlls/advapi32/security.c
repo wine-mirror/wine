@@ -552,8 +552,8 @@ AdjustTokenGroups( HANDLE TokenHandle, BOOL ResetToDefault, PTOKEN_GROUPS NewSta
  */
 BOOL WINAPI
 AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
-                       LPVOID NewState, DWORD BufferLength,
-                       LPVOID PreviousState, LPDWORD ReturnLength )
+                       PTOKEN_PRIVILEGES NewState, DWORD BufferLength,
+                       PTOKEN_PRIVILEGES PreviousState, LPDWORD ReturnLength )
 {
     NTSTATUS status;
 
