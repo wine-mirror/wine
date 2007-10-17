@@ -1546,7 +1546,7 @@ static void test_schannel_provider(void)
 
 static void test_enum_container(void)
 {
-    BYTE abContainerName[256];
+    BYTE abContainerName[MAX_PATH + 2]; /* Larger than maximum name len */
     DWORD dwBufferLen;
     BOOL result, fFound = FALSE;
 
