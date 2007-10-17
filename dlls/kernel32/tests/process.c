@@ -424,17 +424,16 @@ static int strCmp(const char* s1, const char* s2, BOOL sensitive)
     return (sensitive) ? strcmp(s1, s2) : wtstrcasecmp(s1, s2);
 }
 
-#define okChildString(sect, key, expect) \
-    do { \
-        char* result = getChildString((sect), (key)); \
-        ok(strCmp(result, expect, 1) == 0, "%s:%s expected '%s', got '%s'\n", (sect), (key), (expect)?(expect):"(null)", result); \
-    } while (0)
+static void ok_child_string( int line, const char *sect, const char *key,
+                             const char *expect, int sensitive )
+{
+    char* result = getChildString( sect, key );
+    ok_(__FILE__, line)( strCmp(result, expect, sensitive) == 0, "%s:%s expected '%s', got '%s'\n",
+                         sect, key, expect ? expect : "(null)", result );
+}
 
-#define okChildIString(sect, key, expect) \
-    do { \
-        char* result = getChildString(sect, key); \
-        ok(strCmp(result, expect, 0) == 0, "%s:%s expected '%s', got '%s'\n", sect, key, expect, result); \
-    } while (0)
+#define okChildString(sect, key, expect) ok_child_string(__LINE__, (sect), (key), (expect), 1 )
+#define okChildIString(sect, key, expect) ok_child_string(__LINE__, (sect), (key), (expect), 0 )
 
 /* using !expect ensures that the test will fail if the sect/key isn't present
  * in result file
