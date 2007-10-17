@@ -278,6 +278,8 @@ BOOL WINAPI CryptInstallOIDFunctionAddress(HMODULE hModule,
 struct FuncAddr
 {
     HMODULE lib;
+    LPWSTR  dllList;
+    LPWSTR  currentDll;
 };
 
 static BOOL CRYPT_GetFuncFromReg(DWORD dwEncodingType, LPCSTR pszOID,
@@ -333,6 +335,7 @@ static BOOL CRYPT_GetFuncFromReg(DWORD dwEncodingType, LPCSTR pszOID,
                             if (addr)
                             {
                                 addr->lib = lib;
+                                addr->dllList = addr->currentDll = NULL;
                                 *phFuncAddr = addr;
                                 ret = TRUE;
                             }
@@ -430,19 +433,143 @@ BOOL WINAPI CryptFreeOIDFunctionAddress(HCRYPTOIDFUNCADDR hFuncAddr,
     {
         struct FuncAddr *addr = (struct FuncAddr *)hFuncAddr;
 
+        CryptMemFree(addr->dllList);
         FreeLibrary(addr->lib);
         CryptMemFree(addr);
     }
     return TRUE;
 }
 
+static BOOL CRYPT_GetFuncFromDll(LPCWSTR dll, LPCSTR func, HMODULE *lib,
+ void **ppvFuncAddr)
+{
+    BOOL ret = FALSE;
+
+    *lib = LoadLibraryW(dll);
+    if (*lib)
+    {
+        *ppvFuncAddr = GetProcAddress(*lib, func);
+        if (*ppvFuncAddr)
+            ret = TRUE;
+        else
+        {
+            FreeLibrary(*lib);
+            *lib = NULL;
+        }
+    }
+    return ret;
+}
+
 BOOL WINAPI CryptGetDefaultOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
  DWORD dwEncodingType, LPCWSTR pwszDll, DWORD dwFlags, void **ppvFuncAddr,
  HCRYPTOIDFUNCADDR *phFuncAddr)
 {
-    FIXME("(%p, %d, %s, %08x, %p, %p): stub\n", hFuncSet, dwEncodingType,
+    struct OIDFunctionSet *set = (struct OIDFunctionSet *)hFuncSet;
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %d, %s, %08x, %p, %p)\n", hFuncSet, dwEncodingType,
      debugstr_w(pwszDll), dwFlags, ppvFuncAddr, phFuncAddr);
-    return FALSE;
+
+    if (pwszDll)
+    {
+        HMODULE lib;
+
+        *phFuncAddr = NULL;
+        ret = CRYPT_GetFuncFromDll(pwszDll, set->name, &lib, ppvFuncAddr);
+        if (ret)
+        {
+            struct FuncAddr *addr = CryptMemAlloc(sizeof(struct FuncAddr));
+
+            if (addr)
+            {
+                addr->lib = lib;
+                addr->dllList = addr->currentDll = NULL;
+                *phFuncAddr = addr;
+            }
+            else
+            {
+                FreeLibrary(lib);
+                *ppvFuncAddr = NULL;
+                SetLastError(ERROR_OUTOFMEMORY);
+                ret = FALSE;
+            }
+        }
+        else
+            SetLastError(ERROR_FILE_NOT_FOUND);
+    }
+    else
+    {
+        struct FuncAddr *addr = (struct FuncAddr *)*phFuncAddr;
+
+        if (!addr)
+        {
+            DWORD size;
+
+            ret = CryptGetDefaultOIDDllList(hFuncSet, dwEncodingType, NULL,
+             &size);
+            if (ret)
+            {
+                LPWSTR dllList = CryptMemAlloc(size * sizeof(WCHAR));
+
+                if (dllList)
+                {
+                    ret = CryptGetDefaultOIDDllList(hFuncSet, dwEncodingType,
+                     dllList, &size);
+                    if (ret)
+                    {
+                        addr = CryptMemAlloc(sizeof(struct FuncAddr));
+                        if (addr)
+                        {
+                            addr->dllList = dllList;
+                            addr->currentDll = dllList;
+                            addr->lib = NULL;
+                            *phFuncAddr = addr;
+                        }
+                        else
+                        {
+                            CryptMemFree(dllList);
+                            SetLastError(ERROR_OUTOFMEMORY);
+                            ret = FALSE;
+                        }
+                    }
+                }
+                else
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    ret = FALSE;
+                }
+            }
+        }
+        if (addr)
+        {
+            if (!*addr->currentDll)
+            {
+                CryptFreeOIDFunctionAddress(*phFuncAddr, 0);
+                SetLastError(ERROR_FILE_NOT_FOUND);
+                *phFuncAddr = NULL;
+                ret = FALSE;
+            }
+            else
+            {
+                /* FIXME: as elsewhere, can't free until DllCanUnloadNow says
+                 * it's possible, and should defer unloading for some time to
+                 * avoid repeated LoadLibrary/FreeLibrary on the same dll.
+                 */
+                FreeLibrary(addr->lib);
+                ret = CRYPT_GetFuncFromDll(addr->currentDll, set->name,
+                 &addr->lib, ppvFuncAddr);
+                if (ret)
+                {
+                    /* Move past the current DLL */
+                    addr->currentDll += lstrlenW(addr->currentDll) + 1;
+                    *phFuncAddr = addr;
+                }
+                else
+                    SetLastError(ERROR_FILE_NOT_FOUND);
+            }
+        }
+    }
+    return ret;
 }
 
 /***********************************************************************
