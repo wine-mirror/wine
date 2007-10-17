@@ -163,7 +163,7 @@ static const WCHAR wndClass2W[] =
 static const WCHAR acr_manifest[] =
     {'a','c','r','.','m','a','n','i','f','e','s','t',0};
 
-static WCHAR app_dir[MAX_PATH], exe_path[MAX_PATH];
+static WCHAR app_dir[MAX_PATH], exe_path[MAX_PATH], work_dir[MAX_PATH], work_dir_subdir[MAX_PATH];
 static WCHAR app_manifest_path[MAX_PATH], manifest_path[MAX_PATH], depmanifest_path[MAX_PATH];
 
 static int strcmp_aw(LPCWSTR strw, const char *stra)
@@ -230,7 +230,7 @@ static const detailed_info_t detailed_info0 = {
 static const detailed_info_t detailed_info1 = {
     1, 1, ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE, manifest_path,
     ACTIVATION_CONTEXT_PATH_TYPE_NONE, ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE,
-    app_dir,
+    work_dir,
 };
 
 static const detailed_info_t detailed_info1_child = {
@@ -242,7 +242,7 @@ static const detailed_info_t detailed_info1_child = {
 static const detailed_info_t detailed_info2 = {
     1, 2, ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE, manifest_path,
     ACTIVATION_CONTEXT_PATH_TYPE_NONE, ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE,
-    app_dir,
+    work_dir,
 };
 
 static void test_detailed_info(HANDLE handle, const detailed_info_t *exinfo)
@@ -253,7 +253,7 @@ static void test_detailed_info(HANDLE handle, const detailed_info_t *exinfo)
 
     exsize = sizeof(ACTIVATION_CONTEXT_DETAILED_INFORMATION)
         + (exinfo->root_manifest_path ? (lstrlenW(exinfo->root_manifest_path)+1)*sizeof(WCHAR):0)
-        + (exinfo->app_dir ? (lstrlenW(app_dir)+1)*sizeof(WCHAR) : 0);
+        + (exinfo->app_dir ? (lstrlenW(exinfo->app_dir)+1)*sizeof(WCHAR) : 0);
 
     if(exsize != sizeof(ACTIVATION_CONTEXT_DETAILED_INFORMATION)) {
         size = 0xdeadbeef;
@@ -298,9 +298,9 @@ static void test_detailed_info(HANDLE handle, const detailed_info_t *exinfo)
     ok(detailed_info->ulAppDirPathType == exinfo->app_dir_type,
        "detailed_info->ulAppDirPathType=%u, expected %u\n", detailed_info->ulAppDirPathType,
        exinfo->app_dir_type);
-    ok(detailed_info->ulAppDirPathChars == (exinfo->app_dir ? lstrlenW(app_dir) : 0),
+    ok(detailed_info->ulAppDirPathChars == (exinfo->app_dir ? lstrlenW(exinfo->app_dir) : 0),
        "detailed_info->ulAppDirPathChars=%u, expected %u\n",
-       detailed_info->ulAppDirPathChars, exinfo->app_dir ? lstrlenW(app_dir) : 0);
+       detailed_info->ulAppDirPathChars, exinfo->app_dir ? lstrlenW(exinfo->app_dir) : 0);
     if(exinfo->root_manifest_path) {
         ok(detailed_info->lpRootManifestPath != NULL, "detailed_info->lpRootManifestPath == NULL\n");
         if(detailed_info->lpRootManifestPath)
@@ -314,8 +314,8 @@ static void test_detailed_info(HANDLE handle, const detailed_info_t *exinfo)
     if(exinfo->app_dir) {
         ok(detailed_info->lpAppDirPath != NULL, "detailed_info->lpAppDirPath == NULL\n");
         if(detailed_info->lpAppDirPath)
-            ok(!lstrcmpiW(app_dir, detailed_info->lpAppDirPath),
-               "unexpected detailed_info->lpAppDirPath %s\n",strw(detailed_info->lpAppDirPath));
+            ok(!lstrcmpiW(exinfo->app_dir, detailed_info->lpAppDirPath),
+               "unexpected detailed_info->lpAppDirPath\n%s\n",strw(detailed_info->lpAppDirPath));
     }else {
         ok(detailed_info->lpAppDirPath == NULL, "detailed_info->lpAppDirPath != NULL\n");
     }
@@ -959,6 +959,29 @@ static void test_actctx(void)
         test_info_in_assembly(handle, 2, &manifest_comctrl_info);
         pReleaseActCtx(handle);
     }
+
+    trace("manifest1 in subdir\n");
+
+    CreateDirectoryW(work_dir_subdir, NULL);
+    if (SetCurrentDirectoryW(work_dir_subdir))
+    {
+        /* the lpAddDirPath will point to the directory with the manifest */
+        if(!create_manifest_file("..\\test1.manifest", manifest1, NULL, NULL)) {
+            skip("Could not create manifest file\n");
+            return;
+        }
+        handle = test_create("..\\test1.manifest", manifest1);
+        DeleteFileA("..\\test1.manifest");
+        if(handle != INVALID_HANDLE_VALUE) {
+            test_detailed_info(handle, &detailed_info1);
+            test_info_in_assembly(handle, 1, &manifest1_info);
+            pReleaseActCtx(handle);
+        }
+        SetCurrentDirectoryW(work_dir);
+    }
+    else
+        skip("Couldn't change directory\n");
+    RemoveDirectoryW(work_dir_subdir);
 }
 
 static void test_app_manifest(void)
@@ -1008,13 +1031,23 @@ static void run_child_process(void)
 static void init_paths(void)
 {
     LPWSTR ptr;
+    WCHAR last;
 
     static const WCHAR dot_manifest[] = {'.','M','a','n','i','f','e','s','t',0};
+    static const WCHAR backslash[] = {'\\',0};
+    static const WCHAR subdir[] = {'T','e','s','t','S','u','b','d','i','r','\\',0};
 
     GetModuleFileNameW(NULL, exe_path, sizeof(exe_path)/sizeof(WCHAR));
     lstrcpyW(app_dir, exe_path);
-    for(ptr=app_dir+lstrlenW(app_dir); *ptr != '\\'; ptr--);
+    for(ptr=app_dir+lstrlenW(app_dir); *ptr != '\\' && *ptr != '/'; ptr--);
     ptr[1] = 0;
+
+    GetCurrentDirectoryW(MAX_PATH, work_dir);
+    last = work_dir[lstrlenW(work_dir) - 1];
+    if (last != '\\' && last != '/')
+        lstrcatW(work_dir, backslash);
+    lstrcpyW(work_dir_subdir, work_dir);
+    lstrcatW(work_dir_subdir, subdir);
 
     GetModuleFileNameW(NULL, app_manifest_path, sizeof(app_manifest_path)/sizeof(WCHAR));
     lstrcpyW(app_manifest_path+lstrlenW(app_manifest_path), dot_manifest);
