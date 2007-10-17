@@ -180,7 +180,7 @@ static DWORD strlen_aw(const char *str)
     return MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0) - 1;
 }
 
-static BOOL create_manifest_file(const char *filename, const char *manifest,
+static BOOL create_manifest_file(const char *filename, const char *manifest, int manifest_len,
                                  const char *depfile, const char *depmanifest)
 {
     DWORD size;
@@ -190,12 +190,15 @@ static BOOL create_manifest_file(const char *filename, const char *manifest,
     MultiByteToWideChar( CP_ACP, 0, filename, -1, path, MAX_PATH );
     GetFullPathNameW(path, sizeof(manifest_path)/sizeof(WCHAR), manifest_path, NULL);
 
+    if (manifest_len == -1)
+        manifest_len = strlen(manifest);
+
     file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                        FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
     if(file == INVALID_HANDLE_VALUE)
         return FALSE;
-    WriteFile(file, manifest, strlen(manifest), &size, NULL);
+    WriteFile(file, manifest, manifest_len, &size, NULL);
     CloseHandle(file);
 
     if (depmanifest)
@@ -211,6 +214,19 @@ static BOOL create_manifest_file(const char *filename, const char *manifest,
         CloseHandle(file);
     }
     return TRUE;
+}
+
+static BOOL create_wide_manifest(const char *filename, const char *manifest, BOOL fBOM)
+{
+    WCHAR *wmanifest = HeapAlloc(GetProcessHeap(), 0, (strlen(manifest)+2) * sizeof(WCHAR));
+    BOOL ret;
+    int offset = (fBOM ? 0 : 1);
+
+    MultiByteToWideChar(CP_ACP, 0, manifest, -1, &wmanifest[1], (strlen(manifest)+1) * sizeof(WCHAR));
+    wmanifest[0] = 0xfeff;
+    ret = create_manifest_file(filename, (char *)&wmanifest[offset], (strlen(manifest)+1-offset) * sizeof(WCHAR), NULL, NULL);
+    HeapFree(GetProcessHeap(), 0, wmanifest);
+    return ret;
 }
 
 typedef struct {
@@ -581,7 +597,7 @@ static void test_create_and_fail(const char *manifest, const char *depmanifest, 
     actctx.cbSize = sizeof(ACTCTXW);
     actctx.lpSource = path;
 
-    create_manifest_file("bad.manifest", manifest, "testdep.manifest", depmanifest);
+    create_manifest_file("bad.manifest", manifest, -1, "testdep.manifest", depmanifest);
     handle = pCreateActCtxW(&actctx);
     if (todo) todo_wine
     {
@@ -596,6 +612,26 @@ static void test_create_and_fail(const char *manifest, const char *depmanifest, 
     if (handle != INVALID_HANDLE_VALUE) pReleaseActCtx( handle );
     DeleteFileA("bad.manifest");
     DeleteFileA("testdep.manifest");
+}
+
+static void test_create_wide_and_fail(const char *manifest, BOOL fBOM)
+{
+    ACTCTXW actctx;
+    HANDLE handle;
+    WCHAR path[MAX_PATH];
+
+    MultiByteToWideChar( CP_ACP, 0, "bad.manifest", -1, path, MAX_PATH );
+    memset(&actctx, 0, sizeof(ACTCTXW));
+    actctx.cbSize = sizeof(ACTCTXW);
+    actctx.lpSource = path;
+
+    create_wide_manifest("bad.manifest", manifest, fBOM);
+    handle = pCreateActCtxW(&actctx);
+    ok(handle == INVALID_HANDLE_VALUE, "handle != INVALID_HANDLE_VALUE\n");
+    ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "GetLastError == %u\n", GetLastError());
+
+    if (handle != INVALID_HANDLE_VALUE) pReleaseActCtx( handle );
+    DeleteFileA("bad.manifest");
 }
 
 static void test_create_fail(void)
@@ -629,6 +665,8 @@ static void test_create_fail(void)
     test_create_and_fail(wrong_manifest7, NULL, 1 );
     trace("wrong_manifest8\n");
     test_create_and_fail(wrong_manifest8, NULL, 0 );
+    trace("UTF-16 manifest1 without BOM\n");
+    test_create_wide_and_fail(manifest1, FALSE );
     trace("manifest2\n");
     test_create_and_fail(manifest2, NULL, 0 );
     trace("manifest2+depmanifest1\n");
@@ -822,7 +860,7 @@ static void test_actctx(void)
         pReleaseActCtx(handle);
     }
 
-    if(!create_manifest_file("test1.manifest", manifest1, NULL, NULL)) {
+    if(!create_manifest_file("test1.manifest", manifest1, -1, NULL, NULL)) {
         skip("Could not create manifest file\n");
         return;
     }
@@ -845,7 +883,7 @@ static void test_actctx(void)
         pReleaseActCtx(handle);
     }
 
-    if(!create_manifest_file("test2.manifest", manifest2, "testdep.manifest", testdep_manifest1)) {
+    if(!create_manifest_file("test2.manifest", manifest2, -1, "testdep.manifest", testdep_manifest1)) {
         skip("Could not create manifest file\n");
         return;
     }
@@ -862,7 +900,7 @@ static void test_actctx(void)
         pReleaseActCtx(handle);
     }
 
-    if(!create_manifest_file("test3.manifest", manifest2, "testdep.manifest", testdep_manifest2)) {
+    if(!create_manifest_file("test3.manifest", manifest2, -1, "testdep.manifest", testdep_manifest2)) {
         skip("Could not create manifest file\n");
         return;
     }
@@ -891,7 +929,7 @@ static void test_actctx(void)
 
     trace("manifest2 depmanifest3\n");
 
-    if(!create_manifest_file("test2-3.manifest", manifest2, "testdep.manifest", testdep_manifest3)) {
+    if(!create_manifest_file("test2-3.manifest", manifest2, -1, "testdep.manifest", testdep_manifest3)) {
         skip("Could not create manifest file\n");
         return;
     }
@@ -920,7 +958,7 @@ static void test_actctx(void)
 
     trace("manifest3\n");
 
-    if(!create_manifest_file("test3.manifest", manifest3, NULL, NULL)) {
+    if(!create_manifest_file("test3.manifest", manifest3, -1, NULL, NULL)) {
         skip("Could not create manifest file\n");
         return;
     }
@@ -945,7 +983,7 @@ static void test_actctx(void)
 
     trace("manifest4\n");
 
-    if(!create_manifest_file("test4.manifest", manifest4, NULL, NULL)) {
+    if(!create_manifest_file("test4.manifest", manifest4, -1, NULL, NULL)) {
         skip("Could not create manifest file\n");
         return;
     }
@@ -965,8 +1003,7 @@ static void test_actctx(void)
     CreateDirectoryW(work_dir_subdir, NULL);
     if (SetCurrentDirectoryW(work_dir_subdir))
     {
-        /* the lpAddDirPath will point to the directory with the manifest */
-        if(!create_manifest_file("..\\test1.manifest", manifest1, NULL, NULL)) {
+        if(!create_manifest_file("..\\test1.manifest", manifest1, -1, NULL, NULL)) {
             skip("Could not create manifest file\n");
             return;
         }
@@ -982,6 +1019,21 @@ static void test_actctx(void)
     else
         skip("Couldn't change directory\n");
     RemoveDirectoryW(work_dir_subdir);
+
+    trace("UTF-16 manifest1, with BOM\n");
+    if(!create_wide_manifest("test1.manifest", manifest1, TRUE)) {
+        skip("Could not create manifest file\n");
+        return;
+    }
+
+    handle = test_create("test1.manifest", manifest1);
+    DeleteFileA("test1.manifest");
+    if (handle != INVALID_HANDLE_VALUE) {
+        test_detailed_info(handle, &detailed_info1);
+        test_info_in_assembly(handle, 1, &manifest1_info);
+        pReleaseActCtx(handle);
+    }
+
 }
 
 static void test_app_manifest(void)
@@ -1011,7 +1063,7 @@ static void run_child_process(void)
 
     GetModuleFileNameA(NULL, path, MAX_PATH);
     strcat(path, ".manifest");
-    if(!create_manifest_file(path, manifest1, NULL, NULL)) {
+    if(!create_manifest_file(path, manifest1, -1, NULL, NULL)) {
         skip("Could not create manifest file\n");
         return;
     }

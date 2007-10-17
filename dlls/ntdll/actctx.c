@@ -1484,6 +1484,7 @@ static NTSTATUS parse_manifest( struct actctx_loader* acl, struct assembly_ident
     xmlbuf_t xmlbuf;
     NTSTATUS status;
     struct assembly *assembly;
+    int unicode_tests;
 
     TRACE( "parsing manifest loaded from %s base dir %s\n", debugstr_w(filename), debugstr_w(directory) );
 
@@ -1497,7 +1498,8 @@ static NTSTATUS parse_manifest( struct actctx_loader* acl, struct assembly_ident
     assembly->manifest.type = assembly->manifest.info ? ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE
                                                       : ACTIVATION_CONTEXT_PATH_TYPE_NONE;
 
-    if (!RtlIsTextUnicode( buffer, size, NULL ))
+    unicode_tests = IS_TEXT_UNICODE_SIGNATURE;
+    if (!RtlIsTextUnicode( buffer, size, &unicode_tests ))
     {
         /* let's assume utf-8 for now */
         int len = wine_utf8_mbstowcs( 0, buffer, size, NULL, 0 );
