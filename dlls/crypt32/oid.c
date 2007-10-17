@@ -602,10 +602,6 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
     TRACE("(%x, %s, %s, %s, %s)\n", dwEncodingType, pszFuncName,
      debugstr_a(pszOID), debugstr_w(pwszDll), pszOverrideFuncName);
 
-    /* This only registers functions for encoding certs, not messages */
-    if (!GET_CERT_ENCODING_TYPE(dwEncodingType))
-        return TRUE;
-
     /* Native does nothing pwszDll is NULL */
     if (!pwszDll)
         return TRUE;
@@ -665,9 +661,6 @@ BOOL WINAPI CryptUnregisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
 
     TRACE("%x %s %s\n", dwEncodingType, debugstr_a(pszFuncName),
      debugstr_a(pszOID));
-
-    if (!GET_CERT_ENCODING_TYPE(dwEncodingType))
-        return TRUE;
 
     if (!pszFuncName || !pszOID)
     {
