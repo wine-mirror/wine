@@ -53,9 +53,9 @@ typedef struct tagMSICOLUMNHASHENTRY
 
 typedef struct tagMSICOLUMNINFO
 {
-    LPCWSTR tablename;
+    LPWSTR tablename;
     UINT   number;
-    LPCWSTR colname;
+    LPWSTR colname;
     UINT   type;
     UINT   offset;
     INT    ref_count;
@@ -87,12 +87,12 @@ static const WCHAR szStringPool[] = {
     '_','S','t','r','i','n','g','P','o','o','l',0 };
 
 /* information for default tables */
-static const WCHAR szTables[]  = { '_','T','a','b','l','e','s',0 };
-static const WCHAR szTable[]  = { 'T','a','b','l','e',0 };
-static const WCHAR szName[]    = { 'N','a','m','e',0 };
-static const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
-static const WCHAR szNumber[]  = { 'N','u','m','b','e','r',0 };
-static const WCHAR szType[]    = { 'T','y','p','e',0 };
+static WCHAR szTables[]  = { '_','T','a','b','l','e','s',0 };
+static WCHAR szTable[]  = { 'T','a','b','l','e',0 };
+static WCHAR szName[]    = { 'N','a','m','e',0 };
+static WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
+static WCHAR szNumber[]  = { 'N','u','m','b','e','r',0 };
+static WCHAR szType[]    = { 'T','y','p','e',0 };
 
 /* These tables are written into (the .hash_table part).
  * Do not mark them const.
@@ -933,8 +933,8 @@ static void msi_free_colinfo( MSICOLUMNINFO *colinfo, UINT count )
 
     for( i=0; i<count; i++ )
     {
-        msi_free( (LPWSTR) colinfo[i].tablename );
-        msi_free( (LPWSTR) colinfo[i].colname );
+        msi_free( colinfo[i].tablename );
+        msi_free( colinfo[i].colname );
         msi_free( colinfo[i].hash_table );
     }
 }
