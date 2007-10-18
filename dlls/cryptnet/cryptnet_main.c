@@ -22,6 +22,7 @@
 #include "wine/debug.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "wincrypt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptnet);
 
@@ -43,13 +44,23 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
    return TRUE;
 }
 
+static const WCHAR cryptNet[] = { 'c','r','y','p','t','n','e','t','.',
+   'd','l','l',0 };
+static const WCHAR ldapProvOpenStore[] = { 'L','d','a','p','P','r','o','v',
+   'O','p','e','S','t','o','r','e',0 };
+
 /***********************************************************************
  *    DllRegisterServer (CRYPTNET.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-   FIXME("stub\n");
-
+   TRACE("\n");
+   CryptRegisterDefaultOIDFunction(X509_ASN_ENCODING,
+    CRYPT_OID_VERIFY_REVOCATION_FUNC, 0, cryptNet);
+   CryptRegisterOIDFunction(0, CRYPT_OID_OPEN_STORE_PROV_FUNC, "Ldap",
+    cryptNet, "LdapProvOpenStore");
+   CryptRegisterOIDFunction(0, CRYPT_OID_OPEN_STORE_PROV_FUNC,
+    CERT_STORE_PROV_LDAP_W, cryptNet, "LdapProvOpenStore");
    return S_OK;
 }
 
@@ -58,7 +69,11 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-   FIXME("stub\n");
-
+   TRACE("\n");
+   CryptUnregisterDefaultOIDFunction(X509_ASN_ENCODING,
+    CRYPT_OID_VERIFY_REVOCATION_FUNC, cryptNet);
+   CryptUnregisterOIDFunction(0, CRYPT_OID_OPEN_STORE_PROV_FUNC, "Ldap");
+   CryptUnregisterOIDFunction(0, CRYPT_OID_OPEN_STORE_PROV_FUNC,
+    CERT_STORE_PROV_LDAP_W);
    return S_OK;
 }
