@@ -4757,12 +4757,13 @@ static UINT ACTION_InstallODBC( MSIPACKAGE *package )
 
 #define check_flag_combo(x, y) ((x) & ~(y)) == (y)
 
-static LONG env_set_flags( LPCWSTR *name, LPWSTR *value, DWORD *flags )
+static LONG env_set_flags( LPCWSTR *name, LPCWSTR *value, DWORD *flags )
 {
     LPCWSTR cptr = *name;
-    LPWSTR ptr = *value;
+    LPCWSTR ptr = *value;
 
     static const WCHAR prefix[] = {'[','~',']',0};
+    static const int prefix_len = 3;
 
     *flags = 0;
     while (*cptr)
@@ -4790,18 +4791,18 @@ static LONG env_set_flags( LPCWSTR *name, LPWSTR *value, DWORD *flags )
         return ERROR_FUNCTION_FAILED;
     }
 
-    if (!strncmpW(ptr, prefix, lstrlenW(prefix)))
+    if (!strncmpW(ptr, prefix, prefix_len))
     {
-        *flags |= ENV_MOD_PREFIX;
+        *flags |= ENV_MOD_APPEND;
         *value += lstrlenW(prefix);
     }
-    else
+    else if (lstrlenW(*value) >= prefix_len)
     {
-        ptr += lstrlenW(ptr) - lstrlenW(prefix) - 1;
+        ptr += lstrlenW(ptr) - prefix_len;
         if (!lstrcmpW(ptr, prefix))
         {
-            *flags |= ENV_MOD_APPEND;
-            *ptr = '\0';
+            *flags |= ENV_MOD_PREFIX;
+            /* the "[~]" will be removed by deformat_string */;
         }
     }
 
@@ -4823,7 +4824,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     MSIPACKAGE *package = param;
     LPCWSTR name, value, comp;
     LPWSTR data = NULL, newval = NULL;
-    LPWSTR deformatted, ptr;
+    LPWSTR deformatted = NULL, ptr;
     DWORD flags, type, size;
     LONG res;
     HKEY env = NULL, root = HKEY_CURRENT_USER;
@@ -4840,13 +4841,16 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     value = MSI_RecordGetString(rec, 3);
     comp = MSI_RecordGetString(rec, 4);
 
-    deformat_string(package, value, &deformatted);
-    if (!deformatted)
-        return ERROR_OUTOFMEMORY;
-
-    res = env_set_flags(&name, &deformatted, &flags);
+    res = env_set_flags(&name, &value, &flags);
     if (res != ERROR_SUCCESS)
        goto done;
+
+    deformat_string(package, value, &deformatted);
+    if (!deformatted)
+    {
+        res = ERROR_OUTOFMEMORY;
+        goto done;
+    }
 
     value = deformatted;
 
