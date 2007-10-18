@@ -39,6 +39,8 @@ static const WCHAR WC_EDITW[] = {'E','d','i','t',0};
 
 #define NUMCLASSWORDS 4
 
+#define IS_WNDPROC_HANDLE(x) (((ULONG_PTR)(x) >> 16) == (~((ULONG_PTR)0) >> 16))
+
 static LRESULT WINAPI ClassTest_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     return DefWindowProcW (hWnd, msg, wParam, lParam);
@@ -565,12 +567,23 @@ static void test_instances(void)
     check_thread_instance( "EDIT", (HINSTANCE)0x12345678, (HINSTANCE)0x12345678, (HINSTANCE)0xdeadbeef );
 }
 
-static void test_defwndproc(void)
+static void test_builtinproc(void)
 {
+    /* Edit behaves differently. ScrollBar have currently only a Unicode winproc */
+    static const CHAR NORMAL_CLASSES[][10] = {
+        "Button",
+        "Static",
+        "ComboBox",
+        "ComboLBox",
+        "ListBox",
+        "#32770",  /* dialog */
+    };
+    static const int NUM_NORMAL_CLASSES = (sizeof(NORMAL_CLASSES)/sizeof(NORMAL_CLASSES[0]));
     static const char classA[] = "deftest";
     static const WCHAR classW[] = {'d','e','f','t','e','s','t',0};
     WCHAR unistring[] = {0x142, 0x40e, 0x3b4, 0};  /* a string that would be destoryed by a W->A->W conversion */
     WNDPROC pDefWindowProcA, pDefWindowProcW;
+    WNDPROC oldproc;
     WNDCLASSEXA cls;  /* the memory layout of WNDCLASSEXA and WNDCLASSEXW is the same */
     WCHAR buf[128];
     ATOM atom;
@@ -662,10 +675,43 @@ static void test_defwndproc(void)
     DestroyWindow(hwnd);
     UnregisterClass((LPSTR)(DWORD_PTR)atom, GetModuleHandle(NULL));
 
-    /* calling built-in and custom winprocs with CallWindowProc[AW]. Despite
-     * a slightly different nature the end result is the same */
+    /* For most of the builtin controls both GetWindowLongPtrA and W returns a pointer that is executed directly
+     * by CallWindowProcA/W */
+    for (i = 0; i < NUM_NORMAL_CLASSES; i++)
+    {
+        WNDPROC procA, procW;
+        hwnd = CreateWindowExA(0, NORMAL_CLASSES[i], classA, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 680, 260,
+            NULL, NULL, NULL, 0);
+        ok(hwnd != NULL, "Couldn't create window of class %s\n", NORMAL_CLASSES[i]);
+        SetWindowText(hwnd, classA);  /* ComboBox needs this */
+        procA = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC);
+        procW = (WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC);
+        ok(!IS_WNDPROC_HANDLE(procA), "procA should not be a handle for %s (%p)\n", NORMAL_CLASSES[i], procA);
+        ok(!IS_WNDPROC_HANDLE(procW), "procW should not be a handle for %s (%p)\n", NORMAL_CLASSES[i], procW);
+        CallWindowProcA(procA, hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+        ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT A/A invalid return for class %s\n", NORMAL_CLASSES[i]);
+        CallWindowProcA(procW, hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+        ok(memcmp(buf, classW, sizeof(classW)) == 0, "WM_GETTEXT A/W invalid return for class %s\n", NORMAL_CLASSES[i]);
+        CallWindowProcW(procA, hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+        ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT W/A invalid return for class %s\n", NORMAL_CLASSES[i]);
+        CallWindowProcW(procW, hwnd, WM_GETTEXT, 120, (LPARAM)buf);
+        ok(memcmp(buf, classW, sizeof(classW)) == 0, "WM_GETTEXT W/W invalid return for class %s\n", NORMAL_CLASSES[i]);
+
+        oldproc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)ClassTest_WndProc);
+        ok(IS_WNDPROC_HANDLE(oldproc) == FALSE, "Class %s shouldn't return a handle\n", NORMAL_CLASSES[i]);
+        DestroyWindow(hwnd);
+    }
+
+    /* Edit controls are special - they return a wndproc handle when GetWindowLongPtr is called with a different A/W.
+     * On the other hand there is no W->A->W conversion so this control is treated specially. */
     hwnd = CreateWindowW(WC_EDITW, unistring, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, NULL, 0);
+    /* GetClassLongPtr returns that both the Unicode and ANSI wndproc */
+    ok(IS_WNDPROC_HANDLE(GetClassLongPtrA(hwnd, GCLP_WNDPROC)) == FALSE, "Edit control class should have a Unicode wndproc\n");
+    ok(IS_WNDPROC_HANDLE(GetClassLongPtrW(hwnd, GCLP_WNDPROC)) == FALSE, "Edit control class should have a ANSI wndproc\n");
+    /* But GetWindowLongPtr returns only a handle for the ANSI one */
+    ok(IS_WNDPROC_HANDLE(GetWindowLongPtrA(hwnd, GWLP_WNDPROC)), "Edit control should return a wndproc handle\n");
+    ok(!IS_WNDPROC_HANDLE(GetWindowLongPtrW(hwnd, GWLP_WNDPROC)), "Edit control shouldn't return a W wndproc handle\n");
     CallWindowProcW((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
     ok(memcmp(buf, unistring, sizeof(unistring)) == 0, "WM_GETTEXT invalid return\n");
     CallWindowProcA((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
@@ -677,7 +723,9 @@ static void test_defwndproc(void)
     CallWindowProcA((WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
     ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT invalid return\n");
 
-    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)ClassTest_WndProc2);
+    oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)ClassTest_WndProc2);
+    /* SetWindowLongPtr returns a wndproc handle - like GetWindowLongPtr */
+    ok(IS_WNDPROC_HANDLE(oldproc), "Edit control should return a wndproc handle\n");
     ok(IsWindowUnicode(hwnd) == FALSE, "SetWindowLongPtrA should have changed window to ANSI\n");
     SetWindowTextA(hwnd, classA);  /* Windows resets the title to WideStringToMultiByte(unistring) */
     memset(buf, 0, sizeof(buf));
@@ -696,6 +744,12 @@ static void test_defwndproc(void)
     hwnd = CreateWindowA(WC_EDITA, classA, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, NULL, 0);
 
+    /* GetClassLongPtr returns that both the Unicode and ANSI wndproc */
+    ok(!IS_WNDPROC_HANDLE(GetClassLongPtrA(hwnd, GCLP_WNDPROC)), "Edit control class should have a Unicode wndproc\n");
+    ok(!IS_WNDPROC_HANDLE(GetClassLongPtrW(hwnd, GCLP_WNDPROC)), "Edit control class should have a ANSI wndproc\n");
+    /* But GetWindowLongPtr returns only a handle for the Unicode one */
+    ok(!IS_WNDPROC_HANDLE(GetWindowLongPtrA(hwnd, GWLP_WNDPROC)), "Edit control shouldn't return an A wndproc handle\n");
+    ok(IS_WNDPROC_HANDLE(GetWindowLongPtrW(hwnd, GWLP_WNDPROC)), "Edit control should return a wndproc handle\n");
     CallWindowProcA((WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
     ok(memcmp(buf, classA, sizeof(classA)) == 0, "WM_GETTEXT invalid return\n");
     CallWindowProcA((WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), hwnd, WM_GETTEXT, 120, (LPARAM)buf);
@@ -785,6 +839,8 @@ START_TEST(class)
     ClassTest(hInstance,TRUE);
     CreateDialogParamTest(hInstance);
     test_styles();
+    test_builtinproc();
+
+    /* this test unregisters the Button class so it should be executed at the end */
     test_instances();
-    test_defwndproc();
 }

@@ -43,6 +43,8 @@ struct builtin_class_descr
     HBRUSH    brush;   /* brush or system color */
 };
 
+extern WNDPROC EDIT_winproc_handle;
+
 /* Class functions */
 struct tagCLASS;  /* opaque structure */
 struct tagWND;

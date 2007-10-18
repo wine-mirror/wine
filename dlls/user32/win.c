@@ -1788,8 +1788,17 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, UINT size, BOOL unicod
     case GWL_STYLE:      retvalue = wndPtr->dwStyle; break;
     case GWL_EXSTYLE:    retvalue = wndPtr->dwExStyle; break;
     case GWLP_ID:        retvalue = (ULONG_PTR)wndPtr->wIDmenu; break;
-    case GWLP_WNDPROC:   retvalue = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, unicode ); break;
     case GWLP_HINSTANCE: retvalue = (ULONG_PTR)wndPtr->hInstance; break;
+    case GWLP_WNDPROC:
+        /* This looks like a hack only for the edit control (see tests). This makes these controls
+         * more tolerant to A/W mismatches. The lack of W->A->W conversion for such a mismatch suggests
+         * that the hack is in GetWindowLongPtr[AW], not in winprocs.
+         */
+        if (wndPtr->winproc == EDIT_winproc_handle && (!unicode != !(wndPtr->flags & WIN_ISUNICODE)))
+            retvalue = (ULONG_PTR)wndPtr->winproc;
+        else
+            retvalue = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, unicode );
+        break;
     default:
         WARN("Unknown offset %d\n", offset );
         SetLastError( ERROR_INVALID_INDEX );
@@ -1877,7 +1886,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
     {
         WNDPROC proc;
         UINT old_flags = wndPtr->flags;
-        retval = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, unicode );
+        retval = WIN_GetWindowLong( hwnd, offset, size, unicode );
         if (unicode) proc = WINPROC_AllocProc( NULL, (WNDPROC)newval );
         else proc = WINPROC_AllocProc( (WNDPROC)newval, NULL );
         if (proc) wndPtr->winproc = proc;

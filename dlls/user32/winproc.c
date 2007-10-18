@@ -54,6 +54,8 @@ typedef struct tagWINDOWPROC
 #define MAX_WINPROCS  8192
 #define BUILTIN_WINPROCS 8  /* first BUILTIN_WINPROCS entries are reserved for builtin procs */
 
+WNDPROC EDIT_winproc_handle = 0;
+
 static WINDOWPROC winproc_array[MAX_WINPROCS];
 static UINT builtin_used;
 static UINT winproc_used = BUILTIN_WINPROCS;
@@ -109,19 +111,6 @@ static inline WINDOWPROC *find_winproc( WNDPROC funcA, WNDPROC funcW )
         if (funcA && winproc_array[i].procA != funcA) continue;
         if (funcW && winproc_array[i].procW != funcW) continue;
         return &winproc_array[i];
-    }
-    return NULL;
-}
-
-/* find an existing builtin winproc */
-static inline WINDOWPROC *find_builtin_proc( WNDPROC func )
-{
-    unsigned int i;
-
-    for (i = 0; i < builtin_used; i++)
-    {
-        if (winproc_array[i].procA == func || winproc_array[i].procW == func)
-            return &winproc_array[i];
     }
     return NULL;
 }
@@ -2288,12 +2277,7 @@ LRESULT WINAPI CallWindowProcA(
     if (!func) return 0;
 
     if (!(proc = handle_to_proc( func )))
-    {
-        if ((proc = find_builtin_proc( func )) && !IsWindowUnicode( hwnd ))
-            call_window_proc( hwnd, msg, wParam, lParam, &result, proc->procA );
-        else
-            call_window_proc( hwnd, msg, wParam, lParam, &result, func );
-    }
+        call_window_proc( hwnd, msg, wParam, lParam, &result, func );
     else if (proc->procA)
         call_window_proc( hwnd, msg, wParam, lParam, &result, proc->procA );
     else if (proc->procW)
@@ -2319,12 +2303,7 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
     if (!func) return 0;
 
     if (!(proc = handle_to_proc( func )))
-    {
-        if ((proc = find_builtin_proc( func )) && IsWindowUnicode( hwnd ))
-            call_window_proc( hwnd, msg, wParam, lParam, &result, proc->procW );
-        else
-            call_window_proc( hwnd, msg, wParam, lParam, &result, func );
-    }
+        call_window_proc( hwnd, msg, wParam, lParam, &result, func );
     else if (proc->procW)
         call_window_proc( hwnd, msg, wParam, lParam, &result, proc->procW );
     else if (proc->procA)
@@ -2382,12 +2361,7 @@ INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
     if (!func) return 0;
 
     if (!(proc = handle_to_proc( func )))
-    {
-        if ((proc = find_builtin_proc( func )) && !IsWindowUnicode( hwnd ))
-            ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procA );
-        else
-            ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
-    }
+        ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
     else if (proc->procA)
         ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procA );
     else if (proc->procW)
@@ -2417,12 +2391,7 @@ INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
     if (!func) return 0;
 
     if (!(proc = handle_to_proc( func )))
-    {
-        if ((proc = find_builtin_proc( func )) && IsWindowUnicode( hwnd ))
-            ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procW );
-        else
-            ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
-    }
+        ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
     else if (proc->procW)
         ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procW );
     else if (proc->procA)

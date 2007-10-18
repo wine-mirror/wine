@@ -366,7 +366,7 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE hInstance, BOOL local,
  * Register a builtin control class.
  * This allows having both ASCII and Unicode winprocs for the same class.
  */
-static CLASS *register_builtin( const struct builtin_class_descr *descr )
+static WNDPROC register_builtin( const struct builtin_class_descr *descr )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -380,7 +380,7 @@ static CLASS *register_builtin( const struct builtin_class_descr *descr )
     classPtr->hbrBackground = descr->brush;
     classPtr->winproc       = WINPROC_AllocProc( descr->procA, descr->procW );
     release_class_ptr( classPtr );
-    return classPtr;
+    return classPtr->winproc;
 }
 
 
@@ -407,7 +407,7 @@ void CLASS_RegisterBuiltinClasses(void)
     register_builtin( &COMBO_builtin_class );
     register_builtin( &COMBOLBOX_builtin_class );
     register_builtin( &DIALOG_builtin_class );
-    register_builtin( &EDIT_builtin_class );
+    EDIT_winproc_handle = register_builtin( &EDIT_builtin_class );
     register_builtin( &ICONTITLE_builtin_class );
     register_builtin( &LISTBOX_builtin_class );
     register_builtin( &MDICLIENT_builtin_class );
