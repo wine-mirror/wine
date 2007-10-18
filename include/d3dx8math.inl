@@ -122,6 +122,14 @@ static inline FLOAT D3DXVec3LengthSq(CONST D3DXVECTOR3 *pv)
     return (pv->x) * (pv->x) + (pv->y) * (pv->y) + (pv->z) * (pv->z);
 }
 
+static inline D3DXVECTOR3* D3DXVec3Subtract(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
+{
+    if ( !pout || !pv1 || !pv2) return NULL;
+    pout->x = pv1->x - pv2->x;
+    pout->y = pv1->y - pv2->y;
+    pout->z = pv1->z - pv2->z;
+    return pout;
+}
 /*__________________D3DXVECTOR4_______________________*/
 
 static inline D3DXVECTOR4* D3DXVec4Add(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2)
@@ -152,6 +160,15 @@ static inline FLOAT D3DXVec4LengthSq(CONST D3DXVECTOR4 *pv)
     return (pv->x) * (pv->x) + (pv->y) * (pv->y) + (pv->z) * (pv->z) + (pv->w) * (pv->w);
 }
 
+static inline D3DXVECTOR4* D3DXVec4Subtract(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2)
+{
+    if ( !pout || !pv1 || !pv2) return NULL;
+    pout->x = pv1->x - pv2->x;
+    pout->y = pv1->y - pv2->y;
+    pout->z = pv1->z - pv2->z;
+    pout->w = pv1->w - pv2->w;
+    return pout;
+}
 /*__________________D3DXQUATERNION____________________*/
 
 static inline FLOAT D3DXQuaternionDot(CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2)

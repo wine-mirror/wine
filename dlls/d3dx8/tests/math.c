@@ -231,6 +231,17 @@ static void D3X8Vector3Test(void)
     expected=0.0f;
     got = D3DXVec3LengthSq(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+
+/*_______________D3DXVec3Subtract_______________________*/
+    expectedvec.x = 7.0f; expectedvec.y = 9.0f; expectedvec.z = 6.0f;
+    D3DXVec3Subtract(&gotvec,&u,&v);
+    expect_vec3(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec3Subtract(&gotvec,NULL,&v);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec3Subtract(NULL,NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
 }
 
 static void D3X8Vector4Test(void)
@@ -243,7 +254,7 @@ static void D3X8Vector4Test(void)
     v.x = -3.0f; v.y = 4.0f; v.z = -5.0f; v.w = 7.0;
 
 /*_______________D3DXVec3Add__________________________*/
-    expectedvec.x = -2.0f; expectedvec.y = 6.0f; expectedvec.z = -1.0f; expectedvec.w = 17.0;
+    expectedvec.x = -2.0f; expectedvec.y = 6.0f; expectedvec.z = -1.0f; expectedvec.w = 17.0f;
     D3DXVec4Add(&gotvec,&u,&v);
     expect_vec4(expectedvec,gotvec);
     /* Tests the case NULL */
@@ -281,6 +292,16 @@ static void D3X8Vector4Test(void)
     expected=0.0f;
     got = D3DXVec4LengthSq(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+
+/*_______________D3DXVec3Add__________________________*/
+    expectedvec.x = 4.0f; expectedvec.y = -2.0f; expectedvec.z = 9.0f; expectedvec.w = 3.0f;
+    D3DXVec4Subtract(&gotvec,&u,&v);
+    expect_vec4(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec4Subtract(&gotvec,NULL,&v);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec4Subtract(NULL,NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 }
 
 START_TEST(math)
