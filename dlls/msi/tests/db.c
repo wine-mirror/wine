@@ -4253,10 +4253,7 @@ static void test_stringtable(void)
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmp(buffer, "five"), "Expected five, got %s\n", buffer);
-    }
+    ok(!lstrcmp(buffer, "five"), "Expected five, got %s\n", buffer);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
