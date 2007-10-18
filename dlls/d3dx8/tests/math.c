@@ -203,6 +203,15 @@ static void D3X8Vector3Test(void)
     funcpointer = D3DXVec3Add(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
+/*_______________D3DXVec3Cross________________________*/
+    expectedvec.x = -18.0f; expectedvec.y = 40.0f; expectedvec.z = -30.0f;
+    D3DXVec3Cross(&gotvec,&u,&v);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec3Cross(&gotvec,NULL,&v);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec3Cross(NULL,NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
 /*_______________D3DXVec3Dot__________________________*/
     expected = -8.0f;
     got = D3DXVec3Dot(&u,&v);
