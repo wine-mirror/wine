@@ -128,10 +128,8 @@ HRESULT WINAPI SHCoCreateInstance(
 	const WCHAR sInProcServer32[16] ={'\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2','\0'};
 	const WCHAR sLoadWithoutCOM[15] ={'L','o','a','d','W','i','t','h','o','u','t','C','O','M','\0'};
 	WCHAR	sDllPath[MAX_PATH];
-	HKEY	hKey;
+	HKEY	hKey = 0;
 	DWORD	dwSize;
-	BOOLEAN bLoadFromShell32 = FALSE;
-	BOOLEAN bLoadWithoutCOM = FALSE;
 	IClassFactory * pcf = NULL;
 
 	if(!ppv) return E_POINTER;
@@ -148,41 +146,32 @@ HRESULT WINAPI SHCoCreateInstance(
 	TRACE("(%p,%s,unk:%p,%s,%p)\n",
 		aclsid,shdebugstr_guid(myclsid),pUnkOuter,shdebugstr_guid(refiid),ppv);
 
+        if (SUCCEEDED(DllGetClassObject(myclsid, &IID_IClassFactory,(LPVOID*)&pcf)))
+        {
+            hres = IClassFactory_CreateInstance(pcf, pUnkOuter, refiid, ppv);
+            IClassFactory_Release(pcf);
+            goto end;
+        }
+
 	/* we look up the dll path in the registry */
         __SHGUIDToStringW(myclsid, sClassID);
 	lstrcpyW(sKeyName, sCLSID);
 	lstrcatW(sKeyName, sClassID);
 	lstrcatW(sKeyName, sInProcServer32);
 
-	if (ERROR_SUCCESS == RegOpenKeyExW(HKEY_CLASSES_ROOT, sKeyName, 0, KEY_READ, &hKey)) {
-	    dwSize = sizeof(sDllPath);
-	    SHQueryValueExW(hKey, NULL, 0,0, sDllPath, &dwSize );
+	if (RegOpenKeyExW(HKEY_CLASSES_ROOT, sKeyName, 0, KEY_READ, &hKey))
+            return E_ACCESSDENIED;
 
-	    /* if a special registry key is set, we load a shell extension without help of OLE32 */
-	    bLoadWithoutCOM = (ERROR_SUCCESS == SHQueryValueExW(hKey, sLoadWithoutCOM, 0, 0, 0, 0));
-
-	    /* if the com object is inside shell32, omit use of ole32 */
-	    bLoadFromShell32 = (0==lstrcmpiW( PathFindFileNameW(sDllPath), sShell32));
-
-	    RegCloseKey (hKey);
-	} else {
-	    /* since we can't find it in the registry we try internally */
-	    bLoadFromShell32 = TRUE;
-	}
-
-	TRACE("WithoutCom=%u FromShell=%u\n", bLoadWithoutCOM, bLoadFromShell32);
-
-	/* now we create an instance */
-	if (bLoadFromShell32) {
-	    if (! SUCCEEDED(DllGetClassObject(myclsid, &IID_IClassFactory,(LPVOID*)&pcf))) {
-	        ERR("LoadFromShell failed for CLSID=%s\n", shdebugstr_guid(myclsid));
-	    }
-	} else if (bLoadWithoutCOM) {
-
+        /* if a special registry key is set, we load a shell extension without help of OLE32 */
+        if (!SHQueryValueExW(hKey, sLoadWithoutCOM, 0, 0, 0, 0))
+        {
 	    /* load an external dll without ole32 */
 	    HANDLE hLibrary;
 	    typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, REFIID iid, LPVOID *ppv);
 	    DllGetClassObjectFunc DllGetClassObject;
+
+            dwSize = sizeof(sDllPath);
+            SHQueryValueExW(hKey, NULL, 0,0, sDllPath, &dwSize );
 
 	    if ((hLibrary = LoadLibraryExW(sDllPath, 0, LOAD_WITH_ALTERED_SEARCH_PATH)) == 0) {
 	        ERR("couldn't load InprocServer32 dll %s\n", debugstr_w(sDllPath));
@@ -198,19 +187,16 @@ HRESULT WINAPI SHCoCreateInstance(
 		    goto end;
 	    }
 
+            hres = IClassFactory_CreateInstance(pcf, pUnkOuter, refiid, ppv);
+            IClassFactory_Release(pcf);
 	} else {
 
 	    /* load an external dll in the usual way */
 	    hres = CoCreateInstance(myclsid, pUnkOuter, CLSCTX_INPROC_SERVER, refiid, ppv);
-	    goto end;
 	}
 
-	/* here we should have a ClassFactory */
-	if (!pcf) return E_ACCESSDENIED;
-
-	hres = IClassFactory_CreateInstance(pcf, pUnkOuter, refiid, ppv);
-	IClassFactory_Release(pcf);
 end:
+        if (hKey) RegCloseKey(hKey);
 	if(hres!=S_OK)
 	{
 	  ERR("failed (0x%08x) to create CLSID:%s IID:%s\n",
