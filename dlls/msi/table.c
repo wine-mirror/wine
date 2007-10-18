@@ -1560,7 +1560,7 @@ static UINT msi_table_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
     if (r != ERROR_SUCCESS)
     {
         ERR("can't find row to modify\n");
-        return ERROR_SUCCESS;
+        return ERROR_FUNCTION_FAILED;
     }
 
     /* the row cannot be changed */

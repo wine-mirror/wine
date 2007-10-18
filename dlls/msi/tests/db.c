@@ -841,10 +841,7 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "MsiRecordSetInteger failed\n");
 
     r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
-    todo_wine
-    {
-        ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
-    }
+    ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
@@ -892,10 +889,7 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "failed to set string\n");
 
     r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
-    todo_wine
-    {
-        ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
-    }
+    ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
