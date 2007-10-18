@@ -539,6 +539,20 @@ static void _test_range_isequal(unsigned line, IHTMLTxtRange *range1, IHTMLTxtRa
     }
 }
 
+#define test_range_parent(r,t) _test_range_parent(__LINE__,r,t)
+static void _test_range_parent(unsigned line, IHTMLTxtRange *range, elem_type_t type)
+{
+    IHTMLElement *elem;
+    HRESULT hres;
+
+    hres = IHTMLTxtRange_parentElement(range, &elem);
+    ok_(__FILE__,line) (hres == S_OK, "parentElement failed: %08x\n", hres);
+
+    _test_elem_type(line, (IUnknown*)elem, type);
+
+    IHTMLElement_Release(elem);
+}
+
 static void test_elem_collection(IHTMLElementCollection *col, const elem_type_t *elem_types, long exlen)
 {
     long len;
@@ -695,6 +709,8 @@ static void test_txtrange(IHTMLDocument2 *doc)
     IHTMLElement *elem;
     IHTMLBodyElement *body;
     IHTMLTxtRange *body_range, *range, *range2;
+    IHTMLSelectionObject *selection;
+    IDispatch *disp_range;
     HRESULT hres;
 
     hres = IHTMLDocument2_get_body(doc, &elem);
@@ -841,6 +857,24 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     IHTMLTxtRange_Release(range);
     IHTMLTxtRange_Release(body_range);
+
+    hres = IHTMLDocument2_get_selection(doc, &selection);
+    ok(hres == S_OK, "IHTMLDocument2_get_selection failed: %08x\n", hres);
+
+    hres = IHTMLSelectionObject_createRange(selection, &disp_range);
+    ok(hres == S_OK, "IHTMLSelectionObject_createRange failed: %08x\n", hres);
+    IHTMLSelectionObject_Release(selection);
+
+    hres = IDispatch_QueryInterface(disp_range, &IID_IHTMLTxtRange, (void **)&range);
+    ok(hres == S_OK, "Could not get IID_IHTMLTxtRange interface: 0x%08x\n", hres);
+    IDispatch_Release(disp_range);
+
+    test_range_text(range, NULL);
+    test_range_moveend(range, characterW, 3, 3);
+    test_range_text(range, "wor");
+    test_range_parent(range, ET_BODY);
+
+    IHTMLTxtRange_Release(range);
 }
 
 static void test_compatmode(IHTMLDocument2 *doc)
