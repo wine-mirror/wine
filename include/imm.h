@@ -493,7 +493,7 @@ DWORD    WINAPI ImmGetCandidateListCountA(HIMC, LPDWORD);
 DWORD    WINAPI ImmGetCandidateListCountW(HIMC, LPDWORD);
 #define  ImmGetCandidateListCount WINELIB_NAME_AW(ImmGetCandidateListCount)
 BOOL   WINAPI ImmGetCandidateWindow(HIMC, DWORD, LPCANDIDATEFORM);
-#ifndef NOGDI
+#if defined(_WINGDI_) && !defined(NOGDI)
 BOOL   WINAPI ImmGetCompositionFontA(HIMC, LPLOGFONTA);
 BOOL   WINAPI ImmGetCompositionFontW(HIMC, LPLOGFONTW);
 #define  ImmGetCompositionFont WINELIB_NAME_AW(ImmGetCompositionFont)
