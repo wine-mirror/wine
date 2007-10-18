@@ -288,6 +288,7 @@ input:   gbl_statements				{ fix_incomplete();
 						  write_proxies($1);
 						  write_client($1);
 						  write_server($1);
+						  write_dlldata($1);
 						}
 	;
 

@@ -41,6 +41,7 @@ void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));
 
 char *dup_basename(const char *name, const char *ext);
+size_t widl_getline(char **linep, size_t *lenp, FILE *fp);
 
 UUID *parse_uuid(const char *u);
 int is_valid_uuid(const char *s);
