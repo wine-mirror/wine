@@ -274,6 +274,16 @@ static inline FLOAT D3DXQuaternionDot(CONST D3DXQUATERNION *pq1, CONST D3DXQUATE
     return (pq1->x) * (pq2->x) + (pq1->y) * (pq2->y) + (pq1->z) * (pq2->z) + (pq1->w) * (pq2->w);
 }
 
+static inline D3DXQUATERNION* D3DXQuaternionIdentity(D3DXQUATERNION *pout)
+{
+    if ( !pout) return NULL;
+    pout->x = 0.0f;
+    pout->y = 0.0f;
+    pout->z = 0.0f;
+    pout->w = 1.0f;
+    return pout;
+}
+
 static inline FLOAT D3DXQuaternionLength(CONST D3DXQUATERNION *pq)
 {
     if (!pq) return 0.0f;

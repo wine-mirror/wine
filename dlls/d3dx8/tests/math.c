@@ -62,6 +62,14 @@ static void D3X8QuaternionTest(void)
     got = D3DXQuaternionDot(NULL,NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
+/*_______________D3DXQuaternionIdentity________________*/
+    expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 1.0f;
+    D3DXQuaternionIdentity(&gotquat);
+    expect_vec4(expectedquat,gotquat);
+    /* Test the NULL case */
+    funcpointer = D3DXQuaternionIdentity(NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
 /*_______________D3DXQuaternionLength__________________________*/
    expected = 11.0f;
    got = D3DXQuaternionLength(&q);
