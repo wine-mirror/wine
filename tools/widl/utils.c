@@ -86,16 +86,6 @@ int parser_warning(const char *s, ...)
 	return 0;
 }
 
-void internal_error(const char *file, int line, const char *s, ...)
-{
-	va_list ap;
-	va_start(ap, s);
-	fprintf(stderr, "Internal error (please report) %s %d: ", file, line);
-	vfprintf(stderr, s, ap);
-	va_end(ap);
-	exit(3);
-}
-
 void error(const char *s, ...)
 {
 	va_list ap;
