@@ -187,10 +187,11 @@ static void D3X8Vector3Test(void)
 {
     D3DXVECTOR3 expectedvec, gotvec, u, v;
     LPD3DXVECTOR3 funcpointer;
-    FLOAT expected, got;
+    FLOAT expected, got, scale;
 
     u.x = 9.0f; u.y = 6.0f; u.z = 2.0f;
     v.x = 2.0f; v.y = -3.0f; v.z = -4.0;
+    scale = -6.5f;
 
 /*_______________D3DXVec3Add__________________________*/
     expectedvec.x = 11.0f; expectedvec.y = 3.0f; expectedvec.z = -2.0f;
@@ -232,6 +233,16 @@ static void D3X8Vector3Test(void)
     got = D3DXVec3LengthSq(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
+/*_______________D3DXVec3Lerp__________________________*/
+    expectedvec.x = 54.5f; expectedvec.y = 64.5f, expectedvec.z = 41.0f ;
+    D3DXVec3Lerp(&gotvec,&u,&v,scale);
+    expect_vec3(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec3Lerp(&gotvec,NULL,&v,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec3Lerp(NULL,NULL,NULL,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
 /*_______________D3DXVec3Subtract_______________________*/
     expectedvec.x = 7.0f; expectedvec.y = 9.0f; expectedvec.z = 6.0f;
     D3DXVec3Subtract(&gotvec,&u,&v);
@@ -248,12 +259,13 @@ static void D3X8Vector4Test(void)
 {
     D3DXVECTOR4 expectedvec, gotvec, u, v;
     LPD3DXVECTOR4 funcpointer;
-    FLOAT expected, got;
+    FLOAT expected, got, scale;
+    scale = -6.5f;
 
     u.x = 1.0f; u.y = 2.0f; u.z = 4.0f; u.w = 10.0;
     v.x = -3.0f; v.y = 4.0f; v.z = -5.0f; v.w = 7.0;
 
-/*_______________D3DXVec3Add__________________________*/
+/*_______________D3DXVec4Add__________________________*/
     expectedvec.x = -2.0f; expectedvec.y = 6.0f; expectedvec.z = -1.0f; expectedvec.w = 17.0f;
     D3DXVec4Add(&gotvec,&u,&v);
     expect_vec4(expectedvec,gotvec);
@@ -293,7 +305,17 @@ static void D3X8Vector4Test(void)
     got = D3DXVec4LengthSq(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
-/*_______________D3DXVec3Add__________________________*/
+/*_______________D3DXVec4Lerp__________________________*/
+    expectedvec.x = 27.0f; expectedvec.y = -11.0f; expectedvec.z = 62.5;  expectedvec.w = 29.5;
+    D3DXVec4Lerp(&gotvec,&u,&v,scale);
+    expect_vec4(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec4Lerp(&gotvec,NULL,&v,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec4Lerp(NULL,NULL,NULL,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXVec4Subtract__________________________*/
     expectedvec.x = 4.0f; expectedvec.y = -2.0f; expectedvec.z = 9.0f; expectedvec.w = 3.0f;
     D3DXVec4Subtract(&gotvec,&u,&v);
     expect_vec4(expectedvec,gotvec);
