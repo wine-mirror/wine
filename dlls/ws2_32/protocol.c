@@ -301,18 +301,16 @@ INT WINAPI WSAEnumProtocolsA( LPINT protocols, LPWSAPROTOCOL_INFOA buffer, LPDWO
     DWORD size = 0;
     INT local[] = { WS_IPPROTO_TCP, WS_IPPROTO_UDP, NSPROTO_IPX, NSPROTO_SPX, NSPROTO_SPXII, 0 };
 
-    if (!buffer)
-        return SOCKET_ERROR;
-
     if (!protocols) protocols = local;
 
     while (protocols[i]) i++;
 
     size = i * sizeof(WSAPROTOCOL_INFOA);
 
-    if (*len < size)
+    if (*len < size || !buffer)
     {
         *len = size;
+        WSASetLastError(WSAENOBUFS);
         return SOCKET_ERROR;
     }
 
@@ -367,18 +365,16 @@ INT WINAPI WSAEnumProtocolsW( LPINT protocols, LPWSAPROTOCOL_INFOW buffer, LPDWO
     DWORD size = 0;
     INT local[] = { WS_IPPROTO_TCP, WS_IPPROTO_UDP, NSPROTO_IPX, NSPROTO_SPX, NSPROTO_SPXII, 0 };
 
-    if (!buffer)
-        return SOCKET_ERROR;
-
     if (!protocols) protocols = local;
 
     while (protocols[i]) i++;
 
     size = i * sizeof(WSAPROTOCOL_INFOW);
 
-    if (*len < size)
+    if (*len < size || !buffer)
     {
         *len = size;
+        WSASetLastError(WSAENOBUFS);
         return SOCKET_ERROR;
     }
 
