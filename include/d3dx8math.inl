@@ -95,6 +95,12 @@ static inline D3DXVECTOR2* D3DXVec2Subtract(D3DXVECTOR2 *pout, CONST D3DXVECTOR2
 
 /*__________________D3DXVECTOR3_______________________*/
 
+static inline FLOAT D3DXVec3Dot(CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
+{
+    if ( !pv1 || !pv2 ) return 0.0f;
+    return (pv1->x) * (pv2->x) + (pv1->y) * (pv2->y) + (pv1->z) * (pv2->z);
+}
+
 static inline FLOAT D3DXVec3Length(CONST D3DXVECTOR3 *pv)
 {
     if (!pv) return 0.0f;
@@ -108,6 +114,12 @@ static inline FLOAT D3DXVec3LengthSq(CONST D3DXVECTOR3 *pv)
 }
 
 /*__________________D3DXVECTOR4_______________________*/
+
+static inline FLOAT D3DXVec4Dot(CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2)
+{
+    if (!pv1 || !pv2 ) return 0.0f;
+    return (pv1->x) * (pv2->x) + (pv1->y) * (pv2->y) + (pv1->z) * (pv2->z) + (pv1->w) * (pv2->w);
+}
 
 static inline FLOAT D3DXVec4Length(CONST D3DXVECTOR4 *pv)
 {
@@ -123,13 +135,19 @@ static inline FLOAT D3DXVec4LengthSq(CONST D3DXVECTOR4 *pv)
 
 /*__________________D3DXQUATERNION____________________*/
 
-static inline FLOAT D3DXQuaternionLength( CONST D3DXQUATERNION *pq)
+static inline FLOAT D3DXQuaternionDot(CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2)
+{
+    if ( !pq1 || !pq2 ) return 0.0f;
+    return (pq1->x) * (pq2->x) + (pq1->y) * (pq2->y) + (pq1->z) * (pq2->z) + (pq1->w) * (pq2->w);
+}
+
+static inline FLOAT D3DXQuaternionLength(CONST D3DXQUATERNION *pq)
 {
     if (!pq) return 0.0f;
     return sqrt( (pq->x) * (pq->x) + (pq->y) * (pq->y) + (pq->z) * (pq->z) + (pq->w) * (pq->w) );
 }
 
-static inline FLOAT D3DXQuaternionLengthSq( CONST D3DXQUATERNION *pq)
+static inline FLOAT D3DXQuaternionLengthSq(CONST D3DXQUATERNION *pq)
 {
     if (!pq) return 0.0f;
     return (pq->x) * (pq->x) + (pq->y) * (pq->y) + (pq->z) * (pq->z) + (pq->w) * (pq->w);

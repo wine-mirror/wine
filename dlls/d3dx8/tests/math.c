@@ -28,10 +28,23 @@
 
 static void D3X8QuaternionTest(void)
 {
-    D3DXQUATERNION q;
+    D3DXQUATERNION q, r;
     FLOAT expected, got;
 
     q.x = 1.0f, q.y = 2.0f; q.z = 4.0f; q.w = 10.0f;
+    r.x = -3.0f; r.y = 4.0f; r.z = -5.0f; r.w = 7.0;
+
+/*_______________D3DXQuaternionDot______________________*/
+    expected = 55.0f;
+    got = D3DXQuaternionDot(&q,&r);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXQuaternionDot(NULL,&r);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    expected=0.0f;
+    got = D3DXQuaternionDot(NULL,NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXQuaternionLength__________________________*/
    expected = 11.0f;
@@ -168,10 +181,23 @@ static void D3X8Vector2Test(void)
 
 static void D3X8Vector3Test(void)
 {
-    D3DXVECTOR3 u;
+    D3DXVECTOR3 u, v;
     FLOAT expected, got;
 
     u.x = 9.0f; u.y = 6.0f; u.z = 2.0f;
+    v.x = 2.0f; v.y = -3.0f; v.z = -4.0;
+
+/*_______________D3DXVec3Dot__________________________*/
+    expected = -8.0f;
+    got = D3DXVec3Dot(&u,&v);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXVec3Dot(NULL,&v);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    expected=0.0f;
+    got = D3DXVec3Dot(NULL,NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec3Length__________________________*/
    expected = 11.0f;
@@ -194,10 +220,23 @@ static void D3X8Vector3Test(void)
 
 static void D3X8Vector4Test(void)
 {
-    D3DXVECTOR4 u;
+    D3DXVECTOR4 u, v;
     FLOAT expected, got;
 
     u.x = 1.0f; u.y = 2.0f; u.z = 4.0f; u.w = 10.0;
+    v.x = -3.0f; v.y = 4.0f; v.z = -5.0f; v.w = 7.0;
+
+/*_______________D3DXVec4Dot__________________________*/
+    expected = 55.0f;
+    got = D3DXVec4Dot(&u,&v);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXVec4Dot(NULL,&v);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    expected=0.0f;
+    got = D3DXVec4Dot(NULL,NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec4Length__________________________*/
    expected = 11.0f;
