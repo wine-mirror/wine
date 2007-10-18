@@ -280,8 +280,36 @@ static UINT STREAMS_get_column_info(struct tagMSIVIEW *view,
 
 static UINT STREAMS_modify(struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *rec, UINT row)
 {
-    FIXME("(%p, %d, %p): stub!\n", view, eModifyMode, rec);
-    return ERROR_SUCCESS;
+    UINT r;
+
+    TRACE("%p %d %p\n", view, eModifyMode, rec);
+
+    switch (eModifyMode)
+    {
+    case MSIMODIFY_INSERT:
+        r = STREAMS_insert_row(view, rec, FALSE);
+        break;
+
+    case MSIMODIFY_VALIDATE_NEW:
+    case MSIMODIFY_INSERT_TEMPORARY:
+    case MSIMODIFY_UPDATE:
+    case MSIMODIFY_REFRESH:
+    case MSIMODIFY_ASSIGN:
+    case MSIMODIFY_REPLACE:
+    case MSIMODIFY_MERGE:
+    case MSIMODIFY_DELETE:
+    case MSIMODIFY_VALIDATE:
+    case MSIMODIFY_VALIDATE_FIELD:
+    case MSIMODIFY_VALIDATE_DELETE:
+        FIXME("%p %d %p - mode not implemented\n", view, eModifyMode, rec );
+        r = ERROR_CALL_NOT_IMPLEMENTED;
+        break;
+
+    default:
+        r = ERROR_INVALID_DATA;
+    }
+
+    return r;
 }
 
 static UINT STREAMS_delete(struct tagMSIVIEW *view)
