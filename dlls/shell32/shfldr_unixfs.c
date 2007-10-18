@@ -369,36 +369,6 @@ static inline BOOL UNIXFS_is_pidl_of_type(LPITEMIDLIST pIDL, SHCONTF fFilter) {
 }
 
 /******************************************************************************
- * UNIXFS_is_dos_device [Internal]
- *
- * Determines if a unix directory corresponds to any dos device.
- *
- * PARAMS
- *  statPath [I] The stat struct of the directory, as returned by stat(2).
- *
- * RETURNS
- *  TRUE, if statPath corresponds to any dos drive letter
- *  FALSE, otherwise
- */
-static BOOL UNIXFS_is_dos_device(const struct stat *statPath) {
-    struct stat statDrive;
-    char *pszDrivePath;
-    DWORD dwDriveMap;
-    WCHAR wszDosDevice[4] = { 'A', ':', '\\', 0 };
-
-    for (dwDriveMap = GetLogicalDrives(); dwDriveMap; dwDriveMap >>= 1, wszDosDevice[0]++) {
-        if (!(dwDriveMap & 0x1)) continue;
-        pszDrivePath = wine_get_unix_file_name(wszDosDevice);
-        if (pszDrivePath && !stat(pszDrivePath, &statDrive)) {
-            HeapFree(GetProcessHeap(), 0, pszDrivePath);
-            if ((statPath->st_dev == statDrive.st_dev) && (statPath->st_ino == statDrive.st_ino))
-                return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-/******************************************************************************
  * UNIXFS_get_unix_path [Internal]
  *
  * Convert an absolute dos path to an absolute unix path.
@@ -733,9 +703,9 @@ static HRESULT UNIXFS_initialize_target_folder(UnixFolder *This, const char *szB
 {
     LPCITEMIDLIST current = pidlSubFolder;
     DWORD dwPathLen = strlen(szBasePath)+1;
-    struct stat statPrefix;
     char *pNextDir;
-        
+    WCHAR *dos_name;
+
     /* Determine the path's length bytes */
     while (current && current->mkid.cb) {
         dwPathLen += UNIXFS_filename_from_shitemid(current, NULL) + 1; /* For the '/' */
@@ -755,23 +725,20 @@ static HRESULT UNIXFS_initialize_target_folder(UnixFolder *This, const char *szB
     pNextDir += strlen(szBasePath);
     if (This->m_dwPathMode == PATHMODE_UNIX || IsEqualCLSID(&CLSID_MyDocuments, This->m_pCLSID))
         This->m_dwAttributes |= SFGAO_FILESYSTEM;
-    if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
-        *pNextDir = '\0';
-        if (!stat(This->m_pszPath, &statPrefix) && UNIXFS_is_dos_device(&statPrefix))
-            This->m_dwAttributes |= SFGAO_FILESYSTEM;
-    }
     while (current && current->mkid.cb) {
         pNextDir += UNIXFS_filename_from_shitemid(current, pNextDir);
-        if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
-            *pNextDir = '\0';
-            if (!stat(This->m_pszPath, &statPrefix) && UNIXFS_is_dos_device(&statPrefix))
-                This->m_dwAttributes |= SFGAO_FILESYSTEM;
-        }
         *pNextDir++ = '/';
         current = ILGetNext(current);
     }
     *pNextDir='\0';
- 
+
+    if (!(This->m_dwAttributes & SFGAO_FILESYSTEM) &&
+        ((dos_name = wine_get_dos_file_name(This->m_pszPath))))
+    {
+        This->m_dwAttributes |= SFGAO_FILESYSTEM;
+        HeapFree( GetProcessHeap(), 0, dos_name );
+    }
+
     return S_OK;
 }
 
@@ -1050,11 +1017,13 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetAttributesOf(IShellFolder2* if
         pszRelativePath = szAbsolutePath + lstrlenA(szAbsolutePath);
         for (i=0; i<cidl; i++) {
             if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
-                struct stat fileStat;
+                WCHAR *dos_name;
                 if (!UNIXFS_filename_from_shitemid(apidl[i], pszRelativePath)) 
                     return E_INVALIDARG;
-                if (stat(szAbsolutePath, &fileStat) || !UNIXFS_is_dos_device(&fileStat))
+                if (!(dos_name = wine_get_dos_file_name( szAbsolutePath )))
                     *rgfInOut &= ~SFGAO_FILESYSTEM;
+                else
+                    HeapFree( GetProcessHeap(), 0, dos_name );
             }
             if (_ILIsFolder(apidl[i])) 
                 *rgfInOut |= SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR;
