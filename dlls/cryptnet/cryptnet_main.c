@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
+#include <stdio.h>
 #include "windef.h"
 #include "wine/debug.h"
 #include "winbase.h"
 #include "winnt.h"
+#define NONAMELESSUNION
 #include "wincrypt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptnet);
@@ -78,6 +81,169 @@ HRESULT WINAPI DllUnregisterServer(void)
    return S_OK;
 }
 
+static const char *url_oid_to_str(LPCSTR oid)
+{
+    if (HIWORD(oid))
+        return oid;
+    else
+    {
+        static char buf[10];
+
+        switch (LOWORD(oid))
+        {
+#define _x(oid) case LOWORD(oid): return #oid
+        _x(URL_OID_CERTIFICATE_ISSUER);
+        _x(URL_OID_CERTIFICATE_CRL_DIST_POINT);
+        _x(URL_OID_CTL_ISSUER);
+        _x(URL_OID_CTL_NEXT_UPDATE);
+        _x(URL_OID_CRL_ISSUER);
+        _x(URL_OID_CERTIFICATE_FRESHEST_CRL);
+        _x(URL_OID_CRL_FRESHEST_CRL);
+        _x(URL_OID_CROSS_CERT_DIST_POINT);
+#undef _x
+        default:
+            snprintf(buf, sizeof(buf), "%d", LOWORD(oid));
+            return buf;
+        }
+    }
+}
+
+typedef BOOL (WINAPI *UrlDllGetObjectUrlFunc)(LPCSTR, LPVOID, DWORD,
+ PCRYPT_URL_ARRAY, DWORD *, PCRYPT_URL_INFO, DWORD *, LPVOID);
+
+static BOOL WINAPI CRYPT_GetUrlFromCertificateIssuer(LPCSTR pszUrlOid,
+ LPVOID pvPara, DWORD dwFlags, PCRYPT_URL_ARRAY pUrlArray, DWORD *pcbUrlArray,
+ PCRYPT_URL_INFO pUrlInfo, DWORD *pcbUrlInfo, LPVOID pvReserved)
+{
+    /* FIXME: This depends on the AIA (authority info access) extension being
+     * supported in crypt32.
+     */
+    FIXME("\n");
+    SetLastError(CRYPT_E_NOT_FOUND);
+    return FALSE;
+}
+
+static BOOL WINAPI CRYPT_GetUrlFromCertificateCRLDistPoint(LPCSTR pszUrlOid,
+ LPVOID pvPara, DWORD dwFlags, PCRYPT_URL_ARRAY pUrlArray, DWORD *pcbUrlArray,
+ PCRYPT_URL_INFO pUrlInfo, DWORD *pcbUrlInfo, LPVOID pvReserved)
+{
+    PCCERT_CONTEXT cert = (PCCERT_CONTEXT)pvPara;
+    PCERT_EXTENSION ext;
+    BOOL ret = FALSE;
+
+    /* The only applicable flag is CRYPT_GET_URL_FROM_EXTENSION */
+    if (dwFlags && !(dwFlags & CRYPT_GET_URL_FROM_EXTENSION))
+    {
+        SetLastError(CRYPT_E_NOT_FOUND);
+        return FALSE;
+    }
+    if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS,
+     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
+    {
+        CRL_DIST_POINTS_INFO *info;
+        DWORD size;
+
+        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CRL_DIST_POINTS,
+         ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
+         &info, &size);
+        if (ret)
+        {
+            DWORD i, cUrl, bytesNeeded = sizeof(CRYPT_URL_ARRAY);
+
+            for (i = 0, cUrl = 0; i < info->cDistPoint; i++)
+                if (info->rgDistPoint[i].DistPointName.dwDistPointNameChoice
+                 == CRL_DIST_POINT_FULL_NAME)
+                {
+                    DWORD j;
+                    CERT_ALT_NAME_INFO *name =
+                     &info->rgDistPoint[i].DistPointName.FullName;
+
+                    for (j = 0; j < name->cAltEntry; j++)
+                        if (name->rgAltEntry[j].dwAltNameChoice ==
+                         CERT_ALT_NAME_URL)
+                        {
+                            if (name->rgAltEntry[j].pwszURL)
+                            {
+                                cUrl++;
+                                bytesNeeded += sizeof(LPWSTR) +
+                                 (lstrlenW(name->rgAltEntry[j].pwszURL) + 1)
+                                 * sizeof(WCHAR);
+                            }
+                        }
+                }
+            if (!pcbUrlArray)
+                SetLastError(E_INVALIDARG);
+            else if (!pUrlArray)
+                *pcbUrlArray = bytesNeeded;
+            else if (*pcbUrlArray < bytesNeeded)
+            {
+                SetLastError(ERROR_MORE_DATA);
+                *pcbUrlArray = bytesNeeded;
+                ret = FALSE;
+            }
+            else
+            {
+                LPWSTR nextUrl;
+
+                *pcbUrlArray = bytesNeeded;
+                pUrlArray->cUrl = 0;
+                pUrlArray->rgwszUrl =
+                 (LPWSTR *)((BYTE *)pUrlArray + sizeof(CRYPT_URL_ARRAY));
+                nextUrl = (LPWSTR)((BYTE *)pUrlArray + sizeof(CRYPT_URL_ARRAY)
+                 + cUrl * sizeof(LPWSTR));
+                for (i = 0; i < info->cDistPoint; i++)
+                    if (info->rgDistPoint[i].DistPointName.dwDistPointNameChoice
+                     == CRL_DIST_POINT_FULL_NAME)
+                    {
+                        DWORD j;
+                        CERT_ALT_NAME_INFO *name =
+                         &info->rgDistPoint[i].DistPointName.FullName;
+
+                        for (j = 0; j < name->cAltEntry; j++)
+                            if (name->rgAltEntry[j].dwAltNameChoice ==
+                             CERT_ALT_NAME_URL)
+                            {
+                                if (name->rgAltEntry[j].pwszURL)
+                                {
+                                    lstrcpyW(nextUrl,
+                                     name->rgAltEntry[j].pwszURL);
+                                    pUrlArray->rgwszUrl[pUrlArray->cUrl++] =
+                                     nextUrl;
+                                    nextUrl +=
+                                     (lstrlenW(name->rgAltEntry[j].pwszURL) + 1)
+                                     * sizeof(WCHAR);
+                                }
+                            }
+                    }
+            }
+            if (ret)
+            {
+                if (pcbUrlInfo)
+                {
+                    FIXME("url info: stub\n");
+                    if (!pUrlInfo)
+                        *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
+                    else if (*pcbUrlInfo < sizeof(CRYPT_URL_INFO))
+                    {
+                        *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
+                        SetLastError(ERROR_MORE_DATA);
+                        ret = FALSE;
+                    }
+                    else
+                    {
+                        *pcbUrlInfo = sizeof(CRYPT_URL_INFO);
+                        memset(pUrlInfo, 0, sizeof(CRYPT_URL_INFO));
+                    }
+                }
+            }
+            LocalFree(info);
+        }
+    }
+    else
+        SetLastError(CRYPT_E_NOT_FOUND);
+    return ret;
+}
+
 /***********************************************************************
  *    CryptGetObjectUrl (CRYPTNET.@)
  */
@@ -85,9 +251,43 @@ BOOL WINAPI CryptGetObjectUrl(LPCSTR pszUrlOid, LPVOID pvPara, DWORD dwFlags,
  PCRYPT_URL_ARRAY pUrlArray, DWORD *pcbUrlArray, PCRYPT_URL_INFO pUrlInfo,
  DWORD *pcbUrlInfo, LPVOID pvReserved)
 {
-    FIXME("(%s, %p, %08x, %p, %p, %p, %p, %p): stub\n", debugstr_a(pszUrlOid),
+    UrlDllGetObjectUrlFunc func = NULL;
+    HCRYPTOIDFUNCADDR hFunc = NULL;
+    BOOL ret = FALSE;
+
+    TRACE("(%s, %p, %08x, %p, %p, %p, %p, %p)\n", debugstr_a(pszUrlOid),
      pvPara, dwFlags, pUrlArray, pcbUrlArray, pUrlInfo, pcbUrlInfo, pvReserved);
-    return FALSE;
+
+    if (!HIWORD(pszUrlOid))
+    {
+        switch (LOWORD(pszUrlOid))
+        {
+        case LOWORD(URL_OID_CERTIFICATE_ISSUER):
+            func = CRYPT_GetUrlFromCertificateIssuer;
+            break;
+        case LOWORD(URL_OID_CERTIFICATE_CRL_DIST_POINT):
+            func = CRYPT_GetUrlFromCertificateCRLDistPoint;
+            break;
+        default:
+            FIXME("unimplemented for %s\n", url_oid_to_str(pszUrlOid));
+            SetLastError(ERROR_FILE_NOT_FOUND);
+        }
+    }
+    else
+    {
+        static HCRYPTOIDFUNCSET set = NULL;
+
+        if (!set)
+            set = CryptInitOIDFunctionSet(URL_OID_GET_OBJECT_URL_FUNC, 0);
+        CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING, pszUrlOid, 0,
+         (void **)&func, &hFunc);
+    }
+    if (func)
+        ret = func(pszUrlOid, pvPara, dwFlags, pUrlArray, pcbUrlArray,
+         pUrlInfo, pcbUrlInfo, pvReserved);
+    if (hFunc)
+        CryptFreeOIDFunctionAddress(hFunc, 0);
+    return ret;
 }
 
 /***********************************************************************
