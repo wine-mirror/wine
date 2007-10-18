@@ -284,6 +284,12 @@ static inline D3DXQUATERNION* D3DXQuaternionIdentity(D3DXQUATERNION *pout)
     return pout;
 }
 
+static inline BOOL D3DXQuaternionIsIdentity(D3DXQUATERNION *pq)
+{
+    if ( !pq) return FALSE;
+    return ( (pq->x == 0.0f) && (pq->y == 0.0f) && (pq->z == 0.0f) && (pq->w == 1.0f) );
+}
+
 static inline FLOAT D3DXQuaternionLength(CONST D3DXQUATERNION *pq)
 {
     if (!pq) return 0.0f;

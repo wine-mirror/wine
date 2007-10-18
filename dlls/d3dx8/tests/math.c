@@ -32,9 +32,10 @@
 
 static void D3X8QuaternionTest(void)
 {
-    D3DXQUATERNION expectedquat, gotquat, q, r;
+    D3DXQUATERNION expectedquat, gotquat, q, r, s;
     LPD3DXQUATERNION funcpointer;
     FLOAT expected, got;
+    BOOL expectedbool, gotbool;
 
     q.x = 1.0f, q.y = 2.0f; q.z = 4.0f; q.w = 10.0f;
     r.x = -3.0f; r.y = 4.0f; r.z = -5.0f; r.w = 7.0;
@@ -48,7 +49,6 @@ static void D3X8QuaternionTest(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXQuaternionConjugate(NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
-
 
 /*_______________D3DXQuaternionDot______________________*/
     expected = 55.0f;
@@ -69,6 +69,19 @@ static void D3X8QuaternionTest(void)
     /* Test the NULL case */
     funcpointer = D3DXQuaternionIdentity(NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXQuaternionIsIdentity________________*/
+    s.x = 0.0f; s.y = 0.0f; s.z = 0.0f; s.w = 1.0f;
+    expectedbool = TRUE;
+    gotbool = D3DXQuaternionIsIdentity(&s);
+    ok( expectedbool == gotbool, "Expected boolean : %d, Got bool : %d\n", expectedbool, gotbool);
+    s.x = 2.3f; s.y = -4.2f; s.z = 1.2f; s.w=0.2f;
+    expectedbool = FALSE;
+    gotbool = D3DXQuaternionIsIdentity(&q);
+    ok( expectedbool == gotbool, "Expected boolean : %d, Got bool : %d\n", expectedbool, gotbool);
+    /* Test the NULL case */
+    gotbool = D3DXQuaternionIsIdentity(NULL);
+    ok(gotbool == FALSE, "Expected boolean: %d, Got boolean: %d\n", FALSE, gotbool);
 
 /*_______________D3DXQuaternionLength__________________________*/
    expected = 11.0f;
