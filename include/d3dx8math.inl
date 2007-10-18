@@ -258,6 +258,16 @@ static inline D3DXVECTOR4* D3DXVec4Subtract(D3DXVECTOR4 *pout, CONST D3DXVECTOR4
 
 /*__________________D3DXQUATERNION____________________*/
 
+static inline D3DXQUATERNION* D3DXQuaternionConjugate(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
+{
+    if ( !pout || !pq) return NULL;
+    pout->x = -pq->x;
+    pout->y = -pq->y;
+    pout->z = -pq->z;
+    pout->w = pq->w;
+    return pout;
+}
+
 static inline FLOAT D3DXQuaternionDot(CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2)
 {
     if ( !pq1 || !pq2 ) return 0.0f;

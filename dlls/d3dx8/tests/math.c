@@ -32,11 +32,23 @@
 
 static void D3X8QuaternionTest(void)
 {
-    D3DXQUATERNION q, r;
+    D3DXQUATERNION expectedquat, gotquat, q, r;
+    LPD3DXQUATERNION funcpointer;
     FLOAT expected, got;
 
     q.x = 1.0f, q.y = 2.0f; q.z = 4.0f; q.w = 10.0f;
     r.x = -3.0f; r.y = 4.0f; r.z = -5.0f; r.w = 7.0;
+
+/*_______________D3DXQuaternionConjugate________________*/
+    expectedquat.x = -1.0f; expectedquat.y = -2.0f; expectedquat.z = -4.0f; expectedquat.w = 10.0f;
+    D3DXQuaternionConjugate(&gotquat,&q);
+    expect_vec4(expectedquat,gotquat);
+    /* Test the NULL case */
+    funcpointer = D3DXQuaternionConjugate(&gotquat,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXQuaternionConjugate(NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
 
 /*_______________D3DXQuaternionDot______________________*/
     expected = 55.0f;
