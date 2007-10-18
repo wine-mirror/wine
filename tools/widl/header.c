@@ -839,7 +839,7 @@ static void write_coclass_guid(type_t *cocl)
 static void write_com_interface(type_t *iface)
 {
   if (!iface->funcs && !iface->ref) {
-    parser_warning("%s has no methods", iface->name);
+    parser_warning("%s has no methods\n", iface->name);
     return;
   }
 

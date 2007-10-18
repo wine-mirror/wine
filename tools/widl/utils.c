@@ -62,8 +62,6 @@ static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 			free(cpy);
 		}
 	}
-
-	fprintf(stderr, "\n");
 }
 
 
