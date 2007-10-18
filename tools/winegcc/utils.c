@@ -43,7 +43,6 @@ void error(const char* s, ...)
     va_start(ap, s);
     fprintf(stderr, "winegcc: ");
     vfprintf(stderr, s, ap);
-    fprintf(stderr, "\n");
     va_end(ap);
     exit(2);
 }
@@ -53,7 +52,7 @@ void* xmalloc(size_t size)
     void* p;
 
     if ((p = malloc (size)) == NULL)
-	error("Could not malloc %d bytes.", size);
+	error("Could not malloc %d bytes\n", size);
 
     return p;
 }
@@ -62,7 +61,7 @@ void *xrealloc(void* p, size_t size)
 {
     void* p2 = realloc (p, size);
     if (size && !p2)
-	error("Could not realloc %d bytes.", size);
+	error("Could not realloc %d bytes\n", size);
 
     return p2;
 }
@@ -120,7 +119,7 @@ void strarray_add(strarray* arr, const char* str)
 
 void strarray_del(strarray* arr, unsigned int i)
 {
-    if (i >= arr->size) error("Invalid index i=%d", i);
+    if (i >= arr->size) error("Invalid index i=%d\n", i);
     memmove(&arr->base[i], &arr->base[i + 1], (arr->size - i - 1) * sizeof(arr->base[0]));
     arr->size--;
 }
@@ -195,7 +194,7 @@ void create_file(const char* name, int mode, const char* fmt, ...)
     if (verbose) printf("Creating file %s\n", name);
     va_start(ap, fmt);
     if ( !(file = fopen(name, "w")) )
-	error("Unable to open %s for writing.", name);
+	error("Unable to open %s for writing\n", name);
     vfprintf(file, fmt, ap);
     va_end(ap);
     fclose(file);
@@ -327,7 +326,7 @@ void spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 
     if ((status = spawnvp( _P_WAIT, argv[0], argv)) && !ignore_errors)
     {
-	if (status > 0) error("%s failed.", argv[0]);
+	if (status > 0) error("%s failed\n", argv[0]);
 	else perror("winegcc");
 	exit(3);
     }

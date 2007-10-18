@@ -201,7 +201,7 @@ static char* get_temp_file(const char* prefix, const char* suffix)
         free(tmp);
         tmp = strmake("/tmp/%s-XXXXXX%s", prefix, suffix);
         fd = mkstemps( tmp, strlen(suffix) );
-        if (fd == -1) error( "could not create temp file" );
+        if (fd == -1) error( "could not create temp file\n" );
     }
     close( fd );
     strarray_add(tmp_files, tmp);
@@ -233,7 +233,7 @@ static const strarray* get_translator(enum processor processor)
 	    if (!as) as = strarray_fromstring(AS, " ");
 	    return as;
     }
-    error("Unknown processor");
+    error("Unknown processor\n");
 }
 
 static void compile(struct options* opts, const char* lang)
@@ -507,12 +507,12 @@ static void build(struct options* opts)
 		case file_def:
 		case file_spec:
 		    if (spec_file)
-			error("Only one spec file can be specified.");
+			error("Only one spec file can be specified\n");
 		    spec_file = file;
 		    break;
 		case file_rc:
 		    /* FIXME: invoke wrc to build it */
-		    error("Can't compile .rc file at the moment: %s", file);
+		    error("Can't compile .rc file at the moment: %s\n", file);
 	            break;
 	    	case file_res:
 		    strarray_add(files, strmake("-r%s", file));
@@ -527,7 +527,7 @@ static void build(struct options* opts)
 		    strarray_add(files, strmake("-s%s", file));
 		    break;
 	    	case file_na:
-		    error("File does not exist: %s", file);
+		    error("File does not exist: %s\n", file);
 		    break;
 	        default:
 		    file = compile_to_object(opts, file, lang);
@@ -541,7 +541,7 @@ static void build(struct options* opts)
 	    lang = file;
     }
     if (opts->shared && !spec_file)
-	error("A spec file is currently needed in shared mode");
+	error("A spec file is currently needed in shared mode\n");
 
     /* add the default libraries, if needed */
     if (!opts->nostdlib && opts->use_msvcrt) add_library(lib_dirs, files, "msvcrt");
@@ -1020,7 +1020,7 @@ int main(int argc, char **argv)
     }
 
     if (opts.processor == proc_cpp) linking = 0;
-    if (linking == -1) error("Static linking is not supported.");
+    if (linking == -1) error("Static linking is not supported\n");
 
     if (opts.files->size == 0) forward(argc, argv, &opts);
     else if (linking) build(&opts);
