@@ -26,6 +26,10 @@
 
 #define expect_vec(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error),"Expected Vector= (%f, %f)\n , Got Vector= (%f, %f)\n", expectedvec.x, expectedvec.y, gotvec.x, gotvec.y);
 
+#define expect_vec3(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error)&&(fabs(expectedvec.z-gotvec.z)<admitted_error),"Expected Vector= (%f, %f,%f)\n , Got Vector= (%f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, gotvec.x, gotvec.y, gotvec.z);
+
+#define expect_vec4(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error)&&(fabs(expectedvec.z-gotvec.z)<admitted_error)&&(fabs(expectedvec.w-gotvec.w)<admitted_error),"Expected Vector= (%f, %f, %f, %f)\n , Got Vector= (%f, %f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, expectedvec.w, gotvec.x, gotvec.y, gotvec.z, gotvec.w);
+
 static void D3X8QuaternionTest(void)
 {
     D3DXQUATERNION q, r;
@@ -181,11 +185,22 @@ static void D3X8Vector2Test(void)
 
 static void D3X8Vector3Test(void)
 {
-    D3DXVECTOR3 u, v;
+    D3DXVECTOR3 expectedvec, gotvec, u, v;
+    LPD3DXVECTOR3 funcpointer;
     FLOAT expected, got;
 
     u.x = 9.0f; u.y = 6.0f; u.z = 2.0f;
     v.x = 2.0f; v.y = -3.0f; v.z = -4.0;
+
+/*_______________D3DXVec3Add__________________________*/
+    expectedvec.x = 11.0f; expectedvec.y = 3.0f; expectedvec.z = -2.0f;
+    D3DXVec3Add(&gotvec,&u,&v);
+    expect_vec3(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec3Add(&gotvec,NULL,&v);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec3Add(NULL,NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
 /*_______________D3DXVec3Dot__________________________*/
     expected = -8.0f;
@@ -220,11 +235,22 @@ static void D3X8Vector3Test(void)
 
 static void D3X8Vector4Test(void)
 {
-    D3DXVECTOR4 u, v;
+    D3DXVECTOR4 expectedvec, gotvec, u, v;
+    LPD3DXVECTOR4 funcpointer;
     FLOAT expected, got;
 
     u.x = 1.0f; u.y = 2.0f; u.z = 4.0f; u.w = 10.0;
     v.x = -3.0f; v.y = 4.0f; v.z = -5.0f; v.w = 7.0;
+
+/*_______________D3DXVec3Add__________________________*/
+    expectedvec.x = -2.0f; expectedvec.y = 6.0f; expectedvec.z = -1.0f; expectedvec.w = 17.0;
+    D3DXVec4Add(&gotvec,&u,&v);
+    expect_vec4(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec4Add(&gotvec,NULL,&v);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec4Add(NULL,NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
 /*_______________D3DXVec4Dot__________________________*/
     expected = 55.0f;

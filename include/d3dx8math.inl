@@ -95,6 +95,15 @@ static inline D3DXVECTOR2* D3DXVec2Subtract(D3DXVECTOR2 *pout, CONST D3DXVECTOR2
 
 /*__________________D3DXVECTOR3_______________________*/
 
+static inline D3DXVECTOR3* D3DXVec3Add(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
+{
+    if ( !pout || !pv1 || !pv2) return NULL;
+    pout->x = pv1->x + pv2->x;
+    pout->y = pv1->y + pv2->y;
+    pout->z = pv1->z + pv2->z;
+    return pout;
+}
+
 static inline FLOAT D3DXVec3Dot(CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
 {
     if ( !pv1 || !pv2 ) return 0.0f;
@@ -114,6 +123,16 @@ static inline FLOAT D3DXVec3LengthSq(CONST D3DXVECTOR3 *pv)
 }
 
 /*__________________D3DXVECTOR4_______________________*/
+
+static inline D3DXVECTOR4* D3DXVec4Add(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2)
+{
+    if ( !pout || !pv1 || !pv2) return NULL;
+    pout->x = pv1->x + pv2->x;
+    pout->y = pv1->y + pv2->y;
+    pout->z = pv1->z + pv2->z;
+    pout->w = pv1->w + pv2->w;
+    return pout;
+}
 
 static inline FLOAT D3DXVec4Dot(CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2)
 {
