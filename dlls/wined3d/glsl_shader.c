@@ -617,9 +617,8 @@ void shader_generate_glsl_declarations(
     }
 
     /* Declare input register temporaries */
-    for (i=0; i < This->baseShader.limits.packed_input; i++) {
-        if (reg_maps->packed_input[i])
-            shader_addline(buffer, "vec4 IN%lu;\n", i);
+    if(pshader) {
+        shader_addline(buffer, "vec4 IN[%lu];\n", This->baseShader.limits.packed_input);
     }
 
     /* Declare output register temporaries */
@@ -775,7 +774,7 @@ static void shader_glsl_get_register_name(
         if (pshader) {
             /* Pixel shaders >= 3.0 */
             if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3)
-                sprintf(tmpStr, "IN%u", reg);
+                sprintf(tmpStr, "IN[%u]", reg);
              else {
                 if (reg==0)
                     strcpy(tmpStr, "gl_Color");
@@ -2514,28 +2513,28 @@ void pshader_glsl_input_pack(
 
            case WINED3DDECLUSAGE_COLOR:
                if (usage_idx == 0)
-                   shader_addline(buffer, "IN%u%s = vec4(gl_Color)%s;\n",
+                   shader_addline(buffer, "IN[%u]%s = vec4(gl_Color)%s;\n",
                        i, reg_mask, reg_mask);
                else if (usage_idx == 1)
-                   shader_addline(buffer, "IN%u%s = vec4(gl_SecondaryColor)%s;\n",
+                   shader_addline(buffer, "IN[%u]%s = vec4(gl_SecondaryColor)%s;\n",
                        i, reg_mask, reg_mask);
                else
-                   shader_addline(buffer, "IN%u%s = vec4(unsupported_color_input)%s;\n",
+                   shader_addline(buffer, "IN[%u]%s = vec4(unsupported_color_input)%s;\n",
                        i, reg_mask, reg_mask);
                break;
 
            case WINED3DDECLUSAGE_TEXCOORD:
-               shader_addline(buffer, "IN%u%s = vec4(gl_TexCoord[%u])%s;\n",
+               shader_addline(buffer, "IN[%u]%s = vec4(gl_TexCoord[%u])%s;\n",
                    i, reg_mask, usage_idx, reg_mask );
                break;
 
            case WINED3DDECLUSAGE_FOG:
-               shader_addline(buffer, "IN%u%s = vec4(gl_FogFragCoord)%s;\n",
+               shader_addline(buffer, "IN[%u]%s = vec4(gl_FogFragCoord)%s;\n",
                    i, reg_mask, reg_mask);
                break;
 
            default:
-               shader_addline(buffer, "IN%u%s = vec4(unsupported_input)%s;\n",
+               shader_addline(buffer, "IN[%u]%s = vec4(unsupported_input)%s;\n",
                    i, reg_mask, reg_mask);
         }
     }
