@@ -4,7 +4,7 @@
 @ stub LdapProvOpenStore
 @ stub CryptCancelAsyncRetrieval
 @ stub CryptFlushTimeValidObject
-@ stub CryptGetObjectUrl
+@ stdcall CryptGetObjectUrl(ptr ptr long ptr ptr ptr ptr ptr)
 @ stub CryptGetTimeValidObject
 @ stub CryptInstallCancelRetrieval
 @ stub CryptRetrieveObjectByUrlA

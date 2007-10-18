@@ -79,6 +79,18 @@ HRESULT WINAPI DllUnregisterServer(void)
 }
 
 /***********************************************************************
+ *    CryptGetObjectUrl (CRYPTNET.@)
+ */
+BOOL WINAPI CryptGetObjectUrl(LPCSTR pszUrlOid, LPVOID pvPara, DWORD dwFlags,
+ PCRYPT_URL_ARRAY pUrlArray, DWORD *pcbUrlArray, PCRYPT_URL_INFO pUrlInfo,
+ DWORD *pcbUrlInfo, LPVOID pvReserved)
+{
+    FIXME("(%s, %p, %08x, %p, %p, %p, %p, %p): stub\n", debugstr_a(pszUrlOid),
+     pvPara, dwFlags, pUrlArray, pcbUrlArray, pUrlInfo, pcbUrlInfo, pvReserved);
+    return FALSE;
+}
+
+/***********************************************************************
  *    CertDllVerifyRevocation (CRYPTNET.@)
  */
 BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
