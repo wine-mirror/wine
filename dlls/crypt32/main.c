@@ -75,9 +75,21 @@ BOOL WINAPI I_CryptCreateLruCache(void *unknown, HLRUCACHE *out)
     return TRUE;
 }
 
+BOOL WINAPI I_CryptFindLruEntry(DWORD unk0, DWORD unk1)
+{
+    FIXME("(%08x, %08x): stub!\n", unk0, unk1);
+    return FALSE;
+}
+
 BOOL WINAPI I_CryptFindLruEntryData(DWORD unk0, DWORD unk1, DWORD unk2)
 {
     FIXME("(%08x, %08x, %08x): stub!\n", unk0, unk1, unk2);
+    return FALSE;
+}
+
+BOOL WINAPI I_CryptCreateLruEntry(HLRUCACHE h, DWORD unk0, DWORD unk1)
+{
+    FIXME("(%p, %08x, %08x): stub!\n", h, unk0, unk1);
     return FALSE;
 }
 

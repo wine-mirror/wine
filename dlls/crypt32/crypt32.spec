@@ -192,8 +192,9 @@
 @ stub CryptVerifySignatureU
 @ stdcall I_CryptAllocTls()
 @ stdcall I_CryptCreateLruCache(ptr ptr)
-@ stub I_CryptCreateLruEntry
+@ stdcall I_CryptCreateLruEntry(ptr long long)
 @ stdcall I_CryptDetachTls(long)
+@ stdcall I_CryptFindLruEntry(long long)
 @ stdcall I_CryptFindLruEntryData(long long long)
 @ stdcall I_CryptFlushLruCache(ptr long long)
 @ stdcall I_CryptFreeLruCache(ptr long long)
