@@ -156,7 +156,7 @@ void set_codepage(int cp)
 	codepage = cp;
 	codepage_def = find_codepage(codepage);
 	if(!codepage_def)
-		xyyerror("Codepage %d not found; cannot process", codepage);
+		xyyerror("Codepage %d not found; cannot process\n", codepage);
 }
 
 /*
@@ -203,7 +203,7 @@ try_again:
 		assert(codepage_def != NULL);
 		n = wine_cp_mbstowcs(codepage_def, 0, xlatebuffer, strlen(xlatebuffer)+1, inputbuffer, INPUTBUFFER_SIZE);
 		if(n < 0)
-			internal_error(__FILE__, __LINE__, "Could not translate to unicode (%d)", n);
+			internal_error(__FILE__, __LINE__, "Could not translate to unicode (%d)\n", n);
 		if(n <= 1)
 			goto try_again;	/* Should not hapen */
 		n--;	/* Strip added conversion '\0' from input length */
@@ -224,7 +224,7 @@ try_again:
 				if(!n && ferror(yyin))
 					xyyerror(err_fatalread);
 				else
-					xyyerror("Fatal: file to short to determine byteorder (should never happen)");
+					xyyerror("Fatal: file to short to determine byteorder (should never happen)\n");
 			}
 			if(isisochar(inputbuffer[0]) &&
 				isisochar(inputbuffer[1]) &&
@@ -249,7 +249,7 @@ try_again:
 #endif
 			}
 			else
-				xyyerror("Fatal: cannot determine file's byteorder");
+				xyyerror("Fatal: cannot determine file's byteorder\n");
 			/* FIXME:
 			 * Determine the file-endian with the leader-bytes
 			 * "FF FE..."; can't remember the exact sequence.
@@ -302,7 +302,7 @@ try_again:
 
 	if(!n)
 	{
-		mcy_warning("Re-read line (input was or converted to zilch)");
+		mcy_warning("Re-read line (input was or converted to zilch)\n");
 		goto try_again;	/* Should not happen, but could be due to stdin reading and a signal */
 	}
 
@@ -458,7 +458,7 @@ static int scan_number(int ch)
 	while(1)
 	{
 		if(!isisochar(ch))
-			xyyerror("Invalid digit");
+			xyyerror("Invalid digit\n");
 
 		switch(state)
 		{
@@ -472,7 +472,7 @@ static int scan_number(int ch)
 					state = 4;
 			}
 			else
-				internal_error(__FILE__, __LINE__, "Non-digit in first number-scanner state");
+				internal_error(__FILE__, __LINE__, "Non-digit in first number-scanner state\n");
 			break;
 		case 1:
 			if(ch == 'x' || ch == 'X')
@@ -486,7 +486,7 @@ static int scan_number(int ch)
 				state = 3;
 			}
 			else if(isalpha(ch) || ch == '_')
-				xyyerror("Invalid number digit");
+				xyyerror("Invalid number digit\n");
 			else
 			{
 				unget_unichar(ch);
@@ -498,7 +498,7 @@ static int scan_number(int ch)
 			if(isxdigit(ch))
 				push_char(ch);
 			else if(isalpha(ch) || ch == '_' || !isxdigit(tos_char_stack()))
-				xyyerror("Invalid hex digit");
+				xyyerror("Invalid hex digit\n");
 			else
 			{
 				base = 16;
@@ -509,7 +509,7 @@ static int scan_number(int ch)
 			if(ch >= '0' && ch <= '7')
 				push_char(ch);
 			else if(isalnum(ch) || ch == '_')
-				xyyerror("Invalid octal digit");
+				xyyerror("Invalid octal digit\n");
 			else
 			{
 				base = 8;
@@ -520,7 +520,7 @@ static int scan_number(int ch)
 			if(isdigit(ch))
 				push_char(ch);
 			else if(isalnum(ch) || ch == '_')
-				xyyerror("Invalid decimal digit");
+				xyyerror("Invalid decimal digit\n");
 			else
 			{
 				base = 10;
@@ -528,7 +528,7 @@ static int scan_number(int ch)
 			}
 			break;
 		default:
-			internal_error(__FILE__, __LINE__, "Invalid state in number-scanner");
+			internal_error(__FILE__, __LINE__, "Invalid state in number-scanner\n");
 		}
 		ch = get_unichar();
 	}
@@ -626,7 +626,7 @@ int mcy_lex(void)
 			while((ch = get_unichar()) != '\n')
 			{
 				if(ch == EOF)
-					xyyerror("Unexpected EOF");
+					xyyerror("Unexpected EOF\n");
 				push_unichar(ch);
 			}
 			newline();
@@ -710,7 +710,7 @@ int mcy_lex(void)
 					return tTOKEN;
 
 				default:
-					internal_error(__FILE__, __LINE__, "Invalid token type encountered");
+					internal_error(__FILE__, __LINE__, "Invalid token type encountered\n");
 				}
 			}
 
@@ -741,7 +741,7 @@ int mcy_lex(void)
 			mcy_lval.str = xunistrdup(get_unichar_stack());
 			return tCOMMENT;
 		default:
-			xyyerror("Invalid character '%c' (0x%04x)", isisochar(ch) && isprint(ch) ? ch : '.', ch);
+			xyyerror("Invalid character '%c' (0x%04x)\n", isisochar(ch) && isprint(ch) ? ch : '.', ch);
 		}
 	}
 }

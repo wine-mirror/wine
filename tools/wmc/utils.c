@@ -38,7 +38,6 @@ static void generic_msg(const char *s, const char *t, va_list ap)
 {
 	fprintf(stderr, "%s:%d:%d: %s: ", input_name ? input_name : "stdin", line_number, char_number, t);
 	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
 }
 
 /*
@@ -85,7 +84,6 @@ void internal_error(const char *file, int line, const char *s, ...)
 	va_start(ap, s);
 	fprintf(stderr, "Internal error (please report) %s %d: ", file, line);
 	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
 	va_end(ap);
 	exit(3);
 }
@@ -96,7 +94,6 @@ void error(const char *s, ...)
 	va_start(ap, s);
 	fprintf(stderr, "Error: ");
 	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
 	va_end(ap);
 	exit(2);
 }
@@ -107,7 +104,6 @@ void warning(const char *s, ...)
 	va_start(ap, s);
 	fprintf(stderr, "Warning: ");
 	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
 	va_end(ap);
 }
 
