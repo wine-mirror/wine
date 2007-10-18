@@ -1216,6 +1216,8 @@ typedef struct _CRYPT_URL_INFO {
 #define URL_OID_CRL_FRESHEST_CRL           ((LPCSTR)7)
 #define URL_OID_CROSS_CERT_DIST_POINT      ((LPCSTR)8)
 
+#define URL_OID_GET_OBJECT_URL_FUNC "UrlDllGetObjectUrl"
+
 typedef HANDLE HCRYPTASYNC, *PHCRYPTASYNC;
 
 typedef void (WINAPI *PFN_CRYPT_ASYNC_PARAM_FREE_FUNC)(LPSTR pszParamOid,
