@@ -118,11 +118,20 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
     switch (dwCtrlType)
     {
     case CERT_STORE_CTRL_RESYNC:
-        CRYPT_EmptyStore(store->memStore);
         store->dirty = FALSE;
         if (store->type == CERT_STORE_SAVE_AS_STORE)
-            ret = CRYPT_ReadSerializedStoreFromFile(store->file,
-             store->memStore);
+        {
+            HCERTSTORE memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+             CERT_STORE_CREATE_NEW_FLAG, NULL);
+
+            /* FIXME: if I could translate a handle to a path, I could use
+             * CryptQueryObject instead, but there's no API to do so yet.
+             */
+            ret = CRYPT_ReadSerializedStoreFromFile(store->file, memStore);
+            if (ret)
+                I_CertUpdateStore(store->memStore, memStore, 0, 0);
+            CertCloseStore(memStore, 0);
+        }
         else if (store->type == CERT_STORE_SAVE_AS_PKCS7)
         {
             CERT_BLOB blob = { 0, NULL };
@@ -136,24 +145,8 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
                  CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
                  CERT_QUERY_FORMAT_FLAG_BINARY, 0, NULL, NULL, NULL,
                  &messageStore, NULL, NULL);
-                if (ret)
-                {
-                    PCCERT_CONTEXT cert = NULL;
-                    PCCRL_CONTEXT crl = NULL;
-
-                    do {
-                        cert = CertEnumCertificatesInStore(messageStore, cert);
-                        if (cert)
-                            CertAddCertificateContextToStore(store->memStore,
-                             cert, CERT_STORE_ADD_ALWAYS, NULL);
-                    } while (cert);
-                    do {
-                        crl = CertEnumCRLsInStore(messageStore, crl);
-                        if (crl)
-                            CertAddCRLContextToStore(store->memStore, crl,
-                             CERT_STORE_ADD_ALWAYS, NULL);
-                    } while (crl);
-                }
+                I_CertUpdateStore(store->memStore, messageStore, 0, 0);
+                CertCloseStore(messageStore, 0);
                 CryptMemFree(blob.pbData);
             }
         }

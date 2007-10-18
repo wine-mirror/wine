@@ -234,6 +234,8 @@ void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
  CertStoreType type);
 void CRYPT_FreeStore(PWINECRYPT_CERTSTORE store);
 void CRYPT_EmptyStore(HCERTSTORE store);
+BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
+ DWORD unk1);
 
 PWINECRYPT_CERTSTORE CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara);
