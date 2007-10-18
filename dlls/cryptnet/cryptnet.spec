@@ -1,5 +1,5 @@
 @ stub CertDllVerifyCTLUsage
-@ stub CertDllVerifyRevocation
+@ stdcall CertDllVerifyRevocation(long long long ptr long ptr ptr)
 @ stub CryptnetWlxLogoffEvent
 @ stub LdapProvOpenStore
 @ stub CryptCancelAsyncRetrieval

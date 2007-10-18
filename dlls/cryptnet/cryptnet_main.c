@@ -77,3 +77,15 @@ HRESULT WINAPI DllUnregisterServer(void)
     CERT_STORE_PROV_LDAP_W);
    return S_OK;
 }
+
+/***********************************************************************
+ *    CertDllVerifyRevocation (CRYPTNET.@)
+ */
+BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
+ DWORD cContext, void *rgpvContext[], DWORD dwFlags,
+ PCERT_REVOCATION_PARA pRevPara, PCERT_REVOCATION_STATUS pRevStatus)
+{
+   FIXME("(%08x, %d, %d, %p, %08x, %p, %p): stub\n", dwEncodingType, dwRevType,
+    cContext, rgpvContext, dwFlags, pRevPara, pRevStatus);
+   return FALSE;
+}
