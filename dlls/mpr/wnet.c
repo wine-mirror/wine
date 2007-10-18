@@ -1409,7 +1409,7 @@ DWORD WINAPI WNetGetResourceInformationW( LPNETRESOURCEW lpNetResource,
     DWORD ret = WN_NO_NETWORK;
     DWORD index;
 
-    TRACE( "(%p, %p, %p, %p): stub\n",
+    TRACE( "(%p, %p, %p, %p)\n",
            lpNetResource, lpBuffer, cbBuffer, lplpSystem);
 
     if (!(lpBuffer))
