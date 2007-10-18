@@ -1175,7 +1175,7 @@ static void test_data_cache(void)
     fmtetc.cfFormat = CF_METAFILEPICT;
     stgmedium.tymed = TYMED_MFPICT;
     U(stgmedium).hMetaFilePict = OleMetafilePictFromIconAndLabel(
-        LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION)), wszPath, wszPath, 0);
+        LoadIcon(NULL, IDI_APPLICATION), wszPath, wszPath, 0);
     stgmedium.pUnkForRelease = NULL;
 
     fmtetc.dwAspect = DVASPECT_CONTENT;
