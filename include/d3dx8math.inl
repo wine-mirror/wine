@@ -149,6 +149,15 @@ static inline D3DXVECTOR3* D3DXVec3Minimize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3
     return pout;
 }
 
+static inline D3DXVECTOR3* D3DXVec3Scale(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, FLOAT s)
+{
+    if ( !pout || !pv) return NULL;
+    pout->x = s * (pv->x);
+    pout->y = s * (pv->y);
+    pout->z = s * (pv->z);
+    return pout;
+}
+
 static inline D3DXVECTOR3* D3DXVec3Subtract(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
@@ -215,6 +224,16 @@ static inline D3DXVECTOR4* D3DXVec4Minimize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4
     pout->y = min(pv1->y , pv2->y);
     pout->z = min(pv1->z , pv2->z);
     pout->w = min(pv1->w , pv2->w);
+    return pout;
+}
+
+static inline D3DXVECTOR4* D3DXVec4Scale(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv, FLOAT s)
+{
+    if ( !pout || !pv) return NULL;
+    pout->x = s * (pv->x);
+    pout->y = s * (pv->y);
+    pout->z = s * (pv->z);
+    pout->w = s * (pv->w);
     return pout;
 }
 

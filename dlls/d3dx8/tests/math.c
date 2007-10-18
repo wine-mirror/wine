@@ -263,6 +263,16 @@ static void D3X8Vector3Test(void)
     funcpointer = D3DXVec3Minimize(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
+/*_______________D3DXVec3Scale____________________________*/
+    expectedvec.x = -58.5f; expectedvec.y = -39.0f; expectedvec.z = -13.0f;
+    D3DXVec3Scale(&gotvec,&u,scale);
+    expect_vec3(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec3Scale(&gotvec,NULL,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec3Scale(NULL,NULL,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
 /*_______________D3DXVec3Subtract_______________________*/
     expectedvec.x = 7.0f; expectedvec.y = 9.0f; expectedvec.z = 6.0f;
     D3DXVec3Subtract(&gotvec,&u,&v);
@@ -353,6 +363,16 @@ static void D3X8Vector4Test(void)
     funcpointer = D3DXVec4Minimize(&gotvec,NULL,&v);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXVec4Minimize(NULL,NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXVec4Scale____________________________*/
+    expectedvec.x = -6.5f; expectedvec.y = -13.0f; expectedvec.z = -26.0f; expectedvec.w = -65.0f;
+    D3DXVec4Scale(&gotvec,&u,scale);
+    expect_vec4(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec4Scale(&gotvec,NULL,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec4Scale(NULL,NULL,scale);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
 /*_______________D3DXVec4Subtract__________________________*/
