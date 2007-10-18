@@ -50,52 +50,6 @@ static const WCHAR UncPfxW[] = {'U','N','C','\\',0};
 
 #define IS_SEPARATOR(ch)  ((ch) == '\\' || (ch) == '/')
 
-#define MAX_DOS_DRIVES 26
-
-struct drive_info
-{
-    dev_t dev;
-    ino_t ino;
-};
-
-/***********************************************************************
- *           get_drives_info
- *
- * Retrieve device/inode number for all the drives. Helper for find_drive_root.
- */
-static inline int get_drives_info( struct drive_info info[MAX_DOS_DRIVES] )
-{
-    const char *config_dir = wine_get_config_dir();
-    char *buffer, *p;
-    struct stat st;
-    int i, ret;
-
-    buffer = RtlAllocateHeap( GetProcessHeap(), 0, strlen(config_dir) + sizeof("/dosdevices/a:") );
-    if (!buffer) return 0;
-    strcpy( buffer, config_dir );
-    strcat( buffer, "/dosdevices/a:" );
-    p = buffer + strlen(buffer) - 2;
-
-    for (i = ret = 0; i < MAX_DOS_DRIVES; i++)
-    {
-        *p = 'a' + i;
-        if (!stat( buffer, &st ))
-        {
-            info[i].dev = st.st_dev;
-            info[i].ino = st.st_ino;
-            ret++;
-        }
-        else
-        {
-            info[i].dev = 0;
-            info[i].ino = 0;
-        }
-    }
-    RtlFreeHeap( GetProcessHeap(), 0, buffer );
-    return ret;
-}
-
-
 /***********************************************************************
  *           remove_last_componentA
  *
@@ -149,7 +103,7 @@ static NTSTATUS find_drive_rootA( LPCSTR *ppath, unsigned int len, int *drive_re
     struct drive_info info[MAX_DOS_DRIVES];
 
     /* get device and inode of all drives */
-    if (!get_drives_info( info )) return STATUS_OBJECT_PATH_NOT_FOUND;
+    if (!DIR_get_drives_info( info )) return STATUS_OBJECT_PATH_NOT_FOUND;
 
     /* strip off trailing slashes */
     while (len > 1 && path[len - 1] == '/') len--;
@@ -240,7 +194,7 @@ static int find_drive_rootW( LPCWSTR *ppath )
     struct drive_info info[MAX_DOS_DRIVES];
 
     /* get device and inode of all drives */
-    if (!get_drives_info( info )) return -1;
+    if (!DIR_get_drives_info( info )) return -1;
 
     /* strip off trailing slashes */
     lenW = strlenW(path);

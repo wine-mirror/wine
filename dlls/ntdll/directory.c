@@ -227,6 +227,60 @@ static char *get_default_lpt_device( int num )
 
 
 /***********************************************************************
+ *           DIR_get_drives_info
+ *
+ * Retrieve device/inode number for all the drives. Helper for find_drive_root.
+ */
+unsigned int DIR_get_drives_info( struct drive_info info[MAX_DOS_DRIVES] )
+{
+    static struct drive_info cache[MAX_DOS_DRIVES];
+    static time_t last_update;
+    static unsigned int nb_drives;
+    unsigned int ret;
+    time_t now = time(NULL);
+
+    RtlEnterCriticalSection( &dir_section );
+    if (now != last_update)
+    {
+        const char *config_dir = wine_get_config_dir();
+        char *buffer, *p;
+        struct stat st;
+        unsigned int i;
+
+        if ((buffer = RtlAllocateHeap( GetProcessHeap(), 0,
+                                       strlen(config_dir) + sizeof("/dosdevices/a:") )))
+        {
+            strcpy( buffer, config_dir );
+            strcat( buffer, "/dosdevices/a:" );
+            p = buffer + strlen(buffer) - 2;
+
+            for (i = nb_drives = 0; i < MAX_DOS_DRIVES; i++)
+            {
+                *p = 'a' + i;
+                if (!stat( buffer, &st ))
+                {
+                    cache[i].dev = st.st_dev;
+                    cache[i].ino = st.st_ino;
+                    nb_drives++;
+                }
+                else
+                {
+                    cache[i].dev = 0;
+                    cache[i].ino = 0;
+                }
+            }
+            RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        }
+        last_update = now;
+    }
+    memcpy( info, cache, sizeof(cache) );
+    ret = nb_drives;
+    RtlLeaveCriticalSection( &dir_section );
+    return ret;
+}
+
+
+/***********************************************************************
  *           parse_mount_entries
  *
  * Parse mount entries looking for a given device. Helper for get_default_drive_device.

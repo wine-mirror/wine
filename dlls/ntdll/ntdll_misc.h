@@ -29,6 +29,14 @@
 
 #define MAX_NT_PATH_LENGTH 277
 
+#define MAX_DOS_DRIVES 26
+
+struct drive_info
+{
+    dev_t dev;
+    ino_t ino;
+};
+
 /* exceptions */
 extern void wait_suspend( CONTEXT *context );
 extern void WINAPI __regs_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
@@ -113,6 +121,7 @@ extern NTSTATUS FILE_GetNtStatus(void);
 extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
 extern NTSTATUS DIR_unmount_device( HANDLE handle );
 extern NTSTATUS DIR_get_unix_cwd( char **cwd );
+extern unsigned int DIR_get_drives_info( struct drive_info info[MAX_DOS_DRIVES] );
 
 /* virtual memory */
 extern NTSTATUS VIRTUAL_HandleFault(LPCVOID addr);
