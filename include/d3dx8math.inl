@@ -19,6 +19,8 @@
 #ifndef __D3DX8MATH_INL__
 #define __D3DX8MATH_INL__
 
+/*_______________D3DXVECTOR2________________________*/
+
 static inline D3DXVECTOR2* D3DXVec2Add(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
@@ -90,5 +92,33 @@ static inline D3DXVECTOR2* D3DXVec2Subtract(D3DXVECTOR2 *pout, CONST D3DXVECTOR2
     pout->y = pv1->y - pv2->y;
     return pout;
 }
+
+/*__________________D3DXVECTOR3_______________________*/
+
+static inline FLOAT D3DXVec3Length(CONST D3DXVECTOR3 *pv)
+{
+    if (!pv) return 0.0f;
+    return sqrt( (pv->x) * (pv->x) + (pv->y) * (pv->y) + (pv->z) * (pv->z) );
+}
+
+/*__________________D3DXVECTOR4_______________________*/
+
+static inline FLOAT D3DXVec4Length(CONST D3DXVECTOR4 *pv)
+{
+    if (!pv) return 0.0f;
+    return sqrt( (pv->x) * (pv->x) + (pv->y) * (pv->y) + (pv->z) * (pv->z) + (pv->w) * (pv->w) );
+}
+
+
+/*__________________D3DXQUATERNION____________________*/
+
+static inline FLOAT D3DXQuaternionLength( CONST D3DXQUATERNION *pq)
+{
+    if (!pq) return 0.0f;
+    return sqrt( (pq->x) * (pq->x) + (pq->y) * (pq->y) + (pq->z) * (pq->z) + (pq->w) * (pq->w) );
+}
+
+
+
 
 #endif

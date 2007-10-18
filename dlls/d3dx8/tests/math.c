@@ -26,6 +26,23 @@
 
 #define expect_vec(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error),"Expected Vector= (%f, %f)\n , Got Vector= (%f, %f)\n", expectedvec.x, expectedvec.y, gotvec.x, gotvec.y);
 
+static void D3X8QuaternionTest(void)
+{
+    D3DXQUATERNION q;
+    FLOAT expected, got;
+
+    q.x = 1.0f, q.y = 2.0f; q.z = 4.0f; q.w = 10.0f;
+
+/*_______________D3DXQuaternionLength__________________________*/
+   expected = 11.0f;
+   got = D3DXQuaternionLength(&q);
+   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXQuaternionLength(NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+}
+
 static void D3X8Vector2Test(void)
 {
     D3DXVECTOR2 expectedvec, gotvec, u, v;
@@ -140,7 +157,44 @@ static void D3X8Vector2Test(void)
 
 }
 
+static void D3X8Vector3Test(void)
+{
+    D3DXVECTOR3 u;
+    FLOAT expected, got;
+
+    u.x = 9.0f; u.y = 6.0f; u.z = 2.0f;
+
+/*_______________D3DXVec3Length__________________________*/
+   expected = 11.0f;
+   got = D3DXVec3Length(&u);
+   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXVec3Length(NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+}
+
+static void D3X8Vector4Test(void)
+{
+    D3DXVECTOR4 u;
+    FLOAT expected, got;
+
+    u.x = 1.0f; u.y = 2.0f; u.z = 4.0f; u.w = 10.0;
+
+/*_______________D3DXVec4Length__________________________*/
+   expected = 11.0f;
+   got = D3DXVec4Length(&u);
+   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXVec4Length(NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+}
+
 START_TEST(math)
 {
+    D3X8QuaternionTest();
     D3X8Vector2Test();
+    D3X8Vector3Test();
+    D3X8Vector4Test();
 }
