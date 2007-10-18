@@ -863,7 +863,7 @@ static unsigned char conf_string_type_of_char_type(unsigned char t)
         return RPC_FC_C_WSTRING;
     }
 
-    error("string_type_of_char_type: unrecognized type %d", t);
+    error("string_type_of_char_type: unrecognized type %d\n", t);
     return 0;
 }
 
