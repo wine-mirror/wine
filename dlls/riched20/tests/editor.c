@@ -2058,6 +2058,56 @@ static void test_unicode_conversions(void)
     DestroyWindow(hwnd);
 }
 
+static void test_WM_CHAR(void)
+{
+    HWND hwnd;
+    int ret;
+    const char * char_list = "abc\rabc\r";
+    const char * expected_content_single = "abcabc";
+    const char * expected_content_multi = "abc\r\nabc\r\n";
+    char buffer[64] = {0};
+    const char * p;
+
+    /* single-line control must IGNORE carriage returns */
+    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
+                           0, 0, 200, 60, 0, 0, 0, 0);
+    ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
+
+    p = char_list;
+    while (*p != '\0') {
+        SendMessageA(hwnd, WM_KEYDOWN, *p, 1);
+        ret = SendMessageA(hwnd, WM_CHAR, *p, 1);
+        ok(ret == 0, "WM_CHAR('%c') ret=%d\n", *p, ret);
+        SendMessageA(hwnd, WM_KEYUP, *p, 1);
+        p++;
+    }
+
+    SendMessage(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    ret = strcmp(buffer, expected_content_single);
+    ok(ret == 0, "WM_GETTEXT recovered incorrect string!\n");
+
+    DestroyWindow(hwnd);
+
+    /* multi-line control inserts CR normally */
+    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP|ES_MULTILINE,
+                           0, 0, 200, 60, 0, 0, 0, 0);
+    ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
+
+    p = char_list;
+    while (*p != '\0') {
+        SendMessageA(hwnd, WM_KEYDOWN, *p, 1);
+        ret = SendMessageA(hwnd, WM_CHAR, *p, 1);
+        ok(ret == 0, "WM_CHAR('%c') ret=%d\n", *p, ret);
+        SendMessageA(hwnd, WM_KEYUP, *p, 1);
+        p++;
+    }
+
+    SendMessage(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    ret = strcmp(buffer, expected_content_multi);
+    ok(ret == 0, "WM_GETTEXT recovered incorrect string!\n");
+
+    DestroyWindow(hwnd);
+}
 
 static void test_EM_GETTEXTLENGTHEX(void)
 {
@@ -2205,6 +2255,7 @@ START_TEST( editor )
   hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
 
+  test_WM_CHAR();
   test_EM_FINDTEXT();
   test_EM_GETLINE();
   test_EM_SCROLLCARET();
