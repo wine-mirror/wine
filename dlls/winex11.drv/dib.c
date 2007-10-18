@@ -257,6 +257,34 @@ static int DIB_GetBitmapInfoEx( const BITMAPINFOHEADER *header, LONG *width,
 
 
 /***********************************************************************
+ *           X11DRV_DIB_GetColorCount
+ *
+ * Computes the number of colors for the bitmap palette.
+ * Should not be called for a >8-bit deep bitmap.
+ */
+static unsigned int X11DRV_DIB_GetColorCount(const BITMAPINFO *info)
+{
+    unsigned int colors;
+    BOOL core_info = info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER);
+
+    if (core_info)
+    {
+        colors = 1 << ((const BITMAPCOREINFO*)info)->bmciHeader.bcBitCount;
+    }
+    else
+    {
+        colors = info->bmiHeader.biClrUsed;
+        if (!colors) colors = 1 << info->bmiHeader.biBitCount;
+    }
+    if (colors > 256)
+    {
+        ERR("called with >256 colors!\n");
+        colors = 0;
+    }
+    return colors;
+}
+
+/***********************************************************************
  *           DIB_GetBitmapInfo
  *
  * Get the info from a bitmap header.
@@ -343,15 +371,10 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
     }
     else  /* DIB_PAL_COLORS */
     {
-        if (colorPtr) {
-            const WORD * index = (const WORD *)colorPtr;
+        const WORD * index = (const WORD *)colorPtr;
 
-            for (i = start; i < end; i++, index++)
-                colorMapping[i] = X11DRV_PALETTE_ToPhysical( physDev, PALETTEINDEX(*index) );
-        } else {
-            for (i = start; i < end; i++)
-                colorMapping[i] = X11DRV_PALETTE_ToPhysical( physDev, PALETTEINDEX(i) );
-        }
+        for (i = start; i < end; i++, index++)
+            colorMapping[i] = X11DRV_PALETTE_ToPhysical( physDev, PALETTEINDEX(*index) );
     }
 
     return colorMapping;
@@ -366,40 +389,21 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
 static int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WORD depth,
                                       const BITMAPINFO *info, int *nColors )
 {
-    unsigned int colors;
     BOOL isInfo;
     const void *colorPtr;
     int *colorMapping;
 
+
+    *nColors = X11DRV_DIB_GetColorCount(info);
+    if (!*nColors) return NULL;
+
     isInfo = info->bmiHeader.biSize != sizeof(BITMAPCOREHEADER);
-
-    if (isInfo)
-    {
-        colors = info->bmiHeader.biClrUsed;
-        if (!colors) colors = 1 << info->bmiHeader.biBitCount;
-    }
-    else
-    {
-        colors = 1 << ((const BITMAPCOREHEADER *)info)->bcBitCount;
-    }
-
-    colorPtr = (const BYTE*) info + (WORD) info->bmiHeader.biSize;
-
-    if (colors > 256)
-    {
-        ERR("called with >256 colors!\n");
-        return NULL;
-    }
-
-    /* just so CopyDIBSection doesn't have to create an identity palette */
-    if (coloruse == (WORD)-1) colorPtr = NULL;
-
-    if (!(colorMapping = HeapAlloc(GetProcessHeap(), 0, colors * sizeof(int) )))
+    colorPtr = (const BYTE*)info + (WORD)info->bmiHeader.biSize;
+    if (!(colorMapping = HeapAlloc(GetProcessHeap(), 0, *nColors * sizeof(int) )))
         return NULL;
 
-    *nColors = colors;
     return X11DRV_DIB_GenColorMap( physDev, colorMapping, coloruse, depth,
-                                   isInfo, colorPtr, 0, colors);
+                                   isInfo, colorPtr, 0, *nColors);
 }
 
 /***********************************************************************
@@ -4199,7 +4203,9 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
 {
   DIBSECTION dib;
   X_PHYSBITMAP *physBitmap;
-  int nColorMap = 0, *colorMap = NULL, aColorMap = FALSE;
+  unsigned int nColorMap;
+  int* x11ColorMap;
+  int freeColorMap;
 
   TRACE("(%p,%p,%d,%d,%d,%d,%d,%d)\n", physDevSrc->hdc, physDevDst->hdc,
     xSrc, ySrc, xDest, yDest, width, height);
@@ -4228,24 +4234,34 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
 	 * use the DIB colormap instead - this is necessary in some
 	 * cases since we need to do depth conversion in some places
 	 * where real Windows can just copy data straight over */
-	colorMap = physBitmap->colorMap;
+	x11ColorMap = physBitmap->colorMap;
 	nColorMap = physBitmap->nColorMap;
+        freeColorMap = FALSE;
       } else {
-	colorMap = X11DRV_DIB_BuildColorMap( physDevSrc, (WORD)-1,
-					     dib.dsBm.bmBitsPixel,
-					     (BITMAPINFO*)&dib.dsBmih,
-					     &nColorMap );
-	if (colorMap) aColorMap = TRUE;
+	  const BITMAPINFO* info = (BITMAPINFO*)&dib.dsBmih;
+	  int i;
+
+	  nColorMap = X11DRV_DIB_GetColorCount(info);
+	  x11ColorMap = HeapAlloc(GetProcessHeap(), 0, nColorMap * sizeof(int));
+	  for (i = 0; i < nColorMap; i++)
+	      x11ColorMap[i] = X11DRV_PALETTE_ToPhysical(physDevSrc, PALETTEINDEX(i));
+	  freeColorMap = TRUE;
       }
     }
+    else
+    {
+        nColorMap = 0;
+        x11ColorMap = NULL;
+        freeColorMap = FALSE;
+    }
     /* perform the copy */
-    X11DRV_DIB_DoCopyDIBSection(physBitmap, FALSE, colorMap, nColorMap,
+    X11DRV_DIB_DoCopyDIBSection(physBitmap, FALSE, x11ColorMap, nColorMap,
 				physDevDst->drawable, physDevDst->gc, xSrc, ySrc,
                                 physDevDst->dc_rect.left + xDest, physDevDst->dc_rect.top + yDest,
 				width, height);
     /* free color mapping */
-    if (aColorMap)
-      HeapFree(GetProcessHeap(), 0, colorMap);
+    if (freeColorMap)
+      HeapFree(GetProcessHeap(), 0, x11ColorMap);
   }
 }
 
