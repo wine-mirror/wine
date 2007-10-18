@@ -1490,7 +1490,7 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
     /* check there's no duplicate keys */
     r = msi_table_find_row( tv, rec, &row );
     if (r == ERROR_SUCCESS)
-        return ERROR_INVALID_DATA;
+        return ERROR_FUNCTION_FAILED;
 
     return ERROR_SUCCESS;
 }

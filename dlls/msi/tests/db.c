@@ -791,10 +791,8 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
 
     /* should fail ... */
-    todo_wine {
     r = MsiViewModify(hview, MSIMODIFY_INSERT_TEMPORARY, hrec );
     ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
-    }
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
