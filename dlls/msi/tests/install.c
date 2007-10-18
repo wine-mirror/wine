@@ -1006,12 +1006,16 @@ static BOOL get_program_files_dir(LPSTR buf, LPSTR buf2)
         return FALSE;
 
     size = MAX_PATH;
-    if (RegQueryValueEx(hkey, "ProgramFilesDir", 0, &type, (LPBYTE)buf, &size))
+    if (RegQueryValueExA(hkey, "ProgramFilesDir", 0, &type, (LPBYTE)buf, &size)) {
+        RegCloseKey(hkey);
         return FALSE;
+    }
 
     size = MAX_PATH;
-    if (RegQueryValueEx(hkey, "CommonFilesDir", 0, &type, (LPBYTE)buf2, &size))
+    if (RegQueryValueExA(hkey, "CommonFilesDir", 0, &type, (LPBYTE)buf2, &size)) {
+        RegCloseKey(hkey);
         return FALSE;
+    }
 
     RegCloseKey(hkey);
     return TRUE;
