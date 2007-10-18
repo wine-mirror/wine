@@ -243,6 +243,16 @@ static void D3X8Vector3Test(void)
     funcpointer = D3DXVec3Lerp(NULL,NULL,NULL,scale);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
+/*_______________D3DXVec3Maximize__________________________*/
+    expectedvec.x = 9.0f; expectedvec.y = 6.0f; expectedvec.z = 2.0f;
+    D3DXVec3Maximize(&gotvec,&u,&v);
+    expect_vec3(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec3Maximize(&gotvec,NULL,&v);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec3Maximize(NULL,NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
 /*_______________D3DXVec3Subtract_______________________*/
     expectedvec.x = 7.0f; expectedvec.y = 9.0f; expectedvec.z = 6.0f;
     D3DXVec3Subtract(&gotvec,&u,&v);
@@ -313,6 +323,16 @@ static void D3X8Vector4Test(void)
     funcpointer = D3DXVec4Lerp(&gotvec,NULL,&v,scale);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXVec4Lerp(NULL,NULL,NULL,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXVec4Maximize__________________________*/
+    expectedvec.x = 1.0f; expectedvec.y = 4.0f; expectedvec.z = 4.0f; expectedvec.w = 10.0;
+    D3DXVec4Maximize(&gotvec,&u,&v);
+    expect_vec4(expectedvec,gotvec);
+    /* Tests the case NULL */
+    funcpointer = D3DXVec4Maximize(&gotvec,NULL,&v);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXVec4Maximize(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
 /*_______________D3DXVec4Subtract__________________________*/

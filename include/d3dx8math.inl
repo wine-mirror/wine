@@ -131,6 +131,15 @@ static inline D3DXVECTOR3* D3DXVec3Lerp(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv
     return pout;
 }
 
+static inline D3DXVECTOR3* D3DXVec3Maximize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
+{
+    if ( !pout || !pv1 || !pv2) return NULL;
+    pout->x = max(pv1->x , pv2->x);
+    pout->y = max(pv1->y , pv2->y);
+    pout->z = max(pv1->z , pv2->z);
+    return pout;
+}
+
 static inline D3DXVECTOR3* D3DXVec3Subtract(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
@@ -176,6 +185,17 @@ static inline D3DXVECTOR4* D3DXVec4Lerp(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv
     pout->y = (1-s) * (pv1->y) + s * (pv2->y);
     pout->z = (1-s) * (pv1->z) + s * (pv2->z);
     pout->w = (1-s) * (pv1->w) + s * (pv2->w);
+    return pout;
+}
+
+
+static inline D3DXVECTOR4* D3DXVec4Maximize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2)
+{
+    if ( !pout || !pv1 || !pv2) return NULL;
+    pout->x = max(pv1->x , pv2->x);
+    pout->y = max(pv1->y , pv2->y);
+    pout->z = max(pv1->z , pv2->z);
+    pout->w = max(pv1->w , pv2->w);
     return pout;
 }
 
