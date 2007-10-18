@@ -41,6 +41,15 @@ static void D3X8QuaternionTest(void)
     expected=0.0f;
     got = D3DXQuaternionLength(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+
+/*_______________D3DXQuaternionLengthSq________________________*/
+    expected = 121.0f;
+    got = D3DXQuaternionLengthSq(&q);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXQuaternionLengthSq(NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 }
 
 static void D3X8Vector2Test(void)
@@ -172,6 +181,15 @@ static void D3X8Vector3Test(void)
     expected=0.0f;
     got = D3DXVec3Length(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+
+/*_______________D3DXVec3LengthSq________________________*/
+    expected = 121.0f;
+    got = D3DXVec3LengthSq(&u);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXVec3LengthSq(NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 }
 
 static void D3X8Vector4Test(void)
@@ -188,6 +206,15 @@ static void D3X8Vector4Test(void)
    /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec4Length(NULL);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+
+/*_______________D3DXVec4LengthSq________________________*/
+    expected = 121.0f;
+    got = D3DXVec4LengthSq(&u);
+    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    /* Tests the case NULL */
+    expected=0.0f;
+    got = D3DXVec4LengthSq(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 }
 
