@@ -1434,24 +1434,24 @@ static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr,
   if (is_array(v->type))
   {
     const type_t *rt = v->type->ref;
-    switch (rt->type)
-    {
-    case RPC_FC_BOGUS_STRUCT:
-    case RPC_FC_NON_ENCAPSULATED_UNION:
-    case RPC_FC_ENCAPSULATED_UNION:
-    case RPC_FC_ENUM16:
+    if (is_user_type(rt))
       v->type->type = RPC_FC_BOGUS_ARRAY;
-      break;
-    /* FC_RP should be above, but widl overuses these, and will break things.  */
-    case RPC_FC_UP:
-    case RPC_FC_RP:
-      if (rt->ref->type == RPC_FC_IP)
-        v->type->type = RPC_FC_BOGUS_ARRAY;
-      break;
-    default:
-      if (is_user_type(rt))
-        v->type->type = RPC_FC_BOGUS_ARRAY;
-    }
+    else
+      switch (rt->type)
+        {
+        case RPC_FC_BOGUS_STRUCT:
+        case RPC_FC_NON_ENCAPSULATED_UNION:
+        case RPC_FC_ENCAPSULATED_UNION:
+        case RPC_FC_ENUM16:
+          v->type->type = RPC_FC_BOGUS_ARRAY;
+          break;
+          /* FC_RP should be above, but widl overuses these, and will break things.  */
+        case RPC_FC_UP:
+        case RPC_FC_RP:
+          if (rt->ref->type == RPC_FC_IP)
+            v->type->type = RPC_FC_BOGUS_ARRAY;
+          break;
+        }
   }
 }
 
@@ -1859,6 +1859,7 @@ static int get_struct_type(var_list_t *fields)
     case RPC_FC_OP:
     case RPC_FC_CARRAY:
     case RPC_FC_CVARRAY:
+    case RPC_FC_BOGUS_ARRAY:
       has_pointer = 1;
       break;
 
@@ -1897,15 +1898,9 @@ static int get_struct_type(var_list_t *fields)
       /* fallthru - treat it as complex */
 
     /* as soon as we see one of these these members, it's bogus... */
-    case RPC_FC_IP:
     case RPC_FC_ENCAPSULATED_UNION:
     case RPC_FC_NON_ENCAPSULATED_UNION:
-    case RPC_FC_TRANSMIT_AS:
-    case RPC_FC_REPRESENT_AS:
-    case RPC_FC_PAD:
-    case RPC_FC_EMBEDDED_COMPLEX:
     case RPC_FC_BOGUS_STRUCT:
-    case RPC_FC_BOGUS_ARRAY:
       return RPC_FC_BOGUS_STRUCT;
     }
   }

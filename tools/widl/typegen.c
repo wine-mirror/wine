@@ -1744,6 +1744,22 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
             type_t *ft = f->type;
             if (is_ptr(ft))
                 write_pointer_tfs(file, ft, tfsoff);
+            else if (!ft->declarray && is_conformant_array(ft))
+            {
+                unsigned int absoff = ft->typestring_offset;
+                short reloff = absoff - (*tfsoff + 2);
+                int ptr_type = get_attrv(f->attrs, ATTR_POINTERTYPE);
+                /* FIXME: We need to store pointer attributes for arrays
+                   so we don't lose pointer_default info.  */
+                if (ptr_type == 0)
+                    ptr_type = RPC_FC_UP;
+                print_file(file, 0, "/* %d */\n", *tfsoff);
+                print_file(file, 2, "0x%x, 0x0,\t/* %s */\n", ptr_type,
+                           string_of_type(ptr_type));
+                print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
+                           reloff, reloff, absoff);
+                *tfsoff += 4;
+            }
         }
         if (type->ptrdesc == *tfsoff)
             type->ptrdesc = 0;

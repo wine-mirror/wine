@@ -153,6 +153,22 @@ cpp_quote("#endif")
 
   typedef [wire_marshal(int)] void *puint_t;
   int square_puint(puint_t p);
+
+  typedef struct
+  {
+    [size_is(n)] puint_t *ps;
+    int n;
+  } puints_t;
+
+  /* Same thing as puints_t, but make it complex (needs padding).  */
+  typedef struct
+  {
+    [size_is(n)] puint_t *ps;
+    char n;
+  } cpuints_t;
+
+  int sum_puints(puints_t *p);
+  int sum_cpuints(cpuints_t *p);
   int dot_copy_vectors(vector_t u, vector_t v);
 
   typedef struct wire_us *wire_us_t;

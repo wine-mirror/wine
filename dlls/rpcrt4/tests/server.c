@@ -48,6 +48,14 @@ midl_user_free(void __RPC_FAR *p)
   free(p);
 }
 
+static char *
+xstrdup(const char *s)
+{
+  char *d = HeapAlloc(GetProcessHeap(), 0, strlen(s) + 1);
+  strcpy(d, s);
+  return d;
+}
+
 int
 s_int_return(void)
 {
@@ -261,6 +269,26 @@ s_square_puint(puint_t p)
 {
   int n = atoi(p);
   return n * n;
+}
+
+int
+s_sum_puints(puints_t *p)
+{
+  int sum = 0;
+  int i;
+  for (i = 0; i < p->n; ++i)
+    sum += atoi(p->ps[i]);
+  return sum;
+}
+
+int
+s_sum_cpuints(cpuints_t *p)
+{
+  int sum = 0;
+  int i;
+  for (i = 0; i < p->n; ++i)
+    sum += atoi(p->ps[i]);
+  return sum;
 }
 
 int
@@ -724,9 +752,35 @@ pointer_tests(void)
   test_list_t *list = make_list(make_list(make_list(null_list())));
   test_us_t tus = {{p1}};
   int *pa[4];
+  puints_t pus;
+  cpuints_t cpus;
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
+  pus.n = 4;
+  pus.ps = HeapAlloc(GetProcessHeap(), 0, pus.n * sizeof pus.ps[0]);
+  pus.ps[0] = xstrdup("5");
+  pus.ps[1] = xstrdup("6");
+  pus.ps[2] = xstrdup("7");
+  pus.ps[3] = xstrdup("8");
+  ok(sum_puints(&pus) == 26, "RPC sum_puints\n");
+  HeapFree(GetProcessHeap(), 0, pus.ps[0]);
+  HeapFree(GetProcessHeap(), 0, pus.ps[1]);
+  HeapFree(GetProcessHeap(), 0, pus.ps[2]);
+  HeapFree(GetProcessHeap(), 0, pus.ps[3]);
+  HeapFree(GetProcessHeap(), 0, pus.ps);
+  cpus.n = 4;
+  cpus.ps = HeapAlloc(GetProcessHeap(), 0, cpus.n * sizeof cpus.ps[0]);
+  cpus.ps[0] = xstrdup("5");
+  cpus.ps[1] = xstrdup("6");
+  cpus.ps[2] = xstrdup("7");
+  cpus.ps[3] = xstrdup("8");
+  ok(sum_cpuints(&cpus) == 26, "RPC sum_puints\n");
+  HeapFree(GetProcessHeap(), 0, cpus.ps[0]);
+  HeapFree(GetProcessHeap(), 0, cpus.ps[1]);
+  HeapFree(GetProcessHeap(), 0, cpus.ps[2]);
+  HeapFree(GetProcessHeap(), 0, cpus.ps[3]);
+  HeapFree(GetProcessHeap(), 0, cpus.ps);
   ok(square_test_us(&tus) == 121, "RPC square_test_us\n");
 
   pa[0] = &a[0];
