@@ -830,6 +830,8 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        if (lpwhr)
+            WININET_Release( &lpwhr->hdr );
     	return FALSE;
     }
 
@@ -881,6 +883,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
         }
     }
 
+    WININET_Release( &lpwhr->hdr );
     TRACE("%i <--\n",rc);
     return rc;
 }
