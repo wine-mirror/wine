@@ -177,6 +177,16 @@ static void exit_on_signal( int sig )
     exit(1);  /* this will call the atexit functions */
 }
 
+static void set_everything(int x)
+{
+  do_header = x;
+  do_typelib = x;
+  do_proxies = x;
+  do_client = x;
+  do_server = x;
+  do_idfile = x;
+}
+
 int main(int argc,char *argv[])
 {
   extern char* optarg;
@@ -279,7 +289,7 @@ int main(int argc,char *argv[])
   }
 
   if(do_everything) {
-      do_header = do_typelib = do_proxies = do_client = do_server = do_idfile = 1;
+    set_everything(TRUE);
   }
   if(optind < argc) {
     input_name = xstrdup(argv[optind]);
@@ -434,10 +444,9 @@ int main(int argc,char *argv[])
   if(ret) {
     exit(1);
   }
-  header_name = NULL;
-  client_name = NULL;
-  server_name = NULL;
-  idfile_name = NULL;
+
+  /* Everything has been done successfully, don't delete any files.  */
+  set_everything(FALSE);
   return 0;
 }
 
@@ -446,10 +455,16 @@ static void rm_tempfile(void)
   abort_import();
   if(temp_name)
     unlink(temp_name);
-  if (header_name)
+  if (do_header)
     unlink(header_name);
-  if (client_name)
+  if (do_client)
     unlink(client_name);
-  if (server_name)
+  if (do_server)
     unlink(server_name);
+  if (do_idfile)
+    unlink(idfile_name);
+  if (do_proxies)
+    unlink(proxy_name);
+  if (do_typelib)
+    unlink(typelib_name);
 }
