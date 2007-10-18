@@ -21,6 +21,8 @@
 #ifndef __NDRTYPES_H__
 #define __NDRTYPES_H__
 
+#include <limits.h>
+
 typedef struct
 {
     unsigned short MustSize : 1; /* 0x0001 - client interpreter MUST size this
