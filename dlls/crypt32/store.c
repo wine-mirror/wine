@@ -216,6 +216,38 @@ void CRYPT_EmptyStore(HCERTSTORE store)
     } while (crl);
 }
 
+BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
+ DWORD unk1)
+{
+    static BOOL warned = FALSE;
+    PCCERT_CONTEXT cert = NULL;
+    PCCRL_CONTEXT crl = NULL;
+
+    TRACE("(%p, %p, %08x, %08x)\n", store1, store2, unk0, unk1);
+    if (!warned)
+    {
+        FIXME("semi-stub\n");
+        warned = TRUE;
+    }
+
+    /* Poor-man's resync:  empty first store, then add everything from second
+     * store to it.
+     */
+    CRYPT_EmptyStore(store1);
+    do {
+        cert = CertEnumCertificatesInStore(store2, cert);
+        if (cert)
+            CertAddCertificateContextToStore(store1, cert,
+             CERT_STORE_ADD_ALWAYS, NULL);
+    } while (cert);
+    do {
+        crl = CertEnumCRLsInStore(store2, crl);
+        if (crl)
+            CertAddCRLContextToStore(store1, crl, CERT_STORE_ADD_ALWAYS, NULL);
+    } while (crl);
+    return TRUE;
+}
+
 static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     WINE_MEMSTORE *store = (WINE_MEMSTORE *)hCertStore;

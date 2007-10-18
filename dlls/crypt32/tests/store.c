@@ -1840,32 +1840,25 @@ static void test_I_UpdateStore(void)
     ret = pI_CertUpdatestore(NULL, store2, 0, 0);
      */
     ret = pI_CertUpdatestore(store1, store2, 0, 0);
-    todo_wine
     ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
 
     CertAddEncodedCertificateToStore(store2, X509_ASN_ENCODING, bigCert,
      sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &cert);
     /* I_CertUpdateStore adds the contexts from store2 to store1 */
     ret = pI_CertUpdatestore(store1, store2, 0, 0);
-    todo_wine
     ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
     certs = countCertsInStore(store1);
-    todo_wine
     ok(certs == 1, "Expected 1 cert, got %d\n", certs);
     /* Calling it a second time has no effect */
     ret = pI_CertUpdatestore(store1, store2, 0, 0);
-    todo_wine
     ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
     certs = countCertsInStore(store1);
-    todo_wine
     ok(certs == 1, "Expected 1 cert, got %d\n", certs);
 
     /* The last parameters to I_CertUpdateStore appear to be ignored */
     ret = pI_CertUpdatestore(store1, store2, 1, 0);
-    todo_wine
     ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
     ret = pI_CertUpdatestore(store1, store2, 0, 1);
-    todo_wine
     ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
 
     CertAddEncodedCRLToStore(store2, X509_ASN_ENCODING, signedCRL,
@@ -1873,13 +1866,10 @@ static void test_I_UpdateStore(void)
 
     /* I_CertUpdateStore also adds the CRLs from store2 to store1 */
     ret = pI_CertUpdatestore(store1, store2, 0, 0);
-    todo_wine
     ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
     certs = countCertsInStore(store1);
-    todo_wine
     ok(certs == 1, "Expected 1 cert, got %d\n", certs);
     certs = countCRLsInStore(store1);
-    todo_wine
     ok(certs == 1, "Expected 1 CRL, got %d\n", certs);
 
     CertDeleteCertificateFromStore(cert);
@@ -1887,7 +1877,6 @@ static void test_I_UpdateStore(void)
      * from store1
      */
     ret = pI_CertUpdatestore(store1, store2, 0, 0);
-    todo_wine
     ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
     certs = countCertsInStore(store1);
     ok(certs == 0, "Expected 0 certs, got %d\n", certs);

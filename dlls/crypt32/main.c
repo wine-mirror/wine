@@ -60,16 +60,6 @@ HCRYPTPROV CRYPT_GetDefaultProvider(void)
     return hDefProv;
 }
 
-/* Appears to be called to update the contents of store1 with those in store2.
- * The second two parameters are unknown.
- */
-BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
- DWORD unk1)
-{
-    FIXME("(%p, %p, %08x, %08x)\n", store1, store2, unk0, unk1);
-    return FALSE;
-}
-
 typedef void * HLRUCACHE;
 
 /* this function is called by Internet Explorer when it is about to verify a
