@@ -199,7 +199,7 @@ static BOOL CRYPT_MemDeleteCrl(PWINECRYPT_CERTSTORE store, void *pCrlContext)
     return TRUE;
 }
 
-void CRYPT_EmptyStore(HCERTSTORE store)
+static void CRYPT_EmptyStore(HCERTSTORE store)
 {
     PCCERT_CONTEXT cert;
     PCCRL_CONTEXT crl;

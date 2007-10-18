@@ -442,11 +442,17 @@ static BOOL WINAPI CRYPT_RegControl(HCERTSTORE hCertStore, DWORD dwFlags,
     switch (dwCtrlType)
     {
     case CERT_STORE_CTRL_RESYNC:
+    {
+        HCERTSTORE memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
+
         CRYPT_RegFlushStore(store, FALSE);
-        CRYPT_EmptyStore(store->memStore);
-        CRYPT_RegReadFromReg(store->key, store->memStore);
+        CRYPT_RegReadFromReg(store->key, memStore);
+        I_CertUpdateStore(store->memStore, memStore, 0, 0);
+        CertCloseStore(memStore, 0);
         ret = TRUE;
         break;
+    }
     case CERT_STORE_CTRL_COMMIT:
         ret = CRYPT_RegFlushStore(store,
          dwFlags & CERT_STORE_CTRL_COMMIT_FORCE_FLAG);
