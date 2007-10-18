@@ -20571,6 +20571,8 @@ ac_config_files="$ac_config_files dlls/cryptdll/Makefile"
 
 ac_config_files="$ac_config_files dlls/cryptnet/Makefile"
 
+ac_config_files="$ac_config_files dlls/cryptnet/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/ctl3d32/Makefile"
 
 ac_config_files="$ac_config_files dlls/d3d10/Makefile"
@@ -21823,6 +21825,7 @@ do
     "dlls/crypt32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/crypt32/tests/Makefile" ;;
     "dlls/cryptdll/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptdll/Makefile" ;;
     "dlls/cryptnet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptnet/Makefile" ;;
+    "dlls/cryptnet/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptnet/tests/Makefile" ;;
     "dlls/ctl3d32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctl3d32/Makefile" ;;
     "dlls/d3d10/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10/Makefile" ;;
     "dlls/d3d8/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d8/Makefile" ;;

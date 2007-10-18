@@ -72,6 +72,10 @@ dlls/crypt32/tests/*.ok
 dlls/crypt32/tests/crypt32_crosstest.exe
 dlls/crypt32/tests/testlist.c
 dlls/cryptdll/libcryptdll.def
+dlls/cryptnet/libcryptnet.def
+dlls/cryptnet/tests/*.ok
+dlls/cryptnet/tests/cryptnet_crosstest.exe
+dlls/cryptnet/tests/testlist.c
 dlls/ctl3d.dll16
 dlls/ctl3d32/libctl3d32.def
 dlls/ctl3dv2.dll16
@@ -688,6 +692,7 @@ programs/winetest/comcat_test.exe
 programs/winetest/comctl32_test.exe
 programs/winetest/comdlg32_test.exe
 programs/winetest/crypt32_test.exe
+programs/winetest/cryptnet_test.exe
 programs/winetest/d3d8_test.exe
 programs/winetest/d3d9_test.exe
 programs/winetest/d3drm_test.exe

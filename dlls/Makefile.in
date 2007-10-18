@@ -252,6 +252,7 @@ TESTSUBDIRS = \
 	comctl32/tests \
 	comdlg32/tests \
 	crypt32/tests \
+	cryptnet/tests \
 	d3d8/tests \
 	d3d9/tests \
 	d3drm/tests \
@@ -501,6 +502,7 @@ IMPORT_LIBS = \
 	crtdll/libcrtdll.$(IMPLIBEXT) \
 	crypt32/libcrypt32.$(IMPLIBEXT) \
 	cryptdll/libcryptdll.$(IMPLIBEXT) \
+	cryptnet/libcryptnet.$(IMPLIBEXT) \
 	ctl3d32/libctl3d32.$(IMPLIBEXT) \
 	d3d8/libd3d8.$(IMPLIBEXT) \
 	d3d9/libd3d9.$(IMPLIBEXT) \
@@ -665,6 +667,9 @@ crypt32/libcrypt32.$(IMPLIBEXT): crypt32/crypt32.spec $(WINEBUILD)
 
 cryptdll/libcryptdll.$(IMPLIBEXT): cryptdll/cryptdll.spec $(WINEBUILD)
 	@cd cryptdll && $(MAKE) libcryptdll.$(IMPLIBEXT)
+
+cryptnet/libcryptnet.$(IMPLIBEXT): cryptnet/cryptnet.spec $(WINEBUILD)
+	@cd cryptnet && $(MAKE) libcryptnet.$(IMPLIBEXT)
 
 ctl3d32/libctl3d32.$(IMPLIBEXT): ctl3d32/ctl3d32.spec $(WINEBUILD)
 	@cd ctl3d32 && $(MAKE) libctl3d32.$(IMPLIBEXT)

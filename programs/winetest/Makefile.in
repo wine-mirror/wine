@@ -28,6 +28,7 @@ TESTBINS = \
 	comctl32_test.exe \
 	comdlg32_test.exe \
 	crypt32_test.exe \
+	cryptnet_test.exe \
 	d3d8_test.exe \
 	d3d9_test.exe \
 	d3drm_test.exe \
@@ -106,6 +107,8 @@ comdlg32_test.exe: $(DLLDIR)/comdlg32/tests/comdlg32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/comdlg32/tests/comdlg32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 crypt32_test.exe: $(DLLDIR)/crypt32/tests/crypt32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/crypt32/tests/crypt32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+cryptnet_test.exe: $(DLLDIR)/cryptnet/tests/cryptnet_test.exe$(DLLEXT)
+	cp $(DLLDIR)/cryptnet/tests/cryptnet_test.exe$(DLLEXT) $@ && $(STRIP) $@
 d3d8_test.exe: $(DLLDIR)/d3d8/tests/d3d8_test.exe$(DLLEXT)
 	cp $(DLLDIR)/d3d8/tests/d3d8_test.exe$(DLLEXT) $@ && $(STRIP) $@
 d3d9_test.exe: $(DLLDIR)/d3d9/tests/d3d9_test.exe$(DLLEXT)
