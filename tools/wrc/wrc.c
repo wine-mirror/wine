@@ -451,7 +451,7 @@ int main(int argc,char *argv[])
 		 * no output was given.
 		 */
 
-		chat("Starting preprocess");
+		chat("Starting preprocess\n");
 
                 if (!preprocess_only)
                 {
@@ -484,7 +484,7 @@ int main(int argc,char *argv[])
 	}
 
 	/* Go from .rc to .res */
-	chat("Starting parse");
+	chat("Starting parse\n");
 
 	if(!(parser_in = fopen(input_name, "rb")))
 		error("Could not open %s for input\n", input_name);
@@ -507,7 +507,7 @@ int main(int argc,char *argv[])
 	/* Convert the internal lists to binary data */
 	resources2res(resource_top);
 
-	chat("Writing .res-file");
+	chat("Writing .res-file\n");
 	write_resfile(output_name, resource_top);
 	output_name = NULL;
 

@@ -64,7 +64,6 @@ static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 		}
 	}
 #endif
-	fprintf(stderr, "\n");
 }
 
 
@@ -93,7 +92,6 @@ void internal_error(const char *file, int line, const char *s, ...)
 	va_start(ap, s);
 	fprintf(stderr, "Internal error (please report) %s %d: ", file, line);
 	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
 	va_end(ap);
 	exit(3);
 }
@@ -104,7 +102,6 @@ void error(const char *s, ...)
 	va_start(ap, s);
 	fprintf(stderr, "Error: ");
 	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
 	va_end(ap);
 	exit(2);
 }
@@ -115,7 +112,6 @@ void warning(const char *s, ...)
 	va_start(ap, s);
 	fprintf(stderr, "Warning: ");
 	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
 	va_end(ap);
 }
 
@@ -127,7 +123,6 @@ void chat(const char *s, ...)
 		va_start(ap, s);
 		fprintf(stderr, "FYI: ");
 		vfprintf(stderr, s, ap);
-		fprintf(stderr, "\n");
 		va_end(ap);
 	}
 }
@@ -226,7 +221,7 @@ int compare_name_id(const name_id_t *n1, const name_id_t *n2)
 		}
 		else
 		{
-			internal_error(__FILE__, __LINE__, "Can't yet compare strings of mixed type");
+			internal_error(__FILE__, __LINE__, "Can't yet compare strings of mixed type\n");
 		}
 	}
 	else if(n1->type == name_ord && n2->type == name_str)
@@ -234,7 +229,7 @@ int compare_name_id(const name_id_t *n1, const name_id_t *n2)
 	else if(n1->type == name_str && n2->type == name_ord)
 		return -1;
 	else
-		internal_error(__FILE__, __LINE__, "Comparing name-ids with unknown types (%d, %d)",
+		internal_error(__FILE__, __LINE__, "Comparing name-ids with unknown types (%d, %d)\n",
 				n1->type, n2->type);
 
 	return 0; /* Keep the compiler happy */
@@ -247,7 +242,7 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
     int res;
 
     if (!codepage && str->type != type)
-        parser_error( "Current language is Unicode only, cannot convert string" );
+        parser_error( "Current language is Unicode only, cannot convert string\n" );
 
     if((str->type == str_char) && (type == str_unicode))
     {

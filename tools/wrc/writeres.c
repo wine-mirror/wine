@@ -75,7 +75,7 @@ void write_resfile(char *outname, resource_t *top)
 		if(ret != res->size)
 		{
 			fclose(fo);
-			error("Error writing %s", outname);
+			error("Error writing %s\n", outname);
 		}
 		free(res);
 	}
@@ -89,7 +89,7 @@ void write_resfile(char *outname, resource_t *top)
 		if(ret != top->binres->size)
 		{
 			fclose(fo);
-			error("Error writing %s", outname);
+			error("Error writing %s\n", outname);
 		}
 		if(win32 && (top->binres->size & 0x03))
 		{
@@ -98,7 +98,7 @@ void write_resfile(char *outname, resource_t *top)
 			if(ret != 4 - (top->binres->size & 0x03))
 			{
 				fclose(fo);
-				error("Error writing %s", outname);
+				error("Error writing %s\n", outname);
 			}
 		}
 	}

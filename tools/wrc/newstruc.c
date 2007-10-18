@@ -327,7 +327,7 @@ static int convert_bitmap(char *data, int size)
 		type |= FL_SIZEBE | FL_OS2;
 	}
 	else
-		parser_error("Invalid bitmap format, bih->biSize = %d", bih->biSize);
+		parser_error("Invalid bitmap format, bih->biSize = %d\n", bih->biSize);
 
 	switch(type)
 	{
@@ -336,12 +336,12 @@ static int convert_bitmap(char *data, int size)
 	case FL_SIZEBE:
 	case FL_SIZEBE | FL_V4:
 	case FL_SIZEBE | FL_OS2:
-		parser_warning("Bitmap v%c signature little-endian, but size big-endian", type & FL_V4 ? '4' : '3');
+		parser_warning("Bitmap v%c signature little-endian, but size big-endian\n", type & FL_V4 ? '4' : '3');
 		break;
 	case FL_SIGBE:
 	case FL_SIGBE | FL_V4:
 	case FL_SIGBE | FL_OS2:
-		parser_warning("Bitmap v%c signature big-endian, but size little-endian", type & FL_V4 ? '4' : '3');
+		parser_warning("Bitmap v%c signature big-endian, but size little-endian\n", type & FL_V4 ? '4' : '3');
 		break;
 	}
 
@@ -461,7 +461,7 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 	else if(BYTESWAP_WORD(ih->type) == 1)
 		swap = 1;
 	else
-		parser_error("Icon resource data has invalid type id %d", ih->type);
+		parser_error("Icon resource data has invalid type id %d\n", ih->type);
 
 	cnt = swap ? BYTESWAP_WORD(ih->count) : ih->count;
 	for(i = 0; i < cnt; i++)
@@ -481,7 +481,7 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 		}
 		if(ide.offset > rd->size
 		|| ide.offset + ide.ressize > rd->size)
-			parser_error("Icon resource data corrupt");
+			parser_error("Icon resource data corrupt\n");
 		ico->width = ide.width;
 		ico->height = ide.height;
 		ico->nclr = ide.nclr;
@@ -556,7 +556,7 @@ static void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 	else if(BYTESWAP_WORD(ch->type) == 2)
 		swap = 1;
 	else
-		parser_error("Cursor resource data has invalid type id %d", ch->type);
+		parser_error("Cursor resource data has invalid type id %d\n", ch->type);
 	cnt = swap ? BYTESWAP_WORD(ch->count) : ch->count;
 	for(i = 0; i < cnt; i++)
 	{
@@ -575,7 +575,7 @@ static void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 		}
 		if(cde.offset > rd->size
 		|| cde.offset + cde.ressize > rd->size)
-			parser_error("Cursor resource data corrupt");
+			parser_error("Cursor resource data corrupt\n");
 		cur->width = cde.width;
 		cur->height = cde.height;
 		cur->nclr = cde.nclr;
@@ -598,7 +598,7 @@ static void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 			cur->bits = info.biBitCount;
 		}
 		if(!win32 && (cur->planes != 1 || cur->bits != 1))
-			parser_warning("Win16 cursor contains colors");
+			parser_warning("Win16 cursor contains colors\n");
 		cur->xhot = swap ? BYTESWAP_WORD(cde.xhot) : cde.xhot;
 		cur->yhot = swap ? BYTESWAP_WORD(cde.yhot) : cde.yhot;
 		cur->data = new_raw_data();
@@ -840,7 +840,7 @@ ani_curico_t *new_ani_curico(enum res_e type, raw_data_t *rd, int *memopt)
 	else if(rtp->size + 2*sizeof(DWORD) == rd->size)
 		isswapped = 0;
 	else
-		parser_error("Animated %s has an invalid RIFF length", anistr);
+		parser_error("Animated %s has an invalid RIFF length\n", anistr);
 
 	switch(byteorder)
 	{
@@ -1002,7 +1002,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 		msg->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE;
 
 	if(rd->size < sizeof(DWORD))
-		parser_error("Invalid messagetable, size too small");
+		parser_error("Invalid messagetable, size too small\n");
 
 	nblk = *(DWORD *)rd->data;
 	lo = WRC_LOWORD(nblk);
@@ -1017,9 +1017,9 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 	 * the ID, offset and length (and flag) fields to be very sure.
 	 */
 	if(hi && lo)
-		internal_error(__FILE__, __LINE__, "Messagetable contains more than 65535 blocks; cannot determine endian");
+		internal_error(__FILE__, __LINE__, "Messagetable contains more than 65535 blocks; cannot determine endian\n");
 	if(!hi && !lo)
-		parser_error("Invalid messagetable block count 0");
+		parser_error("Invalid messagetable block count 0\n");
 
 	if(!hi && lo)  /* Messagetable byteorder == native byteorder */
 	{
@@ -1032,7 +1032,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 
 		mbp = (msgtab_block_t *)&(((DWORD *)rd->data)[1]);
 		if(MSGTAB_BAD_PTR(mbp, rd->data, rd->size, nblk * sizeof(*mbp)))
-			parser_error("Messagetable's blocks are outside of defined data");
+			parser_error("Messagetable's blocks are outside of defined data\n");
 		for(i = 0; i < nblk; i++)
 		{
 			msgtab_entry_t *mep, *next_mep;
@@ -1043,7 +1043,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 			for(id = mbp[i].idlo; id <= mbp[i].idhi; id++)
 			{
 				if(MSGTAB_BAD_PTR(mep, rd->data, rd->size, mep->length))
-					parser_error("Messagetable's data for block %d, ID 0x%08x is outside of defined data", i, id);
+					parser_error("Messagetable's data for block %d, ID 0x%08x is outside of defined data\n", i, id);
 				if(mep->flags == 1)	/* Docu says 'flags == 0x0001' for unicode */
 				{
 					WORD *wp = (WORD *)&mep[1];
@@ -1051,7 +1051,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 					int n;
 
 					if(mep->length & 1)
-						parser_error("Message 0x%08x is unicode (block %d), but has odd length (%d)", id, i, mep->length);
+						parser_error("Message 0x%08x is unicode (block %d), but has odd length (%d)\n", id, i, mep->length);
 					for(n = 0; n < l; n++)
 						wp[n] = BYTESWAP_WORD(wp[n]);
 
@@ -1079,7 +1079,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 		mbp = (msgtab_block_t *)&(((DWORD *)rd->data)[1]);
 		nblk = BYTESWAP_DWORD(nblk);
 		if(MSGTAB_BAD_PTR(mbp, rd->data, rd->size, nblk * sizeof(*mbp)))
-			parser_error("Messagetable's blocks are outside of defined data");
+			parser_error("Messagetable's blocks are outside of defined data\n");
 		for(i = 0; i < nblk; i++)
 		{
 			msgtab_entry_t *mep;
@@ -1096,7 +1096,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 				mep->flags  = BYTESWAP_WORD(mep->flags);
 
 				if(MSGTAB_BAD_PTR(mep, rd->data, rd->size, mep->length))
-					parser_error("Messagetable's data for block %d, ID 0x%08x is outside of defined data", i, id);
+					parser_error("Messagetable's data for block %d, ID 0x%08x is outside of defined data\n", i, id);
 				if(mep->flags == 1)	/* Docu says 'flags == 0x0001' for unicode */
 				{
 					WORD *wp = (WORD *)&mep[1];
@@ -1104,7 +1104,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 					int n;
 
 					if(mep->length & 1)
-						parser_error("Message 0x%08x is unicode (block %d), but has odd length (%d)", id, i, mep->length);
+						parser_error("Message 0x%08x is unicode (block %d), but has odd length (%d)\n", id, i, mep->length);
 					for(n = 0; n < l; n++)
 						wp[n] = BYTESWAP_WORD(wp[n]);
 

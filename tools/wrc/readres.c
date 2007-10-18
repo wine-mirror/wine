@@ -106,7 +106,7 @@ static enum res_e res_type_from_id(const name_id_t *nid)
 		return res_usr;
 
 	if(nid->type != name_ord)
-		internal_error(__FILE__, __LINE__, "Invalid name_id descriptor %d", nid->type);
+		internal_error(__FILE__, __LINE__, "Invalid name_id descriptor %d\n", nid->type);
 
 	switch(nid->name.i_name)
 	{
@@ -132,7 +132,7 @@ static enum res_e res_type_from_id(const name_id_t *nid)
 	case WRC_RT_VXD:
 	case WRC_RT_ANICURSOR:
 	case WRC_RT_ANIICON:
-		warning("Cannot be sure of resource type, using usertype settings");
+		warning("Cannot be sure of resource type, using usertype settings\n");
 		return res_usr;
 	}
 }
@@ -185,7 +185,7 @@ static resource_t *read_res32(FILE *fp)
 		totsize = hdrsize;
 		if(hdrsize & 3)
 		{
-			warning("Hu? .res header needed alignment (anything can happen now)");
+			warning("Hu? .res header needed alignment (anything can happen now)\n");
 			totsize += 4 - (hdrsize & 3);
 		}
 		totsize += ressize;
@@ -217,7 +217,7 @@ static resource_t *read_res32(FILE *fp)
 		}
 		else if(get_word(idx) == 0)
 		{
-			error("ResType name has zero length (32 bit)");
+			error("ResType name has zero length (32 bit)\n");
 		}
 		else
 		{
@@ -251,7 +251,7 @@ static resource_t *read_res32(FILE *fp)
 		}
 		else if(get_word(idx) == 0)
 		{
-			error("ResName name has zero length (32 bit)");
+			error("ResName name has zero length (32 bit)\n");
 		}
 		else
 		{
@@ -328,7 +328,7 @@ static resource_t *read_res32(FILE *fp)
 */
 static resource_t *read_res16(FILE *fp)
 {
-	internal_error(__FILE__, __LINE__, "Can't yet read 16 bit .res files");
+	internal_error(__FILE__, __LINE__, "Can't yet read 16 bit .res files\n");
 	return NULL;
 }
 
@@ -351,7 +351,7 @@ resource_t *read_resfile(char *inname)
 
 	fp = fopen(inname, "rb");
 	if(!fp)
-		error("Could not open inputfile %s", inname);
+		error("Could not open inputfile %s\n", inname);
 
 	/* Determine 16 or 32 bit .res file */
 	if(fread(&rh, 1, sizeof(rh), fp) != sizeof(rh))
@@ -361,16 +361,16 @@ resource_t *read_resfile(char *inname)
 		if(!memcmp(&emptyheader, &rh, sizeof(rh)))
 			is32bit = 1;
 		else if(!memcmp(&emptyheaderSWAPPED, &rh, sizeof(rh)))
-			error("Binary .res-file has its byteorder swapped");
+			error("Binary .res-file has its byteorder swapped\n");
 		else
 			is32bit = 0;
 	}
 
 	if(is32bit && !win32)
-		error("Cannot convert 32-bit .res-file into 16-bit resources (and will, hopefully never, implement it)");
+		error("Cannot convert 32-bit .res-file into 16-bit resources (and will, hopefully never, implement it)\n");
 
 	if(!is32bit && win32)
-		error("Cannot (yet) convert 16-bit .res-file into 32-bit resources");
+		error("Cannot (yet) convert 16-bit .res-file into 32-bit resources\n");
 
 	if(!is32bit)
 	{
