@@ -1788,6 +1788,115 @@ static void testAddSerialized(void)
     CertCloseStore(store, 0);
 }
 
+static DWORD countCertsInStore(HCERTSTORE store)
+{
+    PCCERT_CONTEXT cert = NULL;
+    DWORD certs = 0;
+
+    do {
+        cert = CertEnumCertificatesInStore(store, cert);
+        if (cert)
+            certs++;
+    } while (cert);
+    return certs;
+}
+
+static DWORD countCRLsInStore(HCERTSTORE store)
+{
+    PCCRL_CONTEXT crl = NULL;
+    DWORD crls = 0;
+
+    do {
+        crl = CertEnumCRLsInStore(store, crl);
+        if (crl)
+            crls++;
+    } while (crl);
+    return crls;
+}
+
+static void test_I_UpdateStore(void)
+{
+    HMODULE lib = GetModuleHandleA("crypt32");
+    BOOL (WINAPI *pI_CertUpdatestore)(HCERTSTORE, HCERTSTORE, DWORD, DWORD) =
+     (void *)GetProcAddress(lib, "I_CertUpdateStore");
+    BOOL ret;
+    HCERTSTORE store1, store2;
+    PCCERT_CONTEXT cert;
+    DWORD certs;
+
+    if (!pI_CertUpdatestore)
+    {
+        skip("No I_CertUpdateStore\n");
+        return;
+    }
+    store1 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    store2 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+
+    /* Crash
+    ret = pI_CertUpdatestore(NULL, NULL, 0, 0);
+    ret = pI_CertUpdatestore(store1, NULL, 0, 0);
+    ret = pI_CertUpdatestore(NULL, store2, 0, 0);
+     */
+    ret = pI_CertUpdatestore(store1, store2, 0, 0);
+    todo_wine
+    ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
+
+    CertAddEncodedCertificateToStore(store2, X509_ASN_ENCODING, bigCert,
+     sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &cert);
+    /* I_CertUpdateStore adds the contexts from store2 to store1 */
+    ret = pI_CertUpdatestore(store1, store2, 0, 0);
+    todo_wine
+    ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
+    certs = countCertsInStore(store1);
+    todo_wine
+    ok(certs == 1, "Expected 1 cert, got %d\n", certs);
+    /* Calling it a second time has no effect */
+    ret = pI_CertUpdatestore(store1, store2, 0, 0);
+    todo_wine
+    ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
+    certs = countCertsInStore(store1);
+    todo_wine
+    ok(certs == 1, "Expected 1 cert, got %d\n", certs);
+
+    /* The last parameters to I_CertUpdateStore appear to be ignored */
+    ret = pI_CertUpdatestore(store1, store2, 1, 0);
+    todo_wine
+    ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
+    ret = pI_CertUpdatestore(store1, store2, 0, 1);
+    todo_wine
+    ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
+
+    CertAddEncodedCRLToStore(store2, X509_ASN_ENCODING, signedCRL,
+     sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
+
+    /* I_CertUpdateStore also adds the CRLs from store2 to store1 */
+    ret = pI_CertUpdatestore(store1, store2, 0, 0);
+    todo_wine
+    ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
+    certs = countCertsInStore(store1);
+    todo_wine
+    ok(certs == 1, "Expected 1 cert, got %d\n", certs);
+    certs = countCRLsInStore(store1);
+    todo_wine
+    ok(certs == 1, "Expected 1 CRL, got %d\n", certs);
+
+    CertDeleteCertificateFromStore(cert);
+    /* If a context is deleted from store2, I_CertUpdateStore delets it
+     * from store1
+     */
+    ret = pI_CertUpdatestore(store1, store2, 0, 0);
+    todo_wine
+    ok(ret, "I_CertUpdateStore failed: %08x\n", GetLastError());
+    certs = countCertsInStore(store1);
+    ok(certs == 0, "Expected 0 certs, got %d\n", certs);
+
+    CertFreeCertificateContext(cert);
+    CertCloseStore(store1, 0);
+    CertCloseStore(store2, 0);
+}
+
 START_TEST(store)
 {
     /* various combinations of CertOpenStore */
@@ -1805,4 +1914,6 @@ START_TEST(store)
     testStoreProperty();
 
     testAddSerialized();
+
+    test_I_UpdateStore();
 }
