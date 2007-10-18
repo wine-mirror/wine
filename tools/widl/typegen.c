@@ -2501,7 +2501,7 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
             fprintf(file, " *)_StubMsg.Buffer = *");
         else
             fprintf(file, " *)_StubMsg.Buffer = ");
-        fprintf(file, varname);
+        fprintf(file, "%s", varname);
         fprintf(file, ";\n");
     }
     else if (phase == PHASE_UNMARSHAL)
@@ -2510,7 +2510,7 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
             print_file(file, indent, "");
         else
             print_file(file, indent, "*");
-        fprintf(file, varname);
+        fprintf(file, "%s", varname);
         if (pass == PASS_IN && is_ptr(type))
             fprintf(file, " = (");
         else

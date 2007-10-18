@@ -422,13 +422,13 @@ int main(int argc,char *argv[])
       idfile_name = xstrdup(optarg);
       break;
     case 'V':
-      printf(version_string);
+      printf("%s", version_string);
       return 0;
     case 'W':
       pedantic = 1;
       break;
     default:
-      fprintf(stderr, usage);
+      fprintf(stderr, "%s", usage);
       return 1;
     }
   }
@@ -458,7 +458,7 @@ int main(int argc,char *argv[])
       input_name = xstrdup(argv[optind]);
   }
   else {
-    fprintf(stderr, usage);
+    fprintf(stderr, "%s", usage);
     return 1;
   }
 
