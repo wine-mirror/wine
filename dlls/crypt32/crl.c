@@ -519,10 +519,7 @@ LONG WINAPI CertVerifyCRLTimeValidity(LPFILETIME pTimeToVerify,
 
     if (!pTimeToVerify)
     {
-        SYSTEMTIME sysTime;
-
-        GetSystemTime(&sysTime);
-        SystemTimeToFileTime(&sysTime, &fileTime);
+        GetSystemTimeAsFileTime(&fileTime);
         pTimeToVerify = &fileTime;
     }
     if ((ret = CompareFileTime(pTimeToVerify, &pCrlInfo->ThisUpdate)) >= 0)
