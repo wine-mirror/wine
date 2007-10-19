@@ -1248,33 +1248,41 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
         }
         else
             ret = FALSE;
-        if (ret && info->cSigners)
+        if (ret)
         {
-            msg->msg_data.info->rgSignerInfo =
-             CryptMemAlloc(info->cSigners * sizeof(CMSG_SIGNER_INFO));
-            if (msg->msg_data.info->rgSignerInfo)
+            if (info->cSigners)
             {
-                msg->msg_data.info->cSignerInfo = info->cSigners;
-                memset(msg->msg_data.info->rgSignerInfo, 0,
-                 msg->msg_data.info->cSignerInfo * sizeof(CMSG_SIGNER_INFO));
-                ret = CSignedMsgData_AllocateHandles(&msg->msg_data);
-                for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
+                msg->msg_data.info->rgSignerInfo =
+                 CryptMemAlloc(info->cSigners * sizeof(CMSG_SIGNER_INFO));
+                if (msg->msg_data.info->rgSignerInfo)
                 {
-                    ret = CSignerInfo_Construct(
-                     &msg->msg_data.info->rgSignerInfo[i],
-                     &info->rgSigners[i]);
-                    if (ret)
+                    msg->msg_data.info->cSignerInfo = info->cSigners;
+                    memset(msg->msg_data.info->rgSignerInfo, 0,
+                     msg->msg_data.info->cSignerInfo * sizeof(CMSG_SIGNER_INFO));
+                    ret = CSignedMsgData_AllocateHandles(&msg->msg_data);
+                    for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
                     {
-                        ret = CSignedMsgData_ConstructSignerHandles(
-                         &msg->msg_data, i, info->rgSigners[i].hCryptProv);
-                        if (dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
-                            CryptReleaseContext(info->rgSigners[i].hCryptProv,
-                             0);
+                        ret = CSignerInfo_Construct(
+                         &msg->msg_data.info->rgSignerInfo[i],
+                         &info->rgSigners[i]);
+                        if (ret)
+                        {
+                            ret = CSignedMsgData_ConstructSignerHandles(
+                             &msg->msg_data, i, info->rgSigners[i].hCryptProv);
+                            if (dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
+                                CryptReleaseContext(info->rgSigners[i].hCryptProv,
+                                 0);
+                        }
                     }
                 }
+                else
+                    ret = FALSE;
             }
             else
-                ret = FALSE;
+            {
+                msg->msg_data.info->cSignerInfo = 0;
+                msg->msg_data.signerHandles = NULL;
+            }
         }
         if (ret)
             ret = CRYPT_ConstructBlobArray(
