@@ -801,7 +801,6 @@ typedef struct _CSignerHandles
 {
     HCRYPTHASH contentHash;
     HCRYPTHASH authAttrHash;
-    HCRYPTKEY  key;
 } CSignerHandles;
 
 typedef struct _CSignedMsgData
@@ -858,8 +857,6 @@ static void CSignedMsgData_CloseHandles(CSignedMsgData *msg_data)
 
     for (i = 0; i < msg_data->info->cSignerInfo; i++)
     {
-        if (msg_data->signerHandles[i].key)
-            CryptDestroyKey(msg_data->signerHandles[i].key);
         if (msg_data->signerHandles[i].contentHash)
             CryptDestroyHash(msg_data->signerHandles[i].contentHash);
         if (msg_data->signerHandles[i].authAttrHash)
