@@ -1107,6 +1107,7 @@ BOOL BIDI_Reorder(
             baselevel = 0;
 
         if (dwWineGCP_Flags & WINE_GCPW_LOOSE_MASK)
+        {
             for (j = 0; j < i; ++j)
                 if (chartype[j] == L)
                 {
@@ -1118,6 +1119,7 @@ BOOL BIDI_Reorder(
                     baselevel = 1;
                     break;
                 }
+        }
 
         /* resolve explicit */
         resolveExplicit(baselevel, N, chartype, levels, i, 0);
