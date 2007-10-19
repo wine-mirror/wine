@@ -1107,10 +1107,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
         if(!GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
             WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
+            HeapFree(GetProcessHeap(), 0, object);
+            *ppCubeTexture = NULL;
+
             return WINED3DERR_INVALIDCALL;
         }
         if(Levels > 1) {
             WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
+            HeapFree(GetProcessHeap(), 0, object);
+            *ppCubeTexture = NULL;
+
             return WINED3DERR_INVALIDCALL;
         }
         Levels = 1;
@@ -1139,11 +1145,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
                 int k;
                 int l;
                 for (l = 0; l < j; l++) {
-                    IWineD3DSurface_Release(object->surfaces[j][i]);
+                    IWineD3DSurface_Release(object->surfaces[l][i]);
                 }
                 for (k = 0; k < i; k++) {
                     for (l = 0; l < 6; l++) {
-                    IWineD3DSurface_Release(object->surfaces[l][j]);
+                        IWineD3DSurface_Release(object->surfaces[l][k]);
                     }
                 }
 
