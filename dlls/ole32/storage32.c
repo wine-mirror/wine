@@ -1015,6 +1015,17 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
      */
     if (STGM_CREATE_MODE(grfMode) == STGM_CREATE)
     {
+      StgStreamImpl *strm;
+
+      LIST_FOR_EACH_ENTRY(strm, &This->strmHead, StgStreamImpl, StrmListEntry)
+      {
+        if (strm->ownerProperty == foundPropertyIndex)
+        {
+          TRACE("Stream deleted %p\n", strm);
+          strm->parentStorage = NULL;
+          list_remove(&strm->StrmListEntry);
+        }
+      }
       IStorage_DestroyElement(iface, pwcsName);
     }
     else

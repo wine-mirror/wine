@@ -335,7 +335,6 @@ static void test_storage_stream(void)
     ok(r==S_OK, "IStorage->CreateStream failed\n");
 
     r = IStream_Seek(stm, pos, STREAM_SEEK_SET, &p);
-    todo_wine
     ok(r==STG_E_REVERTED, "overwritten stream should return STG_E_REVERTED instead of 0x%08x\n", r);
 
     r = IStream_Release(stm2);
