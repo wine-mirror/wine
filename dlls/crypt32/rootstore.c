@@ -504,3 +504,8 @@ PWINECRYPT_CERTSTORE CRYPT_RootOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags)
     CertDuplicateStore(CRYPT_rootStore);
     return CRYPT_rootStore;
 }
+
+void root_store_free(void)
+{
+    CertCloseStore(CRYPT_rootStore, 0);
+}
