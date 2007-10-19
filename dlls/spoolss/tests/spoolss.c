@@ -33,6 +33,7 @@
 static HMODULE hwinspool;
 
 static HMODULE hspl;
+static BOOL   (WINAPI * pBuildOtherNamesFromMachineName)(LPWSTR **, LPDWORD);
 static DWORD  (WINAPI * pSplInitializeWinSpoolDrv)(LPVOID *);
 
 #define WINSPOOL_TABLESIZE   16
@@ -50,6 +51,10 @@ static LPCSTR load_functions(void)
     ptr = "spoolss.dll";
     hspl = LoadLibraryA(ptr);
     if (!hspl) return ptr;
+
+    ptr = "BuildOtherNamesFromMachineName";
+    pBuildOtherNamesFromMachineName = (void *) GetProcAddress(hspl, ptr);
+    if (!pBuildOtherNamesFromMachineName) return ptr;
 
     ptr = "SplInitializeWinSpoolDrv";
     pSplInitializeWinSpoolDrv = (void *) GetProcAddress(hspl, ptr);
@@ -90,6 +95,33 @@ static LPCSTR load_functions(void)
 
 /* ########################### */
 
+static void test_BuildOtherNamesFromMachineName(void)
+{
+    LPWSTR *buffers;
+    DWORD   numentries;
+    DWORD   res;
+
+    buffers = NULL;
+    numentries = 0;
+
+    SetLastError(0xdeadbeef);
+    res = pBuildOtherNamesFromMachineName(&buffers, &numentries);
+
+    /* An array with 3 stringpointer is returned:
+      entry_#0: "" (empty String)
+      entry_#1: <hostname> (this is the same as the computernam)
+      entry_#2: <ip-address> (string with the ip-address of <hostname>)
+    */
+    todo_wine
+    ok( res && (buffers != NULL) && (numentries == 3) && (buffers[0] != NULL) && (buffers[0][0] == '\0'),
+        "got %u with %u and %p,%u (%p:%d)\n", res, GetLastError(), buffers, numentries,
+        ((numentries > 0) && buffers) ? buffers[0] : NULL,
+        ((numentries > 0) && buffers && buffers[0]) ? lstrlenW(buffers[0]) : -1);
+
+}
+
+/* ########################### */
+
 static void test_SplInitializeWinSpoolDrv(VOID)
 {
     DWORD   res;
@@ -124,6 +156,7 @@ START_TEST(spoolss)
         return;
     }
 
+    test_BuildOtherNamesFromMachineName();
     test_SplInitializeWinSpoolDrv();
 
 }
