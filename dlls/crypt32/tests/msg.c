@@ -1926,6 +1926,7 @@ static void test_decode_msg_update(void)
     ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
      TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
     /* but decoding it as an explicitly typed message fails. */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, 0, NULL,
      NULL);
@@ -2447,6 +2448,7 @@ static void test_msg_control(void)
      sizeof(signedWithCertWithValidPubKeyContent), TRUE);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
     ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
+    CryptMsgClose(msg);
 }
 
 static void test_msg_get_signer_count(void)
