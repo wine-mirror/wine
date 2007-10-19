@@ -1186,6 +1186,38 @@ static BOOL URLCache_FindEntryInHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl,
 }
 
 /***********************************************************************
+ *           URLCache_FindEntryInHashW (Internal)
+ *
+ *  Searches all the hash tables in the index for the given URL and
+ * returns the entry, if it was found, in ppEntry
+ *
+ * RETURNS
+ *    TRUE if the entry was found
+ *    FALSE if the entry could not be found
+ *
+ */
+static BOOL URLCache_FindEntryInHashW(LPCURLCACHE_HEADER pHeader, LPCWSTR lpszUrl, CACHEFILE_ENTRY ** ppEntry)
+{
+    struct _HASH_ENTRY * pHashEntry;
+    LPSTR urlA;
+    int url_len;
+    BOOL ret;
+
+    url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, NULL, 0, NULL, NULL);
+    urlA = HeapAlloc(GetProcessHeap(), 0, url_len * sizeof(CHAR));
+    if (!urlA)
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+    WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, urlA, url_len, NULL, NULL);
+    if ((ret = URLCache_FindHash(pHeader, urlA, &pHashEntry)))
+        *ppEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    HeapFree(GetProcessHeap(), 0, urlA);
+    return ret;
+}
+
+/***********************************************************************
  *           URLCache_HashEntrySetUse (Internal)
  *
  *  Searches all the hash tables in the index for the given URL and
@@ -1432,47 +1464,25 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
     CACHEFILE_ENTRY * pEntry;
     URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
-    LPSTR lpszUrlA;
-    int url_len;
 
     TRACE("(%s, %p, %p)\n", debugstr_w(lpszUrl), lpCacheEntryInfo, lpdwCacheEntryInfoBufferSize);
 
-    url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, NULL, 0, NULL, NULL);
-    lpszUrlA = HeapAlloc(GetProcessHeap(), 0, url_len * sizeof(CHAR));
-    if (!lpszUrlA)
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
-    }
-    WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, lpszUrlA, url_len, NULL, NULL);
-
     if (!URLCacheContainers_FindContainerW(lpszUrl, &pContainer))
-    {
-        HeapFree(GetProcessHeap(), 0, lpszUrlA);
         return FALSE;
-    }
 
     if (!URLCacheContainer_OpenIndex(pContainer))
-    {
-        HeapFree(GetProcessHeap(), 0, lpszUrlA);
         return FALSE;
-    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
-    {
-        HeapFree(GetProcessHeap(), 0, lpszUrlA);
         return FALSE;
-    }
 
-    if (!URLCache_FindEntryInHash(pHeader, lpszUrlA, &pEntry))
+    if (!URLCache_FindEntryInHashW(pHeader, lpszUrl, &pEntry))
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        WARN("entry %s not found!\n", debugstr_a(lpszUrlA));
-        HeapFree(GetProcessHeap(), 0, lpszUrlA);
+        WARN("entry %s not found!\n", debugstr_w(lpszUrl));
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
-    HeapFree(GetProcessHeap(), 0, lpszUrlA);
 
     if (pEntry->dwSignature != URL_SIGNATURE)
     {
@@ -1596,47 +1606,25 @@ BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrl, LPINTERNET_CACHE_ENTRY_INFOW 
     LPURLCACHE_HEADER pHeader;
     CACHEFILE_ENTRY * pEntry;
     URLCACHECONTAINER * pContainer;
-    LPSTR lpszUrlA;
-    int url_len;
 
     TRACE("(%s, %p, 0x%08x)\n", debugstr_w(lpszUrl), lpCacheEntryInfo, dwFieldControl);
 
-    url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, NULL, 0, NULL, NULL);
-    lpszUrlA = HeapAlloc(GetProcessHeap(), 0, url_len * sizeof(CHAR));
-    if (!lpszUrlA)
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
-    }
-    WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, lpszUrlA, url_len, NULL, NULL);
-
     if (!URLCacheContainers_FindContainerW(lpszUrl, &pContainer))
-    {
-        HeapFree(GetProcessHeap(), 0, lpszUrlA);
         return FALSE;
-    }
 
     if (!URLCacheContainer_OpenIndex(pContainer))
-    {
-        HeapFree(GetProcessHeap(), 0, lpszUrlA);
         return FALSE;
-    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
-    {
-        HeapFree(GetProcessHeap(), 0, lpszUrlA);
         return FALSE;
-    }
 
-    if (!URLCache_FindEntryInHash(pHeader, lpszUrlA, &pEntry))
+    if (!URLCache_FindEntryInHashW(pHeader, lpszUrl, &pEntry))
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        HeapFree(GetProcessHeap(), 0, lpszUrlA);
-        WARN("entry %s not found!\n", debugstr_a(lpszUrlA));
+        WARN("entry %s not found!\n", debugstr_w(lpszUrl));
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
-    HeapFree(GetProcessHeap(), 0, lpszUrlA);
 
     if (pEntry->dwSignature != URL_SIGNATURE)
     {
