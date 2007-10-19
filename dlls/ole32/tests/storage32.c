@@ -329,8 +329,20 @@ static void test_storage_stream(void)
     /* wrap up */
     r = IStream_Release(stm2);
     ok(r == 0, "wrong ref count\n");
+
+    /* create a stream and write to it */
+    r = IStorage_CreateStream(stg, stmname, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm2 );
+    ok(r==S_OK, "IStorage->CreateStream failed\n");
+
+    r = IStream_Seek(stm, pos, STREAM_SEEK_SET, &p);
+    todo_wine
+    ok(r==STG_E_REVERTED, "overwritten stream should return STG_E_REVERTED instead of 0x%08x\n", r);
+
+    r = IStream_Release(stm2);
+    ok(r == 0, "wrong ref count\n");
     r = IStream_Release(stm);
     ok(r == 0, "wrong ref count\n");
+
     r = IStorage_Release(stg);
     ok(r == 0, "wrong ref count\n");
     r = DeleteFileW(filename);
