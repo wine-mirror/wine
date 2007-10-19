@@ -567,7 +567,11 @@ BOOL WINAPI CryptGetDefaultOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
                     *phFuncAddr = addr;
                 }
                 else
+                {
+                    CryptFreeOIDFunctionAddress(*phFuncAddr, 0);
                     SetLastError(ERROR_FILE_NOT_FOUND);
+                    *phFuncAddr = NULL;
+                }
             }
         }
     }
