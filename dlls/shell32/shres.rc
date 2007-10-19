@@ -115,15 +115,6 @@ IDR_AVI_FILENUKE AVI searching.avi
 /* @makedep: searching.avi */
 IDR_AVI_FILEDELETE AVI searching.avi
 
-/*--------------------- END FIXME ------------------------*/
-
-/*
- * Everything that does not depend on language,
- * like textless bitmaps etc, go into the
- * neutral language. This will prevent them from
- * being duplicated for each language.
- */
-#include "shell32_xx.rc"
 
 /*
  * Everything specific to any language goes
