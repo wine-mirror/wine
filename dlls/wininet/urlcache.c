@@ -2888,9 +2888,9 @@ DWORD WINAPI DeleteIE3Cache(HWND hWnd, HINSTANCE hInst, LPSTR lpszCmdLine, int n
  *           IsUrlCacheEntryExpiredA (WININET.@)
  *
  * PARAMS
- *   url        [I]    Url
- *   dwFlags           Unknown
- *   pftLastModified   Unknown ptr
+ *   url             [I] Url
+ *   dwFlags         [I] Unknown
+ *   pftLastModified [O] Last modified time
  */
 BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLastModified )
 {
@@ -2902,9 +2902,9 @@ BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLas
  *           IsUrlCacheEntryExpiredW (WININET.@)
  *
  * PARAMS
- *   url        [I]    Url
- *   dwFlags           Unknown
- *   pftLastModified   Unknown ptr
+ *   url             [I] Url
+ *   dwFlags         [I] Unknown
+ *   pftLastModified [O] Last modified time
  */
 BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLastModified )
 {
