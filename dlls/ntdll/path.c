@@ -809,7 +809,7 @@ DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
     {
         LPWSTR tmp = RtlAllocateHeap(GetProcessHeap(), 0, reqsize);
         reqsize = get_full_path_helper(name, tmp, reqsize);
-        if (reqsize > size)  /* it may have worked the second time */
+        if (reqsize + sizeof(WCHAR) > size)  /* it may have worked the second time */
         {
             RtlFreeHeap(GetProcessHeap(), 0, tmp);
             return reqsize + sizeof(WCHAR);
