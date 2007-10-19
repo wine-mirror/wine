@@ -146,6 +146,7 @@ static void test_getObjectUrl(void)
          NULL);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
          "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+        CertFreeCertificateContext(cert);
     }
     cert = CertCreateCertificateContext(X509_ASN_ENCODING,
      certWithCRLDistPoint, sizeof(certWithCRLDistPoint));
