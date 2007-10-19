@@ -1272,6 +1272,8 @@ static PCertificateChain CRYPT_ChooseHighestQualityChain(
              chain->context.rgpLowerQualityChainContext;
             alternate->context.rgpLowerQualityChainContext[i] =
              (PCCERT_CHAIN_CONTEXT)chain;
+            chain->context.cLowerQualityChainContext = 0;
+            chain->context.rgpLowerQualityChainContext = NULL;
             chain = alternate;
         }
     }
