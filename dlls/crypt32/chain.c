@@ -1062,6 +1062,8 @@ static void CRYPT_FreeLowerQualityChains(PCertificateChain chain)
     for (i = 0; i < chain->context.cLowerQualityChainContext; i++)
         CertFreeCertificateChain(chain->context.rgpLowerQualityChainContext[i]);
     CryptMemFree(chain->context.rgpLowerQualityChainContext);
+    chain->context.cLowerQualityChainContext = 0;
+    chain->context.rgpLowerQualityChainContext = NULL;
 }
 
 static void CRYPT_FreeChainContext(PCertificateChain chain)
@@ -1365,11 +1367,7 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         } while (ret && alternate);
         chain = CRYPT_ChooseHighestQualityChain(chain);
         if (!(dwFlags & CERT_CHAIN_RETURN_LOWER_QUALITY_CONTEXTS))
-        {
             CRYPT_FreeLowerQualityChains(chain);
-            chain->context.cLowerQualityChainContext = 0;
-            chain->context.rgpLowerQualityChainContext = NULL;
-        }
         if (ppChainContext)
             *ppChainContext = (PCCERT_CHAIN_CONTEXT)chain;
         else
