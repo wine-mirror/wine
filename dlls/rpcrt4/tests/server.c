@@ -459,6 +459,18 @@ s_make_pyramid_doub_carr(unsigned char n, doub_carr_t **dc)
   *dc = t;
 }
 
+unsigned
+s_hash_bstr(bstr_t b)
+{
+  short n = b[-1];
+  short *s = b;
+  unsigned hash = 0;
+  short i;
+  for (i = 0; i < n; ++i)
+    hash = 5 * hash + (unsigned) s[i];
+  return hash;
+}
+
 void
 s_stop(void)
 {
@@ -744,6 +756,38 @@ us_t_UserFree(ULONG *flags, us_t *pus)
   HeapFree(GetProcessHeap(), 0, pus->x);
 }
 
+ULONG __RPC_USER
+bstr_t_UserSize(ULONG *flags, ULONG start, bstr_t *b)
+{
+  return start + FIELD_OFFSET(wire_bstr_t, data[(*b)[-1]]);
+}
+
+unsigned char * __RPC_USER
+bstr_t_UserMarshal(ULONG *flags, unsigned char *buffer, bstr_t *b)
+{
+  wire_bstr_t *wb = (wire_bstr_t *) buffer;
+  wb->n = (*b)[-1];
+  memcpy(&wb->data, *b, wb->n * sizeof wb->data[0]);
+  return buffer + FIELD_OFFSET(wire_bstr_t, data[wb->n]);
+}
+
+unsigned char * __RPC_USER
+bstr_t_UserUnmarshal(ULONG *flags, unsigned char *buffer, bstr_t *b)
+{
+  wire_bstr_t *wb = (wire_bstr_t *) buffer;
+  short *data = HeapAlloc(GetProcessHeap(), 0, (wb->n + 1) * sizeof *data);
+  data[0] = wb->n;
+  memcpy(&data[1], wb->data, wb->n * sizeof data[1]);
+  *b = &data[1];
+  return buffer + FIELD_OFFSET(wire_bstr_t, data[wb->n]);
+}
+
+void __RPC_USER
+bstr_t_UserFree(ULONG *flags, bstr_t *b)
+{
+  HeapFree(GetProcessHeap(), 0, &((*b)[-1]));
+}
+
 static void
 pointer_tests(void)
 {
@@ -754,6 +798,8 @@ pointer_tests(void)
   int *pa[4];
   puints_t pus;
   cpuints_t cpus;
+  short bstr_data[] = { 5, 'H', 'e', 'l', 'l', 'o' };
+  bstr_t bstr = &bstr_data[1];
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
@@ -793,6 +839,8 @@ pointer_tests(void)
   pa[2] = &a[2];
   pa[3] = &a[3];
   ok(sum_pcarr(pa, 4) == 10, "RPC sum_pcarr\n");
+
+  ok(hash_bstr(bstr) == s_hash_bstr(bstr), "RPC hash_bstr_data\n");
 
   free_list(list);
 }

@@ -907,13 +907,31 @@ static int processed(const type_t *type)
     return type->typestring_offset && !type->tfswrite;
 }
 
+static int user_type_has_variable_size(const type_t *t)
+{
+    if (is_ptr(t))
+        return TRUE;
+    else
+        switch (t->type)
+        {
+        case RPC_FC_PSTRUCT:
+        case RPC_FC_CSTRUCT:
+        case RPC_FC_CPSTRUCT:
+        case RPC_FC_CVSTRUCT:
+            return TRUE;
+        }
+    /* Note: Since this only applies to user types, we can't have a conformant
+       array here, and strings should get filed under pointer in this case.  */
+    return FALSE;
+}
+
 static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
 {
     unsigned int start, absoff, flags;
     unsigned int align = 0, ualign = 0;
     const char *name;
     type_t *utype = get_user_type(type, &name);
-    size_t usize = type_memsize(utype, &ualign);
+    size_t usize = user_type_has_variable_size(utype) ? 0 : type_memsize(utype, &ualign);
     size_t size = type_memsize(type, &align);
     unsigned short funoff = user_type_offset(name);
     short reloff;
@@ -949,8 +967,8 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     print_file(file, 2, "0x%x,\t/* Alignment= %d, Flags= %02x */\n",
                flags | (align - 1), align - 1, flags);
     print_file(file, 2, "NdrFcShort(0x%hx),\t/* Function offset= %hu */\n", funoff, funoff);
-    print_file(file, 2, "NdrFcShort(0x%lx),\t/* %lu */\n", usize, usize);
     print_file(file, 2, "NdrFcShort(0x%lx),\t/* %lu */\n", size, size);
+    print_file(file, 2, "NdrFcShort(0x%lx),\t/* %lu */\n", usize, usize);
     *tfsoff += 8;
     reloff = absoff - *tfsoff;
     print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%lu) */\n", reloff, reloff, absoff);
