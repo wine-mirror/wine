@@ -806,6 +806,7 @@ typedef struct _CSignerHandles
 typedef struct _CSignedMsgData
 {
     CRYPT_SIGNED_INFO *info;
+    DWORD              cSignerHandle;
     CSignerHandles    *signerHandles;
 } CSignedMsgData;
 
@@ -841,13 +842,22 @@ static BOOL CSignedMsgData_AllocateHandles(CSignedMsgData *msg_data)
         msg_data->signerHandles =
          CryptMemAlloc(msg_data->info->cSignerInfo * sizeof(CSignerHandles));
         if (msg_data->signerHandles)
+        {
+            msg_data->cSignerHandle = msg_data->info->cSignerInfo;
             memset(msg_data->signerHandles, 0,
              msg_data->info->cSignerInfo * sizeof(CSignerHandles));
+        }
         else
+        {
+            msg_data->cSignerHandle = 0;
             ret = FALSE;
+        }
     }
     else
+    {
+        msg_data->cSignerHandle = 0;
         msg_data->signerHandles = NULL;
+    }
     return ret;
 }
 
@@ -855,7 +865,7 @@ static void CSignedMsgData_CloseHandles(CSignedMsgData *msg_data)
 {
     DWORD i;
 
-    for (i = 0; i < msg_data->info->cSignerInfo; i++)
+    for (i = 0; i < msg_data->cSignerHandle; i++)
     {
         if (msg_data->signerHandles[i].contentHash)
             CryptDestroyHash(msg_data->signerHandles[i].contentHash);
@@ -863,6 +873,8 @@ static void CSignedMsgData_CloseHandles(CSignedMsgData *msg_data)
             CryptDestroyHash(msg_data->signerHandles[i].authAttrHash);
     }
     CryptMemFree(msg_data->signerHandles);
+    msg_data->signerHandles = NULL;
+    msg_data->cSignerHandle = 0;
 }
 
 static BOOL CSignedMsgData_UpdateHash(CSignedMsgData *msg_data,
@@ -871,7 +883,7 @@ static BOOL CSignedMsgData_UpdateHash(CSignedMsgData *msg_data,
     DWORD i;
     BOOL ret = TRUE;
 
-    for (i = 0; ret && i < msg_data->info->cSignerInfo; i++)
+    for (i = 0; ret && i < msg_data->cSignerHandle; i++)
         ret = CryptHashData(msg_data->signerHandles[i].contentHash, pbData,
          cbData, 0);
     return ret;
@@ -1140,7 +1152,7 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         break;
     }
     case CMSG_COMPUTED_HASH_PARAM:
-        if (dwIndex >= msg->msg_data.info->cSignerInfo)
+        if (dwIndex >= msg->msg_data.cSignerHandle)
             SetLastError(CRYPT_E_INVALID_INDEX);
         else
             ret = CryptGetHashParam(
@@ -1279,6 +1291,7 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
             {
                 msg->msg_data.info->cSignerInfo = 0;
                 msg->msg_data.signerHandles = NULL;
+                msg->msg_data.cSignerHandle = 0;
             }
         }
         if (ret)
@@ -2023,7 +2036,7 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
     case CMSG_COMPUTED_HASH_PARAM:
         if (msg->u.signed_data.info)
         {
-            if (dwIndex >= msg->u.signed_data.info->cSignerInfo)
+            if (dwIndex >= msg->u.signed_data.cSignerHandle)
                 SetLastError(CRYPT_E_INVALID_INDEX);
             else
                 ret = CryptGetHashParam(
