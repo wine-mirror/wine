@@ -7166,6 +7166,9 @@ cat >>conftest.$ac_ext <<_ACEOF
      #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
+     #if HAVE_SYS_SOCKETVAR_H
+     # include <sys/socketvar.h>
+     #endif
 
 #include <$ac_header>
 _ACEOF
@@ -7208,9 +7211,6 @@ fi
 
 done
 
-     #if HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
 
 
 for ac_header in netinet/tcp_var.h

@@ -281,10 +281,10 @@ AC_CHECK_HEADERS([netinet/in_pcb.h netinet/ip_var.h net/if.h net/if_arp.h net/if
     [#include <sys/types.h>
      #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
-     #endif])
+     #endif
      #if HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
-     #endif
+     #endif])
 
 AC_CHECK_HEADERS([netinet/tcp_var.h],,,
     [#include <sys/types.h>
