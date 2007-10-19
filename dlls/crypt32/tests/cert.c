@@ -1416,13 +1416,6 @@ static void testGetIssuerCert(void)
     ok(parent == cert1, "Expected cert1 to be the second issuer\n");
     parent = CertGetIssuerCertificateFromStore(store, child, parent, &flags);
     ok(parent == NULL, "Expected no more than two issuers\n");
-    /* It's possible to start enumerating from any certificate in the store */
-    parent = CertGetIssuerCertificateFromStore(store, child, cert1, &flags);
-    ok(parent == NULL, "Expected no issuer\n");
-    parent = CertGetIssuerCertificateFromStore(store, child, cert2, &flags);
-    ok(parent == cert1, "Expected cert1 to be the second issuer\n");
-    parent = CertGetIssuerCertificateFromStore(store, child, parent, &flags);
-    ok(parent == NULL, "Expected no more than two issuers\n");
     CertFreeCertificateContext(child);
     CertFreeCertificateContext(cert1);
     CertFreeCertificateContext(cert2);
@@ -1454,13 +1447,6 @@ static void testGetIssuerCert(void)
     parent = CertGetIssuerCertificateFromStore(store, child, NULL, &flags);
     ok(parent == cert2, "Expected cert2 to be the first issuer\n");
     parent = CertGetIssuerCertificateFromStore(store, child, parent, &flags);
-    ok(parent == cert1, "Expected cert1 to be the second issuer\n");
-    parent = CertGetIssuerCertificateFromStore(store, child, parent, &flags);
-    ok(parent == NULL, "Expected no more than two issuers\n");
-    /* It's possible to start enumerating from any certificate in the store */
-    parent = CertGetIssuerCertificateFromStore(store, child, cert1, &flags);
-    ok(parent == NULL, "Expected no issuer\n");
-    parent = CertGetIssuerCertificateFromStore(store, child, cert2, &flags);
     ok(parent == cert1, "Expected cert1 to be the second issuer\n");
     parent = CertGetIssuerCertificateFromStore(store, child, parent, &flags);
     ok(parent == NULL, "Expected no more than two issuers\n");
