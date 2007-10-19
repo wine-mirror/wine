@@ -1939,7 +1939,10 @@ static void CRYPT_SetBitInField(struct BitField *field, DWORD bit)
         else
             field->indexes = CryptMemAlloc(sizeof(DWORD));
         if (field->indexes)
+        {
+            field->indexes[indexIndex] = 0;
             field->cIndexes = indexIndex + 1;
+        }
     }
     if (field->indexes)
         field->indexes[indexIndex] |= 1 << (bit % BITS_PER_DWORD);
