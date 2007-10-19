@@ -2229,11 +2229,11 @@ static void WINAPI IWineD3DDeviceImpl_SetFullscreen(IWineD3DDevice *iface, BOOL 
     This->ddraw_fullscreen = fullscreen;
 }
 
-/* Enables thead safety in the wined3d device and its resources. Called by DirectDraw
- * from SetCooperativeLeven if DDSCL_MULTITHREADED is specified, and by d3d8/9 from
+/* Enables thread safety in the wined3d device and its resources. Called by DirectDraw
+ * from SetCooperativeLevel if DDSCL_MULTITHREADED is specified, and by d3d8/9 from
  * CreateDevice if D3DCREATE_MULTITHREADED is passed.
  *
- * There is no way to deactivate thread safety once it is enabled
+ * There is no way to deactivate thread safety once it is enabled.
  */
 static void WINAPI IWineD3DDeviceImpl_SetMultithreaded(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
