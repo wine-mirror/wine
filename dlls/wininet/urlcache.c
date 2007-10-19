@@ -2528,7 +2528,55 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
  */
 BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
 {
-    FIXME("(%s) stub\n", debugstr_w(lpszUrlName));
+    URLCACHECONTAINER * pContainer;
+    LPURLCACHE_HEADER pHeader;
+    CACHEFILE_ENTRY * pEntry;
+    LPSTR urlA;
+    int url_len;
+
+    TRACE("(%s)\n", debugstr_w(lpszUrlName));
+
+    url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, NULL, 0, NULL, NULL);
+    urlA = HeapAlloc(GetProcessHeap(), 0, url_len * sizeof(CHAR));
+    if (!urlA)
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+    WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, urlA, url_len, NULL, NULL);
+
+    if (!URLCacheContainers_FindContainerW(lpszUrlName, &pContainer))
+    {
+        HeapFree(GetProcessHeap(), 0, urlA);
+        return FALSE;
+    }
+    if (!URLCacheContainer_OpenIndex(pContainer))
+    {
+        HeapFree(GetProcessHeap(), 0, urlA);
+        return FALSE;
+    }
+    if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
+    {
+        HeapFree(GetProcessHeap(), 0, urlA);
+        return FALSE;
+    }
+
+    if (!URLCache_FindEntryInHash(pHeader, urlA, &pEntry))
+    {
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        TRACE("entry %s not found!\n", debugstr_a(urlA));
+        HeapFree(GetProcessHeap(), 0, urlA);
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    URLCache_DeleteEntry(pHeader, pEntry);
+
+    URLCache_DeleteEntryFromHash(pHeader, urlA);
+
+    URLCacheContainer_UnlockIndex(pContainer, pHeader);
+
+    HeapFree(GetProcessHeap(), 0, urlA);
     return TRUE;
 }
 
