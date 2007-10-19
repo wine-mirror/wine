@@ -1223,6 +1223,28 @@ typedef HANDLE HCRYPTASYNC, *PHCRYPTASYNC;
 typedef void (WINAPI *PFN_CRYPT_ASYNC_PARAM_FREE_FUNC)(LPSTR pszParamOid,
  LPVOID pvParam);
 
+#define CRYPT_PARAM_ASYNC_RETRIEVAL_COMPLETION ((LPCSTR)1)
+#define CRYPT_PARAM_CANCEL_ASYNC_RETRIEVAL     ((LPCSTR)2)
+
+typedef void (WINAPI *PFN_CRYPT_ASYNC_RETRIEVAL_COMPLETION_FUNC)(
+ void *pvCompletion, DWORD dwCompletionCode, LPCSTR pszURL, LPSTR pszObjectOid,
+ void *pvObject);
+
+typedef struct _CRYPT_ASYNC_RETRIEVAL_COMPLETION
+{
+    PFN_CRYPT_ASYNC_RETRIEVAL_COMPLETION_FUNC pfnCompletion;
+    void                                     *pvCompletion;
+} CRYPT_ASYNC_RETRIEVAL_COMPLETION, *PCRYPT_ASYNC_RETRIEVAL_COMPLETION;
+
+typedef BOOL (WINAPI *PFN_CANCEL_ASYNC_RETRIEVAL_FUNC)(
+ HCRYPTASYNC hAsyncRetrieve);
+
+typedef struct _CRYPT_BLOB_ARRAY
+{
+    DWORD            cBlob;
+    PCRYPT_DATA_BLOB rgBlob;
+} CRYPT_BLOB_ARRAY, *PCRYPT_BLOB_ARRAY;
+
 typedef struct _CRYPT_CREDENTIALS {
     DWORD  cbSize;
     LPCSTR pszCredentialsOid;
@@ -1254,7 +1276,26 @@ typedef struct _CRYPT_RETRIEVE_AUX_INFO {
     DWORD     dwMaxUrlRetrievalByteCount;
 } CRYPT_RETRIEVE_AUX_INFO, *PCRYPT_RETRIEVE_AUX_INFO;
 
+typedef void (WINAPI *PFN_FREE_ENCODED_OBJECT_FUNC)(LPCSTR pszObjectOid,
+ PCRYPT_BLOB_ARRAY pObject, void *pvFreeContext);
+
+#define SCHEME_OID_RETRIEVE_ENCODED_OBJECT_FUNC \
+ "SchemeDllRetrieveEncodedObject"
+#define SCHEME_OID_RETRIEVE_ENCODED_OBJECTW_FUNC \
+ "SchemeDllRetrieveEncodedObjectW"
+/* The signature of SchemeDllRetrieveEncodedObjectW is:
+BOOL WINAPI SchemeDllRetrieveEncodedObjectW(LPCWSTR pwszUrl,
+ LPCSTR pszObjectOid, DWORD dwRetrievalFlags, DWORD dwTimeout,
+ PCRYPT_BLOB_ARRAY pObject, PFN_FREE_ENCODED_OBJECT_FUNC *ppfnFreeObject,
+ void **ppvFreeContext, HCRYPTASYNC hAsyncRetrieve,
+ PCRYPT_CREDENTIALS pCredentials, PCRYPT_RETRIEVE_AUX_INFO pAuxInfo);
+ */
+
 #define CONTEXT_OID_CREATE_OBJECT_CONTEXT_FUNC "ContextDllCreateObjectContext"
+/* The signature of ContextDllCreateObjectContext is:
+BOOL WINAPI ContextDllCreateObjectContext(LPCSTR pszObjectOid,
+ DWORD dwRetrievalFlags, PCRYPT_BLOB_ARRAY pObject, void **ppvContxt);
+ */
 
 #define CONTEXT_OID_CERTIFICATE ((LPCSTR)1)
 #define CONTEXT_OID_CRL         ((LPCSTR)2)
@@ -1283,6 +1324,31 @@ typedef struct _CRYPT_RETRIEVE_AUX_INFO {
 #define CRYPT_DONT_CHECK_TIME_VALIDITY      0x00000200
 #define CRYPT_CHECK_FRESHNESS_TIME_VALIDITY 0x00000400
 #define CRYPT_ACCUMULATIVE_TIMEOUT          0x00000800
+
+typedef BOOL (WINAPI *PFN_CRYPT_CANCEL_RETRIEVAL)(DWORD dwFlags, void *pvArg);
+
+typedef struct _CERT_CRL_CONTEXT_PAIR
+{
+    PCCERT_CONTEXT pCertContext;
+    PCCRL_CONTEXT  pCrlContext;
+} CERT_CRL_CONTEXT_PAIR, *PCERT_CRL_CONTEXT_PAIR;
+typedef const CERT_CRL_CONTEXT_PAIR *PCCERT_CRL_CONTEXT_PAIR;
+
+#define TIME_VALID_OID_GET_OBJECT_FUNC   "TimeValidDllGetObject"
+
+#define TIME_VALID_OID_GET_CTL                    ((LPCSTR)1)
+#define TIME_VALID_OID_GET_CRL                    ((LPCSTR)2)
+#define TIME_VALID_OID_GET_CRL_FROM_CERT          ((LPCSTR)3)
+#define TIME_VALID_OID_GET_FRESHEST_CRL_FROM_CERT ((LPCSTR)4)
+#define TIME_VALID_OID_GET_FRESHEST_CRL_FROM_CRL  ((LPCSTR)5)
+
+#define TIME_VALID_OID_FLUSH_OBJECT_FUNC "TimeValidDllFlushObject"
+
+#define TIME_VALID_OID_FLUSH_CTL                    ((LPCSTR)1)
+#define TIME_VALID_OID_FLUSH_CRL                    ((LPCSTR)2)
+#define TIME_VALID_OID_FLUSH_CRL_FROM_CERT          ((LPCSTR)3)
+#define TIME_VALID_OID_FLUSH_FRESHEST_CRL_FROM_CERT ((LPCSTR)4)
+#define TIME_VALID_OID_FLUSH_FRESHEST_CRL_FROM_CRL  ((LPCSTR)5)
 
 /* OID group IDs */
 #define CRYPT_HASH_ALG_OID_GROUP_ID     1
@@ -4069,9 +4135,23 @@ BOOL WINAPI CryptVerifyDetachedMessageHash(PCRYPT_HASH_MESSAGE_PARA pHashPara,
  DWORD *pcbComputedHash);
 
 /* cryptnet.dll functions */
+BOOL WINAPI CryptCancelAsyncRetrieval(HCRYPTASYNC hAsyncRetrieval);
+
 BOOL WINAPI CryptGetObjectUrl(LPCSTR pszUrlOid, LPVOID pvPara, DWORD dwFlags,
  PCRYPT_URL_ARRAY pUrlArray, DWORD *pcbUrlArray, PCRYPT_URL_INFO pUrlInfo,
  DWORD *pcbUrlInfo, LPVOID pvReserved);
+
+BOOL WINAPI CryptGetTimeValidObject(LPCSTR pszTimeValidOid, void *pvPara,
+ PCCERT_CONTEXT pIssuer, LPFILETIME pftValidFor, DWORD dwFlags, DWORD dwTimeout,
+ void **ppvObject, PCRYPT_CREDENTIALS pCredentials, void *pvReserved);
+
+BOOL WINAPI CryptFlushTimeValidObject(LPCSTR pszFlushTimeValidOid, void *pvPara,
+ PCCERT_CONTEXT pIssuer, DWORD dwFlags, void *pvReserved);
+
+BOOL WINAPI CryptInstallCancelRetrieval(PFN_CRYPT_CANCEL_RETRIEVAL pfnCancel,
+ const void *pvArg, DWORD dwFlags, void *pvReserved);
+
+BOOL WINAPI CryptUninstallCancelRetrieval(DWORD dwFlags, void *pvReserved);
 
 BOOL WINAPI CryptRetrieveObjectByUrlA(LPCSTR pszURL, LPCSTR pszObjectOid,
  DWORD dwRetrievalFlags, DWORD dwTimeout, LPVOID *ppvObject,
