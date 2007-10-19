@@ -1363,13 +1363,13 @@ fi
 AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
    	wine_cv_linux_gethostbyname_r_6,
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]],[[
-    char *name=NULL;
+    char *name=0;
     struct hostent he;
     struct hostent *result;
-    char *buf=NULL;
+    char *buf=0;
     int bufsize=0;
     int res,errnr;
-    char *addr=NULL;
+    char *addr=0;
     int addrlen=0;
     int addrtype=0;
     res=gethostbyname_r(name,&he,buf,bufsize,&result,&errnr);
