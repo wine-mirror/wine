@@ -43,6 +43,7 @@ static const char doc_str3[] =
 static const WCHAR noneW[] = {'N','o','n','e',0};
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
+static WCHAR texteditW[] = {'t','e','x','t','e','d','i','t',0};
 static WCHAR wordW[] = {'w','o','r','d',0};
 
 typedef enum {
@@ -873,6 +874,8 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_moveend(range, characterW, 3, 3);
     test_range_text(range, "wor");
     test_range_parent(range, ET_BODY);
+    test_range_expand(range, texteditW, VARIANT_TRUE, "wordabc 123\r\nit's text");
+    test_range_expand(range, texteditW, VARIANT_TRUE, "wordabc 123\r\nit's text");
 
     IHTMLTxtRange_Release(range);
 }

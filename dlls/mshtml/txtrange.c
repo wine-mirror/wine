@@ -1073,11 +1073,11 @@ static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIA
     if(unit == RU_UNKNOWN)
         return E_INVALIDARG;
 
+    *Success = VARIANT_FALSE;
+
     switch(unit) {
     case RU_WORD: {
         dompos_t end_pos, start_pos, new_pos;
-
-        *Success = VARIANT_FALSE;
 
         get_cur_pos(This, TRUE, &start_pos);
         get_cur_pos(This, FALSE, &end_pos);
@@ -1097,6 +1097,40 @@ static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIA
 
         break;
     }
+
+    case RU_TEXTEDIT: {
+        nsIDOMDocument *nsdoc;
+        nsIDOMHTMLDocument *nshtmldoc;
+        nsIDOMHTMLElement *nsbody = NULL;
+        nsresult nsres;
+
+        nsres = nsIWebNavigation_GetDocument(This->doc->nscontainer->navigation, &nsdoc);
+        if(NS_FAILED(nsres) || !nsdoc) {
+            ERR("GetDocument failed: %08x\n", nsres);
+            break;
+        }
+
+        nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
+        nsIDOMDocument_Release(nsdoc);
+
+        nsres = nsIDOMHTMLDocument_GetBody(nshtmldoc, &nsbody);
+        nsIDOMHTMLDocument_Release(nshtmldoc);
+        if(NS_FAILED(nsres) || !nsbody) {
+            ERR("Could not get body: %08x\n", nsres);
+            break;
+        }
+
+        nsres = nsIDOMRange_SelectNodeContents(This->nsrange, (nsIDOMNode*)nsbody);
+        nsIDOMHTMLElement_Release(nsbody);
+        if(NS_FAILED(nsres)) {
+            ERR("Collapse failed: %08x\n", nsres);
+            break;
+        }
+
+        *Success = VARIANT_TRUE;
+        break;
+    }
+
     default:
         FIXME("Unimplemented unit %s\n", debugstr_w(Unit));
     }
