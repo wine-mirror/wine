@@ -1377,6 +1377,43 @@ static void test_FindNextFileA(void)
     ok ( err == ERROR_NO_MORE_FILES, "GetLastError should return ERROR_NO_MORE_FILES\n");
 }
 
+static void test_FindFirstFileExA(void)
+{
+    WIN32_FIND_DATAA search_results;
+    HANDLE handle;
+
+    CreateDirectoryA("test-dir", NULL);
+    _lclose(_lcreat("test-dir\\file1", 0));
+    _lclose(_lcreat("test-dir\\file2", 0));
+    CreateDirectoryA("test-dir\\dir1", NULL);
+    /* FindExLimitToDirectories is ignored */
+    handle = FindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, FindExSearchLimitToDirectories, NULL, 0);
+    ok(handle != INVALID_HANDLE_VALUE, "FindFirstFile failed (err=%u)\n", GetLastError());
+    ok(strcmp(search_results.cFileName, ".") == 0, "First entry should be '.', is %s\n", search_results.cFileName);
+
+#define CHECK_NAME(fn) (strcmp((fn), "file1") == 0 || strcmp((fn), "file2") == 0 || strcmp((fn), "dir1") == 0)
+
+    ok(FindNextFile(handle, &search_results), "Fetching second file failed\n");
+    ok(strcmp(search_results.cFileName, "..") == 0, "Second entry should be '..' is %s\n", search_results.cFileName);
+
+    ok(FindNextFile(handle, &search_results), "Fetching third file failed\n");
+    ok(CHECK_NAME(search_results.cFileName), "Invalid thrid entry - %s\n", search_results.cFileName);
+
+    ok(FindNextFile(handle, &search_results), "Fetching fourth file failed\n");
+    ok(CHECK_NAME(search_results.cFileName), "Invalid fourth entry - %s\n", search_results.cFileName);
+
+    ok(FindNextFile(handle, &search_results), "Fetching fifth file failed\n");
+    ok(CHECK_NAME(search_results.cFileName), "Invalid fifth entry - %s\n", search_results.cFileName);
+
+#undef CHECK_NAME
+
+    ok(FindNextFile(handle, &search_results) == FALSE, "Fetching sixth file should failed\n");
+    DeleteFileA("test-dir\\file1");
+    DeleteFileA("test-dir\\file2");
+    RemoveDirectoryA("test-dir\\dir1");
+    RemoveDirectoryA("test-dir");
+}
+
 static int test_Mapfile_createtemp(HANDLE *handle)
 {
     SetFileAttributesA(filename,FILE_ATTRIBUTE_NORMAL);
@@ -1839,6 +1876,7 @@ START_TEST(file)
     test_MoveFileW();
     test_FindFirstFileA();
     test_FindNextFileA();
+    test_FindFirstFileExA();
     test_LockFile();
     test_file_sharing();
     test_offset_in_overlapped_structure();

@@ -1544,6 +1544,9 @@ BOOL WINAPI ReplaceFileA(LPCSTR lpReplacedFileName,LPCSTR lpReplacementFileName,
 
 /*************************************************************************
  *           FindFirstFileExW  (KERNEL32.@)
+ *
+ * NOTE: The FindExSearchLimitToDirectories is ignored - it gives the same
+ * results as FindExSearchNameMatch
  */
 HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
                                 LPVOID data, FINDEX_SEARCH_OPS search_op,
@@ -1781,9 +1784,6 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
         {
             if (!check_dir_symlink( info, dir_info )) continue;
         }
-	if (info->search_op == FindExSearchLimitToDirectories &&
-	    (dir_info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-	    continue;
 
         data->dwFileAttributes = dir_info->FileAttributes;
         data->ftCreationTime   = *(FILETIME *)&dir_info->CreationTime;
