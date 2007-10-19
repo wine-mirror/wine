@@ -24,13 +24,6 @@
 #include "winnls.h"
 #include "psdlg.h"
 
-/*
- * Everything that does not depend on language,
- * like textless bitmaps etc, go into the
- * neutral language. This will prevent them from
- * being duplicated for each language.
- */
-#include "wps_xx.rc"
 
 /*
  * Everything specific to any language goes
