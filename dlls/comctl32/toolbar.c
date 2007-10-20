@@ -5430,8 +5430,7 @@ TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (infoPtr->strings) {
 	INT i;
 	for (i = 0; i < infoPtr->nNumStrings; i++)
-	    if (infoPtr->strings[i])
-		Free (infoPtr->strings[i]);
+	    Free (infoPtr->strings[i]);
 
 	Free (infoPtr->strings);
     }
