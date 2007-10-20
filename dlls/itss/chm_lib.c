@@ -854,8 +854,7 @@ void chm_close(struct chmFile *h)
             int i;
             for (i=0; i<h->cache_num_blocks; i++)
             {
-                if (h->cache_blocks[i])
-                    HeapFree(GetProcessHeap(), 0, h->cache_blocks[i]);
+                HeapFree(GetProcessHeap(), 0, h->cache_blocks[i]);
             }
             HeapFree(GetProcessHeap(), 0, h->cache_blocks);
             h->cache_blocks = NULL;
