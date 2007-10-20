@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 #include <signal.h>
+#include <sys/types.h>
 
 #include "windef.h"
 #include "winnt.h"
