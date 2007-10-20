@@ -1376,16 +1376,16 @@ itemex_options
 		$$->gotid = TRUE;
 		$$->gottype = TRUE;
 		$$->gotstate = TRUE;
-		if($2) free($2);
-		if($4) free($4);
+		free($2);
+		free($4);
 		}
 	| ',' e_expr ',' e_expr ',' expr {
 		$$ = new_itemex_opt($2 ? *($2) : 0, $4 ? *($4) : 0, $6, 0);
 		$$->gotid = TRUE;
 		$$->gottype = TRUE;
 		$$->gotstate = TRUE;
-		if($2) free($2);
-		if($4) free($4);
+		free($2);
+		free($4);
 		}
 	;
 
@@ -1397,23 +1397,23 @@ itemex_p_options
 		}
 	| ',' e_expr ',' expr {
 		$$ = new_itemex_opt($2 ? *($2) : 0, $4, 0, 0);
-		if($2) free($2);
+		free($2);
 		$$->gotid = TRUE;
 		$$->gottype = TRUE;
 		}
 	| ',' e_expr ',' e_expr ',' expr {
 		$$ = new_itemex_opt($2 ? *($2) : 0, $4 ? *($4) : 0, $6, 0);
-		if($2) free($2);
-		if($4) free($4);
+		free($2);
+		free($4);
 		$$->gotid = TRUE;
 		$$->gottype = TRUE;
 		$$->gotstate = TRUE;
 		}
 	| ',' e_expr ',' e_expr ',' e_expr ',' expr {
 		$$ = new_itemex_opt($2 ? *($2) : 0, $4 ? *($4) : 0, $6 ? *($6) : 0, $8);
-		if($2) free($2);
-		if($4) free($4);
-		if($6) free($6);
+		free($2);
+		free($4);
+		free($6);
 		$$->gotid = TRUE;
 		$$->gottype = TRUE;
 		$$->gotstate = TRUE;
