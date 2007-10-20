@@ -640,22 +640,33 @@ static BOOL CRYPT_EncodeValueWithType(DWORD dwCertEncodingType,
  LPCWSTR *ppszError)
 {
     CERT_NAME_VALUE nameValue = { type, { 0, NULL } };
-    BOOL ret = FALSE;
+    BOOL ret = TRUE;
 
-    nameValue.Value.pbData = CryptMemAlloc((value->end - value->start) *
-     sizeof(WCHAR));
-    if (nameValue.Value.pbData)
+    if (value->end > value->start)
     {
-        DWORD i;
-        LPWSTR ptr = (LPWSTR)nameValue.Value.pbData;
-
-        for (i = 0; i < value->end - value->start; i++)
+        nameValue.Value.pbData = CryptMemAlloc((value->end - value->start) *
+         sizeof(WCHAR));
+        if (!nameValue.Value.pbData)
         {
-            *ptr++ = value->start[i];
-            if (value->start[i] == '"')
-                i++;
+            SetLastError(ERROR_OUTOFMEMORY);
+            ret = FALSE;
         }
-        nameValue.Value.cbData = (LPBYTE)ptr - nameValue.Value.pbData;
+    }
+    if (ret)
+    {
+        if (value->end > value->start)
+        {
+            DWORD i;
+            LPWSTR ptr = (LPWSTR)nameValue.Value.pbData;
+
+            for (i = 0; i < value->end - value->start; i++)
+            {
+                *ptr++ = value->start[i];
+                if (value->start[i] == '"')
+                    i++;
+            }
+            nameValue.Value.cbData = (LPBYTE)ptr - nameValue.Value.pbData;
+        }
         ret = CryptEncodeObjectEx(dwCertEncodingType, X509_UNICODE_NAME_VALUE,
          &nameValue, CRYPT_ENCODE_ALLOC_FLAG, NULL, &output->pbData,
          &output->cbData);
