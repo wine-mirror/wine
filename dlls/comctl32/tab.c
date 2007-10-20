@@ -3064,8 +3064,7 @@ TAB_Destroy (TAB_INFO *infoPtr)
 
   if (infoPtr->items) {
     for (iItem = 0; iItem < infoPtr->uNumItem; iItem++) {
-      if (TAB_GetItem(infoPtr, iItem)->pszText)
-	Free (TAB_GetItem(infoPtr, iItem)->pszText);
+      Free (TAB_GetItem(infoPtr, iItem)->pszText);
     }
     Free (infoPtr->items);
   }
