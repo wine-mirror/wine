@@ -913,8 +913,12 @@ static BOOL CRYPT_AsnEncodeBMPString(const CERT_NAME_VALUE *value,
     LPCWSTR str = (LPCWSTR)value->Value.pbData;
     DWORD bytesNeeded, lenBytes, strLen;
 
-    strLen = value->Value.cbData ? value->Value.cbData / sizeof(WCHAR) :
-     lstrlenW(str);
+    if (value->Value.cbData)
+        strLen = value->Value.cbData / sizeof(WCHAR);
+    else if (value->Value.pbData)
+        strLen = lstrlenW(str);
+    else
+        strLen = 0;
     CRYPT_EncodeLen(strLen * 2, NULL, &lenBytes);
     bytesNeeded = 1 + lenBytes + strLen * 2;
     if (!pbEncoded)
