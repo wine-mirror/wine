@@ -289,6 +289,8 @@ static void test_RtlInitUnicodeStringEx(void)
     ok(uni.Buffer == NULL,
        "pRtlInitUnicodeString(&uni, 0) sets Buffer to %p, expected %p\n",
        uni.Buffer, NULL);
+
+    free(teststring2);
 }
 
 
@@ -1709,7 +1711,8 @@ static void test_RtlIsTextUnicode(void)
 
     flags = IS_TEXT_UNICODE_REVERSE_MASK;
     ok(!pRtlIsTextUnicode(be_unicode, sizeof(unicode) + 2, &flags), "Reverse endian should be Unicode\n");
-    todo_wine ok(flags == 0xc0, "Expected flags 0x70, obtained %x\n", flags);
+    todo_wine ok(flags == 0xc0, "Expected flags 0xc0, obtained %x\n", flags);
+    HeapFree(GetProcessHeap(), 0, be_unicode);
 }
 
 static const WCHAR szGuid[] = { '{','0','1','0','2','0','3','0','4','-',
