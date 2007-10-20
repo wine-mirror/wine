@@ -805,6 +805,7 @@ static void test_CreatePipe(void)
     /* But now we need to get informed that the pipe is closed */
     ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL) == 0, "Broken pipe not detected\n");
     ok(CloseHandle(piperead), "CloseHandle for the read pipe failed\n");
+    HeapFree(GetProcessHeap(), 0, buffer);
 }
 
 struct named_pipe_client_params
@@ -1022,7 +1023,11 @@ static BOOL are_all_privileges_disabled(HANDLE hToken)
     {
         Privileges = HeapAlloc(GetProcessHeap(), 0, Size);
         ret = GetTokenInformation(hToken, TokenPrivileges, Privileges, Size, &Size);
-        if (!ret) return FALSE;
+        if (!ret)
+        {
+            HeapFree(GetProcessHeap(), 0, Privileges);
+            return FALSE;
+        }
     }
     else
         return FALSE;

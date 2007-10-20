@@ -517,6 +517,7 @@ static void test_info_in_assembly(HANDLE handle, DWORD id, const info_in_assembl
     else
         ok(info->lpAssemblyDirectoryName == NULL, "info->lpAssemblyDirectoryName = %s\n",
            strw(info->lpAssemblyDirectoryName));
+    HeapFree(GetProcessHeap(), 0, info);
 }
 
 static void test_file_info(HANDLE handle, ULONG assid, ULONG fileid, LPCWSTR filename)
@@ -560,6 +561,7 @@ static void test_file_info(HANDLE handle, ULONG assid, ULONG fileid, LPCWSTR fil
     if(info->lpFileName)
         ok(!lstrcmpiW(info->lpFileName, filename), "unexpected info->lpFileName\n");
     ok(info->lpFilePath == NULL, "info->lpFilePath != NULL\n");
+    HeapFree(GetProcessHeap(), 0, info);
 }
 
 static HANDLE test_create(const char *file, const char *manifest)
