@@ -710,7 +710,7 @@ static int set_console_input_info( const struct set_console_input_info_request *
 	console->history_index -= delta;
 
 	for (i = 0; i < console->history_size; i++)
-	    if (console->history[i]) free( console->history[i] );
+	    free( console->history[i] );
 	free( console->history );
 	console->history = mem;
 	console->history_size = req->history_size;
@@ -1033,7 +1033,7 @@ static void console_input_destroy( struct object *obj )
     release_object( console_in->event );
 
     for (i = 0; i < console_in->history_size; i++)
-        if (console_in->history[i]) free( console_in->history[i] );
+        free( console_in->history[i] );
     free( console_in->history );
 }
 
