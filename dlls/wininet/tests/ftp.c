@@ -76,7 +76,7 @@ static void test_connect(void)
      */
 
     SetLastError(0xdeadbeef);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", NULL, INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", NULL, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if (hFtp)  /* some servers accept an empty password */
     {
         ok ( GetLastError() == ERROR_SUCCESS, "ERROR_SUCCESS, got %d\n", GetLastError());
@@ -87,7 +87,7 @@ static void test_connect(void)
              "Expected ERROR_INTERNET_LOGIN_FAILURE, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, NULL, "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, NULL, "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     ok ( hFtp == NULL, "Expected InternetConnect to fail\n");
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
@@ -100,12 +100,12 @@ static void test_connect(void)
      */
 
     SetLastError(0xdeadbeef);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, NULL, NULL, INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, NULL, NULL, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if (!hFtp && (GetLastError() == ERROR_INTERNET_LOGIN_FAILURE))
     {
         /* We are most likely running on a clean Wine install or a Windows install where the registry key is removed */
         SetLastError(0xdeadbeef);
-        hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+        hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     }
     ok ( hFtp != NULL, "InternetConnect failed : %d\n", GetLastError());
     ok ( GetLastError() == ERROR_SUCCESS,
@@ -128,7 +128,7 @@ static void test_createdir(void)
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if(!hFtp)
     {
         skip("No ftp connection could be made to ftp.winehq.org\n");
@@ -157,7 +157,7 @@ static void test_createdir(void)
 
     /* Http handle-type for ftp connection */
 
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
 
     /* One small test to show that handle type is checked before parameters */
     SetLastError(0xdeadbeef);
@@ -189,7 +189,7 @@ static void test_deletefile(void)
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if(!hFtp)
     {
         skip("No ftp connection could be made to ftp.winehq.org\n");
@@ -218,7 +218,7 @@ static void test_deletefile(void)
 
     /* Http handle-type for ftp connection */
 
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
 
     /* One small test to show that handle type is checked before parameters */
     SetLastError(0xdeadbeef);
@@ -267,7 +267,7 @@ static void test_getfile(void)
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if(!hFtp)
     {
         skip("No ftp connection could be made to ftp.winehq.org\n");
@@ -394,7 +394,7 @@ static void test_getfile(void)
 
     /* Http handle-type for ftp connection */
 
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
 
     /* Test to show the parameter checking order depends on the Windows version */
     SetLastError(0xdeadbeef);
@@ -434,7 +434,7 @@ static void test_openfile(void)
     InternetCloseHandle(hOpenFile); /* Just in case */
 
     hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if(!hFtp)
     {
         skip("No ftp connection could be made to ftp.winehq.org\n");
@@ -554,7 +554,7 @@ static void test_openfile(void)
 
     /* Http handle-type for ftp connection */
 
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
 
     /* One small test to show that handle type is checked before parameters */
     SetLastError(0xdeadbeef);
@@ -605,7 +605,7 @@ static void test_putfile(void)
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if(!hFtp)
     {
         skip("No ftp connection could be made to ftp.winehq.org\n");
@@ -666,7 +666,7 @@ static void test_putfile(void)
 
     /* Http handle-type for ftp connection */
 
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
 
     /* Test to show the parameter checking order depends on the Windows version */
     SetLastError(0xdeadbeef);
@@ -706,7 +706,7 @@ static void test_removedir(void)
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if(!hFtp)
     {
         skip("No ftp connection could be made to ftp.winehq.org\n");
@@ -743,7 +743,7 @@ static void test_removedir(void)
 
     /* Http handle-type for ftp connection */
 
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
 
     /* One small test to show that handle type is checked before parameters */
     SetLastError(0xdeadbeef);
@@ -775,7 +775,7 @@ static void test_renamefile(void)
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if(!hFtp)
     {
         skip("No ftp connection could be made to ftp.winehq.org\n");
@@ -811,7 +811,7 @@ static void test_renamefile(void)
 
     /* Http handle-type for ftp connection */
 
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
 
     /* One small test to show that handle type is checked before parameters */
     SetLastError(0xdeadbeef);
@@ -836,7 +836,7 @@ static void test_multiple(void)
     HINTERNET hInternet, hFtp, hOpenFile;
 
     hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if(!hFtp)
     {
         skip("No ftp connection could be made to ftp.winehq.org\n");
