@@ -530,6 +530,9 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
     res=ERROR_SUCCESS;
 
 end:
+    HeapFree( GetProcessHeap(), 0, szValue );
+    HeapFree( GetProcessHeap(), 0, szCmdLine );
+
     if( hkRun!=NULL )
         RegCloseKey( hkRun );
     if( hkWin!=NULL )
