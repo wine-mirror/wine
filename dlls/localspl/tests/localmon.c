@@ -166,6 +166,7 @@ static void find_installed_ports(void)
 
     if (!res) {
         skip("no ports found\n");
+        HeapFree(GetProcessHeap(), 0, pi);
         return;
     }
 
