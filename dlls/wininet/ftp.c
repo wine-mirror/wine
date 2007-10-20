@@ -2006,22 +2006,20 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     }
 
 lerror:
-    if (!bSuccess && nsocket != -1)
-        closesocket(nsocket);
+    if (lpwfs) WININET_Release( &lpwfs->hdr );
 
-    if (!bSuccess && lpwfs)
+    if (!bSuccess && handle)
     {
-        HeapFree(GetProcessHeap(), 0, lpwfs);
+        WININET_Release( &hIC->hdr );
         WININET_FreeHandle( handle );
         handle = NULL;
-        lpwfs = NULL;
     }
 
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         INTERNET_ASYNC_RESULT iar;
 
-        iar.dwResult = (DWORD)lpwfs;
+        iar.dwResult = bSuccess ? (DWORD_PTR)lpwfs : 0;
         iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
         SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_REQUEST_COMPLETE,
             &iar, sizeof(INTERNET_ASYNC_RESULT));
