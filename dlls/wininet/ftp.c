@@ -123,6 +123,7 @@ static const WCHAR szNoAccount[] = {'n','o','a','c','c','o','u','n','t','\0'};
 
 static void FTP_CloseFileTransferHandle(LPWININETHANDLEHEADER hdr);
 static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr);
+static void FTP_CloseConnection(LPWININETHANDLEHEADER hdr);
 static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr);
 static BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
 	INTERNET_STATUS_CALLBACK lpfnStatusCB, LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext);
@@ -1895,10 +1896,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwfs->hdr.dwContext = dwContext;
     lpwfs->hdr.dwInternalFlags = dwInternalFlags;
     lpwfs->hdr.dwRefCount = 1;
-    /* FIXME: Native sends INTERNET_STATUS_CLOSING_CONNECTION and
-     * INTERNET_STATUS_CONNECTION_CLOSED, need an equivalent FTP_CloseConnection
-     * function */
-    lpwfs->hdr.close_connection = NULL;
+    lpwfs->hdr.close_connection = FTP_CloseConnection;
     lpwfs->hdr.destroy = FTP_CloseSessionHandle;
     lpwfs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
     lpwfs->download_in_progress = NULL;
@@ -2823,16 +2821,41 @@ recv_end:
     return  (nRC != -1);
 }
 
+/***********************************************************************
+ *           FTP_CloseConnection (internal)
+ *
+ * Close connections
+ */
+static void FTP_CloseConnection(LPWININETHANDLEHEADER hdr)
+{
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) hdr;
+
+    TRACE("\n");
+
+    SendAsyncCallback(&lpwfs->hdr, lpwfs->hdr.dwContext,
+                      INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
+
+    if (lpwfs->download_in_progress != NULL)
+        lpwfs->download_in_progress->session_deleted = TRUE;
+
+     if (lpwfs->sndSocket != -1)
+         closesocket(lpwfs->sndSocket);
+
+     if (lpwfs->lstnSocket != -1)
+         closesocket(lpwfs->lstnSocket);
+
+    if (lpwfs->pasvSocket != -1)
+        closesocket(lpwfs->pasvSocket);
+
+    SendAsyncCallback(&lpwfs->hdr, lpwfs->hdr.dwContext,
+                      INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
+}
+
 
 /***********************************************************************
  *           FTP_CloseSessionHandle (internal)
  *
  * Deallocate session handle
- *
- * RETURNS
- *   TRUE on success
- *   FALSE on failure
- *
  */
 static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr)
 {
@@ -2841,15 +2864,6 @@ static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr)
     TRACE("\n");
 
     WININET_Release(&lpwfs->lpAppInfo->hdr);
-
-    if (lpwfs->download_in_progress != NULL)
-	lpwfs->download_in_progress->session_deleted = TRUE;
-    
-    if (lpwfs->sndSocket != -1)
-        closesocket(lpwfs->sndSocket);
-
-    if (lpwfs->lstnSocket != -1)
-        closesocket(lpwfs->lstnSocket);
 
     HeapFree(GetProcessHeap(), 0, lpwfs->lpszPassword);
     HeapFree(GetProcessHeap(), 0, lpwfs->lpszUserName);
