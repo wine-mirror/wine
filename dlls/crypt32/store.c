@@ -117,6 +117,43 @@ void CRYPT_FreeStore(PWINECRYPT_CERTSTORE store)
     CryptMemFree(store);
 }
 
+BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
+ DWORD unk1)
+{
+    static BOOL warned = FALSE;
+    const WINE_CONTEXT_INTERFACE * const interfaces[] = { pCertInterface,
+     pCRLInterface, pCTLInterface };
+    DWORD i;
+
+    TRACE("(%p, %p, %08x, %08x)\n", store1, store2, unk0, unk1);
+    if (!warned)
+    {
+        FIXME("semi-stub\n");
+        warned = TRUE;
+    }
+
+    /* Poor-man's resync:  empty first store, then add everything from second
+     * store to it.
+     */
+    for (i = 0; i < sizeof(interfaces) / sizeof(interfaces[0]); i++)
+    {
+        const void *context;
+
+        do {
+            context = interfaces[i]->enumContextsInStore(store1, NULL);
+            if (context)
+                interfaces[i]->deleteFromStore(context);
+        } while (context);
+        do {
+            context = interfaces[i]->enumContextsInStore(store2, context);
+            if (context)
+                interfaces[i]->addContextToStore(store1, context,
+                 CERT_STORE_ADD_ALWAYS, NULL);
+        } while (context);
+    }
+    return TRUE;
+}
+
 static BOOL CRYPT_MemAddCert(PWINECRYPT_CERTSTORE store, void *cert,
  void *toReplace, const void **ppStoreContext)
 {
@@ -196,55 +233,6 @@ static BOOL CRYPT_MemDeleteCrl(PWINECRYPT_CERTSTORE store, void *pCrlContext)
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
 
     ContextList_Delete(ms->crls, pCrlContext);
-    return TRUE;
-}
-
-static void CRYPT_EmptyStore(HCERTSTORE store)
-{
-    PCCERT_CONTEXT cert;
-    PCCRL_CONTEXT crl;
-
-    do {
-        cert = CertEnumCertificatesInStore(store, NULL);
-        if (cert)
-            CertDeleteCertificateFromStore(cert);
-    } while (cert);
-    do {
-        crl = CertEnumCRLsInStore(store, NULL);
-        if (crl)
-            CertDeleteCRLFromStore(crl);
-    } while (crl);
-}
-
-BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
- DWORD unk1)
-{
-    static BOOL warned = FALSE;
-    PCCERT_CONTEXT cert = NULL;
-    PCCRL_CONTEXT crl = NULL;
-
-    TRACE("(%p, %p, %08x, %08x)\n", store1, store2, unk0, unk1);
-    if (!warned)
-    {
-        FIXME("semi-stub\n");
-        warned = TRUE;
-    }
-
-    /* Poor-man's resync:  empty first store, then add everything from second
-     * store to it.
-     */
-    CRYPT_EmptyStore(store1);
-    do {
-        cert = CertEnumCertificatesInStore(store2, cert);
-        if (cert)
-            CertAddCertificateContextToStore(store1, cert,
-             CERT_STORE_ADD_ALWAYS, NULL);
-    } while (cert);
-    do {
-        crl = CertEnumCRLsInStore(store2, crl);
-        if (crl)
-            CertAddCRLContextToStore(store1, crl, CERT_STORE_ADD_ALWAYS, NULL);
-    } while (crl);
     return TRUE;
 }
 
