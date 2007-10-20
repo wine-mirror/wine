@@ -1828,6 +1828,7 @@ static void test_get16dibits(void)
             overwritten_bytes++;
     ok(overwritten_bytes == 0, "GetDIBits wrote past the buffer given\n");
 
+    HeapFree(GetProcessHeap(), 0, info);
     DeleteObject(hbmp);
     ReleaseDC(NULL, screen_dc);
 }
