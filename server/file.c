@@ -435,9 +435,10 @@ static int file_set_sd( struct object *obj, const struct security_descriptor *sd
 
     if (set_info & DACL_SECURITY_INFORMATION)
     {
-        if (sd->control & SE_DACL_PRESENT)
+        int present;
+        const ACL *dacl = sd_get_dacl( sd, &present );
+        if (present && dacl)
         {
-            const ACL *dacl = (const ACL *)((char *)sd + sd->owner_len + sd->group_len + sd->sacl_len);
             const ACE_HEADER *ace = (const ACE_HEADER *)(dacl + 1);
             ULONG i;
             for (i = 0; i < dacl->AceCount; i++)
