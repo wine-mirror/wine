@@ -124,8 +124,10 @@ void PerfDataRefresh(void)
     /* Get processor time information */
     SysProcessorTimeInfo = (PSYSTEM_PROCESSORTIME_INFO)malloc(sizeof(SYSTEM_PROCESSORTIME_INFO) * SystemBasicInfo.bKeNumberProcessors);
     status = NtQuerySystemInformation(SystemProcessorTimeInformation, SysProcessorTimeInfo, sizeof(SYSTEM_PROCESSORTIME_INFO) * SystemBasicInfo.bKeNumberProcessors, &ulSize);
-    if (status != NO_ERROR)
+    if (status != NO_ERROR) {
+        free(SysProcessorTimeInfo);
         return;
+    }
 
     /* Get handle information
      * We don't know how much data there is so just keep
