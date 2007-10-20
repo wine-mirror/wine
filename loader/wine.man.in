@@ -206,6 +206,20 @@ always as native.
 .TP
 .I DISPLAY
 Specifies the X11 display to use.
+.TP
+OSS sound driver configuration variables
+.TP
+.I AUDIODEV
+Set the device for audio input / output. Default
+.B /dev/dsp.
+.TP
+.I MIXERDEV
+Set the device for mixer controls. Default
+.B /dev/mixer.
+.TP
+.I MIDIDEV
+Set the MIDI (sequencer) device. Default
+.B /dev/sequencer.
 .SH FILES
 .TP
 .I @bindir@/wine
