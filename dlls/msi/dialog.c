@@ -1705,7 +1705,7 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     TRACE("%p %p %s\n", dialog, rec, debugstr_w( prop ));
 
     /* Create parent group box to hold radio buttons */
-    control = msi_dialog_add_control( dialog, rec, szButton, BS_OWNERDRAW|WS_GROUP );
+    control = msi_dialog_add_control( dialog, rec, szButton, BS_GROUPBOX|WS_GROUP );
     if( !control )
         return ERROR_FUNCTION_FAILED;
 
