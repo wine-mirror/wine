@@ -1065,3 +1065,12 @@ void WINAPI InstallHinfSectionA( HWND hwnd, HINSTANCE handle, LPCSTR cmdline, IN
         RtlFreeUnicodeString( &cmdlineW );
     }
 }
+
+/***********************************************************************
+ *              SetupInstallServicesFromInfSectionA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupInstallServicesFromInfSectionA( HINF Inf, PCSTR SectionName, DWORD Flags)
+{
+    FIXME("(%p, %s, %d) stub!\n", Inf, debugstr_a(SectionName), Flags);
+    return FALSE;
+}

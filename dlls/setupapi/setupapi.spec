@@ -442,7 +442,7 @@
 @ stdcall SetupInstallFilesFromInfSectionW(long long long wstr wstr long)
 @ stdcall SetupInstallFromInfSectionA(long long str long long str long ptr ptr long ptr)
 @ stdcall SetupInstallFromInfSectionW(long long wstr long long wstr long ptr ptr long ptr)
-@ stub SetupInstallServicesFromInfSectionA
+@ stdcall SetupInstallServicesFromInfSectionA(long str long)
 @ stub SetupInstallServicesFromInfSectionExA
 @ stub SetupInstallServicesFromInfSectionExW
 @ stub SetupInstallServicesFromInfSectionW
