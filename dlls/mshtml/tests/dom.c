@@ -58,33 +58,33 @@ typedef enum {
     ET_OPTION
 } elem_type_t;
 
-static const REFIID none_iids[] = {
+static REFIID const none_iids[] = {
     &IID_IUnknown,
     NULL
 };
 
-static const REFIID html_iids[] = {
+static REFIID const html_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     NULL
 };
 
-static const REFIID head_iids[] = {
+static REFIID const head_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     NULL
 };
 
-static const REFIID title_iids[] = {
+static REFIID const title_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     NULL
 };
 
-static const REFIID body_iids[] = {
+static REFIID const body_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
@@ -93,7 +93,7 @@ static const REFIID body_iids[] = {
     NULL
 };
 
-static const REFIID anchor_iids[] = {
+static REFIID const anchor_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
@@ -101,7 +101,7 @@ static const REFIID anchor_iids[] = {
     NULL
 };
 
-static const REFIID input_iids[] = {
+static REFIID const input_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
@@ -110,7 +110,7 @@ static const REFIID input_iids[] = {
     NULL
 };
 
-static const REFIID select_iids[] = {
+static REFIID const select_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
@@ -118,7 +118,7 @@ static const REFIID select_iids[] = {
     NULL
 };
 
-static const REFIID textarea_iids[] = {
+static REFIID const textarea_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
@@ -126,7 +126,7 @@ static const REFIID textarea_iids[] = {
     NULL
 };
 
-static const REFIID option_iids[] = {
+static REFIID const option_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
