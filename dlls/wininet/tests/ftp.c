@@ -299,26 +299,25 @@ static void test_getfile(void)
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    /* Zero attributes, but call succeeds (as would CreateFile with zero attributes) */
+    /* Zero attributes */
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, 0, FTP_TRANSFER_TYPE_UNKNOWN, 0);
+    ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
     todo_wine
     {
-    ok ( bRet == TRUE, "Expected FtpGetFileA to succeed\n");
-    ok ( GetLastError() == ERROR_SUCCESS,
-        "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
+        "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
+    ok (GetFileAttributesA("should_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
+        "Local file should not have been created\n");
     }
-    /* Wine passes this test but for the wrong reason */
-    ok (GetFileAttributesA("should_be_non_existing_deadbeef") != INVALID_FILE_ATTRIBUTES,
-        "Local file should have been created\n");
     DeleteFileA("should_be_non_existing_deadbeef");
 
     /* Illegal condition flags */
     SetLastError(0xdeadbeef);
-    bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, 5, 0);
+    bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, 0xffffffff, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
-    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR || GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INTERNET_EXTENDED_ERROR or ERROR_INVALID_PARAMETER (win98), got %d\n", GetLastError());
     ok (GetFileAttributesA("should_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
         "Local file should not have been created\n");
     DeleteFileA("should_be_non_existing_deadbeef");
@@ -327,14 +326,12 @@ static void test_getfile(void)
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hFtp, "should_be_non_existing_deadbeef", "should_also_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
-    todo_wine
-    {
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
     /* Currently Wine always creates the local file (even on failure) which is not correct, hence the test */
+    todo_wine
     ok (GetFileAttributesA("should_also_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
         "Local file should not have been created\n");
-    }
     DeleteFileA("should_also_be_non_existing_deadbeef");
 
     /* Same call as the previous but now the local file does exists. Windows just removes the file if the call fails
@@ -349,25 +346,20 @@ static void test_getfile(void)
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hFtp, "should_be_non_existing_deadbeef", "should_also_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
-    todo_wine
-    {
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
     /* Currently Wine always creates the local file (even on failure) which is not correct, hence the test */
+    todo_wine
     ok (GetFileAttributesA("should_also_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
         "Local file should not have been created\n");
-    }
     DeleteFileA("should_also_be_non_existing_deadbeef");
 
-    /* This one should succeed and give us a copy of the 'welcome.msg' file */
+    /* This one should fail */
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
-    todo_wine
-    {
-    ok ( bRet == TRUE, "Expected FtpGetFileA to succeed\n");
-    ok ( GetLastError() == ERROR_SUCCESS,
-        "Expected ERROR_SUCCESS, got %d\n", GetLastError());
-    }
+    ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
+    ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
+        "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
     if (GetFileAttributesA("should_be_non_existing_deadbeef") != INVALID_FILE_ATTRIBUTES)
     {
@@ -478,19 +470,21 @@ static void test_openfile(void)
 
     /* Illegal condition flags */
     SetLastError(0xdeadbeef);
-    hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ, 5, 0);
+    hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ, 0xffffffff, 0);
     ok ( !hOpenFile, "Expected FtpOpenFileA to fail\n");
-    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR || GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INTERNET_EXTENDED_ERROR or ERROR_INVALID_PARAMETER (win98), got %d\n", GetLastError());
     InternetCloseHandle(hOpenFile); /* Just in case */
 
-    /* All OK */
     SetLastError(0xdeadbeef);
     hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ, FTP_TRANSFER_TYPE_ASCII, 0);
-    ok ( hOpenFile != NULL, "Expected FtpOpenFileA to succeed\n");
+    todo_wine
+    {
+    ok ( hOpenFile == NULL, "Expected FtpOpenFileA to fail\n");
     /* For some strange/unknown reason, win98 returns ERROR_FILE_NOT_FOUND */
-    ok ( GetLastError() == ERROR_SUCCESS || GetLastError() == ERROR_FILE_NOT_FOUND,
-        "Expected ERROR_SUCCESS or ERROR_FILE_NOT_FOUND (win98), got %d\n", GetLastError());
+    ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR || GetLastError() == ERROR_FILE_NOT_FOUND,
+        "Expected ERROR_INTERNET_EXTENDED_ERROR or ERROR_FILE_NOT_FOUND (win98), got %d\n", GetLastError());
+    }
 
     if (hOpenFile)
     {
@@ -642,8 +636,8 @@ static void test_putfile(void)
     SetLastError(0xdeadbeef);
     bRet = FtpPutFileA(hFtp, "non_existing_local", "non_existing_remote", 5, 0);
     ok ( bRet == FALSE, "Expected FtpPutFileA to fail\n");
-    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok ( GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_FILE_NOT_FOUND or ERROR_INVALID_PARAMETER (win98), got %d\n", GetLastError());
 
     /* Parameters are OK but local file doesn't exist */
     SetLastError(0xdeadbeef);
@@ -854,15 +848,11 @@ static void test_multiple(void)
     bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     DeleteFileA("should_be_non_existing_deadbeef");
 
-    /* This call by itself succeeds in Wine for the test_openfile test */
     SetLastError(0xdeadbeef);
     hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ, FTP_TRANSFER_TYPE_ASCII, 0);
-    todo_wine
-    {
-    ok ( hOpenFile != NULL, "Expected FtpOpenFileA to succeed\n");
-    ok ( GetLastError() == ERROR_SUCCESS || GetLastError() == ERROR_FILE_NOT_FOUND,
-        "Expected ERROR_SUCCESS or ERROR_FILE_NOT_FOUND (win98), got %d\n", GetLastError());
-    }
+    ok ( hOpenFile == NULL, "Expected FtpOpenFileA to fail\n");
+    ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR || GetLastError() == ERROR_FILE_NOT_FOUND,
+        "Expected ERROR_INTERNET_EXTENDED_ERROR or ERROR_FILE_NOT_FOUND (win98), got %d\n", GetLastError());
 
     InternetCloseHandle(hOpenFile);
     InternetCloseHandle(hFtp);

@@ -3391,7 +3391,7 @@ static DWORD FTP_SetResponseError(DWORD dwResponse)
     switch(dwResponse)
     {
 	case 421: /* Service not available - Server may be shutting down. */
-	    dwCode = ERROR_INTERNET_TIMEOUT;
+	    dwCode = ERROR_INTERNET_EXTENDED_ERROR;
 	    break;
 
 	case 425: /* Cannot open data connection. */
@@ -3427,7 +3427,7 @@ static DWORD FTP_SetResponseError(DWORD dwResponse)
 	case 553: /* Action not taken. File name not allowed. */
 
 	default:
-            dwCode = ERROR_INTERNET_INTERNAL_ERROR;
+            dwCode = ERROR_INTERNET_EXTENDED_ERROR;
 	    break;
     }
 
