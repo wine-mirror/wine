@@ -475,11 +475,16 @@ BOOL WINAPI CertStrToNameA(DWORD dwCertEncodingType, LPCSTR pszX500,
              ppszError ? (LPCWSTR *)&errorStr : NULL);
             if (ppszError)
             {
-                DWORD i;
+                if (!ret)
+                {
+                    DWORD i;
 
-                *ppszError = pszX500;
-                for (i = 0; i < errorStr - x500; i++)
-                    *ppszError = CharNextA(*ppszError);
+                    *ppszError = pszX500;
+                    for (i = 0; i < errorStr - x500; i++)
+                        *ppszError = CharNextA(*ppszError);
+                }
+                else
+                    *ppszError = NULL;
             }
             CryptMemFree(x500);
         }
@@ -827,6 +832,8 @@ BOOL WINAPI CertStrToNameW(DWORD dwCertEncodingType, LPCWSTR pszX500,
     CRYPT_FreeKeynameKeeper(&keeper);
     if (!error)
     {
+        if (ppszError)
+            *ppszError = NULL;
         ret = CryptEncodeObjectEx(dwCertEncodingType, X509_NAME, &info,
          0, NULL, pbEncoded, pcbEncoded);
         for (i = 0; i < info.cRDN; i++)
