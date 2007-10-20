@@ -840,6 +840,7 @@ static void test_sequence(void)
     Sleep(1000);
 
     CloseServiceHandle(scm_handle);
+    HeapFree(GetProcessHeap(), 0, config);
 }
 
 static void test_refcount(void)
