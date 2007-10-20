@@ -455,7 +455,6 @@ BOOL WINAPI CertStrToNameA(DWORD dwCertEncodingType, LPCSTR pszX500,
  DWORD dwStrType, void *pvReserved, BYTE *pbEncoded, DWORD *pcbEncoded,
  LPCSTR *ppszError)
 {
-    LPWSTR x500, errorStr;
     BOOL ret;
     int len;
 
@@ -464,24 +463,39 @@ BOOL WINAPI CertStrToNameA(DWORD dwCertEncodingType, LPCSTR pszX500,
      ppszError);
 
     len = MultiByteToWideChar(CP_ACP, 0, pszX500, -1, NULL, 0);
-    x500 = CryptMemAlloc(len * sizeof(WCHAR));
-    if (x500)
+    if (len)
     {
-        MultiByteToWideChar(CP_ACP, 0, pszX500, -1, x500, len);
-        ret = CertStrToNameW(dwCertEncodingType, x500, dwStrType, pvReserved,
-         pbEncoded, pcbEncoded, ppszError ? (LPCWSTR *)&errorStr : NULL);
-        if (ppszError)
-        {
-            DWORD i;
+        LPWSTR x500, errorStr;
 
-            *ppszError = pszX500;
-            for (i = 0; i < errorStr - x500; i++)
-                *ppszError = CharNextA(*ppszError);
+        if ((x500 = CryptMemAlloc(len * sizeof(WCHAR))))
+        {
+            MultiByteToWideChar(CP_ACP, 0, pszX500, -1, x500, len);
+            ret = CertStrToNameW(dwCertEncodingType, x500, dwStrType,
+             pvReserved, pbEncoded, pcbEncoded,
+             ppszError ? (LPCWSTR *)&errorStr : NULL);
+            if (ppszError)
+            {
+                DWORD i;
+
+                *ppszError = pszX500;
+                for (i = 0; i < errorStr - x500; i++)
+                    *ppszError = CharNextA(*ppszError);
+            }
+            CryptMemFree(x500);
         }
-        CryptMemFree(x500);
+        else
+        {
+            SetLastError(ERROR_OUTOFMEMORY);
+            ret = FALSE;
+        }
     }
     else
+    {
+        SetLastError(CRYPT_E_INVALID_X500_STRING);
+        if (ppszError)
+            *ppszError = pszX500;
         ret = FALSE;
+    }
     return ret;
 }
 
