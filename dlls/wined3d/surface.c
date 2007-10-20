@@ -2031,6 +2031,9 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
 
         /* Switch back to unit 0 in which the 2D texture will be stored. */
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0));
+
+        /* Rebind the texture because it isn't bound anymore */
+        glBindTexture(This->glDescription.target, This->glDescription.textureName);
     }
 }
 
