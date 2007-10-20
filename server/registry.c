@@ -334,8 +334,8 @@ static void key_destroy( struct object *obj )
     free( key->class );
     for (i = 0; i <= key->last_value; i++)
     {
-        if (key->values[i].name) free( key->values[i].name );
-        if (key->values[i].data) free( key->values[i].data );
+        free( key->values[i].name );
+        free( key->values[i].data );
     }
     free( key->values );
     for (i = 0; i <= key->last_subkey; i++)
