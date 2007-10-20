@@ -238,7 +238,11 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
     wine_tsx11_lock();
 
     vis = visual_from_fbconfig_id(fbconfig_id);
-    if(!vis) return FALSE;
+    if(!vis)
+    {
+        wine_tsx11_unlock();
+        return FALSE;
+    }
 
     if(data->whole_window && vis->visualid == XVisualIDFromVisual(visual))
     {
@@ -384,7 +388,11 @@ static void update_gl_drawable(Display *display, struct x11drv_win_data *data, c
     wine_tsx11_lock();
 
     vis = visual_from_fbconfig_id(data->fbconfig_id);
-    if(!vis) return;
+    if(!vis)
+    {
+        wine_tsx11_unlock();
+        return;
+    }
 
     pix = XCreatePixmap(display, parent, w, h, vis->depth);
     if(!pix)
