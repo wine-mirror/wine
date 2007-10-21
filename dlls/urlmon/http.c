@@ -641,6 +641,10 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         }
         else
         {
+            /* remove the charset, if present */
+            LPWSTR p = strchrW(content_type, ';');
+            if (p) *p = '\0';
+
             IInternetProtocolSink_ReportProgress(This->protocol_sink,
                                                  (This->grfBINDF & BINDF_FROMURLMON) ?
                                                  BINDSTATUS_MIMETYPEAVAILABLE :
