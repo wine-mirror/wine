@@ -139,6 +139,7 @@ static void init(void)
     pMakeSelfRelativeSD = (void *)GetProcAddress(hmod, "MakeSelfRelativeSD");
     pGetNamedSecurityInfoA = (void *)GetProcAddress(hmod, "GetNamedSecurityInfoA");
     pSetEntriesInAclW = (void *)GetProcAddress(hmod, "SetEntriesInAclW");
+    pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
 
     myARGC = winetest_get_mainargs( &myARGV );
 }
@@ -1069,6 +1070,89 @@ static void test_sid_str(PSID * sid)
     }
 }
 
+struct well_known_sid_value
+{
+    BOOL without_domain;
+    const char *sid_string;
+} well_known_sid_values[] = {
+/*  0 */ {TRUE, "S-1-0-0"},  {TRUE, "S-1-1-0"},  {TRUE, "S-1-2-0"},  {TRUE, "S-1-3-0"},
+/*  4 */ {TRUE, "S-1-3-1"},  {TRUE, "S-1-3-2"},  {TRUE, "S-1-3-3"},  {TRUE, "S-1-5"},
+/*  8 */ {FALSE, "S-1-5-1"}, {TRUE, "S-1-5-2"},  {TRUE, "S-1-5-3"},  {TRUE, "S-1-5-4"},
+/* 12 */ {TRUE, "S-1-5-6"},  {TRUE, "S-1-5-7"},  {TRUE, "S-1-5-8"},  {TRUE, "S-1-5-9"},
+/* 16 */ {TRUE, "S-1-5-10"}, {TRUE, "S-1-5-11"}, {TRUE, "S-1-5-12"}, {TRUE, "S-1-5-13"},
+/* 20 */ {TRUE, "S-1-5-14"}, {FALSE, NULL},      {TRUE, "S-1-5-18"}, {TRUE, "S-1-5-19"},
+/* 24 */ {TRUE, "S-1-5-20"}, {TRUE, "S-1-5-32"},
+/* 26 */ {FALSE, "S-1-5-32-544"}, {TRUE, "S-1-5-32-545"}, {TRUE, "S-1-5-32-546"},
+/* 29 */ {TRUE, "S-1-5-32-547"},  {TRUE, "S-1-5-32-548"}, {TRUE, "S-1-5-32-549"},
+/* 32 */ {TRUE, "S-1-5-32-550"},  {TRUE, "S-1-5-32-551"}, {TRUE, "S-1-5-32-552"},
+/* 35 */ {TRUE, "S-1-5-32-554"},  {TRUE, "S-1-5-32-555"}, {TRUE, "S-1-5-32-556"},
+/* 38 */ {FALSE, "S-1-5-21-12-23-34-45-56-500"}, {FALSE, "S-1-5-21-12-23-34-45-56-501"},
+/* 40 */ {FALSE, "S-1-5-21-12-23-34-45-56-502"}, {FALSE, "S-1-5-21-12-23-34-45-56-512"},
+/* 42 */ {FALSE, "S-1-5-21-12-23-34-45-56-513"}, {FALSE, "S-1-5-21-12-23-34-45-56-514"},
+/* 44 */ {FALSE, "S-1-5-21-12-23-34-45-56-515"}, {FALSE, "S-1-5-21-12-23-34-45-56-516"},
+/* 46 */ {FALSE, "S-1-5-21-12-23-34-45-56-517"}, {FALSE, "S-1-5-21-12-23-34-45-56-518"},
+/* 48 */ {FALSE, "S-1-5-21-12-23-34-45-56-519"}, {FALSE, "S-1-5-21-12-23-34-45-56-520"},
+/* 50 */ {FALSE, "S-1-5-21-12-23-34-45-56-553"},
+/* 51 */ {TRUE, "S-1-5-64-10"},   {TRUE, "S-1-5-64-21"},   {TRUE, "S-1-5-64-14"},
+/* 54 */ {TRUE, "S-1-5-15"},      {TRUE, "S-1-5-1000"},    {FALSE, "S-1-5-32-557"},
+/* 57 */ {TRUE, "S-1-5-32-558"},  {TRUE, "S-1-5-32-559"},  {TRUE, "S-1-5-32-560"},
+/* 60 */ {TRUE, "S-1-5-32-561"},
+/* Added in Windows Vista: */
+/* 61 */ {TRUE, "S-1-5-32-562"},  {TRUE, "S-1-5-32-568"},
+/* 63 */ {TRUE, "S-1-5-17"},      {FALSE, "S-1-5-32-569"}, {TRUE, "S-1-16-0"},
+/* 66 */ {TRUE, "S-1-16-4096"},   {TRUE, "S-1-16-8192"},   {TRUE, "S-1-16-12288"},
+/* 69 */ {TRUE, "S-1-16-16384"},  {TRUE, "S-1-5-33"},      {TRUE, "S-1-3-4"},
+/* 72 */ {FALSE, "S-1-5-21-12-23-34-45-56-571"},  {FALSE, "S-1-5-21-12-23-34-45-56-572"},
+/* 74 */ {TRUE, "S-1-5-22"}, {FALSE, "S-1-5-21-12-23-34-45-56-521"}, {TRUE, "S-1-5-32-573"}
+};
+
+static void test_CreateWellKnownSid()
+{
+    SID_IDENTIFIER_AUTHORITY ident = { SECURITY_NT_AUTHORITY };
+    PSID domainsid;
+    int i;
+
+    if (!pCreateWellKnownSid)
+    {
+        skip("CreateWellKnownSid not available\n");
+        return;
+    }
+
+    /* a domain sid usually have three subauthorities but we test that CreateWellKnownSid doesn't check it */
+    AllocateAndInitializeSid(&ident, 6, SECURITY_NT_NON_UNIQUE, 12, 23, 34, 45, 56, 0, 0, &domainsid);
+
+    for (i = 0; i < sizeof(well_known_sid_values)/sizeof(well_known_sid_values[0]); i++)
+    {
+        struct well_known_sid_value *value = &well_known_sid_values[i];
+        char sid_buffer[SECURITY_MAX_SID_SIZE];
+        LPSTR str;
+        DWORD cb;
+
+        if (value->sid_string == NULL || !value->without_domain)
+            continue;
+
+        if (i >= WinBuiltinTerminalServerLicenseServersSid + 1)
+        {
+            /* These SIDs aren't implemented by all Windows versions - detect it and break the loop */
+            cb = sizeof(sid_buffer);
+            if (!pCreateWellKnownSid(i, domainsid, sid_buffer, &cb))
+            {
+                skip("Well know SIDs starting from %d are not implemented\n", i);
+                break;
+            }
+        }
+
+        cb = sizeof(sid_buffer);
+        ok(CreateWellKnownSid(i, value->without_domain ? NULL : domainsid, sid_buffer, &cb), "Couldn't create well known sid %d\n", i);
+        expect_eq(GetSidLengthRequired(*GetSidSubAuthorityCount(sid_buffer)), cb, DWORD, "%d");
+        ok(IsValidSid(sid_buffer), "The sid is not valid\n");
+        ok(ConvertSidToStringSid(sid_buffer, &str), "Couldn't convert SID to string\n");
+        ok(strcmp(str, value->sid_string) == 0, "SID mismatch - expected %s, got %s\n",
+            value->sid_string, str);
+        LocalFree(str);
+    }
+}
+
 static void test_LookupAccountSid(void)
 {
     SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
@@ -1234,8 +1318,6 @@ static void test_LookupAccountSid(void)
        real_dom_sizeW + 1, dom_sizeW);
 
     FreeSid(pUsersSid);
-
-    pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
 
     if (pCreateWellKnownSid && pConvertSidToStringSidA)
     {
@@ -2194,6 +2276,7 @@ START_TEST(security)
     test_sid();
     test_trustee();
     test_luid();
+    test_CreateWellKnownSid();
     test_FileSecurity();
     test_AccessCheck();
     test_token_attr();
