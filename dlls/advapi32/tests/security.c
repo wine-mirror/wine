@@ -1128,7 +1128,7 @@ static void test_CreateWellKnownSid()
         LPSTR str;
         DWORD cb;
 
-        if (value->sid_string == NULL || !value->without_domain)
+        if (value->sid_string == NULL)
             continue;
 
         if (i >= WinBuiltinTerminalServerLicenseServersSid + 1)
@@ -1150,6 +1150,15 @@ static void test_CreateWellKnownSid()
         ok(strcmp(str, value->sid_string) == 0, "SID mismatch - expected %s, got %s\n",
             value->sid_string, str);
         LocalFree(str);
+
+        if (value->without_domain)
+        {
+            char buf2[SECURITY_MAX_SID_SIZE];
+            cb = sizeof(buf2);
+            ok(CreateWellKnownSid(i, domainsid, buf2, &cb), "Couldn't create well known sid %d with optional domain\n", i);
+            expect_eq(GetSidLengthRequired(*GetSidSubAuthorityCount(sid_buffer)), cb, DWORD, "%d");
+            ok(memcmp(buf2, sid_buffer, cb) == 0, "SID create with domain is different than without (%d)\n", i);
+        }
     }
 }
 
