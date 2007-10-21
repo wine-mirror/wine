@@ -63,6 +63,7 @@
 @ stdcall lineHandoffA(long str long)
 @ stdcall lineHold(long)
 @ stdcall lineInitialize(ptr long ptr str ptr)
+@ stdcall lineInitializeExA(ptr long ptr str ptr ptr ptr)
 @ stdcall lineMakeCall(long ptr str long ptr) lineMakeCallA
 @ stdcall lineMakeCallA(long ptr str long ptr)
 @ stdcall lineMonitorDigits(long long)

@@ -632,6 +632,18 @@ typedef struct linegeneratetone_tag {
     DWORD dwVolume;
 } LINEGENERATETONE, *LPLINEGENERATETONE;
 
+typedef struct lineinitializeexparams_tag {
+    DWORD dwTotalSize;
+    DWORD dwNeededSize;
+    DWORD dwUsedSize;
+    DWORD dwOptions;
+    union {
+    HANDLE hEvent;
+    HANDLE hCompletionPort;
+    } Handles;
+    DWORD dwCompletionKey;
+} LINEINITIALIZEEXPARAMS, *LPLINEINITIALIZEEXPARAMS;
+
 typedef struct linemediacontrolcallstate_tag {
     DWORD dwCallStates;
     DWORD dwMediaControl;

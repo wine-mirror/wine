@@ -964,6 +964,16 @@ DWORD WINAPI lineInitialize(
 }
 
 /***********************************************************************
+ *              lineInitializeExA (TAPI32.@)
+ */
+LONG WINAPI lineInitializeExA(LPHLINEAPP lphLineApp, HINSTANCE hInstance, LINECALLBACK lpfnCallback, LPCSTR lpszFriendlyAppName, LPDWORD lpdwNumDevs, LPDWORD lpdwAPIVersion, LPLINEINITIALIZEEXPARAMS lpLineInitializeExParams)
+{
+    FIXME("(%p, %p, %p, %s, %p, %p, %p): stub.\n", lphLineApp, hInstance,
+          lpfnCallback, debugstr_a(lpszFriendlyAppName), lpdwNumDevs, lpdwAPIVersion, lpLineInitializeExParams);
+    return 0;
+}
+
+/***********************************************************************
  *		lineMakeCall (TAPI32.@)
  */
 DWORD WINAPI lineMakeCallA(HLINE hLine, LPHCALL lphCall, LPCSTR lpszDestAddress, DWORD dwCountryCode, LPLINECALLPARAMS lpCallParams)
