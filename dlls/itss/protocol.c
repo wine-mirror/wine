@@ -223,10 +223,10 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_SENDINGREQUEST,
                                          strrchrW(object_name, '/')+1);
-    HeapFree(GetProcessHeap(), 0, file_name);
 
     /* FIXME: Native doesn't use FindMimeFromData */
     hres = FindMimeFromData(NULL, object_name, NULL, 0, NULL, 0, &mime, 0);
+    HeapFree(GetProcessHeap(), 0, file_name);
     if(SUCCEEDED(hres)) {
         IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_MIMETYPEAVAILABLE, mime);
         CoTaskMemFree(mime);
