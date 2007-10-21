@@ -2025,6 +2025,11 @@ static void test_ConvertSecurityDescriptorToString()
     ok(len >= (strlen(exp_str) + 1), "Length mismatch (expected %d, got %d)\n", strlen(exp_str) + 1, len); \
     LocalFree(string);
 
+#define CHECK_ONE_OF_AND_FREE(exp_str1, exp_str2) \
+    ok(strcmp(string, (exp_str1)) == 0 || strcmp(string, (exp_str2)) == 0, "String mismatch (expected\n\"%s\" or\n\"%s\", got\n\"%s\")\n", (exp_str1), (exp_str2), string); \
+    ok(len >= (strlen(string) + 1), "Length mismatch (expected %d, got %d)\n", strlen(string) + 1, len); \
+    LocalFree(string);
+
     InitializeSecurityDescriptor(&desc, SECURITY_DESCRIPTOR_REVISION);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("");
@@ -2086,11 +2091,13 @@ static void test_ConvertSecurityDescriptorToString()
     SetSecurityDescriptorDacl(&desc, TRUE, NULL, FALSE);
     AddAuditAccessAceEx(pacl, ACL_REVISION, VALID_INHERIT_FLAGS, KEY_READ|KEY_WRITE, psid2, TRUE, TRUE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
-    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)");
+    CHECK_ONE_OF_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)", /* XP */
+        "O:SYG:S-1-5-21-93476-23408-4576D:NO_ACCESS_CONTROLS:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)" /* Vista */);
 
     AddAuditAccessAceEx(pacl, ACL_REVISION, NO_PROPAGATE_INHERIT_ACE, FILE_GENERIC_READ|FILE_GENERIC_WRITE, psid2, TRUE, FALSE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
-    CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)");
+    CHECK_ONE_OF_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)", /* XP */
+                          "O:SYG:S-1-5-21-93476-23408-4576D:NO_ACCESS_CONTROLS:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)" /* Vista */);
 }
 
 static void test_PrivateObjectSecurity(void)
@@ -2150,6 +2157,7 @@ static void test_PrivateObjectSecurity(void)
     HeapFree(GetProcessHeap(), 0, buf);
 }
 #undef CHECK_RESULT_AND_FREE
+#undef CHECK_ONE_OF_AND_FREE
 
 START_TEST(security)
 {
