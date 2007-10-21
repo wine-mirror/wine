@@ -408,11 +408,7 @@ void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
     pbindinfo->cbSize = size;
 }
 
-/***********************************************************************
- *           FindMimeFromData (URLMON.@)
- *
- * Determines the Multipurpose Internet Mail Extensions (MIME) type from the data provided.
- */
+
 static BOOL text_html_filter(const BYTE *b, DWORD size)
 {
     int i;
@@ -522,6 +518,11 @@ static BOOL application_octet_stream_filter(const BYTE *b, DWORD size)
     return TRUE;
 }
 
+/***********************************************************************
+ *           FindMimeFromData (URLMON.@)
+ *
+ * Determines the Multipurpose Internet Mail Extensions (MIME) type from the data provided.
+ */
 HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         DWORD cbSize, LPCWSTR pwzMimeProposed, DWORD dwMimeFlags,
         LPWSTR* ppwzMimeOut, DWORD dwReserved)
@@ -674,6 +675,21 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
     }
 
     return E_FAIL;
+}
+
+/***********************************************************************
+ *           GetClassFileOrMime (URLMON.@)
+ *
+ * Determines the class ID from the bind context, file name or MIME type.
+ */
+HRESULT WINAPI GetClassFileOrMime(LPBC pBC, LPCWSTR pszFilename,
+        LPVOID pBuffer, DWORD cbBuffer, LPCWSTR pszMimeType, DWORD dwReserved,
+        CLSID *pclsid)
+{
+    FIXME("(%p, %s, %p, %d, %p, 0x%08x, %p): stub\n", pBC,
+        debugstr_w(pszFilename), pBuffer, cbBuffer, debugstr_w(pszMimeType),
+        dwReserved, pclsid);
+    return E_NOTIMPL;
 }
 
 /***********************************************************************

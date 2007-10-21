@@ -38,7 +38,7 @@
 @ stub FindMediaType
 @ stub FindMediaTypeClass
 @ stdcall FindMimeFromData(long ptr ptr long ptr long ptr long)
-@ stub GetClassFileOrMime
+@ stdcall GetClassFileOrMime(ptr wstr ptr long wstr long ptr)
 @ stub GetClassURL
 @ stub GetComponentIDFromCLSSPEC
 @ stub GetMarkOfTheWeb
