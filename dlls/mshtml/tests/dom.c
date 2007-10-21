@@ -32,7 +32,7 @@
 static const char doc_blank[] = "<html></html>";
 static const char doc_str1[] = "<html><body>test</body></html>";
 static const char doc_str2[] =
-    "<html><body>test a<font size=\"2\">bc 123<br />it's </font>text<br /></body></html>";
+    "<html><body>test \na<font size=\"2\">bc\t123<br /> it's\r\n  \t</font>text<br /></body></html>";
 static const char doc_str3[] =
     "<html><head><title>test</title><body>"
     "<a href=\"http://test\" name=\"x\">link</a><input />"
@@ -876,6 +876,8 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_parent(range, ET_BODY);
     test_range_expand(range, texteditW, VARIANT_TRUE, "wordabc 123\r\nit's text");
     test_range_expand(range, texteditW, VARIANT_TRUE, "wordabc 123\r\nit's text");
+    test_range_move(range, characterW, 3, 3);
+    test_range_expand(range, wordW, VARIANT_TRUE, "wordabc ");
 
     IHTMLTxtRange_Release(range);
 }
