@@ -1850,7 +1850,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (!wParam)
       ME_EmptyUndoStack(editor);
     ME_UpdateRepaint(editor);
-    return 0;
+    return len;
   }
   case EM_SCROLLCARET:
   {

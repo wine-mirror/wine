@@ -485,6 +485,22 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
         continue;
       }
     }
+    /* handle special \r\r\n sequence (richedit 2.x and higher only) */
+    if (!editor->bEmulateVersion10 && pos-str < len-2 && pos[0] == '\r' && pos[1] == '\r' && pos[2] == '\n') {
+      WCHAR space = ' ';
+
+      if (pos!=str)
+        ME_InternalInsertTextFromCursor(editor, nCursor, str, pos-str, style, 0);
+
+      ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, style, 0);
+
+      pos+=3;
+      if(pos-str <= len) {
+        len -= pos - str;
+        str = pos;
+        continue;
+      }
+    }
     if (pos-str < len) {   /* handle EOLs */
       ME_DisplayItem *tp, *end_run;
       ME_Style *tmp_style;
@@ -685,7 +701,6 @@ ME_SelectWord(ME_TextEditor *editor)
 int ME_GetCursorOfs(ME_TextEditor *editor, int nCursor)
 {
   ME_Cursor *pCursor = &editor->pCursors[nCursor];
-  
   return ME_GetParagraph(pCursor->pRun)->member.para.nCharOfs
     + pCursor->pRun->member.run.nCharOfs + pCursor->nOffset;
 }
