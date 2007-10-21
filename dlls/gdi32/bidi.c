@@ -1157,7 +1157,7 @@ BOOL BIDI_Reorder(
                 for (k = j - 1; k >= lastgood; --k)
                     lpOrder[done + k] = done + j - 1 - k;
             else
-                for (k = lastgood; k <= j; ++k)
+                for (k = lastgood; k < j; ++k)
                     lpOrder[done + k] = done + k;
         }
         done += i;
