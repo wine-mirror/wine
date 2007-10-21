@@ -31,9 +31,31 @@
 #include "sddl.h"
 #include "ntsecapi.h"
 #include "lmcons.h"
-#include "winternl.h"
 
 #include "wine/test.h"
+
+/* copied from Wine winternl.h - not included in the Windows SDK */
+typedef enum _OBJECT_INFORMATION_CLASS {
+    ObjectBasicInformation,
+    ObjectNameInformation,
+    ObjectTypeInformation,
+    ObjectAllInformation,
+    ObjectDataInformation
+} OBJECT_INFORMATION_CLASS, *POBJECT_INFORMATION_CLASS;
+
+typedef struct _OBJECT_BASIC_INFORMATION {
+    ULONG  Attributes;
+    ACCESS_MASK  GrantedAccess;
+    ULONG  HandleCount;
+    ULONG  PointerCount;
+    ULONG  PagedPoolUsage;
+    ULONG  NonPagedPoolUsage;
+    ULONG  Reserved[3];
+    ULONG  NameInformationLength;
+    ULONG  TypeInformationLength;
+    ULONG  SecurityDescriptorLength;
+    LARGE_INTEGER  CreateTime;
+} OBJECT_BASIC_INFORMATION, *POBJECT_BASIC_INFORMATION;
 
 #define expect_eq(expr, value, type, format) { type ret = expr; ok((value) == ret, #expr " expected " format "  got " format "\n", (value), (ret)); }
 
