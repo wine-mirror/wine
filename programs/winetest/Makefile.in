@@ -68,6 +68,7 @@ TESTBINS = \
 	psapi_test.exe \
 	quartz_test.exe \
 	riched20_test.exe \
+	riched32_test.exe \
 	rpcrt4_test.exe \
 	rsabase_test.exe \
 	rsaenh_test.exe \
@@ -187,6 +188,8 @@ quartz_test.exe: $(DLLDIR)/quartz/tests/quartz_test.exe$(DLLEXT)
 	cp $(DLLDIR)/quartz/tests/quartz_test.exe$(DLLEXT) $@ && $(STRIP) $@
 riched20_test.exe: $(DLLDIR)/riched20/tests/riched20_test.exe$(DLLEXT)
 	cp $(DLLDIR)/riched20/tests/riched20_test.exe$(DLLEXT) $@ && $(STRIP) $@
+riched32_test.exe: $(DLLDIR)/riched32/tests/riched32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/riched32/tests/riched32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 rpcrt4_test.exe: $(DLLDIR)/rpcrt4/tests/rpcrt4_test.exe$(DLLEXT)
 	cp $(DLLDIR)/rpcrt4/tests/rpcrt4_test.exe$(DLLEXT) $@ && $(STRIP) $@
 rsabase_test.exe: $(DLLDIR)/rsabase/tests/rsabase_test.exe$(DLLEXT)

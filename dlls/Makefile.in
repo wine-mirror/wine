@@ -292,6 +292,7 @@ TESTSUBDIRS = \
 	psapi/tests \
 	quartz/tests \
 	riched20/tests \
+	riched32/tests \
 	rpcrt4/tests \
 	rsabase/tests \
 	rsaenh/tests \

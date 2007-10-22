@@ -380,6 +380,9 @@ dlls/riched20/tests/*.ok
 dlls/riched20/tests/riched20_crosstest.exe
 dlls/riched20/tests/testlist.c
 dlls/riched20/version.res
+dlls/riched32/tests/*.ok
+dlls/riched32/tests/riched32_crosstest.exe
+dlls/riched32/tests/testlist.c
 dlls/riched32/version.res
 dlls/rpcrt4/librpcrt4.def
 dlls/rpcrt4/tests/*.ok
@@ -732,6 +735,7 @@ programs/winetest/pdh_test.exe
 programs/winetest/psapi_test.exe
 programs/winetest/quartz_test.exe
 programs/winetest/riched20_test.exe
+programs/winetest/riched32_test.exe
 programs/winetest/rpcrt4_test.exe
 programs/winetest/rsabase_test.exe
 programs/winetest/rsaenh_test.exe

@@ -20916,6 +20916,8 @@ ac_config_files="$ac_config_files dlls/riched20/tests/Makefile"
 
 ac_config_files="$ac_config_files dlls/riched32/Makefile"
 
+ac_config_files="$ac_config_files dlls/riched32/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/rpcrt4/Makefile"
 
 ac_config_files="$ac_config_files dlls/rpcrt4/tests/Makefile"
@@ -21999,6 +22001,7 @@ do
     "dlls/riched20/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched20/Makefile" ;;
     "dlls/riched20/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched20/tests/Makefile" ;;
     "dlls/riched32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched32/Makefile" ;;
+    "dlls/riched32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched32/tests/Makefile" ;;
     "dlls/rpcrt4/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rpcrt4/Makefile" ;;
     "dlls/rpcrt4/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rpcrt4/tests/Makefile" ;;
     "dlls/rsabase/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rsabase/Makefile" ;;
