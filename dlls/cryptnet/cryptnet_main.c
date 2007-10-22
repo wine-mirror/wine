@@ -291,6 +291,34 @@ BOOL WINAPI CryptGetObjectUrl(LPCSTR pszUrlOid, LPVOID pvPara, DWORD dwFlags,
 }
 
 /***********************************************************************
+ *    CryptRetrieveObjectByUrlA (CRYPTNET.@)
+ */
+BOOL WINAPI CryptRetrieveObjectByUrlA(LPCSTR pszURL, LPCSTR pszObjectOid,
+ DWORD dwRetrievalFlags, DWORD dwTimeout, LPVOID *ppvObject,
+ HCRYPTASYNC hAsyncRetrieve, PCRYPT_CREDENTIALS pCredentials, LPVOID pvVerify,
+ PCRYPT_RETRIEVE_AUX_INFO pAuxInfo)
+{
+    FIXME("(%s, %s, %08x, %d, %p, %p, %p, %p, %p)\n", debugstr_a(pszURL),
+     debugstr_a(pszObjectOid), dwRetrievalFlags, dwTimeout, ppvObject,
+     hAsyncRetrieve, pCredentials, pvVerify, pAuxInfo);
+    return FALSE;
+}
+
+/***********************************************************************
+ *    CryptRetrieveObjectByUrlW (CRYPTNET.@)
+ */
+BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
+ DWORD dwRetrievalFlags, DWORD dwTimeout, LPVOID *ppvObject,
+ HCRYPTASYNC hAsyncRetrieve, PCRYPT_CREDENTIALS pCredentials, LPVOID pvVerify,
+ PCRYPT_RETRIEVE_AUX_INFO pAuxInfo)
+{
+    FIXME("(%s, %s, %08x, %d, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
+     debugstr_a(pszObjectOid), dwRetrievalFlags, dwTimeout, ppvObject,
+     hAsyncRetrieve, pCredentials, pvVerify, pAuxInfo);
+    return FALSE;
+}
+
+/***********************************************************************
  *    CertDllVerifyRevocation (CRYPTNET.@)
  */
 BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,

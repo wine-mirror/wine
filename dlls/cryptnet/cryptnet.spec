@@ -7,8 +7,8 @@
 @ stdcall CryptGetObjectUrl(ptr ptr long ptr ptr ptr ptr ptr)
 @ stub CryptGetTimeValidObject
 @ stub CryptInstallCancelRetrieval
-@ stub CryptRetrieveObjectByUrlA
-@ stub CryptRetrieveObjectByUrlW
+@ stdcall CryptRetrieveObjectByUrlA(str str long long ptr ptr ptr ptr ptr)
+@ stdcall CryptRetrieveObjectByUrlW(wstr str long long ptr ptr ptr ptr ptr)
 @ stub CryptUninstallCancelRetrieval
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
