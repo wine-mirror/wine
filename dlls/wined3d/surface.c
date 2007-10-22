@@ -677,8 +677,9 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
         /* Whatever surface we have, make sure that there is memory allocated for the downloaded copy,
          * or a pbo to map
          */
-        This->resource.heapMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
-        This->resource.allocatedMemory = This->resource.heapMemory;
+        This->resource.heapMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + RESOURCE_ALIGNMENT);
+        This->resource.allocatedMemory =
+                (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
         if(This->Flags & SFLAG_INSYSMEM) {
             ERR("Surface without memory or pbo has SFLAG_INSYSMEM set!\n");
         }

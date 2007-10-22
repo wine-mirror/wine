@@ -1449,6 +1449,76 @@ static void test_null_stream(void)
     if(d3d9) IDirect3D9_Release(d3d9);
 }
 
+static inline const char *debug_d3dpool(D3DPOOL pool) {
+    switch(pool) {
+        case D3DPOOL_DEFAULT: return "D3DPOOL_DEFAULT";
+        case D3DPOOL_SYSTEMMEM: return "D3DPOOL_SYSTEMMEM";
+        case D3DPOOL_SCRATCH: return "D3DPOOL_SCRATCH";
+        case D3DPOOL_MANAGED: return "D3DPOOL_MANAGED";
+        default:
+        return "unknown pool";
+    }
+}
+
+static void test_vertex_buffer_alignment(void)
+{
+    IDirect3DVertexBuffer9 *buffer = NULL;
+    D3DPRESENT_PARAMETERS present_parameters;
+    IDirect3DDevice9 *device = NULL;
+    IDirect3D9 *d3d9;
+    HWND hwnd;
+    HRESULT hr;
+    D3DPOOL pools[] = {D3DPOOL_DEFAULT, D3DPOOL_SYSTEMMEM, D3DPOOL_SCRATCH, D3DPOOL_MANAGED};
+    DWORD sizes[] = {1, 4, 16, 17, 32, 33, 64, 65, 1024, 1025, 1048576, 1048577};
+    unsigned int i, j;
+    void *data;
+
+    d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
+    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!d3d9 || !hwnd) goto cleanup;
+
+    ZeroMemory(&present_parameters, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = hwnd;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+
+    hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device );
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!device)
+    {
+        skip("Failed to create a d3d device\n");
+        goto cleanup;
+    }
+
+    for(i = 0; i < (sizeof(sizes) / sizeof(sizes[0])); i++) {
+        for(j = 0; j < (sizeof(pools) / sizeof(pools[0])); j++) {
+            hr = IDirect3DDevice9_CreateVertexBuffer(device, sizes[i], 0, 0, pools[j], &buffer, NULL);
+            if(pools[j] == D3DPOOL_SCRATCH) {
+                ok(hr == D3DERR_INVALIDCALL, "Creating a D3DPOOL_SCRATCH buffer returned (0x%08x)\n", hr);
+            } else {
+                ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexBuffer failed (0x%08x). Pool = %s, size %d\n", hr,
+                   debug_d3dpool(pools[j]), sizes[i]);
+            }
+            if(FAILED(hr)) continue;
+
+            hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, (void **) &data, 0);
+            ok(SUCCEEDED(hr), "IDirect3DVertexBuffer9_Lock failed (0x%08x)\n", hr);
+            ok(((DWORD_PTR) data & 31) == 0, "Vertex buffer start address is not 32 byte aligned(size: %d, pool: %s, data: %p)\n",
+               sizes[i], debug_d3dpool(pools[j]), data);
+            hr = IDirect3DVertexBuffer9_Unlock(buffer);
+            ok(SUCCEEDED(hr), "IDirect3DVertexBuffer9_Unlock failed (0x%08x)\n", hr);
+
+            if(buffer) IDirect3DVertexBuffer9_Release(buffer);
+        }
+    }
+
+    cleanup:
+    if(d3d9) IDirect3D9_Release(d3d9);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -1473,5 +1543,6 @@ START_TEST(device)
         test_depthstenciltest();
         test_draw_indexed();
         test_null_stream();
+        test_vertex_buffer_alignment();
     }
 }

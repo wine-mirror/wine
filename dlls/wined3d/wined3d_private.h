@@ -830,6 +830,8 @@ typedef struct IWineD3DResourceImpl
     IWineD3DResourceClass   resource;
 } IWineD3DResourceImpl;
 
+/* Tests show that the start address of resources is 32 byte aligned */
+#define RESOURCE_ALIGNMENT 32
 
 /*****************************************************************************
  * IWineD3DVertexBuffer implementation structure (extends IWineD3DResourceImpl)
