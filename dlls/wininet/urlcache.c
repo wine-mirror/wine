@@ -1193,15 +1193,10 @@ static BOOL URLCache_FindHashW(LPCURLCACHE_HEADER pHeader, LPCWSTR lpszUrl, stru
  *    FALSE if the entry could not be found
  *
  */
-static BOOL URLCache_HashEntrySetUse(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, DWORD dwUseCount)
+static BOOL URLCache_HashEntrySetUse(struct _HASH_ENTRY * pHashEntry, DWORD dwUseCount)
 {
-    struct _HASH_ENTRY * pHashEntry;
-    if (URLCache_FindHash(pHeader, lpszUrl, &pHashEntry))
-    {
-        pHashEntry->dwHashKey = dwUseCount | (DWORD)(pHashEntry->dwHashKey / HASHTABLE_NUM_ENTRIES) * HASHTABLE_NUM_ENTRIES;
-        return TRUE;
-    }
-    return FALSE;
+    pHashEntry->dwHashKey = dwUseCount | (DWORD)(pHashEntry->dwHashKey / HASHTABLE_NUM_ENTRIES) * HASHTABLE_NUM_ENTRIES;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1672,7 +1667,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
 
     pUrlEntry->dwHitRate++;
     pUrlEntry->dwUseCount++;
-    URLCache_HashEntrySetUse(pHeader, lpszUrlName, pUrlEntry->dwUseCount);
+    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
 
     if (!URLCache_CopyEntry(pContainer, pHeader, lpCacheEntryInfo, lpdwCacheEntryInfoBufferSize, pUrlEntry, FALSE))
     {
@@ -1764,7 +1759,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
         return FALSE;
     }
     pUrlEntry->dwUseCount--;
-    URLCache_HashEntrySetUse(pHeader, lpszUrlName, pUrlEntry->dwUseCount);
+    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
