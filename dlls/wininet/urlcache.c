@@ -1772,7 +1772,59 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
  */
 BOOL WINAPI UnlockUrlCacheEntryFileW( LPCWSTR lpszUrlName, DWORD dwReserved )
 {
-    FIXME("(%s, 0x%08x)\n", debugstr_w(lpszUrlName), dwReserved);
+    LPURLCACHE_HEADER pHeader;
+    struct _HASH_ENTRY * pHashEntry;
+    CACHEFILE_ENTRY * pEntry;
+    URL_CACHEFILE_ENTRY * pUrlEntry;
+    URLCACHECONTAINER * pContainer;
+
+    TRACE("(%s, 0x%08x)\n", debugstr_w(lpszUrlName), dwReserved);
+
+    if (dwReserved)
+    {
+        ERR("dwReserved != 0\n");
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!URLCacheContainers_FindContainerW(lpszUrlName, &pContainer))
+       return FALSE;
+
+    if (!URLCacheContainer_OpenIndex(pContainer))
+        return FALSE;
+
+    if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
+        return FALSE;
+
+    if (!URLCache_FindHashW(pHeader, lpszUrlName, &pHashEntry))
+    {
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        TRACE("entry %s not found!\n", debugstr_w(lpszUrlName));
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    pEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    if (pEntry->dwSignature != URL_SIGNATURE)
+    {
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPSTR)&pEntry->dwSignature, sizeof(DWORD)));
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    pUrlEntry = (URL_CACHEFILE_ENTRY *)pEntry;
+
+    if (pUrlEntry->dwUseCount == 0)
+    {
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        return FALSE;
+    }
+    pUrlEntry->dwUseCount--;
+    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
+
+    URLCacheContainer_UnlockIndex(pContainer, pHeader);
+
     return TRUE;
 }
 
