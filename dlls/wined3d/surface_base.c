@@ -483,7 +483,6 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     int extraline = 0;
     SYSTEM_INFO sysInfo;
-    void *oldmem = This->resource.allocatedMemory;
     BITMAPINFO* b_info;
     HDC ddc;
     DWORD *masks;
@@ -609,7 +608,8 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
 
     This->Flags |= SFLAG_DIBSECTION;
 
-    HeapFree(GetProcessHeap(), 0, oldmem);
+    HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
+    This->resource.heapMemory = NULL;
 
     return WINED3D_OK;
 }

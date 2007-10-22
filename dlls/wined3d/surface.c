@@ -668,15 +668,17 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
         checkGLcall("glBindBufferARB");
 
         /* We don't need the system memory anymore and we can't even use it for PBOs */
-        HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+        HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
         This->resource.allocatedMemory = NULL;
+        This->resource.heapMemory = NULL;
         This->Flags |= SFLAG_PBO;
         LEAVE_GL();
     } else if(!(This->resource.allocatedMemory || This->Flags & SFLAG_PBO)) {
         /* Whatever surface we have, make sure that there is memory allocated for the downloaded copy,
          * or a pbo to map
          */
-        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
+        This->resource.heapMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
+        This->resource.allocatedMemory = This->resource.heapMemory;
         if(This->Flags & SFLAG_INSYSMEM) {
             ERR("Surface without memory or pbo has SFLAG_INSYSMEM set!\n");
         }
@@ -2024,8 +2026,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
 #endif
 
     if (!(This->Flags & SFLAG_DONOTFREE)) {
-        HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+        HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
         This->resource.allocatedMemory = NULL;
+        This->resource.heapMemory = NULL;
         IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, FALSE);
     }
 
@@ -2257,7 +2260,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
                 This->hDC = NULL;
                 This->Flags &= ~SFLAG_DIBSECTION;
         } else if(!(This->Flags & SFLAG_USERPTR)) {
-            release = This->resource.allocatedMemory;
+            release = This->resource.heapMemory;
+            This->resource.heapMemory = NULL;
         }
         This->resource.allocatedMemory = Mem;
         This->Flags |= SFLAG_USERPTR | SFLAG_INSYSMEM;
@@ -2277,6 +2281,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
     } else if(This->Flags & SFLAG_USERPTR) {
         /* Lockrect and GetDC will re-create the dib section and allocated memory */
         This->resource.allocatedMemory = NULL;
+        /* HeapMemory should be NULL already */
+        if(This->resource.heapMemory != NULL) ERR("User pointer surface has heap memory allocated\n");
         This->Flags &= ~SFLAG_USERPTR;
 
         if(This->Flags & SFLAG_CLIENT) {
@@ -2839,8 +2845,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         }
 
         if(!(This->Flags & SFLAG_DONOTFREE)) {
-            HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+            HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
             This->resource.allocatedMemory = NULL;
+            This->resource.heapMemory = NULL;
         } else {
             This->Flags &= ~SFLAG_INSYSMEM;
         }

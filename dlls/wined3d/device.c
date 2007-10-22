@@ -101,13 +101,14 @@ static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3
         } \
         WineD3DAdapterChangeGLRam(This, _size); \
     } \
-    object->resource.allocatedMemory = (0 == _size ? NULL : HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _size + 4)); \
-    if (object->resource.allocatedMemory == NULL && _size != 0) { \
+    object->resource.heapMemory = (0 == _size ? NULL : HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _size + 4)); \
+    if (object->resource.heapMemory == NULL && _size != 0) { \
         FIXME("Out of memory!\n"); \
         HeapFree(GetProcessHeap(), 0, object); \
         *pp##type = NULL; \
         return WINED3DERR_OUTOFVIDEOMEMORY; \
     } \
+    object->resource.allocatedMemory = object->resource.heapMemory; \
     *pp##type = (IWineD3D##type *) object; \
     IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object) ;\
     TRACE("(%p) : Created resource %p\n", This, object); \

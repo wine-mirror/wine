@@ -329,6 +329,13 @@ IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface,
         tmp = This->resource.allocatedMemory;
         This->resource.allocatedMemory = Target->resource.allocatedMemory;
         Target->resource.allocatedMemory = tmp;
+
+        if(This->resource.heapMemory) {
+            ERR("GDI Surface %p has heap memory allocated\n", This);
+        }
+        if(Target->resource.heapMemory) {
+            ERR("GDI Surface %p has heap memory allocated\n", Target);
+        }
     }
 
     /* client_memory should not be different, but just in case */
@@ -630,8 +637,9 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     /* Sysmem textures have memory already allocated -
      * release it, this avoids an unnecessary memcpy
      */
-    HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+    HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
     This->resource.allocatedMemory = NULL;
+    This->resource.heapMemory = NULL;
 
     /* We don't mind the nonpow2 stuff in GDI */
     This->pow2Width = This->currentDesc.Width;

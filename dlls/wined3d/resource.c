@@ -82,8 +82,9 @@ void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface){
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+    HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
     This->resource.allocatedMemory = 0;
+    This->resource.heapMemory = 0;
 
     if (This->resource.wineD3DDevice != NULL) {
         IWineD3DDevice_ResourceReleased((IWineD3DDevice *)This->resource.wineD3DDevice, iface);

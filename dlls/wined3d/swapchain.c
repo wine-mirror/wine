@@ -322,6 +322,10 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
                 tmp = front->resource.allocatedMemory;
                 front->resource.allocatedMemory = back->resource.allocatedMemory;
                 back->resource.allocatedMemory = tmp;
+
+                tmp = front->resource.heapMemory;
+                front->resource.heapMemory = back->resource.heapMemory;
+                back->resource.heapMemory = tmp;
             }
 
             /* Flip the PBO */
