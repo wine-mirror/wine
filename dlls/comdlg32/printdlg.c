@@ -3383,6 +3383,11 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
     PageSetupDataA	*pda;
     PRINTDLGA		pdlg;
 
+    if (setupdlg == NULL) {
+	   COMDLG32_SetCommDlgExtendedError(CDERR_INITIALIZATION);
+	   return FALSE;
+    }
+
     /* TRACE */
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
@@ -3399,11 +3404,8 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
 	      setupdlg->hDevNames,
 	      setupdlg->hInstance, setupdlg->Flags, flagstr);
     }
+
     /* Checking setupdlg structure */
-    if (setupdlg == NULL) {
-	   COMDLG32_SetCommDlgExtendedError(CDERR_INITIALIZATION);
-	   return FALSE;
-    }
     if(setupdlg->lStructSize != sizeof(PAGESETUPDLGA)) {
 	   COMDLG32_SetCommDlgExtendedError(CDERR_STRUCTSIZE);
 	   return FALSE;
@@ -3488,6 +3490,12 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
     PRINTDLGW		pdlg;
 
     FIXME("Unicode implementation is not done yet\n");
+
+    if (setupdlg == NULL) {
+	   COMDLG32_SetCommDlgExtendedError(CDERR_INITIALIZATION);
+	   return FALSE;
+    }
+
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
 	const struct pd_flags *pflag = psd_flags;
