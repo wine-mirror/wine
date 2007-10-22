@@ -1248,19 +1248,6 @@ static void state_normalize(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
     }
 }
 
-static void state_psize(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    union {
-        DWORD d;
-        float f;
-    } tmpvalue;
-
-    /* FIXME: check that pointSize isn't outside glGetFloatv( GL_POINT_SIZE_MAX_ARB, &maxSize ); or -ve */
-    tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE];
-    TRACE("Set point size to %f\n", tmpvalue.f);
-    glPointSize(tmpvalue.f);
-    checkGLcall("glPointSize(...);");
-}
-
 static void state_psizemin(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     union {
         DWORD d;
@@ -1311,31 +1298,45 @@ static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3
 
     /* Default values */
     GLfloat att[3] = {1.0f, 0.0f, 0.0f};
+    union {
+        DWORD d;
+        float f;
+    } pointSize, A, B, C;
 
-    /*
-     * Minimum valid point size for OpenGL is 1.0f. For Direct3D it is 0.0f.
-     * This means that OpenGL will clamp really small point sizes to 1.0f.
-     * To correct for this we need to multiply by the scale factor when sizes
-     * are less than 1.0f. scale_factor =  1.0f / point_size.
-     */
-    GLfloat pointSize = *((float*)&stateblock->renderState[WINED3DRS_POINTSIZE]);
-    if(pointSize > 0.0f) {
+    pointSize.d = stateblock->renderState[WINED3DRS_POINTSIZE];
+    A.d = stateblock->renderState[WINED3DRS_POINTSCALE_A];
+    B.d = stateblock->renderState[WINED3DRS_POINTSCALE_B];
+    C.d = stateblock->renderState[WINED3DRS_POINTSCALE_C];
+
+    if(stateblock->renderState[WINED3DRS_POINTSCALEENABLE]) {
         GLfloat scaleFactor;
+        float h = stateblock->viewport.Height;
 
-        if(pointSize < 1.0f) {
-            scaleFactor = pointSize * pointSize;
+        if(pointSize.f < 1.0f) {
+            /*
+             * Minimum valid point size for OpenGL is 1.0f. For Direct3D it is 0.0f.
+             * This means that OpenGL will clamp really small point sizes to 1.0f.
+             * To correct for this we need to multiply by the scale factor when sizes
+             * are less than 1.0f. scale_factor =  1.0f / point_size.
+             */
+            scaleFactor = pointSize.f;
+        } else if(pointSize.f > GL_LIMITS(pointsize)) {
+            /* gl already scales the input to glPointSize,
+             * d3d scales the result after the point size scale.
+             * If the point size is bigger than the max size, use the
+             * scaling to scale it bigger, and set the gl point size to max
+             */
+            scaleFactor = pointSize.f / GL_LIMITS(pointsize);
+            TRACE("scale: %f\n", scaleFactor);
+            pointSize.f = GL_LIMITS(pointsize);
         } else {
             scaleFactor = 1.0f;
         }
+        scaleFactor = pow(h * scaleFactor, 2);
 
-        if(stateblock->renderState[WINED3DRS_POINTSCALEENABLE]) {
-            att[0] = *((float*)&stateblock->renderState[WINED3DRS_POINTSCALE_A]) /
-                    (stateblock->viewport.Height * stateblock->viewport.Height * scaleFactor);
-            att[1] = *((float*)&stateblock->renderState[WINED3DRS_POINTSCALE_B]) /
-                    (stateblock->viewport.Height * stateblock->viewport.Height * scaleFactor);
-            att[2] = *((float*)&stateblock->renderState[WINED3DRS_POINTSCALE_C]) /
-                    (stateblock->viewport.Height * stateblock->viewport.Height * scaleFactor);
-        }
+        att[0] = A.f / scaleFactor;
+        att[1] = B.f / scaleFactor;
+        att[2] = C.f / scaleFactor;
     }
 
     if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
@@ -1345,9 +1346,12 @@ static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3
     else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
         GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
         checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...");
-    } else {
-        TRACE("POINT_PARAMETERS not supported in this version of opengl\n");
+    } else if(stateblock->renderState[WINED3DRS_POINTSCALEENABLE]) {
+        WARN("POINT_PARAMETERS not supported in this version of opengl\n");
     }
+
+    glPointSize(pointSize.f);
+    checkGLcall("glPointSize(...);");
 }
 
 static void state_colorwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -3468,7 +3472,9 @@ static void viewport(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
         transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock, context);
     }
-
+    if(!isStateDirty(context, STATE_RENDER(WINED3DRS_POINTSCALEENABLE))) {
+        state_pscale(STATE_RENDER(WINED3DRS_POINTSCALEENABLE), stateblock, context);
+    }
 }
 
 static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -3787,7 +3793,7 @@ const struct StateEntry StateTable[] =
     { /*151, WINED3DRS_VERTEXBLEND                  */      STATE_RENDER(WINED3DRS_VERTEXBLEND),                state_vertexblend   },
     { /*152, WINED3DRS_CLIPPLANEENABLE              */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      },
     { /*153, WINED3DRS_SOFTWAREVERTEXPROCESSING     */      0,                                                  state_nogl          },
-    { /*154, WINED3DRS_POINTSIZE                    */      STATE_RENDER(WINED3DRS_POINTSIZE),                  state_psize         },
+    { /*154, WINED3DRS_POINTSIZE                    */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
     { /*155, WINED3DRS_POINTSIZE_MIN                */      STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin      },
     { /*156, WINED3DRS_POINTSPRITEENABLE            */      STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          state_pointsprite   },
     { /*157, WINED3DRS_POINTSCALEENABLE             */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
