@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #include <stdarg.h>
+#include <stdio.h>
 #define NONAMELESSUNION
 #include <windef.h>
 #include <winbase.h>
@@ -234,7 +235,143 @@ static void test_getObjectUrl(void)
     }
 }
 
+static void make_tmp_file(LPSTR path)
+{
+    static char curr[MAX_PATH] = { 0 };
+    char temp[MAX_PATH];
+    DWORD dwNumberOfBytesWritten;
+    HANDLE hf;
+
+    if (!*curr)
+        GetCurrentDirectoryA(MAX_PATH, curr);
+    GetTempFileNameA(curr, "net", 0, temp);
+    lstrcpyA(path, temp);
+    hf = CreateFileA(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+     FILE_ATTRIBUTE_NORMAL, NULL);
+    WriteFile(hf, certWithCRLDistPoint, sizeof(certWithCRLDistPoint),
+     &dwNumberOfBytesWritten, NULL);
+    CloseHandle(hf);
+}
+
+static void test_retrieveObjectByUrl(void)
+{
+    BOOL ret;
+    char tmpfile[MAX_PATH * 2], *ptr, url[MAX_PATH + 8];
+    CRYPT_BLOB_ARRAY *pBlobArray;
+    PCCERT_CONTEXT cert;
+    PCCRL_CONTEXT crl;
+    HCERTSTORE store;
+    CRYPT_RETRIEVE_AUX_INFO aux = { 0 };
+    FILETIME ft = { 0 };
+
+    SetLastError(0xdeadbeef);
+    ret = CryptRetrieveObjectByUrlA(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL,
+     NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+
+    make_tmp_file(tmpfile);
+    ptr = strchr(tmpfile, ':');
+    if (ptr)
+        ptr += 2; /* skip colon and first slash */
+    else
+        ptr = tmpfile;
+    snprintf(url, sizeof(url), "file:///%s", ptr);
+    do {
+        ptr = strchr(url, '\\');
+        if (ptr)
+            *ptr = '/';
+    } while (ptr);
+
+    pBlobArray = (CRYPT_BLOB_ARRAY *)0xdeadbeef;
+    ret = CryptRetrieveObjectByUrlA(url, NULL, 0, 0, (void **)&pBlobArray,
+     NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
+    todo_wine
+    ok(pBlobArray && pBlobArray != (CRYPT_BLOB_ARRAY *)0xdeadbeef,
+     "Expected a valid pointer\n");
+    if (pBlobArray && pBlobArray != (CRYPT_BLOB_ARRAY *)0xdeadbeef)
+    {
+        ok(pBlobArray->cBlob == 1, "Expected 1 blob, got %d\n",
+         pBlobArray->cBlob);
+        ok(pBlobArray->rgBlob[0].cbData == sizeof(certWithCRLDistPoint),
+         "Unexpected size %d\n", pBlobArray->rgBlob[0].cbData);
+        CryptMemFree(pBlobArray);
+    }
+    cert = (PCCERT_CONTEXT)0xdeadbeef;
+    ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
+     (void **)&cert, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(cert && cert != (PCCERT_CONTEXT)0xdeadbeef, "Expected a cert\n");
+    if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
+        CertFreeCertificateContext(cert);
+    crl = (PCCRL_CONTEXT)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CRL, 0, 0, (void **)&crl,
+     NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
+     "Expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
+    todo_wine
+    ok(crl == NULL, "Expected CRL to be NULL\n");
+    if (crl && crl != (PCCRL_CONTEXT)0xdeadbeef)
+        CertFreeCRLContext(crl);
+    store = (HCERTSTORE)0xdeadbeef;
+    ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CAPI2_ANY, 0, 0,
+     (void **)&store, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
+    if (store && store != (HCERTSTORE)0xdeadbeef)
+    {
+        DWORD certs = 0;
+
+        cert = NULL;
+        do {
+            cert = CertEnumCertificatesInStore(store, cert);
+            if (cert)
+                certs++;
+        } while (cert);
+        ok(certs == 1, "Expected 1 cert, got %d\n", certs);
+        CertCloseStore(store, 0);
+    }
+    /* Are file URLs cached? */
+    ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE,
+     CRYPT_CACHE_ONLY_RETRIEVAL, 0, (void **)&cert, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
+    if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
+        CertFreeCertificateContext(cert);
+    ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
+     (void **)&cert, NULL, NULL, NULL, &aux);
+    todo_wine
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
+    if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
+        CertFreeCertificateContext(cert);
+    aux.cbSize = sizeof(aux);
+    ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
+     (void **)&cert, NULL, NULL, NULL, &aux);
+    todo_wine
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
+    aux.pLastSyncTime = &ft;
+    ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
+     (void **)&cert, NULL, NULL, NULL, &aux);
+    todo_wine
+    ok(ft.dwLowDateTime || ft.dwHighDateTime,
+     "Expected last sync time to be set\n");
+    DeleteFileA(tmpfile);
+    /* Okay, after being deleted, are file URLs still cached? */
+    SetLastError(0xdeadbeef);
+    ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE,
+     CRYPT_CACHE_ONLY_RETRIEVAL, 0, (void **)&cert, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+}
+
 START_TEST(cryptnet)
 {
     test_getObjectUrl();
+    test_retrieveObjectByUrl();
 }
