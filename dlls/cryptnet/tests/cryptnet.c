@@ -267,7 +267,6 @@ static void test_retrieveObjectByUrl(void)
     SetLastError(0xdeadbeef);
     ret = CryptRetrieveObjectByUrlA(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL,
      NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
 

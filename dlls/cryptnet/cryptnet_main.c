@@ -24,6 +24,7 @@
 #include "wine/debug.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "winnls.h"
 #define NONAMELESSUNION
 #include "wincrypt.h"
 
@@ -298,10 +299,35 @@ BOOL WINAPI CryptRetrieveObjectByUrlA(LPCSTR pszURL, LPCSTR pszObjectOid,
  HCRYPTASYNC hAsyncRetrieve, PCRYPT_CREDENTIALS pCredentials, LPVOID pvVerify,
  PCRYPT_RETRIEVE_AUX_INFO pAuxInfo)
 {
-    FIXME("(%s, %s, %08x, %d, %p, %p, %p, %p, %p)\n", debugstr_a(pszURL),
+    BOOL ret = FALSE;
+    int len;
+
+    TRACE("(%s, %s, %08x, %d, %p, %p, %p, %p, %p)\n", debugstr_a(pszURL),
      debugstr_a(pszObjectOid), dwRetrievalFlags, dwTimeout, ppvObject,
      hAsyncRetrieve, pCredentials, pvVerify, pAuxInfo);
-    return FALSE;
+
+    if (!pszURL)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    len = MultiByteToWideChar(CP_ACP, 0, pszURL, -1, NULL, 0);
+    if (len)
+    {
+        LPWSTR url = CryptMemAlloc(len * sizeof(WCHAR));
+
+        if (url)
+        {
+            MultiByteToWideChar(CP_ACP, 0, pszURL, -1, url, len);
+            ret = CryptRetrieveObjectByUrlW(url, pszObjectOid,
+             dwRetrievalFlags, dwTimeout, ppvObject, hAsyncRetrieve,
+             pCredentials, pvVerify, pAuxInfo);
+            CryptMemFree(url);
+        }
+        else
+            SetLastError(ERROR_OUTOFMEMORY);
+    }
+    return ret;
 }
 
 /***********************************************************************
