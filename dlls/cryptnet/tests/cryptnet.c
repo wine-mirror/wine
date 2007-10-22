@@ -175,13 +175,11 @@ static void test_getObjectUrl(void)
         SetLastError(0xdeadbeef);
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
          (void *)cert, 0, NULL, NULL, NULL, NULL, NULL);
-        todo_wine
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
          (void *)cert, 0, NULL, NULL, NULL, &infoSize, NULL);
-        todo_wine
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
         /* Can get it without specifying the location: */

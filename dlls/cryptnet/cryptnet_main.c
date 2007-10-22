@@ -174,7 +174,10 @@ static BOOL WINAPI CRYPT_GetUrlFromCertificateCRLDistPoint(LPCSTR pszUrlOid,
                         }
                 }
             if (!pcbUrlArray)
+            {
                 SetLastError(E_INVALIDARG);
+                ret = FALSE;
+            }
             else if (!pUrlArray)
                 *pcbUrlArray = bytesNeeded;
             else if (*pcbUrlArray < bytesNeeded)
