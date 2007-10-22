@@ -1210,16 +1210,11 @@ static BOOL URLCache_HashEntrySetUse(struct _HASH_ENTRY * pHashEntry, DWORD dwUs
  *    FALSE if the entry could not be found
  *
  */
-static BOOL URLCache_DeleteEntryFromHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl)
+static BOOL URLCache_DeleteEntryFromHash(struct _HASH_ENTRY * pHashEntry)
 {
-    struct _HASH_ENTRY * pHashEntry;
-    if (URLCache_FindHash(pHeader, lpszUrl, &pHashEntry))
-    {
-        pHashEntry->dwHashKey = HASHTABLE_FREE;
-        pHashEntry->dwOffsetEntry = HASHTABLE_FREE;
-        return TRUE;
-    }
-    return FALSE;
+    pHashEntry->dwHashKey = HASHTABLE_FREE;
+    pHashEntry->dwOffsetEntry = HASHTABLE_FREE;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2597,7 +2592,7 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
     pEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
     URLCache_DeleteEntry(pHeader, pEntry);
 
-    URLCache_DeleteEntryFromHash(pHeader, lpszUrlName);
+    URLCache_DeleteEntryFromHash(pHashEntry);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
@@ -2656,7 +2651,7 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     pEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
     URLCache_DeleteEntry(pHeader, pEntry);
 
-    URLCache_DeleteEntryFromHash(pHeader, urlA);
+    URLCache_DeleteEntryFromHash(pHashEntry);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
