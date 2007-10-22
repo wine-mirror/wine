@@ -573,6 +573,7 @@ static void ALSA_MixerExit(void)
         EnterCriticalSection(&elem_crst);
         TerminateThread(thread, 1);
         refcnt = 0;
+        LeaveCriticalSection(&elem_crst);
     }
 
     TRACE("Cleaning up\n");
