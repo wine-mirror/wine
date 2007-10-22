@@ -534,6 +534,7 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
     TRACE("mmap buffer %p destroyed\n", This->mmap_buffer);
 
     This->drv->capture_buffer = NULL;
+    LeaveCriticalSection(&This->pcm_crst);
     This->pcm_crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->pcm_crst);
 
