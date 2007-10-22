@@ -3280,12 +3280,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
         This->glRect.bottom = This->pow2Height;
     }
 
-    if(This->resource.allocatedMemory == NULL) {
-        /* Make sure memory exists from the start, and it is initialized properly. D3D initializes surfaces,
-         * gl does not, so we need to upload zeroes to init the gl texture.
-         */
-        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->resource.size + 4);
-    }
     This->Flags |= SFLAG_INSYSMEM;
 
     return WINED3D_OK;

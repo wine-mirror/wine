@@ -101,8 +101,8 @@ static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3
         } \
         WineD3DAdapterChangeGLRam(This, _size); \
     } \
-    object->resource.allocatedMemory = (0 == _size ? NULL : Pool == WINED3DPOOL_DEFAULT ? NULL : HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _size)); \
-    if (object->resource.allocatedMemory == NULL && _size != 0 && Pool != WINED3DPOOL_DEFAULT) { \
+    object->resource.allocatedMemory = (0 == _size ? NULL : HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _size + 4)); \
+    if (object->resource.allocatedMemory == NULL && _size != 0) { \
         FIXME("Out of memory!\n"); \
         HeapFree(GetProcessHeap(), 0, object); \
         *pp##type = NULL; \
@@ -310,9 +310,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     TRACE("(%p) : Size=%d, Usage=%d, FVF=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
     *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
 
-    if (Pool == WINED3DPOOL_DEFAULT ) { /* Allocate some system memory for now */
-        object->resource.allocatedMemory  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->resource.size);
-    }
     object->fvf = FVF;
 
     /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
@@ -397,10 +394,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
 
     /* Allocate the storage for the device */
     D3DCREATERESOURCEOBJECTINSTANCE(object,IndexBuffer,WINED3DRTYPE_INDEXBUFFER, Length)
-
-    if (Pool == WINED3DPOOL_DEFAULT ) { /* We need a local copy for drawStridedSlow */
-        object->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,object->resource.size);
-    }
 
     if(Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC) && GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT)) {
         CreateIndexBufferVBO(This, object);
