@@ -27,6 +27,7 @@
 #include "winnls.h"
 #include "wininet.h"
 #define NONAMELESSUNION
+#define CERT_REVOCATION_PARA_HAS_EXTRA_FIELDS
 #include "wincrypt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptnet);
@@ -344,6 +345,362 @@ static void WINAPI CRYPT_FreeBlob(LPCSTR pszObjectOid,
     CryptMemFree(pObject->rgBlob);
 }
 
+static BOOL CRYPT_GetObjectFromFile(HANDLE hFile, PCRYPT_BLOB_ARRAY pObject)
+{
+    BOOL ret;
+    LARGE_INTEGER size;
+
+    if ((ret = GetFileSizeEx(hFile, &size)))
+    {
+        if (size.HighPart)
+        {
+            WARN("file too big\n");
+            SetLastError(ERROR_INVALID_DATA);
+            ret = FALSE;
+        }
+        else
+        {
+            CRYPT_DATA_BLOB blob;
+
+            blob.pbData = CryptMemAlloc(size.LowPart);
+            if (blob.pbData)
+            {
+                blob.cbData = size.LowPart;
+                ret = ReadFile(hFile, blob.pbData, size.LowPart, &blob.cbData,
+                 NULL);
+                if (ret)
+                {
+                    pObject->rgBlob = CryptMemAlloc(sizeof(CRYPT_DATA_BLOB));
+                    if (pObject->rgBlob)
+                    {
+                        pObject->cBlob = 1;
+                        memcpy(pObject->rgBlob, &blob, sizeof(CRYPT_DATA_BLOB));
+                    }
+                    else
+                    {
+                        SetLastError(ERROR_OUTOFMEMORY);
+                        ret = FALSE;
+                    }
+                }
+                if (!ret)
+                    CryptMemFree(blob.pbData);
+            }
+            else
+            {
+                SetLastError(ERROR_OUTOFMEMORY);
+                ret = FALSE;
+            }
+        }
+    }
+    return ret;
+}
+
+/* FIXME: should make wininet cache all downloads instead */
+/* FIXME: how do I know the cached object is up to date? */
+static BOOL CRYPT_GetObjectFromCache(LPCWSTR pszURL, PCRYPT_BLOB_ARRAY pObject,
+ PCRYPT_RETRIEVE_AUX_INFO pAuxInfo)
+{
+    BOOL ret = FALSE;
+    INTERNET_CACHE_ENTRY_INFOW cacheInfo = { sizeof(cacheInfo), 0 };
+    DWORD size = sizeof(cacheInfo);
+
+    TRACE("(%s, %p, %p)\n", debugstr_w(pszURL), pObject, pAuxInfo);
+
+    if (GetUrlCacheEntryInfoW(pszURL, &cacheInfo, &size) ||
+     GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        FILETIME ft;
+
+        GetSystemTimeAsFileTime(&ft);
+        if (CompareFileTime(&cacheInfo.ExpireTime, &ft) >= 0)
+        {
+            LPINTERNET_CACHE_ENTRY_INFOW pCacheInfo = CryptMemAlloc(size);
+
+            if (pCacheInfo)
+            {
+                if (GetUrlCacheEntryInfoW(pszURL, pCacheInfo, &size))
+                {
+                    HANDLE hFile = CreateFileW(pCacheInfo->lpszLocalFileName,
+                     GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                     FILE_ATTRIBUTE_NORMAL, NULL);
+
+                    if (hFile != INVALID_HANDLE_VALUE)
+                    {
+                        if ((ret = CRYPT_GetObjectFromFile(hFile, pObject)))
+                        {
+                            if (pAuxInfo && pAuxInfo->cbSize >=
+                             offsetof(CRYPT_RETRIEVE_AUX_INFO,
+                             pLastSyncTime) + sizeof(PFILETIME) &&
+                             pAuxInfo->pLastSyncTime)
+                                memcpy(pAuxInfo->pLastSyncTime,
+                                 &pCacheInfo->LastSyncTime,
+                                 sizeof(FILETIME));
+                        }
+                        CloseHandle(hFile);
+                    }
+                }
+                CryptMemFree(pCacheInfo);
+            }
+            else
+                SetLastError(ERROR_OUTOFMEMORY);
+        }
+        else
+            DeleteUrlCacheEntryW(pszURL);
+    }
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+static inline LPWSTR strndupW(LPWSTR string, int len)
+{
+    LPWSTR ret = NULL;
+    if (string && (ret = CryptMemAlloc((len + 1) * sizeof(WCHAR))) != NULL)
+    {
+        memcpy(ret, string, len * sizeof(WCHAR));
+        ret[len] = 0;
+    }
+    return ret;
+}
+
+/* Parses the URL, and sets components's lpszHostName and lpszUrlPath members
+ * to NULL-terminated copies of those portions of the URL (to be freed with
+ * CryptMemFree.)
+ */
+static BOOL CRYPT_CrackUrl(LPCWSTR pszURL, URL_COMPONENTSW *components)
+{
+    BOOL ret;
+
+    TRACE("(%s, %p)\n", debugstr_w(pszURL), components);
+
+    memset(components, 0, sizeof(*components));
+    components->dwStructSize = sizeof(*components);
+    components->dwHostNameLength = 1;
+    components->dwUrlPathLength = 1;
+    ret = InternetCrackUrlW(pszURL, 0, ICU_DECODE, components);
+    if (ret)
+    {
+        LPWSTR hostname = strndupW(components->lpszHostName,
+         components->dwHostNameLength);
+        LPWSTR path = strndupW(components->lpszUrlPath,
+         components->dwUrlPathLength);
+
+        components->lpszHostName = hostname;
+        components->lpszUrlPath = path;
+        switch (components->nScheme)
+        {
+        case INTERNET_SCHEME_FTP:
+            if (!components->nPort)
+                components->nPort = INTERNET_DEFAULT_FTP_PORT;
+            break;
+        case INTERNET_SCHEME_HTTP:
+            if (!components->nPort)
+                components->nPort = INTERNET_DEFAULT_HTTP_PORT;
+            break;
+        default:
+            ; /* do nothing */
+        }
+    }
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+struct InetContext
+{
+    HANDLE event;
+    DWORD  timeout;
+    DWORD  error;
+};
+
+static struct InetContext *CRYPT_MakeInetContext(DWORD dwTimeout)
+{
+    struct InetContext *context = CryptMemAlloc(sizeof(struct InetContext));
+
+    if (context)
+    {
+        context->event = CreateEventW(NULL, FALSE, FALSE, NULL);
+        if (!context->event)
+        {
+            CryptMemFree(context);
+            context = NULL;
+        }
+        else
+        {
+            context->timeout = dwTimeout;
+            context->error = ERROR_SUCCESS;
+        }
+    }
+    return context;
+}
+
+static BOOL CRYPT_DownloadObject(DWORD dwRetrievalFlags, HINTERNET hHttp,
+ struct InetContext *context, PCRYPT_BLOB_ARRAY pObject,
+ PCRYPT_RETRIEVE_AUX_INFO pAuxInfo)
+{
+    CRYPT_DATA_BLOB object = { 0, NULL };
+    DWORD bytesAvailable;
+    BOOL ret;
+
+    do {
+        if ((ret = InternetQueryDataAvailable(hHttp, &bytesAvailable, 0, 0)))
+        {
+            if (bytesAvailable)
+            {
+                if (object.pbData)
+                    object.pbData = CryptMemRealloc(object.pbData,
+                     object.cbData + bytesAvailable);
+                else
+                    object.pbData = CryptMemAlloc(bytesAvailable);
+                if (object.pbData)
+                {
+                    INTERNET_BUFFERSA buffer = { sizeof(buffer), 0 };
+
+                    buffer.dwBufferLength = bytesAvailable;
+                    buffer.lpvBuffer = object.pbData + object.cbData;
+                    if (!(ret = InternetReadFileExA(hHttp, &buffer, IRF_NO_WAIT,
+                     (DWORD_PTR)context)))
+                    {
+                        if (GetLastError() == ERROR_IO_PENDING)
+                        {
+                            if (WaitForSingleObject(context->event,
+                             context->timeout) == WAIT_TIMEOUT)
+                                SetLastError(ERROR_TIMEOUT);
+                            else if (context->error)
+                                SetLastError(context->error);
+                            else
+                                ret = TRUE;
+                        }
+                    }
+                    if (ret)
+                        object.cbData += bytesAvailable;
+                }
+                else
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    ret = FALSE;
+                }
+            }
+        }
+        else if (GetLastError() == ERROR_IO_PENDING)
+        {
+            if (WaitForSingleObject(context->event, context->timeout) ==
+             WAIT_TIMEOUT)
+                SetLastError(ERROR_TIMEOUT);
+            else
+                ret = TRUE;
+        }
+    } while (ret && bytesAvailable);
+    if (ret)
+    {
+        pObject->rgBlob = CryptMemAlloc(sizeof(CRYPT_DATA_BLOB));
+        if (!pObject->rgBlob)
+        {
+            CryptMemFree(object.pbData);
+            SetLastError(ERROR_OUTOFMEMORY);
+            ret = FALSE;
+        }
+        else
+        {
+            pObject->rgBlob[0].cbData = object.cbData;
+            pObject->rgBlob[0].pbData = object.pbData;
+            pObject->cBlob = 1;
+        }
+    }
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+static void CRYPT_CacheURL(LPCWSTR pszURL, PCRYPT_BLOB_ARRAY pObject,
+ DWORD dwRetrievalFlags)
+{
+    WCHAR cacheFileName[MAX_PATH];
+
+    /* FIXME: let wininet directly cache instead */
+    if (CreateUrlCacheEntryW(pszURL, pObject->rgBlob[0].cbData, NULL,
+     cacheFileName, 0))
+    {
+        HANDLE hCacheFile = CreateFileW(cacheFileName, GENERIC_WRITE, 0, NULL,
+         CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+        if (hCacheFile != INVALID_HANDLE_VALUE)
+        {
+            DWORD bytesWritten, entryType;
+            FILETIME ft = { 0 };
+
+            if (!(dwRetrievalFlags & CRYPT_STICKY_CACHE_RETRIEVAL))
+                entryType = NORMAL_CACHE_ENTRY;
+            else
+                entryType = STICKY_CACHE_ENTRY;
+            WriteFile(hCacheFile, pObject->rgBlob[0].pbData,
+             pObject->rgBlob[0].cbData, &bytesWritten, NULL);
+            CloseHandle(hCacheFile);
+            CommitUrlCacheEntryW(pszURL, cacheFileName, ft, ft, entryType,
+             NULL, 0, NULL, NULL);
+        }
+    }
+}
+
+static void CALLBACK CRYPT_InetStatusCallback(HINTERNET hInt,
+ DWORD_PTR dwContext, DWORD status, void *statusInfo, DWORD statusInfoLen)
+{
+    struct InetContext *context = (struct InetContext *)dwContext;
+    LPINTERNET_ASYNC_RESULT result;
+
+    switch (status)
+    {
+    case INTERNET_STATUS_REQUEST_COMPLETE:
+        result = (LPINTERNET_ASYNC_RESULT)statusInfo;
+        context->error = result->dwError;
+        SetEvent(context->event);
+    }
+}
+
+static BOOL CRYPT_Connect(URL_COMPONENTSW *components,
+ struct InetContext *context, PCRYPT_CREDENTIALS pCredentials,
+ HINTERNET *phInt, HINTERNET *phHost)
+{
+    BOOL ret;
+
+    TRACE("(%s:%d, %p, %p, %p, %p)\n", debugstr_w(components->lpszHostName),
+     components->nPort, context, pCredentials, phInt, phInt);
+
+    *phHost = NULL;
+    *phInt = InternetOpenW(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL,
+     context ? INTERNET_FLAG_ASYNC : 0);
+    if (*phInt)
+    {
+        DWORD service;
+
+        if (context)
+            InternetSetStatusCallbackW(*phInt, CRYPT_InetStatusCallback);
+        switch (components->nScheme)
+        {
+        case INTERNET_SCHEME_FTP:
+            service = INTERNET_SERVICE_FTP;
+            break;
+        case INTERNET_SCHEME_HTTP:
+            service = INTERNET_SERVICE_HTTP;
+            break;
+        default:
+            service = 0;
+        }
+        /* FIXME: use pCredentials for username/password */
+        *phHost = InternetConnectW(*phInt, components->lpszHostName,
+         components->nPort, NULL, NULL, service, 0, (DWORD_PTR)context);
+        if (!*phHost)
+        {
+            InternetCloseHandle(*phInt);
+            *phInt = NULL;
+            ret = FALSE;
+        }
+        else
+            ret = TRUE;
+    }
+    else
+        ret = FALSE;
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
 static BOOL WINAPI FTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
  LPCSTR pszObjectOid, DWORD dwRetrievalFlags, DWORD dwTimeout,
  PCRYPT_BLOB_ARRAY pObject, PFN_FREE_ENCODED_OBJECT_FUNC *ppfnFreeObject,
@@ -361,13 +718,37 @@ static BOOL WINAPI FTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
     return FALSE;
 }
 
+static const WCHAR x509cacert[] = { 'a','p','p','l','i','c','a','t','i','o','n',
+ '/','x','-','x','5','0','9','-','c','a','-','c','e','r','t',0 };
+static const WCHAR x509emailcert[] = { 'a','p','p','l','i','c','a','t','i','o',
+ 'n','/','x','-','x','5','0','9','-','e','m','a','i','l','-','c','e','r','t',
+ 0 };
+static const WCHAR x509servercert[] = { 'a','p','p','l','i','c','a','t','i','o',
+ 'n','/','x','-','x','5','0','9','-','s','e','r','v','e','r','-','c','e','r',
+ 't',0 };
+static const WCHAR x509usercert[] = { 'a','p','p','l','i','c','a','t','i','o',
+ 'n','/','x','-','x','5','0','9','-','u','s','e','r','-','c','e','r','t',0 };
+static const WCHAR pkcs7cert[] = { 'a','p','p','l','i','c','a','t','i','o','n',
+ '/','x','-','p','k','c','s','7','-','c','e','r','t','i','f','c','a','t','e',
+ 's',0 };
+static const WCHAR pkixCRL[] = { 'a','p','p','l','i','c','a','t','i','o','n',
+ '/','p','k','i','x','-','c','r','l',0 };
+static const WCHAR pkcs7CRL[] = { 'a','p','p','l','i','c','a','t','i','o','n',
+ '/','x','-','p','k','c','s','7','-','c','r','l',0 };
+static const WCHAR pkcs7sig[] = { 'a','p','p','l','i','c','a','t','i','o','n',
+ '/','x','-','p','k','c','s','7','-','s','i','g','n','a','t','u','r','e',0 };
+static const WCHAR pkcs7mime[] = { 'a','p','p','l','i','c','a','t','i','o','n',
+ '/','x','-','p','k','c','s','7','-','m','i','m','e',0 };
+
 static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
  LPCSTR pszObjectOid, DWORD dwRetrievalFlags, DWORD dwTimeout,
  PCRYPT_BLOB_ARRAY pObject, PFN_FREE_ENCODED_OBJECT_FUNC *ppfnFreeObject,
  void **ppvFreeContext, HCRYPTASYNC hAsyncRetrieve,
  PCRYPT_CREDENTIALS pCredentials, PCRYPT_RETRIEVE_AUX_INFO pAuxInfo)
 {
-    FIXME("(%s, %s, %08x, %d, %p, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
+    BOOL ret = FALSE;
+
+    TRACE("(%s, %s, %08x, %d, %p, %p, %p, %p, %p, %p)\n", debugstr_w(pszURL),
      debugstr_a(pszObjectOid), dwRetrievalFlags, dwTimeout, pObject,
      ppfnFreeObject, ppvFreeContext, hAsyncRetrieve, pCredentials, pAuxInfo);
 
@@ -375,7 +756,75 @@ static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
     pObject->rgBlob = NULL;
     *ppfnFreeObject = CRYPT_FreeBlob;
     *ppvFreeContext = NULL;
-    return FALSE;
+
+    if (!(dwRetrievalFlags & CRYPT_WIRE_ONLY_RETRIEVAL))
+        ret = CRYPT_GetObjectFromCache(pszURL, pObject, pAuxInfo);
+    if (!ret && (!(dwRetrievalFlags & CRYPT_CACHE_ONLY_RETRIEVAL) ||
+     (dwRetrievalFlags & CRYPT_WIRE_ONLY_RETRIEVAL)))
+    {
+        URL_COMPONENTSW components;
+
+        if ((ret = CRYPT_CrackUrl(pszURL, &components)))
+        {
+            HINTERNET hInt, hHost;
+            struct InetContext *context = NULL;
+
+            if (dwTimeout)
+                context = CRYPT_MakeInetContext(dwTimeout);
+            ret = CRYPT_Connect(&components, context, pCredentials, &hInt,
+             &hHost);
+            if (ret)
+            {
+                static LPCWSTR types[] = { x509cacert, x509emailcert,
+                 x509servercert, x509usercert, pkcs7cert, pkixCRL, pkcs7CRL,
+                 pkcs7sig, pkcs7mime, NULL };
+                HINTERNET hHttp = HttpOpenRequestW(hHost, NULL,
+                 components.lpszUrlPath, NULL, NULL, types,
+                 INTERNET_FLAG_NO_COOKIES | INTERNET_FLAG_NO_UI,
+                 (DWORD_PTR)context);
+
+                if (hHttp)
+                {
+                    ret = HttpSendRequestExW(hHttp, NULL, NULL, 0,
+                     (DWORD_PTR)context);
+                    if (!ret && GetLastError() == ERROR_IO_PENDING)
+                    {
+                        if (WaitForSingleObject(context->event,
+                         context->timeout) == WAIT_TIMEOUT)
+                            SetLastError(ERROR_TIMEOUT);
+                        else
+                            ret = TRUE;
+                    }
+                    ret = HttpEndRequestW(hHttp, NULL, 0, (DWORD_PTR)context);
+                    if (!ret && GetLastError() == ERROR_IO_PENDING)
+                    {
+                        if (WaitForSingleObject(context->event,
+                         context->timeout) == WAIT_TIMEOUT)
+                            SetLastError(ERROR_TIMEOUT);
+                        else
+                            ret = TRUE;
+                    }
+                    if (ret)
+                        ret = CRYPT_DownloadObject(dwRetrievalFlags, hHttp,
+                         context, pObject, pAuxInfo);
+                    if (ret && !(dwRetrievalFlags & CRYPT_DONT_CACHE_RESULT))
+                        CRYPT_CacheURL(pszURL, pObject, dwRetrievalFlags);
+                    InternetCloseHandle(hHttp);
+                }
+                InternetCloseHandle(hHost);
+                InternetCloseHandle(hInt);
+            }
+            if (context)
+            {
+                CloseHandle(context->event);
+                CryptMemFree(context);
+            }
+            CryptMemFree(components.lpszUrlPath);
+            CryptMemFree(components.lpszHostName);
+        }
+    }
+    TRACE("returning %d\n", ret);
+    return ret;
 }
 
 static BOOL WINAPI File_RetrieveEncodedObjectW(LPCWSTR pszURL,
@@ -439,60 +888,14 @@ static BOOL WINAPI File_RetrieveEncodedObjectW(LPCWSTR pszURL,
             }
             if (hFile != INVALID_HANDLE_VALUE)
             {
-                LARGE_INTEGER size;
-
-                if ((ret = GetFileSizeEx(hFile, &size)))
+                if ((ret = CRYPT_GetObjectFromFile(hFile, pObject)))
                 {
-                    if (size.HighPart)
-                    {
-                        WARN("file too big\n");
-                        SetLastError(ERROR_INVALID_DATA);
-                        ret = FALSE;
-                    }
-                    else
-                    {
-                        CRYPT_DATA_BLOB blob;
-
-                        blob.pbData = CryptMemAlloc(size.LowPart);
-                        if (blob.pbData)
-                        {
-                            blob.cbData = size.LowPart;
-                            ret = ReadFile(hFile, blob.pbData, size.LowPart,
-                             &blob.cbData, NULL);
-                            if (ret)
-                            {
-                                pObject->rgBlob =
-                                 CryptMemAlloc(sizeof(CRYPT_DATA_BLOB));
-                                if (pObject->rgBlob)
-                                {
-                                    pObject->cBlob = 1;
-                                    memcpy(pObject->rgBlob, &blob,
-                                     sizeof(CRYPT_DATA_BLOB));
-                                }
-                                else
-                                {
-                                    SetLastError(ERROR_OUTOFMEMORY);
-                                    ret = FALSE;
-                                }
-                            }
-                            if (!ret)
-                                CryptMemFree(blob.pbData);
-                            else
-                            {
-                                if (pAuxInfo && pAuxInfo->cbSize >=
-                                 offsetof(CRYPT_RETRIEVE_AUX_INFO,
-                                 pLastSyncTime) + sizeof(PFILETIME) &&
-                                 pAuxInfo->pLastSyncTime)
-                                    GetFileTime(hFile, NULL, NULL,
-                                     pAuxInfo->pLastSyncTime);
-                            }
-                        }
-                        else
-                        {
-                            SetLastError(ERROR_OUTOFMEMORY);
-                            ret = FALSE;
-                        }
-                    }
+                    if (pAuxInfo && pAuxInfo->cbSize >=
+                     offsetof(CRYPT_RETRIEVE_AUX_INFO,
+                     pLastSyncTime) + sizeof(PFILETIME) &&
+                     pAuxInfo->pLastSyncTime)
+                        GetFileTime(hFile, NULL, NULL,
+                         pAuxInfo->pLastSyncTime);
                 }
                 CloseHandle(hFile);
             }
@@ -515,6 +918,8 @@ static BOOL CRYPT_GetRetrieveFunction(LPCWSTR pszURL,
 {
     URL_COMPONENTSW components = { sizeof(components), 0 };
     BOOL ret;
+
+    TRACE("(%s, %p, %p)\n", debugstr_w(pszURL), pFunc, phFunc);
 
     *pFunc = NULL;
     *phFunc = 0;
@@ -570,6 +975,7 @@ static BOOL CRYPT_GetRetrieveFunction(LPCWSTR pszURL,
         }
         }
     }
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -805,6 +1211,8 @@ static BOOL CRYPT_GetCreateFunction(LPCSTR pszObjectOid,
 {
     BOOL ret = TRUE;
 
+    TRACE("(%s, %p, %p)\n", debugstr_a(pszObjectOid), pFunc, phFunc);
+
     *pFunc = NULL;
     *phFunc = 0;
     if (!HIWORD(pszObjectOid))
@@ -841,6 +1249,7 @@ static BOOL CRYPT_GetCreateFunction(LPCSTR pszObjectOid,
         ret = CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING, pszObjectOid,
          0, (void **)pFunc, phFunc);
     }
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -888,6 +1297,7 @@ BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
         CryptFreeOIDFunctionAddress(hCreate, 0);
     if (hRetrieve)
         CryptFreeOIDFunctionAddress(hRetrieve, 0);
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
