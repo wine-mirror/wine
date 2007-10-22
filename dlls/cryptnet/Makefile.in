@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = cryptnet.dll
 IMPORTLIB = libcryptnet.$(IMPLIBEXT)
 IMPORTS   = crypt32 kernel32
+DELAYIMPORTS = wininet
 
 C_SRCS = \
 	cryptnet_main.c

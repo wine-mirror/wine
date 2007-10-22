@@ -286,9 +286,7 @@ static void test_retrieveObjectByUrl(void)
     pBlobArray = (CRYPT_BLOB_ARRAY *)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, NULL, 0, 0, (void **)&pBlobArray,
      NULL, NULL, NULL, NULL);
-    todo_wine
     ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
-    todo_wine
     ok(pBlobArray && pBlobArray != (CRYPT_BLOB_ARRAY *)0xdeadbeef,
      "Expected a valid pointer\n");
     if (pBlobArray && pBlobArray != (CRYPT_BLOB_ARRAY *)0xdeadbeef)
@@ -302,7 +300,6 @@ static void test_retrieveObjectByUrl(void)
     cert = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(cert && cert != (PCCERT_CONTEXT)0xdeadbeef, "Expected a cert\n");
     if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(cert);
@@ -310,17 +307,14 @@ static void test_retrieveObjectByUrl(void)
     SetLastError(0xdeadbeef);
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CRL, 0, 0, (void **)&crl,
      NULL, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "Expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
-    todo_wine
     ok(crl == NULL, "Expected CRL to be NULL\n");
     if (crl && crl != (PCCRL_CONTEXT)0xdeadbeef)
         CertFreeCRLContext(crl);
     store = (HCERTSTORE)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CAPI2_ANY, 0, 0,
      (void **)&store, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
     if (store && store != (HCERTSTORE)0xdeadbeef)
     {
@@ -338,25 +332,21 @@ static void test_retrieveObjectByUrl(void)
     /* Are file URLs cached? */
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE,
      CRYPT_CACHE_ONLY_RETRIEVAL, 0, (void **)&cert, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
     if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(cert);
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, &aux);
-    todo_wine
     ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
     if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(cert);
     aux.cbSize = sizeof(aux);
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, &aux);
-    todo_wine
     ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
     aux.pLastSyncTime = &ft;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, &aux);
-    todo_wine
     ok(ft.dwLowDateTime || ft.dwHighDateTime,
      "Expected last sync time to be set\n");
     DeleteFileA(tmpfile);
@@ -364,9 +354,10 @@ static void test_retrieveObjectByUrl(void)
     SetLastError(0xdeadbeef);
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE,
      CRYPT_CACHE_ONLY_RETRIEVAL, 0, (void **)&cert, NULL, NULL, NULL, NULL);
-    todo_wine
-    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
+     GetLastError() == ERROR_PATH_NOT_FOUND),
+     "Expected ERROR_FILE_NOT_FOUND or ERROR_PATH_NOT_FOUND, got %d\n",
+     GetLastError());
 }
 
 START_TEST(cryptnet)
