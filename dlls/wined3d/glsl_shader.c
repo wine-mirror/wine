@@ -2697,8 +2697,10 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
          * in order to make the bindings work, and it has to be done prior
          * to linking the GLSL program. */
         for (i = 0; i < max_attribs; ++i) {
-             snprintf(tmp_name, sizeof(tmp_name), "attrib%i", i);
-             GL_EXTCALL(glBindAttribLocationARB(programId, i, tmp_name));
+            if (((IWineD3DBaseShaderImpl*)vshader)->baseShader.reg_maps.attributes[i]) {
+                snprintf(tmp_name, sizeof(tmp_name), "attrib%i", i);
+                GL_EXTCALL(glBindAttribLocationARB(programId, i, tmp_name));
+            }
         }
         checkGLcall("glBindAttribLocationARB");
 
