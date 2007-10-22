@@ -2182,9 +2182,12 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
     }
     else
     {
-        ret = HTTP_HttpSendRequestW(lpwhr, lpBuffersIn->lpcszHeader, lpBuffersIn->dwHeadersLength,
-                                    lpBuffersIn->lpvBuffer, lpBuffersIn->dwBufferLength,
-                                    lpBuffersIn->dwBufferTotal, FALSE);
+        if (lpBuffersIn)
+            ret = HTTP_HttpSendRequestW(lpwhr, lpBuffersIn->lpcszHeader, lpBuffersIn->dwHeadersLength,
+                                        lpBuffersIn->lpvBuffer, lpBuffersIn->dwBufferLength,
+                                        lpBuffersIn->dwBufferTotal, FALSE);
+        else
+            ret = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, FALSE);
     }
  
     WININET_Release(&lpwhr->hdr);
