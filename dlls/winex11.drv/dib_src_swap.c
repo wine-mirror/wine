@@ -96,7 +96,7 @@ static void convert_555_reverse_src_byteswap(int width, int height,
                         ((srcval <<  2) & 0x7c007c00);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval >>  2) & 0x001f) | /* h */
@@ -130,7 +130,7 @@ static void convert_555_to_565_asis_src_byteswap(int width, int height,
                         ((srcval >> 8) & 0x001f001f);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval << 9) & 0xfe00) | /* h, g - 2bits*/
@@ -165,7 +165,7 @@ static void convert_555_to_565_reverse_src_byteswap(int width, int height,
                          ((srcval <<  3) & 0xf800f800);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval >>  2) & 0x001f) | /* h */
@@ -381,7 +381,7 @@ static void convert_565_reverse_src_byteswap(int width, int height,
                         ((srcval >>  3) & 0x001f001f);  /* h */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval <<  3) & 0xf800) | /* l */
@@ -414,7 +414,7 @@ static void convert_565_to_555_asis_src_byteswap(int width, int height,
                         ((srcval >> 8) & 0x001f001f);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval << 7) & 0x7f80) | /* h, g - 3 bits */
@@ -447,7 +447,7 @@ static void convert_565_to_555_reverse_src_byteswap(int width, int height,
                         ((srcval <<  2) & 0x7c007c00);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval >>  3) & 0x001f) | /* h */

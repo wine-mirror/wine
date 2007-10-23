@@ -275,7 +275,7 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement,
  */
 BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store);
 
-/* Fixes up the the pointers in info, where info is assumed to be a
+/* Fixes up the pointers in info, where info is assumed to be a
  * CRYPT_KEY_PROV_INFO, followed by its container name, provider name, and any
  * provider parameters, in a contiguous buffer, but where info's pointers are
  * assumed to be invalid.  Upon return, info's pointers point to the

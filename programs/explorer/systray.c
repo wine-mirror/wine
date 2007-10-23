@@ -402,7 +402,7 @@ static BOOL is_systray_hidden(void)
     return ret;
 }
 
-/* this function creates the the listener window */
+/* this function creates the listener window */
 void initialize_systray(void)
 {
     WNDCLASSEX class;

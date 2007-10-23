@@ -68,7 +68,7 @@ static ATOM atSubclassProp;
 /* Generate a number of subclass window procs.
  * With a single proc alone, we can't really reliably find out the superclass,
  * so have one for each subclass. The subclass number is also stored in a prop
- * since it's needed by THEMING_CallOriginalClass(). Then, the the subclass 
+ * since it's needed by THEMING_CallOriginalClass(). Then, the subclass
  * proc and ref data are fetched and the proc called.
  */
 #define MAKE_SUBCLASS_PROC(N)                                               \

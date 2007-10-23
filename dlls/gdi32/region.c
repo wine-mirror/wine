@@ -894,7 +894,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
  *
  * NOTES
  *   This is a special case of CreateRoundRectRgn() where the width of the
- *   ellipse at each corner is equal to the width the the rectangle and
+ *   ellipse at each corner is equal to the width the rectangle and
  *   the same for the height.
  */
 HRGN WINAPI CreateEllipticRgn( INT left, INT top,
@@ -919,7 +919,7 @@ HRGN WINAPI CreateEllipticRgn( INT left, INT top,
  *
  * NOTES
  *   This is a special case of CreateRoundRectRgn() where the width of the
- *   ellipse at each corner is equal to the width the the rectangle and
+ *   ellipse at each corner is equal to the width the rectangle and
  *   the same for the height.
  */
 HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )

@@ -1190,7 +1190,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         srcbyte+=6;
                     }
                     if (width&1) {
-                        /* And the the odd pixel */
+                        /* And then the odd pixel */
                         *dstbyte++=(X11DRV_DIB_GetNearestIndex
                                     (colors, 16,
                                      srcbyte[2],
@@ -1220,7 +1220,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         srcbyte+=6;
                     }
                     if (width&1) {
-                        /* And the the odd pixel */
+                        /* And then the odd pixel */
                         *dstbyte++=(X11DRV_DIB_GetNearestIndex
                                     (colors, 16,
                                      srcbyte[0],
@@ -1266,7 +1266,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         srcbyte+=8;
                     }
                     if (width&1) {
-                        /* And the the odd pixel */
+                        /* And then the odd pixel */
                         *dstbyte++=(X11DRV_DIB_GetNearestIndex
                                     (colors, 16,
                                      srcbyte[2],
@@ -1296,7 +1296,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         srcbyte+=8;
                     }
                     if (width&1) {
-                        /* And the the odd pixel */
+                        /* And then the odd pixel */
                         *dstbyte++=(X11DRV_DIB_GetNearestIndex
                                     (colors, 16,
                                      srcbyte[0],

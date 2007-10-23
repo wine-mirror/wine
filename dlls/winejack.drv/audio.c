@@ -489,7 +489,7 @@ int JACK_callback_wwo (nframes_t nframes, void *arg)
 /******************************************************************
  *		JACK_bufsize_wwo
  *
- *		Called whenever the jack server changes the the max number 
+ *		Called whenever the jack server changes the max number
  *		of frames passed to JACK_callback
  */
 int JACK_bufsize_wwo (nframes_t nframes, void *arg)
@@ -537,7 +537,7 @@ int JACK_bufsize_wwo (nframes_t nframes, void *arg)
 /******************************************************************
  *		JACK_bufsize_wwi
  *
- *		Called whenever the jack server changes the the max number 
+ *		Called whenever the jack server changes the max number
  *		of frames passed to JACK_callback
  */
 int JACK_bufsize_wwi (nframes_t nframes, void *arg)

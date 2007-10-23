@@ -6491,7 +6491,7 @@ static BOOL LISTVIEW_RedrawItems(const LISTVIEW_INFO *infoPtr, INT nFirst, INT n
  *  be scrolled only in line increments. "dy" will be rounded to the
  *  nearest number of pixels that are a whole line. Ex: if line height
  *  is 16 and an 8 is passed, the list will be scrolled by 16. If a 7
- *  is passed the the scroll will be 0.  (per MSDN 7/2002)
+ *  is passed, then the scroll will be 0.  (per MSDN 7/2002)
  *
  *  For:  (per experimentaion with native control and CSpy ListView)
  *     LVS_ICON       dy=1 = 1 pixel  (vertical only)

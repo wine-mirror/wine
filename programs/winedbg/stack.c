@@ -161,7 +161,7 @@ static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD64 addr,
 /******************************************************************
  *		stack_fetch_frames
  *
- * Do a backtrace on the the current thread
+ * Do a backtrace on the current thread
  */
 unsigned stack_fetch_frames(void)
 {
@@ -275,7 +275,7 @@ static void stack_print_addr_and_args(int nf)
 /******************************************************************
  *		backtrace
  *
- * Do a backtrace on the the current thread
+ * Do a backtrace on the current thread
  */
 static void backtrace(void)
 {

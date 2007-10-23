@@ -70,7 +70,7 @@ static void ApplicationPageUpdate(void)
         EnableWindow(hApplicationPageSwitchToButton, FALSE);
     }
 
-    /* If we are on the applications tab the the windows menu will */
+    /* If we are on the applications tab, then the windows menu will */
     /* be present on the menu bar so enable & disable the menu items */
     if (TabCtrl_GetCurSel(hTabWnd) == 0)
     {

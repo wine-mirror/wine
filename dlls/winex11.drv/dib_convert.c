@@ -111,7 +111,7 @@ static void convert_555_reverse(int width, int height,
                         ((srcval >> 10) & 0x001f001f);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval << 10) & 0x7c00) | /* h */
@@ -143,7 +143,7 @@ static void convert_555_to_565_asis(int width, int height,
                         ( srcval       & 0x001f001f);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval << 1) & 0xffc0) | /* h, g */
@@ -176,7 +176,7 @@ static void convert_555_to_565_reverse(int width, int height,
                         ((srcval << 11) & 0xf800f800);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval >> 10) & 0x001f) | /* h */
@@ -380,7 +380,7 @@ static void convert_565_reverse(int width, int height,
                         ((srcval >> 11) & 0x001f001f);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval << 11) & 0xf800) | /* h */
@@ -411,7 +411,7 @@ static void convert_565_to_555_asis(int width, int height,
                         ( srcval       & 0x001f001f);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval >> 1) & 0x7fe0) | /* h, g */
@@ -442,7 +442,7 @@ static void convert_565_to_555_reverse(int width, int height,
                         ((srcval << 10) & 0x7c007c00);  /* l */
         }
         if (width&1) {
-            /* And the the odd pixel */
+            /* And then the odd pixel */
             WORD srcval;
             srcval=*((const WORD*)srcpixel);
             *((WORD*)dstpixel)=((srcval >> 11) & 0x001f) | /* h */

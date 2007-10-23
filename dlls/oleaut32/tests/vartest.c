@@ -3142,7 +3142,7 @@ static void test_VarRound(void)
     VARROUND(DATE,1.451,1,DATE,1.5);
     VARROUND(DATE,-1.45,1,DATE,-1.4);
 
-    /* replace the decimal seperator */
+    /* replace the decimal separator */
     GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
     if (!buff[1]) {
         szNumMin[2] = buff[0];
@@ -7889,7 +7889,7 @@ static void test_VarImp(void)
                 BOOL bFail = FALSE;
                 SKIPTESTIMP(rightvt);
 
-                /* Native crashes using the the extra flag VT_BYREF
+                /* Native crashes when using the extra flag VT_BYREF
                  * or with the following VT combinations
                  */
                 if ((leftvt == VT_UI4 && rightvt == VT_BSTR) ||

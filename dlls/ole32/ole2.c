@@ -520,7 +520,7 @@ HRESULT WINAPI DoDragDrop (
     msg.message = 0;
 
     /*
-     * Pump messages. All mouse input should go the the capture window.
+     * Pump messages. All mouse input should go to the capture window.
      */
     while (!trackerInfo.trackingDone && GetMessageA(&msg, 0, 0, 0) )
     {

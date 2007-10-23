@@ -436,7 +436,7 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
      * background color.
      *
      * Since we can't support inverting colors, we map the grayscale value of
-     * the "xor" data to the alpha channel, and xor the the color with either
+     * the "xor" data to the alpha channel, and xor the color with either
      * black or white.
      */
     for (y = 0; y < ymax; ++y)

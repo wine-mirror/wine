@@ -315,7 +315,7 @@ FileMonikerImpl_Load(IMoniker* iface, IStream* pStm)
  *
  * This function saves data of this object. In the beginning I thought
  * that I have just to write the filePath string on Stream. But, when I
- * tested this function with windows programs samples, I noticed that it
+ * tested this function with windows program samples, I noticed that it
  * was not the case. This implementation is based on XP SP2. Other versions
  * of Windows have minor variations.
  *
@@ -328,7 +328,7 @@ FileMonikerImpl_Load(IMoniker* iface, IStream* pStm)
  * 6) If we're only writing the multibyte version, 
  *     write a zero DWORD and finish.
  *
- * 7) DWORD: double-length of the the path string type W ("\0" not
+ * 7) DWORD: double-length of the path string type W ("\0" not
  *    included)
  * 8) WORD constant: 0x3
  * 9) filePath unicode string.

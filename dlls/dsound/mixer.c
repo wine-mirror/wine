@@ -639,7 +639,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
  */
 static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mixlen)
 {
-	/* The buffer's primary_mixpos may be before or after the the device
+	/* The buffer's primary_mixpos may be before or after the device
 	 * buffer's mixpos, but both must be ahead of writepos. */
 	DWORD primary_done;
 

@@ -309,8 +309,8 @@ if ($version eq "1.0") {
 #
 # Open the registry files
 #
-open(TYPES,    "$registry_path/gl.tm")   || die "Could not open 'gl.tm'. Please check your path the the registry files.\n";
-open(REGISTRY, "$registry_path/gl.spec") || die "Could not open 'gl.spec'. Please check your path the the registry files.\n";
+open(TYPES,    "$registry_path/gl.tm")   || die "Could not open 'gl.tm'. Please check your path in the registry files.\n";
+open(REGISTRY, "$registry_path/gl.spec") || die "Could not open 'gl.spec'. Please check your path in the registry files.\n";
 
 #
 # First, create a mapping between the pseudo types used in the spec file

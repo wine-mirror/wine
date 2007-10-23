@@ -3076,7 +3076,7 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI,
 	       pointing at an alpha-numeric char.  However if *pArg is
 	       0xffff or 0xfffe then the param has no name, the former
 	       meaning that the next WORD is the type, the latter
-	       meaning the the next WORD is an offset to the type. */
+	       meaning that the next WORD is an offset to the type. */
 
 	    HaveOffs = FALSE;
 	    if(*pArg == 0xffff)

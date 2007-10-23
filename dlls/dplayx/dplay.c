@@ -5281,14 +5281,14 @@ static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
 	/* The enumeration will return FALSE if we are not to continue.
 	 *
 	 * Note: on my windows box, major / minor version is 6 / 0 for all service providers
-	 *       and have no relations to any of the two dwReserved1 and dwReserved2 keys.
+	 *       and have no relation to any of the two dwReserved1 and dwReserved2 keys.
 	 *       I think that it simply means that they are in-line with DirectX 6.0
 	 */
 	if (lpEnumCallbackA)
 	{
 	    DWORD sizeOfDescription = 0;
 	    
-	    /* Note that this the the A case of this function, so use the A variant to get the description string */
+	    /* Note that this is the A case of this function, so use the A variant to get the description string */
 	    if (RegQueryValueExA(hkServiceProvider, "DescriptionA",
 				 NULL, NULL, NULL, &sizeOfDescription) != ERROR_SUCCESS)
 	    {

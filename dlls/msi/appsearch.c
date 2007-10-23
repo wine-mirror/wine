@@ -73,7 +73,7 @@ static void ACTION_VerStrToInteger(LPCWSTR verStr, PDWORD ms, PDWORD ls)
     *ls = x3 << 16 | x4;
 }
 
-/* Fills in sig with the the values from the Signature table, where name is the
+/* Fills in sig with the values from the Signature table, where name is the
  * signature to find.  Upon return, sig->File will be NULL if the record is not
  * found, and not NULL if it is found.
  * Warning: clears all fields in sig!

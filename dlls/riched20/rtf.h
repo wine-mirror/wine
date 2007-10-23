@@ -961,7 +961,7 @@ struct RTFFont
 
 
 /*
- * Color values are -1 if the default color for the the color
+ * Color values are -1 if the default color for the color
  * number should be used.  The default color is writer-dependent.
  */
 

@@ -52,7 +52,8 @@ dump other information from PE files; See the section 'Dumping' below.
 Usage
 -----
 Winedump is a command line tool. For the list of options and the basic usage
-see the the winedump(1) man page.
+see the winedump(1) man page.
+
 
 Spec mode: Generating stub DLLs
 -------------------------------

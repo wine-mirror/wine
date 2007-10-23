@@ -90,7 +90,7 @@ DOSASPI_PostProc( SRB_ExecSCSICmd *lpPRB )
 		ctx.Eip   = OFFSETOF(lpSRB16->cmd.SRB_PostProc);
 		/* DPMI_CallRMProc will push the pointer to the stack
 		 * it is given (in this case &ptrSRB) with length
-		 * 2*sizeof(WORD), that is, it copies the the contents
+		 * 2*sizeof(WORD), that is, it copies the contents
 		 * of ptrSRB onto the stack, and decs sp by 2*sizeof(WORD).
 		 * After doing that, it pushes the return address
 		 * onto the stack (so we don't need to worry about that)

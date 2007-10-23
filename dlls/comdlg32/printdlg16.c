@@ -327,7 +327,7 @@ static HGLOBAL16 PRINTDLG_GetDlgTemplate16(const PRINTDLG16 *lppd)
 /***********************************************************************
  *           PrintDlg   (COMMDLG.20)
  *
- *  Displays the the PRINT dialog box, which enables the user to specify
+ *  Displays the PRINT dialog box, which enables the user to specify
  *  specific properties of the print job.
  *
  * RETURNS

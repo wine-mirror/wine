@@ -1002,7 +1002,7 @@ static BOOL URLCache_CopyEntry(
  *           URLCache_SetEntryInfo (Internal)
  *
  *  Helper for SetUrlCacheEntryInfo{A,W}. Sets fields in URL entry
- * according the the flags set by dwFieldControl.
+ * according to the flags set by dwFieldControl.
  *
  * RETURNS
  *    TRUE if the buffer was big enough

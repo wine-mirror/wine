@@ -1987,7 +1987,7 @@ static BOOL PRINTDLG_CreateDCW(LPPRINTDLGW lppd)
 /***********************************************************************
  *           PrintDlgA   (COMDLG32.@)
  *
- *  Displays the the PRINT dialog box, which enables the user to specify
+ *  Displays the PRINT dialog box, which enables the user to specify
  *  specific properties of the print job.
  *  
  * PARAMS
@@ -3359,7 +3359,7 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *            PageSetupDlgA  (COMDLG32.@)
  *
- *  Displays the the PAGE SETUP dialog box, which enables the user to specify
+ *  Displays the PAGE SETUP dialog box, which enables the user to specify
  *  specific properties of a printed page such as
  *  size, source, orientation and the width of the page margins.
  *
@@ -3584,7 +3584,7 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lpPrintDlgExA)
 /***********************************************************************
  *	PrintDlgExW (COMDLG32.@)
  *
- * Display the the PRINT dialog box, which enables the user to specify
+ * Displays the PRINT dialog box, which enables the user to specify
  * specific properties of the print job.  The property sheet can also have
  * additional application-specific and driver-specific property pages.
  *  

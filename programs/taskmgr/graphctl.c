@@ -323,8 +323,8 @@ void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
             (m_rectPlot.bottom+m_rectPlot.top)/2, m_strYUnitsString, _tcslen(m_strYUnitsString));
     SelectObject(m_dcGrid, oldFont);
 #endif
-    /*  at this point we are done filling the the grid bitmap,  */
-    /*  no more drawing to this bitmap is needed until the setting are changed */
+    /*  at this point we are done filling the grid bitmap,  */
+    /*  no more drawing to this bitmap is needed until the settings are changed */
   
     /*  if we don't have one yet, set up a memory dc for the plot */
     if (this->m_dcPlot == NULL) 

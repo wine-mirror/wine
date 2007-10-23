@@ -791,7 +791,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
                                   iTrailing, X);
 
         /*
-         * Cleanup the the SSA for the next round of tests
+         * Cleanup the SSA for the next round of tests
          */
         hr = ScriptStringFree(&ssa);
         ok(hr == S_OK, "ScriptStringFree should return S_OK not %08x\n", hr);
