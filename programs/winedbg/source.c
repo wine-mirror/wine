@@ -70,9 +70,9 @@ void source_add_path(const char* path)
     size = strlen(path) + 1;
     if (search_path)
     {
-        unsigned pos = HeapSize(GetProcessHeap(), 0, search_path);
+        unsigned pos = strlen(search_path) + 1;
         new = HeapReAlloc(GetProcessHeap(), 0, search_path, pos + size);
-        if (!new || !pos) return;
+        if (!new) return;
         new[pos - 1] = ';';
         strcpy(&new[pos], path);
     }
