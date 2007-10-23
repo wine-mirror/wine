@@ -108,6 +108,18 @@ static void D3DXColorTest(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXColorScale(NULL,NULL,scale);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXColorSubtract_______________*/
+    expected.r = -0.1f; expected.g = 0.25f; expected.b = -0.35f, expected.a = 0.82f;
+    D3DXColorSubtract(&got,&color,&color2);
+    expect_color(expected,got);
+    /* Test the NULL case */
+    funcpointer = D3DXColorSubtract(&got,NULL,&color2);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXColorSubtract(NULL,NULL,&color2);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXColorSubtract(NULL,NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 }
 
 static void D3DXPlaneTest(void)
