@@ -318,7 +318,32 @@ static inline D3DXVECTOR4* D3DXVec4Subtract(D3DXVECTOR4 *pout, CONST D3DXVECTOR4
     return pout;
 }
 
-/*__________________D3DXQUATERNION____________________*/
+/*__________________D3DXMatrix____________________*/
+
+static inline D3DXMATRIX* D3DXMatrixIdentity(D3DXMATRIX *pout )
+{
+    if ( !pout ) return NULL;
+    pout->m[0][1] = 0.0f;
+    pout->m[0][2] = 0.0f;
+    pout->m[0][3] = 0.0f;
+    pout->m[1][0] = 0.0f;
+    pout->m[1][2] = 0.0f;
+    pout->m[1][3] = 0.0f;
+    pout->m[2][0] = 0.0f;
+    pout->m[2][1] = 0.0f;
+    pout->m[2][3] = 0.0f;
+    pout->m[3][0] = 0.0f;
+    pout->m[3][1] = 0.0f;
+    pout->m[3][2] = 0.0f;
+    pout->m[0][0] = 1.0f;
+    pout->m[1][1] = 1.0f;
+    pout->m[2][2] = 1.0f;
+    pout->m[3][3] = 1.0f;
+    return pout;
+}
+
+
+/*__________________D3DXPLANE____________________*/
 
 static inline FLOAT D3DXPlaneDot(CONST D3DXPLANE *pp, CONST D3DXVECTOR4 *pv)
 {
