@@ -34,15 +34,16 @@
 
 static void D3DXColorTest(void)
 {
-    D3DXCOLOR color, color1, expected, got;
+    D3DXCOLOR color, color1, color2, expected, got;
     LPD3DXCOLOR funcpointer;
     FLOAT scale;
 
     color.r = 0.2f; color.g = 0.75f; color.b = 0.41f; color.a = 0.93f;
+    color1.r = 0.6f; color1.g = 0.55f; color1.b = 0.23f; color1.a = 0.82f;
+    color2.r = 0.3f; color2.g = 0.5f; color2.b = 0.76f; color2.a = 0.11f;
     scale = 0.3f;
 
 /*_______________D3DXColorLerp________________*/
-    color1.r = 0.6f; color1.g = 0.55f; color1.b = 0.23f; color1.a = 0.82f;
     expected.r = 0.32f; expected.g = 0.69f; expected.b = 0.356f; expected.a = 0.897f;
     D3DXColorLerp(&got,&color,&color1,scale);
     expect_color(expected,got);
@@ -52,6 +53,18 @@ static void D3DXColorTest(void)
     funcpointer = D3DXColorLerp(NULL,NULL,&color1,scale);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXColorLerp(NULL,NULL,NULL,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXColorModulate________________*/
+    expected.r = 0.18f; expected.g = 0.275f; expected.b = 0.1748f; expected.a = 0.0902f;
+    D3DXColorModulate(&got,&color1,&color2);
+    expect_color(expected,got);
+    /* Test the NULL case */
+    funcpointer = D3DXColorModulate(&got,NULL,&color2);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXColorModulate(NULL,NULL,&color2);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXColorModulate(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
 /*_______________D3DXColorNegative________________*/

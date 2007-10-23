@@ -31,6 +31,16 @@ static inline D3DXCOLOR* D3DXColorLerp(D3DXCOLOR *pout, CONST D3DXCOLOR *pc1, CO
     return pout;
 }
 
+static inline D3DXCOLOR* D3DXColorModulate(D3DXCOLOR *pout, CONST D3DXCOLOR *pc1, CONST D3DXCOLOR *pc2)
+{
+    if ( !pout || !pc1 || !pc2 ) return NULL;
+    pout->r = (pc1->r) * (pc2->r);
+    pout->g = (pc1->g) * (pc2->g);
+    pout->b = (pc1->b) * (pc2->b);
+    pout->a = (pc1->a) * (pc2->a);
+    return pout;
+}
+
 static inline D3DXCOLOR* D3DXColorNegative(D3DXCOLOR *pout, CONST D3DXCOLOR *pc)
 {
     if ( !pout || !pc ) return NULL;
