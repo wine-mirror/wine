@@ -1087,7 +1087,7 @@ BOOL BIDI_Reorder(
     i = done = 0;
     while (done < uCount)
     {
-        unsigned j, lastgood;
+        unsigned j;
         classify(lpOutString + done, chartype, uCount - done);
         /* limit text to first block */
         i = resolveParagraphs(chartype, uCount - done);
@@ -1140,7 +1140,7 @@ BOOL BIDI_Reorder(
 
         if (lpOrder)
         {
-            unsigned k;
+            int k, lastgood;
             for (j = lastgood = 0; j < i; ++j)
                 if (levels[j] != levels[lastgood])
                 {
