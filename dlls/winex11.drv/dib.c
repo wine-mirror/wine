@@ -614,7 +614,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                 dstval=0;
                 for (x=0; x<width; x++) {
                     PALETTEENTRY srcval;
-                    srcval=srccolors[(int)*srcpixel++];
+                    srcval=srccolors[*srcpixel++];
                     dstval|=(X11DRV_DIB_GetNearestIndex
                              (colors, 2,
                               srcval.peRed,
@@ -998,7 +998,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                 dstval=0;
                 for (x=0; x<width; x++) {
                     PALETTEENTRY srcval;
-                    srcval = srccolors[(int)*srcpixel++];
+                    srcval = srccolors[*srcpixel++];
                     dstval|=(X11DRV_DIB_GetNearestIndex
                              (colors, 16,
                               srcval.peRed,
@@ -1577,7 +1577,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                dstbyte=dstbits;
                for (x = 0; x < width; x++) {
                    PALETTEENTRY srcval;
-                   srcval=srccolors[(int)*srcpixel++];
+                   srcval=srccolors[*srcpixel++];
                    *dstbyte++=X11DRV_DIB_GetNearestIndex(colors, 256,
                                                          srcval.peRed,
                                                          srcval.peGreen,
@@ -2418,7 +2418,7 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
                 for (x = 0; x < width; x++) {
                     PALETTEENTRY srcval;
                     DWORD dstval;
-                    srcval=srccolors[(int)*srcpixel++];
+                    srcval=srccolors[*srcpixel++];
                     dstval=((srcval.peRed   << rShift) & rDst) |
                            ((srcval.peGreen << gShift) & gDst) |
                            ((srcval.peBlue  << bShift) & bDst);
@@ -2815,7 +2815,7 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
                 dstbyte=dstbits;
                 for (x = 0; x < width; x++ ) {
                     PALETTEENTRY srcval;
-                    srcval=srccolors[(int)*srcpixel++];
+                    srcval=srccolors[*srcpixel++];
                     dstbyte[0]=srcval.peBlue;
                     dstbyte[1]=srcval.peGreen;
                     dstbyte[2]=srcval.peRed;
@@ -3400,7 +3400,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
                 dstpixel=(DWORD*)dstbits;
                 for (x = 0; x < width; x++) {
                     PALETTEENTRY srcval;
-                    srcval=srccolors[(int)*srcpixel++];
+                    srcval=srccolors[*srcpixel++];
                     *dstpixel++=(srcval.peRed   << rShift) |
                                 (srcval.peGreen << gShift) |
                                 (srcval.peBlue  << bShift);
