@@ -19,6 +19,18 @@
 #ifndef __D3DX8MATH_INL__
 #define __D3DX8MATH_INL__
 
+/*_______________D3DXCOLOR_____________________*/
+
+static inline D3DXCOLOR* D3DXColorLerp(D3DXCOLOR *pout, CONST D3DXCOLOR *pc1, CONST D3DXCOLOR *pc2, FLOAT s)
+{
+    if ( !pout || !pc1 || !pc2 ) return NULL;
+    pout->r = (1-s) * (pc1->r) + s *(pc2->r);
+    pout->g = (1-s) * (pc1->g) + s *(pc2->g);
+    pout->b = (1-s) * (pc1->b) + s *(pc2->b);
+    pout->a = (1-s) * (pc1->a) + s *(pc2->a);
+    return pout;
+}
+
 static inline D3DXCOLOR* D3DXColorNegative(D3DXCOLOR *pout, CONST D3DXCOLOR *pc)
 {
     if ( !pout || !pc ) return NULL;

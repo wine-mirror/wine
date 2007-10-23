@@ -36,8 +36,23 @@ static void D3DXColorTest(void)
 {
     D3DXCOLOR color, color1, expected, got;
     LPD3DXCOLOR funcpointer;
+    FLOAT scale;
 
     color.r = 0.2f; color.g = 0.75f; color.b = 0.41f; color.a = 0.93f;
+    scale = 0.3f;
+
+/*_______________D3DXColorLerp________________*/
+    color1.r = 0.6f; color1.g = 0.55f; color1.b = 0.23f; color1.a = 0.82f;
+    expected.r = 0.32f; expected.g = 0.69f; expected.b = 0.356f; expected.a = 0.897f;
+    D3DXColorLerp(&got,&color,&color1,scale);
+    expect_color(expected,got);
+    /* Test the NULL case */
+    funcpointer = D3DXColorLerp(&got,NULL,&color1,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXColorLerp(NULL,NULL,&color1,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXColorLerp(NULL,NULL,NULL,scale);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
 /*_______________D3DXColorNegative________________*/
     expected.r = 0.8f; expected.g = 0.25f; expected.b = 0.59f; expected.a = 0.93f;
