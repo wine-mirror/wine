@@ -20,6 +20,8 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
+#define CERT_CHAIN_PARA_HAS_EXTRA_FIELDS
+#define CERT_REVOCATION_PARA_HAS_EXTRA_FIELDS
 #include "wincrypt.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -775,7 +777,6 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
          CERT_TRUST_IS_SELF_SIGNED | CERT_TRUST_HAS_NAME_MATCH_ISSUER;
         CRYPT_CheckRootCert(engine->hRoot, rootElement);
     }
-    /* FIXME: check revocation of every cert with CertVerifyRevocation */
     CRYPT_CombineTrustStatus(&chain->TrustStatus, &rootElement->TrustStatus);
 }
 
@@ -1307,19 +1308,123 @@ static BOOL CRYPT_AddAlternateChainToChain(PCertificateChain chain,
     return ret;
 }
 
+static PCERT_CHAIN_ELEMENT CRYPT_FindIthElementInChain(
+ PCERT_CHAIN_CONTEXT chain, DWORD i)
+{
+    DWORD j, iElement;
+    PCERT_CHAIN_ELEMENT element = NULL;
+
+    for (j = 0, iElement = 0; !element && j < chain->cChain; j++)
+    {
+        if (iElement + chain->rgpChain[j]->cElement < i)
+            iElement += chain->rgpChain[j]->cElement;
+        else
+            element = chain->rgpChain[j]->rgpElement[i - iElement];
+    }
+    return element;
+}
+
 typedef struct _CERT_CHAIN_PARA_NO_EXTRA_FIELDS {
     DWORD            cbSize;
     CERT_USAGE_MATCH RequestedUsage;
 } CERT_CHAIN_PARA_NO_EXTRA_FIELDS, *PCERT_CHAIN_PARA_NO_EXTRA_FIELDS;
 
-typedef struct _CERT_CHAIN_PARA_EXTRA_FIELDS {
-    DWORD            cbSize;
-    CERT_USAGE_MATCH RequestedUsage;
-    CERT_USAGE_MATCH RequestedIssuancePolicy;
-    DWORD            dwUrlRetrievalTimeout;
-    BOOL             fCheckRevocationFreshnessTime;
-    DWORD            dwRevocationFreshnessTime;
-} CERT_CHAIN_PARA_EXTRA_FIELDS, *PCERT_CHAIN_PARA_EXTRA_FIELDS;
+static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
+ LPFILETIME pTime, PCERT_CHAIN_PARA pChainPara, DWORD chainFlags)
+{
+    DWORD cContext;
+
+    if (chainFlags & CERT_CHAIN_REVOCATION_CHECK_END_CERT)
+        cContext = 1;
+    else if ((chainFlags & CERT_CHAIN_REVOCATION_CHECK_CHAIN) ||
+     (chainFlags & CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT))
+    {
+        DWORD i;
+
+        for (i = 0, cContext = 0; i < chain->cChain; i++)
+        {
+            if (i < chain->cChain - 1 ||
+             chainFlags & CERT_CHAIN_REVOCATION_CHECK_CHAIN)
+                cContext += chain->rgpChain[i]->cElement;
+            else
+                cContext += chain->rgpChain[i]->cElement - 1;
+        }
+    }
+    else
+        cContext = 0;
+    if (cContext)
+    {
+        PCCERT_CONTEXT *contexts =
+         CryptMemAlloc(cContext * sizeof(PCCERT_CONTEXT *));
+
+        if (contexts)
+        {
+            DWORD i, j, iContext, revocationFlags;
+            CERT_REVOCATION_PARA revocationPara = { sizeof(revocationPara), 0 };
+            CERT_REVOCATION_STATUS revocationStatus =
+             { sizeof(revocationStatus), 0 };
+            BOOL ret;
+
+            for (i = 0, iContext = 0; iContext < cContext && i < chain->cChain;
+             i++)
+            {
+                for (j = 0; iContext < cContext &&
+                 j < chain->rgpChain[i]->cElement; j++)
+                    contexts[iContext++] =
+                     chain->rgpChain[i]->rgpElement[j]->pCertContext;
+            }
+            revocationFlags = CERT_VERIFY_REV_CHAIN_FLAG;
+            if (chainFlags & CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY)
+                revocationFlags |= CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION;
+            if (chainFlags & CERT_CHAIN_REVOCATION_ACCUMULATIVE_TIMEOUT)
+                revocationFlags |= CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG;
+            revocationPara.pftTimeToUse = pTime;
+            if (pChainPara->cbSize == sizeof(CERT_CHAIN_PARA))
+            {
+                revocationPara.dwUrlRetrievalTimeout =
+                 pChainPara->dwUrlRetrievalTimeout;
+                revocationPara.fCheckFreshnessTime =
+                 pChainPara->fCheckRevocationFreshnessTime;
+                revocationPara.dwFreshnessTime =
+                 pChainPara->dwRevocationFreshnessTime;
+            }
+            ret = CertVerifyRevocation(X509_ASN_ENCODING,
+             CERT_CONTEXT_REVOCATION_TYPE, cContext, (void **)contexts,
+             revocationFlags, &revocationPara, &revocationStatus);
+            if (!ret)
+            {
+                PCERT_CHAIN_ELEMENT element =
+                 CRYPT_FindIthElementInChain(chain, revocationStatus.dwIndex);
+                DWORD error;
+
+                switch (revocationStatus.dwError)
+                {
+                case CRYPT_E_NO_REVOCATION_CHECK:
+                case CRYPT_E_NO_REVOCATION_DLL:
+                case CRYPT_E_NOT_IN_REVOCATION_DATABASE:
+                    error = CERT_TRUST_REVOCATION_STATUS_UNKNOWN;
+                    break;
+                case CRYPT_E_REVOCATION_OFFLINE:
+                    error = CERT_TRUST_IS_OFFLINE_REVOCATION;
+                    break;
+                case CRYPT_E_REVOKED:
+                    error = CERT_TRUST_IS_REVOKED;
+                    break;
+                default:
+                    WARN("unmapped error %08x\n", revocationStatus.dwError);
+                    error = 0;
+                }
+                if (element)
+                {
+                    /* FIXME: set element's pRevocationInfo member */
+                    element->TrustStatus.dwErrorStatus |= error;
+                }
+                chain->TrustStatus.dwErrorStatus |= error;
+            }
+            CryptMemFree(contexts);
+        }
+    }
+}
 
 BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
  PCCERT_CONTEXT pCertContext, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
@@ -1344,15 +1449,21 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
+    if (pChainPara->cbSize != sizeof(CERT_CHAIN_PARA_NO_EXTRA_FIELDS) &&
+     pChainPara->cbSize != sizeof(CERT_CHAIN_PARA))
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
     if (!hChainEngine)
         hChainEngine = CRYPT_GetDefaultChainEngine();
     /* FIXME: what about HCCE_LOCAL_MACHINE? */
-    /* FIXME: pChainPara is for now ignored */
     ret = CRYPT_BuildCandidateChainFromCert(hChainEngine, pCertContext, pTime,
      hAdditionalStore, &chain);
     if (ret)
     {
         PCertificateChain alternate = NULL;
+        PCERT_CHAIN_CONTEXT pChain;
 
         do {
             alternate = CRYPT_BuildAlternateContextFromChain(hChainEngine,
@@ -1368,10 +1479,12 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         chain = CRYPT_ChooseHighestQualityChain(chain);
         if (!(dwFlags & CERT_CHAIN_RETURN_LOWER_QUALITY_CONTEXTS))
             CRYPT_FreeLowerQualityChains(chain);
+        pChain = (PCERT_CHAIN_CONTEXT)chain;
+        CRYPT_VerifyChainRevocation(pChain, pTime, pChainPara, dwFlags);
         if (ppChainContext)
-            *ppChainContext = (PCCERT_CHAIN_CONTEXT)chain;
+            *ppChainContext = pChain;
         else
-            CertFreeCertificateChain((PCCERT_CHAIN_CONTEXT)chain);
+            CertFreeCertificateChain(pChain);
     }
     TRACE("returning %d\n", ret);
     return ret;
