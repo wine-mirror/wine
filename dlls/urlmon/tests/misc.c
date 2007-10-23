@@ -345,6 +345,7 @@ static void test_CoInternetCompareUrl(void)
 
 static const WCHAR mimeTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 static const WCHAR mimeTextPlain[] = {'t','e','x','t','/','p','l','a','i','n',0};
+static const WCHAR mimeTextRichtext[] = {'t','e','x','t','/','r','i','c','h','t','e','x','t',0};
 static const WCHAR mimeAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
     'o','c','t','e','t','-','s','t','r','e','a','m',0};
 static const WCHAR mimeImagePjpeg[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
@@ -449,6 +450,10 @@ static BYTE data67[] = {0x25,0x50,0x44,0x46,'x','<','h','t','m','l','>'};
 static BYTE data68[] = {'M','Z','x'};
 static BYTE data69[] = {'M','Z'};
 static BYTE data70[] = {'M','Z','<','h','t','m','l','>',0xff};
+static BYTE data71[] = {'{','\\','r','t','f',0};
+static BYTE data72[] = {'{','\\','r','t','f'};
+static BYTE data73[] = {' ','{','\\','r','t','f',' '};
+static BYTE data74[] = {'{','\\','r','t','f','<','h','t','m','l','>',' '};
 
 static const struct {
     BYTE *data;
@@ -524,7 +529,11 @@ static const struct {
     {data67, sizeof(data67), mimeTextHtml},
     {data68, sizeof(data68), mimeAppXMSDownload},
     {data69, sizeof(data69), mimeTextPlain},
-    {data70, sizeof(data70), mimeTextHtml}
+    {data70, sizeof(data70), mimeTextHtml},
+    {data71, sizeof(data71), mimeTextRichtext},
+    {data72, sizeof(data72), mimeTextPlain},
+    {data73, sizeof(data73), mimeTextPlain},
+    {data74, sizeof(data74), mimeTextHtml}
 };
 
 static void test_FindMimeFromData(void)

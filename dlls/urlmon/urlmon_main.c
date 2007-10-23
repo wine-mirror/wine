@@ -408,6 +408,10 @@ void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
     pbindinfo->cbSize = size;
 }
 
+static BOOL text_richtext_filter(const BYTE *b, DWORD size)
+{
+    return size > 5 && !memcmp(b, "{\\rtf", 5);
+}
 
 static BOOL text_html_filter(const BYTE *b, DWORD size)
 {
@@ -559,6 +563,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         int i;
 
         static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
+        static const WCHAR wszTextRichtext[] = {'t','e','x','t','/','r','i','c','h','t','e','x','t',0};
         static const WCHAR wszImageGif[] = {'i','m','a','g','e','/','g','i','f',0};
         static const WCHAR wszImagePjpeg[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
         static const WCHAR wszImageTiff[] = {'i','m','a','g','e','/','t','i','f','f',0};
@@ -585,6 +590,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
             BOOL (*filter)(const BYTE *,DWORD);
         } mime_filters[] = {
             {wszTextHtml,       text_html_filter},
+            {wszTextRichtext,   text_richtext_filter},
             {wszImageGif,       image_gif_filter},
             {wszImagePjpeg,     image_pjpeg_filter},
             {wszImageTiff,      image_tiff_filter},
