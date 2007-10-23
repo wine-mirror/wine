@@ -2587,27 +2587,21 @@ static void testVerifyRevocation(void)
      */
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(0, 0, 0, NULL, 0, NULL, &status);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     status.cbSize = sizeof(status);
     ret = CertVerifyRevocation(0, 0, 0, NULL, 0, NULL, &status);
-    todo_wine
     ok(ret, "CertVerifyRevocation failed: %08x\n", GetLastError());
     ret = CertVerifyRevocation(0, 2, 0, NULL, 0, NULL, &status);
-    todo_wine
     ok(ret, "CertVerifyRevocation failed: %08x\n", GetLastError());
     ret = CertVerifyRevocation(2, 0, 0, NULL, 0, NULL, &status);
-    todo_wine
     ok(ret, "CertVerifyRevocation failed: %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(0, 0, 1, (void **)&cert, 0, NULL, &status);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_DLL,
      "Expected CRYPT_E_NO_REVOCATION_DLL, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(0, 2, 1, (void **)&cert, 0, NULL, &status);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_DLL,
      "Expected CRYPT_E_NO_REVOCATION_DLL, got %08x\n", GetLastError());
 
