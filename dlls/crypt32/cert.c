@@ -1231,6 +1231,15 @@ PCCERT_CONTEXT WINAPI CertGetIssuerCertificateFromStore(HCERTSTORE hCertStore,
     return ret;
 }
 
+BOOL WINAPI CertVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
+ DWORD cContext, void *rgpvContext[], DWORD dwFlags,
+ PCERT_REVOCATION_PARA pRevPara, PCERT_REVOCATION_STATUS pRevStatus)
+{
+    FIXME("(%08x, %d, %d, %p, %08x, %p, %p): stub\n", dwEncodingType, dwRevType,
+     cContext, rgpvContext, dwFlags, pRevPara, pRevStatus);
+    return FALSE;
+}
+
 PCRYPT_ATTRIBUTE WINAPI CertFindAttribute(LPCSTR pszObjId, DWORD cAttr,
  CRYPT_ATTRIBUTE rgAttr[])
 {

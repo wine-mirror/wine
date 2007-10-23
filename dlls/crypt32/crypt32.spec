@@ -90,7 +90,7 @@
 @ stdcall CertVerifyCRLRevocation(long ptr long ptr)
 @ stdcall CertVerifyCRLTimeValidity(ptr ptr)
 @ stub CertVerifyCTLUsage
-@ stub CertVerifyRevocation
+@ stdcall CertVerifyRevocation(long long long ptr long ptr ptr)
 @ stdcall CertVerifySubjectCertificateContext(ptr ptr ptr)
 @ stdcall CertVerifyTimeValidity(ptr ptr)
 @ stdcall CertVerifyValidityNesting(ptr ptr)
