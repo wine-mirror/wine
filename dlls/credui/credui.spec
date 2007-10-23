@@ -7,10 +7,10 @@
 @ stdcall CredUIParseUserNameW(wstr ptr long ptr long)
 @ stub CredUIPromptForCredentialsA
 @ stdcall CredUIPromptForCredentialsW(ptr wstr ptr long ptr long ptr long ptr long)
-@ stub CredUIReadSSOCredA
-@ stub CredUIReadSSOCredW
-@ stub CredUIStoreSSOCredA
-@ stub CredUIStoreSSOCredW
+@ stdcall CredUIReadSSOCredA(str ptr)
+@ stdcall CredUIReadSSOCredW(wstr ptr)
+@ stdcall CredUIStoreSSOCredA(str str str long)
+@ stdcall CredUIStoreSSOCredW(wstr wstr wstr long)
 @ stub DllCanUnloadNow
 @ stub DllGetClassObject
 @ stub DllRegisterServer

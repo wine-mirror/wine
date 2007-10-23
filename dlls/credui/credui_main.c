@@ -249,3 +249,43 @@ DWORD WINAPI CredUIParseUserNameW(PCWSTR pszUserName, PWSTR pszUser,
 
     return ERROR_SUCCESS;
 }
+
+/******************************************************************************
+ *           CredUIStoreSSOCredA [CREDUI.@]
+ */
+DWORD WINAPI CredUIStoreSSOCredA(PCSTR a, PCSTR b, PCSTR c, BOOL f)
+{
+    FIXME("(%s, %s, %s, %d)\n", debugstr_a(a), debugstr_a(b), debugstr_a(c), f);
+    return 0;
+}
+
+/******************************************************************************
+ *           CredUIStoreSSOCredW [CREDUI.@]
+ */
+DWORD WINAPI CredUIStoreSSOCredW(PCWSTR a, PCWSTR b, PCWSTR c, BOOL f)
+{
+    FIXME("(%s, %s, %s, %d)\n", debugstr_w(a), debugstr_w(b), debugstr_w(c), f);
+    return 0;
+}
+
+/******************************************************************************
+ *           CredUIReadSSOCredA [CREDUI.@]
+ */
+DWORD WINAPI CredUIReadSSOCredA(PCSTR a, PSTR *b)
+{
+    FIXME("(%s, %p)\n", debugstr_a(a), b);
+    if (b)
+        *b = NULL;
+    return 0;
+}
+
+/******************************************************************************
+ *           CredUIReadSSOCredW [CREDUI.@]
+ */
+DWORD WINAPI CredUIReadSSOCredW(PCWSTR a, PWSTR *b)
+{
+    FIXME("(%s, %p)\n", debugstr_w(a), b);
+    if (b)
+        *b = NULL;
+    return 0;
+}
