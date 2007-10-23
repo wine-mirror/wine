@@ -258,6 +258,14 @@ static inline D3DXVECTOR4* D3DXVec4Subtract(D3DXVECTOR4 *pout, CONST D3DXVECTOR4
 
 /*__________________D3DXQUATERNION____________________*/
 
+static inline FLOAT D3DXPlaneDot( CONST D3DXPLANE *pp, CONST D3DXVECTOR4 *pv)
+{
+    if ( !pp || !pv ) return 0.0f;
+    return ( (pp->a) * (pv->x) + (pp->b) * (pv->y) + (pp->c) * (pv->z) + (pp->d) * (pv->w) );
+}
+
+/*__________________D3DXQUATERNION____________________*/
+
 static inline D3DXQUATERNION* D3DXQuaternionConjugate(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
 {
     if ( !pout || !pq) return NULL;

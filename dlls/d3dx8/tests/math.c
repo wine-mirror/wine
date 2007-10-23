@@ -30,6 +30,27 @@
 
 #define expect_vec4(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error)&&(fabs(expectedvec.z-gotvec.z)<admitted_error)&&(fabs(expectedvec.w-gotvec.w)<admitted_error),"Expected Vector= (%f, %f, %f, %f)\n , Got Vector= (%f, %f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, expectedvec.w, gotvec.x, gotvec.y, gotvec.z, gotvec.w);
 
+static void D3DXPlaneTest(void)
+{
+    D3DXPLANE plane;
+    D3DXVECTOR4 vec;
+    FLOAT expected, got;
+
+    plane.a = -3.0f; plane.b = -1.0f; plane.c = 4.0f; plane.d = 7.0f;
+    vec.x = 2.0f; vec.y = 5.0f; vec.z = -6.0f; vec.w = 11.0f;
+
+/*_______________D3DXPlaneDot________________*/
+    expected = 42.0f;
+    got = D3DXPlaneDot(&plane,&vec),
+    ok( expected == got, "Expected : %f, Got : %f\n",expected, got);
+    expected = 0.0f;
+    got = D3DXPlaneDot(NULL,&vec),
+    ok( expected == got, "Expected : %f, Got : %f\n",expected, got);
+    expected = 0.0f;
+    got = D3DXPlaneDot(NULL,NULL),
+    ok( expected == got, "Expected : %f, Got : %f\n",expected, got);
+}
+
 static void D3X8QuaternionTest(void)
 {
     D3DXQUATERNION expectedquat, gotquat, q, r, s;
@@ -430,6 +451,7 @@ static void D3X8Vector4Test(void)
 
 START_TEST(math)
 {
+    D3DXPlaneTest();
     D3X8QuaternionTest();
     D3X8Vector2Test();
     D3X8Vector3Test();
