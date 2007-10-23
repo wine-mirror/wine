@@ -270,6 +270,12 @@ static inline FLOAT D3DXPlaneDotCoord(CONST D3DXPLANE *pp, CONST D3DXVECTOR4 *pv
     return ( (pp->a) * (pv->x) + (pp->b) * (pv->y) + (pp->c) * (pv->z) + (pp->d) );
 }
 
+static inline FLOAT D3DXPlaneDotNormal(CONST D3DXPLANE *pp, CONST D3DXVECTOR4 *pv)
+{
+    if ( !pp || !pv ) return 0.0f;
+    return ( (pp->a) * (pv->x) + (pp->b) * (pv->y) + (pp->c) * (pv->z) );
+}
+
 /*__________________D3DXQUATERNION____________________*/
 
 static inline D3DXQUATERNION* D3DXQuaternionConjugate(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)

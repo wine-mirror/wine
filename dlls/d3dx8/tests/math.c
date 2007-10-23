@@ -60,6 +60,17 @@ static void D3DXPlaneTest(void)
     expected = 0.0f;
     got = D3DXPlaneDotCoord(NULL,NULL),
     ok( expected == got, "Expected : %f, Got : %f\n",expected, got);
+
+/*_______________D3DXPlaneDotNormal______________*/
+    expected = -35.0f;
+    got = D3DXPlaneDotNormal(&plane,&vec),
+    ok( expected == got, "Expected : %f, Got : %f\n",expected, got);
+    expected = 0.0f;
+    got = D3DXPlaneDotNormal(NULL,&vec),
+    ok( expected == got, "Expected : %f, Got : %f\n",expected, got);
+    expected = 0.0f;
+    got = D3DXPlaneDotNormal(NULL,NULL),
+    ok( expected == got, "Expected : %f, Got : %f\n",expected, got);
 }
 
 static void D3X8QuaternionTest(void)
