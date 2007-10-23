@@ -92,6 +92,7 @@ static void activate_gecko(NSContainer *This)
 
     nsIBaseWindow_SetVisibility(This->window, TRUE);
     nsIBaseWindow_SetEnabled(This->window, TRUE);
+    nsIWebBrowserFocus_Activate(This->focus);
 }
 
 void update_doc(HTMLDocument *This, DWORD flags)
