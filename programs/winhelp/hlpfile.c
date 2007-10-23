@@ -580,7 +580,11 @@ static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE
         if (!tmp) return FALSE;
         HLPFILE_UncompressLZ77(src, src + csz, tmp);
         dst = tmp2 = HeapAlloc(GetProcessHeap(), 0, sz);
-        if (!dst) return FALSE;
+        if (!dst)
+        {
+            HeapFree(GetProcessHeap(), 0, tmp);
+            return FALSE;
+        }
         HLPFILE_UncompressRLE(tmp, tmp + sz77, &tmp2, sz);
         if (tmp2 - dst != sz)
             WINE_WARN("Bogus gfx sizes (LZ77+RunLen): %u / %u\n", tmp2 - dst, sz);
