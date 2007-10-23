@@ -313,6 +313,9 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         msi_free(mi->disk_prompt);
         msi_free(mi->cabinet);
         msi_free(mi->volume_label);
+        mi->disk_prompt = NULL;
+        mi->cabinet = NULL;
+        mi->volume_label = NULL;
 
         mi->disk_id++;
         mi->is_continuous = TRUE;
