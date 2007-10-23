@@ -83,9 +83,9 @@ DWORD WINAPI SHCopyKeyA(HKEY,LPCSTR,HKEY,DWORD);
 DWORD WINAPI SHCopyKeyW(HKEY,LPCWSTR,HKEY,DWORD);
 #define SHCopyKey WINELIB_NAME_AW(SHCopyKey)
 
-/* Undocumented registry functions */
-
 HKEY WINAPI  SHRegDuplicateHKey(HKEY);
+
+/* Undocumented registry functions */
 
 DWORD WINAPI SHDeleteOrphanKeyA(HKEY,LPCSTR);
 DWORD WINAPI SHDeleteOrphanKeyW(HKEY,LPCWSTR);
