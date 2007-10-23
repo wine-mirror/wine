@@ -432,6 +432,13 @@ static BOOL text_html_filter(const BYTE *b, DWORD size)
     return FALSE;
 }
 
+static BOOL audio_wav_filter(const BYTE *b, DWORD size)
+{
+    return size > 12
+        && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
+        && b[8] == 'W' && b[9] == 'A' && b[10] == 'V' && b[11] == 'E';
+}
+
 static BOOL image_gif_filter(const BYTE *b, DWORD size)
 {
     return size >= 6
@@ -564,6 +571,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
 
         static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
         static const WCHAR wszTextRichtext[] = {'t','e','x','t','/','r','i','c','h','t','e','x','t',0};
+        static const WCHAR wszAudioWav[] = {'a','u','d','i','o','/','w','a','v',0};
         static const WCHAR wszImageGif[] = {'i','m','a','g','e','/','g','i','f',0};
         static const WCHAR wszImagePjpeg[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
         static const WCHAR wszImageTiff[] = {'i','m','a','g','e','/','t','i','f','f',0};
@@ -591,6 +599,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         } mime_filters[] = {
             {wszTextHtml,       text_html_filter},
             {wszTextRichtext,   text_richtext_filter},
+            {wszAudioWav,       audio_wav_filter},
             {wszImageGif,       image_gif_filter},
             {wszImagePjpeg,     image_pjpeg_filter},
             {wszImageTiff,      image_tiff_filter},
