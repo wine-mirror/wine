@@ -4358,9 +4358,9 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     }
 
     key = MSI_RecordGetString(row, 6);
-    msiobj_release(&row->hdr);
 
     file = get_loaded_file(package, key);
+    msiobj_release(&row->hdr);
     if (!file)
     {
         ERR("Failed to load the service file\n");
