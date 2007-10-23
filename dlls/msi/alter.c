@@ -145,13 +145,18 @@ static UINT alter_add_column(MSIALTERVIEW *av)
 static UINT ALTER_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIALTERVIEW *av = (MSIALTERVIEW*)view;
+    UINT ref;
 
     TRACE("%p %p\n", av, record);
 
     if (av->hold == 1)
         av->table->ops->add_ref(av->table);
     else if (av->hold == -1)
-        av->table->ops->release(av->table);
+    {
+        ref = av->table->ops->release(av->table);
+        if (ref == 0)
+            av->table = NULL;
+    }
 
     if (av->colinfo)
         return alter_add_column(av);
@@ -202,7 +207,8 @@ static UINT ALTER_delete( struct tagMSIVIEW *view )
     MSIALTERVIEW *av = (MSIALTERVIEW*)view;
 
     TRACE("%p\n", av );
-    av->table->ops->delete( av->table );
+    if (av->table)
+        av->table->ops->delete( av->table );
     msi_free( av );
 
     return ERROR_SUCCESS;
