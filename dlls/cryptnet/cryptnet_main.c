@@ -1326,6 +1326,13 @@ BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
     return ret;
 }
 
+typedef struct _OLD_CERT_REVOCATION_STATUS {
+    DWORD cbSize;
+    DWORD dwIndex;
+    DWORD dwError;
+    DWORD dwReason;
+} OLD_CERT_REVOCATION_STATUS, *POLD_CERT_REVOCATION_STATUS;
+
 /***********************************************************************
  *    CertDllVerifyRevocation (CRYPTNET.@)
  */
@@ -1333,7 +1340,118 @@ BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
  DWORD cContext, PVOID rgpvContext[], DWORD dwFlags,
  PCERT_REVOCATION_PARA pRevPara, PCERT_REVOCATION_STATUS pRevStatus)
 {
-   FIXME("(%08x, %d, %d, %p, %08x, %p, %p): stub\n", dwEncodingType, dwRevType,
-    cContext, rgpvContext, dwFlags, pRevPara, pRevStatus);
-   return FALSE;
+    DWORD error = 0, i;
+    BOOL ret;
+
+    TRACE("(%08x, %d, %d, %p, %08x, %p, %p)\n", dwEncodingType, dwRevType,
+     cContext, rgpvContext, dwFlags, pRevPara, pRevStatus);
+
+    if (pRevStatus->cbSize != sizeof(OLD_CERT_REVOCATION_STATUS) &&
+     pRevStatus->cbSize != sizeof(CERT_REVOCATION_STATUS))
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    memset(&pRevStatus->dwIndex, 0, pRevStatus->cbSize - sizeof(DWORD));
+    if (dwRevType != CERT_CONTEXT_REVOCATION_TYPE)
+    {
+        error = CRYPT_E_NO_REVOCATION_CHECK;
+        ret = FALSE;
+    }
+    else
+    {
+        ret = TRUE;
+        for (i = 0; ret && i < cContext; i++)
+        {
+            DWORD cbUrlArray;
+
+            ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
+             rgpvContext[i], 0, NULL, &cbUrlArray, NULL, NULL, NULL);
+            if (!ret && GetLastError() == CRYPT_E_NOT_FOUND)
+            {
+                error = CRYPT_E_NO_REVOCATION_CHECK;
+                pRevStatus->dwIndex = i;
+            }
+            else if (ret)
+            {
+                CRYPT_URL_ARRAY *urlArray = CryptMemAlloc(cbUrlArray);
+
+                if (urlArray)
+                {
+                    DWORD j, retrievalFlags = 0, startTime, endTime, timeout;
+
+                    ret = CryptGetObjectUrl(URL_OID_CERTIFICATE_CRL_DIST_POINT,
+                     rgpvContext[i], 0, urlArray, &cbUrlArray, NULL, NULL,
+                     NULL);
+                    if (dwFlags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
+                        retrievalFlags |= CRYPT_CACHE_ONLY_RETRIEVAL;
+                    if (dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG &&
+                     pRevPara->cbSize >= offsetof(CERT_REVOCATION_PARA,
+                     dwUrlRetrievalTimeout) + sizeof(DWORD))
+                    {
+                        startTime = GetTickCount();
+                        endTime = startTime + pRevPara->dwUrlRetrievalTimeout;
+                        timeout = pRevPara->dwUrlRetrievalTimeout;
+                    }
+                    else
+                        endTime = timeout = 0;
+                    for (j = 0; ret && j < urlArray->cUrl; j++)
+                    {
+                        PCCRL_CONTEXT crl;
+
+                        ret = CryptRetrieveObjectByUrlW(urlArray->rgwszUrl[j],
+                         CONTEXT_OID_CRL, retrievalFlags, timeout,
+                         (void **)&crl, NULL, NULL, NULL, NULL);
+                        if (ret)
+                        {
+                            PCRL_ENTRY entry = NULL;
+
+                            CertFindCertificateInCRL(
+                             (PCCERT_CONTEXT)rgpvContext[i], crl, 0, NULL,
+                             &entry);
+                            if (entry)
+                            {
+                                error = CRYPT_E_REVOKED;
+                                pRevStatus->dwIndex = i;
+                                ret = FALSE;
+                            }
+                            else if (timeout)
+                            {
+                                DWORD time = GetTickCount();
+
+                                if ((int)(endTime - time) <= 0)
+                                {
+                                    error = ERROR_TIMEOUT;
+                                    pRevStatus->dwIndex = i;
+                                    ret = FALSE;
+                                }
+                                else
+                                    timeout = endTime - time;
+                            }
+                            CertFreeCRLContext(crl);
+                        }
+                        else
+                            error = CRYPT_E_REVOCATION_OFFLINE;
+                    }
+                    CryptMemFree(urlArray);
+                }
+                else
+                {
+                    error = ERROR_OUTOFMEMORY;
+                    pRevStatus->dwIndex = i;
+                    ret = FALSE;
+                }
+            }
+            else
+                pRevStatus->dwIndex = i;
+        }
+    }
+
+    if (!ret)
+    {
+        SetLastError(error);
+        pRevStatus->dwError = error;
+    }
+    TRACE("returning %d (%08x)\n", ret, error);
+    return ret;
 }
