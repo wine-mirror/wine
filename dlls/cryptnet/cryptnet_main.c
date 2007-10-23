@@ -396,7 +396,6 @@ static BOOL CRYPT_GetObjectFromFile(HANDLE hFile, PCRYPT_BLOB_ARRAY pObject)
 }
 
 /* FIXME: should make wininet cache all downloads instead */
-/* FIXME: how do I know the cached object is up to date? */
 static BOOL CRYPT_GetObjectFromCache(LPCWSTR pszURL, PCRYPT_BLOB_ARRAY pObject,
  PCRYPT_RETRIEVE_AUX_INFO pAuxInfo)
 {
@@ -610,7 +609,7 @@ static BOOL CRYPT_DownloadObject(DWORD dwRetrievalFlags, HINTERNET hHttp,
 }
 
 static void CRYPT_CacheURL(LPCWSTR pszURL, PCRYPT_BLOB_ARRAY pObject,
- DWORD dwRetrievalFlags)
+ DWORD dwRetrievalFlags, FILETIME expires)
 {
     WCHAR cacheFileName[MAX_PATH];
 
@@ -633,7 +632,7 @@ static void CRYPT_CacheURL(LPCWSTR pszURL, PCRYPT_BLOB_ARRAY pObject,
             WriteFile(hCacheFile, pObject->rgBlob[0].pbData,
              pObject->rgBlob[0].cbData, &bytesWritten, NULL);
             CloseHandle(hCacheFile);
-            CommitUrlCacheEntryW(pszURL, cacheFileName, ft, ft, entryType,
+            CommitUrlCacheEntryW(pszURL, cacheFileName, expires, ft, entryType,
              NULL, 0, NULL, NULL);
         }
     }
@@ -820,7 +819,21 @@ static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
                         ret = CRYPT_DownloadObject(dwRetrievalFlags, hHttp,
                          context, pObject, pAuxInfo);
                     if (ret && !(dwRetrievalFlags & CRYPT_DONT_CACHE_RESULT))
-                        CRYPT_CacheURL(pszURL, pObject, dwRetrievalFlags);
+                    {
+                        SYSTEMTIME st;
+                        DWORD len = sizeof(st);
+
+                        if (HttpQueryInfoW(hHttp,
+                         HTTP_QUERY_EXPIRES | HTTP_QUERY_FLAG_SYSTEMTIME, &st,
+                         &len, NULL))
+                        {
+                            FILETIME ft;
+
+                            SystemTimeToFileTime(&st, &ft);
+                            CRYPT_CacheURL(pszURL, pObject, dwRetrievalFlags,
+                             ft);
+                        }
+                    }
                     InternetCloseHandle(hHttp);
                 }
                 InternetCloseHandle(hHost);
