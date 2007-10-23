@@ -2300,14 +2300,12 @@ static void test_acls(void)
     ok(ret, "InitializeAcl(ACL_REVISION3) failed with error %d\n", GetLastError());
 
     ret = IsValidAcl(pAcl);
-    todo_wine
     ok(ret, "IsValidAcl failed with error %d\n", GetLastError());
 
     ret = InitializeAcl(pAcl, sizeof(buffer), ACL_REVISION4);
     ok(ret, "InitializeAcl(ACL_REVISION4) failed with error %d\n", GetLastError());
 
     ret = IsValidAcl(pAcl);
-    todo_wine
     ok(ret, "IsValidAcl failed with error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);

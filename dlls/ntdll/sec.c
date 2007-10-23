@@ -1278,7 +1278,8 @@ BOOLEAN WINAPI RtlValidAcl(PACL pAcl)
 		PACE_HEADER	ace;
 		int		i;
 
-                if (pAcl->AclRevision != ACL_REVISION)
+                if (pAcl->AclRevision < MIN_ACL_REVISION ||
+                    pAcl->AclRevision > MAX_ACL_REVISION)
                     ret = FALSE;
                 else
                 {
