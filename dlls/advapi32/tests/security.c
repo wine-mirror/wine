@@ -1143,7 +1143,7 @@ static void test_CreateWellKnownSid()
         }
 
         cb = sizeof(sid_buffer);
-        ok(CreateWellKnownSid(i, value->without_domain ? NULL : domainsid, sid_buffer, &cb), "Couldn't create well known sid %d\n", i);
+        ok(pCreateWellKnownSid(i, value->without_domain ? NULL : domainsid, sid_buffer, &cb), "Couldn't create well known sid %d\n", i);
         expect_eq(GetSidLengthRequired(*GetSidSubAuthorityCount(sid_buffer)), cb, DWORD, "%d");
         ok(IsValidSid(sid_buffer), "The sid is not valid\n");
         ok(ConvertSidToStringSid(sid_buffer, &str), "Couldn't convert SID to string\n");
@@ -1155,7 +1155,7 @@ static void test_CreateWellKnownSid()
         {
             char buf2[SECURITY_MAX_SID_SIZE];
             cb = sizeof(buf2);
-            ok(CreateWellKnownSid(i, domainsid, buf2, &cb), "Couldn't create well known sid %d with optional domain\n", i);
+            ok(pCreateWellKnownSid(i, domainsid, buf2, &cb), "Couldn't create well known sid %d with optional domain\n", i);
             expect_eq(GetSidLengthRequired(*GetSidSubAuthorityCount(sid_buffer)), cb, DWORD, "%d");
             ok(memcmp(buf2, sid_buffer, cb) == 0, "SID create with domain is different than without (%d)\n", i);
         }
