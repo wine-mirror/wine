@@ -51,6 +51,16 @@ static inline D3DXCOLOR* D3DXColorNegative(D3DXCOLOR *pout, CONST D3DXCOLOR *pc)
     return pout;
 }
 
+static inline D3DXCOLOR* D3DXColorScale(D3DXCOLOR *pout, CONST D3DXCOLOR *pc, FLOAT s)
+{
+    if ( !pout || !pc ) return NULL;
+    pout->r = s* (pc->r);
+    pout->g = s* (pc->g);
+    pout->b = s* (pc->b);
+    pout->a = s* (pc->a);
+    return pout;
+}
+
 /*_______________D3DXVECTOR2________________________*/
 
 static inline D3DXVECTOR2* D3DXVec2Add(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
