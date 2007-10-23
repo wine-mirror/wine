@@ -785,6 +785,14 @@ static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
 
                 if (hHttp)
                 {
+                    if (dwTimeout)
+                    {
+                        InternetSetOptionW(hHttp,
+                         INTERNET_OPTION_RECEIVE_TIMEOUT, &dwTimeout,
+                         sizeof(dwTimeout));
+                        InternetSetOptionW(hHttp, INTERNET_OPTION_SEND_TIMEOUT,
+                         &dwTimeout, sizeof(dwTimeout));
+                    }
                     ret = HttpSendRequestExW(hHttp, NULL, NULL, 0,
                      (DWORD_PTR)context);
                     if (!ret && GetLastError() == ERROR_IO_PENDING)
@@ -795,14 +803,18 @@ static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
                         else
                             ret = TRUE;
                     }
-                    ret = HttpEndRequestW(hHttp, NULL, 0, (DWORD_PTR)context);
-                    if (!ret && GetLastError() == ERROR_IO_PENDING)
+                    /* We don't set ret to TRUE in this block to avoid masking
+                     * an error from HttpSendRequestExW.
+                     */
+                    if (!HttpEndRequestW(hHttp, NULL, 0, (DWORD_PTR)context) &&
+                     GetLastError() == ERROR_IO_PENDING)
                     {
                         if (WaitForSingleObject(context->event,
                          context->timeout) == WAIT_TIMEOUT)
+                        {
                             SetLastError(ERROR_TIMEOUT);
-                        else
-                            ret = TRUE;
+                            ret = FALSE;
+                        }
                     }
                     if (ret)
                         ret = CRYPT_DownloadObject(dwRetrievalFlags, hHttp,
