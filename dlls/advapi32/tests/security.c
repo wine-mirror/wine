@@ -2272,6 +2272,49 @@ static void test_PrivateObjectSecurity(void)
 #undef CHECK_RESULT_AND_FREE
 #undef CHECK_ONE_OF_AND_FREE
 
+static void test_acls(void)
+{
+    char buffer[256];
+    PACL pAcl = (PACL)buffer;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    ret = InitializeAcl(pAcl, sizeof(ACL) - 1, ACL_REVISION);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InitializeAcl with too small a buffer should have failed with ERROR_INSUFFICIENT_BUFFER instead of %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = InitializeAcl(pAcl, 0xffffffff, ACL_REVISION);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "InitializeAcl with too large a buffer should have failed with ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = InitializeAcl(pAcl, sizeof(buffer), ACL_REVISION1);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "InitializeAcl(ACL_REVISION1) should have failed with ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
+
+    ret = InitializeAcl(pAcl, sizeof(buffer), ACL_REVISION2);
+    ok(ret, "InitializeAcl(ACL_REVISION2) failed with error %d\n", GetLastError());
+
+    ret = IsValidAcl(pAcl);
+    ok(ret, "IsValidAcl failed with error %d\n", GetLastError());
+
+    ret = InitializeAcl(pAcl, sizeof(buffer), ACL_REVISION3);
+    ok(ret, "InitializeAcl(ACL_REVISION3) failed with error %d\n", GetLastError());
+
+    ret = IsValidAcl(pAcl);
+    todo_wine
+    ok(ret, "IsValidAcl failed with error %d\n", GetLastError());
+
+    ret = InitializeAcl(pAcl, sizeof(buffer), ACL_REVISION4);
+    ok(ret, "InitializeAcl(ACL_REVISION4) failed with error %d\n", GetLastError());
+
+    ret = IsValidAcl(pAcl);
+    todo_wine
+    ok(ret, "IsValidAcl failed with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = InitializeAcl(pAcl, sizeof(buffer), -1);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "InitializeAcl(-1) failed with error %d\n", GetLastError());
+}
+
 START_TEST(security)
 {
     init();
@@ -2299,4 +2342,5 @@ START_TEST(security)
     test_ConvertStringSecurityDescriptor();
     test_ConvertSecurityDescriptorToString();
     test_PrivateObjectSecurity();
+    test_acls();
 }
