@@ -362,6 +362,8 @@ static const WCHAR mimeImageXPng[] = {'i','m','a','g','e','/','x','-','p','n','g
 static const WCHAR mimeImageTiff[] = {'i','m','a','g','e','/','t','i','f','f',0};
 static const WCHAR mimeVideoAvi[] = {'v','i','d','e','o','/','a','v','i',0};
 static const WCHAR mimeVideoMpeg[] = {'v','i','d','e','o','/','m','p','e','g',0};
+static const WCHAR mimeAppPostscript[] =
+    {'a','p','p','l','i','c','a','t','i','o','n','/','p','o','s','t','s','c','r','i','p','t',0};
 static const WCHAR mimeAppXCompressed[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
                                     'x','-','c','o','m','p','r','e','s','s','e','d',0};
 static const WCHAR mimeAppXZip[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
@@ -466,6 +468,9 @@ static BYTE data75[] = {'R','I','F','F',0xff,0xff,0xff,0xff,'W','A','V','E',0xff
 static BYTE data76[] = {'R','I','F','F',0xff,0xff,0xff,0xff,'W','A','V','E'};
 static BYTE data77[] = {'R','I','F','F',0xff,0xff,0xff,0xff,'W','A','V',0xff,0xff};
 static BYTE data78[] = {'R','I','F','F',0xff,0xff,0xff,0xff,'<','h','t','m','l','>',0xff};
+static BYTE data79[] = {'%','!',0xff};
+static BYTE data80[] = {'%','!'};
+static BYTE data81[] = {'%','!','P','S','<','h','t','m','l','>'};
 
 static const struct {
     BYTE *data;
@@ -549,7 +554,10 @@ static const struct {
     {data75, sizeof(data75), mimeAudioWav},
     {data76, sizeof(data76), mimeTextPlain},
     {data77, sizeof(data77), mimeTextPlain},
-    {data78, sizeof(data78), mimeTextHtml}
+    {data78, sizeof(data78), mimeTextHtml},
+    {data79, sizeof(data79), mimeAppPostscript},
+    {data80, sizeof(data80), mimeTextPlain},
+    {data81, sizeof(data81), mimeTextHtml}
 };
 
 static void test_FindMimeFromData(void)
