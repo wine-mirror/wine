@@ -813,7 +813,7 @@
 @ stdcall RtlSetAllBits(ptr)
 # @ stub RtlSetAttributesSecurityDescriptor
 @ stdcall RtlSetBits(ptr long long)
-# @ stub RtlSetControlSecurityDescriptor
+@ stdcall RtlSetControlSecurityDescriptor(ptr long long)
 @ stdcall RtlSetCriticalSectionSpinCount(ptr long)
 @ stdcall RtlSetCurrentDirectory_U(ptr)
 @ stdcall RtlSetCurrentEnvironment(wstr ptr)

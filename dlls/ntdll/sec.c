@@ -1030,6 +1030,19 @@ NTSTATUS WINAPI RtlGetControlSecurityDescriptor(
     return STATUS_SUCCESS;
 }
 
+/******************************************************************************
+ * RtlSetControlSecurityDescriptor (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlSetControlSecurityDescriptor(
+    PSECURITY_DESCRIPTOR SecurityDescriptor,
+    SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
+    SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet)
+{
+    FIXME("(%p 0x%08x 0x%08x): stub\n", SecurityDescriptor, ControlBitsOfInterest,
+          ControlBitsToSet);
+    return STATUS_SUCCESS;
+}
+
 
 /**************************************************************************
  *                 RtlAbsoluteToSelfRelativeSD [NTDLL.@]

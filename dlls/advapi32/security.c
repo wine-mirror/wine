@@ -1363,6 +1363,17 @@ BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescri
     return set_ntstatus( RtlGetControlSecurityDescriptor(pSecurityDescriptor,pControl,lpdwRevision));
 }
 
+/******************************************************************************
+ * SetSecurityDescriptorControl			[ADVAPI32.@]
+ */
+BOOL WINAPI SetSecurityDescriptorControl( PSECURITY_DESCRIPTOR pSecurityDescriptor,
+  SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
+  SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet )
+{
+    return set_ntstatus( RtlSetControlSecurityDescriptor(
+        pSecurityDescriptor, ControlBitsOfInterest, ControlBitsToSet ) );
+}
+
 /*	##############################
 	######	ACL FUNCTIONS	######
 	##############################
@@ -3073,16 +3084,6 @@ BOOL WINAPI SetPrivateObjectSecurity( SECURITY_INFORMATION SecurityInformation,
 {
     FIXME("0x%08x %p %p %p %p - stub\n", SecurityInformation, ModificationDescriptor,
           ObjectsSecurityDescriptor, GenericMapping, Token);
-
-    return TRUE;
-}
-
-BOOL WINAPI SetSecurityDescriptorControl( PSECURITY_DESCRIPTOR pSecurityDescriptor,
-  SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
-  SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet )
-{
-    FIXME("%p 0x%08x 0x%08x - stub\n", pSecurityDescriptor, ControlBitsOfInterest,
-          ControlBitsToSet);
 
     return TRUE;
 }
