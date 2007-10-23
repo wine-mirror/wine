@@ -3400,6 +3400,8 @@ typedef struct _SID {
 #define MIN_ACL_REVISION ACL_REVISION2
 #define MAX_ACL_REVISION ACL_REVISION4
 
+#define ACL_REVISION 2
+
 typedef struct _ACL {
     BYTE AclRevision;
     BYTE Sbz1;
@@ -3892,11 +3894,6 @@ typedef struct _TOKEN_STATISTICS {
 /*
  *	ACLs of NT
  */
-
-#define	ACL_REVISION	2
-
-#define	ACL_REVISION1	1
-#define	ACL_REVISION2	2
 
 /* ACEs, directly starting after an ACL */
 typedef struct _ACE_HEADER {
