@@ -3,7 +3,7 @@
  * Korean Language Support
  *
  * Copyright (c) 1999 Eric Williams.
- * Copyright 2005 YunSong Hwang
+ * Copyright 2005,2007 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -283,9 +283,9 @@ BEGIN
   AUTORADIOBUTTON "세로(&P)", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
   AUTORADIOBUTTON "가로(&L)", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
   GROUPBOX "가장자리", grp4, 80, 156, 152, 56, BS_GROUPBOX
-  LTEXT "왼쪽(&E):", stc15, 88, 172, 21, 8
+  LTEXT "왼쪽(&E):", stc15, 85, 172, 24, 8
   EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "오른쪽(&R):", stc16, 159, 172, 27, 8
+  LTEXT "오른쪽(&R):", stc16, 155, 172, 31, 8
   EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
   LTEXT "위(&O):", stc17, 88, 192, 21, 8
   EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
