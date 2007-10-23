@@ -2575,6 +2575,45 @@ static void testVerifySubjectCert(void)
     CertFreeCertificateContext(context1);
 }
 
+static void testVerifyRevocation(void)
+{
+    BOOL ret;
+    CERT_REVOCATION_STATUS status = { 0 };
+    PCCERT_CONTEXT cert = CertCreateCertificateContext(X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert));
+
+    /* Crash
+    ret = CertVerifyRevocation(0, 0, 0, NULL, 0, NULL, NULL);
+     */
+    SetLastError(0xdeadbeef);
+    ret = CertVerifyRevocation(0, 0, 0, NULL, 0, NULL, &status);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    status.cbSize = sizeof(status);
+    ret = CertVerifyRevocation(0, 0, 0, NULL, 0, NULL, &status);
+    todo_wine
+    ok(ret, "CertVerifyRevocation failed: %08x\n", GetLastError());
+    ret = CertVerifyRevocation(0, 2, 0, NULL, 0, NULL, &status);
+    todo_wine
+    ok(ret, "CertVerifyRevocation failed: %08x\n", GetLastError());
+    ret = CertVerifyRevocation(2, 0, 0, NULL, 0, NULL, &status);
+    todo_wine
+    ok(ret, "CertVerifyRevocation failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CertVerifyRevocation(0, 0, 1, (void **)&cert, 0, NULL, &status);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_DLL,
+     "Expected CRYPT_E_NO_REVOCATION_DLL, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CertVerifyRevocation(0, 2, 1, (void **)&cert, 0, NULL, &status);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_DLL,
+     "Expected CRYPT_E_NO_REVOCATION_DLL, got %08x\n", GetLastError());
+
+    CertFreeCertificateContext(cert);
+}
+
 static BYTE privKey[] = {
  0x07, 0x02, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x52, 0x53, 0x41, 0x32, 0x00,
  0x02, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x79, 0x10, 0x1c, 0xd0, 0x6b, 0x10,
@@ -2921,6 +2960,7 @@ START_TEST(cert)
     testHashPublicKeyInfo();
     testCompareCert();
     testVerifySubjectCert();
+    testVerifyRevocation();
     testAcquireCertPrivateKey();
     testGetPublicKeyLength();
 }
