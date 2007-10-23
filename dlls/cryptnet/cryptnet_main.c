@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2006 Maarten Lankhorst
+ * Copyright 2007 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,8 +38,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
    switch (fdwReason) {
-      case DLL_WINE_PREATTACH:
-         return FALSE;  /* prefer native version */
       case DLL_PROCESS_ATTACH:
          DisableThreadLibraryCalls(hinstDLL);
          break;
