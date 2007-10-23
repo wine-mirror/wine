@@ -2736,7 +2736,7 @@ static void set_admin_property_stream(LPCSTR file)
     hr = IStorage_CreateStream(stg, stmname, STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
 
-    hr = IStream_Write(stm, data, sizeof(data) - 1, &count);
+    hr = IStream_Write(stm, data, sizeof(data), &count);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
 
     IStream_Release(stm);
