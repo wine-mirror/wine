@@ -1066,7 +1066,7 @@ NTSTATUS WINAPI RtlCreateAcl(PACL acl,DWORD size,DWORD rev)
 {
 	TRACE("%p 0x%08x 0x%08x\n", acl, size, rev);
 
-	if (rev!=ACL_REVISION)
+	if (rev < MIN_ACL_REVISION || rev > MAX_ACL_REVISION)
 		return STATUS_INVALID_PARAMETER;
 	if (size<sizeof(ACL))
 		return STATUS_BUFFER_TOO_SMALL;
