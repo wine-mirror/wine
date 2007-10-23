@@ -122,6 +122,33 @@ static void D3DXColorTest(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 }
 
+static void D3DXMatrixTest(void)
+{
+    D3DXMATRIX mat;
+    BOOL expected, got;
+
+/*____________D3DXMatrixIsIdentity______________*/
+    mat.m[0][1] = 0.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 0.0f; mat.m[1][3] = 0.0f;
+    mat.m[2][0] = 0.0f; mat.m[2][1] = 0.0f; mat.m[2][3] = 0.0f;
+    mat.m[3][0] = 0.0f; mat.m[3][1] = 0.0f; mat.m[3][2] = 0.0f;
+    mat.m[0][0] = 1.0f; mat.m[1][1] = 1.0f; mat.m[2][2] = 1.0f;
+    mat.m[3][3] = 1.0f;
+    expected = FALSE;
+    got = D3DXMatrixIsIdentity(&mat);
+    ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
+    D3DXMatrixIdentity(&mat);
+    expected = TRUE;
+    got = D3DXMatrixIsIdentity(&mat);
+    ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
+    /* Test the NULL case */
+    expected = FALSE;
+    got = D3DXMatrixIsIdentity(NULL);
+    ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
+}
+
+
+
 static void D3DXPlaneTest(void)
 {
     D3DXPLANE plane;
@@ -566,6 +593,7 @@ static void D3X8Vector4Test(void)
 START_TEST(math)
 {
     D3DXColorTest();
+    D3DXMatrixTest();
     D3DXPlaneTest();
     D3X8QuaternionTest();
     D3X8Vector2Test();

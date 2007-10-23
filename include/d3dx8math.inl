@@ -320,7 +320,7 @@ static inline D3DXVECTOR4* D3DXVec4Subtract(D3DXVECTOR4 *pout, CONST D3DXVECTOR4
 
 /*__________________D3DXMatrix____________________*/
 
-static inline D3DXMATRIX* D3DXMatrixIdentity(D3DXMATRIX *pout )
+static inline D3DXMATRIX* D3DXMatrixIdentity(D3DXMATRIX *pout)
 {
     if ( !pout ) return NULL;
     pout->m[0][1] = 0.0f;
@@ -342,6 +342,23 @@ static inline D3DXMATRIX* D3DXMatrixIdentity(D3DXMATRIX *pout )
     return pout;
 }
 
+static inline BOOL D3DXMatrixIsIdentity(D3DXMATRIX *pm)
+{
+    int i,j;
+    D3DXMATRIX testmatrix;
+    BOOL equal=TRUE;
+
+    if ( !pm ) return FALSE;
+    D3DXMatrixIdentity(&testmatrix);
+    for (i=0; i<4; i++)
+    {
+     for (j=0; j<4; j++)
+     {
+      if ( fabs(pm->m[i][j] - testmatrix.m[i][j]) > 0.0001 ) equal = FALSE;
+     }
+    }
+    return equal;
+}
 
 /*__________________D3DXPLANE____________________*/
 
