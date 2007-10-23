@@ -24,11 +24,41 @@
 
 #define admitted_error 0.00001f
 
+#define expect_color(expectedcolor,gotcolor) ok((fabs(expectedcolor.r-gotcolor.r)<admitted_error)&&(fabs(expectedcolor.g-gotcolor.g)<admitted_error)&&(fabs(expectedcolor.b-gotcolor.b)<admitted_error)&&(fabs(expectedcolor.a-gotcolor.a)<admitted_error),"Expected Color= (%f, %f, %f, %f)\n , Got Color= (%f, %f, %f, %f)\n", expectedcolor.r, expectedcolor.g, expectedcolor.b, expectedcolor.a, gotcolor.r, gotcolor.g, gotcolor.b, gotcolor.a);
+
 #define expect_vec(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error),"Expected Vector= (%f, %f)\n , Got Vector= (%f, %f)\n", expectedvec.x, expectedvec.y, gotvec.x, gotvec.y);
 
 #define expect_vec3(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error)&&(fabs(expectedvec.z-gotvec.z)<admitted_error),"Expected Vector= (%f, %f,%f)\n , Got Vector= (%f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, gotvec.x, gotvec.y, gotvec.z);
 
 #define expect_vec4(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error)&&(fabs(expectedvec.z-gotvec.z)<admitted_error)&&(fabs(expectedvec.w-gotvec.w)<admitted_error),"Expected Vector= (%f, %f, %f, %f)\n , Got Vector= (%f, %f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, expectedvec.w, gotvec.x, gotvec.y, gotvec.z, gotvec.w);
+
+static void D3DXColorTest(void)
+{
+    D3DXCOLOR color, color1, expected, got;
+    LPD3DXCOLOR funcpointer;
+
+    color.r = 0.2f; color.g = 0.75f; color.b = 0.41f; color.a = 0.93f;
+
+/*_______________D3DXColorNegative________________*/
+    expected.r = 0.8f; expected.g = 0.25f; expected.b = 0.59f; expected.a = 0.93f;
+    D3DXColorNegative(&got,&color);
+    expect_color(got,expected);
+    /* Test the greater than 1 case */
+    color1.r = 0.2f; color1.g = 1.75f; color1.b = 0.41f; color1.a = 0.93f;
+    expected.r = 0.8f; expected.g = -0.75f; expected.b = 0.59f; expected.a = 0.93f;
+    D3DXColorNegative(&got,&color1);
+    expect_color(got,expected);
+    /* Test the negative case */
+    color1.r = 0.2f; color1.g = -0.75f; color1.b = 0.41f; color1.a = 0.93f;
+    expected.r = 0.8f; expected.g = 1.75f; expected.b = 0.59f; expected.a = 0.93f;
+    D3DXColorNegative(&got,&color1);
+    expect_color(got,expected);
+    /* Test the NULL case */
+    funcpointer = D3DXColorNegative(&got,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    funcpointer = D3DXColorNegative(NULL,NULL);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+}
 
 static void D3DXPlaneTest(void)
 {
@@ -473,6 +503,7 @@ static void D3X8Vector4Test(void)
 
 START_TEST(math)
 {
+    D3DXColorTest();
     D3DXPlaneTest();
     D3X8QuaternionTest();
     D3X8Vector2Test();

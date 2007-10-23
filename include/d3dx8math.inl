@@ -19,6 +19,16 @@
 #ifndef __D3DX8MATH_INL__
 #define __D3DX8MATH_INL__
 
+static inline D3DXCOLOR* D3DXColorNegative(D3DXCOLOR *pout, CONST D3DXCOLOR *pc)
+{
+    if ( !pout || !pc ) return NULL;
+    pout->r = 1.0f - pc->r;
+    pout->g = 1.0f - pc->g;
+    pout->b = 1.0f - pc->b;
+    pout->a = pc->a;
+    return pout;
+}
+
 /*_______________D3DXVECTOR2________________________*/
 
 static inline D3DXVECTOR2* D3DXVec2Add(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
