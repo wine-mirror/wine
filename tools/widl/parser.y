@@ -423,7 +423,7 @@ m_attributes:					{ $$ = NULL; }
 attributes:
 	  '[' attrib_list ']'			{ $$ = $2;
 						  if (!$$)
-						    yyerror("empty attribute lists unsupported");
+						    error_loc("empty attribute lists unsupported\n");
 						}
 	;
 
@@ -513,7 +513,7 @@ attribute:					{ $$ = NULL; }
 uuid_string:
 	  aUUID
 	| aSTRING				{ if (!is_valid_uuid($1))
-						    yyerror("invalid UUID: %s", $1);
+						    error_loc("invalid UUID: %s\n", $1);
 						  $$ = parse_uuid($1); }
         ;
 
@@ -624,7 +624,7 @@ expr_list_const: expr_const                     { $$ = append_expr( NULL, $1 ); 
 
 expr_const: expr				{ $$ = $1;
 						  if (!$$->is_const)
-						      yyerror("expression is not constant");
+						      error_loc("expression is not constant\n");
 						}
 	;
 
@@ -658,7 +658,7 @@ funcdef:
 						  free($4);
 						  $$ = make_func(v, $6);
 						  if (is_attr(v->attrs, ATTR_IN)) {
-						    yyerror("inapplicable attribute [in] for function '%s'",$$->def->name);
+						    error_loc("inapplicable attribute [in] for function '%s'\n",$$->def->name);
 						  }
 						}
 	;
@@ -721,8 +721,8 @@ int_std:  tINT					{ $$ = make_builtin($<str>1); }
 
 coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
 	| tCOCLASS aKNOWNTYPE			{ $$ = find_type($2, 0);
-						  if ($$->defined) yyerror("multiple definition error");
-						  if ($$->kind != TKIND_COCLASS) yyerror("%s was not declared a coclass", $2);
+						  if ($$->defined) error_loc("multiple definition error\n");
+						  if ($$->kind != TKIND_COCLASS) error_loc("%s was not declared a coclass\n", $2);
 						}
 	;
 
@@ -755,11 +755,11 @@ dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(0, $2, 0); $$->kind = 
 
 dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
 						  $$ = $2;
-						  if ($$->defined) yyerror("multiple definition error");
+						  if ($$->defined) error_loc("multiple definition error\n");
 						  attrs = make_attr(ATTR_DISPINTERFACE);
 						  $$->attrs = append_attr( $1, attrs );
 						  $$->ref = find_type("IDispatch", 0);
-						  if (!$$->ref) yyerror("IDispatch is undefined");
+						  if (!$$->ref) error_loc("IDispatch is undefined\n");
 						  $$->defined = TRUE;
 						  if (!parse_only && do_header) write_forward($$);
 						}
@@ -803,7 +803,7 @@ interfacehdr: attributes interface		{ $$.interface = $2;
 						  $$.old_pointer_default = pointer_default;
 						  if (is_attr($1, ATTR_POINTERDEFAULT))
 						    pointer_default = get_attrv($1, ATTR_POINTERDEFAULT);
-						  if ($2->defined) yyerror("multiple definition error");
+						  if ($2->defined) error_loc("multiple definition error\n");
 						  $2->attrs = $1;
 						  $2->defined = TRUE;
 						  if (!parse_only && do_header) write_forward($2);
@@ -824,7 +824,7 @@ interfacedef: interfacehdr inherit
 	| interfacehdr ':' aIDENTIFIER
 	  '{' import int_statements '}'		{ $$ = $1.interface;
 						  $$->ref = find_type2($3, 0);
-						  if (!$$->ref) yyerror("base class '%s' not found in import", $3);
+						  if (!$$->ref) error_loc("base class '%s' not found in import\n", $3);
 						  $$->funcs = $6;
 						  compute_method_indexes($$);
 						  if (!parse_only && do_header) write_interface($$);
@@ -1584,7 +1584,7 @@ static type_t *reg_type(type_t *type, const char *name, int t)
   struct rtype *nt;
   int hash;
   if (!name) {
-    yyerror("registering named type without name");
+    error_loc("registering named type without name\n");
     return type;
   }
   hash = hash_ident(name);
@@ -1649,7 +1649,7 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
     if (c != RPC_FC_CHAR && c != RPC_FC_BYTE && c != RPC_FC_WCHAR)
     {
       pident = LIST_ENTRY( list_head( pidents ), const pident_t, entry );
-      yyerror("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays",
+      error_loc("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays\n",
               pident->var->name);
     }
   }
@@ -1691,11 +1691,11 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
         if (is_ptr(cur))
           cur->type = ptr_type;
         else
-          yyerror("'%s': pointer attribute applied to non-pointer type",
+          error_loc("'%s': pointer attribute applied to non-pointer type\n",
                   cur->name);
       }
       else if (is_str && ! is_ptr(cur))
-        yyerror("'%s': [string] attribute applied to non-pointer type",
+        error_loc("'%s': [string] attribute applied to non-pointer type\n",
                 cur->name);
 
       if (is_incomplete(cur))
@@ -1712,7 +1712,7 @@ static type_t *find_type(const char *name, int t)
   while (cur && (cur->t != t || strcmp(cur->name, name)))
     cur = cur->next;
   if (!cur) {
-    yyerror("type '%s' not found", name);
+    error_loc("type '%s' not found\n", name);
     return NULL;
   }
   return cur->type;
@@ -1816,7 +1816,7 @@ static int get_struct_type(var_list_t *fields)
         {
             has_conformance = 1;
             if (field->type->declarray && list_next(fields, &field->entry))
-                yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
+                error_loc("field '%s' deriving from a conformant array must be the last field in the structure\n",
                         field->name);
         }
         if (field->type->length_is)
@@ -1876,7 +1876,7 @@ static int get_struct_type(var_list_t *fields)
     case RPC_FC_CPSTRUCT:
       has_conformance = 1;
       if (list_next( fields, &field->entry ))
-          yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
+          error_loc("field '%s' deriving from a conformant array must be the last field in the structure\n",
                   field->name);
       has_pointer = 1;
       break;
@@ -1884,7 +1884,7 @@ static int get_struct_type(var_list_t *fields)
     case RPC_FC_CSTRUCT:
       has_conformance = 1;
       if (list_next( fields, &field->entry ))
-          yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
+          error_loc("field '%s' deriving from a conformant array must be the last field in the structure\n",
                   field->name);
       break;
 
@@ -1893,8 +1893,7 @@ static int get_struct_type(var_list_t *fields)
       break;
 
     default:
-      fprintf(stderr,"Unknown struct member %s with type (0x%02x)\n",
-              field->name, t->type);
+      error_loc("Unknown struct member %s with type (0x%02x)\n", field->name, t->type);
       /* fallthru - treat it as complex */
 
     /* as soon as we see one of these these members, it's bogus... */
@@ -1936,7 +1935,7 @@ static var_t *reg_const(var_t *var)
   struct rconst *nc;
   int hash;
   if (!var->name) {
-    yyerror("registering constant without name");
+    error_loc("registering constant without name\n");
     return var;
   }
   hash = hash_ident(var->name);
@@ -1954,7 +1953,7 @@ static var_t *find_const(char *name, int f)
   while (cur && strcmp(cur->name, name))
     cur = cur->next;
   if (!cur) {
-    if (f) yyerror("constant '%s' not found", name);
+    if (f) error_loc("constant '%s' not found\n", name);
     return NULL;
   }
   return cur->var;
@@ -2054,7 +2053,7 @@ static void check_arg(var_t *arg)
   type_t *t = arg->type;
 
   if (t->type == 0 && ! is_var_ptr(arg))
-    yyerror("argument '%s' has void type", arg->name);
+    error_loc("argument '%s' has void type\n", arg->name);
 }
 
 static void check_all_user_types(ifref_list_t *ifrefs)
