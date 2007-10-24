@@ -104,8 +104,8 @@
 @ stdcall CreateWellKnownSid(long ptr ptr ptr)
 # @ stub CredDeleteA
 # @ stub CredDeleteW
-# @ stub CredEnumerateA
-# @ stub CredEnumerateW
+@ stdcall CredEnumerateA(str long ptr ptr)
+@ stdcall CredEnumerateW(wstr long ptr ptr)
 # @ stub CredFree
 # @ stub CredGetSessionTypes
 # @ stub CredGetTargetInfoA
