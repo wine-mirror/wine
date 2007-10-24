@@ -378,39 +378,43 @@ DWORD WINAPI CredUIParseUserNameW(PCWSTR pszUserName, PWSTR pszUser,
 /******************************************************************************
  *           CredUIStoreSSOCredA [CREDUI.@]
  */
-DWORD WINAPI CredUIStoreSSOCredA(PCSTR a, PCSTR b, PCSTR c, BOOL f)
+DWORD WINAPI CredUIStoreSSOCredA(PCSTR pszRealm, PCSTR pszUsername,
+                                 PCSTR pszPassword, BOOL bPersist)
 {
-    FIXME("(%s, %s, %s, %d)\n", debugstr_a(a), debugstr_a(b), debugstr_a(c), f);
-    return 0;
+    FIXME("(%s, %s, %p, %d)\n", debugstr_a(pszRealm), debugstr_a(pszUsername),
+          pszPassword, bPersist);
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
  *           CredUIStoreSSOCredW [CREDUI.@]
  */
-DWORD WINAPI CredUIStoreSSOCredW(PCWSTR a, PCWSTR b, PCWSTR c, BOOL f)
+DWORD WINAPI CredUIStoreSSOCredW(PCWSTR pszRealm, PCWSTR pszUsername,
+                                 PCWSTR pszPassword, BOOL bPersist)
 {
-    FIXME("(%s, %s, %s, %d)\n", debugstr_w(a), debugstr_w(b), debugstr_w(c), f);
-    return 0;
+    FIXME("(%s, %s, %p, %d)\n", debugstr_w(pszRealm), debugstr_w(pszUsername),
+          pszPassword, bPersist);
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
  *           CredUIReadSSOCredA [CREDUI.@]
  */
-DWORD WINAPI CredUIReadSSOCredA(PCSTR a, PSTR *b)
+DWORD WINAPI CredUIReadSSOCredA(PCSTR pszRealm, PSTR *ppszUsername)
 {
-    FIXME("(%s, %p)\n", debugstr_a(a), b);
-    if (b)
-        *b = NULL;
-    return 0;
+    FIXME("(%s, %p)\n", debugstr_a(pszRealm), ppszUsername);
+    if (ppszUsername)
+        *ppszUsername = NULL;
+    return ERROR_NOT_FOUND;
 }
 
 /******************************************************************************
  *           CredUIReadSSOCredW [CREDUI.@]
  */
-DWORD WINAPI CredUIReadSSOCredW(PCWSTR a, PWSTR *b)
+DWORD WINAPI CredUIReadSSOCredW(PCWSTR pszRealm, PWSTR *ppszUsername)
 {
-    FIXME("(%s, %p)\n", debugstr_w(a), b);
-    if (b)
-        *b = NULL;
-    return 0;
+    FIXME("(%s, %p)\n", debugstr_w(pszRealm), ppszUsername);
+    if (ppszUsername)
+        *ppszUsername = NULL;
+    return ERROR_NOT_FOUND;
 }
