@@ -739,27 +739,6 @@ BOOL WINAPI GetStringType3ExW(LPWSTR lpszStr, DWORD dwLen, LPVOID p3)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.36]
- *
- * Insert a bitmap menu item at the bottom of a menu.
- *
- * PARAMS
- *  hMenu [I] Menu to insert into
- *  flags [I] Flags for insertion
- *  id    [I] Menu ID of the item
- *  str   [I] Menu text for the item
- *
- * RETURNS
- *  Success: TRUE,  the item is inserted into the menu
- *  Failure: FALSE, if any parameter is invalid
- */
-BOOL WINAPI AppendMenuWrapW(HMENU hMenu, UINT flags, UINT id, LPCWSTR str)
-{
-    TRACE("(%p,0x%08x,0x%08x,%s)\n",hMenu, flags, id, debugstr_w(str));
-    return InsertMenuW(hMenu, -1, flags | MF_BITMAP, id, str);
-}
-
-/*************************************************************************
  *      @   [SHLWAPI.138]
  *
  * Set the text of a given dialog item.

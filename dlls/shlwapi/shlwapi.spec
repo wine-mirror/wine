@@ -33,7 +33,7 @@
 33  stdcall -noname IsCharDigitW(long)
 34  stdcall -noname IsCharXDigitW(long)
 35  stdcall -noname GetStringType3ExW(ptr long ptr)
-36  stdcall -noname AppendMenuWrapW(long long long wstr)
+36  stdcall -noname AppendMenuWrapW(long long long wstr) user32.AppendMenuW
 37  stdcall @(ptr long long long long) user32.CallWindowProcW
 38  stdcall @(wstr) user32.CharLowerW
 39  stdcall @(wstr long) user32.CharLowerBuffW
@@ -423,8 +423,8 @@
 423 stdcall -noname _SHGlobalCounterCreateNamedW(wstr long)
 424 stdcall -noname _SHGlobalCounterDecrement(long)
 425 stdcall -noname DeleteMenuWrap(ptr long long)
-426 stub -noname DestroyMenuWrap
-427 stub -noname TrackPopupMenuWrap
+426 stdcall -noname DestroyMenuWrap(long) user32.DestroyMenu
+427 stdcall -noname TrackPopupMenuWrap(long long long long long long ptr) user32.TrackPopupMenu
 428 stdcall @(long long long long long ptr) user32.TrackPopupMenuEx
 429 stdcall -noname MLIsMLHInstance(long)
 430 stdcall -noname MLSetMLHInstance(long long)
