@@ -20,7 +20,11 @@
 
 #ifndef RPC_NO_WINDOWS_H
 # ifdef __WINESRC__
+#  ifndef RC_INVOKED
+#   include <stdarg.h>
+#  endif
 #  include <windef.h>
+#  include <winbase.h>
 # else
 #  include <windows.h>
 # endif
