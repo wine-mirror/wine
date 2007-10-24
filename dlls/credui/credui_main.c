@@ -192,6 +192,15 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
           debugstr_w(pszTargetName), Reserved, dwAuthError, debugstr_w(pszUsername),
           ulUsernameMaxChars, pszPassword, ulPasswordMaxChars, pfSave, dwFlags);
 
+    if ((dwFlags & (CREDUI_FLAGS_ALWAYS_SHOW_UI|CREDUI_FLAGS_GENERIC_CREDENTIALS)) == CREDUI_FLAGS_ALWAYS_SHOW_UI)
+        return ERROR_INVALID_FLAGS;
+
+    if (!pszTargetName)
+        return ERROR_INVALID_PARAMETER;
+
+    if ((dwFlags & CREDUI_FLAGS_SHOW_SAVE_CHECK_BOX) && !pfSave)
+        return ERROR_INVALID_PARAMETER;
+
     params.pszTargetName = pszTargetName;
     if (pUIInfo)
     {
