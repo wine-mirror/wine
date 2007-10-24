@@ -854,7 +854,7 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
 
   ret = AllocateAndGetIpForwardTableFromStack(&table, FALSE, GetProcessHeap(), 0);
   if (table && !ret) {
-    DWORD ndx, matchedBits, matchedNdx = 0;
+    DWORD ndx, matchedBits, matchedNdx = table->dwNumEntries;
 
     for (ndx = 0, matchedBits = 0; ndx < table->dwNumEntries; ndx++) {
       if (table->table[ndx].dwForwardType != MIB_IPROUTE_TYPE_INVALID &&
