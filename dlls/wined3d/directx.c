@@ -757,6 +757,9 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
             gl_info->ps_glsl_constantsF = gl_max / 4;
             TRACE_(d3d_caps)("Max ARB_FRAGMENT_SHADER float constants: %u\n", gl_info->ps_glsl_constantsF);
+            glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &gl_max);
+            gl_info->max_glsl_varyings = gl_max;
+            TRACE_(d3d_caps)("Max GLSL varyings: %u (%u 4 component varyings)\n", gl_max, gl_max / 4);
         }
         if (gl_info->supported[EXT_VERTEX_SHADER]) {
             gl_info->vs_ati_version = VS_VERSION_11;
