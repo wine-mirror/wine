@@ -217,6 +217,14 @@ struct security_descriptor
 
 };
 
+struct object_attributes
+{
+    obj_handle_t rootdir;
+    data_size_t sd_len;
+
+
+};
+
 struct token_groups
 {
     unsigned int count;
@@ -860,10 +868,9 @@ struct create_event_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
-    obj_handle_t rootdir;
     int          manual_reset;
     int          initial_state;
-    /* VARARG(name,unicode_str); */
+    /* VARARG(objattr,object_attributes); */
 };
 struct create_event_reply
 {
@@ -4873,6 +4880,6 @@ union generic_reply
     struct set_completion_info_reply set_completion_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 317
+#define SERVER_PROTOCOL_VERSION 318
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

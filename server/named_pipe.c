@@ -539,7 +539,7 @@ static void pipe_server_flush( struct fd *fd, struct event **event )
     {
         /* this kind of sux -
            there's no unix way to be alerted when a pipe becomes empty */
-        server->event = create_event( NULL, NULL, 0, 0, 0 );
+        server->event = create_event( NULL, NULL, 0, 0, 0, NULL );
         if (!server->event) return;
         server->flush_poll = add_timeout_user( -TICKS_PER_SEC / 10, check_flushed, server );
         *event = server->event;
@@ -569,7 +569,7 @@ static enum server_fd_type pipe_client_get_fd_type( struct fd *fd )
 static obj_handle_t alloc_wait_event( struct process *process )
 {
     obj_handle_t handle = 0;
-    struct event *event = create_event( NULL, NULL, 0, 1, 0 );
+    struct event *event = create_event( NULL, NULL, 0, 1, 0, NULL );
 
     if (event)
     {

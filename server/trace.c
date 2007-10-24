@@ -782,6 +782,26 @@ static void dump_varargs_token_groups( data_size_t size )
     fputc( '}', stderr );
 }
 
+static void dump_varargs_object_attributes( data_size_t size )
+{
+    const struct object_attributes *objattr = cur_data;
+    fputc( '{', stderr );
+    if (size >= sizeof(struct object_attributes))
+    {
+        const WCHAR *str;
+        fprintf( stderr, "rootdir=%p,sd=", objattr->rootdir );
+        if (objattr->sd_len > size - sizeof(*objattr)) return;
+        dump_inline_security_descriptor( (const struct security_descriptor *)(objattr + 1), objattr->sd_len );
+        str = (const WCHAR *)cur_data + (sizeof(*objattr) + objattr->sd_len) / sizeof(WCHAR);
+        fprintf( stderr, ",name=L\"" );
+        dump_strW( str, (size - sizeof(*objattr) - objattr->sd_len) / sizeof(WCHAR),
+                   stderr, "\"\"" );
+        fputc( '\"', stderr );
+        remove_data( size );
+    }
+    fputc( '}', stderr );
+}
+
 typedef void (*dump_func)( const void *req );
 
 /* Everything below this line is generated automatically by tools/make_requests */
@@ -1136,11 +1156,10 @@ static void dump_create_event_request( const struct create_event_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
-    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " manual_reset=%d,", req->manual_reset );
     fprintf( stderr, " initial_state=%d,", req->initial_state );
-    fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( cur_size );
+    fprintf( stderr, " objattr=" );
+    dump_varargs_object_attributes( cur_size );
 }
 
 static void dump_create_event_reply( const struct create_event_reply *req )

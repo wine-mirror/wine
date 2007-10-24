@@ -305,6 +305,29 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     return TRUE;
 }
 
+/* determines whether an object_attributes struct is valid in a buffer
+ * and calls set_error appropriately */
+int objattr_is_valid( const struct object_attributes *objattr, data_size_t size )
+{
+    if ((size < sizeof(*objattr)) || (size - sizeof(*objattr) < objattr->sd_len))
+    {
+        set_error( STATUS_ACCESS_VIOLATION );
+        return FALSE;
+    }
+
+    if (objattr->sd_len)
+    {
+        const struct security_descriptor *sd = (const struct security_descriptor *)(objattr + 1);
+        if (!sd_is_valid( sd, objattr->sd_len ))
+        {
+            set_error( STATUS_INVALID_SECURITY_DESCR );
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 /* maps from generic rights to specific rights as given by a mapping */
 static inline void map_generic_mask(unsigned int *mask, const GENERIC_MAPPING *mapping)
 {

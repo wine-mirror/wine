@@ -127,3 +127,7 @@ static inline const SID *sd_get_group( const struct security_descriptor *sd )
     else
         return NULL;
 }
+
+/* determines whether an object_attributes struct is valid in a buffer
+ * and calls set_error appropriately */
+extern int objattr_is_valid( const struct object_attributes *objattr, data_size_t size );

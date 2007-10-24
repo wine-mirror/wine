@@ -227,17 +227,25 @@ struct security_descriptor
     data_size_t  group_len;
     data_size_t  sacl_len;
     data_size_t  dacl_len;
-    /* VARARGS(owner,SID); */
-    /* VARARGS(group,SID); */
-    /* VARARGS(sacl,ACL); */
-    /* VARARGS(dacl,ACL); */
+    /* VARARG(owner,SID); */
+    /* VARARG(group,SID); */
+    /* VARARG(sacl,ACL); */
+    /* VARARG(dacl,ACL); */
+};
+
+struct object_attributes
+{
+    obj_handle_t rootdir; /* root directory */
+    data_size_t sd_len;   /* length of security_descriptor data. may be 0 */
+    /* VARARG(sd,security_descriptor); */
+    /* VARARG(name,unicode_str); */
 };
 
 struct token_groups
 {
     unsigned int count;
     /* unsigned int attributes[count]; */
-    /* VARARGS(sids,SID); */
+    /* VARARG(sids,SID); */
 };
 
 enum apc_type
@@ -743,10 +751,9 @@ typedef union
 @REQ(create_event)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
-    obj_handle_t rootdir;       /* root directory */
     int          manual_reset;  /* manual reset event */
     int          initial_state; /* initial state of the event */
-    VARARG(name,unicode_str);   /* object name */
+    VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;        /* handle to the event */
 @END

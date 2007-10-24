@@ -991,7 +991,7 @@ DECL_HANDLER(init_process_done)
     generate_startup_debug_events( process, req->entry );
     set_process_startup_state( process, STARTUP_DONE );
 
-    if (req->gui) process->idle_event = create_event( NULL, NULL, 0, 1, 0 );
+    if (req->gui) process->idle_event = create_event( NULL, NULL, 0, 1, 0, NULL );
     if (current->suspend + process->suspend > 0) stop_thread( current );
     if (process->debugger) set_process_debug_flag( process, 1 );
 }
@@ -1170,7 +1170,7 @@ DECL_HANDLER(make_process_system)
 
     if (!user_process_event)
     {
-        if (!(user_process_event = create_event( NULL, NULL, 0, 1, 0 ))) return;
+        if (!(user_process_event = create_event( NULL, NULL, 0, 1, 0, NULL ))) return;
         make_object_static( (struct object *)user_process_event );
     }
 
