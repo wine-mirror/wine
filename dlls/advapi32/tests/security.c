@@ -1510,7 +1510,7 @@ static void test_LookupAccountName(void)
         ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
         ok(domain_size == domain_save - 1, "Expected %d, got %d\n", domain_save - 1, domain_size);
         ok(lstrlen(domain) == domain_size, "Expected %d\n", lstrlen(domain));
-        ok(sid_use == SidTypeUser, "Expected SidTypeUser, got %d\n", SidTypeUser);
+        ok(sid_use == SidTypeUser, "Expected SidTypeUser, got %d\n", sid_use);
     }
     domain_size = domain_save;
 
