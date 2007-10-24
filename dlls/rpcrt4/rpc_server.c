@@ -167,7 +167,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
   RpcServerInterface* sif;
   RPC_DISPATCH_FUNCTION func;
   UUID *object_uuid;
-  RpcPktHdr *response;
+  RpcPktHdr *response = NULL;
   void *buf = msg->Buffer;
   RPC_STATUS status;
   BOOL exception;
