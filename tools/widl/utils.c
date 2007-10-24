@@ -65,14 +65,25 @@ static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 }
 
 
+/* yyerror:  yacc assumes this is not newline terminated.  */
 int parser_error(const char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	generic_msg(s, "Error", parser_text, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+	exit(1);
+	return 1;
+}
+
+void error_loc(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
 	generic_msg(s, "Error", parser_text, ap);
 	va_end(ap);
 	exit(1);
-	return 1;
 }
 
 int parser_warning(const char *s, ...)

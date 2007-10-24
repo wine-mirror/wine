@@ -35,6 +35,7 @@ char *xstrdup(const char *str);
 
 int parser_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int parser_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
+void error_loc(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));

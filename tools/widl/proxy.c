@@ -509,7 +509,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
       gen_stub(iface, cur, cname, *proc_offset);
       *proc_offset += get_size_procformatstring_func( cur );
       if (midx == -1) midx = idx;
-      else if (midx != idx) parser_error("method index mismatch in write_proxy\n");
+      else if (midx != idx) error("method index mismatch in write_proxy\n");
       midx++;
     }
   }
