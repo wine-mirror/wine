@@ -1991,3 +1991,25 @@ HRESULT __RPC_STUB ITypeLib2_GetDocumentation2_Stub(
   FIXME("not implemented\n");
   return E_FAIL;
 }
+
+HRESULT CALLBACK IPropertyBag_Read_Proxy(
+    IPropertyBag* This,
+    LPCOLESTR pszPropName,
+    VARIANT *pVar,
+    IErrorLog *pErrorLog)
+{
+  FIXME("not implemented\n");
+  return E_FAIL;
+}
+
+HRESULT __RPC_STUB IPropertyBag_Read_Stub(
+    IPropertyBag* This,
+    LPCOLESTR pszPropName,
+    VARIANT *pVar,
+    IErrorLog *pErrorLog,
+    DWORD varType,
+    IUnknown *pUnkObj)
+{
+  FIXME("not implemented\n");
+  return E_FAIL;
+}
