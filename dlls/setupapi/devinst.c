@@ -3065,7 +3065,9 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(
 
         if (RequiredSize)
             *RequiredSize = size;
-        if (!l)
+        if (!PropertyBuffer)
+            ; /* do nothing, ret is already FALSE, last error is already set */
+        else if (!l)
             ret = TRUE;
         else
             SetLastError(l);
@@ -3119,7 +3121,9 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyW(
 
         if (RequiredSize)
             *RequiredSize = size;
-        if (!l)
+        if (!PropertyBuffer)
+            ; /* do nothing, ret is already FALSE, last error is already set */
+        else if (!l)
             ret = TRUE;
         else
             SetLastError(l);
