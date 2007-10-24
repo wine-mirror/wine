@@ -27,6 +27,7 @@ TESTBINS = \
 	comcat_test.exe \
 	comctl32_test.exe \
 	comdlg32_test.exe \
+	credui_test.exe \
 	crypt32_test.exe \
 	cryptnet_test.exe \
 	d3d8_test.exe \
@@ -106,6 +107,8 @@ comctl32_test.exe: $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 comdlg32_test.exe: $(DLLDIR)/comdlg32/tests/comdlg32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/comdlg32/tests/comdlg32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+credui_test.exe: $(DLLDIR)/credui/tests/credui_test.exe$(DLLEXT)
+	cp $(DLLDIR)/credui/tests/credui_test.exe$(DLLEXT) $@ && $(STRIP) $@
 crypt32_test.exe: $(DLLDIR)/crypt32/tests/crypt32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/crypt32/tests/crypt32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 cryptnet_test.exe: $(DLLDIR)/cryptnet/tests/cryptnet_test.exe$(DLLEXT)

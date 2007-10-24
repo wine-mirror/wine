@@ -20564,6 +20564,8 @@ ac_config_files="$ac_config_files dlls/compstui/Makefile"
 
 ac_config_files="$ac_config_files dlls/credui/Makefile"
 
+ac_config_files="$ac_config_files dlls/credui/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/crtdll/Makefile"
 
 ac_config_files="$ac_config_files dlls/crypt32/Makefile"
@@ -21825,6 +21827,7 @@ do
     "dlls/comdlg32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comdlg32/tests/Makefile" ;;
     "dlls/compstui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/compstui/Makefile" ;;
     "dlls/credui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/credui/Makefile" ;;
+    "dlls/credui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/credui/tests/Makefile" ;;
     "dlls/crtdll/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/crtdll/Makefile" ;;
     "dlls/crypt32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/crypt32/Makefile" ;;
     "dlls/crypt32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/crypt32/tests/Makefile" ;;

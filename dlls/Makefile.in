@@ -251,6 +251,7 @@ TESTSUBDIRS = \
 	comcat/tests \
 	comctl32/tests \
 	comdlg32/tests \
+	credui/tests \
 	crypt32/tests \
 	cryptnet/tests \
 	d3d8/tests \
@@ -500,6 +501,7 @@ IMPORT_LIBS = \
 	comctl32/libcomctl32.$(IMPLIBEXT) \
 	comdlg32/libcomdlg32.$(IMPLIBEXT) \
 	compstui/libcompstui.$(IMPLIBEXT) \
+	credui/libcredui.$(IMPLIBEXT) \
 	crtdll/libcrtdll.$(IMPLIBEXT) \
 	crypt32/libcrypt32.$(IMPLIBEXT) \
 	cryptdll/libcryptdll.$(IMPLIBEXT) \
@@ -659,6 +661,9 @@ comdlg32/libcomdlg32.$(IMPLIBEXT): comdlg32/comdlg32.spec $(WINEBUILD)
 
 compstui/libcompstui.$(IMPLIBEXT): compstui/compstui.spec $(WINEBUILD)
 	@cd compstui && $(MAKE) libcompstui.$(IMPLIBEXT)
+
+credui/libcredui.$(IMPLIBEXT): credui/credui.spec $(WINEBUILD)
+	@cd credui && $(MAKE) libcredui.$(IMPLIBEXT)
 
 crtdll/libcrtdll.$(IMPLIBEXT): crtdll/crtdll.spec $(WINEBUILD)
 	@cd crtdll && $(MAKE) libcrtdll.$(IMPLIBEXT)

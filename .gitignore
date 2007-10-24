@@ -65,6 +65,10 @@ dlls/commdlg.dll16
 dlls/compobj.dll16
 dlls/compstui/libcompstui.def
 dlls/credui/credui.res
+dlls/credui/libcredui.def
+dlls/credui/tests/*.ok
+dlls/credui/tests/credui_crosstest.exe
+dlls/credui/tests/testlist.c
 dlls/crtdll/libcrtdll.def
 dlls/crypt32/crypt32.res
 dlls/crypt32/libcrypt32.def
@@ -694,6 +698,7 @@ programs/winetest/cabinet_test.exe
 programs/winetest/comcat_test.exe
 programs/winetest/comctl32_test.exe
 programs/winetest/comdlg32_test.exe
+programs/winetest/credui_test.exe
 programs/winetest/crypt32_test.exe
 programs/winetest/cryptnet_test.exe
 programs/winetest/d3d8_test.exe
