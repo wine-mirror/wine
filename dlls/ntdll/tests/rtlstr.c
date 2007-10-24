@@ -1686,15 +1686,17 @@ static void test_RtlIsTextUnicode(void)
 
     flags =  IS_TEXT_UNICODE_UNICODE_MASK;
     ok(pRtlIsTextUnicode(unicode, sizeof(unicode), &flags), "Text should not pass a Unicode\n");
-    todo_wine ok(flags == 0x6, "Expected flags 0x6, obtained %d\n", flags);
+    todo_wine
+    ok(flags == (IS_TEXT_UNICODE_STATISTICS | IS_TEXT_UNICODE_CONTROLS),
+       "Expected flags 0x6, obtained %x\n", flags);
 
     flags =  IS_TEXT_UNICODE_REVERSE_MASK;
     ok(!pRtlIsTextUnicode(unicode, sizeof(unicode), &flags), "Text should not pass reverse Unicode tests\n");
-    ok(flags == 0, "Expected flags 0, obtained %d\n", flags);
+    ok(flags == 0, "Expected flags 0, obtained %x\n", flags);
 
     flags = IS_TEXT_UNICODE_ODD_LENGTH;
     ok(!pRtlIsTextUnicode(unicode, sizeof(unicode) - 1, &flags), "Odd length test should have passed\n");
-    ok(flags == IS_TEXT_UNICODE_ODD_LENGTH, "Expected flags 0x200, obtained %d\n", flags);
+    ok(flags == IS_TEXT_UNICODE_ODD_LENGTH, "Expected flags 0x200, obtained %x\n", flags);
 
     be_unicode = HeapAlloc(GetProcessHeap(), 0, sizeof(unicode) + sizeof(WCHAR));
     be_unicode[0] = 0xfffe;
@@ -1707,11 +1709,15 @@ static void test_RtlIsTextUnicode(void)
 
     flags = IS_TEXT_UNICODE_REVERSE_MASK;
     ok(!pRtlIsTextUnicode(&be_unicode[1], sizeof(unicode), &flags), "Reverse endian should be Unicode\n");
-    todo_wine ok(flags == 0x70, "Expected flags 0x70, obtained %x\n", flags);
+    todo_wine
+    ok(flags == (IS_TEXT_UNICODE_REVERSE_ASCII16 | IS_TEXT_UNICODE_REVERSE_STATISTICS | IS_TEXT_UNICODE_REVERSE_CONTROLS),
+       "Expected flags 0x70, obtained %x\n", flags);
 
     flags = IS_TEXT_UNICODE_REVERSE_MASK;
     ok(!pRtlIsTextUnicode(be_unicode, sizeof(unicode) + 2, &flags), "Reverse endian should be Unicode\n");
-    todo_wine ok(flags == 0xc0, "Expected flags 0xc0, obtained %x\n", flags);
+    todo_wine
+    ok(flags == (IS_TEXT_UNICODE_REVERSE_CONTROLS | IS_TEXT_UNICODE_REVERSE_SIGNATURE),
+       "Expected flags 0xc0, obtained %x\n", flags);
     HeapFree(GetProcessHeap(), 0, be_unicode);
 }
 
