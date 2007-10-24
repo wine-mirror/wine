@@ -1015,6 +1015,11 @@ BOOL WINAPI CryptUnprotectData(DATA_BLOB* pDataIn,
         SetLastError(ERROR_INVALID_PARAMETER);
         goto finished;
     }
+    if (!pDataIn->cbData)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        goto finished;
+    }
 
     /* debug: show our arguments */
     report(pDataIn,pOptionalEntropy,pPromptStruct,dwFlags);
