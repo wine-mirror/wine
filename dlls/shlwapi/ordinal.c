@@ -33,6 +33,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -796,7 +797,7 @@ BOOL WINAPI SetDlgItemTextWrapW(HWND hWnd, INT iItem, LPCWSTR lpszText)
  */
 DWORD WINAPI StrCmpNCA(LPCSTR lpszSrc, LPCSTR lpszCmp, INT len)
 {
-    return strncmp(lpszSrc, lpszCmp, len);
+    return StrCmpNA(lpszSrc, lpszCmp, len);
 }
 
 /*************************************************************************
@@ -806,7 +807,7 @@ DWORD WINAPI StrCmpNCA(LPCSTR lpszSrc, LPCSTR lpszCmp, INT len)
  */
 DWORD WINAPI StrCmpNCW(LPCWSTR lpszSrc, LPCWSTR lpszCmp, INT len)
 {
-    return strncmpW(lpszSrc, lpszCmp, len);
+    return StrCmpNW(lpszSrc, lpszCmp, len);
 }
 
 /*************************************************************************
@@ -825,7 +826,7 @@ DWORD WINAPI StrCmpNCW(LPCWSTR lpszSrc, LPCWSTR lpszCmp, INT len)
  */
 DWORD WINAPI StrCmpNICA(LPCSTR lpszSrc, LPCSTR lpszCmp, DWORD len)
 {
-    return strncasecmp(lpszSrc, lpszCmp, len);
+    return StrCmpNIA(lpszSrc, lpszCmp, len);
 }
 
 /*************************************************************************
@@ -835,7 +836,7 @@ DWORD WINAPI StrCmpNICA(LPCSTR lpszSrc, LPCSTR lpszCmp, DWORD len)
  */
 DWORD WINAPI StrCmpNICW(LPCWSTR lpszSrc, LPCWSTR lpszCmp, DWORD len)
 {
-    return strncmpiW(lpszSrc, lpszCmp, len);
+    return StrCmpNIW(lpszSrc, lpszCmp, len);
 }
 
 /*************************************************************************
@@ -853,7 +854,7 @@ DWORD WINAPI StrCmpNICW(LPCWSTR lpszSrc, LPCWSTR lpszCmp, DWORD len)
  */
 DWORD WINAPI StrCmpCA(LPCSTR lpszSrc, LPCSTR lpszCmp)
 {
-    return strcmp(lpszSrc, lpszCmp);
+    return lstrcmpA(lpszSrc, lpszCmp);
 }
 
 /*************************************************************************
@@ -863,7 +864,7 @@ DWORD WINAPI StrCmpCA(LPCSTR lpszSrc, LPCSTR lpszCmp)
  */
 DWORD WINAPI StrCmpCW(LPCWSTR lpszSrc, LPCWSTR lpszCmp)
 {
-    return strcmpW(lpszSrc, lpszCmp);
+    return lstrcmpW(lpszSrc, lpszCmp);
 }
 
 /*************************************************************************
@@ -881,7 +882,7 @@ DWORD WINAPI StrCmpCW(LPCWSTR lpszSrc, LPCWSTR lpszCmp)
  */
 DWORD WINAPI StrCmpICA(LPCSTR lpszSrc, LPCSTR lpszCmp)
 {
-    return strcasecmp(lpszSrc, lpszCmp);
+    return lstrcmpiA(lpszSrc, lpszCmp);
 }
 
 /*************************************************************************
@@ -891,7 +892,7 @@ DWORD WINAPI StrCmpICA(LPCSTR lpszSrc, LPCSTR lpszCmp)
  */
 DWORD WINAPI StrCmpICW(LPCWSTR lpszSrc, LPCWSTR lpszCmp)
 {
-    return strcmpiW(lpszSrc, lpszCmp);
+    return lstrcmpiW(lpszSrc, lpszCmp);
 }
 
 /*************************************************************************
