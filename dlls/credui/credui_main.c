@@ -212,7 +212,8 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
     params.fSave = pfSave ? *pfSave : FALSE;
 
     ret = DialogBoxParamW(hinstCredUI, MAKEINTRESOURCEW(IDD_CREDDIALOG),
-                          pUIInfo->hwndParent, CredDialogProc, (LPARAM)&params);
+                          pUIInfo ? pUIInfo->hwndParent : NULL,
+                          CredDialogProc, (LPARAM)&params);
     if (ret <= 0)
         return GetLastError();
 
