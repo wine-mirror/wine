@@ -30,24 +30,65 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(credui);
 
+struct pending_credentials
+{
+    struct list entry;
+    PWSTR pszTargetName;
+    PWSTR pszUsername;
+    PWSTR pszPassword;
+};
+
 static HINSTANCE hinstCredUI;
+
+struct list pending_credentials_list = LIST_INIT(pending_credentials_list);
+
+static CRITICAL_SECTION csPendingCredentials;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &csPendingCredentials,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": csPendingCredentials") }
+};
+static CRITICAL_SECTION csPendingCredentials = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	TRACE("(0x%p, %d, %p)\n",hinstDLL,fdwReason,lpvReserved);
+    TRACE("(0x%p, %d, %p)\n",hinstDLL,fdwReason,lpvReserved);
 
-	if (fdwReason == DLL_WINE_PREATTACH) return FALSE;	/* prefer native version */
+    if (fdwReason == DLL_WINE_PREATTACH) return FALSE;	/* prefer native version */
 
-	if (fdwReason == DLL_PROCESS_ATTACH)
-	{
-		DisableThreadLibraryCalls(hinstDLL);
-		hinstCredUI = hinstDLL;
-	}
+    if (fdwReason == DLL_PROCESS_ATTACH)
+    {
+        DisableThreadLibraryCalls(hinstDLL);
+        hinstCredUI = hinstDLL;
+    }
+    else if (fdwReason == DLL_PROCESS_DETACH)
+    {
+        struct pending_credentials *entry, *cursor2;
+        LIST_FOR_EACH_ENTRY_SAFE(entry, cursor2, &pending_credentials_list, struct pending_credentials, entry)
+        {
+            list_remove(&entry->entry);
 
-	return TRUE;
+            HeapFree(GetProcessHeap(), 0, entry->pszTargetName);
+            HeapFree(GetProcessHeap(), 0, entry->pszUsername);
+            HeapFree(GetProcessHeap(), 0, entry->pszPassword);
+            HeapFree(GetProcessHeap(), 0, entry);
+        }
+    }
+
+    return TRUE;
+}
+
+static DWORD save_credentials(PCWSTR pszTargetName, PCWSTR pszUsername,
+                              PCWSTR pszPassword)
+{
+    FIXME("save servername %s with username %s\n", debugstr_w(pszTargetName), debugstr_w(pszUsername));
+    return ERROR_SUCCESS;
 }
 
 struct cred_dialog_params
@@ -145,6 +186,7 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
 {
     INT_PTR ret;
     struct cred_dialog_params params;
+    DWORD result = ERROR_SUCCESS;
 
     TRACE("(%p, %s, %p, %d, %s, %d, %p, %d, %p, 0x%08x)\n", pUIInfo,
           debugstr_w(pszTargetName), Reserved, dwAuthError, debugstr_w(pszUsername),
@@ -183,7 +225,50 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
     if (pfSave)
         *pfSave = params.fSave;
 
-    return ERROR_SUCCESS;
+    if (params.fSave)
+    {
+        if (dwFlags & CREDUI_FLAGS_EXPECT_CONFIRMATION)
+        {
+            BOOL found = FALSE;
+            struct pending_credentials *entry;
+            int len;
+
+            EnterCriticalSection(&csPendingCredentials);
+
+            /* find existing pending credentials for the same target and overwrite */
+            /* FIXME: is this correct? */
+            LIST_FOR_EACH_ENTRY(entry, &pending_credentials_list, struct pending_credentials, entry)
+                if (!strcmpW(pszTargetName, entry->pszTargetName))
+                {
+                    found = TRUE;
+                    HeapFree(GetProcessHeap(), 0, entry->pszUsername);
+                    HeapFree(GetProcessHeap(), 0, entry->pszPassword);
+                }
+
+            if (!found)
+            {
+                entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
+                list_init(&entry->entry);
+                len = strlenW(pszTargetName);
+                entry->pszTargetName = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
+                memcpy(entry->pszTargetName, pszTargetName, (len + 1)*sizeof(WCHAR));
+                list_add_tail(&entry->entry, &pending_credentials_list);
+            }
+
+            len = strlenW(params.pszUsername);
+            entry->pszUsername = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
+            memcpy(entry->pszUsername, params.pszUsername, (len + 1)*sizeof(WCHAR));
+            len = strlenW(params.pszPassword);
+            entry->pszPassword = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
+            memcpy(entry->pszPassword, params.pszPassword, (len + 1)*sizeof(WCHAR));
+
+            LeaveCriticalSection(&csPendingCredentials);
+        }
+        else
+            result = save_credentials(pszTargetName, pszUsername, pszPassword);
+    }
+
+    return result;
 }
 
 /******************************************************************************
@@ -191,9 +276,39 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
  */
 DWORD WINAPI CredUIConfirmCredentialsW(PCWSTR pszTargetName, BOOL bConfirm)
 {
-    FIXME("(%s, %s): stub\n", debugstr_w(pszTargetName),
-          bConfirm ? "TRUE" : "FALSE");
-    return ERROR_SUCCESS;
+    struct pending_credentials *entry;
+    DWORD result = ERROR_NOT_FOUND;
+
+    TRACE("(%s, %s)\n", debugstr_w(pszTargetName), bConfirm ? "TRUE" : "FALSE");
+
+    if (!pszTargetName)
+        return ERROR_INVALID_PARAMETER;
+
+    EnterCriticalSection(&csPendingCredentials);
+
+    LIST_FOR_EACH_ENTRY(entry, &pending_credentials_list, struct pending_credentials, entry)
+    {
+        if (!strcmpW(pszTargetName, entry->pszTargetName))
+        {
+            if (bConfirm)
+                result = save_credentials(entry->pszTargetName, entry->pszUsername, entry->pszPassword);
+            else
+                result = ERROR_SUCCESS;
+
+            list_remove(&entry->entry);
+
+            HeapFree(GetProcessHeap(), 0, entry->pszTargetName);
+            HeapFree(GetProcessHeap(), 0, entry->pszUsername);
+            HeapFree(GetProcessHeap(), 0, entry->pszPassword);
+            HeapFree(GetProcessHeap(), 0, entry);
+
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&csPendingCredentials);
+
+    return result;
 }
 
 /******************************************************************************
