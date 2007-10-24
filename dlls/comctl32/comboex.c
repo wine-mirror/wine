@@ -1240,6 +1240,7 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam, LPARAM lPa
 	return SendMessageW (parent, WM_COMMAND, wParam, (LPARAM)infoPtr->hwndSelf);
 
     case CBN_SELENDOK:
+    case CBN_SELENDCANCEL:
 	/*
 	 * We have to change the handle since we are the control
 	 * issuing the message. IE4 depends on this.
