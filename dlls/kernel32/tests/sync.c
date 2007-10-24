@@ -245,9 +245,48 @@ static void test_slist(void)
     ok(((struct item*)entry->Next)->value == 1, "item 1 not at the back of list\n");
 }
 
+static void test_event_security(void)
+{
+    HANDLE handle;
+    SECURITY_ATTRIBUTES sa;
+    SECURITY_DESCRIPTOR sd;
+    ACL acl;
+
+    /* no sd */
+    handle = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": Test Event");
+    ok(handle != NULL, "CreateEventW with blank sd failed with error %d\n", GetLastError());
+    CloseHandle(handle);
+
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = &sd;
+    sa.bInheritHandle = FALSE;
+
+    InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+
+    /* blank sd */
+    handle = CreateEventA(&sa, FALSE, FALSE, __FILE__ ": Test Event");
+    ok(handle != NULL, "CreateEventW with blank sd failed with error %d\n", GetLastError());
+    CloseHandle(handle);
+
+    /* sd with NULL dacl */
+    SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE);
+    handle = CreateEventA(&sa, FALSE, FALSE, __FILE__ ": Test Event");
+    ok(handle != NULL, "CreateEventW with blank sd failed with error %d\n", GetLastError());
+    CloseHandle(handle);
+
+    /* sd with empty dacl */
+    InitializeAcl(&acl, sizeof(acl), ACL_REVISION);
+    SetSecurityDescriptorDacl(&sd, TRUE, &acl, FALSE);
+    handle = CreateEventA(&sa, FALSE, FALSE, __FILE__ ": Test Event");
+    todo_wine
+    ok(handle != NULL, "CreateEventW with blank sd failed with error %d\n", GetLastError());
+    CloseHandle(handle);
+}
+
 START_TEST(sync)
 {
     test_signalandwait();
     test_mutex();
     test_slist();
+    test_event_security();
 }
