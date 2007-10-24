@@ -182,7 +182,10 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
     fclose(fp);
   }
   else
+  {
      ERR ("unimplemented!\n");
+     return ERROR_NOT_SUPPORTED;
+  }
 
   return NO_ERROR;
 }
@@ -312,7 +315,10 @@ DWORD getICMPStats(MIB_ICMP *stats)
     fclose(fp);
   }
   else
+  {
      ERR ("unimplemented!\n");
+     return ERROR_NOT_SUPPORTED;
+  }
 
   return NO_ERROR;
 }
@@ -426,7 +432,10 @@ DWORD getIPStats(PMIB_IPSTATS stats)
     fclose(fp);
   }
   else
+  {
      ERR ("unimplemented!\n");
+     return ERROR_NOT_SUPPORTED;
+  }
 
   return NO_ERROR;
 }
@@ -519,7 +528,10 @@ DWORD getTCPStats(MIB_TCPSTATS *stats)
     fclose(fp);
   }
   else
+  {
      ERR ("unimplemented!\n");
+     return ERROR_NOT_SUPPORTED;
+  }
 
   return NO_ERROR;
 }
@@ -575,7 +587,10 @@ DWORD getUDPStats(MIB_UDPSTATS *stats)
     fclose(fp);
   }
   else
+  {
      ERR ("unimplemented!\n");
+     return ERROR_NOT_SUPPORTED;
+  }
 
   return NO_ERROR;
 }
@@ -963,7 +978,7 @@ DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
       else
       {
         ERR ("unimplemented!\n");
-        return ERROR_INVALID_PARAMETER;
+        return ERROR_NOT_SUPPORTED;
       }
 #endif
     }
@@ -984,7 +999,7 @@ DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags)
 
 #if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
   ERR ("unimplemented!\n");
-  return ERROR_INVALID_PARAMETER;
+  return ERROR_NOT_SUPPORTED;
 #endif
 
   if (!ppIpNetTable)
@@ -1064,6 +1079,8 @@ DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags)
         }
         fclose(fp);
       }
+      else
+        ret = ERROR_NOT_SUPPORTED;
     }
     else
       ret = ERROR_OUTOFMEMORY;
@@ -1082,7 +1099,7 @@ DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags)
 
 #if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
   ERR ("unimplemented!\n");
-  return ERROR_INVALID_PARAMETER;
+  return ERROR_NOT_SUPPORTED;
 #endif
 
   if (!ppUdpTable)
@@ -1132,6 +1149,8 @@ DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags)
         }
         fclose(fp);
       }
+      else
+        ret = ERROR_NOT_SUPPORTED;
     }
     else
       ret = ERROR_OUTOFMEMORY;
@@ -1294,7 +1313,7 @@ DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, DWORD maxEntries, HANDLE heap,
    /* get from /proc/net/tcp, no error if can't */
    fp = fopen("/proc/net/tcp", "r");
    if (!fp)
-      return NO_ERROR;
+      return ERROR_NOT_SUPPORTED;
 
    /* skip header line */
    ptr = fgets(buf, sizeof(buf), fp);
