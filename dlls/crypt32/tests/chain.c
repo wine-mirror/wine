@@ -1662,8 +1662,6 @@ static ChainPolicyCheck basePolicyCheck[] = {
    { 0, TRUST_E_CERT_SIGNATURE, 0, 1, NULL }, 0 },
  { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
    { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, 0 },
- { { sizeof(iTunesChain) / sizeof(iTunesChain[0]), iTunesChain },
-   { 0, 0, -1, -1, NULL }, 0 },
 };
 
 static ChainPolicyCheck authenticodePolicyCheck[] = {
@@ -1695,8 +1693,6 @@ static ChainPolicyCheck authenticodePolicyCheck[] = {
    { 0, TRUST_E_CERT_SIGNATURE, 0, 1, NULL }, 0 },
  { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
    { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, 0 },
- { { sizeof(iTunesChain) / sizeof(iTunesChain[0]), iTunesChain },
-   { 0, 0, -1, -1, NULL }, 0 },
 };
 
 static ChainPolicyCheck basicConstraintsPolicyCheck[] = {
@@ -1729,8 +1725,6 @@ static ChainPolicyCheck basicConstraintsPolicyCheck[] = {
  { { sizeof(chain12) / sizeof(chain12[0]), chain12 },
    { 0, 0, -1, -1, NULL }, 0 },
  { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
-   { 0, 0, -1, -1, NULL }, 0 },
- { { sizeof(iTunesChain) / sizeof(iTunesChain[0]), iTunesChain },
    { 0, 0, -1, -1, NULL }, 0 },
 };
 
