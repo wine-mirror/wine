@@ -895,11 +895,15 @@ static unsigned int token_access_check( struct token *token,
 
     /* 4: Grant rights according to the DACL */
     ace = (const ACE_HEADER *)(dacl + 1);
-    for (i = 0; i < dacl->AceCount; i++)
+    for (i = 0; i < dacl->AceCount; i++, ace = ace_next( ace ))
     {
         const ACCESS_ALLOWED_ACE *aa_ace;
         const ACCESS_DENIED_ACE *ad_ace;
         const SID *sid;
+
+        if (ace->AceFlags & INHERIT_ONLY_ACE)
+            continue;
+
         switch (ace->AceType)
         {
         case ACCESS_DENIED_ACE_TYPE:
@@ -937,8 +941,6 @@ static unsigned int token_access_check( struct token *token,
             * rights we need */
         if (desired_access == *granted_access)
             break;
-
-        ace = ace_next( ace );
     }
 
 done:
