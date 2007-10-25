@@ -2349,6 +2349,7 @@ INT WINAPI LCMapStringW(LCID lcid, DWORD flags, LPCWSTR src, INT srclen,
 
     if (flags & LCMAP_SORTKEY)
     {
+        INT ret;
         if (src == dst)
         {
             SetLastError(ERROR_INVALID_FLAGS);
@@ -2360,7 +2361,10 @@ INT WINAPI LCMapStringW(LCID lcid, DWORD flags, LPCWSTR src, INT srclen,
         TRACE("(0x%04x,0x%08x,%s,%d,%p,%d)\n",
               lcid, flags, debugstr_wn(src, srclen), srclen, dst, dstlen);
 
-        return wine_get_sortkey(flags, src, srclen, (char *)dst, dstlen);
+        ret = wine_get_sortkey(flags, src, srclen, (char *)dst, dstlen);
+        if (ret == 0)
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return ret;
     }
 
     /* SORT_STRINGSORT must be used exclusively with LCMAP_SORTKEY */
@@ -2497,6 +2501,8 @@ INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
             goto map_string_exit;
         }
         ret = wine_get_sortkey(flags, srcW, srclenW, dst, dstlen);
+        if (ret == 0)
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
         goto map_string_exit;
     }
 
