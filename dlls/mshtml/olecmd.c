@@ -401,6 +401,12 @@ static HRESULT exec_stop_download(HTMLDocument *This, DWORD nCmdexecopt, VARIANT
     return E_NOTIMPL;
 }
 
+static HRESULT exec_find(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    FIXME("(%p)->(%d %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
+    return E_NOTIMPL;
+}
+
 static HRESULT exec_delete(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
     FIXME("(%p)->(%d %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
@@ -689,7 +695,8 @@ static const struct {
     { OLECMDF_SUPPORTED|OLECMDF_ENABLED,  exec_stop                 }, /* OLECMDID_STOP */
     {0},{0},{0},{0},{0},{0},
     { OLECMDF_SUPPORTED,                  exec_stop_download        }, /* OLECMDID_STOPDOWNLOAD */
-    {0},{0},
+    {0},
+    { OLECMDF_SUPPORTED|OLECMDF_ENABLED,  exec_find                 }, /* OLECMDID_FIND */
     { OLECMDF_SUPPORTED,                  exec_delete               }, /* OLECMDID_DELETE */
     {0},{0},
     { OLECMDF_SUPPORTED,                  exec_enable_interaction   }, /* OLECMDID_ENABLE_INTERACTION */

@@ -114,6 +114,8 @@ DEFINE_EXPECT(OnChanged_READYSTATE);
 DEFINE_EXPECT(OnChanged_1005);
 DEFINE_EXPECT(GetDisplayName);
 DEFINE_EXPECT(BindToStorage);
+DEFINE_EXPECT(IsSystemMoniker);
+DEFINE_EXPECT(GetBindResult);
 DEFINE_EXPECT(Abort);
 DEFINE_EXPECT(Read);
 DEFINE_EXPECT(CreateInstance);
@@ -213,7 +215,14 @@ static void test_timer(DWORD flags)
 
 static HRESULT WINAPI External_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
 {
-    ok(0, "unexpected call\n");
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -811,7 +820,7 @@ static HRESULT WINAPI Binding_GetPriority(IBinding *iface, LONG *pnPriority)
 static HRESULT WINAPI Binding_GetBindResult(IBinding *iface, CLSID *pclsidProtocol,
         DWORD *pdwResult, LPOLESTR *pszResult, DWORD *pdwReserved)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(GetBindResult);
     return E_NOTIMPL;
 }
 
@@ -831,7 +840,8 @@ static IBinding Binding = { &BindingVtbl };
 
 static HRESULT WINAPI Moniker_QueryInterface(IMoniker *iface, REFIID riid, void **ppv)
 {
-    ok(0, "unexpected call\n");
+    *ppv = NULL;
+    ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1052,7 +1062,7 @@ static HRESULT WINAPI Moniker_ParseDisplayName(IMoniker *iface, IBindCtx *pbc,
 
 static HRESULT WINAPI Moniker_IsSystemMoniker(IMoniker *iface, DWORD *pdwMksys)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(IsSystemMoniker);
     return E_NOTIMPL;
 }
 
@@ -2137,7 +2147,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     if(IsEqualGUID(&CGID_DocHostCmdPriv, pguidCmdGroup))
         return E_FAIL; /* TODO */
 
-    ok(0, "unexpected call\n");
+    ok(0, "unexpected pguidCmdGroup: %s\n", debugstr_guid(pguidCmdGroup));
     return E_NOTIMPL;
 }
 
@@ -2795,9 +2805,14 @@ static void test_OleCommandTarget(IUnknown *unk)
 
     for(i=0; i<OLECMDID_GETPRINTTEMPLATE; i++) {
         ok(cmds[i].cmdID == i+1, "cmds[%d].cmdID canged to %x\n", i, cmds[i].cmdID);
+        if(i+1 == OLECMDID_FIND)
+            continue;
         ok(cmds[i].cmdf == expect_cmds[i+1], "cmds[%d].cmdf=%x, expected %x\n",
                 i+1, cmds[i].cmdf, expect_cmds[i+1]);
     }
+
+    ok(!cmds[OLECMDID_FIND-1].cmdf || cmds[OLECMDID_FIND-1].cmdf == (OLECMDF_SUPPORTED|OLECMDF_ENABLED),
+       "cmds[OLECMDID_FIND].cmdf=%x\n", cmds[OLECMDID_FIND-1].cmdf);
 
     IOleCommandTarget_Release(cmdtrg);
 }
@@ -3492,7 +3507,7 @@ static void test_external(IUnknown *unk, BOOL initialized)
     external = (void*)0xdeadbeef;
     hres = IHTMLWindow2_get_external(htmlwin, &external);
     if(initialized) {
-        ok(hres == S_FALSE, "get_external failed: %08x\n", hres);
+        ok(hres == S_FALSE || hres == S_OK, "get_external failed: %08x\n", hres);
         CHECK_CALLED(GetExternal);
         ok(external != NULL, "external == NULL\n");
     }else {
