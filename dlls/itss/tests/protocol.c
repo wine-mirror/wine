@@ -48,10 +48,13 @@
         called_ ## func = TRUE; \
     }while(0)
 
+#define SET_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
 #define CHECK_CALLED(func) \
     do { \
         ok(called_ ## func, "expected " #func "\n"); \
-        expect_ ## func = called_ ## func = FALSE; \
+        SET_CALLED(func); \
     }while(0)
 
 DEFINE_GUID(CLSID_ITSProtocol,0x9d148291,0xb9c8,0x11d0,0xa4,0xcc,0x00,0x00,0xf8,0x01,0x49,0xf6);
@@ -278,7 +281,8 @@ static void test_protocol_fail(IInternetProtocol *protocol, LPCWSTR url, HRESULT
     CHECK_CALLED(ReportResult);
 }
 
-static void protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL expect_mime)
+#define protocol_start(p,u,e) _protocol_start(__LINE__,p,u,e)
+static HRESULT _protocol_start(unsigned line, IInternetProtocol *protocol, LPCWSTR url, BOOL expect_mime)
 {
     HRESULT hres;
 
@@ -297,20 +301,37 @@ static void protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL expect
     expect_hrResult = S_OK;
 
     hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
-    ok(hres == S_OK, "Start failed: %08x\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "Start failed: %08x\n", hres);
 
-    CHECK_CALLED(GetBindInfo);
-    if(test_protocol == MK_PROTOCOL)
-        CHECK_CALLED(ReportProgress_DIRECTBIND);
-    CHECK_CALLED(ReportProgress_SENDINGREQUEST);
-    if(expect_mime)
-        CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
-    if(test_protocol == MK_PROTOCOL)
-        SET_EXPECT(ReportProgress_CACHEFILENAMEAVAIABLE);
-    CHECK_CALLED(ReportData);
-    if(test_protocol == ITS_PROTOCOL)
-        CHECK_CALLED(ReportProgress_BEGINDOWNLOADDATA);
-    CHECK_CALLED(ReportResult);
+    if(FAILED(hres)) {
+        SET_CALLED(GetBindInfo);
+        if(test_protocol == MK_PROTOCOL)
+            SET_CALLED(ReportProgress_DIRECTBIND);
+        SET_CALLED(ReportProgress_SENDINGREQUEST);
+        if(expect_mime)
+            SET_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+        if(test_protocol == MK_PROTOCOL)
+            SET_EXPECT(ReportProgress_CACHEFILENAMEAVAIABLE);
+        SET_CALLED(ReportData);
+        if(test_protocol == ITS_PROTOCOL)
+            SET_CALLED(ReportProgress_BEGINDOWNLOADDATA);
+        SET_CALLED(ReportResult);
+    }else {
+        CHECK_CALLED(GetBindInfo);
+        if(test_protocol == MK_PROTOCOL)
+            CHECK_CALLED(ReportProgress_DIRECTBIND);
+        CHECK_CALLED(ReportProgress_SENDINGREQUEST);
+        if(expect_mime)
+            CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+        if(test_protocol == MK_PROTOCOL)
+            SET_EXPECT(ReportProgress_CACHEFILENAMEAVAIABLE);
+        CHECK_CALLED(ReportData);
+        if(test_protocol == ITS_PROTOCOL)
+            CHECK_CALLED(ReportProgress_BEGINDOWNLOADDATA);
+        CHECK_CALLED(ReportResult);
+    }
+
+    return hres;
 }
 
 static void test_protocol_url(IClassFactory *factory, LPCWSTR url, BOOL expect_mime)
@@ -325,7 +346,12 @@ static void test_protocol_url(IClassFactory *factory, LPCWSTR url, BOOL expect_m
     if(FAILED(hres))
         return;
 
-    protocol_start(protocol, url, expect_mime);
+    hres = protocol_start(protocol, url, expect_mime);
+    if(FAILED(hres)) {
+        IInternetProtocol_Release(protocol);
+        return;
+    }
+
     hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
     ok(hres == S_OK, "Read failed: %08x\n", hres);
     ok(cb == 13, "cb=%u expected 13\n", cb);
