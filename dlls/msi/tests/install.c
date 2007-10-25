@@ -140,7 +140,8 @@ static const CHAR property_dat[] = "Property\tValue\n"
                                    "PROMPTROLLBACKCOST\tP\n"
                                    "Setup\tSetup\n"
                                    "UpgradeCode\t{4C0EAA15-0264-4E5A-8758-609EF142B92D}\n"
-                                   "AdminProperties\tPOSTADMIN\n";
+                                   "AdminProperties\tPOSTADMIN\n"
+                                   "ROOTDRIVE\tC:\\\n";
 
 static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
                                    "s72\ti2\tl255\tL255\tL0\ts72\n"
