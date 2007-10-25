@@ -3693,7 +3693,8 @@ typedef enum {
     WinBuiltinPerfMonitoringUsersSid            = 57,
     WinBuiltinPerfLoggingUsersSid               = 58,
     WinBuiltinAuthorizationAccessSid            = 59,
-    WinBuiltinTerminalServerLicenseServersSid   = 60
+    WinBuiltinTerminalServerLicenseServersSid   = 60,
+    WinBuiltinDCOMUsersSid                      = 61
 } WELL_KNOWN_SID_TYPE;
 
 /*
