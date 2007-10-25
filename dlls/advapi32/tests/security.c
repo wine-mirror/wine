@@ -894,6 +894,22 @@ static void test_AccessCheck(void)
         trace("Couldn't get SE_SECURITY_PRIVILEGE (0x%08x), skipping ACCESS_SYSTEM_SECURITY test\n",
             ret);
 
+    /* test INHERIT_ONLY_ACE */
+    ret = InitializeAcl(Acl, 256, ACL_REVISION);
+    ok(ret, "InitializeAcl failed with error %d\n", GetLastError());
+    ret = AddAccessAllowedAceEx(Acl, ACL_REVISION, INHERIT_ONLY_ACE, KEY_READ, EveryoneSid);
+    ok(ret, "AddAccessAllowedAceEx failed with error %d\n", GetLastError());
+
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    ok(ret, "AccessCheck failed with error %d\n", GetLastError());
+    err = GetLastError();
+    todo_wine
+    ok(!AccessStatus && err == ERROR_ACCESS_DENIED, "AccessCheck should have failed "
+       "with ERROR_ACCESS_DENIED, instead of %d\n", err);
+    todo_wine
+    ok(!Access, "Should have failed to grant any access, got 0x%08x\n", Access);
+
     CloseHandle(Token);
 
     res = DuplicateToken(ProcessToken, SecurityAnonymous, &Token);
