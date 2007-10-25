@@ -228,6 +228,22 @@ static const char *get_context_handle_type_name(const type_t *type)
     return NULL;
 }
 
+/* This is actually fairly involved to implement precisely, due to the
+   effects attributes may have and things like that.  Right now this is
+   only used for optimization, so just check for a very small set of
+   criteria that guarantee the types are equivalent; assume every thing
+   else is different.   */
+static int compare_type(const type_t *a, const type_t *b)
+{
+    if (a == b
+        || (a->name
+            && b->name
+            && strcmp(a->name, b->name) == 0))
+        return 0;
+    /* Ordering doesn't need to be implemented yet.  */
+    return 1;
+}
+
 static int compare_expr(const expr_t *a, const expr_t *b)
 {
     int ret;
@@ -265,12 +281,17 @@ static int compare_expr(const expr_t *a, const expr_t *b)
             if (ret != 0)
                 return ret;
             return compare_expr(a->u.ext, b->u.ext);
+        case EXPR_CAST:
+            ret = compare_type(a->u.tref, b->u.tref);
+            if (ret != 0)
+                return ret;
+            /* Fall through.  */
         case EXPR_NOT:
         case EXPR_NEG:
         case EXPR_PPTR:
-        case EXPR_CAST:
-        case EXPR_SIZEOF:
             return compare_expr(a->ref, b->ref);
+        case EXPR_SIZEOF:
+            return compare_type(a->u.tref, b->u.tref);
         case EXPR_VOID:
             return 0;
     }
