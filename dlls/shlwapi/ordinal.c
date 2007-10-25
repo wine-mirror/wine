@@ -732,10 +732,9 @@ BOOL WINAPI IsCharXDigitW(WCHAR wc)
  *      @	[SHLWAPI.35]
  *
  */
-BOOL WINAPI GetStringType3ExW(LPWSTR lpszStr, DWORD dwLen, LPVOID p3)
+BOOL WINAPI GetStringType3ExW(LPWSTR src, INT count, LPWORD type)
 {
-    FIXME("(%s,0x%08x,%p): stub\n", debugstr_w(lpszStr), dwLen, p3);
-    return TRUE;
+    return GetStringTypeW(CT_CTYPE3, src, count, type);
 }
 
 /*************************************************************************
