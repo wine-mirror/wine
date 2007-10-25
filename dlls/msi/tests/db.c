@@ -2249,6 +2249,24 @@ static MSIHANDLE create_package_db(LPCSTR filename)
     return hdb;
 }
 
+static MSIHANDLE package_from_db(MSIHANDLE hdb)
+{
+    UINT res;
+    CHAR szPackage[10];
+    MSIHANDLE hPackage;
+
+    sprintf(szPackage,"#%li",hdb);
+    res = MsiOpenPackage(szPackage,&hPackage);
+    if (res != ERROR_SUCCESS)
+        return 0;
+
+    res = MsiCloseHandle(hdb);
+    if (res != ERROR_SUCCESS)
+        return 0;
+
+    return hPackage;
+}
+
 static void test_try_transform(void)
 {
     MSIHANDLE hdb, hview, hrec, hpkg;
@@ -2258,11 +2276,10 @@ static void test_try_transform(void)
     char buffer[MAX_PATH];
 
     DeleteFile(msifile);
-    DeleteFile(msifile2);
     DeleteFile(mstfile);
 
     /* create the database */
-    hdb = create_package_db(msifile2);
+    hdb = create_package_db(msifile);
     ok(hdb, "Failed to create package db\n");
 
     query = "CREATE TABLE `MOO` ( `NOO` SHORT NOT NULL, `OOO` CHAR(255) PRIMARY KEY `NOO`)";
@@ -2315,7 +2332,7 @@ static void test_try_transform(void)
     else
         generate_transform_manual();
 
-    r = MsiOpenDatabase(msifile2, MSIDBOPEN_DIRECT, &hdb );
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_DIRECT, &hdb );
     ok( r == ERROR_SUCCESS , "Failed to create database\n" );
 
     r = MsiDatabaseApplyTransform( hdb, mstfile, 0 );
@@ -2423,11 +2440,10 @@ static void test_try_transform(void)
 
     MsiCloseHandle(hrec);
     MsiCloseHandle(hview);
-    MsiCloseHandle(hdb);
 
     /* check that the property was added */
-    r = MsiOpenPackage(msifile2, &hpkg);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    hpkg = package_from_db(hdb);
+    ok(hpkg != 0, "Expected non-NULL hpkg\n");
 
     sz = MAX_PATH;
     r = MsiGetProperty(hpkg, "prop", buffer, &sz);
@@ -2435,9 +2451,9 @@ static void test_try_transform(void)
     ok(!lstrcmp(buffer, "val"), "Expected val, got %s\n", buffer);
 
     MsiCloseHandle(hpkg);
+    MsiCloseHandle(hdb);
 
     DeleteFile(msifile);
-    DeleteFile(msifile2);
     DeleteFile(mstfile);
 }
 
