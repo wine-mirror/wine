@@ -5,7 +5,7 @@
  * Copyright 2002 Jaco Greeff
  * Copyright 2003 Dimitrie O. Paun
  * Copyright 2003-2004 Mike Hearn
- * Copyright 2005,2006 YunSong Hwang
+ * Copyright 2005,2006,2007 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -99,7 +99,7 @@ BEGIN
     GROUPBOX        " DLL 오버라이드 ",IDC_STATIC,8,4,244,240
     LTEXT           "동적 링크 라이브러리는 개별적으로 내장(Wine에 의해 제공)이나 네이티브(윈도우즈나 프로그램에 의해 제공)으로 지정될수 있습니다."
                     ,IDC_STATIC,16,16,220,32
-    LTEXT           "새로 오버라이드할 라이브러리(&N):",IDC_STATIC,16,58,100,8
+    LTEXT           "새로 오버라이드할 라이브러리(&N):",IDC_STATIC,16,58,108,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "더하기(&A)",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
     LTEXT           "현재 오버라이드 목록(&O):",IDC_STATIC,16,86,100,8
@@ -144,7 +144,7 @@ BEGIN
     
     LTEXT           "라벨과 시리얼 번호",IDC_LABELSERIAL_STATIC,15,155,95,10
     
-    PUSHBUTTON      "추가옵션 보이기(&A)",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
+    PUSHBUTTON      "추가옵션 보이기(&A)",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,63,13
     CONTROL         "장치로부터 자동검출(&f):",IDC_RADIO_AUTODETECT,"Button",
                     BS_AUTORADIOBUTTON,15,166,93,10
     EDITTEXT        IDC_EDIT_DEVICE,27,176,163,13,ES_AUTOHSCROLL
@@ -165,10 +165,10 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 드라이버 선택 ",IDC_STATIC,8,4,244,195
-    LTEXT           "원하는 드라이버의 박스를 체크하여 사운드 드라이버를 선택합니다. 어떤 드라이버도 선택하지 않으면 사운드가 해제됩니다. 여러 드라이버를 선택하는 것은 추천하지 않습니다. 드라이버 위에서 마우스 오른쪽 버튼 클릭하여 드라이버를 설정합니다.",IDC_STATIC,15,20,227,30
-    CONTROL         "장치",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
-    PUSHBUTTON      "소리 테스트(&T)",IDC_AUDIO_TEST,170,50,59,14
-    PUSHBUTTON	    "제어판(&C)",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
+    LTEXT           "원하는 드라이버의 박스를 체크하여 사운드 드라이버를 선택합니다. 어떤 드라이버도 선택하지 않으면 사운드가 해제됩니다. 여러 드라이버를 선택하는 것은 추천하지 않습니다. 드라이버 위에서 마우스 오른쪽 버튼 클릭하여 드라이버를 설정합니다.",IDC_STATIC,15,20,227,33
+    CONTROL         "장치",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,56,140,134
+    PUSHBUTTON      "소리 테스트(&T)",IDC_AUDIO_TEST,170,57,59,14
+    PUSHBUTTON	    "제어판(&C)",IDC_AUDIO_CONTROL_PANEL,170,77,59,14
     GROUPBOX        " 다이렉트 사운드 ",IDC_STATIC,8,205,244,60
     LTEXT	    "하드웨어 가속(&H): ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -184,7 +184,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 외관 ",IDC_STATIC,8,4,244,106
-    LTEXT           "테마(&T_:",IDC_STATIC,15,16,130,8
+    LTEXT           "테마(&T):",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "테마 설치(&I)...",IDC_THEME_INSTALL,152,23,93,14
     LTEXT           "색상(&C):",IDC_THEME_COLORTEXT,15,40,112,8
