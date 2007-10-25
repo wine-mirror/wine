@@ -391,10 +391,10 @@ static void test_summary_binary(void)
     type = 0;
     r = MsiSummaryInfoGetProperty(hsuminfo, PID_LASTPRINTED, &type, NULL, NULL, sval, &sz);
     ok(r == ERROR_SUCCESS, "MsiSummaryInfoGetProperty failed\n");
-    ok( !strcmp(sval, ""), "value incorrect\n");
+    ok(!strcmp(sval, ""), "Expected empty string, got %s\n", sval);
     todo_wine {
-    ok( type == VT_LPSTR, "type wrong\n");
-    ok( sz == 0, "length wrong\n");
+    ok(type == VT_LPSTR, "Expected VT_LPSTR, got %d\n", type);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
     }
 
     ival = -1;
