@@ -812,10 +812,9 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @REQ(create_semaphore)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
-    obj_handle_t rootdir;       /* root directory */
     unsigned int initial;       /* initial count */
     unsigned int max;           /* maximum count */
-    VARARG(name,unicode_str);   /* object name */
+    VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;        /* handle to the semaphore */
 @END

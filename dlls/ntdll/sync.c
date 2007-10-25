@@ -144,23 +144,37 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
 {
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
+    struct object_attributes objattr;
+    struct security_descriptor *sd = NULL;
 
     if (MaximumCount <= 0 || InitialCount < 0 || InitialCount > MaximumCount)
         return STATUS_INVALID_PARAMETER;
     if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
+    objattr.rootdir =  attr ? attr->RootDirectory : 0;
+    objattr.sd_len = 0;
+    if (attr)
+    {
+        ret = create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
+        if (ret != STATUS_SUCCESS) return ret;
+    }
+
     SERVER_START_REQ( create_semaphore )
     {
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
-        req->rootdir = attr ? attr->RootDirectory : 0;
         req->initial = InitialCount;
         req->max     = MaximumCount;
+        wine_server_add_data( req, &objattr, sizeof(objattr) );
+        if (objattr.sd_len) wine_server_add_data( req, sd, objattr.sd_len );
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *SemaphoreHandle = reply->handle;
     }
     SERVER_END_REQ;
+
+    free_struct_sd( sd );
+
     return ret;
 }
 
