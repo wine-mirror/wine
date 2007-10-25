@@ -1,6 +1,6 @@
 /*
  * Copyright 2001 Eric Pouech
- * Copyright 2005 YunSong Hwang
+ * Copyright 2005,2007 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -71,7 +71,7 @@ FONT 8, "MS Shell Dlg"
 	AUTOCHECKBOX "가능(&E)", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
 
 	GROUPBOX "명령 히스토리", -1, 10, 57, 190, 35, BS_GROUPBOX
-	LTEXT "다시 부르는 명령의 갯수(&N) :", -1, 14, 67, 78, 18
+	LTEXT "다시 부르는 명령의 갯수(&N):", -1, 14, 67, 78, 18
 	EDITTEXT IDC_OPT_HIST_SIZE, 92, 69, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 	AUTOCHECKBOX "두번  제거(&R)", IDC_OPT_HIST_NODOUBLE, 130, 67, 50, 18, WS_TABSTOP|BS_MULTILINE
