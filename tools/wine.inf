@@ -2224,6 +2224,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,kernel32.dll
 11,,msadp32.acm
 11,,msg711.acm
+11,,mshtml.dll
 11,,msi.dll
 11,,msiexec.exe
 11,,msvcrt.dll
