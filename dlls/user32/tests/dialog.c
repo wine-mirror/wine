@@ -488,6 +488,44 @@ static LRESULT CALLBACK main_window_procA (HWND hwnd, UINT uiMsg, WPARAM wParam,
     return result;
 }
 
+static LRESULT CALLBACK disabled_test_proc (HWND hwnd, UINT uiMsg,
+        WPARAM wParam, LPARAM lParam)
+{
+    LRESULT result;
+    DWORD dw;
+    HWND hwndOk;
+
+    switch (uiMsg)
+    {
+        case WM_INITDIALOG:
+            dw = SendMessage(hwnd, DM_GETDEFID, 0, 0);
+            assert(DC_HASDEFID == HIWORD(dw));
+            hwndOk = GetDlgItem(hwnd, LOWORD(dw));
+            assert(hwndOk);
+            EnableWindow(hwndOk, FALSE);
+
+            PostMessage(hwnd, WM_KEYDOWN, VK_RETURN, 0);
+            PostMessage(hwnd, WM_COMMAND, IDCANCEL, 0);
+            break;
+        case WM_COMMAND:
+            if (wParam == IDOK)
+            {
+                g_terminated = TRUE;
+                EndDialog(hwnd, 0);
+                return 0;
+            }
+            else if (wParam == IDCANCEL)
+            {
+                EndDialog(hwnd, 0);
+                return 0;
+            }
+            break;
+    }
+
+    result=DefWindowProcA (hwnd, uiMsg, wParam, lParam);
+    return result;
+}
+
 static LRESULT CALLBACK testDlgWinProc (HWND hwnd, UINT uiMsg, WPARAM wParam,
         LPARAM lParam)
 {
@@ -876,6 +914,13 @@ static void test_DialogBoxParamA(void)
     ok(ERROR_RESOURCE_NAME_NOT_FOUND == GetLastError(),"got %d, expected ERROR_RESOURCE_NAME_NOT_FOUND\n",GetLastError());
 }
 
+static void test_DisabledDialogTest(void)
+{
+    g_terminated = FALSE;
+    DialogBoxParam(g_hinst, "IDD_DIALOG", NULL, (DLGPROC)disabled_test_proc, 0);
+    ok(FALSE == g_terminated, "dialog with disabled ok button has been terminated\n");
+}
+
 START_TEST(dialog)
 {
     g_hinst = GetModuleHandleA (0);
@@ -888,4 +933,5 @@ START_TEST(dialog)
     InitialFocusTest();
     test_GetDlgItemText();
     test_DialogBoxParamA();
+    test_DisabledDialogTest();
 }
