@@ -434,7 +434,7 @@ static const CHAR adm_component_dat[] = "Component\tComponentId\tDirectory_\tAtt
 static const CHAR adm_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
                                             "s72\ti2\tS64\tS0\tS255\n"
                                             "CustomAction\tAction\n"
-                                            "SetPOSTADMIN\t51\tPOSTADMIN\t1\t";
+                                            "SetPOSTADMIN\t51\tPOSTADMIN\t1\t\n";
 
 static const CHAR adm_admin_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                              "s72\tS255\tI2\n"
