@@ -1404,8 +1404,9 @@ static void test_mk_protocol(void)
 
     SET_EXPECT(GetBindInfo);
     hres = IInternetProtocol_Start(protocol, wrong_url1, &protocol_sink, &bind_info, 0, 0);
-    ok(hres == MK_E_SYNTAX, "Start failed: %08x, expected MK_E_SYNTAX\n", hres);
-    CHECK_CALLED(GetBindInfo);
+    ok(hres == MK_E_SYNTAX || hres == INET_E_INVALID_URL,
+       "Start failed: %08x, expected MK_E_SYNTAX or INET_E_INVALID_URL\n", hres);
+    CLEAR_CALLED(GetBindInfo);
 
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(ReportProgress_DIRECTBIND);

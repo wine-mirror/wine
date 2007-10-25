@@ -122,6 +122,9 @@ static HRESULT WINAPI MkProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
+    if(strncmpiW(szUrl, wszMK, sizeof(wszMK)/sizeof(WCHAR)))
+        return INET_E_INVALID_URL;
+
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(BINDINFO);
     hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bindf, &bindinfo);
@@ -131,9 +134,6 @@ static HRESULT WINAPI MkProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     }
 
     ReleaseBindInfo(&bindinfo);
-
-    if(strncmpiW(szUrl, wszMK, sizeof(wszMK)/sizeof(WCHAR)))
-        return MK_E_SYNTAX;
 
     IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_DIRECTBIND, NULL);
     IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_SENDINGREQUEST, NULL);
