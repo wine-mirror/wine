@@ -2176,16 +2176,17 @@ static void SETUPDI_EnumerateMatchingDeviceInstances(struct DeviceInfoSet *set,
                         if ((flags & DIGCF_ALLCLASSES) ||
                                 IsEqualGUID(class, &deviceClass))
                         {
-                            static const WCHAR fmt[] = {'%','s','\\','%','s',0};
+                            static const WCHAR fmt[] =
+                             {'%','s','\\','%','s','\\','%','s',0};
                             LPWSTR instanceId;
 
                             instanceId = HeapAlloc(GetProcessHeap(), 0,
-                                (lstrlenW(deviceName) +
-                                lstrlenW(deviceInstance) + 2) * sizeof(WCHAR));
+                                (lstrlenW(enumerator) + lstrlenW(deviceName) +
+                                lstrlenW(deviceInstance) + 3) * sizeof(WCHAR));
                             if (instanceId)
                             {
-                                sprintfW(instanceId, fmt, deviceName,
-                                        deviceInstance);
+                                sprintfW(instanceId, fmt, enumerator,
+                                        deviceName, deviceInstance);
                                 SETUPDI_AddDeviceToSet(set, &deviceClass,
                                         0 /* FIXME: DevInst */, instanceId,
                                         FALSE, NULL);
