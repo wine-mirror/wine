@@ -604,8 +604,8 @@ static void test_Extract(void)
     node = session.FileList;
     todo_wine
     {
-        ok(res == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
-           "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), got %08x\n", res);
+        ok(res == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || res == E_FAIL,
+           "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) or E_FAIL, got %08x\n", res);
         ok(session.FileSize == 6, "Expected 6, got %d\n", session.FileSize);
         ok(session.Error.erfOper == FDIERROR_USER_ABORT,
            "Expected FDIERROR_USER_ABORT, got %d\n", session.Error.erfOper);
@@ -644,8 +644,8 @@ static void test_Extract(void)
     res = pExtract(&session, "extract.cab");
     todo_wine
     {
-        ok(res == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
-           "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), got %08x\n", res);
+        ok(res == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || res == E_FAIL,
+           "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) or E_FAIL, got %08x\n", res);
         ok(session.FileSize == 26, "Expected 26, got %d\n", session.FileSize);
         ok(session.Error.erfOper == FDIERROR_USER_ABORT,
            "Expected FDIERROR_USER_ABORT, got %d\n", session.Error.erfOper);
