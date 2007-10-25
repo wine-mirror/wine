@@ -33,12 +33,40 @@
 
 #include "wine/test.h"
 
-/* ######## */
+/* ########################### */
+
+static HMODULE  hcomdlg32;
+static HRESULT (WINAPI * pPrintDlgExA)(LPPRINTDLGEXA);
+static HRESULT (WINAPI * pPrintDlgExW)(LPPRINTDLGEXW);
+
+/* ########################### */
 
 static const CHAR emptyA[] = "";
 static const CHAR PrinterPortsA[] = "PrinterPorts";
 
-/* ######## */
+/* ########################### */
+
+static LPCSTR load_functions(void)
+{
+    LPCSTR  ptr;
+
+    ptr = "comdlg32.dll";
+    hcomdlg32 = LoadLibraryA(ptr);
+    if (!hcomdlg32) return ptr;
+
+    ptr = "PrintDlgExA";
+    pPrintDlgExA = (void *) GetProcAddress(hcomdlg32, ptr);
+    if (!pPrintDlgExA) return ptr;
+
+    ptr = "PrintDlgExW";
+    pPrintDlgExW = (void *) GetProcAddress(hcomdlg32, ptr);
+    if (!pPrintDlgExW) return ptr;
+
+    return NULL;
+
+}
+
+/* ########################### */
 
 static void test_PageSetupDlgA(void)
 {
@@ -98,7 +126,7 @@ static void test_PageSetupDlgA(void)
 
 }
 
-/* ##### */
+/* ########################### */
 
 static void test_PrintDlgA(void)
 {
@@ -210,10 +238,76 @@ static void test_PrintDlgA(void)
 
 }
 
+/* ########################### */
+
+static void test_PrintDlgExW(void)
+{
+    LPPRINTDLGEXW pDlg;
+    HRESULT res;
+
+    /* Set CommDlgExtendedError != 0 */
+    PrintDlg(NULL);
+    SetLastError(0xdeadbeef);
+    res = pPrintDlgExW(NULL);
+    ok( (res == E_INVALIDARG),
+        "got 0x%x with %u and %u (expected 'E_INVALIDARG')\n",
+        res, GetLastError(), CommDlgExtendedError());
+
+
+    pDlg = HeapAlloc(GetProcessHeap(), 0, (sizeof(PRINTDLGEXW)) + 8);
+    if (!pDlg) return;
+
+    /* lStructSize must be exact */
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW) - 1;
+    PrintDlg(NULL);
+    SetLastError(0xdeadbeef);
+    res = pPrintDlgExW(pDlg);
+    ok( (res == E_INVALIDARG),
+        "got 0x%x with %u and %u (expected 'E_INVALIDARG')\n",
+        res, GetLastError(), CommDlgExtendedError());
+
+
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW) + 1;
+    PrintDlg(NULL);
+    SetLastError(0xdeadbeef);
+    res = pPrintDlgExW(pDlg);
+    ok( (res == E_INVALIDARG),
+        "got 0x%x with %u and %u (expected 'E_INVALIDARG')\n",
+        res, GetLastError(), CommDlgExtendedError());
+
+
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW);
+    SetLastError(0xdeadbeef);
+    res = pPrintDlgExW(pDlg);
+    ok( (res == E_HANDLE),
+        "got 0x%x with %u and %u (expected 'E_HANDLE')\n",
+        res, GetLastError(), CommDlgExtendedError());
+
+
+    HeapFree(GetProcessHeap(), 0, pDlg);
+    return;
+
+}
+
+/* ########################### */
 
 START_TEST(printdlg)
 {
+    LPCSTR  ptr;
+
+    ptr = load_functions();
+
     test_PageSetupDlgA();
     test_PrintDlgA();
 
+    /* PrintDlgEx not present before w2k */
+    if (ptr) {
+        skip("%s\n", ptr);
+        return;
+    }
+
+    test_PrintDlgExW();
 }
