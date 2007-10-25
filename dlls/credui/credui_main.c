@@ -25,6 +25,7 @@
 #include "winnt.h"
 #include "winuser.h"
 #include "wincred.h"
+#include "commctrl.h"
 
 #include "credui_resources.h"
 
@@ -66,6 +67,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
         DisableThreadLibraryCalls(hinstDLL);
         hinstCredUI = hinstDLL;
+        InitCommonControls();
     }
     else if (fdwReason == DLL_PROCESS_DETACH)
     {
@@ -102,6 +104,7 @@ struct cred_dialog_params
     PWSTR pszPassword;
     ULONG ulPasswordMaxChars;
     BOOL fSave;
+    DWORD dwFlags;
 };
 
 static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
@@ -112,26 +115,42 @@ static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
         case WM_INITDIALOG:
         {
             struct cred_dialog_params *params = (struct cred_dialog_params *)lParam;
-            DWORD ret;
-            WCHAR user[256];
-            WCHAR domain[256];
 
             SetWindowLongPtrW(hwndDlg, DWLP_USER, (LONG_PTR)params);
-            ret = CredUIParseUserNameW(params->pszUsername, user, 256, domain, 256);
-            if (ret == ERROR_SUCCESS)
+            if (params->pszMessageText)
+                SetDlgItemTextW(hwndDlg, IDC_MESSAGE, params->pszMessageText);
+            else
             {
-                SetDlgItemTextW(hwndDlg, IDC_USERNAME, user);
-                SetDlgItemTextW(hwndDlg, IDC_DOMAIN, domain);
+                WCHAR format[256];
+                WCHAR message[256];
+                LoadStringW(hinstCredUI, IDS_MESSAGEFORMAT, format, sizeof(format)/sizeof(format[0]));
+                snprintfW(message, sizeof(message)/sizeof(message[0]), format, params->pszTargetName);
+                SetDlgItemTextW(hwndDlg, IDC_MESSAGE, message);
             }
+            SetDlgItemTextW(hwndDlg, IDC_USERNAME, params->pszUsername);
             SetDlgItemTextW(hwndDlg, IDC_PASSWORD, params->pszPassword);
 
-            if (ret == ERROR_SUCCESS && user[0])
+            if (params->pszUsername[0])
                 SetFocus(GetDlgItem(hwndDlg, IDC_PASSWORD));
             else
                 SetFocus(GetDlgItem(hwndDlg, IDC_USERNAME));
 
             if (params->pszCaptionText)
                 SetWindowTextW(hwndDlg, params->pszCaptionText);
+            else
+            {
+                WCHAR format[256];
+                WCHAR title[256];
+                LoadStringW(hinstCredUI, IDS_TITLEFORMAT, format, sizeof(format)/sizeof(format[0]));
+                snprintfW(title, sizeof(title)/sizeof(title[0]), format, params->pszTargetName);
+                SetWindowTextW(hwndDlg, title);
+            }
+
+            if (params->dwFlags & (CREDUI_FLAGS_DO_NOT_PERSIST|CREDUI_FLAGS_PERSIST))
+                ShowWindow(GetDlgItem(hwndDlg, IDC_SAVE), SW_HIDE);
+            else if (params->fSave)
+                CheckDlgButton(hwndDlg, IDC_SAVE, BST_CHECKED);
+
             return FALSE;
         }
         case WM_COMMAND:
@@ -139,22 +158,40 @@ static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
             {
                 case MAKELONG(IDOK, BN_CLICKED):
                 {
-                    ULONG domainlen;
                     struct cred_dialog_params *params =
                         (struct cred_dialog_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
+                    HWND hwndUsername = GetDlgItem(hwndDlg, IDC_USERNAME);
+                    LPWSTR user;
+                    INT len;
+                    INT len2;
 
-                    domainlen = GetDlgItemTextW(hwndDlg, IDC_DOMAIN,
-                                                params->pszUsername,
-                                                params->ulUsernameMaxChars);
-                    if (domainlen && (domainlen < params->ulUsernameMaxChars))
+                    len = GetWindowTextLengthW(hwndUsername);
+                    user = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+                    GetWindowTextW(hwndUsername, user, len + 1);
+
+                    if (!user[0])
+                        return TRUE;
+
+                    if (!strchrW(user, '\\') && !strchrW(user, '@'))
                     {
-                        params->pszUsername[domainlen++] = '\\';
-                        params->pszUsername[domainlen] = '\0';
+                        INT len_target = strlenW(params->pszTargetName);
+                        memcpy(params->pszUsername, params->pszTargetName,
+                               min(len_target, params->ulUsernameMaxChars) * sizeof(WCHAR));
+                        if (len_target + 1 < params->ulUsernameMaxChars)
+                            params->pszUsername[len_target] = '\\';
+                        if (len_target + 2 < params->ulUsernameMaxChars)
+                            params->pszUsername[len_target + 1] = '\0';
                     }
-                    if (domainlen < params->ulUsernameMaxChars)
-                        GetDlgItemTextW(hwndDlg, IDC_USERNAME,
-                                        params->pszUsername + domainlen,
-                                        params->ulUsernameMaxChars - domainlen);
+                    else if (params->ulUsernameMaxChars > 0)
+                        params->pszUsername[0] = '\0';
+
+                    len2 = strlenW(params->pszUsername);
+                    memcpy(params->pszUsername + len2, user, min(len, params->ulUsernameMaxChars - len2) * sizeof(WCHAR));
+                    if (params->ulUsernameMaxChars)
+                        params->pszUsername[len2 + min(len, params->ulUsernameMaxChars - len2 - 1)] = '\0';
+
+                    HeapFree(GetProcessHeap(), 0, user);
+
                     GetDlgItemTextW(hwndDlg, IDC_PASSWORD, params->pszPassword,
                                     params->ulPasswordMaxChars);
 
@@ -219,6 +256,7 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
     params.pszPassword = pszPassword;
     params.ulPasswordMaxChars = ulPasswordMaxChars;
     params.fSave = pfSave ? *pfSave : FALSE;
+    params.dwFlags = dwFlags;
 
     ret = DialogBoxParamW(hinstCredUI, MAKEINTRESOURCEW(IDD_CREDDIALOG),
                           pUIInfo ? pUIInfo->hwndParent : NULL,

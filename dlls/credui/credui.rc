@@ -24,6 +24,9 @@
 #include "winnls.h"
 #include "credui_resources.h"
 
+/* @makedep: banner.bmp */
+IDB_BANNER BITMAP LOADONCALL DISCARDABLE banner.bmp
+
 #include "credui_De.rc"
 #include "credui_En.rc"
 #include "credui_Ko.rc"
