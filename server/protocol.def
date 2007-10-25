@@ -781,9 +781,8 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @REQ(create_mutex)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
-    obj_handle_t rootdir;       /* root directory */
     int          owned;         /* initially owned? */
-    VARARG(name,unicode_str);   /* object name */
+    VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;        /* handle to the mutex */
 @END

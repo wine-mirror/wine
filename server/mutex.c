@@ -34,6 +34,7 @@
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
+#include "security.h"
 
 struct mutex
 {
@@ -72,7 +73,7 @@ static const struct object_ops mutex_ops =
 
 
 static struct mutex *create_mutex( struct directory *root, const struct unicode_str *name,
-                                   unsigned int attr, int owned )
+                                   unsigned int attr, int owned, const struct security_descriptor *sd )
 {
     struct mutex *mutex;
 
@@ -85,6 +86,10 @@ static struct mutex *create_mutex( struct directory *root, const struct unicode_
             mutex->owner = NULL;
             mutex->abandoned = 0;
             if (owned) mutex_satisfied( &mutex->obj, current );
+            if (sd) default_set_sd( &mutex->obj, sd, OWNER_SECURITY_INFORMATION|
+                                                     GROUP_SECURITY_INFORMATION|
+                                                     DACL_SECURITY_INFORMATION|
+                                                     SACL_SECURITY_INFORMATION );
         }
     }
     return mutex;
@@ -191,13 +196,24 @@ DECL_HANDLER(create_mutex)
     struct mutex *mutex;
     struct unicode_str name;
     struct directory *root = NULL;
+    const struct object_attributes *objattr = get_req_data();
+    const struct security_descriptor *sd;
 
     reply->handle = 0;
-    get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+
+    if (!objattr_is_valid( objattr, get_req_data_size() ))
         return;
 
-    if ((mutex = create_mutex( root, &name, req->attributes, req->owned )))
+    sd = objattr->sd_len ? (const struct security_descriptor *)(objattr + 1) : NULL;
+
+    /* get unicode string */
+    name.len = ((get_req_data_size() - sizeof(*objattr) - objattr->sd_len) / sizeof(WCHAR)) * sizeof(WCHAR);
+    name.str = (const WCHAR *)get_req_data() + (sizeof(*objattr) + objattr->sd_len) / sizeof(WCHAR);
+
+    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
+        return;
+
+    if ((mutex = create_mutex( root, &name, req->attributes, req->owned, sd )))
     {
         reply->handle = alloc_handle( current->process, mutex, req->access, req->attributes );
         release_object( mutex );

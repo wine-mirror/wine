@@ -1191,10 +1191,9 @@ static void dump_create_mutex_request( const struct create_mutex_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
-    fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " owned=%d,", req->owned );
-    fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( cur_size );
+    fprintf( stderr, " objattr=" );
+    dump_varargs_object_attributes( cur_size );
 }
 
 static void dump_create_mutex_reply( const struct create_mutex_reply *req )

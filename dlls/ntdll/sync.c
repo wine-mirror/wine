@@ -415,22 +415,36 @@ NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
                                IN const OBJECT_ATTRIBUTES* attr OPTIONAL,
                                IN BOOLEAN InitialOwner)
 {
-    NTSTATUS    status;
-    DWORD       len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
+    NTSTATUS status;
+    DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
+    struct security_descriptor *sd = NULL;
+    struct object_attributes objattr;
 
     if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
+
+    objattr.rootdir = attr ? attr->RootDirectory : 0;
+    objattr.sd_len = 0;
+    if (attr)
+    {
+        status = create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
+        if (status != STATUS_SUCCESS) return status;
+    }
 
     SERVER_START_REQ( create_mutex )
     {
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
-        req->rootdir = attr ? attr->RootDirectory : 0;
         req->owned   = InitialOwner;
+        wine_server_add_data( req, &objattr, sizeof(objattr) );
+        if (objattr.sd_len) wine_server_add_data( req, sd, objattr.sd_len );
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *MutantHandle = reply->handle;
     }
     SERVER_END_REQ;
+
+    free_struct_sd( sd );
+
     return status;
 }
 
