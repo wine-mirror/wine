@@ -13,7 +13,6 @@ C_SRCS = \
 	connpt.c \
 	dispatch.c \
 	hash.c \
-	oaidl_p.c \
 	oleaut.c \
 	olefont.c \
 	olepicture.c \
@@ -39,6 +38,9 @@ SPEC_SRCS16 = \
 	typelib.spec
 
 RC_SRCS = oleaut32.rc
+
+IDL_P_SRCS = \
+	oleaut32_oaidl.idl
 
 @MAKE_DLL_RULES@
 

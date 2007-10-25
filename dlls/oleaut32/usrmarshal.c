@@ -49,10 +49,10 @@ static CStdPSFactoryBuffer PSFactoryBuffer;
 
 CSTDSTUBBUFFERRELEASE(&PSFactoryBuffer)
 
-extern const ExtendedProxyFileInfo oaidl_ProxyFileInfo;
+extern const ExtendedProxyFileInfo oleaut32_oaidl_ProxyFileInfo;
 
 static const ProxyFileInfo *OLEAUT32_ProxyFileList[] = {
-  &oaidl_ProxyFileInfo,
+  &oleaut32_oaidl_ProxyFileInfo,
   NULL
 };
 
