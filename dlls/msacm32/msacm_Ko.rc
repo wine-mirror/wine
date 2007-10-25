@@ -1,7 +1,7 @@
 /*
  * Korean resource file for MS ACM
  *
- * Copyright 2005 YunSong Hwang
+ * Copyright 2005,2007 YunSong Hwang
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,10 +28,10 @@ BEGIN
 
     LTEXT           "이름(&N):", -1, 5, 5, 115, 8, NOT WS_GROUP
 
-    COMBOBOX        IDD_ACMFORMATCHOOSE_CMB_CUSTOM, 5, 15, 115, 60,
+    COMBOBOX        IDD_ACMFORMATCHOOSE_CMB_CUSTOM, 5, 15, 97, 60,
                     CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 
-    PUSHBUTTON      "다른 이름으로 저장(&S)...", IDD_ACMFORMATCHOOSE_BTN_SETNAME, 125, 14, 45, 14
+    PUSHBUTTON      "다른 이름으로 저장(&S)...", IDD_ACMFORMATCHOOSE_BTN_SETNAME, 103, 14, 70, 14
     PUSHBUTTON      "제거(&R)", IDD_ACMFORMATCHOOSE_BTN_DELNAME, 175, 14, 45, 14
 
     LTEXT           "형식(&F):", -1, 5, 41, 44, 8, NOT WS_GROUP
