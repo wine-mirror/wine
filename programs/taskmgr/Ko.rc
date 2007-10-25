@@ -2,7 +2,7 @@
  *  Task Manager
  *
  *  Copyright 1999-2001 Brian Palmer
- *  Copyright 2005 YunSong Hwang
+ *  Copyright 2005,2007 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -257,8 +257,8 @@ BEGIN
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_PHYSICAL_MEMORY_SYSTEM_CACHE,185,149,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
-    LTEXT           "합계",IDS_KERNEL_MEMORY_TOTAL,137,174,27,8
-    LTEXT           "페이지된",IDS_KERNEL_MEMORY_PAGED,137,184,21,8
+    LTEXT           "합계",IDS_KERNEL_MEMORY_TOTAL,137,176,27,8
+    LTEXT           "페이지된",IDS_KERNEL_MEMORY_PAGED,137,184,25,8
     LTEXT           "페이지안된",IDS_KERNEL_MEMORY_NONPAGED,137,193,34,8
     EDITTEXT        IDC_KERNEL_MEMORY_TOTAL,185,174,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
@@ -398,7 +398,7 @@ BEGIN
     CONTROL         "세션 ID(&S)",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,149,50,10
     CONTROL         "사용자 이름(&N)",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,7,160,51,10
+                    WS_TABSTOP,7,160,55,10
     CONTROL         "페이지 실패 델타(&a)",IDC_PAGEFAULTSDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,28,72,10
     CONTROL         "가상 메모리 크기(&V)",IDC_VIRTUALMEMORYSIZE,"Button",
@@ -412,7 +412,7 @@ BEGIN
     CONTROL         "핸들 카운트(&H)",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,83,59,10
     CONTROL         "쓰레드 카운트(&T)",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,107,94,59,10
+                    WS_TABSTOP,107,94,63,10
     CONTROL         "GDI 객체",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,105,55,10
     CONTROL         "I/O 쓰기",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
