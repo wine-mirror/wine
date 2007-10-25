@@ -1035,15 +1035,18 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 
 static HRESULT get_callback(IBindCtx *pbc, IBindStatusCallback **callback)
 {
+    IUnknown *unk;
     HRESULT hres;
 
     static WCHAR wszBSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
 
-    hres = IBindCtx_GetObjectParam(pbc, wszBSCBHolder, (IUnknown**)callback);
-    if(FAILED(hres))
-        return MK_E_SYNTAX;
+    hres = IBindCtx_GetObjectParam(pbc, wszBSCBHolder, &unk);
+    if(SUCCEEDED(hres)) {
+        hres = IUnknown_QueryInterface(unk, &IID_IBindStatusCallback, (void**)callback);
+        IUnknown_Release(unk);
+    }
 
-    return S_OK;
+    return SUCCEEDED(hres) ? S_OK : MK_E_SYNTAX;
 }
 
 static HRESULT get_protocol(Binding *This, LPCWSTR url)
