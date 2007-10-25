@@ -1374,17 +1374,11 @@ static void testGetIssuerCert(void)
      flags);
     if (parent)
         CertFreeCertificateContext(parent);
-    /* Now check just the time */
-    flags = CERT_STORE_TIME_VALIDITY_FLAG;
-    parent = CertGetIssuerCertificateFromStore(store, child, NULL, &flags);
-    ok(parent != NULL, "CertGetIssuerCertificateFromStore failed: %08x\n",
-     GetLastError());
-    /* Oops: the child is not expired, so the time validity check actually
-     * succeeds, even though the signing cert is expired.
+    /* Checking time validity is not productive, because while most Windows
+     * versions return 0 (time valid) because the child is not expired,
+     * Windows 2003 SP1 returns that it is expired.  Thus the range of
+     * possibilities is covered, and a test verifies nothing.
      */
-    ok(!flags, "Expected check to succeed, got %08x\n", flags);
-    if (parent)
-        CertFreeCertificateContext(parent);
 
     CertFreeCertificateContext(child);
     CertCloseStore(store, 0);
