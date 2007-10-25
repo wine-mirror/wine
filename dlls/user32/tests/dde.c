@@ -285,12 +285,19 @@ static void test_ddeml_client(void)
     DdeGetLastError(client_pid);
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
-    ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %08x\n", res);
+    ok(hdata != NULL, "Expected non-NULL hdata, got %p\n", hdata);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
     todo_wine
     {
-        ok(hdata == NULL, "Expected NULL hdata, got %p\n", hdata);
-        ok(ret == DMLERR_DATAACKTIMEOUT, "Expected DMLERR_DATAACKTIMEOUT, got %d\n", ret);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %08x\n", res);
     }
+
+    str = (LPSTR)DdeAccessData(hdata, &size);
+    ok(!lstrcmpA(str, "requested data\r\n"), "Expected 'requested data\\r\\n', got %s\n", str);
+    ok(size == 19, "Expected 19, got %d\n", size);
+
+    ret = DdeUnaccessData(hdata);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     /* XTYP_REQUEST, fAckReq = TRUE */
     res = 0xdeadbeef;
