@@ -78,6 +78,11 @@ extern int server_remove_fd_from_cache( obj_handle_t handle );
 extern int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
                                int *needs_close, enum server_fd_type *type, unsigned int *options );
 
+/* security descriptors */
+NTSTATUS NTDLL_create_struct_sd(PSECURITY_DESCRIPTOR nt_sd, struct security_descriptor **server_sd,
+                                data_size_t *server_sd_len);
+void NTDLL_free_struct_sd(struct security_descriptor *server_sd);
+
 /* module handling */
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
 extern FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,

@@ -1855,10 +1855,20 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
     NTSTATUS ret;
     BYTE vprot;
     DWORD len = (attr && attr->ObjectName) ? attr->ObjectName->Length : 0;
+    struct security_descriptor *sd = NULL;
+    struct object_attributes objattr;
 
     /* Check parameters */
 
     if (len > MAX_PATH*sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
+
+    objattr.rootdir = attr ? attr->RootDirectory : 0;
+    objattr.sd_len = 0;
+    if (attr)
+    {
+        ret = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
+        if (ret != STATUS_SUCCESS) return ret;
+    }
 
     vprot = VIRTUAL_GetProt( protect );
     if (sec_flags & SEC_RESERVE)
@@ -1875,15 +1885,19 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
     {
         req->access      = access;
         req->attributes  = (attr) ? attr->Attributes : 0;
-        req->rootdir     = attr ? attr->RootDirectory : 0;
         req->file_handle = file;
         req->size        = size ? size->QuadPart : 0;
         req->protect     = vprot;
+        wine_server_add_data( req, &objattr, sizeof(objattr) );
+        if (objattr.sd_len) wine_server_add_data( req, sd, objattr.sd_len );
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *handle = reply->handle;
     }
     SERVER_END_REQ;
+
+    NTDLL_free_struct_sd( sd );
+
     return ret;
 }
 

@@ -60,9 +60,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-
-static NTSTATUS create_struct_sd(PSECURITY_DESCRIPTOR nt_sd, struct security_descriptor **server_sd,
-                                 data_size_t *server_sd_len)
+/* creates a struct security_descriptor and contained information in one contiguous piece of memory */
+NTSTATUS NTDLL_create_struct_sd(PSECURITY_DESCRIPTOR nt_sd, struct security_descriptor **server_sd,
+                                data_size_t *server_sd_len)
 {
     unsigned int len;
     PSID owner, group;
@@ -124,7 +124,8 @@ static NTSTATUS create_struct_sd(PSECURITY_DESCRIPTOR nt_sd, struct security_des
     return STATUS_SUCCESS;
 }
 
-static void free_struct_sd(struct security_descriptor *server_sd)
+/* frees a struct security_descriptor allocated by NTDLL_create_struct_sd */
+void NTDLL_free_struct_sd(struct security_descriptor *server_sd)
 {
     RtlFreeHeap(GetProcessHeap(), 0, server_sd);
 }
@@ -155,7 +156,7 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
     objattr.sd_len = 0;
     if (attr)
     {
-        ret = create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
+        ret = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
         if (ret != STATUS_SUCCESS) return ret;
     }
 
@@ -173,7 +174,7 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
     }
     SERVER_END_REQ;
 
-    free_struct_sd( sd );
+    NTDLL_free_struct_sd( sd );
 
     return ret;
 }
@@ -263,7 +264,7 @@ NTSTATUS WINAPI NtCreateEvent(
     objattr.sd_len = 0;
     if (attr)
     {
-        ret = create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
+        ret = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
         if (ret != STATUS_SUCCESS) return ret;
     }
 
@@ -281,7 +282,7 @@ NTSTATUS WINAPI NtCreateEvent(
     }
     SERVER_END_REQ;
 
-    free_struct_sd( sd );
+    NTDLL_free_struct_sd( sd );
 
     return ret;
 }
@@ -426,7 +427,7 @@ NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
     objattr.sd_len = 0;
     if (attr)
     {
-        status = create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
+        status = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
         if (status != STATUS_SUCCESS) return status;
     }
 
@@ -443,7 +444,7 @@ NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
     }
     SERVER_END_REQ;
 
-    free_struct_sd( sd );
+    NTDLL_free_struct_sd( sd );
 
     return status;
 }
