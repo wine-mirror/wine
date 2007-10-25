@@ -51,6 +51,10 @@
 #define WND_POPUP_ID		2
 #define WND_CHILD_ID		3
 
+#ifndef WM_LBTRACKPOINT
+#define WM_LBTRACKPOINT  0x0131
+#endif
+
 /* encoded DRAWITEMSTRUCT into an LPARAM */
 typedef struct
 {
