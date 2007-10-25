@@ -1446,7 +1446,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 
     if ((wm->ldr.Flags & LDR_IMAGE_IS_DLL) && TRACE_ON(snoop)) SNOOP_SetupDLL( module );
 
-    TRACE_(loaddll)( " Loaded module %s : native\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
+    TRACE_(loaddll)( "Loaded %s at %p: native\n", debugstr_w(wm->ldr.FullDllName.Buffer), module );
 
     wm->ldr.LoadCount = 1;
     *pwm = wm;
@@ -1563,8 +1563,8 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
             if (mod->Flags & LDR_WINE_INTERNAL && mod->SectionHandle == handle)
             {
                 info.wm = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
-                TRACE( "Found already loaded module %s for builtin %s\n",
-                       debugstr_w(info.wm->ldr.FullDllName.Buffer), debugstr_w(path) );
+                TRACE( "Found %s at %p for builtin %s\n",
+                       debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress, debugstr_w(path) );
                 break;
             }
         }
@@ -1574,7 +1574,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
     }
     else
     {
-        TRACE_(loaddll)( "Loaded module %s : builtin\n", debugstr_w(info.wm->ldr.FullDllName.Buffer) );
+        TRACE_(loaddll)( "Loaded %s at %p: builtin\n", debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress );
         info.wm->ldr.LoadCount = 1;
         info.wm->ldr.SectionHandle = handle;
     }
@@ -1827,7 +1827,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
 
         if (!(flags & DONT_RESOLVE_DLL_REFERENCES)) fixup_imports( *pwm, load_path );
 
-        TRACE("Found loaded module %s for %s at %p, count=%d\n",
+        TRACE("Found %s for %s at %p, count=%d\n",
               debugstr_w((*pwm)->ldr.FullDllName.Buffer), debugstr_w(libname),
               (*pwm)->ldr.BaseAddress, (*pwm)->ldr.LoadCount);
         if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
