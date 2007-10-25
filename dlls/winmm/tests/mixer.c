@@ -436,7 +436,8 @@ static void mixer_test_deviceA(int device)
                mmsys_error(rc));
             if (rc==MMSYSERR_NODRIVER)
                 trace("  No Driver\n");
-            else if (rc==MMSYSERR_NOERROR && winetest_interactive) {
+            else if (rc==MMSYSERR_NOERROR) {
+	      if (winetest_interactive) {
                 trace("    %d: \"%s\" (%s) Destination=%d Source=%d\n",
                       d,mixerlineA.szShortName, mixerlineA.szName,
                       mixerlineA.dwDestination,mixerlineA.dwSource);
@@ -456,9 +457,9 @@ static void mixer_test_deviceA(int device)
                       mixerlineA.Target.vDriverVersion >> 8,
                       mixerlineA.Target.vDriverVersion & 0xff,
                       mixerlineA.Target.wMid, mixerlineA.Target.wPid);
-            }
-            ns=mixerlineA.cConnections;
-            for(s=0;s<ns;s++) {
+	      }
+              ns=mixerlineA.cConnections;
+              for(s=0;s<ns;s++) {
                 mixerlineA.cbStruct = sizeof(mixerlineA);
                 mixerlineA.dwDestination=d;
                 mixerlineA.dwSource=s;
@@ -552,6 +553,7 @@ static void mixer_test_deviceA(int device)
                         }
                     }
                 }
+              }
             }
         }
         rc=mixerClose(mix);
