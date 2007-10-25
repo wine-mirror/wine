@@ -135,7 +135,7 @@
 135 stdcall @(long long long long long) user32.SendDlgItemMessageW
 136 stdcall @(long long long long) user32.SendMessageW
 137 stdcall @(wstr) kernel32.SetCurrentDirectoryW
-138 stdcall -noname SetDlgItemTextWrapW(long long wstr)
+138 stdcall -noname SetDlgItemTextWrapW(long long wstr) user32.SetDlgItemTextW
 139 stdcall @(long long long ptr) user32.SetMenuItemInfoW
 140 stdcall @(long wstr long) user32.SetPropW
 141 stdcall @(long long long) user32.SetWindowLongW

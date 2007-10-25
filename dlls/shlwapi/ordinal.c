@@ -739,28 +739,6 @@ BOOL WINAPI GetStringType3ExW(LPWSTR lpszStr, DWORD dwLen, LPVOID p3)
 }
 
 /*************************************************************************
- *      @   [SHLWAPI.138]
- *
- * Set the text of a given dialog item.
- *
- * PARAMS
- *  hWnd     [I] Handle of dialog
- *  iItem    [I] Index of item
- *  lpszText [O] Text to set
- *
- * RETURNS
- *  Success: TRUE.  The text of the dialog is set to lpszText.
- *  Failure: FALSE, Otherwise.
- */
-BOOL WINAPI SetDlgItemTextWrapW(HWND hWnd, INT iItem, LPCWSTR lpszText)
-{
-    HWND hWndItem = GetDlgItem(hWnd, iItem);
-    if (hWndItem)
-        return SetWindowTextW(hWndItem, lpszText);
-    return FALSE;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.151]
  *
  * Compare two Ascii strings up to a given length.
