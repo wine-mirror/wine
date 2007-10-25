@@ -876,6 +876,8 @@ static void test_AccessCheck(void)
         "AccessCheck should have failed with ERROR_PRIVILEGE_NOT_HELD, instead of %d\n",
         GetLastError());
 
+    ret = ImpersonateLoggedOnUser(Token);
+    ok(ret, "ImpersonateLoggedOnUser failed with error %d\n", GetLastError());
     ret = pRtlAdjustPrivilege(SE_SECURITY_PRIVILEGE, TRUE, TRUE, &Enabled);
     if (!ret)
     {
@@ -893,6 +895,8 @@ static void test_AccessCheck(void)
     else
         trace("Couldn't get SE_SECURITY_PRIVILEGE (0x%08x), skipping ACCESS_SYSTEM_SECURITY test\n",
             ret);
+    ret = RevertToSelf();
+    ok(ret, "RevertToSelf failed with error %d\n", GetLastError());
 
     /* test INHERIT_ONLY_ACE */
     ret = InitializeAcl(Acl, 256, ACL_REVISION);
