@@ -20,6 +20,7 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <windows.h>
 #include <advpub.h>
 #include <assert.h>
@@ -45,7 +46,8 @@ static HRESULT (WINAPI *pTranslateInfStringEx)(HINF,PCSTR,PCSTR,PCSTR,PSTR,DWORD
 static CHAR inf_file[MAX_PATH];
 static CHAR PROG_FILES_ROOT[MAX_PATH];
 static CHAR PROG_FILES[MAX_PATH];
-static DWORD PROG_FILES_LEN;
+static CHAR APP_PATH[MAX_PATH];
+static DWORD APP_PATH_LEN;
 
 static void get_progfiles_dir(void)
 {
@@ -56,9 +58,10 @@ static void get_progfiles_dir(void)
     RegQueryValueExA(hkey, "ProgramFilesDir", NULL, NULL, (LPBYTE)PROG_FILES_ROOT, &size);
     RegCloseKey(hkey);
 
-    lstrcpyA(PROG_FILES, PROG_FILES_ROOT);
-    lstrcatA(PROG_FILES, TEST_STRING1);
-    PROG_FILES_LEN = lstrlenA(PROG_FILES) + 1;
+    lstrcpyA(PROG_FILES, PROG_FILES_ROOT + 3); /* skip C:\ */
+    lstrcpyA(APP_PATH, PROG_FILES_ROOT);
+    lstrcatA(APP_PATH, TEST_STRING1);
+    APP_PATH_LEN = lstrlenA(APP_PATH) + 1;
 }
 
 static BOOL init_function_pointers(void)
@@ -182,10 +185,14 @@ static void delnode_test(void)
     currDir[currDirLen] = '\0';
 }
 
-static void append_str(char **str, const char *data)
+static void append_str(char **str, const char *data, ...)
 {
-    sprintf(*str, data);
+    va_list valist;
+
+    va_start(valist, data);
+    vsprintf(*str, data, valist);
     *str += strlen(*str);
+    va_end(valist);
 }
 
 static void create_inf_file(void)
@@ -205,7 +212,7 @@ static void create_inf_file(void)
     append_str(&ptr, "49030=DestC\n");
     append_str(&ptr, "[ProgramFilesDir]\n");
     append_str(&ptr, "HKLM,\"Software\\Microsoft\\Windows\\CurrentVersion\",");
-    append_str(&ptr, "\"ProgramFilesDir\",,\"%%24%%\\%%16422%%\"\n");
+    append_str(&ptr, "\"ProgramFilesDir\",,\"%%24%%\\%%LProgramF%%\"\n");
     append_str(&ptr, "[section]\n");
     append_str(&ptr, "NotACustomDestination=Version\n");
     append_str(&ptr, "CustomDestination=CustInstDestSection\n");
@@ -218,8 +225,9 @@ static void create_inf_file(void)
     append_str(&ptr, "CustomHDestination=CustInstDestSection\n");
     append_str(&ptr, "[Strings]\n");
     append_str(&ptr, "DefaultAppPath=\"Application Name\"\n");
+    append_str(&ptr, "LProgramF=\"%s\"\n", PROG_FILES);
     append_str(&ptr, "[DestA]\n");
-    append_str(&ptr, "HKLM,\"Software\\Garbage\",\"ProgramFilesDir\",,'%%16422%%'\n");
+    append_str(&ptr, "HKLM,\"Software\\Garbage\",\"ProgramFilesDir\",,'%%24%%\\%%LProgramF%%'\n");
     append_str(&ptr, "[DestB]\n");
     append_str(&ptr, "'HKLM','Software\\Microsoft\\Windows\\CurrentVersion',");
     append_str(&ptr, "'ProgramFilesDir',,\"%%24%%\"\n");
@@ -286,8 +294,8 @@ static void translateinfstring_test(void)
 
     if(hr == ERROR_SUCCESS)
     {
-        ok(!strcmp(buffer, PROG_FILES), "Expected '%s', got '%s'\n", PROG_FILES, buffer);
-        ok(dwSize == PROG_FILES_LEN, "Expected size %d, got %d\n", PROG_FILES_LEN, dwSize);
+        ok(!strcmp(buffer, APP_PATH), "Expected '%s', got '%s'\n", APP_PATH, buffer);
+        ok(dwSize == APP_PATH_LEN, "Expected size %d, got %d\n", APP_PATH_LEN, dwSize);
     }
 
     buffer[0] = 0;
@@ -402,18 +410,18 @@ static void translateinfstringex_test(void)
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     /* translate the string with the install section specified */
-    memset(buffer, 'a', PROG_FILES_LEN);
-    buffer[PROG_FILES_LEN - 1] = '\0';
+    memset(buffer, 'a', APP_PATH_LEN);
+    buffer[APP_PATH_LEN - 1] = '\0';
     size = MAX_PATH;
     hr = pTranslateInfStringEx(hinf, inf_file, "Options.NTx86", "InstallDir",
                               buffer, size, &size, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!strcmp(buffer, PROG_FILES), "Expected %s, got %s\n", PROG_FILES, buffer);
-    ok(size == PROG_FILES_LEN, "Expected size %d, got %d\n", PROG_FILES_LEN, size);
+    ok(!strcmp(buffer, APP_PATH), "Expected %s, got %s\n", APP_PATH, buffer);
+    ok(size == APP_PATH_LEN, "Expected size %d, got %d\n", APP_PATH_LEN, size);
 
     /* Single quote test (Note size includes null on return from call) */
-    memset(buffer, 'a', PROG_FILES_LEN);
-    buffer[PROG_FILES_LEN - 1] = '\0';
+    memset(buffer, 'a', APP_PATH_LEN);
+    buffer[APP_PATH_LEN - 1] = '\0';
     size = MAX_PATH;
     hr = pTranslateInfStringEx(hinf, inf_file, "Options.NTx86", "Result1",
                               buffer, size, &size, NULL);
@@ -423,8 +431,8 @@ static void translateinfstringex_test(void)
     ok(size == lstrlenA(PROG_FILES_ROOT)+1, "Expected size %d, got %d\n",
            lstrlenA(PROG_FILES_ROOT)+1, size);
 
-    memset(buffer, 'a', PROG_FILES_LEN);
-    buffer[PROG_FILES_LEN - 1] = '\0';
+    memset(buffer, 'a', APP_PATH_LEN);
+    buffer[APP_PATH_LEN - 1] = '\0';
     size = MAX_PATH;
     hr = pTranslateInfStringEx(hinf, inf_file, "Options.NTx86", "Result2",
                               buffer, size, &size, NULL);
@@ -439,8 +447,8 @@ static void translateinfstringex_test(void)
         lstrcpy(drive, PROG_FILES_ROOT);
         drive[3] = 0x00; /* Just keep the system drive plus '\' */
 
-        memset(buffer, 'a', PROG_FILES_LEN);
-        buffer[PROG_FILES_LEN - 1] = '\0';
+        memset(buffer, 'a', APP_PATH_LEN);
+        buffer[APP_PATH_LEN - 1] = '\0';
         size = MAX_PATH;
         hr = pTranslateInfStringEx(hinf, inf_file, "Options.NTx86", "Result3",
                                   buffer, size, &size, NULL);
