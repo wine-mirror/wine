@@ -1385,6 +1385,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     if (!object->win_handle) {
         object->win_handle = This->createParms.hFocusWindow;
     }
+    if(!This->ddraw_window) IWineD3DDevice_SetHWND(iface, object->win_handle);
 
     hDc                = GetDC(object->win_handle);
     TRACE("Using hDc %p\n", hDc);
@@ -2001,8 +2002,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
         goto err_out;
     }
     This->swapchains[0] = (IWineD3DSwapChain *) swapchain;
-
-    if(!This->ddraw_window) IWineD3DDevice_SetHWND(iface, swapchain->win_handle);
 
     if(swapchain->backBuffer && swapchain->backBuffer[0]) {
         TRACE("Setting rendertarget to %p\n", swapchain->backBuffer);
