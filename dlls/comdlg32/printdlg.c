@@ -3568,25 +3568,33 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 }
 
 /***********************************************************************
- *	PrintDlgExA (COMDLG32.@)
+ * PrintDlgExA (COMDLG32.@)
  *
  * See PrintDlgExW.
  *
- * FIXME
- *   Stub
+ * BUGS
+ *   Only a Stub
+ *
  */
-HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lpPrintDlgExA)
+HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lppd)
 {
-	FIXME("stub\n");
-	return E_NOTIMPL;
+
+    FIXME("(%p) stub\n", lppd);
+    if ((lppd == NULL) || (lppd->lStructSize != sizeof(PRINTDLGEXA))) {
+        return E_INVALIDARG;
+    }
+
+    if (!IsWindow(lppd->hwndOwner)) {
+        return E_HANDLE;
+    }
+
+    return E_NOTIMPL;
 }
 
 /***********************************************************************
- *	PrintDlgExW (COMDLG32.@)
+ * PrintDlgExW (COMDLG32.@)
  *
- * Displays the PRINT dialog box, which enables the user to specify
- * specific properties of the print job.  The property sheet can also have
- * additional application-specific and driver-specific property pages.
+ * Display the property sheet style PRINT dialog box
  *  
  * PARAMS
  *  lppd  [IO] ptr to PRINTDLGEX struct
@@ -3600,11 +3608,26 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lpPrintDlgExA)
  *    E_HANDLE      Invalid handle.
  *    E_FAIL        Unspecified error.
  *  
- * FIXME
- *   Stub
+ * NOTES
+ * This Dialog enables the user to specify specific properties of the print job.
+ * The property sheet can also have additional application-specific and
+ * driver-specific property pages.
+ *
+ * BUGS
+ *   Only a Stub
+ *
  */
-HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lpPrintDlgExW)
+HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lppd)
 {
-	FIXME("stub\n");
-	return E_NOTIMPL;
+
+    FIXME("(%p) stub\n", lppd);
+    if ((lppd == NULL) || (lppd->lStructSize != sizeof(PRINTDLGEXW))) {
+        return E_INVALIDARG;
+    }
+
+    if (!IsWindow(lppd->hwndOwner)) {
+        return E_HANDLE;
+    }
+
+    return E_NOTIMPL;
 }
