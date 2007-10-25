@@ -2110,7 +2110,9 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
         int out_attr = is_attr(var->attrs, ATTR_OUT);
         const type_t *base = type->ref;
 
-        if (base->type == RPC_FC_IP)
+        if (base->type == RPC_FC_IP
+            || (base->type == 0
+                && is_attr(var->attrs, ATTR_IIDIS)))
         {
             return write_ip_tfs(file, var->attrs, type, typeformat_offset);
         }
@@ -2152,7 +2154,9 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     {
         type_t *ref = type->ref;
 
-        if (ref->type == RPC_FC_IP)
+        if (ref->type == RPC_FC_IP
+            || (ref->type == 0
+                && is_attr(attrs, ATTR_IIDIS)))
         {
             write_ip_tfs(file, attrs, type, tfsoff);
         }
