@@ -1111,12 +1111,13 @@ struct well_known_sid_value
 /* 46 */ {FALSE, "S-1-5-21-12-23-34-45-56-517"}, {FALSE, "S-1-5-21-12-23-34-45-56-518"},
 /* 48 */ {FALSE, "S-1-5-21-12-23-34-45-56-519"}, {FALSE, "S-1-5-21-12-23-34-45-56-520"},
 /* 50 */ {FALSE, "S-1-5-21-12-23-34-45-56-553"},
+/* Added in Windows Server 2003 */
 /* 51 */ {TRUE, "S-1-5-64-10"},   {TRUE, "S-1-5-64-21"},   {TRUE, "S-1-5-64-14"},
 /* 54 */ {TRUE, "S-1-5-15"},      {TRUE, "S-1-5-1000"},    {FALSE, "S-1-5-32-557"},
 /* 57 */ {TRUE, "S-1-5-32-558"},  {TRUE, "S-1-5-32-559"},  {TRUE, "S-1-5-32-560"},
-/* 60 */ {TRUE, "S-1-5-32-561"},
+/* 60 */ {TRUE, "S-1-5-32-561"}, {TRUE, "S-1-5-32-562"},
 /* Added in Windows Vista: */
-/* 61 */ {TRUE, "S-1-5-32-562"},  {TRUE, "S-1-5-32-568"},
+/* 62 */ {TRUE, "S-1-5-32-568"},
 /* 63 */ {TRUE, "S-1-5-17"},      {FALSE, "S-1-5-32-569"}, {TRUE, "S-1-16-0"},
 /* 66 */ {TRUE, "S-1-16-4096"},   {TRUE, "S-1-16-8192"},   {TRUE, "S-1-16-12288"},
 /* 69 */ {TRUE, "S-1-16-16384"},  {TRUE, "S-1-5-33"},      {TRUE, "S-1-3-4"},
@@ -1149,7 +1150,7 @@ static void test_CreateWellKnownSid()
         if (value->sid_string == NULL)
             continue;
 
-        if (i >= WinBuiltinTerminalServerLicenseServersSid + 1)
+        if (i > WinAccountRasAndIasServersSid)
         {
             /* These SIDs aren't implemented by all Windows versions - detect it and break the loop */
             cb = sizeof(sid_buffer);
