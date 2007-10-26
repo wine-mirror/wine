@@ -3499,7 +3499,7 @@ BOOL WINAPI GetOpenFileNameWrapW(LPOPENFILENAMEW ofn)
 /*************************************************************************
  *      @	[SHLWAPI.404]
  */
-HRESULT WINAPI IUnknown_EnumObjects(LPSHELLFOLDER lpFolder, HWND hwnd, SHCONTF flags, IEnumIDList **ppenum)
+HRESULT WINAPI SHIShellFolder_EnumObjects(LPSHELLFOLDER lpFolder, HWND hwnd, SHCONTF flags, IEnumIDList **ppenum)
 {
     IPersist *persist;
     HRESULT hr;
@@ -3636,16 +3636,6 @@ BOOL WINAPI MLFreeLibrary(HMODULE hModule)
 BOOL WINAPI SHFlushSFCacheWrap(void) {
   FIXME(": stub\n");
   return TRUE;
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.425]
- */
-BOOL WINAPI DeleteMenuWrap(HMENU hmenu, UINT pos, UINT flags)
-{
-    /* FIXME: This should do more than simply call DeleteMenu */
-    FIXME("%p %08x %08x): semi-stub\n", hmenu, pos, flags);
-    return DeleteMenu(hmenu, pos, flags);
 }
 
 /*************************************************************************
@@ -4324,7 +4314,10 @@ UINT WINAPI ZoneComputePaneSize(HWND hwnd)
     return 0x95;
 }
 
-void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
+/***********************************************************************
+ *              SHChangeNotifyWrap [SHLWAPI.394]
+ */
+void WINAPI SHChangeNotifyWrap(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
 {
     SHChangeNotify(wEventId, uFlags, dwItem1, dwItem2);
 }
