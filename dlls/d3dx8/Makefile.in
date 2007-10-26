@@ -9,7 +9,8 @@ EXTRALIBS = -ldxguid -luuid
 
 C_SRCS = \
 	d3dx8_main.c \
-	d3dxbuffer.c
+	d3dxbuffer.c \
+	math.c
 
 @MAKE_DLL_RULES@
 

@@ -17,8 +17,7 @@
  */
 
 #include <assert.h>
-#include "d3dx8math.h"
-#include "d3dx8math.inl"
+#include "d3dx8.h"
 
 #include "wine/test.h"
 
@@ -147,8 +146,6 @@ static void D3DXMatrixTest(void)
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
 }
 
-
-
 static void D3DXPlaneTest(void)
 {
     D3DXPLANE plane;
@@ -194,11 +191,12 @@ static void D3DXPlaneTest(void)
 
 static void D3X8QuaternionTest(void)
 {
-    D3DXQUATERNION expectedquat, gotquat, q, r, s;
+    D3DXQUATERNION expectedquat, gotquat, nul, q, r, s;
     LPD3DXQUATERNION funcpointer;
     FLOAT expected, got;
     BOOL expectedbool, gotbool;
 
+    nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f; nul.w = 0.0f;
     q.x = 1.0f, q.y = 2.0f; q.z = 4.0f; q.w = 10.0f;
     r.x = -3.0f; r.y = 4.0f; r.z = -5.0f; r.w = 7.0;
 
@@ -262,14 +260,24 @@ static void D3X8QuaternionTest(void)
     expected=0.0f;
     got = D3DXQuaternionLengthSq(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+
+/*_______________D3DXQuaternionNormalize________________________*/
+    expectedquat.x = 1.0f/11.0f; expectedquat.y = 2.0f/11.0f; expectedquat.z = 4.0f/11.0f; expectedquat.w = 10.0f/11.0f;
+    D3DXQuaternionNormalize(&gotquat,&q);
+    expect_vec4(expectedquat,gotquat);
+    /* Test the nul quaternion */
+    expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.0f;
+    D3DXQuaternionNormalize(&gotquat,&nul);
+    expect_vec4(expectedquat,gotquat);
 }
 
 static void D3X8Vector2Test(void)
 {
-    D3DXVECTOR2 expectedvec, gotvec, u, v;
+    D3DXVECTOR2 expectedvec, gotvec, nul, u, v;
     LPD3DXVECTOR2 funcpointer;
     FLOAT expected, got, scale;
 
+    nul.x = 0.0f; nul.y = 0.0f;
     u.x=3.0f; u.y=4.0f;
     v.x=-7.0f; v.y=9.0f;
     scale = -6.5f;
@@ -347,14 +355,23 @@ static void D3X8Vector2Test(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
 /*_______________D3DXVec2Minimize__________________________*/
-   expectedvec.x = -7.0f; expectedvec.y = 4.0f;
-   D3DXVec2Minimize(&gotvec,&u,&v);
-   expect_vec(expectedvec,gotvec);
-   /* Tests the case NULL */
+    expectedvec.x = -7.0f; expectedvec.y = 4.0f;
+    D3DXVec2Minimize(&gotvec,&u,&v);
+    expect_vec(expectedvec,gotvec);
+    /* Tests the case NULL */
     funcpointer = D3DXVec2Minimize(&gotvec,NULL,&v);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXVec2Minimize(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXVec2Normalize_________________________*/
+    expectedvec.x = 0.6f; expectedvec.y = 0.8f;
+    D3DXVec2Normalize(&gotvec,&u);
+    expect_vec(expectedvec,gotvec);
+    /* Test the nul vector */
+    expectedvec.x = 0.0f; expectedvec.y = 0.0f;
+    D3DXVec2Normalize(&gotvec,&nul);
+    expect_vec(expectedvec,gotvec);
 
 /*_______________D3DXVec2Scale____________________________*/
     expectedvec.x = -19.5f; expectedvec.y = -26.0f;
@@ -380,10 +397,11 @@ static void D3X8Vector2Test(void)
 
 static void D3X8Vector3Test(void)
 {
-    D3DXVECTOR3 expectedvec, gotvec, u, v;
+    D3DXVECTOR3 expectedvec, gotvec, nul, u, v;
     LPD3DXVECTOR3 funcpointer;
     FLOAT expected, got, scale;
 
+    nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f;
     u.x = 9.0f; u.y = 6.0f; u.z = 2.0f;
     v.x = 2.0f; v.y = -3.0f; v.z = -4.0;
     scale = -6.5f;
@@ -467,6 +485,15 @@ static void D3X8Vector3Test(void)
     funcpointer = D3DXVec3Minimize(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
+/*_______________D3DXVec3Normalize_________________________*/
+    expectedvec.x = 9.0f/11.0f; expectedvec.y = 6.0f/11.0f; expectedvec.z = 2.0f/11.0f;
+    D3DXVec3Normalize(&gotvec,&u);
+    expect_vec3(expectedvec,gotvec);
+    /* Test the nul vector */
+    expectedvec.x = 0.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f;
+    D3DXVec3Normalize(&gotvec,&nul);
+    expect_vec3(expectedvec,gotvec);
+
 /*_______________D3DXVec3Scale____________________________*/
     expectedvec.x = -58.5f; expectedvec.y = -39.0f; expectedvec.z = -13.0f;
     D3DXVec3Scale(&gotvec,&u,scale);
@@ -491,13 +518,14 @@ static void D3X8Vector3Test(void)
 
 static void D3X8Vector4Test(void)
 {
-    D3DXVECTOR4 expectedvec, gotvec, u, v;
+    D3DXVECTOR4 expectedvec, gotvec, nul, u, v;
     LPD3DXVECTOR4 funcpointer;
     FLOAT expected, got, scale;
-    scale = -6.5f;
 
+    nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f; nul.w = 0.0f;
     u.x = 1.0f; u.y = 2.0f; u.z = 4.0f; u.w = 10.0;
     v.x = -3.0f; v.y = 4.0f; v.z = -5.0f; v.w = 7.0;
+    scale = -6.5f;
 
 /*_______________D3DXVec4Add__________________________*/
     expectedvec.x = -2.0f; expectedvec.y = 6.0f; expectedvec.z = -1.0f; expectedvec.w = 17.0f;
@@ -568,6 +596,15 @@ static void D3X8Vector4Test(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXVec4Minimize(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXVec4Normalize_________________________*/
+    expectedvec.x = 1.0f/11.0f; expectedvec.y = 2.0f/11.0f; expectedvec.z = 4.0f/11.0f; expectedvec.w = 10.0f/11.0f;
+    D3DXVec4Normalize(&gotvec,&u);
+    expect_vec4(expectedvec,gotvec);
+    /* Test the nul vector */
+    expectedvec.x = 0.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f; expectedvec.w = 0.0f;
+    D3DXVec4Normalize(&gotvec,&nul);
+    expect_vec4(expectedvec,gotvec);
 
 /*_______________D3DXVec4Scale____________________________*/
     expectedvec.x = -6.5f; expectedvec.y = -13.0f; expectedvec.z = -26.0f; expectedvec.w = -65.0f;
