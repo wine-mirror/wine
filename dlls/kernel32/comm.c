@@ -1301,19 +1301,21 @@ BOOL WINAPI SetCommConfig(
 }
 
 /***********************************************************************
- *           SetDefaultCommConfigA   (KERNEL32.@)
+ *           SetDefaultCommConfigW  (KERNEL32.@)
  *
- *  Initializes the default configuration for the specified communication
- *  device. (ascii)
+ * Initializes the default configuration for a communication device.
+ *
+ * PARAMS
+ *  lpszDevice   [I] Name of the device targeted for configuration
+ *  lpCommConfig [I] PTR to a buffer with the configuration for the device
+ *  dwSize       [I] Number of bytes in the buffer
  *
  * RETURNS
+ *  Failure: FALSE
+ *  Success: TRUE, and default configuration saved
  *
- *  True if the device was found and the defaults set, false otherwise
  */
-BOOL WINAPI SetDefaultCommConfigW(
-    LPCWSTR       lpszDevice,  /* [in] The ascii name of the device targeted for configuration. */
-    LPCOMMCONFIG lpCommConfig, /* [in] The default configuration for the device. */
-    DWORD        dwSize)       /* [in] The number of bytes in the configuration structure. */
+BOOL WINAPI SetDefaultCommConfigW(LPCWSTR lpszDevice, LPCOMMCONFIG lpCommConfig, DWORD dwSize)
 {
     FARPROC lpfnSetDefaultCommConfig;
     HMODULE hConfigModule;
@@ -1336,18 +1338,14 @@ BOOL WINAPI SetDefaultCommConfigW(
 
 
 /***********************************************************************
- *           SetDefaultCommConfigW     (KERNEL32.@)
+ *           SetDefaultCommConfigA     (KERNEL32.@)
  *
- *  Initializes the default configuration for the specified
- *  communication device. (unicode)
+ * Initializes the default configuration for a communication device.
  *
- * RETURNS
+ * See SetDefaultCommConfigW.
  *
  */
-BOOL WINAPI SetDefaultCommConfigA(
-    LPCSTR      lpszDevice,    /* [in] The unicode name of the device targeted for configuration. */
-    LPCOMMCONFIG lpCommConfig, /* [in] The default configuration for the device. */
-    DWORD        dwSize)       /* [in] The number of bytes in the configuration structure. */
+BOOL WINAPI SetDefaultCommConfigA(LPCSTR lpszDevice, LPCOMMCONFIG lpCommConfig, DWORD dwSize)
 {
     BOOL r;
     LPWSTR lpDeviceW = NULL;
