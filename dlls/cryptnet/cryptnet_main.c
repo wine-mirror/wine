@@ -21,13 +21,15 @@
 #include "config.h"
 #include "wine/port.h"
 #include <stdio.h>
+
+#define NONAMELESSUNION
+
 #include "windef.h"
 #include "wine/debug.h"
 #include "winbase.h"
 #include "winnt.h"
 #include "winnls.h"
 #include "wininet.h"
-#define NONAMELESSUNION
 #define CERT_REVOCATION_PARA_HAS_EXTRA_FIELDS
 #include "wincrypt.h"
 
@@ -158,17 +160,17 @@ static BOOL WINAPI CRYPT_GetUrlFromCertificateCRLDistPoint(LPCSTR pszUrlOid,
                 {
                     DWORD j;
                     CERT_ALT_NAME_INFO *name =
-                     &info->rgDistPoint[i].DistPointName.FullName;
+                     &info->rgDistPoint[i].DistPointName.u.FullName;
 
                     for (j = 0; j < name->cAltEntry; j++)
                         if (name->rgAltEntry[j].dwAltNameChoice ==
                          CERT_ALT_NAME_URL)
                         {
-                            if (name->rgAltEntry[j].pwszURL)
+                            if (name->rgAltEntry[j].u.pwszURL)
                             {
                                 cUrl++;
                                 bytesNeeded += sizeof(LPWSTR) +
-                                 (lstrlenW(name->rgAltEntry[j].pwszURL) + 1)
+                                 (lstrlenW(name->rgAltEntry[j].u.pwszURL) + 1)
                                  * sizeof(WCHAR);
                             }
                         }
@@ -202,20 +204,20 @@ static BOOL WINAPI CRYPT_GetUrlFromCertificateCRLDistPoint(LPCSTR pszUrlOid,
                     {
                         DWORD j;
                         CERT_ALT_NAME_INFO *name =
-                         &info->rgDistPoint[i].DistPointName.FullName;
+                         &info->rgDistPoint[i].DistPointName.u.FullName;
 
                         for (j = 0; j < name->cAltEntry; j++)
                             if (name->rgAltEntry[j].dwAltNameChoice ==
                              CERT_ALT_NAME_URL)
                             {
-                                if (name->rgAltEntry[j].pwszURL)
+                                if (name->rgAltEntry[j].u.pwszURL)
                                 {
                                     lstrcpyW(nextUrl,
-                                     name->rgAltEntry[j].pwszURL);
+                                     name->rgAltEntry[j].u.pwszURL);
                                     pUrlArray->rgwszUrl[pUrlArray->cUrl++] =
                                      nextUrl;
                                     nextUrl +=
-                                     (lstrlenW(name->rgAltEntry[j].pwszURL) + 1)
+                                     (lstrlenW(name->rgAltEntry[j].u.pwszURL) + 1)
                                      * sizeof(WCHAR);
                                 }
                             }
