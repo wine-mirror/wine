@@ -106,7 +106,6 @@ static void test_cube_texture_from_pool(IDirect3DDevice9 *device_ptr, DWORD caps
     HRESULT hr;
 
     hr = IDirect3DDevice9_CreateCubeTexture(device_ptr, 512, 1, 0, D3DFMT_X8R8G8B8, pool, &texture_ptr, NULL);
-    trace("pool=%d hr=0x%.8x\n", pool, hr);
 
     if((caps & D3DPTEXTURECAPS_CUBEMAP) || !need_cap)
         ok(SUCCEEDED(hr), "hr=0x%.8x\n", hr);
@@ -118,8 +117,6 @@ static void test_cube_texture_from_pool(IDirect3DDevice9 *device_ptr, DWORD caps
 
 static void test_cube_textures(IDirect3DDevice9 *device_ptr, DWORD caps)
 {
-    trace("texture caps: 0x%.8x\n", caps);
-
     test_cube_texture_from_pool(device_ptr, caps, D3DPOOL_DEFAULT, TRUE);
     test_cube_texture_from_pool(device_ptr, caps, D3DPOOL_MANAGED, TRUE);
     test_cube_texture_from_pool(device_ptr, caps, D3DPOOL_SYSTEMMEM, TRUE);
