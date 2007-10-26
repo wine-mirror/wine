@@ -273,24 +273,32 @@ static void D3X8QuaternionTest(void)
 
 static void D3X8Vector2Test(void)
 {
-    D3DXVECTOR2 expectedvec, gotvec, nul, u, v;
+    D3DXVECTOR2 expectedvec, gotvec, nul, u, v, w;
     LPD3DXVECTOR2 funcpointer;
-    FLOAT expected, got, scale;
+    FLOAT coeff1, coeff2, expected, got, scale;
 
     nul.x = 0.0f; nul.y = 0.0f;
-    u.x=3.0f; u.y=4.0f;
-    v.x=-7.0f; v.y=9.0f;
+    u.x = 3.0f; u.y = 4.0f;
+    v.x = -7.0f; v.y = 9.0f;
+    w.x = 4.0f; w.y = -3.0f;
+
+    coeff1 = 2.0f; coeff2 = 5.0f;
     scale = -6.5f;
 
 /*_______________D3DXVec2Add__________________________*/
-   expectedvec.x = -4.0f; expectedvec.y = 13.0f;
-   D3DXVec2Add(&gotvec,&u,&v);
-   expect_vec(expectedvec,gotvec);
-   /* Tests the case NULL */
+    expectedvec.x = -4.0f; expectedvec.y = 13.0f;
+    D3DXVec2Add(&gotvec,&u,&v);
+    expect_vec(expectedvec,gotvec);
+    /* Tests the case NULL */
     funcpointer = D3DXVec2Add(&gotvec,NULL,&v);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXVec2Add(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXVec2BaryCentric___________________*/
+    expectedvec.x = -12.0f; expectedvec.y = -21.0f;
+    D3DXVec2BaryCentric(&gotvec,&u,&v,&w,coeff1,coeff2);
+    expect_vec(expectedvec,gotvec);
 
 /*_______________D3DXVec2CCW__________________________*/
    expected = 55.0f;
@@ -397,13 +405,16 @@ static void D3X8Vector2Test(void)
 
 static void D3X8Vector3Test(void)
 {
-    D3DXVECTOR3 expectedvec, gotvec, nul, u, v;
+    D3DXVECTOR3 expectedvec, gotvec, nul, u, v, w;
     LPD3DXVECTOR3 funcpointer;
-    FLOAT expected, got, scale;
+    FLOAT coeff1, coeff2, expected, got, scale;
 
     nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f;
     u.x = 9.0f; u.y = 6.0f; u.z = 2.0f;
     v.x = 2.0f; v.y = -3.0f; v.z = -4.0;
+    w.x = 3.0f; w.y = -5.0f; w.z = 7.0f;
+
+    coeff1 = 2.0f; coeff2 = 5.0f;
     scale = -6.5f;
 
 /*_______________D3DXVec3Add__________________________*/
@@ -415,6 +426,11 @@ static void D3X8Vector3Test(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXVec3Add(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXVec3BaryCentric___________________*/
+    expectedvec.x = -35.0f; expectedvec.y = -67.0; expectedvec.z = 15.0f;
+    D3DXVec3BaryCentric(&gotvec,&u,&v,&w,coeff1,coeff2);
+    expect_vec3(expectedvec,gotvec);
 
 /*_______________D3DXVec3Cross________________________*/
     expectedvec.x = -18.0f; expectedvec.y = 40.0f; expectedvec.z = -30.0f;
@@ -518,13 +534,16 @@ static void D3X8Vector3Test(void)
 
 static void D3X8Vector4Test(void)
 {
-    D3DXVECTOR4 expectedvec, gotvec, nul, u, v;
+    D3DXVECTOR4 expectedvec, gotvec, nul, u, v, w;
     LPD3DXVECTOR4 funcpointer;
-    FLOAT expected, got, scale;
+    FLOAT coeff1, coeff2, expected, got, scale;
 
     nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f; nul.w = 0.0f;
     u.x = 1.0f; u.y = 2.0f; u.z = 4.0f; u.w = 10.0;
     v.x = -3.0f; v.y = 4.0f; v.z = -5.0f; v.w = 7.0;
+    w.x = 4.0f; w.y =6.0f; w.z = -2.0f; w.w = 1.0f;
+
+    coeff1 = 2.0f; coeff2 = 5.0;
     scale = -6.5f;
 
 /*_______________D3DXVec4Add__________________________*/
@@ -536,6 +555,11 @@ static void D3X8Vector4Test(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXVec4Add(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXVec4BaryCentric____________________*/
+    expectedvec.x = 8.0f; expectedvec.y = 26.0; expectedvec.z =  -44.0f; expectedvec.w = -41.0f;
+    D3DXVec4BaryCentric(&gotvec,&u,&v,&w,coeff1,coeff2);
+    expect_vec4(expectedvec,gotvec);
 
 /*_______________D3DXVec4Dot__________________________*/
     expected = 55.0f;

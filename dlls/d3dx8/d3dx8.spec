@@ -1,14 +1,14 @@
 @ stdcall D3DXVec2Normalize(ptr ptr)
 @ stub D3DXVec2Hermite
 @ stub D3DXVec2CatmullRom
-@ stub D3DXVec2BaryCentric
+@ stdcall D3DXVec2BaryCentric(ptr ptr ptr ptr long long)
 @ stub D3DXVec2Transform
 @ stub D3DXVec2TransformCoord
 @ stub D3DXVec2TransformNormal
 @ stdcall D3DXVec3Normalize(ptr ptr)
 @ stub D3DXVec3Hermite
 @ stub D3DXVec3CatmullRom
-@ stub D3DXVec3BaryCentric
+@ stdcall D3DXVec3BaryCentric(ptr ptr ptr ptr long long)
 @ stub D3DXVec3Transform
 @ stub D3DXVec3TransformCoord
 @ stub D3DXVec3TransformNormal
@@ -18,7 +18,7 @@
 @ stdcall D3DXVec4Normalize(ptr ptr)
 @ stub D3DXVec4Hermite
 @ stub D3DXVec4CatmullRom
-@ stub D3DXVec4BaryCentric
+@ stdcall D3DXVec4BaryCentric(ptr ptr ptr ptr long long)
 @ stub D3DXVec4Transform
 @ stub D3DXMatrixfDeterminant
 @ stub D3DXMatrixMultiply
