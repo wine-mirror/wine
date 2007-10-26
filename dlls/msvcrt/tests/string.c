@@ -388,7 +388,7 @@ static void test_strdup(void)
 
 START_TEST(string)
 {
-    void *mem;
+    char mem[100];
     static const char xilstring[]="c:/xilinx";
     int nLen;
 
@@ -401,13 +401,11 @@ START_TEST(string)
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
-    mem = malloc(100);
-    ok(mem != NULL, "memory not allocated for size 0\n");
-    strcpy((char*)mem,xilstring);
+    strcpy(mem,xilstring);
     nLen=strlen(xilstring);
-    pmemcpy((char*)mem+5, mem,nLen+1);
-    ok(pmemcmp((char*)mem+5,xilstring, nLen) == 0, 
-       "Got result %s\n",(char*)mem+5);
+    pmemcpy(mem+5, mem,nLen+1);
+    ok(pmemcmp(mem+5,xilstring, nLen) == 0,
+       "Got result %s\n",mem+5);
 
     /* Test _swab function */
     test_swab();
