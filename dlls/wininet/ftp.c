@@ -1365,15 +1365,16 @@ BOOL WINAPI FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, 
 
             /* Receive data */
             FTP_RetrieveFileData(lpwfs, nDataSocket, hFile);
+            closesocket(nDataSocket);
+
             nResCode = FTP_ReceiveResponse(lpwfs, dwContext);
             if (nResCode)
             {
                 if (nResCode == 226)
                     bSuccess = TRUE;
-		else
+                else
                     FTP_SetResponseError(nResCode);
             }
-	    closesocket(nDataSocket);
         }
     }
 
@@ -3008,7 +3009,7 @@ static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr)
  *           FTP_CloseFileTransferHandle (internal)
  *
  * Closes the file transfer handle. This also 'cleans' the data queue of
- * the 'transfer conplete' message (this is a bit of a hack though :-/ )
+ * the 'transfer complete' message (this is a bit of a hack though :-/ )
  *
  */
 static void FTP_CloseFileTransferHandle(LPWININETHANDLEHEADER hdr)
@@ -3022,17 +3023,13 @@ static void FTP_CloseFileTransferHandle(LPWININETHANDLEHEADER hdr)
     WININET_Release(&lpwh->lpFtpSession->hdr);
 
     if (!lpwh->session_deleted)
-	lpwfs->download_in_progress = NULL;
+        lpwfs->download_in_progress = NULL;
 
-    /* This just serves to flush the control socket of any spurrious lines written
-       to it (like '226 Transfer complete.').
-
-       Wonder what to do if the server sends us an error code though...
-    */
-    nResCode = FTP_ReceiveResponse(lpwfs, lpwfs->hdr.dwContext);
-    
     if (lpwh->nDataSocket != -1)
         closesocket(lpwh->nDataSocket);
+
+    nResCode = FTP_ReceiveResponse(lpwfs, lpwfs->hdr.dwContext);
+    if (nResCode > 0 && nResCode != 226) WARN("server reports failed transfer\n");
 
     HeapFree(GetProcessHeap(), 0, lpwh);
 }
