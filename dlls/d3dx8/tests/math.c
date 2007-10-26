@@ -301,6 +301,11 @@ static void D3X8Vector2Test(void)
     D3DXVec2BaryCentric(&gotvec,&u,&v,&w,coeff1,coeff2);
     expect_vec(expectedvec,gotvec);
 
+/*_______________D3DXVec2CatmullRom____________________*/
+    expectedvec.x = 5820.25f; expectedvec.y = -3654.5625f;
+    D3DXVec2CatmullRom(&gotvec,&u,&v,&w,&x,scale);
+    expect_vec(expectedvec,gotvec);
+
 /*_______________D3DXVec2CCW__________________________*/
    expected = 55.0f;
    got = D3DXVec2CCW(&u,&v);
@@ -437,6 +442,12 @@ static void D3X8Vector3Test(void)
 /*_______________D3DXVec3BaryCentric___________________*/
     expectedvec.x = -35.0f; expectedvec.y = -67.0; expectedvec.z = 15.0f;
     D3DXVec3BaryCentric(&gotvec,&u,&v,&w,coeff1,coeff2);
+
+    expect_vec3(expectedvec,gotvec);
+
+/*_______________D3DXVec3CatmullRom____________________*/
+    expectedvec.x = 1458.0f; expectedvec.y = 22.1875f; expectedvec.z = 4141.375f;
+    D3DXVec3CatmullRom(&gotvec,&u,&v,&w,&x,scale);
     expect_vec3(expectedvec,gotvec);
 
 /*_______________D3DXVec3Cross________________________*/
@@ -571,6 +582,11 @@ static void D3X8Vector4Test(void)
 /*_______________D3DXVec4BaryCentric____________________*/
     expectedvec.x = 8.0f; expectedvec.y = 26.0; expectedvec.z =  -44.0f; expectedvec.w = -41.0f;
     D3DXVec4BaryCentric(&gotvec,&u,&v,&w,coeff1,coeff2);
+    expect_vec4(expectedvec,gotvec);
+
+/*_______________D3DXVec4CatmullRom____________________*/
+    expectedvec.x = 2754.625f; expectedvec.y = 2367.5625f; expectedvec.z = 1060.1875f; expectedvec.w = 131.3125f;
+    D3DXVec4CatmullRom(&gotvec,&u,&v,&w,&x,scale);
     expect_vec4(expectedvec,gotvec);
 
 /*_______________D3DXVec4Dot__________________________*/
