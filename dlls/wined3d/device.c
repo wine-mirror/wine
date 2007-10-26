@@ -1358,6 +1358,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     IWineD3DSwapChainImpl  *object; /** NOTE: impl ref allowed since this is a create function **/
     HRESULT                 hr = WINED3D_OK;
     IUnknown               *bufferParent;
+    BOOL                    displaymode_set = FALSE;
 
     TRACE("(%p) : Created Aditional Swap Chain\n", This);
 
@@ -1450,30 +1451,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         goto error;
     }
 
-    /**
-    * Create an opengl context for the display visual
-    *  NOTE: the visual is chosen as the window is created and the glcontext cannot
-    *     use different properties after that point in time. FIXME: How to handle when requested format
-    *     doesn't match actual visual? Cannot choose one here - code removed as it ONLY works if the one
-    *     it chooses is identical to the one already being used!
-     **********************************/
-    /** FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat **/
-
-    object->context = HeapAlloc(GetProcessHeap(), 0, sizeof(object->context));
-    if(!object->context)
-	return E_OUTOFMEMORY;
-    object->num_contexts = 1;
-
-    object->context[0] = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, object->win_handle, FALSE /* pbuffer */, pPresentationParameters);
-    if (!object->context[0]) {
-        ERR("Failed to create a new context\n");
-        hr = WINED3DERR_NOTAVAILABLE;
-        goto error;
-    } else {
-        TRACE("Context created (HWND=%p, glContext=%p)\n",
-               object->win_handle, object->context[0]->glCtx);
-    }
-
    /*********************
    * Windowed / Fullscreen
    *******************/
@@ -1504,6 +1481,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         devmode.dmPelsWidth  = pPresentationParameters->BackBufferWidth;
         devmode.dmPelsHeight = pPresentationParameters->BackBufferHeight;
         ChangeDisplaySettingsExW(This->adapter->DeviceName, &devmode, NULL, CDS_FULLSCREEN, NULL);
+        displaymode_set = TRUE;
 
         /* For GetDisplayMode */
         This->ddraw_width = devmode.dmPelsWidth;
@@ -1515,6 +1493,30 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         /* And finally clip mouse to our screen */
         SetRect(&clip_rc, 0, 0, devmode.dmPelsWidth, devmode.dmPelsHeight);
         ClipCursor(&clip_rc);
+    }
+
+        /**
+     * Create an opengl context for the display visual
+     *  NOTE: the visual is chosen as the window is created and the glcontext cannot
+     *     use different properties after that point in time. FIXME: How to handle when requested format
+     *     doesn't match actual visual? Cannot choose one here - code removed as it ONLY works if the one
+     *     it chooses is identical to the one already being used!
+         **********************************/
+    /** FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat **/
+
+    object->context = HeapAlloc(GetProcessHeap(), 0, sizeof(object->context));
+    if(!object->context)
+        return E_OUTOFMEMORY;
+    object->num_contexts = 1;
+
+    object->context[0] = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, object->win_handle, FALSE /* pbuffer */, pPresentationParameters);
+    if (!object->context[0]) {
+        ERR("Failed to create a new context\n");
+        hr = WINED3DERR_NOTAVAILABLE;
+        goto error;
+    } else {
+        TRACE("Context created (HWND=%p, glContext=%p)\n",
+              object->win_handle, object->context[0]->glCtx);
     }
 
    /*********************
@@ -1594,6 +1596,30 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     return WINED3D_OK;
 
 error:
+    if (displaymode_set) {
+        DEVMODEW devmode;
+        HDC      hdc;
+        int      bpp = 0;
+        RECT     clip_rc;
+
+        SetRect(&clip_rc, 0, 0, object->orig_width, object->orig_height);
+        ClipCursor(NULL);
+
+        /* Get info on the current display setup */
+        hdc = GetDC(0);
+        bpp = GetDeviceCaps(hdc, BITSPIXEL);
+        ReleaseDC(0, hdc);
+
+        /* Change the display settings */
+        memset(&devmode, 0, sizeof(devmode));
+        devmode.dmSize       = sizeof(devmode);
+        devmode.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+        devmode.dmBitsPerPel = (bpp >= 24) ? 32 : bpp; /* Stupid XVidMode cannot change bpp */
+        devmode.dmPelsWidth  = object->orig_width;
+        devmode.dmPelsHeight = object->orig_height;
+        ChangeDisplaySettingsExW(This->adapter->DeviceName, &devmode, NULL, CDS_FULLSCREEN, NULL);
+    }
+
     if (object->backBuffer) {
         int i;
         for(i = 0; i < object->presentParms.BackBufferCount; i++) {
