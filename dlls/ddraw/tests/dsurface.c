@@ -287,8 +287,18 @@ static void SrcColorKey32BlitTest(void)
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
-    ok((lpData[0]==0x77010203)&&(lpData[1]==0x00010203)&&(lpData[2]==0xCCCCCCCC)&&(lpData[3]==0xCCCCCCCC),
-       "Destination data after blitting is not correct\n");
+    /* Different behavior on some drivers / windows versions. Some versions ignore the X channel when
+     * color keying, but copy it to the destination surface. Others apply it for color keying, but
+     * do not copy it into the destination surface.
+     */
+    if(lpData[0]==0x00010203) {
+        trace("X channel was not copied into the destination surface\n");
+        ok((lpData[0]==0x00010203)&&(lpData[1]==0x00010203)&&(lpData[2]==0x00FF00FF)&&(lpData[3]==0xCCCCCCCC),
+           "Destination data after blitting is not correct\n");
+    } else {
+        ok((lpData[0]==0x77010203)&&(lpData[1]==0x00010203)&&(lpData[2]==0xCCCCCCCC)&&(lpData[3]==0xCCCCCCCC),
+           "Destination data after blitting is not correct\n");
+    }
     rc = IDirectDrawSurface_Unlock(lpDst, NULL);
     ok(rc==DD_OK,"Unlock returned: %x\n",rc);
 
