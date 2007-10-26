@@ -1871,12 +1871,8 @@ extern void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_input_pack(
    SHADER_BUFFER* buffer,
-   semantic* semantics_out);
-
-/** GLSL Vertex Shader Prototypes */
-extern void vshader_glsl_output_unpack(
-   SHADER_BUFFER* buffer,
-   semantic* semantics_out);
+   semantic* semantics_out,
+   IWineD3DPixelShader *iface);
 
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
@@ -2066,6 +2062,13 @@ extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
+
+enum vertexprocessing_mode {
+    fixedfunction,
+    vertexshader,
+    pretransformed
+};
+
 typedef struct IWineD3DPixelShaderImpl {
     /* IUnknown parts */
     const IWineD3DPixelShaderVtbl *lpVtbl;
@@ -2094,6 +2097,7 @@ typedef struct IWineD3DPixelShaderImpl {
     char                        vpos_uniform;
     BOOL                        render_offscreen;
     UINT                        height;
+    enum vertexprocessing_mode  vertexprocessing;
 
 #if 0 /* needs reworking */
     PSHADERINPUTDATA input;

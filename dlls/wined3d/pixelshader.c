@@ -361,8 +361,19 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
         shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
 
         /* Pack 3.0 inputs */
-        if (This->baseShader.hex_version >= WINED3DPS_VERSION(3,0))
-            pshader_glsl_input_pack(&buffer, This->semantics_in);
+        if (This->baseShader.hex_version >= WINED3DPS_VERSION(3,0) &&
+            !use_vs((IWineD3DDeviceImpl *) This->baseShader.device)) {
+
+            if(((IWineD3DDeviceImpl *) This->baseShader.device)->strided_streams.u.s.position_transformed) {
+                This->vertexprocessing = pretransformed;
+            } else if(!use_vs((IWineD3DDeviceImpl *) This->baseShader.device)) {
+                This->vertexprocessing = fixedfunction;
+            } else {
+                This->vertexprocessing = vertexshader;
+            }
+
+            pshader_glsl_input_pack(&buffer, This->semantics_in, iface);
+        }
 
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
@@ -602,6 +613,20 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
         if(This->baseShader.reg_maps.usesdsy && !This->vpos_uniform) {
             if(This->render_offscreen ? 0 : 1 != deviceImpl->render_offscreen ? 0 : 1) {
                 WARN("Recompiling shader because dsy is used, hard compiled and render_offscreen changed\n");
+                goto recompile;
+            }
+        }
+        if(This->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
+            if(((IWineD3DDeviceImpl *) This->baseShader.device)->strided_streams.u.s.position_transformed &&
+                 This->vertexprocessing != pretransformed) {
+                WARN("Recompiling shader because pretransformed vertices are provided, which wasn't the case before\n");
+                goto recompile;
+            } else if(!use_vs((IWineD3DDeviceImpl *) This->baseShader.device) &&
+                       This->vertexprocessing != fixedfunction) {
+                WARN("Recompiling shader because fixed function vp is in use, which wasn't the case before\n");
+                goto recompile;
+            } else if(This->vertexprocessing != vertexshader) {
+                WARN("Recompiling shader because vertex shaders are in use, which wasn't the case before\n");
                 goto recompile;
             }
         }

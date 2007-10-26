@@ -324,8 +324,11 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
         /* Unpack 3.0 outputs */
-        if (This->baseShader.hex_version >= WINED3DVS_VERSION(3,0))
-            vshader_glsl_output_unpack(&buffer, This->semantics_out);
+        if (This->baseShader.hex_version >= WINED3DVS_VERSION(3,0)) {
+            shader_addline(&buffer, "order_ps_input(OUT);\n");
+        } else {
+            shader_addline(&buffer, "order_ps_input();\n");
+        }
 
         /* If this shader doesn't use fog copy the z coord to the fog coord so that we can use table fog */
         if (!reg_maps->fog)
