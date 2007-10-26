@@ -509,19 +509,23 @@ static HRESULT WINAPI IEnumDMO_fnNext(
     {
         This->index++;
 
+        len = MAX_PATH;
         hres = RegEnumKeyExW(This->hkey, This->index, szNextKey, &len, NULL, NULL, NULL, &ft);
         if (hres != ERROR_SUCCESS)
             break;
 
         TRACE("found %s\n", debugstr_w(szNextKey));
 
-	if (This->dwFlags & DMO_REGISTERF_IS_KEYED)
+        if (!(This->dwFlags & DMO_ENUMF_INCLUDE_KEYED))
         {
             wsprintfW(szKey, szCat3Fmt, szDMORootKey, szNextKey, szDMOKeyed);
             hres = RegOpenKeyExW(HKEY_CLASSES_ROOT, szKey, 0, KEY_READ, &hkey);
-            if (ERROR_SUCCESS != hres)
+            if (ERROR_SUCCESS == hres)
+            {
+                RegCloseKey(hkey);
+                /* Skip Keyed entries */
                 continue;
-            RegCloseKey(hkey);
+            }
         }
 
         wsprintfW(szKey, szCat2Fmt, szDMORootKey, szNextKey);
