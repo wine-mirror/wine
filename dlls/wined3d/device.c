@@ -952,12 +952,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     UINT                       tmpH;
     UINT                       tmpD;
     const GlPixelFormatDesc *glDesc;
+
     getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
 
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */
     if (WINED3DFMT_UNKNOWN >= Format) {
         WARN("(%p) : Texture cannot be created with a format of WINED3DFMT_UNKNOWN\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
+    if(!GL_SUPPORT(EXT_TEXTURE3D)) {
+        WARN("(%p) : Texture cannot be created - no volume texture support\n", This);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -1040,6 +1045,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeImpl        *object; /** NOTE: impl ref allowed since this is a create function **/
     const StaticPixelFormatDesc *formatDesc  = getFormatDescEntry(Format, NULL, NULL);
+
+    if(!GL_SUPPORT(EXT_TEXTURE3D)) {
+        WARN("(%p) : Volume cannot be created - no volume texture support\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, Volume, WINED3DRTYPE_VOLUME, ((Width * formatDesc->bpp) * Height * Depth))
 
