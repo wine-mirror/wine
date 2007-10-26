@@ -127,14 +127,6 @@ static void test_codepage(int cp)
 #else
 
 /* RLE-encoded mbctype tables for given codepages */
-static int result_cp_1252_mbctype[] = { 0x0,66, 0x10,26, 0x0,6, 0x20,26, 0x0,8, 0x20,1,
-  0x0,6, 0x10,1, 0x0,1, 0x10,1, 0x0,1, 0x10,1, 0x0,11, 0x20,1, 0x0,1, 0x20,1, 0x0,1,
-  0x20,1, 0x10,1, 0x0,10, 0x20,1, 0x0,10, 0x20,1, 0x0,4, 0x20,1, 0x0,5, 0x10,23, 0x0,1,
-  0x10,7, 0x20,24, 0x0,1, 32,8 };
-static int result_cp_1250_mbctype[] = { 0x0,66, 0x10,26, 0x0,6, 0x20,26, 0x0,15, 0x10,1,
-  0x0,1, 0x10,4, 0x0,10, 0x20,1, 0x0,1, 0x20,4, 0x0,3, 0x10,1, 0x0,1, 0x10,1, 0x0,4,
-  0x10,1, 0x0,4, 0x10,1, 0x0,3, 0x20,1, 0x0,1, 0x20,1, 0x0,3, 0x20,2, 0x0,1, 0x10,1,
-  0x0,1, 0x20,2, 0x10,23, 0x0,1, 0x10,7, 0x20,24, 0x0,1, 0x20,7, 0,1 };
 static int result_cp_932_mbctype[] = { 0x0,65, 0x8,1, 0x18,26, 0x8,6, 0x28,26, 0x8,4,
   0x0,1, 0x8,1, 0xc,31, 0x8,1, 0xa,5, 0x9,58, 0xc,29, 0,3 };
 static int result_cp_936_mbctype[] = { 0x0,65, 0x8,1, 0x18,26, 0x8,6, 0x28,26, 0x8,6,
@@ -187,9 +179,24 @@ static void test_mbcp(void)
     unsigned char buf[16];
     int step;
 
-    /* some two single-byte code pages*/
-    test_codepage(1252);
-    test_codepage(1250);
+    /* _mbtype tests */
+
+    /* An SBCS codepage test. The ctype of characters on e.g. CP1252 or CP1250 differs slightly
+     * between versions of Windows. Also Windows 9x seems to ignore the codepage and always uses
+     * CP1252 (or the ACP?) so we test only a few ASCII characters */
+    _setmbcp(1252);
+    expect_eq(_mbctype[10], 0, char, "%x");
+    expect_eq(_mbctype[50], 0, char, "%x");
+    expect_eq(_mbctype[66], _SBUP, char, "%x");
+    expect_eq(_mbctype[100], _SBLOW, char, "%x");
+    expect_eq(_mbctype[128], 0, char, "%x");
+    _setmbcp(1250);
+    expect_eq(_mbctype[10], 0, char, "%x");
+    expect_eq(_mbctype[50], 0, char, "%x");
+    expect_eq(_mbctype[66], _SBUP, char, "%x");
+    expect_eq(_mbctype[100], _SBLOW, char, "%x");
+    expect_eq(_mbctype[128], 0, char, "%x");
+
     /* double byte code pages */
     test_codepage_todo(932, todo_cp_932);
     test_codepage(936);
