@@ -898,7 +898,7 @@ static void Direct3D1Test(void)
     };
     static struct v_in cliptest[] = {
         {25.59, 25.59, 1.0},  {-25.59, -25.59,  0.0},
-        {25.61, 25.61, 1.01}, {-25.60, -25.60, -0.01},
+        {25.61, 25.61, 1.01}, {-25.61, -25.61, -0.01},
     };
     static struct v_in offscreentest[] = {
         {128.1, 0.0, 0.0},
