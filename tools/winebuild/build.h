@@ -124,15 +124,16 @@ extern enum target_platform target_platform;
 
 /* entry point flags */
 #define FLAG_NORELAY   0x01  /* don't use relay debugging for this function */
-#define FLAG_NONAME    0x02  /* don't import function by name */
+#define FLAG_NONAME    0x02  /* don't export function by name */
 #define FLAG_RET16     0x04  /* function returns a 16-bit value */
 #define FLAG_RET64     0x08  /* function returns a 64-bit value */
 #define FLAG_I386      0x10  /* function is i386 only */
 #define FLAG_REGISTER  0x20  /* use register calling convention */
 #define FLAG_PRIVATE   0x40  /* function is private (cannot be imported) */
+#define FLAG_ORDINAL   0x80  /* function should be imported by ordinal */
 
-#define FLAG_FORWARD   0x80  /* function is a forwarded name */
-#define FLAG_EXT_LINK  0x100 /* function links to an external symbol */
+#define FLAG_FORWARD   0x100  /* function is a forwarded name */
+#define FLAG_EXT_LINK  0x200  /* function links to an external symbol */
 
 #define MAX_ORDINALS  65535
 

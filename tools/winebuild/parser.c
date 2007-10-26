@@ -70,6 +70,7 @@ static const char * const FlagNames[] =
     "i386",        /* FLAG_I386 */
     "register",    /* FLAG_REGISTER */
     "private",     /* FLAG_PRIVATE */
+    "ordinal",     /* FLAG_ORDINAL */
     NULL
 };
 
@@ -545,11 +546,14 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
         }
     }
 
-    if (!strcmp( odp->name, "@" ) || odp->flags & FLAG_NONAME)
+    if (!strcmp( odp->name, "@" ) || odp->flags & (FLAG_NONAME | FLAG_ORDINAL))
     {
         if (ordinal == -1)
         {
-            error( "Nameless function needs an explicit ordinal number\n" );
+            if (!strcmp( odp->name, "@" ))
+                error( "Nameless function needs an explicit ordinal number\n" );
+            else
+                error( "Function imported by ordinal needs an explicit ordinal number\n" );
             goto error;
         }
         if (spec->type != SPEC_WIN32)
@@ -557,9 +561,16 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
             error( "Nameless functions not supported for Win16\n" );
             goto error;
         }
-        if (!strcmp( odp->name, "@" )) free( odp->name );
-        else odp->export_name = odp->name;
-        odp->name = NULL;
+        if (!strcmp( odp->name, "@" ))
+        {
+            free( odp->name );
+            odp->name = NULL;
+        }
+        else if (!(odp->flags & FLAG_ORDINAL))  /* -ordinal only affects the import library */
+        {
+            odp->export_name = odp->name;
+            odp->name = NULL;
+        }
     }
     return 1;
 

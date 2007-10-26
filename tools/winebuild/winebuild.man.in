@@ -260,7 +260,8 @@ The entry point is not displayed in relay debugging traces (Win32
 only).
 .TP
 .B -noname
-The entry point will be imported by ordinal instead of by name.
+The entry point will be exported by ordinal instead of by name. The
+name is still available for importing.
 .TP
 .B -ret16
 The function returns a 16-bit value (Win16 only).
@@ -277,6 +278,10 @@ The function uses CPU register to pass arguments.
 .B -private
 The function cannot be imported from other dlls, it can only be
 accessed through GetProcAddress.
+.TP
+.B -ordinal
+The entry point will be imported by ordinal instead of by name. The
+name is still exported.
 .SS "Function ordinals"
 Syntax:
 .br

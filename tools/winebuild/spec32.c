@@ -552,7 +552,7 @@ void BuildDef32File( DLLSPEC *spec )
             assert(0);
         }
         output( " @%d", odp->ordinal );
-        if (!odp->name) output( " NONAME" );
+        if (!odp->name || (odp->flags & FLAG_ORDINAL)) output( " NONAME" );
         if (is_data) output( " DATA" );
         if (odp->flags & FLAG_PRIVATE) output( " PRIVATE" );
         output( "\n" );
