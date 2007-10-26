@@ -431,12 +431,10 @@ INT WINAPI SnmpUtilVarBindListCpy(SnmpVarBindList *dst, SnmpVarBindList *src)
         dst->len = 0;
         return SNMPAPI_NOERROR;
     }
-    size = src->len * sizeof(SnmpVarBind *);
+    size = src->len * sizeof(SnmpVarBind);
     if (!(dst->list = HeapAlloc(GetProcessHeap(), 0, size)))
-    {
-        HeapFree(GetProcessHeap(), 0, dst);
         return SNMPAPI_ERROR;
-    }
+
     src_entry = src->list;
     dst_entry = dst->list;
     for (i = 0; i < src->len; i++)
