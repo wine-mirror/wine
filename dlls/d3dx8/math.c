@@ -61,6 +61,20 @@ D3DXVECTOR2* WINAPI D3DXVec2BaryCentric(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv
     return pout;
 }
 
+D3DXVECTOR2* WINAPI D3DXVec2Hermite(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pt1, CONST D3DXVECTOR2 *pv2, CONST D3DXVECTOR2 *pt2, FLOAT s)
+{
+    FLOAT h1, h2, h3, h4;
+
+    h1 = 2.0f * s * s * s - 3.0f * s * s + 1.0f;
+    h2 = s * s * s - 2.0f * s * s + s;
+    h3 = -2.0f * s * s * s + 3.0f * s * s;
+    h4 = s * s * s - s * s;
+
+    pout->x = h1 * (pv1->x) + h2 * (pt1->x) + h3 * (pv2->x) + h4 * (pt2->x);
+    pout->y = h1 * (pv1->y) + h2 * (pt1->y) + h3 * (pv2->y) + h4 * (pt2->y);
+    return pout;
+}
+
 D3DXVECTOR2* WINAPI D3DXVec2Normalize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv)
 {
     FLOAT norm;
@@ -86,6 +100,21 @@ D3DXVECTOR3* WINAPI D3DXVec3BaryCentric(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv
     pout->x = (1.0f-f-g) * (pv1->x) + f * (pv2->x) + g * (pv3->x);
     pout->y = (1.0f-f-g) * (pv1->y) + f * (pv2->y) + g * (pv3->y);
     pout->z = (1.0f-f-g) * (pv1->z) + f * (pv2->z) + g * (pv3->z);
+    return pout;
+}
+
+D3DXVECTOR3* WINAPI D3DXVec3Hermite(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pt1, CONST D3DXVECTOR3 *pv2, CONST D3DXVECTOR3 *pt2, FLOAT s)
+{
+    FLOAT h1, h2, h3, h4;
+
+    h1 = 2.0f * s * s * s - 3.0f * s * s + 1.0f;
+    h2 = s * s * s - 2.0f * s * s + s;
+    h3 = -2.0f * s * s * s + 3.0f * s * s;
+    h4 = s * s * s - s * s;
+
+    pout->x = h1 * (pv1->x) + h2 * (pt1->x) + h3 * (pv2->x) + h4 * (pt2->x);
+    pout->y = h1 * (pv1->y) + h2 * (pt1->y) + h3 * (pv2->y) + h4 * (pt2->y);
+    pout->z = h1 * (pv1->z) + h2 * (pt1->z) + h3 * (pv2->z) + h4 * (pt2->z);
     return pout;
 }
 
@@ -119,6 +148,23 @@ D3DXVECTOR4* WINAPI D3DXVec4BaryCentric(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv
     pout->w = (1.0f-f-g) * (pv1->w) + f * (pv2->w) + g * (pv3->w);
     return pout;
 }
+
+D3DXVECTOR4* WINAPI D3DXVec4Hermite(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pt1, CONST D3DXVECTOR4 *pv2, CONST D3DXVECTOR4 *pt2, FLOAT s)
+{
+    FLOAT h1, h2, h3, h4;
+
+    h1 = 2.0f * s * s * s - 3.0f * s * s + 1.0f;
+    h2 = s * s * s - 2.0f * s * s + s;
+    h3 = -2.0f * s * s * s + 3.0f * s * s;
+    h4 = s * s * s - s * s;
+
+    pout->x = h1 * (pv1->x) + h2 * (pt1->x) + h3 * (pv2->x) + h4 * (pt2->x);
+    pout->y = h1 * (pv1->y) + h2 * (pt1->y) + h3 * (pv2->y) + h4 * (pt2->y);
+    pout->z = h1 * (pv1->z) + h2 * (pt1->z) + h3 * (pv2->z) + h4 * (pt2->z);
+    pout->w = h1 * (pv1->w) + h2 * (pt1->w) + h3 * (pv2->w) + h4 * (pt2->w);
+    return pout;
+}
+
 D3DXVECTOR4* WINAPI D3DXVec4Normalize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv)
 {
     FLOAT norm;

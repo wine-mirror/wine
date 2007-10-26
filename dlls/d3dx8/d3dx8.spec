@@ -1,12 +1,12 @@
 @ stdcall D3DXVec2Normalize(ptr ptr)
-@ stub D3DXVec2Hermite
+@ stdcall D3DXVec2Hermite(ptr ptr ptr ptr ptr long)
 @ stub D3DXVec2CatmullRom
 @ stdcall D3DXVec2BaryCentric(ptr ptr ptr ptr long long)
 @ stub D3DXVec2Transform
 @ stub D3DXVec2TransformCoord
 @ stub D3DXVec2TransformNormal
 @ stdcall D3DXVec3Normalize(ptr ptr)
-@ stub D3DXVec3Hermite
+@ stdcall D3DXVec3Hermite(ptr ptr ptr ptr ptr long)
 @ stub D3DXVec3CatmullRom
 @ stdcall D3DXVec3BaryCentric(ptr ptr ptr ptr long long)
 @ stub D3DXVec3Transform
@@ -16,7 +16,7 @@
 @ stub D3DXVec3Unproject
 @ stub D3DXVec4Cross
 @ stdcall D3DXVec4Normalize(ptr ptr)
-@ stub D3DXVec4Hermite
+@ stdcall D3DXVec4Hermite(ptr ptr ptr ptr ptr long)
 @ stub D3DXVec4CatmullRom
 @ stdcall D3DXVec4BaryCentric(ptr ptr ptr ptr long long)
 @ stub D3DXVec4Transform
