@@ -399,6 +399,7 @@ static void init_server(void)
 void write_server(ifref_list_t *ifaces)
 {
     unsigned int proc_offset = 0;
+    int expr_eval_routines;
     ifref_t *iface;
 
     if (!do_server)
@@ -411,6 +412,10 @@ void write_server(ifref_list_t *ifaces)
         return;
 
     write_formatstringsdecl(server, indent, ifaces, need_stub);
+    expr_eval_routines = write_expr_eval_routines(server, server_token);
+    if (expr_eval_routines)
+        write_expr_eval_routine_list(server, server_token);
+    write_user_quad_list(server);
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, ifref_t, entry )
     {
@@ -424,8 +429,6 @@ void write_server(ifref_list_t *ifaces)
 
         if (iface->iface->funcs)
         {
-            int expr_eval_routines;
-
             write_serverinterfacedecl(iface->iface);
             write_stubdescdecl(iface->iface);
     
@@ -436,12 +439,6 @@ void write_server(ifref_list_t *ifaces)
             print_server("#endif\n");
 
             fprintf(server, "\n");
-
-            expr_eval_routines = write_expr_eval_routines(server, iface->iface->name);
-            if (expr_eval_routines)
-                write_expr_eval_routine_list(server, iface->iface->name);
-
-            write_user_quad_list(server);
             write_stubdescriptor(iface->iface, expr_eval_routines);
             write_dispatchtable(iface->iface);
         }

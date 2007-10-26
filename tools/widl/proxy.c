@@ -65,14 +65,14 @@ static void write_stubdescproto(void)
   print_proxy( "\n");
 }
 
-static void write_stubdesc(void)
+static void write_stubdesc(int expr_eval_routines)
 {
   print_proxy( "static const MIDL_STUB_DESC Object_StubDesc =\n{\n");
   indent++;
   print_proxy( "0,\n");
   print_proxy( "NdrOleAllocate,\n");
   print_proxy( "NdrOleFree,\n");
-  print_proxy( "{0}, 0, 0, 0, 0,\n");
+  print_proxy( "{0}, 0, 0, %s, 0,\n", expr_eval_routines ? "ExprEvalRoutines" : "0");
   print_proxy( "__MIDL_TypeFormatString.Format,\n");
   print_proxy( "1, /* -error bounds_check flag */\n");
   print_proxy( "0x10001, /* Ndr library version */\n");
@@ -598,6 +598,7 @@ int need_stub_files(const ifref_list_t *ifaces)
 void write_proxies(ifref_list_t *ifaces)
 {
   ifref_t *cur;
+  int expr_eval_routines;
   char *file_id = proxy_token;
   int c;
   unsigned int proc_offset = 0;
@@ -613,8 +614,11 @@ void write_proxies(ifref_list_t *ifaces)
           if (need_proxy(cur->iface))
               write_proxy(cur->iface, &proc_offset);
 
+  expr_eval_routines = write_expr_eval_routines(proxy, proxy_token);
+  if (expr_eval_routines)
+      write_expr_eval_routine_list(proxy, proxy_token);
   write_user_quad_list(proxy);
-  write_stubdesc();
+  write_stubdesc(expr_eval_routines);
 
   print_proxy( "#if !defined(__RPC_WIN32__)\n");
   print_proxy( "#error Currently only Wine and WIN32 are supported.\n");

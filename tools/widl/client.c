@@ -386,6 +386,7 @@ static void init_client(void)
 void write_client(ifref_list_t *ifaces)
 {
     unsigned int proc_offset = 0;
+    int expr_eval_routines;
     ifref_t *iface;
 
     if (!do_client)
@@ -398,6 +399,10 @@ void write_client(ifref_list_t *ifaces)
         return;
 
     write_formatstringsdecl(client, indent, ifaces, need_stub);
+    expr_eval_routines = write_expr_eval_routines(client, client_token);
+    if (expr_eval_routines)
+        write_expr_eval_routine_list(client, client_token);
+    write_user_quad_list(client);
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, ifref_t, entry )
     {
@@ -411,8 +416,6 @@ void write_client(ifref_list_t *ifaces)
 
         if (iface->iface->funcs)
         {
-            int expr_eval_routines;
-
             write_implicithandledecl(iface->iface);
     
             write_clientinterfacedecl(iface->iface);
@@ -424,11 +427,6 @@ void write_client(ifref_list_t *ifaces)
             print_client("#endif\n");
 
             fprintf(client, "\n");
-
-            expr_eval_routines = write_expr_eval_routines(client, iface->iface->name);
-            if (expr_eval_routines)
-                write_expr_eval_routine_list(client, iface->iface->name);
-            write_user_quad_list(client);
             write_stubdescriptor(iface->iface, expr_eval_routines);
         }
     }
