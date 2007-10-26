@@ -848,6 +848,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          create;        /* file create action */
     unsigned int options;       /* file options */
     unsigned int attrs;         /* file attributes for creation */
+    VARARG(objattr,object_attributes); /* object attributes */
     VARARG(filename,string);    /* file name */
 @REPLY
     obj_handle_t handle;        /* handle to the file */

@@ -191,6 +191,22 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
 
     if (io->u.Status == STATUS_SUCCESS)
     {
+        struct security_descriptor *sd = NULL;
+        struct object_attributes objattr;
+
+        objattr.rootdir = 0;
+        objattr.sd_len = 0;
+        objattr.name_len = 0;
+        if (attr)
+        {
+            io->u.Status = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
+            if (io->u.Status != STATUS_SUCCESS)
+            {
+                RtlFreeAnsiString( &unix_name );
+                return io->u.Status;
+            }
+        }
+
         SERVER_START_REQ( create_file )
         {
             req->access     = access;
@@ -199,11 +215,14 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
             req->create     = disposition;
             req->options    = options;
             req->attrs      = attributes;
+            wine_server_add_data( req, &objattr, sizeof(objattr) );
+            if (objattr.sd_len) wine_server_add_data( req, sd, objattr.sd_len );
             wine_server_add_data( req, unix_name.Buffer, unix_name.Length );
             io->u.Status = wine_server_call( req );
             *handle = reply->handle;
         }
         SERVER_END_REQ;
+        NTDLL_free_struct_sd( sd );
         RtlFreeAnsiString( &unix_name );
     }
     else WARN("%s not found (%x)\n", debugstr_us(attr->ObjectName), io->u.Status );

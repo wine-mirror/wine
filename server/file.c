@@ -75,6 +75,7 @@ static void file_destroy( struct object *obj );
 static int file_get_poll_events( struct fd *fd );
 static void file_flush( struct fd *fd, struct event **event );
 static enum server_fd_type file_get_fd_type( struct fd *fd );
+static mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner );
 
 static const struct object_ops file_ops =
 {
@@ -154,7 +155,7 @@ static struct object *create_file_obj( struct fd *fd, unsigned int access, mode_
 
 static struct object *create_file( const char *nameptr, data_size_t len, unsigned int access,
                                    unsigned int sharing, int create, unsigned int options,
-                                   unsigned int attrs )
+                                   unsigned int attrs, const struct security_descriptor *sd )
 {
     struct object *obj = NULL;
     struct fd *fd;
@@ -177,11 +178,26 @@ static struct object *create_file( const char *nameptr, data_size_t len, unsigne
     default:                set_error( STATUS_INVALID_PARAMETER ); goto done;
     }
 
-    mode = (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
+    if (sd)
+    {
+        const SID *owner = sd_get_owner( sd );
+        if (!owner)
+            owner = token_get_user( current->process->token );
+        mode = sd_to_mode( sd, owner );
+    }
+    else
+        mode = (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
 
     if (len >= 4 &&
         (!strcasecmp( name + len - 4, ".exe" ) || !strcasecmp( name + len - 4, ".com" )))
-        mode |= 0111;
+    {
+        if (mode & S_IRUSR)
+            mode |= S_IXUSR;
+        if (mode & S_IRGRP)
+            mode |= S_IXGRP;
+        if (mode & S_IROTH)
+            mode |= S_IXOTH;
+    }
 
     access = generic_file_map_access( access );
 
@@ -395,59 +411,26 @@ static struct security_descriptor *file_get_sd( struct object *obj )
     return sd;
 }
 
-static int file_set_sd( struct object *obj, const struct security_descriptor *sd,
-                        unsigned int set_info )
+static mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
 {
-    struct file *file = (struct file *)obj;
-    mode_t new_mode;
+    mode_t new_mode = 0;
     mode_t denied_mode = 0;
-    const SID *owner;
-    int unix_fd;
-
-    assert( obj->ops == &file_ops );
-
-    unix_fd = get_file_unix_fd( file );
-
-    if (unix_fd == -1) return 1;
-
-    if (set_info & OWNER_SECURITY_INFORMATION)
+    int present;
+    const ACL *dacl = sd_get_dacl( sd, &present );
+    if (present && dacl)
     {
-        owner = sd_get_owner( sd );
-        if (!owner)
+        const ACE_HEADER *ace = (const ACE_HEADER *)(dacl + 1);
+        ULONG i;
+        for (i = 0; i < dacl->AceCount; i++, ace_next( ace ))
         {
-            set_error( STATUS_INVALID_SECURITY_DESCR );
-            return 0;
-        }
-        if (!obj->sd || !security_equal_sid( owner, sd_get_owner( obj->sd ) ))
-        {
-            /* FIXME: get Unix uid and call fchown */
-        }
-    }
-    else if (obj->sd)
-        owner = sd_get_owner( obj->sd );
-    else
-        owner = token_get_user( current->process->token );
+            const ACCESS_ALLOWED_ACE *aa_ace;
+            const ACCESS_DENIED_ACE *ad_ace;
+            const SID *sid;
 
-    /* group and sacl not supported */
+            if (ace->AceFlags & INHERIT_ONLY_ACE) continue;
 
-    /* keep the bits that we don't map to access rights in the ACL */
-    new_mode = file->mode & (S_ISUID|S_ISGID|S_ISVTX|S_IRWXG);
-
-    if (set_info & DACL_SECURITY_INFORMATION)
-    {
-        int present;
-        const ACL *dacl = sd_get_dacl( sd, &present );
-        if (present && dacl)
-        {
-            const ACE_HEADER *ace = (const ACE_HEADER *)(dacl + 1);
-            ULONG i;
-            for (i = 0; i < dacl->AceCount; i++)
+            switch (ace->AceType)
             {
-                const ACCESS_ALLOWED_ACE *aa_ace;
-                const ACCESS_DENIED_ACE *ad_ace;
-                const SID *sid;
-                switch (ace->AceType)
-                {
                 case ACCESS_DENIED_ACE_TYPE:
                     ad_ace = (const ACCESS_DENIED_ACE *)ace;
                     sid = (const SID *)&ad_ace->SidStart;
@@ -496,23 +479,65 @@ static int file_set_sd( struct object *obj, const struct security_descriptor *sd
                             new_mode |= S_IXUSR;
                     }
                     break;
-                }
-                ace = ace_next( ace );
             }
         }
-        else
-            /* no ACL means full access rights to anyone */
-            new_mode |= S_IRWXU | S_IRWXO;
+    }
+    else
+        /* no ACL means full access rights to anyone */
+        new_mode = S_IRWXU | S_IRWXO;
 
-        if (file->mode != (new_mode & ~denied_mode))
+    return new_mode & ~denied_mode;
+}
+
+static int file_set_sd( struct object *obj, const struct security_descriptor *sd,
+                        unsigned int set_info )
+{
+    struct file *file = (struct file *)obj;
+    const SID *owner;
+    mode_t mode;
+    int unix_fd;
+
+    assert( obj->ops == &file_ops );
+
+    unix_fd = get_file_unix_fd( file );
+
+    if (unix_fd == -1) return 1;
+
+    if (set_info & OWNER_SECURITY_INFORMATION)
+    {
+        owner = sd_get_owner( sd );
+        if (!owner)
         {
-            if (fchmod( unix_fd, new_mode & ~denied_mode ) == -1)
+            set_error( STATUS_INVALID_SECURITY_DESCR );
+            return 0;
+        }
+        if (!obj->sd || !security_equal_sid( owner, sd_get_owner( obj->sd ) ))
+        {
+            /* FIXME: get Unix uid and call fchown */
+        }
+    }
+    else if (obj->sd)
+        owner = sd_get_owner( obj->sd );
+    else
+        owner = token_get_user( current->process->token );
+
+    /* group and sacl not supported */
+
+    if (set_info & DACL_SECURITY_INFORMATION)
+    {
+        /* keep the bits that we don't map to access rights in the ACL */
+        mode = file->mode & (S_ISUID|S_ISGID|S_ISVTX|S_IRWXG);
+        mode |= sd_to_mode( sd, owner );
+
+        if (file->mode != mode)
+        {
+            if (fchmod( unix_fd, mode ) == -1)
             {
                 file_set_error();
                 return 0;
             }
 
-            file->mode = new_mode & ~denied_mode;
+            file->mode = mode;
         }
     }
     return 1;
@@ -625,10 +650,31 @@ int grow_file( struct file *file, file_pos_t size )
 DECL_HANDLER(create_file)
 {
     struct object *file;
+    const struct object_attributes *objattr = get_req_data();
+    const struct security_descriptor *sd;
+    const char *name;
+    data_size_t name_len;
 
     reply->handle = 0;
-    if ((file = create_file( get_req_data(), get_req_data_size(), req->access,
-                             req->sharing, req->create, req->options, req->attrs )))
+
+    if (!objattr_is_valid( objattr, get_req_data_size() ))
+        return;
+    /* name is transferred in the unix codepage outside of the objattr structure */
+    if (objattr->name_len)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    sd = objattr->sd_len ? (const struct security_descriptor *)(objattr + 1) : NULL;
+
+    name = (const char *)get_req_data() + sizeof(*objattr) + objattr->sd_len;
+    name_len = get_req_data_size() - sizeof(*objattr) - objattr->sd_len;
+
+    reply->handle = 0;
+    if ((file = create_file( name, name_len, req->access,
+                             req->sharing, req->create, req->options,
+                             req->attrs, sd )))
     {
         reply->handle = alloc_handle( current->process, file, req->access, req->attributes );
         release_object( file );
