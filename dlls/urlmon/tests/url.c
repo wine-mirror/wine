@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "urlmon.h"
 #include "wininet.h"
+#include "mshtml.h"
 
 #include "wine/test.h"
 
@@ -89,8 +90,12 @@ DEFINE_EXPECT(OnProgress_MIMETYPEAVAILABLE);
 DEFINE_EXPECT(OnProgress_BEGINDOWNLOADDATA);
 DEFINE_EXPECT(OnProgress_DOWNLOADINGDATA);
 DEFINE_EXPECT(OnProgress_ENDDOWNLOADDATA);
+DEFINE_EXPECT(OnProgress_CLASSIDAVAILABLE);
+DEFINE_EXPECT(OnProgress_BEGINSYNCOPERATION);
+DEFINE_EXPECT(OnProgress_ENDSYNCOPERATION);
 DEFINE_EXPECT(OnStopBinding);
 DEFINE_EXPECT(OnDataAvailable);
+DEFINE_EXPECT(OnObjectAvailable);
 DEFINE_EXPECT(Start);
 DEFINE_EXPECT(Read);
 DEFINE_EXPECT(LockRequest);
@@ -989,6 +994,28 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
         if(szStatusText && test_protocol == FILE_TEST)
             ok(!lstrcmpW(INDEX_HTML+7, szStatusText), "wrong szStatusText\n");
         break;
+    case BINDSTATUS_CLASSIDAVAILABLE:
+    {
+        CLSID clsid;
+        HRESULT hr;
+        CHECK_EXPECT(OnProgress_CLASSIDAVAILABLE);
+        hr = CLSIDFromString((LPOLESTR)szStatusText, &clsid);
+        ok(hr == S_OK, "CLSIDFromString failed with error 0x%08x\n", hr);
+        ok(IsEqualCLSID(&clsid, &CLSID_HTMLDocument),
+            "Expected clsid to be CLSID_HTMLDocument instead of {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+            clsid.Data1, clsid.Data2, clsid.Data3,
+            clsid.Data4[0], clsid.Data4[1], clsid.Data4[2], clsid.Data4[3],
+            clsid.Data4[4], clsid.Data4[5], clsid.Data4[6], clsid.Data4[7]);
+        break;
+    }
+    case BINDSTATUS_BEGINSYNCOPERATION:
+        CHECK_EXPECT(OnProgress_BEGINSYNCOPERATION);
+        ok(szStatusText == NULL, "Expected szStatusText to be NULL\n");
+        break;
+    case BINDSTATUS_ENDSYNCOPERATION:
+        CHECK_EXPECT(OnProgress_ENDSYNCOPERATION);
+        ok(szStatusText == NULL, "Expected szStatusText to be NULL\n");
+        break;
     default:
         ok(0, "unexpexted code %d\n", ulStatusCode);
     };
@@ -1103,8 +1130,8 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
 
 static HRESULT WINAPI statusclb_OnObjectAvailable(IBindStatusCallback *iface, REFIID riid, IUnknown *punk)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(OnObjectAvailable);
+    return S_OK;
 }
 
 static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
@@ -1572,6 +1599,160 @@ static void test_BindToStorage(int protocol, BOOL emul)
         http_is_first = FALSE;
 }
 
+static void test_BindToObject(int protocol, BOOL emul)
+{
+    IMoniker *mon;
+    HRESULT hres;
+    LPOLESTR display_name;
+    IBindCtx *bctx;
+    MSG msg;
+    IBindStatusCallback *previousclb;
+    IUnknown *unk = (IUnknown*)0x00ff00ff;
+    IBinding *bind;
+
+    test_protocol = protocol;
+    emulate_protocol = emul;
+    download_state = BEFORE_DOWNLOAD;
+    stopped_binding = FALSE;
+    data_available = FALSE;
+    mime_type[0] = 0;
+
+    SET_EXPECT(QueryInterface_IServiceProvider);
+    hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
+    ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n\n", hres);
+    if(FAILED(hres))
+        return;
+    CHECK_CALLED(QueryInterface_IServiceProvider);
+
+    SET_EXPECT(QueryInterface_IServiceProvider);
+    hres = RegisterBindStatusCallback(bctx, &bsc, &previousclb, 0);
+    ok(SUCCEEDED(hres), "RegisterBindStatusCallback failed: %08x\n", hres);
+    ok(previousclb == &bsc, "previousclb(%p) != sclb(%p)\n", previousclb, &bsc);
+    CHECK_CALLED(QueryInterface_IServiceProvider);
+    if(previousclb)
+        IBindStatusCallback_Release(previousclb);
+
+    hres = CreateURLMoniker(NULL, urls[test_protocol], &mon);
+    ok(SUCCEEDED(hres), "failed to create moniker: %08x\n", hres);
+    if(FAILED(hres)) {
+        IBindCtx_Release(bctx);
+        return;
+    }
+
+    if(test_protocol == FILE_TEST && INDEX_HTML[7] == '/')
+        memmove(INDEX_HTML+7, INDEX_HTML+8, lstrlenW(INDEX_HTML+7)*sizeof(WCHAR));
+
+    hres = IMoniker_QueryInterface(mon, &IID_IBinding, (void**)&bind);
+    ok(hres == E_NOINTERFACE, "IMoniker should not have IBinding interface\n");
+    if(SUCCEEDED(hres))
+        IBinding_Release(bind);
+
+    hres = IMoniker_GetDisplayName(mon, bctx, NULL, &display_name);
+    ok(hres == S_OK, "GetDisplayName failed %08x\n", hres);
+    ok(!lstrcmpW(display_name, urls[test_protocol]), "GetDisplayName got wrong name\n");
+
+    SET_EXPECT(QueryInterface_IServiceProvider);
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(OnStartBinding);
+    if(emulate_protocol) {
+        SET_EXPECT(Start);
+        SET_EXPECT(UnlockRequest);
+    }else {
+        if(test_protocol == HTTP_TEST) {
+            SET_EXPECT(QueryInterface_IHttpNegotiate);
+            SET_EXPECT(BeginningTransaction);
+            SET_EXPECT(QueryInterface_IHttpNegotiate2);
+            SET_EXPECT(GetRootSecurityId);
+            SET_EXPECT(OnProgress_FINDINGRESOURCE);
+            SET_EXPECT(OnProgress_CONNECTING);
+        }
+        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST)
+            SET_EXPECT(OnProgress_SENDINGREQUEST);
+        if(test_protocol == HTTP_TEST)
+            SET_EXPECT(OnResponse);
+        SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
+        SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
+        if(test_protocol == HTTP_TEST)
+            SET_EXPECT(OnProgress_DOWNLOADINGDATA);
+        SET_EXPECT(OnProgress_ENDDOWNLOADDATA);
+        SET_EXPECT(OnProgress_CLASSIDAVAILABLE);
+        SET_EXPECT(OnProgress_BEGINSYNCOPERATION);
+        SET_EXPECT(OnProgress_ENDSYNCOPERATION);
+        SET_EXPECT(OnObjectAvailable);
+        SET_EXPECT(OnStopBinding);
+    }
+
+    hres = IMoniker_BindToObject(mon, bctx, NULL, &IID_IUnknown, (void**)&unk);
+    if (test_protocol == HTTP_TEST && hres == HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED))
+    {
+        trace( "Network unreachable, skipping tests\n" );
+        return;
+    }
+    todo_wine ok(SUCCEEDED(hres), "IMoniker_BindToObject failed with error 0x%08x\n", hres);
+    /* no point testing the calls if binding didn't even work */
+    if (!SUCCEEDED(hres)) return;
+
+    if((bindf & BINDF_ASYNCHRONOUS) && !data_available) {
+        ok(hres == MK_S_ASYNCHRONOUS, "IMoniker_BindToStorage failed: %08x\n", hres);
+        ok(unk == NULL, "istr should be NULL\n");
+    }else {
+        ok(hres == S_OK, "IMoniker_BindToStorage failed: %08x\n", hres);
+        ok(unk != NULL, "unk == NULL\n");
+    }
+    if(unk)
+        IUnknown_Release(unk);
+
+    while((bindf & BINDF_ASYNCHRONOUS) &&
+          !stopped_binding && GetMessage(&msg,NULL,0,0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    todo_wine CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
+    CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(OnStartBinding);
+    if(emulate_protocol) {
+        CHECK_CALLED(Start);
+        CHECK_CALLED(UnlockRequest);
+    }else {
+        if(test_protocol == HTTP_TEST) {
+            CHECK_CALLED(QueryInterface_IHttpNegotiate);
+            CHECK_CALLED(BeginningTransaction);
+            /* QueryInterface_IHttpNegotiate2 and GetRootSecurityId
+             * called on WinXP but not on Win98 */
+            CLEAR_CALLED(QueryInterface_IHttpNegotiate2);
+            CLEAR_CALLED(GetRootSecurityId);
+            if(http_is_first) {
+                CHECK_CALLED(OnProgress_FINDINGRESOURCE);
+                CHECK_CALLED(OnProgress_CONNECTING);
+            }else todo_wine {
+                CHECK_NOT_CALLED(OnProgress_FINDINGRESOURCE);
+                CHECK_NOT_CALLED(OnProgress_CONNECTING);
+            }
+        }
+        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST)
+            CHECK_CALLED(OnProgress_SENDINGREQUEST);
+        if(test_protocol == HTTP_TEST)
+            CHECK_CALLED(OnResponse);
+        CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
+        CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
+        if(test_protocol == HTTP_TEST)
+            CLEAR_CALLED(OnProgress_DOWNLOADINGDATA);
+        CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
+        CHECK_CALLED(OnProgress_CLASSIDAVAILABLE);
+        CHECK_CALLED(OnProgress_BEGINSYNCOPERATION);
+        CHECK_CALLED(OnProgress_ENDSYNCOPERATION);
+        CHECK_CALLED(OnObjectAvailable);
+        CHECK_CALLED(OnStopBinding);
+    }
+
+    ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
+    ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
+
+    if(test_protocol == HTTP_TEST)
+        http_is_first = FALSE;
+}
+
 static void set_file_url(void)
 {
     int len;
@@ -1639,31 +1820,40 @@ START_TEST(url)
     test_CreateAsyncBindCtxEx();
     test_RegisterBindStatusCallback();
 
+    trace("synchronous http test (COM not initialised)...\n");
+    test_BindToStorage(HTTP_TEST, FALSE);
+    test_BindToStorage_fail();
+
+    CoInitialize(NULL);
+
     trace("synchronous http test...\n");
     test_BindToStorage(HTTP_TEST, FALSE);
+    test_BindToObject(HTTP_TEST, FALSE);
 
     trace("synchronous file test...\n");
     create_file();
     test_BindToStorage(FILE_TEST, FALSE);
+    test_BindToObject(FILE_TEST, FALSE);
     DeleteFileW(wszIndexHtml);
 
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
 
     trace("http test...\n");
     test_BindToStorage(HTTP_TEST, FALSE);
+    test_BindToObject(HTTP_TEST, FALSE);
 
     trace("http test (short response)...\n");
     http_is_first = TRUE;
     urls[HTTP_TEST] = SHORT_RESPONSE_URL;
     test_BindToStorage(HTTP_TEST, FALSE);
+    test_BindToObject(HTTP_TEST, FALSE);
 
     trace("emulated http test...\n");
     test_BindToStorage(HTTP_TEST, TRUE);
 
     trace("about test...\n");
-    CoInitialize(NULL);
     test_BindToStorage(ABOUT_TEST, FALSE);
-    CoUninitialize();
+    test_BindToObject(ABOUT_TEST, FALSE);
 
     trace("emulated about test...\n");
     test_BindToStorage(ABOUT_TEST, TRUE);
@@ -1671,6 +1861,7 @@ START_TEST(url)
     trace("file test...\n");
     create_file();
     test_BindToStorage(FILE_TEST, FALSE);
+    test_BindToObject(FILE_TEST, FALSE);
     DeleteFileW(wszIndexHtml);
 
     trace("emulated file test...\n");
@@ -1687,4 +1878,5 @@ START_TEST(url)
 
     CloseHandle(complete_event);
     CloseHandle(complete_event2);
+    CoUninitialize();
 }
