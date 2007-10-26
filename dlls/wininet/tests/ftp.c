@@ -496,14 +496,12 @@ static void test_openfile(void)
         SetLastError(0xdeadbeef);
         bRet = FtpCreateDirectoryA(hFtp, "new_directory_deadbeef");
         ok ( bRet == FALSE, "Expected FtpCreateDirectoryA to fail\n");
-        todo_wine
         ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
             "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
 
         SetLastError(0xdeadbeef);
         bRet = FtpDeleteFileA(hFtp, "non_existent_file_deadbeef");
         ok ( bRet == FALSE, "Expected FtpDeleteFileA to fail\n");
-        todo_wine
         ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
             "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
 
@@ -529,7 +527,6 @@ static void test_openfile(void)
         SetLastError(0xdeadbeef);
         bRet = FtpPutFileA(hFtp, "now_existing_local", "non_existing_remote", FTP_TRANSFER_TYPE_UNKNOWN, 0);
         ok ( bRet == FALSE, "Expected FtpPutFileA to fail\n");
-        todo_wine
         ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
             "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
         DeleteFileA("now_existing_local");
@@ -537,14 +534,12 @@ static void test_openfile(void)
         SetLastError(0xdeadbeef);
         bRet = FtpRemoveDirectoryA(hFtp, "should_be_non_existing_deadbeef_dir");
         ok ( bRet == FALSE, "Expected FtpRemoveDirectoryA to fail\n");
-        todo_wine
         ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
             "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
 
         SetLastError(0xdeadbeef);
         bRet = FtpRenameFileA(hFtp , "should_be_non_existing_deadbeef", "new");
         ok ( bRet == FALSE, "Expected FtpRenameFileA to fail\n");
-        todo_wine
         ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
             "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
     }

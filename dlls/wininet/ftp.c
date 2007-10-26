@@ -225,6 +225,12 @@ BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
         goto lend;
     }
 
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+        goto lend;
+    }
+
     if ((dwFlags & FTP_CONDITION_MASK) > FTP_TRANSFER_TYPE_BINARY)
     {
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
@@ -392,6 +398,12 @@ BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
         goto lend;
     }
 
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+        goto lend;
+    }
+
     TRACE("lpszDirectory(%s)\n", debugstr_w(lpszDirectory));
 
     hIC = lpwfs->lpAppInfo;
@@ -529,6 +541,12 @@ BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
     if (WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        goto lend;
+    }
+
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
         goto lend;
     }
 
@@ -673,6 +691,12 @@ HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
     if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        goto lend;
+    }
+
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
         goto lend;
     }
 
@@ -866,6 +890,12 @@ BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDir
         goto lend;
     }
 
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+        goto lend;
+    }
+
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
@@ -1044,10 +1074,12 @@ HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
         goto lend;
     }
 
-    if (lpwfs->download_in_progress != NULL) {
-	INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
-	goto lend;
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+        goto lend;
     }
+
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
@@ -1255,8 +1287,9 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
         goto lend;
     }
 
-    if (lpwfs->download_in_progress != NULL) {
-	INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
         goto lend;
     }
     
@@ -1437,6 +1470,12 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
         goto lend;
     }
 
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+        goto lend;
+    }
+
     if (!lpszFileName)
     {
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
@@ -1573,6 +1612,12 @@ BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
     if (WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        goto lend;
+    }
+
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
         goto lend;
     }
 
@@ -1717,6 +1762,12 @@ BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszD
     if (WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        goto lend;
+    }
+
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
         goto lend;
     }
 
