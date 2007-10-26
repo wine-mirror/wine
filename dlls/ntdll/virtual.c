@@ -1864,6 +1864,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
 
     objattr.rootdir = attr ? attr->RootDirectory : 0;
     objattr.sd_len = 0;
+    objattr.name_len = len;
     if (attr)
     {
         ret = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );

@@ -154,6 +154,7 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
 
     objattr.rootdir =  attr ? attr->RootDirectory : 0;
     objattr.sd_len = 0;
+    objattr.name_len = len;
     if (attr)
     {
         ret = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
@@ -262,6 +263,7 @@ NTSTATUS WINAPI NtCreateEvent(
 
     objattr.rootdir = attr ? attr->RootDirectory : 0;
     objattr.sd_len = 0;
+    objattr.name_len = len;
     if (attr)
     {
         ret = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
@@ -425,6 +427,7 @@ NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
 
     objattr.rootdir = attr ? attr->RootDirectory : 0;
     objattr.sd_len = 0;
+    objattr.name_len = len;
     if (attr)
     {
         status = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );

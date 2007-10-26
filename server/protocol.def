@@ -237,6 +237,7 @@ struct object_attributes
 {
     obj_handle_t rootdir; /* root directory */
     data_size_t sd_len;   /* length of security_descriptor data. may be 0 */
+    data_size_t name_len; /* length of the name string. may be 0 */
     /* VARARG(sd,security_descriptor); */
     /* VARARG(name,unicode_str); */
 };

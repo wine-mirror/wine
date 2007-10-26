@@ -205,10 +205,7 @@ DECL_HANDLER(create_mutex)
         return;
 
     sd = objattr->sd_len ? (const struct security_descriptor *)(objattr + 1) : NULL;
-
-    /* get unicode string */
-    name.len = ((get_req_data_size() - sizeof(*objattr) - objattr->sd_len) / sizeof(WCHAR)) * sizeof(WCHAR);
-    name.str = (const WCHAR *)get_req_data() + (sizeof(*objattr) + objattr->sd_len) / sizeof(WCHAR);
+    objattr_get_name( objattr, &name );
 
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
         return;

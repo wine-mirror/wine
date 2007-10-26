@@ -790,14 +790,16 @@ static void dump_varargs_object_attributes( data_size_t size )
     {
         const WCHAR *str;
         fprintf( stderr, "rootdir=%p,sd=", objattr->rootdir );
-        if (objattr->sd_len > size - sizeof(*objattr)) return;
+        if (objattr->sd_len > size - sizeof(*objattr) ||
+            objattr->name_len > size - sizeof(*objattr) - objattr->sd_len)
+            return;
         dump_inline_security_descriptor( (const struct security_descriptor *)(objattr + 1), objattr->sd_len );
-        str = (const WCHAR *)cur_data + (sizeof(*objattr) + objattr->sd_len) / sizeof(WCHAR);
+        str = (const WCHAR *)objattr + (sizeof(*objattr) + objattr->sd_len) / sizeof(WCHAR);
         fprintf( stderr, ",name=L\"" );
-        dump_strW( str, (size - sizeof(*objattr) - objattr->sd_len) / sizeof(WCHAR),
-                   stderr, "\"\"" );
+        dump_strW( str, objattr->name_len / sizeof(WCHAR), stderr, "\"\"" );
         fputc( '\"', stderr );
-        remove_data( size );
+        remove_data( ((sizeof(*objattr) + objattr->sd_len) / sizeof(WCHAR)) * sizeof(WCHAR) +
+                     objattr->name_len );
     }
     fputc( '}', stderr );
 }

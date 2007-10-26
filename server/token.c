@@ -309,7 +309,8 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
  * and calls set_error appropriately */
 int objattr_is_valid( const struct object_attributes *objattr, data_size_t size )
 {
-    if ((size < sizeof(*objattr)) || (size - sizeof(*objattr) < objattr->sd_len))
+    if ((size < sizeof(*objattr)) || (size - sizeof(*objattr) < objattr->sd_len) ||
+        (size - sizeof(*objattr) - objattr->sd_len < objattr->name_len))
     {
         set_error( STATUS_ACCESS_VIOLATION );
         return FALSE;
