@@ -2083,6 +2083,7 @@ typedef struct IWineD3DPixelShaderImpl {
 
     /* Pixel shader input semantics */
     semantic semantics_in [MAX_REG_INPUT];
+    DWORD                 input_reg_map[MAX_REG_INPUT];
 
     /* run time data */
     PSHADERDATA                *data;

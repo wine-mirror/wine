@@ -543,6 +543,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) > 1) {
         shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
         HRESULT hr;
+        unsigned int i;
 
         /* Second pass: figure out which registers are used, what the semantics are, etc.. */
         memset(reg_maps, 0, sizeof(shader_reg_maps));
@@ -550,6 +551,10 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
             This->semantics_in, NULL, pFunction, NULL);
         if (FAILED(hr)) return hr;
         /* FIXME: validate reg_maps against OpenGL */
+
+        for(i = 0; i < MAX_REG_INPUT; i++) {
+            This->input_reg_map[i] = i;
+        }
     }
 
     This->baseShader.shader_mode = deviceImpl->ps_selected_mode;

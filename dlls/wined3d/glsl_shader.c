@@ -802,9 +802,11 @@ static void shader_glsl_get_register_name(
                     glsl_src_param_t rel_param;
                     shader_glsl_add_src_param(arg, addr_token, 0, WINED3DSP_WRITEMASK_0, &rel_param);
 
-                    sprintf(tmpStr, "IN[%s + %u]", rel_param.param_str, reg);
+                    sprintf(tmpStr, "IN[%s + %u]", rel_param.param_str,
+                            ((IWineD3DPixelShaderImpl *) This)->input_reg_map[reg]);
                 } else {
-                    sprintf(tmpStr, "IN[%u]", reg);
+                    sprintf(tmpStr, "IN[%u]",
+                            ((IWineD3DPixelShaderImpl *) This)->input_reg_map[reg]);
                 }
             } else {
                 if (reg==0)
@@ -2584,28 +2586,28 @@ void pshader_glsl_input_pack(
            case WINED3DDECLUSAGE_TEXCOORD:
                if(usage_idx < 8 && This->vertexprocessing == pretransformed) {
                    shader_addline(buffer, "IN[%u]%s = gl_TexCoord[%u]%s;\n",
-                                  i, reg_mask, usage_idx, reg_mask);
+                                  This->input_reg_map[i], reg_mask, usage_idx, reg_mask);
                } else {
                    shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                                  i, reg_mask, reg_mask);
+                                  This->input_reg_map[i], reg_mask, reg_mask);
                }
                break;
 
            case WINED3DDECLUSAGE_COLOR:
                if (usage_idx == 0)
                    shader_addline(buffer, "IN[%u]%s = vec4(gl_Color)%s;\n",
-                       i, reg_mask, reg_mask);
+                       This->input_reg_map[i], reg_mask, reg_mask);
                else if (usage_idx == 1)
                    shader_addline(buffer, "IN[%u]%s = vec4(gl_SecondaryColor)%s;\n",
-                       i, reg_mask, reg_mask);
+                       This->input_reg_map[i], reg_mask, reg_mask);
                else
                    shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                       i, reg_mask, reg_mask);
+                       This->input_reg_map[i], reg_mask, reg_mask);
                break;
 
            default:
                shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                   i, reg_mask, reg_mask);
+                   This->input_reg_map[i], reg_mask, reg_mask);
         }
     }
 }
@@ -2652,7 +2654,7 @@ void delete_glsl_program_entry(IWineD3DDevice *iface, struct glsl_shader_prog_li
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
-static void handle_ps3_input(SHADER_BUFFER *buffer, semantic *semantics_in, semantic *semantics_out, WineD3D_GL_Info *gl_info) {
+static void handle_ps3_input(SHADER_BUFFER *buffer, semantic *semantics_in, semantic *semantics_out, WineD3D_GL_Info *gl_info, DWORD *map) {
     unsigned int i, j;
     DWORD usage_token, usage_token_out;
     DWORD register_token, register_token_out;
@@ -2662,41 +2664,51 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, semantic *semantics_in, sema
 
     set = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*set) * (GL_LIMITS(glsl_varyings) / 4));
 
-    for(i = 0; i < min(MAX_REG_INPUT, GL_LIMITS(glsl_varyings) / 4); i++) {
+    for(i = 0; i < MAX_REG_INPUT; i++) {
         usage_token = semantics_in[i].usage;
         if (!usage_token) continue;
+        if(map[i] >= (GL_LIMITS(glsl_varyings) / 4)) {
+            FIXME("More input varyings declared than supported, expect issues\n");
+            continue;
+        }
         register_token = semantics_in[i].reg;
 
         usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
         usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-        set[i] = shader_glsl_get_write_mask(register_token, reg_mask);
+        set[map[i]] = shader_glsl_get_write_mask(register_token, reg_mask);
 
         if(!semantics_out) {
             switch(usage) {
                 case WINED3DDECLUSAGE_COLOR:
                     if (usage_idx == 0)
-                        shader_addline(buffer, "IN[%u]%s = gl_FrontColor%s;\n", i, reg_mask, reg_mask);
+                        shader_addline(buffer, "IN[%u]%s = gl_FrontColor%s;\n",
+                                       map[i], reg_mask, reg_mask);
                     else if (usage_idx == 1)
-                        shader_addline(buffer, "IN[%u]%s = gl_FrontSecondaryColor%s;\n", i, reg_mask, reg_mask);
+                        shader_addline(buffer, "IN[%u]%s = gl_FrontSecondaryColor%s;\n",
+                                       map[i], reg_mask, reg_mask);
                     else
-                        shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n", i, reg_mask, reg_mask);
+                        shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                                       map[i], reg_mask, reg_mask);
                     break;
 
                 case WINED3DDECLUSAGE_TEXCOORD:
                     if (usage_idx < 8) {
                         shader_addline(buffer, "IN[%u]%s = gl_TexCoord[%u]%s;\n",
-                                                 i, reg_mask, usage_idx, reg_mask);
+                                       map[i], reg_mask, usage_idx, reg_mask);
                     } else {
-                        shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n", i, reg_mask, reg_mask);
+                        shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                                       map[i], reg_mask, reg_mask);
                     }
                     break;
 
                 case WINED3DDECLUSAGE_FOG:
-                    shader_addline(buffer, "IN[%u] = vec4(gl_FogFragCoord, 0.0, 0.0, 0.0)%s;\n", i, reg_mask, reg_mask);
+                    shader_addline(buffer, "IN[%u]%s = vec4(gl_FogFragCoord, 0.0, 0.0, 0.0)%s;\n",
+                                   map[i], reg_mask, reg_mask);
                     break;
 
                 default:
-                    shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n", i, reg_mask, reg_mask);
+                    shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                                   map[i], reg_mask, reg_mask);
             }
         } else {
             BOOL found = FALSE;
@@ -2711,12 +2723,14 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, semantic *semantics_in, sema
 
                 if(usage == usage_out &&
                    usage_idx == usage_idx_out) {
-                    shader_addline(buffer, "IN[%u]%s = OUT[%u]%s;\n", i, reg_mask, j, reg_mask);
+                    shader_addline(buffer, "IN[%u]%s = OUT[%u]%s;\n",
+                                   map[i], reg_mask, j, reg_mask);
                     found = TRUE;
                 }
             }
             if(!found) {
-                shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n", i, reg_mask, reg_mask);
+                shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                               map[i], reg_mask, reg_mask);
             }
         }
     }
@@ -2869,7 +2883,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         }
 
         /* Then, fix the pixel shader input */
-        handle_ps3_input(&buffer, semantics_in, semantics_out, gl_info);
+        handle_ps3_input(&buffer, semantics_in, semantics_out, gl_info, ps->input_reg_map);
 
         shader_addline(&buffer, "}\n");
     } else if(ps_major >= 3 && vs_major < 3) {
@@ -2881,7 +2895,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
          * point size, but we depend on the optimizers kindness to find out that the pixel shader doesn't
          * read gl_TexCoord and gl_ColorX, otherwise we'll run out of varyings
          */
-        handle_ps3_input(&buffer, semantics_in, NULL, gl_info);
+        handle_ps3_input(&buffer, semantics_in, NULL, gl_info, ps->input_reg_map);
         shader_addline(&buffer, "}\n");
     } else {
         ERR("Unexpected vertex and pixel shader version condition: vs: %d, ps: %d\n", vs_major, ps_major);
