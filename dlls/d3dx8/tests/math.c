@@ -433,6 +433,11 @@ static void D3X8Vector2Test(void)
     expectedvec.x = 0.0f; expectedvec.y = 0.0f;
     D3DXVec2TransformCoord(&gotvec,&nulproj,&mat);
     expect_vec(expectedvec,gotvec);
+
+ /*_______________D3DXVec2TransformNormal______________________*/
+    expectedvec.x = 23.0f; expectedvec.y = 30.0f;
+    D3DXVec2TransformNormal(&gotvec,&u,&mat);
+    expect_vec(expectedvec,gotvec);
 }
 
 static void D3X8Vector3Test(void)
@@ -595,6 +600,11 @@ static void D3X8Vector3Test(void)
     nulproj.x = 1.0f; nulproj.y = -1.0f, nulproj.z = -1.0f;
     expectedvec.x = 0.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f;
     D3DXVec3TransformCoord(&gotvec,&nulproj,&mat);
+    expect_vec3(expectedvec,gotvec);
+
+/*_______________D3DXVec3TransformNormal______________________*/
+    expectedvec.x = 57.0f; expectedvec.y = 74.0f; expectedvec.z = 91.0f;
+    D3DXVec3TransformNormal(&gotvec,&u,&mat);
     expect_vec3(expectedvec,gotvec);
 }
 
