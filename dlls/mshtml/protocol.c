@@ -602,6 +602,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     if(!hdll) {
         WARN("Could not open dll: %s\n", debugstr_w(url_dll));
         IInternetProtocolSink_ReportResult(pOIProtSink, HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
+        mshtml_free(url);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
