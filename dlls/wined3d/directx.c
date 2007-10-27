@@ -2374,7 +2374,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
             *pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
         else
             *pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
-        TRACE_(d3d_caps)("Hardware vertex shader version 3.0 enabled (GLSL)\n");
+        TRACE_(d3d_caps)("Hardware vertex shader version %d.%d enabled (GLSL)\n", (*pCaps->VertexShaderVersion >> 8) & 0xff, *pCaps->VertexShaderVersion & 0xff);
     } else if (vs_selected_mode == SHADER_ARB) {
         *pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
         TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
@@ -2414,7 +2414,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
          * offer a way to query this.
          */
         *pCaps->PixelShader1xMaxValue = 8.0;
-        TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (GLSL)\n");
+        TRACE_(d3d_caps)("Hardware pixel shader version %d.%d enabled (GLSL)\n", (*pCaps->PixelShaderVersion >> 8) & 0xff, *pCaps->PixelShaderVersion & 0xff);
     } else if (ps_selected_mode == SHADER_ARB) {
         *pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 8.0;
