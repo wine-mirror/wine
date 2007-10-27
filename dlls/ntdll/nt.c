@@ -738,6 +738,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 else memcpy( SystemInformation, &spi, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
+            FIXME("info_class SYSTEM_PERFORMANCE_INFORMATION\n");
         }
         break;
     case SystemTimeOfDayInformation:
@@ -892,6 +893,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 else memcpy( SystemInformation, &sppi, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
+            FIXME("info_class SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION\n");
         }
         break;
     case SystemModuleInformation:
@@ -912,6 +914,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 else memcpy( SystemInformation, &shi, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
+            FIXME("info_class SYSTEM_HANDLE_INFORMATION\n");
         }
         break;
     case SystemCacheInformation:
@@ -927,6 +930,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 else memcpy( SystemInformation, &sci, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
+            FIXME("info_class SYSTEM_CACHE_INFORMATION\n");
         }
         break;
     case SystemInterruptInformation:
@@ -942,6 +946,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 else memcpy( SystemInformation, &sii, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
+            FIXME("info_class SYSTEM_INTERRUPT_INFORMATION\n");
         }
         break;
     case SystemKernelDebuggerInformation:
