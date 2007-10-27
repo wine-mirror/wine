@@ -2765,7 +2765,7 @@ BOOL InitAdapters(void) {
         else
             Adapters[0].TextureRam = Adapters[0].gl_info.vidmem;
         Adapters[0].UsedTextureRam = 0;
-        TRACE("Emulating %dMB of texture ram\n", Adapters[0].TextureRam);
+        TRACE("Emulating %dMB of texture ram\n", Adapters[0].TextureRam/(1024*1024));
 
         /* Initialize the Adapter's DeviceName which is required for ChangeDisplaySettings and friends */
         DisplayDevice.cb = sizeof(DisplayDevice);
