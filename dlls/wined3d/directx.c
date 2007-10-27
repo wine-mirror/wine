@@ -2367,10 +2367,13 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
     if (vs_selected_mode == SHADER_GLSL) {
         /* Nvidia Geforce6/7 or Ati R4xx/R5xx cards with GLSL support, support VS 3.0 but older Nvidia/Ati
-           models with GLSL support only support 2.0. In case of nvidia we can detect VS 2.0 support using
-           vs_nv_version which is based on NV_vertex_program. For Ati cards there's no easy way, so for
-           now only support 2.0/3.0 detection on Nvidia GeforceFX cards and default to 3.0 for everything else */
-        if(GLINFO_LOCATION.vs_nv_version == VS_VERSION_20)
+         * models with GLSL support only support 2.0. In case of nvidia we can detect VS 2.0 support using
+         * vs_nv_version which is based on NV_vertex_program.
+         * For Ati cards there's no way using glsl (it abstracts the lowlevel info away) and also not
+         * using ARB_vertex_program. It is safe to assume that when a card supports pixel shader 2.0 it
+         * supports vertex shader 2.0 too and the way around. We can detect ps2.0 using the maximum number
+         * of native instructions, so use that here. For more info see the pixel shader versioning code below. */
+        if((GLINFO_LOCATION.vs_nv_version == VS_VERSION_20) || (GLINFO_LOCATION.ps_arb_max_instructions <= 512))
             *pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
         else
             *pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
