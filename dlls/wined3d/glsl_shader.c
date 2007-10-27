@@ -773,9 +773,16 @@ static void shader_glsl_get_register_name(
     case WINED3DSPR_INPUT:
         if (pshader) {
             /* Pixel shaders >= 3.0 */
-            if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3)
-                sprintf(tmpStr, "IN[%u]", reg);
-             else {
+            if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3) {
+                if (param & WINED3DSHADER_ADDRMODE_RELATIVE) {
+                    glsl_src_param_t rel_param;
+                    shader_glsl_add_src_param(arg, addr_token, 0, WINED3DSP_WRITEMASK_0, &rel_param);
+
+                    sprintf(tmpStr, "IN[%s + %u]", rel_param.param_str, reg);
+                } else {
+                    sprintf(tmpStr, "IN[%u]", reg);
+                }
+            } else {
                 if (reg==0)
                     strcpy(tmpStr, "gl_Color");
                 else
@@ -1817,13 +1824,50 @@ void shader_glsl_sincos(SHADER_OPCODE_ARG* arg) {
 void shader_glsl_loop(SHADER_OPCODE_ARG* arg) {
     glsl_src_param_t src1_param;
     IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
+    DWORD regtype = shader_get_regtype(arg->src[1]);
+    DWORD reg = arg->src[1] & WINED3DSP_REGNUM_MASK;
+    const DWORD *control_values = NULL;
+    local_constant *constant;
 
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_ALL, &src1_param);
 
-    shader_addline(arg->buffer, "for (tmpInt%u = 0, aL%u = %s.y; tmpInt%u < %s.x; tmpInt%u++, aL%u += %s.z) {\n",
-                   shader->baseShader.cur_loop_depth, shader->baseShader.cur_loop_regno,
-                   src1_param.reg_name, shader->baseShader.cur_loop_depth, src1_param.reg_name,
-                   shader->baseShader.cur_loop_depth, shader->baseShader.cur_loop_regno, src1_param.reg_name);
+    /* Try to hardcode the loop control parameters if possible. Direct3D 9 class hardware doesn't support real
+     * varying indexing, but Microsoft designed this feature for Shader model 2.x+. If the loop control is
+     * known at compile time, the GLSL compiler can unroll the loop, and replace indirect addressing with direct
+     * addressing.
+     */
+    if(regtype == WINED3DSPR_CONSTINT) {
+        LIST_FOR_EACH_ENTRY(constant, &shader->baseShader.constantsI, local_constant, entry) {
+            if(constant->idx == reg) {
+                control_values = constant->value;
+                break;
+            }
+        }
+    }
+
+    if(control_values) {
+        if(control_values[2] > 0) {
+            shader_addline(arg->buffer, "for (aL%u = %d; aL%u < (%d * %d + %d); aL%u += %d) {\n",
+                           shader->baseShader.cur_loop_depth, control_values[1],
+                           shader->baseShader.cur_loop_depth, control_values[0], control_values[2], control_values[1],
+                           shader->baseShader.cur_loop_depth, control_values[2]);
+        } else if(control_values[2] == 0) {
+            shader_addline(arg->buffer, "for (aL%u = %d, tmpInt%u = 0; tmpInt%u < %d; tmpInt%u++) {\n",
+                           shader->baseShader.cur_loop_depth, control_values[1], shader->baseShader.cur_loop_depth,
+                           shader->baseShader.cur_loop_depth, control_values[0],
+                           shader->baseShader.cur_loop_depth);
+        } else {
+            shader_addline(arg->buffer, "for (aL%u = %d; aL%u > (%d * %d + %d); aL%u += %d) {\n",
+                           shader->baseShader.cur_loop_depth, control_values[1],
+                           shader->baseShader.cur_loop_depth, control_values[0], control_values[2], control_values[1],
+                           shader->baseShader.cur_loop_depth, control_values[2]);
+        }
+    } else {
+        shader_addline(arg->buffer, "for (tmpInt%u = 0, aL%u = %s.y; tmpInt%u < %s.x; tmpInt%u++, aL%u += %s.z) {\n",
+                       shader->baseShader.cur_loop_depth, shader->baseShader.cur_loop_regno,
+                       src1_param.reg_name, shader->baseShader.cur_loop_depth, src1_param.reg_name,
+                       shader->baseShader.cur_loop_depth, shader->baseShader.cur_loop_regno, src1_param.reg_name);
+    }
 
     shader->baseShader.cur_loop_depth++;
     shader->baseShader.cur_loop_regno++;
