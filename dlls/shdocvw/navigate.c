@@ -526,7 +526,9 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
 
     if((Flags && V_VT(Flags) != VT_EMPTY) 
        || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY))
-        FIXME("Unsupported arguments\n");
+        FIXME("Unsupported args (Flags %p:%d; TargetFrameName %p:%d)\n",
+                Flags, Flags ? V_VT(Flags) : -1, TargetFrameName,
+                TargetFrameName ? V_VT(TargetFrameName) : -1);
 
     if(PostData) {
         TRACE("PostData vt=%d\n", V_VT(PostData));
