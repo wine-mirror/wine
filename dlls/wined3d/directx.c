@@ -723,24 +723,24 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
             gl_info->ps_arb_constantsF = gl_max;
             TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM float constants: %d\n", gl_info->ps_arb_constantsF);
-            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_TEMPORARIES_ARB, &gl_max));
+            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
             gl_info->ps_arb_max_temps = gl_max;
-            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM temporaries: %d\n", gl_info->ps_arb_max_temps);
-            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_INSTRUCTIONS_ARB, &gl_max));
+            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native temporaries: %d\n", gl_info->ps_arb_max_temps);
+            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, &gl_max));
             gl_info->ps_arb_max_instructions = gl_max;
-            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM instructions: %d\n", gl_info->ps_arb_max_instructions);
+            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native instructions: %d\n", gl_info->ps_arb_max_instructions);
         }
         if (gl_info->supported[ARB_VERTEX_PROGRAM]) {
             gl_info->vs_arb_version = VS_VERSION_11;
             GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
             gl_info->vs_arb_constantsF = gl_max;
             TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM float constants: %d\n", gl_info->vs_arb_constantsF);
-            GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_TEMPORARIES_ARB, &gl_max));
+            GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
             gl_info->vs_arb_max_temps = gl_max;
-            TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM temporaries: %d\n", gl_info->vs_arb_max_temps);
-            GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_INSTRUCTIONS_ARB, &gl_max));
+            TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native temporaries: %d\n", gl_info->vs_arb_max_temps);
+            GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, &gl_max));
             gl_info->vs_arb_max_instructions = gl_max;
-            TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM instructions: %d\n", gl_info->vs_arb_max_instructions);
+            TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native instructions: %d\n", gl_info->vs_arb_max_instructions);
         }
         if (gl_info->supported[ARB_VERTEX_SHADER]) {
             glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
