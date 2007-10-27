@@ -273,7 +273,7 @@ static void D3X8QuaternionTest(void)
 
 static void D3X8Vector2Test(void)
 {
-    D3DXVECTOR2 expectedvec, gotvec, nul, u, v, w, x;
+    D3DXVECTOR2 expectedvec, gotvec, nul, nulproj, u, v, w, x;
     LPD3DXVECTOR2 funcpointer;
     D3DXVECTOR4 expectedtrans, gottrans;
     D3DXMATRIX mat;
@@ -423,11 +423,21 @@ static void D3X8Vector2Test(void)
     expectedtrans.x = 36.0f; expectedtrans.y = 44.0f; expectedtrans.z = 52.0f; expectedtrans.w = 60.0f;
     D3DXVec2Transform(&gottrans,&u,&mat);
     expect_vec4(expectedtrans,gottrans);
+
+/*_______________D3DXVec2TransformCoord_______________________*/
+    expectedvec.x = 0.6f; expectedvec.y = 11.0f/15.0f;
+    D3DXVec2TransformCoord(&gotvec,&u,&mat);
+    expect_vec(expectedvec,gotvec);
+    /* Test the nul projected vector */
+    nulproj.x = -2.0f; nulproj.y = -1.0f;
+    expectedvec.x = 0.0f; expectedvec.y = 0.0f;
+    D3DXVec2TransformCoord(&gotvec,&nulproj,&mat);
+    expect_vec(expectedvec,gotvec);
 }
 
 static void D3X8Vector3Test(void)
 {
-    D3DXVECTOR3 expectedvec, gotvec, nul, u, v, w, x;
+    D3DXVECTOR3 expectedvec, gotvec, nul, nulproj, u, v, w, x;
     LPD3DXVECTOR3 funcpointer;
     D3DXVECTOR4 expectedtrans, gottrans;
     D3DXMATRIX mat;
@@ -576,6 +586,16 @@ static void D3X8Vector3Test(void)
     expectedtrans.x = 70.0f; expectedtrans.y = 88.0f; expectedtrans.z = 106.0f; expectedtrans.w = 124.0f;
     D3DXVec3Transform(&gottrans,&u,&mat);
     expect_vec4(expectedtrans,gottrans);
+
+/*_______________D3DXVec3TransformCoord_______________________*/
+    expectedvec.x = 70.0f/124.0f; expectedvec.y = 88.0f/124.0f; expectedvec.z = 106.0f/124.0f;
+    D3DXVec3TransformCoord(&gotvec,&u,&mat);
+    expect_vec3(expectedvec,gotvec);
+    /* Test the nul projected vector */
+    nulproj.x = 1.0f; nulproj.y = -1.0f, nulproj.z = -1.0f;
+    expectedvec.x = 0.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f;
+    D3DXVec3TransformCoord(&gotvec,&nulproj,&mat);
+    expect_vec3(expectedvec,gotvec);
 }
 
 static void D3X8Vector4Test(void)
