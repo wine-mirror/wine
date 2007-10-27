@@ -275,6 +275,8 @@ static void D3X8Vector2Test(void)
 {
     D3DXVECTOR2 expectedvec, gotvec, nul, u, v, w, x;
     LPD3DXVECTOR2 funcpointer;
+    D3DXVECTOR4 expectedtrans, gottrans;
+    D3DXMATRIX mat;
     FLOAT coeff1, coeff2, expected, got, scale;
 
     nul.x = 0.0f; nul.y = 0.0f;
@@ -282,6 +284,11 @@ static void D3X8Vector2Test(void)
     v.x = -7.0f; v.y = 9.0f;
     w.x = 4.0f; w.y = -3.0f;
     x.x = 2.0f; x.y = -11.0f;
+
+    mat.m[0][0] = 1.0f; mat.m[0][1] = 2.0f; mat.m[0][2] = 3.0f; mat.m[0][3] = 4.0f;
+    mat.m[1][0] = 5.0f; mat.m[1][1] = 6.0f; mat.m[1][2] = 7.0f; mat.m[1][3] = 8.0f;
+    mat.m[2][0] = 9.0f; mat.m[2][1] = 10.0f; mat.m[2][2] = 11.0f; mat.m[2][3] = 12.0f;
+    mat.m[3][0] = 13.0f; mat.m[3][1] = 14.0f; mat.m[3][2] = 15.0f; mat.m[3][3] = 16.0f;
 
     coeff1 = 2.0f; coeff2 = 5.0f;
     scale = -6.5f;
@@ -412,12 +419,18 @@ static void D3X8Vector2Test(void)
     funcpointer = D3DXVec2Subtract(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
+/*_______________D3DXVec2Transform_______________________*/
+    expectedtrans.x = 36.0f; expectedtrans.y = 44.0f; expectedtrans.z = 52.0f; expectedtrans.w = 60.0f;
+    D3DXVec2Transform(&gottrans,&u,&mat);
+    expect_vec4(expectedtrans,gottrans);
 }
 
 static void D3X8Vector3Test(void)
 {
     D3DXVECTOR3 expectedvec, gotvec, nul, u, v, w, x;
     LPD3DXVECTOR3 funcpointer;
+    D3DXVECTOR4 expectedtrans, gottrans;
+    D3DXMATRIX mat;
     FLOAT coeff1, coeff2, expected, got, scale;
 
     nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f;
@@ -425,6 +438,11 @@ static void D3X8Vector3Test(void)
     v.x = 2.0f; v.y = -3.0f; v.z = -4.0;
     w.x = 3.0f; w.y = -5.0f; w.z = 7.0f;
     x.x = 4.0f; x.y = 1.0f; x.z = 11.0f;
+
+    mat.m[0][0] = 1.0f; mat.m[0][1] = 2.0f; mat.m[0][2] = 3.0f; mat.m[0][3] = 4.0f;
+    mat.m[1][0] = 5.0f; mat.m[1][1] = 6.0f; mat.m[1][2] = 7.0f; mat.m[1][3] = 8.0f;
+    mat.m[2][0] = 9.0f; mat.m[2][1] = 10.0f; mat.m[2][2] = 11.0f; mat.m[2][3] = 12.0f;
+    mat.m[3][0] = 13.0f; mat.m[3][1] = 14.0f; mat.m[3][2] = 15.0f; mat.m[3][3] = 16.0f;
 
     coeff1 = 2.0f; coeff2 = 5.0f;
     scale = -6.5f;
@@ -554,12 +572,18 @@ static void D3X8Vector3Test(void)
     funcpointer = D3DXVec3Subtract(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
+/*_______________D3DXVec3Transform_______________________*/
+    expectedtrans.x = 70.0f; expectedtrans.y = 88.0f; expectedtrans.z = 106.0f; expectedtrans.w = 124.0f;
+    D3DXVec3Transform(&gottrans,&u,&mat);
+    expect_vec4(expectedtrans,gottrans);
 }
 
 static void D3X8Vector4Test(void)
 {
     D3DXVECTOR4 expectedvec, gotvec, nul, u, v, w, x;
     LPD3DXVECTOR4 funcpointer;
+    D3DXVECTOR4 expectedtrans, gottrans;
+    D3DXMATRIX mat;
     FLOAT coeff1, coeff2, expected, got, scale;
 
     nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f; nul.w = 0.0f;
@@ -567,6 +591,12 @@ static void D3X8Vector4Test(void)
     v.x = -3.0f; v.y = 4.0f; v.z = -5.0f; v.w = 7.0;
     w.x = 4.0f; w.y =6.0f; w.z = -2.0f; w.w = 1.0f;
     x.x = 6.0f; x.y = -7.0f; x.z =8.0f; x.w = -9.0f;
+
+    mat.m[0][0] = 1.0f; mat.m[0][1] = 2.0f; mat.m[0][2] = 3.0f; mat.m[0][3] = 4.0f;
+    mat.m[1][0] = 5.0f; mat.m[1][1] = 6.0f; mat.m[1][2] = 7.0f; mat.m[1][3] = 8.0f;
+    mat.m[2][0] = 9.0f; mat.m[2][1] = 10.0f; mat.m[2][2] = 11.0f; mat.m[2][3] = 12.0f;
+    mat.m[3][0] = 13.0f; mat.m[3][1] = 14.0f; mat.m[3][2] = 15.0f; mat.m[3][3] = 16.0f;
+
     coeff1 = 2.0f; coeff2 = 5.0;
     scale = -6.5f;
 
@@ -683,6 +713,11 @@ static void D3X8Vector4Test(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXVec4Subtract(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXVec4Transform_______________________*/
+    expectedtrans.x = 177.0f; expectedtrans.y = 194.0f; expectedtrans.z = 211.0f; expectedtrans.w = 228.0f;
+    D3DXVec4Transform(&gottrans,&u,&mat);
+    expect_vec4(expectedtrans,gottrans);
 }
 
 START_TEST(math)
