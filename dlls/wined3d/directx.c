@@ -2386,9 +2386,18 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     *pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
 
     if (ps_selected_mode == SHADER_GLSL) {
-        /* See the comment about VS2.0/VS3.0 detection as we do the same here but then based on NV_fragment_program
-           in case of GeforceFX cards. */
-        if(GLINFO_LOCATION.ps_nv_version == PS_VERSION_20)
+        /* Older DX9-class videocards (GeforceFX / Radeon >9500/X*00) only support pixel shader 2.0/2.0a/2.0b.
+         * In OpenGL the extensions related to GLSL abstract lowlevel GL info away which is needed
+         * to distinguish between 2.0 and 3.0 (and 2.0a/2.0b). In case of Nvidia we use their fragment
+         * program extensions. On other hardware including ATI GL_ARB_fragment_program offers the info
+         * in max native instructions. Intel and others also offer the info in this extension but they
+         * don't support GLSL (at least on Windows).
+         *
+         * PS2.0 requires at least 96 instructions, 2.0a/2.0b go upto 512. Assume that if the number
+         * of instructions is 512 or less we have to do with ps2.0 hardware.
+         * NOTE: ps3.0 hardware requires 512 or more instructions but ati and nvidia offer 'enough' (1024 vs 4096) on their most basic ps3.0 hardware.
+         */
+        if((GLINFO_LOCATION.ps_nv_version == PS_VERSION_20) || (GLINFO_LOCATION.ps_arb_max_instructions <= 512))
             *pCaps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
         else
             *pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
