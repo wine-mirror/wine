@@ -650,6 +650,11 @@ static void D3X8Vector4Test(void)
     D3DXVec4CatmullRom(&gotvec,&u,&v,&w,&x,scale);
     expect_vec4(expectedvec,gotvec);
 
+/*_______________D3DXVec4Cross_________________________*/
+    expectedvec.x = 390.0f; expectedvec.y = -393.0f; expectedvec.z = -316.0f; expectedvec.w = 166.0f;
+    D3DXVec4Cross(&gotvec,&u,&v,&w);
+    expect_vec4(expectedvec,gotvec);
+
 /*_______________D3DXVec4Dot__________________________*/
     expected = 55.0f;
     got = D3DXVec4Dot(&u,&v);

@@ -14,7 +14,7 @@
 @ stdcall D3DXVec3TransformNormal(ptr ptr ptr)
 @ stub D3DXVec3Project
 @ stub D3DXVec3Unproject
-@ stub D3DXVec4Cross
+@ stdcall D3DXVec4Cross(ptr ptr ptr)
 @ stdcall D3DXVec4Normalize(ptr ptr)
 @ stdcall D3DXVec4Hermite(ptr ptr ptr ptr ptr long)
 @ stdcall D3DXVec4CatmullRom(ptr ptr ptr ptr long)
