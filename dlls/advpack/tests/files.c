@@ -112,17 +112,23 @@ static BOOL check_ini_contents(LPSTR filename, BOOL add)
 
     GetPrivateProfileStringA("backup", "one", NULL, field, FIELD_LEN, filename);
     match = !lstrcmpA(field, "-1,0,0,0,0,0,-1");
-    if ((add && !match) || (!add && match))
+    if ((add && !match) || (!add && match)) {
+        trace("first test: got %s\n", field);
         ret = FALSE;
+    }
 
     GetPrivateProfileStringA("backup", "two", NULL, field, FIELD_LEN, filename);
-    if (lstrcmpA(field, "-1,0,0,0,0,0,-1"))
+    if (lstrcmpA(field, "-1,0,0,0,0,0,-1")) {
+        trace("second test: got %s\n", field);
         ret = FALSE;
+    }
 
     GetPrivateProfileStringA("backup", "three", NULL, field, FIELD_LEN, filename);
     match = !lstrcmpA(field, "-1,0,0,0,0,0,-1");
-    if ((add && !match) || (!add && match))
+    if ((add && !match) || (!add && match)) {
+        trace("third test: got %s\n", field);
         ret = FALSE;
+    }
 
     return ret;
 }
