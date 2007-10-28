@@ -249,6 +249,7 @@ static DWORD_PTR send_end_session_messages( struct window_info *win, UINT count,
     HANDLE process_handle;
     DWORD ret;
 
+    /* FIXME: Use flags to implement EWX_FORCEIFHUNG! */
     /* don't kill the desktop process */
     if (win[0].pid == desktop_pid) return 1;
 
