@@ -26,8 +26,8 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Väntar på program"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    DEFPUSHBUTTON   "Avsluta process",IDOK,51,49,71,15
-    PUSHBUTTON      "Avbryt",IDCANCEL,129,49,50,15
+    DEFPUSHBUTTON   "Avbryt",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "Avsluta process",IDOK,51,49,71,15
     LTEXT           "En simulerad avloggning eller avstängning pågår, men det här programmet svarar inte.",
                     IDC_STATIC,7,7,172,19
     LTEXT           "Om du avslutar processen kan du förlora allt osparat data.",

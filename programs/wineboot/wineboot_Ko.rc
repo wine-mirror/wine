@@ -28,8 +28,8 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "프로그램 대기중"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    DEFPUSHBUTTON   "프로세스 끝내기",IDOK,51,49,71,15
-    PUSHBUTTON      "취소",IDCANCEL,129,49,50,15
+    DEFPUSHBUTTON  "취소",IDCANCEL,129,49,50,15
+    PUSHBUTTON     "프로세스 끝내기",IDOK,51,49,71,15
     LTEXT          " 이 프로세스에 로그 오프나 종료를 시도했으나, 이 프로그램은 아무런 반응이 없습니다.",
                     IDC_STATIC,7,7,172,19
     LTEXT           "만약 당신이 이 프로세스를 끝낸다면 저장 하지 않은 모든 데이터를 잃어버릴 것입니다.",

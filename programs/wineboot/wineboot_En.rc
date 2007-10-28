@@ -26,8 +26,8 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Waiting for Program"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    DEFPUSHBUTTON   "Terminate Process",IDOK,51,49,71,15
-    PUSHBUTTON      "Cancel",IDCANCEL,129,49,50,15
+    DEFPUSHBUTTON   "Cancel",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "Terminate Process",IDOK,51,49,71,15
     LTEXT           "A simulated log-off or shutdown is in progress, but this program isn't responding.",
                     IDC_STATIC,7,7,172,19
     LTEXT           "If you terminate the process you may lose all unsaved data.",
