@@ -227,9 +227,9 @@ static NTSTATUS get_hand_flow(int fd, SERIAL_HANDFLOW* shf)
 #endif
             shf->ControlHandShake |= SERIAL_RTS_CONTROL;
     }
-    if (port.c_iflag & IXON)
-        shf->FlowReplace |= SERIAL_AUTO_RECEIVE;
     if (port.c_iflag & IXOFF)
+        shf->FlowReplace |= SERIAL_AUTO_RECEIVE;
+    if (port.c_iflag & IXON)
         shf->FlowReplace |= SERIAL_AUTO_TRANSMIT;
 
     shf->XonLimit = 10;
@@ -611,13 +611,13 @@ static NTSTATUS set_handflow(int fd, const SERIAL_HANDFLOW* shf)
 #endif
 
     if (shf->FlowReplace & SERIAL_AUTO_RECEIVE)
-        port.c_iflag |= IXON;
-    else
-        port.c_iflag &= ~IXON;
-    if (shf->FlowReplace & SERIAL_AUTO_TRANSMIT)
         port.c_iflag |= IXOFF;
     else
         port.c_iflag &= ~IXOFF;
+    if (shf->FlowReplace & SERIAL_AUTO_TRANSMIT)
+        port.c_iflag |= IXON;
+    else
+        port.c_iflag &= ~IXON;
     if (tcsetattr(fd, TCSANOW, &port) == -1)
     {
         ERR("tcsetattr error '%s'\n", strerror(errno));
