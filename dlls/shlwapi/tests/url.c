@@ -242,7 +242,7 @@ static const struct {
 
 /* ################ */
 
-static const struct {
+static struct {
     char url[30];
     const char *expect;
 } TEST_URL_UNESCAPE[] = {
