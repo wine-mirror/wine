@@ -1242,7 +1242,7 @@ typedef BOOL (WINAPI *CertVerifyRevocationFunc)(DWORD, DWORD, DWORD,
  void **, DWORD, PCERT_REVOCATION_PARA, PCERT_REVOCATION_STATUS);
 
 BOOL WINAPI CertVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
- DWORD cContext, void *rgpvContext[], DWORD dwFlags,
+ DWORD cContext, PVOID rgpvContext[], DWORD dwFlags,
  PCERT_REVOCATION_PARA pRevPara, PCERT_REVOCATION_STATUS pRevStatus)
 {
     BOOL ret;
