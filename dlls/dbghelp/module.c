@@ -402,23 +402,32 @@ static BOOL module_is_elf_container_loaded(const struct process* pcs,
  */
 enum module_type module_get_type_by_name(const WCHAR* name)
 {
-    const WCHAR*ptr;
-    int         len = strlenW(name);
+    int len = strlenW(name);
+
+    /* Skip all version extensions (.[digits]) regex: "(\.\d+)*$" */
+    do
+    {
+        int i = len;
+
+        while (i && isdigit(name[i - 1])) i--;
+
+        if (i && name[i - 1] == '.')
+            len = i - 1;
+        else
+            break;
+    } while (len);
 
     /* check for terminating .so or .so.[digit] */
-    ptr = strrchrW(name, '.');
-    if (ptr)
-    {
-        if (!strcmpW(ptr, S_DotSoW) ||
-            (isdigit(ptr[1]) && !ptr[2] && ptr >= name + 3 && !memcmp(ptr - 3, S_DotSoW, 3)))
-            return DMT_ELF;
-        else if (!strcmpiW(ptr, S_DotPdbW))
-            return DMT_PDB;
-    }
+    if (len > 3 && !memcmp(name + len - 3, S_DotSoW, 3))
+        return DMT_ELF;
+
+    if (len > 4 && !strncmpiW(name + len - 4, S_DotPdbW, 4))
+        return DMT_PDB;
+
     /* wine-[kp]thread is also an ELF module */
-    else if (((len > 12 && name[len - 13] == '/') || len == 12) &&
-             (!strcmpiW(name + len - 12, S_WinePThreadW) ||
-              !strcmpiW(name + len - 12, S_WineKThreadW)))
+    if (((len > 12 && name[len - 13] == '/') || len == 12) &&
+        (!strncmpiW(name + len - 12, S_WinePThreadW, 12) ||
+         !strncmpiW(name + len - 12, S_WineKThreadW, 12)))
     {
         return DMT_ELF;
     }
