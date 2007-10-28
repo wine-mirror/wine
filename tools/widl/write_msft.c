@@ -2473,6 +2473,7 @@ int create_msft_typelib(typelib_t *typelib)
     int failed = 0;
     typelib_entry_t *entry;
     time_t cur_time;
+    char *time_override;
     unsigned int version = 5 << 24 | 1 << 16 | 164; /* 5.01.0164 */
     GUID midl_time_guid    = {0xde77ba63,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}}; 
     GUID midl_version_guid = {0xde77ba64,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}}; 
@@ -2518,7 +2519,8 @@ int create_msft_typelib(typelib_t *typelib)
     
     /* midl adds two sets of custom data to the library: the current unix time
        and midl's version number */
-    cur_time = time(NULL);
+    time_override = getenv( "WIDL_TIME_OVERRIDE");
+    cur_time = time_override ? atol( time_override) : time(NULL);
     set_custdata(msft, &midl_time_guid, VT_UI4, &cur_time, &msft->typelib_header.CustomDataOffset);
     set_custdata(msft, &midl_version_guid, VT_UI4, &version, &msft->typelib_header.CustomDataOffset);
 
