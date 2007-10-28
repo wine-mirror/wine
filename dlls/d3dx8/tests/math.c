@@ -128,12 +128,12 @@ static void D3DXMatrixTest(void)
     BOOL expected, got;
 
 /*____________D3DXMatrixIsIdentity______________*/
-    mat.m[0][1] = 0.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
-    mat.m[1][0] = 11.0f; mat.m[1][2] = 0.0f; mat.m[1][3] = 0.0f;
-    mat.m[2][0] = 0.0f; mat.m[2][1] = 0.0f; mat.m[2][3] = 0.0f;
-    mat.m[3][0] = 0.0f; mat.m[3][1] = 0.0f; mat.m[3][2] = 0.0f;
-    mat.m[0][0] = 1.0f; mat.m[1][1] = 1.0f; mat.m[2][2] = 1.0f;
-    mat.m[3][3] = 1.0f;
+    U(mat).m[0][1] = 0.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 0.0f; U(mat).m[1][3] = 0.0f;
+    U(mat).m[2][0] = 0.0f; U(mat).m[2][1] = 0.0f; U(mat).m[2][3] = 0.0f;
+    U(mat).m[3][0] = 0.0f; U(mat).m[3][1] = 0.0f; U(mat).m[3][2] = 0.0f;
+    U(mat).m[0][0] = 1.0f; U(mat).m[1][1] = 1.0f; U(mat).m[2][2] = 1.0f;
+    U(mat).m[3][3] = 1.0f;
     expected = FALSE;
     got = D3DXMatrixIsIdentity(&mat);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
