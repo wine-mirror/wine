@@ -384,8 +384,7 @@ int WINAPI RestartDialogEx(HWND hWndOwner, LPCWSTR lpwstrReason, DWORD uFlags, D
 {
     TRACE("(%p)\n", hWndOwner);
 
-    /*FIXME: use uReason */
-
+    /* FIXME: use lpwstrReason */
     if (ConfirmDialog(hWndOwner, IDS_RESTART_PROMPT, IDS_RESTART_TITLE))
     {
         HANDLE hToken;
@@ -400,7 +399,7 @@ int WINAPI RestartDialogEx(HWND hWndOwner, LPCWSTR lpwstrReason, DWORD uFlags, D
             AdjustTokenPrivileges(hToken, FALSE, &npr, 0, 0, 0);
             CloseHandle(hToken);
         }
-        ExitWindowsEx(EWX_REBOOT, 0);
+        ExitWindowsEx(EWX_REBOOT, uReason);
     }
 
     return 0;
