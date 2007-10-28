@@ -612,6 +612,7 @@ usage (void)
 "  -c       console mode, no GUI\n"
 "  -e       preserve the environment\n"
 "  -h       print this message and exit\n"
+"  -p       shutdown when the tests are done\n"
 "  -q       quiet mode, no output at all\n"
 "  -o FILE  put report into FILE, do not submit\n"
 "  -s FILE  submit FILE, do not run tests\n"
@@ -624,6 +625,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     char *logname = NULL;
     const char *cp, *submit = NULL;
     int reset_env = 1;
+    int poweroff = 0;
     int interactive = 1;
 
     /* initialize the revision information first */
@@ -645,8 +647,12 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             reset_env = 0;
             break;
         case 'h':
+        case '?':
             usage ();
             exit (0);
+        case 'p':
+            poweroff = 1;
+            break;
         case 'q':
             report (R_QUIET);
             interactive = 0;
@@ -717,6 +723,22 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             free (logname);
         } else run_tests (logname);
         report (R_STATUS, "Finished");
+    }
+    if (poweroff)
+    {
+        HANDLE hToken;
+        TOKEN_PRIVILEGES npr;
+
+        /* enable the shutdown privilege for the current process */
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+        {
+            LookupPrivilegeValueA(0, SE_SHUTDOWN_NAME, &npr.Privileges[0].Luid);
+            npr.PrivilegeCount = 1;
+            npr.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+            AdjustTokenPrivileges(hToken, FALSE, &npr, 0, 0, 0);
+            CloseHandle(hToken);
+        }
+        ExitWindowsEx(EWX_SHUTDOWN | EWX_POWEROFF | EWX_FORCEIFHUNG, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER);
     }
     exit (0);
 }
