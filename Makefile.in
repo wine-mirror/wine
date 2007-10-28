@@ -289,6 +289,7 @@ ALL_MAKEFILES = \
 	dlls/msacm32/Makefile \
 	dlls/msacm32/tests/Makefile \
 	dlls/msadp32.acm/Makefile \
+	dlls/mscat32/Makefile \
 	dlls/mscms/Makefile \
 	dlls/mscms/tests/Makefile \
 	dlls/mscoree/Makefile \
@@ -665,6 +666,7 @@ dlls/msacm32.drv/Makefile: dlls/msacm32.drv/Makefile.in dlls/Makedll.rules
 dlls/msacm32/Makefile: dlls/msacm32/Makefile.in dlls/Makedll.rules
 dlls/msacm32/tests/Makefile: dlls/msacm32/tests/Makefile.in dlls/Maketest.rules
 dlls/msadp32.acm/Makefile: dlls/msadp32.acm/Makefile.in dlls/Makedll.rules
+dlls/mscat32/Makefile: dlls/mscat32/Makefile.in dlls/Makedll.rules
 dlls/mscms/Makefile: dlls/mscms/Makefile.in dlls/Makedll.rules
 dlls/mscms/tests/Makefile: dlls/mscms/tests/Makefile.in dlls/Maketest.rules
 dlls/mscoree/Makefile: dlls/mscoree/Makefile.in dlls/Makedll.rules

@@ -112,6 +112,7 @@ BASEDIRS = \
 	msacm32 \
 	msacm32.drv \
 	msadp32.acm \
+	mscat32 \
 	mscms \
 	mscoree \
 	msdmo \

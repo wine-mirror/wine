@@ -20776,6 +20776,8 @@ ac_config_files="$ac_config_files dlls/msacm32/tests/Makefile"
 
 ac_config_files="$ac_config_files dlls/msadp32.acm/Makefile"
 
+ac_config_files="$ac_config_files dlls/mscat32/Makefile"
+
 ac_config_files="$ac_config_files dlls/mscms/Makefile"
 
 ac_config_files="$ac_config_files dlls/mscms/tests/Makefile"
@@ -21933,6 +21935,7 @@ do
     "dlls/msacm32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm32/Makefile" ;;
     "dlls/msacm32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm32/tests/Makefile" ;;
     "dlls/msadp32.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msadp32.acm/Makefile" ;;
+    "dlls/mscat32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mscat32/Makefile" ;;
     "dlls/mscms/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mscms/Makefile" ;;
     "dlls/mscms/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mscms/tests/Makefile" ;;
     "dlls/mscoree/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mscoree/Makefile" ;;
