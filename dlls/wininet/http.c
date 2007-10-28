@@ -2589,6 +2589,9 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     BOOL loop_next;
     INTERNET_ASYNC_RESULT iar;
     static const WCHAR szClose[] = { 'C','l','o','s','e',0 };
+    static const WCHAR szContentLength[] =
+        { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','l','i','\r','\n',0 };
+    WCHAR contentLengthStr[sizeof szContentLength/2 /* includes \r\n */ + 20 /* int */ ];
 
     TRACE("--> %p\n", lpwhr);
 
@@ -2599,16 +2602,8 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
     HTTP_FixVerb(lpwhr);
     
-    /* if we are using optional stuff, we must add the fixed header of that option length */
-    if (dwContentLength > 0)
-    {
-        static const WCHAR szContentLength[] = {
-            'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','l','i','\r','\n',0};
-        WCHAR contentLengthStr[sizeof szContentLength/2 /* includes \n\r */ + 20 /* int */ ];
-        sprintfW(contentLengthStr, szContentLength, dwContentLength);
-        HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L,
-                HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
-    }
+    sprintfW(contentLengthStr, szContentLength, dwContentLength);
+    HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
 
     do
     {

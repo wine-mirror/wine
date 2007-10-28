@@ -1302,6 +1302,17 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 send(c, notokmsg, sizeof notokmsg-1, 0);
         }
 
+        if (strstr(buffer, "/test5"))
+        {
+            if (strstr(buffer, "Content-Length: 0"))
+            {
+                send(c, okmsg, sizeof okmsg-1, 0);
+                send(c, page1, sizeof page1-1, 0);
+            }
+            else
+                send(c, notokmsg, sizeof notokmsg-1, 0);
+        }
+
         if (strstr(buffer, "/quit"))
         {
             send(c, okmsg, sizeof okmsg-1, 0);
@@ -1526,6 +1537,7 @@ static void test_http_connection(void)
     test_proxy_indirect(si.port);
     test_proxy_direct(si.port);
     test_header_handling_order(si.port);
+    test_basic_request(si.port, "/test5");
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "/quit");
