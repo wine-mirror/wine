@@ -319,26 +319,31 @@ static inline D3DXVECTOR4* D3DXVec4Subtract(D3DXVECTOR4 *pout, CONST D3DXVECTOR4
 }
 
 /*__________________D3DXMatrix____________________*/
+#ifdef NONAMELESSUNION
+# define D3DX_U(x)  (x).u
+#else
+# define D3DX_U(x)  (x)
+#endif
 
 static inline D3DXMATRIX* D3DXMatrixIdentity(D3DXMATRIX *pout)
 {
     if ( !pout ) return NULL;
-    pout->m[0][1] = 0.0f;
-    pout->m[0][2] = 0.0f;
-    pout->m[0][3] = 0.0f;
-    pout->m[1][0] = 0.0f;
-    pout->m[1][2] = 0.0f;
-    pout->m[1][3] = 0.0f;
-    pout->m[2][0] = 0.0f;
-    pout->m[2][1] = 0.0f;
-    pout->m[2][3] = 0.0f;
-    pout->m[3][0] = 0.0f;
-    pout->m[3][1] = 0.0f;
-    pout->m[3][2] = 0.0f;
-    pout->m[0][0] = 1.0f;
-    pout->m[1][1] = 1.0f;
-    pout->m[2][2] = 1.0f;
-    pout->m[3][3] = 1.0f;
+    D3DX_U(*pout).m[0][1] = 0.0f;
+    D3DX_U(*pout).m[0][2] = 0.0f;
+    D3DX_U(*pout).m[0][3] = 0.0f;
+    D3DX_U(*pout).m[1][0] = 0.0f;
+    D3DX_U(*pout).m[1][2] = 0.0f;
+    D3DX_U(*pout).m[1][3] = 0.0f;
+    D3DX_U(*pout).m[2][0] = 0.0f;
+    D3DX_U(*pout).m[2][1] = 0.0f;
+    D3DX_U(*pout).m[2][3] = 0.0f;
+    D3DX_U(*pout).m[3][0] = 0.0f;
+    D3DX_U(*pout).m[3][1] = 0.0f;
+    D3DX_U(*pout).m[3][2] = 0.0f;
+    D3DX_U(*pout).m[0][0] = 1.0f;
+    D3DX_U(*pout).m[1][1] = 1.0f;
+    D3DX_U(*pout).m[2][2] = 1.0f;
+    D3DX_U(*pout).m[3][3] = 1.0f;
     return pout;
 }
 
@@ -354,11 +359,12 @@ static inline BOOL D3DXMatrixIsIdentity(D3DXMATRIX *pm)
     {
      for (j=0; j<4; j++)
      {
-      if ( fabs(pm->m[i][j] - testmatrix.m[i][j]) > 0.0001 ) equal = FALSE;
+      if ( fabs(D3DX_U(*pm).m[i][j] - D3DX_U(testmatrix).m[i][j]) > 0.0001 ) equal = FALSE;
      }
     }
     return equal;
 }
+#undef D3DX_U
 
 /*__________________D3DXPLANE____________________*/
 
