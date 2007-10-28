@@ -1777,8 +1777,29 @@ void shader_glsl_lit(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_1, &src1_param);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, &src3_param);
 
-    shader_addline(arg->buffer, "vec4(1.0, (%s > 0.0 ? %s : 0.0), (%s > 0.0 ? ((%s > 0.0) ? pow(%s, clamp(%s, -128.0, 128.0)) : 0.0) : 0.0), 1.0)%s);\n",
-        src0_param.param_str, src0_param.param_str, src0_param.param_str, src1_param.param_str, src1_param.param_str, src3_param.param_str, dst_mask);
+    /* The sdk specifies the instruction like this
+     * dst.x = 1.0;
+     * if(src.x > 0.0) dst.y = src.x
+     * else dst.y = 0.0.
+     * if(src.x > 0.0 && src.y > 0.0) dst.z = pow(src.y, power);
+     * else dst.z = 0.0;
+     * dst.w = 1.0;
+     *
+     * Obviously that has quite a few conditionals in it which we don't like. So the first step is this:
+     * dst.x = 1.0                                  ... No further explanation needed
+     * dst.y = max(src.y, 0.0);                     ... If x < 0.0, use 0.0, otherwise x. Same as the conditional
+     * dst.z = x > 0.0 ? pow(max(y, 0.0), p) : 0;   ... 0 ^ power is 0, and otherwise we use y anyway
+     * dst.w = 1.0.                                 ... Nothing fancy.
+     *
+     * So we still have one conditional in there. So do this:
+     * dst.z = pow(max(0.0, src.y) * step(0.0, src.x), power);
+     *
+     * step(0.0, x) will return 1 if src.x > 0.0, and 0 otherwise. So if y is 0 we get pow(0.0 * 1.0, power),
+     * which sets dst.z to 0. If y > 0, but x = 0.0, we get pow(y * 0.0, power), which results in 0 too.
+     * if both x and y are > 0, we get pow(y * 1.0, power), as it is supposed to
+     */
+    shader_addline(arg->buffer, "vec4(1.0, max(%s, 0.0), pow(max(0.0, %s) * step(0.0, %s), clamp(%s, -128.0, 128.0)), 1.0)%s);\n",
+                   src0_param.param_str, src1_param.param_str, src0_param.param_str, src3_param.param_str, dst_mask);
 }
 
 /** Process the WINED3DSIO_DST instruction in GLSL:
