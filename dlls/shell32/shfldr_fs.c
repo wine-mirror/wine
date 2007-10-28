@@ -712,7 +712,7 @@ static const WCHAR NeverShowExtW[] = { 'N','e','v','e','r','S','h','o','w','E',
  *  TRUE, if the filename's extension should be hidden
  *  FALSE, otherwise.
  */
-BOOL SHELL_FS_HideExtension(LPWSTR szPath)
+BOOL SHELL_FS_HideExtension(LPCWSTR szPath)
 {
     HKEY hKey;
     DWORD dwData;
@@ -1170,7 +1170,7 @@ ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCWSTR pwszName,
  * Builds a list of paths like the one used in SHFileOperation from a table of
  * PIDLs relative to the given base folder
  */
-static WCHAR *build_paths_list(LPCWSTR wszBasePath, int cidl, LPCITEMIDLIST *pidls)
+static WCHAR *build_paths_list(LPCWSTR wszBasePath, int cidl, const LPCITEMIDLIST *pidls)
 {
     WCHAR *wszPathsList;
     WCHAR *wszListPos;

@@ -70,7 +70,7 @@ static inline int SHELL32_GUIDToStringW (REFGUID guid, LPWSTR str)
 }
 
 void SHELL_FS_ProcessDisplayFilename(LPWSTR szPath, DWORD dwFlags);
-BOOL SHELL_FS_HideExtension(LPWSTR pwszPath);
+BOOL SHELL_FS_HideExtension(LPCWSTR pwszPath);
 
 DEFINE_GUID( CLSID_UnixFolder, 0xcc702eb2, 0x7dc5, 0x11d9, 0xc6, 0x87, 0x00, 0x04, 0x23, 0x8a, 0x01, 0xcd );
 DEFINE_GUID( CLSID_UnixDosFolder, 0x9d20aae8, 0x0625, 0x44b0, 0x9c, 0xa7, 0x71, 0x88, 0x9c, 0x22, 0x54, 0xd9 );
