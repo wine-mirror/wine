@@ -6374,7 +6374,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
 
     /* last resort: send notification on to app */
     /* FIXME: find out what is really used here */
-    return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, 0, (LPARAM)lpnmtdi);
+    return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, (WPARAM)lpnmtdi->hdr.idFrom, (LPARAM)lpnmtdi);
 }
 
 
