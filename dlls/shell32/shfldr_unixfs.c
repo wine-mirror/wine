@@ -356,8 +356,8 @@ cleanup:
  *  TRUE, if pIDL is accepted by fFilter
  *  FALSE, otherwise
  */
-static inline BOOL UNIXFS_is_pidl_of_type(LPITEMIDLIST pIDL, SHCONTF fFilter) {
-    LPPIDLDATA pIDLData = _ILGetDataPointer(pIDL);
+static inline BOOL UNIXFS_is_pidl_of_type(LPCITEMIDLIST pIDL, SHCONTF fFilter) {
+    const PIDLDATA *pIDLData = _ILGetDataPointer(pIDL);
     if (!(fFilter & SHCONTF_INCLUDEHIDDEN) && pIDLData && 
         (pIDLData->u.file.uFileAttribs & FILE_ATTRIBUTE_HIDDEN)) 
     {
@@ -1738,7 +1738,7 @@ static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd
  * be converted, S_FALSE is returned. In such situation DeleteItems will try to delete
  * the files using syscalls
  */
-static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, LPCITEMIDLIST *apidl)
+static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, const LPCITEMIDLIST *apidl)
 {
     char szAbsolute[FILENAME_MAX], *pszRelative;
     LPWSTR wszPathsList, wszListPos;
@@ -1792,7 +1792,7 @@ static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, LPCITEMI
     return ret;
 }
 
-static HRESULT UNIXFS_delete_with_syscalls(UnixFolder *This, UINT cidl, LPCITEMIDLIST *apidl)
+static HRESULT UNIXFS_delete_with_syscalls(UnixFolder *This, UINT cidl, const LPCITEMIDLIST *apidl)
 {
     char szAbsolute[FILENAME_MAX], *pszRelative;
     static const WCHAR empty[] = {0};
