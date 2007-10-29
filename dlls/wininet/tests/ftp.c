@@ -2,6 +2,7 @@
  * Wininet - ftp tests
  *
  * Copyright 2007 Paul Vriens
+ * Copyright 2007 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -55,19 +56,9 @@ static void test_getfile_no_open(void)
         "Expected ERROR_INTERNET_NOT_INITIALIZED or ERROR_INVALID_HANDLE (win98), got %d\n", GetLastError());
 }
 
-static void test_connect(void)
+static void test_connect(HINTERNET hInternet)
 {
-    HINTERNET hInternet, hFtp;
-
-    SetLastError(0xdeadbeef);
-    hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    ok(hInternet != NULL, "InternetOpen failed : %d\n", GetLastError());
-
-    if(!hInternet)
-    {
-        skip("No internet connection could be made\n");
-        return;
-    }
+    HINTERNET hFtp;
 
     /* Try a few username/password combinations:
      * anonymous : NULL
@@ -110,15 +101,11 @@ static void test_connect(void)
     ok ( hFtp != NULL, "InternetConnect failed : %d\n", GetLastError());
     ok ( GetLastError() == ERROR_SUCCESS,
         "ERROR_SUCCESS, got %d\n", GetLastError());
-
-    InternetCloseHandle(hFtp);
-    InternetCloseHandle(hInternet);
 }
 
-static void test_createdir(void)
+static void test_createdir(HINTERNET hFtp, HINTERNET hConnect)
 {
     BOOL      bRet;
-    HINTERNET hInternet, hFtp, hConnect;
 
     /* Invalid internet handle, the other is a valid parameter */
     SetLastError(0xdeadbeef);
@@ -126,17 +113,6 @@ static void test_createdir(void)
     ok ( bRet == FALSE, "Expected FtpCreateDirectoryA to fail\n");
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-
-    hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-    if(!hFtp)
-    {
-        skip("No ftp connection could be made to ftp.winehq.org\n");
-        InternetCloseHandle(hInternet);
-        return;
-    }
-
-    /* We should have a ftp-connection (valid ftp session handle), try some creating */
 
     /* No directory-name */
     SetLastError(0xdeadbeef);
@@ -153,12 +129,6 @@ static void test_createdir(void)
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
-    InternetCloseHandle(hFtp);
-
-    /* Http handle-type for ftp connection */
-
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
-
     /* One small test to show that handle type is checked before parameters */
     SetLastError(0xdeadbeef);
     bRet = FtpCreateDirectoryA(hConnect, NULL);
@@ -171,15 +141,11 @@ static void test_createdir(void)
     ok ( bRet == FALSE, "Expected FtpCreateDirectoryA to fail\n");
     ok ( GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE,
         "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE, got %d\n", GetLastError());
-
-    InternetCloseHandle(hConnect);
-    InternetCloseHandle(hInternet);
 }
 
-static void test_deletefile(void)
+static void test_deletefile(HINTERNET hFtp, HINTERNET hConnect)
 {
     BOOL      bRet;
-    HINTERNET hInternet, hFtp, hConnect;
 
     /* Invalid internet handle, the other is a valid parameter */
     SetLastError(0xdeadbeef);
@@ -187,17 +153,6 @@ static void test_deletefile(void)
     ok ( bRet == FALSE, "Expected FtpDeleteFileA to fail\n");
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-
-    hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-    if(!hFtp)
-    {
-        skip("No ftp connection could be made to ftp.winehq.org\n");
-        InternetCloseHandle(hInternet);
-        return;
-    }
-
-    /* We should have a ftp-connection, try some deleting */
 
     /* No filename */
     SetLastError(0xdeadbeef);
@@ -214,12 +169,6 @@ static void test_deletefile(void)
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
-    InternetCloseHandle(hFtp);
-
-    /* Http handle-type for ftp connection */
-
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
-
     /* One small test to show that handle type is checked before parameters */
     SetLastError(0xdeadbeef);
     bRet = FtpDeleteFileA(hConnect, NULL);
@@ -232,15 +181,11 @@ static void test_deletefile(void)
     ok ( bRet == FALSE, "Expected FtpCreateDirectoryA to fail\n");
     ok ( GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE,
         "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE, got %d\n", GetLastError());
-
-    InternetCloseHandle(hConnect);
-    InternetCloseHandle(hInternet);
 }
 
-static void test_getfile(void)
+static void test_getfile(HINTERNET hFtp, HINTERNET hConnect)
 {
     BOOL      bRet;
-    HINTERNET hInternet, hFtp, hConnect;
     HANDLE    hFile;
 
     /* The order of checking is:
@@ -266,21 +211,10 @@ static void test_getfile(void)
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
-    hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-    if(!hFtp)
-    {
-        skip("No ftp connection could be made to ftp.winehq.org\n");
-        InternetCloseHandle(hInternet);
-        return;
-    }
-
     /* Make sure we start clean */
 
     DeleteFileA("should_be_non_existing_deadbeef");
     DeleteFileA("should_also_be_non_existing_deadbeef");
-
-    /* We should have a ftp-connection, try some getting */
 
     /* No remote file */
     SetLastError(0xdeadbeef);
@@ -386,12 +320,6 @@ static void test_getfile(void)
         DeleteFileA("should_be_existing_non_deadbeef");
     }
 
-    InternetCloseHandle(hFtp);
-
-    /* Http handle-type for ftp connection */
-
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
-
     /* Test to show the parameter checking order depends on the Windows version */
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hConnect, NULL, "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
@@ -412,14 +340,11 @@ static void test_getfile(void)
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
     ok ( GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE,
         "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE, got %d\n", GetLastError());
-
-    InternetCloseHandle(hConnect);
-    InternetCloseHandle(hInternet);
 }
 
-static void test_openfile(void)
+static void test_openfile(HINTERNET hFtp, HINTERNET hConnect)
 {
-    HINTERNET hOpenFile, hInternet, hFtp, hConnect;
+    HINTERNET hOpenFile;
 
     /* Invalid internet handle, the rest are valid parameters */
     SetLastError(0xdeadbeef);
@@ -428,17 +353,6 @@ static void test_openfile(void)
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
     InternetCloseHandle(hOpenFile); /* Just in case */
-
-    hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-    if(!hFtp)
-    {
-        skip("No ftp connection could be made to ftp.winehq.org\n");
-        InternetCloseHandle(hInternet);
-        return;
-    }
-
-    /* We should have a ftp-connection (valid ftp session handle), try some opening */
 
     /* No filename */
     SetLastError(0xdeadbeef);
@@ -536,11 +450,6 @@ static void test_openfile(void)
     }
 
     InternetCloseHandle(hOpenFile);
-    InternetCloseHandle(hFtp);
-
-    /* Http handle-type for ftp connection */
-
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
 
     /* One small test to show that handle type is checked before parameters */
     SetLastError(0xdeadbeef);
@@ -557,14 +466,11 @@ static void test_openfile(void)
         "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE, got %d\n", GetLastError());
 
     InternetCloseHandle(hOpenFile); /* Just in case */
-    InternetCloseHandle(hConnect);
-    InternetCloseHandle(hInternet);
 }
 
-static void test_putfile(void)
+static void test_putfile(HINTERNET hFtp, HINTERNET hConnect)
 {
     BOOL      bRet;
-    HINTERNET hInternet, hFtp, hConnect;
     HANDLE    hFile;
 
     /* The order of checking is:
@@ -590,19 +496,8 @@ static void test_putfile(void)
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
-    hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-    if(!hFtp)
-    {
-        skip("No ftp connection could be made to ftp.winehq.org\n");
-        InternetCloseHandle(hInternet);
-        return;
-    }
-
     /* Start clean */
     DeleteFileA("non_existing_local");
-
-    /* We should have a ftp-connection, try some puts */
 
     /* No local file given */
     SetLastError(0xdeadbeef);
@@ -648,12 +543,6 @@ static void test_putfile(void)
 
     DeleteFileA("now_existing_local");
 
-    InternetCloseHandle(hFtp);
-
-    /* Http handle-type for ftp connection */
-
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
-
     /* Test to show the parameter checking order depends on the Windows version */
     SetLastError(0xdeadbeef);
     bRet = FtpPutFileA(hConnect, NULL, "non_existing_remote", FTP_TRANSFER_TYPE_UNKNOWN, 0);
@@ -674,15 +563,11 @@ static void test_putfile(void)
     ok ( bRet == FALSE, "Expected FtpPutFileA to fail\n");
     ok ( GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE,
         "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE, got %d\n", GetLastError());
-
-    InternetCloseHandle(hConnect);
-    InternetCloseHandle(hInternet);
 }
 
-static void test_removedir(void)
+static void test_removedir(HINTERNET hFtp, HINTERNET hConnect)
 {
     BOOL      bRet;
-    HINTERNET hInternet, hFtp, hConnect;
 
     /* Invalid internet handle, the other is a valid parameter */
     SetLastError(0xdeadbeef);
@@ -690,17 +575,6 @@ static void test_removedir(void)
     ok ( bRet == FALSE, "Expected FtpRemoveDirectoryA to fail\n");
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-
-    hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-    if(!hFtp)
-    {
-        skip("No ftp connection could be made to ftp.winehq.org\n");
-        InternetCloseHandle(hInternet);
-        return;
-    }
-
-    /* We should have a ftp-connection, try some removing */
 
     /* No remote directory given */
     SetLastError(0xdeadbeef);
@@ -725,12 +599,6 @@ static void test_removedir(void)
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
-    InternetCloseHandle(hFtp);
-
-    /* Http handle-type for ftp connection */
-
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
-
     /* One small test to show that handle type is checked before parameters */
     SetLastError(0xdeadbeef);
     bRet = FtpRemoveDirectoryA(hConnect, NULL);
@@ -743,15 +611,11 @@ static void test_removedir(void)
     ok ( bRet == FALSE, "Expected FtpRemoveDirectoryA to fail\n");
     ok ( GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE,
         "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE, got %d\n", GetLastError());
-
-    InternetCloseHandle(hConnect);
-    InternetCloseHandle(hInternet);
 }
 
-static void test_renamefile(void)
+static void test_renamefile(HINTERNET hFtp, HINTERNET hConnect)
 {
     BOOL      bRet;
-    HINTERNET hInternet, hFtp, hConnect;
 
     /* Invalid internet handle, the rest are valid parameters */
     SetLastError(0xdeadbeef);
@@ -759,17 +623,6 @@ static void test_renamefile(void)
     ok ( bRet == FALSE, "Expected FtpRenameFileA to fail\n");
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-
-    hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-    if(!hFtp)
-    {
-        skip("No ftp connection could be made to ftp.winehq.org\n");
-        InternetCloseHandle(hInternet);
-        return;
-    }
-
-    /* We should have a ftp-connection, try some renaming */
 
     /* No 'existing' file */
     SetLastError(0xdeadbeef);
@@ -793,12 +646,6 @@ static void test_renamefile(void)
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
-    InternetCloseHandle(hFtp);
-
-    /* Http handle-type for ftp connection */
-
-    hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, INTERNET_FLAG_PASSIVE, 0);
-
     /* One small test to show that handle type is checked before parameters */
     SetLastError(0xdeadbeef);
     bRet = FtpRenameFileA(hConnect , "should_be_non_existing_deadbeef", NULL);
@@ -811,42 +658,30 @@ static void test_renamefile(void)
     ok ( bRet == FALSE, "Expected FtpRenameFileA to fail\n");
     ok ( GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE,
         "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE, got %d\n", GetLastError());
-
-    InternetCloseHandle(hConnect);
-    InternetCloseHandle(hInternet);
-}
-
-static void test_multiple(void)
-{
-    BOOL      bRet;
-    HINTERNET hInternet, hFtp, hOpenFile;
-
-    hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
-    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-    if(!hFtp)
-    {
-        skip("No ftp connection could be made to ftp.winehq.org\n");
-        InternetCloseHandle(hInternet);
-        return;
-    }
-
-    /* A correct call */
-    bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_existing_non_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
-    ok(bRet, "Expected FtpGetFileA to succeed\n");
-    DeleteFileA("should_be_existing_non_deadbeef");
-
-    SetLastError(0xdeadbeef);
-    hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ, FTP_TRANSFER_TYPE_ASCII, 0);
-    ok(hOpenFile != NULL, "Expected FtpOpenFileA to succeed\n");
-    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", GetLastError());
-
-    InternetCloseHandle(hOpenFile);
-    InternetCloseHandle(hFtp);
-    InternetCloseHandle(hInternet);
 }
 
 START_TEST(ftp)
 {
+    HANDLE hInternet, hFtp, hHttp;
+
+    SetLastError(0xdeadbeef);
+    hInternet = InternetOpen("winetest", 0, NULL, NULL, 0);
+    ok(hInternet != NULL, "InternetOpen failed: %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", NULL, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+    ok(hFtp != NULL, "InternetOpen failed: %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hHttp = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(hFtp != NULL, "InternetOpen failed: %u\n", GetLastError());
+
+    if (!hFtp)
+    {
+        skip("No ftp connection could be made to ftp.winehq.org\n");
+        return;
+    }
+
     /* The first call should always be a proper InternetOpen, if not
      * several calls will return ERROR_INTERNET_NOT_INITIALIZED when
      * all parameters are correct but no session handle is given. Whereas
@@ -856,19 +691,16 @@ START_TEST(ftp)
      * the other sub-tests will show the other situation.
      */
     test_getfile_no_open();
-    test_connect();
-    test_createdir();
-    test_deletefile();
-    test_getfile();
-    test_openfile();
-    test_putfile();
-    test_removedir();
-    test_renamefile();
+    test_connect(hInternet);
+    test_createdir(hFtp, hHttp);
+    test_deletefile(hFtp, hHttp);
+    test_getfile(hFtp, hHttp);
+    test_openfile(hFtp, hHttp);
+    test_putfile(hFtp, hHttp);
+    test_removedir(hFtp, hHttp);
+    test_renamefile(hFtp, hHttp);
 
-    /* A test that does two particular calls in one connection, this currently fails on Wine.
-     * The problem lies in FtpGetFile but is exposed in FtpOpenFile.
-     * Once this is fixed we should change the total test to setup and clear the connections
-     * only once. (and get rid of test_multiple).
-     */
-    test_multiple();
+    InternetCloseHandle(hHttp);
+    InternetCloseHandle(hFtp);
+    InternetCloseHandle(hInternet);
 }
