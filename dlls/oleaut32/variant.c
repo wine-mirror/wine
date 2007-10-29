@@ -5875,7 +5875,10 @@ HRESULT WINAPI VarImp(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     if (FAILED(hres)) goto VarImp_Exit;
 
     if (rightvt == VT_NULL)
+    {
+        memset( &rv, 0, sizeof(rv) );
         V_VT(&rv) = resvt;
+    }
     else
     {
         hres = VariantCopy(&rv, right);
