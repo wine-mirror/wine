@@ -1778,9 +1778,17 @@ static void test_EM_REPLACESEL(void)
     ok(strcmp(buffer, "RichEdit1\r") == 0,
       "EM_GETTEXTEX returned incorrect string\n");
 
+    /* Win98's riched20 and WinXP's riched20 disagree on what to return from
+       EM_REPLACESEL. The general rule seems to be that Win98's riched20
+       returns the number of characters *inserted* into the control (after
+       required conversions), but WinXP's riched20 returns the number of
+       characters interpreted from the original lParam. Wine's builtin riched20
+       implements the WinXP behavior.
+     */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "RichEdit1\r\n");
-    ok(11 == r, "EM_REPLACESEL returned %d, expected 11\n", r);
+    ok(11 == r /* WinXP */ || 10 == r /* Win98 */,
+        "EM_REPLACESEL returned %d, expected 11 or 10\n", r);
 
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
@@ -1806,7 +1814,8 @@ static void test_EM_REPLACESEL(void)
 
     /* The following tests show that richedit should handle the special \r\r\n
        sequence by turning it into a single space on insertion. However,
-       EM_REPLACESEL returns the number of characters in the original string.
+       EM_REPLACESEL on WinXP returns the number of characters in the original
+       string.
      */
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
@@ -1829,7 +1838,8 @@ static void test_EM_REPLACESEL(void)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n");
-    ok(3 == r, "EM_REPLACESEL returned %d, expected 3\n", r);
+    ok(3 == r /* WinXP */ || 1 == r /* Win98 */,
+        "EM_REPLACESEL returned %d, expected 3 or 1\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 1, "EM_EXGETSEL returned cpMin=%d, expected 1\n", cr.cpMin);
@@ -1847,7 +1857,8 @@ static void test_EM_REPLACESEL(void)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\r\r\r\n\r\r\r");
-    ok(9 == r, "EM_REPLACESEL returned %d, expected 9\n", r);
+    ok(9 == r /* WinXP */ || 7 == r /* Win98 */,
+        "EM_REPLACESEL returned %d, expected 9 or 7\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 7, "EM_EXGETSEL returned cpMin=%d, expected 7\n", cr.cpMin);
@@ -1865,7 +1876,8 @@ static void test_EM_REPLACESEL(void)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n\r\n");
-    ok(5 == r, "EM_REPLACESEL returned %d, expected 5\n", r);
+    ok(5 == r /* WinXP */ || 2 == r /* Win98 */,
+        "EM_REPLACESEL returned %d, expected 5 or 2\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 2, "EM_EXGETSEL returned cpMin=%d, expected 2\n", cr.cpMin);
@@ -1883,7 +1895,8 @@ static void test_EM_REPLACESEL(void)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n\r\r");
-    ok(5 == r, "EM_REPLACESEL returned %d, expected 5\n", r);
+    ok(5 == r /* WinXP */ || 3 == r /* Win98 */,
+        "EM_REPLACESEL returned %d, expected 5 or 3\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 3, "EM_EXGETSEL returned cpMin=%d, expected 3\n", cr.cpMin);
@@ -1901,7 +1914,8 @@ static void test_EM_REPLACESEL(void)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\rX\r\n\r\r");
-    ok(6 == r, "EM_REPLACESEL returned %d, expected 5\n", r);
+    ok(6 == r /* WinXP */ || 5 == r /* Win98 */,
+        "EM_REPLACESEL returned %d, expected 6 or 5\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 5, "EM_EXGETSEL returned cpMin=%d, expected 5\n", cr.cpMin);
@@ -1937,7 +1951,8 @@ static void test_EM_REPLACESEL(void)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\n\n\n\n\r\r\r\r\n");
-    ok(9 == r, "EM_REPLACESEL returned %d, expected 9\n", r);
+    ok(9 == r /* WinXP */ || 7 == r /* Win98 */,
+        "EM_REPLACESEL returned %d, expected 9 or 7\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 7, "EM_EXGETSEL returned cpMin=%d, expected 7\n", cr.cpMin);
