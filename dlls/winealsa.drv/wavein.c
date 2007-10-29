@@ -415,9 +415,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     snd_pcm_t *                 pcm;
     int                         err;
     int                         dir;
-
-    snd_pcm_hw_params_alloca(&hw_params);
-    snd_pcm_sw_params_alloca(&sw_params);
+    DWORD                       ret;
 
     /* JPW TODO - review this code */
     TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
@@ -474,6 +472,9 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	    wwi->format.Format.nChannels;
     }
 
+    hw_params = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_hw_params_sizeof() );
+    sw_params = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_sw_params_sizeof() );
+
     snd_pcm_hw_params_any(pcm, hw_params);
 
 #define EXIT_ON_ERROR(f,e,txt) do \
@@ -482,8 +483,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if ( (err = (f) ) < 0) \
     { \
 	WARN(txt ": %s\n", snd_strerror(err)); \
-	snd_pcm_close(pcm); \
-	return e; \
+	ret = (e); \
+        goto error; \
     } \
 } while(0)
 
@@ -511,20 +512,20 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         format = (wwi->format.Format.wBitsPerSample == 32) ? SND_PCM_FORMAT_FLOAT_LE : -1;
     } else if (wwi->format.Format.wFormatTag == WAVE_FORMAT_MULAW) {
         FIXME("unimplemented format: WAVE_FORMAT_MULAW\n");
-        snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        ret = WAVERR_BADFORMAT;
+        goto error;
     } else if (wwi->format.Format.wFormatTag == WAVE_FORMAT_ALAW) {
         FIXME("unimplemented format: WAVE_FORMAT_ALAW\n");
-        snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        ret = WAVERR_BADFORMAT;
+        goto error;
     } else if (wwi->format.Format.wFormatTag == WAVE_FORMAT_ADPCM) {
         FIXME("unimplemented format: WAVE_FORMAT_ADPCM\n");
-        snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        ret = WAVERR_BADFORMAT;
+        goto error;
     } else {
         ERR("invalid format: %0x04x\n", wwi->format.Format.wFormatTag);
-        snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        ret = WAVERR_BADFORMAT;
+        goto error;
     }
 
     EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), WAVERR_BADFORMAT, "unable to set required format");
@@ -534,13 +535,13 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     err = snd_pcm_hw_params_set_rate_near(pcm, hw_params, &rate, &dir);
     if (err < 0) {
 	WARN("Rate %d Hz not available for playback: %s\n", wwi->format.Format.nSamplesPerSec, snd_strerror(rate));
-	snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        ret = WAVERR_BADFORMAT;
+        goto error;
     }
     if (!ALSA_NearMatch(rate, wwi->format.Format.nSamplesPerSec)) {
 	WARN("Rate doesn't match (requested %d Hz, got %d Hz)\n", wwi->format.Format.nSamplesPerSec, rate);
-	snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        ret = WAVERR_BADFORMAT;
+        goto error;
     }
 
     dir=0;
@@ -598,7 +599,15 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     CloseHandle(wwi->hStartUpEvent);
     wwi->hStartUpEvent = INVALID_HANDLE_VALUE;
 
+    HeapFree( GetProcessHeap(), 0, hw_params );
+    HeapFree( GetProcessHeap(), 0, sw_params );
     return widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
+
+error:
+    snd_pcm_close(pcm);
+    HeapFree( GetProcessHeap(), 0, hw_params );
+    HeapFree( GetProcessHeap(), 0, sw_params );
+    return ret;
 }
 
 

@@ -579,8 +579,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     int                         dir=0;
     DWORD                       retcode = 0;
 
-    snd_pcm_sw_params_alloca(&sw_params);
-
     TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
@@ -670,6 +668,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     } \
 } while(0)
 
+    sw_params = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_sw_params_sizeof() );
     snd_pcm_hw_params_malloc(&hw_params);
     if (! hw_params)
     {
@@ -801,6 +800,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	  wwo->format.Format.nSamplesPerSec, wwo->format.Format.nChannels,
 	  wwo->format.Format.nBlockAlign);
 
+    HeapFree( GetProcessHeap(), 0, sw_params );
     wwo->pcm = pcm;
     wwo->hctl = hctl;
     if ( wwo->hw_params )
@@ -822,6 +822,7 @@ errexit:
     if ( hw_params )
 	snd_pcm_hw_params_free(hw_params);
 
+    HeapFree( GetProcessHeap(), 0, sw_params );
     if (wwo->msgRing.ring_buffer_size > 0)
         ALSA_DestroyRingMessage(&wwo->msgRing);
 

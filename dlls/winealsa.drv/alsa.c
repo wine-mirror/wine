@@ -645,11 +645,13 @@ void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_params_t *
     else
     {
 	snd_pcm_access_mask_t * acmask;
-	snd_pcm_access_mask_alloca(&acmask);
+
+        acmask = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_access_mask_sizeof());
 	snd_pcm_hw_params_get_access_mask(hw_params, acmask);
 	for ( access = SND_PCM_ACCESS_MMAP_INTERLEAVED; access <= SND_PCM_ACCESS_LAST; access++)
 	    if (snd_pcm_access_mask_test(acmask, access))
 		TRACE("access=%s\n", snd_pcm_access_name(access));
+        HeapFree( GetProcessHeap(), 0, acmask );
     }
 
     if (format >= 0)
@@ -661,11 +663,12 @@ void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_params_t *
     {
 	snd_pcm_format_mask_t *     fmask;
 
-	snd_pcm_format_mask_alloca(&fmask);
+        fmask = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_format_mask_sizeof());
 	snd_pcm_hw_params_get_format_mask(hw_params, fmask);
 	for ( format = SND_PCM_FORMAT_S8; format <= SND_PCM_FORMAT_LAST ; format++)
 	    if ( snd_pcm_format_mask_test(fmask, format) )
 		TRACE("format=%s\n", snd_pcm_format_name(format));
+        HeapFree( GetProcessHeap(), 0, fmask );
     }
 
     do {

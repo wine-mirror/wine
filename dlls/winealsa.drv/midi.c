@@ -1249,9 +1249,8 @@ LONG ALSA_MidiInit(void)
 #if 0 /* Debug purpose */
     snd_lib_error_set_handler(error_handler);
 #endif
-    
-    snd_seq_client_info_alloca(&cinfo);
-    snd_seq_port_info_alloca(&pinfo);
+    cinfo = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_seq_client_info_sizeof() );
+    pinfo = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_seq_port_info_sizeof() );
 
     /* First, search for all internal midi devices */
     snd_seq_client_info_set_client(cinfo, -1);
@@ -1281,6 +1280,8 @@ LONG ALSA_MidiInit(void)
 
     /* close file and exit */
     midiCloseSeq();
+    HeapFree( GetProcessHeap(), 0, cinfo );
+    HeapFree( GetProcessHeap(), 0, pinfo );
 
     TRACE("End\n");
 #endif

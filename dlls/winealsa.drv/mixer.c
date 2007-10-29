@@ -405,7 +405,9 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
 static void ALSA_MixerInit(void)
 {
     int x, mixnum = 0;
+    snd_ctl_card_info_t *info;
 
+    info = HeapAlloc( GetProcessHeap(), 0, snd_ctl_card_info_sizeof());
     for (x = 0; x < MAX_MIXERS; ++x)
     {
         int card, err, capcontrols = 0;
@@ -413,9 +415,8 @@ static void ALSA_MixerInit(void)
 
         snd_ctl_t *ctl;
         snd_mixer_elem_t *elem, *mastelem = NULL, *headelem = NULL, *captelem = NULL, *pcmelem = NULL;
-        snd_ctl_card_info_t *info = NULL;
-        snd_ctl_card_info_alloca(&info);
 
+        memset(info, 0, snd_ctl_card_info_sizeof());
         memset(&mixdev[mixnum], 0, sizeof(*mixdev));
         snprintf(cardind, sizeof(cardind), "%d", x);
         card = snd_card_get_index(cardind);
@@ -553,6 +554,7 @@ static void ALSA_MixerInit(void)
         snd_mixer_close(mixdev[mixnum].mix);
     }
     cards = mixnum;
+    HeapFree( GetProcessHeap(), 0, info );
 
     /* There is no trouble with already assigning callbacks without initialising critsect:
      * Callbacks only occur when snd_mixer_handle_events is called (only happens in thread)
