@@ -1217,9 +1217,17 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                 }
                 else
                 {
+                    static BOOL reported = FALSE;
+
                     kusrt.KernelTime.QuadPart = 0;
                     kusrt.UserTime.QuadPart = 0;
-                    FIXME("Cannot get kerneltime or usertime of other threads\n");
+                    if (reported)
+                        TRACE("Cannot get kerneltime or usertime of other threads\n");
+                    else
+                    {
+                        FIXME("Cannot get kerneltime or usertime of other threads\n");
+                        reported = TRUE;
+                    }
                 }
                 if (data) memcpy( data, &kusrt, min( length, sizeof(kusrt) ));
                 if (ret_len) *ret_len = min( length, sizeof(kusrt) );
