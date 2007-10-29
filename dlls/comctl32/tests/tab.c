@@ -593,16 +593,14 @@ static void test_tab(INT nMinTabWidth)
     DeleteObject(hFont);
 }
 
-static void test_getters_setters(INT nTabs)
+static void test_getters_setters(HWND parent_wnd, INT nTabs)
 {
     HWND hTab;
-    HWND parent_wnd;
     RECT rTab;
     INT nTabsRetrieved;
     INT rowCount;
 
-    parent_wnd = createParentWindow();
-    ok(parent_wnd != NULL, "Failed to create parent window!\n");
+    ok(parent_wnd != NULL, "no parent window!\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, nTabs);
@@ -810,11 +808,11 @@ static void test_getters_setters(INT nTabs)
     }
 
     DestroyWindow(hTab);
-    DestroyWindow(parent_wnd);
 }
 
 START_TEST(tab)
 {
+    HWND parent_wnd;
     LOGFONTA logfont;
 
     lstrcpyA(logfont.lfFaceName, "Arial");
@@ -839,6 +837,10 @@ START_TEST(tab)
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    parent_wnd = createParentWindow();
+    ok(parent_wnd != NULL, "Failed to create parent window!\n");
+
     /* Testing getters and setters with 5 tabs */
-    test_getters_setters(5);
+    test_getters_setters(parent_wnd, 5);
+    DestroyWindow(parent_wnd);
 }
