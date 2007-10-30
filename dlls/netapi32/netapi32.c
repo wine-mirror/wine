@@ -157,3 +157,11 @@ DWORD WINAPI NetpNetBiosStatusToApiStatus(DWORD nrc)
     }
     return ret;
 }
+
+NET_API_STATUS WINAPI NetUseEnum(LMSTR server, DWORD level, LPBYTE* bufptr, DWORD prefmaxsize,
+                          LPDWORD entriesread, LPDWORD totalentries, LPDWORD resumehandle)
+{
+    FIXME("stub (%p, %d, %p, %d, %p, %p, %p)\n", server, level, bufptr, prefmaxsize,
+           entriesread, totalentries, resumehandle);
+    return ERROR_NOT_SUPPORTED;
+}
