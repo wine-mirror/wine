@@ -22,7 +22,7 @@
 @ stdcall D3DXVec4Transform(ptr ptr ptr)
 @ stdcall D3DXMatrixfDeterminant(ptr)
 @ stdcall D3DXMatrixMultiply(ptr ptr ptr)
-@ stub D3DXMatrixTranspose
+@ stdcall D3DXMatrixTranspose(ptr ptr)
 @ stub D3DXMatrixInverse
 @ stub D3DXMatrixScaling
 @ stub D3DXMatrixTranslation

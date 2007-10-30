@@ -195,6 +195,14 @@ static void D3DXMatrixTest(void)
     expectedmat.m[3][0] = -164.0f; expectedmat.m[3][1] = -320.0f; expectedmat.m[3][2] = 187.0f; expectedmat.m[3][3] = 31.0f;
     D3DXMatrixMultiply(&gotmat,&mat,&mat2);
     expect_mat(expectedmat,gotmat);
+
+/*____________D3DXMatrixTranspose______________*/
+    expectedmat.m[0][0] = 10.0f; expectedmat.m[0][1] = 11.0f; expectedmat.m[0][2] = 19.0f; expectedmat.m[0][3] = 2.0f;
+    expectedmat.m[1][0] = 5.0; expectedmat.m[1][1] = 20.0f; expectedmat.m[1][2] = -21.0f; expectedmat.m[1][3] = 3.0f;
+    expectedmat.m[2][0] = 7.0f; expectedmat.m[2][1] = 16.0f; expectedmat.m[2][2] = 30.f; expectedmat.m[2][3] = -4.0f;
+    expectedmat.m[3][0] = 8.0f; expectedmat.m[3][1] = 33.0f; expectedmat.m[3][2] = 43.0f; expectedmat.m[3][3] = -40.0f;
+    D3DXMatrixTranspose(&gotmat,&mat);
+    expect_mat(expectedmat,gotmat);
 }
 
 static void D3DXPlaneTest(void)

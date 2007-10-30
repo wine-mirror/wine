@@ -58,6 +58,20 @@ D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, C
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm)
+{
+    int i,j;
+
+    for (i=0; i<4; i++)
+    {
+     for (j=0; j<4; j++)
+     {
+      pout->m[i][j] = pm->m[j][i];
+     }
+    }
+    return pout;
+}
+
 /*_________________D3DXQUATERNION________________*/
 
 D3DXQUATERNION* WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
