@@ -385,6 +385,58 @@ static LPWSTR get_key_name_for_target(LPCWSTR target_name, DWORD type)
 }
 
 /******************************************************************************
+ * CredDeleteW [ADVAPI32.@]
+ */
+BOOL WINAPI CredDeleteW(LPCWSTR TargetName, DWORD Type, DWORD Flags)
+{
+    HKEY hkeyMgr;
+    DWORD ret;
+    LPWSTR key_name;
+
+    TRACE("(%s, %d, 0x%x)\n", debugstr_w(TargetName), Type, Flags);
+
+    if (!TargetName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (Type != CRED_TYPE_GENERIC && Type != CRED_TYPE_DOMAIN_PASSWORD)
+    {
+        FIXME("unhandled type %d\n", Type);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (Flags)
+    {
+        FIXME("unhandled flags 0x%x\n", Flags);
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+
+    ret = open_cred_mgr_key(&hkeyMgr, TRUE);
+    if (ret != ERROR_SUCCESS)
+    {
+        WARN("couldn't open/create manager key, error %d\n", ret);
+        SetLastError(ERROR_NO_SUCH_LOGON_SESSION);
+        return FALSE;
+    }
+
+    key_name = get_key_name_for_target(TargetName, Type);
+    ret = RegDeleteKeyW(hkeyMgr, key_name);
+    HeapFree(GetProcessHeap(), 0, key_name);
+    RegCloseKey(hkeyMgr);
+    if (ret != ERROR_SUCCESS)
+    {
+        SetLastError(ERROR_NOT_FOUND);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/******************************************************************************
  * CredFree [ADVAPI32.@]
  */
 VOID WINAPI CredFree(PVOID Buffer)

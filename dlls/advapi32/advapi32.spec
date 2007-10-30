@@ -103,7 +103,7 @@
 # @ stub CreateTraceInstanceId
 @ stdcall CreateWellKnownSid(long ptr ptr ptr)
 # @ stub CredDeleteA
-# @ stub CredDeleteW
+@ stdcall CredDeleteW(wstr long long)
 @ stdcall CredEnumerateA(str long ptr ptr)
 @ stdcall CredEnumerateW(wstr long ptr ptr)
 @ stdcall CredFree(ptr)
