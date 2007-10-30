@@ -298,7 +298,7 @@ static HRESULT SHELL_GetPathFromIDListForExecuteW(LPCITEMIDLIST pidl, LPWSTR psz
  *
  */
 static UINT_PTR SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
-			    LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
+			    const SHELLEXECUTEINFOW *psei, LPSHELLEXECUTEINFOW psei_out)
 {
     STARTUPINFOW  startup;
     PROCESS_INFORMATION info;
@@ -752,7 +752,7 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
 static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
                             const WCHAR* lpFile, WCHAR *env,
 			    LPCWSTR szCommandline, LPITEMIDLIST pidl, SHELL_ExecuteW32 execfunc,
-                            LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
+                            const SHELLEXECUTEINFOW *psei, LPSHELLEXECUTEINFOW psei_out)
 {
     static const WCHAR wApplication[] = {'\\','a','p','p','l','i','c','a','t','i','o','n',0};
     static const WCHAR wTopic[] = {'\\','t','o','p','i','c',0};
@@ -1034,7 +1034,7 @@ HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpR
 }
 
 /* FIXME: is this already implemented somewhere else? */
-static HKEY ShellExecute_GetClassKey( LPSHELLEXECUTEINFOW sei )
+static HKEY ShellExecute_GetClassKey( const SHELLEXECUTEINFOW *sei )
 {
     LPCWSTR ext = NULL, lpClass = NULL;
     LPWSTR cls = NULL;
