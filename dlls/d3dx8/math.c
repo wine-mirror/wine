@@ -58,6 +58,15 @@ D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, C
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixScaling(D3DXMATRIX *pout, FLOAT sx, FLOAT sy, FLOAT sz)
+{
+    D3DXMatrixIdentity(pout);
+    pout->m[0][0] = sx;
+    pout->m[1][1] = sy;
+    pout->m[2][2] = sz;
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm)
 {
     int i,j;
