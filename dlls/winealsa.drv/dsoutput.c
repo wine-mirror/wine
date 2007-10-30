@@ -30,6 +30,7 @@
 #include "wine/port.h"
 
 #include <stdlib.h>
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
