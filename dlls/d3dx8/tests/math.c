@@ -140,6 +140,10 @@ static void D3DXMatrixTest(void)
     expected = TRUE;
     got = D3DXMatrixIsIdentity(&mat);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
+    U(mat).m[0][0] = 0.000009f;
+    expected = FALSE;
+    got = D3DXMatrixIsIdentity(&mat);
+    ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
     /* Test the NULL case */
     expected = FALSE;
     got = D3DXMatrixIsIdentity(NULL);

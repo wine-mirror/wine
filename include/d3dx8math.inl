@@ -351,7 +351,6 @@ static inline BOOL D3DXMatrixIsIdentity(D3DXMATRIX *pm)
 {
     int i,j;
     D3DXMATRIX testmatrix;
-    BOOL equal=TRUE;
 
     if ( !pm ) return FALSE;
     D3DXMatrixIdentity(&testmatrix);
@@ -359,10 +358,10 @@ static inline BOOL D3DXMatrixIsIdentity(D3DXMATRIX *pm)
     {
      for (j=0; j<4; j++)
      {
-      if ( fabs(D3DX_U(*pm).m[i][j] - D3DX_U(testmatrix).m[i][j]) > 0.0001 ) equal = FALSE;
+      if ( D3DX_U(*pm).m[i][j] != D3DX_U(testmatrix).m[i][j] ) return FALSE;
      }
     }
-    return equal;
+    return TRUE;
 }
 #undef D3DX_U
 
