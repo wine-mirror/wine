@@ -1,6 +1,7 @@
 /*
  * Copyright 1996 Bang Jun Young
- *
+ * Copyright 2007 YunSong Hwang
+
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -52,6 +53,7 @@ EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 
 MSGBOX DIALOG 100, 80, 216, 168
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+FONT 9, "MS Shell Dlg"
 BEGIN
 	ICON "", 1088, 8, 20, 16, 16, WS_CHILD | WS_VISIBLE
 	LTEXT "", 100, 32, 4, 176, 48, WS_CHILD | WS_VISIBLE | WS_GROUP | SS_NOPREFIX
