@@ -58,6 +58,24 @@ D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, C
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixRotationAxis(D3DXMATRIX *pout, CONST D3DXVECTOR3 *pv, FLOAT angle)
+{
+    D3DXVECTOR3 v;
+
+    D3DXVec3Normalize(&v,pv);
+    D3DXMatrixIdentity(pout);
+    pout->m[0][0] = (1.0f - cos(angle)) * v.x * v.x + cos(angle);
+    pout->m[1][0] = (1.0f - cos(angle)) * v.x * v.y - sin(angle) * v.z;
+    pout->m[2][0] = (1.0f - cos(angle)) * v.x * v.z + sin(angle) * v.y;
+    pout->m[0][1] = (1.0f - cos(angle)) * v.y * v.x + sin(angle) * v.z;
+    pout->m[1][1] = (1.0f - cos(angle)) * v.y * v.y + cos(angle);
+    pout->m[2][1] = (1.0f - cos(angle)) * v.y * v.z - sin(angle) * v.x;
+    pout->m[0][2] = (1.0f - cos(angle)) * v.z * v.x - sin(angle) * v.y;
+    pout->m[1][2] = (1.0f - cos(angle)) * v.z * v.y + sin(angle) * v.x;
+    pout->m[2][2] = (1.0f - cos(angle)) * v.z * v.z + cos(angle);
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixRotationX(D3DXMATRIX *pout, FLOAT angle)
 {
     D3DXMatrixIdentity(pout);

@@ -149,6 +149,7 @@ static void D3DXColorTest(void)
 static void D3DXMatrixTest(void)
 {
     D3DXMATRIX expectedmat, gotmat, mat, mat2, mat3;
+    D3DXVECTOR3 axis;
     BOOL expected, got;
     FLOAT angle, expectedfloat, gotfloat;
 
@@ -166,7 +167,9 @@ static void D3DXMatrixTest(void)
     mat2.m[0][3] = -4.0f; mat2.m[1][3] = -3.0f; mat2.m[2][3] = -2.0f;
     mat2.m[3][3] = -1.0f;
 
-    angle = D3DX_PI / 3.0f;
+    axis.x = 1.0f; axis.y = -3.0f; axis.z = 7.0f;
+
+    angle = D3DX_PI/3.0f;
 
 /*____________D3DXMatrixfDeterminant_____________*/
     expectedfloat = -147888.0f;
@@ -196,6 +199,14 @@ static void D3DXMatrixTest(void)
     expectedmat.m[2][0] = 239.0f; expectedmat.m[2][1] = 523.0f; expectedmat.m[2][2] = -400.0f; expectedmat.m[2][3] = -116.0f;
     expectedmat.m[3][0] = -164.0f; expectedmat.m[3][1] = -320.0f; expectedmat.m[3][2] = 187.0f; expectedmat.m[3][3] = 31.0f;
     D3DXMatrixMultiply(&gotmat,&mat,&mat2);
+    expect_mat(expectedmat,gotmat);
+
+/*____________D3DXMatrixRotationRotationAxis_____*/
+    expectedmat.m[0][0] = 0.508475f; expectedmat.m[0][1] = 0.763805f; expectedmat.m[0][2] = 0.397563f; expectedmat.m[0][3] = 0.0f;
+    expectedmat.m[1][0] = -0.814652f; expectedmat.m[1][1] = 0.576271f; expectedmat.m[1][2] = -0.065219f; expectedmat.m[1][3] = 0.0f;
+    expectedmat.m[2][0] = -0.278919f; expectedmat.m[2][1] = -0.290713f; expectedmat.m[2][2] = 0.915254f; expectedmat.m[2][3] = 0.0f;
+    expectedmat.m[3][0] = 0.0f; expectedmat.m[3][1] = 0.0f; expectedmat.m[3][2] = 0.0f; expectedmat.m[3][3] = 1.0f;
+    D3DXMatrixRotationAxis(&gotmat,&axis,angle);
     expect_mat(expectedmat,gotmat);
 
 /*____________D3DXMatrixRotationX______________*/

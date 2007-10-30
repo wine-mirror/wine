@@ -29,7 +29,7 @@
 @ stdcall D3DXMatrixRotationX(ptr long)
 @ stdcall D3DXMatrixRotationY(ptr long)
 @ stdcall D3DXMatrixRotationZ(ptr long)
-@ stub D3DXMatrixRotationAxis
+@ stdcall D3DXMatrixRotationAxis(ptr ptr long)
 @ stub D3DXMatrixRotationQuaternion
 @ stub D3DXMatrixRotationYawPitchRoll
 @ stub D3DXMatrixTransformation
