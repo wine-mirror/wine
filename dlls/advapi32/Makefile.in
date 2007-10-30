@@ -9,6 +9,7 @@ IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
 	advapi.c \
+	cred.c \
 	crypt.c \
 	crypt_arc4.c \
 	crypt_des.c \

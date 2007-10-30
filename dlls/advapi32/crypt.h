@@ -94,4 +94,6 @@ struct ustring {
     unsigned char *Buffer;
 };
 
+NTSTATUS WINAPI SystemFunction032(struct ustring *data, struct ustring *key);
+
 #endif /* __WINE_CRYPT_H_ */
