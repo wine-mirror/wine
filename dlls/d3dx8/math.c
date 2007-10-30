@@ -78,6 +78,16 @@ D3DXMATRIX* WINAPI D3DXMatrixRotationY(D3DXMATRIX *pout, FLOAT angle)
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixRotationZ(D3DXMATRIX *pout, FLOAT angle)
+{
+    D3DXMatrixIdentity(pout);
+    pout->m[0][0] = cos(angle);
+    pout->m[1][1] = cos(angle);
+    pout->m[0][1] = sin(angle);
+    pout->m[1][0] = -sin(angle);
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixScaling(D3DXMATRIX *pout, FLOAT sx, FLOAT sy, FLOAT sz)
 {
     D3DXMatrixIdentity(pout);
