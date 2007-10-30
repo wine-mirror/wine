@@ -436,6 +436,172 @@ BOOL WINAPI CredDeleteW(LPCWSTR TargetName, DWORD Type, DWORD Flags)
     return TRUE;
 }
 
+static BOOL credential_matches_filter(HKEY hkeyCred, LPCWSTR filter)
+{
+    if (!filter) return TRUE;
+
+    FIXME("%s\n", debugstr_w(filter));
+    return TRUE;
+}
+
+/******************************************************************************
+ * CredEnumerateW [ADVAPI32.@]
+ */
+BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count,
+                           PCREDENTIALW **Credentials)
+{
+    HKEY hkeyMgr;
+    HKEY hkeyCred;
+    DWORD ret;
+    LPWSTR target_name;
+    DWORD target_name_len;
+    DWORD len;
+    char *buffer;
+    DWORD i;
+    BYTE key_data[KEY_SIZE];
+
+    TRACE("(%s, 0x%x, %p, %p)\n", debugstr_w(Filter), Flags, Count, Credentials);
+
+    if (Flags)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+
+    ret = open_cred_mgr_key(&hkeyMgr, FALSE);
+    if (ret != ERROR_SUCCESS)
+    {
+        WARN("couldn't open/create manager key, error %d\n", ret);
+        SetLastError(ERROR_NO_SUCH_LOGON_SESSION);
+        return FALSE;
+    }
+
+    ret = get_cred_mgr_encryption_key(hkeyMgr, key_data);
+    if (ret != ERROR_SUCCESS)
+    {
+        RegCloseKey(hkeyMgr);
+        SetLastError(ret);
+        return FALSE;
+    }
+
+    ret = RegQueryInfoKeyW(hkeyMgr, NULL, NULL, NULL, NULL, &target_name_len, NULL, NULL, NULL, NULL, NULL, NULL);
+    if (ret != ERROR_SUCCESS)
+    {
+        RegCloseKey(hkeyMgr);
+        SetLastError(ret);
+        return FALSE;
+    }
+
+    target_name = HeapAlloc(GetProcessHeap(), 0, (target_name_len+1)*sizeof(WCHAR));
+    if (!target_name)
+    {
+        RegCloseKey(hkeyMgr);
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
+    *Count = 0;
+    len = 0;
+    for (i = 0;; i++)
+    {
+        ret = RegEnumKeyW(hkeyMgr, i, target_name, target_name_len+1);
+        if (ret == ERROR_NO_MORE_ITEMS)
+        {
+            ret = ERROR_SUCCESS;
+            break;
+        }
+        else if (ret != ERROR_SUCCESS)
+        {
+            ret = ERROR_SUCCESS;
+            continue;
+        }
+        ret = RegOpenKeyExW(hkeyMgr, target_name, 0, KEY_QUERY_VALUE, &hkeyCred);
+        if (ret != ERROR_SUCCESS)
+        {
+            ret = ERROR_SUCCESS;
+            continue;
+        }
+        if (!credential_matches_filter(hkeyCred, Filter))
+        {
+            RegCloseKey(hkeyCred);
+            continue;
+        }
+        len += sizeof(CREDENTIALW);
+        ret = read_credential(hkeyCred, NULL, key_data, NULL, &len);
+        RegCloseKey(hkeyCred);
+        if (ret != ERROR_SUCCESS) break;
+        (*Count)++;
+    }
+    if (ret == ERROR_SUCCESS && *Count == 0)
+        ret = ERROR_NOT_FOUND;
+    if (ret != ERROR_SUCCESS)
+    {
+        HeapFree(GetProcessHeap(), 0, target_name);
+        RegCloseKey(hkeyMgr);
+        SetLastError(ret);
+        return FALSE;
+    }
+    len += *Count + sizeof(PCREDENTIALW);
+
+    if (ret == ERROR_SUCCESS)
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, len);
+        *Credentials = (PCREDENTIALW *)buffer;
+        if (buffer)
+        {
+            buffer += *Count * sizeof(PCREDENTIALW);
+            *Count = 0;
+            for (i = 0;; i++)
+            {
+                ret = RegEnumKeyW(hkeyMgr, i, target_name, target_name_len+1);
+                if (ret == ERROR_NO_MORE_ITEMS)
+                {
+                    ret = ERROR_SUCCESS;
+                    break;
+                }
+                else if (ret != ERROR_SUCCESS)
+                {
+                    ret = ERROR_SUCCESS;
+                    continue;
+                }
+                TRACE("target_name = %s\n", debugstr_w(target_name));
+                ret = RegOpenKeyExW(hkeyMgr, target_name, 0, KEY_QUERY_VALUE, &hkeyCred);
+                if (ret != ERROR_SUCCESS)
+                {
+                    ret = ERROR_SUCCESS;
+                    continue;
+                }
+                if (!credential_matches_filter(hkeyCred, Filter))
+                {
+                    RegCloseKey(hkeyCred);
+                    continue;
+                }
+                len = sizeof(CREDENTIALW);
+                (*Credentials)[*Count] = (PCREDENTIALW)buffer;
+                ret = read_credential(hkeyCred, (*Credentials)[*Count],
+                                      key_data,
+                                      buffer + sizeof(CREDENTIALW), &len);
+                RegCloseKey(hkeyCred);
+                if (ret != ERROR_SUCCESS) break;
+                buffer += len;
+                (*Count)++;
+            }
+        }
+        else
+            ret = ERROR_OUTOFMEMORY;
+    }
+
+    HeapFree(GetProcessHeap(), 0, target_name);
+    RegCloseKey(hkeyMgr);
+
+    if (ret != ERROR_SUCCESS)
+    {
+        SetLastError(ret);
+        return FALSE;
+    }
+    return TRUE;
+}
+
 /******************************************************************************
  * CredFree [ADVAPI32.@]
  */
