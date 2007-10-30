@@ -226,11 +226,20 @@ static void set_ioctl_result( struct ioctl_call *ioctl, unsigned int status,
     ioctl->device = NULL;
     if (ioctl->async)
     {
-        async_terminate( ioctl->async, ioctl->out_size ? STATUS_ALERTED : status );
+        if (ioctl->out_size) status = STATUS_ALERTED;
+        async_terminate( ioctl->async, status );
         release_object( ioctl->async );
         ioctl->async = NULL;
     }
     wake_up( &ioctl->obj, 0 );
+
+    if (status != STATUS_ALERTED)
+    {
+        /* remove it from the device queue */
+        /* (for STATUS_ALERTED this will be done in get_ioctl_result) */
+        list_remove( &ioctl->dev_entry );
+        release_object( ioctl );  /* no longer on the device queue */
+    }
 }
 
 
@@ -352,12 +361,12 @@ static struct device *create_device( struct directory *root, const struct unicod
 
 static void delete_device( struct device *device )
 {
-    struct ioctl_call *ioctl;
+    struct ioctl_call *ioctl, *next;
 
     if (!device->manager) return;  /* already deleted */
 
     /* terminate all pending requests */
-    LIST_FOR_EACH_ENTRY( ioctl, &device->requests, struct ioctl_call, dev_entry )
+    LIST_FOR_EACH_ENTRY_SAFE( ioctl, next, &device->requests, struct ioctl_call, dev_entry )
     {
         list_remove( &ioctl->mgr_entry );
         set_ioctl_result( ioctl, STATUS_FILE_DELETED, NULL, 0 );
