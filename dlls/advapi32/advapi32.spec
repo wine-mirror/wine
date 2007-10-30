@@ -106,7 +106,7 @@
 # @ stub CredDeleteW
 @ stdcall CredEnumerateA(str long ptr ptr)
 @ stdcall CredEnumerateW(wstr long ptr ptr)
-# @ stub CredFree
+@ stdcall CredFree(ptr)
 # @ stub CredGetSessionTypes
 # @ stub CredGetTargetInfoA
 # @ stub CredGetTargetInfoW
@@ -115,7 +115,7 @@
 # @ stub CredMarshalCredentialA
 # @ stub CredMarshalCredentialW
 @ stub CredProfileLoaded
-# @ stub CredReadA
+@ stdcall CredReadW(wstr long long ptr)
 # @ stub CredReadDomainCredentialsA
 # @ stub CredReadDomainCredentialsW
 # @ stub CredReadW

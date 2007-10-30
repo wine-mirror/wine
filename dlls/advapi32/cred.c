@@ -50,6 +50,187 @@ static const WCHAR wszTargetAliasValue[] = {'T','a','r','g','e','t','A','l','i',
 static const WCHAR wszUserNameValue[] = {'U','s','e','r','N','a','m','e',0};
 static const WCHAR wszPasswordValue[] = {'P','a','s','s','w','o','r','d',0};
 
+static DWORD read_credential_blob(HKEY hkey, const BYTE key_data[KEY_SIZE],
+                                  LPBYTE credential_blob,
+                                  DWORD *credential_blob_size)
+{
+    DWORD ret;
+    DWORD type;
+
+    *credential_blob_size = 0;
+    ret = RegQueryValueExW(hkey, wszPasswordValue, 0, &type, NULL, credential_blob_size);
+    if (ret != ERROR_SUCCESS)
+        return ret;
+    else if (type != REG_BINARY)
+        return ERROR_REGISTRY_CORRUPT;
+    if (credential_blob)
+    {
+        struct ustring data;
+        struct ustring key;
+
+        ret = RegQueryValueExW(hkey, wszPasswordValue, 0, &type, (LPVOID)credential_blob,
+                               credential_blob_size);
+        if (ret != ERROR_SUCCESS)
+            return ret;
+        else if (type != REG_BINARY)
+            return ERROR_REGISTRY_CORRUPT;
+
+        key.Length = key.MaximumLength = sizeof(key_data);
+        key.Buffer = (unsigned char *)key_data;
+
+        data.Length = data.MaximumLength = *credential_blob_size;
+        data.Buffer = credential_blob;
+        SystemFunction032(&data, &key);
+    }
+    return ERROR_SUCCESS;
+}
+
+static DWORD read_credential(HKEY hkey, PCREDENTIALW credential,
+                             const BYTE key_data[KEY_SIZE], char *buffer, DWORD *len)
+{
+    DWORD type;
+    DWORD ret;
+    DWORD count;
+
+    ret = RegQueryValueExW(hkey, NULL, 0, &type, NULL, &count);
+    if (ret != ERROR_SUCCESS)
+        return ret;
+    else if (type != REG_SZ)
+        return ERROR_REGISTRY_CORRUPT;
+    *len += count;
+    if (credential)
+    {
+        credential->TargetName = (LPWSTR)buffer;
+        ret = RegQueryValueExW(hkey, NULL, 0, &type, (LPVOID)credential->TargetName,
+                               &count);
+        if (ret != ERROR_SUCCESS || type != REG_SZ) return ret;
+        buffer += count;
+    }
+
+    ret = RegQueryValueExW(hkey, wszCommentValue, 0, &type, NULL, &count);
+    if (ret != ERROR_FILE_NOT_FOUND && ret != ERROR_SUCCESS)
+        return ret;
+    else if (type != REG_SZ)
+        return ERROR_REGISTRY_CORRUPT;
+    *len += count;
+    if (credential)
+    {
+        credential->Comment = (LPWSTR)buffer;
+        ret = RegQueryValueExW(hkey, wszCommentValue, 0, &type, (LPVOID)credential->Comment,
+                               &count);
+        if (ret == ERROR_FILE_NOT_FOUND)
+            credential->Comment = NULL;
+        else if (ret != ERROR_SUCCESS)
+            return ret;
+        else if (type != REG_SZ)
+            return ERROR_REGISTRY_CORRUPT;
+        else
+            buffer += count;
+    }
+
+    ret = RegQueryValueExW(hkey, wszTargetAliasValue, 0, &type, NULL, &count);
+    if (ret != ERROR_FILE_NOT_FOUND && ret != ERROR_SUCCESS)
+        return ret;
+    else if (type != REG_SZ)
+        return ERROR_REGISTRY_CORRUPT;
+    *len += count;
+    if (credential)
+    {
+        credential->TargetAlias = (LPWSTR)buffer;
+        ret = RegQueryValueExW(hkey, wszTargetAliasValue, 0, &type, (LPVOID)credential->TargetAlias,
+                               &count);
+        if (ret == ERROR_FILE_NOT_FOUND)
+            credential->TargetAlias = NULL;
+        else if (ret != ERROR_SUCCESS)
+            return ret;
+        else if (type != REG_SZ)
+            return ERROR_REGISTRY_CORRUPT;
+        else
+            buffer += count;
+    }
+
+    ret = RegQueryValueExW(hkey, wszUserNameValue, 0, &type, NULL, &count);
+    if (ret != ERROR_FILE_NOT_FOUND && ret != ERROR_SUCCESS)
+        return ret;
+    else if (type != REG_SZ)
+        return ERROR_REGISTRY_CORRUPT;
+    *len += count;
+    if (credential)
+    {
+        credential->UserName = (LPWSTR)buffer;
+        ret = RegQueryValueExW(hkey, wszUserNameValue, 0, &type, (LPVOID)credential->UserName,
+                               &count);
+        if (ret == ERROR_FILE_NOT_FOUND)
+        {
+            credential->UserName = NULL;
+            ret = ERROR_SUCCESS;
+        }
+        else if (ret != ERROR_SUCCESS)
+            return ret;
+        else if (type != REG_SZ)
+            return ERROR_REGISTRY_CORRUPT;
+        else
+            buffer += count;
+    }
+
+    ret = read_credential_blob(hkey, key_data, NULL, &count);
+    if (ret != ERROR_FILE_NOT_FOUND && ret != ERROR_SUCCESS)
+        return ret;
+    *len += count;
+    if (credential)
+    {
+        credential->CredentialBlob = (LPBYTE)buffer;
+        ret = read_credential_blob(hkey, key_data, credential->CredentialBlob, &count);
+        if (ret == ERROR_FILE_NOT_FOUND)
+        {
+            credential->CredentialBlob = NULL;
+            ret = ERROR_SUCCESS;
+        }
+        else if (ret != ERROR_SUCCESS)
+            return ret;
+        credential->CredentialBlobSize = count;
+        buffer += count;
+    }
+
+    /* FIXME: Attributes */
+    if (credential)
+    {
+        credential->AttributeCount = 0;
+        credential->Attributes = NULL;
+    }
+
+    if (!credential) return ERROR_SUCCESS;
+
+    count = sizeof(credential->Flags);
+    ret = RegQueryValueExW(hkey, wszFlagsValue, NULL, &type, (LPVOID)&credential->Flags,
+                           &count);
+    if (ret != ERROR_SUCCESS)
+        return ret;
+    else if (type != REG_DWORD)
+        return ERROR_REGISTRY_CORRUPT;
+    count = sizeof(credential->Type);
+    ret = RegQueryValueExW(hkey, wszTypeValue, NULL, &type, (LPVOID)&credential->Type,
+                           &count);
+    if (ret != ERROR_SUCCESS)
+        return ret;
+    else if (type != REG_DWORD)
+        return ERROR_REGISTRY_CORRUPT;
+
+    count = sizeof(credential->LastWritten);
+    ret = RegQueryValueExW(hkey, wszLastWrittenValue, NULL, &type, (LPVOID)&credential->LastWritten,
+                           &count);
+    if (ret != ERROR_SUCCESS)
+        return ret;
+    else if (type != REG_BINARY)
+        return ERROR_REGISTRY_CORRUPT;
+    count = sizeof(credential->Persist);
+    ret = RegQueryValueExW(hkey, wszPersistValue, NULL, &type, (LPVOID)&credential->Persist,
+                           &count);
+    if (ret == ERROR_SUCCESS && type != REG_DWORD)
+        return ERROR_REGISTRY_CORRUPT;
+    return ret;
+}
+
 static DWORD write_credential_blob(HKEY hkey, LPCWSTR target_name, DWORD type,
                                    const BYTE key_data[KEY_SIZE],
                                    const BYTE *credential_blob, DWORD credential_blob_size)
@@ -201,6 +382,100 @@ static LPWSTR get_key_name_for_target(LPCWSTR target_name, DWORD type)
         if (*p == '\\') *p = '_';
 
     return key_name;
+}
+
+/******************************************************************************
+ * CredFree [ADVAPI32.@]
+ */
+VOID WINAPI CredFree(PVOID Buffer)
+{
+    HeapFree(GetProcessHeap(), 0, Buffer);
+}
+
+/******************************************************************************
+ * CredReadW [ADVAPI32.@]
+ */
+BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW *Credential)
+{
+    HKEY hkeyMgr;
+    HKEY hkeyCred;
+    DWORD ret;
+    LPWSTR key_name;
+    DWORD len;
+    BYTE key_data[KEY_SIZE];
+
+    TRACE("(%s, %d, 0x%x, %p)\n", debugstr_w(TargetName), Type, Flags, Credential);
+
+    if (!TargetName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (Type != CRED_TYPE_GENERIC && Type != CRED_TYPE_DOMAIN_PASSWORD)
+    {
+        FIXME("unhandled type %d\n", Type);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (Flags)
+    {
+        FIXME("unhandled flags 0x%x\n", Flags);
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+
+    ret = open_cred_mgr_key(&hkeyMgr, FALSE);
+    if (ret != ERROR_SUCCESS)
+    {
+        WARN("couldn't open/create manager key, error %d\n", ret);
+        SetLastError(ERROR_NO_SUCH_LOGON_SESSION);
+        return FALSE;
+    }
+
+    ret = get_cred_mgr_encryption_key(hkeyMgr, key_data);
+    if (ret != ERROR_SUCCESS)
+    {
+        RegCloseKey(hkeyMgr);
+        SetLastError(ret);
+        return FALSE;
+    }
+
+    key_name = get_key_name_for_target(TargetName, Type);
+    ret = RegOpenKeyExW(hkeyMgr, key_name, 0, KEY_QUERY_VALUE, &hkeyCred);
+    HeapFree(GetProcessHeap(), 0, key_name);
+    if (ret != ERROR_SUCCESS)
+    {
+        TRACE("credentials for target name %s not found\n", debugstr_w(TargetName));
+        SetLastError(ERROR_NOT_FOUND);
+        return FALSE;
+    }
+
+    len = sizeof(**Credential);
+    ret = read_credential(hkeyCred, NULL, key_data, NULL, &len);
+    if (ret == ERROR_SUCCESS)
+    {
+        *Credential = HeapAlloc(GetProcessHeap(), 0, len);
+        if (*Credential)
+        {
+            len = sizeof(**Credential);
+            ret = read_credential(hkeyCred, *Credential, key_data,
+                                  (char *)(*Credential + 1), &len);
+        }
+        else
+            ret = ERROR_OUTOFMEMORY;
+    }
+
+    RegCloseKey(hkeyCred);
+    RegCloseKey(hkeyMgr);
+
+    if (ret != ERROR_SUCCESS)
+    {
+        SetLastError(ret);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /******************************************************************************
