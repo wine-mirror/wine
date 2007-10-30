@@ -25,6 +25,31 @@
 
 #define expect_color(expectedcolor,gotcolor) ok((fabs(expectedcolor.r-gotcolor.r)<admitted_error)&&(fabs(expectedcolor.g-gotcolor.g)<admitted_error)&&(fabs(expectedcolor.b-gotcolor.b)<admitted_error)&&(fabs(expectedcolor.a-gotcolor.a)<admitted_error),"Expected Color= (%f, %f, %f, %f)\n , Got Color= (%f, %f, %f, %f)\n", expectedcolor.r, expectedcolor.g, expectedcolor.b, expectedcolor.a, gotcolor.r, gotcolor.g, gotcolor.b, gotcolor.a);
 
+#define expect_mat(expectedmat,gotmat)\
+{ \
+    int i,j,equal=1; \
+    for (i=0; i<4; i++)\
+        {\
+         for (j=0; j<4; j++)\
+             {\
+              if (fabs(expectedmat.m[i][j]-gotmat.m[i][j])>admitted_error)\
+                 {\
+                  equal=0;\
+                 }\
+             }\
+        }\
+    ok(equal, "Expected matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n)\n\n" \
+       "Got matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f)\n", \
+       expectedmat.m[0][0],expectedmat.m[0][1],expectedmat.m[0][2],expectedmat.m[0][3], \
+       expectedmat.m[1][0],expectedmat.m[1][1],expectedmat.m[1][2],expectedmat.m[1][3], \
+       expectedmat.m[2][0],expectedmat.m[2][1],expectedmat.m[2][2],expectedmat.m[2][3], \
+       expectedmat.m[3][0],expectedmat.m[3][1],expectedmat.m[3][2],expectedmat.m[3][3], \
+       gotmat.m[0][0],gotmat.m[0][1],gotmat.m[0][2],gotmat.m[0][3], \
+       gotmat.m[1][0],gotmat.m[1][1],gotmat.m[1][2],gotmat.m[1][3], \
+       gotmat.m[2][0],gotmat.m[2][1],gotmat.m[2][2],gotmat.m[2][3], \
+       gotmat.m[3][0],gotmat.m[3][1],gotmat.m[3][2],gotmat.m[3][3]); \
+}
+
 #define expect_vec(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error),"Expected Vector= (%f, %f)\n , Got Vector= (%f, %f)\n", expectedvec.x, expectedvec.y, gotvec.x, gotvec.y);
 
 #define expect_vec3(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error)&&(fabs(expectedvec.z-gotvec.z)<admitted_error),"Expected Vector= (%f, %f, %f)\n , Got Vector= (%f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, gotvec.x, gotvec.y, gotvec.z);
@@ -123,7 +148,7 @@ static void D3DXColorTest(void)
 
 static void D3DXMatrixTest(void)
 {
-    D3DXMATRIX mat;
+    D3DXMATRIX expectedmat, gotmat, mat, mat2, mat3;
     BOOL expected, got;
     FLOAT expectedfloat, gotfloat;
 
@@ -134,6 +159,13 @@ static void D3DXMatrixTest(void)
     U(mat).m[0][0] = 10.0f; U(mat).m[1][1] = 20.0f; U(mat).m[2][2] = 30.0f;
     U(mat).m[3][3] = -40.0f;
 
+    mat2.m[0][0] = 1.0f; mat2.m[1][0] = 2.0f; mat2.m[2][0] = 3.0f;
+    mat2.m[3][0] = 4.0f; mat2.m[0][1] = 5.0f; mat2.m[1][1] = 6.0f;
+    mat2.m[2][1] = 7.0f; mat2.m[3][1] = 8.0f; mat2.m[0][2] = -8.0f;
+    mat2.m[1][2] = -7.0f; mat2.m[2][2] = -6.0f; mat2.m[3][2] = -5.0f;
+    mat2.m[0][3] = -4.0f; mat2.m[1][3] = -3.0f; mat2.m[2][3] = -2.0f;
+    mat2.m[3][3] = -1.0f;
+
 /*____________D3DXMatrixfDeterminant_____________*/
     expectedfloat = -147888.0f;
     gotfloat = D3DXMatrixfDeterminant(&mat);
@@ -141,20 +173,28 @@ static void D3DXMatrixTest(void)
 
 /*____________D3DXMatrixIsIdentity______________*/
     expected = FALSE;
-    got = D3DXMatrixIsIdentity(&mat);
+    got = D3DXMatrixIsIdentity(&mat3);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
-    D3DXMatrixIdentity(&mat);
+    D3DXMatrixIdentity(&mat3);
     expected = TRUE;
-    got = D3DXMatrixIsIdentity(&mat);
+    got = D3DXMatrixIsIdentity(&mat3);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
-    U(mat).m[0][0] = 0.000009f;
+    U(mat3).m[0][0] = 0.000009f;
     expected = FALSE;
-    got = D3DXMatrixIsIdentity(&mat);
+    got = D3DXMatrixIsIdentity(&mat3);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
     /* Test the NULL case */
     expected = FALSE;
     got = D3DXMatrixIsIdentity(NULL);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
+
+/*____________D3DXMatrixMultiply______________*/
+    expectedmat.m[0][0] = 73.0f; expectedmat.m[0][1] = 193.0f; expectedmat.m[0][2] = -197.0f; expectedmat.m[0][3] = -77.0f;
+    expectedmat.m[1][0] = 231.0f; expectedmat.m[1][1] = 551.0f; expectedmat.m[1][2] = -489.0f; expectedmat.m[1][3] = -169.0;
+    expectedmat.m[2][0] = 239.0f; expectedmat.m[2][1] = 523.0f; expectedmat.m[2][2] = -400.0f; expectedmat.m[2][3] = -116.0f;
+    expectedmat.m[3][0] = -164.0f; expectedmat.m[3][1] = -320.0f; expectedmat.m[3][2] = 187.0f; expectedmat.m[3][3] = 31.0f;
+    D3DXMatrixMultiply(&gotmat,&mat,&mat2);
+    expect_mat(expectedmat,gotmat);
 }
 
 static void D3DXPlaneTest(void)

@@ -44,6 +44,20 @@ FLOAT WINAPI D3DXMatrixfDeterminant(CONST D3DXMATRIX *pm)
     return det;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, CONST D3DXMATRIX *pm2)
+{
+    int i,j;
+
+    for (i=0; i<4; i++)
+    {
+     for (j=0; j<4; j++)
+     {
+      pout->m[i][j] = pm1->m[i][0] * pm2->m[0][j] + pm1->m[i][1] * pm2->m[1][j] + pm1->m[i][2] * pm2->m[2][j] + pm1->m[i][3] * pm2->m[3][j];
+     }
+    }
+    return pout;
+}
+
 /*_________________D3DXQUATERNION________________*/
 
 D3DXQUATERNION* WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)

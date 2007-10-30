@@ -21,7 +21,7 @@
 @ stdcall D3DXVec4BaryCentric(ptr ptr ptr ptr long long)
 @ stdcall D3DXVec4Transform(ptr ptr ptr)
 @ stdcall D3DXMatrixfDeterminant(ptr)
-@ stub D3DXMatrixMultiply
+@ stdcall D3DXMatrixMultiply(ptr ptr ptr)
 @ stub D3DXMatrixTranspose
 @ stub D3DXMatrixInverse
 @ stub D3DXMatrixScaling
