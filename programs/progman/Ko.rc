@@ -3,7 +3,7 @@
  *
  * Copyright 1996 Ulrich Schmid
  * Copyright 2002 Sylvain Petreolle
- * Copyright 2006 YunSong Hwang
+ * Copyright 2006,2007 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 
 /* Menu */
 
-MAIN_MENU MENU LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
+MAIN_MENU MENU LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 {
 POPUP "파일(&F)" {
    MENUITEM "새 작업(&N)...",              PM_NEW
@@ -69,6 +69,7 @@ DIALOG_NEW DIALOG 0, 0, 170, 65
 LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "새 작업"
+FONT 9, "MS Shell Dlg"
 {
 RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
 LTEXT         "풀그림 그룹(&G)",   PM_NEW_GROUP,    20, 18,  80, 15
@@ -85,6 +86,7 @@ PUSHBUTTON    "도움말(&H)",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "풀그림 이동"
+FONT 9, "MS Shell Dlg"
 {
 LTEXT         "풀그림 이동:",    IDIGNORE,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
@@ -103,6 +105,7 @@ DIALOG_COPY DIALOG 0, 0, 250, 65
 LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "풀그림 복사"
+FONT 9, "MS Shell Dlg"
 {
 LTEXT         "풀그림 복사:",    IDIGNORE,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
@@ -121,6 +124,7 @@ DIALOG_GROUP DIALOG 0, 0, 230, 65
 LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "풀그림 그룹 속성"
+FONT 9, "MS Shell Dlg"
 {
 LTEXT     "설명(&D):", PM_DESCRIPTION_TXT,   05, 18,  50, 10
 EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
@@ -137,6 +141,7 @@ DIALOG_PROGRAM DIALOG 0, 0, 250, 105
 LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "풀그림 속성"
+FONT 9, "MS Shell Dlg"
 {
 LTEXT         "설명(&D):",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
 EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
@@ -162,8 +167,9 @@ DIALOG_SYMBOL DIALOG 0, 0, 200, 85
 LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "아이콘 바꾸기"
+FONT 9, "MS Shell Dlg"
 {
-LTEXT     "파일 이름(&F):",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+LTEXT     "파일이름(&F):",    PM_ICON_FILE_TXT,    5, 15,  40, 10
 EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
 LTEXT     "현재 아이콘(&I):", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
 COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
@@ -180,6 +186,7 @@ DIALOG_EXECUTE DIALOG 0, 0, 200, 85
 LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "풀그림 실행"
+FONT 9, "MS Shell Dlg"
 {
 LTEXT     "명령 라인(&C):", IDIGNORE,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
