@@ -25,7 +25,7 @@
 @ stdcall D3DXMatrixTranspose(ptr ptr)
 @ stub D3DXMatrixInverse
 @ stdcall D3DXMatrixScaling(ptr long long long)
-@ stub D3DXMatrixTranslation
+@ stdcall D3DXMatrixTranslation(ptr long long long)
 @ stub D3DXMatrixRotationX
 @ stub D3DXMatrixRotationY
 @ stub D3DXMatrixRotationZ

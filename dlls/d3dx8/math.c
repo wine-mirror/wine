@@ -67,6 +67,15 @@ D3DXMATRIX* WINAPI D3DXMatrixScaling(D3DXMATRIX *pout, FLOAT sx, FLOAT sy, FLOAT
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixTranslation(D3DXMATRIX *pout, FLOAT x, FLOAT y, FLOAT z)
+{
+    D3DXMatrixIdentity(pout);
+    pout->m[3][0] = x;
+    pout->m[3][1] = y;
+    pout->m[3][2] = z;
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm)
 {
     int i,j;

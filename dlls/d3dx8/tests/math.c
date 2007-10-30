@@ -204,6 +204,14 @@ static void D3DXMatrixTest(void)
     D3DXMatrixScaling(&gotmat,0.69f,0.53f,4.11f);
     expect_mat(expectedmat,gotmat);
 
+/*____________D3DXMatrixTranslation______________*/
+    expectedmat.m[0][0] = 1.0f; expectedmat.m[0][1] = 0.0f; expectedmat.m[0][2] = 0.0f; expectedmat.m[0][3] = 0.0f;
+    expectedmat.m[1][0] = 0.0; expectedmat.m[1][1] = 1.0f; expectedmat.m[1][2] = 0.0f; expectedmat.m[1][3] = 0.0f;
+    expectedmat.m[2][0] = 0.0f; expectedmat.m[2][1] = 0.0f; expectedmat.m[2][2] = 1.0f; expectedmat.m[2][3] = 0.0f;
+    expectedmat.m[3][0] = 0.69f; expectedmat.m[3][1] = 0.53f; expectedmat.m[3][2] = 4.11f; expectedmat.m[3][3] = 1.0f;
+    D3DXMatrixTranslation(&gotmat,0.69f,0.53f,4.11f);
+    expect_mat(expectedmat,gotmat);
+
 /*____________D3DXMatrixTranspose______________*/
     expectedmat.m[0][0] = 10.0f; expectedmat.m[0][1] = 11.0f; expectedmat.m[0][2] = 19.0f; expectedmat.m[0][3] = 2.0f;
     expectedmat.m[1][0] = 5.0; expectedmat.m[1][1] = 20.0f; expectedmat.m[1][2] = -21.0f; expectedmat.m[1][3] = 3.0f;
