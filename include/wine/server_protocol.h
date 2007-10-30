@@ -221,6 +221,7 @@ struct object_attributes
 {
     obj_handle_t rootdir;
     data_size_t sd_len;
+    data_size_t name_len;
 
 
 };
@@ -1010,6 +1011,7 @@ struct create_file_request
     int          create;
     unsigned int options;
     unsigned int attrs;
+    /* VARARG(objattr,object_attributes); */
     /* VARARG(filename,string); */
 };
 struct create_file_reply
@@ -4877,6 +4879,6 @@ union generic_reply
     struct set_completion_info_reply set_completion_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 321
+#define SERVER_PROTOCOL_VERSION 323
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

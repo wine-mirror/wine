@@ -1275,6 +1275,9 @@ static void dump_create_file_request( const struct create_file_request *req )
     fprintf( stderr, " create=%d,", req->create );
     fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " attrs=%08x,", req->attrs );
+    fprintf( stderr, " objattr=" );
+    dump_varargs_object_attributes( cur_size );
+    fputc( ',', stderr );
     fprintf( stderr, " filename=" );
     dump_varargs_string( cur_size );
 }
