@@ -148,8 +148,8 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
     {
         struct user_thread_info *thread_info = get_user_thread_info();
 
-        assert( !thread_info->desktop );
-        thread_info->desktop = full_parent ? full_parent : handle;
+        if (!thread_info->desktop) thread_info->desktop = full_parent ? full_parent : handle;
+        else assert( full_parent == thread_info->desktop );
         if (full_parent && !USER_Driver->pCreateDesktopWindow( thread_info->desktop ))
             ERR( "failed to create desktop window\n" );
     }
