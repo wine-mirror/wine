@@ -252,6 +252,20 @@ static const struct message insert_focus_seq[] = {
     { 0 }
 };
 
+static const struct message delete_focus_seq[] = {
+    { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { TCM_DELETEITEM, sent|wparam|lparam, 1, 0 },
+    { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { TCM_SETCURFOCUS, sent|wparam|lparam, -1, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { TCM_DELETEITEM, sent|wparam|lparam, 0, 0 },
+    { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
 
 static HWND
 create_tabcontrol (DWORD style, DWORD mask)
@@ -899,6 +913,59 @@ static void test_insert_focus(HWND parent_wnd)
     DestroyWindow(hTab);
 }
 
+static void test_delete_focus(HWND parent_wnd)
+{
+    HWND hTab;
+    INT nTabsRetrieved;
+    INT r;
+
+    ok(parent_wnd != NULL, "no parent window!\n");
+
+    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, 2);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    nTabsRetrieved = SendMessage(hTab, TCM_GETITEMCOUNT, 0, 0);
+    expect(2, nTabsRetrieved);
+
+    r = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
+    todo_wine {
+        expect(0, r);
+    }
+
+    r = SendMessage(hTab, TCM_DELETEITEM, 1, 0);
+    expect(1, r);
+
+    nTabsRetrieved = SendMessage(hTab, TCM_GETITEMCOUNT, 0, 0);
+    expect(1, nTabsRetrieved);
+
+    r = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
+    todo_wine {
+        expect(0, r);
+    }
+
+    r = SendMessage(hTab, TCM_SETCURFOCUS, -1, 0);
+    expect(0, r);
+
+    r = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
+    expect(-1, r);
+
+    r = SendMessage(hTab, TCM_DELETEITEM, 0, 0);
+    expect(1, r);
+
+    nTabsRetrieved = SendMessage(hTab, TCM_GETITEMCOUNT, 0, 0);
+    expect(0, nTabsRetrieved);
+
+    r = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
+    expect(-1, r);
+
+    ok_sequence(sequences, TAB_SEQ_INDEX, delete_focus_seq, "delete_focus test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "delete_focus parent test sequence", FALSE);
+
+    DestroyWindow(hTab);
+}
+
 START_TEST(tab)
 {
     HWND parent_wnd;
@@ -933,6 +1000,7 @@ START_TEST(tab)
     test_getters_setters(parent_wnd, 5);
 
     test_insert_focus(parent_wnd);
+    test_delete_focus(parent_wnd);
 
     DestroyWindow(parent_wnd);
 }
