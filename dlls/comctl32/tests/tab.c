@@ -876,9 +876,7 @@ static void test_insert_focus(HWND parent_wnd)
     expect(1, nTabsRetrieved);
 
     r = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
-    todo_wine {
-        expect(0, r);
-    }
+    expect(0, r);
 
     tcNewTab.iImage = 2;
     r = SendMessage(hTab, TCM_INSERTITEM, 2, (LPARAM) &tcNewTab);
@@ -888,9 +886,7 @@ static void test_insert_focus(HWND parent_wnd)
     expect(2, nTabsRetrieved);
 
     r = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
-    todo_wine {
-        expect(0, r);
-    }
+    expect(0, r);
 
     r = SendMessage(hTab, TCM_SETCURFOCUS, -1, 0);
     expect(0, r);
@@ -903,9 +899,7 @@ static void test_insert_focus(HWND parent_wnd)
     expect(2, r);
 
     r = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
-    todo_wine {
-        expect(2, r);
-    }
+    expect(2, r);
 
     ok_sequence(sequences, TAB_SEQ_INDEX, insert_focus_seq, "insert_focus test sequence", TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "insert_focus parent test sequence", FALSE);
@@ -930,9 +924,7 @@ static void test_delete_focus(HWND parent_wnd)
     expect(2, nTabsRetrieved);
 
     r = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
-    todo_wine {
-        expect(0, r);
-    }
+    expect(0, r);
 
     r = SendMessage(hTab, TCM_DELETEITEM, 1, 0);
     expect(1, r);
@@ -941,9 +933,7 @@ static void test_delete_focus(HWND parent_wnd)
     expect(1, nTabsRetrieved);
 
     r = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
-    todo_wine {
-        expect(0, r);
-    }
+    expect(0, r);
 
     r = SendMessage(hTab, TCM_SETCURFOCUS, -1, 0);
     expect(0, r);

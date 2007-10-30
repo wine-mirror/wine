@@ -2325,11 +2325,6 @@ static void TAB_Refresh (TAB_INFO *infoPtr, HDC hdc)
 
     /* Then, draw the selected item */
     TAB_DrawItem (infoPtr, hdc, infoPtr->iSelected);
-
-    /* If we haven't set the current focus yet, set it now.
-     * Only happens when we first paint the tab controls */
-    if (infoPtr->uFocus == -1)
-      TAB_SetCurFocus(infoPtr, infoPtr->iSelected);
   }
 
   SelectObject (hdc, hOldFont);
@@ -2636,6 +2631,10 @@ TAB_InsertItemT (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnicode)
 
   TRACE("[%p]: added item %d %s\n",
         infoPtr->hwnd, iItem, debugstr_w(item->pszText));
+
+  /* If we haven't set the current focus yet, set it now. */
+  if (infoPtr->uFocus == -1)
+    TAB_SetCurFocus(infoPtr, iItem);
 
   return iItem;
 }
