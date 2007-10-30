@@ -20,7 +20,7 @@
 @ stdcall D3DXVec4CatmullRom(ptr ptr ptr ptr long)
 @ stdcall D3DXVec4BaryCentric(ptr ptr ptr ptr long long)
 @ stdcall D3DXVec4Transform(ptr ptr ptr)
-@ stub D3DXMatrixfDeterminant
+@ stdcall D3DXMatrixfDeterminant(ptr)
 @ stub D3DXMatrixMultiply
 @ stub D3DXMatrixTranspose
 @ stub D3DXMatrixInverse

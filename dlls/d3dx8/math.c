@@ -29,6 +29,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx8);
 
+/*_________________D3DXMatrix____________________*/
+
+FLOAT WINAPI D3DXMatrixfDeterminant(CONST D3DXMATRIX *pm)
+{
+    D3DXVECTOR4 minor, v1, v2, v3;
+    FLOAT det;
+
+    v1.x = pm->m[0][0]; v1.y = pm->m[1][0]; v1.z = pm->m[2][0]; v1.w = pm->m[3][0];
+    v2.x = pm->m[0][1]; v2.y = pm->m[1][1]; v2.z = pm->m[2][1]; v2.w = pm->m[3][1];
+    v3.x = pm->m[0][2]; v3.y = pm->m[1][2]; v3.z = pm->m[2][2]; v3.w = pm->m[3][2];
+    D3DXVec4Cross(&minor,&v1,&v2,&v3);
+    det =  - (pm->m[0][3] * minor.x + pm->m[1][3] * minor.y + pm->m[2][3] * minor.z + pm->m[3][3] * minor.w);
+    return det;
+}
+
 /*_________________D3DXQUATERNION________________*/
 
 D3DXQUATERNION* WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
