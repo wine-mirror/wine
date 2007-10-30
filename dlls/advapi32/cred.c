@@ -676,10 +676,40 @@ BOOL WINAPI CredEnumerateA(LPCSTR Filter, DWORD Flags, DWORD *Count,
 
 static BOOL credential_matches_filter(HKEY hkeyCred, LPCWSTR filter)
 {
+    LPWSTR target_name;
+    DWORD ret;
+    DWORD type;
+    DWORD count;
+    LPCWSTR p;
+
     if (!filter) return TRUE;
 
-    FIXME("%s\n", debugstr_w(filter));
-    return TRUE;
+    ret = RegQueryValueExW(hkeyCred, NULL, 0, &type, NULL, &count);
+    if (ret != ERROR_SUCCESS)
+        return FALSE;
+    else if (type != REG_SZ)
+        return FALSE;
+
+    target_name = HeapAlloc(GetProcessHeap(), 0, count);
+    if (!target_name)
+        return FALSE;
+    ret = RegQueryValueExW(hkeyCred, NULL, 0, &type, (LPVOID)target_name, &count);
+    if (ret != ERROR_SUCCESS || type != REG_SZ)
+    {
+        HeapFree(GetProcessHeap(), 0, target_name);
+        return FALSE;
+    }
+
+    TRACE("comparing filter %s to target name %s\n", debugstr_w(filter),
+          debugstr_w(target_name));
+
+    p = strchrW(filter, '*');
+    ret = CompareStringW(GetThreadLocale(), 0, filter,
+                         (p && !p[1] ? p - filter : -1), target_name,
+                         (p && !p[1] ? p - filter : -1)) == CSTR_EQUAL;
+
+    HeapFree(GetProcessHeap(), 0, target_name);
+    return ret;
 }
 
 /******************************************************************************
