@@ -407,7 +407,11 @@ PDH_STATUS WINAPI PdhCloseQuery( PDH_HQUERY handle )
         WaitForSingleObject( thread, INFINITE );
 
         EnterCriticalSection( &pdh_handle_cs );
-        if (query->magic != PDH_MAGIC_QUERY) return ERROR_SUCCESS;
+        if (query->magic != PDH_MAGIC_QUERY)
+        {
+            LeaveCriticalSection( &pdh_handle_cs );
+            return ERROR_SUCCESS;
+        }
         CloseHandle( query->stop );
         CloseHandle( query->thread );
         query->thread = NULL;
@@ -530,7 +534,11 @@ PDH_STATUS WINAPI PdhCollectQueryDataEx( PDH_HQUERY handle, DWORD interval, HAND
         WaitForSingleObject( thread, INFINITE );
 
         EnterCriticalSection( &pdh_handle_cs );
-        if (query->magic != PDH_MAGIC_QUERY) return PDH_INVALID_HANDLE;
+        if (query->magic != PDH_MAGIC_QUERY)
+        {
+            LeaveCriticalSection( &pdh_handle_cs );
+            return PDH_INVALID_HANDLE;
+        }
         CloseHandle( query->thread );
         query->thread = NULL;
     }
