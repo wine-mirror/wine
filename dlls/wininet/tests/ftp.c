@@ -668,17 +668,19 @@ START_TEST(ftp)
     hInternet = InternetOpen("winetest", 0, NULL, NULL, 0);
     ok(hInternet != NULL, "InternetOpen failed: %u\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
     hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", NULL, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-    ok(hFtp != NULL, "InternetOpen failed: %u\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    hHttp = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
-    ok(hFtp != NULL, "InternetOpen failed: %u\n", GetLastError());
-
     if (!hFtp)
     {
+        InternetCloseHandle(hInternet);
         skip("No ftp connection could be made to ftp.winehq.org\n");
+        return;
+    }
+    hHttp = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    if (!hHttp)
+    {
+        InternetCloseHandle(hFtp);
+        InternetCloseHandle(hInternet);
+        skip("No http connection could be made to www.winehq.org\n");
         return;
     }
 

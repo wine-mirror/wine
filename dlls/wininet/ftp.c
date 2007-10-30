@@ -2062,7 +2062,6 @@ lerror:
 
     if (!bSuccess && handle)
     {
-        WININET_Release( &hIC->hdr );
         WININET_FreeHandle( handle );
         handle = NULL;
     }
