@@ -319,7 +319,7 @@ static HRESULT _protocol_start(unsigned line, IInternetProtocol *protocol, LPCWS
     }else {
         CHECK_CALLED(GetBindInfo);
         if(test_protocol == MK_PROTOCOL)
-            CHECK_CALLED(ReportProgress_DIRECTBIND);
+            SET_CALLED(ReportProgress_DIRECTBIND);
         CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         if(expect_mime)
             CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
