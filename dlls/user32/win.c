@@ -1945,6 +1945,8 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
             break;
         case GWL_EXSTYLE:
             req->flags = SET_WIN_EXSTYLE;
+            /* WS_EX_TOPMOST can only be changed through SetWindowPos */
+            newval = (newval & ~WS_EX_TOPMOST) | (wndPtr->dwExStyle & WS_EX_TOPMOST);
             req->ex_style = newval;
             break;
         case GWLP_ID:

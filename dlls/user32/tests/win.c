@@ -993,12 +993,9 @@ static void test_shell_window(void)
     /* passes on Win XP, but not on Win98
     ok(!ret, "third call to SetShellWindow(hwnd1)\n"); */
 
-    todo_wine
-    {
-        SetWindowLong(hwnd1, GWL_EXSTYLE, GetWindowLong(hwnd1,GWL_EXSTYLE)|WS_EX_TOPMOST);
-        ret = GetWindowLong(hwnd1,GWL_EXSTYLE)&WS_EX_TOPMOST? TRUE: FALSE;
-        ok(!ret, "SetWindowExStyle(hwnd1, WS_EX_TOPMOST)\n");
-    }
+    SetWindowLong(hwnd1, GWL_EXSTYLE, GetWindowLong(hwnd1,GWL_EXSTYLE)|WS_EX_TOPMOST);
+    ret = GetWindowLong(hwnd1,GWL_EXSTYLE)&WS_EX_TOPMOST? TRUE: FALSE;
+    ok(!ret, "SetWindowExStyle(hwnd1, WS_EX_TOPMOST)\n");
 
     ret = DestroyWindow(hwnd1);
     ok(ret, "DestroyWindow(hwnd1)\n");
