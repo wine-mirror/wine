@@ -702,7 +702,6 @@ static void write_method_proto(const type_t *iface)
   LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
   {
     const var_t *def = cur->def;
-    const var_t *cas = is_callas(def->attrs);
 
     if (!is_local(def->attrs)) {
       /* proxy prototype */
@@ -721,30 +720,69 @@ static void write_method_proto(const type_t *iface)
       fprintf(header, "    PRPC_MESSAGE pRpcMessage,\n");
       fprintf(header, "    DWORD* pdwStubPhase);\n");
     }
+  }
+}
+
+void write_locals(FILE *fp, const type_t *iface, int body)
+{
+  static const char comment[]
+    = "/* WIDL-generated stub.  You must provide an implementation for this.  */";
+  const func_list_t *funcs = iface->funcs;
+  const func_t *cur;
+
+  if (!is_object(iface->attrs) || !funcs)
+    return;
+
+  LIST_FOR_EACH_ENTRY(cur, funcs, const func_t, entry) {
+    const var_t *def = cur->def;
+    const var_t *cas = is_callas(def->attrs);
+
     if (cas) {
       const func_t *m;
-      LIST_FOR_EACH_ENTRY( m, iface->funcs, const func_t, entry )
-          if (!strcmp(m->def->name, cas->name)) break;
+      LIST_FOR_EACH_ENTRY(m, iface->funcs, const func_t, entry)
+        if (!strcmp(m->def->name, cas->name))
+          break;
       if (&m->entry != iface->funcs) {
         const var_t *mdef = m->def;
         /* proxy prototype - use local prototype */
-        write_type_decl_left(header, mdef->type);
-        fprintf(header, " CALLBACK %s_", iface->name);
-        write_name(header, mdef);
-        fprintf(header, "_Proxy(\n");
-        write_args(header, m->args, iface->name, 1, TRUE);
-        fprintf(header, ");\n");
+        write_type_decl_left(fp, mdef->type);
+        fprintf(fp, " CALLBACK %s_", iface->name);
+        write_name(fp, mdef);
+        fprintf(fp, "_Proxy(\n");
+        write_args(fp, m->args, iface->name, 1, TRUE);
+        fprintf(fp, ")");
+        if (body) {
+          type_t *rt = mdef->type;
+          fprintf(fp, "\n{\n");
+          fprintf(fp, "    %s\n", comment);
+          if (rt->name && strcmp(rt->name, "HRESULT") == 0)
+            fprintf(fp, "    return E_NOTIMPL;\n");
+          else if (rt->type) {
+            fprintf(fp, "    ");
+            write_type_decl(fp, rt, "rv");
+            fprintf(fp, ";\n");
+            fprintf(fp, "    memset(&rv, 0, sizeof rv);\n");
+            fprintf(fp, "    return rv;\n");
+          }
+          fprintf(fp, "}\n\n");
+        }
+        else
+          fprintf(fp, ";\n");
         /* stub prototype - use remotable prototype */
-        write_type_decl_left(header, def->type);
-        fprintf(header, " __RPC_STUB %s_", iface->name);
-        write_name(header, mdef);
-        fprintf(header, "_Stub(\n");
-        write_args(header, cur->args, iface->name, 1, TRUE);
-        fprintf(header, ");\n");
+        write_type_decl_left(fp, def->type);
+        fprintf(fp, " __RPC_STUB %s_", iface->name);
+        write_name(fp, mdef);
+        fprintf(fp, "_Stub(\n");
+        write_args(fp, cur->args, iface->name, 1, TRUE);
+        fprintf(fp, ")");
+        if (body)
+          /* Remotable methods must all return HRESULTs.  */
+          fprintf(fp, "\n{\n    %s\n    return E_NOTIMPL;\n}\n\n", comment);
+        else
+          fprintf(fp, ";\n");
       }
-      else {
-        parser_warning("invalid call_as attribute (%s -> %s)\n", def->name, cas->name);
-      }
+      else
+        error_loc("invalid call_as attribute (%s -> %s)\n", def->name, cas->name);
     }
   }
 }
@@ -894,6 +932,7 @@ static void write_com_interface(type_t *iface)
   fprintf(header, "#endif\n");
   fprintf(header, "\n");
   write_method_proto(iface);
+  write_locals(header, iface, FALSE);
   fprintf(header,"\n#endif  /* __%s_INTERFACE_DEFINED__ */\n\n", iface->name);
 }
 

@@ -62,6 +62,7 @@ static const char usage[] =
 "   -h          Generate headers\n"
 "   -H file     Name of header file (default is infile.h)\n"
 "   -I path     Set include search dir to path (multiple -I allowed)\n"
+"   --local-stubs=file  Write empty stubs for call_as/local methods to file\n"
 "   -N          Do not preprocess input\n"
 "   --oldnames  Use old naming conventions\n"
 "   -p          Generate proxy\n"
@@ -108,6 +109,7 @@ int old_names = 0;
 
 char *input_name;
 char *header_name;
+char *local_stubs_name;
 char *header_token;
 char *typelib_name;
 char *dlldata_name;
@@ -126,6 +128,7 @@ const char *prefix_server = "";
 int line_number = 1;
 
 FILE *header;
+FILE *local_stubs;
 FILE *proxy;
 FILE *idfile;
 
@@ -135,6 +138,7 @@ enum {
     OLDNAMES_OPTION = CHAR_MAX + 1,
     DLLDATA_OPTION,
     DLLDATA_ONLY_OPTION,
+    LOCAL_STUBS_OPTION,
     PREFIX_ALL_OPTION,
     PREFIX_CLIENT_OPTION,
     PREFIX_SERVER_OPTION
@@ -145,6 +149,7 @@ static const char short_options[] =
 static const struct option long_options[] = {
     { "dlldata", required_argument, 0, DLLDATA_OPTION },
     { "dlldata-only", no_argument, 0, DLLDATA_ONLY_OPTION },
+    { "local-stubs", required_argument, 0, LOCAL_STUBS_OPTION },
     { "oldnames", no_argument, 0, OLDNAMES_OPTION },
     { "prefix-all", required_argument, 0, PREFIX_ALL_OPTION },
     { "prefix-client", required_argument, 0, PREFIX_CLIENT_OPTION },
@@ -350,6 +355,10 @@ int main(int argc,char *argv[])
       do_everything = 0;
       do_dlldata = 1;
       break;
+    case LOCAL_STUBS_OPTION:
+      do_everything = 0;
+      local_stubs_name = xstrdup(optarg);
+      break;
     case OLDNAMES_OPTION:
       old_names = 1;
       break;
@@ -554,6 +563,17 @@ int main(int argc,char *argv[])
     start_cplusplus_guard(header);
   }
 
+  if (local_stubs_name) {
+    local_stubs = fopen(local_stubs_name, "w");
+    if (!local_stubs) {
+      fprintf(stderr, "Could not open %s for output\n", local_stubs_name);
+      return 1;
+    }
+    fprintf(local_stubs, "/* call_as/local stubs for %s */\n\n", input_name);
+    fprintf(local_stubs, "#include <objbase.h>\n");
+    fprintf(local_stubs, "#include \"%s\"\n\n", header_name);
+  }
+
   if (do_idfile) {
     idfile_token = make_token(idfile_name);
 
@@ -587,6 +607,10 @@ int main(int argc,char *argv[])
     fclose(header);
   }
 
+  if (local_stubs) {
+    fclose(local_stubs);
+  }
+
   if (do_idfile) {
     fprintf(idfile, "\n");
     end_cplusplus_guard(idfile);
@@ -602,6 +626,8 @@ int main(int argc,char *argv[])
 
   /* Everything has been done successfully, don't delete any files.  */
   set_everything(FALSE);
+  local_stubs_name = NULL;
+
   return 0;
 }
 
@@ -612,6 +638,8 @@ static void rm_tempfile(void)
     unlink(temp_name);
   if (do_header)
     unlink(header_name);
+  if (local_stubs_name)
+    unlink(local_stubs_name);
   if (do_client)
     unlink(client_name);
   if (do_server)

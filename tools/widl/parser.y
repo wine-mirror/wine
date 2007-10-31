@@ -816,6 +816,7 @@ interfacedef: interfacehdr inherit
 						  $$->funcs = $4;
 						  compute_method_indexes($$);
 						  if (!parse_only && do_header) write_interface($$);
+						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
 						  if (!parse_only && do_idfile) write_iid($$);
 						  pointer_default = $1.old_pointer_default;
 						}
@@ -828,6 +829,7 @@ interfacedef: interfacehdr inherit
 						  $$->funcs = $6;
 						  compute_method_indexes($$);
 						  if (!parse_only && do_header) write_interface($$);
+						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
 						  if (!parse_only && do_idfile) write_iid($$);
 						  pointer_default = $1.old_pointer_default;
 						}

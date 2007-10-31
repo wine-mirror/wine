@@ -48,6 +48,7 @@ extern int old_names;
 
 extern char *input_name;
 extern char *header_name;
+extern char *local_stubs_name;
 extern char *typelib_name;
 extern char *dlldata_name;
 extern char *proxy_name;
@@ -64,6 +65,7 @@ extern int line_number;
 extern int char_number;
 
 extern FILE* header;
+extern FILE* local_stubs;
 extern FILE* idfile;
 
 extern void write_proxies(ifref_list_t *ifaces);
