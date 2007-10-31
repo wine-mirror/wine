@@ -135,6 +135,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "_NET_WM_PID",
     "_NET_WM_PING",
     "_NET_WM_STATE",
+    "_NET_WM_STATE_ABOVE",
     "_NET_WM_STATE_FULLSCREEN",
     "_NET_WM_STATE_SKIP_PAGER",
     "_NET_WM_STATE_SKIP_TASKBAR",

@@ -181,6 +181,7 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
     static const unsigned int state_atoms[NB_WM_STATES] =
     {
         XATOM__NET_WM_STATE_FULLSCREEN,
+        XATOM__NET_WM_STATE_ABOVE,
         XATOM__NET_WM_STATE_SKIP_PAGER,
         XATOM__NET_WM_STATE_SKIP_TASKBAR
     };
@@ -195,6 +196,8 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
         new_state |= (1 << WM_STATE_FULLSCREEN);
 
     ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
+    if (ex_style & WS_EX_TOPMOST)
+        new_state |= (1 << WM_STATE_ABOVE);
     if (ex_style & WS_EX_TOOLWINDOW)
         new_state |= (1 << WM_STATE_SKIP_TASKBAR) | (1 << WM_STATE_SKIP_PAGER);
 
