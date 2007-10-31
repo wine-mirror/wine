@@ -45,6 +45,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #define NT_SUCCESS(status) (status == STATUS_SUCCESS)
 
+/* helper function to retrieve active length of an ACL */
+static size_t acl_bytesInUse(PACL pAcl)
+{
+    int i;
+    size_t bytesInUse = sizeof(ACL);
+    PACE_HEADER ace = (PACE_HEADER) (pAcl + 1);
+    for (i = 0; i < pAcl->AceCount; i++)
+    {
+	bytesInUse += ace->AceSize;
+	ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
+    }
+    return bytesInUse;
+}
+
 /* helper function to copy an ACL */
 static BOOLEAN copy_acl(DWORD nDestinationAclLength, PACL pDestinationAcl, PACL pSourceAcl)
 {
@@ -655,7 +669,7 @@ NTSTATUS WINAPI RtlGetSaclSecurityDescriptor(
 	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
 
 	TRACE("(%p,%p,%p,%p)\n",
-	pSecurityDescriptor, lpbSaclPresent, *pSacl, lpbSaclDefaulted);
+	pSecurityDescriptor, lpbSaclPresent, pSacl, lpbSaclDefaulted);
 
 	if (lpsd->Revision != SECURITY_DESCRIPTOR_REVISION)
 	  return STATUS_UNKNOWN_REVISION;
@@ -1553,9 +1567,9 @@ NtAccessCheck(
         RtlGetGroupSecurityDescriptor( SecurityDescriptor, &group, &defaulted );
         sd.group_len = RtlLengthSid( group );
         RtlGetSaclSecurityDescriptor( SecurityDescriptor, &present, &sacl, &defaulted );
-        sd.sacl_len = ((present && sacl) ? sacl->AclSize : 0);
+        sd.sacl_len = ((present && sacl) ? acl_bytesInUse(sacl) : 0);
         RtlGetDaclSecurityDescriptor( SecurityDescriptor, &present, &dacl, &defaulted );
-        sd.dacl_len = ((present && dacl) ? dacl->AclSize : 0);
+        sd.dacl_len = ((present && dacl) ? acl_bytesInUse(dacl) : 0);
 
         wine_server_add_data( req, &sd, sizeof(sd) );
         wine_server_add_data( req, owner, sd.owner_len );
@@ -1637,7 +1651,7 @@ NTSTATUS WINAPI NtSetSecurityObject(HANDLE Handle,
     {
         status = RtlGetSaclSecurityDescriptor( SecurityDescriptor, &present, &sacl, &defaulted );
         if (status != STATUS_SUCCESS) return status;
-        sd.sacl_len = (sacl && present) ? sacl->AclSize : 0;
+        sd.sacl_len = (sacl && present) ? acl_bytesInUse(sacl) : 0;
         sd.control |= SE_SACL_PRESENT;
     }
 
@@ -1645,7 +1659,7 @@ NTSTATUS WINAPI NtSetSecurityObject(HANDLE Handle,
     {
         status = RtlGetDaclSecurityDescriptor( SecurityDescriptor, &present, &dacl, &defaulted );
         if (status != STATUS_SUCCESS) return status;
-        sd.dacl_len = (dacl && present) ? dacl->AclSize : 0;
+        sd.dacl_len = (dacl && present) ? acl_bytesInUse(dacl) : 0;
         sd.control |= SE_DACL_PRESENT;
     }
 
@@ -1745,23 +1759,11 @@ NTSTATUS WINAPI RtlQueryInformationAcl(
                 status = STATUS_INVALID_PARAMETER;
             else
             {
-                INT i;
-                PACE_HEADER ace;
-
                 paclsize->AceCount = pAcl->AceCount;
-
-                paclsize->AclBytesInUse = 0;
-		ace = (PACE_HEADER) (pAcl + 1);
-
-                for (i = 0; i < pAcl->AceCount; i++)
-                {
-                    paclsize->AclBytesInUse += ace->AceSize;
-		    ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
-                }
-
+                paclsize->AclBytesInUse = acl_bytesInUse(pAcl);
 		if (pAcl->AclSize < paclsize->AclBytesInUse)
                 {
-                    WARN("Acl has %d bytes free\n", paclsize->AclBytesFree);
+                    WARN("Acl uses %d bytes, but only has %d allocated!  Returning smaller of the two values.\n", pAcl->AclSize, paclsize->AclBytesInUse);
                     paclsize->AclBytesFree = 0;
                     paclsize->AclBytesInUse = pAcl->AclSize;
                 }
