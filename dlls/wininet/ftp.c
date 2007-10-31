@@ -4,6 +4,7 @@
  * Copyright 1999 Corel Corporation
  * Copyright 2004 Mike McCormack for CodeWeavers
  * Copyright 2004 Kevin Koltzau
+ * Copyright 2007 Hans Leidekker
  *
  * Ulrich Czekalla
  * Noureddine Jemmali
@@ -1863,10 +1864,34 @@ lend:
 BOOL WINAPI FtpCommandA( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags,
                          LPCSTR lpszCommand, DWORD_PTR dwContext, HINTERNET* phFtpCommand )
 {
-    FIXME("%p %d 0x%08x %s 0x%08lx %p\n", hConnect, fExpectResponse, dwFlags,
+    BOOL r;
+    WCHAR *cmdW;
+
+    TRACE("%p %d 0x%08x %s 0x%08lx %p\n", hConnect, fExpectResponse, dwFlags,
           debugstr_a(lpszCommand), dwContext, phFtpCommand);
 
-    return TRUE;
+    if (fExpectResponse)
+    {
+        FIXME("data connection not supported\n");
+        return FALSE;
+    }
+
+    if (!lpszCommand || !lpszCommand[0])
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!(cmdW = WININET_strdup_AtoW(lpszCommand)))
+    {
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
+    r = FtpCommandW(hConnect, fExpectResponse, dwFlags, cmdW, dwContext, phFtpCommand);
+
+    HeapFree(GetProcessHeap(), 0, cmdW);
+    return r;
 }
 
 /***********************************************************************
@@ -1875,10 +1900,82 @@ BOOL WINAPI FtpCommandA( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
 BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags,
                          LPCWSTR lpszCommand, DWORD_PTR dwContext, HINTERNET* phFtpCommand )
 {
-    FIXME("%p %d 0x%08x %s 0x%08lx %p\n", hConnect, fExpectResponse, dwFlags,
-          debugstr_w(lpszCommand), dwContext, phFtpCommand);
+    BOOL r = FALSE;
+    LPWININETFTPSESSIONW lpwfs;
+    LPSTR cmd = NULL;
+    DWORD len, nBytesSent= 0;
+    INT nResCode, nRC = 0;
 
-    return TRUE;
+    TRACE("%p %d 0x%08x %s 0x%08lx %p\n", hConnect, fExpectResponse, dwFlags,
+           debugstr_w(lpszCommand), dwContext, phFtpCommand);
+
+    if (!lpszCommand || !lpszCommand[0])
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (fExpectResponse)
+    {
+        FIXME("data connection not supported\n");
+        return FALSE;
+    }
+
+    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hConnect );
+    if (!lpwfs)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (WH_HFTPSESSION != lpwfs->hdr.htype)
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        goto lend;
+    }
+
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+        goto lend;
+    }
+
+    len = WideCharToMultiByte(CP_ACP, 0, lpszCommand, -1, NULL, 0, NULL, NULL) + strlen(szCRLF);
+    if ((cmd = HeapAlloc(GetProcessHeap(), 0, len )))
+        WideCharToMultiByte(CP_ACP, 0, lpszCommand, -1, cmd, len, NULL, NULL);
+    else
+    {
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        goto lend;
+    }
+
+    strcat(cmd, szCRLF);
+    len--;
+
+    TRACE("Sending (%s) len(%d)\n", cmd, len);
+    while ((nBytesSent < len) && (nRC != -1))
+    {
+        nRC = send(lpwfs->sndSocket, cmd + nBytesSent, len - nBytesSent, 0);
+        if (nRC != -1)
+        {
+            nBytesSent += nRC;
+            TRACE("Sent %d bytes\n", nRC);
+        }
+    }
+
+    if (nBytesSent)
+    {
+        nResCode = FTP_ReceiveResponse(lpwfs, lpwfs->hdr.dwContext);
+        if (nResCode > 0 && nResCode < 400)
+            r = TRUE;
+        else
+            FTP_SetResponseError(nResCode);
+    }
+
+lend:
+    WININET_Release( &lpwfs->hdr );
+    HeapFree(GetProcessHeap(), 0, cmd);
+    return r;
 }
 
 /***********************************************************************

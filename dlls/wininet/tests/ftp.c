@@ -25,7 +25,6 @@
  * TODO:
  *     Add W-function tests.
  *     Add missing function tests:
- *         FtpCommand
  *         FtpFindFirstFile
  *         FtpGetCurrentDirectory
  *         FtpGetFileSize
@@ -652,6 +651,46 @@ static void test_renamefile(HINTERNET hFtp, HINTERNET hConnect)
         "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE, got %d\n", GetLastError());
 }
 
+static void test_command(HINTERNET hFtp, HINTERNET hConnect)
+{
+    BOOL ret;
+    DWORD error;
+    unsigned int i;
+    static const struct
+    {
+        BOOL  ret;
+        DWORD error;
+        const char *cmd;
+    }
+    command_test[] =
+    {
+        { FALSE, ERROR_INVALID_PARAMETER,       NULL },
+        { FALSE, ERROR_INVALID_PARAMETER,       "" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "HELO" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "SIZE " },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, " SIZE" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "SIZE " },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "SIZE /welcome.msg /welcome.msg" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "SIZE  /welcome.msg" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "SIZE /welcome.msg " },
+        { TRUE,  ERROR_SUCCESS,                 "SIZE\t/welcome.msg" },
+        { TRUE,  ERROR_SUCCESS,                 "SIZE /welcome.msg" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "PWD /welcome.msg" },
+        { TRUE,  ERROR_SUCCESS,                 "PWD" },
+        { TRUE,  ERROR_SUCCESS,                 "PWD\r\n" }
+    };
+
+    for (i = 0; i < sizeof(command_test) / sizeof(command_test[0]); i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = FtpCommandA(hFtp, FALSE, FTP_TRANSFER_TYPE_ASCII, command_test[i].cmd, 0, NULL);
+        error = GetLastError();
+
+        ok(ret == command_test[i].ret, "%d: expected FtpCommandA to %s\n", i, command_test[i].ret ? "succeed" : "fail");
+        ok(error == command_test[i].error, "%d: expected error %u, got %u\n", i, command_test[i].error, error);
+    }
+}
+
 START_TEST(ftp)
 {
     HANDLE hInternet, hFtp, hHttp;
@@ -693,6 +732,7 @@ START_TEST(ftp)
     test_putfile(hFtp, hHttp);
     test_removedir(hFtp, hHttp);
     test_renamefile(hFtp, hHttp);
+    test_command(hFtp, hHttp);
 
     InternetCloseHandle(hHttp);
     InternetCloseHandle(hFtp);
