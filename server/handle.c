@@ -641,10 +641,14 @@ DECL_HANDLER(get_security_object)
         owner = sd_get_owner( sd );
         if (req->security_info & OWNER_SECURITY_INFORMATION)
             req_sd.owner_len = sd->owner_len;
+        else
+            req_sd.owner_len = 0;
 
         group = sd_get_group( sd );
         if (req->security_info & GROUP_SECURITY_INFORMATION)
             req_sd.group_len = sd->group_len;
+        else
+            req_sd.group_len = 0;
 
         req_sd.control |= SE_SACL_PRESENT;
         sacl = sd_get_sacl( sd, &present );
