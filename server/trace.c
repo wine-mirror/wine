@@ -2691,7 +2691,8 @@ static void dump_set_window_pos_request( const struct set_window_pos_request *re
 
 static void dump_set_window_pos_reply( const struct set_window_pos_reply *req )
 {
-    fprintf( stderr, " new_style=%08x", req->new_style );
+    fprintf( stderr, " new_style=%08x,", req->new_style );
+    fprintf( stderr, " new_ex_style=%08x", req->new_ex_style );
 }
 
 static void dump_get_window_rectangles_request( const struct get_window_rectangles_request *req )

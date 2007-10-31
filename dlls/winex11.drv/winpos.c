@@ -240,7 +240,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
     struct x11drv_win_data *data;
     RECT new_whole_rect, old_client_rect;
     WND *win;
-    DWORD old_style, new_style;
+    DWORD old_style, new_style, new_ex_style;
     BOOL ret, make_managed = FALSE;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
@@ -293,6 +293,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         }
         ret = !wine_server_call( req );
         new_style = reply->new_style;
+        new_ex_style = reply->new_ex_style;
     }
     SERVER_END_REQ;
 
@@ -304,6 +305,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
             win->rectWindow   = *rectWindow;
             win->rectClient   = *rectClient;
             win->dwStyle      = new_style;
+            win->dwExStyle    = new_ex_style;
             WIN_ReleasePtr( win );
         }
         return ret;
@@ -325,6 +327,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         win->rectClient   = *rectClient;
         old_style         = win->dwStyle;
         win->dwStyle      = new_style;
+        win->dwExStyle    = new_ex_style;
         data->window_rect = *rectWindow;
 
         TRACE( "win %p window %s client %s style %08x\n",

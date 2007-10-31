@@ -2171,6 +2171,7 @@ enum message_type
     VARARG(valid,rectangles);     /* valid rectangles from WM_NCCALCSIZE */
 @REPLY
     unsigned int   new_style;     /* new window style */
+    unsigned int   new_ex_style;  /* new window extended style */
 @END
 
 

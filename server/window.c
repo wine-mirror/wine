@@ -1822,6 +1822,7 @@ DECL_HANDLER(set_window_pos)
     if (!visible_rect) visible_rect = &req->window;
     set_window_pos( win, previous, flags, &req->window, &req->client, visible_rect, valid_rects );
     reply->new_style = win->style;
+    reply->new_ex_style = win->ex_style;
 }
 
 

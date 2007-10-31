@@ -2946,6 +2946,7 @@ struct set_window_pos_reply
 {
     struct reply_header __header;
     unsigned int   new_style;
+    unsigned int   new_ex_style;
 };
 
 
@@ -4879,6 +4880,6 @@ union generic_reply
     struct set_completion_info_reply set_completion_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 323
+#define SERVER_PROTOCOL_VERSION 324
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
