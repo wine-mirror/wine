@@ -77,7 +77,8 @@ struct window
     unsigned int     ex_style;        /* window extended style */
     unsigned int     id;              /* window id */
     void*            instance;        /* creator instance */
-    int              is_unicode;      /* ANSI or unicode */
+    unsigned int     is_unicode : 1;  /* ANSI or unicode */
+    unsigned int     is_linked : 1;   /* is it linked into the parent z-order list? */
     unsigned long    user_data;       /* user-specific data */
     WCHAR           *text;            /* window caption text */
     unsigned int     paint_flags;     /* various painting flags */
@@ -142,6 +143,7 @@ static int set_parent_window( struct window *win, struct window *parent )
     {
         win->parent = parent;
         list_add_head( &parent->children, &win->entry );
+        win->is_linked = 1;
 
         /* if parent belongs to a different thread and the window isn't */
         /* top-level, attach the two threads */
@@ -151,6 +153,7 @@ static int set_parent_window( struct window *win, struct window *parent )
     else  /* move it to parent unlinked list */
     {
         list_add_head( &win->parent->unlinked, &win->entry );
+        win->is_linked = 0;
     }
     return 1;
 }
@@ -159,7 +162,6 @@ static int set_parent_window( struct window *win, struct window *parent )
 static inline struct window *get_next_window( struct window *win )
 {
     struct list *ptr = list_next( &win->parent->children, &win->entry );
-    if (ptr == &win->parent->unlinked) ptr = NULL;
     return ptr ? LIST_ENTRY( ptr, struct window, entry ) : NULL;
 }
 
@@ -167,7 +169,6 @@ static inline struct window *get_next_window( struct window *win )
 static inline struct window *get_prev_window( struct window *win )
 {
     struct list *ptr = list_prev( &win->parent->children, &win->entry );
-    if (ptr == &win->parent->unlinked) ptr = NULL;
     return ptr ? LIST_ENTRY( ptr, struct window, entry ) : NULL;
 }
 
@@ -402,6 +403,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->id             = 0;
     win->instance       = NULL;
     win->is_unicode     = 1;
+    win->is_linked      = 0;
     win->user_data      = 0;
     win->text           = NULL;
     win->paint_flags    = 0;
@@ -1378,6 +1380,7 @@ static void set_window_pos( struct window *win, struct window *previous,
         list_remove( &win->entry );  /* unlink it from the previous location */
         if (previous) list_add_after( &previous->entry, &win->entry );
         else list_add_head( &win->parent->children, &win->entry );
+        win->is_linked = 1;
     }
     if (swp_flags & SWP_SHOWWINDOW) win->style |= WS_VISIBLE;
     else if (swp_flags & SWP_HIDEWINDOW) win->style &= ~WS_VISIBLE;
@@ -1765,8 +1768,11 @@ DECL_HANDLER(get_window_tree)
         struct window *parent = win->parent;
         reply->parent = parent->handle;
         reply->owner  = win->owner;
-        if ((ptr = get_next_window( win ))) reply->next_sibling = ptr->handle;
-        if ((ptr = get_prev_window( win ))) reply->prev_sibling = ptr->handle;
+        if (win->is_linked)
+        {
+            if ((ptr = get_next_window( win ))) reply->next_sibling = ptr->handle;
+            if ((ptr = get_prev_window( win ))) reply->prev_sibling = ptr->handle;
+        }
         if ((ptr = get_first_child( parent ))) reply->first_sibling = ptr->handle;
         if ((ptr = get_last_child( parent ))) reply->last_sibling = ptr->handle;
     }
