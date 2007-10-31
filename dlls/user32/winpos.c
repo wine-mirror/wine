@@ -1371,7 +1371,7 @@ static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
     {
         /* make sure this popup stays above the owner */
 
-        if( hwndInsertAfter != HWND_TOP )
+        if (hwndInsertAfter != HWND_TOP && hwndInsertAfter != HWND_TOPMOST)
         {
             HWND hwndLocalPrev = HWND_TOP;
             HWND prev = GetWindow( owner, GW_HWNDPREV );
@@ -1509,7 +1509,9 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
 
     if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)
     {
-        if (!(winpos->flags & (SWP_NOACTIVATE|SWP_HIDEWINDOW))) /* Bring to the top when activating */
+        if (!(winpos->flags & (SWP_NOACTIVATE|SWP_HIDEWINDOW)) && /* Bring to the top when activating */
+            (winpos->flags & SWP_NOZORDER ||
+             (winpos->hwndInsertAfter != HWND_TOPMOST && winpos->hwndInsertAfter != HWND_NOTOPMOST)))
         {
             winpos->flags &= ~SWP_NOZORDER;
             winpos->hwndInsertAfter = HWND_TOP;
@@ -1523,10 +1525,6 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     if (winpos->hwndInsertAfter == (HWND)0xffff) winpos->hwndInsertAfter = HWND_TOPMOST;
     else if (winpos->hwndInsertAfter == (HWND)0xfffe) winpos->hwndInsertAfter = HWND_NOTOPMOST;
 
-      /* FIXME: TOPMOST not supported yet */
-    if ((winpos->hwndInsertAfter == HWND_TOPMOST) ||
-        (winpos->hwndInsertAfter == HWND_NOTOPMOST)) winpos->hwndInsertAfter = HWND_TOP;
-
     /* hwndInsertAfter must be a sibling of the window */
     if (winpos->hwndInsertAfter == HWND_TOP)
     {
@@ -1535,7 +1533,17 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     }
     else if (winpos->hwndInsertAfter == HWND_BOTTOM)
     {
-        if (GetWindow(winpos->hwnd, GW_HWNDLAST) == winpos->hwnd)
+        if (!(wndPtr->dwExStyle & WS_EX_TOPMOST) && GetWindow(winpos->hwnd, GW_HWNDLAST) == winpos->hwnd)
+            winpos->flags |= SWP_NOZORDER;
+    }
+    else if (winpos->hwndInsertAfter == HWND_TOPMOST)
+    {
+        if ((wndPtr->dwExStyle & WS_EX_TOPMOST) && GetWindow(winpos->hwnd, GW_HWNDFIRST) == winpos->hwnd)
+            winpos->flags |= SWP_NOZORDER;
+    }
+    else if (winpos->hwndInsertAfter == HWND_NOTOPMOST)
+    {
+        if (!(wndPtr->dwExStyle & WS_EX_TOPMOST))
             winpos->flags |= SWP_NOZORDER;
     }
     else
