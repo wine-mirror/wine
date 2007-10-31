@@ -125,7 +125,6 @@ static void test_createdir(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     bRet = FtpCreateDirectoryA(hFtp, "new_directory_deadbeef");
     ok ( bRet == FALSE, "Expected FtpCreateDirectoryA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
@@ -165,7 +164,6 @@ static void test_deletefile(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     bRet = FtpDeleteFileA(hFtp, "non_existent_file_deadbeef");
     ok ( bRet == FALSE, "Expected FtpDeleteFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
@@ -256,14 +254,13 @@ static void test_getfile(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hFtp, "should_be_non_existing_deadbeef", "should_also_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
-    todo_wine
-    {
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
     /* Currently Wine always creates the local file (even on failure) which is not correct, hence the test */
+    todo_wine
     ok (GetFileAttributesA("should_also_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
         "Local file should not have been created\n");
-    }
+
     DeleteFileA("should_also_be_non_existing_deadbeef");
 
     /* Same call as the previous but now the local file does exists. Windows just removes the file if the call fails
@@ -278,14 +275,13 @@ static void test_getfile(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hFtp, "should_be_non_existing_deadbeef", "should_also_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
-    todo_wine
-    {
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
     /* Currently Wine always creates the local file (even on failure) which is not correct, hence the test */
+    todo_wine
     ok (GetFileAttributesA("should_also_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
         "Local file should not have been created\n");
-    }
+
     DeleteFileA("should_also_be_non_existing_deadbeef");
 
     /* This one should succeed */
@@ -537,7 +533,6 @@ static void test_putfile(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     bRet = FtpPutFileA(hFtp, "now_existing_local", "non_existing_remote", FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpPutFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
@@ -587,7 +582,6 @@ static void test_removedir(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     bRet = FtpRemoveDirectoryA(hFtp, "should_be_non_existing_deadbeef_dir");
     ok ( bRet == FALSE, "Expected FtpRemoveDirectoryA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
@@ -595,7 +589,6 @@ static void test_removedir(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     bRet = FtpRemoveDirectoryA(hFtp, "pub");
     ok ( bRet == FALSE, "Expected FtpRemoveDirectoryA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
@@ -642,7 +635,6 @@ static void test_renamefile(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     bRet = FtpRenameFileA(hFtp , "should_be_non_existing_deadbeef", "new");
     ok ( bRet == FALSE, "Expected FtpRenameFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
 
