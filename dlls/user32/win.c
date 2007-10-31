@@ -2599,7 +2599,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
        in the x-order and send the expected WM_WINDOWPOSCHANGING and
        WM_WINDOWPOSCHANGED notification messages.
     */
-    SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+    SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0,
                   SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | (was_visible ? SWP_SHOWWINDOW : 0) );
     /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
      * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
