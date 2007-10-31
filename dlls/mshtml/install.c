@@ -54,6 +54,14 @@ static const WCHAR mshtml_keyW[] =
      '\\','W','i','n','e',
      '\\','M','S','H','T','M','L',0};
 
+static const WCHAR wszMSIE[] =
+     {'S','o','f','t','w','a','r','e','\\',
+      'M','i','c','r','o','s','o','f','t','\\',
+      'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
+static const WCHAR wszIEVersion[] =
+     {'6','.','0','.','2','9','0','0','.','2','1','8','0',0};
+
+
 static HWND install_dialog = NULL;
 static LPWSTR tmp_file_name = NULL;
 static HANDLE tmp_file = INVALID_HANDLE_VALUE;
@@ -97,6 +105,7 @@ static void set_registry(LPCSTR install_dir)
 
     static const WCHAR wszGeckoPath[] = {'G','e','c','k','o','P','a','t','h',0};
     static const WCHAR wszWineGecko[] = {'w','i','n','e','_','g','e','c','k','o',0};
+    static const WCHAR wszVersion[] = {'V','e','r','s','i','o','n',0};
 
     memcpy(mshtml_key, mshtml_keyW, sizeof(mshtml_keyW));
     mshtml_key[sizeof(mshtml_keyW)/sizeof(WCHAR)-1] = '\\';
@@ -125,8 +134,23 @@ static void set_registry(LPCSTR install_dir)
                        len*sizeof(WCHAR)+sizeof(wszWineGecko));
     mshtml_free(gecko_path);
     RegCloseKey(hkey);
-    if(res != ERROR_SUCCESS)
+    if(res != ERROR_SUCCESS) {
         ERR("Failed to set GeckoPath value: %08x\n", res);
+        return;
+    }
+
+    res = RegCreateKeyW(HKEY_LOCAL_MACHINE, wszMSIE, &hkey);
+    if(res != ERROR_SUCCESS) {
+        ERR("Failed to create Internet Explorer key: %d\n", res);
+        return;
+    }
+
+    res = RegSetValueExW(hkey, wszVersion, 0, REG_SZ, (LPVOID)wszIEVersion,
+                         sizeof(wszIEVersion));
+    if(res != ERROR_SUCCESS) {
+        ERR("Failed to set Version value: %d\n", res);
+        return;
+    }
 }
 
 static BOOL install_cab(LPCWSTR file_name)
