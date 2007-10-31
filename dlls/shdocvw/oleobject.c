@@ -416,6 +416,11 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
     case OLEIVERB_INPLACEACTIVATE:
         TRACE("OLEIVERB_INPLACEACTIVATE\n");
         return activate_inplace(This, pActiveSite);
+    case OLEIVERB_HIDE:
+        TRACE("OLEIVERB_HIDE\n");
+        if(This->doc_host.hwnd)
+            ShowWindow(This->doc_host.hwnd, SW_HIDE);
+        return S_OK;
     default:
         FIXME("stub for %d\n", iVerb);
         break;
