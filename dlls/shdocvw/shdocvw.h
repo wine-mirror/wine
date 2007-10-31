@@ -100,6 +100,7 @@ struct WebBrowser {
     const IOleInPlaceObjectVtbl         *lpOleInPlaceObjectVtbl;
     const IOleControlVtbl               *lpOleControlVtbl;
     const IPersistStorageVtbl           *lpPersistStorageVtbl;
+    const IPersistMemoryVtbl            *lpPersistMemoryVtbl;
     const IPersistStreamInitVtbl        *lpPersistStreamInitVtbl;
     const IProvideClassInfo2Vtbl        *lpProvideClassInfoVtbl;
     const IViewObject2Vtbl              *lpViewObjectVtbl;
@@ -152,6 +153,7 @@ struct InternetExplorer {
 #define INPLACEOBJ(x)   ((IOleInPlaceObject*)           &(x)->lpOleInPlaceObjectVtbl)
 #define CONTROL(x)      ((IOleControl*)                 &(x)->lpOleControlVtbl)
 #define PERSTORAGE(x)   ((IPersistStorage*)             &(x)->lpPersistStorageVtbl)
+#define PERMEMORY(x)    ((IPersistMemory*)              &(x)->lpPersistMemoryVtbl)
 #define PERSTRINIT(x)   ((IPersistStreamInit*)          &(x)->lpPersistStreamInitVtbl)
 #define CLASSINFO(x)    ((IProvideClassInfo2*)          &(x)->lpProvideClassInfoVtbl)
 #define CONPTCONT(x)    ((IConnectionPointContainer*)   &(x)->lpConnectionPointContainerVtbl)

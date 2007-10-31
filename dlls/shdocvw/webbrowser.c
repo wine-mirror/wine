@@ -72,6 +72,9 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IPersistStorage, riid)) {
         TRACE("(%p)->(IID_IPersistStorage %p)\n", This, ppv);
         *ppv = PERSTORAGE(This);
+    }else if(IsEqualGUID(&IID_IPersistMemory, riid)) {
+        TRACE("(%p)->(IID_IPersistStorage %p)\n", This, ppv);
+        *ppv = PERMEMORY(This);
     }else if(IsEqualGUID (&IID_IPersistStreamInit, riid)) {
         TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
         *ppv = PERSTRINIT(This);
