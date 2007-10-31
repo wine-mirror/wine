@@ -13,10 +13,10 @@
 @ stub KeReleaseQueuedSpinLock
 @ stub KeTryToAcquireQueuedSpinLock
 @ stub KeTryToAcquireQueuedSpinLockRaiseToSynch
-@ stub KfAcquireSpinLock
-@ stub KfLowerIrql
-@ stub KfRaiseIrql
-@ stub KfReleaseSpinLock
+@ stdcall -norelay KfAcquireSpinLock(ptr)
+@ stdcall -norelay KfLowerIrql(long)
+@ stdcall -norelay KfRaiseIrql()
+@ stdcall -norelay KfReleaseSpinLock(ptr long)
 @ stub HalAcquireDisplayOwnership
 @ stub HalAdjustResourceList
 @ stub HalAllProcessorsStarted
