@@ -387,7 +387,7 @@
 @ stdcall FindResourceExW(long wstr wstr long)
 @ stdcall FindResourceW(long wstr wstr)
 @ stub FindVolumeClose
-@ stub FindVolumeMountPointClose
+@ stdcall FindVolumeMountPointClose(ptr)
 @ stdcall FlushConsoleInputBuffer(long)
 @ stdcall FlushFileBuffers(long)
 @ stdcall FlushInstructionCache(long long long)

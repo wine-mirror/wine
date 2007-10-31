@@ -1406,3 +1406,12 @@ HANDLE WINAPI FindFirstVolumeMountPointW(LPCWSTR root, LPWSTR mount_point, DWORD
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return INVALID_HANDLE_VALUE;
 }
+
+/***********************************************************************
+ *           FindVolumeMountPointClose   (KERNEL32.@)
+ */
+BOOL WINAPI FindVolumeMountPointClose(HANDLE h)
+{
+    FIXME("(%p), stub!\n", h);
+    return FALSE;
+}
