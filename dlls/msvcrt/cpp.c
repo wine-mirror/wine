@@ -1103,13 +1103,13 @@ void* CDECL MSVCRT___RTDynamicCast(void *cppobj, int unknown,
     TRACE("obj: %p unknown: %d src: %p %s dst: %p %s do_throw: %d)\n",
           cppobj, unknown, src, dbgstr_type_info(src), dst, dbgstr_type_info(dst), do_throw);
 
-    if (unknown) FIXME("Unknown parameter is non-zero: please report\n");
-
     /* To cast an object at runtime:
      * 1.Find out the true type of the object from the typeinfo at vtable[-1]
      * 2.Search for the destination type in the class hierarchy
      * 3.If destination type is found, return base object address + dest offset
      *   Otherwise, fail the cast
+     *
+     * FIXME: the unknown parameter doesn't seem to be used for anything
      */
     __TRY
     {
