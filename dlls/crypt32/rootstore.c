@@ -232,21 +232,22 @@ static const char *get_cert_common_name(PCCERT_CONTEXT cert)
 
 static void check_and_store_certs(HCERTSTORE from, HCERTSTORE to)
 {
-    PCCERT_CONTEXT cert = NULL;
     DWORD root_count = 0;
+    CERT_CHAIN_ENGINE_CONFIG chainEngineConfig =
+     { sizeof(chainEngineConfig), 0 };
+    HCERTCHAINENGINE engine;
 
     TRACE("\n");
 
-    do {
-        cert = CertEnumCertificatesInStore(from, cert);
-        if (cert)
-        {
-            CERT_CHAIN_ENGINE_CONFIG chainEngineConfig =
-             { sizeof(chainEngineConfig), 0 };
-            HCERTCHAINENGINE engine = CRYPT_CreateChainEngine(to,
-             &chainEngineConfig);
+    CertDuplicateStore(to);
+    engine = CRYPT_CreateChainEngine(to, &chainEngineConfig);
+    if (engine)
+    {
+        PCCERT_CONTEXT cert = NULL;
 
-            if (engine)
+        do {
+            cert = CertEnumCertificatesInStore(from, cert);
+            if (cert)
             {
                 CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
                 PCCERT_CHAIN_CONTEXT chain;
@@ -275,11 +276,12 @@ static void check_and_store_certs(HCERTSTORE from, HCERTSTORE to)
                                  CERT_STORE_ADD_NEW, NULL))
                                     root_count++;
                     }
+                    CertFreeCertificateChain(chain);
                 }
-                CertFreeCertificateChainEngine(engine);
             }
-        }
-    } while (cert);
+        } while (cert);
+        CertFreeCertificateChainEngine(engine);
+    }
     TRACE("Added %d root certificates\n", root_count);
 }
 
