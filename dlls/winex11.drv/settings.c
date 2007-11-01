@@ -176,6 +176,7 @@ static BOOL read_registry_settings(DEVMODEW *dm)
         return FALSE;
 
 #define query_value(name, data) \
+    size = sizeof(DWORD); \
     if (RegQueryValueExA(hkey, name, 0, &type, (LPBYTE)(data), &size) || \
         type != REG_DWORD || size != sizeof(DWORD)) \
         ret = FALSE
