@@ -37,7 +37,6 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
 static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey);
 
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
-    if (!(This->resource.allocatedMemory || This->Flags & SFLAG_PBO)) This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, This->resource.size + 4);
     if (This->resource.format == WINED3DFMT_DXT1 ||
             This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
             This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
@@ -630,42 +629,23 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
     }
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
-    IWineD3DSwapChain *swapchain = NULL;
-
-    TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-
-    if (This->Flags & SFLAG_LOCKED) {
-        WARN("Surface is already locked, returning D3DERR_INVALIDCALL\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-    if (!(This->Flags & SFLAG_LOCKABLE)) {
-        /* Note: UpdateTextures calls CopyRects which calls this routine to populate the
-              texture regions, and since the destination is an unlockable region we need
-              to tolerate this                                                           */
-        TRACE("Warning: trying to lock unlockable surf@%p\n", This);
-        /*return WINED3DERR_INVALIDCALL; */
-    }
-
-    pLockedRect->Pitch = IWineD3DSurface_GetPitch(iface);
-
-    /* Mark the surface locked */
-    This->Flags |= SFLAG_LOCKED;
-
-    /* Whatever surface we have, make sure that there is memory allocated for the downloaded copy,
-     * or a pbo to map
+static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
+    /* Performance optimization: Count how often a surface is locked, if it is locked regularly do not throw away the system memory copy.
+     * This avoids the need to download the surface from opengl all the time. The surface is still downloaded if the opengl texture is
+     * changed
      */
-    if(!(This->resource.allocatedMemory || This->Flags & SFLAG_PBO)) {
-        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
-        if(This->Flags & SFLAG_INSYSMEM) {
-            ERR("Surface without memory or pbo has SFLAG_INSYSMEM set!\n");
+    if(!(This->Flags & SFLAG_DYNLOCK)) {
+        This->lockCount++;
+        /* MAXLOCKCOUNT is defined in wined3d_private.h */
+        if(This->lockCount > MAXLOCKCOUNT) {
+            TRACE("Surface is locked regularly, not freeing the system memory copy any more\n");
+            This->Flags |= SFLAG_DYNLOCK;
         }
     }
 
     /* Create a PBO for dynamically locked surfaces but don't do it for converted or non-pow2 surfaces.
-     * Also don't create a PBO for systemmem surfaces. */
+     * Also don't create a PBO for systemmem surfaces.
+     */
     if(GL_SUPPORT(ARB_PIXEL_BUFFER_OBJECT) && (This->Flags & SFLAG_DYNLOCK) && !(This->Flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2)) && (This->resource.pool != WINED3DPOOL_SYSTEMMEM)) {
         GLenum error;
         ENTER_GL();
@@ -692,7 +672,40 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         This->resource.allocatedMemory = NULL;
         This->Flags |= SFLAG_PBO;
         LEAVE_GL();
+    } else if(!(This->resource.allocatedMemory || This->Flags & SFLAG_PBO)) {
+        /* Whatever surface we have, make sure that there is memory allocated for the downloaded copy,
+         * or a pbo to map
+         */
+        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
+        if(This->Flags & SFLAG_INSYSMEM) {
+            ERR("Surface without memory or pbo has SFLAG_INSYSMEM set!\n");
+        }
     }
+}
+
+static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
+    IWineD3DSwapChain *swapchain = NULL;
+
+    TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+
+    if (This->Flags & SFLAG_LOCKED) {
+        WARN("Surface is already locked, returning D3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    if (!(This->Flags & SFLAG_LOCKABLE)) {
+        /* Note: UpdateTextures calls CopyRects which calls this routine to populate the
+              texture regions, and since the destination is an unlockable region we need
+              to tolerate this                                                           */
+        TRACE("Warning: trying to lock unlockable surf@%p\n", This);
+        /*return WINED3DERR_INVALIDCALL; */
+    }
+
+    pLockedRect->Pitch = IWineD3DSurface_GetPitch(iface);
+
+    /* Mark the surface locked */
+    This->Flags |= SFLAG_LOCKED;
 
     /* Calculate the correct start address to report */
     if (NULL == pRect) {
@@ -713,19 +726,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         TRACE("Locking non-power 2 texture\n");
     }
 
-    /* Performance optimization: Count how often a surface is locked, if it is locked regularly do not throw away the system memory copy.
-     * This avoids the need to download the surface from opengl all the time. The surface is still downloaded if the opengl texture is
-     * changed
-     */
-    if(!(This->Flags & SFLAG_DYNLOCK)) {
-        This->lockCount++;
-        /* MAXLOCKCOUNT is defined in wined3d_private.h */
-        if(This->lockCount > MAXLOCKCOUNT) {
-            TRACE("Surface is locked regularly, not freeing the system memory copy any more\n");
-            This->Flags |= SFLAG_DYNLOCK;
-        }
-    }
-
     if (Flags & WINED3DLOCK_DISCARD) {
         /* Set SFLAG_INSYSMEM, so we'll never try to download the data from the texture. */
         TRACE("WINED3DLOCK_DISCARD flag passed, marking local copy as up to date\n");
@@ -734,6 +734,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
     if (This->Flags & SFLAG_INSYSMEM) {
         TRACE("Local copy is up to date, not downloading data\n");
+        surface_prepare_system_memory(This); /* Makes sure memory is allocated */
         goto lock_end;
     }
 
@@ -3516,6 +3517,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
     myDevice = This->resource.wineD3DDevice;
 
     if(flag == SFLAG_INSYSMEM) {
+        surface_prepare_system_memory(This);
+
         /* Download the surface to system memory */
         if(This->Flags & SFLAG_INTEXTURE) {
             if (0 == This->glDescription.textureName) {
