@@ -246,11 +246,9 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, DWORD datasize, LP
 
     TRACE("%s\n", debugstr_w(filename));
 
-    hModule = GetModuleHandleW(filename);
-    if(!hModule)
+    if (!GetModuleHandleExW(0, filename, &hModule))
 	hModule = LoadLibraryExW(filename, 0, LOAD_LIBRARY_AS_DATAFILE);
-    else
-	hModule = LoadLibraryExW(filename, 0, 0);
+
     if(!hModule)
     {
 	WARN("Could not load %s\n", debugstr_w(filename));
