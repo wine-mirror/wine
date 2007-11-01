@@ -472,6 +472,16 @@ s_hash_bstr(bstr_t b)
 }
 
 void
+s_get_name(name_t *name)
+{
+  const char bossman[] = "Jeremy White";
+  memcpy(name->name, bossman, min(name->size, sizeof(bossman)));
+  /* ensure nul-termination */
+  if (name->size < sizeof(bossman))
+    name->name[name->size - 1] = 0;
+}
+
+void
 s_stop(void)
 {
   ok(RPC_S_OK == RpcMgmtStopServerListening(NULL), "RpcMgmtStopServerListening\n");
@@ -800,6 +810,8 @@ pointer_tests(void)
   cpuints_t cpus;
   short bstr_data[] = { 5, 'H', 'e', 'l', 'l', 'o' };
   bstr_t bstr = &bstr_data[1];
+  name_t name;
+  void *buffer;
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
@@ -843,6 +855,13 @@ pointer_tests(void)
   ok(hash_bstr(bstr) == s_hash_bstr(bstr), "RPC hash_bstr_data\n");
 
   free_list(list);
+
+  name.size = 10;
+  name.name = buffer = HeapAlloc(GetProcessHeap(), 0, name.size);
+  get_name(&name);
+  todo_wine
+  ok(name.name == buffer, "[in,out] pointer should have stayed as %p but instead changed to %p\n", name.name, buffer);
+  HeapFree(GetProcessHeap(), 0, name.name);
 }
 
 static int

@@ -290,5 +290,12 @@ cpp_quote("#endif")
   typedef [wire_marshal(wire_bstr_t)] short *bstr_t;
   unsigned hash_bstr(bstr_t s);
 
+  typedef struct
+  {
+    [string, size_is(size)] char *name;
+    unsigned int size;
+  } name_t;
+  void get_name([in,out] name_t *name);
+
   void stop(void);
 }
