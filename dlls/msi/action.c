@@ -1845,6 +1845,9 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
             switch (feature->Action)
             {
+            case INSTALLSTATE_ABSENT:
+                component->anyAbsent = 1;
+                break;
             case INSTALLSTATE_ADVERTISED:
                 component->hasAdvertiseFeature = 1;
                 break;
@@ -1906,6 +1909,8 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         }
 
         TRACE("nobody wants component %s\n", debugstr_w(component->Component));
+        if (component->anyAbsent)
+            msi_component_set_state(component, INSTALLSTATE_ABSENT);
     }
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
@@ -2767,6 +2772,8 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     MSICOMPONENT *comp;
     HKEY hkey=0,hkey2=0;
 
+    TRACE("\n");
+
     /* writes the Component and Features values to the registry */
 
     rc = MSIREG_OpenComponents(&hkey);
@@ -2823,6 +2830,13 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             }
 
             RegCloseKey(hkey2);
+
+            rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, &hkey2, TRUE);
+            if (rc != ERROR_SUCCESS)
+                continue;
+
+            msi_reg_set_val_str(hkey2, squished_pc, comp->FullKeypath);
+            RegCloseKey(hkey2);
         }
         else if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ABSENT))
         {
@@ -2840,6 +2854,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             if (res == ERROR_NO_MORE_ITEMS)
                 RegDeleteKeyW(hkey,squished_cc);
 
+            MSIREG_DeleteUserDataComponentKey(comp->ComponentId);
         }
 
         /* UI stuff */
@@ -3785,6 +3800,7 @@ static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
         {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
     WCHAR packagefile[MAX_PATH];
     LPWSTR msiFilePath;
+    HKEY props;
     UINT r;
 
     r = msi_get_local_package_name( packagefile );
@@ -3805,8 +3821,14 @@ static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
     }
     msi_free( msiFilePath );
 
-    /* FIXME: maybe set this key in ACTION_RegisterProduct instead */
     msi_reg_set_val_str( hkey, INSTALLPROPERTY_LOCALPACKAGEW, packagefile );
+
+    r = MSIREG_OpenInstallPropertiesKey(package->ProductCode, &props, TRUE);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    msi_reg_set_val_str(props, INSTALLPROPERTY_LOCALPACKAGEW, packagefile);
+    RegCloseKey(props);
     return ERROR_SUCCESS;
 }
 

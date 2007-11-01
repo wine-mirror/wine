@@ -729,6 +729,30 @@ UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create
     return rc;
 }
 
+UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent)
+{
+    UINT rc;
+    WCHAR comp[GUID_SIZE];
+    WCHAR keypath[0x200];
+    LPWSTR usersid;
+
+    TRACE("%s\n", debugstr_w(szComponent));
+    if (!squash_guid(szComponent, comp))
+        return ERROR_FUNCTION_FAILED;
+    TRACE("squished (%s)\n", debugstr_w(comp));
+
+    rc = get_user_sid(&usersid);
+    if (rc != ERROR_SUCCESS || !usersid)
+    {
+        ERR("Failed to retrieve user SID: %d\n", rc);
+        return rc;
+    }
+
+    sprintfW(keypath, szUserDataComp_fmt, usersid, comp);
+
+    return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
+}
+
 UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, HKEY *key, BOOL create)
 {
     UINT rc;
