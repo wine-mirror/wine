@@ -251,7 +251,7 @@ static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
             if (ext)
             {
                 CRYPT_DATA_BLOB value;
-                DWORD size;
+                DWORD size = sizeof(value);
 
                 ret = CryptDecodeObjectEx(X509_ASN_ENCODING,
                  szOID_SUBJECT_KEY_IDENTIFIER, ext->Value.pbData,
