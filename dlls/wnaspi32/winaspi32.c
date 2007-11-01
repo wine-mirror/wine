@@ -109,7 +109,7 @@ ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
     }
     LeaveCriticalSection(&ASPI_CritSection);
 
-    if (prb->SRB_HaId > ASPI_GetNumControllers())
+    if (prb->SRB_HaId >= ASPI_GetNumControllers())
 	return -1;
 
     hc = ASPI_GetHCforController( prb->SRB_HaId );
@@ -314,8 +314,8 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
   DWORD SRB_Status;
 
   num_controllers = ASPI_GetNumControllers();
-  if (lpPRB->SRB_HaId > num_controllers) {
-      WARN("Failed: Wanted hostadapter %d, but we have only %d.\n",
+  if (lpPRB->SRB_HaId >= num_controllers) {
+      WARN("Failed: Wanted hostadapter with index %d, but we have only %d.\n",
 	  lpPRB->SRB_HaId, num_controllers
       );
       return WNASPI32_DoPosting( lpPRB, SS_INVALID_HA );
