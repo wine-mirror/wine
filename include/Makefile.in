@@ -125,6 +125,7 @@ SRCDIR_INCLUDES = \
 	ddk/ntddser.h \
 	ddk/ntddtape.h \
 	ddk/wdm.h \
+	ddk/winddiui.h \
 	ddk/winsplp.h \
 	ddraw.h \
 	ddrawi.h \
