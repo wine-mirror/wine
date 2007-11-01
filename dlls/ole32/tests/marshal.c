@@ -2469,11 +2469,13 @@ static HANDLE create_target_process(const char *arg)
     STARTUPINFO si = { 0 };
     si.cb = sizeof(si);
 
+    pi.hThread = NULL;
+    pi.hProcess = NULL;
     winetest_get_mainargs( &argv );
     sprintf(cmdline, "%s %s %s", argv[0], argv[1], arg);
     ok(CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL,
-                     &si, &pi) != 0, "error: %u\n", GetLastError());
-    ok(CloseHandle(pi.hThread) != 0, "error %u\n", GetLastError());
+                     &si, &pi) != 0, "CreateProcess failed with error: %u\n", GetLastError());
+    if (pi.hThread) CloseHandle(pi.hThread);
     return pi.hProcess;
 }
 
