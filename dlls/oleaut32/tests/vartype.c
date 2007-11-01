@@ -4747,7 +4747,7 @@ static void test_VarBstrFromR4(void)
     }
   }
 
-  f = -1e-400;    /* deliberately cause underflow */
+  f = -0.0;
   hres = pVarBstrFromR4(f, lcid, 0, &bstr);
   ok(hres == S_OK, "got hres 0x%08x\n", hres);
   if (bstr)
