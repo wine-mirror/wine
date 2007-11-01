@@ -7,7 +7,7 @@
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2006 Stefan Dösinger for CodeWeavers
+ * Copyright 2006-2007 Stefan Dösinger for CodeWeavers
  * Copyright 2007 Henri Verbeet
  * Copyright 2006-2007 Roderick Colenbrander
  *
@@ -1137,11 +1137,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         switch(wined3d_settings.rendertargetlock_mode) {
             case RTL_READTEX:
             case RTL_TEXTEX:
-                /* drop through */
-                FIXME("Render target unlocking using textures temporarily disabled\n");
 #if 0
                 IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL /* partial texture loading not supported yet */);
+                /* drop through */
 #endif
+
             case RTL_AUTO:
             case RTL_READDRAW:
             case RTL_TEXDRAW:
@@ -3348,6 +3348,119 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
     }
 }
 
+struct coords {
+    int x, y, z;
+};
+
+static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This) {
+    struct coords coords[4];
+    int low_coord;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+    ActivateContext(device, device->render_targets[0], CTXUSAGE_BLIT);
+    ENTER_GL();
+
+    if(This->glDescription.target == GL_TEXTURE_2D) {
+        glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
+        checkGLcall("GL_TEXTURE_2D, This->glDescription.textureName)");
+
+        coords[0].x = 0;    coords[0].y = 0;    coords[0].z = 0;
+        coords[1].x = 0;    coords[1].y = 1;    coords[1].z = 0;
+        coords[2].x = 1;    coords[2].y = 1;    coords[2].z = 0;
+        coords[3].x = 1;    coords[3].y = 0;    coords[3].z = 0;
+
+        low_coord = 0;
+    } else {
+        /* Must be a cube map */
+        glDisable(GL_TEXTURE_2D);
+        checkGLcall("glDisable(GL_TEXTURE_2D)");
+        glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+        checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
+        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->glDescription.textureName);
+        checkGLcall("GL_TEXTURE_CUBE_MAP_ARB, This->glDescription.textureName)");
+
+        switch(This->glDescription.target) {
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+                coords[0].x =  1;   coords[0].y = -1;   coords[0].z =  1;
+                coords[1].x =  1;   coords[1].y =  1;   coords[1].z =  1;
+                coords[2].x =  1;   coords[2].y =  1;   coords[2].z = -1;
+                coords[3].x =  1;   coords[3].y = -1;   coords[3].z = -1;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+                coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
+                coords[1].x = -1;   coords[1].y =  1;   coords[1].z =  1;
+                coords[2].x = -1;   coords[2].y =  1;   coords[2].z = -1;
+                coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+                coords[0].x = -1;   coords[0].y =  1;   coords[0].z =  1;
+                coords[1].x =  1;   coords[1].y =  1;   coords[1].z =  1;
+                coords[2].x =  1;   coords[2].y =  1;   coords[2].z = -1;
+                coords[3].x = -1;   coords[3].y =  1;   coords[3].z = -1;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+                coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
+                coords[1].x =  1;   coords[1].y = -1;   coords[1].z =  1;
+                coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
+                coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+                coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
+                coords[1].x =  1;   coords[1].y = -1;   coords[1].z =  1;
+                coords[2].x =  1;   coords[2].y = -1;   coords[2].z =  1;
+                coords[3].x = -1;   coords[3].y = -1;   coords[3].z =  1;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+                coords[0].x = -1;   coords[0].y = -1;   coords[0].z = -1;
+                coords[1].x =  1;   coords[1].y = -1;   coords[1].z = -1;
+                coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
+                coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+
+            default:
+                ERR("Unexpected texture target\n");
+                LEAVE_GL();
+                return;
+        }
+
+        low_coord = -1;
+    }
+
+    if(device->render_offscreen) {
+        coords[0].y = coords[0].y == 1 ? low_coord : 1;
+        coords[1].y = coords[1].y == 1 ? low_coord : 1;
+        coords[2].y = coords[2].y == 1 ? low_coord : 1;
+        coords[3].y = coords[3].y == 1 ? low_coord : 1;
+    }
+
+    glBegin(GL_QUADS);
+    glTexCoord3iv((GLint *) &coords[0]);
+    glVertex2i(0, 0);
+
+    glTexCoord3iv((GLint *) &coords[1]);
+    glVertex2i(0, This->pow2Height);
+
+    glTexCoord3iv((GLint *) &coords[2]);
+    glVertex2i(This->pow2Width, This->pow2Height);
+
+    glTexCoord3iv((GLint *) &coords[3]);
+    glVertex2i(This->pow2Width, 0);
+    glEnd();
+    checkGLcall("glEnd");
+
+    if(This->glDescription.target != GL_TEXTURE_2D) {
+        glEnable(GL_TEXTURE_2D);
+        checkGLcall("glEnable(GL_TEXTURE_2D)");
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+    }
+    LEAVE_GL();
+}
+
 /*****************************************************************************
  * IWineD3DSurface::LoadLocation
  *
@@ -3482,7 +3595,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         }
     } else if(flag == SFLAG_INDRAWABLE) {
         if(This->Flags & SFLAG_INTEXTURE) {
-            /* Blit texture to drawable */
+            surface_blt_to_drawable(This);
         } else {
             /* Activate the correct context for the render target */
             ActivateContext(myDevice, iface, CTXUSAGE_BLIT);

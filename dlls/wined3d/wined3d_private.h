@@ -409,8 +409,6 @@ void primitiveDeclarationConvertToStridedData(
 
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 
-void blt_to_drawable(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *surface);
-
 #define eps 1e-8
 
 #define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \

@@ -4790,7 +4790,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
                curRect[0].x2 < target->currentDesc.Width ||
                curRect[0].y2 < target->currentDesc.Height) {
                 TRACE("Partial clear, and surface not in drawable. Blitting texture to drawable\n");
-                blt_to_drawable(This, target);
+                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
             }
         }
 
