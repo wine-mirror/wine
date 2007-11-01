@@ -21,7 +21,6 @@ C_SRCS = \
 	navigate.c \
 	oleobject.c \
 	persist.c \
-	regsvr.c \
 	shdocvw_main.c \
 	shlinstobj.c \
 	urlhist.c \

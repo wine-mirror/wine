@@ -1,0 +1,105 @@
+[version]
+Signature="$CHICAGO$"
+
+
+[RegisterDll]
+AddReg=Classes.Reg
+
+
+[UnregisterDll]
+DelReg=Classes.Reg
+
+
+[Classes.Reg]
+HKCR,"CLSID\%CLSID_InternetExplorer%",,,"Internet Explorer(Ver 1.0)"
+HKCR,"CLSID\%CLSID_InternetExplorer%\LocalServer32",,,"iexplore.exe"
+HKCR,"CLSID\%CLSID_InternetExplorer%\ProgID",,,"InternetExplorer.Application.1"
+HKCR,"CLSID\%CLSID_InternetExplorer%\VersionIndependentProgID",,,"InternetExplorer.Application"
+HKCR,"InternetExplorer.Application",,,"Internet Explorer(Ver 1.0)"
+HKCR,"InternetExplorer.Application\CLSID",,,"%CLSID_InternetExplorer%"
+HKCR,"InternetExplorer.Application\CurVer",,,"InternetExplorer.Application.1"
+HKCR,"InternetExplorer.Application.1",,,"Internet Explorer(Ver 1.0)"
+HKCR,"InternetExplorer.Application.1\CLSID",,,"%CLSID_InternetExplorer%"
+
+HKCR,"CLSID\%CLSID_SearchAssistantOC%",,,"SearchAssistantOC"
+HKCR,"CLSID\%CLSID_SearchAssistantOC%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_SearchAssistantOC%\InProcServer32","ThreadingModel",,"Apartment"
+HKCR,"CLSID\%CLSID_SearchAssistantOC%\ProgID",,,"SearchAssistantOC.SearchAssistantOC.1"
+HKCR,"CLSID\%CLSID_SearchAssistantOC%\VersionIndependentProgID",,,"SearchAssistantOC.SearchAssistantOC"
+HKCR,"SearchAssistantOC.SearchAssistantOC",,,""
+HKCR,"SearchAssistantOC.SearchAssistantOC\CLSID",,,"%CLSID_SearchAssistantOC%"
+HKCR,"SearchAssistantOC.SearchAssistantOC\CurVer",,,"SearchAssistantOC.SearchAssistantOC.1"
+HKCR,"SearchAssistantOC.SearchAssistantOC.1",,,""
+HKCR,"SearchAssistantOC.SearchAssistantOC.1\CLSID",,,"%CLSID_SearchAssistantOC%"
+
+HKCR,"CLSID\%CLSID_ShellNameSpace%",,,"Shell Name Space"
+HKCR,"CLSID\%CLSID_ShellNameSpace%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_ShellNameSpace%\InProcServer32","ThreadingModel",,"Apartment"
+HKCR,"CLSID\%CLSID_ShellNameSpace%\ProgID",,,"ShellNameSpace.ShellNameSpace.1"
+HKCR,"CLSID\%CLSID_ShellNameSpace%\VersionIndependentProgID",,,"ShellNameSpace.ShellNameSpace"
+
+HKCR,"CLSID\%CLSID_CUrlHistory%",,,"Microsoft Url History Service"
+HKCR,"CLSID\%CLSID_CUrlHistory%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_CUrlHistory%\InProcServer32","ThreadingModel",,"Apartment"
+
+HKCR,"CLSID\%CLSID_MruLongList%",,,"MruLongList"
+HKCR,"CLSID\%CLSID_MruLongList%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_MruLongList%\InProcServer32","ThreadingModel",,"Apartment"
+
+HKCR,"CLSID\%CLSID_ShellShellNameSpace%",,,"Shell Name Space"
+HKCR,"CLSID\%CLSID_ShellShellNameSpace%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_ShellShellNameSpace%\InProcServer32","ThreadingModel",,"Apartment"
+HKCR,"CLSID\%CLSID_ShellShellNameSpace%\ProgID",,,"ShellNameSpace.ShellNameSpace.1"
+HKCR,"CLSID\%CLSID_ShellShellNameSpace%\VersionIndependentProgID",,,"ShellNameSpace.ShellNameSpace"
+
+HKCR,"CLSID\%CLSID_ShellUIHelper%",,,"Microsoft Shell UI Helper"
+HKCR,"CLSID\%CLSID_ShellUIHelper%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_ShellUIHelper%\InProcServer32","ThreadingModel",,"Apartment"
+HKCR,"CLSID\%CLSID_ShellUIHelper%\ProgID",,,"Shell.UIHelper.1"
+HKCR,"Shell.UIHelper",,,"Microsoft Shell UI Helper"
+HKCR,"Shell.UIHelper\CLSID",,,"%CLSID_ShellUIHelper%"
+HKCR,"Shell.UIHelper\CurVer",,,"Shell.UIHelper.2"
+HKCR,"Shell.UIHelper.1",,,""
+HKCR,"Shell.UIHelper.1\CLSID",,,"%CLSID_ShellUIHelper%"
+
+HKCR,"CLSID\%CLSID_Internet%",,,"Internet Explorer"
+HKCR,"CLSID\%CLSID_Internet%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_Internet%\InProcServer32","ThreadingModel",,"Apartment"
+HKCR,"CLSID\%CLSID_Internet%\ShellFolder",,2,"0x24"
+
+HKCR,"CLSID\%CLSID_WebBrowser%",,,"Microsoft Web Browser"
+HKCR,"CLSID\%CLSID_WebBrowser%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_WebBrowser%\InProcServer32","ThreadingModel",,"Apartment"
+HKCR,"CLSID\%CLSID_WebBrowser%\ProgID",,,"Shell.Explorer.2"
+HKCR,"CLSID\%CLSID_WebBrowser%\VersionIndependentProgID",,,"Shell.Explorer"
+HKCR,"Shell.Explorer",,,"Microsoft Web Browser"
+HKCR,"Shell.Explorer\CLSID",,,"%CLSID_WebBrowser%"
+HKCR,"Shell.Explorer\CurVer",,,"Shell.Explorer.2"
+HKCR,"Shell.Explorer.2",,,""
+HKCR,"Shell.Explorer.2\CLSID",,,"%CLSID_WebBrowser%"
+
+HKCR,"CLSID\%CLSID_ShellWindows%",,,"ShellWindows"
+HKCR,"CLSID\%CLSID_ShellWindows%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_ShellWindows%\InProcServer32","ThreadingModel",,"Apartment"
+
+HKCR,"CLSID\%CLSID_MicrosoftBrowserArchitecture%",,,"Microsoft Browser Architecture"
+HKCR,"CLSID\%CLSID_MicrosoftBrowserArchitecture%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_MicrosoftBrowserArchitecture%\InProcServer32","ThreadingModel",,"Apartment"
+
+HKCR,"CLSID\%CLSID_ShellSearchAssistantOC%",,,"SearchAssistantOC"
+HKCR,"CLSID\%CLSID_ShellSearchAssistantOC%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_ShellSearchAssistantOC%\InProcServer32","ThreadingModel",,"Apartment"
+HKCR,"CLSID\%CLSID_ShellSearchAssistantOC%\ProgID",,,"SearchAssistantOC.SearchAssistantOC.1"
+HKCR,"CLSID\%CLSID_ShellSearchAssistantOC%\VersionIndependentProgID",,,"SearchAssistantOC.SearchAssistantOC"
+
+HKCR,"CLSID\%CLSID_WebBrowser_V1%",,,"Microsoft Web Browser Version 1"
+HKCR,"CLSID\%CLSID_WebBrowser_V1%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_WebBrowser_V1%\InProcServer32","ThreadingModel",,"Apartment"
+HKCR,"CLSID\%CLSID_WebBrowser_V1%\ProgID",,,"Shell.Explorer.1"
+HKCR,"CLSID\%CLSID_WebBrowser_V1%\VersionIndependentProgID",,,"Shell.Explorer"
+HKCR,"Shell.Explorer.1",,,""
+HKCR,"Shell.Explorer.1\CLSID",,,"%CLSID_WebBrowser_V1%"
+
+
+[Strings]
+MODULE="shdocvw.dll"

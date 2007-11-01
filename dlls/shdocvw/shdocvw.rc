@@ -20,3 +20,6 @@
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 1 TYPELIB LOADONCALL DISCARDABLE shdocvw_v1.tlb
+
+/* @makedep: shdocvw.inf */
+REGINST REGINST shdocvw.inf
