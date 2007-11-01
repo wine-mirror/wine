@@ -155,7 +155,7 @@ BOOL SCSI_GetDeviceName( int h, int c, int t, int d, LPSTR devstr, LPDWORD lpcbD
     snprintf(buffer, sizeof(buffer), KEYNAME_SCSI, h, c, t, d);
     if( RegOpenKeyExA(HKEY_LOCAL_MACHINE, buffer, 0, KEY_ALL_ACCESS, &hkeyScsi ) != ERROR_SUCCESS )
     {
-        ERR("Could not open HKLM\\%s\n", buffer);
+        TRACE("Could not open HKLM\\%s; device does not exist\n", buffer);
         return FALSE;
     }
 
