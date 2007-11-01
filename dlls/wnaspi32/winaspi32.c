@@ -308,6 +308,7 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
   WORD ret;
   DWORD	status;
   int	in_len, out_len;
+  int   num_controllers = 0;
   int	error_code = 0;
   int	fd;
   DWORD SRB_Status;
@@ -343,9 +344,11 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 	break;
   }
   ASPI_DebugPrintCmd(lpPRB);
-  if (lpPRB->SRB_HaId > ASPI_GetNumControllers()) {
-      ERR("Failed: Wanted hostadapter %d, but we have only %d.\n",
-	  lpPRB->SRB_HaId,ASPI_GetNumControllers()
+
+  num_controllers = ASPI_GetNumControllers();
+  if (lpPRB->SRB_HaId > num_controllers) {
+      WARN("Failed: Wanted hostadapter %d, but we have only %d.\n",
+	  lpPRB->SRB_HaId, num_controllers
       );
       return WNASPI32_DoPosting( lpPRB, SS_INVALID_HA );
   }
