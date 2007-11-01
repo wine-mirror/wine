@@ -3687,10 +3687,10 @@ static void WINSPOOL_GetDefaultDevMode(
 	dm.u1.s1.dmPaperLength = 2970;
 	dm.u1.s1.dmPaperWidth = 2100;
 
-	dm.dmScale = 100;
-	dm.dmCopies = 1;
-	dm.dmDefaultSource = DMBIN_AUTO;
-	dm.dmPrintQuality = DMRES_MEDIUM;
+	dm.u1.s1.dmScale = 100;
+	dm.u1.s1.dmCopies = 1;
+	dm.u1.s1.dmDefaultSource = DMBIN_AUTO;
+	dm.u1.s1.dmPrintQuality = DMRES_MEDIUM;
 	/* dm.dmColor */
 	/* dm.dmDuplex */
 	dm.dmYResolution = 300; /* 300dpi */
@@ -3701,7 +3701,7 @@ static void WINSPOOL_GetDefaultDevMode(
 	/* dm.dmBitsPerPel */
 	/* dm.dmPelsWidth */
 	/* dm.dmPelsHeight */
-	/* dm.dmDisplayFlags */
+	/* dm.u2.dmDisplayFlags */
 	/* dm.dmDisplayFrequency */
 	/* dm.dmICMMethod */
 	/* dm.dmICMIntent */

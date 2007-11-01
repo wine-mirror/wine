@@ -354,7 +354,7 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 	        lpdm->dmCollate =
 		  (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED);
 	    if (lpdm->dmFields & DM_COPIES)
-	        lpdm->dmCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
+	        lpdm->u1.s1.dmCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
 	} else {
 	    if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
 	        lppd->Flags |= PD_COLLATE;
@@ -437,7 +437,7 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
 	        lpdm->dmCollate =
 		  (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED);
 	    if (lpdm->dmFields & DM_COPIES)
-	        lpdm->dmCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
+	        lpdm->u1.s1.dmCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
 	} else {
 	    if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
 	        lppd->Flags |= PD_COLLATE;
@@ -604,7 +604,7 @@ static BOOL PRINTDLG_SetUpPaperComboBoxA(HWND hDlg,
             if (nIDComboBox == cmb2)
                 dm->u1.s1.dmPaperSize = oldWord;
             else
-                dm->dmDefaultSource = oldWord;
+                dm->u1.s1.dmDefaultSource = oldWord;
         }
     }
     else {
@@ -616,7 +616,7 @@ static BOOL PRINTDLG_SetUpPaperComboBoxA(HWND hDlg,
             if (nIDComboBox == cmb2)
                 oldWord = dm->u1.s1.dmPaperSize;
             else
-                oldWord = dm->dmDefaultSource;
+                oldWord = dm->u1.s1.dmDefaultSource;
         }
     }
 
@@ -714,7 +714,7 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
             if (nIDComboBox == cmb2)
                 dm->u1.s1.dmPaperSize = oldWord;
             else
-                dm->dmDefaultSource = oldWord;
+                dm->u1.s1.dmDefaultSource = oldWord;
         }
     }
     else {
@@ -726,7 +726,7 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
             if (nIDComboBox == cmb2)
                 oldWord = dm->u1.s1.dmPaperSize;
             else
-                oldWord = dm->dmDefaultSource;
+                oldWord = dm->u1.s1.dmDefaultSource;
         }
     }
 
@@ -976,7 +976,7 @@ BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name,
 	  if (lppd->hDevMode == 0)
 	      copies = lppd->nCopies;
 	  else
-	      copies = lpdm->dmCopies;
+	      copies = lpdm->u1.s1.dmCopies;
 	  if(copies == 0) copies = 1;
 	  else if(copies < 0) copies = MAX_COPIES;
 	  SetDlgItemInt(hDlg, edt3, copies, FALSE);
@@ -1125,7 +1125,7 @@ static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
 	  if (lppd->hDevMode == 0)
 	      copies = lppd->nCopies;
 	  else
-	      copies = lpdm->dmCopies;
+	      copies = lpdm->u1.s1.dmCopies;
 	  if(copies == 0) copies = 1;
 	  else if(copies < 0) copies = MAX_COPIES;
 	  SetDlgItemInt(hDlg, edt3, copies, FALSE);
@@ -1564,7 +1564,7 @@ LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
       {
 	  DWORD Sel = SendDlgItemMessageA(hDlg, cmb3, CB_GETCURSEL, 0, 0);
 	  if(Sel != CB_ERR)
-	      lpdm->dmDefaultSource = SendDlgItemMessageA(hDlg, cmb3,
+	      lpdm->u1.s1.dmDefaultSource = SendDlgItemMessageA(hDlg, cmb3,
 							  CB_GETITEMDATA, Sel,
 							  0);
       }
@@ -1728,7 +1728,7 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
       {
 	  DWORD Sel = SendDlgItemMessageW(hDlg, cmb3, CB_GETCURSEL, 0, 0);
 	  if(Sel != CB_ERR)
-	      lpdm->dmDefaultSource = SendDlgItemMessageW(hDlg, cmb3,
+	      lpdm->u1.s1.dmDefaultSource = SendDlgItemMessageW(hDlg, cmb3,
 							  CB_GETITEMDATA, Sel,
 							  0);
       }
@@ -2531,7 +2531,7 @@ PRINTDLG_PS_UpdateDlgStructA(HWND hDlg, PageSetupDataA *pda) {
     paperword = SendDlgItemMessageA(hDlg,cmb1,CB_GETITEMDATA,
         SendDlgItemMessageA(hDlg, cmb1, CB_GETCURSEL, 0, 0), 0);
     if (paperword != CB_ERR)
-        dm->dmDefaultSource = paperword;
+        dm->u1.s1.dmDefaultSource = paperword;
     else
         FIXME("could not get dialog text for papersize cmbbox?\n");
 
@@ -2836,7 +2836,7 @@ PRINTDLG_PS_WMCommandA(
     case cmb3:
 	if(msg == CBN_SELCHANGE){
 	    DEVMODEA *dm = GlobalLock(pda->pdlg.hDevMode);
-	    dm->dmDefaultSource = SendDlgItemMessageA(hDlg, cmb3,CB_GETITEMDATA,
+	    dm->u1.s1.dmDefaultSource = SendDlgItemMessageA(hDlg, cmb3,CB_GETITEMDATA,
                 SendDlgItemMessageA(hDlg, cmb3, CB_GETCURSEL, 0, 0), 0);
 	    GlobalUnlock(pda->pdlg.hDevMode);
 	}
@@ -3228,7 +3228,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         PRINTDLG_PS_ChangePrinterA(hDlg, pda);
 	dm = GlobalLock(pda->pdlg.hDevMode);
 	if(dm){
-	    dm->dmDefaultSource = 15; /*FIXME: Automatic select. Does it always 15 at start? */
+	    dm->u1.s1.dmDefaultSource = 15; /*FIXME: Automatic select. Does it always 15 at start? */
 	    PRINTDLG_PaperSizeA(&(pda->pdlg), dm->u1.s1.dmPaperSize, &pda->curdlg.ptPaperSize);
             GlobalUnlock(pda->pdlg.hDevMode);
 	    pda->curdlg.ptPaperSize.x = _c_10mm2size(pda->dlga, pda->curdlg.ptPaperSize.x);

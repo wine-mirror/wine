@@ -65,13 +65,13 @@ static const PSDRV_DEVMODEA DefaultDevmode =
 /* dmOrientation */	DMORIENT_PORTRAIT,
 /* dmPaperSize */	DMPAPER_LETTER,
 /* dmPaperLength */	2794,
-/* dmPaperWidth */      2159
-     }
-   },
+/* dmPaperWidth */      2159,
 /* dmScale */		100, /* ?? */
 /* dmCopies */		1,
 /* dmDefaultSource */	DMBIN_AUTO,
-/* dmPrintQuality */	0,
+/* dmPrintQuality */	0
+     }
+   },
 /* dmColor */		DMCOLOR_COLOR,
 /* dmDuplex */		DMDUP_SIMPLEX,
 /* dmYResolution */	0,
@@ -82,7 +82,9 @@ static const PSDRV_DEVMODEA DefaultDevmode =
 /* dmBitsPerPel */	0,
 /* dmPelsWidth */	0,
 /* dmPelsHeight */	0,
-/* dmDisplayFlags */	0,
+   { /* u2 */
+/* dmDisplayFlags */	0
+   },
 /* dmDisplayFrequency */ 0,
 /* dmICMMethod */       0,
 /* dmICMIntent */       0,
@@ -423,10 +425,10 @@ INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
         return DT_RASPRINTER;
     case HORZSIZE:
         return MulDiv(physDev->horzSize, 100,
-		      physDev->Devmode->dmPublic.dmScale);
+		      physDev->Devmode->dmPublic.u1.s1.dmScale);
     case VERTSIZE:
         return MulDiv(physDev->vertSize, 100,
-		      physDev->Devmode->dmPublic.dmScale);
+		      physDev->Devmode->dmPublic.u1.s1.dmScale);
     case HORZRES:
     case DESKTOPHORZRES:
         return physDev->horzRes;
@@ -475,10 +477,10 @@ INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
                            (double)physDev->pi->ppd->DefaultResolution );
     case LOGPIXELSX:
         return MulDiv(physDev->logPixelsX,
-		      physDev->Devmode->dmPublic.dmScale, 100);
+		      physDev->Devmode->dmPublic.u1.s1.dmScale, 100);
     case LOGPIXELSY:
         return MulDiv(physDev->logPixelsY,
-		      physDev->Devmode->dmPublic.dmScale, 100);
+		      physDev->Devmode->dmPublic.u1.s1.dmScale, 100);
     case SIZEPALETTE:
         return 0;
     case NUMRESERVED:

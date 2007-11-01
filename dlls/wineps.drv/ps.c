@@ -348,14 +348,14 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
 
     WriteSpool16( physDev->job.hJob, (LPSTR)psbeginsetup, strlen(psbeginsetup) );
 
-    if(physDev->Devmode->dmPublic.dmCopies > 1) {
+    if(physDev->Devmode->dmPublic.u1.s1.dmCopies > 1) {
         char copies_buf[100];
-        sprintf(copies_buf, "mark {\n << /NumCopies %d >> setpagedevice\n} stopped cleartomark\n", physDev->Devmode->dmPublic.dmCopies);
+        sprintf(copies_buf, "mark {\n << /NumCopies %d >> setpagedevice\n} stopped cleartomark\n", physDev->Devmode->dmPublic.u1.s1.dmCopies);
         WriteSpool16(physDev->job.hJob, copies_buf, strlen(copies_buf));
     }
 
     for(slot = physDev->pi->ppd->InputSlots; slot; slot = slot->next) {
-        if(slot->WinBin == physDev->Devmode->dmPublic.dmDefaultSource) {
+        if(slot->WinBin == physDev->Devmode->dmPublic.u1.s1.dmDefaultSource) {
 	    if(slot->InvocationString) {
 	        PSDRV_WriteFeature(physDev->job.hJob, "*InputSlot", slot->Name,
 			     slot->InvocationString);

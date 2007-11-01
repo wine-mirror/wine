@@ -104,35 +104,35 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
     }
 
     if(dm2->dmPublic.dmFields & DM_SCALE) {
-        dm1->dmPublic.dmScale = dm2->dmPublic.dmScale;
-	TRACE("Changing Scale to %d\n", dm2->dmPublic.dmScale);
+        dm1->dmPublic.u1.s1.dmScale = dm2->dmPublic.u1.s1.dmScale;
+	TRACE("Changing Scale to %d\n", dm2->dmPublic.u1.s1.dmScale);
     }
 
     if(dm2->dmPublic.dmFields & DM_COPIES) {
-        dm1->dmPublic.dmCopies = dm2->dmPublic.dmCopies;
-	TRACE("Changing Copies to %d\n", dm2->dmPublic.dmCopies);
+        dm1->dmPublic.u1.s1.dmCopies = dm2->dmPublic.u1.s1.dmCopies;
+	TRACE("Changing Copies to %d\n", dm2->dmPublic.u1.s1.dmCopies);
     }
 
     if(dm2->dmPublic.dmFields & DM_DEFAULTSOURCE) {
         INPUTSLOT *slot;
 
 	for(slot = pi->ppd->InputSlots; slot; slot = slot->next) {
-	    if(slot->WinBin == dm2->dmPublic.dmDefaultSource)
+	    if(slot->WinBin == dm2->dmPublic.u1.s1.dmDefaultSource)
 	        break;
 	}
 	if(slot) {
-	    dm1->dmPublic.dmDefaultSource = dm2->dmPublic.dmDefaultSource;
+	    dm1->dmPublic.u1.s1.dmDefaultSource = dm2->dmPublic.u1.s1.dmDefaultSource;
 	    TRACE("Changing bin to '%s'\n", slot->FullName);
 	} else {
 	  TRACE("Trying to change to unsupported bin %d\n",
-		dm2->dmPublic.dmDefaultSource);
+		dm2->dmPublic.u1.s1.dmDefaultSource);
 	}
     }
 
    if (dm2->dmPublic.dmFields & DM_DEFAULTSOURCE )
-       dm1->dmPublic.dmDefaultSource = dm2->dmPublic.dmDefaultSource;
+       dm1->dmPublic.u1.s1.dmDefaultSource = dm2->dmPublic.u1.s1.dmDefaultSource;
    if (dm2->dmPublic.dmFields & DM_PRINTQUALITY )
-       dm1->dmPublic.dmPrintQuality = dm2->dmPublic.dmPrintQuality;
+       dm1->dmPublic.u1.s1.dmPrintQuality = dm2->dmPublic.u1.s1.dmPrintQuality;
    if (dm2->dmPublic.dmFields & DM_COLOR )
        dm1->dmPublic.dmColor = dm2->dmPublic.dmColor;
    if (dm2->dmPublic.dmFields & DM_DUPLEX && pi->ppd->DefaultDuplex && pi->ppd->DefaultDuplex->WinDuplex != 0)
@@ -152,11 +152,11 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
    if (dm2->dmPublic.dmFields & DM_PELSHEIGHT )
        dm1->dmPublic.dmPelsHeight = dm2->dmPublic.dmPelsHeight;
    if (dm2->dmPublic.dmFields & DM_DISPLAYFLAGS )
-       dm1->dmPublic.dmDisplayFlags = dm2->dmPublic.dmDisplayFlags;
+       dm1->dmPublic.u2.dmDisplayFlags = dm2->dmPublic.u2.dmDisplayFlags;
    if (dm2->dmPublic.dmFields & DM_DISPLAYFREQUENCY )
        dm1->dmPublic.dmDisplayFrequency = dm2->dmPublic.dmDisplayFrequency;
    if (dm2->dmPublic.dmFields & DM_POSITION )
-       dm1->dmPublic.u1.dmPosition = dm2->dmPublic.u1.dmPosition;
+       dm1->dmPublic.u1.s2.dmPosition = dm2->dmPublic.u1.s2.dmPosition;
    if (dm2->dmPublic.dmFields & DM_LOGPIXELS )
        dm1->dmPublic.dmLogPixels = dm2->dmPublic.dmLogPixels;
    if (dm2->dmPublic.dmFields & DM_ICMMETHOD )

@@ -148,13 +148,13 @@ static LRESULT PRINTDLG_WMInitDialog16(HWND hDlg, WPARAM wParam, PRINT_PTRA16* p
 
 	    pdm = GlobalLock16(lppd->hDevMode);
 	    if(pdm) {
-		switch (pdm->dmPrintQuality) {
+		switch (pdm->u1.s1.dmPrintQuality) {
 		case DMRES_HIGH		: strcpy(buf,"High");break;
 		case DMRES_MEDIUM	: strcpy(buf,"Medium");break;
 		case DMRES_LOW		: strcpy(buf,"Low");break;
 		case DMRES_DRAFT	: strcpy(buf,"Draft");break;
 		case 0			: strcpy(buf,"Default");break;
-		default			: sprintf(buf,"%ddpi",pdm->dmPrintQuality);break;
+		default			: sprintf(buf,"%ddpi",pdm->u1.s1.dmPrintQuality);break;
 		}
 	        GlobalUnlock16(lppd->hDevMode);
 	    } else

@@ -2814,13 +2814,17 @@ typedef struct
 	short  dmPaperSize;
 	short  dmPaperLength;
 	short  dmPaperWidth;
+        short  dmScale;
+        short  dmCopies;
+        short  dmDefaultSource;
+        short  dmPrintQuality;
       } DUMMYSTRUCTNAME1;
-      POINTL dmPosition;
+      struct {
+        POINTL dmPosition;
+        DWORD dmDisplayOrientation;
+        DWORD dmDisplayFixedOutput;
+      } DUMMYSTRUCTNAME2;
     } DUMMYUNIONNAME1;
-    short  dmScale;
-    short  dmCopies;
-    short  dmDefaultSource;
-    short  dmPrintQuality;
     short  dmColor;
     short  dmDuplex;
     short  dmYResolution;
@@ -2831,7 +2835,10 @@ typedef struct
     DWORD  dmBitsPerPel;
     DWORD  dmPelsWidth;
     DWORD  dmPelsHeight;
-    DWORD  dmDisplayFlags;
+    union {
+      DWORD dmDisplayFlags;
+      DWORD dmNup;
+    } DUMMYUNIONNAME2;
     DWORD  dmDisplayFrequency;
     DWORD  dmICMMethod;
     DWORD  dmICMIntent;
@@ -2857,13 +2864,17 @@ typedef struct
 	short  dmPaperSize;
 	short  dmPaperLength;
 	short  dmPaperWidth;
+        short  dmScale;
+        short  dmCopies;
+        short  dmDefaultSource;
+        short  dmPrintQuality;
       } DUMMYSTRUCTNAME1;
-      POINTL dmPosition;
+      struct {
+        POINTL dmPosition;
+        DWORD dmDisplayOrientation;
+        DWORD dmDisplayFixedOutput;
+      } DUMMYSTRUCTNAME2;
     } DUMMYUNIONNAME1;
-    short  dmScale;
-    short  dmCopies;
-    short  dmDefaultSource;
-    short  dmPrintQuality;
     short  dmColor;
     short  dmDuplex;
     short  dmYResolution;
@@ -2874,7 +2885,10 @@ typedef struct
     DWORD  dmBitsPerPel;
     DWORD  dmPelsWidth;
     DWORD  dmPelsHeight;
-    DWORD  dmDisplayFlags;
+    union {
+      DWORD dmDisplayFlags;
+      DWORD dmNup;
+    } DUMMYUNIONNAME2;
     DWORD  dmDisplayFrequency;
     DWORD  dmICMMethod;
     DWORD  dmICMIntent;

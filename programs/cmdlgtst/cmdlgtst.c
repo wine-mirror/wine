@@ -498,12 +498,12 @@ static void mw_PageSetup(HWND hWnd)
 			OF("dmPaperSize",	u1.s1.dmPaperSize,	DM_PAPERSIZE);
 			OF("dmPaperLength",	u1.s1.dmPaperLength,	DM_PAPERLENGTH);
 			OF("dmPaperWidth",	u1.s1.dmPaperWidth,	DM_PAPERWIDTH);
-			OF("dmScale",		dmScale,	DM_SCALE);
-			OF("dmCopies",		dmCopies,	DM_COPIES);
-			OF("dmDefaultSource",	dmDefaultSource,DM_DEFAULTSOURCE);
-			OF("dmPrintQuality",	dmPrintQuality,	DM_PRINTQUALITY);
+			OF("dmScale",		u1.s1.dmScale,	DM_SCALE);
+			OF("dmCopies",		u1.s1.dmCopies,	DM_COPIES);
+			OF("dmDefaultSource",	u1.s1.dmDefaultSource,DM_DEFAULTSOURCE);
+			OF("dmPrintQuality",	u1.s1.dmPrintQuality,	DM_PRINTQUALITY);
 			if(dm->dmFields &	DM_POSITION)
-				WINE_TRACE("        dmPosition(%d, %d)\n", dm->u1.dmPosition.x, dm->u1.dmPosition.y);
+				WINE_TRACE("        dmPosition(%d, %d)\n", dm->u1.s2.dmPosition.x, dm->u1.s2.dmPosition.y);
 			else
 				WINE_TRACE("        dmPosition NOT SET!\n");
 			OF("dmColor",		dmColor,	DM_COLOR);
