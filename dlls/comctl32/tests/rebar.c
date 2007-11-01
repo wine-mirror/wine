@@ -693,11 +693,11 @@ static void resize_test(void)
     }
 }
 
-static void expect_band_content(UINT uBand, UINT fStyle, COLORREF clrFore,
+static void expect_band_content(UINT uBand, INT fStyle, COLORREF clrFore,
     COLORREF clrBack, LPCSTR lpText, int iImage, HWND hwndChild,
-    UINT cxMinChild, UINT cyMinChild, UINT cx, HBITMAP hbmBack, UINT wID,
-    UINT cyChild, UINT cyMaxChild, UINT cyIntegral, UINT cxIdeal, LPARAM lParam,
-    UINT cxHeader)
+    INT cxMinChild, INT cyMinChild, INT cx, HBITMAP hbmBack, INT wID,
+    INT cyChild, INT cyMaxChild, INT cyIntegral, INT cxIdeal, LPARAM lParam,
+    INT cxHeader)
 {
     CHAR buf[MAX_PATH] = "abc";
     REBARBANDINFO rb;
@@ -712,7 +712,7 @@ static void expect_band_content(UINT uBand, UINT fStyle, COLORREF clrFore,
     ok(SendMessageA(hRebar, RB_GETBANDINFOA, uBand, (LPARAM)&rb), "RB_GETBANDINFO failed\n");
     expect_eq(rb.fStyle, fStyle, int, "%x");
     todo_wine expect_eq(rb.clrFore, clrFore, COLORREF, "%x");
-    todo_wine expect_eq(rb.clrBack, clrBack, int, "%x");
+    todo_wine expect_eq(rb.clrBack, clrBack, unsigned, "%x");
     expect_eq(strcmp(rb.lpText, lpText), 0, int, "%d");
     expect_eq(rb.iImage, iImage, int, "%x");
     expect_eq(rb.hwndChild, hwndChild, HWND, "%p");
