@@ -573,8 +573,15 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
  */
 BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
 {
-    ATOM atom = HIWORD(className) ? GlobalFindAtomA( className ) : LOWORD(className);
-    return UnregisterClassW( (LPCWSTR)MAKEINTATOM(atom), hInstance );
+    if (!IS_INTRESOURCE(className))
+    {
+        WCHAR name[MAX_ATOM_LEN + 1];
+
+        if (!MultiByteToWideChar( CP_ACP, 0, className, -1, name, MAX_ATOM_LEN + 1 ))
+            return FALSE;
+        return UnregisterClassW( name, hInstance );
+    }
+    return UnregisterClassW( (LPCWSTR)className, hInstance );
 }
 
 /***********************************************************************
@@ -583,20 +590,14 @@ BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
 BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 {
     CLASS *classPtr = NULL;
-    ATOM atom = HIWORD(className) ? GlobalFindAtomW( className ) : LOWORD(className);
 
-    TRACE("%s %p %x\n",debugstr_w(className), hInstance, atom);
-
-    if (!atom)
-    {
-        SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
-        return FALSE;
-    }
+    TRACE("%s %p\n",debugstr_w(className), hInstance);
 
     SERVER_START_REQ( destroy_class )
     {
-        req->atom = atom;
         req->instance = hInstance;
+        if (IS_INTRESOURCE(className)) req->atom = LOWORD(className);
+        else wine_server_add_data( req, className, strlenW(className)*sizeof(WCHAR) );
         if (!wine_server_call_err( req )) classPtr = reply->client_ptr;
     }
     SERVER_END_REQ;

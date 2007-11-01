@@ -186,9 +186,13 @@ DECL_HANDLER(create_class)
 /* destroy a window class */
 DECL_HANDLER(destroy_class)
 {
-    struct window_class *class = find_class( current->process, req->atom, req->instance );
+    struct window_class *class;
+    atom_t atom = req->atom;
 
-    if (!class)
+    if (get_req_data_size())
+        atom = find_global_atom( NULL, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
+
+    if (!(class = find_class( current->process, atom, req->instance )))
         set_win32_error( ERROR_CLASS_DOES_NOT_EXIST );
     else if (class->count)
         set_win32_error( ERROR_CLASS_HAS_WINDOWS );

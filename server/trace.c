@@ -3205,7 +3205,9 @@ static void dump_create_class_reply( const struct create_class_reply *req )
 static void dump_destroy_class_request( const struct destroy_class_request *req )
 {
     fprintf( stderr, " atom=%04x,", req->atom );
-    fprintf( stderr, " instance=%p", req->instance );
+    fprintf( stderr, " instance=%p,", req->instance );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_destroy_class_reply( const struct destroy_class_reply *req )

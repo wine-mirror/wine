@@ -2610,6 +2610,7 @@ enum message_type
 @REQ(destroy_class)
     atom_t         atom;           /* class atom */
     void*          instance;       /* module instance */
+    VARARG(name,unicode_str);      /* class name */
 @REPLY
     void*          client_ptr;     /* pointer to class in client address space */
 @END
