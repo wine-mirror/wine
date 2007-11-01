@@ -313,6 +313,18 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
   int	fd;
   DWORD SRB_Status;
 
+  num_controllers = ASPI_GetNumControllers();
+  if (lpPRB->SRB_HaId > num_controllers) {
+      WARN("Failed: Wanted hostadapter %d, but we have only %d.\n",
+	  lpPRB->SRB_HaId, num_controllers
+      );
+      return WNASPI32_DoPosting( lpPRB, SS_INVALID_HA );
+  }
+  fd = ASPI_OpenDevice(lpPRB);
+  if (fd == -1) {
+      return WNASPI32_DoPosting( lpPRB, SS_NO_DEVICE );
+  }
+    
   /* FIXME: hackmode */
 #define MAKE_TARGET_TO_HOST(lpPRB) \
   	if (!TARGET_TO_HOST(lpPRB)) { \
@@ -344,18 +356,6 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 	break;
   }
   ASPI_DebugPrintCmd(lpPRB);
-
-  num_controllers = ASPI_GetNumControllers();
-  if (lpPRB->SRB_HaId > num_controllers) {
-      WARN("Failed: Wanted hostadapter %d, but we have only %d.\n",
-	  lpPRB->SRB_HaId, num_controllers
-      );
-      return WNASPI32_DoPosting( lpPRB, SS_INVALID_HA );
-  }
-  fd = ASPI_OpenDevice(lpPRB);
-  if (fd == -1) {
-      return WNASPI32_DoPosting( lpPRB, SS_NO_DEVICE );
-  }
 
   sg_hd = NULL;
   sg_reply_hdr = NULL;
