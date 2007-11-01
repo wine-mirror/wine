@@ -4441,19 +4441,6 @@ static LPCWSTR *msi_service_args_to_vector(LPCWSTR name, LPWSTR args, DWORD *num
     return vector;
 }
 
-static MSICOMPONENT *msi_find_component( MSIPACKAGE *package, LPCWSTR component )
-{
-    MSICOMPONENT *comp;
-
-    LIST_FOR_EACH_ENTRY(comp, &package->components, MSICOMPONENT, entry)
-    {
-        if (!lstrcmpW(comp->Component, component))
-            return comp;
-    }
-
-    return NULL;
-}
-
 static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
 {
     MSIPACKAGE *package = (MSIPACKAGE *)param;
@@ -4464,7 +4451,7 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     DWORD event, numargs;
     UINT r = ERROR_FUNCTION_FAILED;
 
-    comp = msi_find_component(package, MSI_RecordGetString(rec, 6));
+    comp = get_loaded_component(package, MSI_RecordGetString(rec, 6));
     if (!comp || comp->Action == INSTALLSTATE_UNKNOWN || comp->Action == INSTALLSTATE_ABSENT)
         return ERROR_SUCCESS;
 
