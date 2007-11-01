@@ -2600,6 +2600,9 @@ enum message_type
     int            extra;          /* number of extra class bytes */
     int            win_extra;      /* number of window extra bytes */
     void*          client_ptr;     /* pointer to class in client address space */
+    VARARG(name,unicode_str);      /* class name */
+@REPLY
+    atom_t         atom;           /* resulting class atom */
 @END
 
 

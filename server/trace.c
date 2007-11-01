@@ -3192,7 +3192,14 @@ static void dump_create_class_request( const struct create_class_request *req )
     fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " extra=%d,", req->extra );
     fprintf( stderr, " win_extra=%d,", req->win_extra );
-    fprintf( stderr, " client_ptr=%p", req->client_ptr );
+    fprintf( stderr, " client_ptr=%p,", req->client_ptr );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_create_class_reply( const struct create_class_reply *req )
+{
+    fprintf( stderr, " atom=%04x", req->atom );
 }
 
 static void dump_destroy_class_request( const struct destroy_class_request *req )
@@ -4106,7 +4113,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_start_hook_chain_reply,
     (dump_func)0,
     (dump_func)dump_get_hook_info_reply,
-    (dump_func)0,
+    (dump_func)dump_create_class_reply,
     (dump_func)dump_destroy_class_reply,
     (dump_func)dump_set_class_info_reply,
     (dump_func)dump_set_clipboard_info_reply,

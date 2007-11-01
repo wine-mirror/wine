@@ -295,16 +295,15 @@ static CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE hinstance )
  *           CLASS_RegisterClass
  *
  * The real RegisterClass() functionality.
- * The atom is deleted no matter what.
  */
-static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE hInstance, BOOL local,
+static CLASS *CLASS_RegisterClass( LPCWSTR name, HINSTANCE hInstance, BOOL local,
                                    DWORD style, INT classExtra, INT winExtra )
 {
     CLASS *classPtr;
     BOOL ret;
 
-    TRACE("atom=0x%x hinst=%p style=0x%x clExtr=0x%x winExtr=0x%x\n",
-          atom, hInstance, style, classExtra, winExtra );
+    TRACE("name=%s hinst=%p style=0x%x clExtr=0x%x winExtr=0x%x\n",
+          debugstr_w(name), hInstance, style, classExtra, winExtra );
 
     /* Fix the extra bytes value */
 
@@ -319,25 +318,22 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE hInstance, BOOL local,
         WARN("Win extra bytes %d is > 40\n", winExtra );
 
     classPtr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLASS) + classExtra );
-    if (!classPtr)
-    {
-        GlobalDeleteAtom( atom );
-        return NULL;
-    }
+    if (!classPtr) return NULL;
 
     SERVER_START_REQ( create_class )
     {
         req->local      = local;
-        req->atom       = atom;
         req->style      = style;
         req->instance   = hInstance;
         req->extra      = classExtra;
         req->win_extra  = winExtra;
         req->client_ptr = classPtr;
+        if (IS_INTRESOURCE(name)) req->atom = LOWORD(name);
+        else wine_server_add_data( req, name, strlenW(name) * sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
+        classPtr->atomName = reply->atom;
     }
     SERVER_END_REQ;
-    GlobalDeleteAtom( atom );  /* the server increased the atom ref count */
     if (!ret)
     {
         HeapFree( GetProcessHeap(), 0, classPtr );
@@ -349,7 +345,6 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE hInstance, BOOL local,
     classPtr->cbWndExtra  = winExtra;
     classPtr->cbClsExtra  = classExtra;
     classPtr->hInstance   = hInstance;
-    classPtr->atomName    = atom;
 
     /* Other non-null values must be set by caller */
 
@@ -368,12 +363,9 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE hInstance, BOOL local,
  */
 static WNDPROC register_builtin( const struct builtin_class_descr *descr )
 {
-    ATOM atom;
     CLASS *classPtr;
 
-    if (!(atom = GlobalAddAtomW( descr->name ))) return 0;
-
-    if (!(classPtr = CLASS_RegisterClass( atom, user32_module, FALSE,
+    if (!(classPtr = CLASS_RegisterClass( descr->name, user32_module, FALSE,
                                           descr->style, 0, descr->extra ))) return 0;
 
     classPtr->hCursor       = LoadCursorA( 0, (LPSTR)descr->cursor );
@@ -506,14 +498,25 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     }
     if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
 
-    if (!(atom = GlobalAddAtomA( wc->lpszClassName ))) return 0;
+    if (!IS_INTRESOURCE(wc->lpszClassName))
+    {
+        WCHAR name[MAX_ATOM_LEN + 1];
 
-    if (!(classPtr = CLASS_RegisterClass( atom, instance, !(wc->style & CS_GLOBALCLASS),
-                                          wc->style, wc->cbClsExtra, wc->cbWndExtra )))
-        return 0;
+        if (!MultiByteToWideChar( CP_ACP, 0, wc->lpszClassName, -1, name, MAX_ATOM_LEN + 1 )) return 0;
+        classPtr = CLASS_RegisterClass( name, instance, !(wc->style & CS_GLOBALCLASS),
+                                        wc->style, wc->cbClsExtra, wc->cbWndExtra );
+    }
+    else
+    {
+        classPtr = CLASS_RegisterClass( (LPCWSTR)wc->lpszClassName, instance,
+                                        !(wc->style & CS_GLOBALCLASS), wc->style,
+                                        wc->cbClsExtra, wc->cbWndExtra );
+    }
+    if (!classPtr) return 0;
+    atom = classPtr->atomName;
 
-    TRACE("atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
-          atom, wc->lpfnWndProc, instance, wc->hbrBackground,
+    TRACE("name=%s atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
+          debugstr_a(wc->lpszClassName), atom, wc->lpfnWndProc, instance, wc->hbrBackground,
           wc->style, wc->cbClsExtra, wc->cbWndExtra, classPtr );
 
     classPtr->hIcon         = wc->hIcon;
@@ -544,14 +547,14 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     }
     if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
 
-    if (!(atom = GlobalAddAtomW( wc->lpszClassName ))) return 0;
-
-    if (!(classPtr = CLASS_RegisterClass( atom, instance, !(wc->style & CS_GLOBALCLASS),
+    if (!(classPtr = CLASS_RegisterClass( wc->lpszClassName, instance, !(wc->style & CS_GLOBALCLASS),
                                           wc->style, wc->cbClsExtra, wc->cbWndExtra )))
         return 0;
 
-    TRACE("atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
-          atom, wc->lpfnWndProc, instance, wc->hbrBackground,
+    atom = classPtr->atomName;
+
+    TRACE("name=%s atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
+          debugstr_w(wc->lpszClassName), atom, wc->lpfnWndProc, instance, wc->hbrBackground,
           wc->style, wc->cbClsExtra, wc->cbWndExtra, classPtr );
 
     classPtr->hIcon         = wc->hIcon;

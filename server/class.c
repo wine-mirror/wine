@@ -142,32 +142,45 @@ void *get_class_client_ptr( struct window_class *class )
 DECL_HANDLER(create_class)
 {
     struct window_class *class;
+    atom_t atom;
 
-    class = find_class( current->process, req->atom, req->instance );
+    if (get_req_data_size())
+    {
+        atom = add_global_atom( NULL, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
+        if (!atom) return;
+    }
+    else
+    {
+        atom = req->atom;
+        if (!grab_global_atom( NULL, atom )) return;
+    }
+
+    class = find_class( current->process, atom, req->instance );
     if (class && !class->local == !req->local)
     {
         set_win32_error( ERROR_CLASS_ALREADY_EXISTS );
+        release_global_atom( NULL, atom );
         return;
     }
     if (req->extra < 0 || req->extra > 4096 || req->win_extra < 0 || req->win_extra > 4096)
     {
         /* don't allow stupid values here */
         set_error( STATUS_INVALID_PARAMETER );
+        release_global_atom( NULL, atom );
         return;
     }
-
-    if (!grab_global_atom( NULL, req->atom )) return;
 
     if (!(class = create_class( current->process, req->extra, req->local )))
     {
-        release_global_atom( NULL, req->atom );
+        release_global_atom( NULL, atom );
         return;
     }
-    class->atom       = req->atom;
+    class->atom       = atom;
     class->instance   = req->instance;
     class->style      = req->style;
     class->win_extra  = req->win_extra;
     class->client_ptr = req->client_ptr;
+    reply->atom = atom;
 }
 
 /* destroy a window class */

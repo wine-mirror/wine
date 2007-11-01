@@ -3594,10 +3594,12 @@ struct create_class_request
     int            extra;
     int            win_extra;
     void*          client_ptr;
+    /* VARARG(name,unicode_str); */
 };
 struct create_class_reply
 {
     struct reply_header __header;
+    atom_t         atom;
 };
 
 
@@ -4880,6 +4882,6 @@ union generic_reply
     struct set_completion_info_reply set_completion_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 324
+#define SERVER_PROTOCOL_VERSION 325
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
