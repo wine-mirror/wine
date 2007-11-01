@@ -3565,6 +3565,143 @@ HRESULT WINAPI CoRegisterChannelHook(REFGUID guidExtension, IChannelHook *pChann
     return RPC_RegisterChannelHook(guidExtension, pChannelHook);
 }
 
+typedef struct Context
+{
+    const IComThreadingInfoVtbl *lpVtbl;
+    LONG refs;
+    APTTYPE apttype;
+} Context;
+
+static HRESULT WINAPI Context_QueryInterface(IComThreadingInfo *iface, REFIID riid, LPVOID *ppv)
+{
+    *ppv = NULL;
+
+    if (IsEqualIID(riid, &IID_IComThreadingInfo) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    FIXME("interface not implemented %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Context_AddRef(IComThreadingInfo *iface)
+{
+    Context *This = (Context *)iface;
+    return InterlockedIncrement(&This->refs);
+}
+
+static ULONG WINAPI Context_Release(IComThreadingInfo *iface)
+{
+    Context *This = (Context *)iface;
+    ULONG refs = InterlockedDecrement(&This->refs);
+    if (!refs)
+        HeapFree(GetProcessHeap(), 0, This);
+    return refs;
+}
+
+static HRESULT WINAPI Context_GetCurrentApartmentType(IComThreadingInfo *iface, APTTYPE *apttype)
+{
+    Context *This = (Context *)iface;
+
+    TRACE("(%p)\n", apttype);
+
+    *apttype = This->apttype;
+    return S_OK;
+}
+
+static HRESULT WINAPI Context_GetCurrentThreadType(IComThreadingInfo *iface, THDTYPE *thdtype)
+{
+    Context *This = (Context *)iface;
+
+    TRACE("(%p)\n", thdtype);
+
+    switch (This->apttype)
+    {
+    case APTTYPE_STA:
+    case APTTYPE_MAINSTA:
+        *thdtype = THDTYPE_PROCESSMESSAGES;
+        break;
+    default:
+        *thdtype = THDTYPE_BLOCKMESSAGES;
+        break;
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI Context_GetCurrentLogicalThreadId(IComThreadingInfo *iface, GUID *logical_thread_id)
+{
+    FIXME("(%p): stub\n", logical_thread_id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Context_SetCurrentLogicalThreadId(IComThreadingInfo *iface, REFGUID logical_thread_id)
+{
+    FIXME("(%s): stub\n", debugstr_guid(logical_thread_id));
+    return E_NOTIMPL;
+}
+
+static const IComThreadingInfoVtbl Context_Threading_Vtbl =
+{
+    Context_QueryInterface,
+    Context_AddRef,
+    Context_Release,
+    Context_GetCurrentApartmentType,
+    Context_GetCurrentThreadType,
+    Context_GetCurrentLogicalThreadId,
+    Context_SetCurrentLogicalThreadId
+};
+
+/***********************************************************************
+ *           CoGetObjectContext [OLE32.@]
+ *
+ * Retrieves an object associated with the current context (i.e. apartment).
+ *
+ * PARAMS
+ *  riid [I] ID of the interface of the object to retrieve.
+ *  ppv  [O] Address where object will be stored on return.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ */
+HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
+{
+    APARTMENT *apt = COM_CurrentApt();
+    Context *context;
+    HRESULT hr;
+
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+    if (!apt)
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    context = HeapAlloc(GetProcessHeap(), 0, sizeof(*context));
+    if (!context)
+        return E_OUTOFMEMORY;
+
+    context->lpVtbl = &Context_Threading_Vtbl;
+    context->refs = 1;
+    if (apt->multi_threaded)
+        context->apttype = APTTYPE_MTA;
+    else if (apt->main)
+        context->apttype = APTTYPE_MAINSTA;
+    else
+        context->apttype = APTTYPE_STA;
+
+    hr = IUnknown_QueryInterface((IUnknown *)&context->lpVtbl, riid, ppv);
+    IUnknown_Release((IUnknown *)&context->lpVtbl);
+
+    return hr;
+}
+
 /***********************************************************************
  *		DllMain (OLE32.@)
  */
