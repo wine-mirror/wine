@@ -3754,11 +3754,24 @@ static UINT msi_unpublish_feature(MSIPACKAGE *package, MSIFEATURE *feature)
     return ERROR_SUCCESS;
 }
 
+static BOOL msi_check_unpublish(MSIPACKAGE *package)
+{
+    MSIFEATURE *feature;
+
+    LIST_FOR_EACH_ENTRY(feature, &package->features, MSIFEATURE, entry)
+    {
+        if (feature->ActionRequest != INSTALLSTATE_ABSENT)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static UINT ACTION_UnpublishFeatures(MSIPACKAGE *package)
 {
     MSIFEATURE *feature;
 
-    if (msi_check_publish(package))
+    if (!msi_check_unpublish(package))
         return ERROR_SUCCESS;
 
     LIST_FOR_EACH_ENTRY(feature, &package->features, MSIFEATURE, entry)
