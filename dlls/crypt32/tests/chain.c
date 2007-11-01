@@ -1833,6 +1833,7 @@ static void testVerifyCertChainPolicy(void)
      "Expected both indexes 0, got %d, %d\n", policyStatus.lChainIndex,
      policyStatus.lElementIndex);
     CertFreeCertificateChain(chain);
+    CertFreeCertificateContext(cert);
 
     for (i = 0;
      i < sizeof(basePolicyCheck) / sizeof(basePolicyCheck[0]); i++)
