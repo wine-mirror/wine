@@ -2786,6 +2786,7 @@ static void testAcquireCertPrivateKey(void)
          &keyContext, &size);
         ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
          GetLastError());
+        CryptReleaseContext(certCSP, 0);
 
         CryptDestroyKey(key);
     }
