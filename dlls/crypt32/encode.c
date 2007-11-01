@@ -1579,16 +1579,19 @@ static BOOL CRYPT_AsnEncodeNumericString(const CERT_NAME_VALUE *value,
          pbEncoded, pcbEncoded, bytesNeeded)))
         {
             DWORD i;
+            BYTE *ptr;
 
             if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
-                pbEncoded = *(BYTE **)pbEncoded;
-            *pbEncoded++ = ASN_NUMERICSTRING;
-            CRYPT_EncodeLen(encodedLen, pbEncoded, &lenBytes);
-            pbEncoded += lenBytes;
+                ptr = *(BYTE **)pbEncoded;
+            else
+                ptr = pbEncoded;
+            *ptr++ = ASN_NUMERICSTRING;
+            CRYPT_EncodeLen(encodedLen, ptr, &lenBytes);
+            ptr += lenBytes;
             for (i = 0; ret && i < encodedLen; i++)
             {
                 if (isdigitW(str[i]))
-                    *pbEncoded++ = (BYTE)str[i];
+                    *ptr++ = (BYTE)str[i];
                 else
                 {
                     *pcbEncoded = i;
@@ -1596,6 +1599,8 @@ static BOOL CRYPT_AsnEncodeNumericString(const CERT_NAME_VALUE *value,
                     ret = FALSE;
                 }
             }
+            if (!ret && (dwFlags & CRYPT_ENCODE_ALLOC_FLAG))
+                CryptMemFree(*(BYTE **)pbEncoded);
         }
     }
     return ret;
@@ -1628,16 +1633,19 @@ static BOOL CRYPT_AsnEncodePrintableString(const CERT_NAME_VALUE *value,
          pbEncoded, pcbEncoded, bytesNeeded)))
         {
             DWORD i;
+            BYTE *ptr;
 
             if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
-                pbEncoded = *(BYTE **)pbEncoded;
-            *pbEncoded++ = ASN_PRINTABLESTRING;
-            CRYPT_EncodeLen(encodedLen, pbEncoded, &lenBytes);
-            pbEncoded += lenBytes;
+                ptr = *(BYTE **)pbEncoded;
+            else
+                ptr = pbEncoded;
+            *ptr++ = ASN_PRINTABLESTRING;
+            CRYPT_EncodeLen(encodedLen, ptr, &lenBytes);
+            ptr += lenBytes;
             for (i = 0; ret && i < encodedLen; i++)
             {
                 if (isprintableW(str[i]))
-                    *pbEncoded++ = (BYTE)str[i];
+                    *ptr++ = (BYTE)str[i];
                 else
                 {
                     *pcbEncoded = i;
@@ -1645,6 +1653,8 @@ static BOOL CRYPT_AsnEncodePrintableString(const CERT_NAME_VALUE *value,
                     ret = FALSE;
                 }
             }
+            if (!ret && (dwFlags & CRYPT_ENCODE_ALLOC_FLAG))
+                CryptMemFree(*(BYTE **)pbEncoded);
         }
     }
     return ret;
@@ -1670,16 +1680,19 @@ static BOOL CRYPT_AsnEncodeIA5String(const CERT_NAME_VALUE *value,
          pbEncoded, pcbEncoded, bytesNeeded)))
         {
             DWORD i;
+            BYTE *ptr;
 
             if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
-                pbEncoded = *(BYTE **)pbEncoded;
-            *pbEncoded++ = ASN_IA5STRING;
-            CRYPT_EncodeLen(encodedLen, pbEncoded, &lenBytes);
-            pbEncoded += lenBytes;
+                ptr = *(BYTE **)pbEncoded;
+            else
+                ptr = pbEncoded;
+            *ptr++ = ASN_IA5STRING;
+            CRYPT_EncodeLen(encodedLen, ptr, &lenBytes);
+            ptr += lenBytes;
             for (i = 0; ret && i < encodedLen; i++)
             {
                 if (str[i] <= 0x7f)
-                    *pbEncoded++ = (BYTE)str[i];
+                    *ptr++ = (BYTE)str[i];
                 else
                 {
                     *pcbEncoded = i;
@@ -1687,6 +1700,8 @@ static BOOL CRYPT_AsnEncodeIA5String(const CERT_NAME_VALUE *value,
                     ret = FALSE;
                 }
             }
+            if (!ret && (dwFlags & CRYPT_ENCODE_ALLOC_FLAG))
+                CryptMemFree(*(BYTE **)pbEncoded);
         }
     }
     return ret;
