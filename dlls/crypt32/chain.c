@@ -913,6 +913,10 @@ static BOOL CRYPT_BuildSimpleChain(PCertificateChainEngine engine,
         if (issuer)
         {
             ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer, infoStatus);
+            /* CRYPT_AddCertToSimpleChain add-ref's the issuer, so free it to
+             * close the enumeration that found it
+             */
+            CertFreeCertificateContext(issuer);
             cert = issuer;
         }
         else
