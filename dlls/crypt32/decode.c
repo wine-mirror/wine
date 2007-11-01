@@ -617,15 +617,12 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
 
                 for (ptr = pbEncoded + 1 + lenBytes; ret && !doneDecoding; )
                 {
-                    DWORD itemLenBytes;
-
-                    itemLenBytes = GET_LEN_BYTES(ptr[1]);
                     if (dataLen == CMSG_INDEFINITE_LENGTH)
                     {
                         if (ptr[0] == 0)
                         {
                             doneDecoding = TRUE;
-                            if (itemLenBytes != 1 || ptr[1] != 0)
+                            if (ptr[1] != 0)
                             {
                                 SetLastError(CRYPT_E_ASN1_CORRUPT);
                                 ret = FALSE;
@@ -649,7 +646,8 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                             if (itemDataLen == CMSG_INDEFINITE_LENGTH)
                                 itemEncoded = cbEncoded - (ptr - pbEncoded);
                             else
-                                itemEncoded = 1 + itemLenBytes + itemDataLen;
+                                itemEncoded = 1 + GET_LEN_BYTES(ptr[1]) +
+                                 itemDataLen;
                         }
                         if (ret)
                             ret = arrayDesc->decodeFunc(ptr, itemEncoded,
