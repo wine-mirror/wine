@@ -5746,6 +5746,7 @@ static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
             }
         }
     }
+    CryptDestroyKey(key);
 }
 
 static const BYTE expiredCert[] = { 0x30, 0x82, 0x01, 0x33, 0x30, 0x81, 0xe2,
