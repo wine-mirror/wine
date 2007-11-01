@@ -527,7 +527,7 @@ static void test_load_save(void)
     check_lnk(lnkfile, &desc, 0x0);
 
     r=GetModuleFileName(NULL, mypath, sizeof(mypath));
-    ok(r>=0 && r<sizeof(mypath), "GetModuleFileName failed (%d)\n", r);
+    ok(r<sizeof(mypath), "GetModuleFileName failed (%d)\n", r);
     strcpy(mydir, mypath);
     p=strrchr(mydir, '\\');
     if (p)
@@ -564,9 +564,9 @@ static void test_load_save(void)
 
     /* Create a temporary non-executable file */
     r=GetTempPath(sizeof(mypath), mypath);
-    ok(r>=0 && r<sizeof(mypath), "GetTempPath failed (%d), err %d\n", r, GetLastError());
+    ok(r<sizeof(mypath), "GetTempPath failed (%d), err %d\n", r, GetLastError());
     r=pGetLongPathNameA(mypath, mydir, sizeof(mydir));
-    ok(r>=0 && r<sizeof(mydir), "GetLongPathName failed (%d), err %d\n", r, GetLastError());
+    ok(r<sizeof(mydir), "GetLongPathName failed (%d), err %d\n", r, GetLastError());
     p=strrchr(mydir, '\\');
     if (p)
         *p='\0';
