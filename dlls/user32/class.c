@@ -64,6 +64,7 @@ typedef struct tagCLASS
 } CLASS;
 
 static struct list class_list = LIST_INIT( class_list );
+static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
 #define CLASS_OTHER_PROCESS ((CLASS *)1)
 
@@ -376,9 +377,9 @@ static void register_builtin( const struct builtin_class_descr *descr )
 
 
 /***********************************************************************
- *           CLASS_RegisterBuiltinClasses
+ *           register_builtins
  */
-void CLASS_RegisterBuiltinClasses(void)
+static BOOL WINAPI register_builtins( INIT_ONCE *once, void *param, void **context )
 {
     register_builtin( &DESKTOP_builtin_class );
     register_builtin( &BUTTON_builtin_class );
@@ -393,6 +394,16 @@ void CLASS_RegisterBuiltinClasses(void)
     register_builtin( &MESSAGE_builtin_class );
     register_builtin( &SCROLL_builtin_class );
     register_builtin( &STATIC_builtin_class );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           CLASS_RegisterBuiltinClasses
+ */
+void CLASS_RegisterBuiltinClasses(void)
+{
+    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
 }
 
 
@@ -488,6 +499,8 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     CLASS *classPtr;
     HINSTANCE instance;
 
+    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
+
     if (wc->cbSize != sizeof(*wc) || wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
         wc->hInstance == user32_module)  /* we can't register a class for user32 */
     {
@@ -540,6 +553,8 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     ATOM atom;
     CLASS *classPtr;
     HINSTANCE instance;
+
+    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
 
     if (wc->cbSize != sizeof(*wc) || wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
         wc->hInstance == user32_module)  /* we can't register a class for user32 */
@@ -596,6 +611,8 @@ BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
 BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 {
     CLASS *classPtr = NULL;
+
+    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
 
     SERVER_START_REQ( destroy_class )
     {
@@ -1097,6 +1114,8 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
 
     TRACE("%p %s %p\n", hInstance, debugstr_a(name), wc);
 
+    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
+
     if (!wc)
     {
         SetLastError( ERROR_NOACCESS );
@@ -1147,6 +1166,8 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
     CLASS *classPtr;
 
     TRACE("%p %s %p\n", hInstance, debugstr_w(name), wc);
+
+    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
 
     if (!wc)
     {

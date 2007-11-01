@@ -278,9 +278,6 @@ static BOOL process_attach(void)
     /* Setup palette function pointers */
     palette_init();
 
-    /* Initialize built-in window classes */
-    CLASS_RegisterBuiltinClasses();
-
     return TRUE;
 }
 
