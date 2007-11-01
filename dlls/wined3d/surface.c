@@ -1138,10 +1138,16 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         switch(wined3d_settings.rendertargetlock_mode) {
             case RTL_READTEX:
             case RTL_TEXTEX:
-#if 0
+                ENTER_GL();
+                if (This->glDescription.textureName == 0) {
+                    glGenTextures(1, &This->glDescription.textureName);
+                    checkGLcall("glGenTextures");
+                }
+                glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
+                checkGLcall("glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);");
+                LEAVE_GL();
                 IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL /* partial texture loading not supported yet */);
                 /* drop through */
-#endif
 
             case RTL_AUTO:
             case RTL_READDRAW:
@@ -3353,10 +3359,19 @@ struct coords {
     int x, y, z;
 };
 
-static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This) {
+static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in) {
     struct coords coords[4];
-    int low_coord;
+    RECT rect;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+    if(rect_in) {
+        rect = *rect_in;
+    } else {
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = This->currentDesc.Width;
+        rect.bottom = This->currentDesc.Height;
+    }
 
     ActivateContext(device, device->render_targets[0], CTXUSAGE_BLIT);
     ENTER_GL();
@@ -3364,13 +3379,27 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This) {
     if(This->glDescription.target == GL_TEXTURE_2D) {
         glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
         checkGLcall("GL_TEXTURE_2D, This->glDescription.textureName)");
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri");
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri");
 
-        coords[0].x = 0;    coords[0].y = 0;    coords[0].z = 0;
-        coords[1].x = 0;    coords[1].y = 1;    coords[1].z = 0;
-        coords[2].x = 1;    coords[2].y = 1;    coords[2].z = 0;
-        coords[3].x = 1;    coords[3].y = 0;    coords[3].z = 0;
+        coords[0].x = rect.left   / This->pow2Width;
+        coords[0].z = 0;
 
-        low_coord = 0;
+        coords[1].x = rect.left   / This->pow2Width;
+        coords[1].z = 0;
+
+        coords[2].x = rect.right  / This->pow2Width;
+        coords[2].z = 0;
+
+        coords[3].x = rect.right  / This->pow2Width;
+        coords[3].z = 0;
+
+        coords[0].y = rect.top    / This->pow2Height;
+        coords[1].y = rect.bottom / This->pow2Height;
+        coords[2].y = rect.bottom / This->pow2Height;
+        coords[3].y = rect.top    / This->pow2Height;
     } else {
         /* Must be a cube map */
         glDisable(GL_TEXTURE_2D);
@@ -3379,6 +3408,10 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This) {
         checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
         glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->glDescription.textureName);
         checkGLcall("GL_TEXTURE_CUBE_MAP_ARB, This->glDescription.textureName)");
+        glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri");
+        glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri");
 
         switch(This->glDescription.target) {
             case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
@@ -3427,29 +3460,20 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This) {
                 LEAVE_GL();
                 return;
         }
-
-        low_coord = -1;
-    }
-
-    if(device->render_offscreen) {
-        coords[0].y = coords[0].y == 1 ? low_coord : 1;
-        coords[1].y = coords[1].y == 1 ? low_coord : 1;
-        coords[2].y = coords[2].y == 1 ? low_coord : 1;
-        coords[3].y = coords[3].y == 1 ? low_coord : 1;
     }
 
     glBegin(GL_QUADS);
     glTexCoord3iv((GLint *) &coords[0]);
-    glVertex2i(0, 0);
+    glVertex2i(rect.left, device->render_offscreen ? rect.bottom : rect.top);
 
     glTexCoord3iv((GLint *) &coords[1]);
-    glVertex2i(0, This->pow2Height);
+    glVertex2i(0, device->render_offscreen ? rect.top : rect.bottom);
 
     glTexCoord3iv((GLint *) &coords[2]);
-    glVertex2i(This->pow2Width, This->pow2Height);
+    glVertex2i(rect.right, device->render_offscreen ? rect.top : rect.bottom);
 
     glTexCoord3iv((GLint *) &coords[3]);
-    glVertex2i(This->pow2Width, 0);
+    glVertex2i(rect.right, device->render_offscreen ? rect.bottom : rect.top);
     glEnd();
     checkGLcall("glEnd");
 
@@ -3598,7 +3622,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         }
     } else if(flag == SFLAG_INDRAWABLE) {
         if(This->Flags & SFLAG_INTEXTURE) {
-            surface_blt_to_drawable(This);
+            surface_blt_to_drawable(This, rect);
         } else {
             /* Activate the correct context for the render target */
             ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
