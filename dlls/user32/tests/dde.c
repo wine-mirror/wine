@@ -1286,7 +1286,7 @@ static HDDEDATA CALLBACK client_dde_callback(UINT uType, UINT uFmt, HCONV hconv,
     const char *cmd_name;
 
     type = (uType & XTYP_MASK) >> XTYP_SHIFT;
-    cmd_name = (type >= 0 && type <= 14) ? cmd_type[type] : "unknown";
+    cmd_name = (type <= 14) ? cmd_type[type] : "unknown";
 
     trace("client_dde_callback: %04x (%s) %d %p %p %p %p %08lx %08lx\n",
           uType, cmd_name, uFmt, hconv, hsz1, hsz2, hdata, dwData1, dwData2);
