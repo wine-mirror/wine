@@ -2985,7 +2985,6 @@ LONG WINAPI ChangeDisplaySettingsW( LPDEVMODEW devmode, DWORD flags )
 LONG WINAPI ChangeDisplaySettingsExA( LPCSTR devname, LPDEVMODEA devmode, HWND hwnd,
                                       DWORD flags, LPVOID lparam )
 {
-    DEVMODEW devmodeW;
     LONG ret;
     UNICODE_STRING nameW;
 
@@ -2994,13 +2993,11 @@ LONG WINAPI ChangeDisplaySettingsExA( LPCSTR devname, LPDEVMODEA devmode, HWND h
 
     if (devmode)
     {
-        devmodeW.dmBitsPerPel       = devmode->dmBitsPerPel;
-        devmodeW.dmPelsHeight       = devmode->dmPelsHeight;
-        devmodeW.dmPelsWidth        = devmode->dmPelsWidth;
-        devmodeW.dmDisplayFlags     = devmode->dmDisplayFlags;
-        devmodeW.dmDisplayFrequency = devmode->dmDisplayFrequency;
-        devmodeW.dmFields           = devmode->dmFields;
-        ret = ChangeDisplaySettingsExW(nameW.Buffer, &devmodeW, hwnd, flags, lparam);
+        DEVMODEW *devmodeW;
+
+        devmodeW = GdiConvertToDevmodeW(devmode);
+        ret = ChangeDisplaySettingsExW(nameW.Buffer, devmodeW, hwnd, flags, lparam);
+        HeapFree(GetProcessHeap(), 0, devmodeW);
     }
     else
     {
@@ -3063,12 +3060,23 @@ BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
     ret = EnumDisplaySettingsExW(nameW.Buffer,iModeNum,&devmodeW,dwFlags);
     if (ret)
     {
+        lpDevMode->dmSize = sizeof(*lpDevMode);
+        lpDevMode->dmSpecVersion = devmodeW.dmSpecVersion;
+        lpDevMode->dmDriverVersion = devmodeW.dmDriverVersion;
+        WideCharToMultiByte(CP_ACP, 0, devmodeW.dmDeviceName, -1,
+                            (LPSTR)lpDevMode->dmDeviceName, CCHDEVICENAME, NULL, NULL);
+        lpDevMode->dmDriverExtra      = 0; /* FIXME */
         lpDevMode->dmBitsPerPel       = devmodeW.dmBitsPerPel;
         lpDevMode->dmPelsHeight       = devmodeW.dmPelsHeight;
         lpDevMode->dmPelsWidth        = devmodeW.dmPelsWidth;
         lpDevMode->dmDisplayFlags     = devmodeW.dmDisplayFlags;
         lpDevMode->dmDisplayFrequency = devmodeW.dmDisplayFrequency;
         lpDevMode->dmFields           = devmodeW.dmFields;
+
+        lpDevMode->dmPosition.x       = devmodeW.dmPosition.x;
+        lpDevMode->dmPosition.y       = devmodeW.dmPosition.y;
+        lpDevMode->dmDisplayOrientation = devmodeW.dmDisplayOrientation;
+        lpDevMode->dmDisplayFixedOutput = devmodeW.dmDisplayFixedOutput;
     }
     if (lpszDeviceName) RtlFreeUnicodeString(&nameW);
     return ret;

@@ -165,11 +165,25 @@ void X11DRV_Settings_Init(void)
  */
 BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
 {
-    DWORD dwBpp = screen_depth;
+    static const WCHAR dev_name[CCHDEVICENAME] =
+        { 'W','i','n','e',' ','X','1','1',' ','d','r','i','v','e','r',0 };
+    DWORD dwBpp;
+
+    dwBpp = screen_depth;
     if (dwBpp == 24) dwBpp = 32;
+
+    devmode->dmSize = sizeof(DEVMODEW);
+    devmode->dmSpecVersion = MAKEWORD(1,4);
+    devmode->dmDriverVersion = MAKEWORD(1,4);
+    memcpy(devmode->dmDeviceName, dev_name, sizeof(dev_name));
+    devmode->dmDriverExtra = 0;
     devmode->dmDisplayFlags = 0;
     devmode->dmDisplayFrequency = 0;
-    devmode->dmSize = sizeof(DEVMODEW);
+    devmode->dmPosition.x = 0;
+    devmode->dmPosition.y = 0;
+    devmode->dmDisplayOrientation = 0;
+    devmode->dmDisplayFixedOutput = 0;
+
     if (n == ENUM_CURRENT_SETTINGS)
     {
         TRACE("mode %d (current) -- getting current mode (%s)\n", n, handler_name);
