@@ -72,6 +72,7 @@ typedef struct
     RECT checkbox;  /* checkbox allowing the control to be enabled/disabled */
     RECT calbutton; /* button that toggles the dropdown of the monthcal control */
     BOOL bCalDepressed; /* TRUE = cal button is depressed */
+    int  bDropdownEnabled;
     int  select;
     HFONT hFont;
     int nrFieldsAllocated;
@@ -739,7 +740,10 @@ DATETIME_LButtonDown (DATETIME_INFO *infoPtr, WORD wKey, INT x, INT y)
             TRACE("update calendar %04d/%02d/%02d\n", 
             lprgSysTimeArray->wYear, lprgSysTimeArray->wMonth, lprgSysTimeArray->wDay);
             SendMessageW(infoPtr->hMonthCal, MCM_SETCURSEL, 0, (LPARAM)(&infoPtr->date));
-            ShowWindow(infoPtr->hMonthCal, SW_SHOW);
+
+            if (infoPtr->bDropdownEnabled)
+                ShowWindow(infoPtr->hMonthCal, SW_SHOW);
+            infoPtr->bDropdownEnabled = TRUE;
         }
 
         TRACE ("dt:%p mc:%p mc parent:%p, desktop:%p\n",
@@ -776,6 +780,10 @@ DATETIME_Paint (DATETIME_INFO *infoPtr, HDC hdc)
     } else {
         DATETIME_Refresh (infoPtr, hdc);
     }
+
+    /* Not a click on the dropdown box, enabled it */
+    infoPtr->bDropdownEnabled = TRUE;
+
     return 0;
 }
 
@@ -1063,6 +1071,19 @@ DATETIME_SetFocus (DATETIME_INFO *infoPtr, HWND lostFocus)
 {
     TRACE("got focus from %p\n", lostFocus);
 
+    /* if monthcal is open and it loses focus, close monthcal */
+    if (infoPtr->hMonthCal && (lostFocus == infoPtr->hMonthCal) && \
+        IsWindowVisible(infoPtr->hMonthCal))
+    {
+        ShowWindow(infoPtr->hMonthCal, SW_HIDE);
+        DATETIME_SendSimpleNotify(infoPtr, DTN_CLOSEUP);
+        /* note: this get triggered even if monthcal loses focus to a dropdown
+         * box click, which occurs without an intermediate WM_PAINT call
+         */
+        infoPtr->bDropdownEnabled = FALSE;
+        return 0;
+    }
+
     if (infoPtr->haveFocus == 0) {
 	DATETIME_SendSimpleNotify (infoPtr, NM_SETFOCUS);
 	infoPtr->haveFocus = DTHT_GOTFOCUS;
@@ -1207,6 +1228,7 @@ DATETIME_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     infoPtr->buflen = (int *) Alloc (infoPtr->nrFieldsAllocated * sizeof(int));
     infoPtr->hwndNotify = lpcs->hwndParent;
     infoPtr->select = -1; /* initially, nothing is selected */
+    infoPtr->bDropdownEnabled = TRUE;
 
     DATETIME_StyleChanged(infoPtr, GWL_STYLE, &ss);
     DATETIME_SetFormatW (infoPtr, 0);
