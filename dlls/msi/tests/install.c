@@ -109,6 +109,8 @@ static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "CostFinalize\t\t1000\n"
                                            "CostInitialize\t\t800\n"
                                            "FileCost\t\t900\n"
+                                           "ResolveSource\t\t950\n"
+                                           "MoveFiles\t\t1700\n"
                                            "InstallFiles\t\t4000\n"
                                            "InstallServices\t\t5000\n"
                                            "InstallFinalize\t\t6600\n"
@@ -508,6 +510,27 @@ static const CHAR rem_remove_files_dat[] = "FileKey\tComponent_\tFileName\tDirPr
                                            "block\thelium\tblock\tMSITESTDIR\t3\n"
                                            "siriometer\tlithium\tsiriometer\tMSITESTDIR\t3\n";
 
+static const CHAR mov_move_file_dat[] = "FileKey\tComponent_\tSourceName\tDestName\tSourceFolder\tDestFolder\tOptions\n"
+                                        "s72\ts72\tS255\tS255\tS72\ts72\ti2\n"
+                                        "MoveFile\tFileKey\n"
+                                        "abkhazia\taugustus\tnonexistent\tdest\tSourceDir\tMSITESTDIR\t0\n"
+                                        "bahamas\taugustus\tnonexistent\tdest\tSourceDir\tMSITESTDIR\t1\n"
+                                        "cambodia\taugustus\tcameroon\tcanada\tSourceDir\tMSITESTDIR\t0\n"
+                                        "denmark\taugustus\tdjibouti\tdominica\tSourceDir\tMSITESTDIR\t1\n"
+                                        "ecuador\taugustus\tegypt\telsalvador\tNotAProp\tMSITESTDIR\t1\n"
+                                        "fiji\taugustus\tfinland\tfrance\tSourceDir\tNotAProp\t1\n"
+                                        "gabon\taugustus\tgambia\tgeorgia\tSOURCEFULL\tMSITESTDIR\t1\n"
+                                        "haiti\taugustus\thonduras\thungary\tSourceDir\tDESTFULL\t1\n"
+                                        "iceland\taugustus\tindia\tindonesia\tMSITESTDIR\tMSITESTDIR\t1\n"
+                                        "jamaica\taugustus\tjapan\tjordan\tFILEPATHBAD\tMSITESTDIR\t1\n"
+                                        "kazakhstan\taugustus\t\tkiribati\tFILEPATHGOOD\tMSITESTDIR\t1\n"
+                                        "laos\taugustus\tlatvia\tlebanon\tSourceDir\tMSITESTDIR\t1\n"
+                                        "namibia\taugustus\tnauru\tkiribati\tSourceDir\tMSITESTDIR\t1\n"
+                                        "wildcard\taugustus\tapp*\twildcard\tSourceDir\tMSITESTDIR\t1\n"
+                                        "single\taugustus\tf?o\tsingle\tSourceDir\tMSITESTDIR\t1\n"
+                                        "wildcardnodest\taugustus\tbudd*\t\tSourceDir\tMSITESTDIR\t1\n"
+                                        "singlenodest\taugustus\tb?r\t\tSourceDir\tMSITESTDIR\t1\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -755,6 +778,20 @@ static const msi_table rem_tables[] =
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
     ADD_TABLE(rem_remove_files),
+};
+
+static const msi_table mov_tables[] =
+{
+    ADD_TABLE(cwd_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ci2_feature_comp),
+    ADD_TABLE(ci2_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+    ADD_TABLE(mov_move_file),
+    ADD_TABLE(registry),
 };
 
 /* cabinet definitions */
@@ -2896,6 +2933,108 @@ static void test_removefiles(void)
     RemoveDirectory("msitest");
 }
 
+static void test_movefiles(void)
+{
+    UINT r;
+    char props[MAX_PATH];
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\augustus", 100);
+    create_file("cameroon", 100);
+    create_file("djibouti", 100);
+    create_file("egypt", 100);
+    create_file("finland", 100);
+    create_file("gambai", 100);
+    create_file("honduras", 100);
+    create_file("msitest\\india", 100);
+    create_file("japan", 100);
+    create_file("kenya", 100);
+    CreateDirectoryA("latvia", NULL);
+    create_file("nauru", 100);
+    create_file("apple", 100);
+    create_file("application", 100);
+    create_file("ape", 100);
+    create_file("foo", 100);
+    create_file("fao", 100);
+    create_file("fbod", 100);
+    create_file("budding", 100);
+    create_file("buddy", 100);
+    create_file("bud", 100);
+    create_file("bar", 100);
+    create_file("bur", 100);
+    create_file("bird", 100);
+
+    create_database(msifile, mov_tables, sizeof(mov_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+    MsiEnableLog(INSTALLLOGMODE_VERBOSE | INSTALLLOGMODE_EXTRADEBUG, "log.txt", 0);
+
+    /* if the source or dest property is not a full path,
+     * windows tries to access it as a network resource
+     */
+
+    sprintf(props, "SOURCEFULL=\"%s\\\" DESTFULL=\"%s\\msitest\" "
+            "FILEPATHBAD=\"%s\\japan\" FILEPATHGOOD=\"%s\\kenya\"",
+            CURR_DIR, PROG_FILES_DIR, CURR_DIR, CURR_DIR);
+
+    r = MsiInstallProductA(msifile, props);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\dest", TRUE), "File copied\n");
+    todo_wine ok(delete_pf("msitest\\canada", TRUE), "File not copied\n");
+    todo_wine ok(delete_pf("msitest\\dominica", TRUE), "File not moved\n");
+    ok(!delete_pf("msitest\\elsalvador", TRUE), "File moved\n");
+    ok(!delete_pf("msitest\\france", TRUE), "File moved\n");
+    ok(!delete_pf("msitest\\georgia", TRUE), "File moved\n");
+    todo_wine ok(delete_pf("msitest\\hungary", TRUE), "File not moved\n");
+    ok(!delete_pf("msitest\\indonesia", TRUE), "File moved\n");
+    ok(!delete_pf("msitest\\jordan", TRUE), "File moved\n");
+    todo_wine ok(delete_pf("msitest\\kiribati", TRUE), "File not moved\n");
+    ok(!delete_pf("msitest\\lebanon", TRUE), "File moved\n");
+    ok(!delete_pf("msitest\\lebanon", FALSE), "Directory moved\n");
+    ok(!delete_pf("msitest\\apple", TRUE), "File should not exist\n");
+    todo_wine ok(delete_pf("msitest\\wildcard", TRUE), "File not moved\n");
+    todo_wine ok(delete_pf("msitest\\application", TRUE), "File not moved\n");
+    ok(!delete_pf("msitest\\ape", TRUE), "File moved\n");
+    todo_wine ok(delete_pf("msitest\\foo", TRUE), "File not moved\n");
+    ok(!delete_pf("msitest\\fao", TRUE), "File should not exist\n");
+    todo_wine ok(delete_pf("msitest\\single", TRUE), "File not moved\n");
+    ok(!delete_pf("msitest\\fbod", TRUE), "File moved\n");
+    todo_wine ok(delete_pf("msitest\\budding", TRUE), "File not moved\n");
+    todo_wine ok(delete_pf("msitest\\buddy", TRUE), "File not moved\n");
+    ok(!delete_pf("msitest\\bud", TRUE), "File moved\n");
+    todo_wine ok(delete_pf("msitest\\bar", TRUE), "File not moved\n");
+    todo_wine ok(delete_pf("msitest\\bur", TRUE), "File not moved\n");
+    ok(!delete_pf("msitest\\bird", TRUE), "File moved\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(DeleteFileA("cameroon"), "File moved\n");
+    todo_wine ok(!DeleteFileA("djibouti"), "File not moved\n");
+    ok(DeleteFileA("egypt"), "File moved\n");
+    ok(DeleteFileA("finland"), "File moved\n");
+    ok(DeleteFileA("gambai"), "File moved\n");
+    todo_wine ok(!DeleteFileA("honduras"), "File not moved\n");
+    ok(DeleteFileA("msitest\\india"), "File moved\n");
+    ok(DeleteFileA("japan"), "File moved\n");
+    todo_wine ok(!DeleteFileA("kenya"), "File not moved\n");
+    ok(RemoveDirectoryA("latvia"), "Directory moved\n");
+    todo_wine ok(!DeleteFileA("nauru"), "File not moved\n");
+    todo_wine ok(!DeleteFileA("apple"), "File not moved\n");
+    todo_wine ok(!DeleteFileA("application"), "File not moved\n");
+    ok(DeleteFileA("ape"), "File moved\n");
+    todo_wine ok(!DeleteFileA("foo"), "File not moved\n");
+    todo_wine ok(!DeleteFileA("fao"), "File not moved\n");
+    ok(DeleteFileA("fbod"), "File moved\n");
+    todo_wine ok(!DeleteFileA("budding"), "File not moved\n");
+    todo_wine ok(!DeleteFileA("buddy"), "File not moved\n");
+    ok(DeleteFileA("bud"), "File moved\n");
+    todo_wine ok(!DeleteFileA("bar"), "File not moved\n");
+    todo_wine ok(!DeleteFileA("bur"), "File not moved\n");
+    ok(DeleteFileA("bird"), "File moved\n");
+
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+    DeleteFile(msifile);
+}
 START_TEST(install)
 {
     DWORD len;
@@ -2935,6 +3074,7 @@ START_TEST(install)
     test_admin();
     test_adminprops();
     test_removefiles();
+    test_movefiles();
 
     SetCurrentDirectoryA(prev_path);
 }
