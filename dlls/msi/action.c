@@ -3625,6 +3625,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     UINT rc;
     HKEY hkey=0;
     HKEY hukey=0;
+    HKEY userdata=0;
 
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
@@ -3634,6 +3635,10 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         goto end;
 
     rc = MSIREG_OpenUserFeaturesKey(package->ProductCode,&hukey,TRUE);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = MSIREG_OpenUserDataFeaturesKey(package->ProductCode, &userdata, TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
 
@@ -3678,6 +3683,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
                 strcatW(data,buf);
             }
         }
+
         if (feature->Feature_Parent)
         {
             static const WCHAR sep[] = {'\2',0};
@@ -3686,6 +3692,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         }
 
         msi_reg_set_val_str( hkey, feature->Feature, data );
+        msi_reg_set_val_str( userdata, feature->Feature, data );
         msi_free(data);
 
         size = 0;

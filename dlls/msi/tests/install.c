@@ -2063,16 +2063,10 @@ static void test_publish(void)
     ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
 
     state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
@@ -2112,16 +2106,10 @@ static void test_publish(void)
     ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
 
     state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
@@ -2161,16 +2149,10 @@ static void test_publish(void)
     ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
 
     state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
@@ -2262,16 +2244,10 @@ static void test_publish(void)
     ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
 
     state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
