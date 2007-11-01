@@ -439,8 +439,7 @@ static HRESULT WINAPI RecycleBin_GetDetailsOf(IShellFolder2 *iface, LPCITEMIDLIS
     }
     
     pDetails->str.uType = STRRET_WSTR;
-    pDetails->str.u.pOleStr = StrDupW(buffer);
-    return (pDetails->str.u.pOleStr != NULL ? S_OK : E_OUTOFMEMORY);
+    return SHStrDupW(buffer, &pDetails->str.u.pOleStr);
 }
 
 static HRESULT WINAPI RecycleBin_MapColumnToSCID(IShellFolder2 *iface, UINT iColumn, SHCOLUMNID *pscid)
