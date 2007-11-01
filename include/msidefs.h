@@ -196,6 +196,11 @@ enum msidbServiceControlEvent
     msidbServiceControlEventUninstallDelete = 0x00000080,
 };
 
+enum msidbMoveFileOptions
+{
+    msidbMoveFileOptionsMove = 0x00000001,
+};
+
 /*
  * Windows SDK braindamage alert
  *

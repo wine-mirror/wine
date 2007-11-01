@@ -4965,6 +4965,315 @@ static UINT ACTION_WriteEnvironmentStrings( MSIPACKAGE *package )
     return rc;
 }
 
+#define is_dot_dir(x) ((x[0] == '.') && ((x[1] == 0) || ((x[1] == '.') && (x[2] == 0))))
+
+typedef struct
+{
+    struct list entry;
+    LPWSTR sourcename;
+    LPWSTR destname;
+    LPWSTR source;
+    LPWSTR dest;
+} FILE_LIST;
+
+static BOOL msi_move_file(LPCWSTR source, LPCWSTR dest, int options)
+{
+    BOOL ret;
+
+    if (GetFileAttributesW(source) == FILE_ATTRIBUTE_DIRECTORY ||
+        GetFileAttributesW(dest) == FILE_ATTRIBUTE_DIRECTORY)
+    {
+        WARN("Source or dest is directory, not moving\n");
+        return FALSE;
+    }
+
+    if (options == msidbMoveFileOptionsMove)
+    {
+        TRACE("moving %s -> %s\n", debugstr_w(source), debugstr_w(dest));
+        ret = MoveFileExW(source, dest, MOVEFILE_REPLACE_EXISTING);
+        if (!ret)
+        {
+            WARN("MoveFile failed: %d\n", GetLastError());
+            return FALSE;
+        }
+    }
+    else
+    {
+        TRACE("copying %s -> %s\n", debugstr_w(source), debugstr_w(dest));
+        ret = CopyFileW(source, dest, FALSE);
+        if (!ret)
+        {
+            WARN("CopyFile failed: %d\n", GetLastError());
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static LPWSTR wildcard_to_file(LPWSTR wildcard, LPWSTR filename)
+{
+    LPWSTR path, ptr;
+    DWORD dirlen, pathlen;
+
+    ptr = strrchrW(wildcard, '\\');
+    dirlen = ptr - wildcard + 1;
+
+    pathlen = dirlen + lstrlenW(filename) + 1;
+    path = msi_alloc(pathlen * sizeof(WCHAR));
+
+    lstrcpynW(path, wildcard, dirlen + 1);
+    lstrcatW(path, filename);
+
+    return path;
+}
+
+static void free_file_entry(FILE_LIST *file)
+{
+    msi_free(file->source);
+    msi_free(file->dest);
+    msi_free(file);
+}
+
+static void free_list(FILE_LIST *list)
+{
+    while (!list_empty(&list->entry))
+    {
+        FILE_LIST *file = LIST_ENTRY(list_head(&list->entry), FILE_LIST, entry);
+
+        list_remove(&file->entry);
+        free_file_entry(file);
+    }
+}
+
+static BOOL add_wildcard(FILE_LIST *files, LPWSTR source, LPWSTR dest)
+{
+    FILE_LIST *new, *file;
+    LPWSTR ptr, filename;
+    DWORD size;
+
+    new = msi_alloc_zero(sizeof(FILE_LIST));
+    if (!new)
+        return FALSE;
+
+    new->source = strdupW(source);
+    ptr = strrchrW(dest, '\\') + 1;
+    filename = strrchrW(new->source, '\\') + 1;
+
+    new->sourcename = filename;
+
+    if (*ptr)
+        new->destname = ptr;
+    else
+        new->destname = new->sourcename;
+
+    size = (ptr - dest) + lstrlenW(filename) + 1;
+    new->dest = msi_alloc(size * sizeof(WCHAR));
+    if (!new->dest)
+    {
+        free_file_entry(new);
+        return FALSE;
+    }
+
+    lstrcpynW(new->dest, dest, ptr - dest + 1);
+    lstrcatW(new->dest, filename);
+
+    if (list_empty(&files->entry))
+    {
+        list_add_head(&files->entry, &new->entry);
+        return TRUE;
+    }
+
+    LIST_FOR_EACH_ENTRY(file, &files->entry, FILE_LIST, entry)
+    {
+        if (lstrcmpW(source, file->source) < 0)
+        {
+            list_add_before(&file->entry, &new->entry);
+            return TRUE;
+        }
+    }
+
+    list_add_after(&file->entry, &new->entry);
+    return TRUE;
+}
+
+BOOL move_files_wildcard(LPWSTR source, LPWSTR dest, int options)
+{
+    WIN32_FIND_DATAW wfd;
+    HANDLE hfile;
+    LPWSTR path;
+    BOOL res;
+    FILE_LIST files, *file;
+    DWORD size;
+
+    hfile = FindFirstFileW(source, &wfd);
+    if (hfile == INVALID_HANDLE_VALUE) return FALSE;
+
+    list_init(&files.entry);
+
+    for (res = TRUE; res; res = FindNextFileW(hfile, &wfd))
+    {
+        if (is_dot_dir(wfd.cFileName)) continue;
+
+        path = wildcard_to_file(source, wfd.cFileName);
+        if (!path)
+        {
+            free_list(&files);
+            return FALSE;
+        }
+
+        add_wildcard(&files, path, dest);
+        msi_free(path);
+    }
+
+    /* only the first wildcard match gets renamed to dest */
+    file = LIST_ENTRY(list_head(&files.entry), FILE_LIST, entry);
+    size = (strrchrW(file->dest, '\\') - file->dest) + lstrlenW(file->destname) + 2;
+    file->dest = msi_realloc(file->dest, size * sizeof(WCHAR));
+    if (!file->dest)
+    {
+        free_list(&files);
+        return FALSE;
+    }
+
+    lstrcpyW(strrchrW(file->dest, '\\') + 1, file->destname);
+
+    while (!list_empty(&files.entry))
+    {
+        file = LIST_ENTRY(list_head(&files.entry), FILE_LIST, entry);
+
+        msi_move_file((LPCWSTR)file->source, (LPCWSTR)file->dest, options);
+
+        list_remove(&file->entry);
+        free_file_entry(file);
+    }
+
+    return TRUE;
+}
+
+static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    MSICOMPONENT *comp;
+    LPCWSTR sourcename, destname;
+    LPWSTR sourcedir = NULL, destdir = NULL;
+    LPWSTR source = NULL, dest = NULL;
+    int options;
+    DWORD size;
+    BOOL ret, wildcards;
+
+    static const WCHAR backslash[] = {'\\',0};
+
+    comp = get_loaded_component(package, MSI_RecordGetString(rec, 2));
+    if (!comp || !comp->Enabled ||
+        !(comp->Action & (INSTALLSTATE_LOCAL | INSTALLSTATE_SOURCE)))
+    {
+        TRACE("Component not set for install, not moving file\n");
+        return ERROR_SUCCESS;
+    }
+
+    sourcename = MSI_RecordGetString(rec, 3);
+    destname = MSI_RecordGetString(rec, 4);
+    options = MSI_RecordGetInteger(rec, 7);
+
+    sourcedir = msi_dup_property(package, MSI_RecordGetString(rec, 5));
+    if (!sourcedir)
+        goto done;
+
+    destdir = msi_dup_property(package, MSI_RecordGetString(rec, 6));
+    if (!destdir)
+        goto done;
+
+    if (!sourcename)
+    {
+        if (GetFileAttributesW(sourcedir) == INVALID_FILE_ATTRIBUTES)
+            goto done;
+
+        source = strdupW(sourcedir);
+        if (!source)
+            goto done;
+    }
+    else
+    {
+        size = lstrlenW(sourcedir) + lstrlenW(sourcename) + 2;
+        source = msi_alloc(size * sizeof(WCHAR));
+        if (!source)
+            goto done;
+
+        lstrcpyW(source, sourcedir);
+        if (source[lstrlenW(source) - 1] != '\\')
+            lstrcatW(source, backslash);
+        lstrcatW(source, sourcename);
+    }
+
+    wildcards = strchrW(source, '*') || strchrW(source, '?');
+
+    if (!destname && !wildcards)
+    {
+        destname = strdupW(sourcename);
+        if (!destname)
+            goto done;
+    }
+
+    size = 0;
+    if (destname)
+        size = lstrlenW(destname);
+
+    size += lstrlenW(destdir) + 2;
+    dest = msi_alloc(size * sizeof(WCHAR));
+    if (!dest)
+        goto done;
+
+    lstrcpyW(dest, destdir);
+    if (dest[lstrlenW(dest) - 1] != '\\')
+        lstrcatW(dest, backslash);
+
+    if (destname)
+        lstrcatW(dest, destname);
+
+    if (GetFileAttributesW(destdir) == INVALID_FILE_ATTRIBUTES)
+    {
+        ret = CreateDirectoryW(destdir, NULL);
+        if (!ret)
+        {
+            WARN("CreateDirectory failed: %d\n", GetLastError());
+            return ERROR_SUCCESS;
+        }
+    }
+
+    if (!wildcards)
+        msi_move_file(source, dest, options);
+    else
+        move_files_wildcard(source, dest, options);
+
+done:
+    msi_free(sourcedir);
+    msi_free(destdir);
+    msi_free(source);
+    msi_free(dest);
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_MoveFiles( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','M','o','v','e','F','i','l','e','`',0};
+
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords(view, NULL, ITERATE_MoveFiles, package);
+    msiobj_release(&view->hdr);
+
+    return rc;
+}
+
 static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
                                            LPCSTR action, LPCWSTR table )
 {
@@ -5000,12 +5309,6 @@ static UINT ACTION_RemoveIniValues( MSIPACKAGE *package )
     static const WCHAR table[] =
          {'R','e','m','o','v','e','I','n','i','F','i','l','e',0 };
     return msi_unimplemented_action_stub( package, "RemoveIniValues", table );
-}
-
-static UINT ACTION_MoveFiles( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'M','o','v','e','F','i','l','e',0 };
-    return msi_unimplemented_action_stub( package, "MoveFiles", table );
 }
 
 static UINT ACTION_PatchFiles( MSIPACKAGE *package )
