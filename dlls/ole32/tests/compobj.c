@@ -33,6 +33,7 @@
 
 /* functions that are not present on all versions of Windows */
 HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
+HRESULT (WINAPI * pCoGetObjectContext)(REFIID riid, LPVOID *ppv);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 #define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
@@ -938,10 +939,65 @@ static void test_CoFreeUnusedLibraries(void)
     CoUninitialize();
 }
 
+static void test_CoGetObjectContext(void)
+{
+    HRESULT hr;
+    ULONG refs;
+    IComThreadingInfo *pComThreadingInfo;
+    APTTYPE apttype;
+    THDTYPE thdtype;
+
+    if (!pCoGetObjectContext)
+    {
+        skip("CoGetObjectContext not present\n");
+        return;
+    }
+
+    hr = pCoGetObjectContext(&IID_IComThreadingInfo, (void **)&pComThreadingInfo);
+    ok(hr == CO_E_NOTINITIALIZED, "CoGetObjectContext should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
+    ok(pComThreadingInfo == NULL, "pComThreadingInfo should have been set to NULL\n");
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = pCoGetObjectContext(&IID_IComThreadingInfo, (void **)&pComThreadingInfo);
+    ok_ole_success(hr, "CoGetObjectContext");
+
+    hr = IComThreadingInfo_GetCurrentApartmentType(pComThreadingInfo, &apttype);
+    ok_ole_success(hr, "IComThreadingInfo_GetCurrentApartmentType");
+    ok(apttype == APTTYPE_MAINSTA, "apartment type should be APTTYPE_MAINSTA instead of %d\n", apttype);
+
+    hr = IComThreadingInfo_GetCurrentThreadType(pComThreadingInfo, &thdtype);
+    ok_ole_success(hr, "IComThreadingInfo_GetCurrentThreadType");
+    ok(thdtype == THDTYPE_PROCESSMESSAGES, "thread type should be THDTYPE_PROCESSMESSAGES instead of %d\n", thdtype);
+
+    refs = IComThreadingInfo_Release(pComThreadingInfo);
+    ok(refs == 0, "pComThreadingInfo should have 0 refs instead of %d refs\n", refs);
+
+    CoUninitialize();
+
+    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    hr = pCoGetObjectContext(&IID_IComThreadingInfo, (void **)&pComThreadingInfo);
+    ok_ole_success(hr, "CoGetObjectContext");
+
+    hr = IComThreadingInfo_GetCurrentApartmentType(pComThreadingInfo, &apttype);
+    ok_ole_success(hr, "IComThreadingInfo_GetCurrentApartmentType");
+    ok(apttype == APTTYPE_MTA, "apartment type should be APTTYPE_MTA instead of %d\n", apttype);
+
+    hr = IComThreadingInfo_GetCurrentThreadType(pComThreadingInfo, &thdtype);
+    ok_ole_success(hr, "IComThreadingInfo_GetCurrentThreadType");
+    ok(thdtype == THDTYPE_BLOCKMESSAGES, "thread type should be THDTYPE_BLOCKMESSAGES instead of %d\n", thdtype);
+
+    refs = IComThreadingInfo_Release(pComThreadingInfo);
+    ok(refs == 0, "pComThreadingInfo should have 0 refs instead of %d refs\n", refs);
+
+    CoUninitialize();
+}
 
 START_TEST(compobj)
 {
     HMODULE hOle32 = GetModuleHandle("ole32");
+    pCoGetObjectContext = (void*)GetProcAddress(hOle32, "CoGetObjectContext");
     if (!(pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx")))
     {
         trace("You need DCOM95 installed to run this test\n");
@@ -964,4 +1020,5 @@ START_TEST(compobj)
     test_CoRegisterClassObject();
     test_registered_object_thread_affinity();
     test_CoFreeUnusedLibraries();
+    test_CoGetObjectContext();
 }
