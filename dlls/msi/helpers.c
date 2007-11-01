@@ -831,9 +831,6 @@ BOOL ACTION_VerifyFeatureForAction( const MSIFEATURE* feature, INSTALLSTATE chec
     if (!feature)
         return FALSE;
 
-    if (feature->Installed == check)
-        return FALSE;
-
     if (feature->ActionRequest == check)
         return TRUE;
     else
