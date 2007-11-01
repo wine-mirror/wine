@@ -141,7 +141,6 @@ struct proxy_manager
   void *dest_context_data;  /* reserved context value (LOCK) */
 };
 
-/* this needs to become a COM object that implements IRemUnknown */
 struct apartment
 {
   struct list entry;
