@@ -231,7 +231,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(LPDIRECT3DDEVICE9 iface,
     if (hrc != D3D_OK) {
 
         /* free up object */
-        FIXME("(%p) call to IWineD3DDevice_CreateVertexBuffer failed\n", This);
+        WARN("(%p) call to IWineD3DDevice_CreateVertexBuffer failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
         IUnknown_AddRef(iface);
