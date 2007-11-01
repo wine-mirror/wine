@@ -2034,7 +2034,7 @@ static const BYTE constraintWithDomainName[] = { 0x30, 0x32, 0x03, 0x01, 0x00,
 static void test_encodeBasicConstraints(DWORD dwEncoding)
 {
     DWORD i, bufSize = 0;
-    CERT_BASIC_CONSTRAINTS_INFO info;
+    CERT_BASIC_CONSTRAINTS_INFO info = { { 0 } };
     CERT_NAME_BLOB nameBlob = { sizeof(encodedDomainName),
      (LPBYTE)encodedDomainName };
     BOOL ret;
