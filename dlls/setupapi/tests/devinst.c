@@ -70,6 +70,74 @@ static void init_function_pointers(void)
     pSetupDiRegisterDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiRegisterDeviceInfo");
 }
 
+/* RegDeleteTreeW from dlls/advapi32/registry.c */
+LSTATUS WINAPI devinst_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
+{
+    LONG ret;
+    DWORD dwMaxSubkeyLen, dwMaxValueLen;
+    DWORD dwMaxLen, dwSize;
+    WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
+    HKEY hSubKey = hKey;
+
+    if(lpszSubKey)
+    {
+        ret = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+        if (ret) return ret;
+    }
+
+    /* Get highest length for keys, values */
+    ret = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, NULL,
+            &dwMaxSubkeyLen, NULL, NULL, &dwMaxValueLen, NULL, NULL, NULL);
+    if (ret) goto cleanup;
+
+    dwMaxSubkeyLen++;
+    dwMaxValueLen++;
+    dwMaxLen = max(dwMaxSubkeyLen, dwMaxValueLen);
+    if (dwMaxLen > sizeof(szNameBuf)/sizeof(WCHAR))
+    {
+        /* Name too big: alloc a buffer for it */
+        if (!(lpszName = HeapAlloc( GetProcessHeap(), 0, dwMaxLen*sizeof(WCHAR))))
+        {
+            ret = ERROR_NOT_ENOUGH_MEMORY;
+            goto cleanup;
+        }
+    }
+
+
+    /* Recursively delete all the subkeys */
+    while (TRUE)
+    {
+        dwSize = dwMaxLen;
+        if (RegEnumKeyExW(hSubKey, 0, lpszName, &dwSize, NULL,
+                          NULL, NULL, NULL)) break;
+
+        ret = devinst_RegDeleteTreeW(hSubKey, lpszName);
+        if (ret) goto cleanup;
+    }
+
+    if (lpszSubKey)
+        ret = RegDeleteKeyW(hKey, lpszSubKey);
+    else
+        while (TRUE)
+        {
+            dwSize = dwMaxLen;
+            if (RegEnumValueW(hKey, 0, lpszName, &dwSize,
+                  NULL, NULL, NULL, NULL)) break;
+
+            ret = RegDeleteValueW(hKey, lpszName);
+            if (ret) goto cleanup;
+        }
+
+cleanup:
+    /* Free buffer if allocated */
+    if (lpszName != szNameBuf)
+        HeapFree( GetProcessHeap(), 0, lpszName);
+    if(lpszSubKey)
+        RegCloseKey(hSubKey);
+    return ret;
+}
+
+
 static void test_SetupDiCreateDeviceInfoListEx(void) 
 {
     HDEVINFO devlist;
@@ -686,7 +754,7 @@ static void testDevRegKey(void)
         ret = pSetupDiCallClassInstaller(DIF_REMOVE, set, &devInfo);
         pSetupDiDestroyDeviceInfoList(set);
     }
-    RegDeleteTreeW(HKEY_LOCAL_MACHINE, classKey);
+    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, classKey);
 }
 
 START_TEST(devinst)
