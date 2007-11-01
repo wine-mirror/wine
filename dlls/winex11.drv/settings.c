@@ -24,6 +24,7 @@
 #include "x11drv.h"
 
 #include "windef.h"
+#include "winreg.h"
 #include "wingdi.h"
 #include "ddrawi.h"
 #include "wine/debug.h"
@@ -144,11 +145,13 @@ static int X11DRV_nores_GetCurrentMode(void)
 {
     return 0;
 }
+
 static LONG X11DRV_nores_SetCurrentMode(int mode)
 {
     TRACE("Ignoring mode change request\n");
     return DISP_CHANGE_FAILED;
 }
+
 /* default handler only gets the current X desktop resolution */
 void X11DRV_Settings_Init(void)
 {
@@ -157,6 +160,68 @@ void X11DRV_Settings_Init(void)
                                 X11DRV_nores_SetCurrentMode, 
                                 1, 0);
     X11DRV_Settings_AddOneMode(screen_width, screen_height, 0, 60);
+}
+
+/* Our fake driver GUID path */
+static const char wine_X11_reg_key[] =
+    "System\\CurrentControlSet\\Control\\Video\\{64498428-1122-3344-5566-778899aabbcc}\\0000";
+
+static BOOL read_registry_settings(DEVMODEW *dm)
+{
+    HKEY hkey;
+    DWORD type, size;
+    BOOL ret = TRUE;
+
+    if (RegOpenKeyA(HKEY_CURRENT_CONFIG, wine_X11_reg_key, &hkey))
+        return FALSE;
+
+#define query_value(name, data) \
+    if (RegQueryValueExA(hkey, name, 0, &type, (LPBYTE)(data), &size) || \
+        type != REG_DWORD || size != sizeof(DWORD)) \
+        ret = FALSE
+
+    query_value("DefaultSettings.BitsPerPel", &dm->dmBitsPerPel);
+    query_value("DefaultSettings.XResolution", &dm->dmPelsWidth);
+    query_value("DefaultSettings.YResolution", &dm->dmPelsHeight);
+    query_value("DefaultSettings.VRefresh", &dm->dmDisplayFrequency);
+    query_value("DefaultSettings.Flags", &dm->dmDisplayFlags);
+    query_value("DefaultSettings.XPanning", &dm->dmPosition.x);
+    query_value("DefaultSettings.YPanning", &dm->dmPosition.y);
+    query_value("DefaultSettings.Orientation", &dm->dmDisplayOrientation);
+    query_value("DefaultSettings.FixedOutput", &dm->dmDisplayFixedOutput);
+
+#undef query_value
+
+    RegCloseKey(hkey);
+    return ret;
+}
+
+static BOOL write_registry_settings(const DEVMODEW *dm)
+{
+    HKEY hkey;
+    BOOL ret = TRUE;
+
+    if (RegCreateKeyA(HKEY_CURRENT_CONFIG, wine_X11_reg_key, &hkey))
+        return FALSE;
+
+#define set_value(name, data) \
+    if (RegSetValueExA(hkey, name, 0, REG_DWORD, (LPBYTE)(data), sizeof(DWORD))) \
+        ret = FALSE
+
+    set_value("DefaultSettings.BitsPerPel", &dm->dmBitsPerPel);
+    set_value("DefaultSettings.XResolution", &dm->dmPelsWidth);
+    set_value("DefaultSettings.YResolution", &dm->dmPelsHeight);
+    set_value("DefaultSettings.VRefresh", &dm->dmDisplayFrequency);
+    set_value("DefaultSettings.Flags", &dm->dmDisplayFlags);
+    set_value("DefaultSettings.XPanning", &dm->dmPosition.x);
+    set_value("DefaultSettings.YPanning", &dm->dmPosition.y);
+    set_value("DefaultSettings.Orientation", &dm->dmDisplayOrientation);
+    set_value("DefaultSettings.FixedOutput", &dm->dmDisplayFixedOutput);
+
+#undef set_value
+
+    RegCloseKey(hkey);
+    return ret;
 }
 
 /***********************************************************************
@@ -192,7 +257,7 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     if (n == ENUM_REGISTRY_SETTINGS)
     {
         TRACE("mode %d (registry) -- getting default mode (%s)\n", n, handler_name);
-        n = dd_mode_default;
+        return read_registry_settings(devmode);
     }
     if (n < dd_mode_count)
     {
@@ -311,7 +376,11 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         }
         /* we have a valid mode */
         TRACE("Requested display settings match mode %d (%s)\n", i, handler_name);
-        if (!(flags & CDS_TEST))
+
+        if (flags & CDS_UPDATEREGISTRY)
+            write_registry_settings(devmode);
+
+        if (!(flags & (CDS_TEST | CDS_NORESET)))
             return pSetCurrentMode(i);
         return DISP_CHANGE_SUCCESSFUL;
     }
