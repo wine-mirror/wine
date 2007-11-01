@@ -2123,7 +2123,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
                             {
                                 if (j < validUsages.cUsageIdentifier - 1)
                                 {
-                                    memcpy(&validUsages.rgpszUsageIdentifier[j],
+                                    memmove(&validUsages.rgpszUsageIdentifier[j],
                                      &validUsages.rgpszUsageIdentifier[j +
                                      numRemoved + 1],
                                      (validUsages.cUsageIdentifier - numRemoved
