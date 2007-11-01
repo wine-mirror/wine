@@ -1197,6 +1197,10 @@ static PCertificateChain CRYPT_BuildAlternateContextFromChain(
                 BOOL ret = CRYPT_AddCertToSimpleChain(engine,
                  alternate->context.rgpChain[i], alternateIssuer, infoStatus);
 
+                /* CRYPT_AddCertToSimpleChain add-ref's the issuer, so free it
+                 * to close the enumeration that found it
+                 */
+                CertFreeCertificateContext(alternateIssuer);
                 if (ret)
                 {
                     ret = CRYPT_BuildSimpleChain(engine, alternate->world,
