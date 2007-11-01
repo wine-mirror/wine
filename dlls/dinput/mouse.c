@@ -173,7 +173,7 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
 {
     SysMouseImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
-    int i;
+    unsigned i;
 
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouseImpl));
     if (!newDevice) return NULL;
