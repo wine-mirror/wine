@@ -2784,6 +2784,19 @@ BOOL WINAPI GetProcessIoCounters(HANDLE hProcess, PIO_COUNTERS ioc)
     return !status;
 }
 
+/******************************************************************
+ *		GetProcessHandleCount (KERNEL32.@)
+ */
+BOOL WINAPI GetProcessHandleCount(HANDLE hProcess, DWORD *cnt)
+{
+    NTSTATUS status;
+
+    status = NtQueryInformationProcess(hProcess, ProcessHandleCount,
+                                       cnt, sizeof(*cnt), NULL);
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
 /***********************************************************************
  * ProcessIdToSessionId   (KERNEL32.@)
  * This function is available on Terminal Server 4SP4 and Windows 2000

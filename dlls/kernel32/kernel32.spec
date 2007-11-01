@@ -576,7 +576,7 @@
 @ stdcall GetProcAddress(long str)
 @ stdcall GetProcessAffinityMask(long ptr ptr)
 @ stdcall GetProcessFlags(long)
-# @ stub GetProcessHandleCount
+@ stdcall GetProcessHandleCount(long ptr)
 @ stdcall GetProcessHeap()
 @ stdcall GetProcessHeaps(long ptr)
 @ stdcall GetProcessId(long)
