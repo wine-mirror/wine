@@ -371,7 +371,7 @@ static WNDPROC register_builtin( const struct builtin_class_descr *descr )
     ATOM atom;
     CLASS *classPtr;
 
-    if (!(atom = GlobalAddAtomA( descr->name ))) return 0;
+    if (!(atom = GlobalAddAtomW( descr->name ))) return 0;
 
     if (!(classPtr = CLASS_RegisterClass( atom, user32_module, FALSE,
                                           descr->style, 0, descr->extra ))) return 0;

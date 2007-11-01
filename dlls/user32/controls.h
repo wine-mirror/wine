@@ -34,7 +34,7 @@
 /* Built-in class descriptor */
 struct builtin_class_descr
 {
-    LPCSTR    name;    /* class name */
+    LPCWSTR   name;    /* class name */
     UINT      style;   /* class style */
     WNDPROC   procA;   /* ASCII window procedure */
     WNDPROC   procW;   /* Unicode window procedure */

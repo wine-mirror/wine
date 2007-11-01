@@ -114,9 +114,10 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 /*********************************************************************
  * scrollbar class descriptor
  */
+static const WCHAR scrollbarW[] = {'S','c','r','o','l','l','B','a','r',0};
 const struct builtin_class_descr SCROLL_builtin_class =
 {
-    "ScrollBar",            /* name */
+    scrollbarW,             /* name */
     CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
     NULL,                   /* procA (winproc is Unicode only) */
     ScrollBarWndProc,       /* procW */

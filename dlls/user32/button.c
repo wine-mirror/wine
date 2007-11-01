@@ -159,9 +159,10 @@ static WORD checkBoxWidth = 0, checkBoxHeight = 0;
 /*********************************************************************
  * button class descriptor
  */
+static const WCHAR buttonW[] = {'B','u','t','t','o','n',0};
 const struct builtin_class_descr BUTTON_builtin_class =
 {
-    "Button",            /* name */
+    buttonW,             /* name */
     CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
     ButtonWndProcA,      /* procA */
     ButtonWndProcW,      /* procW */
