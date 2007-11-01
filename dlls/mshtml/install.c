@@ -147,6 +147,7 @@ static void set_registry(LPCSTR install_dir)
 
     res = RegSetValueExW(hkey, wszVersion, 0, REG_SZ, (LPVOID)wszIEVersion,
                          sizeof(wszIEVersion));
+    RegCloseKey(hkey);
     if(res != ERROR_SUCCESS) {
         ERR("Failed to set Version value: %d\n", res);
         return;
