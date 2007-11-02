@@ -1757,12 +1757,19 @@ DECL_HANDLER(get_window_children)
     int total = 0;
     user_handle_t *data;
     data_size_t len;
+    atom_t atom = req->atom;
+
+    if (get_req_data_size())
+    {
+        atom = find_global_atom( NULL, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
+        if (!atom) return;
+    }
 
     if (parent)
     {
         LIST_FOR_EACH_ENTRY( ptr, &parent->children, struct window, entry )
         {
-            if (req->atom && get_class_atom(ptr->class) != req->atom) continue;
+            if (atom && get_class_atom(ptr->class) != atom) continue;
             if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
             total++;
         }
@@ -1774,7 +1781,7 @@ DECL_HANDLER(get_window_children)
         LIST_FOR_EACH_ENTRY( ptr, &parent->children, struct window, entry )
         {
             if (len < sizeof(*data)) break;
-            if (req->atom && get_class_atom(ptr->class) != req->atom) continue;
+            if (atom && get_class_atom(ptr->class) != atom) continue;
             if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
             *data++ = ptr->handle;
             len -= sizeof(*data);

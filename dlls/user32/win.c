@@ -211,7 +211,7 @@ static WND *free_window_handle( HWND hwnd )
  * Build an array of the children of a given window. The array must be
  * freed with HeapFree. Returns NULL when no windows are found.
  */
-static HWND *list_window_children( HWND hwnd, ATOM atom, DWORD tid )
+static HWND *list_window_children( HWND hwnd, LPCWSTR class, DWORD tid )
 {
     HWND *list;
     int size = 32;
@@ -225,8 +225,9 @@ static HWND *list_window_children( HWND hwnd, ATOM atom, DWORD tid )
         SERVER_START_REQ( get_window_children )
         {
             req->parent = hwnd;
-            req->atom = atom;
             req->tid = tid;
+            if (!(req->atom = get_int_atom_value( class )) && class)
+                wine_server_add_data( req, class, strlenW(class)*sizeof(WCHAR) );
             wine_server_set_reply( req, list, (size-1) * sizeof(HWND) );
             if (!wine_server_call( req )) count = reply->count;
         }
@@ -1398,11 +1399,9 @@ BOOL WINAPI OpenIcon( HWND hwnd )
 
 
 /***********************************************************************
- *           WIN_FindWindow
- *
- * Implementation of FindWindow() and FindWindowEx().
+ *		FindWindowExW (USER32.@)
  */
-static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className, LPCWSTR title )
+HWND WINAPI FindWindowExW( HWND parent, HWND child, LPCWSTR className, LPCWSTR title )
 {
     HWND *list = NULL;
     HWND retvalue = 0;
@@ -1458,54 +1457,31 @@ HWND WINAPI FindWindowA( LPCSTR className, LPCSTR title )
 /***********************************************************************
  *		FindWindowExA (USER32.@)
  */
-HWND WINAPI FindWindowExA( HWND parent, HWND child,
-                               LPCSTR className, LPCSTR title )
+HWND WINAPI FindWindowExA( HWND parent, HWND child, LPCSTR className, LPCSTR title )
 {
-    ATOM atom = 0;
-    LPWSTR buffer;
-    HWND hwnd;
-    INT len;
+    LPWSTR titleW = NULL;
+    HWND hwnd = 0;
 
-    if (className)
+    if (title)
     {
-        /* If the atom doesn't exist, then no class */
-        /* with this name exists either. */
-        if (!(atom = GlobalFindAtomA( className )))
-        {
-            SetLastError (ERROR_CANNOT_FIND_WND_CLASS);
-            return 0;
-        }
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, title, -1, NULL, 0 );
+        if (!(titleW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return 0;
+        MultiByteToWideChar( CP_ACP, 0, title, -1, titleW, len );
     }
-    if (!title) return WIN_FindWindow( parent, child, atom, NULL );
 
-    len = MultiByteToWideChar( CP_ACP, 0, title, -1, NULL, 0 );
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return 0;
-    MultiByteToWideChar( CP_ACP, 0, title, -1, buffer, len );
-    hwnd = WIN_FindWindow( parent, child, atom, buffer );
-    HeapFree( GetProcessHeap(), 0, buffer );
+    if (!IS_INTRESOURCE(className))
+    {
+        WCHAR classW[256];
+        if (MultiByteToWideChar( CP_ACP, 0, className, -1, classW, sizeof(classW)/sizeof(WCHAR) ))
+            hwnd = FindWindowExW( parent, child, classW, titleW );
+    }
+    else
+    {
+        hwnd = FindWindowExW( parent, child, (LPCWSTR)className, titleW );
+    }
+
+    HeapFree( GetProcessHeap(), 0, titleW );
     return hwnd;
-}
-
-
-/***********************************************************************
- *		FindWindowExW (USER32.@)
- */
-HWND WINAPI FindWindowExW( HWND parent, HWND child,
-                               LPCWSTR className, LPCWSTR title )
-{
-    ATOM atom = 0;
-
-    if (className)
-    {
-        /* If the atom doesn't exist, then no class */
-        /* with this name exists either. */
-        if (!(atom = GlobalFindAtomW( className )))
-        {
-            SetLastError (ERROR_CANNOT_FIND_WND_CLASS);
-            return 0;
-        }
-    }
-    return WIN_FindWindow( parent, child, atom, title );
 }
 
 
@@ -2774,7 +2750,7 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
  */
 HWND *WIN_ListChildren( HWND hwnd )
 {
-    return list_window_children( hwnd, 0, 0 );
+    return list_window_children( hwnd, NULL, 0 );
 }
 
 
@@ -2818,7 +2794,7 @@ BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
 
     USER_CheckNotLock();
 
-    if (!(list = list_window_children( GetDesktopWindow(), 0, id ))) return TRUE;
+    if (!(list = list_window_children( GetDesktopWindow(), NULL, id ))) return TRUE;
 
     /* Now call the callback function for every window */
 

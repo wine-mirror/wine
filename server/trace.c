@@ -2635,7 +2635,9 @@ static void dump_get_window_children_request( const struct get_window_children_r
 {
     fprintf( stderr, " parent=%p,", req->parent );
     fprintf( stderr, " atom=%04x,", req->atom );
-    fprintf( stderr, " tid=%04x", req->tid );
+    fprintf( stderr, " tid=%04x,", req->tid );
+    fprintf( stderr, " class=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_get_window_children_reply( const struct get_window_children_reply *req )
