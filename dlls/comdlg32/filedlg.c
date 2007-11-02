@@ -36,7 +36,7 @@
  *
  * FIXME: add to recent docs
  *
- * FIXME: flags not implemented: OFN_CREATEPROMPT, OFN_DONTADDTORECENT,
+ * FIXME: flags not implemented: OFN_DONTADDTORECENT,
  * OFN_ENABLEINCLUDENOTIFY, OFN_ENABLESIZING,
  * OFN_NODEREFERENCELINKS, OFN_NOREADONLYRETURN,
  * OFN_NOTESTFILECREATE, OFN_USEMONIKERS
@@ -83,7 +83,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #define UNIMPLEMENTED_FLAGS \
-(OFN_CREATEPROMPT | OFN_DONTADDTORECENT |\
+(OFN_DONTADDTORECENT |\
 OFN_ENABLEINCLUDENOTIFY | OFN_ENABLESIZING |\
 OFN_NODEREFERENCELINKS | OFN_NOREADONLYRETURN |\
 OFN_NOTESTFILECREATE /*| OFN_USEMONIKERS*/)
@@ -2117,6 +2117,24 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	    goto ret;
 	  }
 	}
+
+        /* In Open dialog: check if it should be created if it doesn't exist */
+        if (!(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
+            && fodInfos->ofnInfos->Flags & OFN_CREATEPROMPT
+            && !PathFileExistsW(lpstrPathAndFile))
+        {
+          WCHAR lpstrCreate[100];
+          int answer;
+
+          LoadStringW(COMDLG32_hInstance, IDS_CREATEFILE, lpstrCreate, 100);
+          answer = MessageBoxW(hwnd, lpstrCreate, fodInfos->title,
+                               MB_YESNO | MB_ICONEXCLAMATION);
+          if (answer == IDNO)
+          {
+            ret = FALSE;
+            goto ret;
+          }
+        }
 
         /* Check that the size of the file does not exceed buffer size.
              (Allow for extra \0 if OFN_MULTISELECT is set.) */
