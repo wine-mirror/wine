@@ -37,6 +37,28 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
 static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey);
 
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
+    IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
+
+    if (0 == This->glDescription.textureName) {
+        ERR("Surface does not have a texture, but SFLAG_INTEXTURE is set\n");
+        return;
+    }
+
+    if(myDevice->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
+        ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    }
+
+    ENTER_GL();
+            /* Make sure that a proper texture unit is selected, bind the texture
+    * and dirtify the sampler to restore the texture on the next draw
+            */
+    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+        checkGLcall("glActiveTextureARB");
+    }
+    IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
+    IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
+
     if (This->resource.format == WINED3DFMT_DXT1 ||
             This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
             This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
@@ -58,6 +80,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
                 checkGLcall("glGetCompressedTexImageARB()");
             }
         }
+        LEAVE_GL();
     } else {
         void *mem;
         int src_pitch = 0;
@@ -65,6 +88,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
 
          if(This->Flags & SFLAG_CONVERTED) {
              FIXME("Read back converted textures unsupported\n");
+             LEAVE_GL();
              return;
          }
 
@@ -96,6 +120,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
                           This->glDescription.glType, mem);
             checkGLcall("glGetTexImage()");
         }
+        LEAVE_GL();
 
         if (This->Flags & SFLAG_NONPOW2) {
             LPBYTE src_data, dst_data;
@@ -163,6 +188,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
             HeapFree(GetProcessHeap(), 0, mem);
         }
     }
+
     /* Surface has now been downloaded */
     This->Flags |= SFLAG_INSYSMEM;
 }
@@ -3556,7 +3582,6 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, DWORD flag, const RECT *rect) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-    IWineD3DDeviceImpl *myDevice;
     GLenum format, internal, type;
     CONVERT_TYPES convert;
     int bpp;
@@ -3581,34 +3606,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         This->Flags |= SFLAG_LOST;
         return WINED3DERR_DEVICELOST;
     }
-    myDevice = This->resource.wineD3DDevice;
 
     if(flag == SFLAG_INSYSMEM) {
         surface_prepare_system_memory(This);
 
         /* Download the surface to system memory */
         if(This->Flags & SFLAG_INTEXTURE) {
-            if (0 == This->glDescription.textureName) {
-                ERR("Surface does not have a texture, but SFLAG_INTEXTURE is set\n");
-            }
-
-            if(myDevice->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
-                ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-            }
-
-            ENTER_GL();
-            /* Make sure that a proper texture unit is selected, bind the texture
-             * and dirtify the sampler to restore the texture on the next draw
-             */
-            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-                checkGLcall("glActiveTextureARB");
-            }
-            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
-            IWineD3DSurface_PreLoad(iface);
-
             surface_download_data(This);
-            LEAVE_GL();
         } else {
             read_from_framebuffer(This, rect,
                                   This->resource.allocatedMemory,
