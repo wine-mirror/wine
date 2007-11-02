@@ -41,6 +41,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(class);
 
+#define MAX_ATOM_LEN 255 /* from dlls/kernel32/atom.c */
+
 typedef struct tagCLASS
 {
     struct list      entry;         /* Entry in class list */
@@ -56,12 +58,12 @@ typedef struct tagCLASS
     HCURSOR          hCursor;       /* Default cursor */
     HBRUSH           hbrBackground; /* Default background */
     ATOM             atomName;      /* Name of the class */
+    WCHAR            name[MAX_ATOM_LEN + 1];
 } CLASS;
 
 static struct list class_list = LIST_INIT( class_list );
 
 #define CLASS_OTHER_PROCESS ((CLASS *)1)
-#define MAX_ATOM_LEN 255 /* from dlls/kernel32/atom.c */
 
 /***********************************************************************
  *           get_class_ptr
@@ -283,29 +285,37 @@ void CLASS_FreeModuleClasses( HMODULE16 hModule )
 
 
 /***********************************************************************
- *           CLASS_FindClassByAtom
+ *           CLASS_FindClass
  *
  * Return a pointer to the class.
  * hinstance has been normalized by the caller.
  */
-static CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE hinstance )
+static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
 {
     struct list *ptr;
+    ATOM atom = get_int_atom_value( name );
 
     USER_Lock();
 
     LIST_FOR_EACH( ptr, &class_list )
     {
         CLASS *class = LIST_ENTRY( ptr, CLASS, entry );
-        if (class->atomName != atom) continue;
+        if (atom)
+        {
+            if (class->atomName != atom) continue;
+        }
+        else
+        {
+            if (!name || strcmpiW( class->name, name )) continue;
+        }
         if (!hinstance || !class->local || class->hInstance == hinstance)
         {
-            TRACE("0x%04x %p -> %p\n", atom, hinstance, class);
+            TRACE("%s %p -> %p\n", debugstr_w(name), hinstance, class);
             return class;
         }
     }
     USER_Unlock();
-    TRACE("0x%04x %p -> not found\n", atom, hinstance);
+    TRACE("%s %p -> not found\n", debugstr_w(name), hinstance);
     return NULL;
 }
 
@@ -339,6 +349,10 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, HINSTANCE hInstance, BOOL local
     classPtr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLASS) + classExtra );
     if (!classPtr) return NULL;
 
+    classPtr->atomName = get_int_atom_value( name );
+    if (!classPtr->atomName && name) strcpyW( classPtr->name, name );
+    else GlobalGetAtomNameW( classPtr->atomName, classPtr->name, sizeof(classPtr->name)/sizeof(WCHAR) );
+
     SERVER_START_REQ( create_class )
     {
         req->local      = local;
@@ -347,8 +361,8 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, HINSTANCE hInstance, BOOL local
         req->extra      = classExtra;
         req->win_extra  = winExtra;
         req->client_ptr = classPtr;
-        if (!(req->atom = get_int_atom_value(name)) && name)
-            wine_server_add_data( req, name, strlenW(name) * sizeof(WCHAR) );
+        req->atom       = classPtr->atomName;
+        if (!req->atom && name) wine_server_add_data( req, name, strlenW(name) * sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
         classPtr->atomName = reply->atom;
     }
@@ -942,6 +956,7 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
         if (!set_server_info( hwnd, offset, newval, size )) break;
         retval = class->atomName;
         class->atomName = newval;
+        GlobalGetAtomNameW( newval, class->name, sizeof(class->name)/sizeof(WCHAR) );
         break;
     case GCL_CBCLSEXTRA:  /* cannot change this one */
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -982,21 +997,14 @@ DWORD WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
  */
 INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
 {
-    char tmpbuf[MAX_ATOM_LEN + 1];
-    INT ret;
-
-    TRACE("%p %p %d\n", hwnd, buffer, count);
+    WCHAR tmpbuf[MAX_ATOM_LEN + 1];
+    DWORD len;
 
     if (count <= 0) return 0;
-
-    ret = GlobalGetAtomNameA( GetClassLongW( hwnd, GCW_ATOM ), tmpbuf, MAX_ATOM_LEN + 1 );
-    if (ret)
-    {
-        ret = min(count - 1, ret);
-        memcpy(buffer, tmpbuf, ret);
-        buffer[ret] = 0;
-    }
-    return ret;
+    if (!GetClassNameW( hwnd, tmpbuf, sizeof(tmpbuf)/sizeof(WCHAR) )) return 0;
+    RtlUnicodeToMultiByteN( buffer, count - 1, &len, tmpbuf, strlenW(tmpbuf) * sizeof(WCHAR) );
+    buffer[len] = 0;
+    return len;
 }
 
 
@@ -1005,19 +1013,32 @@ INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
  */
 INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
 {
-    WCHAR tmpbuf[MAX_ATOM_LEN + 1];
+    CLASS *class;
     INT ret;
 
     TRACE("%p %p %d\n", hwnd, buffer, count);
 
     if (count <= 0) return 0;
 
-    ret = GlobalGetAtomNameW( GetClassLongW( hwnd, GCW_ATOM ), tmpbuf, MAX_ATOM_LEN + 1 );
-    if (ret)
+    if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
+
+    if (class == CLASS_OTHER_PROCESS)
     {
-        ret = min(count - 1, ret);
-        memcpy(buffer, tmpbuf, ret * sizeof(WCHAR));
-        buffer[ret] = 0;
+        WCHAR tmpbuf[MAX_ATOM_LEN + 1];
+
+        ret = GlobalGetAtomNameW( GetClassLongW( hwnd, GCW_ATOM ), tmpbuf, MAX_ATOM_LEN + 1 );
+        if (ret)
+        {
+            ret = min(count - 1, ret);
+            memcpy(buffer, tmpbuf, ret * sizeof(WCHAR));
+            buffer[ret] = 0;
+        }
+    }
+    else
+    {
+        lstrcpynW( buffer, class->name, count );
+        release_class_ptr( class );
+        ret = strlenW( buffer );
     }
     return ret;
 }
@@ -1096,14 +1117,23 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSW *wc )
  */
 BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
 {
-    ATOM atom = HIWORD(name) ? GlobalFindAtomA( name ) : LOWORD(name);
+    ATOM atom;
     CLASS *classPtr;
 
-    TRACE("%p %s %x %p\n", hInstance, debugstr_a(name), atom, wc);
+    TRACE("%p %s %p\n", hInstance, debugstr_a(name), wc);
 
     if (!hInstance) hInstance = user32_module;
 
-    if (!atom || !(classPtr = CLASS_FindClassByAtom( atom, hInstance )))
+    if (!IS_INTRESOURCE(name))
+    {
+        WCHAR nameW[MAX_ATOM_LEN + 1];
+        if (!MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, sizeof(nameW)/sizeof(WCHAR) ))
+            return FALSE;
+        classPtr = CLASS_FindClass( nameW, hInstance );
+    }
+    else classPtr = CLASS_FindClass( (LPCWSTR)name, hInstance );
+
+    if (!classPtr)
     {
         SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
         return FALSE;
@@ -1119,6 +1149,7 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
     wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameA( classPtr );
     wc->lpszClassName = name;
+    atom = classPtr->atomName;
     release_class_ptr( classPtr );
 
     /* We must return the atom of the class here instead of just TRUE. */
@@ -1131,14 +1162,14 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
  */
 BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc )
 {
-    ATOM atom = HIWORD(name) ? GlobalFindAtomW( name ) : LOWORD(name);
+    ATOM atom;
     CLASS *classPtr;
 
-    TRACE("%p %s %x %p\n", hInstance, debugstr_w(name), atom, wc);
+    TRACE("%p %s %p\n", hInstance, debugstr_w(name), wc);
 
     if (!hInstance) hInstance = user32_module;
 
-    if (!atom || !(classPtr = CLASS_FindClassByAtom( atom, hInstance )))
+    if (!(classPtr = CLASS_FindClass( name, hInstance )))
     {
         SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
         return FALSE;
@@ -1154,6 +1185,7 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
     wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameW( classPtr );
     wc->lpszClassName = name;
+    atom = classPtr->atomName;
     release_class_ptr( classPtr );
 
     /* We must return the atom of the class here instead of just TRUE. */
