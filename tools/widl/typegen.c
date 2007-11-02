@@ -1420,7 +1420,7 @@ static void write_pointer_description(FILE *file, type_t *type,
             &offset_in_memory, &offset_in_buffer, typestring_offset);
 }
 
-static int is_declptr(const type_t *t)
+int is_declptr(const type_t *t)
 {
   return is_ptr(t) || (is_conformant_array(t) && !t->declarray);
 }
@@ -2083,6 +2083,14 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
         size_t off;
         off = write_array_tfs(file, var->attrs, type, var->name, typeformat_offset);
         ptr_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
+        /* Top level pointers to conformant arrays may be handled specially
+           since we can bypass the pointer, but if the array is burried
+           beneath another pointer (e.g., "[size_is(,n)] int **p" then we
+           always need to write the pointer.  */
+        if (!ptr_type && var->type != type)
+          /* FIXME:  This should use pointer_default, but the information
+             isn't kept around for arrays.  */
+          ptr_type = RPC_FC_UP;
         if (ptr_type && ptr_type != RPC_FC_RP)
         {
             unsigned int absoff = type->typestring_offset;
@@ -2711,6 +2719,13 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         {
             unsigned char tc = type->type;
             const char *array_type = "FixedArray";
+            type_t *st;
+
+            for (st = type->ref; is_ptr(st) || is_array(st); st = st->ref)
+                if (st->size_is)
+                    error("in function %s: multidimensional conformant arrays"
+                          " not supported at the top level\n",
+                          func->def->name);
 
             if (tc == RPC_FC_SMVARRAY || tc == RPC_FC_LGVARRAY)
             {
@@ -2826,8 +2841,28 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             else
             {
                 const var_t *iid;
+                expr_t *sx = NULL;
+                type_t *st;
+
+                for (st = type->ref; is_ptr(st) || is_array(st); st = st->ref)
+                    if (st->size_is)
+                    {
+                        if (!sx)
+                            sx = st->size_is;
+                        else
+                            error("in function %s: multidimensional conformant"
+                                  " arrays not supported at the top level\n",
+                                  func->def->name);
+                    }
+
                 if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
                     print_file( file, indent, "_StubMsg.MaxCount = (unsigned long)%s;\n", iid->name );
+                else if (sx)
+                {
+                    print_file(file, indent, "_StubMsg.MaxCount = (unsigned long) ");
+                    write_expr(file, sx, 1);
+                    fprintf(file, ";\n\n");
+                }
                 if (var->type->ref->type == RPC_FC_IP)
                     print_phase_function(file, indent, "InterfacePointer", phase, var, start_offset);
                 else

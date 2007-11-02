@@ -29,6 +29,7 @@ extern void *get_attrp(const attr_list_t *list, enum attr_type t);
 extern unsigned long get_attrv(const attr_list_t *list, enum attr_type t);
 extern int is_void(const type_t *t);
 extern int is_conformant_array(const type_t *t);
+extern int is_declptr(const type_t *t);
 extern void write_name(FILE *h, const var_t *v);
 extern void write_prefix_name(FILE *h, const char *prefix, const var_t *v);
 extern const char* get_name(const var_t *v);
@@ -67,7 +68,7 @@ extern void write_guid(FILE *f, const char *guid_prefix, const char *name,
 
 static inline int last_ptr(const type_t *type)
 {
-    return is_ptr(type) && !is_ptr(type->ref);
+    return is_ptr(type) && !is_declptr(type->ref);
 }
 
 static inline int last_array(const type_t *type)

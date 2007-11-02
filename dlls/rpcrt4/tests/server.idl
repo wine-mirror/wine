@@ -297,5 +297,7 @@ cpp_quote("#endif")
   } name_t;
   void get_name([in,out] name_t *name);
 
+  int sum_pcarr2(int n, [size_is(, n)] int **pa);
+
   void stop(void);
 }

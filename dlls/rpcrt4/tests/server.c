@@ -481,6 +481,12 @@ s_get_name(name_t *name)
     name->name[name->size - 1] = 0;
 }
 
+int
+s_sum_pcarr2(int n, int **pa)
+{
+  return s_sum_conf_array(*pa, n);
+}
+
 void
 s_stop(void)
 {
@@ -812,6 +818,7 @@ pointer_tests(void)
   bstr_t bstr = &bstr_data[1];
   name_t name;
   void *buffer;
+  int *pa2;
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
@@ -862,6 +869,9 @@ pointer_tests(void)
   todo_wine
   ok(name.name == buffer, "[in,out] pointer should have stayed as %p but instead changed to %p\n", name.name, buffer);
   HeapFree(GetProcessHeap(), 0, name.name);
+
+  pa2 = a;
+  ok(sum_pcarr2(4, &pa2) == 10, "RPC sum_pcarr2\n");
 }
 
 static int
