@@ -2609,6 +2609,24 @@ static int needs_freeing(const attr_list_t *attrs, const type_t *t, int out)
                     || is_array(t)));
 }
 
+expr_t *get_size_is_expr(const type_t *t, const char *name)
+{
+    expr_t *x = NULL;
+
+    for ( ; is_ptr(t) || is_array(t); t = t->ref)
+        if (t->size_is)
+        {
+            if (!x)
+                x = t->size_is;
+            else
+                error("%s: multidimensional conformant"
+                      " arrays not supported at the top level\n",
+                      name);
+        }
+
+    return x;
+}
+
 void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                               enum pass pass, enum remoting_phase phase)
 {
@@ -2719,13 +2737,13 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         {
             unsigned char tc = type->type;
             const char *array_type = "FixedArray";
-            type_t *st;
 
-            for (st = type->ref; is_ptr(st) || is_array(st); st = st->ref)
-                if (st->size_is)
-                    error("in function %s: multidimensional conformant arrays"
-                          " not supported at the top level\n",
-                          func->def->name);
+            /* We already have the size_is expression since it's at the
+               top level, but do checks for multidimensional conformant
+               arrays.  When we handle them, we'll need to extend this
+               function to return a list, and then we'll actually use
+               the return value.  */
+            get_size_is_expr(type, var->name);
 
             if (tc == RPC_FC_SMVARRAY || tc == RPC_FC_LGVARRAY)
             {
@@ -2841,19 +2859,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             else
             {
                 const var_t *iid;
-                expr_t *sx = NULL;
-                type_t *st;
-
-                for (st = type->ref; is_ptr(st) || is_array(st); st = st->ref)
-                    if (st->size_is)
-                    {
-                        if (!sx)
-                            sx = st->size_is;
-                        else
-                            error("in function %s: multidimensional conformant"
-                                  " arrays not supported at the top level\n",
-                                  func->def->name);
-                    }
+                expr_t *sx = get_size_is_expr(type, var->name);
 
                 if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
                     print_file( file, indent, "_StubMsg.MaxCount = (unsigned long)%s;\n", iid->name );

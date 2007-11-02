@@ -189,13 +189,11 @@ static void free_variable( const var_t *arg )
 {
   unsigned int type_offset = arg->type->typestring_offset;
   var_t *constraint;
-  type_t *type;
-  expr_list_t *expr;
+  type_t *type = arg->type;
+  expr_t *size = get_size_is_expr(type, arg->name);
 
-  expr = get_attrp( arg->attrs, ATTR_SIZEIS );
-  if (expr)
+  if (size)
   {
-    const expr_t *size = LIST_ENTRY( list_head(expr), const expr_t, entry );
     print_proxy( "_StubMsg.MaxCount = " );
     write_expr(proxy, size, 0);
     fprintf(proxy, ";\n\n");
@@ -205,7 +203,6 @@ static void free_variable( const var_t *arg )
     return;
   }
 
-  type = arg->type;
   switch( type->type )
   {
   case RPC_FC_BYTE:
