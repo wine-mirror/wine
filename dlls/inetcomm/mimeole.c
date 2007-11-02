@@ -235,6 +235,15 @@ static HRESULT WINAPI MimeMessage_GetBody(
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI MimeMessage_DeleteBody(
+    IMimeMessage *iface,
+    HBODY hBody,
+    DWORD dwFlags)
+{
+    FIXME("(%p)->(%p, %08x)\n", iface, hBody, dwFlags);
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI MimeMessage_MoveBody(
     IMimeMessage *iface,
     HBODY hBody,
@@ -357,6 +366,17 @@ static HRESULT WINAPI MimeMessage_GetBodyProp(
     LPCSTR pszName,
     DWORD dwFlags,
     LPPROPVARIANT pValue)
+{
+    FIXME("(%p)->(%p, %s, 0x%x, %p)\n", iface, hBody, pszName, dwFlags, pValue);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeMessage_SetBodyProp(
+    IMimeMessage *iface,
+    HBODY hBody,
+    LPCSTR pszName,
+    DWORD dwFlags,
+    LPCPROPVARIANT pValue)
 {
     FIXME("(%p)->(%p, %s, 0x%x, %p)\n", iface, hBody, pszName, dwFlags, pValue);
     return E_NOTIMPL;
@@ -591,6 +611,7 @@ static const IMimeMessageVtbl MimeMessageVtbl =
     MimeMessage_SaveBody,
     MimeMessage_InsertBody,
     MimeMessage_GetBody,
+    MimeMessage_DeleteBody,
     MimeMessage_MoveBody,
     MimeMessage_CountBodies,
     MimeMessage_FindFirst,
@@ -604,6 +625,7 @@ static const IMimeMessageVtbl MimeMessageVtbl =
     MimeMessage_IsContentType,
     MimeMessage_QueryBodyProp,
     MimeMessage_GetBodyProp,
+    MimeMessage_SetBodyProp,
     MimeMessage_DeleteBodyProp,
     MimeMessage_SetOption,
     MimeMessage_GetOption,

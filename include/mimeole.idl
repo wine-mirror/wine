@@ -466,6 +466,10 @@ library MIMEOLE
             [in]        HBODY hPivot,
             [out]       LPHBODY phBody);
 
+        HRESULT DeleteBody(
+            [in]        HBODY hBody,
+            [in]        DWORD dwFlags);
+
         HRESULT MoveBody(
             [in]        HBODY hBody,
             [in]        BODYLOCATION location);
@@ -527,6 +531,12 @@ library MIMEOLE
             [in]        LPCSTR pszName,
             [in]        DWORD dwFlags,
             [in, out]   LPPROPVARIANT pValue);
+
+        HRESULT SetBodyProp(
+            [in]        HBODY hBody,
+            [in]        LPCSTR pszName,
+            [in]        DWORD dwFlags,
+            [in]        LPCPROPVARIANT pValue);
 
         HRESULT DeleteBodyProp(
             [in]        HBODY hBody,
