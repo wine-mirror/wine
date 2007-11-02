@@ -25,6 +25,58 @@ import "propidl.idl";
 interface IMimeMessageCallback;
 interface IMimeEnumAddressTypes;
 interface IMimeMessageParts;
+interface IMimeMessageTree;
+interface IMimeBody;
+interface IMimeEnumProperties;
+
+cpp_quote("DEFINE_GUID(CLSID_IMimeBody,      0xfd853cdb, 0x7f86, 0x11d0, 0x82, 0x52, 0x0, 0xc0, 0x4f, 0xd8, 0x5a, 0xb4);")
+cpp_quote("DEFINE_GUID(CLSID_IMimeMessage,   0xfd853ce3, 0x7f86, 0x11d0, 0x82, 0x52, 0x0, 0xc0, 0x4f, 0xd8, 0x5a, 0xb4);")
+
+cpp_quote("#define MIME_E_REG_CREATE_KEY         0x800cce01")
+cpp_quote("#define MIME_E_REG_QUERY_INFO         0x800cce02")
+cpp_quote("#define MIME_E_INVALID_ENCTYPE        0x800cce03")
+cpp_quote("#define MIME_E_BOUNDARY_MISMATCH      0x800cce04")
+cpp_quote("#define MIME_E_NOT_FOUND              0x800cce05")
+cpp_quote("#define MIME_E_NO_DATA                0x800cce05")
+cpp_quote("#define MIME_E_BUFFER_TOO_SMALL       0x800cce06")
+
+cpp_quote("typedef enum tagMIMEPROPID {")
+cpp_quote("    PID_HDR_NEWSGROUP  = 2,")
+cpp_quote("    PID_HDR_NEWSGROUPS = 3,")
+cpp_quote("    PID_HDR_REFS       = 4,")
+cpp_quote("    PID_HDR_SUBJECT    = 5,")
+cpp_quote("    PID_HDR_FROM       = 6,")
+cpp_quote("    PID_HDR_MESSAGEID  = 7,")
+cpp_quote("    PID_HDR_RETURNPATH = 8,")
+cpp_quote("    PID_HDR_RR         = 9,")
+cpp_quote("    PID_HDR_RETRCPTO   = 10,")
+cpp_quote("    PID_HDR_APPARTO    = 11,")
+cpp_quote("    PID_HDR_DATE       = 12,")
+cpp_quote("    PID_HDR_RECEIVED   = 13,")
+cpp_quote("    PID_HDR_REPLYTO    = 14,")
+cpp_quote("    PID_HDR_XMAILER    = 15,")
+cpp_quote("    PID_HDR_BCC        = 16,")
+cpp_quote("    PID_HDR_MIMEVER    = 17,")
+cpp_quote("    PID_HDR_CNTTYPE    = 18,")
+cpp_quote("    PID_HDR_CNTXFER    = 19,")
+cpp_quote("    PID_HDR_CNTID      = 20,")
+cpp_quote("    PID_HDR_CNTDESC    = 21,")
+cpp_quote("    PID_HDR_CNTDISP    = 22,")
+cpp_quote("    PID_HDR_CNTBASE    = 23,")
+cpp_quote("    PID_HDR_CNTLOC     = 24,")
+cpp_quote("    PID_HDR_TO         = 25,")
+cpp_quote("    PID_HDR_PATH       = 26,")
+cpp_quote("    PID_HDR_FOLLOWUPTO = 27,")
+cpp_quote("    PID_HDR_EXPIRES    = 28,")
+cpp_quote("    PID_HDR_CC         = 29,")
+
+cpp_quote("    PID_HDR_SENDER     = 61,")
+
+cpp_quote("    PID_HDR_INREPLYTO  = 77,")
+cpp_quote("} MIMEPROPID;")
+
+cpp_quote("#define OID_HEADER_RELOAD_TYPE        (0x00370000 | VT_UI4)")
+
 
 [
     uuid(e4b28371-83b0-11d0-8259-00c04fd85ab4),
@@ -260,6 +312,12 @@ library MIMEOLE
             X500,
         } CERTNAMETYPE;
 
+        typedef enum tagCERTDATAID
+        {
+            CDID_EMAIL,
+            CDID_MAX
+        } CERTDATAID;
+
         typedef struct tagX509CERTRESULT
         {
             DWORD       cEntries;
@@ -268,7 +326,48 @@ library MIMEOLE
         } X509CERTRESULT, *PX509CERTRESULT;
         typedef const X509CERTRESULT *PCX509CERTRESULT;
 
-        /* FIXME: fill this in */
+        HRESULT InitNew(void);
+
+        HRESULT CheckInit(void);
+
+        HRESULT EncodeMessage(
+            [in]    IMimeMessageTree */*const*/ pTree,
+            [in]    DWORD dwFlags);
+
+        HRESULT EncodeBody(
+            [in]    IMimeMessageTree */*const*/ pTree,
+            [in]    HBODY hEncodeRoot,
+            [in]    DWORD dwFlags);
+
+        HRESULT DecodeMessage(
+            [in]    IMimeMessageTree */*const*/ pTree,
+            [in]    DWORD dwFlags);
+
+        HRESULT DecodeBody(
+            [in]    IMimeMessageTree */*const*/ pTree,
+            [in]    HBODY hDecodeRoot,
+            [in]    DWORD dwFlags);
+
+        HRESULT EnumCertificates(
+            [in]    HCAPICERTSTORE hc,
+            [in]    DWORD dwUsage,
+            [in]    PCX509CERT pPrev,
+            [out]   PCX509CERT *ppCert);
+
+        HRESULT GetCertificateName(
+            [in]    const PCX509CERT pX509Cert,
+            [in]    const CERTNAMETYPE cn,
+            [out]   LPSTR *ppszName);
+
+        HRESULT GetMessageType(
+            [in]    const HWND hwndParent,
+            [in]    IMimeBody */*const*/ pBody,
+            [out]   DWORD */*const*/ pdwSecType);
+
+        HRESULT GetCertData(
+            [in]        const PCX509CERT pX509Cert,
+            [in]        const CERTDATAID dataid,
+            [out, ref]  LPPROPVARIANT pValue);
     }
 
     [
@@ -286,6 +385,16 @@ library MIMEOLE
     ]
     interface IMimePropertySchema : IUnknown
     {
+        typedef enum tagMIMEPROPFLAGS
+        {
+            MPF_INETCSET            = 0x01,
+            MPF_RFC1522             = 0x02,
+            MPF_ADDRESS             = 0x04,
+            MPF_HASPARAMS           = 0x08,
+            MPF_MIME                = 0x10,
+            MPF_READONLY            = 0x20
+        } MIMEPROPFLAGS;
+
         /* FIXME: fill this in */
     }
 
@@ -295,7 +404,135 @@ library MIMEOLE
     ]
     interface IMimePropertySet : IPersistStreamInit
     {
-        /* FIXME: fill this in */
+        typedef [unique] IMimePropertySet *LPMIMEPROPERTYSET;
+
+        cpp_quote("#define PDF_ENCODED              0x00000001")
+        cpp_quote("#define PDF_NAMEINDATA           0x00000002")
+        cpp_quote("#define PDF_HEADERFORMAT        (0x00000004 | PDF_ENCODED)")
+        cpp_quote("#define PDF_NOCOMMENTS           0x00000008")
+        cpp_quote("#define PDF_SAVENOENCODE         0x00000010")
+        cpp_quote("#define PDF_VECTOR               0x00000020")
+
+        typedef struct tagMIMEPARAMINFO
+        {
+            LPSTR           pszName;
+            LPSTR           pszData;
+        } MIMEPARAMINFO, *LPMIMEPARAMINFO;
+
+        typedef enum tagPROPINFOMASK
+        {
+            PIM_CHARSET           = 0x01,
+            PIM_ENCODINGTYPE      = 0x02,
+            PIM_ROWNUMBER         = 0x04,
+            PIM_FLAGS             = 0x08,
+            PIM_PROPID            = 0x10,
+            PIM_VALUES            = 0x20,
+            PIM_VTDEFAULT         = 0x40,
+            PIM_VTCURRENT         = 0x80
+        } PROPINFOMASK;
+
+        typedef struct tagMIMEPROPINFO
+        {
+            DWORD           dwMask;
+            HCHARSET        hCharset;
+            ENCODINGTYPE    ietEncoding;
+            DWORD           dwRowNumber;
+            DWORD           dwFlags;
+            DWORD           dwPropId;
+            DWORD           cValues;
+            VARTYPE         vtDefault;
+            VARTYPE         vtCurrent;
+        } MIMEPROPINFO, *LPMIMEPROPINFO;
+        typedef const MIMEPROPINFO *LPCMIMEPROPINFO;
+
+        HRESULT GetPropInfo(
+            [in]        LPCSTR               pszName,
+            [in,out]    LPMIMEPROPINFO       pInfo);
+
+        HRESULT SetPropInfo(
+            [in]        LPCSTR               pszName,
+            [in]        LPCMIMEPROPINFO      pInfo);
+
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef GetProp")
+cpp_quote("#undef SetProp")
+cpp_quote("#undef EnumProps")
+cpp_quote("#endif")
+        HRESULT GetProp(
+            [in]        LPCSTR               pszName,
+            [in]        DWORD                dwFlags,
+            [in,out]    LPPROPVARIANT        pValue);
+
+        HRESULT SetProp(
+            [in]        LPCSTR               pszName,
+            [in]        DWORD                dwFlags,
+            [in]        LPCPROPVARIANT       pValue);
+
+        HRESULT AppendProp(
+            [in]        LPCSTR               pszName,
+            [in]        DWORD                dwFlags,
+            [in]        LPPROPVARIANT        pValue);
+
+        HRESULT DeleteProp(
+            [in]        LPCSTR               pszName);
+
+        HRESULT CopyProps(
+            [in]        ULONG                cNames,
+            [in,unique] LPCSTR               *prgszName,
+            [in]        IMimePropertySet     *pPropertySet);
+
+        HRESULT MoveProps(
+            [in]        ULONG                cNames,
+            [in]        LPCSTR               *prgszName,
+            [in]        IMimePropertySet     *pPropertySet);
+
+        HRESULT DeleteExcept(
+            [in]        ULONG                cNames,
+            [in]        LPCSTR               *prgszName);
+
+        HRESULT QueryProp(
+            [in]        LPCSTR               pszName,
+            [in]        LPCSTR               pszCriteria,
+            [in]        boolean              fSubString,
+            [in]        boolean              fCaseSensitive);
+
+        HRESULT GetCharset(
+            [out]       LPHCHARSET           phCharset);
+
+        HRESULT SetCharset(
+            [in]        HCHARSET             hCharset,
+            [in]        CSETAPPLYTYPE        applytype);
+
+        HRESULT GetParameters(
+            [in]        LPCSTR               pszName,
+            [out]       ULONG                *pcParams,
+            [out]       LPMIMEPARAMINFO      *pprgParam);
+
+        HRESULT IsContentType(
+            [in]        LPCSTR               pszPriType,
+            [in,unique] LPCSTR               pszSubType);
+
+        HRESULT BindToObject(
+            [in]        REFIID               riid,
+            [out,iid_is(riid)] void          **ppvObject);
+
+        HRESULT Clone(
+            [out]       IMimePropertySet     **ppPropertySet);
+
+        HRESULT SetOption(
+            [in]        const TYPEDID        oid,
+            [in]        LPCPROPVARIANT       pValue);
+
+        HRESULT GetOption(
+            [in]        const TYPEDID        oid,
+            [in,out]    LPPROPVARIANT        pValue);
+
+        cpp_quote("#define EPF_NONAME 0x00000001")
+
+        HRESULT EnumProps(
+            [in]        DWORD                dwFlags,
+            [out]       IMimeEnumProperties  **ppEnum);
+
     }
 
     [
@@ -393,7 +630,58 @@ library MIMEOLE
             ULONG cLines;
         } TRANSMITINFO, *LPTRANSMITINFO;
 
-        /* FIXME: fill this in */
+        HRESULT IsType(
+            [in]        IMSGBODYTYPE     bodytype);
+
+        HRESULT SetDisplayName(
+            [in]        LPCSTR           pszDisplay);
+
+        HRESULT GetDisplayName(
+            [out]       LPSTR            *ppszDisplay);
+
+        HRESULT GetOffsets(
+            [out]       LPBODYOFFSETS     pOffsets);
+
+        HRESULT GetCurrentEncoding(
+            [out]       ENCODINGTYPE     *pietEncoding);
+
+        HRESULT SetCurrentEncoding(
+            [in]        ENCODINGTYPE     ietEncoding);
+
+        HRESULT GetEstimatedSize(
+            [in]        ENCODINGTYPE     ietEncoding,
+            [out]       ULONG            *pcbSize);
+
+        HRESULT GetDataHere(
+            [in]        ENCODINGTYPE     ietEncoding,
+            [in]        IStream          *pStream);
+
+        HRESULT GetData(
+            [in]        ENCODINGTYPE     ietEncoding,
+            [out]       IStream          **ppStream);
+
+        HRESULT SetData(
+            [in]        ENCODINGTYPE     ietEncoding,
+            [in,unique] LPCSTR           pszPriType,
+            [in,unique] LPCSTR           pszSubType,
+            [in]        REFIID           riid,
+            [in,iid_is(riid)]  LPVOID    pvObject);
+
+        HRESULT EmptyData(void);
+
+        HRESULT CopyTo(
+            [in]        IMimeBody        *pBody);
+
+        HRESULT GetTransmitInfo(
+            [in,out]    LPTRANSMITINFO   pTransmitInfo);
+
+        HRESULT SaveToFile(
+            [in]        ENCODINGTYPE     ietEncoding,
+            [in]        LPCSTR           pszFilePath);
+
+        HRESULT GetHandle(
+           [out]        LPHBODY          phBody);
+
     }
 
     [
@@ -611,10 +899,6 @@ library MIMEOLE
             [in]        IMimeMessageCallback *pCallback,
             [out]       IMoniker **ppMoniker);
 
-cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
-cpp_quote("#undef GetProp")
-cpp_quote("#undef SetProp")
-cpp_quote("#endif")
         HRESULT GetProp(
             [in]        LPCSTR pszName,
             [in]        DWORD dwFlags,
