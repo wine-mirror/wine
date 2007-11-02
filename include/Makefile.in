@@ -24,6 +24,8 @@ IDL_H_SRCS = \
 	htiframe.idl \
 	iads.idl \
 	icftypes.idl \
+	imnact.idl \
+	imnxport.idl \
 	indexsrv.idl \
 	mediaobj.idl \
 	mimeinfo.idl \

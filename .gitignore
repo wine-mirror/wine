@@ -577,6 +577,8 @@ include/hlink.h
 include/htiframe.h
 include/iads.h
 include/icftypes.h
+include/imnact.h
+include/imnxport.h
 include/indexsrv.h
 include/mediaobj.h
 include/mimeinfo.h
