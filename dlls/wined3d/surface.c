@@ -3614,41 +3614,34 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
 
         if (This->Flags & SFLAG_INDRAWABLE) {
-            if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8 ||
-                This->resource.format == WINED3DFMT_DXT1 || This->resource.format == WINED3DFMT_DXT2 ||
-                This->resource.format == WINED3DFMT_DXT3 || This->resource.format == WINED3DFMT_DXT4 ||
-                This->resource.format == WINED3DFMT_DXT5)
-                FIXME("Format %d not supported\n", This->resource.format);
-            else {
-                GLint prevRead;
+            GLint prevRead;
 
-                ENTER_GL();
-                glGetIntegerv(GL_READ_BUFFER, &prevRead);
-                vcheckGLcall("glGetIntegerv");
-                glReadBuffer(This->resource.wineD3DDevice->offscreenBuffer);
-                vcheckGLcall("glReadBuffer");
+            ENTER_GL();
+            glGetIntegerv(GL_READ_BUFFER, &prevRead);
+            vcheckGLcall("glGetIntegerv");
+            glReadBuffer(This->resource.wineD3DDevice->offscreenBuffer);
+            vcheckGLcall("glReadBuffer");
 
-                if(!(This->Flags & SFLAG_ALLOCATED)) {
-                    surface_allocate_surface(This, internal, This->pow2Width,
-                                             This->pow2Height, format, type);
-                }
-
-                clear_unused_channels(This);
-
-                glCopyTexSubImage2D(This->glDescription.target,
-                                    This->glDescription.level,
-                                    0, 0, 0, 0,
-                                    This->currentDesc.Width,
-                                    This->currentDesc.Height);
-                checkGLcall("glCopyTexSubImage2D");
-
-                glReadBuffer(prevRead);
-                vcheckGLcall("glReadBuffer");
-
-                LEAVE_GL();
-
-                TRACE("Updated target %d\n", This->glDescription.target);
+            if(!(This->Flags & SFLAG_ALLOCATED)) {
+                surface_allocate_surface(This, internal, This->pow2Width,
+                                            This->pow2Height, format, type);
             }
+
+            clear_unused_channels(This);
+
+            glCopyTexSubImage2D(This->glDescription.target,
+                                This->glDescription.level,
+                                0, 0, 0, 0,
+                                This->currentDesc.Width,
+                                This->currentDesc.Height);
+            checkGLcall("glCopyTexSubImage2D");
+
+            glReadBuffer(prevRead);
+            vcheckGLcall("glReadBuffer");
+
+            LEAVE_GL();
+
+            TRACE("Updated target %d\n", This->glDescription.target);
             return WINED3D_OK;
         } else {
             /* The only place where LoadTexture() might get called when isInDraw=1
