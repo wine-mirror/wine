@@ -2510,7 +2510,7 @@ REBAR_SetBandInfoT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnic
         else
             Str_SetPtrAtoW(&wstr, (LPSTR)lprbbi->lpText);
 
-        if (REBAR_strdifW(wstr, lprbbi->lpText)) {
+        if (REBAR_strdifW(wstr, lpBand->lpText)) {
             Free(lpBand->lpText);
             lpBand->lpText = wstr;
             bChanged = TRUE;
