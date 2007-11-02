@@ -4,8 +4,8 @@
 @ stub DllGetClassObject
 @ stub DummyEntryPoint
 @ stub DummyEntryPointA
-@ stdcall FileProtocolHandler(long str long) FileProtocolHandlerA
-@ stdcall FileProtocolHandlerA(long str long)
+@ stdcall FileProtocolHandler(long ptr str long) FileProtocolHandlerA
+@ stdcall FileProtocolHandlerA(long ptr str long)
 @ stdcall InetIsOffline(long)
 @ stub MIMEAssociationDialogA
 @ stub MIMEAssociationDialogW

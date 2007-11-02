@@ -61,17 +61,19 @@ BOOL WINAPI InetIsOffline(DWORD flags)
  * Handles a URL given to it and executes it.
  *
  * HWND hWnd - Parent Window
+ * HINSTANCE hInst - ignored
  * LPCSTR pszUrl - The URL that needs to be handled
  * int nShowCmd - How to display the operation.
  */
 
-HRESULT WINAPI FileProtocolHandlerA(HWND hWnd, LPCSTR pszUrl,int nShowCmd)
+HRESULT WINAPI FileProtocolHandlerA(HWND hWnd, HINSTANCE hInst, LPCSTR pszUrl,
+        int nShowCmd)
 {
     CHAR pszPath[MAX_PATH];
     DWORD size = MAX_PATH;
     HRESULT createpath = PathCreateFromUrlA(pszUrl,pszPath,&size,0);
 
-    TRACE("(%p, %p, %d)\n",hWnd,pszUrl,nShowCmd);
+    TRACE("(%p, %s, %d)\n",hWnd,debugstr_a(pszUrl),nShowCmd);
 
     if(createpath != S_OK)
         return E_FAIL;
