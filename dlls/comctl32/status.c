@@ -633,7 +633,6 @@ STATUSBAR_SetMinHeight (STATUS_INFO *infoPtr, INT height)
 	RECT parent_rect;
         HTHEME theme;
 
-	GetClientRect (infoPtr->Notify, &parent_rect);
 	infoPtr->height = height + infoPtr->verticalBorder;
         
         if ((theme = GetWindowTheme (infoPtr->Self)))
@@ -651,13 +650,14 @@ STATUSBAR_SetMinHeight (STATUS_INFO *infoPtr, INT height)
             ReleaseDC (infoPtr->Self, hdc);
         }
         
-	width = parent_rect.right - parent_rect.left;
-	x = parent_rect.left;
-	y = parent_rect.bottom - infoPtr->height;
-	MoveWindow (infoPtr->Self, parent_rect.left,
-		    parent_rect.bottom - infoPtr->height,
-		    width, infoPtr->height, TRUE);
-	STATUSBAR_SetPartBounds (infoPtr);
+        if (GetClientRect (infoPtr->Notify, &parent_rect))
+        {
+            width = parent_rect.right - parent_rect.left;
+            x = parent_rect.left;
+            y = parent_rect.bottom - infoPtr->height;
+            MoveWindow (infoPtr->Self, x, y, width, infoPtr->height, TRUE);
+            STATUSBAR_SetPartBounds (infoPtr);
+        }
     }
 
     return TRUE;
@@ -1191,13 +1191,13 @@ STATUSBAR_WMSize (STATUS_INFO *infoPtr, WORD flags)
     if (GetWindowLongW(infoPtr->Self, GWL_STYLE) & CCS_NORESIZE) return FALSE;
 
     /* width and height don't apply */
-    GetClientRect (infoPtr->Notify, &parent_rect);
+    if (!GetClientRect (infoPtr->Notify, &parent_rect))
+        return FALSE;
+
     width = parent_rect.right - parent_rect.left;
     x = parent_rect.left;
     y = parent_rect.bottom - infoPtr->height;
-    MoveWindow (infoPtr->Self, parent_rect.left,
-		parent_rect.bottom - infoPtr->height,
-		width, infoPtr->height, TRUE);
+    MoveWindow (infoPtr->Self, x, y, width, infoPtr->height, TRUE);
     STATUSBAR_SetPartBounds (infoPtr);
     return TRUE;
 }
