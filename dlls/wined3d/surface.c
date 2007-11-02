@@ -483,13 +483,67 @@ const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface) {
     return (CONST void*)(This->resource.allocatedMemory);
 }
 
-static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, void *dest, UINT pitch, BOOL srcUpsideDown) {
+static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, void *dest, UINT pitch) {
+    IWineD3DSwapChainImpl *swapchain;
+    IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     BYTE *mem;
     GLint fmt;
     GLint type;
     BYTE *row, *top, *bottom;
     int i;
     BOOL bpp;
+    RECT local_rect;
+    BOOL srcIsUpsideDown;
+
+    if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
+        static BOOL warned = FALSE;
+        if(!warned) {
+            ERR("The application tries to lock the render target, but render target locking is disabled\n");
+            warned = TRUE;
+        }
+        return;
+    }
+
+    IWineD3DSurface_GetContainer((IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    /* Activate the surface. Set it up for blitting now, although not necessarily needed for LockRect.
+     * Certain graphics drivers seem to dislike some enabled states when reading from opengl, the blitting usage
+     * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
+     * context->last_was_blit set on the unlock.
+     */
+    ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
+    ENTER_GL();
+
+    /* Select the correct read buffer, and give some debug output.
+     * There is no need to keep track of the current read buffer or reset it, every part of the code
+     * that reads sets the read buffer as desired.
+     */
+    if(!swapchain) {
+        /* Locking the primary render target which is not on a swapchain(=offscreen render target).
+         * Read from the back buffer
+         */
+        TRACE("Locking offscreen render target\n");
+        glReadBuffer(myDevice->offscreenBuffer);
+        srcIsUpsideDown = TRUE;
+    } else {
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
+        TRACE("Locking %#x buffer\n", buffer);
+        glReadBuffer(buffer);
+        checkGLcall("glReadBuffer");
+
+        IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+        srcIsUpsideDown = FALSE;
+    }
+
+    /* TODO: Get rid of the extra rectangle comparison and construction of a full surface rectangle */
+    if(!rect) {
+        local_rect.left = 0;
+        local_rect.top = 0;
+        local_rect.right = This->currentDesc.Width;
+        local_rect.bottom = This->currentDesc.Height;
+    } else {
+        local_rect = *rect;
+    }
+    /* TODO: Get rid of the extra GetPitch call, LockRect does that too. Cache the pitch */
 
     switch(This->resource.format)
     {
@@ -517,6 +571,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
                 mem = HeapAlloc(GetProcessHeap(), 0, This->resource.size * 3);
                 if(!mem) {
                     ERR("Out of memory\n");
+                    LEAVE_GL();
                     return;
                 }
                 bpp = This->bytesPerPixel * 3;
@@ -536,9 +591,9 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         checkGLcall("glBindBufferARB");
     }
 
-    glReadPixels(rect->left, rect->top,
-                 rect->right - rect->left,
-                 rect->bottom - rect->top,
+    glReadPixels(local_rect.left, local_rect.top,
+                 local_rect.right - local_rect.left,
+                 local_rect.bottom - local_rect.top,
                  fmt, type, mem);
     vcheckGLcall("glReadPixels");
 
@@ -550,7 +605,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
          * to get a pointer to it and perform the flipping in software. This is a lot
          * faster than calling glReadPixels for each line. In case we want more speed
          * we should rerender it flipped in a FBO and read the data back from the FBO. */
-        if(!srcUpsideDown) {
+        if(!srcIsUpsideDown) {
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
             checkGLcall("glBindBufferARB");
 
@@ -560,23 +615,24 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
     }
 
     /* TODO: Merge this with the palettization loop below for P8 targets */
-    if(!srcUpsideDown) {
+    if(!srcIsUpsideDown) {
         UINT len, off;
         /* glReadPixels returns the image upside down, and there is no way to prevent this.
             Flip the lines in software */
-        len = (rect->right - rect->left) * bpp;
-        off = rect->left * bpp;
+        len = (local_rect.right - local_rect.left) * bpp;
+        off = local_rect.left * bpp;
 
         row = HeapAlloc(GetProcessHeap(), 0, len);
         if(!row) {
             ERR("Out of memory\n");
             if(This->resource.format == WINED3DFMT_P8) HeapFree(GetProcessHeap(), 0, mem);
+            LEAVE_GL();
             return;
         }
 
-        top = mem + pitch * rect->top;
-        bottom = ((BYTE *) mem) + pitch * ( rect->bottom - rect->top - 1);
-        for(i = 0; i < (rect->bottom - rect->top) / 2; i++) {
+        top = mem + pitch * local_rect.top;
+        bottom = ((BYTE *) mem) + pitch * ( local_rect.bottom - local_rect.top - 1);
+        for(i = 0; i < (local_rect.bottom - local_rect.top) / 2; i++) {
             memcpy(row, top + off, len);
             memcpy(top + off, bottom + off, len);
             memcpy(bottom + off, row, len);
@@ -607,8 +663,8 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
             pal = This->resource.wineD3DDevice->palettes[This->resource.wineD3DDevice->currentPalette];
         }
 
-        for(y = rect->top; y < rect->bottom; y++) {
-            for(x = rect->left; x < rect->right; x++) {
+        for(y = local_rect.top; y < local_rect.bottom; y++) {
+            for(x = local_rect.left; x < local_rect.right; x++) {
                 /*                      start              lines            pixels      */
                 BYTE *blue =  (BYTE *) ((BYTE *) mem) + y * pitch + x * (sizeof(BYTE) * 3);
                 BYTE *green = blue  + 1;
@@ -627,6 +683,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         }
         HeapFree(GetProcessHeap(), 0, mem);
     }
+    LEAVE_GL();
 }
 
 static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
@@ -3500,9 +3557,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     IWineD3DDeviceImpl *myDevice;
-    IWineD3DSwapChainImpl *swapchain;
-    BOOL srcIsUpsideDown;
-    RECT local_rect;
     GLenum format, internal, type;
     CONVERT_TYPES convert;
     int bpp;
@@ -3556,58 +3610,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             surface_download_data(This);
             LEAVE_GL();
         } else {
-            if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
-                static BOOL warned = FALSE;
-                if(!warned) {
-                    ERR("The application tries to lock the render target, but render target locking is disabled\n");
-                    warned = TRUE;
-                }
-                goto load_end;
-            }
-
-            IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
-            /* Activate the surface. Set it up for blitting now, although not necessarily needed for LockRect.
-             * Certain graphics drivers seem to dislike some enabled states when reading from opengl, the blitting usage
-             * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
-             * context->last_was_blit set on the unlock.
-             */
-            ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
-            ENTER_GL();
-
-            /* Select the correct read buffer, and give some debug output.
-             * There is no need to keep track of the current read buffer or reset it, every part of the code
-             * that reads sets the read buffer as desired.
-             */
-            if(!swapchain) {
-                /* Locking the primary render target which is not on a swapchain(=offscreen render target).
-                 * Read from the back buffer
-                 */
-                TRACE("Locking offscreen render target\n");
-                glReadBuffer(myDevice->offscreenBuffer);
-                srcIsUpsideDown = TRUE;
-            } else {
-                GLenum buffer = surface_get_gl_buffer(iface, (IWineD3DSwapChain *)swapchain);
-                TRACE("Locking %#x buffer\n", buffer);
-                glReadBuffer(buffer);
-                checkGLcall("glReadBuffer");
-
-                IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-                srcIsUpsideDown = FALSE;
-            }
-
-            /* TODO: Get rid of the extra rectangle comparison and construction of a full surface rectangle */
-            if(!rect) {
-                local_rect.left = 0;
-                local_rect.top = 0;
-                local_rect.right = This->currentDesc.Width;
-                local_rect.bottom = This->currentDesc.Height;
-            }
-            /* TODO: Get rid of the extra GetPitch call, LockRect does that too. Cache the pitch */
-            read_from_framebuffer(This, rect ? rect : &local_rect,
+            read_from_framebuffer(This, rect,
                                   This->resource.allocatedMemory,
-                                  IWineD3DSurface_GetPitch(iface),
-                                  srcIsUpsideDown);
-            LEAVE_GL();
+                                  IWineD3DSurface_GetPitch(iface));
         }
     } else if(flag == SFLAG_INDRAWABLE) {
         if(This->Flags & SFLAG_INTEXTURE) {
@@ -3722,7 +3727,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         }
     }
 
-    load_end:
     if(rect == NULL) {
         This->Flags |= flag;
     }
