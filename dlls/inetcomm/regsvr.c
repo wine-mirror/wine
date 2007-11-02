@@ -30,6 +30,7 @@
 #include "winerror.h"
 
 #include "inetcomm_private.h"
+#include "mimeole.h"
 
 #include "wine/debug.h"
 
