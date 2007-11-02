@@ -482,7 +482,7 @@ void crypt_sip_free(void)
 static BOOL CRYPT_LoadSIP(const GUID *pgSubject)
 {
     SIP_DISPATCH_INFO sip = { 0 };
-    HMODULE lib, temp = NULL;
+    HMODULE lib = NULL, temp = NULL;
 
     sip.pfGet = CRYPT_LoadSIPFunc(pgSubject, szGetSigned, &lib);
     if (!sip.pfGet)
