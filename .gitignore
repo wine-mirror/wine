@@ -582,6 +582,7 @@ include/imnxport.h
 include/indexsrv.h
 include/mediaobj.h
 include/mimeinfo.h
+include/mimeole.h
 include/mlang.h
 include/mmstream.h
 include/mscoree.h

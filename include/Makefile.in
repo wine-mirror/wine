@@ -29,6 +29,7 @@ IDL_H_SRCS = \
 	indexsrv.idl \
 	mediaobj.idl \
 	mimeinfo.idl \
+	mimeole.idl \
 	mlang.idl \
 	mmstream.idl \
 	mscoree.idl \
