@@ -580,6 +580,13 @@ library MIMEOLE
             IMSG_PRI_HIGH   = 1,
         } IMSGPRIORITY;
 
+        cpp_quote("#define WPF_HTML             0x00000001")
+        cpp_quote("#define WPF_AUTOINLINE       0x00000002")
+        cpp_quote("#define WPF_SLIDESHOW        0x00000004")
+        cpp_quote("#define WPF_ATTACHLINKS      0x00000008")
+        cpp_quote("#define WPF_IMAGESONLY       0x00000010")
+        cpp_quote("#define WPF_NOMETACHARSET    0x00000020")
+
         typedef struct tagWEPAGEOPTIONS
         {
             DWORD cbSize;
@@ -687,7 +694,9 @@ cpp_quote("#endif")
     ]
     interface IMimeMessageCallback : IUnknown
     {
-        /* FIXME: fill this in */
+        HRESULT OnWebPageSplitter(
+            [in]       DWORD cInlined,
+            [in]       IStream *ppStream);
     }
 
     [
