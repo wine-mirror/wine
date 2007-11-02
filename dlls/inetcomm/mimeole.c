@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "objbase.h"
+#include "ole2.h"
 #include "mimeole.h"
 
 #include "wine/debug.h"
@@ -53,4 +54,16 @@ HRESULT WINAPI MimeOleCreateMessage(IUnknown *pUnkOuter, IMimeMessage **ppMessag
 
     *ppMessage = NULL;
     return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *              MimeOleCreateVirtualStream (INETCOMM.@)
+ */
+HRESULT WINAPI MimeOleCreateVirtualStream(IStream **ppStream)
+{
+    HRESULT hr;
+    FIXME("(%p)\n", ppStream);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, ppStream);
+    return hr;
 }

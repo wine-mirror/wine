@@ -55,7 +55,7 @@
 @ stub MimeOleCreateMessageParts
 @ stub MimeOleCreatePropertySet
 @ stub MimeOleCreateSecurity
-@ stub MimeOleCreateVirtualStream
+@ stdcall MimeOleCreateVirtualStream(ptr)
 @ stub MimeOleDecodeHeader
 @ stub MimeOleEncodeHeader
 @ stub MimeOleFileTimeToInetDate
