@@ -838,6 +838,27 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
     BYTE *mem;
     UINT bpp;
     UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
+    IWineD3DDeviceImpl *myDevice = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
+    IWineD3DSwapChainImpl *swapchain;
+
+    /* Activate the correct context for the render target */
+    ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
+    ENTER_GL();
+
+    IWineD3DSurface_GetContainer((IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    if(!swapchain) {
+        /* Primary offscreen render target */
+        TRACE("Offscreen render target\n");
+        glDrawBuffer(myDevice->offscreenBuffer);
+        checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
+    } else {
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
+        TRACE("Unlocking %#x buffer\n", buffer);
+        glDrawBuffer(buffer);
+        checkGLcall("glDrawBuffer");
+
+        IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+    }
 
     glDisable(GL_TEXTURE_2D);
     vcheckGLcall("glDisable(GL_TEXTURE_2D)");
@@ -971,7 +992,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
             mem = HeapAlloc(GetProcessHeap(), 0, This->resource.size * sizeof(DWORD));
             if(!mem) {
                 ERR("Out of memory\n");
-                return;
+                goto cleanup;
             }
             memory_allocated = TRUE;
             d3dfmt_convert_surface(This->resource.allocatedMemory,
@@ -1008,6 +1029,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
                  mem + bpp * This->lockedRect.left + pitch * This->lockedRect.top);
     checkGLcall("glDrawPixels");
 
+cleanup:
     if(This->Flags & SFLAG_PBO) {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
         checkGLcall("glBindBufferARB");
@@ -1034,6 +1056,19 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
     checkGLcall("glEnable(GL_TEXTURE_2D)");
 
     if(memory_allocated) HeapFree(GetProcessHeap(), 0, mem);
+
+    if(!swapchain) {
+        glDrawBuffer(myDevice->offscreenBuffer);
+        checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
+    } else if(swapchain->backBuffer) {
+        glDrawBuffer(GL_BACK);
+        checkGLcall("glDrawBuffer(GL_BACK)");
+    } else {
+        glDrawBuffer(GL_FRONT);
+        checkGLcall("glDrawBuffer(GL_FRONT)");
+    }
+    LEAVE_GL();
+
     return;
 }
 
@@ -3578,37 +3613,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         if(This->Flags & SFLAG_INTEXTURE) {
             surface_blt_to_drawable(This, rect);
         } else {
-            /* Activate the correct context for the render target */
-            ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
-            ENTER_GL();
-
-            IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
-            if(!swapchain) {
-                /* Primary offscreen render target */
-                TRACE("Offscreen render target\n");
-                glDrawBuffer(myDevice->offscreenBuffer);
-                checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
-            } else {
-                GLenum buffer = surface_get_gl_buffer(iface, (IWineD3DSwapChain *)swapchain);
-                TRACE("Unlocking %#x buffer\n", buffer);
-                glDrawBuffer(buffer);
-                checkGLcall("glDrawBuffer");
-
-                IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-            }
-
             flush_to_framebuffer_drawpixels(This);
-            if(!swapchain) {
-                glDrawBuffer(myDevice->offscreenBuffer);
-                checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
-            } else if(swapchain->backBuffer) {
-                glDrawBuffer(GL_BACK);
-                checkGLcall("glDrawBuffer(GL_BACK)");
-            } else {
-                glDrawBuffer(GL_FRONT);
-                checkGLcall("glDrawBuffer(GL_FRONT)");
-            }
-            LEAVE_GL();
         }
     } else /* if(flag == SFLAG_INTEXTURE) */ {
         d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
