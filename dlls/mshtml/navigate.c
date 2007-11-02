@@ -689,6 +689,27 @@ BSCallback *create_bscallback(IMoniker *mon)
     return ret;
 }
 
+/* Calls undocumented 84 cmd of CGID_ShellDocView */
+static void call_docview_84(HTMLDocument *doc)
+{
+    IOleCommandTarget *olecmd;
+    VARIANT var;
+    HRESULT hres;
+
+    if(!doc->client)
+        return;
+
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+    if(FAILED(hres))
+        return;
+
+    VariantInit(&var);
+    hres = IOleCommandTarget_Exec(olecmd, &CGID_ShellDocView, 84, 0, NULL, &var);
+    IOleCommandTarget_Release(olecmd);
+    if(SUCCEEDED(hres) && V_VT(&var) != VT_NULL)
+        FIXME("handle result\n");
+}
+
 static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_ret,
                             HGLOBAL *post_data_ret, ULONG *post_data_len_ret)
 {
@@ -815,6 +836,7 @@ HRESULT start_binding(HTMLDocument *doc, BSCallback *bscallback)
     HRESULT hres;
 
     bscallback->doc = doc;
+    call_docview_84(bscallback->doc);
 
     hres = CreateAsyncBindCtx(0, STATUSCLB(bscallback), NULL, &bctx);
     if(FAILED(hres)) {
