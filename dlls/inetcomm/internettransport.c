@@ -171,12 +171,12 @@ HRESULT InternetTransport_DropConnection(InternetTransport *This)
 
     ret = shutdown(This->Socket, SD_BOTH);
 
-    This->Status = IXP_DISCONNECTED;
-
     ret = closesocket(This->Socket);
 
     DestroyWindow(This->hwnd);
     This->hwnd = NULL;
+
+    InternetTransport_ChangeStatus(This, IXP_DISCONNECTED);
 
     return S_OK;
 }
