@@ -1,0 +1,12 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ctapi32.dll
+IMPORTS   = advapi32 kernel32
+
+C_SRCS = ctapi32.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
