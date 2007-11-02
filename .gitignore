@@ -186,6 +186,7 @@ dlls/imagehlp/libimagehlp.def
 dlls/imm.dll16
 dlls/imm32/libimm32.def
 dlls/imm32/version.res
+dlls/inetcomm/libinetcomm.def
 dlls/infosoft/tests/*.ok
 dlls/infosoft/tests/infosoft_crosstest.exe
 dlls/infosoft/tests/testlist.c

@@ -90,6 +90,7 @@ BASEDIRS = \
 	imaadp32.acm \
 	imagehlp \
 	imm32 \
+	inetcomm \
 	infosoft \
 	inkobj \
 	inseng \
@@ -536,6 +537,7 @@ IMPORT_LIBS = \
 	icmp/libicmp.$(IMPLIBEXT) \
 	imagehlp/libimagehlp.$(IMPLIBEXT) \
 	imm32/libimm32.$(IMPLIBEXT) \
+	inetcomm/libinetcomm.$(IMPLIBEXT) \
 	iphlpapi/libiphlpapi.$(IMPLIBEXT) \
 	kernel32/libkernel32.$(IMPLIBEXT) \
 	lz32/liblz32.$(IMPLIBEXT) \
@@ -762,6 +764,9 @@ imagehlp/libimagehlp.$(IMPLIBEXT): imagehlp/imagehlp.spec $(WINEBUILD)
 
 imm32/libimm32.$(IMPLIBEXT): imm32/imm32.spec $(WINEBUILD)
 	@cd imm32 && $(MAKE) libimm32.$(IMPLIBEXT)
+
+inetcomm/libinetcomm.$(IMPLIBEXT): inetcomm/inetcomm.spec $(WINEBUILD)
+	@cd inetcomm && $(MAKE) libinetcomm.$(IMPLIBEXT)
 
 iphlpapi/libiphlpapi.$(IMPLIBEXT): iphlpapi/iphlpapi.spec $(WINEBUILD)
 	@cd iphlpapi && $(MAKE) libiphlpapi.$(IMPLIBEXT)
