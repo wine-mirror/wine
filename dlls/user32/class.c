@@ -97,6 +97,25 @@ static inline void release_class_ptr( CLASS *ptr )
 
 
 /***********************************************************************
+ *           get_int_atom_value
+ */
+static ATOM get_int_atom_value( LPCWSTR name )
+{
+    UINT ret = 0;
+
+    if (IS_INTRESOURCE(name)) return LOWORD(name);
+    if (*name++ != '#') return 0;
+    while (*name)
+    {
+        if (*name < '0' || *name > '9') return 0;
+        ret = ret * 10 + *name++ - '0';
+        if (ret > 0xffff) return 0;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
  *           set_server_info
  *
  * Set class info with the wine server.
@@ -328,8 +347,8 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, HINSTANCE hInstance, BOOL local
         req->extra      = classExtra;
         req->win_extra  = winExtra;
         req->client_ptr = classPtr;
-        if (IS_INTRESOURCE(name)) req->atom = LOWORD(name);
-        else wine_server_add_data( req, name, strlenW(name) * sizeof(WCHAR) );
+        if (!(req->atom = get_int_atom_value(name)) && name)
+            wine_server_add_data( req, name, strlenW(name) * sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
         classPtr->atomName = reply->atom;
     }
@@ -596,8 +615,8 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
     SERVER_START_REQ( destroy_class )
     {
         req->instance = hInstance;
-        if (IS_INTRESOURCE(className)) req->atom = LOWORD(className);
-        else wine_server_add_data( req, className, strlenW(className)*sizeof(WCHAR) );
+        if (!(req->atom = get_int_atom_value(className)) && className)
+            wine_server_add_data( req, className, strlenW(className) * sizeof(WCHAR) );
         if (!wine_server_call_err( req )) classPtr = reply->client_ptr;
     }
     SERVER_END_REQ;
