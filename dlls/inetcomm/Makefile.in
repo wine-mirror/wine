@@ -4,10 +4,12 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = inetcomm.dll
 IMPORTLIB = libinetcomm.$(IMPLIBEXT)
-IMPORTS   = kernel32
+IMPORTS   = ole32 ws2_32 user32 advapi32 kernel32
+EXTRALIBS = -luuid
 
 C_SRCS = \
-	inetcomm_main.c
+	inetcomm_main.c \
+	internettransport.c
 
 @MAKE_DLL_RULES@
 
