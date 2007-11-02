@@ -2746,6 +2746,7 @@ struct create_window_request
     user_handle_t  owner;
     atom_t         atom;
     void*          instance;
+    /* VARARG(class,unicode_str); */
 };
 struct create_window_reply
 {
@@ -4883,6 +4884,6 @@ union generic_reply
     struct set_completion_info_reply set_completion_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 326
+#define SERVER_PROTOCOL_VERSION 327
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

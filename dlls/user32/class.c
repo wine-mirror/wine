@@ -101,7 +101,7 @@ static inline void release_class_ptr( CLASS *ptr )
 /***********************************************************************
  *           get_int_atom_value
  */
-static ATOM get_int_atom_value( LPCWSTR name )
+ATOM get_int_atom_value( LPCWSTR name )
 {
     UINT ret = 0;
 

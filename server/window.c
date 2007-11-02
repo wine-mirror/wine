@@ -1561,6 +1561,7 @@ static void set_window_region( struct window *win, struct region *region, int re
 DECL_HANDLER(create_window)
 {
     struct window *win, *parent, *owner = NULL;
+    atom_t atom;
 
     reply->handle = 0;
 
@@ -1580,7 +1581,13 @@ DECL_HANDLER(create_window)
         else /* owner must be a top-level window */
             while (!is_desktop_window(owner->parent)) owner = owner->parent;
     }
-    if (!(win = create_window( parent, owner, req->atom, req->instance ))) return;
+
+    if (get_req_data_size())
+        atom = find_global_atom( NULL, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
+    else
+        atom = req->atom;
+
+    if (!(win = create_window( parent, owner, atom, req->instance ))) return;
 
     reply->handle    = win->handle;
     reply->parent    = win->parent ? win->parent->handle : 0;

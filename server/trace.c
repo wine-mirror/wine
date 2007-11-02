@@ -2526,7 +2526,9 @@ static void dump_create_window_request( const struct create_window_request *req 
     fprintf( stderr, " parent=%p,", req->parent );
     fprintf( stderr, " owner=%p,", req->owner );
     fprintf( stderr, " atom=%04x,", req->atom );
-    fprintf( stderr, " instance=%p", req->instance );
+    fprintf( stderr, " instance=%p,", req->instance );
+    fprintf( stderr, " class=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_create_window_reply( const struct create_window_reply *req )

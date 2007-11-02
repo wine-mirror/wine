@@ -2030,6 +2030,7 @@ enum message_type
     user_handle_t  owner;       /* owner window */
     atom_t         atom;        /* class atom */
     void*          instance;    /* module instance */
+    VARARG(class,unicode_str);  /* class name */
 @REPLY
     user_handle_t  handle;      /* created window */
     user_handle_t  parent;      /* full handle of parent */

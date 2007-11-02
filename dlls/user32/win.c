@@ -95,7 +95,7 @@ static void *user_handles[NB_USER_HANDLES];
  *
  * Create a window handle with the server.
  */
-static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
+static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
                                   HINSTANCE instance, BOOL unicode )
 {
     WORD index;
@@ -113,8 +113,9 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
     {
         req->parent   = parent;
         req->owner    = owner;
-        req->atom     = atom;
         req->instance = instance;
+        if (!(req->atom = get_int_atom_value( name )) && name)
+            wine_server_add_data( req, name, strlenW(name)*sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
             handle = reply->handle;
@@ -857,7 +858,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
  *
  * Implementation of CreateWindowEx().
  */
-static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom, UINT flags )
+static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags )
 {
     INT sw = SW_SHOW;
     WND *wndPtr;
@@ -867,7 +868,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom, UINT flags )
 
     TRACE("%s %s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
           unicode ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
-          unicode ? debugstr_w((LPCWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
+          debugstr_w(className),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
           cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams );
     if(TRACE_ON(win)) dump_window_styles( cs->style, cs->dwExStyle );
@@ -968,7 +969,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom, UINT flags )
             SetLastError(ERROR_TLW_WITH_WSCHILD);
             return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
         }
-        if (classAtom != LOWORD(DESKTOP_CLASS_ATOM))  /* are we creating the desktop itself? */
+        if (className != (LPCWSTR)DESKTOP_CLASS_ATOM)  /* are we creating the desktop itself? */
             parent = GetDesktopWindow();
     }
 
@@ -983,7 +984,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom, UINT flags )
 
     /* Create the window structure */
 
-    if (!(wndPtr = create_window_handle( parent, owner, classAtom, cs->hInstance, unicode )))
+    if (!(wndPtr = create_window_handle( parent, owner, className, cs->hInstance, unicode )))
         return 0;
     hwnd = wndPtr->hwndSelf;
 
@@ -1135,30 +1136,8 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
                                 HWND16 parent, HMENU16 menu,
                                 HINSTANCE16 instance, LPVOID data )
 {
-    ATOM classAtom;
     CREATESTRUCTA cs;
     char buffer[256];
-
-    /* Find the class atom */
-
-    if (HIWORD(className))
-    {
-        if (!(classAtom = GlobalFindAtomA( className )))
-        {
-            ERR( "bad class name %s\n", debugstr_a(className) );
-            return 0;
-        }
-    }
-    else
-    {
-        classAtom = LOWORD(className);
-        if (!GlobalGetAtomNameA( classAtom, buffer, sizeof(buffer) ))
-        {
-            ERR( "bad atom %x\n", classAtom);
-            return 0;
-        }
-        className = buffer;
-    }
 
     /* Fix the coordinates */
 
@@ -1178,7 +1157,24 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    return HWND_16( WIN_CreateWindowEx( &cs, classAtom, 0 ));
+    if (!IS_INTRESOURCE(className))
+    {
+        WCHAR bufferW[256];
+
+        if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
+            return 0;
+        return HWND_16( WIN_CreateWindowEx( &cs, bufferW, 0 ));
+    }
+    else
+    {
+        if (!GlobalGetAtomNameA( LOWORD(className), buffer, sizeof(buffer) ))
+        {
+            ERR( "bad atom %x\n", LOWORD(className));
+            return 0;
+        }
+        cs.lpszClass = buffer;
+        return HWND_16( WIN_CreateWindowEx( &cs, (LPCWSTR)className, 0 ));
+    }
 }
 
 
@@ -1191,32 +1187,7 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
                                  HWND parent, HMENU menu,
                                  HINSTANCE instance, LPVOID data )
 {
-    ATOM classAtom;
     CREATESTRUCTA cs;
-    char buffer[256];
-
-    /* Find the class atom */
-
-    if (HIWORD(className))
-    {
-        if (!(classAtom = GlobalFindAtomA( className )))
-        {
-            ERR( "bad class name %s\n", debugstr_a(className) );
-            return 0;
-        }
-    }
-    else
-    {
-        classAtom = LOWORD(className);
-        if (!GlobalGetAtomNameA( classAtom, buffer, sizeof(buffer) ))
-        {
-            ERR( "bad atom %x\n", classAtom);
-            return 0;
-        }
-        className = buffer;
-    }
-
-    /* Create the window */
 
     cs.lpCreateParams = data;
     cs.hInstance      = instance;
@@ -1231,7 +1202,14 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    return WIN_CreateWindowEx( &cs, classAtom, WIN_ISWIN32 );
+    if (!IS_INTRESOURCE(className))
+    {
+        WCHAR bufferW[256];
+        if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
+            return 0;
+        return WIN_CreateWindowEx( &cs, bufferW, WIN_ISWIN32 );
+    }
+    return WIN_CreateWindowEx( &cs, (LPCWSTR)className, WIN_ISWIN32 );
 }
 
 
@@ -1244,32 +1222,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
                                  HWND parent, HMENU menu,
                                  HINSTANCE instance, LPVOID data )
 {
-    ATOM classAtom;
     CREATESTRUCTW cs;
-    WCHAR buffer[256];
-
-    /* Find the class atom */
-
-    if (HIWORD(className))
-    {
-        if (!(classAtom = GlobalFindAtomW( className )))
-        {
-            ERR( "bad class name %s\n", debugstr_w(className) );
-            return 0;
-        }
-    }
-    else
-    {
-        classAtom = LOWORD(className);
-        if (!GlobalGetAtomNameW( classAtom, buffer, sizeof(buffer)/sizeof(WCHAR) ))
-        {
-            ERR( "bad atom %x\n", classAtom);
-            return 0;
-        }
-        className = buffer;
-    }
-
-    /* Create the window */
 
     cs.lpCreateParams = data;
     cs.hInstance      = instance;
@@ -1286,7 +1239,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
 
     /* Note: we rely on the fact that CREATESTRUCTA and */
     /* CREATESTRUCTW have the same layout. */
-    return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, classAtom, WIN_ISWIN32 | WIN_ISUNICODE );
+    return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, className, WIN_ISWIN32 | WIN_ISUNICODE );
 }
 
 

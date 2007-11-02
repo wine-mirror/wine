@@ -48,6 +48,7 @@ extern WNDPROC EDIT_winproc_handle;
 /* Class functions */
 struct tagCLASS;  /* opaque structure */
 struct tagWND;
+extern ATOM get_int_atom_value( LPCWSTR name );
 extern void CLASS_RegisterBuiltinClasses(void);
 extern void CLASS_AddWindow( struct tagCLASS *class, struct tagWND *win, BOOL unicode );
 extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
