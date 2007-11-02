@@ -32,6 +32,7 @@
 #include "mshtmdid.h"
 #include "mshtmcid.h"
 #include "hlink.h"
+#include "dispex.h"
 #include "idispids.h"
 #include "shlguid.h"
 
@@ -96,6 +97,7 @@ DEFINE_EXPECT(Exec_HTTPEQUIV_DONE);
 DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_0);
 DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_1);
 DEFINE_EXPECT(Exec_ShellDocView_37);
+DEFINE_EXPECT(Exec_ShellDocView_84);
 DEFINE_EXPECT(Exec_UPDATECOMMANDS);
 DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(Exec_HTTPEQUIV);
@@ -213,6 +215,8 @@ static void test_timer(DWORD flags)
         CHECK_CALLED(Exec_SETTITLE);
 }
 
+DEFINE_GUID(IID_External_unk,0x30510406,0x98B5,0x11CF,0xBB,0x82,0x00,0xAA,0x00,0xBD,0xCE,0x0B);
+
 static HRESULT WINAPI External_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -221,6 +225,13 @@ static HRESULT WINAPI External_QueryInterface(IDispatch *iface, REFIID riid, voi
         *ppv = iface;
         return S_OK;
     }
+
+    if(IsEqualGUID(&IID_IProxyManager, riid))
+        return E_NOINTERFACE; /* TODO */
+    if(IsEqualGUID(&IID_IDispatchEx, riid))
+        return E_NOINTERFACE; /* TODO */
+    if(IsEqualGUID(&IID_External_unk, riid))
+        return E_NOINTERFACE; /* TODO */
 
     ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
@@ -838,9 +849,15 @@ static const IBindingVtbl BindingVtbl = {
 
 static IBinding Binding = { &BindingVtbl };
 
+DEFINE_GUID(IID_IMoniker_unk,0xA158A630,0xED6F,0x45FB,0xB9,0x87,0xF6,0x86,0x76,0xF5,0x77,0x52);
+
 static HRESULT WINAPI Moniker_QueryInterface(IMoniker *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IMoniker_unk, riid))
+        return E_NOINTERFACE; /* TODO */
+
     ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
@@ -2124,6 +2141,15 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
                 ok(V_I4(pvaIn) == 0, "V_I4(pvaIn)=%d, expected 0\n", V_I4(pvaIn));
             }
             return S_OK;
+        case 84:
+            CHECK_EXPECT2(Exec_ShellDocView_84);
+
+            ok(pvaIn == NULL, "pvaIn == NULL\n");
+            ok(pvaOut != NULL, "pvaOut=%p, expected NULL\n", pvaOut);
+            if(pvaIn)
+                ok(V_VT(pvaOut) == VT_EMPTY, "V_VT(pvaOut)=%d\n", V_VT(pvaOut));
+
+            return E_NOTIMPL;
         default:
             ok(0, "unexpected command %d\n", nCmdID);
             return E_FAIL;
@@ -2146,6 +2172,16 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
 
     if(IsEqualGUID(&CGID_DocHostCmdPriv, pguidCmdGroup))
         return E_FAIL; /* TODO */
+
+    if(IsEqualGUID(&CGID_Explorer, pguidCmdGroup)) {
+        ok(0, "unexpected cmd %d of CGID_Explorer\n", nCmdID);
+        return E_NOTIMPL;
+    }
+
+    if(IsEqualGUID(&CGID_DocHostCommandHandler, pguidCmdGroup)) {
+        ok(0, "unexpected cmd %d of CGID_DocHostCommandHandler\n", nCmdID);
+        return E_NOTIMPL;
+    }
 
     ok(0, "unexpected pguidCmdGroup: %s\n", debugstr_guid(pguidCmdGroup));
     return E_NOTIMPL;
@@ -2524,6 +2560,7 @@ static void test_Load(IPersistMoniker *persist)
         SET_EXPECT(LockContainer);
     }
     SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(Exec_ShellDocView_84);
     SET_EXPECT(BindToStorage);
     if(set_clientsite) {
         SET_EXPECT(Invoke_AMBIENT_SILENT);
@@ -2559,6 +2596,7 @@ static void test_Load(IPersistMoniker *persist)
         container_locked = TRUE;
     }
     CHECK_CALLED(OnChanged_READYSTATE);
+    SET_CALLED(Exec_ShellDocView_84);
     CHECK_CALLED(BindToStorage);
     if(set_clientsite) {
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
@@ -2575,7 +2613,7 @@ static void test_Load(IPersistMoniker *persist)
     test_readyState((IUnknown*)persist);
 }
 
-static void test_download(BOOL verb_done, BOOL css_dwl)
+static void test_download(BOOL verb_done, BOOL css_dwl, BOOL css_try_dwl)
 {
     HWND hwnd;
     MSG msg;
@@ -2593,6 +2631,8 @@ static void test_download(BOOL verb_done, BOOL css_dwl)
     SET_EXPECT(SetStatusText);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
     SET_EXPECT(GetDropTarget);
+    if(css_try_dwl)
+        SET_EXPECT(Exec_ShellDocView_84);
     if(css_dwl) {
         SET_EXPECT(CreateInstance);
         SET_EXPECT(Start);
@@ -2622,6 +2662,8 @@ static void test_download(BOOL verb_done, BOOL css_dwl)
     CHECK_CALLED(SetStatusText);
     CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
     CHECK_CALLED(GetDropTarget);
+    if(css_try_dwl)
+        SET_CALLED(Exec_ShellDocView_84);
     if(css_dwl) {
         if(called_CreateInstance) {
             CHECK_CALLED(CreateInstance);
@@ -2633,6 +2675,7 @@ static void test_download(BOOL verb_done, BOOL css_dwl)
         }else {
             skip("CreateInstance not called. Assuming no Gecko installed.\n");
 
+            SET_CALLED(Exec_ShellDocView_84);
             SET_CALLED(CreateInstance);
             SET_CALLED(Start);
             SET_CALLED(LockRequest);
@@ -2912,10 +2955,12 @@ static void test_exec_editmode(IUnknown *unk)
     SET_EXPECT(Invoke_AMBIENT_SILENT);
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(Exec_ShellDocView_84);
     SET_EXPECT(InPlaceUIWindow_SetActiveObject);
     SET_EXPECT(HideUI);
     SET_EXPECT(ShowUI);
     SET_EXPECT(InPlaceFrame_SetBorderSpace);
+
     expect_status_text = NULL;
     readystate_set_loading = TRUE;
 
@@ -2929,6 +2974,7 @@ static void test_exec_editmode(IUnknown *unk)
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(OnChanged_READYSTATE);
+    SET_CALLED(Exec_ShellDocView_84);
     CHECK_CALLED(InPlaceUIWindow_SetActiveObject);
     CHECK_CALLED(HideUI);
     CHECK_CALLED(ShowUI);
@@ -3047,8 +3093,8 @@ static HWND create_container_window(void)
 
     RegisterClassExW(&wndclass);
     return CreateWindowW(wszHTMLDocumentTest, wszHTMLDocumentTest,
-            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+            515, 530, NULL, NULL, NULL, NULL);
 }
 
 static HRESULT test_DoVerb(IOleObject *oleobj)
@@ -3616,7 +3662,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     }
 
     if(load_state == LD_LOADING) {
-        test_download(FALSE, TRUE);
+        test_download(FALSE, TRUE, TRUE);
         test_GetCurMoniker(unk, &Moniker, NULL);
     }
 
@@ -3653,6 +3699,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     call_UIActivate = CallUIActivate_None;
     test_Activate(unk, CLIENTSITE_SETNULL);
     test_Window(unk, TRUE);
+
     test_UIDeactivate();
     test_InPlaceDeactivate(unk, TRUE);
     test_CloseView();
@@ -3706,10 +3753,11 @@ static void test_HTMLDocument_hlink(void)
     test_Persist(unk);
     test_Navigate(unk);
 
-    test_download(FALSE, TRUE);
+    test_download(FALSE, TRUE, TRUE);
 
     test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
+
     test_exec_onunload(unk);
     test_Window(unk, TRUE);
     test_InPlaceDeactivate(unk, TRUE);
@@ -3756,9 +3804,9 @@ static void test_HTMLDocument_StreamLoad(void)
 
     test_GetCurMoniker(unk, NULL, NULL);
     test_StreamLoad(unk);
-    test_download(TRUE, FALSE);
-
+    test_download(TRUE, FALSE, TRUE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
+
     test_UIDeactivate();
     test_InPlaceDeactivate(unk, TRUE);
     test_Close(unk, FALSE);
@@ -3836,7 +3884,7 @@ static void test_editing_mode(void)
     IOleObject_Release(oleobj);
 
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
-    test_download(TRUE, FALSE);
+    test_download(TRUE, FALSE, FALSE);
     test_timer(EXPECT_UPDATEUI);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED|OLECMDF_ENABLED);
 
