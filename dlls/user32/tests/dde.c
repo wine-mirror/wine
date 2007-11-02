@@ -1512,7 +1512,6 @@ static void test_DdeCreateDataHandle(void)
 
     ptr = DdeAccessData(hdata, &size);
     ok(ptr != NULL, "Expected non-NULL ptr\n");
-    ok(lstrlenA((LPSTR)ptr) == 0, "Expected 0, got %d\n", lstrlenA((LPSTR)ptr));
     ok(size == 260, "Expected 260, got %d\n", size);
 
     ret = DdeUnaccessData(hdata);
@@ -1536,8 +1535,6 @@ static void test_DdeCreateDataHandle(void)
 
     ptr = DdeAccessData(hdata, &size);
     ok(ptr != NULL, "Expected non-NULL ptr\n");
-    ok(lstrlenA((LPSTR)ptr) != 0, "Expected non-empty string\n");
-    ok(lstrcmpA((LPSTR)ptr, "data"), "Did not expect data\n");
     ok(size == 0, "Expected 0, got %d\n", size);
 
     ret = DdeUnaccessData(hdata);
