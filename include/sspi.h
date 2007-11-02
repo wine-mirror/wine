@@ -63,8 +63,11 @@ typedef struct _SecHandle
 typedef SecHandle CredHandle;
 typedef PSecHandle PCredHandle;
 
+#ifndef __WINE_CTXTHANDLE_DEFINED__
+#define __WINE_CTXTHANDLE_DEFINED__
 typedef SecHandle CtxtHandle;
 typedef PSecHandle PCtxtHandle;
+#endif
 
 typedef struct _SECURITY_INTEGER
 {

@@ -32,8 +32,11 @@ typedef struct _SecHandle
 } SecHandle, *PSecHandle;
 #endif
 
+#ifndef __WINE_CTXTHANDLE_DEFINED__
+#define __WINE_CTXTHANDLE_DEFINED__
 typedef SecHandle CtxtHandle;
 typedef PSecHandle PCtxtHandle;
+#endif
 
 typedef struct _CREDENTIAL_ATTRIBUTEA
 {
