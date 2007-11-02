@@ -749,9 +749,12 @@ static BOOL CRYPT_ValueToRDN(DWORD dwCertEncodingType, PCERT_NAME_INFO info,
             ret = CRYPT_EncodeValue(dwCertEncodingType, value,
              &info->rgRDN[info->cRDN].rgRDNAttr[0].Value, types, ppszError);
         }
-    }
-    if (ret)
+        else
+            SetLastError(ERROR_OUTOFMEMORY);
         info->cRDN++;
+    }
+    else
+        SetLastError(ERROR_OUTOFMEMORY);
     return ret;
 }
 
