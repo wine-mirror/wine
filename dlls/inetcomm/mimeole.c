@@ -25,7 +25,9 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "objbase.h"
+#include "mimeole.h"
 
 #include "wine/debug.h"
 
@@ -45,7 +47,7 @@ HRESULT WINAPI MimeOleSetCompatMode(DWORD dwMode)
 /***********************************************************************
  *              MimeOleCreateMessage (INETCOMM.@)
  */
-HRESULT WINAPI MimeOleCreateMessage(IUnknown *pUnkOuter, IUnknown **ppMessage)
+HRESULT WINAPI MimeOleCreateMessage(IUnknown *pUnkOuter, IMimeMessage **ppMessage)
 {
     FIXME("(%p, %p)\n", pUnkOuter, ppMessage);
 
