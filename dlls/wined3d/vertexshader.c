@@ -333,20 +333,16 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         /* If this shader doesn't use fog copy the z coord to the fog coord so that we can use table fog */
         if (!reg_maps->fog)
             shader_addline(&buffer, "gl_FogFragCoord = gl_Position.z;\n");
-        
+
         /* Write the final position.
          *
          * OpenGL coordinates specify the center of the pixel while d3d coords specify
-         * the corner. The offsets are stored in z and w in the 2nd row of the projection
-         * matrix to avoid wasting a free shader constant. Add them to the w and z coord
-         * of the 2nd row
+         * the corner. The offsets are stored in z and w in posFixup. posFixup.y contains
+         * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
+         * contains 1.0 to allow a mad.
          */
-        shader_addline(&buffer, "gl_Position.x = gl_Position.x + posFixup[2];\n");
-        shader_addline(&buffer, "gl_Position.y = gl_Position.y + posFixup[3];\n");
-        /* Account for any inverted textures (render to texture case) by reversing the y coordinate
-         *  (this is handled in drawPrim() when it sets the MODELVIEW and PROJECTION matrices)
-         */
-        shader_addline(&buffer, "gl_Position.y = gl_Position.y * posFixup[1];\n");
+        shader_addline(&buffer, "gl_Position.xy = gl_Position.xy * posFixup.xy + posFixup.zw;\n");
+
         /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
          *
          * Basically we want(in homogenous coordinates) z = z * 2 - 1. However, shaders are run
@@ -399,15 +395,13 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         /* Write the final position.
          *
          * OpenGL coordinates specify the center of the pixel while d3d coords specify
-         * the corner. The offsets are stored in the 2nd row of the projection matrix,
-         * the x offset in z and the y offset in w. Add them to the resulting position
+         * the corner. The offsets are stored in z and w in posFixup. posFixup.y contains
+         * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
+         * contains 1.0 to allow a mad, but arb vs swizzles are too restricted for that.
          */
-        shader_addline(&buffer, "ADD TMP_OUT.x, TMP_OUT.x, posFixup.z;\n");
-        shader_addline(&buffer, "ADD TMP_OUT.y, TMP_OUT.y, posFixup.w;\n");
-        /* Account for any inverted textures (render to texture case) by reversing the y coordinate
-         *  (this is handled in drawPrim() when it sets the MODELVIEW and PROJECTION matrices)
-         */
-        shader_addline(&buffer, "MUL TMP_OUT.y, TMP_OUT.y, posFixup.y;\n");
+        shader_addline(&buffer, "ADD TMP_OUT.x, TMP_OUT.x, posFixup.z;");
+        shader_addline(&buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, posFixup.w;");
+
         /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
          * and the glsl equivalent
          */

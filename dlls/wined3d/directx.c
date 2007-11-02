@@ -2642,6 +2642,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     } else {
         object->surface_alignment = 4;
     }
+    object->posFixup[0] = 1.0; /* This is needed to get the x coord unmodified through a MAD */
 
     /* Set the state up as invalid until the device is fully created */
     object->state   = WINED3DERR_DRIVERINTERNALERROR;
