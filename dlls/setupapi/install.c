@@ -1067,6 +1067,15 @@ void WINAPI InstallHinfSectionA( HWND hwnd, HINSTANCE handle, LPCSTR cmdline, IN
 }
 
 /***********************************************************************
+ *              SetupInstallServicesFromInfSectionW  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupInstallServicesFromInfSectionW( HINF Inf, PCWSTR SectionName, DWORD Flags)
+{
+    FIXME("(%p, %s, %d) stub!\n", Inf, debugstr_w(SectionName), Flags);
+    return FALSE;
+}
+
+/***********************************************************************
  *              SetupInstallServicesFromInfSectionA  (SETUPAPI.@)
  */
 BOOL WINAPI SetupInstallServicesFromInfSectionA( HINF Inf, PCSTR SectionName, DWORD Flags)
