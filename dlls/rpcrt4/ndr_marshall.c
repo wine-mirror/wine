@@ -976,8 +976,10 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   if (pointer_needs_unmarshaling) {
     if (attr & RPC_FC_P_DEREF) {
-      if (!*pPointer || fMustAlloc)
+      if (!*pPointer || fMustAlloc) {
         *pPointer = NdrAllocate(pStubMsg, sizeof(void *));
+        *(unsigned char**) *pPointer = NULL;
+      }
       pPointer = *(unsigned char***)pPointer;
       TRACE("deref => %p\n", pPointer);
     }
