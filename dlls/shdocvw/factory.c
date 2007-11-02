@@ -172,6 +172,23 @@ HRESULT register_class_object(BOOL do_reg)
     return CoRevokeClassObject(cookie);
 }
 
+static HRESULT reg_install(LPCSTR section, STRTABLEA *strtable)
+{
+    typeof(RegInstallA) *pRegInstall;
+    HMODULE hadvpack;
+    HRESULT hres;
+
+    static const WCHAR advpackW[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
+
+    hadvpack = LoadLibraryW(advpackW);
+    pRegInstall = (typeof(RegInstallA)*)GetProcAddress(hadvpack, "RegInstall");
+
+    hres = pRegInstall(shdocvw_hinstance, section, strtable);
+
+    FreeLibrary(hadvpack);
+    return hres;
+}
+
 static const GUID CLSID_MicrosoftBrowserArchitecture =
     {0xa5e46e3a, 0x8849, 0x11d1, {0x9d, 0x8c, 0x00, 0xc0, 0x4f, 0xc9, 0x9d, 0x61}};
 static const GUID CLSID_MruLongList =
@@ -188,15 +205,11 @@ static const GUID CLSID_MruLongList =
 
 static HRESULT register_server(BOOL doregister)
 {
-    HRESULT hres;
-    HMODULE hAdvpack;
-    typeof(RegInstallA) *pRegInstall;
     STRTABLEA strtable;
     STRENTRYA pse[13];
     static CLSID const *clsids[13];
     int i = 0;
-
-    static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
+    HRESULT hres;
 
     INF_SET_CLSID(CUrlHistory);
     INF_SET_CLSID(Internet);
@@ -223,10 +236,7 @@ static HRESULT register_server(BOOL doregister)
     strtable.cEntries = sizeof(pse)/sizeof(pse[0]);
     strtable.pse = pse;
 
-    hAdvpack = LoadLibraryW(wszAdvpack);
-    pRegInstall = (typeof(RegInstallA)*)GetProcAddress(hAdvpack, "RegInstall");
-
-    hres = pRegInstall(shdocvw_hinstance, doregister ? "RegisterDll" : "UnregisterDll", &strtable);
+    hres = reg_install(doregister ? "RegisterDll" : "UnregisterDll", &strtable);
 
     for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++)
         HeapFree(GetProcessHeap(), 0, pse[i].pszValue);
@@ -273,4 +283,10 @@ HRESULT WINAPI DllUnregisterServer(void)
         return hres;
 
     return UnRegisterTypeLib(&LIBID_SHDocVw, 1, 1, LOCALE_SYSTEM_DEFAULT, SYS_WIN32);
+}
+
+DWORD register_iexplore(BOOL doregister)
+{
+    HRESULT hres = reg_install(doregister ? "RegisterIE" : "UnregisterIE", NULL);
+    return !SUCCEEDED(hres);
 }

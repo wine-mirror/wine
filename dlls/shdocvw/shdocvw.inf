@@ -10,6 +10,14 @@ AddReg=Classes.Reg
 DelReg=Classes.Reg
 
 
+[RegisterIE]
+AddReg=IE.Reg
+
+
+[UnregisterIE]
+DelReg=IE.Reg
+
+
 [Classes.Reg]
 HKCR,"CLSID\%CLSID_InternetExplorer%",,,"Internet Explorer(Ver 1.0)"
 HKCR,"CLSID\%CLSID_InternetExplorer%\LocalServer32",,,"iexplore.exe"
@@ -99,6 +107,10 @@ HKCR,"CLSID\%CLSID_WebBrowser_V1%\ProgID",,,"Shell.Explorer.1"
 HKCR,"CLSID\%CLSID_WebBrowser_V1%\VersionIndependentProgID",,,"Shell.Explorer"
 HKCR,"Shell.Explorer.1",,,""
 HKCR,"Shell.Explorer.1\CLSID",,,"%CLSID_WebBrowser_V1%"
+
+
+[IE.Reg]
+HKLM,"Software\Microsoft\Internet Explorer","Version",,"6.0.2900.2180"
 
 
 [Strings]

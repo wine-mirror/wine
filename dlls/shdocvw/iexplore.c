@@ -192,7 +192,14 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
     MSG msg;
     HRESULT hres;
 
-    FIXME("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
+    TRACE("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
+
+    if(*szCommandLine == '-' || *szCommandLine == '/') {
+        if(!strcasecmp(szCommandLine+1, "regserver"))
+            return register_iexplore(TRUE);
+        if(!strcasecmp(szCommandLine+1, "unregserver"))
+            return register_iexplore(FALSE);
+    }
 
     CoInitialize(NULL);
 
