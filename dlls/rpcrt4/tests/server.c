@@ -857,7 +857,7 @@ pointer_tests(void)
   free_list(list);
 
   name.size = 10;
-  name.name = buffer = HeapAlloc(GetProcessHeap(), 0, name.size);
+  name.name = buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, name.size);
   get_name(&name);
   todo_wine
   ok(name.name == buffer, "[in,out] pointer should have stayed as %p but instead changed to %p\n", name.name, buffer);
