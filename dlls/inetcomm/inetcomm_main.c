@@ -65,23 +65,3 @@ HRESULT WINAPI DllCanUnloadNow(void)
     FIXME("\n");
     return S_FALSE;
 }
-
-/***********************************************************************
- *    DllRegisterServer (INETCOMM.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-   FIXME("stub\n");
-
-   return S_OK;
-}
-
-/***********************************************************************
- *    DllUnregisterServer (INETCOMM.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-   FIXME("stub\n");
-
-   return S_OK;
-}

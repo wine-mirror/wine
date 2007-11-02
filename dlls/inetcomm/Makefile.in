@@ -9,7 +9,8 @@ EXTRALIBS = -luuid
 
 C_SRCS = \
 	inetcomm_main.c \
-	internettransport.c
+	internettransport.c \
+	regsvr.c
 
 @MAKE_DLL_RULES@
 
