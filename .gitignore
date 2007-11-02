@@ -187,6 +187,9 @@ dlls/imm.dll16
 dlls/imm32/libimm32.def
 dlls/imm32/version.res
 dlls/inetcomm/libinetcomm.def
+dlls/inetcomm/tests/*.ok
+dlls/inetcomm/tests/inetcomm_crosstest.exe
+dlls/inetcomm/tests/testlist.c
 dlls/infosoft/tests/*.ok
 dlls/infosoft/tests/infosoft_crosstest.exe
 dlls/infosoft/tests/testlist.c
@@ -719,6 +722,7 @@ programs/winetest/dsound_test.exe
 programs/winetest/gdi32_test.exe
 programs/winetest/gdiplus_test.exe
 programs/winetest/hlink_test.exe
+programs/winetest/inetcomm_test.exe
 programs/winetest/infosoft_test.exe
 programs/winetest/iphlpapi_test.exe
 programs/winetest/itss_test.exe

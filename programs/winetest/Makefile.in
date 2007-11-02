@@ -42,6 +42,7 @@ TESTBINS = \
 	gdi32_test.exe \
 	gdiplus_test.exe \
 	hlink_test.exe \
+	inetcomm_test.exe \
 	infosoft_test.exe \
 	iphlpapi_test.exe \
 	itss_test.exe \
@@ -137,6 +138,8 @@ gdiplus_test.exe: $(DLLDIR)/gdiplus/tests/gdiplus_test.exe$(DLLEXT)
 	cp $(DLLDIR)/gdiplus/tests/gdiplus_test.exe$(DLLEXT) $@ && $(STRIP) $@
 hlink_test.exe: $(DLLDIR)/hlink/tests/hlink_test.exe$(DLLEXT)
 	cp $(DLLDIR)/hlink/tests/hlink_test.exe$(DLLEXT) $@ && $(STRIP) $@
+inetcomm_test.exe: $(DLLDIR)/inetcomm/tests/inetcomm_test.exe$(DLLEXT)
+	cp $(DLLDIR)/inetcomm/tests/inetcomm_test.exe$(DLLEXT) $@ && $(STRIP) $@
 infosoft_test.exe: $(DLLDIR)/infosoft/tests/infosoft_test.exe$(DLLEXT)
 	cp $(DLLDIR)/infosoft/tests/infosoft_test.exe$(DLLEXT) $@ && $(STRIP) $@
 iphlpapi_test.exe: $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT)
