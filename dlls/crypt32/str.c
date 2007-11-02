@@ -839,21 +839,21 @@ BOOL WINAPI CertStrToNameW(DWORD dwCertEncodingType, LPCWSTR pszX500,
             *ppszError = NULL;
         ret = CryptEncodeObjectEx(dwCertEncodingType, X509_NAME, &info,
          0, NULL, pbEncoded, pcbEncoded);
-        for (i = 0; i < info.cRDN; i++)
-        {
-            DWORD j;
-
-            for (j = 0; j < info.rgRDN[i].cRDNAttr; j++)
-                LocalFree(info.rgRDN[i].rgRDNAttr[j].Value.pbData);
-            CryptMemFree(info.rgRDN[i].rgRDNAttr);
-        }
-        CryptMemFree(info.rgRDN);
     }
     else
     {
         SetLastError(error);
         ret = FALSE;
     }
+    for (i = 0; i < info.cRDN; i++)
+    {
+        DWORD j;
+
+        for (j = 0; j < info.rgRDN[i].cRDNAttr; j++)
+            LocalFree(info.rgRDN[i].rgRDNAttr[j].Value.pbData);
+        CryptMemFree(info.rgRDN[i].rgRDNAttr);
+    }
+    CryptMemFree(info.rgRDN);
     return ret;
 }
 
