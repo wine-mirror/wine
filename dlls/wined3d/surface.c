@@ -3642,7 +3642,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             LEAVE_GL();
 
             TRACE("Updated target %d\n", This->glDescription.target);
-            return WINED3D_OK;
         } else {
             /* The only place where LoadTexture() might get called when isInDraw=1
              * is ActivateContext where lastActiveRenderTarget is preloaded.
