@@ -51,7 +51,7 @@
 @ stub MimeOleCreateByteStream
 @ stub MimeOleCreateHashTable
 @ stub MimeOleCreateHeaderTable
-@ stub MimeOleCreateMessage
+@ stdcall MimeOleCreateMessage(ptr ptr)
 @ stub MimeOleCreateMessageParts
 @ stub MimeOleCreatePropertySet
 @ stub MimeOleCreateSecurity
@@ -98,7 +98,7 @@
 @ stub MimeOleSMimeCapsToDlg
 @ stub MimeOleSetBodyPropA
 @ stub MimeOleSetBodyPropW
-@ stub MimeOleSetCompatMode
+@ stdcall MimeOleSetCompatMode(long)
 @ stub MimeOleSetDefaultCharset
 @ stub MimeOleSetPropA
 @ stub MimeOleSetPropW
