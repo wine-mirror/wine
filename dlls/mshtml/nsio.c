@@ -629,66 +629,61 @@ static HRESULT create_mon_for_nschannel(nsChannel *channel, IMoniker **mon)
     return hres;
 }
 
-static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListener *aListener,
-                                          nsISupports *aContext)
+static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
+        nsIStreamListener *listener, nsISupports *context, BOOL *open)
 {
-    nsChannel *This = NSCHANNEL_THIS(iface);
+    IMoniker *mon;
+    HRESULT hres;
+
+    *open = FALSE;
+
+    if(container->bscallback) {
+        nsIChannel_AddRef(NSCHANNEL(This));
+        container->bscallback->nschannel = This;
+
+        nsIStreamListener_AddRef(listener);
+        container->bscallback->nslistener = listener;
+
+        if(context) {
+            nsISupports_AddRef(context);
+            container->bscallback->nscontext = context;
+        }
+
+        if(do_load_from_moniker_hack(This))
+            return WINE_NS_LOAD_FROM_MONIKER;
+    }else  {
+        BOOL cont = before_async_open(This, container);
+
+        if(!cont) {
+            TRACE("canceled\n");
+            return NS_ERROR_UNEXPECTED;
+        }
+
+        if(!container->doc) {
+            return This->channel
+                ?  nsIChannel_AsyncOpen(This->channel, listener, context)
+                : NS_ERROR_UNEXPECTED;
+        }
+
+        hres = create_mon_for_nschannel(This, &mon);
+        if(FAILED(hres)) {
+            return NS_ERROR_UNEXPECTED;
+        }
+        set_current_mon(container->doc, mon);
+    }
+
+    *open = TRUE;
+    return NS_OK;
+}
+
+static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamListener *listener,
+        nsISupports *context)
+{
     BSCallback *bscallback;
     IMoniker *mon = NULL;
-    PRBool is_doc_uri;
     nsresult nsres;
     task_t *task;
     HRESULT hres;
-
-    TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
-
-    nsIWineURI_GetIsDocumentURI(This->uri, &is_doc_uri);
-
-    if(is_doc_uri && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI)) {
-        NSContainer *container;
-
-        nsIWineURI_GetNSContainer(This->uri, &container);
-        if(!container) {
-            TRACE("container = NULL\n");
-            return nsIChannel_AsyncOpen(This->channel, aListener, aContext);
-        }
-
-        if(container->bscallback) {
-            nsIChannel_AddRef(NSCHANNEL(This));
-            container->bscallback->nschannel = This;
-
-            nsIStreamListener_AddRef(aListener);
-            container->bscallback->nslistener = aListener;
-
-            if(aContext) {
-                nsISupports_AddRef(aContext);
-                container->bscallback->nscontext = aContext;
-            }
-
-            nsIWebBrowserChrome_Release(NSWBCHROME(container));
-
-            if(do_load_from_moniker_hack(This))
-                return WINE_NS_LOAD_FROM_MONIKER;
-        }else  {
-            BOOL cont = before_async_open(This, container);
-            nsIWebBrowserChrome_Release(NSWBCHROME(container));
-
-            if(!cont) {
-                TRACE("canceled\n");
-                return NS_ERROR_UNEXPECTED;
-            }
-
-            if(!container->doc)
-                return This->channel
-                    ?  nsIChannel_AsyncOpen(This->channel, aListener, aContext)
-                    : NS_ERROR_UNEXPECTED;
-
-            hres = create_mon_for_nschannel(This, &mon);
-            if(FAILED(hres))
-                return NS_ERROR_UNEXPECTED;
-            set_current_mon(container->doc, mon);
-        }
-    }
 
     if(This->channel) {
         if(This->post_data_stream) {
@@ -710,7 +705,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             }
         }
 
-        nsres = nsIChannel_AsyncOpen(This->channel, aListener, aContext);
+        nsres = nsIChannel_AsyncOpen(This->channel, listener, context);
 
         if(mon)
             IMoniker_Release(mon);
@@ -732,17 +727,17 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     nsIChannel_AddRef(NSCHANNEL(This));
     bscallback->nschannel = This;
 
-    nsIStreamListener_AddRef(aListener);
-    bscallback->nslistener = aListener;
+    nsIStreamListener_AddRef(listener);
+    bscallback->nslistener = listener;
 
-    if(aContext) {
-        nsISupports_AddRef(aContext);
-        bscallback->nscontext = aContext;
+    if(context) {
+        nsISupports_AddRef(context);
+        bscallback->nscontext = context;
     }
 
     task = mshtml_alloc(sizeof(task_t));
 
-    task->doc = bscallback->doc;
+    task->doc = container->doc;
     task->task_id = TASK_START_BINDING;
     task->next = NULL;
     task->bscallback = bscallback;
@@ -750,6 +745,35 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     push_task(task);
 
     return NS_OK;
+}
+
+static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListener *aListener,
+                                          nsISupports *aContext)
+{
+    nsChannel *This = NSCHANNEL_THIS(iface);
+    NSContainer *container;
+    PRBool is_doc_uri;
+    BOOL open = TRUE;
+    nsresult nsres = NS_OK;
+
+    TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
+
+    nsIWineURI_GetNSContainer(This->uri, &container);
+    if(!container) {
+        TRACE("container = NULL\n");
+        return nsIChannel_AsyncOpen(This->channel, aListener, aContext);
+    }
+
+    nsIWineURI_GetIsDocumentURI(This->uri, &is_doc_uri);
+
+    if(is_doc_uri && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI))
+        nsres = async_open_doc_uri(This, container, aListener, aContext, &open);
+
+    if(open)
+        nsres = async_open(This, container, aListener, aContext);
+
+    nsIWebBrowserChrome_Release(NSWBCHROME(container));
+    return nsres;
 }
 
 static nsresult NSAPI nsChannel_GetRequestMethod(nsIHttpChannel *iface, nsACString *aRequestMethod)
