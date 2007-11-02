@@ -404,11 +404,16 @@ static NTSTATUS TAPE_SetPosition( int fd, const TAPE_SET_POSITION *data )
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
 
-    TRACE( "fd: %d method: 0x%08x partition: 0x%08x offset: 0x%08x immediate: 0x%02x\n",
-           fd, data->Method, data->Partition, data->Offset.u.LowPart, data->Immediate );
+    TRACE( "fd: %d method: 0x%08x partition: 0x%08x offset: 0x%x%08x immediate: 0x%02x\n",
+           fd, data->Method, data->Partition, (DWORD)(data->Offset.QuadPart >> 32),
+           (DWORD)data->Offset.QuadPart, data->Immediate );
 
-    if (data->Offset.u.HighPart > 0)
+    if (sizeof(cmd.mt_count) < sizeof(data->Offset.QuadPart) &&
+        (int)data->Offset.QuadPart != data->Offset.QuadPart)
+    {
+        ERR("Offset too large or too small\n");
         return STATUS_INVALID_PARAMETER;
+    }
 
     switch (data->Method)
     {
@@ -418,7 +423,7 @@ static NTSTATUS TAPE_SetPosition( int fd, const TAPE_SET_POSITION *data )
 #ifdef MTSEEK
     case TAPE_ABSOLUTE_BLOCK:
         cmd.mt_op = MTSEEK;
-        cmd.mt_count = data->Offset.u.LowPart;
+        cmd.mt_count = data->Offset.QuadPart;
         break;
 #endif
 #ifdef MTEOM
@@ -427,24 +432,24 @@ static NTSTATUS TAPE_SetPosition( int fd, const TAPE_SET_POSITION *data )
         break;
 #endif
     case TAPE_SPACE_FILEMARKS:
-        if (data->Offset.u.LowPart >= 0) {
+        if (data->Offset.QuadPart >= 0) {
             cmd.mt_op = MTFSF;
-            cmd.mt_count = data->Offset.u.LowPart;
+            cmd.mt_count = data->Offset.QuadPart;
         }
         else {
             cmd.mt_op = MTBSF;
-            cmd.mt_count = -data->Offset.u.LowPart;
+            cmd.mt_count = -data->Offset.QuadPart;
         }
         break;
 #if defined(MTFSS) && defined(MTBSS)
     case TAPE_SPACE_SETMARKS:
-        if (data->Offset.u.LowPart >= 0) {
+        if (data->Offset.QuadPart >= 0) {
             cmd.mt_op = MTFSS;
-            cmd.mt_count = data->Offset.u.LowPart;
+            cmd.mt_count = data->Offset.QuadPart;
         }
         else {
             cmd.mt_op = MTBSS;
-            cmd.mt_count = -data->Offset.u.LowPart;
+            cmd.mt_count = -data->Offset.QuadPart;
         }
         break;
 #endif
