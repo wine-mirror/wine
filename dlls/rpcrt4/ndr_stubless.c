@@ -859,6 +859,304 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
     return size;
 }
 
+static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
+                              PFORMAT_STRING pFormat, int phase,
+                              unsigned char *args,
+                              unsigned short number_of_params)
+{
+    /* counter */
+    unsigned short i;
+    /* current format string offset */
+    int current_offset = 0;
+    /* current stack offset */
+    unsigned short current_stack_offset = 0;
+    /* location to put retval into */
+    LONG_PTR *retval_ptr = NULL;
+
+    for (i = 0; i < number_of_params; i++)
+    {
+        const NDR_PARAM_OIF_BASETYPE *pParam =
+        (const NDR_PARAM_OIF_BASETYPE *)&pFormat[current_offset];
+        unsigned char *pArg;
+
+        current_stack_offset = pParam->stack_offset;
+        pArg = (unsigned char *)(args+current_stack_offset);
+
+        TRACE("param[%d]: new format\n", i);
+        TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(pParam->param_attributes); TRACE("\n");
+        TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
+        TRACE("\tmemory addr (before): %p -> %p\n", pArg, *(unsigned char **)pArg);
+
+        if (pParam->param_attributes.IsBasetype)
+        {
+            const unsigned char *pTypeFormat =
+            &pParam->type_format_char;
+
+            TRACE("\tbase type: 0x%02x\n", *pTypeFormat);
+
+            switch (phase)
+            {
+                case STUBLESS_MARSHAL:
+                    if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
+                    {
+                        if (pParam->param_attributes.IsSimpleRef)
+                            call_marshaller(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                        else
+                            call_marshaller(pStubMsg, pArg, pTypeFormat);
+                    }
+                    break;
+                case STUBLESS_FREE:
+                    if (pParam->param_attributes.ServerAllocSize)
+                        HeapFree(GetProcessHeap(), 0, *(void **)pArg);
+                    break;
+                case STUBLESS_UNMARSHAL:
+                    if (pParam->param_attributes.ServerAllocSize)
+                        *(void **)pArg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                   pParam->param_attributes.ServerAllocSize * 8);
+
+                    if (pParam->param_attributes.IsIn)
+                    {
+                        if (pParam->param_attributes.IsSimpleRef)
+                            call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
+                        else
+                            call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
+                    }
+
+                    /* make a note of the address of the return value parameter for later */
+                    if (pParam->param_attributes.IsReturn)
+                        retval_ptr = (LONG_PTR *)pArg;
+
+                    break;
+                case STUBLESS_CALCSIZE:
+                    if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
+                    {
+                        if (pParam->param_attributes.IsSimpleRef)
+                            call_buffer_sizer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                        else
+                            call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
+                    }
+                    break;
+                default:
+                    RpcRaiseException(RPC_S_INTERNAL_ERROR);
+            }
+
+            current_offset += sizeof(NDR_PARAM_OIF_BASETYPE);
+        }
+        else
+        {
+            const NDR_PARAM_OIF_OTHER *pParamOther =
+            (const NDR_PARAM_OIF_OTHER *)&pFormat[current_offset];
+
+            const unsigned char * pTypeFormat =
+                &(pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset]);
+
+            TRACE("\tcomplex type 0x%02x\n", *pTypeFormat);
+
+            switch (phase)
+            {
+                case STUBLESS_MARSHAL:
+                    if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
+                    {
+                        if (pParam->param_attributes.IsByValue)
+                            call_marshaller(pStubMsg, pArg, pTypeFormat);
+                        else
+                            call_marshaller(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                    }
+                    break;
+                case STUBLESS_FREE:
+                    if (pParam->param_attributes.MustFree)
+                    {
+                        if (pParam->param_attributes.IsByValue)
+                            call_freer(pStubMsg, pArg, pTypeFormat);
+                        else
+                            call_freer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                    }
+
+                    if (pParam->param_attributes.IsOut &&
+                        !pParam->param_attributes.IsIn &&
+                        !pParam->param_attributes.IsByValue &&
+                        !pParam->param_attributes.ServerAllocSize)
+                    {
+                        pStubMsg->pfnFree(*(void **)pArg);
+                    }
+
+                    if (pParam->param_attributes.ServerAllocSize)
+                        HeapFree(GetProcessHeap(), 0, *(void **)pArg);
+                    /* FIXME: call call_freer here for IN types with MustFree set */
+                    break;
+                case STUBLESS_UNMARSHAL:
+                    if (pParam->param_attributes.ServerAllocSize)
+                        *(void **)pArg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                   pParam->param_attributes.ServerAllocSize * 8);
+
+                    if (pParam->param_attributes.IsIn)
+                    {
+                        if (pParam->param_attributes.IsByValue)
+                            call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
+                        else
+                            call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
+                    }
+                    else if (pParam->param_attributes.IsOut &&
+                             !pParam->param_attributes.ServerAllocSize &&
+                             !pParam->param_attributes.IsByValue)
+                    {
+                        DWORD size = calc_arg_size(pStubMsg, pTypeFormat);
+
+                        if(size)
+                        {
+                            *(void **)pArg = NdrAllocate(pStubMsg, size);
+                            memset(*(void **)pArg, 0, size);
+                        }
+                    }
+                    break;
+                case STUBLESS_CALCSIZE:
+                    if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
+                    {
+                        if (pParam->param_attributes.IsByValue)
+                            call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
+                        else
+                            call_buffer_sizer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                    }
+                    break;
+                default:
+                    RpcRaiseException(RPC_S_INTERNAL_ERROR);
+            }
+
+            current_offset += sizeof(NDR_PARAM_OIF_OTHER);
+        }
+        TRACE("\tmemory addr (after): %p -> %p\n", pArg, *(unsigned char **)pArg);
+    }
+
+    return retval_ptr;
+}
+
+static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
+                                  PFORMAT_STRING pFormat, int phase,
+                                  unsigned char *args,
+                                  unsigned short stack_size, BOOL object)
+{
+    /* counter */
+    unsigned short i;
+    /* current format string offset */
+    int current_offset = 0;
+    /* current stack offset */
+    unsigned short current_stack_offset = 0;
+    /* location to put retval into */
+    LONG_PTR *retval_ptr = NULL;
+
+    for (i = 0; TRUE; i++)
+    {
+        const NDR_PARAM_OI_BASETYPE *pParam =
+        (const NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
+        /* note: current_stack_offset starts after the This pointer
+         * if present, so adjust this */
+        unsigned short current_stack_offset_adjusted = current_stack_offset +
+            (object ? sizeof(void *) : 0);
+        unsigned char *pArg = (unsigned char *)(args+current_stack_offset_adjusted);
+
+        /* no more parameters; exit loop */
+        if (current_stack_offset_adjusted >= stack_size)
+            break;
+
+        TRACE("param[%d]: old format\n", i);
+        TRACE("\tparam_direction: 0x%x\n", pParam->param_direction);
+        TRACE("\tstack_offset: 0x%x\n", current_stack_offset_adjusted);
+
+        if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE ||
+            pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
+        {
+            const unsigned char *pTypeFormat =
+            &pParam->type_format_char;
+
+            TRACE("\tbase type 0x%02x\n", *pTypeFormat);
+
+            switch (phase)
+            {
+                case STUBLESS_MARSHAL:
+                    if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
+                        call_marshaller(pStubMsg, pArg, pTypeFormat);
+                    break;
+                case STUBLESS_FREE:
+                    if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
+                        call_freer(pStubMsg, pArg, pTypeFormat);
+                    break;
+                case STUBLESS_UNMARSHAL:
+                    if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
+                        call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
+                    else if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
+                        retval_ptr = (LONG_PTR *)pArg;
+                        break;
+                case STUBLESS_CALCSIZE:
+                    if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
+                        call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
+                    break;
+                default:
+                    RpcRaiseException(RPC_S_INTERNAL_ERROR);
+            }
+
+            current_stack_offset += call_memory_sizer(pStubMsg, pTypeFormat);
+            current_offset += sizeof(NDR_PARAM_OI_BASETYPE);
+        }
+        else
+        {
+            const NDR_PARAM_OI_OTHER *pParamOther =
+            (const NDR_PARAM_OI_OTHER *)&pFormat[current_offset];
+
+            const unsigned char * pTypeFormat =
+                &pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset];
+
+            TRACE("\tcomplex type 0x%02x\n", *pTypeFormat);
+
+            switch (phase)
+            {
+                case STUBLESS_MARSHAL:
+                    if (pParam->param_direction == RPC_FC_OUT_PARAM ||
+                        pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
+                        pParam->param_direction == RPC_FC_RETURN_PARAM)
+                        call_marshaller(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                    break;
+                case STUBLESS_FREE:
+                    if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
+                        pParam->param_direction == RPC_FC_IN_PARAM)
+                        call_freer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                    else if (pParam->param_direction == RPC_FC_OUT_PARAM)
+                        pStubMsg->pfnFree(*(void **)pArg);
+                        break;
+                case STUBLESS_UNMARSHAL:
+                    if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
+                        pParam->param_direction == RPC_FC_IN_PARAM)
+                        call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
+                    else if (pParam->param_direction == RPC_FC_RETURN_PARAM)
+                        retval_ptr = (LONG_PTR *)pArg;
+                    else if (pParam->param_direction == RPC_FC_OUT_PARAM)
+                    {
+                        DWORD size = calc_arg_size(pStubMsg, pTypeFormat);
+
+                        if(size)
+                        {
+                            *(void **)pArg = NdrAllocate(pStubMsg, size);
+                            memset(*(void **)pArg, 0, size);
+                        }
+                    }
+                    break;
+                case STUBLESS_CALCSIZE:
+                    if (pParam->param_direction == RPC_FC_OUT_PARAM ||
+                        pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
+                        pParam->param_direction == RPC_FC_RETURN_PARAM)
+                        call_buffer_sizer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                    break;
+                default:
+                    RpcRaiseException(RPC_S_INTERNAL_ERROR);
+            }
+
+            current_stack_offset += pParamOther->stack_size * sizeof(INT);
+            current_offset += sizeof(NDR_PARAM_OI_OTHER);
+        }
+    }
+
+    return retval_ptr;
+}
+
 /***********************************************************************
  *            NdrStubCall2 [RPCRT4.@]
  *
@@ -882,12 +1180,8 @@ LONG WINAPI NdrStubCall2(
     unsigned char * args;
     /* size of stack */
     unsigned short stack_size;
-    /* current stack offset */
-    unsigned short current_stack_offset;
     /* number of parameters. optional for client to give it to us */
     unsigned char number_of_params = ~0;
-    /* counter */
-    unsigned short i;
     /* cache of Oif_flags from v2 procedure header */
     INTERPRETER_OPT_FLAGS Oif_flags = { 0 };
     /* cache of extension flags from NDR_PROC_HEADER_EXTS */
@@ -1110,278 +1404,13 @@ LONG WINAPI NdrStubCall2(
         case STUBLESS_UNMARSHAL:
         case STUBLESS_CALCSIZE:
         case STUBLESS_FREE:
-            current_offset = parameter_start_offset;
-            current_stack_offset = 0;
-
-            /* NOTE: V1 style format does't terminate on the number_of_params
-             * condition as it doesn't have this attribute. Instead it
-             * terminates when the stack size given in the header is exceeded.
-             */
-            for (i = 0; i < number_of_params; i++)
-            {
-                if (bV2Format) /* new parameter format */
-                {
-                    const NDR_PARAM_OIF_BASETYPE *pParam =
-                        (const NDR_PARAM_OIF_BASETYPE *)&pFormat[current_offset];
-                    unsigned char *pArg;
-
-                    current_stack_offset = pParam->stack_offset;
-                    pArg = (unsigned char *)(args+current_stack_offset);
-
-                    TRACE("param[%d]: new format\n", i);
-                    TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(pParam->param_attributes); TRACE("\n");
-                    TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
-                    TRACE("\tmemory addr (before): %p -> %p\n", pArg, *(unsigned char **)pArg);
-
-                    if (pParam->param_attributes.IsBasetype)
-                    {
-                        const unsigned char *pTypeFormat =
-                            &pParam->type_format_char;
-
-                        TRACE("\tbase type: 0x%02x\n", *pTypeFormat);
-
-                        switch (phase)
-                        {
-                        case STUBLESS_MARSHAL:
-                            if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
-                            {
-                                if (pParam->param_attributes.IsSimpleRef)
-                                    call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
-                                else
-                                    call_marshaller(&stubMsg, pArg, pTypeFormat);
-                            }
-                            break;
-                        case STUBLESS_FREE:
-                            if (pParam->param_attributes.ServerAllocSize)
-                                HeapFree(GetProcessHeap(), 0, *(void **)pArg);
-                            break;
-                        case STUBLESS_UNMARSHAL:
-                            if (pParam->param_attributes.ServerAllocSize)
-                                *(void **)pArg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                    pParam->param_attributes.ServerAllocSize * 8);
-
-                            if (pParam->param_attributes.IsIn)
-                            {
-                                if (pParam->param_attributes.IsSimpleRef)
-                                    call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
-                                else
-                                    call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
-                            }
-
-                            /* make a note of the address of the return value parameter for later */
-                            if (pParam->param_attributes.IsReturn)
-                                retval_ptr = (LONG_PTR *)pArg;
-
-                            break;
-                        case STUBLESS_CALCSIZE:
-                            if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
-                            {
-                                if (pParam->param_attributes.IsSimpleRef)
-                                    call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
-                                else
-                                    call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
-                            }
-                            break;
-                        default:
-                            RpcRaiseException(RPC_S_INTERNAL_ERROR);
-                        }
-
-                        current_offset += sizeof(NDR_PARAM_OIF_BASETYPE);
-                    }
-                    else
-                    {
-                        const NDR_PARAM_OIF_OTHER *pParamOther =
-                            (const NDR_PARAM_OIF_OTHER *)&pFormat[current_offset];
-
-                        const unsigned char * pTypeFormat =
-                            &(pStubDesc->pFormatTypes[pParamOther->type_offset]);
-
-                        TRACE("\tcomplex type 0x%02x\n", *pTypeFormat);
-
-                        switch (phase)
-                        {
-                        case STUBLESS_MARSHAL:
-                            if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
-                            {
-                                if (pParam->param_attributes.IsByValue)
-                                    call_marshaller(&stubMsg, pArg, pTypeFormat);
-                                else
-                                    call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
-                            }
-                            break;
-                        case STUBLESS_FREE:
-                            if (pParam->param_attributes.MustFree)
-                            {
-                                if (pParam->param_attributes.IsByValue)
-                                    call_freer(&stubMsg, pArg, pTypeFormat);
-                                else
-                                    call_freer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
-                            }
-
-                            if (pParam->param_attributes.IsOut &&
-                                !pParam->param_attributes.IsIn &&
-                                !pParam->param_attributes.IsByValue &&
-                                !pParam->param_attributes.ServerAllocSize)
-                            {
-                                stubMsg.pfnFree(*(void **)pArg);
-                            }
-
-                            if (pParam->param_attributes.ServerAllocSize)
-                                HeapFree(GetProcessHeap(), 0, *(void **)pArg);
-                            /* FIXME: call call_freer here for IN types with MustFree set */
-                            break;
-                        case STUBLESS_UNMARSHAL:
-                            if (pParam->param_attributes.ServerAllocSize)
-                                *(void **)pArg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                    pParam->param_attributes.ServerAllocSize * 8);
-
-                            if (pParam->param_attributes.IsIn)
-                            {
-                                if (pParam->param_attributes.IsByValue)
-                                    call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
-                                else
-                                    call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
-                            }
-                            else if (pParam->param_attributes.IsOut &&
-                                     !pParam->param_attributes.ServerAllocSize &&
-                                     !pParam->param_attributes.IsByValue)
-                            {
-                                DWORD size = calc_arg_size(&stubMsg, pTypeFormat);
-
-                                if(size)
-                                {
-                                    *(void **)pArg = NdrAllocate(&stubMsg, size);
-                                    memset(*(void **)pArg, 0, size);
-                                }
-                            }
-                            break;
-                        case STUBLESS_CALCSIZE:
-                            if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
-                            {
-                                if (pParam->param_attributes.IsByValue)
-                                    call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
-                                else
-                                    call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
-                            }
-                            break;
-                        default:
-                            RpcRaiseException(RPC_S_INTERNAL_ERROR);
-                        }
-
-                        current_offset += sizeof(NDR_PARAM_OIF_OTHER);
-                    }
-                    TRACE("\tmemory addr (after): %p -> %p\n", pArg, *(unsigned char **)pArg);
-                }
-                else /* old parameter format */
-                {
-                    const NDR_PARAM_OI_BASETYPE *pParam =
-                        (const NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
-                    /* note: current_stack_offset starts after the This pointer
-                     * if present, so adjust this */
-                    unsigned short current_stack_offset_adjusted = current_stack_offset +
-                        ((pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT) ? sizeof(void *) : 0);
-                    unsigned char *pArg = (unsigned char *)(args+current_stack_offset_adjusted);
-
-                    /* no more parameters; exit loop */
-                    if (current_stack_offset_adjusted >= stack_size)
-                        break;
-
-                    TRACE("param[%d]: old format\n", i);
-                    TRACE("\tparam_direction: 0x%x\n", pParam->param_direction);
-                    TRACE("\tstack_offset: 0x%x\n", current_stack_offset_adjusted);
-
-                    if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE ||
-                        pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                    {
-                        const unsigned char *pTypeFormat =
-                            &pParam->type_format_char;
-
-                        TRACE("\tbase type 0x%02x\n", *pTypeFormat);
-
-                        switch (phase)
-                        {
-                        case STUBLESS_MARSHAL:
-                            if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                                call_marshaller(&stubMsg, pArg, pTypeFormat);
-                            break;
-                        case STUBLESS_FREE:
-                            if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
-                                call_freer(&stubMsg, pArg, pTypeFormat);
-                            break;
-                        case STUBLESS_UNMARSHAL:
-                            if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
-                                call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
-                            else if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                                retval_ptr = (LONG_PTR *)pArg;
-                            break;
-                        case STUBLESS_CALCSIZE:
-                            if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                                call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
-                            break;
-                        default:
-                            RpcRaiseException(RPC_S_INTERNAL_ERROR);
-                        }
-
-                        current_stack_offset += call_memory_sizer(&stubMsg, pTypeFormat);
-                        current_offset += sizeof(NDR_PARAM_OI_BASETYPE);
-                    }
-                    else
-                    {
-                        const NDR_PARAM_OI_OTHER *pParamOther = 
-                            (const NDR_PARAM_OI_OTHER *)&pFormat[current_offset];
-
-                        const unsigned char * pTypeFormat =
-                            &pStubDesc->pFormatTypes[pParamOther->type_offset];
-
-                        TRACE("\tcomplex type 0x%02x\n", *pTypeFormat);
-
-                        switch (phase)
-                        {
-                        case STUBLESS_MARSHAL:
-                            if (pParam->param_direction == RPC_FC_OUT_PARAM ||
-                                pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
-                                pParam->param_direction == RPC_FC_RETURN_PARAM)
-                                call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
-                            break;
-                        case STUBLESS_FREE:
-                            if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
-                                pParam->param_direction == RPC_FC_IN_PARAM)
-                                call_freer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
-                            else if (pParam->param_direction == RPC_FC_OUT_PARAM)
-                                stubMsg.pfnFree(*(void **)pArg);
-                            break;
-                        case STUBLESS_UNMARSHAL:
-                            if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
-                                pParam->param_direction == RPC_FC_IN_PARAM)
-                                call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
-                            else if (pParam->param_direction == RPC_FC_RETURN_PARAM)
-                                retval_ptr = (LONG_PTR *)pArg;
-                            else if (pParam->param_direction == RPC_FC_OUT_PARAM)
-                            {
-                                DWORD size = calc_arg_size(&stubMsg, pTypeFormat);
-
-                                if(size)
-                                {
-                                    *(void **)pArg = NdrAllocate(&stubMsg, size);
-                                    memset(*(void **)pArg, 0, size);
-                                }
-                            }
-                            break;
-                        case STUBLESS_CALCSIZE:
-                            if (pParam->param_direction == RPC_FC_OUT_PARAM ||
-                                pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
-                                pParam->param_direction == RPC_FC_RETURN_PARAM)
-                                call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
-                            break;
-                        default:
-                            RpcRaiseException(RPC_S_INTERNAL_ERROR);
-                        }
-
-                        current_stack_offset += pParamOther->stack_size * sizeof(INT);
-                        current_offset += sizeof(NDR_PARAM_OI_OTHER);
-                    }
-                }
-            }
+            if (bV2Format)
+                retval_ptr = stub_do_args(&stubMsg, &pFormat[parameter_start_offset],
+                                          phase, args, number_of_params);
+            else
+                retval_ptr = stub_do_old_args(&stubMsg, &pFormat[parameter_start_offset],
+                                              phase, args, stack_size,
+                                              (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT));
 
             break;
         default:
