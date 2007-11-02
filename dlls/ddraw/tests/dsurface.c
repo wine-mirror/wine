@@ -1594,8 +1594,7 @@ static void test_lockrect_invalid(void)
     };
 
     const DWORD dds_caps[] = {
-        DDSCAPS_OFFSCREENPLAIN,
-        DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE,
+        DDSCAPS_OFFSCREENPLAIN
     };
 
     for (j = 0; j < (sizeof(dds_caps) / sizeof(*dds_caps)); ++j)
