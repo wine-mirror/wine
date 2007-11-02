@@ -1075,7 +1075,15 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
     return size;
 }
 
-/* FIXME: need to free some stuff in here too */
+/***********************************************************************
+ *            NdrStubCall2 [RPCRT4.@]
+ *
+ * Unmarshals [in] parameters, calls either a method in an object or a server
+ * function, marshals any [out] parameters and frees any allocated data.
+ *
+ * NOTES
+ *  Used by stubless MIDL-generated code.
+ */
 LONG WINAPI NdrStubCall2(
     struct IRpcStubBuffer * pThis,
     struct IRpcChannelBuffer * pChannel,
