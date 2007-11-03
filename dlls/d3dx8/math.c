@@ -152,6 +152,20 @@ D3DXMATRIX* WINAPI D3DXMatrixPerspectiveLH(D3DXMATRIX *pout, FLOAT w, FLOAT h, F
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixPerspectiveOffCenterLH(D3DXMATRIX *pout, FLOAT l, FLOAT r, FLOAT b, FLOAT t, FLOAT zn, FLOAT zf)
+{
+    D3DXMatrixIdentity(pout);
+    pout->m[0][0] = 2.0f * zn / (r - l);
+    pout->m[1][1] = -2.0f * zn / (b - t);
+    pout->m[2][0] = -1.0f - 2.0f * l / (r - l);
+    pout->m[2][1] = 1.0f + 2.0f * t / (b - t);
+    pout->m[2][2] = - zf / (zn - zf);
+    pout->m[3][2] = (zn * zf) / (zn -zf);
+    pout->m[2][3] = 1.0f;
+    pout->m[3][3] = 0.0f;
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixPerspectiveOffCenterRH(D3DXMATRIX *pout, FLOAT l, FLOAT r, FLOAT b, FLOAT t, FLOAT zn, FLOAT zf)
 {
     D3DXMatrixIdentity(pout);
