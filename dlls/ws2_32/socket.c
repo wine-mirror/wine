@@ -1654,6 +1654,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_SO_KEEPALIVE:
         case WS_SO_OOBINLINE:
         case WS_SO_RCVBUF:
+        case WS_SO_REUSEADDR:
         case WS_SO_SNDBUF:
         case WS_SO_TYPE:
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
@@ -1796,18 +1797,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return ret;
         }
 #endif
-        /* As mentioned in setsockopt, the windows style SO_REUSEADDR is
-         * not possible in Unix, so always return false here. */
-        case WS_SO_REUSEADDR:
-            if (!optlen || *optlen < sizeof(int) || !optval)
-            {
-                SetLastError(WSAEFAULT);
-                return SOCKET_ERROR;
-            }
-            *(int *)optval = 0;
-            *optlen = sizeof(int);
-            return 0;
-
         default:
             TRACE("Unknown SOL_SOCKET optname: 0x%08x\n", optname);
             SetLastError(WSAENOPROTOOPT);
@@ -2869,6 +2858,10 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_SO_ERROR:
         case WS_SO_KEEPALIVE:
         case WS_SO_OOBINLINE:
+        /* BSD socket SO_REUSEADDR is not 100% compatible to winsock semantics.
+         * however, using it the BSD way fixes bug 8513 and seems to be what
+         * most programmers assume, anyway */
+        case WS_SO_REUSEADDR:
         case WS_SO_SNDBUF:
         case WS_SO_TYPE:
             convert_sockopt(&level, &optname);
@@ -2900,13 +2893,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             }
             get_per_thread_data()->opentype = *(const int *)optval;
             TRACE("setting global SO_OPENTYPE = 0x%x\n", *((int*)optval) );
-            return 0;
-
-        /* SO_REUSEADDR allows two applications to bind to the same port at at
-         * same time. There is no direct way to do that in unix. While Wineserver
-         * might do this, it does not seem useful for now, so just ignore it.*/
-        case WS_SO_REUSEADDR:
-            TRACE("Ignoring SO_REUSEADDR, does not translate\n");
             return 0;
 
 #ifdef SO_RCVTIMEO
