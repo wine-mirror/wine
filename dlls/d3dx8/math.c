@@ -116,6 +116,18 @@ D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, C
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixPerspectiveRH(D3DXMATRIX *pout, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf)
+{
+    D3DXMatrixIdentity(pout);
+    pout->m[0][0] = 2.0f * zn / w;
+    pout->m[1][1] = 2.0f * zn / h;
+    pout->m[2][2] = zf / (zn - zf);
+    pout->m[3][2] = (zn * zf) / (zn - zf);
+    pout->m[2][3] = -1.0f;
+    pout->m[3][3] = 0.0f;
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixRotationAxis(D3DXMATRIX *pout, CONST D3DXVECTOR3 *pv, FLOAT angle)
 {
     D3DXVECTOR3 v;
