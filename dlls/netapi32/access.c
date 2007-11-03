@@ -180,9 +180,6 @@ NET_API_STATUS WINAPI NetUserAdd(LPCWSTR servername,
 
     if(su)
     {
-        HeapFree(GetProcessHeap(), 0, su->home_dir);
-        HeapFree(GetProcessHeap(), 0, su->user_comment);
-        HeapFree(GetProcessHeap(), 0, su->user_logon_script_path);
         HeapFree(GetProcessHeap(), 0, su);
     }
     return status;
