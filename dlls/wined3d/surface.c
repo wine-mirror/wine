@@ -897,7 +897,7 @@ lock_end:
          * Dirtify on lock
          * as seen in msdn docs
          */
-        IWineD3DSurface_AddDirtyRect(iface, &This->lockedRect);
+        IWineD3DSurface_AddDirtyRect(iface, pRect);
 
         /** Dirtify Container if needed */
         if (WINED3D_OK == IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&pBaseTexture) && pBaseTexture != NULL) {
