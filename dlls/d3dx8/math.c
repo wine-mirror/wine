@@ -76,6 +76,21 @@ D3DXMATRIX* WINAPI D3DXMatrixRotationAxis(D3DXMATRIX *pout, CONST D3DXVECTOR3 *p
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixRotationQuaternion(D3DXMATRIX *pout, CONST D3DXQUATERNION *pq)
+{
+    D3DXMatrixIdentity(pout);
+    pout->m[0][0] = 1.0f - 2.0f * (pq->y * pq->y + pq->z * pq->z);
+    pout->m[0][1] = 2.0f * (pq->x *pq->y + pq->z * pq->w);
+    pout->m[0][2] = 2.0f * (pq->x * pq->z - pq->y * pq->w);
+    pout->m[1][0] = 2.0f * (pq->x * pq->y - pq->z * pq->w);
+    pout->m[1][1] = 1.0f - 2.0f * (pq->x * pq->x + pq->z * pq->z);
+    pout->m[1][2] = 2.0f * (pq->y *pq->z + pq->x *pq->w);
+    pout->m[2][0] = 2.0f * (pq->x * pq->z + pq->y * pq->w);
+    pout->m[2][1] = 2.0f * (pq->y *pq->z - pq->x *pq->w);
+    pout->m[2][2] = 1.0f - 2.0f * (pq->x * pq->x + pq->y * pq->y);
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixRotationX(D3DXMATRIX *pout, FLOAT angle)
 {
     D3DXMatrixIdentity(pout);
