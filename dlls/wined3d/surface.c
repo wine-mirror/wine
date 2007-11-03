@@ -3439,6 +3439,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
 
 static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DWORD flag, BOOL persistent) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    IWineD3DBaseTexture *texture;
 
     TRACE("(%p)->(%s, %s)\n", iface,
           flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
@@ -3446,9 +3447,23 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
 
     /* TODO: For offscreen textures with fbo offscreen rendering the drawable is the same as the texture.*/
     if(persistent) {
+        if((This->Flags & SFLAG_INTEXTURE) && !(flag & SFLAG_INTEXTURE)) {
+            if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&texture) == WINED3D_OK) {
+                TRACE("Passing to container\n");
+                IWineD3DBaseTexture_SetDirty(texture, TRUE);
+                IWineD3DBaseTexture_Release(texture);
+            }
+        }
         This->Flags &= ~SFLAG_LOCATIONS;
         This->Flags |= flag;
     } else {
+        if((This->Flags & SFLAG_INTEXTURE) && (flag & SFLAG_INTEXTURE)) {
+            if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&texture) == WINED3D_OK) {
+                TRACE("Passing to container\n");
+                IWineD3DBaseTexture_SetDirty(texture, TRUE);
+                IWineD3DBaseTexture_Release(texture);
+            }
+        }
         This->Flags &= ~flag;
     }
 }
