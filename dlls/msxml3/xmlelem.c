@@ -356,6 +356,9 @@ static HRESULT WINAPI xmlelem_put_text(IXMLElement *iface, BSTR p)
 
     content = xmlChar_from_wchar(p);
     xmlNodeSetContent(This->node, content);
+
+    HeapFree( GetProcessHeap(), 0, content);
+
     return S_OK;
 }
 
