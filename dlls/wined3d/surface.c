@@ -200,11 +200,6 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
         if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
             FIXME("Using DXT1/3/5 without advertized support\n");
         } else {
-            if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
-                /* Neither NONPOW2, DIBSECTION nor OVERSIZE flags can be set on compressed textures */
-                This->Flags |= SFLAG_CLIENT;
-            }
-
             /* glCompressedTexSubImage2D for uploading and glTexImage2D for allocating does not work well on some drivers(r200 dri, MacOS ATI driver)
              * glCompressedTexImage2D does not accept NULL pointers. So for compressed textures surface_allocate_surface does nothing, and this
              * function uses glCompressedTexImage2D instead of the SubImage call
@@ -256,6 +251,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
 
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type) {
     BOOL enable_client_storage = FALSE;
+    BYTE *mem = NULL;
 
     TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n", This,
             This->glDescription.target, This->glDescription.level, debug_d3dformat(This->resource.format), internal, width, height, format, type);
@@ -265,6 +261,18 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
             This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
         /* glCompressedTexImage2D does not accept NULL pointers, so we cannot allocate a compressed texture without uploading data */
         TRACE("Not allocating compressed surfaces, surface_upload_data will specify them\n");
+
+        /* We have to point GL to the client storage memory here, because upload_data might use a PBO. This means a double upload
+         * once, unfortunately
+         */
+        if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+            /* Neither NONPOW2, DIBSECTION nor OVERSIZE flags can be set on compressed textures */
+            This->Flags |= SFLAG_CLIENT;
+            mem = (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+            GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, internal,
+                       width, height, 0 /* border */, This->resource.size, mem));
+        }
+
         return;
     }
 
@@ -285,11 +293,14 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
             enable_client_storage = TRUE;
         } else {
             This->Flags |= SFLAG_CLIENT;
-            /* Below point opengl to our allocated texture memory */
+
+            /* Point opengl to our allocated texture memory. Do not use resource.allocatedMemory here because
+             * it might point into a pbo. Instead use heapMemory, but get the alignment right.
+             */
+            mem = (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
         }
     }
-    glTexImage2D(This->glDescription.target, This->glDescription.level, internal, width, height, 0, format, type,
-                 This->Flags & SFLAG_CLIENT ? This->resource.allocatedMemory : NULL);
+    glTexImage2D(This->glDescription.target, This->glDescription.level, internal, width, height, 0, format, type, mem);
     checkGLcall("glTexImage2D");
 
     if(enable_client_storage) {
@@ -751,16 +762,20 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
         checkGLcall("glBindBufferARB");
 
         /* We don't need the system memory anymore and we can't even use it for PBOs */
-        HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
+        if(!(This->Flags & SFLAG_CLIENT)) {
+            HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
+            This->resource.heapMemory = NULL;
+        }
         This->resource.allocatedMemory = NULL;
-        This->resource.heapMemory = NULL;
         This->Flags |= SFLAG_PBO;
         LEAVE_GL();
     } else if(!(This->resource.allocatedMemory || This->Flags & SFLAG_PBO)) {
         /* Whatever surface we have, make sure that there is memory allocated for the downloaded copy,
          * or a pbo to map
          */
-        This->resource.heapMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + RESOURCE_ALIGNMENT);
+        if(!This->resource.heapMemory) {
+            This->resource.heapMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + RESOURCE_ALIGNMENT);
+        }
         This->resource.allocatedMemory =
                 (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
         if(This->Flags & SFLAG_INSYSMEM) {
