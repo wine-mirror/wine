@@ -198,6 +198,14 @@ static void D3DXMatrixTest(void)
     got = D3DXMatrixIsIdentity(NULL);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
 
+/*____________D3DXMatrixLookatLH_______________*/
+    expectedmat.m[0][0] = -0.822465f; expectedmat.m[0][1] = -0.409489f; expectedmat.m[0][2] = -0.394803f; expectedmat.m[0][3] = 0.0f;
+    expectedmat.m[1][0] = -0.555856f; expectedmat.m[1][1] = 0.431286f; expectedmat.m[1][2] = 0.710645f; expectedmat.m[1][3] = 0.0f;
+    expectedmat.m[2][0] = -0.120729f; expectedmat.m[2][1] = 0.803935f; expectedmat.m[2][2] = -0.582335f; expectedmat.m[2][3] = 0.0f;
+    expectedmat.m[3][0] = 4.494634f; expectedmat.m[3][1] = 0.809719f; expectedmat.m[3][2] = 10.060076f; expectedmat.m[3][3] = 1.0f;
+    D3DXMatrixLookAtLH(&gotmat,&eye,&at,&axis);
+    expect_mat(expectedmat,gotmat);
+
 /*____________D3DXMatrixLookatRH_______________*/
     expectedmat.m[0][0] = 0.822465f; expectedmat.m[0][1] = -0.409489f; expectedmat.m[0][2] = 0.394803f; expectedmat.m[0][3] = 0.0f;
     expectedmat.m[1][0] = 0.555856f; expectedmat.m[1][1] = 0.431286f; expectedmat.m[1][2] = -0.710645f; expectedmat.m[1][3] = 0.0f;

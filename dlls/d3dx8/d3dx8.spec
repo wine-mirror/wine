@@ -35,7 +35,7 @@
 @ stub D3DXMatrixTransformation
 @ stub D3DXMatrixAffineTransformation
 @ stdcall D3DXMatrixLookAtRH(ptr ptr ptr ptr ptr)
-@ stub D3DXMatrixLookAtLH
+@ stdcall D3DXMatrixLookAtLH(ptr ptr ptr ptr)
 @ stub D3DXMatrixPerspectiveRH
 @ stub D3DXMatrixPerspectiveLH
 @ stub D3DXMatrixPerspectiveFovRH
