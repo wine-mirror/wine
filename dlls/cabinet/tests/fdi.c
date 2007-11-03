@@ -436,6 +436,9 @@ static INT_PTR get_open_info(char *pszName, USHORT *pdate, USHORT *ptime,
 
     attrs = GetFileAttributes(pszName);
     ok(attrs != INVALID_FILE_ATTRIBUTES, "Failed to GetFileAttributes\n");
+    /* fixme: should convert attrs to *pattribs, make sure
+     * have a test that catches the fact that we don't?
+     */
 
     return (INT_PTR)handle;
 }

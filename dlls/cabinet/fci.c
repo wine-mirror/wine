@@ -2416,6 +2416,10 @@ BOOL __cdecl FCIAddFile(
   }
 
   /* get information about the file */
+  /* set defaults in case callback doesn't set one or more fields */
+  cffile.attribs=0;
+  cffile.date=0;
+  cffile.time=0;
   file_handle=(*pfnfcigoi)(pszSourceFile, &(cffile.date), &(cffile.time),
     &(cffile.attribs), &err, p_fci_internal->pv);
   /* check file_handle */
