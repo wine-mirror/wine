@@ -111,6 +111,19 @@ D3DXMATRIX* WINAPI D3DXMatrixRotationY(D3DXMATRIX *pout, FLOAT angle)
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixRotationYawPitchRoll(D3DXMATRIX *pout, FLOAT yaw, FLOAT pitch, FLOAT roll)
+{
+    D3DXMATRIX m, pout1, pout2, pout3;
+
+    D3DXMatrixIdentity(&pout3);
+    D3DXMatrixRotationZ(&m,roll);
+    D3DXMatrixMultiply(&pout2,&pout3,&m);
+    D3DXMatrixRotationX(&m,pitch);
+    D3DXMatrixMultiply(&pout1,&pout2,&m);
+    D3DXMatrixRotationY(&m,yaw);
+    D3DXMatrixMultiply(pout,&pout1,&m);
+    return pout;
+}
 D3DXMATRIX* WINAPI D3DXMatrixRotationZ(D3DXMATRIX *pout, FLOAT angle)
 {
     D3DXMatrixIdentity(pout);

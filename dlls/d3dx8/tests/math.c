@@ -236,6 +236,14 @@ static void D3DXMatrixTest(void)
     D3DXMatrixRotationY(&gotmat,angle);
     expect_mat(expectedmat,gotmat);
 
+/*____________D3DXMatrixRotationYawPitchRoll____*/
+    expectedmat.m[0][0] = 0.888777f; expectedmat.m[0][1] = 0.091875f; expectedmat.m[0][2] = -0.449037f; expectedmat.m[0][3] = 0.0f;
+    expectedmat.m[1][0] = 0.351713f; expectedmat.m[1][1] = 0.491487f; expectedmat.m[1][2] = 0.796705f; expectedmat.m[1][3] = 0.0f;
+    expectedmat.m[2][0] = 0.293893f; expectedmat.m[2][1] = -0.866025f; expectedmat.m[2][2] = 0.404509f; expectedmat.m[2][3] = 0.0f;
+    expectedmat.m[3][0] = 0.0f; expectedmat.m[3][1] = 0.0f; expectedmat.m[3][2] = 0.0f; expectedmat.m[3][3] = 1.0f;
+    D3DXMatrixRotationYawPitchRoll(&gotmat, 3.0f*angle/5.0f, angle, 3.0f*angle/17.0f);
+    expect_mat(expectedmat,gotmat);
+
 /*____________D3DXMatrixRotationZ______________*/
     expectedmat.m[0][0] = 0.5f; expectedmat.m[0][1] = sqrt(3.0f)/2.0f; expectedmat.m[0][2] = 0.0f; expectedmat.m[0][3] = 0.0f;
     expectedmat.m[1][0] = -sqrt(3.0f)/2.0f; expectedmat.m[1][1] = 0.5f; expectedmat.m[1][2] = 0.0f; expectedmat.m[1][3] = 0.0f;
