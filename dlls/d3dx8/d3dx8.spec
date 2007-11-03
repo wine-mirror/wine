@@ -38,7 +38,7 @@
 @ stdcall D3DXMatrixLookAtLH(ptr ptr ptr ptr)
 @ stdcall D3DXMatrixPerspectiveRH(ptr long long long long)
 @ stdcall D3DXMatrixPerspectiveLH(ptr long long long long)
-@ stub D3DXMatrixPerspectiveFovRH
+@ stdcall D3DXMatrixPerspectiveFovRH(ptr long long long long)
 @ stub D3DXMatrixPerspectiveFovLH
 @ stub D3DXMatrixPerspectiveOffCenterRH
 @ stub D3DXMatrixPerspectiveOffCenterLH
