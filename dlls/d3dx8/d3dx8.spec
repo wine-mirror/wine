@@ -34,7 +34,7 @@
 @ stdcall D3DXMatrixRotationYawPitchRoll(ptr long long long)
 @ stub D3DXMatrixTransformation
 @ stub D3DXMatrixAffineTransformation
-@ stub D3DXMatrixLookAtRH
+@ stdcall D3DXMatrixLookAtRH(ptr ptr ptr ptr ptr)
 @ stub D3DXMatrixLookAtLH
 @ stub D3DXMatrixPerspectiveRH
 @ stub D3DXMatrixPerspectiveLH

@@ -150,7 +150,7 @@ static void D3DXMatrixTest(void)
 {
     D3DXMATRIX expectedmat, gotmat, mat, mat2, mat3;
     D3DXQUATERNION q;
-    D3DXVECTOR3 axis;
+    D3DXVECTOR3 at, axis, eye;
     BOOL expected, got;
     FLOAT angle, expectedfloat, gotfloat;
 
@@ -170,7 +170,9 @@ static void D3DXMatrixTest(void)
 
     q.x = 1.0f; q.y = -4.0f; q.z =7.0f; q.w = -11.0f;
 
+    at.x = -2.0f; at.y = 13.0f; at.z = -9.0f;
     axis.x = 1.0f; axis.y = -3.0f; axis.z = 7.0f;
+    eye.x = 8.0f; eye.y = -5.0f; eye.z = 5.75f;
 
     angle = D3DX_PI/3.0f;
 
@@ -195,6 +197,14 @@ static void D3DXMatrixTest(void)
     expected = FALSE;
     got = D3DXMatrixIsIdentity(NULL);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
+
+/*____________D3DXMatrixLookatRH_______________*/
+    expectedmat.m[0][0] = 0.822465f; expectedmat.m[0][1] = -0.409489f; expectedmat.m[0][2] = 0.394803f; expectedmat.m[0][3] = 0.0f;
+    expectedmat.m[1][0] = 0.555856f; expectedmat.m[1][1] = 0.431286f; expectedmat.m[1][2] = -0.710645f; expectedmat.m[1][3] = 0.0f;
+    expectedmat.m[2][0] = 0.120729f; expectedmat.m[2][1] = 0.803935f; expectedmat.m[2][2] = 0.582335f; expectedmat.m[2][3] = 0.0f;
+    expectedmat.m[3][0] = -4.494634f; expectedmat.m[3][1] = 0.809719f; expectedmat.m[3][2] = -10.060076f; expectedmat.m[3][3] = 1.0f;
+    D3DXMatrixLookAtRH(&gotmat,&eye,&at,&axis);
+    expect_mat(expectedmat,gotmat);
 
 /*____________D3DXMatrixMultiply______________*/
     expectedmat.m[0][0] = 73.0f; expectedmat.m[0][1] = 193.0f; expectedmat.m[0][2] = -197.0f; expectedmat.m[0][3] = -77.0f;

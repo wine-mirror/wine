@@ -44,6 +44,35 @@ FLOAT WINAPI D3DXMatrixfDeterminant(CONST D3DXMATRIX *pm)
     return det;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixLookAtRH(D3DXMATRIX *pout, CONST D3DXVECTOR3 *peye, CONST D3DXVECTOR3 *pat, CONST D3DXVECTOR3 *pup)
+{
+    D3DXVECTOR3 right, rightn, up, upn, vec, vec2;
+
+    D3DXVec3Subtract(&vec2, pat, peye);
+    D3DXVec3Normalize(&vec, &vec2);
+    D3DXVec3Cross(&right, pup, &vec);
+    D3DXVec3Cross(&up, &vec, &right);
+    D3DXVec3Normalize(&rightn, &right);
+    D3DXVec3Normalize(&upn, &up);
+    pout->m[0][0] = -rightn.x;
+    pout->m[1][0] = -rightn.y;
+    pout->m[2][0] = -rightn.z;
+    pout->m[3][0] = D3DXVec3Dot(&rightn,peye);
+    pout->m[0][1] = upn.x;
+    pout->m[1][1] = upn.y;
+    pout->m[2][1] = upn.z;
+    pout->m[3][1] = -D3DXVec3Dot(&upn, peye);
+    pout->m[0][2] = -vec.x;
+    pout->m[1][2] = -vec.y;
+    pout->m[2][2] = -vec.z;
+    pout->m[3][2] = D3DXVec3Dot(&vec, peye);
+    pout->m[0][3] = 0.0f;
+    pout->m[1][3] = 0.0f;
+    pout->m[2][3] = 0.0f;
+    pout->m[3][3] = 1.0f;
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, CONST D3DXMATRIX *pm2)
 {
     int i,j;
