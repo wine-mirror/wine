@@ -338,7 +338,7 @@ static void select_shader_mode(
         /* Geforce4 cards support GLSL but for vertex shaders only. Further its reported GLSL caps are
          * wrong. This combined with the fact that glsl won't offer more features or performance, use ARB
          * shaders only on this card. */
-        if(gl_info->vs_nv_version < VS_VERSION_20)
+        if(gl_info->vs_nv_version && gl_info->vs_nv_version < VS_VERSION_20)
             *vs_selected = SHADER_ARB;
         else
             *vs_selected = SHADER_GLSL;
