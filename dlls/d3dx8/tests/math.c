@@ -222,6 +222,12 @@ static void D3DXMatrixTest(void)
     D3DXMatrixMultiply(&gotmat,&mat,&mat2);
     expect_mat(expectedmat,gotmat);
 
+/*____________D3DXMatrixOrthoLH_______________*/
+    D3DXMatrixIdentity(&expectedmat);
+    expectedmat.m[0][0] = 0.8f; expectedmat.m[1][1] = 0.270270f; expectedmat.m[2][2] = -0.151515f; expectedmat.m[3][2] = -0.484848f;
+    D3DXMatrixOrthoLH(&gotmat, 2.5f, 7.4f, -3.2f, -9.8f);
+    expect_mat(expectedmat,gotmat);
+
 /*____________D3DXMatrixOrthoRH_______________*/
     D3DXMatrixIdentity(&expectedmat);
     expectedmat.m[0][0] = 0.8f; expectedmat.m[1][1] = 0.270270f; expectedmat.m[2][2] = 0.151515f; expectedmat.m[3][2] = -0.484848f;

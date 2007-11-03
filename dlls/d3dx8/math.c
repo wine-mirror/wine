@@ -116,6 +116,16 @@ D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, C
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixOrthoLH(D3DXMATRIX *pout, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf)
+{
+    D3DXMatrixIdentity(pout);
+    pout->m[0][0] = 2.0f / w;
+    pout->m[1][1] = 2.0f / h;
+    pout->m[2][2] = 1.0f / (zf - zn);
+    pout->m[3][2] = zn / (zn - zf);
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixOrthoRH(D3DXMATRIX *pout, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf)
 {
     D3DXMatrixIdentity(pout);
