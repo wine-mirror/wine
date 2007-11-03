@@ -116,6 +116,18 @@ D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, C
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixPerspectiveFovLH(D3DXMATRIX *pout, FLOAT fovy, FLOAT aspect, FLOAT zn, FLOAT zf)
+{
+    D3DXMatrixIdentity(pout);
+    pout->m[0][0] = 1.0f / (aspect * tan(fovy/2.0f));
+    pout->m[1][1] = 1.0f / tan(fovy/2.0f);
+    pout->m[2][2] = zf / (zf - zn);
+    pout->m[2][3] = 1.0f;
+    pout->m[3][2] = (zf * zn) / (zn - zf);
+    pout->m[3][3] = 0.0f;
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixPerspectiveFovRH(D3DXMATRIX *pout, FLOAT fovy, FLOAT aspect, FLOAT zn, FLOAT zf)
 {
     D3DXMatrixIdentity(pout);
