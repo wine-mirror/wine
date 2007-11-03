@@ -1557,7 +1557,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 * ShellView_OnChange()
 */
 
-static LRESULT ShellView_OnChange(IShellViewImpl * This, LPITEMIDLIST * Pidls, LONG wEventId)
+static LRESULT ShellView_OnChange(IShellViewImpl * This, const LPCITEMIDLIST * Pidls, LONG wEventId)
 {
 
 	TRACE("(%p)(%p,%p,0x%08x)\n", This, Pidls[0], Pidls[1], wEventId);
@@ -1610,7 +1610,7 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 					GET_WM_COMMAND_ID(wParam, lParam),
 					GET_WM_COMMAND_CMD(wParam, lParam),
 					GET_WM_COMMAND_HWND(wParam, lParam));
-	  case SHV_CHANGE_NOTIFY: return ShellView_OnChange(pThis, (LPITEMIDLIST*)wParam, (LONG)lParam);
+	  case SHV_CHANGE_NOTIFY: return ShellView_OnChange(pThis, (const LPCITEMIDLIST*)wParam, (LONG)lParam);
 
 	  case WM_CONTEXTMENU:  ShellView_DoContextMenu(pThis, LOWORD(lParam), HIWORD(lParam), FALSE);
 	                        return 0;
