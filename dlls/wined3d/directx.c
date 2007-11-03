@@ -641,6 +641,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     TRACE_(d3d_caps)("Maximum texture size support - max texture size=%d\n", gl_max);
 
     glGetFloatv(GL_POINT_SIZE_RANGE, gl_floatv);
+    gl_info->max_pointsizemin = gl_floatv[0];
     gl_info->max_pointsize = gl_floatv[1];
     TRACE_(d3d_caps)("Maximum point size support - max point size=%f\n", gl_floatv[1]);
 

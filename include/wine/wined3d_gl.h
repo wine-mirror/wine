@@ -1137,6 +1137,7 @@ void (WINE_GLAPI *glVertex4s) (GLshort x, GLshort y, GLshort z, GLshort w);
 void (WINE_GLAPI *glVertex4sv) (const GLshort* v);
 void (WINE_GLAPI *glVertexPointer) (GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
 void (WINE_GLAPI *glViewport) (GLint x, GLint y, GLsizei width, GLsizei height);
+void (WINE_GLAPI *glPointParameterfv) (GLenum pname, const GLfloat *params);
 
 /* WGL functions */
 HGLRC   (WINAPI *pwglCreateContext)(HDC);
@@ -1483,7 +1484,8 @@ BOOL    (WINAPI *pwglShareLists)(HGLRC,HGLRC);
     USE_GL_FUNC(glVertex4s) \
     USE_GL_FUNC(glVertex4sv) \
     USE_GL_FUNC(glVertexPointer) \
-    USE_GL_FUNC(glViewport)
+    USE_GL_FUNC(glViewport) \
+    USE_GL_FUNC(glPointParameterfv) \
 
 #define WGL_FUNCS_GEN \
     USE_WGL_FUNC(wglCreateContext) \
@@ -3719,7 +3721,7 @@ typedef struct _WineD3D_GL_Info {
   UINT   max_clipplanes;
   UINT   max_texture_size;
   UINT   max_texture3d_size;
-  float  max_pointsize;
+  float  max_pointsize, max_pointsizemin;
   UINT   max_blends;
   UINT   max_anisotropy;
   UINT   max_aux_buffers;

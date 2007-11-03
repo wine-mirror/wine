@@ -1312,14 +1312,18 @@ static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3
         GLfloat scaleFactor;
         float h = stateblock->viewport.Height;
 
-        if(pointSize.f < 1.0f) {
+        if(pointSize.f < GL_LIMITS(pointsizemin)) {
             /*
-             * Minimum valid point size for OpenGL is 1.0f. For Direct3D it is 0.0f.
-             * This means that OpenGL will clamp really small point sizes to 1.0f.
-             * To correct for this we need to multiply by the scale factor when sizes
+             * Minimum valid point size for OpenGL is driver specific. For Direct3D it is
+             * 0.0f. This means that OpenGL will clamp really small point sizes to the
+             * driver minimum. To correct for this we need to multiply by the scale factor when sizes
              * are less than 1.0f. scale_factor =  1.0f / point_size.
              */
-            scaleFactor = pointSize.f;
+            scaleFactor = pointSize.f / GL_LIMITS(pointsizemin);
+            /* Clamp the point size, don't rely on the driver to do it. MacOS says min point size
+             * is 1.0, but then accepts points below that and draws too small points
+             */
+            pointSize.f = GL_LIMITS(pointsizemin);
         } else if(pointSize.f > GL_LIMITS(pointsize)) {
             /* gl already scales the input to glPointSize,
              * d3d scales the result after the point size scale.
