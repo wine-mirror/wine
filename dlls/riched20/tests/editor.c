@@ -1971,33 +1971,83 @@ static void test_EM_REPLACESEL(void)
 
 static void test_WM_PASTE(void)
 {
+    MSG msg;
     int result;
     char buffer[1024] = {0};
+    char key_info[][3] =
+    {
+        /* VirtualKey, ScanCode, WM_CHAR code */
+        {'C', 0x2e,  3},	/* Ctrl-C */
+        {'X', 0x2d, 24},	/* Ctrl-X */
+        {'V', 0x2f, 22},	/* Ctrl-V */
+        {'Z', 0x2c, 26},	/* Ctrl-Z */
+        {'Y', 0x15, 25},	/* Ctrl-Y */
+    };
     const char* text1 = "testing paste\r";
+    const char* text1_step1 = "testing paste\r\ntesting paste\r\n";
     const char* text1_after = "testing paste\r\n";
     const char* text2 = "testing paste\r\rtesting paste";
+    const char* text2_after = "testing paste\r\n\r\ntesting paste";
     const char* text3 = "testing paste\r\npaste\r\ntesting paste";
     HWND hwndRichEdit = new_richedit(NULL);
 
+    /* Native riched20 won't obey WM_CHAR messages or WM_KEYDOWN/WM_KEYUP
+       messages, probably because it inspects the keyboard state itself.
+       Therefore, native requires this in order to obey Ctrl-<key> keystrokes.
+     */
+#define SEND_CTRL_KEY(hwnd, k) \
+    keybd_event(VK_CONTROL, 0x1d, 0, 0);\
+    keybd_event(k[0], k[1], 0, 0);\
+    keybd_event(k[0], k[1], KEYEVENTF_KEYUP, 0);\
+    keybd_event(VK_CONTROL, 0x1d, KEYEVENTF_KEYUP, 0); \
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { \
+        TranslateMessage(&msg); \
+        DispatchMessage(&msg); \
+    }
+
+#define SEND_CTRL_C(hwnd) SEND_CTRL_KEY(hwnd, key_info[0])
+#define SEND_CTRL_X(hwnd) SEND_CTRL_KEY(hwnd, key_info[1])
+#define SEND_CTRL_V(hwnd) SEND_CTRL_KEY(hwnd, key_info[2])
+#define SEND_CTRL_Z(hwnd) SEND_CTRL_KEY(hwnd, key_info[3])
+#define SEND_CTRL_Y(hwnd) SEND_CTRL_KEY(hwnd, key_info[4])
+
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text1);
     SendMessage(hwndRichEdit, EM_SETSEL, 0, 14);
-    SendMessage(hwndRichEdit, WM_CHAR, 3, 0);  /* ctrl-c */
+
+    SEND_CTRL_C(hwndRichEdit)   /* Copy */
     SendMessage(hwndRichEdit, EM_SETSEL, 14, 14);
-    SendMessage(hwndRichEdit, WM_CHAR, 22, 0);  /* ctrl-v */
-    SendMessage(hwndRichEdit, WM_CHAR, 26, 0);  /* ctrl-z */
+    SEND_CTRL_V(hwndRichEdit)   /* Paste */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    /* Pasted text should be visible at this step */
+    result = strcmp(text1_step1, buffer);
+    ok(result == 0,
+        "test paste: strcmp = %i\n", result);
+    SEND_CTRL_Z(hwndRichEdit)   /* Undo */
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    /* Text should be the same as before (except for \r -> \r\n conversion) */
     result = strcmp(text1_after, buffer);
     ok(result == 0,
         "test paste: strcmp = %i\n", result);
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text2);
     SendMessage(hwndRichEdit, EM_SETSEL, 8, 13);
-    SendMessage(hwndRichEdit, WM_CHAR, 3, 0);  /* ctrl-c */
+    SEND_CTRL_C(hwndRichEdit)   /* Copy */
     SendMessage(hwndRichEdit, EM_SETSEL, 14, 14);
-    SendMessage(hwndRichEdit, WM_CHAR, 22, 0);  /* ctrl-v */
-    SendMessage(hwndRichEdit, WM_CHAR, 26, 0);  /* ctrl-z */
-    SendMessage(hwndRichEdit, WM_CHAR, 25, 0);  /* ctrl-y */
+    SEND_CTRL_V(hwndRichEdit)   /* Paste */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    /* Pasted text should be visible at this step */
+    result = strcmp(text3, buffer);
+    ok(result == 0,
+        "test paste: strcmp = %i\n", result);
+    SEND_CTRL_Z(hwndRichEdit)   /* Undo */
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    /* Text should be the same as before (except for \r -> \r\n conversion) */
+    result = strcmp(text2_after, buffer);
+    ok(result == 0,
+        "test paste: strcmp = %i\n", result);
+    SEND_CTRL_Y(hwndRichEdit)   /* Redo */
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    /* Text should revert to post-paste state */
     result = strcmp(buffer,text3);
     ok(result == 0,
         "test paste: strcmp = %i\n", result);
