@@ -442,8 +442,12 @@ DWORD WINAPI WsControl(DWORD protocol,
                   if (!pcbResponseInfoLen)
                      return ERROR_BAD_ENVIRONMENT;
                   GetIpForwardTable(NULL, &routeTableSize, FALSE);
-                  numRoutes = min(routeTableSize - sizeof(MIB_IPFORWARDTABLE),
-                   0) / sizeof(MIB_IPFORWARDROW) + 1;
+                  if (!routeTableSize) {
+                      *pcbResponseInfoLen = 0;
+                      return WSCTL_SUCCESS;
+                  }
+                  numRoutes = (routeTableSize - sizeof(MIB_IPFORWARDTABLE))
+                   / sizeof(MIB_IPFORWARDROW) + 1;
                   if (*pcbResponseInfoLen < sizeof(IPRouteEntry) * numRoutes)
                      return (ERROR_LOCK_VIOLATION);
                   table = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, routeTableSize );
@@ -491,8 +495,12 @@ DWORD WINAPI WsControl(DWORD protocol,
                   if (!pcbResponseInfoLen)
                      return ERROR_BAD_ENVIRONMENT;
                   GetIpNetTable(NULL, &arpTableSize, FALSE);
-                  numEntries = min(arpTableSize - sizeof(MIB_IPNETTABLE),
-                   0) / sizeof(MIB_IPNETROW) + 1;
+                  if (!arpTableSize) {
+                      *pcbResponseInfoLen = 0;
+                      return WSCTL_SUCCESS;
+                  }
+                  numEntries = (arpTableSize - sizeof(MIB_IPNETTABLE))
+                   / sizeof(MIB_IPNETROW) + 1;
                   if (*pcbResponseInfoLen < sizeof(MIB_IPNETROW) * numEntries)
                      return (ERROR_LOCK_VIOLATION);
                   table = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, arpTableSize );
@@ -529,8 +537,12 @@ DWORD WINAPI WsControl(DWORD protocol,
                   if (!pcbResponseInfoLen)
                      return ERROR_BAD_ENVIRONMENT;
                   GetTcpTable(NULL, &tcpTableSize, FALSE);
-                  numEntries = min(tcpTableSize - sizeof(MIB_TCPTABLE),
-                   0) / sizeof(MIB_TCPROW) + 1;
+                  if (!tcpTableSize) {
+                      *pcbResponseInfoLen = 0;
+                      return WSCTL_SUCCESS;
+                  }
+                  numEntries = (tcpTableSize - sizeof(MIB_TCPTABLE))
+                   / sizeof(MIB_TCPROW) + 1;
                   if (*pcbResponseInfoLen < sizeof(MIB_TCPROW) * numEntries)
                      return (ERROR_LOCK_VIOLATION);
                   table = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, tcpTableSize );
