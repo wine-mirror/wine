@@ -698,21 +698,21 @@ static void test_EM_SETOPTIONS(void)
     DestroyWindow(hwndRichEdit);
 }
 
-static void check_CFE_LINK_rcvd(HWND hwnd, int is_url)
+static void check_CFE_LINK_rcvd(HWND hwnd, int is_url, const char * url)
 {
   CHARFORMAT2W text_format;
   int link_present = 0;
   text_format.cbSize = sizeof(text_format);
-  SendMessage(hwnd, EM_SETSEL, 0, 0);
+  SendMessage(hwnd, EM_SETSEL, 0, 1);
   SendMessage(hwnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &text_format);
   link_present = text_format.dwEffects & CFE_LINK;
   if (is_url) 
   { /* control text is url; should get CFE_LINK */
-	ok(0 != link_present, "URL Case: CFE_LINK not set.\n");
+	ok(0 != link_present, "URL Case: CFE_LINK not set for [%s].\n", url);
   }
   else 
   {
-    ok(0 == link_present, "Non-URL Case: CFE_LINK set.\n");
+    ok(0 == link_present, "Non-URL Case: CFE_LINK set for [%s].\n", url);
   }
 }
 
@@ -761,11 +761,11 @@ static void test_EM_AUTOURLDETECT(void)
     SendMessage(hwndRichEdit, EM_AUTOURLDETECT, FALSE, 0);
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) urls[i].text);
     SendMessage(hwndRichEdit, WM_CHAR, 0, 0);
-    check_CFE_LINK_rcvd(hwndRichEdit, 0);
+    check_CFE_LINK_rcvd(hwndRichEdit, 0, urls[i].text);
     SendMessage(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) urls[i].text);
     SendMessage(hwndRichEdit, WM_CHAR, 0, 0);
-    check_CFE_LINK_rcvd(hwndRichEdit, urls[i].is_url);
+    check_CFE_LINK_rcvd(hwndRichEdit, urls[i].is_url, urls[i].text);
   }
   DestroyWindow(hwndRichEdit);
   DestroyWindow(parent);
