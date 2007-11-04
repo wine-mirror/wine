@@ -14,6 +14,7 @@ C_SRCS = \
 	cstub.c \
 	ndr_clientserver.c \
 	ndr_contexthandle.c \
+	ndr_es.c \
 	ndr_fullpointer.c \
 	ndr_marshall.c \
 	ndr_ole.c \

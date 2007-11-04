@@ -98,12 +98,12 @@
 @ stub MIDL_wchar_strlen
 @ stub MesBufferHandleReset
 @ stub MesDecodeBufferHandleCreate
-@ stub MesDecodeIncrementalHandleCreate
+@ stdcall MesDecodeIncrementalHandleCreate(ptr ptr ptr)
 @ stub MesEncodeDynBufferHandleCreate
 @ stub MesEncodeFixedBufferHandleCreate
-@ stub MesEncodeIncrementalHandleCreate
-@ stub MesHandleFree
-@ stub MesIncrementalHandleReset
+@ stdcall MesEncodeIncrementalHandleCreate(ptr ptr ptr ptr)
+@ stdcall MesHandleFree(ptr)
+@ stdcall MesIncrementalHandleReset(ptr ptr ptr ptr ptr long)
 @ stub MesInqProcEncodingId
 @ stdcall NDRCContextBinding(ptr)
 @ stdcall NDRCContextMarshall(ptr ptr)
