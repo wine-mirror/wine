@@ -1211,6 +1211,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         switch(wined3d_settings.rendertargetlock_mode) {
             case RTL_READTEX:
             case RTL_TEXTEX:
+                ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
                 ENTER_GL();
                 if (This->glDescription.textureName == 0) {
                     glGenTextures(1, &This->glDescription.textureName);
