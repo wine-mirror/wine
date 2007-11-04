@@ -943,3 +943,9 @@ HRESULT HttpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
     
     return S_OK;
 }
+
+HRESULT HttpSProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
+{
+    FIXME("(%p %p)\n", pUnkOuter, ppobj);
+    return E_NOINTERFACE;
+}
