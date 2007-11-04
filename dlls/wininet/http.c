@@ -2121,7 +2121,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
                    LPINTERNET_BUFFERSW lpBuffersOut,
                    DWORD dwFlags, DWORD_PTR dwContext)
 {
-    BOOL ret;
+    BOOL ret = FALSE;
     LPWININETHTTPREQW lpwhr;
     LPWININETHTTPSESSIONW lpwhs;
     LPWININETAPPINFOW hIC;
@@ -2134,7 +2134,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-    	return FALSE;
+        goto lend;
     }
 
     lpwhs = lpwhr->lpHttpSession;
@@ -2178,7 +2178,6 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
          * This is from windows.
          */
         INTERNET_SetLastError(ERROR_IO_PENDING);
-        ret = FALSE;
     }
     else
     {
@@ -2189,8 +2188,11 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
         else
             ret = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, FALSE);
     }
- 
-    WININET_Release(&lpwhr->hdr);
+
+lend:
+    if ( lpwhr )
+        WININET_Release( &lpwhr->hdr );
+
     TRACE("<---\n");
     return ret;
 }
