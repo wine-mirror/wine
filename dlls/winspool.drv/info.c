@@ -145,7 +145,7 @@ static struct list monitor_handles = LIST_INIT( monitor_handles );
 static monitor_t * pm_localport;
 
 static opened_printer_t **printer_handles;
-static int nb_printer_handles;
+static UINT nb_printer_handles;
 static LONG next_job_id = 1;
 
 static DWORD (WINAPI *GDI_CallDeviceCapabilities16)( LPCSTR lpszDevice, LPCSTR lpszPort,
@@ -1566,11 +1566,9 @@ static opened_printer_t *get_opened_printer(HANDLE hprn)
 
     EnterCriticalSection(&printer_handles_cs);
 
-    if ((idx <= 0) || (idx > nb_printer_handles))
-        goto end;
-
-    ret = printer_handles[idx - 1];
-end:
+    if ((idx > 0) && (idx <= nb_printer_handles)) {
+        ret = printer_handles[idx - 1];
+    }
     LeaveCriticalSection(&printer_handles_cs);
     return ret;
 }
