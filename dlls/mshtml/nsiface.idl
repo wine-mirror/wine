@@ -1506,6 +1506,33 @@ interface nsIFile : nsISupports
 
 [
     object,
+    uuid(56c35506-f14b-11d3-99d3-ddbfac2ccf65)
+    /* FROZEN */
+]
+interface nsIPrefBranch : nsISupports
+{
+    nsresult GetRoot(char **aRoot);
+    nsresult GetPrefType(const char *aPrefName, PRInt32 *_retval);
+    nsresult GetBoolPref(const char *aPrefName, PRBool *_retval);
+    nsresult SetBoolPref(const char *aPrefName, PRInt32 aValue);
+    nsresult GetCharPref(const char *aPrefName, char **_retval);
+    nsresult SetCharPref(const char *aPrefName, const char *aValue);
+    nsresult GetIntPref(const char *aPrefName, PRInt32 *_retval);
+    nsresult SetIntPref(const char *aPrefName, PRInt32 aValue);
+    nsresult GetComplexValue(const char *aPrefName, const nsIID *aType, void **aValue);
+    nsresult SetComplexValue(const char *aPrefName, const nsIID *aType, nsISupports *aValue);
+    nsresult ClearUserPref(const char *aPrefName);
+    nsresult LockPref(const char *aPrefName);
+    nsresult PrefHasUserValue(const char *aPrefName, PRBool *_retval);
+    nsresult PrefIsLocked(const char *aPrefName, PRBool *_retval);
+    nsresult UnlockPref(const char *aPrefName);
+    nsresult DeleteBranch(const char *aStartingAt);
+    nsresult GetChildList(const char *aStartingAt, PRUint32 *aCount, char ***aChildArray);
+    nsresult ResetBranch(const char *aStartingAt);
+}
+
+[
+    object,
     uuid(15fd6940-8ea7-11d3-93ad-00104ba0fd40)
     /* FROZEN */
 ]

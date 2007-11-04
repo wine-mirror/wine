@@ -45,6 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NS_EDITORCONTROLLER_CONTRACTID "@mozilla.org/editor/editorcontroller;1"
 #define NS_ARRAY_CONTRACTID "@mozilla.org/array;1"
 #define NS_VARIANT_CONTRACTID "@mozilla.org/variant;1"
+#define NS_PREFERENCES_CONTRACTID "@mozilla.org/preferences;1"
 
 #define APPSTARTUP_TOPIC "app-startup"
 
@@ -253,8 +254,39 @@ static BOOL load_wine_gecko(PRUnichar *gre_path)
     return ret;
 }
 
+static void set_lang(nsIPrefBranch *pref)
+{
+    char langs[100];
+    DWORD res, size, type;
+    HKEY hkey;
+    nsresult nsres;
+
+    static const WCHAR international_keyW[] =
+        {'S','o','f','t','w','a','r','e',
+         '\\','M','i','c','r','o','s','o','f','t',
+         '\\','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',
+         '\\','I','n','t','e','r','n','a','t','i','o','n','a','l',0};
+
+    res = RegOpenKeyW(HKEY_CURRENT_USER, international_keyW, &hkey);
+    if(res != ERROR_SUCCESS)
+        return;
+
+    size = sizeof(langs);
+    res = RegQueryValueExA(hkey, "AcceptLanguage", 0, &type, (LPBYTE)langs, &size);
+    RegCloseKey(hkey);
+    if(res != ERROR_SUCCESS || type != REG_SZ)
+        return;
+
+    TRACE("Setting lang %s\n", debugstr_a(langs));
+
+    nsres = nsIPrefBranch_SetCharPref(pref, "intl.accept_languages", langs);
+    if(NS_FAILED(nsres))
+        ERR("SetCharPref failed: %08x\n", nsres);
+}
+
 static void set_profile(void)
 {
+    nsIPrefBranch *pref;
     nsIProfile *profile;
     PRBool exists = FALSE;
     nsresult nsres;
@@ -280,6 +312,17 @@ static void set_profile(void)
         ERR("SetCurrentProfile failed: %08x\n", nsres);
 
     nsIProfile_Release(profile);
+
+    nsres = nsIServiceManager_GetServiceByContractID(pServMgr, NS_PREFERENCES_CONTRACTID,
+            &IID_nsIPrefBranch, (void**)&pref);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get preference service: %08x\n", nsres);
+        return;
+    }
+
+    set_lang(pref);
+
+    nsIPrefBranch_Release(pref);
 }
 
 static BOOL init_xpcom(const PRUnichar *gre_path)
