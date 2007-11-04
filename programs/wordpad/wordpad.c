@@ -52,7 +52,6 @@
 
 /* use LoadString */
 static const WCHAR xszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a','d',0};
-static const WCHAR xszMainMenu[] = {'M','A','I','N','M','E','N','U',0};
 
 static const WCHAR wszRichEditClass[] = {'R','I','C','H','E','D','I','T','2','0','W',0};
 static const WCHAR wszMainWndClass[] = {'W','O','R','D','P','A','D','T','O','P',0};
@@ -1528,7 +1527,7 @@ static void preview_bar_show(BOOL show)
 static void preview_exit(void)
 {
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
-    HMENU hMenu = LoadMenuW(hInstance, xszMainMenu);
+    HMENU hMenu = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDM_MAINMENU));
 
     set_bar_states();
     preview.window.right = 0;
@@ -3261,7 +3260,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     wc.hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_WORDPAD));
     wc.hCursor = LoadCursor(NULL, IDC_IBEAM);
     wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
-    wc.lpszMenuName = xszMainMenu;
+    wc.lpszMenuName = MAKEINTRESOURCEW(IDM_MAINMENU);
     wc.lpszClassName = wszMainWndClass;
     RegisterClassW(&wc);
 
