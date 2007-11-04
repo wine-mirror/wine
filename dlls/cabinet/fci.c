@@ -233,6 +233,7 @@ HFCI __cdecl FCICreate(
   p_fci_internal->estimatedCabinetSize = 0;
   p_fci_internal->statusFolderTotal = 0;
 
+  memset(&p_fci_internal->oldCCAB, 0, sizeof(CCAB));
   memcpy(p_fci_internal->szPrevCab, pccab->szCab, CB_MAX_CABINET_NAME);
   memcpy(p_fci_internal->szPrevDisk, pccab->szDisk, CB_MAX_DISK_NAME);
 
