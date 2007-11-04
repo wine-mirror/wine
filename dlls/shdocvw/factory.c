@@ -247,7 +247,7 @@ static HRESULT register_server(BOOL doregister)
 #undef INF_SET_CLSID
 
 /***********************************************************************
- *          DllRegisterServer (msimtf.@)
+ *          DllRegisterServer (shdocvw.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
@@ -272,7 +272,7 @@ HRESULT WINAPI DllRegisterServer(void)
 }
 
 /***********************************************************************
- *          DllUnregisterServer (msimtf.@)
+ *          DllUnregisterServer (shdocvw.@)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
