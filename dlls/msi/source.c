@@ -606,6 +606,9 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (!szSource || !*szSource)
         return ERROR_INVALID_PARAMETER;
 
+    if (!(dwOptions & (MSISOURCETYPE_NETWORK | MSISOURCETYPE_URL)))
+        return ERROR_INVALID_PARAMETER;
+
     if (dwOptions & MSICODE_PATCH)
     {
         FIXME("Unhandled options MSICODE_PATCH\n");
