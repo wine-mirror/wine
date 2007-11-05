@@ -508,7 +508,7 @@ struct tagXDG_PARSED_FILE
     PARSED_GROUP *groups;
 };
 
-static BOOL parsed_str_eq(PARSED_STRING *str1, const char *str2)
+static BOOL parsed_str_eq(const PARSED_STRING *str1, const char *str2)
 {
     if (strncmp(str1->str, str2, str1->len) != 0)
         return FALSE;

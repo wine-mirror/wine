@@ -138,7 +138,7 @@ static BOOL TRASH_EnsureInitialized(void)
     return TRUE;
 }
 
-static BOOL file_good_for_bucket(TRASH_BUCKET *pBucket, struct stat *file_stat)
+static BOOL file_good_for_bucket(const TRASH_BUCKET *pBucket, const struct stat *file_stat)
 {
     if (pBucket->device != file_stat->st_dev)
         return FALSE;
@@ -486,7 +486,7 @@ static INT CALLBACK free_item_callback(void *item, void *lParam)
     return TRUE;
 }
 
-static HDPA enum_bucket_trashinfos(TRASH_BUCKET *bucket, int *count)
+static HDPA enum_bucket_trashinfos(const TRASH_BUCKET *bucket, int *count)
 {
     HDPA ret = DPA_Create(32);
     struct dirent *entry;
