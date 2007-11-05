@@ -625,7 +625,7 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationA(
 
     if (OriginalFileInfo->cbSize != sizeof(*OriginalFileInfo))
     {
-        ERR("incorrect OriginalFileInfo->cbSize of %d\n", OriginalFileInfo->cbSize);
+        WARN("incorrect OriginalFileInfo->cbSize of %d\n", OriginalFileInfo->cbSize);
         SetLastError( ERROR_INVALID_USER_BUFFER );
         return FALSE;
     }
@@ -663,7 +663,7 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
 
     if (OriginalFileInfo->cbSize != sizeof(*OriginalFileInfo))
     {
-        ERR("incorrect OriginalFileInfo->cbSize of %d\n", OriginalFileInfo->cbSize);
+        WARN("incorrect OriginalFileInfo->cbSize of %d\n", OriginalFileInfo->cbSize);
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
     }
