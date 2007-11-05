@@ -893,3 +893,51 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
 
     return r;
 }
+
+static UINT ITERATE_CCPSearch(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = param;
+    LPCWSTR signature;
+    LPWSTR value = NULL;
+    MSISIGNATURE sig;
+    UINT r = ERROR_SUCCESS;
+
+    static const WCHAR success[] = {'C','C','P','_','S','u','c','c','e','s','s',0};
+    static const WCHAR one[] = {'1',0};
+
+    signature = MSI_RecordGetString(row, 1);
+
+    TRACE("%s\n", debugstr_w(signature));
+
+    ACTION_AppSearchSigName(package, signature, &sig, &value);
+    if (value)
+    {
+        TRACE("Found signature %s\n", debugstr_w(signature));
+        MSI_SetPropertyW(package, success, one);
+        msi_free(value);
+        r = ERROR_NO_MORE_ITEMS;
+    }
+
+    ACTION_FreeSignature(&sig);
+
+    return r;
+}
+
+UINT ACTION_CCPSearch(MSIPACKAGE *package)
+{
+    static const WCHAR query[] =  {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ',
+        'C','C','P','S','e','a','r','c','h',0};
+    MSIQUERY *view = NULL;
+    UINT r;
+
+    r = MSI_OpenQuery(package->db, &view, query);
+    if (r != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    r = MSI_IterateRecords(view, NULL, ITERATE_CCPSearch, package);
+    msiobj_release(&view->hdr);
+
+    return r;
+}

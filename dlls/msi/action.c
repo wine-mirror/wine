@@ -5424,12 +5424,6 @@ static UINT ACTION_UnregisterFonts( MSIPACKAGE *package )
     return msi_unimplemented_action_stub( package, "UnregisterFonts", table );
 }
 
-static UINT ACTION_CCPSearch( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'C','C','P','S','e','a','r','c','h',0 };
-    return msi_unimplemented_action_stub( package, "CCPSearch", table );
-}
-
 static UINT ACTION_RMCCPSearch( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'C','C','P','S','e','a','r','c','h',0 };

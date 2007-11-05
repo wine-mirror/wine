@@ -829,6 +829,7 @@ static inline void msi_component_set_state( MSICOMPONENT *comp, INSTALLSTATE sta
 
 /* actions in other modules */
 extern UINT ACTION_AppSearch(MSIPACKAGE *package);
+extern UINT ACTION_CCPSearch(MSIPACKAGE *package);
 extern UINT ACTION_FindRelatedProducts(MSIPACKAGE *package);
 extern UINT ACTION_InstallFiles(MSIPACKAGE *package);
 extern UINT ACTION_RemoveFiles(MSIPACKAGE *package);
