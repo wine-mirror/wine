@@ -30,7 +30,7 @@
 #include "wine/test.h"
 #include "dsound.h"
 #include "dxerr8.h"
-
+#include "mmreg.h"
 #include "dsound_test.h"
 
 #define PI 3.14159265358979323846
@@ -57,7 +57,7 @@ char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
             *b++=sample;
             if (wfx->nChannels==2)
                 *b++=sample;
-        } else {
+        } else if (wfx->wBitsPerSample == 16) {
             signed short sample=(signed short)((double)32767.5*y-0.5);
             b[0]=sample & 0xff;
             b[1]=sample >> 8;
@@ -66,6 +66,32 @@ char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
                 b[0]=sample & 0xff;
                 b[1]=sample >> 8;
                 b+=2;
+            }
+        } else if (wfx->wBitsPerSample == 24) {
+            signed int sample=(signed int)((double)8388607.5*y-0.5);
+            b[0]=sample & 0xff;
+            b[1]=(sample >> 8)&0xff;
+            b[2]=sample >> 16;
+            b+=3;
+            if (wfx->nChannels==2) {
+                b[0]=sample & 0xff;
+                b[1]=(sample >> 8)&0xff;
+                b[2]=sample >> 16;
+                b+=3;
+            }
+        } else if (wfx->wBitsPerSample == 32) {
+            signed int sample=(signed int)((double)2147483647.5*y-0.5);
+            b[0]=sample & 0xff;
+            b[1]=(sample >> 8)&0xff;
+            b[2]=(sample >> 16)&0xff;
+            b[3]=sample >> 24;
+            b+=4;
+            if (wfx->nChannels==2) {
+                b[0]=sample & 0xff;
+                b[1]=(sample >> 8)&0xff;
+                b[2]=(sample >> 16)&0xff;
+                b[3]=sample >> 24;
+                b+=4;
             }
         }
     }
@@ -330,8 +356,15 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
        "returned the needed size: rc=%s size=%d\n",DXGetErrorString8(rc),size);
 
     rc=IDirectSoundBuffer_GetFormat(*dsbo,&wfx,sizeof(wfx),NULL);
-    ok(rc==DS_OK,"IDirectSoundBuffer_GetFormat() failed: %s\n",
-       DXGetErrorString8(rc));
+    if (wfx.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+    {
+        WAVEFORMATEXTENSIBLE wfxe;
+        ok(rc == DSERR_INVALIDPARAM, "IDirectSoundBuffer_GetFormat returned: %s\n", DXGetErrorString8(rc));
+        rc=IDirectSoundBuffer_GetFormat(*dsbo,(WAVEFORMATEX*)&wfxe,sizeof(wfxe),NULL);
+        wfx = wfxe.Format;
+    }
+    ok(rc==DS_OK,
+        "IDirectSoundBuffer_GetFormat() failed: %s\n", DXGetErrorString8(rc));
     if (rc==DS_OK && winetest_debug > 1) {
         trace("    Format: %s tag=0x%04x %dx%dx%d avg.B/s=%d align=%d\n",
               is_primary ? "Primary" : "Secondary",

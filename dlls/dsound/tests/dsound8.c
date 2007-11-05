@@ -32,6 +32,9 @@
 #include "dsound.h"
 #include "dxerr8.h"
 #include "dsconf.h"
+#include "mmreg.h"
+#include "ks.h"
+#include "ksmedia.h"
 
 #include "dsound_test.h"
 
@@ -727,6 +730,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
             goto EXIT1;
 
         for (f=0;f<NB_FORMATS;f++) {
+            WAVEFORMATEXTENSIBLE wfxe;
             init_format(&wfx,WAVE_FORMAT_PCM,formats[f][0],formats[f][1],
                         formats[f][2]);
             secondary=NULL;
@@ -749,18 +753,83 @@ static HRESULT test_secondary8(LPGUID lpGuid)
             bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
                                         wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx;
-            if (winetest_interactive) {
-                trace("  Testing a secondary buffer at %dx%dx%d "
-                      "with a primary buffer at %dx%dx%d\n",
-                      wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
-                      wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
-            }
-            rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            if (wfx.wBitsPerSample != 8 && wfx.wBitsPerSample != 16)
+                ok(rc == DSERR_CONTROLUNAVAIL && !secondary, "IDirectSound_CreateSoundBuffer() "
+                    "should have returned DSERR_CONTROLUNAVAIL and NULL, returned: %s %p\n",
+                    DXGetErrorString8(rc), secondary);
+            else
+                ok(rc==DS_OK && secondary!=NULL,
+                    "IDirectSound_CreateSoundBuffer() failed to create a secondary "
+                    "buffer %s\n",DXGetErrorString8(rc));
+            if (secondary)
+                IDirectSoundBuffer_Release(secondary);
+            secondary = NULL;
+
+            bufdesc.lpwfxFormat=(WAVEFORMATEX*)&wfxe;
+            wfxe.Format = wfx;
+            wfxe.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+            wfxe.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+            wfxe.Format.cbSize = 1;
+            wfxe.Samples.wValidBitsPerSample = wfx.wBitsPerSample;
+            wfxe.dwChannelMask = (wfx.nChannels == 1 ? KSAUDIO_SPEAKER_MONO : KSAUDIO_SPEAKER_STEREO);
+
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok(rc==DSERR_INVALIDPARAM && !secondary,
+                "IDirectSound_CreateSoundBuffer() returned: %s %p\n",
+                DXGetErrorString8(rc), secondary);
+            if (secondary)
+                IDirectSoundBuffer_Release(secondary);
+
+            wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx) + 1;
+
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok(DSERR_CONTROLUNAVAIL && !secondary,
+                "IDirectSound_CreateSoundBuffer() returned: %s %p\n",
+                DXGetErrorString8(rc), secondary);
+            if (secondary)
+                IDirectSoundBuffer_Release(secondary);
+
+            wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx);
+            wfxe.SubFormat = GUID_NULL;
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok(rc==DSERR_INVALIDPARAM && !secondary,
+                "IDirectSound_CreateSoundBuffer() returned: %s %p\n",
+                DXGetErrorString8(rc), secondary);
+            if (secondary)
+                IDirectSoundBuffer_Release(secondary);
+            wfxe.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+
+            ++wfxe.Samples.wValidBitsPerSample;
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok(rc==DSERR_INVALIDPARAM && !secondary,
+                "IDirectSound_CreateSoundBuffer() returned: %s %p\n",
+                DXGetErrorString8(rc), secondary);
+            if (secondary)
+                IDirectSoundBuffer_Release(secondary);
+            --wfxe.Samples.wValidBitsPerSample;
+
+            wfxe.Samples.wValidBitsPerSample = 0;
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok(rc==DS_OK && secondary,
+                "IDirectSound_CreateSoundBuffer() returned: %s %p\n",
+                DXGetErrorString8(rc), secondary);
+            if (secondary)
+                IDirectSoundBuffer_Release(secondary);
+            wfxe.Samples.wValidBitsPerSample = wfxe.Format.wBitsPerSample;
+
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DS_OK && secondary!=NULL,
-               "IDirectSound8_CreateSoundBuffer() failed to create a secondary "
-               "buffer: %s\n",DXGetErrorString8(rc));
+                "IDirectSound_CreateSoundBuffer() failed to create a secondary "
+                "buffer %s\n",DXGetErrorString8(rc));
 
             if (rc==DS_OK && secondary!=NULL) {
+                if (winetest_interactive) {
+                    trace("  Testing a secondary buffer at %dx%dx%d "
+                        "with a primary buffer at %dx%dx%d\n",
+                        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
+                        wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
+                }
                 test_buffer8(dso,&secondary,0,FALSE,0,FALSE,0,
                              winetest_interactive,1.0,0,NULL,0,0);
 

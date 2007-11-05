@@ -30,7 +30,7 @@
 #include "wine/test.h"
 #include "dsound.h"
 #include "dxerr8.h"
-
+#include "mmreg.h"
 #include "dsound_test.h"
 
 static HRESULT (WINAPI *pDirectSoundEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
@@ -218,6 +218,13 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
        "returned the needed size: rc=%s size=%d\n",DXGetErrorString8(rc),size);
 
     rc=IDirectSoundBuffer_GetFormat(*dsbo,&wfx,sizeof(wfx),NULL);
+    if (wfx.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+    {
+        WAVEFORMATEXTENSIBLE wfxe;
+        ok(rc == DSERR_INVALIDPARAM, "IDirectSoundBuffer_GetFormat returned: %s\n", DXGetErrorString8(rc));
+        rc=IDirectSoundBuffer_GetFormat(*dsbo,(WAVEFORMATEX*)&wfxe,sizeof(wfxe),NULL);
+        wfx = wfxe.Format;
+    }
     ok(rc==DS_OK,"IDirectSoundBuffer_GetFormat() failed: %s\n",
        DXGetErrorString8(rc));
     if (rc==DS_OK && winetest_debug > 1) {
