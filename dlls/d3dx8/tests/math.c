@@ -223,14 +223,18 @@ static void D3DXMatrixTest(void)
     expect_mat(expectedmat,gotmat);
 
 /*____________D3DXMatrixOrthoLH_______________*/
-    D3DXMatrixIdentity(&expectedmat);
-    expectedmat.m[0][0] = 0.8f; expectedmat.m[1][1] = 0.270270f; expectedmat.m[2][2] = -0.151515f; expectedmat.m[3][2] = -0.484848f;
+    expectedmat.m[0][0] = 0.8f; expectedmat.m[0][1] = 0.0f; expectedmat.m[0][2] = 0.0f; expectedmat.m[0][3] = 0.0f;
+    expectedmat.m[1][0] = 0.0f; expectedmat.m[1][1] = 0.270270f; expectedmat.m[1][2] = 0.0f; expectedmat.m[1][3] = 0.0f;
+    expectedmat.m[2][0] = 0.0f; expectedmat.m[2][1] = 0.0f; expectedmat.m[2][2] = -0.151515f; expectedmat.m[2][3] = 0.0f;
+    expectedmat.m[3][0] = 0.0f; expectedmat.m[3][1] = 0.0f; expectedmat.m[3][2] = -0.484848f; expectedmat.m[3][3] = 1.0f;
     D3DXMatrixOrthoLH(&gotmat, 2.5f, 7.4f, -3.2f, -9.8f);
     expect_mat(expectedmat,gotmat);
 
 /*____________D3DXMatrixOrthoRH_______________*/
-    D3DXMatrixIdentity(&expectedmat);
-    expectedmat.m[0][0] = 0.8f; expectedmat.m[1][1] = 0.270270f; expectedmat.m[2][2] = 0.151515f; expectedmat.m[3][2] = -0.484848f;
+    expectedmat.m[0][0] = 0.8f; expectedmat.m[0][1] = 0.0f; expectedmat.m[0][2] = 0.0f; expectedmat.m[0][3] = 0.0f;
+    expectedmat.m[1][0] = 0.0f; expectedmat.m[1][1] = 0.270270f; expectedmat.m[1][2] = 0.0f; expectedmat.m[1][3] = 0.0f;
+    expectedmat.m[2][0] = 0.0f; expectedmat.m[2][1] = 0.0f; expectedmat.m[2][2] = 0.151515f; expectedmat.m[2][3] = 0.0f;
+    expectedmat.m[3][0] = 0.0f; expectedmat.m[3][1] = 0.0f; expectedmat.m[3][2] = -0.484848f; expectedmat.m[3][3] = 1.0f;
     D3DXMatrixOrthoRH(&gotmat, 2.5f, 7.4f, -3.2f, -9.8f);
     expect_mat(expectedmat,gotmat);
 
