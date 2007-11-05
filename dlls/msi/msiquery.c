@@ -567,6 +567,7 @@ UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hR
 UINT MSI_ViewModify( MSIQUERY *query, MSIMODIFY mode, MSIRECORD *rec )
 {
     MSIVIEW *view = NULL;
+    UINT r;
 
     if ( !query || !rec )
         return ERROR_INVALID_HANDLE;
@@ -575,7 +576,11 @@ UINT MSI_ViewModify( MSIQUERY *query, MSIMODIFY mode, MSIRECORD *rec )
     if ( !view  || !view->ops->modify)
         return ERROR_FUNCTION_FAILED;
 
-    return view->ops->modify( view, mode, rec, query->row );
+    r = view->ops->modify( view, mode, rec, query->row );
+    if (mode == MSIMODIFY_DELETE && r == ERROR_SUCCESS)
+        query->row--;
+
+    return r;
 }
 
 UINT WINAPI MsiViewModify( MSIHANDLE hView, MSIMODIFY eModifyMode,

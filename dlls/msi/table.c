@@ -1518,8 +1518,7 @@ static UINT TABLE_insert_row( struct tagMSIVIEW *view, MSIRECORD *rec, BOOL temp
 static UINT TABLE_delete_row( struct tagMSIVIEW *view, UINT row )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
-    UINT r, num_rows, num_cols;
-    BYTE *src, *dest;
+    UINT r, num_rows, num_cols, i;
 
     TRACE("%p %d\n", tv, row);
 
@@ -1538,9 +1537,9 @@ static UINT TABLE_delete_row( struct tagMSIVIEW *view, UINT row )
     if ( row == num_rows - 1 )
         return ERROR_SUCCESS;
 
-    dest = tv->table->data[row];
-    src = tv->table->data[row + 1];
-    memmove(dest, src, (num_rows - row - 1) * tv->row_size);
+    for (i = row + 1; i < num_rows; i++)
+        memcpy(tv->table->data[i - 1], tv->table->data[i], tv->row_size);
+
     return ERROR_SUCCESS;
 }
 
@@ -1570,6 +1569,18 @@ static UINT msi_table_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
     return TABLE_set_row(view, new_row, rec, (1 << tv->num_cols) - 1);
 }
 
+static UINT modify_delete_row( struct tagMSIVIEW *view, MSIRECORD *rec )
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW *)view;
+    UINT row, r;
+
+    r = msi_table_find_row(tv, rec, &row);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    return TABLE_delete_row(view, row);
+}
+
 static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
                           MSIRECORD *rec, UINT row)
 {
@@ -1580,6 +1591,9 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
 
     switch (eModifyMode)
     {
+    case MSIMODIFY_DELETE:
+        r = modify_delete_row( view, rec );
+        break;
     case MSIMODIFY_VALIDATE_NEW:
         r = table_validate_new( tv, rec );
         break;
@@ -1600,7 +1614,6 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
     case MSIMODIFY_ASSIGN:
     case MSIMODIFY_REPLACE:
     case MSIMODIFY_MERGE:
-    case MSIMODIFY_DELETE:
     case MSIMODIFY_VALIDATE:
     case MSIMODIFY_VALIDATE_FIELD:
     case MSIMODIFY_VALIDATE_DELETE:
