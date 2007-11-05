@@ -205,7 +205,7 @@ static int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, U
             return n;
         }
         n = st_find_free_entry( st );
-        if( n < 0 )
+        if( n == -1 )
             return -1;
     }
 
@@ -257,7 +257,7 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT r
             return n;
         }
         n = st_find_free_entry( st );
-        if( n < 0 )
+        if( n == -1 )
             return -1;
     }
 
