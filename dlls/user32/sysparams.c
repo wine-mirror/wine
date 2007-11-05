@@ -25,6 +25,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -3069,14 +3073,14 @@ BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
         lpDevMode->dmBitsPerPel       = devmodeW.dmBitsPerPel;
         lpDevMode->dmPelsHeight       = devmodeW.dmPelsHeight;
         lpDevMode->dmPelsWidth        = devmodeW.dmPelsWidth;
-        lpDevMode->dmDisplayFlags     = devmodeW.dmDisplayFlags;
+        lpDevMode->u2.dmDisplayFlags  = devmodeW.u2.dmDisplayFlags;
         lpDevMode->dmDisplayFrequency = devmodeW.dmDisplayFrequency;
         lpDevMode->dmFields           = devmodeW.dmFields;
 
-        lpDevMode->dmPosition.x       = devmodeW.dmPosition.x;
-        lpDevMode->dmPosition.y       = devmodeW.dmPosition.y;
-        lpDevMode->dmDisplayOrientation = devmodeW.dmDisplayOrientation;
-        lpDevMode->dmDisplayFixedOutput = devmodeW.dmDisplayFixedOutput;
+        lpDevMode->u1.s2.dmPosition.x = devmodeW.u1.s2.dmPosition.x;
+        lpDevMode->u1.s2.dmPosition.y = devmodeW.u1.s2.dmPosition.y;
+        lpDevMode->u1.s2.dmDisplayOrientation = devmodeW.u1.s2.dmDisplayOrientation;
+        lpDevMode->u1.s2.dmDisplayFixedOutput = devmodeW.u1.s2.dmDisplayFixedOutput;
     }
     if (lpszDeviceName) RtlFreeUnicodeString(&nameW);
     return ret;
