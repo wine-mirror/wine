@@ -106,12 +106,13 @@ static void test_null(void)
     HKEY hkey;
     DWORD dwType, cbData;
     LPBYTE lpData = NULL;
+    INSTALLSTATE state;
 
     r = pMsiOpenPackageExW(NULL, 0, &hpkg);
     ok( r == ERROR_INVALID_PARAMETER,"wrong error\n");
 
-    r = MsiQueryProductStateW(NULL);
-    ok( r == INSTALLSTATE_INVALIDARG, "wrong return\n");
+    state = MsiQueryProductStateW(NULL);
+    ok( state == INSTALLSTATE_INVALIDARG, "wrong return\n");
 
     r = MsiEnumFeaturesW(NULL,0,NULL,NULL);
     ok( r == ERROR_INVALID_PARAMETER,"wrong error\n");
