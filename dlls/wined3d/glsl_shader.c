@@ -1563,17 +1563,17 @@ void shader_glsl_compare(SHADER_OPCODE_ARG* arg) {
         shader_addline(arg->buffer, "vec%d(%s(%s, %s)));\n", mask_size, compare,
                 src0_param.param_str, src1_param.param_str);
     } else {
-        const char *compare;
-
         switch(arg->opcode->opcode) {
-            case WINED3DSIO_SLT: compare = "<"; break;
-            case WINED3DSIO_SGE: compare = ">="; break;
-            default: compare = "";
+            case WINED3DSIO_SLT:
+                shader_addline(arg->buffer, "step(%s, %s));\n", src0_param.param_str, src1_param.param_str);
+                break;
+            case WINED3DSIO_SGE:
+                shader_addline(arg->buffer, "step(%s, %s));\n", src1_param.param_str, src0_param.param_str);
+                break;
+            default:
                 FIXME("Can't handle opcode %s\n", arg->opcode->name);
         }
 
-        shader_addline(arg->buffer, "(%s %s %s) ? 1.0 : 0.0);\n",
-                src0_param.param_str, compare, src1_param.param_str);
     }
 }
 
