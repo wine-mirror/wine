@@ -21,6 +21,10 @@
 #include "config.h"
 #include <string.h>
 #include <stdio.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
 #include "x11drv.h"
 
 #include "windef.h"
@@ -185,11 +189,11 @@ static BOOL read_registry_settings(DEVMODEW *dm)
     query_value("DefaultSettings.XResolution", &dm->dmPelsWidth);
     query_value("DefaultSettings.YResolution", &dm->dmPelsHeight);
     query_value("DefaultSettings.VRefresh", &dm->dmDisplayFrequency);
-    query_value("DefaultSettings.Flags", &dm->dmDisplayFlags);
-    query_value("DefaultSettings.XPanning", &dm->dmPosition.x);
-    query_value("DefaultSettings.YPanning", &dm->dmPosition.y);
-    query_value("DefaultSettings.Orientation", &dm->dmDisplayOrientation);
-    query_value("DefaultSettings.FixedOutput", &dm->dmDisplayFixedOutput);
+    query_value("DefaultSettings.Flags", &dm->u2.dmDisplayFlags);
+    query_value("DefaultSettings.XPanning", &dm->u1.s2.dmPosition.x);
+    query_value("DefaultSettings.YPanning", &dm->u1.s2.dmPosition.y);
+    query_value("DefaultSettings.Orientation", &dm->u1.s2.dmDisplayOrientation);
+    query_value("DefaultSettings.FixedOutput", &dm->u1.s2.dmDisplayFixedOutput);
 
 #undef query_value
 
@@ -213,11 +217,11 @@ static BOOL write_registry_settings(const DEVMODEW *dm)
     set_value("DefaultSettings.XResolution", &dm->dmPelsWidth);
     set_value("DefaultSettings.YResolution", &dm->dmPelsHeight);
     set_value("DefaultSettings.VRefresh", &dm->dmDisplayFrequency);
-    set_value("DefaultSettings.Flags", &dm->dmDisplayFlags);
-    set_value("DefaultSettings.XPanning", &dm->dmPosition.x);
-    set_value("DefaultSettings.YPanning", &dm->dmPosition.y);
-    set_value("DefaultSettings.Orientation", &dm->dmDisplayOrientation);
-    set_value("DefaultSettings.FixedOutput", &dm->dmDisplayFixedOutput);
+    set_value("DefaultSettings.Flags", &dm->u2.dmDisplayFlags);
+    set_value("DefaultSettings.XPanning", &dm->u1.s2.dmPosition.x);
+    set_value("DefaultSettings.YPanning", &dm->u1.s2.dmPosition.y);
+    set_value("DefaultSettings.Orientation", &dm->u1.s2.dmDisplayOrientation);
+    set_value("DefaultSettings.FixedOutput", &dm->u1.s2.dmDisplayFixedOutput);
 
 #undef set_value
 
@@ -243,12 +247,12 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     devmode->dmDriverVersion = MAKEWORD(1,4);
     memcpy(devmode->dmDeviceName, dev_name, sizeof(dev_name));
     devmode->dmDriverExtra = 0;
-    devmode->dmDisplayFlags = 0;
+    devmode->u2.dmDisplayFlags = 0;
     devmode->dmDisplayFrequency = 0;
-    devmode->dmPosition.x = 0;
-    devmode->dmPosition.y = 0;
-    devmode->dmDisplayOrientation = 0;
-    devmode->dmDisplayFixedOutput = 0;
+    devmode->u1.s2.dmPosition.x = 0;
+    devmode->u1.s2.dmPosition.y = 0;
+    devmode->u1.s2.dmDisplayOrientation = 0;
+    devmode->u1.s2.dmDisplayFixedOutput = 0;
 
     if (n == ENUM_CURRENT_SETTINGS)
     {
