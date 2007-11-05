@@ -4438,7 +4438,7 @@ static UINT ACTION_InstallServices( MSIPACKAGE *package )
 }
 
 /* converts arg1[~]arg2[~]arg3 to a list of ptrs to the strings */
-static LPCWSTR *msi_service_args_to_vector(LPCWSTR name, LPWSTR args, DWORD *numargs)
+static LPCWSTR *msi_service_args_to_vector(LPWSTR args, DWORD *numargs)
 {
     LPCWSTR *vector;
     LPWSTR p, q;
@@ -4512,7 +4512,7 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
         goto done;
     }
 
-    vector = msi_service_args_to_vector(name, args, &numargs);
+    vector = msi_service_args_to_vector(args, &numargs);
 
     if (!StartServiceW(service, numargs, vector))
     {
