@@ -1546,10 +1546,8 @@ static void test_EM_GETMODIFY(void)
   SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)TestItem2);
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
-  todo_wine {
   ok (result == 0,
       "EM_GETMODIFY returned non-zero for WM_SETTEXT\n");
-  }
   
   /* clear the text */
   SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
