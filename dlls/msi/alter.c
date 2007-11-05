@@ -76,7 +76,7 @@ static UINT ITERATE_columns(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-static BOOL check_column_exists(MSIDATABASE *db, MSIVIEW *columns, LPCWSTR table, LPCWSTR column)
+static BOOL check_column_exists(MSIDATABASE *db, LPCWSTR table, LPCWSTR column)
 {
     MSIQUERY *view;
     MSIRECORD *rec;
@@ -124,7 +124,7 @@ static UINT alter_add_column(MSIALTERVIEW *av)
     if (r != ERROR_SUCCESS)
         return r;
 
-    if (check_column_exists(av->db, columns, av->colinfo->table, av->colinfo->column))
+    if (check_column_exists(av->db, av->colinfo->table, av->colinfo->column))
         return ERROR_BAD_QUERY_SYNTAX;
 
     r = MSI_OpenQuery(av->db, &view, query, av->colinfo->table, av->colinfo->column);
