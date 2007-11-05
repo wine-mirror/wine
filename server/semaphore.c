@@ -187,7 +187,10 @@ DECL_HANDLER(create_semaphore)
 
     if ((sem = create_semaphore( root, &name, req->attributes, req->initial, req->max, sd )))
     {
-        reply->handle = alloc_handle( current->process, sem, req->access, req->attributes );
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            reply->handle = alloc_handle( current->process, sem, req->access, req->attributes );
+        else
+            reply->handle = alloc_handle_no_access_check( current->process, sem, req->access, req->attributes );
         release_object( sem );
     }
 

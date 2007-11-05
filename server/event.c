@@ -187,7 +187,10 @@ DECL_HANDLER(create_event)
 
     if ((event = create_event( root, &name, req->attributes, req->manual_reset, req->initial_state, sd )))
     {
-        reply->handle = alloc_handle( current->process, event, req->access, req->attributes );
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            reply->handle = alloc_handle( current->process, event, req->access, req->attributes );
+        else
+            reply->handle = alloc_handle_no_access_check( current->process, event, req->access, req->attributes );
         release_object( event );
     }
 

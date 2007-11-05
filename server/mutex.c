@@ -212,7 +212,10 @@ DECL_HANDLER(create_mutex)
 
     if ((mutex = create_mutex( root, &name, req->attributes, req->owned, sd )))
     {
-        reply->handle = alloc_handle( current->process, mutex, req->access, req->attributes );
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            reply->handle = alloc_handle( current->process, mutex, req->access, req->attributes );
+        else
+            reply->handle = alloc_handle_no_access_check( current->process, mutex, req->access, req->attributes );
         release_object( mutex );
     }
 

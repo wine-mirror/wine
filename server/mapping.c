@@ -415,7 +415,10 @@ DECL_HANDLER(create_mapping)
 
     if ((obj = create_mapping( root, &name, req->attributes, req->size, req->protect, req->file_handle, sd )))
     {
-        reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
+        else
+            reply->handle = alloc_handle_no_access_check( current->process, obj, req->access, req->attributes );
         release_object( obj );
     }
 

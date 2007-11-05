@@ -226,7 +226,7 @@ static obj_handle_t alloc_entry( struct handle_table *table, void *obj, unsigned
 
 /* allocate a handle for an object, incrementing its refcount */
 /* return the handle, or 0 on error */
-static obj_handle_t alloc_handle_no_access_check( struct process *process, void *ptr, unsigned int access, unsigned int attr )
+obj_handle_t alloc_handle_no_access_check( struct process *process, void *ptr, unsigned int access, unsigned int attr )
 {
     struct object *obj = ptr;
 

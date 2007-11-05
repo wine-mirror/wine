@@ -278,7 +278,6 @@ static void test_event_security(void)
     InitializeAcl(&acl, sizeof(acl), ACL_REVISION);
     SetSecurityDescriptorDacl(&sd, TRUE, &acl, FALSE);
     handle = CreateEventA(&sa, FALSE, FALSE, __FILE__ ": Test Event");
-    todo_wine
     ok(handle != NULL, "CreateEventW with blank sd failed with error %d\n", GetLastError());
     CloseHandle(handle);
 }
