@@ -139,7 +139,7 @@ START_TEST(loader)
         },
         { &dos_header, sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x200, 0x200,
-          sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x1000,
+          sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x200,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER),
           ERROR_SUCCESS
         },
