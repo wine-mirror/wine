@@ -612,9 +612,9 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         FIXME("Unknown context MSIINSTALLCONTEXT_USERUNMANAGED\n");
 
     if (dwContext == MSIINSTALLCONTEXT_MACHINE)
-        rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, FALSE, TRUE);
+        rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, FALSE, FALSE);
     else
-        rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, TRUE, TRUE);
+        rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, TRUE, FALSE);
 
     if (rc != ERROR_SUCCESS)
         return ERROR_UNKNOWN_PRODUCT;
