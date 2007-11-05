@@ -45,7 +45,7 @@
 @ stdcall D3DXMatrixOrthoRH(ptr long long long long)
 @ stdcall D3DXMatrixOrthoLH(ptr long long long long)
 @ stdcall D3DXMatrixOrthoOffCenterRH(ptr long long long long long long)
-@ stub D3DXMatrixOrthoOffCenterLH
+@ stdcall D3DXMatrixOrthoOffCenterLH(ptr long long long long long long)
 @ stub D3DXMatrixShadow
 @ stub D3DXMatrixReflect
 @ stub D3DXQuaternionToAxisAngle
