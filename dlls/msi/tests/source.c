@@ -591,10 +591,7 @@ static void test_MsiSourceListAddSourceEx(void)
     r = pMsiSourceListAddSourceExA(prodcode, usersid,
                                   MSIINSTALLCONTEXT_USERMANAGED,
                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
     lstrcatA(keypath, usersid);
@@ -608,10 +605,7 @@ static void test_MsiSourceListAddSourceEx(void)
     r = pMsiSourceListAddSourceExA(prodcode, usersid,
                                   MSIINSTALLCONTEXT_USERMANAGED,
                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
-    todo_wine
-    {
-        ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
-    }
+    ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
 
     res = RegCreateKeyA(prodkey, "SourceList", &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -624,19 +618,13 @@ static void test_MsiSourceListAddSourceEx(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     res = RegOpenKeyA(prodkey, "SourceList\\URL", &url);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
-        ok(size == 11, "Expected 11, got %d\n", size);
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+    ok(size == 11, "Expected 11, got %d\n", size);
 
     RegCloseKey(url);
 
@@ -648,28 +636,19 @@ static void test_MsiSourceListAddSourceEx(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     res = RegOpenKeyA(prodkey, "SourceList\\URL", &url);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
-        ok(size == 11, "Expected 11, got %d\n", size);
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+    ok(size == 11, "Expected 11, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "2", NULL, NULL, (LPBYTE)value, &size);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
-        ok(size == 9, "Expected 9, got %d\n", size);
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
+    ok(size == 9, "Expected 9, got %d\n", size);
 
     RegCloseKey(url);
     RegCloseKey(prodkey);

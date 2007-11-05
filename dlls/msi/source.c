@@ -52,20 +52,28 @@ typedef struct tagMediaInfo
     DWORD   index;
 } media_info;
 
-static UINT OpenSourceKey(LPCWSTR szProduct, HKEY* key, DWORD dwOptions, BOOL user, BOOL create)
+static UINT OpenSourceKey(LPCWSTR szProduct, HKEY* key, DWORD dwOptions,
+                          MSIINSTALLCONTEXT context, BOOL create)
 {
     HKEY rootkey = 0; 
-    UINT rc; 
+    UINT rc = ERROR_FUNCTION_FAILED;
     static const WCHAR szSourceList[] = {'S','o','u','r','c','e','L','i','s','t',0};
 
-    if (user)
+    if (context == MSIINSTALLCONTEXT_USERUNMANAGED)
     {
         if (dwOptions == MSICODE_PATCH)
             rc = MSIREG_OpenUserPatchesKey(szProduct, &rootkey, create);
         else
             rc = MSIREG_OpenUserProductsKey(szProduct, &rootkey, create);
     }
-    else
+    else if (context == MSIINSTALLCONTEXT_USERMANAGED)
+    {
+        if (dwOptions == MSICODE_PATCH)
+            rc = MSIREG_OpenUserPatchesKey(szProduct, &rootkey, create);
+        else
+            rc = MSIREG_OpenLocalManagedProductKey(szProduct, &rootkey, create);
+    }
+    else if (context == MSIINSTALLCONTEXT_MACHINE)
     {
         if (dwOptions == MSICODE_PATCH)
             rc = MSIREG_OpenPatchesKey(szProduct, &rootkey, create);
@@ -235,11 +243,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
         FIXME("Unknown context MSIINSTALLCONTEXT_USERUNMANAGED\n");
 
-    if (dwContext == MSIINSTALLCONTEXT_MACHINE)
-        rc = OpenSourceKey(szProduct, &sourcekey, dwOptions, FALSE, FALSE);
-    else
-        rc = OpenSourceKey(szProduct, &sourcekey, dwOptions, TRUE, FALSE);
-
+    rc = OpenSourceKey(szProduct, &sourcekey, dwOptions, dwContext, FALSE);
     if (rc != ERROR_SUCCESS)
         return rc;
 
@@ -382,11 +386,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
         FIXME("Unknown context MSIINSTALLCONTEXT_USERUNMANAGED\n");
 
-    if (dwContext == MSIINSTALLCONTEXT_MACHINE)
-        rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, FALSE, TRUE);
-    else
-        rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, TRUE, TRUE);
-
+    rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, TRUE);
     if (rc != ERROR_SUCCESS)
         return ERROR_UNKNOWN_PRODUCT;
 
@@ -670,14 +670,7 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (szUserSid)
         FIXME("Unhandled UserSid %s\n",debugstr_w(szUserSid));
 
-    if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
-        FIXME("Unknown context MSIINSTALLCONTEXT_USERUNMANAGED\n");
-
-    if (dwContext == MSIINSTALLCONTEXT_MACHINE)
-        rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, FALSE, FALSE);
-    else
-        rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, TRUE, FALSE);
-
+    rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, FALSE);
     if (rc != ERROR_SUCCESS)
         return rc;
 
@@ -797,11 +790,7 @@ UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid,
     if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
         FIXME("Unknown context MSIINSTALLCONTEXT_USERUNMANAGED\n");
 
-    if (dwContext == MSIINSTALLCONTEXT_MACHINE)
-        rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, FALSE, TRUE);
-    else
-        rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, TRUE, TRUE);
-
+    rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, TRUE);
     if (rc != ERROR_SUCCESS)
         return ERROR_UNKNOWN_PRODUCT;
 
