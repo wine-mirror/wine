@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
+#include <lm.h>
 #include "resources.h"
 
 #define NET_START 0001
@@ -34,6 +35,45 @@ int output_string(int msg, ...)
     vprintf(msg_buffer, arguments);
     va_end(arguments);
     return 0;
+}
+
+static BOOL net_use(int argc, char *argv[])
+{
+    USE_INFO_2 *buffer, *connection;
+    DWORD read, total, resume_handle, rc, i;
+    const char *status_description[] = { "OK", "Paused", "Disconnected", "An error occurred",
+                                         "A network error occurred", "Connection is being made",
+					 "Reconnecting" };
+    resume_handle = 0;
+    buffer = NULL;
+
+    if(argc<3)
+    {
+        do {
+            rc = NetUseEnum(NULL, 2, (BYTE **) &buffer, 2048, &read, &total, &resume_handle);
+            if (rc != ERROR_MORE_DATA && rc != ERROR_SUCCESS)
+            {
+                break;
+            }
+
+	    if(total == 0)
+	    {
+	        output_string(STRING_NO_ENTRIES);
+		break;
+	    }
+
+            output_string(STRING_USE_HEADER);
+            for (i = 0, connection = buffer; i < read; ++i, ++connection)
+                output_string(STRING_USE_ENTRY, status_description[connection->ui2_status], connection->ui2_local,
+				connection->ui2_remote, connection->ui2_refcount);
+
+            if (buffer != NULL) NetApiBufferFree(buffer);
+        } while (rc == ERROR_MORE_DATA);
+
+	return TRUE;
+    }
+
+    return FALSE;
 }
 
 static BOOL StopService(SC_HANDLE SCManager, SC_HANDLE serviceHandle)
@@ -157,6 +197,11 @@ int main(int argc, char *argv[])
             return 1;
         }
         return 0;
+    }
+
+    if(!strcasecmp(argv[1], "use"))
+    {
+        if(!net_use(argc, argv)) return 1;
     }
 
     return 0;

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = net.exe
 APPMODE   = -mconsole
-IMPORTS   = user32 advapi32 kernel32
+IMPORTS   = netapi32 user32 advapi32 kernel32
 
 C_SRCS = net.c
 

@@ -37,4 +37,7 @@ STRINGTABLE
     STRING_STOP_SVC_SUCCESS, "The %s service was stopped successfully.\n"
     STRING_STOP_SVC_FAIL, "The %s service failed to stop.\n"
     STRING_HELP_USAGE, "The syntax of this command is:\n\nNET HELP command\n    -or-\nNET command /HELP\n\n   Commands available are:\n   NET HELP    NET START     NET STOP\n"
+    STRING_NO_ENTRIES, "There are no entries in the list.\n"
+    STRING_USE_HEADER, "\nStatus    Local   Remote\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY, "%s      %S      %S      Open resources: %lu\n"
 }
