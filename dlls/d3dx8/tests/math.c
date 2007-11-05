@@ -230,6 +230,14 @@ static void D3DXMatrixTest(void)
     D3DXMatrixOrthoLH(&gotmat, 2.5f, 7.4f, -3.2f, -9.8f);
     expect_mat(expectedmat,gotmat);
 
+/*____________D3DXMatrixOrthoOffCenterRH_______________*/
+    expectedmat.m[0][0] = 3.636364f; expectedmat.m[0][1] = 0.0f; expectedmat.m[0][2] = 0.0f; expectedmat.m[0][3] = 0.0f;
+    expectedmat.m[1][0] = 0.0f; expectedmat.m[1][1] = 0.180180f; expectedmat.m[1][2] = 0.0; expectedmat.m[1][3] = 0.0f;
+    expectedmat.m[2][0] = 0.0f; expectedmat.m[2][1] = 0.0f; expectedmat.m[2][2] = 0.045662f; expectedmat.m[2][3] = 0.0f;
+    expectedmat.m[3][0] = -1.727272f; expectedmat.m[3][1] = -0.567568f; expectedmat.m[3][2] = 0.424658f; expectedmat.m[3][3] = 1.0f;
+    D3DXMatrixOrthoOffCenterRH(&gotmat, 0.2f, 0.75f, -2.4f, 8.7f, 9.3, -12.6);
+    expect_mat(expectedmat,gotmat);
+
 /*____________D3DXMatrixOrthoRH_______________*/
     expectedmat.m[0][0] = 0.8f; expectedmat.m[0][1] = 0.0f; expectedmat.m[0][2] = 0.0f; expectedmat.m[0][3] = 0.0f;
     expectedmat.m[1][0] = 0.0f; expectedmat.m[1][1] = 0.270270f; expectedmat.m[1][2] = 0.0f; expectedmat.m[1][3] = 0.0f;
