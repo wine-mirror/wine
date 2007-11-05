@@ -46,9 +46,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 typedef struct tagMediaInfo
 {
+    struct list entry;
     LPWSTR  path;
     WCHAR   szIndex[10];
-    WCHAR   type;
+    DWORD   index;
 } media_info;
 
 static UINT OpenSourceKey(LPCWSTR szProduct, HKEY* key, DWORD dwOptions, BOOL user, BOOL create)
@@ -128,43 +129,6 @@ static UINT OpenURLSubkey(HKEY rootkey, HKEY *key, BOOL create)
     else
         rc = RegOpenKeyW(rootkey, URL, key); 
 
-    return rc;
-}
-
-
-static UINT find_given_source(HKEY key, LPCWSTR szSource, media_info *ss)
-{
-    DWORD index = 0;
-    WCHAR szIndex[10];
-    DWORD size;
-    DWORD val_size;
-    LPWSTR val;
-    UINT rc = ERROR_SUCCESS;
-
-    while (rc == ERROR_SUCCESS)
-    {
-        val = NULL;
-        val_size = 0;
-        size = sizeof(szIndex)/sizeof(szIndex[0]);
-        rc = RegEnumValueW(key, index, szIndex, &size, NULL, NULL, NULL, &val_size);
-        if (rc != ERROR_NO_MORE_ITEMS)
-        {
-            val = msi_alloc(val_size);
-            RegEnumValueW(key, index, szIndex, &size, NULL, NULL, (LPBYTE)val, 
-                &val_size);
-            if (lstrcmpiW(szSource,val)==0)
-            {
-                ss->path = val;
-                strcpyW(ss->szIndex,szIndex);
-                break;
-            }
-            else
-                strcpyW(ss->szIndex,szIndex);
-
-            msi_free(val);
-            index ++;
-        }
-    }
     return rc;
 }
 
@@ -578,6 +542,90 @@ UINT WINAPI MsiSourceListAddSourceExA(LPCSTR szProduct, LPCSTR szUserSid,
     return ret;
 }
 
+static void free_source_list(struct list *sourcelist)
+{
+    while (!list_empty(sourcelist))
+    {
+        media_info *info = LIST_ENTRY(list_head(sourcelist), media_info, entry);
+        list_remove(&info->entry);
+        msi_free(info->path);
+        msi_free(info);
+    }
+}
+
+static void add_source_to_list(struct list *sourcelist, media_info *info)
+{
+    media_info *iter;
+    BOOL found = FALSE;
+    static const WCHAR fmt[] = {'%','i',0};
+
+    if (list_empty(sourcelist))
+    {
+        list_add_head(sourcelist, &info->entry);
+        return;
+    }
+
+    LIST_FOR_EACH_ENTRY(iter, sourcelist, media_info, entry)
+    {
+        if (!found && info->index < iter->index)
+        {
+            found = TRUE;
+            list_add_before(&iter->entry, &info->entry);
+        }
+
+        /* update the rest of the list */
+        if (found)
+            sprintfW(iter->szIndex, fmt, ++iter->index);
+    }
+
+    if (!found)
+        list_add_after(&iter->entry, &info->entry);
+}
+
+static UINT fill_source_list(struct list *sourcelist, HKEY sourcekey, DWORD *count)
+{
+    UINT r = ERROR_SUCCESS;
+    DWORD index = 0;
+    WCHAR name[10];
+    DWORD size, val_size;
+    media_info *entry;
+
+    *count = 0;
+
+    while (r == ERROR_SUCCESS)
+    {
+        size = sizeof(name) / sizeof(name[0]);
+        r = RegEnumValueW(sourcekey, index, name, &size, NULL, NULL, NULL, &val_size);
+        if (r != ERROR_SUCCESS)
+            return r;
+
+        entry = msi_alloc(sizeof(media_info));
+        if (!entry)
+            goto error;
+
+        entry->path = msi_alloc(val_size);
+        if (!entry->path)
+            goto error;
+
+        lstrcpyW(entry->szIndex, name);
+        entry->index = atoiW(name);
+
+        size++;
+        r = RegEnumValueW(sourcekey, index, name, &size, NULL,
+                          NULL, (LPBYTE)entry->path, &val_size);
+        if (r != ERROR_SUCCESS)
+            goto error;
+
+        index = ++(*count);
+        add_source_to_list(sourcelist, entry);
+    }
+
+error:
+    *count = -1;
+    free_source_list(sourcelist);
+    return ERROR_OUTOFMEMORY;
+}
+
 /******************************************************************
  *  MsiSourceListAddSourceExW (MSI.@)
  */
@@ -588,12 +636,16 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
     HKEY sourcekey;
     HKEY typekey;
     UINT rc;
-    media_info source_struct;
+    struct list sourcelist;
+    media_info *info;
     WCHAR squished_pc[GUID_SIZE];
+    WCHAR name[10];
     LPWSTR source;
     LPCWSTR postfix;
-    DWORD size;
+    DWORD size, count;
 
+    static const WCHAR fmt[] = {'%','i',0};
+    static const WCHAR one[] = {'1',0};
     static const WCHAR backslash[] = {'\\',0};
     static const WCHAR forwardslash[] = {'/',0};
 
@@ -653,33 +705,55 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         lstrcatW(source, postfix);
     }
 
-    source_struct.szIndex[0] = 0;
-    if (find_given_source(typekey, source, &source_struct) == ERROR_SUCCESS)
+    list_init(&sourcelist);
+    rc = fill_source_list(&sourcelist, typekey, &count);
+    if (rc != ERROR_NO_MORE_ITEMS)
+        return rc;
+
+    size = (lstrlenW(source) + 1) * sizeof(WCHAR);
+
+    if (count == 0)
     {
-        DWORD current_index = atoiW(source_struct.szIndex);
-        /* found the source */
-        if (dwIndex > 0 && current_index != dwIndex)
-            FIXME("Need to reorder the sources!\n");
-        msi_free( source_struct.path );
+        rc = RegSetValueExW(typekey, one, 0, REG_EXPAND_SZ, (LPBYTE)source, size);
+        goto done;
+    }
+    else if (dwIndex > count)
+    {
+        sprintfW(name, fmt, count + 1);
+        rc = RegSetValueExW(typekey, name, 0, REG_EXPAND_SZ, (LPBYTE)source, size);
+        goto done;
     }
     else
     {
-        DWORD current_index = 0;
-        static const WCHAR fmt[] = {'%','i',0};
-        DWORD size = lstrlenW(source) * sizeof(WCHAR);
+        /* add to the end of the list */
+        if (dwIndex == 0)
+            dwIndex = count + 1;
 
-        if (source_struct.szIndex[0])
-            current_index = atoiW(source_struct.szIndex);
-        /* new source */
-        if (dwIndex > 0 && dwIndex < current_index)
-            FIXME("Need to reorder the sources!\n");
+        sprintfW(name, fmt, dwIndex);
+        info = msi_alloc(sizeof(media_info));
+        if (!info)
+        {
+            rc = ERROR_OUTOFMEMORY;
+            goto done;
+        }
 
-        current_index ++;
-        sprintfW(source_struct.szIndex,fmt,current_index);
-        rc = RegSetValueExW(typekey, source_struct.szIndex, 0, REG_EXPAND_SZ, 
-                (const BYTE *)source, size);
+        info->path = strdupW(source);
+        lstrcpyW(info->szIndex, name);
+        info->index = dwIndex;
+        add_source_to_list(&sourcelist, info);
+
+        LIST_FOR_EACH_ENTRY(info, &sourcelist, media_info, entry)
+        {
+            size = (lstrlenW(info->path) + 1) * sizeof(WCHAR);
+            rc = RegSetValueExW(typekey, info->szIndex, 0,
+                                REG_EXPAND_SZ, (LPBYTE)info->path, size);
+            if (rc != ERROR_SUCCESS)
+                goto done;
+        }
     }
 
+done:
+    free_source_list(&sourcelist);
     msi_free(source);
     RegCloseKey(typekey);
     RegCloseKey(sourcekey);

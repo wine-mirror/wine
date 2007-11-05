@@ -449,29 +449,20 @@ static void test_MsiSourceListAddSourceEx(void)
     size = MAX_PATH;
     res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "third/"), "Expected 'third/', got %s\n", value);
-        ok(size == 7, "Expected 7, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "third/"), "Expected 'third/', got %s\n", value);
+    ok(size == 7, "Expected 7, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "2", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
-        ok(size == 11, "Expected 11, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+    ok(size == 11, "Expected 11, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "3", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
-        ok(size == 9, "Expected 9, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
+    ok(size == 9, "Expected 9, got %d\n", size);
 
     /* add another source, index > N */
     r = pMsiSourceListAddSourceExA(prodcode, usersid,
@@ -482,29 +473,20 @@ static void test_MsiSourceListAddSourceEx(void)
     size = MAX_PATH;
     res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "third/"), "Expected 'third/', got %s\n", value);
-        ok(size == 7, "Expected 7, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "third/"), "Expected 'third/', got %s\n", value);
+    ok(size == 7, "Expected 7, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "2", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
-        ok(size == 11, "Expected 11, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+    ok(size == 11, "Expected 11, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "3", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
-        ok(size == 9, "Expected 9, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
+    ok(size == 9, "Expected 9, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "4", NULL, NULL, (LPBYTE)value, &size);
@@ -536,29 +518,20 @@ static void test_MsiSourceListAddSourceEx(void)
     size = MAX_PATH;
     res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "third/"), "Expected 'third/', got %s\n", value);
-        ok(size == 7, "Expected 7, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "third/"), "Expected 'third/', got %s\n", value);
+    ok(size == 7, "Expected 7, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "2", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
-        ok(size == 11, "Expected 11, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+    ok(size == 11, "Expected 11, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "3", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
-        ok(size == 9, "Expected 9, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
+    ok(size == 9, "Expected 9, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "4", NULL, NULL, (LPBYTE)value, &size);
