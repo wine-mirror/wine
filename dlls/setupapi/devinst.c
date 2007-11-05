@@ -164,6 +164,7 @@ static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
         }
         HeapFree(GetProcessHeap(), 0, ifaceInfo->referenceString);
         HeapFree(GetProcessHeap(), 0, ifaceInfo->symbolicLink);
+        HeapFree(GetProcessHeap(), 0, ifaceInfo);
     }
     HeapFree(GetProcessHeap(), 0, instances->instances);
 }
