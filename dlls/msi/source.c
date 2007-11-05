@@ -556,6 +556,29 @@ UINT WINAPI MsiSourceListAddSourceA( LPCSTR szProduct, LPCSTR szUserName,
 }
 
 /******************************************************************
+ *  MsiSourceListAddSourceExA (MSI.@)
+ */
+UINT WINAPI MsiSourceListAddSourceExA(LPCSTR szProduct, LPCSTR szUserSid,
+        MSIINSTALLCONTEXT dwContext, DWORD dwOptions, LPCSTR szSource, DWORD dwIndex)
+{
+    UINT ret;
+    LPWSTR product, usersid, source;
+
+    product = strdupAtoW(szProduct);
+    usersid = strdupAtoW(szUserSid);
+    source = strdupAtoW(szSource);
+
+    ret = MsiSourceListAddSourceExW(product, usersid, dwContext,
+                                    dwOptions, source, dwIndex);
+
+    msi_free(product);
+    msi_free(usersid);
+    msi_free(source);
+
+    return ret;
+}
+
+/******************************************************************
  *  MsiSourceListAddSourceExW (MSI.@)
  */
 UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,

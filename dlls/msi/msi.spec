@@ -248,7 +248,7 @@
 252 stub MsiQueryFeatureStateExW
 253 stub MsiDeterminePatchSequenceA
 254 stub MsiDeterminePatchSequenceW
-255 stub MsiSourceListAddSourceExA
+255 stdcall MsiSourceListAddSourceExA(str str long long str long)
 256 stdcall MsiSourceListAddSourceExW(wstr wstr long long wstr long)
 257 stub MsiSourceListClearSourceA
 258 stub MsiSourceListClearSourceW
