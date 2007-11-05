@@ -635,9 +635,9 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationA(
         AlternativePlatformInfo, &OriginalFileInfoW);
     if (ret)
     {
-        WideCharToMultiByte(CP_ACP, 0, OriginalFileInfoW.OriginalInfName, MAX_PATH,
+        WideCharToMultiByte(CP_ACP, 0, OriginalFileInfoW.OriginalInfName, -1,
             OriginalFileInfo->OriginalInfName, MAX_PATH, NULL, NULL);
-        WideCharToMultiByte(CP_ACP, 0, OriginalFileInfoW.OriginalCatalogName, MAX_PATH,
+        WideCharToMultiByte(CP_ACP, 0, OriginalFileInfoW.OriginalCatalogName, -1,
             OriginalFileInfo->OriginalCatalogName, MAX_PATH, NULL, NULL);
     }
 
