@@ -136,7 +136,7 @@ static void WINAPI dump_INTERPRETER_OPT_FLAGS(INTERPRETER_OPT_FLAGS Oi2Flags)
     TRACE("\n");
 }
 
-#define ARG_FROM_OFFSET(stubMsg, offset) ((stubMsg).StackTop + (offset))
+#define ARG_FROM_OFFSET(args, offset) ((args) + (offset))
 
 static PFORMAT_STRING client_get_handle(
     PMIDL_STUB_MESSAGE pStubMsg, const NDR_PROC_HEADER *pProcHeader,
@@ -156,9 +156,9 @@ static PFORMAT_STRING client_get_handle(
                 TRACE("Explicit primitive handle @ %d\n", pDesc->offset);
 
                 if (pDesc->flag) /* pointer to binding */
-                    *phBinding = **(handle_t **)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                    *phBinding = **(handle_t **)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 else
-                    *phBinding = *(handle_t *)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                    *phBinding = *(handle_t *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 return pFormat + sizeof(NDR_EHD_PRIMITIVE);
             }
         case RPC_FC_BIND_GENERIC: /* explicit generic */
@@ -171,9 +171,9 @@ static PFORMAT_STRING client_get_handle(
                 TRACE("Explicit generic binding handle #%d\n", pDesc->binding_routine_pair_index);
 
                 if (pDesc->flag_and_size & HANDLE_PARAM_IS_VIA_PTR)
-                    pArg = *(void **)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                    pArg = *(void **)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 else
-                    pArg = (void *)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                    pArg = (void *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 memcpy(&pObject, pArg, pDesc->flag_and_size & 0xf);
                 pGenPair = &pStubMsg->StubDesc->aGenericBindingRoutinePairs[pDesc->binding_routine_pair_index];
                 *phBinding = pGenPair->pfnBind(pObject);
@@ -187,10 +187,10 @@ static PFORMAT_STRING client_get_handle(
                 if (pDesc->flags & HANDLE_PARAM_IS_VIA_PTR)
                 {
                     TRACE("\tHANDLE_PARAM_IS_VIA_PTR\n");
-                    context_handle = **(NDR_CCONTEXT **)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                    context_handle = **(NDR_CCONTEXT **)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 }
                 else
-                    context_handle = *(NDR_CCONTEXT *)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                    context_handle = *(NDR_CCONTEXT *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 if ((pDesc->flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL) &&
                     !context_handle)
                 {
@@ -254,9 +254,9 @@ static void client_free_handle(
                 TRACE("Explicit generic binding handle #%d\n", pDesc->binding_routine_pair_index);
 
                 if (pDesc->flag_and_size & HANDLE_PARAM_IS_VIA_PTR)
-                    pArg = *(void **)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                    pArg = *(void **)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 else
-                    pArg = (void *)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                    pArg = (void *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 memcpy(&pObject, pArg, pDesc->flag_and_size & 0xf);
                 pGenPair = &pStubMsg->StubDesc->aGenericBindingRoutinePairs[pDesc->binding_routine_pair_index];
                 pGenPair->pfnUnbind(pObject, hBinding);
@@ -285,7 +285,8 @@ static void client_free_handle(
 }
 
 static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
-    int phase, unsigned short number_of_params, unsigned char *pRetVal)
+    int phase, unsigned char *args, unsigned short number_of_params,
+    unsigned char *pRetVal)
 {
     /* current format string offset */
     int current_offset = 0;
@@ -301,7 +302,7 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
         unsigned char * pArg;
 
         current_stack_offset = pParam->stack_offset;
-        pArg = ARG_FROM_OFFSET(*pStubMsg, current_stack_offset);
+        pArg = ARG_FROM_OFFSET(args, current_stack_offset);
 
         TRACE("param[%d]: new format\n", i);
         TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(pParam->param_attributes); TRACE("\n");
@@ -437,8 +438,9 @@ static unsigned int type_stack_size(unsigned char fc)
     }
 }
 
-static void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
-    PFORMAT_STRING pFormat, int phase, unsigned short stack_size,
+void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
+    PFORMAT_STRING pFormat, int phase, unsigned char *args,
+    unsigned short stack_size,
     unsigned char *pRetVal, BOOL object_proc)
 {
     /* current format string offset */
@@ -460,7 +462,7 @@ static void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
          * if present, so adjust this */
         unsigned short current_stack_offset_adjusted = current_stack_offset +
             (object_proc ? sizeof(void *) : 0);
-        unsigned char * pArg = ARG_FROM_OFFSET(*pStubMsg, current_stack_offset_adjusted);
+        unsigned char * pArg = ARG_FROM_OFFSET(args, current_stack_offset_adjusted);
 
         /* no more parameters; exit loop */
         if (current_stack_offset_adjusted >= stack_size)
@@ -716,11 +718,11 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 case PROXY_MARSHAL:
                 case PROXY_UNMARSHAL:
                     if (bV2Format)
-                        client_do_args(&stubMsg, pFormat, phase, number_of_params,
-                            (unsigned char *)&RetVal);
+                        client_do_args(&stubMsg, pFormat, phase, stubMsg.StackTop,
+                            number_of_params, (unsigned char *)&RetVal);
                     else
-                        client_do_args_old_format(&stubMsg, pFormat, phase, stack_size,
-                            (unsigned char *)&RetVal,
+                        client_do_args_old_format(&stubMsg, pFormat, phase,
+                            stubMsg.StackTop, stack_size, (unsigned char *)&RetVal,
                             (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT));
                     break;
                 default:
@@ -794,11 +796,11 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
             case PROXY_MARSHAL:
             case PROXY_UNMARSHAL:
                 if (bV2Format)
-                    client_do_args(&stubMsg, pFormat, phase, number_of_params,
-                        (unsigned char *)&RetVal);
+                    client_do_args(&stubMsg, pFormat, phase, stubMsg.StackTop,
+                        number_of_params, (unsigned char *)&RetVal);
                 else
-                    client_do_args_old_format(&stubMsg, pFormat, phase, stack_size,
-                        (unsigned char *)&RetVal,
+                    client_do_args_old_format(&stubMsg, pFormat, phase,
+                        stubMsg.StackTop, stack_size, (unsigned char *)&RetVal,
                         (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT));
                 break;
             default:

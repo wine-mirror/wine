@@ -218,7 +218,7 @@
 @ stdcall NdrMapCommAndFaultStatus(ptr ptr ptr long)
 @ stub NdrMarkNextActivePipe
 @ stub NdrMesProcEncodeDecode2
-@ stub NdrMesProcEncodeDecode
+@ varargs NdrMesProcEncodeDecode(ptr ptr ptr)
 @ stub NdrMesSimpleTypeAlignSize
 @ stub NdrMesSimpleTypeDecode
 @ stub NdrMesSimpleTypeEncode
