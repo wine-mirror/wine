@@ -680,50 +680,52 @@ static void test_MsiQueryComponentState(void)
     LONG res;
     UINT r;
 
+    static const INSTALLSTATE MAGIC_ERROR = 0xdeadbeef;
+
     create_test_guid(prodcode, prod_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
     get_user_sid(&usersid);
 
     /* NULL szProductCode */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(NULL, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
     /* empty szProductCode */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA("", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);\
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
     /* random szProductCode */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA("random", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
     /* GUID-length szProductCode */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA("DJANE93KNDNAS-2KN2NR93KMN3LN13=L1N3KDE", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
     /* GUID-length with brackets */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA("{JANE93KNDNAS-2KN2NR93KMN3LN13=L1N3KD}", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
     /* actual GUID */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
     lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
     lstrcatA(keypath, prod_squashed);
@@ -731,7 +733,7 @@ static void test_MsiQueryComponentState(void)
     res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -748,16 +750,16 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* local system product key exists */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
     res = RegSetValueExA(prodkey, "LocalPackage", 0, REG_SZ, (const BYTE *)"msitest.msi", 11);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* LocalPackage value exists */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -769,7 +771,7 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* component key exists */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -778,7 +780,7 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* component\product exists */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_NOTUSED, "Expected INSTALLSTATE_NOTUSED, got %d\n", state);
@@ -786,7 +788,7 @@ static void test_MsiQueryComponentState(void)
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"hi", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
@@ -800,10 +802,10 @@ static void test_MsiQueryComponentState(void)
 
     /* MSIINSTALLCONTEXT_USERUNMANAGED */
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
     lstrcatA(keypath, prod_squashed);
@@ -811,7 +813,7 @@ static void test_MsiQueryComponentState(void)
     res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &prodkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -833,7 +835,7 @@ static void test_MsiQueryComponentState(void)
 
     RegCloseKey(prodkey);
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -847,7 +849,7 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* component key exists */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -856,7 +858,7 @@ static void test_MsiQueryComponentState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* component\product exists */
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_NOTUSED, "Expected INSTALLSTATE_NOTUSED, got %d\n", state);
@@ -864,17 +866,17 @@ static void test_MsiQueryComponentState(void)
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"hi", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     /* MSIINSTALLCONTEXT_USERMANAGED */
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
     lstrcatA(keypath, prod_squashed);
@@ -882,10 +884,10 @@ static void test_MsiQueryComponentState(void)
     res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &prodkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
+    ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
     RegDeleteKeyA(prodkey, "");
     RegCloseKey(prodkey);
@@ -898,7 +900,7 @@ static void test_MsiQueryComponentState(void)
     res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -918,7 +920,7 @@ static void test_MsiQueryComponentState(void)
     res = RegSetValueExA(prodkey, "ManagedLocalPackage", 0, REG_SZ, (const BYTE *)"msitest.msi", 11);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = 0xdeadbeef;
+    state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
