@@ -122,7 +122,7 @@ static int string_to_nscmptype(LPCWSTR str)
 
 static PRUint16 get_node_type(nsIDOMNode *node)
 {
-    PRUint16 type = 0xfff;
+    PRUint16 type = 0;
 
     if(node)
         nsIDOMNode_GetNodeType(node, &type);
@@ -189,6 +189,8 @@ static void wstrbuf_append_nodetxt(wstrbuf_t *buf, LPCWSTR str, int len)
 {
     const WCHAR *s = str;
     WCHAR *d;
+
+    TRACE("%s\n", debugstr_wn(str, len));
 
     if(buf->len+len >= buf->size) {
         buf->size = 2*buf->len+len;
@@ -261,6 +263,9 @@ static BOOL fill_nodestr(dompos_t *pos)
     nsIDOMText_GetData(text, &pos->str);
     nsIDOMText_Release(text);
     nsAString_GetData(&pos->str, &pos->p, NULL);
+
+    if(pos->off == -1)
+        pos->off = *pos->p ? strlenW(pos->p)-1 : 0;
 
     return TRUE;
 }
@@ -416,7 +421,7 @@ static void set_range_pos(HTMLTxtRange *This, BOOL start, dompos_t *pos)
         else
             nsres = nsIDOMRange_SetStartBefore(This->nsrange, pos->node);
     }else {
-        if(pos->type == TEXT_NODE)
+        if(pos->type == TEXT_NODE && pos->p[pos->off+1])
             nsres = nsIDOMRange_SetEnd(This->nsrange, pos->node, pos->off+1);
         else
             nsres = nsIDOMRange_SetEndAfter(This->nsrange, pos->node);
@@ -520,6 +525,27 @@ static WCHAR get_pos_char(const dompos_t *pos)
     return 0;
 }
 
+static void end_space(const dompos_t *pos, dompos_t *new_pos)
+{
+    const WCHAR *p;
+
+    *new_pos = *pos;
+    dompos_addref(new_pos);
+
+    if(pos->type != TEXT_NODE)
+        return;
+
+    p = new_pos->p+new_pos->off;
+
+    if(!*p || !isspace(*p))
+        return;
+
+    while(p[1] && isspace(p[1]))
+        p++;
+
+    new_pos->off = p - new_pos->p;
+}
+
 static WCHAR next_char(const dompos_t *pos, dompos_t *new_pos)
 {
     nsIDOMNode *iter, *tmp;
@@ -528,7 +554,13 @@ static WCHAR next_char(const dompos_t *pos, dompos_t *new_pos)
     WCHAR cspace = 0;
 
     if(pos->type == TEXT_NODE && pos->off != -1 && pos->p[pos->off]) {
-        p = pos->p+pos->off+1;
+        p = pos->p+pos->off;
+
+        if(isspace(*p))
+            while(isspaceW(*++p));
+        else
+            p++;
+
         if(*p && isspaceW(*p)) {
             cspace = ' ';
             while(p[1] && isspaceW(p[1]))
@@ -540,7 +572,7 @@ static WCHAR next_char(const dompos_t *pos, dompos_t *new_pos)
             new_pos->off = p - pos->p;
             dompos_addref(new_pos);
 
-            return *p;
+            return cspace ? cspace : *p;
         }else {
             last_space = *pos;
             last_space.off = p - pos->p;
@@ -719,8 +751,7 @@ static long move_next_chars(long cnt, const dompos_t *pos, BOOL col, const dompo
         ret++;
 
     if(ret >= cnt) {
-        *new_pos = *pos;
-        dompos_addref(new_pos);
+        end_space(pos, new_pos);
         return ret;
     }
 
@@ -771,33 +802,14 @@ static long move_prev_chars(HTMLTxtRange *This, long cnt, const dompos_t *pos, B
 
         ret++;
 
-        if(bound_pos && dompos_cmp(&iter, bound_pos))
+        if(bound_pos && dompos_cmp(&iter, bound_pos)) {
             *bounded = TRUE;
+            cnt--;
+        }
     }
 
     *new_pos = iter;
-    return ret;
-}
-
-static BOOL find_next_space(const dompos_t *pos, dompos_t *ret)
-{
-    dompos_t iter, tmp;
-    WCHAR c;
-
-    c = next_char(pos, &iter);
-    if(!c) {
-        *ret = iter;
-        return FALSE;
-    }
-
-    while(c && !isspaceW(c)) {
-        tmp = iter;
-        c = next_char(&tmp, &iter);
-        dompos_release(&tmp);
-    }
-
-    *ret = iter;
-    return TRUE;
+    return bounded && *bounded ? ret+1 : ret;
 }
 
 static long find_prev_space(HTMLTxtRange *This, const dompos_t *pos, BOOL first_space, dompos_t *ret)
@@ -825,21 +837,67 @@ static long find_prev_space(HTMLTxtRange *This, const dompos_t *pos, BOOL first_
     return TRUE;
 }
 
+static int find_word_end(const dompos_t *pos, dompos_t *ret)
+{
+    dompos_t iter, tmp;
+    int cnt = 1;
+    WCHAR c;
+    c = get_pos_char(pos);
+    if(isspaceW(c)) {
+        *ret = *pos;
+        dompos_addref(ret);
+        return 0;
+    }
+
+    c = next_char(pos, &iter);
+    if(!c) {
+        *ret = iter;
+        return 0;
+    }
+    if(c == '\n') {
+        *ret = *pos;
+        dompos_addref(ret);
+        return 0;
+    }
+
+    while(c && !isspaceW(c)) {
+        tmp = iter;
+        c = next_char(&tmp, &iter);
+        if(c == '\n') {
+            dompos_release(&iter);
+            iter = tmp;
+        }else {
+            cnt++;
+            dompos_release(&tmp);
+        }
+    }
+
+    *ret = iter;
+    return cnt;
+}
+
 static long move_next_words(long cnt, const dompos_t *pos, dompos_t *new_pos)
 {
     dompos_t iter, tmp;
     long ret = 0;
+    WCHAR c;
 
-    iter = *pos;
-    dompos_addref(&iter);
-
-    while(ret < cnt) {
-        if(!find_next_space(&iter, &tmp))
-            break;
-
+    c = get_pos_char(pos);
+    if(isspaceW(c)) {
+        end_space(pos, &iter);
         ret++;
-        dompos_release(&iter);
-        iter = tmp;
+    }else {
+        c = next_char(pos, &iter);
+        if(c && isspaceW(c))
+            ret++;
+    }
+
+    while(c && ret < cnt) {
+        tmp = iter;
+        c = next_char(&tmp, &iter);
+        dompos_release(&tmp);
+        if(isspaceW(c))
+            ret++;
     }
 
     *new_pos = iter;
@@ -1192,26 +1250,30 @@ static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIA
 
     switch(unit) {
     case RU_WORD: {
-        dompos_t end_pos, start_pos, new_pos;
+        dompos_t end_pos, start_pos, new_start_pos, new_end_pos;
+        PRBool collapsed;
+
+        nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
 
         get_cur_pos(This, TRUE, &start_pos);
         get_cur_pos(This, FALSE, &end_pos);
 
-        if(!isspaceW(get_pos_char(&end_pos))) {
-            if(find_next_space(&end_pos, &new_pos)) {
-                set_range_pos(This, FALSE, &new_pos);
-                *Success = VARIANT_TRUE;
-            }
-            dompos_release(&new_pos);
-        }
-
-        if(find_prev_space(This, &start_pos, TRUE, &new_pos)) {
-            set_range_pos(This, TRUE, &new_pos);
+        if(find_word_end(&end_pos, &new_end_pos) || collapsed) {
+            set_range_pos(This, FALSE, &new_end_pos);
             *Success = VARIANT_TRUE;
         }
 
-        dompos_release(&new_pos);
+        if(start_pos.type && (get_pos_char(&end_pos) || !dompos_cmp(&new_end_pos, &end_pos))) {
+            if(find_prev_space(This, &start_pos, TRUE, &new_start_pos)) {
+                set_range_pos(This, TRUE, &new_start_pos);
+                *Success = VARIANT_TRUE;
+            }
+            dompos_release(&new_start_pos);
+        }
+
+        dompos_release(&new_end_pos);
         dompos_release(&end_pos);
+        dompos_release(&start_pos);
 
         break;
     }
@@ -1268,11 +1330,9 @@ static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
     if(unit == RU_UNKNOWN)
         return E_INVALIDARG;
 
-    IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
-
     if(!Count) {
         *ActualCount = 0;
-        return S_OK;
+        return IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
     }
 
     switch(unit) {
@@ -1284,8 +1344,9 @@ static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
         if(Count > 0) {
             *ActualCount = move_next_chars(Count, &cur_pos, TRUE, NULL, NULL, &new_pos);
             set_range_pos(This, FALSE, &new_pos);
-            IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
             dompos_release(&new_pos);
+
+            IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
         }else {
             *ActualCount = -move_prev_chars(This, -Count, &cur_pos, FALSE, NULL, NULL, &new_pos);
             set_range_pos(This, TRUE, &new_pos);
@@ -1305,8 +1366,8 @@ static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
         if(Count > 0) {
             *ActualCount = move_next_words(Count, &cur_pos, &new_pos);
             set_range_pos(This, FALSE, &new_pos);
-            IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
             dompos_release(&new_pos);
+            IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
         }else {
             *ActualCount = -move_prev_words(This, -Count, &cur_pos, &new_pos);
             set_range_pos(This, TRUE, &new_pos);

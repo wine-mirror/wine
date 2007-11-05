@@ -497,12 +497,14 @@ static void _test_range_moveend(unsigned line, IHTMLTxtRange *range, LPWSTR unit
 }
 
 #define test_range_put_text(r,t) _test_range_put_text(__LINE__,r,t)
-static void _test_range_put_text(unsigned line, IHTMLTxtRange *range, LPCWSTR text)
+static void _test_range_put_text(unsigned line, IHTMLTxtRange *range, const char *text)
 {
     HRESULT hres;
+    BSTR bstr = a2bstr(text);
 
-    hres = IHTMLTxtRange_put_text(range, (BSTR)text);
+    hres = IHTMLTxtRange_put_text(range, bstr);
     ok_(__FILE__,line) (hres == S_OK, "put_text failed: %08x\n", hres);
+    SysFreeString(bstr);
     _test_range_text(line, range, NULL);
 }
 
@@ -759,6 +761,14 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_text(range, NULL);
     test_range_moveend(range, characterW, 3, 3);
     test_range_text(range, "c 1");
+    test_range_expand(range, texteditW, VARIANT_TRUE, "test abc 123\r\nit's text");
+    test_range_collapse(range, TRUE);
+    test_range_move(range, characterW, 4, 4);
+    test_range_moveend(range, characterW, 1, 1);
+    test_range_text(range, " ");
+    test_range_move(range, wordW, 1, 1);
+    test_range_moveend(range, characterW, 2, 2);
+    test_range_text(range, "ab");
 
     IHTMLTxtRange_Release(range);
 
@@ -838,7 +848,7 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     test_range_collapse(range, TRUE);
     test_range_expand(range, wordW, VARIANT_TRUE, "test ");
-    test_range_put_text(range, wordW);
+    test_range_put_text(range, "word");
     test_range_text(body_range, "wordabc 123\r\nit's text");
     test_range_text(range, NULL);
     test_range_moveend(range, characterW, 3, 3);
@@ -878,6 +888,20 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_expand(range, texteditW, VARIANT_TRUE, "wordabc 123\r\nit's text");
     test_range_move(range, characterW, 3, 3);
     test_range_expand(range, wordW, VARIANT_TRUE, "wordabc ");
+    test_range_moveend(range, characterW, -4, -4);
+    test_range_put_text(range, "abc def ");
+    test_range_expand(range, texteditW, VARIANT_TRUE, "abc def abc 123\r\nit's text");
+    test_range_move(range, wordW, 1, 1);
+    test_range_movestart(range, characterW, -1, -1);
+    test_range_text(range, " ");
+    test_range_move(range, wordW, 1, 1);
+    test_range_moveend(range, characterW, 3, 3);
+    test_range_text(range, "def");
+    test_range_put_text(range, "xyz");
+    test_range_moveend(range, characterW, 1, 1);
+    test_range_move(range, wordW, 1, 1);
+    test_range_moveend(range, characterW, 2, 2);
+    test_range_text(range, "ab");
 
     IHTMLTxtRange_Release(range);
 }
