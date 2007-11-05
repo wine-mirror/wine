@@ -235,9 +235,8 @@ BOOL WINAPI CloseFigure(HDC hdc)
         }
         else
         {
-            /* FIXME: Shouldn't we draw a line to the beginning of the
-               figure? */
             /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
+            /* It is not necessary to draw a line, PT_CLOSEFIGURE is a virtual closing line itself */
             if(dc->path.numEntriesUsed)
             {
                 dc->path.pFlags[dc->path.numEntriesUsed-1]|=PT_CLOSEFIGURE;

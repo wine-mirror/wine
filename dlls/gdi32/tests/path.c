@@ -391,10 +391,41 @@ done:
     ReleaseDC(0, hdc);
 }
 
+static void test_closefigure(void) {
+    BOOL retb;
+    int nSize, nSizeWitness;
+    HDC hdc = GetDC(0);
+
+    BeginPath(hdc);
+    MoveToEx(hdc, 95, 95, NULL);
+    LineTo(hdc, 95,  0);
+    LineTo(hdc,  0, 95);
+
+    retb = CloseFigure(hdc);
+    EndPath(hdc);
+    nSize = GetPath(hdc, NULL, NULL, 0);
+
+    AbortPath(hdc);
+
+    BeginPath(hdc);
+    MoveToEx(hdc, 95, 95, NULL);
+    LineTo(hdc, 95,  0);
+    LineTo(hdc,  0, 95);
+
+    EndPath(hdc);
+    nSizeWitness = GetPath(hdc, NULL, NULL, 0);
+
+    /* This test shows CloseFigure does not have to add a point at the end of the path */
+    ok(nSize == nSizeWitness, "Wrong number of points, no point should be added by CloseFigure\n");
+
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(path)
 {
     test_widenpath();
     test_arcto();
     test_anglearc();
     test_polydraw();
+    test_closefigure();
 }
