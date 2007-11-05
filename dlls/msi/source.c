@@ -78,7 +78,7 @@ static UINT OpenSourceKey(LPCWSTR szProduct, HKEY* key, DWORD dwOptions,
         if (dwOptions == MSICODE_PATCH)
             rc = MSIREG_OpenPatchesKey(szProduct, &rootkey, create);
         else
-            rc = MSIREG_OpenProductsKey(szProduct, &rootkey, create);
+            rc = MSIREG_OpenLocalClassesProductKey(szProduct, &rootkey, create);
     }
 
     if (rc)
