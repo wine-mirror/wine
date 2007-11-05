@@ -667,8 +667,8 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         return ERROR_FUNCTION_FAILED;
     }
 
-    if (szUserSid)
-        FIXME("Unhandled UserSid %s\n",debugstr_w(szUserSid));
+    if (szUserSid && (dwContext & MSIINSTALLCONTEXT_MACHINE))
+        return ERROR_INVALID_PARAMETER;
 
     rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, FALSE);
     if (rc != ERROR_SUCCESS)

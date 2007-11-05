@@ -659,10 +659,7 @@ static void test_MsiSourceListAddSourceEx(void)
     r = pMsiSourceListAddSourceExA(prodcode, usersid,
                                   MSIINSTALLCONTEXT_MACHINE,
                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     r = pMsiSourceListAddSourceExA(prodcode, NULL,
                                   MSIINSTALLCONTEXT_MACHINE,
