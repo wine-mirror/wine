@@ -4850,9 +4850,12 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     LPWSTR deformatted = NULL, ptr;
     DWORD flags, type, size;
     LONG res;
-    HKEY env = NULL, root = HKEY_CURRENT_USER;
+    HKEY env = NULL, root;
+    LPCWSTR environment;
 
-    static const WCHAR environment[] =
+    static const WCHAR user_env[] =
+        {'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR machine_env[] =
         {'S','y','s','t','e','m','\\',
          'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
          'C','o','n','t','r','o','l','\\',
@@ -4878,9 +4881,18 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     value = deformatted;
 
     if (flags & ENV_MOD_MACHINE)
+    {
+        environment = machine_env;
         root = HKEY_LOCAL_MACHINE;
+    }
+    else
+    {
+        environment = user_env;
+        root = HKEY_CURRENT_USER;
+    }
 
-    res = RegOpenKeyExW(root, environment, 0, KEY_ALL_ACCESS, &env);
+    res = RegCreateKeyExW(root, environment, 0, NULL, 0,
+                          KEY_ALL_ACCESS, NULL, &env, NULL);
     if (res != ERROR_SUCCESS)
         goto done;
 
