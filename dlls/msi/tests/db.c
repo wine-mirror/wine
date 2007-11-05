@@ -698,6 +698,7 @@ static void test_viewmodify(void)
 {
     MSIHANDLE hdb = 0, hview = 0, hrec = 0;
     UINT r;
+    MSIDBERROR err;
     const char *query;
     char buffer[0x100];
     DWORD sz;
@@ -717,8 +718,8 @@ static void test_viewmodify(void)
     /* check what the error function reports without doing anything */
     sz = 0;
     /* passing NULL as the 3rd param make function to crash on older platforms */
-    r = MsiViewGetError( 0, NULL, &sz );
-    ok(r == MSIDBERROR_INVALIDARG, "MsiViewGetError return\n");
+    err = MsiViewGetError( 0, NULL, &sz );
+    ok(err == MSIDBERROR_INVALIDARG, "MsiViewGetError return\n");
 
     /* open a view */
     query = "SELECT * FROM `phone`";
@@ -726,31 +727,31 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
 
     /* see what happens with a good hview and bad args */
-    r = MsiViewGetError( hview, NULL, NULL );
-    ok(r == MSIDBERROR_INVALIDARG || r == MSIDBERROR_NOERROR,
-       "MsiViewGetError returns %u (expected -3)\n", r);
-    r = MsiViewGetError( hview, buffer, NULL );
-    ok(r == MSIDBERROR_INVALIDARG, "MsiViewGetError return\n");
+    err = MsiViewGetError( hview, NULL, NULL );
+    ok(err == MSIDBERROR_INVALIDARG || err == MSIDBERROR_NOERROR,
+       "MsiViewGetError returns %u (expected -3)\n", err);
+    err = MsiViewGetError( hview, buffer, NULL );
+    ok(err == MSIDBERROR_INVALIDARG, "MsiViewGetError return\n");
 
     /* see what happens with a zero length buffer */
     sz = 0;
     buffer[0] = 'x';
-    r = MsiViewGetError( hview, buffer, &sz );
-    ok(r == MSIDBERROR_MOREDATA, "MsiViewGetError return\n");
+    err = MsiViewGetError( hview, buffer, &sz );
+    ok(err == MSIDBERROR_MOREDATA, "MsiViewGetError return\n");
     ok(buffer[0] == 'x', "buffer cleared\n");
     ok(sz == 0, "size not zero\n");
 
     /* ok this one is strange */
     sz = 0;
-    r = MsiViewGetError( hview, NULL, &sz );
-    ok(r == MSIDBERROR_NOERROR, "MsiViewGetError return\n");
+    err = MsiViewGetError( hview, NULL, &sz );
+    ok(err == MSIDBERROR_NOERROR, "MsiViewGetError return\n");
     ok(sz == 0, "size not zero\n");
 
     /* see if it really has an error */
     sz = sizeof buffer;
     buffer[0] = 'x';
-    r = MsiViewGetError( hview, buffer, &sz );
-    ok(r == MSIDBERROR_NOERROR, "MsiViewGetError return\n");
+    err = MsiViewGetError( hview, buffer, &sz );
+    ok(err == MSIDBERROR_NOERROR, "MsiViewGetError return\n");
     ok(buffer[0] == 0, "buffer not cleared\n");
     ok(sz == 0, "size not zero\n");
 
