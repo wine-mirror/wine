@@ -441,11 +441,9 @@ DWORD WINAPI WsControl(DWORD protocol,
 
                   if (!pcbResponseInfoLen)
                      return ERROR_BAD_ENVIRONMENT;
-                  GetIpForwardTable(NULL, &routeTableSize, FALSE);
-                  if (!routeTableSize) {
-                      *pcbResponseInfoLen = 0;
-                      return WSCTL_SUCCESS;
-                  }
+                  ret = GetIpForwardTable(NULL, &routeTableSize, FALSE);
+                  if (ret != ERROR_INSUFFICIENT_BUFFER)
+                      return ret;
                   numRoutes = (routeTableSize - sizeof(MIB_IPFORWARDTABLE))
                    / sizeof(MIB_IPFORWARDROW) + 1;
                   if (*pcbResponseInfoLen < sizeof(IPRouteEntry) * numRoutes)
@@ -494,11 +492,9 @@ DWORD WINAPI WsControl(DWORD protocol,
 
                   if (!pcbResponseInfoLen)
                      return ERROR_BAD_ENVIRONMENT;
-                  GetIpNetTable(NULL, &arpTableSize, FALSE);
-                  if (!arpTableSize) {
-                      *pcbResponseInfoLen = 0;
-                      return WSCTL_SUCCESS;
-                  }
+                  ret = GetIpNetTable(NULL, &arpTableSize, FALSE);
+                  if (ret != ERROR_INSUFFICIENT_BUFFER)
+                      return ret;
                   numEntries = (arpTableSize - sizeof(MIB_IPNETTABLE))
                    / sizeof(MIB_IPNETROW) + 1;
                   if (*pcbResponseInfoLen < sizeof(MIB_IPNETROW) * numEntries)
@@ -536,11 +532,9 @@ DWORD WINAPI WsControl(DWORD protocol,
 
                   if (!pcbResponseInfoLen)
                      return ERROR_BAD_ENVIRONMENT;
-                  GetTcpTable(NULL, &tcpTableSize, FALSE);
-                  if (!tcpTableSize) {
-                      *pcbResponseInfoLen = 0;
-                      return WSCTL_SUCCESS;
-                  }
+                  ret = GetTcpTable(NULL, &tcpTableSize, FALSE);
+                  if (ret != ERROR_INSUFFICIENT_BUFFER)
+                      return ret;
                   numEntries = (tcpTableSize - sizeof(MIB_TCPTABLE))
                    / sizeof(MIB_TCPROW) + 1;
                   if (*pcbResponseInfoLen < sizeof(MIB_TCPROW) * numEntries)
