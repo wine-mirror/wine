@@ -603,7 +603,7 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (!szProduct || !squash_guid(szProduct, squished_pc))
         return ERROR_INVALID_PARAMETER;
 
-    if (!szSource)
+    if (!szSource || !*szSource)
         return ERROR_INVALID_PARAMETER;
 
     if (dwOptions & MSICODE_PATCH)
