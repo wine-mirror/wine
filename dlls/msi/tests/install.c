@@ -2388,7 +2388,7 @@ static UINT run_query(MSIHANDLE hdb, MSIHANDLE hrec, const char *query)
 static void set_transform_summary_info(void)
 {
     UINT r;
-    MSIHANDLE suminfo;
+    MSIHANDLE suminfo = 0;
 
     /* build summmary info */
     r = MsiGetSummaryInformation(0, mstfile, 3, &suminfo);
@@ -2425,10 +2425,7 @@ static void set_transform_summary_info(void)
     }
 
     r = MsiCloseHandle(suminfo);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS , "Failed to close suminfo\n");
-    }
+    ok(r == ERROR_SUCCESS , "Failed to close suminfo\n");
 }
 
 static void generate_transform(void)
