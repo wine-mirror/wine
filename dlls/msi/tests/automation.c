@@ -2096,7 +2096,7 @@ static UINT find_registry_key(HKEY hkeyParent, LPCSTR subkey, LPCSTR findkey, HK
     return (found ? ERROR_SUCCESS : ERROR_FILE_NOT_FOUND);
 }
 
-static void test_Installer_InstallProduct(LPCWSTR szPath)
+static void test_Installer_InstallProduct(void)
 {
     HRESULT hr;
     CHAR path[MAX_PATH];
@@ -2381,7 +2381,7 @@ static void test_Installer(void)
     }
 
     /* Installer::InstallProduct and other tests that depend on our product being installed */
-    test_Installer_InstallProduct(szPath);
+    test_Installer_InstallProduct();
 }
 
 START_TEST(automation)
