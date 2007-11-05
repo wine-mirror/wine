@@ -589,11 +589,12 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
     HKEY typekey;
     UINT rc;
     media_info source_struct;
+    WCHAR squished_pc[GUID_SIZE];
 
     TRACE("%s %s %x %x %s %i\n", debugstr_w(szProduct), debugstr_w(szUserSid),
           dwContext, dwOptions, debugstr_w(szSource), dwIndex);
 
-    if (!szProduct)
+    if (!szProduct || !squash_guid(szProduct, squished_pc))
         return ERROR_INVALID_PARAMETER;
 
     if (!szSource)
