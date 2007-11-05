@@ -694,12 +694,6 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     }
     else
         rc = ACTION_ProcessExecSequence(package,FALSE);
-    
-    if (rc == -1)
-    {
-        /* install was halted but should be considered a success */
-        rc = ERROR_SUCCESS;
-    }
 
     package->script->CurrentlyScripting= FALSE;
 
