@@ -65,7 +65,7 @@ static void init_functionpointers(void)
 
 static void test_usefeature(void)
 {
-    UINT r;
+    INSTALLSTATE r;
 
     if (!pMsiUseFeatureExA)
         return;
