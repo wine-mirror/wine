@@ -1407,7 +1407,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
 
             if (device->render_targets && device->render_targets[0]) {
                 IWineD3DSurfaceImpl* render_target = (IWineD3DSurfaceImpl*)device->render_targets[0];
-                if(render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
+                if((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET) && (render_target->resource.format == WINED3DFMT_P8))
                     p8_render_target = TRUE;
             }
 
