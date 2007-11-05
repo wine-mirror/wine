@@ -1323,6 +1323,16 @@ static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
             else if ( tv->columns[i].type & MSITYPE_STRING )
             {
                 LPCWSTR sval = MSI_RecordGetString( rec, i + 1 );
+                UINT ival, x;
+
+                r = msi_string2idW(tv->db->strings, sval, &ival);
+                if (r == ERROR_SUCCESS)
+                {
+                    TABLE_fetch_int(&tv->view, row, i + 1, &x);
+                    if (ival == x)
+                        continue;
+                }
+
                 val = msi_addstringW( tv->db->strings, 0, sval, -1, 1,
                                       persistent ? StringPersistent : StringNonPersistent );
             }
