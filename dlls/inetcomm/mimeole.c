@@ -696,3 +696,187 @@ HRESULT WINAPI MimeOleCreateVirtualStream(IStream **ppStream)
     hr = CreateStreamOnHGlobal(NULL, TRUE, ppStream);
     return hr;
 }
+
+typedef struct MimeSecurity
+{
+    const IMimeSecurityVtbl *lpVtbl;
+
+    LONG refs;
+} MimeSecurity;
+
+static HRESULT WINAPI MimeSecurity_QueryInterface(
+        IMimeSecurity* iface,
+        REFIID riid,
+        void** obj)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IMimeSecurity))
+    {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    FIXME("no interface for %s\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MimeSecurity_AddRef(
+        IMimeSecurity* iface)
+{
+    MimeSecurity *This = (MimeSecurity *)iface;
+    TRACE("(%p)->()\n", iface);
+    return InterlockedIncrement(&This->refs);
+}
+
+static ULONG WINAPI MimeSecurity_Release(
+        IMimeSecurity* iface)
+{
+    MimeSecurity *This = (MimeSecurity *)iface;
+    ULONG refs;
+
+    TRACE("(%p)->()\n", iface);
+
+    refs = InterlockedDecrement(&This->refs);
+    if (!refs)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return refs;
+}
+
+static HRESULT WINAPI MimeSecurity_InitNew(
+        IMimeSecurity* iface)
+{
+    FIXME("(%p)->(): stub\n", iface);
+    return S_OK;
+}
+
+static HRESULT WINAPI MimeSecurity_CheckInit(
+        IMimeSecurity* iface)
+{
+    FIXME("(%p)->(): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeSecurity_EncodeMessage(
+        IMimeSecurity* iface,
+        IMimeMessageTree* pTree,
+        DWORD dwFlags)
+{
+    FIXME("(%p)->(%p, %08x): stub\n", iface, pTree, dwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeSecurity_EncodeBody(
+        IMimeSecurity* iface,
+        IMimeMessageTree* pTree,
+        HBODY hEncodeRoot,
+        DWORD dwFlags)
+{
+    FIXME("(%p)->(%p, %p, %08x): stub\n", iface, pTree, hEncodeRoot, dwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeSecurity_DecodeMessage(
+        IMimeSecurity* iface,
+        IMimeMessageTree* pTree,
+        DWORD dwFlags)
+{
+    FIXME("(%p)->(%p, %08x): stub\n", iface, pTree, dwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeSecurity_DecodeBody(
+        IMimeSecurity* iface,
+        IMimeMessageTree* pTree,
+        HBODY hDecodeRoot,
+        DWORD dwFlags)
+{
+    FIXME("(%p)->(%p, %p, %08x): stub\n", iface, pTree, hDecodeRoot, dwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeSecurity_EnumCertificates(
+        IMimeSecurity* iface,
+        HCAPICERTSTORE hc,
+        DWORD dwUsage,
+        PCX509CERT pPrev,
+        PCX509CERT* ppCert)
+{
+    FIXME("(%p)->(%p, %08x, %p, %p): stub\n", iface, hc, dwUsage, pPrev, ppCert);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeSecurity_GetCertificateName(
+        IMimeSecurity* iface,
+        const PCX509CERT pX509Cert,
+        const CERTNAMETYPE cn,
+        LPSTR* ppszName)
+{
+    FIXME("(%p)->(%p, %08x, %p): stub\n", iface, pX509Cert, cn, ppszName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeSecurity_GetMessageType(
+        IMimeSecurity* iface,
+        const HWND hwndParent,
+        IMimeBody* pBody,
+        DWORD* pdwSecType)
+{
+    FIXME("(%p)->(%p, %p, %p): stub\n", iface, hwndParent, pBody, pdwSecType);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeSecurity_GetCertData(
+        IMimeSecurity* iface,
+        const PCX509CERT pX509Cert,
+        const CERTDATAID dataid,
+        LPPROPVARIANT pValue)
+{
+    FIXME("(%p)->(%p, %x, %p): stub\n", iface, pX509Cert, dataid, pValue);
+    return E_NOTIMPL;
+}
+
+
+static const IMimeSecurityVtbl MimeSecurityVtbl =
+{
+    MimeSecurity_QueryInterface,
+    MimeSecurity_AddRef,
+    MimeSecurity_Release,
+    MimeSecurity_InitNew,
+    MimeSecurity_CheckInit,
+    MimeSecurity_EncodeMessage,
+    MimeSecurity_EncodeBody,
+    MimeSecurity_DecodeMessage,
+    MimeSecurity_DecodeBody,
+    MimeSecurity_EnumCertificates,
+    MimeSecurity_GetCertificateName,
+    MimeSecurity_GetMessageType,
+    MimeSecurity_GetCertData
+};
+
+/***********************************************************************
+ *              MimeOleCreateSecurity (INETCOMM.@)
+ */
+HRESULT WINAPI MimeOleCreateSecurity(IMimeSecurity **ppSecurity)
+{
+    MimeSecurity *This;
+
+    TRACE("(%p)\n", ppSecurity);
+
+    *ppSecurity = NULL;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->lpVtbl = &MimeSecurityVtbl;
+    This->refs = 1;
+
+    *ppSecurity = (IMimeSecurity *)&This->lpVtbl;
+    return S_OK;
+}

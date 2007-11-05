@@ -54,7 +54,7 @@
 @ stdcall MimeOleCreateMessage(ptr ptr)
 @ stub MimeOleCreateMessageParts
 @ stub MimeOleCreatePropertySet
-@ stub MimeOleCreateSecurity
+@ stdcall MimeOleCreateSecurity(ptr)
 @ stdcall MimeOleCreateVirtualStream(ptr)
 @ stub MimeOleDecodeHeader
 @ stub MimeOleEncodeHeader

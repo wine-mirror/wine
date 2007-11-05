@@ -41,9 +41,21 @@ static void test_CreateVirtualStream(void)
     IStream_Release(pstm);
 }
 
+static void test_CreateSecurity(void)
+{
+    HRESULT hr;
+    IMimeSecurity *sec;
+
+    hr = MimeOleCreateSecurity(&sec);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    IMimeSecurity_Release(sec);
+}
+
 START_TEST(mimeole)
 {
     OleInitialize(NULL);
     test_CreateVirtualStream();
+    test_CreateSecurity();
     OleUninitialize();
 }
