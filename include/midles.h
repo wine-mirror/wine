@@ -59,7 +59,7 @@ typedef struct _MIDL_ES_MESSAGE
     unsigned char          *Buffer;
     ULONG                   BufferSize;
     unsigned char         **pDynBuffer;
-    unsigned char          *pEncodedSize;
+    ULONG                  *pEncodedSize;
     RPC_SYNTAX_IDENTIFIER   InterfaceId;
     ULONG                   ProcNumber;
     ULONG                   AlienDataRep;
