@@ -617,7 +617,7 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, TRUE, FALSE);
 
     if (rc != ERROR_SUCCESS)
-        return ERROR_UNKNOWN_PRODUCT;
+        return rc;
 
     if (dwOptions & MSISOURCETYPE_NETWORK)
         rc = OpenNetworkSubkey(sourcekey, &typekey, TRUE);

@@ -410,10 +410,7 @@ static void test_MsiSourceListAddSourceEx(void)
     r = pMsiSourceListAddSourceExA(prodcode, usersid,
                                   MSIINSTALLCONTEXT_USERUNMANAGED,
                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
-    todo_wine
-    {
-        ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
-    }
+    ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
 
     res = RegCreateKeyA(userkey, "SourceList", &url);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
