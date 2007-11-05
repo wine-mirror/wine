@@ -31,6 +31,10 @@
 #include "mmsystem.h"
 #include "winternl.h"
 #include "mmddk.h"
+#include "wingdi.h"
+#include "mmreg.h"
+#include "ks.h"
+#include "ksmedia.h"
 #include "wine/debug.h"
 #include "dsound.h"
 #include "dsdriver.h"
@@ -1522,6 +1526,7 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
         WARN("invalid parameter: ppdsb == NULL\n");
         return DSERR_INVALIDPARAM;
     }
+    *ppdsb = NULL;
 
     if (TRACE_ON(dsound)) {
         TRACE("(structsize=%d)\n",dsbd->dwSize);
@@ -1558,11 +1563,50 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
         }
     } else {
         IDirectSoundBufferImpl * dsb;
+        WAVEFORMATEXTENSIBLE *pwfxe;
 
         if (dsbd->lpwfxFormat == NULL) {
             WARN("invalid parameter: dsbd->lpwfxFormat can't be NULL for "
                  "secondary buffer\n");
             return DSERR_INVALIDPARAM;
+        }
+        pwfxe = (WAVEFORMATEXTENSIBLE*)dsbd->lpwfxFormat;
+
+        if (pwfxe->Format.wBitsPerSample != 16 && pwfxe->Format.wBitsPerSample != 8 && pwfxe->Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE)
+        {
+            WARN("wBitsPerSample=%d needs a WAVEFORMATEXTENSIBLE\n", dsbd->lpwfxFormat->wBitsPerSample);
+            return DSERR_CONTROLUNAVAIL;
+        }
+        if (pwfxe->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        {
+            if (pwfxe->Format.cbSize < (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)))
+            {
+                WARN("Too small a cbSize (%d/%d)\n", pwfxe->Format.cbSize, (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)));
+                return DSERR_INVALIDPARAM;
+            }
+
+            if (pwfxe->Format.cbSize > (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)))
+            {
+                WARN("Too big a cbSize (%d/%d)\n", pwfxe->Format.cbSize, (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)));
+                return DSERR_CONTROLUNAVAIL;
+            }
+
+            if (!IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))
+            {
+                if (!IsEqualGUID(&pwfxe->SubFormat, &GUID_NULL))
+                    FIXME("SubFormat %s not supported right now.\n", debugstr_guid(&pwfxe->SubFormat));
+                return DSERR_INVALIDPARAM;
+            }
+            if (pwfxe->Samples.wValidBitsPerSample > dsbd->lpwfxFormat->wBitsPerSample)
+            {
+                WARN("Samples.wValidBitsPerSample(%d) > Format.wBitsPerSample (%d)\n", pwfxe->Samples.wValidBitsPerSample, pwfxe->Format.wBitsPerSample);
+                return DSERR_INVALIDPARAM;
+            }
+            if (pwfxe->Samples.wValidBitsPerSample && pwfxe->Samples.wValidBitsPerSample < dsbd->lpwfxFormat->wBitsPerSample)
+            {
+                FIXME("Non-packed formats not supported right now: %d/%d\n", pwfxe->Samples.wValidBitsPerSample, dsbd->lpwfxFormat->wBitsPerSample);
+                return DSERR_CONTROLUNAVAIL;
+            }
         }
 
         TRACE("(formattag=0x%04x,chans=%d,samplerate=%d,"

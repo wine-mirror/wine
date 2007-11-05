@@ -48,8 +48,11 @@
 #include "wine/debug.h"
 #include "dsound.h"
 #include "dsconf.h"
+#include "ks.h"
 #include "initguid.h"
+#include "ksmedia.h"
 #include "dsdriver.h"
+
 #include "dsound_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);

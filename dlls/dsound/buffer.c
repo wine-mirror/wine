@@ -495,8 +495,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFormat(
                 *wfwritten = size;
         } else {
             WARN("invalid parameter: wfsize too small\n");
+            CopyMemory(lpwf,This->pwfx,wfsize);
             if (wfwritten)
-                *wfwritten = 0;
+                *wfwritten = wfsize;
             return DSERR_INVALIDPARAM;
         }
     } else {
