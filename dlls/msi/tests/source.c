@@ -31,9 +31,10 @@
 #include "wine/test.h"
 
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
-
 static UINT (WINAPI *pMsiSourceListGetInfoA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, LPSTR, LPDWORD);
+static UINT (WINAPI *pMsiSourceListAddSourceExA)
+    (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, DWORD);
 
 static void init_functionpointers(void)
 {
@@ -41,7 +42,7 @@ static void init_functionpointers(void)
     HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
 
     pMsiSourceListGetInfoA = (void*)GetProcAddress(hmsi, "MsiSourceListGetInfoA");
-
+    pMsiSourceListAddSourceExA = (void*)GetProcAddress(hmsi, "MsiSourceListAddSourceExA");
     pConvertSidToStringSidA = (void*)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
 }
 
@@ -332,9 +333,484 @@ static void test_MsiSourceListGetInfo(void)
     RegCloseKey(userkey);
 }
 
+static void test_MsiSourceListAddSourceEx(void)
+{
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    CHAR keypath[MAX_PATH*2];
+    CHAR value[MAX_PATH];
+    LPSTR usersid;
+    LONG res;
+    UINT r;
+    HKEY prodkey, userkey, hkey;
+    HKEY url, net;
+    DWORD size;
+
+    if (!pMsiSourceListAddSourceExA)
+    {
+        skip("Skipping MsiSourceListAddSourceEx tests\n");
+        return;
+    }
+
+    create_test_guid(prodcode, prod_squashed);
+    get_user_sid(&usersid);
+
+    /* GetLastError is not set by the function */
+
+    /* NULL szProductCodeOrPatchCode */
+    r = pMsiSourceListAddSourceExA(NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* empty szProductCodeOrPatchCode */
+    r = pMsiSourceListAddSourceExA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* garbage szProductCodeOrPatchCode */
+    r = pMsiSourceListAddSourceExA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* guid without brackets */
+    r = pMsiSourceListAddSourceExA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA", usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* guid with brackets */
+    r = pMsiSourceListAddSourceExA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}", usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* MSIINSTALLCONTEXT_USERUNMANAGED */
+
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+
+    res = RegCreateKeyA(userkey, "SourceList", &url);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    RegCloseKey(url);
+
+    /* SourceList key exists */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    res = RegOpenKeyA(userkey, "SourceList\\URL", &url);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
+    }
+
+    /* add another source, index 0 */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "another", 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "2", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
+        ok(size == 9, "Expected 9, got %d\n", size);
+    }
+
+    /* add another source, index 1 */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "third/", 1);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "third/"), "Expected 'third/', got %s\n", value);
+        ok(size == 7, "Expected 7, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "2", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "3", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
+        ok(size == 9, "Expected 9, got %d\n", size);
+    }
+
+    /* add another source, index > N */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "last/", 5);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "third/"), "Expected 'third/', got %s\n", value);
+        ok(size == 7, "Expected 7, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "2", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "3", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
+        ok(size == 9, "Expected 9, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "4", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(value, "last/"), "Expected 'last/', got %s\n", value);
+    ok(size == 6, "Expected 6, got %d\n", size);
+
+    /* just MSISOURCETYPE_NETWORK */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSISOURCETYPE_NETWORK, "source", 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    res = RegOpenKeyA(userkey, "SourceList\\Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(net, "1", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "source\\"), "Expected 'source\\', got %s\n", value);
+        ok(size == 8, "Expected 8, got %d\n", size);
+    }
+
+    /* just MSISOURCETYPE_URL */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSISOURCETYPE_URL, "source", 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "third/"), "Expected 'third/', got %s\n", value);
+        ok(size == 7, "Expected 7, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "2", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "3", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
+        ok(size == 9, "Expected 9, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "4", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(value, "last/"), "Expected 'last/', got %s\n", value);
+    ok(size == 6, "Expected 6, got %d\n", size);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "5", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "source/"), "Expected 'source/', got %s\n", value);
+        ok(size == 8, "Expected 8, got %d\n", size);
+    }
+
+    /* NULL szUserSid */
+    r = pMsiSourceListAddSourceExA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSISOURCETYPE_NETWORK, "nousersid", 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(net, "1", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "source\\"), "Expected 'source\\', got %s\n", value);
+        ok(size == 8, "Expected 8, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(net, "2", NULL, NULL, (LPBYTE)value, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "nousersid\\"), "Expected 'nousersid\\', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
+    }
+
+    /* invalid options, must have source type */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT, "source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PATCH, "source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* NULL szSource */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSISOURCETYPE_URL, NULL, 1);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* empty szSource */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSISOURCETYPE_URL, "", 1);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* MSIINSTALLCONTEXT_USERMANAGED, non-NULL szUserSid */
+
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* product key exists */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+
+    res = RegCreateKeyA(prodkey, "SourceList", &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    RegCloseKey(hkey);
+
+    /* SourceList exists */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    res = RegOpenKeyA(prodkey, "SourceList\\URL", &url);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
+    }
+
+    RegCloseKey(url);
+
+    /* MSIINSTALLCONTEXT_USERMANAGED, NULL szUserSid */
+
+    r = pMsiSourceListAddSourceExA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "another", 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    res = RegOpenKeyA(prodkey, "SourceList\\URL", &url);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "2", NULL, NULL, (LPBYTE)value, &size);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
+        ok(size == 9, "Expected 9, got %d\n", size);
+    }
+
+    RegCloseKey(url);
+    RegCloseKey(prodkey);
+
+    /* MSIINSTALLCONTEXT_MACHINE */
+
+    /* szUserSid must be NULL for MSIINSTALLCONTEXT_MACHINE */
+    r = pMsiSourceListAddSourceExA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    r = pMsiSourceListAddSourceExA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* product key exists */
+    r = pMsiSourceListAddSourceExA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+
+    res = RegCreateKeyA(prodkey, "SourceList", &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    RegCloseKey(hkey);
+
+    /* SourceList exists */
+    r = pMsiSourceListAddSourceExA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    res = RegOpenKeyA(prodkey, "SourceList\\URL", &url);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
+    }
+
+    RegCloseKey(url);
+    RegCloseKey(prodkey);
+    HeapFree(GetProcessHeap(), 0, usersid);
+}
+
 START_TEST(source)
 {
     init_functionpointers();
 
     test_MsiSourceListGetInfo();
+    test_MsiSourceListAddSourceEx();
 }
