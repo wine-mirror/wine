@@ -486,18 +486,21 @@ static BOOL add_printer_driver(const char *name)
     di3a.pConfigFile      = driver_nt;
     di3a.pDefaultDataType = default_data_type;
 
-    if (AddPrinterDriverA(NULL, 3, (LPBYTE)&di3a))
+    if (AddPrinterDriverA(NULL, 3, (LPBYTE)&di3a) ||
+        (GetLastError() ==  ERROR_PRINTER_DRIVER_ALREADY_INSTALLED ))
     {
         di3a.cVersion     = 0;
         di3a.pEnvironment = env_9x;
         di3a.pDriverPath  = driver_9x;
         di3a.pConfigFile  = driver_9x;
-        if (AddPrinterDriverA(NULL, 3, (LPBYTE)&di3a))
+        if (AddPrinterDriverA(NULL, 3, (LPBYTE)&di3a) ||
+            (GetLastError() ==  ERROR_PRINTER_DRIVER_ALREADY_INSTALLED ))
         {
             return TRUE;
         }
     }
-    ERR("Failed adding driver %s: %u\n", debugstr_a(di3a.pDriverPath), GetLastError());
+    ERR("Failed adding driver %s (%s): %u\n", debugstr_a(di3a.pDriverPath),
+        debugstr_a(di3a.pEnvironment), GetLastError());
     return FALSE;
 }
 
