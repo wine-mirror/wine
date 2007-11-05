@@ -429,7 +429,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         return hres;
 
     if(!bind_complete)
-        return start_binding(This->bscallback);
+        return start_binding(This, This->bscallback);
 
     return S_OK;
 }

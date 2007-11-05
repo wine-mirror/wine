@@ -1185,6 +1185,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->window = NULL;
     ret->option_factory = NULL;
 
+    list_init(&ret->bindings);
     list_init(&ret->selection_list);
     list_init(&ret->range_list);
 

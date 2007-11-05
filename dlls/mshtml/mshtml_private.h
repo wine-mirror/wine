@@ -140,6 +140,7 @@ struct HTMLDocument {
     BSCallback *bscallback;
     IMoniker *mon;
     LPOLESTR url;
+    struct list bindings;
 
     HWND hwnd;
     HWND tooltips_hwnd;
@@ -260,6 +261,8 @@ struct BSCallback {
     HTMLDocument *doc;
 
     nsProtocolStream *nsstream;
+
+    struct list entry;
 };
 
 typedef struct {
@@ -417,7 +420,7 @@ void init_nsevents(NSContainer*);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
 
 BSCallback *create_bscallback(IMoniker*);
-HRESULT start_binding(BSCallback*);
+HRESULT start_binding(HTMLDocument*,BSCallback*);
 HRESULT load_stream(BSCallback*,IStream*);
 void set_document_bscallback(HTMLDocument*,BSCallback*);
 void set_current_mon(HTMLDocument*,IMoniker*);
