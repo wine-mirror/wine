@@ -97,10 +97,10 @@
 @ stub MIDL_wchar_strcpy
 @ stub MIDL_wchar_strlen
 @ stub MesBufferHandleReset
-@ stub MesDecodeBufferHandleCreate
+@ stdcall MesDecodeBufferHandleCreate(ptr long ptr)
 @ stdcall MesDecodeIncrementalHandleCreate(ptr ptr ptr)
 @ stub MesEncodeDynBufferHandleCreate
-@ stub MesEncodeFixedBufferHandleCreate
+@ stdcall MesEncodeFixedBufferHandleCreate(ptr long ptr ptr)
 @ stdcall MesEncodeIncrementalHandleCreate(ptr ptr ptr ptr)
 @ stdcall MesHandleFree(ptr)
 @ stdcall MesIncrementalHandleReset(ptr ptr ptr ptr ptr long)

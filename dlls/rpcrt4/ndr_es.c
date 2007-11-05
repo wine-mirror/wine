@@ -132,6 +132,58 @@ RPC_STATUS WINAPI MesHandleFree(handle_t Handle)
     return RPC_S_OK;
 }
 
+/***********************************************************************
+ *            MesEncodeFixedBufferHandleCreate [RPCRT4.@]
+ */
+RPC_STATUS RPC_ENTRY MesEncodeFixedBufferHandleCreate(
+    char *Buffer, ULONG BufferSize, ULONG *pEncodedSize, handle_t *pHandle)
+{
+    MIDL_ES_MESSAGE *pEsMsg;
+
+    TRACE("(%p, %d, %p, %p)\n", Buffer, BufferSize, pEncodedSize, pHandle);
+
+    pEsMsg = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEsMsg));
+    if (!pEsMsg)
+        return ERROR_OUTOFMEMORY;
+
+    init_MIDL_ES_MESSAGE(pEsMsg);
+
+    pEsMsg->Operation = MES_ENCODE;
+    pEsMsg->HandleStyle = MES_FIXED_BUFFER_HANDLE;
+    pEsMsg->Buffer = (unsigned char *)Buffer;
+    pEsMsg->BufferSize = BufferSize;
+    pEsMsg->pEncodedSize = pEncodedSize;
+
+    *pHandle = (handle_t)pEsMsg;
+
+    return RPC_S_OK;}
+
+/***********************************************************************
+ *            MesDecodeBufferHandleCreate [RPCRT4.@]
+ */
+RPC_STATUS RPC_ENTRY MesDecodeBufferHandleCreate(
+    char *Buffer, ULONG BufferSize, handle_t *pHandle)
+{
+    MIDL_ES_MESSAGE *pEsMsg;
+
+    TRACE("(%p, %d, %p)\n", Buffer, BufferSize, pHandle);
+
+    pEsMsg = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEsMsg));
+    if (!pEsMsg)
+        return ERROR_OUTOFMEMORY;
+
+    init_MIDL_ES_MESSAGE(pEsMsg);
+
+    pEsMsg->Operation = MES_DECODE;
+    pEsMsg->HandleStyle = MES_FIXED_BUFFER_HANDLE;
+    pEsMsg->Buffer = (unsigned char *)Buffer;
+    pEsMsg->BufferSize = BufferSize;
+
+    *pHandle = (handle_t)pEsMsg;
+
+    return RPC_S_OK;
+}
+
 static void es_data_alloc(MIDL_ES_MESSAGE *pEsMsg, ULONG size)
 {
     if (pEsMsg->HandleStyle == MES_INCREMENTAL_HANDLE)
@@ -144,6 +196,11 @@ static void es_data_alloc(MIDL_ES_MESSAGE *pEsMsg, ULONG size)
             ERR("not enough bytes allocated - requested %d, got %d\n", size, tmpsize);
             RpcRaiseException(ERROR_OUTOFMEMORY);
         }
+    }
+    else if (pEsMsg->HandleStyle == MES_FIXED_BUFFER_HANDLE)
+    {
+        TRACE("%d with fixed buffer handle\n", size);
+        pEsMsg->StubMsg.Buffer = pEsMsg->Buffer;
     }
     pEsMsg->StubMsg.RpcMsg->Buffer = pEsMsg->StubMsg.BufferStart = pEsMsg->StubMsg.Buffer;
 }
@@ -161,6 +218,14 @@ static void es_data_read(MIDL_ES_MESSAGE *pEsMsg, ULONG size)
             RpcRaiseException(ERROR_OUTOFMEMORY);
         }
     }
+    else
+    {
+        TRACE("%d from fixed or dynamic buffer handle\n", size);
+        /* FIXME: validate BufferSize? */
+        pEsMsg->StubMsg.Buffer = pEsMsg->Buffer;
+        pEsMsg->Buffer += size;
+        pEsMsg->BufferSize -= size;
+    }
     pEsMsg->StubMsg.BufferLength = size;
     pEsMsg->StubMsg.RpcMsg->Buffer = pEsMsg->StubMsg.BufferStart = pEsMsg->StubMsg.Buffer;
     pEsMsg->StubMsg.BufferEnd = pEsMsg->StubMsg.Buffer + size;
@@ -172,6 +237,11 @@ static void es_data_write(MIDL_ES_MESSAGE *pEsMsg, ULONG size)
     {
         TRACE("%d to incremental handle\n", size);
         pEsMsg->Write(pEsMsg->UserState, (char *)pEsMsg->StubMsg.BufferStart, size);
+    }
+    else
+    {
+        TRACE("%d to dynamic or fixed buffer handle\n", size);
+        *pEsMsg->pEncodedSize += size;
     }
 }
 
