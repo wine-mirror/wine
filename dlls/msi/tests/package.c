@@ -1760,7 +1760,6 @@ static void test_property_table(void)
     ok(found == TRUE, "dantes should be in the _Property table\n");
 
     MsiCloseHandle(hdb);
-    MsiCloseHandle(hrec);
     MsiCloseHandle(hpkg);
     DeleteFile(msifile);
 }
