@@ -419,11 +419,8 @@ static void test_MsiSourceListAddSourceEx(void)
     size = MAX_PATH;
     res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
-        ok(size == 11, "Expected 11, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+    ok(size == 11, "Expected 11, got %d\n", size);
 
     /* add another source, index 0 */
     r = pMsiSourceListAddSourceExA(prodcode, usersid,
@@ -434,20 +431,14 @@ static void test_MsiSourceListAddSourceEx(void)
     size = MAX_PATH;
     res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
-        ok(size == 11, "Expected 11, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+    ok(size == 11, "Expected 11, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(url, "2", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
-        ok(size == 9, "Expected 9, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "another/"), "Expected 'another/', got %s\n", value);
+    ok(size == 9, "Expected 9, got %d\n", size);
 
     /* add another source, index 1 */
     r = pMsiSourceListAddSourceExA(prodcode, usersid,
@@ -533,11 +524,8 @@ static void test_MsiSourceListAddSourceEx(void)
     size = MAX_PATH;
     res = RegQueryValueExA(net, "1", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "source\\"), "Expected 'source\\', got %s\n", value);
-        ok(size == 8, "Expected 8, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "source\\"), "Expected 'source\\', got %s\n", value);
+    ok(size == 8, "Expected 8, got %d\n", size);
 
     /* just MSISOURCETYPE_URL */
     r = pMsiSourceListAddSourceExA(prodcode, usersid,
@@ -581,11 +569,8 @@ static void test_MsiSourceListAddSourceEx(void)
     size = MAX_PATH;
     res = RegQueryValueExA(url, "5", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "source/"), "Expected 'source/', got %s\n", value);
-        ok(size == 8, "Expected 8, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "source/"), "Expected 'source/', got %s\n", value);
+    ok(size == 8, "Expected 8, got %d\n", size);
 
     /* NULL szUserSid */
     r = pMsiSourceListAddSourceExA(prodcode, NULL,
@@ -596,20 +581,14 @@ static void test_MsiSourceListAddSourceEx(void)
     size = MAX_PATH;
     res = RegQueryValueExA(net, "1", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "source\\"), "Expected 'source\\', got %s\n", value);
-        ok(size == 8, "Expected 8, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "source\\"), "Expected 'source\\', got %s\n", value);
+    ok(size == 8, "Expected 8, got %d\n", size);
 
     size = MAX_PATH;
     res = RegQueryValueExA(net, "2", NULL, NULL, (LPBYTE)value, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    todo_wine
-    {
-        ok(!lstrcmpA(value, "nousersid\\"), "Expected 'nousersid\\', got %s\n", value);
-        ok(size == 11, "Expected 11, got %d\n", size);
-    }
+    ok(!lstrcmpA(value, "nousersid\\"), "Expected 'nousersid\\', got %s\n", value);
+    ok(size == 11, "Expected 11, got %d\n", size);
 
     /* invalid options, must have source type */
     r = pMsiSourceListAddSourceExA(prodcode, usersid,

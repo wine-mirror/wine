@@ -590,6 +590,12 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
     UINT rc;
     media_info source_struct;
     WCHAR squished_pc[GUID_SIZE];
+    LPWSTR source;
+    LPCWSTR postfix;
+    DWORD size;
+
+    static const WCHAR backslash[] = {'\\',0};
+    static const WCHAR forwardslash[] = {'/',0};
 
     TRACE("%s %s %x %x %s %i\n", debugstr_w(szProduct), debugstr_w(szUserSid),
           dwContext, dwOptions, debugstr_w(szSource), dwIndex);
@@ -633,8 +639,19 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         return ERROR_FUNCTION_FAILED;
     }
 
+    postfix = (dwOptions & MSISOURCETYPE_NETWORK) ? backslash : forwardslash;
+    if (szSource[lstrlenW(szSource) - 1] == *postfix)
+        source = strdupW(szSource);
+    else
+    {
+        size = lstrlenW(szSource) + 2;
+        source = msi_alloc(size * sizeof(WCHAR));
+        lstrcpyW(source, szSource);
+        lstrcatW(source, postfix);
+    }
+
     source_struct.szIndex[0] = 0;
-    if (find_given_source(typekey, szSource, &source_struct)==ERROR_SUCCESS)
+    if (find_given_source(typekey, source, &source_struct) == ERROR_SUCCESS)
     {
         DWORD current_index = atoiW(source_struct.szIndex);
         /* found the source */
@@ -646,7 +663,7 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
     {
         DWORD current_index = 0;
         static const WCHAR fmt[] = {'%','i',0};
-        DWORD size = lstrlenW(szSource)*sizeof(WCHAR);
+        DWORD size = lstrlenW(source) * sizeof(WCHAR);
 
         if (source_struct.szIndex[0])
             current_index = atoiW(source_struct.szIndex);
@@ -657,9 +674,10 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         current_index ++;
         sprintfW(source_struct.szIndex,fmt,current_index);
         rc = RegSetValueExW(typekey, source_struct.szIndex, 0, REG_EXPAND_SZ, 
-                (const BYTE *)szSource, size);
+                (const BYTE *)source, size);
     }
 
+    msi_free(source);
     RegCloseKey(typekey);
     RegCloseKey(sourcekey);
     return rc;
