@@ -1589,7 +1589,7 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
 
 static UINT execute_script(MSIPACKAGE *package, UINT script )
 {
-    int i;
+    UINT i;
     UINT rc = ERROR_SUCCESS;
 
     TRACE("Executing Script %i\n",script);
