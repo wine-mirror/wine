@@ -664,7 +664,8 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
     if (OriginalFileInfo->cbSize != sizeof(*OriginalFileInfo))
     {
         ERR("incorrect OriginalFileInfo->cbSize of %d\n", OriginalFileInfo->cbSize);
-        return ERROR_INVALID_USER_BUFFER;
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
     }
 
     inf_path = (LPWSTR)&InfInformation->VersionData[0];
