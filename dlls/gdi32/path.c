@@ -1901,11 +1901,6 @@ static BOOL PATH_WidenPath(DC *dc)
         return FALSE;
     }
 
-    /* pen width must be strictly higher than 1 */
-    if(penWidth == 1) {
-        return TRUE;
-    }
-
     penWidthIn = penWidth / 2;
     penWidthOut = penWidth / 2;
     if(penWidthIn + penWidthOut < penWidth)

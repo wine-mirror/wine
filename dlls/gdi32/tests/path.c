@@ -83,14 +83,15 @@ static void test_widenpath(void)
 
     AbortPath(hdc);
 
-    /* Test when the pen width is equal to 1. The path should not change */
+    /* Test when the pen width is equal to 1. The path should change too */
     narrowPen = CreatePen(PS_SOLID, 1, RGB(0,0,0));
     oldPen = SelectObject(hdc, narrowPen);
     BeginPath(hdc);
     Polyline(hdc, pnt, 6);
     EndPath(hdc);
+    ret = WidenPath(hdc);
     nSize = GetPath(hdc, NULL, NULL, 0);
-    ok(nSize == 6, "WidenPath fails detecting 1px wide pen. Path length is %d, should be 6\n", nSize);
+    ok(nSize > 6, "WidenPath should compute a widdened path with a 1px wide pen. Path length is %d, should be more than 6\n", nSize);
 
     ReleaseDC(0, hdc);
     return;
