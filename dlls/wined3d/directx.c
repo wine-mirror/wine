@@ -623,12 +623,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     gl_info->vs_arb_constantsF = 0;
     gl_info->ps_arb_constantsF = 0;
 
-/* Now work out what GL support this card really has */
-#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) pwglGetProcAddress(#pfn);
-    GL_EXT_FUNCS_GEN;
-    WGL_EXT_FUNCS_GEN;
-#undef USE_GL_FUNC
-
     /* Retrieve opengl defaults */
     glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
     gl_info->max_clipplanes = min(WINED3DMAXUSERCLIPPLANES, gl_max);
@@ -685,6 +679,11 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                 }
             }
         }
+        /* Now work out what GL support this card really has */
+#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) pwglGetProcAddress(#pfn);
+        GL_EXT_FUNCS_GEN;
+        WGL_EXT_FUNCS_GEN;
+#undef USE_GL_FUNC
 
         if (gl_info->supported[APPLE_FENCE]) {
             /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.
