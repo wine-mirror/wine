@@ -935,6 +935,36 @@ static BOOL create_container_key(KEYCONTAINER *pKeyContainer, REGSAM sam, HKEY *
 }
 
 /******************************************************************************
+ * open_container_key [Internal]
+ *
+ * Opens a key container's persistent storage for reading.
+ *
+ * PARAMS
+ *  pszContainerName [I] Name of the container to be opened.  May be the empty
+ *                       string if the parent key of all containers is to be
+ *                       opened.
+ *  dwFlags          [I] Flags indicating which keyset to be opened.
+ *  phKey            [O] Returned key
+ */
+static BOOL open_container_key(LPCSTR pszContainerName, DWORD dwFlags, HKEY *phKey)
+{
+    CHAR szRSABase[MAX_PATH];
+    HKEY hRootKey;
+
+    sprintf(szRSABase, RSAENH_REGKEY, pszContainerName);
+
+    if (dwFlags & CRYPT_MACHINE_KEYSET)
+        hRootKey = HKEY_LOCAL_MACHINE;
+    else
+        hRootKey = HKEY_CURRENT_USER;
+
+    /* @@ Wine registry key: HKLM\Software\Wine\Crypto\RSA */
+    /* @@ Wine registry key: HKCU\Software\Wine\Crypto\RSA */
+    return RegOpenKeyExA(hRootKey, szRSABase, 0, KEY_READ, phKey) ==
+                         ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * store_key_container_keys [Internal]
  *
  * Stores key container's keys in a persistent location.
@@ -1053,26 +1083,15 @@ static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, const 
  */
 static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, const VTableProvStruc *pVTable)
 {
-    CHAR szRSABase[MAX_PATH];
     BYTE *pbKey;
-    HKEY hKey, hRootKey;
+    HKEY hKey;
     DWORD dwValueType, dwLen;
     KEYCONTAINER *pKeyContainer;
     HCRYPTPROV hKeyContainer;
     DATA_BLOB blobIn, blobOut;
     HCRYPTKEY hCryptKey;
 
-    sprintf(szRSABase, RSAENH_REGKEY, pszContainerName);
-
-    if (dwFlags & CRYPT_MACHINE_KEYSET) {
-        hRootKey = HKEY_LOCAL_MACHINE;
-    } else {
-        hRootKey = HKEY_CURRENT_USER;
-    }
-
-    /* @@ Wine registry key: HKLM\Software\Wine\Crypto\RSA */
-    /* @@ Wine registry key: HKCU\Software\Wine\Crypto\RSA */
-    if (RegOpenKeyExA(hRootKey, szRSABase, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+    if (!open_container_key(pszContainerName, dwFlags, &hKey))
     {
         SetLastError(NTE_BAD_KEYSET);
         return (HCRYPTPROV)INVALID_HANDLE_VALUE;
@@ -2913,8 +2932,7 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
     KEYCONTAINER *pKeyContainer;
     PROV_ENUMALGS provEnumalgs;
     DWORD dwTemp;
-    CHAR szRSABase[MAX_PATH];
-    HKEY hKey, hRootKey;
+    HKEY hKey;
    
     /* This is for dwParam 41, which does not seem to be documented
      * on MSDN. IE6 SP1 asks for it in the 'About' dialog, however.
@@ -3000,15 +3018,7 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
                 return TRUE;
             }
  
-            sprintf(szRSABase, RSAENH_REGKEY, "");
-
-            if (dwFlags & CRYPT_MACHINE_KEYSET) {
-                hRootKey = HKEY_LOCAL_MACHINE;
-            } else {
-                hRootKey = HKEY_CURRENT_USER;
-            }
-
-            if (RegOpenKeyExA(hRootKey, szRSABase, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+            if (!open_container_key("", dwFlags, &hKey))
             {
                 SetLastError(ERROR_NO_MORE_ITEMS);
                 return FALSE;
