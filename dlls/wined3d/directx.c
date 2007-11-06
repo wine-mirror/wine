@@ -680,7 +680,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             }
         }
         /* Now work out what GL support this card really has */
-#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) pwglGetProcAddress(#pfn);
+#define USE_GL_FUNC(type, pfn, ext, replace) gl_info->pfn = (type) pwglGetProcAddress(#pfn);
         GL_EXT_FUNCS_GEN;
         WGL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
