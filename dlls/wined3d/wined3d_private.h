@@ -1611,6 +1611,8 @@ struct glsl_shader_prog_link {
     GLhandleARB             programId;
     GLhandleARB             *vuniformF_locations;
     GLhandleARB             *puniformF_locations;
+    GLhandleARB             vuniformI_locations[MAX_CONST_I];
+    GLhandleARB             puniformI_locations[MAX_CONST_I];
     GLhandleARB             posFixup_location;
     GLhandleARB             bumpenvmat_location;
     GLhandleARB             luminancescale_location;

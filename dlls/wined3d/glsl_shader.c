@@ -230,15 +230,12 @@ static void shader_glsl_load_constantsI(
     IWineD3DBaseShaderImpl* This,
     WineD3D_GL_Info *gl_info,
     GLhandleARB programId,
+    GLhandleARB locations[MAX_CONST_I],
     unsigned max_constants,
     int* constants,
     BOOL* constants_set) {
     
-    GLhandleARB tmp_loc;
     int i;
-    char tmp_name[8];
-    char is_pshader = shader_is_pshader_version(This->baseShader.hex_version);
-    const char* prefix = is_pshader? "PI":"VI";
     struct list* ptr;
 
     for (i=0; i<max_constants; ++i) {
@@ -247,15 +244,9 @@ static void shader_glsl_load_constantsI(
             TRACE_(d3d_constants)("Loading constants %i: %i, %i, %i, %i\n",
                   i, constants[i*4], constants[i*4+1], constants[i*4+2], constants[i*4+3]);
 
-            /* TODO: Benchmark and see if it would be beneficial to store the 
-             * locations of the constants to avoid looking up each time */
-            snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, i);
-            tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
-            if (tmp_loc != -1) {
-                /* We found this uniform name in the program - go ahead and send the data */
-                GL_EXTCALL(glUniform4ivARB(tmp_loc, 1, &constants[i*4]));
-                checkGLcall("glUniform4ivARB");
-            }
+            /* We found this uniform name in the program - go ahead and send the data */
+            GL_EXTCALL(glUniform4ivARB(locations[i], 1, &constants[i*4]));
+            checkGLcall("glUniform4ivARB");
         }
     }
 
@@ -269,13 +260,9 @@ static void shader_glsl_load_constantsI(
         TRACE_(d3d_constants)("Loading local constants %i: %i, %i, %i, %i\n", idx,
             values[0], values[1], values[2], values[3]);
 
-        snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, idx);
-        tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
-        if (tmp_loc != -1) {
-            /* We found this uniform name in the program - go ahead and send the data */
-            GL_EXTCALL(glUniform4ivARB(tmp_loc, 1, values));
-            checkGLcall("glUniform4ivARB");
-        }
+        /* We found this uniform name in the program - go ahead and send the data */
+        GL_EXTCALL(glUniform4ivARB(locations[idx], 1, values));
+        checkGLcall("glUniform4ivARB");
         ptr = list_next(&This->baseShader.constantsI, ptr);
     }
 }
@@ -375,7 +362,8 @@ void shader_glsl_load_constants(
                 stateBlock->vertexShaderConstantF, constant_locations, constant_list);
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
-        shader_glsl_load_constantsI(vshader, gl_info, programId, MAX_CONST_I,
+        shader_glsl_load_constantsI(vshader, gl_info, programId,
+                                    prog->vuniformI_locations, MAX_CONST_I,
                                     stateBlock->vertexShaderConstantI,
                                     stateBlock->changed.vertexShaderConstantsI);
 
@@ -393,7 +381,7 @@ void shader_glsl_load_constants(
 
         IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
 
-        constant_locations = stateBlock->glsl_program->puniformF_locations;
+        constant_locations = prog->puniformF_locations;
         constant_list = &stateBlock->set_pconstantsF;
 
         /* Load pixel shader samplers */
@@ -404,7 +392,8 @@ void shader_glsl_load_constants(
                 stateBlock->pixelShaderConstantF, constant_locations, constant_list);
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
-        shader_glsl_load_constantsI(pshader, gl_info, programId, MAX_CONST_I,
+        shader_glsl_load_constantsI(pshader, gl_info, programId,
+                                    prog->puniformI_locations, MAX_CONST_I,
                                     stateBlock->pixelShaderConstantI, 
                                     stateBlock->changed.pixelShaderConstantsI);
 
@@ -3036,10 +3025,18 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
         snprintf(glsl_name, sizeof(glsl_name), "VC[%i]", i);
         entry->vuniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
+    for (i = 0; i < MAX_CONST_I; ++i) {
+        snprintf(glsl_name, sizeof(glsl_name), "VI[%i]", i);
+        entry->vuniformI_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
+    }
     entry->puniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(pshader_constantsF));
     for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
         snprintf(glsl_name, sizeof(glsl_name), "PC[%i]", i);
         entry->puniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
+    }
+    for (i = 0; i < MAX_CONST_I; ++i) {
+        snprintf(glsl_name, sizeof(glsl_name), "PI[%i]", i);
+        entry->puniformI_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
 
     entry->posFixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
@@ -3049,6 +3046,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     entry->srgb_comparison_location = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_comparison"));
     entry->srgb_mul_low_location = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_mul_low"));
     entry->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
+    checkGLcall("Find glsl program uniform locations");
 }
 
 static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
