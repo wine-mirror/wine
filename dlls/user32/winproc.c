@@ -778,12 +778,12 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
             MDICREATESTRUCTW mdi_cs;
             DWORD name_lenA = 0, name_lenW = 0, class_lenA = 0, class_lenW = 0;
 
-            if (HIWORD(csA->lpszClass))
+            if (!IS_INTRESOURCE(csA->lpszClass))
             {
                 class_lenA = strlen(csA->lpszClass) + 1;
                 RtlMultiByteToUnicodeSize( &class_lenW, csA->lpszClass, class_lenA );
             }
-            if (HIWORD(csA->lpszName))
+            if (!IS_INTRESOURCE(csA->lpszName))
             {
                 name_lenA = strlen(csA->lpszName) + 1;
                 RtlMultiByteToUnicodeSize( &name_lenW, csA->lpszName, name_lenA );
@@ -825,12 +825,12 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
 
             memcpy( &csW, csA, sizeof(csW) );
 
-            if (HIWORD(csA->szTitle))
+            if (!IS_INTRESOURCE(csA->szTitle))
             {
                 title_lenA = strlen(csA->szTitle) + 1;
                 RtlMultiByteToUnicodeSize( &title_lenW, csA->szTitle, title_lenA );
             }
-            if (HIWORD(csA->szClass))
+            if (!IS_INTRESOURCE(csA->szClass))
             {
                 class_lenA = strlen(csA->szClass) + 1;
                 RtlMultiByteToUnicodeSize( &class_lenW, csA->szClass, class_lenA );
@@ -1032,37 +1032,35 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
     {
     case WM_NCCREATE:
     case WM_CREATE:
-        {   /* csW->lpszName and csW->lpszClass are NOT supposed to be atoms
-             * at this point.
-             */
-            char buffer[1024], *cls, *name;
+        {
+            char buffer[1024], *cls;
             CREATESTRUCTW *csW = (CREATESTRUCTW *)lParam;
             CREATESTRUCTA csA = *(CREATESTRUCTA *)csW;
             MDICREATESTRUCTA mdi_cs;
-            DWORD name_lenA, name_lenW, class_lenA, class_lenW;
+            DWORD name_lenA = 0, name_lenW = 0, class_lenA = 0, class_lenW = 0;
 
-            class_lenW = strlenW(csW->lpszClass) * sizeof(WCHAR);
-            RtlUnicodeToMultiByteSize(&class_lenA, csW->lpszClass, class_lenW);
-
-            if (csW->lpszName)
+            if (!IS_INTRESOURCE(csW->lpszClass))
             {
-                name_lenW = strlenW(csW->lpszName) * sizeof(WCHAR);
+                class_lenW = (strlenW(csW->lpszClass) + 1) * sizeof(WCHAR);
+                RtlUnicodeToMultiByteSize(&class_lenA, csW->lpszClass, class_lenW);
+            }
+            if (!IS_INTRESOURCE(csW->lpszName))
+            {
+                name_lenW = (strlenW(csW->lpszName) + 1) * sizeof(WCHAR);
                 RtlUnicodeToMultiByteSize(&name_lenA, csW->lpszName, name_lenW);
             }
-            else
-                name_lenW = name_lenA = 0;
 
-            if (!(cls = get_buffer( buffer, sizeof(buffer), class_lenA + name_lenA + 2 ))) break;
+            if (!(cls = get_buffer( buffer, sizeof(buffer), class_lenA + name_lenA ))) break;
 
-            RtlUnicodeToMultiByteN(cls, class_lenA, NULL, csW->lpszClass, class_lenW);
-            cls[class_lenA] = 0;
-            csA.lpszClass = cls;
-
-            if (csW->lpszName)
+            if (class_lenA)
             {
-                name = cls + class_lenA + 1;
+                RtlUnicodeToMultiByteN(cls, class_lenA, NULL, csW->lpszClass, class_lenW);
+                csA.lpszClass = cls;
+            }
+            if (name_lenA)
+            {
+                char *name = cls + class_lenA;
                 RtlUnicodeToMultiByteN(name, name_lenA, NULL, csW->lpszName, name_lenW);
-                name[name_lenA] = 0;
                 csA.lpszName = name;
             }
 
@@ -1149,12 +1147,12 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 
             memcpy( &csA, csW, sizeof(csA) );
 
-            if (HIWORD(csW->szTitle))
+            if (!IS_INTRESOURCE(csW->szTitle))
             {
                 title_lenW = (strlenW(csW->szTitle) + 1) * sizeof(WCHAR);
                 RtlUnicodeToMultiByteSize( &title_lenA, csW->szTitle, title_lenW );
             }
-            if (HIWORD(csW->szClass))
+            if (!IS_INTRESOURCE(csW->szClass))
             {
                 class_lenW = (strlenW(csW->szClass) + 1) * sizeof(WCHAR);
                 RtlUnicodeToMultiByteSize( &class_lenA, csW->szClass, class_lenW );
