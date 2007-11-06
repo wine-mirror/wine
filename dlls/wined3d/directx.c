@@ -706,6 +706,18 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
         WGL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 
+        /* Now mark all the extensions supported which are included in the opengl core version. Do this *after*
+         * loading the functions, otherwise the code above will load the extension entry points instead of the
+         * core functions, which may not work
+         */
+        for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i) {
+            if (gl_info->supported[EXTENSION_MAP[i].extension] == FALSE &&
+                EXTENSION_MAP[i].version <= gl_info->gl_driver_version && EXTENSION_MAP[i].version) {
+                TRACE_(d3d_caps)(" GL CORE: %s support\n", EXTENSION_MAP[i].extension_string);
+                gl_info->supported[EXTENSION_MAP[i].extension] = TRUE;
+            }
+        }
+
         if (gl_info->supported[APPLE_FENCE]) {
             /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.
              * The apple extension interacts with some other apple exts. Disable the NV
