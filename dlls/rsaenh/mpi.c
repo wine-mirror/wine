@@ -31,6 +31,9 @@
 #include <stdarg.h>
 #include "tomcrypt.h"
 
+/* table of first PRIME_SIZE primes */
+static const mp_digit __prime_tab[];
+
 /* Known optimal configurations
  CPU                    /Compiler     /MUL CUTOFF/SQR CUTOFF
 -------------------------------------------------------------
@@ -3808,7 +3811,7 @@ mp_zero (mp_int * a)
   memset (a->dp, 0, sizeof (mp_digit) * a->alloc);
 }
 
-const mp_digit __prime_tab[] = {
+static const mp_digit __prime_tab[] = {
   0x0002, 0x0003, 0x0005, 0x0007, 0x000B, 0x000D, 0x0011, 0x0013,
   0x0017, 0x001D, 0x001F, 0x0025, 0x0029, 0x002B, 0x002F, 0x0035,
   0x003B, 0x003D, 0x0043, 0x0047, 0x0049, 0x004F, 0x0053, 0x0059,

@@ -45,7 +45,7 @@ struct pending_credentials
 
 static HINSTANCE hinstCredUI;
 
-struct list pending_credentials_list = LIST_INIT(pending_credentials_list);
+static struct list pending_credentials_list = LIST_INIT(pending_credentials_list);
 
 static CRITICAL_SECTION csPendingCredentials;
 static CRITICAL_SECTION_DEBUG critsect_debug =

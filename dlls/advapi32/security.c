@@ -137,7 +137,7 @@ typedef struct WELLKOWNRID
     DWORD Rid;
 } WELLKNOWNRID;
 
-WELLKNOWNRID WellKnownRids[] = {
+static const WELLKNOWNRID WellKnownRids[] = {
     { WinAccountAdministratorSid,    DOMAIN_USER_RID_ADMIN },
     { WinAccountGuestSid,            DOMAIN_USER_RID_GUEST },
     { WinAccountKrbtgtSid,           DOMAIN_USER_RID_KRBTGT },

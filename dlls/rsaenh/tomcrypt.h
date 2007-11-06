@@ -473,9 +473,6 @@ int mp_exptmod(const mp_int *a, const mp_int *b, mp_int *c, mp_int *d);
 /* number of primes */
 #define PRIME_SIZE      256
 
-/* table of first PRIME_SIZE primes */
-extern const mp_digit __prime_tab[];
-
 /* result=1 if a is divisible by one of the first PRIME_SIZE primes */
 int mp_prime_is_divisible(const mp_int *a, int *result);
 

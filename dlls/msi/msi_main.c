@@ -44,9 +44,10 @@ INSTALLUI_HANDLERW gUIHandlerW = NULL;
 DWORD gUIFilter = 0;
 LPVOID gUIContext = NULL;
 WCHAR gszLogFile[MAX_PATH];
-WCHAR msi_path[MAX_PATH];
-ITypeLib *msi_typelib = NULL;
 HINSTANCE msi_hInstance;
+
+static WCHAR msi_path[MAX_PATH];
+static ITypeLib *msi_typelib;
 
 /*
  * Dll lifetime tracking declaration
