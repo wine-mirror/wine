@@ -487,6 +487,16 @@ s_sum_pcarr2(int n, int **pa)
   return s_sum_conf_array(*pa, n);
 }
 
+int
+s_sum_L1_norms(int n, vector_t *vs)
+{
+  int i;
+  int sum = 0;
+  for (i = 0; i < n; ++i)
+    sum += abs(vs[i].x) + abs(vs[i].y) + abs(vs[i].z);
+  return sum;
+}
+
 void
 s_stop(void)
 {
@@ -983,6 +993,8 @@ array_tests(void)
   make_pyramid_doub_carr(4, &dc);
   ok(check_pyramid_doub_carr(dc), "RPC make_pyramid_doub_carr\n");
   free_pyramid_doub_carr(dc);
+
+  ok(sum_L1_norms(2, vs) == 21, "RPC sum_L1_norms\n");
 }
 
 static void

@@ -298,6 +298,7 @@ cpp_quote("#endif")
   void get_name([in,out] name_t *name);
 
   int sum_pcarr2(int n, [size_is(, n)] int **pa);
+  int sum_L1_norms(int n, [size_is(n)] vector_t *vs);
 
   void stop(void);
 }

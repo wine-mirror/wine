@@ -1535,9 +1535,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
         has_pointer = TRUE;
 
     align = 0;
-    size = type_memsize(type, &align);
-    if (size == 0)              /* conformant array */
-        size = type_memsize(type->ref, &align);
+    size = type_memsize((is_conformant_array(type) ? type->ref : type), &align);
 
     start_offset = *typestring_offset;
     update_tfsoff(type, start_offset, file);
