@@ -414,7 +414,7 @@
 @ stub RpcErrorNumberOfRecords # wxp
 @ stub RpcErrorResetEnumeration # wxp
 @ stub RpcErrorSaveErrorInfo # wxp
-@ stub RpcErrorStartEnumeration # wxp
+@ stdcall RpcErrorStartEnumeration(ptr)
 @ stub RpcFreeAuthorizationContext # wxp
 @ stub RpcGetAsyncCallStatus
 @ stub RpcIfIdVectorFree

@@ -828,3 +828,12 @@ DWORD WINAPI I_RpcMapWin32Status(RPC_STATUS status)
     FIXME("(%ld): stub\n", status);
     return 0;
 }
+
+/******************************************************************************
+ * RpcErrorStartEnumeration   (rpcrt4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcErrorStartEnumeration(void** EnumHandle)
+{
+    FIXME("(%p): stub\n", EnumHandle);
+    return RPC_S_ENTRY_NOT_FOUND;
+}
