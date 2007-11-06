@@ -422,8 +422,24 @@ HRESULT shader_get_registers_used(
                 else if (WINED3DSPR_TEMP == regtype)
                     reg_maps->temporary[reg] = 1;
 
-                else if (WINED3DSPR_INPUT == regtype && !pshader)
-                    reg_maps->attributes[reg] = 1;
+                else if (WINED3DSPR_INPUT == regtype) {
+                    if( !pshader)
+                        reg_maps->attributes[reg] = 1;
+                    else {
+                        if(param & WINED3DSHADER_ADDRMODE_RELATIVE) {
+                            /* If relative addressing is used, we must assume that all registers
+                             * are used. Even if it is a construct like v3[aL], we can't assume
+                             * that v0, v1 and v2 aren't read because aL can be negative
+                             */
+                            unsigned int i;
+                            for(i = 0; i < MAX_REG_INPUT; i++) {
+                                ((IWineD3DPixelShaderImpl *) This)->input_reg_used[i] = TRUE;
+                            }
+                        } else {
+                            ((IWineD3DPixelShaderImpl *) This)->input_reg_used[reg] = TRUE;
+                        }
+                    }
+                }
 
                 else if (WINED3DSPR_RASTOUT == regtype && reg == 1)
                     reg_maps->fog = 1;

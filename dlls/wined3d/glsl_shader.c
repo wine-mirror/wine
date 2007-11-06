@@ -2670,6 +2670,9 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, semantic *semantics_in, sema
         if(map[i] >= (GL_LIMITS(glsl_varyings) / 4)) {
             FIXME("More input varyings declared than supported, expect issues\n");
             continue;
+        } else if(map[i] == -1) {
+            /* Declared, but not read register */
+            continue;
         }
         register_token = semantics_in[i].reg;
 
