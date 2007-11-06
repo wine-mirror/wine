@@ -906,6 +906,35 @@ static void store_key_pair(HCRYPTKEY hCryptKey, HKEY hKey, LPCSTR szValueName, D
 }
 
 /******************************************************************************
+ * create_container_key [Internal]
+ *
+ * Creates the registry key for a key container's persistent storage.
+ * 
+ * PARAMS
+ *  pKeyContainer [I] Pointer to the key container
+ *  sam           [I] Desired registry access
+ *  phKey         [O] Returned key
+ */
+static BOOL create_container_key(KEYCONTAINER *pKeyContainer, REGSAM sam, HKEY *phKey)
+{
+    CHAR szRSABase[MAX_PATH];
+    HKEY hRootKey;
+
+    sprintf(szRSABase, RSAENH_REGKEY, pKeyContainer->szName);
+
+    if (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET)
+        hRootKey = HKEY_LOCAL_MACHINE;
+    else
+        hRootKey = HKEY_CURRENT_USER;
+
+    /* @@ Wine registry key: HKLM\Software\Wine\Crypto\RSA */
+    /* @@ Wine registry key: HKCU\Software\Wine\Crypto\RSA */
+    return RegCreateKeyExA(hRootKey, szRSABase, 0, NULL,
+                           REG_OPTION_NON_VOLATILE, sam, NULL, phKey, NULL)
+                           == ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * store_key_container_keys [Internal]
  *
  * Stores key container's keys in a persistent location.
@@ -915,27 +944,19 @@ static void store_key_pair(HCRYPTKEY hCryptKey, HKEY hKey, LPCSTR szValueName, D
  */
 static void store_key_container_keys(KEYCONTAINER *pKeyContainer)
 {
-    CHAR szRSABase[MAX_PATH];
-    HKEY hKey, hRootKey;
+    HKEY hKey;
     DWORD dwFlags;
 
     /* On WinXP, persistent keys are stored in a file located at:
      * $AppData$\\Microsoft\\Crypto\\RSA\\$SID$\\some_hex_string
      */
-    sprintf(szRSABase, RSAENH_REGKEY, pKeyContainer->szName);
 
-    if (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET) {
-        hRootKey = HKEY_LOCAL_MACHINE;
+    if (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET)
         dwFlags = CRYPTPROTECT_LOCAL_MACHINE;
-    } else {
-        hRootKey = HKEY_CURRENT_USER;
+    else
         dwFlags = 0;
-    }
-    
-    /* @@ Wine registry key: HKLM\Software\Wine\Crypto\RSA */
-    /* @@ Wine registry key: HKCU\Software\Wine\Crypto\RSA */
-    if (RegCreateKeyExA(hRootKey, szRSABase, 0, NULL, REG_OPTION_NON_VOLATILE,
-                        KEY_WRITE, NULL, &hKey, NULL) == ERROR_SUCCESS)
+
+    if (create_container_key(pKeyContainer, KEY_WRITE, &hKey))
     {
         store_key_pair(pKeyContainer->hKeyExchangeKeyPair, hKey,
                        "KeyExchangeKeyPair", dwFlags);
@@ -1006,21 +1027,10 @@ static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, const 
         /* The new key container has to be inserted into the CSP immediately 
          * after creation to be available for CPGetProvParam's PP_ENUMCONTAINERS. */
         if (!(dwFlags & CRYPT_VERIFYCONTEXT)) {
-            CHAR szRSABase[MAX_PATH];
-            HKEY hRootKey, hKey;
+            HKEY hKey;
 
-            sprintf(szRSABase, RSAENH_REGKEY, pKeyContainer->szName);
-
-            if (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET) {
-                hRootKey = HKEY_LOCAL_MACHINE;
-            } else {
-                hRootKey = HKEY_CURRENT_USER;
-            }
-
-            /* @@ Wine registry key: HKLM\Software\Wine\Crypto\RSA */
-            /* @@ Wine registry key: HKCU\Software\Wine\Crypto\RSA */
-            RegCreateKeyA(hRootKey, szRSABase, &hKey);
-            RegCloseKey(hKey);
+            if (create_container_key(pKeyContainer, KEY_WRITE, &hKey))
+                RegCloseKey(hKey);
         }
     }
 
