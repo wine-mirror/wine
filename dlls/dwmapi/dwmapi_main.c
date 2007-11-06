@@ -59,3 +59,13 @@ HRESULT WINAPI DwmIsCompositionEnabled(BOOL *enabled)
     *enabled = FALSE;
     return S_OK;
 }
+
+/**********************************************************************
+ *           DwmEnableComposition         (DWMAPI.102)
+ */
+HRESULT WINAPI DwmEnableComposition(UINT uCompositionAction)
+{
+    FIXME("(%d) stub\n", uCompositionAction);
+
+    return S_OK;
+}
