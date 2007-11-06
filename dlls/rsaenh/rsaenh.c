@@ -965,6 +965,38 @@ static BOOL open_container_key(LPCSTR pszContainerName, DWORD dwFlags, HKEY *phK
 }
 
 /******************************************************************************
+ * delete_container_key [Internal]
+ *
+ * Deletes a key container's persistent storage.
+ *
+ * PARAMS
+ *  pszContainerName [I] Name of the container to be opened.
+ *  dwFlags          [I] Flags indicating which keyset to be opened.
+ */
+static BOOL delete_container_key(LPCSTR pszContainerName, DWORD dwFlags)
+{
+    CHAR szRegKey[MAX_PATH];
+
+    if (snprintf(szRegKey, MAX_PATH, RSAENH_REGKEY, pszContainerName) >= MAX_PATH) {
+        SetLastError(NTE_BAD_KEYSET_PARAM);
+        return FALSE;
+    } else {
+        HKEY hRootKey;
+        if (dwFlags & CRYPT_MACHINE_KEYSET)
+            hRootKey = HKEY_LOCAL_MACHINE;
+        else
+            hRootKey = HKEY_CURRENT_USER;
+        if (!RegDeleteKeyA(hRootKey, szRegKey)) {
+            SetLastError(ERROR_SUCCESS);
+            return TRUE;
+        } else {
+            SetLastError(NTE_BAD_KEYSET);
+            return FALSE;
+        }
+    }
+}
+
+/******************************************************************************
  * store_key_container_keys [Internal]
  *
  * Stores key container's keys in a persistent location.
@@ -1479,7 +1511,6 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
                    DWORD dwFlags, PVTableProvStruc pVTable)
 {
     CHAR szKeyContainerName[MAX_PATH];
-    CHAR szRegKey[MAX_PATH];
 
     TRACE("(phProv=%p, pszContainer=%s, dwFlags=%08x, pVTable=%p)\n", phProv,
           debugstr_a(pszContainer), dwFlags, pVTable);
@@ -1501,24 +1532,7 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
             break;
 
         case CRYPT_DELETEKEYSET:
-            if (snprintf(szRegKey, MAX_PATH, RSAENH_REGKEY, szKeyContainerName) >= MAX_PATH) {
-                SetLastError(NTE_BAD_KEYSET_PARAM);
-                return FALSE;
-            } else {
-                HKEY hRootKey;
-                if (dwFlags & CRYPT_MACHINE_KEYSET)
-                    hRootKey = HKEY_LOCAL_MACHINE;
-                else
-                    hRootKey = HKEY_CURRENT_USER;
-                if (!RegDeleteKeyA(hRootKey, szRegKey)) {
-                    SetLastError(ERROR_SUCCESS);
-                    return TRUE;
-                } else {
-                    SetLastError(NTE_BAD_KEYSET);
-                    return FALSE;
-                }
-            }
-            break;
+            return delete_container_key(szKeyContainerName, dwFlags);
 
         case CRYPT_NEWKEYSET:
             *phProv = read_key_container(szKeyContainerName, dwFlags, pVTable);
