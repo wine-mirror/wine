@@ -2244,6 +2244,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
         }
         case INTERNET_OPTION_SECURITY_FLAGS:
             FIXME("INTERNET_OPTION_SECURITY_FLAGS: Stub\n");
+            bSuccess = TRUE;
             break;
 
         case INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT:
