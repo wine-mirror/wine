@@ -493,6 +493,7 @@ struct WineD3DContext {
     DWORD                   tid;    /* Thread ID which owns this context at the moment */
 
     /* Stores some inforation about the context state for optimization */
+    GLint                   last_draw_buffer;
     BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
     BOOL                    last_was_pshader;
     BOOL                    last_was_vshader;
