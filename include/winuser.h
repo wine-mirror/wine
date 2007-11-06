@@ -4388,6 +4388,7 @@ BOOL      WINAPI AppendMenuA(HMENU,UINT,UINT_PTR,LPCSTR);
 BOOL      WINAPI AppendMenuW(HMENU,UINT,UINT_PTR,LPCWSTR);
 #define     AppendMenu WINELIB_NAME_AW(AppendMenu)
 UINT        WINAPI ArrangeIconicWindows(HWND);
+BOOL        WINAPI AttachThreadInput(DWORD,DWORD,BOOL);
 HDWP        WINAPI BeginDeferWindowPos(INT);
 HDC         WINAPI BeginPaint(HWND,LPPAINTSTRUCT);
 BOOL        WINAPI BringWindowToTop(HWND);
