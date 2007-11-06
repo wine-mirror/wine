@@ -26,6 +26,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winnls.h"
+#include "objbase.h"
 
 #include "guiddef.h"
 #include "wintrust.h"

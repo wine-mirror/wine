@@ -31,6 +31,7 @@
 #include "winnt.h"
 #include "winnls.h"
 #include "wininet.h"
+#include "objbase.h"
 #define CERT_REVOCATION_PARA_HAS_EXTRA_FIELDS
 #include "wincrypt.h"
 
