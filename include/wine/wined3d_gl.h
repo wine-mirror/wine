@@ -3328,8 +3328,8 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FVEXTPROC,                    glSecondaryColor3fvEXT,                     EXT_SECONDARY_COLOR,    NULL );\
     USE_GL_FUNC(PGLFNGLSECONDARYCOLORPOINTEREXTPROC,                glSecondaryColorPointerEXT,                 EXT_SECONDARY_COLOR,    NULL );\
     /* GL_EXT_texture3D */ \
-    USE_GL_FUNC(PGLFNGLTEXIMAGE3DEXTPROC,                           glTexImage3DEXT,                            EXT_TEXTURE3D,          NULL );\
-    USE_GL_FUNC(PGLFNGLTEXSUBIMAGE3DEXTPROC,                        glTexSubImage3DEXT,                         EXT_TEXTURE3D,          NULL );\
+    USE_GL_FUNC(PGLFNGLTEXIMAGE3DEXTPROC,                           glTexImage3DEXT,                            EXT_TEXTURE3D,          glTexImage3D);\
+    USE_GL_FUNC(PGLFNGLTEXSUBIMAGE3DEXTPROC,                        glTexSubImage3DEXT,                         EXT_TEXTURE3D,          glTexSubImage3D);\
     /* GL_ARB_vertex_program */ \
     USE_GL_FUNC(PGLFNGENPROGRAMSARBPROC,                            glGenProgramsARB,                           ARB_VERTEX_PROGRAM,     NULL );\
     USE_GL_FUNC(PGLFNBINDPROGRAMARBPROC,                            glBindProgramARB,                           ARB_VERTEX_PROGRAM,     NULL );\

@@ -91,7 +91,7 @@ static const struct {
     {"GL_EXT_secondary_color",              EXT_SECONDARY_COLOR,            0                           },
     {"GL_EXT_stencil_two_side",             EXT_STENCIL_TWO_SIDE,           0                           },
     {"GL_EXT_stencil_wrap",                 EXT_STENCIL_WRAP,               0                           },
-    {"GL_EXT_texture3D",                    EXT_TEXTURE3D,                  0                           },
+    {"GL_EXT_texture3D",                    EXT_TEXTURE3D,                  MAKEDWORD_VERSION(1, 2)     },
     {"GL_EXT_texture_compression_s3tc",     EXT_TEXTURE_COMPRESSION_S3TC,   0                           },
     {"GL_EXT_texture_env_add",              EXT_TEXTURE_ENV_ADD,            0                           },
     {"GL_EXT_texture_env_combine",          EXT_TEXTURE_ENV_COMBINE,        0                           },
