@@ -353,19 +353,18 @@ void shader_glsl_load_constants(
     GLhandleARB *constant_locations;
     struct list *constant_list;
     GLhandleARB programId;
-    GLint pos;
+    struct glsl_shader_prog_link *prog = stateBlock->glsl_program;
 
-    if (!stateBlock->glsl_program) {
+    if (!prog) {
         /* No GLSL program set - nothing to do. */
         return;
     }
-    programId = stateBlock->glsl_program->programId;
+    programId = prog->programId;
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
-        GLint pos;
 
-        constant_locations = stateBlock->glsl_program->vuniformF_locations;
+        constant_locations = prog->vuniformF_locations;
         constant_list = &stateBlock->set_vconstantsF;
 
         /* Load vertex shader samplers */
@@ -386,9 +385,7 @@ void shader_glsl_load_constants(
                                     stateBlock->changed.vertexShaderConstantsB);
 
         /* Upload the position fixup params */
-        pos = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
-        checkGLcall("glGetUniformLocationARB");
-        GL_EXTCALL(glUniform4fvARB(pos, 1, &deviceImpl->posFixup[0]));
+        GL_EXTCALL(glUniform4fvARB(prog->posFixup_location, 1, &deviceImpl->posFixup[0]));
         checkGLcall("glUniform4fvARB");
     }
 
@@ -421,9 +418,7 @@ void shader_glsl_load_constants(
          */
         if(((IWineD3DPixelShaderImpl *) pshader)->needsbumpmat != -1) {
             float *data = (float *) &stateBlock->textureState[(int) ((IWineD3DPixelShaderImpl *) pshader)->needsbumpmat][WINED3DTSS_BUMPENVMAT00];
-            pos = GL_EXTCALL(glGetUniformLocationARB(programId, "bumpenvmat"));
-            checkGLcall("glGetUniformLocationARB");
-            GL_EXTCALL(glUniformMatrix2fvARB(pos, 1, 0, data));
+            GL_EXTCALL(glUniformMatrix2fvARB(prog->bumpenvmat_location, 1, 0, data));
             checkGLcall("glUniformMatrix2fvARB");
 
             /* texbeml needs the luminance scale and offset too. If texbeml is used, needsbumpmat
@@ -434,13 +429,9 @@ void shader_glsl_load_constants(
                 GLfloat *scale = (GLfloat *) &stateBlock->textureState[stage][WINED3DTSS_BUMPENVLSCALE];
                 GLfloat *offset = (GLfloat *) &stateBlock->textureState[stage][WINED3DTSS_BUMPENVLOFFSET];
 
-                pos = GL_EXTCALL(glGetUniformLocationARB(programId, "luminancescale"));
-                checkGLcall("glGetUniformLocationARB");
-                GL_EXTCALL(glUniform1fvARB(pos, 1, scale));
+                GL_EXTCALL(glUniform1fvARB(prog->luminancescale_location, 1, scale));
                 checkGLcall("glUniform1fvARB");
-                pos = GL_EXTCALL(glGetUniformLocationARB(programId, "luminanceoffset"));
-                checkGLcall("glGetUniformLocationARB");
-                GL_EXTCALL(glUniform1fvARB(pos, 1, offset));
+                GL_EXTCALL(glUniform1fvARB(prog->luminanceoffset_location, 1, offset));
                 checkGLcall("glUniform1fvARB");
             }
         } else if(((IWineD3DPixelShaderImpl *) pshader)->srgb_enabled &&
@@ -462,17 +453,11 @@ void shader_glsl_load_constants(
                 mul_low[2] = 1.0; mul_low[3] = 1.0;
             }
 
-            pos = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_comparison"));
-            checkGLcall("glGetUniformLocationARB");
-            GL_EXTCALL(glUniform4fvARB(pos, 1, comparison));
-            pos = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_mul_low"));
-            checkGLcall("glGetUniformLocationARB");
-            GL_EXTCALL(glUniform4fvARB(pos, 1, mul_low));
+            GL_EXTCALL(glUniform4fvARB(prog->srgb_comparison_location, 1, comparison));
+            GL_EXTCALL(glUniform4fvARB(prog->srgb_mul_low_location, 1, mul_low));
         }
         if(((IWineD3DPixelShaderImpl *) pshader)->vpos_uniform) {
             float correction_params[4];
-            pos = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
-            checkGLcall("glGetUniformLocationARB");
             if(deviceImpl->render_offscreen) {
                 correction_params[0] = 0.0;
                 correction_params[1] = 1.0;
@@ -481,7 +466,7 @@ void shader_glsl_load_constants(
                 correction_params[0] = ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
                 correction_params[1] = -1.0;
             }
-            GL_EXTCALL(glUniform4fvARB(pos, 1, correction_params));
+            GL_EXTCALL(glUniform4fvARB(prog->ycorrection_location, 1, correction_params));
         }
     }
 }
@@ -3056,6 +3041,14 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
         snprintf(glsl_name, sizeof(glsl_name), "PC[%i]", i);
         entry->puniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
+
+    entry->posFixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
+    entry->bumpenvmat_location = GL_EXTCALL(glGetUniformLocationARB(programId, "bumpenvmat"));
+    entry->luminancescale_location = GL_EXTCALL(glGetUniformLocationARB(programId, "luminancescale"));
+    entry->luminanceoffset_location = GL_EXTCALL(glGetUniformLocationARB(programId, "luminanceoffset"));
+    entry->srgb_comparison_location = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_comparison"));
+    entry->srgb_mul_low_location = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_mul_low"));
+    entry->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
 }
 
 static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
