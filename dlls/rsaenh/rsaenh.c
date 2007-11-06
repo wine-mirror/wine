@@ -1100,6 +1100,51 @@ static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, const 
 }
 
 /******************************************************************************
+ * read_key_value [Internal]
+ *
+ * Reads a key pair value from the registry
+ *
+ * PARAMS
+ *  hKeyContainer [I] Crypt provider to use to import the key
+ *  hKey          [I] Registry key from which to read the key pair
+ *  szValueName   [I] Registry value from which to read the key pair's value
+ *  dwFlags       [I] Flags for unprotecting the key
+ *  phCryptKey    [O] Returned key
+ */
+static BOOL read_key_value(HCRYPTPROV hKeyContainer, HKEY hKey, LPCSTR szValueName, DWORD dwFlags, HCRYPTKEY *phCryptKey)
+{
+    DWORD dwValueType, dwLen;
+    BYTE *pbKey;
+    DATA_BLOB blobIn, blobOut;
+    BOOL ret = FALSE;
+
+    if (RegQueryValueExA(hKey, szValueName, 0, &dwValueType, NULL, &dwLen) ==
+        ERROR_SUCCESS)
+    {
+        pbKey = HeapAlloc(GetProcessHeap(), 0, dwLen);
+        if (pbKey)
+        {
+            if (RegQueryValueExA(hKey, szValueName, 0, &dwValueType, pbKey, &dwLen) ==
+                ERROR_SUCCESS)
+            {
+                blobIn.pbData = pbKey;
+                blobIn.cbData = dwLen;
+
+                if (CryptUnprotectData(&blobIn, NULL, NULL, NULL, NULL,
+                    dwFlags, &blobOut))
+                {
+                    ret = RSAENH_CPImportKey(hKeyContainer, blobOut.pbData, blobOut.cbData, 0, 0,
+                                             phCryptKey);
+                    HeapFree(GetProcessHeap(), 0, blobOut.pbData);
+                }
+            }
+            HeapFree(GetProcessHeap(), 0, pbKey);
+        }
+    }
+    return ret;
+}
+
+/******************************************************************************
  * read_key_container [Internal]
  *
  * Tries to read the persistent state of the key container (mainly the signature
@@ -1115,12 +1160,9 @@ static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, const 
  */
 static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, const VTableProvStruc *pVTable)
 {
-    BYTE *pbKey;
     HKEY hKey;
-    DWORD dwValueType, dwLen;
     KEYCONTAINER *pKeyContainer;
     HCRYPTPROV hKeyContainer;
-    DATA_BLOB blobIn, blobOut;
     HCRYPTKEY hCryptKey;
 
     if (!open_container_key(pszContainerName, dwFlags, &hKey))
@@ -1132,59 +1174,19 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, cons
     hKeyContainer = new_key_container(pszContainerName, dwFlags, pVTable);
     if (hKeyContainer != (HCRYPTPROV)INVALID_HANDLE_VALUE)
     {
+        DWORD dwProtectFlags = (dwFlags & CRYPT_MACHINE_KEYSET) ?
+            CRYPTPROTECT_LOCAL_MACHINE : 0;
+
         if (!lookup_handle(&handle_table, hKeyContainer, RSAENH_MAGIC_CONTAINER, 
                            (OBJECTHDR**)&pKeyContainer))
             return (HCRYPTPROV)INVALID_HANDLE_VALUE;
     
-        if (RegQueryValueExA(hKey, "KeyExchangeKeyPair", 0, &dwValueType, NULL, &dwLen) == 
-            ERROR_SUCCESS) 
-        {
-            pbKey = HeapAlloc(GetProcessHeap(), 0, dwLen);
-            if (pbKey) 
-            {
-                if (RegQueryValueExA(hKey, "KeyExchangeKeyPair", 0, &dwValueType, pbKey, &dwLen) ==
-                    ERROR_SUCCESS)
-                {
-                    blobIn.pbData = pbKey;
-                    blobIn.cbData = dwLen;
-
-                    if (CryptUnprotectData(&blobIn, NULL, NULL, NULL, NULL, 
-                         (dwFlags & CRYPT_MACHINE_KEYSET) ? CRYPTPROTECT_LOCAL_MACHINE : 0, &blobOut))
-                    {
-                        if(RSAENH_CPImportKey(hKeyContainer, blobOut.pbData, blobOut.cbData, 0, 0,
-                                           &hCryptKey))
-                            pKeyContainer->hKeyExchangeKeyPair = hCryptKey;
-                        HeapFree(GetProcessHeap(), 0, blobOut.pbData);
-                    }
-                }
-                HeapFree(GetProcessHeap(), 0, pbKey);
-            }
-        }
-
-        if (RegQueryValueExA(hKey, "SignatureKeyPair", 0, &dwValueType, NULL, &dwLen) == 
-            ERROR_SUCCESS) 
-        {
-            pbKey = HeapAlloc(GetProcessHeap(), 0, dwLen);
-            if (pbKey) 
-            {
-                if (RegQueryValueExA(hKey, "SignatureKeyPair", 0, &dwValueType, pbKey, &dwLen) == 
-                    ERROR_SUCCESS)
-                {
-                    blobIn.pbData = pbKey;
-                    blobIn.cbData = dwLen;
-
-                    if (CryptUnprotectData(&blobIn, NULL, NULL, NULL, NULL, 
-                         (dwFlags & CRYPT_MACHINE_KEYSET) ? CRYPTPROTECT_LOCAL_MACHINE : 0, &blobOut))
-                    {
-                        if(RSAENH_CPImportKey(hKeyContainer, blobOut.pbData, blobOut.cbData, 0, 0,
-                                           &hCryptKey))
-                            pKeyContainer->hSignatureKeyPair = hCryptKey;
-                        HeapFree(GetProcessHeap(), 0, blobOut.pbData);
-                    }
-                }
-                HeapFree(GetProcessHeap(), 0, pbKey);
-            }
-        }
+        if (read_key_value(hKeyContainer, hKey, "KeyExchangeKeyPair",
+            dwProtectFlags, &hCryptKey))
+            pKeyContainer->hKeyExchangeKeyPair = hCryptKey;
+        if (read_key_value(hKeyContainer, hKey, "SignatureKeyPair",
+            dwProtectFlags, &hCryptKey))
+            pKeyContainer->hSignatureKeyPair = hCryptKey;
     }
 
     return hKeyContainer;
