@@ -299,7 +299,7 @@ static void clear_test(IDirect3DDevice9 *device)
 
     /* negative x, negative y */
     rect_negneg.x1 = 640;
-    rect_negneg.x1 = 240;
+    rect_negneg.y1 = 240;
     rect_negneg.x2 = 320;
     rect_negneg.y2 = 0;
     hr = IDirect3DDevice9_Clear(device, 1, &rect_negneg, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
