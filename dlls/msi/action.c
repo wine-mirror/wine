@@ -1727,6 +1727,8 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szAddLocal[] =
         {'A','D','D','L','O','C','A','L',0};
+    static const WCHAR szAddSource[] =
+        {'A','D','D','S','O','U','R','C','E',0};
     static const WCHAR szRemove[] =
         {'R','E','M','O','V','E',0};
     static const WCHAR szReinstall[] =
@@ -1766,6 +1768,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
      */
     override |= process_state_property(package,szAddLocal,INSTALLSTATE_LOCAL);
     override |= process_state_property(package,szRemove,INSTALLSTATE_ABSENT);
+    override |= process_state_property(package,szAddSource,INSTALLSTATE_SOURCE);
     override |= process_state_property(package,szReinstall,INSTALLSTATE_LOCAL);
 
     if (!override)
