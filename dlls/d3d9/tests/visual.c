@@ -4426,5 +4426,13 @@ START_TEST(visual)
     else skip("No ps_1_1 support\n");
 
 cleanup:
-    if(device_ptr) IDirect3DDevice9_Release(device_ptr);
+    if(device_ptr) {
+        D3DPRESENT_PARAMETERS present_parameters;
+        IDirect3DSwapChain9 *swapchain;
+        IDirect3DDevice9_GetSwapChain(device_ptr, 0, &swapchain);
+        IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters);
+        IDirect3DSwapChain9_Release(swapchain);
+        IDirect3DDevice9_Release(device_ptr);
+        DestroyWindow(present_parameters.hDeviceWindow);
+    }
 }
