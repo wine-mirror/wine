@@ -895,7 +895,7 @@ static void store_key_pair(HCRYPTKEY hCryptKey, HKEY hKey, LPCSTR szValueName, D
                     {
                         RegSetValueExA(hKey, szValueName, 0, REG_BINARY,
                                        blobOut.pbData, blobOut.cbData);
-                        HeapFree(GetProcessHeap(), 0, blobOut.pbData);
+                        LocalFree(blobOut.pbData);
                     }
                 }
                 HeapFree(GetProcessHeap(), 0, pbKey);
@@ -1135,7 +1135,7 @@ static BOOL read_key_value(HCRYPTPROV hKeyContainer, HKEY hKey, LPCSTR szValueNa
                 {
                     ret = RSAENH_CPImportKey(hKeyContainer, blobOut.pbData, blobOut.cbData, 0, 0,
                                              phCryptKey);
-                    HeapFree(GetProcessHeap(), 0, blobOut.pbData);
+                    LocalFree(blobOut.pbData);
                 }
             }
             HeapFree(GetProcessHeap(), 0, pbKey);
