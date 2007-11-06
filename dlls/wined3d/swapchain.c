@@ -103,6 +103,7 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
                 FIXME("(%p) Something's still holding the back buffer\n",This);
             }
         }
+        HeapFree(GetProcessHeap(), 0, This->backBuffer);
     }
 
     /* Restore the screen resolution if we rendered in fullscreen
