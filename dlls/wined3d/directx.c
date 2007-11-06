@@ -2760,6 +2760,20 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
                   gl_info->vs_glsl_constantsF, gl_info->vs_arb_constantsF);
             gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
         }
+
+        /* MacOS advertises GL_ARB_texture_non_power_of_two on ATI r500 and earlier cards, although
+         * these cards only support GL_ARB_texture_rectangle(D3DPTEXTURECAPS_NONPOW2CONDITIONAL).
+         * If real NP2 textures are used, the driver falls back to software. So remove the supported
+         * flag for this extension
+         */
+        if(gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] && gl_info->gl_vendor == VENDOR_ATI) {
+            if(gl_info->gl_card == CARD_ATI_RADEON_X700 || gl_info->gl_card == CARD_ATI_RADEON_X1600 ||
+               gl_info->gl_card == CARD_ATI_RADEON_9500 || gl_info->gl_card == CARD_ATI_RADEON_8500  ||
+               gl_info->gl_card == CARD_ATI_RADEON_7200 || gl_info->gl_card == CARD_ATI_RAGE_128PRO) {
+                TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing\n");
+                gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
+            }
+        }
     }
 }
 
