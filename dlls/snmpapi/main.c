@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(snmpapi);
 
-static INT asn_any_copy(AsnAny *dst, AsnAny *src)
+static INT asn_any_copy(AsnAny *dst, const AsnAny *src)
 {
     memset(dst, 0, sizeof(AsnAny));
     switch (src->asnType)
