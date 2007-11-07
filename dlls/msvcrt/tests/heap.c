@@ -148,11 +148,12 @@ static void test_aligned_realloc(size_t size1, size_t size2, size_t alignment)
                     }
                 }
             }
-        }
-        else
+            p_aligned_free(mem2);
+        } else {
             ok(errno == EINVAL, "_aligned_realloc(%p, %d, %d) errno: %d != %d\n", mem, size2, alignment, errno, EINVAL);
+            p_aligned_free(mem);
+        }
 
-        p_aligned_free(mem);
         free(mem1);
     }
     else
@@ -219,11 +220,12 @@ static void test_aligned_offset_realloc(size_t size1, size_t size2, size_t align
                     }
                 }
             }
-        }
-        else
+            p_aligned_free(mem2);
+        } else {
             ok(errno == EINVAL, "_aligned_offset_realloc(%p, %d, %d, %d) errno: %d != %d\n", mem, size2, alignment, offset, errno, EINVAL);
+            p_aligned_free(mem);
+        }
 
-        p_aligned_free(mem);
         free(mem1);
     }
     else
@@ -352,6 +354,9 @@ START_TEST(heap)
     
     mem = realloc(NULL, 0);
     ok(mem != NULL, "memory not (re)allocated for size 0\n");
+
+    if (mem)
+        free(mem);
 
     test_aligned();
 }
