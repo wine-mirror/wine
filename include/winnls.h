@@ -689,104 +689,104 @@ enum SYSGEOCLASS
 /* NLS Functions.
  */
 
-INT         WINAPI CompareStringA(LCID,DWORD,LPCSTR,INT,LPCSTR,INT);
-INT         WINAPI CompareStringW(LCID,DWORD,LPCWSTR,INT,LPCWSTR,INT);
-#define     CompareString WINELIB_NAME_AW(CompareString)
-LCID        WINAPI ConvertDefaultLocale(LCID);
-BOOL        WINAPI EnumCalendarInfoA(CALINFO_ENUMPROCA,LCID,CALID,CALTYPE);
-BOOL        WINAPI EnumCalendarInfoW(CALINFO_ENUMPROCW,LCID,CALID,CALTYPE);
-#define     EnumCalendarInfo WINELIB_NAME_AW(EnumCalendarInfo)
-BOOL        WINAPI EnumCalendarInfoExA(CALINFO_ENUMPROCEXA,LCID,CALID,CALTYPE);
-BOOL        WINAPI EnumCalendarInfoExW(CALINFO_ENUMPROCEXW,LCID,CALID,CALTYPE);
-#define     EnumCalendarInfoEx WINELIB_NAME_AW(EnumCalendarInfoEx)
-BOOL        WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA,LCID,DWORD);
-BOOL        WINAPI EnumDateFormatsW(DATEFMT_ENUMPROCW,LCID,DWORD);
-#define     EnumDateFormats WINELIB_NAME_AW(EnumDateFormats)
-BOOL        WINAPI EnumDateFormatsExA(DATEFMT_ENUMPROCEXA,LCID,DWORD);
-BOOL        WINAPI EnumDateFormatsExW(DATEFMT_ENUMPROCEXW,LCID,DWORD);
-#define     EnumDateFormatsEx WINELIB_NAME_AW(EnumDateFormatsEx)
-BOOL        WINAPI EnumSystemCodePagesA(CODEPAGE_ENUMPROCA,DWORD);
-BOOL        WINAPI EnumSystemCodePagesW(CODEPAGE_ENUMPROCW,DWORD);
-#define     EnumSystemCodePages WINELIB_NAME_AW(EnumSystemCodePages)
-BOOL        WINAPI EnumSystemGeoID(GEOCLASS,GEOID,GEO_ENUMPROC);
-BOOL        WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA,DWORD);
-BOOL        WINAPI EnumSystemLocalesW(LOCALE_ENUMPROCW,DWORD);
-#define     EnumSystemLocales WINELIB_NAME_AW(EnumSystemLocales)
-BOOL        WINAPI EnumSystemLanguageGroupsA(LANGUAGEGROUP_ENUMPROCA,DWORD,LONG_PTR);
-BOOL        WINAPI EnumSystemLanguageGroupsW(LANGUAGEGROUP_ENUMPROCW,DWORD,LONG_PTR);
-#define     EnumSystemLanguageGroups WINELIB_NAME_AW(EnumSystemLanguageGroups)
-BOOL        WINAPI EnumLanguageGroupLocalesA(LANGGROUPLOCALE_ENUMPROCA,LGRPID,DWORD,LONG_PTR);
-BOOL        WINAPI EnumLanguageGroupLocalesW(LANGGROUPLOCALE_ENUMPROCW,LGRPID,DWORD,LONG_PTR);
-#define     EnumLanguageGroupLocales WINELIB_NAME_AW(EnumLanguageGroupLocales)
-BOOL        WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA,LCID,DWORD);
-BOOL        WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW,LCID,DWORD);
-#define     EnumTimeFormats WINELIB_NAME_AW(EnumTimeFormats)
-BOOL        WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA,DWORD,LONG_PTR);
-BOOL        WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW,DWORD,LONG_PTR);
-#define     EnumUILanguages WINELIB_NAME_AW(EnumUILanguages)
-INT         WINAPI FoldStringA(DWORD,LPCSTR,INT,LPSTR,INT);
-INT         WINAPI FoldStringW(DWORD,LPCWSTR,INT,LPWSTR,INT);
-#define     FoldString WINELIB_NAME_AW(FoldString)
-UINT        WINAPI GetACP(void);
-BOOL        WINAPI GetCPInfo(UINT,LPCPINFO);
-BOOL        WINAPI GetCPInfoExA(UINT,DWORD,LPCPINFOEXA);
-BOOL        WINAPI GetCPInfoExW(UINT,DWORD,LPCPINFOEXW);
-#define     GetCPInfoEx WINELIB_NAME_AW(GetCPInfoEx)
-INT         WINAPI GetCalendarInfoA(LCID,DWORD,DWORD,LPSTR,INT,LPDWORD);
-INT         WINAPI GetCalendarInfoW(LCID,DWORD,DWORD,LPWSTR,INT,LPDWORD);
-#define     GetCalendarInfo WINELIB_NAME_AW(GetCalendarInfo)
-INT         WINAPI GetCurrencyFormatA(LCID,DWORD,LPCSTR,const CURRENCYFMTA*,LPSTR,INT);
-INT         WINAPI GetCurrencyFormatW(LCID,DWORD,LPCWSTR,const CURRENCYFMTW*,LPWSTR,INT);
-#define     GetCurrencyFormat WINELIB_NAME_AW(GetCurrencyFormat)
-INT         WINAPI GetDateFormatA(LCID,DWORD,const SYSTEMTIME*,LPCSTR,LPSTR,INT);
-INT         WINAPI GetDateFormatW(LCID,DWORD,const SYSTEMTIME*,LPCWSTR,LPWSTR,INT);
-#define     GetDateFormat WINELIB_NAME_AW(GetDateFormat)
-INT         WINAPI GetGeoInfoA(GEOID,GEOTYPE,LPSTR,INT,LANGID);
-INT         WINAPI GetGeoInfoW(GEOID,GEOTYPE,LPWSTR,INT,LANGID);
-#define     GetGeoInfo WINELIB_NAME_AW(GetGeoInfo)
-INT         WINAPI GetLocaleInfoA(LCID,LCTYPE,LPSTR,INT);
-INT         WINAPI GetLocaleInfoW(LCID,LCTYPE,LPWSTR,INT);
-#define     GetLocaleInfo WINELIB_NAME_AW(GetLocaleInfo)
-INT         WINAPI GetNumberFormatA(LCID,DWORD,LPCSTR,const NUMBERFMTA*,LPSTR,INT);
-INT         WINAPI GetNumberFormatW(LCID,DWORD,LPCWSTR,const NUMBERFMTW*,LPWSTR,INT);
-#define     GetNumberFormat WINELIB_NAME_AW(GetNumberFormat)
-UINT        WINAPI GetOEMCP(void);
-BOOL        WINAPI GetStringTypeA(LCID,DWORD,LPCSTR,INT,LPWORD);
-BOOL        WINAPI GetStringTypeW(DWORD,LPCWSTR,INT,LPWORD);
-BOOL        WINAPI GetStringTypeExA(LCID,DWORD,LPCSTR,INT,LPWORD);
-BOOL        WINAPI GetStringTypeExW(LCID,DWORD,LPCWSTR,INT,LPWORD);
-#define     GetStringTypeEx WINELIB_NAME_AW(GetStringTypeEx)
-LANGID      WINAPI GetSystemDefaultLangID(void);
-LCID        WINAPI GetSystemDefaultLCID(void);
-LANGID      WINAPI GetSystemDefaultUILanguage(void);
-LCID        WINAPI GetThreadLocale(void);
-INT         WINAPI GetTimeFormatA(LCID,DWORD,const SYSTEMTIME*,LPCSTR,LPSTR,INT);
-INT         WINAPI GetTimeFormatW(LCID,DWORD,const SYSTEMTIME*,LPCWSTR,LPWSTR,INT);
-#define     GetTimeFormat WINELIB_NAME_AW(GetTimeFormat)
-LANGID      WINAPI GetUserDefaultLangID(void);
-LCID        WINAPI GetUserDefaultLCID(void);
-LANGID      WINAPI GetUserDefaultUILanguage(void);
-GEOID       WINAPI GetUserGeoID(GEOCLASS);
-BOOL        WINAPI IsDBCSLeadByte(BYTE);
-BOOL        WINAPI IsDBCSLeadByteEx(UINT,BYTE);
-BOOL        WINAPI IsValidCodePage(UINT);
-BOOL        WINAPI IsValidLocale(LCID,DWORD);
-BOOL        WINAPI IsValidLanguageGroup(LGRPID,DWORD);
-INT         WINAPI LCIDToLocaleName(LCID,LPWSTR,INT,DWORD);
-INT         WINAPI LCMapStringA(LCID,DWORD,LPCSTR,INT,LPSTR,INT);
-INT         WINAPI LCMapStringW(LCID,DWORD,LPCWSTR,INT,LPWSTR,INT);
-#define     LCMapString WINELIB_NAME_AW(LCMapString)
-LCID        WINAPI LocaleNameToLCID(LPCWSTR,DWORD);
-INT         WINAPI MultiByteToWideChar(UINT,DWORD,LPCSTR,INT,LPWSTR,INT);
-INT         WINAPI SetCalendarInfoA(LCID,CALID,CALTYPE,LPCSTR);
-INT         WINAPI SetCalendarInfoW(LCID,CALID,CALTYPE,LPCWSTR);
-#define     SetCalendarInfo WINELIB_NAME_AW(SetCalendarInfo)
-BOOL        WINAPI SetLocaleInfoA(LCID,LCTYPE,LPCSTR);
-BOOL        WINAPI SetLocaleInfoW(LCID,LCTYPE,LPCWSTR);
-#define     SetLocaleInfo WINELIB_NAME_AW(SetLocaleInfo)
-BOOL        WINAPI SetThreadLocale(LCID);
-BOOL        WINAPI SetUserGeoID(GEOID);
-INT         WINAPI WideCharToMultiByte(UINT,DWORD,LPCWSTR,INT,LPSTR,INT,LPCSTR,LPBOOL);
+WINBASEAPI INT         WINAPI CompareStringA(LCID,DWORD,LPCSTR,INT,LPCSTR,INT);
+WINBASEAPI INT         WINAPI CompareStringW(LCID,DWORD,LPCWSTR,INT,LPCWSTR,INT);
+#define                       CompareString WINELIB_NAME_AW(CompareString)
+WINBASEAPI LCID        WINAPI ConvertDefaultLocale(LCID);
+WINBASEAPI BOOL        WINAPI EnumCalendarInfoA(CALINFO_ENUMPROCA,LCID,CALID,CALTYPE);
+WINBASEAPI BOOL        WINAPI EnumCalendarInfoW(CALINFO_ENUMPROCW,LCID,CALID,CALTYPE);
+#define                       EnumCalendarInfo WINELIB_NAME_AW(EnumCalendarInfo)
+WINBASEAPI BOOL        WINAPI EnumCalendarInfoExA(CALINFO_ENUMPROCEXA,LCID,CALID,CALTYPE);
+WINBASEAPI BOOL        WINAPI EnumCalendarInfoExW(CALINFO_ENUMPROCEXW,LCID,CALID,CALTYPE);
+#define                       EnumCalendarInfoEx WINELIB_NAME_AW(EnumCalendarInfoEx)
+WINBASEAPI BOOL        WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA,LCID,DWORD);
+WINBASEAPI BOOL        WINAPI EnumDateFormatsW(DATEFMT_ENUMPROCW,LCID,DWORD);
+#define                       EnumDateFormats WINELIB_NAME_AW(EnumDateFormats)
+WINBASEAPI BOOL        WINAPI EnumDateFormatsExA(DATEFMT_ENUMPROCEXA,LCID,DWORD);
+WINBASEAPI BOOL        WINAPI EnumDateFormatsExW(DATEFMT_ENUMPROCEXW,LCID,DWORD);
+#define                       EnumDateFormatsEx WINELIB_NAME_AW(EnumDateFormatsEx)
+WINBASEAPI BOOL        WINAPI EnumSystemCodePagesA(CODEPAGE_ENUMPROCA,DWORD);
+WINBASEAPI BOOL        WINAPI EnumSystemCodePagesW(CODEPAGE_ENUMPROCW,DWORD);
+#define                       EnumSystemCodePages WINELIB_NAME_AW(EnumSystemCodePages)
+WINBASEAPI BOOL        WINAPI EnumSystemGeoID(GEOCLASS,GEOID,GEO_ENUMPROC);
+WINBASEAPI BOOL        WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA,DWORD);
+WINBASEAPI BOOL        WINAPI EnumSystemLocalesW(LOCALE_ENUMPROCW,DWORD);
+#define                       EnumSystemLocales WINELIB_NAME_AW(EnumSystemLocales)
+WINBASEAPI BOOL        WINAPI EnumSystemLanguageGroupsA(LANGUAGEGROUP_ENUMPROCA,DWORD,LONG_PTR);
+WINBASEAPI BOOL        WINAPI EnumSystemLanguageGroupsW(LANGUAGEGROUP_ENUMPROCW,DWORD,LONG_PTR);
+#define                       EnumSystemLanguageGroups WINELIB_NAME_AW(EnumSystemLanguageGroups)
+WINBASEAPI BOOL        WINAPI EnumLanguageGroupLocalesA(LANGGROUPLOCALE_ENUMPROCA,LGRPID,DWORD,LONG_PTR);
+WINBASEAPI BOOL        WINAPI EnumLanguageGroupLocalesW(LANGGROUPLOCALE_ENUMPROCW,LGRPID,DWORD,LONG_PTR);
+#define                       EnumLanguageGroupLocales WINELIB_NAME_AW(EnumLanguageGroupLocales)
+WINBASEAPI BOOL        WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA,LCID,DWORD);
+WINBASEAPI BOOL        WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW,LCID,DWORD);
+#define                       EnumTimeFormats WINELIB_NAME_AW(EnumTimeFormats)
+WINBASEAPI BOOL        WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA,DWORD,LONG_PTR);
+WINBASEAPI BOOL        WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW,DWORD,LONG_PTR);
+#define                       EnumUILanguages WINELIB_NAME_AW(EnumUILanguages)
+WINBASEAPI INT         WINAPI FoldStringA(DWORD,LPCSTR,INT,LPSTR,INT);
+WINBASEAPI INT         WINAPI FoldStringW(DWORD,LPCWSTR,INT,LPWSTR,INT);
+#define                       FoldString WINELIB_NAME_AW(FoldString)
+WINBASEAPI UINT        WINAPI GetACP(void);
+WINBASEAPI BOOL        WINAPI GetCPInfo(UINT,LPCPINFO);
+WINBASEAPI BOOL        WINAPI GetCPInfoExA(UINT,DWORD,LPCPINFOEXA);
+WINBASEAPI BOOL        WINAPI GetCPInfoExW(UINT,DWORD,LPCPINFOEXW);
+#define                       GetCPInfoEx WINELIB_NAME_AW(GetCPInfoEx)
+WINBASEAPI INT         WINAPI GetCalendarInfoA(LCID,DWORD,DWORD,LPSTR,INT,LPDWORD);
+WINBASEAPI INT         WINAPI GetCalendarInfoW(LCID,DWORD,DWORD,LPWSTR,INT,LPDWORD);
+#define                       GetCalendarInfo WINELIB_NAME_AW(GetCalendarInfo)
+WINBASEAPI INT         WINAPI GetCurrencyFormatA(LCID,DWORD,LPCSTR,const CURRENCYFMTA*,LPSTR,INT);
+WINBASEAPI INT         WINAPI GetCurrencyFormatW(LCID,DWORD,LPCWSTR,const CURRENCYFMTW*,LPWSTR,INT);
+#define                       GetCurrencyFormat WINELIB_NAME_AW(GetCurrencyFormat)
+WINBASEAPI INT         WINAPI GetDateFormatA(LCID,DWORD,const SYSTEMTIME*,LPCSTR,LPSTR,INT);
+WINBASEAPI INT         WINAPI GetDateFormatW(LCID,DWORD,const SYSTEMTIME*,LPCWSTR,LPWSTR,INT);
+#define                       GetDateFormat WINELIB_NAME_AW(GetDateFormat)
+WINBASEAPI INT         WINAPI GetGeoInfoA(GEOID,GEOTYPE,LPSTR,INT,LANGID);
+WINBASEAPI INT         WINAPI GetGeoInfoW(GEOID,GEOTYPE,LPWSTR,INT,LANGID);
+#define                       GetGeoInfo WINELIB_NAME_AW(GetGeoInfo)
+WINBASEAPI INT         WINAPI GetLocaleInfoA(LCID,LCTYPE,LPSTR,INT);
+WINBASEAPI INT         WINAPI GetLocaleInfoW(LCID,LCTYPE,LPWSTR,INT);
+#define                       GetLocaleInfo WINELIB_NAME_AW(GetLocaleInfo)
+WINBASEAPI INT         WINAPI GetNumberFormatA(LCID,DWORD,LPCSTR,const NUMBERFMTA*,LPSTR,INT);
+WINBASEAPI INT         WINAPI GetNumberFormatW(LCID,DWORD,LPCWSTR,const NUMBERFMTW*,LPWSTR,INT);
+#define                       GetNumberFormat WINELIB_NAME_AW(GetNumberFormat)
+WINBASEAPI UINT        WINAPI GetOEMCP(void);
+WINBASEAPI BOOL        WINAPI GetStringTypeA(LCID,DWORD,LPCSTR,INT,LPWORD);
+WINBASEAPI BOOL        WINAPI GetStringTypeW(DWORD,LPCWSTR,INT,LPWORD);
+WINBASEAPI BOOL        WINAPI GetStringTypeExA(LCID,DWORD,LPCSTR,INT,LPWORD);
+WINBASEAPI BOOL        WINAPI GetStringTypeExW(LCID,DWORD,LPCWSTR,INT,LPWORD);
+#define                       GetStringTypeEx WINELIB_NAME_AW(GetStringTypeEx)
+WINBASEAPI LANGID      WINAPI GetSystemDefaultLangID(void);
+WINBASEAPI LCID        WINAPI GetSystemDefaultLCID(void);
+WINBASEAPI LANGID      WINAPI GetSystemDefaultUILanguage(void);
+WINBASEAPI LCID        WINAPI GetThreadLocale(void);
+WINBASEAPI INT         WINAPI GetTimeFormatA(LCID,DWORD,const SYSTEMTIME*,LPCSTR,LPSTR,INT);
+WINBASEAPI INT         WINAPI GetTimeFormatW(LCID,DWORD,const SYSTEMTIME*,LPCWSTR,LPWSTR,INT);
+#define                       GetTimeFormat WINELIB_NAME_AW(GetTimeFormat)
+WINBASEAPI LANGID      WINAPI GetUserDefaultLangID(void);
+WINBASEAPI LCID        WINAPI GetUserDefaultLCID(void);
+WINBASEAPI LANGID      WINAPI GetUserDefaultUILanguage(void);
+WINBASEAPI GEOID       WINAPI GetUserGeoID(GEOCLASS);
+WINBASEAPI BOOL        WINAPI IsDBCSLeadByte(BYTE);
+WINBASEAPI BOOL        WINAPI IsDBCSLeadByteEx(UINT,BYTE);
+WINBASEAPI BOOL        WINAPI IsValidCodePage(UINT);
+WINBASEAPI BOOL        WINAPI IsValidLocale(LCID,DWORD);
+WINBASEAPI BOOL        WINAPI IsValidLanguageGroup(LGRPID,DWORD);
+WINBASEAPI INT         WINAPI LCIDToLocaleName(LCID,LPWSTR,INT,DWORD);
+WINBASEAPI INT         WINAPI LCMapStringA(LCID,DWORD,LPCSTR,INT,LPSTR,INT);
+WINBASEAPI INT         WINAPI LCMapStringW(LCID,DWORD,LPCWSTR,INT,LPWSTR,INT);
+#define                       LCMapString WINELIB_NAME_AW(LCMapString)
+WINBASEAPI LCID        WINAPI LocaleNameToLCID(LPCWSTR,DWORD);
+WINBASEAPI INT         WINAPI MultiByteToWideChar(UINT,DWORD,LPCSTR,INT,LPWSTR,INT);
+WINBASEAPI INT         WINAPI SetCalendarInfoA(LCID,CALID,CALTYPE,LPCSTR);
+WINBASEAPI INT         WINAPI SetCalendarInfoW(LCID,CALID,CALTYPE,LPCWSTR);
+#define                       SetCalendarInfo WINELIB_NAME_AW(SetCalendarInfo)
+WINBASEAPI BOOL        WINAPI SetLocaleInfoA(LCID,LCTYPE,LPCSTR);
+WINBASEAPI BOOL        WINAPI SetLocaleInfoW(LCID,LCTYPE,LPCWSTR);
+#define                       SetLocaleInfo WINELIB_NAME_AW(SetLocaleInfo)
+WINBASEAPI BOOL        WINAPI SetThreadLocale(LCID);
+WINBASEAPI BOOL        WINAPI SetUserGeoID(GEOID);
+WINBASEAPI INT         WINAPI WideCharToMultiByte(UINT,DWORD,LPCWSTR,INT,LPSTR,INT,LPCSTR,LPBOOL);
 
 #ifdef __cplusplus
 }

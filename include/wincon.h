@@ -174,7 +174,7 @@ typedef struct tagINPUT_RECORD
 #ifdef __i386__
 /* Note: this should return a COORD, but calling convention for returning
  * structures is different between Windows and gcc on i386. */
-DWORD WINAPI GetLargestConsoleWindowSize(HANDLE);
+WINBASEAPI DWORD WINAPI GetLargestConsoleWindowSize(HANDLE);
 
 static inline COORD __wine_GetLargestConsoleWindowSize_wrapper(HANDLE h)
 {
@@ -188,89 +188,74 @@ static inline COORD __wine_GetLargestConsoleWindowSize_wrapper(HANDLE h)
 #define GetLargestConsoleWindowSize(h) __wine_GetLargestConsoleWindowSize_wrapper(h)
 
 #else  /* __i386__ */
-COORD WINAPI GetLargestConsoleWindowSize(HANDLE);
+WINBASEAPI COORD WINAPI GetLargestConsoleWindowSize(HANDLE);
 #endif  /* __i386__ */
 
-BOOL WINAPI   AllocConsole(VOID);
-HANDLE WINAPI CreateConsoleScreenBuffer( DWORD dwDesiredAccess, DWORD dwShareMode,
-                                         LPSECURITY_ATTRIBUTES sa, DWORD dwFlags,
-                                         LPVOID lpScreenBufferData);
-BOOL WINAPI   FillConsoleOutputAttribute( HANDLE hConsoleOutput, WORD wAttribute, DWORD nLength,
-                                          COORD dwCoord, LPDWORD lpNumAttrsWritten);
-BOOL WINAPI   FillConsoleOutputCharacterA(HANDLE,CHAR,DWORD,COORD,LPDWORD);
-BOOL WINAPI   FillConsoleOutputCharacterW(HANDLE,WCHAR,DWORD,COORD,LPDWORD);
-#define       FillConsoleOutputCharacter WINELIB_NAME_AW(FillConsoleOutputCharacter)
-BOOL WINAPI   FlushConsoleInputBuffer( HANDLE handle);
-BOOL WINAPI   FreeConsole(VOID);
-BOOL WINAPI   GenerateConsoleCtrlEvent( DWORD dwCtrlEvent, DWORD dwProcessGroupID);
-UINT WINAPI   GetConsoleCP(VOID);
-BOOL WINAPI   GetConsoleCursorInfo( HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo);
-BOOL WINAPI   GetConsoleMode( HANDLE hcon,LPDWORD mode);
-UINT WINAPI   GetConsoleOutputCP(VOID);
-BOOL WINAPI   GetConsoleScreenBufferInfo(HANDLE hConsoleOutput,
-                                         LPCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo);
-DWORD WINAPI  GetConsoleTitleA(LPSTR title,DWORD size);
-DWORD WINAPI  GetConsoleTitleW(LPWSTR title, DWORD size);
-#define       GetConsoleTitle WINELIB_NAME_AW(GetConsoleTitle)
-HWND WINAPI   GetConsoleWindow(void);
-BOOL WINAPI   GetNumberOfConsoleInputEvents( HANDLE hcon,LPDWORD nrofevents);
-BOOL WINAPI   GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons);
-BOOL WINAPI   PeekConsoleInputA( HANDLE handle, PINPUT_RECORD buffer, DWORD count, LPDWORD read );
-BOOL WINAPI   PeekConsoleInputW( HANDLE handle, PINPUT_RECORD buffer, DWORD count, LPDWORD read );
-#define       PeekConsoleInput WINELIB_NAME_AW(PeekConsoleInput)
-BOOL WINAPI   ReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead,
-                           LPDWORD lpNumberOfCharsRead, LPVOID lpReserved);
-BOOL WINAPI   ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead,
-                           LPDWORD lpNumberOfCharsRead, LPVOID lpReserved);
-#define       ReadConsole WINELIB_NAME_AW(ReadConsole)
-BOOL WINAPI   ReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength,
-                                LPDWORD lpNumberOfEventsRead);
-BOOL WINAPI   ReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength,
-                                LPDWORD lpNumberOfEventsRead);
-#define       ReadConsoleInput WINELIB_NAME_AW(ReadConsoleInput)
-BOOL WINAPI   ReadConsoleOutputA( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize,
-                                  COORD dwBufferCoord, LPSMALL_RECT lpReadRegion );
-BOOL WINAPI   ReadConsoleOutputW( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize,
-                                  COORD dwBufferCoord, LPSMALL_RECT lpReadRegion );
-#define       ReadConsoleOutput WINELIB_NAME_AW(ReadConsoleOutput)
-BOOL WINAPI   ReadConsoleOutputAttribute( HANDLE hConsoleOutput, LPWORD lpAttribute, DWORD nLength,
-                                          COORD dwReadCoord, LPDWORD lpNumberOfAttrsRead);
-BOOL WINAPI   ReadConsoleOutputCharacterA(HANDLE,LPSTR,DWORD,COORD,LPDWORD);
-BOOL WINAPI   ReadConsoleOutputCharacterW(HANDLE,LPWSTR,DWORD,COORD,LPDWORD);
-#define       ReadConsoleOutputCharacter WINELIB_NAME_AW(ReadConsoleOutputCharacter)
-BOOL WINAPI   ScrollConsoleScreenBufferA( HANDLE hConsoleOutput, LPSMALL_RECT lpScrollRect,
-                                          LPSMALL_RECT lpClipRect, COORD dwDestOrigin,
-                                          LPCHAR_INFO lpFill);
-BOOL WINAPI   ScrollConsoleScreenBufferW( HANDLE hConsoleOutput, LPSMALL_RECT lpScrollRect,
-                                          LPSMALL_RECT lpClipRect, COORD dwDestOrigin,
-                                          LPCHAR_INFO lpFill);
-#define       ScrollConsoleScreenBuffer WINELIB_NAME_AW(ScrollConsoleScreenBuffer)
-BOOL WINAPI   SetConsoleActiveScreenBuffer( HANDLE hConsoleOutput);
-BOOL WINAPI   SetConsoleCP(UINT cp);
-BOOL WINAPI   SetConsoleCtrlHandler( PHANDLER_ROUTINE func, BOOL add);
-BOOL WINAPI   SetConsoleCursorInfo( HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo);
-BOOL WINAPI   SetConsoleCursorPosition(HANDLE,COORD);
-BOOL WINAPI   SetConsoleMode( HANDLE hcon, DWORD mode);
-BOOL WINAPI   SetConsoleOutputCP(UINT cp);
-BOOL WINAPI   SetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
-BOOL WINAPI   SetConsoleTextAttribute( HANDLE hConsoleOutput,WORD wAttr);
-BOOL WINAPI   SetConsoleTitleA(LPCSTR title);
-BOOL WINAPI   SetConsoleTitleW(LPCWSTR title);
-#define       SetConsoleTitle WINELIB_NAME_AW(SetConsoleTitle)
-BOOL WINAPI   SetConsoleWindowInfo( HANDLE hcon, BOOL bAbsolute, LPSMALL_RECT window);
-BOOL WINAPI   WriteConsoleA(HANDLE,CONST VOID *,DWORD,LPDWORD,LPVOID);
-BOOL WINAPI   WriteConsoleW(HANDLE, CONST VOID *lpBuffer, DWORD,LPDWORD,LPVOID);
-#define       WriteConsole WINELIB_NAME_AW(WriteConsole)
-BOOL WINAPI   WriteConsoleInputA(HANDLE,const INPUT_RECORD *,DWORD,LPDWORD);
-BOOL WINAPI   WriteConsoleInputW(HANDLE,const INPUT_RECORD *,DWORD,LPDWORD);
-#define       WriteConsoleInput WINELIB_NAME_AW(WriteConsoleInput)
-BOOL WINAPI   WriteConsoleOutputA(HANDLE,const CHAR_INFO*,COORD,COORD,LPSMALL_RECT);
-BOOL WINAPI   WriteConsoleOutputW(HANDLE,const CHAR_INFO*,COORD,COORD,LPSMALL_RECT);
-#define       WriteConsoleOutput WINELIB_NAME_AW(WriteConsoleOutput)
-BOOL WINAPI   WriteConsoleOutputAttribute(HANDLE,CONST WORD *,DWORD,COORD,LPDWORD);
-BOOL WINAPI   WriteConsoleOutputCharacterA(HANDLE,LPCSTR,DWORD,COORD,LPDWORD);
-BOOL WINAPI   WriteConsoleOutputCharacterW(HANDLE,LPCWSTR,DWORD,COORD,LPDWORD);
-#define       WriteConsoleOutputCharacter WINELIB_NAME_AW(WriteConsoleOutputCharacter)
+WINBASEAPI BOOL   WINAPI AllocConsole(VOID);
+WINBASEAPI HANDLE WINAPI CreateConsoleScreenBuffer( DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,LPVOID);
+WINBASEAPI BOOL WINAPI   FillConsoleOutputAttribute( HANDLE,WORD,DWORD,COORD,LPDWORD);
+WINBASEAPI BOOL WINAPI   FillConsoleOutputCharacterA(HANDLE,CHAR,DWORD,COORD,LPDWORD);
+WINBASEAPI BOOL WINAPI   FillConsoleOutputCharacterW(HANDLE,WCHAR,DWORD,COORD,LPDWORD);
+#define                  FillConsoleOutputCharacter WINELIB_NAME_AW(FillConsoleOutputCharacter)
+WINBASEAPI BOOL WINAPI   FlushConsoleInputBuffer( HANDLE);
+WINBASEAPI BOOL WINAPI   FreeConsole(VOID);
+WINBASEAPI BOOL WINAPI   GenerateConsoleCtrlEvent( DWORD,DWORD);
+WINBASEAPI UINT WINAPI   GetConsoleCP(VOID);
+WINBASEAPI BOOL WINAPI   GetConsoleCursorInfo( HANDLE,LPCONSOLE_CURSOR_INFO);
+WINBASEAPI BOOL WINAPI   GetConsoleMode( HANDLE,LPDWORD);
+WINBASEAPI UINT WINAPI   GetConsoleOutputCP(VOID);
+WINBASEAPI BOOL WINAPI   GetConsoleScreenBufferInfo(HANDLE,LPCONSOLE_SCREEN_BUFFER_INFO);
+WINBASEAPI DWORD WINAPI  GetConsoleTitleA(LPSTR,DWORD);
+WINBASEAPI DWORD WINAPI  GetConsoleTitleW(LPWSTR,DWORD);
+#define                  GetConsoleTitle WINELIB_NAME_AW(GetConsoleTitle)
+WINBASEAPI HWND WINAPI   GetConsoleWindow(void);
+WINBASEAPI BOOL WINAPI   GetNumberOfConsoleInputEvents( HANDLE,LPDWORD);
+WINBASEAPI BOOL WINAPI   GetNumberOfConsoleMouseButtons(LPDWORD);
+WINBASEAPI BOOL WINAPI   PeekConsoleInputA( HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
+WINBASEAPI BOOL WINAPI   PeekConsoleInputW( HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
+#define                  PeekConsoleInput WINELIB_NAME_AW(PeekConsoleInput)
+WINBASEAPI BOOL WINAPI   ReadConsoleA(HANDLE,LPVOID,DWORD,LPDWORD,LPVOID);
+WINBASEAPI BOOL WINAPI   ReadConsoleW(HANDLE,LPVOID,DWORD,LPDWORD,LPVOID);
+#define                  ReadConsole WINELIB_NAME_AW(ReadConsole)
+WINBASEAPI BOOL WINAPI   ReadConsoleInputA(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
+WINBASEAPI BOOL WINAPI   ReadConsoleInputW(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
+#define                  ReadConsoleInput WINELIB_NAME_AW(ReadConsoleInput)
+WINBASEAPI BOOL WINAPI   ReadConsoleOutputA( HANDLE,LPCHAR_INFO,COORD,COORD,LPSMALL_RECT);
+WINBASEAPI BOOL WINAPI   ReadConsoleOutputW( HANDLE,LPCHAR_INFO,COORD,COORD,LPSMALL_RECT);
+#define                  ReadConsoleOutput WINELIB_NAME_AW(ReadConsoleOutput)
+WINBASEAPI BOOL WINAPI   ReadConsoleOutputAttribute( HANDLE,LPWORD,DWORD,COORD,LPDWORD);
+WINBASEAPI BOOL WINAPI   ReadConsoleOutputCharacterA(HANDLE,LPSTR,DWORD,COORD,LPDWORD);
+WINBASEAPI BOOL WINAPI   ReadConsoleOutputCharacterW(HANDLE,LPWSTR,DWORD,COORD,LPDWORD);
+#define                  ReadConsoleOutputCharacter WINELIB_NAME_AW(ReadConsoleOutputCharacter)
+WINBASEAPI BOOL WINAPI   ScrollConsoleScreenBufferA( HANDLE,LPSMALL_RECT,LPSMALL_RECT,COORD,LPCHAR_INFO);
+WINBASEAPI BOOL WINAPI   ScrollConsoleScreenBufferW( HANDLE,LPSMALL_RECT,LPSMALL_RECT,COORD,LPCHAR_INFO);
+#define                  ScrollConsoleScreenBuffer WINELIB_NAME_AW(ScrollConsoleScreenBuffer)
+WINBASEAPI BOOL WINAPI   SetConsoleActiveScreenBuffer( HANDLE);
+WINBASEAPI BOOL WINAPI   SetConsoleCP(UINT);
+WINBASEAPI BOOL WINAPI   SetConsoleCtrlHandler( PHANDLER_ROUTINE,BOOL);
+WINBASEAPI BOOL WINAPI   SetConsoleCursorInfo( HANDLE,LPCONSOLE_CURSOR_INFO);
+WINBASEAPI BOOL WINAPI   SetConsoleCursorPosition(HANDLE,COORD);
+WINBASEAPI BOOL WINAPI   SetConsoleMode( HANDLE,DWORD);
+WINBASEAPI BOOL WINAPI   SetConsoleOutputCP(UINT);
+WINBASEAPI BOOL WINAPI   SetConsoleScreenBufferSize(HANDLE,COORD);
+WINBASEAPI BOOL WINAPI   SetConsoleTextAttribute( HANDLE,WORD);
+WINBASEAPI BOOL WINAPI   SetConsoleTitleA(LPCSTR);
+WINBASEAPI BOOL WINAPI   SetConsoleTitleW(LPCWSTR);
+#define                  SetConsoleTitle WINELIB_NAME_AW(SetConsoleTitle)
+WINBASEAPI BOOL WINAPI   SetConsoleWindowInfo( HANDLE,BOOL,LPSMALL_RECT);
+WINBASEAPI BOOL WINAPI   WriteConsoleA(HANDLE,CONST VOID *,DWORD,LPDWORD,LPVOID);
+WINBASEAPI BOOL WINAPI   WriteConsoleW(HANDLE,CONST VOID *,DWORD,LPDWORD,LPVOID);
+#define                  WriteConsole WINELIB_NAME_AW(WriteConsole)
+WINBASEAPI BOOL WINAPI   WriteConsoleInputA(HANDLE,const INPUT_RECORD *,DWORD,LPDWORD);
+WINBASEAPI BOOL WINAPI   WriteConsoleInputW(HANDLE,const INPUT_RECORD *,DWORD,LPDWORD);
+#define                  WriteConsoleInput WINELIB_NAME_AW(WriteConsoleInput)
+WINBASEAPI BOOL WINAPI   WriteConsoleOutputA(HANDLE,const CHAR_INFO*,COORD,COORD,LPSMALL_RECT);
+WINBASEAPI BOOL WINAPI   WriteConsoleOutputW(HANDLE,const CHAR_INFO*,COORD,COORD,LPSMALL_RECT);
+#define                  WriteConsoleOutput WINELIB_NAME_AW(WriteConsoleOutput)
+WINBASEAPI BOOL WINAPI   WriteConsoleOutputAttribute(HANDLE,CONST WORD *,DWORD,COORD,LPDWORD);
+WINBASEAPI BOOL WINAPI   WriteConsoleOutputCharacterA(HANDLE,LPCSTR,DWORD,COORD,LPDWORD);
+WINBASEAPI BOOL WINAPI   WriteConsoleOutputCharacterW(HANDLE,LPCWSTR,DWORD,COORD,LPDWORD);
+#define                  WriteConsoleOutputCharacter WINELIB_NAME_AW(WriteConsoleOutputCharacter)
 
 #ifdef __cplusplus
 }
