@@ -441,7 +441,12 @@ static void test_listbox_height(void)
 
 static void test_itemfrompoint(void)
 {
-    HWND hList = CreateWindow( "ListBox", "list test", 0,
+    /* WS_POPUP is required in order to have a more accurate size calculation (
+       without caption). LBS_NOINTEGRALHEIGHT is required in order to test
+       behavior of partially-displayed item.
+     */
+    HWND hList = CreateWindow( "ListBox", "list test",
+                               WS_VISIBLE|WS_POPUP|LBS_NOINTEGRALHEIGHT,
                                1, 1, 600, 100, NULL, NULL, NULL, NULL );
     LONG r, id;
     RECT rc;
@@ -464,10 +469,14 @@ static void test_itemfrompoint(void)
     r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( /* x */ 30, /* y */ 30 ));
     ok( r == 0x1, "ret %x\n", r );
 
-    r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( /* x */ 30, /* y */ 37 ));
+    r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( /* x */ 30, /* y */ 601 ));
     ok( r == 0x10001, "ret %x\n", r );
 
-
+    /* Resize control so that below assertions about sizes are valid */
+    r = SendMessage( hList, LB_GETITEMRECT, 0, (LPARAM)&rc);
+    ok( r == 1, "ret %x\n", r);
+    r = MoveWindow(hList, 1, 1, 600, (rc.bottom - rc.top + 1) * 9 / 2, TRUE);
+    ok( r != 0, "ret %x\n", r);
 
     id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi2");
     ok( id == 2, "item id wrong\n");
