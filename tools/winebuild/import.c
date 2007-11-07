@@ -1194,8 +1194,19 @@ void output_stubs( DLLSPEC *spec )
         output( "\t.align %d\n", get_alignment(4) );
         output( "\t%s\n", func_declaration(name) );
         output( "%s:\n", asm_name(name) );
-        output( "\tsubl $4,%%esp\n" );
 
+        /* flesh out the stub a bit to make safedisc happy */
+        output(" \tnop\n" );
+        output(" \tnop\n" );
+        output(" \tnop\n" );
+        output(" \tnop\n" );
+        output(" \tnop\n" );
+        output(" \tnop\n" );
+        output(" \tnop\n" );
+        output(" \tnop\n" );
+        output(" \tnop\n" );
+
+        output( "\tsubl $4,%%esp\n" );
         if (UsePIC)
         {
             output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
