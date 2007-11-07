@@ -245,7 +245,7 @@ static void HTTP_FixURL( LPWININETHTTPREQW lpwhr)
     }
 
     if(CSTR_EQUAL != CompareStringW( LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                       lpwhr->lpszPath, strlenW(szHttp), szHttp, strlenW(szHttp) )
+                       lpwhr->lpszPath, strlenW(lpwhr->lpszPath), szHttp, strlenW(szHttp) )
        && lpwhr->lpszPath[0] != '/') /* not an absolute path ?? --> fix it !! */
     {
         WCHAR *fixurl = HeapAlloc(GetProcessHeap(), 0, 
