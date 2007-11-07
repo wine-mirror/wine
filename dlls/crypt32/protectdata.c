@@ -857,7 +857,7 @@ BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn,
         szDataDescr = empty_str;
 
     /* get crypt context */
-    if (!CryptAcquireContextW(&hProv,NULL,NULL,CRYPT32_PROTECTDATA_PROV,CRYPT_VERIFYCONTEXT))
+    if (!CryptAcquireContextW(&hProv,NULL,MS_ENHANCED_PROV_W,CRYPT32_PROTECTDATA_PROV,CRYPT_VERIFYCONTEXT))
     {
         ERR("CryptAcquireContextW failed\n");
         goto finished;
@@ -1043,7 +1043,7 @@ BOOL WINAPI CryptUnprotectData(DATA_BLOB* pDataIn,
     }
 
     /* get a crypt context */
-    if (!CryptAcquireContextW(&hProv,NULL,NULL,CRYPT32_PROTECTDATA_PROV,CRYPT_VERIFYCONTEXT))
+    if (!CryptAcquireContextW(&hProv,NULL,MS_ENHANCED_PROV_W,CRYPT32_PROTECTDATA_PROV,CRYPT_VERIFYCONTEXT))
     {
         ERR("CryptAcquireContextW failed\n");
         goto free_protect_data;
