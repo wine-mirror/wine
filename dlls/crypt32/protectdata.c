@@ -95,12 +95,12 @@ struct protect_data_t
     DATA_BLOB   info1;
     DWORD       null0;
     WCHAR *     szDataDescr;  /* serialized differently than the DATA_BLOBs */
-    DWORD       unknown0;     /* perhaps the HASH alg const should go here? */
-    DWORD       unknown1;
+    ALG_ID      cipher_alg;
+    DWORD       cipher_key_len;
     DATA_BLOB   data0;
     DWORD       null1;
-    DWORD       unknown2;     /* perhaps the KEY alg const should go here? */
-    DWORD       unknown3;
+    ALG_ID      hash_alg;
+    DWORD       hash_len;
     DATA_BLOB   salt;
     DATA_BLOB   cipher;
     DATA_BLOB   fingerprint;
@@ -288,11 +288,11 @@ BOOL serialize(const struct protect_data_t *pInfo, DATA_BLOB *pSerial)
                      (dwStrLen+1)*sizeof(WCHAR),sizeof(BYTE),TRUE);
     /*TRACE("used %u\n",ptr-pSerial->pbData);*/
 
-    /* unknown0 */
-    serialize_dword(pInfo->unknown0,&ptr);
+    /* cipher_alg */
+    serialize_dword(pInfo->cipher_alg,&ptr);
     /*TRACE("used %u\n",ptr-pSerial->pbData);*/
-    /* unknown1 */
-    serialize_dword(pInfo->unknown1,&ptr);
+    /* cipher_key_len */
+    serialize_dword(pInfo->cipher_key_len,&ptr);
     /*TRACE("used %u\n",ptr-pSerial->pbData);*/
     
     /* data0 */
@@ -304,11 +304,11 @@ BOOL serialize(const struct protect_data_t *pInfo, DATA_BLOB *pSerial)
     serialize_dword(pInfo->null1,&ptr);
     /*TRACE("used %u\n",ptr-pSerial->pbData);*/
     
-    /* unknown2 */
-    serialize_dword(pInfo->unknown2,&ptr);
+    /* hash_alg */
+    serialize_dword(pInfo->hash_alg,&ptr);
     /*TRACE("used %u\n",ptr-pSerial->pbData);*/
-    /* unknown3 */
-    serialize_dword(pInfo->unknown3,&ptr);
+    /* hash_len */
+    serialize_dword(pInfo->hash_len,&ptr);
     /*TRACE("used %u\n",ptr-pSerial->pbData);*/
     
     /* salt */
@@ -401,17 +401,17 @@ BOOL unserialize(const DATA_BLOB *pSerial, struct protect_data_t *pInfo)
         return FALSE;
     }
 
-    /* unknown0 */
-    if (!unserialize_dword(ptr,&index,size,&pInfo->unknown0))
+    /* cipher_alg */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->cipher_alg))
     {
-        ERR("reading unknown0 failed!\n");
+        ERR("reading cipher_alg failed!\n");
         return FALSE;
     }
     
-    /* unknown1 */
-    if (!unserialize_dword(ptr,&index,size,&pInfo->unknown1))
+    /* cipher_key_len */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->cipher_key_len))
     {
-        ERR("reading unknown1 failed!\n");
+        ERR("reading cipher_key_len failed!\n");
         return FALSE;
     }
     
@@ -430,17 +430,17 @@ BOOL unserialize(const DATA_BLOB *pSerial, struct protect_data_t *pInfo)
         return FALSE;
     }
     
-    /* unknown2 */
-    if (!unserialize_dword(ptr,&index,size,&pInfo->unknown2))
+    /* hash_alg */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->hash_alg))
     {
-        ERR("reading unknown2 failed!\n");
+        ERR("reading hash_alg failed!\n");
         return FALSE;
     }
     
-    /* unknown3 */
-    if (!unserialize_dword(ptr,&index,size,&pInfo->unknown3))
+    /* hash_len */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->hash_len))
     {
-        ERR("reading unknown3 failed!\n");
+        ERR("reading hash_len failed!\n");
         return FALSE;
     }
     
@@ -596,14 +596,14 @@ BOOL fill_protect_data(struct protect_data_t * pInfo, LPCWSTR szDataDescr,
         memcpy(pInfo->szDataDescr,szDataDescr,(dwStrLen+1)*sizeof(WCHAR));
     }
 
-    pInfo->unknown0=0x0000;
-    pInfo->unknown1=0x0000;
+    pInfo->cipher_alg=CRYPT32_PROTECTDATA_KEY_CALG;
+    pInfo->cipher_key_len=0x0000; /* FIXME: get correct value */
 
     convert_str_to_blob(crypt_magic_str, &pInfo->data0);
 
     pInfo->null1=0x0000;
-    pInfo->unknown2=0x0000;
-    pInfo->unknown3=0x0000;
+    pInfo->hash_alg=CRYPT32_PROTECTDATA_HASH_CALG;
+    pInfo->hash_len=0x0000; /* FIXME: get correct value */
 
     /* allocate memory to hold a salt */
     pInfo->salt.cbData=CRYPT32_PROTECTDATA_SALT_LEN;
