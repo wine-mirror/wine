@@ -3293,7 +3293,7 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
 
         len = origlen + valuelen + ((ch > 0) ? 2 : 0);
 
-        lpsztmp = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,  lphttpHdr->lpszValue, (len+1)*sizeof(WCHAR));
+        lpsztmp = HeapReAlloc(GetProcessHeap(), 0, lphttpHdr->lpszValue, (len+1)*sizeof(WCHAR));
         if (lpsztmp)
         {
             lphttpHdr->lpszValue = lpsztmp;
