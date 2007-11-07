@@ -72,6 +72,10 @@ typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 /* dsound_convert.h */
 typedef void (*bitsconvertfunc)(const void *, void *);
 extern const bitsconvertfunc convertbpp[4][4];
+typedef void (*mixfunc)(const void *, void *, unsigned);
+extern const mixfunc mixfunctions[4];
+typedef void (*normfunc)(const void *, void *, unsigned);
+extern const normfunc normfunctions[4];
 
 /*****************************************************************************
  * IDirectSoundDevice implementation structure

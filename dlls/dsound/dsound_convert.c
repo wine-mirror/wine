@@ -182,3 +182,135 @@ const bitsconvertfunc convertbpp[4][4] = {
     { convert_24_to_8, convert_24_to_16, convert_24_to_24, convert_24_to_32 },
     { convert_32_to_8, convert_32_to_16, convert_32_to_24, convert_32_to_32 },
 };
+
+static void mix8(int8_t *src, int32_t *dst, unsigned len)
+{
+    TRACE("%p - %p %d\n", src, dst, len);
+    while (len--)
+        /* 8-bit WAV is unsigned, it's here converted to signed, normalize function will convert it back again */
+        *(dst++) += (int8_t)((uint8_t)*(src++) - (uint8_t)0x80);
+}
+
+static void mix16(int16_t *src, int32_t *dst, unsigned len)
+{
+    TRACE("%p - %p %d\n", src, dst, len);
+    len /= 2;
+    while (len--)
+    {
+        *dst += le16(*src);
+        ++dst; ++src;
+    }
+}
+
+static void mix24(int24_struct *src, int32_t *dst, unsigned len)
+{
+    TRACE("%p - %p %d\n", src, dst, len);
+    len /= 3;
+    while (len--)
+    {
+        uint32_t field;
+        field = ((unsigned)src->byte[2] << 16) + ((unsigned)src->byte[1] << 8) + (unsigned)src->byte[0];
+        if (src->byte[2] & 0x80)
+            field |= 0xFF000000U;
+        *(dst++) += field;
+        ++src;
+    }
+}
+
+static void mix32(int32_t *src, int64_t *dst, unsigned len)
+{
+    TRACE("%p - %p %d\n", src, dst, len);
+    len /= 4;
+    while (len--)
+        *(dst++) += le32(*(src++));
+}
+
+const mixfunc mixfunctions[4] = {
+    (mixfunc)mix8,
+    (mixfunc)mix16,
+    (mixfunc)mix24,
+    (mixfunc)mix32
+};
+
+static void norm8(int32_t *src, int8_t *dst, unsigned len)
+{
+    TRACE("%p - %p %d\n", src, dst, len);
+    while (len--)
+    {
+        *dst = (*src) + 0x80;
+        if (*src < -0x80)
+            *dst = 0;
+        else if (*src > 0x7f)
+            *dst = 0xff;
+        ++dst;
+        ++src;
+    }
+}
+
+static void norm16(int32_t *src, int16_t *dst, unsigned len)
+{
+    TRACE("%p - %p %d\n", src, dst, len);
+    len /= 2;
+    while (len--)
+    {
+        *dst = le16(*src);
+        if (*src <= -0x8000)
+            *dst = le16(0x8000);
+        else if (*src > 0x7fff)
+            *dst = le16(0x7fff);
+        ++dst;
+        ++src;
+    }
+}
+
+static void norm24(int32_t *src, int24_struct *dst, unsigned len)
+{
+    TRACE("%p - %p %d\n", src, dst, len);
+    len /= 3;
+    while (len--)
+    {
+        if (*src <= -0x800000)
+        {
+            dst->byte[0] = 0;
+            dst->byte[1] = 0;
+            dst->byte[2] = 0x80;
+        }
+        else if (*src > 0x7fffff)
+        {
+            dst->byte[0] = 0xff;
+            dst->byte[1] = 0xff;
+            dst->byte[2] = 0x7f;
+        }
+        else
+        {
+            dst->byte[0] = *src;
+            dst->byte[1] = *src >> 8;
+            dst->byte[2] = *src >> 16;
+        }
+        ++dst;
+        ++src;
+    }
+}
+
+static void norm32(int64_t *src, int32_t *dst, unsigned len)
+{
+    TRACE("%p - %p %d\n", src, dst, len);
+    len /= 4;
+    while (len--)
+    {
+        *dst = le32(*src);
+        if (*src <= -(int64_t)0x80000000)
+            *dst = le32(0x80000000);
+        else if (*src > 0x7fffffff)
+            *dst = le32(0x7fffffff);
+        ++dst;
+        ++src;
+    }
+}
+
+const normfunc normfunctions[4] = {
+    (normfunc)norm8,
+    (normfunc)norm16,
+    (normfunc)norm24,
+    (normfunc)norm32,
+};
