@@ -32,7 +32,11 @@
 #endif
 
 #ifndef WINE_UNICODE_API
-#define WINE_UNICODE_API DECLSPEC_IMPORT
+# if defined(_MSC_VER) || defined(__MINGW32__)
+#  define WINE_UNICODE_API DECLSPEC_IMPORT
+# else
+#  define WINE_UNICODE_API
+# endif
 #endif
 
 #ifndef WINE_UNICODE_INLINE
