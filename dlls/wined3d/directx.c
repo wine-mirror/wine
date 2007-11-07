@@ -738,6 +738,29 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                 gl_info->max_vertex_samplers = tmp;
                 glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &tmp);
                 gl_info->max_combined_samplers = tmp;
+
+                /* Loading GLSL sampler uniforms is much simpler if we can assume that the sampler setup
+                 * is known at shader link time. In a vertex shader + pixel shader combination this isn't
+                 * an issue because then the sampler setup only depends on the two shaders. If a pixel
+                 * shader is used with fixed function vertex processing we're fine too because fixed function
+                 * vertex processing doesn't use any samplers. If fixed function fragment processing is
+                 * used we have to make sure that all vertex sampler setups are valid together with all
+                 * possible fixed function fragment processing setups. This is true if vsamplers + MAX_TEXTURES
+                 * <= max_samplers. This is true on all d3d9 cards that support vtf(gf 6 and gf7 cards).
+                 * dx9 radeon cards do not support vertex texture fetch. DX10 cards have 128 samplers, and
+                 * dx9 is limited to 8 fixed function texture stages and 4 vertex samplers. DX10 does not have
+                 * a fixed function pipeline anymore.
+                 *
+                 * So this is just a check to check that our assumption holds true. If not, write a warning
+                 * and reduce the number of vertex samplers or propably disable vertex texture fetch.
+                 */
+                if(gl_info->max_vertex_samplers &&
+                   MAX_TEXTURES + gl_info->max_vertex_samplers > gl_info->max_combined_samplers) {
+                    FIXME("OpenGL implementation supports %u vertex samplers and %u total samplers\n",
+                          gl_info->max_vertex_samplers, gl_info->max_combined_samplers);
+                    FIXME("Expected vertex samplers + MAX_TEXTURES(=8) > combined_samplers\n");
+                    gl_info->max_vertex_samplers = max(0, gl_info->max_combined_samplers - MAX_TEXTURES);
+                }
             } else {
                 gl_info->max_combined_samplers = gl_info->max_fragment_samplers;
             }

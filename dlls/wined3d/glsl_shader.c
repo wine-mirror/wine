@@ -77,10 +77,10 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
  */
 static void shader_glsl_load_psamplers(
     WineD3D_GL_Info *gl_info,
-    IWineD3DStateBlock* iface) {
+    IWineD3DStateBlock* iface,
+    GLhandleARB programId) {
 
     IWineD3DStateBlockImpl* stateBlock = (IWineD3DStateBlockImpl*) iface;
-    GLhandleARB programId = stateBlock->glsl_program->programId;
     GLhandleARB name_loc;
     int i;
     char sampler_name[20];
@@ -101,9 +101,8 @@ static void shader_glsl_load_psamplers(
     }
 }
 
-static void shader_glsl_load_vsamplers(WineD3D_GL_Info *gl_info, IWineD3DStateBlock* iface) {
+static void shader_glsl_load_vsamplers(WineD3D_GL_Info *gl_info, IWineD3DStateBlock* iface, GLhandleARB programId) {
     IWineD3DStateBlockImpl* stateBlock = (IWineD3DStateBlockImpl*) iface;
-    GLhandleARB programId = stateBlock->glsl_program->programId;
     GLhandleARB name_loc;
     char sampler_name[20];
     int i;
@@ -354,9 +353,6 @@ void shader_glsl_load_constants(
         constant_locations = prog->vuniformF_locations;
         constant_list = &stateBlock->set_vconstantsF;
 
-        /* Load vertex shader samplers */
-        shader_glsl_load_vsamplers(gl_info, (IWineD3DStateBlock*)stateBlock);
-
         /* Load DirectX 9 float constants/uniforms for vertex shader */
         shader_glsl_load_constantsF(vshader, gl_info, GL_LIMITS(vshader_constantsF),
                 stateBlock->vertexShaderConstantF, constant_locations, constant_list);
@@ -383,9 +379,6 @@ void shader_glsl_load_constants(
 
         constant_locations = prog->puniformF_locations;
         constant_list = &stateBlock->set_pconstantsF;
-
-        /* Load pixel shader samplers */
-        shader_glsl_load_psamplers(gl_info, (IWineD3DStateBlock*) stateBlock);
 
         /* Load DirectX 9 float constants/uniforms for pixel shader */
         shader_glsl_load_constantsF(pshader, gl_info, GL_LIMITS(pshader_constantsF),
@@ -3047,6 +3040,27 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     entry->srgb_mul_low_location = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_mul_low"));
     entry->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
     checkGLcall("Find glsl program uniform locations");
+
+    /* Set the shader to allow uniform loading on it */
+    GL_EXTCALL(glUseProgramObjectARB(programId));
+    checkGLcall("glUseProgramObjectARB(programId)");
+
+    /* Load the vertex and pixel samplers now. The function that finds the mappings makes sure
+     * that it stays the same for each vertexshader-pixelshader pair(=linked glsl program). If
+     * a pshader with fixed function pipeline is used there are no vertex samplers, and if a
+     * vertex shader with fixed function pixel processing is used we make sure that the card
+     * supports enough samplers to allow the max number of vertex samplers with all possible
+     * fixed function fragment processing setups. So once the program is linked these samplers
+     * won't change.
+     */
+    if(vshader_id) {
+        /* Load vertex shader samplers */
+        shader_glsl_load_vsamplers(gl_info, (IWineD3DStateBlock*)This->stateBlock, programId);
+    }
+    if(pshader_id) {
+        /* Load pixel shader samplers */
+        shader_glsl_load_psamplers(gl_info, (IWineD3DStateBlock*)This->stateBlock, programId);
+    }
 }
 
 static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
