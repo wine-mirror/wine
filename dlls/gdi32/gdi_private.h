@@ -384,92 +384,92 @@ typedef struct tagBITMAPOBJ
 #define WINE_GCPW_LOOSE_MASK 2
 
 extern BOOL BIDI_Reorder( LPCWSTR lpString, INT uCount, DWORD dwFlags, DWORD dwWineGCP_Flags,
-                          LPWSTR lpOutString, INT uCountOut, UINT *lpOrder );
+                          LPWSTR lpOutString, INT uCountOut, UINT *lpOrder ) DECLSPEC_HIDDEN;
 
 /* bitmap.c */
-extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap );
-extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc );
-extern INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp );
+extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
+extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc ) DECLSPEC_HIDDEN;
+extern INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp ) DECLSPEC_HIDDEN;
 
 /* clipping.c */
-extern void CLIPPING_UpdateGCRegion( DC * dc );
+extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
 
 /* dc.c */
-extern DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic );
-extern DC * DC_GetDCUpdate( HDC hdc );
-extern DC * DC_GetDCPtr( HDC hdc );
-extern void DC_ReleaseDCPtr( DC *dc );
-extern BOOL free_dc_ptr( DC *dc );
-extern DC *get_dc_ptr( HDC hdc );
-extern void release_dc_ptr( DC *dc );
-extern void update_dc( DC *dc );
-extern void DC_InitDC( DC * dc );
-extern void DC_UpdateXforms( DC * dc );
+extern DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic ) DECLSPEC_HIDDEN;
+extern DC * DC_GetDCUpdate( HDC hdc ) DECLSPEC_HIDDEN;
+extern DC * DC_GetDCPtr( HDC hdc ) DECLSPEC_HIDDEN;
+extern void DC_ReleaseDCPtr( DC *dc ) DECLSPEC_HIDDEN;
+extern BOOL free_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
+extern DC *get_dc_ptr( HDC hdc ) DECLSPEC_HIDDEN;
+extern void release_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
+extern void update_dc( DC *dc ) DECLSPEC_HIDDEN;
+extern void DC_InitDC( DC * dc ) DECLSPEC_HIDDEN;
+extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;
 
 /* dib.c */
-extern int DIB_GetDIBWidthBytes( int width, int depth );
-extern int DIB_GetDIBImageBytes( int width, int height, int depth );
-extern int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );
+extern int DIB_GetDIBWidthBytes( int width, int depth ) DECLSPEC_HIDDEN;
+extern int DIB_GetDIBImageBytes( int width, int height, int depth ) DECLSPEC_HIDDEN;
+extern int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
 
 /* driver.c */
-extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name );
-extern const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs );
-extern void DRIVER_release_driver( const DC_FUNCTIONS *funcs );
-extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size );
+extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
+extern const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs ) DECLSPEC_HIDDEN;
+extern void DRIVER_release_driver( const DC_FUNCTIONS *funcs ) DECLSPEC_HIDDEN;
+extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;
 
 /* enhmetafile.c */
-extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk );
+extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk ) DECLSPEC_HIDDEN;
 
 /* freetype.c */
-extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID);
-extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD);
-extern GdiFont* WineEngCreateFontInstance(DC*, HFONT);
-extern BOOL WineEngDestroyFontInstance(HFONT handle);
-extern DWORD WineEngEnumFonts(LPLOGFONTW, FONTENUMPROCW, LPARAM);
+extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
+extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD) DECLSPEC_HIDDEN;
+extern GdiFont* WineEngCreateFontInstance(DC*, HFONT) DECLSPEC_HIDDEN;
+extern BOOL WineEngDestroyFontInstance(HFONT handle) DECLSPEC_HIDDEN;
+extern DWORD WineEngEnumFonts(LPLOGFONTW, FONTENUMPROCW, LPARAM) DECLSPEC_HIDDEN;
 extern BOOL WineEngGetCharABCWidths(GdiFont *font, UINT firstChar,
-                                    UINT lastChar, LPABC buffer);
+                                    UINT lastChar, LPABC buffer) DECLSPEC_HIDDEN;
 extern BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar,
-                                    UINT count, LPWORD pgi, LPABC buffer);
-extern BOOL WineEngGetCharWidth(GdiFont*, UINT, UINT, LPINT);
-extern DWORD WineEngGetFontData(GdiFont*, DWORD, DWORD, LPVOID, DWORD);
-extern DWORD WineEngGetFontUnicodeRanges(GdiFont *, LPGLYPHSET);
+                                    UINT count, LPWORD pgi, LPABC buffer) DECLSPEC_HIDDEN;
+extern BOOL WineEngGetCharWidth(GdiFont*, UINT, UINT, LPINT) DECLSPEC_HIDDEN;
+extern DWORD WineEngGetFontData(GdiFont*, DWORD, DWORD, LPVOID, DWORD) DECLSPEC_HIDDEN;
+extern DWORD WineEngGetFontUnicodeRanges(GdiFont *, LPGLYPHSET) DECLSPEC_HIDDEN;
 extern DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
-                                    LPWORD pgi, DWORD flags);
+                                    LPWORD pgi, DWORD flags) DECLSPEC_HIDDEN;
 extern DWORD WineEngGetGlyphOutline(GdiFont*, UINT glyph, UINT format,
                                     LPGLYPHMETRICS, DWORD buflen, LPVOID buf,
-                                    const MAT2*);
-extern DWORD WineEngGetKerningPairs(GdiFont*, DWORD, KERNINGPAIR *);
-extern BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph);
-extern UINT WineEngGetOutlineTextMetrics(GdiFont*, UINT, LPOUTLINETEXTMETRICW);
-extern UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags);
-extern BOOL WineEngGetTextExtentExPoint(GdiFont*, LPCWSTR, INT, INT, LPINT, LPINT, LPSIZE);
-extern BOOL WineEngGetTextExtentPointI(GdiFont*, const WORD *, INT, LPSIZE);
-extern INT  WineEngGetTextFace(GdiFont*, INT, LPWSTR);
-extern BOOL WineEngGetTextMetrics(GdiFont*, LPTEXTMETRICW);
-extern BOOL WineEngFontIsLinked(GdiFont*);
-extern BOOL WineEngInit(void);
-extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID);
+                                    const MAT2*) DECLSPEC_HIDDEN;
+extern DWORD WineEngGetKerningPairs(GdiFont*, DWORD, KERNINGPAIR *) DECLSPEC_HIDDEN;
+extern BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph) DECLSPEC_HIDDEN;
+extern UINT WineEngGetOutlineTextMetrics(GdiFont*, UINT, LPOUTLINETEXTMETRICW) DECLSPEC_HIDDEN;
+extern UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags) DECLSPEC_HIDDEN;
+extern BOOL WineEngGetTextExtentExPoint(GdiFont*, LPCWSTR, INT, INT, LPINT, LPINT, LPSIZE) DECLSPEC_HIDDEN;
+extern BOOL WineEngGetTextExtentPointI(GdiFont*, const WORD *, INT, LPSIZE) DECLSPEC_HIDDEN;
+extern INT  WineEngGetTextFace(GdiFont*, INT, LPWSTR) DECLSPEC_HIDDEN;
+extern BOOL WineEngGetTextMetrics(GdiFont*, LPTEXTMETRICW) DECLSPEC_HIDDEN;
+extern BOOL WineEngFontIsLinked(GdiFont*) DECLSPEC_HIDDEN;
+extern BOOL WineEngInit(void) DECLSPEC_HIDDEN;
+extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 
 /* gdiobj.c */
-extern BOOL GDI_Init(void);
-extern void *GDI_AllocObject( WORD, WORD, HGDIOBJ *, const struct gdi_obj_funcs *funcs );
-extern void *GDI_ReallocObject( WORD, HGDIOBJ, void *obj );
-extern BOOL GDI_FreeObject( HGDIOBJ, void *obj );
-extern void *GDI_GetObjPtr( HGDIOBJ, WORD );
-extern void GDI_ReleaseObj( HGDIOBJ );
-extern void GDI_CheckNotLock(void);
-extern BOOL GDI_inc_ref_count( HGDIOBJ handle );
-extern BOOL GDI_dec_ref_count( HGDIOBJ handle );
-extern BOOL GDI_hdc_using_object(HGDIOBJ obj, HDC hdc);
-extern BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc);
+extern BOOL GDI_Init(void) DECLSPEC_HIDDEN;
+extern void *GDI_AllocObject( WORD, WORD, HGDIOBJ *, const struct gdi_obj_funcs *funcs ) DECLSPEC_HIDDEN;
+extern void *GDI_ReallocObject( WORD, HGDIOBJ, void *obj ) DECLSPEC_HIDDEN;
+extern BOOL GDI_FreeObject( HGDIOBJ, void *obj ) DECLSPEC_HIDDEN;
+extern void *GDI_GetObjPtr( HGDIOBJ, WORD ) DECLSPEC_HIDDEN;
+extern void GDI_ReleaseObj( HGDIOBJ ) DECLSPEC_HIDDEN;
+extern void GDI_CheckNotLock(void) DECLSPEC_HIDDEN;
+extern BOOL GDI_inc_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
+extern BOOL GDI_dec_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
+extern BOOL GDI_hdc_using_object(HGDIOBJ obj, HDC hdc) DECLSPEC_HIDDEN;
+extern BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc) DECLSPEC_HIDDEN;
 
 /* metafile.c */
-extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh);
-extern HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh);
-extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCVOID filename, BOOL unicode );
-extern METAHEADER *MF_ReadMetaFile(HANDLE hfile);
-extern METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh);
-extern BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh);
+extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh) DECLSPEC_HIDDEN;
+extern HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh) DECLSPEC_HIDDEN;
+extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCVOID filename, BOOL unicode ) DECLSPEC_HIDDEN;
+extern METAHEADER *MF_ReadMetaFile(HANDLE hfile) DECLSPEC_HIDDEN;
+extern METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh) DECLSPEC_HIDDEN;
+extern BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh) DECLSPEC_HIDDEN;
 
 /* path.c */
 
@@ -479,42 +479,43 @@ extern BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh);
  * function is implemented as a macro for performance reasons.
  */
 
-extern void PATH_InitGdiPath(GdiPath *pPath);
-extern void PATH_DestroyGdiPath(GdiPath *pPath);
-extern BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc);
+extern void PATH_InitGdiPath(GdiPath *pPath) DECLSPEC_HIDDEN;
+extern void PATH_DestroyGdiPath(GdiPath *pPath) DECLSPEC_HIDDEN;
+extern BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc) DECLSPEC_HIDDEN;
 
-extern BOOL PATH_MoveTo(DC *dc);
-extern BOOL PATH_LineTo(DC *dc, INT x, INT y);
-extern BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2);
+extern BOOL PATH_MoveTo(DC *dc) DECLSPEC_HIDDEN;
+extern BOOL PATH_LineTo(DC *dc, INT x, INT y) DECLSPEC_HIDDEN;
+extern BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2) DECLSPEC_HIDDEN;
 extern BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
-                            LPCWSTR str, UINT count, const INT *dx);
-extern BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2);
+                            LPCWSTR str, UINT count, const INT *dx) DECLSPEC_HIDDEN;
+extern BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2) DECLSPEC_HIDDEN;
 extern BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
-                     INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines);
-extern BOOL PATH_PolyBezierTo(DC *dc, const POINT *pt, DWORD cbCount);
-extern BOOL PATH_PolyBezier(DC *dc, const POINT *pt, DWORD cbCount);
-extern BOOL PATH_PolyDraw(DC *dc, const POINT *pts, const BYTE *types, DWORD cbCount);
-extern BOOL PATH_PolylineTo(DC *dc, const POINT *pt, DWORD cbCount);
-extern BOOL PATH_Polyline(DC *dc, const POINT *pt, DWORD cbCount);
-extern BOOL PATH_Polygon(DC *dc, const POINT *pt, DWORD cbCount);
-extern BOOL PATH_PolyPolyline(DC *dc, const POINT *pt, const DWORD *counts, DWORD polylines);
-extern BOOL PATH_PolyPolygon(DC *dc, const POINT *pt, const INT *counts, UINT polygons);
-extern BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height);
-extern BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags);
+                     INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines) DECLSPEC_HIDDEN;
+extern BOOL PATH_PolyBezierTo(DC *dc, const POINT *pt, DWORD cbCount) DECLSPEC_HIDDEN;
+extern BOOL PATH_PolyBezier(DC *dc, const POINT *pt, DWORD cbCount) DECLSPEC_HIDDEN;
+extern BOOL PATH_PolyDraw(DC *dc, const POINT *pts, const BYTE *types, DWORD cbCount) DECLSPEC_HIDDEN;
+extern BOOL PATH_PolylineTo(DC *dc, const POINT *pt, DWORD cbCount) DECLSPEC_HIDDEN;
+extern BOOL PATH_Polyline(DC *dc, const POINT *pt, DWORD cbCount) DECLSPEC_HIDDEN;
+extern BOOL PATH_Polygon(DC *dc, const POINT *pt, DWORD cbCount) DECLSPEC_HIDDEN;
+extern BOOL PATH_PolyPolyline(DC *dc, const POINT *pt, const DWORD *counts, DWORD polylines) DECLSPEC_HIDDEN;
+extern BOOL PATH_PolyPolygon(DC *dc, const POINT *pt, const INT *counts, UINT polygons) DECLSPEC_HIDDEN;
+extern BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height) DECLSPEC_HIDDEN;
+extern BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags) DECLSPEC_HIDDEN;
 
 /* painting.c */
-extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut );
+extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut ) DECLSPEC_HIDDEN;
 
 /* palette.c */
 extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg);
 extern UINT WINAPI GDIRealizePalette( HDC hdc );
-extern HPALETTE PALETTE_Init(void);
+extern HPALETTE PALETTE_Init(void) DECLSPEC_HIDDEN;
 
 /* region.c */
-extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
+extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y ) DECLSPEC_HIDDEN;
 
 /* Undocumented value for DIB's iUsage: Indicates a mono DIB w/o pal entries */
 #define DIB_PAL_MONO 2
-#endif /* __WINE_GDI_PRIVATE_H */
 
 BOOL WINAPI FontIsLinked(HDC);
+
+#endif /* __WINE_GDI_PRIVATE_H */
