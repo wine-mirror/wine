@@ -104,8 +104,11 @@ struct DirectSoundDevice
     PrimaryBufferImpl*          primary;
     DSBUFFERDESC                dsbd;
     DWORD                       speaker_config;
-    LPBYTE                      tmp_buffer;
-    DWORD                       tmp_buffer_len;
+    LPBYTE                      tmp_buffer, mix_buffer;
+    DWORD                       tmp_buffer_len, mix_buffer_len;
+
+    mixfunc mixfunction;
+    normfunc normfunction;
 
     /* DirectSound3DListener fields */
     IDirectSound3DListenerImpl*	listener;
@@ -441,7 +444,7 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave);
 HRESULT DSOUND_FullDuplexCreate(REFIID riid, LPDIRECTSOUNDFULLDUPLEX* ppDSFD);
 
 /* mixer.c */
-
+DWORD DSOUND_bufpos_to_mixpos(const DirectSoundDevice* device, DWORD pos);
 void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len);
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan);

@@ -188,6 +188,16 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 			device->prebuf = device->helfrags;
 	}
 
+	device->mix_buffer_len = DSOUND_bufpos_to_mixpos(device, device->buflen);
+	device->mix_buffer = HeapAlloc(GetProcessHeap(), 0, device->mix_buffer_len);
+	if (!device->mix_buffer)
+	{
+		if (device->hwbuf)
+			IDsDriverBuffer_Release(device->hwbuf);
+		device->hwbuf = NULL;
+		return DSERR_OUTOFMEMORY;
+	}
+
 	if (device->state == STATE_PLAYING) device->state = STATE_STARTING;
 	else if (device->state == STATE_STOPPING) device->state = STATE_STOPPED;
 
@@ -256,7 +266,10 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 
 		TRACE("fraglen=%d, overshot=%d\n", device->fraglen, overshot);
 	}
+	device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
+	device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
 	FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
+	FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
 	device->pwplay = device->pwqueue = device->playpos = device->mixpos = 0;
 	return err;
 }
@@ -443,7 +456,7 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex,
 	RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
 	EnterCriticalSection(&(device->mixlock));
 
-	if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
+        if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
             alloc_size = sizeof(WAVEFORMATEX);
             cp_size = sizeof(PCMWAVEFORMAT);
         } else
@@ -519,6 +532,12 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex,
 				WARN("DSOUND_PrimaryOpen(2) failed: %08x\n", err);
 		}
 	}
+
+	device->mix_buffer_len = DSOUND_bufpos_to_mixpos(device, device->buflen);
+	device->mix_buffer = HeapReAlloc(GetProcessHeap(), 0, device->mix_buffer, device->mix_buffer_len);
+	FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
+	device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
+	device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
 
 	if (nSamplesPerSec != device->pwfx->nSamplesPerSec || bpp != device->pwfx->wBitsPerSample || chans != device->pwfx->nChannels) {
 		IDirectSoundBufferImpl** dsb = device->buffers;

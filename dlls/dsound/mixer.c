@@ -90,6 +90,19 @@ void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan)
     TRACE("Vol=%d Pan=%d\n", volpan->lVolume, volpan->lPan);
 }
 
+/** Convert a primary buffer position to a pointer position for device->mix_buffer
+ * device: DirectSoundDevice for which to calculate
+ * pos: Primary buffer position to converts
+ * Returns: Offset for mix_buffer
+ */
+DWORD DSOUND_bufpos_to_mixpos(const DirectSoundDevice* device, DWORD pos)
+{
+    DWORD ret = pos * 32 / device->pwfx->wBitsPerSample;
+    if (device->pwfx->wBitsPerSample == 32)
+        ret *= 2;
+    return ret;
+}
+
 /* NOTE: Not all secpos have to always be mapped to a bufpos, other way around is always the case
  * DWORD64 is used here because a single DWORD wouldn't be big enough to fit the freqAcc for big buffers
  */
@@ -466,9 +479,9 @@ static LPBYTE DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, DWORD writepos,
  */
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
 {
-	INT i, len = fraglen, field, todo, ilen;
+	INT len = fraglen, ilen;
 	BYTE *ibuf = (dsb->tmp_buffer ? dsb->tmp_buffer : dsb->buffer->memory) + dsb->buf_mixpos, *volbuf;
-	DWORD oldpos;
+	DWORD oldpos, mixbufpos;
 
 	TRACE("buf_mixpos=%d/%d sec_mixpos=%d/%d\n", dsb->buf_mixpos, dsb->tmp_buffer_len, dsb->sec_mixpos, dsb->buflen);
 	TRACE("(%p,%d,%d)\n",dsb,writepos,fraglen);
@@ -486,82 +499,26 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	if (volbuf)
 		ibuf = volbuf;
 
+	mixbufpos = DSOUND_bufpos_to_mixpos(dsb->device, writepos);
 	/* Now mix the temporary buffer into the devices main buffer */
-	if (dsb->device->pwfx->wBitsPerSample == 8) {
-		BYTE	*obuf = dsb->device->buffer + writepos;
-
-		if ((writepos + len) <= dsb->device->buflen)
-			todo = len;
-		else
-			todo = dsb->device->buflen - writepos;
-
-		for (i = 0; i < todo; i++) {
-			/* 8-bit WAV is unsigned */
-			field = (*ibuf++ - 128);
-			field += (*obuf - 128);
-			if (field > 127) field = 127;
-			else if (field < -128) field = -128;
-			*obuf++ = field + 128;
-		}
- 
-		if (todo < len) {
-			todo = len - todo;
-			obuf = dsb->device->buffer;
-
-			for (i = 0; i < todo; i++) {
-				/* 8-bit WAV is unsigned */
-				field = (*ibuf++ - 128);
-				field += (*obuf - 128);
-				if (field > 127) field = 127;
-				else if (field < -128) field = -128;
-				*obuf++ = field + 128;
-			}
-		}
-	} else {
-		INT16	*ibufs, *obufs;
-
-		ibufs = (INT16 *) ibuf;
-		obufs = (INT16 *)(dsb->device->buffer + writepos);
-
-		if ((writepos + len) <= dsb->device->buflen)
-			todo = len / 2;
-		else
-			todo = (dsb->device->buflen - writepos) / 2;
-
-		for (i = 0; i < todo; i++) {
-			/* 16-bit WAV is signed */
-			field = *ibufs++;
-
-			field += *obufs;
-			if (field > 32767) field = 32767;
-			else if (field < -32768) field = -32768;
-			*obufs++ = field;
-		}
-
-		if (todo < (len / 2)) {
-			todo = (len / 2) - todo;
-			obufs = (INT16 *)dsb->device->buffer;
-
-			for (i = 0; i < todo; i++) {
-				/* 16-bit WAV is signed */
-				field = *ibufs++;
-				field += *obufs;
-				if (field > 32767) field = 32767;
-				else if (field < -32768) field = -32768;
-				*obufs++ = field;
-			}
-		}
+	if ((writepos + len) <= dsb->device->buflen)
+		dsb->device->mixfunction(ibuf, dsb->device->mix_buffer + mixbufpos, len);
+	else
+	{
+		DWORD todo = dsb->device->buflen - writepos;
+		dsb->device->mixfunction(ibuf, dsb->device->mix_buffer + mixbufpos, todo);
+		dsb->device->mixfunction(ibuf + todo, dsb->device->mix_buffer, len - todo);
 	}
 
 	oldpos = dsb->sec_mixpos;
 	dsb->buf_mixpos += len;
 
 	if (dsb->buf_mixpos >= dsb->tmp_buffer_len) {
+		if (dsb->buf_mixpos > dsb->tmp_buffer_len)
+			ERR("Mixpos (%u) past buflen (%u), capping...\n", dsb->buf_mixpos, dsb->tmp_buffer_len);
 		if (dsb->playflags & DSBPLAY_LOOPING) {
 			dsb->buf_mixpos -= dsb->tmp_buffer_len;
 		} else if (dsb->buf_mixpos >= dsb->tmp_buffer_len) {
-			if (dsb->buf_mixpos > dsb->tmp_buffer_len)
-				ERR("Mixpos (%u) past buflen (%u), capping...\n", dsb->buf_mixpos, dsb->tmp_buffer_len);
 			dsb->buf_mixpos = dsb->sec_mixpos = 0;
 			dsb->state = STATE_STOPPED;
 		}
@@ -817,7 +774,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 	if (device->priolevel != DSSCL_WRITEPRIMARY) {
 		BOOL recover = FALSE, all_stopped = FALSE;
-		DWORD playpos, writepos, writelead, maxq, frag, prebuff_max, prebuff_left, size1, size2;
+		DWORD playpos, writepos, writelead, maxq, frag, prebuff_max, prebuff_left, size1, size2, mixplaypos, mixplaypos2;
 		LPVOID buf1, buf2;
 		BOOL lock = (device->hwbuf && !(device->drvdesc.dwFlags & DSDDESC_DONTNEEDPRIMARYLOCK));
 		BOOL mustlock = FALSE;
@@ -836,12 +793,16 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		      playpos,writepos,device->playpos,device->mixpos,device->buflen);
 		assert(device->playpos < device->buflen);
 
+		mixplaypos = DSOUND_bufpos_to_mixpos(device, device->playpos);
+		mixplaypos2 = DSOUND_bufpos_to_mixpos(device, playpos);
 		/* wipe out just-played sound data */
 		if (playpos < device->playpos) {
 			buf1 = device->buffer + device->playpos;
 			buf2 = device->buffer;
 			size1 = device->buflen - device->playpos;
 			size2 = playpos;
+			FillMemory(device->mix_buffer + mixplaypos, device->mix_buffer_len - mixplaypos, 0);
+			FillMemory(device->mix_buffer, mixplaypos2, 0);
 			if (lock)
 				IDsDriverBuffer_Lock(device->hwbuf, &buf1, &size1, &buf2, &size2, device->playpos, size1+size2, 0);
 			FillMemory(buf1, size1, nfiller);
@@ -855,6 +816,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 			buf2 = NULL;
 			size1 = playpos - device->playpos;
 			size2 = 0;
+			FillMemory(device->mix_buffer + mixplaypos, mixplaypos2 - mixplaypos, 0);
 			if (lock)
 				IDsDriverBuffer_Lock(device->hwbuf, &buf1, &size1, &buf2, &size2, device->playpos, size1+size2, 0);
 			FillMemory(buf1, size1, nfiller);
@@ -905,6 +867,15 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 		/* do the mixing */
 		frag = DSOUND_MixToPrimary(device, writepos, maxq, mustlock, recover, &all_stopped);
+
+		if (frag + writepos > device->buflen)
+		{
+			DWORD todo = device->buflen - writepos;
+			device->normfunction(device->mix_buffer + DSOUND_bufpos_to_mixpos(device, writepos), device->buffer + writepos, todo);
+			device->normfunction(device->mix_buffer, device->buffer, frag - todo);
+		}
+		else
+			device->normfunction(device->mix_buffer + DSOUND_bufpos_to_mixpos(device, writepos), device->buffer + writepos, frag);
 
 		/* update the mix position, taking wrap-around into acount */
 		device->mixpos = writepos + frag;

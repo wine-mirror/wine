@@ -1275,8 +1275,9 @@ ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
 
         DSOUND_renderer[device->drvdesc.dnDevNode] = NULL;
 
-        HeapFree(GetProcessHeap(),0,device->tmp_buffer);
-        HeapFree(GetProcessHeap(),0,device->buffer);
+        HeapFree(GetProcessHeap(), 0, device->tmp_buffer);
+        HeapFree(GetProcessHeap(), 0, device->mix_buffer);
+        HeapFree(GetProcessHeap(), 0, device->buffer);
         RtlDeleteResource(&device->buffer_list_lock);
         device->mixlock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&device->mixlock);
