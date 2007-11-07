@@ -1299,8 +1299,18 @@ void shader_glsl_mov(SHADER_OPCODE_ARG* arg) {
      * shader versions WINED3DSIO_MOVA is used for this. */
     if ((WINED3DSHADER_VERSION_MAJOR(shader->baseShader.hex_version) == 1 &&
             !shader_is_pshader_version(shader->baseShader.hex_version) &&
-            shader_get_regtype(arg->dst) == WINED3DSPR_ADDR) ||
-            arg->opcode->opcode == WINED3DSIO_MOVA) {
+            shader_get_regtype(arg->dst) == WINED3DSPR_ADDR)) {
+        /* This is a simple floor(). Msdn claims it is a round to nearest, but our test shows
+         * that it is just a floor(). ATI docs confirm that, and the test succeeds on the
+         * reference rasterizer too
+         */
+        size_t mask_size = shader_glsl_get_write_mask_size(write_mask);
+        if (mask_size > 1) {
+            shader_addline(buffer, "ivec%d(floor(%s)));\n", mask_size, src0_param.param_str);
+        } else {
+            shader_addline(buffer, "int(floor(%s)));\n", src0_param.param_str);
+        }
+    } else if(arg->opcode->opcode == WINED3DSIO_MOVA) {
         /* We need to *round* to the nearest int here. */
         size_t mask_size = shader_glsl_get_write_mask_size(write_mask);
         if (mask_size > 1) {
