@@ -1065,6 +1065,12 @@ static BOOL CRYPT_AsnDecodeCRLEntry(const BYTE *pbEncoded, DWORD cbEncoded,
     ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
      pbEncoded, cbEncoded, dwFlags, NULL, entry, pcbStructInfo, pcbDecoded,
      entry ? entry->SerialNumber.pbData : NULL);
+    if (ret && entry && !entry->SerialNumber.cbData)
+    {
+        WARN("empty CRL entry serial number\n");
+        SetLastError(CRYPT_E_ASN1_CORRUPT);
+        ret = FALSE;
+    }
     return ret;
 }
 

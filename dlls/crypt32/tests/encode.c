@@ -4269,7 +4269,7 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED,
      v1CRLWithIssuerAndEmptyEntry, v1CRLWithIssuerAndEmptyEntry[1] + 2,
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
      "Expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
     /* with a real CRL entry */
     ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED,
