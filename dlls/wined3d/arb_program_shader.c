@@ -467,7 +467,15 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
     strcat(hwLine, tmpReg);
     break;
   case WINED3DSPR_CONST:
-    sprintf(tmpReg, "C[%s%u]", (param & WINED3DSHADER_ADDRMODE_RELATIVE) ? "A0.x + " : "", reg);
+      if(param & WINED3DSHADER_ADDRMODE_RELATIVE) {
+          if(reg - This->rel_offset >= 0) {
+              sprintf(tmpReg, "C[A0.x + %u]", reg - This->rel_offset);
+          } else {
+              sprintf(tmpReg, "C[A0.x - %u]", -reg + This->rel_offset);
+          }
+      } else {
+          sprintf(tmpReg, "C[%u]", reg);
+      }
     strcat(hwLine, tmpReg);
     break;
   case WINED3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
@@ -1571,6 +1579,7 @@ void shader_hw_sincos(SHADER_OPCODE_ARG* arg) {
 /* Map the opcode 1-to-1 to the GL code */
 void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 
+    IWineD3DVertexShaderImpl *shader = (IWineD3DVertexShaderImpl*) arg->shader;
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD dst = arg->dst;
@@ -1580,9 +1589,17 @@ void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
     char tmpLine[256];
     unsigned int i;
 
-    if ((curOpcode->opcode == WINED3DSIO_MOV && dst_regtype == WINED3DSPR_ADDR) || curOpcode->opcode == WINED3DSIO_MOVA)
-        strcpy(tmpLine, "ARL");
-    else
+    if ((curOpcode->opcode == WINED3DSIO_MOV && dst_regtype == WINED3DSPR_ADDR) || curOpcode->opcode == WINED3DSIO_MOVA) {
+        if(shader->rel_offset) {
+            memset(tmpLine, 0, sizeof(tmpLine));
+            vshader_program_add_param(arg, src[0], TRUE, tmpLine);
+            shader_addline(buffer, "ADD TMP.x, %s, helper_const.z;\n", tmpLine);
+            shader_addline(buffer, "ARL A0.x, TMP.x;\n");
+            return;
+        } else {
+            strcpy(tmpLine, "ARL");
+        }
+    } else
         strcpy(tmpLine, curOpcode->glname);
 
     if (curOpcode->num_params > 0) {

@@ -2051,6 +2051,9 @@ typedef struct IWineD3DVertexShaderImpl {
 
     /* run time datas...  */
     VSHADERDATA                *data;
+    UINT                       min_rel_offset, max_rel_offset;
+    UINT                       rel_offset;
+
 #if 0 /* needs reworking */
     /* run time datas */
     VSHADERINPUTDATA input;

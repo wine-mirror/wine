@@ -353,7 +353,9 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
          * before the homogenous divide, so we have to take the w into account: z = ((z / w) * 2 - 1) * w,
          * which is the same as z = z / 2 - w.
          */
-        shader_addline(&buffer, "gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;\n");
+        shader_addline(&buffer, "tmp0 = gl_Position;\n");
+        shader_addline(&buffer, "gl_Position.z = tmp0.z * 2.0;\n");
+        shader_addline(&buffer, "gl_Position.z = gl_Position.z - gl_Position.w;\n");
 
         shader_addline(&buffer, "}\n");
 
@@ -369,7 +371,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
 
         /*  Create the hw ARB shader */
         shader_addline(&buffer, "!!ARBvp1.0\n");
-        shader_addline(&buffer, "PARAM zfixup = { 2.0, -1.0, 0.0, 0.0 };\n");
+        shader_addline(&buffer, "PARAM helper_const = { 2.0, -1.0, %d.0, 0.0 };\n", This->rel_offset);
 
         /* Mesa supports only 95 constants */
         if (GL_VEND(MESA) || GL_VEND(WINE))
@@ -377,7 +379,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
                 min(95, This->baseShader.limits.constant_float);
 
         /* Some instructions need a temporary register. Add it if needed, but only if it is really needed */
-        if(reg_maps->usesnrm) {
+        if(reg_maps->usesnrm || This->rel_offset) {
             shader_addline(&buffer, "TEMP TMP;\n");
         }
 
@@ -409,7 +411,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
          * and the glsl equivalent
          */
-        shader_addline(&buffer, "MAD TMP_OUT.z, TMP_OUT.z, zfixup.x, -TMP_OUT.w;\n");
+        shader_addline(&buffer, "MAD TMP_OUT.z, TMP_OUT.z, helper_const.x, -TMP_OUT.w;\n");
 
         shader_addline(&buffer, "MOV result.position, TMP_OUT;\n");
         
@@ -566,12 +568,31 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     list_init(&This->baseShader.constantsI);
 
     /* Second pass: figure out registers used, semantics, etc.. */
+    This->min_rel_offset = GL_LIMITS(vshader_constantsF);
+    This->max_rel_offset = 0;
     memset(reg_maps, 0, sizeof(shader_reg_maps));
     hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
        This->semantics_in, This->semantics_out, pFunction, NULL);
     if (hr != WINED3D_OK) return hr;
 
     This->baseShader.shader_mode = deviceImpl->vs_selected_mode;
+
+    if(deviceImpl->vs_selected_mode == SHADER_ARB &&
+       (GLINFO_LOCATION).arb_vs_offset_limit      &&
+       This->min_rel_offset <= This->max_rel_offset) {
+
+        if(This->max_rel_offset - This->min_rel_offset > 127) {
+            FIXME("The difference between the minimum and maximum relative offset is > 127\n");
+            FIXME("Which this OpenGL implementation does not support. Try using GLSL\n");
+            FIXME("Min: %d, Max: %d\n", This->min_rel_offset, This->max_rel_offset);
+        } else if(This->max_rel_offset - This->min_rel_offset > 63) {
+            This->rel_offset = This->min_rel_offset + 63;
+        } else if(This->max_rel_offset > 63) {
+            This->rel_offset = This->min_rel_offset;
+        } else {
+            This->rel_offset = 0;
+        }
+    }
 
     /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {

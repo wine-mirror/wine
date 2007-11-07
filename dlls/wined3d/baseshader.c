@@ -446,6 +446,15 @@ HRESULT shader_get_registers_used(
 
                 else if (WINED3DSPR_MISCTYPE == regtype && reg == 0 && pshader)
                     reg_maps->vpos = 1;
+
+                else if(WINED3DSPR_CONST == regtype && !pshader &&
+                        param & WINED3DSHADER_ADDRMODE_RELATIVE) {
+                    if(reg <= ((IWineD3DVertexShaderImpl *) This)->min_rel_offset) {
+                        ((IWineD3DVertexShaderImpl *) This)->min_rel_offset = reg;
+                    } else if(reg >= ((IWineD3DVertexShaderImpl *) This)->max_rel_offset) {
+                        ((IWineD3DVertexShaderImpl *) This)->max_rel_offset = reg;
+                    }
+                }
             }
         }
     }

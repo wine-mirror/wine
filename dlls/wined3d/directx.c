@@ -407,6 +407,38 @@ static void select_shader_max_constants(
  **********************************************************/
 
 #define GLINFO_LOCATION (*gl_info)
+static inline BOOL test_arb_vs_offset_limit(WineD3D_GL_Info *gl_info) {
+    GLuint prog;
+    BOOL ret = FALSE;
+    const char *testcode =
+        "!!ARBvp1.0\n"
+        "PARAM C[66] = { program.env[0..65] };\n"
+        "ADDRESS A0;"
+        "ARL A0.x, 0.0;\n"
+        "MOV result.position, C[A0.x + 65];\n"
+        "END\n";
+
+    while(glGetError());
+    GL_EXTCALL(glGenProgramsARB(1, &prog));
+    if(!prog) {
+        ERR("Failed to create an ARB offset limit test program\n");
+    }
+    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prog));
+    GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+                                  strlen(testcode), testcode));
+    if(glGetError() != 0) {
+        TRACE("OpenGL implementation does not allow indirect addressing offsets > 63\n");
+        TRACE("error: %s\n", debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        ret = TRUE;
+    } else TRACE("OpenGL implementation allows offsets > 63\n");
+
+    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, 0));
+    GL_EXTCALL(glDeleteProgramsARB(1, &prog));
+    checkGLcall("ARB vp offset limit test cleanup\n");
+
+    return ret;
+}
+
 BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     const char *GL_Extensions    = NULL;
     const char *WGL_Extensions   = NULL;
@@ -691,7 +723,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
                 GLint tmp;
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-                gl_info->max_fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, tmp);
+                gl_info->max_fragment_samplers = min(8, tmp);
             } else {
                 gl_info->max_fragment_samplers = max(gl_info->max_fragment_samplers, gl_max);
             }
@@ -747,6 +779,8 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, &gl_max));
             gl_info->vs_arb_max_instructions = gl_max;
             TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native instructions: %d\n", gl_info->vs_arb_max_instructions);
+
+            gl_info->arb_vs_offset_limit = test_arb_vs_offset_limit(gl_info);
         }
         if (gl_info->supported[ARB_VERTEX_SHADER]) {
             glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
