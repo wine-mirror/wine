@@ -563,8 +563,8 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
          * achive anything anyway
          */
         if(highest_reg_used < (GL_LIMITS(glsl_varyings) / 4) ||
-           num_regs_used >= (GL_LIMITS(glsl_varyings) / 4) ) {
-            if(num_regs_used >= (GL_LIMITS(glsl_varyings) / 4)) {
+           num_regs_used > (GL_LIMITS(glsl_varyings) / 4) ) {
+            if(num_regs_used > (GL_LIMITS(glsl_varyings) / 4)) {
                 /* This happens with relative addressing. The input mapper function
                  * warns about this if the higher registers are declared too, so
                  * don't write a FIXME here
