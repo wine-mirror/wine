@@ -43,13 +43,13 @@ extern "C" {
 
 #define NTAPI __stdcall
 
-#if (defined(_M_IX86) || defined(_M_IA64) || defined(_M_AMD64) || defined(__MINGW32__)) && !defined(MIDL_PASS)
+#ifndef MIDL_PASS
 # if defined(_MSC_VER)
 #  define DECLSPEC_IMPORT __declspec(dllimport)
 # elif defined(__MINGW32__)
 #  define DECLSPEC_IMPORT __attribute__((dllimport))
 # else
-#  define DECLSPEC_IMPORT
+#  define DECLSPEC_IMPORT DECLSPEC_HIDDEN
 # endif
 #else
 # define DECLSPEC_IMPORT
