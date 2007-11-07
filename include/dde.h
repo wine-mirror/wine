@@ -28,6 +28,12 @@
 extern "C" {
 #endif
 
+#ifdef _USER32_
+#define WINUSERAPI
+#else
+#define WINUSERAPI DECLSPEC_IMPORT
+#endif
+
 #define WM_DDE_INITIATE   0x3E0
 #define WM_DDE_TERMINATE  0x3E1
 #define WM_DDE_ADVISE	  0x3E2
@@ -69,19 +75,12 @@ typedef struct
     BYTE Value[1];   	/* undetermined array */
 } DDEPOKE;
 
-BOOL WINAPI DdeSetQualityOfService(HWND hwndClient,
-				   CONST SECURITY_QUALITY_OF_SERVICE *pqosNew,
-				   PSECURITY_QUALITY_OF_SERVICE pqosPrev);
-
-BOOL WINAPI ImpersonateDdeClientWindow(HWND hWndClient, HWND hWndServer);
-
-/* lParam packing/unpacking API */
-
-LPARAM      WINAPI PackDDElParam(UINT,UINT_PTR,UINT_PTR);
-BOOL        WINAPI UnpackDDElParam(UINT,LPARAM,PUINT_PTR,PUINT_PTR);
-BOOL        WINAPI FreeDDElParam(UINT,LPARAM);
-LPARAM      WINAPI ReuseDDElParam(LPARAM,UINT,UINT,UINT_PTR,UINT_PTR);
-
+WINUSERAPI BOOL        WINAPI DdeSetQualityOfService(HWND,CONST SECURITY_QUALITY_OF_SERVICE *,PSECURITY_QUALITY_OF_SERVICE);
+WINUSERAPI BOOL        WINAPI FreeDDElParam(UINT,LPARAM);
+WINUSERAPI BOOL        WINAPI ImpersonateDdeClientWindow(HWND,HWND);
+WINUSERAPI LPARAM      WINAPI PackDDElParam(UINT,UINT_PTR,UINT_PTR);
+WINUSERAPI LPARAM      WINAPI ReuseDDElParam(LPARAM,UINT,UINT,UINT_PTR,UINT_PTR);
+WINUSERAPI BOOL        WINAPI UnpackDDElParam(UINT,LPARAM,PUINT_PTR,PUINT_PTR);
 
 #ifdef __cplusplus
 }
