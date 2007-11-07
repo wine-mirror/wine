@@ -43,53 +43,66 @@ struct builtin_class_descr
     HBRUSH    brush;   /* brush or system color */
 };
 
-extern WNDPROC EDIT_winproc_handle;
+extern const struct builtin_class_descr BUTTON_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr COMBO_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr COMBOLBOX_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr DIALOG_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr DESKTOP_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr EDIT_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr ICONTITLE_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr LISTBOX_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr MDICLIENT_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr MENU_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr SCROLL_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr STATIC_builtin_class DECLSPEC_HIDDEN;
+
+extern WNDPROC EDIT_winproc_handle DECLSPEC_HIDDEN;
 
 /* Class functions */
 struct tagCLASS;  /* opaque structure */
 struct tagWND;
-extern ATOM get_int_atom_value( LPCWSTR name );
-extern void CLASS_RegisterBuiltinClasses(void);
-extern void CLASS_AddWindow( struct tagCLASS *class, struct tagWND *win, BOOL unicode );
-extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
+extern ATOM get_int_atom_value( LPCWSTR name ) DECLSPEC_HIDDEN;
+extern void CLASS_RegisterBuiltinClasses(void) DECLSPEC_HIDDEN;
+extern void CLASS_AddWindow( struct tagCLASS *class, struct tagWND *win, BOOL unicode ) DECLSPEC_HIDDEN;
+extern void CLASS_FreeModuleClasses( HMODULE16 hModule ) DECLSPEC_HIDDEN;
 
 /* defwnd proc */
-extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );
+extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType ) DECLSPEC_HIDDEN;
 
 /* desktop */
-extern BOOL DESKTOP_SetPattern( LPCWSTR pattern );
+extern BOOL DESKTOP_SetPattern( LPCWSTR pattern ) DECLSPEC_HIDDEN;
 
 /* icon title */
-extern HWND ICONTITLE_Create( HWND hwnd );
+extern HWND ICONTITLE_Create( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* menu controls */
-extern HWND MENU_IsMenuActive(void);
+extern HWND MENU_IsMenuActive(void) DECLSPEC_HIDDEN;
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
-                                     INT orgX, INT orgY );
-extern BOOL MENU_SetMenu(HWND, HMENU);
-extern void MENU_TrackMouseMenuBar( HWND hwnd, INT ht, POINT pt );
-extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar );
+                                     INT orgX, INT orgY ) DECLSPEC_HIDDEN;
+extern BOOL MENU_SetMenu(HWND, HMENU) DECLSPEC_HIDDEN;
+extern void MENU_TrackMouseMenuBar( HWND hwnd, INT ht, POINT pt ) DECLSPEC_HIDDEN;
+extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar ) DECLSPEC_HIDDEN;
 extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
-                                HWND hwnd, BOOL suppress_draw );
-extern UINT MENU_FindSubMenu( HMENU *hmenu, HMENU hSubTarget );
+                                HWND hwnd, BOOL suppress_draw ) DECLSPEC_HIDDEN;
+extern UINT MENU_FindSubMenu( HMENU *hmenu, HMENU hSubTarget ) DECLSPEC_HIDDEN;
 
 /* nonclient area */
-extern LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip);
-extern LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam );
-extern LRESULT NC_HandleNCCalcSize( HWND hwnd, RECT *winRect );
-extern LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt );
-extern LRESULT NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam );
-extern LRESULT NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam);
-extern LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam );
-extern LRESULT NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam );
-extern BOOL NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down );
-extern void NC_GetSysPopupPos( HWND hwnd, RECT* rect );
+extern LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip) DECLSPEC_HIDDEN;
+extern LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam ) DECLSPEC_HIDDEN;
+extern LRESULT NC_HandleNCCalcSize( HWND hwnd, RECT *winRect ) DECLSPEC_HIDDEN;
+extern LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt ) DECLSPEC_HIDDEN;
+extern LRESULT NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
+extern LRESULT NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam) DECLSPEC_HIDDEN;
+extern LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
+extern LRESULT NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
+extern BOOL NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down ) DECLSPEC_HIDDEN;
+extern void NC_GetSysPopupPos( HWND hwnd, RECT* rect ) DECLSPEC_HIDDEN;
 
 /* scrollbar */
-extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, BOOL arrows, BOOL interior );
-extern void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt );
+extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, BOOL arrows, BOOL interior ) DECLSPEC_HIDDEN;
+extern void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt ) DECLSPEC_HIDDEN;
 extern INT SCROLL_SetNCSbState( HWND hwnd, int vMin, int vMax, int vPos,
-                                int hMin, int hMax, int hPos );
+                                int hMin, int hMax, int hPos ) DECLSPEC_HIDDEN;
 
 /* combo box */
 
@@ -131,7 +144,7 @@ typedef struct
    INT            editHeight;     /* explicitly */
 } HEADCOMBO,*LPHEADCOMBO;
 
-extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL );
+extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL ) DECLSPEC_HIDDEN;
 
 /* Dialog info structure */
 typedef struct
@@ -152,9 +165,9 @@ typedef struct
 /* offset of DIALOGINFO ptr in dialog extra bytes */
 #define DWLP_WINE_DIALOGINFO (DWLP_USER+sizeof(ULONG_PTR))
 
-extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create );
-extern void DIALOG_EnableOwner( HWND hOwner );
-extern BOOL DIALOG_DisableOwner( HWND hOwner );
-extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner );
+extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create ) DECLSPEC_HIDDEN;
+extern void DIALOG_EnableOwner( HWND hOwner ) DECLSPEC_HIDDEN;
+extern BOOL DIALOG_DisableOwner( HWND hOwner ) DECLSPEC_HIDDEN;
+extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner ) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_CONTROLS_H */

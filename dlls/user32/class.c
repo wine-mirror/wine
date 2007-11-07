@@ -414,19 +414,6 @@ static WNDPROC register_builtin( const struct builtin_class_descr *descr )
  */
 void CLASS_RegisterBuiltinClasses(void)
 {
-    extern const struct builtin_class_descr BUTTON_builtin_class;
-    extern const struct builtin_class_descr COMBO_builtin_class;
-    extern const struct builtin_class_descr COMBOLBOX_builtin_class;
-    extern const struct builtin_class_descr DIALOG_builtin_class;
-    extern const struct builtin_class_descr DESKTOP_builtin_class;
-    extern const struct builtin_class_descr EDIT_builtin_class;
-    extern const struct builtin_class_descr ICONTITLE_builtin_class;
-    extern const struct builtin_class_descr LISTBOX_builtin_class;
-    extern const struct builtin_class_descr MDICLIENT_builtin_class;
-    extern const struct builtin_class_descr MENU_builtin_class;
-    extern const struct builtin_class_descr SCROLL_builtin_class;
-    extern const struct builtin_class_descr STATIC_builtin_class;
-
     register_builtin( &DESKTOP_builtin_class );
     register_builtin( &BUTTON_builtin_class );
     register_builtin( &COMBO_builtin_class );
