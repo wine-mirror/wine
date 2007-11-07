@@ -195,6 +195,7 @@ static void test_cryptunprotectdata(void)
     ok(data_desc!=NULL,"Description not allocated\n");
     ok(data_desc[0]=='\0',"Description not empty\n");
 
+    LocalFree(data_desc);
     LocalFree(plain.pbData);
 
     plain.pbData=NULL;
