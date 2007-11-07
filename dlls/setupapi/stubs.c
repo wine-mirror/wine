@@ -71,6 +71,17 @@ DWORD WINAPI CM_Disconnect_Machine(DWORD handle)
 }
 
 /***********************************************************************
+ *		CM_Get_Device_IDA  (SETUPAPI.@)
+ */
+DWORD WINAPI CM_Get_Device_IDA( LPVOID dnDevInst, LPSTR Buffer,
+                                   ULONG  BufferLen, ULONG  ulFlags)
+{
+    FIXME("%p, %p, %u %u\n",dnDevInst, Buffer, BufferLen, ulFlags);
+    Buffer[0] = 0;
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
  *             CM_Get_Device_ID_ListA  (SETUPAPI.@)
  */
 
@@ -79,6 +90,17 @@ DWORD WINAPI CM_Get_Device_ID_ListA(
 {
     FIXME("%p %p %d %d\n", pszFilter, Buffer, BufferLen, ulFlags );
     memset(Buffer,0,2);
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *		CM_Get_Device_ID_Size  (SETUPAPI.@)
+ */
+DWORD WINAPI CM_Get_Device_ID_Size( ULONG*  pulLen, LPVOID dnDevInst,
+                                        ULONG  ulFlags)
+{
+    FIXME("%p %p %u\n",pulLen, dnDevInst, ulFlags);
+    *pulLen = 1;
     return CR_SUCCESS;
 }
 

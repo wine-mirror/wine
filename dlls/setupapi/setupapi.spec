@@ -71,7 +71,7 @@
 @ stub CM_Get_DevNode_Registry_Property_ExW
 @ stub CM_Get_DevNode_Status
 @ stub CM_Get_DevNode_Status_Ex
-@ stub CM_Get_Device_IDA
+@ stdcall CM_Get_Device_IDA(ptr ptr long long)
 @ stub CM_Get_Device_IDW
 @ stub CM_Get_Device_ID_ExA
 @ stub CM_Get_Device_ID_ExW
@@ -83,7 +83,7 @@
 @ stub CM_Get_Device_ID_List_SizeW
 @ stub CM_Get_Device_ID_List_Size_ExA
 @ stub CM_Get_Device_ID_List_Size_ExW
-@ stub CM_Get_Device_ID_Size
+@ stdcall CM_Get_Device_ID_Size(ptr ptr long)
 @ stub CM_Get_Device_ID_Size_Ex
 @ stub CM_Get_Device_Interface_AliasA
 @ stub CM_Get_Device_Interface_AliasW
