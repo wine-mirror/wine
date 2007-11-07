@@ -69,6 +69,10 @@ typedef struct SecondaryBufferImpl           SecondaryBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
+/* dsound_convert.h */
+typedef void (*bitsconvertfunc)(const void *, void *);
+extern const bitsconvertfunc convertbpp[4][4];
+
 /*****************************************************************************
  * IDirectSoundDevice implementation structure
  */
@@ -188,7 +192,7 @@ struct IDirectSoundBufferImpl
 
     /* IKsPropertySet fields */
     IKsBufferPropertySetImpl*   iks;
-
+    bitsconvertfunc convert;
     struct list entry;
 };
 

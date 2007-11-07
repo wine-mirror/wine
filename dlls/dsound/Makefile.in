@@ -11,6 +11,7 @@ C_SRCS = \
 	buffer.c \
 	capture.c \
 	dsound.c \
+	dsound_convert.c \
 	dsound_main.c \
 	duplex.c \
 	mixer.c \

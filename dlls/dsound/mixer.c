@@ -29,7 +29,6 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
-#include "winuser.h"
 #include "mmsystem.h"
 #include "winternl.h"
 #include "wine/debug.h"
@@ -179,6 +178,8 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	dsb->max_buffer_len = dsb->freqAcc = dsb->freqAccNext = 0;
 	dsb->freqneeded = needresample;
 
+	dsb->convert = convertbpp[dsb->pwfx->wBitsPerSample/8 - 1][dsb->device->pwfx->wBitsPerSample/8 - 1];
+
 	if (needremix)
 	{
 		if (needresample)
@@ -246,74 +247,31 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
 	}
 }
 
-/* WAV format info can be found at:
- *
- *    http://www.cwi.nl/ftp/audio/AudioFormats.part2
- *    ftp://ftp.cwi.nl/pub/audio/RIFF-format
- *
- * Import points to remember:
- *    8-bit WAV is unsigned
- *    16-bit WAV is signed
- */
- /* Use the same formulas as pcmconverter.c */
-static inline INT16 cvtU8toS16(BYTE b)
-{
-    return (short)((b+(b << 8))-32768);
-}
-
-static inline BYTE cvtS16toU8(INT16 s)
-{
-    return (s >> 8) ^ (unsigned char)0x80;
-}
-
 /**
  * Copy a single frame from the given input buffer to the given output buffer.
  * Translate 8 <-> 16 bits and mono <-> stereo
  */
 static inline void cp_fields(const IDirectSoundBufferImpl *dsb, const BYTE *ibuf, BYTE *obuf )
 {
-	DirectSoundDevice * device = dsb->device;
-        INT fl,fr;
+    DirectSoundDevice *device = dsb->device;
+    INT istep = dsb->pwfx->wBitsPerSample / 8, ostep = device->pwfx->wBitsPerSample / 8;
 
-        if (dsb->pwfx->wBitsPerSample == 8)  {
-                if (device->pwfx->wBitsPerSample == 8 &&
-                    device->pwfx->nChannels == dsb->pwfx->nChannels) {
-                        /* avoid needless 8->16->8 conversion */
-                        *obuf=*ibuf;
-                        if (dsb->pwfx->nChannels==2)
-                                *(obuf+1)=*(ibuf+1);
-                        return;
-                }
-                fl = cvtU8toS16(*ibuf);
-                fr = (dsb->pwfx->nChannels==2 ? cvtU8toS16(*(ibuf + 1)) : fl);
-        } else {
-                fl = *((const INT16 *)ibuf);
-                fr = (dsb->pwfx->nChannels==2 ? *(((const INT16 *)ibuf) + 1)  : fl);
-        }
+    if (device->pwfx->nChannels == dsb->pwfx->nChannels) {
+        dsb->convert(ibuf, obuf);
+        if (device->pwfx->nChannels == 2)
+            dsb->convert(ibuf + istep, obuf + ostep);
+    }
 
-        if (device->pwfx->nChannels == 2) {
-                if (device->pwfx->wBitsPerSample == 8) {
-                        *obuf = cvtS16toU8(fl);
-                        *(obuf + 1) = cvtS16toU8(fr);
-                        return;
-                }
-                if (device->pwfx->wBitsPerSample == 16) {
-                        *((INT16 *)obuf) = fl;
-                        *(((INT16 *)obuf) + 1) = fr;
-                        return;
-                }
-        }
-        if (device->pwfx->nChannels == 1) {
-                fl = (fl + fr) >> 1;
-                if (device->pwfx->wBitsPerSample == 8) {
-                        *obuf = cvtS16toU8(fl);
-                        return;
-                }
-                if (device->pwfx->wBitsPerSample == 16) {
-                        *((INT16 *)obuf) = fl;
-                        return;
-                }
-        }
+    if (device->pwfx->nChannels == 1 && dsb->pwfx->nChannels == 2)
+    {
+        dsb->convert(ibuf, obuf);
+    }
+
+    if (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 1)
+    {
+        dsb->convert(ibuf, obuf);
+        dsb->convert(ibuf, obuf + ostep);
+    }
 }
 
 /**
