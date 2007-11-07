@@ -43,7 +43,7 @@ typedef struct {
     LONG ref;
 } EnumFORMATETC;
 
-static IEnumFORMATETC *EnumFORMATETC_Create(UINT cfmtetc, FORMATETC *rgfmtetc, UINT it);
+static IEnumFORMATETC *EnumFORMATETC_Create(UINT cfmtetc, const FORMATETC *rgfmtetc, UINT it);
 
 #define ENUMF_THIS(iface) ICOM_THIS_MULTI(EnumFORMATETC, lpEnumFORMATETCVtbl, iface)
 
@@ -158,7 +158,7 @@ static const IEnumFORMATETCVtbl EnumFORMATETCVtbl = {
     EnumFORMATETC_Clone
 };
 
-static IEnumFORMATETC *EnumFORMATETC_Create(UINT cfmtetc, FORMATETC *rgfmtetc, UINT it)
+static IEnumFORMATETC *EnumFORMATETC_Create(UINT cfmtetc, const FORMATETC *rgfmtetc, UINT it)
 {
     EnumFORMATETC *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(EnumFORMATETC));
 

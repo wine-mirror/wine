@@ -228,7 +228,7 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
     IInternetProtocolSink_ReportProgress(This->protocol_sink, ulStatusCode, (LPWSTR)lpvStatusInformation);
 }
 
-static inline LPWSTR strndupW(LPWSTR string, int len)
+static inline LPWSTR strndupW(LPCWSTR string, int len)
 {
     LPWSTR ret = NULL;
     if (string &&

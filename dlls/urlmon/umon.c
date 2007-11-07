@@ -183,7 +183,7 @@ static void Binding_CloseCacheDownload(Binding *This)
     This->pstrCache = 0;
 }
 
-static HRESULT Binding_MoreCacheData(Binding *This, char *buf, DWORD dwBytes)
+static HRESULT Binding_MoreCacheData(Binding *This, const char *buf, DWORD dwBytes)
 {
     DWORD written;
 
