@@ -2500,37 +2500,39 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
             mat[2] = mat[6] = mat[10] = mat[14] = 0;
             break;
         }
-    } else if(!calculatedCoords) { /* under directx the R/Z coord can be used for translation, under opengl we use the Q coord instead */
-        switch(coordtype) {
-            case WINED3DDECLTYPE_FLOAT1:
-                /* Direct3D passes the default 1.0 in the 2nd coord, while gl passes it in the 4th.
-                 * swap 2nd and 4th coord. No need to store the value of mat[12] in mat[4] because
-                 * the input value to the transformation will be 0, so the matrix value is irrelevant
-                 */
-                mat[12] = mat[4];
-                mat[13] = mat[5];
-                mat[14] = mat[6];
-                mat[15] = mat[7];
-                break;
-            case WINED3DDECLTYPE_FLOAT2:
-                /* See above, just 3rd and 4th coord
-                 */
-                mat[12] = mat[8];
-                mat[13] = mat[9];
-                mat[14] = mat[10];
-                mat[15] = mat[11];
-                break;
-            case WINED3DDECLTYPE_FLOAT3: /* Opengl defaults match dx defaults */
-            case WINED3DDECLTYPE_FLOAT4: /* No defaults apply, all app defined */
+    } else { /* under directx the R/Z coord can be used for translation, under opengl we use the Q coord instead */
+        if(!calculatedCoords) {
+            switch(coordtype) {
+                case WINED3DDECLTYPE_FLOAT1:
+                    /* Direct3D passes the default 1.0 in the 2nd coord, while gl passes it in the 4th.
+                     * swap 2nd and 4th coord. No need to store the value of mat[12] in mat[4] because
+                     * the input value to the transformation will be 0, so the matrix value is irrelevant
+                     */
+                    mat[12] = mat[4];
+                    mat[13] = mat[5];
+                    mat[14] = mat[6];
+                    mat[15] = mat[7];
+                    break;
+                case WINED3DDECLTYPE_FLOAT2:
+                    /* See above, just 3rd and 4th coord
+                    */
+                    mat[12] = mat[8];
+                    mat[13] = mat[9];
+                    mat[14] = mat[10];
+                    mat[15] = mat[11];
+                    break;
+                case WINED3DDECLTYPE_FLOAT3: /* Opengl defaults match dx defaults */
+                case WINED3DDECLTYPE_FLOAT4: /* No defaults apply, all app defined */
 
-            /* This is to prevent swaping the matrix lines and put the default 4th coord = 1.0
-             * into a bad place. The division elimination below will apply to make sure the
-             * 1.0 doesn't do anything bad. The caller will set this value if the stride is 0
-             */
-            case WINED3DDECLTYPE_UNUSED: /* No texture coords, 0/0/0/1 defaults are passed */
-                break;
-            default:
-                FIXME("Unexpected fixed function texture coord input\n");
+                /* This is to prevent swaping the matrix lines and put the default 4th coord = 1.0
+                 * into a bad place. The division elimination below will apply to make sure the
+                 * 1.0 doesn't do anything bad. The caller will set this value if the stride is 0
+                 */
+                case WINED3DDECLTYPE_UNUSED: /* No texture coords, 0/0/0/1 defaults are passed */
+                    break;
+                default:
+                    FIXME("Unexpected fixed function texture coord input\n");
+            }
         }
         switch (flags & ~WINED3DTTFF_PROJECTED) {
             /* case WINED3DTTFF_COUNT1: Won't ever get here */
