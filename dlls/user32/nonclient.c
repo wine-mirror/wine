@@ -32,8 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nonclient);
 
-BOOL NC_DrawGrayButton(HDC hdc, int x, int y);
-
 static const BYTE lpGrayMask[] = { 0xAA, 0xA0,
                                    0x55, 0x50,
                                    0xAA, 0xA0,
@@ -1624,40 +1622,6 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
         break;
     }
     return 0;
-}
-
-/*************************************************************
-*  NC_DrawGrayButton
-*
-* Stub for the grayed button of the caption
-*
-*************************************************************/
-
-BOOL NC_DrawGrayButton(HDC hdc, int x, int y)
-{
-    HBITMAP hMaskBmp;
-    HDC hdcMask;
-    HBRUSH hOldBrush;
-
-    hMaskBmp = CreateBitmap (12, 10, 1, 1, lpGrayMask);
-
-    if(hMaskBmp == 0)
-        return FALSE;
-
-    hdcMask = CreateCompatibleDC (0);
-    SelectObject (hdcMask, hMaskBmp);
-
-    /* Draw the grayed bitmap using the mask */
-    hOldBrush = SelectObject (hdc, (HGDIOBJ)RGB(128, 128, 128));
-    BitBlt (hdc, x, y, 12, 10,
-            hdcMask, 0, 0, 0xB8074A);
-
-    /* Clean up */
-    SelectObject (hdc, hOldBrush);
-    DeleteObject(hMaskBmp);
-    DeleteDC (hdcMask);
-
-    return TRUE;
 }
 
 /***********************************************************************
