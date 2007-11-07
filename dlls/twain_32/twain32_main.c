@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 /* A helper function that looks up a destination identity in the active
    source list */
-static activeDS *TWAIN_LookupSource (pTW_IDENTITY pDest)
+static activeDS *TWAIN_LookupSource (const TW_IDENTITY *pDest)
 {
     activeDS *pSource;
 
