@@ -253,7 +253,9 @@ HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For Direc
 HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For DirectPlay,"Path",,"dpmodemx.dll"
 
 [Environment]
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"APPDATA",,"%16410%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ComSpec",,"%11%\cmd.exe"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"LOCALAPPDATA",,"%16412%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATH",2,"%11%;%10%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ProgramFiles",,"%16422%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SystemDrive",2,"c:"
