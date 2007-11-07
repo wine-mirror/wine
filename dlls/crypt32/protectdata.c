@@ -704,7 +704,7 @@ BOOL hash_matches_blob(HCRYPTHASH hHash, const DATA_BLOB *two)
 
 /* create an encryption key from a given salt and optional entropy */
 static
-BOOL load_encryption_key(HCRYPTPROV hProv, const DATA_BLOB *salt,
+BOOL load_encryption_key(HCRYPTPROV hProv, DWORD key_len, const DATA_BLOB *salt,
                          const DATA_BLOB *pOptionalEntropy, HCRYPTKEY *phKey)
 {
     BOOL rc = TRUE;
@@ -753,7 +753,7 @@ BOOL load_encryption_key(HCRYPTPROV hProv, const DATA_BLOB *salt,
 
     /* produce a symmetric key */
     if (rc && !CryptDeriveKey(hProv,CRYPT32_PROTECTDATA_KEY_CALG,
-                              hSaltHash,CRYPT_EXPORTABLE,phKey))
+                              hSaltHash,key_len << 16 | CRYPT_EXPORTABLE,phKey))
     {
         ERR("CryptDeriveKey\n");
         rc = FALSE;
@@ -871,7 +871,7 @@ BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn,
     }
 
     /* load key */
-    if (!load_encryption_key(hProv,&protect_data.salt,pOptionalEntropy,&hKey))
+    if (!load_encryption_key(hProv,protect_data.cipher_key_len,&protect_data.salt,pOptionalEntropy,&hKey))
     {
         goto free_protect_data;
     }
@@ -1050,7 +1050,7 @@ BOOL WINAPI CryptUnprotectData(DATA_BLOB* pDataIn,
     }
 
     /* load key */
-    if (!load_encryption_key(hProv,&protect_data.salt,pOptionalEntropy,&hKey))
+    if (!load_encryption_key(hProv,protect_data.cipher_key_len,&protect_data.salt,pOptionalEntropy,&hKey))
     {
         goto free_context;
     }
