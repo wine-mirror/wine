@@ -35,6 +35,12 @@
 extern "C" {
 #endif
 
+#ifdef _NTSYSTEM_
+#define NTSYSAPI
+#else
+#define NTSYSAPI DECLSPEC_IMPORT
+#endif
+
 #define NTAPI __stdcall
 
 #if (defined(_M_IX86) || defined(_M_IA64) || defined(_M_AMD64) || defined(__MINGW32__)) && !defined(MIDL_PASS)
@@ -650,12 +656,12 @@ typedef union _SLIST_HEADER {
 
 #endif
 
-PSLIST_ENTRY WINAPI RtlFirstEntrySList(const SLIST_HEADER*);
-VOID         WINAPI RtlInitializeSListHead(PSLIST_HEADER);
-PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER);
-PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER);
-PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER, PSLIST_ENTRY);
-WORD         WINAPI RtlQueryDepthSList(PSLIST_HEADER);
+NTSYSAPI PSLIST_ENTRY WINAPI RtlFirstEntrySList(const SLIST_HEADER*);
+NTSYSAPI VOID         WINAPI RtlInitializeSListHead(PSLIST_HEADER);
+NTSYSAPI PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER);
+NTSYSAPI PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER);
+NTSYSAPI PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER, PSLIST_ENTRY);
+NTSYSAPI WORD         WINAPI RtlQueryDepthSList(PSLIST_HEADER);
 
 
 /* Heap flags */
@@ -4763,7 +4769,7 @@ DECL_WINELIB_TYPE_AW(OSVERSIONINFOEX)
 DECL_WINELIB_TYPE_AW(POSVERSIONINFOEX)
 DECL_WINELIB_TYPE_AW(LPOSVERSIONINFOEX)
 
-ULONGLONG WINAPI VerSetConditionMask(ULONGLONG,DWORD,BYTE);
+NTSYSAPI ULONGLONG WINAPI VerSetConditionMask(ULONGLONG,DWORD,BYTE);
 
 #define VER_SET_CONDITION(_m_,_t_,_c_) ((_m_)=VerSetConditionMask((_m_),(_t_),(_c_)))
 
