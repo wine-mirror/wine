@@ -61,21 +61,22 @@ static const BYTE crypt32_protectdata_secret[] = {
  * to be something like this:
 
  DWORD  count0;         - how many "info0_*[16]" blocks follow (was always 1)
- BYTE   info0_0[16];    - unknown information
- ...
+ BYTE   info0_0[16];    - unknown information - persistent across invocations,
+ ...                      reboots, password changes, and users
  DWORD  count1;         - how many "info1_*[16]" blocks follow (was always 1)
- BYTE   info1_0[16];    - unknown information
- ...
+ BYTE   info1_0[16];    - unknown information - unique to each user, but
+ ...                      persistent across reboots and password changes
  DWORD  null0;          - NULL "end of records"?
- DWORD  str_len;        - length of WCHAR string including term
- WCHAR  str[str_len];   - The "dataDescription" value
- DWORD  unknown0;       - unknown value (seems large, but only WORD large)
- DWORD  unknown1;       - unknown value (seems small, less than a BYTE)
+ DWORD  str_len;        - byte length of WCHAR string including term
+ BYTE   str[str_len];   - The "dataDescription" value as a NULL-terminated
+                          little-endian WCHAR string
+ ALG_ID cipher_alg;     - cipher algo - was CALG_3DES
+ DWORD  cipher_key_len; - cipher key bit length - was 0xa8==168
  DWORD  data_len;       - length of data (was 16 in samples)
  BYTE   data[data_len]; - unknown data (fingerprint?)
  DWORD  null1;          - NULL ?
- DWORD  unknown2;       - unknown value (seems large, but only WORD large)
- DWORD  unknown3;       - unknown value (seems small, less than a BYTE)
+ ALG_ID hash_alg;       - hash algo - was CALG_SHA1
+ DWORD  hash_len;       - bit length of hash - was 0xa0==160
  DWORD  salt_len;       - length of salt(?) data
  BYTE   salt[salt_len]; - salt(?) for symmetric encryption
  DWORD  cipher_len;     - length of cipher(?) data - was close to plain len
