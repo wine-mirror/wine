@@ -1002,7 +1002,7 @@ static BOOL delete_container_key(LPCSTR pszContainerName, DWORD dwFlags)
  * Stores key container's keys in a persistent location.
  *
  * PARAMS
- *  pKeyContainer [I] Pointer to the key container to be destroyed.
+ *  pKeyContainer [I] Pointer to the key container whose keys are to be saved
  */
 static void store_key_container_keys(KEYCONTAINER *pKeyContainer)
 {
