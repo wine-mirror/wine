@@ -6,9 +6,6 @@ MODULE    = cfgmgr32.dll
 IMPORTLIB = libcfgmgr32.$(IMPLIBEXT)
 IMPORTS   = setupapi kernel32
 
-C_SRCS = \
-	main.c
-
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
