@@ -166,15 +166,23 @@ check (const struct listbox_test test)
 	DWORD size = SendMessage (hLB, LB_GETTEXTLEN, i, 0);
 	CHAR *txt;
 	WCHAR *txtw;
+	int resA, resW;
 
 	txt = HeapAlloc (GetProcessHeap(), 0, size+1);
-	SendMessageA(hLB, LB_GETTEXT, i, (LPARAM)txt);
+	memset(txt, 0, size+1);
+	resA=SendMessageA(hLB, LB_GETTEXT, i, (LPARAM)txt);
         ok(!strcmp (txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
 
 	txtw = HeapAlloc (GetProcessHeap(), 0, 2*size+2);
-	SendMessageW(hLB, LB_GETTEXT, i, (LPARAM)txtw);
-	WideCharToMultiByte( CP_ACP, 0, txtw, -1, txt, size, NULL, NULL );
-        ok(!strcmp (txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
+	memset(txtw, 0, 2*size+2);
+	resW=SendMessageW(hLB, LB_GETTEXT, i, (LPARAM)txtw);
+	if (resA != resW) {
+            trace("SendMessageW(LB_GETTEXT) not supported on this platform (resA=%d resW=%d), skipping...\n",
+                resA, resW);
+	} else {
+	    WideCharToMultiByte( CP_ACP, 0, txtw, -1, txt, size, NULL, NULL );
+            ok(!strcmp (txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
+	}
 
 	HeapFree (GetProcessHeap(), 0, txtw);
 	HeapFree (GetProcessHeap(), 0, txt);
