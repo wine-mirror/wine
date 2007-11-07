@@ -48,7 +48,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 #define CRYPT32_PROTECTDATA_PROV      PROV_RSA_FULL
 #define CRYPT32_PROTECTDATA_HASH_CALG CALG_SHA1
+#define CRYPT32_PROTECTDATA_HASH_LEN  160
 #define CRYPT32_PROTECTDATA_KEY_CALG  CALG_RC2
+#define CRYPT32_PROTECTDATA_KEY_LEN   40
 #define CRYPT32_PROTECTDATA_SALT_LEN  16
 
 static const BYTE crypt32_protectdata_secret[] = {
@@ -597,13 +599,13 @@ BOOL fill_protect_data(struct protect_data_t * pInfo, LPCWSTR szDataDescr,
     }
 
     pInfo->cipher_alg=CRYPT32_PROTECTDATA_KEY_CALG;
-    pInfo->cipher_key_len=0x0000; /* FIXME: get correct value */
+    pInfo->cipher_key_len=CRYPT32_PROTECTDATA_KEY_LEN;
 
     convert_str_to_blob(crypt_magic_str, &pInfo->data0);
 
     pInfo->null1=0x0000;
     pInfo->hash_alg=CRYPT32_PROTECTDATA_HASH_CALG;
-    pInfo->hash_len=0x0000; /* FIXME: get correct value */
+    pInfo->hash_len=CRYPT32_PROTECTDATA_HASH_LEN;
 
     /* allocate memory to hold a salt */
     pInfo->salt.cbData=CRYPT32_PROTECTDATA_SALT_LEN;
