@@ -247,6 +247,15 @@ NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event )
     }
 }
 
+/***********************************************************************
+ *           IoAllocateMdl  (NTOSKRNL.EXE.@)
+ */
+PMDL WINAPI IoAllocateMdl( PVOID VirtualAddress, ULONG Length, BOOLEAN SecondaryBuffer, BOOLEAN ChargeQuota, PIRP Irp )
+{
+    FIXME( "stub: %p, %u, %i, %i, %p \n", VirtualAddress, Length, SecondaryBuffer, ChargeQuota, Irp );
+    return NULL;
+}
+
 
 /***********************************************************************
  *           IoAllocateWorkItem  (NTOSKRNL.EXE.@)

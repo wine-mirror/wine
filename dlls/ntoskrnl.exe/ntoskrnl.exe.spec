@@ -312,7 +312,7 @@
 @ stub IoAllocateDriverObjectExtension
 @ stub IoAllocateErrorLogEntry
 @ stub IoAllocateIrp
-@ stub IoAllocateMdl
+@ stdcall IoAllocateMdl(ptr long long long ptr)
 @ stdcall IoAllocateWorkItem(ptr)
 @ stub IoAssignResources
 @ stub IoAttachDevice
