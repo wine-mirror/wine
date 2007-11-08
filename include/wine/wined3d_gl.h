@@ -2854,6 +2854,18 @@ typedef int (WINE_GLAPI * PGLXFNWAITVIDEOSYNCSGIPROC) (int, int, unsigned int *)
 #define GL_DEPTH_CLAMP_NV                   0x864F
 #endif
 
+/* GL_APPLE_flush_render */
+typedef void (WINE_GLAPI * PGLFNFLUSHRENDERAPPLEPROC) (void);
+typedef void (WINE_GLAPI * PGLFNFINISHRENDERAPPLEPROC) (void);
+
+/* GL_APPLE_ycbcr_422 */
+#ifndef GL_APPLE_ycbcr_422
+#define GL_APPLE_ycbcr_422
+#define GL_YCBCR_422_APPLE                  0x85B9
+#define UNSIGNED_SHORT_8_8_APPLE            0x85BA
+#define UNSIGNED_SHORT_8_8_REV_APPLE        0x85BB
+#endif
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -3206,6 +3218,8 @@ typedef enum _GL_SupportedExt {
   /* APPLE */
   APPLE_FENCE,
   APPLE_CLIENT_STORAGE,
+  APPLE_FLUSH_RENDER,
+  APPLE_YCBCR_422,
   /* SGI */
   SGI_VIDEO_SYNC,
   SGIS_GENERATE_MIPMAP,
@@ -3488,6 +3502,9 @@ typedef enum _GL_SupportedExt {
     /* GLX_SGI_video_sync */ \
     USE_GL_FUNC(PGLXFNGETVIDEOSYNCSGIPROC,                      glXGetVideoSyncSGI); \
     USE_GL_FUNC(PGLXFNWAITVIDEOSYNCSGIPROC,                     glXWaitVideoSyncSGI); \
+    /* GL_APPLE_flush_render */ \
+    USE_GL_FUNC(PGLFNFLUSHRENDERAPPLEPROC,                      glFlushRenderApple); \
+    USE_GL_FUNC(PGLFNFINISHRENDERAPPLEPROC,                     glFinishRenderApple); \
 
 /* OpenGL 2.0 functions */
 #define GL2_FUNCS_GEN \

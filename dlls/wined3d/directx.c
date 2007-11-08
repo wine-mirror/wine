@@ -44,6 +44,8 @@ static const struct {
     /* APPLE */
     {"GL_APPLE_client_storage",             APPLE_CLIENT_STORAGE},
     {"GL_APPLE_fence",                      APPLE_FENCE},
+    {"GL_APPLE_flush_render",               APPLE_FLUSH_RENDER},
+    {"GL_APPLE_ycbcr_422",                  APPLE_YCBCR_422},
 
     /* ATI */
     {"GL_ATI_separate_stencil",             ATI_SEPARATE_STENCIL},
@@ -2715,6 +2717,33 @@ ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
     return IUnknown_Release(volumeParent);
 }
 
+static BOOL implementation_is_apple(WineD3D_GL_Info *gl_info) {
+    /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
+     * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
+     * detect the Apple OpenGL implementation to apply some extension fixups afterwards.
+     *
+     * Detecting this isn't really easy. The vendor string doesn't mention Apple. Compile-time checks
+     * aren't sufficient either because a Linux binary may display on a macos X server via remote X11.
+     * So try to detect the GL implementation by looking at certain Apple extensions. Some extensions
+     * like client storage might be supported on other implementations too, but GL_APPLE_flush_render
+     * is specific to the MacOS window management, and GL_APPLE_ycbcr_422 is a Quicktime specific, so
+     * it the chance that other implementations support it is rather rare since Win32 Quicktime uses
+     * DirectDraw, not OpenGL.
+     */
+    if(gl_info->supported[APPLE_FENCE] &&
+       gl_info->supported[APPLE_CLIENT_STORAGE] &&
+       gl_info->supported[APPLE_FLUSH_RENDER] &&
+       gl_info->supported[APPLE_YCBCR_422]) {
+        TRACE_(d3d_caps)("GL_APPLE_fence, GL_APPLE_client_storage, GL_APPLE_flush_render and GL_ycbcr_422 are supported\n");
+        TRACE_(d3d_caps)("Activating MacOS fixups\n");
+        return TRUE;
+    } else {
+        TRACE_(d3d_caps)("Apple extensions are not supported\n");
+        TRACE_(d3d_caps)("Not activating MacOS fixups\n");
+        return FALSE;
+    }
+}
+
 #define PUSH1(att)        attribs[nAttribs++] = (att);
 #define GLINFO_LOCATION (Adapters[0].gl_info)
 BOOL InitAdapters(void) {
@@ -2769,6 +2798,7 @@ BOOL InitAdapters(void) {
         int attribute;
         DISPLAY_DEVICEW DisplayDevice;
         HDC hdc;
+        BOOL apple;
 
         TRACE("Initializing default adapter\n");
         Adapters[0].monitorPoint.x = -1;
@@ -2852,6 +2882,8 @@ BOOL InitAdapters(void) {
             cfgs++;
         }
         WineD3D_ReleaseFakeGLContext();
+
+        apple = implementation_is_apple(&Adapters[0].gl_info);
 
         select_shader_mode(&Adapters[0].gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &Adapters[0].gl_info);
