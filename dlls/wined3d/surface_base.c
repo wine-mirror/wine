@@ -1573,22 +1573,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
-    /* Already locked? */
-    if(This->Flags & SFLAG_LOCKED)
-    {
-        ERR("(%p) Surface already locked\n", This);
-        /* What should I return here? */
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (!(This->Flags & SFLAG_LOCKABLE))
-    {
-        /* This is some GL specific thing, see the OpenGL version of
-         * this method, but check for the flag and write a trace
-         */
-        TRACE("Warning: trying to lock unlockable surf@%p\n", This);
-    }
-
     TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n",
           This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
 
@@ -1642,6 +1626,5 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
     /* No dirtifying is needed for this surface implementation */
     TRACE("returning memory@%p, pitch(%d)\n", pLockedRect->pBits, pLockedRect->Pitch);
 
-    This->Flags |= SFLAG_LOCKED;
     return WINED3D_OK;
 }

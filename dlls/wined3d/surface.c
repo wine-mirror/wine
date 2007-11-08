@@ -799,6 +799,12 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         WARN("Surface is already locked, returning D3DERR_INVALIDCALL\n");
         return WINED3DERR_INVALIDCALL;
     }
+    This->Flags |= SFLAG_LOCKED;
+
+    if (!(This->Flags & SFLAG_LOCKABLE))
+    {
+        TRACE("Warning: trying to lock unlockable surf@%p\n", This);
+    }
 
     if (Flags & WINED3DLOCK_DISCARD) {
         /* Set SFLAG_INSYSMEM, so we'll never try to download the data from the texture. */

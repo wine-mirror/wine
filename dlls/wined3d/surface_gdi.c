@@ -205,6 +205,15 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
+    /* Already locked? */
+    if(This->Flags & SFLAG_LOCKED)
+    {
+        ERR("(%p) Surface already locked\n", This);
+        /* What should I return here? */
+        return WINED3DERR_INVALIDCALL;
+    }
+    This->Flags |= SFLAG_LOCKED;
+
     if(!This->resource.allocatedMemory) {
         /* This happens on gdi surfaces if the application set a user pointer and resets it.
          * Recreate the DIB section
