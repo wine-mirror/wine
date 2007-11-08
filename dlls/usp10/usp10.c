@@ -660,6 +660,7 @@ error:
     usp_free(analysis->glyphs);
     usp_free(analysis->logattrs);
     usp_free(analysis->pItem);
+    usp_free(analysis->sc);
     usp_free(analysis);
     return hr;
 }
@@ -887,6 +888,7 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
     usp_free(analysis->pItem);
     usp_free(analysis->logattrs);
     usp_free(analysis->sz);
+    usp_free(analysis->sc);
     usp_free(analysis);
 
     if (invalid) return E_INVALIDARG;

@@ -640,6 +640,7 @@ static void test_ScriptString(HDC hdc)
                               ReqWidth, &Control, &State, Dx, &Tabdef,
                               &InClass, &ssa);
     ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
+    ScriptStringFree(&ssa);
 
     /* test makes sure that a call with a valid pssa still works */
     hr = ScriptStringAnalyse( hdc, teststr, len, Glyphs, Charset, Flags,
@@ -844,8 +845,9 @@ static void test_ScriptCacheGetHeight(HDC hdc)
 
     hr = ScriptCacheGetHeight(hdc, &sc, &height);
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
-
     ok(height > 0, "expected height > 0\n");
+
+    ScriptFreeCache(&sc);
 }
 
 static void test_ScriptGetGlyphABCWidth(HDC hdc)
@@ -867,6 +869,8 @@ static void test_ScriptGetGlyphABCWidth(HDC hdc)
 
     hr = ScriptGetGlyphABCWidth(hdc, &sc, 'a', &abc);
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+
+    ScriptFreeCache(&sc);
 }
 
 static void test_ScriptLayout(void)
