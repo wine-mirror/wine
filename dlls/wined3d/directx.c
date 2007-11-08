@@ -2744,6 +2744,25 @@ static BOOL implementation_is_apple(WineD3D_GL_Info *gl_info) {
     }
 }
 
+static void fixup_extensions(WineD3D_GL_Info *gl_info) {
+    if(implementation_is_apple(gl_info)) {
+        /* MacOS advertises more GLSL vertex shader uniforms than support on hardware, and if more are
+         * used it falls back to software. While the compiler can detect if the shader uses all declared
+         * uniforms, the optimization fails if the shader uses relative addressing. So any GLSL shader
+         * using relative addressing falls back to software.
+         *
+         * ARB vp gives the correct amount of uniforms, so use it instead of GLSL
+         */
+        if(gl_info->vs_glsl_constantsF <= gl_info->vs_arb_constantsF) {
+            FIXME("GLSL doesn't advertise more vertex shader uniforms than ARB. Driver fixup outdated?\n");
+        } else {
+            TRACE("Driver claims %u GLSL vs uniforms, replacing with %u ARB vp uniforms\n",
+                  gl_info->vs_glsl_constantsF, gl_info->vs_arb_constantsF);
+            gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
+        }
+    }
+}
+
 #define PUSH1(att)        attribs[nAttribs++] = (att);
 #define GLINFO_LOCATION (Adapters[0].gl_info)
 BOOL InitAdapters(void) {
@@ -2798,7 +2817,6 @@ BOOL InitAdapters(void) {
         int attribute;
         DISPLAY_DEVICEW DisplayDevice;
         HDC hdc;
-        BOOL apple;
 
         TRACE("Initializing default adapter\n");
         Adapters[0].monitorPoint.x = -1;
@@ -2883,7 +2901,7 @@ BOOL InitAdapters(void) {
         }
         WineD3D_ReleaseFakeGLContext();
 
-        apple = implementation_is_apple(&Adapters[0].gl_info);
+        fixup_extensions(&Adapters[0].gl_info);
 
         select_shader_mode(&Adapters[0].gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &Adapters[0].gl_info);
