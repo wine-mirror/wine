@@ -1217,7 +1217,7 @@ START_TEST(usp10)
     hdc = GetDC(hwnd);                                      /* We now have a hdc             */
     ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
 
-    memset(&lf, 0, sizeof(HFONT));
+    memset(&lf, 0, sizeof(LOGFONTA));
     lstrcpyA(lf.lfFaceName, "Symbol");
     lf.lfHeight = 10;
     lf.lfWeight = 3;
