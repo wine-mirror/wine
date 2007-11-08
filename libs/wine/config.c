@@ -230,6 +230,7 @@ static void init_paths(void)
         }
     }
     if (!S_ISDIR(st.st_mode)) fatal_error( "%s is not a directory\n", config_dir );
+    if (st.st_uid != getuid()) fatal_error( "%s is not owned by you\n", config_dir );
 
     init_server_dir( st.st_dev, st.st_ino );
 }
