@@ -231,6 +231,14 @@ static BOOL CRYPT_DecodeEnsureSpace(DWORD dwFlags,
     return ret;
 }
 
+static void CRYPT_FreeSpace(PCRYPT_DECODE_PARA pDecodePara, LPVOID pv)
+{
+    if (pDecodePara && pDecodePara->pfnFree)
+        pDecodePara->pfnFree(pv);
+    else
+        LocalFree(pv);
+}
+
 /* Helper function to check *pcbStructInfo and set it to the required size.
  * Assumes pvStructInfo is not NULL.
  */
@@ -540,6 +548,8 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
                     ret = CRYPT_AsnDecodeSequenceItems(items, cItem,
                      ptr, dataLen, dwFlags, pvStructInfo, nextData,
                      &cbDecoded);
+                    if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                        CRYPT_FreeSpace(pDecodePara, pvStructInfo);
                 }
             }
         }
@@ -727,6 +737,8 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                             ptr += itemDecoded;
                         }
                     }
+                    if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                        CRYPT_FreeSpace(pDecodePara, pvStructInfo);
                 }
             }
             if (itemSizes != &itemSize)
