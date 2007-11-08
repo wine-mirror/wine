@@ -835,9 +835,9 @@ static void CBPaintText(
  *           CBPaintBorder
  */
 static void CBPaintBorder(
-  HWND        hwnd,
-  LPHEADCOMBO lphc,
-  HDC         hdc)
+  HWND            hwnd,
+  const HEADCOMBO *lphc,
+  HDC             hdc)
 {
   RECT clientRect;
 
@@ -1541,8 +1541,8 @@ static LRESULT COMBO_GetTextA( LPHEADCOMBO lphc, INT count, LPSTR buf )
  */
 static void CBResetPos(
   LPHEADCOMBO lphc,
-  LPRECT      rectEdit,
-  LPRECT      rectLB,
+  const RECT  *rectEdit,
+  const RECT  *rectLB,
   BOOL        bRedraw)
 {
    BOOL	bDrop = (CB_GETTYPE(lphc) != CBS_SIMPLE);
@@ -1804,7 +1804,7 @@ static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM wParam, LPARAM lParam )
    }
 }
 
-static LRESULT COMBO_GetComboBoxInfo(LPHEADCOMBO lphc, COMBOBOXINFO *pcbi)
+static LRESULT COMBO_GetComboBoxInfo(const HEADCOMBO *lphc, COMBOBOXINFO *pcbi)
 {
     if (!pcbi || (pcbi->cbSize < sizeof(COMBOBOXINFO)))
         return FALSE;
