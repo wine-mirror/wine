@@ -313,7 +313,7 @@
 @ stub IoAllocateErrorLogEntry
 @ stub IoAllocateIrp
 @ stub IoAllocateMdl
-@ stub IoAllocateWorkItem
+@ stdcall IoAllocateWorkItem(ptr)
 @ stub IoAssignResources
 @ stub IoAttachDevice
 @ stub IoAttachDeviceByPointer

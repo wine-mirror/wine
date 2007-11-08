@@ -249,6 +249,16 @@ NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event )
 
 
 /***********************************************************************
+ *           IoAllocateWorkItem  (NTOSKRNL.EXE.@)
+ */
+PIO_WORKITEM WINAPI IoAllocateWorkItem( PDEVICE_OBJECT DeviceObject )
+{
+    FIXME( "stub: %p \n", DeviceObject );
+    return NULL;
+}
+
+
+/***********************************************************************
  *           IoCreateDevice   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,

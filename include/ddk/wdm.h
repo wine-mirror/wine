@@ -88,6 +88,7 @@ typedef struct _IO_TIMER *PIO_TIMER;
 typedef struct _ETHREAD *PETHREAD;
 typedef struct _KTHREAD *PKTHREAD;
 typedef struct _EPROCESS *PEPROCESS;
+typedef struct _IO_WORKITEM *PIO_WORKITEM;
 
 #define MAXIMUM_VOLUME_LABEL_LENGTH       (32 * sizeof(WCHAR))
 
