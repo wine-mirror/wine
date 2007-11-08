@@ -864,7 +864,11 @@ then
 	ldap_count_references \
 	ldap_first_reference \
 	ldap_next_reference \
-	ldap_parse_reference,
+	ldap_parse_reference \
+	ldap_parse_sort_control \
+	ldap_parse_sortresponse_control \
+	ldap_parse_vlv_control \
+	ldap_parse_vlvresponse_control,
         [$LDAPLIBS $LIBPTHREAD])
 fi
 WINE_NOTICE_IF([test "x$LDAPLIBS" = "x"],[libldap (OpenLDAP) development files not found.

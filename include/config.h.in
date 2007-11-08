@@ -288,6 +288,18 @@
 /* Define to 1 if you have the `ldap_parse_reference' function. */
 #undef HAVE_LDAP_PARSE_REFERENCE
 
+/* Define to 1 if you have the `ldap_parse_sortresponse_control' function. */
+#undef HAVE_LDAP_PARSE_SORTRESPONSE_CONTROL
+
+/* Define to 1 if you have the `ldap_parse_sort_control' function. */
+#undef HAVE_LDAP_PARSE_SORT_CONTROL
+
+/* Define to 1 if you have the `ldap_parse_vlvresponse_control' function. */
+#undef HAVE_LDAP_PARSE_VLVRESPONSE_CONTROL
+
+/* Define to 1 if you have the `ldap_parse_vlv_control' function. */
+#undef HAVE_LDAP_PARSE_VLV_CONTROL
+
 /* Define if you have libaudioIO */
 #undef HAVE_LIBAUDIOIO
 
