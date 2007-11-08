@@ -3131,6 +3131,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             checkGLcall("glDisable(GL_ALPHA_TEST)");
         }
 
+        /* Flush in case the drawable is used by multiple GL contexts */
+        if(dstSwapchain && (dstSwapchain->num_contexts >= 2))
+            glFlush();
+
         /* Unbind the texture */
         glBindTexture(GL_TEXTURE_2D, 0);
         checkGLcall("glEnable glBindTexture");
@@ -3481,6 +3485,8 @@ struct coords {
 static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in) {
     struct coords coords[4];
     RECT rect;
+    IWineD3DSwapChain *swapchain = NULL;
+    HRESULT hr;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
     if(rect_in) {
@@ -3601,6 +3607,15 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         checkGLcall("glEnable(GL_TEXTURE_2D)");
         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+    }
+
+    hr = IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DSwapChain, (void **) &swapchain);
+    if(hr == WINED3D_OK && swapchain) {
+        /* Make sure to flush the buffers. This is needed in apps like Red Alert II and Tiberian SUN that use multiple WGL contexts. */
+        if(((IWineD3DSwapChainImpl*)swapchain)->num_contexts >= 2)
+            glFlush();
+
+        IWineD3DSwapChain_Release(swapchain);
     }
     LEAVE_GL();
 }
