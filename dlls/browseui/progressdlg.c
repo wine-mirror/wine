@@ -407,7 +407,7 @@ static HRESULT WINAPI ProgressDialog_SetProgress64(IProgressDialog *iface, ULONG
     ProgressDialog *This = (ProgressDialog *)iface;
     HWND hwnd;
 
-    TRACE("(%p, %llu, %llu)\n", This, ullCompleted, ullTotal);
+    TRACE("(%p, 0x%s, 0x%s)\n", This, wine_dbgstr_longlong(ullCompleted), wine_dbgstr_longlong(ullTotal));
 
     EnterCriticalSection(&This->cs);
     This->ullTotal = ullTotal;
