@@ -121,7 +121,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
 
   *ppEnumObj = (LPDIRECTXFILEENUMOBJECT)object;
     
-  return S_FALSE;
+  return DXFILE_OK;
 }
 
 static HRESULT WINAPI IDirectXFileImpl_CreateSaveObject(IDirectXFile* iface, LPCSTR szFileName, DXFILEFORMAT dwFileFormat, LPDIRECTXFILESAVEOBJECT* ppSaveObj)
@@ -130,7 +130,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateSaveObject(IDirectXFile* iface, LPC
 
   FIXME("(%p/%p)->(%s,%x,%p) stub!\n", This, iface, szFileName, dwFileFormat, ppSaveObj);
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LPVOID pvData, DWORD cbSize)
@@ -139,7 +139,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
 
   FIXME("(%p/%p)->(%p,%d) stub!\n", This, iface, pvData, cbSize);
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static const IDirectXFileVtbl IDirectXFile_Vtbl =
@@ -165,7 +165,7 @@ HRESULT IDirectXFileBinaryImpl_Create(IDirectXFileBinaryImpl** ppObj)
 
     *ppObj = object;
     
-    return S_OK;
+    return DXFILE_OK;
 }
 
 /*** IUnknown methods ***/
@@ -219,7 +219,7 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_GetName(IDirectXFileBinary* iface, 
 
   FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, pstrNameBuf, pdwBufLen); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileBinaryImpl_GetId(IDirectXFileBinary* iface, LPGUID pGuid)
@@ -228,7 +228,7 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_GetId(IDirectXFileBinary* iface, LP
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, pGuid); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 /*** IDirectXFileBinary methods ***/
@@ -238,7 +238,7 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_GetSize(IDirectXFileBinary* iface, 
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, pcbSize); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileBinaryImpl_GetMimeType(IDirectXFileBinary* iface, LPCSTR* pszMimeType)
@@ -247,7 +247,7 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_GetMimeType(IDirectXFileBinary* ifa
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, pszMimeType);
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileBinaryImpl_Read(IDirectXFileBinary* iface, LPVOID pvData, DWORD cbSize, LPDWORD pcbRead)
@@ -256,7 +256,7 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_Read(IDirectXFileBinary* iface, LPV
 
   FIXME("(%p/%p)->(%p, %d, %p) stub!\n", This, iface, pvData, cbSize, pcbRead);
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static const IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl =
@@ -338,7 +338,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetName(IDirectXFileData* iface, LPST
 
   FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, pstrNameBuf, pdwBufLen); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileDataImpl_GetId(IDirectXFileData* iface, LPGUID pGuid)
@@ -347,7 +347,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetId(IDirectXFileData* iface, LPGUID
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, pGuid); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 /*** IDirectXFileData methods ***/
@@ -357,7 +357,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetData(IDirectXFileData* iface, LPCS
 
   FIXME("(%p/%p)->(%s,%p,%p) stub!\n", This, iface, szMember, pcbSize, ppvData); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileDataImpl_GetType(IDirectXFileData* iface, const GUID** pguid)
@@ -366,7 +366,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetType(IDirectXFileData* iface, cons
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, pguid); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface, LPDIRECTXFILEOBJECT* ppChildObj)
@@ -375,7 +375,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppChildObj); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileDataImpl_AddDataObject(IDirectXFileData* iface, LPDIRECTXFILEDATA pDataObj)
@@ -384,7 +384,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_AddDataObject(IDirectXFileData* iface
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, pDataObj); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileDataImpl_AddDataReference(IDirectXFileData* iface, LPCSTR szRef, const GUID* pguidRef)
@@ -393,7 +393,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_AddDataReference(IDirectXFileData* if
 
   FIXME("(%p/%p)->(%s,%p) stub!\n", This, iface, szRef, pguidRef); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileDataImpl_AddBinaryObject(IDirectXFileData* iface, LPCSTR szName, const GUID* pguid, LPCSTR szMimeType, LPVOID pvData, DWORD cbSize)
@@ -402,7 +402,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_AddBinaryObject(IDirectXFileData* ifa
 
   FIXME("(%p/%p)->(%s,%p,%s,%p,%d) stub!\n", This, iface, szName, pguid, szMimeType, pvData, cbSize);
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static const IDirectXFileDataVtbl IDirectXFileData_Vtbl =
@@ -486,7 +486,7 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetName(IDirectXFileDataRefe
 
   FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, pstrNameBuf, pdwBufLen); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetId(IDirectXFileDataReference* iface, LPGUID pGuid)
@@ -495,7 +495,7 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetId(IDirectXFileDataRefere
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, pGuid); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 /*** IDirectXFileDataReference ***/
@@ -505,7 +505,7 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_Resolve(IDirectXFileDataRefe
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppDataObj); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static const IDirectXFileDataReferenceVtbl IDirectXFileDataReference_Vtbl =
@@ -591,7 +591,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 
   *ppDataObj = (LPDIRECTXFILEDATA)object;
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectById(IDirectXFileEnumObject* iface, REFGUID rguid, LPDIRECTXFILEDATA* ppDataObj)
@@ -600,7 +600,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectById(IDirectXFileE
 
   FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, rguid, ppDataObj); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectByName(IDirectXFileEnumObject* iface, LPCSTR szName, LPDIRECTXFILEDATA* ppDataObj)
@@ -609,7 +609,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectByName(IDirectXFil
 
   FIXME("(%p/%p)->(%s,%p) stub!\n", This, iface, szName, ppDataObj); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static const IDirectXFileEnumObjectVtbl IDirectXFileEnumObject_Vtbl =
@@ -687,7 +687,7 @@ static HRESULT WINAPI IDirectXFileObjectImpl_GetName(IDirectXFileObject* iface, 
 
   FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, pstrNameBuf, pdwBufLen); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileObjectImpl_GetId(IDirectXFileObject* iface, LPGUID pGuid)
@@ -696,7 +696,7 @@ static HRESULT WINAPI IDirectXFileObjectImpl_GetId(IDirectXFileObject* iface, LP
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, pGuid); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static const IDirectXFileObjectVtbl IDirectXFileObject_Vtbl =
@@ -772,7 +772,7 @@ static HRESULT WINAPI IDirectXFileSaveObjectImpl_SaveTemplates(IDirectXFileSaveO
 
   FIXME("(%p/%p)->(%d,%p) stub!\n", This, iface, cTemplates, ppguidTemplates);
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileSaveObjectImpl_CreateDataObject(IDirectXFileSaveObject* iface, REFGUID rguidTemplate, LPCSTR szName, const GUID* pguid, DWORD cbSize, LPVOID pvData, LPDIRECTXFILEDATA* ppDataObj)
@@ -781,7 +781,7 @@ static HRESULT WINAPI IDirectXFileSaveObjectImpl_CreateDataObject(IDirectXFileSa
 
   FIXME("(%p/%p)->(%p,%s,%p,%d,%p,%p) stub!\n", This, iface, rguidTemplate, szName, pguid, cbSize, pvData, ppDataObj);
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static HRESULT WINAPI IDirectXFileSaveObjectImpl_SaveData(IDirectXFileSaveObject* iface, LPDIRECTXFILEDATA ppDataObj)
@@ -790,7 +790,7 @@ static HRESULT WINAPI IDirectXFileSaveObjectImpl_SaveData(IDirectXFileSaveObject
 
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppDataObj); 
 
-  return S_FALSE;
+  return DXFILEERR_BADVALUE;
 }
 
 static const IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl =
