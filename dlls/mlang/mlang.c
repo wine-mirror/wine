@@ -1216,6 +1216,7 @@ static ULONG WINAPI fnIEnumScript_Release(
     if (ref == 0)
     {
         TRACE("Destroying %p\n", This);
+        HeapFree(GetProcessHeap(), 0, This->script_info);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
