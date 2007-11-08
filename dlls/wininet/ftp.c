@@ -2049,6 +2049,9 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwfs->hdr.destroy = FTP_CloseSessionHandle;
     lpwfs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
     lpwfs->download_in_progress = NULL;
+    lpwfs->sndSocket = -1;
+    lpwfs->lstnSocket = -1;
+    lpwfs->pasvSocket = -1;
 
     WININET_AddRef( &hIC->hdr );
     lpwfs->lpAppInfo = hIC;
