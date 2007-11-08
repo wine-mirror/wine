@@ -184,6 +184,10 @@ static void COOKIE_crackUrlSimple(LPCWSTR lpszUrl, LPWSTR hostName, int hostName
     UrlComponents.lpszUrlPath = path;
     UrlComponents.lpszUserName = NULL;
     UrlComponents.lpszHostName = hostName;
+    UrlComponents.dwExtraInfoLength = 0;
+    UrlComponents.dwPasswordLength = 0;
+    UrlComponents.dwSchemeLength = 0;
+    UrlComponents.dwUserNameLength = 0;
     UrlComponents.dwHostNameLength = hostNameLen;
     UrlComponents.dwUrlPathLength = pathLen;
 
