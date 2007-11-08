@@ -4296,6 +4296,7 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
          "Wrong issuer size %d\n", info->Issuer.cbData);
         ok(!memcmp(info->Issuer.pbData, encodedCommonName, info->Issuer.cbData),
          "Unexpected issuer\n");
+        LocalFree(buf);
     }
     /* a real CRL from verisign that has extensions */
     ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED,
@@ -4359,6 +4360,7 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
          "Unexpected issuer\n");
         ok(info->cExtension == 1, "Expected 1 extensions, got %d\n",
          info->cExtension);
+        LocalFree(buf);
     }
     ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED,
      v2CRLWithExt, sizeof(v2CRLWithExt), CRYPT_DECODE_ALLOC_FLAG,
