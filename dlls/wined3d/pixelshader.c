@@ -361,18 +361,17 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
         shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
 
         /* Pack 3.0 inputs */
-        if (This->baseShader.hex_version >= WINED3DPS_VERSION(3,0) &&
-            !use_vs((IWineD3DDeviceImpl *) This->baseShader.device)) {
+        if (This->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
 
             if(((IWineD3DDeviceImpl *) This->baseShader.device)->strided_streams.u.s.position_transformed) {
                 This->vertexprocessing = pretransformed;
+                pshader_glsl_input_pack(&buffer, This->semantics_in, iface);
             } else if(!use_vs((IWineD3DDeviceImpl *) This->baseShader.device)) {
                 This->vertexprocessing = fixedfunction;
+                pshader_glsl_input_pack(&buffer, This->semantics_in, iface);
             } else {
                 This->vertexprocessing = vertexshader;
             }
-
-            pshader_glsl_input_pack(&buffer, This->semantics_in, iface);
         }
 
         /* Base Shader Body */
