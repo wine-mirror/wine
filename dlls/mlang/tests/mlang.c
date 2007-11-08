@@ -677,6 +677,7 @@ static void test_rfc1766(IMultiLanguage2 *iML2)
         ok(n == 1, "couldn't fetch 1 RFC1766INFO structure\n");
         ok(IsValidLocale(info.lcid, LCID_SUPPORTED), "invalid lcid %04x\n", info.lcid);
     }
+    IEnumRfc1766_Release(pEnumRfc1766);
 }
 
 static void test_GetLcidFromRfc1766(IMultiLanguage2 *iML2)
