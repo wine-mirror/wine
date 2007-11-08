@@ -693,7 +693,7 @@ static inline INT lcid_to_rfc1766A( LCID lcid, LPSTR rfc1766, INT len )
     if (n)
     {
         rfc1766[n - 1] = '-';
-        n += GetLocaleInfoA( lcid, LOCALE_SISO3166CTRYNAME, rfc1766 + n, len - n ) + 1;
+        n += GetLocaleInfoA( lcid, LOCALE_SISO3166CTRYNAME, rfc1766 + n, len - n );
         LCMapStringA( LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, rfc1766, n, rfc1766, len );
         return n;
     }
@@ -706,7 +706,7 @@ static inline INT lcid_to_rfc1766W( LCID lcid, LPWSTR rfc1766, INT len )
     if (n)
     {
         rfc1766[n - 1] = '-';
-        n += GetLocaleInfoW( lcid, LOCALE_SISO3166CTRYNAME, rfc1766 + n, len - n ) + 1;
+        n += GetLocaleInfoW( lcid, LOCALE_SISO3166CTRYNAME, rfc1766 + n, len - n );
         LCMapStringW( LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, rfc1766, n, rfc1766, len );
         return n;
     }
