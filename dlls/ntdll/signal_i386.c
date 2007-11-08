@@ -1334,7 +1334,7 @@ size_t get_signal_stack_total_size(void)
 
     if (!signal_stack_size)
     {
-        size_t size = 4096, min_size = teb_size + max( MINSIGSTKSZ, 4096 );
+        size_t size = 8192, min_size = teb_size + max( MINSIGSTKSZ, 8192 );
         /* find the first power of two not smaller than min_size */
         while (size < min_size) size *= 2;
         signal_stack_mask = size - 1;
