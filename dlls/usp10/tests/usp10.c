@@ -337,10 +337,11 @@ static void test_ScriptGetFontProperties(HDC hdc)
     ok( hr == E_INVALIDARG, "(hdc,&psc,NULL), expected E_INVALIDARG, got %08x\n", hr);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
-    /* Pass an uninitialized sfp */
+    /* Pass an invalid sfp */
     psc = NULL;
+    sfp.cBytes = sizeof(SCRIPT_FONTPROPERTIES) - 1;
     hr = ScriptGetFontProperties(hdc,&psc,&sfp);
-    ok( hr == E_INVALIDARG, "(hdc,&psc,&sfp) partly uninitialized, expected E_INVALIDARG, got %08x\n", hr);
+    ok( hr == E_INVALIDARG, "(hdc,&psc,&sfp) invalid, expected E_INVALIDARG, got %08x\n", hr);
     ok( psc != NULL, "Expected a pointer in psc, got NULL\n");
     ScriptFreeCache(&psc);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
