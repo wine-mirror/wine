@@ -1222,12 +1222,20 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
         struct thread *owner = get_window_thread( new_win );
         if (owner)
         {
-            if (owner->queue->input == input)
+            msg->win = new_win;
+            if (owner->queue->input != input)
             {
-                msg->win = new_win;
-                set_queue_bits( owner->queue, get_hardware_msg_bit( msg ));
-                remove = 0;
+                list_remove( &msg->entry );
+                if (msg->msg == WM_MOUSEMOVE && merge_message( owner->queue->input, msg ))
+                {
+                    free_message( msg );
+                    release_object( owner );
+                    return;
+                }
+                list_add_tail( &owner->queue->input->msg_list, &msg->entry );
             }
+            set_queue_bits( owner->queue, get_hardware_msg_bit( msg ));
+            remove = 0;
             release_object( owner );
         }
     }
