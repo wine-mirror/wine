@@ -349,18 +349,21 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
               dsbcaps.dwBufferBytes);
     }
 
-    /* Query the format size. Note that it may not match sizeof(wfx) */
+    /* Query the format size. */
     size=0;
     rc=IDirectSoundBuffer_GetFormat(*dsbo,NULL,0,&size);
     ok(rc==DS_OK && size!=0,"IDirectSoundBuffer_GetFormat() should have "
        "returned the needed size: rc=%s size=%d\n",DXGetErrorString8(rc),size);
 
-    rc=IDirectSoundBuffer_GetFormat(*dsbo,&wfx,sizeof(wfx),NULL);
-    if (wfx.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-    {
+    ok(size == sizeof(WAVEFORMATEX) || size == sizeof(WAVEFORMATEXTENSIBLE),
+       "Expected a correct structure size, got %d\n", size);
+
+    if (size == sizeof(WAVEFORMATEX)) {
+        rc=IDirectSoundBuffer_GetFormat(*dsbo,&wfx,size,NULL);
+    }
+    else if (size == sizeof(WAVEFORMATEXTENSIBLE)) {
         WAVEFORMATEXTENSIBLE wfxe;
-        ok(rc == DSERR_INVALIDPARAM, "IDirectSoundBuffer_GetFormat returned: %s\n", DXGetErrorString8(rc));
-        rc=IDirectSoundBuffer_GetFormat(*dsbo,(WAVEFORMATEX*)&wfxe,sizeof(wfxe),NULL);
+        rc=IDirectSoundBuffer_GetFormat(*dsbo,(WAVEFORMATEX*)&wfxe,size,NULL);
         wfx = wfxe.Format;
     }
     ok(rc==DS_OK,
