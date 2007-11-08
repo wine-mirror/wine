@@ -5036,6 +5036,7 @@ static void test_decodePKCSAttribute(DWORD dwEncoding)
          "Unexpected size %d\n", attr->rgValue[0].cbData);
         ok(!memcmp(attr->rgValue[0].pbData, ints[0].encoded,
          attr->rgValue[0].cbData), "Unexpected value\n");
+        LocalFree(buf);
     }
 }
 
