@@ -279,6 +279,7 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     ok( hr == S_OK, "ScriptGetCMap(NULL,&psc,NULL,0,0,NULL), expected S_OK, "
                     "got %08x\n", hr);
     ok( psc != NULL, "ScritpGetCMap expected psc to be not NULL\n");
+    ScriptFreeCache( &psc);
 
     /* Set psc to NULL, to be able to check if a pointer is returned in psc */
     psc = NULL;
