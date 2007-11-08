@@ -31,8 +31,6 @@
 
 #ifdef HAVE_LDAP_H
 #include <ldap.h>
-#else
-#define LDAP_SUCCESS        0x00
 #endif
 
 #include "winldap_private.h"
@@ -232,7 +230,7 @@ PWCHAR CDECL ldap_get_dnW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry )
  */
 ULONG CDECL ldap_ufn2dnA( PCHAR ufn, PCHAR *dn )
 {
-    ULONG ret = LDAP_SUCCESS;
+    ULONG ret = WLDAP32_LDAP_SUCCESS;
 #ifdef HAVE_LDAP
     PWCHAR ufnW = NULL, dnW = NULL;
 
@@ -279,7 +277,7 @@ ULONG CDECL ldap_ufn2dnA( PCHAR ufn, PCHAR *dn )
  */
 ULONG CDECL ldap_ufn2dnW( PWCHAR ufn, PWCHAR *dn )
 {
-    ULONG ret = LDAP_SUCCESS;
+    ULONG ret = WLDAP32_LDAP_SUCCESS;
 #ifdef HAVE_LDAP
     char *ufnU = NULL;
 

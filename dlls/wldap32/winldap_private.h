@@ -23,6 +23,8 @@
  */
 
 typedef enum {
+    WLDAP32_LDAP_SUCCESS                 =   0x00,
+    WLDAP32_LDAP_UNWILLING_TO_PERFORM    =   0x35,
     WLDAP32_LDAP_SERVER_DOWN             =   0x51,
     WLDAP32_LDAP_LOCAL_ERROR             =   0x52,
     WLDAP32_LDAP_ENCODING_ERROR          =   0x53,

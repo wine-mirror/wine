@@ -32,9 +32,6 @@
 
 #ifdef HAVE_LDAP_H
 #include <ldap.h>
-#else
-#define LDAP_SUCCESS        0x00
-#define LDAP_NOT_SUPPORTED  0x5c
 #endif
 
 #include "winldap_private.h"
@@ -57,7 +54,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  */
 ULONG CDECL WLDAP32_ldap_abandon( WLDAP32_LDAP *ld, ULONG msgid )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
 
     TRACE( "(%p, 0x%08x)\n", ld, msgid );
@@ -112,7 +109,7 @@ ULONG CDECL ldap_check_filterW( WLDAP32_LDAP *ld, PWCHAR filter )
     TRACE( "(%p, %s)\n", ld, debugstr_w(filter) );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
-    return LDAP_SUCCESS; /* FIXME: do some checks */
+    return WLDAP32_LDAP_SUCCESS; /* FIXME: do some checks */
 }
 
 /***********************************************************************
@@ -121,7 +118,7 @@ ULONG CDECL ldap_check_filterW( WLDAP32_LDAP *ld, PWCHAR filter )
 ULONG CDECL ldap_cleanup( HANDLE instance )
 {
     TRACE( "(%p)\n", instance );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************
@@ -160,7 +157,7 @@ WLDAP32_LDAP * CDECL ldap_conn_from_msg( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *
  */
 ULONG CDECL WLDAP32_ldap_count_entries( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
 
     TRACE( "(%p, %p)\n", ld, res );
@@ -187,7 +184,7 @@ ULONG CDECL WLDAP32_ldap_count_entries( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *r
  */
 ULONG CDECL WLDAP32_ldap_count_references( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP_COUNT_REFERENCES
 
     TRACE( "(%p, %p)\n", ld, res );
@@ -258,7 +255,7 @@ ULONG CDECL ldap_escape_filter_elementA( PCHAR src, ULONG srclen, PCHAR dst, ULO
     else
     {
         escape_filter_element( src, srclen, dst );
-        return LDAP_SUCCESS;
+        return WLDAP32_LDAP_SUCCESS;
     }
 }
 
@@ -442,7 +439,7 @@ void CDECL ldap_memfreeW( PWCHAR block )
  */
 ULONG CDECL WLDAP32_ldap_msgfree( WLDAP32_LDAPMessage *res )
 {
-    ULONG ret = LDAP_SUCCESS;
+    ULONG ret = WLDAP32_LDAP_SUCCESS;
 #ifdef HAVE_LDAP
 
     TRACE( "(%p)\n", res );

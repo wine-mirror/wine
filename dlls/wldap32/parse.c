@@ -31,8 +31,6 @@
 
 #ifdef HAVE_LDAP_H
 #include <ldap.h>
-#else
-#define LDAP_NOT_SUPPORTED  0x5c
 #endif
 
 #include "winldap_private.h"
@@ -48,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 ULONG CDECL ldap_parse_extended_resultA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *result,
     PCHAR *oid, struct WLDAP32_berval **data, BOOLEAN free )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *oidW = NULL;
 
@@ -92,7 +90,7 @@ ULONG CDECL ldap_parse_extended_resultA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *
 ULONG CDECL ldap_parse_extended_resultW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *result,
     PWCHAR *oid, struct WLDAP32_berval **data, BOOLEAN free )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *oidU = NULL;
 
@@ -121,7 +119,7 @@ ULONG CDECL ldap_parse_extended_resultW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *
 ULONG CDECL ldap_parse_referenceA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *message,
     PCHAR **referrals )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR **referralsW = NULL;
 
@@ -158,7 +156,7 @@ ULONG CDECL ldap_parse_referenceA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *messag
 ULONG CDECL ldap_parse_referenceW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *message,
     PWCHAR **referrals )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP_PARSE_REFERENCE
     char **referralsU = NULL;
 
@@ -184,7 +182,7 @@ ULONG CDECL ldap_parse_resultA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *result,
     ULONG *retcode, PCHAR *matched, PCHAR *error, PCHAR **referrals,
     PLDAPControlA **serverctrls, BOOLEAN free )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR **matchedW = NULL, **errorW = NULL, **referralsW = NULL;
     LDAPControlW **serverctrlsW = NULL;
@@ -241,7 +239,7 @@ ULONG CDECL ldap_parse_resultW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *result,
     ULONG *retcode, PWCHAR *matched, PWCHAR *error, PWCHAR **referrals,
     PLDAPControlW **serverctrls, BOOLEAN free )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char **matchedU = NULL, **errorU = NULL, **referralsU = NULL;
     LDAPControl **serverctrlsU = NULL;
@@ -277,7 +275,7 @@ ULONG CDECL ldap_parse_resultW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *result,
 ULONG CDECL ldap_parse_sort_controlA( WLDAP32_LDAP *ld, PLDAPControlA *control,
     ULONG *result, PCHAR *attr )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     WCHAR *attrW = NULL;
     LDAPControlW **controlW = NULL;
@@ -321,7 +319,7 @@ ULONG CDECL ldap_parse_sort_controlA( WLDAP32_LDAP *ld, PLDAPControlA *control,
 ULONG CDECL ldap_parse_sort_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
     ULONG *result, PWCHAR *attr )
 {
-    ULONG ret = LDAP_NOT_SUPPORTED;
+    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     char *attrU = NULL;
     LDAPControl **controlU = NULL;
@@ -380,7 +378,7 @@ INT CDECL ldap_parse_vlv_controlA( WLDAP32_LDAP *ld, PLDAPControlA *control,
     PULONG targetpos, PULONG listcount,
     struct WLDAP32_berval **context, PINT errcode )
 {
-    int ret = LDAP_NOT_SUPPORTED;
+    int ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     LDAPControlW **controlW = NULL;
 
@@ -427,7 +425,7 @@ INT CDECL ldap_parse_vlv_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
     PULONG targetpos, PULONG listcount,
     struct WLDAP32_berval **context, PINT errcode )
 {
-    int ret = LDAP_NOT_SUPPORTED;
+    int ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     LDAPControl **controlU = NULL;
 #ifdef HAVE_LDAP_PARSE_VLV_CONTROL
