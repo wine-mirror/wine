@@ -254,6 +254,7 @@ static HDDEDATA CALLBACK client_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
 static void test_ddeml_client(void)
 {
     UINT ret;
+    char buffer[32];
     LPSTR str;
     DWORD size, res;
     HDDEDATA hdata, op;
@@ -359,8 +360,8 @@ static void test_ddeml_client(void)
 
     item = DdeCreateStringHandleA(client_pid, "poker", CP_WINANSI);
 
-    lstrcpyA(str, "poke data\r\n");
-    hdata = DdeCreateDataHandle(client_pid, (LPBYTE)str, lstrlenA(str) + 1,
+    lstrcpyA(buffer, "poke data\r\n");
+    hdata = DdeCreateDataHandle(client_pid, (LPBYTE)buffer, lstrlenA(buffer) + 1,
                                 0, item, CF_TEXT, 0);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
 
@@ -402,8 +403,8 @@ static void test_ddeml_client(void)
 
     DdeFreeDataHandle(hdata);
 
-    lstrcpyA(str, "[Command(Var)]");
-    hdata = DdeCreateDataHandle(client_pid, (LPBYTE)str, lstrlenA(str) + 1,
+    lstrcpyA(buffer, "[Command(Var)]");
+    hdata = DdeCreateDataHandle(client_pid, (LPBYTE)buffer, lstrlenA(buffer) + 1,
                                 0, NULL, CF_TEXT, 0);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
 
