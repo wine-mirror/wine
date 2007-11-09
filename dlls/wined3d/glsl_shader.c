@@ -533,9 +533,9 @@ void shader_generate_glsl_declarations(
                 extra_constants_needed++;
             } else {
                 ps_impl->srgb_mode_hardcoded = 1;
-                shader_addline(buffer, "const vec4 srgb_mul_low = {%f, %f, %f, %f};\n",
+                shader_addline(buffer, "const vec4 srgb_mul_low = vec4(%f, %f, %f, %f);\n",
                                srgb_mul_low, srgb_mul_low, srgb_mul_low, srgb_mul_low);
-                shader_addline(buffer, "const vec4 srgb_comparison = {%f, %f, %f, %f};\n",
+                shader_addline(buffer, "const vec4 srgb_comparison = vec4(%f, %f, %f, %f);\n",
                                srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
             }
         } else {
@@ -557,7 +557,7 @@ void shader_generate_glsl_declarations(
                  * actually used, only the max limit of the shader version
                  */
                 FIXME("Cannot find a free uniform for vpos correction params\n");
-                shader_addline(buffer, "const vec4 ycorrection = {%f, %f, 0.0, 0.0};\n",
+                shader_addline(buffer, "const vec4 ycorrection = vec4(%f, %f, 0.0, 0.0);\n",
                                device->render_offscreen ? 0.0 : ((IWineD3DSurfaceImpl *) device->render_targets[0])->currentDesc.Height,
                                device->render_offscreen ? 1.0 : -1.0);
             }
