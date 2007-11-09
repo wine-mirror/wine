@@ -110,6 +110,9 @@ static inline D3DVALUE AngleBetweenVectorsRad (const D3DVECTOR *a, const D3DVECT
 	product = ScalarProduct (a,b);
 	la = VectorMagnitude (a);
 	lb = VectorMagnitude (b);
+	if (!la || !lb)
+		return 0;
+
 	cos = product/(la*lb);
 	angle = acos(cos);
 	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f radians (%f degrees)\n",  a->x, a->y, a->z, b->x,
