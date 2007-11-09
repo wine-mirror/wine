@@ -587,6 +587,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
             This->rel_offset = 0;
         }
     }
+    This->baseShader.load_local_constsF = This->baseShader.reg_maps.usesrelconstF && !list_empty(&This->baseShader.constantsF);
 
     /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {

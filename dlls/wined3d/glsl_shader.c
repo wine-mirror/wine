@@ -199,6 +199,11 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL
     }
     checkGLcall("glUniform4fvARB()");
 
+    if(!This->baseShader.load_local_constsF) {
+        TRACE("No need to load local float constants for this shader\n");
+        return;
+    }
+
     /* Load immediate constants */
     if (TRACE_ON(d3d_shader)) {
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
@@ -464,6 +469,7 @@ void shader_generate_glsl_declarations(
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     int i;
     unsigned int extra_constants_needed = 0;
+    local_constant* lconst;
 
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
@@ -640,6 +646,15 @@ void shader_generate_glsl_declarations(
     shader_addline(buffer, "vec4 tmp0;\n");
     shader_addline(buffer, "vec4 tmp1;\n");
 
+    /* Hardcodeable local constants */
+    if(!This->baseShader.load_local_constsF) {
+        LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+            float *value = (float *) lconst->value;
+            shader_addline(buffer, "const vec4 LC%u = vec4(%f, %f, %f, %f);\n", lconst->idx,
+                           value[0], value[1], value[2], value[3]);
+        }
+    }
+
     /* Start the main program */
     shader_addline(buffer, "void main() {\n");
     if(pshader && reg_maps->vpos) {
@@ -734,6 +749,17 @@ static void shader_glsl_gen_modifier (
     }
 }
 
+static BOOL constant_is_local(IWineD3DBaseShaderImpl* This, DWORD reg) {
+    local_constant* lconst;
+
+    if(This->baseShader.load_local_constsF) return FALSE;
+    LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+        if(lconst->idx == reg) return TRUE;
+    }
+    return FALSE;
+
+}
+
 /** Writes the GLSL variable name that corresponds to the register that the
  * DX opcode parameter is trying to access */
 static void shader_glsl_get_register_name(
@@ -819,8 +845,13 @@ static void shader_glsl_get_register_name(
                }
            }
 
-        } else
-             sprintf(tmpStr, "%s[%u]", prefix, reg);
+        } else {
+            if(constant_is_local(This, reg)) {
+                sprintf(tmpStr, "LC%u", reg);
+            } else {
+                sprintf(tmpStr, "%s[%u]", prefix, reg);
+            }
+        }
 
         break;
     }

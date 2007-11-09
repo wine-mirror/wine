@@ -586,6 +586,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
             }
         }
     }
+    This->baseShader.load_local_constsF = FALSE;
 
     This->baseShader.shader_mode = deviceImpl->ps_selected_mode;
 

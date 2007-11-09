@@ -1669,6 +1669,7 @@ typedef struct shader_reg_maps {
     DWORD samplers[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     char bumpmat, luminanceparams;
     char usesnrm, vpos, usesdsy;
+    char usesrelconstF;
 
     /* Whether or not loops are used in this shader, and nesting depth */
     unsigned loop_depth;
@@ -1898,6 +1899,7 @@ typedef struct IWineD3DBaseShaderClass
     GLuint                          prgId;
     BOOL                            is_compiled;
     UINT                            cur_loop_depth, cur_loop_regno;
+    BOOL                            load_local_constsF;
 
     /* Type of shader backend */
     int shader_mode;
