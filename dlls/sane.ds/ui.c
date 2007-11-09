@@ -597,6 +597,7 @@ BOOL DoScannerUI(void)
         HeapFree(GetProcessHeap(),0,(LPBYTE)psp[index].u.pResource);
         HeapFree(GetProcessHeap(),0,(LPBYTE)psp[index].pszTitle);
     }
+    HeapFree(GetProcessHeap(),0,szCaption);
     
     if (psrc == IDOK)
         return TRUE;
