@@ -198,4 +198,7 @@ static inline struct ntdll_thread_regs *ntdll_get_thread_regs(void)
     return (struct ntdll_thread_regs *)NtCurrentTeb()->SpareBytes1;
 }
 
+/* Completion */
+extern NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue, NTSTATUS CompletionStatus, ULONG_PTR Information );
+
 #endif

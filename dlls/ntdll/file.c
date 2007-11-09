@@ -560,6 +560,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     NTSTATUS status;
     ULONG total = 0;
     enum server_fd_type type;
+    ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p),partial stub!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
@@ -620,7 +621,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             BOOL avail_mode;
 
             if ((status = get_io_avail_mode( hFile, type, &avail_mode )))
-                goto done;
+                goto err;
             if (total && avail_mode)
             {
                 status = STATUS_SUCCESS;
@@ -630,7 +631,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*fileio))))
             {
                 status = STATUS_NO_MEMORY;
-                goto done;
+                goto err;
             }
             fileio->io.handle  = hFile;
             fileio->io.apc     = apc;
@@ -650,13 +651,13 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 req->async.arg      = fileio;
                 req->async.apc      = fileio_apc;
                 req->async.event    = hEvent;
-                req->async.cvalue   = 0;
+                req->async.cvalue   = cvalue;
                 status = wine_server_call( req );
             }
             SERVER_END_REQ;
 
             if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
-            goto done;
+            goto err;
         }
         else  /* synchronous read, wait for the fd to become ready */
         {
@@ -667,7 +668,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             {
                 timeout_init_done = 1;
                 if ((status = get_io_timeouts( hFile, type, length, TRUE, &timeouts )))
-                    goto done;
+                    goto err;
                 if (hEvent) NtResetEvent( hEvent, NULL );
             }
             timeout = get_next_io_timeout( &timeouts, total );
@@ -693,6 +694,9 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     }
 
 done:
+    if (cvalue) NTDLL_AddCompletion( hFile, cvalue, status, total );
+
+err:
     if (needs_close) close( unix_handle );
     if (status == STATUS_SUCCESS)
     {
@@ -794,6 +798,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     NTSTATUS status;
     ULONG total = 0;
     enum server_fd_type type;
+    ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p)!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
@@ -848,8 +853,12 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             if (errno == EINTR) continue;
             if (errno != EAGAIN)
             {
-                if (errno == EFAULT) status = STATUS_INVALID_USER_BUFFER;
-                else status = FILE_GetNtStatus();
+                if (errno == EFAULT)
+                {
+                    status = STATUS_INVALID_USER_BUFFER;
+                    goto err;
+                }
+                status = FILE_GetNtStatus();
                 goto done;
             }
         }
@@ -861,7 +870,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*fileio))))
             {
                 status = STATUS_NO_MEMORY;
-                goto done;
+                goto err;
             }
             fileio->io.handle  = hFile;
             fileio->io.apc     = apc;
@@ -880,13 +889,13 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                 req->async.arg      = fileio;
                 req->async.apc      = fileio_apc;
                 req->async.event    = hEvent;
-                req->async.cvalue   = 0;
+                req->async.cvalue   = cvalue;
                 status = wine_server_call( req );
             }
             SERVER_END_REQ;
 
             if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
-            goto done;
+            goto err;
         }
         else  /* synchronous write, wait for the fd to become ready */
         {
@@ -897,7 +906,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             {
                 timeout_init_done = 1;
                 if ((status = get_io_timeouts( hFile, type, length, FALSE, &timeouts )))
-                    goto done;
+                    goto err;
                 if (hEvent) NtResetEvent( hEvent, NULL );
             }
             timeout = get_next_io_timeout( &timeouts, total );
@@ -921,6 +930,9 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     }
 
 done:
+    if (cvalue) NTDLL_AddCompletion( hFile, cvalue, status, total );
+
+err:
     if (needs_close) close( unix_handle );
     if (status == STATUS_SUCCESS)
     {
@@ -989,6 +1001,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
     NTSTATUS status;
     HANDLE wait_handle;
     ULONG options;
+    ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_context;
 
     if (!(async = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*async) )))
         return STATUS_NO_MEMORY;
@@ -1007,7 +1020,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         req->async.arg      = async;
         req->async.apc      = (apc || event) ? ioctl_apc : NULL;
         req->async.event    = event;
-        req->async.cvalue   = 0;
+        req->async.cvalue   = cvalue;
         wine_server_add_data( req, in_buffer, in_size );
         wine_server_set_reply( req, out_buffer, out_size );
         if (!(status = wine_server_call( req )))
@@ -2126,6 +2139,8 @@ NTSTATUS WINAPI NtLockFile( HANDLE hFile, HANDLE lock_granted_event,
         FIXME("Unimplemented yet parameter\n");
         return STATUS_NOT_IMPLEMENTED;
     }
+
+    if (apc_user) FIXME("I/O completion on lock not implemented yet\n");
 
     for (;;)
     {
