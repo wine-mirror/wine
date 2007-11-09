@@ -96,6 +96,32 @@ typedef struct _D3DVECTOR D3DXVECTOR3, *LPD3DXVECTOR3;
 
 typedef struct D3DXVECTOR4
 {
+#ifdef __cplusplus
+    D3DXVECTOR4();
+    D3DXVECTOR4(CONST FLOAT *pf);
+    D3DXVECTOR4(FLOAT fx, FLOAT fy, FLOAT fz, FLOAT fw);
+
+    operator FLOAT* ();
+    operator CONST FLOAT* () const;
+
+    D3DXVECTOR4& operator += (CONST D3DXVECTOR4&);
+    D3DXVECTOR4& operator -= (CONST D3DXVECTOR4&);
+    D3DXVECTOR4& operator *= (FLOAT);
+    D3DXVECTOR4& operator /= (FLOAT);
+
+    D3DXVECTOR4 operator + () const;
+    D3DXVECTOR4 operator - () const;
+
+    D3DXVECTOR4 operator + (CONST D3DXVECTOR4&) const;
+    D3DXVECTOR4 operator - (CONST D3DXVECTOR4&) const;
+    D3DXVECTOR4 operator * (FLOAT) const;
+    D3DXVECTOR4 operator / (FLOAT) const;
+
+    friend D3DXVECTOR4 operator * (FLOAT, CONST D3DXVECTOR4&);
+
+    BOOL operator == (CONST D3DXVECTOR4&) const;
+    BOOL operator != (CONST D3DXVECTOR4&) const;
+#endif /* __cplusplus */
     FLOAT x, y, z, w;
 } D3DXVECTOR4, *LPD3DXVECTOR4;
 

@@ -236,6 +236,118 @@ inline BOOL D3DXVECTOR3::operator != (CONST D3DXVECTOR3& v) const
     return x != v.x || y != v.y || z != v.z;
 }
 
+inline D3DXVECTOR4::D3DXVECTOR4()
+{
+}
+
+inline D3DXVECTOR4::D3DXVECTOR4(CONST FLOAT *pf)
+{
+    if(!pf) return;
+    x = pf[0];
+    y = pf[1];
+    z = pf[2];
+    w = pf[3];
+}
+
+inline D3DXVECTOR4::D3DXVECTOR4(FLOAT fx, FLOAT fy, FLOAT fz, FLOAT fw)
+{
+    x = fx;
+    y = fy;
+    z = fz;
+    w = fw;
+}
+
+inline D3DXVECTOR4::operator FLOAT* ()
+{
+    return (FLOAT*)&x;
+}
+
+inline D3DXVECTOR4::operator CONST FLOAT* () const
+{
+    return (CONST FLOAT*)&x;
+}
+
+inline D3DXVECTOR4& D3DXVECTOR4::operator += (CONST D3DXVECTOR4& v)
+{
+    x += v.x;
+    y += v.y;
+    z += v.z;
+    w += v.w;
+    return *this;
+}
+
+inline D3DXVECTOR4& D3DXVECTOR4::operator -= (CONST D3DXVECTOR4& v)
+{
+    x -= v.x;
+    y -= v.y;
+    z -= v.z;
+    w -= v.w;
+    return *this;
+}
+
+inline D3DXVECTOR4& D3DXVECTOR4::operator *= (FLOAT f)
+{
+    x *= f;
+    y *= f;
+    z *= f;
+    w *= f;
+    return *this;
+}
+
+inline D3DXVECTOR4& D3DXVECTOR4::operator /= (FLOAT f)
+{
+    x /= f;
+    y /= f;
+    z /= f;
+    w /= f;
+    return *this;
+}
+
+inline D3DXVECTOR4 D3DXVECTOR4::operator + () const
+{
+    return *this;
+}
+
+inline D3DXVECTOR4 D3DXVECTOR4::operator - () const
+{
+    return D3DXVECTOR4(-x, -y, -z, -w);
+}
+
+inline D3DXVECTOR4 D3DXVECTOR4::operator + (CONST D3DXVECTOR4& v) const
+{
+    return D3DXVECTOR4(x + v.x, y + v.y, z + v.z, w + v.w);
+}
+
+inline D3DXVECTOR4 D3DXVECTOR4::operator - (CONST D3DXVECTOR4& v) const
+{
+    return D3DXVECTOR4(x - v.x, y - v.y, z - v.z, w - v.w);
+}
+
+inline D3DXVECTOR4 D3DXVECTOR4::operator * (FLOAT f) const
+{
+    return D3DXVECTOR4(x * f, y * f, z * f, w * f);
+}
+
+inline D3DXVECTOR4 D3DXVECTOR4::operator / (FLOAT f) const
+{
+    return D3DXVECTOR4(x / f, y / f, z / f, w / f);
+}
+
+inline D3DXVECTOR4 operator * (FLOAT f, CONST D3DXVECTOR4& v)
+{
+    return D3DXVECTOR4(f * v.x, f * v.y, f * v.z, f * v.w);
+}
+
+inline BOOL D3DXVECTOR4::operator == (CONST D3DXVECTOR4& v) const
+{
+    return x == v.x && y == v.y && z == v.z && w == v.w;
+}
+
+inline BOOL D3DXVECTOR4::operator != (CONST D3DXVECTOR4& v) const
+{
+    return x != v.x || y != v.y || z != v.z || w != v.w;
+}
+
 #endif /* __cplusplus */
 
 /*_______________D3DXCOLOR_____________________*/
