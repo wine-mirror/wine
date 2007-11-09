@@ -390,7 +390,7 @@ int WINAPI RestartDialogEx(HWND hWndOwner, LPCWSTR lpwstrReason, DWORD uFlags, D
         HANDLE hToken;
         TOKEN_PRIVILEGES npr;
 
-        /* enable shutdown privilege for current process */
+        /* enable the shutdown privilege for the current process */
         if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
         {
             LookupPrivilegeValueA(0, "SeShutdownPrivilege", &npr.Privileges[0].Luid);

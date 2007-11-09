@@ -2537,7 +2537,7 @@ void pshader_glsl_texkill(SHADER_OPCODE_ARG* arg) {
         /* 2.0 shaders compare all 4 components in texkill */
         shader_addline(arg->buffer, "if (any(lessThan(%s.xyzw, vec4(0.0)))) discard;\n", dst_param.reg_name);
     } else {
-        /* 1.X shaders only compare the first 3 components, propably due to the nature of the texkill
+        /* 1.X shaders only compare the first 3 components, probably due to the nature of the texkill
          * instruction as a tex* instruction, and phase, which kills all a / w components. Even if all
          * 4 components are defined, only the first 3 are used
          */

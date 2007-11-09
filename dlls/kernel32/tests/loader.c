@@ -147,7 +147,7 @@ START_TEST(loader)
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x200, 0x1000,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x1000,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER),
-          ERROR_BAD_EXE_FORMAT /* XP doesn't like aligments */
+          ERROR_BAD_EXE_FORMAT /* XP doesn't like alignments */
         },
         { &dos_header, sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x1000, 0x200,

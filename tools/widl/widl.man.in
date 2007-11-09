@@ -94,8 +94,8 @@ Do not preprocess input.
 .IP "\fB-W\fR"
 Enable pedantic warnings.
 .IP "\fB-d \fIn\fR"
-Set debug level to the nonnegative integer \fIn\fR.  If
-prefixed with \fB0x\fR, it will be interpretted as a hexidecimal
+Set debug level to the non negative integer \fIn\fR.  If
+prefixed with \fB0x\fR, it will be interpreted as an hexadecimal
 number.  For the meaning of values, see the \fBDebug\fR section.
 .PP
 .B Miscellaneous options:
