@@ -31,6 +31,32 @@
 
 typedef struct D3DXVECTOR2
 {
+#ifdef __cplusplus
+    D3DXVECTOR2();
+    D3DXVECTOR2(CONST FLOAT *pf);
+    D3DXVECTOR2(FLOAT fx, FLOAT fy);
+
+    operator FLOAT* ();
+    operator CONST FLOAT* () const;
+
+    D3DXVECTOR2& operator += (CONST D3DXVECTOR2&);
+    D3DXVECTOR2& operator -= (CONST D3DXVECTOR2&);
+    D3DXVECTOR2& operator *= (FLOAT);
+    D3DXVECTOR2& operator /= (FLOAT);
+
+    D3DXVECTOR2 operator + () const;
+    D3DXVECTOR2 operator - () const;
+
+    D3DXVECTOR2 operator + (CONST D3DXVECTOR2&) const;
+    D3DXVECTOR2 operator - (CONST D3DXVECTOR2&) const;
+    D3DXVECTOR2 operator * (FLOAT) const;
+    D3DXVECTOR2 operator / (FLOAT) const;
+
+    friend D3DXVECTOR2 operator * (FLOAT, CONST D3DXVECTOR2&);
+
+    BOOL operator == (CONST D3DXVECTOR2&) const;
+    BOOL operator != (CONST D3DXVECTOR2&) const;
+#endif /* __cplusplus */
     FLOAT x, y;
 } D3DXVECTOR2, *LPD3DXVECTOR2;
 

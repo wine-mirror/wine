@@ -21,6 +21,111 @@
 
 /*_______________D3DXCOLOR_____________________*/
 
+/* constructors & operators */
+#ifdef __cplusplus
+
+inline D3DXVECTOR2::D3DXVECTOR2()
+{
+}
+
+inline D3DXVECTOR2::D3DXVECTOR2(CONST FLOAT *pf)
+{
+    if(!pf) return;
+    x = pf[0];
+    y = pf[1];
+}
+
+inline D3DXVECTOR2::D3DXVECTOR2(FLOAT fx, FLOAT fy)
+{
+    x = fx;
+    y = fy;
+}
+
+inline D3DXVECTOR2::operator FLOAT* ()
+{
+    return (FLOAT*)&x;
+}
+
+inline D3DXVECTOR2::operator CONST FLOAT* () const
+{
+    return (CONST FLOAT*)&x;
+}
+
+inline D3DXVECTOR2& D3DXVECTOR2::operator += (CONST D3DXVECTOR2& v)
+{
+    x += v.x;
+    y += v.y;
+    return *this;
+}
+
+inline D3DXVECTOR2& D3DXVECTOR2::operator -= (CONST D3DXVECTOR2& v)
+{
+    x -= v.x;
+    y -= v.y;
+    return *this;
+}
+
+inline D3DXVECTOR2& D3DXVECTOR2::operator *= (FLOAT f)
+{
+    x *= f;
+    y *= f;
+    return *this;
+}
+
+inline D3DXVECTOR2& D3DXVECTOR2::operator /= (FLOAT f)
+{
+    x /= f;
+    y /= f;
+    return *this;
+}
+
+inline D3DXVECTOR2 D3DXVECTOR2::operator + () const
+{
+    return *this;
+}
+
+inline D3DXVECTOR2 D3DXVECTOR2::operator - () const
+{
+    return D3DXVECTOR2(-x, -y);
+}
+
+inline D3DXVECTOR2 D3DXVECTOR2::operator + (CONST D3DXVECTOR2& v) const
+{
+    return D3DXVECTOR2(x + v.x, y + v.y);
+}
+
+inline D3DXVECTOR2 D3DXVECTOR2::operator - (CONST D3DXVECTOR2& v) const
+{
+    return D3DXVECTOR2(x - v.x, y - v.y);
+}
+
+inline D3DXVECTOR2 D3DXVECTOR2::operator * (FLOAT f) const
+{
+    return D3DXVECTOR2(x * f, y * f);
+}
+
+inline D3DXVECTOR2 D3DXVECTOR2::operator / (FLOAT f) const
+{
+    return D3DXVECTOR2(x / f, y / f);
+}
+
+inline D3DXVECTOR2 operator * (FLOAT f, CONST D3DXVECTOR2& v)
+{
+    return D3DXVECTOR2(f * v.x, f * v.y);
+}
+
+inline BOOL D3DXVECTOR2::operator == (CONST D3DXVECTOR2& v) const
+{
+    return x == v.x && y == v.y;
+}
+
+inline BOOL D3DXVECTOR2::operator != (CONST D3DXVECTOR2& v) const
+{
+    return x != v.x || y != v.y;
+}
+
+#endif /* __cplusplus */
+
 static inline D3DXCOLOR* D3DXColorAdd(D3DXCOLOR *pout, CONST D3DXCOLOR *pc1, CONST D3DXCOLOR *pc2)
 {
     if ( !pout || !pc1 || !pc2 ) return NULL;
