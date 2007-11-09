@@ -1175,7 +1175,8 @@ static void test_depthstenciltest(void)
     D3DPRESENT_PARAMETERS        d3dpp;
     D3DDISPLAYMODE               d3ddm;
     IDirect3DSurface9           *pDepthStencil           = NULL;
-    DWORD                        state;
+    IDirect3DSurface9           *pDepthStencil2          = NULL;
+    D3DZBUFFERTYPE               state;
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
@@ -1212,6 +1213,11 @@ static void test_depthstenciltest(void)
     hr = IDirect3DDevice9_SetDepthStencilSurface(pDevice, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
 
+    /* Check if the set buffer is returned on a get. WineD3D had a bug with that once, prevent it from coming back */
+    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil2);
+    ok(hr == D3DERR_NOTFOUND && pDepthStencil2 == NULL, "IDirect3DDevice9_GetDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
+    if(pDepthStencil2) IDirect3DSurface9_Release(pDepthStencil2);
+
     /* This left the render states untouched! */
     hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZENABLE, &state);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
@@ -1243,6 +1249,74 @@ static void test_depthstenciltest(void)
     /* Now it works again */
     hr = IDirect3DDevice9_Clear(pDevice, 0, NULL, D3DCLEAR_ZBUFFER, 0x00000000, 1.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+    if(pDepthStencil) IDirect3DSurface9_Release(pDepthStencil);
+    if(pDevice) IDirect3D9_Release(pDevice);
+
+    /* Now see if autodepthstencil disable is honored. First, without a format set */
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = 800;
+    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = FALSE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_UNKNOWN;
+
+    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!pDevice)
+    {
+        skip("Failed to create a d3d device\n");
+        goto cleanup;
+    }
+
+    pDepthStencil = NULL;
+    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil);
+    ok(hr == D3DERR_NOTFOUND && pDepthStencil == NULL, "IDirect3DDevice9_GetDepthStencilSurface returned %s, surface = %p\n", DXGetErrorString9(hr), pDepthStencil);
+    if(pDepthStencil) {
+        IDirect3DSurface9_Release(pDepthStencil);
+        pDepthStencil = NULL;
+    }
+
+    /* Check the depth test state */
+    hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZENABLE, &state);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(state == D3DZB_FALSE, "D3DRS_ZENABLE is %s\n", state == D3DZB_FALSE ? "D3DZB_FALSE" : (state == D3DZB_TRUE ? "D3DZB_TRUE" : "D3DZB_USEW"));
+
+    if(pDevice) IDirect3D9_Release(pDevice);
+
+    /* Next, try EnableAutoDepthStencil FALSE with a depth stencil format set */
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = 800;
+    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = FALSE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+
+    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!pDevice)
+    {
+        skip("Failed to create a d3d device\n");
+        goto cleanup;
+    }
+
+    pDepthStencil = NULL;
+    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil);
+    ok(hr == D3DERR_NOTFOUND && pDepthStencil == NULL, "IDirect3DDevice9_GetDepthStencilSurface returned %s, surface = %p\n", DXGetErrorString9(hr), pDepthStencil);
+    if(pDepthStencil) {
+        IDirect3DSurface9_Release(pDepthStencil);
+        pDepthStencil = NULL;
+    }
+
+    hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZENABLE, &state);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(state == D3DZB_FALSE, "D3DRS_ZENABLE is %s\n", state == D3DZB_FALSE ? "D3DZB_FALSE" : (state == D3DZB_TRUE ? "D3DZB_TRUE" : "D3DZB_USEW"));
 
 cleanup:
     if(pDepthStencil) IDirect3DSurface9_Release(pDepthStencil);

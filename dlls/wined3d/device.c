@@ -1578,7 +1578,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
     if (pPresentationParameters->EnableAutoDepthStencil && hr == WINED3D_OK) {
         TRACE("Creating depth stencil buffer\n");
-        if (This->depthStencilBuffer == NULL ) {
+        if (This->auto_depth_stencil_buffer == NULL ) {
             hr = D3DCB_CreateDepthStencil((IUnknown *) This->parent,
                                     parent,
                                     object->presentParms.BackBufferWidth,
@@ -1587,10 +1587,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
                                     object->presentParms.MultiSampleType,
                                     object->presentParms.MultiSampleQuality,
                                     FALSE /* FIXME: Discard */,
-                                    &This->depthStencilBuffer,
+                                    &This->auto_depth_stencil_buffer,
                                     NULL /* pShared (always null)*/  );
-            if (This->depthStencilBuffer != NULL)
-                IWineD3DSurface_SetContainer(This->depthStencilBuffer, 0);
+            if (This->auto_depth_stencil_buffer != NULL)
+                IWineD3DSurface_SetContainer(This->auto_depth_stencil_buffer, 0);
         }
 
         /** TODO: A check on width, height and multisample types
@@ -2054,7 +2054,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     This->lastThread = GetCurrentThreadId();
 
     /* Depth Stencil support */
-    This->stencilBufferTarget = This->depthStencilBuffer;
+    This->stencilBufferTarget = This->auto_depth_stencil_buffer;
     if (NULL != This->stencilBufferTarget) {
         IWineD3DSurface_AddRef(This->stencilBufferTarget);
     }
@@ -2206,8 +2206,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     /* Release the buffers (with sanity checks)*/
     TRACE("Releasing the depth stencil buffer at %p\n", This->stencilBufferTarget);
     if(This->stencilBufferTarget != NULL && (IWineD3DSurface_Release(This->stencilBufferTarget) >0)){
-        if(This->depthStencilBuffer != This->stencilBufferTarget)
-            FIXME("(%p) Something's still holding the depthStencilBuffer\n",This);
+        if(This->auto_depth_stencil_buffer != This->stencilBufferTarget)
+            FIXME("(%p) Something's still holding the stencilBufferTarget\n",This);
     }
     This->stencilBufferTarget = NULL;
 
@@ -2218,11 +2218,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     TRACE("Setting rendertarget to NULL\n");
     This->render_targets[0] = NULL;
 
-    if (This->depthStencilBuffer) {
-        if(D3DCB_DestroyDepthStencilSurface(This->depthStencilBuffer) > 0) {
-            FIXME("(%p) Something's still holding the depthStencilBuffer\n", This);
+    if (This->auto_depth_stencil_buffer) {
+        if(D3DCB_DestroyDepthStencilSurface(This->auto_depth_stencil_buffer) > 0) {
+            FIXME("(%p) Something's still holding the auto depth stencil buffer\n", This);
         }
-        This->depthStencilBuffer = NULL;
+        This->auto_depth_stencil_buffer = NULL;
     }
 
     for(i=0; i < This->NumberOfSwapChains; i++) {
@@ -6045,7 +6045,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice* iface, IWineD3DSurface **ppZStencilSurface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    *ppZStencilSurface = This->depthStencilBuffer;
+    *ppZStencilSurface = This->stencilBufferTarget;
     TRACE("(%p) : zStencilSurface  returning %p\n", This,  *ppZStencilSurface);
 
     if(*ppZStencilSurface != NULL) {
@@ -6387,7 +6387,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
     HRESULT  hr = WINED3D_OK;
     IWineD3DSurface *tmp;
 
-    TRACE("(%p) Swapping z-buffer\n",This);
+    TRACE("(%p) Swapping z-buffer. Old = %p, new = %p\n",This, This->stencilBufferTarget, pNewZStencil);
 
     if (pNewZStencil == This->stencilBufferTarget) {
         TRACE("Trying to do a NOP SetRenderTarget operation\n");

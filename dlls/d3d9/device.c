@@ -603,6 +603,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetDepthStencilSurface(LPDIRECT3DDE
         }
     } else {
         WARN("Call to IWineD3DDevice_GetDepthStencilSurface failed\n");
+        *ppZStencilSurface = NULL;
     }
     LeaveCriticalSection(&d3d9_cs);
     return hr;

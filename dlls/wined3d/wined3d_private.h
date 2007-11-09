@@ -685,7 +685,7 @@ struct IWineD3DDeviceImpl
 
     /* Render Target Support */
     IWineD3DSurface       **render_targets;
-    IWineD3DSurface        *depthStencilBuffer;
+    IWineD3DSurface        *auto_depth_stencil_buffer;
     IWineD3DSurface       **fbo_color_attachments;
     IWineD3DSurface        *fbo_depth_attachment;
 
