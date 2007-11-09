@@ -285,57 +285,66 @@ static void test_ddeml_client(void)
     DdeGetLastError(client_pid);
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
-    ok(hdata != NULL, "Expected non-NULL hdata, got %p\n", hdata);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
     todo_wine
     {
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %08x\n", res);
     }
+    if (hdata == NULL)
+        ok(FALSE, "hdata is NULL\n");
+    else
+    {
+        str = (LPSTR)DdeAccessData(hdata, &size);
+        ok(!lstrcmpA(str, "requested data\r\n"), "Expected 'requested data\\r\\n', got %s\n", str);
+        ok(size == 19, "Expected 19, got %d\n", size);
 
-    str = (LPSTR)DdeAccessData(hdata, &size);
-    ok(!lstrcmpA(str, "requested data\r\n"), "Expected 'requested data\\r\\n', got %s\n", str);
-    ok(size == 19, "Expected 19, got %d\n", size);
-
-    ret = DdeUnaccessData(hdata);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+        ret = DdeUnaccessData(hdata);
+        ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    }
 
     /* XTYP_REQUEST, fAckReq = TRUE */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
-    ok(hdata != NULL, "Expected non-NULL hdata\n");
     todo_wine
     {
         ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
         ok(ret == DMLERR_MEMORY_ERROR, "Expected DMLERR_MEMORY_ERROR, got %d\n", ret);
     }
+    if (hdata == NULL)
+        ok(FALSE, "hdata is NULL\n");
+    else
+    {
+        str = (LPSTR)DdeAccessData(hdata, &size);
+        ok(!lstrcmpA(str, "requested data\r\n"), "Expected 'requested data\\r\\n', got %s\n", str);
+        ok(size == 19, "Expected 19, got %d\n", size);
 
-    str = (LPSTR)DdeAccessData(hdata, &size);
-    ok(!lstrcmpA(str, "requested data\r\n"), "Expected 'requested data\\r\\n', got %s\n", str);
-    ok(size == 19, "Expected 19, got %d\n", size);
-
-    ret = DdeUnaccessData(hdata);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+        ret = DdeUnaccessData(hdata);
+        ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    }
 
     /* XTYP_REQUEST, all params normal */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
-    ok(hdata != NULL, "Expected non-NULL hdata\n");
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
     todo_wine
     {
         ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
     }
+    if (hdata == NULL)
+        ok(FALSE, "hdata is NULL\n");
+    else
+    {
+        str = (LPSTR)DdeAccessData(hdata, &size);
+        ok(!lstrcmpA(str, "requested data\r\n"), "Expected 'requested data\\r\\n', got %s\n", str);
+        ok(size == 19, "Expected 19, got %d\n", size);
 
-    str = (LPSTR)DdeAccessData(hdata, &size);
-    ok(!lstrcmpA(str, "requested data\r\n"), "Expected 'requested data\\r\\n', got %s\n", str);
-    ok(size == 19, "Expected 19, got %d\n", size);
-
-    ret = DdeUnaccessData(hdata);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+        ret = DdeUnaccessData(hdata);
+        ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    }
 
     /* XTYP_REQUEST, no item */
     res = 0xdeadbeef;
@@ -444,22 +453,24 @@ static void test_ddeml_client(void)
     DdeGetLastError(client_pid);
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
-    ok(hdata != NULL, "Expected non-NULL hdata\n");
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
     todo_wine
     {
         ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
     }
+    if (hdata == NULL)
+        ok(FALSE, "hdata is NULL\n");
+    else
+    {
+        str = (LPSTR)DdeAccessData(hdata, &size);
+        ok(!lstrcmpA(str, "command executed\r\n"), "Expected 'command executed\\r\\n', got %s\n", str);
+        ok(size == 21, "Expected 21, got %d\n", size);
 
-    str = (LPSTR)DdeAccessData(hdata, &size);
-    ok(!lstrcmpA(str, "command executed\r\n"), "Expected 'command executed\\r\\n', got %s\n", str);
-    ok(size == 21, "Expected 21, got %d\n", size);
-
-    ret = DdeUnaccessData(hdata);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+        ret = DdeUnaccessData(hdata);
+        ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    }
 
     /* invalid transactions */
-
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
     op = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_ADVREQ, default_timeout, &res);
