@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 David Adam
+ * Copyright (C) 2007 Tony Wasserka
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -60,7 +61,38 @@ typedef struct D3DXVECTOR2
     FLOAT x, y;
 } D3DXVECTOR2, *LPD3DXVECTOR2;
 
+#ifdef __cplusplus
+typedef struct D3DXVECTOR3 : public D3DVECTOR
+{
+    D3DXVECTOR3();
+    D3DXVECTOR3(CONST FLOAT *pf);
+    D3DXVECTOR3(CONST D3DVECTOR& v);
+    D3DXVECTOR3(FLOAT fx, FLOAT fy, FLOAT fz);
+
+    operator FLOAT* ();
+    operator CONST FLOAT* () const;
+
+    D3DXVECTOR3& operator += (CONST D3DXVECTOR3&);
+    D3DXVECTOR3& operator -= (CONST D3DXVECTOR3&);
+    D3DXVECTOR3& operator *= (FLOAT);
+    D3DXVECTOR3& operator /= (FLOAT);
+
+    D3DXVECTOR3 operator + () const;
+    D3DXVECTOR3 operator - () const;
+
+    D3DXVECTOR3 operator + (CONST D3DXVECTOR3&) const;
+    D3DXVECTOR3 operator - (CONST D3DXVECTOR3&) const;
+    D3DXVECTOR3 operator * (FLOAT) const;
+    D3DXVECTOR3 operator / (FLOAT) const;
+
+    friend D3DXVECTOR3 operator * (FLOAT, CONST struct D3DXVECTOR3&);
+
+    BOOL operator == (CONST D3DXVECTOR3&) const;
+    BOOL operator != (CONST D3DXVECTOR3&) const;
+} D3DXVECTOR3, *LPD3DXVECTOR3;
+#else /* !__cplusplus */
 typedef struct _D3DVECTOR D3DXVECTOR3, *LPD3DXVECTOR3;
+#endif /* !__cplusplus */
 
 typedef struct D3DXVECTOR4
 {

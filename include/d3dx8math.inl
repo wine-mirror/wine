@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 David Adam
+ * Copyright (C) 2007 Tony Wasserka
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,8 +19,6 @@
 
 #ifndef __D3DX8MATH_INL__
 #define __D3DX8MATH_INL__
-
-/*_______________D3DXCOLOR_____________________*/
 
 /* constructors & operators */
 #ifdef __cplusplus
@@ -124,7 +123,122 @@ inline BOOL D3DXVECTOR2::operator != (CONST D3DXVECTOR2& v) const
     return x != v.x || y != v.y;
 }
 
+inline D3DXVECTOR3::D3DXVECTOR3()
+{
+}
+
+inline D3DXVECTOR3::D3DXVECTOR3(CONST FLOAT *pf)
+{
+    if(!pf) return;
+    x = pf[0];
+    y = pf[1];
+    z = pf[2];
+}
+
+inline D3DXVECTOR3::D3DXVECTOR3(CONST D3DVECTOR& v)
+{
+    x = v.x;
+    y = v.y;
+    z = v.z;
+}
+
+inline D3DXVECTOR3::D3DXVECTOR3(FLOAT fx, FLOAT fy, FLOAT fz)
+{
+    x = fx;
+    y = fy;
+    z = fz;
+}
+
+inline D3DXVECTOR3::operator FLOAT* ()
+{
+    return (FLOAT*)&x;
+}
+
+inline D3DXVECTOR3::operator CONST FLOAT* () const
+{
+    return (CONST FLOAT*)&x;
+}
+
+inline D3DXVECTOR3& D3DXVECTOR3::operator += (CONST D3DXVECTOR3& v)
+{
+    x += v.x;
+    y += v.y;
+    z += v.z;
+    return *this;
+}
+
+inline D3DXVECTOR3& D3DXVECTOR3::operator -= (CONST D3DXVECTOR3& v)
+{
+    x -= v.x;
+    y -= v.y;
+    z -= v.z;
+    return *this;
+}
+
+inline D3DXVECTOR3& D3DXVECTOR3::operator *= (FLOAT f)
+{
+    x *= f;
+    y *= f;
+    z *= f;
+    return *this;
+}
+
+inline D3DXVECTOR3& D3DXVECTOR3::operator /= (FLOAT f)
+{
+    x /= f;
+    y /= f;
+    z /= f;
+    return *this;
+}
+
+inline D3DXVECTOR3 D3DXVECTOR3::operator + () const
+{
+    return *this;
+}
+
+inline D3DXVECTOR3 D3DXVECTOR3::operator - () const
+{
+    return D3DXVECTOR3(-x, -y, -z);
+}
+
+inline D3DXVECTOR3 D3DXVECTOR3::operator + (CONST D3DXVECTOR3& v) const
+{
+    return D3DXVECTOR3(x + v.x, y + v.y, z + v.z);
+}
+
+inline D3DXVECTOR3 D3DXVECTOR3::operator - (CONST D3DXVECTOR3& v) const
+{
+    return D3DXVECTOR3(x - v.x, y - v.y, z - v.z);
+}
+
+inline D3DXVECTOR3 D3DXVECTOR3::operator * (FLOAT f) const
+{
+    return D3DXVECTOR3(x * f, y * f, z * f);
+}
+
+inline D3DXVECTOR3 D3DXVECTOR3::operator / (FLOAT f) const
+{
+    return D3DXVECTOR3(x / f, y / f, z / f);
+}
+
+inline D3DXVECTOR3 operator * (FLOAT f, CONST D3DXVECTOR3& v)
+{
+    return D3DXVECTOR3(f * v.x, f * v.y, f * v.z);
+}
+
+inline BOOL D3DXVECTOR3::operator == (CONST D3DXVECTOR3& v) const
+{
+    return x == v.x && y == v.y && z == v.z;
+}
+
+inline BOOL D3DXVECTOR3::operator != (CONST D3DXVECTOR3& v) const
+{
+    return x != v.x || y != v.y || z != v.z;
+}
+
 #endif /* __cplusplus */
+
+/*_______________D3DXCOLOR_____________________*/
 
 static inline D3DXCOLOR* D3DXColorAdd(D3DXCOLOR *pout, CONST D3DXCOLOR *pc1, CONST D3DXCOLOR *pc2)
 {
