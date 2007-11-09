@@ -271,7 +271,7 @@ typedef union
     struct
     {
         enum apc_type    type;
-        unsigned int   (*func)(void*, void*, unsigned int);
+        unsigned int   (*func)(void*, void*, unsigned int, unsigned long *);
         void            *user;
         void            *sb;
         unsigned int     status;
@@ -356,6 +356,7 @@ typedef union
     {
         enum apc_type    type;
         unsigned int     status;
+        unsigned long    total;
     } async_io;
     struct
     {
@@ -4904,6 +4905,6 @@ union generic_reply
     struct add_fd_completion_reply add_fd_completion_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 330
+#define SERVER_PROTOCOL_VERSION 331
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

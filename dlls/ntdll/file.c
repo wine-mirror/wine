@@ -338,7 +338,7 @@ NTSTATUS FILE_GetNtStatus(void)
 /***********************************************************************
  *             FILE_AsyncReadService      (INTERNAL)
  */
-static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status)
+static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status, ULONG_PTR *total)
 {
     async_fileio_read *fileio = user;
     int fd, needs_close, result;
@@ -389,7 +389,7 @@ static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATU
     if (status != STATUS_PENDING)
     {
         iosb->u.Status = status;
-        iosb->Information = fileio->already;
+        iosb->Information = *total = fileio->already;
     }
     return status;
 }
@@ -718,7 +718,7 @@ err:
 /***********************************************************************
  *             FILE_AsyncWriteService      (INTERNAL)
  */
-static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status)
+static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status, ULONG_PTR *total)
 {
     async_fileio_write *fileio = user;
     int result, fd, needs_close;
@@ -759,7 +759,7 @@ static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTAT
     if (status != STATUS_PENDING)
     {
         iosb->u.Status = status;
-        iosb->Information = fileio->already;
+        iosb->Information = *total = fileio->already;
     }
     return status;
 }

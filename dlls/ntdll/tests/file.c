@@ -524,9 +524,7 @@ static void test_iocp_fileio(HANDLE h)
         if (get_msg(h))
         {
             ok( completionKey == CKEY_SECOND, "Invalid completion key: %lx\n", completionKey );
-            todo_wine {
             ok( ioSb.Information == 3, "Invalid ioSb.Information: %ld\n", ioSb.Information );
-            }
             ok( U(ioSb).Status == STATUS_SUCCESS, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
             ok( completionValue == (ULONG_PTR)&o, "Invalid completion value: %lx\n", completionValue );
         }

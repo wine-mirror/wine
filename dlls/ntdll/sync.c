@@ -786,7 +786,8 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         result->type = call->type;
         result->async_io.status = call->async_io.func( call->async_io.user,
                                                        call->async_io.sb,
-                                                       call->async_io.status );
+                                                       call->async_io.status,
+                                                       &result->async_io.total );
         break;
     case APC_VIRTUAL_ALLOC:
         result->type = call->type;

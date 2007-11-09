@@ -1118,7 +1118,7 @@ static int WS2_recv( int fd, struct iovec* iov, int count,
  *
  * Handler for overlapped recv() operations.
  */
-static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status)
+static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, ULONG_PTR *total )
 {
     ws2_async* wsa = user;
     int result = 0, fd;
@@ -1155,7 +1155,7 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
     if (status != STATUS_PENDING)
     {
         iosb->u.Status = status;
-        iosb->Information = result;
+        iosb->Information = *total = result;
     }
     return status;
 }
@@ -1222,7 +1222,7 @@ static int WS2_send( int fd, struct iovec* iov, int count,
  *
  * Handler for overlapped send() operations.
  */
-static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status)
+static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, ULONG_PTR *total )
 {
     ws2_async* wsa = user;
     int result = 0, fd;
@@ -1262,7 +1262,7 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
     if (status != STATUS_PENDING)
     {
         iosb->u.Status = status;
-        iosb->Information = result;
+        iosb->Information = *total = result;
     }
     return status;
 }

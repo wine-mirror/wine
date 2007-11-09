@@ -231,7 +231,7 @@ void async_set_timeout( struct async *async, timeout_t timeout, unsigned int sta
 }
 
 /* store the result of the client-side async callback */
-void async_set_result( struct object *obj, unsigned int status )
+void async_set_result( struct object *obj, unsigned int status, unsigned long total )
 {
     struct async *async = (struct async *)obj;
 
@@ -256,7 +256,7 @@ void async_set_result( struct object *obj, unsigned int status )
         async->timeout = NULL;
         async->status = status;
         if (async->data.cvalue && async->queue && async->queue->fd)
-            fd_add_completion( async->queue->fd, async->data.cvalue, status, 0 ); /* TODO pass Information field */
+            fd_add_completion( async->queue->fd, async->data.cvalue, status, total );
         if (async->data.apc)
         {
             apc_call_t data;
