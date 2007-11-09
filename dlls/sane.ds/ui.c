@@ -739,6 +739,11 @@ static INT_PTR InitializeDialog(HWND hwnd)
 
     rc = psane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE,
             &optcount, NULL);
+    if (rc != SANE_STATUS_GOOD)
+    {
+        ERR("Unable to read number of options\n");
+        return FALSE;
+    }
 
     for ( i = 1; i < optcount; i++)
     {
