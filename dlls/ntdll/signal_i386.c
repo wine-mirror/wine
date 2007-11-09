@@ -1040,16 +1040,21 @@ static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context
 {
     if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
     {
-        if (context->EFlags & 0x100)
+        struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
+
+        /* when single stepping can't tell whether this is a hw bp or a
+         * single step interrupt. try to avoid as much overhead as possible
+         * and only do a server call if there is any hw bp enabled. */
+
+        if( !(context->EFlags & 0x100) || (regs->dr7 & 0xff) )
         {
-            context->EFlags &= ~0x100;  /* clear single-step flag */
-        }
-        else  /* hardware breakpoint, fetch the debug registers */
-        {
+            /* (possible) hardware breakpoint, fetch the debug registers */
             context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
             NtGetContextThread(GetCurrentThread(), context);
             context->ContextFlags |= CONTEXT_FULL;  /* restore flags */
         }
+
+        context->EFlags &= ~0x100;  /* clear single-step flag */
     }
 
     __regs_RtlRaiseException( rec, context );

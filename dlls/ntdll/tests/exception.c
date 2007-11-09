@@ -489,7 +489,7 @@ static DWORD bpx_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *
         /* single step exception on second nop */
         ok( context->Eip == (DWORD)code_mem + 1, "eip is wrong: %x instead of %x\n",
                                                  context->Eip, (DWORD)code_mem + 1);
-        todo_wine{ ok( (context->Dr6 & 0x4000), "BS flag is not set in Dr6\n"); };
+        ok( (context->Dr6 & 0x4000), "BS flag is not set in Dr6\n");
        /* depending on the win version the B0 bit is already set here as well
         ok( (context->Dr6 & 0xf) == 0, "B0...3 flags in Dr6 shouldn't be set\n"); */
         context->EFlags |= 0x100;
@@ -497,7 +497,7 @@ static DWORD bpx_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *
         /* hw bp exception on second nop */
         ok( context->Eip == (DWORD)code_mem + 1, "eip is wrong: %x instead of %x\n",
                                                  context->Eip, (DWORD)code_mem + 1);
-        todo_wine{ ok( (context->Dr6 & 0xf) == 1, "B0 flag is not set in Dr6\n"); };
+        ok( (context->Dr6 & 0xf) == 1, "B0 flag is not set in Dr6\n");
         ok( !(context->Dr6 & 0x4000), "BS flag is set in Dr6\n");
         context->Dr0 = 0;       /* clear breakpoint */
         context->EFlags |= 0x100;
@@ -506,7 +506,7 @@ static DWORD bpx_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *
         ok( context->Eip == (DWORD)code_mem + 2, "eip is wrong: %x instead of %x\n",
                                                  context->Eip, (DWORD)code_mem + 2);
         ok( (context->Dr6 & 0xf) == 0, "B0...3 flags in Dr6 shouldn't be set\n");
-        todo_wine{ ok( (context->Dr6 & 0x4000), "BS flag is not set in Dr6\n"); };
+        ok( (context->Dr6 & 0x4000), "BS flag is not set in Dr6\n");
     }
 
     context->Dr6 = 0;  /* clear status register */
