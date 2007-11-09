@@ -703,18 +703,17 @@ static MENUITEM *MENU_FindItemByCoords( const POPUPMENU *menu,
 {
     MENUITEM *item;
     UINT i;
-    RECT wrect;
     RECT rect;
 
-    if (!GetWindowRect(menu->hWnd,&wrect)) return NULL;
-    pt.x -= wrect.left;pt.y -= wrect.top;
+    if (!GetWindowRect(menu->hWnd, &rect)) return NULL;
+    pt.x -= rect.left;
+    pt.y -= rect.top;
     item = menu->items;
     for (i = 0; i < menu->nItems; i++, item++)
     {
         rect = item->rect;
         MENU_AdjustMenuItemRect(menu, &rect);
-	if ((pt.x >= rect.left) && (pt.x < rect.right) &&
-	    (pt.y >= rect.top) && (pt.y < rect.bottom))
+	if (PtInRect(&rect, pt))
 	{
 	    if (pos) *pos = i;
 	    return item;
@@ -1109,7 +1108,7 @@ MENU_GetMaxPopupHeight(LPPOPUPMENU lppop)
  *
  * Calculate the size of a popup menu.
  */
-static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
+static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
 {
     MENUITEM *lpitem;
     HDC hdc;
@@ -1143,7 +1142,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
 	    if ((i != start) &&
 		(lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
 
-	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, FALSE, lppop );
+	    MENU_CalcItemSize( hdc, lpitem, lppop->hwndOwner, orgX, orgY, FALSE, lppop );
 	    maxX = max( maxX, lpitem->rect.right );
 	    orgY = lpitem->rect.bottom;
 	    if (IS_STRING_ITEM(lpitem->fType) && lpitem->xTab)
@@ -1792,7 +1791,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
     menu->hwndOwner = hwndOwner;
 
     menu->nScrollPos = 0;
-    MENU_PopupMenuCalcSize( menu, hwndOwner );
+    MENU_PopupMenuCalcSize( menu );
 
     /* adjust popup menu pos so that it fits within the desktop */
 
@@ -3657,7 +3656,7 @@ INT WINAPI GetMenuStringA(
     if (!str || !nMaxSiz) return strlenW(item->text);
     if (!WideCharToMultiByte( CP_ACP, 0, item->text, -1, str, nMaxSiz, NULL, NULL ))
         str[nMaxSiz-1] = 0;
-    TRACE("returning '%s'\n", str );
+    TRACE("returning %s\n", debugstr_a(str));
     return strlen(str);
 }
 
@@ -3682,6 +3681,7 @@ INT WINAPI GetMenuStringW( HMENU hMenu, UINT wItemID,
         return 0;
     }
     lstrcpynW( str, item->text, nMaxSiz );
+    TRACE("returning %s\n", debugstr_w(str));
     return strlenW(str);
 }
 
