@@ -4303,6 +4303,142 @@ static void pshader_version_varying_test(IDirect3DDevice9 *device) {
     if(texture) IDirect3DTexture9_Release(texture);
 }
 
+void test_compare_instructions(IDirect3DDevice9 *device)
+{
+    DWORD shader_sge_vec_code[] = {
+        0xfffe0101,                                         /* vs_1_1                   */
+        0x0000001f, 0x80000000, 0x900f0000,                 /* dcl_position v0          */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0             */
+        0x00000001, 0x800f0000, 0xa0e40000,                 /* mov r0, c0               */
+        0x0000000d, 0xd00f0000, 0x80e40000, 0xa0e40001,     /* sge oD0, r0, c1          */
+        0x0000ffff                                          /* end                      */
+    };
+    DWORD shader_slt_vec_code[] = {
+        0xfffe0101,                                         /* vs_1_1                   */
+        0x0000001f, 0x80000000, 0x900f0000,                 /* dcl_position v0          */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0             */
+        0x00000001, 0x800f0000, 0xa0e40000,                 /* mov r0, c0               */
+        0x0000000c, 0xd00f0000, 0x80e40000, 0xa0e40001,     /* slt oD0, r0, c1          */
+        0x0000ffff                                          /* end                      */
+    };
+    DWORD shader_sge_scalar_code[] = {
+        0xfffe0101,                                         /* vs_1_1                   */
+        0x0000001f, 0x80000000, 0x900f0000,                 /* dcl_position v0          */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0             */
+        0x00000001, 0x800f0000, 0xa0e40000,                 /* mov r0, c0               */
+        0x0000000d, 0xd0010000, 0x80000000, 0xa0550001,     /* slt oD0.r, r0.r, c1.b    */
+        0x0000000d, 0xd0020000, 0x80550000, 0xa0aa0001,     /* slt oD0.g, r0.g, c1.r    */
+        0x0000000d, 0xd0040000, 0x80aa0000, 0xa0000001,     /* slt oD0.b, r0.b, c1.g    */
+        0x0000ffff                                          /* end                      */
+    };
+    DWORD shader_slt_scalar_code[] = {
+        0xfffe0101,                                         /* vs_1_1                   */
+        0x0000001f, 0x80000000, 0x900f0000,                 /* dcl_position v0          */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0             */
+        0x00000001, 0x800f0000, 0xa0e40000,                 /* mov r0, c0               */
+        0x0000000c, 0xd0010000, 0x80000000, 0xa0aa0001,     /* slt oD0.r, r0.r, c1.b    */
+        0x0000000c, 0xd0020000, 0x80550000, 0xa0000001,     /* slt oD0.g, r0.g, c1.r    */
+        0x0000000c, 0xd0040000, 0x80aa0000, 0xa0550001,     /* slt oD0.b, r0.b, c1.g    */
+        0x0000ffff                                          /* end                      */
+    };
+    IDirect3DVertexShader9 *shader_sge_vec;
+    IDirect3DVertexShader9 *shader_slt_vec;
+    IDirect3DVertexShader9 *shader_sge_scalar;
+    IDirect3DVertexShader9 *shader_slt_scalar;
+    HRESULT hr, color;
+    float quad1[] =  {
+        -1.0,   -1.0,   0.1,
+         0.0,   -1.0,   0.1,
+        -1.0,    0.0,   0.1,
+         0.0,    0.0,   0.1
+    };
+    float quad2[] =  {
+         0.0,   -1.0,   0.1,
+         1.0,   -1.0,   0.1,
+         0.0,    0.0,   0.1,
+         1.0,    0.0,   0.1
+    };
+    float quad3[] =  {
+        -1.0,    0.0,   0.1,
+         0.0,    0.0,   0.1,
+        -1.0,    1.0,   0.1,
+         0.0,    1.0,   0.1
+    };
+    float quad4[] =  {
+         0.0,    0.0,   0.1,
+         1.0,    0.0,   0.1,
+         0.0,    1.0,   0.1,
+         1.0,    1.0,   0.1
+    };
+    const float const0[4] = {0.8, 0.2, 0.2, 0.2};
+    const float const1[4] = {0.2, 0.8, 0.2, 0.2};
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, shader_sge_vec_code, &shader_sge_vec);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateVertexShader(device, shader_slt_vec_code, &shader_slt_vec);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateVertexShader(device, shader_sge_scalar_code, &shader_sge_scalar);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateVertexShader(device, shader_slt_scalar_code, &shader_slt_scalar);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, const0, 1);
+    ok(SUCCEEDED(hr), "SetVertexShaderConstantF failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 1, const1, 1);
+    ok(SUCCEEDED(hr), "SetVertexShaderConstantF failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetFVF failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_SetVertexShader(device, shader_sge_vec);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(float) * 3);
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetVertexShader(device, shader_slt_vec);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2,  quad2, sizeof(float) * 3);
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetVertexShader(device, shader_sge_scalar);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, sizeof(float) * 3);
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, const0, 1);
+        ok(SUCCEEDED(hr), "SetVertexShaderConstantF failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetVertexShader(device, shader_slt_scalar);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, sizeof(float) * 3);
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x00FF00FF, "Compare test: Quad 1(sge vec) returned color 0x%08x, expected 0x00FF00FFn", color);
+    color = getPixelColor(device, 480, 360);
+    ok(color == 0x0000FF00, "Compare test: Quad 2(slt vec) returned color 0x%08x, expected 0x0000FF00\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color == 0x00FFFFFF, "Compare test: Quad 3(sge scalar) returned color 0x%08x, expected 0x00FFFFFF\n", color);
+    color = getPixelColor(device, 480, 160);
+    ok(color == 0x000000ff, "Compare test: Quad 4(slt scalar) returned color 0x%08x, expected 0x000000ff\n", color);
+
+    IDirect3DVertexShader9_Release(shader_sge_vec);
+    IDirect3DVertexShader9_Release(shader_slt_vec);
+    IDirect3DVertexShader9_Release(shader_sge_scalar);
+    IDirect3DVertexShader9_Release(shader_slt_scalar);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -4385,6 +4521,7 @@ START_TEST(visual)
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
         test_constant_clamp_vs(device_ptr);
+        test_compare_instructions(device_ptr);
     }
     else skip("No vs_1_1 support\n");
 

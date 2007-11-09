@@ -1563,9 +1563,17 @@ void shader_glsl_compare(SHADER_OPCODE_ARG* arg) {
     } else {
         switch(arg->opcode->opcode) {
             case WINED3DSIO_SLT:
-                shader_addline(arg->buffer, "step(%s, %s));\n", src0_param.param_str, src1_param.param_str);
+                /* Step(src0, src1) is not suitable here because if src0 == src1 SLT is supposed,
+                 * to return 0.0 but step returns 1.0 because step is not < x
+                 * An alternative is a bvec compare padded with an unused secound component.
+                 * step(src1 * -1.0, src0 * -1.0) is not an option because it suffers from the same
+                 * issue. Playing with not() is not possible either because not() does not accept
+                 * a scalar.
+                 */
+                shader_addline(arg->buffer, "(%s < %s) ? 1.0 : 0.0);\n", src0_param.param_str, src1_param.param_str);
                 break;
             case WINED3DSIO_SGE:
+                /* Here we can use the step() function and safe a conditional */
                 shader_addline(arg->buffer, "step(%s, %s));\n", src1_param.param_str, src0_param.param_str);
                 break;
             default:
