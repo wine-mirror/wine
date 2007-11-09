@@ -1427,15 +1427,14 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
     switch (bmpImage->depth) {
     case 15:
     case 16:
-#if defined(__i386__) && defined(__GNUC__)
 	/* Some X servers might have 32 bit/ 16bit deep pixel */
 	if (lines && width && (bmpImage->bits_per_pixel == 16) &&
             (ImageByteOrder(gdi_display)==LSBFirst) )
 	{
-	    dstbits=(BYTE*)bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
-	    /* FIXME: Does this really handle all these cases correctly? */
 	    /* ==== pal 8 dib -> rgb or bgr 555 or 565 bmp ==== */
+	    dstbits=(BYTE*)bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
 	    for (h = lines ; h--; ) {
+#if defined(__i386__) && defined(__GNUC__)
 		int _cl1,_cl2; /* temp outputs for asm below */
 		/* Borrowed from DirectDraw */
 		__asm__ __volatile__(
@@ -1454,23 +1453,33 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 		 "d" (colors)
 		:"eax", "cc", "memory"
 		);
+#else
+		DWORD* dstpixel=(DWORD*)dstbits;
+		for (x=0; x<width/2; x++) {
+		    /* Do 2 pixels at a time */
+		    *dstpixel++=(colors[srcbyte[1]] << 16) | colors[srcbyte[0]];
+		    srcbyte+=2;
+		}
+		if (width&1) {
+		    /* And then the odd pixel */
+		    *((WORD*)dstpixel)=colors[srcbyte[0]];
+		}
+#endif
 		srcbyte = (srcbits += linebytes);
 		dstbits -= bmpImage->bytes_per_line;
 	    }
 	    return;
 	}
 	break;
-#endif
     case 24:
     case 32:
-#if defined(__i386__) && defined(__GNUC__)
 	if (lines && width && (bmpImage->bits_per_pixel == 32) &&
             (ImageByteOrder(gdi_display)==LSBFirst) )
 	{
 	    dstbits=(BYTE*)bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
-	    /* FIXME: Does this really handle both cases correctly? */
 	    /* ==== pal 8 dib -> rgb or bgr 0888 bmp ==== */
 	    for (h = lines ; h--; ) {
+#if defined(__i386__) && defined(__GNUC__)
 		int _cl1,_cl2; /* temp outputs for asm below */
 		/* Borrowed from DirectDraw */
 		__asm__ __volatile__(
@@ -1489,13 +1498,18 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 		 "d" (colors)
 		:"eax", "cc", "memory"
 		);
+#else
+		DWORD* dstpixel=(DWORD*)dstbits;
+		for (x=0; x<width; x++) {
+		    *dstpixel++=colors[*srcbyte++];
+		}
+#endif
 		srcbyte = (srcbits += linebytes);
 		dstbits -= bmpImage->bytes_per_line;
 	    }
 	    return;
 	}
 	break;
-#endif
     default:
         break; /* use slow generic case below */
     }
