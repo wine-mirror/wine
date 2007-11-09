@@ -394,6 +394,8 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
         int hold_for_group = 0;
 
         opt = psane_get_option_descriptor(activeDS.deviceHandle, i);
+        if (!opt)
+            continue;
         if (opt->type == SANE_TYPE_GROUP && split_tabs)
         {
             if (control_len > 0)
@@ -407,6 +409,8 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
                 return NULL;
             }
         }
+        if (!SANE_OPTION_IS_ACTIVE (opt->cap))
+            continue;
 
         len = create_item(hdc, opt, ID_BASE + i, &item_tpl, y, &x, &count);
 
