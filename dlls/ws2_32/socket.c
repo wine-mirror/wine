@@ -1324,6 +1324,7 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
         req->async.iosb     = &wsa->local_iosb;
         req->async.arg      = wsa;
         req->async.apc      = ws2_async_apc;
+        req->async.cvalue   = 0;
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -2688,6 +2689,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 req->async.arg      = wsa;
                 req->async.apc      = ws2_async_apc;
                 req->async.event    = lpCompletionRoutine ? 0 : lpOverlapped->hEvent;
+                req->async.cvalue   = 0;
                 err = wine_server_call( req );
             }
             SERVER_END_REQ;
@@ -4201,6 +4203,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                     req->async.arg      = wsa;
                     req->async.apc      = ws2_async_apc;
                     req->async.event    = lpCompletionRoutine ? 0 : lpOverlapped->hEvent;
+                    req->async.cvalue   = 0;
                     err = wine_server_call( req );
                 }
                 SERVER_END_REQ;

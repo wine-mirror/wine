@@ -650,6 +650,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 req->async.arg      = fileio;
                 req->async.apc      = fileio_apc;
                 req->async.event    = hEvent;
+                req->async.cvalue   = 0;
                 status = wine_server_call( req );
             }
             SERVER_END_REQ;
@@ -879,6 +880,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                 req->async.arg      = fileio;
                 req->async.apc      = fileio_apc;
                 req->async.event    = hEvent;
+                req->async.cvalue   = 0;
                 status = wine_server_call( req );
             }
             SERVER_END_REQ;
@@ -1005,6 +1007,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         req->async.arg      = async;
         req->async.apc      = (apc || event) ? ioctl_apc : NULL;
         req->async.event    = event;
+        req->async.cvalue   = 0;
         wine_server_add_data( req, in_buffer, in_size );
         wine_server_set_reply( req, out_buffer, out_size );
         if (!(status = wine_server_call( req )))
@@ -1061,7 +1064,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
                                       PVOID out_buffer, ULONG out_size)
 {
     ULONG device = (code >> 16);
-    NTSTATUS status;
+    NTSTATUS status = STATUS_NOT_SUPPORTED;
 
     TRACE("(%p,%p,%p,%p,%p,0x%08x,%p,0x%08x,%p,0x%08x)\n",
           handle, event, apc, apc_context, io, code,
@@ -1085,11 +1088,12 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
         status = TAPE_DeviceIoControl(handle, event, apc, apc_context, io, code,
                                       in_buffer, in_size, out_buffer, out_size);
         break;
-    default:
+    }
+
+    if (status == STATUS_NOT_SUPPORTED)
         status = server_ioctl_file( handle, event, apc, apc_context, io, code,
                                     in_buffer, in_size, out_buffer, out_size );
-        break;
-    }
+
     if (status != STATUS_PENDING) io->u.Status = status;
     return status;
 }
@@ -1807,6 +1811,16 @@ static inline void get_device_info_fstatfs( FILE_FS_DEVICE_INFORMATION *info, co
 }
 #endif
 
+static inline int is_device_placeholder( int fd )
+{
+    static const char wine_placeholder[] = "Wine device placeholder";
+    char buffer[sizeof(wine_placeholder)-1];
+
+    if (pread( fd, buffer, sizeof(wine_placeholder) - 1, 0 ) != sizeof(wine_placeholder) - 1)
+        return 0;
+    return !memcmp( buffer, wine_placeholder, sizeof(wine_placeholder) - 1 );
+}
+
 /******************************************************************************
  *              get_device_info
  *
@@ -1846,6 +1860,10 @@ static NTSTATUS get_device_info( int fd, FILE_FS_DEVICE_INFORMATION *info )
     else if (S_ISFIFO( st.st_mode ) || S_ISSOCK( st.st_mode ))
     {
         info->DeviceType = FILE_DEVICE_NAMED_PIPE;
+    }
+    else if (is_device_placeholder( fd ))
+    {
+        info->DeviceType = FILE_DEVICE_DISK;
     }
     else  /* regular file or directory */
     {

@@ -163,6 +163,7 @@ typedef struct
     void           *arg;
     void           *apc;
     obj_handle_t    event;
+    unsigned long   cvalue;
 } async_data_t;
 
 
@@ -4885,6 +4886,6 @@ union generic_reply
     struct set_completion_info_reply set_completion_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 328
+#define SERVER_PROTOCOL_VERSION 329
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -132,7 +132,7 @@ struct completion *get_completion_obj( struct process *process, obj_handle_t han
     return (struct completion *) get_handle_obj( process, handle, access, &completion_ops );
 }
 
-static void add_completion( struct completion *completion, unsigned long ckey, unsigned long cvalue, unsigned int status, unsigned long information )
+void add_completion( struct completion *completion, unsigned long ckey, unsigned long cvalue, unsigned int status, unsigned long information )
 {
     struct comp_msg *msg = mem_alloc( sizeof( *msg ) );
 

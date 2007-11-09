@@ -179,6 +179,7 @@ typedef struct
     void           *arg;           /* opaque user data to pass to callback */
     void           *apc;           /* user apc to call */
     obj_handle_t    event;         /* event to signal when done */
+    unsigned long   cvalue;        /* completion value to use for completion events */
 } async_data_t;
 
 /* structures for extra message data */

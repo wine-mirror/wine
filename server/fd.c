@@ -1919,6 +1919,13 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
     return fd;
 }
 
+/* add a completion result to a completion queue attached to the fd */
+void fd_add_completion( struct fd *fd, unsigned long cvalue, unsigned int status, unsigned long information )
+{
+    if (fd->completion)
+        add_completion( fd->completion, fd->comp_key, cvalue, status, information );
+}
+
 /* flush a file buffers */
 DECL_HANDLER(flush_file)
 {

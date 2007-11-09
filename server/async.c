@@ -144,6 +144,10 @@ void async_terminate( struct async *async, unsigned int status )
         return;
     }
 
+    /* send error completion event */
+    if (status != STATUS_ALERTED && async->data.cvalue && async->queue && async->queue->fd)
+        fd_add_completion( async->queue->fd, async->data.cvalue, status, 0 );
+
     memset( &data, 0, sizeof(data) );
     data.type            = APC_ASYNC_IO;
     data.async_io.func   = async->data.callback;
@@ -251,6 +255,8 @@ void async_set_result( struct object *obj, unsigned int status )
         if (async->timeout) remove_timeout_user( async->timeout );
         async->timeout = NULL;
         async->status = status;
+        if (async->data.cvalue && async->queue && async->queue->fd)
+            fd_add_completion( async->queue->fd, async->data.cvalue, status, 0 ); /* TODO pass Information field */
         if (async->data.apc)
         {
             apc_call_t data;

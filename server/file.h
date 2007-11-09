@@ -122,7 +122,8 @@ extern struct object *create_dir_obj( struct fd *fd );
 
 /* completion */
 
-struct completion *get_completion_obj( struct process *process, obj_handle_t handle, unsigned int access );
+extern struct completion *get_completion_obj( struct process *process, obj_handle_t handle, unsigned int access );
+extern void add_completion( struct completion *completion, unsigned long ckey, unsigned long cvalue, unsigned int status, unsigned long information );
 
 /* serial port functions */
 
@@ -139,6 +140,7 @@ extern void async_set_result( struct object *obj, unsigned int status );
 extern int async_waiting( struct async_queue *queue );
 extern void async_terminate( struct async *async, unsigned int status );
 extern void async_wake_up( struct async_queue *queue, unsigned int status );
+extern void fd_add_completion( struct fd *fd, unsigned long cvalue, unsigned int status, unsigned long information );
 
 /* access rights that require Unix read permission */
 #define FILE_UNIX_READ_ACCESS (FILE_READ_DATA|FILE_READ_ATTRIBUTES|FILE_READ_EA)
