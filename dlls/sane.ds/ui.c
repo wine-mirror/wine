@@ -370,10 +370,8 @@ static int create_item(HDC hdc, const SANE_Option_Descriptor *opt,
 
 
 static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
-                                          BOOL split_tabs)
+                                          SANE_Int optcount, BOOL split_tabs)
 {
-    SANE_Status rc;
-    SANE_Int optcount;
     int i;
     INT y = 2;
     LPDLGTEMPLATEW tpl = NULL;
@@ -384,15 +382,6 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
     LPBYTE ptr;
     int group_offset = -1;
     INT control_count = 0;
-
-    rc = psane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE,
-            &optcount, NULL);
-
-    if (rc != SANE_STATUS_GOOD)
-    {
-        ERR("Unable to read number of options\n");
-        return NULL;
-    }
 
     for (i = *from_index; i < optcount; i++)
     {
@@ -540,12 +529,17 @@ BOOL DoScannerUI(void)
     memset(&psp,0,sizeof(psp));
     rc = psane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE,
             &optcount, NULL);
+    if (rc != SANE_STATUS_GOOD)
+    {
+        ERR("Unable to read number of options\n");
+        return FALSE;
+    }
 
     while (index < optcount)
     {
         const SANE_Option_Descriptor *opt;
         psp[page_count].u.pResource = create_options_page(hdc, &index,
-                TRUE);
+                optcount, TRUE);
         opt = psane_get_option_descriptor(activeDS.deviceHandle, index);
 
         if (opt->type == SANE_TYPE_GROUP)
