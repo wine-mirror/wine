@@ -3006,3 +3006,12 @@ enum message_type
     obj_handle_t  chandle;        /* port handle */
     unsigned long ckey;           /* completion key */
 @END
+
+
+/* check for associated completion and push msg */
+@REQ(add_fd_completion)
+    obj_handle_t   handle;        /* async' object */
+    unsigned long  cvalue;        /* completion value */
+    unsigned int   status;        /* completion status */
+    unsigned long  information;   /* IO_STATUS_BLOCK Information */
+@END

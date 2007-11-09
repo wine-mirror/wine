@@ -2056,3 +2056,14 @@ DECL_HANDLER(set_completion_info)
         release_object( fd );
     }
 }
+
+/* push new completion msg into a completion queue attached to the fd */
+DECL_HANDLER(add_fd_completion)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+    if (fd)
+    {
+        fd_add_completion( fd, req->cvalue, req->status, req->information );
+        release_object( fd );
+    }
+}
