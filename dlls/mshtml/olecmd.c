@@ -626,12 +626,6 @@ static HRESULT exec_htmleditmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *
     return S_OK;
 }
 
-static HRESULT exec_setdirty(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
-{
-    FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
-    return E_NOTIMPL;
-}
-
 static HRESULT exec_baselinefont3(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
@@ -718,7 +712,6 @@ static const cmdtable_t base_cmds[] = {
     {IDM_BROWSEMODE,       NULL,                  exec_browsemode},
     {IDM_EDITMODE,         NULL,                  exec_editmode},
     {IDM_PRINT,            query_enabled_stub,    exec_print},
-    {IDM_SETDIRTY,         NULL,                  exec_setdirty},
     {IDM_HTMLEDITMODE,     NULL,                  exec_htmleditmode},
     {IDM_BASELINEFONT3,    NULL,                  exec_baselinefont3},
     {IDM_BLOCKDIRLTR,      query_enabled_stub,    NULL},

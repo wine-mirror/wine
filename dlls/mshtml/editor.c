@@ -99,6 +99,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static const WCHAR wszFont[] = {'f','o','n','t',0};
 static const WCHAR wszSize[] = {'s','i','z','e',0};
 
+static void set_dirty(HTMLDocument *This, VARIANT_BOOL dirty)
+{
+    nsresult nsres;
+
+    if(!This->nscontainer || !This->nscontainer->editor)
+        return;
+
+    if(dirty) {
+        nsres = nsIEditor_IncrementModificationCount(This->nscontainer->editor, 1);
+        if(NS_FAILED(nsres))
+            ERR("IncrementModificationCount failed: %08x\n", nsres);
+    }else {
+        nsres = nsIEditor_ResetModificationCount(This->nscontainer->editor);
+        if(NS_FAILED(nsres))
+            ERR("ResetModificationCount failed: %08x\n", nsres);
+    }
+}
+
 static void do_ns_editor_command(NSContainer *This, const char *cmd)
 {
     nsresult nsres;
@@ -383,6 +401,8 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
 
     nsISelection_Release(nsselection);
     nsIDOMDocument_Release(nsdoc);
+
+    set_dirty(This, VARIANT_TRUE);
 }
 
 static void handle_arrow_key(HTMLDocument *This, nsIDOMKeyEvent *event, const char * const cmds[4])
@@ -949,6 +969,21 @@ HRESULT editor_exec_paste(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VAR
     return S_OK;
 }
 
+static HRESULT exec_setdirty(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
+
+    if(!in || This->usermode != EDITMODE)
+        return S_OK;
+
+    if(V_VT(in) == VT_BOOL)
+        set_dirty(This, V_BOOL(in));
+    else
+        FIXME("unsupported vt=%d\n", V_VT(in));
+
+    return S_OK;
+}
+
 static HRESULT query_edit_status(HTMLDocument *This, OLECMD *cmd)
 {
     switch(cmd->cmdID) {
@@ -1247,6 +1282,7 @@ const cmdtable_t editmode_cmds[] = {
     {IDM_OUTDENT,         query_edit_status,    exec_outdent},
     {IDM_COMPOSESETTINGS, NULL,                 exec_composesettings},
     {IDM_HYPERLINK,       query_edit_status,    exec_hyperlink},
+    {IDM_SETDIRTY,        NULL,                 exec_setdirty},
     {0,NULL,NULL}
 };
 
