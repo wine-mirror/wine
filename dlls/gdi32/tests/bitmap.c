@@ -31,6 +31,8 @@
 
 #include "wine/test.h"
 
+static BOOL (WINAPI *pGdiAlphaBlend)(HDC,int,int,int,int,HDC,int,int,int,int,BLENDFUNCTION);
+
 #define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
 
 static BOOL is_win9x;
@@ -1836,19 +1838,30 @@ static void test_get16dibits(void)
 void test_GdiAlphaBlend()
 {
     /* test out-of-bound parameters for GdiAlphaBlend */
-    HDC hdcNull = GetDC(NULL);
+    HDC hdcNull;
 
-    HDC hdcDst = CreateCompatibleDC(hdcNull);
-    HBITMAP bmpDst = CreateCompatibleBitmap(hdcNull, 100, 100);
+    HDC hdcDst;
+    HBITMAP bmpDst;
     HBITMAP oldDst;
 
     BITMAPINFO bmi;
-    HDC hdcSrc = CreateCompatibleDC(hdcNull);
+    HDC hdcSrc;
     HBITMAP bmpSrc;
     HBITMAP oldSrc;
     LPVOID bits;
 
     BLENDFUNCTION blend;
+
+    if (!pGdiAlphaBlend)
+    {
+        skip("GdiAlphaBlend() is not implemented\n");
+        return;
+    }
+
+    hdcNull = GetDC(NULL);
+    hdcDst = CreateCompatibleDC(hdcNull);
+    bmpDst = CreateCompatibleBitmap(hdcNull, 100, 100);
+    hdcSrc = CreateCompatibleDC(hdcNull);
 
     memset(&bmi, 0, sizeof(bmi));  /* as of Wine 0.9.44 we require the src to be a DIB section */
     bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
@@ -1868,22 +1881,22 @@ void test_GdiAlphaBlend()
     blend.SourceConstantAlpha = 128;
     blend.AlphaFormat = 0;
 
-    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend), TRUE, BOOL, "%d");
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend), TRUE, BOOL, "%d");
     SetLastError(0xdeadbeef);
-    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 10, 10, blend), FALSE, BOOL, "%d");
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 10, 10, blend), FALSE, BOOL, "%d");
     expect_eq(GetLastError(), ERROR_INVALID_PARAMETER, int, "%d");
-    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 10, 10, blend), FALSE, BOOL, "%d");
-    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 15, 0, 10, 10, blend), FALSE, BOOL, "%d");
-    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 10, 10, -2, 3, blend), FALSE, BOOL, "%d");
-    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 10, 10, -2, 3, blend), FALSE, BOOL, "%d");
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 10, 10, blend), FALSE, BOOL, "%d");
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 15, 0, 10, 10, blend), FALSE, BOOL, "%d");
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 10, 10, -2, 3, blend), FALSE, BOOL, "%d");
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 10, 10, -2, 3, blend), FALSE, BOOL, "%d");
 
     SetWindowOrgEx(hdcSrc, -10, -10, NULL);
-    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 10, 10, blend), TRUE, BOOL, "%d");
-    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 10, 10, blend), TRUE, BOOL, "%d");
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 10, 10, blend), TRUE, BOOL, "%d");
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 10, 10, blend), TRUE, BOOL, "%d");
     SetMapMode(hdcSrc, MM_ANISOTROPIC);
     ScaleWindowExtEx(hdcSrc, 10, 1, 10, 1, NULL);
-    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 30, 30, blend), TRUE, BOOL, "%d");
-    expect_eq(GdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 30, 30, blend), TRUE, BOOL, "%d");
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 30, 30, blend), TRUE, BOOL, "%d");
+    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 30, 30, blend), TRUE, BOOL, "%d");
 
     SelectObject(hdcDst, oldDst);
     SelectObject(hdcSrc, oldSrc);
@@ -1898,7 +1911,11 @@ void test_GdiAlphaBlend()
 
 START_TEST(bitmap)
 {
+    HMODULE hdll;
     is_win9x = GetWindowLongPtrW(GetDesktopWindow(), GWLP_WNDPROC) == 0;
+
+    hdll = GetModuleHandle("gdi32.dll");
+    pGdiAlphaBlend = (void*)GetProcAddress(hdll, "GdiAlphaBlend");
 
     test_createdibitmap();
     test_dibsections();
