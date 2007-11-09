@@ -414,11 +414,8 @@ static void test_ddeml_client(void)
     op = DdeClientTransaction((LPBYTE)hdata, -1, conversation, NULL, 0, XTYP_EXECUTE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
-    todo_wine
-    {
-        ok(op == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", op);
-        ok(res == DDE_FACK, "Expected DDE_FACK, got %d\n", res);
-    }
+    ok(op == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", op);
+    ok(res == DDE_FACK, "Expected DDE_FACK, got %d\n", res);
 
     /* XTYP_EXECUTE, no data */
     res = 0xdeadbeef;

@@ -985,6 +985,15 @@ static WDML_QUEUE_STATE WDML_HandleReply(WDML_CONV* pConv, MSG* msg, HDDEDATA* h
 	case WM_DDE_TERMINATE:
 	    qs = WDML_HandleIncomingTerminate(pConv, msg, hdd);
 	    break;
+        case WM_DDE_ACK:
+            /* This happens at end of DdeClientTransaction XTYP_EXECUTE
+             * Without this assignment, DdeClientTransaction's return value is undefined
+             * See also http://support.microsoft.com/kb/102574
+             */
+            *hdd = (HDDEDATA)TRUE;
+            if (ack)
+                *ack = DDE_FACK;
+	    break;
 	}
 	break;
     case WDML_QS_BLOCK:
