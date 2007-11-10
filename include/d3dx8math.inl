@@ -508,6 +508,137 @@ inline BOOL D3DXMATRIX::operator != (CONST D3DXMATRIX& mat) const
     return (memcmp(this, &mat, sizeof(D3DXMATRIX)) != 0);
 }
 
+inline D3DXQUATERNION::D3DXQUATERNION()
+{
+}
+
+inline D3DXQUATERNION::D3DXQUATERNION(CONST FLOAT *pf)
+{
+    if(!pf) return;
+    x = pf[0];
+    y = pf[1];
+    z = pf[2];
+    w = pf[3];
+}
+
+inline D3DXQUATERNION::D3DXQUATERNION(FLOAT fx, FLOAT fy, FLOAT fz, FLOAT fw)
+{
+    x = fx;
+    y = fy;
+    z = fz;
+    w = fw;
+}
+
+inline D3DXQUATERNION::operator FLOAT* ()
+{
+    return (FLOAT*)&x;
+}
+
+inline D3DXQUATERNION::operator CONST FLOAT* () const
+{
+    return (CONST FLOAT*)&x;
+}
+
+inline D3DXQUATERNION& D3DXQUATERNION::operator += (CONST D3DXQUATERNION& quat)
+{
+    x += quat.x;
+    y += quat.y;
+    z += quat.z;
+    w += quat.w;
+    return *this;
+}
+
+inline D3DXQUATERNION& D3DXQUATERNION::operator -= (CONST D3DXQUATERNION& quat)
+{
+    x -= quat.x;
+    y -= quat.y;
+    z -= quat.z;
+    w -= quat.w;
+    return *this;
+}
+
+/* TODO: uncomment this when D3DXQuaternionMultiply has been implemented
+inline D3DXQUATERNION& D3DXQUATERNION::operator *= (CONST D3DXQUATERNION& quat)
+{
+    D3DXQuaternionMultiply(this, this, &quat);
+    return *this;
+}
+*/
+
+inline D3DXQUATERNION& D3DXQUATERNION::operator *= (FLOAT f)
+{
+    x *= f;
+    y *= f;
+    z *= f;
+    w *= f;
+    return *this;
+}
+
+inline D3DXQUATERNION& D3DXQUATERNION::operator /= (FLOAT f)
+{
+    FLOAT inv = 1.0f / f;
+    x *= inv;
+    y *= inv;
+    z *= inv;
+    w *= inv;
+    return *this;
+}
+
+inline D3DXQUATERNION D3DXQUATERNION::operator + () const
+{
+    return *this;
+}
+
+inline D3DXQUATERNION D3DXQUATERNION::operator - () const
+{
+    return D3DXQUATERNION(-x, -y, -z, -w);
+}
+
+inline D3DXQUATERNION D3DXQUATERNION::operator + (CONST D3DXQUATERNION& quat) const
+{
+    return D3DXQUATERNION(x + quat.x, y + quat.y, z + quat.z, w + quat.w);
+}
+
+inline D3DXQUATERNION D3DXQUATERNION::operator - (CONST D3DXQUATERNION& quat) const
+{
+    return D3DXQUATERNION(x - quat.x, y - quat.y, z - quat.z, w - quat.w);
+}
+
+/* TODO: uncomment this when D3DXQuaternionMultiply has been implemented
+inline D3DXQUATERNION D3DXQUATERNION::operator * (CONST D3DXQUATERNION& quat) const
+{
+    D3DXQUATERNION buf;
+    D3DXQuaternionMultiply(&buf, this, &quat);
+    return buf;
+}
+*/
+
+inline D3DXQUATERNION D3DXQUATERNION::operator * (FLOAT f) const
+{
+    return D3DXQUATERNION(x * f, y * f, z * f, w * f);
+}
+
+inline D3DXQUATERNION D3DXQUATERNION::operator / (FLOAT f) const
+{
+    FLOAT inv = 1.0f / f;
+    return D3DXQUATERNION(x * inv, y * inv, z * inv, w * inv);
+}
+
+inline D3DXQUATERNION operator * (FLOAT f, CONST D3DXQUATERNION& quat)
+{
+    return D3DXQUATERNION(f * quat.x, f * quat.y, f * quat.z, f * quat.w);
+}
+
+inline BOOL D3DXQUATERNION::operator == (CONST D3DXQUATERNION& quat) const
+{
+    return x == quat.x && y == quat.y && z == quat.z && w == quat.w;
+}
+
+inline BOOL D3DXQUATERNION::operator != (CONST D3DXQUATERNION& quat) const
+{
+    return x != quat.x || y != quat.y || z != quat.z || w != quat.w;
+}
+
 #endif /* __cplusplus */
 
 /*_______________D3DXCOLOR_____________________*/

@@ -168,6 +168,34 @@ typedef struct _D3DMATRIX D3DXMATRIX, *LPD3DXMATRIX;
 
 typedef struct D3DXQUATERNION
 {
+#ifdef __cplusplus
+    D3DXQUATERNION();
+    D3DXQUATERNION(CONST FLOAT *pf);
+    D3DXQUATERNION(FLOAT fx, FLOAT fy, FLOAT fz, FLOAT fw);
+
+    operator FLOAT* ();
+    operator CONST FLOAT* () const;
+
+    D3DXQUATERNION& operator += (CONST D3DXQUATERNION&);
+    D3DXQUATERNION& operator -= (CONST D3DXQUATERNION&);
+    D3DXQUATERNION& operator *= (CONST D3DXQUATERNION&);
+    D3DXQUATERNION& operator *= (FLOAT);
+    D3DXQUATERNION& operator /= (FLOAT);
+
+    D3DXQUATERNION  operator + () const;
+    D3DXQUATERNION  operator - () const;
+
+    D3DXQUATERNION operator + (CONST D3DXQUATERNION&) const;
+    D3DXQUATERNION operator - (CONST D3DXQUATERNION&) const;
+    D3DXQUATERNION operator * (CONST D3DXQUATERNION&) const;
+    D3DXQUATERNION operator * (FLOAT) const;
+    D3DXQUATERNION operator / (FLOAT) const;
+
+    friend D3DXQUATERNION operator * (FLOAT, CONST D3DXQUATERNION&);
+
+    BOOL operator == (CONST D3DXQUATERNION&) const;
+    BOOL operator != (CONST D3DXQUATERNION&) const;
+#endif /* __cplusplus */
     FLOAT x, y, z, w;
 } D3DXQUATERNION, *LPD3DXQUATERNION;
 
