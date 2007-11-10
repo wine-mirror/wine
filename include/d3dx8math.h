@@ -201,6 +201,20 @@ typedef struct D3DXQUATERNION
 
 typedef struct D3DXPLANE
 {
+#ifdef __cplusplus
+    D3DXPLANE();
+    D3DXPLANE(CONST FLOAT *pf);
+    D3DXPLANE(FLOAT fa, FLOAT fb, FLOAT fc, FLOAT fd);
+
+    operator FLOAT* ();
+    operator CONST FLOAT* () const;
+
+    D3DXPLANE operator + () const;
+    D3DXPLANE operator - () const;
+
+    BOOL operator == (CONST D3DXPLANE&) const;
+    BOOL operator != (CONST D3DXPLANE&) const;
+#endif /* __cplusplus */
     FLOAT a, b, c, d;
 } D3DXPLANE, *LPD3DXPLANE;
 

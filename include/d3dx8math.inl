@@ -639,6 +639,57 @@ inline BOOL D3DXQUATERNION::operator != (CONST D3DXQUATERNION& quat) const
     return x != quat.x || y != quat.y || z != quat.z || w != quat.w;
 }
 
+inline D3DXPLANE::D3DXPLANE()
+{
+}
+
+inline D3DXPLANE::D3DXPLANE(CONST FLOAT *pf)
+{
+    if(!pf) return;
+    a = pf[0];
+    b = pf[1];
+    c = pf[2];
+    d = pf[3];
+}
+
+inline D3DXPLANE::D3DXPLANE(FLOAT fa, FLOAT fb, FLOAT fc, FLOAT fd)
+{
+    a = fa;
+    b = fb;
+    c = fc;
+    d = fd;
+}
+
+inline D3DXPLANE::operator FLOAT* ()
+{
+    return (FLOAT*)&a;
+}
+
+inline D3DXPLANE::operator CONST FLOAT* () const
+{
+    return (CONST FLOAT*)&a;
+}
+
+inline D3DXPLANE D3DXPLANE::operator + () const
+{
+    return *this;
+}
+
+inline D3DXPLANE D3DXPLANE::operator - () const
+{
+    return D3DXPLANE(-a, -b, -c, -d);
+}
+
+inline BOOL D3DXPLANE::operator == (CONST D3DXPLANE& pl) const
+{
+    return a == pl.a && b == pl.b && c == pl.c && d == pl.d;
+}
+
+inline BOOL D3DXPLANE::operator != (CONST D3DXPLANE& pl) const
+{
+    return a != pl.a || b != pl.b || c != pl.c || d != pl.d;
+}
+
 #endif /* __cplusplus */
 
 /*_______________D3DXCOLOR_____________________*/
