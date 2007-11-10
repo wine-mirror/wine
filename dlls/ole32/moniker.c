@@ -279,6 +279,7 @@ static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MonikerComparison
 
         memcpy(&(*moniker_data)->abData[0], &clsid, sizeof(clsid));
         memcpy(&(*moniker_data)->abData[sizeof(clsid)], pszDisplayName, (len+1)*sizeof(WCHAR));
+        CoTaskMemFree(pszDisplayName);
     }
     return S_OK;
 }
