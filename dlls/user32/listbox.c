@@ -1815,6 +1815,7 @@ static LRESULT LISTBOX_Directory( LB_DESCR *descr, UINT attrib,
     LRESULT ret = LB_OKAY;
     WIN32_FIND_DATAW entry;
     int pos;
+    LRESULT maxinsert = LB_ERR;
 
     /* don't scan directory if we just want drives exclusively */
     if (attrib != (DDL_DRIVES | DDL_EXCLUSIVE)) {
@@ -1860,22 +1861,27 @@ static LRESULT LISTBOX_Directory( LB_DESCR *descr, UINT attrib,
                 pos = LISTBOX_FindFileStrPos( descr, buffer );
                 if ((ret = LISTBOX_InsertString( descr, pos, buffer )) < 0)
                     break;
+                if (ret <= maxinsert) maxinsert++; else maxinsert = ret;
             } while (FindNextFileW( handle, &entry ));
             FindClose( handle );
         }
     }
-
-    /* scan drives */
-    if ((ret >= 0) && (attrib & DDL_DRIVES))
+    if (ret >= 0)
     {
-        WCHAR buffer[] = {'[','-','a','-',']',0};
-        WCHAR root[] = {'A',':','\\',0};
-        int drive;
-        for (drive = 0; drive < 26; drive++, buffer[2]++, root[0]++)
+        ret = maxinsert;
+
+        /* scan drives */
+        if (attrib & DDL_DRIVES)
         {
-            if (GetDriveTypeW(root) <= DRIVE_NO_ROOT_DIR) continue;
-            if ((ret = LISTBOX_InsertString( descr, -1, buffer )) < 0)
-                break;
+            WCHAR buffer[] = {'[','-','a','-',']',0};
+            WCHAR root[] = {'A',':','\\',0};
+            int drive;
+            for (drive = 0; drive < 26; drive++, buffer[2]++, root[0]++)
+            {
+                if (GetDriveTypeW(root) <= DRIVE_NO_ROOT_DIR) continue;
+                if ((ret = LISTBOX_InsertString( descr, -1, buffer )) < 0)
+                    break;
+            }
         }
     }
     return ret;
