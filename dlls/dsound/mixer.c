@@ -590,7 +590,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mi
 	TRACE("primary_done=%d, mixlen (primary) = %i\n", primary_done, mixlen);
 
 	if (!mixlen)
-		return 0;
+		return primary_done;
 
 	/* First try to mix to the end of the buffer if possible
 	 * Theoretically it would allow for better optimization
