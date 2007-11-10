@@ -355,6 +355,9 @@ HRESULT WINAPI ItemMonikerImpl_Save(IMoniker* iface,
     res=IStream_Write(pStm,&nameLength,sizeof(DWORD),NULL);
     res=IStream_Write(pStm,itemNameA,nameLength * sizeof(CHAR),NULL);
 
+    HeapFree(GetProcessHeap(), 0, itemNameA);
+    HeapFree(GetProcessHeap(), 0, itemDelimiterA);
+
     return res;
 }
 
