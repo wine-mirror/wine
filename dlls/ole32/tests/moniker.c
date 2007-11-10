@@ -878,6 +878,7 @@ static void test_MkParseDisplayName(void)
         ok_ole_success(hr, IMoniker_BindToObject);
 
         IUnknown_Release(object);
+        IMoniker_Release(pmk);
     }
     IBindCtx_Release(pbc);
 
