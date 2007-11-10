@@ -125,7 +125,46 @@ typedef struct D3DXVECTOR4
     FLOAT x, y, z, w;
 } D3DXVECTOR4, *LPD3DXVECTOR4;
 
+#ifdef __cplusplus
+typedef struct D3DXMATRIX : public D3DMATRIX
+{
+    D3DXMATRIX();
+    D3DXMATRIX(CONST FLOAT *pf);
+    D3DXMATRIX(CONST D3DMATRIX& mat);
+    D3DXMATRIX(FLOAT f11, FLOAT f12, FLOAT f13, FLOAT f14,
+               FLOAT f21, FLOAT f22, FLOAT f23, FLOAT f24,
+               FLOAT f31, FLOAT f32, FLOAT f33, FLOAT f34,
+               FLOAT f41, FLOAT f42, FLOAT f43, FLOAT f44);
+
+    FLOAT& operator () (UINT row, UINT col);
+    FLOAT operator () (UINT row, UINT col) const;
+
+    operator FLOAT* ();
+    operator CONST FLOAT* () const;
+
+    D3DXMATRIX& operator *= (CONST D3DXMATRIX&);
+    D3DXMATRIX& operator += (CONST D3DXMATRIX&);
+    D3DXMATRIX& operator -= (CONST D3DXMATRIX&);
+    D3DXMATRIX& operator *= (FLOAT);
+    D3DXMATRIX& operator /= (FLOAT);
+
+    D3DXMATRIX operator + () const;
+    D3DXMATRIX operator - () const;
+
+    D3DXMATRIX operator * (CONST D3DXMATRIX&) const;
+    D3DXMATRIX operator + (CONST D3DXMATRIX&) const;
+    D3DXMATRIX operator - (CONST D3DXMATRIX&) const;
+    D3DXMATRIX operator * (FLOAT) const;
+    D3DXMATRIX operator / (FLOAT) const;
+
+    friend D3DXMATRIX operator * (FLOAT, CONST D3DXMATRIX&);
+
+    BOOL operator == (CONST D3DXMATRIX&) const;
+    BOOL operator != (CONST D3DXMATRIX&) const;
+} D3DXMATRIX, *LPD3DXMATRIX;
+#else /* !__cplusplus */
 typedef struct _D3DMATRIX D3DXMATRIX, *LPD3DXMATRIX;
+#endif /* !__cplusplus */
 
 typedef struct D3DXQUATERNION
 {
