@@ -1759,6 +1759,8 @@ static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
 
     if (idLBox && ((hwnd = GetDlgItem( hDlg, idLBox )) != 0))
     {
+        if (attrib == DDL_DRIVES) attrib |= DDL_EXCLUSIVE;
+
         SENDMSG( combo ? CB_RESETCONTENT : LB_RESETCONTENT, 0, 0 );
         if (attrib & DDL_DIRECTORY)
         {
