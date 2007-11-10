@@ -793,13 +793,15 @@ FileMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
     res = CreateBindCtx(0,&bind);
     if (FAILED(res)) return res;
 
+    res = S_FALSE;
     if (SUCCEEDED(IMoniker_GetDisplayName(pmkOtherMoniker,bind,NULL,&filePath))) {
-	int result = lstrcmpiW(filePath, This->filePathName);
+	if (!lstrcmpiW(filePath, This->filePathName))
+            res = S_OK;
 	CoTaskMemFree(filePath);
-        if ( result == 0 ) return S_OK;
     }
-    return S_FALSE;
 
+    IBindCtx_Release(bind);
+    return res;
 }
 
 /******************************************************************************
