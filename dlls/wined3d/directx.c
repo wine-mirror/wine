@@ -1102,9 +1102,10 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             } else if(WINE_D3D7_CAPABLE(gl_info)) {
                 gl_info->gl_card = CARD_ATI_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
                 vidmem = 32; /* There are models with up to 64MB */
-            } else
+            } else {
                 gl_info->gl_card = CARD_ATI_RAGE_128PRO;
                 vidmem = 16; /* There are 16-32MB models */
+            }
             break;
         case VENDOR_INTEL:
             if (strstr(gl_info->gl_renderer, "915GM")) {
