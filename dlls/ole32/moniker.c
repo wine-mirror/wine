@@ -94,15 +94,14 @@ typedef struct EnumMonikerImpl
     const IEnumMonikerVtbl *lpVtbl;
     LONG ref;
 
-    InterfaceData **monikers;
-    ULONG moniker_count;
+    InterfaceList *moniker_list;
     ULONG pos;
 } EnumMonikerImpl;
 
 
 /* IEnumMoniker Local functions*/
-static HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(InterfaceData **monikers,
-    ULONG moniker_count, ULONG pos, IEnumMoniker **ppenumMoniker);
+static HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(InterfaceList *moniker_list,
+    ULONG pos, IEnumMoniker **ppenumMoniker);
 
 static IrotHandle get_irot_handle(void)
 {
@@ -934,8 +933,7 @@ RunningObjectTableImpl_EnumRunning(IRunningObjectTable* iface,
     }
 
     if (SUCCEEDED(hr))
-        hr = EnumMonikerImpl_CreateEnumROTMoniker(interface_list->interfaces,
-                                                  interface_list->size,
+        hr = EnumMonikerImpl_CreateEnumROTMoniker(interface_list,
                                                   0, ppenumMoniker);
 
     return hr;
@@ -1320,9 +1318,9 @@ static ULONG   WINAPI EnumMonikerImpl_Release(IEnumMoniker* iface)
 
         TRACE("(%p) Deleting\n",This);
 
-        for (i = 0; i < This->moniker_count; i++)
-            HeapFree(GetProcessHeap(), 0, This->monikers[i]);
-        HeapFree(GetProcessHeap(), 0, This->monikers);
+        for (i = 0; i < This->moniker_list->size; i++)
+            HeapFree(GetProcessHeap(), 0, This->moniker_list->interfaces[i]);
+        HeapFree(GetProcessHeap(), 0, This->moniker_list);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1337,13 +1335,13 @@ static HRESULT   WINAPI EnumMonikerImpl_Next(IEnumMoniker* iface, ULONG celt, IM
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
     HRESULT hr = S_OK;
 
-    TRACE("(%p) TabCurrentPos %d Tablastindx %d\n", This, This->pos, This->moniker_count);
+    TRACE("(%p) TabCurrentPos %d Tablastindx %d\n", This, This->pos, This->moniker_list->size);
 
     /* retrieve the requested number of moniker from the current position */
-    for(i = 0; (This->pos < This->moniker_count) && (i < celt); i++)
+    for(i = 0; (This->pos < This->moniker_list->size) && (i < celt); i++)
     {
         IStream *stream;
-        hr = create_stream_on_mip_ro(This->monikers[This->pos++], &stream);
+        hr = create_stream_on_mip_ro(This->moniker_list->interfaces[This->pos++], &stream);
         if (hr != S_OK) break;
         hr = CoUnmarshalInterface(stream, &IID_IMoniker, (void **)&rgelt[i]);
         IStream_Release(stream);
@@ -1372,7 +1370,7 @@ static HRESULT   WINAPI EnumMonikerImpl_Skip(IEnumMoniker* iface, ULONG celt)
 
     TRACE("(%p)\n",This);
 
-    if  (This->pos + celt >= This->moniker_count)
+    if  (This->pos + celt >= This->moniker_list->size)
         return S_FALSE;
 
     This->pos += celt;
@@ -1400,35 +1398,35 @@ static HRESULT   WINAPI EnumMonikerImpl_Reset(IEnumMoniker* iface)
 static HRESULT   WINAPI EnumMonikerImpl_Clone(IEnumMoniker* iface, IEnumMoniker ** ppenum)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
-    InterfaceData **monikers;
+    InterfaceList *moniker_list;
     ULONG i;
 
     TRACE("(%p)\n",This);
 
     *ppenum = NULL;
 
-    monikers = HeapAlloc(GetProcessHeap(), 0, sizeof(*monikers)*This->moniker_count);
-    if (!monikers)
+    moniker_list = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(InterfaceList, interfaces[This->moniker_list->size]));
+    if (!moniker_list)
         return E_OUTOFMEMORY;
 
-    for (i = 0; i < This->moniker_count; i++)
+    moniker_list->size = This->moniker_list->size;
+    for (i = 0; i < This->moniker_list->size; i++)
     {
-        SIZE_T size = FIELD_OFFSET(InterfaceData, abData[This->monikers[i]->ulCntData]);
-        monikers[i] = HeapAlloc(GetProcessHeap(), 0, size);
-        if (!monikers[i])
+        SIZE_T size = FIELD_OFFSET(InterfaceData, abData[This->moniker_list->interfaces[i]->ulCntData]);
+        moniker_list->interfaces[i] = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!moniker_list->interfaces[i])
         {
             ULONG end = i;
             for (i = 0; i < end; i++)
-                HeapFree(GetProcessHeap(), 0, monikers[i]);
-            HeapFree(GetProcessHeap(), 0, monikers);
+                HeapFree(GetProcessHeap(), 0, moniker_list->interfaces[i]);
+            HeapFree(GetProcessHeap(), 0, moniker_list);
             return E_OUTOFMEMORY;
         }
-        memcpy(monikers[i], This->monikers[i], size);
+        memcpy(moniker_list->interfaces[i], This->moniker_list->interfaces[i], size);
     }
 
     /* copy the enum structure */ 
-    return EnumMonikerImpl_CreateEnumROTMoniker(monikers, This->moniker_count,
-        This->pos, ppenum);
+    return EnumMonikerImpl_CreateEnumROTMoniker(moniker_list, This->pos, ppenum);
 }
 
 /* Virtual function table for the IEnumMoniker class. */
@@ -1448,8 +1446,7 @@ static const IEnumMonikerVtbl VT_EnumMonikerImpl =
  *        Used by EnumRunning to create the structure and EnumClone
  *	  to copy the structure
  */
-static HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(InterfaceData **monikers,
-                                                 ULONG moniker_count,
+static HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(InterfaceList *moniker_list,
                                                  ULONG current_pos,
                                                  IEnumMoniker **ppenumMoniker)
 {
@@ -1469,8 +1466,7 @@ static HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(InterfaceData **monik
     /* the initial reference is set to "1" */
     This->ref = 1;			/* set the ref count to one         */
     This->pos = current_pos;		/* Set the list start posn */
-    This->moniker_count = moniker_count; /* Need the same size table as ROT */
-    This->monikers = monikers;
+    This->moniker_list = moniker_list;
 
     *ppenumMoniker =  (IEnumMoniker*)This;
 
