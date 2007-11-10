@@ -603,7 +603,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	    trace("  Testing the capture buffer at %s\n", format_string(&wfx));
 	rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
 	ok(((rc==DS_OK)&&(dscbo!=NULL))||(rc==DSERR_BADFORMAT)||
-           ((rc==DSERR_NODRIVER))||(rc==DSERR_ALLOCATED)||(rc==E_INVALIDARG),
+           ((rc==DSERR_NODRIVER))||(rc==DSERR_ALLOCATED)||(rc==E_INVALIDARG)||(rc==E_FAIL),
            "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
            "%s capture buffer: %s\n",format_string(&wfx),DXGetErrorString8(rc));
 	if (rc==DS_OK) {
@@ -641,6 +641,12 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	        ok(ref==0,"IDirectSoundCaptureBuffer_Release() has %d "
                    "references, should have 0\n",ref);
             }
+        } else if (rc==E_FAIL) {
+            /* WAVE_FORMAT_PCM only allows 8 and 16 bits per sample, so only
+             * report a failure if the bits per sample is 8 or 16
+             */
+            if (wfx.wBitsPerSample == 8 || wfx.wBitsPerSample == 16)
+                ok(FALSE,"Should not fail for 8 or 16 bits per sample\n");
         }
     }
 
