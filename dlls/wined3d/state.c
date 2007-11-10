@@ -3598,12 +3598,15 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContex
 }
 
 static void scissorrect(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) stateblock->wineD3DDevice->swapchains[0];
     RECT *pRect = &stateblock->scissorRect;
     RECT windowRect;
     UINT winHeight;
 
-    GetClientRect(swapchain->win_handle, &windowRect);
+    windowRect.left = 0;
+    windowRect.top = 0;
+    windowRect.right = ((IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0])->currentDesc.Width;
+    windowRect.bottom = ((IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0])->currentDesc.Height;
+
     /* Warning: glScissor uses window coordinates, not viewport coordinates, so our viewport correction does not apply
      * Warning2: Even in windowed mode the coords are relative to the window, not the screen
      */
