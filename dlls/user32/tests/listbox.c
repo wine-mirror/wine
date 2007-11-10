@@ -550,6 +550,354 @@ static void test_listbox_item_data(void)
     DestroyWindow( hList );
 }
 
+static void test_listbox_LB_DIR()
+{
+    HWND hList;
+    int res, itemCount;
+    int itemCount_justFiles;
+    int itemCount_justDrives;
+    int itemCount_allFiles;
+    int i;
+    char pathBuffer[MAX_PATH];
+    char * p;
+    char driveletter;
+
+    /* NOTE: for this test to succeed, there must be no subdirectories
+       under the current directory. In addition, there must be at least
+       one file that fits the wildcard w*.c . Normally, the test
+       directory itself satisfies both conditions.
+     */
+    hList = CreateWindow( "ListBox", "list test", WS_VISIBLE|WS_POPUP,
+                          1, 1, 600, 100, NULL, NULL, NULL, NULL );
+    assert(hList);
+
+    /* Test for standard usage */
+
+    /* This should list all the files in the test directory. */
+    strcpy(pathBuffer, "*");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, 0, (LPARAM)pathBuffer);
+    ok (res >= 0, "SendMessage(LB_DIR, 0, *) failed - 0x%08x\n", GetLastError());
+
+    /* There should be some content in the listbox */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount > 0, "SendMessage(LB_DIR) did NOT fill the listbox!\n");
+    itemCount_allFiles = itemCount;
+    ok(res + 1 == itemCount,
+        "SendMessage(LB_DIR, 0, *) returned incorrect index (expected %d got %d)!\n",
+        itemCount - 1, res);
+
+
+    /* This should list all the w*.c files in the test directory
+     * As of this writing, this includes win.c, winstation.c, wsprintf.c
+     */
+    strcpy(pathBuffer, "w*.c");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, 0, (LPARAM)pathBuffer);
+    ok (res >= 0, "SendMessage(LB_DIR, 0, w*.c) failed - 0x%08x\n", GetLastError());
+
+    /* Path specification does NOT converted to uppercase */
+    ok (!strcmp(pathBuffer, "w*.c"),
+        "expected no change to pathBuffer, got %s\n", pathBuffer);
+
+    /* There should be some content in the listbox */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount > 0, "SendMessage(LB_DIR) did NOT fill the listbox!\n");
+    itemCount_justFiles = itemCount;
+    ok(res + 1 == itemCount,
+        "SendMessage(LB_DIR, 0, w*.c) returned incorrect index (expected %d got %d)!\n",
+        itemCount - 1, res);
+
+    /* Every single item in the control should start with a w and end in .c */
+    for (i = 0; i < itemCount; i++) {
+        memset(pathBuffer, 0, MAX_PATH);
+        SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
+        p = pathBuffer + strlen(pathBuffer);
+        ok(((pathBuffer[0] == 'w' || pathBuffer[0] == 'W') &&
+            (*(p-1) == 'c' || *(p-1) == 'C') &&
+            (*(p-2) == '.')), "Element %d (%s) does not fit requested w*.c\n", i, pathBuffer);
+    }
+
+    /* Test DDL_DIRECTORY */
+    strcpy(pathBuffer, "*");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY, (LPARAM)pathBuffer);
+    ok (res > 0, "SendMessage(LB_DIR, DDL_DIRECTORY, *) failed - 0x%08x\n", GetLastError());
+
+    /* There should be some content in the listbox.
+     * All files plus "[..]"
+     */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_allFiles + 1,
+        "SendMessage(LB_DIR, DDL_DIRECTORY, *) filled with %d entries, expected %d\n",
+        itemCount, itemCount_allFiles + 1);
+    ok(res + 1 == itemCount,
+        "SendMessage(LB_DIR, DDL_DIRECTORY, *) returned incorrect index (expected %d got %d)!\n",
+        itemCount - 1, res);
+
+
+    /* Test DDL_DIRECTORY */
+    strcpy(pathBuffer, "w*.c");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY, (LPARAM)pathBuffer);
+    ok (res >= 0, "SendMessage(LB_DIR, DDL_DIRECTORY, w*.c) failed - 0x%08x\n", GetLastError());
+
+    /* There should be some content in the listbox. Since the parent directory does not
+     * fit w*.c, there should be exactly the same number of items as without DDL_DIRECTORY
+     */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_justFiles,
+        "SendMessage(LB_DIR, DDL_DIRECTORY, w*.c) filled with %d entries, expected %d\n",
+        itemCount, itemCount_justFiles);
+    ok(res + 1 == itemCount,
+        "SendMessage(LB_DIR, DDL_DIRECTORY, w*.c) returned incorrect index (expected %d got %d)!\n",
+        itemCount - 1, res);
+
+    /* Every single item in the control should start with a w and end in .c. */
+    for (i = 0; i < itemCount; i++) {
+        memset(pathBuffer, 0, MAX_PATH);
+        SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
+        p = pathBuffer + strlen(pathBuffer);
+        ok(
+            ((pathBuffer[0] == 'w' || pathBuffer[0] == 'W') &&
+            (*(p-1) == 'c' || *(p-1) == 'C') &&
+            (*(p-2) == '.')), "Element %d (%s) does not fit requested w*.c\n", i, pathBuffer);
+    }
+
+
+    /* Test DDL_DRIVES|DDL_EXCLUSIVE */
+    strcpy(pathBuffer, "*");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
+    ok (res > 0, "SendMessage(LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, *)  failed - 0x%08x\n", GetLastError());
+
+    /* There should be some content in the listbox. In particular, there should
+     * be at least one element before, since the string "[-c-]" should
+     * have been added. Depending on the user setting, more drives might have
+     * been added.
+     */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount >= 1,
+        "SendMessage(LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, *) filled with %d entries, expected at least %d\n",
+        itemCount, 1);
+    itemCount_justDrives = itemCount;
+    ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, *) returned incorrect index!\n");
+
+    /* Every single item in the control should fit the format [-c-] */
+    for (i = 0; i < itemCount; i++) {
+        memset(pathBuffer, 0, MAX_PATH);
+        driveletter = '\0';
+        SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
+        ok( strlen(pathBuffer) == 5, "Length of drive string is not 5\n" );
+        ok( sscanf(pathBuffer, "[-%c-]", &driveletter) == 1, "Element %d (%s) does not fit [-X-]\n", i, pathBuffer);
+        ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
+        if (!(driveletter >= 'a' && driveletter <= 'z')) {
+            /* Correct after invalid entry is found */
+            trace("removing count of invalid entry %s\n", pathBuffer);
+            itemCount_justDrives--;
+        }
+    }
+
+
+    trace("Files with w*.c: %d Mapped drives: %d Directories: 1\n",
+        itemCount_justFiles, itemCount_justDrives);
+
+    /* Test DDL_DRIVES. */
+    strcpy(pathBuffer, "*");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DRIVES, (LPARAM)pathBuffer);
+    ok (res > 0, "SendMessage(LB_DIR, DDL_DRIVES, *)  failed - 0x%08x\n", GetLastError());
+
+    /* There should be some content in the listbox. In particular, there should
+     * be at least one element before, since the string "[-c-]" should
+     * have been added. Depending on the user setting, more drives might have
+     * been added.
+     */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_justDrives + itemCount_allFiles,
+        "SendMessage(LB_DIR, DDL_DRIVES, w*.c) filled with %d entries, expected %d\n",
+        itemCount, itemCount_justDrives + itemCount_allFiles);
+    ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DRIVES, w*.c) returned incorrect index!\n");
+
+
+    /* Test DDL_DRIVES. */
+    strcpy(pathBuffer, "w*.c");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DRIVES, (LPARAM)pathBuffer);
+    ok (res > 0, "SendMessage(LB_DIR, DDL_DRIVES, w*.c)  failed - 0x%08x\n", GetLastError());
+
+    /* There should be some content in the listbox. In particular, there should
+     * be at least one element before, since the string "[-c-]" should
+     * have been added. Depending on the user setting, more drives might have
+     * been added.
+     */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_justDrives + itemCount_justFiles,
+        "SendMessage(LB_DIR, DDL_DRIVES, w*.c) filled with %d entries, expected %d\n",
+        itemCount, itemCount_justDrives + itemCount_justFiles);
+    ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DRIVES, w*.c) returned incorrect index!\n");
+
+    /* Every single item in the control should fit the format [-c-], or w*.c */
+    for (i = 0; i < itemCount; i++) {
+        memset(pathBuffer, 0, MAX_PATH);
+        driveletter = '\0';
+        SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
+        p = pathBuffer + strlen(pathBuffer);
+        if (sscanf(pathBuffer, "[-%c-]", &driveletter) == 1) {
+            ok( strlen(pathBuffer) == 5, "Length of drive string is not 5\n" );
+            ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
+        } else {
+            ok(
+                ((pathBuffer[0] == 'w' || pathBuffer[0] == 'W') &&
+                (*(p-1) == 'c' || *(p-1) == 'C') &&
+                (*(p-2) == '.')), "Element %d (%s) does not fit requested w*.c\n", i, pathBuffer);
+        }
+    }
+
+
+    /* Test DDL_DIRECTORY|DDL_DRIVES. This does *not* imply DDL_EXCLUSIVE */
+    strcpy(pathBuffer, "*");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_DRIVES, (LPARAM)pathBuffer);
+    ok (res > 0, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES, *) failed - 0x%08x\n", GetLastError());
+
+    /* There should be some content in the listbox. In particular, there should
+     * be exactly the number of plain files, plus the number of mapped drives.
+     */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_allFiles + itemCount_justDrives + 1,
+        "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES) filled with %d entries, expected %d\n",
+        itemCount, itemCount_allFiles + itemCount_justDrives + 1);
+    ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES, w*.c) returned incorrect index!\n");
+
+    /* Every single item in the control should start with a w and end in .c,
+     * except for the "[..]" string, which should appear exactly as it is,
+     * and the mapped drives in the format "[-X-]".
+     */
+    for (i = 0; i < itemCount; i++) {
+        memset(pathBuffer, 0, MAX_PATH);
+        driveletter = '\0';
+        SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
+        p = pathBuffer + strlen(pathBuffer);
+        if (sscanf(pathBuffer, "[-%c-]", &driveletter) == 1) {
+            ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
+        }
+    }
+
+
+    /* Test DDL_DIRECTORY|DDL_DRIVES. */
+    strcpy(pathBuffer, "w*.c");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_DRIVES, (LPARAM)pathBuffer);
+    ok (res > 0, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES, w*.c) failed - 0x%08x\n", GetLastError());
+
+    /* There should be some content in the listbox. In particular, there should
+     * be exactly the number of plain files, plus the number of mapped drives.
+     */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_justFiles + itemCount_justDrives,
+        "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES) filled with %d entries, expected %d\n",
+        itemCount, itemCount_justFiles + itemCount_justDrives);
+    ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES, w*.c) returned incorrect index!\n");
+
+    /* Every single item in the control should start with a w and end in .c,
+     * except the mapped drives in the format "[-X-]". The "[..]" directory
+     * should not appear.
+     */
+    for (i = 0; i < itemCount; i++) {
+        memset(pathBuffer, 0, MAX_PATH);
+        driveletter = '\0';
+        SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
+        p = pathBuffer + strlen(pathBuffer);
+        if (sscanf(pathBuffer, "[-%c-]", &driveletter) == 1) {
+            ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
+        } else {
+            ok(
+                ((pathBuffer[0] == 'w' || pathBuffer[0] == 'W') &&
+                (*(p-1) == 'c' || *(p-1) == 'C') &&
+                (*(p-2) == '.')), "Element %d (%s) does not fit requested w*.c\n", i, pathBuffer);
+        }
+    }
+
+    /* Test DDL_DIRECTORY|DDL_EXCLUSIVE. */
+    strcpy(pathBuffer, "*");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
+    ok (res == 0, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, *) failed - 0x%08x\n", GetLastError());
+
+    /* There should be exactly one element: "[..]" */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == 1,
+        "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE) filled with %d entries, expected %d\n",
+        itemCount, 1);
+    ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, *) returned incorrect index!\n");
+
+    memset(pathBuffer, 0, MAX_PATH);
+    SendMessage(hList, LB_GETTEXT, 0, (LPARAM)pathBuffer);
+    ok( !strcmp(pathBuffer, "[..]"), "First (and only) element is not [..]\n");
+
+    /* Test DDL_DIRECTORY|DDL_EXCLUSIVE. */
+    strcpy(pathBuffer, "w*.c");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
+    ok (res == LB_ERR, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, w*.c) returned %d expected %d\n", res, LB_ERR);
+
+    /* There should be no elements, since "[..]" does not fit w*.c */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == 0,
+        "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE) filled with %d entries, expected %d\n",
+        itemCount, 0);
+
+    /* Test DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE. */
+    strcpy(pathBuffer, "*");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
+    ok (res > 0, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, w*.c,) failed - 0x%08x\n", GetLastError());
+
+    /* There should be no plain files on the listbox */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_justDrives + 1,
+        "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE) filled with %d entries, expected %d\n",
+        itemCount, itemCount_justDrives + 1);
+    ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, w*.c) returned incorrect index!\n");
+
+    for (i = 0; i < itemCount; i++) {
+        memset(pathBuffer, 0, MAX_PATH);
+        driveletter = '\0';
+        SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
+        p = pathBuffer + strlen(pathBuffer);
+        if (sscanf(pathBuffer, "[-%c-]", &driveletter) == 1) {
+            ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
+        } else {
+            ok( !strcmp(pathBuffer, "[..]"), "Element %d (%s) does not fit expected [..]\n", i, pathBuffer);
+        }
+    }
+
+
+    /* Test DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE. */
+    strcpy(pathBuffer, "w*.c");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
+    ok (res > 0, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, w*.c,) failed - 0x%08x\n", GetLastError());
+
+    /* There should be no plain files on the listbox, and no [..], since it does not fit w*.c */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_justDrives,
+        "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE) filled with %d entries, expected %d\n",
+        itemCount, itemCount_justDrives);
+    ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, w*.c) returned incorrect index!\n");
+
+    for (i = 0; i < itemCount; i++) {
+        memset(pathBuffer, 0, MAX_PATH);
+        driveletter = '\0';
+        SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
+        p = pathBuffer + strlen(pathBuffer);
+        ok (sscanf(pathBuffer, "[-%c-]", &driveletter) == 1, "Element %d (%s) does not fit [-X-]\n", i, pathBuffer);
+        ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
+    }
+    DestroyWindow(hList);
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
@@ -626,4 +974,5 @@ START_TEST(listbox)
   test_listbox_height();
   test_itemfrompoint();
   test_listbox_item_data();
+  test_listbox_LB_DIR();
 }
