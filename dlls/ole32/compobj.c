@@ -965,6 +965,21 @@ static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry, BOOL free_entry)
     }
 }
 
+/* frees memory associated with active dll list */
+static void COMPOBJ_DllList_Free(void)
+{
+    OpenDll *entry, *cursor2;
+    EnterCriticalSection(&csOpenDllList);
+    LIST_FOR_EACH_ENTRY_SAFE(entry, cursor2, &openDllList, OpenDll, entry)
+    {
+        list_remove(&entry->entry);
+
+        HeapFree(GetProcessHeap(), 0, entry->library_name);
+        HeapFree(GetProcessHeap(), 0, entry);
+    }
+    LeaveCriticalSection(&csOpenDllList);
+}
+
 /******************************************************************************
  *           CoBuildVersion [OLE32.@]
  *           CoBuildVersion [COMPOBJ.1]
@@ -3721,6 +3736,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
         OLEDD_UnInitialize();
         COMPOBJ_UninitProcess();
         RPC_UnregisterAllChannelHooks();
+        COMPOBJ_DllList_Free();
         OLE32_hInstance = 0;
 	break;
 
