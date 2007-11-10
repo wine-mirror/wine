@@ -1395,6 +1395,7 @@ static void test_default_handler(void)
     ok_ole_success(hr, "CreateItemMoniker");
     hr = IOleObject_SetMoniker(pObject, OLEWHICHMK_CONTAINER, pMoniker);
     ok_ole_success(hr, "IOleObject_SetMoniker");
+    IMoniker_Release(pMoniker);
 
     hr = IOleObject_GetMoniker(pObject, OLEGETMONIKER_ONLYIFTHERE, OLEWHICHMK_CONTAINER, &pMoniker);
     ok(hr == E_FAIL, "IOleObject_GetMoniker should have returned E_FAIL instead of 0x%08x\n", hr);
