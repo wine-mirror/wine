@@ -220,6 +220,42 @@ typedef struct D3DXPLANE
 
 typedef struct D3DXCOLOR
 {
+#ifdef __cplusplus
+    D3DXCOLOR();
+    D3DXCOLOR(DWORD col);
+    D3DXCOLOR(CONST FLOAT *pf);
+    D3DXCOLOR(CONST D3DCOLORVALUE& col);
+    D3DXCOLOR(FLOAT fr, FLOAT fg, FLOAT fb, FLOAT fa);
+
+    operator DWORD () const;
+
+    operator FLOAT* ();
+    operator CONST FLOAT* () const;
+
+    operator D3DCOLORVALUE* ();
+    operator CONST D3DCOLORVALUE* () const;
+
+    operator D3DCOLORVALUE& ();
+    operator CONST D3DCOLORVALUE& () const;
+
+    D3DXCOLOR& operator += (CONST D3DXCOLOR&);
+    D3DXCOLOR& operator -= (CONST D3DXCOLOR&);
+    D3DXCOLOR& operator *= (FLOAT);
+    D3DXCOLOR& operator /= (FLOAT);
+
+    D3DXCOLOR operator + () const;
+    D3DXCOLOR operator - () const;
+
+    D3DXCOLOR operator + (CONST D3DXCOLOR&) const;
+    D3DXCOLOR operator - (CONST D3DXCOLOR&) const;
+    D3DXCOLOR operator * (FLOAT) const;
+    D3DXCOLOR operator / (FLOAT) const;
+
+    friend D3DXCOLOR operator * (FLOAT, CONST D3DXCOLOR&);
+
+    BOOL operator == (CONST D3DXCOLOR&) const;
+    BOOL operator != (CONST D3DXCOLOR&) const;
+#endif /* __cplusplus */
     FLOAT r, g, b, a;
 } D3DXCOLOR, *LPD3DXCOLOR;
 

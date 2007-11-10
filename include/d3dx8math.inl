@@ -690,6 +690,167 @@ inline BOOL D3DXPLANE::operator != (CONST D3DXPLANE& pl) const
     return a != pl.a || b != pl.b || c != pl.c || d != pl.d;
 }
 
+inline D3DXCOLOR::D3DXCOLOR()
+{
+}
+
+inline D3DXCOLOR::D3DXCOLOR(DWORD col)
+{
+    CONST FLOAT f = 1.0f / 255.0f;
+    r = f * (FLOAT)(unsigned char)(col >> 16);
+    g = f * (FLOAT)(unsigned char)(col >>  8);
+    b = f * (FLOAT)(unsigned char)col;
+    a = f * (FLOAT)(unsigned char)(col >> 24);
+}
+
+inline D3DXCOLOR::D3DXCOLOR(CONST FLOAT *pf)
+{
+    if(!pf) return;
+    r = pf[0];
+    g = pf[1];
+    b = pf[2];
+    a = pf[3];
+}
+
+inline D3DXCOLOR::D3DXCOLOR(CONST D3DCOLORVALUE& col)
+{
+    r = col.r;
+    g = col.g;
+    b = col.b;
+    a = col.a;
+}
+
+inline D3DXCOLOR::D3DXCOLOR(FLOAT fr, FLOAT fg, FLOAT fb, FLOAT fa)
+{
+    r = fr;
+    g = fg;
+    b = fb;
+    a = fa;
+}
+
+inline D3DXCOLOR::operator DWORD () const
+{
+    DWORD _r = r >= 1.0f ? 0xff : r <= 0.0f ? 0x00 : (DWORD)(r * 255.0f + 0.5f);
+    DWORD _g = g >= 1.0f ? 0xff : g <= 0.0f ? 0x00 : (DWORD)(g * 255.0f + 0.5f);
+    DWORD _b = b >= 1.0f ? 0xff : b <= 0.0f ? 0x00 : (DWORD)(b * 255.0f + 0.5f);
+    DWORD _a = a >= 1.0f ? 0xff : a <= 0.0f ? 0x00 : (DWORD)(a * 255.0f + 0.5f);
+
+    return (_a << 24) | (_r << 16) | (_g << 8) | _b;
+}
+
+inline D3DXCOLOR::operator FLOAT * ()
+{
+    return (FLOAT*)&r;
+}
+
+inline D3DXCOLOR::operator CONST FLOAT * () const
+{
+    return (CONST FLOAT*)&r;
+}
+
+inline D3DXCOLOR::operator D3DCOLORVALUE * ()
+{
+    return (D3DCOLORVALUE*)&r;
+}
+
+inline D3DXCOLOR::operator CONST D3DCOLORVALUE * () const
+{
+    return (CONST D3DCOLORVALUE*)&r;
+}
+
+inline D3DXCOLOR::operator D3DCOLORVALUE& ()
+{
+    return *((D3DCOLORVALUE*)&r);
+}
+
+inline D3DXCOLOR::operator CONST D3DCOLORVALUE& () const
+{
+    return *((CONST D3DCOLORVALUE*)&r);
+}
+
+inline D3DXCOLOR& D3DXCOLOR::operator += (CONST D3DXCOLOR& col)
+{
+    r += col.r;
+    g += col.g;
+    b += col.b;
+    a += col.a;
+    return *this;
+}
+
+inline D3DXCOLOR& D3DXCOLOR::operator -= (CONST D3DXCOLOR& col)
+{
+    r -= col.r;
+    g -= col.g;
+    b -= col.b;
+    a -= col.a;
+    return *this;
+}
+
+inline D3DXCOLOR& D3DXCOLOR::operator *= (FLOAT f)
+{
+    r *= f;
+    g *= f;
+    b *= f;
+    a *= f;
+    return *this;
+}
+
+inline D3DXCOLOR& D3DXCOLOR::operator /= (FLOAT f)
+{
+    FLOAT inv = 1.0f / f;
+    r *= inv;
+    g *= inv;
+    b *= inv;
+    a *= inv;
+    return *this;
+}
+
+inline D3DXCOLOR D3DXCOLOR::operator + () const
+{
+    return *this;
+}
+
+inline D3DXCOLOR D3DXCOLOR::operator - () const
+{
+    return D3DXCOLOR(-r, -g, -b, -a);
+}
+
+inline D3DXCOLOR D3DXCOLOR::operator + (CONST D3DXCOLOR& col) const
+{
+    return D3DXCOLOR(r + col.r, g + col.g, b + col.b, a + col.a);
+}
+
+inline D3DXCOLOR D3DXCOLOR::operator - (CONST D3DXCOLOR& col) const
+{
+    return D3DXCOLOR(r - col.r, g - col.g, b - col.b, a - col.a);
+}
+
+inline D3DXCOLOR D3DXCOLOR::operator * (FLOAT f) const
+{
+    return D3DXCOLOR(r * f, g * f, b * f, a * f);
+}
+
+inline D3DXCOLOR D3DXCOLOR::operator / (FLOAT f) const
+{
+    FLOAT inv = 1.0f / f;
+    return D3DXCOLOR(r * inv, g * inv, b * inv, a * inv);
+}
+
+inline D3DXCOLOR operator * (FLOAT f, CONST D3DXCOLOR& col)
+{
+    return D3DXCOLOR(f * col.r, f * col.g, f * col.b, f * col.a);
+}
+
+inline BOOL D3DXCOLOR::operator == (CONST D3DXCOLOR& col) const
+{
+    return r == col.r && g == col.g && b == col.b && a == col.a;
+}
+
+inline BOOL D3DXCOLOR::operator != (CONST D3DXCOLOR& col) const
+{
+    return r != col.r || g != col.g || b != col.b || a != col.a;
+}
+
 #endif /* __cplusplus */
 
 /*_______________D3DXCOLOR_____________________*/
