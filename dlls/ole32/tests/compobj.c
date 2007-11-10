@@ -642,6 +642,7 @@ static void test_CoMarshalInterThreadInterfaceInStream(void)
     ok_ole_success(hr, "CoUnmarshalInterface");
 
     IClassFactory_Release(pProxy);
+    IStream_Release(pStream);
 
     ok_no_locks();
 
