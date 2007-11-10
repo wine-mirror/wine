@@ -544,6 +544,7 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
     IMoniker_Release(pmkObjectName);
     if (hr != S_OK)
     {
+        HeapFree(GetProcessHeap(), 0, moniker);
         rot_entry_delete(rot_entry);
         return hr;
     }
@@ -567,6 +568,7 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
         }
         break;
     }
+    HeapFree(GetProcessHeap(), 0, moniker);
     if (FAILED(hr))
     {
         rot_entry_delete(rot_entry);
