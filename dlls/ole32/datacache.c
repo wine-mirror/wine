@@ -295,6 +295,7 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
         (*cache_entry)->fmtetc.ptd = HeapAlloc(GetProcessHeap(), 0, formatetc->ptd->tdSize);
         memcpy((*cache_entry)->fmtetc.ptd, formatetc->ptd, formatetc->ptd->tdSize);
     }
+    (*cache_entry)->data_cf = 0;
     (*cache_entry)->stgmedium.tymed = TYMED_NULL;
     (*cache_entry)->stgmedium.pUnkForRelease = NULL;
     (*cache_entry)->storage = NULL;
