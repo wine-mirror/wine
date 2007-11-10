@@ -750,6 +750,7 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *This, IStorage *storage,
 
     if (data)
         hr = IStream_Write(pres_stream, data, header.dwSize, NULL);
+    HeapFree(GetProcessHeap(), 0, data);
 
     IStream_Release(pres_stream);
     return hr;
