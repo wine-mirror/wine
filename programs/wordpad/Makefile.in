@@ -10,6 +10,7 @@ EXTRADEFS = -DNO_LIBWINE_PORT
 MODCFLAGS = @BUILTINFLAG@
 
 C_SRCS = \
+	print.c \
 	wordpad.c
 
 RC_SRCS = rsrc.rc

@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define MAX_STRING_LEN 255
+
 #define ID_FILE_EXIT 1000
 #define ID_FILE_OPEN 1001
 #define ID_FILE_SAVE 1002
@@ -182,3 +184,16 @@
 #define STRING_SAVE_LOSEFORMATTING 1704
 #define STRING_INVALID_NUMBER 1705
 #define STRING_OLE_STORAGE_NOT_SUPPORTED 1706
+
+void dialog_printsetup(HWND);
+void dialog_print(HWND, LPWSTR);
+void target_device(HWND, DWORD);
+void print_quick(LPWSTR);
+LRESULT preview_command(HWND, WPARAM, LPARAM);
+void init_preview(HWND, LPWSTR);
+void close_preview(HWND);
+BOOL preview_isactive(void);
+LRESULT print_preview(HWND);
+void get_default_printer_opts(void);
+void registry_set_pagemargins(HKEY);
+void registry_read_pagemargins(HKEY);
