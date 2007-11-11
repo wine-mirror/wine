@@ -56,7 +56,6 @@ static char *get_temp_buffer( int size )
     return ret;
 }
 
-/* default implementation of wine_dbgstr_an */
 static const char *wine_debugstr_an( const char *str, int n )
 {
     static const char hex[16] = "0123456789abcdef";
@@ -108,10 +107,10 @@ static const char *wine_debugstr_an( const char *str, int n )
     return res;
 }
 
-/* default implementation of wine_dbgstr_wn */
 static const char *wine_debugstr_wn( const WCHAR *str, int n )
 {
     char *dst, *res;
+    size_t size;
 
     if (!HIWORD(str))
     {
@@ -122,11 +121,11 @@ static const char *wine_debugstr_wn( const WCHAR *str, int n )
     }
     if (n == -1) n = lstrlenW(str);
     if (n < 0) n = 0;
-    else if (n > 200) n = 200;
+    size = 12 + min( 300, n * 5);
     dst = res = get_temp_buffer( n * 5 + 7 );
     *dst++ = 'L';
     *dst++ = '"';
-    while (n-- > 0)
+    while (n-- > 0 && dst <= res + size - 10)
     {
         WCHAR c = *str++;
         switch (c)
@@ -148,7 +147,7 @@ static const char *wine_debugstr_wn( const WCHAR *str, int n )
         }
     }
     *dst++ = '"';
-    if (*str)
+    if (n > 0)
     {
         *dst++ = '.';
         *dst++ = '.';
