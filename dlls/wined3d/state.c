@@ -3426,6 +3426,19 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
                 FIXME("Clipping not supported with vertex shaders\n");
                 warned = TRUE;
             }
+            if(wasrhw) {
+                /* Apply the transform matrices when switching from rhw drawing to vertex shaders. Vertex
+                 * shaders themselves do not need it it, but the matrices are not reapplied automatically when
+                 * switching back from vertex shaders to fixed function processing. So make sure we leave the
+                 * fixed function vertex processing states back in a sane state before switching to shaders
+                 */
+                if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
+                    transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock, context);
+                }
+                if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)))) {
+                    transform_world(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), stateblock, context);
+                }
+            }
         }
     }
 
