@@ -488,7 +488,7 @@ static void test_PdhGetCounterInfoA( void )
 
     size = sizeof(info) - 1;
     ret = PdhGetCounterInfoA( counter, 0, &size, NULL );
-    ok(ret == PDH_MORE_DATA, "PdhGetCounterInfoA failed 0x%08x\n", ret);
+    ok(ret == PDH_MORE_DATA || ret == PDH_INVALID_ARGUMENT, "PdhGetCounterInfoA failed 0x%08x\n", ret);
 
     size = sizeof(info);
     ret = PdhGetCounterInfoA( counter, 0, &size, &info );
@@ -542,7 +542,7 @@ static void test_PdhGetCounterInfoW( void )
 
     size = sizeof(info) - 1;
     ret = PdhGetCounterInfoW( counter, 0, &size, NULL );
-    ok(ret == PDH_MORE_DATA, "PdhGetCounterInfoW failed 0x%08x\n", ret);
+    ok(ret == PDH_MORE_DATA || ret == PDH_INVALID_ARGUMENT, "PdhGetCounterInfoW failed 0x%08x\n", ret);
 
     size = sizeof(info);
     ret = PdhGetCounterInfoW( counter, 0, &size, &info );
