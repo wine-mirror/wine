@@ -235,6 +235,14 @@ static void D3DXMatrixTest(void)
     D3DXMatrixMultiply(&gotmat,&mat,&mat2);
     expect_mat(expectedmat,gotmat);
 
+/*____________D3DXMatrixMultiplyTranspose____*/
+    expectedmat.m[0][0] = 73.0f; expectedmat.m[0][1] = 231.0f; expectedmat.m[0][2] = 239.0f; expectedmat.m[0][3] = -164.0f;
+    expectedmat.m[1][0] = 193.0f; expectedmat.m[1][1] = 551.0f; expectedmat.m[1][2] = 523.0f; expectedmat.m[1][3] = -320.0;
+    expectedmat.m[2][0] = -197.0f; expectedmat.m[2][1] = -489.0f; expectedmat.m[2][2] = -400.0f; expectedmat.m[2][3] = 187.0f;
+    expectedmat.m[3][0] = -77.0f; expectedmat.m[3][1] = -169.0f; expectedmat.m[3][2] = -116.0f; expectedmat.m[3][3] = 31.0f;
+    D3DXMatrixMultiplyTranspose(&gotmat,&mat,&mat2);
+    expect_mat(expectedmat,gotmat);
+
 /*____________D3DXMatrixOrthoLH_______________*/
     U(expectedmat).m[0][0] = 0.8f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
     U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 0.270270f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;

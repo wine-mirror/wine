@@ -158,6 +158,15 @@ D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, C
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixMultiplyTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, CONST D3DXMATRIX *pm2)
+{
+    D3DXMATRIX temp;
+
+    D3DXMatrixMultiply(&temp, pm1, pm2);
+    D3DXMatrixTranspose(pout, &temp);
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixOrthoLH(D3DXMATRIX *pout, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf)
 {
     D3DXMatrixIdentity(pout);
