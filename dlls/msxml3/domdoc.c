@@ -671,7 +671,10 @@ static HRESULT WINAPI domdoc_get_documentElement(
     IXMLDOMNode *element_node;
     HRESULT hr;
 
-    TRACE("%p\n", This);
+    TRACE("%p %p\n", This, This->node);
+
+    if(!DOMElement)
+        return E_INVALIDARG;
 
     *DOMElement = NULL;
 
