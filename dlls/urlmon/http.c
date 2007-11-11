@@ -148,15 +148,9 @@ static void HTTPPROTOCOL_Close(HttpProtocol *This)
         This->http_negotiate = 0;
     }
     if (This->request)
-    {
         InternetCloseHandle(This->request);
-        This->request = 0;
-    }
     if (This->connect)
-    {
         InternetCloseHandle(This->connect);
-        This->connect = 0;
-    }
     if (This->internet)
     {
         InternetCloseHandle(This->internet);
@@ -208,15 +202,23 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
         IInternetProtocol_AddRef((IInternetProtocol *)This);
         return;
     case INTERNET_STATUS_HANDLE_CLOSING:
-        if (This->protocol_sink)
+        if (*(HINTERNET *)lpvStatusInformation == This->connect)
         {
-            IInternetProtocolSink_Release(This->protocol_sink);
-            This->protocol_sink = 0;
+            This->connect = 0;
         }
-        if (This->bind_info.cbSize)
+        else if (*(HINTERNET *)lpvStatusInformation == This->request)
         {
-            ReleaseBindInfo(&This->bind_info);
-            memset(&This->bind_info, 0, sizeof(This->bind_info));
+            This->request = 0;
+            if (This->protocol_sink)
+            {
+                IInternetProtocolSink_Release(This->protocol_sink);
+                This->protocol_sink = 0;
+            }
+            if (This->bind_info.cbSize)
+            {
+                ReleaseBindInfo(&This->bind_info);
+                memset(&This->bind_info, 0, sizeof(This->bind_info));
+            }
         }
         IInternetProtocol_Release((IInternetProtocol *)This);
         return;
