@@ -977,6 +977,7 @@ static HRESULT Stream_WriteLocationInfo( IStream* stm, LPCWSTR path,
     LOCATION_INFO *loc;
     LPSTR szLabel, szPath, szFinalPath;
     ULONG count = 0;
+    HRESULT hr;
 
     TRACE("%p %s %p\n", stm, debugstr_w(path), volume);
 
@@ -1018,7 +1019,10 @@ static HRESULT Stream_WriteLocationInfo( IStream* stm, LPCWSTR path,
                          szPath, path_size, NULL, NULL );
     szFinalPath[0] = 0;
 
-    return IStream_Write( stm, loc, total_size, &count );
+    hr = IStream_Write( stm, loc, total_size, &count );
+    HeapFree(GetProcessHeap(), 0, loc);
+
+    return hr;
 }
 
 static EXP_DARWIN_LINK* shelllink_build_darwinid( LPCWSTR string, DWORD magic )
