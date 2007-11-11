@@ -47,6 +47,45 @@ FLOAT WINAPI D3DXMatrixfDeterminant(CONST D3DXMATRIX *pm)
     return det;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixInverse(D3DXMATRIX *pout, FLOAT *pdeterminant, CONST D3DXMATRIX *pm)
+{
+    int a, i, j;
+    D3DXVECTOR4 v, vec[3];
+    FLOAT cofactor, det;
+
+    det = D3DXMatrixfDeterminant(pm);
+    if ( !det ) return NULL;
+    if ( pdeterminant ) *pdeterminant = det;
+    for (i=0; i<4; i++)
+    {
+     for (j=0; j<4; j++)
+     {
+      if (j != i )
+      {
+       a = j;
+       if ( j > i ) a = a-1;
+       vec[a].x = pm->u.m[j][0];
+       vec[a].y = pm->u.m[j][1];
+       vec[a].z = pm->u.m[j][2];
+       vec[a].w = pm->u.m[j][3];
+      }
+     }
+    D3DXVec4Cross(&v, &vec[0], &vec[1], &vec[2]);
+    for (j=0; j<4; j++)
+    {
+     switch(j)
+     {
+      case 0: cofactor = v.x; break;
+      case 1: cofactor = v.y; break;
+      case 2: cofactor = v.z; break;
+      case 3: cofactor = v.w; break;
+     }
+    pout->u.m[j][i] = pow(-1.0f, i) * cofactor / det;
+    }
+   }
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixLookAtLH(D3DXMATRIX *pout, CONST D3DXVECTOR3 *peye, CONST D3DXVECTOR3 *pat, CONST D3DXVECTOR3 *pup)
 {
     D3DXVECTOR3 right, rightn, up, upn, vec, vec2;

@@ -23,7 +23,7 @@
 @ stdcall D3DXMatrixfDeterminant(ptr)
 @ stdcall D3DXMatrixMultiply(ptr ptr ptr)
 @ stdcall D3DXMatrixTranspose(ptr ptr)
-@ stub D3DXMatrixInverse
+@ stdcall D3DXMatrixInverse(ptr ptr ptr)
 @ stdcall D3DXMatrixScaling(ptr long long long)
 @ stdcall D3DXMatrixTranslation(ptr long long long)
 @ stdcall D3DXMatrixRotationX(ptr long)
