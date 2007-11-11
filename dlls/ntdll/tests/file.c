@@ -101,6 +101,8 @@ static void read_file_test(void)
     LARGE_INTEGER offset;
     HANDLE event = CreateEventA( NULL, TRUE, FALSE, NULL );
 
+    buffer[0] = 1;
+
     if (!create_pipe( &read, &write, FILE_FLAG_OVERLAPPED, 4096 )) return;
 
     /* try read with no data */
