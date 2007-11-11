@@ -974,6 +974,15 @@ BOOL WINAPI GetConsoleKeyboardLayoutNameA(LPSTR layoutName)
 }
 
 /***********************************************************************
+ *            GetConsoleKeyboardLayoutNameW   (KERNEL32.@)
+ */
+BOOL WINAPI GetConsoleKeyboardLayoutNameW(LPWSTR layoutName)
+{
+    FIXME( "stub %p\n", layoutName);
+    return TRUE;
+}
+
+/***********************************************************************
  *            GetConsoleInputExeNameA   (KERNEL32.@)
  */
 DWORD WINAPI GetConsoleInputExeNameA(DWORD BufferLength, LPSTR lpBuffer)
