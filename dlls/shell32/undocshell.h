@@ -411,11 +411,6 @@ BOOL WINAPI PathMakeUniqueNameAW(
 	LPCVOID lpszLongName,
 	LPCVOID lpszPathName);
 
-BOOL WINAPI PathYetAnotherMakeUniqueName(
-	LPWSTR lpszBuffer,
-	LPCWSTR lpszPathName,
-	LPCWSTR lpszShortName,
-	LPCWSTR lpszLongName);
 
 BOOL WINAPI PathQualifyA(LPCSTR path);
 BOOL WINAPI PathQualifyW(LPCWSTR path);
@@ -423,22 +418,9 @@ BOOL WINAPI PathQualifyW(LPCWSTR path);
 BOOL  WINAPI PathQualifyAW(LPCVOID path);
 
 
-/* PathResolve flags */
-#define PRF_CHECKEXISTANCE  0x01
-#define PRF_EXECUTABLE      0x02
-#define PRF_QUALIFYONPATH   0x04
-#define PRF_WINDOWS31       0x08
-
 BOOL WINAPI PathResolveAW(LPVOID lpszPath, LPCVOID *alpszPaths, DWORD dwFlags);
 
 VOID WINAPI PathSetDlgItemPathAW(HWND hDlg, int nIDDlgItem, LPCVOID lpszPath);
-
-/* PathProcessCommand flags */
-#define PPCF_QUOTEPATH        0x01 /* implies PPCF_INCLUDEARGS */
-#define PPCF_INCLUDEARGS      0x02
-#define PPCF_NODIRECTORIES    0x10
-#define PPCF_DONTRESOLVE      0x20
-#define PPCF_PATHISRELATIVE   0x40
 
 HRESULT WINAPI PathProcessCommandAW(LPCVOID lpszPath, LPVOID lpszBuff,
 				DWORD dwBuffSize, DWORD dwFlags);

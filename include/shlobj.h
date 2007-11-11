@@ -1292,8 +1292,26 @@ BOOL WINAPI WriteCabinetState(CABINETSTATE *);
 /****************************************************************************
  * Path Manipulation Routines
  */
+
+/* PathProcessCommand flags */
+#define PPCF_ADDQUOTES        0x01
+#define PPCF_INCLUDEARGS      0x02
+#define PPCF_ADDARGUMENTS     0x03
+#define PPCF_NODIRECTORIES    0x10
+#define PPCF_DONTRESOLVE      0x20
+#define PPCF_FORCEQUALIFY     0x40
+#define PPCF_LONGESTPOSSIBLE  0x80
+
+/* PathResolve flags */
+#define PRF_VERIFYEXISTS         0x01
+#define PRF_EXECUTABLE           0x02
+#define PRF_TRYPROGRAMEXTENSIONS 0x03
+#define PRF_FIRSTDIRDEF          0x04
+#define PRF_DONTFINDLINK         0x08
+
 VOID WINAPI PathGetShortPath(LPWSTR pszPath);
 LONG WINAPI PathProcessCommand(LPCWSTR, LPWSTR, int, DWORD);
+BOOL WINAPI PathYetAnotherMakeUniqueName(LPWSTR, LPCWSTR, LPCWSTR, LPCWSTR);
 
 /****************************************************************************
  * Drag And Drop Routines
