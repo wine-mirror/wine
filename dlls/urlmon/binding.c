@@ -622,14 +622,14 @@ static ULONG WINAPI InternetProtocolSink_Release(IInternetProtocolSink *iface)
 
 typedef struct {
     task_header_t header;
-    PROTOCOLDATA *data;
+    PROTOCOLDATA data;
 } switch_task_t;
 
 static void switch_proc(Binding *binding, task_header_t *t)
 {
     switch_task_t *task = (switch_task_t*)t;
 
-    IInternetProtocol_Continue(binding->protocol, task->data);
+    IInternetProtocol_Continue(binding->protocol, &task->data);
 
     HeapFree(GetProcessHeap(), 0, task);
 }
@@ -643,7 +643,7 @@ static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
     TRACE("(%p)->(%p)\n", This, pProtocolData);
 
     task = HeapAlloc(GetProcessHeap(), 0, sizeof(switch_task_t));
-    task->data = pProtocolData;
+    memcpy(&task->data, pProtocolData, sizeof(PROTOCOLDATA));
 
     push_task(This, &task->header, switch_proc);
 
