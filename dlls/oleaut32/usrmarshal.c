@@ -661,7 +661,12 @@ void WINAPI VARIANT_UserFree(ULONG *pFlags, VARIANT *pvar)
   if (!ref) return;
 
   if(vt & VT_ARRAY)
-    LPSAFEARRAY_UserFree(pFlags, V_ARRAYREF(pvar));
+  {
+    if (vt & VT_BYREF)
+      LPSAFEARRAY_UserFree(pFlags, V_ARRAYREF(pvar));
+    else
+      LPSAFEARRAY_UserFree(pFlags, &V_ARRAY(pvar));
+  }
   else
   {
     switch (vt)
