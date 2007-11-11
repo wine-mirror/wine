@@ -21,12 +21,6 @@
 #include "wine/test.h"
 #include "winbase.h"
 
-#define CDROM   "CDROM"
-#define FLOPPY  "FLOPPY"
-#define HARDISK "HARDDISK"
-#define LANMAN  "LANMANREDIRECTOR"
-#define RAMDISK "RAMDISK"
-
 static HINSTANCE hdll;
 static BOOL (WINAPI * pGetVolumeNameForVolumeMountPointA)(LPCSTR, LPSTR, DWORD);
 static BOOL (WINAPI * pGetVolumeNameForVolumeMountPointW)(LPCWSTR, LPWSTR, DWORD);
@@ -38,17 +32,16 @@ static void test_query_dos_deviceA(void)
     char drivestr[] = "a:";
     char *p, buffer[2000];
     DWORD ret;
+    BOOL found = FALSE;
+
     for (;drivestr[0] <= 'z'; drivestr[0]++) {
         ret = QueryDosDeviceA( drivestr, buffer, sizeof(buffer));
         if(ret) {
             for (p = buffer; *p; p++) *p = toupper(*p);
-            todo_wine
-            ok( strstr( buffer, CDROM)   || strstr( buffer, FLOPPY) ||
-                strstr( buffer, HARDISK) || strstr( buffer, LANMAN) ||
-                strstr( buffer, RAMDISK), "expect the string %s contains %s,%s,%s,%s or %s\n",
-                buffer, CDROM, FLOPPY, HARDISK, LANMAN, RAMDISK);
+            if (strstr(buffer, "HARDDISK") || strstr(buffer, "RAMDISK")) found = TRUE;
         }
     }
+    todo_wine ok(found, "expected at least one devicename to contain HARDDISK or RAMDISK\n");
 }
 
 static void test_GetVolumeNameForVolumeMountPointA(void)
