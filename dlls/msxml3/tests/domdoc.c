@@ -405,12 +405,9 @@ static void test_domdoc( void )
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
-    /* try with a null out pointer - crashes */
-    if (0)
-    {
-        r = IXMLDOMDocument_get_documentElement( doc, NULL );
-        ok( r == S_OK, "should be no document element\n");
-    }
+    /* try with a null out pointer */
+    r = IXMLDOMDocument_get_documentElement( doc, NULL );
+    ok( r == E_INVALIDARG, "should be no document element\n");
 
     /* check if nodename is correct */
     r = IXMLDOMDocument_get_nodeName( doc, NULL );
@@ -704,6 +701,7 @@ todo_wine
         r = IXMLDOMNode_get_baseName( node, &str );
         ok( r == S_OK, "get_baseName returned wrong code\n");
         ok( lstrcmpW(str,szdl) == 0, "basename was wrong\n");
+        SysFreeString( str );
 
         r = IXMLDOMNode_get_nodeValue( node, &var );
         ok( r == S_OK, "returns %08x\n", r );
