@@ -596,7 +596,7 @@ DECL_HANDLER(set_user_object_info)
         const WCHAR *ptr, *name = get_object_name( obj, &len );
 
         /* if there is a backslash return the part of the name after it */
-        if (name && (ptr = memchrW( name, '\\', len )))
+        if (name && (ptr = memchrW( name, '\\', len/sizeof(WCHAR) )))
         {
             len -= (ptr + 1 - name) * sizeof(WCHAR);
             name = ptr + 1;
