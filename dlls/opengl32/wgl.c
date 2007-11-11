@@ -121,17 +121,6 @@ HGLRC WINAPI wglCreateLayerContext(HDC hdc,
 }
 
 /***********************************************************************
- *		wglCopyContext (OPENGL32.@)
- */
-BOOL WINAPI wglCopyContext(HGLRC hglrcSrc,
-			   HGLRC hglrcDst,
-			   UINT mask) {
-  FIXME("(%p,%p,%d)\n", hglrcSrc, hglrcDst, mask);
-
-  return FALSE;
-}
-
-/***********************************************************************
  *		wglDescribeLayerPlane (OPENGL32.@)
  */
 BOOL WINAPI wglDescribeLayerPlane(HDC hdc,

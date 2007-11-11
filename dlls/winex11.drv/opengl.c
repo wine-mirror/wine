@@ -211,6 +211,7 @@ static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
 /* GLX 1.0 */
 MAKE_FUNCPTR(glXChooseVisual)
+MAKE_FUNCPTR(glXCopyContext)
 MAKE_FUNCPTR(glXCreateContext)
 MAKE_FUNCPTR(glXCreateGLXPixmap)
 MAKE_FUNCPTR(glXGetCurrentContext)
@@ -379,6 +380,7 @@ static BOOL has_opengl(void)
 #define LOAD_FUNCPTR(f) if((p##f = (void*)pglXGetProcAddressARB((const unsigned char*)#f)) == NULL) goto sym_not_found;
 /* GLX 1.0 */
 LOAD_FUNCPTR(glXChooseVisual)
+LOAD_FUNCPTR(glXCopyContext)
 LOAD_FUNCPTR(glXCreateContext)
 LOAD_FUNCPTR(glXCreateGLXPixmap)
 LOAD_FUNCPTR(glXGetCurrentContext)
@@ -1505,6 +1507,38 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     }
   }
   return TRUE;
+}
+
+/**
+ * X11DRV_wglCopyContext
+ *
+ * For OpenGL32 wglCopyContext.
+ */
+BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
+    Wine_GLContext *src = (Wine_GLContext*)hglrcSrc;
+    Wine_GLContext *dst = (Wine_GLContext*)hglrcDst;
+
+    TRACE("hglrcSrc: (%p), hglrcDst: (%p), mask: %#x\n", hglrcSrc, hglrcDst, mask);
+
+    /* There is a slight difference in the way GL contexts share display lists in WGL and GLX.
+     * In case of GLX you need to specify this at context creation time but in case of WGL you
+     * do this using wglShareLists which you can call after creating the context.
+     * To emulate WGL we try to delay the creation of the context until wglShareLists or wglMakeCurrent.
+     * Upto now that works fine.
+     *
+     * The delayed GLX context creation could cause issues for wglCopyContext as it might get called
+     * when there is no GLX context yet. Warn the user about it and let him report a bug report.
+     * The chance this will cause problems is small as at the time of writing Wine has had OpenGL support
+     * for more than 7 years and this function has remained a stub ever since then.
+     */
+    if(!src->ctx || !dst->ctx) {
+        FIXME("No source or destination context available! This could indicate a Wine bug.");
+        return FALSE;
+    }
+    pglXCopyContext(gdi_display, src->ctx, dst->ctx, mask);
+
+    /* As opposed to wglCopyContext, glXCopyContext doesn't return anything, so hopefully we passed */
+    return TRUE;
 }
 
 /**
@@ -3454,6 +3488,16 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
   ERR_(opengl)("No OpenGL support compiled in.\n");
 
   return FALSE;
+}
+
+/**
+ * X11DRV_wglCopyContext
+ *
+ * For OpenGL32 wglCopyContext.
+ */
+BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return FALSE;
 }
 
 /**

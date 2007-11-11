@@ -375,7 +375,7 @@
 @  stdcall glVertexPointer( long long long ptr ) wine_glVertexPointer
 @  stdcall glViewport( long long long long ) wine_glViewport
 @  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
-@  stdcall wglCopyContext(long long long)
+@  stdcall wglCopyContext(long long long) gdi32.wglCopyContext
 @  stdcall wglCreateContext(long) gdi32.wglCreateContext
 @  stdcall wglCreateLayerContext(long long)
 @  stdcall wglDeleteContext(long) gdi32.wglDeleteContext

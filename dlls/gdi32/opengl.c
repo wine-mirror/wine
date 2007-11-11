@@ -60,6 +60,31 @@ static DC* OPENGL_GetDefaultDC(void)
 }
 
 /***********************************************************************
+ *		wglCopyContext (OPENGL32.@)
+ */
+BOOL WINAPI wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
+{
+    DC *dc;
+    BOOL ret = FALSE;
+    OPENGL_Context ctx = (OPENGL_Context)hglrcSrc;
+
+    TRACE("hglrcSrc: (%p), hglrcDst: (%p), mask: %#x\n", hglrcSrc, hglrcDst, mask);
+    /* If no context is set, this call doesn't have a purpose */
+    if(!hglrcSrc || !hglrcDst)
+        return FALSE;
+
+    /* Retrieve the HDC associated with the context to access the display driver */
+    dc = get_dc_ptr(ctx->hdc);
+    if (!dc) return FALSE;
+
+    if (!dc->funcs->pwglCopyContext) FIXME(" :stub\n");
+    else ret = dc->funcs->pwglCopyContext(hglrcSrc, hglrcDst, mask);
+
+    release_dc_ptr( dc );
+    return ret;
+}
+
+/***********************************************************************
  *		wglCreateContext (OPENGL32.@)
  */
 HGLRC WINAPI wglCreateContext(HDC hdc)

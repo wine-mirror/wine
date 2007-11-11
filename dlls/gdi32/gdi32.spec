@@ -498,6 +498,7 @@
 ################################################################
 # Wine extensions: OpenGL support
 #
+@ stdcall wglCopyContext(long long long)
 @ stdcall wglCreateContext(long)
 @ stdcall wglDeleteContext(long)
 @ stdcall wglGetCurrentContext()

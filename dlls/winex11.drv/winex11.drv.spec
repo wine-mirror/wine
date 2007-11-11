@@ -132,6 +132,7 @@
 @ cdecl ForceXIMReset(long) X11DRV_ForceXIMReset
 
 # OpenGL
+@ cdecl wglCopyContext(long long long) X11DRV_wglCopyContext
 @ cdecl wglCreateContext(ptr) X11DRV_wglCreateContext
 @ cdecl wglDeleteContext(long) X11DRV_wglDeleteContext
 @ cdecl wglGetProcAddress(str) X11DRV_wglGetProcAddress
