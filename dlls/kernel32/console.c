@@ -963,6 +963,15 @@ BOOL WINAPI SetConsoleTitleA( LPCSTR title )
     return ret;
 }
 
+/***********************************************************************
+ *            GetConsoleInputExeNameA   (KERNEL32.@)
+ */
+DWORD WINAPI GetConsoleInputExeNameA(DWORD BufferLength, LPSTR lpBuffer)
+{
+    DWORD ret = 0;
+    FIXME( "stub %u %p\n", BufferLength, lpBuffer);
+    return ret;
+}
 
 /***********************************************************************
  *            GetConsoleTitleA   (KERNEL32.@)

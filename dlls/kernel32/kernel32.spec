@@ -457,7 +457,7 @@
 @ stub GetConsoleFontInfo
 @ stub GetConsoleFontSize
 @ stub GetConsoleHardwareState
-@ stub GetConsoleInputExeNameA
+@ stdcall GetConsoleInputExeNameA(long ptr)
 @ stub GetConsoleInputExeNameW
 @ stdcall GetConsoleInputWaitHandle()
 @ stub GetConsoleKeyboardLayoutNameA
