@@ -753,7 +753,7 @@ static void InternetOpenUrlA_test(void)
   SetLastError(0);
   myhttp = InternetOpenUrl(myhinternet, TEST_URL, 0, 0,
 			   INTERNET_FLAG_RELOAD|INTERNET_FLAG_NO_CACHE_WRITE|INTERNET_FLAG_TRANSFER_BINARY,0);
-  if (GetLastError() == 12007)
+  if (GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     return; /* WinXP returns this when not connected to the net */
   ok((myhttp != 0),"InternetOpenUrl failed, error %u\n",GetLastError());
   ret = InternetReadFile(myhttp, buffer,0x400,&readbytes);
@@ -762,6 +762,9 @@ static void InternetOpenUrlA_test(void)
   while (readbytes && InternetReadFile(myhttp, buffer,0x400,&readbytes))
     totalbytes += readbytes;
   trace("read 0x%08x bytes\n",totalbytes);
+
+  InternetCloseHandle(myhttp);
+  InternetCloseHandle(myhinternet);
 }
 
 static void InternetTimeFromSystemTimeA_test(void)
