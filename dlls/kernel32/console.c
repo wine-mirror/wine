@@ -963,6 +963,16 @@ BOOL WINAPI SetConsoleTitleA( LPCSTR title )
     return ret;
 }
 
+
+/***********************************************************************
+ *            GetConsoleKeyboardLayoutNameA   (KERNEL32.@)
+ */
+BOOL WINAPI GetConsoleKeyboardLayoutNameA(LPSTR layoutName)
+{
+    FIXME( "stub %p\n", layoutName);
+    return TRUE;
+}
+
 /***********************************************************************
  *            GetConsoleInputExeNameA   (KERNEL32.@)
  */

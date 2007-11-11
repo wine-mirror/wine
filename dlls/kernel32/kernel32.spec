@@ -460,7 +460,7 @@
 @ stdcall GetConsoleInputExeNameA(long ptr)
 @ stdcall GetConsoleInputExeNameW(long ptr)
 @ stdcall GetConsoleInputWaitHandle()
-@ stub GetConsoleKeyboardLayoutNameA
+@ stdcall GetConsoleKeyboardLayoutNameA(ptr)
 @ stub GetConsoleKeyboardLayoutNameW
 @ stdcall GetConsoleMode(long ptr)
 @ stub GetConsoleNlsMode
