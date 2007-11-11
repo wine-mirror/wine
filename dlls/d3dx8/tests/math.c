@@ -878,6 +878,12 @@ static void D3X8Vector3Test(void)
     expectedvec.x = 57.0f; expectedvec.y = 74.0f; expectedvec.z = 91.0f;
     D3DXVec3TransformNormal(&gotvec,&u,&mat);
     expect_vec3(expectedvec,gotvec);
+
+/*_______________D3DXVec3Unproject_________________________*/
+    expectedvec.x = -2.913411f; expectedvec.y = 1.593215f; expectedvec.z = 0.380724f;
+    D3DXMatrixPerspectiveFovLH(&projection,D3DX_PI/4.0f,20.0f/17.0f,1.0f,1000.0f);
+    D3DXVec3Unproject(&gotvec,&u,&viewport,&projection,&view,&world);
+    expect_vec3(expectedvec,gotvec);
 }
 
 static void D3X8Vector4Test(void)

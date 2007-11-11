@@ -606,6 +606,21 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformNormal(D3DXVECTOR3 *pout, CONST D3DXVECTOR3
 
 }
 
+D3DXVECTOR3* WINAPI D3DXVec3Unproject(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, CONST D3DVIEWPORT8 *pviewport, CONST D3DXMATRIX *pprojection, CONST D3DXMATRIX *pview, CONST D3DXMATRIX *pworld)
+{
+    D3DXMATRIX m1, m2, m3;
+    D3DXVECTOR3 vec;
+
+    D3DXMatrixMultiply(&m1, pworld, pview);
+    D3DXMatrixMultiply(&m2, &m1, pprojection);
+    D3DXMatrixInverse(&m3, NULL, &m2);
+    vec.x = 2.0f * ( pv->x - pviewport->X ) / pviewport->Width - 1.0f;
+    vec.y = 1.0f - 2.0f * ( pv->y - pviewport->Y ) / pviewport->Height;
+    vec.z = ( pv->z - pviewport->MinZ) / ( pviewport->MaxZ - pviewport->MinZ );
+    D3DXVec3TransformCoord(pout, &vec, &m3);
+    return pout;
+}
+
 /*_________________D3DXVec4_____________________*/
 
 D3DXVECTOR4* WINAPI D3DXVec4BaryCentric(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2, CONST D3DXVECTOR4 *pv3, FLOAT f, FLOAT g)
