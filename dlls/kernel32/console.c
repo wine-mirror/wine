@@ -974,6 +974,16 @@ DWORD WINAPI GetConsoleInputExeNameA(DWORD BufferLength, LPSTR lpBuffer)
 }
 
 /***********************************************************************
+ *            GetConsoleInputExeNameW   (KERNEL32.@)
+ */
+DWORD WINAPI GetConsoleInputExeNameW(DWORD BufferLength, LPWSTR lpBuffer)
+{
+    DWORD ret = 0;
+    FIXME( "stub %u %p\n", BufferLength, lpBuffer);
+    return ret;
+}
+
+/***********************************************************************
  *            GetConsoleTitleA   (KERNEL32.@)
  *
  * See GetConsoleTitleW.
