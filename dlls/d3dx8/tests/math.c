@@ -692,10 +692,11 @@ static void D3X8Vector2Test(void)
 
 static void D3X8Vector3Test(void)
 {
+    D3DVIEWPORT8 viewport;
     D3DXVECTOR3 expectedvec, gotvec, nul, nulproj, u, v, w, x;
     LPD3DXVECTOR3 funcpointer;
     D3DXVECTOR4 expectedtrans, gottrans;
-    D3DXMATRIX mat;
+    D3DXMATRIX mat, projection, view, world;
     FLOAT coeff1, coeff2, expected, got, scale;
 
     nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f;
@@ -704,10 +705,25 @@ static void D3X8Vector3Test(void)
     w.x = 3.0f; w.y = -5.0f; w.z = 7.0f;
     x.x = 4.0f; x.y = 1.0f; x.z = 11.0f;
 
+    viewport.Width = 800; viewport.MinZ = 0.2f; viewport.X = 10;
+    viewport.Height = 680; viewport.MaxZ = 0.9f; viewport.Y = 5;
+
     U(mat).m[0][0] = 1.0f; U(mat).m[0][1] = 2.0f; U(mat).m[0][2] = 3.0f; U(mat).m[0][3] = 4.0f;
     U(mat).m[1][0] = 5.0f; U(mat).m[1][1] = 6.0f; U(mat).m[1][2] = 7.0f; U(mat).m[1][3] = 8.0f;
     U(mat).m[2][0] = 9.0f; U(mat).m[2][1] = 10.0f; U(mat).m[2][2] = 11.0f; U(mat).m[2][3] = 12.0f;
     U(mat).m[3][0] = 13.0f; U(mat).m[3][1] = 14.0f; U(mat).m[3][2] = 15.0f; U(mat).m[3][3] = 16.0f;
+
+    view.m[0][1] = 5.0f; view.m[0][2] = 7.0f; view.m[0][3] = 8.0f;
+    view.m[1][0] = 11.0f; view.m[1][2] = 16.0f; view.m[1][3] = 33.0f;
+    view.m[2][0] = 19.0f; view.m[2][1] = -21.0f; view.m[2][3] = 43.0f;
+    view.m[3][0] = 2.0f; view.m[3][1] = 3.0f; view.m[3][2] = -4.0f;
+    view.m[0][0] = 10.0f; view.m[1][1] = 20.0f; view.m[2][2] = 30.0f;
+    view.m[3][3] = -40.0f;
+
+    world.m[0][0] = 21.0f; world.m[0][1] = 2.0f; world.m[0][2] = 3.0f; world.m[0][3] = 4.0;
+    world.m[1][0] = 5.0f; world.m[1][1] = 23.0f; world.m[1][2] = 7.0f; world.m[1][3] = 8.0f;
+    world.m[2][0] = -8.0f; world.m[2][1] = -7.0f; world.m[2][2] = 25.0f; world.m[2][3] = -5.0f;
+    world.m[3][0] = -4.0f; world.m[3][1] = -3.0f; world.m[3][2] = -2.0f; world.m[3][3] = 27.0f;
 
     coeff1 = 2.0f; coeff2 = 5.0f;
     scale = -6.5f;
@@ -815,6 +831,12 @@ static void D3X8Vector3Test(void)
     /* Test the nul vector */
     expectedvec.x = 0.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f;
     D3DXVec3Normalize(&gotvec,&nul);
+    expect_vec3(expectedvec,gotvec);
+
+/*_______________D3DXVec3Project_________________________*/
+    expectedvec.x = 1135.721924f; expectedvec.y = 147.086914f; expectedvec.z = 0.153412f;
+    D3DXMatrixPerspectiveFovLH(&projection,D3DX_PI/4.0f,20.0f/17.0f,1.0f,1000.0f);
+    D3DXVec3Project(&gotvec,&u,&viewport,&projection,&view,&world);
     expect_vec3(expectedvec,gotvec);
 
 /*_______________D3DXVec3Scale____________________________*/

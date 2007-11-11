@@ -12,7 +12,7 @@
 @ stdcall D3DXVec3Transform(ptr ptr ptr)
 @ stdcall D3DXVec3TransformCoord(ptr ptr ptr)
 @ stdcall D3DXVec3TransformNormal(ptr ptr ptr)
-@ stub D3DXVec3Project
+@ stdcall D3DXVec3Project(ptr ptr ptr ptr ptr ptr)
 @ stub D3DXVec3Unproject
 @ stdcall D3DXVec4Cross(ptr ptr ptr ptr)
 @ stdcall D3DXVec4Normalize(ptr ptr)

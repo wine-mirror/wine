@@ -553,6 +553,20 @@ D3DXVECTOR3* WINAPI D3DXVec3Normalize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv)
     return pout;
 }
 
+D3DXVECTOR3* WINAPI D3DXVec3Project(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, CONST D3DVIEWPORT8 *pviewport, CONST D3DXMATRIX *pprojection, CONST D3DXMATRIX *pview, CONST D3DXMATRIX *pworld)
+{
+    D3DXMATRIX m1, m2;
+    D3DXVECTOR3 vec;
+
+    D3DXMatrixMultiply(&m1, pworld, pview);
+    D3DXMatrixMultiply(&m2, &m1, pprojection);
+    D3DXVec3TransformCoord(&vec, pv, &m2);
+    pout->x = pviewport->X +  ( 1.0f + vec.x ) * pviewport->Width / 2.0f;
+    pout->y = pviewport->Y +  ( 1.0f - vec.y ) * pviewport->Height / 2.0f;
+    pout->z = pviewport->MinZ + vec.z * ( pviewport->MaxZ - pviewport->MinZ );
+    return pout;
+}
+
 D3DXVECTOR4* WINAPI D3DXVec3Transform(D3DXVECTOR4 *pout, CONST D3DXVECTOR3 *pv, CONST D3DXMATRIX *pm)
 {
     pout->x = pm->u.m[0][0] * pv->x + pm->u.m[1][0] * pv->y + pm->u.m[2][0] * pv->z + pm->u.m[3][0];
