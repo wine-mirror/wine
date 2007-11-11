@@ -509,7 +509,10 @@ static ULONG WINAPI RemUnkStub_Release(LPRPCSTUBBUFFER iface)
   TRACE("(%p)->Release()\n",This);
   refs = InterlockedDecrement(&This->refs);
   if (!refs)
+  {
+    IRpcStubBuffer_Disconnect(iface);
     HeapFree(GetProcessHeap(), 0, This);
+  }
   return refs;
 }
 
