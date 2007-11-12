@@ -279,7 +279,7 @@
 279 stdcall -noname SHInvokeDefaultCommand(ptr ptr ptr)
 280 stdcall -noname SHRegGetIntW(ptr wstr long)
 281 stdcall -noname SHPackDispParamsV(ptr ptr ptr ptr)
-282 stdcall -noname SHPackDispParams(ptr ptr ptr ptr)
+282 varargs -noname SHPackDispParams(ptr ptr long)
 283 stub -noname IConnectionPoint_InvokeWithCancel
 284 stdcall -noname IConnectionPoint_SimpleInvoke(ptr long ptr)
 285 stdcall -noname IConnectionPoint_OnChanged(ptr long)

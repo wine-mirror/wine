@@ -2850,13 +2850,19 @@ HRESULT WINAPI SHPackDispParamsV(DISPPARAMS *params, VARIANTARG *args, UINT cnt,
 /*************************************************************************
  *      @       [SHLWAPI.282]
  *
- * This function seems to be a forward to SHPackDispParamsV (whatever THAT
- * function does...).
+ * SHPackDispParams
  */
-HRESULT WINAPI SHPackDispParams(LPVOID w, LPVOID x, LPVOID y, LPVOID z)
+HRESULT WINAPIV SHPackDispParams(DISPPARAMS *params, VARIANTARG *args, UINT cnt, ...)
 {
-  FIXME("%p %p %p %p\n", w, x, y, z);
-  return E_FAIL;
+  va_list valist;
+  HRESULT hres;
+
+  va_start(valist, cnt);
+
+  hres = SHPackDispParamsV(params, args, cnt, valist);
+
+  va_end(valist);
+  return hres;
 }
 
 /*************************************************************************
