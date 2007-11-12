@@ -278,7 +278,7 @@
 278 stdcall -noname SHCreateWorkerWindowW(long long long long long long)
 279 stdcall -noname SHInvokeDefaultCommand(ptr ptr ptr)
 280 stdcall -noname SHRegGetIntW(ptr wstr long)
-281 stdcall -noname SHPackDispParamsV(ptr ptr ptr ptr)
+281 stdcall -noname SHPackDispParamsV(ptr ptr long ptr)
 282 varargs -noname SHPackDispParams(ptr ptr long)
 283 stub -noname IConnectionPoint_InvokeWithCancel
 284 stdcall -noname IConnectionPoint_SimpleInvoke(ptr long ptr)
