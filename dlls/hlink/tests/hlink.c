@@ -316,6 +316,36 @@ static void test_persist(void)
     IHlink_Release(lnk);
 }
 
+static void test_special_reference(void)
+{
+    LPWSTR ref;
+    HRESULT hres;
+
+    hres = HlinkGetSpecialReference(HLSR_HOME, &ref);
+    todo_wine
+    ok(hres == S_OK, "HlinkGetSpecialReference(HLSR_HOME) failed: %08x\n", hres);
+    todo_wine
+    ok(ref != NULL, "ref == NULL\n");
+    CoTaskMemFree(ref);
+
+    hres = HlinkGetSpecialReference(HLSR_SEARCHPAGE, &ref);
+    todo_wine
+    ok(hres == S_OK, "HlinkGetSpecialReference(HLSR_SEARCHPAGE) failed: %08x\n", hres);
+    todo_wine
+    ok(ref != NULL, "ref == NULL\n");
+    CoTaskMemFree(ref);
+
+    ref = (void*)0xdeadbeef;
+    hres = HlinkGetSpecialReference(HLSR_HISTORYFOLDER, &ref);
+    ok(hres == E_NOTIMPL, "HlinkGetSpecialReference(HLSR_HISTORYFOLDER) failed: %08x\n", hres);
+    ok(ref == NULL, "ref=%p\n", ref);
+
+    ref = (void*)0xdeadbeef;
+    hres = HlinkGetSpecialReference(4, &ref);
+    ok(hres == E_INVALIDARG, "HlinkGetSpecialReference(HLSR_HISTORYFOLDER) failed: %08x\n", hres);
+    ok(ref == NULL, "ref=%p\n", ref);
+}
+
 START_TEST(hlink)
 {
     CoInitialize(NULL);
@@ -323,6 +353,7 @@ START_TEST(hlink)
     test_HlinkIsShortcut();
     test_reference();
     test_persist();
+    test_special_reference();
 
     CoUninitialize();
 }

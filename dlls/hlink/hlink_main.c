@@ -278,8 +278,57 @@ HRESULT WINAPI HlinkIsShortcut(LPCWSTR pwzFileName)
 
 HRESULT WINAPI HlinkGetSpecialReference(ULONG uReference, LPWSTR *ppwzReference)
 {
-    FIXME("(%u %p) stub\n", uReference, ppwzReference);
-    return E_NOTIMPL;
+    DWORD res, type, size = 100;
+    LPCWSTR value_name;
+    WCHAR *buf;
+    HKEY hkey;
+
+    static const WCHAR start_pageW[] = {'S','t','a','r','t',' ','P','a','g','e',0};
+    static const WCHAR search_pageW[] = {'S','e','a','r','c','h',' ','P','a','g','e',0};
+
+    static const WCHAR ie_main_keyW[] =
+        {'S','o','f','t','w','a','r','e',
+         '\\','M','i','c','r','o','s','o','f','t','\\',
+         'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',
+         '\\','M','a','i','n',0};
+
+    TRACE("(%u %p)\n", uReference, ppwzReference);
+
+    *ppwzReference = NULL;
+
+    switch(uReference) {
+    case HLSR_HOME:
+        value_name = start_pageW;
+        break;
+    case HLSR_SEARCHPAGE:
+        value_name = search_pageW;
+        break;
+    case HLSR_HISTORYFOLDER:
+        return E_NOTIMPL;
+    default:
+        return E_INVALIDARG;
+    }
+
+    res = RegOpenKeyW(HKEY_CURRENT_USER, ie_main_keyW, &hkey);
+    if(res != ERROR_SUCCESS) {
+        WARN("Could not open key: %u\n", res);
+        return HRESULT_FROM_WIN32(res);
+    }
+
+    buf = CoTaskMemAlloc(size);
+    res = RegQueryValueExW(hkey, value_name, NULL, &type, (PBYTE)buf, &size);
+    buf = CoTaskMemRealloc(buf, size);
+    if(res == ERROR_MORE_DATA)
+        res = RegQueryValueExW(hkey, value_name, NULL, &type, (PBYTE)buf, &size);
+    RegCloseKey(hkey);
+    if(res != ERROR_SUCCESS) {
+        WARN("Could not query value %s: %u\n", debugstr_w(value_name), res);
+        CoTaskMemFree(buf);
+        return HRESULT_FROM_WIN32(res);
+    }
+
+    *ppwzReference = buf;
+    return S_OK;
 }
 
 HRESULT WINAPI HlinkTranslateURL(LPCWSTR pwzURL, DWORD grfFlags, LPWSTR *ppwzTranslatedURL)
