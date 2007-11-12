@@ -82,6 +82,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     WCHAR path[MAX_PATH];
 
     static const WCHAR backslash[] = {'\\',0};
+    static WCHAR szTables[]  = { '_','T','a','b','l','e','s',0 };
 
     TRACE("%s %s\n",debugstr_w(szDBPath),debugstr_w(szPersist) );
 
@@ -114,7 +115,10 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
         if( r == ERROR_SUCCESS )
         {
             IStorage_SetClass( stg, &CLSID_MsiDatabase );
-            r = msi_init_string_table( stg );
+            /* create the _Tables stream */
+            r = write_stream_data(stg, szTables, NULL, 0, TRUE);
+            if (!FAILED(r))
+                r = msi_init_string_table( stg );
         }
         created = TRUE;
     }

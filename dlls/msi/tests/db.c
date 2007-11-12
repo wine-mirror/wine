@@ -4497,11 +4497,8 @@ void enum_stream_names(IStorage *stg)
         if(FAILED(hr) || !count)
             break;
 
-        todo_wine
-        {
-            ok(!lstrcmpW(stat.pwcsName, database_table_data[n].name),
-               "Expected table %d name to match\n", n);
-        }
+        ok(!lstrcmpW(stat.pwcsName, database_table_data[n].name),
+           "Expected table %d name to match\n", n);
 
         stm = NULL;
         hr = IStorage_OpenStream(stg, stat.pwcsName, NULL,
@@ -4514,15 +4511,11 @@ void enum_stream_names(IStorage *stg)
         hr = IStream_Read(stm, data, sz, &count);
         ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-        if (n == 1) todo_wine
         ok(count == database_table_data[n].size,
            "Expected %d, got %d\n", database_table_data[n].size, count);
 
         if (!database_table_data[n].size)
-        {
-            if (n == 1) todo_wine
             ok(!memcmp(data, check, MAX_PATH), "data should not be changed\n");
-        }
         else
             ok(!memcmp(data, database_table_data[n].data, database_table_data[n].size),
                "Expected table %d data to match\n", n);
@@ -4531,10 +4524,7 @@ void enum_stream_names(IStorage *stg)
         n++;
     }
 
-    todo_wine
-    {
-        ok(n == 3, "Expected 3, got %d\n", n);
-    }
+    ok(n == 3, "Expected 3, got %d\n", n);
 
     IEnumSTATSTG_Release(stgenum);
 }
