@@ -2800,10 +2800,51 @@ HRESULT WINAPI SHInvokeDefaultCommand(HWND hWnd, IShellFolder* lpFolder, LPCITEM
  *
  * _SHPackDispParamsV
  */
-HRESULT WINAPI SHPackDispParamsV(LPVOID w, LPVOID x, LPVOID y, LPVOID z)
+HRESULT WINAPI SHPackDispParamsV(DISPPARAMS *params, VARIANTARG *args, UINT cnt, va_list valist)
 {
-	FIXME("%p %p %p %p\n",w,x,y,z);
-	return E_FAIL;
+  VARIANTARG *iter;
+
+  TRACE("(%p %p %u ...)\n", params, args, cnt);
+
+  params->rgvarg = args;
+  params->rgdispidNamedArgs = NULL;
+  params->cArgs = cnt;
+  params->cNamedArgs = 0;
+
+  iter = args+cnt;
+
+  while(iter-- > args) {
+    V_VT(iter) = va_arg(valist, enum VARENUM);
+
+    TRACE("vt=%d\n", V_VT(iter));
+
+    if(V_VT(iter) & VT_BYREF) {
+      V_BYREF(iter) = va_arg(valist, LPVOID);
+    } else {
+      switch(V_VT(iter)) {
+      case VT_I4:
+        V_I4(iter) = va_arg(valist, LONG);
+        break;
+      case VT_BSTR:
+        V_BSTR(iter) = va_arg(valist, BSTR);
+        break;
+      case VT_DISPATCH:
+        V_DISPATCH(iter) = va_arg(valist, IDispatch*);
+        break;
+      case VT_BOOL:
+        V_BOOL(iter) = va_arg(valist, int);
+        break;
+      case VT_UNKNOWN:
+        V_UNKNOWN(iter) = va_arg(valist, IUnknown*);
+        break;
+      default:
+        V_VT(iter) = VT_I4;
+        V_I4(iter) = va_arg(valist, LONG);
+      }
+    }
+  }
+
+  return S_OK;
 }
 
 /*************************************************************************
