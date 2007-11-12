@@ -372,12 +372,13 @@ static HRESULT num_of_funcs(ITypeInfo *tinfo, unsigned int *num)
 typedef struct _TMAsmProxy {
     BYTE	popleax;
     BYTE	pushlval;
-    BYTE	nr;
+    DWORD	nr;
     BYTE	pushleax;
     BYTE	lcall;
     DWORD	xcall;
     BYTE	lret;
     WORD	bytestopop;
+    BYTE	nop;
 } TMAsmProxy;
 
 #include "poppack.h"
@@ -1709,7 +1710,7 @@ static HRESULT init_proxy_entry_point(TMProxyImpl *proxy, unsigned int num)
  * arg3 arg2 arg1 <method> <returnptr>
  */
     xasm->popleax       = 0x58;
-    xasm->pushlval      = 0x6a;
+    xasm->pushlval      = 0x68;
     xasm->nr            = num;
     xasm->pushleax      = 0x50;
     xasm->lcall         = 0xe8; /* relative jump */
@@ -1717,6 +1718,7 @@ static HRESULT init_proxy_entry_point(TMProxyImpl *proxy, unsigned int num)
     xasm->xcall        -= (DWORD)&(xasm->lret);
     xasm->lret          = 0xc2;
     xasm->bytestopop    = (nrofargs+2)*4; /* pop args, This, iMethod */
+    xasm->nop           = 0x90;
     proxy->lpvtbl[num]  = xasm;
 #else
     FIXME("not implemented on non i386\n");
@@ -1754,7 +1756,7 @@ PSFacBuf_CreateProxy(
     proxy = CoTaskMemAlloc(sizeof(TMProxyImpl));
     if (!proxy) return E_OUTOFMEMORY;
 
-    assert(sizeof(TMAsmProxy) == 12);
+    assert(sizeof(TMAsmProxy) == 16);
 
     proxy->dispatch = NULL;
     proxy->dispatch_proxy = NULL;
