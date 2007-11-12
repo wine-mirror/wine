@@ -850,7 +850,7 @@ LINGER linger_testvals[] = {
 static void test_set_getsockopt(void)
 {
     SOCKET s;
-    int i, err;
+    int i, err, lasterr;
     int timeout;
     LINGER lingval;
     int size;
@@ -889,6 +889,15 @@ static void test_set_getsockopt(void)
                  lingval.l_onoff, lingval.l_linger,
                  linger_testvals[i].l_onoff, linger_testvals[i].l_linger);
     }
+    /* Test for erroneously passing a value instead of a pointer as optval */
+    size = sizeof(char);
+    err = setsockopt(s, SOL_SOCKET, SO_DONTROUTE, (char *)1, size);
+    ok(err == SOCKET_ERROR, "setsockopt with optval being a value passed "
+                            "instead of failing.\n");
+    lasterr = WSAGetLastError();
+    ok(lasterr == WSAEFAULT, "setsockopt with optval being a value "
+                             "returned 0x%08x, not WSAEFAULT(0x%08x)\n",
+                             lasterr, WSAEFAULT);
     closesocket(s);
 }
 

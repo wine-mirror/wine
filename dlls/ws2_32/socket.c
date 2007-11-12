@@ -2812,6 +2812,13 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     TRACE("socket: %04lx, level 0x%x, name 0x%x, ptr %p, len %d\n",
           s, level, optname, optval, optlen);
 
+    /* some broken apps pass the value directly instead of a pointer to it */
+    if(IS_INTRESOURCE(optval))
+    {
+        SetLastError(WSAEFAULT);
+        return SOCKET_ERROR;
+    }
+
     switch(level)
     {
     case WS_SOL_SOCKET:
