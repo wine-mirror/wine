@@ -1420,14 +1420,16 @@ void __RPC_USER HMETAFILEPICT_UserFree(ULONG *pFlags, HMETAFILEPICT *phMfp)
 {
     TRACE("(%s, &%p)\n", debugstr_user_flags(pFlags), *phMfp);
 
-    if ((LOWORD(*pFlags) == MSHCTX_INPROC) && *phMfp)
+    if ((LOWORD(*pFlags) != MSHCTX_INPROC) && *phMfp)
     {
         METAFILEPICT *mfpict;
 
         mfpict = GlobalLock(*phMfp);
         /* FIXME: raise an exception if mfpict is NULL? */
-
+        HMETAFILE_UserFree(pFlags, &mfpict->hMF);
         GlobalUnlock(*phMfp);
+
+        GlobalFree(*phMfp);
     }
 }
 
