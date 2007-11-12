@@ -2065,8 +2065,6 @@ static void _SHCreateSymbolicLinks(void)
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, pszPersonal);
-
     /* Create symbolic links for 'My Pictures', 'My Video' and 'My Music'. */
     for (i=0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++) {
         /* Create the current 'My Whatever' folder and get it's unix path. */
@@ -2094,7 +2092,12 @@ static void _SHCreateSymbolicLinks(void)
     }
 
     /* Last but not least, the Desktop folder */
-    strcpy(szDesktopTarget, pszHome);
+    if (pszHome)
+        strcpy(szDesktopTarget, pszHome);
+    else
+        strcpy(szDesktopTarget, pszPersonal);
+    HeapFree(GetProcessHeap(), 0, pszPersonal);
+
     if (_SHAppendToUnixPath(szDesktopTarget, DesktopW) &&
         !stat(szDesktopTarget, &statFolder) && S_ISDIR(statFolder.st_mode))
     {
