@@ -856,7 +856,18 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         handle = atoiW(&szPackage[1]);
         db = msihandle2msiinfo( handle, MSIHANDLETYPE_DATABASE );
         if( !db )
-            return ERROR_INVALID_HANDLE;
+        {
+            IWineMsiRemoteDatabase *remote_database;
+
+            remote_database = (IWineMsiRemoteDatabase *)msi_get_remote( handle );
+            if ( !remote_database )
+                return ERROR_INVALID_HANDLE;
+
+            IWineMsiRemoteDatabase_Release( remote_database );
+            WARN("MsiOpenPackage not allowed during a custom action!\n");
+
+            return ERROR_FUNCTION_FAILED;
+        }
     }
     else
     {
@@ -1598,7 +1609,27 @@ static HRESULT WINAPI mrp_SetMsiHandle( IWineMsiRemotePackage *iface, MSIHANDLE 
 HRESULT WINAPI mrp_GetActiveDatabase( IWineMsiRemotePackage *iface, MSIHANDLE *handle )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
-    *handle = MsiGetActiveDatabase(This->package);
+    IWineMsiRemoteDatabase *rdb = NULL;
+    HRESULT hr;
+    MSIHANDLE hdb;
+
+    hr = create_msi_remote_database( NULL, (LPVOID *)&rdb );
+    if (FAILED(hr) || !rdb)
+    {
+        ERR("Failed to create remote database\n");
+        return hr;
+    }
+
+    hdb = MsiGetActiveDatabase(This->package);
+
+    hr = IWineMsiRemoteDatabase_SetMsiHandle( rdb, hdb );
+    if (FAILED(hr))
+    {
+        ERR("Failed to set the database handle\n");
+        return hr;
+    }
+
+    *handle = alloc_msi_remote_handle( (IUnknown *)rdb );
     return S_OK;
 }
 

@@ -26,10 +26,25 @@ import "oaidl.idl";
 cpp_quote("#if 0")
 typedef unsigned long MSIHANDLE;
 typedef int INSTALLMESSAGE;
+typedef int MSICONDITION;
 typedef int MSIRUNMODE;
 typedef int INSTALLSTATE;
 typedef WORD LANGID;
 cpp_quote("#endif")
+
+[
+    uuid(7BDE2046-D03B-4ffc-B84C-A098F38CFF0B),
+    oleautomation,
+    object
+]
+interface IWineMsiRemoteDatabase : IUnknown
+{
+    HRESULT IsTablePersistent( [in] BSTR table, [out] MSICONDITION *persistent );
+    HRESULT GetPrimaryKeys( [in] BSTR table, [out] MSIHANDLE *keys );
+    HRESULT GetSummaryInformation( [in] UINT updatecount, [out] MSIHANDLE *suminfo );
+    HRESULT OpenView( [in] BSTR query, [out] MSIHANDLE *view );
+    HRESULT SetMsiHandle( [in] MSIHANDLE handle );
+}
 
 [
     uuid(902B3592-9D08-4dfd-A593-D07C52546421),

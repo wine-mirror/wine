@@ -34,6 +34,7 @@
 #include "msidefs.h"
 #include "msipriv.h"
 #include "objidl.h"
+#include "msiserver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -459,7 +460,28 @@ UINT WINAPI MsiGetSummaryInformationW( MSIHANDLE hDatabase,
     {
         db = msihandle2msiinfo( hDatabase, MSIHANDLETYPE_DATABASE );
         if( !db )
-            return ERROR_INVALID_PARAMETER;
+        {
+            HRESULT hr;
+            IWineMsiRemoteDatabase *remote_database;
+
+            remote_database = (IWineMsiRemoteDatabase *)msi_get_remote( hDatabase );
+            if ( !remote_database )
+                return ERROR_INVALID_HANDLE;
+
+            hr = IWineMsiRemoteDatabase_GetSummaryInformation( remote_database,
+                                                               uiUpdateCount, pHandle );
+            IWineMsiRemoteDatabase_Release( remote_database );
+
+            if (FAILED(hr))
+            {
+                if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+                    return HRESULT_CODE(hr);
+
+                return ERROR_FUNCTION_FAILED;
+            }
+
+            return ERROR_SUCCESS;
+        }
     }
 
     si = MSI_GetSummaryInformationW( db->storage, uiUpdateCount );

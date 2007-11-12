@@ -588,6 +588,7 @@ UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz );
 extern ITypeLib *get_msi_typelib( LPWSTR *path );
 extern HRESULT create_msi_custom_remote( IUnknown *pOuter, LPVOID *ppObj );
 extern HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj );
+extern HRESULT create_msi_remote_database( IUnknown *pOuter, LPVOID *ppObj );
 extern IUnknown *msi_get_remote(MSIHANDLE handle);
 
 /* handle functions */
