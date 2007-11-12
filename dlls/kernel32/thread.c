@@ -518,6 +518,36 @@ BOOL WINAPI GetThreadTimes(
     return TRUE;
 }
 
+/**********************************************************************
+ * GetThreadId [KERNEL32.@]
+ *
+ * Retrieve the identifier of a thread.
+ *
+ * PARAMS
+ *  Thread [I] The thread to retrive the identifier of.
+ *
+ * RETURNS
+ *    Success: Identifier of the target thread.
+ *    Failure: 0
+ */
+DWORD WINAPI GetThreadId(HANDLE Thread)
+{
+    THREAD_BASIC_INFORMATION tbi;
+    NTSTATUS status;
+
+    TRACE("(%p)\n", Thread);
+
+    status = NtQueryInformationThread(Thread, ThreadBasicInformation, &tbi,
+                                      sizeof(tbi), NULL);
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
+
+    return HandleToULong(tbi.ClientId.UniqueThread);
+}
+
 
 /**********************************************************************
  * VWin32_BoostThreadGroup [KERNEL.535]

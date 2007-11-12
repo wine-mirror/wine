@@ -629,6 +629,7 @@
 @ stdcall GetTempPathA(long ptr)
 @ stdcall GetTempPathW(long ptr)
 @ stdcall GetThreadContext(long ptr)
+@ stdcall GetThreadId(ptr)
 # @ stub GetThreadIOPendingFlag
 @ stdcall GetThreadLocale()
 @ stdcall GetThreadPriority(long)
