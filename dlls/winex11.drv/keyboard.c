@@ -89,7 +89,6 @@ static int min_keycode, max_keycode, keysyms_per_keycode;
 static WORD keyc2vkey[256], keyc2scan[256];
 
 static int NumLockMask, AltGrMask; /* mask in the XKeyEvent state */
-static int kcControl, kcAlt, kcShift, kcNumLock, kcCapsLock; /* keycodes */
 
 static char KEYBOARD_MapDeadKeysym(KeySym keysym);
 
@@ -1807,13 +1806,6 @@ void X11DRV_InitKeyboard(void)
 	keyc2scan[keyc]=scan++;
       }
 
-    /* Now store one keycode for each modifier. Used to simulate keypresses. */
-    kcControl = XKeysymToKeycode(display, XK_Control_L);
-    kcAlt = XKeysymToKeycode(display, XK_Alt_L);
-    if (!kcAlt) kcAlt = XKeysymToKeycode(display, XK_Meta_L);
-    kcShift = XKeysymToKeycode(display, XK_Shift_L);
-    kcNumLock = XKeysymToKeycode(display, XK_Num_Lock);
-    kcCapsLock = XKeysymToKeycode(display, XK_Caps_Lock);
     wine_tsx11_unlock();
 }
 
