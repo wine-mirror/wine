@@ -1224,8 +1224,6 @@ BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction
     WDML_CONV*		pConv;
     WDML_XACT*          pXAct;
 
-    TRACE("(%08x,%p,%08x);\n", idInst, hConv, idTransaction);
-
     if ((pInstance = WDML_GetInstance(idInst)))
     {
         if (hConv)

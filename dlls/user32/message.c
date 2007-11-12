@@ -3486,8 +3486,6 @@ BOOL WINAPI KillTimer( HWND hwnd, UINT_PTR id )
 {
     BOOL ret;
 
-    TRACE("%p %ld\n", hwnd, id );
-
     SERVER_START_REQ( kill_win_timer )
     {
         req->win = hwnd;
@@ -3506,8 +3504,6 @@ BOOL WINAPI KillTimer( HWND hwnd, UINT_PTR id )
 BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
 {
     BOOL ret;
-
-    TRACE("%p %ld\n", hwnd, id );
 
     SERVER_START_REQ( kill_win_timer )
     {

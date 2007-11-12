@@ -132,7 +132,6 @@ BOOL WINAPI UnpackDDElParam(UINT msg, LPARAM lParam,
             if (uiHi) *uiHi = 0;
             return FALSE;
         }
-        TRACE("unpacked: low %08lx, high %08lx\n", params[0], params[1]);
         if (uiLo) *uiLo = params[0];
         if (uiHi) *uiHi = params[1];
         GlobalUnlock( (HGLOBAL)lParam );
@@ -1126,8 +1125,6 @@ HSZ WINAPI DdeCreateStringHandleW(DWORD idInst, LPCWSTR psz, INT codepage)
     WDML_INSTANCE*	pInstance;
     HSZ			hsz = 0;
 
-    TRACE("(%d,%s,%d)\n", idInst, debugstr_w(psz), codepage);
-
     pInstance = WDML_GetInstance(idInst);
     if (pInstance)
     {
@@ -2025,8 +2022,6 @@ BOOL		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode,
 BOOL WINAPI DdeSetUserHandle(HCONV hConv, DWORD id, DWORD hUser)
 {
     WDML_CONV*	pConv;
-
-    TRACE("(%p,%x,%x)\n", hConv, id, hUser);
 
     pConv = WDML_GetConv(hConv, FALSE);
     if (pConv == NULL)

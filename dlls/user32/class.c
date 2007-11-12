@@ -611,8 +611,6 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 {
     CLASS *classPtr = NULL;
 
-    TRACE("%s %p\n",debugstr_w(className), hInstance);
-
     SERVER_START_REQ( destroy_class )
     {
         req->instance = hInstance;
@@ -636,8 +634,6 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
     WORD retvalue = 0;
 
     if (offset < 0) return GetClassLongA( hwnd, offset );
-
-    TRACE("%p %x\n",hwnd, offset);
 
     if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
 
@@ -675,8 +671,6 @@ static ULONG_PTR CLASS_GetClassLong( HWND hwnd, INT offset, UINT size,
 {
     CLASS *class;
     ULONG_PTR retvalue = 0;
-
-    TRACE("%p %d\n", hwnd, offset);
 
     if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
 
@@ -835,8 +829,6 @@ WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
 
     if (offset < 0) return SetClassLongA( hwnd, offset, (DWORD)newval );
 
-    TRACE("%p %d %x\n", hwnd, offset, newval);
-
     if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
 
     SERVER_START_REQ( set_class_info )
@@ -869,8 +861,6 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
 {
     CLASS *class;
     ULONG_PTR retval = 0;
-
-    TRACE("%p %d %lx\n", hwnd, offset, newval);
 
     if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
 
@@ -962,8 +952,6 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
  */
 DWORD WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
 {
-    TRACE("%p %d %x\n", hwnd, offset, newval);
-
     return CLASS_SetClassLong( hwnd, offset, newval, sizeof(LONG), TRUE );
 }
 
@@ -973,8 +961,6 @@ DWORD WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
  */
 DWORD WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
 {
-    TRACE("%p %d %x\n", hwnd, offset, newval);
-
     return CLASS_SetClassLong( hwnd, offset, newval, sizeof(LONG), FALSE );
 }
 

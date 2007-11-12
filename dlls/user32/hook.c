@@ -518,8 +518,6 @@ BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
 {
     BOOL ret;
 
-    TRACE( "%p\n", hhook );
-
     SERVER_START_REQ( remove_hook )
     {
         req->handle = hhook;
@@ -711,8 +709,6 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
 BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
 {
     BOOL ret;
-
-    TRACE( "%p\n", hEventHook );
 
     SERVER_START_REQ( remove_hook )
     {

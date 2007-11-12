@@ -2020,8 +2020,6 @@ BOOL WINAPI EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
     BOOL bFineWithMe;
     SCROLLBAR_INFO *infoPtr;
 
-    TRACE("%p %d %d\n", hwnd, nBar, flags );
-
     flags &= ESB_DISABLE_BOTH;
 
     if (nBar == SB_BOTH)

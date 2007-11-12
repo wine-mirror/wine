@@ -506,8 +506,6 @@ BOOL WINAPI SetKeyboardState( LPBYTE state )
 {
     BOOL ret;
 
-    TRACE("(%p)\n", state);
-
     SERVER_START_REQ( set_key_state )
     {
         req->tid = GetCurrentThreadId();
@@ -580,7 +578,6 @@ WORD WINAPI VkKeyScanExW(WCHAR cChar, HKL dwhkl)
  */
 DWORD WINAPI OemKeyScan(WORD wOemChar)
 {
-    TRACE("(%d)\n", wOemChar);
     return wOemChar;
 }
 
