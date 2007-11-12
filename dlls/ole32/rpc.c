@@ -1712,7 +1712,7 @@ HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
     while (tries++ < MAXTRIES) {
         TRACE("waiting for %s\n", debugstr_w(pipefn));
-      
+
         WaitNamedPipeW( pipefn, NMPWAIT_WAIT_FOREVER );
         hPipe = CreateFileW(pipefn, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
         if (hPipe == INVALID_HANDLE_VALUE) {
@@ -1761,8 +1761,9 @@ struct local_server_params
     CLSID clsid;
     IStream *stream;
     HANDLE ready_event;
+    HANDLE stop_event;
+    HANDLE thread;
     BOOL multi_use;
-    HANDLE pipe;
 };
 
 /* FIXME: should call to rpcss instead */
@@ -1780,40 +1781,44 @@ static DWORD WINAPI local_server_thread(LPVOID param)
     ULARGE_INTEGER	newpos;
     ULONG		res;
     BOOL multi_use = lsp->multi_use;
+    OVERLAPPED ovl;
+    HANDLE pipe_event;
 
     TRACE("Starting threader for %s.\n",debugstr_guid(&lsp->clsid));
 
+    memset(&ovl, 0, sizeof(ovl));
     get_localserver_pipe_name(pipefn, &lsp->clsid);
 
-    hPipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX,
+    hPipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                               PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
                               4096, 4096, 500 /* 0.5 second timeout */, NULL );
 
-    lsp->pipe = hPipe;
     SetEvent(lsp->ready_event);
-
-    HeapFree(GetProcessHeap(), 0, lsp);
 
     if (hPipe == INVALID_HANDLE_VALUE)
     {
         FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
         return 1;
     }
+
+    ovl.hEvent = pipe_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     
     while (1) {
-        if (!ConnectNamedPipe(hPipe,NULL))
+        if (!ConnectNamedPipe(hPipe, &ovl))
         {
             DWORD error = GetLastError();
-            /* client already connected isn't an error */
-            if (error != ERROR_PIPE_CONNECTED)
+            if (error == ERROR_IO_PENDING)
             {
-                /* if error wasn't caused by RPC_StopLocalServer closing the
-                 * pipe for us */
-                if (error != ERROR_INVALID_HANDLE)
-                {
-                    ERR("Failure during ConnectNamedPipe %u\n", error);
-                    CloseHandle(hPipe);
-                }
+                HANDLE handles[2] = { pipe_event, lsp->stop_event };
+                DWORD ret;
+                ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+                if (ret != WAIT_OBJECT_0)
+                    break;
+            }
+            /* client already connected isn't an error */
+            else if (error != ERROR_PIPE_CONNECTED)
+            {
+                ERR("ConnectNamedPipe failed with error %d\n", GetLastError());
                 break;
             }
         }
@@ -1828,6 +1833,8 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
         if (hres) {
             FIXME("IStream_Seek failed, %x\n",hres);
+            CloseHandle(hPipe);
+            CloseHandle(pipe_event);
             return hres;
         }
 
@@ -1837,11 +1844,14 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         hres = IStream_Read(pStm,buffer,buflen,&res);
         if (hres) {
             FIXME("Stream Read failed, %x\n",hres);
+            CloseHandle(hPipe);
+            CloseHandle(pipe_event);
             HeapFree(GetProcessHeap(),0,buffer);
             return hres;
         }
         
-        WriteFile(hPipe,buffer,buflen,&res,NULL);
+        WriteFile(hPipe,buffer,buflen,&res,&ovl);
+        GetOverlappedResult(hPipe, &ovl, NULL, TRUE);
         HeapFree(GetProcessHeap(),0,buffer);
 
         FlushFileBuffers(hPipe);
@@ -1852,11 +1862,11 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         if (!multi_use)
         {
             TRACE("single use object, shutting down pipe %s\n", debugstr_w(pipefn));
-            CloseHandle(hPipe);
             break;
         }
     }
-    IStream_Release(pStm);
+    CloseHandle(hPipe);
+    CloseHandle(pipe_event);
     return 0;
 }
 
@@ -1864,30 +1874,59 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration)
 {
     DWORD tid;
-    HANDLE thread, ready_event;
-    struct local_server_params *lsp = HeapAlloc(GetProcessHeap(), 0, sizeof(*lsp));
+    struct local_server_params *lsp;
+
+    lsp = HeapAlloc(GetProcessHeap(), 0, sizeof(*lsp));
+    if (!lsp)
+        return E_OUTOFMEMORY;
 
     lsp->clsid = *clsid;
     lsp->stream = stream;
     IStream_AddRef(stream);
-    lsp->ready_event = ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    lsp->ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    if (!lsp->ready_event)
+    {
+        HeapFree(GetProcessHeap(), 0, lsp);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+    lsp->stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    if (!lsp->stop_event)
+    {
+        CloseHandle(lsp->ready_event);
+        HeapFree(GetProcessHeap(), 0, lsp);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
     lsp->multi_use = multi_use;
 
-    thread = CreateThread(NULL, 0, local_server_thread, lsp, 0, &tid);
-    if (!thread)
+    lsp->thread = CreateThread(NULL, 0, local_server_thread, lsp, 0, &tid);
+    if (!lsp->thread)
+    {
+        CloseHandle(lsp->ready_event);
+        CloseHandle(lsp->stop_event);
+        HeapFree(GetProcessHeap(), 0, lsp);
         return HRESULT_FROM_WIN32(GetLastError());
-    CloseHandle(thread);
+    }
 
-    WaitForSingleObject(ready_event, INFINITE);
-    CloseHandle(ready_event);
+    WaitForSingleObject(lsp->ready_event, INFINITE);
+    CloseHandle(lsp->ready_event);
+    lsp->ready_event = NULL;
 
-    *registration = lsp->pipe;
+    *registration = lsp;
     return S_OK;
 }
 
 /* stops listening for a local server */
 void RPC_StopLocalServer(void *registration)
 {
-    HANDLE pipe = registration;
-    CloseHandle(pipe);
+    struct local_server_params *lsp = registration;
+
+    /* signal local_server_thread to stop */
+    SetEvent(lsp->stop_event);
+    /* wait for it to exit */
+    WaitForSingleObject(lsp->thread, INFINITE);
+
+    IStream_Release(lsp->stream);
+    CloseHandle(lsp->stop_event);
+    CloseHandle(lsp->thread);
+    HeapFree(GetProcessHeap(), 0, lsp);
 }
