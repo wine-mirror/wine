@@ -90,7 +90,7 @@ static nsresult NSAPI handle_blur(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     TRACE("(%p)\n", This);
 
-    if(This->doc && This->doc->focus && !is_doc_child_focus(This)) {
+    if(!This->reset_focus && This->doc && This->doc->focus && !is_doc_child_focus(This)) {
         This->doc->focus = FALSE;
         notif_focus(This->doc);
     }
@@ -104,7 +104,7 @@ static nsresult NSAPI handle_focus(nsIDOMEventListener *iface, nsIDOMEvent *even
 
     TRACE("(%p)\n", This);
 
-    if(This->doc && !This->doc->focus) {
+    if(!This->reset_focus && This->doc && !This->doc->focus) {
         This->doc->focus = TRUE;
         notif_focus(This->doc);
     }

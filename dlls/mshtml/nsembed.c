@@ -81,6 +81,8 @@ static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','
 
 static ATOM nscontainer_class;
 
+#define WM_RESETFOCUS_HACK WM_USER+600
+
 static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     NSContainer *This;
@@ -96,13 +98,25 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
     }
 
     switch(msg) {
-        case WM_SIZE:
-            TRACE("(%p)->(WM_SIZE)\n", This);
+    case WM_SIZE:
+        TRACE("(%p)->(WM_SIZE)\n", This);
 
-            nsres = nsIBaseWindow_SetSize(This->window,
-                    LOWORD(lParam), HIWORD(lParam), TRUE);
-            if(NS_FAILED(nsres))
-                WARN("SetSize failed: %08x\n", nsres);
+        nsres = nsIBaseWindow_SetSize(This->window,
+                LOWORD(lParam), HIWORD(lParam), TRUE);
+        if(NS_FAILED(nsres))
+            WARN("SetSize failed: %08x\n", nsres);
+        break;
+
+    case WM_RESETFOCUS_HACK:
+        /*
+         * FIXME
+         * Gecko grabs focus in edit mode and some apps don't like it.
+         * We should somehow prevent grabbing focus.
+         */
+        if(This->reset_focus) {
+            SetFocus(This->reset_focus);
+            This->reset_focus = NULL;
+        }
     }
 
     return DefWindowProcW(hwnd, msg, wParam, lParam);
@@ -1293,6 +1307,9 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetFocus(nsIEmbeddingSiteWindow *ifa
 
     TRACE("(%p)\n", This);
 
+    if(This->reset_focus)
+        PostMessageW(This->hwnd, WM_RESETFOCUS_HACK, 0, 0);
+
     return nsIBaseWindow_SetFocus(This->window);
 }
 
@@ -1558,6 +1575,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     ret->content_listener = NULL;
     ret->editor_controller = NULL;
     ret->editor = NULL;
+    ret->reset_focus = NULL;
 
     if(parent)
         nsIWebBrowserChrome_AddRef(NSWBCHROME(parent));

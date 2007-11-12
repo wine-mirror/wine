@@ -524,6 +524,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
 
 void handle_edit_load(HTMLDocument *This)
 {
+    This->nscontainer->reset_focus = GetFocus();
     get_editor_controller(This->nscontainer);
 }
 

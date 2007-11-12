@@ -209,6 +209,7 @@ struct NSContainer {
     HWND hwnd;
 
     BSCallback *bscallback; /* hack */
+    HWND reset_focus; /* hack */
 };
 
 typedef struct {
