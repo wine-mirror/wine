@@ -209,7 +209,7 @@ static IStream Test_Stream = { &StreamVtbl };
 static void test_copyto(void)
 {
     IStream *pStream, *pStream2;
-    HRESULT hr = CreateStreamOnHGlobal(NULL, FALSE, &pStream);
+    HRESULT hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
     static const char szHello[] = "Hello";
     ULARGE_INTEGER cb;
     static const char *methods_copyto[] =
