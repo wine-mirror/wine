@@ -2555,7 +2555,7 @@ static void test_local_server(void)
     ok(process != NULL, "couldn't start local server process, error was %d\n", GetLastError());
 
     ready_event = CreateEvent(NULL, FALSE, FALSE, "Wine COM Test Ready Event");
-    WaitForSingleObject(ready_event, 1000);
+    WaitForSingleObject(ready_event, INFINITE);
     CloseHandle(ready_event);
 
     hr = CoCreateInstance(&CLSID_WineOOPTest, NULL, CLSCTX_LOCAL_SERVER, &IID_IClassFactory, (void **)&cf);
