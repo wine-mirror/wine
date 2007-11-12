@@ -1960,6 +1960,7 @@ static void COM_RevokeRegisteredClassObject(RegisteredClass *curClass)
         memset(&zero, 0, sizeof(zero));
         IStream_Seek(curClass->pMarshaledData, zero, STREAM_SEEK_SET, NULL);
         CoReleaseMarshalData(curClass->pMarshaledData);
+        IStream_Release(curClass->pMarshaledData);
     }
 
     HeapFree(GetProcessHeap(), 0, curClass);
