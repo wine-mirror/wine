@@ -289,7 +289,7 @@ static void propset_private_tests(void)
                  (void **)(&pcf));
 
     /* some early versions of Direct Sound do not have this */
-    if (pcf==0)
+    if (rc==CLASS_E_CLASSNOTAVAILABLE)
         return;
 
     /* direct sound private does have an IKsPropertySet */
