@@ -104,6 +104,7 @@ struct connection_ops {
   int (*read)(RpcConnection *conn, void *buffer, unsigned int len);
   int (*write)(RpcConnection *conn, const void *buffer, unsigned int len);
   int (*close)(RpcConnection *conn);
+  void (*cancel_call)(RpcConnection *conn);
   size_t (*get_top_of_tower)(unsigned char *tower_data, const char *networkaddr, const char *endpoint);
   RPC_STATUS (*parse_top_of_tower)(const unsigned char *tower_data, size_t tower_size, char **networkaddr, char **endpoint);
 };
@@ -190,6 +191,11 @@ static inline int rpcrt4_conn_close(RpcConnection *Connection)
   return Connection->ops->close(Connection);
 }
 
+static inline void rpcrt4_conn_cancel_call(RpcConnection *Connection)
+{
+  Connection->ops->cancel_call(Connection);
+}
+
 static inline RPC_STATUS rpcrt4_conn_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
 {
   return old_conn->ops->handoff(old_conn, new_conn);
@@ -198,5 +204,7 @@ static inline RPC_STATUS rpcrt4_conn_handoff(RpcConnection *old_conn, RpcConnect
 /* floors 3 and up */
 RPC_STATUS RpcTransport_GetTopOfTower(unsigned char *tower_data, size_t *tower_size, const char *protseq, const char *networkaddr, const char *endpoint);
 RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data, size_t tower_size, char **protseq, char **networkaddr, char **endpoint);
+
+void RPCRT4_SetThreadCurrentConnection(RpcConnection *Connection);
 
 #endif

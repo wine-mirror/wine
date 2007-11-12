@@ -100,6 +100,8 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winnt.h"
+#include "winternl.h"
 #include "iptypes.h"
 #include "iphlpapi.h"
 #include "wine/unicode.h"
@@ -133,6 +135,25 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION uuid_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static CRITICAL_SECTION threaddata_cs;
+static CRITICAL_SECTION_DEBUG threaddata_cs_debug =
+{
+    0, 0, &uuid_cs,
+    { &threaddata_cs_debug.ProcessLocksList, &threaddata_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": threaddata_cs") }
+};
+static CRITICAL_SECTION threaddata_cs = { &threaddata_cs_debug, -1, 0, 0, 0, 0 };
+
+struct list threaddata_list = LIST_INIT(threaddata_list);
+
+struct threaddata
+{
+    struct list entry;
+    CRITICAL_SECTION cs;
+    DWORD thread_id;
+    RpcConnection *connection;
+};
+
 /***********************************************************************
  * DllMain
  *
@@ -148,13 +169,28 @@ static CRITICAL_SECTION uuid_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
+    struct threaddata *tdata;
+
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hinstDLL);
         master_mutex = CreateMutexA( NULL, FALSE, RPCSS_MASTER_MUTEX_NAME);
         if (!master_mutex)
           ERR("Failed to create master mutex\n");
         break;
+
+    case DLL_THREAD_DETACH:
+        tdata = NtCurrentTeb()->ReservedForNtRpc;
+        if (tdata)
+        {
+            EnterCriticalSection(&threaddata_cs);
+            list_remove(&tdata->entry);
+            LeaveCriticalSection(&threaddata_cs);
+
+            DeleteCriticalSection(&tdata->cs);
+            if (tdata->connection)
+                ERR("tdata->connection should be NULL but is still set to %p\n", tdata);
+            HeapFree(GetProcessHeap(), 0, tdata);
+        }
 
     case DLL_PROCESS_DETACH:
         CloseHandle(master_mutex);
@@ -847,11 +883,53 @@ RPC_STATUS RPC_ENTRY RpcMgmtSetCancelTimeout(LONG Timeout)
     return RPC_S_OK;
 }
 
+void RPCRT4_SetThreadCurrentConnection(RpcConnection *Connection)
+{
+    struct threaddata *tdata = NtCurrentTeb()->ReservedForNtRpc;
+    if (!tdata)
+    {
+        tdata = HeapAlloc(GetProcessHeap(), 0, sizeof(*tdata));
+        if (!tdata) return;
+
+        InitializeCriticalSection(&tdata->cs);
+        tdata->thread_id = GetCurrentThreadId();
+        tdata->connection = Connection;
+
+        EnterCriticalSection(&threaddata_cs);
+        list_add_tail(&threaddata_list, &tdata->entry);
+        LeaveCriticalSection(&threaddata_cs);
+
+        NtCurrentTeb()->ReservedForNtRpc = tdata;
+        return;
+    }
+
+    EnterCriticalSection(&tdata->cs);
+    tdata->connection = Connection;
+    LeaveCriticalSection(&tdata->cs);
+}
+
 /******************************************************************************
  * RpcCancelThread   (rpcrt4.@)
  */
 RPC_STATUS RPC_ENTRY RpcCancelThread(HANDLE ThreadHandle)
 {
-    FIXME("(%p): stub\n", ThreadHandle);
+    DWORD target_tid;
+    struct threaddata *tdata;
+
+    TRACE("(%p)\n", ThreadHandle);
+
+    target_tid = GetThreadId(ThreadHandle);
+    if (!target_tid)
+        return RPC_S_INVALID_ARG;
+
+    EnterCriticalSection(&threaddata_cs);
+    LIST_FOR_EACH_ENTRY(tdata, &threaddata_list, struct threaddata, entry)
+        if (tdata->thread_id == target_tid)
+        {
+            rpcrt4_conn_cancel_call(tdata->connection);
+            break;
+        }
+    LeaveCriticalSection(&threaddata_cs);
+
     return RPC_S_OK;
 }

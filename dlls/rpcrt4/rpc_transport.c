@@ -416,6 +416,11 @@ static int rpcrt4_conn_np_close(RpcConnection *Connection)
   return 0;
 }
 
+static void rpcrt4_conn_np_cancel_call(RpcConnection *Connection)
+{
+    /* FIXME: implement when named pipe writes use overlapped I/O */
+}
+
 static size_t rpcrt4_ncacn_np_get_top_of_tower(unsigned char *tower_data,
                                                const char *networkaddr,
                                                const char *endpoint)
@@ -703,6 +708,7 @@ typedef struct _RpcConnection_tcp
 {
   RpcConnection common;
   int sock;
+  int cancel_fds[2];
 } RpcConnection_tcp;
 
 static RpcConnection *rpcrt4_conn_tcp_alloc(void)
@@ -712,6 +718,12 @@ static RpcConnection *rpcrt4_conn_tcp_alloc(void)
   if (tcpc == NULL)
     return NULL;
   tcpc->sock = -1;
+  if (socketpair(PF_UNIX, SOCK_STREAM, 0, tcpc->cancel_fds) < 0)
+  {
+    ERR("socketpair() failed: %s\n", strerror(errno));
+    HeapFree(GetProcessHeap(), 0, tcpc);
+    return NULL;
+  }
   return &tcpc->common;
 }
 
@@ -777,6 +789,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
     /* RPC depends on having minimal latency so disable the Nagle algorithm */
     val = 1;
     setsockopt(sock, SOL_TCP, TCP_NODELAY, &val, sizeof(val));
+    fcntl(sock, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
 
     tcpc->sock = sock;
 
@@ -942,18 +955,64 @@ static int rpcrt4_conn_tcp_read(RpcConnection *Connection,
                                 void *buffer, unsigned int count)
 {
   RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
-  int r = recv(tcpc->sock, buffer, count, MSG_WAITALL);
-  TRACE("%d %p %u -> %d\n", tcpc->sock, buffer, count, r);
-  return r;
+  int bytes_read = 0;
+  do
+  {
+    int r = recv(tcpc->sock, (char *)buffer + bytes_read, count - bytes_read, 0);
+    if (r >= 0)
+      bytes_read += r;
+    else if (errno != EAGAIN)
+      return -1;
+    else
+    {
+      struct pollfd pfds[2];
+      pfds[0].fd = tcpc->sock;
+      pfds[0].events = POLLIN;
+      pfds[1].fd = tcpc->cancel_fds[0];
+      pfds[1].fd = POLLIN;
+      if (poll(pfds, 2, -1 /* infinite */) == -1 && errno != EINTR)
+      {
+        ERR("poll() failed: %s\n", strerror(errno));
+        return -1;
+      }
+      if (pfds[1].revents & POLLIN) /* canceled */
+      {
+        char dummy;
+        read(pfds[1].fd, &dummy, sizeof(dummy));
+        return -1;
+      }
+    }
+  } while (bytes_read != count);
+  TRACE("%d %p %u -> %d\n", tcpc->sock, buffer, count, bytes_read);
+  return bytes_read;
 }
 
 static int rpcrt4_conn_tcp_write(RpcConnection *Connection,
                                  const void *buffer, unsigned int count)
 {
   RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
-  int r = write(tcpc->sock, buffer, count);
-  TRACE("%d %p %u -> %d\n", tcpc->sock, buffer, count, r);
-  return r;
+  int bytes_written = 0;
+  do
+  {
+    int r = write(tcpc->sock, (const char *)buffer + bytes_written, count - bytes_written);
+    if (r >= 0)
+      bytes_written += r;
+    else if (errno != EAGAIN)
+      return -1;
+    else
+    {
+      struct pollfd pfd;
+      pfd.fd = tcpc->sock;
+      pfd.events = POLLOUT;
+      if (poll(&pfd, 1, -1 /* infinite */) == -1 && errno != EINTR)
+      {
+        ERR("poll() failed: %s\n", strerror(errno));
+        return -1;
+      }
+    }
+  } while (bytes_written != count);
+  TRACE("%d %p %u -> %d\n", tcpc->sock, buffer, count, bytes_written);
+  return bytes_written;
 }
 
 static int rpcrt4_conn_tcp_close(RpcConnection *Connection)
@@ -965,7 +1024,19 @@ static int rpcrt4_conn_tcp_close(RpcConnection *Connection)
   if (tcpc->sock != -1)
     close(tcpc->sock);
   tcpc->sock = -1;
+  close(tcpc->cancel_fds[0]);
+  close(tcpc->cancel_fds[1]);
   return 0;
+}
+
+static void rpcrt4_conn_tcp_cancel_call(RpcConnection *Connection)
+{
+    RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
+    char dummy = 1;
+
+    TRACE("%p\n", Connection);
+
+    write(tcpc->cancel_fds[1], &dummy, 1);
 }
 
 static size_t rpcrt4_ncacn_ip_tcp_get_top_of_tower(unsigned char *tower_data,
@@ -1250,6 +1321,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_conn_np_read,
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
+    rpcrt4_conn_np_cancel_call,
     rpcrt4_ncacn_np_get_top_of_tower,
     rpcrt4_ncacn_np_parse_top_of_tower,
   },
@@ -1261,6 +1333,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_conn_np_read,
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
+    rpcrt4_conn_np_cancel_call,
     rpcrt4_ncalrpc_get_top_of_tower,
     rpcrt4_ncalrpc_parse_top_of_tower,
   },
@@ -1272,6 +1345,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_conn_tcp_read,
     rpcrt4_conn_tcp_write,
     rpcrt4_conn_tcp_close,
+    rpcrt4_conn_tcp_cancel_call,
     rpcrt4_ncacn_ip_tcp_get_top_of_tower,
     rpcrt4_ncacn_ip_tcp_parse_top_of_tower,
   }
