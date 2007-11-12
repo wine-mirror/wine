@@ -4453,6 +4453,121 @@ static void test_viewmodify_delete(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 }
 
+static const WCHAR _Tables[] = {0x4840, 0x3f7f, 0x4164, 0x422f, 0x4836, 0};
+static const WCHAR _StringData[] = {0x4840, 0x3f3f, 0x4577, 0x446c, 0x3b6a, 0x45e4, 0x4824, 0};
+static const WCHAR _StringPool[] = {0x4840, 0x3f3f, 0x4577, 0x446c, 0x3e6a, 0x44b2, 0x482f, 0};
+
+static const WCHAR data14[] = { /* _StringPool */
+/*  len, refs */
+    0,   0,    /* string 0 ''    */
+};
+
+static const struct {
+    LPCWSTR name;
+    const void *data;
+    DWORD size;
+} database_table_data[] =
+{
+    {_Tables, NULL, 0},
+    {_StringData, NULL, 0},
+    {_StringPool, data14, sizeof data14},
+};
+
+void enum_stream_names(IStorage *stg)
+{
+    IEnumSTATSTG *stgenum = NULL;
+    IStream *stm;
+    HRESULT hr;
+    STATSTG stat;
+    ULONG n, count;
+    BYTE data[MAX_PATH];
+    BYTE check[MAX_PATH];
+    DWORD sz;
+
+    memset(check, 'a', MAX_PATH);
+
+    hr = IStorage_EnumElements(stg, 0, NULL, 0, &stgenum);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    n = 0;
+    while(TRUE)
+    {
+        count = 0;
+        hr = IEnumSTATSTG_Next(stgenum, 1, &stat, &count);
+        if(FAILED(hr) || !count)
+            break;
+
+        todo_wine
+        {
+            ok(!lstrcmpW(stat.pwcsName, database_table_data[n].name),
+               "Expected table %d name to match\n", n);
+        }
+
+        stm = NULL;
+        hr = IStorage_OpenStream(stg, stat.pwcsName, NULL,
+                                 STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok(stm != NULL, "Expected non-NULL stream\n");
+
+        sz = MAX_PATH;
+        memset(data, 'a', MAX_PATH);
+        hr = IStream_Read(stm, data, sz, &count);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+        if (n == 1) todo_wine
+        ok(count == database_table_data[n].size,
+           "Expected %d, got %d\n", database_table_data[n].size, count);
+
+        if (!database_table_data[n].size)
+        {
+            if (n == 1) todo_wine
+            ok(!memcmp(data, check, MAX_PATH), "data should not be changed\n");
+        }
+        else
+            ok(!memcmp(data, database_table_data[n].data, database_table_data[n].size),
+               "Expected table %d data to match\n", n);
+
+        IStream_Release(stm);
+        n++;
+    }
+
+    todo_wine
+    {
+        ok(n == 3, "Expected 3, got %d\n", n);
+    }
+
+    IEnumSTATSTG_Release(stgenum);
+}
+
+static void test_defaultdatabase(void)
+{
+    UINT r;
+    HRESULT hr;
+    MSIHANDLE hdb;
+    IStorage *stg = NULL;
+
+    static const WCHAR msifileW[] = {'w','i','n','e','t','e','s','t','.','m','s','i',0};
+
+    DeleteFile(msifile);
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    MsiCloseHandle(hdb);
+
+    hr = StgOpenStorage(msifileW, NULL, STGM_READ | STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(stg != NULL, "Expected non-NULL stg\n");
+
+    enum_stream_names(stg);
+
+    IStorage_Release(stg);
+    DeleteFileA(msifile);
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -4480,4 +4595,5 @@ START_TEST(db)
     test_viewmodify_update();
     test_stringtable();
     test_viewmodify_delete();
+    test_defaultdatabase();
 }
