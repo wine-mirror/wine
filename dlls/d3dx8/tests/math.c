@@ -21,7 +21,7 @@
 
 #include "wine/test.h"
 
-#define admitted_error 0.00001f
+#define admitted_error 0.0001f
 
 #define expect_color(expectedcolor,gotcolor) ok((fabs(expectedcolor.r-gotcolor.r)<admitted_error)&&(fabs(expectedcolor.g-gotcolor.g)<admitted_error)&&(fabs(expectedcolor.b-gotcolor.b)<admitted_error)&&(fabs(expectedcolor.a-gotcolor.a)<admitted_error),"Expected Color= (%f, %f, %f, %f)\n , Got Color= (%f, %f, %f, %f)\n", expectedcolor.r, expectedcolor.g, expectedcolor.b, expectedcolor.a, gotcolor.r, gotcolor.g, gotcolor.b, gotcolor.a);
 
@@ -176,6 +176,21 @@ static void D3DXMatrixTest(void)
     eye.x = 8.0f; eye.y = -5.0f; eye.z = 5.75f;
 
     angle = D3DX_PI/3.0f;
+
+/*____________D3DXMatrixAffineTransformation______*/
+    expectedmat.m[0][0] = -459.239990f; expectedmat.m[0][1] = -576.719971f; expectedmat.m[0][2] = -263.440002f; expectedmat.m[0][3] = 0.0f;
+    expectedmat.m[1][0] = 519.760010f; expectedmat.m[1][1] = -352.440002f; expectedmat.m[1][2] = -277.679993f; expectedmat.m[1][3] = 0.0f;
+    expectedmat.m[2][0] = 363.119995f; expectedmat.m[2][1] = -121.040001f; expectedmat.m[2][2] = -117.479996f; expectedmat.m[2][3] = 0.0f;
+    expectedmat.m[3][0] = -1239.0f; expectedmat.m[3][1] = 667.0f; expectedmat.m[3][2] = 567.0f; expectedmat.m[3][3] = 1.0f;
+    D3DXMatrixAffineTransformation(&gotmat,3.56f,&at,&q,&axis);
+    expect_mat(expectedmat,gotmat);
+/* Test the NULL case */
+    expectedmat.m[0][0] = -459.239990f; expectedmat.m[0][1] = -576.719971f; expectedmat.m[0][2] = -263.440002f; expectedmat.m[0][3] = 0.0f;
+    expectedmat.m[1][0] = 519.760010f; expectedmat.m[1][1] = -352.440002f; expectedmat.m[1][2] = -277.679993f; expectedmat.m[1][3] = 0.0f;
+    expectedmat.m[2][0] = 363.119995f; expectedmat.m[2][1] = -121.040001f; expectedmat.m[2][2] = -117.479996f; expectedmat.m[2][3] = 0.0f;
+    expectedmat.m[3][0] = 1.0f; expectedmat.m[3][1] = -3.0f; expectedmat.m[3][2] = 7.0f; expectedmat.m[3][3] = 1.0f;
+    D3DXMatrixAffineTransformation(&gotmat,3.56f,NULL,&q,&axis);
+    expect_mat(expectedmat,gotmat);
 
 /*____________D3DXMatrixfDeterminant_____________*/
     expectedfloat = -147888.0f;

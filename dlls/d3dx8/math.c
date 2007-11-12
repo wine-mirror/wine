@@ -34,6 +34,44 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx8);
 
 /*_________________D3DXMatrix____________________*/
 
+D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *pout, float scaling, D3DXVECTOR3 *rotationcenter, D3DXQUATERNION *rotation, D3DXVECTOR3 *translation)
+{
+    D3DXMATRIX m1, m2, m3, m4, m5, p1, p2, p3;
+
+    D3DXMatrixScaling(&m1, scaling, scaling, scaling);
+    if ( !rotationcenter )
+    {
+     D3DXMatrixIdentity(&m2);
+     D3DXMatrixIdentity(&m4);
+    }
+    else
+    {
+     D3DXMatrixTranslation(&m2, -rotationcenter->x, -rotationcenter->y, -rotationcenter->z);
+     D3DXMatrixTranslation(&m4, rotationcenter->x, rotationcenter->y, rotationcenter->z);
+    }
+    if ( !rotation )
+    {
+     D3DXMatrixIdentity(&m3);
+    }
+    else
+    {
+     D3DXMatrixRotationQuaternion(&m3, rotation);
+    }
+    if ( !translation )
+    {
+     D3DXMatrixIdentity(&m5);
+    }
+    else
+    {
+     D3DXMatrixTranslation(&m5, translation->x, translation->y, translation->z);
+    }
+    D3DXMatrixMultiply(&p1, &m1, &m2);
+    D3DXMatrixMultiply(&p2, &p1, &m3);
+    D3DXMatrixMultiply(&p3, &p2, &m4);
+    D3DXMatrixMultiply(pout, &p3, &m5);
+    return pout;
+}
+
 FLOAT WINAPI D3DXMatrixfDeterminant(CONST D3DXMATRIX *pm)
 {
     D3DXVECTOR4 minor, v1, v2, v3;
