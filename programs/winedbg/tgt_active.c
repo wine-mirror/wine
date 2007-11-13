@@ -893,7 +893,7 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
         if (ds != start_ok) return ds;
         hFile = parser_generate_command_file("echo Modules:", "info share",
                                              "echo Threads:", "info threads",
-                                             "detach", NULL);
+                                             "backtrace", "detach", NULL);
     }
     else if (!strcmp(argv[0], "--minidump"))
     {
