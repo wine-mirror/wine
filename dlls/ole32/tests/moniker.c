@@ -935,7 +935,7 @@ static void test_MkParseDisplayName(void)
 
     IRunningObjectTable_Revoke(pprot,pdwReg1);
     IRunningObjectTable_Revoke(pprot,pdwReg2);
-    IEnumMoniker_Release(spEM1);
+    IUnknown_Release(lpEM1);
     IEnumMoniker_Release(spEM1);
     IEnumMoniker_Release(spEM2);
     IEnumMoniker_Release(spEM3);
