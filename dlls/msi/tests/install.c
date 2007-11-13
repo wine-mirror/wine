@@ -413,7 +413,7 @@ static const CHAR pp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "UnpublishFeatures\tUNPUBLISH_FEATURES=1 Or FULL=1\t1800\n"
                                               "RemoveFiles\t\t3500\n"
                                               "InstallFiles\t\t4000\n"
-                                              "RegisterUser\t\t6000\n"
+                                              "RegisterUser\tREGISTER_USER=1 Or FULL=1\t6000\n"
                                               "RegisterProduct\tREGISTER_PRODUCT=1 Or FULL=1\t6100\n"
                                               "PublishFeatures\tPUBLISH_FEATURES=1 Or FULL=1\t6300\n"
                                               "PublishProduct\tPUBLISH_PRODUCT=1 Or FULL=1\t6400\n"
@@ -491,7 +491,6 @@ static const CHAR rem_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "UnpublishFeatures\t\t1800\n"
                                                "RemoveFiles\t\t3500\n"
                                                "InstallFiles\t\t4000\n"
-                                               "RegisterUser\t\t6000\n"
                                                "RegisterProduct\t\t6100\n"
                                                "PublishFeatures\t\t6300\n"
                                                "PublishProduct\t\t6400\n"
@@ -1820,11 +1819,85 @@ static void delete_pfmsitest_files(void)
     RemoveDirectoryA(path);
 }
 
+static void check_reg_str(HKEY prodkey, LPCSTR name, LPCSTR expected, BOOL bcase, DWORD line)
+{
+    char val[MAX_PATH];
+    DWORD size, type;
+    LONG res;
+
+    size = MAX_PATH;
+    val[0] = '\0';
+    res = RegQueryValueExA(prodkey, name, NULL, &type, (LPBYTE)val, &size);
+
+    if (res != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ))
+    {
+        ok_(__FILE__, line)(FALSE, "Key doesn't exist or wrong type\n");
+        return;
+    }
+
+    if (!expected)
+        ok_(__FILE__, line)(lstrlenA(val) == 0, "Expected empty string, got %s\n", val);
+    else
+    {
+        if (bcase)
+            ok_(__FILE__, line)(!lstrcmpA(val, expected), "Expected %s, got %s\n", expected, val);
+        else
+            ok_(__FILE__, line)(!lstrcmpiA(val, expected), "Expected %s, got %s\n", expected, val);
+    }
+}
+
+static void check_reg_dword(HKEY prodkey, LPCSTR name, DWORD expected, DWORD line)
+{
+    DWORD val, size, type;
+    LONG res;
+
+    size = sizeof(DWORD);
+    res = RegQueryValueExA(prodkey, name, NULL, &type, (LPBYTE)&val, &size);
+
+    if (res != ERROR_SUCCESS || type != REG_DWORD)
+    {
+        ok_(__FILE__, line)(FALSE, "Key doesn't exist or wrong type\n");
+        return;
+    }
+
+    ok_(__FILE__, line)(val == expected, "Expected %d, got %d\n", expected, val);
+}
+
+#define CHECK_REG_STR(prodkey, name, expected) \
+    check_reg_str(prodkey, name, expected, TRUE, __LINE__);
+
+#define CHECK_REG_ISTR(prodkey, name, expected) \
+    check_reg_str(prodkey, name, expected, FALSE, __LINE__);
+
+#define CHECK_REG_DWORD(prodkey, name, expected) \
+    check_reg_dword(prodkey, name, expected, __LINE__);
+
+static void get_date_str(LPSTR date)
+{
+    SYSTEMTIME systime;
+
+    static const char date_fmt[] = "%d%d%d";
+    GetLocalTime(&systime);
+    sprintf(date, date_fmt, systime.wYear, systime.wMonth, systime.wDay);
+}
+
 static void test_publish(void)
 {
     UINT r;
+    LONG res;
+    HKEY uninstall, prodkey;
     INSTALLSTATE state;
     CHAR prodcode[] = "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
+    char date[MAX_PATH];
+    char temp[MAX_PATH];
+
+    static const CHAR subkey[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+
+    get_date_str(date);
+    GetTempPath(MAX_PATH, temp);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, subkey, &uninstall);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
@@ -1847,6 +1920,9 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
     /* nothing published */
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -1867,6 +1943,9 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
     /* install again */
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -1886,6 +1965,9 @@ static void test_publish(void)
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     /* try to uninstall */
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
@@ -1910,6 +1992,9 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
     /* PublishProduct */
     r = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -1926,6 +2011,9 @@ static void test_publish(void)
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     /* try to uninstall after PublishProduct */
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
@@ -1947,6 +2035,119 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    /* RegisterProduct */
+    r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
+    CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
+    CHECK_REG_STR(prodkey, "InstallDate", date);
+    CHECK_REG_STR(prodkey, "InstallSource", temp);
+    CHECK_REG_ISTR(prodkey, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "Publisher", "Wine");
+    CHECK_REG_STR(prodkey, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "AuthorizedCDFPrefix", NULL);
+    CHECK_REG_STR(prodkey, "Comments", NULL);
+    CHECK_REG_STR(prodkey, "Contact", NULL);
+    CHECK_REG_STR(prodkey, "HelpLink", NULL);
+    CHECK_REG_STR(prodkey, "HelpTelephone", NULL);
+    CHECK_REG_STR(prodkey, "InstallLocation", NULL);
+    CHECK_REG_STR(prodkey, "Readme", NULL);
+    CHECK_REG_STR(prodkey, "Size", NULL);
+    CHECK_REG_STR(prodkey, "URLInfoAbout", NULL);
+    CHECK_REG_STR(prodkey, "URLUpdateInfo", NULL);
+    CHECK_REG_DWORD(prodkey, "Language", 1033);
+    CHECK_REG_DWORD(prodkey, "Version", 0x1010001);
+    CHECK_REG_DWORD(prodkey, "VersionMajor", 1);
+    CHECK_REG_DWORD(prodkey, "VersionMinor", 1);
+    CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
+    todo_wine
+    {
+        CHECK_REG_DWORD(prodkey, "EstimatedSize", 12);
+    }
+
+    RegCloseKey(prodkey);
+
+    /* complete uninstall */
+    r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
+    ok(pf_exists("msitest\\maximus"), "File deleted\n");
+    ok(pf_exists("msitest"), "File deleted\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
+    }
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    todo_wine
+    {
+        CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
+        CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
+        CHECK_REG_STR(prodkey, "InstallDate", date);
+        CHECK_REG_STR(prodkey, "InstallSource", temp);
+        CHECK_REG_ISTR(prodkey, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+        CHECK_REG_STR(prodkey, "Publisher", "Wine");
+        CHECK_REG_STR(prodkey, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+        CHECK_REG_STR(prodkey, "AuthorizedCDFPrefix", NULL);
+        CHECK_REG_STR(prodkey, "Comments", NULL);
+        CHECK_REG_STR(prodkey, "Contact", NULL);
+        CHECK_REG_STR(prodkey, "HelpLink", NULL);
+        CHECK_REG_STR(prodkey, "HelpTelephone", NULL);
+        CHECK_REG_STR(prodkey, "InstallLocation", NULL);
+        CHECK_REG_STR(prodkey, "Readme", NULL);
+        CHECK_REG_STR(prodkey, "Size", NULL);
+        CHECK_REG_STR(prodkey, "URLInfoAbout", NULL);
+        CHECK_REG_STR(prodkey, "URLUpdateInfo", NULL);
+        CHECK_REG_DWORD(prodkey, "Language", 1033);
+        CHECK_REG_DWORD(prodkey, "Version", 0x1010001);
+        CHECK_REG_DWORD(prodkey, "VersionMajor", 1);
+        CHECK_REG_DWORD(prodkey, "VersionMinor", 1);
+        CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
+        CHECK_REG_DWORD(prodkey, "EstimatedSize", 12);
+    }
+
+    RegCloseKey(prodkey);
+
     /* PublishProduct and RegisterProduct */
     r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1 PUBLISH_PRODUCT=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -1966,6 +2167,38 @@ static void test_publish(void)
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
+    CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
+    CHECK_REG_STR(prodkey, "InstallDate", date);
+    CHECK_REG_STR(prodkey, "InstallSource", temp);
+    CHECK_REG_ISTR(prodkey, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "Publisher", "Wine");
+    CHECK_REG_STR(prodkey, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "AuthorizedCDFPrefix", NULL);
+    CHECK_REG_STR(prodkey, "Comments", NULL);
+    CHECK_REG_STR(prodkey, "Contact", NULL);
+    CHECK_REG_STR(prodkey, "HelpLink", NULL);
+    CHECK_REG_STR(prodkey, "HelpTelephone", NULL);
+    CHECK_REG_STR(prodkey, "InstallLocation", NULL);
+    CHECK_REG_STR(prodkey, "Readme", NULL);
+    CHECK_REG_STR(prodkey, "Size", NULL);
+    CHECK_REG_STR(prodkey, "URLInfoAbout", NULL);
+    CHECK_REG_STR(prodkey, "URLUpdateInfo", NULL);
+    CHECK_REG_DWORD(prodkey, "Language", 1033);
+    CHECK_REG_DWORD(prodkey, "Version", 0x1010001);
+    CHECK_REG_DWORD(prodkey, "VersionMajor", 1);
+    CHECK_REG_DWORD(prodkey, "VersionMinor", 1);
+    CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
+    todo_wine
+    {
+        CHECK_REG_DWORD(prodkey, "EstimatedSize", 12);
+    }
+
+    RegCloseKey(prodkey);
 
     /* try it again */
     r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1 PUBLISH_PRODUCT=1");
@@ -1993,6 +2226,12 @@ static void test_publish(void)
     }
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    todo_wine
+    {
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    }
+
     /* uninstall has a problem with this */
     r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
     todo_wine
@@ -2012,6 +2251,12 @@ static void test_publish(void)
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    todo_wine
+    {
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    }
 
     /* PublishProduct and RegisterProduct and ProcessComponents */
     r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1 PUBLISH_PRODUCT=1 PROCESS_COMPONENTS=1");
@@ -2033,6 +2278,38 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
+    CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
+    CHECK_REG_STR(prodkey, "InstallDate", date);
+    CHECK_REG_STR(prodkey, "InstallSource", temp);
+    CHECK_REG_ISTR(prodkey, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "Publisher", "Wine");
+    CHECK_REG_STR(prodkey, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "AuthorizedCDFPrefix", NULL);
+    CHECK_REG_STR(prodkey, "Comments", NULL);
+    CHECK_REG_STR(prodkey, "Contact", NULL);
+    CHECK_REG_STR(prodkey, "HelpLink", NULL);
+    CHECK_REG_STR(prodkey, "HelpTelephone", NULL);
+    CHECK_REG_STR(prodkey, "InstallLocation", NULL);
+    CHECK_REG_STR(prodkey, "Readme", NULL);
+    CHECK_REG_STR(prodkey, "Size", NULL);
+    CHECK_REG_STR(prodkey, "URLInfoAbout", NULL);
+    CHECK_REG_STR(prodkey, "URLUpdateInfo", NULL);
+    CHECK_REG_DWORD(prodkey, "Language", 1033);
+    CHECK_REG_DWORD(prodkey, "Version", 0x1010001);
+    CHECK_REG_DWORD(prodkey, "VersionMajor", 1);
+    CHECK_REG_DWORD(prodkey, "VersionMinor", 1);
+    CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
+    todo_wine
+    {
+        CHECK_REG_DWORD(prodkey, "EstimatedSize", 12);
+    }
+
+    RegCloseKey(prodkey);
+
     /* complete uninstall */
     r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -2053,6 +2330,12 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    todo_wine
+    {
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    }
+
     /* PublishProduct, RegisterProduct, ProcessComponents, PublishFeatures */
     r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1 PUBLISH_PRODUCT=1 PROCESS_COMPONENTS=1 PUBLISH_FEATURES=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -2072,6 +2355,38 @@ static void test_publish(void)
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
+    CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
+    CHECK_REG_STR(prodkey, "InstallDate", date);
+    CHECK_REG_STR(prodkey, "InstallSource", temp);
+    CHECK_REG_ISTR(prodkey, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "Publisher", "Wine");
+    CHECK_REG_STR(prodkey, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "AuthorizedCDFPrefix", NULL);
+    CHECK_REG_STR(prodkey, "Comments", NULL);
+    CHECK_REG_STR(prodkey, "Contact", NULL);
+    CHECK_REG_STR(prodkey, "HelpLink", NULL);
+    CHECK_REG_STR(prodkey, "HelpTelephone", NULL);
+    CHECK_REG_STR(prodkey, "InstallLocation", NULL);
+    CHECK_REG_STR(prodkey, "Readme", NULL);
+    CHECK_REG_STR(prodkey, "Size", NULL);
+    CHECK_REG_STR(prodkey, "URLInfoAbout", NULL);
+    CHECK_REG_STR(prodkey, "URLUpdateInfo", NULL);
+    CHECK_REG_DWORD(prodkey, "Language", 1033);
+    CHECK_REG_DWORD(prodkey, "Version", 0x1010001);
+    CHECK_REG_DWORD(prodkey, "VersionMajor", 1);
+    CHECK_REG_DWORD(prodkey, "VersionMinor", 1);
+    CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
+    todo_wine
+    {
+        CHECK_REG_DWORD(prodkey, "EstimatedSize", 12);
+    }
+
+    RegCloseKey(prodkey);
 
     /* complete uninstall */
     r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
@@ -2096,6 +2411,12 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    todo_wine
+    {
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    }
+
     /* complete install */
     r = MsiInstallProductA(msifile, "FULL=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -2115,6 +2436,38 @@ static void test_publish(void)
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
+    CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
+    CHECK_REG_STR(prodkey, "InstallDate", date);
+    CHECK_REG_STR(prodkey, "InstallSource", temp);
+    CHECK_REG_ISTR(prodkey, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "Publisher", "Wine");
+    CHECK_REG_STR(prodkey, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "AuthorizedCDFPrefix", NULL);
+    CHECK_REG_STR(prodkey, "Comments", NULL);
+    CHECK_REG_STR(prodkey, "Contact", NULL);
+    CHECK_REG_STR(prodkey, "HelpLink", NULL);
+    CHECK_REG_STR(prodkey, "HelpTelephone", NULL);
+    CHECK_REG_STR(prodkey, "InstallLocation", NULL);
+    CHECK_REG_STR(prodkey, "Readme", NULL);
+    CHECK_REG_STR(prodkey, "Size", NULL);
+    CHECK_REG_STR(prodkey, "URLInfoAbout", NULL);
+    CHECK_REG_STR(prodkey, "URLUpdateInfo", NULL);
+    CHECK_REG_DWORD(prodkey, "Language", 1033);
+    CHECK_REG_DWORD(prodkey, "Version", 0x1010001);
+    CHECK_REG_DWORD(prodkey, "VersionMajor", 1);
+    CHECK_REG_DWORD(prodkey, "VersionMinor", 1);
+    CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
+    todo_wine
+    {
+        CHECK_REG_DWORD(prodkey, "EstimatedSize", 12);
+    }
+
+    RegCloseKey(prodkey);
 
     /* no UnpublishFeatures */
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
@@ -2139,6 +2492,9 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
     /* complete install */
     r = MsiInstallProductA(msifile, "FULL=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -2158,6 +2514,38 @@ static void test_publish(void)
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
+    CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
+    CHECK_REG_STR(prodkey, "InstallDate", date);
+    CHECK_REG_STR(prodkey, "InstallSource", temp);
+    CHECK_REG_ISTR(prodkey, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "Publisher", "Wine");
+    CHECK_REG_STR(prodkey, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "AuthorizedCDFPrefix", NULL);
+    CHECK_REG_STR(prodkey, "Comments", NULL);
+    CHECK_REG_STR(prodkey, "Contact", NULL);
+    CHECK_REG_STR(prodkey, "HelpLink", NULL);
+    CHECK_REG_STR(prodkey, "HelpTelephone", NULL);
+    CHECK_REG_STR(prodkey, "InstallLocation", NULL);
+    CHECK_REG_STR(prodkey, "Readme", NULL);
+    CHECK_REG_STR(prodkey, "Size", NULL);
+    CHECK_REG_STR(prodkey, "URLInfoAbout", NULL);
+    CHECK_REG_STR(prodkey, "URLUpdateInfo", NULL);
+    CHECK_REG_DWORD(prodkey, "Language", 1033);
+    CHECK_REG_DWORD(prodkey, "Version", 0x1010001);
+    CHECK_REG_DWORD(prodkey, "VersionMajor", 1);
+    CHECK_REG_DWORD(prodkey, "VersionMinor", 1);
+    CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
+    todo_wine
+    {
+        CHECK_REG_DWORD(prodkey, "EstimatedSize", 12);
+    }
+
+    RegCloseKey(prodkey);
 
     /* UnpublishFeatures, only feature removed.  Only works when entire product is removed */
     r = MsiInstallProductA(msifile, "UNPUBLISH_FEATURES=1 REMOVE=feature");
@@ -2179,6 +2567,38 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
+    CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
+    CHECK_REG_STR(prodkey, "InstallDate", date);
+    CHECK_REG_STR(prodkey, "InstallSource", temp);
+    CHECK_REG_ISTR(prodkey, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "Publisher", "Wine");
+    CHECK_REG_STR(prodkey, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "AuthorizedCDFPrefix", NULL);
+    CHECK_REG_STR(prodkey, "Comments", NULL);
+    CHECK_REG_STR(prodkey, "Contact", NULL);
+    CHECK_REG_STR(prodkey, "HelpLink", NULL);
+    CHECK_REG_STR(prodkey, "HelpTelephone", NULL);
+    CHECK_REG_STR(prodkey, "InstallLocation", NULL);
+    CHECK_REG_STR(prodkey, "Readme", NULL);
+    CHECK_REG_STR(prodkey, "Size", NULL);
+    CHECK_REG_STR(prodkey, "URLInfoAbout", NULL);
+    CHECK_REG_STR(prodkey, "URLUpdateInfo", NULL);
+    CHECK_REG_DWORD(prodkey, "Language", 1033);
+    CHECK_REG_DWORD(prodkey, "Version", 0x1010001);
+    CHECK_REG_DWORD(prodkey, "VersionMajor", 1);
+    CHECK_REG_DWORD(prodkey, "VersionMinor", 1);
+    CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
+    todo_wine
+    {
+        CHECK_REG_DWORD(prodkey, "EstimatedSize", 12);
+    }
+
+    RegCloseKey(prodkey);
+
     /* complete install */
     r = MsiInstallProductA(msifile, "FULL=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -2198,6 +2618,38 @@ static void test_publish(void)
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
+    CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
+    CHECK_REG_STR(prodkey, "InstallDate", date);
+    CHECK_REG_STR(prodkey, "InstallSource", temp);
+    CHECK_REG_ISTR(prodkey, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "Publisher", "Wine");
+    CHECK_REG_STR(prodkey, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "AuthorizedCDFPrefix", NULL);
+    CHECK_REG_STR(prodkey, "Comments", NULL);
+    CHECK_REG_STR(prodkey, "Contact", NULL);
+    CHECK_REG_STR(prodkey, "HelpLink", NULL);
+    CHECK_REG_STR(prodkey, "HelpTelephone", NULL);
+    CHECK_REG_STR(prodkey, "InstallLocation", NULL);
+    CHECK_REG_STR(prodkey, "Readme", NULL);
+    CHECK_REG_STR(prodkey, "Size", NULL);
+    CHECK_REG_STR(prodkey, "URLInfoAbout", NULL);
+    CHECK_REG_STR(prodkey, "URLUpdateInfo", NULL);
+    CHECK_REG_DWORD(prodkey, "Language", 1033);
+    CHECK_REG_DWORD(prodkey, "Version", 0x1010001);
+    CHECK_REG_DWORD(prodkey, "VersionMajor", 1);
+    CHECK_REG_DWORD(prodkey, "VersionMinor", 1);
+    CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
+    todo_wine
+    {
+        CHECK_REG_DWORD(prodkey, "EstimatedSize", 12);
+    }
+
+    RegCloseKey(prodkey);
 
     /* UnpublishFeatures, both features removed */
     r = MsiInstallProductA(msifile, "UNPUBLISH_FEATURES=1 REMOVE=feature,montecristo");
@@ -2222,6 +2674,9 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
     /* complete install */
     r = MsiInstallProductA(msifile, "FULL=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -2241,6 +2696,38 @@ static void test_publish(void)
                                 "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
+    CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
+    CHECK_REG_STR(prodkey, "InstallDate", date);
+    CHECK_REG_STR(prodkey, "InstallSource", temp);
+    CHECK_REG_ISTR(prodkey, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "Publisher", "Wine");
+    CHECK_REG_STR(prodkey, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_REG_STR(prodkey, "AuthorizedCDFPrefix", NULL);
+    CHECK_REG_STR(prodkey, "Comments", NULL);
+    CHECK_REG_STR(prodkey, "Contact", NULL);
+    CHECK_REG_STR(prodkey, "HelpLink", NULL);
+    CHECK_REG_STR(prodkey, "HelpTelephone", NULL);
+    CHECK_REG_STR(prodkey, "InstallLocation", NULL);
+    CHECK_REG_STR(prodkey, "Readme", NULL);
+    CHECK_REG_STR(prodkey, "Size", NULL);
+    CHECK_REG_STR(prodkey, "URLInfoAbout", NULL);
+    CHECK_REG_STR(prodkey, "URLUpdateInfo", NULL);
+    CHECK_REG_DWORD(prodkey, "Language", 1033);
+    CHECK_REG_DWORD(prodkey, "Version", 0x1010001);
+    CHECK_REG_DWORD(prodkey, "VersionMajor", 1);
+    CHECK_REG_DWORD(prodkey, "VersionMinor", 1);
+    CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
+    todo_wine
+    {
+        CHECK_REG_DWORD(prodkey, "EstimatedSize", 12);
+    }
+
+    RegCloseKey(prodkey);
 
     /* complete uninstall */
     r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
@@ -2265,9 +2752,16 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
+    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
+    todo_wine
+    {
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    }
+
     /* make sure 'Program Files\msitest' is removed */
     delete_pfmsitest_files();
 
+    RegCloseKey(uninstall);
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
