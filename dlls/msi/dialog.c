@@ -143,6 +143,7 @@ static const WCHAR szListBox[] = { 'L','i','s','t','B','o','x',0 };
 static const WCHAR szDirectoryCombo[] = { 'D','i','r','e','c','t','o','r','y','C','o','m','b','o',0 };
 static const WCHAR szDirectoryList[] = { 'D','i','r','e','c','t','o','r','y','L','i','s','t',0 };
 static const WCHAR szVolumeCostList[] = { 'V','o','l','u','m','e','C','o','s','t','L','i','s','t',0 };
+static const WCHAR szVolumeSelectCombo[] = { 'V','o','l','u','m','e','S','e','l','e','c','t','C','o','m','b','o',0 };
 static const WCHAR szSelectionDescription[] = {'S','e','l','e','c','t','i','o','n','D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR szSelectionPath[] = {'S','e','l','e','c','t','i','o','n','P','a','t','h',0};
 static const WCHAR szProperty[] = {'P','r','o','p','e','r','t','y',0};
@@ -2566,6 +2567,84 @@ static UINT msi_dialog_volumecost_list( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+/******************** VolumeSelect Combo ***************************************/
+
+static UINT msi_dialog_volsel_handler( msi_dialog *dialog,
+                                       msi_control *control, WPARAM param )
+{
+    WCHAR text[MAX_PATH];
+    LPWSTR prop;
+    BOOL indirect;
+    int index;
+
+    if (HIWORD(param) != CBN_SELCHANGE)
+        return ERROR_SUCCESS;
+
+    index = SendMessageW( control->hwnd, CB_GETCURSEL, 0, 0 );
+    if ( index == CB_ERR )
+    {
+        ERR("No ComboBox item selected!\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    SendMessageW( control->hwnd, CB_GETLBTEXT, index, (LPARAM)text );
+
+    indirect = control->attributes & msidbControlAttributesIndirect;
+    prop = msi_dialog_dup_property( dialog, control->property, indirect );
+
+    MSI_SetPropertyW( dialog->package, prop, text );
+
+    msi_free( prop );
+    return ERROR_SUCCESS;
+}
+
+static void msi_dialog_vsc_add_drives( msi_dialog *dialog, msi_control *control )
+{
+    LPWSTR drives, ptr;
+    DWORD size;
+
+    size = GetLogicalDriveStringsW( 0, NULL );
+    if ( !size ) return;
+
+    drives = msi_alloc( (size + 1) * sizeof(WCHAR) );
+    if ( !drives ) return;
+
+    GetLogicalDriveStringsW( size, drives );
+
+    ptr = drives;
+    while (*ptr)
+    {
+        SendMessageW( control->hwnd, CB_ADDSTRING, 0, (LPARAM)ptr );
+        ptr += lstrlenW(ptr) + 1;
+    }
+
+    msi_free( drives );
+}
+
+static UINT msi_dialog_volumeselect_combo( msi_dialog *dialog, MSIRECORD *rec )
+{
+    msi_control *control;
+    LPCWSTR prop;
+    DWORD style;
+
+    /* FIXME: CBS_OWNERDRAWFIXED */
+    style = WS_CHILD | WS_VISIBLE | WS_GROUP | WS_TABSTOP |
+            CBS_DROPDOWNLIST | CBS_SORT | CBS_HASSTRINGS |
+            WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
+    control = msi_dialog_add_control( dialog, rec, WC_COMBOBOXW, style );
+    if (!control)
+        return ERROR_FUNCTION_FAILED;
+
+    control->attributes = MSI_RecordGetInteger( rec, 8 );
+    control->handler = msi_dialog_volsel_handler;
+    prop = MSI_RecordGetString( rec, 9 );
+    control->property = msi_dialog_dup_property( dialog, prop, FALSE );
+
+    msi_dialog_vsc_add_drives( dialog, control );
+
+    return ERROR_SUCCESS;
+}
+
 static const struct control_handler msi_dialog_handler[] =
 {
     { szText, msi_dialog_text_control },
@@ -2587,6 +2666,7 @@ static const struct control_handler msi_dialog_handler[] =
     { szDirectoryCombo, msi_dialog_directory_combo },
     { szDirectoryList, msi_dialog_directory_list },
     { szVolumeCostList, msi_dialog_volumecost_list },
+    { szVolumeSelectCombo, msi_dialog_volumeselect_combo },
 };
 
 #define NUM_CONTROL_TYPES (sizeof msi_dialog_handler/sizeof msi_dialog_handler[0])
