@@ -3,7 +3,7 @@
  * French language support
  *
  * Copyright 1998 Juergen Schmied
- * Copyright 2006 Jonathan Ernst
+ * Copyright 2006-2007 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -95,7 +95,7 @@ END
 
 SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Parcourir"
+CAPTION "Parcourir les dossiers"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -108,6 +108,37 @@ FONT 8, "MS Shell Dlg"
 	4, 40, 180, 120
 }
 
+SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Parcourir les dossiers"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "Dossier :", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Créer un nouveau dossier", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Annuler", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Message"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Oui", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Oui pour &tous", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Non", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Annuler", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "À propos de %s"
@@ -118,7 +149,7 @@ FONT 10, "MS Shell Dlg"
  ICON "", 1088, 10, 10, 14, 16
  LTEXT "", 100, 30, 10, 137, 10
  LTEXT "", 101, 30, 22, 137, 10
- LTEXT "Wine est une réalisation de :", 98, 8, 55, 137, 10
+ LTEXT "Wine est une réalisation de :", 98, 8, 55, 137, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -128,7 +159,7 @@ FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
  LTEXT "Entrez le nom d'un programme, d'un dossier, d'un document ou d'une ressource Internet, et Wine l'ouvrira pour vous.", 12289, 36, 11, 182, 18
- LTEXT "&Ouvrir :", 12305, 7, 39, 24, 10
+ LTEXT "&Ouvrir :", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Annuler", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
@@ -165,7 +196,7 @@ STRINGTABLE DISCARDABLE
 	IDS_SELECT		"Sélectionner"
 	IDS_OPEN		"Ouvrir"
 
-	IDS_CREATEFOLDER_DENIED "Impossible de créer le nouveau dossier : permission refusée."
+	IDS_CREATEFOLDER_DENIED "Impossible de créer le nouveau dossier : permission refusée."
 	IDS_CREATEFOLDER_CAPTION "Erreur lors de la création du nouveau dossier"
 	IDS_DELETEITEM_CAPTION "Confirmer la suppression du fichier"
 	IDS_DELETEFOLDER_CAPTION "Confirmer la suppression du dossier"
@@ -176,12 +207,12 @@ STRINGTABLE DISCARDABLE
 	IDS_TRASHFOLDER_TEXT "Êtes-vous sûr de vouloir mettre « %1 » et tout ce qu'il contient dans la corbeille ?"
 	IDS_TRASHMULTIPLE_TEXT "Êtes-vous sûr de vouloir mettre ces %1 éléments dans la corbeille ?"
 	IDS_CANTTRASH_TEXT "L'élément « %1 » ne peut pas être mis dans la corbeille. Souhaitez-vous le supprimer à la place ?"
-	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+	IDS_OVERWRITEFILE_TEXT "Ce dossier contient déjà un fichier nommé « %1 ».\n\nVoulez-vous le remplacer ?"
 	IDS_OVERWRITEFILE_CAPTION "Confirmer l'écrasement du fichier"
-	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
+	IDS_OVERWRITEFOLDER_TEXT "Ce dossier contient déjà un dossier nommé « %1 ».\n\n"\
+	    "Si des fichiers dans le dossier de destination ont le même nom que ceux dans le dossier\n"\
+	    "sélectionné, ils seront remplacés. Voulez-vous quand même déplacer ou copier\n"\
+	    "le dossier ?"
 
         /* message box strings */
        IDS_RESTART_TITLE       "Redémarrer"
