@@ -1971,6 +1971,10 @@ static HRESULT WINAPI DataCache_Cache(
     HRESULT hr;
 
     TRACE("(%p, 0x%x, %p)\n", pformatetc, advf, pdwConnection);
+
+    if (!pformatetc || !pdwConnection)
+        return E_INVALIDARG;
+
     TRACE("pformatetc = %s\n", debugstr_formatetc(pformatetc));
 
     *pdwConnection = 0;
