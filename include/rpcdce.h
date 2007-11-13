@@ -367,6 +367,8 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerListen( unsigned int MinimumCallThreads, unsigned int MaxCalls, unsigned int DontWait );
 
+RPCRTAPI RPC_STATUS RPC_ENTRY RpcMgmtSetCancelTimeout(LONG);
+
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcMgmtWaitServerListen( void );
 
@@ -465,6 +467,8 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingInqAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName, ULONG *AuthnLevel,
                           ULONG *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, ULONG *AuthzSvc );
 #define RpcBindingInqAuthInfo WINELIB_NAME_AW(RpcBindingInqAuthInfo)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY RpcCancelThread(void*);
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcNetworkIsProtseqValidA( RPC_CSTR protseq );

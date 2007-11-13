@@ -859,7 +859,7 @@ void WINAPI I_RpcFree(void *Object)
 /******************************************************************************
  * I_RpcMapWin32Status   (rpcrt4.@)
  */
-DWORD WINAPI I_RpcMapWin32Status(RPC_STATUS status)
+LONG WINAPI I_RpcMapWin32Status(RPC_STATUS status)
 {
     FIXME("(%ld): stub\n", status);
     return 0;
@@ -911,7 +911,7 @@ void RPCRT4_SetThreadCurrentConnection(RpcConnection *Connection)
 /******************************************************************************
  * RpcCancelThread   (rpcrt4.@)
  */
-RPC_STATUS RPC_ENTRY RpcCancelThread(HANDLE ThreadHandle)
+RPC_STATUS RPC_ENTRY RpcCancelThread(void* ThreadHandle)
 {
     DWORD target_tid;
     struct threaddata *tdata;

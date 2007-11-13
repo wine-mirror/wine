@@ -162,6 +162,8 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcBindingInqTransportType( RPC_BINDING_HANDLE Binding, unsigned int* Type );
 
+RPCRTAPI LONG RPC_ENTRY I_RpcMapWin32Status(RPC_STATUS);
+
 #endif
 
 #else
