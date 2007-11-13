@@ -729,6 +729,7 @@ extern BOOL squash_guid(LPCWSTR in, LPWSTR out);
 extern BOOL encode_base85_guid(GUID *,LPWSTR);
 extern BOOL decode_base85_guid(LPCWSTR,GUID*);
 extern UINT MSIREG_OpenUninstallKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+extern UINT MSIREG_DeleteUninstallKey(LPCWSTR szProduct);
 extern UINT MSIREG_OpenUserProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenUserPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenFeatures(HKEY* key);

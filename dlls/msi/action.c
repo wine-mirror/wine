@@ -4039,6 +4039,7 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
     MSIREG_DeleteUserProductKey(package->ProductCode);
     MSIREG_DeleteUserDataProductKey(package->ProductCode);
     MSIREG_DeleteUserFeaturesKey(package->ProductCode);
+    MSIREG_DeleteUninstallKey(package->ProductCode);
 
 done:
     msi_free(remove);

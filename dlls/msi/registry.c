@@ -504,6 +504,16 @@ UINT MSIREG_OpenUninstallKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     return rc;
 }
 
+UINT MSIREG_DeleteUninstallKey(LPCWSTR szProduct)
+{
+    WCHAR keypath[0x200];
+    TRACE("%s\n",debugstr_w(szProduct));
+
+    sprintfW(keypath,szUninstall_fmt,szProduct);
+
+    return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
+}
+
 UINT MSIREG_OpenUserProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
 {
     UINT rc;
