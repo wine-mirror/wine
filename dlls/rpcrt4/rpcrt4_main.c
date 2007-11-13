@@ -138,7 +138,7 @@ static CRITICAL_SECTION uuid_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 static CRITICAL_SECTION threaddata_cs;
 static CRITICAL_SECTION_DEBUG threaddata_cs_debug =
 {
-    0, 0, &uuid_cs,
+    0, 0, &threaddata_cs,
     { &threaddata_cs_debug.ProcessLocksList, &threaddata_cs_debug.ProcessLocksList },
       0, 0, { (DWORD_PTR)(__FILE__ ": threaddata_cs") }
 };
