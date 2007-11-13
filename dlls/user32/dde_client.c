@@ -1010,7 +1010,7 @@ static WDML_QUEUE_STATE WDML_HandleReply(WDML_CONV* pConv, MSG* msg, HDDEDATA* h
  * waits until an answer for a sent request is received
  * time out is also handled. only used for synchronous transactions
  */
-static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, WDML_XACT* pXAct, DWORD *ack)
+static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, const WDML_XACT* pXAct, DWORD *ack)
 {
     DWORD	dwTime;
     DWORD	err;
