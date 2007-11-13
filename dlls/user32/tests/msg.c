@@ -6246,12 +6246,14 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     static long beginpaint_counter = 0;
     LRESULT ret;
     struct message msg;
+    LPARAM logged_lParam;
 
     trace("parent: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
 
+    logged_lParam=lParam;
     if (log_all_parent_messages ||
         message == WM_PARENTNOTIFY || message == WM_CANCELMODE ||
 	message == WM_SETFOCUS || message == WM_KILLFOCUS ||
@@ -6313,7 +6315,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
                 di.u.item.action = dis->itemAction;
                 di.u.item.state = dis->itemState;
 
-                lParam = di.u.lp;
+                logged_lParam = di.u.lp;
                 break;
             }
         }
@@ -6323,7 +6325,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
         if (defwndproc_counter) msg.flags |= defwinproc;
         if (beginpaint_counter) msg.flags |= beginpaint;
         msg.wParam = wParam;
-        msg.lParam = lParam;
+        msg.lParam = logged_lParam;
         add_message(&msg);
     }
 
