@@ -730,7 +730,7 @@ static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
         rc = ERROR_SUCCESS;
         *appValue = NULL;
         for (i = 0; rc == ERROR_SUCCESS && !*appValue && i < 26; i++)
-            if (drives & (1 << drives))
+            if (drives & (1 << i))
             {
                 pathWithDrive[0] = 'A' + i;
                 if (GetDriveTypeW(pathWithDrive) == DRIVE_FIXED)
