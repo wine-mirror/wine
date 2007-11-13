@@ -3,7 +3,7 @@
  *
  * Copyright 2002 Robert Dickenson
  * Copyright 2003 Vincent Béron
- * Copyright 2005-2006 Jonathan Ernst
+ * Copyright 2005-2007 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,6 +63,7 @@ BEGIN
             MENUITEM "Valeur c&haîne",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "Valeur &binaire",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "Valeur &mot double",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "Valeur chaîne &multiple",         ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Supprimer\tSuppr",                ID_EDIT_DELETE
@@ -90,7 +91,7 @@ BEGIN
     BEGIN
         MENUITEM "&Sommaire\tF1",                ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
-         MENUITEM "&À propos de l'éditeur de registres",      ID_HELP_ABOUT
+         MENUITEM "À &propos de l'éditeur de registres",      ID_HELP_ABOUT
     END
 END
 
@@ -113,6 +114,7 @@ BEGIN
             MENUITEM "Valeur c&haîne",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "Valeur &binaire",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "Valeur &mot double",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "Valeur chaîne &multiple",         ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Supprimer\tDel",                ID_EDIT_DELETE
@@ -212,12 +214,25 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Modification de la valeur binaire"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Nom de la valeur:",IDC_STATIC,5,5,119,8
+    LTEXT           "Nom de la valeur :",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
-    LTEXT           "Données de la valeur:",IDC_STATIC,5,30,90,8
+    LTEXT           "Données de la valeur :",IDC_STATIC,5,30,90,8
     CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,160,40
     DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
     PUSHBUTTON   "Annuler",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Multi String"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nom de la valeur :",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Données de la valeur :",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "OK",IDOK,140,160,30,11,WS_GROUP
+    PUSHBUTTON   "Annuler",IDCANCEL,175,160,30,11,WS_GROUP
 END
 
 /*
@@ -255,6 +270,7 @@ BEGIN
     ID_EDIT_NEW_STRINGVALUE "Ajoute une nouvelle valeur chaîne"
     ID_EDIT_NEW_BINARYVALUE "Ajoute une nouvelle valeur binaire"
     ID_EDIT_NEW_DWORDVALUE  "Ajoute une nouvelle valeur mot double"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Ajoute une nouvelle valeur chaîne multiple"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importe un fichier texte dans les registres"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Exporte tout ou une partie des registres dans un fichier texte"
