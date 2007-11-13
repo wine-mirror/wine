@@ -1647,7 +1647,7 @@ static void test_extendedSocketOptions(void)
     sa.sin_port = htons(0);
     sa.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    if((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0){
+    if((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) == INVALID_SOCKET) {
         trace("Creating the socket failed: %d\n", WSAGetLastError());
         WSACleanup();
         return;
@@ -1673,7 +1673,7 @@ static void test_extendedSocketOptions(void)
 
     closesocket(sock);
 
-    if((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) < 0){
+    if((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) == INVALID_SOCKET) {
         trace("Creating the socket failed: %d\n", WSAGetLastError());
         WSACleanup();
         return;
@@ -1720,7 +1720,7 @@ static void test_getsockname(void)
     sa_set.sin_port = htons(0);
     sa_set.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    if((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) < 0){
+    if((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) == INVALID_SOCKET) {
         trace("Creating the socket failed: %d\n", WSAGetLastError());
         WSACleanup();
         return;
