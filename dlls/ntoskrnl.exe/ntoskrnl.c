@@ -252,7 +252,7 @@ NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event )
  */
 PMDL WINAPI IoAllocateMdl( PVOID VirtualAddress, ULONG Length, BOOLEAN SecondaryBuffer, BOOLEAN ChargeQuota, PIRP Irp )
 {
-    FIXME( "stub: %p, %u, %i, %i, %p \n", VirtualAddress, Length, SecondaryBuffer, ChargeQuota, Irp );
+    FIXME( "stub: %p, %u, %i, %i, %p\n", VirtualAddress, Length, SecondaryBuffer, ChargeQuota, Irp );
     return NULL;
 }
 
@@ -262,7 +262,7 @@ PMDL WINAPI IoAllocateMdl( PVOID VirtualAddress, ULONG Length, BOOLEAN Secondary
  */
 PIO_WORKITEM WINAPI IoAllocateWorkItem( PDEVICE_OBJECT DeviceObject )
 {
-    FIXME( "stub: %p \n", DeviceObject );
+    FIXME( "stub: %p\n", DeviceObject );
     return NULL;
 }
 
