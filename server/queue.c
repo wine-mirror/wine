@@ -269,7 +269,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->paint_count     = 0;
         queue->quit_message    = 0;
         queue->recv_result     = NULL;
-        queue->next_timer_id   = 1;
+        queue->next_timer_id   = 0x7fff;
         queue->timeout         = NULL;
         queue->input           = (struct thread_input *)grab_object( input );
         queue->hooks           = NULL;
@@ -1950,7 +1950,7 @@ DECL_HANDLER(set_win_timer)
             do
             {
                 id = queue->next_timer_id;
-                if (++queue->next_timer_id >= 0x10000) queue->next_timer_id = 1;
+                if (--queue->next_timer_id <= 0x100) queue->next_timer_id = 0x7fff;
             }
             while (find_timer( queue, 0, req->msg, id ));
         }
