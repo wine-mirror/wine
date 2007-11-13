@@ -18,14 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <config.h>
-#include <wine/port.h>
+#include "config.h"
+#include "wine/port.h"
 #include <string.h>
-#include <wine/library.h>
-#include <wine/debug.h>
-#include <windef.h>
-#include <winreg.h>
-#include <winnls.h>
+#include "wine/library.h"
+#include "wine/debug.h"
+#include "windef.h"
+#include "winreg.h"
+#include "winnls.h"
 #include "ctapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ctapi32);
