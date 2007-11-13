@@ -399,8 +399,8 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
          * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
          * contains 1.0 to allow a mad, but arb vs swizzles are too restricted for that.
          */
-        shader_addline(&buffer, "ADD TMP_OUT.x, TMP_OUT.x, posFixup.z;");
-        shader_addline(&buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, posFixup.w;");
+        shader_addline(&buffer, "ADD TMP_OUT.x, TMP_OUT.x, posFixup.z;\n");
+        shader_addline(&buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, posFixup.w;\n");
 
         /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
          * and the glsl equivalent
