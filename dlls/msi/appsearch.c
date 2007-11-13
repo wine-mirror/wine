@@ -769,6 +769,9 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATU
 
     TRACE("%s\n", debugstr_w(sig->Name));
 
+    msi_free(sig->File);
+    sig->File = NULL;
+
     *appValue = NULL;
 
     row = MSI_QueryGetRecord( package->db, query, sig->Name );
