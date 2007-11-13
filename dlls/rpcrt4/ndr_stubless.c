@@ -1442,6 +1442,9 @@ LONG WINAPI NdrStubCall2(
     return S_OK;
 }
 
+/***********************************************************************
+ *            NdrServerCall2 [RPCRT4.@]
+ */
 void WINAPI NdrServerCall2(PRPC_MESSAGE pRpcMsg)
 {
     DWORD dwPhase;
