@@ -572,7 +572,7 @@ static char* debug_getbuf(void)
 static inline const char* debugrange(const RANGE *lprng)
 {
     if (!lprng) return "(null)";
-    return wine_dbg_sprintf("[%d, %d)", lprng->lower, lprng->upper);
+    return wine_dbg_sprintf("[%d, %d]", lprng->lower, lprng->upper);
 }
 
 static const char* debugscrollinfo(const SCROLLINFO *pScrollInfo)
