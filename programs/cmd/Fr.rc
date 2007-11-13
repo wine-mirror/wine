@@ -3,8 +3,8 @@
  * French Language Support
  *
  * Copyright 2003 Sylvain Petreolle
+ * Copyright 2007 Jonathan Ernst
  * 
- *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -24,7 +24,7 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-  WCMD_ATTRIB, "Aide d' ATTRIB\n"
+  WCMD_ATTRIB, "Aide d'ATTRIB\n"
   WCMD_CALL,
 "CALL <fichierbatch> sert à appeler un fichier batch \n\
 depuis un autre fichier batch. Quand le fichier batch sort, le contrôle revient\n\
@@ -61,7 +61,7 @@ précéder d'un signe @.\n"
   WCMD_FOR,
 "La commande FOR sert à exécuter une commande pour un groupe de fichiers.\n\
 \n\
-Syntaxe: FOR %variable IN (groupe) DO commande\n\
+Syntaxe : FOR %variable IN (groupe) DO commande\n\
 \n\
 La nécessité de doubler le signe '%' en utilisant FOR dans un fichier batch \n\
 n'existe pas dans cmd.\n"
@@ -83,7 +83,7 @@ GOTO n'a pas d'effet si utilisé interactivement.\n"
   WCMD_IF,
 "IF est utilisé pour exécuter une commande de façon conditionnelle.\n\
 \n\
-Syntaxe:	IF [NOT] EXIST nomfichier commande\n\
+Syntaxe :	IF [NOT] EXIST nomfichier commande\n\
 		IF [NOT] chaîne1==chaîne2 commande\n\
 		IF [NOT] ERRORLEVEL nombre commande\n\
 \n\
@@ -92,7 +92,7 @@ entre guillemets doubles. La comparaison est insensible à la casse.\n"
 
   WCMD_LABEL,  "LABEL sert à modifier le nom de volume d'un disque.  \n\
 \n\
-Syntaxe: LABEL [lecteur:]\n\
+Syntaxe : LABEL [lecteur:]\n\
 La commnande demandera le nouveau nom de volume pour le lecteur donné.\n\
 Vous pouvez afficher le nom de volume avec la commande VOL.\n"
 
@@ -174,7 +174,7 @@ s'il est appelé depuis la ligne de commande.\n"
   WCMD_TIME,   "Aide de TIME\n"
 
   WCMD_TITLE,
-"Règle le titre de la fenêtre pour la session cmd, syntaxe: TITLE [chaîne]\n"
+"Règle le titre de la fenêtre pour la session cmd, Syntaxe : TITLE [chaîne]\n"
 
   WCMD_TYPE,
 "TYPE <nomfichier> affiche <nomfichier> sur la console (ou ailleurs\n\
@@ -192,7 +192,13 @@ Le flag de verification n'a pas de fonction dans Wine.\n"
   WCMD_VER,
 "VER affiche la version de cmd actuellement en mémoire.\n"
 
-  WCMD_VOL, "\t\tAffiche le nom de volume d'un lecteur de disque\n"
+  WCMD_VOL,    "Aide de VOL\n"
+
+  WCMD_PUSHD,  "PUSHD <répertoire> enregistre le répertoire courant sur\n\
+une pile et change le répertoire courrant par le répertoire spécifié.\n"
+
+  WCMD_POPD,   "POPD change le répertoire courant par le dernier enregistré à l'aide de \n\
+PUSHD.\n"
 
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
@@ -200,7 +206,7 @@ Le flag de verification n'a pas de fonction dans Wine.\n"
 "EXIT termine la session de ligne de commande et retourne\n\
 au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
 
-  WCMD_ALLHELP, "Les commandes internes CMD sont:\n\
+  WCMD_ALLHELP, "Les commandes internes CMD sont :\n\
 ATTRIB\t\tAffiche ou change les attributs de fichiers DOS\n\
 CALL\t\tInvoque un fichier batch à l'intérieur d'un autre\n\
 CD (CHDIR)\tChange le répertoire courant par défaut\n\
@@ -216,7 +222,9 @@ MD (MKDIR)\tCrée un répertoire\n\
 MORE\t\tDisplay output in pages\n\
 MOVE\t\tDéplace un fichier, un groupe de fichiers ou un répertoire\n\
 PATH\t\tRègle ou affiche le chemin de recherche\n\
+POPD\t\tChange le répertoire courant par le dernier enregistré avec PUSHD\n\
 PROMPT\t\tChange l'invite de commande\n\
+PUSHD\t\tChange de répertoire en enregistrant le répertoire courant\n\
 REN (RENAME)\tRenomme un fichier, un groupe de fichiers ou un répertoire\n\
 RD (RMDIR)\tEfface un répertoire\n\
 SET\t\tRègle ou affiche les variables d'environment\n\
@@ -228,38 +236,38 @@ VOL\t\tAffiche le nom de volume d'un lecteur de disque\n\
 EXIT\t\tQuitte CMD\n\n\
 Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
 
-  WCMD_CONFIRM, "Are you sure"
-  WCMD_YES, "Y"
+  WCMD_CONFIRM, "Êtes-vous sûr"
+  WCMD_YES, "O"
   WCMD_NO, "N"
-  WCMD_NOASSOC, "File association missing for extension %s\n"
-  WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
-  WCMD_OVERWRITE, "Overwrite %s"
-  WCMD_MORESTR, "More..."
-  WCMD_TRUNCATEDLINE, "Line in Batch processing possibly truncated. Using:\n"
-  WCMD_NYI, "Not Yet Implemented\n\n"
-  WCMD_NOARG, "Argument missing\n"
-  WCMD_SYNTAXERR, "Syntax error\n"
-  WCMD_FILENOTFOUND, "%s : File Not Found\n"
-  WCMD_NOCMDHELP, "No help available for %s\n"
-  WCMD_NOTARGET, "Target to GOTO not found\n"
-  WCMD_CURRENTDATE, "Current Date is %s\n"
-  WCMD_CURRENTTIME, "Current Time is %s\n"
-  WCMD_NEWDATE, "Enter new date: "
-  WCMD_NEWTIME, "Enter new time: "
-  WCMD_MISSINGENV, "Environment variable %s not defined\n"
-  WCMD_READFAIL, "Failed to open '%s'\n"
-  WCMD_CALLINSCRIPT, "Cannot call batch label outside of a batch script\n"
-  WCMD_ALL, "A"
-  WCMD_DELPROMPT, "%s, Delete"
-  WCMD_ECHOPROMPT, "Echo is %s\n"
-  WCMD_VERIFYPROMPT, "Verify is %s\n"
-  WCMD_VERIFYERR, "Verify must be ON or OFF\n";
-  WCMD_ARGERR, "Parameter error\n"
-  WCMD_VOLUMEDETAIL, "Volume in drive %c is %s\nVolume Serial Number is %04x-%04x\n\n"
-  WCMD_VOLUMEPROMPT, "Volume label (11 characters, ENTER for none)?"
+  WCMD_NOASSOC, "Association de fichier manquante pour l'extension %s\n"
+  WCMD_NOFTYPE, "Aucun commande d'ouverture associée avec le type de fichier « %s »\n"
+  WCMD_OVERWRITE, "Écraser %s"
+  WCMD_MORESTR, "Plus..."
+  WCMD_TRUNCATEDLINE, "Ligne du processus batch probablement tronquée. Utilisation de :\n"
+  WCMD_NYI, "Pas encore implémenté\n\n"
+  WCMD_NOARG, "Argument manquant\n"
+  WCMD_SYNTAXERR, "Erreur de syntaxe\n"
+  WCMD_FILENOTFOUND, "%s : Fichier non trouvé\n"
+  WCMD_NOCMDHELP, "Pas d'aide disponible pour %s\n"
+  WCMD_NOTARGET, "La destination de l'instruction GOTO n'a pas été trouvée\n"
+  WCMD_CURRENTDATE, "La date courante est %s\n"
+  WCMD_CURRENTTIME, "L'heure courante est %s\n"
+  WCMD_NEWDATE, "Saisissez la nouvelle date : "
+  WCMD_NEWTIME, "Saisissez la nouvelle heure : "
+  WCMD_MISSINGENV, "La variable d'environnement %s n'est pas définie\n"
+  WCMD_READFAIL, "Impossible d'ouvrir « %s »\n"
+  WCMD_CALLINSCRIPT, "Impossible d'appeler une étiquette de batch hors d'un script batch\n"
+  WCMD_ALL, "T"
+  WCMD_DELPROMPT, "%s, Supprimer"
+  WCMD_ECHOPROMPT, "Echo est %s\n"
+  WCMD_VERIFYPROMPT, "Verify est %s\n"
+  WCMD_VERIFYERR, "Verify doit être ON ou OFF\n";
+  WCMD_ARGERR, "Erreur de paramètre\n"
+  WCMD_VOLUMEDETAIL, "Le volume dans le lecteur %c est %s\nLe numéro de série du volume est %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT, "Étiquette du volume (11 caractères, ENTRÉE pour aucun) ?"
   WCMD_NOPATH, "PATH not found\n"
-  WCMD_ANYKEY,"Press Return key to continue: "
-  WCMD_CONSTITLE,"Wine Command Prompt"
-  WCMD_VERSION,"CMD Version %s\n\n"
-  WCMD_MOREPROMPT, "More? "
+  WCMD_ANYKEY,"Appuyez sur ENTRÉE pour continuer : "
+  WCMD_CONSTITLE,"Invite de commande Wine"
+  WCMD_VERSION,"CMD version %s\n\n"
+  WCMD_MOREPROMPT, "Plus ? "
 }
