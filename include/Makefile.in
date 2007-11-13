@@ -369,6 +369,7 @@ SRCDIR_INCLUDES = \
 	ver.h \
 	vfw.h \
 	vfwmsgs.h \
+	wfext.h \
 	winbase.h \
 	wincon.h \
 	wincred.h \
