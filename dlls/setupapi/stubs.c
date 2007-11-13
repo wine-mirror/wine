@@ -26,6 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "cfgmgr32.h"
 #include "setupapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
@@ -52,10 +53,8 @@ DWORD WINAPI suErrorToIds16( WORD w1, WORD w2 )
 /***********************************************************************
  *		CM_Connect_MachineW  (SETUPAPI.@)
  */
-DWORD WINAPI CM_Connect_MachineW(LPCWSTR name, void * machine)
+CONFIGRET WINAPI CM_Connect_MachineW(PCWSTR name, PHMACHINE machine)
 {
-#define  CR_SUCCESS       0x00000000
-#define  CR_ACCESS_DENIED 0x00000033
   FIXME("\n");
   return  CR_ACCESS_DENIED;
 }
@@ -63,7 +62,7 @@ DWORD WINAPI CM_Connect_MachineW(LPCWSTR name, void * machine)
 /***********************************************************************
  *		CM_Disconnect_Machine  (SETUPAPI.@)
  */
-DWORD WINAPI CM_Disconnect_Machine(DWORD handle)
+CONFIGRET WINAPI CM_Disconnect_Machine(HMACHINE handle)
 {
   FIXME("\n");
   return  CR_SUCCESS;
@@ -73,10 +72,10 @@ DWORD WINAPI CM_Disconnect_Machine(DWORD handle)
 /***********************************************************************
  *		CM_Get_Device_IDA  (SETUPAPI.@)
  */
-DWORD WINAPI CM_Get_Device_IDA( LPVOID dnDevInst, LPSTR Buffer,
+CONFIGRET WINAPI CM_Get_Device_IDA( DEVINST dnDevInst, PSTR Buffer,
                                    ULONG  BufferLen, ULONG  ulFlags)
 {
-    FIXME("%p, %p, %u %u\n",dnDevInst, Buffer, BufferLen, ulFlags);
+    FIXME("%x, %p, %u %u\n",dnDevInst, Buffer, BufferLen, ulFlags);
     Buffer[0] = 0;
     return CR_SUCCESS;
 }
@@ -85,7 +84,7 @@ DWORD WINAPI CM_Get_Device_IDA( LPVOID dnDevInst, LPSTR Buffer,
  *             CM_Get_Device_ID_ListA  (SETUPAPI.@)
  */
 
-DWORD WINAPI CM_Get_Device_ID_ListA(
+CONFIGRET WINAPI CM_Get_Device_ID_ListA(
     PCSTR pszFilter, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
 {
     FIXME("%p %p %d %d\n", pszFilter, Buffer, BufferLen, ulFlags );
@@ -96,10 +95,10 @@ DWORD WINAPI CM_Get_Device_ID_ListA(
 /***********************************************************************
  *		CM_Get_Device_ID_Size  (SETUPAPI.@)
  */
-DWORD WINAPI CM_Get_Device_ID_Size( ULONG*  pulLen, LPVOID dnDevInst,
+CONFIGRET WINAPI CM_Get_Device_ID_Size( PULONG  pulLen, DEVINST dnDevInst,
                                         ULONG  ulFlags)
 {
-    FIXME("%p %p %u\n",pulLen, dnDevInst, ulFlags);
+    FIXME("%p %x %u\n",pulLen, dnDevInst, ulFlags);
     *pulLen = 1;
     return CR_SUCCESS;
 }
