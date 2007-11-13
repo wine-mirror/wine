@@ -880,9 +880,11 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
 
     /** FIXME: add support for real non-power-two if it's provided by the video card **/
     /* Precalculated scaling for 'faked' non power of two texture coords */
-    object->pow2scalingFactorX  =  (((float)Width)  / ((float)pow2Width));
-    object->pow2scalingFactorY  =  (((float)Height) / ((float)pow2Height));
-    TRACE(" xf(%f) yf(%f)\n", object->pow2scalingFactorX, object->pow2scalingFactorY);
+    object->baseTexture.pow2Matrix[0] =  (((float)Width)  / ((float)pow2Width));
+    object->baseTexture.pow2Matrix[5] =  (((float)Height) / ((float)pow2Height));
+    object->baseTexture.pow2Matrix[10] = 1.0;
+    object->baseTexture.pow2Matrix[15] = 1.0;
+    TRACE(" xf(%f) yf(%f)\n", object->baseTexture.pow2Matrix[0], object->baseTexture.pow2Matrix[5]);
 
     /* Calculate levels for mip mapping */
     if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
@@ -975,6 +977,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     object->width  = Width;
     object->height = Height;
     object->depth  = Depth;
+
+    /* Is NP2 support for volumes needed? */
+    object->baseTexture.pow2Matrix[ 0] = 1.0;
+    object->baseTexture.pow2Matrix[ 5] = 1.0;
+    object->baseTexture.pow2Matrix[10] = 1.0;
+    object->baseTexture.pow2Matrix[15] = 1.0;
 
     /* Calculate levels for mip mapping */
     if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
@@ -1112,7 +1120,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     object->edgeLength           = EdgeLength;
     /* TODO: support for native non-power 2 */
     /* Precalculated scaling for 'faked' non power of two texture coords */
-    object->pow2scalingFactor    = ((float)EdgeLength) / ((float)pow2EdgeLength);
+    object->baseTexture.pow2Matrix[ 0] = ((float)EdgeLength) / ((float)pow2EdgeLength);
+    object->baseTexture.pow2Matrix[ 5] = ((float)EdgeLength) / ((float)pow2EdgeLength);
+    object->baseTexture.pow2Matrix[10] = ((float)EdgeLength) / ((float)pow2EdgeLength);
+    object->baseTexture.pow2Matrix[15] = 1.0;
 
     /* Calculate levels for mip mapping */
     if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {

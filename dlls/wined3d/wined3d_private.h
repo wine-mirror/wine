@@ -924,6 +924,7 @@ typedef struct IWineD3DBaseTextureClass
     BOOL                    is_srgb;
     UINT                    srgb_mode_change_count;
     WINED3DFORMAT           shader_conversion_group;
+    float                   pow2Matrix[16];
 } IWineD3DBaseTextureClass;
 
 typedef struct IWineD3DBaseTextureImpl
@@ -950,8 +951,6 @@ typedef struct IWineD3DTextureImpl
     
     UINT                      width;
     UINT                      height;
-    float                     pow2scalingFactorX;
-    float                     pow2scalingFactorY;
 
 } IWineD3DTextureImpl;
 
@@ -971,8 +970,6 @@ typedef struct IWineD3DCubeTextureImpl
     IWineD3DSurface          *surfaces[6][MAX_LEVELS];
 
     UINT                      edgeLength;
-    float                     pow2scalingFactor;
-
 } IWineD3DCubeTextureImpl;
 
 extern const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl;
@@ -1096,12 +1093,6 @@ struct IWineD3DSurfaceImpl
 
     /* PBO */
     GLuint                    pbo;
-
-#if 0
-    /* precalculated x and y scalings for texture coords */
-    float                     pow2scalingFactorX; /* =  (Width  / pow2Width ) */
-    float                     pow2scalingFactorY; /* =  (Height / pow2Height) */
-#endif
 
     RECT                      lockedRect;
     RECT                      dirtyRect;

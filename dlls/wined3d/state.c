@@ -1904,6 +1904,7 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD texUnit = state - STATE_TRANSFORM(WINED3DTS_TEXTURE0);
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[texUnit];
+    BOOL generated;
 
     /* Ignore this when a vertex shader is used, or if the streams aren't sorted out yet */
     if(use_vs(stateblock->wineD3DDevice) ||
@@ -1925,15 +1926,24 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
         return;
     }
+    generated = (stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU;
 
     set_texture_matrix((float *)&stateblock->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
                         stateblock->textureState[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS],
-                        (stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU,
+                        generated,
                         context->last_was_rhw,
                         stateblock->wineD3DDevice->strided_streams.u.s.texCoords[texUnit].dwStride ?
                             stateblock->wineD3DDevice->strided_streams.u.s.texCoords[texUnit].dwType:
                             WINED3DDECLTYPE_UNUSED);
 
+    /* The sampler applying function calls us if this changes */
+    if(context->lastWasPow2Texture[texUnit] && stateblock->textures[texUnit]) {
+        if(generated) {
+            FIXME("Non-power2 texture being used with generated texture coords\n");
+        }
+        TRACE("Non power two matrix multiply fixup\n");
+        glMultMatrixf(((IWineD3DTextureImpl *) stateblock->textures[texUnit])->baseTexture.pow2Matrix);
+    }
 }
 
 static void unloadTexCoords(IWineD3DStateBlockImpl *stateblock) {
@@ -2289,19 +2299,19 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
          */
         if(!GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) && sampler < MAX_TEXTURES) {
             if(stateblock->textureDimensions[sampler] == GL_TEXTURE_2D) {
-                if(((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorX != 1.0 ||
-                   ((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorY != 1.0 ) {
+                if(((IWineD3DTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[0] != 1.0 ||
+                   ((IWineD3DTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[5] != 1.0 ) {
                     texIsPow2 = TRUE;
                 }
             } else if(stateblock->textureDimensions[sampler] == GL_TEXTURE_CUBE_MAP_ARB) {
-                if(((IWineD3DCubeTextureImpl *) stateblock->textures[sampler])->pow2scalingFactor != 1.0) {
+                if(((IWineD3DCubeTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[0] != 1.0) {
                     texIsPow2 = TRUE;
                 }
             }
 
             if(texIsPow2 || context->lastWasPow2Texture[sampler]) {
-                transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stateblock->wineD3DDevice->texUnitMap[sampler]), stateblock, context);
                 context->lastWasPow2Texture[sampler] = texIsPow2;
+                transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stateblock->wineD3DDevice->texUnitMap[sampler]), stateblock, context);
             }
         }
 
