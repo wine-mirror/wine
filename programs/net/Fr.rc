@@ -1,0 +1,43 @@
+/*
+ * NET.EXE - Wine-compatible net program
+ * French language support
+ *
+ * Copyright 2007 Jonathan Ernst
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+
+STRINGTABLE
+{
+    STRING_USAGE, "La syntaxe de cette commande est :\n\nNET [ HELP | START | STOP ]\n"
+    STRING_START_USAGE, "Spécifie le service à démarrer.\n"
+    STRING_STOP_USAGE, "Spécifie le service à arrêter.\n"
+    STRING_STOP_DEP, "Arrêt du service dépendant : %s\n"
+    STRING_CANT_STOP, "Impossible d'arrêter le service %s\n"
+    STRING_NO_SCM, "Impossible d'obtenir le gestionnaire de contrôle de service.\n"
+    STRING_NO_SVCHANDLE, "Impossible d'obtenir le service.\n"
+    STRING_START_SVC, "Le service %s démarre.\n"
+    STRING_START_SVC_SUCCESS, "Le service %s a démarré avec succès.\n"
+    STRING_START_SVC_FAIL, "Le service %s n'a pas pu être démarré.\n"
+    STRING_STOP_SVC, "Le service %s est en train d'être arrêté.\n"
+    STRING_STOP_SVC_SUCCESS, "Le service %s a été arrêté avec succès.\n"
+    STRING_STOP_SVC_FAIL, "Le service %s n'a pas pu être arrêté.\n"
+    STRING_HELP_USAGE, "La syntaxe de cette commande est :\n\nNET HELP commande\n    -ou-\nNET commande /HELP\n\n   Les commandes disponibles sont :\n   NET HELP    NET START     NET STOP\n"
+    STRING_NO_ENTRIES, "Il n'y a pas d'entrées dans la liste.\n"
+    STRING_USE_HEADER, "\nStatut    Local   Distant\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY, "%s      %S      %S      Ressources ouvertes : %lu\n"
+}
