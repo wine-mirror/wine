@@ -334,6 +334,7 @@ SRCDIR_INCLUDES = \
 	richedit.h \
 	rmxfguid.h \
 	rpc.h \
+	rpcasync.h \
 	rpcdce.h \
 	rpcdcep.h \
 	rpcndr.h \

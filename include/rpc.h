@@ -60,6 +60,9 @@ typedef void* I_RPC_HANDLE;
 #include <rpcnterr.h>
 #include <excpt.h>
 #include <winerror.h>
+#ifndef RPC_NO_WINDOWS_H
+#include <rpcasync.h>
+#endif
 
 /* ignore exception handling for now */
 #define RpcTryExcept if (1) {

@@ -871,7 +871,7 @@ LONG WINAPI I_RpcMapWin32Status(RPC_STATUS status)
 /******************************************************************************
  * RpcErrorStartEnumeration   (rpcrt4.@)
  */
-RPC_STATUS RPC_ENTRY RpcErrorStartEnumeration(void** EnumHandle)
+RPC_STATUS RPC_ENTRY RpcErrorStartEnumeration(RPC_ERROR_ENUM_HANDLE* EnumHandle)
 {
     FIXME("(%p): stub\n", EnumHandle);
     return RPC_S_ENTRY_NOT_FOUND;
