@@ -127,6 +127,7 @@ static void test_xmldoc(void)
     hr = IXMLElement_get_tagName(element, &name);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(!lstrcmpW(name, szBankAccount), "Expected BANKACCOUNT\n");
+    SysFreeString(name);
 
     hr = IXMLElement_get_children(element, &collection);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
@@ -151,6 +152,7 @@ static void test_xmldoc(void)
     hr = IXMLElement_get_tagName(child, &name);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(!lstrcmpW(name, szNumber), "Expected NUMBER\n");
+    SysFreeString(name);
 
     hr = IXMLElement_get_children(child, &inner);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
@@ -171,6 +173,7 @@ static void test_xmldoc(void)
     hr = IXMLElement_get_text(value, &name);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(!lstrcmpW(name, szNumVal), "Expected '1234'\n");
+    SysFreeString(name);
 
     IXMLElementCollection_Release(inner);
 
@@ -196,6 +199,7 @@ static void test_xmldoc(void)
     hr = IXMLElement_get_tagName(child, &name);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(!lstrcmpW(name, szName), "Expected NAME\n");
+    SysFreeString(name);
 
     hr = IXMLElement_get_children(child, &inner);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
@@ -217,6 +221,7 @@ static void test_xmldoc(void)
     hr = IXMLElement_get_text(value, &name);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(!lstrcmpW(name, szNameVal), "Expected 'Captain Ahab'\n");
+    SysFreeString(name);
 
     IXMLElementCollection_Release(inner);
 
