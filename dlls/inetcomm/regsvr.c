@@ -432,6 +432,18 @@ static struct regsvr_coclass const coclass_list[] = {
 	"inetcomm.dll",
 	"Both"
     },
+    {   &CLSID_IMimeBody,
+        "CLSID_IMimeBody",
+        NULL,
+        "inetcomm.dll",
+        "Both"
+    },
+    {   &CLSID_IMimeMessage,
+        "CLSID_IMimeMessage",
+        NULL,
+        "inetcomm.dll",
+        "Both"
+    },
     { NULL }			/* list terminator */
 };
 
