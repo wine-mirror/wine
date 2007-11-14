@@ -349,9 +349,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
          * before the homogenous divide, so we have to take the w into account: z = ((z / w) * 2 - 1) * w,
          * which is the same as z = z / 2 - w.
          */
-        shader_addline(&buffer, "tmp0 = gl_Position;\n");
-        shader_addline(&buffer, "gl_Position.z = tmp0.z * 2.0;\n");
-        shader_addline(&buffer, "gl_Position.z = gl_Position.z - gl_Position.w;\n");
+        shader_addline(&buffer, "gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;\n");
 
         shader_addline(&buffer, "}\n");
 
