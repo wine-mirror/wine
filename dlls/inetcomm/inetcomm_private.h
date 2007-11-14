@@ -68,3 +68,5 @@ HRESULT InternetTransport_Write(InternetTransport *This, const char *pvData,
 
 BOOL InternetTransport_RegisterClass(HINSTANCE hInstance);
 void InternetTransport_UnregisterClass(HINSTANCE hInstance);
+
+HRESULT MimeBody_create(IUnknown *outer, void **obj);

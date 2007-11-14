@@ -36,6 +36,489 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcomm);
 
+typedef struct MimeBody
+{
+    const IMimeBodyVtbl *lpVtbl;
+    LONG refs;
+
+    HBODY handle;
+} MimeBody;
+
+static inline MimeBody *impl_from_IMimeBody( IMimeBody *iface )
+{
+    return (MimeBody *)((char*)iface - FIELD_OFFSET(MimeBody, lpVtbl));
+}
+
+static HRESULT WINAPI MimeBody_QueryInterface(IMimeBody* iface,
+                                     REFIID riid,
+                                     void** ppvObject)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppvObject);
+
+    *ppvObject = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IPersist) ||
+        IsEqualIID(riid, &IID_IPersistStreamInit) ||
+        IsEqualIID(riid, &IID_IMimePropertySet) ||
+        IsEqualIID(riid, &IID_IMimeBody))
+    {
+        *ppvObject = iface;
+    }
+
+    if(*ppvObject)
+    {
+        IUnknown_AddRef((IUnknown*)*ppvObject);
+        return S_OK;
+    }
+
+    FIXME("no interface for %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MimeBody_AddRef(IMimeBody* iface)
+{
+    MimeBody *This = impl_from_IMimeBody(iface);
+    TRACE("(%p)->()\n", iface);
+    return InterlockedIncrement(&This->refs);
+}
+
+static ULONG WINAPI MimeBody_Release(IMimeBody* iface)
+{
+    MimeBody *This = impl_from_IMimeBody(iface);
+    ULONG refs;
+
+    TRACE("(%p)->()\n", iface);
+
+    refs = InterlockedDecrement(&This->refs);
+    if (!refs)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return refs;
+}
+
+static HRESULT WINAPI MimeBody_GetClassID(
+                                 IMimeBody* iface,
+                                 CLSID* pClassID)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+
+static HRESULT WINAPI MimeBody_IsDirty(
+                              IMimeBody* iface)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_Load(
+                           IMimeBody* iface,
+                           LPSTREAM pStm)
+{
+    FIXME("(%p)->(%p): stub\n", iface, pStm);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_Save(
+                           IMimeBody* iface,
+                           LPSTREAM pStm,
+                           BOOL fClearDirty)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetSizeMax(
+                                 IMimeBody* iface,
+                                 ULARGE_INTEGER* pcbSize)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_InitNew(
+                              IMimeBody* iface)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetPropInfo(
+                                  IMimeBody* iface,
+                                  LPCSTR pszName,
+                                  LPMIMEPROPINFO pInfo)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_SetPropInfo(
+                                  IMimeBody* iface,
+                                  LPCSTR pszName,
+                                  LPCMIMEPROPINFO pInfo)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetProp(
+                              IMimeBody* iface,
+                              LPCSTR pszName,
+                              DWORD dwFlags,
+                              LPPROPVARIANT pValue)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_SetProp(
+                              IMimeBody* iface,
+                              LPCSTR pszName,
+                              DWORD dwFlags,
+                              LPCPROPVARIANT pValue)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_AppendProp(
+                                 IMimeBody* iface,
+                                 LPCSTR pszName,
+                                 DWORD dwFlags,
+                                 LPPROPVARIANT pValue)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_DeleteProp(
+                                 IMimeBody* iface,
+                                 LPCSTR pszName)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_CopyProps(
+                                IMimeBody* iface,
+                                ULONG cNames,
+                                LPCSTR* prgszName,
+                                IMimePropertySet* pPropertySet)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_MoveProps(
+                                IMimeBody* iface,
+                                ULONG cNames,
+                                LPCSTR* prgszName,
+                                IMimePropertySet* pPropertySet)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_DeleteExcept(
+                                   IMimeBody* iface,
+                                   ULONG cNames,
+                                   LPCSTR* prgszName)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_QueryProp(
+                                IMimeBody* iface,
+                                LPCSTR pszName,
+                                LPCSTR pszCriteria,
+                                boolean fSubString,
+                                boolean fCaseSensitive)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetCharset(
+                                 IMimeBody* iface,
+                                 LPHCHARSET phCharset)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_SetCharset(
+                                 IMimeBody* iface,
+                                 HCHARSET hCharset,
+                                 CSETAPPLYTYPE applytype)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetParameters(
+                                    IMimeBody* iface,
+                                    LPCSTR pszName,
+                                    ULONG* pcParams,
+                                    LPMIMEPARAMINFO* pprgParam)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_IsContentType(
+                                    IMimeBody* iface,
+                                    LPCSTR pszPriType,
+                                    LPCSTR pszSubType)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_BindToObject(
+                                   IMimeBody* iface,
+                                   REFIID riid,
+                                   void** ppvObject)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_Clone(
+                            IMimeBody* iface,
+                            IMimePropertySet** ppPropertySet)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_SetOption(
+                                IMimeBody* iface,
+                                const TYPEDID oid,
+                                LPCPROPVARIANT pValue)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetOption(
+                                IMimeBody* iface,
+                                const TYPEDID oid,
+                                LPPROPVARIANT pValue)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_EnumProps(
+                                IMimeBody* iface,
+                                DWORD dwFlags,
+                                IMimeEnumProperties** ppEnum)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_IsType(
+                             IMimeBody* iface,
+                             IMSGBODYTYPE bodytype)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_SetDisplayName(
+                                     IMimeBody* iface,
+                                     LPCSTR pszDisplay)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetDisplayName(
+                                     IMimeBody* iface,
+                                     LPSTR* ppszDisplay)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetOffsets(
+                                 IMimeBody* iface,
+                                 LPBODYOFFSETS pOffsets)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetCurrentEncoding(
+                                         IMimeBody* iface,
+                                         ENCODINGTYPE* pietEncoding)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_SetCurrentEncoding(
+                                         IMimeBody* iface,
+                                         ENCODINGTYPE ietEncoding)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetEstimatedSize(
+                                       IMimeBody* iface,
+                                       ENCODINGTYPE ietEncoding,
+                                       ULONG* pcbSize)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetDataHere(
+                                  IMimeBody* iface,
+                                  ENCODINGTYPE ietEncoding,
+                                  IStream* pStream)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetData(
+                              IMimeBody* iface,
+                              ENCODINGTYPE ietEncoding,
+                              IStream** ppStream)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_SetData(
+                              IMimeBody* iface,
+                              ENCODINGTYPE ietEncoding,
+                              LPCSTR pszPriType,
+                              LPCSTR pszSubType,
+                              REFIID riid,
+                              LPVOID pvObject)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_EmptyData(
+                                IMimeBody* iface)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_CopyTo(
+                             IMimeBody* iface,
+                             IMimeBody* pBody)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetTransmitInfo(
+                                      IMimeBody* iface,
+                                      LPTRANSMITINFO pTransmitInfo)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_SaveToFile(
+                                 IMimeBody* iface,
+                                 ENCODINGTYPE ietEncoding,
+                                 LPCSTR pszFilePath)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeBody_GetHandle(
+                                IMimeBody* iface,
+                                LPHBODY phBody)
+{
+    MimeBody *This = impl_from_IMimeBody(iface);
+    TRACE("(%p)->(%p)\n", iface, phBody);
+
+    *phBody = This->handle;
+    return This->handle ? S_OK : MIME_E_NO_DATA;
+}
+
+static IMimeBodyVtbl body_vtbl =
+{
+    MimeBody_QueryInterface,
+    MimeBody_AddRef,
+    MimeBody_Release,
+    MimeBody_GetClassID,
+    MimeBody_IsDirty,
+    MimeBody_Load,
+    MimeBody_Save,
+    MimeBody_GetSizeMax,
+    MimeBody_InitNew,
+    MimeBody_GetPropInfo,
+    MimeBody_SetPropInfo,
+    MimeBody_GetProp,
+    MimeBody_SetProp,
+    MimeBody_AppendProp,
+    MimeBody_DeleteProp,
+    MimeBody_CopyProps,
+    MimeBody_MoveProps,
+    MimeBody_DeleteExcept,
+    MimeBody_QueryProp,
+    MimeBody_GetCharset,
+    MimeBody_SetCharset,
+    MimeBody_GetParameters,
+    MimeBody_IsContentType,
+    MimeBody_BindToObject,
+    MimeBody_Clone,
+    MimeBody_SetOption,
+    MimeBody_GetOption,
+    MimeBody_EnumProps,
+    MimeBody_IsType,
+    MimeBody_SetDisplayName,
+    MimeBody_GetDisplayName,
+    MimeBody_GetOffsets,
+    MimeBody_GetCurrentEncoding,
+    MimeBody_SetCurrentEncoding,
+    MimeBody_GetEstimatedSize,
+    MimeBody_GetDataHere,
+    MimeBody_GetData,
+    MimeBody_SetData,
+    MimeBody_EmptyData,
+    MimeBody_CopyTo,
+    MimeBody_GetTransmitInfo,
+    MimeBody_SaveToFile,
+    MimeBody_GetHandle
+};
+
+HRESULT MimeBody_create(IUnknown *outer, void **obj)
+{
+    MimeBody *This;
+
+    *obj = NULL;
+
+    if(outer) return CLASS_E_NOAGGREGATION;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->lpVtbl = &body_vtbl;
+    This->refs = 1;
+    This->handle = NULL;
+
+    *obj = (IMimeBody *)&This->lpVtbl;
+    return S_OK;
+}
+
 typedef struct MimeMessage
 {
     const IMimeMessageVtbl *lpVtbl;
