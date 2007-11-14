@@ -2291,8 +2291,6 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
         return -1;
     }
 
-    if (ii.hbmColor == 0)
-	ERR("no color!\n");
     ret = GetObjectW (ii.hbmMask, sizeof(BITMAP), (LPVOID)&bmp);
     if (!ret) {
         ERR("couldn't get mask bitmap info\n");
@@ -2317,18 +2315,32 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
     if (hdcImage == 0)
 	ERR("invalid hdcImage!\n");
 
+    imagelist_point_from_index(himl, nIndex, &pt);
+
     SetTextColor(himl->hdcImage, RGB(0,0,0));
     SetBkColor  (himl->hdcImage, RGB(255,255,255));
-    hbmOldSrc = SelectObject (hdcImage, ii.hbmColor);
 
-    imagelist_point_from_index(himl, nIndex, &pt);
-    StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
-                  hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
-
-    if (himl->hbmMask) {
-        SelectObject (hdcImage, ii.hbmMask);
-        StretchBlt   (himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
-                      hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+    if (ii.hbmColor)
+    {
+        hbmOldSrc = SelectObject (hdcImage, ii.hbmColor);
+        StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
+                    hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+        if (himl->hbmMask)
+        {
+            SelectObject (hdcImage, ii.hbmMask);
+            StretchBlt (himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
+                        hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+        }
+    }
+    else
+    {
+        UINT height = bmp.bmHeight / 2;
+        hbmOldSrc = SelectObject (hdcImage, ii.hbmMask);
+        StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
+                    hdcImage, 0, height, bmp.bmWidth, height, SRCCOPY);
+        if (himl->hbmMask)
+            StretchBlt (himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
+                        hdcImage, 0, 0, bmp.bmWidth, height, SRCCOPY);
     }
 
     SelectObject (hdcImage, hbmOldSrc);
