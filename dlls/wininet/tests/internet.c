@@ -285,7 +285,7 @@ static void test_null(void)
 
   sz = 0;
   r = InternetGetCookieW(NULL, NULL, NULL, &sz);
-  ok(GetLastError() == ERROR_INTERNET_UNRECOGNIZED_SCHEME, "wrong error\n");
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error\n");
   ok( r == FALSE, "return wrong\n");
 
   r = InternetGetCookieW(szServer, NULL, NULL, &sz);
@@ -295,25 +295,30 @@ static void test_null(void)
   ok( r == FALSE, "return wrong\n");
 
   sz = 0;
+  r = InternetGetCookieW(szUrlEmpty, szServer, NULL, &sz);
+  ok( r == FALSE, "return wrong\n");
+
+  sz = 0;
   r = InternetGetCookieW(szUrl, szServer, NULL, &sz);
   ok( r == TRUE, "return wrong\n");
-  todo_wine {
-  ok( sz == 30, "sz wrong\n");
-  }
+
+  /* sz is 14 on XP SP2 and beyond, 30 on XP SP1 and before */
+  ok( sz == 14 || sz == 30, "sz wrong, got %u, expected 14 or 30\n", sz);
 
   sz = 0x20;
   memset(buffer, 0, sizeof buffer);
   r = InternetGetCookieW(szUrl, szServer, buffer, &sz);
   ok( r == TRUE, "return wrong\n");
-  todo_wine {
-  ok( sz == lstrlenW(buffer), "sz wrong\n");
-  ok( !lstrcmpW(szExpect, buffer), "cookie data wrong\n");
-  }
+
+  /* sz == lstrlenW(buffer) only in XP SP1 */
+  ok( sz == 1 + lstrlenW(buffer), "sz wrong\n");
+
+  /* before XP SP2, buffer is "server; server" */
+  ok( !lstrcmpW(szExpect, buffer) || !lstrcmpW(szServer, buffer), "cookie data wrong\n");
 
   sz = sizeof(buffer);
   r = InternetQueryOptionA(NULL, INTERNET_OPTION_CONNECTED_STATE, buffer, &sz);
   ok(r == TRUE, "ret %d\n", r);
-
 }
 
 /* ############################### */

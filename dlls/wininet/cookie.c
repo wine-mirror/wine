@@ -258,21 +258,23 @@ static void COOKIE_deleteDomain(cookie_domain *deadDomain)
 BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     LPWSTR lpCookieData, LPDWORD lpdwSize)
 {
+    BOOL ret;
     struct list * cursor;
-    int cnt = 0, domain_count = 0;
-    int cookie_count = 0;
+    unsigned int cnt = 0, domain_count = 0, cookie_count = 0;
     WCHAR hostName[2048], path[2048];
 
     TRACE("(%s, %s, %p, %p)\n", debugstr_w(lpszUrl),debugstr_w(lpszCookieName),
-	  lpCookieData, lpdwSize);
+          lpCookieData, lpdwSize);
 
     if (!lpszUrl)
     {
-        SetLastError(ERROR_INTERNET_UNRECOGNIZED_SCHEME);
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    COOKIE_crackUrlSimple(lpszUrl, hostName, sizeof(hostName)/sizeof(hostName[0]), path, sizeof(path)/sizeof(path[0]));
+    hostName[0] = 0;
+    ret = COOKIE_crackUrlSimple(lpszUrl, hostName, sizeof(hostName)/sizeof(hostName[0]), path, sizeof(path)/sizeof(path[0]));
+    if (!ret || !hostName[0]) return FALSE;
 
     LIST_FOR_EACH(cursor, &domain_list)
     {
@@ -288,22 +290,29 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
                 cookie *thisCookie = LIST_ENTRY(cursor, cookie, entry);
                 if (lpCookieData == NULL) /* return the size of the buffer required to lpdwSize */
                 {
-                    if (cookie_count != 0)
-                        cnt += 2; /* '; ' */
+                    unsigned int len;
+
+                    if (cookie_count) cnt += 2; /* '; ' */
                     cnt += strlenW(thisCookie->lpCookieName);
-                    cnt += 1; /* = */
-                    cnt += strlenW(thisCookie->lpCookieData);
+                    if ((len = strlenW(thisCookie->lpCookieData)))
+                    {
+                        cnt += 1; /* = */
+                        cnt += len;
+                    }
                 }
                 else
                 {
                     static const WCHAR szsc[] = { ';',' ',0 };
-                    static const WCHAR szpseq[] = { '%','s','=','%','s',0 };
-                    if (cookie_count != 0)
-                        cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szsc);
-                    cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szpseq,
-                                    thisCookie->lpCookieName,
-                                    thisCookie->lpCookieData);
-                    TRACE("Cookie: %s=%s\n", debugstr_w(thisCookie->lpCookieName), debugstr_w(thisCookie->lpCookieData));
+                    static const WCHAR szname[] = { '%','s',0 };
+                    static const WCHAR szdata[] = { '=','%','s',0 };
+
+                    if (cookie_count) cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szsc);
+                    cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szname, thisCookie->lpCookieName);
+
+                    if (thisCookie->lpCookieData[0])
+                        cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szdata, thisCookie->lpCookieData);
+
+                    TRACE("Cookie: %s\n", debugstr_w(lpCookieData));
                 }
                 cookie_count++;
             }
@@ -319,15 +328,14 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 
     if (lpCookieData == NULL)
     {
-	cnt += 1; /* NULL */
-	*lpdwSize = cnt*sizeof(WCHAR);
-	TRACE("returning\n");
-	return TRUE;
+        *lpdwSize = (cnt + 1) * sizeof(WCHAR);
+        TRACE("returning %u\n", *lpdwSize);
+        return TRUE;
     }
 
-    *lpdwSize = (cnt + 1)*sizeof(WCHAR);
+    *lpdwSize = cnt + 1;
 
-    TRACE("Returning %i (from %i domains): %s\n", cnt, domain_count,
+    TRACE("Returning %u (from %u domains): %s\n", cnt, domain_count,
            debugstr_w(lpCookieData));
 
     return (cnt ? TRUE : FALSE);
