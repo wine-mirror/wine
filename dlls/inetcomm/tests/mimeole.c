@@ -22,6 +22,9 @@
 
 #include "windows.h"
 #include "ole2.h"
+#include "ocidl.h"
+
+#include "initguid.h"
 #include "mimeole.h"
 
 #include <stdio.h>
@@ -52,10 +55,27 @@ static void test_CreateSecurity(void)
     IMimeSecurity_Release(sec);
 }
 
+static void test_CreateBody(void)
+{
+    HRESULT hr;
+    IMimeBody *body;
+    HBODY handle = (void *)0xdeadbeef;
+
+    hr = CoCreateInstance(&CLSID_IMimeBody, NULL, CLSCTX_INPROC_SERVER, &IID_IMimeBody, (void**)&body);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeBody_GetHandle(body, &handle);
+    ok(hr == MIME_E_NO_DATA, "ret %08x\n", hr);
+    ok(handle == NULL, "handle %p\n", handle);
+
+    IMimeBody_Release(body);
+}
+
 START_TEST(mimeole)
 {
     OleInitialize(NULL);
     test_CreateVirtualStream();
     test_CreateSecurity();
+    test_CreateBody();
     OleUninitialize();
 }
