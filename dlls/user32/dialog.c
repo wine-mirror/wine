@@ -1793,6 +1793,9 @@ static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
         }
     }
 
+    /* Convert path specification to uppercase */
+    if (spec) CharUpperW(spec);
+
     if (idStatic && ((hwnd = GetDlgItem( hDlg, idStatic )) != 0))
     {
         WCHAR temp[MAX_PATH];
