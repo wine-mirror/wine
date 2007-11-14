@@ -218,6 +218,7 @@ static void test_null(void)
   static const WCHAR szServer[] = { 's','e','r','v','e','r',0 };
   static const WCHAR szEmpty[] = { 0 };
   static const WCHAR szUrl[] = { 'h','t','t','p',':','/','/','a','.','b','.','c',0 };
+  static const WCHAR szUrlEmpty[] = { 'h','t','t','p',':','/','/',0 };
   static const WCHAR szExpect[] = { 's','e','r','v','e','r',';',' ','s','e','r','v','e','r',0 };
   WCHAR buffer[0x20];
   BOOL r;
@@ -267,13 +268,14 @@ static void test_null(void)
   r = InternetSetCookieW(szUrl, szServer, szServer);
   ok(r == TRUE, "return wrong\n");
 
-  todo_wine {
   r = InternetSetCookieW(szUrl, NULL, szServer);
   ok(r == TRUE, "return wrong\n");
-  }
 
   r = InternetSetCookieW(szUrl, szServer, szEmpty);
   ok(r == TRUE, "return wrong\n");
+
+  r = InternetSetCookieW(szUrlEmpty, szServer, szServer);
+  ok(r == FALSE, "return wrong\n");
 
   r = InternetSetCookieW(szServer, NULL, szServer);
   todo_wine {
