@@ -223,7 +223,7 @@ extern	void 		WDML_FreeAllHSZ(WDML_INSTANCE* pInstance) DECLSPEC_HIDDEN;
 extern	BOOL		WDML_DecHSZ(WDML_INSTANCE* pInstance, HSZ hsz) DECLSPEC_HIDDEN;
 extern	BOOL		WDML_IncHSZ(WDML_INSTANCE* pInstance, HSZ hsz) DECLSPEC_HIDDEN;
 extern	ATOM		WDML_MakeAtomFromHsz(HSZ hsz) DECLSPEC_HIDDEN;
-extern	HSZ		WDML_MakeHszFromAtom(WDML_INSTANCE* pInstance, ATOM atom) DECLSPEC_HIDDEN;
+extern	HSZ		WDML_MakeHszFromAtom(const WDML_INSTANCE* pInstance, ATOM atom) DECLSPEC_HIDDEN;
 /* client calls these */
 extern	WDML_XACT*	WDML_AllocTransaction(WDML_INSTANCE* pInstance, UINT ddeMsg, UINT wFmt, HSZ hszItem) DECLSPEC_HIDDEN;
 extern	void		WDML_QueueTransaction(WDML_CONV* pConv, WDML_XACT* pXAct) DECLSPEC_HIDDEN;

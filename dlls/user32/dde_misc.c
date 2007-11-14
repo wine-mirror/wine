@@ -864,7 +864,7 @@ ATOM	WDML_MakeAtomFromHsz(HSZ hsz)
  * Generally used while receiving a global atom and transforming it
  * into an HSZ
  */
-HSZ	WDML_MakeHszFromAtom(WDML_INSTANCE* pInstance, ATOM atom)
+HSZ	WDML_MakeHszFromAtom(const WDML_INSTANCE* pInstance, ATOM atom)
 {
     WCHAR nameBuffer[MAX_BUFFER_LEN];
 
