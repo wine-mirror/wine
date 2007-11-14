@@ -833,6 +833,7 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
     psHead.nPages = 3;
     psHead.hwndParent = data->hWnd;
     psHead.u3.phpage = psPage;
+    psHead.dwFlags = PSH_NOAPPLYNOW;
 
     WINECON_DumpConfig("init", refcfg);
 
