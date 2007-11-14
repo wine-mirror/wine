@@ -1038,8 +1038,13 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     ok( node == child, "%p %p\n", node, child );
     IXMLDOMNode_Release( child );
-    IXMLDOMNode_Release( node );
 
+
+    V_VT(&var) = VT_NULL;
+    V_DISPATCH(&var) = (IDispatch*)node;
+    r = IXMLDOMNode_insertBefore( root, node, var, NULL );
+    ok( r == S_OK, "returns %08x\n", r );
+    IXMLDOMNode_Release( node );
 
     r = IXMLDOMNode_QueryInterface( root, &IID_IXMLDOMElement, (LPVOID*)&element );
     ok( r == S_OK, "returns %08x\n", r );
