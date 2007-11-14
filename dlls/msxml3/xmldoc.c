@@ -449,11 +449,10 @@ static HRESULT WINAPI xmldoc_createElement(IXMLDocument *iface, VARIANT vType,
 
     *ppElem = NULL;
 
-    node = xmlNewNode(NULL, empty);
-
     if (V_VT(&vType) != VT_I4)
         return E_INVALIDARG;
 
+    node = xmlNewNode(NULL, empty);
     node->type = type_msxml_to_libxml(V_I4(&vType));
 
     /* FIXME: create xmlNodePtr based on vType and var1 */
