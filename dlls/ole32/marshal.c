@@ -511,15 +511,31 @@ static HRESULT WINAPI ProxyCliSec_QueryBlanket(IClientSecurity *iface,
                                                IUnknown *pProxy,
                                                DWORD *pAuthnSvc,
                                                DWORD *pAuthzSvc,
-                                               OLECHAR **pServerPrincName,
+                                               OLECHAR **ppServerPrincName,
                                                DWORD *pAuthnLevel,
                                                DWORD *pImpLevel,
                                                void **pAuthInfo,
                                                DWORD *pCapabilities)
 {
     FIXME("(%p, %p, %p, %p, %p, %p, %p, %p): stub\n", pProxy, pAuthnSvc,
-          pAuthzSvc, pServerPrincName, pAuthnLevel, pImpLevel, pAuthInfo,
+          pAuthzSvc, ppServerPrincName, pAuthnLevel, pImpLevel, pAuthInfo,
           pCapabilities);
+
+    if (pAuthnSvc)
+        *pAuthnSvc = 0;
+    if (pAuthzSvc)
+        *pAuthzSvc = 0;
+    if (ppServerPrincName)
+        *ppServerPrincName = NULL;
+    if (pAuthnLevel)
+        *pAuthnLevel = RPC_C_AUTHN_LEVEL_DEFAULT;
+    if (pImpLevel)
+        *pImpLevel = RPC_C_IMP_LEVEL_DEFAULT;
+    if (pAuthInfo)
+        *pAuthInfo = NULL;
+    if (pCapabilities)
+        *pCapabilities = EOAC_NONE;
+
     return E_NOTIMPL;
 }
 
