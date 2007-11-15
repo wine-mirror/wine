@@ -410,6 +410,32 @@ D3DXMATRIX* WINAPI D3DXMatrixScaling(D3DXMATRIX *pout, FLOAT sx, FLOAT sy, FLOAT
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixShadow(D3DXMATRIX *pout, CONST D3DXVECTOR4 *plight, CONST D3DXPLANE *pplane)
+{
+    D3DXPLANE Nplane;
+    FLOAT dot;
+
+    D3DXPlaneNormalize(&Nplane, pplane);
+    dot = D3DXPlaneDot(&Nplane, plight);
+    pout->u.m[0][0] = dot - Nplane.a * plight->x;
+    pout->u.m[0][1] = -Nplane.a * plight->y;
+    pout->u.m[0][2] = -Nplane.a * plight->z;
+    pout->u.m[0][3] = -Nplane.a * plight->w;
+    pout->u.m[1][0] = -Nplane.b * plight->x;
+    pout->u.m[1][1] = dot - Nplane.b * plight->y;
+    pout->u.m[1][2] = -Nplane.b * plight->z;
+    pout->u.m[1][3] = -Nplane.b * plight->w;
+    pout->u.m[2][0] = -Nplane.c * plight->x;
+    pout->u.m[2][1] = -Nplane.c * plight->y;
+    pout->u.m[2][2] = dot - Nplane.c * plight->z;
+    pout->u.m[2][3] = -Nplane.c * plight->w;
+    pout->u.m[3][0] = -Nplane.d * plight->x;
+    pout->u.m[3][1] = -Nplane.d * plight->y;
+    pout->u.m[3][2] = -Nplane.d * plight->z;
+    pout->u.m[3][3] = dot - Nplane.d * plight->w;
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixTranslation(D3DXMATRIX *pout, FLOAT x, FLOAT y, FLOAT z)
 {
     D3DXMatrixIdentity(pout);

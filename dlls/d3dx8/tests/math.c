@@ -152,8 +152,10 @@ static void D3DXMatrixTest(void)
 {
     D3DXMATRIX expectedmat, gotmat, mat, mat2, mat3;
     LPD3DXMATRIX funcpointer;
+    D3DXPLANE plane;
     D3DXQUATERNION q;
     D3DXVECTOR3 at, axis, eye;
+    D3DXVECTOR4 light;
     BOOL expected, got;
     FLOAT angle, determinant, expectedfloat, gotfloat;
 
@@ -171,11 +173,15 @@ static void D3DXMatrixTest(void)
     U(mat2).m[0][3] = -4.0f; U(mat2).m[1][3] = -3.0f; U(mat2).m[2][3] = -2.0f;
     U(mat2).m[3][3] = -1.0f;
 
+    plane.a = -3.0f; plane.b = -1.0f; plane.c = 4.0f; plane.d = 7.0f;
+
     q.x = 1.0f; q.y = -4.0f; q.z =7.0f; q.w = -11.0f;
 
     at.x = -2.0f; at.y = 13.0f; at.z = -9.0f;
     axis.x = 1.0f; axis.y = -3.0f; axis.z = 7.0f;
     eye.x = 8.0f; eye.y = -5.0f; eye.z = 5.75f;
+
+    light.x = 9.6f; light.y = 8.5f; light.z = 7.4; light.w = 6.3;
 
     angle = D3DX_PI/3.0f;
 
@@ -394,6 +400,14 @@ static void D3DXMatrixTest(void)
     U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 4.11f; U(expectedmat).m[2][3] = 0.0f;
     U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
     D3DXMatrixScaling(&gotmat,0.69f,0.53f,4.11f);
+    expect_mat(expectedmat,gotmat);
+
+/*____________D3DXMatrixShadow______________*/
+    U(expectedmat).m[0][0] = 12.786773f; U(expectedmat).m[0][1] = 5.000961f; U(expectedmat).m[0][2] = 4.353778f; U(expectedmat).m[0][3] = 3.706595f;
+    U(expectedmat).m[1][0] = 1.882715; U(expectedmat).m[1][1] = 8.805615f; U(expectedmat).m[1][2] = 1.451259f; U(expectedmat).m[1][3] = 1.235532f;
+    U(expectedmat).m[2][0] = -7.530860f; U(expectedmat).m[2][1] = -6.667949f; U(expectedmat).m[2][2] = 1.333590f; U(expectedmat).m[2][3] = -4.942127f;
+    U(expectedmat).m[3][0] = -13.179006f; U(expectedmat).m[3][1] = -11.668910f; U(expectedmat).m[3][2] = -10.158816f; U(expectedmat).m[3][3] = -1.510094f;
+    D3DXMatrixShadow(&gotmat,&light,&plane);
     expect_mat(expectedmat,gotmat);
 
 /*____________D3DXMatrixTranslation______________*/
