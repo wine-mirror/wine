@@ -318,6 +318,7 @@ static void test__lcreat( void )
         ok ( 0 != ret, "FindClose complains (%d)\n", GetLastError ());
         ok (!strcmp (filename, search_results.cFileName),
             "found unexpected name \"%s\"\n", search_results.cFileName);
+        search_results.dwFileAttributes &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
         ok (FILE_ATTRIBUTE_ARCHIVE==search_results.dwFileAttributes,
             "attributes of file \"%s\" are 0x%04x\n", search_results.cFileName,
             search_results.dwFileAttributes);
