@@ -1289,9 +1289,10 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
     ret = ERROR_INVALID_PARAMETER;
   else {
     DWORD numEntries = getNumArpEntries();
-    ULONG size = sizeof(MIB_IPNETTABLE) + (numEntries - 1) *
-     sizeof(MIB_IPNETROW);
+    ULONG size = sizeof(MIB_IPNETTABLE);
 
+    if (numEntries > 1)
+      size += (numEntries - 1) * sizeof(MIB_IPNETROW);
     if (!pIpNetTable || *pdwSize < size) {
       *pdwSize = size;
       ret = ERROR_INSUFFICIENT_BUFFER;
@@ -1301,8 +1302,9 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
 
       ret = getArpTable(&table, GetProcessHeap(), 0);
       if (!ret) {
-        size = sizeof(MIB_IPNETTABLE) + (table->dwNumEntries - 1) *
-         sizeof(MIB_IPNETROW);
+        size = sizeof(MIB_IPNETTABLE);
+        if (table->dwNumEntries > 1)
+          size += (table->dwNumEntries - 1) * sizeof(MIB_IPNETROW);
         if (*pdwSize < size) {
           *pdwSize = size;
           ret = ERROR_INSUFFICIENT_BUFFER;

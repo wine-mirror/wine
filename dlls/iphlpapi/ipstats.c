@@ -1009,9 +1009,12 @@ DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags)
     ret = ERROR_INVALID_PARAMETER;
   else {
     DWORD numEntries = getNumArpEntries();
-    PMIB_IPNETTABLE table = HeapAlloc(heap, flags,
-     sizeof(MIB_IPNETTABLE) + (numEntries - 1) * sizeof(MIB_IPNETROW));
+    DWORD size = sizeof(MIB_IPNETTABLE);
+    PMIB_IPNETTABLE table;
 
+    if (numEntries > 1)
+      size += (numEntries - 1) * sizeof(MIB_IPNETROW);
+    table = HeapAlloc(heap, flags, size);
     if (table) {
       FILE *fp;
 
