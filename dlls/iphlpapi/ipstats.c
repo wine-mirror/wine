@@ -777,9 +777,12 @@ DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
     ret = ERROR_INVALID_PARAMETER;
   else {
     DWORD numRoutes = getNumRoutes();
-    PMIB_IPFORWARDTABLE table = HeapAlloc(heap, flags,
-     sizeof(MIB_IPFORWARDTABLE) + (numRoutes - 1) * sizeof(MIB_IPFORWARDROW));
+    DWORD size = sizeof(MIB_IPFORWARDTABLE);
+    PMIB_IPFORWARDTABLE table;
 
+    if (numRoutes > 1)
+      size += (numRoutes - 1) * sizeof(MIB_IPFORWARDROW);
+    table = HeapAlloc(heap, flags, size);
     if (table) {
 #if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
        int mib[6] = {CTL_NET, PF_ROUTE, 0, PF_INET, NET_RT_DUMP, 0};

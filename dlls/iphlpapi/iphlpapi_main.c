@@ -1222,9 +1222,10 @@ DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSi
     ret = ERROR_INVALID_PARAMETER;
   else {
     DWORD numRoutes = getNumRoutes();
-    ULONG sizeNeeded = sizeof(MIB_IPFORWARDTABLE) + (numRoutes - 1) *
-     sizeof(MIB_IPFORWARDROW);
+    ULONG sizeNeeded = sizeof(MIB_IPFORWARDTABLE);
 
+    if (numRoutes > 1)
+      sizeNeeded += (numRoutes - 1) * sizeof(MIB_IPFORWARDROW);
     if (!pIpForwardTable || *pdwSize < sizeNeeded) {
       *pdwSize = sizeNeeded;
       ret = ERROR_INSUFFICIENT_BUFFER;
@@ -1234,8 +1235,9 @@ DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSi
 
       ret = getRouteTable(&table, GetProcessHeap(), 0);
       if (!ret) {
-        sizeNeeded = sizeof(MIB_IPFORWARDTABLE) + (table->dwNumEntries - 1) *
-         sizeof(MIB_IPFORWARDROW);
+        sizeNeeded = sizeof(MIB_IPFORWARDTABLE);
+        if (table->dwNumEntries > 1)
+          sizeNeeded += (table->dwNumEntries - 1) * sizeof(MIB_IPFORWARDROW);
         if (*pdwSize < sizeNeeded) {
           *pdwSize = sizeNeeded;
           ret = ERROR_INSUFFICIENT_BUFFER;
