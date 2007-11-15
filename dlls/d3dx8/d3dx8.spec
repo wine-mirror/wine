@@ -61,7 +61,7 @@
 @ stub D3DXQuaternionSlerp
 @ stub D3DXQuaternionSquad
 @ stub D3DXQuaternionBaryCentric
-@ stub D3DXPlaneNormalize
+@ stdcall D3DXPlaneNormalize(ptr ptr)
 @ stub D3DXPlaneIntersectLine
 @ stub D3DXPlaneFromPointNormal
 @ stub D3DXPlaneFromPoints

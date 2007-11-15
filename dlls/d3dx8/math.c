@@ -433,6 +433,30 @@ D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm)
     return pout;
 }
 
+/*_________________D3DXPLANE________________*/
+
+D3DXPLANE* WINAPI D3DXPlaneNormalize(D3DXPLANE *pout, CONST D3DXPLANE *pp)
+{
+    FLOAT norm;
+
+    norm = sqrt(pp->a * pp->a + pp->b * pp->b + pp->c * pp->c);
+    if ( norm )
+    {
+     pout->a = pp->a / norm;
+     pout->b = pp->b / norm;
+     pout->c = pp->c / norm;
+     pout->d = pp->d / norm;
+    }
+    else
+    {
+     pout->a = 0.0f;
+     pout->b = 0.0f;
+     pout->c = 0.0f;
+     pout->d = 0.0f;
+    }
+    return pout;
+}
+
 /*_________________D3DXQUATERNION________________*/
 
 D3DXQUATERNION* WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)

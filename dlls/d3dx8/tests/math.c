@@ -50,6 +50,8 @@
        U(gotmat).m[3][0],U(gotmat).m[3][1],U(gotmat).m[3][2],U(gotmat).m[3][3]); \
 }
 
+#define expect_plane(expectedplane,gotplane) ok((fabs(expectedplane.a-gotplane.a)<admitted_error)&&(fabs(expectedplane.b-gotplane.b)<admitted_error)&&(fabs(expectedplane.c-gotplane.c)<admitted_error)&&(fabs(expectedplane.d-gotplane.d)<admitted_error),"Expected Plane= (%f, %f, %f, %f)\n , Got Plane= (%f, %f, %f, %f)\n", expectedplane.a, expectedplane.b, expectedplane.c, expectedplane.d, gotplane.a, gotplane.b, gotplane.c, gotplane.d);
+
 #define expect_vec(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error),"Expected Vector= (%f, %f)\n , Got Vector= (%f, %f)\n", expectedvec.x, expectedvec.y, gotvec.x, gotvec.y);
 
 #define expect_vec3(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error)&&(fabs(expectedvec.z-gotvec.z)<admitted_error),"Expected Vector= (%f, %f, %f)\n , Got Vector= (%f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, gotvec.x, gotvec.y, gotvec.z);
@@ -413,7 +415,7 @@ static void D3DXMatrixTest(void)
 
 static void D3DXPlaneTest(void)
 {
-    D3DXPLANE plane;
+    D3DXPLANE expectedplane, gotplane, nulplane, plane;
     D3DXVECTOR4 vec;
     FLOAT expected, got;
 
@@ -452,6 +454,19 @@ static void D3DXPlaneTest(void)
     expected = 0.0f;
     got = D3DXPlaneDotNormal(NULL,NULL),
     ok( expected == got, "Expected : %f, Got : %f\n",expected, got);
+
+/*_______________D3DXPlaneDotNormalize______________*/
+    expectedplane.a = -3.0f/sqrt(26.0f); expectedplane.b = -1.0f/sqrt(26.0f); expectedplane.c = 4.0f/sqrt(26.0f); expectedplane.d = 7.0/sqrt(26.0f);
+    D3DXPlaneNormalize(&gotplane, &plane);
+    expect_plane(expectedplane, gotplane);
+    nulplane.a = 0.0; nulplane.b = 0.0f, nulplane.c = 0.0f; nulplane.d = 0.0f;
+    expectedplane.a = 0.0f; expectedplane.b = 0.0f; expectedplane.c = 0.0f; expectedplane.d = 0.0f;
+    D3DXPlaneNormalize(&gotplane, &nulplane);
+    expect_plane(expectedplane, gotplane);
+    nulplane.a = 0.0; nulplane.b = 0.0f, nulplane.c = 0.0f; nulplane.d = 4.3f;
+    expectedplane.a = 0.0f; expectedplane.b = 0.0f; expectedplane.c = 0.0f; expectedplane.d = 0.0f;
+    D3DXPlaneNormalize(&gotplane, &nulplane);
+    expect_plane(expectedplane, gotplane);
 }
 
 static void D3X8QuaternionTest(void)
