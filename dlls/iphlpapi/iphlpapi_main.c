@@ -1579,8 +1579,10 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
     ret = ERROR_INVALID_PARAMETER;
   else {
     DWORD numEntries = getNumTcpEntries();
-    DWORD size = sizeof(MIB_TCPTABLE) + (numEntries - 1) * sizeof(MIB_TCPROW);
+    DWORD size = sizeof(MIB_TCPTABLE);
 
+    if (numEntries > 1)
+      size += (numEntries - 1) * sizeof(MIB_TCPROW);
     if (!pTcpTable || *pdwSize < size) {
       *pdwSize = size;
       ret = ERROR_INSUFFICIENT_BUFFER;
@@ -1588,8 +1590,9 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
     else {
       ret = getTcpTable(&pTcpTable, numEntries, 0, 0);
       if (!ret) {
-        size = sizeof(MIB_TCPTABLE) + (pTcpTable->dwNumEntries - 1) *
-         sizeof(MIB_TCPROW);
+        size = sizeof(MIB_TCPTABLE);
+        if (numEntries > 1)
+          size += (numEntries - 1) * sizeof(MIB_TCPROW);
         *pdwSize = size;
 
           if (bOrder)

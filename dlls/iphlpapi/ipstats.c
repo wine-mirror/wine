@@ -1212,9 +1212,11 @@ DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, DWORD maxEntries, HANDLE heap,
 
    if (!*ppTcpTable)
    {
-      *ppTcpTable = HeapAlloc (heap, flags,
-                               sizeof (MIB_TCPTABLE) +
-                               (numEntries - 1) * sizeof (MIB_TCPROW));
+      DWORD size = sizeof(MIB_TCPTABLE);
+
+      if (numEntries > 1)
+         size += (numEntries - 1) * sizeof (MIB_TCPROW);
+      *ppTcpTable = HeapAlloc (heap, flags, size);
       if (!*ppTcpTable)
       {
          ERR ("Out of memory!\n");
