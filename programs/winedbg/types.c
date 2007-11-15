@@ -259,7 +259,6 @@ BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, long in
     TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
     WCHAR*                      ptr;
     char                        tmp[256];
-    int                         i;
     struct dbg_type             type;
 
     if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag) ||
@@ -274,6 +273,7 @@ BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, long in
             fcp->Count = min(count, 256);
             if (types_get_info(&lvalue->type, TI_FINDCHILDREN, fcp))
             {
+                unsigned i;
                 type.module = lvalue->type.module;
                 for (i = 0; i < min(fcp->Count, count); i++)
                 {
