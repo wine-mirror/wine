@@ -333,6 +333,7 @@ static void test_domdoc( void )
     IXMLDOMParseError *error;
     IXMLDOMElement *element = NULL;
     IXMLDOMNode *node;
+    IXMLDOMText *nodetext = NULL;
     VARIANT_BOOL b;
     VARIANT var;
     BSTR str;
@@ -487,6 +488,15 @@ static void test_domdoc( void )
     ok( r == S_FALSE, "returns %08x\n", r );
     ok( code == 0, "code %ld\n", code );
     IXMLDOMParseError_Release( error );
+
+     /* test createTextNode */
+    str = SysAllocString( szOpen );
+    r = IXMLDOMDocument_createTextNode(doc, str, NULL);
+    ok( r == E_INVALIDARG, "returns %08x\n", r );
+    r = IXMLDOMDocument_createTextNode(doc, str, &nodetext);
+    ok( r == S_OK, "returns %08x\n", r );
+    IXMLDOMText_Release( nodetext );
+    SysFreeString( str );
 
     r = IXMLDOMDocument_Release( doc );
     ok( r == 0, "document ref count incorrect\n");
