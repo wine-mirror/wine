@@ -31,6 +31,38 @@ static const char szContainer[] = "winetest";
 static const unsigned char pbData[] = "Wine rocks totally!";
 static const char szProvider[] = MS_ENHANCED_PROV_A;
 
+typedef struct _ctdatatype {
+       unsigned char origstr[32];
+       unsigned char decstr[32];
+       int strlen;
+       int enclen;
+       int buflen;
+} cryptdata;
+
+static const cryptdata cTestData[4] = {
+       {"abcdefghijkl",
+       {'a','b','c','d','e','f','g','h',0x2,0x2,'k','l',0},
+       12,8,16},
+       {"abcdefghij",
+       {'a','b','c','d','e','f','g','h',0x2,0x2,0},
+       10,8,16},
+       {"abcdefgh",
+       {'a','b','c','d','e','f','g','h',0},
+       8,8,16},
+       {"abcdefghijkl",
+       {'a','b','c','d','e','f','g','h','i','j','k','l',0},
+       12,12,16}
+};
+
+static void printBytes(const char *heading, BYTE *pb, size_t cb)
+{
+    size_t i;
+    printf("%s: ",heading);
+    for(i=0;i<cb;i++)
+        printf("0x%02x,",pb[i]);
+    putchar('\n');
+}
+
 static BOOL (WINAPI *pCryptDuplicateHash) (HCRYPTHASH, DWORD*, DWORD, HCRYPTHASH*);
 
 /*
@@ -424,6 +456,26 @@ static void test_3des112(void)
     result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
     ok(result, "%08x\n", GetLastError());
 
+    for (i=0; i<4; i++)
+    {
+      memcpy(pbData,cTestData[i].origstr,cTestData[i].strlen);
+
+      dwLen = cTestData[i].enclen;
+      result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
+      ok(result, "%08x\n", GetLastError());
+      ok(dwLen==cTestData[i].buflen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].buflen);
+
+      result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+      ok(result, "%08x\n", GetLastError());
+      ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
+      ok(memcmp(pbData,cTestData[i].decstr,cTestData[1].enclen)==0,"decryption incorrect %d\n",i);
+      if((dwLen != cTestData[i].enclen) ||
+         memcmp(pbData,cTestData[i].decstr,cTestData[i].enclen))
+      {
+          printBytes("expected",cTestData[i].decstr,cTestData[i].strlen);
+          printBytes("got",pbData,dwLen);
+      }
+    }
     result = CryptDestroyKey(hKey);
     ok(result, "%08x\n", GetLastError());
 }
@@ -460,6 +512,27 @@ static void test_des(void)
     result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
     ok(result, "%08x\n", GetLastError());
 
+    for (i=0; i<4; i++)
+    {
+      memcpy(pbData,cTestData[i].origstr,cTestData[i].strlen);
+
+      dwLen = cTestData[i].enclen;
+      result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
+      ok(result, "%08x\n", GetLastError());
+      ok(dwLen==cTestData[i].buflen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].buflen);
+
+      result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+      ok(result, "%08x\n", GetLastError());
+      ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
+      ok(memcmp(pbData,cTestData[i].decstr,cTestData[i].enclen)==0,"decryption incorrect %d\n",i);
+      if((dwLen != cTestData[i].enclen) ||
+         memcmp(pbData,cTestData[i].decstr,cTestData[i].enclen))
+      {
+          printBytes("expected",cTestData[i].decstr,cTestData[i].strlen);
+          printBytes("got",pbData,dwLen);
+      }
+    }
+
     result = CryptDestroyKey(hKey);
     ok(result, "%08x\n", GetLastError());
 }
@@ -489,6 +562,26 @@ static void test_3des(void)
     result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
     ok(result, "%08x\n", GetLastError());
 
+    for (i=0; i<4; i++)
+    {
+      memcpy(pbData,cTestData[i].origstr,cTestData[i].strlen);
+
+      dwLen = cTestData[i].enclen;
+      result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
+      ok(result, "%08x\n", GetLastError());
+      ok(dwLen==cTestData[i].buflen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].buflen);
+
+      result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+      ok(result, "%08x\n", GetLastError());
+      ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
+      ok(memcmp(pbData,cTestData[i].decstr,cTestData[i].enclen)==0,"decryption incorrect %d\n",i);
+      if((dwLen != cTestData[i].enclen) ||
+         memcmp(pbData,cTestData[i].decstr,cTestData[i].enclen))
+      {
+          printBytes("expected",cTestData[i].decstr,cTestData[i].strlen);
+          printBytes("got",pbData,dwLen);
+      }
+    }
     result = CryptDestroyKey(hKey);
     ok(result, "%08x\n", GetLastError());
 }
