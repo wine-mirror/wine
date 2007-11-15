@@ -109,8 +109,6 @@ static HRESULT WINAPI xmlcf_CreateInstance(
         return r;
 
     r = IUnknown_QueryInterface( punk, riid, ppobj );
-    if (FAILED(r))
-        return r;
     IUnknown_Release( punk );
     return r;
 }
