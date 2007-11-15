@@ -375,6 +375,7 @@
 @ cdecl _mbsnbcnt(ptr long)
 @ stub _mbsnbcoll #(str str long)
 @ cdecl _mbsnbcpy(ptr str long)
+@ cdecl _mbsnbcpy_s(ptr long str long)
 @ cdecl _mbsnbicmp(str str long)
 @ stub _mbsnbicoll #(str str long)
 @ cdecl _mbsnbset(str long long)

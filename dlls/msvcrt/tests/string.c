@@ -49,6 +49,7 @@ static void* (*pmemcpy)(void *, const void *, size_t n);
 static int* (*pmemcmp)(void *, const void *, size_t n);
 static int (*pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (*pstrcat_s)(char *dst, size_t len, const char *src);
+static int (*p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsigned char * src, size_t count);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -514,6 +515,53 @@ static void test_strcat_s(void)
     ok(ret == EINVAL, "strcat_s: Writing to a NULL string returned %d, expected EINVAL\n", ret);
 }
 
+static void test__mbsnbcpy_s(void)
+{
+    unsigned char dest[8];
+    const unsigned char big[] = "atoolongstringforthislittledestination";
+    const unsigned char small[] = "small";
+    int ret;
+
+    if(!p_mbsnbcpy_s)
+    {
+        skip("_mbsnbcpy_s not found\n");
+        return;
+    }
+
+    memset(dest, 'X', sizeof(dest));
+    ret = p_mbsnbcpy_s(dest, sizeof(dest), small, sizeof(small));
+    ok(ret == 0, "_mbsnbcpy_s: Copying a string into a big enough destination returned %d, expected 0\n", ret);
+    ok(dest[0] == 's' && dest[1] == 'm' && dest[2] == 'a' && dest[3] == 'l' &&
+       dest[4] == 'l' && dest[5] == '\0'&& dest[6] == 'X' && dest[7] == 'X',
+       "Unexpected return data from _mbsnbcpy_s: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+       dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+
+    /* WTF? */
+    memset(dest, 'X', sizeof(dest));
+    ret = p_mbsnbcpy_s(dest, sizeof(dest) - 2, big, sizeof(small));
+    ok(ret == ERANGE, "_mbsnbcpy_s: Copying a too long string returned %d, expected ERANGE\n", ret);
+    ok(dest[0] == '\0'&& dest[1] == 't' && dest[2] == 'o' && dest[3] == 'o' &&
+       dest[4] == 'l' && dest[5] == 'o' && dest[6] == 'X' && dest[7] == 'X',
+       "Unexpected return data from _mbsnbcpy_s: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+       dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+
+    memset(dest, 'X', sizeof(dest));
+    ret = p_mbsnbcpy_s(dest, sizeof(dest) - 2, big, 4);
+    ok(ret == 0, "_mbsnbcpy_s: Copying a too long string with a count cap returned %d, expected 0\n", ret);
+    ok(dest[0] == 'a' && dest[1] == 't' && dest[2] == 'o' && dest[3] == 'o' &&
+       dest[4] == '\0'&& dest[5] == 'X' && dest[6] == 'X' && dest[7] == 'X',
+       "Unexpected return data from _mbsnbcpy_s: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+       dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+
+    memset(dest, 'X', sizeof(dest));
+    ret = p_mbsnbcpy_s(dest, sizeof(dest) - 2, small, sizeof(small) + 10);
+    ok(ret == 0, "_mbsnbcpy_s: Copying more data than the source string len returned %d, expected 0\n", ret);
+    ok(dest[0] == 's' && dest[1] == 'm' && dest[2] == 'a' && dest[3] == 'l' &&
+       dest[4] == 'l' && dest[5] == '\0'&& dest[6] == 'X' && dest[7] == 'X',
+       "Unexpected return data from _mbsnbcpy_s: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+       dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -528,6 +576,7 @@ START_TEST(string)
     SET(pmemcmp,"memcmp");
     SET(pstrcpy_s,"strcpy_s");
     SET(pstrcat_s,"strcat_s");
+    SET(p_mbsnbcpy_s,"_mbsnbcpy_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -549,4 +598,5 @@ START_TEST(string)
     test_strdup();
     test_strcpy_s();
     test_strcat_s();
+    test__mbsnbcpy_s();
 }
