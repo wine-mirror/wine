@@ -746,8 +746,11 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
     ret = enumIPAddresses(&numAddresses, &ifc);
     if (!ret)
     {
-      *ppIpAddrTable = HeapAlloc(heap, flags, sizeof(MIB_IPADDRTABLE) +
-       (numAddresses - 1) * sizeof(MIB_IPADDRROW));
+      DWORD size = sizeof(MIB_IPADDRTABLE);
+
+      if (numAddresses > 1)
+        size += (numAddresses - 1) * sizeof(MIB_IPADDRROW);
+      *ppIpAddrTable = HeapAlloc(heap, flags, size);
       if (*ppIpAddrTable) {
         DWORD i = 0, bcast;
         caddr_t ifPtr;

@@ -1172,17 +1172,17 @@ DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL 
     ret = getIPAddrTable(&table, GetProcessHeap(), 0);
     if (ret == NO_ERROR)
     {
-      ULONG size = sizeof(MIB_IPADDRTABLE) + (table->dwNumEntries - 1) *
-       sizeof(MIB_IPADDRROW);
+      ULONG size = sizeof(MIB_IPADDRTABLE);
 
+      if (table->dwNumEntries > 1)
+        size += (table->dwNumEntries - 1) * sizeof(MIB_IPADDRROW);
       if (!pIpAddrTable || *pdwSize < size) {
         *pdwSize = size;
         ret = ERROR_INSUFFICIENT_BUFFER;
       }
       else {
         *pdwSize = size;
-        memcpy(pIpAddrTable, table, sizeof(MIB_IPADDRTABLE) +
-         (table->dwNumEntries - 1) * sizeof(MIB_IPADDRROW));
+        memcpy(pIpAddrTable, table, size);
         if (bOrder)
           qsort(pIpAddrTable->table, pIpAddrTable->dwNumEntries,
            sizeof(MIB_IPADDRROW), IpAddrTableSorter);
