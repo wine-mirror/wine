@@ -1428,7 +1428,14 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         else
             SetLastError( RtlNtStatusToDosError(status) );
     }
-    else SetLastError(0);
+    else
+    {
+        if ((creation == CREATE_ALWAYS && io.Information == FILE_OVERWRITTEN) ||
+            (creation == OPEN_ALWAYS && io.Information == FILE_OPENED))
+            SetLastError( ERROR_ALREADY_EXISTS );
+        else
+            SetLastError( 0 );
+    }
     RtlFreeUnicodeString( &nameW );
 
  done:
