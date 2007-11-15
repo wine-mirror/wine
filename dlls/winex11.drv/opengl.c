@@ -1532,7 +1532,7 @@ BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
      * for more than 7 years and this function has remained a stub ever since then.
      */
     if(!src->ctx || !dst->ctx) {
-        FIXME("No source or destination context available! This could indicate a Wine bug.");
+        FIXME("No source or destination context available! This could indicate a Wine bug.\n");
         return FALSE;
     }
     pglXCopyContext(gdi_display, src->ctx, dst->ctx, mask);
