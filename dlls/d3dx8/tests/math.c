@@ -416,6 +416,8 @@ static void D3DXMatrixTest(void)
 static void D3DXPlaneTest(void)
 {
     D3DXPLANE expectedplane, gotplane, nulplane, plane;
+    D3DXVECTOR3 expectedvec, gotvec, vec1, vec2;
+    LPD3DXVECTOR3 funcpointer;
     D3DXVECTOR4 vec;
     FLOAT expected, got;
 
@@ -455,7 +457,20 @@ static void D3DXPlaneTest(void)
     got = D3DXPlaneDotNormal(NULL,NULL),
     ok( expected == got, "Expected : %f, Got : %f\n",expected, got);
 
-/*_______________D3DXPlaneDotNormalize______________*/
+/*_______________D3DXPlaneIntersectLine___________*/
+    vec1.x = 9.0f; vec1.y = 6.0f; vec1.z = 3.0f;
+    vec2.x = 2.0f; vec2.y = 5.0f; vec2.z = 8.0f;
+    expectedvec.x = 20.0f/3.0f; expectedvec.y = 17.0f/3.0f; expectedvec.z = 14.0f/3.0f;
+    D3DXPlaneIntersectLine(&gotvec,&plane,&vec1,&vec2);
+    expect_vec3(expectedvec, gotvec);
+    /* Test a parallele line */
+    vec1.x = 11.0f; vec1.y = 13.0f; vec1.z = 15.0f;
+    vec2.x = 17.0f; vec2.y = 31.0f; vec2.z = 24.0f;
+    expectedvec.x = 20.0f/3.0f; expectedvec.y = 17.0f/3.0f; expectedvec.z = 14.0f/3.0f;
+    funcpointer = D3DXPlaneIntersectLine(&gotvec,&plane,&vec1,&vec2);
+    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXPlaneNormalize______________*/
     expectedplane.a = -3.0f/sqrt(26.0f); expectedplane.b = -1.0f/sqrt(26.0f); expectedplane.c = 4.0f/sqrt(26.0f); expectedplane.d = 7.0/sqrt(26.0f);
     D3DXPlaneNormalize(&gotplane, &plane);
     expect_plane(expectedplane, gotplane);

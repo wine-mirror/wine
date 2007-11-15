@@ -62,7 +62,7 @@
 @ stub D3DXQuaternionSquad
 @ stub D3DXQuaternionBaryCentric
 @ stdcall D3DXPlaneNormalize(ptr ptr)
-@ stub D3DXPlaneIntersectLine
+@ stdcall D3DXPlaneIntersectLine(ptr ptr ptr ptr)
 @ stub D3DXPlaneFromPointNormal
 @ stub D3DXPlaneFromPoints
 @ stub D3DXPlaneTransform
