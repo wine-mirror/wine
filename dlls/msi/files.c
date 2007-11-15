@@ -637,7 +637,8 @@ static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *m
         }
     }
 
-    if (mi->cabinet && GetFileAttributesW(mi->cabinet) == INVALID_FILE_ATTRIBUTES)
+    if (file->IsCompressed && mi->cabinet &&
+        GetFileAttributesW(mi->cabinet) == INVALID_FILE_ATTRIBUTES)
     {
         ERR("Cabinet not found: %s\n", debugstr_w(mi->cabinet));
         return ERROR_INSTALL_FAILURE;

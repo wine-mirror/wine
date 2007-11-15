@@ -3536,8 +3536,8 @@ static void test_missingcab(void)
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     }
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(!delete_pf("msitest\\gaius", TRUE), "File installed\n");
@@ -3552,8 +3552,8 @@ static void test_missingcab(void)
     {
         ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
         ok(!delete_pf("msitest\\maximus", TRUE), "File installed\n");
+        ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
     }
-    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest\\caesar", TRUE), "File removed\n");
     ok(delete_pf("msitest\\gaius", TRUE), "File removed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
