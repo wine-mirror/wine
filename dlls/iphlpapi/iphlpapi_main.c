@@ -1597,8 +1597,6 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
                    sizeof(MIB_TCPROW), TcpTableSorter);
           ret = NO_ERROR;
       }
-      else
-        ret = ERROR_OUTOFMEMORY;
     }
   }
   TRACE("returning %d\n", ret);
