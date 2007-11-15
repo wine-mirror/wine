@@ -325,6 +325,27 @@ D3DXMATRIX* WINAPI D3DXMatrixPerspectiveRH(D3DXMATRIX *pout, FLOAT w, FLOAT h, F
     return pout;
 }
 
+D3DXMATRIX* WINAPI D3DXMatrixReflect(D3DXMATRIX *pout, CONST D3DXPLANE *pplane)
+{
+    D3DXPLANE Nplane;
+
+    D3DXPlaneNormalize(&Nplane, pplane);
+    D3DXMatrixIdentity(pout);
+    pout->u.m[0][0] = 1.0f - 2.0f * Nplane.a * Nplane.a;
+    pout->u.m[0][1] = -2.0f * Nplane.a * Nplane.b;
+    pout->u.m[0][2] = -2.0f * Nplane.a * Nplane.c;
+    pout->u.m[1][0] = -2.0f * Nplane.a * Nplane.b;
+    pout->u.m[1][1] = 1.0f - 2.0f * Nplane.b * Nplane.b;
+    pout->u.m[1][2] = -2.0f * Nplane.b * Nplane.c;
+    pout->u.m[2][0] = -2.0f * Nplane.c * Nplane.a;
+    pout->u.m[2][1] = -2.0f * Nplane.c * Nplane.b;
+    pout->u.m[2][2] = 1.0f - 2.0f * Nplane.c * Nplane.c;
+    pout->u.m[3][0] = -2.0f * Nplane.d * Nplane.a;
+    pout->u.m[3][1] = -2.0f * Nplane.d * Nplane.b;
+    pout->u.m[3][2] = -2.0f * Nplane.d * Nplane.c;
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixRotationAxis(D3DXMATRIX *pout, CONST D3DXVECTOR3 *pv, FLOAT angle)
 {
     D3DXVECTOR3 v;

@@ -346,6 +346,13 @@ static void D3DXMatrixTest(void)
     D3DXMatrixPerspectiveRH(&gotmat, 0.2f, 0.75f, -2.4f, 8.7f);
     expect_mat(expectedmat,gotmat);
 
+/*____________D3DXMatrixReflect______________*/
+    U(expectedmat).m[0][0] = 0.307692f; U(expectedmat).m[0][1] = -0.230769f; U(expectedmat).m[0][2] = 0.923077f; U(expectedmat).m[0][3] = 0.0f;
+    U(expectedmat).m[1][0] = -0.230769; U(expectedmat).m[1][1] = 0.923077f; U(expectedmat).m[1][2] = 0.307693f; U(expectedmat).m[1][3] = 0.0f;
+    U(expectedmat).m[2][0] = 0.923077f; U(expectedmat).m[2][1] = 0.307693f; U(expectedmat).m[2][2] = -0.230769f; U(expectedmat).m[2][3] = 0.0f;
+    U(expectedmat).m[3][0] = 1.615385f; U(expectedmat).m[3][1] = 0.538462f; U(expectedmat).m[3][2] = -2.153846f; U(expectedmat).m[3][3] = 1.0f;
+    D3DXMatrixReflect(&gotmat,&plane);
+    expect_mat(expectedmat,gotmat);
 /*____________D3DXMatrixRotationAxis_____*/
     U(expectedmat).m[0][0] = 0.508475f; U(expectedmat).m[0][1] = 0.763805f; U(expectedmat).m[0][2] = 0.397563f; U(expectedmat).m[0][3] = 0.0f;
     U(expectedmat).m[1][0] = -0.814652f; U(expectedmat).m[1][1] = 0.576271f; U(expectedmat).m[1][2] = -0.065219f; U(expectedmat).m[1][3] = 0.0f;
