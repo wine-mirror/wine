@@ -57,7 +57,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         checkGLcall("glActiveTextureARB");
     }
     IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
-    IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
+    IWineD3DSurface_BindTexture((IWineD3DSurface *) This);
 
     if (This->resource.format == WINED3DFMT_DXT1 ||
             This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
@@ -2186,6 +2186,30 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
     return WINED3D_OK;
 }
 
+static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface) {
+    /* TODO: check for locks */
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DBaseTexture *baseTexture = NULL;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+    TRACE("(%p)Checking to see if the container is a base texture\n", This);
+    if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {
+        TRACE("Passing to container\n");
+        IWineD3DBaseTexture_BindTexture(baseTexture);
+        IWineD3DBaseTexture_Release(baseTexture);
+    } else {
+        TRACE("(%p) : Binding surface\n", This);
+
+        if(!device->isInDraw) {
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        }
+        ENTER_GL();
+        glBindTexture(This->glDescription.target, This->glDescription.textureName);
+        LEAVE_GL();
+    }
+    return;
+}
+
 #include <errno.h>
 #include <stdio.h>
 HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const char* filename) {
@@ -3845,6 +3869,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     /* Internal use: */
     IWineD3DSurfaceImpl_AddDirtyRect,
     IWineD3DSurfaceImpl_LoadTexture,
+    IWineD3DSurfaceImpl_BindTexture,
     IWineD3DSurfaceImpl_SaveSnapshot,
     IWineD3DBaseSurfaceImpl_SetContainer,
     IWineD3DSurfaceImpl_SetGlTextureDesc,
