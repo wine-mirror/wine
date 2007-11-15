@@ -596,9 +596,7 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
 
 static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *mi)
 {
-    UINT rc = ERROR_SUCCESS, type;
-    BOOL found = TRUE;
-    LPWSTR source_dir;
+    UINT rc = ERROR_SUCCESS;
 
     /* media info for continuous cabinet is already loaded */
     if (mi->is_continuous)
@@ -611,41 +609,41 @@ static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *m
         return ERROR_FUNCTION_FAILED;
     }
 
-    if (mi->volume_label && mi->disk_id > 1)
+    /* package should be downloaded */
+    if (file->IsCompressed &&
+        GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES &&
+        package->BaseURL && UrlIsW(package->BaseURL, URLIS_URL))
     {
-        source_dir = msi_dup_property(package, cszSourceDir);
-        PathStripToRootW(source_dir);
-        type = GetDriveTypeW(source_dir);
-
-        if (type == DRIVE_CDROM || type == DRIVE_REMOVABLE)
-            found = source_matches_volume(mi, source_dir);
-
-        if (!found)
-            found = GetFileAttributesW(mi->cabinet) != INVALID_FILE_ATTRIBUTES;
-
-        msi_free(source_dir);
+        return download_remote_cabinet(package, mi);
     }
 
-    if (file->IsCompressed &&
-        GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
+    /* check volume matches, change media if not */
+    if (mi->volume_label && mi->disk_id > 1)
     {
-        found = FALSE;
+        LPWSTR source = msi_dup_property(package, cszSourceDir);
+        BOOL matches;
+        UINT type;
 
-        if (package->BaseURL && UrlIsW(package->BaseURL, URLIS_URL))
+        PathStripToRootW(source);
+        type = GetDriveTypeW(source);
+        matches = source_matches_volume(mi, source);
+        msi_free(source);
+
+        if ((type == DRIVE_CDROM || type == DRIVE_REMOVABLE) && !matches)
         {
-            rc = download_remote_cabinet(package, mi);
-            if (rc == ERROR_SUCCESS &&
-                GetFileAttributesW(mi->source) != INVALID_FILE_ATTRIBUTES)
-            {
-                found = TRUE;
-            }
+            rc = msi_change_media(package, mi);
+            if (rc != ERROR_SUCCESS)
+                return rc;
         }
     }
 
-    if (!found)
-        rc = msi_change_media(package, mi);
+    if (mi->cabinet && GetFileAttributesW(mi->cabinet) == INVALID_FILE_ATTRIBUTES)
+    {
+        ERR("Cabinet not found: %s\n", debugstr_w(mi->cabinet));
+        return ERROR_INSTALL_FAILURE;
+    }
 
-    return rc;
+    return ERROR_SUCCESS;
 }
 
 static UINT get_file_target(MSIPACKAGE *package, LPCWSTR file_key, 
