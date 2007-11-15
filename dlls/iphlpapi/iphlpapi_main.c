@@ -853,7 +853,7 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
     return ERROR_INVALID_PARAMETER;
 
   ret = AllocateAndGetIpForwardTableFromStack(&table, FALSE, GetProcessHeap(), 0);
-  if (table && !ret) {
+  if (!ret) {
     DWORD ndx, matchedBits, matchedNdx = table->dwNumEntries;
 
     for (ndx = 0, matchedBits = 0; ndx < table->dwNumEntries; ndx++) {
@@ -869,6 +869,11 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
           matchedBits = numShifts;
           matchedNdx = ndx;
         }
+        else if (!matchedBits && table->table[ndx].dwForwardType ==
+         MIB_IPROUTE_TYPE_INDIRECT) {
+          /* default to a default gateway */
+          matchedNdx = ndx;
+        }
       }
     }
     if (matchedNdx < table->dwNumEntries) {
@@ -881,8 +886,6 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
     }
     HeapFree(GetProcessHeap(), 0, table);
   }
-  else if (!ret)
-    ret = ERROR_OUTOFMEMORY;
   TRACE("returning %d\n", ret);
   return ret;
 }
