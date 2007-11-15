@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <mbctype.h>
 #include <locale.h>
+#include <errno.h>
 
 static char *buf_to_string(const unsigned char *bin, int len, int nr)
 {
@@ -46,6 +47,7 @@ static char *buf_to_string(const unsigned char *bin, int len, int nr)
 
 static void* (*pmemcpy)(void *, const void *, size_t n);
 static int* (*pmemcmp)(void *, const void *, size_t n);
+static int (*pstrcpy_s)(char *dst, size_t len, const char *src);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -393,6 +395,61 @@ static void test_strdup(void)
    free( str );
 }
 
+static void test_strcpy_s(void)
+{
+    char dest[8];
+    const char *small = "small";
+    const char *big = "atoolongstringforthislittledestination";
+    int ret;
+
+    if(!pstrcpy_s)
+    {
+        skip("strcpy_s not found\n");
+        return;
+    }
+
+    memset(dest, 'X', sizeof(dest));
+    ret = pstrcpy_s(dest, sizeof(dest), small);
+    ok(ret == 0, "Copying a string into a big enough destination returned %d, expected 0\n", ret);
+    ok(dest[0] == 's' && dest[1] == 'm' && dest[2] == 'a' && dest[3] == 'l' &&
+       dest[4] == 'l' && dest[5] == '\0'&& dest[6] == 'X' && dest[7] == 'X',
+       "Unexpected return data from strcpy_s: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+       dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+
+    memset(dest, 'X', sizeof(dest));
+    ret = pstrcpy_s(dest, 0, big);
+    ok(ret == EINVAL, "Copying into a destination of size 0 returned %d, expected EINVAL\n", ret);
+    ok(dest[0] == 'X' && dest[1] == 'X' && dest[2] == 'X' && dest[3] == 'X' &&
+       dest[4] == 'X' && dest[5] == 'X' && dest[6] == 'X' && dest[7] == 'X',
+       "Unexpected return data from strcpy_s: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+       dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+    ret = pstrcpy_s(dest, 0, NULL);
+    ok(ret == EINVAL, "Copying into a destination of size 0 returned %d, expected EINVAL\n", ret);
+    ok(dest[0] == 'X' && dest[1] == 'X' && dest[2] == 'X' && dest[3] == 'X' &&
+       dest[4] == 'X' && dest[5] == 'X' && dest[6] == 'X' && dest[7] == 'X',
+       "Unexpected return data from strcpy_s: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+       dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+
+    memset(dest, 'X', sizeof(dest));
+    ret = pstrcpy_s(dest, sizeof(dest), big);
+    ok(ret == ERANGE, "Copying a big string in a small location returned %d, expected ERANGE\n", ret);
+    ok(dest[0] == '\0'&& dest[1] == 't' && dest[2] == 'o' && dest[3] == 'o' &&
+       dest[4] == 'l' && dest[5] == 'o' && dest[6] == 'n' && dest[7] == 'g',
+       "Unexpected return data from strcpy_s: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+       dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+
+    memset(dest, 'X', sizeof(dest));
+    ret = pstrcpy_s(dest, sizeof(dest), NULL);
+    ok(ret == EINVAL, "Copying from a NULL source string returned %d, expected EINVAL\n", ret);
+    ok(dest[0] == '\0'&& dest[1] == 'X' && dest[2] == 'X' && dest[3] == 'X' &&
+       dest[4] == 'X' && dest[5] == 'X' && dest[6] == 'X' && dest[7] == 'X',
+       "Unexpected return data from strcpy_s: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+       dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+
+    ret = pstrcpy_s(NULL, sizeof(dest), small);
+    ok(ret == EINVAL, "Copying a big string a NULL dest returned %d, expected EINVAL\n", ret);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -405,6 +462,7 @@ START_TEST(string)
     ok(hMsvcrt != 0, "GetModuleHandleA failed\n");
     SET(pmemcpy,"memcpy");
     SET(pmemcmp,"memcmp");
+    SET(pstrcpy_s,"strcpy_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -424,4 +482,5 @@ START_TEST(string)
     test_mbsspnp();
    /* test _strdup */
     test_strdup();
+    test_strcpy_s();
 }
