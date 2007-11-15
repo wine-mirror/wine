@@ -211,8 +211,9 @@ InterfaceIndexTable *getInterfaceIndexTable(void)
       numInterfaces++;
     if (numInterfaces > 1)
       size += (numInterfaces - 1) * sizeof(DWORD);
-    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    ret = HeapAlloc(GetProcessHeap(), 0, size);
     if (ret) {
+      ret->numIndexes = 0;
       for (p = indexes; p && p->if_name; p++)
         ret->indexes[ret->numIndexes++] = p->if_index;
     }
@@ -241,8 +242,9 @@ InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void)
           numInterfaces++;
       if (numInterfaces > 1)
         size += (numInterfaces - 1) * sizeof(DWORD);
-      ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+      ret = HeapAlloc(GetProcessHeap(), 0, size);
       if (ret) {
+        ret->numIndexes = 0;
         for (p = indexes; p && p->if_name; p++)
           if (!isLoopbackInterface(fd, p->if_name))
             ret->indexes[ret->numIndexes++] = p->if_index;
