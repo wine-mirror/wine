@@ -234,10 +234,6 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
                          */
                         CpuUsage = PerfDataGetProcessorUsage();
                         CpuKernelUsage = PerfDataGetProcessorSystemUsage();
-                        if (CpuUsage < 0 )        CpuUsage = 0;
-                        if (CpuUsage > 100)       CpuUsage = 100;
-                        if (CpuKernelUsage < 0)   CpuKernelUsage = 0;
-                        if (CpuKernelUsage > 100) CpuKernelUsage = 100;
 
                         /*
                          *  Get the memory usage

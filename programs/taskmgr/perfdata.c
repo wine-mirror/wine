@@ -332,11 +332,19 @@ ULONG PerfDataGetProcessCount(void)
 
 ULONG PerfDataGetProcessorUsage(void)
 {
+    if( dbIdleTime < 0.0 )
+        return 0;
+    if( dbIdleTime > 100.0 )
+        return 100;
     return (ULONG)dbIdleTime;
 }
 
 ULONG PerfDataGetProcessorSystemUsage(void)
 {
+    if( dbKernelTime < 0.0 )
+        return 0;
+    if( dbKernelTime > 100.0 )
+        return 100;
     return (ULONG)dbKernelTime;
 }
 
