@@ -530,6 +530,35 @@ static const CHAR mov_move_file_dat[] = "FileKey\tComponent_\tSourceName\tDestNa
                                         "wildcardnodest\taugustus\tbudd*\t\tSourceDir\tMSITESTDIR\t1\n"
                                         "singlenodest\taugustus\tb?r\t\tSourceDir\tMSITESTDIR\t1\n";
 
+static const CHAR mc_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "maximus\t\tMSITESTDIR\t0\t1\tmaximus\n"
+                                        "augustus\t\tMSITESTDIR\t0\t1\taugustus\n"
+                                        "caesar\t\tMSITESTDIR\t0\t1\tcaesar\n"
+                                        "gaius\t\tMSITESTDIR\t0\tGAIUS=1\tgaius\n";
+
+static const CHAR mc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                  "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                  "File\tFile\n"
+                                  "maximus\tmaximus\tmaximus\t500\t\t\t16384\t1\n"
+                                  "augustus\taugustus\taugustus\t500\t\t\t0\t2\n"
+                                  "caesar\tcaesar\tcaesar\t500\t\t\t16384\t3\n"
+                                  "gaius\tgaius\tgaius\t500\t\t\t16384\t4";
+
+static const CHAR mc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                   "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                   "Media\tDiskId\n"
+                                   "1\t1\t\ttest1.cab\tDISK1\t\n"
+                                   "2\t2\t\ttest2.cab\tDISK2\t\n"
+                                   "3\t3\t\ttest3.cab\tDISK3\t\n"
+                                   "4\t4\t\ttest3.cab\tDISK3\t\n";
+
+static const CHAR mc_file_hash_dat[] = "File_\tOptions\tHashPart1\tHashPart2\tHashPart3\tHashPart4\n"
+                                       "s72\ti2\ti4\ti4\ti4\ti4\n"
+                                       "MsiFileHash\tFile_\n"
+                                       "caesar\t0\t1477005400\t-2141257985\t284379198\t21485139";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -791,6 +820,19 @@ static const msi_table mov_tables[] =
     ADD_TABLE(property),
     ADD_TABLE(mov_move_file),
     ADD_TABLE(registry),
+};
+
+static const msi_table mc_tables[] =
+{
+    ADD_TABLE(mc_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(cc_feature),
+    ADD_TABLE(cie_feature_comp),
+    ADD_TABLE(mc_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(mc_media),
+    ADD_TABLE(property),
+    ADD_TABLE(mc_file_hash),
 };
 
 /* cabinet definitions */
@@ -3472,6 +3514,57 @@ static void test_movefiles(void)
     RemoveDirectory("msitest");
     DeleteFile(msifile);
 }
+
+static void test_missingcab(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\augustus", 500);
+    create_file("maximus", 500);
+
+    create_database(msifile, mc_tables, sizeof(mc_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    create_cab_file("test1.cab", MEDIA_SIZE, "maximus\0");
+
+    create_pf("msitest", FALSE);
+    create_pf("msitest\\caesar", TRUE);
+
+    r = MsiInstallProductA(msifile, NULL);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    }
+    ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\gaius", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    create_pf("msitest", FALSE);
+    create_pf("msitest\\caesar", TRUE);
+    create_pf("msitest\\gaius", TRUE);
+
+    r = MsiInstallProductA(msifile, "GAIUS=1");
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+        ok(!delete_pf("msitest\\maximus", TRUE), "File installed\n");
+    }
+    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\caesar", TRUE), "File removed\n");
+    ok(delete_pf("msitest\\gaius", TRUE), "File removed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+    DeleteFile("maximus");
+    DeleteFile("test1.cab");
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -3512,6 +3605,7 @@ START_TEST(install)
     test_adminprops();
     test_removefiles();
     test_movefiles();
+    test_missingcab();
 
     SetCurrentDirectoryA(prev_path);
 }
