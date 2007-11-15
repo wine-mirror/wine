@@ -3548,9 +3548,9 @@ static void test_missingcab(void)
     create_pf("msitest\\gaius", TRUE);
 
     r = MsiInstallProductA(msifile, "GAIUS=1");
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
     todo_wine
     {
-        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
         ok(!delete_pf("msitest\\maximus", TRUE), "File installed\n");
         ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
     }

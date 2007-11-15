@@ -782,7 +782,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             if (rc != ERROR_SUCCESS)
             {
                 ERR("Failed to ready media\n");
-                rc = ERROR_FUNCTION_FAILED;
                 break;
             }
 
