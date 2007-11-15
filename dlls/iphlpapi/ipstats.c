@@ -1112,9 +1112,12 @@ DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags)
     ret = ERROR_INVALID_PARAMETER;
   else {
     DWORD numEntries = getNumUdpEntries();
-    PMIB_UDPTABLE table = HeapAlloc(heap, flags,
-     sizeof(MIB_UDPTABLE) + (numEntries - 1) * sizeof(MIB_UDPROW));
+    DWORD size = sizeof(MIB_UDPTABLE);
+    PMIB_UDPTABLE table;
 
+    if (numEntries > 1)
+      size += (numEntries - 1) * sizeof(MIB_UDPROW);
+    table = HeapAlloc(heap, flags, size);
     if (table) {
       FILE *fp;
 
