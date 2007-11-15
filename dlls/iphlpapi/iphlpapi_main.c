@@ -1015,8 +1015,10 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
     ret = ERROR_INVALID_PARAMETER;
   else {
     DWORD numInterfaces = getNumInterfaces();
-    ULONG size = sizeof(MIB_IFTABLE) + (numInterfaces - 1) * sizeof(MIB_IFROW);
+    ULONG size = sizeof(MIB_IFTABLE);
 
+    if (numInterfaces > 1)
+      size += (numInterfaces - 1) * sizeof(MIB_IFROW);
     if (!pIfTable || *pdwSize < size) {
       *pdwSize = size;
       ret = ERROR_INSUFFICIENT_BUFFER;
@@ -1025,8 +1027,9 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
       InterfaceIndexTable *table = getInterfaceIndexTable();
 
       if (table) {
-        size = sizeof(MIB_IFTABLE) + (table->numIndexes - 1) *
-         sizeof(MIB_IFROW);
+        size = sizeof(MIB_IFTABLE);
+        if (table->numIndexes > 1)
+          size += (table->numIndexes - 1) * sizeof(MIB_IFROW);
         if (*pdwSize < size) {
           *pdwSize = size;
           ret = ERROR_INSUFFICIENT_BUFFER;
@@ -1082,9 +1085,10 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
     ret = ERROR_INVALID_PARAMETER;
   else {
     DWORD numInterfaces = getNumInterfaces();
-    ULONG size = sizeof(IP_INTERFACE_INFO) + (numInterfaces - 1) *
-     sizeof(IP_ADAPTER_INDEX_MAP);
+    ULONG size = sizeof(IP_INTERFACE_INFO);
 
+    if (numInterfaces > 1)
+      size += (numInterfaces - 1) * sizeof(IP_ADAPTER_INDEX_MAP);
     if (!pIfTable || *dwOutBufLen < size) {
       *dwOutBufLen = size;
       ret = ERROR_INSUFFICIENT_BUFFER;
@@ -1093,8 +1097,9 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
       InterfaceIndexTable *table = getInterfaceIndexTable();
 
       if (table) {
-        size = sizeof(IP_INTERFACE_INFO) + (table->numIndexes - 1) *
-         sizeof(IP_ADAPTER_INDEX_MAP);
+        size = sizeof(IP_INTERFACE_INFO);
+        if (table->numIndexes > 1)
+          size += (table->numIndexes - 1) * sizeof(IP_ADAPTER_INDEX_MAP);
         if (*dwOutBufLen < size) {
           *dwOutBufLen = size;
           ret = ERROR_INSUFFICIENT_BUFFER;

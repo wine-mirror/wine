@@ -205,11 +205,13 @@ InterfaceIndexTable *getInterfaceIndexTable(void)
 
   if (indexes) {
     struct if_nameindex *p;
+    DWORD size = sizeof(InterfaceIndexTable);
 
     for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
       numInterfaces++;
-    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-     sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
+    if (numInterfaces > 1)
+      size += (numInterfaces - 1) * sizeof(DWORD);
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     if (ret) {
       for (p = indexes; p && p->if_name; p++)
         ret->indexes[ret->numIndexes++] = p->if_index;
