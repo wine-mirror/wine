@@ -1884,7 +1884,7 @@ typedef struct IWineD3DBaseShaderClass
     SHADER_LIMITS                   limits;
     SHADER_PARSE_STATE              parse_state;
     CONST SHADER_OPCODE             *shader_ins;
-    CONST DWORD                     *function;
+    DWORD                          *function;
     UINT                            functionLength;
     GLuint                          prgId;
     BOOL                            is_compiled;
