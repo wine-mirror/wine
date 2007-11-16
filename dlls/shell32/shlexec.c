@@ -1403,6 +1403,39 @@ static UINT_PTR SHELL_quote_and_execute( LPCWSTR wcmd, LPCWSTR wszParameters, LP
     return retval;
 }
 
+static UINT_PTR SHELL_execute_url( LPCWSTR lpFile, LPCWSTR wFile, LPCWSTR wcmd, LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out, SHELL_ExecuteW32 execfunc )
+{
+    static const WCHAR wShell[] = {'\\','s','h','e','l','l','\\',0};
+    static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};
+    WCHAR lpstrProtocol[256];
+    LPCWSTR lpstrRes;
+    INT iSize;
+
+    lpstrRes = strchrW(lpFile, ':');
+    if (lpstrRes)
+        iSize = lpstrRes - lpFile;
+    else
+        iSize = strlenW(lpFile);
+
+    TRACE("Got URL: %s\n", debugstr_w(lpFile));
+    /* Looking for ...protocol\shell\lpOperation\command */
+    memcpy(lpstrProtocol, lpFile, iSize*sizeof(WCHAR));
+    lpstrProtocol[iSize] = '\0';
+    strcatW(lpstrProtocol, wShell);
+    strcatW(lpstrProtocol, psei->lpVerb? psei->lpVerb: wszOpen);
+    strcatW(lpstrProtocol, wCommand);
+
+    /* Remove File Protocol from lpFile */
+    /* In the case file://path/file     */
+    if (!strncmpiW(lpFile, wFile, iSize))
+    {
+        lpFile += iSize;
+        while (*lpFile == ':') lpFile++;
+    }
+    return execute_from_key(lpstrProtocol, lpFile, NULL, psei->lpParameters,
+                            wcmd, execfunc, psei, psei_out);
+}
+
 /*************************************************************************
  *	SHELL_execute [Internal]
  */
@@ -1720,33 +1753,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     }
     else if (PathIsURLW(lpFile))    /* File not found, check for URL */
     {
-	static const WCHAR wShell[] = {'\\','s','h','e','l','l','\\',0};
-	static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};
-        LPWSTR lpstrRes;
-        INT iSize;
-
-        lpstrRes = strchrW(lpFile, ':');
-        if (lpstrRes)
-            iSize = lpstrRes - lpFile;
-        else
-            iSize = strlenW(lpFile);
-
-        TRACE("Got URL: %s\n", debugstr_w(lpFile));
-        /* Looking for ...protocol\shell\lpOperation\command */
-        memcpy(lpstrProtocol, lpFile, iSize*sizeof(WCHAR));
-        lpstrProtocol[iSize] = '\0';
-        strcatW(lpstrProtocol, wShell);
-        strcatW(lpstrProtocol, sei_tmp.lpVerb? sei_tmp.lpVerb: wszOpen);
-        strcatW(lpstrProtocol, wCommand);
-
-        /* Remove File Protocol from lpFile */
-        /* In the case file://path/file     */
-        if (!strncmpiW(lpFile, wFile, iSize))
-        {
-            lpFile += iSize;
-            while (*lpFile == ':') lpFile++;
-        }
-        retval = execute_from_key(lpstrProtocol, lpFile, NULL, sei_tmp.lpParameters, wcmd, execfunc, &sei_tmp, sei);
+        retval = SHELL_execute_url( lpFile, wFile, wcmd, &sei_tmp, sei, execfunc );
     }
     /* Check if file specified is in the form www.??????.*** */
     else if (!strncmpiW(lpFile, wWww, 3))
