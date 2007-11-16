@@ -1600,8 +1600,8 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
       ret = getTcpTable(&pTcpTable, numEntries, 0, 0);
       if (!ret) {
         size = sizeof(MIB_TCPTABLE);
-        if (numEntries > 1)
-          size += (numEntries - 1) * sizeof(MIB_TCPROW);
+        if (pTcpTable->dwNumEntries > 1)
+          size += (pTcpTable->dwNumEntries - 1) * sizeof(MIB_TCPROW);
         *pdwSize = size;
 
           if (bOrder)
