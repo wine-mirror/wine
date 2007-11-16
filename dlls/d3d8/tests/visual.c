@@ -800,5 +800,10 @@ START_TEST(visual)
     }
 
 cleanup:
-    if(device_ptr) IDirect3DDevice8_Release(device_ptr);
+    if(device_ptr) {
+        D3DDEVICE_CREATION_PARAMETERS creation_parameters;
+        IDirect3DDevice8_GetCreationParameters(device_ptr, &creation_parameters);
+        IDirect3DDevice8_Release(device_ptr);
+        DestroyWindow(creation_parameters.hFocusWindow);
+    }
 }
