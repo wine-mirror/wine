@@ -1289,6 +1289,37 @@ static LONG ShellExecute_FromContextMenu( LPSHELLEXECUTEINFOW sei )
     return r;
 }
 
+static UINT_PTR SHELL_execute_class( LPCWSTR wszApplicationName, LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out, SHELL_ExecuteW32 execfunc )
+{
+    static const WCHAR wSpace[] = {' ',0};
+    WCHAR execCmd[1024], wcmd[1024];
+    /* launch a document by fileclass like 'WordPad.Document.1' */
+    /* the Commandline contains 'c:\Path\wordpad.exe "%1"' */
+    /* FIXME: wcmd should not be of a fixed size. Fixed to 1024, MAX_PATH is way too short! */
+    ULONG cmask=(psei->fMask & SEE_MASK_CLASSALL);
+    DWORD resultLen;
+    BOOL done;
+
+    HCR_GetExecuteCommandW((cmask == SEE_MASK_CLASSKEY) ? psei->hkeyClass : NULL,
+                           (cmask == SEE_MASK_CLASSNAME) ? psei->lpClass: NULL,
+                           psei->lpVerb,
+                           execCmd, sizeof(execCmd));
+
+    /* FIXME: get the extension of lpFile, check if it fits to the lpClass */
+    TRACE("SEE_MASK_CLASSNAME->%s, doc->%s\n", debugstr_w(execCmd), debugstr_w(wszApplicationName));
+
+    wcmd[0] = '\0';
+    done = SHELL_ArgifyW(wcmd, sizeof(wcmd)/sizeof(WCHAR), execCmd, wszApplicationName, psei->lpIDList, NULL, &resultLen);
+    if (!done && wszApplicationName[0])
+    {
+        strcatW(wcmd, wSpace);
+        strcatW(wcmd, wszApplicationName);
+    }
+    if (resultLen > sizeof(wcmd)/sizeof(WCHAR))
+        ERR("Argify buffer not large enough... truncating\n");
+    return execfunc(wcmd, NULL, FALSE, psei, psei_out);
+}
+
 /*************************************************************************
  *	SHELL_execute [Internal]
  */
@@ -1318,7 +1349,6 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     UINT_PTR retval = SE_ERR_NOASSOC;
     WCHAR wcmd[1024];
     WCHAR buffer[MAX_PATH];
-    BOOL done;
     BOOL appKnownSingular = FALSE;
 
     /* make a local copy of the LPSHELLEXECUTEINFO structure and work with this from now on */
@@ -1422,30 +1452,8 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
     if (sei_tmp.fMask & SEE_MASK_CLASSALL)
     {
-	/* launch a document by fileclass like 'WordPad.Document.1' */
-        /* the Commandline contains 'c:\Path\wordpad.exe "%1"' */
-        /* FIXME: szCommandline should not be of a fixed size. Fixed to 1024, MAX_PATH is way too short! */
-        ULONG cmask=(sei_tmp.fMask & SEE_MASK_CLASSALL);
-        DWORD resultLen;
-        HCR_GetExecuteCommandW((cmask == SEE_MASK_CLASSKEY) ? sei_tmp.hkeyClass : NULL,
-                               (cmask == SEE_MASK_CLASSNAME) ? sei_tmp.lpClass: NULL,
-                               sei_tmp.lpVerb,
-                               wszParameters, parametersLen);
-
-        /* FIXME: get the extension of lpFile, check if it fits to the lpClass */
-        TRACE("SEE_MASK_CLASSNAME->%s, doc->%s\n", debugstr_w(wszParameters), debugstr_w(wszApplicationName));
-
-        wcmd[0] = '\0';
-        done = SHELL_ArgifyW(wcmd, sizeof(wcmd)/sizeof(WCHAR), wszParameters, wszApplicationName, sei_tmp.lpIDList, NULL, &resultLen);
-        if (!done && wszApplicationName[0])
-        {
-            strcatW(wcmd, wSpace);
-            strcatW(wcmd, wszApplicationName);
-        }
-        if (resultLen > sizeof(wcmd)/sizeof(WCHAR))
-            ERR("Argify buffer not large enough... truncating\n");
-        retval = execfunc(wcmd, NULL, FALSE, &sei_tmp, sei);
-
+        retval = SHELL_execute_class( wszApplicationName, &sei_tmp, sei,
+                                      execfunc );
         HeapFree(GetProcessHeap(), 0, wszApplicationName);
         if (wszParameters != parametersBuffer)
             HeapFree(GetProcessHeap(), 0, wszParameters);
