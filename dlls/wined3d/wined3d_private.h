@@ -625,13 +625,8 @@ extern BOOL pbuffer_support;
 /* allocate one pbuffer per surface */
 extern BOOL pbuffer_per_surface;
 
-typedef struct ResourceList {
-    IWineD3DResource         *resource;
-    struct ResourceList      *next;
-} ResourceList;
-
 /* A helper function that dumps a resource list */
-void dumpResources(ResourceList *resources);
+void dumpResources(struct list *list);
 
 /*****************************************************************************
  * IWineD3DDevice implementation structure
@@ -681,7 +676,7 @@ struct IWineD3DDeviceImpl
     IWineD3DSwapChain     **swapchains;
     UINT                    NumberOfSwapChains;
 
-    ResourceList           *resources; /* a linked list to track resources created by the device */
+    struct list             resources; /* a linked list to track resources created by the device */
 
     /* Render Target Support */
     IWineD3DSurface       **render_targets;
@@ -821,6 +816,7 @@ typedef struct IWineD3DResourceClass
     BYTE                   *allocatedMemory; /* Pointer to the real data location */
     BYTE                   *heapMemory; /* Pointer to the HeapAlloced block of memory */
     struct list             privateData;
+    struct list             resource_list_entry;
 
 } IWineD3DResourceClass;
 

@@ -2695,6 +2695,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->adapter = numAdapters ? &Adapters[Adapter] : NULL;
     IWineD3D_AddRef(object->wineD3D);
     object->parent  = parent;
+    list_init(&object->resources);
 
     if(This->dxVersion == 7) {
         object->surface_alignment = 8;

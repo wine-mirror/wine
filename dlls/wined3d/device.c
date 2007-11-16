@@ -179,9 +179,9 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         /* NOTE: You must release the parent if the object was created via a callback
         ** ***************************/
 
-        if (This->resources != NULL ) {
+        if (!list_empty(&This->resources)) {
             FIXME("(%p) Device released with resources still bound, acceptable but unexpected\n", This);
-            dumpResources(This->resources);
+            dumpResources(&This->resources);
         }
 
         if(This->contexts) ERR("Context array not freed!\n");
@@ -6622,18 +6622,18 @@ static BOOL     WINAPI  IWineD3DDeviceImpl_ShowCursor(IWineD3DDevice* iface, BOO
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_TestCooperativeLevel(IWineD3DDevice* iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DResourceImpl *resource;
     TRACE("(%p) : state (%u)\n", This, This->state);
+
     /* TODO: Implement wrapping of the WndProc so that mimimize and maxamise can be monitored and the states adjusted. */
     switch (This->state) {
     case WINED3D_OK:
         return WINED3D_OK;
     case WINED3DERR_DEVICELOST:
         {
-            ResourceList *resourceList  = This->resources;
-            while (NULL != resourceList) {
-                if (((IWineD3DResourceImpl *)resourceList->resource)->resource.pool == WINED3DPOOL_DEFAULT /* TODO: IWineD3DResource_GetPool(resourceList->resource)*/)
-                return WINED3DERR_DEVICENOTRESET;
-                resourceList = resourceList->next;
+            LIST_FOR_EACH_ENTRY(resource, &This->resources, IWineD3DResourceImpl, resource.resource_list_entry) {
+                if (resource->resource.pool == WINED3DPOOL_DEFAULT)
+                    return WINED3DERR_DEVICENOTRESET;
             }
             return WINED3DERR_DEVICELOST;
         }
@@ -6876,51 +6876,17 @@ static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT i
  *****************************************************/
 static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    ResourceList* resourceList;
 
-    TRACE("(%p) : resource %p\n", This, resource);
-    /* add a new texture to the frot of the linked list */
-    resourceList = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ResourceList));
-    resourceList->resource = resource;
-
-    /* Get the old head */
-    resourceList->next = This->resources;
-
-    This->resources = resourceList;
-    TRACE("Added resource %p with element %p pointing to %p\n", resource, resourceList, resourceList->next);
-
-    return;
+    TRACE("(%p) : Adding Resource %p\n", This, resource);
+    list_add_head(&This->resources, &((IWineD3DResourceImpl *) resource)->resource.resource_list_entry);
 }
 
 static void WINAPI IWineD3DDeviceImpl_RemoveResource(IWineD3DDevice *iface, IWineD3DResource *resource){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    ResourceList* resourceList = NULL;
-    ResourceList* previousResourceList = NULL;
-    
-    TRACE("(%p) : resource %p\n", This, resource);
 
-    resourceList = This->resources;
+    TRACE("(%p) : Removing resource %p\n", This, resource);
 
-    while (resourceList != NULL) {
-        if(resourceList->resource == resource) break;
-        previousResourceList = resourceList;
-        resourceList = resourceList->next;
-    }
-
-    if (resourceList == NULL) {
-        FIXME("Attempted to remove resource %p that hasn't been stored\n", resource);
-        return;
-    } else {
-            TRACE("Found resource  %p with element %p pointing to %p (previous %p)\n", resourceList->resource, resourceList, resourceList->next, previousResourceList);
-    }
-    /* make sure we don't leave a hole in the list */
-    if (previousResourceList != NULL) {
-        previousResourceList->next = resourceList->next;
-    } else {
-        This->resources = resourceList->next;
-    }
-
-    return;
+    list_remove(&((IWineD3DResourceImpl *) resource)->resource.resource_list_entry);
 }
 
 
