@@ -758,7 +758,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
                 GLint tmp;
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-                gl_info->max_fragment_samplers = min(8, tmp);
+                gl_info->max_fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, tmp);
             } else {
                 gl_info->max_fragment_samplers = max(gl_info->max_fragment_samplers, gl_max);
             }
