@@ -1128,6 +1128,7 @@ IDirect3DVertexDeclaration9 *getConvertedDecl(IDirect3DDevice9Impl *This, DWORD 
     if (hr != S_OK) return NULL;
 
     hr = IDirect3DDevice9Impl_CreateVertexDeclaration((IDirect3DDevice9 *) This, elements, &pDecl);
+    HeapFree(GetProcessHeap(), 0, elements); /* CreateVertexDeclaration makes a copy */
     if (hr != S_OK) return NULL;
 
     if(This->declArraySize == This->numConvertedDecls) {
