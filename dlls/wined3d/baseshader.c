@@ -1062,7 +1062,7 @@ void shader_trace_init(
     }
 }
 
-void shader_delete_constant_list(
+static void shader_delete_constant_list(
     struct list* clist) {
 
     struct list *ptr;
@@ -1087,3 +1087,41 @@ const shader_backend_t none_shader_backend = {
     &shader_none_load_constants,
     &shader_none_cleanup
 };
+
+/* *******************************************
+   IWineD3DPixelShader IUnknown parts follow
+   ******************************************* */
+HRESULT  WINAPI IWineD3DBaseShaderImpl_QueryInterface(IWineD3DBaseShader *iface, REFIID riid, LPVOID *ppobj)
+{
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)iface;
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DBase)
+        || IsEqualGUID(riid, &IID_IWineD3DBaseShader)
+        || IsEqualGUID(riid, &IID_IWineD3DPixelShader)) {
+        IUnknown_AddRef(iface);
+        *ppobj = This;
+        return S_OK;
+    }
+    *ppobj = NULL;
+    return E_NOINTERFACE;
+}
+
+ULONG  WINAPI IWineD3DBaseShaderImpl_AddRef(IWineD3DBaseShader *iface) {
+    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
+    TRACE("(%p) : AddRef increasing from %d\n", This, This->baseShader.ref);
+    return InterlockedIncrement(&This->baseShader.ref);
+}
+
+ULONG  WINAPI IWineD3DBaseShaderImpl_Release(IWineD3DBaseShader *iface) {
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)iface;
+    ULONG ref;
+    TRACE("(%p) : Releasing from %d\n", This, This->baseShader.ref);
+    ref = InterlockedDecrement(&This->baseShader.ref);
+    if (ref == 0) {
+        shader_delete_constant_list(&This->baseShader.constantsF);
+        shader_delete_constant_list(&This->baseShader.constantsB);
+        shader_delete_constant_list(&This->baseShader.constantsI);
+    }
+    return ref;
+}

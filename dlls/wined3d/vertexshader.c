@@ -437,33 +437,19 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
 /* *******************************************
    IWineD3DVertexShader IUnknown parts follow
    ******************************************* */
-static HRESULT WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShader *iface, REFIID riid, LPVOID *ppobj)
-{
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    if (IsEqualGUID(riid, &IID_IUnknown) 
-        || IsEqualGUID(riid, &IID_IWineD3DBase)
-        || IsEqualGUID(riid, &IID_IWineD3DBaseShader)
-        || IsEqualGUID(riid, &IID_IWineD3DVertexShader)) {
-        IUnknown_AddRef(iface);
-        *ppobj = This;
-        return S_OK;
-    }
-    *ppobj = NULL;
-    return E_NOINTERFACE;
+static HRESULT  WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShader *iface, REFIID riid, LPVOID *ppobj) {
+    return IWineD3DBaseShaderImpl_QueryInterface((IWineD3DBaseShader *) iface, riid, ppobj);
 }
 
-static ULONG WINAPI IWineD3DVertexShaderImpl_AddRef(IWineD3DVertexShader *iface) {
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %d\n", This, This->ref);
-    return InterlockedIncrement(&This->ref);
+static ULONG  WINAPI IWineD3DVertexShaderImpl_AddRef(IWineD3DVertexShader *iface) {
+    return IWineD3DBaseShaderImpl_AddRef((IWineD3DBaseShader *) iface);
 }
 
 static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     ULONG ref;
-    TRACE("(%p) : Releasing from %d\n", This, This->ref);
-    ref = InterlockedDecrement(&This->ref);
+    ref = IWineD3DBaseShaderImpl_Release((IWineD3DBaseShader *) iface);
+
     if (ref == 0) {
         if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
             struct list *linked_programs = &This->baseShader.linked_programs;
@@ -480,11 +466,7 @@ static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface
             GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
             checkGLcall("glDeleteObjectARB");
         }
-        shader_delete_constant_list(&This->baseShader.constantsF);
-        shader_delete_constant_list(&This->baseShader.constantsB);
-        shader_delete_constant_list(&This->baseShader.constantsI);
         HeapFree(GetProcessHeap(), 0, This);
-
     }
     return ref;
 }

@@ -71,8 +71,8 @@ static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3
     object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
     D3DMEMCHECK(object, pp##type); \
     object->lpVtbl = &IWineD3D##type##_Vtbl;  \
-    object->parent       = parent; \
-    object->ref          = 1; \
+    object->parent          = parent; \
+    object->baseShader.ref  = 1; \
     object->baseShader.device = (IWineD3DDevice*) This; \
     list_init(&object->baseShader.linked_programs); \
     *pp##type = (IWineD3D##type *) object; \

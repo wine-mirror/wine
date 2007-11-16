@@ -1748,9 +1748,6 @@ extern const SHADER_OPCODE* shader_get_opcode(
     IWineD3DBaseShader *iface, 
     const DWORD code);
 
-extern void shader_delete_constant_list(
-    struct list* clist);
-
 void delete_glsl_program_entry(IWineD3DDevice *iface, struct glsl_shader_prog_link *entry);
 
 /* Vertex shader utility functions */
@@ -1882,6 +1879,7 @@ extern void pshader_glsl_input_pack(
  */
 typedef struct IWineD3DBaseShaderClass
 {
+    LONG                            ref;
     DWORD                           hex_version;
     SHADER_LIMITS                   limits;
     SHADER_PARSE_STATE              parse_state;
@@ -1924,11 +1922,14 @@ typedef struct IWineD3DBaseShaderClass
 typedef struct IWineD3DBaseShaderImpl {
     /* IUnknown */
     const IWineD3DBaseShaderVtbl    *lpVtbl;
-    LONG                            ref;
 
     /* IWineD3DBaseShader */
     IWineD3DBaseShaderClass         baseShader;
 } IWineD3DBaseShaderImpl;
+
+HRESULT  WINAPI IWineD3DBaseShaderImpl_QueryInterface(IWineD3DBaseShader *iface, REFIID riid, LPVOID *ppobj);
+ULONG  WINAPI IWineD3DBaseShaderImpl_AddRef(IWineD3DBaseShader *iface);
+ULONG  WINAPI IWineD3DBaseShaderImpl_Release(IWineD3DBaseShader *iface);
 
 extern HRESULT shader_get_registers_used(
     IWineD3DBaseShader *iface,
@@ -2038,7 +2039,6 @@ static inline BOOL shader_is_scalar(DWORD param) {
 typedef struct IWineD3DVertexShaderImpl {
     /* IUnknown parts*/   
     const IWineD3DVertexShaderVtbl *lpVtbl;
-    LONG                        ref;     /* Note: Ref counting not required */
 
     /* IWineD3DBaseShader */
     IWineD3DBaseShaderClass     baseShader;
@@ -2079,7 +2079,6 @@ enum vertexprocessing_mode {
 typedef struct IWineD3DPixelShaderImpl {
     /* IUnknown parts */
     const IWineD3DPixelShaderVtbl *lpVtbl;
-    LONG                        ref;     /* Note: Ref counting not required */
 
     /* IWineD3DBaseShader */
     IWineD3DBaseShaderClass     baseShader;
