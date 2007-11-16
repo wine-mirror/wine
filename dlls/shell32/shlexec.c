@@ -1371,7 +1371,17 @@ static UINT_PTR SHELL_quote_and_execute( LPCWSTR wcmd, LPCWSTR wszParameters, LP
     static const WCHAR wQuote[] = {'"',0};
     static const WCHAR wSpace[] = {' ',0};
     UINT_PTR retval;
-    WCHAR wszQuotedCmd[MAX_PATH+2];
+    DWORD len;
+    WCHAR *wszQuotedCmd;
+
+    /* Length of quotes plus length of command plus NULL terminator */
+    len = 2 + lstrlenW(wcmd) + 1;
+    if (wszParameters[0])
+    {
+        /* Length of space plus length of parameters */
+        len += 1 + lstrlenW(wszParameters);
+    }
+    wszQuotedCmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     /* Must quote to handle case where cmd contains spaces,
      * else security hole if malicious user creates executable file "C:\\Program"
      */
@@ -1387,6 +1397,7 @@ static UINT_PTR SHELL_quote_and_execute( LPCWSTR wcmd, LPCWSTR wszParameters, LP
         retval = execute_from_key(lpstrProtocol, wszApplicationName, env, psei->lpParameters, wcmd, execfunc, psei, psei_out);
     else
         retval = execfunc(wszQuotedCmd, env, FALSE, psei, psei_out);
+    HeapFree(GetProcessHeap(), 0, wszQuotedCmd);
     return retval;
 }
 
