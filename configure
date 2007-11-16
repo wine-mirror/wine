@@ -10482,7 +10482,7 @@ echo "${ECHO_T}not found" >&6; }
 This probably prevents linking to OpenGL. Try deleting the file and restarting configure."
                               else
                                   wine_warnings="$wine_warnings|No OpenGL library found on this system.
-Wine will be build without OpenGL or Direct3D support."
+Wine will be built without OpenGL or Direct3D support."
                               fi
 else
   { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_GL" >&5
@@ -10571,11 +10571,11 @@ fi
 
              else
                  wine_warnings="$wine_warnings|Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).
-Wine will be build without OpenGL or Direct3D support."
+Wine will be built without OpenGL or Direct3D support."
 	     fi
          else
              wine_warnings="$wine_warnings|OpenGL development headers not found.
-Wine will be build without OpenGL or Direct3D support."
+Wine will be built without OpenGL or Direct3D support."
 	 fi
     fi
 

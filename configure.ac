@@ -656,7 +656,7 @@ Wine will be built without XComposite support. (winex11.drv)])
 This probably prevents linking to OpenGL. Try deleting the file and restarting configure.])
                               else
                                   WINE_WARNING([No OpenGL library found on this system.
-Wine will be build without OpenGL or Direct3D support.])
+Wine will be built without OpenGL or Direct3D support.])
                               fi],
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
@@ -668,11 +668,11 @@ Wine will be build without OpenGL or Direct3D support.])
 			     $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
              else
                  WINE_WARNING([Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).
-Wine will be build without OpenGL or Direct3D support.])
+Wine will be built without OpenGL or Direct3D support.])
 	     fi
          else
              WINE_WARNING([OpenGL development headers not found.
-Wine will be build without OpenGL or Direct3D support.])
+Wine will be built without OpenGL or Direct3D support.])
 	 fi
     fi
 
