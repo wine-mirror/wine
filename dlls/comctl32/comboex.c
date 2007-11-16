@@ -1578,6 +1578,27 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT const *di
 }
 
 
+static void COMBOEX_ResetContent (COMBOEX_INFO *infoPtr)
+{
+    if (infoPtr->items)
+    {
+        CBE_ITEMDATA *item, *next;
+
+        item = infoPtr->items;
+        while (item) {
+            next = item->next;
+            COMBOEX_FreeText (item);
+            Free (item);
+            item = next;
+        }
+        infoPtr->items = 0;
+    }
+
+    infoPtr->selected = -1;
+    infoPtr->nb_items = 0;
+}
+
+
 static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr)
 {
     if (infoPtr->hwndCombo)
@@ -1586,18 +1607,7 @@ static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr)
     Free (infoPtr->edit);
     infoPtr->edit = 0;
 
-    if (infoPtr->items) {
-        CBE_ITEMDATA *item, *next;
-
-	item = infoPtr->items;
-	while (item) {
-	    next = item->next;
-	    COMBOEX_FreeText (item);
-	    Free (item);
-	    item = next;
-	}
-	infoPtr->items = 0;
-    }
+    COMBOEX_ResetContent (infoPtr);
 
     if (infoPtr->defaultFont)
 	DeleteObject (infoPtr->defaultFont);
@@ -2234,12 +2244,15 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case CB_GETLBTEXTLEN:
             return COMBOEX_GetListboxText(infoPtr, wParam, NULL);
 
+	case CB_RESETCONTENT:
+            COMBOEX_ResetContent(infoPtr);
+            /* fall through */
+
 /*   Combo messages we are not sure if we need to process or just forward */
 	case CB_GETDROPPEDCONTROLRECT:
 	case CB_GETITEMHEIGHT:
 	case CB_GETEXTENDEDUI:
 	case CB_LIMITTEXT:
-	case CB_RESETCONTENT:
 	case CB_SELECTSTRING:
 
 /*   Combo messages OK to just forward to the regular COMBO */
