@@ -21,6 +21,7 @@
 #include "config.h"
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -166,17 +167,40 @@ void X11DRV_Settings_Init(void)
     X11DRV_Settings_AddOneMode(screen_width, screen_height, 0, 60);
 }
 
-/* Our fake driver GUID path */
-static const char wine_X11_reg_key[] =
-    "System\\CurrentControlSet\\Control\\Video\\{64498428-1122-3344-5566-778899aabbcc}\\0000";
+static BOOL get_display_device_reg_key(char *key, unsigned len)
+{
+    static const char display_device_guid_prop[] = "__wine_display_device_guid";
+    static const char video_path[] = "System\\CurrentControlSet\\Control\\Video\\{";
+    static const char display0[] = "}\\0000";
+    ATOM guid_atom;
+
+    assert(len >= sizeof(video_path) + sizeof(display0) + 40);
+
+    guid_atom = HandleToULong(GetPropA(GetDesktopWindow(), display_device_guid_prop));
+    if (!guid_atom) return FALSE;
+
+    memcpy(key, video_path, sizeof(video_path));
+
+    if (!GlobalGetAtomNameA(guid_atom, key + strlen(key), 40))
+        return FALSE;
+
+    strcat(key, display0);
+
+    TRACE("display device key %s\n", wine_dbgstr_a(key));
+    return TRUE;
+}
 
 static BOOL read_registry_settings(DEVMODEW *dm)
 {
+    char wine_x11_reg_key[128];
     HKEY hkey;
     DWORD type, size;
     BOOL ret = TRUE;
 
-    if (RegOpenKeyA(HKEY_CURRENT_CONFIG, wine_X11_reg_key, &hkey))
+    if (!get_display_device_reg_key(wine_x11_reg_key, sizeof(wine_x11_reg_key)))
+        return FALSE;
+
+    if (RegOpenKeyExA(HKEY_CURRENT_CONFIG, wine_x11_reg_key, 0, KEY_READ, &hkey))
         return FALSE;
 
 #define query_value(name, data) \
@@ -203,10 +227,15 @@ static BOOL read_registry_settings(DEVMODEW *dm)
 
 static BOOL write_registry_settings(const DEVMODEW *dm)
 {
+    char wine_x11_reg_key[128];
     HKEY hkey;
     BOOL ret = TRUE;
 
-    if (RegCreateKeyA(HKEY_CURRENT_CONFIG, wine_X11_reg_key, &hkey))
+    if (!get_display_device_reg_key(wine_x11_reg_key, sizeof(wine_x11_reg_key)))
+        return FALSE;
+
+    if (RegCreateKeyExA(HKEY_CURRENT_CONFIG, wine_x11_reg_key, 0, NULL,
+                        REG_OPTION_VOLATILE, KEY_WRITE, NULL, &hkey, NULL))
         return FALSE;
 
 #define set_value(name, data) \

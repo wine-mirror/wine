@@ -115,6 +115,25 @@ static BOOL get_default_desktop_size( unsigned int *width, unsigned int *height 
     return ret;
 }
 
+static void initialize_display_settings( HWND desktop )
+{
+    static const WCHAR display_device_guid_propW[] = {
+        '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
+        'd','e','v','i','c','e','_','g','u','i','d',0 };
+    GUID guid;
+    LPWSTR guid_str;
+    ATOM guid_atom;
+
+    UuidCreate( &guid );
+    UuidToStringW( &guid, &guid_str );
+    WINE_TRACE( "display guid %s\n", wine_dbgstr_w(guid_str) );
+
+    guid_atom = GlobalAddAtomW( guid_str );
+    SetPropW( desktop, display_device_guid_propW, ULongToHandle(guid_atom) );
+
+    RpcStringFreeW( &guid_str );
+}
+
 /* main desktop management function */
 void manage_desktop( char *arg )
 {
@@ -171,6 +190,7 @@ void manage_desktop( char *arg )
         SetWindowTextW( hwnd, desktop_nameW );
         SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
         SetDeskWallPaper( (LPSTR)-1 );
+        initialize_display_settings( hwnd );
         initialize_diskarbitration();
         initialize_hal();
         initialize_systray();
