@@ -749,14 +749,15 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
  * launching an application and trying (#2) to connect to it
  *
  */
-static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
+static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
                             const WCHAR* lpFile, WCHAR *env,
 			    LPCWSTR szCommandline, LPITEMIDLIST pidl, SHELL_ExecuteW32 execfunc,
                             const SHELLEXECUTEINFOW *psei, LPSHELLEXECUTEINFOW psei_out)
 {
     static const WCHAR wApplication[] = {'\\','a','p','p','l','i','c','a','t','i','o','n',0};
     static const WCHAR wTopic[] = {'\\','t','o','p','i','c',0};
-    WCHAR *     endkey = key + strlenW(key);
+    WCHAR       regkey[256];
+    WCHAR *     endkey = regkey + strlenW(key);
     WCHAR       app[256], topic[256], ifexec[256], res[256];
     LONG        applen, topiclen, ifexeclen;
     WCHAR *     exec;
@@ -769,9 +770,10 @@ static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
     unsigned    ret = SE_ERR_NOASSOC;
     BOOL unicode = !(GetVersion() & 0x80000000);
 
+    strcpyW(regkey, key);
     strcpyW(endkey, wApplication);
     applen = sizeof(app);
-    if (RegQueryValueW(HKEY_CLASSES_ROOT, key, app, &applen) != ERROR_SUCCESS)
+    if (RegQueryValueW(HKEY_CLASSES_ROOT, regkey, app, &applen) != ERROR_SUCCESS)
     {
         WCHAR command[1024], fullpath[MAX_PATH];
         static const WCHAR wSo[] = { '.','s','o',0 };
@@ -822,7 +824,7 @@ static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
 
     strcpyW(endkey, wTopic);
     topiclen = sizeof(topic);
-    if (RegQueryValueW(HKEY_CLASSES_ROOT, key, topic, &topiclen) != ERROR_SUCCESS)
+    if (RegQueryValueW(HKEY_CLASSES_ROOT, regkey, topic, &topiclen) != ERROR_SUCCESS)
     {
         static const WCHAR wSystem[] = {'S','y','s','t','e','m',0};
         strcpyW(topic, wSystem);
@@ -864,7 +866,7 @@ static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
         }
         strcpyW(endkey, wIfexec);
         ifexeclen = sizeof(ifexec);
-        if (RegQueryValueW(HKEY_CLASSES_ROOT, key, ifexec, &ifexeclen) == ERROR_SUCCESS)
+        if (RegQueryValueW(HKEY_CLASSES_ROOT, regkey, ifexec, &ifexeclen) == ERROR_SUCCESS)
         {
             exec = ifexec;
         }
