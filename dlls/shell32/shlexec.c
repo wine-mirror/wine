@@ -1305,8 +1305,10 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI |
         SEE_MASK_UNICODE       | SEE_MASK_ASYNCOK      | SEE_MASK_HMONITOR;
 
-    WCHAR *wszApplicationName, wszParameters[1024], wszDir[MAX_PATH];
+    WCHAR parametersBuffer[1024];
+    WCHAR *wszApplicationName, *wszParameters, wszDir[MAX_PATH];
     DWORD dwApplicationNameLen = MAX_PATH+2;
+    DWORD parametersLen = sizeof(parametersBuffer) / sizeof(WCHAR);
     DWORD len;
     SHELLEXECUTEINFOW sei_tmp;	/* modifiable copy of SHELLEXECUTEINFO struct */
     WCHAR wfileName[MAX_PATH];
@@ -1354,8 +1356,17 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         memcpy(wszApplicationName, sei_tmp.lpFile, l*sizeof(WCHAR));
     }
 
+    wszParameters = parametersBuffer;
     if (sei_tmp.lpParameters)
+    {
+        len = lstrlenW(sei_tmp.lpParameters) + 1;
+        if (len > parametersLen)
+        {
+            wszParameters = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            parametersLen = len;
+        }
 	strcpyW(wszParameters, sei_tmp.lpParameters);
+    }
     else
 	*wszParameters = '\0';
 
@@ -1389,6 +1400,8 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
 	    if (hr == S_OK) {
                 HeapFree(GetProcessHeap(), 0, wszApplicationName);
+                if (wszParameters != parametersBuffer)
+                    HeapFree(GetProcessHeap(), 0, wszParameters);
 		return TRUE;
             }
 	}
@@ -1402,6 +1415,8 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     {
         sei->hInstApp = (HINSTANCE) 33;
         HeapFree(GetProcessHeap(), 0, wszApplicationName);
+        if (wszParameters != parametersBuffer)
+            HeapFree(GetProcessHeap(), 0, wszParameters);
         return TRUE;
     }
 
@@ -1415,7 +1430,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         HCR_GetExecuteCommandW((cmask == SEE_MASK_CLASSKEY) ? sei_tmp.hkeyClass : NULL,
                                (cmask == SEE_MASK_CLASSNAME) ? sei_tmp.lpClass: NULL,
                                sei_tmp.lpVerb,
-                               wszParameters, sizeof(wszParameters)/sizeof(WCHAR));
+                               wszParameters, parametersLen);
 
         /* FIXME: get the extension of lpFile, check if it fits to the lpClass */
         TRACE("SEE_MASK_CLASSNAME->%s, doc->%s\n", debugstr_w(wszParameters), debugstr_w(wszApplicationName));
@@ -1432,6 +1447,8 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         retval = execfunc(wcmd, NULL, FALSE, &sei_tmp, sei);
 
         HeapFree(GetProcessHeap(), 0, wszApplicationName);
+        if (wszParameters != parametersBuffer)
+            HeapFree(GetProcessHeap(), 0, wszParameters);
         return retval > 32;
     }
 
@@ -1496,10 +1513,11 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
             len++;
             buf = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
             ExpandEnvironmentStringsW(sei_tmp.lpParameters, buf, len);
-            if (len > 1024)
-                ERR("Parameters exceeds buffer size (%i > 1024)\n",len);
-            lstrcpynW(wszParameters, buf, min(1024,len));
-            HeapFree(GetProcessHeap(),0,buf);
+            if (wszParameters != parametersBuffer)
+                HeapFree(GetProcessHeap(), 0, wszParameters);
+            wszParameters = buf;
+            parametersLen = len;
+            sei_tmp.lpParameters = wszParameters;
         }
     }
 
@@ -1595,6 +1613,8 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     retval = execfunc(wcmd, NULL, FALSE, &sei_tmp, sei);
     if (retval > 32) {
         HeapFree(GetProcessHeap(), 0, wszApplicationName);
+        if (wszParameters != parametersBuffer)
+            HeapFree(GetProcessHeap(), 0, wszParameters);
         return TRUE;
     }
 
@@ -1664,6 +1684,8 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     TRACE("retval %lu\n", retval);
 
     HeapFree(GetProcessHeap(), 0, wszApplicationName);
+    if (wszParameters != parametersBuffer)
+        HeapFree(GetProcessHeap(), 0, wszParameters);
 
     sei->hInstApp = (HINSTANCE)(retval > 32 ? 33 : retval);
     return retval > 32;
