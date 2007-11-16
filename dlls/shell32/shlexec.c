@@ -1320,6 +1320,52 @@ static UINT_PTR SHELL_execute_class( LPCWSTR wszApplicationName, LPSHELLEXECUTEI
     return execfunc(wcmd, NULL, FALSE, psei, psei_out);
 }
 
+static BOOL SHELL_translate_idlist( LPSHELLEXECUTEINFOW sei, LPWSTR wszParameters, DWORD parametersLen, LPWSTR wszApplicationName, DWORD dwApplicationNameLen )
+{
+    static const WCHAR wExplorer[] = {'e','x','p','l','o','r','e','r','.','e','x','e',0};
+    WCHAR buffer[MAX_PATH];
+    BOOL appKnownSingular = FALSE;
+
+    /* last chance to translate IDList: now also allow CLSID paths */
+    if (SUCCEEDED(SHELL_GetPathFromIDListForExecuteW(sei->lpIDList, buffer, sizeof(buffer)))) {
+        if (buffer[0]==':' && buffer[1]==':') {
+            /* open shell folder for the specified class GUID */
+            if (lstrlenW(buffer) + 1 > parametersLen)
+                ERR("parameters len exceeds buffer size (%i > %i), truncating\n",
+                    lstrlenW(buffer) + 1, parametersLen);
+            lstrcpynW(wszParameters, buffer, parametersLen);
+            if (lstrlenW(wExplorer) > dwApplicationNameLen)
+                ERR("application len exceeds buffer size (%i > %i), truncating\n",
+                    lstrlenW(wExplorer) + 1, dwApplicationNameLen);
+            lstrcpynW(wszApplicationName, wExplorer, dwApplicationNameLen);
+            appKnownSingular = TRUE;
+
+            sei->fMask &= ~SEE_MASK_INVOKEIDLIST;
+        } else {
+            WCHAR target[MAX_PATH];
+            DWORD attribs;
+            DWORD resultLen;
+            /* Check if we're executing a directory and if so use the
+               handler for the Folder class */
+            strcpyW(target, buffer);
+            attribs = GetFileAttributesW(buffer);
+            if (attribs != INVALID_FILE_ATTRIBUTES &&
+                (attribs & FILE_ATTRIBUTE_DIRECTORY) &&
+                HCR_GetExecuteCommandW(0, wszFolder,
+                                       sei->lpVerb,
+                                       buffer, sizeof(buffer))) {
+                SHELL_ArgifyW(wszApplicationName, dwApplicationNameLen,
+                              buffer, target, sei->lpIDList, NULL, &resultLen);
+                if (resultLen > dwApplicationNameLen)
+                    ERR("Argify buffer not large enough... truncating\n");
+                appKnownSingular = FALSE;
+            }
+            sei->fMask &= ~SEE_MASK_INVOKEIDLIST;
+        }
+    }
+    return appKnownSingular;
+}
+
 /*************************************************************************
  *	SHELL_execute [Internal]
  */
@@ -1330,7 +1376,6 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     static const WCHAR wWww[] = {'w','w','w',0};
     static const WCHAR wFile[] = {'f','i','l','e',0};
     static const WCHAR wHttp[] = {'h','t','t','p',':','/','/',0};
-    static const WCHAR wExplorer[] = {'e','x','p','l','o','r','e','r','.','e','x','e',0};
     static const DWORD unsupportedFlags =
         SEE_MASK_INVOKEIDLIST  | SEE_MASK_ICON         | SEE_MASK_HOTKEY |
         SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI |
@@ -1348,7 +1393,6 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     LPCWSTR lpFile;
     UINT_PTR retval = SE_ERR_NOASSOC;
     WCHAR wcmd[1024];
-    WCHAR buffer[MAX_PATH];
     BOOL appKnownSingular = FALSE;
 
     /* make a local copy of the LPSHELLEXECUTEINFO structure and work with this from now on */
@@ -1463,37 +1507,10 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     /* Has the IDList not yet been translated? */
     if (sei_tmp.fMask & SEE_MASK_IDLIST)
     {
-	/* last chance to translate IDList: now also allow CLSID paths */
-	if (SUCCEEDED(SHELL_GetPathFromIDListForExecuteW(sei_tmp.lpIDList, buffer, sizeof(buffer)))) {
-	    if (buffer[0]==':' && buffer[1]==':') {
-		/* open shell folder for the specified class GUID */
-		strcpyW(wszParameters, buffer);
-		strcpyW(wszApplicationName, wExplorer);
-		appKnownSingular = TRUE;
-
-		sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
-	    } else {
-                WCHAR target[MAX_PATH];
-                DWORD attribs;
-                DWORD resultLen;
-		/* Check if we're executing a directory and if so use the
-		   handler for the Folder class */
-		strcpyW(target, buffer);
-		attribs = GetFileAttributesW(buffer);
-		if (attribs != INVALID_FILE_ATTRIBUTES &&
-		    (attribs & FILE_ATTRIBUTE_DIRECTORY) &&
-		    HCR_GetExecuteCommandW(0, wszFolder,
-		                           sei_tmp.lpVerb,
-		                           buffer, sizeof(buffer))) {
-		    SHELL_ArgifyW(wszApplicationName, dwApplicationNameLen,
-		                  buffer, target, sei_tmp.lpIDList, NULL, &resultLen);
-		    if (resultLen > dwApplicationNameLen)
-			ERR("Argify buffer not large enough... truncating\n");
-		    appKnownSingular = FALSE;
-		}
-		sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
-	    }
-	}
+        appKnownSingular = SHELL_translate_idlist( &sei_tmp, wszParameters,
+                                                   parametersLen,
+                                                   wszApplicationName,
+                                                   dwApplicationNameLen );
     }
 
     /* expand environment strings */
