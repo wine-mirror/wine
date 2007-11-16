@@ -1417,11 +1417,12 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI |
         SEE_MASK_UNICODE       | SEE_MASK_ASYNCOK      | SEE_MASK_HMONITOR;
 
-    WCHAR parametersBuffer[1024], dirBuffer[MAX_PATH];
-    WCHAR *wszApplicationName, *wszParameters, *wszDir;
+    WCHAR parametersBuffer[1024], dirBuffer[MAX_PATH], wcmdBuffer[1024];
+    WCHAR *wszApplicationName, *wszParameters, *wszDir, *wcmd;
     DWORD dwApplicationNameLen = MAX_PATH+2;
     DWORD parametersLen = sizeof(parametersBuffer) / sizeof(WCHAR);
     DWORD dirLen = sizeof(dirBuffer) / sizeof(WCHAR);
+    DWORD wcmdLen = sizeof(wcmdBuffer) / sizeof(WCHAR);
     DWORD len;
     SHELLEXECUTEINFOW sei_tmp;	/* modifiable copy of SHELLEXECUTEINFO struct */
     WCHAR wfileName[MAX_PATH];
@@ -1429,7 +1430,6 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     WCHAR lpstrProtocol[256];
     LPCWSTR lpFile;
     UINT_PTR retval = SE_ERR_NOASSOC;
-    WCHAR wcmd[1024];
     BOOL appKnownSingular = FALSE;
 
     /* make a local copy of the LPSHELLEXECUTEINFO structure and work with this from now on */
@@ -1681,6 +1681,15 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
     lpFile = wfileName;
 
+    wcmd = wcmdBuffer;
+    len = lstrlenW(wszApplicationName) + 1;
+    if (sei_tmp.lpParameters[0])
+        len += 1 + lstrlenW(wszParameters);
+    if (len > wcmdLen)
+    {
+        wcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        wcmdLen = len;
+    }
     strcpyW(wcmd, wszApplicationName);
     if (sei_tmp.lpParameters[0]) {
         strcatW(wcmd, wSpace);
@@ -1694,12 +1703,14 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
             HeapFree(GetProcessHeap(), 0, wszParameters);
         if (wszDir != dirBuffer)
             HeapFree(GetProcessHeap(), 0, wszDir);
+        if (wcmd != wcmdBuffer)
+            HeapFree(GetProcessHeap(), 0, wcmd);
         return TRUE;
     }
 
     /* Else, try to find the executable */
     wcmd[0] = '\0';
-    retval = SHELL_FindExecutable(sei_tmp.lpDirectory, lpFile, sei_tmp.lpVerb, wcmd, 1024, lpstrProtocol, &env, sei_tmp.lpIDList, sei_tmp.lpParameters);
+    retval = SHELL_FindExecutable(sei_tmp.lpDirectory, lpFile, sei_tmp.lpVerb, wcmd, wcmdLen, lpstrProtocol, &env, sei_tmp.lpIDList, sei_tmp.lpParameters);
     if (retval > 32)  /* Found */
     {
         retval = SHELL_quote_and_execute( wcmd, wszParameters, lpstrProtocol,
@@ -1754,6 +1765,8 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         HeapFree(GetProcessHeap(), 0, wszParameters);
     if (wszDir != dirBuffer)
         HeapFree(GetProcessHeap(), 0, wszDir);
+    if (wcmd != wcmdBuffer)
+        HeapFree(GetProcessHeap(), 0, wcmd);
 
     sei->hInstApp = (HINSTANCE)(retval > 32 ? 33 : retval);
     return retval > 32;
