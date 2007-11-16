@@ -711,6 +711,7 @@
 @ cdecl srand(long) MSVCRT_srand
 @ varargs sscanf(str str) MSVCRT_sscanf
 @ cdecl strcat(str str) ntdll.strcat
+@ cdecl strcat_s(str long str) MSVCRT_strcat_s
 @ cdecl strchr(str long) ntdll.strchr
 @ cdecl strcmp(str str) ntdll.strcmp
 @ cdecl strcoll(str str) MSVCRT_strcoll
