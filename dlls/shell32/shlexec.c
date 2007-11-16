@@ -632,11 +632,7 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
                      * attached */
                     TRACE("found %s\n", debugstr_w(lpResult));
                     return 33;
-
-                    /* Greater than 32 to indicate success FIXME According to the
-                     * docs, I should be returning a handle for the
-                     * executable. Does this mean I'm supposed to open the
-                     * executable file or something? More RTFM, I guess... */
+                    /* Greater than 32 to indicate success */
                 }
                 tok = p;
             }
