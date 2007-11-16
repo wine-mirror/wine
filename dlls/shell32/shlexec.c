@@ -1366,12 +1366,35 @@ static BOOL SHELL_translate_idlist( LPSHELLEXECUTEINFOW sei, LPWSTR wszParameter
     return appKnownSingular;
 }
 
+static UINT_PTR SHELL_quote_and_execute( LPCWSTR wcmd, LPCWSTR wszParameters, LPWSTR lpstrProtocol, LPCWSTR wszApplicationName, LPWSTR env, LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out, SHELL_ExecuteW32 execfunc )
+{
+    static const WCHAR wQuote[] = {'"',0};
+    static const WCHAR wSpace[] = {' ',0};
+    UINT_PTR retval;
+    WCHAR wszQuotedCmd[MAX_PATH+2];
+    /* Must quote to handle case where cmd contains spaces,
+     * else security hole if malicious user creates executable file "C:\\Program"
+     */
+    strcpyW(wszQuotedCmd, wQuote);
+    strcatW(wszQuotedCmd, wcmd);
+    strcatW(wszQuotedCmd, wQuote);
+    if (wszParameters[0]) {
+        strcatW(wszQuotedCmd, wSpace);
+        strcatW(wszQuotedCmd, wszParameters);
+    }
+    TRACE("%s/%s => %s/%s\n", debugstr_w(wszApplicationName), debugstr_w(psei->lpVerb), debugstr_w(wszQuotedCmd), debugstr_w(lpstrProtocol));
+    if (*lpstrProtocol)
+        retval = execute_from_key(lpstrProtocol, wszApplicationName, env, psei->lpParameters, wcmd, execfunc, psei, psei_out);
+    else
+        retval = execfunc(wszQuotedCmd, env, FALSE, psei, psei_out);
+    return retval;
+}
+
 /*************************************************************************
  *	SHELL_execute [Internal]
  */
 BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 {
-    static const WCHAR wQuote[] = {'"',0};
     static const WCHAR wSpace[] = {' ',0};
     static const WCHAR wWww[] = {'w','w','w',0};
     static const WCHAR wFile[] = {'f','i','l','e',0};
@@ -1666,22 +1689,9 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     retval = SHELL_FindExecutable(sei_tmp.lpDirectory, lpFile, sei_tmp.lpVerb, wcmd, 1024, lpstrProtocol, &env, sei_tmp.lpIDList, sei_tmp.lpParameters);
     if (retval > 32)  /* Found */
     {
-        WCHAR wszQuotedCmd[MAX_PATH+2];
-        /* Must quote to handle case where cmd contains spaces,
-         * else security hole if malicious user creates executable file "C:\\Program"
-         */
-        strcpyW(wszQuotedCmd, wQuote);
-        strcatW(wszQuotedCmd, wcmd);
-        strcatW(wszQuotedCmd, wQuote);
-        if (wszParameters[0]) {
-            strcatW(wszQuotedCmd, wSpace);
-            strcatW(wszQuotedCmd, wszParameters);
-        }
-        TRACE("%s/%s => %s/%s\n", debugstr_w(wszApplicationName), debugstr_w(sei_tmp.lpVerb), debugstr_w(wszQuotedCmd), debugstr_w(lpstrProtocol));
-        if (*lpstrProtocol)
-            retval = execute_from_key(lpstrProtocol, wszApplicationName, env, sei_tmp.lpParameters, wcmd, execfunc, &sei_tmp, sei);
-        else
-            retval = execfunc(wszQuotedCmd, env, FALSE, &sei_tmp, sei);
+        retval = SHELL_quote_and_execute( wcmd, wszParameters, lpstrProtocol,
+                                          wszApplicationName, env, &sei_tmp,
+                                          sei, execfunc );
         HeapFree( GetProcessHeap(), 0, env );
     }
     else if (PathIsURLW(lpFile))    /* File not found, check for URL */
