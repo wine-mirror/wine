@@ -1604,10 +1604,10 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
           size += (pTcpTable->dwNumEntries - 1) * sizeof(MIB_TCPROW);
         *pdwSize = size;
 
-          if (bOrder)
-             qsort(pTcpTable->table, pTcpTable->dwNumEntries,
-                   sizeof(MIB_TCPROW), TcpTableSorter);
-          ret = NO_ERROR;
+        if (bOrder)
+           qsort(pTcpTable->table, pTcpTable->dwNumEntries,
+                 sizeof(MIB_TCPROW), TcpTableSorter);
+        ret = NO_ERROR;
       }
     }
   }
