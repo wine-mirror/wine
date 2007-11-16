@@ -1407,9 +1407,11 @@ static UINT_PTR SHELL_execute_url( LPCWSTR lpFile, LPCWSTR wFile, LPCWSTR wcmd, 
 {
     static const WCHAR wShell[] = {'\\','s','h','e','l','l','\\',0};
     static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};
-    WCHAR lpstrProtocol[256];
+    UINT_PTR retval;
+    WCHAR *lpstrProtocol;
     LPCWSTR lpstrRes;
     INT iSize;
+    DWORD len;
 
     lpstrRes = strchrW(lpFile, ':');
     if (lpstrRes)
@@ -1419,6 +1421,12 @@ static UINT_PTR SHELL_execute_url( LPCWSTR lpFile, LPCWSTR wFile, LPCWSTR wcmd, 
 
     TRACE("Got URL: %s\n", debugstr_w(lpFile));
     /* Looking for ...protocol\shell\lpOperation\command */
+    len = iSize + lstrlenW(wShell) + lstrlenW(wCommand) + 1;
+    if (psei->lpVerb)
+        len += lstrlenW(psei->lpVerb);
+    else
+        len += lstrlenW(wszOpen);
+    lpstrProtocol = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     memcpy(lpstrProtocol, lpFile, iSize*sizeof(WCHAR));
     lpstrProtocol[iSize] = '\0';
     strcatW(lpstrProtocol, wShell);
@@ -1432,8 +1440,10 @@ static UINT_PTR SHELL_execute_url( LPCWSTR lpFile, LPCWSTR wFile, LPCWSTR wcmd, 
         lpFile += iSize;
         while (*lpFile == ':') lpFile++;
     }
-    return execute_from_key(lpstrProtocol, lpFile, NULL, psei->lpParameters,
-                            wcmd, execfunc, psei, psei_out);
+    retval = execute_from_key(lpstrProtocol, lpFile, NULL, psei->lpParameters,
+                              wcmd, execfunc, psei, psei_out);
+    HeapFree(GetProcessHeap(), 0, lpstrProtocol);
+    return retval;
 }
 
 /*************************************************************************
