@@ -3,11 +3,11 @@ Signature="$CHICAGO$"
 
 
 [RegisterDll]
-AddReg=Classes.Reg
+AddReg=Classes.Reg, Settings.Reg
 
 
 [UnregisterDll]
-DelReg=Classes.Reg
+DelReg=Classes.Reg, Settings.Reg
 
 
 [RegisterIE]
@@ -120,8 +120,14 @@ HKCR,"InternetShortcut","NeverShowExt",,
 HKCR,"InternetShortcut\CLSID",,,"%CLSID_InteretShortcut%"
 HKCR,"InternetShortcut\DefaultIcon",,,"url.dll,0"
 HKCR,"InternetShortcut\shell\open\command",,,"rundll32.exe shdocvw.dll,OpenURL %l"
-HKCR,"InternetShortcut\shell\print\command",,,rundll32.exe mshtml.dll,PrintHTML \"%1\""
+HKCR,"InternetShortcut\shell\print\command",,,"rundll32.exe mshtml.dll,PrintHTML \"%1\""
 HKCR,"InternetShortcut\shell\printto\command",,,"rundll32.exe mshtml.dll,PrintHTML \"%1\" \"%2\" \"%3\" \"%4\""
+
+
+[Settings.Reg]
+HKCU,"Software\Microsoft\Internet Explorer\Main","Start Page",,"http://www.winehq.org"
+HKCU,"Software\Microsoft\Internet Explorer\Main","Search Page",,"http://www.google.com"
+
 
 [IE.Reg]
 HKLM,"Software\Microsoft\Internet Explorer","Version",,"6.0.2900.2180"

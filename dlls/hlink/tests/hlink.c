@@ -322,16 +322,12 @@ static void test_special_reference(void)
     HRESULT hres;
 
     hres = HlinkGetSpecialReference(HLSR_HOME, &ref);
-    todo_wine
     ok(hres == S_OK, "HlinkGetSpecialReference(HLSR_HOME) failed: %08x\n", hres);
-    todo_wine
     ok(ref != NULL, "ref == NULL\n");
     CoTaskMemFree(ref);
 
     hres = HlinkGetSpecialReference(HLSR_SEARCHPAGE, &ref);
-    todo_wine
     ok(hres == S_OK, "HlinkGetSpecialReference(HLSR_SEARCHPAGE) failed: %08x\n", hres);
-    todo_wine
     ok(ref != NULL, "ref == NULL\n");
     CoTaskMemFree(ref);
 
