@@ -1966,3 +1966,12 @@ BOOL WINAPI LinkWindow_RegisterClass(void)
     FIXME("()\n");
     return TRUE;
 }
+
+/*************************************************************************
+ *              LinkWindow_UnregisterClass (SHELL32.259)
+ */
+BOOL WINAPI LinkWindow_UnregisterClass(void)
+{
+    FIXME("()\n");
+    return TRUE;
+}
