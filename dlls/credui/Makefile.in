@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = credui.dll
 IMPORTLIB = libcredui.$(IMPLIBEXT)
-IMPORTS   = comctl32 user32 kernel32
+IMPORTS   = comctl32 user32 advapi32 kernel32
 
 C_SRCS = \
 	credui_main.c

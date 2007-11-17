@@ -41,6 +41,7 @@ struct pending_credentials
     PWSTR pszTargetName;
     PWSTR pszUsername;
     PWSTR pszPassword;
+    BOOL generic;
 };
 
 static HINSTANCE hinstCredUI;
@@ -87,10 +88,32 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 static DWORD save_credentials(PCWSTR pszTargetName, PCWSTR pszUsername,
-                              PCWSTR pszPassword)
+                              PCWSTR pszPassword, BOOL generic)
 {
-    FIXME("save servername %s with username %s\n", debugstr_w(pszTargetName), debugstr_w(pszUsername));
-    return ERROR_SUCCESS;
+    CREDENTIALW cred;
+
+    TRACE("saving servername %s with username %s\n", debugstr_w(pszTargetName), debugstr_w(pszUsername));
+
+    cred.Flags = 0;
+    cred.Type = generic ? CRED_TYPE_GENERIC : CRED_TYPE_DOMAIN_PASSWORD;
+    cred.TargetName = (LPWSTR)pszTargetName;
+    cred.Comment = NULL;
+    cred.CredentialBlobSize = strlenW(pszPassword) * sizeof(WCHAR);
+    cred.CredentialBlob = (LPBYTE)pszPassword;
+    cred.Persist = CRED_PERSIST_ENTERPRISE;
+    cred.AttributeCount = 0;
+    cred.Attributes = NULL;
+    cred.TargetAlias = NULL;
+    cred.UserName = (LPWSTR)pszUsername;
+
+    if (CredWriteW(&cred, 0))
+        return ERROR_SUCCESS;
+    else
+    {
+        DWORD ret = GetLastError();
+        ERR("CredWriteW failed with error %d\n", ret);
+        return ret;
+    }
 }
 
 struct cred_dialog_params
@@ -312,11 +335,13 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
             len = strlenW(params.pszPassword);
             entry->pszPassword = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
             memcpy(entry->pszPassword, params.pszPassword, (len + 1)*sizeof(WCHAR));
+            entry->generic = dwFlags & CREDUI_FLAGS_GENERIC_CREDENTIALS ? TRUE : FALSE;
 
             LeaveCriticalSection(&csPendingCredentials);
         }
         else
-            result = save_credentials(pszTargetName, pszUsername, pszPassword);
+            result = save_credentials(pszTargetName, pszUsername, pszPassword,
+                                      dwFlags & CREDUI_FLAGS_GENERIC_CREDENTIALS ? TRUE : FALSE);
     }
 
     return result;
@@ -342,7 +367,8 @@ DWORD WINAPI CredUIConfirmCredentialsW(PCWSTR pszTargetName, BOOL bConfirm)
         if (!strcmpW(pszTargetName, entry->pszTargetName))
         {
             if (bConfirm)
-                result = save_credentials(entry->pszTargetName, entry->pszUsername, entry->pszPassword);
+                result = save_credentials(entry->pszTargetName, entry->pszUsername,
+                                          entry->pszPassword, entry->generic);
             else
                 result = ERROR_SUCCESS;
 
