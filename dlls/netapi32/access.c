@@ -178,10 +178,8 @@ NET_API_STATUS WINAPI NetUserAdd(LPCWSTR servername,
         break;
     }
 
-    if(su)
-    {
-        HeapFree(GetProcessHeap(), 0, su);
-    }
+    HeapFree(GetProcessHeap(), 0, su);
+
     return status;
 }
 
