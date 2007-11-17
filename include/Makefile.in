@@ -204,6 +204,7 @@ SRCDIR_INCLUDES = \
 	ipifcons.h \
 	iprtrmib.h \
 	iptypes.h \
+	isguids.h \
 	ks.h \
 	ksguid.h \
 	ksmedia.h \
