@@ -54,7 +54,7 @@ static const cryptdata cTestData[4] = {
        12,12,16}
 };
 
-static void printBytes(const char *heading, BYTE *pb, size_t cb)
+static void printBytes(const char *heading, const BYTE *pb, size_t cb)
 {
     size_t i;
     printf("%s: ",heading);
