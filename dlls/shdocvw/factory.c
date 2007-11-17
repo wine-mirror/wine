@@ -24,6 +24,7 @@
 #include "shdocvw.h"
 #include "winreg.h"
 #include "advpub.h"
+#include "isguids.h"
 
 #include "wine/debug.h"
 
@@ -206,14 +207,15 @@ static const GUID CLSID_MruLongList =
 static HRESULT register_server(BOOL doregister)
 {
     STRTABLEA strtable;
-    STRENTRYA pse[13];
-    static CLSID const *clsids[13];
+    STRENTRYA pse[14];
+    static CLSID const *clsids[14];
     int i = 0;
     HRESULT hres;
 
     INF_SET_CLSID(CUrlHistory);
     INF_SET_CLSID(Internet);
     INF_SET_CLSID(InternetExplorer);
+    INF_SET_CLSID(InternetShortcut);
     INF_SET_CLSID(MicrosoftBrowserArchitecture);
     INF_SET_CLSID(MruLongList);
     INF_SET_CLSID(SearchAssistantOC);
