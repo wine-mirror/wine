@@ -142,6 +142,8 @@ static void CredDialogFillUsernameCombo(HWND hwndUsername, struct cred_dialog_pa
     for (i = 0; i < count; i++)
     {
         COMBOBOXEXITEMW comboitem;
+        DWORD j;
+        BOOL duplicate = FALSE;
 
         if (params->dwFlags & CREDUI_FLAGS_GENERIC_CREDENTIALS)
         {
@@ -153,6 +155,17 @@ static void CredDialogFillUsernameCombo(HWND hwndUsername, struct cred_dialog_pa
             if (credentials[i]->Type == CRED_TYPE_GENERIC)
                 continue;
         }
+
+        /* don't add another item with the same name if we've already added it */
+        for (j = 0; j < i; j++)
+            if (!strcmpW(credentials[i]->UserName, credentials[j]->UserName))
+            {
+                duplicate = TRUE;
+                break;
+            }
+
+        if (duplicate)
+            continue;
 
         comboitem.mask = CBEIF_TEXT;
         comboitem.iItem = -1;
