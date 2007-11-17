@@ -4220,6 +4220,13 @@ typedef struct
 #define STATE_SYSTEM_PROTECTED       0x20000000
 #define STATE_SYSTEM_VALID           0x3FFFFFFF
 
+/* Lock codes for LockSetForegroundWindow */
+#define LSFW_LOCK   1
+#define LSFW_UNLOCK 2
+
+/* Values for AllowSetForegroundWindow */
+#define ASFW_ANY    ((DWORD)-1)
+
 #define     EnumTaskWindows(handle,proc,lparam) \
             EnumThreadWindows(handle,proc,lparam)
 #define     OemToAnsiA OemToCharA
