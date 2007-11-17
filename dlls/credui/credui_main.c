@@ -130,6 +130,89 @@ struct cred_dialog_params
     DWORD dwFlags;
 };
 
+static BOOL CredDialogInit(HWND hwndDlg, struct cred_dialog_params *params)
+{
+    SetWindowLongPtrW(hwndDlg, DWLP_USER, (LONG_PTR)params);
+    if (params->pszMessageText)
+        SetDlgItemTextW(hwndDlg, IDC_MESSAGE, params->pszMessageText);
+    else
+    {
+        WCHAR format[256];
+        WCHAR message[256];
+        LoadStringW(hinstCredUI, IDS_MESSAGEFORMAT, format, sizeof(format)/sizeof(format[0]));
+        snprintfW(message, sizeof(message)/sizeof(message[0]), format, params->pszTargetName);
+        SetDlgItemTextW(hwndDlg, IDC_MESSAGE, message);
+    }
+    SetDlgItemTextW(hwndDlg, IDC_USERNAME, params->pszUsername);
+    SetDlgItemTextW(hwndDlg, IDC_PASSWORD, params->pszPassword);
+
+    if (params->pszUsername[0])
+        SetFocus(GetDlgItem(hwndDlg, IDC_PASSWORD));
+    else
+        SetFocus(GetDlgItem(hwndDlg, IDC_USERNAME));
+
+    if (params->pszCaptionText)
+        SetWindowTextW(hwndDlg, params->pszCaptionText);
+    else
+    {
+        WCHAR format[256];
+        WCHAR title[256];
+        LoadStringW(hinstCredUI, IDS_TITLEFORMAT, format, sizeof(format)/sizeof(format[0]));
+        snprintfW(title, sizeof(title)/sizeof(title[0]), format, params->pszTargetName);
+        SetWindowTextW(hwndDlg, title);
+    }
+
+    if (params->dwFlags & (CREDUI_FLAGS_DO_NOT_PERSIST|CREDUI_FLAGS_PERSIST))
+        ShowWindow(GetDlgItem(hwndDlg, IDC_SAVE), SW_HIDE);
+    else if (params->fSave)
+        CheckDlgButton(hwndDlg, IDC_SAVE, BST_CHECKED);
+
+    return FALSE;
+}
+
+static void CredDialogCommandOk(HWND hwndDlg, struct cred_dialog_params *params)
+{
+    HWND hwndUsername = GetDlgItem(hwndDlg, IDC_USERNAME);
+    LPWSTR user;
+    INT len;
+    INT len2;
+
+    len = GetWindowTextLengthW(hwndUsername);
+    user = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    GetWindowTextW(hwndUsername, user, len + 1);
+
+    if (!user[0])
+    {
+        HeapFree(GetProcessHeap(), 0, user);
+        return;
+    }
+
+    if (!strchrW(user, '\\') && !strchrW(user, '@'))
+    {
+        INT len_target = strlenW(params->pszTargetName);
+        memcpy(params->pszUsername, params->pszTargetName,
+               min(len_target, params->ulUsernameMaxChars) * sizeof(WCHAR));
+        if (len_target + 1 < params->ulUsernameMaxChars)
+            params->pszUsername[len_target] = '\\';
+        if (len_target + 2 < params->ulUsernameMaxChars)
+            params->pszUsername[len_target + 1] = '\0';
+    }
+    else if (params->ulUsernameMaxChars > 0)
+        params->pszUsername[0] = '\0';
+
+    len2 = strlenW(params->pszUsername);
+    memcpy(params->pszUsername + len2, user, min(len, params->ulUsernameMaxChars - len2) * sizeof(WCHAR));
+    if (params->ulUsernameMaxChars)
+        params->pszUsername[len2 + min(len, params->ulUsernameMaxChars - len2 - 1)] = '\0';
+
+    HeapFree(GetProcessHeap(), 0, user);
+
+    GetDlgItemTextW(hwndDlg, IDC_PASSWORD, params->pszPassword,
+                    params->ulPasswordMaxChars);
+
+    EndDialog(hwndDlg, IDOK);
+}
+
 static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                                        LPARAM lParam)
 {
@@ -139,42 +222,7 @@ static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
         {
             struct cred_dialog_params *params = (struct cred_dialog_params *)lParam;
 
-            SetWindowLongPtrW(hwndDlg, DWLP_USER, (LONG_PTR)params);
-            if (params->pszMessageText)
-                SetDlgItemTextW(hwndDlg, IDC_MESSAGE, params->pszMessageText);
-            else
-            {
-                WCHAR format[256];
-                WCHAR message[256];
-                LoadStringW(hinstCredUI, IDS_MESSAGEFORMAT, format, sizeof(format)/sizeof(format[0]));
-                snprintfW(message, sizeof(message)/sizeof(message[0]), format, params->pszTargetName);
-                SetDlgItemTextW(hwndDlg, IDC_MESSAGE, message);
-            }
-            SetDlgItemTextW(hwndDlg, IDC_USERNAME, params->pszUsername);
-            SetDlgItemTextW(hwndDlg, IDC_PASSWORD, params->pszPassword);
-
-            if (params->pszUsername[0])
-                SetFocus(GetDlgItem(hwndDlg, IDC_PASSWORD));
-            else
-                SetFocus(GetDlgItem(hwndDlg, IDC_USERNAME));
-
-            if (params->pszCaptionText)
-                SetWindowTextW(hwndDlg, params->pszCaptionText);
-            else
-            {
-                WCHAR format[256];
-                WCHAR title[256];
-                LoadStringW(hinstCredUI, IDS_TITLEFORMAT, format, sizeof(format)/sizeof(format[0]));
-                snprintfW(title, sizeof(title)/sizeof(title[0]), format, params->pszTargetName);
-                SetWindowTextW(hwndDlg, title);
-            }
-
-            if (params->dwFlags & (CREDUI_FLAGS_DO_NOT_PERSIST|CREDUI_FLAGS_PERSIST))
-                ShowWindow(GetDlgItem(hwndDlg, IDC_SAVE), SW_HIDE);
-            else if (params->fSave)
-                CheckDlgButton(hwndDlg, IDC_SAVE, BST_CHECKED);
-
-            return FALSE;
+            return CredDialogInit(hwndDlg, params);
         }
         case WM_COMMAND:
             switch (wParam)
@@ -183,45 +231,7 @@ static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                 {
                     struct cred_dialog_params *params =
                         (struct cred_dialog_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
-                    HWND hwndUsername = GetDlgItem(hwndDlg, IDC_USERNAME);
-                    LPWSTR user;
-                    INT len;
-                    INT len2;
-
-                    len = GetWindowTextLengthW(hwndUsername);
-                    user = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
-                    GetWindowTextW(hwndUsername, user, len + 1);
-
-                    if (!user[0])
-                    {
-                        HeapFree(GetProcessHeap(), 0, user);
-                        return TRUE;
-                    }
-
-                    if (!strchrW(user, '\\') && !strchrW(user, '@'))
-                    {
-                        INT len_target = strlenW(params->pszTargetName);
-                        memcpy(params->pszUsername, params->pszTargetName,
-                               min(len_target, params->ulUsernameMaxChars) * sizeof(WCHAR));
-                        if (len_target + 1 < params->ulUsernameMaxChars)
-                            params->pszUsername[len_target] = '\\';
-                        if (len_target + 2 < params->ulUsernameMaxChars)
-                            params->pszUsername[len_target + 1] = '\0';
-                    }
-                    else if (params->ulUsernameMaxChars > 0)
-                        params->pszUsername[0] = '\0';
-
-                    len2 = strlenW(params->pszUsername);
-                    memcpy(params->pszUsername + len2, user, min(len, params->ulUsernameMaxChars - len2) * sizeof(WCHAR));
-                    if (params->ulUsernameMaxChars)
-                        params->pszUsername[len2 + min(len, params->ulUsernameMaxChars - len2 - 1)] = '\0';
-
-                    HeapFree(GetProcessHeap(), 0, user);
-
-                    GetDlgItemTextW(hwndDlg, IDC_PASSWORD, params->pszPassword,
-                                    params->ulPasswordMaxChars);
-
-                    EndDialog(hwndDlg, IDOK);
+                    CredDialogCommandOk(hwndDlg, params);
                     return TRUE;
                 }
                 case MAKELONG(IDCANCEL, BN_CLICKED):
