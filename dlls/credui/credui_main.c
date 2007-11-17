@@ -130,8 +130,44 @@ struct cred_dialog_params
     DWORD dwFlags;
 };
 
+static void CredDialogFillUsernameCombo(HWND hwndUsername, struct cred_dialog_params *params)
+{
+    DWORD count;
+    DWORD i;
+    PCREDENTIALW *credentials;
+
+    if (!CredEnumerateW(NULL, 0, &count, &credentials))
+        return;
+
+    for (i = 0; i < count; i++)
+    {
+        COMBOBOXEXITEMW comboitem;
+
+        if (params->dwFlags & CREDUI_FLAGS_GENERIC_CREDENTIALS)
+        {
+            if ((credentials[i]->Type != CRED_TYPE_GENERIC) || !credentials[i]->UserName)
+                continue;
+        }
+        else
+        {
+            if (credentials[i]->Type == CRED_TYPE_GENERIC)
+                continue;
+        }
+
+        comboitem.mask = CBEIF_TEXT;
+        comboitem.iItem = -1;
+        comboitem.pszText = credentials[i]->UserName;
+        SendMessageW(hwndUsername, CBEM_INSERTITEMW, 0, (LPARAM)&comboitem);
+    }
+
+    CredFree(credentials);
+}
+
 static BOOL CredDialogInit(HWND hwndDlg, struct cred_dialog_params *params)
 {
+    HWND hwndUsername = GetDlgItem(hwndDlg, IDC_USERNAME);
+    HWND hwndPassword = GetDlgItem(hwndDlg, IDC_PASSWORD);
+
     SetWindowLongPtrW(hwndDlg, DWLP_USER, (LONG_PTR)params);
     if (params->pszMessageText)
         SetDlgItemTextW(hwndDlg, IDC_MESSAGE, params->pszMessageText);
@@ -143,13 +179,15 @@ static BOOL CredDialogInit(HWND hwndDlg, struct cred_dialog_params *params)
         snprintfW(message, sizeof(message)/sizeof(message[0]), format, params->pszTargetName);
         SetDlgItemTextW(hwndDlg, IDC_MESSAGE, message);
     }
-    SetDlgItemTextW(hwndDlg, IDC_USERNAME, params->pszUsername);
-    SetDlgItemTextW(hwndDlg, IDC_PASSWORD, params->pszPassword);
+    SetWindowTextW(hwndUsername, params->pszUsername);
+    SetWindowTextW(hwndPassword, params->pszPassword);
+
+    CredDialogFillUsernameCombo(hwndUsername, params);
 
     if (params->pszUsername[0])
-        SetFocus(GetDlgItem(hwndDlg, IDC_PASSWORD));
+        SetFocus(hwndPassword);
     else
-        SetFocus(GetDlgItem(hwndDlg, IDC_USERNAME));
+        SetFocus(hwndUsername);
 
     if (params->pszCaptionText)
         SetWindowTextW(hwndDlg, params->pszCaptionText);
