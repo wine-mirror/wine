@@ -288,6 +288,16 @@ static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                 case MAKELONG(IDCANCEL, BN_CLICKED):
                     EndDialog(hwndDlg, IDCANCEL);
                     return TRUE;
+                case MAKELONG(IDC_PASSWORD, EN_SETFOCUS):
+                    /* don't allow another window to steal focus while the
+                     * user is typing their password */
+                    LockSetForegroundWindow(LSFW_LOCK);
+                    return TRUE;
+                case MAKELONG(IDC_PASSWORD, EN_KILLFOCUS):
+                    /* the user is no longer typing their password, so allow
+                     * other windows to become foreground ones */
+                    LockSetForegroundWindow(LSFW_UNLOCK);
+                    return TRUE;
             }
             /* fall through */
         default:
