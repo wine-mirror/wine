@@ -1957,3 +1957,12 @@ HRESULT WINAPI SHSetLocalizedName(LPWSTR pszPath, LPCWSTR pszResModule, int idsR
 
     return S_OK;
 }
+
+/*************************************************************************
+ *              LinkWindow_RegisterClass (SHELL32.258)
+ */
+BOOL WINAPI LinkWindow_RegisterClass(void)
+{
+    FIXME("()\n");
+    return TRUE;
+}

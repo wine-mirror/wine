@@ -210,6 +210,7 @@
  250 stdcall -noname PathRemoveExtension(ptr) PathRemoveExtensionAW
  251 stdcall -noname PathRemoveArgs(ptr) PathRemoveArgsAW
  256 stdcall @(ptr ptr) SHELL32_256
+ 258 stdcall -noname LinkWindow_RegisterClass()
 #299 stub Shl1632_ThunkData32
 #300 stub Shl3216_ThunkData32
 
