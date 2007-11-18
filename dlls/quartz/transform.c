@@ -107,6 +107,8 @@ static HRESULT TransformFilter_InputPin_Construct(const PIN_INFO * pPinInfo, SAM
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
     }
+
+    CoTaskMemFree(pPinImpl);
     return E_FAIL;
 }
 
@@ -136,6 +138,8 @@ static HRESULT TransformFilter_OutputPin_Construct(const PIN_INFO * pPinInfo, co
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
     }
+
+    CoTaskMemFree(pPinImpl);
     return E_FAIL;
 }
 

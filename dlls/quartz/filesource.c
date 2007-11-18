@@ -880,6 +880,8 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
         *ppPin = (IPin *)(&pPinImpl->pin.pin.lpVtbl);
         return S_OK;
     }
+
+    CoTaskMemFree(pPinImpl);
     return E_FAIL;
 }
 

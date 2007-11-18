@@ -147,10 +147,12 @@ HRESULT InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LP
     {
         pPinImpl->pin.lpVtbl = &InputPin_Vtbl;
         pPinImpl->lpVtblMemInput = &MemInputPin_Vtbl;
-        
+
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
     }
+
+    CoTaskMemFree(pPinImpl);
     return E_FAIL;
 }
 
@@ -228,10 +230,12 @@ HRESULT OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *pro
     if (SUCCEEDED(OutputPin_Init(pPinInfo, props, pUserData, pQueryAccept, pCritSec, pPinImpl)))
     {
         pPinImpl->pin.lpVtbl = &OutputPin_Vtbl;
-        
+
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
     }
+
+    CoTaskMemFree(pPinImpl);
     return E_FAIL;
 }
 
@@ -1021,10 +1025,12 @@ HRESULT PullPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPV
     if (SUCCEEDED(PullPin_Init(pPinInfo, pSampleProc, pUserData, pQueryAccept, pCritSec, pPinImpl)))
     {
         pPinImpl->pin.lpVtbl = &PullPin_Vtbl;
-        
+
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
     }
+
+    CoTaskMemFree(pPinImpl);
     return E_FAIL;
 }
 

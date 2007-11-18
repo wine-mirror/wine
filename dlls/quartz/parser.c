@@ -128,10 +128,12 @@ static HRESULT Parser_OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_P
     if (SUCCEEDED(Parser_OutputPin_Init(pPinInfo, props, pUserData, pQueryAccept, pmt, fSamplesPerSec, pCritSec, pPinImpl)))
     {
         pPinImpl->pin.pin.lpVtbl = &Parser_OutputPin_Vtbl;
-        
+
         *ppPin = (IPin *)pPinImpl;
         return S_OK;
     }
+
+    CoTaskMemFree(pPinImpl);
     return E_FAIL;
 }
 
@@ -723,10 +725,12 @@ static HRESULT Parser_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC p
     if (SUCCEEDED(PullPin_Init(pPinInfo, pSampleProc, pUserData, pQueryAccept, pCritSec, pPinImpl)))
     {
         pPinImpl->pin.lpVtbl = &Parser_InputPin_Vtbl;
-        
+
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
     }
+
+    CoTaskMemFree(pPinImpl);
     return E_FAIL;
 }
 

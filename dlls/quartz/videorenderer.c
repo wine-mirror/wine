@@ -277,10 +277,12 @@ static HRESULT VideoRenderer_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPL
     {
         pPinImpl->pin.lpVtbl = &VideoRenderer_InputPin_Vtbl;
         pPinImpl->lpVtblMemInput = &MemInputPin_Vtbl;
-      
+
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
     }
+
+    CoTaskMemFree(pPinImpl);
     return E_FAIL;
 }
 

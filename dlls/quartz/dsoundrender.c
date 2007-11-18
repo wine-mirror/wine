@@ -97,10 +97,12 @@ static HRESULT DSoundRender_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLE
     {
         pPinImpl->pin.lpVtbl = &DSoundRender_InputPin_Vtbl;
         pPinImpl->lpVtblMemInput = &MemInputPin_Vtbl;
-        
+
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
     }
+
+    CoTaskMemFree(pPinImpl);
     return E_FAIL;
 }
 
