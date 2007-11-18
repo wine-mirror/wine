@@ -1388,6 +1388,26 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
 }
 
 /***********************************************************************
+ *           FindFirstVolumeA   (KERNEL32.@)
+ */
+HANDLE WINAPI FindFirstVolumeA(LPSTR volume, DWORD len)
+{
+    FIXME("(%p, %d), stub!\n", volume, len);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return INVALID_HANDLE_VALUE;
+}
+
+/***********************************************************************
+ *           FindFirstVolumeW   (KERNEL32.@)
+ */
+HANDLE WINAPI FindFirstVolumeW(LPWSTR volume, DWORD len)
+{
+    FIXME("(%p, %d), stub!\n", volume, len);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return INVALID_HANDLE_VALUE;
+}
+
+/***********************************************************************
  *           FindFirstVolumeMountPointA   (KERNEL32.@)
  */
 HANDLE WINAPI FindFirstVolumeMountPointA(LPCSTR root, LPSTR mount_point, DWORD len)

@@ -371,10 +371,10 @@
 @ stdcall FindFirstFileExA(str long ptr long ptr long)
 @ stdcall FindFirstFileExW(wstr long ptr long ptr long)
 @ stdcall FindFirstFileW(wstr ptr)
-@ stub FindFirstVolumeA
+@ stdcall FindFirstVolumeA(ptr long)
 @ stdcall FindFirstVolumeMountPointA(str ptr long)
 @ stdcall FindFirstVolumeMountPointW(wstr ptr long)
-@ stub FindFirstVolumeW
+@ stdcall FindFirstVolumeW(ptr long)
 @ stdcall FindNextChangeNotification(long)
 @ stdcall FindNextFileA(long ptr)
 @ stdcall FindNextFileW(long ptr)
