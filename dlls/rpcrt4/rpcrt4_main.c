@@ -926,7 +926,9 @@ RPC_STATUS RPC_ENTRY RpcCancelThread(void* ThreadHandle)
     LIST_FOR_EACH_ENTRY(tdata, &threaddata_list, struct threaddata, entry)
         if (tdata->thread_id == target_tid)
         {
-            rpcrt4_conn_cancel_call(tdata->connection);
+            EnterCriticalSection(&tdata->cs);
+            if (tdata->connection) rpcrt4_conn_cancel_call(tdata->connection);
+            LeaveCriticalSection(&tdata->cs);
             break;
         }
     LeaveCriticalSection(&threaddata_cs);
