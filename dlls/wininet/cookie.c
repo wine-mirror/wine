@@ -454,7 +454,7 @@ BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         return FALSE;
     }
 
-    hostName[0] = 0;
+    hostName[0] = path[0] = 0;
     ret = COOKIE_crackUrlSimple(lpszUrl, hostName, sizeof(hostName)/sizeof(hostName[0]), path, sizeof(path)/sizeof(path[0]));
     if (!ret || !hostName[0]) return FALSE;
 
