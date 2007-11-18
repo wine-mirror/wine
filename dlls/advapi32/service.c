@@ -2107,9 +2107,6 @@ QueryServiceConfigW( SC_HANDLE hService,
         n -= sizeof(WCHAR);
     }
 
-    if( n < 0 )
-        ERR("Buffer overflow!\n");
-
     TRACE("Image path           = %s\n", debugstr_w(lpServiceConfig->lpBinaryPathName) );
     TRACE("Group                = %s\n", debugstr_w(lpServiceConfig->lpLoadOrderGroup) );
     TRACE("Dependencies         = %s\n", debugstr_w(lpServiceConfig->lpDependencies) );
