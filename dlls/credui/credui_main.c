@@ -183,6 +183,11 @@ static BOOL CredDialogInit(HWND hwndDlg, struct cred_dialog_params *params)
     HWND hwndPassword = GetDlgItem(hwndDlg, IDC_PASSWORD);
 
     SetWindowLongPtrW(hwndDlg, DWLP_USER, (LONG_PTR)params);
+
+    if (params->hbmBanner)
+        SendMessageW(GetDlgItem(hwndDlg, IDB_BANNER), STM_SETIMAGE,
+                     IMAGE_BITMAP, (LPARAM)params->hbmBanner);
+
     if (params->pszMessageText)
         SetDlgItemTextW(hwndDlg, IDC_MESSAGE, params->pszMessageText);
     else
