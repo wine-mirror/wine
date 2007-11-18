@@ -339,7 +339,7 @@ static void test_AddPortEx(void)
 
 /* ########################### */
 
-static void test_ClosePort()
+static void test_ClosePort(void)
 {
     HANDLE  hPort;
     HANDLE  hPort2;
@@ -629,7 +629,7 @@ static void test_InitializePrintMonitor(void)
 
 /* ########################### */
 
-static void test_OpenPort()
+static void test_OpenPort(void)
 {
     HANDLE  hPort;
     HANDLE  hPort2;
