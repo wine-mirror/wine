@@ -622,6 +622,11 @@ static void D3X8QuaternionTest(void)
     got = D3DXQuaternionLengthSq(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
+/*_______________D3DXQuaternionMultiply________________________*/
+    expectedquat.x = 3.0f; expectedquat.y = 61.0f; expectedquat.z = -32.0f; expectedquat.w = 85.0f;
+    D3DXQuaternionMultiply(&gotquat,&q,&r);
+    expect_vec4(expectedquat,gotquat);
+
 /*_______________D3DXQuaternionNormalize________________________*/
     expectedquat.x = 1.0f/11.0f; expectedquat.y = 2.0f/11.0f; expectedquat.z = 4.0f/11.0f; expectedquat.w = 10.0f/11.0f;
     D3DXQuaternionNormalize(&gotquat,&q);

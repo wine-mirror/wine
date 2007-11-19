@@ -53,7 +53,7 @@
 @ stub D3DXQuaternionRotationMatrix
 @ stub D3DXQuaternionRotationAxis
 @ stub D3DXQuaternionRotationYawPitchRoll
-@ stub D3DXQuaternionMultiply
+@ stdcall D3DXQuaternionMultiply(ptr ptr ptr)
 @ stdcall D3DXQuaternionNormalize(ptr ptr)
 @ stub D3DXQuaternionInverse
 @ stub D3DXQuaternionLn
