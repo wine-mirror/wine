@@ -63,7 +63,7 @@
 @ stub D3DXQuaternionBaryCentric
 @ stdcall D3DXPlaneNormalize(ptr ptr)
 @ stdcall D3DXPlaneIntersectLine(ptr ptr ptr ptr)
-@ stub D3DXPlaneFromPointNormal
+@ stdcall D3DXPlaneFromPointNormal(ptr ptr ptr)
 @ stub D3DXPlaneFromPoints
 @ stub D3DXPlaneTransform
 @ stub D3DXColorAdjustSaturation

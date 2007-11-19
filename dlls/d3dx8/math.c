@@ -482,6 +482,15 @@ D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm)
 
 /*_________________D3DXPLANE________________*/
 
+D3DXPLANE* WINAPI D3DXPlaneFromPointNormal(D3DXPLANE *pout, CONST D3DXVECTOR3 *pvpoint, CONST D3DXVECTOR3 *pvnormal)
+{
+    pout->a = pvnormal->x;
+    pout->b = pvnormal->y;
+    pout->c = pvnormal->z;
+    pout->d = -D3DXVec3Dot(pvpoint, pvnormal);
+    return pout;
+}
+
 D3DXVECTOR3* WINAPI D3DXPlaneIntersectLine(D3DXVECTOR3 *pout, CONST D3DXPLANE *pp, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
 {
     D3DXVECTOR3 direction, normal;
