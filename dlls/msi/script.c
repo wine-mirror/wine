@@ -102,12 +102,10 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
     /* Create an installer object */
     hr = create_msiserver(NULL, (LPVOID *)&pActiveScriptSite->pInstaller);
     if (hr != S_OK) goto done;
-    IUnknown_AddRef((IUnknown *)pActiveScriptSite->pInstaller);
 
     /* Create a session object */
     hr = create_session(hPackage, pActiveScriptSite->pInstaller, &pActiveScriptSite->pSession);
     if (hr != S_OK) goto done;
-    IUnknown_AddRef((IUnknown *)pActiveScriptSite->pSession);
 
     /* Create the scripting engine */
     if ((type & 7) == msidbCustomActionTypeJScript)
