@@ -2330,7 +2330,7 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
 error:
     ERR( "Main exe initialization for %s failed, status %x\n",
          debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), status );
-    exit(1);
+    NtTerminateProcess( GetCurrentProcess(), status );
 }
 
 
