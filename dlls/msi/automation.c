@@ -282,6 +282,7 @@ static ULONG WINAPI AutomationObject_Release(IDispatch* iface)
     if (!ref)
     {
         if (This->funcFree) This->funcFree(This);
+        ITypeInfo_Release(This->iTypeInfo);
         MsiCloseHandle(This->msiHandle);
         HeapFree(GetProcessHeap(), 0, This);
     }
