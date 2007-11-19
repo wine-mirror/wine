@@ -212,6 +212,10 @@ static void modify_icon(NOTIFYICONDATAW *nid, BOOL modify_tooltip)
     {
         set_tooltip(icon, nid->szTip, modify_tooltip);
     }
+    if (nid->uFlags & NIF_INFO && nid->cbSize >= NOTIFYICONDATAA_V2_SIZE)
+    {
+        WINE_FIXME("balloon tip title %s, message %s\n", wine_dbgstr_w(nid->szInfoTitle), wine_dbgstr_w(nid->szInfo));
+    }
 }
 
 static void add_icon(NOTIFYICONDATAW *nid)
