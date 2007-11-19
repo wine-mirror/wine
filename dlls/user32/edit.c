@@ -184,7 +184,7 @@ typedef struct
  *	We still like to call them internally
  *	"static inline" makes them more like macro's
  */
-static inline BOOL	EDIT_EM_CanUndo(EDITSTATE *es);
+static inline BOOL	EDIT_EM_CanUndo(const EDITSTATE *es);
 static inline void	EDIT_EM_EmptyUndoBuffer(EDITSTATE *es);
 static inline void	EDIT_WM_Clear(EDITSTATE *es);
 static inline void	EDIT_WM_Cut(EDITSTATE *es);
@@ -204,7 +204,7 @@ static void	EDIT_MoveUp_ML(EDITSTATE *es, BOOL extend);
  */
 static INT	EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count, INT action);
 static INT	EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap);
-static void	EDIT_ConfinePoint(EDITSTATE *es, LPINT x, LPINT y);
+static void	EDIT_ConfinePoint(const EDITSTATE *es, LPINT x, LPINT y);
 static void	EDIT_GetLineRect(EDITSTATE *es, INT line, INT scol, INT ecol, LPRECT rc);
 static void	EDIT_InvalidateText(EDITSTATE *es, INT start, INT end);
 static void	EDIT_LockBuffer(EDITSTATE *es);
@@ -220,7 +220,7 @@ static void	EDIT_PaintLine(EDITSTATE *es, HDC hdc, INT line, BOOL rev);
 static INT	EDIT_PaintText(EDITSTATE *es, HDC hdc, INT x, INT y, INT line, INT col, INT count, BOOL rev);
 static void	EDIT_SetCaretPos(EDITSTATE *es, INT pos, BOOL after_wrap);
 static void	EDIT_AdjustFormatRect(EDITSTATE *es);
-static void	EDIT_SetRectNP(EDITSTATE *es, LPRECT lprc);
+static void	EDIT_SetRectNP(EDITSTATE *es, const RECT *lprc);
 static void	EDIT_UnlockBuffer(EDITSTATE *es, BOOL force);
 static void	EDIT_UpdateScrollInfo(EDITSTATE *es);
 static INT CALLBACK EDIT_WordBreakProc(LPWSTR s, INT index, INT count, INT action);
@@ -232,10 +232,10 @@ static BOOL	EDIT_EM_FmtLines(EDITSTATE *es, BOOL add_eol);
 static HLOCAL	EDIT_EM_GetHandle(EDITSTATE *es);
 static HLOCAL16	EDIT_EM_GetHandle16(EDITSTATE *es);
 static INT	EDIT_EM_GetLine(EDITSTATE *es, INT line, LPWSTR dst, BOOL unicode);
-static LRESULT	EDIT_EM_GetSel(EDITSTATE *es, PUINT start, PUINT end);
+static LRESULT	EDIT_EM_GetSel(const EDITSTATE *es, PUINT start, PUINT end);
 static LRESULT	EDIT_EM_GetThumb(EDITSTATE *es);
 static INT	EDIT_EM_LineFromChar(EDITSTATE *es, INT index);
-static INT	EDIT_EM_LineIndex(EDITSTATE *es, INT line);
+static INT	EDIT_EM_LineIndex(const EDITSTATE *es, INT line);
 static INT	EDIT_EM_LineLength(EDITSTATE *es, INT index);
 static BOOL	EDIT_EM_LineScroll(EDITSTATE *es, INT dx, INT dy);
 static BOOL	EDIT_EM_LineScroll_internal(EDITSTATE *es, INT dx, INT dy);
@@ -249,8 +249,8 @@ static void	EDIT_EM_SetLimitText(EDITSTATE *es, UINT limit);
 static void	EDIT_EM_SetMargins(EDITSTATE *es, INT action, WORD left, WORD right, BOOL repaint);
 static void	EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c);
 static void	EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap);
-static BOOL	EDIT_EM_SetTabStops(EDITSTATE *es, INT count, LPINT tabs);
-static BOOL	EDIT_EM_SetTabStops16(EDITSTATE *es, INT count, LPINT16 tabs);
+static BOOL	EDIT_EM_SetTabStops(EDITSTATE *es, INT count, const INT *tabs);
+static BOOL	EDIT_EM_SetTabStops16(EDITSTATE *es, INT count, const INT16 *tabs);
 static void	EDIT_EM_SetWordBreakProc(EDITSTATE *es, void *wbp);
 static void	EDIT_EM_SetWordBreakProc16(EDITSTATE *es, EDITWORDBREAKPROC16 wbp);
 static BOOL	EDIT_EM_Undo(EDITSTATE *es);
@@ -264,7 +264,7 @@ static void	EDIT_WM_Copy(EDITSTATE *es);
 static LRESULT	EDIT_WM_Create(EDITSTATE *es, LPCWSTR name);
 static LRESULT	EDIT_WM_Destroy(EDITSTATE *es);
 static LRESULT	EDIT_WM_EraseBkGnd(EDITSTATE *es, HDC dc);
-static INT	EDIT_WM_GetText(EDITSTATE *es, INT count, LPWSTR dst, BOOL unicode);
+static INT	EDIT_WM_GetText(const EDITSTATE *es, INT count, LPWSTR dst, BOOL unicode);
 static LRESULT	EDIT_WM_HScroll(EDITSTATE *es, INT action, INT pos);
 static LRESULT	EDIT_WM_KeyDown(EDITSTATE *es, INT key);
 static LRESULT	EDIT_WM_KillFocus(EDITSTATE *es);
@@ -284,7 +284,7 @@ static LRESULT  EDIT_WM_StyleChanged(EDITSTATE *es, WPARAM which, const STYLESTR
 static LRESULT	EDIT_WM_SysKeyDown(EDITSTATE *es, INT key, DWORD key_data);
 static void	EDIT_WM_Timer(EDITSTATE *es);
 static LRESULT	EDIT_WM_VScroll(EDITSTATE *es, INT action, INT pos);
-static void	EDIT_UpdateText(EDITSTATE *es, LPRECT rc, BOOL bErase);
+static void	EDIT_UpdateText(EDITSTATE *es, const RECT *rc, BOOL bErase);
 static void	EDIT_UpdateTextRegion(EDITSTATE *es, HRGN hrgn, BOOL bErase);
 static void EDIT_ImeComposition(HWND hwnd, LPARAM CompFlag, EDITSTATE *es);
 
@@ -312,7 +312,7 @@ const struct builtin_class_descr EDIT_builtin_class =
  *	EM_CANUNDO
  *
  */
-static inline BOOL EDIT_EM_CanUndo(EDITSTATE *es)
+static inline BOOL EDIT_EM_CanUndo(const EDITSTATE *es)
 {
 	return (es->undo_insert_count || strlenW(es->undo_text));
 }
@@ -1622,7 +1622,7 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
  *	(so CharFromPos returns the nearest _visible_ character)
  *
  */
-static void EDIT_ConfinePoint(EDITSTATE *es, LPINT x, LPINT y)
+static void EDIT_ConfinePoint(const EDITSTATE *es, LPINT x, LPINT y)
 {
 	*x = min(max(*x, es->format_rect.left), es->format_rect.right - 1);
 	*y = min(max(*y, es->format_rect.top), es->format_rect.bottom - 1);
@@ -2390,7 +2390,7 @@ static void EDIT_AdjustFormatRect(EDITSTATE *es)
  *		it is also used to set the rect of a single line control
  *
  */
-static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
+static void EDIT_SetRectNP(EDITSTATE *es, const RECT *rc)
 {
 	LONG_PTR ExStyle;
 	INT bw, bh;
@@ -2855,7 +2855,7 @@ static INT EDIT_EM_GetLine(EDITSTATE *es, INT line, LPWSTR dst, BOOL unicode)
  *	EM_GETSEL
  *
  */
-static LRESULT EDIT_EM_GetSel(EDITSTATE *es, PUINT start, PUINT end)
+static LRESULT EDIT_EM_GetSel(const EDITSTATE *es, PUINT start, PUINT end)
 {
 	UINT s = es->selection_start;
 	UINT e = es->selection_end;
@@ -2920,10 +2920,10 @@ static INT EDIT_EM_LineFromChar(EDITSTATE *es, INT index)
  *	EM_LINEINDEX
  *
  */
-static INT EDIT_EM_LineIndex(EDITSTATE *es, INT line)
+static INT EDIT_EM_LineIndex(const EDITSTATE *es, INT line)
 {
 	INT line_index;
-	LINEDEF *line_def;
+	const LINEDEF *line_def;
 
 	if (!(es->style & ES_MULTILINE))
 		return 0;
@@ -3851,7 +3851,7 @@ static void EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap)
  *	EM_SETTABSTOPS
  *
  */
-static BOOL EDIT_EM_SetTabStops(EDITSTATE *es, INT count, LPINT tabs)
+static BOOL EDIT_EM_SetTabStops(EDITSTATE *es, INT count, const INT *tabs)
 {
 	if (!(es->style & ES_MULTILINE))
 		return FALSE;
@@ -3872,7 +3872,7 @@ static BOOL EDIT_EM_SetTabStops(EDITSTATE *es, INT count, LPINT tabs)
  *	EM_SETTABSTOPS16
  *
  */
-static BOOL EDIT_EM_SetTabStops16(EDITSTATE *es, INT count, LPINT16 tabs)
+static BOOL EDIT_EM_SetTabStops16(EDITSTATE *es, INT count, const INT16 *tabs)
 {
 	if (!(es->style & ES_MULTILINE))
 		return FALSE;
@@ -4275,7 +4275,7 @@ static LRESULT EDIT_WM_EraseBkGnd(EDITSTATE *es, HDC dc)
  *	WM_GETTEXT
  *
  */
-static INT EDIT_WM_GetText(EDITSTATE *es, INT count, LPWSTR dst, BOOL unicode)
+static INT EDIT_WM_GetText(const EDITSTATE *es, INT count, LPWSTR dst, BOOL unicode)
 {
     if(!count) return 0;
 
@@ -5344,7 +5344,7 @@ static void EDIT_UpdateTextRegion(EDITSTATE *es, HRGN hrgn, BOOL bErase)
  *	EDIT_UpdateText
  *
  */
-static void EDIT_UpdateText(EDITSTATE *es, LPRECT rc, BOOL bErase)
+static void EDIT_UpdateText(EDITSTATE *es, const RECT *rc, BOOL bErase)
 {
     if (es->flags & EF_UPDATE) {
         es->flags &= ~EF_UPDATE;
