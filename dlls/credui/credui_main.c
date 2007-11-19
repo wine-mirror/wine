@@ -129,6 +129,7 @@ struct cred_dialog_params
     ULONG ulPasswordMaxChars;
     BOOL fSave;
     DWORD dwFlags;
+    HWND hwndBalloonTip;
 };
 
 static void CredDialogFillUsernameCombo(HWND hwndUsername, struct cred_dialog_params *params)
@@ -177,6 +178,68 @@ static void CredDialogFillUsernameCombo(HWND hwndUsername, struct cred_dialog_pa
     CredFree(credentials);
 }
 
+static void CredDialogShowIncorrectPasswordBalloon(HWND hwndDlg, struct cred_dialog_params *params)
+{
+    TTTOOLINFOW toolinfo;
+    RECT rcPassword;
+    INT x;
+    INT y;
+    WCHAR wszTitle[256];
+    WCHAR wszText[256];
+
+    /* user name likely wrong so balloon would be confusing. focus is also
+     * not set to the password edit box, so more notification would need to be
+     * handled */
+    if (!params->pszUsername[0])
+        return;
+
+    if (!LoadStringW(hinstCredUI, IDS_INCORRECTPASSWORDTITLE, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0])))
+    {
+        ERR("failed to load IDS_INCORRECTPASSWORDTITLE\n");
+        return;
+    }
+    if (!LoadStringW(hinstCredUI, IDS_INCORRECTPASSWORD, wszText, sizeof(wszText)/sizeof(wszText[0])))
+    {
+        ERR("failed to load IDS_INCORRECTPASSWORD\n");
+        return;
+    }
+
+    params->hwndBalloonTip = CreateWindowExW(WS_EX_TOOLWINDOW, TOOLTIPS_CLASSW,
+        NULL, WS_POPUP | TTS_NOPREFIX | TTS_BALLOON, CW_USEDEFAULT,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hwndDlg, NULL,
+        hinstCredUI, NULL);
+    SetWindowPos(params->hwndBalloonTip, HWND_TOPMOST, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+    toolinfo.cbSize = sizeof(toolinfo);
+    toolinfo.uFlags = TTF_TRACK;
+    toolinfo.hwnd = hwndDlg;
+    toolinfo.uId = 0;
+    memset(&toolinfo.rect, 0, sizeof(toolinfo.rect));
+    toolinfo.hinst = NULL;
+    toolinfo.lpszText = wszText;
+    toolinfo.lParam = 0;
+    toolinfo.lpReserved = NULL;
+    SendMessageW(params->hwndBalloonTip, TTM_ADDTOOLW, 0, (LPARAM)&toolinfo);
+
+    SendMessageW(params->hwndBalloonTip, TTM_SETTITLEW, TTI_ERROR, (LPARAM)wszTitle);
+
+    GetWindowRect(GetDlgItem(hwndDlg, IDC_PASSWORD), &rcPassword);
+    /* centred vertically and in the right side of the password edit control */
+    x = rcPassword.right - 12;
+    y = (rcPassword.top + rcPassword.bottom) / 2;
+    SendMessageW(params->hwndBalloonTip, TTM_TRACKPOSITION, 0, MAKELONG(x, y));
+
+    SendMessageW(params->hwndBalloonTip, TTM_TRACKACTIVATE, TRUE, (LPARAM)&toolinfo);
+}
+
+static void CredDialogHideBalloonTip(HWND hwndDlg, struct cred_dialog_params *params)
+{
+    /* we don't need the balloon tip again, so destroy it */
+    DestroyWindow(params->hwndBalloonTip);
+    params->hwndBalloonTip = NULL;
+}
+
 static BOOL CredDialogInit(HWND hwndDlg, struct cred_dialog_params *params)
 {
     HWND hwndUsername = GetDlgItem(hwndDlg, IDC_USERNAME);
@@ -223,6 +286,9 @@ static BOOL CredDialogInit(HWND hwndDlg, struct cred_dialog_params *params)
         ShowWindow(GetDlgItem(hwndDlg, IDC_SAVE), SW_HIDE);
     else if (params->fSave)
         CheckDlgButton(hwndDlg, IDC_SAVE, BST_CHECKED);
+
+    if (params->dwFlags & CREDUI_FLAGS_INCORRECT_PASSWORD)
+        CredDialogShowIncorrectPasswordBalloon(hwndDlg, params);
 
     return FALSE;
 }
@@ -300,12 +366,31 @@ static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                     LockSetForegroundWindow(LSFW_LOCK);
                     return TRUE;
                 case MAKELONG(IDC_PASSWORD, EN_KILLFOCUS):
+                {
+                    struct cred_dialog_params *params =
+                        (struct cred_dialog_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
                     /* the user is no longer typing their password, so allow
                      * other windows to become foreground ones */
                     LockSetForegroundWindow(LSFW_UNLOCK);
+                    CredDialogHideBalloonTip(hwndDlg, params);
                     return TRUE;
+                }
+                case MAKELONG(IDC_PASSWORD, EN_CHANGE):
+                {
+                    struct cred_dialog_params *params =
+                        (struct cred_dialog_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
+                    CredDialogHideBalloonTip(hwndDlg, params);
+                    return TRUE;
+                }
             }
-            /* fall through */
+            return FALSE;
+        case WM_DESTROY:
+        {
+            struct cred_dialog_params *params =
+                (struct cred_dialog_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
+            if (params->hwndBalloonTip) DestroyWindow(params->hwndBalloonTip);
+            return TRUE;
+        }
         default:
             return FALSE;
     }
@@ -360,6 +445,7 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
     params.ulPasswordMaxChars = ulPasswordMaxChars;
     params.fSave = pfSave ? *pfSave : FALSE;
     params.dwFlags = dwFlags;
+    params.hwndBalloonTip = NULL;
 
     ret = DialogBoxParamW(hinstCredUI, MAKEINTRESOURCEW(IDD_CREDDIALOG),
                           pUIInfo ? pUIInfo->hwndParent : NULL,
