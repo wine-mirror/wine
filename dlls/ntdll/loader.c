@@ -36,6 +36,7 @@
 
 #include "wine/exception.h"
 #include "wine/library.h"
+#include "wine/pthread.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/server.h"
@@ -51,6 +52,8 @@ WINE_DECLARE_DEBUG_CHANNEL(imports);
 /* we don't want to include winuser.h */
 #define RT_MANIFEST                         ((ULONG_PTR)24)
 #define ISOLATIONAWARE_MANIFEST_RESOURCE_ID ((ULONG_PTR)2)
+
+extern struct wine_pthread_functions pthread_functions;
 
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 
@@ -2314,6 +2317,9 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     if ((status = fixup_imports( wm, load_path )) != STATUS_SUCCESS) goto error;
     if ((status = alloc_process_tls()) != STATUS_SUCCESS) goto error;
     if ((status = alloc_thread_tls()) != STATUS_SUCCESS) goto error;
+
+    pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
+
     if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS)
     {
         if (last_failed_modref)

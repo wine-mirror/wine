@@ -1072,7 +1072,6 @@ NTSTATUS server_init_process_done(void)
     }
     SERVER_END_REQ;
 
-    pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
     return status;
 }
 
