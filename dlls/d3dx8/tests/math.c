@@ -67,6 +67,7 @@ static void D3DXColorTest(void)
     color.r = 0.2f; color.g = 0.75f; color.b = 0.41f; color.a = 0.93f;
     color1.r = 0.6f; color1.g = 0.55f; color1.b = 0.23f; color1.a = 0.82f;
     color2.r = 0.3f; color2.g = 0.5f; color2.b = 0.76f; color2.a = 0.11f;
+
     scale = 0.3f;
 
 /*_______________D3DXColorAdd________________*/
@@ -80,6 +81,11 @@ static void D3DXColorTest(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
     funcpointer = D3DXColorAdd(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+
+/*_______________D3DXColorAdjustSaturation______*/
+    expected.r = 0.486028f; expected.g = 0.651028f; expected.b = 0.549028f, expected.a = 0.93f;
+    D3DXColorAdjustSaturation(&got,&color,scale);
+    expect_color(expected,got);
 
 /*_______________D3DXColorLerp________________*/
     expected.r = 0.32f; expected.g = 0.69f; expected.b = 0.356f; expected.a = 0.897f;
@@ -436,7 +442,6 @@ static void D3DXMatrixTest(void)
 
 static void D3DXPlaneTest(void)
 {
-
     D3DXMATRIX mat;
     D3DXPLANE expectedplane, gotplane, nulplane, plane;
     D3DXVECTOR3 expectedvec, gotvec, vec1, vec2, vec3;

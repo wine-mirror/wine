@@ -32,6 +32,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx8);
 
+/*_________________D3DXColor____________________*/
+
+D3DXCOLOR* WINAPI D3DXColorAdjustSaturation(D3DXCOLOR *pout, CONST D3DXCOLOR *pc, FLOAT s)
+{
+    FLOAT grey;
+
+    grey = pc->r * 0.2125f + pc->g * 0.7154f + pc->b * 0.0721f;
+    pout->r = grey + s * (pc->r - grey);
+    pout->g = grey + s * (pc->g - grey);
+    pout->b = grey + s * (pc->b - grey);
+    pout->a = pc->a;
+    return pout;
+}
+
 /*_________________D3DXMatrix____________________*/
 
 D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *pout, float scaling, D3DXVECTOR3 *rotationcenter, D3DXQUATERNION *rotation, D3DXVECTOR3 *translation)
