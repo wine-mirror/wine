@@ -150,19 +150,17 @@ static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
     SendMessageW(hwndToolBar, TB_ADDBUTTONSW, 1, (LPARAM)&button);
 }
 
-static void AddTextButton(HWND hWnd, int string, int command, int id)
+static void AddTextButton(HWND hRebarWnd, int string, int command, int id)
 {
     REBARBANDINFOW rb;
-    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
-    static const WCHAR button[] = {'B','U','T','T','O','N',0};
+    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hRebarWnd, GWLP_HINSTANCE);
     WCHAR text[MAX_STRING_LEN];
     HWND hButton;
-    RECT rc;
 
     LoadStringW(hInstance, string, text, MAX_STRING_LEN);
-    hButton = CreateWindowW(button, text,
+    hButton = CreateWindowW(WC_BUTTONW, text,
                             WS_VISIBLE | WS_CHILD, 5, 5, 100, 15,
-                            hMainWnd, (HMENU)command, hInstance, NULL);
+                            hRebarWnd, (HMENU)command, hInstance, NULL);
 
     rb.cbSize = sizeof(rb);
     rb.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_CHILD | RBBIM_IDEALSIZE | RBBIM_ID;
@@ -173,11 +171,7 @@ static void AddTextButton(HWND hWnd, int string, int command, int id)
     rb.cxIdeal = 100;
     rb.wID = id;
 
-    rc.bottom = 22;
-    rc.right = 90;
-
-    SendMessageW(hWnd, RB_INSERTBAND, -1, (LPARAM)&rb);
-    SetWindowPos(hButton, 0, 0, 0, 90, 22, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+    SendMessageW(hRebarWnd, RB_INSERTBAND, -1, (LPARAM)&rb);
 }
 
 static void AddSeparator(HWND hwndToolBar)
@@ -1502,15 +1496,21 @@ static void preview_bar_show(BOOL show)
     if(show)
     {
         REBARBANDINFOW rb;
+        HWND hStatic;
 
         AddTextButton(hReBar, STRING_PREVIEW_PRINT, ID_PRINT, BANDID_PREVIEW_BTN1);
         AddTextButton(hReBar, STRING_PREVIEW_NEXTPAGE, ID_PREVIEW_NEXTPAGE, BANDID_PREVIEW_BTN2);
         AddTextButton(hReBar, STRING_PREVIEW_PREVPAGE, ID_PREVIEW_PREVPAGE, BANDID_PREVIEW_BTN3);
         AddTextButton(hReBar, STRING_PREVIEW_CLOSE, ID_FILE_EXIT, BANDID_PREVIEW_BTN4);
 
+        hStatic = CreateWindowW(WC_STATICW, NULL,
+                                WS_VISIBLE | WS_CHILD, 0, 0, 0, 0,
+                                hReBar, NULL, NULL, NULL);
+
         rb.cbSize = sizeof(rb);
         rb.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_CHILD | RBBIM_IDEALSIZE | RBBIM_ID;
         rb.fStyle = RBBS_NOGRIPPER | RBBS_VARIABLEHEIGHT;
+        rb.hwndChild = hStatic;
         rb.cyChild = rb.cyMinChild = 22;
         rb.cx = rb.cxMinChild = 90;
         rb.cxIdeal = 100;
