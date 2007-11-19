@@ -761,7 +761,9 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     nsIWineURI_GetNSContainer(This->uri, &container);
     if(!container) {
         TRACE("container = NULL\n");
-        return nsIChannel_AsyncOpen(This->channel, aListener, aContext);
+        return This->channel
+            ? nsIChannel_AsyncOpen(This->channel, aListener, aContext)
+            : NS_ERROR_UNEXPECTED;
     }
 
     nsIWineURI_GetIsDocumentURI(This->uri, &is_doc_uri);
