@@ -635,6 +635,21 @@ D3DXQUATERNION* WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *pout, CONST D3DXQ
     }
     return pout;
 }
+
+D3DXQUATERNION* WINAPI D3DXQuaternionSlerp(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2, FLOAT t)
+{
+    FLOAT dot, epsilon;
+
+    epsilon = 1.0f;
+    dot = D3DXQuaternionDot(pq1, pq2);
+    if ( dot < 0.0f) epsilon = -1.0f;
+    pout->x = (1.0f - t) * pq1->x + epsilon * t * pq2->x;
+    pout->y = (1.0f - t) * pq1->y + epsilon * t * pq2->y;
+    pout->z = (1.0f - t) * pq1->z + epsilon * t * pq2->z;
+    pout->w = (1.0f - t) * pq1->w + epsilon * t * pq2->w;
+    return pout;
+}
+
 /*_________________D3DXVec2_____________________*/
 
 D3DXVECTOR2* WINAPI D3DXVec2BaryCentric(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2, CONST D3DXVECTOR2 *pv3, FLOAT f, FLOAT g)

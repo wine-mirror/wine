@@ -552,14 +552,17 @@ static void D3DXPlaneTest(void)
 
 static void D3X8QuaternionTest(void)
 {
-    D3DXQUATERNION expectedquat, gotquat, nul, q, r, s;
+    D3DXQUATERNION expectedquat, gotquat, nul, q, r, s, t;
     LPD3DXQUATERNION funcpointer;
-    FLOAT expected, got;
+    FLOAT expected, got, scale;
     BOOL expectedbool, gotbool;
 
     nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f; nul.w = 0.0f;
     q.x = 1.0f, q.y = 2.0f; q.z = 4.0f; q.w = 10.0f;
     r.x = -3.0f; r.y = 4.0f; r.z = -5.0f; r.w = 7.0;
+    t.x = -1111.0f, t.y= 111.0f; t.z = -11.0f; t.w = 1.0f;
+
+    scale = 0.3f;
 
 /*_______________D3DXQuaternionConjugate________________*/
     expectedquat.x = -1.0f; expectedquat.y = -2.0f; expectedquat.z = -4.0f; expectedquat.w = 10.0f;
@@ -643,6 +646,14 @@ static void D3X8QuaternionTest(void)
     /* Test the nul quaternion */
     expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.0f;
     D3DXQuaternionNormalize(&gotquat,&nul);
+    expect_vec4(expectedquat,gotquat);
+
+/*_______________D3DXQuaternionSlerp________________________*/
+    expectedquat.x = -0.2f; expectedquat.y = 2.6f; expectedquat.z = 1.3f; expectedquat.w = 9.1f;
+    D3DXQuaternionSlerp(&gotquat,&q,&r,scale);
+    expect_vec4(expectedquat,gotquat);
+    expectedquat.x = 334.0f; expectedquat.y = -31.9f; expectedquat.z = 6.1f; expectedquat.w = 6.7f;
+    D3DXQuaternionSlerp(&gotquat,&q,&t,scale);
     expect_vec4(expectedquat,gotquat);
 }
 

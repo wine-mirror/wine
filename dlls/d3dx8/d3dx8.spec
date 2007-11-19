@@ -58,7 +58,7 @@
 @ stdcall D3DXQuaternionInverse(ptr ptr)
 @ stub D3DXQuaternionLn
 @ stub D3DXQuaternionExp
-@ stub D3DXQuaternionSlerp
+@ stdcall D3DXQuaternionSlerp(ptr ptr ptr long)
 @ stub D3DXQuaternionSquad
 @ stub D3DXQuaternionBaryCentric
 @ stdcall D3DXPlaneNormalize(ptr ptr)
