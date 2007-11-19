@@ -573,64 +573,39 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr, BOOL track_activate)
 
     if (track_activate)
     {
-        if (toolPtr->uFlags & TTF_ABSOLUTE)
+        rect.left = infoPtr->xTrackPos;
+        rect.top  = infoPtr->yTrackPos;
+        ptfx = rect.left;
+
+        if (toolPtr->uFlags & TTF_CENTERTIP)
         {
-            rect.left = infoPtr->xTrackPos;
-            rect.top  = infoPtr->yTrackPos;
-            ptfx = rect.left;
-
-            if (toolPtr->uFlags & TTF_CENTERTIP)
-            {
-                rect.left -= (size.cx / 2);
-                if (!(style & TTS_BALLOON))
-                    rect.top  -= (size.cy / 2);
-            }
-            infoPtr->bToolBelow = TRUE;
-        }
-        else
-        {
-            RECT rcTool;
-
-		GetCursorPos ((LPPOINT)&rect);
-		if (style & TTS_BALLOON)
-		{
-                ptfx = rect.left;
-                if (rect.top - size.cy >= 0)
-                {
-                    rect.top -= size.cy;
-                    infoPtr->bToolBelow = FALSE;
-                }
-                else
-                {
-                    infoPtr->bToolBelow = TRUE;
-                    rect.top += 20;
-                }
-                rect.left = max(0, rect.left - BALLOON_STEMINDENT);
-		}
-		else
-		{
-		rect.top += 20;
-		    infoPtr->bToolBelow = TRUE;
-            }
-
-            if (toolPtr->uFlags & TTF_CENTERTIP)
-            {
-                rect.left -= (size.cx / 2);
+            rect.left -= (size.cx / 2);
+            if (!(style & TTS_BALLOON))
                 rect.top  -= (size.cy / 2);
-            }
+        }
+        infoPtr->bToolBelow = TRUE;
 
-            if (toolPtr->uFlags & TTF_IDISHWND)
-                GetWindowRect ((HWND)toolPtr->uId, &rcTool);
+        if (!(toolPtr->uFlags & TTF_ABSOLUTE))
+        {
+            if (style & TTS_BALLOON)
+                rect.left -= BALLOON_STEMINDENT;
             else
             {
-                rcTool = toolPtr->rect;
-                MapWindowPoints (toolPtr->hwnd, NULL, (LPPOINT)&rcTool, 2);
-            }
+                RECT rcTool;
 
-            /* smart placement */
-            if ((rect.left + size.cx > rcTool.left) && (rect.left < rcTool.right) &&
-                (rect.top + size.cy > rcTool.top) && (rect.top < rcTool.bottom))
-                rect.left = rcTool.right;
+                if (toolPtr->uFlags & TTF_IDISHWND)
+                    GetWindowRect ((HWND)toolPtr->uId, &rcTool);
+                else
+                {
+                    rcTool = toolPtr->rect;
+                    MapWindowPoints (toolPtr->hwnd, NULL, (LPPOINT)&rcTool, 2);
+                }
+
+                /* smart placement */
+                if ((rect.left + size.cx > rcTool.left) && (rect.left < rcTool.right) &&
+                    (rect.top + size.cy > rcTool.top) && (rect.top < rcTool.bottom))
+                    rect.left = rcTool.right;
+            }
         }
     }
     else
