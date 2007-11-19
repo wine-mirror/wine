@@ -67,7 +67,7 @@
 @ stdcall D3DXPlaneFromPoints(ptr ptr ptr ptr)
 @ stdcall D3DXPlaneTransform(ptr ptr ptr)
 @ stdcall D3DXColorAdjustSaturation(ptr ptr long)
-@ stub D3DXColorAdjustContrast
+@ stdcall D3DXColorAdjustContrast(ptr ptr long)
 @ stub D3DXCreateMatrixStack
 @ stdcall D3DXCreateFont(ptr ptr ptr)
 @ stub D3DXCreateFontIndirect

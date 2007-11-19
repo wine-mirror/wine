@@ -34,6 +34,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx8);
 
 /*_________________D3DXColor____________________*/
 
+D3DXCOLOR* WINAPI D3DXColorAdjustContrast(D3DXCOLOR *pout, CONST D3DXCOLOR *pc, FLOAT s)
+{
+    pout->r = 0.5f + s * (pc->r - 0.5f);
+    pout->g = 0.5f + s * (pc->g - 0.5f);
+    pout->b = 0.5f + s * (pc->b - 0.5f);
+    pout->a = pc->a;
+    return pout;
+}
+
 D3DXCOLOR* WINAPI D3DXColorAdjustSaturation(D3DXCOLOR *pout, CONST D3DXCOLOR *pc, FLOAT s)
 {
     FLOAT grey;

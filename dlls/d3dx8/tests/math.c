@@ -82,6 +82,11 @@ static void D3DXColorTest(void)
     funcpointer = D3DXColorAdd(NULL,NULL,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
+/*_______________D3DXColorAdjustContrast______*/
+    expected.r = 0.41f; expected.g = 0.575f; expected.b = 0.473f, expected.a = 0.93f;
+    D3DXColorAdjustContrast(&got,&color,scale);
+    expect_color(expected,got);
+
 /*_______________D3DXColorAdjustSaturation______*/
     expected.r = 0.486028f; expected.g = 0.651028f; expected.b = 0.549028f, expected.a = 0.93f;
     D3DXColorAdjustSaturation(&got,&color,scale);
