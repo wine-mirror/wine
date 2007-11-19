@@ -2236,6 +2236,7 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SETTEXT:
 	case WM_GETTEXT:
+	case WM_GETTEXTLENGTH:
             return SendMessageW(infoPtr->hwndEdit, uMsg, wParam, lParam);
 
 	case CB_GETLBTEXT:
