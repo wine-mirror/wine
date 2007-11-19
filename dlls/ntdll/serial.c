@@ -39,9 +39,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
 #include <fcntl.h>
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>

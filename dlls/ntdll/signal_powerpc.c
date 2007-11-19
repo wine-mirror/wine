@@ -103,7 +103,6 @@ typedef struct ucontext SIGCONTEXT;
 # include <sys/ucontext.h>
 
 # include <sys/types.h>
-# include <signal.h>
 typedef siginfo_t siginfo;
 
 typedef struct ucontext SIGCONTEXT;
