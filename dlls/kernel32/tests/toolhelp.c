@@ -21,13 +21,11 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <windef.h>
-#include <winbase.h>
 
-#include "tlhelp32.h"
-#include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
+#include "tlhelp32.h"
+#include "wine/test.h"
 #include "winuser.h"
 
 static char     selfname[MAX_PATH];
