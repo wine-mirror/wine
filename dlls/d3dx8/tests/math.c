@@ -554,7 +554,7 @@ static void D3X8QuaternionTest(void)
 {
     D3DXQUATERNION expectedquat, gotquat, nul, q, r, s, t, u;
     LPD3DXQUATERNION funcpointer;
-    FLOAT expected, got, scale;
+    FLOAT expected, got, scale, scale2;
     BOOL expectedbool, gotbool;
 
     nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f; nul.w = 0.0f;
@@ -564,6 +564,12 @@ static void D3X8QuaternionTest(void)
     u.x = 91.0f; u.y = - 82.0f; u.z = 7.3f; u.w = -6.4f;
 
     scale = 0.3f;
+    scale2 = 0.78f;
+
+/*_______________D3DXQuaternionBaryCentric________________________*/
+    expectedquat.x = -867.444458; expectedquat.y = 87.851111f; expectedquat.z = -9.937778f; expectedquat.w = 3.235555f;
+    D3DXQuaternionBaryCentric(&gotquat,&q,&r,&t,scale,scale2);
+    expect_vec4(expectedquat,gotquat);
 
 /*_______________D3DXQuaternionConjugate________________*/
     expectedquat.x = -1.0f; expectedquat.y = -2.0f; expectedquat.z = -4.0f; expectedquat.w = 10.0f;

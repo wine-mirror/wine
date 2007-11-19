@@ -60,7 +60,7 @@
 @ stub D3DXQuaternionExp
 @ stdcall D3DXQuaternionSlerp(ptr ptr ptr long)
 @ stdcall D3DXQuaternionSquad(ptr ptr ptr ptr ptr long)
-@ stub D3DXQuaternionBaryCentric
+@ stdcall D3DXQuaternionBaryCentric(ptr ptr ptr ptr long long)
 @ stdcall D3DXPlaneNormalize(ptr ptr)
 @ stdcall D3DXPlaneIntersectLine(ptr ptr ptr ptr)
 @ stdcall D3DXPlaneFromPointNormal(ptr ptr ptr)
