@@ -437,12 +437,13 @@ static void D3DXMatrixTest(void)
 static void D3DXPlaneTest(void)
 {
     D3DXPLANE expectedplane, gotplane, nulplane, plane;
-    D3DXVECTOR3 expectedvec, gotvec, vec1, vec2;
+    D3DXVECTOR3 expectedvec, gotvec, vec1, vec2, vec3;
     LPD3DXVECTOR3 funcpointer;
     D3DXVECTOR4 vec;
     FLOAT expected, got;
 
     plane.a = -3.0f; plane.b = -1.0f; plane.c = 4.0f; plane.d = 7.0f;
+
     vec.x = 2.0f; vec.y = 5.0f; vec.z = -6.0f; vec.w = 11.0f;
 
 /*_______________D3DXPlaneDot________________*/
@@ -483,6 +484,19 @@ static void D3DXPlaneTest(void)
     vec2.x = 17.0f; vec2.y = 31.0f; vec2.z = 24.0f;
     expectedplane.a = 17.0f; expectedplane.b = 31.0f; expectedplane.c = 24.0f; expectedplane.d = -950.0f;
     D3DXPlaneFromPointNormal(&gotplane,&vec1,&vec2);
+    expect_plane(expectedplane, gotplane);
+
+/*_______________D3DXPlaneFromPoints_______*/
+    vec1.x = 1.0f; vec1.y = 2.0f; vec1.z = 3.0f;
+    vec2.x = 1.0f; vec2.y = -6.0f; vec2.z = -5.0f;
+    vec3.x = 83.0f; vec3.y = 74.0f; vec3.z = 65.0f;
+    expectedplane.a = 0.085914f; expectedplane.b = -0.704492f; expectedplane.c = 0.704492f; expectedplane.d = -0.790406f;
+    D3DXPlaneFromPoints(&gotplane,&vec1,&vec2,&vec3);
+    expect_plane(expectedplane, gotplane);
+    /* Test if 2 vectors are parallels */
+    vec3.x = 1.0f; vec3.y = 1.0f; vec3.z = 2.0f;
+    expectedplane.a = 0.0f; expectedplane.b = 0.0f; expectedplane.c = 0.0f; expectedplane.d = 0.0f;
+    D3DXPlaneFromPoints(&gotplane,&vec1,&vec2,&vec3);
     expect_plane(expectedplane, gotplane);
 
 /*_______________D3DXPlaneIntersectLine___________*/

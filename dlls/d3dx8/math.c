@@ -491,6 +491,20 @@ D3DXPLANE* WINAPI D3DXPlaneFromPointNormal(D3DXPLANE *pout, CONST D3DXVECTOR3 *p
     return pout;
 }
 
+D3DXPLANE* WINAPI D3DXPlaneFromPoints(D3DXPLANE *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2, CONST D3DXVECTOR3 *pv3)
+{
+    D3DXVECTOR3 edge1, edge2, normal, Nnormal;
+
+    edge1.x = 0.0f; edge1.y = 0.0f; edge1.z = 0.0f;
+    edge2.x = 0.0f; edge2.y = 0.0f; edge2.z = 0.0f;
+    D3DXVec3Subtract(&edge1, pv2, pv1);
+    D3DXVec3Subtract(&edge2, pv3, pv1);
+    D3DXVec3Cross(&normal, &edge1, &edge2);
+    D3DXVec3Normalize(&Nnormal, &normal);
+    D3DXPlaneFromPointNormal(pout, pv1, &Nnormal);
+    return pout;
+}
+
 D3DXVECTOR3* WINAPI D3DXPlaneIntersectLine(D3DXVECTOR3 *pout, CONST D3DXPLANE *pp, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
 {
     D3DXVECTOR3 direction, normal;

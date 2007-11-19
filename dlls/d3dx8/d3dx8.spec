@@ -64,7 +64,7 @@
 @ stdcall D3DXPlaneNormalize(ptr ptr)
 @ stdcall D3DXPlaneIntersectLine(ptr ptr ptr ptr)
 @ stdcall D3DXPlaneFromPointNormal(ptr ptr ptr)
-@ stub D3DXPlaneFromPoints
+@ stdcall D3DXPlaneFromPoints(ptr ptr ptr ptr)
 @ stub D3DXPlaneTransform
 @ stub D3DXColorAdjustSaturation
 @ stub D3DXColorAdjustContrast
