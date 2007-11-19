@@ -520,7 +520,9 @@ HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pb
         IBindCtx_RevokeObjectParam(pbc, BSCBHolder);
     }
 
-    hres = IBindCtx_RegisterObjectParam(pbc, BSCBHolder, (IUnknown*)create_bsc(pbsc));
+    bsc = create_bsc(pbsc);
+    hres = IBindCtx_RegisterObjectParam(pbc, BSCBHolder, (IUnknown*)bsc);
+    IBindStatusCallback_Release(bsc);
     if(FAILED(hres)) {
         IBindStatusCallback_Release(prev);
         return hres;
