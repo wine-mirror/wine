@@ -591,6 +591,15 @@ static void D3X8QuaternionTest(void)
     funcpointer = D3DXQuaternionIdentity(NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
+/*_______________D3DXQuaternionInverse________________________*/
+    expectedquat.x = -1.0f/121.0f; expectedquat.y = -2.0f/121.0f; expectedquat.z = -4.0f/121.0f; expectedquat.w = 10.0f/121.0f;
+    D3DXQuaternionInverse(&gotquat,&q);
+    expect_vec4(expectedquat,gotquat);
+    /* test the null quaternion */
+    expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.0f;
+    D3DXQuaternionInverse(&gotquat,&nul);
+    expect_vec4(expectedquat,gotquat);
+
 /*_______________D3DXQuaternionIsIdentity________________*/
     s.x = 0.0f; s.y = 0.0f; s.z = 0.0f; s.w = 1.0f;
     expectedbool = TRUE;

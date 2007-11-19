@@ -581,7 +581,31 @@ D3DXPLANE* WINAPI D3DXPlaneTransform(D3DXPLANE *pout, CONST D3DXPLANE *pplane, C
 
 /*_________________D3DXQUATERNION________________*/
 
-D3DXQUATERNION* WINAPI D3DXQuaternionMultiply(D3DXQUATERNION * pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION * pq2)
+D3DXQUATERNION* WINAPI D3DXQuaternionInverse(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
+{
+    D3DXQUATERNION temp;
+    FLOAT norm;
+
+    norm = D3DXQuaternionLengthSq(pq);
+    if ( !norm )
+    {
+     pout->x = 0.0f;
+     pout->y = 0.0f;
+     pout->z = 0.0f;
+     pout->w = 0.0f;
+    }
+    else
+    {
+    D3DXQuaternionConjugate(&temp, pq);
+    pout->x = temp.x / norm;
+    pout->y = temp.y / norm;
+    pout->z = temp.z / norm;
+    pout->w = temp.w / norm;
+    }
+    return pout;
+}
+
+D3DXQUATERNION* WINAPI D3DXQuaternionMultiply(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2)
 {
     pout->x = pq2->w * pq1->x + pq2->x * pq1->w + pq2->y * pq1->z - pq2->z * pq1->y;
     pout->y = pq2->w * pq1->y - pq2->x * pq1->z + pq2->y * pq1->w + pq2->z * pq1->x;

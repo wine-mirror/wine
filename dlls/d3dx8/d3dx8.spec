@@ -55,7 +55,7 @@
 @ stub D3DXQuaternionRotationYawPitchRoll
 @ stdcall D3DXQuaternionMultiply(ptr ptr ptr)
 @ stdcall D3DXQuaternionNormalize(ptr ptr)
-@ stub D3DXQuaternionInverse
+@ stdcall D3DXQuaternionInverse(ptr ptr)
 @ stub D3DXQuaternionLn
 @ stub D3DXQuaternionExp
 @ stub D3DXQuaternionSlerp
