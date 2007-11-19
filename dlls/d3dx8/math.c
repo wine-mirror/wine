@@ -547,6 +547,15 @@ D3DXPLANE* WINAPI D3DXPlaneNormalize(D3DXPLANE *pout, CONST D3DXPLANE *pp)
     return pout;
 }
 
+D3DXPLANE* WINAPI D3DXPlaneTransform(D3DXPLANE *pout, CONST D3DXPLANE *pplane, CONST D3DXMATRIX *pm)
+{
+     pout->a = pm->u.m[0][0] * pplane->a + pm->u.m[1][0] * pplane->b + pm->u.m[2][0] * pplane->c + pm->u.m[3][0] * pplane->d;
+     pout->b = pm->u.m[0][1] * pplane->a + pm->u.m[1][1] * pplane->b + pm->u.m[2][1] * pplane->c + pm->u.m[3][1] * pplane->d;
+     pout->c = pm->u.m[0][2] * pplane->a + pm->u.m[1][2] * pplane->b + pm->u.m[2][2] * pplane->c + pm->u.m[3][2] * pplane->d;
+     pout->d = pm->u.m[0][3] * pplane->a + pm->u.m[1][3] * pplane->b + pm->u.m[2][3] * pplane->c + pm->u.m[3][3] * pplane->d;
+    return pout;
+}
+
 /*_________________D3DXQUATERNION________________*/
 
 D3DXQUATERNION* WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)

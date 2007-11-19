@@ -436,11 +436,20 @@ static void D3DXMatrixTest(void)
 
 static void D3DXPlaneTest(void)
 {
+
+    D3DXMATRIX mat;
     D3DXPLANE expectedplane, gotplane, nulplane, plane;
     D3DXVECTOR3 expectedvec, gotvec, vec1, vec2, vec3;
     LPD3DXVECTOR3 funcpointer;
     D3DXVECTOR4 vec;
     FLOAT expected, got;
+
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = 10.0f; U(mat).m[1][1] = 20.0f; U(mat).m[2][2] = 30.0f;
+    U(mat).m[3][3] = -40.0f;
 
     plane.a = -3.0f; plane.b = -1.0f; plane.c = 4.0f; plane.d = 7.0f;
 
@@ -523,6 +532,11 @@ static void D3DXPlaneTest(void)
     nulplane.a = 0.0; nulplane.b = 0.0f, nulplane.c = 0.0f; nulplane.d = 4.3f;
     expectedplane.a = 0.0f; expectedplane.b = 0.0f; expectedplane.c = 0.0f; expectedplane.d = 0.0f;
     D3DXPlaneNormalize(&gotplane, &nulplane);
+    expect_plane(expectedplane, gotplane);
+
+/*_______________D3DXPlaneTransform____________*/
+    expectedplane.a = 49.0f; expectedplane.b = -98.0f; expectedplane.c = 55.0f; expectedplane.d = -165.0f;
+    D3DXPlaneTransform(&gotplane,&plane,&mat);
     expect_plane(expectedplane, gotplane);
 }
 
