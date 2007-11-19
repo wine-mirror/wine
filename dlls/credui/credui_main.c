@@ -35,6 +35,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(credui);
 
+#define TOOLID_INCORRECTPASSWORD    1
+#define TOOLID_CAPSLOCKON           2
+
+#define ID_CAPSLOCKPOP              1
+
 struct pending_credentials
 {
     struct list entry;
@@ -130,6 +135,7 @@ struct cred_dialog_params
     BOOL fSave;
     DWORD dwFlags;
     HWND hwndBalloonTip;
+    BOOL fBalloonTipActive;
 };
 
 static void CredDialogFillUsernameCombo(HWND hwndUsername, struct cred_dialog_params *params)
@@ -178,31 +184,13 @@ static void CredDialogFillUsernameCombo(HWND hwndUsername, struct cred_dialog_pa
     CredFree(credentials);
 }
 
-static void CredDialogShowIncorrectPasswordBalloon(HWND hwndDlg, struct cred_dialog_params *params)
+static void CredDialogCreateBalloonTip(HWND hwndDlg, struct cred_dialog_params *params)
 {
     TTTOOLINFOW toolinfo;
-    RECT rcPassword;
-    INT x;
-    INT y;
-    WCHAR wszTitle[256];
     WCHAR wszText[256];
 
-    /* user name likely wrong so balloon would be confusing. focus is also
-     * not set to the password edit box, so more notification would need to be
-     * handled */
-    if (!params->pszUsername[0])
+    if (params->hwndBalloonTip)
         return;
-
-    if (!LoadStringW(hinstCredUI, IDS_INCORRECTPASSWORDTITLE, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0])))
-    {
-        ERR("failed to load IDS_INCORRECTPASSWORDTITLE\n");
-        return;
-    }
-    if (!LoadStringW(hinstCredUI, IDS_INCORRECTPASSWORD, wszText, sizeof(wszText)/sizeof(wszText[0])))
-    {
-        ERR("failed to load IDS_INCORRECTPASSWORD\n");
-        return;
-    }
 
     params->hwndBalloonTip = CreateWindowExW(WS_EX_TOOLWINDOW, TOOLTIPS_CLASSW,
         NULL, WS_POPUP | TTS_NOPREFIX | TTS_BALLOON, CW_USEDEFAULT,
@@ -211,16 +199,63 @@ static void CredDialogShowIncorrectPasswordBalloon(HWND hwndDlg, struct cred_dia
     SetWindowPos(params->hwndBalloonTip, HWND_TOPMOST, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
+    if (!LoadStringW(hinstCredUI, IDS_INCORRECTPASSWORD, wszText, sizeof(wszText)/sizeof(wszText[0])))
+    {
+        ERR("failed to load IDS_INCORRECTPASSWORD\n");
+        return;
+    }
+
     toolinfo.cbSize = sizeof(toolinfo);
     toolinfo.uFlags = TTF_TRACK;
     toolinfo.hwnd = hwndDlg;
-    toolinfo.uId = 0;
+    toolinfo.uId = TOOLID_INCORRECTPASSWORD;
     memset(&toolinfo.rect, 0, sizeof(toolinfo.rect));
     toolinfo.hinst = NULL;
     toolinfo.lpszText = wszText;
     toolinfo.lParam = 0;
     toolinfo.lpReserved = NULL;
     SendMessageW(params->hwndBalloonTip, TTM_ADDTOOLW, 0, (LPARAM)&toolinfo);
+
+    if (!LoadStringW(hinstCredUI, IDS_CAPSLOCKON, wszText, sizeof(wszText)/sizeof(wszText[0])))
+    {
+        ERR("failed to load IDS_CAPSLOCKON\n");
+        return;
+    }
+
+    toolinfo.uId = TOOLID_CAPSLOCKON;
+    SendMessageW(params->hwndBalloonTip, TTM_ADDTOOLW, 0, (LPARAM)&toolinfo);
+}
+
+static void CredDialogShowIncorrectPasswordBalloon(HWND hwndDlg, struct cred_dialog_params *params)
+{
+    TTTOOLINFOW toolinfo;
+    RECT rcPassword;
+    INT x;
+    INT y;
+    WCHAR wszTitle[256];
+
+    /* user name likely wrong so balloon would be confusing. focus is also
+     * not set to the password edit box, so more notification would need to be
+     * handled */
+    if (!params->pszUsername[0])
+        return;
+
+    /* don't show two balloon tips at once */
+    if (params->fBalloonTipActive)
+        return;
+
+    if (!LoadStringW(hinstCredUI, IDS_INCORRECTPASSWORDTITLE, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0])))
+    {
+        ERR("failed to load IDS_INCORRECTPASSWORDTITLE\n");
+        return;
+    }
+
+    CredDialogCreateBalloonTip(hwndDlg, params);
+
+    memset(&toolinfo, 0, sizeof(toolinfo));
+    toolinfo.cbSize = sizeof(toolinfo);
+    toolinfo.hwnd = hwndDlg;
+    toolinfo.uId = TOOLID_INCORRECTPASSWORD;
 
     SendMessageW(params->hwndBalloonTip, TTM_SETTITLEW, TTI_ERROR, (LPARAM)wszTitle);
 
@@ -231,13 +266,97 @@ static void CredDialogShowIncorrectPasswordBalloon(HWND hwndDlg, struct cred_dia
     SendMessageW(params->hwndBalloonTip, TTM_TRACKPOSITION, 0, MAKELONG(x, y));
 
     SendMessageW(params->hwndBalloonTip, TTM_TRACKACTIVATE, TRUE, (LPARAM)&toolinfo);
+
+    params->fBalloonTipActive = TRUE;
+}
+
+static void CredDialogShowCapsLockBalloon(HWND hwndDlg, struct cred_dialog_params *params)
+{
+    TTTOOLINFOW toolinfo;
+    RECT rcPassword;
+    INT x;
+    INT y;
+    WCHAR wszTitle[256];
+
+    /* don't show two balloon tips at once */
+    if (params->fBalloonTipActive)
+        return;
+
+    if (!LoadStringW(hinstCredUI, IDS_CAPSLOCKONTITLE, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0])))
+    {
+        ERR("failed to load IDS_IDSCAPSLOCKONTITLE\n");
+        return;
+    }
+
+    CredDialogCreateBalloonTip(hwndDlg, params);
+
+    memset(&toolinfo, 0, sizeof(toolinfo));
+    toolinfo.cbSize = sizeof(toolinfo);
+    toolinfo.hwnd = hwndDlg;
+    toolinfo.uId = TOOLID_CAPSLOCKON;
+
+    SendMessageW(params->hwndBalloonTip, TTM_SETTITLEW, TTI_WARNING, (LPARAM)wszTitle);
+
+    GetWindowRect(GetDlgItem(hwndDlg, IDC_PASSWORD), &rcPassword);
+    /* just inside the left side of the password edit control */
+    x = rcPassword.left + 12;
+    y = rcPassword.bottom - 3;
+    SendMessageW(params->hwndBalloonTip, TTM_TRACKPOSITION, 0, MAKELONG(x, y));
+
+    SendMessageW(params->hwndBalloonTip, TTM_TRACKACTIVATE, TRUE, (LPARAM)&toolinfo);
+
+    SetTimer(hwndDlg, ID_CAPSLOCKPOP,
+             SendMessageW(params->hwndBalloonTip, TTM_GETDELAYTIME, TTDT_AUTOPOP, 0),
+             NULL);
+
+    params->fBalloonTipActive = TRUE;
 }
 
 static void CredDialogHideBalloonTip(HWND hwndDlg, struct cred_dialog_params *params)
 {
-    /* we don't need the balloon tip again, so destroy it */
-    DestroyWindow(params->hwndBalloonTip);
-    params->hwndBalloonTip = NULL;
+    TTTOOLINFOW toolinfo;
+
+    if (!params->hwndBalloonTip)
+        return;
+
+    memset(&toolinfo, 0, sizeof(toolinfo));
+
+    toolinfo.cbSize = sizeof(toolinfo);
+    toolinfo.hwnd = hwndDlg;
+    toolinfo.uId = 0;
+    SendMessageW(params->hwndBalloonTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&toolinfo);
+    toolinfo.uId = 1;
+    SendMessageW(params->hwndBalloonTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&toolinfo);
+
+    params->fBalloonTipActive = FALSE;
+}
+
+static inline BOOL CredDialogCapsLockOn(void)
+{
+    return GetKeyState(VK_CAPITAL) & 0x1 ? TRUE : FALSE;
+}
+
+static LRESULT CALLBACK CredDialogPasswordSubclassProc(HWND hwnd, UINT uMsg,
+    WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+    struct cred_dialog_params *params = (struct cred_dialog_params *)dwRefData;
+    switch (uMsg)
+    {
+    case WM_KEYDOWN:
+        if (wParam == VK_CAPITAL)
+        {
+            HWND hwndDlg = GetParent(hwnd);
+            if (CredDialogCapsLockOn())
+                CredDialogShowCapsLockBalloon(hwndDlg, params);
+            else
+                CredDialogHideBalloonTip(hwndDlg, params);
+        }
+        break;
+    case WM_DESTROY:
+        RemoveWindowSubclass(hwnd, CredDialogPasswordSubclassProc, uIdSubclass);
+        break;
+    }
+    return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 }
 
 static BOOL CredDialogInit(HWND hwndDlg, struct cred_dialog_params *params)
@@ -267,7 +386,12 @@ static BOOL CredDialogInit(HWND hwndDlg, struct cred_dialog_params *params)
     CredDialogFillUsernameCombo(hwndUsername, params);
 
     if (params->pszUsername[0])
+    {
+        /* prevent showing a balloon tip here */
+        params->fBalloonTipActive = TRUE;
         SetFocus(hwndPassword);
+        params->fBalloonTipActive = FALSE;
+    }
     else
         SetFocus(hwndUsername);
 
@@ -287,8 +411,13 @@ static BOOL CredDialogInit(HWND hwndDlg, struct cred_dialog_params *params)
     else if (params->fSave)
         CheckDlgButton(hwndDlg, IDC_SAVE, BST_CHECKED);
 
+    /* setup subclassing for Caps Lock detection */
+    SetWindowSubclass(hwndPassword, CredDialogPasswordSubclassProc, 1, (DWORD_PTR)params);
+
     if (params->dwFlags & CREDUI_FLAGS_INCORRECT_PASSWORD)
         CredDialogShowIncorrectPasswordBalloon(hwndDlg, params);
+    else if ((GetFocus() == hwndPassword) && CredDialogCapsLockOn())
+        CredDialogShowCapsLockBalloon(hwndDlg, params);
 
     return FALSE;
 }
@@ -361,6 +490,12 @@ static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                     EndDialog(hwndDlg, IDCANCEL);
                     return TRUE;
                 case MAKELONG(IDC_PASSWORD, EN_SETFOCUS):
+                    if (CredDialogCapsLockOn())
+                    {
+                        struct cred_dialog_params *params =
+                            (struct cred_dialog_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
+                        CredDialogShowCapsLockBalloon(hwndDlg, params);
+                    }
                     /* don't allow another window to steal focus while the
                      * user is typing their password */
                     LockSetForegroundWindow(LSFW_LOCK);
@@ -382,6 +517,15 @@ static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                     CredDialogHideBalloonTip(hwndDlg, params);
                     return TRUE;
                 }
+            }
+            return FALSE;
+        case WM_TIMER:
+            if (wParam == ID_CAPSLOCKPOP)
+            {
+                struct cred_dialog_params *params =
+                    (struct cred_dialog_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
+                CredDialogHideBalloonTip(hwndDlg, params);
+                return TRUE;
             }
             return FALSE;
         case WM_DESTROY:
@@ -446,6 +590,7 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
     params.fSave = pfSave ? *pfSave : FALSE;
     params.dwFlags = dwFlags;
     params.hwndBalloonTip = NULL;
+    params.fBalloonTipActive = FALSE;
 
     ret = DialogBoxParamW(hinstCredUI, MAKEINTRESOURCEW(IDD_CREDDIALOG),
                           pUIInfo ? pUIInfo->hwndParent : NULL,
