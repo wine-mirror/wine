@@ -23,6 +23,7 @@
 
 #include <errno.h>
 #include <signal.h>
+#include <stdlib.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -41,7 +42,8 @@ int spawnvp(int mode, const char *cmdname, const char *const argv[])
     if (mode == _P_OVERLAY)
     {
         execvp(cmdname, (char **)argv);
-        return -1;  /* if we get here it failed */
+        /* if we get here it failed */
+        if (errno != ENOTSUP) return -1;  /* exec fails on MacOS if the process has multiple threads */
     }
 
     dfl_act.sa_handler = SIG_DFL;
@@ -57,6 +59,8 @@ int spawnvp(int mode, const char *cmdname, const char *const argv[])
         execvp(cmdname, (char **)argv);
         _exit(1);
     }
+
+    if (pid != -1 && mode == _P_OVERLAY) exit(0);
 
     if (pid != -1 && mode == _P_WAIT)
     {
