@@ -1265,6 +1265,9 @@ static void check_service_is_installed(void)
 
     res = DeleteService(service);
     ok(res, "Failed to delete TestService\n");
+
+    CloseServiceHandle(service);
+    CloseServiceHandle(scm);
 }
 
 static void test_MsiInstallProduct(void)
