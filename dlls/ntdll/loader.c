@@ -2296,6 +2296,7 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
         exit(1);
     }
 
+    peb->LoaderLock = &loader_section;
     peb->ProcessParameters->ImagePathName = wm->ldr.FullDllName;
     version_init( wm->ldr.FullDllName.Buffer );
 
