@@ -24,7 +24,6 @@
 #include "pin.h"
 
 #include "uuids.h"
-#include "vfwmsgs.h"
 #include "amvideo.h"
 #include "windef.h"
 #include "winbase.h"

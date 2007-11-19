@@ -53,7 +53,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "winreg.h"
 #include "mmsystem.h"
 #include "winuser.h"
 #include "winnls.h"

@@ -28,7 +28,6 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
-#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"

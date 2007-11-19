@@ -140,7 +140,6 @@
 # include <pwd.h>
 #endif
 #include <grp.h>
-#include <limits.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION

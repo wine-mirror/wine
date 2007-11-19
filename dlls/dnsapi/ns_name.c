@@ -32,7 +32,6 @@
 # include <resolv.h>
 #endif
 #include <string.h>
-#include <ctype.h>
 
 /* Data. */
 

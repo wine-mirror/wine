@@ -25,7 +25,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winuser.h"
 #include "winerror.h"
 #include "winuser.h"
 #include "wine/debug.h"
