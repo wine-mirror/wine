@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <assert.h>
 #include <ctype.h>
 
 #include "wine/unicode.h"

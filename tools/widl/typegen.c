@@ -40,7 +40,6 @@
 #include "windef.h"
 #include "wine/list.h"
 
-#include "widl.h"
 #include "typegen.h"
 
 static const func_t *current_func;

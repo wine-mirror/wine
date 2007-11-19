@@ -37,7 +37,6 @@
 #include "header.h"
 #include "windef.h"
 
-#include "widl.h"
 #include "typelib.h"
 #include "typelib_struct.h"
 #include "typegen.h"

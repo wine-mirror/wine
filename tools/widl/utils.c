@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <assert.h>
 #include <ctype.h>
 
 #include "widl.h"
