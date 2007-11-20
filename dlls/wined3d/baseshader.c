@@ -1080,12 +1080,16 @@ static void shader_none_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {}
 static void shader_none_select_depth_blt(IWineD3DDevice *iface) {}
 static void shader_none_load_constants(IWineD3DDevice *iface, char usePS, char useVS) {}
 static void shader_none_cleanup(IWineD3DDevice *iface) {}
+static void shader_none_color_correction(SHADER_OPCODE_ARG* arg) {}
+static void shader_none_destroy(IWineD3DBaseShader *iface) {}
 
 const shader_backend_t none_shader_backend = {
     &shader_none_select,
     &shader_none_select_depth_blt,
     &shader_none_load_constants,
-    &shader_none_cleanup
+    &shader_none_cleanup,
+    &shader_none_color_correction,
+    &shader_none_destroy
 };
 
 /* *******************************************
@@ -1115,14 +1119,17 @@ ULONG  WINAPI IWineD3DBaseShaderImpl_AddRef(IWineD3DBaseShader *iface) {
 
 ULONG  WINAPI IWineD3DBaseShaderImpl_Release(IWineD3DBaseShader *iface) {
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)iface;
+    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
     ULONG ref;
     TRACE("(%p) : Releasing from %d\n", This, This->baseShader.ref);
     ref = InterlockedDecrement(&This->baseShader.ref);
     if (ref == 0) {
+        deviceImpl->shader_backend->shader_destroy(iface);
         HeapFree(GetProcessHeap(), 0, This->baseShader.function);
         shader_delete_constant_list(&This->baseShader.constantsF);
         shader_delete_constant_list(&This->baseShader.constantsB);
         shader_delete_constant_list(&This->baseShader.constantsI);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }

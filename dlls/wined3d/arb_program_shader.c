@@ -1723,10 +1723,14 @@ static void shader_arb_cleanup(IWineD3DDevice *iface) {
     if (GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
+static void shader_arb_destroy(IWineD3DBaseShader *iface) {
+}
+
 const shader_backend_t arb_program_shader_backend = {
     &shader_arb_select,
     &shader_arb_select_depth_blt,
     &shader_arb_load_constants,
     &shader_arb_cleanup,
-    &shader_arb_color_correction
+    &shader_arb_color_correction,
+    &shader_arb_destroy
 };

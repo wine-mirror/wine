@@ -3176,10 +3176,44 @@ static void shader_glsl_cleanup(IWineD3DDevice *iface) {
     GL_EXTCALL(glUseProgramObjectARB(0));
 }
 
+static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
+    struct list *linked_programs;
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
+    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *) This->baseShader.device)->adapter->gl_info;
+
+    /* Note: Do not use QueryInterface here to find out which shader type this is because this code
+     * can be called from IWineD3DBaseShader::Release
+     */
+    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
+
+    if(This->baseShader.prgId == 0) return;
+    linked_programs = &This->baseShader.linked_programs;
+
+    TRACE("Deleting linked programs\n");
+    if (linked_programs->next) {
+        struct glsl_shader_prog_link *entry, *entry2;
+
+        if(pshader) {
+            LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, pshader_entry) {
+                delete_glsl_program_entry(This->baseShader.device, entry);
+            }
+        } else {
+            LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, vshader_entry) {
+                delete_glsl_program_entry(This->baseShader.device, entry);
+            }
+        }
+    }
+
+    TRACE("Deleting shader object %u\n", This->baseShader.prgId);
+    GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
+    checkGLcall("glDeleteObjectARB");
+}
+
 const shader_backend_t glsl_shader_backend = {
     &shader_glsl_select,
     &shader_glsl_select_depth_blt,
     &shader_glsl_load_constants,
     &shader_glsl_cleanup,
-    &shader_glsl_color_correction
+    &shader_glsl_color_correction,
+    &shader_glsl_destroy
 };

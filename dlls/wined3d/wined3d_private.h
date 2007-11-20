@@ -211,6 +211,7 @@ typedef struct {
     void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
     void (*shader_cleanup)(IWineD3DDevice *iface);
     void (*shader_color_correction)(struct SHADER_OPCODE_ARG *arg);
+    void (*shader_destroy)(IWineD3DBaseShader *iface);
 } shader_backend_t;
 
 extern const shader_backend_t glsl_shader_backend;

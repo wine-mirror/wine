@@ -445,33 +445,8 @@ static ULONG  WINAPI IWineD3DVertexShaderImpl_AddRef(IWineD3DVertexShader *iface
     return IWineD3DBaseShaderImpl_AddRef((IWineD3DBaseShader *) iface);
 }
 
-static void destroy_glsl_vshader(IWineD3DVertexShaderImpl *This) {
-    struct list *linked_programs = &This->baseShader.linked_programs;
-
-    TRACE("Deleting linked programs\n");
-    if (linked_programs->next) {
-        struct glsl_shader_prog_link *entry, *entry2;
-        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, vshader_entry) {
-            delete_glsl_program_entry(This->baseShader.device, entry);
-        }
-    }
-
-    TRACE("Deleting shader object %u\n", This->baseShader.prgId);
-    GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
-    checkGLcall("glDeleteObjectARB");
-}
 static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface) {
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    ULONG ref;
-    ref = IWineD3DBaseShaderImpl_Release((IWineD3DBaseShader *) iface);
-
-    if (ref == 0) {
-        if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
-            destroy_glsl_vshader(This);
-        }
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-    return ref;
+    return IWineD3DBaseShaderImpl_Release((IWineD3DBaseShader *) iface);
 }
 
 /* *******************************************
