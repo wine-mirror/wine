@@ -665,6 +665,27 @@ D3DXQUATERNION* WINAPI D3DXQuaternionSquad(D3DXQUATERNION *pout, CONST D3DXQUATE
     return pout;
 }
 
+void WINAPI D3DXQuaternionToAxisAngle(CONST D3DXQUATERNION *pq, D3DXVECTOR3 *paxis, FLOAT *pangle)
+{
+    FLOAT norm;
+
+    *pangle = 0.0f;
+    norm = D3DXQuaternionLength(pq);
+    if ( norm )
+    {
+     paxis->x = pq->x / norm;
+     paxis->y = pq->y / norm;
+     paxis->z = pq->z / norm;
+     if ( fabs( pq->w ) <= 1.0f ) *pangle = 2.0f * acos(pq->w);
+    }
+    else
+    {
+     paxis->x = 1.0f;
+     paxis->y = 0.0f;
+     paxis->z = 0.0f;
+    }
+}
+
 /*_________________D3DXVec2_____________________*/
 
 D3DXVECTOR2* WINAPI D3DXVec2BaryCentric(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2, CONST D3DXVECTOR2 *pv3, FLOAT f, FLOAT g)

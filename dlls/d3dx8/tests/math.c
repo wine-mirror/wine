@@ -552,9 +552,10 @@ static void D3DXPlaneTest(void)
 
 static void D3X8QuaternionTest(void)
 {
-    D3DXQUATERNION expectedquat, gotquat, nul, q, r, s, t, u;
+    D3DXQUATERNION expectedquat, gotquat, Nq, nul, q, r, s, t, u;
     LPD3DXQUATERNION funcpointer;
-    FLOAT expected, got, scale, scale2;
+    D3DXVECTOR3 axis, expectedvec;
+    FLOAT angle, expected, got, scale, scale2;
     BOOL expectedbool, gotbool;
 
     nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f; nul.w = 0.0f;
@@ -667,6 +668,26 @@ static void D3X8QuaternionTest(void)
     expectedquat.x = -156.296f; expectedquat.y = 30.242f; expectedquat.z = -2.5022f; expectedquat.w = 7.3576f;
     D3DXQuaternionSquad(&gotquat,&q,&r,&t,&u,scale);
     expect_vec4(expectedquat,gotquat);
+
+/*_______________D3DXQuaternionToAxisAngle__________________*/
+    Nq.x = 1.0f/22.0f; Nq.y = 2.0f/22.0f; Nq.z = 4.0f/22.0f; Nq.w = 10.0f/22.0f;
+    expectedvec.x = 1.0f/11.0f; expectedvec.y = 2.0f/11.0f; expectedvec.z = 4.0f/11.0f;
+    expected = 2.197869f;
+    D3DXQuaternionToAxisAngle(&Nq,&axis,&angle);
+    expect_vec3(expectedvec,axis);
+    ok(fabs( angle - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
+    /* Test if |w|>1.0f */
+    expectedvec.x = 1.0f/11.0f; expectedvec.y = 2.0f/11.0f; expectedvec.z = 4.0f/11.0f;
+    expected = 0.0f;
+    D3DXQuaternionToAxisAngle(&q,&axis,&angle);
+    expect_vec3(expectedvec,axis);
+    ok(fabs( angle - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
+    /* Test the null quaternion */
+    expectedvec.x = 1.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f;
+    expected = 0.0f;
+    D3DXQuaternionToAxisAngle(&nul,&axis,&angle);
+    expect_vec3(expectedvec,axis);
+    ok(fabs( angle - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
 }
 
 static void D3X8Vector2Test(void)
