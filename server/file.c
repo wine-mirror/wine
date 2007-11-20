@@ -299,6 +299,7 @@ static struct security_descriptor *file_get_sd( struct object *obj )
     const SID *user;
     const SID *group;
     size_t dacl_size;
+    ACE_HEADER *current_ace;
     ACCESS_ALLOWED_ACE *aaa;
     ACL *dacl;
     SID *sid;
@@ -328,6 +329,11 @@ static struct security_descriptor *file_get_sd( struct object *obj )
     if (st.st_mode & S_IRWXU)
         dacl_size += FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
             FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
+    if ((!(st.st_mode & S_IRUSR) && (st.st_mode & (S_IRGRP|S_IROTH))) ||
+        (!(st.st_mode & S_IWUSR) && (st.st_mode & (S_IWGRP|S_IWOTH))) ||
+        (!(st.st_mode & S_IXUSR) && (st.st_mode & (S_IXGRP|S_IXOTH))))
+        dacl_size += FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart) +
+            FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
     if (st.st_mode & S_IRWXO)
         dacl_size += FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
             FIELD_OFFSET(SID, SubAuthority[world_sid->SubAuthorityCount]);
@@ -355,10 +361,15 @@ static struct security_descriptor *file_get_sd( struct object *obj )
     dacl->Sbz1 = 0;
     dacl->AclSize = dacl_size;
     dacl->AceCount = 1 + (st.st_mode & S_IRWXU ? 1 : 0) + (st.st_mode & S_IRWXO ? 1 : 0);
+    if ((!(st.st_mode & S_IRUSR) && (st.st_mode & (S_IRGRP|S_IROTH))) ||
+        (!(st.st_mode & S_IWUSR) && (st.st_mode & (S_IWGRP|S_IWOTH))) ||
+        (!(st.st_mode & S_IXUSR) && (st.st_mode & (S_IXGRP|S_IXOTH))))
+        dacl->AceCount++;
     dacl->Sbz2 = 0;
 
     /* always give FILE_ALL_ACCESS for Local System */
     aaa = (ACCESS_ALLOWED_ACE *)(dacl + 1);
+    current_ace = &aaa->Header;
     aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     aaa->Header.AceFlags = 0;
     aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
@@ -370,7 +381,8 @@ static struct security_descriptor *file_get_sd( struct object *obj )
     if (st.st_mode & S_IRWXU)
     {
         /* appropriate access rights for the user */
-        aaa = (ACCESS_ALLOWED_ACE *)ace_next( &aaa->Header );
+        aaa = (ACCESS_ALLOWED_ACE *)ace_next( current_ace );
+        current_ace = &aaa->Header;
         aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
         aaa->Header.AceFlags = 0;
         aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
@@ -385,10 +397,33 @@ static struct security_descriptor *file_get_sd( struct object *obj )
         sid = (SID *)&aaa->SidStart;
         memcpy( sid, user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
     }
+    if ((!(st.st_mode & S_IRUSR) && (st.st_mode & (S_IRGRP|S_IROTH))) ||
+        (!(st.st_mode & S_IWUSR) && (st.st_mode & (S_IWGRP|S_IWOTH))) ||
+        (!(st.st_mode & S_IXUSR) && (st.st_mode & (S_IXGRP|S_IXOTH))))
+    {
+        /* deny just in case the user is a member of the group */
+        ACCESS_DENIED_ACE *ada = (ACCESS_DENIED_ACE *)ace_next( current_ace );
+        current_ace = &ada->Header;
+        ada->Header.AceType = ACCESS_DENIED_ACE_TYPE;
+        ada->Header.AceFlags = 0;
+        ada->Header.AceSize = FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart) +
+                              FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
+        ada->Mask = 0;
+        if (!(st.st_mode & S_IRUSR) && (st.st_mode & (S_IRGRP|S_IROTH)))
+            ada->Mask |= FILE_GENERIC_READ;
+        if (!(st.st_mode & S_IWUSR) && (st.st_mode & (S_IWGRP|S_IROTH)))
+            ada->Mask |= FILE_GENERIC_WRITE | DELETE;
+        if (!(st.st_mode & S_IXUSR) && (st.st_mode & (S_IXGRP|S_IXOTH)))
+            ada->Mask |= FILE_GENERIC_EXECUTE;
+        ada->Mask &= ~STANDARD_RIGHTS_ALL; /* never deny standard rights */
+        sid = (SID *)&ada->SidStart;
+        memcpy( sid, user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
+    }
     if (st.st_mode & S_IRWXO)
     {
         /* appropriate access rights for Everyone */
-        aaa = (ACCESS_ALLOWED_ACE *)ace_next( &aaa->Header );
+        aaa = (ACCESS_ALLOWED_ACE *)ace_next( current_ace );
+        current_ace = &aaa->Header;
         aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
         aaa->Header.AceFlags = 0;
         aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
@@ -438,11 +473,11 @@ static mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner
                     {
                         unsigned int access = generic_file_map_access( ad_ace->Mask );
                         if (access & FILE_READ_DATA)
-                            denied_mode |= S_IROTH;
+                            denied_mode |= S_IRUSR|S_IRGRP|S_IROTH;
                         if (access & FILE_WRITE_DATA)
-                            denied_mode |= S_IWOTH;
+                            denied_mode |= S_IWUSR|S_IWGRP|S_IWOTH;
                         if (access & FILE_EXECUTE)
-                            denied_mode |= S_IXOTH;
+                            denied_mode |= S_IXUSR|S_IXGRP|S_IXOTH;
                     }
                     else if (security_equal_sid( sid, owner ))
                     {
@@ -462,11 +497,11 @@ static mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner
                     {
                         unsigned int access = generic_file_map_access( aa_ace->Mask );
                         if (access & FILE_READ_DATA)
-                            new_mode |= S_IROTH;
+                            new_mode |= S_IRUSR|S_IRGRP|S_IROTH;
                         if (access & FILE_WRITE_DATA)
-                            new_mode |= S_IWOTH;
+                            new_mode |= S_IWUSR|S_IWGRP|S_IWOTH;
                         if (access & FILE_EXECUTE)
-                            new_mode |= S_IXOTH;
+                            new_mode |= S_IXUSR|S_IXGRP|S_IXOTH;
                     }
                     else if (security_equal_sid( sid, owner ))
                     {
