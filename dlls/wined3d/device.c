@@ -6340,7 +6340,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
     TRACE("(%p) : Setting rendertarget %d to %p\n", This, RenderTargetIndex, pRenderTarget);
 
     if (RenderTargetIndex >= GL_LIMITS(buffers)) {
-        ERR("(%p) : Only %d render targets are supported.\n", This, GL_LIMITS(buffers));
+        WARN("(%p) : Unsupported target %u set, returning WINED3DERR_INVALIDCALL(only %u supported)\n",
+             This, RenderTargetIndex, GL_LIMITS(buffers));
         return WINED3DERR_INVALIDCALL;
     }
 
