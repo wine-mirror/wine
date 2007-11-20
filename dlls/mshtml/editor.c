@@ -586,6 +586,9 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         DWORD len;
         nsresult nsres;
 
+        V_VT(out) = VT_BSTR;
+        V_BSTR(out) = NULL;
+
         nsparam = create_nscommand_params();
 
         nsres = get_ns_command_state(This->nscontainer, NSCMD_FONTFACE, nsparam);
@@ -600,7 +603,6 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         MultiByteToWideChar(CP_ACP, 0, stra, -1, strw, -1);
         nsfree(stra);
 
-        V_VT(out) = VT_BSTR;
         V_BSTR(out) = SysAllocString(strw);
         mshtml_free(strw);
     }
