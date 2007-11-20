@@ -795,6 +795,7 @@ static void test_SetThreadContext(void)
     HANDLE thread;
     DWORD threadid;
     DWORD prevcount;
+    BOOL ret;
 
     SetLastError(0xdeadbeef);
     event = CreateEvent( NULL, TRUE, FALSE, NULL );
@@ -811,16 +812,20 @@ static void test_SetThreadContext(void)
 
     ctx.ContextFlags = CONTEXT_FULL;
     SetLastError(0xdeadbeef);
-    ok( GetThreadContext( thread, &ctx ), "GetThreadContext failed : (%d)\n", GetLastError() );
+    ret = GetThreadContext( thread, &ctx );
+    ok( ret, "GetThreadContext failed : (%u)\n", GetLastError() );
 
-    /* simulate a call to set_test_val(10) */
-    stack = (int *)ctx.Esp;
-    stack[-1] = 10;
-    stack[-2] = ctx.Eip;
-    ctx.Esp -= 2 * sizeof(int *);
-    ctx.Eip = (DWORD)set_test_val;
-    SetLastError(0xdeadbeef);
-    ok( SetThreadContext( thread, &ctx ), "SetThreadContext failed : (%d)\n", GetLastError() );
+    if (ret)
+    {
+        /* simulate a call to set_test_val(10) */
+        stack = (int *)ctx.Esp;
+        stack[-1] = 10;
+        stack[-2] = ctx.Eip;
+        ctx.Esp -= 2 * sizeof(int *);
+        ctx.Eip = (DWORD)set_test_val;
+        SetLastError(0xdeadbeef);
+        ok( SetThreadContext( thread, &ctx ), "SetThreadContext failed : (%d)\n", GetLastError() );
+    }
 
     SetLastError(0xdeadbeef);
     prevcount = ResumeThread( thread );
