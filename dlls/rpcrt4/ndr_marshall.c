@@ -871,10 +871,11 @@ static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
-#if 0 /* this causes problems for InstallShield so is disabled - we need more tests */
     if (!Pointer)
+    {
+      ERR("NULL ref pointer is not allowed\n");
       RpcRaiseException(RPC_X_NULL_REF_POINTER);
-#endif
+    }
     pointer_needs_marshaling = 1;
     break;
   case RPC_FC_UP: /* unique pointer */
@@ -1016,6 +1017,11 @@ static void PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
+    if (!Pointer)
+    {
+      ERR("NULL ref pointer is not allowed\n");
+      RpcRaiseException(RPC_X_NULL_REF_POINTER);
+    }
     break;
   case RPC_FC_OP:
   case RPC_FC_UP:
