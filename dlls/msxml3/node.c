@@ -564,7 +564,10 @@ static HRESULT WINAPI xmlnode_get_text(
     default:
         FIXME("Unhandled node type %d\n", This->node->type);
     }
-        
+
+    /* Always return a string. */
+    if (!str) str = SysAllocStringLen( NULL, 0 );
+
     TRACE("%p %s\n", This, debugstr_w(str) );
     *text = str;
  
