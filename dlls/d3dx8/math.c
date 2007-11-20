@@ -655,6 +655,57 @@ D3DXQUATERNION* WINAPI D3DXQuaternionRotationAxis(D3DXQUATERNION *pout, CONST D3
     return pout;
 }
 
+D3DXQUATERNION* WINAPI D3DXQuaternionRotationMatrix(D3DXQUATERNION *pout, CONST D3DXMATRIX *pm)
+{
+    int i, maxi;
+    FLOAT maxdiag, S, trace;
+
+    trace = pm->u.m[0][0] + pm->u.m[1][1] + pm->u.m[2][2] + 1.0f;
+    if ( trace > 0.0f)
+    {
+     pout->x = ( pm->u.m[1][2] - pm->u.m[2][1] ) / ( 2.0f * sqrt(trace) );
+     pout->y = ( pm->u.m[2][0] - pm->u.m[0][2] ) / ( 2.0f * sqrt(trace) );
+     pout->z = ( pm->u.m[0][1] - pm->u.m[1][0] ) / ( 2.0f * sqrt(trace) );
+     pout->w = sqrt(trace) / 2.0f;
+     return pout;
+     }
+    maxi = 0;
+    maxdiag = pm->u.m[0][0];
+    for (i=1; i<3; i++)
+    {
+     if ( pm->u.m[i][i] > maxdiag )
+     {
+      maxi = i;
+      maxdiag = pm->u.m[i][i];
+     }
+    }
+    switch( maxi )
+    {
+     case 0:
+       S = 2.0f * sqrt(1.0f + pm->u.m[0][0] - pm->u.m[1][1] - pm->u.m[2][2]);
+       pout->x = 0.25f * S;
+       pout->y = ( pm->u.m[0][1] + pm->u.m[1][0] ) / S;
+       pout->z = ( pm->u.m[0][2] + pm->u.m[2][0] ) / S;
+       pout->w = ( pm->u.m[1][2] - pm->u.m[2][1] ) / S;
+     break;
+     case 1:
+       S = 2.0f * sqrt(1.0f + pm->u.m[1][1] - pm->u.m[0][0] - pm->u.m[2][2]);
+       pout->x = ( pm->u.m[0][1] + pm->u.m[1][0] ) / S;
+       pout->y = 0.25f * S;
+       pout->z = ( pm->u.m[1][2] + pm->u.m[2][1] ) / S;
+       pout->w = ( pm->u.m[2][0] - pm->u.m[0][2] ) / S;
+     break;
+     case 2:
+       S = 2.0f * sqrt(1.0f + pm->u.m[2][2] - pm->u.m[0][0] - pm->u.m[1][1]);
+       pout->x = ( pm->u.m[0][2] + pm->u.m[2][0] ) / S;
+       pout->y = ( pm->u.m[1][2] + pm->u.m[2][1] ) / S;
+       pout->z = 0.25f * S;
+       pout->w = ( pm->u.m[0][1] - pm->u.m[1][0] ) / S;
+     break;
+    }
+    return pout;
+}
+
 D3DXQUATERNION* WINAPI D3DXQuaternionSlerp(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2, FLOAT t)
 {
     FLOAT dot, epsilon;

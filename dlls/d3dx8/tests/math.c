@@ -552,6 +552,7 @@ static void D3DXPlaneTest(void)
 
 static void D3X8QuaternionTest(void)
 {
+    D3DXMATRIX mat;
     D3DXQUATERNION expectedquat, gotquat, Nq, nul, q, r, s, t, u;
     LPD3DXQUATERNION funcpointer;
     D3DXVECTOR3 axis, expectedvec;
@@ -666,6 +667,38 @@ static void D3X8QuaternionTest(void)
     axis.x = 0.0f; axis.y = 0.0; axis.z = 0.0f;
     expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.866025f;
     D3DXQuaternionRotationAxis(&gotquat,&axis,angle);
+    expect_vec4(expectedquat,gotquat);
+
+/*_______________D3DXQuaternionRotationMatrix___________________*/
+    /* test when the trace is >0 */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = 10.0f; U(mat).m[1][1] = 20.0f; U(mat).m[2][2] = 30.0f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 2.368682f; expectedquat.y = 0.768221f; expectedquat.z = -0.384111f; expectedquat.w = 3.905125f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the greater element is (2,2) */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = -60.0f; U(mat).m[2][2] = 40.0f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 1.233905f; expectedquat.y = -0.237290f; expectedquat.z = 5.267827f; expectedquat.w = -0.284747f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the greater element is (1,1) */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 60.0f; U(mat).m[2][2] = -80.0f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 0.651031f; expectedquat.y = 6.144103f; expectedquat.z = -0.203447f; expectedquat.w = 0.488273f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_vec4(expectedquat,gotquat);
 
 /*_______________D3DXQuaternionSlerp________________________*/
