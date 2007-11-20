@@ -512,7 +512,7 @@ static void test_iocp_fileio(HANDLE h)
 
         NTSTATUS res = pNtSetInformationFile( hPipeSrv, &iosb, &fci, sizeof(fci), FileCompletionInformation );
         ok( res == STATUS_SUCCESS, "NtSetInformationFile failed: %x\n", res );
-        ok( iosb.Status == STATUS_SUCCESS, "iosb.Status invalid: %x\n", iosb.Status );
+        ok( U(iosb).Status == STATUS_SUCCESS, "iosb.Status invalid: %x\n", U(iosb).Status );
 
         count = get_pending_msgs(h);
         ok( !count, "Unexpected msg count: %ld\n", count );
