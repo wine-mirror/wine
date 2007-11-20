@@ -984,6 +984,7 @@ static void test_ClassInfo(IUnknown *unk)
 static void test_ie_funcs(IUnknown *unk)
 {
     IWebBrowser2 *wb;
+    IDispatch *disp;
     VARIANT_BOOL b;
     int i;
     long hwnd;
@@ -1133,6 +1134,18 @@ static void test_ie_funcs(IUnknown *unk)
     hres = IWebBrowser2_get_Resizable(wb, &b);
     ok(hres == E_NOTIMPL, "get_Resizable failed: %08x\n", hres);
     ok(b == 0x100, "b=%x\n", b);
+
+    /* Application */
+
+    disp = NULL;
+    hres = IWebBrowser2_get_Application(wb, &disp);
+    ok(hres == S_OK, "get_Application failed: %08x\n", hres);
+    ok(disp == (void*)wb, "disp=%p, expected %p\n", disp, wb);
+    if(disp)
+        IDispatch_Release(disp);
+
+    hres = IWebBrowser2_get_Application(wb, NULL);
+    ok(hres == E_POINTER, "get_Application failed: %08x, expected E_POINTER\n", hres);
 
     IWebBrowser2_Release(wb);
 }

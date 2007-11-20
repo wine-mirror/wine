@@ -260,8 +260,15 @@ static HRESULT WINAPI WebBrowser_Stop(IWebBrowser2 *iface)
 static HRESULT WINAPI WebBrowser_get_Application(IWebBrowser2 *iface, IDispatch **ppDisp)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, ppDisp);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppDisp);
+
+    if(!ppDisp)
+        return E_POINTER;
+
+    *ppDisp = (IDispatch*)WEBBROWSER2(This);
+    IDispatch_AddRef(*ppDisp);
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_Parent(IWebBrowser2 *iface, IDispatch **ppDisp)
