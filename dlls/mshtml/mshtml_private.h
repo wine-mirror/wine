@@ -398,6 +398,7 @@ BOOL install_wine_gecko(BOOL);
 void hlink_frame_navigate(HTMLDocument*,IHlinkFrame*,LPCWSTR,nsIInputStream*,DWORD);
 
 void call_property_onchanged(ConnectionPoint*,DISPID);
+HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*);
 
 void *nsalloc(size_t);
 void nsfree(void*);

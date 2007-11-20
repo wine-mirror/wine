@@ -415,6 +415,18 @@ void hide_tooltip(HTMLDocument *This)
     SendMessageW(This->tooltips_hwnd, TTM_ACTIVATE, FALSE, 0);
 }
 
+HRESULT call_set_active_object(IOleInPlaceUIWindow *window, IOleInPlaceActiveObject *act_obj)
+{
+    static WCHAR html_documentW[30];
+
+    if(act_obj && !html_documentW[0]) {
+        LoadStringW(hInst, IDS_HTMLDOCUMENT, html_documentW,
+                    sizeof(html_documentW)/sizeof(WCHAR));
+    }
+
+    return IOleInPlaceFrame_SetActiveObject(window, act_obj, act_obj ? html_documentW : NULL);
+}
+
 /**********************************************************
  * IOleDocumentView implementation
  */
@@ -564,7 +576,6 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
     }
 
     if(fUIActivate) {
-        OLECHAR wszHTMLDocument[30];
         RECT rcBorderWidths;
 
         if(This->ui_active)
@@ -583,12 +594,9 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 
         update_doc(This, UPDATE_UI);
 
-        LoadStringW(hInst, IDS_HTMLDOCUMENT, wszHTMLDocument,
-                    sizeof(wszHTMLDocument)/sizeof(WCHAR));
-
         hres = IOleInPlaceSite_OnUIActivate(This->ipsite);
         if(SUCCEEDED(hres)) {
-            IOleInPlaceFrame_SetActiveObject(This->frame, ACTOBJ(This), wszHTMLDocument);
+            call_set_active_object((IOleInPlaceUIWindow*)This->frame, ACTOBJ(This));
         }else {
             FIXME("OnUIActivate failed: %08x\n", hres);
             IOleInPlaceFrame_Release(This->frame);
@@ -604,7 +612,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             IDocHostUIHandler_HideUI(This->hostui);
 
         if(This->ip_window)
-            IOleInPlaceUIWindow_SetActiveObject(This->ip_window, ACTOBJ(This), wszHTMLDocument);
+            call_set_active_object(This->ip_window, ACTOBJ(This));
 
         memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
         IOleInPlaceFrame_SetBorderSpace(This->frame, &rcBorderWidths);
@@ -614,9 +622,9 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
         if(This->ui_active) {
             This->ui_active = FALSE;
             if(This->ip_window)
-                IOleInPlaceUIWindow_SetActiveObject(This->ip_window, NULL, NULL);
+                call_set_active_object(This->ip_window, NULL);
             if(This->frame)
-                IOleInPlaceFrame_SetActiveObject(This->frame, NULL, NULL);
+                call_set_active_object((IOleInPlaceUIWindow*)This->frame, NULL);
             if(This->hostui)
                 IDocHostUIHandler_HideUI(This->hostui);
             if(This->ipsite)
