@@ -595,11 +595,10 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         return hres;
 
     if(This->ui_active) {
-        OLECHAR wszHTMLDocument[30];
         RECT rcBorderWidths;
 
         if(This->ip_window)
-            IOleInPlaceUIWindow_SetActiveObject(This->ip_window, NULL, NULL);
+            call_set_active_object(This->ip_window, NULL);
         if(This->hostui)
             IDocHostUIHandler_HideUI(This->hostui);
 
@@ -607,11 +606,8 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
             IDocHostUIHandler_ShowUI(This->hostui, DOCHOSTUITYPE_AUTHOR, ACTOBJ(This), CMDTARGET(This),
                 This->frame, This->ip_window);
 
-        LoadStringW(hInst, IDS_HTMLDOCUMENT, wszHTMLDocument,
-                    sizeof(wszHTMLDocument)/sizeof(WCHAR));
-
         if(This->ip_window)
-            IOleInPlaceUIWindow_SetActiveObject(This->ip_window, ACTOBJ(This), wszHTMLDocument);
+            call_set_active_object(This->ip_window, ACTOBJ(This));
 
         memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
         IOleInPlaceFrame_SetBorderSpace(This->frame, &rcBorderWidths);
