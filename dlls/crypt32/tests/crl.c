@@ -29,6 +29,7 @@
 
 #include "wine/test.h"
 
+
 static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
  0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
  0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
@@ -76,11 +77,15 @@ static const BYTE signedCRL[] = { 0x30, 0x45, 0x30, 0x2c, 0x30, 0x02, 0x06,
  0x30, 0x5a, 0x30, 0x02, 0x06, 0x00, 0x03, 0x11, 0x00, 0x0f, 0x0e, 0x0d, 0x0c,
  0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 };
 
+static BOOL (WINAPI *pCertFindCertificateInCRL)(PCCERT_CONTEXT,PCCRL_CONTEXT,DWORD,void*,PCRL_ENTRY*);
+static PCCRL_CONTEXT (WINAPI *pCertFindCRLInStore)(HCERTSTORE,DWORD,DWORD,DWORD,const void*,PCCRL_CONTEXT);
 static BOOL (WINAPI *pCertIsValidCRLForCertificate)(PCCERT_CONTEXT, PCCRL_CONTEXT, DWORD, void*);
 
 static void init_function_pointers(void)
 {
     HMODULE hdll = GetModuleHandleA("crypt32.dll");
+    pCertFindCertificateInCRL = (void*)GetProcAddress(hdll, "CertFindCertificateInCRL");
+    pCertFindCRLInStore = (void*)GetProcAddress(hdll, "CertFindCRLInStore");
     pCertIsValidCRLForCertificate = (void*)GetProcAddress(hdll, "CertIsValidCRLForCertificate");
 }
 
@@ -205,33 +210,38 @@ static void testFindCRL(void)
     BOOL ret;
 
     if (!store) return;
+    if (!pCertFindCRLInStore)
+    {
+        skip("CertFindCRLInStore() is not available\n");
+        return;
+    }
 
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
     ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
 
     /* Crashes
-    context = CertFindCRLInStore(NULL, 0, 0, 0, NULL, NULL);
+    context = pCertFindCRLInStore(NULL, 0, 0, 0, NULL, NULL);
      */
 
     /* Find any context */
-    context = CertFindCRLInStore(store, 0, 0, CRL_FIND_ANY, NULL, NULL);
+    context = pCertFindCRLInStore(store, 0, 0, CRL_FIND_ANY, NULL, NULL);
     ok(context != NULL, "Expected a context\n");
     if (context)
         CertFreeCRLContext(context);
     /* Bogus flags are ignored */
-    context = CertFindCRLInStore(store, 0, 1234, CRL_FIND_ANY, NULL, NULL);
+    context = pCertFindCRLInStore(store, 0, 1234, CRL_FIND_ANY, NULL, NULL);
     ok(context != NULL, "Expected a context\n");
     if (context)
         CertFreeCRLContext(context);
     /* CRL encoding type is ignored too */
-    context = CertFindCRLInStore(store, 1234, 0, CRL_FIND_ANY, NULL, NULL);
+    context = pCertFindCRLInStore(store, 1234, 0, CRL_FIND_ANY, NULL, NULL);
     ok(context != NULL, "Expected a context\n");
     if (context)
         CertFreeCRLContext(context);
 
     /* This appears to match any cert */
-    context = CertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_BY, NULL, NULL);
+    context = pCertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_BY, NULL, NULL);
     ok(context != NULL, "Expected a context\n");
     if (context)
         CertFreeCRLContext(context);
@@ -241,7 +251,7 @@ static void testFindCRL(void)
      sizeof(bigCert2));
     ok(cert != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
-    context = CertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_BY, cert, NULL);
+    context = pCertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_BY, cert, NULL);
     ok(context == NULL, "Expected no matching context\n");
     CertFreeCertificateContext(cert);
 
@@ -250,7 +260,7 @@ static void testFindCRL(void)
      sizeof(bigCert));
     ok(cert != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
-    context = CertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_BY, cert, NULL);
+    context = pCertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_BY, cert, NULL);
     ok(context != NULL, "Expected a context\n");
     if (context)
         CertFreeCRLContext(context);
@@ -600,31 +610,37 @@ static void testFindCertInCRL(void)
     PCCRL_CONTEXT crl;
     PCRL_ENTRY entry;
 
+    if (!pCertFindCertificateInCRL)
+    {
+        skip("CertFindCertificateInCRL() is not available\n");
+        return;
+    }
+
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
      sizeof(bigCert));
     ok(cert != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
 
     /* Crash
-    ret = CertFindCertificateInCRL(NULL, NULL, 0, NULL, NULL);
-    ret = CertFindCertificateInCRL(NULL, crl, 0, NULL, NULL);
-    ret = CertFindCertificateInCRL(cert, NULL, 0, NULL, NULL);
-    ret = CertFindCertificateInCRL(cert, crl, 0, NULL, NULL);
-    ret = CertFindCertificateInCRL(NULL, NULL, 0, NULL, &entry);
-    ret = CertFindCertificateInCRL(NULL, crl, 0, NULL, &entry);
-    ret = CertFindCertificateInCRL(cert, NULL, 0, NULL, &entry);
+    ret = pCertFindCertificateInCRL(NULL, NULL, 0, NULL, NULL);
+    ret = pCertFindCertificateInCRL(NULL, crl, 0, NULL, NULL);
+    ret = pCertFindCertificateInCRL(cert, NULL, 0, NULL, NULL);
+    ret = pCertFindCertificateInCRL(cert, crl, 0, NULL, NULL);
+    ret = pCertFindCertificateInCRL(NULL, NULL, 0, NULL, &entry);
+    ret = pCertFindCertificateInCRL(NULL, crl, 0, NULL, &entry);
+    ret = pCertFindCertificateInCRL(cert, NULL, 0, NULL, &entry);
      */
 
     crl = CertCreateCRLContext(X509_ASN_ENCODING, verisignCRL,
      sizeof(verisignCRL));
-    ret = CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
+    ret = pCertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
     ok(ret, "CertFindCertificateInCRL failed: %08x\n", GetLastError());
     ok(entry == NULL, "Expected not to find an entry in CRL\n");
     CertFreeCRLContext(crl);
 
     crl = CertCreateCRLContext(X509_ASN_ENCODING, v1CRLWithIssuerAndEntry,
      sizeof(v1CRLWithIssuerAndEntry));
-    ret = CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
+    ret = pCertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
     ok(ret, "CertFindCertificateInCRL failed: %08x\n", GetLastError());
     ok(entry != NULL, "Expected to find an entry in CRL\n");
     CertFreeCRLContext(crl);
@@ -632,7 +648,7 @@ static void testFindCertInCRL(void)
     /* Entry found even though CRL issuer doesn't match cert issuer */
     crl = CertCreateCRLContext(X509_ASN_ENCODING, crlWithDifferentIssuer,
      sizeof(crlWithDifferentIssuer));
-    ret = CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
+    ret = pCertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
     ok(ret, "CertFindCertificateInCRL failed: %08x\n", GetLastError());
     ok(entry != NULL, "Expected to find an entry in CRL\n");
     CertFreeCRLContext(crl);

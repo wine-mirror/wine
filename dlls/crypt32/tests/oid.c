@@ -27,6 +27,10 @@
 
 #include "wine/test.h"
 
+
+static BOOL (WINAPI *pCryptEnumOIDInfo)(DWORD,DWORD,void*,PFN_CRYPT_ENUM_OID_INFO);
+
+
 struct OIDToAlgID
 {
     LPCSTR oid;
@@ -471,14 +475,20 @@ static void test_enumOIDInfo(void)
     BOOL ret;
     DWORD count = 0;
 
+    if (!pCryptEnumOIDInfo)
+    {
+        skip("CryptEnumOIDInfo() is not available\n");
+        return;
+    }
+
     /* This crashes
-    ret = CryptEnumOIDInfo(7, 0, NULL, NULL);
+    ret = pCryptEnumOIDInfo(7, 0, NULL, NULL);
      */
 
     /* Silly tests, check that more than one thing is enumerated */
-    ret = CryptEnumOIDInfo(0, 0, &count, countOidInfo);
+    ret = pCryptEnumOIDInfo(0, 0, &count, countOidInfo);
     ok(ret && count > 0, "Expected more than item enumerated\n");
-    ret = CryptEnumOIDInfo(0, 0, NULL, noOidInfo);
+    ret = pCryptEnumOIDInfo(0, 0, NULL, noOidInfo);
     ok(!ret, "Expected FALSE\n");
 }
 
@@ -532,6 +542,9 @@ static void test_findOIDInfo(void)
 
 START_TEST(oid)
 {
+    HMODULE hCrypt32 = GetModuleHandleA("crypt32.dll");
+    pCryptEnumOIDInfo = (void*)GetProcAddress(hCrypt32, "CryptEnumOIDInfo");
+
     testOIDToAlgID();
     testAlgIDToOID();
     test_enumOIDInfo();

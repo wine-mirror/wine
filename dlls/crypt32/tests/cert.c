@@ -29,6 +29,11 @@
 
 #include "wine/test.h"
 
+static BOOL (WINAPI *pCertAddStoreToCollection)(HCERTSTORE,HCERTSTORE,DWORD,DWORD);
+static PCCERT_CONTEXT (WINAPI *pCertCreateSelfSignCertificate)(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE,PCERT_NAME_BLOB,DWORD,PCRYPT_KEY_PROV_INFO,PCRYPT_ALGORITHM_IDENTIFIER,PSYSTEMTIME,PSYSTEMTIME,PCERT_EXTENSIONS);
+static BOOL (WINAPI *pCertGetValidUsages)(DWORD,PCCERT_CONTEXT*,int*,LPSTR*,DWORD*);
+static BOOL (WINAPI *pCryptAcquireCertificatePrivateKey)(PCCERT_CONTEXT,DWORD,void*,HCRYPTPROV_OR_NCRYPT_KEY_HANDLE*,DWORD*,BOOL*);
+static BOOL (WINAPI *pCryptEncodeObjectEx)(DWORD,LPCSTR,const void*,DWORD,PCRYPT_ENCODE_PARA,void*,DWORD*);
 static BOOL (WINAPI * pCryptVerifyCertificateSignatureEx)
                         (HCRYPTPROV, DWORD, DWORD, void *, DWORD, void *, DWORD, void *);
 
@@ -45,6 +50,11 @@ static void init_function_pointers(void)
     if(!p ## func) \
       trace("GetProcAddress(%s) failed\n", #func);
 
+    GET_PROC(hCrypt32, CertAddStoreToCollection)
+    GET_PROC(hCrypt32, CertCreateSelfSignCertificate)
+    GET_PROC(hCrypt32, CertGetValidUsages)
+    GET_PROC(hCrypt32, CryptAcquireCertificatePrivateKey)
+    GET_PROC(hCrypt32, CryptEncodeObjectEx)
     GET_PROC(hCrypt32, CryptVerifyCertificateSignatureEx)
 
     GET_PROC(hAdvapi32, CryptAcquireContextW)
@@ -256,10 +266,10 @@ static void testAddCert(void)
     collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(collection != NULL, "CertOpenStore failed: %08x\n", GetLastError());
-    if (collection)
+    if (collection && pCertAddStoreToCollection)
     {
         /* Add store to the collection, but disable updates */
-        CertAddStoreToCollection(collection, store, 0, 0);
+        pCertAddStoreToCollection(collection, store, 0, 0);
 
         context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
          sizeof(bigCert2));
@@ -1587,6 +1597,11 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
         skip("no CryptVerifyCertificateSignatureEx support\n");
         return;
     }
+    if (!pCryptEncodeObjectEx)
+    {
+        skip("no CryptEncodeObjectEx support\n");
+        return;
+    }
     ret = pCryptVerifyCertificateSignatureEx(0, 0, 0, NULL, 0, NULL, 0, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
@@ -1608,7 +1623,7 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
     info.Signature.cbData = sigLen;
     info.Signature.pbData = (BYTE *)sig;
     info.Signature.cUnusedBits = 0;
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_CERT, &info,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, X509_CERT, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&cert, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (cert)
@@ -1791,13 +1806,19 @@ static void testCreateSelfSignCert(void)
     HCRYPTKEY key;
     CRYPT_KEY_PROV_INFO info;
 
+    if (!pCertCreateSelfSignCertificate)
+    {
+        skip("CertCreateSelfSignCertificate() is not available\n");
+        return;
+    }
+
     /* This crashes:
-    context = CertCreateSelfSignCertificate(0, NULL, 0, NULL, NULL, NULL, NULL,
+    context = pCertCreateSelfSignCertificate(0, NULL, 0, NULL, NULL, NULL, NULL,
      NULL);
      * Calling this with no first parameter creates a new key container, which
      * lasts beyond the test, so I don't test that.  Nb: the generated key
      * name is a GUID.
-    context = CertCreateSelfSignCertificate(0, &name, 0, NULL, NULL, NULL, NULL,
+    context = pCertCreateSelfSignCertificate(0, &name, 0, NULL, NULL, NULL, NULL,
      NULL);
      */
 
@@ -1808,7 +1829,7 @@ static void testCreateSelfSignCert(void)
      CRYPT_NEWKEYSET);
     ok(ret, "CryptAcquireContext failed: %08x\n", GetLastError());
 
-    context = CertCreateSelfSignCertificate(csp, &name, 0, NULL, NULL, NULL,
+    context = pCertCreateSelfSignCertificate(csp, &name, 0, NULL, NULL, NULL,
      NULL, NULL);
     ok(!context && GetLastError() == NTE_NO_KEY,
      "Expected NTE_NO_KEY, got %08x\n", GetLastError());
@@ -1816,7 +1837,7 @@ static void testCreateSelfSignCert(void)
     ok(ret, "CryptGenKey failed: %08x\n", GetLastError());
     if (ret)
     {
-        context = CertCreateSelfSignCertificate(csp, &name, 0, NULL, NULL, NULL,
+        context = pCertCreateSelfSignCertificate(csp, &name, 0, NULL, NULL, NULL,
          NULL, NULL);
         ok(context != NULL, "CertCreateSelfSignCertificate failed: %08x\n",
          GetLastError());
@@ -1868,7 +1889,7 @@ static void testCreateSelfSignCert(void)
     info.dwKeySpec = AT_KEYEXCHANGE;
     info.pwszProvName = (LPWSTR) MS_DEF_PROV_W;
     info.pwszContainerName = cspNameW;
-    context = CertCreateSelfSignCertificate(0, &name, 0, &info, NULL, NULL,
+    context = pCertCreateSelfSignCertificate(0, &name, 0, &info, NULL, NULL,
         NULL, NULL);
     ok(context != NULL, "CertCreateSelfSignCertificate failed: %08x\n",
         GetLastError());
@@ -2220,14 +2241,20 @@ static void testGetValidUsages(void)
     LPSTR *oids = NULL;
     PCCERT_CONTEXT contexts[3];
 
+    if (!pCertGetValidUsages)
+    {
+        skip("CertGetValidUsages() is not available\n");
+        return;
+    }
+
     /* Crash
-    ret = CertGetValidUsages(0, NULL, NULL, NULL, NULL);
-    ret = CertGetValidUsages(0, NULL, NULL, NULL, &size);
+    ret = pCertGetValidUsages(0, NULL, NULL, NULL, NULL);
+    ret = pCertGetValidUsages(0, NULL, NULL, NULL, &size);
      */
     contexts[0] = NULL;
     numOIDs = size = 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    ret = CertGetValidUsages(1, &contexts[0], &numOIDs, NULL, &size);
+    ret = pCertGetValidUsages(1, &contexts[0], &numOIDs, NULL, &size);
     ok(ret, "CertGetValidUsages failed: %d\n", GetLastError());
     ok(numOIDs == -1, "Expected -1, got %d\n", numOIDs);
     ok(size == 0, "Expected size 0, got %d\n", size);
@@ -2238,16 +2265,16 @@ static void testGetValidUsages(void)
     contexts[2] = CertCreateCertificateContext(X509_ASN_ENCODING,
      cert2WithUsage, sizeof(cert2WithUsage));
     numOIDs = size = 0xdeadbeef;
-    ret = CertGetValidUsages(0, NULL, &numOIDs, NULL, &size);
+    ret = pCertGetValidUsages(0, NULL, &numOIDs, NULL, &size);
     ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
     ok(numOIDs == -1, "Expected -1, got %d\n", numOIDs);
     ok(size == 0, "Expected size 0, got %d\n", size);
     numOIDs = size = 0xdeadbeef;
-    ret = CertGetValidUsages(1, contexts, &numOIDs, NULL, &size);
+    ret = pCertGetValidUsages(1, contexts, &numOIDs, NULL, &size);
     ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
     ok(numOIDs == -1, "Expected -1, got %d\n", numOIDs);
     ok(size == 0, "Expected size 0, got %d\n", size);
-    ret = CertGetValidUsages(1, &contexts[1], &numOIDs, NULL, &size);
+    ret = pCertGetValidUsages(1, &contexts[1], &numOIDs, NULL, &size);
     ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
     ok(numOIDs == 3, "Expected 3, got %d\n", numOIDs);
     ok(size, "Expected non-zero size\n");
@@ -2258,10 +2285,10 @@ static void testGetValidUsages(void)
         DWORD smallSize = 1;
 
         SetLastError(0xdeadbeef);
-        ret = CertGetValidUsages(1, &contexts[1], &numOIDs, oids, &smallSize);
+        ret = pCertGetValidUsages(1, &contexts[1], &numOIDs, oids, &smallSize);
         ok(!ret && GetLastError() == ERROR_MORE_DATA,
          "Expected ERROR_MORE_DATA, got %d\n", GetLastError());
-        ret = CertGetValidUsages(1, &contexts[1], &numOIDs, oids, &size);
+        ret = pCertGetValidUsages(1, &contexts[1], &numOIDs, oids, &size);
         ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
         for (i = 0; i < numOIDs; i++)
             ok(!lstrcmpA(oids[i], expectedOIDs[i]), "unexpected OID %s\n",
@@ -2270,11 +2297,11 @@ static void testGetValidUsages(void)
     }
     numOIDs = size = 0xdeadbeef;
     /* Oddly enough, this crashes when the number of contexts is not 1:
-    ret = CertGetValidUsages(2, contexts, &numOIDs, NULL, &size);
+    ret = pCertGetValidUsages(2, contexts, &numOIDs, NULL, &size);
      * but setting size to 0 allows it to succeed:
      */
     size = 0;
-    ret = CertGetValidUsages(2, contexts, &numOIDs, NULL, &size);
+    ret = pCertGetValidUsages(2, contexts, &numOIDs, NULL, &size);
     ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
     ok(numOIDs == 3, "Expected 3, got %d\n", numOIDs);
     ok(size, "Expected non-zero size\n");
@@ -2283,7 +2310,7 @@ static void testGetValidUsages(void)
     {
         int i;
 
-        ret = CertGetValidUsages(1, &contexts[1], &numOIDs, oids, &size);
+        ret = pCertGetValidUsages(1, &contexts[1], &numOIDs, oids, &size);
         ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
         for (i = 0; i < numOIDs; i++)
             ok(!lstrcmpA(oids[i], expectedOIDs[i]), "unexpected OID %s\n",
@@ -2292,7 +2319,7 @@ static void testGetValidUsages(void)
     }
     numOIDs = 0xdeadbeef;
     size = 0;
-    ret = CertGetValidUsages(1, &contexts[2], &numOIDs, NULL, &size);
+    ret = pCertGetValidUsages(1, &contexts[2], &numOIDs, NULL, &size);
     ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
     ok(numOIDs == 2, "Expected 2, got %d\n", numOIDs);
     ok(size, "Expected non-zero size\n");
@@ -2301,7 +2328,7 @@ static void testGetValidUsages(void)
     {
         int i;
 
-        ret = CertGetValidUsages(1, &contexts[2], &numOIDs, oids, &size);
+        ret = pCertGetValidUsages(1, &contexts[2], &numOIDs, oids, &size);
         ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
         for (i = 0; i < numOIDs; i++)
             ok(!lstrcmpA(oids[i], expectedOIDs2[i]), "unexpected OID %s\n",
@@ -2310,7 +2337,7 @@ static void testGetValidUsages(void)
     }
     numOIDs = 0xdeadbeef;
     size = 0;
-    ret = CertGetValidUsages(3, contexts, &numOIDs, NULL, &size);
+    ret = pCertGetValidUsages(3, contexts, &numOIDs, NULL, &size);
     ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
     ok(numOIDs == 2, "Expected 2, got %d\n", numOIDs);
     ok(size, "Expected non-zero size\n");
@@ -2319,7 +2346,7 @@ static void testGetValidUsages(void)
     {
         int i;
 
-        ret = CertGetValidUsages(3, contexts, &numOIDs, oids, &size);
+        ret = pCertGetValidUsages(3, contexts, &numOIDs, oids, &size);
         ok(ret, "CertGetValidUsages failed: %08x\n", GetLastError());
         for (i = 0; i < numOIDs; i++)
             ok(!lstrcmpA(oids[i], expectedOIDs2[i]), "unexpected OID %s\n",
@@ -2679,6 +2706,12 @@ static void testAcquireCertPrivateKey(void)
     HCRYPTKEY key;
     WCHAR ms_def_prov_w[MAX_PATH];
 
+    if (!pCryptAcquireCertificatePrivateKey)
+    {
+        skip("CryptAcquireCertificatePrivateKey() is not available\n");
+        return;
+    }
+
     lstrcpyW(ms_def_prov_w, MS_DEF_PROV_W);
 
     keyProvInfo.pwszContainerName = cspNameW;
@@ -2696,28 +2729,28 @@ static void testAcquireCertPrivateKey(void)
      sizeof(selfSignedCert));
 
     /* Crash
-    ret = CryptAcquireCertificatePrivateKey(NULL, 0, NULL, NULL, NULL, NULL);
-    ret = CryptAcquireCertificatePrivateKey(NULL, 0, NULL, NULL, NULL,
+    ret = pCryptAcquireCertificatePrivateKey(NULL, 0, NULL, NULL, NULL, NULL);
+    ret = pCryptAcquireCertificatePrivateKey(NULL, 0, NULL, NULL, NULL,
      &callerFree);
-    ret = CryptAcquireCertificatePrivateKey(NULL, 0, NULL, NULL, &keySpec,
+    ret = pCryptAcquireCertificatePrivateKey(NULL, 0, NULL, NULL, &keySpec,
      NULL);
-    ret = CryptAcquireCertificatePrivateKey(NULL, 0, NULL, &csp, NULL, NULL);
-    ret = CryptAcquireCertificatePrivateKey(NULL, 0, NULL, &csp, &keySpec,
+    ret = pCryptAcquireCertificatePrivateKey(NULL, 0, NULL, &csp, NULL, NULL);
+    ret = pCryptAcquireCertificatePrivateKey(NULL, 0, NULL, &csp, &keySpec,
      &callerFree);
-    ret = CryptAcquireCertificatePrivateKey(cert, 0, NULL, NULL, NULL, NULL);
+    ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, NULL, NULL, NULL);
      */
 
     /* Missing private key */
-    ret = CryptAcquireCertificatePrivateKey(cert, 0, NULL, &csp, NULL, NULL);
+    ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &csp, NULL, NULL);
     ok(!ret && GetLastError() == CRYPT_E_NO_KEY_PROPERTY,
      "Expected CRYPT_E_NO_KEY_PROPERTY, got %08x\n", GetLastError());
-    ret = CryptAcquireCertificatePrivateKey(cert, 0, NULL, &csp, &keySpec,
+    ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &csp, &keySpec,
      &callerFree);
     ok(!ret && GetLastError() == CRYPT_E_NO_KEY_PROPERTY,
      "Expected CRYPT_E_NO_KEY_PROPERTY, got %08x\n", GetLastError());
     CertSetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, 0,
      &keyProvInfo);
-    ret = CryptAcquireCertificatePrivateKey(cert, 0, NULL, &csp, &keySpec,
+    ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &csp, &keySpec,
      &callerFree);
     ok(!ret && GetLastError() == CRYPT_E_NO_KEY_PROPERTY,
      "Expected CRYPT_E_NO_KEY_PROPERTY, got %08x\n", GetLastError());
@@ -2733,20 +2766,20 @@ static void testAcquireCertPrivateKey(void)
         CERT_KEY_CONTEXT keyContext;
 
         /* Don't cache provider */
-        ret = CryptAcquireCertificatePrivateKey(cert, 0, NULL, &certCSP,
+        ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &certCSP,
          &keySpec, &callerFree);
         ok(ret, "CryptAcquireCertificatePrivateKey failed: %08x\n",
          GetLastError());
         ok(callerFree, "Expected callerFree to be TRUE\n");
         CryptReleaseContext(certCSP, 0);
-        ret = CryptAcquireCertificatePrivateKey(cert, 0, NULL, &certCSP,
+        ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &certCSP,
          NULL, NULL);
         ok(ret, "CryptAcquireCertificatePrivateKey failed: %08x\n",
          GetLastError());
         CryptReleaseContext(certCSP, 0);
 
         /* Use the key prov info's caching (there shouldn't be any) */
-        ret = CryptAcquireCertificatePrivateKey(cert,
+        ret = pCryptAcquireCertificatePrivateKey(cert,
          CRYPT_ACQUIRE_USE_PROV_INFO_FLAG, NULL, &certCSP, &keySpec,
          &callerFree);
         ok(ret, "CryptAcquireCertificatePrivateKey failed: %08x\n",
@@ -2755,7 +2788,7 @@ static void testAcquireCertPrivateKey(void)
         CryptReleaseContext(certCSP, 0);
 
         /* Cache it (and check that it's cached) */
-        ret = CryptAcquireCertificatePrivateKey(cert,
+        ret = pCryptAcquireCertificatePrivateKey(cert,
          CRYPT_ACQUIRE_CACHE_FLAG, NULL, &certCSP, &keySpec, &callerFree);
         ok(ret, "CryptAcquireCertificatePrivateKey failed: %08x\n",
          GetLastError());
@@ -2775,7 +2808,7 @@ static void testAcquireCertPrivateKey(void)
         CertSetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, 0,
          &keyProvInfo);
         /* Now use the key prov info's caching */
-        ret = CryptAcquireCertificatePrivateKey(cert,
+        ret = pCryptAcquireCertificatePrivateKey(cert,
          CRYPT_ACQUIRE_USE_PROV_INFO_FLAG, NULL, &certCSP, &keySpec,
          &callerFree);
         ok(ret, "CryptAcquireCertificatePrivateKey failed: %08x\n",
@@ -2808,7 +2841,7 @@ static void testAcquireCertPrivateKey(void)
             ok(size == sizeof(exportedPublicKeyBlob), "Unexpected size %d\n",
              size);
             ok(!memcmp(buf, exportedPublicKeyBlob, size), "Unexpected value\n");
-            ret = CryptEncodeObjectEx(X509_ASN_ENCODING, RSA_CSP_PUBLICKEYBLOB,
+            ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, RSA_CSP_PUBLICKEYBLOB,
              buf, CRYPT_ENCODE_ALLOC_FLAG, NULL, &encodedKey, &size);
             ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
             if (ret)
