@@ -672,6 +672,7 @@ struct get_dll_info_reply
     struct reply_header __header;
     size_t       size;
     void*        entry_point;
+    data_size_t  filename_len;
     /* VARARG(filename,unicode_str); */
 };
 
@@ -4905,6 +4906,6 @@ union generic_reply
     struct add_fd_completion_reply add_fd_completion_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 331
+#define SERVER_PROTOCOL_VERSION 332
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

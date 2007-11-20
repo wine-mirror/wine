@@ -19,6 +19,7 @@
  */
 
 #include "ntdll_test.h"
+#include <winnls.h>
 
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -754,6 +755,37 @@ static void test_query_process_handlecount(void)
     }
 }
 
+static void test_query_process_image_file_name(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    UNICODE_STRING image_file_name;
+    void *buffer;
+    char *file_nameA;
+    INT len;
+
+    status = pNtQueryInformationProcess(NULL, ProcessImageFileName, &image_file_name, sizeof(image_file_name), NULL);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, &image_file_name, 2, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, &image_file_name, sizeof(image_file_name), &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, ReturnLength);
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, buffer, ReturnLength, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    memcpy(&image_file_name, buffer, sizeof(image_file_name));
+    len = WideCharToMultiByte(CP_ACP, 0, image_file_name.Buffer, image_file_name.Length/sizeof(WCHAR), NULL, 0, NULL, NULL);
+    file_nameA = HeapAlloc(GetProcessHeap(), 0, len + 1);
+    WideCharToMultiByte(CP_ACP, 0, image_file_name.Buffer, image_file_name.Length/sizeof(WCHAR), file_nameA, len, NULL, NULL);
+    file_nameA[len] = '\0';
+    HeapFree(GetProcessHeap(), 0, buffer);
+    trace("process image file name: %s\n", file_nameA);
+    HeapFree(GetProcessHeap(), 0, file_nameA);
+}
+
 
 static void test_readvirtualmemory(void)
 {
@@ -885,6 +917,10 @@ START_TEST(info)
     /* 0x14 ProcessHandleCount */
     trace("Starting test_query_process_handlecount()\n");
     test_query_process_handlecount();
+
+    /* 27 ProcessImageFileName */
+    trace("Starting test_query_process_image_file_name()\n");
+    test_query_process_image_file_name();
 
     /* belongs into it's own file */
     trace("Starting test_readvirtualmemory()\n");

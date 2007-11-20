@@ -1004,6 +1004,7 @@ static void dump_get_dll_info_reply( const struct get_dll_info_reply *req )
 {
     fprintf( stderr, " size=%lu,", (unsigned long)req->size );
     fprintf( stderr, " entry_point=%p,", req->entry_point );
+    fprintf( stderr, " filename_len=%u,", req->filename_len );
     fprintf( stderr, " filename=" );
     dump_varargs_unicode_str( cur_size );
 }

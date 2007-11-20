@@ -1129,16 +1129,25 @@ DECL_HANDLER(get_dll_info)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
     {
-        struct process_dll *dll = find_process_dll( process, req->base_address );
+        struct process_dll *dll;
+
+        if (req->base_address)
+            dll = find_process_dll( process, req->base_address );
+        else /* NULL means main module */
+            dll = list_head( &process->dlls ) ?
+                LIST_ENTRY(list_head( &process->dlls ), struct process_dll, entry) : NULL;
 
         if (dll)
         {
             reply->size = dll->size;
             reply->entry_point = NULL; /* FIXME */
+            reply->filename_len = dll->namelen;
             if (dll->filename)
             {
-                data_size_t len = min( dll->namelen, get_reply_max_size() );
-                set_reply_data( dll->filename, len );
+                if (dll->namelen <= get_reply_max_size())
+                    set_reply_data( dll->filename, dll->namelen );
+                else
+                    set_error( STATUS_BUFFER_TOO_SMALL );
             }
         }
         else
