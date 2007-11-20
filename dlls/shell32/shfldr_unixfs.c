@@ -742,6 +742,61 @@ static HRESULT UNIXFS_initialize_target_folder(UnixFolder *This, const char *szB
 }
 
 /******************************************************************************
+ * UNIXFS_copy [Internal]
+ *
+ *  Copy pwszDosSrc to pwszDosDst.
+ *
+ * PARAMS
+ *  pwszDosSrc [I]  absolute path of the source
+ *  pwszDosDst [I]  absolute path of the destination
+ *
+ * RETURNS
+ *  Success: S_OK,
+ *  Failure: E_FAIL
+ */
+static HRESULT UNIXFS_copy(LPCWSTR pwszDosSrc, LPCWSTR pwszDosDst)
+{
+    SHFILEOPSTRUCTW op;
+    LPWSTR pwszSrc, pwszDst;
+    HRESULT res = E_OUTOFMEMORY;
+    UINT iSrcLen, iDstLen;
+
+    if (!pwszDosSrc || !pwszDosDst)
+        return E_FAIL;
+
+    iSrcLen = lstrlenW(pwszDosSrc);
+    iDstLen = lstrlenW(pwszDosDst);
+    pwszSrc = HeapAlloc(GetProcessHeap(), 0, (iSrcLen + 2) * sizeof(WCHAR));
+    pwszDst = HeapAlloc(GetProcessHeap(), 0, (iDstLen + 2) * sizeof(WCHAR));
+
+    if (pwszSrc && pwszDst) {
+        lstrcpyW(pwszSrc, pwszDosSrc);
+        lstrcpyW(pwszDst, pwszDosDst);
+        /* double null termination */
+        pwszSrc[iSrcLen + 1] = 0;
+        pwszDst[iDstLen + 1] = 0;
+
+        ZeroMemory(&op, sizeof(op));
+        op.hwnd = GetActiveWindow();
+        op.wFunc = FO_COPY;
+        op.pFrom = pwszSrc;
+        op.pTo = pwszDst;
+        op.fFlags = FOF_ALLOWUNDO;
+        if (!SHFileOperationW(&op))
+        {
+            WARN("SHFileOperationW failed\n");
+            res = E_FAIL;
+        }
+        else
+            res = S_OK;
+    }
+
+    HeapFree(GetProcessHeap(), 0, pwszSrc);
+    HeapFree(GetProcessHeap(), 0, pwszDst);
+    return res;
+}
+
+/******************************************************************************
  * UnixFolder
  *
  * Class whose heap based instances represent unix filesystem directories.
@@ -1864,7 +1919,7 @@ static HRESULT WINAPI UnixFolder_ISFHelper_CopyItems(ISFHelper* iface, IShellFol
     HRESULT hr;
     char szAbsoluteDst[FILENAME_MAX], *pszRelativeDst;
     
-    TRACE("(iface=%p, psfFrom=%p, cidl=%d, apidl=%p): semi-stub\n", iface, psfFrom, cidl, apidl);
+    TRACE("(iface=%p, psfFrom=%p, cidl=%d, apidl=%p)\n", iface, psfFrom, cidl, apidl);
 
     if (!psfFrom || !cidl || !apidl)
         return E_INVALIDARG;
@@ -1882,6 +1937,8 @@ static HRESULT WINAPI UnixFolder_ISFHelper_CopyItems(ISFHelper* iface, IShellFol
         WCHAR wszSrc[MAX_PATH];
         char szSrc[FILENAME_MAX];
         STRRET strret;
+        HRESULT res;
+        WCHAR *pwszDosSrc, *pwszDosDst;
 
         /* Build the unix path of the current source item. */
         if (FAILED(IShellFolder_GetDisplayNameOf(psfFrom, apidl[i], SHGDN_FORPARSING, &strret)))
@@ -1894,7 +1951,19 @@ static HRESULT WINAPI UnixFolder_ISFHelper_CopyItems(ISFHelper* iface, IShellFol
         /* Build the unix path of the current destination item */
         UNIXFS_filename_from_shitemid(apidl[i], pszRelativeDst);
 
-        FIXME("Would copy %s to %s. Not yet implemented.\n", szSrc, szAbsoluteDst);
+        pwszDosSrc = wine_get_dos_file_name(szSrc);
+        pwszDosDst = wine_get_dos_file_name(szAbsoluteDst);
+
+        if (pwszDosSrc && pwszDosDst)
+            res = UNIXFS_copy(pwszDosSrc, pwszDosDst);
+        else
+            res = E_OUTOFMEMORY;
+
+        HeapFree(GetProcessHeap(), 0, pwszDosSrc);
+        HeapFree(GetProcessHeap(), 0, pwszDosDst);
+
+        if (res != S_OK)
+            return res;
     }
     return S_OK;
 }
