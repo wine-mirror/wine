@@ -131,7 +131,7 @@ static TIMER_DIRECTION LISTBOX_Timer = LB_TIMER_NONE;
 static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
-static LRESULT LISTBOX_GetItemRect( LB_DESCR *descr, INT index, RECT *rect );
+static LRESULT LISTBOX_GetItemRect( const LB_DESCR *descr, INT index, RECT *rect );
 
 /*********************************************************************
  * listbox class descriptor
@@ -177,7 +177,7 @@ static inline BOOL is_old_app( LB_DESCR *descr )
  *
  * Return the current page size
  */
-static INT LISTBOX_GetCurrentPageSize( LB_DESCR *descr )
+static INT LISTBOX_GetCurrentPageSize( const LB_DESCR *descr )
 {
     INT i, height;
     if (!(descr->style & LBS_OWNERDRAWVARIABLE)) return descr->page_size;
@@ -195,7 +195,7 @@ static INT LISTBOX_GetCurrentPageSize( LB_DESCR *descr )
  *
  * Return the maximum possible index for the top of the listbox.
  */
-static INT LISTBOX_GetMaxTopIndex( LB_DESCR *descr )
+static INT LISTBOX_GetMaxTopIndex( const LB_DESCR *descr )
 {
     INT max, page;
 
@@ -432,7 +432,7 @@ static void LISTBOX_UpdateSize( LB_DESCR *descr )
  * Get the rectangle enclosing an item, in listbox client coordinates.
  * Return 1 if the rectangle is (partially) visible, 0 if hidden, -1 on error.
  */
-static LRESULT LISTBOX_GetItemRect( LB_DESCR *descr, INT index, RECT *rect )
+static LRESULT LISTBOX_GetItemRect( const LB_DESCR *descr, INT index, RECT *rect )
 {
     /* Index <= 0 is legal even on empty listboxes */
     if (index && (index >= descr->nb_items))
@@ -490,7 +490,7 @@ static LRESULT LISTBOX_GetItemRect( LB_DESCR *descr, INT index, RECT *rect )
  *
  * Return the item nearest from point (x,y) (in client coordinates).
  */
-static INT LISTBOX_GetItemFromPoint( LB_DESCR *descr, INT x, INT y )
+static INT LISTBOX_GetItemFromPoint( const LB_DESCR *descr, INT x, INT y )
 {
     INT index = descr->top_item;
 
@@ -999,10 +999,10 @@ static INT LISTBOX_FindString( LB_DESCR *descr, INT start, LPCWSTR str, BOOL exa
 /***********************************************************************
  *           LISTBOX_GetSelCount
  */
-static LRESULT LISTBOX_GetSelCount( LB_DESCR *descr )
+static LRESULT LISTBOX_GetSelCount( const LB_DESCR *descr )
 {
     INT i, count;
-    LB_ITEMDATA *item = descr->items;
+    const LB_ITEMDATA *item = descr->items;
 
     if (!(descr->style & LBS_MULTIPLESEL) ||
         (descr->style & LBS_NOSEL))
@@ -1016,10 +1016,10 @@ static LRESULT LISTBOX_GetSelCount( LB_DESCR *descr )
 /***********************************************************************
  *           LISTBOX_GetSelItems16
  */
-static LRESULT LISTBOX_GetSelItems16( LB_DESCR *descr, INT16 max, LPINT16 array )
+static LRESULT LISTBOX_GetSelItems16( const LB_DESCR *descr, INT16 max, LPINT16 array )
 {
     INT i, count;
-    LB_ITEMDATA *item = descr->items;
+    const LB_ITEMDATA *item = descr->items;
 
     if (!(descr->style & LBS_MULTIPLESEL)) return LB_ERR;
     for (i = count = 0; (i < descr->nb_items) && (count < max); i++, item++)
@@ -1031,10 +1031,10 @@ static LRESULT LISTBOX_GetSelItems16( LB_DESCR *descr, INT16 max, LPINT16 array 
 /***********************************************************************
  *           LISTBOX_GetSelItems
  */
-static LRESULT LISTBOX_GetSelItems( LB_DESCR *descr, INT max, LPINT array )
+static LRESULT LISTBOX_GetSelItems( const LB_DESCR *descr, INT max, LPINT array )
 {
     INT i, count;
-    LB_ITEMDATA *item = descr->items;
+    const LB_ITEMDATA *item = descr->items;
 
     if (!(descr->style & LBS_MULTIPLESEL)) return LB_ERR;
     for (i = count = 0; (i < descr->nb_items) && (count < max); i++, item++)
@@ -1200,7 +1200,7 @@ static void LISTBOX_InvalidateItemRect( LB_DESCR *descr, INT index )
 /***********************************************************************
  *           LISTBOX_GetItemHeight
  */
-static LRESULT LISTBOX_GetItemHeight( LB_DESCR *descr, INT index )
+static LRESULT LISTBOX_GetItemHeight( const LB_DESCR *descr, INT index )
 {
     if (descr->style & LBS_OWNERDRAWVARIABLE && descr->nb_items > 0)
     {
