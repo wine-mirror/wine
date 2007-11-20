@@ -1206,6 +1206,10 @@ static void test_get_text(void)
     ok( r == S_OK, "ret %08x\n", r ); 
     IXMLDOMNodeList_Release( node_list );
 
+    /* Invalid output parameter*/
+    r = IXMLDOMNode_get_text( node, NULL );
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+
     r = IXMLDOMNode_get_text( node, &str );
     ok( r == S_OK, "ret %08x\n", r );
 todo_wine {
