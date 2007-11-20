@@ -701,6 +701,12 @@ static void D3X8QuaternionTest(void)
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_vec4(expectedquat,gotquat);
 
+/*_______________D3DXQuaternionRotationYawPitchRoll__________*/
+    expectedquat.x = 0.303261f; expectedquat.y = 0.262299f; expectedquat.z = 0.410073f; expectedquat.w = 0.819190f;
+    D3DXQuaternionRotationYawPitchRoll(&gotquat,D3DX_PI/4.0f,D3DX_PI/11.0f,D3DX_PI/3.0f);
+    expect_vec4(expectedquat,gotquat);
+
+
 /*_______________D3DXQuaternionSlerp________________________*/
     expectedquat.x = -0.2f; expectedquat.y = 2.6f; expectedquat.z = 1.3f; expectedquat.w = 9.1f;
     D3DXQuaternionSlerp(&gotquat,&q,&r,scale);
