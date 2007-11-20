@@ -2,6 +2,8 @@
  * Unit tests for rsaenh functions
  *
  * Copyright (c) 2004 Michael Jung
+ * Copyright (c) 2006 Juan Lang
+ * Copyright (c) 2007 Vijay Kiran Kamuju
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -83,7 +85,7 @@ static void trace_hex(BYTE *pbData, DWORD dwLen) {
 }
 */
 
-static int init_environment(void)
+static int init_base_environment(void)
 {
     HCRYPTKEY hKey;
     BOOL result;
@@ -100,7 +102,7 @@ static int init_environment(void)
         ok(GetLastError()==NTE_BAD_KEYSET, "%08x\n", GetLastError());
         if (GetLastError()!=NTE_BAD_KEYSET) return 0;
         result = CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, 
-                                    CRYPT_NEWKEYSET);
+                                     CRYPT_NEWKEYSET);
         ok(result, "%08x\n", GetLastError());
         if (!result) return 0;
         result = CryptGenKey(hProv, AT_KEYEXCHANGE, 0, &hKey);
@@ -113,7 +115,7 @@ static int init_environment(void)
     return 1;
 }
 
-static void clean_up_environment(void)
+static void clean_up_base_environment(void)
 {
     BOOL result;
 
@@ -121,6 +123,61 @@ static void clean_up_environment(void)
     ok(!result && GetLastError()==NTE_BAD_FLAGS, "%08x\n", GetLastError());
         
     CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
+}
+
+static int init_aes_environment(void)
+{
+    HCRYPTKEY hKey;
+    BOOL result;
+
+    pCryptDuplicateHash = (void *)GetProcAddress(GetModuleHandleA("advapi32.dll"), "CryptDuplicateHash");
+
+    hProv = (HCRYPTPROV)INVALID_HANDLE_VALUE;
+
+    /* we are using NULL as provider name for RSA_AES provider as the provider
+     * names are different in Windows XP and Vista. Its different as to what
+     * its defined in the SDK on Windows XP.
+     * This provider is available on Windows XP, Windows 2003 and Vista.      */
+
+    result = CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);
+    todo_wine {
+    ok(!result && GetLastError()==NTE_BAD_FLAGS, "%d, %08x\n", result, GetLastError());
+    }
+
+    if (!CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES, 0))
+    {
+        todo_wine {
+        ok(GetLastError()==NTE_BAD_KEYSET, "%08x\n", GetLastError());
+        }
+        if (GetLastError()!=NTE_BAD_KEYSET) return 0;
+        result = CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES,
+                                     CRYPT_NEWKEYSET);
+        todo_wine {
+        ok(result, "%08x\n", GetLastError());
+        }
+        if (!result) return 0;
+        result = CryptGenKey(hProv, AT_KEYEXCHANGE, 0, &hKey);
+        todo_wine {
+        ok(result, "%08x\n", GetLastError());
+        }
+        if (result) CryptDestroyKey(hKey);
+        result = CryptGenKey(hProv, AT_SIGNATURE, 0, &hKey);
+        todo_wine {
+        ok(result, "%08x\n", GetLastError());
+        }
+        if (result) CryptDestroyKey(hKey);
+    }
+    return 1;
+}
+
+static void clean_up_aes_environment(void)
+{
+    BOOL result;
+
+    result = CryptReleaseContext(hProv, 1);
+    todo_wine ok(!result && GetLastError()==NTE_BAD_FLAGS, "%08x\n", GetLastError());
+
+    CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES, CRYPT_DELETEKEYSET);
 }
 
 static void test_prov(void) 
@@ -584,6 +641,72 @@ static void test_3des(void)
     }
     result = CryptDestroyKey(hKey);
     ok(result, "%08x\n", GetLastError());
+}
+
+static void test_aes(int keylen)
+{
+    HCRYPTKEY hKey;
+    BOOL result;
+    DWORD dwLen;
+    unsigned char pbData[16];
+    int i;
+
+    switch (keylen)
+    {
+        case 256:
+            result = derive_key(CALG_AES_256, &hKey, 0);
+            break;
+        case 192:
+            result = derive_key(CALG_AES_192, &hKey, 0);
+            break;
+        default:
+        case 128:
+            result = derive_key(CALG_AES_128, &hKey, 0);
+            break;
+    }
+    if (!result) return;
+
+    for (i=0; i<sizeof(pbData); i++) pbData[i] = (unsigned char)i;
+
+    dwLen = 13;
+    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, 16);
+    todo_wine {
+    ok(result, "%08x\n", GetLastError());
+    }
+
+    result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+    todo_wine {
+    ok(result, "%08x\n", GetLastError());
+    }
+
+    for (i=0; i<4; i++)
+    {
+      memcpy(pbData,cTestData[i].origstr,cTestData[i].strlen);
+
+      dwLen = cTestData[i].enclen;
+      result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
+      todo_wine {
+      ok(result, "%08x\n", GetLastError());
+      ok(dwLen==cTestData[i].buflen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].buflen);
+      }
+
+      result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+      todo_wine {
+      ok(result, "%08x\n", GetLastError());
+      ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
+      ok(memcmp(pbData,cTestData[i].decstr,cTestData[1].enclen)==0,"decryption incorrect %d\n",i);
+      if((dwLen != cTestData[i].enclen) ||
+         memcmp(pbData,cTestData[i].decstr,cTestData[i].enclen))
+      {
+          printBytes("expected",cTestData[i].decstr,cTestData[i].strlen);
+          printBytes("got",pbData,dwLen);
+      }
+      }
+    }
+    result = CryptDestroyKey(hKey);
+    todo_wine {
+    ok(result, "%08x\n", GetLastError());
+    }
 }
 
 static void test_rc2(void)
@@ -1881,7 +2004,7 @@ static void test_null_provider(void)
 
 START_TEST(rsaenh)
 {
-    if (!init_environment()) 
+    if (!init_base_environment())
         return;
     test_prov();
     test_gen_random();
@@ -1899,7 +2022,13 @@ START_TEST(rsaenh)
     test_rsa_encrypt();
     test_import_export();
     test_enum_container();
-    clean_up_environment();
+    clean_up_base_environment();
     test_schannel_provider();
     test_null_provider();
+    if (!init_aes_environment())
+        return;
+    test_aes(128);
+    test_aes(192);
+    test_aes(256);
+    clean_up_aes_environment();
 }
