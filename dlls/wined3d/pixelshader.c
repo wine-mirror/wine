@@ -414,8 +414,16 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
         shader_addline(&buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, state.fog.params.y, state.fog.params.z;\n");
 
         if(This->srgb_enabled) {
+            const char *color_reg;
+
             if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
-                shader_addline(&buffer, "LRP TMP_COLOR.rgb, TMP_FOG.x, R0, state.fog.color;\n");
+                color_reg = "R0";
+            } else {
+                color_reg = "TMP_COLOR";
+            }
+
+            if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
+                shader_addline(&buffer, "LRP R0.rgb, TMP_FOG.x, R0, state.fog.color;\n");
                 shader_addline(&buffer, "MOV result.color.a, R0.a;\n");
             } else {
                 shader_addline(&buffer, "LRP TMP_COLOR.rgb, TMP_FOG.x, TMP_COLOR, state.fog.color;\n");
@@ -424,20 +432,20 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
             /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
 
             /* Calculate the > 0.0031308 case */
-            shader_addline(&buffer, "POW TMP.x, TMP_COLOR.x, srgb_pow.x;\n");
-            shader_addline(&buffer, "POW TMP.y, TMP_COLOR.y, srgb_pow.y;\n");
-            shader_addline(&buffer, "POW TMP.z, TMP_COLOR.z, srgb_pow.z;\n");
+            shader_addline(&buffer, "POW TMP.x, %s.x, srgb_pow.x;\n", color_reg);
+            shader_addline(&buffer, "POW TMP.y, %s.y, srgb_pow.y;\n", color_reg);
+            shader_addline(&buffer, "POW TMP.z, %s.z, srgb_pow.z;\n", color_reg);
             shader_addline(&buffer, "MUL TMP, TMP, srgb_mul_hi;\n");
             shader_addline(&buffer, "SUB TMP, TMP, srgb_sub_hi;\n");
             /* Calculate the < case */
-            shader_addline(&buffer, "MUL TMP2, srgb_mul_low, TMP_COLOR;\n");
+            shader_addline(&buffer, "MUL TMP2, srgb_mul_low, %s;\n", color_reg);
             /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
-            shader_addline(&buffer, "SLT TA, srgb_comparison, TMP_COLOR;\n");
-            shader_addline(&buffer, "SGE TB, srgb_comparison, TMP_COLOR;\n");
+            shader_addline(&buffer, "SLT TA, srgb_comparison, %s;\n", color_reg);
+            shader_addline(&buffer, "SGE TB, srgb_comparison, %s;\n", color_reg);
             /* Store the components > 0.0031308 in the destination */
-            shader_addline(&buffer, "MUL TMP_COLOR, TMP, TA;\n");
+            shader_addline(&buffer, "MUL %s, TMP, TA;\n", color_reg);
             /* Add the components that are < 0.0031308 */
-            shader_addline(&buffer, "MAD result.color.xyz, TMP2, TB, TMP_COLOR;\n");
+            shader_addline(&buffer, "MAD result.color.xyz, TMP2, TB, %s;\n", color_reg);
             /* [0.0;1.0] clamping. Not needed, this is done implicitly */
         } else {
             if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
