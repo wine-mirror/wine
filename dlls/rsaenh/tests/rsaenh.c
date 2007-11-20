@@ -140,31 +140,21 @@ static int init_aes_environment(void)
      * This provider is available on Windows XP, Windows 2003 and Vista.      */
 
     result = CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);
-    todo_wine {
     ok(!result && GetLastError()==NTE_BAD_FLAGS, "%d, %08x\n", result, GetLastError());
-    }
 
     if (!CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES, 0))
     {
-        todo_wine {
         ok(GetLastError()==NTE_BAD_KEYSET, "%08x\n", GetLastError());
-        }
         if (GetLastError()!=NTE_BAD_KEYSET) return 0;
         result = CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES,
                                      CRYPT_NEWKEYSET);
-        todo_wine {
         ok(result, "%08x\n", GetLastError());
-        }
         if (!result) return 0;
         result = CryptGenKey(hProv, AT_KEYEXCHANGE, 0, &hKey);
-        todo_wine {
         ok(result, "%08x\n", GetLastError());
-        }
         if (result) CryptDestroyKey(hKey);
         result = CryptGenKey(hProv, AT_SIGNATURE, 0, &hKey);
-        todo_wine {
         ok(result, "%08x\n", GetLastError());
-        }
         if (result) CryptDestroyKey(hKey);
     }
     return 1;
@@ -175,7 +165,7 @@ static void clean_up_aes_environment(void)
     BOOL result;
 
     result = CryptReleaseContext(hProv, 1);
-    todo_wine ok(!result && GetLastError()==NTE_BAD_FLAGS, "%08x\n", GetLastError());
+    ok(!result && GetLastError()==NTE_BAD_FLAGS, "%08x\n", GetLastError());
 
     CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES, CRYPT_DELETEKEYSET);
 }
@@ -670,14 +660,10 @@ static void test_aes(int keylen)
 
     dwLen = 13;
     result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, 16);
-    todo_wine {
     ok(result, "%08x\n", GetLastError());
-    }
 
     result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
-    todo_wine {
     ok(result, "%08x\n", GetLastError());
-    }
 
     for (i=0; i<4; i++)
     {
@@ -685,13 +671,10 @@ static void test_aes(int keylen)
 
       dwLen = cTestData[i].enclen;
       result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
-      todo_wine {
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].buflen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].buflen);
-      }
 
       result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
-      todo_wine {
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
       ok(memcmp(pbData,cTestData[i].decstr,cTestData[1].enclen)==0,"decryption incorrect %d\n",i);
@@ -701,12 +684,9 @@ static void test_aes(int keylen)
           printBytes("expected",cTestData[i].decstr,cTestData[i].strlen);
           printBytes("got",pbData,dwLen);
       }
-      }
     }
     result = CryptDestroyKey(hKey);
-    todo_wine {
     ok(result, "%08x\n", GetLastError());
-    }
 }
 
 static void test_rc2(void)
