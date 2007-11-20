@@ -1235,6 +1235,13 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
 /*****************************************************************************
  * IWineD3DVertexDeclaration implementation structure
  */
+typedef struct attrib_declaration {
+    DWORD usage;
+    DWORD idx;
+} attrib_declaration;
+
+#define MAX_ATTRIBS 16
+
 typedef struct IWineD3DVertexDeclarationImpl {
     /* IUnknown  Information */
     const IWineD3DVertexDeclarationVtbl *lpVtbl;
@@ -1249,6 +1256,10 @@ typedef struct IWineD3DVertexDeclarationImpl {
     DWORD                   streams[MAX_STREAMS];
     UINT                    num_streams;
     BOOL                    position_transformed;
+
+    /* Ordered array of declaration types that need swizzling in a vshader */
+    attrib_declaration      swizzled_attribs[MAX_ATTRIBS];
+    UINT                    num_swizzled_attribs;
 } IWineD3DVertexDeclarationImpl;
 
 extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
@@ -1624,7 +1635,6 @@ typedef struct {
 #define MAX_REG_TEXCRD 8
 #define MAX_REG_INPUT 12
 #define MAX_REG_OUTPUT 12
-#define MAX_ATTRIBS 16
 #define MAX_CONST_I 16
 #define MAX_CONST_B 16
 
@@ -2049,11 +2059,16 @@ typedef struct IWineD3DVertexShaderImpl {
     semantic semantics_in [MAX_ATTRIBS];
     semantic semantics_out [MAX_REG_OUTPUT];
 
+    /* Ordered array of attributes that are swizzled */
+    attrib_declaration          swizzled_attribs [MAX_ATTRIBS];
+    UINT                        num_swizzled_attribs;
+
     /* run time datas...  */
     VSHADERDATA                *data;
     UINT                       min_rel_offset, max_rel_offset;
     UINT                       rel_offset;
 
+    UINT                       recompile_count;
 #if 0 /* needs reworking */
     /* run time datas */
     VSHADERINPUTDATA input;
