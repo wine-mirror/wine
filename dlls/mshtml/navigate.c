@@ -647,8 +647,8 @@ static HRESULT WINAPI BSCServiceProvider_QueryService(IServiceProvider *iface,
         REFGUID guidService, REFIID riid, void **ppv)
 {
     BSCallback *This = SERVPROV_THIS(iface);
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 #undef SERVPROV_THIS
