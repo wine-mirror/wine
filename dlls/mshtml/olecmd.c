@@ -534,8 +534,6 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     IMoniker *mon;
     HRESULT hres;
 
-    static const WCHAR wszAboutBlank[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
-
     TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
 
     if(in || out)
@@ -546,8 +544,19 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 
     This->usermode = EDITMODE;
 
+    if(This->mon) {
+        CLSID clsid = IID_NULL;
+        hres = IMoniker_GetClassID(This->mon, &clsid);
+        if(SUCCEEDED(hres)) {
+            /* We should use IMoniker::Save here */
+            FIXME("Use CLSID %s\n", debugstr_guid(&clsid));
+        }
+    }
+
     if(This->frame)
         IOleInPlaceFrame_SetStatusText(This->frame, NULL);
+
+    This->readystate = READYSTATE_UNINITIALIZED;
 
     if(This->client) {
         IOleCommandTarget *cmdtrg;
@@ -581,13 +590,23 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     if(This->nscontainer)
         set_ns_editmode(This->nscontainer);
 
-    hres = CreateURLMoniker(NULL, wszAboutBlank, &mon);
-    if(FAILED(hres)) {
-        FIXME("CreateURLMoniker failed: %08x\n", hres);
-        return hres;
-    }
-
     update_doc(This, UPDATE_UI);
+
+    if(This->mon) {
+        /* FIXME: We should find nicer way to do this */
+        remove_doc_tasks(This);
+
+        mon = This->mon;
+        IMoniker_AddRef(mon);
+    }else {
+        static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
+        hres = CreateURLMoniker(NULL, about_blankW, &mon);
+        if(FAILED(hres)) {
+            FIXME("CreateURLMoniker failed: %08x\n", hres);
+            return hres;
+        }
+    }
 
     hres = IPersistMoniker_Load(PERSISTMON(This), TRUE, mon, NULL, 0);
     IMoniker_Release(mon);
