@@ -643,6 +643,18 @@ D3DXQUATERNION* WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *pout, CONST D3DXQ
     return pout;
 }
 
+D3DXQUATERNION* WINAPI D3DXQuaternionRotationAxis(D3DXQUATERNION *pout, CONST D3DXVECTOR3 *pv, FLOAT angle)
+{
+    D3DXVECTOR3 temp;
+
+    D3DXVec3Normalize(&temp, pv);
+    pout->x = sin( angle / 2.0f ) * temp.x;
+    pout->y = sin( angle / 2.0f ) * temp.y;
+    pout->z = sin( angle / 2.0f ) * temp.z;
+    pout->w = cos( angle / 2.0f );
+    return pout;
+}
+
 D3DXQUATERNION* WINAPI D3DXQuaternionSlerp(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2, FLOAT t)
 {
     FLOAT dot, epsilon;

@@ -656,6 +656,18 @@ static void D3X8QuaternionTest(void)
     D3DXQuaternionNormalize(&gotquat,&nul);
     expect_vec4(expectedquat,gotquat);
 
+/*_______________D3DXQuaternionRotationAxis___________________*/
+    axis.x = 2.0f; axis.y = 7.0; axis.z = 13.0f;
+    angle = D3DX_PI/3.0f;
+    expectedquat.x = 0.067116; expectedquat.y = 0.234905f; expectedquat.z = 0.436251f; expectedquat.w = 0.866025f;
+    D3DXQuaternionRotationAxis(&gotquat,&axis,angle);
+    expect_vec4(expectedquat,gotquat);
+ /* Test the nul quaternion */
+    axis.x = 0.0f; axis.y = 0.0; axis.z = 0.0f;
+    expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.866025f;
+    D3DXQuaternionRotationAxis(&gotquat,&axis,angle);
+    expect_vec4(expectedquat,gotquat);
+
 /*_______________D3DXQuaternionSlerp________________________*/
     expectedquat.x = -0.2f; expectedquat.y = 2.6f; expectedquat.z = 1.3f; expectedquat.w = 9.1f;
     D3DXQuaternionSlerp(&gotquat,&q,&r,scale);

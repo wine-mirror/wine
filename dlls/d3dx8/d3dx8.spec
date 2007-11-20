@@ -51,7 +51,7 @@
 @ stdcall D3DXMatrixReflect(ptr ptr)
 @ stdcall D3DXQuaternionToAxisAngle(ptr ptr ptr)
 @ stub D3DXQuaternionRotationMatrix
-@ stub D3DXQuaternionRotationAxis
+@ stdcall D3DXQuaternionRotationAxis(ptr ptr long)
 @ stub D3DXQuaternionRotationYawPitchRoll
 @ stdcall D3DXQuaternionMultiply(ptr ptr ptr)
 @ stdcall D3DXQuaternionNormalize(ptr ptr)
