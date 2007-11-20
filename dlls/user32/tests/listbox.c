@@ -1010,7 +1010,7 @@ static void test_listbox_dlgdir(void)
     /* Loaded path should have overwritten the label text */
     SendMessage(g_label, WM_GETTEXT, (WPARAM)MAX_PATH, (LPARAM)pathBuffer);
     trace("Static control after DlgDirList: %s\n", pathBuffer);
-    ok (strcmp("default contents", pathBuffer), "DlgDirList() did not modify static control!");
+    ok (strcmp("default contents", pathBuffer), "DlgDirList() did not modify static control!\n");
 
     /* There should be some content in the listbox */
     itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
