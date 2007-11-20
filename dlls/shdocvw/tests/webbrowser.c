@@ -1147,6 +1147,11 @@ static void test_ie_funcs(IUnknown *unk)
     hres = IWebBrowser2_get_Application(wb, NULL);
     ok(hres == E_POINTER, "get_Application failed: %08x, expected E_POINTER\n", hres);
 
+    /* Quit */
+
+    hres = IWebBrowser2_Quit(wb);
+    ok(hres == E_FAIL, "Quit failed: %08x, expected E_FAIL\n", hres);
+
     IWebBrowser2_Release(wb);
 }
 
