@@ -421,7 +421,7 @@ static mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner
     {
         const ACE_HEADER *ace = (const ACE_HEADER *)(dacl + 1);
         ULONG i;
-        for (i = 0; i < dacl->AceCount; i++, ace_next( ace ))
+        for (i = 0; i < dacl->AceCount; i++, ace = ace_next( ace ))
         {
             const ACCESS_ALLOWED_ACE *aa_ace;
             const ACCESS_DENIED_ACE *ad_ace;
