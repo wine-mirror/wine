@@ -43,4 +43,8 @@ STRINGTABLE DISCARDABLE
 {
     IDS_TITLEFORMAT     "Se connecter à %s"
     IDS_MESSAGEFORMAT   "Connexion à %s"
+    IDS_INCORRECTPASSWORDTITLE  "Échec lors de la connexion"
+    IDS_INCORRECTPASSWORD       "Assurez-vous que votre nom d'utilisateur\net votre mot de passe sont corrects."
+    IDS_CAPSLOCKONTITLE "VERR.MAJ est activé"
+    IDS_CAPSLOCKON      "Le verrouillage majuscule étant activé, cela pourrait provoquer une erreur lors de la saisie de votre mot de passe.\n\nAppuyez sur la touche VERR.MAJ de votre clavier afin de désactiver le verrouilage majuscule avant\nde saisir votre mot de passe."
 }
