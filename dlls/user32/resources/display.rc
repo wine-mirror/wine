@@ -31,8 +31,8 @@
 	0x01,			/* horizontal-line width              */
 
 	/* default system color values */
-	0x00c0c0c0L,	/* scrollbar */
-	0x00c0c0c0L,	/* desktop */
+	0x00d4d0c8L,	/* scrollbar */
+	0x00d4d0c8L,	/* desktop */
 	0x00800000L,	/* active caption */
 	0x00ffffffL,	/* inactive caption */
 	0x00ffffffL,	/* menu */
@@ -41,12 +41,12 @@
 	0x00000000L,	/* menu text */
 	0x00000000L,	/* window text */
 	0x00ffffffL,	/* caption text */
-	0x00c0c0c0L,	/* active border */
-	0x00c0c0c0L,	/* inactive border */
+	0x00d4d0c8L,	/* active border */
+	0x00d4d0c8L,	/* inactive border */
 	0x00ffffffL,	/* app workspace */
 	0x00800000L,	/* hilite bk */
 	0x00ffffffL,	/* hilite text */
-	0x00c0c0c0L,	/* btn face */
+	0x00d4d0c8L,	/* btn face */
 	0x00808080L,	/* btn shadow */
 	0x00c0c0c0L,	/* gray text */
 	0x00000000L,	/* btn text */

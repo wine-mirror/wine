@@ -87,26 +87,26 @@ enum spi_index
 
 static const char * const DefSysColors[] =
 {
-    "Scrollbar", "192 192 192",              /* COLOR_SCROLLBAR */
+    "Scrollbar", "212 208 200",              /* COLOR_SCROLLBAR */
     "Background", "0 128 128",               /* COLOR_BACKGROUND */
     "ActiveTitle", "0 0 128",                /* COLOR_ACTIVECAPTION */
     "InactiveTitle", "128 128 128",          /* COLOR_INACTIVECAPTION */
-    "Menu", "192 192 192",                   /* COLOR_MENU */
+    "Menu", "212 208 200",                   /* COLOR_MENU */
     "Window", "255 255 255",                 /* COLOR_WINDOW */
     "WindowFrame", "0 0 0",                  /* COLOR_WINDOWFRAME */
     "MenuText", "0 0 0",                     /* COLOR_MENUTEXT */
     "WindowText", "0 0 0",                   /* COLOR_WINDOWTEXT */
     "TitleText", "255 255 255",              /* COLOR_CAPTIONTEXT */
-    "ActiveBorder", "192 192 192",           /* COLOR_ACTIVEBORDER */
-    "InactiveBorder", "192 192 192",         /* COLOR_INACTIVEBORDER */
+    "ActiveBorder", "212 208 200",           /* COLOR_ACTIVEBORDER */
+    "InactiveBorder", "212 208 200",         /* COLOR_INACTIVEBORDER */
     "AppWorkSpace", "128 128 128",           /* COLOR_APPWORKSPACE */
     "Hilight", "0 0 128",                    /* COLOR_HIGHLIGHT */
     "HilightText", "255 255 255",            /* COLOR_HIGHLIGHTTEXT */
-    "ButtonFace", "192 192 192",             /* COLOR_BTNFACE */
+    "ButtonFace", "212 208 200",             /* COLOR_BTNFACE */
     "ButtonShadow", "128 128 128",           /* COLOR_BTNSHADOW */
     "GrayText", "128 128 128",               /* COLOR_GRAYTEXT */
     "ButtonText", "0 0 0",                   /* COLOR_BTNTEXT */
-    "InactiveTitleText", "192 192 192",      /* COLOR_INACTIVECAPTIONTEXT */
+    "InactiveTitleText", "212 208 200",      /* COLOR_INACTIVECAPTIONTEXT */
     "ButtonHilight", "255 255 255",          /* COLOR_BTNHIGHLIGHT */
     "ButtonDkShadow", "0 0 0",               /* COLOR_3DDKSHADOW */
     "ButtonLight", "224 224 224",            /* COLOR_3DLIGHT */
@@ -117,7 +117,7 @@ static const char * const DefSysColors[] =
     "GradientActiveTitle", "16 132 208",     /* COLOR_GRADIENTACTIVECAPTION */
     "GradientInactiveTitle", "181 181 181",  /* COLOR_GRADIENTINACTIVECAPTION */
     "MenuHilight", "0 0 0",                  /* COLOR_MENUHILIGHT */
-    "MenuBar", "192 192 192"                 /* COLOR_MENUBAR */
+    "MenuBar", "212 208 200"                 /* COLOR_MENUBAR */
 };
 
 /**
