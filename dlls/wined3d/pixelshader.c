@@ -286,6 +286,7 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
 
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     SHADER_BUFFER buffer;
+    const char *fragcolor;
 
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
         it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
@@ -341,27 +342,12 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
                 shader_addline(&buffer, "gl_FragColor = R0;\n");
         }
 
-        /* Pixel shader < 3.0 do not replace the fog stage.
-         * This implements linear fog computation and blending.
-         * TODO: non linear fog
-         * NOTE: gl_Fog.start and gl_Fog.end don't hold fog start s and end e but
-         * -1/(e-s) and e/(e-s) respectively.
-         */
-        if(This->baseShader.hex_version < WINED3DPS_VERSION(3,0)) {
-            shader_addline(&buffer, "float Fog = clamp(gl_FogFragCoord * gl_Fog.start + gl_Fog.end, 0.0, 1.0);\n");
-            if(GL_SUPPORT(ARB_DRAW_BUFFERS))
-                shader_addline(&buffer, "gl_FragData[0].xyz = mix(gl_Fog.color.xyz, gl_FragData[0].xyz, Fog);\n");
-            else
-                shader_addline(&buffer, "gl_FragColor.xyz = mix(gl_Fog.color.xyz, gl_FragColor.xyz, Fog);\n");
+        if(GL_SUPPORT(ARB_DRAW_BUFFERS)) {
+            fragcolor = "gl_FragData[0]";
+        } else {
+            fragcolor = "gl_FragColor";
         }
         if(This->srgb_enabled) {
-            const char *fragcolor;
-
-            if(GL_SUPPORT(ARB_DRAW_BUFFERS)) {
-                fragcolor = "gl_FragData[0]";
-            } else {
-                fragcolor = "gl_FragColor";
-            }
             shader_addline(&buffer, "tmp0.xyz = pow(%s.xyz, vec3(%f, %f, %f)) * vec3(%f, %f, %f) - vec3(%f, %f, %f);\n",
                             fragcolor, srgb_pow, srgb_pow, srgb_pow, srgb_mul_high, srgb_mul_high, srgb_mul_high,
                             srgb_sub_high, srgb_sub_high, srgb_sub_high);
@@ -370,6 +356,16 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
             shader_addline(&buffer, "%s.y = %s.y < srgb_comparison.y ? tmp1.y : tmp0.y;\n", fragcolor, fragcolor);
             shader_addline(&buffer, "%s.z = %s.z < srgb_comparison.z ? tmp1.z : tmp0.z;\n", fragcolor, fragcolor);
             shader_addline(&buffer, "%s = clamp(%s, 0.0, 1.0);\n", fragcolor, fragcolor);
+        }
+        /* Pixel shader < 3.0 do not replace the fog stage.
+         * This implements linear fog computation and blending.
+         * TODO: non linear fog
+         * NOTE: gl_Fog.start and gl_Fog.end don't hold fog start s and end e but
+         * -1/(e-s) and e/(e-s) respectively.
+         */
+        if(This->baseShader.hex_version < WINED3DPS_VERSION(3,0)) {
+            shader_addline(&buffer, "float Fog = clamp(gl_FogFragCoord * gl_Fog.start + gl_Fog.end, 0.0, 1.0);\n");
+            shader_addline(&buffer, "%s.xyz = mix(gl_Fog.color.xyz, %s.xyz, Fog);\n", fragcolor, fragcolor);
         }
 
         shader_addline(&buffer, "}\n");
@@ -413,48 +409,34 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
          */
         shader_addline(&buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, state.fog.params.y, state.fog.params.z;\n");
 
+        if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
+            fragcolor = "R0";
+        } else {
+            fragcolor = "TMP_COLOR";
+        }
         if(This->srgb_enabled) {
-            const char *color_reg;
-
-            if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
-                color_reg = "R0";
-            } else {
-                color_reg = "TMP_COLOR";
-            }
-
-            if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
-                shader_addline(&buffer, "LRP R0.rgb, TMP_FOG.x, R0, state.fog.color;\n");
-                shader_addline(&buffer, "MOV result.color.a, R0.a;\n");
-            } else {
-                shader_addline(&buffer, "LRP TMP_COLOR.rgb, TMP_FOG.x, TMP_COLOR, state.fog.color;\n");
-                shader_addline(&buffer, "MOV result.color.a, TMP_COLOR.a;\n");
-            }
             /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
 
             /* Calculate the > 0.0031308 case */
-            shader_addline(&buffer, "POW TMP.x, %s.x, srgb_pow.x;\n", color_reg);
-            shader_addline(&buffer, "POW TMP.y, %s.y, srgb_pow.y;\n", color_reg);
-            shader_addline(&buffer, "POW TMP.z, %s.z, srgb_pow.z;\n", color_reg);
+            shader_addline(&buffer, "POW TMP.x, %s.x, srgb_pow.x;\n", fragcolor);
+            shader_addline(&buffer, "POW TMP.y, %s.y, srgb_pow.y;\n", fragcolor);
+            shader_addline(&buffer, "POW TMP.z, %s.z, srgb_pow.z;\n", fragcolor);
             shader_addline(&buffer, "MUL TMP, TMP, srgb_mul_hi;\n");
             shader_addline(&buffer, "SUB TMP, TMP, srgb_sub_hi;\n");
             /* Calculate the < case */
-            shader_addline(&buffer, "MUL TMP2, srgb_mul_low, %s;\n", color_reg);
+            shader_addline(&buffer, "MUL TMP2, srgb_mul_low, %s;\n", fragcolor);
             /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
-            shader_addline(&buffer, "SLT TA, srgb_comparison, %s;\n", color_reg);
-            shader_addline(&buffer, "SGE TB, srgb_comparison, %s;\n", color_reg);
+            shader_addline(&buffer, "SLT TA, srgb_comparison, %s;\n", fragcolor);
+            shader_addline(&buffer, "SGE TB, srgb_comparison, %s;\n", fragcolor);
             /* Store the components > 0.0031308 in the destination */
-            shader_addline(&buffer, "MUL %s, TMP, TA;\n", color_reg);
+            shader_addline(&buffer, "MUL %s, TMP, TA;\n", fragcolor);
             /* Add the components that are < 0.0031308 */
-            shader_addline(&buffer, "MAD result.color.xyz, TMP2, TB, %s;\n", color_reg);
+            shader_addline(&buffer, "MAD result.color.xyz, TMP2, TB, %s;\n", fragcolor);
             /* [0.0;1.0] clamping. Not needed, this is done implicitly */
-        } else {
-            if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
-                shader_addline(&buffer, "LRP result.color.rgb, TMP_FOG.x, R0, state.fog.color;\n");
-                shader_addline(&buffer, "MOV result.color.a, R0.a;\n");
-            } else {
-                shader_addline(&buffer, "LRP result.color.rgb, TMP_FOG.x, TMP_COLOR, state.fog.color;\n");
-                shader_addline(&buffer, "MOV result.color.a, TMP_COLOR.a;\n");
-            }
+        }
+        if (This->baseShader.hex_version < WINED3DPS_VERSION(3,0)) {
+            shader_addline(&buffer, "LRP result.color.rgb, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
+            shader_addline(&buffer, "MOV result.color.a, %s.a;\n", fragcolor);
         }
 
         shader_addline(&buffer, "END\n"); 
