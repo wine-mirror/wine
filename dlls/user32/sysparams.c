@@ -88,7 +88,7 @@ enum spi_index
 static const char * const DefSysColors[] =
 {
     "Scrollbar", "212 208 200",              /* COLOR_SCROLLBAR */
-    "Background", "0 128 128",               /* COLOR_BACKGROUND */
+    "Background", "58 110 165",               /* COLOR_BACKGROUND */
     "ActiveTitle", "0 0 128",                /* COLOR_ACTIVECAPTION */
     "InactiveTitle", "128 128 128",          /* COLOR_INACTIVECAPTION */
     "Menu", "212 208 200",                   /* COLOR_MENU */
@@ -261,8 +261,7 @@ static const WCHAR MessageFontSize[]=                        {'M','e','s','s','a
 static const WCHAR System[]=                                 {'S','y','s','t','e','m',0};
 static const WCHAR IconTitleSize[]=                          {'I','c','o','n','T','i','t','l','e','S','i','z','e',0};
 static const WCHAR IconTitleFaceName[]=                      {'I','c','o','n','T','i','t','l','e','F','a','c','e','N','a','m','e',0};
-static const WCHAR defPattern[]=                             {'1','7','0',' ','8','5',' ','1','7','0',' ','8','5',' ','1','7','0',' ','8','5',
-                                                              ' ','1','7','0',' ','8','5',0};
+static const WCHAR defPattern[]=                             {'0',' ','0',' ','0',' ','0',' ','0',' ','0',' ','0',' ','0',0};
 static const WCHAR CSu[]=                                    {'%','u',0};
 static const WCHAR CSd[]=                                    {'%','d',0};
 
