@@ -216,7 +216,7 @@ const struct builtin_class_descr MENU_builtin_class =
     if (flags & (bit)) { flags &= ~(bit); MENUOUT ((text)); } \
   } while (0)
 
-static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
+static void do_debug_print_menuitem(const char *prefix, const MENUITEM *mp,
 				    const char *postfix)
 {
     static const char * const hbmmenus[] = { "HBMMENU_CALLBACK", "", "HBMMENU_SYSTEM",
@@ -1095,7 +1095,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
  *           MENU_GetMaxPopupHeight
  */
 static UINT
-MENU_GetMaxPopupHeight(LPPOPUPMENU lppop)
+MENU_GetMaxPopupHeight(const POPUPMENU *lppop)
 {
     if (lppop->cyMax)
         return lppop->cyMax;
@@ -1268,7 +1268,7 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
  * Draw scroll arrows.
  */
 static void
-MENU_DrawScrollArrows(LPPOPUPMENU lppop, HDC hdc)
+MENU_DrawScrollArrows(const POPUPMENU *lppop, HDC hdc)
 {
     HDC hdcMem = CreateCompatibleDC(hdc);
     HBITMAP hOrigBitmap;
