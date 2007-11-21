@@ -33,7 +33,7 @@
 @ stdcall D3DXMatrixRotationAxis(ptr ptr long)
 @ stdcall D3DXMatrixRotationQuaternion(ptr ptr)
 @ stdcall D3DXMatrixRotationYawPitchRoll(ptr long long long)
-@ stub D3DXMatrixTransformation
+@ stdcall D3DXMatrixTransformation(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DXMatrixAffineTransformation(ptr long ptr ptr ptr)
 @ stdcall D3DXMatrixLookAtRH(ptr ptr ptr ptr)
 @ stdcall D3DXMatrixLookAtLH(ptr ptr ptr ptr)

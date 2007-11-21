@@ -480,6 +480,86 @@ D3DXMATRIX* WINAPI D3DXMatrixShadow(D3DXMATRIX *pout, CONST D3DXVECTOR4 *plight,
     return pout;
 }
 
+D3DXMATRIX* D3DXMatrixTransformation(D3DXMATRIX *pout, CONST D3DXVECTOR3 *pscalingcenter, CONST D3DXQUATERNION *pscalingrotation, CONST D3DXVECTOR3 *pscaling, CONST D3DXVECTOR3 *protationcenter, CONST D3DXQUATERNION *protation, CONST D3DXVECTOR3 *ptranslation)
+{
+    D3DXMATRIX m1, m2, m3, m4, m5, m6, m7, p1, p2, p3, p4, p5;
+    D3DXQUATERNION prc;
+    D3DXVECTOR3 psc, pt;
+
+    if ( !pscalingcenter )
+    {
+     psc.x = 0.0f;
+     psc.y = 0.0f;
+     psc.z = 0.0f;
+    }
+    else
+    {
+     psc.x = pscalingcenter->x;
+     psc.y = pscalingcenter->y;
+     psc.z = pscalingcenter->z;
+    }
+    if ( !protationcenter )
+    {
+     prc.x = 0.0f;
+     prc.y = 0.0f;
+     prc.z = 0.0f;
+    }
+    else
+    {
+     prc.x = protationcenter->x;
+     prc.y = protationcenter->y;
+     prc.z = protationcenter->z;
+    }
+    if ( !ptranslation )
+    {
+     pt.x = 0.0f;
+     pt.y = 0.0f;
+     pt.z = 0.0f;
+    }
+    else
+    {
+     pt.x = ptranslation->x;
+     pt.y = ptranslation->y;
+     pt.z = ptranslation->z;
+    }
+    D3DXMatrixTranslation(&m1, -psc.x, -psc.y, -psc.z);
+    if ( !pscalingrotation )
+    {
+     D3DXMatrixIdentity(&m2);
+     D3DXMatrixIdentity(&m4);
+    }
+    else
+    {
+     D3DXMatrixRotationQuaternion(&m4, pscalingrotation);
+     D3DXMatrixInverse(&m2, NULL, &m4);
+    }
+    if ( !pscaling )
+    {
+     D3DXMatrixIdentity(&m3);
+    }
+    else
+    {
+    D3DXMatrixScaling(&m3, pscaling->x, pscaling->y, pscaling->z);
+    }
+    if ( !protation )
+    {
+     D3DXMatrixIdentity(&m6);
+    }
+    else
+    {
+     D3DXMatrixRotationQuaternion(&m6, protation);
+    }
+    D3DXMatrixTranslation(&m5, psc.x - prc.x,  psc.y - prc.y,  psc.z - prc.z);
+    D3DXMatrixTranslation(&m7, prc.x + pt.x, prc.y + pt.y, prc.z + pt.z);
+    D3DXMatrixMultiply(&p1, &m1, &m2);
+    D3DXMatrixMultiply(&p2, &p1, &m3);
+    D3DXMatrixMultiply(&p3, &p2, &m4);
+    D3DXMatrixMultiply(&p4, &p3, &m5);
+    D3DXMatrixMultiply(&p5, &p4, &m6);
+    D3DXMatrixMultiply(pout, &p5, &m7);
+    return pout;
+}
+
 D3DXMATRIX* WINAPI D3DXMatrixTranslation(D3DXMATRIX *pout, FLOAT x, FLOAT y, FLOAT z)
 {
     D3DXMatrixIdentity(pout);
