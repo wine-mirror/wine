@@ -961,7 +961,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         }
         else  /* WM_MOUSEMOVE */
         {
-            UINT pos;
+            INT pos;
 
             if (!SCROLL_PtInRectEx( &rect, pt, vertical )) pos = lastClickPos;
             else
@@ -1621,7 +1621,7 @@ static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, LPCSCROLLINFO info, BOOL b
 
     if (info->fMask & SIF_PAGE)
     {
-	if( infoPtr->page != info->nPage && info->nPage >= 0)
+	if( infoPtr->page != info->nPage )
 	{
             infoPtr->page = info->nPage;
             action |= SA_SSI_REFRESH;
