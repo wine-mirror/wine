@@ -2,6 +2,7 @@
  * Implementation of hyperlinking (hlink.dll)
  *
  * Copyright 2006 Mike McCormack
+ * Copyright 2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -342,6 +343,57 @@ static void test_special_reference(void)
     ok(ref == NULL, "ref=%p\n", ref);
 }
 
+static void test_HlinkCreateExtensionServices(void)
+{
+    IAuthenticate *authenticate;
+    LPWSTR password, username;
+    HWND hwnd;
+    HRESULT hres;
+
+    static const WCHAR usernameW[] = {'u','s','e','r',0};
+    static const WCHAR passwordW[] = {'p','a','s','s',0};
+
+    hres = HlinkCreateExtensionServices(NULL, NULL, NULL, NULL,
+                                        NULL, &IID_IAuthenticate, (void**)&authenticate);
+    ok(hres == S_OK, "HlinkCreateExtensionServices failed: %08x\n", hres);
+    ok(authenticate != NULL, "HlinkCreateExtensionServices returned NULL\n");
+
+    password = username = (void*)0xdeadbeef;
+    hwnd = (void*)0xdeadbeef;
+    hres = IAuthenticate_Authenticate(authenticate, &hwnd, &username, &password);
+    ok(hres == S_OK, "Authenticate failed: %08x\n", hres);
+    ok(!hwnd, "hwnd != NULL\n");
+    ok(!username, "username != NULL\n");
+    ok(!password, "password != NULL\n");
+
+    IAuthenticate_Release(authenticate);
+
+
+    hres = HlinkCreateExtensionServices(NULL, (HWND)0xfefefefe, usernameW, passwordW,
+                                        NULL, &IID_IAuthenticate, (void**)&authenticate);
+    ok(hres == S_OK, "HlinkCreateExtensionServices failed: %08x\n", hres);
+    ok(authenticate != NULL, "HlinkCreateExtensionServices returned NULL\n");
+
+    password = username = NULL;
+    hwnd = NULL;
+    hres = IAuthenticate_Authenticate(authenticate, &hwnd, &username, &password);
+    ok(hres == S_OK, "Authenticate failed: %08x\n", hres);
+    ok(hwnd == (HWND)0xfefefefe, "hwnd=%p\n", hwnd);
+    ok(!lstrcmpW(username, usernameW), "unexpected username\n");
+    ok(!lstrcmpW(password, passwordW), "unexpected password\n");
+    CoTaskMemFree(username);
+    CoTaskMemFree(password);
+
+    password = username = (void*)0xdeadbeef;
+    hwnd = (void*)0xdeadbeef;
+    hres = IAuthenticate_Authenticate(authenticate, &hwnd, NULL, &password);
+    ok(hres == E_INVALIDARG, "Authenticate failed: %08x\n", hres);
+    ok(password == (void*)0xdeadbeef, "password = %p\n", password);
+    ok(hwnd == (void*)0xdeadbeef, "hwnd = %p\n", hwnd);
+
+    IAuthenticate_Release(authenticate);
+}
+
 START_TEST(hlink)
 {
     CoInitialize(NULL);
@@ -350,6 +402,7 @@ START_TEST(hlink)
     test_reference();
     test_persist();
     test_special_reference();
+    test_HlinkCreateExtensionServices();
 
     CoUninitialize();
 }
