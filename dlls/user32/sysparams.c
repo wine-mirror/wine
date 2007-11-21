@@ -108,8 +108,8 @@ static const char * const DefSysColors[] =
     "ButtonText", "0 0 0",                   /* COLOR_BTNTEXT */
     "InactiveTitleText", "212 208 200",      /* COLOR_INACTIVECAPTIONTEXT */
     "ButtonHilight", "255 255 255",          /* COLOR_BTNHIGHLIGHT */
-    "ButtonDkShadow", "0 0 0",               /* COLOR_3DDKSHADOW */
-    "ButtonLight", "224 224 224",            /* COLOR_3DLIGHT */
+    "ButtonDkShadow", "64 64 64",            /* COLOR_3DDKSHADOW */
+    "ButtonLight", "212 208 200",            /* COLOR_3DLIGHT */
     "InfoText", "0 0 0",                     /* COLOR_INFOTEXT */
     "InfoWindow", "255 255 225",             /* COLOR_INFOBK */
     "ButtonAlternateFace", "180 180 180",    /* COLOR_ALTERNATEBTNFACE */
