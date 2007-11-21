@@ -337,6 +337,14 @@ HRESULT WINAPI HlinkTranslateURL(LPCWSTR pwzURL, DWORD grfFlags, LPWSTR *ppwzTra
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI HlinkUpdateStackItem(IHlinkFrame *pihlframe, IHlinkBrowseContext *pihlbc,
+        ULONG uHLID, IMoniker *pimkTrgt, LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName)
+{
+    FIXME("(%p %p %u %p %s %s)\n", pihlframe, pihlbc, uHLID, pimkTrgt, debugstr_w(pwzLocation),
+          debugstr_w(pwzFriendlyName));
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI HLinkCF_fnQueryInterface ( LPCLASSFACTORY iface,
         REFIID riid, LPVOID *ppvObj)
 {
