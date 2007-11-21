@@ -553,7 +553,7 @@ static void D3DXPlaneTest(void)
 static void D3X8QuaternionTest(void)
 {
     D3DXMATRIX mat;
-    D3DXQUATERNION expectedquat, gotquat, Nq, nul, q, r, s, t, u;
+    D3DXQUATERNION expectedquat, gotquat, Nq, Nq1, nul, q, r, s, t, u;
     LPD3DXQUATERNION funcpointer;
     D3DXVECTOR3 axis, expectedvec;
     FLOAT angle, expected, got, scale, scale2;
@@ -643,6 +643,23 @@ static void D3X8QuaternionTest(void)
     got = D3DXQuaternionLengthSq(NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
+/*_______________D3DXQuaternionLn______________________________*/
+    expectedquat.x = 1.0f; expectedquat.y = 2.0f; expectedquat.z = 4.0f; expectedquat.w = 0.0f;
+    D3DXQuaternionLn(&gotquat,&q);
+    expect_vec4(expectedquat,gotquat);
+    expectedquat.x = -3.0f; expectedquat.y = 4.0f; expectedquat.z = -5.0f; expectedquat.w = 0.0f;
+    D3DXQuaternionLn(&gotquat,&r);
+    expect_vec4(expectedquat,gotquat);
+    Nq.x = 1.0f/11.0f; Nq.y = 2.0f/11.0f; Nq.z = 4.0f/11.0f; Nq.w=10.0f/11.0f;
+    expectedquat.x = 0.093768f; expectedquat.y = 0.187536f; expectedquat.z = 0.375073f; expectedquat.w = 0.0f;
+    D3DXQuaternionLn(&gotquat,&Nq);
+    expect_vec4(expectedquat,gotquat);
+    /* Test the cas where the norm of the quaternion is <1 */
+    Nq1.x = 0.2f; Nq1.y = 0.1f; Nq1.z = 0.3; Nq1.w= 0.9f;
+    expectedquat.x = 0.206945f; expectedquat.y = 0.103473f; expectedquat.z = 0.310418f; expectedquat.w = 0.0f;
+    D3DXQuaternionLn(&gotquat,&Nq1);
+    todo_wine{ expect_vec4(expectedquat,gotquat) };
+
 /*_______________D3DXQuaternionMultiply________________________*/
     expectedquat.x = 3.0f; expectedquat.y = 61.0f; expectedquat.z = -32.0f; expectedquat.w = 85.0f;
     D3DXQuaternionMultiply(&gotquat,&q,&r);
@@ -705,7 +722,6 @@ static void D3X8QuaternionTest(void)
     expectedquat.x = 0.303261f; expectedquat.y = 0.262299f; expectedquat.z = 0.410073f; expectedquat.w = 0.819190f;
     D3DXQuaternionRotationYawPitchRoll(&gotquat,D3DX_PI/4.0f,D3DX_PI/11.0f,D3DX_PI/3.0f);
     expect_vec4(expectedquat,gotquat);
-
 
 /*_______________D3DXQuaternionSlerp________________________*/
     expectedquat.x = -0.2f; expectedquat.y = 2.6f; expectedquat.z = 1.3f; expectedquat.w = 9.1f;

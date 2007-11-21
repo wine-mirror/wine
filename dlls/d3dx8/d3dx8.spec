@@ -56,7 +56,7 @@
 @ stdcall D3DXQuaternionMultiply(ptr ptr ptr)
 @ stdcall D3DXQuaternionNormalize(ptr ptr)
 @ stdcall D3DXQuaternionInverse(ptr ptr)
-@ stub D3DXQuaternionLn
+@ stdcall D3DXQuaternionLn(ptr ptr)
 @ stub D3DXQuaternionExp
 @ stdcall D3DXQuaternionSlerp(ptr ptr ptr long)
 @ stdcall D3DXQuaternionSquad(ptr ptr ptr ptr ptr long)

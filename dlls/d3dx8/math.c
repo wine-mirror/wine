@@ -612,6 +612,34 @@ D3DXQUATERNION* WINAPI D3DXQuaternionInverse(D3DXQUATERNION *pout, CONST D3DXQUA
     return pout;
 }
 
+D3DXQUATERNION* WINAPI D3DXQuaternionLn(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
+{
+    FLOAT norm, normvec, theta;
+
+    norm = D3DXQuaternionLengthSq(pq);
+    if ( norm > 1.0001f )
+    {
+     pout->x = pq->x;
+     pout->y = pq->y;
+     pout->z = pq->z;
+     pout->w = 0.0f;
+    }
+    else if( norm > 0.99999f)
+    {
+     normvec = sqrt( pq->x * pq->x + pq->y * pq->y + pq->z * pq->z );
+     theta = atan2(normvec, pq->w) / normvec;
+     pout->x = theta * pq->x;
+     pout->y = theta * pq->y;
+     pout->z = theta * pq->z;
+     pout->w = 0.0f;
+    }
+    else
+    {
+     FIXME("The quaternion (%f, %f, %f, %f) has a norm <1. This should not happen. Windows returns a result anyway. This case is not implemented yet.\n", pq->x, pq->y, pq->z, pq->w);
+    }
+    return pout;
+}
+
 D3DXQUATERNION* WINAPI D3DXQuaternionMultiply(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2)
 {
     pout->x = pq2->w * pq1->x + pq2->x * pq1->w + pq2->y * pq1->z - pq2->z * pq1->y;
