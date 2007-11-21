@@ -74,5 +74,5 @@
 1120 stdcall GetServiceW(long ptr ptr long ptr ptr ptr)
 #1130 stub NPLoadNameSpaces
 1140 stub TransmitFile
-1141 stub AcceptEx
-1142 stub GetAcceptExSockaddrs
+1141 stdcall AcceptEx(long long ptr long long long ptr ptr) mswsock.AcceptEx
+1142 stdcall GetAcceptExSockaddrs(ptr long long long ptr ptr ptr ptr) mswsock.GetAcceptExSockaddrs
