@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2002 Travis Michielsen
  * Copyright (C) 2004-2005 Juan Lang
+ * Copyright (C) 2007 Vijay Kiran Kamuju
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -133,6 +134,53 @@ typedef struct _RSAPUBKEY {
     DWORD   bitlen;
     DWORD   pubexp;
 } RSAPUBKEY;
+
+typedef struct _PUBKEY {
+    DWORD   magic;
+    DWORD   bitlen;
+} DHPUBKEY, DSSPUBKEY, KEAPUBKEY, TEKPUBKEY;
+
+typedef struct _DSSSEED {
+    DWORD   counter;
+    BYTE    seed[20];
+} DSSSEED;
+
+typedef struct _PUBKEYVER3 {
+    DWORD   magic;
+    DWORD   bitlenP;
+    DWORD   bitlenQ;
+    DWORD   bitlenJ;
+    DSSSEED DSSSeed;
+} DHPUBKEY_VER3, DSSPUBKEY_VER3;
+
+typedef struct _PRIVKEYVER3 {
+    DWORD   magic;
+    DWORD   bitlenP;
+    DWORD   bitlenQ;
+    DWORD   bitlenJ;
+    DWORD   bitlenX;
+    DSSSEED DSSSeed;
+} DHPRIVKEY_VER3, DSSPRIVKEY_VER3;
+
+typedef struct _KEY_TYPE_SUBTYPE {
+    DWORD   dwKeySpec;
+    GUID    Type;
+    GUID    SubType;
+} KEY_TYPE_SUBTYPE, *PKEY_TYPE_SUBTYPE;
+
+typedef struct _CERT_FORTEZZA_DATA_PROP {
+    unsigned char   SerialNumber[8];
+    int             CertIndex;
+    unsigned char   CertLabel[36];
+} CERT_FORTEZZA_DATA_PROP;
+
+typedef struct _CMS_DH_KEY_INFO {
+    DWORD             dwVersion;
+    ALG_ID            Algid;
+    LPSTR             pszContentEncObjId;
+    CRYPT_DATA_BLOB   PubInfo;
+    void              *pReserved;
+} CMS_DH_KEY_INFO, *PCMS_DH_KEY_INFO;
 
 typedef struct _CRYPT_BIT_BLOB {
     DWORD cbData;
@@ -560,6 +608,75 @@ typedef struct _CRL_CONTEXT {
     HCERTSTORE hCertStore;
 } CRL_CONTEXT, *PCRL_CONTEXT;
 typedef const CRL_CONTEXT *PCCRL_CONTEXT;
+
+#define SORTED_CTL_EXT_FLAGS_OFFSET                (0*4)
+#define SORTED_CTL_EXT_COUNT_OFFSET                (1*4)
+#define SORTED_CTL_EXT_MAX_COLLISION_OFFSET        (2*4)
+#define SORTED_CTL_EXT_HASH_BUCKET_OFFSET          (3*4)
+
+#define SORTED_CTL_EXT_HASHED_SUBJECT_IDENTIFIER_FLAG    0x1
+
+typedef struct _CERT_DSS_PARAMETERS {
+    CRYPT_UINT_BLOB    p;
+    CRYPT_UINT_BLOB    q;
+    CRYPT_UINT_BLOB    g;
+} CERT_DSS_PARAMETERS, *PCERT_DSS_PARAMETERS;
+
+#define CERT_DSS_R_LEN            20
+#define CERT_DSS_S_LEN            20
+#define CERT_DSS_SIGNATURE_LEN    (CERT_DSS_R_LEN + CERT_DSS_S_LEN)
+
+#define CERT_MAX_ENCODED_DSS_SIGNATURE_LEN    (2 + 2*(2 + 20 +1))
+
+typedef struct _CERT_DH_PARAMETERS {
+    CRYPT_UINT_BLOB    p;
+    CRYPT_UINT_BLOB    g;
+} CERT_DH_PARAMETERS, *PCERT_DH_PARAMETERS;
+
+typedef struct _CERT_X942_DH_VALIDATION_PARAMS {
+    CRYPT_BIT_BLOB     seed;
+    DWORD              pgenCounter;
+} CERT_X942_DH_VALIDATION_PARAMS, *PCERT_X942_DH_VALIDATION_PARAMS;
+
+typedef struct _CERT_X942_DH_PARAMETERS {
+    CRYPT_UINT_BLOB                    p;
+    CRYPT_UINT_BLOB                    g;
+    CRYPT_UINT_BLOB                    q;
+    CRYPT_UINT_BLOB                    j;
+    PCERT_X942_DH_VALIDATION_PARAMS    pValidationParams;
+} CERT_X942_DH_PARAMETERS, *PCERT_X942_DH_PARAMETERS;
+
+#define CRYPT_X942_COUNTER_BYTE_LENGTH        4
+#define CRYPT_X942_KEY_LENGTH_BYTE_LENGTH     4
+#define CRYPT_X942_PUB_INFO_BYTE_LENGTH       (512/8)
+
+typedef struct _CRYPT_X942_OTHER_INFO {
+    LPSTR              pszContentEncryptionObjId;
+    BYTE               rgbCounter[CRYPT_X942_COUNTER_BYTE_LENGTH];
+    BYTE               rgbKeyLength[CRYPT_X942_KEY_LENGTH_BYTE_LENGTH];
+    CRYPT_DATA_BLOB    PubInfo;
+} CRYPT_X942_OTHER_INFO, *PCRYPT_X942_OTHER_INFO;
+
+typedef struct _CRYPT_RC2_CBC_PARAMETERS {
+    DWORD    dwVersion;
+    BOOL     fIV;
+    BYTE     rgbIV[4];
+} CRYPT_RC2_CBC_PARAMETERS, *PCRYPT_RC2_CBC_PARAMETERS;
+
+#define CRYPT_RC2_40BIT_VERSION    160
+#define CRYPT_RC2_56BIT_VERSION    52
+#define CRYPT_RC2_64BIT_VERSION    120
+#define CRYPT_RC2_128BIT_VERSION   58
+
+typedef struct _CRYPT_SMIME_CAPABILITY {
+    LPSTR               pszObjId;
+    CRYPT_OBJID_BLOB    Parameters;
+} CRYPT_SMIME_CAPABILITY, *PCRYPT_SMIME_CAPABILITY;
+
+typedef struct _CRYPT_SMIME_CAPABILITIES {
+    DWORD                   cCapability;
+    CRYPT_SMIME_CAPABILITY  rgCapability;
+} CRYPT_SMIME_CAPABILITIES, *PCRYPT_SMIME_CAPABILITIES;
 
 typedef struct _VTableProvStruc {
     DWORD    Version;
@@ -1804,6 +1921,14 @@ static const WCHAR MS_ENH_RSA_AES_PROV_W[] =           { 'M','i','c','r','o','s'
 #define KP_KEYEXCHANGE_PIN      32
 #define KP_SIGNATURE_PIN        33
 #define KP_PREHASH              34
+#define KP_ROUNDS               35
+#define KP_OAEP_PARAMS          36
+#define KP_CMS_KEY_INFO         37
+#define KP_CMS_DH_KEY_INFO      38
+#define KP_PUB_PARAMS           39
+#define KP_VERIFY_PARAMS        40
+#define KP_HIGHEST_VERSION      41
+#define KP_GET_USE_COUNT        42
 
 /* CryptSignHash/CryptVerifySignature */
 #define CRYPT_NOHASHOID         0x00000001
