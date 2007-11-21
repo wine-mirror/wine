@@ -1454,7 +1454,13 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         }
     }
     else if (moved && !DragFullWindows)
+    {
         draw_moving_frame( hdc, &sizingRect, thickframe );
+        /* make sure the moving frame is erased before we move the window */
+        wine_tsx11_lock();
+        XFlush( gdi_display );
+        wine_tsx11_unlock();
+    }
 
     ReleaseDC( parent, hdc );
 
