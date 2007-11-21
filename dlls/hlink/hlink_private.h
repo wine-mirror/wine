@@ -27,5 +27,52 @@
 #include "ole2.h"
 #include "hlink.h"
 
+#include "wine/unicode.h"
+
 extern HRESULT WINAPI HLink_Constructor(IUnknown*,REFIID,void**);
 extern HRESULT WINAPI HLinkBrowseContext_Constructor(IUnknown*,REFIID,void**);
+
+static inline void *hlink_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline void *hlink_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline BOOL hlink_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline LPWSTR hlink_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = hlink_alloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
+}
+
+static inline LPWSTR hlink_co_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = CoTaskMemAlloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
+}

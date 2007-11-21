@@ -24,7 +24,6 @@
 #include "hlguids.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hlink);
 
@@ -71,34 +70,6 @@ static inline HlinkImpl* HlinkImpl_from_IDataObject( IDataObject* iface)
     return (HlinkImpl*) ((CHAR*)iface - FIELD_OFFSET(HlinkImpl, lpDOVtbl));
 }
 
-static inline LPWSTR strdupW( LPCWSTR str )
-{
-    LPWSTR r;
-    UINT len;
-
-    if (!str)
-        return NULL;
-    len = (lstrlenW(str)+1) * sizeof (WCHAR);
-    r = HeapAlloc(GetProcessHeap(), 0, len);
-    if (r)
-        memcpy(r, str, len);
-    return r;
-}
-
-static inline LPWSTR co_strdupW( LPCWSTR str )
-{
-    LPWSTR r;
-    UINT len;
-
-    if (!str)
-        return NULL;
-    len = (lstrlenW(str)+1) * sizeof (WCHAR);
-    r = CoTaskMemAlloc(len);
-    if (r)
-        memcpy(r, str, len);
-    return r;
-}
-
 static inline void __GetMoniker(HlinkImpl* This, IMoniker** moniker)
 {
     *moniker = NULL;
@@ -127,7 +98,7 @@ HRESULT WINAPI HLink_Constructor(IUnknown *pUnkOuter, REFIID riid,
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    hl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HlinkImpl));
+    hl = hlink_alloc_zero(sizeof(HlinkImpl));
     if (!hl)
         return E_OUTOFMEMORY;
 
@@ -184,15 +155,15 @@ static ULONG WINAPI IHlink_fnRelease (IHlink* iface)
         return refCount;
 
     TRACE("-- destroying IHlink (%p)\n", This);
-    HeapFree(GetProcessHeap(), 0, This->FriendlyName);
-    HeapFree(GetProcessHeap(), 0, This->Target);
-    HeapFree(GetProcessHeap(), 0, This->TargetFrameName);
-    HeapFree(GetProcessHeap(), 0, This->Location);
+    hlink_free(This->FriendlyName);
+    hlink_free(This->Target);
+    hlink_free(This->TargetFrameName);
+    hlink_free(This->Location);
     if (This->Moniker)
         IMoniker_Release(This->Moniker);
     if (This->Site)
         IHlinkSite_Release(This->Site);
-    HeapFree(GetProcessHeap(), 0, This);
+    hlink_free(This);
     return 0;
 }
 
@@ -252,8 +223,8 @@ static HRESULT WINAPI IHlink_fnSetMonikerReference( IHlink* iface,
         CoTaskMemFree(display_name);
     }
 
-    HeapFree(GetProcessHeap(), 0, This->Location);
-    This->Location = strdupW( pwzLocation );
+    hlink_free(This->Location);
+    This->Location = hlink_strdupW( pwzLocation );
 
     return S_OK;
 }
@@ -268,13 +239,13 @@ static HRESULT WINAPI IHlink_fnSetStringReference(IHlink* iface,
 
     if (grfHLSETF & HLINKSETF_TARGET)
     {
-        HeapFree(GetProcessHeap(), 0, This->Target);
-        This->Target = strdupW( pwzTarget );
+        hlink_free(This->Target);
+        This->Target = hlink_strdupW( pwzTarget );
     }
     if (grfHLSETF & HLINKSETF_LOCATION)
     {
-        HeapFree(GetProcessHeap(), 0, This->Location);
-        This->Location = strdupW( pwzLocation );
+        hlink_free(This->Location);
+        This->Location = hlink_strdupW( pwzLocation );
     }
 
     return S_OK;
@@ -306,7 +277,7 @@ static HRESULT WINAPI IHlink_fnGetStringReference (IHlink* iface,
 
     if (ppwzTarget)
     {
-        *ppwzTarget = co_strdupW( This->Target );
+        *ppwzTarget = hlink_co_strdupW( This->Target );
 
         if (!This->Target)
         {
@@ -326,7 +297,7 @@ static HRESULT WINAPI IHlink_fnGetStringReference (IHlink* iface,
         }
     }
     if (ppwzLocation)
-        *ppwzLocation = co_strdupW( This->Location );
+        *ppwzLocation = hlink_co_strdupW( This->Location );
 
     TRACE("(Target: %s Location: %s)\n",
             (ppwzTarget)?debugstr_w(*ppwzTarget):"<NULL>",
@@ -342,8 +313,8 @@ static HRESULT WINAPI IHlink_fnSetFriendlyName (IHlink *iface,
 
     TRACE("(%p) -> (%s)\n", This, debugstr_w(pwzFriendlyName));
 
-    HeapFree(GetProcessHeap(), 0, This->FriendlyName);
-    This->FriendlyName = strdupW( pwzFriendlyName );
+    hlink_free(This->FriendlyName);
+    This->FriendlyName = hlink_strdupW( pwzFriendlyName );
 
     return S_OK;
 }
@@ -358,7 +329,7 @@ static HRESULT WINAPI IHlink_fnGetFriendlyName (IHlink* iface,
     /* FIXME: Only using explicitly set and cached friendly names */
 
     if (This->FriendlyName)
-        *ppwzFriendlyName = co_strdupW( This->FriendlyName );
+        *ppwzFriendlyName = hlink_co_strdupW( This->FriendlyName );
     else
     {
         IMoniker *moniker;
@@ -385,8 +356,8 @@ static HRESULT WINAPI IHlink_fnSetTargetFrameName(IHlink* iface,
     HlinkImpl  *This = (HlinkImpl*)iface;
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzTargetFramename));
 
-    HeapFree(GetProcessHeap(), 0, This->TargetFrameName);
-    This->TargetFrameName = strdupW( pwzTargetFramename );
+    hlink_free(This->TargetFrameName);
+    This->TargetFrameName = hlink_strdupW( pwzTargetFramename );
 
     return S_OK;
 }
@@ -397,7 +368,7 @@ static HRESULT WINAPI IHlink_fnGetTargetFrameName(IHlink* iface,
     HlinkImpl  *This = (HlinkImpl*)iface;
 
     TRACE("(%p)->(%p)\n", This, ppwzTargetFrameName);
-    *ppwzTargetFrameName = co_strdupW( This->TargetFrameName );
+    *ppwzTargetFrameName = hlink_co_strdupW( This->TargetFrameName );
 
     return S_OK;
 }
@@ -677,18 +648,18 @@ static HRESULT read_hlink_string(IStream *pStm, LPWSTR *out_str)
 
     TRACE("read len %d\n", len);
 
-    str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    str = hlink_alloc(len * sizeof(WCHAR));
     if (!str) return E_OUTOFMEMORY;
 
     hr = IStream_Read(pStm, str, len * sizeof(WCHAR), &read);
     if (FAILED(hr))
     {
-        HeapFree(GetProcessHeap(), 0, str);
+        hlink_free(str);
         return hr;
     }
     if (read != len * sizeof(WCHAR))
     {
-        HeapFree(GetProcessHeap(), 0, str);
+        hlink_free(str);
         return STG_E_READFAULT;
     }
     TRACE("read string %s\n", debugstr_w(str));
