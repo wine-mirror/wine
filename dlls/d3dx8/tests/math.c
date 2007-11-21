@@ -595,6 +595,20 @@ static void D3X8QuaternionTest(void)
     got = D3DXQuaternionDot(NULL,NULL);
     ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
+/*_______________D3DXQuaternionExp______________________________*/
+    expectedquat.x = -0.216382f; expectedquat.y = -0.432764f; expectedquat.z = -0.8655270f; expectedquat.w = -0.129449f;
+    D3DXQuaternionExp(&gotquat,&q);
+    expect_vec4(expectedquat,gotquat);
+    /* Test the null quaternion */
+    expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 1.0f;
+    D3DXQuaternionExp(&gotquat,&nul);
+    expect_vec4(expectedquat,gotquat);
+    /* Test the case where the norm of the quaternion is <1 */
+    Nq1.x = 0.2f; Nq1.y = 0.1f; Nq1.z = 0.3; Nq1.w= 0.9f;
+    expectedquat.x = 0.195366; expectedquat.y = 0.097683f; expectedquat.z = 0.293049f; expectedquat.w = 0.930813f;
+    D3DXQuaternionExp(&gotquat,&Nq1);
+    expect_vec4(expectedquat,gotquat);
+
 /*_______________D3DXQuaternionIdentity________________*/
     expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 1.0f;
     D3DXQuaternionIdentity(&gotquat);

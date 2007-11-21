@@ -588,6 +588,28 @@ D3DXQUATERNION* WINAPI D3DXQuaternionBaryCentric(D3DXQUATERNION *pout, CONST D3D
     return pout;
 }
 
+D3DXQUATERNION* WINAPI D3DXQuaternionExp(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
+{
+    FLOAT norm;
+
+    norm = sqrt(pq->x * pq->x + pq->y * pq->y + pq->z * pq->z);
+    if (norm )
+    {
+     pout->x = sin(norm) * pq->x / norm;
+     pout->y = sin(norm) * pq->y / norm;
+     pout->z = sin(norm) * pq->z / norm;
+     pout->w = cos(norm);
+    }
+    else
+    {
+     pout->x = 0.0f;
+     pout->y = 0.0f;
+     pout->z = 0.0f;
+     pout->w = 1.0f;
+    }
+    return pout;
+}
+
 D3DXQUATERNION* WINAPI D3DXQuaternionInverse(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
 {
     D3DXQUATERNION temp;
