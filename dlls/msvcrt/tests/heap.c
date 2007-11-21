@@ -342,6 +342,7 @@ START_TEST(heap)
 
     mem = malloc(0);
     ok(mem != NULL, "memory not allocated for size 0\n");
+    free(mem);
 
     mem = realloc(NULL, 10);
     ok(mem != NULL, "memory not allocated\n");
