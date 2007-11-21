@@ -215,16 +215,6 @@ HRESULT WINAPI HlinkQueryCreateFromData(IDataObject* piDataObj)
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI HlinkCreateExtensionServices(LPCWSTR pwzAdditionalHeaders,
-        HWND phwnd, LPCWSTR pszUsername, LPCWSTR pszPassword,
-        IUnknown *punkOuter, REFIID riid, void** ppvObj)
-{
-    FIXME("%s %p %s %s %p %s %p\n",debugstr_w(pwzAdditionalHeaders),
-            phwnd, debugstr_w(pszUsername), debugstr_w(pszPassword),
-            punkOuter, debugstr_guid(riid), ppvObj);
-    return E_NOTIMPL;
-}
-
 HRESULT WINAPI HlinkNavigateToStringReference( LPCWSTR pwzTarget,
         LPCWSTR pwzLocation, IHlinkSite *pihlsite, DWORD dwSiteData,
         IHlinkFrame *pihlframe, DWORD grfHLNF, LPBC pibc,

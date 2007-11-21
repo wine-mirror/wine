@@ -10,6 +10,7 @@ EXTRALIBS = -luuid
 
 C_SRCS = \
 	browse_ctx.c \
+	extserv.c \
 	hlink_main.c \
 	link.c
 
