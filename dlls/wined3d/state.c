@@ -3373,6 +3373,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
          */
         if (useVertexShaderFunction) {
             device->posFixup[1] = device->render_offscreen ? -1.0 : 1.0;
+            device->posFixup[3] = -device->posFixup[1] / stateblock->viewport.Height;
         }
     }
 
@@ -3496,7 +3497,7 @@ static void viewport(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
     checkGLcall("glViewport");
 
     stateblock->wineD3DDevice->posFixup[2] = 1.0 / stateblock->viewport.Width;
-    stateblock->wineD3DDevice->posFixup[3] = -1.0 / stateblock->viewport.Height;
+    stateblock->wineD3DDevice->posFixup[3] = -stateblock->wineD3DDevice->posFixup[1] / stateblock->viewport.Height;
     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
         transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock, context);
     }
