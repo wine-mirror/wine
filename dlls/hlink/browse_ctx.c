@@ -18,20 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
-#define COBJMACROS
-
-#include "winerror.h"
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "ole2.h"
-#include "unknwn.h"
-#include "objidl.h"
+#include "hlink_private.h"
 
 #include "wine/debug.h"
-#include "hlink.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hlink);
 
