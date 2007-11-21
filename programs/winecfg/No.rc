@@ -2,7 +2,7 @@
  * WineCfg resources
  * Norwegian Bokmål Language Support
  *
- * Copyright 2005-2006 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2007 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -46,7 +46,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Programminnstillinger ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine kan herme etter forskjellige Windows-versjoner for hvert program. Denne fanen er koblet med bibliotek- og grafikkfanene, sånn at du kan endre innstillinger for hele systemet eller enkelte program der også.",
+    LTEXT           "Wine kan etterligne forskjellige Windows-versjoner for hvert program. Denne fanen er koblet med bibliotek- og grafikkfanene, sånn at du kan endre innstillinger for hele systemet eller enkelte program der også.",
                     IDC_STATIC,15,20,227,30
     CONTROL         "Programmer",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,150
@@ -69,9 +69,9 @@ BEGIN
     
     LTEXT           "Du kan velge å emulere et Windows-skrivebord, der alle vinduene er bundet i en virtuell skjerm, eller du kan få vinduene til å oppføre seg som andre programmer på skrivebordet.",
                     IDC_STATIC,15,126,228,28
-    LTEXT           "Skrivebordsstrrelse:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
+    LTEXT           "Størrelse:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,108,168,8,8,WS_DISABLED
-    CONTROL         "Emuler et virtuelt skrivebord",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL         "Vis et virtuelt skrivebord",IDC_ENABLE_DESKTOP,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,153,230,10
 		    
     EDITTEXT        IDC_DESKTOP_WIDTH,64,168,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
@@ -83,7 +83,7 @@ BEGIN
     COMBOBOX	    IDC_D3D_VSHADER_MODE,100,198,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     CONTROL         "Tillat piksel-skyggelegger (hvis maskinvaren støtter det)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,217,230,10
-    GROUPBOX        " Screen Resolution ",IDC_STATIC,8,242,244,25
+    GROUPBOX        " Skjermoppløsning (styrer skriftstørrelse) ",IDC_STATIC,8,242,244,25
     CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
     EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT           "dpi",IDC_STATIC,235,252,10,8
@@ -99,7 +99,7 @@ BEGIN
     LTEXT           "Ny overstyring for bibliotek:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "&Legg til",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
-    LTEXT           "Eksisterende overstyringer:",IDC_STATIC,16,86,100,8
+    LTEXT           "Gjeldende overstyringer:",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "R&ediger",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "Fje&rn",IDC_DLLS_REMOVEDLL,164,114,82,14 
@@ -110,7 +110,7 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Rediger overstyring"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Lastingsrekkeflge ",IDC_STATIC,8,4,94,66
+    GROUPBOX        " Lastingsrekkefølge ",IDC_STATIC,8,4,94,66
     CONTROL         "Inne&bygget (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
     CONTROL         "I&nnfødt (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
     CONTROL         "&Innebygget så innfødt",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
@@ -179,7 +179,7 @@ IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
+    GROUPBOX        " Utseende ",IDC_STATIC,8,4,244,106
     LTEXT           "Tema:",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Installer tema . . .",IDC_THEME_INSTALL,152,23,93,14
@@ -289,8 +289,8 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDC_SYSPARAMS_BUTTON            "Styrer bakgrunnen"
-    IDC_SYSPARAMS_BUTTON_TEXT       "Styrer tekst"
+    IDC_SYSPARAMS_BUTTON            "Kontrollerbakgrunn"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Kontrollertekst"
     IDC_SYSPARAMS_DESKTOP           "Skrivebord"
     IDC_SYSPARAMS_MENU              "Menybakgrunn"
     IDC_SYSPARAMS_MENU_TEXT         "Menytekst"
@@ -305,5 +305,5 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Aktiv titteltekst"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Inaktiv tittellinje"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inaktiv titteltekst"
-    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Meldingsvindutekst"
 END
