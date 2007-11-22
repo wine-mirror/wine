@@ -468,7 +468,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
     break;
   case WINED3DSPR_CONST:
       if(param & WINED3DSHADER_ADDRMODE_RELATIVE) {
-          if(reg - This->rel_offset >= 0) {
+          if(reg >= This->rel_offset) {
               sprintf(tmpReg, "C[A0.x + %u]", reg - This->rel_offset);
           } else {
               sprintf(tmpReg, "C[A0.x - %u]", -reg + This->rel_offset);
