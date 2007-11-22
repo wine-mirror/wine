@@ -3493,7 +3493,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
 
     TRACE("(%p,%d,%p)\n", iface, index, ppTInfo);
 
-    if ((index < 0) || (index >= This->typelib_header.nrtypeinfos)) {
+    if (index >= This->typelib_header.nrtypeinfos) {
 	return TYPE_E_ELEMENTNOTFOUND;
     }
 
@@ -3514,7 +3514,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
 
     TRACE("(%p,%d,%p)\n", iface, index, pTKind);
 
-    if ((index < 0) || (index >= This->typelib_header.nrtypeinfos)) {
+    if (index >= This->typelib_header.nrtypeinfos) {
 	return TYPE_E_ELEMENTNOTFOUND;
     }
 
