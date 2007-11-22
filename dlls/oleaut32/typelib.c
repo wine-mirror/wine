@@ -3758,7 +3758,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
     int i;
     ITypeInfoImpl *pTInfo = This->pTypeInfo;
     
-    if ((ITypeLib2_fnGetTypeInfoCount(iface) < index + 1) || (index < 0))
+    if (ITypeLib2_fnGetTypeInfoCount(iface) < index + 1)
     	 return TYPE_E_ELEMENTNOTFOUND;
 
     TRACE("(%p) index %d\n", This, index);
@@ -6647,7 +6647,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetParamCustData(
 
     for(i=0, pFDesc=This->funclist; i!=indexFunc && pFDesc; i++,pFDesc=pFDesc->next);
 
-    if(pFDesc && indexParam >=0 && indexParam<pFDesc->funcdesc.cParams)
+    if(pFDesc && indexParam<pFDesc->funcdesc.cParams)
         for(pCData=pFDesc->pParamDesc[indexParam].pCustData; pCData;
                 pCData = pCData->next)
             if( IsEqualIID(guid, &pCData->guid)) break;
@@ -6880,7 +6880,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllParamCustData( ITypeInfo2 * iface,
     for(i=0, pFDesc=This->funclist; i!=indexFunc && pFDesc; i++,
             pFDesc=pFDesc->next)
         ;
-    if(pFDesc && indexParam >=0 && indexParam<pFDesc->funcdesc.cParams){
+    if(pFDesc && indexParam<pFDesc->funcdesc.cParams){
         pCustData->prgCustData =
             TLB_Alloc(pFDesc->pParamDesc[indexParam].ctCustData *
                     sizeof(CUSTDATAITEM));
