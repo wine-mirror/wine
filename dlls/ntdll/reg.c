@@ -271,8 +271,16 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
                     fixed_size = (char *)keyinfo.Name - (char *)&keyinfo;
                     keyinfo.LastWriteTime = modif;
                     keyinfo.TitleIndex = 0;
-                    keyinfo.ClassLength = max( 0, wine_server_reply_size(reply) - reply->namelen );
-                    keyinfo.ClassOffset = keyinfo.ClassLength ? fixed_size + reply->namelen : -1;
+                    if (reply->namelen < wine_server_reply_size(reply))
+                    {
+                        keyinfo.ClassLength = wine_server_reply_size(reply) - reply->namelen;
+                        keyinfo.ClassOffset = fixed_size + reply->namelen;
+                    }
+                    else
+                    {
+                        keyinfo.ClassLength = 0;
+                        keyinfo.ClassOffset = -1;
+                    }
                     keyinfo.NameLength = reply->namelen;
                     memcpy( info, &keyinfo, min( length, fixed_size ) );
                 }
