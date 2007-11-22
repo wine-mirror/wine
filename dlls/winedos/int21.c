@@ -1385,7 +1385,7 @@ static void INT21_SequentialReadFromFCB( CONTEXT86 *context )
     struct XFCB *xfcb;
     HANDLE handle;
     DWORD record_number;
-    long position;
+    DWORD position;
     BYTE *disk_transfer_area;
     UINT bytes_read;
     BYTE AL_result;
@@ -1405,7 +1405,7 @@ static void INT21_SequentialReadFromFCB( CONTEXT86 *context )
         record_number = 128 * fcb->current_block_number + fcb->record_within_current_block;
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %ld\n",
+            TRACE("seek(%d, %d, 0) failed with %u\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* end of file, no data read */
         } else {
@@ -1421,7 +1421,7 @@ static void INT21_SequentialReadFromFCB( CONTEXT86 *context )
                     AL_result = 0x03; /* end of file, partial record read */
                 } /* if */
             } else {
-                TRACE("successful read %d bytes from record %d (position %ld) of file %d (handle %p)\n",
+                TRACE("successful read %d bytes from record %d (position %u) of file %d (handle %p)\n",
                     bytes_read, record_number, position, fcb->file_number, handle);
                 AL_result = 0x00; /* successful */
             } /* if */
@@ -1465,7 +1465,7 @@ static void INT21_SequentialWriteToFCB( CONTEXT86 *context )
     struct XFCB *xfcb;
     HANDLE handle;
     DWORD record_number;
-    long position;
+    DWORD position;
     BYTE *disk_transfer_area;
     UINT bytes_written;
     BYTE AL_result;
@@ -1485,7 +1485,7 @@ static void INT21_SequentialWriteToFCB( CONTEXT86 *context )
         record_number = 128 * fcb->current_block_number + fcb->record_within_current_block;
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %ld\n",
+            TRACE("seek(%d, %d, 0) failed with %u\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* disk full */
         } else {
@@ -1496,7 +1496,7 @@ static void INT21_SequentialWriteToFCB( CONTEXT86 *context )
                       fcb->file_number, disk_transfer_area, fcb->logical_record_size, bytes_written);
                 AL_result = 0x01; /* disk full */
             } else {
-                TRACE("successful written %d bytes from record %d (position %ld) of file %d (handle %p)\n",
+                TRACE("successful written %d bytes from record %d (position %u) of file %d (handle %p)\n",
                     bytes_written, record_number, position, fcb->file_number, handle);
                 AL_result = 0x00; /* successful */
             } /* if */
@@ -1541,7 +1541,7 @@ static void INT21_ReadRandomRecordFromFCB( CONTEXT86 *context )
     struct XFCB *xfcb;
     HANDLE handle;
     DWORD record_number;
-    long position;
+    DWORD position;
     BYTE *disk_transfer_area;
     UINT bytes_read;
     BYTE AL_result;
@@ -1561,7 +1561,7 @@ static void INT21_ReadRandomRecordFromFCB( CONTEXT86 *context )
     } else {
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %ld\n",
+            TRACE("seek(%d, %d, 0) failed with %u\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* end of file, no data read */
         } else {
@@ -1577,7 +1577,7 @@ static void INT21_ReadRandomRecordFromFCB( CONTEXT86 *context )
                     AL_result = 0x03; /* end of file, partial record read */
                 } /* if */
             } else {
-                TRACE("successful read %d bytes from record %d (position %ld) of file %d (handle %p)\n",
+                TRACE("successful read %d bytes from record %d (position %u) of file %d (handle %p)\n",
                     bytes_read, record_number, position, fcb->file_number, handle);
                 AL_result = 0x00; /* successful */
             } /* if */
@@ -1614,7 +1614,7 @@ static void INT21_WriteRandomRecordToFCB( CONTEXT86 *context )
     struct XFCB *xfcb;
     HANDLE handle;
     DWORD record_number;
-    long position;
+    DWORD position;
     BYTE *disk_transfer_area;
     UINT bytes_written;
     BYTE AL_result;
@@ -1634,7 +1634,7 @@ static void INT21_WriteRandomRecordToFCB( CONTEXT86 *context )
     } else {
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %ld\n",
+            TRACE("seek(%d, %d, 0) failed with %u\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* disk full */
         } else {
@@ -1645,7 +1645,7 @@ static void INT21_WriteRandomRecordToFCB( CONTEXT86 *context )
                       fcb->file_number, disk_transfer_area, fcb->logical_record_size, bytes_written);
                 AL_result = 0x01; /* disk full */
             } else {
-                TRACE("successful written %d bytes from record %d (position %ld) of file %d (handle %p)\n",
+                TRACE("successful written %d bytes from record %d (position %u) of file %d (handle %p)\n",
                     bytes_written, record_number, position, fcb->file_number, handle);
                 AL_result = 0x00; /* successful */
             } /* if */
@@ -1689,7 +1689,7 @@ static void INT21_RandomBlockReadFromFCB( CONTEXT86 *context )
     struct XFCB *xfcb;
     HANDLE handle;
     DWORD record_number;
-    long position;
+    DWORD position;
     BYTE *disk_transfer_area;
     UINT records_requested;
     UINT bytes_requested;
@@ -1713,7 +1713,7 @@ static void INT21_RandomBlockReadFromFCB( CONTEXT86 *context )
     } else {
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %ld\n",
+            TRACE("seek(%d, %d, 0) failed with %u\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             records_read = 0;
             AL_result = 0x01; /* end of file, no data read */
@@ -1734,7 +1734,7 @@ static void INT21_RandomBlockReadFromFCB( CONTEXT86 *context )
                     AL_result = 0x03; /* end of file, partial record read */
                 } /* if */
             } else {
-                TRACE("successful read %d bytes from record %d (position %ld) of file %d (handle %p)\n",
+                TRACE("successful read %d bytes from record %d (position %u) of file %d (handle %p)\n",
                     bytes_read, record_number, position, fcb->file_number, handle);
                 records_read = records_requested;
                 AL_result = 0x00; /* successful */
@@ -1780,7 +1780,7 @@ static void INT21_RandomBlockWriteToFCB( CONTEXT86 *context )
     struct XFCB *xfcb;
     HANDLE handle;
     DWORD record_number;
-    long position;
+    DWORD position;
     BYTE *disk_transfer_area;
     UINT records_requested;
     UINT bytes_requested;
@@ -1804,7 +1804,7 @@ static void INT21_RandomBlockWriteToFCB( CONTEXT86 *context )
     } else {
         position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
         if (position != record_number * fcb->logical_record_size) {
-            TRACE("seek(%d, %d, 0) failed with %ld\n",
+            TRACE("seek(%d, %d, 0) failed with %u\n",
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             records_written = 0;
             AL_result = 0x01; /* disk full */
@@ -1819,7 +1819,7 @@ static void INT21_RandomBlockWriteToFCB( CONTEXT86 *context )
                 records_written = bytes_written / fcb->logical_record_size;
                 AL_result = 0x01; /* disk full */
             } else {
-                TRACE("successful write %d bytes from record %d (position %ld) of file %d (handle %p)\n",
+                TRACE("successful write %d bytes from record %d (position %u) of file %d (handle %p)\n",
                     bytes_written, record_number, position, fcb->file_number, handle);
                 records_written = records_requested;
                 AL_result = 0x00; /* successful */
@@ -2733,7 +2733,7 @@ static void INT21_IoctlHPScanHandler( CONTEXT86 *context )
  */
 static void INT21_Ioctl_Char( CONTEXT86 *context )
 {
-    int status, i;
+    int status;
     int IsConsoleIOHandle = 0;
     IO_STATUS_BLOCK io;
     FILE_INTERNAL_INFORMATION info;
@@ -2750,6 +2750,7 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
             return;
         }
     } else {
+        UINT i;
         for (i = 0; i < NB_MAGIC_DEVICES; i++)
         {
             if (!magic_devices[i].handle) continue;
