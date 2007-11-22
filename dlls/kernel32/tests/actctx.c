@@ -75,7 +75,7 @@ static const char manifest4[] =
 "<dependency>"
 "<dependentAssembly>"
 "<assemblyIdentity type=\"win32\" name=\"Microsoft.Windows.Common-Controls\" "
-    "version=\"6.0.0.0\" processorArchitecture=\"x86\" publicKeyToken=\"6595b64144ccf1df\">"
+    "version=\"6.0.1.0\" processorArchitecture=\"x86\" publicKeyToken=\"6595b64144ccf1df\">"
 "</assemblyIdentity>"
 "</dependentAssembly>"
 "</dependency>"
