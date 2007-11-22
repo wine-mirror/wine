@@ -74,7 +74,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commctrl);
 
 #define NAME       "microsoft.windows.common-controls"
 #define FILE       "comctl32.dll"
-#define VERSION    "6.0.0.0"
+#define VERSION    "6.0.2600.2982"
 #define PUBLIC_KEY "6595b64144ccf1df"
 
 #ifdef __i386__
