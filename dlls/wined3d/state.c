@@ -1688,6 +1688,7 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
             case GL_TEXTURE_2D:
                 if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
                     glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_2D);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, ...)");
                 } else {
                     glDisable(GL_TEXTURE_3D);
                     checkGLcall("glDisable(GL_TEXTURE_3D)");
@@ -1702,6 +1703,7 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
             case GL_TEXTURE_3D:
                 if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
                     glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_3D);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_3D)");
                 } else {
                     if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
                         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
@@ -1716,6 +1718,7 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
             case GL_TEXTURE_CUBE_MAP_ARB:
                 if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
                     glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_CUBE_MAP_ARB);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_CUBE_MAP_ARB)");
                 } else {
                     glDisable(GL_TEXTURE_2D);
                     checkGLcall("glDisable(GL_TEXTURE_2D)");
@@ -1729,6 +1732,7 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
     } else {
         if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
             glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
+            checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE)");
         } else {
             glEnable(GL_TEXTURE_2D);
             checkGLcall("glEnable(GL_TEXTURE_2D)");
