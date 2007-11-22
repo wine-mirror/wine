@@ -106,7 +106,7 @@ static void paint_text (HWND hwnd, HDC hdc, DWORD dwStyle, const COMBOBOXINFO *c
          clipRegion=NULL;
        }
 
-       if (!IsWindowEnabled(hwnd) & WS_DISABLED) itemState |= ODS_DISABLED;
+       if (!IsWindowEnabled(hwnd)) itemState |= ODS_DISABLED;
 
        dis.CtlType      = ODT_COMBOBOX;
        dis.CtlID        = ctlid;
