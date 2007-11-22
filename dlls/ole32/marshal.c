@@ -1097,10 +1097,15 @@ static BOOL find_proxy_manager(APARTMENT * apt, OXID oxid, OID oid, struct proxy
         struct proxy_manager * proxy = LIST_ENTRY(cursor, struct proxy_manager, entry);
         if ((oxid == proxy->oxid) && (oid == proxy->oid))
         {
-            *proxy_found = proxy;
-            ClientIdentity_AddRef((IMultiQI *)&proxy->lpVtbl);
-            found = TRUE;
-            break;
+            /* be careful of a race with ClientIdentity_Release, which would
+             * cause us to return a proxy which is in the process of being
+             * destroyed */
+            if (ClientIdentity_AddRef((IMultiQI *)&proxy->lpVtbl) != 0)
+            {
+                *proxy_found = proxy;
+                found = TRUE;
+                break;
+            }
         }
     }
     LeaveCriticalSection(&apt->cs);
