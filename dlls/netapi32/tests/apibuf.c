@@ -58,7 +58,6 @@ static void run_apibuf_tests(void)
     ok(pNetApiBufferFree(p) == NERR_Success, "Freed\n");
 
     ok(pNetApiBufferSize(p, &dwSize) == NERR_Success, "Got size\n");
-    ok(dwSize >= 0, "The size\n");
     ok(pNetApiBufferSize(NULL, &dwSize) == ERROR_INVALID_PARAMETER, "Error for NULL pointer\n");
 
     /* border reallocate cases */
@@ -72,7 +71,7 @@ static void run_apibuf_tests(void)
     ok(pNetApiBufferAllocate(0, (LPVOID *)&p) == NERR_Success,
        "Reserved memory\n");
     ok(pNetApiBufferSize(p, &dwSize) == NERR_Success, "Got size\n");
-    ok((dwSize >= 0) && (dwSize < 0xFFFFFFFF),"The size of the 0-length buffer\n");
+    ok(dwSize < 0xFFFFFFFF, "The size of the 0-length buffer\n");
     ok(pNetApiBufferFree(p) == NERR_Success, "Freed\n");
 
     /* NULL-Pointer */
