@@ -206,7 +206,7 @@ HKCU,Software\Wine\Debug,"RelayFromExclude",2,"winex11.drv;user32;gdi32;advapi32
 HKCU,%Desktop%,"FontSmoothing",2,"0"
 HKCU,%Desktop%,"DragFullWindows",2,"0"
 HKCU,%Desktop%,"SmoothScroll",3,00,00,00,00
-HKCU,%Desktop%,"UserPreferencemask",3,00,00,00,00
+HKCU,%Desktop%,"UserPreferencemask",3,10,00,00,00
 HKCU,%Desktop%,"LowPowerActive",,"0"
 
 [Metrics]

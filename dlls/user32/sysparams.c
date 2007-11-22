@@ -88,8 +88,8 @@ enum spi_index
 static const char * const DefSysColors[] =
 {
     "Scrollbar", "212 208 200",              /* COLOR_SCROLLBAR */
-    "Background", "58 110 165",               /* COLOR_BACKGROUND */
-    "ActiveTitle", "0 0 128",                /* COLOR_ACTIVECAPTION */
+    "Background", "58 110 165",              /* COLOR_BACKGROUND */
+    "ActiveTitle", "10 36 106",              /* COLOR_ACTIVECAPTION */
     "InactiveTitle", "128 128 128",          /* COLOR_INACTIVECAPTION */
     "Menu", "212 208 200",                   /* COLOR_MENU */
     "Window", "255 255 255",                 /* COLOR_WINDOW */
@@ -114,8 +114,8 @@ static const char * const DefSysColors[] =
     "InfoWindow", "255 255 225",             /* COLOR_INFOBK */
     "ButtonAlternateFace", "180 180 180",    /* COLOR_ALTERNATEBTNFACE */
     "HotTrackingColor", "0 0 255",           /* COLOR_HOTLIGHT */
-    "GradientActiveTitle", "16 132 208",     /* COLOR_GRADIENTACTIVECAPTION */
-    "GradientInactiveTitle", "181 181 181",  /* COLOR_GRADIENTINACTIVECAPTION */
+    "GradientActiveTitle", "166 202 240",    /* COLOR_GRADIENTACTIVECAPTION */
+    "GradientInactiveTitle", "192 192 192",  /* COLOR_GRADIENTINACTIVECAPTION */
     "MenuHilight", "0 0 0",                  /* COLOR_MENUHILIGHT */
     "MenuBar", "212 208 200"                 /* COLOR_MENUBAR */
 };
