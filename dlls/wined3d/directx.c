@@ -968,10 +968,18 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_7800GT;
                     vidmem = 256; /* A 7800GT uses 256MB while highend 7900 cards can use 512MB */
                 }
-                /* Geforce7 midend / Geforce6 highend */
-                else if(strstr(gl_info->gl_renderer, "6800") ||
-                        strstr(gl_info->gl_renderer, "7600") ||
-                        strstr(gl_info->gl_renderer, "7700"))
+                /* Geforce7 midend */
+                else if(strstr(gl_info->gl_renderer, "7600") ||
+                        strstr(gl_info->gl_renderer, "7700")) {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_7600;
+                    vidmem = 256; /* The 7600 uses 256-512MB */
+                /* Geforce7 lower medium */
+                } else if(strstr(gl_info->gl_renderer, "7400")) {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_7400;
+                    vidmem = 256; /* The 7400 uses 256-512MB */
+                }
+                /* Geforce6 highend */
+                else if(strstr(gl_info->gl_renderer, "6800"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_6800;
                     vidmem = 128; /* The 6800 uses 128-256MB, the 7600 uses 256-512MB */
