@@ -110,6 +110,8 @@ HRESULT InternetTransport_Connect(InternetTransport *This,
 
     for (ai_cur = ai; ai_cur; ai_cur = ai->ai_next)
     {
+        int so;
+
         if (TRACE_ON(inetcomm))
         {
             char host[256];
@@ -122,12 +124,13 @@ HRESULT InternetTransport_Connect(InternetTransport *This,
 
         InternetTransport_ChangeStatus(This, IXP_CONNECTING);
 
-        This->Socket = socket(ai_cur->ai_family, ai_cur->ai_socktype, ai_cur->ai_protocol);
-        if (This->Socket < 0)
+        so = socket(ai_cur->ai_family, ai_cur->ai_socktype, ai_cur->ai_protocol);
+        if (so == -1)
         {
             WARN("socket() failed\n");
             continue;
         }
+        This->Socket = so;
 
         /* FIXME: set to async */
 
