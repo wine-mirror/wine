@@ -3616,7 +3616,7 @@ typedef BOOL (WINAPI * WINED3D_PFNWGLQUERYPBUFFERARBPROC) (HPBUFFERARB hPbuffer,
  ****************************************************/
 
 typedef struct {
-    GLint                   glInternal, glGammaInternal, glFormat, glType;
+    GLint                   glInternal, glGammaInternal, rtInternal, glFormat, glType;
     WINED3DFORMAT           conversion_group;
 } GlPixelFormatDesc;
 

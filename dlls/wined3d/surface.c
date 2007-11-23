@@ -1414,10 +1414,17 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
 
     /* Default values: From the surface */
     *format = glDesc->glFormat;
-    *internal = srgb_mode?glDesc->glGammaInternal:glDesc->glInternal;
     *type = glDesc->glType;
     *convert = NO_CONVERSION;
     *target_bpp = This->bytesPerPixel;
+
+    if(srgb_mode) {
+        *internal = glDesc->glGammaInternal;
+    } else if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+        *internal = glDesc->rtInternal;
+    } else {
+        *internal = glDesc->glInternal;
+    }
 
     /* Ok, now look if we have to do any conversion */
     switch(This->resource.format) {
