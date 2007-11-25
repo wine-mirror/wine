@@ -88,23 +88,30 @@ DWORD joystick_map_pov(POINTL *p)
 /*
  * This maps the read value (from the input event) to a value in the
  * 'wanted' range.
+ * Notes:
+ *   Dead zone is in % multiplied by a 100 (range 0..10000)
  */
 LONG joystick_map_axis(ObjProps *props, int val)
 {
     LONG ret;
-    LONG center = (props->lMax - props->lMin) / 2;
+    LONG dead_zone = MulDiv( props->lDeadZone, props->lDevMax - props->lDevMin, 10000 );
+    LONG dev_range = props->lDevMax - props->lDevMin - dead_zone;
 
-    /* map the value from the hmin-hmax range into the wmin-wmax range */
-    ret = MulDiv( val - props->lDevMin, props->lMax - props->lMin,
-                  props->lDevMax - props->lDevMin );
+    /* Center input */
+    val -= (props->lDevMin + props->lDevMax) / 2;
 
-    if (abs( ret - center ) <= props->lDeadZone / 2 )
-        ret = center;
+    /* Remove dead zone */
+    if (abs( val ) <= dead_zone / 2)
+        val = 0;
+    else
+        val = val < 0 ? val + dead_zone / 2 : val - dead_zone / 2;
 
-    ret += props->lMin;
+    /* Scale and map the value from the device range into the required range */
+    ret = MulDiv( val, props->lMax - props->lMin, dev_range ) +
+          (props->lMin + props->lMax) / 2;
 
-    TRACE( "(%d %d) -> (%d <%d> %d): val=%d ret=%d\n",
-           props->lDevMin, props->lDevMax,
+    TRACE( "(%d <%d> %d) -> (%d <%d> %d): val=%d ret=%d\n",
+           props->lDevMin, dead_zone, props->lDevMax,
            props->lMin, props->lDeadZone, props->lMax,
            val, ret );
 
