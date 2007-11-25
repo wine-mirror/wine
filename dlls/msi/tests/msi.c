@@ -28,17 +28,12 @@
 
 #include "wine/test.h"
 
-typedef struct test_MSIFILEHASHINFO {
-    ULONG dwFileHashInfoSize;
-    ULONG dwData[4];
-} test_MSIFILEHASHINFO, *test_PMSIFILEHASHINFO;
-
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 
 static INSTALLSTATE (WINAPI *pMsiGetComponentPathA)
     (LPCSTR, LPCSTR, LPSTR, DWORD*);
 static UINT (WINAPI *pMsiGetFileHashA)
-    (LPCSTR, DWORD, test_PMSIFILEHASHINFO);
+    (LPCSTR, DWORD, PMSIFILEHASHINFO);
 static UINT (WINAPI *pMsiOpenPackageExA)
     (LPCSTR, DWORD, MSIHANDLE*);
 static UINT (WINAPI *pMsiOpenPackageExW)
@@ -229,58 +224,111 @@ static void test_getcomponentpath(void)
     ok( r == INSTALLSTATE_UNKNOWN, "wrong return value\n");
 }
 
-static void test_filehash(void)
+static void create_file(LPCSTR name, LPCSTR data, DWORD size)
+{
+    HANDLE file;
+    DWORD written;
+
+    file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n", name);
+    WriteFile(file, data, strlen(data), &written, NULL);
+
+    if (size)
+    {
+        SetFilePointer(file, size, NULL, FILE_BEGIN);
+        SetEndOfFile(file);
+    }
+
+    CloseHandle(file);
+}
+
+#define HASHSIZE sizeof(MSIFILEHASHINFO)
+
+static const struct
+{
+    LPCSTR data;
+    DWORD size;
+    MSIFILEHASHINFO hash;
+} hash_data[] =
+{
+    { "abc", 0,
+      { HASHSIZE,
+        { 0x98500190, 0xb04fd23c, 0x7d3f96d6, 0x727fe128 },
+      },
+    },
+
+    { "C:\\Program Files\\msitest\\caesar\n", 0,
+      { HASHSIZE,
+        { 0x2b566794, 0xfd42181b, 0x2514d6e4, 0x5768b4e2 },
+      },
+    },
+
+    { "C:\\Program Files\\msitest\\caesar\n", 500,
+      { HASHSIZE,
+        { 0x58095058, 0x805efeff, 0x10f3483e, 0x0147d653 },
+      },
+    },
+};
+
+static void test_MsiGetFileHash(void)
 {
     const char name[] = "msitest.bin";
-    const char data[] = {'a','b','c'};
-    HANDLE handle;
     UINT r;
-    test_MSIFILEHASHINFO hash;
-    DWORD count = 0;
+    MSIFILEHASHINFO hash;
+    DWORD i;
 
     if (!pMsiGetFileHashA)
+    {
+        skip("MsiGetFileHash not implemented.");
         return;
+    }
 
-    DeleteFile(name);
+    hash.dwFileHashInfoSize = sizeof(MSIFILEHASHINFO);
 
-    memset(&hash, 0, sizeof hash);
+    /* szFilePath is NULL */
+    r = pMsiGetFileHashA(NULL, 0, &hash);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* szFilePath is empty */
+    r = pMsiGetFileHashA("", 0, &hash);
+    todo_wine
+    {
+        ok(r == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %d\n", r);
+    }
+
+    /* szFilePath is nonexistent */
     r = pMsiGetFileHashA(name, 0, &hash);
-    ok( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
+    ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
 
-    r = pMsiGetFileHashA(name, 0, NULL);
-    ok( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
-
-    memset(&hash, 0, sizeof hash);
-    hash.dwFileHashInfoSize = sizeof hash;
-    r = pMsiGetFileHashA(name, 0, &hash);
-    ok( r == ERROR_FILE_NOT_FOUND, "wrong error %d\n", r);
-
-    handle = CreateFile(name, GENERIC_READ|GENERIC_WRITE, 0, NULL, 
-                CREATE_ALWAYS, FILE_ATTRIBUTE_ARCHIVE, NULL);
-    ok(handle != INVALID_HANDLE_VALUE, "failed to create file\n");
-
-    WriteFile(handle, data, sizeof data, &count, NULL);
-    CloseHandle(handle);
-
-    memset(&hash, 0, sizeof hash);
-    r = pMsiGetFileHashA(name, 0, &hash);
-    ok( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
-
-    memset(&hash, 0, sizeof hash);
-    hash.dwFileHashInfoSize = sizeof hash;
+    /* dwOptions is non-zero */
     r = pMsiGetFileHashA(name, 1, &hash);
-    ok( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
+    /* pHash.dwFileHashInfoSize is not correct */
+    hash.dwFileHashInfoSize = 0;
     r = pMsiGetFileHashA(name, 0, &hash);
-    ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
-    ok(hash.dwFileHashInfoSize == sizeof hash, "hash size changed\n");
-    ok(hash.dwData[0] == 0x98500190 &&
-       hash.dwData[1] == 0xb04fd23c &&
-       hash.dwData[2] == 0x7d3f96d6 &&
-       hash.dwData[3] == 0x727fe128, "hash of abc incorrect\n");
+    /* pHash is NULL */
+    r = pMsiGetFileHashA(name, 0, NULL);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
-    DeleteFile(name);
+    for (i = 0; i < sizeof(hash_data) / sizeof(hash_data[0]); i++)
+    {
+        create_file(name, hash_data[i].data, hash_data[i].size);
+
+        memset(&hash, 0, sizeof(MSIFILEHASHINFO));
+        hash.dwFileHashInfoSize = sizeof(MSIFILEHASHINFO);
+
+        r = pMsiGetFileHashA(name, 0, &hash);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!memcmp(&hash, &hash_data[i].hash, HASHSIZE), "Hash incorrect\n");
+
+        DeleteFile(name);
+    }
 }
 
 /* copied from dlls/msi/registry.c */
@@ -941,7 +989,7 @@ START_TEST(msi)
     test_usefeature();
     test_null();
     test_getcomponentpath();
-    test_filehash();
+    test_MsiGetFileHash();
     test_MsiQueryProductState();
     test_MsiQueryFeatureState();
     test_MsiQueryComponentState();
