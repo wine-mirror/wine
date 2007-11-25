@@ -170,8 +170,38 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_item(IHTMLStyleSheetsCollection 
         VARIANT *pvarIndex, VARIANT *pvarResult)
 {
     HTMLStyleSheetsCollection *This = HTMLSTYLESHEETSCOL_THIS(iface);
-    FIXME("(%p)->(%p %p)\n", This, pvarIndex, pvarResult);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p)\n", This, pvarIndex, pvarResult);
+
+    switch(V_VT(pvarIndex)) {
+    case VT_I4: {
+        nsIDOMStyleSheet *nsstylesheet;
+        nsresult nsres;
+
+        TRACE("index=%d\n", V_I4(pvarIndex));
+
+        nsres = nsIDOMStyleSheetList_Item(This->nslist, V_I4(pvarIndex), &nsstylesheet);
+        if(NS_FAILED(nsres) || !nsstylesheet) {
+            WARN("Item failed: %08x\n", nsres);
+            V_VT(pvarResult) = VT_EMPTY;
+            return E_INVALIDARG;
+        }
+
+        V_VT(pvarResult) = VT_DISPATCH;
+        V_DISPATCH(pvarResult) = (IDispatch*)HTMLStyleSheet_Create(nsstylesheet);
+
+        return S_OK;
+    }
+
+    case VT_BSTR:
+        FIXME("id=%s not implemented\n", debugstr_w(V_BSTR(pvarResult)));
+        return E_NOTIMPL;
+
+    default:
+        WARN("Invalid vt=%d\n", V_VT(pvarIndex));
+    }
+
+    return E_INVALIDARG;
 }
 
 #undef HTMLSTYLESHEETSCOL_THIS
