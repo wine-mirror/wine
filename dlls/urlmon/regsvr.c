@@ -550,7 +550,7 @@ static HRESULT register_inf(BOOL doregister)
     INF_SET_CLSID(MkProtocol);
 
     for(i = 0; i < sizeof(pse)/sizeof(pse[0]); i++) {
-        pse[i].pszValue = HeapAlloc(GetProcessHeap(), 0, 39);
+        pse[i].pszValue = urlmon_alloc(39);
         sprintf(pse[i].pszValue, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
                 clsids[i]->Data1, clsids[i]->Data2, clsids[i]->Data3, clsids[i]->Data4[0],
                 clsids[i]->Data4[1], clsids[i]->Data4[2], clsids[i]->Data4[3], clsids[i]->Data4[4],
@@ -566,7 +566,7 @@ static HRESULT register_inf(BOOL doregister)
     hres = pRegInstall(URLMON_hInstance, doregister ? "RegisterDll" : "UnregisterDll", &strtable);
 
     for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++)
-        HeapFree(GetProcessHeap(), 0, pse[i].pszValue);
+        urlmon_free(pse[i].pszValue);
 
     return hres;
 }

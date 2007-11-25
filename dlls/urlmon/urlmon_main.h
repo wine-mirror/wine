@@ -63,4 +63,24 @@ HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv);
 
 HRESULT create_binding_protocol(LPCWSTR url, IInternetProtocol **protocol);
 
+static inline void *urlmon_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline void *urlmon_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline void *urlmon_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
+static inline BOOL urlmon_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
 #endif /* __WINE_URLMON_MAIN_H */

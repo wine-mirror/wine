@@ -299,7 +299,7 @@ static ULONG WINAPI ProtocolStream_Release(IStream *iface)
 
     if(!ref) {
         IInternetProtocol_Release(This->protocol);
-        HeapFree(GetProcessHeap(), 0, This);
+        urlmon_free(This);
 
         URLMON_UnlockModule();
     }
@@ -451,7 +451,7 @@ static const IStreamVtbl ProtocolStreamVtbl = {
 
 static ProtocolStream *create_stream(IInternetProtocol *protocol)
 {
-    ProtocolStream *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(ProtocolStream));
+    ProtocolStream *ret = urlmon_alloc(sizeof(ProtocolStream));
 
     ret->lpStreamVtbl = &ProtocolStreamVtbl;
     ret->ref = 1;
@@ -531,10 +531,10 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
         ReleaseBindInfo(&This->bindinfo);
         This->section.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->section);
-        HeapFree(GetProcessHeap(), 0, This->mime);
-        HeapFree(GetProcessHeap(), 0, This->url);
+        urlmon_free(This->mime);
+        urlmon_free(This->url);
 
-        HeapFree(GetProcessHeap(), 0, This);
+        urlmon_free(This);
 
         URLMON_UnlockModule();
     }
@@ -631,7 +631,7 @@ static void switch_proc(Binding *binding, task_header_t *t)
 
     IInternetProtocol_Continue(binding->protocol, &task->data);
 
-    HeapFree(GetProcessHeap(), 0, task);
+    urlmon_free(task);
 }
 
 static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
@@ -642,7 +642,7 @@ static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
 
     TRACE("(%p)->(%p)\n", This, pProtocolData);
 
-    task = HeapAlloc(GetProcessHeap(), 0, sizeof(switch_task_t));
+    task = urlmon_alloc(sizeof(switch_task_t));
     memcpy(&task->data, pProtocolData, sizeof(PROTOCOLDATA));
 
     push_task(This, &task->header, switch_proc);
@@ -670,8 +670,8 @@ static void on_progress_proc(Binding *binding, task_header_t *t)
     IBindStatusCallback_OnProgress(binding->callback, task->progress,
             task->progress_max, task->status_code, task->status_text);
 
-    HeapFree(GetProcessHeap(), 0, task->status_text);
-    HeapFree(GetProcessHeap(), 0, task);
+    urlmon_free(task->status_text);
+    urlmon_free(task);
 }
 
 static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
@@ -685,7 +685,7 @@ static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
         return;
     }
 
-    task = HeapAlloc(GetProcessHeap(), 0, sizeof(on_progress_task_t));
+    task = urlmon_alloc(sizeof(on_progress_task_t));
 
     task->progress = progress;
     task->progress_max = progress_max;
@@ -694,7 +694,7 @@ static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
     if(status_text) {
         DWORD size = (strlenW(status_text)+1)*sizeof(WCHAR);
 
-        task->status_text = HeapAlloc(GetProcessHeap(), 0, size);
+        task->status_text = urlmon_alloc(size);
         memcpy(task->status_text, status_text, size);
     }else {
         task->status_text = NULL;
@@ -727,7 +727,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
         break;
     case BINDSTATUS_MIMETYPEAVAILABLE: {
         int len = strlenW(szStatusText)+1;
-        This->mime = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        This->mime = urlmon_alloc(len*sizeof(WCHAR));
         memcpy(This->mime, szStatusText, len*sizeof(WCHAR));
         break;
     }
@@ -822,7 +822,7 @@ static void report_data_proc(Binding *binding, task_header_t *t)
 
     report_data(binding, task->bscf, task->progress, task->progress_max);
 
-    HeapFree(GetProcessHeap(), 0, task);
+    urlmon_free(task);
 }
 
 static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *iface,
@@ -836,7 +836,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
         FIXME("called from worked hread\n");
 
     if(This->continue_call) {
-        report_data_task_t *task = HeapAlloc(GetProcessHeap(), 0, sizeof(report_data_task_t));
+        report_data_task_t *task = urlmon_alloc(sizeof(report_data_task_t));
         task->bscf = grfBSCF;
         task->progress = ulProgress;
         task->progress_max = ulProgressMax;
@@ -858,7 +858,7 @@ static void report_result_proc(Binding *binding, task_header_t *t)
         binding->request_locked = FALSE;
     }
 
-    HeapFree(GetProcessHeap(), 0, t);
+    urlmon_free(t);
 }
 
 static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *iface,
@@ -871,7 +871,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *i
     if(GetCurrentThreadId() == This->apartment_thread && !This->continue_call) {
         IInternetProtocol_Terminate(This->protocol, 0);
     }else {
-        task_header_t *task = HeapAlloc(GetProcessHeap(), 0, sizeof(task_header_t));
+        task_header_t *task = urlmon_alloc(sizeof(task_header_t));
         push_task(This, task, report_result_proc);
     }
 
@@ -1123,7 +1123,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
 
     URLMON_LockModule();
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(Binding));
+    ret = urlmon_alloc(sizeof(Binding));
 
     ret->lpBindingVtbl              = &BindingVtbl;
     ret->lpInternetProtocolSinkVtbl = &InternetProtocolSinkVtbl;
@@ -1185,7 +1185,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
         ret->bindf |= BINDF_NEEDFILE;
 
     len = strlenW(url)+1;
-    ret->url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    ret->url = urlmon_alloc(len*sizeof(WCHAR));
     memcpy(ret->url, url, len*sizeof(WCHAR));
 
     ret->stream = create_stream(ret->protocol);

@@ -54,7 +54,7 @@ HRESULT UMCreateStreamOnCacheFile(LPCWSTR pszURL,
     HRESULT hr;
 
     size = (strlenW(pszURL)+1)*sizeof(WCHAR);
-    url = HeapAlloc(GetProcessHeap(), 0, size);
+    url = urlmon_alloc(size);
     memcpy(url, pszURL, size);
 
     for (c = url; *c && *c != '#' && *c != '?'; ++c)
@@ -72,7 +72,7 @@ HRESULT UMCreateStreamOnCacheFile(LPCWSTR pszURL,
     else
        hr = 0;
 
-    HeapFree(GetProcessHeap(), 0, url);
+    urlmon_free(url);
 
     if (hr)
        return hr;
@@ -99,17 +99,13 @@ HRESULT UMCreateStreamOnCacheFile(LPCWSTR pszURL,
        }
     }
 
-    ucstr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,sizeof(IUMCacheStream));
-    if(ucstr )
+    ucstr = urlmon_alloc_zero(sizeof(IUMCacheStream));
+    if(ucstr)
     {
-       ucstr->pszURL = HeapAlloc(GetProcessHeap(),
-                                 HEAP_ZERO_MEMORY,
-                                 sizeof(WCHAR) * (lstrlenW(pszURL) + 1));
+       ucstr->pszURL = urlmon_alloc_zero(sizeof(WCHAR) * (lstrlenW(pszURL) + 1));
        if (ucstr->pszURL)
        {
-            ucstr->pszFileName = HeapAlloc(GetProcessHeap(),
-                                           HEAP_ZERO_MEMORY,
-                                           sizeof(WCHAR) * (lstrlenW(pszFileName) + 1));
+            ucstr->pszFileName = urlmon_alloc_zero(sizeof(WCHAR) * (lstrlenW(pszFileName) + 1));
            if (ucstr->pszFileName)
            {
               ucstr->lpVtbl=&stvt;
@@ -123,9 +119,9 @@ HRESULT UMCreateStreamOnCacheFile(LPCWSTR pszURL,
 
               return S_OK;
            }
-           HeapFree(GetProcessHeap(), 0, ucstr->pszURL);
+           urlmon_free(ucstr->pszURL);
        }
-       HeapFree(GetProcessHeap(), 0, ucstr);
+       urlmon_free(ucstr);
     }
     CloseHandle(handle);
     if (phfile)
@@ -211,9 +207,9 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
        TRACE(" destroying UMCacheStream (%p)\n",This);
        UMCloseCacheFileStream(This);
        CloseHandle(This->handle);
-       HeapFree(GetProcessHeap(), 0, This->pszFileName);
-       HeapFree(GetProcessHeap(), 0, This->pszURL);
-       HeapFree(GetProcessHeap(),0,This);
+       urlmon_free(This->pszFileName);
+       urlmon_free(This->pszURL);
+       urlmon_free(This);
     }
     return refCount;
 }
@@ -563,7 +559,7 @@ HRESULT WINAPI URLOpenBlockingStreamA(LPUNKNOWN pCaller, LPCSTR szURL,
         return E_INVALIDARG;
 
     len = MultiByteToWideChar(CP_ACP, 0, szURL, -1, NULL, 0);
-    szURLW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    szURLW = urlmon_alloc(len * sizeof(WCHAR));
     if (!szURLW)
     {
         *ppStream = NULL;
@@ -573,7 +569,7 @@ HRESULT WINAPI URLOpenBlockingStreamA(LPUNKNOWN pCaller, LPCSTR szURL,
 
     hr = URLOpenBlockingStreamW(pCaller, szURLW, ppStream, dwReserved, lpfnCB);
 
-    HeapFree(GetProcessHeap(), 0, szURLW);
+    urlmon_free(szURLW);
 
     return hr;
 }
@@ -615,14 +611,14 @@ HRESULT WINAPI URLOpenStreamA(LPUNKNOWN pCaller, LPCSTR szURL, DWORD dwReserved,
         return E_INVALIDARG;
 
     len = MultiByteToWideChar(CP_ACP, 0, szURL, -1, NULL, 0);
-    szURLW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    szURLW = urlmon_alloc(len * sizeof(WCHAR));
     if (!szURLW)
         return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, szURL, -1, szURLW, len);
 
     hr = URLOpenStreamW(pCaller, szURLW, dwReserved, lpfnCB);
 
-    HeapFree(GetProcessHeap(), 0, szURLW);
+    urlmon_free(szURLW);
 
     return hr;
 }

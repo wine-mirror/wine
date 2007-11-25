@@ -159,7 +159,7 @@ static void HTTPPROTOCOL_Close(HttpProtocol *This)
     if (This->full_header)
     {
         if (This->full_header != wszHeaders)
-            HeapFree(GetProcessHeap(), 0, This->full_header);
+            urlmon_free(This->full_header);
         This->full_header = 0;
     }
     This->flags = 0;
@@ -234,7 +234,7 @@ static inline LPWSTR strndupW(LPCWSTR string, int len)
 {
     LPWSTR ret = NULL;
     if (string &&
-        (ret = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR))) != NULL)
+        (ret = urlmon_alloc((len+1)*sizeof(WCHAR))) != NULL)
     {
         memcpy(ret, string, len*sizeof(WCHAR));
         ret[len] = 0;
@@ -296,7 +296,7 @@ static ULONG WINAPI HttpProtocol_Release(IInternetProtocol *iface)
 
     if(!ref) {
         HTTPPROTOCOL_Close(This);
-        HeapFree(GetProcessHeap(), 0, This);
+        urlmon_free(This);
 
         URLMON_UnlockModule();
     }
@@ -378,7 +378,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         {
             WARN("ObtainUserAgentString failed: %08x\n", hres);
         }
-        else if (!(user_agenta = HeapAlloc(GetProcessHeap(), 0, len*sizeof(CHAR))))
+        else if (!(user_agenta = urlmon_alloc(len*sizeof(CHAR))))
         {
             WARN("Out of memory\n");
         }
@@ -393,7 +393,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
             else
                 MultiByteToWideChar(CP_ACP, 0, user_agenta, -1, user_agent, len*sizeof(WCHAR));
         }
-        HeapFree(GetProcessHeap(), 0, user_agenta);
+        urlmon_free(user_agenta);
     }
 
     This->internet = InternetOpenW(user_agent, 0, NULL, NULL, INTERNET_FLAG_ASYNC);
@@ -472,8 +472,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     else
     {
         int len_addl_header = lstrlenW(addl_header);
-        This->full_header = HeapAlloc(GetProcessHeap(), 0,
-                                      len_addl_header*sizeof(WCHAR)+sizeof(wszHeaders));
+        This->full_header = urlmon_alloc(len_addl_header*sizeof(WCHAR)+sizeof(wszHeaders));
         if (!This->full_header)
         {
             WARN("Out of memory\n");
@@ -557,10 +556,10 @@ done:
         CoTaskMemFree(accept_mimes[num++]);
     CoTaskMemFree(user_agent);
 
-    HeapFree(GetProcessHeap(), 0, pass);
-    HeapFree(GetProcessHeap(), 0, user);
-    HeapFree(GetProcessHeap(), 0, path);
-    HeapFree(GetProcessHeap(), 0, host);
+    urlmon_free(pass);
+    urlmon_free(user);
+    urlmon_free(path);
+    urlmon_free(host);
 
     return hres;
 }
@@ -610,7 +609,7 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
             if ((!HttpQueryInfoW(This->request, HTTP_QUERY_RAW_HEADERS_CRLF, response_headers, &len,
                                  NULL) &&
                  GetLastError() != ERROR_INSUFFICIENT_BUFFER) ||
-                !(response_headers = HeapAlloc(GetProcessHeap(), 0, len)) ||
+                !(response_headers = urlmon_alloc(len)) ||
                 !HttpQueryInfoW(This->request, HTTP_QUERY_RAW_HEADERS_CRLF, response_headers, &len,
                                 NULL))
             {
@@ -631,7 +630,7 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         len = 0;
         if ((!HttpQueryInfoW(This->request, HTTP_QUERY_CONTENT_TYPE, content_type, &len, NULL) &&
              GetLastError() != ERROR_INSUFFICIENT_BUFFER) ||
-            !(content_type = HeapAlloc(GetProcessHeap(), 0, len)) ||
+            !(content_type = urlmon_alloc(len)) ||
             !HttpQueryInfoW(This->request, HTTP_QUERY_CONTENT_TYPE, content_type, &len, NULL))
         {
             WARN("HttpQueryInfo failed: %d\n", GetLastError());
@@ -657,7 +656,7 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         len = 0;
         if ((!HttpQueryInfoW(This->request, HTTP_QUERY_CONTENT_LENGTH, content_length, &len, NULL) &&
              GetLastError() != ERROR_INSUFFICIENT_BUFFER) ||
-            !(content_length = HeapAlloc(GetProcessHeap(), 0, len)) ||
+            !(content_length = urlmon_alloc(len)) ||
             !HttpQueryInfoW(This->request, HTTP_QUERY_CONTENT_LENGTH, content_length, &len, NULL))
         {
             WARN("HttpQueryInfo failed: %d\n", GetLastError());
@@ -694,9 +693,9 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
     }
 
 done:
-    HeapFree(GetProcessHeap(), 0, response_headers);
-    HeapFree(GetProcessHeap(), 0, content_type);
-    HeapFree(GetProcessHeap(), 0, content_length);
+    urlmon_free(response_headers);
+    urlmon_free(content_type);
+    urlmon_free(content_length);
 
     /* Returns S_OK on native */
     return S_OK;
@@ -926,7 +925,7 @@ HRESULT HttpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 
     URLMON_LockModule();
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HttpProtocol));
+    ret = urlmon_alloc(sizeof(HttpProtocol));
 
     ret->lpInternetProtocolVtbl = &HttpProtocolVtbl;
     ret->lpInternetPriorityVtbl = &HttpPriorityVtbl;
