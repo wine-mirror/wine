@@ -557,6 +557,9 @@ static void test_NtMapViewOfSection(void)
     CloseHandle( mapping );
     CloseHandle( file );
     DeleteFileA( testfile );
+
+    TerminateProcess(hProcess, 0);
+    CloseHandle(hProcess);
 }
 
 static void test_BadPtr(void)
