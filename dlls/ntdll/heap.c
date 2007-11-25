@@ -243,15 +243,16 @@ static void HEAP_Dump( HEAP *heap )
         DPRINTF( "\n\nSub-heap %p: base=%p size=%08lx committed=%08lx\n",
                  subheap, subheap->base, subheap->size, subheap->commitSize );
 
-        DPRINTF( "\n Block   Stat   Size    Id\n" );
+        DPRINTF( "\n Block    Arena   Stat   Size    Id\n" );
         ptr = (char *)subheap->base + subheap->headerSize;
         while (ptr < (char *)subheap->base + subheap->size)
         {
             if (*(DWORD *)ptr & ARENA_FLAG_FREE)
             {
                 ARENA_FREE *pArena = (ARENA_FREE *)ptr;
-                DPRINTF( "%p free %08x prev=%p next=%p\n",
-                         pArena, pArena->size & ARENA_SIZE_MASK,
+                DPRINTF( "%p %08x free %08x prev=%p next=%p\n",
+                         pArena, pArena->magic,
+                         pArena->size & ARENA_SIZE_MASK,
                          LIST_ENTRY( pArena->entry.prev, ARENA_FREE, entry ),
                          LIST_ENTRY( pArena->entry.next, ARENA_FREE, entry ) );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
@@ -261,8 +262,8 @@ static void HEAP_Dump( HEAP *heap )
             else if (*(DWORD *)ptr & ARENA_FLAG_PREV_FREE)
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DPRINTF( "%p Used %08x back=%p\n",
-                        pArena, pArena->size & ARENA_SIZE_MASK, *((ARENA_FREE **)pArena - 1) );
+                DPRINTF( "%p %08x Used %08x back=%p\n",
+                        pArena, pArena->magic, pArena->size & ARENA_SIZE_MASK, *((ARENA_FREE **)pArena - 1) );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
                 usedSize += pArena->size & ARENA_SIZE_MASK;
@@ -270,7 +271,7 @@ static void HEAP_Dump( HEAP *heap )
             else
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DPRINTF( "%p used %08x\n", pArena, pArena->size & ARENA_SIZE_MASK );
+                DPRINTF( "%p %08x used %08x\n", pArena, pArena->magic, pArena->size & ARENA_SIZE_MASK );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
                 usedSize += pArena->size & ARENA_SIZE_MASK;
@@ -813,7 +814,7 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     /* Check magic number */
     if (pArena->magic != ARENA_FREE_MAGIC)
     {
-        ERR("Heap %p: invalid free arena magic for %p\n", subheap->heap, pArena );
+        ERR("Heap %p: invalid free arena magic %08x for %p\n", subheap->heap, pArena->magic, pArena );
         return FALSE;
     }
     /* Check size flags */
@@ -916,11 +917,11 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
     if (pArena->magic != ARENA_INUSE_MAGIC)
     {
         if (quiet == NOISY) {
-            ERR("Heap %p: invalid in-use arena magic for %p\n", subheap->heap, pArena );
+            ERR("Heap %p: invalid in-use arena magic %08x for %p\n", subheap->heap, pArena->magic, pArena );
             if (TRACE_ON(heap))
                HEAP_Dump( subheap->heap );
         }  else if (WARN_ON(heap)) {
-            WARN("Heap %p: invalid in-use arena magic for %p\n", subheap->heap, pArena );
+            WARN("Heap %p: invalid in-use arena magic %08x for %p\n", subheap->heap, pArena->magic, pArena );
             if (TRACE_ON(heap))
                HEAP_Dump( subheap->heap );
         }
