@@ -209,7 +209,7 @@ static DWORD msi_atou(LPCWSTR str)
 		ret += (*str - '0');
 		str++;
 	}
-	return 0;
+	return ret;
 }
 
 static LPWSTR msi_strdup(LPCWSTR str)
