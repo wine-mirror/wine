@@ -6047,6 +6047,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
             IWineD3DSurface_SetContainer(Swapchain->backBuffer[0], (IWineD3DBase *) Swapchain);
         } else {
             HeapFree(GetProcessHeap(), 0, Swapchain->backBuffer);
+            Swapchain->backBuffer = NULL;
         }
 
     }
