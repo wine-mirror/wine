@@ -1046,7 +1046,7 @@ static HRESULT WINAPI HTMLDocument_createStyleSheet(IHTMLDocument2 *iface, BSTR 
 
     FIXME("(%p)->(%s %ld %p) semi-stub\n", This, debugstr_w(bstrHref), lIndex, ppnewStyleSheet);
 
-    *ppnewStyleSheet = HTMLStyleSheet_Create();
+    *ppnewStyleSheet = HTMLStyleSheet_Create(NULL);
     return S_OK;
 }
 

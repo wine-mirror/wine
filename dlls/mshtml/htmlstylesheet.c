@@ -38,7 +38,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
     const IHTMLStyleSheetVtbl *lpHTMLStyleSheetVtbl;
+
     LONG ref;
+
+    nsIDOMCSSStyleSheet *nsstylesheet;
 } HTMLStyleSheet;
 
 typedef struct {
@@ -470,12 +473,21 @@ static const IHTMLStyleSheetVtbl HTMLStyleSheetVtbl = {
     HTMLStyleSheet_get_rules
 };
 
-IHTMLStyleSheet *HTMLStyleSheet_Create(void)
+IHTMLStyleSheet *HTMLStyleSheet_Create(nsIDOMStyleSheet *nsstylesheet)
 {
     HTMLStyleSheet *ret = mshtml_alloc(sizeof(HTMLStyleSheet));
+    nsresult nsres;
 
     ret->lpHTMLStyleSheetVtbl = &HTMLStyleSheetVtbl;
     ret->ref = 1;
+    ret->nsstylesheet = NULL;
+
+    if(nsstylesheet) {
+        nsres = nsIDOMStyleSheet_QueryInterface(nsstylesheet, &IID_nsIDOMCSSStyleSheet,
+                (void**)&ret->nsstylesheet);
+        if(NS_FAILED(nsres))
+            ERR("Could not get nsICSSStyleSheet interface: %08x\n", nsres);
+    }
 
     return HTMLSTYLESHEET(ret);
 }

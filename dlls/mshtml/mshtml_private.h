@@ -430,7 +430,7 @@ void set_current_mon(HTMLDocument*,IMoniker*);
 IHTMLSelectionObject *HTMLSelectionObject_Create(HTMLDocument*,nsISelection*);
 IHTMLTxtRange *HTMLTxtRange_Create(HTMLDocument*,nsIDOMRange*);
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration*);
-IHTMLStyleSheet *HTMLStyleSheet_Create(void);
+IHTMLStyleSheet *HTMLStyleSheet_Create(nsIDOMStyleSheet*);
 IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList*);
 
 void detach_selection(HTMLDocument*);

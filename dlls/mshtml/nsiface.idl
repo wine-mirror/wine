@@ -123,7 +123,8 @@ typedef nsISupports nsIPrincipal;
 typedef nsISupports nsIAtom;
 typedef nsISupports nsISupportsArray;
 typedef nsISupports nsIContentFilter;
-typedef nsISupports nsIDOMStyleSheet;
+typedef nsISupports nsIDOMMediaList;
+typedef nsISupports nsIDOMCSSRuleList;
 
 [
     object,
@@ -568,6 +569,36 @@ interface nsIDOMCSSStyleDeclaration : nsISupports
     nsresult GetLength(PRUint32 *aLength);
     nsresult Item(PRUint32 index, nsAString *_retval);
     nsresult GetParentRule(nsIDOMCSSRule **aParentRule);
+}
+
+[
+    object,
+    uuid(a6cf9080-15b3-11d2-932e-00805f8add32)
+    /* FROZEN */
+]
+interface nsIDOMStyleSheet : nsISupports
+{
+    nsresult GetType(nsAString *aType);
+    nsresult GetDisabled(PRBool *aDisabled);
+    nsresult SetDisabled(PRBool aDisabled);
+    nsresult GetOwnerNode(nsIDOMNode **aOwnerNode);
+    nsresult GetParentStyleSheet(nsIDOMStyleSheet **aParentStyleSheet);
+    nsresult GetHref(nsAString *aHref);
+    nsresult GetTitle(nsAString *aTitle);
+    nsresult GetMedia(nsIDOMMediaList **aMedia);
+}
+
+[
+    object,
+    uuid(a6cf90c2-15b3-11d2-932e-00805f8add32)
+    /* FROZEN */
+]
+interface nsIDOMCSSStyleSheet : nsIDOMStyleSheet
+{
+    nsresult GetOwnerRule(nsIDOMCSSRule **aOwnerRule);
+    nsresult GetCssRules(nsIDOMCSSRuleList **aCssRules);
+    nsresult InsertRule(const nsAString *rule, PRUint32 index, PRUint32 *_retval);
+    nsresult DeleteRule(PRUint32 index);
 }
 
 [
