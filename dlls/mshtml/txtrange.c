@@ -40,6 +40,7 @@ static const WCHAR brW[] = {'b','r',0};
 
 typedef struct {
     const IHTMLTxtRangeVtbl *lpHTMLTxtRangeVtbl;
+    const IOleCommandTargetVtbl *lpOleCommandTargetVtbl;
 
     LONG ref;
 
@@ -942,6 +943,9 @@ static HRESULT WINAPI HTMLTxtRange_QueryInterface(IHTMLTxtRange *iface, REFIID r
     }else if(IsEqualGUID(&IID_IHTMLTxtRange, riid)) {
         TRACE("(%p)->(IID_IHTMLTxtRange %p)\n", This, ppv);
         *ppv = HTMLTXTRANGE(This);
+    }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
+        TRACE("(%p)->(IID_IOleCommandTarget %p)\n", This, ppv);
+        *ppv = CMDTARGET(This);
     }
 
     if(*ppv) {
@@ -1697,11 +1701,66 @@ static const IHTMLTxtRangeVtbl HTMLTxtRangeVtbl = {
     HTMLTxtRange_execCommandShowHelp
 };
 
+#define OLECMDTRG_THIS(iface) DEFINE_THIS(HTMLTxtRange, OleCommandTarget, iface)
+
+static HRESULT WINAPI RangeCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
+{
+    HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+    return IHTMLTxtRange_QueryInterface(HTMLTXTRANGE(This), riid, ppv);
+}
+
+static ULONG WINAPI RangeCommandTarget_AddRef(IOleCommandTarget *iface)
+{
+    HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+    return IHTMLTxtRange_AddRef(HTMLTXTRANGE(This));
+}
+
+static ULONG WINAPI RangeCommandTarget_Release(IOleCommandTarget *iface)
+{
+    HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+    return IHTMLTxtRange_Release(HTMLTXTRANGE(This));
+}
+
+static HRESULT WINAPI RangeCommandTarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
+{
+    HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+    FIXME("(%p)->(%s %d %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RangeCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+    TRACE("(%p)->(%s %d %x %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID,
+          nCmdexecopt, pvaIn, pvaOut);
+
+    if(pguidCmdGroup && IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
+        FIXME("Unsupported cmdid %d of CGID_MSHTML\n", nCmdID);
+    }else {
+        FIXME("Unsupported cmd %d of group %s\n", nCmdID, debugstr_guid(pguidCmdGroup));
+    }
+
+    return E_NOTIMPL;
+}
+
+#undef OLECMDTRG_THIS
+
+static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
+    RangeCommandTarget_QueryInterface,
+    RangeCommandTarget_AddRef,
+    RangeCommandTarget_Release,
+    RangeCommandTarget_QueryStatus,
+    RangeCommandTarget_Exec
+};
+
 IHTMLTxtRange *HTMLTxtRange_Create(HTMLDocument *doc, nsIDOMRange *nsrange)
 {
     HTMLTxtRange *ret = mshtml_alloc(sizeof(HTMLTxtRange));
 
     ret->lpHTMLTxtRangeVtbl = &HTMLTxtRangeVtbl;
+    ret->lpOleCommandTargetVtbl = &OleCommandTargetVtbl;
     ret->ref = 1;
 
     if(nsrange)
