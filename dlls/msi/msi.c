@@ -2277,6 +2277,12 @@ UINT WINAPI MsiGetFileHashW( LPCWSTR szFilePath, DWORD dwOptions,
 
     TRACE("%s %08x %p\n", debugstr_w(szFilePath), dwOptions, pHash );
 
+    if (!szFilePath)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!*szFilePath)
+        return ERROR_PATH_NOT_FOUND;
+
     if (dwOptions)
         return ERROR_INVALID_PARAMETER;
     if (!pHash)

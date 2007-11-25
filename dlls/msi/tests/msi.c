@@ -287,17 +287,11 @@ static void test_MsiGetFileHash(void)
 
     /* szFilePath is NULL */
     r = pMsiGetFileHashA(NULL, 0, &hash);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* szFilePath is empty */
     r = pMsiGetFileHashA("", 0, &hash);
-    todo_wine
-    {
-        ok(r == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %d\n", r);
-    }
+    ok(r == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %d\n", r);
 
     /* szFilePath is nonexistent */
     r = pMsiGetFileHashA(name, 0, &hash);
