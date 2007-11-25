@@ -1412,6 +1412,8 @@ static void test_QueryInterface(IUnknown *unk)
 {
     IQuickActivate *qa = (IQuickActivate*)0xdeadbeef;
     IRunnableObject *runnable = (IRunnableObject*)0xdeadbeef;
+    IPerPropertyBrowsing *propbrowse = (void*)0xdeadbeef;
+    IOleCache *cache = (void*)0xdeadbeef;
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&qa);
@@ -1421,6 +1423,14 @@ static void test_QueryInterface(IUnknown *unk)
     hres = IUnknown_QueryInterface(unk, &IID_IRunnableObject, (void**)&runnable);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
     ok(runnable == NULL, "runnable=%p, ezpected NULL\n", runnable);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPerPropertyBrowsing, (void**)&propbrowse);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(runnable == NULL, "runnable=%p, ezpected NULL\n", runnable);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleCache, (void**)&cache);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(cache == NULL, "runnable=%p, ezpected NULL\n", runnable);
 }
 
 static void test_WebBrowser(void)
