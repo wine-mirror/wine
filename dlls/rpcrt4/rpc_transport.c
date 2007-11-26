@@ -773,7 +773,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
     }
 
     sock = socket(ai_cur->ai_family, ai_cur->ai_socktype, ai_cur->ai_protocol);
-    if (sock < 0)
+    if (sock == -1)
     {
       WARN("socket() failed: %s\n", strerror(errno));
       continue;
@@ -850,7 +850,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         }
 
         sock = socket(ai_cur->ai_family, ai_cur->ai_socktype, ai_cur->ai_protocol);
-        if (sock < 0)
+        if (sock == -1)
         {
             WARN("socket() failed: %s\n", strerror(errno));
             status = RPC_S_CANT_CREATE_ENDPOINT;
