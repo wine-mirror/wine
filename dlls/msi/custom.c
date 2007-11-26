@@ -226,7 +226,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
     if (type & msidbCustomActionTypeInScript)
     {
         if (type & msidbCustomActionTypeNoImpersonate)
-            FIXME("msidbCustomActionTypeNoImpersonate not handled\n");
+            WARN("msidbCustomActionTypeNoImpersonate not handled\n");
 
         if (type & msidbCustomActionTypeRollback)
         {
