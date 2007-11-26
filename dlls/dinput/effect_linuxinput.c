@@ -540,7 +540,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
 
     _dump_DIEFFECT(peff, &This->guid);
 
-    if ((dwFlags & !DIEP_NORESTART & !DIEP_NODOWNLOAD & !DIEP_START) == 0) {
+    if ((dwFlags & ~DIEP_NORESTART & ~DIEP_NODOWNLOAD & ~DIEP_START) == 0) {
 	/* set everything */
 	dwFlags = DIEP_AXES | DIEP_DIRECTION | DIEP_DURATION | DIEP_ENVELOPE |
 	    DIEP_GAIN | DIEP_SAMPLEPERIOD | DIEP_STARTDELAY | DIEP_TRIGGERBUTTON |
