@@ -505,7 +505,7 @@ static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr 
         else
         {
             *valid = 0;
-            ERR("Couldn't find column %s\n", debugstr_w( cond->u.column ) );
+            WARN("Couldn't find column %s\n", debugstr_w( cond->u.column ) );
         }
         break;
     case EXPR_COMPLEX:
