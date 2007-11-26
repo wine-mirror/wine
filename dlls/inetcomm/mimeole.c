@@ -31,11 +31,57 @@
 #include "ole2.h"
 #include "mimeole.h"
 
+#include "wine/list.h"
 #include "wine/debug.h"
 
 #include "inetcomm_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcomm);
+
+typedef struct
+{
+    LPCSTR     name;
+    DWORD      id;
+    DWORD      flags; /* MIMEPROPFLAGS */
+    VARTYPE    default_vt;
+} property_t;
+
+typedef struct
+{
+    struct list entry;
+    property_t prop;
+} property_list_entry_t;
+
+static const property_t default_props[] =
+{
+    {"References",                   PID_HDR_REFS,       0,                               VT_LPSTR},
+    {"Subject",                      PID_HDR_SUBJECT,    0,                               VT_LPSTR},
+    {"From",                         PID_HDR_FROM,       MPF_ADDRESS,                     VT_LPSTR},
+    {"Message-ID",                   PID_HDR_MESSAGEID,  0,                               VT_LPSTR},
+    {"Return-Path",                  PID_HDR_RETURNPATH, MPF_ADDRESS,                     VT_LPSTR},
+    {"Date",                         PID_HDR_DATE,       0,                               VT_LPSTR},
+    {"Received",                     PID_HDR_RECEIVED,   0,                               VT_LPSTR},
+    {"Reply-To",                     PID_HDR_REPLYTO,    MPF_ADDRESS,                     VT_LPSTR},
+    {"X-Mailer",                     PID_HDR_XMAILER,    0,                               VT_LPSTR},
+    {"Bcc",                          PID_HDR_BCC,        MPF_ADDRESS,                     VT_LPSTR},
+    {"MIME-Version",                 PID_HDR_MIMEVER,    MPF_MIME,                        VT_LPSTR},
+    {"Content-Type",                 PID_HDR_CNTTYPE,    MPF_MIME | MPF_HASPARAMS,        VT_LPSTR},
+    {"Content-Transfer-Encoding",    PID_HDR_CNTXFER,    MPF_MIME,                        VT_LPSTR},
+    {"Content-ID",                   PID_HDR_CNTID,      MPF_MIME,                        VT_LPSTR},
+    {"Content-Disposition",          PID_HDR_CNTDISP,    MPF_MIME,                        VT_LPSTR},
+    {"To",                           PID_HDR_TO,         MPF_ADDRESS,                     VT_LPSTR},
+    {"Cc",                           PID_HDR_CC,         MPF_ADDRESS,                     VT_LPSTR},
+    {"Sender",                       PID_HDR_SENDER,     MPF_ADDRESS,                     VT_LPSTR},
+    {"In-Reply-To",                  PID_HDR_INREPLYTO,  0,                               VT_LPSTR},
+    {NULL,                           0,                  0,                               0}
+};
+
+typedef struct
+{
+    struct list entry;
+    const property_t *prop;
+    PROPVARIANT value;
+} header_t;
 
 typedef struct MimeBody
 {
@@ -43,11 +89,24 @@ typedef struct MimeBody
     LONG refs;
 
     HBODY handle;
+
+    struct list headers;
+    struct list new_props; /* FIXME: This should be in a PropertySchema */
+    DWORD next_prop_id;
 } MimeBody;
 
 static inline MimeBody *impl_from_IMimeBody( IMimeBody *iface )
 {
     return (MimeBody *)((char*)iface - FIELD_OFFSET(MimeBody, lpVtbl));
+}
+
+static LPSTR strdupA(LPCSTR str)
+{
+    char *ret;
+    int len = strlen(str);
+    ret = HeapAlloc(GetProcessHeap(), 0, len + 1);
+    memcpy(ret, str, len + 1);
+    return ret;
 }
 
 #define PARSER_BUF_SIZE 1024
@@ -117,18 +176,122 @@ fail:
     return hr;
 }
 
+static header_t *read_prop(MimeBody *body, char **ptr)
+{
+    char *colon = strchr(*ptr, ':');
+    const property_t *prop;
+    header_t *ret;
+
+    if(!colon) return NULL;
+
+    *colon = '\0';
+
+    for(prop = default_props; prop->name; prop++)
+    {
+        if(!strcasecmp(*ptr, prop->name))
+        {
+            TRACE("%s: found match with default property id %d\n", *ptr, prop->id);
+            break;
+        }
+    }
+
+    if(!prop->name)
+    {
+        property_list_entry_t *prop_entry;
+        LIST_FOR_EACH_ENTRY(prop_entry, &body->new_props, property_list_entry_t, entry)
+        {
+            if(!strcasecmp(*ptr, prop_entry->prop.name))
+            {
+                TRACE("%s: found match with already added new property id %d\n", *ptr, prop_entry->prop.id);
+                prop = &prop_entry->prop;
+                break;
+            }
+        }
+        if(!prop->name)
+        {
+            prop_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*prop_entry));
+            prop_entry->prop.name = strdupA(*ptr);
+            prop_entry->prop.id = body->next_prop_id++;
+            prop_entry->prop.flags = 0;
+            prop_entry->prop.default_vt = VT_LPSTR;
+            list_add_tail(&body->new_props, &prop_entry->entry);
+            prop = &prop_entry->prop;
+            TRACE("%s: allocating new prop id %d\n", *ptr, prop_entry->prop.id);
+        }
+    }
+
+    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(*ret));
+    ret->prop = prop;
+    PropVariantInit(&ret->value);
+    *ptr = colon + 1;
+
+    return ret;
+}
+
+static void read_value(header_t *header, char **cur)
+{
+    char *end = *cur, *value;
+    DWORD len;
+
+    do {
+        end = strstr(end, "\r\n");
+        end += 2;
+    } while(*end == ' ' || *end == '\t');
+
+    len = end - *cur;
+    value = HeapAlloc(GetProcessHeap(), 0, len + 1);
+    memcpy(value, *cur, len);
+    value[len] = '\0';
+
+    header->value.vt = VT_LPSTR;
+    header->value.pszVal = value;
+
+    *cur = end;
+}
+
 static HRESULT parse_headers(MimeBody *body, IStream *stm)
 {
-    char *header_buf;
+    char *header_buf, *cur_header_ptr;
     HRESULT hr;
+    header_t *header;
 
     hr = copy_headers_to_buf(stm, &header_buf);
     if(FAILED(hr)) return hr;
+
+    cur_header_ptr = header_buf;
+    while((header = read_prop(body, &cur_header_ptr)))
+    {
+        read_value(header, &cur_header_ptr);
+        list_add_tail(&body->headers, &header->entry);
+    }
 
     HeapFree(GetProcessHeap(), 0, header_buf);
     return hr;
 }
 
+static void empty_header_list(struct list *list)
+{
+    header_t *header, *cursor2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(header, cursor2, list, header_t, entry)
+    {
+        list_remove(&header->entry);
+        PropVariantClear(&header->value);
+        HeapFree(GetProcessHeap(), 0, header);
+    }
+}
+
+static void empty_new_prop_list(struct list *list)
+{
+    property_list_entry_t *prop, *cursor2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(prop, cursor2, list, property_list_entry_t, entry)
+    {
+        list_remove(&prop->entry);
+        HeapFree(GetProcessHeap(), 0, (char *)prop->prop.name);
+        HeapFree(GetProcessHeap(), 0, prop);
+    }
+}
 
 static HRESULT WINAPI MimeBody_QueryInterface(IMimeBody* iface,
                                      REFIID riid,
@@ -174,6 +337,9 @@ static ULONG WINAPI MimeBody_Release(IMimeBody* iface)
     refs = InterlockedDecrement(&This->refs);
     if (!refs)
     {
+        empty_header_list(&This->headers);
+        empty_new_prop_list(&This->new_props);
+
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -582,6 +748,8 @@ static IMimeBodyVtbl body_vtbl =
     MimeBody_GetHandle
 };
 
+#define FIRST_CUSTOM_PROP_ID 0x100
+
 HRESULT MimeBody_create(IUnknown *outer, void **obj)
 {
     MimeBody *This;
@@ -596,6 +764,9 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj)
     This->lpVtbl = &body_vtbl;
     This->refs = 1;
     This->handle = NULL;
+    list_init(&This->headers);
+    list_init(&This->new_props);
+    This->next_prop_id = FIRST_CUSTOM_PROP_ID;
 
     *obj = (IMimeBody *)&This->lpVtbl;
     return S_OK;
