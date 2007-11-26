@@ -473,8 +473,7 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
  * SetupForBlit
  *
  * Sets up a context for DirectDraw blitting.
- * All texture units are disabled, except unit 0
- * Texture unit 0 is activted where GL_TEXTURE_2D is activated
+ * All texture units are disabled, texture unit 0 is set as current unit
  * fog, lighting, blending, alpha test, z test, scissor test, culling diabled
  * color writing enabled for all channels
  * register combiners disabled, shaders disabled
@@ -544,8 +543,8 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     }
     glDisable(GL_TEXTURE_3D);
     checkGLcall("glDisable GL_TEXTURE_3D");
-    glEnable(GL_TEXTURE_2D);
-    checkGLcall("glEnable GL_TEXTURE_2D");
+    glDisable(GL_TEXTURE_2D);
+    checkGLcall("glDisable GL_TEXTURE_2D");
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 

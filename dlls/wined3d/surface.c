@@ -964,9 +964,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
         IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
     }
 
-    glDisable(GL_TEXTURE_2D);
-    vcheckGLcall("glDisable(GL_TEXTURE_2D)");
-
     glFlush();
     vcheckGLcall("glFlush");
     glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
@@ -1152,12 +1149,6 @@ cleanup:
         glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
         vcheckGLcall("glPixelStorei GL_PACK_SWAP_BYTES");
     }
-
-    /* Blitting environment requires that 2D texturing is enabled. It was turned off before,
-     * turn it on again
-     */
-    glEnable(GL_TEXTURE_2D);
-    checkGLcall("glEnable(GL_TEXTURE_2D)");
 
     if(memory_allocated) HeapFree(GetProcessHeap(), 0, mem);
 
@@ -2535,6 +2526,10 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     ENTER_GL();
     IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
+    /* TODO: Do we need GL_TEXTURE_2D enabled fpr copyteximage? */
+    glEnable(GL_TEXTURE_2D);
+    checkGLcall("glEnable(GL_TEXTURE_2D)");
+
     /* Bind the target texture */
     glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
     checkGLcall("glBindTexture");
@@ -2600,8 +2595,12 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
             }
         }
     }
-
     vcheckGLcall("glCopyTexSubImage2D");
+
+    /* Leave the opengl state valid for blitting */
+    glDisable(GL_TEXTURE_2D);
+    checkGLcall("glDisable(GL_TEXTURE_2D)");
+
     LEAVE_GL();
 }
 
@@ -2619,6 +2618,9 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
     ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
     ENTER_GL();
+    glEnable(GL_TEXTURE_2D);
+    checkGLcall("glEnable(GL_TEXTURE_2D)");
+
     IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
     /* Try to use an aux buffer for drawing the rectangle. This way it doesn't need restoring.
@@ -2780,6 +2782,8 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     }
 
     /* Cleanup */
+    glDisable(GL_TEXTURE_2D);
+    checkGLcall("glDisable(GL_TEXTURE_2D)");
     if(src != Src->glDescription.textureName && src != backup) {
         glDeleteTextures(1, &src);
         checkGLcall("glDeleteTextures(1, &src)");
@@ -2788,6 +2792,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         glDeleteTextures(1, &backup);
         checkGLcall("glDeleteTextures(1, &backup)");
     }
+
     LEAVE_GL();
 }
 
@@ -3094,6 +3099,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
         ENTER_GL();
 
+        glEnable(GL_TEXTURE_2D);
+        checkGLcall("glEnable(GL_TEXTURE_2D)");
+
         if(!dstSwapchain) {
             TRACE("Drawing to offscreen buffer\n");
             glDrawBuffer(myDevice->offscreenBuffer);
@@ -3166,9 +3174,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         if(dstSwapchain && (dstSwapchain->num_contexts >= 2))
             glFlush();
 
-        /* Unbind the texture */
         glBindTexture(GL_TEXTURE_2D, 0);
         checkGLcall("glEnable glBindTexture");
+        /* Leave the opengl state valid for blitting */
+        glDisable(GL_TEXTURE_2D);
+        checkGLcall("glDisable(GL_TEXTURE_2D)");
 
         /* The draw buffer should only need to be restored if we were drawing to the front buffer, and there is a back buffer.
          * otherwise the context manager should choose between GL_BACK / offscreenDrawBuffer
@@ -3534,6 +3544,8 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     ENTER_GL();
 
     if(This->glDescription.target == GL_TEXTURE_2D) {
+        glEnable(GL_TEXTURE_2D);
+        checkGLcall("glEnable(GL_TEXTURE_2D)");
         glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
         checkGLcall("GL_TEXTURE_2D, This->glDescription.textureName)");
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -3559,8 +3571,6 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         coords[3].y = rect.top    / This->pow2Height;
     } else {
         /* Must be a cube map */
-        glDisable(GL_TEXTURE_2D);
-        checkGLcall("glDisable(GL_TEXTURE_2D)");
         glEnable(GL_TEXTURE_CUBE_MAP_ARB);
         checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
         glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->glDescription.textureName);
@@ -3635,10 +3645,11 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     checkGLcall("glEnd");
 
     if(This->glDescription.target != GL_TEXTURE_2D) {
-        glEnable(GL_TEXTURE_2D);
-        checkGLcall("glEnable(GL_TEXTURE_2D)");
         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+    } else {
+        glDisable(GL_TEXTURE_2D);
+        checkGLcall("glDisable(GL_TEXTURE_2D)");
     }
 
     hr = IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DSwapChain, (void **) &swapchain);
