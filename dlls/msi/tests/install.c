@@ -3540,10 +3540,7 @@ static void test_missingcab(void)
     create_pf_data("msitest\\caesar", "abcdefgh", TRUE);
 
     r = MsiInstallProductA(msifile, NULL);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");

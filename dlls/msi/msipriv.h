@@ -424,6 +424,7 @@ typedef struct tagMSIFILE
     LPWSTR  SourcePath;
     LPWSTR  TargetPath;
     BOOL IsCompressed;
+    MSIFILEHASHINFO hash;
 } MSIFILE;
 
 typedef struct tagMSITEMPFILE

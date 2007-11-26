@@ -1394,6 +1394,41 @@ static LPWSTR folder_split_path(LPWSTR p, WCHAR ch)
     return p+1;
 }
 
+static UINT load_file_hash(MSIPACKAGE *package, MSIFILE *file)
+{
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+        '`','M','s','i','F','i','l','e','H','a','s','h','`',' ',
+        'W','H','E','R','E',' ','`','F','i','l','e','_','`',' ','=',' ','\'','%','s','\'',0};
+    MSIQUERY *view = NULL;
+    MSIRECORD *row;
+    UINT r;
+
+    TRACE("%s\n", debugstr_w(file->File));
+
+    r = MSI_OpenQuery(package->db, &view, query, file->File);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    r = MSI_ViewExecute(view, NULL);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    r = MSI_ViewFetch(view, &row);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    file->hash.dwFileHashInfoSize = sizeof(MSIFILEHASHINFO);
+    file->hash.dwData[0] = MSI_RecordGetInteger(row, 3);
+    file->hash.dwData[1] = MSI_RecordGetInteger(row, 4);
+    file->hash.dwData[2] = MSI_RecordGetInteger(row, 5);
+    file->hash.dwData[3] = MSI_RecordGetInteger(row, 6);
+
+done:
+    if (view) msiobj_release(&view->hdr);
+    return r;
+}
+
 static UINT load_file(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE* package = (MSIPACKAGE*)param;
@@ -1443,6 +1478,8 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     {
         file->IsCompressed = package->WordCount & MSIWORDCOUNT_COMPRESSED;
     }
+
+    load_file_hash(package, file);
 
     TRACE("File Loaded (%s)\n",debugstr_w(file->File));  
 
