@@ -832,7 +832,7 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count,
         SetLastError(ret);
         return FALSE;
     }
-    len += *Count + sizeof(PCREDENTIALW);
+    len += *Count * sizeof(PCREDENTIALW);
 
     if (ret == ERROR_SUCCESS)
     {
