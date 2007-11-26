@@ -75,6 +75,7 @@ static const struct {
     {"GL_ARB_texture_float",                ARB_TEXTURE_FLOAT,              0                           },
     {"GL_ARB_texture_mirrored_repeat",      ARB_TEXTURE_MIRRORED_REPEAT,    0                           },
     {"GL_ARB_texture_non_power_of_two",     ARB_TEXTURE_NON_POWER_OF_TWO,   0                           },
+    {"GL_ARB_texture_rectangle",            ARB_TEXTURE_RECTANGLE,          0                           },
     {"GL_ARB_vertex_blend",                 ARB_VERTEX_BLEND,               0                           },
     {"GL_ARB_vertex_buffer_object",         ARB_VERTEX_BUFFER_OBJECT,       0                           },
     {"GL_ARB_vertex_program",               ARB_VERTEX_PROGRAM,             0                           },
@@ -869,6 +870,12 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             gl_info->ps_nv_version = PS_VERSION_30;
         } else if (gl_info->supported[NV_FRAGMENT_PROGRAM]) {
             gl_info->ps_nv_version = PS_VERSION_20;
+        }
+        if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]) {
+            /* If we have full NP2 texture support, disable GL_ARB_texture_rectangle because we will never use it.
+             * This saves a few redundant glDisable calls
+             */
+            gl_info->supported[ARB_TEXTURE_RECTANGLE] = FALSE;
         }
 
     }
@@ -2837,6 +2844,7 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
                gl_info->gl_card == CARD_ATI_RADEON_7200 || gl_info->gl_card == CARD_ATI_RAGE_128PRO) {
                 TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing\n");
                 gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
+                gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
             }
         }
     }
