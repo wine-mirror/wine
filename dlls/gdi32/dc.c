@@ -472,7 +472,7 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
         release_dc_ptr( dc );
         return;
     }
-    if (!dcs->flags & DC_SAVED)
+    if (!(dcs->flags & DC_SAVED))
     {
         release_dc_ptr( dc );
         release_dc_ptr( dcs );
