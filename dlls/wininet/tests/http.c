@@ -1228,7 +1228,8 @@ struct server_info {
 static DWORD CALLBACK server_thread(LPVOID param)
 {
     struct server_info *si = param;
-    int r, s, c, i, on;
+    int r, c, i, on;
+    SOCKET s;
     struct sockaddr_in sa;
     char buffer[0x100];
     WSADATA wsaData;
@@ -1237,7 +1238,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     WSAStartup(MAKEWORD(1,1), &wsaData);
 
     s = socket(AF_INET, SOCK_STREAM, 0);
-    if (s<0)
+    if (s == INVALID_SOCKET)
         return 1;
 
     on = 1;
