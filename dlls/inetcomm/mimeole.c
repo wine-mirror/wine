@@ -228,6 +228,31 @@ static header_t *read_prop(MimeBody *body, char **ptr)
     return ret;
 }
 
+static void unfold_header(char *header, int len)
+{
+    char *start = header, *cp = header;
+
+    do {
+        while(*cp == ' ' || *cp == '\t')
+        {
+            cp++;
+            len--;
+        }
+        if(cp != start)
+            memmove(start, cp, len + 1);
+
+        cp = strstr(start, "\r\n");
+        len -= (cp - start);
+        start = cp;
+        *start = ' ';
+        start++;
+        len--;
+        cp += 2;
+    } while(*cp == ' ' || *cp == '\t');
+
+    *(start - 1) = '\0';
+}
+
 static void read_value(header_t *header, char **cur)
 {
     char *end = *cur, *value;
@@ -242,6 +267,9 @@ static void read_value(header_t *header, char **cur)
     value = HeapAlloc(GetProcessHeap(), 0, len + 1);
     memcpy(value, *cur, len);
     value[len] = '\0';
+
+    unfold_header(value, len);
+    TRACE("value %s\n", debugstr_a(value));
 
     header->value.vt = VT_LPSTR;
     header->value.pszVal = value;
