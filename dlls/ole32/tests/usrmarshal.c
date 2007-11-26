@@ -366,6 +366,118 @@ static void test_marshal_HMETAFILEPICT(void)
     HMETAFILEPICT_UserFree(&flags, &hmfp2);
 }
 
+static HRESULT WINAPI Test_IUnknown_QueryInterface(
+                                                   LPUNKNOWN iface,
+                                                   REFIID riid,
+                                                   LPVOID *ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *ppvObj = (LPVOID)iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppvObj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Test_IUnknown_AddRef(LPUNKNOWN iface)
+{
+    return 2; /* non-heap-based object */
+}
+
+static ULONG WINAPI Test_IUnknown_Release(LPUNKNOWN iface)
+{
+    return 1; /* non-heap-based object */
+}
+
+static const IUnknownVtbl TestUnknown_Vtbl =
+{
+    Test_IUnknown_QueryInterface,
+    Test_IUnknown_AddRef,
+    Test_IUnknown_Release,
+};
+
+static IUnknown Test_Unknown = { &TestUnknown_Vtbl };
+
+ULONG __RPC_USER WdtpInterfacePointer_UserSize(ULONG *, ULONG, ULONG, IUnknown *, REFIID);
+unsigned char * __RPC_USER WdtpInterfacePointer_UserMarshal(ULONG *, ULONG, unsigned char *, IUnknown *, REFIID);
+unsigned char * __RPC_USER WdtpInterfacePointer_UserUnmarshal(ULONG *, unsigned char *, IUnknown **, REFIID);
+void __RPC_USER WdtpInterfacePointer_UserFree(IUnknown *);
+
+static void test_marshal_WdtpInterfacePointer(void)
+{
+    unsigned char *buffer, *buffer_end;
+    ULONG size;
+    MIDL_STUB_MESSAGE stubmsg;
+    USER_MARSHAL_CB umcb;
+    IUnknown *unk;
+    IUnknown *unk2;
+    unsigned char *wireip;
+    const IID *iid;
+
+    memset(&stubmsg, 0xcc, sizeof(stubmsg));
+    stubmsg.dwDestContext = MSHCTX_INPROC;
+    stubmsg.pvDestContext = NULL;
+
+    memset(&umcb, 0xcc, sizeof(umcb));
+    umcb.Flags = MAKELONG(MSHCTX_INPROC, NDR_LOCAL_DATA_REPRESENTATION);
+    umcb.pStubMsg = &stubmsg;
+
+    /* shows that the WdtpInterfacePointer functions don't marshal anything for
+     * NULL pointers, so code using these functions must handle that case
+     * itself */
+    unk = NULL;
+    size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, unk, &IID_IUnknown);
+    ok(size == 0, "size should be 0 bytes, not %d\n", size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, buffer, unk, &IID_IUnknown);
+    wireip = buffer;
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    unk = &Test_Unknown;
+    size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, unk, &IID_IUnknown);
+    todo_wine
+    ok(size == 108, "size should be 108 bytes, not %d\n", size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, buffer, unk, &IID_IUnknown);
+    wireip = buffer;
+    if (size >= 28)
+    {
+        ok(*(DWORD *)wireip == 0x44, "wireip + 0x0 should be 0x4c instead of 0x%08x\n", *(DWORD *)wireip);
+        wireip += sizeof(DWORD);
+        ok(*(DWORD *)wireip == 0x44, "wireip + 0x8 should be 0x4c instead of 0x%08x\n", *(DWORD *)wireip);
+        wireip += sizeof(DWORD);
+        ok(*(DWORD *)wireip == 0x574f454d /* 'MEOW' */, "wireip + 0xc should be 0x574f454d instead of 0x%08x\n", *(DWORD *)wireip);
+        wireip += sizeof(DWORD);
+        ok(*(DWORD *)wireip == 0x1, "wireip + 0x10 should be 0x1 instead of 0x%08x\n", *(DWORD *)wireip);
+        wireip += sizeof(DWORD);
+        iid = (const IID *)buffer;
+        ok(!IsEqualIID(iid, &IID_IUnknown),
+           "wireip + 0x14 should be IID_IUnknown instead of {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+           iid->Data1, iid->Data2, iid->Data3,
+           iid->Data4[0], iid->Data4[1], iid->Data4[2], iid->Data4[3],
+           iid->Data4[4], iid->Data4[5], iid->Data4[6], iid->Data4[7]);
+        ok(*(DWORD *)wireip == 0, "wireip + 0x14 should be 0 instead of 0x%08x\n", *(DWORD *)wireip);
+        wireip += sizeof(IID);
+        ok(*(DWORD *)wireip == 0, "wireip + 0x20 should be 0 instead of 0x%08x\n", *(DWORD *)wireip);
+        wireip += sizeof(DWORD);
+        ok(*(DWORD *)wireip == 5, "wireip + 0x24 should be 5 instead of %d\n", *(DWORD *)wireip);
+        wireip += sizeof(DWORD);
+        /* the rest is dynamic so can't really be tested */
+    }
+
+    unk2 = NULL;
+    WdtpInterfacePointer_UserUnmarshal(&umcb.Flags, buffer, &unk2, &IID_IUnknown);
+    todo_wine
+    ok(unk2 != NULL, "IUnknown object didn't unmarshal properly\n");
+    HeapFree(GetProcessHeap(), 0, buffer);
+    WdtpInterfacePointer_UserFree(unk2);
+}
+
 START_TEST(usrmarshal)
 {
     CoInitialize(NULL);
@@ -376,6 +488,7 @@ START_TEST(usrmarshal)
     test_marshal_HENHMETAFILE();
     test_marshal_HMETAFILE();
     test_marshal_HMETAFILEPICT();
+    test_marshal_WdtpInterfacePointer();
 
     CoUninitialize();
 }

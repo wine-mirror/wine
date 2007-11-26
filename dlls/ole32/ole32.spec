@@ -267,10 +267,10 @@
 @ stub UtConvertDvtd32toDvtd16
 @ stub UtGetDvtd16Info
 @ stub UtGetDvtd32Info
-@ stub WdtpInterfacePointer_UserFree
-@ stub WdtpInterfacePointer_UserMarshal
-@ stub WdtpInterfacePointer_UserSize
-@ stub WdtpInterfacePointer_UserUnmarshal
+@ stdcall WdtpInterfacePointer_UserFree(ptr)
+@ stdcall WdtpInterfacePointer_UserMarshal(ptr long ptr ptr ptr)
+@ stdcall WdtpInterfacePointer_UserSize(ptr long ptr long ptr)
+@ stdcall WdtpInterfacePointer_UserUnmarshal(ptr ptr ptr ptr)
 @ stdcall WriteClassStg(ptr ptr)
 @ stdcall WriteClassStm(ptr ptr)
 @ stdcall WriteFmtUserTypeStg(ptr long ptr)

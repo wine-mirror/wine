@@ -1434,6 +1434,100 @@ void __RPC_USER HMETAFILEPICT_UserFree(ULONG *pFlags, HMETAFILEPICT *phMfp)
 }
 
 /******************************************************************************
+ *           WdtpInterfacePointer_UserSize [OLE32.@]
+ *
+ * Calculates the buffer size required to marshal an interface pointer.
+ *
+ * PARAMS
+ *  pFlags       [I] Flags. See notes.
+ *  RealFlags    [I] The MSHCTX to use when marshaling the interface.
+ *  punk         [I] Interface pointer to size.
+ *  StartingSize [I] Starting size of the buffer. This value is added on to
+ *                   the buffer size required for the clip format.
+ *  riid         [I] ID of interface to size.
+ *
+ * RETURNS
+ *  The buffer size required to marshal an interface pointer plus the starting size.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ */
+ULONG __RPC_USER WdtpInterfacePointer_UserSize(ULONG *pFlags, ULONG RealFlags, IUnknown *punk, ULONG StartingSize, REFIID riid)
+{
+    FIXME("(%s, 0%x, %p, %d, %s): stub\n", debugstr_user_flags(pFlags), RealFlags, punk, StartingSize, debugstr_guid(riid));
+    return 0;
+}
+
+/******************************************************************************
+ *           WdtpInterfacePointer_UserMarshal [OLE32.@]
+ *
+ * Marshals an interface pointer into a buffer.
+ *
+ * PARAMS
+ *  pFlags    [I] Flags. See notes.
+ *  RealFlags [I] The MSHCTX to use when marshaling the interface.
+ *  pBuffer   [I] Buffer to marshal the clip format into.
+ *  punk      [I] Interface pointer to marshal.
+ *  riid      [I] ID of interface to marshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ */
+unsigned char * WINAPI WdtpInterfacePointer_UserMarshal(ULONG *pFlags, ULONG RealFlags, unsigned char *pBuffer, IUnknown *punk, REFIID riid)
+{
+    FIXME("(%s, 0x%x, %p, &%p, %s): stub\n", debugstr_user_flags(pFlags), RealFlags, pBuffer, punk, debugstr_guid(riid));
+    return NULL;
+}
+
+/******************************************************************************
+ *           WdtpInterfacePointer_UserUnmarshal [OLE32.@]
+ *
+ * Unmarshals an interface pointer from a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format from.
+ *  ppunk    [I/O] Address that receives the unmarshaled interface pointer.
+ *  riid     [I] ID of interface to unmarshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an ULONG.
+ */
+unsigned char * WINAPI WdtpInterfacePointer_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, IUnknown **ppunk, REFIID riid)
+{
+    FIXME("(%s, %p, %p, %s): stub\n", debugstr_user_flags(pFlags), pBuffer, ppunk, debugstr_guid(riid));
+    return NULL;
+}
+
+/******************************************************************************
+ *           WdtpInterfacePointer_UserFree [OLE32.@]
+ *
+ * Frees an unmarshaled interface pointer.
+ *
+ * PARAMS
+ *  punk    [I] Interface pointer to free.
+ *
+ * RETURNS
+ *  Nothing.
+ */
+void WINAPI WdtpInterfacePointer_UserFree(IUnknown *punk)
+{
+    FIXME("(%p): stub\n", punk);
+}
+
+/******************************************************************************
 *           STGMEDIUM_UserSize [OLE32.@]
 *
 * Calculates the buffer size required to marshal an STGMEDIUM.
