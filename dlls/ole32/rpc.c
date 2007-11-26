@@ -796,6 +796,14 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
                           (LPARAM)&message_state->params))
         {
             ERR("PostMessage failed with error %u\n", GetLastError());
+
+            IRpcStubBuffer_Release(message_state->params.stub);
+            message_state->params.stub = NULL;
+            IRpcChannelBuffer_Release(message_state->params.chan);
+            message_state->params.chan = NULL;
+            /* Note: message_state->params.iface doesn't have a reference and
+             * so doesn't need to be released */
+
             hr = HRESULT_FROM_WIN32(GetLastError());
         }
     }
