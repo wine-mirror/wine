@@ -101,6 +101,8 @@ typedef struct MimeBody
     struct list headers;
     struct list new_props; /* FIXME: This should be in a PropertySchema */
     DWORD next_prop_id;
+    char *content_pri_type;
+    char *content_sub_type;
 } MimeBody;
 
 static inline MimeBody *impl_from_IMimeBody( IMimeBody *iface )
@@ -343,6 +345,30 @@ static void read_value(header_t *header, char **cur)
     *cur = end;
 }
 
+static void init_content_type(MimeBody *body, header_t *header)
+{
+    char *slash;
+    DWORD len;
+
+    if(header->prop->id != PID_HDR_CNTTYPE)
+    {
+        ERR("called with header %s\n", header->prop->name);
+        return;
+    }
+
+    slash = strchr(header->value.pszVal, '/');
+    if(!slash)
+    {
+        WARN("malformed context type value\n");
+        return;
+    }
+    len = slash - header->value.pszVal;
+    body->content_pri_type = HeapAlloc(GetProcessHeap(), 0, len + 1);
+    memcpy(body->content_pri_type, header->value.pszVal, len);
+    body->content_pri_type[len] = '\0';
+    body->content_sub_type = strdupA(slash + 1);
+}
+
 static HRESULT parse_headers(MimeBody *body, IStream *stm)
 {
     char *header_buf, *cur_header_ptr;
@@ -357,6 +383,9 @@ static HRESULT parse_headers(MimeBody *body, IStream *stm)
     {
         read_value(header, &cur_header_ptr);
         list_add_tail(&body->headers, &header->entry);
+
+        if(header->prop->id == PID_HDR_CNTTYPE)
+            init_content_type(body, header);
     }
 
     HeapFree(GetProcessHeap(), 0, header_buf);
@@ -448,6 +477,8 @@ static ULONG WINAPI MimeBody_Release(IMimeBody* iface)
         empty_header_list(&This->headers);
         empty_new_prop_list(&This->new_props);
 
+        HeapFree(GetProcessHeap(), 0, This->content_pri_type);
+        HeapFree(GetProcessHeap(), 0, This->content_sub_type);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -631,8 +662,24 @@ static HRESULT WINAPI MimeBody_IsContentType(
                                     LPCSTR pszPriType,
                                     LPCSTR pszSubType)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    MimeBody *This = impl_from_IMimeBody(iface);
+
+    TRACE("(%p)->(%s, %s)\n", This, debugstr_a(pszPriType), debugstr_a(pszSubType));
+    if(pszPriType)
+    {
+        const char *pri = This->content_pri_type;
+        if(!pri) pri = "text";
+        if(strcasecmp(pri, pszPriType)) return S_FALSE;
+    }
+
+    if(pszSubType)
+    {
+        const char *sub = This->content_sub_type;
+        if(!sub) sub = "plain";
+        if(strcasecmp(sub, pszSubType)) return S_FALSE;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_BindToObject(
@@ -875,6 +922,8 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj)
     list_init(&This->headers);
     list_init(&This->new_props);
     This->next_prop_id = FIRST_CUSTOM_PROP_ID;
+    This->content_pri_type = NULL;
+    This->content_sub_type = NULL;
 
     *obj = (IMimeBody *)&This->lpVtbl;
     return S_OK;
