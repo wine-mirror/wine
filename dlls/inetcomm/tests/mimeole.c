@@ -89,6 +89,7 @@ static void test_CreateBody(void)
     IStream *in;
     LARGE_INTEGER off;
     ULARGE_INTEGER pos;
+    ENCODINGTYPE enc;
 
     hr = CoCreateInstance(&CLSID_IMimeBody, NULL, CLSCTX_INPROC_SERVER, &IID_IMimeBody, (void**)&body);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -106,6 +107,10 @@ static void test_CreateBody(void)
     /* Need to call InitNew before Load otherwise Load crashes with native inetcomm */
     hr = IMimeBody_InitNew(body);
     ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeBody_GetCurrentEncoding(body, &enc);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(enc == IET_7BIT, "encoding %d\n", enc);
 
     hr = IMimeBody_Load(body, in);
     ok(hr == S_OK, "ret %08x\n", hr);

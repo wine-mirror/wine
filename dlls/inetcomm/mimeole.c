@@ -103,6 +103,7 @@ typedef struct MimeBody
     DWORD next_prop_id;
     char *content_pri_type;
     char *content_sub_type;
+    ENCODINGTYPE encoding;
 } MimeBody;
 
 static inline MimeBody *impl_from_IMimeBody( IMimeBody *iface )
@@ -762,16 +763,24 @@ static HRESULT WINAPI MimeBody_GetCurrentEncoding(
                                          IMimeBody* iface,
                                          ENCODINGTYPE* pietEncoding)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    MimeBody *This = impl_from_IMimeBody(iface);
+
+    TRACE("(%p)->(%p)\n", This, pietEncoding);
+
+    *pietEncoding = This->encoding;
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_SetCurrentEncoding(
                                          IMimeBody* iface,
                                          ENCODINGTYPE ietEncoding)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    MimeBody *This = impl_from_IMimeBody(iface);
+
+    TRACE("(%p)->(%d)\n", This, ietEncoding);
+
+    This->encoding = ietEncoding;
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_GetEstimatedSize(
@@ -924,6 +933,7 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj)
     This->next_prop_id = FIRST_CUSTOM_PROP_ID;
     This->content_pri_type = NULL;
     This->content_sub_type = NULL;
+    This->encoding = IET_7BIT;
 
     *obj = (IMimeBody *)&This->lpVtbl;
     return S_OK;
