@@ -336,7 +336,7 @@ static inline void find_swizzled_attribs(IWineD3DVertexDeclaration *declaration,
                oldswizzles[i].usage == This->swizzled_attribs[j].usage &&
                oldswizzles[i].idx > This->swizzled_attribs[j].idx)) {
                 memmove(&This->swizzled_attribs[j + 1], &This->swizzled_attribs[j],
-                         sizeof(This->swizzled_attribs) - (sizeof(This->swizzled_attribs[0]) * (j - 1)));
+                         sizeof(This->swizzled_attribs) - (sizeof(This->swizzled_attribs[0]) * (j + 1)));
                 break;
             }
         }

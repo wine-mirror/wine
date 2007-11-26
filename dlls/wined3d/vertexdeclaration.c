@@ -175,7 +175,7 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVerte
                   (This->swizzled_attribs[j].usage == This->pDeclarationWine[i].Usage &&
                    This->swizzled_attribs[j].idx   >   This->pDeclarationWine[i].UsageIndex)) {
                     memmove(&This->swizzled_attribs[j + 1], &This->swizzled_attribs[j],
-                             sizeof(This->swizzled_attribs) - (sizeof(This->swizzled_attribs[0]) * (j - 1)));
+                             sizeof(This->swizzled_attribs) - (sizeof(This->swizzled_attribs[0]) * (j + 1)));
                     break;
                 }
             }
