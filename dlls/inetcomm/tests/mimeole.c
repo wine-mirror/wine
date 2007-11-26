@@ -125,6 +125,15 @@ static void test_CreateBody(void)
     hr = IMimeBody_IsContentType(body, NULL, "mixed");
     ok(hr == S_OK, "ret %08x\n", hr);
 
+    hr = IMimeBody_SetData(body, IET_8BIT, "text", "plain", &IID_IStream, in);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeBody_IsContentType(body, "text", "plain");
+    todo_wine
+        ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeBody_GetCurrentEncoding(body, &enc);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(enc == IET_8BIT, "encoding %d\n", enc);
+
     IMimeBody_Release(body);
 }
 

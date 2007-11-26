@@ -104,6 +104,8 @@ typedef struct MimeBody
     char *content_pri_type;
     char *content_sub_type;
     ENCODINGTYPE encoding;
+    void *data;
+    IID data_iid;
 } MimeBody;
 
 static inline MimeBody *impl_from_IMimeBody( IMimeBody *iface )
@@ -431,6 +433,16 @@ static void empty_new_prop_list(struct list *list)
     }
 }
 
+static void release_data(REFIID riid, void *data)
+{
+    if(!data) return;
+
+    if(IsEqualIID(riid, &IID_IStream))
+        IStream_Release((IStream *)data);
+    else
+        FIXME("Unhandled data format %s\n", debugstr_guid(riid));
+}
+
 static HRESULT WINAPI MimeBody_QueryInterface(IMimeBody* iface,
                                      REFIID riid,
                                      void** ppvObject)
@@ -480,6 +492,9 @@ static ULONG WINAPI MimeBody_Release(IMimeBody* iface)
 
         HeapFree(GetProcessHeap(), 0, This->content_pri_type);
         HeapFree(GetProcessHeap(), 0, This->content_sub_type);
+
+        release_data(&This->data_iid, This->data);
+
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -818,8 +833,31 @@ static HRESULT WINAPI MimeBody_SetData(
                               REFIID riid,
                               LPVOID pvObject)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    MimeBody *This = impl_from_IMimeBody(iface);
+    TRACE("(%p)->(%d, %s, %s, %s %p)\n", This, ietEncoding, debugstr_a(pszPriType), debugstr_a(pszSubType),
+          debugstr_guid(riid), pvObject);
+
+    if(IsEqualIID(riid, &IID_IStream))
+        IStream_AddRef((IStream *)pvObject);
+    else
+    {
+        FIXME("Unhandled object type %s\n", debugstr_guid(riid));
+        return E_INVALIDARG;
+    }
+
+    if(This->data)
+        FIXME("release old data\n");
+
+    This->data_iid = *riid;
+    This->data = pvObject;
+
+    IMimeBody_SetCurrentEncoding(iface, ietEncoding);
+
+    /* FIXME: Update the content type.
+       If pszPriType == NULL use 'application'
+       If pszSubType == NULL use 'octet-stream' */
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_EmptyData(
@@ -934,6 +972,8 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj)
     This->content_pri_type = NULL;
     This->content_sub_type = NULL;
     This->encoding = IET_7BIT;
+    This->data = NULL;
+    This->data_iid = IID_NULL;
 
     *obj = (IMimeBody *)&This->lpVtbl;
     return S_OK;

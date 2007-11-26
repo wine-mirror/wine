@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define INITGUID
 
 #include <stdarg.h>
 #include <string.h>
@@ -28,7 +27,10 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winerror.h"
+#include "objbase.h"
+#include "ocidl.h"
 
+#include "initguid.h"
 #include "inetcomm_private.h"
 #include "mimeole.h"
 
