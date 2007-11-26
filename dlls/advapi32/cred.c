@@ -85,8 +85,9 @@ static DWORD read_credential_blob(HKEY hkey, const BYTE key_data[KEY_SIZE],
     return ERROR_SUCCESS;
 }
 
-static DWORD read_credential(HKEY hkey, PCREDENTIALW credential,
-                             const BYTE key_data[KEY_SIZE], char *buffer, DWORD *len)
+static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
+                                      const BYTE key_data[KEY_SIZE],
+                                      char *buffer, DWORD *len)
 {
     DWORD type;
     DWORD ret;
@@ -257,8 +258,8 @@ static DWORD write_credential_blob(HKEY hkey, LPCWSTR target_name, DWORD type,
     return ret;
 }
 
-static DWORD write_credential(HKEY hkey, const CREDENTIALW *credential,
-                              const BYTE key_data[KEY_SIZE], BOOL preserve_blob)
+static DWORD registry_write_credential(HKEY hkey, const CREDENTIALW *credential,
+                                       const BYTE key_data[KEY_SIZE], BOOL preserve_blob)
 {
     DWORD ret;
     FILETIME LastWritten;
@@ -382,6 +383,96 @@ static LPWSTR get_key_name_for_target(LPCWSTR target_name, DWORD type)
         if (*p == '\\') *p = '_';
 
     return key_name;
+}
+
+static BOOL credential_matches_filter(HKEY hkeyCred, LPCWSTR filter)
+{
+    LPWSTR target_name;
+    DWORD ret;
+    DWORD type;
+    DWORD count;
+    LPCWSTR p;
+
+    if (!filter) return TRUE;
+
+    ret = RegQueryValueExW(hkeyCred, NULL, 0, &type, NULL, &count);
+    if (ret != ERROR_SUCCESS)
+        return FALSE;
+    else if (type != REG_SZ)
+        return FALSE;
+
+    target_name = HeapAlloc(GetProcessHeap(), 0, count);
+    if (!target_name)
+        return FALSE;
+    ret = RegQueryValueExW(hkeyCred, NULL, 0, &type, (LPVOID)target_name, &count);
+    if (ret != ERROR_SUCCESS || type != REG_SZ)
+    {
+        HeapFree(GetProcessHeap(), 0, target_name);
+        return FALSE;
+    }
+
+    TRACE("comparing filter %s to target name %s\n", debugstr_w(filter),
+          debugstr_w(target_name));
+
+    p = strchrW(filter, '*');
+    ret = CompareStringW(GetThreadLocale(), 0, filter,
+                         (p && !p[1] ? p - filter : -1), target_name,
+                         (p && !p[1] ? p - filter : -1)) == CSTR_EQUAL;
+
+    HeapFree(GetProcessHeap(), 0, target_name);
+    return ret;
+}
+
+static DWORD registry_enumerate_credentials(HKEY hkeyMgr, LPCWSTR filter,
+                                            LPWSTR target_name,
+                                            DWORD target_name_len, BYTE key_data[KEY_SIZE],
+                                            PCREDENTIALW *credentials, char *buffer,
+                                            DWORD *len, DWORD *count)
+{
+    DWORD i;
+    DWORD ret;
+    for (i = 0;; i++)
+    {
+        HKEY hkeyCred;
+        ret = RegEnumKeyW(hkeyMgr, i, target_name, target_name_len+1);
+        if (ret == ERROR_NO_MORE_ITEMS)
+        {
+            ret = ERROR_SUCCESS;
+            break;
+        }
+        else if (ret != ERROR_SUCCESS)
+        {
+            ret = ERROR_SUCCESS;
+            continue;
+        }
+        TRACE("target_name = %s\n", debugstr_w(target_name));
+        ret = RegOpenKeyExW(hkeyMgr, target_name, 0, KEY_QUERY_VALUE, &hkeyCred);
+        if (ret != ERROR_SUCCESS)
+        {
+            ret = ERROR_SUCCESS;
+            continue;
+        }
+        if (!credential_matches_filter(hkeyCred, filter))
+        {
+            RegCloseKey(hkeyCred);
+            continue;
+        }
+        if (buffer)
+        {
+            *len = sizeof(CREDENTIALW);
+            credentials[*count] = (PCREDENTIALW)buffer;
+        }
+        else
+            *len += sizeof(CREDENTIALW);
+        ret = registry_read_credential(hkeyCred, buffer ? credentials[*count] : NULL,
+                                       key_data, buffer ? buffer + sizeof(CREDENTIALW) : NULL,
+                                       len);
+        RegCloseKey(hkeyCred);
+        if (ret != ERROR_SUCCESS) break;
+        if (buffer) buffer += *len;
+        (*count)++;
+    }
+    return ret;
 }
 
 static void convert_PCREDENTIALW_to_PCREDENTIALA(const CREDENTIALW *CredentialW, PCREDENTIALA CredentialA, DWORD *len)
@@ -674,44 +765,6 @@ BOOL WINAPI CredEnumerateA(LPCSTR Filter, DWORD Flags, DWORD *Count,
     return TRUE;
 }
 
-static BOOL credential_matches_filter(HKEY hkeyCred, LPCWSTR filter)
-{
-    LPWSTR target_name;
-    DWORD ret;
-    DWORD type;
-    DWORD count;
-    LPCWSTR p;
-
-    if (!filter) return TRUE;
-
-    ret = RegQueryValueExW(hkeyCred, NULL, 0, &type, NULL, &count);
-    if (ret != ERROR_SUCCESS)
-        return FALSE;
-    else if (type != REG_SZ)
-        return FALSE;
-
-    target_name = HeapAlloc(GetProcessHeap(), 0, count);
-    if (!target_name)
-        return FALSE;
-    ret = RegQueryValueExW(hkeyCred, NULL, 0, &type, (LPVOID)target_name, &count);
-    if (ret != ERROR_SUCCESS || type != REG_SZ)
-    {
-        HeapFree(GetProcessHeap(), 0, target_name);
-        return FALSE;
-    }
-
-    TRACE("comparing filter %s to target name %s\n", debugstr_w(filter),
-          debugstr_w(target_name));
-
-    p = strchrW(filter, '*');
-    ret = CompareStringW(GetThreadLocale(), 0, filter,
-                         (p && !p[1] ? p - filter : -1), target_name,
-                         (p && !p[1] ? p - filter : -1)) == CSTR_EQUAL;
-
-    HeapFree(GetProcessHeap(), 0, target_name);
-    return ret;
-}
-
 /******************************************************************************
  * CredEnumerateW [ADVAPI32.@]
  */
@@ -719,13 +772,11 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count,
                            PCREDENTIALW **Credentials)
 {
     HKEY hkeyMgr;
-    HKEY hkeyCred;
     DWORD ret;
     LPWSTR target_name;
     DWORD target_name_len;
     DWORD len;
     char *buffer;
-    DWORD i;
     BYTE key_data[KEY_SIZE];
 
     TRACE("(%s, 0x%x, %p, %p)\n", debugstr_w(Filter), Flags, Count, Credentials);
@@ -770,36 +821,8 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count,
 
     *Count = 0;
     len = 0;
-    for (i = 0;; i++)
-    {
-        ret = RegEnumKeyW(hkeyMgr, i, target_name, target_name_len+1);
-        if (ret == ERROR_NO_MORE_ITEMS)
-        {
-            ret = ERROR_SUCCESS;
-            break;
-        }
-        else if (ret != ERROR_SUCCESS)
-        {
-            ret = ERROR_SUCCESS;
-            continue;
-        }
-        ret = RegOpenKeyExW(hkeyMgr, target_name, 0, KEY_QUERY_VALUE, &hkeyCred);
-        if (ret != ERROR_SUCCESS)
-        {
-            ret = ERROR_SUCCESS;
-            continue;
-        }
-        if (!credential_matches_filter(hkeyCred, Filter))
-        {
-            RegCloseKey(hkeyCred);
-            continue;
-        }
-        len += sizeof(CREDENTIALW);
-        ret = read_credential(hkeyCred, NULL, key_data, NULL, &len);
-        RegCloseKey(hkeyCred);
-        if (ret != ERROR_SUCCESS) break;
-        (*Count)++;
-    }
+    ret = registry_enumerate_credentials(hkeyMgr, Filter, target_name, target_name_len,
+                                         key_data, NULL, NULL, &len, Count);
     if (ret == ERROR_SUCCESS && *Count == 0)
         ret = ERROR_NOT_FOUND;
     if (ret != ERROR_SUCCESS)
@@ -819,41 +842,10 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count,
         {
             buffer += *Count * sizeof(PCREDENTIALW);
             *Count = 0;
-            for (i = 0;; i++)
-            {
-                ret = RegEnumKeyW(hkeyMgr, i, target_name, target_name_len+1);
-                if (ret == ERROR_NO_MORE_ITEMS)
-                {
-                    ret = ERROR_SUCCESS;
-                    break;
-                }
-                else if (ret != ERROR_SUCCESS)
-                {
-                    ret = ERROR_SUCCESS;
-                    continue;
-                }
-                TRACE("target_name = %s\n", debugstr_w(target_name));
-                ret = RegOpenKeyExW(hkeyMgr, target_name, 0, KEY_QUERY_VALUE, &hkeyCred);
-                if (ret != ERROR_SUCCESS)
-                {
-                    ret = ERROR_SUCCESS;
-                    continue;
-                }
-                if (!credential_matches_filter(hkeyCred, Filter))
-                {
-                    RegCloseKey(hkeyCred);
-                    continue;
-                }
-                len = sizeof(CREDENTIALW);
-                (*Credentials)[*Count] = (PCREDENTIALW)buffer;
-                ret = read_credential(hkeyCred, (*Credentials)[*Count],
-                                      key_data,
-                                      buffer + sizeof(CREDENTIALW), &len);
-                RegCloseKey(hkeyCred);
-                if (ret != ERROR_SUCCESS) break;
-                buffer += len;
-                (*Count)++;
-            }
+            ret = registry_enumerate_credentials(hkeyMgr, Filter, target_name,
+                                                 target_name_len, key_data,
+                                                 *Credentials, buffer, &len,
+                                                 Count);
         }
         else
             ret = ERROR_OUTOFMEMORY;
@@ -988,15 +980,15 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
     }
 
     len = sizeof(**Credential);
-    ret = read_credential(hkeyCred, NULL, key_data, NULL, &len);
+    ret = registry_read_credential(hkeyCred, NULL, key_data, NULL, &len);
     if (ret == ERROR_SUCCESS)
     {
         *Credential = HeapAlloc(GetProcessHeap(), 0, len);
         if (*Credential)
         {
             len = sizeof(**Credential);
-            ret = read_credential(hkeyCred, *Credential, key_data,
-                                  (char *)(*Credential + 1), &len);
+            ret = registry_read_credential(hkeyCred, *Credential, key_data,
+                                           (char *)(*Credential + 1), &len);
         }
         else
             ret = ERROR_OUTOFMEMORY;
@@ -1123,8 +1115,8 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
         return FALSE;
     }
 
-    ret = write_credential(hkeyCred, Credential, key_data,
-                           Flags & CRED_PRESERVE_CREDENTIAL_BLOB);
+    ret = registry_write_credential(hkeyCred, Credential, key_data,
+                                    Flags & CRED_PRESERVE_CREDENTIAL_BLOB);
 
     RegCloseKey(hkeyCred);
     RegCloseKey(hkeyMgr);
