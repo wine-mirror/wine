@@ -1229,8 +1229,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                     glGenTextures(1, &This->glDescription.textureName);
                     checkGLcall("glGenTextures");
                 }
-                glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
-                checkGLcall("glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);");
+                glBindTexture(This->glDescription.target, This->glDescription.textureName);
+                checkGLcall("glBindTexture(This->glDescription.target, This->glDescription.textureName)");
                 LEAVE_GL();
                 IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL /* partial texture loading not supported yet */);
                 /* drop through */
@@ -2020,7 +2020,7 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
     if(GL_SUPPORT(EXT_PALETTED_TEXTURE))
     {
         TRACE("Using GL_EXT_PALETTED_TEXTURE for 8-bit paletted texture support\n");
-        GL_EXTCALL(glColorTableEXT(GL_TEXTURE_2D,GL_RGBA,256,GL_RGBA,GL_UNSIGNED_BYTE, table));
+        GL_EXTCALL(glColorTableEXT(This->glDescription.target,GL_RGBA,256,GL_RGBA,GL_UNSIGNED_BYTE, table));
     }
     else
     {
@@ -2527,11 +2527,11 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
     /* TODO: Do we need GL_TEXTURE_2D enabled fpr copyteximage? */
-    glEnable(GL_TEXTURE_2D);
-    checkGLcall("glEnable(GL_TEXTURE_2D)");
+    glEnable(This->glDescription.target);
+    checkGLcall("glEnable(This->glDescription.target)");
 
     /* Bind the target texture */
-    glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
+    glBindTexture(This->glDescription.target, This->glDescription.textureName);
     checkGLcall("glBindTexture");
     if(!swapchain) {
         glReadBuffer(myDevice->offscreenBuffer);
@@ -2598,8 +2598,8 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     vcheckGLcall("glCopyTexSubImage2D");
 
     /* Leave the opengl state valid for blitting */
-    glDisable(GL_TEXTURE_2D);
-    checkGLcall("glDisable(GL_TEXTURE_2D)");
+    glDisable(This->glDescription.target);
+    checkGLcall("glDisable(This->glDescription.target)");
 
     LEAVE_GL();
 }
@@ -2613,13 +2613,12 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     UINT fbwidth = Src->currentDesc.Width;
     UINT fbheight = Src->currentDesc.Height;
     GLenum drawBuffer = GL_BACK;
+    GLenum texture_target;
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
     ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
     ENTER_GL();
-    glEnable(GL_TEXTURE_2D);
-    checkGLcall("glEnable(GL_TEXTURE_2D)");
 
     IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
@@ -2639,6 +2638,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         checkGLcall("glGenTextures\n");
         glBindTexture(GL_TEXTURE_2D, backup);
         checkGLcall("glBindTexture(Src->glDescription.target, Src->glDescription.textureName)");
+        texture_target = GL_TEXTURE_2D;
     } else {
         /* Backup the back buffer and copy the source buffer into a texture to draw an upside down stretched quad. If
          * we are reading from the back buffer, the backup can be used as source texture
@@ -2647,8 +2647,11 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
             /* Get it a description */
             IWineD3DSurface_PreLoad(SrcSurface);
         }
-        glBindTexture(GL_TEXTURE_2D, Src->glDescription.textureName);
-        checkGLcall("glBindTexture(Src->glDescription.target, Src->glDescription.textureName)");
+        texture_target = Src->glDescription.target;
+        glBindTexture(texture_target, Src->glDescription.textureName);
+        checkGLcall("glBindTexture(texture_target, Src->glDescription.textureName)");
+        glEnable(texture_target);
+        checkGLcall("glEnable(texture_target)");
 
         /* For now invalidate the texture copy of the back buffer. Drawable and sysmem copy are untouched */
         Src->Flags &= ~SFLAG_INTEXTURE;
@@ -2658,7 +2661,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     checkGLcall("glReadBuffer(GL_BACK)");
 
     /* TODO: Only back up the part that will be overwritten */
-    glCopyTexSubImage2D(GL_TEXTURE_2D, 0,
+    glCopyTexSubImage2D(texture_target, 0,
                         0, 0 /* read offsets */,
                         0, 0,
                         fbwidth,
@@ -2667,10 +2670,10 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     checkGLcall("glCopyTexSubImage2D");
 
     /* No issue with overriding these - the sampler is dirty due to blit usage */
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+    glTexParameteri(texture_target, GL_TEXTURE_MAG_FILTER,
                     stateLookup[WINELOOKUP_MAGFILTER][Filter - minLookup[WINELOOKUP_MAGFILTER]]);
     checkGLcall("glTexParameteri");
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+    glTexParameteri(texture_target, GL_TEXTURE_MIN_FILTER,
                     minMipLookup[Filter][WINED3DTEXF_NONE]);
     checkGLcall("glTexParameteri");
 
@@ -2704,6 +2707,12 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
         glReadBuffer(GL_BACK);
         checkGLcall("glReadBuffer(GL_BACK)");
+
+        if(texture_target != GL_TEXTURE_2D) {
+            glDisable(texture_target);
+            glEnable(GL_TEXTURE_2D);
+            texture_target = GL_TEXTURE_2D;
+        }
     }
     checkGLcall("glEnd and previous");
 
@@ -2719,8 +2728,8 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     }
 
     /* draw the source texture stretched and upside down. The correct surface is bound already */
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
     glDrawBuffer(drawBuffer);
     glReadBuffer(drawBuffer);
@@ -2744,21 +2753,42 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     glEnd();
     checkGLcall("glEnd and previous");
 
+    if(texture_target != This->glDescription.target) {
+        glDisable(texture_target);
+        glEnable(This->glDescription.target);
+        texture_target = This->glDescription.target;
+    }
+
     /* Now read the stretched and upside down image into the destination texture */
-    glBindTexture(This->glDescription.target, This->glDescription.textureName);
+    glBindTexture(texture_target, This->glDescription.textureName);
     checkGLcall("glBindTexture");
-    glCopyTexSubImage2D(This->glDescription.target,
+    glCopyTexSubImage2D(texture_target,
                         0,
                         drect->x1, drect->y1, /* xoffset, yoffset */
                         0, 0, /* We blitted the image to the origin */
                         drect->x2 - drect->x1, drect->y2 - drect->y1);
     checkGLcall("glCopyTexSubImage2D");
 
-    /* Write the back buffer backup back */
-    glBindTexture(GL_TEXTURE_2D, backup ? backup : Src->glDescription.textureName);
-    checkGLcall("glBindTexture(GL_TEXTURE_2D, Src->glDescription.textureName)");
-
     if(drawBuffer == GL_BACK) {
+        /* Write the back buffer backup back */
+        if(backup) {
+            if(texture_target != GL_TEXTURE_2D) {
+                glDisable(texture_target);
+                glEnable(GL_TEXTURE_2D);
+                texture_target = GL_TEXTURE_2D;
+            }
+            glBindTexture(GL_TEXTURE_2D, backup);
+            checkGLcall("glBindTexture(GL_TEXTURE_2D, backup)");
+        } else {
+            if(texture_target != Src->glDescription.target) {
+                glDisable(texture_target);
+                glEnable(Src->glDescription.target);
+                texture_target = Src->glDescription.target;
+            }
+            glBindTexture(Src->glDescription.target, Src->glDescription.textureName);
+            checkGLcall("glBindTexture(Src->glDescription.target, Src->glDescription.textureName)");
+        }
+
         glBegin(GL_QUADS);
             /* top left */
             glTexCoord2f(0.0, (float) fbheight / (float) Src->pow2Height);
@@ -2780,10 +2810,10 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         /* Restore the old draw buffer */
         glDrawBuffer(GL_BACK);
     }
+    glDisable(texture_target);
+    checkGLcall("glDisable(texture_target)");
 
     /* Cleanup */
-    glDisable(GL_TEXTURE_2D);
-    checkGLcall("glDisable(GL_TEXTURE_2D)");
     if(src != Src->glDescription.textureName && src != backup) {
         glDeleteTextures(1, &src);
         checkGLcall("glDeleteTextures(1, &src)");
@@ -3099,8 +3129,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
         ENTER_GL();
 
-        glEnable(GL_TEXTURE_2D);
-        checkGLcall("glEnable(GL_TEXTURE_2D)");
+        glEnable(Src->glDescription.target);
+        checkGLcall("glEnable(Src->glDescription.target)");
 
         if(!dstSwapchain) {
             TRACE("Drawing to offscreen buffer\n");
@@ -3114,18 +3144,18 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         }
 
         /* Bind the texture */
-        glBindTexture(GL_TEXTURE_2D, Src->glDescription.textureName);
+        glBindTexture(Src->glDescription.target, Src->glDescription.textureName);
         checkGLcall("glBindTexture");
 
         /* Filtering for StretchRect */
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+        glTexParameteri(Src->glDescription.target, GL_TEXTURE_MAG_FILTER,
                         stateLookup[WINELOOKUP_MAGFILTER][Filter - minLookup[WINELOOKUP_MAGFILTER]]);
         checkGLcall("glTexParameteri");
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+        glTexParameteri(Src->glDescription.target, GL_TEXTURE_MIN_FILTER,
                         minMipLookup[Filter][WINED3DTEXF_NONE]);
         checkGLcall("glTexParameteri");
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(Src->glDescription.target, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(Src->glDescription.target, GL_TEXTURE_WRAP_T, GL_CLAMP);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         checkGLcall("glTexEnvi");
 
@@ -3174,11 +3204,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         if(dstSwapchain && (dstSwapchain->num_contexts >= 2))
             glFlush();
 
-        glBindTexture(GL_TEXTURE_2D, 0);
-        checkGLcall("glEnable glBindTexture");
+        glBindTexture(Src->glDescription.target, 0);
+        checkGLcall("glBindTexture(Src->glDescription.target, 0)");
         /* Leave the opengl state valid for blitting */
-        glDisable(GL_TEXTURE_2D);
-        checkGLcall("glDisable(GL_TEXTURE_2D)");
+        glDisable(Src->glDescription.target);
+        checkGLcall("glDisable(Src->glDescription.target)");
 
         /* The draw buffer should only need to be restored if we were drawing to the front buffer, and there is a back buffer.
          * otherwise the context manager should choose between GL_BACK / offscreenDrawBuffer
