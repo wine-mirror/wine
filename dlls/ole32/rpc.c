@@ -127,6 +127,9 @@ struct message_state
     RPC_BINDING_HANDLE binding_handle;
     ULONG prefix_data_len;
     SChannelHookCallInfo channel_hook_info;
+
+    /* client only */
+    struct dispatch_params params;
 };
 
 typedef struct
@@ -600,6 +603,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
     message_state->channel_hook_info.dwServerPid = This->server_pid;
     message_state->channel_hook_info.iMethod = msg->ProcNum;
     message_state->channel_hook_info.pObject = NULL; /* only present on server-side */
+    memset(&message_state->params, 0, sizeof(message_state->params));
 
     extensions_size = ChannelHooks_ClientGetSize(&message_state->channel_hook_info,
         &channel_hook_data, &channel_hook_count, &extension_count);
@@ -731,7 +735,6 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     RPC_MESSAGE *msg = (RPC_MESSAGE *)olemsg;
     RPC_STATUS status;
     DWORD index;
-    struct dispatch_params *params;
     APARTMENT *apt = NULL;
     IPID ipid;
     struct message_state *message_state;
@@ -762,18 +765,15 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
         return RPC_E_CANTCALLOUT_ININPUTSYNCCALL;
     }
 
-    params = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*params));
-    if (!params) return E_OUTOFMEMORY;
-
     message_state = (struct message_state *)msg->Handle;
     /* restore the binding handle and the real start of data */
     msg->Handle = message_state->binding_handle;
     msg->Buffer = (char *)msg->Buffer - message_state->prefix_data_len;
     msg->BufferLength += message_state->prefix_data_len;
 
-    params->msg = olemsg;
-    params->status = RPC_S_OK;
-    params->hr = S_OK;
+    message_state->params.msg = olemsg;
+    message_state->params.status = RPC_S_OK;
+    message_state->params.hr = S_OK;
 
     /* Note: this is an optimization in the Microsoft OLE runtime that we need
      * to copy, as shown by the test_no_couninitialize_client test. without
@@ -783,14 +783,17 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
      * from DllMain */
 
     RpcBindingInqObject(message_state->binding_handle, &ipid);
-    hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan,
-                                  &params->iid, &params->iface);
-    params->handle = ClientRpcChannelBuffer_GetEventHandle(This);
+    hr = ipid_get_dispatch_params(&ipid, &apt, &message_state->params.stub,
+                                  &message_state->params.chan,
+                                  &message_state->params.iid,
+                                  &message_state->params.iface);
+    message_state->params.handle = ClientRpcChannelBuffer_GetEventHandle(This);
     if ((hr == S_OK) && !apt->multi_threaded)
     {
         TRACE("Calling apartment thread 0x%08x...\n", apt->tid);
 
-        if (!PostMessageW(apartment_getwindow(apt), DM_EXECUTERPC, 0, (LPARAM)params))
+        if (!PostMessageW(apartment_getwindow(apt), DM_EXECUTERPC, 0,
+                          (LPARAM)&message_state->params))
         {
             ERR("PostMessage failed with error %u\n", GetLastError());
             hr = HRESULT_FROM_WIN32(GetLastError());
@@ -802,10 +805,10 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
         {
             /* otherwise, we go via RPC runtime so the stub and channel aren't
              * needed here */
-            IRpcStubBuffer_Release(params->stub);
-            params->stub = NULL;
-            IRpcChannelBuffer_Release(params->chan);
-            params->chan = NULL;
+            IRpcStubBuffer_Release(message_state->params.stub);
+            message_state->params.stub = NULL;
+            IRpcChannelBuffer_Release(message_state->params.chan);
+            message_state->params.chan = NULL;
         }
 
         /* we use a separate thread here because we need to be able to
@@ -814,7 +817,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
          * and re-enter this STA from an incoming server thread will
          * deadlock. InstallShield is an example of that.
          */
-        if (!QueueUserWorkItem(rpc_sendreceive_thread, params, WT_EXECUTEDEFAULT))
+        if (!QueueUserWorkItem(rpc_sendreceive_thread, &message_state->params, WT_EXECUTEDEFAULT))
         {
             ERR("QueueUserWorkItem failed with error %u\n", GetLastError());
             hr = E_UNEXPECTED;
@@ -826,22 +829,20 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
 
     if (hr == S_OK)
     {
-        if (WaitForSingleObject(params->handle, 0))
+        if (WaitForSingleObject(message_state->params.handle, 0))
         {
             COM_CurrentInfo()->pending_call_count_client++;
-            hr = CoWaitForMultipleHandles(0, INFINITE, 1, &params->handle, &index);
+            hr = CoWaitForMultipleHandles(0, INFINITE, 1, &message_state->params.handle, &index);
             COM_CurrentInfo()->pending_call_count_client--;
         }
     }
-    ClientRpcChannelBuffer_ReleaseEventHandle(This, params->handle);
+    ClientRpcChannelBuffer_ReleaseEventHandle(This, message_state->params.handle);
 
     /* for WM shortcut, faults are returned in params->hr */
     if (hr == S_OK)
-        hrFault = params->hr;
+        hrFault = message_state->params.hr;
 
-    status = params->status;
-    HeapFree(GetProcessHeap(), 0, params);
-    params = NULL;
+    status = message_state->params.status;
 
     orpcthat.flags = ORPCF_NULL;
     orpcthat.extensions = NULL;
