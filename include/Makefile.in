@@ -112,6 +112,9 @@ SRCDIR_INCLUDES = \
 	d3dx8core.h \
 	d3dx8math.h \
 	d3dx8math.inl \
+	d3dx9.h \
+	d3dx9math.h \
+	d3dx9math.inl \
 	dbghelp.h \
 	dbinit.idl \
 	dbprop.idl \
