@@ -722,6 +722,7 @@ LDD
 DLLTOOL
 DLLWRAP
 MINGWAR
+SECURITYLIB
 COREFOUNDATIONLIB
 IOKITLIB
 LDEXECFLAGS
@@ -8093,7 +8094,9 @@ fi
     LDSHARED="\$(CC) -dynamiclib"
     STRIP="$STRIP -x"
     LDRPATH_LOCAL="&& install_name_tool -change @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/libwine.1.dylib @executable_path/\$(TOPOBJDIR)/libs/wine/libwine.1.dylib \$@ || \$(RM) \$@"
-        COREFOUNDATIONLIB="-framework CoreFoundation"
+        SECURITYLIB="-framework Security -framework CoreFoundation"
+
+    COREFOUNDATIONLIB="-framework CoreFoundation"
 
     IOKITLIB="-framework IOKit -framework CoreFoundation"
 
@@ -22414,6 +22417,7 @@ LDD!$LDD$ac_delim
 DLLTOOL!$DLLTOOL$ac_delim
 DLLWRAP!$DLLWRAP$ac_delim
 MINGWAR!$MINGWAR$ac_delim
+SECURITYLIB!$SECURITYLIB$ac_delim
 COREFOUNDATIONLIB!$COREFOUNDATIONLIB$ac_delim
 IOKITLIB!$IOKITLIB$ac_delim
 LDEXECFLAGS!$LDEXECFLAGS$ac_delim
@@ -22462,7 +22466,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 71; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 72; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

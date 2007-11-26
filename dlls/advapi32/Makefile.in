@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = advapi32.dll
 IMPORTLIB = libadvapi32.$(IMPLIBEXT)
 IMPORTS   = kernel32 ntdll
+EXTRALIBS = @SECURITYLIB@
 
 C_SRCS = \
 	advapi.c \
