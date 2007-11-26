@@ -557,7 +557,7 @@ static const CHAR mc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tV
 static const CHAR mc_file_hash_dat[] = "File_\tOptions\tHashPart1\tHashPart2\tHashPart3\tHashPart4\n"
                                        "s72\ti2\ti4\ti4\ti4\ti4\n"
                                        "MsiFileHash\tFile_\n"
-                                       "caesar\t0\t1477005400\t-2141257985\t284379198\t21485139";
+                                       "caesar\t0\t850433704\t-241429251\t675791761\t-1221108824";
 
 typedef struct _msi_table
 {
@@ -1100,23 +1100,25 @@ static BOOL get_program_files_dir(LPSTR buf, LPSTR buf2)
     return TRUE;
 }
 
-static void create_file(const CHAR *name, DWORD size)
+static void create_file_data(LPCSTR name, LPCSTR data, DWORD size)
 {
     HANDLE file;
-    DWORD written, left;
+    DWORD written;
 
     file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n", name);
-    WriteFile(file, name, strlen(name), &written, NULL);
-    WriteFile(file, "\n", strlen("\n"), &written, NULL);
+    WriteFile(file, data, strlen(data), &written, NULL);
 
-    left = size - lstrlen(name) - 1;
+    if (size)
+    {
+        SetFilePointer(file, size, NULL, FILE_BEGIN);
+        SetEndOfFile(file);
+    }
 
-    SetFilePointer(file, left, NULL, FILE_CURRENT);
-    SetEndOfFile(file);
-    
     CloseHandle(file);
 }
+
+#define create_file(name, size) create_file_data(name, name, size)
 
 static void create_test_files(void)
 {
@@ -3286,7 +3288,7 @@ static void test_adminprops(void)
     RemoveDirectory("msitest");
 }
 
-static void create_pf(LPCSTR file, BOOL is_file)
+static void create_pf_data(LPCSTR file, LPCSTR data, BOOL is_file)
 {
     CHAR path[MAX_PATH];
 
@@ -3295,10 +3297,12 @@ static void create_pf(LPCSTR file, BOOL is_file)
     lstrcatA(path, file);
 
     if (is_file)
-        create_file(path, 500);
+        create_file_data(path, data, 500);
     else
         CreateDirectoryA(path, NULL);
 }
+
+#define create_pf(file, is_file) create_pf_data(file, file, is_file)
 
 static void test_removefiles(void)
 {
@@ -3533,7 +3537,7 @@ static void test_missingcab(void)
     create_cab_file("test1.cab", MEDIA_SIZE, "maximus\0");
 
     create_pf("msitest", FALSE);
-    create_pf("msitest\\caesar", TRUE);
+    create_pf_data("msitest\\caesar", "abcdefgh", TRUE);
 
     r = MsiInstallProductA(msifile, NULL);
     todo_wine
@@ -3547,7 +3551,7 @@ static void test_missingcab(void)
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     create_pf("msitest", FALSE);
-    create_pf("msitest\\caesar", TRUE);
+    create_pf_data("msitest\\caesar", "abcdefgh", TRUE);
     create_pf("msitest\\gaius", TRUE);
 
     r = MsiInstallProductA(msifile, "GAIUS=1");
