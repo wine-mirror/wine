@@ -62,6 +62,7 @@ struct media_info {
     UINT last_sequence;
     LPWSTR disk_prompt;
     LPWSTR cabinet;
+    LPWSTR first_volume;
     LPWSTR volume_label;
     BOOL is_continuous;
     BOOL is_extracted;
@@ -284,6 +285,9 @@ static UINT msi_media_get_disk_info( MSIPACKAGE *package, struct media_info *mi 
     mi->cabinet = strdupW(MSI_RecordGetString(row, 4));
     mi->volume_label = strdupW(MSI_RecordGetString(row, 5));
 
+    if (!mi->first_volume)
+        mi->first_volume = strdupW(mi->volume_label);
+
     ptr = strrchrW(mi->source, '\\') + 1;
     lstrcpyW(ptr, mi->cabinet);
     msiobj_release(&row->hdr);
@@ -491,6 +495,7 @@ static void free_media_info( struct media_info *mi )
     msi_free( mi->disk_prompt );
     msi_free( mi->cabinet );
     msi_free( mi->volume_label );
+    msi_free( mi->first_volume );
     msi_free( mi );
 }
 
@@ -563,6 +568,9 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
     mi->volume_label = strdupW(MSI_RecordGetString(row, 5));
     msiobj_release(&row->hdr);
 
+    if (!mi->first_volume)
+        mi->first_volume = strdupW(mi->volume_label);
+
     source_dir = msi_dup_property(package, cszSourceDir);
 
     if (mi->cabinet && mi->cabinet[0] == '#')
@@ -618,7 +626,8 @@ static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *m
     }
 
     /* check volume matches, change media if not */
-    if (mi->volume_label && mi->disk_id > 1)
+    if (mi->volume_label && mi->disk_id > 1 &&
+        lstrcmpW(mi->first_volume, mi->volume_label))
     {
         LPWSTR source = msi_dup_property(package, cszSourceDir);
         BOOL matches;
