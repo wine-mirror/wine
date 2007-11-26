@@ -1084,6 +1084,14 @@ static BOOL compare_cert_by_issuer(PCCERT_CONTEXT pCertContext, DWORD dwType,
     return ret;
 }
 
+static BOOL compare_existing_cert(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    PCCERT_CONTEXT toCompare = (PCCERT_CONTEXT)pvPara;
+    return CertCompareCertificate(pCertContext->dwCertEncodingType,
+     pCertContext->pCertInfo, toCompare->pCertInfo);
+}
+
 PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, DWORD dwFlags, DWORD dwType, const void *pvPara,
  PCCERT_CONTEXT pPrevCertContext)
@@ -1116,6 +1124,9 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
         break;
     case CERT_COMPARE_ISSUER_OF:
         compare = compare_cert_by_issuer;
+        break;
+    case CERT_COMPARE_EXISTING:
+        compare = compare_existing_cert;
         break;
     default:
         FIXME("find type %08x unimplemented\n", dwType);
