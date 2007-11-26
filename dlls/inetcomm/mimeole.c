@@ -79,8 +79,16 @@ static const property_t default_props[] =
 typedef struct
 {
     struct list entry;
+    char *name;
+    char *value;
+} param_t;
+
+typedef struct
+{
+    struct list entry;
     const property_t *prop;
     PROPVARIANT value;
+    struct list params;
 } header_t;
 
 typedef struct MimeBody
@@ -223,6 +231,7 @@ static header_t *read_prop(MimeBody *body, char **ptr)
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(*ret));
     ret->prop = prop;
     PropVariantInit(&ret->value);
+    list_init(&ret->params);
     *ptr = colon + 1;
 
     return ret;
@@ -253,6 +262,57 @@ static void unfold_header(char *header, int len)
     *(start - 1) = '\0';
 }
 
+static void add_param(header_t *header, const char *p)
+{
+    const char *key = p, *value, *cp = p;
+    param_t *param;
+    char *name;
+
+    TRACE("got param %s\n", p);
+
+    while (*key == ' ' || *key == '\t' ) key++;
+
+    cp = strchr(key, '=');
+    if(!cp)
+    {
+        WARN("malformed parameter - skipping\n");
+        return;
+    }
+
+    name = HeapAlloc(GetProcessHeap(), 0, cp - key + 1);
+    memcpy(name, key, cp - key);
+    name[cp - key] = '\0';
+
+    value = cp + 1;
+
+    param = HeapAlloc(GetProcessHeap(), 0, sizeof(*param));
+    param->name = name;
+    param->value = strdupA(value);
+    list_add_tail(&header->params, &param->entry);
+}
+
+static void split_params(header_t *header, char *value)
+{
+    char *cp = value, *start = value;
+    int in_quote = 0;
+    int done_value = 0;
+
+    while(*cp)
+    {
+        if(!in_quote && *cp == ';')
+        {
+            *cp = '\0';
+            if(done_value) add_param(header, start);
+            done_value = 1;
+            start = cp + 1;
+        }
+        else if(*cp == '"')
+            in_quote = !in_quote;
+        cp++;
+    }
+    if(done_value) add_param(header, start);
+}
+
 static void read_value(header_t *header, char **cur)
 {
     char *end = *cur, *value;
@@ -270,6 +330,12 @@ static void read_value(header_t *header, char **cur)
 
     unfold_header(value, len);
     TRACE("value %s\n", debugstr_a(value));
+
+    if(header->prop->flags & MPF_HASPARAMS)
+    {
+        split_params(header, value);
+        TRACE("value w/o params %s\n", debugstr_a(value));
+    }
 
     header->value.vt = VT_LPSTR;
     header->value.pszVal = value;
@@ -297,6 +363,19 @@ static HRESULT parse_headers(MimeBody *body, IStream *stm)
     return hr;
 }
 
+static void emptry_param_list(struct list *list)
+{
+    param_t *param, *cursor2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(param, cursor2, list, param_t, entry)
+    {
+        list_remove(&param->entry);
+        HeapFree(GetProcessHeap(), 0, param->name);
+        HeapFree(GetProcessHeap(), 0, param->value);
+        HeapFree(GetProcessHeap(), 0, param);
+    }
+}
+
 static void empty_header_list(struct list *list)
 {
     header_t *header, *cursor2;
@@ -305,6 +384,7 @@ static void empty_header_list(struct list *list)
     {
         list_remove(&header->entry);
         PropVariantClear(&header->value);
+        emptry_param_list(&header->params);
         HeapFree(GetProcessHeap(), 0, header);
     }
 }
