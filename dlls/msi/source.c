@@ -240,8 +240,8 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (szUserSid)
         FIXME("Unhandled UserSid %s\n",debugstr_w(szUserSid));
 
-    if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
-        FIXME("Unknown context MSIINSTALLCONTEXT_USERUNMANAGED\n");
+    if (dwContext != MSIINSTALLCONTEXT_USERUNMANAGED)
+        FIXME("Unhandled context %d\n", dwContext);
 
     rc = OpenSourceKey(szProduct, &sourcekey, dwOptions, dwContext, FALSE);
     if (rc != ERROR_SUCCESS)
