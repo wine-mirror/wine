@@ -2,6 +2,7 @@
  * MIME OLE Interfaces
  *
  * Copyright 2006 Robert Shearman for CodeWeavers
+ * Copyright 2007 Huw Davies for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -48,6 +49,86 @@ static inline MimeBody *impl_from_IMimeBody( IMimeBody *iface )
 {
     return (MimeBody *)((char*)iface - FIELD_OFFSET(MimeBody, lpVtbl));
 }
+
+#define PARSER_BUF_SIZE 1024
+
+/*****************************************************
+ *        copy_headers_to_buf [internal]
+ *
+ * Copies the headers into a '\0' terminated memory block and leave
+ * the stream's current position set to after the blank line.
+ */
+static HRESULT copy_headers_to_buf(IStream *stm, char **ptr)
+{
+    char *buf = NULL;
+    DWORD size = PARSER_BUF_SIZE, offset = 0, last_end = 0;
+    HRESULT hr;
+    int done = 0;
+
+    *ptr = NULL;
+
+    do
+    {
+        char *end;
+        DWORD read;
+
+        if(!buf)
+            buf = HeapAlloc(GetProcessHeap(), 0, size + 1);
+        else
+        {
+            size *= 2;
+            buf = HeapReAlloc(GetProcessHeap(), 0, buf, size + 1);
+        }
+        if(!buf)
+        {
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
+        hr = IStream_Read(stm, buf + offset, size - offset, &read);
+        if(FAILED(hr)) goto fail;
+
+        offset += read;
+        buf[offset] = '\0';
+
+        if(read == 0) done = 1;
+
+        while(!done && (end = strstr(buf + last_end, "\r\n")))
+        {
+            DWORD new_end = end - buf + 2;
+            if(new_end - last_end == 2)
+            {
+                LARGE_INTEGER off;
+                off.QuadPart = new_end;
+                IStream_Seek(stm, off, STREAM_SEEK_SET, NULL);
+                buf[new_end] = '\0';
+                done = 1;
+            }
+            else
+                last_end = new_end;
+        }
+    } while(!done);
+
+    *ptr = buf;
+    return S_OK;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, buf);
+    return hr;
+}
+
+static HRESULT parse_headers(MimeBody *body, IStream *stm)
+{
+    char *header_buf;
+    HRESULT hr;
+
+    hr = copy_headers_to_buf(stm, &header_buf);
+    if(FAILED(hr)) return hr;
+
+    HeapFree(GetProcessHeap(), 0, header_buf);
+    return hr;
+}
+
 
 static HRESULT WINAPI MimeBody_QueryInterface(IMimeBody* iface,
                                      REFIID riid,
@@ -119,8 +200,9 @@ static HRESULT WINAPI MimeBody_Load(
                            IMimeBody* iface,
                            LPSTREAM pStm)
 {
-    FIXME("(%p)->(%p): stub\n", iface, pStm);
-    return E_NOTIMPL;
+    MimeBody *This = impl_from_IMimeBody(iface);
+    TRACE("(%p)->(%p)\n", iface, pStm);
+    return parse_headers(This, pStm);
 }
 
 static HRESULT WINAPI MimeBody_Save(
@@ -143,8 +225,8 @@ static HRESULT WINAPI MimeBody_GetSizeMax(
 static HRESULT WINAPI MimeBody_InitNew(
                               IMimeBody* iface)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    TRACE("%p->()\n", iface);
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_GetPropInfo(
