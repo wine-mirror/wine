@@ -837,6 +837,22 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
         else
             toAdd = CertDuplicateCertificateContext(pCertContext);
         break;
+    case CERT_STORE_ADD_NEWER:
+        if (existing)
+        {
+            if (CompareFileTime(&existing->pCertInfo->NotBefore,
+             &pCertContext->pCertInfo->NotBefore) >= 0)
+            {
+                TRACE("existing certificate is newer, not adding\n");
+                SetLastError(CRYPT_E_EXISTS);
+                ret = FALSE;
+            }
+            else
+                toAdd = CertDuplicateCertificateContext(pCertContext);
+        }
+        else
+            toAdd = CertDuplicateCertificateContext(pCertContext);
+        break;
     default:
         FIXME("Unimplemented add disposition %d\n", dwAddDisposition);
         ret = FALSE;
