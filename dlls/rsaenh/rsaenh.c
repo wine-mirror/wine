@@ -1583,8 +1583,8 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
 
         case CRYPT_VERIFYCONTEXT|CRYPT_NEWKEYSET:
         case CRYPT_VERIFYCONTEXT:
-            if (pszContainer) {
-                TRACE("pszContainer should be NULL\n");
+            if (pszContainer && *pszContainer) {
+                TRACE("pszContainer should be empty\n");
                 SetLastError(NTE_BAD_FLAGS);
                 return FALSE;
             }
