@@ -3510,6 +3510,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     struct coords coords[4];
     RECT rect;
     IWineD3DSwapChain *swapchain = NULL;
+    IWineD3DBaseTexture *texture = NULL;
     HRESULT hr;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
@@ -3640,6 +3641,17 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
             glFlush();
 
         IWineD3DSwapChain_Release(swapchain);
+    } else {
+        /* We changed the filtering settings on the texture. Inform the container about this to get the filters
+         * reset properly next draw
+         */
+        hr = IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DBaseTexture, (void **) &texture);
+        if(hr == WINED3D_OK && texture) {
+            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
+            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
+            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
+            IWineD3DBaseTexture_Release(texture);
+        }
     }
     LEAVE_GL();
 }
