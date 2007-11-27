@@ -525,8 +525,17 @@ static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const ch
             break;
 
         case WINED3DSTT_2D:
-            tex_type = "2D";
+        {
+            IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) arg->shader;
+            IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
+            if(device->stateBlock->textures[sampler_idx] &&
+               IWineD3DBaseTexture_GetTextureDimensions(device->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
+                tex_type = "RECT";
+            } else {
+                tex_type = "2D";
+            }
             break;
+        }
 
         case WINED3DSTT_VOLUME:
             tex_type = "3D";

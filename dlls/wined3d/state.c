@@ -354,7 +354,9 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
      * used WINED3DRS_COLORKEYENABLE state(which is d3d <= 3 only). The texture function will call alpha
      * in case it finds some texture+colorkeyenable combination which needs extra care.
      */
-    if(stateblock->textures[0] && stateblock->textureDimensions[0] == GL_TEXTURE_2D) {
+    if(stateblock->textures[0] && (
+       stateblock->textureDimensions[0] == GL_TEXTURE_2D ||
+       stateblock->textureDimensions[0] == GL_TEXTURE_RECTANGLE_ARB)) {
         surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)stateblock->textures[0])->surfaces[0];
 
         if(surf->CKeyFlags & WINEDDSD_CKSRCBLT) {
@@ -1696,8 +1698,29 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
                         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                         checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
                     }
+                    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                        glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+                    }
                     glEnable(GL_TEXTURE_2D);
                     checkGLcall("glEnable(GL_TEXTURE_2D)");
+                }
+                break;
+            case GL_TEXTURE_RECTANGLE_ARB:
+                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_RECTANGLE_ARB);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, ...)");
+                } else {
+                    glDisable(GL_TEXTURE_2D);
+                    checkGLcall("glDisable(GL_TEXTURE_2D)");
+                    glDisable(GL_TEXTURE_3D);
+                    checkGLcall("glDisable(GL_TEXTURE_3D)");
+                    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+                    }
+                    glEnable(GL_TEXTURE_RECTANGLE_ARB);
+                    checkGLcall("glEnable(GL_TEXTURE_RECTANGLE_ARB)");
                 }
                 break;
             case GL_TEXTURE_3D:
@@ -1708,6 +1731,10 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
                     if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
                         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                         checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+                    }
+                    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                        glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
                     }
                     glDisable(GL_TEXTURE_2D);
                     checkGLcall("glDisable(GL_TEXTURE_2D)");
@@ -1724,6 +1751,10 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
                     checkGLcall("glDisable(GL_TEXTURE_2D)");
                     glDisable(GL_TEXTURE_3D);
                     checkGLcall("glDisable(GL_TEXTURE_3D)");
+                    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                        glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+                    }
                     glEnable(GL_TEXTURE_CUBE_MAP_ARB);
                     checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
                 }
@@ -1741,6 +1772,10 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
             if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
                 glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                 checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+            }
+            if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
             }
             /* Binding textures is done by samplers. A dummy texture will be bound */
         }
@@ -1795,6 +1830,10 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
             if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
                 glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                 checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+            }
+            if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
             }
             if(GL_SUPPORT(NV_TEXTURE_SHADER2) && mapped_stage < GL_LIMITS(textures)) {
                 glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
@@ -1873,7 +1912,8 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     arg0 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG0];
 
     if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && stage == 0 &&
-       stateblock->textures[0] && stateblock->textureDimensions[0] == GL_TEXTURE_2D) {
+       stateblock->textures[0] &&
+       (stateblock->textureDimensions[0] == GL_TEXTURE_2D || stateblock->textureDimensions[0] == GL_TEXTURE_RECTANGLE_ARB)) {
         IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
 
         if(surf->CKeyFlags & WINEDDSD_CKSRCBLT &&
@@ -2302,7 +2342,8 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
          * scaling is reapplied or removed, the texture matrix has to be reapplied
          */
         if(!GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) && sampler < MAX_TEXTURES) {
-            if(stateblock->textureDimensions[sampler] == GL_TEXTURE_2D) {
+            if(stateblock->textureDimensions[sampler] == GL_TEXTURE_2D ||
+               stateblock->textureDimensions[sampler] == GL_TEXTURE_RECTANGLE_ARB) {
                 if(((IWineD3DTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[0] != 1.0 ||
                    ((IWineD3DTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[5] != 1.0 ) {
                     texIsPow2 = TRUE;

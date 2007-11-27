@@ -5739,8 +5739,16 @@ static void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWOR
     GLint old_binding;
 
     texttarget = surface_impl->glDescription.target;
-    target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
-    glGetIntegerv(texttarget == GL_TEXTURE_2D ? GL_TEXTURE_BINDING_2D : GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
+    if(texttarget == GL_TEXTURE_2D) {
+        target = GL_TEXTURE_2D;
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
+    } else if(texttarget == GL_TEXTURE_RECTANGLE_ARB) {
+        target = GL_TEXTURE_RECTANGLE_ARB;
+        glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
+    } else {
+        target = GL_TEXTURE_CUBE_MAP_ARB;
+        glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
+    }
 
     IWineD3DSurface_PreLoad(surface);
 
@@ -6086,8 +6094,16 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
             GLint old_binding = 0;
 
             texttarget = depth_stencil_impl->glDescription.target;
-            target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
-            glGetIntegerv(texttarget == GL_TEXTURE_2D ? GL_TEXTURE_BINDING_2D : GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
+            if(texttarget == GL_TEXTURE_2D) {
+                target = GL_TEXTURE_2D;
+                glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
+            } else if(texttarget == GL_TEXTURE_RECTANGLE_ARB) {
+                target = GL_TEXTURE_RECTANGLE_ARB;
+                glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
+            } else {
+                target = GL_TEXTURE_CUBE_MAP_ARB;
+                glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
+            }
 
             IWineD3DSurface_PreLoad(depth_stencil);
 

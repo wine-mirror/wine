@@ -349,6 +349,10 @@ HRESULT shader_get_registers_used(
                 } else {
                     int texType = IWineD3DBaseTexture_GetTextureDimensions(stateBlock->textures[sampler_code]);
                     switch(texType) {
+                        /* We have to select between texture rectangles and 2D textures later because 2.0 and
+                         * 3.0 shaders only have WINED3DSTT_2D as well
+                         */
+                        case GL_TEXTURE_RECTANGLE_ARB:
                         case GL_TEXTURE_2D:
                             reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
                             break;

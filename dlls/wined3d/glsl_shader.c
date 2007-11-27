@@ -576,7 +576,12 @@ void shader_generate_glsl_declarations(
                     shader_addline(buffer, "uniform sampler1D %csampler%u;\n", prefix, i);
                     break;
                 case WINED3DSTT_2D:
-                    shader_addline(buffer, "uniform sampler2D %csampler%u;\n", prefix, i);
+                    if(device->stateBlock->textures[i] &&
+                       IWineD3DBaseTexture_GetTextureDimensions(device->stateBlock->textures[i]) == GL_TEXTURE_RECTANGLE_ARB) {
+                        shader_addline(buffer, "uniform sampler2DRect %csampler%u;\n", prefix, i);
+                    } else {
+                        shader_addline(buffer, "uniform sampler2D %csampler%u;\n", prefix, i);
+                    }
                     break;
                 case WINED3DSTT_CUBE:
                     shader_addline(buffer, "uniform samplerCube %csampler%u;\n", prefix, i);
@@ -1081,7 +1086,7 @@ static inline const char* shader_get_comp_op(
     }
 }
 
-static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, glsl_sample_function_t *sample_function) {
+static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, BOOL texrect, glsl_sample_function_t *sample_function) {
     /* Note that there's no such thing as a projected cube texture. */
     switch(sampler_type) {
         case WINED3DSTT_1D:
@@ -1089,7 +1094,11 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, 
             sample_function->coord_mask = WINED3DSP_WRITEMASK_0;
             break;
         case WINED3DSTT_2D:
-            sample_function->name = projected ? "texture2DProj" : "texture2D";
+            if(texrect) {
+                sample_function->name = projected ? "texture2DRectProj" : "texture2DRect";
+            } else {
+                sample_function->name = projected ? "texture2DProj" : "texture2D";
+            }
             sample_function->coord_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1;
             break;
         case WINED3DSTT_CUBE:
@@ -2036,7 +2045,7 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     glsl_sample_function_t sample_function;
     DWORD sampler_type;
     DWORD sampler_idx;
-    BOOL projected;
+    BOOL projected, texrect = FALSE;
     DWORD mask = 0;
 
     /* All versions have a destination register */
@@ -2086,8 +2095,13 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
         }
     }
 
+    if(deviceImpl->stateBlock->textures[sampler_idx] &&
+       IWineD3DBaseTexture_GetTextureDimensions(deviceImpl->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
+        texrect = TRUE;
+    }
+
     sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
-    shader_glsl_get_sample_function(sampler_type, projected, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, projected, texrect, &sample_function);
     mask |= sample_function.coord_mask;
 
     if (hex_version < WINED3DPS_VERSION(2,0)) {
@@ -2122,19 +2136,24 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
 
 void shader_glsl_texldl(SHADER_OPCODE_ARG* arg) {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*)arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param, lod_param;
     char dst_swizzle[6];
     DWORD sampler_type;
     DWORD sampler_idx;
+    BOOL texrect = FALSE;
 
     shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_get_swizzle(arg->src[1], FALSE, arg->dst, dst_swizzle);
 
     sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
     sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
-    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
-    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &coord_param);
+    if(deviceImpl->stateBlock->textures[sampler_idx] &&
+       IWineD3DBaseTexture_GetTextureDimensions(deviceImpl->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
+        texrect = TRUE;
+    }
+    shader_glsl_get_sample_function(sampler_type, FALSE, texrect, &sample_function);    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &coord_param);
 
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, &lod_param);
 
@@ -2216,9 +2235,11 @@ void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
     shader_glsl_get_write_mask(arg->dst, dst_mask);
 
     /* Do I have to take care about the projected bit? I don't think so, since the dp3 returns only one
-     * scalar, and projected sampling would require 4
+     * scalar, and projected sampling would require 4.
+     *
+     * It is a dependent read - not valid with conditional NP2 textures
      */
-    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, &sample_function);
 
     switch(count_bits(sample_function.coord_mask)) {
         case 1:
@@ -2354,7 +2375,8 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
-    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
+    /* Dependent read, not valid with conditional NP2 */
+    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
     shader_addline(arg->buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
@@ -2406,7 +2428,8 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_append_dst(buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
-    shader_glsl_get_sample_function(stype, FALSE, &sample_function);
+    /* Dependent read, not valid with conditional NP2 */
+    shader_glsl_get_sample_function(stype, FALSE, FALSE, &sample_function);
 
     /* Sample the texture */
     shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
@@ -2440,7 +2463,8 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_append_dst(buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
-    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
+    /* Dependent read, not valid with conditional NP2 */
+    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
     shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
@@ -2468,7 +2492,8 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
     flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
 
     sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
-    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
+    /* Dependent read, not valid with conditional NP2 */
+    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, &sample_function);
     mask = sample_function.coord_mask;
 
     shader_glsl_get_write_mask(arg->dst, dst_swizzle);
@@ -2557,7 +2582,8 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
-    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
+    /* Dependent read, not valid with conditional NP2 */
+    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, &sample_function);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &src0_param);
 
     shader_addline(arg->buffer, "%s(Psampler%u, %s)%s);\n", sample_function.name, sampler_idx, src0_param.param_str, dst_mask);

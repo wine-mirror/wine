@@ -285,11 +285,15 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
         checkGLcall("glBindTexture");
         if (isNewTexture) {
             /* For a new texture we have to set the textures levels after binding the texture.
-            * In theory this is all we should ever have to do, but because ATI's drivers are broken, we
-            * also need to set the texture dimensions before the texture is set */
-            TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
-            glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
-            checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
+             * In theory this is all we should ever have to do, but because ATI's drivers are broken, we
+             * also need to set the texture dimensions before the texture is set
+             * Beware that texture rectangles do not support mipmapping.
+             */
+            if(textureDimensions != GL_TEXTURE_RECTANGLE_ARB) {
+                TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
+                glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
+                checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
+            }
             if(textureDimensions==GL_TEXTURE_CUBE_MAP_ARB) {
                 /* Cubemaps are always set to clamp, regardeless of the sampler state. */
                 glTexParameteri(textureDimensions, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -413,15 +417,17 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
         TRACE("ValueMAG=%d setting MAGFILTER to %x\n", state, glValue);
         glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
         /* We need to reset the Aniotropic filtering state when we change the mag filter to WINED3DTEXF_ANISOTROPIC (this seems a bit weird, check the documentataion to see how it should be switched off. */
-        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && WINED3DTEXF_ANISOTROPIC == state) {
+        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && WINED3DTEXF_ANISOTROPIC == state &&
+            textureDimensions != GL_TEXTURE_RECTANGLE_ARB) {
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT, samplerStates[WINED3DSAMP_MAXANISOTROPY]);
         }
         This->baseTexture.states[WINED3DTEXSTA_MAGFILTER] = state;
     }
 
-    if(samplerStates[WINED3DSAMP_MINFILTER]     != This->baseTexture.states[WINED3DTEXSTA_MINFILTER] ||
-       samplerStates[WINED3DSAMP_MIPFILTER]     != This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] ||
-       samplerStates[WINED3DSAMP_MAXMIPLEVEL]   != This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL]) {
+    if(textureDimensions != GL_TEXTURE_RECTANGLE_ARB &&
+       (samplerStates[WINED3DSAMP_MINFILTER]     != This->baseTexture.states[WINED3DTEXSTA_MINFILTER] ||
+        samplerStates[WINED3DSAMP_MIPFILTER]     != This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] ||
+        samplerStates[WINED3DSAMP_MAXMIPLEVEL]   != This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL])) {
         GLint glValue;
 
         This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] = samplerStates[WINED3DSAMP_MIPFILTER];
@@ -458,7 +464,7 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
     }
 
     if(samplerStates[WINED3DSAMP_MAXANISOTROPY] != This->baseTexture.states[WINED3DTEXSTA_MAXANISOTROPY]) {
-        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && textureDimensions != GL_TEXTURE_RECTANGLE_ARB) {
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT, samplerStates[WINED3DSAMP_MAXANISOTROPY]);
             checkGLcall("glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT ...");
         } else {

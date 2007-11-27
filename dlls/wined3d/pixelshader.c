@@ -312,6 +312,12 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
         if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
             shader_addline(&buffer, "#extension GL_ARB_draw_buffers : enable\n");
         }
+        if (GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+            /* The spec says that it doesn't have to be explicitly enabled, but the nvidia
+             * drivers write a warning if we don't do so
+             */
+            shader_addline(&buffer, "#extension GL_ARB_texture_rectangle : enable\n");
+        }
 
         /* Base Declarations */
         shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);

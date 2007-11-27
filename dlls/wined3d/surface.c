@@ -3573,7 +3573,33 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     ActivateContext(device, device->render_targets[0], CTXUSAGE_BLIT);
     ENTER_GL();
 
-    if(This->glDescription.target == GL_TEXTURE_2D) {
+    if(This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB) {
+        glEnable(GL_TEXTURE_RECTANGLE_ARB);
+        checkGLcall("glEnable(GL_TEXTURE_RECTANGLE_ARB)");
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, This->glDescription.textureName);
+        checkGLcall("GL_TEXTURE_RECTANGLE_ARB, This->glDescription.textureName)");
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri");
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri");
+
+        coords[0].x = rect.left;
+        coords[0].z = 0;
+
+        coords[1].x = rect.left;
+        coords[1].z = 0;
+
+        coords[2].x = rect.right;
+        coords[2].z = 0;
+
+        coords[3].x = rect.right;
+        coords[3].z = 0;
+
+        coords[0].y = rect.top;
+        coords[1].y = rect.bottom;
+        coords[2].y = rect.bottom;
+        coords[3].y = rect.top;
+    } else if(This->glDescription.target == GL_TEXTURE_2D) {
         glEnable(GL_TEXTURE_2D);
         checkGLcall("glEnable(GL_TEXTURE_2D)");
         glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);

@@ -2797,10 +2797,17 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
     /* No oversized texture? This is easy */
     if(!(This->Flags & SFLAG_OVERSIZE)) {
         /* Which rect from the texture do I need? */
-        glTexCoord[0] = (float) Rect->left / (float) This->pow2Width;
-        glTexCoord[2] = (float) Rect->top / (float) This->pow2Height;
-        glTexCoord[1] = (float) Rect->right / (float) This->pow2Width;
-        glTexCoord[3] = (float) Rect->bottom / (float) This->pow2Height;
+        if(This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB) {
+            glTexCoord[0] = (float) Rect->left;
+            glTexCoord[2] = (float) Rect->top;
+            glTexCoord[1] = (float) Rect->right;
+            glTexCoord[3] = (float) Rect->bottom;
+        } else {
+            glTexCoord[0] = (float) Rect->left / (float) This->pow2Width;
+            glTexCoord[2] = (float) Rect->top / (float) This->pow2Height;
+            glTexCoord[1] = (float) Rect->right / (float) This->pow2Width;
+            glTexCoord[3] = (float) Rect->bottom / (float) This->pow2Height;
+        }
 
         return TRUE;
     } else {
@@ -2877,7 +2884,10 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
         Rect->bottom -= This->glRect.top;
 
         /* Get the gl coordinates. The gl rectangle is a power of 2, eigher the max size,
-         * or the pow2Width / pow2Height of the surface
+         * or the pow2Width / pow2Height of the surface.
+         *
+         * Can never be GL_TEXTURE_RECTANGLE_ARB because oversized surfaces are always set up
+         * as regular GL_TEXTURE_2D.
          */
         glTexCoord[0] = (float) Rect->left / (float) (This->glRect.right - This->glRect.left);
         glTexCoord[2] = (float) Rect->top / (float) (This->glRect.bottom - This->glRect.top);
