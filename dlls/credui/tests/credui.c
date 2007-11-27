@@ -41,7 +41,8 @@ static void test_CredUIPromptForCredentials(void)
     credui_info.hbmBanner = NULL;
 
     ret = CredUIConfirmCredentialsW(NULL, TRUE);
-    ok(ret == ERROR_INVALID_PARAMETER, "CredUIConfirmCredentials should have returned ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER /* 2003 + */ || ret == ERROR_NOT_FOUND /* XP */,
+        "CredUIConfirmCredentials should have returned ERROR_INVALID_PARAMETER or ERROR_NOT_FOUND instead of %d\n", ret);
 
     ret = CredUIConfirmCredentialsW(wszServerName, TRUE);
     ok(ret == ERROR_NOT_FOUND, "CredUIConfirmCredentials should have returned ERROR_NOT_FOUND instead of %d\n", ret);
