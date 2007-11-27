@@ -291,6 +291,10 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR *str, unsigned int len)
  */
 int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
 {
+    /* Detect integer overflow. */
+    if (len >= ((UINT_MAX-sizeof(WCHAR)-sizeof(DWORD))/sizeof(WCHAR)))
+	return 0;
+
     if (*old!=NULL) {
       DWORD newbytelen = len*sizeof(WCHAR);
       DWORD *ptr = HeapReAlloc(GetProcessHeap(),0,((DWORD*)*old)-1,newbytelen+sizeof(WCHAR)+sizeof(DWORD));
@@ -339,6 +343,10 @@ BSTR WINAPI SysAllocStringByteLen(LPCSTR str, UINT len)
 {
     DWORD* newBuffer;
     char* stringBuffer;
+
+    /* Detect integer overflow. */
+    if (len >= (UINT_MAX-sizeof(WCHAR)-sizeof(DWORD)))
+	return NULL;
 
     /*
      * Allocate a new buffer to hold the string.
