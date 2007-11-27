@@ -96,7 +96,7 @@
 @ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr)
 # @ stub CreateProcessAsUserSecure
 @ stdcall CreateProcessAsUserW(long str str ptr ptr long long ptr str ptr ptr)
-# @ stub CreateProcessWithLogonW
+@ stdcall CreateProcessWithLogonW(wstr wstr wstr long wstr wstr long ptr wstr ptr ptr)
 # @ stub CreateRestrictedToken
 @ stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr)
