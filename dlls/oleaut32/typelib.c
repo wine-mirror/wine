@@ -1421,6 +1421,19 @@ static void *TLB_CopyTypeDesc( TYPEDESC *dest, const TYPEDESC *src, void *buffer
     return buffer;
 }
 
+/* free custom data allocated by MSFT_CustData */
+static inline void TLB_FreeCustData(TLBCustData *pCustData)
+{
+    TLBCustData *pCustDataNext;
+    for (; pCustData; pCustData = pCustDataNext)
+    {
+        VariantClear(&pCustData->data);
+
+        pCustDataNext = pCustData->next;
+        TLB_Free(pCustData);
+    }
+}
+
 /**********************************************************************
  *
  *  Functions for reading MSFT typelibs (those created by CreateTypeLib2)
@@ -4474,7 +4487,6 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
       TLBFuncDesc *pFInfo, *pFInfoNext;
       TLBVarDesc *pVInfo, *pVInfoNext;
       TLBImplType *pImpl, *pImplNext;
-      TLBCustData *pCustData, *pCustDataNext;
 
       TRACE("destroying ITypeInfo(%p)\n",This);
 
@@ -4514,13 +4526,7 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
           }
           TLB_Free(pFInfo->funcdesc.lprgelemdescParam);
           TLB_Free(pFInfo->pParamDesc);
-          for (pCustData = pFInfo->pCustData; pCustData; pCustData = pCustDataNext)
-          {
-              VariantClear(&pCustData->data);
-
-              pCustDataNext = pCustData->next;
-              TLB_Free(pCustData);
-          }
+          TLB_FreeCustData(pFInfo->pCustData);
           if (HIWORD(pFInfo->Entry) != 0 && pFInfo->Entry != (BSTR)-1) 
               SysFreeString(pFInfo->Entry);
           SysFreeString(pFInfo->HelpString);
@@ -4536,23 +4542,18 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
               VariantClear(pVInfo->vardesc.u.lpvarValue);
               TLB_Free(pVInfo->vardesc.u.lpvarValue);
           }
+          TLB_FreeCustData(pVInfo->pCustData);
           SysFreeString(pVInfo->Name);
           pVInfoNext = pVInfo->next;
           TLB_Free(pVInfo);
       }
       for(pImpl = This->impltypelist; pImpl; pImpl = pImplNext)
       {
-          for (pCustData = pImpl->pCustData; pCustData; pCustData = pCustDataNext)
-          {
-              VariantClear(&pCustData->data);
-
-              pCustDataNext = pCustData->next;
-              TLB_Free(pCustData);
-          }
+          TLB_FreeCustData(pImpl->pCustData);
           pImplNext = pImpl->next;
           TLB_Free(pImpl);
       }
-      TLB_Free(This->pCustData);
+      TLB_FreeCustData(This->pCustData);
 
 finish_free:
       if (This->next)
