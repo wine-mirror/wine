@@ -19,19 +19,19 @@
  */
 
 
-static inline void *dns_alloc( SIZE_T size )
+static inline void *heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
 }
 
-static inline void *dns_zero_alloc( SIZE_T size )
+static inline void *heap_alloc_zero( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
 }
 
-static inline void dns_free( LPVOID mem )
+static inline BOOL heap_free( LPVOID mem )
 {
-    HeapFree( GetProcessHeap(), 0, mem );
+    return HeapFree( GetProcessHeap(), 0, mem );
 }
 
 static inline LPSTR dns_strdup_a( LPCSTR src )
@@ -39,7 +39,7 @@ static inline LPSTR dns_strdup_a( LPCSTR src )
     LPSTR dst;
 
     if (!src) return NULL;
-    dst = dns_alloc( (lstrlenA( src ) + 1) * sizeof(char) );
+    dst = heap_alloc( (lstrlenA( src ) + 1) * sizeof(char) );
     if (dst) lstrcpyA( dst, src );
     return dst;
 }
@@ -49,7 +49,7 @@ static inline char *dns_strdup_u( const char *src )
     char *dst;
 
     if (!src) return NULL;
-    dst = dns_alloc( (strlen( src ) + 1) * sizeof(char) );
+    dst = heap_alloc( (strlen( src ) + 1) * sizeof(char) );
     if (dst) strcpy( dst, src );
     return dst;
 }
@@ -59,7 +59,7 @@ static inline LPWSTR dns_strdup_w( LPCWSTR src )
     LPWSTR dst;
 
     if (!src) return NULL;
-    dst = dns_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) );
+    dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) );
     if (dst) lstrcpyW( dst, src );
     return dst;
 }
@@ -70,7 +70,7 @@ static inline LPWSTR dns_strdup_aw( LPCSTR str )
     if (str)
     {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-        if ((ret = dns_alloc( len * sizeof(WCHAR) )))
+        if ((ret = heap_alloc( len * sizeof(WCHAR) )))
             MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
     }
     return ret;
@@ -82,7 +82,7 @@ static inline LPWSTR dns_strdup_uw( const char *str )
     if (str)
     {
         DWORD len = MultiByteToWideChar( CP_UTF8, 0, str, -1, NULL, 0 );
-        if ((ret = dns_alloc( len * sizeof(WCHAR) )))
+        if ((ret = heap_alloc( len * sizeof(WCHAR) )))
             MultiByteToWideChar( CP_UTF8, 0, str, -1, ret, len );
     }
     return ret;
@@ -94,7 +94,7 @@ static inline LPSTR dns_strdup_wa( LPCWSTR str )
     if (str)
     {
         DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
-        if ((ret = dns_alloc( len )))
+        if ((ret = heap_alloc( len )))
             WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     }
     return ret;
@@ -106,7 +106,7 @@ static inline char *dns_strdup_wu( LPCWSTR str )
     if (str)
     {
         DWORD len = WideCharToMultiByte( CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL );
-        if ((ret = dns_alloc( len )))
+        if ((ret = heap_alloc( len )))
             WideCharToMultiByte( CP_UTF8, 0, str, -1, ret, len, NULL, NULL );
     }
     return ret;
@@ -120,7 +120,7 @@ static inline char *dns_strdup_au( LPCSTR src )
     if (ret)
     {
         dst = dns_strdup_wu( ret );
-        dns_free( ret );
+        heap_free( ret );
     }
     return dst;
 }
@@ -133,7 +133,7 @@ static inline LPSTR dns_strdup_ua( const char *src )
     if (ret)
     {
         dst = dns_strdup_wa( ret );
-        dns_free( ret );
+        heap_free( ret );
     }
     return dst;
 }
