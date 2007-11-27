@@ -75,7 +75,7 @@ static ULONG WINAPI InternetExplorer_Release(IWebBrowser2 *iface)
 
     if(!ref) {
         DocHost_Release(&This->doc_host);
-        shdocvw_free(This);
+        heap_free(This);
     }
 
     return ref;

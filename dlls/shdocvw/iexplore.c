@@ -161,7 +161,7 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 
     TRACE("(%p %s %p)\n", pOuter, debugstr_guid(riid), ppv);
 
-    ret = shdocvw_alloc(sizeof(InternetExplorer));
+    ret = heap_alloc(sizeof(InternetExplorer));
     ret->ref = 0;
 
     ret->doc_host.disp = (IDispatch*)WEBBROWSER2(ret);
@@ -174,7 +174,7 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 
     hres = IWebBrowser2_QueryInterface(WEBBROWSER2(ret), riid, ppv);
     if(FAILED(hres)) {
-        shdocvw_free(ret);
+        heap_free(ret);
         return hres;
     }
 
