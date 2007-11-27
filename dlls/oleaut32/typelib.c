@@ -4514,7 +4514,7 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
           }
           TLB_Free(pFInfo->funcdesc.lprgelemdescParam);
           TLB_Free(pFInfo->pParamDesc);
-          for (pCustData = This->pCustData; pCustData; pCustData = pCustDataNext)
+          for (pCustData = pFInfo->pCustData; pCustData; pCustData = pCustDataNext)
           {
               VariantClear(&pCustData->data);
 
