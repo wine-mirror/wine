@@ -810,7 +810,7 @@ static LPWSTR msi_get_checkbox_value( msi_dialog *dialog, LPCWSTR prop )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','`','C','h','e','c','k','B','o','x',' ','`',
+        'F','R','O','M',' ','`','C','h','e','c','k','B','o','x','`',' ',
         'W','H','E','R','E',' ',
         '`','P','r','o','p','e','r','t','y','`',' ','=',' ',
         '\'','%','s','\'',0
