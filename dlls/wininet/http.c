@@ -1193,6 +1193,7 @@ static BOOL HTTP_InsertAuthorizationForHeader( LPWININETHTTPREQW lpwhr, struct H
     if (pAuthInfo && pAuthInfo->auth_data_len)
     {
         static const WCHAR wszSpace[] = {' ',0};
+        static const WCHAR wszBasic[] = {'B','a','s','i','c',0};
         unsigned int len;
 
         /* scheme + space + base64 encoded data (3/2/1 bytes data -> 4 bytes of characters) */
@@ -1208,10 +1209,14 @@ static BOOL HTTP_InsertAuthorizationForHeader( LPWININETHTTPREQW lpwhr, struct H
                           authorization+strlenW(authorization));
 
         /* clear the data as it isn't valid now that it has been sent to the
-         * server */
-        HeapFree(GetProcessHeap(), 0, pAuthInfo->auth_data);
-        pAuthInfo->auth_data = NULL;
-        pAuthInfo->auth_data_len = 0;
+         * server, unless it's Basic authentication which doesn't do
+         * connection tracking */
+        if (strcmpiW(pAuthInfo->scheme, wszBasic))
+        {
+            HeapFree(GetProcessHeap(), 0, pAuthInfo->auth_data);
+            pAuthInfo->auth_data = NULL;
+            pAuthInfo->auth_data_len = 0;
+        }
     }
 
     TRACE("Inserting authorization: %s\n", debugstr_w(authorization));
