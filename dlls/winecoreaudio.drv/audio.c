@@ -2129,6 +2129,29 @@ static DWORD widStop(WORD wDevID)
     return ret;
 }
 
+/**************************************************************************
+ *                      widGetPos                                 [internal]
+ */
+static DWORD widGetPos(WORD wDevID, LPMMTIME lpTime, UINT size)
+{
+    DWORD		    val;
+    WINE_WAVEIN*    wwi;
+
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV)
+    {
+        WARN("invalid device ID\n");
+        return MMSYSERR_INVALHANDLE;
+    }
+
+    wwi = &WInDev[wDevID];
+
+    OSSpinLockLock(&WInDev[wDevID].lock);
+    val = wwi->dwTotalRecorded;
+    OSSpinLockUnlock(&WInDev[wDevID].lock);
+
+    return bytes_to_mmtime(lpTime, val, &wwi->format);
+}
 
 /**************************************************************************
  *                      widReset                                [internal]
@@ -2283,6 +2306,7 @@ DWORD WINAPI CoreAudio_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
         case WIDM_RESET:            return widReset         (wDevID);
         case WIDM_START:            return widStart         (wDevID);
         case WIDM_STOP:             return widStop          (wDevID);
+        case WIDM_GETPOS:           return widGetPos        (wDevID, (LPMMTIME)dwParam1, (UINT)dwParam2  );
         case DRV_QUERYDEVICEINTERFACESIZE: return widDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
         case DRV_QUERYDEVICEINTERFACE:     return widDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
         case DRV_QUERYDSOUNDIFACE:  return widDsCreate   (wDevID, (PIDSCDRIVER*)dwParam1);
