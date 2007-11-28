@@ -455,8 +455,8 @@ static void test_marshal_WdtpInterfacePointer(void)
         wireip += sizeof(DWORD);
         ok(*(DWORD *)wireip == 0x1, "wireip + 0xc should be 0x1 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
-        iid = (const IID *)buffer;
-        ok(!IsEqualIID(iid, &IID_IUnknown),
+        iid = (const IID *)wireip;
+        ok(IsEqualIID(iid, &IID_IUnknown),
            "wireip + 0x10 should be IID_IUnknown instead of {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
            iid->Data1, iid->Data2, iid->Data3,
            iid->Data4[0], iid->Data4[1], iid->Data4[2], iid->Data4[3],
