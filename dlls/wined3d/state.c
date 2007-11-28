@@ -2353,7 +2353,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
                 state_alpha(WINED3DRS_COLORKEYENABLE, stateblock, context);
             }
         }
-    } else if(sampler < GL_LIMITS(texture_stages)) {
+    } else if(mapped_stage < GL_LIMITS(textures)) {
         if(sampler < stateblock->lowest_disabled_stage) {
             /* TODO: What should I do with pixel shaders here ??? */
             if(!isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) {
