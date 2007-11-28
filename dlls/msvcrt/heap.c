@@ -396,7 +396,7 @@ void * CDECL _aligned_offset_realloc(void *memblock, MSVCRT_size_t size,
                                      MSVCRT_size_t alignment, MSVCRT_size_t offset)
 {
     void * temp, **saved;
-    MSVCRT_size_t old_padding, new_padding;
+    MSVCRT_size_t old_padding, new_padding, old_size;
     TRACE("(%p, %u, %u, %u)\n", memblock, size, alignment, offset);
 
     if (!memblock)
@@ -434,7 +434,22 @@ void * CDECL _aligned_offset_realloc(void *memblock, MSVCRT_size_t size,
         return NULL;
     }
 
-    old_padding = (char *)*saved - (char *)memblock;
+    old_padding = (char *)memblock - (char *)*saved;
+
+    /* Get previous size of block */
+    old_size = _msize(*saved);
+    if (old_size == -1)
+    {
+        /* It seems this function was called with an invalid pointer. Bail out. */
+        return NULL;
+    }
+    /* Adjust old_size to get amount of actual data in old block. */
+    old_size -= old_padding;
+    if (old_size < 0)
+    {
+        /* Shouldn't happen. Something's weird, so bail out. */
+        return NULL;
+    }
 
     temp = MSVCRT_realloc(*saved, size + alignment + sizeof(void *));
 
@@ -448,11 +463,40 @@ void * CDECL _aligned_offset_realloc(void *memblock, MSVCRT_size_t size,
     /* so it can be found later to free. */
     saved = SAVED_PTR(memblock);
 
-    /* a new start address may require different padding to get the */
-    /* proper alignment */
-    new_padding = (char *)temp - (char *)memblock;
+    new_padding = (char *)memblock - (char *)temp;
+
+/*
+   Memory layout of old block is as follows:
+   +-------+---------------------+-+--------------------------+-----------+
+   |  ...  | "old_padding" bytes | | ... "old_size" bytes ... |    ...    |
+   +-------+---------------------+-+--------------------------+-----------+
+           ^                     ^ ^
+           |                     | |
+        *saved               saved memblock
+
+   Memory layout of new block is as follows:
+   +-------+-----------------------------+-+----------------------+-------+
+   |  ...  |    "new_padding" bytes      | | ... "size" bytes ... |  ...  |
+   +-------+-----------------------------+-+----------------------+-------+
+           ^                             ^ ^
+           |                             | |
+          temp                       saved memblock
+
+   However, in the new block, actual data is still written as follows
+   (because it was copied by MSVCRT_realloc):
+   +-------+---------------------+--------------------------------+-------+
+   |  ...  | "old_padding" bytes |   ... "old_size" bytes ...     |  ...  |
+   +-------+---------------------+--------------------------------+-------+
+           ^                             ^ ^
+           |                             | |
+          temp                       saved memblock
+
+   Therefore, min(old_size,size) bytes of actual data have to be moved
+   from the offset they were at in the old block (temp + old_padding),
+   to the offset they have to be in the new block (temp + new_padding == memblock).
+*/
     if (new_padding != old_padding)
-        memmove((char *)memblock + old_padding, (char *)memblock + new_padding, size);
+        memmove((char *)memblock, (char *)temp + old_padding, (old_size < size) ? old_size : size);
 
     *saved = temp;
 
