@@ -410,54 +410,86 @@ static HRESULT WINAPI ProxyBindStatusCallback_OnStartBinding(IBindStatusCallback
                                                IBinding *pib)
 {
     ProxyBindStatusCallback *This = (ProxyBindStatusCallback *)iface;
-    return IBindStatusCallback_OnStartBinding(This->pBSC, dwReserved, pib);
+
+    if(This->pBSC)
+        return IBindStatusCallback_OnStartBinding(This->pBSC, dwReserved, pib);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProxyBindStatusCallback_GetPriority(IBindStatusCallback *iface, LONG *pnPriority)
 {
     ProxyBindStatusCallback *This = (ProxyBindStatusCallback *)iface;
-    return IBindStatusCallback_GetPriority(This->pBSC, pnPriority);
+
+    if(This->pBSC)
+        return IBindStatusCallback_GetPriority(This->pBSC, pnPriority);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProxyBindStatusCallback_OnLowResource(IBindStatusCallback *iface, DWORD reserved)
 {
     ProxyBindStatusCallback *This = (ProxyBindStatusCallback *)iface;
-    return IBindStatusCallback_OnLowResource(This->pBSC, reserved);
+
+    if(This->pBSC)
+        return IBindStatusCallback_OnLowResource(This->pBSC, reserved);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProxyBindStatusCallback_OnProgress(IBindStatusCallback *iface, ULONG ulProgress,
                                            ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
 {
     ProxyBindStatusCallback *This = (ProxyBindStatusCallback *)iface;
-    return IBindStatusCallback_OnProgress(This->pBSC, ulProgress,
+
+    if(This->pBSC)
+        return IBindStatusCallback_OnProgress(This->pBSC, ulProgress,
                                           ulProgressMax, ulStatusCode,
                                           szStatusText);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProxyBindStatusCallback_OnStopBinding(IBindStatusCallback *iface, HRESULT hresult, LPCWSTR szError)
 {
     ProxyBindStatusCallback *This = (ProxyBindStatusCallback *)iface;
-    return IBindStatusCallback_OnStopBinding(This->pBSC, hresult, szError);
+
+    if(This->pBSC)
+        return IBindStatusCallback_OnStopBinding(This->pBSC, hresult, szError);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProxyBindStatusCallback_GetBindInfo(IBindStatusCallback *iface, DWORD *grfBINDF, BINDINFO *pbindinfo)
 {
     ProxyBindStatusCallback *This = (ProxyBindStatusCallback *)iface;
-    return IBindStatusCallback_GetBindInfo(This->pBSC, grfBINDF, pbindinfo);
+
+    if(This->pBSC)
+        return IBindStatusCallback_GetBindInfo(This->pBSC, grfBINDF, pbindinfo);
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI ProxyBindStatusCallback_OnDataAvailable(IBindStatusCallback *iface, DWORD grfBSCF,
                                                               DWORD dwSize, FORMATETC* pformatetc, STGMEDIUM* pstgmed)
 {
     ProxyBindStatusCallback *This = (ProxyBindStatusCallback *)iface;
-    return IBindStatusCallback_OnDataAvailable(This->pBSC, grfBSCF, dwSize,
+
+    if(This->pBSC)
+        return IBindStatusCallback_OnDataAvailable(This->pBSC, grfBSCF, dwSize,
                                                pformatetc, pstgmed);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProxyBindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface, REFIID riid, IUnknown *punk)
 {
     ProxyBindStatusCallback *This = (ProxyBindStatusCallback *)iface;
-    return IBindStatusCallback_OnObjectAvailable(This->pBSC, riid, punk);
+
+    if(This->pBSC)
+        return IBindStatusCallback_OnObjectAvailable(This->pBSC, riid, punk);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BlockingBindStatusCallback_OnDataAvailable(IBindStatusCallback *iface, DWORD grfBSCF,
