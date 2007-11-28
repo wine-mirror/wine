@@ -617,6 +617,10 @@ static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *m
         return ERROR_FUNCTION_FAILED;
     }
 
+    /* cabinet is internal, no checks needed */
+    if (!mi->cabinet || mi->cabinet[0] == '#')
+        return ERROR_SUCCESS;
+
     /* package should be downloaded */
     if (file->IsCompressed &&
         GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES &&
@@ -647,7 +651,6 @@ static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *m
     }
 
     if (file->IsCompressed &&
-        mi->cabinet && mi->cabinet[0] != '#' &&
         GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
     {
         ERR("Cabinet not found: %s\n", debugstr_w(mi->source));
