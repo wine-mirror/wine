@@ -1930,6 +1930,7 @@ static VOID Local32_ToHandle( LOCAL32HEADER *header, INT16 type,
 static VOID Local32_FromHandle( LOCAL32HEADER *header, INT16 type,
                                 DWORD *addr, LPDWORD handle, LPBYTE ptr )
 {
+    *addr = 0;
     switch (type)
     {
         case -2:    /* 16:16 pointer */
