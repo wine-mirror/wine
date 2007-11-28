@@ -2823,6 +2823,23 @@ BOOL WINAPI RSAENH_CPSetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
             setup_key(pCryptKey);
             return TRUE;
 
+        case KP_SALT_EX:
+        {
+            CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)pbData;
+
+            /* salt length can't be greater than 128 bits = 16 bytes */
+            if (blob->cbData > 16)
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return FALSE;
+            }
+            memcpy(pCryptKey->abKeyValue + pCryptKey->dwKeyLen, blob->pbData,
+                   blob->cbData);
+            pCryptKey->dwSaltLen = blob->cbData;
+            setup_key(pCryptKey);
+            return TRUE;
+        }
+
         case KP_EFFECTIVE_KEYLEN:
             switch (pCryptKey->aiAlgid) {
                 case CALG_RC2:
