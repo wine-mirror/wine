@@ -1401,7 +1401,7 @@ static VOID ADVAPI_ApplyRestrictions( DWORD dwFlags, DWORD dwType,
 
                 if ((dwFlags & RRF_RT_DWORD) == RRF_RT_DWORD)
                     cbExpect = 4;
-                else if ((dwFlags & RRF_RT_DWORD) == RRF_RT_QWORD)
+                else if ((dwFlags & RRF_RT_QWORD) == RRF_RT_QWORD)
                     cbExpect = 8;
 
                 if (cbExpect && cbData != cbExpect)
