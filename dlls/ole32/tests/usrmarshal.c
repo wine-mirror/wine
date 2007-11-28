@@ -447,25 +447,24 @@ static void test_marshal_WdtpInterfacePointer(void)
     wireip = buffer;
     if (size >= 28)
     {
-        ok(*(DWORD *)wireip == 0x44, "wireip + 0x0 should be 0x4c instead of 0x%08x\n", *(DWORD *)wireip);
+        ok(*(DWORD *)wireip == 0x44, "wireip + 0x0 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
-        ok(*(DWORD *)wireip == 0x44, "wireip + 0x8 should be 0x4c instead of 0x%08x\n", *(DWORD *)wireip);
+        ok(*(DWORD *)wireip == 0x44, "wireip + 0x4 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
-        ok(*(DWORD *)wireip == 0x574f454d /* 'MEOW' */, "wireip + 0xc should be 0x574f454d instead of 0x%08x\n", *(DWORD *)wireip);
+        ok(*(DWORD *)wireip == 0x574f454d /* 'MEOW' */, "wireip + 0x8 should be 0x574f454d instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
-        ok(*(DWORD *)wireip == 0x1, "wireip + 0x10 should be 0x1 instead of 0x%08x\n", *(DWORD *)wireip);
+        ok(*(DWORD *)wireip == 0x1, "wireip + 0xc should be 0x1 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
         iid = (const IID *)buffer;
         ok(!IsEqualIID(iid, &IID_IUnknown),
-           "wireip + 0x14 should be IID_IUnknown instead of {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+           "wireip + 0x10 should be IID_IUnknown instead of {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
            iid->Data1, iid->Data2, iid->Data3,
            iid->Data4[0], iid->Data4[1], iid->Data4[2], iid->Data4[3],
            iid->Data4[4], iid->Data4[5], iid->Data4[6], iid->Data4[7]);
-        ok(*(DWORD *)wireip == 0, "wireip + 0x14 should be 0 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(IID);
-        ok(*(DWORD *)wireip == 0, "wireip + 0x20 should be 0 instead of 0x%08x\n", *(DWORD *)wireip);
+        ok(*(DWORD *)wireip == 0, "wireip + 0x1c should be 0 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
-        ok(*(DWORD *)wireip == 5, "wireip + 0x24 should be 5 instead of %d\n", *(DWORD *)wireip);
+        ok(*(DWORD *)wireip == 5, "wireip + 0x20 should be 5 instead of %d\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
         /* the rest is dynamic so can't really be tested */
     }
