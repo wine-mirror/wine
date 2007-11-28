@@ -1347,7 +1347,7 @@ WORD WINAPI DestroyIcon32( HGLOBAL16 handle, UINT16 flags )
     if ( get_user_thread_info()->cursor == HICON_32(handle) )
     {
         WARN_(cursor)("Destroying active cursor!\n" );
-        SetCursor( 0 );
+        return FALSE;
     }
 
     /* Try shared cursor/icon first */

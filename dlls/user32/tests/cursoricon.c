@@ -373,6 +373,52 @@ static void test_CreateIcon(void)
     DeleteObject(hbmColor);
 }
 
+static void test_DestroyCursor(void)
+{
+    static const BYTE bmp_bits[4096];
+    ICONINFO cursorInfo;
+    HCURSOR cursor, cursor2;
+    BOOL ret;
+    DWORD error;
+    UINT display_bpp;
+    HDC hdc;
+
+    hdc = GetDC(0);
+    display_bpp = GetDeviceCaps(hdc, BITSPIXEL);
+    ReleaseDC(0, hdc);
+
+    cursorInfo.fIcon = FALSE;
+    cursorInfo.xHotspot = 0;
+    cursorInfo.yHotspot = 0;
+    cursorInfo.hbmMask = CreateBitmap(32, 32, 1, 1, bmp_bits);
+    cursorInfo.hbmColor = CreateBitmap(32, 32, 1, display_bpp, bmp_bits);
+
+    cursor = CreateIconIndirect(&cursorInfo);
+    ok(cursor != NULL, "CreateIconIndirect returned %p\n", cursor);
+    if(!cursor) {
+        return;
+    }
+    SetCursor(cursor);
+
+    SetLastError(0xdeadbeef);
+    ret = DestroyCursor(cursor);
+    ok(!ret, "DestroyCursor on the active cursor succeeded\n");
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: %u\n", error);
+
+    cursor2 = GetCursor();
+    ok(cursor2 == cursor, "Active was set to %p when trying to destroy it\n", cursor2);
+
+    SetCursor(NULL);
+
+    /* Trying to destroy the cursor properly fails now for some reason with ERROR_INVALID_CURSOR_HANDLE */
+    ret = DestroyCursor(cursor);
+    /* ok(ret, "DestroyCursor failed, GetLastError=%d\n", GetLastError()); */
+
+    DeleteObject(cursorInfo.hbmMask);
+    DeleteObject(cursorInfo.hbmColor);
+}
+
 START_TEST(cursoricon)
 {
     test_CopyImage_Bitmap(1);
@@ -382,4 +428,5 @@ START_TEST(cursoricon)
     test_CopyImage_Bitmap(24);
     test_CopyImage_Bitmap(32);
     test_CreateIcon();
+    test_DestroyCursor();
 }
