@@ -3399,6 +3399,12 @@ unsigned char *  WINAPI NdrConformantStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     TRACE("memory_size = %d\n", pCStructFormat->memory_size);
 
     bufsize = safe_multiply(esize, pStubMsg->MaxCount);
+    if (pCStructFormat->memory_size + bufsize < pCStructFormat->memory_size) /* integer overflow */
+    {
+        ERR("integer overflow of memory_size %u with bufsize %u\n",
+            pCStructFormat->memory_size, bufsize);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
     /* copy constant sized part of struct */
     pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_copy_to_buffer(pStubMsg, pMemory, pCStructFormat->memory_size + bufsize);
@@ -3447,6 +3453,12 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
     TRACE("memory_size = %d\n", pCStructFormat->memory_size);
 
     bufsize = safe_multiply(esize, pStubMsg->MaxCount);
+    if (pCStructFormat->memory_size + bufsize < pCStructFormat->memory_size) /* integer overflow */
+    {
+        ERR("integer overflow of memory_size %u with bufsize %u\n",
+            pCStructFormat->memory_size, bufsize);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
     /* work out how much memory to allocate if we need to do so */
     if (!*ppMemory || fMustAlloc)
     {
