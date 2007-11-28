@@ -876,6 +876,17 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
         pow2Width = pow2Height = 1;
         while (pow2Width < Width) pow2Width <<= 1;
         while (pow2Height < Height) pow2Height <<= 1;
+
+        if(pow2Width != Width || pow2Height != Height) {
+            if(Levels > 1) {
+                WARN("Attempted to create a mipmapped np2 texture without unconditional np2 support\n");
+                HeapFree(GetProcessHeap(), 0, object);
+                *ppTexture = NULL;
+                return WINED3DERR_INVALIDCALL;
+            } else {
+                Levels = 1;
+            }
+        }
     }
 
     /** FIXME: add support for real non-power-two if it's provided by the video card **/
