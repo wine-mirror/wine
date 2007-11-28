@@ -1645,7 +1645,8 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
     }
 
     key_name = get_key_name_for_target(Credential->TargetName, Credential->Type);
-    ret = RegCreateKeyExW(hkeyMgr, key_name, 0, NULL, REG_OPTION_VOLATILE,
+    ret = RegCreateKeyExW(hkeyMgr, key_name, 0, NULL,
+                          Credential->Persist == CRED_PERSIST_SESSION ? REG_OPTION_VOLATILE : REG_OPTION_NON_VOLATILE,
                           KEY_READ|KEY_WRITE, NULL, &hkeyCred, NULL);
     HeapFree(GetProcessHeap(), 0, key_name);
     if (ret != ERROR_SUCCESS)
