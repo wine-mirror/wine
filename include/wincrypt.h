@@ -1930,6 +1930,11 @@ static const WCHAR MS_ENH_RSA_AES_PROV_W[] =           { 'M','i','c','r','o','s'
 #define KP_HIGHEST_VERSION      41
 #define KP_GET_USE_COUNT        42
 
+/* Values for KP_PADDING */
+#define PKCS5_PADDING  1
+#define RANDOM_PADDING 2
+#define ZERO_PADDING   3
+
 /* CryptSignHash/CryptVerifySignature */
 #define CRYPT_NOHASHOID         0x00000001
 #define CRYPT_TYPE2_FORMAT      0x00000002
