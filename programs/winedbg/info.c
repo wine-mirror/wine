@@ -201,7 +201,7 @@ static BOOL CALLBACK info_mod_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
 void info_win32_module(DWORD64 base)
 {
     struct info_module  im;
-    int                 i, j, num_printed = 0;
+    UINT                i, j, num_printed = 0;
     DWORD               opt;
 
     if (!dbg_curr_process)
@@ -388,7 +388,6 @@ void info_win32_window(HWND hWnd, BOOL detailed)
     char	wndName[128];
     RECT	clientRect;
     RECT	windowRect;
-    int         i;
     WORD	w;
 
     if (!IsWindow(hWnd)) hWnd = GetDesktopWindow();
@@ -434,6 +433,8 @@ void info_win32_window(HWND hWnd, BOOL detailed)
 
     if (GetClassLong(hWnd, GCL_CBWNDEXTRA))
     {
+        UINT i;
+
         dbg_printf("Extra bytes:");
         for (i = 0; i < GetClassLong(hWnd, GCL_CBWNDEXTRA) / 2; i++)
         {
