@@ -1020,8 +1020,8 @@ void pshader_hw_texkill(SHADER_OPCODE_ARG* arg) {
          * copy the register into our general purpose TMP variable, overwrite .w and pass TMP to KIL
          */
         shader_addline(buffer, "MOV TMP, %s;\n", reg_dest);
-        shader_addline(buffer, "MOV TMP.w, one.w;\n", reg_dest);
-        shader_addline(buffer, "KIL TMP;\n", reg_dest);
+        shader_addline(buffer, "MOV TMP.w, one.w;\n");
+        shader_addline(buffer, "KIL TMP;\n");
     }
 }
 
@@ -1374,8 +1374,8 @@ void pshader_hw_texdepth(SHADER_OPCODE_ARG* arg) {
      */
     shader_addline(buffer, "RCP %s.g, %s.g;\n", dst_name, dst_name);
     shader_addline(buffer, "MUL TMP.x, %s.r, %s.g;\n", dst_name, dst_name);
-    shader_addline(buffer, "MIN TMP.x, TMP.x, one.r;\n", dst_name, dst_name);
-    shader_addline(buffer, "MAX result.depth, TMP.x, 0.0;\n", dst_name, dst_name);
+    shader_addline(buffer, "MIN TMP.x, TMP.x, one.r;\n");
+    shader_addline(buffer, "MAX result.depth, TMP.x, 0.0;\n");
 }
 
 /** Process the WINED3DSIO_TEXDP3TEX instruction in ARB:

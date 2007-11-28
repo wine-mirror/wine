@@ -478,7 +478,7 @@ void shader_generate_glsl_declarations(
     /* Prototype the subroutines */
     for (i = 0; i < This->baseShader.limits.label; i++) {
         if (reg_maps->labels[i])
-            shader_addline(buffer, "void subroutine%lu();\n", i);
+            shader_addline(buffer, "void subroutine%u();\n", i);
     }
 
     /* Declare the constants (aka uniforms) */
@@ -573,19 +573,19 @@ void shader_generate_glsl_declarations(
             switch (stype) {
 
                 case WINED3DSTT_1D:
-                    shader_addline(buffer, "uniform sampler1D %csampler%lu;\n", prefix, i);
+                    shader_addline(buffer, "uniform sampler1D %csampler%u;\n", prefix, i);
                     break;
                 case WINED3DSTT_2D:
-                    shader_addline(buffer, "uniform sampler2D %csampler%lu;\n", prefix, i);
+                    shader_addline(buffer, "uniform sampler2D %csampler%u;\n", prefix, i);
                     break;
                 case WINED3DSTT_CUBE:
-                    shader_addline(buffer, "uniform samplerCube %csampler%lu;\n", prefix, i);
+                    shader_addline(buffer, "uniform samplerCube %csampler%u;\n", prefix, i);
                     break;
                 case WINED3DSTT_VOLUME:
-                    shader_addline(buffer, "uniform sampler3D %csampler%lu;\n", prefix, i);
+                    shader_addline(buffer, "uniform sampler3D %csampler%u;\n", prefix, i);
                     break;
                 default:
-                    shader_addline(buffer, "uniform unsupported_sampler %csampler%lu;\n", prefix, i);
+                    shader_addline(buffer, "uniform unsupported_sampler %csampler%u;\n", prefix, i);
                     FIXME("Unrecognized sampler type: %#x\n", stype);
                     break;
             }
@@ -601,7 +601,7 @@ void shader_generate_glsl_declarations(
     /* Declare texture coordinate temporaries and initialize them */
     for (i = 0; i < This->baseShader.limits.texcoord; i++) {
         if (reg_maps->texcoord[i]) 
-            shader_addline(buffer, "vec4 T%lu = gl_TexCoord[%lu];\n", i, i);
+            shader_addline(buffer, "vec4 T%u = gl_TexCoord[%u];\n", i, i);
     }
 
     /* Declare input register varyings. Only pixel shader, vertex shaders have that declared in the
@@ -609,25 +609,25 @@ void shader_generate_glsl_declarations(
      */
     if(pshader && This->baseShader.hex_version >= WINED3DVS_VERSION(3, 0)) {
         if(use_vs(device)) {
-            shader_addline(buffer, "varying vec4 IN[%lu];\n", GL_LIMITS(glsl_varyings) / 4);
+            shader_addline(buffer, "varying vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
         } else {
             /* TODO: Write a replacement shader for the fixed function vertex pipeline, so this isn't needed.
              * For fixed function vertex processing + 3.0 pixel shader we need a separate function in the
              * pixel shader that reads the fixed function color into the packed input registers.
              */
-            shader_addline(buffer, "vec4 IN[%lu];\n", GL_LIMITS(glsl_varyings) / 4);
+            shader_addline(buffer, "vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
         }
     }
 
     /* Declare output register temporaries */
     if(This->baseShader.limits.packed_output) {
-        shader_addline(buffer, "vec4 OUT[%lu];\n", This->baseShader.limits.packed_output);
+        shader_addline(buffer, "vec4 OUT[%u];\n", This->baseShader.limits.packed_output);
     }
 
     /* Declare temporary variables */
     for(i = 0; i < This->baseShader.limits.temporary; i++) {
         if (reg_maps->temporary[i])
-            shader_addline(buffer, "vec4 R%lu;\n", i);
+            shader_addline(buffer, "vec4 R%u;\n", i);
     }
 
     /* Declare attributes */
@@ -2009,12 +2009,12 @@ void shader_glsl_label(SHADER_OPCODE_ARG* arg) {
 
     DWORD snum = (arg->src[0]) & WINED3DSP_REGNUM_MASK;
     shader_addline(arg->buffer, "}\n");
-    shader_addline(arg->buffer, "void subroutine%lu () {\n",  snum);
+    shader_addline(arg->buffer, "void subroutine%u () {\n",  snum);
 }
 
 void shader_glsl_call(SHADER_OPCODE_ARG* arg) {
     DWORD snum = (arg->src[0]) & WINED3DSP_REGNUM_MASK;
-    shader_addline(arg->buffer, "subroutine%lu();\n", snum);
+    shader_addline(arg->buffer, "subroutine%u();\n", snum);
 }
 
 void shader_glsl_callnz(SHADER_OPCODE_ARG* arg) {
@@ -2022,7 +2022,7 @@ void shader_glsl_callnz(SHADER_OPCODE_ARG* arg) {
 
     DWORD snum = (arg->src[0]) & WINED3DSP_REGNUM_MASK;
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_0, &src1_param);
-    shader_addline(arg->buffer, "if (%s) subroutine%lu();\n", src1_param.param_str, snum);
+    shader_addline(arg->buffer, "if (%s) subroutine%u();\n", src1_param.param_str, snum);
 }
 
 /*********************************************
@@ -2273,7 +2273,7 @@ void pshader_glsl_texdepth(SHADER_OPCODE_ARG* arg) {
      * too is irrelevant, since if x = 0, any y value < 1.0 (and > 1.0 is not allowed) results in a result
      * >= 1.0 or < 0.0
      */
-    shader_addline(arg->buffer, "gl_FragDepth = clamp((%s.x / min(%s.y, 1.0)), 0.0, 1.0);\n", dst_param.reg_name, dst_param.reg_name, dst_param.reg_name);
+    shader_addline(arg->buffer, "gl_FragDepth = clamp((%s.x / min(%s.y, 1.0)), 0.0, 1.0);\n", dst_param.reg_name, dst_param.reg_name);
 }
 
 /** Process the WINED3DSIO_TEXM3X2DEPTH instruction in GLSL:
@@ -2901,7 +2901,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         semantics_in = ps->semantics_in;
 
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
-        shader_addline(&buffer, "varying vec4 IN[%lu];\n", GL_LIMITS(glsl_varyings) / 4);
+        shader_addline(&buffer, "varying vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
         shader_addline(&buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
@@ -2935,7 +2935,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     } else if(ps_major >= 3 && vs_major < 3) {
         semantics_in = ps->semantics_in;
 
-        shader_addline(&buffer, "varying vec4 IN[%lu];\n", GL_LIMITS(glsl_varyings) / 4);
+        shader_addline(&buffer, "varying vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
         shader_addline(&buffer, "void order_ps_input() {\n");
         /* The vertex shader wrote to the builtin varyings. There is no need to figure out position and
          * point size, but we depend on the optimizers kindness to find out that the pixel shader doesn't

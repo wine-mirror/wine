@@ -1745,11 +1745,17 @@ typedef struct SHADER_PARSE_STATE {
     DWORD texcoord_w[2];
 } SHADER_PARSE_STATE;
 
+#ifdef __GNUC__
+#define PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
+#else
+#define PRINTF_ATTR(fmt,args)
+#endif
+
 /* Base Shader utility functions. 
  * (may move callers into the same file in the future) */
 extern int shader_addline(
     SHADER_BUFFER* buffer,
-    const char* fmt, ...);
+    const char* fmt, ...) PRINTF_ATTR(2,3);
 
 extern const SHADER_OPCODE* shader_get_opcode(
     IWineD3DBaseShader *iface, 
