@@ -624,7 +624,7 @@ static DWORD open_cred_mgr_key(HKEY *hkey, BOOL open_for_write)
 {
     return RegCreateKeyExW(HKEY_CURRENT_USER, wszCredentialManagerKey, 0,
                            NULL, REG_OPTION_NON_VOLATILE,
-                           KEY_READ | KEY_WRITE, NULL, hkey, NULL);
+                           KEY_READ | (open_for_write ? KEY_WRITE : 0), NULL, hkey, NULL);
 }
 
 static DWORD get_cred_mgr_encryption_key(HKEY hkeyMgr, BYTE key_data[KEY_SIZE])
@@ -660,8 +660,19 @@ static DWORD get_cred_mgr_encryption_key(HKEY hkeyMgr, BYTE key_data[KEY_SIZE])
     value = RtlUniform(&seed);
     *(DWORD *)(key_data + 4) = value;
 
-    return RegSetValueExW(hkeyMgr, wszEncryptionKeyValue, 0, REG_BINARY,
-                          (LPVOID)key_data, KEY_SIZE);
+    ret = RegSetValueExW(hkeyMgr, wszEncryptionKeyValue, 0, REG_BINARY,
+                         (LPVOID)key_data, KEY_SIZE);
+    if (ret == ERROR_ACCESS_DENIED)
+    {
+        ret = open_cred_mgr_key(&hkeyMgr, TRUE);
+        if (ret == ERROR_SUCCESS)
+        {
+            ret = RegSetValueExW(hkeyMgr, wszEncryptionKeyValue, 0, REG_BINARY,
+                                 (LPVOID)key_data, KEY_SIZE);
+            RegCloseKey(hkeyMgr);
+        }
+    }
+    return ret;
 }
 
 static LPWSTR get_key_name_for_target(LPCWSTR target_name, DWORD type)
