@@ -2798,6 +2798,14 @@ BOOL WINAPI RSAENH_CPSetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
     }
     
     switch (dwParam) {
+        case KP_PADDING:
+            /* The MS providers only support PKCS5_PADDING */
+            if (*(DWORD *)pbData != PKCS5_PADDING) {
+                SetLastError(NTE_BAD_DATA);
+                return FALSE;
+            }
+            return TRUE;
+
         case KP_MODE:
             pCryptKey->dwMode = *(DWORD*)pbData;
             return TRUE;
@@ -2901,7 +2909,7 @@ BOOL WINAPI RSAENH_CPGetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
                                  DWORD *pdwDataLen, DWORD dwFlags)
 {
     CRYPTKEY *pCryptKey;
-    DWORD dwBitLen;
+    DWORD dwValue;
         
     TRACE("(hProv=%08lx, hKey=%08lx, dwParam=%08x, pbData=%p, pdwDataLen=%p dwFlags=%08x)\n",
           hProv, hKey, dwParam, pbData, pdwDataLen, dwFlags);
@@ -2933,20 +2941,24 @@ BOOL WINAPI RSAENH_CPGetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
             return copy_param(pbData, pdwDataLen, 
                     (CONST BYTE*)&pCryptKey->abKeyValue[pCryptKey->dwKeyLen], pCryptKey->dwSaltLen);
         
+        case KP_PADDING:
+            dwValue = PKCS5_PADDING;
+            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwValue, sizeof(DWORD));
+
         case KP_KEYLEN:
-            dwBitLen = pCryptKey->dwKeyLen << 3;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwBitLen, sizeof(DWORD));
+            dwValue = pCryptKey->dwKeyLen << 3;
+            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwValue, sizeof(DWORD));
         
         case KP_EFFECTIVE_KEYLEN:
             if (pCryptKey->dwEffectiveKeyLen)
-                dwBitLen = pCryptKey->dwEffectiveKeyLen;
+                dwValue = pCryptKey->dwEffectiveKeyLen;
             else
-                dwBitLen = pCryptKey->dwKeyLen << 3;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwBitLen, sizeof(DWORD));
+                dwValue = pCryptKey->dwKeyLen << 3;
+            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwValue, sizeof(DWORD));
 
         case KP_BLOCKLEN:
-            dwBitLen = pCryptKey->dwBlockLen << 3;
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwBitLen, sizeof(DWORD));
+            dwValue = pCryptKey->dwBlockLen << 3;
+            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwValue, sizeof(DWORD));
     
         case KP_MODE:
             return copy_param(pbData, pdwDataLen, (CONST BYTE*)&pCryptKey->dwMode, sizeof(DWORD));
