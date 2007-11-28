@@ -338,7 +338,6 @@ static UINT ICO_ExtractIconExW(
 	UINT16		iconDirCount = 0,iconCount = 0;
 	LPBYTE		peimage;
 	HANDLE		fmapping;
-	ULONG		uSize;
 	DWORD		fsizeh,fsizel;
         WCHAR		szExePath[MAX_PATH];
         DWORD		dwSearchReturn;
@@ -420,6 +419,7 @@ static UINT ICO_ExtractIconExW(
 	  NE_NAMEINFO	*pIconStorage = NULL;
 	  NE_NAMEINFO	*pIconDir = NULL;
 	  LPicoICONDIR	lpiID = NULL;
+	  ULONG		uSize = 0;
 
           TRACE("-- OS2/icon Signature (0x%08x)\n", sig);
 
