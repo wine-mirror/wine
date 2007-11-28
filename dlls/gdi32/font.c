@@ -2128,7 +2128,8 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     {
         HFONT orig_font = dc->hFont, cur_font;
         UINT glyph;
-        INT span = 0, *offsets = NULL, i;
+        INT span = 0, *offsets = NULL;
+        unsigned int i;
 
         glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WORD));
         for(i = 0; i < count; i++)
@@ -2138,7 +2139,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             {
                 if(!offsets)
                 {
-                    int j;
+                    unsigned int j;
                     offsets = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*deltas));
                     offsets[0] = 0;
                     if(!deltas)
