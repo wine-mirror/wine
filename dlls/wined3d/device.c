@@ -891,10 +891,20 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
 
     /** FIXME: add support for real non-power-two if it's provided by the video card **/
     /* Precalculated scaling for 'faked' non power of two texture coords */
-    object->baseTexture.pow2Matrix[0] =  (((float)Width)  / ((float)pow2Width));
-    object->baseTexture.pow2Matrix[5] =  (((float)Height) / ((float)pow2Height));
-    object->baseTexture.pow2Matrix[10] = 1.0;
-    object->baseTexture.pow2Matrix[15] = 1.0;
+    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE) &&
+       (Width != pow2Width || Height != pow2Height)) {
+        object->baseTexture.pow2Matrix[0] =  (float)Width;
+        object->baseTexture.pow2Matrix[5] =  (float)Height;
+        object->baseTexture.pow2Matrix[10] = 1.0;
+        object->baseTexture.pow2Matrix[15] = 1.0;
+        object->target = GL_TEXTURE_RECTANGLE_ARB;
+    } else {
+        object->baseTexture.pow2Matrix[0] =  (((float)Width)  / ((float)pow2Width));
+        object->baseTexture.pow2Matrix[5] =  (((float)Height) / ((float)pow2Height));
+        object->baseTexture.pow2Matrix[10] = 1.0;
+        object->baseTexture.pow2Matrix[15] = 1.0;
+        object->target = GL_TEXTURE_2D;
+    }
     TRACE(" xf(%f) yf(%f)\n", object->baseTexture.pow2Matrix[0], object->baseTexture.pow2Matrix[5]);
 
     /* Calculate levels for mip mapping */

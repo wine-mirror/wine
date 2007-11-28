@@ -3505,6 +3505,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
         This->glRect.right = 0;
         This->glRect.bottom = 0;
     } else {
+        /* Check this after the oversize check - do not make an oversized surface a texture_rectangle one */
+        if(This->Flags & SFLAG_NONPOW2 && GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+            This->glDescription.target = GL_TEXTURE_RECTANGLE_ARB;
+            This->pow2Width  = This->currentDesc.Width;
+            This->pow2Height = This->currentDesc.Height;
+            This->Flags &= ~SFLAG_NONPOW2;
+        }
+
         /* No oversize, gl rect is the full texture size */
         This->Flags &= ~SFLAG_OVERSIZE;
         This->glRect.left = 0;

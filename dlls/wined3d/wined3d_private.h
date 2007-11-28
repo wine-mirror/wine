@@ -948,6 +948,7 @@ typedef struct IWineD3DTextureImpl
     
     UINT                      width;
     UINT                      height;
+    UINT                      target;
 
 } IWineD3DTextureImpl;
 

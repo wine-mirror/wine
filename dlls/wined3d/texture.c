@@ -207,7 +207,7 @@ static UINT WINAPI IWineD3DTextureImpl_GetTextureDimensions(IWineD3DTexture *ifa
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     TRACE("(%p)\n", This);
 
-    return GL_TEXTURE_2D;
+    return This->target;
 }
 
 static void WINAPI IWineD3DTextureImpl_ApplyStateChanges(IWineD3DTexture *iface,
