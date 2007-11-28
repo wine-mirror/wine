@@ -677,14 +677,15 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
 static UINT ACTION_CheckDirectory(MSIPACKAGE *package, LPCWSTR dir,
  LPWSTR *appValue)
 {
-    UINT rc = ERROR_SUCCESS;
+    DWORD attr = GetFileAttributesW(dir);
 
-    if (GetFileAttributesW(dir) & FILE_ATTRIBUTE_DIRECTORY)
+    if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
     {
         TRACE("directory exists, returning %s\n", debugstr_w(dir));
         *appValue = strdupW(dir);
     }
-    return rc;
+
+    return ERROR_SUCCESS;
 }
 
 static BOOL ACTION_IsFullPath(LPCWSTR path)
