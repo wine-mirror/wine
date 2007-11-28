@@ -957,6 +957,11 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_8600GT;
                     vidmem = 256;
                 }
+                /* Geforce8 - midend mobile */
+                else if(strstr(gl_info->gl_renderer, "8600 M")) {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_8600MGT;
+                    vidmem = 512;
+                }
                 /* Geforce8 - lowend */
                 else if(strstr(gl_info->gl_renderer, "8300") ||
                         strstr(gl_info->gl_renderer, "8400") ||
