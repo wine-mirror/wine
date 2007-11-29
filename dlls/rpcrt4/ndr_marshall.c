@@ -952,6 +952,7 @@ static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                               unsigned char *Buffer,
                               unsigned char **pPointer,
+                              unsigned char *pSrcPointer,
                               PFORMAT_STRING pFormat,
                               unsigned char fMustAlloc)
 {
@@ -961,7 +962,7 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   DWORD pointer_id = 0;
   int pointer_needs_unmarshaling;
 
-  TRACE("(%p,%p,%p,%p,%d)\n", pStubMsg, Buffer, pPointer, pFormat, fMustAlloc);
+  TRACE("(%p,%p,%p,%p,%p,%d)\n", pStubMsg, Buffer, pPointer, pSrcPointer, pFormat, fMustAlloc);
   TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
@@ -984,10 +985,10 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   case RPC_FC_OP: /* object pointer - we must free data before overwriting it */
     pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
     TRACE("pointer_id is 0x%08x\n", pointer_id);
-    if (!fMustAlloc && *pPointer)
+    if (!fMustAlloc && pSrcPointer)
     {
-        FIXME("free object pointer %p\n", *pPointer);
-        *pPointer = NULL;
+        FIXME("free object pointer %p\n", pSrcPointer);
+        pSrcPointer = NULL;
     }
     if (pointer_id)
       pointer_needs_unmarshaling = 1;
@@ -1007,21 +1008,61 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   }
 
   if (pointer_needs_unmarshaling) {
-    if (attr & RPC_FC_P_DEREF) {
-      if (!*pPointer || fMustAlloc) {
-        *pPointer = NdrAllocate(pStubMsg, sizeof(void *));
-        *(unsigned char**) *pPointer = NULL;
+    unsigned char *base_ptr_val = *pPointer;
+    unsigned char **current_ptr = pPointer;
+    if (pStubMsg->IsClient) {
+      TRACE("client\n");
+      /* if we aren't forcing allocation of memory then try to use the existing
+       * (source) pointer to unmarshall the data into so that [in,out]
+       * parameters behave correctly. it doesn't matter if the parameter is
+       * [out] only since in that case the pointer will be NULL. we force
+       * allocation when the source pointer is NULL here instead of in the type
+       * unmarshalling routine for the benefit of the deref code below */
+      if (!fMustAlloc) {
+        if (pSrcPointer) {
+          TRACE("pSrcPointer = %p\n", pSrcPointer);
+          base_ptr_val = pSrcPointer;
+        } else
+          fMustAlloc = TRUE;
       }
-      pPointer = *(unsigned char***)pPointer;
-      TRACE("deref => %p\n", pPointer);
+    } else {
+      TRACE("server\n");
+      /* the memory in a stub is never initialised, so we have to work out here
+       * whether we have to initialise it so we can use the optimisation of
+       * setting the pointer to the buffer, if possible, or set fMustAlloc to
+       * TRUE. As there is no space used in the buffer for pointers when using
+       * reference pointers we must allocate memory in this case */
+      if (type == RPC_FC_RP || attr & RPC_FC_P_DEREF) {
+        fMustAlloc = TRUE;
+        base_ptr_val = NULL;
+      } else {
+        base_ptr_val = NULL;
+        *current_ptr = NULL;
+      }
+    }
+
+    if (attr & RPC_FC_P_DEREF) {
+      if (fMustAlloc) {
+        base_ptr_val = NdrAllocate(pStubMsg, sizeof(void *));
+        current_ptr = (unsigned char **)base_ptr_val;
+      } else
+        current_ptr = *(unsigned char***)current_ptr;
+      TRACE("deref => %p\n", current_ptr);
+      if (!fMustAlloc && !*current_ptr) fMustAlloc = TRUE;
     }
     m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
-    if (m) m(pStubMsg, pPointer, desc, fMustAlloc);
+    if (m) m(pStubMsg, current_ptr, desc, fMustAlloc);
     else FIXME("no unmarshaller for data type=%02x\n", *desc);
 
     if (type == RPC_FC_FP)
       NdrFullPointerInsertRefId(pStubMsg->FullPtrXlatTables, pointer_id,
-                                *pPointer);
+                                base_ptr_val);
+
+    /* this must be done after the call to the unmarshaller, since when we are
+     * unmarshalling reference pointers on the server side *pPointer will be
+     * pointing to valid data */
+    if (base_ptr_val && (!fMustAlloc || attr & RPC_FC_P_DEREF))
+      *pPointer = base_ptr_val;
   }
 
   TRACE("pointer=%p\n", *pPointer);
@@ -1268,7 +1309,8 @@ static unsigned char * EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
  *           EmbeddedPointerUnmarshall
  */
 static unsigned char * EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
-                                                 unsigned char *pMemory,
+                                                 unsigned char *pDstMemoryPtrs,
+                                                 unsigned char *pSrcMemoryPtrs,
                                                  PFORMAT_STRING pFormat,
                                                  unsigned char fMustAlloc)
 {
@@ -1277,7 +1319,7 @@ static unsigned char * EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned i;
   unsigned char *saved_buffer = NULL;
 
-  TRACE("(%p,%p,%p,%d)\n", pStubMsg, pMemory, pFormat, fMustAlloc);
+  TRACE("(%p,%p,%p,%p,%d)\n", pStubMsg, pDstMemoryPtrs, pSrcMemoryPtrs, pFormat, fMustAlloc);
 
   if (*pFormat != RPC_FC_PP) return NULL;
   pFormat += 2;
@@ -1315,14 +1357,16 @@ static unsigned char * EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     }
     for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = pMemory + (i * stride);
+      unsigned char *memdstbase = pDstMemoryPtrs + (i * stride);
+      unsigned char *memsrcbase = pSrcMemoryPtrs + (i * stride);
       unsigned char *bufbase = Mark + (i * stride);
       unsigned u;
 
       for (u=0; u<count; u++,info+=8) {
-        unsigned char *memptr = membase + *(const SHORT*)&info[0];
+        unsigned char **memdstptr = (unsigned char **)(memdstbase + *(const SHORT*)&info[0]);
+        unsigned char **memsrcptr = (unsigned char **)(memsrcbase + *(const SHORT*)&info[0]);
         unsigned char *bufptr = bufbase + *(const SHORT*)&info[2];
-        PointerUnmarshall(pStubMsg, bufptr, (unsigned char**)memptr, info+4, fMustAlloc);
+        PointerUnmarshall(pStubMsg, bufptr, memdstptr, *memsrcptr, info+4, fMustAlloc);
       }
     }
     pFormat += 8 * count;
@@ -1574,7 +1618,7 @@ unsigned char * WINAPI NdrPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   else
     Buffer = pStubMsg->Buffer;
 
-  PointerUnmarshall(pStubMsg, Buffer, ppMemory, pFormat, fMustAlloc);
+  PointerUnmarshall(pStubMsg, Buffer, ppMemory, *ppMemory, pFormat, fMustAlloc);
 
   return NULL;
 }
@@ -1692,7 +1736,7 @@ unsigned char * WINAPI NdrSimpleStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   }
 
   if (pFormat[0] != RPC_FC_STRUCT)
-    EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, pFormat+4, TRUE /* FIXME */);
+    EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat+4, TRUE /* FIXME */);
 
   return NULL;
 }
@@ -1963,7 +2007,7 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       else
         safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
 
-      PointerUnmarshall(pStubMsg, saved_buffer, (unsigned char**)pMemory, pPointer, TRUE);
+      PointerUnmarshall(pStubMsg, saved_buffer, (unsigned char**)pMemory, *(unsigned char**)pMemory, pPointer, TRUE);
       if (pointer_buffer_mark_set)
       {
         STD_OVERFLOW_CHECK(pStubMsg);
@@ -2579,7 +2623,7 @@ unsigned char * WINAPI NdrConformantArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pStubMsg->BufferMark = pStubMsg->Buffer;
   safe_copy_from_buffer(pStubMsg, *ppMemory, size);
 
-  EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, pFormat, TRUE /* FIXME */);
+  EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
 
   return NULL;
 }
@@ -2723,7 +2767,7 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
         *ppMemory = NdrAllocate(pStubMsg, memsize);
     safe_copy_from_buffer(pStubMsg, *ppMemory + pStubMsg->Offset, bufsize);
 
-    EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, pFormat, TRUE /* FIXME */);
+    EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
 
     return NULL;
 }
@@ -3471,7 +3515,7 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
     safe_copy_from_buffer(pStubMsg, *ppMemory, pCStructFormat->memory_size + bufsize);
 
     if (pCStructFormat->type == RPC_FC_CPSTRUCT)
-        EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, pFormat, TRUE /* FIXME */);
+        EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
 
     return NULL;
 }
@@ -3721,7 +3765,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     else if (cvarray_type == RPC_FC_C_WSTRING)
         TRACE("string=%s\n", debugstr_w((WCHAR *)(*ppMemory + pCVStructFormat->memory_size)));
 
-    EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, pFormat, TRUE /* FIXME */);
+    EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
 
     return NULL;
 }
@@ -4025,7 +4069,7 @@ unsigned char *  WINAPI NdrFixedArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_copy_from_buffer(pStubMsg, *ppMemory, total_size);
 
-    pFormat = EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, pFormat, TRUE /* FIXME */);
+    pFormat = EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
 
     return NULL;
 }
@@ -4255,7 +4299,7 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
         *ppMemory = NdrAllocate(pStubMsg, size);
     safe_copy_from_buffer(pStubMsg, *ppMemory + pStubMsg->Offset, bufsize);
 
-    EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, pFormat, TRUE /* FIXME */);
+    EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
 
     return NULL;
 }
@@ -4598,7 +4642,7 @@ static unsigned char *union_arm_unmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                     RpcRaiseException(RPC_X_BAD_STUB_DATA);
                 }
 
-                PointerUnmarshall(pStubMsg, saved_buffer, *(unsigned char ***)ppMemory, desc, fMustAlloc);
+                PointerUnmarshall(pStubMsg, saved_buffer, *(unsigned char ***)ppMemory, **(unsigned char ***)ppMemory, desc, fMustAlloc);
                 if (pointer_buffer_mark_set)
                 {
                   STD_OVERFLOW_CHECK(pStubMsg);
