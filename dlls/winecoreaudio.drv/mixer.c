@@ -760,6 +760,11 @@ static DWORD MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSW lpMlc, DWORD_
             break;
         case MIXER_GETLINECONTROLSF_ONEBYTYPE:
             TRACE("dwLineID=%d MIXER_GETLINECONTROLSF_ONEBYTYPE (%s)\n", lpMlc->dwLineID, getControlType(lpMlc->u.dwControlType));
+            if ( (lpMlc->dwLineID < 0) || (lpMlc->dwLineID >= mixer.caps.cDestinations) )
+            {
+                ret = MIXERR_INVALLINE;
+                break;
+            }
             if (lpMlc->u.dwControlType == MIXERCONTROL_CONTROLTYPE_VOLUME)
             {
                 ctrl = (lpMlc->dwLineID * ControlsPerLine) + IDControlVolume;
