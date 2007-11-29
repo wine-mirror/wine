@@ -66,7 +66,7 @@ static int load_functions(void) {
 			buffer_w[size / sizeof(WCHAR)] = '\0';
 			len = WideCharToMultiByte(CP_UNIXCP, 0, buffer_w, -1, buffer, sizeof(buffer), NULL, NULL);
 			if (len)
-				memcpy(soname, buffer, len - 1);
+				memcpy(soname, buffer, len);
 		}
 		RegCloseKey(key_handle);
 	}
