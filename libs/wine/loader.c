@@ -668,6 +668,25 @@ void *wine_dlopen( const char *filename, int flag, char *error, size_t errorsize
 #ifdef HAVE_DLOPEN
     void *ret;
     const char *s;
+
+#ifdef __APPLE__
+    /* the Mac OS loader pretends to be able to load PE files, so avoid them here */
+    unsigned char magic[2];
+    int fd = open( filename, O_RDONLY );
+    if (fd != -1)
+    {
+        if (pread( fd, magic, 2, 0 ) == 2 && magic[0] == 'M' && magic[1] == 'Z')
+        {
+            static const char msg[] = "MZ format";
+            size_t len = min( errorsize, sizeof(msg) );
+            memcpy( error, msg, len );
+            error[len - 1] = 0;
+            close( fd );
+            return NULL;
+        }
+        close( fd );
+    }
+#endif
     dlerror(); dlerror();
 #ifdef __sun
     if (strchr( filename, ':' ))
