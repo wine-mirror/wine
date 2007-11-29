@@ -114,7 +114,7 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocol *iface)
         if(This->protocol_sink)
             IInternetProtocolSink_Release(This->protocol_sink);
 
-        urlmon_free(This);
+        heap_free(This);
 
         URLMON_UnlockModule();
     }
@@ -480,7 +480,7 @@ static const IInternetProtocolSinkVtbl InternetProtocolSinkVtbl = {
 
 HRESULT create_binding_protocol(LPCWSTR url, IInternetProtocol **protocol)
 {
-    BindProtocol *ret = urlmon_alloc(sizeof(BindProtocol));
+    BindProtocol *ret = heap_alloc(sizeof(BindProtocol));
 
     ret->lpInternetProtocolVtbl = &BindProtocolVtbl;
     ret->lpInternetBindInfoVtbl = &InternetBindInfoVtbl;

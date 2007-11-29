@@ -68,12 +68,12 @@ static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, 
         {'P','R','O','T','O','C','O','L','S','\\','H','a','n','d','l','e','r','\\'};
     static const WCHAR wszCLSID[] = {'C','L','S','I','D',0};
 
-    wszKey = urlmon_alloc(sizeof(wszProtocolsKey)+(schema_len+1)*sizeof(WCHAR));
+    wszKey = heap_alloc(sizeof(wszProtocolsKey)+(schema_len+1)*sizeof(WCHAR));
     memcpy(wszKey, wszProtocolsKey, sizeof(wszProtocolsKey));
     memcpy(wszKey + sizeof(wszProtocolsKey)/sizeof(WCHAR), schema, (schema_len+1)*sizeof(WCHAR));
 
     res = RegOpenKeyW(HKEY_CLASSES_ROOT, wszKey, &hkey);
-    urlmon_free(wszKey);
+    heap_free(wszKey);
     if(res != ERROR_SUCCESS) {
         TRACE("Could not open protocol handler key\n");
         return E_FAIL;
@@ -207,10 +207,10 @@ static HRESULT WINAPI InternetSession_RegisterNameSpace(IInternetSession *iface,
     if(!pCF || !pwzProtocol)
         return E_INVALIDARG;
 
-    new_name_space = urlmon_alloc(sizeof(name_space));
+    new_name_space = heap_alloc(sizeof(name_space));
 
     size = (strlenW(pwzProtocol)+1)*sizeof(WCHAR);
-    new_name_space->protocol = urlmon_alloc(size);
+    new_name_space->protocol = heap_alloc(size);
     memcpy(new_name_space->protocol, pwzProtocol, size);
 
     IClassFactory_AddRef(pCF);
@@ -247,8 +247,8 @@ static HRESULT WINAPI InternetSession_UnregisterNameSpace(IInternetSession *ifac
         name_space_list = iter->next;
 
     IClassFactory_Release(iter->cf);
-    urlmon_free(iter->protocol);
-    urlmon_free(iter);
+    heap_free(iter->protocol);
+    heap_free(iter);
 
     return S_OK;
 }

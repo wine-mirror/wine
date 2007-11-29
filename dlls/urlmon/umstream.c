@@ -54,7 +54,7 @@ HRESULT UMCreateStreamOnCacheFile(LPCWSTR pszURL,
     HRESULT hr;
 
     size = (strlenW(pszURL)+1)*sizeof(WCHAR);
-    url = urlmon_alloc(size);
+    url = heap_alloc(size);
     memcpy(url, pszURL, size);
 
     for (c = url; *c && *c != '#' && *c != '?'; ++c)
@@ -72,7 +72,7 @@ HRESULT UMCreateStreamOnCacheFile(LPCWSTR pszURL,
     else
        hr = 0;
 
-    urlmon_free(url);
+    heap_free(url);
 
     if (hr)
        return hr;
@@ -99,13 +99,13 @@ HRESULT UMCreateStreamOnCacheFile(LPCWSTR pszURL,
        }
     }
 
-    ucstr = urlmon_alloc_zero(sizeof(IUMCacheStream));
+    ucstr = heap_alloc_zero(sizeof(IUMCacheStream));
     if(ucstr)
     {
-       ucstr->pszURL = urlmon_alloc_zero(sizeof(WCHAR) * (lstrlenW(pszURL) + 1));
+       ucstr->pszURL = heap_alloc_zero(sizeof(WCHAR) * (lstrlenW(pszURL) + 1));
        if (ucstr->pszURL)
        {
-            ucstr->pszFileName = urlmon_alloc_zero(sizeof(WCHAR) * (lstrlenW(pszFileName) + 1));
+            ucstr->pszFileName = heap_alloc_zero(sizeof(WCHAR) * (lstrlenW(pszFileName) + 1));
            if (ucstr->pszFileName)
            {
               ucstr->lpVtbl=&stvt;
@@ -119,9 +119,9 @@ HRESULT UMCreateStreamOnCacheFile(LPCWSTR pszURL,
 
               return S_OK;
            }
-           urlmon_free(ucstr->pszURL);
+           heap_free(ucstr->pszURL);
        }
-       urlmon_free(ucstr);
+       heap_free(ucstr);
     }
     CloseHandle(handle);
     if (phfile)
@@ -207,9 +207,9 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
        TRACE(" destroying UMCacheStream (%p)\n",This);
        UMCloseCacheFileStream(This);
        CloseHandle(This->handle);
-       urlmon_free(This->pszFileName);
-       urlmon_free(This->pszURL);
-       urlmon_free(This);
+       heap_free(This->pszFileName);
+       heap_free(This->pszURL);
+       heap_free(This);
     }
     return refCount;
 }
@@ -591,7 +591,7 @@ HRESULT WINAPI URLOpenBlockingStreamA(LPUNKNOWN pCaller, LPCSTR szURL,
         return E_INVALIDARG;
 
     len = MultiByteToWideChar(CP_ACP, 0, szURL, -1, NULL, 0);
-    szURLW = urlmon_alloc(len * sizeof(WCHAR));
+    szURLW = heap_alloc(len * sizeof(WCHAR));
     if (!szURLW)
     {
         *ppStream = NULL;
@@ -601,7 +601,7 @@ HRESULT WINAPI URLOpenBlockingStreamA(LPUNKNOWN pCaller, LPCSTR szURL,
 
     hr = URLOpenBlockingStreamW(pCaller, szURLW, ppStream, dwReserved, lpfnCB);
 
-    urlmon_free(szURLW);
+    heap_free(szURLW);
 
     return hr;
 }
@@ -643,14 +643,14 @@ HRESULT WINAPI URLOpenStreamA(LPUNKNOWN pCaller, LPCSTR szURL, DWORD dwReserved,
         return E_INVALIDARG;
 
     len = MultiByteToWideChar(CP_ACP, 0, szURL, -1, NULL, 0);
-    szURLW = urlmon_alloc(len * sizeof(WCHAR));
+    szURLW = heap_alloc(len * sizeof(WCHAR));
     if (!szURLW)
         return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, szURL, -1, szURLW, len);
 
     hr = URLOpenStreamW(pCaller, szURLW, dwReserved, lpfnCB);
 
-    urlmon_free(szURLW);
+    heap_free(szURLW);
 
     return hr;
 }

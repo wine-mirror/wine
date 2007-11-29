@@ -81,7 +81,7 @@ static ULONG WINAPI FtpProtocol_Release(IInternetProtocol *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        urlmon_free(This);
+        heap_free(This);
 
         URLMON_UnlockModule();
     }
@@ -191,7 +191,7 @@ HRESULT FtpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 
     URLMON_LockModule();
 
-    ret = urlmon_alloc(sizeof(FtpProtocol));
+    ret = heap_alloc(sizeof(FtpProtocol));
 
     ret->lpInternetProtocolVtbl = &FtpProtocolVtbl;
     ret->ref = 1;

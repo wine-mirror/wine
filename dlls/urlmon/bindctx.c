@@ -132,7 +132,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
         if(This->authenticate)
             IAuthenticate_Release(This->authenticate);
         IBindStatusCallback_Release(This->callback);
-        urlmon_free(This);
+        heap_free(This);
     }
 
     return ref;
@@ -455,7 +455,7 @@ static const IAuthenticateVtbl BSCAuthenticateVtbl = {
 
 static IBindStatusCallback *create_bsc(IBindStatusCallback *bsc)
 {
-    BindStatusCallback *ret = urlmon_alloc_zero(sizeof(BindStatusCallback));
+    BindStatusCallback *ret = heap_alloc_zero(sizeof(BindStatusCallback));
 
     ret->lpBindStatusCallbackVtbl = &BindStatusCallbackVtbl;
     ret->lpServiceProviderVtbl    = &BSCServiceProviderVtbl;
@@ -640,7 +640,7 @@ static ULONG WINAPI AsyncBindCtx_Release(IBindCtx *iface)
 
     if(!ref) {
         IBindCtx_Release(This->bindctx);
-        urlmon_free(This);
+        heap_free(This);
     }
 
     return ref;
@@ -837,7 +837,7 @@ HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
     if(FAILED(hres))
         return hres;
 
-    ret = urlmon_alloc(sizeof(AsyncBindCtx));
+    ret = heap_alloc(sizeof(AsyncBindCtx));
 
     ret->lpBindCtxVtbl = &AsyncBindCtxVtbl;
     ret->ref = 1;
