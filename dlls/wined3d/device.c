@@ -2845,7 +2845,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
         } else {
             TRACE("Light already disabled, nothing to do\n");
         }
+        lightInfo->enabled = FALSE;
     } else {
+        lightInfo->enabled = TRUE;
         if (lightInfo->glIndex != -1) {
             /* nop */
             TRACE("Nothing to do as light was enabled\n");
@@ -2860,8 +2862,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
                 }
             }
             if(lightInfo->glIndex == -1) {
-                ERR("Too many concurrently active lights\n");
-                return WINED3DERR_INVALIDCALL;
+                /* Our tests show that Windows returns D3D_OK in this situation, even with
+                 * D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE devices. This
+                 * is consistent among ddraw, d3d8 and d3d9. GetLightEnable returns TRUE
+                 * as well for those lights.
+                 *
+                 * TODO: Test how this affects rendering
+                 */
+                FIXME("Too many concurrently active lights\n");
+                return WINED3D_OK;
             }
 
             /* i == lightInfo->glIndex */
@@ -2893,7 +2902,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetLightEnable(IWineD3DDevice *iface, D
         return WINED3DERR_INVALIDCALL;
     }
     /* true is 128 according to SetLightEnable */
-    *pEnable = lightInfo->glIndex != -1 ? 128 : 0;
+    *pEnable = lightInfo->enabled ? 128 : 0;
     return WINED3D_OK;
 }
 

@@ -180,6 +180,9 @@ static void LightTest(void)
     float one = 1.0f;
     float zero= 0.0f;
     D3DMATERIAL7 mat;
+    BOOL enabled;
+    unsigned int i;
+    D3DDEVICEDESC7 caps;
 
     /* Set a few lights with funky indices. */
     memset(&light, 0, sizeof(light));
@@ -343,6 +346,32 @@ static void LightTest(void)
     rc = IDirect3DDevice7_GetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "IDirect3DDevice7_GetMaterial returned: %x\n", rc);
     ok(U4(mat).power == -1, "Returned power is %f\n", U4(mat).power);
+
+    memset(&caps, 0, sizeof(caps));
+    rc = IDirect3DDevice7_GetCaps(lpD3DDevice, &caps);
+    ok(rc == D3D_OK, "IDirect3DDevice7_GetCaps failed with %x\n", rc);
+
+    for(i = 1; i <= caps.dwMaxActiveLights; i++) {
+        rc = IDirect3DDevice7_LightEnable(lpD3DDevice, i, TRUE);
+        ok(rc == D3D_OK, "Enabling light %u failed with %x\n", i, rc);
+        rc = IDirect3DDevice7_GetLightEnable(lpD3DDevice, i, &enabled);
+        ok(rc == D3D_OK, "GetLightEnable on light %u failed with %x\n", i, rc);
+        ok(enabled, "Light %d is %s\n", i, enabled ? "enabled" : "disabled");
+    }
+
+    /* TODO: Test the rendering results in this situation */
+    rc = IDirect3DDevice7_LightEnable(lpD3DDevice, i + 1, TRUE);
+    ok(rc == D3D_OK, "Enabling one light more than supported returned %x\n", rc);
+    rc = IDirect3DDevice7_GetLightEnable(lpD3DDevice, i + 1, &enabled);
+    ok(rc == D3D_OK, "GetLightEnable on light %u failed with %x\n", i + 1,  rc);
+    ok(enabled, "Light %d is %s\n", i + 1, enabled ? "enabled" : "disabled");
+    rc = IDirect3DDevice7_LightEnable(lpD3DDevice, i + 1, FALSE);
+    ok(rc == D3D_OK, "Disabling the additional returned %x\n", rc);
+
+    for(i = 1; i <= caps.dwMaxActiveLights; i++) {
+        rc = IDirect3DDevice7_LightEnable(lpD3DDevice, i, FALSE);
+        ok(rc == D3D_OK, "Disabling light %u failed with %x\n", i, rc);
+    }
 }
 
 static void ProcessVerticesTest(void)

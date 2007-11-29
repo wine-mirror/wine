@@ -1106,6 +1106,74 @@ cleanup:
     if(hwnd) DestroyWindow(hwnd);
 }
 
+static void test_lights(void)
+{
+    D3DPRESENT_PARAMETERS d3dpp;
+    IDirect3DDevice8 *device = NULL;
+    IDirect3D8 *d3d8;
+    HWND hwnd;
+    HRESULT hr;
+    unsigned int i;
+    BOOL enabled;
+    D3DCAPS8 caps;
+    D3DDISPLAYMODE               d3ddm;
+
+    d3d8 = pDirect3DCreate8( D3D_SDK_VERSION );
+    ok(d3d8 != NULL, "Failed to create IDirect3D8 object\n");
+    hwnd = CreateWindow( "static", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!d3d8 || !hwnd) goto cleanup;
+
+    IDirect3D8_GetAdapterDisplayMode( d3d8, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = 800;
+    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+
+    hr = IDirect3D8_CreateDevice( d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
+                                  D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &d3dpp, &device );
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
+    if(!device)
+    {
+        skip("Failed to create a d3d device\n");
+        goto cleanup;
+    }
+
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetDeviceCaps failed with %s\n", DXGetErrorString8(hr));
+
+    for(i = 1; i <= caps.MaxActiveLights; i++) {
+        hr = IDirect3DDevice8_LightEnable(device, i, TRUE);
+        ok(hr == D3D_OK, "Enabling light %u failed with %s\n", i, DXGetErrorString8(hr));
+        hr = IDirect3DDevice8_GetLightEnable(device, i, &enabled);
+        ok(hr == D3D_OK, "GetLightEnable on light %u failed with %s\n", i, DXGetErrorString8(hr));
+        ok(enabled, "Light %d is %s\n", i, enabled ? "enabled" : "disabled");
+    }
+
+    /* TODO: Test the rendering results in this situation */
+    hr = IDirect3DDevice8_LightEnable(device, i + 1, TRUE);
+    ok(hr == D3D_OK, "Enabling one light more than supported returned %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_GetLightEnable(device, i + 1, &enabled);
+    ok(hr == D3D_OK, "GetLightEnable on light %u failed with %s\n", i + 1, DXGetErrorString8(hr));
+    ok(enabled, "Light %d is %s\n", i + 1, enabled ? "enabled" : "disabled");
+    hr = IDirect3DDevice8_LightEnable(device, i + 1, FALSE);
+    ok(hr == D3D_OK, "Disabling the additional returned %s\n", DXGetErrorString8(hr));
+
+    for(i = 1; i <= caps.MaxActiveLights; i++) {
+        hr = IDirect3DDevice8_LightEnable(device, i, FALSE);
+        ok(hr == D3D_OK, "Disabling light %u failed with %s\n", i, DXGetErrorString8(hr));
+    }
+
+    cleanup:
+    if(device) IDirect3DDevice8_Release(device);
+    if(d3d8) IDirect3D8_Release(d3d8);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -1129,5 +1197,6 @@ START_TEST(device)
         test_scene();
         test_shader();
         test_limits();
+        test_lights();
     }
 }

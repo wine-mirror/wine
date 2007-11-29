@@ -1593,6 +1593,68 @@ static void test_vertex_buffer_alignment(void)
     if(d3d9) IDirect3D9_Release(d3d9);
 }
 
+static void test_lights(void)
+{
+    D3DPRESENT_PARAMETERS present_parameters;
+    IDirect3DDevice9 *device = NULL;
+    IDirect3D9 *d3d9;
+    HWND hwnd;
+    HRESULT hr;
+    unsigned int i;
+    BOOL enabled;
+    D3DCAPS9 caps;
+
+    d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
+    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!d3d9 || !hwnd) goto cleanup;
+
+    ZeroMemory(&present_parameters, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = hwnd;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+
+    hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+                                  D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &present_parameters, &device );
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!device)
+    {
+        skip("Failed to create a d3d device\n");
+        goto cleanup;
+    }
+
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps failed with %s\n", DXGetErrorString9(hr));
+
+    for(i = 1; i <= caps.MaxActiveLights; i++) {
+        hr = IDirect3DDevice9_LightEnable(device, i, TRUE);
+        ok(hr == D3D_OK, "Enabling light %u failed with %s\n", i, DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_GetLightEnable(device, i, &enabled);
+        ok(hr == D3D_OK, "GetLightEnable on light %u failed with %s\n", i, DXGetErrorString9(hr));
+        ok(enabled, "Light %d is %s\n", i, enabled ? "enabled" : "disabled");
+    }
+
+    /* TODO: Test the rendering results in this situation */
+    hr = IDirect3DDevice9_LightEnable(device, i + 1, TRUE);
+    ok(hr == D3D_OK, "Enabling one light more than supported returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_GetLightEnable(device, i + 1, &enabled);
+    ok(hr == D3D_OK, "GetLightEnable on light %u failed with %s\n", i + 1, DXGetErrorString9(hr));
+    ok(enabled, "Light %d is %s\n", i + 1, enabled ? "enabled" : "disabled");
+    hr = IDirect3DDevice9_LightEnable(device, i + 1, FALSE);
+    ok(hr == D3D_OK, "Disabling the additional returned %s\n", DXGetErrorString9(hr));
+
+    for(i = 1; i <= caps.MaxActiveLights; i++) {
+        hr = IDirect3DDevice9_LightEnable(device, i, FALSE);
+        ok(hr == D3D_OK, "Disabling light %u failed with %s\n", i, DXGetErrorString9(hr));
+    }
+
+    cleanup:
+    if(device) IDirect3DDevice9_Release(device);
+    if(d3d9) IDirect3D9_Release(d3d9);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -1618,5 +1680,6 @@ START_TEST(device)
         test_draw_indexed();
         test_null_stream();
         test_vertex_buffer_alignment();
+        test_lights();
     }
 }
