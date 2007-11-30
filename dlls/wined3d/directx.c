@@ -485,8 +485,9 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             gl_info->gl_vendor = VENDOR_NVIDIA;
         } else if (strstr(gl_string, "ATI")) {
             gl_info->gl_vendor = VENDOR_ATI;
-        } else if (strstr(gl_string, "Intel(R)") || 
-		   strstr(gl_info->gl_renderer, "Intel(R)")) {
+        } else if (strstr(gl_string, "Intel(R)") ||
+                   strstr(gl_info->gl_renderer, "Intel(R)") ||
+                   strstr(gl_string, "Intel Inc.")) {
             gl_info->gl_vendor = VENDOR_INTEL;
         } else if (strstr(gl_string, "Mesa")) {
             gl_info->gl_vendor = VENDOR_MESA;
@@ -573,7 +574,28 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             }
             break;
 
-	case VENDOR_INTEL:
+        case VENDOR_INTEL:
+            /* Apple and Mesa version strings look differently, but both provide intel drivers */
+            if(strstr(gl_string, "APPLE")) {
+                /* [0-9]+.[0-9]+ APPLE-[0-9]+.[0.9]+.[0.9]+
+                 * We only need the first part, and use the APPLE as identification
+                 * "1.2 APPLE-1.4.56"
+                 */
+                gl_string_cursor = gl_string;
+                major = atoi(gl_string_cursor);
+                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+                    ++gl_string_cursor;
+                }
+
+                if (*gl_string_cursor++ != '.') {
+                    ERR_(d3d_caps)("Invalid MacOS-Intel version string: %s\n", debugstr_a(gl_string));
+                    break;
+                }
+
+                minor = atoi(gl_string_cursor);
+                break;
+            }
+
         case VENDOR_MESA:
             gl_string_cursor = strstr(gl_string, "Mesa");
             gl_string_cursor = strstr(gl_string_cursor, " ");
@@ -1132,7 +1154,11 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             }
             break;
         case VENDOR_INTEL:
-            if (strstr(gl_info->gl_renderer, "915GM")) {
+            if (strstr(gl_info->gl_renderer, "GMA 950")) {
+                /* MacOS calls the card GMA 950, but everywhere else the PCI ID is named 945GM */
+                gl_info->gl_card = CARD_INTEL_I945GM;
+                vidmem = 64;
+            } else if (strstr(gl_info->gl_renderer, "915GM")) {
                 gl_info->gl_card = CARD_INTEL_I915GM;
             } else if (strstr(gl_info->gl_renderer, "915G")) {
                 gl_info->gl_card = CARD_INTEL_I915G;
@@ -1165,7 +1191,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             else
                 gl_info->gl_card = CARD_NVIDIA_RIVA_128;
     }
-    TRACE("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", gl_info->gl_vendor, gl_info->gl_card);
+    TRACE_(d3d_caps)("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", gl_info->gl_vendor, gl_info->gl_card);
 
     /* If we have an estimate use it, else default to 64MB;  */
     if(vidmem)
