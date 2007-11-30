@@ -154,6 +154,7 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
     {
         WARN("wrong OSVERSIONINFO size from app (got: %d)\n",
                         v->dwOSVersionInfoSize );
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
 

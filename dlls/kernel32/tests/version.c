@@ -43,12 +43,64 @@ static void init_function_pointers(void)
     KERNEL32_GET_PROC(VerSetConditionMask);
 }
 
+static void test_GetVersionEx(void)
+{
+    OSVERSIONINFOA infoA;
+    OSVERSIONINFOEXA infoExA;
+    BOOL ret;
+
+    if (0)
+    {
+        /* Silently crashes on XP */
+        ret = GetVersionExA(NULL);
+    }
+
+    SetLastError(0xdeadbeef);
+    memset(&infoA,0,sizeof infoA);
+    ret = GetVersionExA(&infoA);
+    ok(!ret, "Expected GetVersionExA to fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    infoA.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA) / 2;
+    ret = GetVersionExA(&infoA);
+    ok(!ret, "Expected GetVersionExA to fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    infoA.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA) * 2;
+    ret = GetVersionExA(&infoA);
+    ok(!ret, "Expected GetVersionExA to fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    infoA.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+    ret = GetVersionExA(&infoA);
+    ok(ret, "Expected GetVersionExA to succeed\n");
+    ok(GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    infoExA.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA);
+    ret = GetVersionExA((OSVERSIONINFOA *)&infoExA);
+    ok(ret, "Expected GetVersionExA to succeed\n");
+    ok(GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got %d\n", GetLastError());
+
+}
+
 START_TEST(version)
 {
     OSVERSIONINFOEX info = { sizeof(info) };
     BOOL ret;
 
     init_function_pointers();
+
+    test_GetVersionEx();
+
     if(!pVerifyVersionInfoA || !pVerSetConditionMask)
     {
         skip("Needed functions not available\n");
