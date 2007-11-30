@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 static WINE_EXCEPTION_FILTER(stub_filter)
 {
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+    if (GetExceptionInformation()->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE)
         return EXCEPTION_CONTINUE_SEARCH;
     return EXCEPTION_EXECUTE_HANDLER;
 }
