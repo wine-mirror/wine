@@ -514,7 +514,7 @@ todo_wine {
 
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 0;
-    mem_orig = mem = HeapAlloc(GetProcessHeap(), 0, srcsize);
+    mem_orig = mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, srcsize);
     ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, 0 );
     ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
@@ -600,6 +600,8 @@ todo_wine {
     my_alloc_called = 0;
     ok(StubMsg.MemorySize == 0, "memorysize touched in unmarshal\n");
 
+    HeapFree(GetProcessHeap(), 0, mem_orig);
+    HeapFree(GetProcessHeap(), 0, StubMsg.BufferStart);
 }
 
 typedef struct
