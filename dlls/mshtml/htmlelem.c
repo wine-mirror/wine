@@ -1293,6 +1293,7 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
     static const WCHAR wszINPUT[]    = {'I','N','P','U','T',0};
     static const WCHAR wszOPTION[]   = {'O','P','T','I','O','N',0};
     static const WCHAR wszSELECT[]   = {'S','E','L','E','C','T',0};
+    static const WCHAR wszTABLE[]    = {'T','A','B','L','E',0};
     static const WCHAR wszTEXTAREA[] = {'T','E','X','T','A','R','E','A',0};
 
     nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMHTMLElement, (void**)&nselem);
@@ -1314,6 +1315,8 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
         ret = HTMLOptionElement_Create(nselem);
     else if(!strcmpW(class_name, wszSELECT))
         ret = HTMLSelectElement_Create(nselem);
+    else if(!strcmpW(class_name, wszTABLE))
+        ret = HTMLTable_Create(nselem);
     else if(!strcmpW(class_name, wszTEXTAREA))
         ret = HTMLTextAreaElement_Create(nselem);
 

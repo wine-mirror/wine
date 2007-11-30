@@ -25,6 +25,7 @@ C_SRCS = \
 	htmlselect.c \
 	htmlstyle.c \
 	htmlstylesheet.c \
+	htmltable.c \
 	htmltextcont.c \
 	htmltextarea.c \
 	htmlwindow.c \
