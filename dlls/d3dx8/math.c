@@ -695,6 +695,11 @@ D3DXQUATERNION* WINAPI D3DXQuaternionInverse(D3DXQUATERNION *pout, CONST D3DXQUA
     D3DXQUATERNION temp;
     FLOAT norm;
 
+    temp.x = 0.0f;
+    temp.y = 0.0f;
+    temp.z = 0.0f;
+    temp.w = 0.0f;
+
     norm = D3DXQuaternionLengthSq(pq);
     if ( !norm )
     {
