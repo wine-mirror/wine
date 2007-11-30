@@ -1906,19 +1906,8 @@ typedef CONTEXT *PCONTEXT;
 #define WT_EXECUTEDELETEWAIT           0x08
 
 
-/*
- * From OS/2 2.0 exception handling
- * Win32 seems to use the same flags as ExceptionFlags in an EXCEPTION_RECORD
- */
-
-#define EH_NONCONTINUABLE   0x01
-#define EH_UNWINDING        0x02
-#define EH_EXIT_UNWIND      0x04
-#define EH_STACK_INVALID    0x08
-#define EH_NESTED_CALL      0x10
-
 #define EXCEPTION_CONTINUABLE        0
-#define EXCEPTION_NONCONTINUABLE     EH_NONCONTINUABLE
+#define EXCEPTION_NONCONTINUABLE     0x01
 
 /*
  * The exception record used by Win32 to give additional information

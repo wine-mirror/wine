@@ -187,6 +187,14 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_pop_frame( EXCEPTION_REGISTR
 #endif
 }
 
+/* Exception handling flags - from OS/2 2.0 exception handling */
+
+/* Win32 seems to use the same flags as ExceptionFlags in an EXCEPTION_RECORD */
+#define EH_NONCONTINUABLE   0x01
+#define EH_UNWINDING        0x02
+#define EH_EXIT_UNWIND      0x04
+#define EH_STACK_INVALID    0x08
+#define EH_NESTED_CALL      0x10
 
 /* Wine-specific exceptions codes */
 

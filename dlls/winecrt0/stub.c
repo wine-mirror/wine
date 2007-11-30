@@ -32,5 +32,5 @@ void DECLSPEC_HIDDEN __wine_spec_unimplemented_stub( const char *module, const c
 
     args[0] = (ULONG_PTR)module;
     args[1] = (ULONG_PTR)function;
-    RaiseException( EXCEPTION_WINE_STUB, EH_NONCONTINUABLE, 2, args );
+    RaiseException( EXCEPTION_WINE_STUB, EXCEPTION_NONCONTINUABLE, 2, args );
 }
