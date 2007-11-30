@@ -598,8 +598,32 @@ static HRESULT WINAPI HTMLElement2_put_dir(IHTMLElement2 *iface, BSTR v)
 static HRESULT WINAPI HTMLElement2_get_dir(IHTMLElement2 *iface, BSTR *p)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = NULL;
+
+    if(This->nselem) {
+        nsAString dir_str;
+        nsresult nsres;
+
+        nsAString_Init(&dir_str, NULL);
+
+        nsres = nsIDOMHTMLElement_GetDir(This->nselem, &dir_str);
+        if(NS_SUCCEEDED(nsres)) {
+            const PRUnichar *dir;
+            nsAString_GetData(&dir_str, &dir, NULL);
+            if(*dir)
+                *p = SysAllocString(dir);
+        }else {
+            ERR("GetDir failed: %08x\n", nsres);
+        }
+
+        nsAString_Finish(&dir_str);
+    }
+
+    TRACE("ret %s\n", debugstr_w(*p));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_createControlRange(IHTMLElement2 *iface, IDispatch **range)
