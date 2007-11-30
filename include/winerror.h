@@ -81,7 +81,7 @@
 #define HRESULT_SEVERITY(hr)    (((hr) >> 31) & 0x1)
 #define SCODE_SEVERITY(sc)      (((sc) >> 31) & 0x1)
 
-#define __HRESULT_FROM_WIN32(x)   ((x) ? ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)) : 0 )
+#define __HRESULT_FROM_WIN32(x)   ((HRESULT)(x) > 0 ? ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)) : (HRESULT)(x) )
 #ifndef _HRESULT_DEFINED
 #define _HRESULT_DEFINED
 # ifdef _MSC_VER
@@ -92,7 +92,7 @@ typedef int             HRESULT;
 #endif
 static inline HRESULT HRESULT_FROM_WIN32(unsigned long x)
 {
-    return x ? ((HRESULT) ((x & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)) : 0;
+    return (HRESULT)x > 0 ? ((HRESULT) ((x & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)) : (HRESULT)x;
 }
 #define FACILITY_NT_BIT         0x10000000
 #define HRESULT_FROM_NT(x)      ((HRESULT) ((x) | FACILITY_NT_BIT))
