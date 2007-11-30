@@ -3480,6 +3480,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
         This->glRect.bottom = This->pow2Height;
     }
 
+    if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+        switch(wined3d_settings.offscreen_rendering_mode) {
+            case ORM_FBO:        This->get_drawable_size = get_drawable_size_fbo;        break;
+            case ORM_PBUFFER:    This->get_drawable_size = get_drawable_size_pbuffer;    break;
+            case ORM_BACKBUFFER: This->get_drawable_size = get_drawable_size_backbuffer; break;
+        }
+    }
+
     This->Flags |= SFLAG_INSYSMEM;
 
     return WINED3D_OK;
@@ -3877,6 +3885,28 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3DBase *container) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    IWineD3DSwapChain *swapchain = NULL;
+
+    /* Update the drawable size method */
+    if(container) {
+        IWineD3DBase_QueryInterface(container, &IID_IWineD3DSwapChain, (void **) &swapchain);
+    }
+    if(swapchain) {
+        This->get_drawable_size = get_drawable_size_swapchain;
+        IWineD3DSwapChain_Release(swapchain);
+    } else if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+        switch(wined3d_settings.offscreen_rendering_mode) {
+            case ORM_FBO:        This->get_drawable_size = get_drawable_size_fbo;        break;
+            case ORM_PBUFFER:    This->get_drawable_size = get_drawable_size_pbuffer;    break;
+            case ORM_BACKBUFFER: This->get_drawable_size = get_drawable_size_backbuffer; break;
+        }
+    }
+
+    return IWineD3DBaseSurfaceImpl_SetContainer(iface, container);
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -3924,7 +3954,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_LoadTexture,
     IWineD3DSurfaceImpl_BindTexture,
     IWineD3DSurfaceImpl_SaveSnapshot,
-    IWineD3DBaseSurfaceImpl_SetContainer,
+    IWineD3DSurfaceImpl_SetContainer,
     IWineD3DSurfaceImpl_SetGlTextureDesc,
     IWineD3DSurfaceImpl_GetGlDesc,
     IWineD3DSurfaceImpl_GetData,

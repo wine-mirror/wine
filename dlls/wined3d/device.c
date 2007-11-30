@@ -7362,3 +7362,29 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
         context->isStateDirty[idx] |= (1 << shift);
     }
 }
+
+void get_drawable_size_pbuffer(IWineD3DSurfaceImpl *This, UINT *width, UINT *height) {
+    IWineD3DDeviceImpl *dev = This->resource.wineD3DDevice;
+    /* The drawable size of a pbuffer render target is the current pbuffer size
+     */
+    *width = dev->pbufferWidth;
+    *height = dev->pbufferHeight;
+}
+
+void get_drawable_size_fbo(IWineD3DSurfaceImpl *This, UINT *width, UINT *height) {
+    /* The drawable size of a fbo target is the opengl texture size, which is the power of two size
+     */
+    *width = This->pow2Width;
+    *height = This->pow2Height;
+}
+
+void get_drawable_size_backbuffer(IWineD3DSurfaceImpl *This, UINT *width, UINT *height) {
+    IWineD3DDeviceImpl *dev = This->resource.wineD3DDevice;
+    /* The drawable size of a backbuffer / aux buffer offscreen target is the size of the
+     * current context's drawable, which is the size of the back buffer of the swapchain
+     * the active context belongs to. The back buffer of the swapchain is stored as the
+     * surface the context belongs to.
+     */
+    *width = ((IWineD3DSurfaceImpl *) dev->activeContext->surface)->currentDesc.Width;
+    *height = ((IWineD3DSurfaceImpl *) dev->activeContext->surface)->currentDesc.Height;
+}

@@ -1087,6 +1087,9 @@ struct IWineD3DSurfaceImpl
     UINT                      pow2Width;
     UINT                      pow2Height;
 
+    /* A method to retrieve the drawable size. Not in the Vtable to make it changeable */
+    void (*get_drawable_size)(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);
+
     /* Oversized texture */
     RECT                      glRect;
 
@@ -1161,6 +1164,11 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
 void WINAPI IWineD3DBaseSurfaceImpl_BindTexture(IWineD3DSurface *iface);
 
 const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface);
+
+void get_drawable_size_swapchain(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);
+void get_drawable_size_backbuffer(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);
+void get_drawable_size_pbuffer(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);
+void get_drawable_size_fbo(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);
 
 /* Surface flags: */
 #define SFLAG_OVERSIZE    0x00000001 /* Surface is bigger than gl size, blts only */
