@@ -1061,7 +1061,7 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     /* this must be done after the call to the unmarshaller, since when we are
      * unmarshalling reference pointers on the server side *pPointer will be
      * pointing to valid data */
-    if (base_ptr_val && (!fMustAlloc || attr & RPC_FC_P_DEREF))
+    if ((!fMustAlloc || attr & RPC_FC_P_DEREF) && base_ptr_val)
       *pPointer = base_ptr_val;
   }
 
