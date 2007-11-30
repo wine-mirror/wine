@@ -3668,25 +3668,21 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContex
 
 static void scissorrect(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     RECT *pRect = &stateblock->scissorRect;
-    RECT windowRect;
-    UINT winHeight;
+    UINT height;
+    UINT width;
+    IWineD3DSurfaceImpl *target = (IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0];
 
-    windowRect.left = 0;
-    windowRect.top = 0;
-    windowRect.right = ((IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0])->currentDesc.Width;
-    windowRect.bottom = ((IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0])->currentDesc.Height;
-
+    target->get_drawable_size(target, &width, &height);
     /* Warning: glScissor uses window coordinates, not viewport coordinates, so our viewport correction does not apply
      * Warning2: Even in windowed mode the coords are relative to the window, not the screen
      */
-    winHeight = windowRect.bottom - windowRect.top;
-    TRACE("(%p) Setting new Scissor Rect to %d:%d-%d:%d\n", stateblock->wineD3DDevice, pRect->left, pRect->bottom - winHeight,
+    TRACE("(%p) Setting new Scissor Rect to %d:%d-%d:%d\n", stateblock->wineD3DDevice, pRect->left, pRect->bottom - height,
           pRect->right - pRect->left, pRect->bottom - pRect->top);
 
     if (stateblock->wineD3DDevice->render_offscreen) {
         glScissor(pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
     } else {
-        glScissor(pRect->left, winHeight - pRect->bottom, pRect->right - pRect->left, pRect->bottom - pRect->top);
+        glScissor(pRect->left, height - pRect->bottom, pRect->right - pRect->left, pRect->bottom - pRect->top);
     }
     checkGLcall("glScissor");
 }
