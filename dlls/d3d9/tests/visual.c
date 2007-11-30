@@ -323,13 +323,13 @@ typedef struct {
 } test_data_t;
 
 /*
- *  c7      rounded     ARGB
- * -2.4     -2          0x00ffff00
- * -1.6     -2          0x00ffff00
- * -0.4      0          0x0000ffff
- *  0.4      0          0x0000ffff
- *  1.6      2          0x00ff00ff
- *  2.4      2          0x00ff00ff
+ *  c7      mova    ARGB            mov     ARGB
+ * -2.4     -2      0x00ffff00      -3      0x00ff0000
+ * -1.6     -2      0x00ffff00      -2      0x00ffff00
+ * -0.4      0      0x0000ffff      -1      0x0000ff00
+ *  0.4      0      0x0000ffff       0      0x0000ffff
+ *  1.6      2      0x00ff00ff       1      0x000000ff
+ *  2.4      2      0x00ff00ff       2      0x00ff00ff
  */
 static void test_mova(IDirect3DDevice9 *device)
 {
@@ -348,14 +348,39 @@ static void test_mova(IDirect3DDevice9 *device)
         0x02000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                 */
         0x0000ffff                                                              /* END                          */
     };
+    static const DWORD mov_test[] = {
+        0xfffe0101,                                                             /* vs_1_1                       */
+        0x0000001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0              */
+        0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 1.0, 0.0, 0.0, 1.0   */
+        0x00000051, 0xa00f0001, 0x3f800000, 0x3f800000, 0x00000000, 0x3f800000, /* def c1, 1.0, 1.0, 0.0, 1.0   */
+        0x00000051, 0xa00f0002, 0x00000000, 0x3f800000, 0x00000000, 0x3f800000, /* def c2, 0.0, 1.0, 0.0, 1.0   */
+        0x00000051, 0xa00f0003, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000, /* def c3, 0.0, 1.0, 1.0, 1.0   */
+        0x00000051, 0xa00f0004, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, /* def c4, 0.0, 0.0, 1.0, 1.0   */
+        0x00000051, 0xa00f0005, 0x3f800000, 0x00000000, 0x3f800000, 0x3f800000, /* def c5, 1.0, 0.0, 1.0, 1.0   */
+        0x00000051, 0xa00f0006, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000, /* def c6, 1.0, 1.0, 1.0, 1.0   */
+        0x00000001, 0xb0010000, 0xa0000007,                                     /* mov a0.x, c7.x               */
+        0x00000001, 0xd00f0000, 0xa0e42003,                                     /* mov oD0, c[a0.x + 3]         */
+        0x00000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                 */
+        0x0000ffff                                                              /* END                          */
+    };
 
-    static const test_data_t test_data[] = {
-        {{-2.4f, 0.0f, 0.0f, 0.0f}, 0x00ffff00},
-        {{-1.6f, 0.0f, 0.0f, 0.0f}, 0x00ffff00},
-        {{-0.4f, 0.0f, 0.0f, 0.0f}, 0x0000ffff},
-        {{ 0.4f, 0.0f, 0.0f, 0.0f}, 0x0000ffff},
-        {{ 1.6f, 0.0f, 0.0f, 0.0f}, 0x00ff00ff},
-        {{ 2.4f, 0.0f, 0.0f, 0.0f}, 0x00ff00ff}
+    static const test_data_t test_data[2][6] = {
+        {
+            {{-2.4f, 0.0f, 0.0f, 0.0f}, 0x00ff0000},
+            {{-1.6f, 0.0f, 0.0f, 0.0f}, 0x00ffff00},
+            {{-0.4f, 0.0f, 0.0f, 0.0f}, 0x0000ff00},
+            {{ 0.4f, 0.0f, 0.0f, 0.0f}, 0x0000ffff},
+            {{ 1.6f, 0.0f, 0.0f, 0.0f}, 0x000000ff},
+            {{ 2.4f, 0.0f, 0.0f, 0.0f}, 0x00ff00ff}
+        },
+        {
+            {{-2.4f, 0.0f, 0.0f, 0.0f}, 0x00ffff00},
+            {{-1.6f, 0.0f, 0.0f, 0.0f}, 0x00ffff00},
+            {{-0.4f, 0.0f, 0.0f, 0.0f}, 0x0000ffff},
+            {{ 0.4f, 0.0f, 0.0f, 0.0f}, 0x0000ffff},
+            {{ 1.6f, 0.0f, 0.0f, 0.0f}, 0x00ff00ff},
+            {{ 2.4f, 0.0f, 0.0f, 0.0f}, 0x00ff00ff}
+        }
     };
 
     static const float quad[][3] = {
@@ -372,43 +397,51 @@ static void test_mova(IDirect3DDevice9 *device)
 
     IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
     IDirect3DVertexShader9 *mova_shader = NULL;
+    IDirect3DVertexShader9 *mov_shader = NULL;
     HRESULT hr;
-    int i;
+    int i, j;
 
     hr = IDirect3DDevice9_CreateVertexShader(device, mova_test, &mova_shader);
     ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_SetVertexShader(device, mova_shader);
-    ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
-
+    hr = IDirect3DDevice9_CreateVertexShader(device, mov_test, &mov_shader);
+    ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
     hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
     ok(SUCCEEDED(hr), "SetVertexDeclaration failed (%08x)\n", hr);
 
-    for (i = 0; i < (sizeof(test_data) / sizeof(test_data_t)); ++i)
+    hr = IDirect3DDevice9_SetVertexShader(device, mov_shader);
+    ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
+    for(j = 0; j < 2; ++j)
     {
-        DWORD color;
+        for (i = 0; i < (sizeof(test_data[0]) / sizeof(test_data_t)); ++i)
+        {
+            DWORD color;
 
-        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 7, test_data[i].in, 1);
-        ok(SUCCEEDED(hr), "SetVertexShaderConstantF failed (%08x)\n", hr);
+            hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 7, test_data[j][i].in, 1);
+            ok(SUCCEEDED(hr), "SetVertexShaderConstantF failed (%08x)\n", hr);
 
-        hr = IDirect3DDevice9_BeginScene(device);
-        ok(SUCCEEDED(hr), "BeginScene failed (%08x)\n", hr);
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(SUCCEEDED(hr), "BeginScene failed (%08x)\n", hr);
 
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
-        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
+            ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
 
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(SUCCEEDED(hr), "EndScene failed (%08x)\n", hr);
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(SUCCEEDED(hr), "EndScene failed (%08x)\n", hr);
 
-        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-        ok(SUCCEEDED(hr), "Present failed (%08x)\n", hr);
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            ok(SUCCEEDED(hr), "Present failed (%08x)\n", hr);
 
-        color = getPixelColor(device, 320, 240);
-        ok(color == test_data[i].out, "Expected color %08x, got %08x (for input %f)\n", test_data[i].out, color, test_data[i].in[0]);
+            color = getPixelColor(device, 320, 240);
+            ok(color == test_data[j][i].out, "Expected color %08x, got %08x (for input %f, instruction %s)\n",
+               test_data[j][i].out, color, test_data[j][i].in[0], j == 0 ? "mov" : "mova");
 
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0, 0.0f, 0);
-        ok(SUCCEEDED(hr), "Clear failed (%08x)\n", hr);
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0, 0.0f, 0);
+            ok(SUCCEEDED(hr), "Clear failed (%08x)\n", hr);
+        }
+        hr = IDirect3DDevice9_SetVertexShader(device, mova_shader);
+        ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
     }
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
@@ -416,6 +449,7 @@ static void test_mova(IDirect3DDevice9 *device)
 
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
     IDirect3DVertexShader9_Release(mova_shader);
+    IDirect3DVertexShader9_Release(mov_shader);
 }
 
 struct sVertex {
