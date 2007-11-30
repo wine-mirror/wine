@@ -305,6 +305,9 @@ static APARTMENT *apartment_get_or_create(DWORD model)
             }
 
             LeaveCriticalSection(&csApartment);
+
+            if (apt->main)
+                apartment_createwindowifneeded(apt);
         }
         else
         {
