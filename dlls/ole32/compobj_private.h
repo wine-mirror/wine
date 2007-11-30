@@ -307,6 +307,8 @@ extern HINSTANCE OLE32_hInstance; /* FIXME: make static */
 
 #define CHARS_IN_GUID 39 /* including NULL */
 
+#define WINE_CLSCTX_DONT_HOST   0x80000000
+
 /* Exported non-interface Data Advise Holder functions */
 HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDelegate);
 void DataAdviseHolder_OnDisconnect(IDataAdviseHolder *iface);

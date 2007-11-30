@@ -79,7 +79,7 @@ HINSTANCE OLE32_hInstance = 0; /* FIXME: make static ... */
 static HRESULT COM_GetRegisteredClassObject(const struct apartment *apt, REFCLSID rclsid,
                                             DWORD dwClsContext, LPUNKNOWN*  ppUnk);
 static void COM_RevokeAllClasses(const struct apartment *apt);
-static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv);
+static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll, REFCLSID rclsid, REFIID riid, BOOL hostifnecessary, void **ppv);
 
 static APARTMENT *MTA; /* protected by csApartment */
 static APARTMENT *MainApartment; /* the first STA apartment */
@@ -2087,38 +2087,51 @@ static void get_threading_model(HKEY key, LPWSTR value, DWORD len)
 }
 
 static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll,
-                                       REFCLSID rclsid, REFIID riid, void **ppv)
+                                       REFCLSID rclsid, REFIID riid,
+                                       BOOL hostifnecessary, void **ppv)
 {
-    static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
-    static const WCHAR wszFree[] = {'F','r','e','e',0};
-    static const WCHAR wszBoth[] = {'B','o','t','h',0};
     WCHAR dllpath[MAX_PATH+1];
-    WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
+    BOOL apartment_threaded;
 
-    get_threading_model(hkeydll, threading_model, ARRAYSIZE(threading_model));
-    /* "Apartment" */
-    if (!strcmpiW(threading_model, wszApartment))
+    if (hostifnecessary)
     {
-        if (apt->multi_threaded)
-            return apartment_hostobject_in_hostapt(apt, FALSE, FALSE, hkeydll, rclsid, riid, ppv);
-    }
-    /* "Free" */
-    else if (!strcmpiW(threading_model, wszFree))
-    {
-        if (!apt->multi_threaded)
-            return apartment_hostobject_in_hostapt(apt, TRUE, FALSE, hkeydll, rclsid, riid, ppv);
-    }
-    /* everything except "Apartment", "Free" and "Both" */
-    else if (strcmpiW(threading_model, wszBoth))
-    {
-        /* everything else is main-threaded */
-        if (threading_model[0])
-            FIXME("unrecognised threading model %s for object %s, should be main-threaded?\n",
-                debugstr_w(threading_model), debugstr_guid(rclsid));
+        static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
+        static const WCHAR wszFree[] = {'F','r','e','e',0};
+        static const WCHAR wszBoth[] = {'B','o','t','h',0};
+        WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
 
-        if (apt->multi_threaded || !apt->main)
-            return apartment_hostobject_in_hostapt(apt, FALSE, TRUE, hkeydll, rclsid, riid, ppv);
+        get_threading_model(hkeydll, threading_model, ARRAYSIZE(threading_model));
+        /* "Apartment" */
+        if (!strcmpiW(threading_model, wszApartment))
+        {
+            apartment_threaded = TRUE;
+            if (apt->multi_threaded)
+                return apartment_hostobject_in_hostapt(apt, FALSE, FALSE, hkeydll, rclsid, riid, ppv);
+        }
+        /* "Free" */
+        else if (!strcmpiW(threading_model, wszFree))
+        {
+            apartment_threaded = FALSE;
+            if (!apt->multi_threaded)
+                return apartment_hostobject_in_hostapt(apt, TRUE, FALSE, hkeydll, rclsid, riid, ppv);
+        }
+        /* everything except "Apartment", "Free" and "Both" */
+        else if (strcmpiW(threading_model, wszBoth))
+        {
+            apartment_threaded = TRUE;
+            /* everything else is main-threaded */
+            if (threading_model[0])
+                FIXME("unrecognised threading model %s for object %s, should be main-threaded?\n",
+                    debugstr_w(threading_model), debugstr_guid(rclsid));
+
+            if (apt->multi_threaded || !apt->main)
+                return apartment_hostobject_in_hostapt(apt, FALSE, TRUE, hkeydll, rclsid, riid, ppv);
+        }
+        else
+            apartment_threaded = FALSE;
     }
+    else
+        apartment_threaded = !apt->multi_threaded;
 
     if (COM_RegReadPath(hkeydll, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
     {
@@ -2127,8 +2140,7 @@ static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll,
         return REGDB_E_CLASSNOTREG;
     }
 
-    return apartment_getclassobject(apt, dllpath,
-                                    !strcmpiW(threading_model, wszApartment),
+    return apartment_getclassobject(apt, dllpath, apartment_threaded,
                                     rclsid, riid, ppv);
 }
 
@@ -2228,7 +2240,8 @@ HRESULT WINAPI CoGetClassObject(
 
         if (SUCCEEDED(hres))
         {
-            hres = get_inproc_class_object(apt, hkey, rclsid, iid, ppv);
+            hres = get_inproc_class_object(apt, hkey, rclsid, iid,
+                !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             RegCloseKey(hkey);
         }
 
@@ -2258,7 +2271,8 @@ HRESULT WINAPI CoGetClassObject(
 
         if (SUCCEEDED(hres))
         {
-            hres = get_inproc_class_object(apt, hkey, rclsid, iid, ppv);
+            hres = get_inproc_class_object(apt, hkey, rclsid, iid,
+                !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             RegCloseKey(hkey);
         }
 
