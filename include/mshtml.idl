@@ -6237,6 +6237,432 @@ coclass HTMLDocument
 }
 
 /*****************************************************************************
+ *    HTMLTableEvents dispinterface
+ */
+[
+    hidden,
+    uuid(3050f407-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface HTMLTableEvents
+{
+properties:
+methods:
+    [id(DISPID_HTMLELEMENTEVENTS_ONHELP)]
+    VARIANT_BOOL onhelp();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCLICK)]
+    VARIANT_BOOL onclick();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDBLCLICK)]
+    VARIANT_BOOL ondblclick();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONKEYPRESS)]
+    VARIANT_BOOL onkeypress();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONKEYDOWN)]
+    void onkeydown();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONKEYUP)]
+    void onkeyup();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEOUT)]
+    void onmouseout();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEOVER)]
+    void onmouseover();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEMOVE)]
+    void onmousemove();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEDOWN)]
+    void onmousedown();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEUP)]
+    void onmouseup();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONSELECTSTART)]
+    VARIANT_BOOL onselectstart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFILTERCHANGE)]
+    void onfilterchange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGSTART)]
+    VARIANT_BOOL ondragstart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREUPDATE)]
+    VARIANT_BOOL onbeforeupdate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONAFTERUPDATE)]
+    void onafterupdate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONERRORUPDATE)]
+    VARIANT_BOOL onerrorupdate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWEXIT)]
+    VARIANT_BOOL onrowexit();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWENTER)]
+    void onrowenter();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDATASETCHANGED)]
+    void ondatasetchanged();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDATAAVAILABLE)]
+    void ondataavailable();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDATASETCOMPLETE)]
+    void ondatasetcomplete();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONLOSECAPTURE)]
+    void onlosecapture();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONPROPERTYCHANGE)]
+    void onpropertychange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONSCROLL)]
+    void onscroll();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFOCUS)]
+    void onfocus();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBLUR)]
+    void onblur();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONRESIZE)]
+    void onresize();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAG)]
+    VARIANT_BOOL ondrag();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGEND)]
+    void ondragend();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGENTER)]
+    VARIANT_BOOL ondragenter();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGOVER)]
+    VARIANT_BOOL ondragover();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGLEAVE)]
+    void ondragleave();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDROP)]
+    VARIANT_BOOL ondrop();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFORECUT)]
+    VARIANT_BOOL onbeforecut();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCUT)]
+    VARIANT_BOOL oncut();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFORECOPY)]
+    VARIANT_BOOL onbeforecopy();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCOPY)]
+    VARIANT_BOOL oncopy();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREPASTE)]
+    VARIANT_BOOL onbeforepaste();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONPASTE)]
+    VARIANT_BOOL onpaste();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCONTEXTMENU)]
+    VARIANT_BOOL oncontextmenu();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWSDELETE)]
+    void onrowsdelete();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWSINSERTED)]
+    void onrowsinserted();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCELLCHANGE)]
+    void oncellchange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONREADYSTATECHANGE)]
+    void onreadystatechange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREEDITFOCUS)]
+    void onbeforeeditfocus();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONLAYOUTCOMPLETE)]
+    void onlayoutcomplete();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONPAGE)]
+    void onpage();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREDEACTIVATE)]
+    VARIANT_BOOL onbeforedeactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREACTIVATE)]
+    VARIANT_BOOL onbeforeactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOVE)]
+    void onmove();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCONTROLSELECT)]
+    VARIANT_BOOL oncontrolselect();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOVESTART)]
+    VARIANT_BOOL onmovestart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOVEEND)]
+    void onmoveend();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONRESIZESTART)]
+    VARIANT_BOOL onresizestart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONRESIZEEND)]
+    void onresizeend();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEENTER)]
+    void onmouseenter();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSELEAVE)]
+    void onmouseleave();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEWHEEL)]
+    VARIANT_BOOL onmousewheel();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONACTIVATE)]
+    void onactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDEACTIVATE)]
+    void ondeactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFOCUSIN)]
+    void onfocusin();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFOCUSOUT)]
+    void onfocusout();
+}
+
+/*****************************************************************************
+ *    IHTMLTableCaption interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f2eb-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLTableCaption : IDispatch
+{
+    [propput, id(DISPID_IHTMLTABLECAPTION_ALIGN)]
+    HRESULT align([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECAPTION_ALIGN)]
+    HRESULT align([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLECAPTION_VALIGN)]
+    HRESULT vAlign([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECAPTION_VALIGN)]
+    HRESULT vAlign([retval, out] BSTR *p);
+}
+
+interface IHTMLTableSection;
+
+/*****************************************************************************
+ *    IHTMLTable interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f21e-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLTable : IDispatch
+{
+    [propput, id(DISPID_IHTMLTABLE_COLS)]
+    HRESULT cols([in] long v);
+
+    [propget, id(DISPID_IHTMLTABLE_COLS)]
+    HRESULT cols([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLTABLE_BORDER)]
+    HRESULT border([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLE_BORDER)]
+    HRESULT border([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLE_FRAME)]
+    HRESULT frame([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLE_FRAME)]
+    HRESULT frame([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLE_RULES)]
+    HRESULT rules([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLE_RULES)]
+    HRESULT rules([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLE_CELLSPACING)]
+    HRESULT cellSpacing([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLE_CELLSPACING)]
+    HRESULT cellSpacing([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLE_CELLPADDING)]
+    HRESULT cellPadding([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLE_CELLPADDING)]
+    HRESULT cellPadding([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLE_BACKGROUND)]
+    HRESULT background([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLE_BACKGROUND)]
+    HRESULT background([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLE_BGCOLOR)]
+    HRESULT bgColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLE_BGCOLOR)]
+    HRESULT bgColor([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLE_BORDERCOLOR)]
+    HRESULT borderColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLE_BORDERCOLOR)]
+    HRESULT borderColor([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLE_BORDERCOLORLIGHT)]
+    HRESULT borderColorLight([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLE_BORDERCOLORLIGHT)]
+    HRESULT borderColorLight([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLE_BORDERCOLORDARK)]
+    HRESULT borderColorDark([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLE_BORDERCOLORDARK)]
+    HRESULT borderColorDark([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLE_ALIGN)]
+    HRESULT align([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLE_ALIGN)]
+    HRESULT align([retval, out] BSTR * p);
+
+    [id(DISPID_IHTMLTABLE_REFRESH)]
+    HRESULT refresh();
+
+    [propget, id(DISPID_IHTMLTABLE_ROWS)]
+    HRESULT rows([retval, out] IHTMLElementCollection **p);
+
+    [propput, id(DISPID_IHTMLTABLE_WIDTH)]
+    HRESULT width([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLE_WIDTH)]
+    HRESULT width([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLE_HEIGHT)]
+    HRESULT height([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLE_HEIGHT)]
+    HRESULT height([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLE_DATAPAGESIZE)]
+    HRESULT dataPageSize([in] long v);
+
+    [propget, id(DISPID_IHTMLTABLE_DATAPAGESIZE)]
+    HRESULT dataPageSize([retval, out] long *p);
+
+    [id(DISPID_IHTMLTABLE_NEXTPAGE)]
+    HRESULT nextPage();
+
+    [id(DISPID_IHTMLTABLE_PREVIOUSPAGE)]
+    HRESULT previousPage();
+
+    [propget, id(DISPID_IHTMLTABLE_THEAD)]
+    HRESULT tHead([retval, out] IHTMLTableSection **p);
+
+    [propget, id(DISPID_IHTMLTABLE_TFOOT)]
+    HRESULT tFoot([retval, out] IHTMLTableSection **p);
+
+    [propget, id(DISPID_IHTMLTABLE_TBODIES)]
+    HRESULT tBodies([retval, out] IHTMLElementCollection **p);
+
+    [propget, id(DISPID_IHTMLTABLE_CAPTION)]
+    HRESULT caption([retval, out] IHTMLTableCaption **p);
+
+    [id(DISPID_IHTMLTABLE_CREATETHEAD)]
+    HRESULT createTHead([retval, out] IDispatch **head);
+
+    [id(DISPID_IHTMLTABLE_DELETETHEAD)]
+    HRESULT deleteTHead();
+
+    [id(DISPID_IHTMLTABLE_CREATETFOOT)]
+    HRESULT createTFoot([retval, out] IDispatch **foot);
+
+    [id(DISPID_IHTMLTABLE_DELETETFOOT)]
+    HRESULT deleteTFoot();
+
+    [id(DISPID_IHTMLTABLE_CREATECAPTION)]
+    HRESULT createCaption([retval, out] IHTMLTableCaption **caption);
+
+    [id(DISPID_IHTMLTABLE_DELETECAPTION)]
+    HRESULT deleteCaption();
+
+    [id(DISPID_IHTMLTABLE_INSERTROW)]
+    HRESULT insertRow(
+            [defaultvalue(-1), in] long index,
+            [retval, out] IDispatch **row);
+
+    [id(DISPID_IHTMLTABLE_DELETEROW)]
+    HRESULT deleteRow([defaultvalue(-1), in] long index);
+
+    [propget, id(DISPID_IHTMLTABLE_READYSTATE)]
+    HRESULT readyState([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLE_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLE_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([retval, out] VARIANT *p);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f23b-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLTableSection : IDispatch
+{
+    [propput, id(DISPID_IHTMLTABLESECTION_ALIGN)]
+    HRESULT align([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLESECTION_ALIGN)]
+    HRESULT align([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLESECTION_VALIGN)]
+    HRESULT vAlign([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLESECTION_VALIGN)]
+    HRESULT vAlign([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLESECTION_BGCOLOR)]
+    HRESULT bgColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLESECTION_BGCOLOR)]
+    HRESULT bgColor([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLTABLESECTION_ROWS)]
+    HRESULT rows([retval, out] IHTMLElementCollection **p);
+
+    [id(DISPID_IHTMLTABLESECTION_INSERTROW)]
+    HRESULT insertRow(
+            [defaultvalue(-1), in] long index,
+            [retval, out] IDispatch **row);
+
+    [id(DISPID_IHTMLTABLESECTION_DELETEROW)]
+    HRESULT deleteRow([defaultvalue(-1), in] long index);
+}
+
+/*****************************************************************************
  *    IHTMLFrameBase2 interface
  */
 [
