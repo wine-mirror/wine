@@ -877,6 +877,8 @@ pointer_tests(void)
   name.name = buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, name.size);
   get_name(&name);
   ok(name.name == buffer, "[in,out] pointer should have stayed as %p but instead changed to %p\n", name.name, buffer);
+  todo_wine
+  ok(!strcmp(name.name, "Jeremy Wh"), "name didn't unmarshall properly, expected \"Jeremy Wh\", but got \"%s\"\n", name.name);
   HeapFree(GetProcessHeap(), 0, name.name);
 
   pa2 = a;
