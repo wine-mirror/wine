@@ -2367,9 +2367,33 @@ static HRESULT WINAPI OLEPictureImpl_GetIDsOfNames(
   LCID        lcid,
   DISPID*     rgDispId)
 {
-  FIXME("():Stub\n");
+  ITypeInfo * pTInfo;
+  HRESULT hres;
 
-  return E_NOTIMPL;
+  TRACE("(%p,%s,%p,cNames=%d,lcid=%04x,%p)\n", iface, debugstr_guid(riid),
+        rgszNames, cNames, (int)lcid, rgDispId);
+
+  if (cNames == 0)
+  {
+    return E_INVALIDARG;
+  }
+  else
+  {
+    /* retrieve type information */
+    hres = OLEPictureImpl_GetTypeInfo(iface, 0, lcid, &pTInfo);
+
+    if (FAILED(hres))
+    {
+      ERR("GetTypeInfo failed.\n");
+      return hres;
+    }
+
+    /* convert names to DISPIDs */
+    hres = DispGetIDsOfNames (pTInfo, rgszNames, cNames, rgDispId);
+    ITypeInfo_Release(pTInfo);
+
+    return hres;
+  }
 }
 
 /************************************************************************
