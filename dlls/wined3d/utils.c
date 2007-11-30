@@ -2697,8 +2697,8 @@ WINED3DFORMAT pixelformat_for_depth(DWORD depth) {
         case 8:  return WINED3DFMT_P8;
         case 15: return WINED3DFMT_X1R5G5B5;
         case 16: return WINED3DFMT_R5G6B5;
-        case 24: return WINED3DFMT_R8G8B8;
-        case 32: return WINED3DFMT_X8R8G8B8;
+        case 24: return WINED3DFMT_X8R8G8B8; /* Robots needs 24bit to be X8R8G8B8 */
+        case 32: return WINED3DFMT_X8R8G8B8; /* EVE online and the Fur demo need 32bit AdapterDisplatMode to return X8R8G8B8 */
         default: return WINED3DFMT_UNKNOWN;
     }
 }

@@ -1410,23 +1410,8 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
             if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
                 pMode->RefreshRate = DevModeW.dmDisplayFrequency;
 
-            if (Format == WINED3DFMT_UNKNOWN)
-            {
-                switch (DevModeW.dmBitsPerPel)
-                {
-                    case 8:
-                        pMode->Format = WINED3DFMT_P8;
-                        break;
-                    case 16:
-                        pMode->Format = WINED3DFMT_R5G6B5;
-                        break;
-                    case 32:
-                        pMode->Format = WINED3DFMT_X8R8G8B8;
-                        break;
-                    default:
-                        pMode->Format = WINED3DFMT_UNKNOWN;
-                        ERR("Unhandled bit depth (%u) in mode list!\n", DevModeW.dmBitsPerPel);
-                }
+            if (Format == WINED3DFMT_UNKNOWN) {
+                pMode->Format = pixelformat_for_depth(DevModeW.dmBitsPerPel);
             } else {
                 pMode->Format = Format;
             }
@@ -1479,14 +1464,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT A
             pMode->RefreshRate = DevModeW.dmDisplayFrequency;
         }
 
-        switch (bpp) {
-        case  8: pMode->Format       = WINED3DFMT_R3G3B2;   break;
-        case 16: pMode->Format       = WINED3DFMT_R5G6B5;   break;
-        case 24: pMode->Format       = WINED3DFMT_X8R8G8B8; break; /* Robots needs 24bit to be X8R8G8B8 */
-        case 32: pMode->Format       = WINED3DFMT_X8R8G8B8; break; /* EVE online and the Fur demo need 32bit AdapterDisplatMode to return X8R8G8B8 */
-        default: pMode->Format       = WINED3DFMT_UNKNOWN;
-        }
-
+        pMode->Format = pixelformat_for_depth(bpp);
     } else {
         FIXME_(d3d_caps)("Adapter not primary display\n");
     }
