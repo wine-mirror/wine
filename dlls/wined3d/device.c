@@ -4789,6 +4789,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     WINED3DRECT curRect;
     RECT vp_rect;
     WINED3DVIEWPORT *vp = &This->stateBlock->viewport;
+    UINT drawable_width, drawable_height;
 
     TRACE("(%p) Count (%d), pRects (%p), Flags (%x), Color (0x%08x), Z (%f), Stencil (%d)\n", This,
           Count, pRects, Flags, Color, Z, Stencil);
@@ -4825,6 +4826,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
             break;
         }
     }
+
+    target->get_drawable_size(target, &drawable_width, &drawable_height);
 
     /* This is for offscreen rendering as well as for multithreading, thus activate the set render target
      * and not the last active one.
@@ -4873,7 +4876,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
                        This->stateBlock->viewport.Height);
         } else {
             glScissor(This->stateBlock->viewport.X,
-                      (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height -
+                      (drawable_height -
                       (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)),
                        This->stateBlock->viewport.Width,
                        This->stateBlock->viewport.Height);
@@ -4912,7 +4915,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
                 glScissor(curRect.x1, curRect.y1,
                           curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
             } else {
-                glScissor(curRect.x1, target->currentDesc.Height - curRect.y2,
+                glScissor(curRect.x1, drawable_height - curRect.y2,
                           curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
             }
             checkGLcall("glScissor");
