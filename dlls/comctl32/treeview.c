@@ -3996,7 +3996,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     if(ht.hItem && (ht.flags & TVHT_ONITEM))
     {
         infoPtr->focusedItem = ht.hItem;
-        InvalidateRect(hwnd, &(((HTREEITEM)(ht.hItem))->rect), TRUE);
+        InvalidateRect(hwnd, &ht.hItem->rect, TRUE);
 
         if(infoPtr->selectedItem)
             InvalidateRect(hwnd, &(infoPtr->selectedItem->rect), TRUE);
