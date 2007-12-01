@@ -94,6 +94,8 @@
 #define IDS_CANTTRASH_TEXT          140
 #define IDS_OVERWRITEFOLDER_TEXT    141
 
+#define MENU_SHV_FILE 144
+
 /* Note: this string is referenced from the registry*/
 #define IDS_RECYCLEBIN_FOLDER_NAME   8964
 
