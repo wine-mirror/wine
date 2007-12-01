@@ -51,6 +51,7 @@ static inline unsigned GET_UINT(const BYTE* buffer, unsigned i)
 
 static HLPFILE *first_hlpfile = 0;
 static BYTE    *file_buffer;
+static UINT     file_buffer_size;
 
 static struct
 {
@@ -1328,7 +1329,6 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
 static BOOL HLPFILE_ReadFileToBuffer(HFILE hFile)
 {
     BYTE  header[16], dummy[1];
-    UINT  size;
 
     if (_hread(hFile, header, 16) != 16) {WINE_WARN("header\n"); return FALSE;};
 
@@ -1336,19 +1336,33 @@ static BOOL HLPFILE_ReadFileToBuffer(HFILE hFile)
     if (GET_UINT(header, 0) != 0x00035F3F)
     {WINE_WARN("wrong header\n"); return FALSE;};
 
-    size = GET_UINT(header, 12);
-    file_buffer = HeapAlloc(GetProcessHeap(), 0, size + 1);
+    file_buffer_size = GET_UINT(header, 12);
+    file_buffer = HeapAlloc(GetProcessHeap(), 0, file_buffer_size + 1);
     if (!file_buffer) return FALSE;
 
     memcpy(file_buffer, header, 16);
-    if (_hread(hFile, file_buffer + 16, size - 16) != size - 16)
+    if (_hread(hFile, file_buffer + 16, file_buffer_size - 16) != file_buffer_size - 16)
     {WINE_WARN("filesize1\n"); return FALSE;};
 
     if (_hread(hFile, dummy, 1) != 0) WINE_WARN("filesize2\n");
 
-    file_buffer[size] = '\0'; /* FIXME: was '0', sounds ackward to me */
+    file_buffer[file_buffer_size] = '\0'; /* FIXME: was '0', sounds ackward to me */
 
     return TRUE;
+}
+
+/**************************************************************************
+ * comp_FindSubFile
+ *
+ * HLPFILE_BPTreeCompare function for HLPFILE directory.
+ *
+ */
+static int comp_FindSubFile(void *p, const void *key,
+                            int leaf, void** next)
+{
+    *next = (char *)p+strlen(p)+(leaf?5:3);
+    WINE_TRACE("Comparing '%s' with '%s'\n", (char *)p, (char *)key);
+    return strcmp(p, key);
 }
 
 /***********************************************************************
@@ -1357,66 +1371,30 @@ static BOOL HLPFILE_ReadFileToBuffer(HFILE hFile)
  */
 static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE **subbuf, BYTE **subend)
 {
-    BYTE *root = file_buffer + GET_UINT(file_buffer,  4);
-    BYTE *end  = file_buffer + GET_UINT(file_buffer, 12);
     BYTE *ptr;
-    BYTE *bth;
 
-    unsigned    pgsize;
-    unsigned    pglast;
-    unsigned    nentries;
-    unsigned    i, n;
-
-    bth = root + 9;
-
-    /* FIXME: this should be using the EnumBTree functions from this file */
-    pgsize = GET_USHORT(bth, 4);
-    WINE_TRACE("%s => pgsize=%u #pg=%u rootpg=%u #lvl=%u\n", 
-               name, pgsize, GET_USHORT(bth, 30), GET_USHORT(bth, 26), GET_USHORT(bth, 32));
-
-    ptr = bth + 38 + GET_USHORT(bth, 26) * pgsize;
-
-    for (n = 1; n < GET_USHORT(bth, 32); n++)
+    WINE_TRACE("looking for file '%s'\n", name);
+    ptr = HLPFILE_BPTreeSearch(file_buffer + GET_UINT(file_buffer, 4),
+                               name, comp_FindSubFile);
+    if (!ptr) return FALSE;
+    *subbuf = file_buffer + GET_UINT(ptr, strlen(name)+1);
+    if (*subbuf >= file_buffer + file_buffer_size)
     {
-        nentries = GET_USHORT(ptr, 2);
-        pglast = GET_USHORT(ptr, 4);
-        WINE_TRACE("[%u]: #entries=%u next=%u\n", n, nentries, pglast);
-
-        ptr += 6;
-        for (i = 0; i < nentries; i++)
-        {
-            char *str = (char*) ptr;
-            WINE_TRACE("<= %s\n", str);
-            if (strcmp(name, str) < 0) break;
-            ptr += strlen(str) + 1;
-            pglast = GET_USHORT(ptr, 0);
-            ptr += 2;
-        }
-        ptr = bth + 38 + pglast * pgsize;
+        WINE_ERR("internal file %s does not fit\n", name);
+        return FALSE;
     }
-
-    nentries = GET_USHORT(ptr, 2);
-    ptr += 8;
-    for (i = 0; i < nentries; i++)
+    *subend = *subbuf + GET_UINT(*subbuf, 0);
+    if (*subend > file_buffer + file_buffer_size)
     {
-        char*   fname = (char*)ptr;
-        ptr += strlen(fname) + 1;
-        WINE_TRACE("\\- %s\n", fname);
-        if (strcmp(fname, name) == 0)
-        {
-            *subbuf = file_buffer + GET_UINT(ptr, 0);
-            *subend = *subbuf + GET_UINT(*subbuf, 0);
-            if (file_buffer > *subbuf || *subbuf > *subend || *subend > end)
-	    {
-                WINE_WARN("size mismatch\n");
-                return FALSE;
-	    }
-            return TRUE;
-        }
-        ptr += 4;
+        WINE_ERR("internal file %s does not fit\n", name);
+        return FALSE;
     }
-
-    return FALSE;
+    if (GET_UINT(*subbuf, 0) < GET_UINT(*subbuf, 4) + 9)
+    {
+        WINE_ERR("invalid size provided for internal file %s\n", name);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /***********************************************************************
