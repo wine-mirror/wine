@@ -39,8 +39,6 @@
  * the X client instead of in the server like other bitmaps; however,
  * some programs (notably Paint Brush) expect to be able to manipulate
  * the bits directly :-(
- *
- * FIXME: what are we going to do with animation and color (bpp > 1) cursors ?!
  */
 
 #include "config.h"
@@ -900,6 +898,13 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
     bits = map_fileW( filename, &filesize );
     if (!bits)
         return hIcon;
+
+    /* Check for .ani. */
+    if (memcmp( bits, "RIFF", 4 ) == 0)
+    {
+        FIXME("No support for .ani cursors.\n");
+        goto end;
+    }
 
     dir = (CURSORICONFILEDIR*) bits;
     if ( filesize < sizeof(*dir) )
