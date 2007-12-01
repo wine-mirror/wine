@@ -464,7 +464,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     GLfloat     gl_floatv[2];
     int         major = 1, minor = 0;
     BOOL        return_value = TRUE;
-    int         i;
+    unsigned    i;
     HDC         hdc;
     unsigned int vidmem=0;
 
@@ -792,7 +792,11 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                     FIXME("OpenGL implementation supports %u vertex samplers and %u total samplers\n",
                           gl_info->max_vertex_samplers, gl_info->max_combined_samplers);
                     FIXME("Expected vertex samplers + MAX_TEXTURES(=8) > combined_samplers\n");
-                    gl_info->max_vertex_samplers = max(0, gl_info->max_combined_samplers - MAX_TEXTURES);
+                    if( gl_info->max_combined_samplers > MAX_TEXTURES )
+                        gl_info->max_vertex_samplers =
+                            gl_info->max_combined_samplers - MAX_TEXTURES;
+                    else
+                        gl_info->max_vertex_samplers = 0;
                 }
             } else {
                 gl_info->max_combined_samplers = gl_info->max_fragment_samplers;
