@@ -210,6 +210,25 @@ static UINT create_media_table( MSIHANDLE hdb )
             "PRIMARY KEY `DiskId`)" );
 }
 
+static UINT create_ccpsearch_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `CCPSearch` ("
+            "`Signature_` CHAR(72) NOT NULL "
+            "PRIMARY KEY `Signature_`)" );
+}
+
+static UINT create_drlocator_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `DrLocator` ("
+            "`Signature_` CHAR(72) NOT NULL, "
+            "`Parent` CHAR(72), "
+            "`Path` CHAR(255), "
+            "`Depth` SHORT "
+            "PRIMARY KEY `Signature_`, `Parent`, `Path`)" );
+}
+
 static UINT add_component_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Component`  "
@@ -374,6 +393,36 @@ static UINT add_media_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Media` "
             "(`DiskId`, `LastSequence`, `DiskPrompt`, `Cabinet`, `VolumeLabel`, `Source`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_ccpsearch_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `CCPSearch` (`Signature_`) VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_drlocator_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `DrLocator` "
+            "(`Signature_`, `Parent`, `Path`, `Depth`) "
             "VALUES( %s )";
     char *query;
     UINT sz, r;
@@ -4773,6 +4822,58 @@ static void test_launchconditions(void)
     DeleteFile( msifile );
 }
 
+static void test_ccpsearch(void)
+{
+    MSIHANDLE hdb, hpkg;
+    CHAR prop[MAX_PATH];
+    DWORD size = MAX_PATH;
+    UINT r;
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    hdb = create_package_db();
+    ok(hdb, "failed to create package database\n");
+
+    r = create_ccpsearch_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_ccpsearch_entry(hdb, "'CCP_random'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_ccpsearch_entry(hdb, "'RMCCP_random'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_reglocator_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_reglocator_entry(hdb, "'CCP_random', 0, 'htmlfile\\shell\\open\\nonexistent', '', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_drlocator_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_drlocator_entry(hdb, "'RMCCP_random', '', 'C:\\', '0'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_signature_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    hpkg = package_from_db(hdb);
+    ok(hpkg, "failed to create package\n");
+
+    MsiCloseHandle(hdb);
+
+    r = MsiDoAction(hpkg, "CCPSearch");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiGetPropertyA(hpkg, "CCP_Success", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, "1"), "Expected 1, got %s\n", prop);
+
+    MsiCloseHandle(hpkg);
+    DeleteFileA(msifile);
+}
+
 START_TEST(package)
 {
     test_createpackage();
@@ -4795,4 +4896,5 @@ START_TEST(package)
     test_sourcedirprop();
     test_prop_path();
     test_launchconditions();
+    test_ccpsearch();
 }
