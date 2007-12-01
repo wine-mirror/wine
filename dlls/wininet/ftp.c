@@ -885,9 +885,27 @@ BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDir
     TRACE("len(%d)\n", *lpdwCurrentDirectory);
 
     lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hFtpSession );
-    if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
+    if (NULL == lpwfs)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
+        goto lend;
+    }
+
+    if (WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        goto lend;
+    }
+
+    if (!lpdwCurrentDirectory)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        goto lend;
+    }
+
+    if (lpszCurrentDirectory == NULL)
+    {
+        INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
         goto lend;
     }
 
