@@ -93,27 +93,22 @@ static BOOL  HLPFILE_Uncompress3(char*, const char*, const BYTE*, const BYTE*);
 static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz);
 static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
 
-#if 0
 /***********************************************************************
  *
  *           HLPFILE_PageByNumber
  */
-static HLPFILE_PAGE *HLPFILE_PageByNumber(LPCSTR lpszPath, UINT wNum)
+static HLPFILE_PAGE *HLPFILE_PageByNumber(HLPFILE* hlpfile, UINT wNum)
 {
     HLPFILE_PAGE *page;
-    HLPFILE *hlpfile = HLPFILE_ReadHlpFile(lpszPath);
+    UINT          temp = wNum;
 
-    if (!hlpfile) return 0;
+    WINE_TRACE("<%s>[%u]\n", hlpfile->lpszPath, wNum);
 
-    WINE_TRACE("[%s/%u]\n", lpszPath, wNum);
-
-    for (page = hlpfile->first_page; page && wNum; page = page->next) wNum--;
-
-    /* HLPFILE_FreeHlpFile(lpszPath); */
-
+    for (page = hlpfile->first_page; page && temp; page = page->next) temp--;
+    if (!page)
+        WINE_ERR("Page of number %u not found in file %s\n", wNum, hlpfile->lpszPath);
     return page;
 }
-#endif
 
 /* FIXME:
  * this finds the page containing the offset. The offset can either
@@ -163,6 +158,10 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
     if (!hlpfile) return 0;
 
     WINE_TRACE("<%s>[%x]\n", hlpfile->lpszPath, lHash);
+
+    /* For win 3.0 files hash values are really page numbers */
+    if (hlpfile->version <= 16)
+        return HLPFILE_PageByNumber(hlpfile, lHash);
 
     for (i = 0; i < hlpfile->wContextLen; i++)
     {
