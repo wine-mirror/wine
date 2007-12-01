@@ -932,7 +932,7 @@ static void convert_PCREDENTIALW_to_PCREDENTIALA(const CREDENTIALW *CredentialW,
     CredentialA->Type = CredentialW->Type;
     if (CredentialW->TargetName)
     {
-        CredentialA->TargetName = (LPSTR)buffer;
+        CredentialA->TargetName = buffer;
         string_len = WideCharToMultiByte(CP_ACP, 0, CredentialW->TargetName, -1, CredentialA->TargetName, -1, NULL, NULL);
         buffer += string_len;
         *len += string_len;
@@ -941,7 +941,7 @@ static void convert_PCREDENTIALW_to_PCREDENTIALA(const CREDENTIALW *CredentialW,
         CredentialA->TargetName = NULL;
     if (CredentialW->Comment)
     {
-        CredentialA->Comment = (LPSTR)buffer;
+        CredentialA->Comment = buffer;
         string_len = WideCharToMultiByte(CP_ACP, 0, CredentialW->Comment, -1, CredentialA->Comment, -1, NULL, NULL);
         buffer += string_len;
         *len += string_len;
@@ -965,7 +965,7 @@ static void convert_PCREDENTIALW_to_PCREDENTIALA(const CREDENTIALW *CredentialW,
     CredentialA->Attributes = NULL; /* FIXME */
     if (CredentialW->TargetAlias)
     {
-        CredentialA->TargetAlias = (LPSTR)buffer;
+        CredentialA->TargetAlias = buffer;
         string_len = WideCharToMultiByte(CP_ACP, 0, CredentialW->TargetAlias, -1, CredentialA->TargetAlias, -1, NULL, NULL);
         buffer += string_len;
         *len += string_len;
@@ -974,7 +974,7 @@ static void convert_PCREDENTIALW_to_PCREDENTIALA(const CREDENTIALW *CredentialW,
         CredentialA->TargetAlias = NULL;
     if (CredentialW->UserName)
     {
-        CredentialA->UserName = (LPSTR)buffer;
+        CredentialA->UserName = buffer;
         string_len = WideCharToMultiByte(CP_ACP, 0, CredentialW->UserName, -1, CredentialA->UserName, -1, NULL, NULL);
         buffer += string_len;
         *len += string_len;

@@ -4087,7 +4087,7 @@ BOOL WINAPI ConvertStringSidToSidW(LPCWSTR StringSid, PSID* Sid)
         SetLastError(ERROR_INVALID_PARAMETER);
     else if (ParseStringSidToSid(StringSid, NULL, &cBytes))
     {
-        PSID pSid = *Sid = (PSID) LocalAlloc(0, cBytes);
+        PSID pSid = *Sid = LocalAlloc(0, cBytes);
 
         bret = ParseStringSidToSid(StringSid, pSid, &cBytes);
         if (!bret)
