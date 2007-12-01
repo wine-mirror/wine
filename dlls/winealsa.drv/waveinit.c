@@ -198,7 +198,7 @@ static int ALSA_RegGetBoolean(HKEY key, const char *value, BOOL *answer)
 }
 
 /*----------------------------------------------------------------------------
-** ALSA_RegGetBoolean
+** ALSA_RegGetInt
 **  Get a string and interpret it as a DWORD
 */
 static int ALSA_RegGetInt(HKEY key, const char *value, DWORD *answer)
