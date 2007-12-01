@@ -161,13 +161,32 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset)
     return found;
 }
 
+/**************************************************************************
+ * comp_PageByHash
+ *
+ * HLPFILE_BPTreeCompare function for '|CONTEXT' B+ tree file
+ *
+ */
+static int comp_PageByHash(void *p, const void *key,
+                           int leaf, void** next)
+{
+    LONG lKey = (LONG)key;
+    LONG lTest = GET_UINT(p, 0);
+
+    *next = (char *)p+(leaf?8:6);
+    WINE_TRACE("Comparing '%u' with '%u'\n", lKey, lTest);
+    if (lTest < lKey) return -1;
+    if (lTest > lKey) return 1;
+    return 0;
+}
+
 /***********************************************************************
  *
  *           HLPFILE_HlpFilePageByHash
  */
 HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
 {
-    unsigned int i;
+    BYTE *ptr;
 
     if (!hlpfile) return 0;
 
@@ -177,14 +196,14 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
     if (hlpfile->version <= 16)
         return HLPFILE_PageByNumber(hlpfile, lHash);
 
-    for (i = 0; i < hlpfile->wContextLen; i++)
+    ptr = HLPFILE_BPTreeSearch(hlpfile->Context, (void*)lHash, comp_PageByHash);
+    if (!ptr)
     {
-        if (hlpfile->Context[i].lHash == lHash)
-            return HLPFILE_PageByOffset(hlpfile, hlpfile->Context[i].offset);
+        WINE_ERR("Page of hash %x not found in file %s\n", lHash, hlpfile->lpszPath);
+        return NULL;
     }
 
-    WINE_ERR("Page of hash %x not found in file %s\n", lHash, hlpfile->lpszPath);
-    return NULL;
+    return HLPFILE_PageByOffset(hlpfile, GET_UINT(ptr, 4));
 }
 
 /***********************************************************************
@@ -272,7 +291,6 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
     hlpfile->lpszCopyright      = NULL;
     hlpfile->first_page         = NULL;
     hlpfile->first_macro        = NULL;
-    hlpfile->wContextLen        = 0;
     hlpfile->Context            = NULL;
     hlpfile->wMapLen            = 0;
     hlpfile->Map                = NULL;
@@ -1978,63 +1996,6 @@ static void* HLPFILE_BPTreeSearch(BYTE* buf, const void* key,
     return NULL;
 }
 
-/******************************************************************
- *		HLPFILE_EnumBTreeLeaves
- *
- *
- */
-static void HLPFILE_EnumBTreeLeaves(const BYTE* buf, const BYTE* end, unsigned (*fn)(const BYTE*, void*), void* user)
-{
-    unsigned    psize, pnext;
-    unsigned    num, nlvl;
-    const BYTE* ptr;
-
-    num    = GET_UINT(buf, 9 + 34);
-    psize  = GET_USHORT(buf, 9 + 4);
-    nlvl   = GET_USHORT(buf, 9 + 32);
-    pnext  = GET_USHORT(buf, 9 + 26);
-
-    WINE_TRACE("BTree: #entries=%u pagSize=%u #levels=%u #pages=%u root=%u struct%16s\n",
-               num, psize, nlvl, GET_USHORT(buf, 9 + 30), pnext, buf + 9 + 6);
-    if (!num) return;
-
-    while (--nlvl > 0)
-    {
-        ptr = (buf + 9 + 38) + pnext * psize;
-        WINE_TRACE("BTree: (index[%u]) unused=%u #entries=%u <%u\n",
-                   pnext, GET_USHORT(ptr, 0), GET_USHORT(ptr, 2), GET_USHORT(ptr, 4));
-        pnext = GET_USHORT(ptr, 4);
-    }
-    while (pnext != 0xFFFF)
-    {
-        const BYTE*     node_page;
-        unsigned short  limit;
-
-        node_page = ptr = (buf + 9 + 38) + pnext * psize;
-        limit = GET_USHORT(ptr, 2);
-        WINE_TRACE("BTree: (leaf [%u]) unused=%u #entries=%u <%u >%u\n",
-                   pnext, GET_USHORT(ptr, 0), limit, GET_USHORT(ptr, 4), GET_USHORT(ptr, 6));
-        ptr += 8;
-        while (limit--)
-            ptr += (fn)(ptr, user);
-        pnext = GET_USHORT(node_page, 6);
-    }
-}
-
-struct myfncb {
-    HLPFILE*    hlpfile;
-    int         i;
-};
-
-static unsigned myfn(const BYTE* ptr, void* user)
-{
-    struct myfncb*      m = user;
-
-    m->hlpfile->Context[m->i].lHash  = GET_UINT(ptr, 0);
-    m->hlpfile->Context[m->i].offset = GET_UINT(ptr, 4);
-    m->i++;
-    return 8;
-}
 
 /***********************************************************************
  *
@@ -2043,19 +2004,14 @@ static unsigned myfn(const BYTE* ptr, void* user)
 static BOOL HLPFILE_GetContext(HLPFILE *hlpfile)
 {
     BYTE                *cbuf, *cend;
-    struct myfncb       m;
     unsigned            clen;
 
     if (!HLPFILE_FindSubFile("|CONTEXT",  &cbuf, &cend)) {WINE_WARN("context0\n"); return FALSE;}
 
-    clen = GET_UINT(cbuf, 0x2b);
-    hlpfile->Context = HeapAlloc(GetProcessHeap(), 0, clen * sizeof(HLPFILE_CONTEXT));
+    clen = cend - cbuf;
+    hlpfile->Context = HeapAlloc(GetProcessHeap(), 0, clen);
     if (!hlpfile->Context) return FALSE;
-    hlpfile->wContextLen = clen;
-
-    m.hlpfile = hlpfile;
-    m.i = 0;
-    HLPFILE_EnumBTreeLeaves(cbuf, cend, myfn, &m);
+    memcpy(hlpfile->Context, cbuf, clen);
 
     return TRUE;
 }

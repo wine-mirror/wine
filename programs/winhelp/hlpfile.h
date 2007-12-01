@@ -104,12 +104,6 @@ typedef struct tagHlpFilePage
 
 typedef struct
 {
-    LONG                        lHash;
-    unsigned long               offset;
-} HLPFILE_CONTEXT;
-
-typedef struct
-{
     LONG                        lMap;
     unsigned long               offset;
 } HLPFILE_MAP;
@@ -128,8 +122,7 @@ typedef struct tagHlpFileFile
     LPSTR                       lpszCopyright;
     HLPFILE_PAGE*               first_page;
     HLPFILE_MACRO*              first_macro;
-    unsigned                    wContextLen;
-    HLPFILE_CONTEXT*            Context;
+    BYTE*                       Context;
     unsigned                    wMapLen;
     HLPFILE_MAP*                Map;
     unsigned long               contents_start;
