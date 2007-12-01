@@ -1266,7 +1266,7 @@ static LONG ShellExecute_FromContextMenu( LPSHELLEXECUTEINFOW sei )
         i = 0;
         while ( 1 )
         {
-            r = RegEnumKeyW( hkeycm, i++, szguid, 39 );
+            r = RegEnumKeyW( hkeycm, i++, szguid, sizeof(szguid)/sizeof(szguid[0]) );
             if ( r != ERROR_SUCCESS )
                 break;
 
