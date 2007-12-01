@@ -585,6 +585,9 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     glDisable(GL_STENCIL_TEST);
     checkGLcall("glDisable GL_STENCIL_TEST");
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_STENCILENABLE));
+    glDisable(GL_SCISSOR_TEST);
+    checkGLcall("glDisable GL_SCISSOR_TEST");
+    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
     if(GL_SUPPORT(ARB_POINT_SPRITE)) {
         glDisable(GL_POINT_SPRITE_ARB);
         checkGLcall("glDisable GL_POINT_SPRITE_ARB");
