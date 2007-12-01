@@ -75,6 +75,18 @@ static struct
     HLPFILE_LINK*       link;
 } attributes;
 
+/*
+ * Compare function type for HLPFILE_BPTreeSearch function.
+ *
+ * PARAMS
+ *     p       [I] pointer to testing block (key + data)
+ *     key     [I] pointer to key value to look for
+ *     leaf    [I] whether this function called for index of leaf page
+ *     next    [O] pointer to pointer to next block
+ */
+typedef int (*HLPFILE_BPTreeCompare)(void *p, const void *key,
+                                     int leaf, void **next);
+
 static BOOL  HLPFILE_DoReadHlpFile(HLPFILE*, LPCSTR);
 static BOOL  HLPFILE_ReadFileToBuffer(HFILE);
 static BOOL  HLPFILE_FindSubFile(LPCSTR name, BYTE**, BYTE**);
@@ -92,6 +104,8 @@ static void  HLPFILE_Uncompress2(const BYTE*, const BYTE*, BYTE*, const BYTE*);
 static BOOL  HLPFILE_Uncompress3(char*, const char*, const BYTE*, const BYTE*);
 static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz);
 static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
+
+static void* HLPFILE_BPTreeSearch(BYTE*, const void*, HLPFILE_BPTreeCompare);
 
 /***********************************************************************
  *
@@ -1902,6 +1916,66 @@ static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, 
     if (*dst != sdst)
         WINE_WARN("Buffer X-flow: d(%u) instead of d(%u)\n",
                   *dst - (sdst - dstsz), dstsz);
+}
+
+/**************************************************************************
+ * HLPFILE_BPTreeSearch
+ *
+ * Searches for an element in B+ tree
+ *
+ * PARAMS
+ *     buf        [I] pointer to the embedded file structured as a B+ tree
+ *     key        [I] pointer to data to find
+ *     comp       [I] compare function
+ *
+ * RETURNS
+ *     Pointer to block identified by key, or NULL if failure.
+ *
+ */
+static void* HLPFILE_BPTreeSearch(BYTE* buf, const void* key,
+                                  HLPFILE_BPTreeCompare comp)
+{
+    unsigned magic;
+    unsigned page_size;
+    unsigned cur_page;
+    unsigned level;
+    BYTE *pages, *ptr, *newptr;
+    int i, entries;
+    int ret;
+
+    magic = GET_USHORT(buf, 9);
+    if (magic != 0x293B)
+    {
+        WINE_ERR("Invalid magic in B+ tree: 0x%x\n", magic);
+        return NULL;
+    }
+    page_size = GET_USHORT(buf, 9+4);
+    cur_page  = GET_USHORT(buf, 9+26);
+    level     = GET_USHORT(buf, 9+32);
+    pages     = buf + 9 + 38;
+    while (--level > 0)
+    {
+        ptr = pages + cur_page*page_size;
+        entries = GET_SHORT(ptr, 2);
+        ptr += 6;
+        for (i = 0; i < entries; i++)
+        {
+            if (comp(ptr, key, 0, (void **)&newptr) > 0) break;
+            ptr = newptr;
+        }
+        cur_page = GET_USHORT(ptr-2, 0);
+    }
+    ptr = pages + cur_page*page_size;
+    entries = GET_SHORT(ptr, 2);
+    ptr += 8;
+    for (i = 0; i < entries; i++)
+    {
+        ret = comp(ptr, key, 1, (void **)&newptr);
+        if (ret == 0) return ptr;
+        if (ret > 0) return NULL;
+        ptr = newptr;
+    }
+    return NULL;
 }
 
 /******************************************************************
