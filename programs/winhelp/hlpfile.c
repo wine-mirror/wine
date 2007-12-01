@@ -1575,24 +1575,35 @@ static BYTE *HLPFILE_UncompressLZ77(BYTE *ptr, BYTE *end, BYTE *newptr)
  */
 static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
 {
-    UINT i, num, dec_size;
+    UINT i, num, dec_size, head_size;
     BYTE *buf, *end;
 
     if (!HLPFILE_FindSubFile("|Phrases", &buf, &end)) return FALSE;
 
+    if (hlpfile->version <= 16)
+        head_size = 13;
+    else
+        head_size = 17;
+
     num = phrases.num = GET_USHORT(buf, 9);
     if (buf + 2 * num + 0x13 >= end) {WINE_WARN("1a\n"); return FALSE;};
 
-    dec_size = HLPFILE_UncompressedLZ77_Size(buf + 0x13 + 2 * num, end);
+    if (hlpfile->version <= 16)
+        dec_size = end - buf - 15 - 2 * num;
+    else
+        dec_size = HLPFILE_UncompressedLZ77_Size(buf + 0x13 + 2 * num, end);
 
     phrases.offsets = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned) * (num + 1));
     phrases.buffer  = HeapAlloc(GetProcessHeap(), 0, dec_size);
     if (!phrases.offsets || !phrases.buffer) return FALSE;
 
     for (i = 0; i <= num; i++)
-        phrases.offsets[i] = GET_USHORT(buf, 0x11 + 2 * i) - 2 * num - 2;
+        phrases.offsets[i] = GET_USHORT(buf, head_size + 2 * i) - 2 * num - 2;
 
-    HLPFILE_UncompressLZ77(buf + 0x13 + 2 * num, end, (BYTE*)phrases.buffer);
+    if (hlpfile->version <= 16)
+        memcpy(phrases.buffer, buf + 15 + 2*num, dec_size);
+    else
+        HLPFILE_UncompressLZ77(buf + 0x13 + 2 * num, end, (BYTE*)phrases.buffer);
 
     hlpfile->hasPhrases = TRUE;
     return TRUE;
