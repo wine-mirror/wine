@@ -341,6 +341,13 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
         index  = (ref - 0x0C) / hlpfile->dsize;
         offset = (ref - 0x0C) % hlpfile->dsize;
 
+        if (hlpfile->version <= 16 && index != old_index && index != 0)
+        {
+            /* we jumped to the next block, adjust pointers */
+            ref -= 12;
+            offset -= 12;
+        }
+
         WINE_TRACE("ref=%08x => [%u/%u]\n", ref, index, offset);
 
         if (index >= topic.wMapLen) {WINE_WARN("maplen\n"); break;}
@@ -355,11 +362,8 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
             if (!HLPFILE_AddPage(hlpfile, buf, end, index * 0x8000L + offs)) return FALSE;
             break;
 
+	case 0x01:
 	case 0x20:
-            if (!HLPFILE_AddParagraph(hlpfile, buf, end, &len)) return FALSE;
-            offs += len;
-            break;
-
 	case 0x23:
             if (!HLPFILE_AddParagraph(hlpfile, buf, end, &len)) return FALSE;
             offs += len;
@@ -369,10 +373,18 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
             WINE_ERR("buf[0x14] = %x\n", buf[0x14]);
 	}
 
-        ref = GET_UINT(buf, 0xc);
+        if (hlpfile->version <= 16)
+        {
+            ref += GET_UINT(buf, 0xc);
+            if (GET_UINT(buf, 0xc) == 0)
+                break;
+        }
+        else
+            ref = GET_UINT(buf, 0xc);
     } while (ref != 0xffffffff);
 
     HLPFILE_GetMap(hlpfile);
+    if (hlpfile->version <= 16) return TRUE;
     return HLPFILE_GetContext(hlpfile);
 }
 
@@ -388,7 +400,6 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     char*         ptr;
     HLPFILE_MACRO*macro;
 
-    if (buf + 0x31 > end) {WINE_WARN("page1\n"); return FALSE;};
     title = buf + GET_UINT(buf, 0x10);
     if (title > end) {WINE_WARN("page2\n"); return FALSE;};
 
@@ -897,8 +908,12 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
     format = buf + 0x15;
     format_end = buf + GET_UINT(buf, 0x10);
 
-    fetch_long(&format);
-    *len = fetch_ushort(&format);
+    if (buf[0x14] == 0x20 || buf[0x14] == 0x23)
+    {
+        fetch_long(&format);
+        *len = fetch_ushort(&format);
+    }
+    else *len = end-buf-15;
 
     if (buf[0x14] == 0x23)
     {
@@ -918,7 +933,10 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
         WINE_TRACE("looking for format at offset %u for column %d\n", format - (buf + 0x15), nc);
         if (buf[0x14] == 0x23)
             format += 5;
-        format += 4;
+        if (buf[0x14] == 0x01)
+            format += 6;
+        else
+            format += 4;
         bits = GET_USHORT(format, 0); format += 2;
         if (bits & 0x0001) fetch_long(&format);
         if (bits & 0x0002) fetch_short(&format);
@@ -1108,6 +1126,13 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
             case 0xE0:
             case 0xE1:
                 WINE_WARN("jump topic 1 => %u\n", GET_UINT(format, 1));
+                HLPFILE_FreeLink(attributes.link);
+                attributes.link = HLPFILE_AllocLink((*format & 1) ? hlp_link_link : hlp_link_popup,
+                                                    hlpfile->lpszPath,
+                                                    GET_UINT(format, 1)-16,
+                                                    1, -1);
+
+
                 format += 5;
                 break;
 
