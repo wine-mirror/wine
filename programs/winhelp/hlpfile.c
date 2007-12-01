@@ -3,6 +3,7 @@
  *
  * Copyright    1996 Ulrich Schmid
  *              2002 Eric Pouech
+ *              2007 Kirill K. Smirnov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -337,9 +338,8 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
     {
         BYTE*   end;
 
-        /* FIXME this depends on the blocksize, can be 2k in some cases */
-        index  = (ref - 0x0C) >> 14;
-        offset = (ref - 0x0C) & 0x3fff;
+        index  = (ref - 0x0C) / hlpfile->dsize;
+        offset = (ref - 0x0C) % hlpfile->dsize;
 
         WINE_TRACE("ref=%08x => [%u/%u]\n", ref, index, offset);
 
@@ -1387,8 +1387,31 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
                magic, major, minor, flags);
     if (magic != 0x036C || major != 1)
     {WINE_WARN("Wrong system header\n"); return FALSE;}
-    if (minor <= 16) {WINE_WARN("too old file format (NIY)\n"); return FALSE;}
-    if (flags & 8) {WINE_WARN("Unsupported yet page size\n"); return FALSE;}
+    if (minor <= 16)
+    {
+        hlpfile->tbsize = 0x800;
+        hlpfile->compressed = 0;
+    }
+    else if (flags == 0)
+    {
+        hlpfile->tbsize = 0x1000;
+        hlpfile->compressed = 0;
+    }
+    else if (flags == 4)
+    {
+        hlpfile->tbsize = 0x1000;
+        hlpfile->compressed = 1;
+    }
+    else
+    {
+        hlpfile->tbsize = 0x800;
+        hlpfile->compressed = 1;
+    }
+
+    if (hlpfile->compressed)
+        hlpfile->dsize = 0x4000;
+    else
+        hlpfile->dsize = hlpfile->tbsize - 0x0C;
 
     hlpfile->version = minor;
     hlpfile->flags = flags;
@@ -1654,29 +1677,27 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
 {
     BYTE *buf, *ptr, *end, *newptr;
     unsigned int i, newsize = 0;
+    unsigned int topic_size;
 
     if (!HLPFILE_FindSubFile("|TOPIC", &buf, &end))
     {WINE_WARN("topic0\n"); return FALSE;}
 
-    switch (hlpfile->flags & (8|4))
+    buf += 9; /* Skip file header */
+    topic_size = end - buf;
+    if (hlpfile->compressed)
     {
-    case 8:
-        WINE_FIXME("Unsupported format\n");
-        return FALSE;
-    case 4:
-        buf += 9;
-        topic.wMapLen = (end - buf - 1) / 0x1000 + 1;
-        
+        topic.wMapLen = (topic_size - 1) / hlpfile->tbsize + 1;
+
         for (i = 0; i < topic.wMapLen; i++)
         {
-            ptr = buf + i * 0x1000;
-            
+            ptr = buf + i * hlpfile->tbsize;
+
             /* I don't know why, it's necessary for printman.hlp */
             if (ptr + 0x44 > end) ptr = end - 0x44;
 
-            newsize += HLPFILE_UncompressedLZ77_Size(ptr + 0xc, min(end, ptr + 0x1000));
+            newsize += HLPFILE_UncompressedLZ77_Size(ptr + 0xc, min(end, ptr + hlpfile->tbsize));
         }
-        
+
         topic.map = HeapAlloc(GetProcessHeap(), 0,
                               topic.wMapLen * sizeof(topic.map[0]) + newsize);
         if (!topic.map) return FALSE;
@@ -1685,35 +1706,30 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
 
         for (i = 0; i < topic.wMapLen; i++)
         {
-            ptr = buf + i * 0x1000;
+            ptr = buf + i * hlpfile->tbsize;
             if (ptr + 0x44 > end) ptr = end - 0x44;
 
             topic.map[i] = newptr;
-            newptr = HLPFILE_UncompressLZ77(ptr + 0xc, min(end, ptr + 0x1000), newptr);
+            newptr = HLPFILE_UncompressLZ77(ptr + 0xc, min(end, ptr + hlpfile->tbsize), newptr);
         }
-        break;
-    case 0:
-        /* basically, we need to copy the 0x1000 byte pages (removing the first 0x0C) in
-         * one single are in memory
+    }
+    else
+    {
+        /* basically, we need to copy the TopicBlockSize byte pages
+         * (removing the first 0x0C) in one single area in memory
          */
-#define DST_LEN (0x1000 - 0x0C)
-        buf += 9;
-        newsize = end - buf;
-        /* number of destination pages */
-        topic.wMapLen = (newsize - 1) / DST_LEN + 1;
+        topic.wMapLen = (topic_size - 1) / hlpfile->tbsize + 1;
         topic.map = HeapAlloc(GetProcessHeap(), 0,
-                              topic.wMapLen * (sizeof(topic.map[0]) + DST_LEN));
+                              topic.wMapLen * (sizeof(topic.map[0]) + hlpfile->dsize));
         if (!topic.map) return FALSE;
         newptr = (BYTE*)(topic.map + topic.wMapLen);
-        topic.end = newptr + newsize;
+        topic.end = newptr + topic_size;
 
         for (i = 0; i < topic.wMapLen; i++)
         {
-            topic.map[i] = newptr + i * DST_LEN;
-            memcpy(topic.map[i], buf + i * 0x1000 + 0x0C, DST_LEN);
+            topic.map[i] = newptr + i * hlpfile->dsize;
+            memcpy(topic.map[i], buf + i * hlpfile->tbsize + 0x0C, hlpfile->dsize);
         }
-#undef DST_LEN
-        break;
     }
     return TRUE;
 }
