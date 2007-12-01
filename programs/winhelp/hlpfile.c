@@ -1266,7 +1266,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
         flag = ref[dscr_offset + i * 11 + 0];
         family = ref[dscr_offset + i * 11 + 2];
 
-        hlpfile->fonts[i].LogFont.lfHeight = -ref[dscr_offset + i * 11 + 1] / 2;
+        hlpfile->fonts[i].LogFont.lfHeight = -ref[dscr_offset + i * 11 + 1] / 2 - 3;
         hlpfile->fonts[i].LogFont.lfWidth = 0;
         hlpfile->fonts[i].LogFont.lfEscapement = 0;
         hlpfile->fonts[i].LogFont.lfOrientation = 0;
