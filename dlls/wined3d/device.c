@@ -4797,6 +4797,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
+     * drawable. After the clear we'll mark the drawable up to date, so we have to make sure that this is true
+     * for the cleared parts, and the untouched parts.
+     *
+     * If we're clearing the whole target there is no need to copy it into the drawable, it will be overwritten
+     * anyway. If we're not clearing the color buffer we don't have to copy either since we're not going to set
+     * the drawable up to date
+     */
+    if (Count > 0 && pRects) {
+        if(Flags & WINED3DCLEAR_TARGET) {
+            if(pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
+               pRects[0].x2 < target->currentDesc.Width ||
+               pRects[0].y2 < target->currentDesc.Height) {
+                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
+            }
+        }
+        curRect = pRects;
+    } else {
+        curRect = NULL;
+    }
+
     /* This is for offscreen rendering as well as for multithreading, thus activate the set render target
      * and not the last active one.
      */
@@ -4805,12 +4826,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         apply_fbo_state(iface);
-    }
-
-    if (Count > 0 && pRects) {
-        curRect = pRects;
-    } else {
-        curRect = NULL;
     }
 
     /* Only set the values up once, as they are not changing */
@@ -4861,17 +4876,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         glClear(glMask);
         checkGLcall("glClear");
     } else {
-        if(!(target->Flags & SFLAG_INDRAWABLE) &&
-           !(wined3d_settings.offscreen_rendering_mode == ORM_FBO && This->render_offscreen && target->Flags & SFLAG_INTEXTURE)) {
-
-            if(curRect[0].x1 > 0 || curRect[0].y1 > 0 ||
-               curRect[0].x2 < target->currentDesc.Width ||
-               curRect[0].y2 < target->currentDesc.Height) {
-                TRACE("Partial clear, and surface not in drawable. Blitting texture to drawable\n");
-                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
-            }
-        }
-
         /* Now process each rect in turn */
         for (i = 0; i < Count; i++) {
             /* Note gl uses lower left, width/height */
@@ -4913,18 +4917,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
                     mask & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
                     mask & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
                     mask & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
-    }
 
+        /* Dirtify the target surface for now. If the surface is locked regularly, and an up to date sysmem copy exists,
+         * it is most likely more efficient to perform a clear on the sysmem copy too instead of downloading it
+         */
+        IWineD3DSurface_ModifyLocation(This->lastActiveRenderTarget, SFLAG_INDRAWABLE, TRUE);
+        /* TODO: Move the fbo logic into ModifyLocation() */
+        if(This->render_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+            target->Flags |= SFLAG_INTEXTURE;
+        }
+    }
     LEAVE_GL();
 
-    /* Dirtify the target surface for now. If the surface is locked regularly, and an up to date sysmem copy exists,
-     * it is most likely more efficient to perform a clear on the sysmem copy too instead of downloading it
-     */
-    IWineD3DSurface_ModifyLocation(This->lastActiveRenderTarget, SFLAG_INDRAWABLE, TRUE);
-    /* TODO: Move the fbo logic into ModifyLocation() */
-    if(This->render_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        target->Flags |= SFLAG_INTEXTURE;
-    }
     return WINED3D_OK;
 }
 
