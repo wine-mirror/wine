@@ -276,6 +276,7 @@ static void clear_test(IDirect3DDevice9 *device)
     D3DRECT rect[2];
     D3DRECT rect_negneg;
     DWORD color;
+    D3DVIEWPORT9 old_vp, vp;
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
@@ -315,6 +316,69 @@ static void clear_test(IDirect3DDevice9 *device)
     ok(color == 0x00ffffff, "Clear rectangle 4(NULL) has color %08x\n", color);
     color = getPixelColor(device, 480, 120); /* upper right quad */
     ok(color == 0x00ffffff, "Clear rectangle 4(neg, neg) has color %08x\n", color);
+
+    /* Test how the viewport affects clears */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_GetViewport(device, &old_vp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %s\n", DXGetErrorString9(hr));
+
+    vp.X = 160;
+    vp.Y = 120;
+    vp.Width = 160;
+    vp.Height = 120;
+    vp.MinZ = 0.0;
+    vp.MaxZ = 1.0;
+    hr = IDirect3DDevice9_SetViewport(device, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+    vp.X = 320;
+    vp.Y = 240;
+    vp.Width = 320;
+    vp.Height = 240;
+    vp.MinZ = 0.0;
+    vp.MaxZ = 1.0;
+    hr = IDirect3DDevice9_SetViewport(device, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %s\n", DXGetErrorString9(hr));
+    rect[0].x1 = 160;
+    rect[0].y1 = 120;
+    rect[0].x2 = 480;
+    rect[0].y2 = 360;
+    hr = IDirect3DDevice9_Clear(device, 1, &rect[0], D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetViewport(device, &old_vp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %s\n", DXGetErrorString9(hr));
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    color = getPixelColor(device, 158, 118);
+    ok(color == 0x00ffffff, "(158,118) has color %08x\n", color);
+    color = getPixelColor(device, 162, 118);
+    ok(color == 0x00ffffff, "(162,118) has color %08x\n", color);
+    color = getPixelColor(device, 158, 122);
+    ok(color == 0x00ffffff, "(158,122) has color %08x\n", color);
+    color = getPixelColor(device, 162, 122);
+    ok(color == 0x000000ff, "(162,122) has color %08x\n", color);
+
+    color = getPixelColor(device, 318, 238);
+    ok(color == 0x000000ff, "(318,238) has color %08x\n", color);
+    color = getPixelColor(device, 322, 238);
+    ok(color == 0x00ffffff, "(322,328) has color %08x\n", color);
+    color = getPixelColor(device, 318, 242);
+    ok(color == 0x00ffffff, "(318,242) has color %08x\n", color);
+    color = getPixelColor(device, 322, 242);
+    ok(color == 0x0000ff00, "(322,242) has color %08x\n", color);
+
+    color = getPixelColor(device, 478, 358);
+    ok(color == 0x0000ff00, "(478,358 has color %08x\n", color);
+    color = getPixelColor(device, 482, 358);
+    ok(color == 0x00ffffff, "(482,358) has color %08x\n", color);
+    color = getPixelColor(device, 478, 362);
+    ok(color == 0x00ffffff, "(478,362) has color %08x\n", color);
+    color = getPixelColor(device, 482, 362);
+    ok(color == 0x00ffffff, "(482,362) has color %08x\n", color);
 }
 
 typedef struct {

@@ -4786,7 +4786,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
 
     GLbitfield     glMask = 0;
     unsigned int   i;
-    CONST WINED3DRECT* curRect;
+    WINED3DRECT curRect;
+    RECT vp_rect;
+    WINED3DVIEWPORT *vp = &This->stateBlock->viewport;
 
     TRACE("(%p) Count (%d), pRects (%p), Flags (%x), Color (0x%08x), Z (%f), Stencil (%d)\n", This,
           Count, pRects, Flags, Color, Z, Stencil);
@@ -4803,19 +4805,25 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
      *
      * If we're clearing the whole target there is no need to copy it into the drawable, it will be overwritten
      * anyway. If we're not clearing the color buffer we don't have to copy either since we're not going to set
-     * the drawable up to date
+     * the drawable up to date. We have to check all settings that limit the clear area though. Do not bother
+     * checking all this if the dest surface is in the drawable anyway.
      */
-    if (Count > 0 && pRects) {
-        if(Flags & WINED3DCLEAR_TARGET) {
-            if(pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
-               pRects[0].x2 < target->currentDesc.Width ||
-               pRects[0].y2 < target->currentDesc.Height) {
+    if((Flags & WINED3DCLEAR_TARGET) && !(target->Flags & SFLAG_INDRAWABLE)) {
+        while(1) {
+            if(vp->X != 0 || vp->Y != 0 ||
+               vp->Width < target->currentDesc.Width || vp->Height < target->currentDesc.Height) {
                 IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
+                break;
             }
+            if(Count > 0 && pRects && (
+               pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
+               pRects[0].x2 < target->currentDesc.Width ||
+               pRects[0].y2 < target->currentDesc.Height)) {
+                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
+                break;
+            }
+            break;
         }
-        curRect = pRects;
-    } else {
-        curRect = NULL;
     }
 
     /* This is for offscreen rendering as well as for multithreading, thus activate the set render target
@@ -4857,9 +4865,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         glMask = glMask | GL_COLOR_BUFFER_BIT;
     }
 
-    if (!curRect) {
-        /* In drawable flag is set below */
-
+    if (!(Count > 0 && pRects)) {
         if (This->render_offscreen) {
             glScissor(This->stateBlock->viewport.X,
                        This->stateBlock->viewport.Y,
@@ -4876,29 +4882,38 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         glClear(glMask);
         checkGLcall("glClear");
     } else {
+        /* The viewport cap still applies, we have to intersect each clear rect with the viewport
+         * range because glClear ignores the viewport(and the viewport isn't even applied in this state)
+         */
+        vp_rect.left = vp->X;
+        vp_rect.top = vp->Y;
+        vp_rect.right = vp->X + vp->Width;
+        vp_rect.bottom = vp->Y + vp->Height;
+
         /* Now process each rect in turn */
         for (i = 0; i < Count; i++) {
             /* Note gl uses lower left, width/height */
-            TRACE("(%p) %p Rect=(%d,%d)->(%d,%d) glRect=(%d,%d), len=%d, hei=%d\n", This, curRect,
-                  curRect[i].x1, curRect[i].y1, curRect[i].x2, curRect[i].y2,
-                  curRect[i].x1, (target->currentDesc.Height - curRect[i].y2),
-                  curRect[i].x2 - curRect[i].x1, curRect[i].y2 - curRect[i].y1);
+            IntersectRect((RECT *) &curRect, &vp_rect, (RECT *) &pRects[i]);
+            TRACE("(%p) Rect=(%d,%d)->(%d,%d) glRect=(%d,%d), len=%d, hei=%d\n", This,
+                  pRects[i].x1, pRects[i].y1, pRects[i].x2, pRects[i].y2,
+                  curRect.x1, (target->currentDesc.Height - curRect.y2),
+                  curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
 
             /* Tests show that rectangles where x1 > x2 or y1 > y2 are ignored silently.
              * The rectangle is not cleared, no error is returned, but further rectanlges are
              * still cleared if they are valid
              */
-            if(curRect[i].x1 > curRect[i].x2 || curRect[i].y1 > curRect[i].y2) {
+            if(curRect.x1 > curRect.x2 || curRect.y1 > curRect.y2) {
                 TRACE("Rectangle with negative dimensions, ignoring\n");
                 continue;
             }
 
             if(This->render_offscreen) {
-                glScissor(curRect[i].x1, curRect[i].y1,
-                          curRect[i].x2 - curRect[i].x1, curRect[i].y2 - curRect[i].y1);
+                glScissor(curRect.x1, curRect.y1,
+                          curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
             } else {
-                glScissor(curRect[i].x1, target->currentDesc.Height - curRect[i].y2,
-                          curRect[i].x2 - curRect[i].x1, curRect[i].y2 - curRect[i].y1);
+                glScissor(curRect.x1, target->currentDesc.Height - curRect.y2,
+                          curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
             }
             checkGLcall("glScissor");
 
