@@ -1626,7 +1626,7 @@ void WINSPOOL_LoadSystemPrinters(void)
         if(RegQueryInfoKeyA(hkeyPrinters, NULL, NULL, NULL, &num, NULL, NULL,
                             NULL, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
             for(i = 0; i < num; i++) {
-                if(RegEnumKeyW(hkeyPrinters, i, PrinterName, sizeof(PrinterName)) == ERROR_SUCCESS) {
+                if(RegEnumKeyW(hkeyPrinters, i, PrinterName, sizeof(PrinterName)/sizeof(PrinterName[0])) == ERROR_SUCCESS) {
                     if(RegOpenKeyW(hkeyPrinters, PrinterName, &hkey) == ERROR_SUCCESS) {
                         if(RegQueryValueExW(hkey, NameW, 0, 0, 0, &needed) == ERROR_FILE_NOT_FOUND) {
                             set_reg_szW(hkey, NameW, PrinterName);
@@ -4276,7 +4276,7 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
     pi = (used <= cbBuf) ? lpbPrinters : NULL;
 
     for(i = 0; i < number; i++) {
-        if(RegEnumKeyW(hkeyPrinters, i, PrinterName, sizeof(PrinterName)) !=
+        if(RegEnumKeyW(hkeyPrinters, i, PrinterName, sizeof(PrinterName)/sizeof(PrinterName[0])) !=
 	   ERROR_SUCCESS) {
 	    ERR("Can't enum key number %d\n", i);
 	    RegCloseKey(hkeyPrinters);
@@ -5177,7 +5177,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPCWSTR pEnvironment,
     for( i = 0,  ptr = (pDriverInfo && (cbBuf >= size)) ? pDriverInfo : NULL ;
          i < number;
          i++, ptr = (ptr && (cbBuf >= size * i)) ? ptr + size : NULL) {
-        if(RegEnumKeyW(hkeyDrivers, i, DriverNameW, sizeof(DriverNameW))
+        if(RegEnumKeyW(hkeyDrivers, i, DriverNameW, sizeof(DriverNameW)/sizeof(DriverNameW[0]))
                        != ERROR_SUCCESS) {
             ERR("Can't enum key number %d\n", i);
             RegCloseKey(hkeyDrivers);
