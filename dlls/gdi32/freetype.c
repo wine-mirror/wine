@@ -4580,17 +4580,18 @@ BOOL WineEngGetTextExtentExPoint(GdiFont *font, LPCWSTR wstr, INT count,
 }
 
 /*************************************************************
- * WineEngGetTextExtentPointI
+ * WineEngGetTextExtentExPointI
  *
  */
-BOOL WineEngGetTextExtentPointI(GdiFont *font, const WORD *indices, INT count,
-				LPSIZE size)
+BOOL WineEngGetTextExtentExPointI(GdiFont *font, const WORD *indices, INT count,
+                                  INT max_ext, LPINT pnfit, LPINT dxs, LPSIZE size)
 {
     INT idx;
+    INT nfit = 0, ext;
     GLYPHMETRICS gm;
     TEXTMETRICW tm;
 
-    TRACE("%p, %p, %d, %p\n", font, indices, count, size);
+    TRACE("%p, %p, %d, %d, %p\n", font, indices, count, max_ext, size);
 
     size->cx = 0;
     WineEngGetTextMetrics(font, &tm);
@@ -4600,9 +4601,19 @@ BOOL WineEngGetTextExtentPointI(GdiFont *font, const WORD *indices, INT count,
         WineEngGetGlyphOutline(font, indices[idx],
 			       GGO_METRICS | GGO_GLYPH_INDEX, &gm, 0, NULL,
 			       NULL);
-	size->cx += FONT_GM(font,indices[idx])->adv;
+        size->cx += FONT_GM(font,indices[idx])->adv;
+        ext = size->cx;
+        if (! pnfit || ext <= max_ext) {
+            ++nfit;
+            if (dxs)
+                dxs[idx] = ext;
+        }
     }
-    TRACE("return %d,%d\n", size->cx, size->cy);
+
+    if (pnfit)
+        *pnfit = nfit;
+
+    TRACE("return %d, %d, %d\n", size->cx, size->cy, nfit);
     return TRUE;
 }
 
@@ -5129,8 +5140,8 @@ BOOL WineEngGetTextExtentExPoint(GdiFont *font, LPCWSTR wstr, INT count,
     return FALSE;
 }
 
-BOOL WineEngGetTextExtentPointI(GdiFont *font, const WORD *indices, INT count,
-				LPSIZE size)
+BOOL WineEngGetTextExtentExPointI(GdiFont *font, const WORD *indices, INT count,
+                                  INT max_ext, LPINT nfit, LPINT dx, LPSIZE size)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;

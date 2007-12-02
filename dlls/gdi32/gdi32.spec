@@ -332,7 +332,7 @@
 @ stdcall GetTextCharsetInfo(long ptr long)
 @ stdcall GetTextColor(long)
 @ stdcall GetTextExtentExPointA(long str long long ptr ptr ptr)
-# @ stub GetTextExtentExPointI
+@ stdcall GetTextExtentExPointI(long ptr long long ptr ptr ptr)
 @ stdcall GetTextExtentExPointW(long wstr long long ptr ptr ptr)
 # @ stub GetTextExtentExPointWPri
 @ stdcall GetTextExtentPoint32A(long str long ptr)
