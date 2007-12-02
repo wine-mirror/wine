@@ -30,6 +30,7 @@
 #include "msipriv.h"
 #include "activscp.h"
 #include "oleauto.h"
+#include "shlwapi.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -1644,6 +1645,26 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                     ERR("MsiInstallProduct returned %d\n", ret);
                     return DISP_E_EXCEPTION;
                 }
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
+        case DISPID_INSTALLER_VERSION:
+            if (wFlags & DISPATCH_PROPERTYGET) {
+                DLLVERSIONINFO verinfo;
+                WCHAR version[MAX_PATH];
+
+                static const WCHAR format[] = {'%','d','.','%','d','.','%','d','.','%','d',0};
+
+                verinfo.cbSize = sizeof(DLLVERSIONINFO);
+                hr = DllGetVersion(&verinfo);
+                if (FAILED(hr)) return hr;
+
+                sprintfW(version, format, verinfo.dwMajorVersion, verinfo.dwMinorVersion,
+                         verinfo.dwBuildNumber, verinfo.dwPlatformID);
+
+                V_VT(pVarResult) = VT_BSTR;
+                V_BSTR(pVarResult) = SysAllocString(version);
             }
             else return DISP_E_MEMBERNOTFOUND;
             break;

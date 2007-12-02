@@ -475,8 +475,8 @@ static void test_dispid(void)
     ok( get_dispid( pInstaller, "EnableLog" ) == 7, "dispid wrong\n");
     }
     ok( get_dispid( pInstaller, "InstallProduct" ) == 8, "dispid wrong\n");
-    todo_wine {
     ok( get_dispid( pInstaller, "Version" ) == 9, "dispid wrong\n");
+    todo_wine {
     ok( get_dispid( pInstaller, "LastErrorRecord" ) == 10, "dispid wrong\n");
     }
     ok( get_dispid( pInstaller, "RegistryValue" ) == 11, "dispid wrong\n");
@@ -2379,11 +2379,9 @@ static void test_Installer(void)
     }
 
     /* Installer::Version */
-    todo_wine {
-        memset(szPath, 0, sizeof(szPath));
-        hr = Installer_VersionGet(szPath);
-        ok(hr == S_OK, "Installer_VersionGet failed, hresult 0x%08x\n", hr);
-    }
+    memset(szPath, 0, sizeof(szPath));
+    hr = Installer_VersionGet(szPath);
+    ok(hr == S_OK, "Installer_VersionGet failed, hresult 0x%08x\n", hr);
 
     /* Installer::InstallProduct and other tests that depend on our product being installed */
     test_Installer_InstallProduct();

@@ -145,6 +145,8 @@ library WindowsInstaller
             void InstallProduct(
                 [in] BSTR PackagePath,
                 [in, optional, defaultvalue("0")] BSTR PropertyValues);
+        [id(DISPID_INSTALLER_VERSION)]
+            BSTR Version();
         [id(DISPID_INSTALLER_REGISTRYVALUE), propget]
             BSTR RegistryValue(
                 [in] VARIANT Root,
