@@ -55,6 +55,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
 
+static CRITICAL_SECTION CONSOLE_CritSect;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &CONSOLE_CritSect,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": CONSOLE_CritSect") }
+};
+static CRITICAL_SECTION CONSOLE_CritSect = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
 static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
 
@@ -982,23 +991,35 @@ BOOL WINAPI GetConsoleKeyboardLayoutNameW(LPWSTR layoutName)
     return TRUE;
 }
 
-/***********************************************************************
- *            GetConsoleInputExeNameA   (KERNEL32.@)
- */
-DWORD WINAPI GetConsoleInputExeNameA(DWORD BufferLength, LPSTR lpBuffer)
-{
-    DWORD ret = 0;
-    FIXME( "stub %u %p\n", BufferLength, lpBuffer);
-    return ret;
-}
+static WCHAR input_exe[MAX_PATH + 1];
 
 /***********************************************************************
  *            GetConsoleInputExeNameW   (KERNEL32.@)
  */
-DWORD WINAPI GetConsoleInputExeNameW(DWORD BufferLength, LPWSTR lpBuffer)
+BOOL WINAPI GetConsoleInputExeNameW(DWORD buflen, LPWSTR buffer)
 {
-    DWORD ret = 0;
-    FIXME( "stub %u %p\n", BufferLength, lpBuffer);
+    TRACE("%u %p\n", buflen, buffer);
+
+    RtlEnterCriticalSection(&CONSOLE_CritSect);
+    if (buflen > strlenW(input_exe)) strcpyW(buffer, input_exe);
+    else SetLastError(ERROR_BUFFER_OVERFLOW);
+    RtlLeaveCriticalSection(&CONSOLE_CritSect);
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *            GetConsoleInputExeNameA   (KERNEL32.@)
+ */
+BOOL WINAPI GetConsoleInputExeNameA(DWORD buflen, LPSTR buffer)
+{
+    WCHAR *bufferW;
+    BOOL ret;
+
+    if (!(bufferW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * buflen))) return FALSE;
+    if ((ret = GetConsoleInputExeNameW(buflen, bufferW)))
+        WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, buflen, NULL, NULL);
+    HeapFree(GetProcessHeap(), 0, bufferW);
     return ret;
 }
 
@@ -1467,35 +1488,45 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 
 /******************************************************************************
  *  SetConsoleInputExeNameW	 [KERNEL32.@]
- *
- * BUGS
- *   Unimplemented
  */
 BOOL WINAPI SetConsoleInputExeNameW(LPCWSTR name)
 {
-    FIXME("(%s): stub!\n", debugstr_w(name));
+    TRACE("(%s)\n", debugstr_w(name));
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    if (!name || !name[0])
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    RtlEnterCriticalSection(&CONSOLE_CritSect);
+    if (strlenW(name) < sizeof(input_exe)/sizeof(WCHAR)) strcpyW(input_exe, name);
+    RtlLeaveCriticalSection(&CONSOLE_CritSect);
+
     return TRUE;
 }
 
 /******************************************************************************
  *  SetConsoleInputExeNameA	 [KERNEL32.@]
- *
- * BUGS
- *   Unimplemented
  */
 BOOL WINAPI SetConsoleInputExeNameA(LPCSTR name)
 {
-    int		len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0);
-    LPWSTR	xptr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    BOOL	ret;
+    int len;
+    LPWSTR nameW;
+    BOOL ret;
 
-    if (!xptr) return FALSE;
+    if (!name || !name[0])
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
-    MultiByteToWideChar(CP_ACP, 0, name, -1, xptr, len);
-    ret = SetConsoleInputExeNameW(xptr);
-    HeapFree(GetProcessHeap(), 0, xptr);
+    len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0);
+    if (!(nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)))) return FALSE;
+
+    MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, len);
+    ret = SetConsoleInputExeNameW(nameW);
+    HeapFree(GetProcessHeap(), 0, nameW);
 
     return ret;
 }
@@ -1533,15 +1564,6 @@ struct ConsoleHandler
 
 static struct ConsoleHandler    CONSOLE_DefaultConsoleHandler = {CONSOLE_DefaultHandler, NULL};
 static struct ConsoleHandler*   CONSOLE_Handlers = &CONSOLE_DefaultConsoleHandler;
-
-static CRITICAL_SECTION CONSOLE_CritSect;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &CONSOLE_CritSect,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": CONSOLE_CritSect") }
-};
-static CRITICAL_SECTION CONSOLE_CritSect = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /*****************************************************************************/
 

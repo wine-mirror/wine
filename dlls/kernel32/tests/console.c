@@ -23,6 +23,11 @@
 #include <windows.h>
 #include <stdio.h>
 
+BOOL WINAPI GetConsoleInputExeNameA(DWORD, LPSTR);
+BOOL WINAPI GetConsoleInputExeNameW(DWORD, LPWSTR);
+BOOL WINAPI SetConsoleInputExeNameA(LPCSTR);
+BOOL WINAPI SetConsoleInputExeNameW(LPCWSTR);
+
 /* DEFAULT_ATTRIB is used for all initial filling of the console.
  * all modifications are made with TEST_ATTRIB so that we could check
  * what has to be modified or not
@@ -746,6 +751,52 @@ static void testScreenBuffer(HANDLE hConOut)
     SetConsoleOutputCP(oldcp);
 }
 
+static void test_GetSetConsoleInputExeName(void)
+{
+    BOOL ret;
+    DWORD error;
+    char buffer[MAX_PATH], module[MAX_PATH], *p;
+    static char input_exe[MAX_PATH] = "winetest.exe";
+
+    SetLastError(0xdeadbeef);
+    ret = GetConsoleInputExeNameA(0, NULL);
+    error = GetLastError();
+    ok(ret, "GetConsoleInputExeNameA failed\n");
+    ok(error == ERROR_BUFFER_OVERFLOW, "got %u expected ERROR_BUFFER_OVERFLOW\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = GetConsoleInputExeNameA(0, buffer);
+    error = GetLastError();
+    ok(ret, "GetConsoleInputExeNameA failed\n");
+    ok(error == ERROR_BUFFER_OVERFLOW, "got %u expected ERROR_BUFFER_OVERFLOW\n", error);
+
+    GetModuleFileNameA(GetModuleHandle(NULL), module, sizeof(module));
+    p = strrchr(module, '\\') + 1;
+
+    ret = GetConsoleInputExeNameA(sizeof(buffer)/sizeof(buffer[0]), buffer);
+    ok(ret, "GetConsoleInputExeNameA failed\n");
+    todo_wine ok(!lstrcmpA(buffer, p), "got %s expected %s\n", buffer, p);
+
+    SetLastError(0xdeadbeef);
+    ret = SetConsoleInputExeNameA(NULL);
+    error = GetLastError();
+    ok(!ret, "SetConsoleInputExeNameA failed\n");
+    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = SetConsoleInputExeNameA("");
+    error = GetLastError();
+    ok(!ret, "SetConsoleInputExeNameA failed\n");
+    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", error);
+
+    ret = SetConsoleInputExeNameA(input_exe);
+    ok(ret, "SetConsoleInputExeNameA failed\n");
+
+    ret = GetConsoleInputExeNameA(sizeof(buffer)/sizeof(buffer[0]), buffer);
+    ok(ret, "GetConsoleInputExeNameA failed\n");
+    ok(!lstrcmpA(buffer, input_exe), "got %s expected %s\n", buffer, input_exe);
+}
+
 START_TEST(console)
 {
     HANDLE hConIn, hConOut;
@@ -784,4 +835,6 @@ START_TEST(console)
     testScreenBuffer(hConOut);
     testCtrlHandler();
     /* still to be done: access rights & access on objects */
+
+    test_GetSetConsoleInputExeName();
 }
