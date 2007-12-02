@@ -732,6 +732,18 @@ UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes)
     return ERROR_SUCCESS;
 }
 
+UINT WINAPI MsiEnumComponentCostsW(MSIHANDLE hInstall, LPCWSTR szComponent,
+                                   DWORD dwIndex, INSTALLSTATE iState,
+                                   LPWSTR lpDriveBuf, DWORD *pcchDriveBuf,
+                                   int *piCost, int *pTempCost)
+{
+    FIXME("(%ld, %s, %d, %d, %p, %p, %p %p): stub!\n", hInstall,
+          debugstr_w(szComponent), dwIndex, iState, lpDriveBuf,
+          pcchDriveBuf, piCost, pTempCost);
+
+    return ERROR_NO_MORE_ITEMS;
+}
+
 UINT WINAPI MsiQueryComponentStateA(LPCSTR szProductCode,
                                     LPCSTR szUserSid, MSIINSTALLCONTEXT dwContext,
                                     LPCSTR szComponent, INSTALLSTATE *pdwState)
