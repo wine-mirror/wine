@@ -168,7 +168,7 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
             break;
         case REG_DWORD: {
                 TCHAR buf[64];
-                wsprintf(buf, _T("0x%08X (%d)"), *(DWORD*)ValBuf, *(DWORD*)ValBuf);
+                wsprintf(buf, _T("0x%08x (%u)"), *(DWORD*)ValBuf, *(DWORD*)ValBuf);
                 ListView_SetItemText(hwndLV, index, 2, buf);
             }
             break;
