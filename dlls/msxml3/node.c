@@ -519,8 +519,36 @@ static HRESULT WINAPI xmlnode_cloneNode(
     VARIANT_BOOL deep,
     IXMLDOMNode** cloneRoot)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    xmlNodePtr pClone = NULL;
+    IXMLDOMNode *pNode = NULL;
+
+    TRACE("%p (%d)\n", This, deep);
+
+    if(!cloneRoot)
+        return E_INVALIDARG;
+
+    pClone = xmlCopyNode(This->node, deep ? 1 : 2);
+    if(pClone)
+    {
+        pClone->doc = This->node->doc;
+
+        pNode = create_node(pClone);
+        if(!pNode)
+        {
+            ERR("Copy failed\n");
+            return E_FAIL;
+        }
+
+        *cloneRoot = pNode;
+    }
+    else
+    {
+        ERR("Copy failed\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_get_nodeTypeString(

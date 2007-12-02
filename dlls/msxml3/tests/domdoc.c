@@ -1594,6 +1594,132 @@ static void test_XPath(void)
     free_bstrs();
 }
 
+static void test_cloneNode(void )
+{
+    IXMLDOMDocument *doc = NULL;
+    VARIANT_BOOL b;
+    IXMLDOMNodeList *pList;
+    IXMLDOMNamedNodeMap *mapAttr;
+    long nLength = 0, nLength1 = 0;
+    long nAttrCnt = 0, nAttrCnt1 = 0;
+    IXMLDOMNode *node;
+    IXMLDOMNode *node_clone;
+    HRESULT r;
+    BSTR str;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
+
+    str = SysAllocString( szComplete4 );
+    ole_check(IXMLDOMDocument_loadXML(doc, str, &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString(str);
+
+    if(!b)
+        return;
+
+    r = IXMLDOMNode_selectSingleNode(doc, _bstr_("lc/pr"), &node);
+    ok( r == S_OK, "ret %08x\n", r );
+    ok( node != NULL, "node %p\n", node );
+
+    if(!node)
+    {
+        IXMLDOMDocument_Release(doc);
+        return;
+    }
+
+    /* Check invalid parameter */
+    r = IXMLDOMNode_cloneNode(node, VARIANT_TRUE, NULL);
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+
+    /* All Children */
+    r = IXMLDOMNode_cloneNode(node, VARIANT_TRUE, &node_clone);
+    ok( r == S_OK, "ret %08x\n", r );
+    ok( node_clone != NULL, "node %p\n", node );
+
+    if(!node_clone)
+    {
+        IXMLDOMDocument_Release(doc);
+        IXMLDOMNode_Release(node);
+        return;
+    }
+
+    r = IXMLDOMNode_get_childNodes(node, &pList);
+    ok( r == S_OK, "ret %08x\n", r );
+    if (pList)
+	{
+		IXMLDOMNodeList_get_length(pList, &nLength);
+		IXMLDOMNodeList_Release(pList);
+	}
+
+    r = IXMLDOMNode_get_attributes(node, &mapAttr);
+    ok( r == S_OK, "ret %08x\n", r );
+    if(mapAttr)
+    {
+        IXMLDOMNamedNodeMap_get_length(mapAttr, &nAttrCnt);
+        IXMLDOMNamedNodeMap_Release(mapAttr);
+    }
+
+    r = IXMLDOMNode_get_childNodes(node_clone, &pList);
+    ok( r == S_OK, "ret %08x\n", r );
+    if (pList)
+	{
+		IXMLDOMNodeList_get_length(pList, &nLength1);
+		IXMLDOMNodeList_Release(pList);
+	}
+
+    r = IXMLDOMNode_get_attributes(node_clone, &mapAttr);
+    ok( r == S_OK, "ret %08x\n", r );
+    if(mapAttr)
+    {
+        IXMLDOMNamedNodeMap_get_length(mapAttr, &nAttrCnt1);
+        IXMLDOMNamedNodeMap_Release(mapAttr);
+    }
+
+    ok(nLength == nLength1, "wrong Child count (%ld, %ld)\n", nLength, nLength1);
+    ok(nAttrCnt == nAttrCnt1, "wrong Attribute count (%ld, %ld)\n", nAttrCnt, nAttrCnt1);
+    IXMLDOMNode_Release(node_clone);
+
+    /* No Children */
+    r = IXMLDOMNode_cloneNode(node, VARIANT_FALSE, &node_clone);
+    ok( r == S_OK, "ret %08x\n", r );
+    ok( node_clone != NULL, "node %p\n", node );
+
+    if(!node_clone)
+    {
+        IXMLDOMDocument_Release(doc);
+        IXMLDOMNode_Release(node);
+        return;
+    }
+
+    r = IXMLDOMNode_get_childNodes(node_clone, &pList);
+    ok( r == S_OK, "ret %08x\n", r );
+    if (pList)
+	{
+		IXMLDOMNodeList_get_length(pList, &nLength1);
+        ok( nLength1 == 0, "Length should be 0 (%ld)\n", nLength1);
+		IXMLDOMNodeList_Release(pList);
+	}
+
+    r = IXMLDOMNode_get_attributes(node_clone, &mapAttr);
+    ok( r == S_OK, "ret %08x\n", r );
+    if(mapAttr)
+    {
+        IXMLDOMNamedNodeMap_get_length(mapAttr, &nAttrCnt1);
+        ok( nAttrCnt1 == 3, "Attribute count should be 3 (%ld)\n", nAttrCnt1);
+        IXMLDOMNamedNodeMap_Release(mapAttr);
+    }
+
+    ok(nLength != nLength1, "wrong Child count (%ld, %ld)\n", nLength, nLength1);
+    ok(nAttrCnt == nAttrCnt1, "wrong Attribute count (%ld, %ld)\n", nAttrCnt, nAttrCnt1);
+    IXMLDOMNode_Release(node_clone);
+
+
+    IXMLDOMNode_Release(node);
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -1612,6 +1738,7 @@ START_TEST(domdoc)
     test_XMLHTTP();
     test_IXMLDOMDocument2();
     test_XPath();
+    test_cloneNode();
 
     CoUninitialize();
 }
