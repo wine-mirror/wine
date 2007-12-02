@@ -42,6 +42,7 @@ static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pVarFormatNumber)(LPVARIANT,int,int,int,int,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarFormat)(LPVARIANT,LPOLESTR,int,int,ULONG,BSTR*);
+static HRESULT (WINAPI *pVarWeekdayName)(int,int,int,ULONG,BSTR*);
 
 /* Have I8/UI8 data type? */
 #define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
@@ -392,10 +393,112 @@ static void test_VarFormat(void)
   VARFMT(VT_BOOL,V_BOOL,VARIANT_TRUE,"",E_INVALIDARG,"");
 }
 
+static const char *szVarWdnFail = \
+    "VarWeekdayName (%d, %d, %d, %d, %x): returned %8x, expected %8x\n";
+#define VARWDN(iWeekday, fAbbrev, iFirstDay, dwFlags, ret, buff, out, freeOut) \
+do { \
+  hres = pVarWeekdayName(iWeekday, fAbbrev, iFirstDay, dwFlags, &out); \
+  if (SUCCEEDED(hres)) { \
+    WideCharToMultiByte(CP_ACP, 0, out, -1, buff, sizeof(buff), 0, 0); \
+    if (freeOut) SysFreeString(out); \
+  } else { \
+    buff[0] = '\0'; \
+  } \
+  ok(hres == ret, \
+     szVarWdnFail, \
+     iWeekday, fAbbrev, iFirstDay, dwFlags, &out, hres, ret \
+     ); \
+} while(0)
+
+#define VARWDN_F(iWeekday, fAbbrev, iFirstDay, dwFlags, ret) \
+  VARWDN(iWeekday, fAbbrev, iFirstDay, dwFlags, ret, buff, out, 1)
+
+#define VARWDN_O(iWeekday, fAbbrev, iFirstDay, dwFlags) \
+  VARWDN(iWeekday, fAbbrev, iFirstDay, dwFlags, S_OK, buff, out, 0)
+
+static void test_VarWeekdayName(void)
+{
+  char buff[256];
+  BSTR out = NULL;
+  HRESULT hres;
+  int iWeekday, fAbbrev, iFirstDay;
+  BSTR dayNames[7][2]; /* Monday-Sunday, full/abbr */
+  DWORD defaultFirstDay;
+  int firstDay;
+  int day;
+  int size;
+  DWORD localeValue;
+
+  CHECKPTR(VarWeekdayName);
+
+  /* Initialize days' names */
+  for (day = 0; day <= 6; ++day)
+  {
+    for (fAbbrev = 0; fAbbrev <= 1; ++fAbbrev)
+    {
+      localeValue = fAbbrev ? LOCALE_SABBREVDAYNAME1 : LOCALE_SDAYNAME1;
+      localeValue += day;
+      size = GetLocaleInfoW(LOCALE_USER_DEFAULT, localeValue, NULL, 0);
+      dayNames[day][fAbbrev] = SysAllocStringLen(NULL, size - 1);
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, localeValue,
+                     dayNames[day][fAbbrev], size);
+    }
+  }
+
+  /* Get the user's first day of week. 0=Monday, .. */
+  GetLocaleInfoW(
+      LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK | LOCALE_RETURN_NUMBER,
+      (LPWSTR)&defaultFirstDay, sizeof(defaultFirstDay) / sizeof(WCHAR));
+
+  /* Check invalid arguments */
+  VARWDN_F(0, 0, 4, 0, E_INVALIDARG);
+  VARWDN_F(8, 0, 4, 0, E_INVALIDARG);
+  VARWDN_F(4, 0, -1, 0, E_INVALIDARG);
+  VARWDN_F(4, 0, 8, 0, E_INVALIDARG);
+
+  hres = pVarWeekdayName(1, 0, 0, 0, NULL);
+  ok(E_INVALIDARG == hres,
+     "Null pointer: expected E_INVALIDARG, got 0x%08x\n", hres);
+
+  /* Check all combinations */
+  for (iWeekday = 1; iWeekday <= 7; ++iWeekday)
+  {
+    for (fAbbrev = 0; fAbbrev <= 1; ++fAbbrev)
+    {
+      /* 0 = Default, 1 = Sunday, 2 = Monday, .. */
+      for (iFirstDay = 0; iFirstDay <= 7; ++iFirstDay)
+      {
+        VARWDN_O(iWeekday, fAbbrev, iFirstDay, 0);
+        if (iFirstDay == 0)
+          firstDay = defaultFirstDay;
+        else
+          /* Translate from 0=Sunday to 0=Monday in the modulo 7 space */
+          firstDay = iFirstDay - 2;
+        day = (7 + iWeekday - 1 + firstDay) % 7;
+        ok(VARCMP_EQ == VarBstrCmp(out, dayNames[day][fAbbrev],
+                                   LOCALE_USER_DEFAULT, 0),
+           "VarWeekdayName(%d,%d,%d): got wrong dayname: '%s'\n",
+           iWeekday, fAbbrev, iFirstDay, buff);
+        SysFreeString(out);
+      }
+    }
+  }
+
+  /* Cleanup */
+  for (day = 0; day <= 6; ++day)
+  {
+    for (fAbbrev = 0; fAbbrev <= 1; ++fAbbrev)
+    {
+      SysFreeString(dayNames[day][fAbbrev]);
+    }
+  }
+}
+
 START_TEST(varformat)
 {
   hOleaut32 = GetModuleHandleA("oleaut32.dll");
 
   test_VarFormatNumber();
   test_VarFormat();
+  test_VarWeekdayName();
 }
