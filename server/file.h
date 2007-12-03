@@ -65,7 +65,6 @@ extern int get_unix_fd( struct fd *fd );
 extern int is_same_file_fd( struct fd *fd1, struct fd *fd2 );
 extern int is_fd_removable( struct fd *fd );
 extern int fd_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
-extern void fd_poll_event( struct fd *fd, int event );
 extern int check_fd_events( struct fd *fd, int events );
 extern void set_fd_events( struct fd *fd, int events );
 extern obj_handle_t lock_fd( struct fd *fd, file_pos_t offset, file_pos_t count, int shared, int wait );

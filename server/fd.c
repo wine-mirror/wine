@@ -428,6 +428,11 @@ static struct fd **freelist;                /* list of free entries in the array
 
 static int get_next_timeout(void);
 
+static inline void fd_poll_event( struct fd *fd, int event )
+{
+    fd->fd_ops->poll_event( fd, event );
+}
+
 #ifdef USE_EPOLL
 
 static int epoll_fd = -1;
@@ -1687,12 +1692,6 @@ void set_fd_signaled( struct fd *fd, int signaled )
 int fd_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
     return (!current || current->process == process);
-}
-
-/* callback for event happening in the main poll() loop */
-void fd_poll_event( struct fd *fd, int event )
-{
-    return fd->fd_ops->poll_event( fd, event );
 }
 
 /* check if events are pending and if yes return which one(s) */
