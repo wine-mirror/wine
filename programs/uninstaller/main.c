@@ -32,6 +32,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(uninstaller);
 
 typedef struct {
+    HKEY  root;
     WCHAR *key;
     WCHAR *descr;
     WCHAR *command;
@@ -182,7 +183,7 @@ static int cmp_by_name(const void *a, const void *b)
 /**
  * Fetch information from the uninstall key.
  */
-static int FetchUninstallInformation(void)
+static int FetchFromRootKey(HKEY root)
 {
     HKEY hkeyUninst, hkeyApp;
     int i;
@@ -190,14 +191,9 @@ static int FetchUninstallInformation(void)
     WCHAR subKeyName[256];
     WCHAR key_app[1024];
     WCHAR *p;
-  
-    numentries = 0;
-    oldsel = -1;
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, PathUninstallW, 0, KEY_READ, &hkeyUninst) != ERROR_SUCCESS)
-        return 0;
 
-    if (!entries)
-        entries = HeapAlloc(GetProcessHeap(), 0, sizeof(uninst_entry));
+    if (RegOpenKeyExW(root, PathUninstallW, 0, KEY_READ, &hkeyUninst) != ERROR_SUCCESS)
+        return 0;
 
     lstrcpyW(key_app, PathUninstallW);
     lstrcatW(key_app, BackSlashW);
@@ -207,12 +203,13 @@ static int FetchUninstallInformation(void)
     for (i=0; RegEnumKeyExW( hkeyUninst, i, subKeyName, &sizeOfSubKeyName, NULL, NULL, NULL, NULL ) != ERROR_NO_MORE_ITEMS; ++i)
     {
         lstrcpyW(p, subKeyName);
-        RegOpenKeyExW(HKEY_LOCAL_MACHINE, key_app, 0, KEY_READ, &hkeyApp);
+        RegOpenKeyExW(root, key_app, 0, KEY_READ, &hkeyApp);
         if ((RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, NULL, &displen) == ERROR_SUCCESS)
          && (RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0, NULL, &uninstlen) == ERROR_SUCCESS))
         {
             numentries++;
             entries = HeapReAlloc(GetProcessHeap(), 0, entries, numentries*sizeof(uninst_entry));
+            entries[numentries-1].root = root;
             entries[numentries-1].key = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(subKeyName)+1)*sizeof(WCHAR));
             lstrcpyW(entries[numentries-1].key, subKeyName);
             entries[numentries-1].descr = HeapAlloc(GetProcessHeap(), 0, displen);
@@ -228,11 +225,26 @@ static int FetchUninstallInformation(void)
         RegCloseKey(hkeyApp);
         sizeOfSubKeyName = 255;
     }
-    qsort(entries, numentries, sizeof(uninst_entry), cmp_by_name);
     RegCloseKey(hkeyUninst);
     return 1;
+
 }
 
+static int FetchUninstallInformation(void)
+{
+    int rc;
+
+    numentries = 0;
+    oldsel = -1;
+    if (!entries)
+        entries = HeapAlloc(GetProcessHeap(), 0, sizeof(uninst_entry));
+
+    rc = FetchFromRootKey(HKEY_LOCAL_MACHINE);
+    rc |= FetchFromRootKey(HKEY_CURRENT_USER);
+
+    qsort(entries, numentries, sizeof(uninst_entry), cmp_by_name);
+    return rc;
+}
 
 static void UninstallProgram(void)
 {
@@ -264,7 +276,7 @@ static void UninstallProgram(void)
             if(MessageBoxW(0, errormsg, sAppName, MB_YESNO | MB_ICONQUESTION)==IDYES)
             {
                 /* delete the application's uninstall entry */
-                RegOpenKeyExW(HKEY_LOCAL_MACHINE, PathUninstallW, 0, KEY_READ, &hkey);
+                RegOpenKeyExW(entries[i].root, PathUninstallW, 0, KEY_READ, &hkey);
                 RegDeleteKeyW(hkey, entries[i].key);
                 RegCloseKey(hkey);
             }
