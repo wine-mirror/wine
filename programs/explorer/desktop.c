@@ -38,7 +38,7 @@ static BOOL using_root;
 /* window procedure for the desktop window */
 static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
-    WINE_TRACE( "got msg %x wp %lx lp %lx\n", message, wp, lp );
+    WINE_TRACE( "got msg %04x wp %lx lp %lx\n", message, wp, lp );
 
     switch(message)
     {
@@ -123,6 +123,7 @@ static void initialize_display_settings( HWND desktop )
     GUID guid;
     LPWSTR guid_str;
     ATOM guid_atom;
+    DEVMODEW dmW;
 
     UuidCreate( &guid );
     UuidToStringW( &guid, &guid_str );
@@ -132,6 +133,16 @@ static void initialize_display_settings( HWND desktop )
     SetPropW( desktop, display_device_guid_propW, ULongToHandle(guid_atom) );
 
     RpcStringFreeW( &guid_str );
+
+    /* Store current display mode in the registry */
+    if (EnumDisplaySettingsExW( NULL, ENUM_CURRENT_SETTINGS, &dmW, 0 ))
+    {
+        WINE_TRACE( "Current display mode %ux%u %u bpp %u Hz\n", dmW.dmPelsWidth,
+                    dmW.dmPelsHeight, dmW.dmBitsPerPel, dmW.dmDisplayFrequency );
+        ChangeDisplaySettingsExW( NULL, &dmW, 0,
+                                  CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY,
+                                  NULL );
+    }
 }
 
 /* main desktop management function */
