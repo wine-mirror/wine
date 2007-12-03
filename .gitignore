@@ -405,6 +405,7 @@ dlls/rpcrt4/version.res
 dlls/rsabase/tests/*.ok
 dlls/rsabase/tests/rsabase_crosstest.exe
 dlls/rsabase/tests/testlist.c
+dlls/rsabase/version.res
 dlls/rsaenh/librsaenh.def
 dlls/rsaenh/tests/*.ok
 dlls/rsaenh/tests/rsaenh_crosstest.exe
