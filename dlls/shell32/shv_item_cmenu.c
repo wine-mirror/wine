@@ -177,38 +177,7 @@ static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu2 *iface)
 	return refCount;
 }
 
-/**************************************************************************
-*  ICM_InsertItem()
-*/
-void WINAPI _InsertMenuItem (
-	HMENU hmenu,
-	UINT indexMenu,
-	BOOL fByPosition,
-	UINT wID,
-	UINT fType,
-	LPCSTR dwTypeData,
-	UINT fState)
-{
-	MENUITEMINFOA	mii;
-
-	ZeroMemory(&mii, sizeof(mii));
-	mii.cbSize = sizeof(mii);
-	if (fType == MFT_SEPARATOR)
-	{
-	  mii.fMask = MIIM_ID | MIIM_TYPE;
-	}
-	else
-	{
-	  mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-	  mii.dwTypeData = (LPSTR) dwTypeData;
-	  mii.fState = fState;
-	}
-	mii.wID = wID;
-	mii.fType = fType;
-	InsertMenuItemA( hmenu, indexMenu, fByPosition, &mii);
-}
-
-static void WINAPI _InsertMenuItemW (
+static void _InsertMenuItemW (
 	HMENU hmenu,
 	UINT indexMenu,
 	BOOL fByPosition,

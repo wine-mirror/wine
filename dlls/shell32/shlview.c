@@ -768,9 +768,21 @@ static void ShellView_MergeFileMenu(IShellViewImpl * This, HMENU hSubMenu)
 
 	if(hSubMenu)
 	{ /*insert This item at the beginning of the menu */
-	  _InsertMenuItem(hSubMenu, 0, TRUE, 0, MFT_SEPARATOR, NULL, MFS_ENABLED);
-	  _InsertMenuItem(hSubMenu, 0, TRUE, IDM_MYFILEITEM, MFT_STRING, "dummy45", MFS_ENABLED);
+            MENUITEMINFOA mii;
 
+            mii.cbSize = sizeof(mii);
+            mii.fMask = MIIM_ID | MIIM_TYPE;
+            mii.wID = 0;
+            mii.fType = MFT_SEPARATOR;
+            InsertMenuItemA(hSubMenu, 0, TRUE, &mii);
+
+            mii.cbSize = sizeof(mii);
+            mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
+            mii.dwTypeData = (LPSTR)"dummy45";
+            mii.fState = MFS_ENABLED;
+            mii.wID = IDM_MYFILEITEM;
+            mii.fType = MFT_STRING;
+            InsertMenuItemA(hSubMenu, 0, TRUE, &mii);
 	}
 	TRACE("--\n");
 }
@@ -788,9 +800,13 @@ static void ShellView_MergeViewMenu(IShellViewImpl * This, HMENU hSubMenu)
 	  MENUITEMINFOA mii;
 	  static char view[] = "View";
 
-	  _InsertMenuItem(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, 0, MFT_SEPARATOR, NULL, MFS_ENABLED);
+          ZeroMemory(&mii, sizeof(mii));
+          mii.cbSize = sizeof(mii);
+          mii.fMask = MIIM_ID | MIIM_TYPE;
+          mii.wID = 0;
+          mii.fType = MFT_SEPARATOR;
+          InsertMenuItemA(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
 
-	  ZeroMemory(&mii, sizeof(mii));
 	  mii.cbSize = sizeof(mii);
 	  mii.fMask = MIIM_SUBMENU | MIIM_TYPE | MIIM_DATA;
 	  mii.fType = MFT_STRING;
