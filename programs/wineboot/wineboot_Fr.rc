@@ -1,7 +1,7 @@
 /*
  * WineBoot resources
  *
- * Copyright (C) 2007 Robert Shearman for CodeWeavers
+ * Copyright 2007 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,15 +19,17 @@
  *
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winnls.h"
-#include "winuser.h"
-#include "commctrl.h"
-#include "resource.h"
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
-#include "wineboot_En.rc"
-#include "wineboot_Fr.rc"
-#include "wineboot_Ko.rc"
-#include "wineboot_Sv.rc"
+IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Attente du programme"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "Annuler",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "Arrêter le programme",IDOK,51,49,71,15
+    LTEXT           "Une simulation de déconnexion ou d'extinction est en cours, mais ce programme ne répond pas.",
+                    IDC_STATIC,7,7,172,19
+    LTEXT           "Si vous arrêtez le programme, vous pouvez perdre toutes les données non enregistrées.",
+                    IDC_STATIC,7,28,172,15
+END
