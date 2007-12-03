@@ -686,6 +686,11 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
     name = service_get_pipe_name(service->name);
     pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX,
                   PIPE_TYPE_BYTE|PIPE_WAIT, 1, 256, 256, 10000, NULL );
+
+    if (pipe==INVALID_HANDLE_VALUE)
+        ERR("failed to create pipe for %s, error = %d\n",
+            debugstr_w(service->name), GetLastError());
+
     HeapFree(GetProcessHeap(), 0, name);
 
     /* let the process who started us know we've tried to create a pipe */
@@ -693,12 +698,7 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
     SetEvent(event);
     CloseHandle(event);
 
-    if (pipe==INVALID_HANDLE_VALUE)
-    {
-        ERR("failed to create pipe for %s, error = %d\n",
-            debugstr_w(service->name), GetLastError());
-        return 0;
-    }
+    if (pipe==INVALID_HANDLE_VALUE) return 0;
 
     /* dispatcher loop */
     while (1)
