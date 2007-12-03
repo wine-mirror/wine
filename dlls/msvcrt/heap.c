@@ -443,13 +443,14 @@ void * CDECL _aligned_offset_realloc(void *memblock, MSVCRT_size_t size,
         /* It seems this function was called with an invalid pointer. Bail out. */
         return NULL;
     }
+
     /* Adjust old_size to get amount of actual data in old block. */
-    old_size -= old_padding;
-    if (old_size < 0)
+    if (old_size < old_padding)
     {
         /* Shouldn't happen. Something's weird, so bail out. */
         return NULL;
     }
+    old_size -= old_padding;
 
     temp = MSVCRT_realloc(*saved, size + alignment + sizeof(void *));
 
