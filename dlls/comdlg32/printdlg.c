@@ -3069,12 +3069,12 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     scalx = rcClient.right  / (double)pda->curdlg.ptPaperSize.x;
     scaly = rcClient.bottom / (double)pda->curdlg.ptPaperSize.y; 
     rcMargin = rcClient;
- 
-    rcMargin.left   += (LONG)pda->curdlg.rtMargin.left   * scalx;
-    rcMargin.top    += (LONG)pda->curdlg.rtMargin.top    * scalx;
-    rcMargin.right  -= (LONG)pda->curdlg.rtMargin.right  * scaly;
-    rcMargin.bottom -= (LONG)pda->curdlg.rtMargin.bottom * scaly;
-    
+
+    rcMargin.left   += pda->curdlg.rtMargin.left   * scalx;
+    rcMargin.top    += pda->curdlg.rtMargin.top    * scalx;
+    rcMargin.right  -= pda->curdlg.rtMargin.right  * scaly;
+    rcMargin.bottom -= pda->curdlg.rtMargin.bottom * scaly;
+
     /* if the space is too small then we make sure to not draw anything */
     rcMargin.left = min(rcMargin.left, rcMargin.right);
     rcMargin.top = min(rcMargin.top, rcMargin.bottom);

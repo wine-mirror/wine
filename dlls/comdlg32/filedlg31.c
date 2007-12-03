@@ -531,7 +531,7 @@ static LRESULT FD31_Validate( const FD31_DATA *lfs, LPCWSTR path, UINT control, 
     FD31_UpdateFileTitle(lfs);
     if (lfs->hook)
     {
-        lRet = (BOOL)FD31_CallWindowProc(lfs, lfs->fileokstring,
+        lRet = FD31_CallWindowProc(lfs, lfs->fileokstring,
                   0, lfs->lParam );
         if (lRet)
         {
@@ -543,7 +543,7 @@ static LRESULT FD31_Validate( const FD31_DATA *lfs, LPCWSTR path, UINT control, 
     {
         if (ofnW->lpstrFile)
         {
-            LPWSTR str = (LPWSTR)ofnW->lpstrFile;
+            LPWSTR str = ofnW->lpstrFile;
             LPWSTR ptr = strrchrW(str, '\\');
 	    str[lstrlenW(str) + 1] = '\0';
 	    *ptr = 0;
@@ -919,7 +919,7 @@ LONG FD31_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   if (ofn->Flags & OFN_HIDEREADONLY)
     ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE);
   if (lfs->hook)
-      return (BOOL) FD31_CallWindowProc(lfs, WM_INITDIALOG, wParam, lfs->lParam);
+      return FD31_CallWindowProc(lfs, WM_INITDIALOG, wParam, lfs->lParam);
   return TRUE;
 }
 
