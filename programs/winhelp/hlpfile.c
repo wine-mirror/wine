@@ -284,30 +284,14 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
         }
     }
 
-    hlpfile = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE) + lstrlen(lpszPath) + 1);
+    hlpfile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                        sizeof(HLPFILE) + lstrlen(lpszPath) + 1);
     if (!hlpfile) return 0;
 
     hlpfile->lpszPath           = (char*)hlpfile + sizeof(HLPFILE);
-    hlpfile->lpszTitle          = NULL;
-    hlpfile->lpszCopyright      = NULL;
-    hlpfile->first_page         = NULL;
-    hlpfile->first_macro        = NULL;
-    hlpfile->Context            = NULL;
-    hlpfile->wMapLen            = 0;
-    hlpfile->Map                = NULL;
     hlpfile->contents_start     = 0xFFFFFFFF;
-    hlpfile->prev               = NULL;
     hlpfile->next               = first_hlpfile;
     hlpfile->wRefCount          = 1;
-
-    hlpfile->numBmps            = 0;
-    hlpfile->bmps               = NULL;
-
-    hlpfile->numFonts           = 0;
-    hlpfile->fonts              = NULL;
-
-    hlpfile->numWindows         = 0;
-    hlpfile->windows            = NULL;
 
     strcpy(hlpfile->lpszPath, lpszPath);
 
