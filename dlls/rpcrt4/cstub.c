@@ -558,6 +558,9 @@ void WINAPI NdrStubInitialize(PRPC_MESSAGE pRpcMsg,
   TRACE("(%p,%p,%p,%p)\n", pRpcMsg, pStubMsg, pStubDescriptor, pRpcChannelBuffer);
   NdrServerInitializeNew(pRpcMsg, pStubMsg, pStubDescriptor);
   pStubMsg->pRpcChannelBuffer = pRpcChannelBuffer;
+  IRpcChannelBuffer_GetDestCtx(pStubMsg->pRpcChannelBuffer,
+                               &pStubMsg->dwDestContext,
+                               &pStubMsg->pvDestContext);
 }
 
 /***********************************************************************
