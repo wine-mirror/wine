@@ -25,4 +25,5 @@
 #include "version.rc"
 
 #include "rsrc_En.rc"
+#include "rsrc_Fr.rc"
 #include "rsrc_Ko.rc"
