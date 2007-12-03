@@ -441,7 +441,8 @@ static void test_marshal_WdtpInterfacePointer(void)
     unk = &Test_Unknown;
     size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, unk, &IID_IUnknown);
     todo_wine
-    ok(size == 108, "size should be 108 bytes, not %d\n", size);
+    ok(size > 28, "size should be > 28 bytes, not %d\n", size);
+    trace("WdtpInterfacePointer_UserSize returned %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, buffer, unk, &IID_IUnknown);
     wireip = buffer;
