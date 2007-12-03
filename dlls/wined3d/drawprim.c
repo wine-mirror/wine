@@ -133,7 +133,7 @@ static BOOL fixed_get_input(
     else if (usage == WINED3DDECLUSAGE_SAMPLE && usage_idx == 0)
         *regnum = 14 + WINED3DDP_MAXTEXCOORD;
 
-    if (*regnum < 0) {
+    if (*regnum == -1) {
         FIXME("Unsupported input stream [usage=%s, usage_idx=%u]\n",
             debug_d3ddeclusage(usage), usage_idx);
         return FALSE;
