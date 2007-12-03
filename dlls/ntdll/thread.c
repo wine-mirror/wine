@@ -820,8 +820,13 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
                         ret = wine_server_call( req );
                     }
                     SERVER_END_REQ;
-                    if (ret != STATUS_PENDING) break;
-                    NtYieldExecution();
+                    if (ret == STATUS_PENDING)
+                    {
+                        LARGE_INTEGER timeout;
+                        timeout.QuadPart = -10000;
+                        NtDelayExecution( FALSE, &timeout );
+                    }
+                    else break;
                 }
                 NtResumeThread( handle, &dummy );
             }
@@ -1110,8 +1115,13 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
                         ret = wine_server_call( req );
                     }
                     SERVER_END_REQ;
-                    if (ret != STATUS_PENDING) break;
-                    NtYieldExecution();
+                    if (ret == STATUS_PENDING)
+                    {
+                        LARGE_INTEGER timeout;
+                        timeout.QuadPart = -10000;
+                        NtDelayExecution( FALSE, &timeout );
+                    }
+                    else break;
                 }
                 NtResumeThread( handle, &dummy );
             }
