@@ -836,7 +836,25 @@ static ITypeLibVtbl delegating_invoke_test_obj_vtbl =
     NULL
 };
 
-static HRESULT WINAPI delegating_invoke_test_get_buffer(IRpcChannelBuffer *pchan,
+static HRESULT WINAPI delegating_invoke_chan_query_interface(IRpcChannelBuffer *pchan,
+                                                             REFIID iid,
+                                                             void **ppv)
+{
+    ok(0, "call to QueryInterface not expected\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI delegating_invoke_chan_add_ref(IRpcChannelBuffer *pchan)
+{
+    return 2;
+}
+
+static ULONG WINAPI delegating_invoke_chan_release(IRpcChannelBuffer *pchan)
+{
+    return 1;
+}
+
+static HRESULT WINAPI delegating_invoke_chan_get_buffer(IRpcChannelBuffer *pchan,
                                                         RPCOLEMESSAGE *msg,
                                                         REFIID iid)
 {
@@ -844,16 +862,46 @@ static HRESULT WINAPI delegating_invoke_test_get_buffer(IRpcChannelBuffer *pchan
     return S_OK;
 }
 
+static HRESULT WINAPI delegating_invoke_chan_send_receive(IRpcChannelBuffer *pchan,
+                                                          RPCOLEMESSAGE *pMessage,
+                                                          ULONG *pStatus)
+{
+    ok(0, "call to SendReceive not expected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI delegating_invoke_chan_free_buffer(IRpcChannelBuffer *pchan,
+                                                         RPCOLEMESSAGE *pMessage)
+{
+    ok(0, "call to FreeBuffer not expected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI delegating_invoke_chan_get_dest_ctx(IRpcChannelBuffer *pchan,
+                                                          DWORD *pdwDestContext,
+                                                          void **ppvDestContext)
+{
+    *pdwDestContext = MSHCTX_LOCAL;
+    *ppvDestContext = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI delegating_invoke_chan_is_connected(IRpcChannelBuffer *pchan)
+{
+    ok(0, "call to IsConnected not expected\n");
+    return E_NOTIMPL;
+}
+
 static IRpcChannelBufferVtbl delegating_invoke_test_rpc_chan_vtbl =
 {
-    NULL,
-    NULL,
-    NULL,
-    delegating_invoke_test_get_buffer,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    delegating_invoke_chan_query_interface,
+    delegating_invoke_chan_add_ref,
+    delegating_invoke_chan_release,
+    delegating_invoke_chan_get_buffer,
+    delegating_invoke_chan_send_receive,
+    delegating_invoke_chan_free_buffer,
+    delegating_invoke_chan_get_dest_ctx,
+    delegating_invoke_chan_is_connected
 };
 
 static void test_delegating_Invoke(IPSFactoryBuffer *ppsf)
@@ -869,7 +917,6 @@ static void test_delegating_Invoke(IPSFactoryBuffer *ppsf)
     memset(&msg, 0, sizeof(msg));
     msg.dataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
     msg.iMethod = 3;
-    /* FIXME: Figure out why this fails on Windows */
     r = IRpcStubBuffer_Invoke(pstub, &msg, pchan);
     ok(r == S_OK, "ret %08x\n", r);
     if(r == S_OK)
