@@ -2234,6 +2234,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,msi.dll
 11,,msiexec.exe
 11,,msvcrt.dll
+11,,msxml3.dll
 11,,notepad.exe
 11,,ntdll.dll
 11,,ole32.dll
@@ -2248,7 +2249,10 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,riched20.dll
 11,,riched32.dll
 11,,rpcrt4.dll
+11,,rsabase.dll
+11,,rsaenh.dll
 11,,rundll32.exe
+11,,schannel.dll
 11,,setupapi.dll
 11,,shdocvw.dll
 11,,shell32.dll
