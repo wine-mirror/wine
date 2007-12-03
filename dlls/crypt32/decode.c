@@ -715,7 +715,7 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                     else
                         array->rgItems = (BYTE *)array +
                          sizeof(struct GenericArray);
-                    nextData = (BYTE *)array->rgItems +
+                    nextData = array->rgItems +
                      array->cItems * arrayDesc->itemSize;
                     for (i = 0, ptr = pbEncoded + 1 + lenBytes; ret &&
                      i < cItems && ptr - pbEncoded - 1 - lenBytes <

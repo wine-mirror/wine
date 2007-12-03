@@ -734,7 +734,7 @@ static BOOL CRYPT_SavePKCSToFile(HCERTSTORE store,
         {
             ret = CRYPT_SavePKCSToMem(store, dwMsgAndCertEncodingType, &blob);
             if (ret)
-                ret = WriteFile((HANDLE)handle, blob.pbData, blob.cbData,
+                ret = WriteFile(handle, blob.pbData, blob.cbData,
                  &blob.cbData, NULL);
         }
         else
@@ -750,7 +750,7 @@ static BOOL CRYPT_SavePKCSToFile(HCERTSTORE store,
 static BOOL CRYPT_SaveSerializedToFile(HCERTSTORE store,
  DWORD dwMsgAndCertEncodingType, void *handle)
 {
-    return CRYPT_WriteSerializedStoreToFile((HANDLE)handle, store);
+    return CRYPT_WriteSerializedStoreToFile(handle, store);
 }
 
 struct MemWrittenTracker
@@ -847,7 +847,7 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
     switch (dwSaveTo)
     {
     case CERT_STORE_SAVE_TO_FILE:
-        handle = (HANDLE)pvSaveToPara;
+        handle = pvSaveToPara;
         saveFunc = dwSaveAs == CERT_STORE_SAVE_AS_STORE ?
          CRYPT_SaveSerializedToFile : CRYPT_SavePKCSToFile;
         break;
