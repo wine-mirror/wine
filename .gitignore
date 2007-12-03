@@ -415,6 +415,7 @@ dlls/sane.ds/rsrc.res
 dlls/schannel/tests/*.ok
 dlls/schannel/tests/schannel_crosstest.exe
 dlls/schannel/tests/testlist.c
+dlls/schannel/version.res
 dlls/secur32/libsecur32.def
 dlls/secur32/tests/*.ok
 dlls/secur32/tests/secur32_crosstest.exe
