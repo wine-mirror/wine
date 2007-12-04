@@ -1020,8 +1020,8 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
        * unmarshalling routine for the benefit of the deref code below */
       if (!fMustAlloc) {
         if (pSrcPointer) {
-          TRACE("pSrcPointer = %p\n", pSrcPointer);
-          base_ptr_val = pSrcPointer;
+          TRACE("setting *pPointer to %p\n", pSrcPointer);
+          *pPointer = base_ptr_val = pSrcPointer;
         } else
           fMustAlloc = TRUE;
       }
@@ -1030,11 +1030,9 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       /* the memory in a stub is never initialised, so we have to work out here
        * whether we have to initialise it so we can use the optimisation of
        * setting the pointer to the buffer, if possible, or set fMustAlloc to
-       * TRUE. As there is no space used in the buffer for pointers when using
-       * reference pointers we must allocate memory in this case */
-      if (type == RPC_FC_RP || attr & RPC_FC_P_DEREF) {
+       * TRUE. */
+      if (attr & RPC_FC_P_DEREF) {
         fMustAlloc = TRUE;
-        base_ptr_val = NULL;
       } else {
         base_ptr_val = NULL;
         *current_ptr = NULL;
@@ -1044,6 +1042,7 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     if (attr & RPC_FC_P_DEREF) {
       if (fMustAlloc) {
         base_ptr_val = NdrAllocate(pStubMsg, sizeof(void *));
+        *pPointer = base_ptr_val;
         current_ptr = (unsigned char **)base_ptr_val;
       } else
         current_ptr = *(unsigned char***)current_ptr;
@@ -1057,12 +1056,6 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     if (type == RPC_FC_FP)
       NdrFullPointerInsertRefId(pStubMsg->FullPtrXlatTables, pointer_id,
                                 base_ptr_val);
-
-    /* this must be done after the call to the unmarshaller, since when we are
-     * unmarshalling reference pointers on the server side *pPointer will be
-     * pointing to valid data */
-    if ((!fMustAlloc || attr & RPC_FC_P_DEREF) && base_ptr_val)
-      *pPointer = base_ptr_val;
   }
 
   TRACE("pointer=%p\n", *pPointer);
