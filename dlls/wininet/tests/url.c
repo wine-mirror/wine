@@ -53,7 +53,7 @@
 #define CREATE_URL11 "about:"
 #define CREATE_URL12 "http://www.winehq.org:65535"
 
-static inline void copy_compsA(
+static void copy_compsA(
     URL_COMPONENTSA *src, 
     URL_COMPONENTSA *dst, 
     DWORD scheLen,
@@ -73,7 +73,7 @@ static inline void copy_compsA(
     SetLastError(0xfaceabad);
 }
 
-static inline void zero_compsA(
+static void zero_compsA(
     URL_COMPONENTSA *dst, 
     DWORD scheLen,
     DWORD hostLen,
