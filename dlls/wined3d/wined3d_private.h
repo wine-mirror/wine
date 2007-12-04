@@ -1443,6 +1443,15 @@ extern void stateblock_copy(
 
 extern const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
 
+/* Direct3D terminology with little modifications. We do not have an issued state
+ * because only the driver knows about it, but we have a created state because d3d
+ * allows GetData on a created issue, but opengl doesn't
+ */
+enum query_state {
+    QUERY_CREATED,
+    QUERY_SIGNALLED,
+    QUERY_BUILDING
+};
 /*****************************************************************************
  * IWineD3DQueryImpl implementation structure (extends IUnknown)
  */
@@ -1460,6 +1469,7 @@ typedef struct IWineD3DQueryImpl
 #endif
 
     /* IWineD3DQuery fields */
+    enum query_state         state;
     WINED3DQUERYTYPE         type;
     /* TODO: Think about using a IUnknown instead of a void* */
     void                     *extendedData;

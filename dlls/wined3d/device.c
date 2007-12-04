@@ -1259,6 +1259,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
 
     D3DCREATEOBJECTINSTANCE(object, Query)
     object->type         = Type;
+    object->state        = QUERY_CREATED;
     /* allocated the 'extended' data based on the type of query requested */
     switch(Type){
     case WINED3DQUERYTYPE_OCCLUSION:
