@@ -354,8 +354,16 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
     {
         BYTE*   end;
 
-        index  = (ref - 0x0C) / hlpfile->dsize;
-        offset = (ref - 0x0C) % hlpfile->dsize;
+        if (hlpfile->version <= 16)
+        {
+            index  = (ref - 0x0C) / hlpfile->dsize;
+            offset = (ref - 0x0C) % hlpfile->dsize;
+        }
+        else
+        {
+            index  = (ref - 0x0C) >> 14;
+            offset = (ref - 0x0C) & 0x3FFF;
+        }
 
         if (hlpfile->version <= 16 && index != old_index && index != 0)
         {
