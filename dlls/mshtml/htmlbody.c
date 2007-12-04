@@ -506,11 +506,9 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
 
     HTMLTextContainer_Init(&ret->textcont);
 
-    ConnectionPoint_Init(&ret->cp_propnotif, CONPTCONT(&ret->cp_container),
-            &IID_IPropertyNotifySink, NULL);
-    ConnectionPoint_Init(&ret->cp_txtcontevents, CONPTCONT(&ret->cp_container),
-            &DIID_HTMLTextContainerEvents, &ret->cp_propnotif);
-    ConnectionPointContainer_Init(&ret->cp_container, &ret->cp_propnotif, (IUnknown*)HTMLBODY(ret));
+    ConnectionPointContainer_Init(&ret->cp_container, (IUnknown*)HTMLBODY(ret));
+    ConnectionPoint_Init(&ret->cp_propnotif, &ret->cp_container, &IID_IPropertyNotifySink);
+    ConnectionPoint_Init(&ret->cp_txtcontevents, &ret->cp_container, &DIID_HTMLTextContainerEvents);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLBodyElement,
                                              (void**)&ret->nsbody);

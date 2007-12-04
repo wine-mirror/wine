@@ -90,7 +90,7 @@ struct ConnectionPoint {
     } *sinks;
     DWORD sinks_size;
 
-    IID iid;
+    const IID *iid;
 
     ConnectionPoint *next;
 };
@@ -372,8 +372,8 @@ void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
 
-void ConnectionPoint_Init(ConnectionPoint*,IConnectionPointContainer*,REFIID,ConnectionPoint*);
-void ConnectionPointContainer_Init(ConnectionPointContainer*,ConnectionPoint*,IUnknown*);
+void ConnectionPoint_Init(ConnectionPoint*,ConnectionPointContainer*,REFIID);
+void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*);
 void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 
 NSContainer *NSContainer_Create(HTMLDocument*,NSContainer*);

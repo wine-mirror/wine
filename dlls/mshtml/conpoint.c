@@ -93,7 +93,7 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *i
     if(!pIID)
         return E_POINTER;
 
-    memcpy(pIID, &This->iid, sizeof(IID));
+    memcpy(pIID, This->iid, sizeof(IID));
     return S_OK;
 }
 
@@ -122,8 +122,8 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
 
     TRACE("(%p)->(%p %p)\n", This, pUnkSink, pdwCookie);
 
-    hres = IUnknown_QueryInterface(pUnkSink, &This->iid, (void**)&sink);
-    if(FAILED(hres) && !IsEqualGUID(&IID_IPropertyNotifySink, &This->iid))
+    hres = IUnknown_QueryInterface(pUnkSink, This->iid, (void**)&sink);
+    if(FAILED(hres) && !IsEqualGUID(&IID_IPropertyNotifySink, This->iid))
         hres = IUnknown_QueryInterface(pUnkSink, &IID_IDispatch, (void**)&sink);
     if(FAILED(hres))
         return CONNECT_E_CANNOTCONNECT;
@@ -184,18 +184,17 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
     ConnectionPoint_EnumConnections
 };
 
-void ConnectionPoint_Init(ConnectionPoint *cp, IConnectionPointContainer *container,
-        REFIID riid, ConnectionPoint *prev)
+void ConnectionPoint_Init(ConnectionPoint *cp, ConnectionPointContainer *container, REFIID riid)
 {
     cp->lpConnectionPointVtbl = &ConnectionPointVtbl;
-    cp->container = container;
+    cp->container = CONPTCONT(container);
     cp->sinks = NULL;
     cp->sinks_size = 0;
-    cp->iid = *riid;
+    cp->iid = riid;
     cp->next = NULL;
 
-    if(prev)
-        prev->next = cp;
+    cp->next = container->cp_list;
+    container->cp_list = cp;
 }
 
 static void ConnectionPoint_Destroy(ConnectionPoint *This)
@@ -250,7 +249,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
     *ppCP = NULL;
 
     for(iter = This->cp_list; iter; iter = iter->next) {
-        if(IsEqualGUID(&iter->iid, riid))
+        if(IsEqualGUID(iter->iid, riid))
             *ppCP = CONPOINT(iter);
     }
 
@@ -273,11 +272,10 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
 
 #undef CONPTCONT_THIS
 
-void ConnectionPointContainer_Init(ConnectionPointContainer *This, ConnectionPoint *cp_list,
-        IUnknown *outer)
+void ConnectionPointContainer_Init(ConnectionPointContainer *This, IUnknown *outer)
 {
     This->lpConnectionPointContainerVtbl = &ConnectionPointContainerVtbl;
-    This->cp_list = cp_list;
+    This->cp_list = NULL;
     This->outer = outer;
 }
 
