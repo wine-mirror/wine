@@ -41,7 +41,6 @@ typedef struct {
     const IHTMLBodyElementVtbl *lpHTMLBodyElementVtbl;
 
     ConnectionPoint cp_propnotif;
-    ConnectionPoint cp_txtcontevents;
 
     nsIDOMHTMLBodyElement *nsbody;
 } HTMLBodyElement;
@@ -502,8 +501,6 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
     ret->textcont.element.node.vtbl = &HTMLBodyElementImplVtbl;
 
     ConnectionPoint_Init(&ret->cp_propnotif, &ret->textcont.element.cp_container, &IID_IPropertyNotifySink);
-    ConnectionPoint_Init(&ret->cp_txtcontevents, &ret->textcont.element.cp_container,
-                         &DIID_HTMLTextContainerEvents);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLBodyElement,
                                              (void**)&ret->nsbody);

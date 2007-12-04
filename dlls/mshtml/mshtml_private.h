@@ -297,6 +297,8 @@ typedef struct {
     HTMLElement element;
 
     const IHTMLTextContainerVtbl *lpHTMLTextContainerVtbl;
+
+    ConnectionPoint cp;
 } HTMLTextContainer;
 
 #define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)
