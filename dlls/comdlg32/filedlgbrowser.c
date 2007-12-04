@@ -117,11 +117,11 @@ static void COMDLG32_DumpSBSPFlags(UINT uflags)
             FE(SBSP_INITIATEDBYHLINKFRAME),
         };
 #undef FE
-        DPRINTF("SBSP Flags: %08x =", uflags);
+        TRACE("SBSP Flags: %08x =", uflags);
 	for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++)
 	    if (flags[i].mask & uflags)
-		DPRINTF("%s ", flags[i].name);
-	DPRINTF("\n");
+		TRACE("%s ", flags[i].name);
+	TRACE("\n");
     }
 }
 
