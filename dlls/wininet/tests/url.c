@@ -239,6 +239,25 @@ static void InternetCrackUrl_test(void)
   GLE = GetLastError();
   ok(ret == FALSE, "Expected InternetCrackUrl to fail\n");
   ok(GLE != 0xdeadbeef && GLE != ERROR_SUCCESS, "Expected GLE to represent a failure\n");
+
+  /* Invalid Call: must set size of components structure (Windows only
+   * inforces this on the InternetCrackUrlA version of the call) */
+  copy_compsA(&urlSrc, &urlComponents, 0, 1024, 1024, 1024, 2048, 1024);
+  SetLastError(0xdeadbeef);
+  urlComponents.dwStructSize = 0;
+  ret = InternetCrackUrlA(TEST_URL, 0, 0, &urlComponents);
+  ok(ret == FALSE, "Expected InternetCrackUrl to fail\n");
+  ok(GLE != 0xdeadbeef && GLE != ERROR_SUCCESS, "Expected GLE to represent a failure\n");
+
+  /* Invalid Call: size of dwStructSize must be one of the "standard" sizes
+   * of the URL_COMPONENTS structure (Windows only inforces this on the
+   * InternetCrackUrlA version of the call) */
+  copy_compsA(&urlSrc, &urlComponents, 0, 1024, 1024, 1024, 2048, 1024);
+  SetLastError(0xdeadbeef);
+  urlComponents.dwStructSize = sizeof(urlComponents) + 1;
+  ret = InternetCrackUrlA(TEST_URL, 0, 0, &urlComponents);
+  ok(ret == FALSE, "Expected InternetCrackUrl to fail\n");
+  ok(GLE != 0xdeadbeef && GLE != ERROR_SUCCESS, "Expected GLE to represent a failure\n");
 }
 
 static void InternetCrackUrlW_test(void)

@@ -1069,7 +1069,8 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 
   TRACE("(%s %u %x %p)\n", debugstr_a(lpszUrl), dwUrlLength, dwFlags, lpUrlComponents);
 
-  if (!lpszUrl || !*lpszUrl)
+  if (!lpszUrl || !*lpszUrl || !lpUrlComponents ||
+          lpUrlComponents->dwStructSize != sizeof(URL_COMPONENTSA))
   {
       INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
       return FALSE;
@@ -1087,6 +1088,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
   MultiByteToWideChar(CP_ACP,0,lpszUrl,dwUrlLength,lpwszUrl,nLength);
 
   memset(&UCW,0,sizeof(UCW));
+  UCW.dwStructSize = sizeof(URL_COMPONENTSW);
   if(lpUrlComponents->dwHostNameLength!=0)
       UCW.dwHostNameLength= lpUrlComponents->dwHostNameLength;
   if(lpUrlComponents->dwUserNameLength!=0)
