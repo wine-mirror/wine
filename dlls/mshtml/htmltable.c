@@ -39,6 +39,8 @@ typedef struct {
     HTMLElement element;
 
     const IHTMLTableVtbl  *lpHTMLTableVtbl;
+
+    ConnectionPoint cp;
 } HTMLTable;
 
 #define HTMLTABLE(x)  ((IHTMLTable*)  &(x)->lpHTMLTableVtbl)
@@ -554,6 +556,8 @@ HTMLElement *HTMLTable_Create(nsIDOMHTMLElement *nselem)
 
     ret->element.node.vtbl = &HTMLTableImplVtbl;
     ret->lpHTMLTableVtbl = &HTMLTableVtbl;
+
+    ConnectionPoint_Init(&ret->cp, &ret->element.cp_container, &DIID_HTMLTableEvents);
 
     return &ret->element;
 }
