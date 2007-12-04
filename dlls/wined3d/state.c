@@ -1957,7 +1957,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         return;
     }
 
-    if (mapped_stage < 0) return;
+    if (mapped_stage == -1) return;
 
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
         if(mapped_stage >= GL_LIMITS(textures)) {
