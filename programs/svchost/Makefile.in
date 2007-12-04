@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = svchost.exe
+APPMODE   = -municode
+IMPORTS   = advapi32 kernel32
+
+C_SRCS = \
+	svchost.c
+
+@MAKE_PROG_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

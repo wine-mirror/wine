@@ -27,6 +27,7 @@ SUBDIRS = \
 	rundll32 \
 	spoolsv \
 	start \
+	svchost \
 	taskmgr \
 	uninstaller \
 	view \
@@ -70,6 +71,7 @@ INSTALLSUBDIRS = \
 	rundll32 \
 	spoolsv \
 	start \
+	svchost \
 	taskmgr \
 	uninstaller \
 	wineboot \

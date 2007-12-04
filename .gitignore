@@ -676,6 +676,7 @@ programs/rundll32/rundll32
 programs/spoolsv/spoolsv
 programs/start/rsrc.res
 programs/start/start
+programs/svchost/svchost
 programs/taskmgr/taskmgr
 programs/taskmgr/taskmgr.res
 programs/uninstaller/rsrc.res

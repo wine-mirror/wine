@@ -21191,6 +21191,8 @@ ac_config_files="$ac_config_files programs/spoolsv/Makefile"
 
 ac_config_files="$ac_config_files programs/start/Makefile"
 
+ac_config_files="$ac_config_files programs/svchost/Makefile"
+
 ac_config_files="$ac_config_files programs/taskmgr/Makefile"
 
 ac_config_files="$ac_config_files programs/uninstaller/Makefile"
@@ -22154,6 +22156,7 @@ do
     "programs/rundll32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/rundll32/Makefile" ;;
     "programs/spoolsv/Makefile") CONFIG_FILES="$CONFIG_FILES programs/spoolsv/Makefile" ;;
     "programs/start/Makefile") CONFIG_FILES="$CONFIG_FILES programs/start/Makefile" ;;
+    "programs/svchost/Makefile") CONFIG_FILES="$CONFIG_FILES programs/svchost/Makefile" ;;
     "programs/taskmgr/Makefile") CONFIG_FILES="$CONFIG_FILES programs/taskmgr/Makefile" ;;
     "programs/uninstaller/Makefile") CONFIG_FILES="$CONFIG_FILES programs/uninstaller/Makefile" ;;
     "programs/view/Makefile") CONFIG_FILES="$CONFIG_FILES programs/view/Makefile" ;;
