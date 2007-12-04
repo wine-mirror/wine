@@ -550,6 +550,8 @@ HTMLElement *HTMLTable_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLTable *ret = mshtml_alloc(sizeof(HTMLTable));
 
+    HTMLElement_Init(&ret->element);
+
     ret->element.node.vtbl = &HTMLTableImplVtbl;
     ret->lpHTMLTableVtbl = &HTMLTableVtbl;
 

@@ -1280,6 +1280,14 @@ static const NodeImplVtbl HTMLElementImplVtbl = {
     HTMLElement_destructor
 };
 
+void HTMLElement_Init(HTMLElement *This)
+{
+    This->node.vtbl = &HTMLElementImplVtbl;
+    This->lpHTMLElementVtbl = &HTMLElementVtbl;
+
+    HTMLElement2_Init(This);
+}
+
 HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
 {
     nsIDOMHTMLElement *nselem;
@@ -1322,15 +1330,12 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
 
     if(!ret) {
         ret = mshtml_alloc(sizeof(HTMLElement));
-        ret->node.vtbl = &HTMLElementImplVtbl;
+        HTMLElement_Init(ret);
     }
 
     nsAString_Finish(&class_name_str);
 
-    ret->lpHTMLElementVtbl = &HTMLElementVtbl;
     ret->nselem = nselem;
-
-    HTMLElement2_Init(ret);
 
     return ret;
 }

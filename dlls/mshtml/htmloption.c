@@ -340,6 +340,8 @@ HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
     HTMLOptionElement *ret = mshtml_alloc(sizeof(HTMLOptionElement));
     nsresult nsres;
 
+    HTMLElement_Init(&ret->element);
+
     ret->lpHTMLOptionElementVtbl = &HTMLOptionElementVtbl;
     ret->element.node.vtbl = &HTMLOptionElementImplVtbl;
 
@@ -511,6 +513,7 @@ HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLDocument *doc)
     HTMLOptionElementFactory *ret;
 
     ret = mshtml_alloc(sizeof(HTMLOptionElementFactory));
+
     ret->lpHTMLOptionElementFactoryVtbl = &HTMLOptionElementFactoryVtbl;
     ret->ref = 1;
     ret->doc = doc;

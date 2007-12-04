@@ -429,6 +429,8 @@ HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement *nselem)
     HTMLSelectElement *ret = mshtml_alloc(sizeof(HTMLSelectElement));
     nsresult nsres;
 
+    HTMLElement_Init(&ret->element);
+
     ret->lpHTMLSelectElementVtbl = &HTMLSelectElementVtbl;
     ret->element.node.vtbl = &HTMLSelectElementImplVtbl;
     

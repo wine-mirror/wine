@@ -409,6 +409,8 @@ HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement *nselem)
     HTMLTextAreaElement *ret = mshtml_alloc(sizeof(HTMLTextAreaElement));
     nsresult nsres;
 
+    HTMLElement_Init(&ret->element);
+
     ret->lpHTMLTextAreaElementVtbl = &HTMLTextAreaElementVtbl;
     ret->element.node.vtbl = &HTMLTextAreaElementImplVtbl;
 

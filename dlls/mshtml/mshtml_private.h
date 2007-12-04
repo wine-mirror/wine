@@ -445,6 +445,7 @@ HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTable_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement*);
 
+void HTMLElement_Init(HTMLElement*);
 void HTMLElement2_Init(HTMLElement*);
 void HTMLTextContainer_Init(HTMLTextContainer*);
 

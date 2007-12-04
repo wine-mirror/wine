@@ -501,10 +501,10 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
 
     TRACE("(%p)->(%p)\n", ret, nselem);
 
+    HTMLTextContainer_Init(&ret->textcont);
+
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
     ret->textcont.element.node.vtbl = &HTMLBodyElementImplVtbl;
-
-    HTMLTextContainer_Init(&ret->textcont);
 
     ConnectionPointContainer_Init(&ret->cp_container, (IUnknown*)HTMLBODY(ret));
     ConnectionPoint_Init(&ret->cp_propnotif, &ret->cp_container, &IID_IPropertyNotifySink);

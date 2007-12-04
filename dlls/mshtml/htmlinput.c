@@ -1062,6 +1062,8 @@ HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
     HTMLInputElement *ret = mshtml_alloc(sizeof(HTMLInputElement));
     nsresult nsres;
 
+    HTMLElement_Init(&ret->element);
+
     ret->lpHTMLInputElementVtbl = &HTMLInputElementVtbl;
     ret->element.node.vtbl = &HTMLInputElementImplVtbl;
 
