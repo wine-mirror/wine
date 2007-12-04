@@ -243,7 +243,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetCursorProperties(LPDIRECT3DDEVICE8
     }
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_SetCursorProperties(This->WineD3DDevice,XHotSpot,YHotSpot,(IWineD3DSurface*)pSurface->wineD3DSurface);
+    hr = IWineD3DDevice_SetCursorProperties(This->WineD3DDevice,XHotSpot,YHotSpot,pSurface->wineD3DSurface);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
@@ -399,7 +399,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetBackBuffer(LPDIRECT3DDEVICE8 iface
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    rc = IWineD3DDevice_GetBackBuffer(This->WineD3DDevice, 0, BackBuffer, (WINED3DBACKBUFFER_TYPE) Type, (IWineD3DSurface **)&retSurface);
+    rc = IWineD3DDevice_GetBackBuffer(This->WineD3DDevice, 0, BackBuffer, (WINED3DBACKBUFFER_TYPE) Type, &retSurface);
     if (rc == D3D_OK && NULL != retSurface && NULL != ppBackBuffer) {
         IWineD3DSurface_GetParent(retSurface, (IUnknown **)ppBackBuffer);
         IWineD3DSurface_Release(retSurface);
@@ -811,10 +811,10 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 ifa
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, NULL == pZSurface ? NULL : (IWineD3DSurface *)pZSurface->wineD3DSurface);
+    IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, NULL == pZSurface ? NULL : pZSurface->wineD3DSurface);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, 0, pSurface ? (IWineD3DSurface *)pSurface->wineD3DSurface : NULL);
+    hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, 0, pSurface ? pSurface->wineD3DSurface : NULL);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
@@ -1229,7 +1229,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetTexture(LPDIRECT3DDEVICE8 iface, D
     }
 
     EnterCriticalSection(&d3d8_cs);
-    rc = IWineD3DDevice_GetTexture(This->WineD3DDevice, Stage, (IWineD3DBaseTexture **)&retTexture);
+    rc = IWineD3DDevice_GetTexture(This->WineD3DDevice, Stage, &retTexture);
     if (rc == D3D_OK && NULL != retTexture) {
         IWineD3DBaseTexture_GetParent(retTexture, (IUnknown **)ppTexture);
         IWineD3DBaseTexture_Release(retTexture);
@@ -2063,7 +2063,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetStreamSource(LPDIRECT3DDEVICE8 ifa
     }
 
     EnterCriticalSection(&d3d8_cs);
-    rc = IWineD3DDevice_GetStreamSource(This->WineD3DDevice, StreamNumber, (IWineD3DVertexBuffer **)&retStream, 0 /* Offset in bytes */, pStride);
+    rc = IWineD3DDevice_GetStreamSource(This->WineD3DDevice, StreamNumber, &retStream, 0 /* Offset in bytes */, pStride);
     if (rc == D3D_OK  && NULL != retStream) {
         IWineD3DVertexBuffer_GetParent(retStream, (IUnknown **)pStream);
         IWineD3DVertexBuffer_Release(retStream);
