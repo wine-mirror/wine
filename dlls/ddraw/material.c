@@ -47,7 +47,7 @@ WINE_DECLARE_DEBUG_CHANNEL(ddraw_thunk);
 
 static void dump_material(const D3DMATERIAL *mat)
 {
-    DPRINTF("  dwSize : %d\n", mat->dwSize);
+    TRACE("  dwSize : %d\n", mat->dwSize);
 }
 
 /*****************************************************************************

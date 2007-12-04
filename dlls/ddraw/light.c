@@ -158,7 +158,7 @@ IDirect3DLightImpl_Initialize(IDirect3DLight *iface,
  *****************************************************************************/
 static void dump_light(const D3DLIGHT2 *light)
 {
-    DPRINTF("    - dwSize : %d\n", light->dwSize);
+    TRACE("    - dwSize : %d\n", light->dwSize);
 }
 
 static const float zero_value[] = {
