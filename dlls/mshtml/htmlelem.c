@@ -1255,6 +1255,9 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IHTMLElement2, riid)) {
         TRACE("(%p)->(IID_IHTMLElement2 %p)\n", This, ppv);
         *ppv = HTMLELEM2(This);
+    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
+        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
+        *ppv = CONPTCONT(&This->cp_container);
     }
 
     if(*ppv) {
@@ -1268,6 +1271,8 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 void HTMLElement_destructor(HTMLDOMNode *iface)
 {
     HTMLElement *This = HTMLELEM_NODE_THIS(iface);
+
+    ConnectionPointContainer_Destroy(&This->cp_container);
 
     if(This->nselem)
         nsIDOMHTMLElement_Release(This->nselem);
@@ -1284,6 +1289,8 @@ void HTMLElement_Init(HTMLElement *This)
 {
     This->node.vtbl = &HTMLElementImplVtbl;
     This->lpHTMLElementVtbl = &HTMLElementVtbl;
+
+    ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)HTMLELEM(This));
 
     HTMLElement2_Init(This);
 }

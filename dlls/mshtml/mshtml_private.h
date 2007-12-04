@@ -285,6 +285,7 @@ struct HTMLDOMNode {
 
 typedef struct {
     HTMLDOMNode node;
+    ConnectionPointContainer cp_container;
 
     const IHTMLElementVtbl   *lpHTMLElementVtbl;
     const IHTMLElement2Vtbl  *lpHTMLElement2Vtbl;

@@ -40,7 +40,6 @@ typedef struct {
 
     const IHTMLBodyElementVtbl *lpHTMLBodyElementVtbl;
 
-    ConnectionPointContainer cp_container;
     ConnectionPoint cp_propnotif;
     ConnectionPoint cp_txtcontevents;
 
@@ -464,9 +463,6 @@ static HRESULT HTMLBodyElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IHTMLTextContainer, riid)) {
         TRACE("(%p)->(IID_IHTMLTextContainer %p)\n", &This->textcont, ppv);
         *ppv = HTMLTEXTCONT(&This->textcont);
-    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
-        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
-        *ppv = CONPTCONT(&This->cp_container);
     }
 
     if(*ppv) {
@@ -481,7 +477,6 @@ static void HTMLBodyElement_destructor(HTMLDOMNode *iface)
 {
     HTMLBodyElement *This = HTMLBODY_NODE_THIS(iface);
 
-    ConnectionPointContainer_Destroy(&This->cp_container);
     nsIDOMHTMLBodyElement_Release(This->nsbody);
 
     HTMLElement_destructor(&This->textcont.element.node);
@@ -506,9 +501,9 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
     ret->textcont.element.node.vtbl = &HTMLBodyElementImplVtbl;
 
-    ConnectionPointContainer_Init(&ret->cp_container, (IUnknown*)HTMLBODY(ret));
-    ConnectionPoint_Init(&ret->cp_propnotif, &ret->cp_container, &IID_IPropertyNotifySink);
-    ConnectionPoint_Init(&ret->cp_txtcontevents, &ret->cp_container, &DIID_HTMLTextContainerEvents);
+    ConnectionPoint_Init(&ret->cp_propnotif, &ret->textcont.element.cp_container, &IID_IPropertyNotifySink);
+    ConnectionPoint_Init(&ret->cp_txtcontevents, &ret->textcont.element.cp_container,
+                         &DIID_HTMLTextContainerEvents);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLBodyElement,
                                              (void**)&ret->nsbody);
