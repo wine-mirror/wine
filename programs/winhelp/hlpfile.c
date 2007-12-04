@@ -412,11 +412,13 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
 {
     HLPFILE_PAGE* page;
     BYTE*         title;
-    UINT          titlesize;
+    UINT          titlesize, blocksize, datalen;
     char*         ptr;
     HLPFILE_MACRO*macro;
 
-    title = buf + GET_UINT(buf, 0x10);
+    blocksize = GET_UINT(buf, 0);
+    datalen = GET_UINT(buf, 0x10);
+    title = buf + datalen;
     if (title > end) {WINE_WARN("page2\n"); return FALSE;};
 
     titlesize = GET_UINT(buf, 4);
@@ -424,23 +426,22 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     if (!page) return FALSE;
     page->lpszTitle = (char*)page + sizeof(HLPFILE_PAGE);
 
-    if (hlpfile->hasPhrases)
+    if (titlesize > blocksize - datalen)
     {
-        HLPFILE_Uncompress2(title, end, (BYTE*)page->lpszTitle, (BYTE*)page->lpszTitle + titlesize);
-    }
-    else
-    {
-        if (GET_UINT(buf, 0x4) > GET_UINT(buf, 0) - GET_UINT(buf, 0x10))
-        {
-            /* need to decompress */
-            HLPFILE_Uncompress3(page->lpszTitle, page->lpszTitle + titlesize, 
-                                title, end);
-        }
+        /* need to decompress */
+        if (hlpfile->hasPhrases)
+            HLPFILE_Uncompress2(title, end, (BYTE*)page->lpszTitle, (BYTE*)page->lpszTitle + titlesize);
+        else if (hlpfile->hasPhrases40)
+            HLPFILE_Uncompress3(page->lpszTitle, page->lpszTitle + titlesize, title, end);
         else
         {
+            WINE_FIXME("Text size is too long, splitting\n");
+            titlesize = blocksize - datalen;
             memcpy(page->lpszTitle, title, titlesize);
         }
     }
+    else
+        memcpy(page->lpszTitle, title, titlesize);
 
     page->lpszTitle[titlesize] = '\0';
 
@@ -888,7 +889,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
     UINT               textsize;
     BYTE              *format, *format_end;
     char              *text, *text_base, *text_end;
-    long               size;
+    long               size, blocksize, datalen;
     unsigned short     bits;
     unsigned           nc, ncol = 1;
 
@@ -900,25 +901,28 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
 
     if (buf + 0x19 > end) {WINE_WARN("header too small\n"); return FALSE;};
 
+    blocksize = GET_UINT(buf, 0);
     size = GET_UINT(buf, 0x4);
+    datalen = GET_UINT(buf, 0x10);
     text = text_base = HeapAlloc(GetProcessHeap(), 0, size);
     if (!text) return FALSE;
-    if (hlpfile->hasPhrases)
+    if (size > blocksize - datalen)
     {
-        HLPFILE_Uncompress2(buf + GET_UINT(buf, 0x10), end, (BYTE*)text, (BYTE*)text + size);
-    }
-    else
-    {
-        if (GET_UINT(buf, 0x4) > GET_UINT(buf, 0) - GET_UINT(buf, 0x10))
-        {
-            /* block is compressed */
-            HLPFILE_Uncompress3(text, text + size, buf + GET_UINT(buf, 0x10), end);
-        }
+        /* need to decompress */
+        if (hlpfile->hasPhrases)
+            HLPFILE_Uncompress2(buf + datalen, end, (BYTE*)text, (BYTE*)text + size);
+        else if (hlpfile->hasPhrases40)
+            HLPFILE_Uncompress3(text, text + size, buf + datalen, end);
         else
         {
-            text = (char*)buf + GET_UINT(buf, 0x10);
+            WINE_FIXME("Text size is too long, splitting\n");
+            size = blocksize - datalen;
+            memcpy(text, buf + datalen, size);
         }
     }
+    else
+        memcpy(text, buf + datalen, size);
+
     text_end = text + size;
 
     format = buf + 0x15;
@@ -1694,7 +1698,7 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
     else
         HLPFILE_UncompressLZ77(buf_phs + 9, end_phs, (BYTE*)phrases.buffer);
 
-    hlpfile->hasPhrases = FALSE;
+    hlpfile->hasPhrases40 = TRUE;
     return TRUE;
 }
 

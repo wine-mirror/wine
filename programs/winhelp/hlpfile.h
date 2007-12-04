@@ -137,7 +137,8 @@ typedef struct tagHlpFileFile
     unsigned short              tbsize;     /* topic block size */
     unsigned short              dsize;      /* decompress size */
     unsigned short              compressed;
-    unsigned                    hasPhrases; /* Phrases or PhrIndex/PhrImage */
+    unsigned                    hasPhrases;   /* file has |Phrases */
+    unsigned                    hasPhrases40; /* file has |PhrIndex/|PhrImage */
 
     unsigned                    numBmps;
     HBITMAP*                    bmps;
