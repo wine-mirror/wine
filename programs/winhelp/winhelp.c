@@ -445,7 +445,8 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
             break;
         }
     }
-    return 0L;
+    /* Always return success for now */
+    return 1;
 }
 
 /******************************************************************
