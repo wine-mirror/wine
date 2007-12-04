@@ -581,7 +581,7 @@ BOOL module_remove(struct process* pcs, struct module* module)
     TRACE("%s (%p)\n", debugstr_w(module->module.ModuleName), module);
     hash_table_destroy(&module->ht_symbols);
     hash_table_destroy(&module->ht_types);
-    HeapFree(GetProcessHeap(), 0, (char*)module->sources);
+    HeapFree(GetProcessHeap(), 0, module->sources);
     HeapFree(GetProcessHeap(), 0, module->addr_sorttab);
     HeapFree(GetProcessHeap(), 0, module->dwarf2_info);
     pool_destroy(&module->pool);

@@ -214,7 +214,7 @@ BOOL WINAPI SymGetSearchPath(HANDLE hProcess, PSTR szSearchPath,
 static BOOL WINAPI process_invade_cb(PCSTR name, ULONG base, ULONG size, PVOID user)
 {
     char        tmp[MAX_PATH];
-    HANDLE      hProcess = (HANDLE)user;
+    HANDLE      hProcess = user;
 
     if (!GetModuleFileNameExA(hProcess, (HMODULE)base, 
                               tmp, sizeof(tmp)))
@@ -320,7 +320,7 @@ BOOL WINAPI SymInitializeW(HANDLE hProcess, PCWSTR UserSearchPath, BOOL fInvadeP
     if (check_live_target(pcs))
     {
         if (fInvadeProcess)
-            EnumerateLoadedModules(hProcess, process_invade_cb, (void*)hProcess);
+            EnumerateLoadedModules(hProcess, process_invade_cb, hProcess);
         elf_synchronize_module_list(pcs);
     }
     else if (fInvadeProcess)
@@ -488,7 +488,7 @@ static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, U
         FIXME("No mapping for action %u\n", action);
         return FALSE;
     }
-    return cb32(hProcess, action, (PVOID)data32, (PVOID)user32);
+    return cb32(hProcess, action, data32, (PVOID)user32);
 }
 
 /******************************************************************

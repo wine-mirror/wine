@@ -552,15 +552,15 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     addr_32to64(&frame32.AddrStack,  &frame64->AddrStack);
     addr_32to64(&frame32.AddrBStore, &frame64->AddrBStore);
     frame64->FuncTableEntry = frame32.FuncTableEntry; /* FIXME */
-    frame64->Params[0] = (ULONG)frame32.Params[0];
-    frame64->Params[1] = (ULONG)frame32.Params[1];
-    frame64->Params[2] = (ULONG)frame32.Params[2];
-    frame64->Params[3] = (ULONG)frame32.Params[3];
+    frame64->Params[0] = frame32.Params[0];
+    frame64->Params[1] = frame32.Params[1];
+    frame64->Params[2] = frame32.Params[2];
+    frame64->Params[3] = frame32.Params[3];
     frame64->Far = frame32.Far;
     frame64->Virtual = frame32.Virtual;
-    frame64->Reserved[0] = (ULONG)frame32.Reserved[0];
-    frame64->Reserved[1] = (ULONG)frame32.Reserved[1];
-    frame64->Reserved[2] = (ULONG)frame32.Reserved[2];
+    frame64->Reserved[0] = frame32.Reserved[0];
+    frame64->Reserved[1] = frame32.Reserved[1];
+    frame64->Reserved[2] = frame32.Reserved[2];
     /* we don't handle KdHelp */
     frame64->KdHelp.Thread = 0xC000FADE;
     frame64->KdHelp.ThCallbackStack = 0x10;

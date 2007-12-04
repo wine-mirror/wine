@@ -174,7 +174,7 @@ static int numeric_leaf(int* value, const unsigned short int* leaf)
 
         case LF_USHORT:
             length += 2;
-            *value = *(const unsigned short*)leaf;
+            *value = *leaf;
             break;
 
         case LF_LONG:
