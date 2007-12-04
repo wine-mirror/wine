@@ -1107,6 +1107,113 @@ todo_wine {
     HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
 }
 
+static void test_conformant_string(void)
+{
+    RPC_MESSAGE RpcMessage;
+    MIDL_STUB_MESSAGE StubMsg;
+    MIDL_STUB_DESC StubDesc;
+    void *ptr;
+    unsigned char *mem, *mem_orig;
+    char memsrc[] = "This is a test string";
+
+    static const unsigned char fmtstr_conf_str[] =
+    {
+			0x11, 0x8,	/* FC_RP [simple_pointer] */
+			0x22,		/* FC_C_CSTRING */
+			0x5c,		/* FC_PAD */
+    };
+
+    StubDesc = Object_StubDesc;
+    StubDesc.pFormatTypes = fmtstr_conf_str;
+
+    NdrClientInitializeNew(
+                           &RpcMessage,
+                           &StubMsg,
+                           &StubDesc,
+                           0);
+
+    StubMsg.BufferLength = 0;
+    NdrPointerBufferSize( &StubMsg,
+                          (unsigned char *)memsrc,
+                          fmtstr_conf_str );
+    ok(StubMsg.BufferLength >= sizeof(memsrc) + 12, "length %d\n", StubMsg.BufferLength);
+
+    /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
+    StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
+
+    ptr = NdrPointerMarshall( &StubMsg, (unsigned char *)memsrc, fmtstr_conf_str );
+    ok(ptr == NULL, "ret %p\n", ptr);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == sizeof(memsrc) + 12, "Buffer %p Start %p len %d\n",
+        StubMsg.Buffer, StubMsg.BufferStart, 12 + sizeof(memsrc));
+    ok(!memcmp(StubMsg.BufferStart + 12, memsrc, sizeof(memsrc)), "incorrectly marshaled\n");
+
+    StubMsg.Buffer = StubMsg.BufferStart;
+    StubMsg.MemorySize = 0;
+    mem = NULL;
+
+    /* Client */
+    my_alloc_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    mem = mem_orig = HeapAlloc(GetProcessHeap(), 0, sizeof(memsrc));
+    NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 0);
+    ok(mem == mem_orig, "mem not alloced\n");
+    ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
+
+    my_alloc_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 1);
+todo_wine {
+    ok(mem == mem_orig, "mem not alloced\n");
+    ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
+}
+
+    my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrPointerFree( &StubMsg, mem, fmtstr_conf_str );
+    ok(my_free_called == 1, "free called %d\n", my_free_called);
+
+    /* Server */
+    my_alloc_called = 0;
+    StubMsg.IsClient = 0;
+    mem = NULL;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 0);
+todo_wine {
+    ok(mem == StubMsg.BufferStart + 12, "mem not pointing at buffer\n");
+    ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
+}
+    my_alloc_called = 0;
+    mem = NULL;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 1);
+todo_wine {
+    ok(mem == StubMsg.BufferStart + 12, "mem not pointing at buffer\n");
+    ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
+}
+
+    my_alloc_called = 0;
+    mem = mem_orig;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 0);
+todo_wine {
+    ok(mem == StubMsg.BufferStart + 12, "mem not pointing at buffer\n");
+    ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
+}
+
+    my_alloc_called = 0;
+    mem = mem_orig;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 1);
+todo_wine {
+    ok(mem == StubMsg.BufferStart + 12, "mem not pointing at buffer\n");
+    ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
+}
+
+    HeapFree(GetProcessHeap(), 0, mem_orig);
+    HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
+}
+
 START_TEST( ndr_marshall )
 {
     test_ndr_simple_type();
@@ -1116,4 +1223,5 @@ START_TEST( ndr_marshall )
     test_client_init();
     test_ndr_allocate();
     test_conformant_array();
+    test_conformant_string();
 }
