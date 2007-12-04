@@ -29,6 +29,71 @@
 #include "wine/test.h"
 
 static const char msifile[] = "winetest.msi";
+char CURR_DIR[MAX_PATH];
+
+/* RegDeleteTreeW from dlls/advapi32/registry.c */
+LSTATUS WINAPI package_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
+{
+    LONG ret;
+    DWORD dwMaxSubkeyLen, dwMaxValueLen;
+    DWORD dwMaxLen, dwSize;
+    WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
+    HKEY hSubKey = hKey;
+
+    if(lpszSubKey)
+    {
+        ret = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+        if (ret) return ret;
+    }
+
+    ret = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, NULL,
+            &dwMaxSubkeyLen, NULL, NULL, &dwMaxValueLen, NULL, NULL, NULL);
+    if (ret) goto cleanup;
+
+    dwMaxSubkeyLen++;
+    dwMaxValueLen++;
+    dwMaxLen = max(dwMaxSubkeyLen, dwMaxValueLen);
+    if (dwMaxLen > sizeof(szNameBuf)/sizeof(WCHAR))
+    {
+        /* Name too big: alloc a buffer for it */
+        if (!(lpszName = HeapAlloc( GetProcessHeap(), 0, dwMaxLen*sizeof(WCHAR))))
+        {
+            ret = ERROR_NOT_ENOUGH_MEMORY;
+            goto cleanup;
+        }
+    }
+
+    /* Recursively delete all the subkeys */
+    while (TRUE)
+    {
+        dwSize = dwMaxLen;
+        if (RegEnumKeyExW(hSubKey, 0, lpszName, &dwSize, NULL,
+                          NULL, NULL, NULL)) break;
+
+        ret = package_RegDeleteTreeW(hSubKey, lpszName);
+        if (ret) goto cleanup;
+    }
+
+    if (lpszSubKey)
+        ret = RegDeleteKeyW(hKey, lpszSubKey);
+    else
+        while (TRUE)
+        {
+            dwSize = dwMaxLen;
+            if (RegEnumValueW(hKey, 0, lpszName, &dwSize,
+                  NULL, NULL, NULL, NULL)) break;
+
+            ret = RegDeleteValueW(hKey, lpszName);
+            if (ret) goto cleanup;
+        }
+
+cleanup:
+    if (lpszName != szNameBuf)
+        HeapFree(GetProcessHeap(), 0, lpszName);
+    if(lpszSubKey)
+        RegCloseKey(hSubKey);
+    return ret;
+}
 
 static UINT do_query(MSIHANDLE hdb, const char *query, MSIHANDLE *phrec)
 {
@@ -229,6 +294,16 @@ static UINT create_drlocator_table( MSIHANDLE hdb )
             "PRIMARY KEY `Signature_`, `Parent`, `Path`)" );
 }
 
+static UINT create_complocator_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `CompLocator` ("
+            "`Signature_` CHAR(72) NOT NULL, "
+            "`ComponentId` CHAR(38) NOT NULL, "
+            "`Type` SHORT "
+            "PRIMARY KEY `Signature_`)" );
+}
+
 static UINT add_component_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Component`  "
@@ -423,6 +498,22 @@ static UINT add_drlocator_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `DrLocator` "
             "(`Signature_`, `Parent`, `Path`, `Depth`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_complocator_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `CompLocator` "
+            "(`Signature_`, `ComponentId`, `Type`) "
             "VALUES( %s )";
     char *query;
     UINT sz, r;
@@ -3951,9 +4042,6 @@ static void test_removefiles(void)
     MSIHANDLE hpkg;
     UINT r;
     MSIHANDLE hdb;
-    char CURR_DIR[MAX_PATH];
-
-    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
@@ -4874,8 +4962,405 @@ static void test_ccpsearch(void)
     DeleteFileA(msifile);
 }
 
+static BOOL squash_guid(LPCWSTR in, LPWSTR out)
+{
+    DWORD i,n=1;
+    GUID guid;
+
+    if (FAILED(CLSIDFromString((LPOLESTR)in, &guid)))
+        return FALSE;
+
+    for(i=0; i<8; i++)
+        out[7-i] = in[n++];
+    n++;
+    for(i=0; i<4; i++)
+        out[11-i] = in[n++];
+    n++;
+    for(i=0; i<4; i++)
+        out[15-i] = in[n++];
+    n++;
+    for(i=0; i<2; i++)
+    {
+        out[17+i*2] = in[n++];
+        out[16+i*2] = in[n++];
+    }
+    n++;
+    for( ; i<8; i++)
+    {
+        out[17+i*2] = in[n++];
+        out[16+i*2] = in[n++];
+    }
+    out[32]=0;
+    return TRUE;
+}
+
+static void set_component_path(LPCSTR filename, LPCSTR guid)
+{
+    WCHAR guidW[MAX_PATH];
+    WCHAR squashedW[MAX_PATH];
+    CHAR squashed[MAX_PATH];
+    CHAR substr[MAX_PATH];
+    CHAR path[MAX_PATH];
+    HKEY hkey;
+
+    MultiByteToWideChar(CP_ACP, 0, guid, -1, guidW, MAX_PATH);
+    squash_guid(guidW, squashedW);
+    WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
+
+    lstrcpyA(substr, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                    "Installer\\UserData\\S-1-5-18\\Components\\");
+    lstrcatA(substr, squashed);
+
+    RegCreateKeyA(HKEY_LOCAL_MACHINE, substr, &hkey);
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\");
+    lstrcatA(path, filename);
+
+    /* just using a random squashed product code */
+    RegSetValueExA(hkey, "7D2F387510109040002000060BECB6AB", 0,
+                   REG_SZ, (LPBYTE)path, lstrlenA(path));
+
+    RegCloseKey(hkey);
+
+    lstrcpyA(substr, "SOFTWARE\\Classes\\Installer\\Products\\7D2F387510109040002000060BECB6AB");
+    RegCreateKeyA(HKEY_LOCAL_MACHINE, substr, &hkey);
+}
+
+static void delete_component_path(LPCSTR guid)
+{
+    WCHAR guidW[MAX_PATH];
+    WCHAR squashedW[MAX_PATH];
+    WCHAR substrW[MAX_PATH];
+    CHAR squashed[MAX_PATH];
+    CHAR substr[MAX_PATH];
+
+    MultiByteToWideChar(CP_ACP, 0, guid, -1, guidW, MAX_PATH);
+    squash_guid(guidW, squashedW);
+    WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
+
+    lstrcpyA(substr, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                    "Installer\\UserData\\S-1-5-18\\Components\\");
+    lstrcatA(substr, squashed);
+
+    MultiByteToWideChar(CP_ACP, 0, substr, -1, substrW, MAX_PATH);
+    package_RegDeleteTreeW(HKEY_LOCAL_MACHINE, substrW);
+
+    lstrcpyA(substr, "SOFTWARE\\Classes\\Installer\\Products\\7D2F387510109040002000060BECB6AB");
+    MultiByteToWideChar(CP_ACP, 0, substr, -1, substrW, MAX_PATH);
+    package_RegDeleteTreeW(HKEY_LOCAL_MACHINE, substrW);
+}
+
+static void test_complocator(void)
+{
+    MSIHANDLE hdb, hpkg;
+    UINT r;
+    CHAR prop[MAX_PATH];
+    CHAR expected[MAX_PATH];
+    DWORD size = MAX_PATH;
+
+    hdb = create_package_db();
+    ok(hdb, "failed to create package database\n");
+
+    r = create_appsearch_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'ABELISAURUS', 'abelisaurus'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'BACTROSAURUS', 'bactrosaurus'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'CAMELOTIA', 'camelotia'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'DICLONIUS', 'diclonius'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'ECHINODON', 'echinodon'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'FALCARIUS', 'falcarius'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'GALLIMIMUS', 'gallimimus'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'HAGRYPHUS', 'hagryphus'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'IGUANODON', 'iguanodon'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'JOBARIA', 'jobaria'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'KAKURU', 'kakuru'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'LABOCANIA', 'labocania'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'MEGARAPTOR', 'megaraptor'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'NEOSODON', 'neosodon'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'OLOROTITAN', 'olorotitan'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'PANTYDRACO', 'pantydraco'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_complocator_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'abelisaurus', '{E3619EED-305A-418C-B9C7-F7D7377F0934}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'bactrosaurus', '{D56B688D-542F-42Ef-90FD-B6DA76EE8119}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'camelotia', '{8211BE36-2466-47E3-AFB7-6AC72E51AED2}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'diclonius', '{5C767B20-A33C-45A4-B80B-555E512F01AE}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'echinodon', '{A19E16C5-C75D-4699-8111-C4338C40C3CB}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'falcarius', '{17762FA1-A7AE-4CC6-8827-62873C35361D}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'gallimimus', '{75EBF568-C959-41E0-A99E-9050638CF5FB}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'hagrphus', '{D4969B72-17D9-4AB6-BE49-78F2FEE857AC}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'iguanodon', '{8E0DA02E-F6A7-4A8F-B25D-6F564C492308}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'jobaria', '{243C22B1-8C51-4151-B9D1-1AE5265E079E}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'kakuru', '{5D0F03BA-50BC-44F2-ABB1-72C972F4E514}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'labocania', '{C7DDB60C-7828-4046-A6F8-699D5E92F1ED}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'megaraptor', '{8B1034B7-BD5E-41ac-B52C-0105D3DFD74D}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'neosodon', '{0B499649-197A-48EF-93D2-AF1C17ED6E90}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'olorotitan', '{54E9E91F-AED2-46D5-A25A-7E50AFA24513}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_complocator_entry(hdb, "'pantydraco', '{2A989951-5565-4FA7-93A7-E800A3E67D71}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_signature_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'abelisaurus', 'abelisaurus', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'bactrosaurus', 'bactrosaurus', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'camelotia', 'camelotia', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'diclonius', 'diclonius', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'iguanodon', 'iguanodon', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'jobaria', 'jobaria', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'kakuru', 'kakuru', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'labocania', 'labocania', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    hpkg = package_from_db(hdb);
+    ok(hpkg, "failed to create package\n");
+
+    MsiCloseHandle(hdb);
+
+    create_test_file("abelisaurus");
+    create_test_file("bactrosaurus");
+    create_test_file("camelotia");
+    create_test_file("diclonius");
+    create_test_file("echinodon");
+    create_test_file("falcarius");
+    create_test_file("gallimimus");
+    create_test_file("hagryphus");
+    CreateDirectoryA("iguanodon", NULL);
+    CreateDirectoryA("jobaria", NULL);
+    CreateDirectoryA("kakuru", NULL);
+    CreateDirectoryA("labocania", NULL);
+    CreateDirectoryA("megaraptor", NULL);
+    CreateDirectoryA("neosodon", NULL);
+    CreateDirectoryA("olorotitan", NULL);
+    CreateDirectoryA("pantydraco", NULL);
+
+    set_component_path("abelisaurus", "{E3619EED-305A-418C-B9C7-F7D7377F0934}");
+    set_component_path("bactrosaurus", "{D56B688D-542F-42Ef-90FD-B6DA76EE8119}");
+    set_component_path("echinodon", "{A19E16C5-C75D-4699-8111-C4338C40C3CB}");
+    set_component_path("falcarius", "{17762FA1-A7AE-4CC6-8827-62873C35361D}");
+    set_component_path("iguanodon", "{8E0DA02E-F6A7-4A8F-B25D-6F564C492308}");
+    set_component_path("jobaria", "{243C22B1-8C51-4151-B9D1-1AE5265E079E}");
+    set_component_path("megaraptor", "{8B1034B7-BD5E-41ac-B52C-0105D3DFD74D}");
+    set_component_path("neosodon", "{0B499649-197A-48EF-93D2-AF1C17ED6E90}");
+
+    r = MsiDoAction(hpkg, "AppSearch");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "ABELISAURUS", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    lstrcpyA(expected, CURR_DIR);
+    lstrcatA(expected, "\\abelisaurus");
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "BACTROSAURUS", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "CAMELOTIA", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "DICLONIUS", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "ECHINODON", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    lstrcpyA(expected, CURR_DIR);
+    lstrcatA(expected, "\\");
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "FALCARIUS", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "GALLIMIMUS", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "HAGRYPHUS", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "IGUANODON", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "JOBARIA", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "KAKURU", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "LABOCANIA", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "MEGARAPTOR", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    lstrcpyA(expected, CURR_DIR);
+    lstrcatA(expected, "\\");
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "NEOSODON", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    lstrcpyA(expected, CURR_DIR);
+    lstrcatA(expected, "\\neosodon\\");
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "OLOROTITAN", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "PANTYDRACO", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected , got %s\n", prop);
+
+    MsiCloseHandle(hpkg);
+    DeleteFileA("abelisaurus");
+    DeleteFileA("bactrosaurus");
+    DeleteFileA("camelotia");
+    DeleteFileA("diclonius");
+    DeleteFileA("echinodon");
+    DeleteFileA("falcarius");
+    DeleteFileA("gallimimus");
+    DeleteFileA("hagryphus");
+    RemoveDirectoryA("iguanodon");
+    RemoveDirectoryA("jobaria");
+    RemoveDirectoryA("kakuru");
+    RemoveDirectoryA("labocania");
+    RemoveDirectoryA("megaraptor");
+    RemoveDirectoryA("neosodon");
+    RemoveDirectoryA("olorotitan");
+    RemoveDirectoryA("pantydraco");
+    delete_component_path("{E3619EED-305A-418C-B9C7-F7D7377F0934}");
+    delete_component_path("{D56B688D-542F-42Ef-90FD-B6DA76EE8119}");
+    delete_component_path("{A19E16C5-C75D-4699-8111-C4338C40C3CB}");
+    delete_component_path("{17762FA1-A7AE-4CC6-8827-62873C35361D}");
+    delete_component_path("{8E0DA02E-F6A7-4A8F-B25D-6F564C492308}");
+    delete_component_path("{243C22B1-8C51-4151-B9D1-1AE5265E079E}");
+    delete_component_path("{8B1034B7-BD5E-41ac-B52C-0105D3DFD74D}");
+    delete_component_path("{0B499649-197A-48EF-93D2-AF1C17ED6E90}");
+    DeleteFileA(msifile);
+}
+
 START_TEST(package)
 {
+    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+
     test_createpackage();
     test_getsourcepath_bad();
     test_getsourcepath();
@@ -4897,4 +5382,5 @@ START_TEST(package)
     test_prop_path();
     test_launchconditions();
     test_ccpsearch();
+    test_complocator();
 }
