@@ -1541,6 +1541,8 @@ ULONG RpcAssoc_Release(RpcAssoc *assoc)
     HeapFree(GetProcessHeap(), 0, assoc->NetworkAddr);
     HeapFree(GetProcessHeap(), 0, assoc->Protseq);
 
+    DeleteCriticalSection(&assoc->cs);
+
     HeapFree(GetProcessHeap(), 0, assoc);
   }
 
