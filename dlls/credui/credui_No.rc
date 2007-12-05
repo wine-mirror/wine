@@ -38,3 +38,13 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,97,128,50,14
     PUSHBUTTON      "Avbryt",IDCANCEL,156,128,50,14
 END
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_TITLEFORMAT     "Koble til %s"
+    IDS_MESSAGEFORMAT   "Kobler til %s"
+    IDS_INCORRECTPASSWORDTITLE  "Klarte ikke logge på"
+    IDS_INCORRECTPASSWORD       "Sørg for at du oppga riktig\nbrukernavn og passord."
+    IDS_CAPSLOCKONTITLE "Caps Lock er på"
+    IDS_CAPSLOCKON      "Å ha Caps Lock på kan føre til at du skriver inn passordet på feil måte.\n\nTrykk på Caps Lock-knappen på tastaturet for å slå av Caps Lock før du\nskriver inn passordet på nytt."
+}
