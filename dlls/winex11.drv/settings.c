@@ -197,6 +197,8 @@ static BOOL read_registry_settings(DEVMODEW *dm)
     DWORD type, size;
     BOOL ret = TRUE;
 
+    dm->dmFields = 0;
+
     if (!get_display_device_reg_key(wine_x11_reg_key, sizeof(wine_x11_reg_key)))
         return FALSE;
 
@@ -210,10 +212,15 @@ static BOOL read_registry_settings(DEVMODEW *dm)
         ret = FALSE
 
     query_value("DefaultSettings.BitsPerPel", &dm->dmBitsPerPel);
+    dm->dmFields |= DM_BITSPERPEL;
     query_value("DefaultSettings.XResolution", &dm->dmPelsWidth);
+    dm->dmFields |= DM_PELSWIDTH;
     query_value("DefaultSettings.YResolution", &dm->dmPelsHeight);
+    dm->dmFields |= DM_PELSHEIGHT;
     query_value("DefaultSettings.VRefresh", &dm->dmDisplayFrequency);
+    dm->dmFields |= DM_DISPLAYFREQUENCY;
     query_value("DefaultSettings.Flags", &dm->u2.dmDisplayFlags);
+    dm->dmFields |= DM_DISPLAYFLAGS;
     query_value("DefaultSettings.XPanning", &dm->u1.s2.dmPosition.x);
     query_value("DefaultSettings.YPanning", &dm->u1.s2.dmPosition.y);
     query_value("DefaultSettings.Orientation", &dm->u1.s2.dmDisplayOrientation);
