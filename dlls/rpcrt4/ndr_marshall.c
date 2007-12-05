@@ -988,7 +988,7 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     if (!fMustAlloc && pSrcPointer)
     {
         FIXME("free object pointer %p\n", pSrcPointer);
-        pSrcPointer = NULL;
+        fMustAlloc = TRUE;
     }
     if (pointer_id)
       pointer_needs_unmarshaling = 1;
