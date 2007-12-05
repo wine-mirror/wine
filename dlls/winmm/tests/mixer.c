@@ -195,12 +195,11 @@ static void mixer_test_controlA(HMIXER mix, LPMIXERCONTROLA control)
         ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
            "MMSYSERR_NOERROR expected, got %s\n",
            mmsys_error(rc));
-        if (rc==MMSYSERR_NOERROR) {
+        if (rc==MMSYSERR_NOERROR && winetest_interactive) {
             MIXERCONTROLDETAILS new_details;
             MIXERCONTROLDETAILS_UNSIGNED new_value;
 
-            if (winetest_interactive)
-                trace("            Value=%d\n",value.dwValue);
+            trace("            Value=%d\n",value.dwValue);
 
             if (value.dwValue + control->Metrics.cSteps < S1(control->Bounds).dwMaximum)
                 new_value.dwValue = value.dwValue + control->Metrics.cSteps;
@@ -275,12 +274,11 @@ static void mixer_test_controlA(HMIXER mix, LPMIXERCONTROLA control)
         ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
            "MMSYSERR_NOERROR expected, got %s\n",
            mmsys_error(rc));
-        if (rc==MMSYSERR_NOERROR) {
+        if (rc==MMSYSERR_NOERROR && winetest_interactive) {
             MIXERCONTROLDETAILS new_details;
             MIXERCONTROLDETAILS_BOOLEAN new_value;
 
-            if (winetest_interactive)
-                trace("            Value=%d\n",value.fValue);
+            trace("            Value=%d\n",value.fValue);
 
             if (value.fValue == FALSE)
                 new_value.fValue = TRUE;
@@ -584,12 +582,11 @@ static void mixer_test_controlW(HMIXER mix, LPMIXERCONTROLW control)
         ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
            "MMSYSERR_NOERROR expected, got %s\n",
            mmsys_error(rc));
-        if (rc==MMSYSERR_NOERROR) {
+        if (rc==MMSYSERR_NOERROR && winetest_interactive) {
             MIXERCONTROLDETAILS new_details;
             MIXERCONTROLDETAILS_UNSIGNED new_value;
 
-            if (winetest_interactive)
-                trace("            Value=%d\n",value.dwValue);
+            trace("            Value=%d\n",value.dwValue);
 
             if (value.dwValue + control->Metrics.cSteps < S1(control->Bounds).dwMaximum)
                 new_value.dwValue = value.dwValue + control->Metrics.cSteps;
@@ -664,12 +661,11 @@ static void mixer_test_controlW(HMIXER mix, LPMIXERCONTROLW control)
         ok(rc==MMSYSERR_NOERROR,"mixerGetControlDetails(MIXER_GETCONTROLDETAILSF_VALUE): "
            "MMSYSERR_NOERROR expected, got %s\n",
            mmsys_error(rc));
-        if (rc==MMSYSERR_NOERROR) {
+        if (rc==MMSYSERR_NOERROR && winetest_interactive) {
             MIXERCONTROLDETAILS new_details;
             MIXERCONTROLDETAILS_BOOLEAN new_value;
 
-            if (winetest_interactive)
-                trace("            Value=%d\n",value.fValue);
+            trace("            Value=%d\n",value.fValue);
 
             if (value.fValue == FALSE)
                 new_value.fValue = TRUE;
