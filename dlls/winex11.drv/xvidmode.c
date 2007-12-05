@@ -197,10 +197,6 @@ void X11DRV_XF86VM_Init(void)
   dd_mode_count = X11DRV_Settings_GetModeCount();
 
   TRACE("Available DD modes: count=%d\n", dd_mode_count);
-
-  /* the first mode in the list seems to be the default */
-  X11DRV_Settings_SetDefaultMode(0);
-  
   TRACE("Enabling XVidMode\n");
 }
 

@@ -156,7 +156,6 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
     make_modes();
     X11DRV_Settings_AddDepthModes();
     dd_mode_count = X11DRV_Settings_GetModeCount();
-    X11DRV_Settings_SetDefaultMode(0);
 }
 
 

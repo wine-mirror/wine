@@ -739,7 +739,6 @@ extern int X11DRV_Settings_CreateDriver(LPDDHALINFO info);
 extern LPDDHALMODEINFO X11DRV_Settings_CreateModes(unsigned int max_modes, int reserve_depths);
 unsigned int X11DRV_Settings_GetModeCount(void);
 void X11DRV_Settings_Init(void);
-extern void X11DRV_Settings_SetDefaultMode(int mode);
 LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
                                             int (*pNewGCM)(void),
                                             LONG (*pNewSCM)(int),

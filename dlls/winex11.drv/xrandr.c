@@ -304,7 +304,6 @@ void X11DRV_XRandR_Init(void)
     make_modes();
     X11DRV_Settings_AddDepthModes();
     dd_mode_count = X11DRV_Settings_GetModeCount();
-    X11DRV_Settings_SetDefaultMode(0);
 
     TRACE("Available DD modes: count=%d\n", dd_mode_count);
     TRACE("Enabling XRandR\n");
