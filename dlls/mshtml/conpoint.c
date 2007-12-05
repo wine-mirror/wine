@@ -36,6 +36,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define CONPOINT(x) ((IConnectionPoint*) &(x)->lpConnectionPointVtbl);
 
+static const char *debugstr_cp_guid(REFIID riid)
+{
+#define X(x) \
+    if(IsEqualGUID(riid, &x)) \
+        return #x
+
+    X(IID_IPropertyNotifySink);
+    X(DIID_HTMLDocumentEvents);
+    X(DIID_HTMLDocumentEvents2);
+    X(DIID_HTMLTableEvents);
+    X(DIID_HTMLTextContainerEvents);
+
+#undef X
+
+    return debugstr_guid(riid);
+}
+
 void call_property_onchanged(ConnectionPoint *This, DISPID dispid)
 {
     DWORD i;
@@ -244,7 +261,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
     ConnectionPointContainer *This = CONPTCONT_THIS(iface);
     ConnectionPoint *iter;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppCP);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_cp_guid(riid), ppCP);
 
     *ppCP = NULL;
 
@@ -258,7 +275,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
         return S_OK;
     }
 
-    FIXME("unsupported riid %s\n", debugstr_guid(riid));
+    FIXME("unsupported riid %s\n", debugstr_cp_guid(riid));
     return CONNECT_E_NOCONNECTION;
 }
 
