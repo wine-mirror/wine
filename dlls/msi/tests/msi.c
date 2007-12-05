@@ -1044,12 +1044,9 @@ static void test_MsiGetComponentPath(void)
     /* product value exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Products\\");
@@ -1066,24 +1063,18 @@ static void test_MsiGetComponentPath(void)
     /* install properties key exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     RegDeleteValueA(compkey, prod_squashed);
     RegDeleteKeyA(compkey, "");
@@ -1114,12 +1105,9 @@ static void test_MsiGetComponentPath(void)
     /* product value exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Products\\");
@@ -1136,24 +1124,18 @@ static void test_MsiGetComponentPath(void)
     /* install properties key exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     RegDeleteValueA(compkey, prod_squashed);
     RegDeleteKeyA(compkey, "");
@@ -1199,12 +1181,9 @@ static void test_MsiGetComponentPath(void)
     /* product value exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Products\\");
@@ -1221,24 +1200,18 @@ static void test_MsiGetComponentPath(void)
     /* install properties key exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     RegDeleteValueA(compkey, prod_squashed);
     RegDeleteKeyA(prodkey, "");
@@ -1283,24 +1256,18 @@ static void test_MsiGetComponentPath(void)
     /* product value exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     RegDeleteValueA(compkey, prod_squashed);
     RegDeleteKeyA(prodkey, "");
@@ -1341,24 +1308,18 @@ static void test_MsiGetComponentPath(void)
     /* product value exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-        ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-        ok(size == 10, "Expected 10, got %d\n", size);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
 
     RegDeleteValueA(compkey, prod_squashed);
     RegDeleteKeyA(prodkey, "");
