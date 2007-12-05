@@ -1,7 +1,7 @@
 /*
- * WineBoot resources
+ * WineBoot Norwegian Bokmål resources
  *
- * Copyright (C) 2007 Robert Shearman for CodeWeavers
+ * Copyright (C) 2007 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,16 +19,17 @@
  *
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winnls.h"
-#include "winuser.h"
-#include "commctrl.h"
-#include "resource.h"
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-#include "wineboot_En.rc"
-#include "wineboot_Fr.rc"
-#include "wineboot_Ko.rc"
-#include "wineboot_No.rc"
-#include "wineboot_Sv.rc"
+IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Venter på program"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "Avbryt",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "Avslutt programmet",IDOK,51,49,71,15
+    LTEXT           "En simulert avlogging eller avslutting har startet, men dette programmet svarer ikke.",
+                    IDC_STATIC,7,7,172,19
+    LTEXT           "Hvis du avslutter programmet kan all ulagret data gå tapt.",
+                    IDC_STATIC,7,28,172,15
+END
