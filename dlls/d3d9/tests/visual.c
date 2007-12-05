@@ -277,6 +277,8 @@ static void clear_test(IDirect3DDevice9 *device)
     D3DRECT rect_negneg;
     DWORD color;
     D3DVIEWPORT9 old_vp, vp;
+    RECT scissor;
+    DWORD oldColorWrite;
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
@@ -379,6 +381,89 @@ static void clear_test(IDirect3DDevice9 *device)
     ok(color == 0x00ffffff, "(478,362) has color %08x\n", color);
     color = getPixelColor(device, 482, 362);
     ok(color == 0x00ffffff, "(482,362) has color %08x\n", color);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+    scissor.left = 160;
+    scissor.right = 480;
+    scissor.top = 120;
+    scissor.bottom = 360;
+    hr = IDirect3DDevice9_SetScissorRect(device, &scissor);
+    ok(hr == D3D_OK, "IDirect3DDevice_SetScissorRect failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SCISSORTESTENABLE, TRUE);
+    ok(hr == D3D_OK, "IDirect3DDevice_SetScissorRect failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Clear(device, 1, &rect[1], D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SCISSORTESTENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice_SetScissorRect failed with %s\n", DXGetErrorString9(hr));
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    color = getPixelColor(device, 158, 118);
+    ok(color == 0x00ffffff, "Pixel 158/118 has color %08x\n", color);
+    color = getPixelColor(device, 162, 118);
+    ok(color == 0x00ffffff, "Pixel 162/118 has color %08x\n", color);
+    color = getPixelColor(device, 158, 122);
+    ok(color == 0x00ffffff, "Pixel 158/122 has color %08x\n", color);
+    color = getPixelColor(device, 162, 122);
+    ok(color == 0x00ff0000, "Pixel 162/122 has color %08x\n", color);
+
+    color = getPixelColor(device, 158, 358);
+    ok(color == 0x00ffffff, "Pixel 158/358 has color %08x\n", color);
+    color = getPixelColor(device, 162, 358);
+    ok(color == 0x0000ff00, "Pixel 162/358 has color %08x\n", color);
+    color = getPixelColor(device, 158, 358);
+    ok(color == 0x00ffffff, "Pixel 158/358 has color %08x\n", color);
+    color = getPixelColor(device, 162, 362);
+    ok(color == 0x00ffffff, "Pixel 162/362 has color %08x\n", color);
+
+    color = getPixelColor(device, 478, 118);
+    ok(color == 0x00ffffff, "Pixel 158/118 has color %08x\n", color);
+    color = getPixelColor(device, 478, 122);
+    ok(color == 0x0000ff00, "Pixel 162/118 has color %08x\n", color);
+    color = getPixelColor(device, 482, 122);
+    ok(color == 0x00ffffff, "Pixel 158/122 has color %08x\n", color);
+    color = getPixelColor(device, 482, 358);
+    ok(color == 0x00ffffff, "Pixel 162/122 has color %08x\n", color);
+
+    color = getPixelColor(device, 478, 358);
+    ok(color == 0x0000ff00, "Pixel 478/358 has color %08x\n", color);
+    color = getPixelColor(device, 478, 362);
+    ok(color == 0x00ffffff, "Pixel 478/118 has color %08x\n", color);
+    color = getPixelColor(device, 482, 358);
+    ok(color == 0x00ffffff, "Pixel 482/122 has color %08x\n", color);
+    color = getPixelColor(device, 482, 362);
+    ok(color == 0x00ffffff, "Pixel 482/122 has color %08x\n", color);
+
+    color = getPixelColor(device, 318, 238);
+    ok(color == 0x00ff0000, "Pixel 318/238 has color %08x\n", color);
+    color = getPixelColor(device, 318, 242);
+    ok(color == 0x0000ff00, "Pixel 318/242 has color %08x\n", color);
+    color = getPixelColor(device, 322, 238);
+    ok(color == 0x0000ff00, "Pixel 322/238 has color %08x\n", color);
+    color = getPixelColor(device, 322, 242);
+    ok(color == 0x0000ff00, "Pixel 322/242 has color %08x\n", color);
+
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_COLORWRITEENABLE, &oldColorWrite);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, oldColorWrite);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %s\n", DXGetErrorString9(hr));
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    /* Colorwriteenable does not affect the clear */
+    color = getPixelColor(device, 320, 240);
+    ok(color == 0x00ffffff, "Color write protected clear returned color %08x\n", color);
 }
 
 typedef struct {

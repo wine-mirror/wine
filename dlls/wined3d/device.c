@@ -4816,6 +4816,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
                 IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
                 break;
             }
+            if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE] && (
+               This->stateBlock->scissorRect.left > 0 || This->stateBlock->scissorRect.top > 0 ||
+               This->stateBlock->scissorRect.right < target->currentDesc.Width ||
+               This->stateBlock->scissorRect.bottom < target->currentDesc.Height)) {
+                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
+                break;
+            }
             if(Count > 0 && pRects && (
                pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
                pRects[0].x2 < target->currentDesc.Width ||
@@ -4868,35 +4875,32 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         glMask = glMask | GL_COLOR_BUFFER_BIT;
     }
 
+    vp_rect.left = vp->X;
+    vp_rect.top = vp->Y;
+    vp_rect.right = vp->X + vp->Width;
+    vp_rect.bottom = vp->Y + vp->Height;
     if (!(Count > 0 && pRects)) {
-        if (This->render_offscreen) {
-            glScissor(This->stateBlock->viewport.X,
-                       This->stateBlock->viewport.Y,
-                       This->stateBlock->viewport.Width,
-                       This->stateBlock->viewport.Height);
+        if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE]) {
+            IntersectRect(&vp_rect, &vp_rect, &This->stateBlock->scissorRect);
+        }
+        if(This->render_offscreen) {
+            glScissor(vp_rect.left, vp_rect.top,
+                        vp_rect.right - vp_rect.left, vp_rect.bottom - vp_rect.top);
         } else {
-            glScissor(This->stateBlock->viewport.X,
-                      (drawable_height -
-                      (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)),
-                       This->stateBlock->viewport.Width,
-                       This->stateBlock->viewport.Height);
+            glScissor(vp_rect.left, drawable_height - vp_rect.bottom,
+                        vp_rect.right - vp_rect.left, vp_rect.bottom - vp_rect.top);
         }
         checkGLcall("glScissor");
         glClear(glMask);
         checkGLcall("glClear");
     } else {
-        /* The viewport cap still applies, we have to intersect each clear rect with the viewport
-         * range because glClear ignores the viewport(and the viewport isn't even applied in this state)
-         */
-        vp_rect.left = vp->X;
-        vp_rect.top = vp->Y;
-        vp_rect.right = vp->X + vp->Width;
-        vp_rect.bottom = vp->Y + vp->Height;
-
         /* Now process each rect in turn */
         for (i = 0; i < Count; i++) {
             /* Note gl uses lower left, width/height */
             IntersectRect((RECT *) &curRect, &vp_rect, (RECT *) &pRects[i]);
+            if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE]) {
+                IntersectRect((RECT *) &curRect, (RECT *) &curRect, &This->stateBlock->scissorRect);
+            }
             TRACE("(%p) Rect=(%d,%d)->(%d,%d) glRect=(%d,%d), len=%d, hei=%d\n", This,
                   pRects[i].x1, pRects[i].y1, pRects[i].x2, pRects[i].y2,
                   curRect.x1, (target->currentDesc.Height - curRect.y2),
