@@ -296,6 +296,9 @@ static inline void find_swizzled_attribs(IWineD3DVertexDeclaration *declaration,
 
     for(i = 0; i < decl->num_swizzled_attribs; i++) {
         for(j = 0; j < MAX_ATTRIBS; j++) {
+
+            if(!This->baseShader.reg_maps.attributes[j]) continue;
+
             usage_token = This->semantics_in[j].usage;
             usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
             usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
@@ -679,7 +682,7 @@ static inline BOOL swizzled_attribs_differ(IWineD3DVertexShaderImpl *This, IWine
 
     for(i = 0; i < vdecl->declarationWNumElements; i++) {
         for(j = 0; j < MAX_ATTRIBS; j++) {
-            if(!This->baseShader.reg_maps.attributes) continue;
+            if(!This->baseShader.reg_maps.attributes[j]) continue;
 
             usage_token = This->semantics_in[j].usage;
             usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
