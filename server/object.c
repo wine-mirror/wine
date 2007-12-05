@@ -318,6 +318,24 @@ struct object *find_object( const struct namespace *namespace, const struct unic
     return NULL;
 }
 
+/* find an object by its index; the refcount is incremented */
+struct object *find_object_index( const struct namespace *namespace, unsigned int index )
+{
+    unsigned int i;
+
+    /* FIXME: not efficient at all */
+    for (i = 0; i < namespace->hash_size; i++)
+    {
+        const struct object_name *ptr;
+        LIST_FOR_EACH_ENTRY( ptr, &namespace->names[i], const struct object_name, entry )
+        {
+            if (!index--) return grab_object( ptr->obj );
+        }
+    }
+    set_error( STATUS_NO_MORE_ENTRIES );
+    return NULL;
+}
+
 /* allocate a namespace */
 struct namespace *create_namespace( unsigned int hash_size )
 {

@@ -406,26 +406,62 @@ NTSTATUS WINAPI NtCreateDirectoryObject(PHANDLE DirectoryHandle, ACCESS_MASK Des
  * Read information from a namespace directory.
  * 
  * PARAMS
- *  DirectoryHandle   [I]   Handle to a directory object
- *  Buffer            [O]   Buffer to hold the read data
- *  BufferLength      [I]   Size of the buffer in bytes
- *  ReturnSingleEntry [I]   If TRUE, return a single entry, if FALSE, return as many as fit in the buffer
- *  RestartScan       [I]   If TRUE, start scanning from the start, if FALSE, scan from Context
- *  Context           [I/O] Indicates what point of the directory the scan is at
- *  ReturnLength      [O]   Caller supplied storage for the number of bytes written (or NULL)
+ *  handle        [I]   Handle to a directory object
+ *  buffer        [O]   Buffer to hold the read data
+ *  size          [I]   Size of the buffer in bytes
+ *  single_entry  [I]   If TRUE, return a single entry, if FALSE, return as many as fit in the buffer
+ *  restart       [I]   If TRUE, start scanning from the start, if FALSE, scan from Context
+ *  context       [I/O] Indicates what point of the directory the scan is at
+ *  ret_size      [O]   Caller supplied storage for the number of bytes written (or NULL)
  *
  * RETURNS
  *  Success: ERROR_SUCCESS.
  *  Failure: An NTSTATUS error code.
  */
-NTSTATUS WINAPI NtQueryDirectoryObject(IN HANDLE DirectoryHandle, OUT PDIRECTORY_BASIC_INFORMATION Buffer,
-                                       IN ULONG BufferLength, IN BOOLEAN ReturnSingleEntry, IN BOOLEAN RestartScan,
-                                       IN OUT PULONG Context, OUT PULONG ReturnLength OPTIONAL)
+NTSTATUS WINAPI NtQueryDirectoryObject(HANDLE handle, PDIRECTORY_BASIC_INFORMATION buffer,
+                                       ULONG size, BOOLEAN single_entry, BOOLEAN restart,
+                                       PULONG context, PULONG ret_size)
 {
-    FIXME("(%p,%p,0x%08x,0x%08x,0x%08x,%p,%p), stub\n", DirectoryHandle, Buffer, BufferLength, ReturnSingleEntry,
-          RestartScan, Context, ReturnLength);
+    NTSTATUS ret;
 
-    return STATUS_NOT_IMPLEMENTED;
+    if (restart) *context = 0;
+
+    if (single_entry)
+    {
+        if (size <= sizeof(*buffer) + 2*sizeof(WCHAR)) return STATUS_BUFFER_OVERFLOW;
+
+        SERVER_START_REQ( get_directory_entry )
+        {
+            req->handle = handle;
+            req->index = *context;
+            wine_server_set_reply( req, buffer + 1, size - sizeof(*buffer) - 2*sizeof(WCHAR) );
+            if (!(ret = wine_server_call( req )))
+            {
+                buffer->ObjectName.Buffer = (WCHAR *)(buffer + 1);
+                buffer->ObjectName.Length = reply->name_len;
+                buffer->ObjectName.MaximumLength = reply->name_len + sizeof(WCHAR);
+                buffer->ObjectTypeName.Buffer = (WCHAR *)(buffer + 1) + reply->name_len/sizeof(WCHAR) + 1;
+                buffer->ObjectTypeName.Length = wine_server_reply_size( reply ) - reply->name_len;
+                buffer->ObjectTypeName.MaximumLength = buffer->ObjectTypeName.Length + sizeof(WCHAR);
+                /* make room for the terminating null */
+                memmove( buffer->ObjectTypeName.Buffer, buffer->ObjectTypeName.Buffer - 1,
+                         buffer->ObjectTypeName.Length );
+                buffer->ObjectName.Buffer[buffer->ObjectName.Length/sizeof(WCHAR)] = 0;
+                buffer->ObjectTypeName.Buffer[buffer->ObjectTypeName.Length/sizeof(WCHAR)] = 0;
+                (*context)++;
+            }
+        }
+        SERVER_END_REQ;
+        if (ret_size)
+            *ret_size = buffer->ObjectName.MaximumLength + buffer->ObjectTypeName.MaximumLength + sizeof(*buffer);
+    }
+    else
+    {
+        FIXME("multiple entries not implemented\n");
+        ret = STATUS_NOT_IMPLEMENTED;
+    }
+
+    return ret;
 }
 
 /*

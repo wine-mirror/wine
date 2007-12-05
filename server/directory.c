@@ -396,3 +396,38 @@ DECL_HANDLER(open_directory)
 
     if (root) release_object( root );
 }
+
+/* get a directory entry by index */
+DECL_HANDLER(get_directory_entry)
+{
+    static const WCHAR objectW[] = {'O','b','j','e','c','t',0 };
+    static const WCHAR dirW[] = {'D','i','r','e','c','t','o','r','y',0 };
+
+    struct directory *dir = get_directory_obj( current->process, req->handle, DIRECTORY_QUERY );
+    if (dir)
+    {
+        struct object *obj = find_object_index( dir->entries, req->index );
+        if (obj)
+        {
+            size_t name_len, type_len;
+            const WCHAR *name = get_object_name( obj, &name_len );
+            const WCHAR *type = obj->ops == &directory_ops ? dirW : objectW;
+
+            type_len = strlenW(type) * sizeof(WCHAR);
+            if (name_len + type_len <= get_reply_max_size())
+            {
+                void *ptr = set_reply_data_size( name_len + type_len );
+                if (ptr)
+                {
+                    reply->name_len = name_len;
+                    memcpy( ptr, name, name_len );
+                    memcpy( (char *)ptr + name_len, type, type_len );
+                }
+            }
+            else set_error( STATUS_BUFFER_OVERFLOW );
+
+            release_object( obj );
+        }
+        release_object( dir );
+    }
+}

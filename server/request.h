@@ -321,6 +321,7 @@ DECL_HANDLER(create_mailslot);
 DECL_HANDLER(set_mailslot_info);
 DECL_HANDLER(create_directory);
 DECL_HANDLER(open_directory);
+DECL_HANDLER(get_directory_entry);
 DECL_HANDLER(create_symlink);
 DECL_HANDLER(open_symlink);
 DECL_HANDLER(query_symlink);
@@ -557,6 +558,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_mailslot_info,
     (req_handler)req_create_directory,
     (req_handler)req_open_directory,
+    (req_handler)req_get_directory_entry,
     (req_handler)req_create_symlink,
     (req_handler)req_open_symlink,
     (req_handler)req_query_symlink,

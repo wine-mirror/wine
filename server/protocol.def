@@ -2851,6 +2851,17 @@ enum message_type
 @END
 
 
+/* Get a directory entry by index */
+@REQ(get_directory_entry)
+    obj_handle_t   handle;             /* handle to the directory */
+    unsigned int   index;              /* entry index */
+@REPLY
+    size_t         name_len;           /* length of the entry name in bytes */
+    VARARG(name,unicode_str,name_len); /* entry name */
+    VARARG(type,unicode_str);          /* entry type */
+@END
+
+
 /* Create a symbolic link object */
 @REQ(create_symlink)
     unsigned int   access;        /* access flags */

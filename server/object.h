@@ -126,6 +126,7 @@ extern struct object *grab_object( void *obj );
 extern void release_object( void *obj );
 extern struct object *find_object( const struct namespace *namespace, const struct unicode_str *name,
                                    unsigned int attributes );
+extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_signal( struct object *obj, unsigned int access );
