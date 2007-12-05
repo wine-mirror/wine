@@ -1725,7 +1725,7 @@ ULONG WINAPI D3D7CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface) {
     IUnknown* surfaceParent;
     TRACE("(%p) call back\n", pSurface);
 
-    IWineD3DSurface_GetParent(pSurface, (IUnknown **) &surfaceParent);
+    IWineD3DSurface_GetParent(pSurface, &surfaceParent);
     IUnknown_Release(surfaceParent);
     return IUnknown_Release(surfaceParent);
 }

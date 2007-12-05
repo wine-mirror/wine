@@ -4179,7 +4179,7 @@ IDirect3DDeviceImpl_7_GetTexture(IDirect3DDevice7 *iface,
     }
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, Stage, (IWineD3DBaseTexture **) &Surf);
+    hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, Stage, &Surf);
     if( (hr != D3D_OK) || (!Surf) ) 
     {
         *Texture = NULL;
