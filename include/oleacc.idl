@@ -1,0 +1,36 @@
+/*
+ * Copyright (C) 2005 Dmitry Timoshkov
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+
+cpp_quote("LRESULT WINAPI LresultFromObject(REFIID,WPARAM,LPUNKNOWN);")
+cpp_quote("HRESULT WINAPI ObjectFromLresult(LRESULT,REFIID,WPARAM,void **);")
+cpp_quote("HRESULT WINAPI WindowFromAccessibleObject(IAccessible *,HWND *);")
+cpp_quote("HRESULT WINAPI AccessibleObjectFromWindow(HWND,DWORD,REFIID,void **);")
+cpp_quote("HRESULT WINAPI AccessibleObjectFromEvent(HWND,DWORD,DWORD,IAccessible **,VARIANT *);")
+cpp_quote("HRESULT WINAPI AccessibleObjectFromPoint(POINT,IAccessible **,VARIANT *);")
+cpp_quote("HRESULT WINAPI AccessibleChildren(IAccessible *,LONG,LONG,VARIANT *,LONG *);")
+
+cpp_quote("void WINAPI GetOleaccVersionInfo(DWORD *,DWORD *);")
+cpp_quote("HRESULT WINAPI CreateStdAccessibleObject(HWND,LONG,REFIID,void **);")
+cpp_quote("HRESULT WINAPI CreateStdAccessibleProxyA(HWND,LPCSTR,LONG,REFIID,void **);")
+cpp_quote("HRESULT WINAPI CreateStdAccessibleProxyW(HWND,LPCWSTR,LONG,REFIID,void **);")
+cpp_quote("#define CreateStdAccessibleProxy WINELIB_NAME_AW(CreateStdAccessibleProxy)")
+
+cpp_quote("DEFINE_GUID(CLSID_AccPropServices, 0xB5F8350B,0x0548,0x48B1,0xA6,0xEE,0x88,0xBD,0x00,0xB4,0xA5,0xE7);")
+cpp_quote("DEFINE_GUID(IIS_IsOleaccProxy, 0x902697FA,0x80E4,0x4560,0x80,0x2A,0xA1,0x3F,0x22,0xA6,0x47,0x09);")

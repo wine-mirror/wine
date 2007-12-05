@@ -44,6 +44,7 @@ IDL_H_SRCS = \
 	objsafe.idl \
 	ocidl.idl \
 	ocmm.idl \
+	oleacc.idl \
 	oledb.idl \
 	oleidl.idl \
 	optary.idl \

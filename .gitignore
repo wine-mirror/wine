@@ -602,6 +602,7 @@ include/objidl.h
 include/objsafe.h
 include/ocidl.h
 include/ocmm.h
+include/oleacc.h
 include/oledb.h
 include/oleidl.h
 include/optary.h
