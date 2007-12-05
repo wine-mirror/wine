@@ -288,7 +288,6 @@ static void test_MRUListA(void)
         iRet = pEnumMRUList(hMRU, 0, NULL, 0);
         ok(iRet == 3, "EnumMRUList expected %d, got %d\n", LIST_SIZE, iRet);
 
-        todo_wine{
         /* negative item pos = get list size */
         iRet = pEnumMRUList(hMRU, -1, NULL, 0);
         ok(iRet == 3, "EnumMRUList expected %d, got %d\n", LIST_SIZE, iRet);
@@ -304,7 +303,6 @@ static void test_MRUListA(void)
         /* negative item pos = get list size */
         iRet = pEnumMRUList(hMRU, -5, buffer, 255);
         ok(iRet == 3, "EnumMRUList expected %d, got %d\n", LIST_SIZE, iRet);
-        }
 
         /* check entry 0 */
         buffer[0] = 0;
