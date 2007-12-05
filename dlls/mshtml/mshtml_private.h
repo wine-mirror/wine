@@ -541,22 +541,22 @@ extern LONG module_ref;
 
 /* memory allocation functions */
 
-static inline void *mshtml_alloc(size_t len)
+static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
 }
 
-static inline void *mshtml_alloc_zero(size_t len)
+static inline void *heap_alloc_zero(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
 }
 
-static inline void *mshtml_realloc(void *mem, size_t len)
+static inline void *heap_realloc(void *mem, size_t len)
 {
     return HeapReAlloc(GetProcessHeap(), 0, mem, len);
 }
 
-static inline BOOL mshtml_free(void *mem)
+static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
 }

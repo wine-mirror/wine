@@ -82,7 +82,7 @@ void remove_doc_tasks(const HTMLDocument *doc)
         while(iter->next && iter->next->doc == doc) {
             tmp = iter->next;
             iter->next = tmp->next;
-            mshtml_free(tmp);
+            heap_free(tmp);
         }
 
         if(!iter->next)
@@ -248,7 +248,7 @@ static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 break;
 
             process_task(task);
-            mshtml_free(task);
+            heap_free(task);
         }
 
         return 0;
@@ -305,7 +305,7 @@ thread_data_t *get_thread_data(BOOL create)
 
     thread_data = TlsGetValue(mshtml_tls);
     if(!thread_data && create) {
-        thread_data = mshtml_alloc_zero(sizeof(thread_data_t));
+        thread_data = heap_alloc_zero(sizeof(thread_data_t));
         TlsSetValue(mshtml_tls, thread_data);
     }
 

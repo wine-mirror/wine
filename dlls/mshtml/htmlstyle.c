@@ -193,7 +193,7 @@ static ULONG WINAPI HTMLStyle_Release(IHTMLStyle *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
-        mshtml_free(This);
+        heap_free(This);
 
     return ref;
 }
@@ -1736,7 +1736,7 @@ static const IHTMLStyleVtbl HTMLStyleVtbl = {
 
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle)
 {
-    HTMLStyle *ret = mshtml_alloc(sizeof(HTMLStyle));
+    HTMLStyle *ret = heap_alloc(sizeof(HTMLStyle));
 
     ret->lpHTMLStyleVtbl = &HTMLStyleVtbl;
     ret->ref = 1;

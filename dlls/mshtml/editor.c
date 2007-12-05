@@ -569,12 +569,12 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         TRACE("%s\n", debugstr_w(V_BSTR(in)));
 
         len = WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, NULL, 0, NULL, NULL);
-        stra = mshtml_alloc(len);
+        stra = heap_alloc(len);
         WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, stra, -1, NULL, NULL);
 
         set_ns_fontname(This->nscontainer, stra);
 
-        mshtml_free(stra);
+        heap_free(stra);
 
         update_doc(This, UPDATE_UI);
     }
@@ -599,12 +599,12 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         nsICommandParams_Release(nsparam);
 
         len = MultiByteToWideChar(CP_ACP, 0, stra, -1, NULL, 0);
-        strw = mshtml_alloc(len*sizeof(WCHAR));
+        strw = heap_alloc(len*sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, stra, -1, strw, -1);
         nsfree(stra);
 
         V_BSTR(out) = SysAllocString(strw);
-        mshtml_free(strw);
+        heap_free(strw);
     }
 
     return S_OK;

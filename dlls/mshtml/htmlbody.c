@@ -490,7 +490,7 @@ static const NodeImplVtbl HTMLBodyElementImplVtbl = {
 
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
 {
-    HTMLBodyElement *ret = mshtml_alloc(sizeof(HTMLBodyElement));
+    HTMLBodyElement *ret = heap_alloc(sizeof(HTMLBodyElement));
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", ret, nselem);

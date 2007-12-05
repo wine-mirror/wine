@@ -89,7 +89,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 
     if(!ref) {
         list_remove(&This->entry);
-        mshtml_free(This);
+        heap_free(This);
     }
 
     return ref;
@@ -775,12 +775,12 @@ static void astr_to_nswstr(const char *str, nsAString *nsstr)
     int len;
 
     len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    wstr = mshtml_alloc(len*sizeof(WCHAR));
+    wstr = heap_alloc(len*sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, str, -1, wstr, len);
 
     nsAString_Init(nsstr, wstr);
 
-    mshtml_free(wstr);
+    heap_free(wstr);
 }
 
 static nsresult call_js_func(nsIScriptContainer *script_container, nsISupports *target,
@@ -867,7 +867,7 @@ void setup_nswindow(HTMLWindow *This)
 
 HTMLWindow *HTMLWindow_Create(HTMLDocument *doc)
 {
-    HTMLWindow *ret = mshtml_alloc(sizeof(HTMLWindow));
+    HTMLWindow *ret = heap_alloc(sizeof(HTMLWindow));
 
     ret->lpHTMLWindow2Vtbl = &HTMLWindow2Vtbl;
     ret->ref = 1;

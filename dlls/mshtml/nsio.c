@@ -204,9 +204,9 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
             nsIInterfaceRequestor_Release(This->notif_callback);
         if(This->original_uri)
             nsIURI_Release(This->original_uri);
-        mshtml_free(This->content);
-        mshtml_free(This->charset);
-        mshtml_free(This);
+        heap_free(This->content);
+        heap_free(This->charset);
+        heap_free(This);
     }
 
     return ref;
@@ -735,7 +735,7 @@ static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamLis
         bscallback->nscontext = context;
     }
 
-    task = mshtml_alloc(sizeof(task_t));
+    task = heap_alloc(sizeof(task_t));
 
     task->doc = container->doc;
     task->task_id = TASK_START_BINDING;
@@ -1190,8 +1190,8 @@ static nsrefcnt NSAPI nsURI_Release(nsIWineURI *iface)
             nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
         if(This->uri)
             nsIURI_Release(This->uri);
-        mshtml_free(This->wine_url);
-        mshtml_free(This);
+        heap_free(This->wine_url);
+        heap_free(This);
     }
 
     return ref;
@@ -1655,11 +1655,11 @@ static nsresult NSAPI nsURI_SetWineURL(nsIWineURI *iface, LPCWSTR aURL)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(aURL));
 
-    mshtml_free(This->wine_url);
+    heap_free(This->wine_url);
 
     if(aURL) {
         int len = strlenW(aURL)+1;
-        This->wine_url = mshtml_alloc(len*sizeof(WCHAR));
+        This->wine_url = heap_alloc(len*sizeof(WCHAR));
         memcpy(This->wine_url, aURL, len*sizeof(WCHAR));
 
         /* FIXME: Always use wine url */
@@ -1717,7 +1717,7 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
 
 static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIWineURI **_retval)
 {
-    nsURI *ret = mshtml_alloc(sizeof(nsURI));
+    nsURI *ret = heap_alloc(sizeof(nsURI));
 
     ret->lpWineURIVtbl = &nsWineURIVtbl;
     ret->ref = 1;
@@ -1794,7 +1794,7 @@ static nsrefcnt NSAPI nsProtocolHandler_Release(nsIProtocolHandler *iface)
     if(!ref) {
         if(This->nshandler)
             nsIProtocolHandler_Release(This->nshandler);
-        mshtml_free(This);
+        heap_free(This);
     }
 
     return ref;
@@ -1887,7 +1887,7 @@ static const nsIProtocolHandlerVtbl nsProtocolHandlerVtbl = {
 
 static nsIProtocolHandler *create_protocol_handler(nsIProtocolHandler *nshandler)
 {
-    nsProtocolHandler *ret = mshtml_alloc(sizeof(nsProtocolHandler));
+    nsProtocolHandler *ret = heap_alloc(sizeof(nsProtocolHandler));
 
     ret->lpProtocolHandlerVtbl = &nsProtocolHandlerVtbl;
     ret->ref = 1;
@@ -2092,7 +2092,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
         return channel ? NS_OK : NS_ERROR_UNEXPECTED;
     }
 
-    ret = mshtml_alloc(sizeof(nsChannel));
+    ret = heap_alloc(sizeof(nsChannel));
 
     ret->lpHttpChannelVtbl = &nsChannelVtbl;
     ret->lpUploadChannelVtbl = &nsUploadChannelVtbl;

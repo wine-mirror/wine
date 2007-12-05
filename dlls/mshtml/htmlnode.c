@@ -66,7 +66,7 @@ static ULONG WINAPI HTMLDOMNode_Release(IHTMLDOMNode *iface)
 
     if(!ref) {
         This->vtbl->destructor(This);
-        mshtml_free(This);
+        heap_free(This);
     }
 
     return ref;
@@ -354,7 +354,7 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
         ret = &HTMLElement_Create(nsnode)->node;
         break;
     default:
-        ret = mshtml_alloc(sizeof(HTMLDOMNode));
+        ret = heap_alloc(sizeof(HTMLDOMNode));
         ret->vtbl = &HTMLDOMNodeImplVtbl;
     }
 

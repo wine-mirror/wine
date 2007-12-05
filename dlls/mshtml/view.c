@@ -368,7 +368,7 @@ static LRESULT WINAPI tooltips_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 static void create_tooltips_window(HTMLDocument *This)
 {
-    tooltip_data *data = mshtml_alloc(sizeof(*data));
+    tooltip_data *data = heap_alloc(sizeof(*data));
 
     This->tooltips_hwnd = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, TTS_NOPREFIX | WS_POPUP,
             CW_USEDEFAULT, CW_USEDEFAULT, 10, 10, This->hwnd, NULL, hInst, NULL);

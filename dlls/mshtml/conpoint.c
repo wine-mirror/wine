@@ -152,9 +152,9 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
         }
 
         if(i == This->sinks_size)
-            This->sinks = mshtml_realloc(This->sinks,(++This->sinks_size)*sizeof(*This->sinks));
+            This->sinks = heap_realloc(This->sinks,(++This->sinks_size)*sizeof(*This->sinks));
     }else {
-        This->sinks = mshtml_alloc(sizeof(*This->sinks));
+        This->sinks = heap_alloc(sizeof(*This->sinks));
         This->sinks_size = 1;
         i = 0;
     }
@@ -223,7 +223,7 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
             IUnknown_Release(This->sinks[i].unk);
     }
 
-    mshtml_free(This->sinks);
+    heap_free(This->sinks);
 }
 
 #define CONPTCONT_THIS(iface) DEFINE_THIS(ConnectionPointContainer, ConnectionPointContainer, iface)

@@ -160,20 +160,20 @@ static inline void wstrbuf_init(wstrbuf_t *buf)
 {
     buf->len = 0;
     buf->size = 16;
-    buf->buf = mshtml_alloc(buf->size * sizeof(WCHAR));
+    buf->buf = heap_alloc(buf->size * sizeof(WCHAR));
     *buf->buf = 0;
 }
 
 static inline void wstrbuf_finish(wstrbuf_t *buf)
 {
-    mshtml_free(buf->buf);
+    heap_free(buf->buf);
 }
 
 static void wstrbuf_append_len(wstrbuf_t *buf, LPCWSTR str, int len)
 {
     if(buf->len+len >= buf->size) {
         buf->size = 2*buf->len+len;
-        buf->buf = mshtml_realloc(buf->buf, buf->size * sizeof(WCHAR));
+        buf->buf = heap_realloc(buf->buf, buf->size * sizeof(WCHAR));
     }
 
     memcpy(buf->buf+buf->len, str, len*sizeof(WCHAR));
@@ -195,7 +195,7 @@ static void wstrbuf_append_nodetxt(wstrbuf_t *buf, LPCWSTR str, int len)
 
     if(buf->len+len >= buf->size) {
         buf->size = 2*buf->len+len;
-        buf->buf = mshtml_realloc(buf->buf, buf->size * sizeof(WCHAR));
+        buf->buf = heap_realloc(buf->buf, buf->size * sizeof(WCHAR));
     }
 
     if(buf->len && isspaceW(buf->buf[buf->len-1])) {
@@ -979,7 +979,7 @@ static ULONG WINAPI HTMLTxtRange_Release(IHTMLTxtRange *iface)
             nsISelection_Release(This->nsrange);
         if(This->doc)
             list_remove(&This->entry);
-        mshtml_free(This);
+        heap_free(This);
     }
 
     return ref;
@@ -1757,7 +1757,7 @@ static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
 
 IHTMLTxtRange *HTMLTxtRange_Create(HTMLDocument *doc, nsIDOMRange *nsrange)
 {
-    HTMLTxtRange *ret = mshtml_alloc(sizeof(HTMLTxtRange));
+    HTMLTxtRange *ret = heap_alloc(sizeof(HTMLTxtRange));
 
     ret->lpHTMLTxtRangeVtbl = &HTMLTxtRangeVtbl;
     ret->lpOleCommandTargetVtbl = &OleCommandTargetVtbl;

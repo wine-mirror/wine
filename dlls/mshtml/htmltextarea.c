@@ -406,7 +406,7 @@ static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
 
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement *nselem)
 {
-    HTMLTextAreaElement *ret = mshtml_alloc(sizeof(HTMLTextAreaElement));
+    HTMLTextAreaElement *ret = heap_alloc(sizeof(HTMLTextAreaElement));
     nsresult nsres;
 
     HTMLElement_Init(&ret->element);

@@ -136,7 +136,7 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
 
         static const char content_length[] = "Content-Length: %u\r\n\r\n";
 
-        data = mshtml_alloc(headers_len+post_len+sizeof(content_length)+8);
+        data = heap_alloc(headers_len+post_len+sizeof(content_length)+8);
 
         if(headers_len) {
             WideCharToMultiByte(CP_ACP, 0, headers, -1, data, -1, NULL, NULL);
@@ -281,7 +281,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     bscallback = create_bscallback(mon);
 
     if(This->frame) {
-        task = mshtml_alloc(sizeof(task_t));
+        task = heap_alloc(sizeof(task_t));
 
         task->doc = This;
         task->task_id = TASK_SETPROGRESS;
@@ -290,7 +290,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
         push_task(task);
     }
 
-    task = mshtml_alloc(sizeof(task_t));
+    task = heap_alloc(sizeof(task_t));
 
     task->doc = This;
     task->task_id = TASK_SETDOWNLOADSTATE;
@@ -366,7 +366,7 @@ static HRESULT get_doc_string(HTMLDocument *This, char **str, DWORD *len)
     TRACE("%s\n", debugstr_w(strw));
 
     *len = WideCharToMultiByte(CP_ACP, 0, strw, -1, NULL, 0, NULL, NULL);
-    *str = mshtml_alloc(*len);
+    *str = heap_alloc(*len);
     WideCharToMultiByte(CP_ACP, 0, strw, -1, *str, *len, NULL, NULL);
 
     nsAString_Finish(&nsstr);
@@ -700,7 +700,7 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM
     if(FAILED(hres))
         FIXME("Write failed: %08x\n", hres);
 
-    mshtml_free(str);
+    heap_free(str);
     return S_OK;
 }
 

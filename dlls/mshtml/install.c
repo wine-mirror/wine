@@ -66,7 +66,7 @@ static void clean_up(void)
 
     if(tmp_file_name) {
         DeleteFileW(tmp_file_name);
-        mshtml_free(tmp_file_name);
+        heap_free(tmp_file_name);
         tmp_file_name = NULL;
     }
 
@@ -112,7 +112,7 @@ static void set_registry(LPCSTR install_dir)
     }
 
     len = MultiByteToWideChar(CP_ACP, 0, install_dir, -1, NULL, 0)-1;
-    gecko_path = mshtml_alloc((len+1)*sizeof(WCHAR)+sizeof(wszWineGecko));
+    gecko_path = heap_alloc((len+1)*sizeof(WCHAR)+sizeof(wszWineGecko));
     MultiByteToWideChar(CP_ACP, 0, install_dir, -1, gecko_path, (len+1)*sizeof(WCHAR));
 
     if (len && gecko_path[len-1] != '\\')
@@ -123,7 +123,7 @@ static void set_registry(LPCSTR install_dir)
     size = len*sizeof(WCHAR)+sizeof(wszWineGecko);
     res = RegSetValueExW(hkey, wszGeckoPath, 0, REG_SZ, (LPVOID)gecko_path,
                        len*sizeof(WCHAR)+sizeof(wszWineGecko));
-    mshtml_free(gecko_path);
+    heap_free(gecko_path);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS)
         ERR("Failed to set GeckoPath value: %08x\n", res);
@@ -161,13 +161,13 @@ static BOOL install_cab(LPCWSTR file_name)
     pExtractFilesA = (typeof(ExtractFilesA)*)GetProcAddress(advpack, "ExtractFiles");
 
     len = WideCharToMultiByte(CP_ACP, 0, file_name, -1, NULL, 0, NULL, NULL);
-    file_name_a = mshtml_alloc(len);
+    file_name_a = heap_alloc(len);
     WideCharToMultiByte(CP_ACP, 0, file_name, -1, file_name_a, -1, NULL, NULL);
 
     /* FIXME: Use unicode version (not yet implemented) */
     hres = pExtractFilesA(file_name_a, install_dir, 0, NULL, NULL, 0);
     FreeLibrary(advpack);
-    mshtml_free(file_name_a);
+    heap_free(file_name_a);
     if(FAILED(hres)) {
         ERR("Could not extract package: %08x\n", hres);
         clean_up();
@@ -213,7 +213,7 @@ static BOOL install_from_unix_file(const char *file_name)
 
     ret = install_cab(dos_file_name);
 
-    mshtml_free(dos_file_name);
+    heap_free(dos_file_name);
     return ret;
 }
 
@@ -229,10 +229,10 @@ static BOOL install_from_registered_dir(void)
     if(res != ERROR_SUCCESS)
         return FALSE;
 
-    file_name = mshtml_alloc(size+sizeof(GECKO_FILE_NAME));
+    file_name = heap_alloc(size+sizeof(GECKO_FILE_NAME));
     res = RegQueryValueExA(hkey, "GeckoCabDir", NULL, &type, (PBYTE)file_name, &size);
     if(res == ERROR_MORE_DATA) {
-        file_name = mshtml_realloc(file_name, size+sizeof(GECKO_FILE_NAME));
+        file_name = heap_realloc(file_name, size+sizeof(GECKO_FILE_NAME));
         res = RegQueryValueExA(hkey, "GeckoCabDir", NULL, &type, (PBYTE)file_name, &size);
     }
     RegCloseKey(hkey);
@@ -245,7 +245,7 @@ static BOOL install_from_registered_dir(void)
 
     ret = install_from_unix_file(file_name);
 
-    mshtml_free(file_name);
+    heap_free(file_name);
     return ret;
 }
 
@@ -266,14 +266,14 @@ static BOOL install_from_default_dir(void)
     len = strlen(data_dir);
     len2 = strlen(subdir);
 
-    file_name = mshtml_alloc(len+len2+sizeof(GECKO_FILE_NAME));
+    file_name = heap_alloc(len+len2+sizeof(GECKO_FILE_NAME));
     memcpy(file_name, data_dir, len);
     memcpy(file_name+len, subdir, len2);
     memcpy(file_name+len+len2, GECKO_FILE_NAME, sizeof(GECKO_FILE_NAME));
 
     ret = install_from_unix_file(file_name);
 
-    mshtml_free(file_name);
+    heap_free(file_name);
     return ret;
 }
 
@@ -307,7 +307,7 @@ static HRESULT WINAPI InstallCallback_OnStartBinding(IBindStatusCallback *iface,
 
     GetTempPathW(sizeof(tmp_dir)/sizeof(WCHAR), tmp_dir);
 
-    tmp_file_name = mshtml_alloc(MAX_PATH*sizeof(WCHAR));
+    tmp_file_name = heap_alloc(MAX_PATH*sizeof(WCHAR));
     GetTempFileNameW(tmp_dir, NULL, 0, tmp_file_name);
 
     TRACE("creating temp file %s\n", debugstr_w(tmp_file_name));
@@ -433,12 +433,12 @@ static LPWSTR get_url(void)
     if(res != ERROR_SUCCESS)
         return NULL;
 
-    url = mshtml_alloc(size);
+    url = heap_alloc(size);
 
     res = RegQueryValueExW(hkey, wszGeckoUrl, NULL, &type, (LPBYTE)url, &size);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS || type != REG_SZ) {
-        mshtml_free(url);
+        heap_free(url);
         return NULL;
     }
 
@@ -459,7 +459,7 @@ static DWORD WINAPI download_proc(PVOID arg)
     HRESULT hres;
 
     CreateURLMoniker(NULL, url, &mon);
-    mshtml_free(url);
+    heap_free(url);
     url = NULL;
 
     CreateAsyncBindCtx(0, &InstallCallback, 0, &bctx);

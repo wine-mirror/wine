@@ -103,7 +103,7 @@ static ULONG WINAPI HTMLStyleSheetsCollection_Release(IHTMLStyleSheetsCollection
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
-        mshtml_free(This);
+        heap_free(This);
 
     return ref;
 }
@@ -221,7 +221,7 @@ static const IHTMLStyleSheetsCollectionVtbl HTMLStyleSheetsCollectionVtbl = {
 
 IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList *nslist)
 {
-    HTMLStyleSheetsCollection *ret = mshtml_alloc(sizeof(HTMLStyleSheetsCollection));
+    HTMLStyleSheetsCollection *ret = heap_alloc(sizeof(HTMLStyleSheetsCollection));
 
     ret->lpHTMLStyleSheetsCollectionVtbl = &HTMLStyleSheetsCollectionVtbl;
     ret->ref = 1;
@@ -279,7 +279,7 @@ static ULONG WINAPI HTMLStyleSheet_Release(IHTMLStyleSheet *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
-        mshtml_free(This);
+        heap_free(This);
 
     return ref;
 }
@@ -505,7 +505,7 @@ static const IHTMLStyleSheetVtbl HTMLStyleSheetVtbl = {
 
 IHTMLStyleSheet *HTMLStyleSheet_Create(nsIDOMStyleSheet *nsstylesheet)
 {
-    HTMLStyleSheet *ret = mshtml_alloc(sizeof(HTMLStyleSheet));
+    HTMLStyleSheet *ret = heap_alloc(sizeof(HTMLStyleSheet));
     nsresult nsres;
 
     ret->lpHTMLStyleSheetVtbl = &HTMLStyleSheetVtbl;

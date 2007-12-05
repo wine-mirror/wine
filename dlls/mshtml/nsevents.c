@@ -146,7 +146,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     if(This->doc->usermode == EDITMODE)
         handle_edit_load(This->doc);
 
-    task = mshtml_alloc(sizeof(task_t));
+    task = heap_alloc(sizeof(task_t));
 
     task->doc = This->doc;
     task->task_id = TASK_PARSECOMPLETE;

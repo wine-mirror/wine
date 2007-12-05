@@ -81,7 +81,7 @@ static ULONG WINAPI OleUndoManager_Release(IOleUndoManager *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
-        mshtml_free(This);
+        heap_free(This);
 
     return ref;
 }
@@ -195,7 +195,7 @@ static const IOleUndoManagerVtbl OleUndoManagerVtbl = {
 
 static IOleUndoManager *create_undomgr(void)
 {
-    UndoManager *ret = mshtml_alloc(sizeof(UndoManager));
+    UndoManager *ret = heap_alloc(sizeof(UndoManager));
 
     ret->lpOleUndoManagerVtbl = &OleUndoManagerVtbl;
     ret->ref = 1;

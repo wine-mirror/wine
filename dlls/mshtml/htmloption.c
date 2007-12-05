@@ -337,7 +337,7 @@ static const NodeImplVtbl HTMLOptionElementImplVtbl = {
 
 HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
 {
-    HTMLOptionElement *ret = mshtml_alloc(sizeof(HTMLOptionElement));
+    HTMLOptionElement *ret = heap_alloc(sizeof(HTMLOptionElement));
     nsresult nsres;
 
     HTMLElement_Init(&ret->element);
@@ -399,7 +399,7 @@ static ULONG WINAPI HTMLOptionElementFactory_Release(IHTMLOptionElementFactory *
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
-        mshtml_free(This);
+        heap_free(This);
 
     return ref;
 }
@@ -512,7 +512,7 @@ HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLDocument *doc)
 {
     HTMLOptionElementFactory *ret;
 
-    ret = mshtml_alloc(sizeof(HTMLOptionElementFactory));
+    ret = heap_alloc(sizeof(HTMLOptionElementFactory));
 
     ret->lpHTMLOptionElementFactoryVtbl = &HTMLOptionElementFactoryVtbl;
     ret->ref = 1;

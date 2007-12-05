@@ -1059,7 +1059,7 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
 
 HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
 {
-    HTMLInputElement *ret = mshtml_alloc(sizeof(HTMLInputElement));
+    HTMLInputElement *ret = heap_alloc(sizeof(HTMLInputElement));
     nsresult nsres;
 
     HTMLElement_Init(&ret->element);

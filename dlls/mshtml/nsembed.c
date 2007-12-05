@@ -874,7 +874,7 @@ static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
     if(!ref) {
         if(This->parent)
             nsIWebBrowserChrome_Release(NSWBCHROME(This->parent));
-        mshtml_free(This);
+        heap_free(This);
     }
 
     return ref;
@@ -1558,7 +1558,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     if(!load_gecko(FALSE))
         return NULL;
 
-    ret = mshtml_alloc(sizeof(NSContainer));
+    ret = heap_alloc(sizeof(NSContainer));
 
     ret->lpWebBrowserChromeVtbl      = &nsWebBrowserChromeVtbl;
     ret->lpContextMenuListenerVtbl   = &nsContextMenuListenerVtbl;

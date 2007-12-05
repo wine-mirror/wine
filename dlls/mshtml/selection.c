@@ -100,7 +100,7 @@ static ULONG WINAPI HTMLSelectionObject_Release(IHTMLSelectionObject *iface)
             nsISelection_Release(This->nsselection);
         if(This->doc)
             list_remove(&This->entry);
-        mshtml_free(This);
+        heap_free(This);
     }
 
     return ref;
@@ -243,7 +243,7 @@ static const IHTMLSelectionObjectVtbl HTMLSelectionObjectVtbl = {
 
 IHTMLSelectionObject *HTMLSelectionObject_Create(HTMLDocument *doc, nsISelection *nsselection)
 {
-    HTMLSelectionObject *ret = mshtml_alloc(sizeof(HTMLSelectionObject));
+    HTMLSelectionObject *ret = heap_alloc(sizeof(HTMLSelectionObject));
 
     ret->lpHTMLSelectionObjectVtbl = &HTMLSelectionObjectVtbl;
     ret->ref = 1;

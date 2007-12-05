@@ -88,7 +88,7 @@ static nsrefcnt NSAPI nsInputStream_Release(nsIInputStream *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
-        mshtml_free(This);
+        heap_free(This);
 
     return ref;
 }
@@ -176,7 +176,7 @@ static const nsIInputStreamVtbl nsInputStreamVtbl = {
 
 static nsProtocolStream *create_nsprotocol_stream(void)
 {
-    nsProtocolStream *ret = mshtml_alloc(sizeof(nsProtocolStream));
+    nsProtocolStream *ret = heap_alloc(sizeof(nsProtocolStream));
 
     ret->lpInputStreamVtbl = &nsInputStreamVtbl;
     ret->ref = 1;
@@ -212,7 +212,7 @@ static HRESULT read_stream_data(BSCallback *This, IStream *stream)
             break;
 
         if(!This->readed && This->nsstream->buf_size >= 2 && *(WORD*)This->nsstream->buf == 0xfeff) {
-                This->nschannel->charset = mshtml_alloc(sizeof(UTF16_STR));
+                This->nschannel->charset = heap_alloc(sizeof(UTF16_STR));
                 memcpy(This->nschannel->charset, UTF16_STR, sizeof(UTF16_STR));
         }
 
@@ -330,8 +330,8 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
         if(This->binding)
             IBinding_Release(This->binding);
         list_remove(&This->entry);
-        mshtml_free(This->headers);
-        mshtml_free(This);
+        heap_free(This->headers);
+        heap_free(This);
     }
 
     return ref;
@@ -383,10 +383,10 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface, 
 
         if(!This->nschannel)
             return S_OK;
-        mshtml_free(This->nschannel->content);
+        heap_free(This->nschannel->content);
 
         len = WideCharToMultiByte(CP_ACP, 0, szStatusText, -1, NULL, 0, NULL, NULL);
-        This->nschannel->content = mshtml_alloc(len*sizeof(WCHAR));
+        This->nschannel->content = heap_alloc(len*sizeof(WCHAR));
         WideCharToMultiByte(CP_ACP, 0, szStatusText, -1, This->nschannel->content, -1, NULL, NULL);
     }
     }
@@ -425,7 +425,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
         return S_OK;
 
     if(This->doc && This->doc->bscallback == This && !This->doc->nscontainer) {
-        task_t *task = mshtml_alloc(sizeof(task_t));
+        task_t *task = heap_alloc(sizeof(task_t));
 
         task->doc = This->doc;
         task->task_id = TASK_PARSECOMPLETE;
@@ -662,7 +662,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 
 BSCallback *create_bscallback(IMoniker *mon)
 {
-    BSCallback *ret = mshtml_alloc(sizeof(BSCallback));
+    BSCallback *ret = heap_alloc(sizeof(BSCallback));
 
     ret->lpBindStatusCallbackVtbl = &BindStatusCallbackVtbl;
     ret->lpServiceProviderVtbl    = &ServiceProviderVtbl;
@@ -750,9 +750,9 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
         len = MultiByteToWideChar(CP_ACP, 0, ptr2, ptr-ptr2, NULL, 0);
 
         if(headers)
-            headers = mshtml_realloc(headers,(headers_len+len+1)*sizeof(WCHAR));
+            headers = heap_realloc(headers,(headers_len+len+1)*sizeof(WCHAR));
         else
-            headers = mshtml_alloc((len+1)*sizeof(WCHAR));
+            headers = heap_alloc((len+1)*sizeof(WCHAR));
 
         len = MultiByteToWideChar(CP_ACP, 0, ptr2, ptr-ptr2, headers+headers_len, -1);
         headers_len += len;
@@ -895,7 +895,7 @@ HRESULT load_stream(BSCallback *bscallback, IStream *stream)
     add_nsrequest(bscallback);
 
     if(bscallback->nschannel) {
-        bscallback->nschannel->content = mshtml_alloc(sizeof(text_html));
+        bscallback->nschannel->content = heap_alloc(sizeof(text_html));
         memcpy(bscallback->nschannel->content, text_html, sizeof(text_html));
     }
 

@@ -550,7 +550,7 @@ static const NodeImplVtbl HTMLTableImplVtbl = {
 
 HTMLElement *HTMLTable_Create(nsIDOMHTMLElement *nselem)
 {
-    HTMLTable *ret = mshtml_alloc(sizeof(HTMLTable));
+    HTMLTable *ret = heap_alloc(sizeof(HTMLTable));
 
     HTMLElement_Init(&ret->element);
 
