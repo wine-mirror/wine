@@ -1667,6 +1667,7 @@ static RPC_STATUS RpcAssoc_BindConnection(const RpcAssoc *assoc, RpcConnection *
     break;
   }
 
+  I_RpcFreeBuffer(&msg);
   RPCRT4_FreeHeader(response_hdr);
   return status;
 }
