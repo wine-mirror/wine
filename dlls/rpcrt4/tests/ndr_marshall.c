@@ -250,17 +250,13 @@ todo_wine {
         if (formattypes[2] == 0xd /* FC_ENUM16 */)
             ok(mem != StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem points to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
         else
-todo_wine {
             ok(mem == StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem doesn't point to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
- }
         ok(!cmp(mem, memsrc, size), "%s: incorrecly unmarshaled\n", msgpfx);
         ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
         ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
         if (formattypes[2] != 0xd /* FC_ENUM16 */) {
-todo_wine {
             ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
             my_alloc_called = 0;
- }
         }
     }
     HeapFree(GetProcessHeap(), 0, mem_orig);

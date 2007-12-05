@@ -5463,10 +5463,18 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
 
 #define BASE_TYPE_UNMARSHALL(type) \
         ALIGN_POINTER(pStubMsg->Buffer, sizeof(type)); \
-        if (fMustAlloc || !*ppMemory) \
-            *ppMemory = NdrAllocate(pStubMsg, sizeof(type)); \
-        TRACE("*ppMemory: %p\n", *ppMemory); \
-        **(type **)ppMemory = *(type *)pStubMsg->Buffer; \
+        if (!fMustAlloc && !pStubMsg->IsClient && !*ppMemory) \
+        { \
+            *ppMemory = pStubMsg->Buffer; \
+            TRACE("*ppMemory: %p\n", *ppMemory); \
+        } \
+        else \
+        {  \
+            if (fMustAlloc) \
+                *ppMemory = NdrAllocate(pStubMsg, sizeof(type)); \
+            TRACE("*ppMemory: %p\n", *ppMemory); \
+            **(type **)ppMemory = *(type *)pStubMsg->Buffer; \
+        } \
         pStubMsg->Buffer += sizeof(type);
 
     switch(*pFormat)
