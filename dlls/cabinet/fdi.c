@@ -377,7 +377,7 @@ HFDI __cdecl FDICreate(
     return NULL;
   }
 
-  if (!((rv = ((HFDI) (*pfnalloc)(sizeof(FDI_Int)))))) {
+  if (!((rv = (*pfnalloc)(sizeof(FDI_Int))))) {
     perf->erfOper = FDIERROR_ALLOC_FAIL;
     perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
     perf->fError = TRUE;
