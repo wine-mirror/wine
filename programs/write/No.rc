@@ -1,5 +1,7 @@
 /*
- * Copyright 2007 Mikolaj Zalewski
+ * Norwegian Bokmål language support
+ *
+ * Copyright (C) 2007 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,13 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windef.h>
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-#include "resources.h"
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "En.rc"
-#include "Fr.rc"
-#include "Ko.rc"
-#include "No.rc"
+STRINGTABLE
+{
+    IDS_FAILED, "Klarte ikke starte Wordpad"
+}
