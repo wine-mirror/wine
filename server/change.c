@@ -164,6 +164,7 @@ static const struct object_ops dir_ops =
 {
     sizeof(struct dir),       /* size */
     dir_dump,                 /* dump */
+    no_get_type,              /* get_type */
     add_queue,                /* add_queue */
     remove_queue,             /* remove_queue */
     default_fd_signaled,      /* signaled */

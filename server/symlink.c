@@ -46,6 +46,7 @@ struct symlink
 };
 
 static void symlink_dump( struct object *obj, int verbose );
+static struct object_type *symlink_get_type( struct object *obj );
 static unsigned int symlink_map_access( struct object *obj, unsigned int access );
 static struct object *symlink_lookup_name( struct object *obj, struct unicode_str *name,
                                            unsigned int attr );
@@ -55,6 +56,7 @@ static const struct object_ops symlink_ops =
 {
     sizeof(struct symlink),       /* size */
     symlink_dump,                 /* dump */
+    symlink_get_type,             /* get_type */
     no_add_queue,                 /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
@@ -80,6 +82,13 @@ static void symlink_dump( struct object *obj, int verbose )
     fprintf( stderr, " -> L\"" );
     dump_strW( symlink->target, symlink->len / sizeof(WCHAR), stderr, "\"\"" );
     fprintf( stderr, "\"\n" );
+}
+
+static struct object_type *symlink_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'S','y','m','b','o','l','i','c','L','i','n','k'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static struct object *symlink_lookup_name( struct object *obj, struct unicode_str *name,

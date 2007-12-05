@@ -74,6 +74,7 @@ static const struct object_ops mailslot_ops =
 {
     sizeof(struct mailslot),   /* size */
     mailslot_dump,             /* dump */
+    no_get_type,               /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     default_fd_signaled,       /* signaled */
@@ -124,6 +125,7 @@ static const struct object_ops mail_writer_ops =
 {
     sizeof(struct mail_writer), /* size */
     mail_writer_dump,           /* dump */
+    no_get_type,                /* get_type */
     no_add_queue,               /* add_queue */
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
@@ -162,6 +164,7 @@ struct mailslot_device
 };
 
 static void mailslot_device_dump( struct object *obj, int verbose );
+static struct object_type *mailslot_device_get_type( struct object *obj );
 static struct fd *mailslot_device_get_fd( struct object *obj );
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                    unsigned int attr );
@@ -174,6 +177,7 @@ static const struct object_ops mailslot_device_ops =
 {
     sizeof(struct mailslot_device), /* size */
     mailslot_device_dump,           /* dump */
+    mailslot_device_get_type,       /* get_type */
     no_add_queue,                   /* add_queue */
     NULL,                           /* remove_queue */
     NULL,                           /* signaled */
@@ -316,6 +320,13 @@ static void mailslot_device_dump( struct object *obj, int verbose )
 {
     assert( obj->ops == &mailslot_device_ops );
     fprintf( stderr, "Mail slot device\n" );
+}
+
+static struct object_type *mailslot_device_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'D','e','v','i','c','e'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static struct fd *mailslot_device_get_fd( struct object *obj )

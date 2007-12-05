@@ -81,6 +81,7 @@ static const struct object_ops file_ops =
 {
     sizeof(struct file),          /* size */
     file_dump,                    /* dump */
+    no_get_type,                  /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     default_fd_signaled,          /* signaled */

@@ -44,6 +44,7 @@ struct semaphore
 };
 
 static void semaphore_dump( struct object *obj, int verbose );
+static struct object_type *semaphore_get_type( struct object *obj );
 static int semaphore_signaled( struct object *obj, struct thread *thread );
 static int semaphore_satisfied( struct object *obj, struct thread *thread );
 static unsigned int semaphore_map_access( struct object *obj, unsigned int access );
@@ -53,6 +54,7 @@ static const struct object_ops semaphore_ops =
 {
     sizeof(struct semaphore),      /* size */
     semaphore_dump,                /* dump */
+    semaphore_get_type,            /* get_type */
     add_queue,                     /* add_queue */
     remove_queue,                  /* remove_queue */
     semaphore_signaled,            /* signaled */
@@ -125,6 +127,13 @@ static void semaphore_dump( struct object *obj, int verbose )
     fprintf( stderr, "Semaphore count=%d max=%d ", sem->count, sem->max );
     dump_object_name( &sem->obj );
     fputc( '\n', stderr );
+}
+
+static struct object_type *semaphore_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'S','e','m','a','p','h','o','r','e'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static int semaphore_signaled( struct object *obj, struct thread *thread )

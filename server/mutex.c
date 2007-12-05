@@ -46,6 +46,7 @@ struct mutex
 };
 
 static void mutex_dump( struct object *obj, int verbose );
+static struct object_type *mutex_get_type( struct object *obj );
 static int mutex_signaled( struct object *obj, struct thread *thread );
 static int mutex_satisfied( struct object *obj, struct thread *thread );
 static unsigned int mutex_map_access( struct object *obj, unsigned int access );
@@ -56,6 +57,7 @@ static const struct object_ops mutex_ops =
 {
     sizeof(struct mutex),      /* size */
     mutex_dump,                /* dump */
+    mutex_get_type,            /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     mutex_signaled,            /* signaled */
@@ -126,6 +128,13 @@ static void mutex_dump( struct object *obj, int verbose )
     fprintf( stderr, "Mutex count=%u owner=%p ", mutex->count, mutex->owner );
     dump_object_name( &mutex->obj );
     fputc( '\n', stderr );
+}
+
+static struct object_type *mutex_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'M','u','t','a','n','t'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static int mutex_signaled( struct object *obj, struct thread *thread )

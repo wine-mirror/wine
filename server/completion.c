@@ -52,6 +52,7 @@ struct completion
 };
 
 static void completion_dump( struct object*, int );
+static struct object_type *completion_get_type( struct object *obj );
 static void completion_destroy( struct object * );
 static int  completion_signaled( struct object *obj, struct thread *thread );
 
@@ -59,6 +60,7 @@ static const struct object_ops completion_ops =
 {
     sizeof(struct completion), /* size */
     completion_dump,           /* dump */
+    completion_get_type,       /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     completion_signaled,       /* signaled */
@@ -102,6 +104,13 @@ static void completion_dump( struct object *obj, int verbose )
     fprintf( stderr, "Completion " );
     dump_object_name( &completion->obj );
     fprintf( stderr, " (%u packets pending)\n", completion->depth );
+}
+
+static struct object_type *completion_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'C','o','m','p','l','e','t','i','o','n'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static int completion_signaled( struct object *obj, struct thread *thread )

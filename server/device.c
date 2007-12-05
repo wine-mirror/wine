@@ -58,6 +58,7 @@ static const struct object_ops ioctl_call_ops =
 {
     sizeof(struct ioctl_call),        /* size */
     ioctl_call_dump,                  /* dump */
+    no_get_type,                      /* get_type */
     add_queue,                        /* add_queue */
     remove_queue,                     /* remove_queue */
     ioctl_call_signaled,              /* signaled */
@@ -89,6 +90,7 @@ static const struct object_ops device_manager_ops =
 {
     sizeof(struct device_manager),    /* size */
     device_manager_dump,              /* dump */
+    no_get_type,                      /* get_type */
     add_queue,                        /* add_queue */
     remove_queue,                     /* remove_queue */
     device_manager_signaled,          /* signaled */
@@ -116,6 +118,7 @@ struct device
 };
 
 static void device_dump( struct object *obj, int verbose );
+static struct object_type *device_get_type( struct object *obj );
 static struct fd *device_get_fd( struct object *obj );
 static void device_destroy( struct object *obj );
 static struct object *device_open_file( struct object *obj, unsigned int access,
@@ -128,6 +131,7 @@ static const struct object_ops device_ops =
 {
     sizeof(struct device),            /* size */
     device_dump,                      /* dump */
+    device_get_type,                  /* get_type */
     no_add_queue,                     /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
@@ -250,6 +254,13 @@ static void device_dump( struct object *obj, int verbose )
     fprintf( stderr, "Device " );
     dump_object_name( &device->obj );
     fputc( '\n', stderr );
+}
+
+static struct object_type *device_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'D','e','v','i','c','e'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static struct fd *device_get_fd( struct object *obj )

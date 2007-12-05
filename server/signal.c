@@ -63,6 +63,7 @@ static const struct object_ops handler_ops =
 {
     sizeof(struct handler),   /* size */
     handler_dump,             /* dump */
+    no_get_type,              /* get_type */
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */

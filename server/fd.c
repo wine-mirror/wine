@@ -191,6 +191,7 @@ static const struct object_ops fd_ops =
 {
     sizeof(struct fd),        /* size */
     fd_dump,                  /* dump */
+    no_get_type,              /* get_type */
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
@@ -227,6 +228,7 @@ static const struct object_ops device_ops =
 {
     sizeof(struct device),    /* size */
     device_dump,              /* dump */
+    no_get_type,              /* get_type */
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
@@ -262,6 +264,7 @@ static const struct object_ops inode_ops =
 {
     sizeof(struct inode),     /* size */
     inode_dump,               /* dump */
+    no_get_type,              /* get_type */
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
@@ -299,6 +302,7 @@ static const struct object_ops file_lock_ops =
 {
     sizeof(struct file_lock),   /* size */
     file_lock_dump,             /* dump */
+    no_get_type,                /* get_type */
     add_queue,                  /* add_queue */
     remove_queue,               /* remove_queue */
     file_lock_signaled,         /* signaled */

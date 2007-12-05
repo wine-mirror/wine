@@ -86,6 +86,7 @@ static const struct object_ops thread_apc_ops =
 {
     sizeof(struct thread_apc),  /* size */
     dump_thread_apc,            /* dump */
+    no_get_type,                /* get_type */
     add_queue,                  /* add_queue */
     remove_queue,               /* remove_queue */
     thread_apc_signaled,        /* signaled */
@@ -114,6 +115,7 @@ static const struct object_ops thread_ops =
 {
     sizeof(struct thread),      /* size */
     dump_thread,                /* dump */
+    no_get_type,                /* get_type */
     add_queue,                  /* add_queue */
     remove_queue,               /* remove_queue */
     thread_signaled,            /* signaled */

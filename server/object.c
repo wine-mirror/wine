@@ -353,6 +353,11 @@ struct namespace *create_namespace( unsigned int hash_size )
 
 /* functions for unimplemented/default object operations */
 
+struct object_type *no_get_type( struct object *obj )
+{
+    return NULL;
+}
+
 int no_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );

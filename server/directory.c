@@ -41,6 +41,35 @@
 
 #define HASH_SIZE 7  /* default hash size */
 
+struct object_type
+{
+    struct object     obj;        /* object header */
+};
+
+static void object_type_dump( struct object *obj, int verbose );
+static struct object_type *object_type_get_type( struct object *obj );
+
+static const struct object_ops object_type_ops =
+{
+    sizeof(struct object_type),   /* size */
+    object_type_dump,             /* dump */
+    object_type_get_type,         /* get_type */
+    no_add_queue,                 /* add_queue */
+    NULL,                         /* remove_queue */
+    NULL,                         /* signaled */
+    NULL,                         /* satisfied */
+    no_signal,                    /* signal */
+    no_get_fd,                    /* get_fd */
+    no_map_access,                /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
+    no_lookup_name,               /* lookup_name */
+    no_open_file,                 /* open_file */
+    no_close_handle,              /* close_handle */
+    no_destroy                    /* destroy */
+};
+
+
 struct directory
 {
     struct object     obj;        /* object header */
@@ -48,6 +77,7 @@ struct directory
 };
 
 static void directory_dump( struct object *obj, int verbose );
+static struct object_type *directory_get_type( struct object *obj );
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
                                              unsigned int attr );
 static void directory_destroy( struct object *obj );
@@ -56,6 +86,7 @@ static const struct object_ops directory_ops =
 {
     sizeof(struct directory),     /* size */
     directory_dump,               /* dump */
+    directory_get_type,           /* get_type */
     no_add_queue,                 /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
@@ -72,7 +103,24 @@ static const struct object_ops directory_ops =
 };
 
 static struct directory *root_directory;
+static struct directory *dir_objtype;
 
+
+static void object_type_dump( struct object *obj, int verbose )
+{
+    assert( obj->ops == &object_type_ops );
+
+    fputs( "Object type ", stderr );
+    dump_object_name( obj );
+    fputc( '\n', stderr );
+}
+
+static struct object_type *object_type_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'O','b','j','e','c','t','T','y','p','e'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
+}
 
 static void directory_dump( struct object *obj, int verbose )
 {
@@ -81,6 +129,13 @@ static void directory_dump( struct object *obj, int verbose )
     fputs( "Directory ", stderr );
     dump_object_name( obj );
     fputc( '\n', stderr );
+}
+
+static struct object_type *directory_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'D','i','r','e','c','t','o','r','y'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
@@ -120,6 +175,8 @@ static struct object *directory_lookup_name( struct object *obj, struct unicode_
             set_error( STATUS_OBJECT_NAME_INVALID );
         else if (p)  /* Path still has backslashes */
             set_error( STATUS_OBJECT_PATH_NOT_FOUND );
+        else
+            clear_error();
     }
     return NULL;
 }
@@ -284,6 +341,22 @@ void *open_object_dir( struct directory *root, const struct unicode_str *name,
     return NULL;
 }
 
+/* retrieve an object type, creating it if needed */
+struct object_type *get_object_type( const struct unicode_str *name )
+{
+    struct object_type *type;
+
+    if ((type = open_object_dir( dir_objtype, name, 0, &object_type_ops )))
+        return type;
+
+    if ((type = create_named_object_dir( dir_objtype, name, 0, &object_type_ops )))
+    {
+        grab_object( type );
+        make_object_static( &type->obj );
+        clear_error();
+    }
+    return type;
+}
 
 /* Global initialization */
 
@@ -296,12 +369,14 @@ void init_directories(void)
     static const WCHAR dir_basenamedW[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s'};
     static const WCHAR dir_named_pipeW[] = {'\\','D','e','v','i','c','e','\\','N','a','m','e','d','P','i','p','e'};
     static const WCHAR dir_mailslotW[] = {'\\','D','e','v','i','c','e','\\','M','a','i','l','S','l','o','t'};
+    static const WCHAR dir_objtypeW[] = {'O','b','j','e','c','t','T','y','p','e','s',};
     static const struct unicode_str dir_global_str = {dir_globalW, sizeof(dir_globalW)};
     static const struct unicode_str dir_driver_str = {dir_driverW, sizeof(dir_driverW)};
     static const struct unicode_str dir_device_str = {dir_deviceW, sizeof(dir_deviceW)};
     static const struct unicode_str dir_basenamed_str = {dir_basenamedW, sizeof(dir_basenamedW)};
     static const struct unicode_str dir_named_pipe_str = {dir_named_pipeW, sizeof(dir_named_pipeW)};
     static const struct unicode_str dir_mailslot_str = {dir_mailslotW, sizeof(dir_mailslotW)};
+    static const struct unicode_str dir_objtype_str = {dir_objtypeW, sizeof(dir_objtypeW)};
 
     /* symlinks */
     static const WCHAR link_dosdevW[] = {'D','o','s','D','e','v','i','c','e','s'};
@@ -327,8 +402,10 @@ void init_directories(void)
     root_directory = create_directory( NULL, NULL, 0, HASH_SIZE );
     dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE );
     dir_device     = create_directory( root_directory, &dir_device_str, 0, HASH_SIZE );
+    dir_objtype    = create_directory( root_directory, &dir_objtype_str, 0, HASH_SIZE );
     make_object_static( &root_directory->obj );
     make_object_static( &dir_driver->obj );
+    make_object_static( &dir_objtype->obj );
 
     dir_global     = create_directory( NULL, &dir_global_str, 0, HASH_SIZE );
     /* use a larger hash table for this one since it can contain a lot of objects */
@@ -400,20 +477,19 @@ DECL_HANDLER(open_directory)
 /* get a directory entry by index */
 DECL_HANDLER(get_directory_entry)
 {
-    static const WCHAR objectW[] = {'O','b','j','e','c','t',0 };
-    static const WCHAR dirW[] = {'D','i','r','e','c','t','o','r','y',0 };
-
     struct directory *dir = get_directory_obj( current->process, req->handle, DIRECTORY_QUERY );
     if (dir)
     {
         struct object *obj = find_object_index( dir->entries, req->index );
         if (obj)
         {
-            size_t name_len, type_len;
+            size_t name_len, type_len = 0;
+            const WCHAR *type_name = NULL;
             const WCHAR *name = get_object_name( obj, &name_len );
-            const WCHAR *type = obj->ops == &directory_ops ? dirW : objectW;
+            struct object_type *type = obj->ops->get_type( obj );
 
-            type_len = strlenW(type) * sizeof(WCHAR);
+            if (type) type_name = get_object_name( &type->obj, &type_len );
+
             if (name_len + type_len <= get_reply_max_size())
             {
                 void *ptr = set_reply_data_size( name_len + type_len );
@@ -421,11 +497,12 @@ DECL_HANDLER(get_directory_entry)
                 {
                     reply->name_len = name_len;
                     memcpy( ptr, name, name_len );
-                    memcpy( (char *)ptr + name_len, type, type_len );
+                    memcpy( (char *)ptr + name_len, type_name, type_len );
                 }
             }
             else set_error( STATUS_BUFFER_OVERFLOW );
 
+            if (type) release_object( type );
             release_object( obj );
         }
         release_object( dir );

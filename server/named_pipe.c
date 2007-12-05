@@ -117,6 +117,7 @@ static const struct object_ops named_pipe_ops =
 {
     sizeof(struct named_pipe),    /* size */
     named_pipe_dump,              /* dump */
+    no_get_type,                  /* get_type */
     no_add_queue,                 /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
@@ -145,6 +146,7 @@ static const struct object_ops pipe_server_ops =
 {
     sizeof(struct pipe_server),   /* size */
     pipe_server_dump,             /* dump */
+    no_get_type,                  /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     default_fd_signaled,          /* signaled */
@@ -183,6 +185,7 @@ static const struct object_ops pipe_client_ops =
 {
     sizeof(struct pipe_client),   /* size */
     pipe_client_dump,             /* dump */
+    no_get_type,                  /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     default_fd_signaled,          /* signaled */
@@ -211,6 +214,7 @@ static const struct fd_ops pipe_client_fd_ops =
 };
 
 static void named_pipe_device_dump( struct object *obj, int verbose );
+static struct object_type *named_pipe_device_get_type( struct object *obj );
 static struct fd *named_pipe_device_get_fd( struct object *obj );
 static struct object *named_pipe_device_lookup_name( struct object *obj,
     struct unicode_str *name, unsigned int attr );
@@ -225,6 +229,7 @@ static const struct object_ops named_pipe_device_ops =
 {
     sizeof(struct named_pipe_device), /* size */
     named_pipe_device_dump,           /* dump */
+    named_pipe_device_get_type,       /* get_type */
     no_add_queue,                     /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
@@ -426,6 +431,13 @@ static void named_pipe_device_dump( struct object *obj, int verbose )
 {
     assert( obj->ops == &named_pipe_device_ops );
     fprintf( stderr, "Named pipe device\n" );
+}
+
+static struct object_type *named_pipe_device_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'D','e','v','i','c','e'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static struct fd *named_pipe_device_get_fd( struct object *obj )

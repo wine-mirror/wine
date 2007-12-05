@@ -61,6 +61,7 @@ static const struct object_ops snapshot_ops =
 {
     sizeof(struct snapshot),      /* size */
     snapshot_dump,                /* dump */
+    no_get_type,                  /* get_type */
     no_add_queue,                 /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */

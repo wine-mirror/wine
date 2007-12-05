@@ -52,6 +52,7 @@ static const struct object_ops async_ops =
 {
     sizeof(struct async),      /* size */
     async_dump,                /* dump */
+    no_get_type,               /* get_type */
     no_add_queue,              /* add_queue */
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
@@ -81,6 +82,7 @@ static const struct object_ops async_queue_ops =
 {
     sizeof(struct async_queue),      /* size */
     async_queue_dump,                /* dump */
+    no_get_type,                     /* get_type */
     no_add_queue,                    /* add_queue */
     NULL,                            /* remove_queue */
     NULL,                            /* signaled */

@@ -67,6 +67,7 @@ static const struct object_ops process_ops =
 {
     sizeof(struct process),      /* size */
     process_dump,                /* dump */
+    no_get_type,                 /* get_type */
     add_queue,                   /* add_queue */
     remove_queue,                /* remove_queue */
     process_signaled,            /* signaled */
@@ -116,6 +117,7 @@ static const struct object_ops startup_info_ops =
 {
     sizeof(struct startup_info),   /* size */
     startup_info_dump,             /* dump */
+    no_get_type,                   /* get_type */
     add_queue,                     /* add_queue */
     remove_queue,                  /* remove_queue */
     startup_info_signaled,         /* signaled */

@@ -76,6 +76,7 @@ static const struct object_ops console_input_ops =
 {
     sizeof(struct console_input),     /* size */
     console_input_dump,               /* dump */
+    no_get_type,                      /* get_type */
     no_add_queue,                     /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
@@ -107,6 +108,7 @@ static const struct object_ops console_input_events_ops =
 {
     sizeof(struct console_input_events), /* size */
     console_input_events_dump,        /* dump */
+    no_get_type,                      /* get_type */
     add_queue,                        /* add_queue */
     remove_queue,                     /* remove_queue */
     console_input_events_signaled,    /* signaled */
@@ -149,6 +151,7 @@ static const struct object_ops screen_buffer_ops =
 {
     sizeof(struct screen_buffer),     /* size */
     screen_buffer_dump,               /* dump */
+    no_get_type,                      /* get_type */
     no_add_queue,                     /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */

@@ -51,6 +51,7 @@ struct timer
 };
 
 static void timer_dump( struct object *obj, int verbose );
+static struct object_type *timer_get_type( struct object *obj );
 static int timer_signaled( struct object *obj, struct thread *thread );
 static int timer_satisfied( struct object *obj, struct thread *thread );
 static unsigned int timer_map_access( struct object *obj, unsigned int access );
@@ -60,6 +61,7 @@ static const struct object_ops timer_ops =
 {
     sizeof(struct timer),      /* size */
     timer_dump,                /* dump */
+    timer_get_type,            /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     timer_signaled,            /* signaled */
@@ -183,6 +185,13 @@ static void timer_dump( struct object *obj, int verbose )
              timer->manual, get_timeout_str(timer->when), timer->period );
     dump_object_name( &timer->obj );
     fputc( '\n', stderr );
+}
+
+static struct object_type *timer_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'T','i','m','e','r'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static int timer_signaled( struct object *obj, struct thread *thread )

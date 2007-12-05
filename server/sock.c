@@ -106,6 +106,7 @@ static const struct object_ops sock_ops =
 {
     sizeof(struct sock),          /* size */
     sock_dump,                    /* dump */
+    no_get_type,                  /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     sock_signaled,                /* signaled */

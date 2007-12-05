@@ -44,6 +44,7 @@ struct event
 };
 
 static void event_dump( struct object *obj, int verbose );
+static struct object_type *event_get_type( struct object *obj );
 static int event_signaled( struct object *obj, struct thread *thread );
 static int event_satisfied( struct object *obj, struct thread *thread );
 static unsigned int event_map_access( struct object *obj, unsigned int access );
@@ -53,6 +54,7 @@ static const struct object_ops event_ops =
 {
     sizeof(struct event),      /* size */
     event_dump,                /* dump */
+    event_get_type,            /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     event_signaled,            /* signaled */
@@ -124,6 +126,13 @@ static void event_dump( struct object *obj, int verbose )
              event->manual_reset, event->signaled );
     dump_object_name( &event->obj );
     fputc( '\n', stderr );
+}
+
+static struct object_type *event_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'E','v','e','n','t'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static int event_signaled( struct object *obj, struct thread *thread )

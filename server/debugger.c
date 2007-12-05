@@ -69,6 +69,7 @@ static const struct object_ops debug_event_ops =
 {
     sizeof(struct debug_event),    /* size */
     debug_event_dump,              /* dump */
+    no_get_type,                   /* get_type */
     add_queue,                     /* add_queue */
     remove_queue,                  /* remove_queue */
     debug_event_signaled,          /* signaled */
@@ -92,6 +93,7 @@ static const struct object_ops debug_ctx_ops =
 {
     sizeof(struct debug_ctx),      /* size */
     debug_ctx_dump,                /* dump */
+    no_get_type,                   /* get_type */
     add_queue,                     /* add_queue */
     remove_queue,                  /* remove_queue */
     debug_ctx_signaled,            /* signaled */

@@ -45,6 +45,7 @@ struct async;
 struct async_queue;
 struct winstation;
 struct directory;
+struct object_type;
 
 
 struct unicode_str
@@ -60,6 +61,8 @@ struct object_ops
     size_t size;
     /* dump the object (for debugging) */
     void (*dump)(struct object *,int);
+    /* return the object type */
+    struct object_type *(*get_type)(struct object *);
     /* add a thread to the object wait queue */
     int  (*add_queue)(struct object *,struct wait_queue_entry *);
     /* remove a thread from the object wait queue */
@@ -127,6 +130,7 @@ extern void release_object( void *obj );
 extern struct object *find_object( const struct namespace *namespace, const struct unicode_str *name,
                                    unsigned int attributes );
 extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
+extern struct object_type *no_get_type( struct object *obj );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_signal( struct object *obj, unsigned int access );
@@ -207,6 +211,7 @@ extern void *create_named_object_dir( struct directory *root, const struct unico
                                       unsigned int attr, const struct object_ops *ops );
 extern void *open_object_dir( struct directory *root, const struct unicode_str *name,
                               unsigned int attr, const struct object_ops *ops );
+extern struct object_type *get_object_type( const struct unicode_str *name );
 extern void init_directories(void);
 
 /* symbolic link functions */

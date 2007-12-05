@@ -52,6 +52,7 @@ struct mapping
 };
 
 static void mapping_dump( struct object *obj, int verbose );
+static struct object_type *mapping_get_type( struct object *obj );
 static struct fd *mapping_get_fd( struct object *obj );
 static unsigned int mapping_map_access( struct object *obj, unsigned int access );
 static void mapping_destroy( struct object *obj );
@@ -60,6 +61,7 @@ static const struct object_ops mapping_ops =
 {
     sizeof(struct mapping),      /* size */
     mapping_dump,                /* dump */
+    mapping_get_type,            /* get_type */
     no_add_queue,                /* add_queue */
     NULL,                        /* remove_queue */
     NULL,                        /* signaled */
@@ -358,6 +360,13 @@ static void mapping_dump( struct object *obj, int verbose )
              mapping->base, mapping->shared_file );
     dump_object_name( &mapping->obj );
     fputc( '\n', stderr );
+}
+
+static struct object_type *mapping_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'S','e','c','t','i','o','n'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static struct fd *mapping_get_fd( struct object *obj )
