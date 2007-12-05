@@ -278,11 +278,13 @@ DECL_HANDLER(open_winstation);
 DECL_HANDLER(close_winstation);
 DECL_HANDLER(get_process_winstation);
 DECL_HANDLER(set_process_winstation);
+DECL_HANDLER(enum_winstation);
 DECL_HANDLER(create_desktop);
 DECL_HANDLER(open_desktop);
 DECL_HANDLER(close_desktop);
 DECL_HANDLER(get_thread_desktop);
 DECL_HANDLER(set_thread_desktop);
+DECL_HANDLER(enum_desktop);
 DECL_HANDLER(set_user_object_info);
 DECL_HANDLER(attach_thread_input);
 DECL_HANDLER(get_thread_input);
@@ -512,11 +514,13 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_close_winstation,
     (req_handler)req_get_process_winstation,
     (req_handler)req_set_process_winstation,
+    (req_handler)req_enum_winstation,
     (req_handler)req_create_desktop,
     (req_handler)req_open_desktop,
     (req_handler)req_close_desktop,
     (req_handler)req_get_thread_desktop,
     (req_handler)req_set_thread_desktop,
+    (req_handler)req_enum_desktop,
     (req_handler)req_set_user_object_info,
     (req_handler)req_attach_thread_input,
     (req_handler)req_get_thread_input,

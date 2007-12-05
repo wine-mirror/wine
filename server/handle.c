@@ -446,6 +446,27 @@ obj_handle_t find_inherited_handle( struct process *process, const struct object
     return 0;
 }
 
+/* enumerate handles of a given type */
+/* this is needed for window stations and desktops */
+obj_handle_t enumerate_handles( struct process *process, const struct object_ops *ops,
+                                unsigned int *index )
+{
+    struct handle_table *table = process->handles;
+    unsigned int i;
+    struct handle_entry *entry;
+
+    if (!table) return 0;
+
+    for (i = *index, entry = &table->entries[i]; i <= table->last; i++, entry++)
+    {
+        if (!entry->ptr) continue;
+        if (entry->ptr->ops != ops) continue;
+        *index = i + 1;
+        return index_to_handle(i);
+    }
+    return 0;
+}
+
 /* get/set the handle reserved flags */
 /* return the old flags (or -1 on error) */
 static int set_handle_flags( struct process *process, obj_handle_t handle, int mask, int flags )

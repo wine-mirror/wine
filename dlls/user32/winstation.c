@@ -204,13 +204,27 @@ BOOL WINAPI EnumWindowStationsA( WINSTAENUMPROCA func, LPARAM lparam )
 
 
 /******************************************************************************
- *              EnumWindowStationsA  (USER32.@)
+ *              EnumWindowStationsW  (USER32.@)
  */
 BOOL WINAPI EnumWindowStationsW( WINSTAENUMPROCW func, LPARAM lparam )
 {
-    FIXME( "(%p,%lx): stub\n", func, lparam );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    unsigned int index = 0;
+    WCHAR name[MAX_PATH];
+    BOOL ret = TRUE;
+
+    while (ret)
+    {
+        SERVER_START_REQ( enum_winstation )
+        {
+            req->index = index;
+            wine_server_set_reply( req, name, sizeof(name) );
+            ret = !wine_server_call( req );
+            index = reply->next;
+        }
+        SERVER_END_REQ;
+        if (ret) ret = func( name, lparam );
+    }
+    return ret;
 }
 
 
@@ -384,9 +398,24 @@ BOOL WINAPI EnumDesktopsA( HWINSTA winsta, DESKTOPENUMPROCA func, LPARAM lparam 
  */
 BOOL WINAPI EnumDesktopsW( HWINSTA winsta, DESKTOPENUMPROCW func, LPARAM lparam )
 {
-    FIXME( "(%p,%p,%lx): stub\n", winsta, func, lparam );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    unsigned int index = 0;
+    WCHAR name[MAX_PATH];
+    BOOL ret = TRUE;
+
+    while (ret)
+    {
+        SERVER_START_REQ( enum_desktop )
+        {
+            req->winstation = winsta;
+            req->index      = index;
+            wine_server_set_reply( req, name, sizeof(name) );
+            ret = !wine_server_call( req );
+            index = reply->next;
+        }
+        SERVER_END_REQ;
+        if (ret) ret = func( name, lparam );
+    }
+    return ret;
 }
 
 

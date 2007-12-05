@@ -385,6 +385,20 @@ void close_thread_desktop( struct thread *thread )
     clear_error();  /* ignore errors */
 }
 
+/* set the reply data from the object name */
+static void set_reply_data_obj_name( struct object *obj )
+{
+    data_size_t len;
+    const WCHAR *ptr, *name = get_object_name( obj, &len );
+
+    /* if there is a backslash return the part of the name after it */
+    if (name && (ptr = memchrW( name, '\\', len/sizeof(WCHAR) )))
+    {
+        len -= (ptr + 1 - name) * sizeof(WCHAR);
+        name = ptr + 1;
+    }
+    if (name) set_reply_data( name, min( len, get_reply_max_size() ));
+}
 
 /* create a window station */
 DECL_HANDLER(create_winstation)
@@ -590,18 +604,60 @@ DECL_HANDLER(set_user_object_info)
         release_object( obj );
         return;
     }
-    if (get_reply_max_size())
-    {
-        data_size_t len;
-        const WCHAR *ptr, *name = get_object_name( obj, &len );
-
-        /* if there is a backslash return the part of the name after it */
-        if (name && (ptr = memchrW( name, '\\', len/sizeof(WCHAR) )))
-        {
-            len -= (ptr + 1 - name) * sizeof(WCHAR);
-            name = ptr + 1;
-        }
-        if (name) set_reply_data( name, min( len, get_reply_max_size() ));
-    }
+    if (get_reply_max_size()) set_reply_data_obj_name( obj );
     release_object( obj );
+}
+
+
+/* enumerate window stations */
+DECL_HANDLER(enum_winstation)
+{
+    unsigned int index = req->index;
+    obj_handle_t handle;
+    struct object *obj;
+
+    while ((handle = enumerate_handles( current->process, &winstation_ops, &index )))
+    {
+        if (!(obj = get_handle_obj( current->process, handle, WINSTA_ENUMERATE, &winstation_ops )))
+            continue;
+        set_reply_data_obj_name( obj );
+        release_object( obj );
+        clear_error();
+        reply->next = index;
+        return;
+    }
+    set_error( STATUS_NO_MORE_ENTRIES );
+}
+
+
+/* enumerate desktops */
+DECL_HANDLER(enum_desktop)
+{
+    struct winstation *winstation;
+    struct desktop *desktop;
+    unsigned int index = req->index;
+    obj_handle_t handle;
+
+    if (!(winstation = (struct winstation *)get_handle_obj( current->process, req->winstation,
+                                                            WINSTA_ENUMDESKTOPS, &winstation_ops )))
+        return;
+
+    while ((handle = enumerate_handles( current->process, &desktop_ops, &index )))
+    {
+        if (!(desktop = get_desktop_obj( current->process, handle, DESKTOP_ENUMERATE )))
+            continue;
+
+        if (desktop->winstation == winstation)
+        {
+            set_reply_data_obj_name( &desktop->obj );
+            release_object( desktop );
+            clear_error();
+            reply->next = index;
+            return;
+        }
+        release_object( desktop );
+    }
+
+    release_object( winstation );
+    set_error( STATUS_NO_MORE_ENTRIES );
 }
