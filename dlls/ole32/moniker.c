@@ -693,7 +693,7 @@ RunningObjectTableImpl_GetObject( IRunningObjectTable* iface,
 {
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
     MonikerComparisonData *moniker_data;
-    InterfaceData *object;
+    InterfaceData *object = NULL;
     IrotCookie cookie;
     HRESULT hr;
     struct rot_entry *rot_entry;
