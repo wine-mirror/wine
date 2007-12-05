@@ -23,10 +23,8 @@
 #include <windows.h>
 #include <stdio.h>
 
-BOOL WINAPI GetConsoleInputExeNameA(DWORD, LPSTR);
-BOOL WINAPI GetConsoleInputExeNameW(DWORD, LPWSTR);
-BOOL WINAPI SetConsoleInputExeNameA(LPCSTR);
-BOOL WINAPI SetConsoleInputExeNameW(LPCWSTR);
+static BOOL (WINAPI *pGetConsoleInputExeNameA)(DWORD, LPSTR);
+static BOOL (WINAPI *pSetConsoleInputExeNameA)(LPCSTR);
 
 /* DEFAULT_ATTRIB is used for all initial filling of the console.
  * all modifications are made with TEST_ATTRIB so that we could check
@@ -54,6 +52,21 @@ BOOL WINAPI SetConsoleInputExeNameW(LPCWSTR);
   expect = ReadConsoleOutputAttribute((hCon), &__attr, 1, (c), &__len) == 1 && __len == 1 && __attr == (attr); \
   ok(expect, "At (%d,%d): expecting attr %04x got %04x\n", (c).X, (c).Y, (attr), __attr); \
 } while (0)
+
+static void init_function_pointers(void)
+{
+    HMODULE hKernel32;
+
+#define KERNEL32_GET_PROC(func)                                     \
+    p##func = (void *)GetProcAddress(hKernel32, #func);             \
+    if(!p##func) trace("GetProcAddress(hKernel32, '%s') failed\n", #func);
+
+    hKernel32 = GetModuleHandleA("kernel32.dll");
+    KERNEL32_GET_PROC(GetConsoleInputExeNameA);
+    KERNEL32_GET_PROC(SetConsoleInputExeNameA);
+
+#undef KERNEL32_GET_PROC
+}
 
 /* FIXME: this could be optimized on a speed point of view */
 static void resetContent(HANDLE hCon, COORD sbSize, BOOL content)
@@ -759,13 +772,13 @@ static void test_GetSetConsoleInputExeName(void)
     static char input_exe[MAX_PATH] = "winetest.exe";
 
     SetLastError(0xdeadbeef);
-    ret = GetConsoleInputExeNameA(0, NULL);
+    ret = pGetConsoleInputExeNameA(0, NULL);
     error = GetLastError();
     ok(ret, "GetConsoleInputExeNameA failed\n");
     ok(error == ERROR_BUFFER_OVERFLOW, "got %u expected ERROR_BUFFER_OVERFLOW\n", error);
 
     SetLastError(0xdeadbeef);
-    ret = GetConsoleInputExeNameA(0, buffer);
+    ret = pGetConsoleInputExeNameA(0, buffer);
     error = GetLastError();
     ok(ret, "GetConsoleInputExeNameA failed\n");
     ok(error == ERROR_BUFFER_OVERFLOW, "got %u expected ERROR_BUFFER_OVERFLOW\n", error);
@@ -773,26 +786,26 @@ static void test_GetSetConsoleInputExeName(void)
     GetModuleFileNameA(GetModuleHandle(NULL), module, sizeof(module));
     p = strrchr(module, '\\') + 1;
 
-    ret = GetConsoleInputExeNameA(sizeof(buffer)/sizeof(buffer[0]), buffer);
+    ret = pGetConsoleInputExeNameA(sizeof(buffer)/sizeof(buffer[0]), buffer);
     ok(ret, "GetConsoleInputExeNameA failed\n");
     todo_wine ok(!lstrcmpA(buffer, p), "got %s expected %s\n", buffer, p);
 
     SetLastError(0xdeadbeef);
-    ret = SetConsoleInputExeNameA(NULL);
+    ret = pSetConsoleInputExeNameA(NULL);
     error = GetLastError();
     ok(!ret, "SetConsoleInputExeNameA failed\n");
     ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", error);
 
     SetLastError(0xdeadbeef);
-    ret = SetConsoleInputExeNameA("");
+    ret = pSetConsoleInputExeNameA("");
     error = GetLastError();
     ok(!ret, "SetConsoleInputExeNameA failed\n");
     ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", error);
 
-    ret = SetConsoleInputExeNameA(input_exe);
+    ret = pSetConsoleInputExeNameA(input_exe);
     ok(ret, "SetConsoleInputExeNameA failed\n");
 
-    ret = GetConsoleInputExeNameA(sizeof(buffer)/sizeof(buffer[0]), buffer);
+    ret = pGetConsoleInputExeNameA(sizeof(buffer)/sizeof(buffer[0]), buffer);
     ok(ret, "GetConsoleInputExeNameA failed\n");
     ok(!lstrcmpA(buffer, input_exe), "got %s expected %s\n", buffer, input_exe);
 }
@@ -802,6 +815,8 @@ START_TEST(console)
     HANDLE hConIn, hConOut;
     BOOL ret;
     CONSOLE_SCREEN_BUFFER_INFO	sbi;
+
+    init_function_pointers();
 
     /* be sure we have a clean console (and that's our own)
      * FIXME: this will make the test fail (currently) if we don't run
@@ -836,5 +851,11 @@ START_TEST(console)
     testCtrlHandler();
     /* still to be done: access rights & access on objects */
 
-    test_GetSetConsoleInputExeName();
+    if (!pGetConsoleInputExeNameA && !pSetConsoleInputExeNameA)
+    {
+        skip("GetConsoleInputExeNameA and/or SetConsoleInputExeNameA is not available\n");
+        return;
+    }
+    else
+        test_GetSetConsoleInputExeName();
 }
