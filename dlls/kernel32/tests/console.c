@@ -851,7 +851,7 @@ START_TEST(console)
     testCtrlHandler();
     /* still to be done: access rights & access on objects */
 
-    if (!pGetConsoleInputExeNameA && !pSetConsoleInputExeNameA)
+    if (!pGetConsoleInputExeNameA || !pSetConsoleInputExeNameA)
     {
         skip("GetConsoleInputExeNameA and/or SetConsoleInputExeNameA is not available\n");
         return;
