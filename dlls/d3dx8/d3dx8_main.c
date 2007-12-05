@@ -29,10 +29,9 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
-
+#include "wine/unicode.h"
 #include "d3dx8core.h"
 #include "d3dx8core_private.h"
-
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
@@ -79,11 +78,21 @@ HRESULT WINAPI D3DXAssembleShaderFromFileA(LPSTR pSrcFile, DWORD Flags,
 				    LPD3DXBUFFER* ppConstants,
 				    LPD3DXBUFFER* ppCompiledShader,
 				    LPD3DXBUFFER* ppCompilationErrors) {
-  FIXME("(void): stub\n");
-  return D3D_OK;
+  LPWSTR pSrcFileW = NULL;
+  DWORD len;
+  HRESULT ret;
+
+  if (!pSrcFile) return D3DXERR_INVALIDDATA;
+
+  len = MultiByteToWideChar( CP_ACP, 0, pSrcFile, -1, NULL, 0 );
+  pSrcFileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+  MultiByteToWideChar( CP_ACP, 0, pSrcFile, -1, pSrcFileW, len );
+  ret=D3DXAssembleShaderFromFileW(pSrcFileW, Flags, ppConstants, ppCompiledShader, ppCompilationErrors);
+  HeapFree( GetProcessHeap(), 0, pSrcFileW );
+  return ret;
 }
 
-HRESULT WINAPI D3DXAssembleShaderFromFileW(LPSTR pSrcFile, DWORD Flags,
+HRESULT WINAPI D3DXAssembleShaderFromFileW(LPWSTR pSrcFile, DWORD Flags,
 				    LPD3DXBUFFER* ppConstants,
 				    LPD3DXBUFFER* ppCompiledShader,
 				    LPD3DXBUFFER* ppCompilationErrors) {
