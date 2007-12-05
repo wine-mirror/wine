@@ -68,10 +68,11 @@ static HMODULE hComctl32;
 static HANDLE (WINAPI *pCreateMRUListA)(LPCREATEMRULISTA);
 static void   (WINAPI *pFreeMRUList)(HANDLE);
 static INT    (WINAPI *pAddMRUStringA)(HANDLE,LPCSTR);
+static INT    (WINAPI *pEnumMRUList)(HANDLE,INT,LPVOID,DWORD);
 /*
 static INT    (WINAPI *pFindMRUStringA)(HANDLE,LPCSTR,LPINT);
-static INT    (WINAPI *pEnumMRUList)(HANDLE,INT,LPVOID,DWORD);
 */
+
 
 static BOOL create_reg_entries(void)
 {
@@ -162,8 +163,13 @@ static void test_MRUListA(void)
     pCreateMRUListA = (void*)GetProcAddress(hComctl32,(LPCSTR)151);
     pFreeMRUList = (void*)GetProcAddress(hComctl32,(LPCSTR)152);
     pAddMRUStringA = (void*)GetProcAddress(hComctl32,(LPCSTR)153);
-    if (!pCreateMRUListA || !pFreeMRUList || !pAddMRUStringA)
+    pEnumMRUList = (void*)GetProcAddress(hComctl32,(LPCSTR)154);
+
+    if (!pCreateMRUListA || !pFreeMRUList || !pAddMRUStringA || !pEnumMRUList)
+    {
+        skip("MRU entry points not found\n");
         return;
+    }
 
     if (0)
     {
@@ -213,6 +219,7 @@ static void test_MRUListA(void)
 
     if (hMRU)
     {
+        char buffer[255];
         checks[0] = "Test 1";
         checks[1] = "Test 2";
         checks[2] = "Test 3";
@@ -276,6 +283,63 @@ static void test_MRUListA(void)
            iRet, GetLastError());
         checks[0] = checks[3];
         check_reg_entries("abc", checks);
+
+        /* NULL buffer = get list size */
+        iRet = pEnumMRUList(hMRU, 0, NULL, 0);
+        ok(iRet == 3, "EnumMRUList expected %d, got %d\n", LIST_SIZE, iRet);
+
+        todo_wine{
+        /* negative item pos = get list size */
+        iRet = pEnumMRUList(hMRU, -1, NULL, 0);
+        ok(iRet == 3, "EnumMRUList expected %d, got %d\n", LIST_SIZE, iRet);
+
+        /* negative item pos = get list size */
+        iRet = pEnumMRUList(hMRU, -5, NULL, 0);
+        ok(iRet == 3, "EnumMRUList expected %d, got %d\n", LIST_SIZE, iRet);
+
+        /* negative item pos = get list size */
+        iRet = pEnumMRUList(hMRU, -1, buffer, 255);
+        ok(iRet == 3, "EnumMRUList expected %d, got %d\n", LIST_SIZE, iRet);
+
+        /* negative item pos = get list size */
+        iRet = pEnumMRUList(hMRU, -5, buffer, 255);
+        ok(iRet == 3, "EnumMRUList expected %d, got %d\n", LIST_SIZE, iRet);
+        }
+
+        /* check entry 0 */
+        buffer[0] = 0;
+        iRet = pEnumMRUList(hMRU, 0, buffer, 255);
+        todo_wine ok(iRet == strlen(checks[3]), "EnumMRUList expected %d, got %d\n", strlen(checks[3]), iRet);
+        ok(strcmp(buffer, checks[3]) == 0, "EnumMRUList expected %s, got %s\n", checks[3], buffer);
+
+        /* check entry 0 with a too small buffer */
+        buffer[0] = 0;   /* overwritten with 'T' */
+        buffer[1] = 'A'; /* overwritten with 0   */
+        buffer[2] = 'A'; /* unchanged */
+        buffer[3] = 0;   /* unchanged */
+        iRet = pEnumMRUList(hMRU, 0, buffer, 2);
+        todo_wine ok(iRet == strlen(checks[3]), "EnumMRUList expected %d, got %d\n", strlen(checks[3]), iRet);
+        todo_wine ok(strcmp(buffer, "T") == 0, "EnumMRUList expected %s, got %s\n", "T", buffer);
+        /* make sure space after buffer has old values */
+        ok(buffer[2] == 'A', "EnumMRUList expected %02x, got %02x\n", 'A', buffer[2]);
+
+        /* check entry 1 */
+        buffer[0] = 0;
+        iRet = pEnumMRUList(hMRU, 1, buffer, 255);
+        todo_wine ok(iRet == strlen(checks[1]), "EnumMRUList expected %d, got %d\n", strlen(checks[1]), iRet);
+        ok(strcmp(buffer, checks[1]) == 0, "EnumMRUList expected %s, got %s\n", checks[1], buffer);
+
+        /* check entry 2 */
+        buffer[0] = 0;
+        iRet = pEnumMRUList(hMRU, 2, buffer, 255);
+        todo_wine ok(iRet == strlen(checks[2]), "EnumMRUList expected %d, got %d\n", strlen(checks[2]), iRet);
+        ok(strcmp(buffer, checks[2]) == 0, "EnumMRUList expected %s, got %s\n", checks[2], buffer);
+
+        /* check out of bounds entry 3 */
+        strcpy(buffer, "dummy");
+        iRet = pEnumMRUList(hMRU, 3, buffer, 255);
+        ok(iRet == -1, "EnumMRUList expected %d, got %d\n", -1, iRet);
+        ok(strcmp(buffer, "dummy") == 0, "EnumMRUList expected unchanged buffer %s, got %s\n", "dummy", buffer);
 
         /* Finished with this MRU */
         pFreeMRUList(hMRU);
