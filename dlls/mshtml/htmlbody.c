@@ -127,7 +127,7 @@ static HRESULT WINAPI HTMLBodyElement_get_background(IHTMLBodyElement *iface, BS
     if(NS_SUCCEEDED(nsres)) {
         const PRUnichar *background;
         nsAString_GetData(&background_str, &background, NULL);
-        *p = SysAllocString(background);
+        *p = *background ? SysAllocString(background) : NULL;
     }else {
         ERR("GetBackground failed: %08x\n", nsres);
         *p = NULL;
