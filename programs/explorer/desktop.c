@@ -121,18 +121,18 @@ static void initialize_display_settings( HWND desktop )
         '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
         'd','e','v','i','c','e','_','g','u','i','d',0 };
     GUID guid;
-    LPWSTR guid_str;
+    RPC_CSTR guid_str;
     ATOM guid_atom;
     DEVMODEW dmW;
 
     UuidCreate( &guid );
-    UuidToStringW( &guid, &guid_str );
-    WINE_TRACE( "display guid %s\n", wine_dbgstr_w(guid_str) );
+    UuidToStringA( &guid, &guid_str );
+    WINE_TRACE( "display guid %s\n", guid_str );
 
-    guid_atom = GlobalAddAtomW( guid_str );
+    guid_atom = GlobalAddAtomA( (LPCSTR)guid_str );
     SetPropW( desktop, display_device_guid_propW, ULongToHandle(guid_atom) );
 
-    RpcStringFreeW( &guid_str );
+    RpcStringFreeA( &guid_str );
 
     /* Store current display mode in the registry */
     if (EnumDisplaySettingsExW( NULL, ENUM_CURRENT_SETTINGS, &dmW, 0 ))
