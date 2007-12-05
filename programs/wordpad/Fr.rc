@@ -27,7 +27,7 @@ BEGIN
         MENUITEM "&Enregistrer\tCtrl+S",    ID_FILE_SAVE
         MENUITEM "Enregistrer &sous...",    ID_FILE_SAVEAS
         MENUITEM SEPARATOR
-        MENUITEM "&Imprimer . . .\tCtrl+P",    ID_PRINT
+        MENUITEM "&Imprimer...\tCtrl+P",    ID_PRINT
         MENUITEM "A&perçu avant impression...",    ID_PREVIEW
         MENUITEM "&Mise en page...",        ID_PRINTSETUP
         MENUITEM SEPARATOR
@@ -44,7 +44,7 @@ BEGIN
         MENUITEM "&Effacer\tDel",                   ID_EDIT_CLEAR
         MENUITEM "&Sélectionner tout\tCtrl+A",      ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "&Rechercher . . .\tCrtl+F",             ID_FIND
+        MENUITEM "&Rechercher...\tCrtl+F",             ID_FIND
         MENUITEM "Rechercher le &suivant\tF3",                  ID_FIND_NEXT
         MENUITEM "&Remplacer...\tCtrl+H",          ID_REPLACE
         MENUITEM SEPARATOR
