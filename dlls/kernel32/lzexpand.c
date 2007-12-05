@@ -192,10 +192,9 @@ HFILE WINAPI LZInit( HFILE hfSrc )
 	}
         for (i = 0; i < MAX_LZSTATES; i++) if (!lzstates[i]) break;
         if (i == MAX_LZSTATES) return LZERROR_GLOBALLOC;
-	lzstates[i] = lzs = HeapAlloc( GetProcessHeap(), 0, sizeof(struct lzstate) );
+	lzstates[i] = lzs = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*lzs) );
 	if(lzs == NULL) return LZERROR_GLOBALLOC;
 
-	memset(lzs,'\0',sizeof(*lzs));
 	lzs->realfd	= hfSrc;
 	lzs->lastchar	= head.lastchar;
 	lzs->reallength = head.reallength;
