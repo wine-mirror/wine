@@ -41,7 +41,7 @@ static SECURITY_STATUS SECUR32_makeSecHandle(PSecHandle phSec,
 
     if (phSec && package && realHandle)
     {
-        PSecHandle newSec = (PSecHandle)SECUR32_ALLOC(sizeof(SecHandle));
+        PSecHandle newSec = HeapAlloc(GetProcessHeap(), 0, sizeof(SecHandle));
 
         if (newSec)
         {
@@ -169,7 +169,7 @@ SECURITY_STATUS WINAPI FreeCredentialsHandle(
             ret = package->provider->fnTableW.FreeCredentialsHandle(cred);
         else
             ret = SEC_E_INVALID_HANDLE;
-        SECUR32_FREE(cred);
+        HeapFree(GetProcessHeap(), 0, cred);
     }
     else
         ret = SEC_E_INVALID_HANDLE;
@@ -465,7 +465,7 @@ SECURITY_STATUS WINAPI DeleteSecurityContext(PCtxtHandle phContext)
             ret = package->provider->fnTableW.DeleteSecurityContext(ctxt);
         else
             ret = SEC_E_INVALID_HANDLE;
-        SECUR32_FREE(ctxt);
+        HeapFree(GetProcessHeap(), 0, ctxt);
     }
     else
         ret = SEC_E_INVALID_HANDLE;
@@ -710,7 +710,7 @@ SECURITY_STATUS WINAPI QuerySecurityPackageInfoA(SEC_CHAR *pszPackageName,
                  package->infoW.Comment, -1, NULL, 0, NULL, NULL);
                 bytesNeeded += commentLen;
             }
-            *ppPackageInfo = (PSecPkgInfoA)SECUR32_ALLOC(bytesNeeded);
+            *ppPackageInfo = HeapAlloc(GetProcessHeap(), 0, bytesNeeded);
             if (*ppPackageInfo)
             {
                 PSTR nextString = (PSTR)((PBYTE)*ppPackageInfo +
@@ -772,7 +772,7 @@ SECURITY_STATUS WINAPI QuerySecurityPackageInfoW(SEC_WCHAR *pszPackageName,
             commentLen = lstrlenW(package->infoW.Comment) + 1;
             bytesNeeded += commentLen * sizeof(WCHAR);
         }
-        *ppPackageInfo = (PSecPkgInfoW)SECUR32_ALLOC(bytesNeeded);
+        *ppPackageInfo = HeapAlloc(GetProcessHeap(), 0, bytesNeeded);
         if (*ppPackageInfo)
         {
             PWSTR nextString = (PWSTR)((PBYTE)*ppPackageInfo +

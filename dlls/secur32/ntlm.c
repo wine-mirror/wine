@@ -748,7 +748,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
     if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
     {
-        pOutput->pBuffers[token_idx].pvBuffer = SECUR32_ALLOC(bin_len);
+        pOutput->pBuffers[token_idx].pvBuffer = HeapAlloc(GetProcessHeap(), 0, bin_len);
         pOutput->pBuffers[token_idx].cbBuffer = bin_len;
     }
     else if (pOutput->pBuffers[token_idx].cbBuffer < bin_len)

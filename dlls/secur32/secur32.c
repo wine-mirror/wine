@@ -169,7 +169,7 @@ PWSTR SECUR32_strdupW(PCWSTR str)
 
     if (str)
     {
-        ret = (PWSTR)SECUR32_ALLOC((lstrlenW(str) + 1) * sizeof(WCHAR));
+        ret = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(str) + 1) * sizeof(WCHAR));
         if (ret)
             lstrcpyW(ret, str);
     }
@@ -188,7 +188,7 @@ PWSTR SECUR32_AllocWideFromMultiByte(PCSTR str)
 
         if (charsNeeded)
         {
-            ret = (PWSTR)SECUR32_ALLOC(charsNeeded * sizeof(WCHAR));
+            ret = HeapAlloc(GetProcessHeap(), 0, charsNeeded * sizeof(WCHAR));
             if (ret)
                 MultiByteToWideChar(CP_ACP, 0, str, -1, ret, charsNeeded);
         }
@@ -211,7 +211,7 @@ PSTR SECUR32_AllocMultiByteFromWide(PCWSTR str)
 
         if (charsNeeded)
         {
-            ret = (PSTR)SECUR32_ALLOC(charsNeeded);
+            ret = HeapAlloc(GetProcessHeap(), 0, charsNeeded);
             if (ret)
                 WideCharToMultiByte(CP_ACP, 0, str, -1, ret, charsNeeded,
                  NULL, NULL);
@@ -663,8 +663,8 @@ static void SECUR32_freeProviders(void)
     {
         LIST_FOR_EACH_ENTRY(package, &packageTable->table, SecurePackage, entry)
         {
-            SECUR32_FREE(package->infoW.Name);
-            SECUR32_FREE(package->infoW.Comment);
+            HeapFree(GetProcessHeap(), 0, package->infoW.Name);
+            HeapFree(GetProcessHeap(), 0, package->infoW.Comment);
         }
 
         HeapFree(GetProcessHeap(), 0, packageTable);
@@ -675,7 +675,7 @@ static void SECUR32_freeProviders(void)
     {
         LIST_FOR_EACH_ENTRY(provider, &providerTable->table, SecureProvider, entry)
         {
-            SECUR32_FREE(provider->moduleName);
+            HeapFree(GetProcessHeap(), 0, provider->moduleName);
             if (provider->lib)
                 FreeLibrary(provider->lib);
         }
@@ -698,7 +698,7 @@ static void SECUR32_freeProviders(void)
  */
 SECURITY_STATUS WINAPI FreeContextBuffer(PVOID pv)
 {
-    SECUR32_FREE(pv);
+    HeapFree(GetProcessHeap(), 0, pv);
 
     return SEC_E_OK;
 }
@@ -731,7 +731,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
         }
         if (bytesNeeded)
         {
-            *ppPackageInfo = (PSecPkgInfoW)SECUR32_ALLOC(bytesNeeded);
+            *ppPackageInfo = HeapAlloc(GetProcessHeap(), 0, bytesNeeded);
             if (*ppPackageInfo)
             {
                 ULONG i = 0;
@@ -796,7 +796,7 @@ static PSecPkgInfoA thunk_PSecPkgInfoWToA(ULONG cPackages,
                 bytesNeeded += WideCharToMultiByte(CP_ACP, 0, info[i].Comment,
                  -1, NULL, 0, NULL, NULL);
         }
-        ret = (PSecPkgInfoA)SECUR32_ALLOC(bytesNeeded);
+        ret = HeapAlloc(GetProcessHeap(), 0, bytesNeeded);
         if (ret)
         {
             PSTR nextString;

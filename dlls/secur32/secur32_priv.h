@@ -24,12 +24,6 @@
 #include <sys/types.h>
 #include "wine/list.h"
 
-/* Memory allocation functions for memory accessible by callers of secur32.
- * The details are implementation specific.
- */
-#define SECUR32_ALLOC(bytes) HeapAlloc(GetProcessHeap(), 0, (bytes))
-#define SECUR32_FREE(p)      HeapFree(GetProcessHeap(), 0, (p))
-
 typedef struct _SecureProvider
 {
     struct list             entry;
@@ -119,7 +113,7 @@ SecurePackage *SECUR32_findPackageW(PCWSTR packageName);
 SecurePackage *SECUR32_findPackageA(PCSTR packageName);
 
 /* A few string helpers; will return NULL if str is NULL.  Free return with
- * SECUR32_FREE */
+ * HeapFree */
 PWSTR SECUR32_strdupW(PCWSTR str);
 PWSTR SECUR32_AllocWideFromMultiByte(PCSTR str);
 PSTR  SECUR32_AllocMultiByteFromWide(PCWSTR str);
