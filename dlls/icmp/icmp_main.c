@@ -433,8 +433,9 @@ DWORD WINAPI IcmpSendEcho(
              * Decrease the timeout so that we don't enter an endless loop even
              * if we get flooded with ICMP packets that are not for us.
              */
-            Timeout -= (recv_time - send_time);
-            if (Timeout < 0) Timeout = 0;
+            DWORD t = (recv_time - send_time);
+            if (Timeout > t) Timeout -= t;
+            else             Timeout = 0;
             continue;
         } else {
             /* This is a reply to our packet */
