@@ -102,8 +102,22 @@ static void test_render_run(void)
     releasefiltergraph();
 }
 
+static void test_filter_graph2(void)
+{
+    HRESULT hr;
+    IFilterGraph2 *pF = NULL;
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (LPVOID*)&pF);
+    todo_wine {
+        ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
+        ok(pF != NULL, "pF is NULL\n");
+    }
+}
+
 START_TEST(filtergraph)
 {
     CoInitialize(NULL);
     test_render_run();
+    test_filter_graph2();
 }
