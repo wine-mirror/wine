@@ -1116,6 +1116,33 @@ static void test_EM_SETTEXTEX(void)
   ok(strcmp((const char *)buf, TestItem2_after) == 0,
       "WM_GETTEXT did *not* see \\r converted to \\r\\n pairs.\n");
 
+  /* Baseline test for just-enough buffer space for string */
+  getText.cb = (lstrlenW(TestItem2) + 1) * sizeof(WCHAR);
+  getText.codepage = 1200;  /* no constant for unicode */
+  getText.flags = GT_DEFAULT;
+  getText.lpDefaultChar = NULL;
+  getText.lpUsedDefaultChar = NULL;
+  memset(buf, 0, MAX_BUF_LEN);
+  SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
+  ok(lstrcmpW(buf, TestItem2) == 0,
+      "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
+
+  /* When there is enough space for one character, but not both, of the CRLF
+     pair at the end of the string, the CR is not copied at all. That is,
+     the caller must not see CRLF pairs truncated to CR at the end of the
+     string.
+   */
+  getText.cb = (lstrlenW(TestItem2) + 1) * sizeof(WCHAR);
+  getText.codepage = 1200;  /* no constant for unicode */
+  getText.flags = GT_USECRLF;   /* <-- asking for CR -> CRLF conversion */
+  getText.lpDefaultChar = NULL;
+  getText.lpUsedDefaultChar = NULL;
+  memset(buf, 0, MAX_BUF_LEN);
+  SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
+  ok(lstrcmpW(buf, TestItem1) == 0,
+      "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
+
+
   /* \r\n pairs get changed into \r */
   setText.codepage = 1200;  /* no constant for unicode */
   getText.codepage = 1200;  /* no constant for unicode */

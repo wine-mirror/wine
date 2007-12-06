@@ -2804,7 +2804,10 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
       if (!ME_FindItemFwd(item, diRun))
         /* No '\r' is appended to the last paragraph. */
         nLen = 0;
-      else {
+      else if (bCRLF && nChars == 1) {
+        nLen = 0;
+        nChars = 0;
+      } else {
         *buffer = '\r';
         if (bCRLF)
         {
