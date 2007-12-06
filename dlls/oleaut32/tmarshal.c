@@ -471,7 +471,9 @@ TMProxyImpl_Connect(
         HRESULT hr = TMarshalDispatchChannel_Create(pRpcChannelBuffer, &This->iid, &pDelegateChannel);
         if (FAILED(hr))
             return hr;
-        return IRpcProxyBuffer_Connect(This->dispatch_proxy, pDelegateChannel);
+        hr = IRpcProxyBuffer_Connect(This->dispatch_proxy, pDelegateChannel);
+        IRpcChannelBuffer_Release(pDelegateChannel);
+        return hr;
     }
 
     return S_OK;
