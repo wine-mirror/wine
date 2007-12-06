@@ -1557,6 +1557,15 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		IShellView_Refresh((IShellView*)This);
               }
 
+	      else if(plvKeyDown->wVKey == VK_BACK)
+	      {
+		LPSHELLBROWSER lpSb;
+		if((lpSb = (LPSHELLBROWSER)SendMessageW(This->hWndParent, CWM_GETISHELLBROWSER, 0, 0)))
+		{
+		  IShellBrowser_BrowseObject(lpSb, NULL, SBSP_PARENT);
+		}
+	      }
+
               else
 		FIXME("LVN_KEYDOWN key=0x%08x\n",plvKeyDown->wVKey);
 	    }
