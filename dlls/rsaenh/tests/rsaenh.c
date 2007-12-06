@@ -1937,6 +1937,7 @@ static void test_null_provider(void)
     result = CryptGetUserKey(prov, AT_SIGNATURE, &key);
     ok(result, "CryptGetUserKey failed: %08x\n", GetLastError());
     CryptDestroyKey(key);
+    CryptReleaseContext(prov, 0);
 
     CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
@@ -1956,9 +1957,11 @@ static void test_null_provider(void)
     result = CryptGetUserKey(prov, AT_KEYEXCHANGE, &key);
     ok (result, "CryptGetUserKey failed with error %08x\n", GetLastError());
     CryptDestroyKey(key);
+    CryptReleaseContext(prov, 0);
 
     CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
+    CryptReleaseContext(prov, 0);
 
     /* test the machine key set */
     CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
