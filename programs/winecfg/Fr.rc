@@ -63,18 +63,17 @@ BEGIN
     GROUPBOX        " Paramètres des fenêtres ",IDC_STATIC,8,4,244,180
 
     CONTROL	    "Permettre aux applications DirectX d'empêcher la souris de quitter leur fenêtre",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP | BS_MULTILINE,15,14,230,16
+
+    CONTROL	        "Permettre au gestionnaire de &fenêtres de contrôler les fenêtres",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     LTEXT 	    "Si les fenêtres sont gérées par votre gestionnaire de fenêtres, elles auront des bordures standard, elles respecteront votre bureau virtuel et apparaîtront dans la liste des fenêtres.\n\nSi les fenêtres ne sont pas gérées, elles seront déconnectées de votre gestionnaire de fenêtres. Ceci signifie qu'elle ne seront pas parfaitement intégrées à votre bureau, mais que l'émulation sera plus précise ce qui permet à certains programmes de mieux fonctionner.",
 		    IDC_STATIC,15,45,228,80
-    CONTROL	    "Permettre au gestionnaire de fenêtres de contrôler les fenêtres",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,140,230,8
 
-    /* FIXME: the wording of this explanation could be a lot better */
+    CONTROL         "Émuler un bureau virtuel",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,113,230,10
     LTEXT           "Vous avez le choix entre l'émulation d'un bureau Windows où toutes les fenêtres de vos programmes Windows sont confinées ou bien d'afficher les fenêtres de ces programmes sur votre bureau standard.",
                     IDC_STATIC,15,154,228,28
     LTEXT           "Taille du bureau :",IDC_DESKTOP_SIZE,15,125,60,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,129,123,8,8,WS_DISABLED
-    CONTROL         "Emuler un bureau virtuel",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,113,230,10
-
     EDITTEXT        IDC_DESKTOP_WIDTH,84,123,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT        IDC_DESKTOP_HEIGHT,137,123,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
@@ -84,10 +83,10 @@ BEGIN
     COMBOBOX	    IDC_D3D_VSHADER_MODE,110,198,100,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     CONTROL         "Permettre le Pixel Shader (si supporté par le matériel)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,215,230,10
-    GROUPBOX        " Screen Resolution ",IDC_STATIC,8,242,244,25
+    GROUPBOX        " Résolution de l'écran ",IDC_STATIC,8,242,244,25
     CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
     EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
-    LTEXT           "dpi",IDC_STATIC,235,252,10,8
+    LTEXT           "ppp",IDC_STATIC,235,252,10,8
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -99,11 +98,11 @@ BEGIN
                     , IDC_STATIC,16,16,220,32
     LTEXT           "&Nouveau surclassage pour :",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
-    PUSHBUTTON      "&Ajouter surclassage",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
+    PUSHBUTTON      "&Ajouter",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
     LTEXT           "Surclassages existants :",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
-    PUSHBUTTON      "&Editer surclassage",IDC_DLLS_EDITDLL,164,96,82,14
-    PUSHBUTTON      "&Supprimer surclassage",IDC_DLLS_REMOVEDLL,164,114,82,14
+    PUSHBUTTON      "&Modifier",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "&Supprimer",IDC_DLLS_REMOVEDLL,164,114,82,14
 END
 
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
@@ -140,17 +139,17 @@ BEGIN
     LTEXT           "&Type :",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,43,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    LTEXT           "Label et numéro de série",IDC_LABELSERIAL_STATIC,15,155,95,10
+    LTEXT           "Étiquette et numéro de série",IDC_LABELSERIAL_STATIC,15,155,95,10
 
     PUSHBUTTON      "&Affichage avancé",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
     CONTROL         "Autodétection depuis le &lecteur :",IDC_RADIO_AUTODETECT,"Button",
                     BS_AUTORADIOBUTTON,15,166,140,10
     EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Pa&rcourir...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    PUSHBUTTON      "&Parcourir...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
     CONTROL         "Assigner &manuellement :",IDC_RADIO_ASSIGN,"Button",
                     BS_AUTORADIOBUTTON,15,195,140,10
 
-    LTEXT           "&Label :",IDC_STATIC_LABEL,33,208,40,12
+    LTEXT           "É&tiquette :",IDC_STATIC_LABEL,33,208,40,12
     EDITTEXT        IDC_EDIT_LABEL,74,205,67,13,ES_AUTOHSCROLL | WS_TABSTOP
     LTEXT           "N° de série :",IDC_STATIC_SERIAL,33,225,40,12
     EDITTEXT        IDC_EDIT_SERIAL,74,221,67,13,ES_AUTOHSCROLL | WS_TABSTOP
@@ -165,15 +164,16 @@ BEGIN
     GROUPBOX        " Sélection du pilote ",IDC_STATIC,8,4,244,195
     LTEXT           "Sélectionnez un pilote audio en cochant la case en regard du pilote désiré. Désactivez le son en ne sélectionnant aucun pilote. La sélection de pilotes multiples n'est pas recommandée. Configurez le pilote en effectuant un click droit dessus.",IDC_STATIC,15,20,227,60
     CONTROL         "Matériel",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,60,140,130
-    PUSHBUTTON	    "Panneau de configuration",IDC_AUDIO_CONTROL_PANEL,160,60,86,14
+    PUSHBUTTON      "&Tester le son",IDC_AUDIO_TEST,160,60,86,14
+    PUSHBUTTON	    "Panneau de configuration",IDC_AUDIO_CONTROL_PANEL,160,80,86,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Accélération matérielle : ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,50,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Echantillonage (défaut) :",IDC_STATIC,15,232,130,8
+    LTEXT           "Échantillonage (défaut) :",IDC_STATIC,15,232,130,8
     COMBOBOX        IDC_DSOUND_RATES,100,230,38,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Bits par échantillon :",IDC_STATIC,153,232,80,8
     COMBOBOX        IDC_DSOUND_BITS,223,230,25,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Emulation pilote",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
+    CONTROL         "Émulation pilote",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
