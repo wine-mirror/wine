@@ -7,7 +7,7 @@ IMPORTS   = kernel32
 EXTRALIBS =
 
 C_SRCS = \
-	bits_main.c
+	qmgr_main.c
 
 @MAKE_DLL_RULES@
 

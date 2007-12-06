@@ -1,5 +1,5 @@
 /*
- * Implementation of qmgr.dll
+ * Main DLL interface to Queue Manager (BITS)
  *
  * Background Intelligent Transfer Service (BITS) interface.  Dll is named
  * qmgr for backwards compatibility with early versions of BITS.
@@ -25,24 +25,25 @@
 
 #include "windef.h"
 #include "winbase.h"
+
 #include "wine/debug.h"
-#include "objbase.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(bits);
+WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
+/* Entry point for DLL */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hinstDLL);
-        break;
-    case DLL_PROCESS_DETACH:
-        break;
+        case DLL_WINE_PREATTACH:
+            return FALSE;  /* prefer native version */
+        case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hinstDLL);
+            break;
+        case DLL_PROCESS_DETACH:
+            break;
     }
 
     return TRUE;
