@@ -42,6 +42,8 @@ static const char elem_test_str[] =
     "<textarea id=\"X\">text text</textarea>"
     "<table><tbody></tbody></table>"
     "</body></html>";
+static const char indent_test_str[] =
+    "<html><head><title>test</title></head><body>abc<br /><a href=\"about:blank\">123</a></body></html>";
 
 static const WCHAR noneW[] = {'N','o','n','e',0};
 
@@ -1209,6 +1211,61 @@ static void test_elems(IHTMLDocument2 *doc)
     test_create_option_elem(doc);
 }
 
+static void test_exec(IUnknown *unk, const GUID *grpid, DWORD cmdid, VARIANT *in, VARIANT *out)
+{
+    IOleCommandTarget *cmdtrg;
+    HRESULT hres;
+
+    hres = IHTMLTxtRange_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    ok(hres == S_OK, "Could not get IOleCommandTarget interface: %08x\n", hres);
+
+    hres = IOleCommandTarget_Exec(cmdtrg, grpid, cmdid, 0, in, out);
+    ok(hres == S_OK, "Exec failed: %08x\n", hres);
+
+    IOleCommandTarget_Release(cmdtrg);
+}
+
+static void test_indent(IHTMLDocument2 *doc)
+{
+    IHTMLElementCollection *col;
+    IHTMLTxtRange *range;
+    HRESULT hres;
+
+    static const elem_type_t all_types[] = {
+        ET_HTML,
+        ET_HEAD,
+        ET_TITLE,
+        ET_BODY,
+        ET_BR,
+        ET_A,
+    };
+
+    static const elem_type_t indent_types[] = {
+        ET_HTML,
+        ET_HEAD,
+        ET_TITLE,
+        ET_BODY,
+        ET_BLOCKQUOTE,
+        ET_P,
+        ET_BR,
+        ET_A,
+    };
+
+    hres = IHTMLDocument2_get_all(doc, &col);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+    test_elem_collection(col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    IHTMLElementCollection_Release(col);
+
+    range = test_create_body_range(doc);
+    test_exec((IUnknown*)range, &CGID_MSHTML, IDM_INDENT, NULL, NULL);
+    IHTMLTxtRange_Release(range);
+
+    hres = IHTMLDocument2_get_all(doc, &col);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+    test_elem_collection(col, indent_types, sizeof(indent_types)/sizeof(indent_types[0]));
+    IHTMLElementCollection_Release(col);
+}
+
 static IHTMLDocument2 *notif_doc;
 static BOOL doc_complete;
 
@@ -1387,6 +1444,7 @@ START_TEST(dom)
     run_domtest(doc_str2, test_txtrange);
     run_domtest(elem_test_str, test_elems);
     run_domtest(doc_blank, test_defaults);
+    run_domtest(indent_test_str, test_indent);
 
     CoUninitialize();
     gecko_installer_workaround(FALSE);
