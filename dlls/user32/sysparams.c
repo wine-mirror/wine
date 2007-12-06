@@ -100,7 +100,7 @@ static const char * const DefSysColors[] =
     "ActiveBorder", "212 208 200",           /* COLOR_ACTIVEBORDER */
     "InactiveBorder", "212 208 200",         /* COLOR_INACTIVEBORDER */
     "AppWorkSpace", "128 128 128",           /* COLOR_APPWORKSPACE */
-    "Hilight", "0 0 128",                    /* COLOR_HIGHLIGHT */
+    "Hilight", "10 36 106",                  /* COLOR_HIGHLIGHT */
     "HilightText", "255 255 255",            /* COLOR_HIGHLIGHTTEXT */
     "ButtonFace", "212 208 200",             /* COLOR_BTNFACE */
     "ButtonShadow", "128 128 128",           /* COLOR_BTNSHADOW */
@@ -112,11 +112,11 @@ static const char * const DefSysColors[] =
     "ButtonLight", "212 208 200",            /* COLOR_3DLIGHT */
     "InfoText", "0 0 0",                     /* COLOR_INFOTEXT */
     "InfoWindow", "255 255 225",             /* COLOR_INFOBK */
-    "ButtonAlternateFace", "180 180 180",    /* COLOR_ALTERNATEBTNFACE */
-    "HotTrackingColor", "0 0 255",           /* COLOR_HOTLIGHT */
+    "ButtonAlternateFace", "181 181 181",    /* COLOR_ALTERNATEBTNFACE */
+    "HotTrackingColor", "0 0 128",           /* COLOR_HOTLIGHT */
     "GradientActiveTitle", "166 202 240",    /* COLOR_GRADIENTACTIVECAPTION */
     "GradientInactiveTitle", "192 192 192",  /* COLOR_GRADIENTINACTIVECAPTION */
-    "MenuHilight", "0 0 0",                  /* COLOR_MENUHILIGHT */
+    "MenuHilight", "10 36 106",              /* COLOR_MENUHILIGHT */
     "MenuBar", "212 208 200"                 /* COLOR_MENUBAR */
 };
 
