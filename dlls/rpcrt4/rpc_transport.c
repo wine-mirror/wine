@@ -604,8 +604,16 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
     
     if (!objs)
         return -1;
-    
-    res = WaitForMultipleObjects(count, objs, FALSE, INFINITE);
+
+    do
+    {
+        /* an alertable wait isn't strictly necessary, but due to our
+         * overlapped I/O implementation in Wine we need to free some memory
+         * by the file user APC being called, even if no completion routine was
+         * specified at the time of starting the async operation */
+        res = WaitForMultipleObjectsEx(count, objs, FALSE, INFINITE, TRUE);
+    } while (res == WAIT_IO_COMPLETION);
+
     if (res == WAIT_OBJECT_0)
         return 0;
     else if (res == WAIT_FAILED)
