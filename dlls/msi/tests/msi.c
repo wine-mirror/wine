@@ -1329,6 +1329,325 @@ static void test_MsiGetComponentPath(void)
     DeleteFileA("C:\\imapath");
 }
 
+static void test_MsiGetProductCode(void)
+{
+    HKEY compkey, prodkey;
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    CHAR prodcode2[MAX_PATH];
+    CHAR prod2_squashed[MAX_PATH];
+    CHAR component[MAX_PATH];
+    CHAR comp_base85[MAX_PATH];
+    CHAR comp_squashed[MAX_PATH];
+    CHAR keypath[MAX_PATH];
+    CHAR product[MAX_PATH];
+    LPSTR usersid;
+    LONG res;
+    UINT r;
+
+    create_test_guid(prodcode, prod_squashed);
+    create_test_guid(prodcode2, prod2_squashed);
+    compose_base85_guid(component, comp_base85, comp_squashed);
+    get_user_sid(&usersid);
+
+    /* szComponent is NULL */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(NULL, product);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
+
+    /* szComponent is empty */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA("", product);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
+
+    /* garbage szComponent */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA("garbage", product);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
+
+    /* guid without brackets */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D", product);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
+
+    /* guid with brackets */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}", product);
+    ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
+    ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
+
+    /* same length as guid, but random */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA("A938G02JF-2NF3N93-VN3-2NNF-3KGKALDNF93", product);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
+
+    /* all params correct, szComponent not published */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
+    ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Components\\");
+    lstrcatA(keypath, comp_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &compkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user unmanaged component key exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
+    ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
+
+    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* product value exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
+    }
+
+    res = RegSetValueExA(compkey, prod2_squashed, 0, REG_SZ, (const BYTE *)"C:\\another", 10);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* another product value exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode2), "Expected %s, got %s\n", prodcode2, product);
+    }
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user managed product key of first product exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
+    }
+
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user unmanaged product key exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
+    }
+
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local classes product key exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
+    }
+
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod2_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user managed product key of second product exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode2), "Expected %s, got %s\n", prodcode2, product);
+    }
+
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+    RegDeleteValueA(compkey, prod_squashed);
+    RegDeleteValueA(compkey, prod2_squashed);
+    RegDeleteKeyA(compkey, "");
+    RegCloseKey(compkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Components\\");
+    lstrcatA(keypath, comp_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &compkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local user component key exists */
+        lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
+    ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
+
+    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* product value exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
+    }
+
+    res = RegSetValueExA(compkey, prod2_squashed, 0, REG_SZ, (const BYTE *)"C:\\another", 10);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* another product value exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode2), "Expected %s, got %s\n", prodcode2, product);
+    }
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user managed product key of first product exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
+    }
+
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user unmanaged product key exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
+    }
+
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local classes product key exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
+    }
+
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod2_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user managed product key of second product exists */
+    lstrcpyA(product, "prod");
+    r = MsiGetProductCodeA(component, product);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(product, prodcode2), "Expected %s, got %s\n", prodcode2, product);
+    }
+
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+    RegDeleteValueA(compkey, prod_squashed);
+    RegDeleteValueA(compkey, prod2_squashed);
+    RegDeleteKeyA(compkey, "");
+    RegCloseKey(compkey);
+}
+
 START_TEST(msi)
 {
     init_functionpointers();
@@ -1341,4 +1660,5 @@ START_TEST(msi)
     test_MsiQueryFeatureState();
     test_MsiQueryComponentState();
     test_MsiGetComponentPath();
+    test_MsiGetProductCode();
 }
