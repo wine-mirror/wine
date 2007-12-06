@@ -254,8 +254,11 @@ static ULONG WINAPI HTMLStyleSheetsCollection_Release(IHTMLStyleSheetsCollection
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        if(This->nslist)
+            nsIDOMStyleSheetList_Release(This->nslist);
         heap_free(This);
+    }
 
     return ref;
 }
