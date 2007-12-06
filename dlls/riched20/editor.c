@@ -2002,13 +2002,34 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case WM_GETTEXT:
   {
     GETTEXTEX ex;
+    LRESULT rc;
+    LPSTR bufferA = NULL;
+    LPWSTR bufferW = NULL;
 
-    ex.cb = wParam;
+    if (unicode)
+        bufferW = richedit_alloc((wParam + 2) * sizeof(WCHAR));
+    else bufferA = richedit_alloc(wParam + 2);
+
+    ex.cb = wParam + (unicode ? 2*sizeof(WCHAR) : 2);
     ex.flags = GT_USECRLF;
     ex.codepage = unicode ? 1200 : CP_ACP;
     ex.lpDefaultChar = NULL;
     ex.lpUsedDefaultChar = NULL;
-    return RichEditWndProc_common(hWnd, EM_GETTEXTEX, (WPARAM)&ex, lParam, unicode);
+    rc = RichEditWndProc_common(hWnd, EM_GETTEXTEX, (WPARAM)&ex, unicode ? (LPARAM)bufferW : (LPARAM)bufferA, unicode);
+
+    if (unicode)
+    {
+        memcpy((LPWSTR)lParam, bufferW, wParam);
+        if (lstrlenW(bufferW) >= wParam / sizeof(WCHAR)) rc = 0;
+    }
+    else
+    {
+        memcpy((LPSTR)lParam, bufferA, wParam);
+        if (strlen(bufferA) >= wParam) rc = 0;
+    }
+    if (bufferA != NULL) richedit_free(bufferA);
+    if (bufferW != NULL) richedit_free(bufferW);
+    return rc;
   }
   case EM_GETTEXTEX:
   {

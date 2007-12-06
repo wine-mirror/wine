@@ -656,14 +656,48 @@ static void test_WM_GETTEXT(void)
 {
     HWND hwndRichEdit = new_richedit(NULL);
     static const char text[] = "Hello. My name is RichEdit!";
+    static const char text2[] = "Hello. My name is RichEdit!\r";
+    static const char text2_after[] = "Hello. My name is RichEdit!\r\n";
     char buffer[1024] = {0};
     int result;
 
+    /* Baseline test with normal-sized buffer */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+    result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    ok(result == strlen(buffer),
+        "WM_GETTEXT returned %d, expected %d\n", result, strlen(buffer));
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,text);
     ok(result == 0, 
         "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
+
+    /* Test for behavior in overflow case */
+    memset(buffer, 0, 1024);
+    result = SendMessage(hwndRichEdit, WM_GETTEXT, strlen(text), (LPARAM)buffer);
+    ok(result == 0,
+        "WM_GETTEXT returned %d, expected 0\n", result);
+    result = strcmp(buffer,text);
+    ok(result == 0,
+        "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
+
+    /* Baseline test with normal-sized buffer and carriage return */
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text2);
+    result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    ok(result == strlen(buffer),
+        "WM_GETTEXT returned %d, expected %d\n", result, strlen(buffer));
+    result = strcmp(buffer,text2_after);
+    ok(result == 0,
+        "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
+
+    /* Test for behavior of CRLF conversion in case of overflow */
+    memset(buffer, 0, 1024);
+    result = SendMessage(hwndRichEdit, WM_GETTEXT, strlen(text2), (LPARAM)buffer);
+    ok(result == 0,
+        "WM_GETTEXT returned %d, expected 0\n", result);
+    result = strcmp(buffer,text2);
+    ok(result == 0,
+        "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
+
     DestroyWindow(hwndRichEdit);
 }
 
