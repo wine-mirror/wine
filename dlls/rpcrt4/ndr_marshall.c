@@ -3559,7 +3559,40 @@ void WINAPI NdrConformantStructFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
+    const NDR_CSTRUCT_FORMAT *pCStructFormat = (const NDR_CSTRUCT_FORMAT *)pFormat;
+    PFORMAT_STRING pCArrayFormat;
+    ULONG esize;
+
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+
+    pFormat += sizeof(NDR_CSTRUCT_FORMAT);
+    if ((pCStructFormat->type != RPC_FC_CPSTRUCT) && (pCStructFormat->type != RPC_FC_CSTRUCT))
+    {
+        ERR("invalid format type %x\n", pCStructFormat->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return;
+    }
+
+    pCArrayFormat = (const unsigned char *)&pCStructFormat->offset_to_array_description +
+        pCStructFormat->offset_to_array_description;
+    if (*pCArrayFormat != RPC_FC_CARRAY)
+    {
+        ERR("invalid array format type %x\n", pCStructFormat->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return;
+    }
+    esize = *(const WORD*)(pCArrayFormat+2);
+
+    ComputeConformance(pStubMsg, pMemory + pCStructFormat->memory_size,
+                       pCArrayFormat + 4, 0);
+
+    TRACE("memory_size = %d\n", pCStructFormat->memory_size);
+
+    /* copy constant sized part of struct */
+    pStubMsg->BufferMark = pStubMsg->Buffer;
+
+    if (pCStructFormat->type == RPC_FC_CPSTRUCT)
+        EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
 }
 
 /***********************************************************************
