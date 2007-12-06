@@ -326,13 +326,13 @@ static BOOL WINHELP_RegisterWinClasses(void)
     class_main.hInstance           = Globals.hInstance;
     class_main.hIcon               = LoadIcon(0, IDI_APPLICATION);
     class_main.hCursor             = LoadCursor(0, IDC_ARROW);
-    class_main.hbrBackground       = GetStockObject(WHITE_BRUSH);
+    class_main.hbrBackground       = (HBRUSH)(COLOR_WINDOW+1);
     class_main.lpszMenuName        = 0;
     class_main.lpszClassName       = MAIN_WIN_CLASS_NAME;
 
     class_button_box               = class_main;
     class_button_box.lpfnWndProc   = WINHELP_ButtonBoxWndProc;
-    class_button_box.hbrBackground = GetStockObject(GRAY_BRUSH);
+    class_button_box.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
     class_button_box.lpszClassName = BUTTON_BOX_WIN_CLASS_NAME;
 
     class_text = class_main;
@@ -342,7 +342,7 @@ static BOOL WINHELP_RegisterWinClasses(void)
 
     class_shadow = class_main;
     class_shadow.lpfnWndProc       = WINHELP_ShadowWndProc;
-    class_shadow.hbrBackground     = GetStockObject(GRAY_BRUSH);
+    class_shadow.hbrBackground     = (HBRUSH)(COLOR_3DDKSHADOW+1);
     class_shadow.lpszClassName     = SHADOW_WIN_CLASS_NAME;
 
     class_history = class_main;
