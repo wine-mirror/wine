@@ -116,7 +116,7 @@ static void test_CreateBody(void)
     ok(hr == S_OK, "ret %08x\n", hr);
     off.QuadPart = 0;
     IStream_Seek(in, off, STREAM_SEEK_CUR, &pos);
-    ok(pos.LowPart == 328, "pos %u\n", pos.LowPart);
+    ok(pos.u.LowPart == 328, "pos %u\n", pos.u.LowPart);
 
     hr = IMimeBody_IsContentType(body, "multipart", "mixed");
     ok(hr == S_OK, "ret %08x\n", hr);
