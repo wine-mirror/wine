@@ -747,7 +747,7 @@ static void test_get_current_dir(HINTERNET hFtp, HINTERNET hConnect)
     bRet = FtpGetCurrentDirectoryA( hFtp, lpszCurrentDirectory, &dwCurrentDirectoryLen );
     ok ( bRet == TRUE, "Expected FtpGetCurrentDirectoryA to pass\n" );
 todo_wine
-    ok ( lstrcmp(lpszCurrentDirectory, "/pub") == 0, "Expected returned value \"%s\" to match \"%s\" \n", (char*)lpszCurrentDirectory, "/pub");
+    ok ( lstrcmp(lpszCurrentDirectory, "/pub") == 0, "Expected returned value \"%s\" to match \"%s\"\n", (char*)lpszCurrentDirectory, "/pub");
     ok ( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got: %d\n", GetLastError());
 
 
@@ -759,7 +759,7 @@ todo_wine
     bRet = FtpGetCurrentDirectoryA( hFtp, lpszCurrentDirectory, &dwCurrentDirectoryLen );
 todo_wine
     ok ( bRet == FALSE, "Expected FtpGetCurrentDirectoryA to fail\n");
-    ok ( lstrcmp(lpszCurrentDirectory, "/pub") != 0, "Expected returned value \"%s\" to not match \"%s\" \n", (char*)lpszCurrentDirectory, "/pub");
+    ok ( lstrcmp(lpszCurrentDirectory, "/pub") != 0, "Expected returned value \"%s\" to not match \"%s\"\n", (char*)lpszCurrentDirectory, "/pub");
 todo_wine
     ok ( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got: %d\n", GetLastError());
 
@@ -770,7 +770,7 @@ todo_wine
     bRet = FtpGetCurrentDirectoryA( hFtp, lpszCurrentDirectory, &dwCurrentDirectoryLen );
     ok ( bRet == TRUE, "Expected FtpGetCurrentDirectoryA to pass\n");
 todo_wine
-    ok ( lstrcmp(lpszCurrentDirectory, "/pub") == 0, "Expected returned value \"%s\" to match \"%s\" \n", (char*)lpszCurrentDirectory, "/pub");
+    ok ( lstrcmp(lpszCurrentDirectory, "/pub") == 0, "Expected returned value \"%s\" to match \"%s\"\n", (char*)lpszCurrentDirectory, "/pub");
     ok ( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got: %d\n", GetLastError());
 }
 
