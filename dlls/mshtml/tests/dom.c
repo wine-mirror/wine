@@ -27,17 +27,20 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "mshtml.h"
+#include "mshtmcid.h"
+#include "mshtmhst.h"
 #include "docobj.h"
 
 static const char doc_blank[] = "<html></html>";
 static const char doc_str1[] = "<html><body>test</body></html>";
 static const char doc_str2[] =
     "<html><body>test \na<font size=\"2\">bc\t123<br /> it's\r\n  \t</font>text<br /></body></html>";
-static const char doc_str3[] =
-    "<html><head><title>test</title><body>"
-    "<a href=\"http://test\" name=\"x\">link</a><input />"
+static const char elem_test_str[] =
+    "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
+    "<body><a href=\"http://test\" name=\"x\">link</a><input />"
     "<select id=\"s\"><option id=\"x\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
+    "<table><tbody></tbody></table>"
     "</body></html>";
 
 static const WCHAR noneW[] = {'N','o','n','e',0};
@@ -56,7 +59,13 @@ typedef enum {
     ET_INPUT,
     ET_SELECT,
     ET_TEXTAREA,
-    ET_OPTION
+    ET_OPTION,
+    ET_STYLE,
+    ET_BLOCKQUOTE,
+    ET_P,
+    ET_BR,
+    ET_TABLE,
+    ET_TBODY
 } elem_type_t;
 
 static REFIID const none_iids[] = {
@@ -64,24 +73,11 @@ static REFIID const none_iids[] = {
     NULL
 };
 
-static REFIID const html_iids[] = {
+static REFIID const elem_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
-    NULL
-};
-
-static REFIID const head_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    NULL
-};
-
-static REFIID const title_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
+    &IID_IConnectionPointContainer,
     NULL
 };
 
@@ -91,6 +87,7 @@ static REFIID const body_iids[] = {
     &IID_IHTMLElement2,
     &IID_IHTMLTextContainer,
     &IID_IHTMLBodyElement,
+    &IID_IConnectionPointContainer,
     NULL
 };
 
@@ -99,6 +96,7 @@ static REFIID const anchor_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLAnchorElement,
+    &IID_IConnectionPointContainer,
     NULL
 };
 
@@ -108,6 +106,7 @@ static REFIID const input_iids[] = {
     &IID_IHTMLElement2,
     &IID_IHTMLInputElement,
     &IID_IHTMLInputTextElement,
+    &IID_IConnectionPointContainer,
     NULL
 };
 
@@ -116,6 +115,7 @@ static REFIID const select_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLSelectElement,
+    &IID_IConnectionPointContainer,
     NULL
 };
 
@@ -124,6 +124,7 @@ static REFIID const textarea_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLTextAreaElement,
+    &IID_IConnectionPointContainer,
     NULL
 };
 
@@ -132,6 +133,16 @@ static REFIID const option_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLOptionElement,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
+static REFIID const table_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLTable,
+    &IID_IConnectionPointContainer,
     NULL
 };
 
@@ -142,15 +153,21 @@ typedef struct {
 
 static const elem_type_info_t elem_type_infos[] = {
     {"",          none_iids},
-    {"HTML",      html_iids},
-    {"HEAD",      head_iids},
-    {"TITLE",     title_iids},
+    {"HTML",      elem_iids},
+    {"HEAD",      elem_iids},
+    {"TITLE",     elem_iids},
     {"BODY",      body_iids},
     {"A",         anchor_iids},
     {"INPUT",     input_iids},
     {"SELECT",    select_iids},
     {"TEXTAREA",  textarea_iids},
-    {"OPTION",    option_iids}
+    {"OPTION",    option_iids},
+    {"STYLE",     elem_iids},
+    {"BLOCKQUOTE",elem_iids},
+    {"P",         elem_iids},
+    {"BR",        elem_iids},
+    {"TABLE",     table_iids},
+    {"TBODY",     elem_iids}
 };
 
 static const char *dbgstr_w(LPCWSTR str)
@@ -556,7 +573,9 @@ static void _test_range_parent(unsigned line, IHTMLTxtRange *range, elem_type_t 
     IHTMLElement_Release(elem);
 }
 
-static void test_elem_collection(IHTMLElementCollection *col, const elem_type_t *elem_types, long exlen)
+#define test_elem_collection(c,t,l) _test_elem_collection(__LINE__,c,t,l)
+static void _test_elem_collection(unsigned line, IHTMLElementCollection *col,
+        const elem_type_t *elem_types, long exlen)
 {
     long len;
     DWORD i;
@@ -565,8 +584,11 @@ static void test_elem_collection(IHTMLElementCollection *col, const elem_type_t 
     HRESULT hres;
 
     hres = IHTMLElementCollection_get_length(col, &len);
-    ok(hres == S_OK, "get_length failed: %08x\n", hres);
-    ok(len == exlen, "len=%ld, expected %ld\n", len, exlen);
+    ok_(__FILE__,line) (hres == S_OK, "get_length failed: %08x\n", hres);
+    ok_(__FILE__,line) (len == exlen, "len=%ld, expected %ld\n", len, exlen);
+
+    if(len > exlen)
+        len = exlen;
 
     V_VT(&index) = VT_EMPTY;
     V_VT(&name) = VT_I4;
@@ -575,26 +597,26 @@ static void test_elem_collection(IHTMLElementCollection *col, const elem_type_t 
         V_I4(&name) = i;
         disp = (void*)0xdeadbeef;
         hres = IHTMLElementCollection_item(col, name, index, &disp);
-        ok(hres == S_OK, "item(%d) failed: %08x\n", i, hres);
-        ok(disp != NULL, "item returned NULL\n");
+        ok_(__FILE__,line) (hres == S_OK, "item(%d) failed: %08x\n", i, hres);
+        ok_(__FILE__,line) (disp != NULL, "item returned NULL\n");
         if(FAILED(hres) || !disp)
             continue;
 
-        test_elem_type((IUnknown*)disp, elem_types[i]);
+        _test_elem_type(line, (IUnknown*)disp, elem_types[i]);
         IDispatch_Release(disp);
     }
 
     V_I4(&name) = len;
     disp = (void*)0xdeadbeef;
     hres = IHTMLElementCollection_item(col, name, index, &disp);
-    ok(hres == S_OK, "item failed: %08x\n", hres);
-    ok(disp == NULL, "disp != NULL\n");
+    ok_(__FILE__,line) (hres == S_OK, "item failed: %08x\n", hres);
+    ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
 
     V_I4(&name) = -1;
     disp = (void*)0xdeadbeef;
     hres = IHTMLElementCollection_item(col, name, index, &disp);
-    ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
-    ok(disp == NULL, "disp != NULL\n");
+    ok_(__FILE__,line) (hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
+    ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
 }
 
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
@@ -707,13 +729,11 @@ static void test_create_option_elem(IHTMLDocument2 *doc)
     IHTMLOptionElement_Release(option);
 }
 
-static void test_txtrange(IHTMLDocument2 *doc)
+static IHTMLTxtRange *test_create_body_range(IHTMLDocument2 *doc)
 {
-    IHTMLElement *elem;
     IHTMLBodyElement *body;
-    IHTMLTxtRange *body_range, *range, *range2;
-    IHTMLSelectionObject *selection;
-    IDispatch *disp_range;
+    IHTMLTxtRange *range;
+    IHTMLElement *elem;
     HRESULT hres;
 
     hres = IHTMLDocument2_get_body(doc, &elem);
@@ -722,9 +742,21 @@ static void test_txtrange(IHTMLDocument2 *doc)
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
     IHTMLElement_Release(elem);
 
-    hres = IHTMLBodyElement_createTextRange(body, &body_range);
+    hres = IHTMLBodyElement_createTextRange(body, &range);
     IHTMLBodyElement_Release(body);
     ok(hres == S_OK, "createTextRange failed: %08x\n", hres);
+
+    return range;
+}
+
+static void test_txtrange(IHTMLDocument2 *doc)
+{
+    IHTMLTxtRange *body_range, *range, *range2;
+    IHTMLSelectionObject *selection;
+    IDispatch *disp_range;
+    HRESULT hres;
+
+    body_range = test_create_body_range(doc);
 
     test_range_text(body_range, "test abc 123\r\nit's text");
 
@@ -1002,9 +1034,21 @@ static void test_default_selection(IHTMLDocument2 *doc)
     IHTMLTxtRange_Release(range);
 }
 
+static void test_default_body(IHTMLBodyElement *body)
+{
+    BSTR bstr;
+    HRESULT hres;
+
+    bstr = (void*)0xdeadbeef;
+    hres = IHTMLBodyElement_get_background(body, &bstr);
+    ok(hres == S_OK, "get_background failed: %08x\n", hres);
+    ok(bstr == NULL, "bstr != NULL\n");
+}
+
 static void test_defaults(IHTMLDocument2 *doc)
 {
     IHTMLStyleSheetsCollection *stylesheetcol;
+    IHTMLBodyElement *body;
     IHTMLElement *elem;
     IHTMLStyle *style;
     long l;
@@ -1012,6 +1056,11 @@ static void test_defaults(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_body(doc, &elem);
     ok(hres == S_OK, "get_body failed: %08x\n", hres);
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
+    ok(hres == S_OK, "Could not get IHTMBodyElement: %08x\n", hres);
+    test_default_body(body);
+    IHTMLBodyElement_Release(body);
 
     hres = IHTMLElement_get_style(elem, &style);
     IHTMLElement_Release(elem);
@@ -1035,6 +1084,44 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_default_selection(doc);
 }
 
+static void test_stylesheets(IHTMLDocument2 *doc)
+{
+    IHTMLStyleSheetsCollection *col = NULL;
+    VARIANT idx, res;
+    long len = 0;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_styleSheets(doc, &col);
+    ok(hres == S_OK, "get_styleSheets failed: %08x\n", hres);
+    ok(col != NULL, "col == NULL\n");
+
+    hres = IHTMLStyleSheetsCollection_get_length(col, &len);
+    ok(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok(len == 1, "len=%ld\n", len);
+
+    VariantInit(&res);
+    V_VT(&idx) = VT_I4;
+    V_I4(&idx) = 0;
+
+    hres = IHTMLStyleSheetsCollection_item(col, &idx, &res);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    ok(V_VT(&res) == VT_DISPATCH, "V_VT(res) = %d\n", V_VT(&res));
+    ok(V_DISPATCH(&res) != NULL, "V_DISPATCH(&res) == NULL\n");
+    VariantClear(&res);
+
+    V_VT(&res) = VT_I4;
+    V_VT(&idx) = VT_I4;
+    V_I4(&idx) = 1;
+
+    hres = IHTMLStyleSheetsCollection_item(col, &idx, &res);
+    ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
+    ok(V_VT(&res) == VT_EMPTY, "V_VT(res) = %d\n", V_VT(&res));
+    ok(V_DISPATCH(&res) != NULL, "V_DISPATCH(&res) == NULL\n");
+    VariantClear(&res);
+
+    IHTMLStyleSheetsCollection_Release(col);
+}
+
 static void test_elems(IHTMLDocument2 *doc)
 {
     IHTMLElementCollection *col;
@@ -1050,13 +1137,16 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_HTML,
         ET_HEAD,
         ET_TITLE,
+        ET_STYLE,
         ET_BODY,
         ET_A,
         ET_INPUT,
         ET_SELECT,
         ET_OPTION,
         ET_OPTION,
-        ET_TEXTAREA
+        ET_TEXTAREA,
+        ET_TABLE,
+        ET_TBODY
     };
 
     static const elem_type_t item_types[] = {
@@ -1097,6 +1187,7 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLElement_Release(elem);
     }
 
+    test_stylesheets(doc);
     test_create_option_elem(doc);
 }
 
@@ -1276,7 +1367,7 @@ START_TEST(dom)
 
     run_domtest(doc_str1, test_doc_elem);
     run_domtest(doc_str2, test_txtrange);
-    run_domtest(doc_str3, test_elems);
+    run_domtest(elem_test_str, test_elems);
     run_domtest(doc_blank, test_defaults);
 
     CoUninitialize();
