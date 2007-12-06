@@ -600,6 +600,7 @@ static IWidget *Widget_Create(void)
             ok_ole_success(hr, CreateStdDispatch);
             ITypeInfo_Release(pTypeInfo);
         }
+        ITypeLib_Release(pTypeLib);
     }
 
     if (SUCCEEDED(hr))
