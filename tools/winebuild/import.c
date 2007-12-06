@@ -617,10 +617,11 @@ int resolve_imports( DLLSPEC *spec )
                 }
             }
         }
-        if (!removed && check_unused( imp, spec ))
+        if (!removed)
         {
             /* the dll is not used, get rid of it */
-            warning( "winebuild: %s imported but no symbols used\n", imp->spec->file_name );
+            if (check_unused( imp, spec ))
+                warning( "winebuild: %s imported but no symbols used\n", imp->spec->file_name );
             remove_import_dll( i );
             i--;
         }
