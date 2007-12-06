@@ -85,20 +85,25 @@ static void releasefiltergraph(void)
     ok(hr==0, "Releasing filtergraph returned: %x\n", hr);
 }
 
-START_TEST(filtergraph)
+static void test_render_run(void)
 {
     HANDLE h;
-	
-    CoInitialize(NULL);
+
     if (!createfiltergraph())
         return;
 
     h = CreateFileW(file, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (h != INVALID_HANDLE_VALUE) {
-	CloseHandle(h);
-	renderfile();
-	rungraph();
+        CloseHandle(h);
+        renderfile();
+        rungraph();
     }
 
     releasefiltergraph();
+}
+
+START_TEST(filtergraph)
+{
+    CoInitialize(NULL);
+    test_render_run();
 }
