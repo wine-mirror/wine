@@ -594,6 +594,173 @@ out:
     }
 }
 
+static void alpha_test(IDirect3DDevice7 *device)
+{
+    HRESULT hr;
+    IDirectDrawSurface7 *backbuffer = NULL, *offscreen = NULL;
+    DWORD color, red, green, blue;
+    DDSURFACEDESC2 ddsd;
+
+    struct vertex quad1[] =
+    {
+        {-1.0f, -1.0f,   0.1f,                          0x4000ff00},
+        {-1.0f,  0.0f,   0.1f,                          0x4000ff00},
+        { 1.0f, -1.0f,   0.1f,                          0x4000ff00},
+        { 1.0f,  0.0f,   0.1f,                          0x4000ff00},
+    };
+    struct vertex quad2[] =
+    {
+        {-1.0f,  0.0f,   0.1f,                          0xc00000ff},
+        {-1.0f,  1.0f,   0.1f,                          0xc00000ff},
+        { 1.0f,  0.0f,   0.1f,                          0xc00000ff},
+        { 1.0f,  1.0f,   0.1f,                          0xc00000ff},
+    };
+    static const float composite_quad[][5] = {
+        { 0.0f, -1.0f, 0.1f, 0.0f, 1.0f},
+        { 0.0f,  1.0f, 0.1f, 0.0f, 0.0f},
+        { 1.0f, -1.0f, 0.1f, 1.0f, 1.0f},
+        { 1.0f,  1.0f, 0.1f, 1.0f, 0.0f},
+    };
+
+    /* Clear the render target with alpha = 0.5 */
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x80ff0000, 0.0, 0);
+    ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_3DDEVICE;
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    U4(ddsd).ddpfPixelFormat.dwRGBBitCount      = 32;
+    U4(ddsd).ddpfPixelFormat.dwRGBAlphaBitMask  = 0xff000000;
+    U4(ddsd).ddpfPixelFormat.dwRBitMask         = 0x00ff0000;
+    U4(ddsd).ddpfPixelFormat.dwGBitMask         = 0x0000ff00;
+    U4(ddsd).ddpfPixelFormat.dwBBitMask         = 0x000000ff;
+    hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &offscreen, NULL);
+    ok(hr == D3D_OK, "Creating the offscreen render target failed, hr = %08x\n", hr);
+    if(!offscreen) {
+        goto out;
+    }
+    hr = IDirect3DDevice7_GetRenderTarget(device, &backbuffer);
+    ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
+    if(!backbuffer) {
+        goto out;
+    }
+
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_MINFILTER, D3DFILTER_NEAREST);
+    ok(SUCCEEDED(hr), "SetTextureStageState D3DSAMP_MINFILTER failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_MAGFILTER, D3DFILTER_NEAREST);
+    ok(SUCCEEDED(hr), "SetTextureStageState D3DSAMP_MAGFILTER failed (0x%08x)\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+    if(IDirect3DDevice7_BeginScene(device) == D3D_OK) {
+
+        /* Draw two quads, one with src alpha blending, one with dest alpha blending. The
+         * SRCALPHA / INVSRCALPHA blend doesn't give any surprises. Colors are blended based on
+         * the input alpha
+         *
+         * The DESTALPHA / INVDESTALPHA do not "work" on the regular buffer because there is no alpha.
+         * They give essentially ZERO and ONE blend factors
+         */
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad1, 4, 0);
+        ok(hr == D3D_OK, "DrawPrimitive failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_SRCBLEND, D3DBLEND_DESTALPHA);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVDESTALPHA);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad2, 4, 0);
+        ok(hr == D3D_OK, "DrawPrimitive failed, hr = %08x\n", hr);
+
+        /* Switch to the offscreen buffer, and redo the testing. SRCALPHA and DESTALPHA. The offscreen buffer
+         * has a alpha channel on its own. Clear the offscreen buffer with alpha = 0.5 again, then draw the
+         * quads again. The SRCALPHA/INVSRCALPHA doesn't give any surprises, but the DESTALPHA/INVDESTALPHA
+         * blending works as supposed now - blend factor is 0.5 in both cases, not 0.75 as from the input
+         * vertices
+         */
+        hr = IDirect3DDevice7_SetRenderTarget(device, offscreen, 0);
+        ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x80ff0000, 0.0, 0);
+        ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad1, 4, 0);
+        ok(hr == D3D_OK, "DrawPrimitive failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_SRCBLEND, D3DBLEND_DESTALPHA);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVDESTALPHA);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad2, 4, 0);
+        ok(hr == D3D_OK, "DrawPrimitive failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice7_SetRenderTarget(device, backbuffer, 0);
+        ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
+
+        /* Render the offscreen texture onto the frame buffer to be able to compare it regularly.
+         * Disable alpha blending for the final composition
+         */
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice7_SetTexture(device, 0, offscreen);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetTexture failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_TEX1, composite_quad, 4, 0);
+        ok(hr == D3D_OK, "DrawPrimitive failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice7_SetTexture(device, 0, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetTexture failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed, hr = %08x\n", hr);
+    }
+
+    color = getPixelColor(device, 160, 360);
+    red =   (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue =  (color & 0x000000ff);
+    ok(red >= 0xbe && red <= 0xc0 && green >= 0x39 && green <= 0x41 && blue == 0x00,
+       "SRCALPHA on frame buffer returned color %08x, expected 0x00bf4000\n", color);
+
+    color = getPixelColor(device, 160, 120);
+    red =   (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue =  (color & 0x000000ff);
+    ok(red == 0x00 && green == 0x00 && blue >= 0xfe && blue <= 0xff ,
+       "DSTALPHA on frame buffer returned color %08x, expected 0x00ff0000\n", color);
+
+    color = getPixelColor(device, 480, 360);
+    red =   (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue =  (color & 0x000000ff);
+    ok(red >= 0xbe && red <= 0xc0 && green >= 0x39 && green <= 0x41 && blue == 0x00,
+       "SRCALPHA on texture returned color %08x, expected bar\n", color);
+
+    color = getPixelColor(device, 480, 120);
+    red =   (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue =  (color & 0x000000ff);
+    ok(red >= 0x7e && red <= 0x81 && green == 0x00 && blue >= 0x7e && blue <= 0x81,
+       "DSTALPHA on texture returned color %08x, expected foo\n", color);
+
+    out:
+    if(offscreen) IDirectDrawSurface7_Release(offscreen);
+    if(backbuffer) IDirectDrawSurface7_Release(backbuffer);
+}
+
 START_TEST(visual)
 {
     HRESULT hr;
@@ -638,6 +805,7 @@ START_TEST(visual)
     clear_test(Direct3DDevice);
     fog_test(Direct3DDevice);
     offscreen_test(Direct3DDevice);
+    alpha_test(Direct3DDevice);
 
 cleanup:
     releaseObjects();

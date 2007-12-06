@@ -29,6 +29,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /*****************************************************************************
  * Pixel format array
+ *
+ * For the formats WINED3DFMT_A32B32G32R32F, WINED3DFMT_A16B16G16R16F,
+ * and WINED3DFMT_A16B16G16R16 do not have correct alpha masks, because the
+ * high masks do not fit into the 32 bit values needed for ddraw. It is only
+ * used for ddraw mostly, and to figure out if the format has alpha at all, so
+ * setting a mask like 0x1 for those surfaces is correct. The 64 and 128 bit
+ * formats are not usable in 2D rendering because ddraw doesn't support them.
  */
 static const StaticPixelFormatDesc formats[] = {
   /*{WINED3DFORMAT          ,alphamask  ,redmask    ,greenmask  ,bluemask   ,bpp    ,depth  ,stencil,    isFourcc*/
@@ -47,13 +54,13 @@ static const StaticPixelFormatDesc formats[] = {
     /* IEEE formats */
     {WINED3DFMT_R32F        ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,0      ,0          ,FALSE },
     {WINED3DFMT_G32R32F     ,0x0        ,0x0        ,0x0        ,0x0        ,8      ,0      ,0          ,FALSE },
-    {WINED3DFMT_A32B32G32R32F,0x0       ,0x0        ,0x0        ,0x0        ,16     ,0      ,0          ,FALSE },
+    {WINED3DFMT_A32B32G32R32F,0x1       ,0x0        ,0x0        ,0x0        ,16     ,0      ,0          ,FALSE },
     /* Hmm? */
     {WINED3DFMT_CxV8U8      ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,FALSE },
     /* Float */
     {WINED3DFMT_R16F        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,FALSE },
     {WINED3DFMT_G16R16F     ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,0      ,0          ,FALSE },
-    {WINED3DFMT_A16B16G16R16F,0x0       ,0x0        ,0x0        ,0x0        ,8      ,0      ,0          ,FALSE },
+    {WINED3DFMT_A16B16G16R16F,0x1       ,0x0        ,0x0        ,0x0        ,8      ,0      ,0          ,FALSE },
     /* Palettized formats */
     {WINED3DFMT_A8P8        ,0x0000ff00 ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,FALSE },
     {WINED3DFMT_P8          ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,FALSE },
@@ -74,7 +81,7 @@ static const StaticPixelFormatDesc formats[] = {
     {WINED3DFMT_X8B8G8R8    ,0x0        ,0x000000ff ,0x0000ff00 ,0x00ff0000 ,4      ,0      ,0          ,FALSE },
     {WINED3DFMT_G16R16      ,0x0        ,0x0000ffff ,0xffff0000 ,0x0        ,4      ,0      ,0          ,FALSE },
     {WINED3DFMT_A2R10G10B10 ,0xb0000000 ,0x3ff00000 ,0x000ffc00 ,0x000003ff ,4      ,0      ,0          ,FALSE },
-    {WINED3DFMT_A16B16G16R16,0x0        ,0x0000ffff ,0xffff0000 ,0x0        ,8      ,0      ,0          ,FALSE },
+    {WINED3DFMT_A16B16G16R16,0x1        ,0x0000ffff ,0xffff0000 ,0x0        ,8      ,0      ,0          ,FALSE },
     /* Luminance */
     {WINED3DFMT_L8          ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,FALSE },
     {WINED3DFMT_A8L8        ,0x0000ff00 ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,FALSE },

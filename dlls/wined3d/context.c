@@ -682,6 +682,20 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     BOOL readTexture = wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_offscreen;
     WineD3DContext *context = This->activeContext;
     BOOL oldRenderOffscreen = This->render_offscreen;
+    const WINED3DFORMAT oldFmt = ((IWineD3DSurfaceImpl *) This->lastActiveRenderTarget)->resource.format;
+    const WINED3DFORMAT newFmt = ((IWineD3DSurfaceImpl *) target)->resource.format;
+
+    /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
+     * the alpha blend state changes with different render target formats
+     */
+    if(oldFmt != newFmt) {
+        const StaticPixelFormatDesc *old = getFormatDescEntry(oldFmt, NULL, NULL);
+        const StaticPixelFormatDesc *new = getFormatDescEntry(oldFmt, NULL, NULL);
+
+        if((old->alphaMask && !new->alphaMask) || (!old->alphaMask && new->alphaMask)) {
+            Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE));
+        }
+    }
 
     hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **) &swapchain);
     if(hr == WINED3D_OK && swapchain) {

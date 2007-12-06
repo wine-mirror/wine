@@ -234,6 +234,8 @@ static void state_ambient(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD
 static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     int srcBlend = GL_ZERO;
     int dstBlend = GL_ZERO;
+    const StaticPixelFormatDesc *rtFormat;
+    IWineD3DSurfaceImpl *target = (IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0];
 
     /* GL_LINE_SMOOTH needs GL_BLEND to work, according to the red book, and special blending params */
     if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]      ||
@@ -255,10 +257,22 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         case WINED3DBLEND_INVSRCCOLOR        : dstBlend = GL_ONE_MINUS_SRC_COLOR;  break;
         case WINED3DBLEND_SRCALPHA           : dstBlend = GL_SRC_ALPHA;  break;
         case WINED3DBLEND_INVSRCALPHA        : dstBlend = GL_ONE_MINUS_SRC_ALPHA;  break;
-        case WINED3DBLEND_DESTALPHA          : dstBlend = GL_DST_ALPHA;  break;
-        case WINED3DBLEND_INVDESTALPHA       : dstBlend = GL_ONE_MINUS_DST_ALPHA;  break;
         case WINED3DBLEND_DESTCOLOR          : dstBlend = GL_DST_COLOR;  break;
         case WINED3DBLEND_INVDESTCOLOR       : dstBlend = GL_ONE_MINUS_DST_COLOR;  break;
+
+        /* To compensate the lack of format switching with backbuffer offscreen rendering,
+         * and with onscreen rendering, we modify the alpha test parameters for (INV)DESTALPHA
+         * if the render target doesn't support alpha blending. A nonexistent alpha channel
+         * returns 1.0, so D3DBLEND_DESTALPHA is GL_ONE, and D3DBLEND_INVDESTALPHA is GL_ZERO
+         */
+        case WINED3DBLEND_DESTALPHA          :
+            rtFormat = getFormatDescEntry(target->resource.format, NULL, NULL);
+            dstBlend = rtFormat->alphaMask ? GL_DST_ALPHA : GL_ONE;
+            break;
+        case WINED3DBLEND_INVDESTALPHA       :
+            rtFormat = getFormatDescEntry(target->resource.format, NULL, NULL);
+            dstBlend = rtFormat->alphaMask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
+            break;
 
         case WINED3DBLEND_SRCALPHASAT        :
             dstBlend = GL_SRC_ALPHA_SATURATE;
@@ -291,11 +305,18 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         case WINED3DBLEND_INVSRCCOLOR        : srcBlend = GL_ONE_MINUS_SRC_COLOR;  break;
         case WINED3DBLEND_SRCALPHA           : srcBlend = GL_SRC_ALPHA;  break;
         case WINED3DBLEND_INVSRCALPHA        : srcBlend = GL_ONE_MINUS_SRC_ALPHA;  break;
-        case WINED3DBLEND_DESTALPHA          : srcBlend = GL_DST_ALPHA;  break;
-        case WINED3DBLEND_INVDESTALPHA       : srcBlend = GL_ONE_MINUS_DST_ALPHA;  break;
         case WINED3DBLEND_DESTCOLOR          : srcBlend = GL_DST_COLOR;  break;
         case WINED3DBLEND_INVDESTCOLOR       : srcBlend = GL_ONE_MINUS_DST_COLOR;  break;
         case WINED3DBLEND_SRCALPHASAT        : srcBlend = GL_SRC_ALPHA_SATURATE;  break;
+
+        case WINED3DBLEND_DESTALPHA          :
+            rtFormat = getFormatDescEntry(target->resource.format, NULL, NULL);
+            srcBlend = rtFormat->alphaMask ? GL_DST_ALPHA : GL_ONE;
+            break;
+        case WINED3DBLEND_INVDESTALPHA       :
+            rtFormat = getFormatDescEntry(target->resource.format, NULL, NULL);
+            srcBlend = rtFormat->alphaMask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
+            break;
 
         case WINED3DBLEND_BOTHSRCALPHA       : srcBlend = GL_SRC_ALPHA;
             dstBlend = GL_ONE_MINUS_SRC_ALPHA;
