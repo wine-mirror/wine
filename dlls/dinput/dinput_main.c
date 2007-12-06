@@ -55,17 +55,17 @@ static const IDirectInput8WVtbl ddi8wvt;
 
 static inline IDirectInputImpl *impl_from_IDirectInput7W( IDirectInput7W *iface )
 {
-    return (IDirectInputImpl *)CONTAINING_RECORD( iface, IDirectInputImpl, lpVtbl7w );
+    return CONTAINING_RECORD( iface, IDirectInputImpl, lpVtbl7w );
 }
 
 static inline IDirectInputImpl *impl_from_IDirectInput8A( IDirectInput8A *iface )
 {
-    return (IDirectInputImpl *)CONTAINING_RECORD( iface, IDirectInputImpl, lpVtbl8a );
+    return CONTAINING_RECORD( iface, IDirectInputImpl, lpVtbl8a );
 }
 
 static inline IDirectInputImpl *impl_from_IDirectInput8W( IDirectInput8W *iface )
 {
-    return (IDirectInputImpl *)CONTAINING_RECORD( iface, IDirectInputImpl, lpVtbl8w );
+    return CONTAINING_RECORD( iface, IDirectInputImpl, lpVtbl8w );
 }
 
 static inline IDirectInput7W *IDirectInput7W_from_impl( IDirectInputImpl *iface )

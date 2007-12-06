@@ -319,7 +319,7 @@ void fill_DataFormat(void *out, const void *in, const DataFormat *df) {
 		    case 4:
 			TRACE("Copying (i) to %d default value %d\n",
 			      df->dt[i].offset_out, df->dt[i].value);
-			*((int *) (out_c + df->dt[i].offset_out)) = (int) df->dt[i].value;
+			*((int *) (out_c + df->dt[i].offset_out)) = df->dt[i].value;
 			break;
 			
 		    default:
