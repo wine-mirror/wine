@@ -28,6 +28,15 @@
 
 #include "wine/test.h"
 
+static const char *debugstr_w(LPCWSTR str)
+{
+    static char buf[1024];
+    if(!str)
+        return "(null)";
+    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
+    return buf;
+}
+
 static void test_HlinkIsShortcut(void)
 {
     int i;
@@ -346,12 +355,15 @@ static void test_special_reference(void)
 static void test_HlinkCreateExtensionServices(void)
 {
     IAuthenticate *authenticate;
-    LPWSTR password, username;
+    IHttpNegotiate *http_negotiate;
+    LPWSTR password, username, headers;
     HWND hwnd;
     HRESULT hres;
 
     static const WCHAR usernameW[] = {'u','s','e','r',0};
     static const WCHAR passwordW[] = {'p','a','s','s',0};
+    static const WCHAR headersW[] = {'h','e','a','d','e','r','s',0};
+    static const WCHAR headersexW[] = {'h','e','a','d','e','r','s','\r','\n',0};
 
     hres = HlinkCreateExtensionServices(NULL, NULL, NULL, NULL,
                                         NULL, &IID_IAuthenticate, (void**)&authenticate);
@@ -366,10 +378,29 @@ static void test_HlinkCreateExtensionServices(void)
     ok(!username, "username != NULL\n");
     ok(!password, "password != NULL\n");
 
+    hres = IAuthenticate_QueryInterface(authenticate, &IID_IHttpNegotiate, (void**)&http_negotiate);
+    ok(hres == S_OK, "Could not get IHttpNegotiate interface: %08x\n", hres);
+
+    headers = (void*)0xdeadbeef;
+    hres = IHttpNegotiate_BeginningTransaction(http_negotiate, (void*)0xdeadbeef, (void*)0xdeadbeef,
+                                               0, &headers);
+    ok(hres == S_OK, "BeginningTransaction failed: %08x\n", hres);
+    ok(headers == NULL, "headers != NULL\n");
+
+    hres = IHttpNegotiate_BeginningTransaction(http_negotiate, (void*)0xdeadbeef, (void*)0xdeadbeef,
+                                               0, NULL);
+    ok(hres == E_INVALIDARG, "BeginningTransaction failed: %08x, expected E_INVALIDARG\n", hres);
+
+    headers = (void*)0xdeadbeef;
+    hres = IHttpNegotiate_OnResponse(http_negotiate, 200, (void*)0xdeadbeef, (void*)0xdeadbeef, &headers);
+    ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
+    ok(headers == NULL, "headers != NULL\n");
+
+    IHttpNegotiate_Release(http_negotiate);
     IAuthenticate_Release(authenticate);
 
 
-    hres = HlinkCreateExtensionServices(NULL, (HWND)0xfefefefe, usernameW, passwordW,
+    hres = HlinkCreateExtensionServices(headersW, (HWND)0xfefefefe, usernameW, passwordW,
                                         NULL, &IID_IAuthenticate, (void**)&authenticate);
     ok(hres == S_OK, "HlinkCreateExtensionServices failed: %08x\n", hres);
     ok(authenticate != NULL, "HlinkCreateExtensionServices returned NULL\n");
@@ -391,6 +422,22 @@ static void test_HlinkCreateExtensionServices(void)
     ok(password == (void*)0xdeadbeef, "password = %p\n", password);
     ok(hwnd == (void*)0xdeadbeef, "hwnd = %p\n", hwnd);
 
+    hres = IAuthenticate_QueryInterface(authenticate, &IID_IHttpNegotiate, (void**)&http_negotiate);
+    ok(hres == S_OK, "Could not get IHttpNegotiate interface: %08x\n", hres);
+
+    headers = (void*)0xdeadbeef;
+    hres = IHttpNegotiate_BeginningTransaction(http_negotiate, (void*)0xdeadbeef, (void*)0xdeadbeef,
+                                               0, &headers);
+    ok(hres == S_OK, "BeginningTransaction failed: %08x\n", hres);
+    ok(!lstrcmpW(headers, headersexW), "unexpected headers \"%s\"\n", debugstr_w(headers));
+    CoTaskMemFree(headers);
+
+    headers = (void*)0xdeadbeef;
+    hres = IHttpNegotiate_OnResponse(http_negotiate, 200, (void*)0xdeadbeef, (void*)0xdeadbeef, &headers);
+    ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
+    ok(headers == NULL, "unexpected headers \"%s\"\n", debugstr_w(headers));
+
+    IHttpNegotiate_Release(http_negotiate);
     IAuthenticate_Release(authenticate);
 }
 

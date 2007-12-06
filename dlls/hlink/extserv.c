@@ -28,6 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hlink);
 typedef struct {
     const IUnknownVtbl        *lpIUnknownVtbl;
     const IAuthenticateVtbl   *lpIAuthenticateVtbl;
+    const IHttpNegotiateVtbl  *lpIHttpNegotiateVtbl;
 
     LONG ref;
     IUnknown *outer;
@@ -35,10 +36,12 @@ typedef struct {
     HWND hwnd;
     LPWSTR username;
     LPWSTR password;
+    LPWSTR headers;
 } ExtensionService;
 
 #define EXTSERVUNK(x)    ((IUnknown*)       &(x)->lpIUnknownVtbl)
 #define AUTHENTICATE(x)  ((IAuthenticate*)  &(x)->lpIAuthenticateVtbl)
+#define HTTPNEGOTIATE(x) ((IHttpNegotiate*) &(x)->lpIHttpNegotiateVtbl)
 
 #define EXTSERVUNK_THIS(iface)  DEFINE_THIS(ExtensionService, IUnknown, iface)
 
@@ -54,6 +57,9 @@ static HRESULT WINAPI ExtServUnk_QueryInterface(IUnknown *iface, REFIID riid, vo
     }else if(IsEqualGUID(&IID_IAuthenticate, riid)) {
         TRACE("(%p)->(IID_IAuthenticate %p)\n", This, ppv);
         *ppv = AUTHENTICATE(This);
+    }else if(IsEqualGUID(&IID_IHttpNegotiate, riid)) {
+        TRACE("(%p)->(IID_IHttpNegotiate %p)\n", This, ppv);
+        *ppv = HTTPNEGOTIATE(This);
     }
 
     if(*ppv) {
@@ -145,29 +151,96 @@ static const IAuthenticateVtbl AuthenticateVtbl = {
     Authenticate_Authenticate
 };
 
+#define HTTPNEGOTIATE_THIS(iface) DEFINE_THIS(ExtensionService, IHttpNegotiate, iface)
+
+static HRESULT WINAPI HttpNegotiate_QueryInterface(IHttpNegotiate *iface, REFIID riid, void **ppv)
+{
+    ExtensionService *This = HTTPNEGOTIATE_THIS(iface);
+    return IUnknown_QueryInterface(This->outer, riid, ppv);
+}
+
+static ULONG WINAPI HttpNegotiate_AddRef(IHttpNegotiate *iface)
+{
+    ExtensionService *This = HTTPNEGOTIATE_THIS(iface);
+    return IUnknown_AddRef(This->outer);
+}
+
+static ULONG WINAPI HttpNegotiate_Release(IHttpNegotiate *iface)
+{
+    ExtensionService *This = HTTPNEGOTIATE_THIS(iface);
+    return IUnknown_Release(This->outer);
+}
+
+static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate *iface,
+        LPCWSTR szURL, LPCWSTR szHeaders, DWORD dwReserved, LPWSTR *pszAdditionalHeaders)
+{
+    ExtensionService *This = HTTPNEGOTIATE_THIS(iface);
+
+    TRACE("(%p)->(%s %s %x %p)\n", This, debugstr_w(szURL), debugstr_w(szHeaders), dwReserved,
+          pszAdditionalHeaders);
+
+    if(!pszAdditionalHeaders)
+        return E_INVALIDARG;
+
+    *pszAdditionalHeaders = hlink_co_strdupW(This->headers);
+    return S_OK;
+}
+
+static HRESULT WINAPI HttpNegotiate_OnResponse(IHttpNegotiate *iface, DWORD dwResponseCode,
+        LPCWSTR szResponseHeaders, LPCWSTR szRequestHeaders, LPWSTR *pszAdditionalRequestHeaders)
+{
+    ExtensionService *This = HTTPNEGOTIATE_THIS(iface);
+
+    TRACE("(%p)->(%d %s %s %p)\n", This, dwResponseCode, debugstr_w(szResponseHeaders),
+          debugstr_w(szRequestHeaders), pszAdditionalRequestHeaders);
+
+    *pszAdditionalRequestHeaders = NULL;
+    return S_OK;
+}
+
+#undef HTTPNEGOTIATE_THIS
+
+static const IHttpNegotiateVtbl HttpNegotiateVtbl = {
+    HttpNegotiate_QueryInterface,
+    HttpNegotiate_AddRef,
+    HttpNegotiate_Release,
+    HttpNegotiate_BeginningTransaction,
+    HttpNegotiate_OnResponse
+};
+
 HRESULT WINAPI HlinkCreateExtensionServices(LPCWSTR pwzAdditionalHeaders,
         HWND phwnd, LPCWSTR pszUsername, LPCWSTR pszPassword,
         IUnknown *punkOuter, REFIID riid, void** ppv)
 {
     ExtensionService *ret;
+    int len = 0;
     HRESULT hres = S_OK;
 
     TRACE("%s %p %s %s %p %s %p\n",debugstr_w(pwzAdditionalHeaders),
             phwnd, debugstr_w(pszUsername), debugstr_w(pszPassword),
             punkOuter, debugstr_guid(riid), ppv);
 
-    if(pwzAdditionalHeaders)
-        FIXME("Unsupported pwzAdditionalHeaders\n");
-
     ret = hlink_alloc(sizeof(*ret));
 
     ret->lpIUnknownVtbl = &ExtServUnkVtbl;
     ret->lpIAuthenticateVtbl = &AuthenticateVtbl;
+    ret->lpIHttpNegotiateVtbl = &HttpNegotiateVtbl;
     ret->ref = 1;
     ret->hwnd = phwnd;
     ret->username = hlink_strdupW(pszUsername);
     ret->password = hlink_strdupW(pszPassword);
 
+    if(pwzAdditionalHeaders)
+        len = strlenW(pwzAdditionalHeaders);
+
+    if(len && pwzAdditionalHeaders[len-1] != '\n' && pwzAdditionalHeaders[len-1] != '\r') {
+        static const WCHAR endlW[] = {'\r','\n',0};
+        ret->headers = hlink_alloc(len*sizeof(WCHAR) + sizeof(endlW));
+        memcpy(ret->headers, pwzAdditionalHeaders, len*sizeof(WCHAR));
+        memcpy(ret->headers+len, endlW, sizeof(endlW));
+    }else {
+        ret->headers = hlink_strdupW(pwzAdditionalHeaders);
+    }
 
     if(!punkOuter) {
         ret->outer = EXTSERVUNK(ret);
