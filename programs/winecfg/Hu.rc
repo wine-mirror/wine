@@ -165,7 +165,8 @@ BEGIN
     GROUPBOX        " Meghajtóprogram választás ",IDC_STATIC,8,4,244,195
     LTEXT           "Válasszon egy hangmeghajtót a kiválasztott meghajtóprogram elõtti négyzet bejlölésével.  A hang letiltható, ha nem jelöl be egy meghajtót sem. Több meghajtóprogram bejelölése nem ajánlott. Az összes meghajtó beállítható, ha rájuk kattint jobb egérgombbal.",IDC_STATIC,15,15,227,35
     CONTROL         "Eszközök",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140 
-    PUSHBUTTON	    "Vezérlõpult",IDC_AUDIO_CONTROL_PANEL,170,50,59,14
+    PUSHBUTTON      "&Test Sound",IDC_AUDIO_TEST,170,50,59,14
+    PUSHBUTTON	    "Vezérlõpult",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Hardveres gyorsítás: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP

@@ -171,6 +171,7 @@ BEGIN
     GROUPBOX        " Избор на драйвер ",IDC_STATIC,8,4,244,195
     LTEXT           "Изберете звуков драйвер като сложите отметка на желания от вас драйвер. Може да забраните звука като не изберете никакъв драйвер. Избирането на повече от един драйвер не е препоръчително. Може да настроите драйвера като щракнете върху него с десния бутон на мишката.",IDC_STATIC,15,20,227,50
     CONTROL         "Устройства",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,70,140,120
+    PUSHBUTTON      "&Test Sound",IDC_AUDIO_TEST,170,50,59,14
     PUSHBUTTON	    "Контролен панел",IDC_AUDIO_CONTROL_PANEL,170,70,69,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Хардуерно ускорение: ",IDC_STATIC,15,215,90,10
