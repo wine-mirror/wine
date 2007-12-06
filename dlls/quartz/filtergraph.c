@@ -483,7 +483,8 @@ static HRESULT WINAPI GraphBuilder_FindFilterByName(IGraphBuilder *iface,
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_w(pName), pName, ppFilter);
 
-    *ppFilter = NULL;
+    if (!ppFilter)
+        return E_POINTER;
 
     for (i = 0; i < This->nFilters; i++)
     {
@@ -495,6 +496,7 @@ static HRESULT WINAPI GraphBuilder_FindFilterByName(IGraphBuilder *iface,
         }
     }
 
+    *ppFilter = NULL;
     return VFW_E_NOT_FOUND;
 }
 

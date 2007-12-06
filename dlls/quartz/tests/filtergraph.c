@@ -143,6 +143,8 @@ static void test_graph_builder(void)
     hr = IGraphBuilder_FindFilterByName(pgraph, testFilterW, &pF2);
     ok(hr == S_OK, "IGraphBuilder_FindFilterByName returned %x\n", hr);
     ok(pF2 != NULL, "IGraphBuilder_FindFilterByName returned NULL\n");
+    hr = IGraphBuilder_FindFilterByName(pgraph, testFilterW, NULL);
+    ok(hr == E_POINTER, "IGraphBuilder_FindFilterByName returned %x\n", hr);
     releasefiltergraph();
 }
 
