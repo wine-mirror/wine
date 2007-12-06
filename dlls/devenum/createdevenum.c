@@ -459,7 +459,7 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
                        OLECHAR wszVfwIndex[] = { 'V','F','W','I','n','d','e','x',0 };
                        VARIANT var;
                        V_VT(&var) = VT_I4;
-                       V_UNION(&var, ulVal) = (ULONG)i;
+                       V_UNION(&var, ulVal) = i;
                        res = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID)&pPropBag);
                        if (SUCCEEDED(res))
                           res = IPropertyBag_Write(pPropBag, wszVfwIndex, &var);
