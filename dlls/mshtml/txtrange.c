@@ -28,6 +28,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "ole2.h"
+#include "mshtmcid.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -1729,15 +1730,61 @@ static HRESULT WINAPI RangeCommandTarget_QueryStatus(IOleCommandTarget *iface, c
     return E_NOTIMPL;
 }
 
+static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
+{
+    nsIDOMDocumentFragment *fragment;
+    nsIDOMElement *blockquote_elem, *p_elem;
+    nsIDOMDocument *nsdoc;
+    nsIDOMNode *tmp;
+    nsAString tag_str;
+
+    static const PRUnichar blockquoteW[] = {'B','L','O','C','K','Q','U','O','T','E',0};
+    static const PRUnichar pW[] = {'P',0};
+
+    TRACE("(%p)->(%p %p)\n", This, in, out);
+
+    nsIWebNavigation_GetDocument(This->doc->nscontainer->navigation, &nsdoc);
+
+    nsAString_Init(&tag_str, blockquoteW);
+    nsIDOMDocument_CreateElement(nsdoc, &tag_str, &blockquote_elem);
+    nsAString_Finish(&tag_str);
+
+    nsAString_Init(&tag_str, pW);
+    nsIDOMDocument_CreateElement(nsdoc, &tag_str, &p_elem);
+    nsAString_Finish(&tag_str);
+
+    nsIDOMDocument_Release(nsdoc);
+
+    nsIDOMRange_ExtractContents(This->nsrange, &fragment);
+    nsIDOMElement_AppendChild(p_elem, (nsIDOMNode*)fragment, &tmp);
+    nsIDOMDocumentFragment_Release(fragment);
+    nsIDOMNode_Release(tmp);
+
+    nsIDOMElement_AppendChild(blockquote_elem, (nsIDOMNode*)p_elem, &tmp);
+    nsIDOMElement_Release(p_elem);
+    nsIDOMNode_Release(tmp);
+
+    nsIDOMRange_InsertNode(This->nsrange, (nsIDOMNode*)blockquote_elem);
+    nsIDOMElement_Release(blockquote_elem);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI RangeCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
         DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
     HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+
     TRACE("(%p)->(%s %d %x %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID,
           nCmdexecopt, pvaIn, pvaOut);
 
     if(pguidCmdGroup && IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
-        FIXME("Unsupported cmdid %d of CGID_MSHTML\n", nCmdID);
+        switch(nCmdID) {
+        case IDM_INDENT:
+            return exec_indent(This, pvaIn, pvaOut);
+        default:
+            FIXME("Unsupported cmdid %d of CGID_MSHTML\n", nCmdID);
+        }
     }else {
         FIXME("Unsupported cmd %d of group %s\n", nCmdID, debugstr_guid(pguidCmdGroup));
     }
