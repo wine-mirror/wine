@@ -1084,6 +1084,23 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_default_selection(doc);
 }
 
+static void test_stylesheet(IDispatch *disp)
+{
+    IHTMLStyleSheetRulesCollection *col = NULL;
+    IHTMLStyleSheet *stylesheet;
+    HRESULT hres;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLStyleSheet, (void**)&stylesheet);
+    ok(hres == S_OK, "Could not get IHTMLStyleSheet: %08x\n", hres);
+
+    hres = IHTMLStyleSheet_get_rules(stylesheet, &col);
+    ok(hres == S_OK, "get_rules failed: %08x\n", hres);
+    ok(col != NULL, "col == NULL\n");
+
+    IHTMLStyleSheetRulesCollection_Release(col);
+    IHTMLStyleSheet_Release(stylesheet);
+}
+
 static void test_stylesheets(IHTMLDocument2 *doc)
 {
     IHTMLStyleSheetsCollection *col = NULL;
@@ -1107,6 +1124,7 @@ static void test_stylesheets(IHTMLDocument2 *doc)
     ok(hres == S_OK, "item failed: %08x\n", hres);
     ok(V_VT(&res) == VT_DISPATCH, "V_VT(res) = %d\n", V_VT(&res));
     ok(V_DISPATCH(&res) != NULL, "V_DISPATCH(&res) == NULL\n");
+    test_stylesheet(V_DISPATCH(&res));
     VariantClear(&res);
 
     V_VT(&res) = VT_I4;

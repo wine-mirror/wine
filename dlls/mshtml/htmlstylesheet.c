@@ -52,8 +52,148 @@ typedef struct {
     nsIDOMStyleSheetList *nslist;
 } HTMLStyleSheetsCollection;
 
-#define HTMLSTYLESHEET(x)      ((IHTMLStyleSheet*)             &(x)->lpHTMLStyleSheetVtbl);
-#define HTMLSTYLESHEETSCOL(x)  ((IHTMLStyleSheetsCollection*)  &(x)->lpHTMLStyleSheetsCollectionVtbl);
+typedef struct {
+    const IHTMLStyleSheetRulesCollectionVtbl *lpHTMLStyleSheetRulesCollectionVtbl;
+
+    LONG ref;
+
+    nsIDOMCSSRuleList *nslist;
+} HTMLStyleSheetRulesCollection;
+
+#define HTMLSTYLESHEET(x)     ((IHTMLStyleSheet*)                &(x)->lpHTMLStyleSheetVtbl);
+#define HTMLSTYLESHEETSCOL(x) ((IHTMLStyleSheetsCollection*)     &(x)->lpHTMLStyleSheetsCollectionVtbl);
+#define HTMLSTYLERULESCOL(x)  ((IHTMLStyleSheetRulesCollection*) &(x)->lpHTMLStyleSheetRulesCollectionVtbl)
+
+#define HTMLSTYLERULESCOL_THIS(iface) \
+    DEFINE_THIS(HTMLStyleSheetRulesCollection, HTMLStyleSheetRulesCollection, iface)
+
+static HRESULT WINAPI HTMLStyleSheetRulesCollection_QueryInterface(IHTMLStyleSheetRulesCollection *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLSTYLERULESCOL_THIS(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLSTYLERULESCOL(This);
+    }else if(IsEqualGUID(&IID_IHTMLStyleSheetRulesCollection, riid)) {
+        TRACE("(%p)->(IID_IHTMLStyleSheetRulesCollection %p)\n", This, ppv);
+        *ppv = HTMLSTYLERULESCOL(This);
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HTMLStyleSheetRulesCollection_AddRef(IHTMLStyleSheetRulesCollection *iface)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLSTYLERULESCOL_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLStyleSheetRulesCollection_Release(IHTMLStyleSheetRulesCollection *iface)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLSTYLERULESCOL_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        if(This->nslist)
+            nsIDOMCSSRuleList_Release(This->nslist);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLStyleSheetRulesCollection_GetTypeInfoCount(
+        IHTMLStyleSheetRulesCollection *iface, UINT *pctinfo)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLSTYLERULESCOL_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetRulesCollection_GetTypeInfo(IHTMLStyleSheetRulesCollection *iface,
+        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLSTYLERULESCOL_THIS(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetRulesCollection_GetIDsOfNames(IHTMLStyleSheetRulesCollection *iface,
+        REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLSTYLERULESCOL_THIS(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetRulesCollection_Invoke(IHTMLStyleSheetRulesCollection *iface,
+        DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLSTYLERULESCOL_THIS(iface);
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetRulesCollection_get_length(IHTMLStyleSheetRulesCollection *iface,
+        long *p)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLSTYLERULESCOL_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyleSheetRulesCollection_item(IHTMLStyleSheetRulesCollection *iface,
+        long index, IHTMLStyleSheetRule **ppHTMLStyleSheetRule)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLSTYLERULESCOL_THIS(iface);
+    FIXME("(%p)->(%ld %p)\n", This, index, ppHTMLStyleSheetRule);
+    return E_NOTIMPL;
+}
+
+#undef HTMLSTYLERULECOL_THIS
+
+static const IHTMLStyleSheetRulesCollectionVtbl HTMLStyleSheetRulesCollectionVtbl = {
+    HTMLStyleSheetRulesCollection_QueryInterface,
+    HTMLStyleSheetRulesCollection_AddRef,
+    HTMLStyleSheetRulesCollection_Release,
+    HTMLStyleSheetRulesCollection_GetTypeInfoCount,
+    HTMLStyleSheetRulesCollection_GetTypeInfo,
+    HTMLStyleSheetRulesCollection_GetIDsOfNames,
+    HTMLStyleSheetRulesCollection_Invoke,
+    HTMLStyleSheetRulesCollection_get_length,
+    HTMLStyleSheetRulesCollection_item
+};
+
+static IHTMLStyleSheetRulesCollection *HTMLStyleSheetRulesCollection_Create(nsIDOMCSSRuleList *nslist)
+{
+    HTMLStyleSheetRulesCollection *ret;
+
+    ret = heap_alloc(sizeof(*ret));
+    ret->lpHTMLStyleSheetRulesCollectionVtbl = &HTMLStyleSheetRulesCollectionVtbl;
+    ret->ref = 1;
+    ret->nslist = nslist;
+
+    if(nslist)
+        nsIDOMCSSRuleList_AddRef(nslist);
+
+    return HTMLSTYLERULESCOL(ret);
+}
 
 #define HTMLSTYLESHEETSCOL_THIS(iface) \
     DEFINE_THIS(HTMLStyleSheetsCollection, HTMLStyleSheetsCollection, iface)
@@ -468,8 +608,19 @@ static HRESULT WINAPI HTMLStyleSheet_get_rules(IHTMLStyleSheet *iface,
                                                IHTMLStyleSheetRulesCollection **p)
 {
     HTMLStyleSheet *This = HTMLSTYLESHEET_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMCSSRuleList *nslist = NULL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* Gecko has buggy security checks and GetCssRules will fail. We have a correct
+     * implementation and it will work when the bug will be fixed in Gecko. */
+    nsres = nsIDOMCSSStyleSheet_GetCssRules(This->nsstylesheet, &nslist);
+    if(NS_FAILED(nsres))
+        WARN("GetCssRules failed: %08x\n", nsres);
+
+    *p = HTMLStyleSheetRulesCollection_Create(nslist);
+    return S_OK;
 }
 
 static const IHTMLStyleSheetVtbl HTMLStyleSheetVtbl = {

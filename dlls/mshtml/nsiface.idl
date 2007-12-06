@@ -81,6 +81,7 @@ interface nsIOutputStream;
 interface nsIEditorObserver;
 interface nsIEditActionListener;
 interface nsIDocumentStateListener;
+interface nsIDOMCSSStyleSheet;
 
 interface IMoniker;
 
@@ -116,7 +117,6 @@ typedef nsISupports nsIDOMHTMLOptionsCollection;
 typedef nsISupports nsIDOMHTMLCollection;
 typedef nsISupports nsIWebProgressListener;
 typedef nsISupports nsIDOMCSSValue;
-typedef nsISupports nsIDOMCSSRule;
 typedef nsISupports nsIPrintSession;
 typedef nsISupports nsIControllerCommandTable;
 typedef nsISupports nsIPrincipal;
@@ -124,7 +124,6 @@ typedef nsISupports nsIAtom;
 typedef nsISupports nsISupportsArray;
 typedef nsISupports nsIContentFilter;
 typedef nsISupports nsIDOMMediaList;
-typedef nsISupports nsIDOMCSSRuleList;
 
 [
     object,
@@ -553,6 +552,20 @@ interface nsIUploadChannel : nsISupports
 
 [
     object,
+    uuid(a6cf90c1-15b3-11d2-932e-00805f8add32)
+    /* FROZEN */
+]
+interface nsIDOMCSSRule : nsISupports
+{
+    nsresult GetType(PRUint16 *aType);
+    nsresult GetCssText(nsAString *aCssText);
+    nsresult SetCssText(const nsAString *aCssText);
+    nsresult GetParentStyleSheet(nsIDOMCSSStyleSheet **aParentStyleSheet);
+    nsresult GetParentRule(nsIDOMCSSRule **aParentRule);
+}
+
+[
+    object,
     uuid(a6cf90be-15b3-11d2-932e-00805f8add32)
     /* FROZEN */
 ]
@@ -569,6 +582,17 @@ interface nsIDOMCSSStyleDeclaration : nsISupports
     nsresult GetLength(PRUint32 *aLength);
     nsresult Item(PRUint32 index, nsAString *_retval);
     nsresult GetParentRule(nsIDOMCSSRule **aParentRule);
+}
+
+[
+    object,
+    uuid(a6cf90c0-15b3-11d2-932e-00805f8add32)
+    /* FROZEN */
+]
+interface nsIDOMCSSRuleList : nsISupports
+{
+    nsresult GetLength(PRUint32 *aLength);
+    nsresult Item(PRUint32 index, nsIDOMCSSRule **_retval);
 }
 
 [
