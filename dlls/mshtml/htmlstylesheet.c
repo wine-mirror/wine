@@ -154,8 +154,20 @@ static HRESULT WINAPI HTMLStyleSheetRulesCollection_get_length(IHTMLStyleSheetRu
         long *p)
 {
     HTMLStyleSheetRulesCollection *This = HTMLSTYLERULESCOL_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRUint32 len = 0;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->nslist) {
+        nsresult nsres;
+
+        nsres = nsIDOMCSSRuleList_GetLength(This->nslist, &len);
+        if(NS_FAILED(nsres))
+            ERR("GetLength failed: %08x\n", nsres);
+    }
+
+    *p = len;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyleSheetRulesCollection_item(IHTMLStyleSheetRulesCollection *iface,
