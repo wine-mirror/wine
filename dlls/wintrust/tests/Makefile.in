@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = wintrust.dll
-IMPORTS   = wintrust crypt32 user32 advapi32 kernel32
+IMPORTS   = wintrust crypt32 advapi32 kernel32
 
 CTESTS = \
 	asn.c \

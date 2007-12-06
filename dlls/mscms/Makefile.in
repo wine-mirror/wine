@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mscms.dll
 IMPORTLIB = libmscms.$(IMPLIBEXT)
-IMPORTS   = kernel32 ntdll
+IMPORTS   = kernel32
 EXTRALIBS = @LCMSLIBS@
 
 C_SRCS = \

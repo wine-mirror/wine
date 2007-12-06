@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = vmm.vxd
-IMPORTS   = kernel32 ntdll
+IMPORTS   = kernel32
 
 C_SRCS = \
 	vmm.c

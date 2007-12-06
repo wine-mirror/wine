@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = odbccp32.dll
-IMPORTS   = odbccp32 user32 kernel32
+IMPORTS   = odbccp32 kernel32
 
 CTESTS = \
 	misc.c

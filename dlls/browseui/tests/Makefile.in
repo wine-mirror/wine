@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = browseui.dll
-IMPORTS   = ole32 user32 kernel32
+IMPORTS   = ole32 kernel32
 EXTRALIBS = -luuid
 
 CTESTS = \

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = secur32.dll
 IMPORTLIB = libsecur32.$(IMPLIBEXT)
-IMPORTS   = netapi32 user32 advapi32 kernel32 ntdll
+IMPORTS   = netapi32 advapi32 kernel32 ntdll
 DELAYIMPORTS = crypt32
 
 C_SRCS = \

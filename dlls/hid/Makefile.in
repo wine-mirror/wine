@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = hid.dll
 IMPORTLIB = libhid.$(IMPLIBEXT)
-IMPORTS   = kernel32 ntdll
+IMPORTS   = kernel32
 
 C_SRCS = \
 	main.c

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = hhctrl.ocx
-IMPORTS   = advapi32 comctl32 shell32 shlwapi ole32 oleaut32 user32 gdi32 kernel32
+IMPORTS   = advapi32 comctl32 shlwapi ole32 oleaut32 user32 gdi32 kernel32
 EXTRALIBS = -luuid
 
 C_SRCS = \

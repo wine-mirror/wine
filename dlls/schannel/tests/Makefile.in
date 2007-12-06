@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = schannel.dll
-IMPORTS   = crypt32 advapi32 kernel32
+IMPORTS   = kernel32
 
 CTESTS = \
 	main.c

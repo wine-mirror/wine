@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msxml3.dll
-IMPORTS   = urlmon shlwapi oleaut32 ole32 user32 advapi32 kernel32 ntdll
+IMPORTS   = urlmon shlwapi oleaut32 ole32 user32 advapi32 kernel32
 EXTRALIBS = -luuid @XML2LIBS@ @XSLTLIBS@
 EXTRAINCL = @XML2INCL@ @XSLTINCL@
 

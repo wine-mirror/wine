@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mapi32.dll
 IMPORTLIB = libmapi32.$(IMPLIBEXT)
-IMPORTS   = shlwapi shell32 ole32 user32 kernel32 ntdll
+IMPORTS   = shlwapi shell32 kernel32
 EXTRALIBS = -luuid
 
 C_SRCS = \

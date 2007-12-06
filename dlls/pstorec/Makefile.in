@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = pstorec.dll
-IMPORTS   = ole32 shlwapi advapi32 kernel32
+IMPORTS   = kernel32
 EXTRALIBS = -luuid
 
 C_SRCS = \

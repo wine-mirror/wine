@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = advpack.dll
-IMPORTS   = cabinet user32 advapi32 kernel32
+IMPORTS   = cabinet advapi32 kernel32
 
 CTESTS = \
 	advpack.c \

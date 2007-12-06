@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = iphlpapi.dll
-IMPORTS   = iphlpapi kernel32
+IMPORTS   = kernel32
 
 CTESTS = \
 	iphlpapi.c

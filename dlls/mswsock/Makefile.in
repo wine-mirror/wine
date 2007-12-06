@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mswsock.dll
 IMPORTLIB = libmswsock.$(IMPLIBEXT)
-IMPORTS   = ws2_32 iphlpapi kernel32
+IMPORTS   = ws2_32 kernel32
 
 C_SRCS = \
 	mswsock.c
