@@ -1160,6 +1160,8 @@ static void test_DispCallFunc(void)
     hr = DispCallFunc(pWidget, 36, CC_STDCALL, VT_UI4, 4, rgvt, rgpvarg, &varresult);
     ok_ole_success(hr, DispCallFunc);
     VariantClear(&varresult);
+    VariantClear(&vararg[1]);
+    VariantClear(&vararg[2]);
 }
 
 START_TEST(tmarshal)
