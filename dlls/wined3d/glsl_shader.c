@@ -2870,7 +2870,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     SHADER_BUFFER buffer;
     DWORD usage_token;
     DWORD register_token;
-    DWORD usage, usage_idx;
+    DWORD usage, usage_idx, writemask;
     char reg_mask[6];
     semantic *semantics_out, *semantics_in;
 
@@ -2880,8 +2880,21 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     buffer.newline = TRUE;
 
     if(vs_major < 3 && ps_major < 3) {
-        /* That one is easy: The vertex shader writes to the builtin varyings, the pixel shader reads from them */
-        shader_addline(&buffer, "void order_ps_input() { /* do nothing */ }\n");
+        /* That one is easy: The vertex shader writes to the builtin varyings, the pixel shader reads from them.
+         * Take care about the texcoord .w fixup though if we're using the fixed function fragment pipeline
+         */
+        if((GLINFO_LOCATION).set_texcoord_w && ps_major == 0 && vs_major > 0) {
+            shader_addline(&buffer, "void order_ps_input() {\n");
+            for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
+                if(vs->baseShader.reg_maps.texcoord_mask[i] != 0 &&
+                   vs->baseShader.reg_maps.texcoord_mask[i] != WINED3DSP_WRITEMASK_ALL) {
+                    shader_addline(&buffer, "gl_TexCoord[%u].w = 1.0;\n", i);
+                }
+            }
+            shader_addline(&buffer, "}\n");
+        } else {
+            shader_addline(&buffer, "void order_ps_input() { /* do nothing */ }\n");
+        }
     } else if(ps_major < 3 && vs_major >= 3) {
         /* The vertex shader writes to its own varyings, the pixel shader needs them in the builtin ones */
         semantics_out = vs->semantics_out;
@@ -2894,7 +2907,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
 
             usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
             usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-            shader_glsl_get_write_mask(register_token, reg_mask);
+            writemask = shader_glsl_get_write_mask(register_token, reg_mask);
 
             switch(usage) {
                 case WINED3DDECLUSAGE_COLOR:
@@ -2910,8 +2923,13 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
 
                 case WINED3DDECLUSAGE_TEXCOORD:
                     if (usage_idx < 8) {
+                        if(!(GLINFO_LOCATION).set_texcoord_w || ps_major > 0) writemask |= WINED3DSP_WRITEMASK_3;
+
                         shader_addline(&buffer, "gl_TexCoord[%u]%s = OUT[%u]%s;\n",
-                                       usage_idx, reg_mask, i, reg_mask);
+                                        usage_idx, reg_mask, i, reg_mask);
+                        if(!(writemask & WINED3DSP_WRITEMASK_3)) {
+                            shader_addline(&buffer, "gl_TexCoord[%u].w = 1.0;\n", usage_idx);
+                        }
                     }
                     break;
 

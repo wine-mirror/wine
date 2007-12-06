@@ -1672,6 +1672,7 @@ typedef struct shader_reg_maps {
     char packed_output[MAX_REG_OUTPUT];     /* vertex >= 3.0 */
     char attributes[MAX_ATTRIBS];           /* vertex */
     char labels[MAX_LABELS];                /* pixel, vertex */
+    DWORD texcoord_mask[MAX_REG_TEXCRD];    /* vertex < 3.0 */
 
     /* Sampler usage tokens 
      * Use 0 as default (bit 31 is always 1 on a valid token) */
@@ -2010,6 +2011,10 @@ extern void print_glsl_info_log(
 static inline int shader_get_regtype(const DWORD param) {
     return (((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT) |
             ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2));
+}
+
+static inline int shader_get_writemask(const DWORD param) {
+    return param & WINED3DSP_WRITEMASK_ALL;
 }
 
 extern unsigned int shader_get_float_offset(const DWORD reg);

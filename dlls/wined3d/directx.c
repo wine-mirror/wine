@@ -2860,6 +2860,20 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
                 gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
             }
         }
+
+        /* The Intel GPUs on MacOS set the .w register of texcoords to 0.0 by default, which causes problems
+         * with fixed function fragment processing. Ideally this flag should be detected with a test shader
+         * and opengl feedback mode, but some GL implementations(MacOS ATI at least, propably all macos ones)
+         * do not like vertex shaders in feedback mode and return an error, even though it should be valid
+         * according to the spec.
+         *
+         * We don't want to enable this on all cards, as it adds an extra instruction per texcoord used. This
+         * makes the shader slower and eats instruction slots which should be available to the d3d app.
+         */
+        if(gl_info->gl_vendor == VENDOR_INTEL) {
+            TRACE("Enabling vertex texture coord fixes in vertex shaders\n");
+            gl_info->set_texcoord_w = TRUE;
+        }
     }
 }
 

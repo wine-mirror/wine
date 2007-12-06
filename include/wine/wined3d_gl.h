@@ -3685,6 +3685,7 @@ typedef struct _WineD3D_GL_Info {
   GL_VSVersion vs_ati_version;
 
   BOOL arb_vs_offset_limit;
+  BOOL set_texcoord_w;
 
   BOOL supported[OPENGL_SUPPORTED_EXT_END + 1];
 

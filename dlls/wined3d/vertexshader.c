@@ -455,6 +455,16 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         /* We need a constant to fixup the final position */
         shader_addline(&buffer, "PARAM posFixup = program.env[%d];\n", ARB_SHADER_PRIVCONST_POS);
 
+        if((GLINFO_LOCATION).set_texcoord_w) {
+            int i;
+            for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
+                if(This->baseShader.reg_maps.texcoord_mask[i] != 0 &&
+                   This->baseShader.reg_maps.texcoord_mask[i] != WINED3DSP_WRITEMASK_ALL) {
+                    shader_addline(&buffer, "MOV result.texcoord[%u].w, -helper_const.y;\n", i);
+                   }
+            }
+        }
+
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 

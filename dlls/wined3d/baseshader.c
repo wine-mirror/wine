@@ -463,6 +463,15 @@ HRESULT shader_get_registers_used(
                         reg_maps->usesrelconstF = TRUE;
                     }
                 }
+
+                /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and is used
+                 * in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel shaders because TECRDOUT
+                 * isn't used in them, but future register types might cause issues
+                 */
+                else if(WINED3DSPR_TEXCRDOUT == regtype && i == 0 /* Only look at writes */ &&
+                        !pshader && WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) < 3) {
+                    reg_maps->texcoord_mask[reg] |= shader_get_writemask(param);
+                }
             }
         }
     }
