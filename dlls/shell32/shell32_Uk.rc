@@ -139,23 +139,15 @@ STRINGTABLE DISCARDABLE
 {
 	IDS_DESKTOP		"Стільниця"
 	IDS_MYCOMPUTER		"Мій Комп'ютер"
-}
 
-/*
-	context menus
-*/
-STRINGTABLE DISCARDABLE
-{
+        /* context menus */
 	IDS_VIEW_LARGE		"&Великі Іконки"
 	IDS_VIEW_SMALL		"&Малі Іконки"
 	IDS_VIEW_LIST		"&Список"
 	IDS_VIEW_DETAILS	"&Подробиці"
 	IDS_SELECT		"Ви&брати"
 	IDS_OPEN		"Ві&дкрити"
-}
 
-STRINGTABLE DISCARDABLE
-{
 	IDS_CREATEFOLDER_DENIED "Не вдалося створити нову теку: Відмова у доступі."
 	IDS_CREATEFOLDER_CAPTION "Помилка при створенні нової теки"
 	IDS_DELETEITEM_CAPTION "Підтвердження вилучення файлу"
@@ -168,11 +160,8 @@ STRINGTABLE DISCARDABLE
 	    "If the files in the destination folder have the same names as files in the\n"\
 	    "selected folder they will be replaced. Do you still want to move or copy\n"\
 	    "the folder?"
-}
 
 /*	columns in the shellview	*/
-STRINGTABLE
-BEGIN
 	IDS_SHV_COLUMN1		"Файл"
 	IDS_SHV_COLUMN2		"Розмір"
 	IDS_SHV_COLUMN3		"Тип"
@@ -182,4 +171,4 @@ BEGIN
 	IDS_SHV_COLUMN7		"Вільний Розмір"
 
 	IDS_NEWFOLDER		"New Folder"
-END
+}
