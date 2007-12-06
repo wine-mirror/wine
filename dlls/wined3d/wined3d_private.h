@@ -574,6 +574,7 @@ typedef struct WineD3D_PixelFormat
 typedef struct GLPixelFormatDesc GLPixelFormatDesc;
 struct WineD3DAdapter
 {
+    UINT                    num;
     POINT                   monitorPoint;
     WineD3D_GL_Info         gl_info;
     const char              *driver;

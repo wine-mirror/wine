@@ -1402,6 +1402,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     HRESULT                 hr = WINED3D_OK;
     IUnknown               *bufferParent;
     BOOL                    displaymode_set = FALSE;
+    WINED3DDISPLAYMODE      Mode;
+    const StaticPixelFormatDesc *formatDesc;
 
     TRACE("(%p) : Created Aditional Swap Chain\n", This);
 
@@ -1439,10 +1441,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    object->orig_width = GetSystemMetrics(SM_CXSCREEN);
-    object->orig_height = GetSystemMetrics(SM_CYSCREEN);
-    object->orig_fmt = pixelformat_for_depth(GetDeviceCaps(hDc, BITSPIXEL) * GetDeviceCaps(hDc, PLANES));
-    ReleaseDC(object->win_handle, hDc);
+    /* Get info on the current display setup */
+    IWineD3D_GetAdapterDisplayMode(This->wineD3D, This->adapter->num, &Mode);
+    object->orig_width = Mode.Width;
+    object->orig_height = Mode.Height;
+    object->orig_fmt = Mode.Format;
+    formatDesc  = getFormatDescEntry(Mode.Format, NULL, NULL);
 
     /** MSDN: If Windowed is TRUE and either of the BackBufferWidth/Height values is zero,
      *  then the corresponding dimension of the client area of the hDeviceWindow
@@ -1507,14 +1511,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
    if (!pPresentationParameters->Windowed) {
 
         DEVMODEW devmode;
-        HDC      hdc;
         int      bpp = 0;
         RECT     clip_rc;
 
-        /* Get info on the current display setup */
-        hdc = GetDC(0);
-        bpp = GetDeviceCaps(hdc, BITSPIXEL);
-        ReleaseDC(0, hdc);
+        bpp = formatDesc->bpp * 8;
 
         /* Change the display settings */
         memset(&devmode, 0, sizeof(devmode));
@@ -1641,23 +1641,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 error:
     if (displaymode_set) {
         DEVMODEW devmode;
-        HDC      hdc;
-        int      bpp = 0;
         RECT     clip_rc;
 
         SetRect(&clip_rc, 0, 0, object->orig_width, object->orig_height);
         ClipCursor(NULL);
 
-        /* Get info on the current display setup */
-        hdc = GetDC(0);
-        bpp = GetDeviceCaps(hdc, BITSPIXEL);
-        ReleaseDC(0, hdc);
-
         /* Change the display settings */
         memset(&devmode, 0, sizeof(devmode));
         devmode.dmSize       = sizeof(devmode);
         devmode.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-        devmode.dmBitsPerPel = (bpp >= 24) ? 32 : bpp; /* Stupid XVidMode cannot change bpp */
+        devmode.dmBitsPerPel = (formatDesc->bpp >= 3) ? 32 : formatDesc->bpp * 8; /* Stupid XVidMode cannot change bpp */
         devmode.dmPelsWidth  = object->orig_width;
         devmode.dmPelsHeight = object->orig_height;
         ChangeDisplaySettingsExW(This->adapter->DeviceName, &devmode, NULL, CDS_FULLSCREEN, NULL);

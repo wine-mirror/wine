@@ -464,30 +464,14 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *i
 
 static HRESULT WINAPI IWineD3DSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WINED3DDISPLAYMODE*pMode) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
-    HDC                 hdc;
-    int                 bpp = 0;
+    HRESULT hr;
 
-    pMode->Width        = GetSystemMetrics(SM_CXSCREEN);
-    pMode->Height       = GetSystemMetrics(SM_CYSCREEN);
-    pMode->RefreshRate  = 85; /* FIXME: How to identify? */
-
-    hdc = GetDC(0);
-    bpp = GetDeviceCaps(hdc, BITSPIXEL);
-    ReleaseDC(0, hdc);
-
-    switch (bpp) {
-    case  8: pMode->Format       = WINED3DFMT_R8G8B8; break;
-    case 16: pMode->Format       = WINED3DFMT_R5G6B5; break;
-    case 24: /*pMode->Format       = WINED3DFMT_R8G8B8; break; */ /* 32bpp and 24bpp can be aliased for X */
-    case 32: pMode->Format       = WINED3DFMT_A8R8G8B8; break;
-    default:
-       FIXME("Unrecognized display mode format\n");
-       pMode->Format       = WINED3DFMT_UNKNOWN;
-    }
+    TRACE("(%p)->(%p): Calling GetAdapterDisplayMode\n", This, pMode);
+    hr = IWineD3D_GetAdapterDisplayMode(This->wineD3DDevice->wineD3D, This->wineD3DDevice->adapter->num, pMode);
 
     TRACE("(%p) : returning w(%d) h(%d) rr(%d) fmt(%u,%s)\n", This, pMode->Width, pMode->Height, pMode->RefreshRate,
     pMode->Format, debug_d3dformat(pMode->Format));
-    return WINED3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IWineD3DSwapChainImpl_GetDevice(IWineD3DSwapChain *iface, IWineD3DDevice**ppDevice) {

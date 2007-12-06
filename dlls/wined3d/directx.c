@@ -2698,7 +2698,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
 
     IWineD3DDeviceImpl *object  = NULL;
     IWineD3DImpl       *This    = (IWineD3DImpl *)iface;
-    HDC hDC;
+    WINED3DDISPLAYMODE  mode;
     int i;
 
     /* Validate the adapter number. If no adapters are available(no GL), ignore the adapter
@@ -2762,11 +2762,11 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->state = WINED3D_OK;
 
     /* Get the initial screen setup for ddraw */
-    object->ddraw_width = GetSystemMetrics(SM_CXSCREEN);
-    object->ddraw_height = GetSystemMetrics(SM_CYSCREEN);
-    hDC = GetDC(0);
-    object->ddraw_format = pixelformat_for_depth(GetDeviceCaps(hDC, BITSPIXEL) * GetDeviceCaps(hDC, PLANES));
-    ReleaseDC(0, hDC);
+    IWineD3DImpl_GetAdapterDisplayMode(iface, Adapter, &mode);
+
+    object->ddraw_width = mode.Width;
+    object->ddraw_height = mode.Height;
+    object->ddraw_format = mode.Format;
 
     for(i = 0; i < PATCHMAP_SIZE; i++) {
         list_init(&object->patches[i]);
@@ -2933,6 +2933,7 @@ BOOL InitAdapters(void) {
         HDC hdc;
 
         TRACE("Initializing default adapter\n");
+        Adapters[0].num = 0;
         Adapters[0].monitorPoint.x = -1;
         Adapters[0].monitorPoint.y = -1;
 
