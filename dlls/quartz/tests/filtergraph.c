@@ -102,6 +102,52 @@ static void test_render_run(void)
     releasefiltergraph();
 }
 
+static void test_graph_builder(void)
+{
+    HRESULT hr;
+    IBaseFilter *pF = NULL;
+    IBaseFilter *pF2 = NULL;
+    IPin *pIn = NULL;
+    IEnumPins *pEnum = NULL;
+    PIN_DIRECTION dir;
+    static const WCHAR testFilterW[] = {'t','e','s','t','F','i','l','t','e','r',0};
+    static const WCHAR fooBarW[] = {'f','o','o','B','a','r',0};
+
+    if (!createfiltergraph())
+        return;
+
+    /* create video filter */
+    hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (LPVOID*)&pF);
+    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
+    ok(pF != NULL, "pF is NULL\n");
+
+    /* add the two filters to the graph */
+    hr = IGraphBuilder_AddFilter(pgraph, pF, testFilterW);
+    ok(hr == S_OK, "failed to add pF to the graph: %x\n", hr);
+
+    /* find the pins */
+    hr = IBaseFilter_EnumPins(pF, &pEnum);
+    ok(hr == S_OK, "IBaseFilter_EnumPins failed for pF: %x\n", hr);
+    ok(pEnum != NULL, "pEnum is NULL\n");
+    hr = IEnumPins_Next(pEnum, 1, &pIn, NULL);
+    ok(hr == S_OK, "IEnumPins_Next failed for pF: %x\n", hr);
+    ok(pIn != NULL, "pIn is NULL\n");
+    hr = IPin_QueryDirection(pIn, &dir);
+    ok(hr == S_OK, "IPin_QueryDirection failed: %x\n", hr);
+    ok(dir == PINDIR_INPUT, "pin has wrong direction\n");
+
+    hr = IGraphBuilder_FindFilterByName(pgraph, fooBarW, &pF2);
+    todo_wine {
+        ok(hr == VFW_E_NOT_FOUND, "IGraphBuilder_FindFilterByName returned %x\n", hr);
+    }
+    ok(pF2 == NULL, "IGraphBuilder_FindFilterByName returned %p\n", pF2);
+    hr = IGraphBuilder_FindFilterByName(pgraph, testFilterW, &pF2);
+    ok(hr == S_OK, "IGraphBuilder_FindFilterByName returned %x\n", hr);
+    ok(pF2 != NULL, "IGraphBuilder_FindFilterByName returned NULL\n");
+    releasefiltergraph();
+}
+
 static void test_filter_graph2(void)
 {
     HRESULT hr;
@@ -119,5 +165,6 @@ START_TEST(filtergraph)
 {
     CoInitialize(NULL);
     test_render_run();
+    test_graph_builder();
     test_filter_graph2();
 }
