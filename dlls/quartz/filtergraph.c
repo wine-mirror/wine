@@ -495,7 +495,7 @@ static HRESULT WINAPI GraphBuilder_FindFilterByName(IGraphBuilder *iface,
         }
     }
 
-    return E_FAIL; /* FIXME: check this error code */
+    return VFW_E_NOT_FOUND;
 }
 
 /* NOTE: despite the implication, it doesn't matter which

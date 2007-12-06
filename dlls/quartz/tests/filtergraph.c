@@ -138,9 +138,7 @@ static void test_graph_builder(void)
     ok(dir == PINDIR_INPUT, "pin has wrong direction\n");
 
     hr = IGraphBuilder_FindFilterByName(pgraph, fooBarW, &pF2);
-    todo_wine {
-        ok(hr == VFW_E_NOT_FOUND, "IGraphBuilder_FindFilterByName returned %x\n", hr);
-    }
+    ok(hr == VFW_E_NOT_FOUND, "IGraphBuilder_FindFilterByName returned %x\n", hr);
     ok(pF2 == NULL, "IGraphBuilder_FindFilterByName returned %p\n", pF2);
     hr = IGraphBuilder_FindFilterByName(pgraph, testFilterW, &pF2);
     ok(hr == S_OK, "IGraphBuilder_FindFilterByName returned %x\n", hr);
