@@ -1996,7 +1996,13 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return 0;
   }
   case WM_GETTEXTLENGTH:
-    return ME_GetTextLength(editor);
+  {
+    GETTEXTLENGTHEX how;
+
+    how.flags = GTL_CLOSE | GTL_USECRLF | GTL_NUMCHARS;
+    how.codepage = unicode ? 1200 : CP_ACP;
+    return ME_GetTextLengthEx(editor, &how);
+  }
   case EM_GETTEXTLENGTHEX:
     return ME_GetTextLengthEx(editor, (GETTEXTLENGTHEX *)wParam);
   case WM_GETTEXT:

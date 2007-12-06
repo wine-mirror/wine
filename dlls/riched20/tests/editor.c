@@ -671,6 +671,12 @@ static void test_WM_GETTEXT(void)
     ok(result == 0, 
         "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
 
+    /* Test for returned value of WM_GETTEXTLENGTH */
+    result = SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(result == strlen(text),
+        "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
+        result, strlen(text));
+
     /* Test for behavior in overflow case */
     memset(buffer, 0, 1024);
     result = SendMessage(hwndRichEdit, WM_GETTEXT, strlen(text), (LPARAM)buffer);
@@ -688,6 +694,12 @@ static void test_WM_GETTEXT(void)
     result = strcmp(buffer,text2_after);
     ok(result == 0,
         "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
+
+    /* Test for returned value of WM_GETTEXTLENGTH */
+    result = SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(result == strlen(text2_after),
+        "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
+        result, strlen(text2_after));
 
     /* Test for behavior of CRLF conversion in case of overflow */
     memset(buffer, 0, 1024);
