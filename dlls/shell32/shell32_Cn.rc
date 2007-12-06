@@ -80,6 +80,8 @@ BEGIN
 	IDS_SHV_COLUMN7		" £”‡ø’º‰"
 	IDS_SHV_COLUMN8		"Name" /*FIXME*/
 	IDS_SHV_COLUMN9		"Comments" /*FIXME*/
+
+	IDS_NEWFOLDER		"New Folder"
 END
 
 #pragma code_page(default)

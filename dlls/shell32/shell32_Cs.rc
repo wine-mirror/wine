@@ -186,4 +186,6 @@ BEGIN
 	IDS_SHV_COLUMN7		"Volné místo"
 	IDS_SHV_COLUMN8		"Jméno"
 	IDS_SHV_COLUMN9		"Komentáø"
+
+	IDS_NEWFOLDER		"New Folder"
 END

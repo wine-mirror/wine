@@ -1080,11 +1080,12 @@ ISFHelper_fnGetUniqueName (ISFHelper * iface, LPWSTR pwszName, UINT uLen)
     IEnumIDList *penum;
     HRESULT hr;
     WCHAR wszText[MAX_PATH];
-    const WCHAR wszNewFolder[] = {'N','e','w',' ','F','o','l','d','e','r',0 };
+    WCHAR wszNewFolder[25];
     const WCHAR wszFormat[] = {'%','s',' ','%','d',0 };
 
     TRACE ("(%p)(%p %u)\n", This, pwszName, uLen);
 
+    LoadStringW(shell32_hInstance, IDS_NEWFOLDER, wszNewFolder,  sizeof(wszNewFolder)/sizeof(WCHAR));
     if (uLen < sizeof(wszNewFolder)/sizeof(WCHAR) + 3)
         return E_POINTER;
 

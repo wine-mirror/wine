@@ -226,4 +226,6 @@ STRINGTABLE DISCARDABLE
 	IDS_COMMON_PICTURES         "Documents\\Bildoj"
 	IDS_COMMON_VIDEO            "Documents\\Video"
 	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
+
+	IDS_NEWFOLDER		"New Folder"
 }

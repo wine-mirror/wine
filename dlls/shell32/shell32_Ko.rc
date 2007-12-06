@@ -248,4 +248,6 @@ IDS_COMMON_MUSIC            "Documents\\My Music"
 IDS_COMMON_PICTURES         "Documents\\My Pictures"
 IDS_COMMON_VIDEO            "Documents\\My Video"
 IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
+
+IDS_NEWFOLDER		"New Folder"
 }

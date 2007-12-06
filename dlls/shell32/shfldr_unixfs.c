@@ -1708,11 +1708,13 @@ static HRESULT WINAPI UnixFolder_ISFHelper_GetUniqueName(ISFHelper* iface, LPWST
     LPITEMIDLIST pidlElem;
     DWORD dwFetched;
     int i;
-    static const WCHAR wszNewFolder[] = { 'N','e','w',' ','F','o','l','d','e','r', 0 };
+    WCHAR wszNewFolder[25];
     static const WCHAR wszFormat[] = { '%','s',' ','%','d',0 };
 
     TRACE("(iface=%p, pwszName=%p, uLen=%u)\n", iface, pwszName, uLen);
-    
+
+    LoadStringW(shell32_hInstance, IDS_NEWFOLDER, wszNewFolder, sizeof(wszNewFolder)/sizeof(WCHAR));
+
     if (uLen < sizeof(wszNewFolder)/sizeof(WCHAR)+3)
         return E_INVALIDARG;
 

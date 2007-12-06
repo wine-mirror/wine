@@ -180,4 +180,6 @@ BEGIN
 	IDS_SHV_COLUMN5		"Атрибути"
 	IDS_SHV_COLUMN6		"Розмір"
 	IDS_SHV_COLUMN7		"Вільний Розмір"
+
+	IDS_NEWFOLDER		"New Folder"
 END

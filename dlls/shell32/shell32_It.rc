@@ -206,4 +206,6 @@ STRINGTABLE DISCARDABLE
 	IDS_APPDATA                 "Applicazioni"
 	IDS_PRINTHOOD               "PrintHood"
 	IDS_COOKIES                 "Cookies"
+
+	IDS_NEWFOLDER		"New Folder"
 }
