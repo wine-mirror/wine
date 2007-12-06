@@ -2504,8 +2504,10 @@ static void test_EM_GETTEXTLENGTHEX(void)
     HWND hwnd;
     GETTEXTLENGTHEX gtl;
     int ret;
+    const char * base_string = "base string";
     const char * test_string = "a\nb\n\n\r\n";
     const char * test_string_after = "a";
+    const char * test_string_2 = "a\rtest\rstring";
     char buffer[64] = {0};
 
     /* single line */
@@ -2522,6 +2524,18 @@ static void test_EM_GETTEXTLENGTHEX(void)
     gtl.codepage = CP_ACP;
     ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
     ok(ret == 0, "ret %d\n",ret);
+
+    SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) base_string);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    ok(ret == strlen(base_string), "ret %d\n",ret);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    ok(ret == strlen(base_string), "ret %d\n",ret);
 
     SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) test_string);
 
@@ -2549,19 +2563,43 @@ static void test_EM_GETTEXTLENGTHEX(void)
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
     gtl.codepage = CP_ACP;
     ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
-    todo_wine ok(ret == 0, "ret %d\n",ret);
+    ok(ret == 0, "ret %d\n",ret);
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
     gtl.codepage = CP_ACP;
     ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
     ok(ret == 0, "ret %d\n",ret);
 
+    SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) base_string);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    ok(ret == strlen(base_string), "ret %d\n",ret);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    ok(ret == strlen(base_string), "ret %d\n",ret);
+
+    SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) test_string_2);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    ok(ret == strlen(test_string_2) + 2, "ret %d\n",ret);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
+    gtl.codepage = CP_ACP;
+    ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+    ok(ret == strlen(test_string_2), "ret %d\n",ret);
+
     SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) test_string);
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
     gtl.codepage = CP_ACP;
     ret = SendMessageA(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
-    todo_wine ok(ret == 10, "ret %d\n",ret);
+    ok(ret == 10, "ret %d\n",ret);
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
     gtl.codepage = CP_ACP;

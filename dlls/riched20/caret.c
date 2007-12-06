@@ -59,7 +59,7 @@ int ME_GetTextLengthEx(ME_TextEditor *editor, const GETTEXTLENGTHEX *how)
   length = ME_GetTextLength(editor);
 
   if ((GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_MULTILINE) && (how->flags & GTL_USECRLF))
-    length += editor->nParagraphs;
+    length += editor->nParagraphs - 1;
   
   if (how->flags & GTL_NUMBYTES)
   {
