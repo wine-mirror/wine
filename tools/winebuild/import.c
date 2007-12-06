@@ -254,19 +254,13 @@ static int read_import_lib( struct import *imp )
         nb_delayed++;
     }
 
-    imp->exports = xmalloc( spec->nb_entry_points * sizeof(*imp->exports) );
-
-    for (i = 0; i < spec->nb_entry_points; i++)
+    if (spec->nb_entry_points)
     {
-        ORDDEF *odp = &spec->entry_points[i];
-
-        if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL) continue;
-        if (odp->flags & FLAG_PRIVATE) continue;
-        imp->exports[imp->nb_exports++] = odp;
-    }
-    imp->exports = xrealloc( imp->exports, imp->nb_exports * sizeof(*imp->exports) );
-    if (imp->nb_exports)
+        imp->exports = xmalloc( spec->nb_entry_points * sizeof(*imp->exports) );
+        for (i = 0; i < spec->nb_entry_points; i++)
+            imp->exports[imp->nb_exports++] = &spec->entry_points[i];
         qsort( imp->exports, imp->nb_exports, sizeof(*imp->exports), func_cmp );
+    }
     return 1;
 }
 
@@ -614,15 +608,22 @@ int resolve_imports( DLLSPEC *spec )
             odp = find_export( undef_symbols.names[j], imp->exports, imp->nb_exports );
             if (odp)
             {
-                add_import_func( imp, odp );
-                remove_name( &undef_symbols, j-- );
-                removed++;
+                if (odp->flags & FLAG_PRIVATE) continue;
+                if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL)
+                    warning( "winebuild: Data export '%s' cannot be imported from %s\n",
+                             odp->link_name, imp->spec->file_name );
+                else
+                {
+                    add_import_func( imp, odp );
+                    remove_name( &undef_symbols, j-- );
+                    removed++;
+                }
             }
         }
         if (!removed && check_unused( imp, spec ))
         {
             /* the dll is not used, get rid of it */
-            warning( "%s imported but no symbols used\n", imp->spec->file_name );
+            warning( "winebuild: %s imported but no symbols used\n", imp->spec->file_name );
             remove_import_dll( i );
             i--;
         }
