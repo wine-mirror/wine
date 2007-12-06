@@ -309,7 +309,7 @@ static VOID CLOCK_Paint(HWND hWnd)
 
     SetViewportOrgEx(dcMem, -ps.rcPaint.left, -ps.rcPaint.top, NULL);
     /* Erase the background */
-    FillRect(dcMem, &ps.rcPaint, GetStockObject(LTGRAY_BRUSH));
+    FillRect(dcMem, &ps.rcPaint, GetSysColorBrush(COLOR_3DFACE));
 
     if(Globals.bAnalog)
 	AnalogClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.bWithoutTitle);

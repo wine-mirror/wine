@@ -32,16 +32,11 @@
 #include "windows.h"
 #include "winclock.h"
 
-#define Black  RGB(0,0,0)
-#define Gray   RGB(128,128,128)
-#define LtGray RGB(192,192,192)
-#define White  RGB(255,255,255)
-
-static const COLORREF FaceColor = LtGray;
-static const COLORREF HandColor = White;
-static const COLORREF TickColor = White;
-static const COLORREF ShadowColor = Black;
-static const COLORREF BackgroundColor = LtGray;
+#define FaceColor (GetSysColor(COLOR_3DFACE))
+#define HandColor (GetSysColor(COLOR_3DHIGHLIGHT))
+#define TickColor (GetSysColor(COLOR_3DHIGHLIGHT))
+#define ShadowColor (GetSysColor(COLOR_3DDKSHADOW))
+#define BackgroundColor (GetSysColor(COLOR_3DFACE))
 
 static const int SHADOW_DEPTH = 2;
  
