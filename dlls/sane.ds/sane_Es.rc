@@ -1,7 +1,7 @@
 /*
- * Top level resource file for Twain
+ * Spanish resources for Twain
  *
- * Copyright 2006 CodeWeavers, Aric Stewart
+ * Copyright 2007 Luis Carlos Busquets Pérez
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,20 +18,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
+LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
 
-#include "resource.h"
+IDD_DIALOG1 DIALOG DISCARDABLE 0, 0, 186, 46
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | DS_CENTER | DS_SETFOREGROUND
+CAPTION "Escaneando"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT   "Escaneando... Por favor espere",IDC_STATIC,5,19,176,8, SS_CENTER
+END
 
-#include "sane_De.rc"
-#include "sane_En.rc"
-#include "sane_Es.rc"
-#include "sane_Fi.rc"
-#include "sane_Fr.rc"
-#include "sane_Ko.rc"
-#include "sane_Nl.rc"
-#include "sane_No.rc"
-#include "sane_Pl.rc"
-#include "sane_Sv.rc"
+STRINGTABLE DISCARDABLE
+{
+ 0 ""
+ 1 "px"
+ 2 "b"
+ 3 "mm"
+ 4 "dpi"
+ 5 "%"
+ 6 "ns"
+}
