@@ -9706,7 +9706,7 @@ static void WINAPI wine_glWriteMaskEXT( GLuint res, GLuint in, GLenum outX, GLen
 }
 
 
-/* The table giving the correspondance between names and functions */
+/* The table giving the correspondence between names and functions */
 const OpenGL_extension extension_registry[1197] = {
   { "glActiveStencilFaceEXT", "GL_EXT_stencil_two_side", (void *) wine_glActiveStencilFaceEXT },
   { "glActiveTexture", "GL_VERSION_1_3", (void *) wine_glActiveTexture },

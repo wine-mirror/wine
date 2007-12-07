@@ -231,7 +231,7 @@ static void SetDeferredRun(WORD *pval, int cval, int iStart, int nval)
 
     Output: revised character count
 
-    Note:    This is a very simplfistic function. In effect it restricts
+    Note:    This is a very simplistic function. In effect it restricts
             the action of the algorithm to the first paragraph in the input
             where a paragraph ends at the end of the first block separator
             or at the end of the input text.

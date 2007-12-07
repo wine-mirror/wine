@@ -2780,7 +2780,7 @@ DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
  * TranslateCharsetInfo [GDI32.@]
  *
  * Fills a CHARSETINFO structure for a character set, code page, or
- * font. This allows making the correspondance between different labelings
+ * font. This allows making the correspondence between different labelings
  * (character set, Windows, ANSI, and OEM codepages, and Unicode ranges)
  * of the same encoding.
  *

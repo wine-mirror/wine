@@ -5761,7 +5761,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
     }
 
     /* TODO: Write a test for the return value */
-    FIXME("Attempt to destroy nonexistant patch\n");
+    FIXME("Attempt to destroy nonexistent patch\n");
     return WINED3DERR_INVALIDCALL;
 }
 

@@ -702,8 +702,8 @@ foreach (sort keys %ext_functions) {
     print EXT "\nstatic ", GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe, $local_var);
 }
 
-# Then the table giving the string <-> function correspondance */
-print EXT "\n\n/* The table giving the correspondance between names and functions */\n";
+# Then the table giving the string <-> function correspondence */
+print EXT "\n\n/* The table giving the correspondence between names and functions */\n";
 print EXT "const OpenGL_extension extension_registry[$count] = {\n";
 my $i = 0;
 foreach (sort keys %ext_functions) {

@@ -2081,7 +2081,7 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
       index = PROPSHEET_FindPageByResId(psInfo, result);
       if(index >= psInfo->nPages) {
         index = old_index;
-        WARN("Tried to skip to nonexistant page by res id\n");
+        WARN("Tried to skip to nonexistent page by res id\n");
         break;
       }
       continue;
