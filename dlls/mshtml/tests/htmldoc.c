@@ -2424,6 +2424,7 @@ static void _test_readyState(unsigned line, IUnknown *unk)
     ok_(__FILE__, line)
         (!lstrcmpW(state, expected_state[load_state]), "unexpected state \"%s\", expected %d\n",
          debugstr_w(state), load_state);
+    SysFreeString(state);
 
     IHTMLDocument_Release(htmldoc);
 }
