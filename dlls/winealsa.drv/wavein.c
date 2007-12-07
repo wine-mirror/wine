@@ -162,7 +162,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     /* make sleep time to be # of ms to output a period */
     dwSleepTime = (wwi->dwPeriodSize * 1000) / wwi->format.Format.nAvgBytesPerSec;
     frames_per_period = snd_pcm_bytes_to_frames(wwi->pcm, wwi->dwPeriodSize);
-    TRACE("sleeptime=%d ms\n", dwSleepTime);
+    TRACE("sleeptime=%d ms, total buffer length=%d ms (%d bytes)\n", dwSleepTime, wwi->dwBufferSize * 1000 / wwi->format.Format.nAvgBytesPerSec, wwi->dwBufferSize);
 
     for (;;) {
 	/* wait for dwSleepTime or an event in thread's queue */
@@ -180,6 +180,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
             /* read all the fragments accumulated so far */
 	    frames = snd_pcm_avail_update(wwi->pcm);
 	    bytes = snd_pcm_frames_to_bytes(wwi->pcm, frames);
+
             TRACE("frames = %d  bytes = %d\n", frames, bytes);
 	    periods = bytes / wwi->dwPeriodSize;
             while ((periods > 0) && (wwi->lpQueuePtr))
@@ -194,7 +195,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		    bytesRead = snd_pcm_frames_to_bytes(wwi->pcm, read);
 
                     TRACE("bytesRead=%d (direct)\n", bytesRead);
-		    if (bytesRead != (DWORD) -1)
+		    if (read != (DWORD) -1)
 		    {
 			/* update number of bytes recorded in current buffer and by this device */
                         lpWaveHdr->dwBytesRecorded += bytesRead;
@@ -216,9 +217,9 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 			    lpWaveHdr = lpNext;
 			}
                     } else {
-                        TRACE("read(%s, %p, %d) failed (%s)\n", wwi->pcmname,
+                        FIXME("read(%s, %p, %d) failed (%s)\n", wwi->pcmname,
                             lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
-                            frames_per_period, strerror(errno));
+                            frames_per_period, snd_strerror(read));
                     }
                 }
 		else
@@ -230,14 +231,14 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
                     TRACE("bytesRead=%d (local)\n", bytesRead);
 
-		    if (bytesRead == (DWORD) -1) {
+		    if (read == (DWORD) -1) {
 			TRACE("read(%s, %p, %d) failed (%s)\n", wwi->pcmname,
 			      buffer, frames_per_period, strerror(errno));
 			continue;
 		    }
 
                     /* copy data in client buffers */
-                    while (bytesRead != (DWORD) -1 && bytesRead > 0)
+                    while (read != (DWORD) -1 && bytesRead > 0)
                     {
                         DWORD dwToCopy = min (bytesRead, lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
 
