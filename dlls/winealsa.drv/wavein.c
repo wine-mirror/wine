@@ -160,7 +160,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     SetEvent(wwi->hStartUpEvent);
 
     /* make sleep time to be # of ms to output a period */
-    dwSleepTime = (1024/*wwi-dwPeriodSize => overrun!*/ * 1000) / wwi->format.Format.nAvgBytesPerSec;
+    dwSleepTime = (wwi->dwPeriodSize * 1000) / wwi->format.Format.nAvgBytesPerSec;
     frames_per_period = snd_pcm_bytes_to_frames(wwi->pcm, wwi->dwPeriodSize);
     TRACE("sleeptime=%d ms\n", dwSleepTime);
 
@@ -581,10 +581,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     ALSA_InitRingMessage(&wwi->msgRing);
 
-    wwi->dwPeriodSize = period_size;
-    /*if (wwi->dwFragmentSize % wwi->format.Format.nBlockAlign)
-	ERR("Fragment doesn't contain an integral number of data blocks\n");
-    */
+    wwi->dwPeriodSize = snd_pcm_frames_to_bytes(pcm, period_size);
     TRACE("dwPeriodSize=%u\n", wwi->dwPeriodSize);
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwi->format.Format.wBitsPerSample, wwi->format.Format.nAvgBytesPerSec,
