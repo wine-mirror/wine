@@ -124,10 +124,10 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, LPVOID bmBit
     /* check if bpp is compatible with screen depth */
     if (!((bitmap.bmBitsPixel == 1) ||
           (bitmap.bmBitsPixel == screen_depth) ||
-          (bitmap.bmBitsPixel == 24 && screen_depth == 32) ||
-          (bitmap.bmBitsPixel == 32 && screen_depth == 24) ||
-          (bitmap.bmBitsPixel == 15 && screen_depth == 16) ||
-          (bitmap.bmBitsPixel == 16 && screen_depth == 15)))
+          (bitmap.bmBitsPixel == 24 && screen_depth == 32) ||   /* FIXME: Not compatible */
+          (bitmap.bmBitsPixel == 32 && screen_depth == 24) ||   /* FIXME: Not compatible */
+          (bitmap.bmBitsPixel == 15 && screen_depth == 16) ||   /* Confirmed by tests    */
+          (bitmap.bmBitsPixel == 16 && screen_depth == 15)))    /* TODO: Confirm this    */
     {
         ERR("Trying to make bitmap with planes=%d, bpp=%d\n",
             bitmap.bmPlanes, bitmap.bmBitsPixel);

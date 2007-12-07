@@ -1555,7 +1555,8 @@ static void test_select_object(void)
 {
     HDC hdc;
     HBITMAP hbm, hbm_old;
-    INT planes, bpp;
+    INT planes, bpp, i;
+    DWORD depths[] = {8, 15, 16, 24, 32};
 
     hdc = GetDC(0);
     ok(hdc != 0, "GetDC(0) failed\n");
@@ -1594,17 +1595,30 @@ static void test_select_object(void)
 
     DeleteObject(hbm);
 
-    /* test a color bitmap that doesn't match the dc's bpp */
-    planes = GetDeviceCaps(hdc, PLANES);
-    bpp = GetDeviceCaps(hdc, BITSPIXEL) == 24 ? 8 : 24;
+    for(i = 0; i < sizeof(depths)/sizeof(depths[0]); i++) {
+        /* test a color bitmap to dc bpp matching */
+        planes = GetDeviceCaps(hdc, PLANES);
+        bpp = GetDeviceCaps(hdc, BITSPIXEL);
 
-    hbm = CreateBitmap(10, 10, planes, bpp, NULL);
-    ok(hbm != 0, "CreateBitmap failed\n");
+        hbm = CreateBitmap(10, 10, planes, depths[i], NULL);
+        ok(hbm != 0, "CreateBitmap failed\n");
 
-    hbm_old = SelectObject(hdc, hbm);
-    ok(hbm_old == 0, "SelectObject should fail\n");
+        hbm_old = SelectObject(hdc, hbm);
+        if(depths[i] == bpp ||
+          (bpp == 16 && depths[i] == 15)        /* 16 and 15 bpp are compatible */
+          ) {
+            ok(hbm_old != 0, "SelectObject failed, BITSPIXEL: %d, created depth: %d\n", bpp, depths[i]);
+            SelectObject(hdc, hbm_old);
+        } else {
+            if(bpp == 24 && depths[i] == 32) {
+                todo_wine ok(hbm_old == 0, "SelectObject should fail. BITSPIXELS: %d, created depth: %d\n", bpp, depths[i]);
+            } else {
+                ok(hbm_old == 0, "SelectObject should fail. BITSPIXELS: %d, created depth: %d\n", bpp, depths[i]);
+            }
+        }
 
-    DeleteObject(hbm);
+        DeleteObject(hbm);
+    }
 
     DeleteDC(hdc);
 }
