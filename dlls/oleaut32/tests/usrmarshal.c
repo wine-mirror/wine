@@ -208,6 +208,7 @@ static void test_marshal_LPSAFEARRAY(void)
         LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
+    lpsa->cLocks = 0;
     SafeArrayDestroy(lpsa);
 
     /* test NULL safe array */
@@ -244,6 +245,7 @@ static void test_marshal_LPSAFEARRAY(void)
     check_safearray(buffer, lpsa);
 
     HeapFree(GetProcessHeap(), 0, buffer);
+    lpsa->cLocks = 0;
     SafeArrayDestroy(lpsa);
 
     /* VARTYPE-less arrays can be marshaled if cbElements is 1,2,4 or 8 as type SF_In */
@@ -1125,6 +1127,7 @@ static void test_marshal_VARIANT(void)
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
+    lpsa->cLocks = 0;
     SafeArrayDestroy(lpsa);
 
     /*** VARIANT BYREF ***/
