@@ -910,7 +910,6 @@ IDirectDrawImpl_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *Caps, DWORD *t
     {
         TRACE("(%p) Asked for memory with description: ", This);
         DDRAW_dump_DDSCAPS2(Caps);
-        TRACE("\n");
     }
     EnterCriticalSection(&ddraw_cs);
 

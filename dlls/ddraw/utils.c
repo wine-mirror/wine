@@ -321,7 +321,6 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
     if(TRACE_ON(ddraw)) {
         TRACE("Returning: ");
         DDRAW_dump_pixelformat(DDPixelFormat);
-        TRACE("\n");
     }
 }
 /*****************************************************************************
@@ -343,7 +342,6 @@ PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
     if(TRACE_ON(ddraw))
     {
         DDRAW_dump_pixelformat(DDPixelFormat);
-        TRACE("\n");
     }
 
     if(DDPixelFormat->dwFlags & DDPF_PALETTEINDEXED8)
@@ -616,17 +614,17 @@ PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
 static void
 DDRAW_dump_DWORD(const void *in)
 {
-    TRACE("%d", *((const DWORD *) in));
+    TRACE("%d\n", *((const DWORD *) in));
 }
 static void
 DDRAW_dump_PTR(const void *in)
 {
-    TRACE("%p", *((const void * const*) in));
+    TRACE("%p\n", *((const void * const*) in));
 }
 static void
 DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *ddck)
 {
-    TRACE(" Low : %d  - High : %d", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
+    TRACE("Low : %d  - High : %d\n", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
 }
 
 static void DDRAW_dump_flags_nolf(DWORD flags, const flag_info* names,
@@ -637,11 +635,10 @@ static void DDRAW_dump_flags_nolf(DWORD flags, const flag_info* names,
     for (i=0; i < num_names; i++)
         if ((flags & names[i].val) ||      /* standard flag value */
             ((!flags) && (!names[i].val))) /* zero value only */
-            TRACE("%s ", names[i].name);
+            TRACE("%s\n", names[i].name);
 }
 
-static void DDRAW_dump_flags(DWORD flags, const flag_info* names,
-                             size_t num_names)
+static void DDRAW_dump_flags(DWORD flags, const flag_info* names, size_t num_names)
 {
     DDRAW_dump_flags_nolf(flags, names, num_names);
     TRACE("\n");
@@ -704,7 +701,7 @@ void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in)
     };
 
     DDRAW_dump_flags_nolf(in->dwCaps, flags, sizeof(flags)/sizeof(flags[0]));
-    DDRAW_dump_flags_nolf(in->dwCaps2, flags2, sizeof(flags2)/sizeof(flags2[0]));
+    DDRAW_dump_flags(in->dwCaps2, flags2, sizeof(flags2)/sizeof(flags2[0]));
 }
 
 void
@@ -758,7 +755,6 @@ DDRAW_dump_members(DWORD flags,
         {
             TRACE(" - %s : ", mems[i].name);
             mems[i].func((const char *)data + mems[i].offset);
-            TRACE("\n");
         }
     }
 }
@@ -820,7 +816,7 @@ DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf)
         TRACE(" V "); TRACE(cmd, pf->u3.dwBumpDvBitMask);
         TRACE(" L "); TRACE(cmd, pf->u4.dwBumpLuminanceBitMask);
     }
-    TRACE(")");
+    TRACE(")\n");
 }
 
 void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd)
@@ -1118,7 +1114,7 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps)
     TRACE(" - dwMinOverlayStretch : %d\n", lpcaps->dwMinOverlayStretch);
     TRACE(" - dwMaxOverlayStretch : %d\n", lpcaps->dwMaxOverlayStretch);
     TRACE("...\n");
-    TRACE(" - ddsCaps : "); DDRAW_dump_DDSCAPS2(&lpcaps->ddsCaps); TRACE("\n");
+    TRACE(" - ddsCaps : "); DDRAW_dump_DDSCAPS2(&lpcaps->ddsCaps);
 }
 
 /*****************************************************************************
