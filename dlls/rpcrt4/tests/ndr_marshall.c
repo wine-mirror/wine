@@ -1167,7 +1167,9 @@ todo_wine {
     my_free_called = 0;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerFree( &StubMsg, mem, fmtstr_conf_str );
+todo_wine {
     ok(my_free_called == 1, "free called %d\n", my_free_called);
+}
 
     /* Server */
     my_alloc_called = 0;
