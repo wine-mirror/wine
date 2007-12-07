@@ -146,8 +146,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     WAVEHDR*		lpWaveHdr;
     DWORD		dwSleepTime;
     DWORD		bytesRead;
-    LPVOID		buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, wwi->dwPeriodSize);
-    char               *pOffset = buffer;
     enum win_wm_message msg;
     DWORD		param;
     HANDLE		ev;
@@ -171,140 +169,69 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	 */
 	if (wwi->lpQueuePtr != NULL && wwi->state == WINE_WS_PLAYING)
         {
-	    int periods;
-	    DWORD frames;
-	    DWORD bytes;
-	    DWORD read;
+            DWORD frames;
+            DWORD bytes;
+            DWORD read;
 
             lpWaveHdr = wwi->lpQueuePtr;
             /* read all the fragments accumulated so far */
-	    frames = snd_pcm_avail_update(wwi->pcm);
-	    bytes = snd_pcm_frames_to_bytes(wwi->pcm, frames);
+            frames = snd_pcm_avail_update(wwi->pcm);
+            bytes = snd_pcm_frames_to_bytes(wwi->pcm, frames);
 
-            TRACE("frames = %d  bytes = %d\n", frames, bytes);
-	    periods = bytes / wwi->dwPeriodSize;
-            while ((periods > 0) && (wwi->lpQueuePtr))
+            TRACE("frames = %d  bytes = %d state=%d\n", frames, bytes, snd_pcm_state(wwi->pcm));
+            if (snd_pcm_state(wwi->pcm) == SND_PCM_STATE_XRUN)
             {
-		periods--;
-		bytes = wwi->dwPeriodSize;
-                TRACE("bytes = %d\n",bytes);
-                if (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded >= wwi->dwPeriodSize)
-                {
-                    /* directly read fragment in wavehdr */
-                    read = wwi->read(wwi->pcm, lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, frames_per_period);
-		    bytesRead = snd_pcm_frames_to_bytes(wwi->pcm, read);
-
-                    TRACE("bytesRead=%d (direct)\n", bytesRead);
-		    if (read != (DWORD) -1)
-		    {
-			/* update number of bytes recorded in current buffer and by this device */
-                        lpWaveHdr->dwBytesRecorded += bytesRead;
-			InterlockedExchangeAdd((LONG*)&wwi->dwTotalRecorded, bytesRead);
-
-			/* buffer is full. notify client */
-			if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength)
-			{
-			    /* must copy the value of next waveHdr, because we have no idea of what
-			     * will be done with the content of lpWaveHdr in callback
-			     */
-			    LPWAVEHDR	lpNext = lpWaveHdr->lpNext;
-
-			    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
-			    lpWaveHdr->dwFlags |=  WHDR_DONE;
-
-			    wwi->lpQueuePtr = lpNext;
-			    widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
-			    lpWaveHdr = lpNext;
-			}
-                    } else {
-                        FIXME("read(%s, %p, %d) failed (%s)\n", wwi->pcmname,
-                            lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
-                            frames_per_period, snd_strerror(read));
-                    }
-                }
-		else
-		{
-                    /* read the fragment in a local buffer */
-		    read = wwi->read(wwi->pcm, buffer, frames_per_period);
-		    bytesRead = snd_pcm_frames_to_bytes(wwi->pcm, read);
-                    pOffset = buffer;
-
-                    TRACE("bytesRead=%d (local)\n", bytesRead);
-
-		    if (read == (DWORD) -1) {
-			TRACE("read(%s, %p, %d) failed (%s)\n", wwi->pcmname,
-			      buffer, frames_per_period, strerror(errno));
-			continue;
-		    }
-
-                    /* copy data in client buffers */
-                    while (read != (DWORD) -1 && bytesRead > 0)
-                    {
-                        DWORD dwToCopy = min (bytesRead, lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
-
-                        memcpy(lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
-                               pOffset,
-                               dwToCopy);
-
-                        /* update number of bytes recorded in current buffer and by this device */
-                        lpWaveHdr->dwBytesRecorded += dwToCopy;
-                        InterlockedExchangeAdd((LONG*)&wwi->dwTotalRecorded, dwToCopy);
-                        bytesRead -= dwToCopy;
-                        pOffset   += dwToCopy;
-
-                        /* client buffer is full. notify client */
-                        if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength)
-                        {
-			    /* must copy the value of next waveHdr, because we have no idea of what
-			     * will be done with the content of lpWaveHdr in callback
-			     */
-			    LPWAVEHDR	lpNext = lpWaveHdr->lpNext;
-			    TRACE("lpNext=%p\n", lpNext);
-
-                            lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
-                            lpWaveHdr->dwFlags |=  WHDR_DONE;
-
-			    wwi->lpQueuePtr = lpNext;
-                            widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
-
-			    lpWaveHdr = lpNext;
-			    if (!lpNext && bytesRead) {
-				/* before we give up, check for more header messages */
-				while (ALSA_PeekRingMessage(&wwi->msgRing, &msg, &param, &ev))
-				{
-				    if (msg == WINE_WM_HEADER) {
-					LPWAVEHDR hdr;
-					ALSA_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev);
-					hdr = ((LPWAVEHDR)param);
-					TRACE("msg = %s, hdr = %p, ev = %p\n", ALSA_getCmdString(msg), hdr, ev);
-					hdr->lpNext = 0;
-					if (lpWaveHdr == 0) {
-					    /* new head of queue */
-					    wwi->lpQueuePtr = lpWaveHdr = hdr;
-					} else {
-					    /* insert buffer at the end of queue */
-					    LPWAVEHDR*  wh;
-					    for (wh = &(wwi->lpQueuePtr); *wh; wh = &((*wh)->lpNext));
-					    *wh = hdr;
-					}
-				    } else
-					break;
-				}
-
-				if (lpWaveHdr == 0) {
-                                    /* no more buffer to copy data to, but we did read more.
-                                     * what hasn't been copied will be dropped
-                                     */
-                                    WARN("buffer under run! %u bytes dropped.\n", bytesRead);
-                                    wwi->lpQueuePtr = NULL;
-                                    break;
-				}
-                            }
-                        }
-		    }
-		}
+                FIXME("Recovering from XRUN!\n");
+                snd_pcm_prepare(wwi->pcm);
+                frames = snd_pcm_avail_update(wwi->pcm);
+                bytes = snd_pcm_frames_to_bytes(wwi->pcm, frames);
+                snd_pcm_start(wwi->pcm);
+                snd_pcm_forward(wwi->pcm, frames - snd_pcm_bytes_to_frames(wwi->pcm, wwi->dwPeriodSize));
+                continue;
             }
-	}
+            while (frames > 0 && wwi->lpQueuePtr)
+            {
+                TRACE("bytes = %d\n", bytes);
+                if (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded < bytes)
+                {
+                    bytes = lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded;
+                    frames = snd_pcm_bytes_to_frames(wwi->pcm, bytes);
+                }
+                /* directly read fragment in wavehdr */
+                read = wwi->read(wwi->pcm, lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, frames);
+                bytesRead = snd_pcm_frames_to_bytes(wwi->pcm, read);
+
+                TRACE("bytesRead=(%d(%d)/(%d)) -> (%d/%d) \n", bytesRead, read, frames, lpWaveHdr->dwBufferLength, lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
+                if (read != (DWORD) -1)
+                {
+                    /* update number of bytes recorded in current buffer and by this device */
+                    lpWaveHdr->dwBytesRecorded += bytesRead;
+                    InterlockedExchangeAdd((LONG*)&wwi->dwTotalRecorded, bytesRead);
+                    frames -= read;
+                    bytes -= bytesRead;
+
+                    /* buffer is full. notify client */
+                    if (!snd_pcm_bytes_to_frames(wwi->pcm, lpWaveHdr->dwBytesRecorded - lpWaveHdr->dwBufferLength))
+                    {
+                        /* must copy the value of next waveHdr, because we have no idea of what
+                         * will be done with the content of lpWaveHdr in callback
+                         */
+                        LPWAVEHDR	lpNext = lpWaveHdr->lpNext;
+
+                        lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+                        lpWaveHdr->dwFlags |=  WHDR_DONE;
+
+                        wwi->lpQueuePtr = lpNext;
+                        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+                        lpWaveHdr = lpNext;
+                    }
+                } else {
+                    WARN("read(%s, %p, %d) failed (%d/%s)\n", wwi->pcmname,
+                        lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
+                        frames, frames, snd_strerror(read));
+                }
+            }
+        }
 
         ALSA_WaitRingMessage(&wwi->msgRing, dwSleepTime);
 
@@ -383,7 +310,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		wwi->hThread = 0;
 		wwi->state = WINE_WS_CLOSED;
 		SetEvent(ev);
-		HeapFree(GetProcessHeap(), 0, buffer);
 		ExitThread(0);
 		/* shouldn't go here */
 	    default:
