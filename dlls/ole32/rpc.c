@@ -1725,15 +1725,15 @@ HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
         WaitNamedPipeW( pipefn, NMPWAIT_WAIT_FOREVER );
         hPipe = CreateFileW(pipefn, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
         if (hPipe == INVALID_HANDLE_VALUE) {
+            DWORD index;
             if (tries == 1) {
                 if ( (hres = create_local_service(rclsid)) &&
                      (hres = create_server(rclsid)) )
                     return hres;
-                Sleep(1000);
             } else {
                 WARN("Connecting to %s, no response yet, retrying: le is %u\n", debugstr_w(pipefn), GetLastError());
-                Sleep(1000);
             }
+            CoWaitForMultipleHandles(0, 1000, 0, NULL, &index);
             continue;
         }
         bufferlen = 0;
