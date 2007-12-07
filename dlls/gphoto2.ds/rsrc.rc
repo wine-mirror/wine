@@ -28,6 +28,7 @@
 
 #include "gphoto2_De.rc"
 #include "gphoto2_En.rc"
+#include "gphoto2_Es.rc"
 #include "gphoto2_Fr.rc"
 #include "gphoto2_Ko.rc"
 #include "gphoto2_Nl.rc"
