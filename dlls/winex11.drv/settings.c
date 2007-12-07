@@ -266,10 +266,6 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
 {
     static const WCHAR dev_name[CCHDEVICENAME] =
         { 'W','i','n','e',' ','X','1','1',' ','d','r','i','v','e','r',0 };
-    DWORD dwBpp;
-
-    dwBpp = screen_depth;
-    if (dwBpp == 24) dwBpp = 32;
 
     devmode->dmSize = sizeof(DEVMODEW);
     devmode->dmSpecVersion = MAKEWORD(1,4);
