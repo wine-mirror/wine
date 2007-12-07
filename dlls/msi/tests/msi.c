@@ -1434,15 +1434,6 @@ static void test_MsiGetProductCode(void)
     res = RegSetValueExA(compkey, prod2_squashed, 0, REG_SZ, (const BYTE *)"C:\\another", 10);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    /* another product value exists */
-    lstrcpyA(product, "prod");
-    r = MsiGetProductCodeA(component, product);
-    todo_wine
-    {
-        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %d\n", r);
-        ok(!lstrcmpA(product, prodcode2), "Expected %s, got %s\n", prodcode2, product);
-    }
-
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\Managed\\");
     lstrcatA(keypath, usersid);
@@ -1555,15 +1546,6 @@ static void test_MsiGetProductCode(void)
 
     res = RegSetValueExA(compkey, prod2_squashed, 0, REG_SZ, (const BYTE *)"C:\\another", 10);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-
-    /* another product value exists */
-    lstrcpyA(product, "prod");
-    r = MsiGetProductCodeA(component, product);
-    todo_wine
-    {
-        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %d\n", r);
-        ok(!lstrcmpA(product, prodcode2), "Expected %s, got %s\n", prodcode2, product);
-    }
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\Managed\\");
