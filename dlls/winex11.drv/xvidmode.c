@@ -143,8 +143,6 @@ void X11DRV_XF86VM_Init(void)
   Bool ok;
   int nmodes;
   unsigned int i;
-  DWORD dwBpp = screen_depth;
-  if (dwBpp == 24) dwBpp = 32;
 
   if (xf86vm_major) return; /* already initialized? */
 
