@@ -2153,6 +2153,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,oleaut32.dll,1
 11,,shell32.dll,1
 
+11,,actxprxy.dll,1
 11,,amstream.dll,1
 11,,atl.dll,1
 11,,avifil32.dll,1
@@ -2208,6 +2209,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,,winebrowser.exe
 10,,winhelp.exe
 10,command,start.exe
+11,,actxprxy.dll
 11,,advapi32.dll
 11,,advpack.dll
 11,,cabinet.dll
