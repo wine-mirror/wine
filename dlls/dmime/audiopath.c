@@ -142,7 +142,7 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectI
 		DMUSIC_CreateDirectMusicGraphImpl (&IID_IDirectMusicGraph, (LPVOID*)&pGraph, NULL);
 		This->pToolGraph = (IDirectMusicGraph*) pGraph;
 	      }
-	      *ppObject = (LPDIRECTMUSICGRAPH) This->pToolGraph; 
+	      *ppObject = This->pToolGraph;
 	      IDirectMusicGraph_AddRef((LPDIRECTMUSICGRAPH) *ppObject);
 	      return S_OK;
 	    }
@@ -158,7 +158,7 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectI
 	case DMUS_PATH_PERFORMANCE:
 	  {
 	    /* TODO check wanted GUID */
-	    *ppObject = (LPDIRECTMUSICPERFORMANCE8) This->pPerf; 
+	    *ppObject = This->pPerf;
 	    IUnknown_AddRef((LPUNKNOWN) *ppObject);
 	    return S_OK;
 	  }
@@ -167,16 +167,16 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectI
 	case DMUS_PATH_PERFORMANCE_GRAPH:
 	  {
 	    IDirectMusicGraph* pPerfoGraph = NULL; 
-	    IDirectMusicPerformance8_GetGraph((LPDIRECTMUSICPERFORMANCE8) This->pPerf, &pPerfoGraph);
+	    IDirectMusicPerformance8_GetGraph(This->pPerf, &pPerfoGraph);
 	    if (NULL == pPerfoGraph) {
 	      IDirectMusicGraphImpl* pGraph = NULL; 
 	      DMUSIC_CreateDirectMusicGraphImpl (&IID_IDirectMusicGraph, (LPVOID*)&pGraph, NULL);			
-	      IDirectMusicPerformance8_SetGraph((LPDIRECTMUSICPERFORMANCE8) This->pPerf, (IDirectMusicGraph*) pGraph);
+	      IDirectMusicPerformance8_SetGraph(This->pPerf, (IDirectMusicGraph*) pGraph);
 	      /* we need release as SetGraph do an AddRef */
 	      IDirectMusicGraph_Release((LPDIRECTMUSICGRAPH) pGraph);
 	      pPerfoGraph = (LPDIRECTMUSICGRAPH) pGraph;
 	    }
-	    *ppObject = (LPDIRECTMUSICGRAPH) pPerfoGraph; 
+	    *ppObject = pPerfoGraph;
 	    return S_OK;
 	  }
 	  break;
