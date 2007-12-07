@@ -487,9 +487,10 @@ UINT WINAPI MsiGetProductCodeA(LPCSTR szComponent, LPSTR szBuffer)
             return ERROR_OUTOFMEMORY;
     }
 
+    *szwBuffer = '\0';
     r = MsiGetProductCodeW( szwComponent, szwBuffer );
 
-    if( ERROR_SUCCESS == r )
+    if(*szwBuffer)
         WideCharToMultiByte(CP_ACP, 0, szwBuffer, -1, szBuffer, GUID_SIZE, NULL, NULL);
 
     msi_free( szwComponent );
@@ -499,38 +500,65 @@ UINT WINAPI MsiGetProductCodeA(LPCSTR szComponent, LPSTR szBuffer)
 
 UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
 {
-    UINT rc;
-    HKEY hkey;
-    WCHAR szSquished[GUID_SIZE];
+    UINT rc, index;
+    HKEY compkey, prodkey;
+    WCHAR squished_comp[GUID_SIZE];
+    WCHAR squished_prod[GUID_SIZE];
     DWORD sz = GUID_SIZE;
-    static const WCHAR szPermKey[] =
-        { '0','0','0','0','0','0','0','0','0','0','0','0',
-          '0','0','0','0','0','0','0','0','0','0','0','0',
-          '0','0','0','0','0','0','0','0',0};
 
-    TRACE("%s %p\n",debugstr_w(szComponent), szBuffer);
+    TRACE("%s %p\n", debugstr_w(szComponent), szBuffer);
 
-    if (NULL == szComponent)
+    if (!szComponent || !*szComponent)
         return ERROR_INVALID_PARAMETER;
 
-    rc = MSIREG_OpenComponentsKey( szComponent, &hkey, FALSE);
-    if (rc != ERROR_SUCCESS)
-        return ERROR_UNKNOWN_COMPONENT;
+    if (!squash_guid(szComponent, squished_comp))
+        return ERROR_INVALID_PARAMETER;
 
-    rc = RegEnumValueW(hkey, 0, szSquished, &sz, NULL, NULL, NULL, NULL);
-    if (rc == ERROR_SUCCESS && strcmpW(szSquished,szPermKey)==0)
+    if (MSIREG_OpenUserDataComponentKey(szComponent, &compkey, FALSE) != ERROR_SUCCESS &&
+        MSIREG_OpenLocalSystemComponentKey(szComponent, &compkey, FALSE) != ERROR_SUCCESS)
     {
-        sz = GUID_SIZE;
-        rc = RegEnumValueW(hkey, 1, szSquished, &sz, NULL, NULL, NULL, NULL);
+        return ERROR_UNKNOWN_COMPONENT;
     }
 
-    RegCloseKey(hkey);
-
+    rc = RegEnumValueW(compkey, 0, squished_prod, &sz, NULL, NULL, NULL, NULL);
     if (rc != ERROR_SUCCESS)
-        return ERROR_INSTALL_FAILURE;
+    {
+        RegCloseKey(compkey);
+        return ERROR_UNKNOWN_COMPONENT;
+    }
 
-    unsquash_guid(szSquished, szBuffer);
-    return ERROR_SUCCESS;
+    /* check simple case, only one product */
+    rc = RegEnumValueW(compkey, 1, squished_prod, &sz, NULL, NULL, NULL, NULL);
+    if (rc == ERROR_NO_MORE_ITEMS)
+    {
+        rc = ERROR_SUCCESS;
+        goto done;
+    }
+
+    index = 0;
+    while ((rc = RegEnumValueW(compkey, index, squished_prod, &sz,
+           NULL, NULL, NULL, NULL)) != ERROR_NO_MORE_ITEMS)
+    {
+        index++;
+        sz = GUID_SIZE;
+        unsquash_guid(squished_prod, szBuffer);
+
+        if (MSIREG_OpenLocalManagedProductKey(szBuffer, &prodkey, FALSE) == ERROR_SUCCESS ||
+            MSIREG_OpenUserProductsKey(szBuffer, &prodkey, FALSE) == ERROR_SUCCESS ||
+            MSIREG_OpenLocalClassesProductKey(szBuffer, &prodkey, FALSE) == ERROR_SUCCESS)
+        {
+            RegCloseKey(prodkey);
+            rc = ERROR_SUCCESS;
+            goto done;
+        }
+    }
+
+    rc = ERROR_INSTALL_FAILURE;
+
+done:
+    RegCloseKey(compkey);
+    unsquash_guid(squished_prod, szBuffer);
+    return rc;
 }
 
 static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
