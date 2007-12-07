@@ -182,7 +182,8 @@ static void test_createdibitmap(void)
 
     /* Now select a polychrome bitmap into the dc and we expect
        screen_depth bitmaps again */
-    hbm_colour = CreateCompatibleBitmap(hdc, 1, 1);
+    hbm_colour = CreateCompatibleBitmap(hdc, bmih.biWidth, bmih.biHeight);
+    test_bitmap_info(hbm_colour, screen_depth, &bmih);
     hbm_old = SelectObject(hdcmem, hbm_colour);
 
     /* First try 32 bits */
