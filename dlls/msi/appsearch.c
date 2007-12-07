@@ -28,6 +28,7 @@
 #include "msiquery.h"
 #include "msidefs.h"
 #include "winver.h"
+#include "shlwapi.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "msipriv.h"
@@ -157,30 +158,77 @@ static void ACTION_FreeSignature(MSISIGNATURE *sig)
 static UINT ACTION_AppSearchComponents(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATURE *sig)
 {
     static const WCHAR query[] =  {
-        's','e','l','e','c','t',' ','*',' ',
-        'f','r','o','m',' ',
-        'C','o','m','p','L','o','c','a','t','o','r',' ',
-        'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
+        'S','E','L','E','C','T',' ','*',' ',
+        'F','R','O','M',' ',
+        '`','C','o','m','p','L','o','c','a','t','o','r','`',' ',
+        'W','H','E','R','E',' ','`','S','i','g','n','a','t','u','r','e','_','`',' ','=',' ',
         '\'','%','s','\'',0};
-    MSIRECORD *row;
-    LPWSTR guid;
+    static const WCHAR sigquery[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','S','i','g','n','a','t','u','r','e','`',' ',
+        'W','H','E','R','E',' ','`','S','i','g','n','a','t','u','r','e','`',' ','=',' ',
+        '\'','%','s','\'',0};
+
+    MSIRECORD *row, *rec;
+    LPCWSTR signature, guid;
+    BOOL sigpresent = TRUE;
+    BOOL isdir;
+    UINT type;
+    WCHAR path[MAX_PATH];
+    DWORD size = MAX_PATH;
+    LPWSTR ptr;
+    DWORD attr;
 
     TRACE("%s\n", debugstr_w(sig->Name));
 
     *appValue = NULL;
 
-    row = MSI_QueryGetRecord( package->db, query, sig->Name );
+    row = MSI_QueryGetRecord(package->db, query, sig->Name);
     if (!row)
     {
         TRACE("failed to query CompLocator for %s\n", debugstr_w(sig->Name));
         return ERROR_SUCCESS;
     }
 
-    guid = msi_dup_record_field( row, 2 );
-    FIXME("AppSearch CompLocator (%s) unimplemented\n", debugstr_w(guid));
-    msi_free( guid );
-    msiobj_release( &row->hdr );
+    signature = MSI_RecordGetString(row, 1);
+    guid = MSI_RecordGetString(row, 2);
+    type = MSI_RecordGetInteger(row, 3);
 
+    rec = MSI_QueryGetRecord(package->db, sigquery, signature);
+    if (!rec)
+        sigpresent = FALSE;
+
+    *path = '\0';
+    MsiLocateComponentW(guid, path, &size);
+    if (!*path)
+        goto done;
+
+    attr = GetFileAttributesW(path);
+    if (attr == INVALID_FILE_ATTRIBUTES)
+        goto done;
+
+    isdir = (attr & FILE_ATTRIBUTE_DIRECTORY);
+
+    if (type != msidbLocatorTypeDirectory && sigpresent && !isdir)
+    {
+        *appValue = strdupW(path);
+    }
+    else if (!sigpresent && (type != msidbLocatorTypeDirectory || isdir))
+    {
+        if (type == msidbLocatorTypeFileName)
+        {
+            ptr = strrchrW(path, '\\');
+            *(ptr + 1) = '\0';
+        }
+        else
+            PathAddBackslashW(path);
+
+        *appValue = strdupW(path);
+    }
+
+done:
+    if (rec) msiobj_release(&rec->hdr);
+    msiobj_release(&row->hdr);
     return ERROR_SUCCESS;
 }
 

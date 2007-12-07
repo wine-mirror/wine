@@ -5228,10 +5228,7 @@ static void test_complocator(void)
 
     lstrcpyA(expected, CURR_DIR);
     lstrcatA(expected, "\\abelisaurus");
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
-    }
+    ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "BACTROSAURUS", prop, &size);
@@ -5254,10 +5251,7 @@ static void test_complocator(void)
 
     lstrcpyA(expected, CURR_DIR);
     lstrcatA(expected, "\\");
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
-    }
+    ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "FALCARIUS", prop, &size);
@@ -5300,10 +5294,7 @@ static void test_complocator(void)
 
     lstrcpyA(expected, CURR_DIR);
     lstrcatA(expected, "\\");
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
-    }
+    ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "NEOSODON", prop, &size);
@@ -5311,10 +5302,7 @@ static void test_complocator(void)
 
     lstrcpyA(expected, CURR_DIR);
     lstrcatA(expected, "\\neosodon\\");
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
-    }
+    ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "OLOROTITAN", prop, &size);
