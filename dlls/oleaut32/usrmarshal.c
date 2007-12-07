@@ -1048,9 +1048,14 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *B
     (*ppsa)->cbElements = wiresa->cbElements;
     (*ppsa)->cLocks = LOWORD(wiresa->cLocks);
 
-    hr = SafeArrayAllocData(*ppsa);
-    if (FAILED(hr))
-        RpcRaiseException(hr);
+    /* SafeArrayCreateEx allocates the data for us, but
+     * SafeArrayAllocDescriptor doesn't */
+    if(!vt)
+    {
+        hr = SafeArrayAllocData(*ppsa);
+        if (FAILED(hr))
+            RpcRaiseException(hr);
+    }
 
     if ((*(ULONG *)Buffer != cell_count) || (SAFEARRAY_GetCellCount(*ppsa) != cell_count))
         RpcRaiseException(RPC_S_INVALID_BOUND);
