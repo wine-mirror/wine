@@ -604,6 +604,7 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 
     lpWaveHdr->dwFlags &= ~WHDR_DONE;
     lpWaveHdr->dwFlags |= WHDR_INQUEUE;
+    lpWaveHdr->dwBytesRecorded = 0;
     lpWaveHdr->lpNext = 0;
 
     ALSA_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
