@@ -168,13 +168,11 @@ check (const struct listbox_test test)
 	WCHAR *txtw;
 	int resA, resW;
 
-	txt = HeapAlloc (GetProcessHeap(), 0, size+1);
-	memset(txt, 0, size+1);
+	txt = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, size+1);
 	resA=SendMessageA(hLB, LB_GETTEXT, i, (LPARAM)txt);
         ok(!strcmp (txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
 
-	txtw = HeapAlloc (GetProcessHeap(), 0, 2*size+2);
-	memset(txtw, 0, 2*size+2);
+	txtw = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, 2*size+2);
 	resW=SendMessageW(hLB, LB_GETTEXT, i, (LPARAM)txtw);
 	if (resA != resW) {
             trace("SendMessageW(LB_GETTEXT) not supported on this platform (resA=%d resW=%d), skipping...\n",
