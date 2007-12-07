@@ -20,6 +20,7 @@
  */
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -343,7 +344,7 @@ static void read_value(header_t *header, char **cur)
     }
 
     header->value.vt = VT_LPSTR;
-    header->value.pszVal = value;
+    header->value.u.pszVal = value;
 
     *cur = end;
 }
@@ -359,15 +360,15 @@ static void init_content_type(MimeBody *body, header_t *header)
         return;
     }
 
-    slash = strchr(header->value.pszVal, '/');
+    slash = strchr(header->value.u.pszVal, '/');
     if(!slash)
     {
         WARN("malformed context type value\n");
         return;
     }
-    len = slash - header->value.pszVal;
+    len = slash - header->value.u.pszVal;
     body->content_pri_type = HeapAlloc(GetProcessHeap(), 0, len + 1);
-    memcpy(body->content_pri_type, header->value.pszVal, len);
+    memcpy(body->content_pri_type, header->value.u.pszVal, len);
     body->content_pri_type[len] = '\0';
     body->content_sub_type = strdupA(slash + 1);
 }
