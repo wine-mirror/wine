@@ -813,7 +813,7 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
 	}
     }
 
-    if (nr || !found) 
+    if (!found)
     {
         TRACE("No more VID* entries found nr=%d\n", nr);
         return 20;
