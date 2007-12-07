@@ -1141,7 +1141,7 @@ static void test_conformant_string(void)
     ptr = NdrPointerMarshall( &StubMsg, (unsigned char *)memsrc, fmtstr_conf_str );
     ok(ptr == NULL, "ret %p\n", ptr);
     ok(StubMsg.Buffer - StubMsg.BufferStart == sizeof(memsrc) + 12, "Buffer %p Start %p len %d\n",
-        StubMsg.Buffer, StubMsg.BufferStart, 12 + sizeof(memsrc));
+       StubMsg.Buffer, StubMsg.BufferStart, StubMsg.Buffer - StubMsg.BufferStart);
     ok(!memcmp(StubMsg.BufferStart + 12, memsrc, sizeof(memsrc)), "incorrectly marshaled\n");
 
     StubMsg.Buffer = StubMsg.BufferStart;

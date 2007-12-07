@@ -1587,13 +1587,13 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
         {
             if (pwfxe->Format.cbSize < (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)))
             {
-                WARN("Too small a cbSize (%d/%d)\n", pwfxe->Format.cbSize, (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)));
+                WARN("Too small a cbSize %u\n", pwfxe->Format.cbSize);
                 return DSERR_INVALIDPARAM;
             }
 
             if (pwfxe->Format.cbSize > (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)))
             {
-                WARN("Too big a cbSize (%d/%d)\n", pwfxe->Format.cbSize, (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)));
+                WARN("Too big a cbSize %u\n", pwfxe->Format.cbSize);
                 return DSERR_CONTROLUNAVAIL;
             }
 

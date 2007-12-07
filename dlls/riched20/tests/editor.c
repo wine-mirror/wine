@@ -1070,9 +1070,9 @@ static void test_WM_SETTEXT()
   result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) a); \
   ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result); \
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buf); \
-  ok (result == strlen(buf), \
+  ok (result == lstrlen(buf), \
 	"WM_GETTEXT returned %ld instead of expected %u\n", \
-	result, strlen(buf)); \
+	result, lstrlen(buf)); \
   result = strcmp(b, buf); \
   ok(result == 0, \
         "WM_SETTEXT round trip: strcmp = %ld\n", result);
