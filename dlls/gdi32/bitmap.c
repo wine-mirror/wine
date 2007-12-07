@@ -263,6 +263,19 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
         return NULL;
     }
 
+    /* Windows only uses 1, 4, 8, 16, 24 and 32 bpp */
+    if(bm.bmBitsPixel == 1)         bm.bmBitsPixel = 1;
+    else if(bm.bmBitsPixel <= 4)    bm.bmBitsPixel = 4;
+    else if(bm.bmBitsPixel <= 8)    bm.bmBitsPixel = 8;
+    else if(bm.bmBitsPixel <= 16)   bm.bmBitsPixel = 16;
+    else if(bm.bmBitsPixel <= 24)   bm.bmBitsPixel = 24;
+    else if(bm.bmBitsPixel <= 32)   bm.bmBitsPixel = 32;
+    else {
+        WARN("Invalid bmBitsPixel %d, returning ERROR_INVALID_PARAMETER\n", bm.bmBitsPixel);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
     /* Windows ignores the provided bm.bmWidthBytes */
     bm.bmWidthBytes = BITMAP_GetWidthBytes( bm.bmWidth, bm.bmBitsPixel );
 

@@ -1557,6 +1557,8 @@ static void test_select_object(void)
     HBITMAP hbm, hbm_old;
     INT planes, bpp, i;
     DWORD depths[] = {8, 15, 16, 24, 32};
+    BITMAP bm;
+    DWORD bytes;
 
     hdc = GetDC(0);
     ok(hdc != 0, "GetDC(0) failed\n");
@@ -1617,6 +1619,21 @@ static void test_select_object(void)
             }
         }
 
+        memset(&bm, 0xAA, sizeof(bm));
+        bytes = GetObject(hbm, sizeof(bm), &bm);
+        ok(bytes == sizeof(bm), "GetObject returned %d\n", bytes);
+        ok(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
+        ok(bm.bmWidth == 10, "wrong bmWidth %d\n", bm.bmWidth);
+        ok(bm.bmHeight == 10, "wrong bmHeight %d\n", bm.bmHeight);
+        ok(bm.bmWidthBytes == BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel), "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
+        ok(bm.bmPlanes == planes, "wrong bmPlanes %u\n", bm.bmPlanes);
+        if(depths[i] == 15) {
+            ok(bm.bmBitsPixel == 16, "wrong bmBitsPixel %d(15 bpp special)\n", bm.bmBitsPixel);
+        } else {
+            ok(bm.bmBitsPixel == depths[i], "wrong bmBitsPixel %d\n", bm.bmBitsPixel);
+        }
+        ok(!bm.bmBits, "wrong bmBits %p\n", bm.bmBits);
+
         DeleteObject(hbm);
     }
 
@@ -1658,6 +1675,7 @@ static void test_CreateBitmap(void)
     BITMAP bmp;
     HDC screenDC = GetDC(0);
     HDC hdc = CreateCompatibleDC(screenDC);
+    UINT i, expect;
 
     /* all of these are the stock monochrome bitmap */
     HBITMAP bm = CreateCompatibleBitmap(hdc, 0, 0);
@@ -1716,6 +1734,42 @@ static void test_CreateBitmap(void)
     ok(bm != 0, "CreateBitmapIndirect error %u\n", GetLastError());
     test_mono_1x1_bmp(bm);
     DeleteObject(bm);
+
+    /* Test how the bmBitsPixel field is treated */
+    for(i = 1; i <= 33; i++) {
+        bmp.bmType = 0;
+        bmp.bmWidth = 1;
+        bmp.bmHeight = 1;
+        bmp.bmWidthBytes = 28;
+        bmp.bmPlanes = 1;
+        bmp.bmBitsPixel = i;
+        bmp.bmBits = NULL;
+        bm = CreateBitmapIndirect(&bmp);
+        if(i > 32) {
+            DWORD error = GetLastError();
+            ok(bm == 0, "CreateBitmapIndirect for %d bpp succeeded\n", i);
+            ok(error == ERROR_INVALID_PARAMETER, "Got error %d, expected ERROR_INVALID_PARAMETER\n", error);
+            continue;
+        }
+        ok(bm != 0, "CreateBitmapIndirect error %u\n", GetLastError());
+        GetObject(bm, sizeof(bmp), &bmp);
+        if(i == 1) {
+            expect = 1;
+        } else if(i <= 4) {
+            expect = 4;
+        } else if(i <= 8) {
+            expect = 8;
+        } else if(i <= 16) {
+            expect = 16;
+        } else if(i <= 24) {
+            expect = 24;
+        } else if(i <= 32) {
+            expect = 32;
+        }
+        ok(bmp.bmBitsPixel == expect, "CreateBitmapIndirect for a %d bpp bitmap created a %d bpp bitmap, expected %d\n",
+           i, bmp.bmBitsPixel, expect);
+        DeleteObject(bm);
+    }
 }
 
 static void test_bitmapinfoheadersize(void)
