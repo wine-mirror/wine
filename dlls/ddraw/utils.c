@@ -629,12 +629,8 @@ DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *ddck)
     TRACE(" Low : %d  - High : %d", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
 }
 
-#define DDRAW_dump_flags(flags,names,num_names) DDRAW_dump_flags_(flags, names, num_names, 1)
-static void
-DDRAW_dump_flags_(DWORD flags,
-                  const flag_info* names,
-                  size_t num_names,
-                  int newline)
+static void DDRAW_dump_flags_nolf(DWORD flags, const flag_info* names,
+                                  size_t num_names)
 {
     unsigned int	i;
 
@@ -642,9 +638,13 @@ DDRAW_dump_flags_(DWORD flags,
         if ((flags & names[i].val) ||      /* standard flag value */
             ((!flags) && (!names[i].val))) /* zero value only */
             TRACE("%s ", names[i].name);
+}
 
-    if (newline)
-        TRACE("\n");
+static void DDRAW_dump_flags(DWORD flags, const flag_info* names,
+                             size_t num_names)
+{
+    DDRAW_dump_flags_nolf(flags, names, num_names);
+    TRACE("\n");
 }
 
 void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in)
@@ -703,8 +703,8 @@ void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in)
         FE(DDSCAPS2_STEREOSURFACELEFT)
     };
 
-    DDRAW_dump_flags_(in->dwCaps, flags, sizeof(flags)/sizeof(flags[0]), 0);
-    DDRAW_dump_flags_(in->dwCaps2, flags2, sizeof(flags2)/sizeof(flags2[0]), 0);
+    DDRAW_dump_flags_nolf(in->dwCaps, flags, sizeof(flags)/sizeof(flags[0]));
+    DDRAW_dump_flags_nolf(in->dwCaps2, flags2, sizeof(flags2)/sizeof(flags2[0]));
 }
 
 void
@@ -741,7 +741,7 @@ DDRAW_dump_pixelformat_flag(DWORD flagmask)
             FE(DDPF_ZPIXELS)
     };
 
-    DDRAW_dump_flags_(flagmask, flags, sizeof(flags)/sizeof(flags[0]), 0);
+    DDRAW_dump_flags_nolf(flagmask, flags, sizeof(flags)/sizeof(flags[0]));
 }
 
 static void
