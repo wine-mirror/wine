@@ -1,0 +1,22 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = actxprxy.dll
+IMPORTS   = rpcrt4 kernel32 ntdll
+EXTRADEFS = -DREGISTER_PROXY_DLL -DPROXY_CLSID_IS="{ 0xb8da6310, 0xe19b, 0x11d0, { 0x93, 0x3c, 0x00, 0xa0, 0xc9, 0x0d, 0xca, 0xa9 } }"
+
+EXTRA_OBJS = dlldata.o
+
+C_SRCS = \
+	usrmarshal.c
+
+IDL_I_SRCS = \
+	actxprxy_servprov.idl
+
+IDL_P_SRCS = \
+	actxprxy_servprov.idl
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

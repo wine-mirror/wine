@@ -18,6 +18,7 @@ EXTRADIRS = @GLU32FILES@ @OPENGLFILES@ @QUARTZFILES@ @XFILES@
 BASEDIRS = \
 	acledit \
 	activeds \
+	actxprxy \
 	advapi32 \
 	advpack \
 	amstream \

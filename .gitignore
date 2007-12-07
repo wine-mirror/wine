@@ -15,6 +15,9 @@ dlls/Makedll.rules
 dlls/Makeimplib.rules
 dlls/Maketest.rules
 dlls/activeds/libactiveds.def
+dlls/actxprxy/actxprxy_servprov.h
+dlls/actxprxy/actxprxy_servprov_i.c
+dlls/actxprxy/actxprxy_servprov_p.c
 dlls/advapi32/libadvapi32.def
 dlls/advapi32/tests/*.ok
 dlls/advapi32/tests/advapi32_crosstest.exe
