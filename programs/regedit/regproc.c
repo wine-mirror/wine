@@ -374,7 +374,7 @@ static void closeKey(void)
 
 /******************************************************************************
  * This function is a wrapper for the setValue function.  It prepares the
- * land and clean the area once completed.
+ * land and cleans the area once completed.
  * Note: this function modifies the line parameter.
  *
  * line - registry file unwrapped line. Should have the registry value name and

@@ -2526,7 +2526,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
          * in max native instructions. Intel and others also offer the info in this extension but they
          * don't support GLSL (at least on Windows).
          *
-         * PS2.0 requires at least 96 instructions, 2.0a/2.0b go upto 512. Assume that if the number
+         * PS2.0 requires at least 96 instructions, 2.0a/2.0b go up to 512. Assume that if the number
          * of instructions is 512 or less we have to do with ps2.0 hardware.
          * NOTE: ps3.0 hardware requires 512 or more instructions but ati and nvidia offer 'enough' (1024 vs 4096) on their most basic ps3.0 hardware.
          */
@@ -2811,8 +2811,8 @@ static BOOL implementation_is_apple(WineD3D_GL_Info *gl_info) {
      * aren't sufficient either because a Linux binary may display on a macos X server via remote X11.
      * So try to detect the GL implementation by looking at certain Apple extensions. Some extensions
      * like client storage might be supported on other implementations too, but GL_APPLE_flush_render
-     * is specific to the MacOS window management, and GL_APPLE_ycbcr_422 is a Quicktime specific, so
-     * it the chance that other implementations support it is rather rare since Win32 Quicktime uses
+     * is specific to the Mac OS X window management, and GL_APPLE_ycbcr_422 is QuickTime specific. So
+     * the chance that other implementations support them is rather small since Win32 QuickTime uses
      * DirectDraw, not OpenGL.
      */
     if(gl_info->supported[APPLE_FENCE] &&
@@ -2831,7 +2831,7 @@ static BOOL implementation_is_apple(WineD3D_GL_Info *gl_info) {
 
 static void fixup_extensions(WineD3D_GL_Info *gl_info) {
     if(implementation_is_apple(gl_info)) {
-        /* MacOS advertises more GLSL vertex shader uniforms than support on hardware, and if more are
+        /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
          * used it falls back to software. While the compiler can detect if the shader uses all declared
          * uniforms, the optimization fails if the shader uses relative addressing. So any GLSL shader
          * using relative addressing falls back to software.

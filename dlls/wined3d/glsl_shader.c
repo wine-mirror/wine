@@ -651,7 +651,7 @@ void shader_generate_glsl_declarations(
     shader_addline(buffer, "vec4 tmp0;\n");
     shader_addline(buffer, "vec4 tmp1;\n");
 
-    /* Hardcodeable local constants */
+    /* Hardcodable local constants */
     if(!This->baseShader.load_local_constsF) {
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
             float *value = (float *) lconst->value;
@@ -1581,7 +1581,7 @@ void shader_glsl_compare(SHADER_OPCODE_ARG* arg) {
             case WINED3DSIO_SLT:
                 /* Step(src0, src1) is not suitable here because if src0 == src1 SLT is supposed,
                  * to return 0.0 but step returns 1.0 because step is not < x
-                 * An alternative is a bvec compare padded with an unused secound component.
+                 * An alternative is a bvec compare padded with an unused second component.
                  * step(src1 * -1.0, src0 * -1.0) is not an option because it suffers from the same
                  * issue. Playing with not() is not possible either because not() does not accept
                  * a scalar.

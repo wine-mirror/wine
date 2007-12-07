@@ -131,7 +131,7 @@ RPCRTAPI RPC_BINDING_HANDLE RPC_ENTRY
  * Note that the prototypes for I_RpcBindingSetAsync are different for each case.
  *
  * Wine defaults to the WinNT case and only defines these function is MSWMSG is
- *  defined. Defining the NT functions by default causes MIDL generated proxys
+ *  defined. Defining the NT functions by default causes MIDL generated proxies
  *  to not compile.
  */
 

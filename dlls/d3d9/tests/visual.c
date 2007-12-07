@@ -22,7 +22,7 @@
  *
  * However, neither d3d nor opengl is guaranteed to be pixel exact, and thus the capability of this test
  * is rather limited. As a general guideline for adding tests, do not rely on corner pixels. Draw a big enough
- * area which shows specific behavior(like a quad on the whole screen), and try to get resulting colos with
+ * area which shows specific behavior(like a quad on the whole screen), and try to get resulting colors with
  * all bits set or unset in all channels(like pure red, green, blue, white, black). Hopefully everything that
  * causes visible results in games can be tested in a way that does not depend on pixel exactness
  */

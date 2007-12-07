@@ -524,7 +524,7 @@ BOOL WINAPI GetThreadTimes(
  * Retrieve the identifier of a thread.
  *
  * PARAMS
- *  Thread [I] The thread to retrive the identifier of.
+ *  Thread [I] The thread to retrieve the identifier of.
  *
  * RETURNS
  *    Success: Identifier of the target thread.

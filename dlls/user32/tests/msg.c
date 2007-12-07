@@ -7866,7 +7866,7 @@ static void test_SendMessageTimeout(void)
     info.timeout = 1;
     info.ret = 0xdeadbeef;
     thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
-    Sleep(100);  /* SendMessageTimeout should timeout here */
+    Sleep(100);  /* SendMessageTimeout should time out here */
     wait_for_thread( thread );
     CloseHandle( thread );
     ok( info.ret == 0, "SendMessageTimeout succeeded\n" );
@@ -7908,7 +7908,7 @@ static void test_SendMessageTimeout(void)
     thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
     wait_for_thread( thread );
     CloseHandle( thread );
-    /* we should timeout but still get the message */
+    /* we should time out but still get the message */
     ok( info.ret == 0, "SendMessageTimeout failed\n" );
     ok_sequence( WmUser, "WmUser", FALSE );
 

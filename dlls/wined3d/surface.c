@@ -3711,9 +3711,9 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
  * Copies the current surface data from wherever it is to the requested
  * location. The location is one of the surface flags, SFLAG_INSYSMEM,
  * SFLAG_INTEXTURE and SFLAG_INDRAWABLE. When the surface is current in
- * multiple locations, the gl texture is prefered over the drawable, which is
- * prefered over system memory. The PBO counts as system memory. If rect is
- * not NULL, only the specified rectangle is copied(only supported for
+ * multiple locations, the gl texture is preferred over the drawable, which is
+ * preferred over system memory. The PBO counts as system memory. If rect is
+ * not NULL, only the specified rectangle is copied (only supported for
  * sysmem<->drawable copies at the moment). If rect is NULL, the destination
  * location is marked up to date after the copy.
  *

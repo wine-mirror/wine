@@ -1524,7 +1524,7 @@ BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
      * In case of GLX you need to specify this at context creation time but in case of WGL you
      * do this using wglShareLists which you can call after creating the context.
      * To emulate WGL we try to delay the creation of the context until wglShareLists or wglMakeCurrent.
-     * Upto now that works fine.
+     * Up to now that works fine.
      *
      * The delayed GLX context creation could cause issues for wglCopyContext as it might get called
      * when there is no GLX context yet. Warn the user about it and let him report a bug report.
