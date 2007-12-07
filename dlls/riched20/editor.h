@@ -23,24 +23,24 @@
 
 extern HANDLE me_heap;
 
-static inline void *richedit_alloc( size_t len )
+static inline void *heap_alloc( size_t len )
 {
     return HeapAlloc( me_heap, 0, len );
 }
 
-static inline BOOL richedit_free( void *ptr )
+static inline BOOL heap_free( void *ptr )
 {
     return HeapFree( me_heap, 0, ptr );
 }
 
-static inline void *richedit_realloc( void *ptr, size_t len )
+static inline void *heap_realloc( void *ptr, size_t len )
 {
     return HeapReAlloc( me_heap, 0, ptr, len );
 }
 
-#define ALLOC_OBJ(type) richedit_alloc(sizeof(type))
-#define ALLOC_N_OBJ(type, count) richedit_alloc((count)*sizeof(type))
-#define FREE_OBJ(ptr) richedit_free(ptr)
+#define ALLOC_OBJ(type) heap_alloc(sizeof(type))
+#define ALLOC_N_OBJ(type, count) heap_alloc((count)*sizeof(type))
+#define FREE_OBJ(ptr) heap_free(ptr)
 
 #define RUN_IS_HIDDEN(run) ((run)->style->fmt.dwMask & CFM_HIDDEN \
                              && (run)->style->fmt.dwEffects & CFE_HIDDEN)

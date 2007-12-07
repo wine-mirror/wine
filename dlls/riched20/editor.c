@@ -2013,8 +2013,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     LPWSTR bufferW = NULL;
 
     if (unicode)
-        bufferW = richedit_alloc((wParam + 2) * sizeof(WCHAR));
-    else bufferA = richedit_alloc(wParam + 2);
+        bufferW = heap_alloc((wParam + 2) * sizeof(WCHAR));
+    else
+        bufferA = heap_alloc(wParam + 2);
 
     ex.cb = wParam + (unicode ? 2*sizeof(WCHAR) : 2);
     ex.flags = GT_USECRLF;
@@ -2033,8 +2034,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         memcpy((LPSTR)lParam, bufferA, wParam);
         if (strlen(bufferA) >= wParam) rc = 0;
     }
-    if (bufferA != NULL) richedit_free(bufferA);
-    if (bufferW != NULL) richedit_free(bufferW);
+    heap_free(bufferA);
+    heap_free(bufferW);
     return rc;
   }
   case EM_GETTEXTEX:
@@ -2066,7 +2067,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       /* potentially each char may be a CR, why calculate the exact value with O(N) when
         we can just take a bigger buffer? :) */
       int crlfmul = (ex->flags & GT_USECRLF) ? 2 : 1;
-      LPWSTR buffer = richedit_alloc((crlfmul*nCount + 1) * sizeof(WCHAR));
+      LPWSTR buffer = heap_alloc((crlfmul*nCount + 1) * sizeof(WCHAR));
       DWORD buflen = ex->cb;
       LRESULT rc;
       DWORD flags = 0;
@@ -2075,7 +2076,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       rc = WideCharToMultiByte(ex->codepage, flags, buffer, -1, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefaultChar);
       if (rc) rc--; /* do not count 0 terminator */
 
-      richedit_free(buffer);
+      heap_free(buffer);
       return rc;
     }
   }
