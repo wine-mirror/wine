@@ -1005,7 +1005,7 @@ struct RTFStyleElt
  * if no memory available.
  */
 
-# define        New(t)  ((t *) RTFAlloc ((int) sizeof (t)))
+# define        New(t)  (heap_alloc (sizeof (t)))
 
 /* Parser stack size */
 
