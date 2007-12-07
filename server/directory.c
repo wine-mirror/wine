@@ -483,7 +483,7 @@ DECL_HANDLER(get_directory_entry)
         struct object *obj = find_object_index( dir->entries, req->index );
         if (obj)
         {
-            size_t name_len, type_len = 0;
+            data_size_t name_len, type_len = 0;
             const WCHAR *type_name = NULL;
             const WCHAR *name = get_object_name( obj, &name_len );
             struct object_type *type = obj->ops->get_type( obj );
