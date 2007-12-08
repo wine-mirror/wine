@@ -54,7 +54,7 @@ static ULONG WINAPI DirectMusicCF_Release(LPCLASSFACTORY iface) {
 
 static HRESULT WINAPI DirectMusicCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
-	return DMUSIC_CreateDirectMusicImpl (riid, (LPVOID*) ppobj, pOuter);
+	return DMUSIC_CreateDirectMusicImpl (riid, ppobj, pOuter);
 }
 
 static HRESULT WINAPI DirectMusicCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {

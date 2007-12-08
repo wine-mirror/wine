@@ -118,7 +118,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstr
 		tmpEntry = LIST_ENTRY(listEntry, DMUS_PRIVATE_INSTRUMENTENTRY, entry);
 		IDirectMusicInstrument_GetPatch (tmpEntry->pInstrument, &dwInstPatch);
 		if (dwPatch == dwInstPatch) {
-			*ppInstrument = (LPDIRECTMUSICINSTRUMENT)tmpEntry->pInstrument;
+			*ppInstrument = tmpEntry->pInstrument;
 			IDirectMusicInstrument_AddRef (tmpEntry->pInstrument);
 			IDirectMusicInstrumentImpl_Custom_Load (tmpEntry->pInstrument, This->pStm); /* load instrument before returning it */
 			TRACE(": returning instrument %p\n", *ppInstrument);
