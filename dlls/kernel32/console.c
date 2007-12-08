@@ -1013,14 +1013,15 @@ BOOL WINAPI GetConsoleInputExeNameW(DWORD buflen, LPWSTR buffer)
  */
 BOOL WINAPI GetConsoleInputExeNameA(DWORD buflen, LPSTR buffer)
 {
-    WCHAR *bufferW;
-    BOOL ret;
+    TRACE("%u %p\n", buflen, buffer);
 
-    if (!(bufferW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * buflen))) return FALSE;
-    if ((ret = GetConsoleInputExeNameW(buflen, bufferW)))
-        WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, buflen, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, bufferW);
-    return ret;
+    RtlEnterCriticalSection(&CONSOLE_CritSect);
+    if (WideCharToMultiByte(CP_ACP, 0, input_exe, -1, NULL, 0, NULL, NULL) <= buflen)
+        WideCharToMultiByte(CP_ACP, 0, input_exe, -1, buffer, buflen, NULL, NULL);
+    else SetLastError(ERROR_BUFFER_OVERFLOW);
+    RtlLeaveCriticalSection(&CONSOLE_CritSect);
+
+    return TRUE;
 }
 
 /***********************************************************************
