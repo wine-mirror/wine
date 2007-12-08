@@ -4968,7 +4968,15 @@ void test_vshader_input(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
 
         color = getPixelColor(device, 480, 360);
-        /* vs_1_1 may fail, accept the clear color */
+        /* vs_1_1 may fail, accept the clear color
+         *
+         * NOTE: This test fails on the reference rasterizer. In the refrast, the 4 vertices have different colors,
+         * i.e., the whole old stream is read, and not just the last used attribute. Some games require that this
+         * does *not* happen, otherwise they can crash because of a read from a bad pointer, so do not accept the
+         * refrast's result.
+         *
+         * A test app for this behavior is Half Life 2 Episode 2 in dxlevel 95, and related games(Portal, TF2).
+         */
         ok(color == 0x000000FF || color == 0x00808080,
            "Input test: Quad 2(different colors) returned color 0x%08x, expected 0x000000FF\n", color);
         color = getPixelColor(device, 160, 120);
