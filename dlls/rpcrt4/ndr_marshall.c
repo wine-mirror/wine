@@ -1776,7 +1776,7 @@ ULONG WINAPI NdrSimpleStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 
   if (pFormat[0] != RPC_FC_STRUCT)
     EmbeddedPointerMemorySize(pStubMsg, pFormat+4);
-  return size;
+  return pStubMsg->MemorySize;
 }
 
 /***********************************************************************
