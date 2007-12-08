@@ -4512,7 +4512,7 @@ BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar, UINT count, LPWORD 
     FT_UInt glyph_index;
     GdiFont *linked_font;
 
-    if(!FT_IS_SCALABLE(font->ft_face))
+    if(!FT_HAS_HORIZONTAL(font->ft_face))
         return FALSE;
 
     get_glyph_index_linked(font, 'a', &linked_font, &glyph_index);

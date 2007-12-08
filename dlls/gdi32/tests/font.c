@@ -33,6 +33,7 @@
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 
 LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
+BOOL  (WINAPI *pGetCharABCWidthsI)(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPABC abc);
 BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
 DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
 DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
@@ -45,6 +46,7 @@ static void init(void)
     hgdi32 = GetModuleHandleA("gdi32.dll");
 
     pGdiGetCharDimensions = (void *)GetProcAddress(hgdi32, "GdiGetCharDimensions");
+    pGetCharABCWidthsI = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsI");
     pGetCharABCWidthsW = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsW");
     pGetFontUnicodeRanges = (void *)GetProcAddress(hgdi32, "GetFontUnicodeRanges");
     pGetGlyphIndicesA = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesA");
@@ -450,14 +452,55 @@ static void test_GdiGetCharDimensions(void)
     DeleteDC(hdc);
 }
 
-static void test_GetCharABCWidthsW(void)
+static void test_GetCharABCWidths(void)
 {
+    static const WCHAR str[] = {'a',0};
     BOOL ret;
+    HDC hdc;
+    LOGFONTA lf;
+    HFONT hfont;
     ABC abc[1];
-    if (!pGetCharABCWidthsW) return;
+    WORD glyphs[1];
+    DWORD nb;
+
+    if (!pGetCharABCWidthsW || !pGetCharABCWidthsI)
+    {
+        skip("GetCharABCWidthsW/I not available on this platform\n");
+        return;
+    }
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "System");
+    lf.lfHeight = 20;
+
+    hfont = CreateFontIndirectA(&lf);
+    hdc = GetDC(0);
+    hfont = SelectObject(hdc, hfont);
+
+    nb = pGetGlyphIndicesW(hdc, str, 1, glyphs, 0);
+    ok(nb == 1, "pGetGlyphIndicesW should have returned 1\n");
+
+    ret = pGetCharABCWidthsI(NULL, 0, 1, glyphs, abc);
+    ok(!ret, "GetCharABCWidthsI should have failed\n");
+
+    ret = pGetCharABCWidthsI(hdc, 0, 1, glyphs, NULL);
+    ok(!ret, "GetCharABCWidthsI should have failed\n");
+
+    ret = pGetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
+    ok(ret, "GetCharABCWidthsI should have succeeded\n");
 
     ret = pGetCharABCWidthsW(NULL, 'a', 'a', abc);
-    ok(!ret, "GetCharABCWidthsW should have returned FALSE\n");
+    ok(!ret, "GetCharABCWidthsW should have failed\n");
+
+    ret = pGetCharABCWidthsW(hdc, 'a', 'a', NULL);
+    ok(!ret, "GetCharABCWidthsW should have failed\n");
+
+    ret = pGetCharABCWidthsW(hdc, 'a', 'a', abc);
+    ok(!ret, "GetCharABCWidthsW should have failed\n");
+
+    hfont = SelectObject(hdc, hfont);
+    DeleteObject(hfont);
+    ReleaseDC(NULL, hdc);
 }
 
 static void test_text_extents(void)
@@ -1702,7 +1745,7 @@ START_TEST(font)
     test_bitmap_font();
     test_bitmap_font_metrics();
     test_GdiGetCharDimensions();
-    test_GetCharABCWidthsW();
+    test_GetCharABCWidths();
     test_text_extents();
     test_GetGlyphIndices();
     test_GetKerningPairs();

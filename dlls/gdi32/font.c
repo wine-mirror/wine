@@ -2510,6 +2510,12 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
 
     if (!dc) return FALSE;
 
+    if (!abc)
+    {
+        DC_ReleaseDCPtr( dc );
+        return FALSE;
+    }
+
     if(dc->gdiFont)
         ret = WineEngGetCharABCWidths( dc->gdiFont, firstChar, lastChar, abc );
     else
@@ -2558,6 +2564,12 @@ BOOL WINAPI GetCharABCWidthsI( HDC hdc, UINT firstChar, UINT count,
     BOOL ret = FALSE;
 
     if (!dc) return FALSE;
+
+    if (!abc)
+    {
+        DC_ReleaseDCPtr( dc );
+        return FALSE;
+    }
 
     if(dc->gdiFont)
         ret = WineEngGetCharABCWidthsI( dc->gdiFont, firstChar, count, pgi, abc );
