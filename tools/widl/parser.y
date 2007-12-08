@@ -1329,7 +1329,7 @@ static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr,
     }
   }
 
-  if (ptr_type)
+  if (ptr_type && !arr)
   {
     if (is_ptr(v->type))
     {
