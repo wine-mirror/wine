@@ -1072,10 +1072,8 @@ static void test_conformant_array(void)
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrConformantArrayUnmarshall( &StubMsg, &mem, fmtstr_conf_array, 0);
-todo_wine {
     ok(mem == StubMsg.BufferStart + 4, "mem not pointing at buffer\n");
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
-}
     my_alloc_called = 0;
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
