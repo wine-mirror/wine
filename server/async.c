@@ -147,7 +147,7 @@ void async_terminate( struct async *async, unsigned int status )
     }
 
     /* send error completion event */
-    if (status != STATUS_ALERTED && async->data.cvalue && async->queue && async->queue->fd)
+    if (status != STATUS_ALERTED && async->data.cvalue && async->queue->fd)
         fd_add_completion( async->queue->fd, async->data.cvalue, status, 0 );
 
     memset( &data, 0, sizeof(data) );
@@ -257,7 +257,7 @@ void async_set_result( struct object *obj, unsigned int status, unsigned long to
         if (async->timeout) remove_timeout_user( async->timeout );
         async->timeout = NULL;
         async->status = status;
-        if (async->data.cvalue && async->queue && async->queue->fd)
+        if (async->data.cvalue && async->queue->fd)
             fd_add_completion( async->queue->fd, async->data.cvalue, status, total );
         if (async->data.apc)
         {
