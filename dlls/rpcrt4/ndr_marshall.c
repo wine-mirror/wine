@@ -4059,6 +4059,7 @@ unsigned char *  WINAPI NdrFixedArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 {
     const NDR_SMFARRAY_FORMAT *pSmFArrayFormat = (const NDR_SMFARRAY_FORMAT *)pFormat;
     unsigned long total_size;
+    unsigned char *saved_buffer;
 
     TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -4084,12 +4085,22 @@ unsigned char *  WINAPI NdrFixedArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
         pFormat = (const unsigned char *)(pLgFArrayFormat + 1);
     }
 
-    if (fMustAlloc || !*ppMemory)
+    if (fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, total_size);
-    pStubMsg->BufferMark = pStubMsg->Buffer;
-    safe_copy_from_buffer(pStubMsg, *ppMemory, total_size);
+    else
+    {
+        if (!pStubMsg->IsClient && !*ppMemory)
+            /* for servers, we just point straight into the RPC buffer */
+            *ppMemory = pStubMsg->Buffer;
+    }
 
-    pFormat = EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
+    saved_buffer = pStubMsg->BufferMark = pStubMsg->Buffer;
+    safe_buffer_increment(pStubMsg, total_size);
+    pFormat = EmbeddedPointerUnmarshall(pStubMsg, saved_buffer, *ppMemory, pFormat, fMustAlloc);
+
+    TRACE("copying %p to %p\n", saved_buffer, *ppMemory);
+    if (*ppMemory != saved_buffer)
+        memcpy(*ppMemory, saved_buffer, total_size);
 
     return NULL;
 }
