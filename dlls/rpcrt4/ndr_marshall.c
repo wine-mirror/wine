@@ -3457,6 +3457,7 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
     const NDR_CSTRUCT_FORMAT *pCStructFormat = (const NDR_CSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCArrayFormat;
     ULONG esize, bufsize;
+    unsigned char *saved_buffer;
 
     TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -3490,19 +3491,27 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
             pCStructFormat->memory_size, bufsize);
         RpcRaiseException(RPC_X_BAD_STUB_DATA);
     }
-    /* work out how much memory to allocate if we need to do so */
-    if (!*ppMemory || fMustAlloc)
+
+    if (fMustAlloc)
     {
         SIZE_T size = pCStructFormat->memory_size + bufsize;
         *ppMemory = NdrAllocate(pStubMsg, size);
     }
+    else
+    {
+        if (!pStubMsg->IsClient && !*ppMemory)
+            /* for servers, we just point straight into the RPC buffer */
+            *ppMemory = pStubMsg->Buffer;
+    }
 
-    /* now copy the data */
-    pStubMsg->BufferMark = pStubMsg->Buffer;
-    safe_copy_from_buffer(pStubMsg, *ppMemory, pCStructFormat->memory_size + bufsize);
-
+    saved_buffer = pStubMsg->BufferMark = pStubMsg->Buffer;
+    safe_buffer_increment(pStubMsg, pCStructFormat->memory_size + bufsize);
     if (pCStructFormat->type == RPC_FC_CPSTRUCT)
-        EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
+        EmbeddedPointerUnmarshall(pStubMsg, saved_buffer, *ppMemory, pFormat, fMustAlloc);
+
+    TRACE("copying %p to %p\n", saved_buffer, *ppMemory);
+    if (*ppMemory != saved_buffer)
+        memcpy(*ppMemory, saved_buffer, pCStructFormat->memory_size + bufsize);
 
     return NULL;
 }
