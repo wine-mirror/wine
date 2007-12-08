@@ -108,7 +108,7 @@ FONT 8, "MS Shell Dlg"
 
 SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Message"
+CAPTION "Mensaje"
 FONT 8, "MS Shell Dlg"
 {
     DEFPUSHBUTTON "&Sí", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
@@ -205,16 +205,16 @@ STRINGTABLE DISCARDABLE
 	IDS_PERSONAL                "Mis documentos"
 	IDS_FAVORITES               "Favoritos"
 	IDS_STARTUP                 "Menú Inicio\\Programas\\Inicio"
-	IDS_RECENT                  "Recent"
-	IDS_SENDTO                  "SendTo"
+	IDS_RECENT                  "Recientes"
+	IDS_SENDTO                  "Enviar a"
 	IDS_STARTMENU               "Menú Inicio"
 	IDS_MYMUSIC                 "Mi música"
 	IDS_MYVIDEO                 "Mis vídeos"
 	IDS_DESKTOPDIRECTORY        "Escritorio"
 	IDS_NETHOOD                 "Entorno de red"
-	IDS_TEMPLATES               "Templates"
+	IDS_TEMPLATES               "Plantillas"
 	IDS_APPDATA                 "Application Data"
-	IDS_PRINTHOOD               "PrintHood"
+	IDS_PRINTHOOD               "Vencindario de impresión"
 	IDS_LOCAL_APPDATA           "Configuración local\\Datos de programa"
 	IDS_INTERNET_CACHE          "Configuración local\\Archivos temporales de Internet"
 	IDS_COOKIES                 "Cookies"
@@ -229,5 +229,5 @@ STRINGTABLE DISCARDABLE
 	IDS_COMMON_VIDEO            "Documentos\\Mis vídeos"
 	IDS_CDBURN_AREA             "Configuración local\\Datos de programa\\Microsoft\\CD Burning"
 
-	IDS_NEWFOLDER		"New Folder"
+	IDS_NEWFOLDER		"Nueva carpeta"
 }
