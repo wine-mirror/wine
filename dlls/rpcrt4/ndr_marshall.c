@@ -1464,12 +1464,18 @@ static unsigned long EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned char *Mark = pStubMsg->BufferMark;
   unsigned rep, count, stride;
   unsigned i;
+  unsigned char *saved_buffer = NULL;
 
   TRACE("(%p,%p)\n", pStubMsg, pFormat);
 
   if (pStubMsg->IgnoreEmbeddedPointers) return 0;
 
-  FIXME("(%p,%p): stub\n", pStubMsg, pFormat);
+  if (pStubMsg->PointerBufferMark)
+  {
+    saved_buffer = pStubMsg->Buffer;
+    pStubMsg->Buffer = pStubMsg->PointerBufferMark;
+    pStubMsg->PointerBufferMark = NULL;
+  }
 
   if (*pFormat != RPC_FC_PP) return 0;
   pFormat += 2;
@@ -1507,6 +1513,12 @@ static unsigned long EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       }
     }
     pFormat += 8 * count;
+  }
+
+  if (saved_buffer)
+  {
+    pStubMsg->PointerBufferMark = pStubMsg->Buffer;
+    pStubMsg->Buffer = saved_buffer;
   }
 
   return 0;
