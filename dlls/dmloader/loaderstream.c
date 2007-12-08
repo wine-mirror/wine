@@ -179,16 +179,16 @@ static HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_Clone (LPSTREAM iface
 		if (SUCCEEDED(result)) {
 			LARGE_INTEGER liNewPosition;
 			liNewPosition.QuadPart = ullCurrentPosition.QuadPart;
-			result = IDirectMusicLoaderFileStream_IStream_Seek ((LPSTREAM)pOther, liNewPosition, STREAM_SEEK_SET, &ullCurrentPosition);
+			result = IDirectMusicLoaderFileStream_IStream_Seek (pOther, liNewPosition, STREAM_SEEK_SET, &ullCurrentPosition);
 		}
 		if (FAILED(result)) {
 			TRACE(": failed\n");
-			IDirectMusicLoaderFileStream_IStream_Release ((LPSTREAM)pOther);
+			IDirectMusicLoaderFileStream_IStream_Release (pOther);
 			return result;
 		}
 	}
 	TRACE(": succeeded\n");
-	*ppstm = (IStream*)pOther;
+	*ppstm = pOther;
 	return S_OK;
 }
 
@@ -452,7 +452,7 @@ static HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_Clone (LPSTREAM i
 	IDirectMusicLoaderResourceStream_Attach (pOther, This->pbMemData, This->llMemLength, This->llPos, This->pLoader);
 
 	TRACE(": succeeded\n");
-	*ppstm = (IStream*)pOther;
+	*ppstm = pOther;
 	return S_OK;
 }
 
@@ -670,7 +670,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Clone (LPSTREAM if
 	IDirectMusicLoaderGenericStream_Attach (pOther, pLowLevel, This->pLoader);
 
 	TRACE(": succeeded\n");
-	*ppstm = (IStream*)pOther;
+	*ppstm = pOther;
 	return S_OK;
 }
 
