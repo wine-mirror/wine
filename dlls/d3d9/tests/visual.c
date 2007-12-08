@@ -1014,9 +1014,9 @@ static void offscreen_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "SetTextureStageState failed, hr = %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
     ok(hr == D3D_OK, "SetTextureStageState failed, hr = %s\n", DXGetErrorString9(hr));
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
     ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_MINFILTER failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
     ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_MAGFILTER failed (0x%08x)\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
@@ -5235,9 +5235,9 @@ static void alpha_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "SetTextureStageState failed, hr = %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
     ok(hr == D3D_OK, "SetTextureStageState failed, hr = %s\n", DXGetErrorString9(hr));
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
     ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_MINFILTER failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
     ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_MAGFILTER failed (0x%08x)\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
