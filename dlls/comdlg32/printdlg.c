@@ -2791,21 +2791,30 @@ PRINTDLG_PS_WMCommandA(
         }
 	return TRUE;
     case rad1:
-	    if (pda->curdlg.ptPaperSize.x > pda->curdlg.ptPaperSize.y){
-	        DWORD tmp = pda->curdlg.ptPaperSize.x;
-		pda->curdlg.ptPaperSize.x = pda->curdlg.ptPaperSize.y;
-		pda->curdlg.ptPaperSize.y = tmp;
-	    }
-	    PRINTDLG_PS_ChangePaperPrev(pda);
-	break;
     case rad2:
-	    if (pda->curdlg.ptPaperSize.y > pda->curdlg.ptPaperSize.x){
-	        DWORD tmp = pda->curdlg.ptPaperSize.x;
-		pda->curdlg.ptPaperSize.x = pda->curdlg.ptPaperSize.y;
-		pda->curdlg.ptPaperSize.y = tmp;
-	    }
+	if((id == rad1 && pda->curdlg.ptPaperSize.x > pda->curdlg.ptPaperSize.y) ||
+	   (id == rad2 && pda->curdlg.ptPaperSize.y > pda->curdlg.ptPaperSize.x))
+	{
+	    char TmpText[25];
+	    char TmpText2[25];
+	    DWORD tmp = pda->curdlg.ptPaperSize.x;
+
+	    pda->curdlg.ptPaperSize.x = pda->curdlg.ptPaperSize.y;
+	    pda->curdlg.ptPaperSize.y = tmp;
+
+	    GetDlgItemTextA(hDlg, edt4, TmpText, sizeof(TmpText));
+	    GetDlgItemTextA(hDlg, edt5, TmpText2, sizeof(TmpText2));
+	    SetDlgItemTextA(hDlg, edt5, TmpText);
+	    SetDlgItemTextA(hDlg, edt4, TmpText2);
+
+	    GetDlgItemTextA(hDlg, edt6, TmpText, sizeof(TmpText));
+	    GetDlgItemTextA(hDlg, edt7, TmpText2, sizeof(TmpText2));
+	    SetDlgItemTextA(hDlg, edt7, TmpText);
+	    SetDlgItemTextA(hDlg, edt6, TmpText2);
+
 	    PRINTDLG_PS_ChangePaperPrev(pda);
-	    break;
+	}
+	break;
     case cmb1: /* Printer combo */
 	    if(msg == CBN_SELCHANGE){
 		char crPrinterName[256];
