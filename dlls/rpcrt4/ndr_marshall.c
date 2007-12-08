@@ -5667,6 +5667,8 @@ static ULONG WINAPI NdrBaseTypeMemorySize(
     PMIDL_STUB_MESSAGE pStubMsg,
     PFORMAT_STRING pFormat)
 {
+    TRACE("pStubMsg %p, type 0x%02x\n", pStubMsg, *pFormat);
+
     switch(*pFormat)
     {
     case RPC_FC_BYTE:
