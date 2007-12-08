@@ -873,7 +873,7 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
             D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surface, NULL);
     ok(SUCCEEDED(hr), "CreateOffscreenPlainSurface failed (0x%08x)\n", hr);
 
-    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_DISCARD);
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
     ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
 
     for (y = 0; y < 128; ++y)
@@ -1378,7 +1378,7 @@ static void texbem_test(IDirect3DDevice9 *device)
                 D3DPOOL_MANAGED, &texture[i], NULL);
         ok(SUCCEEDED(hr), "CreateTexture failed (0x%08x)\n", hr);
 
-        hr = IDirect3DTexture9_LockRect(texture[i], 0, &locked_rect, NULL, D3DLOCK_DISCARD);
+        hr = IDirect3DTexture9_LockRect(texture[i], 0, &locked_rect, NULL, 0);
         ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
         for (y = 0; y < 128; ++y)
         {
