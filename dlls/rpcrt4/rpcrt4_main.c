@@ -191,6 +191,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
                 ERR("tdata->connection should be NULL but is still set to %p\n", tdata);
             HeapFree(GetProcessHeap(), 0, tdata);
         }
+        break;
 
     case DLL_PROCESS_DETACH:
         CloseHandle(master_mutex);
