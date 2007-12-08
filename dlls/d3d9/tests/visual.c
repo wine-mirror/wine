@@ -279,6 +279,7 @@ static void clear_test(IDirect3DDevice9 *device)
     D3DVIEWPORT9 old_vp, vp;
     RECT scissor;
     DWORD oldColorWrite;
+    BOOL invalid_clear_failed = FALSE;
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
@@ -294,11 +295,12 @@ static void clear_test(IDirect3DDevice9 *device)
     rect[1].y1 = 0;
     rect[1].x2 = 320;
     rect[1].y2 = 240;
-    /* Clear 2 rectangles with one call. Shows that a positive value is returned, but the negative rectangle
-     * is ignored, the positive is still cleared afterwards
+    /* Clear 2 rectangles with one call. The refrast returns an error in this case, every real driver tested so far
+     * returns D3D_OK, but ignores the rectangle silently
      */
     hr = IDirect3DDevice9_Clear(device, 2, rect, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+    if(hr == D3DERR_INVALIDCALL) invalid_clear_failed = TRUE;
 
     /* negative x, negative y */
     rect_negneg.x1 = 640;
@@ -306,14 +308,21 @@ static void clear_test(IDirect3DDevice9 *device)
     rect_negneg.x2 = 320;
     rect_negneg.y2 = 0;
     hr = IDirect3DDevice9_Clear(device, 1, &rect_negneg, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+    if(hr == D3DERR_INVALIDCALL) invalid_clear_failed = TRUE;
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
     color = getPixelColor(device, 160, 360); /* lower left quad */
     ok(color == 0x00ffffff, "Clear rectangle 3(pos, neg) has color %08x\n", color);
     color = getPixelColor(device, 160, 120); /* upper left quad */
-    ok(color == 0x00ff0000, "Clear rectangle 1(pos, pos) has color %08x\n", color);
+    if(invalid_clear_failed) {
+        /* If the negative rectangle was refused, the other rectangles in the list shouldn't be cleared either */
+        ok(color == 0x00ffffff, "Clear rectangle 1(pos, pos) has color %08x\n", color);
+    } else {
+        /* If the negative rectangle was dropped silently, the correct ones are cleared */
+        ok(color == 0x00ff0000, "Clear rectangle 1(pos, pos) has color %08x\n", color);
+    }
     color = getPixelColor(device, 480, 360); /* lower right quad  */
     ok(color == 0x00ffffff, "Clear rectangle 4(NULL) has color %08x\n", color);
     color = getPixelColor(device, 480, 120); /* upper right quad */
