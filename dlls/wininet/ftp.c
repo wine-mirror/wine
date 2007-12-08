@@ -844,13 +844,12 @@ BOOL WINAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDire
         }
     }
     ret = FtpGetCurrentDirectoryW(hFtpSession, lpszCurrentDirectory?dir:NULL, lpdwCurrentDirectory?&len:NULL);
-    if(lpdwCurrentDirectory) {
-        *lpdwCurrentDirectory = len;
-        if(lpszCurrentDirectory) { 
-            WideCharToMultiByte(CP_ACP, 0, dir, len, lpszCurrentDirectory, *lpdwCurrentDirectory, NULL, NULL);
-            HeapFree(GetProcessHeap(), 0, dir);
-        }
-    }
+
+    if (ret && lpszCurrentDirectory)
+        WideCharToMultiByte(CP_ACP, 0, dir, -1, lpszCurrentDirectory, len, NULL, NULL);
+
+    if (lpdwCurrentDirectory) *lpdwCurrentDirectory = len;
+    HeapFree(GetProcessHeap(), 0, dir);
     return ret;
 }
 
@@ -965,8 +964,6 @@ BOOL WINAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszC
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
-    ZeroMemory(lpszCurrentDirectory, *lpdwCurrentDirectory);
-
     hIC = lpwfs->lpAppInfo;
     if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_PWD, NULL,
         lpwfs->hdr.lpfnStatusCB, &lpwfs->hdr, lpwfs->hdr.dwContext))
@@ -978,7 +975,7 @@ BOOL WINAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszC
         if (nResCode == 257) /* Extract directory name */
         {
             DWORD firstpos, lastpos, len;
-	    LPWSTR lpszResponseBuffer = WININET_strdup_AtoW(INTERNET_GetResponseBuffer());
+            LPWSTR lpszResponseBuffer = WININET_strdup_AtoW(INTERNET_GetResponseBuffer());
 
             for (firstpos = 0, lastpos = 0; lpszResponseBuffer[lastpos]; lastpos++)
             {
@@ -988,14 +985,19 @@ BOOL WINAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszC
                         firstpos = lastpos;
                     else
                         break;
-		}
+                }
             }
+            len = lastpos - firstpos;
+            if (*lpdwCurrentDirectory >= len)
+            {
+                memcpy(lpszCurrentDirectory, &lpszResponseBuffer[firstpos + 1], len * sizeof(WCHAR));
+                lpszCurrentDirectory[len - 1] = 0;
+                *lpdwCurrentDirectory = len;
+                bSuccess = TRUE;
+            }
+            else INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
 
-            len = lastpos - firstpos - 1;
-            lstrcpynW(lpszCurrentDirectory, &lpszResponseBuffer[firstpos+1], *lpdwCurrentDirectory);
             HeapFree(GetProcessHeap(), 0, lpszResponseBuffer);
-            *lpdwCurrentDirectory = len;
-            bSuccess = TRUE;
         }
         else
             FTP_SetResponseError(nResCode);

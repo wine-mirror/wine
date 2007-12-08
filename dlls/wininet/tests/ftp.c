@@ -746,10 +746,8 @@ static void test_get_current_dir(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     bRet = FtpGetCurrentDirectoryA( hFtp, lpszCurrentDirectory, &dwCurrentDirectoryLen );
     ok ( bRet == TRUE, "Expected FtpGetCurrentDirectoryA to pass\n" );
-todo_wine
-    ok ( lstrcmp(lpszCurrentDirectory, "/pub") == 0, "Expected returned value \"%s\" to match \"%s\"\n", (char*)lpszCurrentDirectory, "/pub");
+    ok ( !strcmp(lpszCurrentDirectory, "/pub"), "Expected returned value \"%s\" to match \"/pub\"\n", lpszCurrentDirectory);
     ok ( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got: %d\n", GetLastError());
-
 
     /* test for the current directory with a size only large enough to
      * fit the string and not the null terminating character */
@@ -757,10 +755,8 @@ todo_wine
     dwCurrentDirectoryLen = 4;
     lpszCurrentDirectory[4] = 'a'; /* set position 4 of the array to something else to make sure a leftover \0 isn't fooling the test */
     bRet = FtpGetCurrentDirectoryA( hFtp, lpszCurrentDirectory, &dwCurrentDirectoryLen );
-todo_wine
     ok ( bRet == FALSE, "Expected FtpGetCurrentDirectoryA to fail\n");
-    ok ( lstrcmp(lpszCurrentDirectory, "/pub") != 0, "Expected returned value \"%s\" to not match \"%s\"\n", (char*)lpszCurrentDirectory, "/pub");
-todo_wine
+    ok ( strcmp(lpszCurrentDirectory, "/pub"), "Expected returned value \"%s\" to not match \"/pub\"\n", lpszCurrentDirectory);
     ok ( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got: %d\n", GetLastError());
 
     /* test for the current directory with a size large enough to store
@@ -769,8 +765,7 @@ todo_wine
     dwCurrentDirectoryLen = 5;
     bRet = FtpGetCurrentDirectoryA( hFtp, lpszCurrentDirectory, &dwCurrentDirectoryLen );
     ok ( bRet == TRUE, "Expected FtpGetCurrentDirectoryA to pass\n");
-todo_wine
-    ok ( lstrcmp(lpszCurrentDirectory, "/pub") == 0, "Expected returned value \"%s\" to match \"%s\"\n", (char*)lpszCurrentDirectory, "/pub");
+    ok ( !strcmp(lpszCurrentDirectory, "/pub"), "Expected returned value \"%s\" to match \"/pub\"\n", lpszCurrentDirectory);
     ok ( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got: %d\n", GetLastError());
 }
 
