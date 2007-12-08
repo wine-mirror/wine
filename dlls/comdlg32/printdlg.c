@@ -2890,10 +2890,10 @@ PRINTDLG_PS_WMCommandA(
     	GETVAL(id, pda->curdlg.rtMargin.left);
 	break;
     case edt5:
-    	GETVAL(id, pda->curdlg.rtMargin.right);
+	GETVAL(id, pda->curdlg.rtMargin.top);
 	break;
     case edt6:
-    	GETVAL(id, pda->curdlg.rtMargin.top);
+	GETVAL(id, pda->curdlg.rtMargin.right);
 	break;
     case edt7:
     	GETVAL(id, pda->curdlg.rtMargin.bottom);
