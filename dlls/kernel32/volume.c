@@ -58,13 +58,10 @@ enum fs_type
 {
     FS_ERROR,    /* error accessing the device */
     FS_UNKNOWN,  /* unknown file system */
-    FS_PLACEHOLDER,  /* Wine placeholder for drive device */
     FS_FAT1216,
     FS_FAT32,
     FS_ISO9660
 };
-
-static const char wine_placeholder[] = "Wine device placeholder";
 
 static const WCHAR drive_types[][8] =
 {
@@ -164,52 +161,6 @@ static BOOL open_device_root( LPCWSTR root, HANDLE *handle )
     return TRUE;
 }
 
-/* get the label by reading it from a file at the root of the filesystem */
-static void get_filesystem_label( const WCHAR *device, WCHAR *label, DWORD len )
-{
-    HANDLE handle;
-    WCHAR labelW[] = {'A',':','\\','.','w','i','n','d','o','w','s','-','l','a','b','e','l',0};
-
-    labelW[0] = device[4];
-    handle = CreateFileW( labelW, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                          OPEN_EXISTING, 0, 0 );
-    if (handle != INVALID_HANDLE_VALUE)
-    {
-        char buffer[256], *p;
-        DWORD size;
-
-        if (!ReadFile( handle, buffer, sizeof(buffer)-1, &size, NULL )) size = 0;
-        CloseHandle( handle );
-        p = buffer + size;
-        while (p > buffer && (p[-1] == ' ' || p[-1] == '\r' || p[-1] == '\n')) p--;
-        *p = 0;
-        if (!MultiByteToWideChar( CP_UNIXCP, 0, buffer, -1, label, len ))
-            label[len-1] = 0;
-    }
-    else label[0] = 0;
-}
-
-/* get the serial number by reading it from a file at the root of the filesystem */
-static DWORD get_filesystem_serial( const WCHAR *device )
-{
-    HANDLE handle;
-    WCHAR serialW[] = {'A',':','\\','.','w','i','n','d','o','w','s','-','s','e','r','i','a','l',0};
-
-    serialW[0] = device[4];
-    handle = CreateFileW( serialW, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                          OPEN_EXISTING, 0, 0 );
-    if (handle != INVALID_HANDLE_VALUE)
-    {
-        char buffer[32];
-        DWORD size;
-
-        if (!ReadFile( handle, buffer, sizeof(buffer)-1, &size, NULL )) size = 0;
-        CloseHandle( handle );
-        buffer[size] = 0;
-        return strtoul( buffer, NULL, 16 );
-    }
-    else return 0;
-}
 
 /* fetch the type of a drive from the registry */
 static UINT get_registry_drive_type( const WCHAR *root )
@@ -305,14 +256,9 @@ static enum fs_type VOLUME_ReadFATSuperblock( HANDLE handle, BYTE *buff )
 
     /* try a fixed disk, with a FAT partition */
     if (SetFilePointer( handle, 0, NULL, FILE_BEGIN ) != 0 ||
-        !ReadFile( handle, buff, SUPERBLOCK_SIZE, &size, NULL ))
+        !ReadFile( handle, buff, SUPERBLOCK_SIZE, &size, NULL ) ||
+        size != SUPERBLOCK_SIZE)
         return FS_ERROR;
-
-    if (size >= sizeof(wine_placeholder)-1 &&
-        !memcmp( buff, wine_placeholder, sizeof(wine_placeholder)-1 ))
-        return FS_PLACEHOLDER;
-
-    if (size != SUPERBLOCK_SIZE) return FS_ERROR;
 
     /* FIXME: do really all FAT have their name beginning with
      * "FAT" ? (At least FAT12, FAT16 and FAT32 have :)
@@ -386,7 +332,7 @@ static enum fs_type VOLUME_ReadCDSuperblock( HANDLE handle, BYTE *buff )
 /**************************************************************************
  *                              VOLUME_GetSuperblockLabel
  */
-static void VOLUME_GetSuperblockLabel( const WCHAR *device, enum fs_type type, const BYTE *superblock,
+static void VOLUME_GetSuperblockLabel( enum fs_type type, const BYTE *superblock,
                                        WCHAR *label, DWORD len )
 {
     const BYTE *label_ptr = NULL;
@@ -397,9 +343,6 @@ static void VOLUME_GetSuperblockLabel( const WCHAR *device, enum fs_type type, c
     case FS_ERROR:
     case FS_UNKNOWN:
         label_len = 0;
-        break;
-    case FS_PLACEHOLDER:
-        get_filesystem_label( device, label, len );
         break;
     case FS_FAT1216:
         label_ptr = superblock + 0x2b;
@@ -441,15 +384,13 @@ static void VOLUME_GetSuperblockLabel( const WCHAR *device, enum fs_type type, c
 /**************************************************************************
  *                              VOLUME_GetSuperblockSerial
  */
-static DWORD VOLUME_GetSuperblockSerial( const WCHAR *device, enum fs_type type, const BYTE *superblock )
+static DWORD VOLUME_GetSuperblockSerial( enum fs_type type, const BYTE *superblock )
 {
     switch(type)
     {
     case FS_ERROR:
     case FS_UNKNOWN:
         break;
-    case FS_PLACEHOLDER:
-        return get_filesystem_serial( device );
     case FS_FAT1216:
         return GETLONG( superblock, 0x27 );
     case FS_FAT32:
@@ -578,8 +519,8 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
         TRACE( "%s: found fs type %d\n", debugstr_w(device), type );
         if (type == FS_ERROR) return FALSE;
 
-        if (label && label_len) VOLUME_GetSuperblockLabel( device, type, superblock, label, label_len );
-        if (serial) *serial = VOLUME_GetSuperblockSerial( device, type, superblock );
+        if (label && label_len) VOLUME_GetSuperblockLabel( type, superblock, label, label_len );
+        if (serial) *serial = VOLUME_GetSuperblockSerial( type, superblock );
         goto fill_fs_info;
     }
     else TRACE( "cannot open device %s: err %d\n", debugstr_w(device), GetLastError() );
@@ -603,8 +544,47 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
         break;
     }
 
-    if (label && label_len) get_filesystem_label( device, label, label_len );
-    if (serial) *serial = get_filesystem_serial( device );
+    if (label && label_len)
+    {
+        WCHAR labelW[] = {'A',':','\\','.','w','i','n','d','o','w','s','-','l','a','b','e','l',0};
+
+        labelW[0] = device[4];
+        handle = CreateFileW( labelW, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                              OPEN_EXISTING, 0, 0 );
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            char buffer[256], *p;
+            DWORD size;
+
+            if (!ReadFile( handle, buffer, sizeof(buffer)-1, &size, NULL )) size = 0;
+            CloseHandle( handle );
+            p = buffer + size;
+            while (p > buffer && (p[-1] == ' ' || p[-1] == '\r' || p[-1] == '\n')) p--;
+            *p = 0;
+            if (!MultiByteToWideChar( CP_UNIXCP, 0, buffer, -1, label, label_len ))
+                label[label_len-1] = 0;
+        }
+        else label[0] = 0;
+    }
+    if (serial)
+    {
+        WCHAR serialW[] = {'A',':','\\','.','w','i','n','d','o','w','s','-','s','e','r','i','a','l',0};
+
+        serialW[0] = device[4];
+        handle = CreateFileW( serialW, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                              OPEN_EXISTING, 0, 0 );
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            char buffer[32];
+            DWORD size;
+
+            if (!ReadFile( handle, buffer, sizeof(buffer)-1, &size, NULL )) size = 0;
+            CloseHandle( handle );
+            buffer[size] = 0;
+            *serial = strtoul( buffer, NULL, 16 );
+        }
+        else *serial = 0;
+    }
 
 fill_fs_info:  /* now fill in the information that depends on the file system type */
 
