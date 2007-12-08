@@ -1733,7 +1733,7 @@ static void fill_surface(IDirect3DSurface9 *surface, DWORD color)
     memset(&l, 0, sizeof(l));
     hr = IDirect3DSurface9_GetDesc(surface, &desc);
     ok(hr == D3D_OK, "IDirect3DSurface9_GetDesc failed with %s\n", DXGetErrorString9(hr));
-    hr = IDirect3DSurface9_LockRect(surface, &l, NULL, D3DLOCK_DISCARD);
+    hr = IDirect3DSurface9_LockRect(surface, &l, NULL, 0);
     ok(hr == D3D_OK, "IDirect3DSurface9_LockRect failed with %s\n", DXGetErrorString9(hr));
     if(FAILED(hr)) return;
 
