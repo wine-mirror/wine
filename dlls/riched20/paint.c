@@ -558,25 +558,26 @@ ME_InvalidateSelection(ME_TextEditor *editor)
   assert(para2->type == diParagraph);
   /* last selection markers aren't always updated, which means
   they can point past the end of the document */ 
-  if (editor->nLastSelStart > len)
-    editor->nLastSelEnd = len; 
-  if (editor->nLastSelEnd > len)
-    editor->nLastSelEnd = len; 
-    
-  /* if the start part of selection is being expanded or contracted... */
-  if (nStart < editor->nLastSelStart) {
-    ME_MarkForPainting(editor, para1, ME_FindItemFwd(editor->pLastSelStartPara, diParagraphOrEnd));
-  } else 
-  if (nStart > editor->nLastSelStart) {
-    ME_MarkForPainting(editor, editor->pLastSelStartPara, ME_FindItemFwd(para1, diParagraphOrEnd));
-  }
+  if (editor->nLastSelStart > len || editor->nLastSelEnd > len) {
+    ME_MarkForPainting(editor,
+        ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph),
+        ME_FindItemFwd(editor->pBuffer->pFirst, diTextEnd));
+  } else {
+    /* if the start part of selection is being expanded or contracted... */
+    if (nStart < editor->nLastSelStart) {
+      ME_MarkForPainting(editor, para1, ME_FindItemFwd(editor->pLastSelStartPara, diParagraphOrEnd));
+    } else
+    if (nStart > editor->nLastSelStart) {
+      ME_MarkForPainting(editor, editor->pLastSelStartPara, ME_FindItemFwd(para1, diParagraphOrEnd));
+    }
 
-  /* if the end part of selection is being contracted or expanded... */
-  if (nEnd < editor->nLastSelEnd) {
-    ME_MarkForPainting(editor, para2, ME_FindItemFwd(editor->pLastSelEndPara, diParagraphOrEnd));
-  } else 
-  if (nEnd > editor->nLastSelEnd) {
-    ME_MarkForPainting(editor, editor->pLastSelEndPara, ME_FindItemFwd(para2, diParagraphOrEnd));
+    /* if the end part of selection is being contracted or expanded... */
+    if (nEnd < editor->nLastSelEnd) {
+      ME_MarkForPainting(editor, para2, ME_FindItemFwd(editor->pLastSelEndPara, diParagraphOrEnd));
+    } else
+    if (nEnd > editor->nLastSelEnd) {
+      ME_MarkForPainting(editor, editor->pLastSelEndPara, ME_FindItemFwd(para2, diParagraphOrEnd));
+    }
   }
 
   ME_InvalidateMarkedParagraphs(editor);
