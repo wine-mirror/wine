@@ -1126,8 +1126,10 @@ static unsigned long PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned type = pFormat[0], attr = pFormat[1];
   PFORMAT_STRING desc;
   NDR_MEMORYSIZE m;
+  DWORD pointer_id = 0;
+  int pointer_needs_sizing;
 
-  FIXME("(%p,%p,%p): stub\n", pStubMsg, Buffer, pFormat);
+  TRACE("(%p,%p,%p)\n", pStubMsg, Buffer, pFormat);
   TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
@@ -1135,21 +1137,43 @@ static unsigned long PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
+    pointer_needs_sizing = 1;
     break;
+  case RPC_FC_UP: /* unique pointer */
+  case RPC_FC_OP: /* object pointer - we must free data before overwriting it */
+    pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
+    TRACE("pointer_id is 0x%08x\n", pointer_id);
+    if (pointer_id)
+      pointer_needs_sizing = 1;
+    else
+      pointer_needs_sizing = 0;
+    break;
+  case RPC_FC_FP:
+  {
+    void *pointer;
+    pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
+    TRACE("pointer_id is 0x%08x\n", pointer_id);
+    pointer_needs_sizing = !NdrFullPointerQueryRefId(
+      pStubMsg->FullPtrXlatTables, pointer_id, 1, &pointer);
+    break;
+  }
   default:
     FIXME("unhandled ptr type=%02x\n", type);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    return 0;
   }
 
   if (attr & RPC_FC_P_DEREF) {
     TRACE("deref\n");
   }
 
-  m = NdrMemorySizer[*desc & NDR_TABLE_MASK];
-  if (m) m(pStubMsg, desc);
-  else FIXME("no memorysizer for data type=%02x\n", *desc);
+  if (pointer_needs_sizing) {
+    m = NdrMemorySizer[*desc & NDR_TABLE_MASK];
+    if (m) m(pStubMsg, desc);
+    else FIXME("no memorysizer for data type=%02x\n", *desc);
+  }
 
-  return 0;
+  return pStubMsg->MemorySize;
 }
 
 /***********************************************************************
