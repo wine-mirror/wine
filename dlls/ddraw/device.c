@@ -5477,8 +5477,8 @@ const IDirect3DDeviceVtbl IDirect3DDevice1_Vtbl =
     IDirect3DDeviceImpl_1_SetMatrix,
     IDirect3DDeviceImpl_1_GetMatrix,
     IDirect3DDeviceImpl_1_DeleteMatrix,
-    Thunk_IDirect3DDeviceImpl_1_EndScene,
     Thunk_IDirect3DDeviceImpl_1_BeginScene,
+    Thunk_IDirect3DDeviceImpl_1_EndScene,
     Thunk_IDirect3DDeviceImpl_1_GetDirect3D
 };
 
