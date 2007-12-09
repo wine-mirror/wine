@@ -89,9 +89,9 @@ static ULONG WINAPI ExtServUnk_Release(IUnknown *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        hlink_free(This->username);
-        hlink_free(This->password);
-        hlink_free(This);
+        heap_free(This->username);
+        heap_free(This->password);
+        heap_free(This);
     }
 
     return ref;
@@ -220,7 +220,7 @@ HRESULT WINAPI HlinkCreateExtensionServices(LPCWSTR pwzAdditionalHeaders,
             phwnd, debugstr_w(pszUsername), debugstr_w(pszPassword),
             punkOuter, debugstr_guid(riid), ppv);
 
-    ret = hlink_alloc(sizeof(*ret));
+    ret = heap_alloc(sizeof(*ret));
 
     ret->lpIUnknownVtbl = &ExtServUnkVtbl;
     ret->lpIAuthenticateVtbl = &AuthenticateVtbl;
@@ -235,7 +235,7 @@ HRESULT WINAPI HlinkCreateExtensionServices(LPCWSTR pwzAdditionalHeaders,
 
     if(len && pwzAdditionalHeaders[len-1] != '\n' && pwzAdditionalHeaders[len-1] != '\r') {
         static const WCHAR endlW[] = {'\r','\n',0};
-        ret->headers = hlink_alloc(len*sizeof(WCHAR) + sizeof(endlW));
+        ret->headers = heap_alloc(len*sizeof(WCHAR) + sizeof(endlW));
         memcpy(ret->headers, pwzAdditionalHeaders, len*sizeof(WCHAR));
         memcpy(ret->headers+len, endlW, sizeof(endlW));
     }else {

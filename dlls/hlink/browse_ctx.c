@@ -46,7 +46,7 @@ HRESULT WINAPI HLinkBrowseContext_Constructor(IUnknown *pUnkOuter, REFIID riid,
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    hl = hlink_alloc_zero(sizeof(HlinkBCImpl));
+    hl = heap_alloc_zero(sizeof(HlinkBCImpl));
     if (!hl)
         return E_OUTOFMEMORY;
 
@@ -95,10 +95,10 @@ static ULONG WINAPI IHlinkBC_fnRelease (IHlinkBrowseContext* iface)
         return refCount;
 
     TRACE("-- destroying IHlinkBrowseContext (%p)\n", This);
-    hlink_free(This->BrowseWindowInfo);
+    heap_free(This->BrowseWindowInfo);
     if (This->CurrentPage)
         IHlink_Release(This->CurrentPage);
-    hlink_free(This);
+    heap_free(This);
     return 0;
 }
 
@@ -155,8 +155,8 @@ static HRESULT WINAPI IHlinkBC_SetBrowseWindowInfo(IHlinkBrowseContext* iface,
     HlinkBCImpl  *This = (HlinkBCImpl*)iface;
     TRACE("(%p)->(%p)\n", This, phlbwi);
 
-    hlink_free(This->BrowseWindowInfo);
-    This->BrowseWindowInfo = hlink_alloc(phlbwi->cbSize);
+    heap_free(This->BrowseWindowInfo);
+    This->BrowseWindowInfo = heap_alloc(phlbwi->cbSize);
     memcpy(This->BrowseWindowInfo, phlbwi, phlbwi->cbSize);
 
     return S_OK;

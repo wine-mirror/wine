@@ -98,7 +98,7 @@ HRESULT WINAPI HLink_Constructor(IUnknown *pUnkOuter, REFIID riid,
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    hl = hlink_alloc_zero(sizeof(HlinkImpl));
+    hl = heap_alloc_zero(sizeof(HlinkImpl));
     if (!hl)
         return E_OUTOFMEMORY;
 
@@ -155,15 +155,15 @@ static ULONG WINAPI IHlink_fnRelease (IHlink* iface)
         return refCount;
 
     TRACE("-- destroying IHlink (%p)\n", This);
-    hlink_free(This->FriendlyName);
-    hlink_free(This->Target);
-    hlink_free(This->TargetFrameName);
-    hlink_free(This->Location);
+    heap_free(This->FriendlyName);
+    heap_free(This->Target);
+    heap_free(This->TargetFrameName);
+    heap_free(This->Location);
     if (This->Moniker)
         IMoniker_Release(This->Moniker);
     if (This->Site)
         IHlinkSite_Release(This->Site);
-    hlink_free(This);
+    heap_free(This);
     return 0;
 }
 
@@ -223,7 +223,7 @@ static HRESULT WINAPI IHlink_fnSetMonikerReference( IHlink* iface,
         CoTaskMemFree(display_name);
     }
 
-    hlink_free(This->Location);
+    heap_free(This->Location);
     This->Location = hlink_strdupW( pwzLocation );
 
     return S_OK;
@@ -239,12 +239,12 @@ static HRESULT WINAPI IHlink_fnSetStringReference(IHlink* iface,
 
     if (grfHLSETF & HLINKSETF_TARGET)
     {
-        hlink_free(This->Target);
+        heap_free(This->Target);
         This->Target = hlink_strdupW( pwzTarget );
     }
     if (grfHLSETF & HLINKSETF_LOCATION)
     {
-        hlink_free(This->Location);
+        heap_free(This->Location);
         This->Location = hlink_strdupW( pwzLocation );
     }
 
@@ -313,7 +313,7 @@ static HRESULT WINAPI IHlink_fnSetFriendlyName (IHlink *iface,
 
     TRACE("(%p) -> (%s)\n", This, debugstr_w(pwzFriendlyName));
 
-    hlink_free(This->FriendlyName);
+    heap_free(This->FriendlyName);
     This->FriendlyName = hlink_strdupW( pwzFriendlyName );
 
     return S_OK;
@@ -356,7 +356,7 @@ static HRESULT WINAPI IHlink_fnSetTargetFrameName(IHlink* iface,
     HlinkImpl  *This = (HlinkImpl*)iface;
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzTargetFramename));
 
-    hlink_free(This->TargetFrameName);
+    heap_free(This->TargetFrameName);
     This->TargetFrameName = hlink_strdupW( pwzTargetFramename );
 
     return S_OK;
@@ -648,18 +648,18 @@ static HRESULT read_hlink_string(IStream *pStm, LPWSTR *out_str)
 
     TRACE("read len %d\n", len);
 
-    str = hlink_alloc(len * sizeof(WCHAR));
+    str = heap_alloc(len * sizeof(WCHAR));
     if (!str) return E_OUTOFMEMORY;
 
     hr = IStream_Read(pStm, str, len * sizeof(WCHAR), &read);
     if (FAILED(hr))
     {
-        hlink_free(str);
+        heap_free(str);
         return hr;
     }
     if (read != len * sizeof(WCHAR))
     {
-        hlink_free(str);
+        heap_free(str);
         return STG_E_READFAULT;
     }
     TRACE("read string %s\n", debugstr_w(str));
