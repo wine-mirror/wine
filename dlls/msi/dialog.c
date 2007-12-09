@@ -409,6 +409,9 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     style |= WS_CHILD;
 
     control = msi_alloc( sizeof *control + strlenW(name)*sizeof(WCHAR) );
+    if (!control)
+        return NULL;
+
     strcpyW( control->name, name );
     list_add_head( &dialog->controls, &control->entry );
     control->handler = NULL;
