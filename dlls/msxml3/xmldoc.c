@@ -44,7 +44,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 /* FIXME: IXMLDocument needs to implement
  *   - IXMLError
  *   - IPersistMoniker
- *   - IPersistStream
  */
 
 typedef struct _xmldoc
@@ -79,11 +78,13 @@ static HRESULT WINAPI xmldoc_QueryInterface(IXMLDocument *iface, REFIID riid, vo
     TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IXMLDocument))
+        IsEqualGUID(riid, &IID_IXMLDocument) ||
+        IsEqualGUID(riid, &IID_IXMLDOMDocument))
     {
         *ppvObject = iface;
     }
-    else if (IsEqualGUID(&IID_IPersistStreamInit, riid))
+    else if (IsEqualGUID(&IID_IPersistStreamInit, riid) ||
+             IsEqualGUID(&IID_IPersistStream, riid))
     {
         *ppvObject = (IPersistStreamInit *)&(This->lpvtblIPersistStreamInit);
     }
@@ -522,7 +523,7 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_IsDirty(
     return E_NOTIMPL;
 }
 
-static xmlDocPtr parse_xml(char *ptr, int len)
+xmlDocPtr parse_xml(char *ptr, int len)
 {
 #ifdef HAVE_XMLREADMEMORY
     return xmlReadMemory(ptr, len, NULL, NULL,

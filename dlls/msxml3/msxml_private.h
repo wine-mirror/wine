@@ -61,6 +61,8 @@ extern LONG xmldoc_release( xmlDocPtr doc );
 extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
 extern HRESULT XMLElementCollection_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
 
+extern xmlDocPtr parse_xml(char *ptr, int len);
+
 #endif
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,

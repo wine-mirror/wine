@@ -168,6 +168,7 @@ static bsc domdoc_bsc = { &bsc_vtbl };
 typedef struct _domdoc
 {
     const struct IXMLDOMDocument2Vtbl *lpVtbl;
+    const struct IPersistStreamVtbl   *lpvtblIPersistStream;
     LONG ref;
     VARIANT_BOOL async;
     VARIANT_BOOL validating;
@@ -178,6 +179,9 @@ typedef struct _domdoc
     IXMLDOMNode *node;
     IXMLDOMSchemaCollection *schema;
     HRESULT error;
+
+     /* IPersistStream */
+     IStream *stream;
 } domdoc;
 
 LONG xmldoc_add_ref(xmlDocPtr doc)
@@ -210,6 +214,131 @@ static inline xmlDocPtr get_doc( domdoc *This )
     return (xmlDocPtr) xmlNodePtr_from_domnode( This->node, XML_DOCUMENT_NODE );
 }
 
+static inline domdoc *impl_from_IPersistStream(IPersistStream *iface)
+{
+    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIPersistStream));
+}
+
+/************************************************************************
+ * xmldoc implementation of IPersistStream.
+ */
+static HRESULT WINAPI xmldoc_IPersistStream_QueryInterface(
+    IPersistStream *iface, REFIID riid, LPVOID *ppvObj)
+{
+    domdoc *this = impl_from_IPersistStream(iface);
+    return IXMLDocument_QueryInterface((IXMLDocument *)this, riid, ppvObj);
+}
+
+static ULONG WINAPI xmldoc_IPersistStream_AddRef(
+    IPersistStream *iface)
+{
+    domdoc *this = impl_from_IPersistStream(iface);
+    return IXMLDocument_AddRef((IXMLDocument *)this);
+}
+
+static ULONG WINAPI xmldoc_IPersistStream_Release(
+    IPersistStream *iface)
+{
+    domdoc *this = impl_from_IPersistStream(iface);
+    return IXMLDocument_Release((IXMLDocument *)this);
+}
+
+static HRESULT WINAPI xmldoc_IPersistStream_GetClassID(
+    IPersistStream *iface, CLSID *classid)
+{
+    FIXME("(%p,%p): stub!\n", iface, classid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmldoc_IPersistStream_IsDirty(
+    IPersistStream *iface)
+{
+    domdoc *This = impl_from_IPersistStream(iface);
+
+    FIXME("(%p->%p): stub!\n", iface, This);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI xmldoc_IPersistStream_Load(
+    IPersistStream *iface, LPSTREAM pStm)
+{
+    domdoc *This = impl_from_IPersistStream(iface);
+    HRESULT hr;
+    HGLOBAL hglobal;
+    DWORD read, written, len;
+    BYTE buf[4096];
+    char *ptr;
+    xmlDocPtr xmldoc = NULL;
+
+    TRACE("(%p, %p)\n", iface, pStm);
+
+    if (!pStm)
+        return E_INVALIDARG;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &This->stream);
+    if (FAILED(hr))
+        return hr;
+
+    do
+    {
+        IStream_Read(pStm, buf, sizeof(buf), &read);
+        hr = IStream_Write(This->stream, buf, read, &written);
+    } while(SUCCEEDED(hr) && written != 0 && read != 0);
+
+    if (FAILED(hr))
+    {
+        ERR("Failed to copy stream\n");
+        return hr;
+    }
+
+    hr = GetHGlobalFromStream(This->stream, &hglobal);
+    if (FAILED(hr))
+        return hr;
+
+    len = GlobalSize(hglobal);
+    ptr = GlobalLock(hglobal);
+    if (len != 0)
+        xmldoc = parse_xml(ptr, len);
+    GlobalUnlock(hglobal);
+
+    if (!xmldoc)
+    {
+        ERR("Failed to parse xml\n");
+        return E_FAIL;
+    }
+
+    attach_xmlnode( This->node, (xmlNodePtr)xmldoc );
+
+    return S_OK;
+}
+
+static HRESULT WINAPI xmldoc_IPersistStream_Save(
+    IPersistStream *iface, LPSTREAM pStm, BOOL fClearDirty)
+{
+    FIXME("(%p, %p, %d): stub!\n", iface, pStm, fClearDirty);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmldoc_IPersistStream_GetSizeMax(
+    IPersistStream *iface, ULARGE_INTEGER *pcbSize)
+{
+    TRACE("(%p, %p): stub!\n", iface, pcbSize);
+    return E_NOTIMPL;
+}
+
+static const IPersistStreamVtbl xmldoc_IPersistStream_VTable =
+{
+    xmldoc_IPersistStream_QueryInterface,
+    xmldoc_IPersistStream_AddRef,
+    xmldoc_IPersistStream_Release,
+    xmldoc_IPersistStream_GetClassID,
+    xmldoc_IPersistStream_IsDirty,
+    xmldoc_IPersistStream_Load,
+    xmldoc_IPersistStream_Save,
+    xmldoc_IPersistStream_GetSizeMax,
+};
+
 static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID riid, void** ppvObject )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
@@ -226,6 +355,10 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID rii
               IsEqualGUID( riid, &IID_IDispatch ) )
     {
         return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
+    }
+    else if (IsEqualGUID(&IID_IPersistStream, riid))
+    {
+        *ppvObject = (IPersistStream*)&(This->lpvtblIPersistStream);
     }
     else
     {
@@ -261,6 +394,7 @@ static ULONG WINAPI domdoc_Release(
     {
         IUnknown_Release( This->node_unk );
         if(This->schema) IXMLDOMSchemaCollection_Release( This->schema );
+        if (This->stream) IStream_Release(This->stream);
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -1023,6 +1157,8 @@ static HRESULT WINAPI domdoc_load(
     LPWSTR filename = NULL;
     xmlDocPtr xmldoc = NULL;
     HRESULT hr = S_FALSE;
+    IXMLDOMDocument2 *pNewDoc = NULL;
+    IStream *pStream = NULL;
 
     TRACE("type %d\n", V_VT(&xmlSource) );
 
@@ -1036,7 +1172,59 @@ static HRESULT WINAPI domdoc_load(
     {
     case VT_BSTR:
         filename = V_BSTR(&xmlSource);
-    }
+        break;
+    case VT_UNKNOWN:
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&xmlSource), &IID_IXMLDOMDocument2, (void**)&pNewDoc);
+        if(hr == S_OK)
+        {
+            if(pNewDoc)
+            {
+                domdoc *newDoc = impl_from_IXMLDOMDocument2( pNewDoc );
+                xmldoc = xmlCopyDoc(get_doc(newDoc), 1);
+                attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
+
+                *isSuccessful = VARIANT_TRUE;
+
+                return S_OK;
+            }
+        }
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&xmlSource), &IID_IStream, (void**)&pStream);
+        if(hr == S_OK)
+        {
+            IPersistStream *pDocStream;
+            hr = IUnknown_QueryInterface(iface, &IID_IPersistStream, (void**)&pDocStream);
+            if(hr == S_OK)
+            {
+                hr = xmldoc_IPersistStream_Load(pDocStream, pStream);
+                IStream_Release(pStream);
+                if(hr == S_OK)
+                {
+                    *isSuccessful = VARIANT_TRUE;
+
+                    TRACE("Using ID_IStream to load Document\n");
+                    return S_OK;
+                }
+                else
+                {
+                    ERR("xmldoc_IPersistStream_Load failed (%d)\n", hr);
+                }
+            }
+            else
+            {
+                ERR("QueryInterface IID_IPersistStream failed (%d)\n", hr);
+            }
+        }
+        else
+        {
+            /* ISequentialStream */
+            FIXME("Unknown type not supported (%d) (%p)(%p)\n", hr, pNewDoc, V_UNKNOWN(&xmlSource)->lpVtbl);
+        }
+        break;
+     default:
+            FIXME("VT type not supported (%d)\n", V_VT(&xmlSource));
+     }
+
+    TRACE("filename (%s)\n", debugstr_w(filename));
 
     if ( filename )
     {
@@ -1056,6 +1244,8 @@ static HRESULT WINAPI domdoc_load(
 
     xmldoc->_private = 0;
     attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
+
+    TRACE("ret (%d)\n", hr);
 
     return hr;
 }
@@ -1562,6 +1752,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
         return E_OUTOFMEMORY;
 
     doc->lpVtbl = &domdoc_vtbl;
+    doc->lpvtblIPersistStream = &xmldoc_IPersistStream_VTable;
     doc->ref = 1;
     doc->async = 0;
     doc->validating = 0;
@@ -1570,6 +1761,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->bUseXPath = FALSE;
     doc->error = S_OK;
     doc->schema = NULL;
+    doc->stream = NULL;
 
     xmldoc = xmlNewDoc(NULL);
     if(!xmldoc)
