@@ -147,6 +147,7 @@ typedef struct {
     HDC hdc;
     LONG height;
     WCHAR default_char;
+    LOGFONTW lf;
 } ScriptCache;
 
 typedef struct {
@@ -212,6 +213,8 @@ static HRESULT init_script_cache(const HDC hdc, ScriptCache *sc)
     TEXTMETRICW metric;
 
     if (!GetTextMetricsW(hdc, &metric)) return E_INVALIDARG;
+    if (!GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(LOGFONTW), &sc->lf)) return E_INVALIDARG;
+
     sc->height = metric.tmHeight;
     sc->default_char = metric.tmDefaultChar;
     sc->hdc = hdc;
@@ -237,6 +240,21 @@ static HRESULT get_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
     }
     TRACE("<- %p\n", *psc);
     return S_OK;
+}
+
+static HFONT select_cached_font(SCRIPT_CACHE *psc)
+{
+    HFONT old_font;
+    ScriptCache *sc = *psc;
+
+    old_font = SelectObject(sc->hdc, CreateFontIndirectW(&sc->lf));
+    return old_font;
+}
+
+static void unselect_cached_font(SCRIPT_CACHE *psc, HFONT old_font)
+{
+    ScriptCache *sc = *psc;
+    DeleteObject(SelectObject(sc->hdc, old_font));
 }
 
 /***********************************************************************
@@ -1228,6 +1246,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 {
     int cnt;
     HRESULT hr;
+    HFONT hfont;
     *pcGlyphs = cChars;
 
     TRACE("(%p, %p, %p, %d, %d, %p)\n",  hdc, psc, pwcChars, cChars, cMaxGlyphs, psa);
@@ -1236,6 +1255,8 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 
     if (cChars > cMaxGlyphs) return E_OUTOFMEMORY;
     if ((hr = get_script_cache(hdc, psc))) return hr;
+
+    hfont = select_cached_font(psc);
 
     TRACE("Before: ");
     for (cnt = 0; cnt < cChars; cnt++)
@@ -1270,6 +1291,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
          psva[cnt].fZeroWidth = 0;
          pwLogClust[cnt] = cnt;
     }
+    unselect_cached_font(psc, hfont);
     return S_OK;
 }
 
@@ -1300,11 +1322,14 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
     int wcnt;
     HRESULT hr;
     LPABC lpABC;
+    HFONT hfont;
 
     TRACE("(%p, %p, %p, %s, %d, %p, %p, %p)\n",  hdc, psc, pwGlyphs,
           debugstr_wn(pwGlyphs, cGlyphs), cGlyphs, psva, psa, piAdvance);
 
     if ((hr = get_script_cache(hdc, psc))) return hr;
+
+    hfont = select_cached_font(psc);
 
     /*   Here we need to calculate the width of the run unit.  At this point the input string
      *   has been converted to glyphs and we still need to translate back to the original chars
@@ -1315,8 +1340,8 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
         memset(pABC, 0, sizeof(ABC));
 
     /* FIXME: set pGoffset to more reasonable values */
-     if (!GetCharABCWidthsI(get_cache_hdc(psc), 0, cGlyphs, (WORD *) pwGlyphs, lpABC ))
-     {
+    if (!GetCharABCWidthsI(get_cache_hdc(psc), 0, cGlyphs, (WORD *)pwGlyphs, lpABC))
+    {
          WARN("Could not get ABC values\n");
          for (wcnt = 0; wcnt < cGlyphs; wcnt++) {
              piAdvance[wcnt] = 0;
@@ -1346,8 +1371,9 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
      if (pABC)
         TRACE("Total for run:   abcA=%d,  abcB=%d,  abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
 
-     usp_free(lpABC);
-     return S_OK;
+    usp_free(lpABC);
+    unselect_cached_font(psc, hfont);
+    return S_OK;
 }
 
 /***********************************************************************
@@ -1372,11 +1398,14 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
 {
     int cnt;
     HRESULT hr;
+    HFONT hfont;
 
     TRACE("(%p,%p,%s,%d,0x%x,%p)\n", hdc, psc, debugstr_wn(pwcInChars, cChars),
           cChars, dwFlags, pwOutGlyphs);
 
     if ((hr = get_script_cache(hdc, psc))) return hr;
+
+    hfont = select_cached_font(psc);
 
     TRACE("Before: ");
     for (cnt = 0; cnt < cChars; cnt++)
@@ -1391,6 +1420,7 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
     }
     TRACE("\n");
 
+    unselect_cached_font(psc, hfont);
     return S_OK;
 }
 
@@ -1403,7 +1433,8 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
                              int iReserved, const WORD *pwGlyphs, int cGlyphs, const int *piAdvance,
                              const int *piJustify, const GOFFSET *pGoffset)
 {
-    HRESULT hr;
+    HFONT hfont;
+    HRESULT hr = S_OK;
 
     TRACE("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p)\n",
          hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
@@ -1413,14 +1444,17 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
     if (!piAdvance || !psa || !pwGlyphs) return E_INVALIDARG;
     if ((hr = get_script_cache(hdc, psc))) return hr;
 
+    hfont = select_cached_font(psc);
+
     fuOptions &= ETO_CLIPPED + ETO_OPAQUE;
     if  (!psa->fNoGlyphIndex)                                     /* Have Glyphs?                      */
         fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do translation to glyph */
 
     if (!ExtTextOutW(get_cache_hdc(psc), x, y, fuOptions, lprc, pwGlyphs, cGlyphs, NULL))
-        return S_FALSE;
+        hr = S_FALSE;
 
-    return S_OK;
+    unselect_cached_font(psc, hfont);
+    return hr;
 }
 
 /***********************************************************************
@@ -1467,15 +1501,18 @@ HRESULT WINAPI ScriptCacheGetHeight(HDC hdc, SCRIPT_CACHE *psc, LONG *height)
  */
 HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, ABC *abc)
 {
-    HRESULT hr;
+    HFONT hfont;
+    HRESULT hr = S_OK;
 
     TRACE("(%p, %p, 0x%04x, %p)\n", hdc, psc, glyph, abc);
 
     if ((hr = get_script_cache(hdc, psc))) return hr;
 
-    /* FIXME: get this from the cache */
-    if (!GetCharABCWidthsI(get_cache_hdc(psc), 0, 1, &glyph, abc)) return E_HANDLE;
-    return S_OK;
+    hfont = select_cached_font(psc);
+    if (!GetCharABCWidthsI(get_cache_hdc(psc), 0, 1, &glyph, abc)) hr = E_HANDLE;
+
+    unselect_cached_font(psc, hfont);
+    return hr;
 }
 
 /***********************************************************************
