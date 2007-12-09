@@ -47,17 +47,17 @@ static CRITICAL_SECTION_DEBUG pdh_handle_cs_debug =
 };
 static CRITICAL_SECTION pdh_handle_cs = { &pdh_handle_cs_debug, -1, 0, 0, 0, 0 };
 
-static inline void *pdh_alloc( SIZE_T size )
+static inline void *heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
 }
 
-static inline void *pdh_alloc_zero( SIZE_T size )
+static inline void *heap_alloc_zero( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
 }
 
-static inline void pdh_free( LPVOID mem )
+static inline void heap_free( LPVOID mem )
 {
     HeapFree( GetProcessHeap(), 0, mem );
 }
@@ -67,7 +67,7 @@ static inline WCHAR *pdh_strdup( const WCHAR *src )
     WCHAR *dst;
 
     if (!src) return NULL;
-    if ((dst = pdh_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) ))) strcpyW( dst, src );
+    if ((dst = heap_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) ))) strcpyW( dst, src );
     return dst;
 }
 
@@ -78,7 +78,7 @@ static inline WCHAR *pdh_strdup_aw( const char *src )
 
     if (!src) return NULL;
     len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
-    if ((dst = pdh_alloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
+    if ((dst = heap_alloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
     return dst;
 }
 
@@ -127,7 +127,7 @@ static struct counter *create_counter( void )
 {
     struct counter *counter;
 
-    if ((counter = pdh_alloc_zero( sizeof(struct counter) )))
+    if ((counter = heap_alloc_zero( sizeof(struct counter) )))
     {
         counter->magic = PDH_MAGIC_COUNTER;
         return counter;
@@ -138,8 +138,8 @@ static struct counter *create_counter( void )
 static void destroy_counter( struct counter *counter )
 {
     counter->magic = 0;
-    pdh_free( counter->path );
-    pdh_free( counter );
+    heap_free( counter->path );
+    heap_free( counter );
 }
 
 #define PDH_MAGIC_QUERY     0x50444830 /* 'PDH0' */
@@ -159,7 +159,7 @@ static struct query *create_query( void )
 {
     struct query *query;
 
-    if ((query = pdh_alloc_zero( sizeof(struct query) )))
+    if ((query = heap_alloc_zero( sizeof(struct query) )))
     {
         query->magic = PDH_MAGIC_QUERY;
         list_init( &query->counters );
@@ -171,7 +171,7 @@ static struct query *create_query( void )
 static void destroy_query( struct query *query )
 {
     query->magic = 0;
-    pdh_free( query );
+    heap_free( query );
 }
 
 struct source
@@ -244,7 +244,7 @@ PDH_STATUS WINAPI PdhAddCounterA( PDH_HQUERY query, LPCSTR path,
 
     ret = PdhAddCounterW( query, pathW, userdata, counter );
 
-    pdh_free( pathW );
+    heap_free( pathW );
     return ret;
 }
 
@@ -795,7 +795,7 @@ PDH_STATUS WINAPI PdhLookupPerfIndexByNameA( LPCSTR machine, LPCSTR name, LPDWOR
 
     ret = PdhLookupPerfIndexByNameW( NULL, nameW, index );
 
-    pdh_free( nameW );
+    heap_free( nameW );
     return ret;
 }
 
@@ -909,7 +909,7 @@ PDH_STATUS WINAPI PdhOpenQueryA( LPCSTR source, DWORD_PTR userdata, PDH_HQUERY *
     if (source && !(sourceW = pdh_strdup_aw( source ))) return PDH_MEMORY_ALLOCATION_FAILURE;
 
     ret = PdhOpenQueryW( sourceW, userdata, query );
-    pdh_free( sourceW );
+    heap_free( sourceW );
 
     return ret;
 }
@@ -1005,7 +1005,7 @@ PDH_STATUS WINAPI PdhValidatePathA( LPCSTR path )
 
     ret = PdhValidatePathW( pathW );
 
-    pdh_free( pathW );
+    heap_free( pathW );
     return ret;
 }
 
