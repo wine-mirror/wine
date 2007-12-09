@@ -1474,7 +1474,7 @@ HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, AB
     if ((hr = get_script_cache(hdc, psc))) return hr;
 
     /* FIXME: get this from the cache */
-    if (!GetCharABCWidthsW(get_cache_hdc(psc), glyph, glyph, abc)) return E_HANDLE;
+    if (!GetCharABCWidthsI(get_cache_hdc(psc), 0, 1, &glyph, abc)) return E_HANDLE;
     return S_OK;
 }
 
