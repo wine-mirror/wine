@@ -1258,28 +1258,14 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 
     hfont = select_cached_font(psc);
 
-    TRACE("Before: ");
-    for (cnt = 0; cnt < cChars; cnt++)
-         TRACE("%4x",pwcChars[cnt]);
-    TRACE("\n");
-
     if  (!psa->fNoGlyphIndex) {                                         /* Glyph translate */
         if (!(GetGlyphIndicesW(get_cache_hdc(psc), pwcChars, cChars, pwOutGlyphs, 0)))
             return S_FALSE;
-
-        TRACE("After:  ");
-        for (cnt = 0; cnt < cChars; cnt++) {
-             TRACE("%04x",pwOutGlyphs[cnt]);
-        }
-        TRACE("\n");
     }
     else {
-        TRACE("After:  ");
         for (cnt = 0; cnt < cChars; cnt++) {                           /* no translate so set up */
              pwOutGlyphs[cnt] = pwcChars[cnt];                         /* copy in to out and     */
-             TRACE("%04x",pwOutGlyphs[cnt]);
         }
-       TRACE("\n");
     }
 
     /*  Set up a valid SCRIPT_VISATTR and LogClust for each char in this run */     
@@ -1396,7 +1382,6 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
 HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars,
                              int cChars, DWORD dwFlags, WORD *pwOutGlyphs)
 {
-    int cnt;
     HRESULT hr;
     HFONT hfont;
 
@@ -1406,22 +1391,11 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
     if ((hr = get_script_cache(hdc, psc))) return hr;
 
     hfont = select_cached_font(psc);
-
-    TRACE("Before: ");
-    for (cnt = 0; cnt < cChars; cnt++)
-         TRACE("%4x",pwcInChars[cnt]);
-    TRACE("\n");
-
-    GetGlyphIndicesW(get_cache_hdc(psc), pwcInChars, cChars, pwOutGlyphs, 0);
-
-    TRACE("After:  ");
-    for (cnt = 0; cnt < cChars; cnt++) {
-         TRACE("%04x",pwOutGlyphs[cnt]);
-    }
-    TRACE("\n");
+    if (GetGlyphIndicesW(get_cache_hdc(psc), pwcInChars, cChars, pwOutGlyphs, 0) == GDI_ERROR)
+        hr = S_FALSE;
 
     unselect_cached_font(psc, hfont);
-    return S_OK;
+    return hr;
 }
 
 /***********************************************************************
