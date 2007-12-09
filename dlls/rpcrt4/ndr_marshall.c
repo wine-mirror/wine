@@ -2859,8 +2859,33 @@ void WINAPI NdrConformantVaryingArrayBufferSize( PMIDL_STUB_MESSAGE pStubMsg,
 ULONG WINAPI NdrConformantVaryingArrayMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
                                                   PFORMAT_STRING pFormat )
 {
-    FIXME( "stub\n" );
-    return 0;
+    ULONG bufsize, memsize;
+    unsigned char alignment = pFormat[1] + 1;
+    DWORD esize = *(const WORD*)(pFormat+2);
+
+    TRACE("(%p, %p)\n", pStubMsg, pFormat);
+
+    if (pFormat[0] != RPC_FC_CVARRAY)
+    {
+        ERR("invalid format type %x\n", pFormat[0]);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return pStubMsg->MemorySize;
+    }
+
+    pFormat = ReadConformance(pStubMsg, pFormat+4);
+    pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
+
+    ALIGN_POINTER(pStubMsg->Buffer, alignment);
+
+    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+    memsize = safe_multiply(esize, pStubMsg->MaxCount);
+
+    safe_buffer_increment(pStubMsg, bufsize);
+    pStubMsg->MemorySize += memsize;
+
+    EmbeddedPointerMemorySize(pStubMsg, pFormat);
+
+    return pStubMsg->MemorySize;
 }
 
 
