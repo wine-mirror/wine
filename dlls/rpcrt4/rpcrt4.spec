@@ -294,7 +294,7 @@
 @ stdcall NdrProxyGetBuffer(ptr ptr)
 @ stdcall NdrProxyInitialize(ptr ptr ptr ptr long)
 @ stdcall NdrProxySendReceive(ptr ptr)
-@ stub NdrRangeUnmarshall
+@ stdcall NdrRangeUnmarshall(ptr ptr ptr long)
 @ stub NdrRpcSmClientAllocate
 @ stub NdrRpcSmClientFree
 @ stub NdrRpcSmSetClientToOsf
