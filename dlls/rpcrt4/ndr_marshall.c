@@ -3201,10 +3201,18 @@ void WINAPI NdrComplexArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
     pMemory = ComplexFree(pStubMsg, pMemory, pFormat, NULL);
 }
 
-static ULONG UserMarshalFlags(const MIDL_STUB_MESSAGE *pStubMsg)
+static void UserMarshalCB(PMIDL_STUB_MESSAGE pStubMsg,
+                          USER_MARSHAL_CB_TYPE cbtype, PFORMAT_STRING pFormat,
+                          USER_MARSHAL_CB *umcb)
 {
-  return MAKELONG(pStubMsg->dwDestContext,
-                  pStubMsg->RpcMsg->DataRepresentation);
+  umcb->Flags = MAKELONG(pStubMsg->dwDestContext,
+                         pStubMsg->RpcMsg->DataRepresentation);
+  umcb->pStubMsg = pStubMsg;
+  umcb->pReserve = NULL;
+  umcb->Signature = USER_MARSHAL_CB_SIGNATURE;
+  umcb->CBType = cbtype;
+  umcb->pFormat = pFormat;
+  umcb->pTypeFormat = NULL /* FIXME */;
 }
 
 #define USER_MARSHAL_PTR_PREFIX \
@@ -3221,9 +3229,12 @@ unsigned char * WINAPI NdrUserMarshalMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned flags = pFormat[1];
   unsigned index = *(const WORD*)&pFormat[2];
   unsigned char *saved_buffer = NULL;
-  ULONG uflag = UserMarshalFlags(pStubMsg);
+  USER_MARSHAL_CB umcb;
+
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   TRACE("index=%d\n", index);
+
+  UserMarshalCB(pStubMsg, USER_MARSHAL_CB_MARSHALL, pFormat, &umcb);
 
   if (flags & USER_MARSHAL_POINTER)
   {
@@ -3243,7 +3254,7 @@ unsigned char * WINAPI NdrUserMarshalMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   pStubMsg->Buffer =
     pStubMsg->StubDesc->aUserMarshalQuadruple[index].pfnMarshall(
-      &uflag, pStubMsg->Buffer, pMemory);
+      &umcb.Flags, pStubMsg->Buffer, pMemory);
 
   if (saved_buffer)
   {
@@ -3269,9 +3280,12 @@ unsigned char * WINAPI NdrUserMarshalUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned index = *(const WORD*)&pFormat[2];
   DWORD memsize = *(const WORD*)&pFormat[4];
   unsigned char *saved_buffer = NULL;
-  ULONG uflag = UserMarshalFlags(pStubMsg);
+  USER_MARSHAL_CB umcb;
+
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
   TRACE("index=%d\n", index);
+
+  UserMarshalCB(pStubMsg, USER_MARSHAL_CB_UNMARSHALL, pFormat, &umcb);
 
   if (flags & USER_MARSHAL_POINTER)
   {
@@ -3294,7 +3308,7 @@ unsigned char * WINAPI NdrUserMarshalUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   pStubMsg->Buffer =
     pStubMsg->StubDesc->aUserMarshalQuadruple[index].pfnUnmarshall(
-      &uflag, pStubMsg->Buffer, *ppMemory);
+      &umcb.Flags, pStubMsg->Buffer, *ppMemory);
 
   if (saved_buffer)
   {
@@ -3316,10 +3330,13 @@ void WINAPI NdrUserMarshalBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned flags = pFormat[1];
   unsigned index = *(const WORD*)&pFormat[2];
   DWORD bufsize = *(const WORD*)&pFormat[6];
-  ULONG uflag = UserMarshalFlags(pStubMsg);
+  USER_MARSHAL_CB umcb;
   unsigned long saved_buffer_length = 0;
+
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   TRACE("index=%d\n", index);
+
+  UserMarshalCB(pStubMsg, USER_MARSHAL_CB_BUFFER_SIZE, pFormat, &umcb);
 
   if (flags & USER_MARSHAL_POINTER)
   {
@@ -3346,7 +3363,7 @@ void WINAPI NdrUserMarshalBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   else
     pStubMsg->BufferLength =
         pStubMsg->StubDesc->aUserMarshalQuadruple[index].pfnBufferSize(
-                             &uflag, pStubMsg->BufferLength, pMemory);
+                             &umcb.Flags, pStubMsg->BufferLength, pMemory);
 
   if (saved_buffer_length)
   {
@@ -3401,12 +3418,15 @@ void WINAPI NdrUserMarshalFree(PMIDL_STUB_MESSAGE pStubMsg,
 {
 /*  unsigned flags = pFormat[1]; */
   unsigned index = *(const WORD*)&pFormat[2];
-  ULONG uflag = UserMarshalFlags(pStubMsg);
+  USER_MARSHAL_CB umcb;
+
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   TRACE("index=%d\n", index);
 
+  UserMarshalCB(pStubMsg, USER_MARSHAL_CB_FREE, pFormat, &umcb);
+
   pStubMsg->StubDesc->aUserMarshalQuadruple[index].pfnFree(
-    &uflag, pMemory);
+    &umcb.Flags, pMemory);
 }
 
 /***********************************************************************
