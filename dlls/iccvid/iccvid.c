@@ -82,12 +82,12 @@ typedef struct _ICCVID_Info
     cinepak_info *cvinfo;
 } ICCVID_Info;
 
-static inline LPVOID ICCVID_Alloc( size_t size, size_t count )
+static inline LPVOID heap_alloc( size_t size )
 {
-    return HeapAlloc( GetProcessHeap(), 0, size*count );
+    return HeapAlloc( GetProcessHeap(), 0, size );
 }
 
-static inline BOOL ICCVID_Free( LPVOID ptr )
+static inline BOOL heap_free( LPVOID ptr )
 {
     return HeapFree( GetProcessHeap(), 0, ptr );
 }
@@ -338,7 +338,7 @@ static cinepak_info *decode_cinepak_init(void)
     cinepak_info *cvinfo;
     int i;
 
-    cvinfo = ICCVID_Alloc( sizeof (cinepak_info), 1 );
+    cvinfo = heap_alloc( sizeof (cinepak_info) );
     if( !cvinfo )
         return NULL;
     cvinfo->strip_num = 0;
@@ -359,10 +359,10 @@ static void free_cvinfo( cinepak_info *cvinfo )
 
     for( i=0; i<cvinfo->strip_num; i++ )
     {
-        ICCVID_Free(cvinfo->v4_codebook[i]);
-        ICCVID_Free(cvinfo->v1_codebook[i]);
+        heap_free(cvinfo->v4_codebook[i]);
+        heap_free(cvinfo->v1_codebook[i]);
     }
-    ICCVID_Free( cvinfo );
+    heap_free( cvinfo );
 }
 
 typedef void (*fn_cvid_v1)(unsigned char *frm, unsigned char *limit,
@@ -457,13 +457,13 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
 
         for(i = cvinfo->strip_num; i < strips; i++)
             {
-            if((cvinfo->v4_codebook[i] = ICCVID_Alloc(sizeof(cvid_codebook), 260)) == NULL)
+            if((cvinfo->v4_codebook[i] = heap_alloc(sizeof(cvid_codebook) * 260)) == NULL)
                 {
                 ERR("CVID: codebook v4 alloc err\n");
                 return;
                 }
 
-            if((cvinfo->v1_codebook[i] = ICCVID_Alloc(sizeof(cvid_codebook), 260)) == NULL)
+            if((cvinfo->v1_codebook[i] = heap_alloc(sizeof(cvid_codebook) * 260)) == NULL)
                 {
                 ERR("CVID: codebook v1 alloc err\n");
                 return;
@@ -918,7 +918,7 @@ static LRESULT ICCVID_Close( ICCVID_Info *info )
         return 0;
     if( info->cvinfo )
         free_cvinfo( info->cvinfo );
-    ICCVID_Free( info );
+    heap_free( info );
     return 1;
 }
 
@@ -978,7 +978,7 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
 
         if (icinfo && icinfo->fccType != ICTYPE_VIDEO) return 0;
 
-        info = ICCVID_Alloc( sizeof (ICCVID_Info), 1 );
+        info = heap_alloc( sizeof (ICCVID_Info) );
         if( info )
         {
             info->dwMagic = ICCVID_MAGIC;
