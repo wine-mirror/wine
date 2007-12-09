@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = qmgrprxy.dll
+IMPORTS   = rpcrt4 kernel32
+EXTRADEFS = -DREGISTER_PROXY_DLL
+
+IDL_I_SRCS = qmgrprxy.idl
+IDL_P_SRCS = qmgrprxy.idl
+
+EXTRA_OBJS = dlldata.o
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

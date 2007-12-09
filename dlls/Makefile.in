@@ -163,6 +163,7 @@ BASEDIRS = \
 	pstorec \
 	qcap \
 	qmgr \
+	qmgrprxy \
 	quartz \
 	query \
 	rasapi32 \
