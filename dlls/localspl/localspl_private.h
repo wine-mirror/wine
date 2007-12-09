@@ -49,14 +49,14 @@ extern HINSTANCE LOCALSPL_hInstance;
 #define PORT_IS_LPR      8
 
 
-/* ## Memory allocation macros ## */
+/* ## Memory allocation functions ## */
 
-static inline void *spl_alloc( size_t len )
+static inline void *heap_alloc( size_t len )
 {
     return HeapAlloc( GetProcessHeap(), 0, len );
 }
 
-static inline BOOL spl_free( void *mem )
+static inline BOOL heap_free( void *mem )
 {
     return HeapFree( GetProcessHeap(), 0, mem );
 }
