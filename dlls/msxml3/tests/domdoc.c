@@ -568,6 +568,7 @@ static void test_domnode( void )
         r = IXMLDOMNode_get_baseName( element, &str );
         ok( r == S_OK, "get_baseName returned wrong code\n");
         ok( lstrcmpW(str,szlc) == 0, "basename was wrong\n");
+        SysFreeString(str);
 
         /* check if nodename is correct */
         r = IXMLDOMElement_get_nodeName( element, NULL );
@@ -1606,6 +1607,7 @@ static void test_cloneNode(void )
     IXMLDOMNode *node_clone;
     HRESULT r;
     BSTR str;
+    static const WCHAR szSearch[] = { 'l', 'c', '/', 'p', 'r', 0 };
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
     if( r != S_OK )
@@ -1619,9 +1621,11 @@ static void test_cloneNode(void )
     if(!b)
         return;
 
-    r = IXMLDOMNode_selectSingleNode(doc, _bstr_("lc/pr"), &node);
+    str = SysAllocString( szSearch);
+    r = IXMLDOMNode_selectSingleNode(doc, str, &node);
     ok( r == S_OK, "ret %08x\n", r );
     ok( node != NULL, "node %p\n", node );
+    SysFreeString(str);
 
     if(!node)
     {
