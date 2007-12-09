@@ -552,7 +552,7 @@ static LPWSTR msi_build_insertsql_columns(LPWSTR *columns_data, LPWSTR *types, D
 
 static LPWSTR msi_build_insertsql_data(LPWSTR **records, LPWSTR *types, DWORD num_columns, DWORD irec)
 {
-    LPWSTR columns;
+    LPWSTR columns, temp_columns;
     DWORD sql_size = 1, i;
     WCHAR expanded[128];
 
@@ -578,6 +578,7 @@ static LPWSTR msi_build_insertsql_data(LPWSTR **records, LPWSTR *types, DWORD nu
                     lstrcpyW(expanded, empty);
                 break;
             default:
+                HeapFree( GetProcessHeap(), 0, columns );
                 return NULL;
         }
 
@@ -585,9 +586,13 @@ static LPWSTR msi_build_insertsql_data(LPWSTR **records, LPWSTR *types, DWORD nu
             expanded[lstrlenW(expanded) - 2] = '\0';
 
         sql_size += lstrlenW(expanded);
-        columns = msi_realloc(columns, sql_size * sizeof(WCHAR));
-        if (!columns)
+        temp_columns = msi_realloc(columns, sql_size * sizeof(WCHAR));
+        if (!temp_columns)
+        {
+            HeapFree( GetProcessHeap(), 0, columns);
             return NULL;
+        }
+        columns = temp_columns;
 
         lstrcatW(columns, expanded);
     }
@@ -654,6 +659,7 @@ UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
     LPWSTR *columns, *types, *labels;
     LPWSTR path, ptr, data;
     LPWSTR **records;
+    LPWSTR **temp_records;
 
     static const WCHAR backslash[] = {'\\',0};
 
@@ -680,7 +686,10 @@ UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
 
     records = msi_alloc(sizeof(LPWSTR *));
     if (!records)
-        return ERROR_OUTOFMEMORY;
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
 
     /* read in the table records */
     while (*ptr)
@@ -688,9 +697,13 @@ UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
         msi_parse_line( &ptr, &records[num_records], NULL );
 
         num_records++;
-        records = msi_realloc(records, (num_records + 1) * sizeof(LPWSTR *));
-        if (!records)
-            return ERROR_OUTOFMEMORY;
+        temp_records = msi_realloc(records, (num_records + 1) * sizeof(LPWSTR *));
+        if (!temp_records)
+        {
+            r = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+        records = temp_records;
     }
 
     r = msi_add_table_to_db( db, columns, types, labels, num_labels, num_columns );
