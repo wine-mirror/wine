@@ -1613,7 +1613,12 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
 
     phrases.offsets = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned) * (num + 1));
     phrases.buffer  = HeapAlloc(GetProcessHeap(), 0, dec_size);
-    if (!phrases.offsets || !phrases.buffer) return FALSE;
+    if (!phrases.offsets || !phrases.buffer)
+    {
+        HeapFree(GetProcessHeap(), 0, phrases.offsets);
+        HeapFree(GetProcessHeap(), 0, phrases.buffer);
+        return FALSE;
+    }
 
     for (i = 0; i <= num; i++)
         phrases.offsets[i] = GET_USHORT(buf, head_size + 2 * i) - 2 * num - 2;
@@ -1672,7 +1677,12 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
 
     phrases.offsets = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned) * (num + 1));
     phrases.buffer  = HeapAlloc(GetProcessHeap(), 0, dec_size);
-    if (!phrases.offsets || !phrases.buffer) return FALSE;
+    if (!phrases.offsets || !phrases.buffer)
+    {
+        HeapFree(GetProcessHeap(), 0, phrases.offsets);
+        HeapFree(GetProcessHeap(), 0, phrases.buffer);
+        return FALSE;
+    }
 
 #define getbit() (ptr += (mask < 0), mask = mask*2 + (mask<=0), (*ptr & mask) != 0)
 
