@@ -3236,6 +3236,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 return WINED3DERR_INVALIDCALL;
             }
 
+            ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_RESOURCELOAD);
+            ENTER_GL();
+
             TRACE("Calling GetSwapChain with mydevice = %p\n", myDevice);
             if(dstSwapchain && dstSwapchain->backBuffer && This == (IWineD3DSurfaceImpl*) dstSwapchain->backBuffer[0]) {
                 glDrawBuffer(GL_BACK);
@@ -3247,6 +3250,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 glDrawBuffer(myDevice->offscreenBuffer);
                 checkGLcall("glDrawBuffer(myDevice->offscreenBuffer3)");
             } else {
+                LEAVE_GL();
                 TRACE("Surface is higher back buffer, falling back to software\n");
                 return WINED3DERR_INVALIDCALL;
             }
@@ -3268,6 +3272,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 glDrawBuffer(GL_BACK);
             }
             vcheckGLcall("glDrawBuffer");
+            LEAVE_GL();
 
             return WINED3D_OK;
         }
