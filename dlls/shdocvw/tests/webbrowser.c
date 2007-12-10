@@ -1405,6 +1405,7 @@ static void test_Navigate2(IUnknown *unk)
     CHECK_CALLED(SetStatusText);
     CHECK_CALLED(EnableModeless_TRUE);
 
+    VariantClear(&url);
     IWebBrowser2_Release(webbrowser);
 }
 
