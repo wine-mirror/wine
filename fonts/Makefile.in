@@ -216,8 +216,8 @@ system-1257-96-16.fnt: system.ttf $(SFNT2FNT)
 system-874-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) system.ttf 16 874 96 128 7
 
-system-932-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) system.ttf 16 932 96 128 7
+system-932-96-18.fnt: system.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) system.ttf 18 932 96 128 7
 
 system-936-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) system.ttf 16 936 96 128 7
@@ -333,8 +333,8 @@ vgas1257.fon: system-1257-96-16.fnt $(FNT2FON)
 vgas874.fon: system-874-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-874-96-16.fnt $@
 
-jvgasys.fon: system-932-96-16.fnt $(FNT2FON)
-	$(FNT2FON) system-932-96-16.fnt $@
+jvgasys.fon: system-932-96-18.fnt $(FNT2FON)
+	$(FNT2FON) system-932-96-18.fnt $@
 
 svgasys.fon: system-936-96-16.fnt system-1252-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-936-96-16.fnt system-1252-96-16.fnt $@
