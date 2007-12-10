@@ -431,6 +431,7 @@ static void test_xmlelem_collection(void)
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
     ok(child == NULL, "Expected NULL child\n");
 
+    IEnumVARIANT_Release(enumVar);
     IXMLElement_Release(element);
     IXMLElementCollection_Release(collection);
     IXMLDocument_Release(doc);
