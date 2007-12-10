@@ -201,7 +201,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                 read = wwi->read(wwi->pcm, lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, frames);
                 bytesRead = snd_pcm_frames_to_bytes(wwi->pcm, read);
 
-                TRACE("bytesRead=(%d(%d)/(%d)) -> (%d/%d) \n", bytesRead, read, frames, lpWaveHdr->dwBufferLength, lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
+                TRACE("bytesRead=(%d(%d)/(%d)) -> (%d/%d)\n", bytesRead, read, frames, lpWaveHdr->dwBufferLength, lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
                 if (read != (DWORD) -1)
                 {
                     /* update number of bytes recorded in current buffer and by this device */
