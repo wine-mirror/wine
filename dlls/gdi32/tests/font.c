@@ -324,19 +324,32 @@ static void test_bitmap_font_metrics(void)
         { "Courier", FW_NORMAL, 20, 16, 4, 0, 0, 12, 12, CP1252_BIT | CP1250_BIT | CP1251_BIT },
         { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 14, CP1252_BIT },
         { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 15, CP1250_BIT | CP1251_BIT },
-        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 2, CP1252_BIT},
+/*
+ * TODO:  the system for CP932 should be NORMAL, not BOLD.  However that would
+ *        require a new system.sfd for that font
+ */
+        { "System", FW_BOLD, 18, 16, 2, 0, 2, 8, 16, CP932_BIT },
+        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 2, CP1252_BIT },
         { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 8, CP1250_BIT | CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 2, 4, CP932_BIT },
         { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 3, 4, CP1252_BIT },
         { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 2, 8, CP1250_BIT | CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 5, 4, 1, 0, 0, 3, 6, CP932_BIT },
         { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 13, CP1252_BIT },
         { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 8, CP1250_BIT | CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 6, 5, 1, 0, 0, 4, 8, CP932_BIT },
         { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 7, CP1252_BIT },
         { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 8, CP1250_BIT | CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 8, 7, 1, 0, 0, 5, 10, CP932_BIT },
         { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8, CP1252_BIT | CP1250_BIT },
         { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8, CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 10, 8, 2, 0, 0, 6, 12, CP932_BIT },
         { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, CP1252_BIT | CP1250_BIT | CP1251_BIT },
+/* No proper small font for Japanese yet */
+/*        { "Small Fonts", FW_NORMAL, 11, 9, 2, 0, 0, 7, 14, CP932_BIT }, */
         { "Fixedsys", FW_NORMAL, 15, 12, 3, 3, 0, 8, 8, CP1252_BIT | CP1250_BIT },
-        { "Fixedsys", FW_NORMAL, 16, 12, 4, 3, 0, 8, 8, CP1251_BIT }
+        { "Fixedsys", FW_NORMAL, 16, 12, 4, 3, 0, 8, 8, CP1251_BIT },
+        { "FixedSys", FW_NORMAL, 18, 16, 2, 0, 0, 8, 16, CP932_BIT }
 
         /* FIXME: add "Terminal" */
     };
