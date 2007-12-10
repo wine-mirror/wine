@@ -523,8 +523,8 @@ static BOOL dns_name_matches(LPCWSTR constraint, LPCWSTR name,
     else if (lstrlenW(name) >= lstrlenW(constraint))
         match = !lstrcmpiW(name + lstrlenW(name) - lstrlenW(constraint),
          constraint);
-    else
-        ; /* name is too short, no match */
+    /* else:  name is too short, no match */
+
     return match;
 }
 
@@ -550,8 +550,8 @@ static BOOL ip_address_matches(const CRYPT_DATA_BLOB *constraint,
          */
         match = (subnet & mask) == (addr & mask);
     }
-    else
-        ; /* name is wrong size, no match */
+    /* else: name is wrong size, no match */
+
     return match;
 }
 
