@@ -48,6 +48,8 @@ typedef struct {
 
 static const WCHAR attrBackgroundColor[] =
     {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
+static const WCHAR attrBorderLeft[] =
+    {'b','o','r','d','e','r','-','l','e','f','t',0};
 static const WCHAR attrColor[] =
     {'c','o','l','o','r',0};
 static const WCHAR attrDisplay[] =
@@ -60,6 +62,12 @@ static const WCHAR attrFontStyle[] =
     {'f','o','n','t','-','s','t','y','l','e',0};
 static const WCHAR attrFontWeight[] =
     {'f','o','n','t','-','w','e','i','g','h','t',0};
+static const WCHAR attrMarginLeft[] =
+    {'m','a','r','g','i','n','-','l','e','f','t',0};
+static const WCHAR attrMarginRight[] =
+    {'m','a','r','g','i','n','-','r','i','g','h','t',0};
+static const WCHAR attrPaddingLeft[] =
+    {'p','a','d','d','i','n','g','-','l','e','f','t',0};
 static const WCHAR attrTextDecoration[] =
     {'t','e','x','t','-','d','e','c','o','r','a','t','i','o','n',0};
 static const WCHAR attrVisibility[] =
@@ -69,6 +77,9 @@ static const WCHAR valLineThrough[] =
     {'l','i','n','e','-','t','h','r','o','u','g','h',0};
 static const WCHAR valUnderline[] =
     {'u','n','d','e','r','l','i','n','e',0};
+
+static const WCHAR px_formatW[] = {'%','d','p','x',0};
+static const WCHAR emptyW[] = {0};
 
 static HRESULT set_style_attr(HTMLStyle *This, LPCWSTR name, LPCWSTR value)
 {
@@ -687,7 +698,24 @@ static HRESULT WINAPI HTMLStyle_get_marginTop(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_marginRight(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
+
+    TRACE("(%p)->(v(%d))\n", This, V_VT(&v));
+
+    switch(V_VT(&v)) {
+    case VT_NULL:
+        return set_style_attr(This, attrMarginRight, emptyW);
+    case VT_I4: {
+        WCHAR buf[14];
+
+        wsprintfW(buf, px_formatW, V_I4(&v));
+        return set_style_attr(This, attrMarginRight, buf);
+    }
+    case VT_BSTR:
+        return set_style_attr(This, attrMarginRight, V_BSTR(&v));
+    default:
+        FIXME("Unsupported vt=%d\n", V_VT(&v));
+    }
+
     return E_NOTIMPL;
 }
 
@@ -715,7 +743,26 @@ static HRESULT WINAPI HTMLStyle_get_marginBottom(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_marginLeft(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
+
+    switch(V_VT(&v)) {
+    case VT_NULL:
+        TRACE("(%p)->(NULL)\n", This);
+        return set_style_attr(This, attrMarginLeft, emptyW);
+    case VT_I4: {
+        WCHAR buf[14];
+
+        TRACE("(%p)->(%d)\n", This, V_I4(&v));
+
+        wsprintfW(buf, px_formatW, V_I4(&v));
+        return set_style_attr(This, attrMarginLeft, buf);
+    }
+    case VT_BSTR:
+        TRACE("(%p)->(%s)\n", This, debugstr_w(V_BSTR(&v)));
+        return set_style_attr(This, attrMarginLeft, V_BSTR(&v));
+    default:
+        FIXME("Unsupported vt=%d\n", V_VT(&v));
+    }
+
     return E_NOTIMPL;
 }
 
@@ -785,7 +832,22 @@ static HRESULT WINAPI HTMLStyle_get_paddingBottom(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_paddingLeft(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
+
+    TRACE("(%p)->(vt=%d)\n", This, V_VT(&v));
+
+    switch(V_VT(&v)) {
+    case VT_I4: {
+        WCHAR buf[14];
+
+        wsprintfW(buf, px_formatW, V_I4(&v));
+        return set_style_attr(This, attrPaddingLeft, buf);
+    }
+    case VT_BSTR:
+        return set_style_attr(This, attrPaddingLeft, V_BSTR(&v));
+    default:
+        FIXME("unsupported vt=%d\n", V_VT(&v));
+    }
+
     return E_NOTIMPL;
 }
 
@@ -869,8 +931,10 @@ static HRESULT WINAPI HTMLStyle_get_borderBottom(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_borderLeft(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, attrBorderLeft, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_borderLeft(IHTMLStyle *iface, BSTR *p)
