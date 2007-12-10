@@ -633,11 +633,11 @@ static void alpha_test(IDirect3DDevice7 *device)
     ddsd.dwHeight = 128;
     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_3DDEVICE;
     U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    U4(ddsd).ddpfPixelFormat.dwRGBBitCount      = 32;
-    U4(ddsd).ddpfPixelFormat.dwRGBAlphaBitMask  = 0xff000000;
-    U4(ddsd).ddpfPixelFormat.dwRBitMask         = 0x00ff0000;
-    U4(ddsd).ddpfPixelFormat.dwGBitMask         = 0x0000ff00;
-    U4(ddsd).ddpfPixelFormat.dwBBitMask         = 0x000000ff;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount      = 32;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask         = 0x00ff0000;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask         = 0x0000ff00;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask         = 0x000000ff;
+    U5(U4(ddsd).ddpfPixelFormat).dwRGBAlphaBitMask  = 0xff000000;
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &offscreen, NULL);
     ok(hr == D3D_OK, "Creating the offscreen render target failed, hr = %08x\n", hr);
     if(!offscreen) {
