@@ -158,6 +158,10 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     {
         cf = (IClassFactory*) &xmldoccf.lpVtbl;
     }
+    else if( IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument ) )
+    {
+        cf = (IClassFactory*) &domdoccf.lpVtbl;
+    }
 
     if ( !cf )
         return CLASS_E_CLASSNOTAVAILABLE;

@@ -496,6 +496,23 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Microsoft.FreeThreadedXMLDOM",
 	"1.0"
     },
+    {   &CLSID_DOMFreeThreadedDocument,
+        "Free threaded XML DOM Document",
+        NULL,
+        "msxml3.dll",
+        "Both",
+        "Microsoft.FreeThreadedXMLDOM",
+        NULL
+    },
+    {   &CLSID_FreeThreadedDOMDocument,
+        "Free Threaded XML DOM Document",
+        NULL,
+        "msxml3.dll",
+        "Both",
+        "Microsoft.FreeThreadedXMLDOM.1.0",
+        "1.0"
+     },
+
     {   &CLSID_XMLHTTPRequest,
 	"XML HTTP Request",
 	NULL,
