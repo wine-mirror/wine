@@ -279,13 +279,13 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, W
     {
         /* FIXME: byte order? */
         r->Data.KEY.wFlags      = *(const WORD *)pos;   pos += sizeof(WORD);
-        r->Data.KEY.chProtocol  = *(const BYTE *)pos++;
-        r->Data.KEY.chAlgorithm = *(const BYTE *)pos++;
+        r->Data.KEY.chProtocol  = *pos++;
+        r->Data.KEY.chAlgorithm = *pos++;
 
         size = rr->rdata + rr->rdlength - pos;
 
         for (i = 0; i < size; i++)
-            r->Data.KEY.Key[i] = *(const BYTE *)pos++;
+            r->Data.KEY.Key[i] = *pos++;
 
         *dlen = sizeof(DNS_KEY_DATA) + (size - 1) * sizeof(BYTE);
         break;
@@ -353,8 +353,8 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, W
 
         /* FIXME: byte order? */
         r->Data.SIG.wTypeCovered  = *(const WORD *)pos;   pos += sizeof(WORD);
-        r->Data.SIG.chAlgorithm   = *(const BYTE *)pos++;
-        r->Data.SIG.chLabelCount  = *(const BYTE *)pos++;
+        r->Data.SIG.chAlgorithm   = *pos++;
+        r->Data.SIG.chLabelCount  = *pos++;
         r->Data.SIG.dwOriginalTtl = *(const DWORD *)pos;  pos += sizeof(DWORD);
         r->Data.SIG.dwExpiration  = *(const DWORD *)pos;  pos += sizeof(DWORD);
         r->Data.SIG.dwTimeSigned  = *(const DWORD *)pos;  pos += sizeof(DWORD);
@@ -363,7 +363,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, W
         size = rr->rdata + rr->rdlength - pos;
 
         for (i = 0; i < size; i++)
-            r->Data.SIG.Signature[i] = *(const BYTE *)pos++;
+            r->Data.SIG.Signature[i] = *pos++;
 
         *dlen = sizeof(DNS_SIG_DATAA) + (size - 1) * sizeof(BYTE);
         break; 

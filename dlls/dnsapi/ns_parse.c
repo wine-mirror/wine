@@ -51,7 +51,7 @@ static void	setsection(ns_msg *msg, ns_sect sect);
 #endif
 
 #define DNS_NS_GET16(s, cp) do { \
-    register const u_char *t_cp = (const u_char *)(cp); \
+    register const u_char *t_cp = (cp); \
     (s) = ((WORD)t_cp[0] << 8) \
         | ((WORD)t_cp[1]) \
         ; \
@@ -59,7 +59,7 @@ static void	setsection(ns_msg *msg, ns_sect sect);
 } while (0)
 
 #define DNS_NS_GET32(l, cp) do { \
-    register const u_char *t_cp = (const u_char *)(cp); \
+    register const u_char *t_cp = (cp); \
     (l) = ((DWORD)t_cp[0] << 24) \
         | ((DWORD)t_cp[1] << 16) \
         | ((DWORD)t_cp[2] << 8) \
