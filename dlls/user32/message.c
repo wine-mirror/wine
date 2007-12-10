@@ -2173,11 +2173,11 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                                    WMCHAR_MAP_RECVMESSAGE );
         reply_message( &info, result, TRUE );
         thread_info->receive_info = old_info;
-    next:
-        HeapFree( GetProcessHeap(), 0, buffer );
 
         /* if some PM_QS* flags were specified, only handle sent messages from now on */
         if (HIWORD(flags)) flags = PM_QS_SENDMESSAGE | LOWORD(flags);
+    next:
+        HeapFree( GetProcessHeap(), 0, buffer );
     }
 }
 
