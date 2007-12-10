@@ -6,7 +6,7 @@
 8 stdcall HlinkNavigateToStringReference(wstr wstr ptr long ptr long ptr ptr ptr)
 9 stdcall HlinkOnNavigate(ptr ptr long ptr wstr wstr ptr)
 10 stdcall HlinkNavigate(ptr ptr long ptr ptr ptr)
-11 stdcall HlinkUpdateStackItem(ptr ptr long wstr wstr)
+11 stdcall HlinkUpdateStackItem(ptr ptr long ptr wstr wstr)
 12 stub HlinkOnRenameDocument
 14 stub HlinkResolveMonikerForData
 15 stub HlinkResolveStringForData
