@@ -197,7 +197,7 @@ void primitiveDeclarationConvertToStridedData(
                 WARN("loadBaseVertexIndex is < 0 (%d), not using vbos\n", This->stateBlock->loadBaseVertexIndex);
                 streamVBO = 0;
                 data = ((IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[element->Stream])->resource.allocatedMemory;
-                if(data + This->stateBlock->loadBaseVertexIndex * stride < 0) {
+                if((UINT_PTR)data < -This->stateBlock->loadBaseVertexIndex * stride) {
                     FIXME("System memory vertex data load offset is negative!\n");
                 }
             }
