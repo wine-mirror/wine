@@ -2602,8 +2602,8 @@ static int needs_freeing(const attr_list_t *attrs, const type_t *t, int out)
          || (is_ptr(t)
              && (t->ref->type == RPC_FC_IP
                  || is_ptr(t->ref))))
-        || (out && (is_string_type(attrs, t)
-                    || is_array(t)));
+         || (out && is_string_type(attrs, t))
+         || is_array(t);
 }
 
 expr_t *get_size_is_expr(const type_t *t, const char *name)
