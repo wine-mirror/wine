@@ -225,7 +225,7 @@ typedef struct
 static void add_filename_node(struct list *list, const char *name)
 {
   filename_node_t *node = xmalloc(sizeof *node);
-  node->filename = xstrdup(name);
+  node->filename = dup_basename( name, ".idl" );
   list_add_tail(list, &node->link);
 }
 

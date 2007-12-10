@@ -10,6 +10,7 @@
 /tags
 /wine
 Makefile
+dlldata.c
 dlls/Makedll.rules
 dlls/Makeimplib.rules
 dlls/Maketest.rules
