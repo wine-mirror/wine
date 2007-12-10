@@ -36,6 +36,9 @@
 #include FT_SFNT_NAMES_H
 #include FT_TRUETYPE_TABLES_H
 #include FT_TRUETYPE_TAGS_H
+#ifdef HAVE_FREETYPE_INTERNAL_SFNT_H
+#include <freetype/internal/sfnt.h>
+#endif
 
 #include "wine/unicode.h"
 #include "wine/wingdi16.h"
@@ -89,6 +92,14 @@ typedef struct {
     BYTE bitDepth;
     CHAR flags;
 } bitmapSizeTable_t;
+
+typedef struct
+{
+    FT_Int major;
+    FT_Int minor;
+    FT_Int patch;
+} FT_Version_t;
+static FT_Version_t FT_Version;
 
 #define GET_BE_WORD(ptr)  MAKEWORD( ((BYTE *)(ptr))[1], ((BYTE *)(ptr))[0] )
 #define GET_BE_DWORD(ptr) ((DWORD)MAKELONG( GET_BE_WORD(&((WORD *)(ptr))[1]), \
@@ -194,9 +205,38 @@ static int get_char(const union cptable *cptable, int enc, int index)
     return cptable->sbcs.cp2uni[index];
 }
 
+/* from gdi32/freetype.c */
+static FT_Error load_sfnt_table(FT_Face ft_face, FT_ULong table, FT_Long offset, FT_Byte *buf, FT_ULong *len)
+{
+
+    FT_Error err;
+
+    /* If the FT_Load_Sfnt_Table function is there we'll use it */
+#ifdef HAVE_FT_LOAD_SFNT_TABLE
+    err = FT_Load_Sfnt_Table(ft_face, table, offset, buf, len);
+#elif defined(HAVE_FREETYPE_INTERNAL_SFNT_H)
+    TT_Face tt_face = (TT_Face) ft_face;
+    SFNT_Interface *sfnt;
+    if (FT_Version.major==2 && FT_Version.minor==0)
+    {
+        /* 2.0.x */
+        sfnt = *(SFNT_Interface**)((char*)tt_face + 528);
+    }
+    else
+    {
+        /* A field was added in the middle of the structure in 2.1.x */
+        sfnt = *(SFNT_Interface**)((char*)tt_face + 532);
+    }
+    err = sfnt->load_any(tt_face, table, offset, buf, len);
+#else
+    err = FT_Err_Unimplemented_Feature;
+#endif
+    return err;
+}
+
 static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned char def_char, int avg_width)
 {
-    int ascent = 0, il, ppem, descent = 0, width_bytes = 0, space_size, max_width = 0;
+    int ascent = 0, il, el, ppem, descent = 0, width_bytes = 0, space_size, max_width = 0;
     FNT_HEADER hdr;
     FONTINFO16 fi;
     BYTE left_byte, right_byte, byte;
@@ -208,13 +248,10 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     const union cptable *cptable;
     FT_SfntName sfntname;
     TT_OS2 *os2;
-
-#ifdef HAVE_FT_LOAD_SFNT_TABLE
     FT_ULong needed;
     eblcHeader_t *eblc;
     bitmapSizeTable_t *size_table;
     int num_sizes;
-#endif
 
     cptable = wine_cp_get_table(enc);
     if(!cptable)
@@ -229,30 +266,30 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
 
     ppem = face->size->metrics.y_ppem;
 
-#ifdef HAVE_FT_LOAD_SFNT_TABLE
     needed = 0;
-    if(FT_Load_Sfnt_Table(face, TTAG_EBLC, 0, NULL, &needed))
-        error("Can't find EBLC table\n");
-
-    eblc = malloc(needed);
-    FT_Load_Sfnt_Table(face, TTAG_EBLC, 0, (FT_Byte *)eblc, &needed);
-
-    num_sizes = GET_BE_DWORD(&eblc->numSizes);
-
-    size_table = (bitmapSizeTable_t *)(eblc + 1);
-    for(i = 0; i < num_sizes; i++)
+    if (load_sfnt_table(face, TTAG_EBLC, 0, NULL, &needed))
+        fprintf(stderr,"Can't find EBLC table\n");
+    else
     {
-        if(size_table->hori.ascender - size_table->hori.descender == ppem)
-        {
-            ascent = size_table->hori.ascender;
-            descent = -size_table->hori.descender;
-            break;
-        }
-        size_table++;
-    }
+        eblc = malloc(needed);
+        load_sfnt_table(face, TTAG_EBLC, 0, (FT_Byte *)eblc, &needed);
 
-    free(eblc);
-#endif
+        num_sizes = GET_BE_DWORD(&eblc->numSizes);
+
+        size_table = (bitmapSizeTable_t *)(eblc + 1);
+        for(i = 0; i < num_sizes; i++)
+        {
+            if(size_table->hori.ascender - size_table->hori.descender == ppem)
+            {
+                ascent = size_table->hori.ascender;
+                descent = -size_table->hori.descender;
+                break;
+            }
+            size_table++;
+        }
+
+        free(eblc);
+    }
 
     /* Versions of fontforge prior to early 2006 have incorrect
        ascender values in the eblc table, so we won't find the 
@@ -272,9 +309,14 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
         error("Can't find M\n");
     il = ascent - (face->glyph->metrics.height >> 6);
 
-    /* Hack: Courier has no internal leading, nor do any Chinese fonts */
-    if(!strcmp(face->family_name, "Courier") || enc == 936 || enc == 950)
+    /* Hack: Courier has no internal leading, nor do any Chinese or Japanese fonts */
+    if(!strcmp(face->family_name, "Courier") || enc == 936 || enc == 950 || enc == 932)
         il = 0;
+    /* Japanese fonts have an external leading */
+    if(enc == 932)
+        el = 2;
+    else
+        el = 0;
 
     first_char = FT_Get_First_Char(face, &gi);
     if(first_char == 0xd) /* fontforge's first glyph is 0xd, we'll catch this and skip it */
@@ -331,7 +373,7 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     fi.dfHorizRes = dpi;
     fi.dfAscent = ascent;
     fi.dfInternalLeading = il;
-    fi.dfExternalLeading = 0;
+    fi.dfExternalLeading = el;
     fi.dfItalic = (face->style_flags & FT_STYLE_FLAG_ITALIC) ? 1 : 0;
     fi.dfUnderline = 0;
     fi.dfStrikeOut = 0;
@@ -461,6 +503,9 @@ int main(int argc, char **argv)
 
     if(FT_Init_FreeType(&lib))
         error("ft init failure\n");
+
+    FT_Version.major=FT_Version.minor=FT_Version.patch=-1;
+    FT_Library_Version(lib,&FT_Version.major,&FT_Version.minor,&FT_Version.patch);
 
     if(FT_New_Face(lib, argv[1], 0, &face)) {
         fprintf(stderr, "Can't open face\n");
