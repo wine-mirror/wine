@@ -81,18 +81,61 @@ static const WCHAR valUnderline[] =
 static const WCHAR px_formatW[] = {'%','d','p','x',0};
 static const WCHAR emptyW[] = {0};
 
-static HRESULT set_style_attr(HTMLStyle *This, LPCWSTR name, LPCWSTR value)
+static LPWSTR fix_px_value(LPCWSTR val)
+{
+    LPCWSTR ptr = val;
+
+    while(*ptr) {
+        while(*ptr && isspaceW(*ptr))
+            ptr++;
+        if(!*ptr)
+            break;
+
+        while(*ptr && isdigitW(*ptr))
+            ptr++;
+
+        if(!*ptr || isspaceW(*ptr)) {
+            LPWSTR ret, p;
+            int len = strlenW(val)+1;
+
+            ret = heap_alloc((len+2)*sizeof(WCHAR));
+            memcpy(ret, val, (ptr-val)*sizeof(WCHAR));
+            p = ret + (ptr-val);
+            *p++ = 'p';
+            *p++ = 'x';
+            strcpyW(p, ptr);
+
+            TRACE("fixed %s -> %s\n", debugstr_w(val), debugstr_w(ret));
+
+            return ret;
+        }
+
+        while(*ptr && !isspaceW(*ptr))
+            ptr++;
+    }
+
+    return NULL;
+}
+
+#define ATTR_FIX_PX  1
+
+static HRESULT set_style_attr(HTMLStyle *This, LPCWSTR name, LPCWSTR value, DWORD flags)
 {
     nsAString str_name, str_value, str_empty;
+    LPWSTR val = NULL;
     nsresult nsres;
 
     static const PRUnichar wszEmpty[] = {0};
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(name), debugstr_w(value));
 
+    if(flags & ATTR_FIX_PX)
+        val = fix_px_value(value);
+
     nsAString_Init(&str_name, name);
-    nsAString_Init(&str_value, value);
+    nsAString_Init(&str_value, val ? val : value);
     nsAString_Init(&str_empty, wszEmpty);
+    heap_free(val);
 
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->nsstyle, &str_name, &str_value, &str_empty);
     if(NS_FAILED(nsres))
@@ -250,7 +293,7 @@ static HRESULT WINAPI HTMLStyle_put_fontFamily(IHTMLStyle *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return set_style_attr(This, attrFontFamily, v);
+    return set_style_attr(This, attrFontFamily, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_fontFamily(IHTMLStyle *iface, BSTR *p)
@@ -316,7 +359,7 @@ static HRESULT WINAPI HTMLStyle_put_fontSize(IHTMLStyle *iface, VARIANT v)
 
     switch(V_VT(&v)) {
     case VT_BSTR:
-        return set_style_attr(This, attrFontSize, V_BSTR(&v));
+        return set_style_attr(This, attrFontSize, V_BSTR(&v), 0);
     default:
         FIXME("not supported vt %d\n", V_VT(&v));
     }
@@ -387,13 +430,13 @@ static HRESULT WINAPI HTMLStyle_put_backgroundColor(IHTMLStyle *iface, VARIANT v
 
     switch(V_VT(&v)) {
     case VT_BSTR:
-        return set_style_attr(This, attrBackgroundColor, V_BSTR(&v));
+        return set_style_attr(This, attrBackgroundColor, V_BSTR(&v), 0);
     case VT_I4: {
         WCHAR value[10];
         static const WCHAR format[] = {'#','%','0','6','x',0};
 
         wsprintfW(value, format, V_I4(&v));
-        return set_style_attr(This, attrBackgroundColor, value);
+        return set_style_attr(This, attrBackgroundColor, value, 0);
     }
     default:
         FIXME("unsupported vt %d\n", V_VT(&v));
@@ -703,15 +746,15 @@ static HRESULT WINAPI HTMLStyle_put_marginRight(IHTMLStyle *iface, VARIANT v)
 
     switch(V_VT(&v)) {
     case VT_NULL:
-        return set_style_attr(This, attrMarginRight, emptyW);
+        return set_style_attr(This, attrMarginRight, emptyW, 0);
     case VT_I4: {
         WCHAR buf[14];
 
         wsprintfW(buf, px_formatW, V_I4(&v));
-        return set_style_attr(This, attrMarginRight, buf);
+        return set_style_attr(This, attrMarginRight, buf, 0);
     }
     case VT_BSTR:
-        return set_style_attr(This, attrMarginRight, V_BSTR(&v));
+        return set_style_attr(This, attrMarginRight, V_BSTR(&v), 0);
     default:
         FIXME("Unsupported vt=%d\n", V_VT(&v));
     }
@@ -747,18 +790,18 @@ static HRESULT WINAPI HTMLStyle_put_marginLeft(IHTMLStyle *iface, VARIANT v)
     switch(V_VT(&v)) {
     case VT_NULL:
         TRACE("(%p)->(NULL)\n", This);
-        return set_style_attr(This, attrMarginLeft, emptyW);
+        return set_style_attr(This, attrMarginLeft, emptyW, 0);
     case VT_I4: {
         WCHAR buf[14];
 
         TRACE("(%p)->(%d)\n", This, V_I4(&v));
 
         wsprintfW(buf, px_formatW, V_I4(&v));
-        return set_style_attr(This, attrMarginLeft, buf);
+        return set_style_attr(This, attrMarginLeft, buf, 0);
     }
     case VT_BSTR:
         TRACE("(%p)->(%s)\n", This, debugstr_w(V_BSTR(&v)));
-        return set_style_attr(This, attrMarginLeft, V_BSTR(&v));
+        return set_style_attr(This, attrMarginLeft, V_BSTR(&v), 0);
     default:
         FIXME("Unsupported vt=%d\n", V_VT(&v));
     }
@@ -840,10 +883,10 @@ static HRESULT WINAPI HTMLStyle_put_paddingLeft(IHTMLStyle *iface, VARIANT v)
         WCHAR buf[14];
 
         wsprintfW(buf, px_formatW, V_I4(&v));
-        return set_style_attr(This, attrPaddingLeft, buf);
+        return set_style_attr(This, attrPaddingLeft, buf, 0);
     }
     case VT_BSTR:
-        return set_style_attr(This, attrPaddingLeft, V_BSTR(&v));
+        return set_style_attr(This, attrPaddingLeft, V_BSTR(&v), 0);
     default:
         FIXME("unsupported vt=%d\n", V_VT(&v));
     }
@@ -934,7 +977,7 @@ static HRESULT WINAPI HTMLStyle_put_borderLeft(IHTMLStyle *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return set_style_attr(This, attrBorderLeft, v);
+    return set_style_attr(This, attrBorderLeft, v, ATTR_FIX_PX);
 }
 
 static HRESULT WINAPI HTMLStyle_get_borderLeft(IHTMLStyle *iface, BSTR *p)
@@ -1216,7 +1259,7 @@ static HRESULT WINAPI HTMLStyle_put_display(IHTMLStyle *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return set_style_attr(This, attrDisplay, v);
+    return set_style_attr(This, attrDisplay, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_display(IHTMLStyle *iface, BSTR *p)
@@ -1234,7 +1277,7 @@ static HRESULT WINAPI HTMLStyle_put_visibility(IHTMLStyle *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return set_style_attr(This, attrVisibility, v);
+    return set_style_attr(This, attrVisibility, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_visibility(IHTMLStyle *iface, BSTR *p)
