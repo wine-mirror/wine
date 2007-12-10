@@ -411,9 +411,16 @@ static void test_DestroyCursor(void)
 
     SetCursor(NULL);
 
-    /* Trying to destroy the cursor properly fails now for some reason with ERROR_INVALID_CURSOR_HANDLE */
+    /* Trying to destroy the cursor properly fails now with
+     * ERROR_INVALID_CURSOR_HANDLE.  This happens because we called
+     * DestroyCursor() 2+ times after calling SetCursor().  The calls to
+     * GetCursor() and SetCursor(NULL) in between make no difference. */
     ret = DestroyCursor(cursor);
-    /* ok(ret, "DestroyCursor failed, GetLastError=%d\n", GetLastError()); */
+    todo_wine {
+        ok(!ret, "DestroyCursor succeeded.\n");
+        error = GetLastError();
+        ok(error == ERROR_INVALID_CURSOR_HANDLE, "Last error: 0x%08x\n", error);
+    }
 
     DeleteObject(cursorInfo.hbmMask);
     DeleteObject(cursorInfo.hbmColor);
