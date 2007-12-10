@@ -188,7 +188,7 @@ static void proxy_check_pointers( const var_list_t *args )
 static void free_variable( const var_t *arg )
 {
   unsigned int type_offset = arg->type->typestring_offset;
-  var_t *constraint;
+  expr_t *iid;
   type_t *type = arg->type;
   expr_t *size = get_size_is_expr(type, arg->name);
 
@@ -219,9 +219,13 @@ static void free_variable( const var_t *arg )
 
   case RPC_FC_FP:
   case RPC_FC_IP:
-    constraint = get_attrp( arg->attrs, ATTR_IIDIS );
-    if( constraint )
-      print_proxy( "_StubMsg.MaxCount = (unsigned long) ( %s );\n",constraint->name);
+    iid = get_attrp( arg->attrs, ATTR_IIDIS );
+    if( iid )
+    {
+      print_proxy( "_StubMsg.MaxCount = (unsigned long) " );
+      write_expr(proxy, iid, 1);
+      print_proxy( ";\n\n" );
+    }
     print_proxy( "NdrClearOutParameters( &_StubMsg, ");
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
     fprintf(proxy, "(void*)%s );\n", arg->name );

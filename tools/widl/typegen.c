@@ -1972,20 +1972,14 @@ static size_t write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *type,
 {
     size_t i;
     size_t start_offset = *typeformat_offset;
-    const var_t *iid = get_attrp(attrs, ATTR_IIDIS);
+    expr_t *iid = get_attrp(attrs, ATTR_IIDIS);
 
     if (iid)
     {
-        expr_t expr;
-
-        expr.type = EXPR_IDENTIFIER;
-        expr.ref  = NULL;
-        expr.u.sval = iid->name;
-        expr.is_const = FALSE;
         print_file(file, 2, "0x2f,  /* FC_IP */\n");
         print_file(file, 2, "0x5c,  /* FC_PAD */\n");
         *typeformat_offset
-            += write_conf_or_var_desc(file, NULL, 0, type, &expr) + 2;
+            += write_conf_or_var_desc(file, NULL, 0, type, iid) + 2;
     }
     else
     {
@@ -2839,9 +2833,13 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 }
                 else
                 {
-                    const var_t *iid;
+                    expr_t *iid;
                     if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
-                        print_file( file, indent, "_StubMsg.MaxCount = (unsigned long)%s;\n", iid->name );
+                    {
+                        print_file( file, indent, "_StubMsg.MaxCount = (unsigned long) " );
+                        write_expr( file, iid, 1 );
+                        fprintf( file, ";\n\n" );
+                    }
                     print_phase_function(file, indent, "Pointer", phase, var, start_offset);
                 }
                 break;
@@ -2862,11 +2860,15 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             }
             else
             {
-                const var_t *iid;
+                expr_t *iid;
                 expr_t *sx = get_size_is_expr(type, var->name);
 
                 if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
-                    print_file( file, indent, "_StubMsg.MaxCount = (unsigned long)%s;\n", iid->name );
+                {
+                    print_file( file, indent, "_StubMsg.MaxCount = (unsigned long) " );
+                    write_expr( file, iid, 1 );
+                    fprintf( file, ";\n\n" );
+                }
                 else if (sx)
                 {
                     print_file(file, indent, "_StubMsg.MaxCount = (unsigned long) ");
