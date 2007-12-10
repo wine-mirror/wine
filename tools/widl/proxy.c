@@ -272,6 +272,11 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   }
   print_proxy( "RPC_MESSAGE _RpcMessage;\n" );
   print_proxy( "MIDL_STUB_MESSAGE _StubMsg;\n" );
+  if (has_ret) {
+    if (decl_indirect(def->type))
+      print_proxy("void *_p_%s = &%s;\n",
+                 "_RetVal", "_RetVal");
+  }
   print_proxy( "\n");
 
   /* FIXME: trace */
@@ -307,7 +312,13 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   write_remoting_arguments(proxy, indent, cur, PASS_OUT, PHASE_UNMARSHAL);
 
   if (has_ret)
-      print_phase_basetype(proxy, indent, PHASE_UNMARSHAL, PASS_RETURN, def, "_RetVal");
+  {
+      if (decl_indirect(def->type))
+          print_proxy("MIDL_memset(&%s, 0, sizeof(%s));\n", "_RetVal", "_RetVal");
+      else if (is_ptr(def->type) || is_array(def->type))
+          print_proxy("%s = 0;\n", "_RetVal");
+      write_remoting_arguments(proxy, indent, cur, PASS_RETURN, PHASE_UNMARSHAL);
+  }
 
   indent--;
   print_proxy( "}\n");

@@ -139,6 +139,11 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         print_client("RPC_MESSAGE _RpcMessage;\n");
         print_client("MIDL_STUB_MESSAGE _StubMsg;\n");
+        if (!is_void(def->type) && decl_indirect(def->type))
+        {
+            print_client("void *_p_%s = &%s;\n",
+                         "_RetVal", "_RetVal");
+        }
         fprintf(client, "\n");
 
         /* check pointers */
@@ -216,7 +221,13 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         /* unmarshal return value */
         if (!is_void(def->type))
-            print_phase_basetype(client, indent, PHASE_UNMARSHAL, PASS_RETURN, def, "_RetVal");
+        {
+            if (decl_indirect(def->type))
+                print_client("MIDL_memset(&%s, 0, sizeof(%s));\n", "_RetVal", "_RetVal");
+            else if (is_ptr(def->type) || is_array(def->type))
+                print_client("%s = 0;\n", "_RetVal");
+            write_remoting_arguments(client, indent, func, PASS_RETURN, PHASE_UNMARSHAL);
+        }
 
         /* update proc_offset */
         if (func->args)
