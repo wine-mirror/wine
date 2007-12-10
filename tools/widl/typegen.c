@@ -2601,7 +2601,9 @@ static int needs_freeing(const attr_list_t *attrs, const type_t *t, int out)
         (is_user_type(t)
          || (is_ptr(t)
              && (t->ref->type == RPC_FC_IP
-                 || is_ptr(t->ref))))
+                 || (is_struct(t->ref->type) && t->ref->type != RPC_FC_STRUCT)
+                 || is_ptr(t->ref)
+                 || is_user_type(t->ref))))
          || (out && is_string_type(attrs, t))
          || is_array(t);
 }
