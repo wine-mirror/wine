@@ -28,14 +28,6 @@
 #include "winbase.h"
 #include "winerror.h"
 
-static int dll_capable(const char *dll, const char *function)
-{
-    HMODULE module = GetModuleHandleA(dll);
-    if (!module) return 0;
-
-    return (GetProcAddress(module, function) != NULL);
-}
-
 /* keep filename and filenameW the same */
 static const char filename[] = "testfile.xxx";
 static const WCHAR filenameW[] = { 't','e','s','t','f','i','l','e','.','x','x','x',0 };
@@ -1031,7 +1023,6 @@ static void test_LockFile(void)
     OVERLAPPED overlapped;
     int limited_LockFile;
     int limited_UnLockFile;
-    int lockfileex_capable;
 
     handle = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
@@ -1068,16 +1059,12 @@ static void test_LockFile(void)
     S(U(overlapped)).OffsetHigh = 0;
     overlapped.hEvent = 0;
 
-    lockfileex_capable = dll_capable("kernel32", "LockFileEx");
-    if (lockfileex_capable)
+    /* Test for broken LockFileEx a la Windows 95 OSR2. */
+    if (LockFileEx( handle, 0, 0, 100, 0, &overlapped ))
     {
-        /* Test for broken LockFileEx a la Windows 95 OSR2. */
-        if (LockFileEx( handle, 0, 0, 100, 0, &overlapped ))
-        {
-            /* LockFileEx is probably OK, test it more. */
-            ok( LockFileEx( handle, 0, 0, 100, 0, &overlapped ),
-                "LockFileEx 100,100 failed\n" );
-	}
+        /* LockFileEx is probably OK, test it more. */
+        ok( LockFileEx( handle, 0, 0, 100, 0, &overlapped ),
+            "LockFileEx 100,100 failed\n" );
     }
 
     /* overlapping shared locks are OK */
@@ -1085,20 +1072,14 @@ static void test_LockFile(void)
     limited_UnLockFile || ok( LockFileEx( handle, 0, 0, 100, 0, &overlapped ), "LockFileEx 150,100 failed\n" );
 
     /* but exclusive is not */
-    if (lockfileex_capable)
-    {
-        ok( !LockFileEx( handle, LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY,
-                         0, 50, 0, &overlapped ),
-                         "LockFileEx exclusive 150,50 succeeded\n" );
-	if (dll_capable("kernel32.dll", "UnlockFileEx"))
-        {
-            if (!UnlockFileEx( handle, 0, 100, 0, &overlapped ))
-            { /* UnLockFile is capable. */
-                S(U(overlapped)).Offset = 100;
-                ok( !UnlockFileEx( handle, 0, 100, 0, &overlapped ),
-                    "UnlockFileEx 150,100 again succeeded\n" );
-	    }
-	}
+    ok( !LockFileEx( handle, LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY,
+                     0, 50, 0, &overlapped ),
+        "LockFileEx exclusive 150,50 succeeded\n" );
+    if (!UnlockFileEx( handle, 0, 100, 0, &overlapped ))
+    { /* UnLockFile is capable. */
+        S(U(overlapped)).Offset = 100;
+        ok( !UnlockFileEx( handle, 0, 100, 0, &overlapped ),
+            "UnlockFileEx 150,100 again succeeded\n" );
     }
 
     ok( LockFile( handle, 0, 0x10000000, 0, 0xf0000000 ), "LockFile failed\n" );
