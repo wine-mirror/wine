@@ -3,6 +3,7 @@
  *
  * Copyright 2006 Michael Kaufmann
  * Copyright 2007 Dmitry Timoshkov
+ * Copyright 2007 Andrew Riedi
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -424,6 +425,31 @@ static void test_DestroyCursor(void)
 
     DeleteObject(cursorInfo.hbmMask);
     DeleteObject(cursorInfo.hbmColor);
+
+    /* Try testing DestroyCursor() now using LoadCursor() cursors. */
+    cursor = LoadCursor(NULL, IDC_ARROW);
+
+    SetLastError(0xdeadbeef);
+    ret = DestroyCursor(cursor);
+    ok(ret, "DestroyCursor on the active cursor failed.\n");
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: 0x%08x\n", error);
+
+    /* Try setting the cursor to a destroyed OEM cursor. */
+    SetLastError(0xdeadbeef);
+    SetCursor(cursor);
+    error = GetLastError();
+    todo_wine {
+        ok(error == 0xdeadbeef, "Last error: 0x%08x\n", error);
+    }
+
+    /* Check if LoadCursor() returns the same handle with the same icon. */
+    cursor2 = LoadCursor(NULL, IDC_ARROW);
+    ok(cursor2 == cursor, "cursor == %p, cursor2 == %p\n", cursor, cursor2);
+
+    /* Check if LoadCursor() returns the same handle with a different icon. */
+    cursor2 = LoadCursor(NULL, IDC_WAIT);
+    ok(cursor2 != cursor, "cursor == %p, cursor2 == %p\n", cursor, cursor2);
 }
 
 START_TEST(cursoricon)
