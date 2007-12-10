@@ -2755,7 +2755,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             }
             else if (tc == RPC_FC_CARRAY)
             {
-                if (is_size_needed_for_phase(phase) && phase != PHASE_FREE)
+                if (is_size_needed_for_phase(phase))
                 {
                     print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
                     write_expr(file, type->size_is, 1);
@@ -2786,16 +2786,20 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                               : "ConformantVaryingArray");
             }
 
-            if (!in_attr && phase == PHASE_FREE)
+            if (pointer_type != RPC_FC_RP) array_type = "Pointer";
+            print_phase_function(file, indent, array_type, phase, var, start_offset);
+            if (phase == PHASE_FREE && type->declarray && pointer_type == RPC_FC_RP)
             {
-                print_file(file, indent, "if (%s)\n", var->name);
-                indent++;
-                print_file(file, indent, "_StubMsg.pfnFree(%s);\n", var->name);
-            }
-            else if (phase != PHASE_FREE)
-            {
-                const char *t = pointer_type == RPC_FC_RP ? array_type : "Pointer";
-                print_phase_function(file, indent, t, phase, var, start_offset);
+                /* these are all unmarshalled by pointing into the buffer on the
+                 * server side */
+                if (type->type != RPC_FC_SMFARRAY &&
+                    type->type != RPC_FC_LGFARRAY &&
+                    type->type != RPC_FC_CARRAY)
+                {
+                    print_file(file, indent, "if (%s)\n", var->name);
+                    indent++;
+                    print_file(file, indent, "_StubMsg.pfnFree(%s);\n", var->name);
+                }
             }
         }
         else if (!is_ptr(var->type) && is_base_type(rtype))
