@@ -477,6 +477,8 @@ static void test_block_cipher_modes(void)
     dwLen = 23;
     result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abData, &dwLen, 24);
     ok(!result && GetLastError() == NTE_BAD_ALGID, "%08x\n", GetLastError());
+
+    CryptDestroyKey(hKey);
 }
 
 static void test_3des112(void)
@@ -1133,18 +1135,23 @@ static void test_import_private(void)
     result = CryptDecrypt(hSessionKey, 0, TRUE, 0, abEncryptedMessage, &dwLen);
     ok(result && dwLen == 12 && !memcmp(abEncryptedMessage, "Wine rocks!",12), 
        "%08x, len: %d\n", GetLastError(), dwLen);
+    CryptDestroyKey(hSessionKey);
     
     if (!derive_key(CALG_RC4, &hSessionKey, 56)) return;
 
     dwLen = (DWORD)sizeof(abSessionKey);
     result = CryptExportKey(hSessionKey, hKeyExchangeKey, SIMPLEBLOB, 0, abSessionKey, &dwLen);
     ok(result, "%08x\n", GetLastError());
+    CryptDestroyKey(hSessionKey);
     if (!result) return;
 
     dwLen = (DWORD)sizeof(abSessionKey);
     result = CryptImportKey(hProv, abSessionKey, dwLen, hKeyExchangeKey, 0, &hSessionKey);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
+
+    CryptDestroyKey(hSessionKey);
+    CryptDestroyKey(hKeyExchangeKey);
 }
 
 static void test_verify_signature(void) {
@@ -1364,6 +1371,8 @@ static void test_verify_signature(void) {
     ok(!result && GetLastError()==NTE_BAD_SIGNATURE, "%08lx\n", GetLastError());
     if (result) return;*/
 
+    CryptDestroyHash(hHash);
+
     result = CryptCreateHash(hProv, CALG_MD4, 0, 0, &hHash);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
@@ -1379,6 +1388,8 @@ static void test_verify_signature(void) {
     result = CryptVerifySignature(hHash, abSignatureMD4NoOID, 128, hPubSignKey, NULL, CRYPT_NOHASHOID);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
+
+    CryptDestroyHash(hHash);
 
     result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
     ok(result, "%08x\n", GetLastError());
@@ -1396,6 +1407,8 @@ static void test_verify_signature(void) {
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
 
+    CryptDestroyHash(hHash);
+
     result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
@@ -1411,6 +1424,9 @@ static void test_verify_signature(void) {
     result = CryptVerifySignature(hHash, abSignatureSHANoOID, 128, hPubSignKey, NULL, CRYPT_NOHASHOID);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
+
+    CryptDestroyHash(hHash);
+    CryptDestroyKey(hPubSignKey);
 }
 
 static void test_rsa_encrypt(void)
@@ -1485,6 +1501,8 @@ static void test_import_export(void)
     ok(result, "failed to export the fresh imported public key\n");
     ok(dwLen == 84, "Expected exported key to be 84 bytes long but got %d bytes.\n",dwLen);
     ok(!memcmp(emptyKey, abPlainPublicKey, dwLen), "exported key is different from the imported key\n");
+
+    CryptDestroyKey(hPublicKey);
 }
         
 static void test_schannel_provider(void)
@@ -1929,6 +1947,7 @@ static void test_null_provider(void)
     if (!result) return;
     result = CryptImportKey(prov, signBlob, sizeof(signBlob), 0, 0, &key);
     ok(result, "CryptGenKey failed: %08x\n", GetLastError());
+    CryptDestroyKey(key);
     /* doesn't allow access to the key exchange key.. */
     result = CryptGetUserKey(prov, AT_KEYEXCHANGE, &key);
     ok(!result && GetLastError() == NTE_NO_KEY,
@@ -1961,7 +1980,6 @@ static void test_null_provider(void)
 
     CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
-    CryptReleaseContext(prov, 0);
 
     /* test the machine key set */
     CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
