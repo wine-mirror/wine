@@ -280,6 +280,7 @@ static void check_all_user_types(ifref_list_t *ifaces);
 %right CAST
 %right PPTR
 %right NEG
+%right ADDRESSOF
 
 %%
 
@@ -612,6 +613,7 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| expr SHR expr				{ $$ = make_expr2(EXPR_SHR, $1, $3); }
 	| '~' expr				{ $$ = make_expr1(EXPR_NOT, $2); }
 	| '-' expr %prec NEG			{ $$ = make_expr1(EXPR_NEG, $2); }
+	| '&' expr %prec ADDRESSOF      { $$ = make_expr1(EXPR_ADDRESSOF, $2); }
 	| '*' expr %prec PPTR			{ $$ = make_expr1(EXPR_PPTR, $2); }
 	| '(' type ')' expr %prec CAST		{ $$ = make_exprt(EXPR_CAST, $2, $4); }
 	| tSIZEOF '(' type ')'			{ $$ = make_exprt(EXPR_SIZEOF, $3, NULL); }
@@ -1138,6 +1140,8 @@ static expr_t *make_exprt(enum expr_type type, type_t *tref, expr_t *expr)
 static expr_t *make_expr1(enum expr_type type, expr_t *expr)
 {
   expr_t *e;
+  if (type == EXPR_ADDRESSOF && expr->type != EXPR_IDENTIFIER)
+    error("address-of operator applied to invalid expression\n");
   e = xmalloc(sizeof(expr_t));
   e->type = type;
   e->ref = expr;

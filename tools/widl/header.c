@@ -483,6 +483,10 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     write_expr(h, e->ext2, 1);
     if (brackets) fprintf(h, ")");
     break;
+  case EXPR_ADDRESSOF:
+    fprintf(h, "&");
+    write_expr(h, e->ref, 1);
+    break;
   }
 }
 

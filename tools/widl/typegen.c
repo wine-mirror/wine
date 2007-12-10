@@ -288,6 +288,7 @@ static int compare_expr(const expr_t *a, const expr_t *b)
         case EXPR_NOT:
         case EXPR_NEG:
         case EXPR_PPTR:
+        case EXPR_ADDRESSOF:
             return compare_expr(a->ref, b->ref);
         case EXPR_SIZEOF:
             return compare_type(a->u.tref, b->u.tref);
@@ -3022,6 +3023,10 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
             fprintf(h, " : ");
             write_struct_expr(h, e->ext2, 1, fields, structvar);
             if (brackets) fprintf(h, ")");
+            break;
+        case EXPR_ADDRESSOF:
+            fprintf(h, "&");
+            write_struct_expr(h, e->ref, 1, fields, structvar);
             break;
     }
 }

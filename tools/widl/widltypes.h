@@ -154,6 +154,7 @@ enum expr_type
     EXPR_OR,
     EXPR_COND,
     EXPR_TRUEFALSE,
+    EXPR_ADDRESSOF,
 };
 
 enum type_kind
