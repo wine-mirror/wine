@@ -608,6 +608,7 @@ static void test_FindMimeFromData(void)
             ok(!lstrcmpW(mime, mimeTextHtml), "[%d] wrong mime\n", i);
         else
             ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime\n", i);
+        CoTaskMemFree(mime);
 
         hres = FindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
                 mimeImagePjpeg, 0, &mime, 0);
