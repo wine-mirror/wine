@@ -1918,7 +1918,7 @@ cbDeletePlayerFromAllGroups(
     DP_IF_EnumGroupsInGroup( (IDirectPlay3Impl*)lpCtxt->This,
                              dpId, NULL,
                              cbDeletePlayerFromAllGroups,
-                             (LPVOID)lpContext, DPENUMGROUPS_ALL,
+                             lpContext, DPENUMGROUPS_ALL,
                              lpCtxt->bAnsi );
 
   }
@@ -3358,7 +3358,7 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
                 lpSessionDest->u1.lpszSessionNameA );
       lpSessionDest->u1.lpszSessionNameA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=
-        lstrlenA( (LPSTR)lpSessionDest->u1.lpszSessionNameA ) + 1;
+        lstrlenA( lpSessionDest->u1.lpszSessionNameA ) + 1;
     }
 
     if( lpSessionSrc->u2.lpszPasswordA )
@@ -3367,7 +3367,7 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
                 lpSessionDest->u2.lpszPasswordA );
       lpSessionDest->u2.lpszPasswordA = (LPSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=
-        lstrlenA( (LPSTR)lpSessionDest->u2.lpszPasswordA ) + 1;
+        lstrlenA( lpSessionDest->u2.lpszPasswordA ) + 1;
     }
   }
   else /* UNICODE */
@@ -3378,7 +3378,7 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
                 lpSessionDest->u1.lpszSessionName );
       lpSessionDest->u1.lpszSessionName = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace += sizeof(WCHAR) *
-        ( lstrlenW( (LPWSTR)lpSessionDest->u1.lpszSessionName ) + 1 );
+        ( lstrlenW( lpSessionDest->u1.lpszSessionName ) + 1 );
     }
 
     if( lpSessionSrc->u2.lpszPassword )
@@ -3387,7 +3387,7 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
                 lpSessionDest->u2.lpszPassword );
       lpSessionDest->u2.lpszPassword = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace += sizeof(WCHAR) *
-        ( lstrlenW( (LPWSTR)lpSessionDest->u2.lpszPassword ) + 1 );
+        ( lstrlenW( lpSessionDest->u2.lpszPassword ) + 1 );
     }
   }
 }
