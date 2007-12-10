@@ -28,6 +28,9 @@
 #include "winbase.h"
 #include "winerror.h"
 
+static HINSTANCE hkernel32;
+static HANDLE (WINAPI *pFindFirstFileExA)(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
+
 /* keep filename and filenameW the same */
 static const char filename[] = "testfile.xxx";
 static const WCHAR filenameW[] = { 't','e','s','t','f','i','l','e','.','x','x','x',0 };
@@ -1420,12 +1423,18 @@ static void test_FindFirstFileExA(void)
     WIN32_FIND_DATAA search_results;
     HANDLE handle;
 
+    if (!pFindFirstFileExA)
+    {
+        skip("FindFirstFileExA() is missing\n");
+        return;
+    }
+
     CreateDirectoryA("test-dir", NULL);
     _lclose(_lcreat("test-dir\\file1", 0));
     _lclose(_lcreat("test-dir\\file2", 0));
     CreateDirectoryA("test-dir\\dir1", NULL);
     /* FindExLimitToDirectories is ignored */
-    handle = FindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, FindExSearchLimitToDirectories, NULL, 0);
+    handle = pFindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, FindExSearchLimitToDirectories, NULL, 0);
     ok(handle != INVALID_HANDLE_VALUE, "FindFirstFile failed (err=%u)\n", GetLastError());
     ok(strcmp(search_results.cFileName, ".") == 0, "First entry should be '.', is %s\n", search_results.cFileName);
 
@@ -1895,6 +1904,9 @@ static void test_RemoveDirectory(void)
 
 START_TEST(file)
 {
+    hkernel32 = GetModuleHandleA("kernel32.dll");
+    pFindFirstFileExA=(void*)GetProcAddress(hkernel32, "FindFirstFileExA");
+
     test__hread(  );
     test__hwrite(  );
     test__lclose(  );

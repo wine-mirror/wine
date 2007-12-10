@@ -29,6 +29,7 @@ static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
 static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
 static BOOL   (WINAPI *pFindActCtxSectionStringW)(DWORD,const GUID *,ULONG,LPCWSTR,PACTCTX_SECTION_KEYED_DATA);
 static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
+static BOOL   (WINAPI *pIsDebuggerPresent)(void);
 static BOOL   (WINAPI *pQueryActCtxW)(DWORD,HANDLE,PVOID,ULONG,PVOID,SIZE_T,SIZE_T*);
 static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 
@@ -881,8 +882,9 @@ static void test_actctx(void)
         test_detailed_info(handle, &detailed_info1);
         test_info_in_assembly(handle, 1, &manifest1_info);
 
-        if (!IsDebuggerPresent())  /* CloseHandle will generate an exception if a debugger is present */
+        if (pIsDebuggerPresent && !pIsDebuggerPresent())
         {
+            /* CloseHandle will generate an exception if a debugger is present */
             b = CloseHandle(handle);
             ok(!b, "CloseHandle succeeded\n");
             ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() == %u\n", GetLastError());
@@ -1137,6 +1139,7 @@ static BOOL init_funcs(void)
     X(DeactivateActCtx);
     X(FindActCtxSectionStringW);
     X(GetCurrentActCtx);
+    X(IsDebuggerPresent);
     X(QueryActCtxW);
     X(ReleaseActCtx);
 #undef X
