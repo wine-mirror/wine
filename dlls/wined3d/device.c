@@ -1509,33 +1509,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     **************************************/
 
    if (!pPresentationParameters->Windowed) {
+        WINED3DDISPLAYMODE mode;
 
-        DEVMODEW devmode;
-        int      bpp = 0;
-        RECT     clip_rc;
-
-        bpp = formatDesc->bpp * 8;
 
         /* Change the display settings */
-        memset(&devmode, 0, sizeof(devmode));
-        devmode.dmSize       = sizeof(devmode);
-        devmode.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-        devmode.dmBitsPerPel = bpp;
-        devmode.dmPelsWidth  = pPresentationParameters->BackBufferWidth;
-        devmode.dmPelsHeight = pPresentationParameters->BackBufferHeight;
-        ChangeDisplaySettingsExW(This->adapter->DeviceName, &devmode, NULL, CDS_FULLSCREEN, NULL);
+        mode.Width = pPresentationParameters->BackBufferWidth;
+        mode.Height = pPresentationParameters->BackBufferHeight;
+        mode.Format = pPresentationParameters->BackBufferFormat;
+        mode.RefreshRate = pPresentationParameters->FullScreen_RefreshRateInHz;
+
+        IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
         displaymode_set = TRUE;
-
-        /* For GetDisplayMode */
-        This->ddraw_width = devmode.dmPelsWidth;
-        This->ddraw_height = devmode.dmPelsHeight;
-        This->ddraw_format = pPresentationParameters->BackBufferFormat;
-
         IWineD3DDevice_SetFullscreen(iface, TRUE);
-
-        /* And finally clip mouse to our screen */
-        SetRect(&clip_rc, 0, 0, devmode.dmPelsWidth, devmode.dmPelsHeight);
-        ClipCursor(&clip_rc);
     }
 
         /**
