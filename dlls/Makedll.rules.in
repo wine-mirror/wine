@@ -4,7 +4,6 @@
 # MODULE       : name of the main module being built
 # EXTRALIBS    : extra libraries to link in (optional)
 # SPEC_SRCS16  : interface definition files for 16-bit dlls (optional)
-# SUBSYSTEM    : (optional) subsystem (for native dlls)
 #
 # plus all variables required by the global Make.rules.in
 #
@@ -32,7 +31,7 @@ all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 # Rules for .so files
 
 $(MODULE).so: $(MAINSPEC) $(ALL_OBJS) Makefile.in
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(SUBSYSTEM:%=-Wb,--subsystem,%) $(DLLFILENAME:%=-Wb,-F,%) $(BASEADDRESS:%=-Wl,--image-base,%) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
 
 # Rules for .dll files
 
