@@ -77,8 +77,8 @@
 @ stub WTHelperCertIsSelfSigned
 @ stub WTHelperCheckCertUsage
 @ stub WTHelperGetAgencyInfo
-@ stub WTHelperGetFileHandle
-@ stub WTHelperGetFileName
+@ stdcall WTHelperGetFileHandle(ptr)
+@ stdcall WTHelperGetFileName(ptr)
 @ stub WTHelperGetKnownUsages
 @ stdcall WTHelperGetProvCertFromChain(ptr long)
 @ stub WTHelperGetProvPrivateDataFromChain

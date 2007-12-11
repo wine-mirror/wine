@@ -432,6 +432,30 @@ CRYPT_PROVIDER_DATA * WINAPI WTHelperProvDataFromStateData(HANDLE hStateData)
     return (CRYPT_PROVIDER_DATA *)hStateData;
 }
 
+/***********************************************************************
+ *		WTHelperGetFileName(WINTRUST.@)
+ */
+LPCWSTR WINAPI WTHelperGetFileName(WINTRUST_DATA *data)
+{
+    TRACE("%p\n",data);
+    if (data->dwUnionChoice == WTD_CHOICE_FILE)
+        return data->u.pFile->pcwszFilePath;
+    else
+        return NULL;
+}
+
+/***********************************************************************
+ *		WTHelperGetFileHandle(WINTRUST.@)
+ */
+HANDLE WINAPI WTHelperGetFileHandle(WINTRUST_DATA *data)
+{
+    TRACE("%p\n",data);
+    if (data->dwUnionChoice == WTD_CHOICE_FILE)
+        return data->u.pFile->hFile;
+    else
+        return INVALID_HANDLE_VALUE;
+}
+
 static const WCHAR Software_Publishing[] = {
  'S','o','f','t','w','a','r','e','\\',
  'M','i','c','r','o','s','o','f','t','\\',
