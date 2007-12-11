@@ -1270,7 +1270,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
         hlpfile->fonts[i].LogFont.lfItalic = (flag & 2) ? TRUE : FALSE;
         hlpfile->fonts[i].LogFont.lfUnderline = (flag & 4) ? TRUE : FALSE;
         hlpfile->fonts[i].LogFont.lfStrikeOut = (flag & 8) ? TRUE : FALSE;
-        hlpfile->fonts[i].LogFont.lfCharSet = ANSI_CHARSET;
+        hlpfile->fonts[i].LogFont.lfCharSet = DEFAULT_CHARSET;
         hlpfile->fonts[i].LogFont.lfOutPrecision = OUT_DEFAULT_PRECIS;
         hlpfile->fonts[i].LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
         hlpfile->fonts[i].LogFont.lfQuality = DEFAULT_QUALITY;
