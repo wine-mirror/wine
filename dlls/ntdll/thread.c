@@ -508,6 +508,8 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         apc_call_t call;
         apc_result_t result;
 
+        memset( &call, 0, sizeof(call) );
+
         call.create_thread.type    = APC_CREATE_THREAD;
         call.create_thread.func    = start;
         call.create_thread.arg     = param;

@@ -1363,6 +1363,8 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         apc_call_t call;
         apc_result_t result;
 
+        memset( &call, 0, sizeof(call) );
+
         call.virtual_alloc.type      = APC_VIRTUAL_ALLOC;
         call.virtual_alloc.addr      = *ret;
         call.virtual_alloc.size      = *size_ptr;
@@ -1484,6 +1486,8 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
         apc_call_t call;
         apc_result_t result;
 
+        memset( &call, 0, sizeof(call) );
+
         call.virtual_free.type      = APC_VIRTUAL_FREE;
         call.virtual_free.addr      = addr;
         call.virtual_free.size      = size;
@@ -1579,6 +1583,8 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
     {
         apc_call_t call;
         apc_result_t result;
+
+        memset( &call, 0, sizeof(call) );
 
         call.virtual_protect.type = APC_VIRTUAL_PROTECT;
         call.virtual_protect.addr = addr;
@@ -1680,6 +1686,8 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         NTSTATUS status;
         apc_call_t call;
         apc_result_t result;
+
+        memset( &call, 0, sizeof(call) );
 
         call.virtual_query.type = APC_VIRTUAL_QUERY;
         call.virtual_query.addr = addr;
@@ -1787,6 +1795,8 @@ NTSTATUS WINAPI NtLockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, 
         apc_call_t call;
         apc_result_t result;
 
+        memset( &call, 0, sizeof(call) );
+
         call.virtual_lock.type = APC_VIRTUAL_LOCK;
         call.virtual_lock.addr = *addr;
         call.virtual_lock.size = *size;
@@ -1821,6 +1831,8 @@ NTSTATUS WINAPI NtUnlockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size
     {
         apc_call_t call;
         apc_result_t result;
+
+        memset( &call, 0, sizeof(call) );
 
         call.virtual_unlock.type = APC_VIRTUAL_UNLOCK;
         call.virtual_unlock.addr = *addr;
@@ -1962,6 +1974,8 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     {
         apc_call_t call;
         apc_result_t result;
+
+        memset( &call, 0, sizeof(call) );
 
         call.map_view.type        = APC_MAP_VIEW;
         call.map_view.handle      = handle;
@@ -2122,6 +2136,8 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
         apc_call_t call;
         apc_result_t result;
 
+        memset( &call, 0, sizeof(call) );
+
         call.unmap_view.type = APC_UNMAP_VIEW;
         call.unmap_view.addr = addr;
         status = NTDLL_queue_process_apc( process, &call, &result );
@@ -2156,6 +2172,8 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
     {
         apc_call_t call;
         apc_result_t result;
+
+        memset( &call, 0, sizeof(call) );
 
         call.virtual_flush.type = APC_VIRTUAL_FLUSH;
         call.virtual_flush.addr = addr;
