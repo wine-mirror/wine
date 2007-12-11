@@ -259,6 +259,11 @@ typedef struct tagFace {
     Bitmap_Size size;     /* set if face is a bitmap */
     BOOL external; /* TRUE if we should manually add this font to the registry */
     struct tagFamily *family;
+    /* Cached data for Enum */
+    BOOL cache_valid;
+    ENUMLOGFONTEXW elf;
+    NEWTEXTMETRICEXW ntm;
+    DWORD type;
 } Face;
 
 typedef struct tagFamily {
@@ -1234,6 +1239,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                 }
             }
             face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
+            face->cache_valid = FALSE;
             list_add_tail(&family->faces, &face->entry);
             face->StyleName = StyleW;
             if (file)
@@ -3253,6 +3259,15 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     GdiFont *font = alloc_font();
     LONG width, height;
 
+    if (face->cache_valid)
+    {
+        TRACE("Cached\n");
+        memcpy(pelf,&face->elf,sizeof(ENUMLOGFONTEXW));
+        memcpy(pntm,&face->ntm,sizeof(NEWTEXTMETRICEXW));
+        *ptype = face->type;
+        return;
+    }
+
     if(face->scalable) {
         height = 100;
         width = 0;
@@ -3347,6 +3362,11 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     }
 
     pelf->elfScript[0] = '\0'; /* This will get set in WineEngEnumFonts */
+
+    memcpy(&face->elf,pelf,sizeof(ENUMLOGFONTEXW));
+    memcpy(&face->ntm,pntm,sizeof(NEWTEXTMETRICEXW));
+    face->type = *ptype;
+    face->cache_valid = TRUE;
 
     free_font(font);
 }
