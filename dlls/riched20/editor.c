@@ -1999,7 +1999,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     GETTEXTLENGTHEX how;
 
-    how.flags = GTL_CLOSE | GTL_USECRLF | GTL_NUMCHARS;
+    how.flags = GTL_CLOSE | (editor->bEmulateVersion10 ? 0 : GTL_USECRLF) | GTL_NUMCHARS;
     how.codepage = unicode ? 1200 : CP_ACP;
     return ME_GetTextLengthEx(editor, &how);
   }

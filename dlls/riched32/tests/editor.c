@@ -108,6 +108,29 @@ static void test_WM_SETTEXT()
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_WM_GETTEXTLENGTH(void)
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    static const char text3[] = "aaa\r\nbbb\r\nccc\r\nddd\r\neee";
+    static const char text4[] = "aaa\r\nbbb\r\nccc\r\nddd\r\neee\r\n";
+    int result;
+
+    /* Test for WM_GETTEXTLENGTH */
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text3);
+    result = SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(result == strlen(text3),
+        "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
+        result, strlen(text3));
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text4);
+    result = SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(result == strlen(text4),
+        "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
+        result, strlen(text4));
+
+    DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -119,6 +142,7 @@ START_TEST( editor )
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
 
   test_WM_SETTEXT();
+  test_WM_GETTEXTLENGTH();
 
   /* Set the environment variable WINETEST_RICHED32 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
