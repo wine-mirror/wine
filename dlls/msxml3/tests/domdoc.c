@@ -575,7 +575,7 @@ static void test_domnode( void )
         ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code\n");
     
         /* content doesn't matter here */
-        str = SysAllocString( szNonExistentFile );
+        str = NULL;
         r = IXMLDOMElement_get_nodeName( element, &str );
         ok ( r == S_OK, "get_nodeName wrong code\n");
         ok ( str != NULL, "str is null\n");
