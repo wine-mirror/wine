@@ -238,6 +238,23 @@ static void test_CopyImage_Bitmap(int depth)
     HeapFree(GetProcessHeap(), 0, info);
 }
 
+static void test_initial_cursor(void)
+{
+    HCURSOR cursor, cursor2;
+    DWORD error;
+
+    cursor = GetCursor();
+
+    /* Check what handle GetCursor() returns if a cursor is not set yet. */
+    SetLastError(0xdeadbeef);
+    cursor2 = LoadCursor(NULL, IDC_WAIT);
+    todo_wine {
+        ok(cursor == cursor2, "cursor (%p) is not IDC_WAIT (%p).\n", cursor, cursor2);
+    }
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: 0x%08x\n", error);
+}
+
 static void test_icon_info_dbg(HICON hIcon, UINT exp_cx, UINT exp_cy, UINT exp_bpp, int line)
 {
     ICONINFO info;
@@ -460,6 +477,7 @@ START_TEST(cursoricon)
     test_CopyImage_Bitmap(16);
     test_CopyImage_Bitmap(24);
     test_CopyImage_Bitmap(32);
+    test_initial_cursor();
     test_CreateIcon();
     test_DestroyCursor();
 }
