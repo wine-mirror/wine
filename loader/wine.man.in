@@ -276,7 +276,8 @@ in the top-level directory of the source distribution.
 .PP
 A status report on many applications is available from
 .I http://appdb.winehq.org.
-Please add entries to this list for applications you currently run.
+Please add entries to this list for applications you currently run, if
+there is no entry for this application.
 .PP
 Bug reports may be posted to Wine Bugzilla
 .I http://bugs.winehq.org
