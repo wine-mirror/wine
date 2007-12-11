@@ -594,7 +594,8 @@ int main(int argc, char **argv)
     switch(exec_mode)
     {
     case MODE_DLL:
-        spec->characteristics |= IMAGE_FILE_DLL;
+        if (spec->subsystem != IMAGE_SUBSYSTEM_NATIVE)
+            spec->characteristics |= IMAGE_FILE_DLL;
         load_resources( argv, spec );
         load_import_libs( argv );
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
