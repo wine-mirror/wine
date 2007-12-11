@@ -150,7 +150,7 @@ typedef struct _ITF_CACHE_ENTRY {
 } ITF_CACHE_ENTRY;
 
 typedef struct _IFilterGraphImpl {
-    const IGraphBuilderVtbl *IGraphBuilder_vtbl;
+    const IFilterGraph2Vtbl *IFilterGraph2_vtbl;
     const IMediaControlVtbl *IMediaControl_vtbl;
     const IMediaSeekingVtbl *IMediaSeeking_vtbl;
     const IBasicAudioVtbl *IBasicAudio_vtbl;
@@ -165,7 +165,6 @@ typedef struct _IFilterGraphImpl {
     /* IAMStats */
     /* IBasicVideo2 */
     /* IFilterChain */
-    /* IFilterGraph2 */
     /* IFilterMapper2 */
     /* IGraphVersion */
     /* IQueueCommand */
@@ -205,8 +204,9 @@ static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
     
     if (IsEqualGUID(&IID_IUnknown, riid) ||
 	IsEqualGUID(&IID_IFilterGraph, riid) ||
+	IsEqualGUID(&IID_IFilterGraph2, riid) ||
 	IsEqualGUID(&IID_IGraphBuilder, riid)) {
-        *ppvObj = &(This->IGraphBuilder_vtbl);
+        *ppvObj = &(This->IFilterGraph2_vtbl);
         TRACE("   returning IGraphBuilder interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IMediaControl, riid)) {
         *ppvObj = &(This->IMediaControl_vtbl);
@@ -293,25 +293,25 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
 
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI GraphBuilder_QueryInterface(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_QueryInterface(IFilterGraph2 *iface,
 						  REFIID riid,
 						  LPVOID*ppvObj) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
     return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
-static ULONG WINAPI GraphBuilder_AddRef(IGraphBuilder *iface) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+static ULONG WINAPI FilterGraph2_AddRef(IFilterGraph2 *iface) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     
     TRACE("(%p/%p)->() calling FilterGraph AddRef\n", This, iface);
     
     return Filtergraph_AddRef(This);
 }
 
-static ULONG WINAPI GraphBuilder_Release(IGraphBuilder *iface) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+static ULONG WINAPI FilterGraph2_Release(IFilterGraph2 *iface) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     
     TRACE("(%p/%p)->() calling FilterGraph Release\n", This, iface);
 
@@ -319,10 +319,10 @@ static ULONG WINAPI GraphBuilder_Release(IGraphBuilder *iface) {
 }
 
 /*** IFilterGraph methods ***/
-static HRESULT WINAPI GraphBuilder_AddFilter(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
 					     IBaseFilter *pFilter,
 					     LPCWSTR pName) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     HRESULT hr;
     int i,j;
     WCHAR* wszFilterName = NULL;
@@ -415,9 +415,9 @@ static HRESULT WINAPI GraphBuilder_AddFilter(IGraphBuilder *iface,
     return hr;
 }
 
-static HRESULT WINAPI GraphBuilder_RemoveFilter(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface,
 						IBaseFilter *pFilter) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     int i;
     HRESULT hr = E_FAIL;
 
@@ -466,19 +466,19 @@ static HRESULT WINAPI GraphBuilder_RemoveFilter(IGraphBuilder *iface,
     return hr; /* FIXME: check this error code */
 }
 
-static HRESULT WINAPI GraphBuilder_EnumFilters(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_EnumFilters(IFilterGraph2 *iface,
 					      IEnumFilters **ppEnum) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
     return IEnumFiltersImpl_Construct(This->ppFiltersInGraph, This->nFilters, ppEnum);
 }
 
-static HRESULT WINAPI GraphBuilder_FindFilterByName(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface,
 						    LPCWSTR pName,
 						    IBaseFilter **ppFilter) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     int i;
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_w(pName), pName, ppFilter);
@@ -502,14 +502,14 @@ static HRESULT WINAPI GraphBuilder_FindFilterByName(IGraphBuilder *iface,
 
 /* NOTE: despite the implication, it doesn't matter which
  * way round you put in the input and output pins */
-static HRESULT WINAPI GraphBuilder_ConnectDirect(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface,
 						 IPin *ppinIn,
 						 IPin *ppinOut,
 						 const AM_MEDIA_TYPE *pmt) {
     PIN_DIRECTION dir;
     HRESULT hr;
 
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
 
     TRACE("(%p/%p)->(%p, %p, %p)\n", This, iface, ppinIn, ppinOut, pmt);
 
@@ -546,9 +546,9 @@ static HRESULT WINAPI GraphBuilder_ConnectDirect(IGraphBuilder *iface,
     return hr;
 }
 
-static HRESULT WINAPI GraphBuilder_Reconnect(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_Reconnect(IFilterGraph2 *iface,
 					     IPin *ppin) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     IPin *pConnectedTo = NULL;
     HRESULT hr;
     PIN_DIRECTION pindir;
@@ -572,17 +572,17 @@ static HRESULT WINAPI GraphBuilder_Reconnect(IGraphBuilder *iface,
     return hr;
 }
 
-static HRESULT WINAPI GraphBuilder_Disconnect(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_Disconnect(IFilterGraph2 *iface,
 					      IPin *ppin) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppin);
 
     return IPin_Disconnect(ppin);
 }
 
-static HRESULT WINAPI GraphBuilder_SetDefaultSyncSource(IGraphBuilder *iface) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
 
     TRACE("(%p/%p)->(): stub !!!\n", iface, This);
 
@@ -682,10 +682,10 @@ static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* pinputpin, IPi
 }
 
 /*** IGraphBuilder methods ***/
-static HRESULT WINAPI GraphBuilder_Connect(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
 					   IPin *ppinOut,
 					   IPin *ppinIn) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     HRESULT hr;
     AM_MEDIA_TYPE* mt;
     IEnumMediaTypes* penummt;
@@ -790,7 +790,7 @@ static HRESULT WINAPI GraphBuilder_Connect(IGraphBuilder *iface,
             goto error;
         }
 
-        hr = IGraphBuilder_AddFilter(iface, pfilter, V_UNION(&var, bstrVal));
+        hr = IFilterGraph2_AddFilter(iface, pfilter, V_UNION(&var, bstrVal));
         if (FAILED(hr)) {
             ERR("Unable to add filter (%x)\n", hr);
             IBaseFilter_Release(pfilter);
@@ -823,7 +823,7 @@ static HRESULT WINAPI GraphBuilder_Connect(IGraphBuilder *iface,
         }
         TRACE("Successfully connected to filter, follow chain...\n");
 
-        /* Render all output pins of the filter by calling IGraphBuilder_Render on each of them */
+        /* Render all output pins of the filter by calling IFilterGraph2_Render on each of them */
         hr = GetInternalConnections(pfilter, ppinfilter, &ppins, &nb);
 
         if (SUCCEEDED(hr)) {
@@ -835,7 +835,7 @@ static HRESULT WINAPI GraphBuilder_Connect(IGraphBuilder *iface,
             TRACE("pins to consider: %d\n", nb);
             for(i = 0; i < nb; i++) {
                 TRACE("Processing pin %d\n", i);
-                hr = IGraphBuilder_Connect(iface, ppins[i], ppinIn);
+                hr = IFilterGraph2_Connect(iface, ppins[i], ppinIn);
                 if (FAILED(hr)) {
                    TRACE("Cannot render pin %p (%x)\n", ppinfilter, hr);
                 }
@@ -852,7 +852,7 @@ static HRESULT WINAPI GraphBuilder_Connect(IGraphBuilder *iface,
 error:
         if (ppinfilter) IPin_Release(ppinfilter);
         if (pfilter) {
-            IGraphBuilder_RemoveFilter(iface, pfilter);
+            IFilterGraph2_RemoveFilter(iface, pfilter);
             IBaseFilter_Release(pfilter);
         }
     }
@@ -863,9 +863,9 @@ error:
     return S_OK;
 }
 
-static HRESULT WINAPI GraphBuilder_Render(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface,
 					  IPin *ppinOut) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     IEnumMediaTypes* penummt;
     AM_MEDIA_TYPE* mt;
     ULONG nbmt;
@@ -939,7 +939,7 @@ static HRESULT WINAPI GraphBuilder_Render(IGraphBuilder *iface,
                goto error;
             }
 
-            hr = IGraphBuilder_AddFilter(iface, pfilter, V_UNION(&var, bstrVal));
+            hr = IFilterGraph2_AddFilter(iface, pfilter, V_UNION(&var, bstrVal));
             if (FAILED(hr)) {
                 ERR("Unable to add filter (%x)\n", hr);
                 IBaseFilter_Release(pfilter);
@@ -964,7 +964,7 @@ static HRESULT WINAPI GraphBuilder_Render(IGraphBuilder *iface,
             }
 
 	    /* Connect the pin to render to the renderer */
-            hr = IGraphBuilder_Connect(iface, ppinOut, ppinfilter);
+            hr = IFilterGraph2_Connect(iface, ppinOut, ppinfilter);
             if (FAILED(hr)) {
                 TRACE("Unable to connect to renderer (%x)\n", hr);
                 IPin_Release(ppinfilter);
@@ -977,7 +977,7 @@ static HRESULT WINAPI GraphBuilder_Render(IGraphBuilder *iface,
 
 error:
             if (pfilter) {
-                IGraphBuilder_RemoveFilter(iface, pfilter);
+                IFilterGraph2_RemoveFilter(iface, pfilter);
                 IBaseFilter_Release(pfilter);
             }
 	}
@@ -991,10 +991,10 @@ error:
     return S_OK;
 }
 
-static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface,
 					      LPCWSTR lpcwstrFile,
 					      LPCWSTR lpcwstrPlayList) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     static const WCHAR string[] = {'R','e','a','d','e','r',0};
     IBaseFilter* preader = NULL;
     IBaseFilter* psplitter = NULL;
@@ -1017,7 +1017,7 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
     if (lpcwstrPlayList != NULL)
         return E_INVALIDARG;
 
-    hr = IGraphBuilder_AddSourceFilter(iface, lpcwstrFile, string, &preader);
+    hr = IFilterGraph2_AddSourceFilter(iface, lpcwstrFile, string, &preader);
 
     /* Retrieve file media type */
     if (SUCCEEDED(hr))
@@ -1047,7 +1047,7 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
         if (pEnumMoniker)
             IEnumMoniker_Release(pEnumMoniker);
         if (preader) {
-             IGraphBuilder_RemoveFilter(iface, preader);
+             IFilterGraph2_RemoveFilter(iface, preader);
              IBaseFilter_Release(preader);
         }
         return hr;
@@ -1072,7 +1072,7 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
            continue;
         }
 
-        hr = IGraphBuilder_AddFilter(iface, psplitter, V_UNION(&var, bstrVal));
+        hr = IFilterGraph2_AddFilter(iface, psplitter, V_UNION(&var, bstrVal));
         if (FAILED(hr)) {
             ERR("Unable add filter (%x)\n", hr);
             IBaseFilter_Release(psplitter);
@@ -1117,19 +1117,19 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
             CoTaskMemFree(ppins);
             ppins = NULL;
         }
-        IGraphBuilder_RemoveFilter(iface, psplitter);
+        IFilterGraph2_RemoveFilter(iface, psplitter);
         IBaseFilter_Release(psplitter);
         psplitter = NULL;
     }
 
-    /* Render all output pin of the splitter by calling IGraphBuilder_Render on each of them */
+    /* Render all output pin of the splitter by calling IFilterGraph2_Render on each of them */
     if (SUCCEEDED(hr)) {
         int partial = 0;
         int i;
         TRACE("pins to consider: %d\n", nb);
         for(i = 0; i < nb; i++) {
             TRACE("Processing pin %d\n", i);
-            hr = IGraphBuilder_Render(iface, ppins[i]);
+            hr = IFilterGraph2_Render(iface, ppins[i]);
             if (FAILED(hr)) {
                 ERR("Cannot render pin %p (%x)\n", ppins[i], hr);
                 partial = 1;
@@ -1149,11 +1149,11 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
     return hr;
 }
 
-static HRESULT WINAPI GraphBuilder_AddSourceFilter(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface,
 						   LPCWSTR lpcwstrFileName,
 						   LPCWSTR lpcwstrFilterName,
 						   IBaseFilter **ppFilter) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     HRESULT hr;
     IBaseFilter* preader;
     IFileSourceFilter* pfile = NULL;
@@ -1169,7 +1169,7 @@ static HRESULT WINAPI GraphBuilder_AddSourceFilter(IGraphBuilder *iface,
         return hr;
     }
 
-    hr = IGraphBuilder_AddFilter(iface, preader, lpcwstrFilterName);
+    hr = IFilterGraph2_AddFilter(iface, preader, lpcwstrFilterName);
     if (FAILED(hr)) {
         ERR("Unable add filter (%x)\n", hr);
         IBaseFilter_Release(preader);
@@ -1207,58 +1207,95 @@ static HRESULT WINAPI GraphBuilder_AddSourceFilter(IGraphBuilder *iface,
 error:
     if (pfile)
         IFileSourceFilter_Release(pfile);
-    IGraphBuilder_RemoveFilter(iface, preader);
+    IFilterGraph2_RemoveFilter(iface, preader);
     IBaseFilter_Release(preader);
        
     return hr;
 }
 
-static HRESULT WINAPI GraphBuilder_SetLogFile(IGraphBuilder *iface,
+static HRESULT WINAPI FilterGraph2_SetLogFile(IFilterGraph2 *iface,
 					      DWORD_PTR hFile) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
 
     TRACE("(%p/%p)->(%08x): stub !!!\n", This, iface, (DWORD) hFile);
 
     return S_OK;
 }
 
-static HRESULT WINAPI GraphBuilder_Abort(IGraphBuilder *iface) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+static HRESULT WINAPI FilterGraph2_Abort(IFilterGraph2 *iface) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
 
     TRACE("(%p/%p)->(): stub !!!\n", This, iface);
 
     return S_OK;
 }
 
-static HRESULT WINAPI GraphBuilder_ShouldOperationContinue(IGraphBuilder *iface) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+static HRESULT WINAPI FilterGraph2_ShouldOperationContinue(IFilterGraph2 *iface) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
 
     TRACE("(%p/%p)->(): stub !!!\n", This, iface);
 
     return S_OK;
 }
 
+/*** IFilterGraph2 methods ***/
+static HRESULT WINAPI FilterGraph2_AddSourceFilterForMoniker(IFilterGraph2 *iface,
+                                                             IMoniker *pMoniker,
+                                                             IBindCtx *pCtx,
+                                                             LPCWSTR lpcwstrFilterName,
+                                                             IBaseFilter **ppFilter) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
 
-static const IGraphBuilderVtbl IGraphBuilder_VTable =
+    TRACE("(%p/%p)->(%p %p %s %p): stub !!!\n", This, iface, pMoniker, pCtx, debugstr_w(lpcwstrFilterName), ppFilter);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI FilterGraph2_ReconnectEx(IFilterGraph2 *iface,
+                                               IPin *ppin,
+                                               const AM_MEDIA_TYPE *pmt) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
+
+    TRACE("(%p/%p)->(%p %p): stub !!!\n", This, iface, ppin, pmt);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI FilterGraph2_RenderEx(IFilterGraph2 *iface,
+                                            IPin *pPinOut,
+                                            DWORD dwFlags,
+                                            DWORD *pvContext) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
+
+    TRACE("(%p/%p)->(%p %08x %p): stub !!!\n", This, iface, pPinOut, dwFlags, pvContext);
+
+    return S_OK;
+}
+
+
+static const IFilterGraph2Vtbl IFilterGraph2_VTable =
 {
-    GraphBuilder_QueryInterface,
-    GraphBuilder_AddRef,
-    GraphBuilder_Release,
-    GraphBuilder_AddFilter,
-    GraphBuilder_RemoveFilter,
-    GraphBuilder_EnumFilters,
-    GraphBuilder_FindFilterByName,
-    GraphBuilder_ConnectDirect,
-    GraphBuilder_Reconnect,
-    GraphBuilder_Disconnect,
-    GraphBuilder_SetDefaultSyncSource,
-    GraphBuilder_Connect,
-    GraphBuilder_Render,
-    GraphBuilder_RenderFile,
-    GraphBuilder_AddSourceFilter,
-    GraphBuilder_SetLogFile,
-    GraphBuilder_Abort,
-    GraphBuilder_ShouldOperationContinue
+    FilterGraph2_QueryInterface,
+    FilterGraph2_AddRef,
+    FilterGraph2_Release,
+    FilterGraph2_AddFilter,
+    FilterGraph2_RemoveFilter,
+    FilterGraph2_EnumFilters,
+    FilterGraph2_FindFilterByName,
+    FilterGraph2_ConnectDirect,
+    FilterGraph2_Reconnect,
+    FilterGraph2_Disconnect,
+    FilterGraph2_SetDefaultSyncSource,
+    FilterGraph2_Connect,
+    FilterGraph2_Render,
+    FilterGraph2_RenderFile,
+    FilterGraph2_AddSourceFilter,
+    FilterGraph2_SetLogFile,
+    FilterGraph2_Abort,
+    FilterGraph2_ShouldOperationContinue,
+    FilterGraph2_AddSourceFilterForMoniker,
+    FilterGraph2_ReconnectEx,
+    FilterGraph2_RenderEx
 };
 
 /*** IUnknown methods ***/
@@ -4593,7 +4630,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
         return CLASS_E_NOAGGREGATION;
 
     fimpl = CoTaskMemAlloc(sizeof(*fimpl));
-    fimpl->IGraphBuilder_vtbl = &IGraphBuilder_VTable;
+    fimpl->IFilterGraph2_vtbl = &IFilterGraph2_VTable;
     fimpl->IMediaControl_vtbl = &IMediaControl_VTable;
     fimpl->IMediaSeeking_vtbl = &IMediaSeeking_VTable;
     fimpl->IBasicAudio_vtbl = &IBasicAudio_VTable;

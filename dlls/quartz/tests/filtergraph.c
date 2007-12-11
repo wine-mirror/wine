@@ -155,10 +155,11 @@ static void test_filter_graph2(void)
 
     hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
             &IID_IFilterGraph2, (LPVOID*)&pF);
-    todo_wine {
-        ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
-        ok(pF != NULL, "pF is NULL\n");
-    }
+    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
+    ok(pF != NULL, "pF is NULL\n");
+
+    hr = IFilterGraph2_Release(pF);
+    ok(hr == 0, "IFilterGraph2_Release returned: %x\n", hr);
 }
 
 START_TEST(filtergraph)
