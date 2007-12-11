@@ -647,6 +647,7 @@ loader/wine-preloader
 loader/wine-preloader-installed
 loader/wine-pthread
 loader/wine-pthread-installed
+loader/wine.de.man
 loader/wine.man
 programs/Makeprog.rules
 programs/clock/clock
