@@ -21,6 +21,7 @@
 
 #include <wine/test.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -31,6 +32,7 @@
 #include "idispids.h"
 #include "olectl.h"
 #include "mshtmdid.h"
+#include "shlguid.h"
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -38,17 +40,16 @@
 #define SET_EXPECT(func) \
     expect_ ## func = TRUE
 
-#define CHECK_EXPECT(func) \
-    do { \
-        ok(expect_ ##func, "unexpected call " #func "\n"); \
-        expect_ ## func = FALSE; \
-        called_ ## func = TRUE; \
-    }while(0)
-
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
         called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
     }while(0)
 
 #define CHECK_CALLED(func) \
@@ -81,19 +82,139 @@ DEFINE_EXPECT(GetOptionKeyPath);
 DEFINE_EXPECT(GetOverridesKeyPath);
 DEFINE_EXPECT(SetStatusText);
 DEFINE_EXPECT(UpdateUI);
+DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_0);
+DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_1);
+DEFINE_EXPECT(Exec_SETPROGRESSMAX);
+DEFINE_EXPECT(Exec_SETPROGRESSPOS);
+DEFINE_EXPECT(QueryStatus_SETPROGRESSTEXT);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
 
 static HWND container_hwnd, shell_embedding_hwnd;
 
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
+
 static HRESULT QueryInterface(REFIID,void**);
+
+static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface,
+        REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI OleCommandTarget_AddRef(IOleCommandTarget *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI OleCommandTarget_Release(IOleCommandTarget *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
+{
+    ok(!pguidCmdGroup, "pguidCmdGroup != MULL\n");
+    ok(cCmds == 1, "cCmds=%d, expected 1\n", cCmds);
+    ok(!pCmdText, "pCmdText != NULL\n");
+
+    switch(prgCmds[0].cmdID) {
+    case OLECMDID_SETPROGRESSTEXT:
+        CHECK_EXPECT(QueryStatus_SETPROGRESSTEXT);
+        prgCmds[0].cmdf = OLECMDF_ENABLED;
+        return S_OK;
+    default:
+        ok(0, "unexpected command %d\n", prgCmds[0].cmdID);
+    }
+
+    return E_FAIL;
+}
+
+static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    if(!pguidCmdGroup) {
+        switch(nCmdID) {
+        case OLECMDID_SETPROGRESSMAX:
+            CHECK_EXPECT(Exec_SETPROGRESSMAX);
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08x\n", nCmdexecopt);
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            if(pvaIn)
+                ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
+            ok(pvaOut == NULL, "pvaOut=%p, expected NULL\n", pvaOut);
+            return S_OK;
+        case OLECMDID_SETPROGRESSPOS:
+            CHECK_EXPECT(Exec_SETPROGRESSPOS);
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08x\n", nCmdexecopt);
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            if(pvaIn)
+                ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
+            ok(pvaOut == NULL, "pvaOut=%p, expected NULL\n", pvaOut);
+            return S_OK;
+        case OLECMDID_SETDOWNLOADSTATE:
+            ok(!nCmdexecopt, "nCmdexecopts=%08x\n", nCmdexecopt);
+            ok(pvaOut == NULL, "pvaOut=%p\n", pvaOut);
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d\n", V_VT(pvaIn));
+            switch(V_I4(pvaIn)) {
+            case 0:
+                CHECK_EXPECT(Exec_SETDOWNLOADSTATE_0);
+                break;
+            case 1:
+                CHECK_EXPECT2(Exec_SETDOWNLOADSTATE_1);
+                break;
+            default:
+                ok(0, "unexpevted V_I4(pvaIn)=%d\n", V_I4(pvaIn));
+            }
+            return S_OK;
+        default:
+            ok(0, "unexpected nsCmdID %d\n", nCmdID);
+        }
+    }else if(IsEqualGUID(&CGID_Explorer, pguidCmdGroup)) {
+        switch(nCmdID) {
+        case 24:
+            return E_FAIL; /* TODO */
+        default:
+            ok(0, "unexpected nCmdID %d\n", nCmdID);
+        }
+    }else {
+        ok(0, "unepected pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
+    }
+
+    return E_FAIL;
+}
+
+static IOleCommandTargetVtbl OleCommandTargetVtbl = {
+    OleCommandTarget_QueryInterface,
+    OleCommandTarget_AddRef,
+    OleCommandTarget_Release,
+    OleCommandTarget_QueryStatus,
+    OleCommandTarget_Exec
+};
+
+static IOleCommandTarget OleCommandTarget = { &OleCommandTargetVtbl };
 
 static HRESULT WINAPI OleContainer_QueryInterface(IOleContainer *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_ITargetContainer, riid))
         return E_NOINTERFACE; /* TODO */
-    if(IsEqualGUID(&IID_IOleCommandTarget, riid))
-        return E_NOINTERFACE; /* TODO */
+
+    if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
+        *ppv = &OleCommandTarget;
+        return S_OK;
+    }
 
     ok(0, "unexpected call\n");
     return E_NOINTERFACE;
@@ -646,6 +767,7 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
         IUnknown *pcmdtReserved, IDispatch *pdicpReserved)
 {
     ok(0, "unexpected call %d %p %p %p\n", dwID, ppt, pcmdtReserved, pdicpReserved);
+    trace("%x\n", dwID);
     return S_FALSE;
 }
 
@@ -927,6 +1049,8 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
         SET_EXPECT(Site_GetWindow);
         SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         SET_EXPECT(Invoke_AMBIENT_SILENT);
+    }else {
+        SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
     }
 
     hres = IOleObject_SetClientSite(oleobj, client);
@@ -937,7 +1061,9 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
         CHECK_CALLED(Site_GetWindow);
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
-    }
+    }else {
+        todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+   }
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
     ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
@@ -1381,6 +1507,7 @@ static void test_Navigate2(IUnknown *unk)
     V_BSTR(&url) = SysAllocString(wszAboutBlank);
 
     SET_EXPECT(Invoke_AMBIENT_USERMODE);
+    SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
     SET_EXPECT(EnableModeless_FALSE);
     SET_EXPECT(GetHostInfo);
     SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
@@ -1388,6 +1515,10 @@ static void test_Navigate2(IUnknown *unk)
     SET_EXPECT(Invoke_AMBIENT_PALETTE);
     SET_EXPECT(GetOptionKeyPath);
     SET_EXPECT(GetOverridesKeyPath);
+    SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
+    SET_EXPECT(Exec_SETPROGRESSMAX);
+    SET_EXPECT(Exec_SETPROGRESSPOS);
+    SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
     SET_EXPECT(SetStatusText);
     SET_EXPECT(EnableModeless_TRUE);
 
@@ -1395,6 +1526,7 @@ static void test_Navigate2(IUnknown *unk)
     ok(hres == S_OK, "Navigate2 failed: %08x\n", hres);
 
     CHECK_CALLED(Invoke_AMBIENT_USERMODE);
+    todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
     CHECK_CALLED(EnableModeless_FALSE);
     CHECK_CALLED(GetHostInfo);
     CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
@@ -1402,6 +1534,12 @@ static void test_Navigate2(IUnknown *unk)
     CHECK_CALLED(Invoke_AMBIENT_PALETTE);
     CHECK_CALLED(GetOptionKeyPath);
     CHECK_CALLED(GetOverridesKeyPath);
+    todo_wine {
+    CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
+    CHECK_CALLED(Exec_SETPROGRESSMAX);
+    CHECK_CALLED(Exec_SETPROGRESSPOS);
+    CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+    }
     CHECK_CALLED(SetStatusText);
     CHECK_CALLED(EnableModeless_TRUE);
 
