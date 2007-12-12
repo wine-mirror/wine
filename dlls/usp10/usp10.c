@@ -575,7 +575,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     TRACE("index=%d cnt=%d iCharPos=%d\n", index+1, cnt, pItems[index+1].iCharPos = cnt);
 
     /*  Set one SCRIPT_STATE item being returned  */
-    *pcItems = index + 1;
+    if (pcItems) *pcItems = index + 1;
 
     /*  Set SCRIPT_ITEM                                     */
     pItems[index+1].iCharPos = cnt;       /* the last + 1 item
@@ -1229,7 +1229,7 @@ HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
  *  pwcChars    [I]   Array of characters specifying the run.
  *  cChars      [I]   Number of characters in pwcChars.
  *  cMaxGlyphs  [I]   Length of pwOutGlyphs.
- *  psa         [I/O] String analysis.
+ *  psa         [I/O] Script analysis.
  *  pwOutGlyphs [O]   Array of glyphs.
  *  pwLogClust  [O]   Array of logical cluster info.
  *  psva        [O]   Array of visual attributes.
@@ -1247,14 +1247,16 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
     int cnt;
     HRESULT hr;
     HFONT hfont;
-    *pcGlyphs = cChars;
 
     TRACE("(%p, %p, %p, %d, %d, %p)\n",  hdc, psc, pwcChars, cChars, cMaxGlyphs, psa);
     if (psa) TRACE("psa values: %d, %d, %d, %d, %d, %d, %d\n", psa->eScript, psa->fRTL, psa->fLayoutRTL,
                    psa->fLinkBefore, psa->fLinkAfter, psa->fLogicalOrder, psa->fNoGlyphIndex);
 
+    if (!psva || !pcGlyphs) return E_INVALIDARG;
     if (cChars > cMaxGlyphs) return E_OUTOFMEMORY;
     if ((hr = get_script_cache(hdc, psc))) return hr;
+
+    *pcGlyphs = cChars;
 
     hfont = select_cached_font(psc);
 
@@ -1267,15 +1269,19 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
              pwOutGlyphs[cnt] = pwcChars[cnt];                         /* copy in to out and     */
         }
     }
+    if (psva)
+    {
+        /* set up a valid SCRIPT_VISATTR and LogClust for each char in this run */
+        for (cnt = 0; cnt < cChars; cnt++)
+        {
+            /* FIXME: set to better values */
+            psva[cnt].uJustification = 2;
+            psva[cnt].fClusterStart  = 1;
+            psva[cnt].fDiacritic     = 0;
+            psva[cnt].fZeroWidth     = 0;
 
-    /*  Set up a valid SCRIPT_VISATTR and LogClust for each char in this run */     
-    for (cnt = 0;  cnt < cChars; cnt++) {
-        /* FIXME:  set to better values */
-         psva[cnt].uJustification = 2;
-         psva[cnt].fClusterStart = 1;
-         psva[cnt].fDiacritic = 0;
-         psva[cnt].fZeroWidth = 0;
-         pwLogClust[cnt] = cnt;
+            if (pwLogClust) pwLogClust[cnt] = cnt;
+        }
     }
     unselect_cached_font(psc, hfont);
     return S_OK;
@@ -1313,6 +1319,7 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
     TRACE("(%p, %p, %p, %s, %d, %p, %p, %p)\n",  hdc, psc, pwGlyphs,
           debugstr_wn(pwGlyphs, cGlyphs), cGlyphs, psva, psa, piAdvance);
 
+    if (!psva) return E_INVALIDARG;
     if ((hr = get_script_cache(hdc, psc))) return hr;
 
     hfont = select_cached_font(psc);
@@ -1329,33 +1336,30 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
     if (!GetCharABCWidthsI(get_cache_hdc(psc), 0, cGlyphs, (WORD *)pwGlyphs, lpABC))
     {
          WARN("Could not get ABC values\n");
-         for (wcnt = 0; wcnt < cGlyphs; wcnt++) {
-             piAdvance[wcnt] = 0;
-             pGoffset[wcnt].du = 0;
-             pGoffset[wcnt].dv = 0;
+         for (wcnt = 0; wcnt < cGlyphs; wcnt++)
+         {
+             if (pGoffset)  pGoffset[wcnt].du = pGoffset[wcnt].dv = 0;
+             if (piAdvance) piAdvance[wcnt] = 0;
          }
-     }
-     else
-     {
-         for (wcnt = 0; wcnt < cGlyphs ; wcnt++) {          /* add up the char lengths  */
-             TRACE("     Glyph=%04x,  abcA=%d,  abcB=%d,  abcC=%d  wcnt=%d\n",
-                                  pwGlyphs[wcnt],  
-                                  lpABC[wcnt].abcA,
-                                  lpABC[wcnt].abcB,
-                                  lpABC[wcnt].abcC, wcnt);
-             if (pABC)
-             {
+    }
+    else
+    {
+        for (wcnt = 0; wcnt < cGlyphs; wcnt++)          /* add up the char lengths  */
+        {
+            TRACE("     Glyph=%04x,  abcA=%d,  abcB=%d,  abcC=%d  wcnt=%d\n",
+                  pwGlyphs[wcnt], lpABC[wcnt].abcA, lpABC[wcnt].abcB, lpABC[wcnt].abcC, wcnt);
+
+            if (pABC)
+            {
                 pABC->abcA += lpABC[wcnt].abcA;
                 pABC->abcB += lpABC[wcnt].abcB;
                 pABC->abcC += lpABC[wcnt].abcC;
-             }
-             piAdvance[wcnt] = lpABC[wcnt].abcA + lpABC[wcnt].abcB + lpABC[wcnt].abcC;
-             pGoffset[wcnt].du = 0;
-             pGoffset[wcnt].dv = 0;
-         }
-     }
-     if (pABC)
-        TRACE("Total for run:   abcA=%d,  abcB=%d,  abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
+            }
+            if (pGoffset)  pGoffset[wcnt].du = pGoffset[wcnt].dv = 0;
+            if (piAdvance) piAdvance[wcnt] = lpABC[wcnt].abcA + lpABC[wcnt].abcB + lpABC[wcnt].abcC;
+        }
+    }
+    if (pABC) TRACE("Total for run:   abcA=%d,  abcB=%d,  abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
 
     heap_free(lpABC);
     unselect_cached_font(psc, hfont);

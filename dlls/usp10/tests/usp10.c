@@ -34,6 +34,50 @@
 #include <winnls.h>
 #include <usp10.h>
 
+static void test_ScriptShape(HDC hdc)
+{
+    static const WCHAR test1[] = {'t', 'e', 's', 't',0};
+    BOOL ret;
+    HRESULT hr;
+    SCRIPT_CACHE sc = NULL;
+    WORD glyphs[4];
+    SCRIPT_VISATTR attrs[4];
+    SCRIPT_ITEM items[2];
+    int nb, widths[4];
+
+    hr = ScriptItemize(NULL, 4, 2, NULL, NULL, items, NULL);
+    ok(hr == E_INVALIDARG, "ScriptItemize should return E_INVALIDARG not %08x\n", hr);
+
+    hr = ScriptItemize(test1, 4, 2, NULL, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "ScriptItemize should return E_INVALIDARG not %08x\n", hr);
+
+    hr = ScriptItemize(test1, 4, 2, NULL, NULL, items, NULL);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
+
+    hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, NULL, NULL, &nb);
+    ok(hr == E_INVALIDARG, "ScriptShape should return E_INVALIDARG not %08x\n", hr);
+
+    hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, NULL, attrs, NULL);
+    ok(hr == E_INVALIDARG, "ScriptShape should return E_INVALIDARG not %08x\n", hr);
+
+    hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, NULL, attrs, &nb);
+    ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
+    ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
+
+    hr = ScriptPlace(hdc, &sc, glyphs, 4, NULL, &items[0].a, widths, NULL, NULL);
+    ok(hr == E_INVALIDARG, "ScriptPlace should return E_INVALIDARG not %08x\n", hr);
+
+    hr = ScriptPlace(hdc, &sc, glyphs, 4, attrs, &items[0].a, widths, NULL, NULL);
+    ok(!hr, "ScriptPlace should return S_OK not %08x\n", hr);
+    ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
+
+    ret = ExtTextOutW(hdc, 1, 1, 0, NULL, glyphs, 4, widths);
+    ok(ret, "ExtTextOutW should return TRUE\n");
+
+    ScriptFreeCache(&sc);
+}
+
 static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256])
 {
     HRESULT         hr;
@@ -1234,6 +1278,7 @@ START_TEST(usp10)
     test_ScriptGetCMap(hdc, pwOutGlyphs);
     test_ScriptCacheGetHeight(hdc);
     test_ScriptGetGlyphABCWidth(hdc);
+    test_ScriptShape(hdc);
 
     test_ScriptGetFontProperties(hdc);
     test_ScriptTextOut(hdc);
