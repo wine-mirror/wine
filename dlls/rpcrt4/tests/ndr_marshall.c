@@ -975,9 +975,7 @@ static void test_ndr_allocate(void)
     p1 = NdrAllocate(&StubMsg, 10);
     p2 = NdrAllocate(&StubMsg, 24);
     ok(my_alloc_called == 2, "alloc called %d\n", my_alloc_called);
-todo_wine {
     ok(StubMsg.pMemoryList != NULL, "StubMsg.pMemoryList NULL\n");
- }
     if(StubMsg.pMemoryList)
     {
         mem_list_v2 = StubMsg.pMemoryList;

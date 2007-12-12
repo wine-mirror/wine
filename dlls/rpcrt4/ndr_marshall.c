@@ -331,15 +331,74 @@ const NDR_FREE NdrFreer[NDR_TABLE_SIZE] = {
   NdrRangeFree
 };
 
+typedef struct _NDR_MEMORY_LIST
+{
+    ULONG magic;
+    ULONG size;
+    ULONG reserved;
+    struct _NDR_MEMORY_LIST *next;
+} NDR_MEMORY_LIST;
+
+#define MEML_MAGIC  ('M' << 24 | 'E' << 16 | 'M' << 8 | 'L')
+
 void * WINAPI NdrAllocate(MIDL_STUB_MESSAGE *pStubMsg, size_t len)
 {
-  /* hmm, this is probably supposed to do more? */
-  return pStubMsg->pfnAllocate(len);
+    size_t aligned_len;
+    size_t adjusted_len;
+    void *p;
+    NDR_MEMORY_LIST *mem_list;
+
+    aligned_len = ALIGNED_LENGTH(len, 8);
+    adjusted_len = aligned_len + sizeof(NDR_MEMORY_LIST);
+    /* check for overflow */
+    if (adjusted_len < len)
+    {
+        ERR("overflow of adjusted_len %d, len %d\n", adjusted_len, len);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
+
+    p = pStubMsg->pfnAllocate(adjusted_len);
+    if (!p) RpcRaiseException(ERROR_OUTOFMEMORY);
+
+    mem_list = (NDR_MEMORY_LIST *)((char *)p + aligned_len);
+    mem_list->magic = MEML_MAGIC;
+    mem_list->size = aligned_len;
+    mem_list->reserved = 0;
+    mem_list->next = pStubMsg->pMemoryList;
+    pStubMsg->pMemoryList = mem_list;
+
+    TRACE("-- %p\n", p);
+    return p;
 }
 
 static void WINAPI NdrFree(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *Pointer)
 {
-  pStubMsg->pfnFree(Pointer);
+    NDR_MEMORY_LIST *mem_list, *prev_mem_list;
+
+    TRACE("(%p, %p)\n", pStubMsg, Pointer);
+
+    for (prev_mem_list = NULL, mem_list = pStubMsg->pMemoryList;
+       mem_list;
+       prev_mem_list = mem_list, mem_list = mem_list->next)
+    {
+      const unsigned char *base_pointer = (unsigned char *)mem_list - mem_list->size;
+      if (base_pointer == Pointer)
+      {
+          if (mem_list->magic != MEML_MAGIC)
+          {
+              ERR("memory linked list corrupted, magic changed to 0x%08x\n", mem_list->magic);
+              break;
+          }
+
+          /* fixup next pointers */
+          if (prev_mem_list)
+              prev_mem_list->next = mem_list->next;
+          else
+              pStubMsg->pMemoryList = mem_list->next;
+          pStubMsg->pfnFree(Pointer);
+          break;
+      }
+    }
 }
 
 static inline BOOL IsConformanceOrVariancePresent(PFORMAT_STRING pFormat)
