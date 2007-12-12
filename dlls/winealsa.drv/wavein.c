@@ -164,9 +164,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
     for (;;) {
 	/* wait for dwSleepTime or an event in thread's queue */
-	/* FIXME: could improve wait time depending on queue state,
-	 * ie, number of queued fragments
-	 */
 	if (wwi->lpQueuePtr != NULL && wwi->state == WINE_WS_PLAYING)
         {
             DWORD frames;
