@@ -113,8 +113,8 @@ static void _dump_DIEFFECT_flags(DWORD dwFlags)
         };
         for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++)
             if (flags[i].mask & dwFlags)
-                DPRINTF("%s ", flags[i].name);
-        DPRINTF("\n");
+                TRACE("%s ", flags[i].name);
+        TRACE("\n");
     }       
 }
 
@@ -160,11 +160,11 @@ static void _dump_DICUSTOMFORCE(LPCDICUSTOMFORCE frc)
     if (frc->cSamples % frc->cChannels != 0)
 	WARN("Custom force has a non-integral samples-per-channel count!\n");
     if (TRACE_ON(dinput)) {
-	DPRINTF("Custom force data (time aligned, axes in order):\n");
+	TRACE("Custom force data (time aligned, axes in order):\n");
 	for (i = 1; i <= frc->cSamples; ++i) {
-	    DPRINTF("%d ", frc->rglForceData[i]);
+	    TRACE("%d ", frc->rglForceData[i]);
 	    if (i % frc->cChannels == 0)
-		DPRINTF("\n");
+		TRACE("\n");
 	}	
     }
 }
@@ -194,8 +194,8 @@ static void _dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid)
     if (TRACE_ON(dinput)) {
 	TRACE("    ");	
 	for (i = 0; i < eff->cAxes; ++i)
-	    DPRINTF("%d ", eff->rgdwAxes[i]);
-	DPRINTF("\n");
+	    TRACE("%d ", eff->rgdwAxes[i]);
+	TRACE("\n");
     }
     TRACE("  - rglDirection: %p\n", eff->rglDirection);
     TRACE("  - lpEnvelope: %p\n", eff->lpEnvelope);

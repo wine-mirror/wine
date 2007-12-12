@@ -61,8 +61,8 @@ void _dump_cooperativelevel_DI(DWORD dwFlags) {
 	};
 	for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++)
 	    if (flags[i].mask & dwFlags)
-		DPRINTF("%s ",flags[i].name);
-	DPRINTF("\n");
+		TRACE("%s ",flags[i].name);
+	TRACE("\n");
     }
 }
 
@@ -92,51 +92,47 @@ void _dump_EnumObjects_flags(DWORD dwFlags) {
 	};
 	type = (dwFlags & 0xFF0000FF);
 	instance = ((dwFlags >> 8) & 0xFFFF);
-	DPRINTF("Type:");
+	TRACE("Type:");
 	if (type == DIDFT_ALL) {
-	    DPRINTF(" DIDFT_ALL");
+	    TRACE(" DIDFT_ALL");
 	} else {
 	    for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++) {
 		if (flags[i].mask & type) {
 		    type &= ~flags[i].mask;
-		    DPRINTF(" %s",flags[i].name);
+		    TRACE(" %s",flags[i].name);
 		}
 	    }
 	    if (type) {
-                DPRINTF(" (unhandled: %08x)", type);
+                TRACE(" (unhandled: %08x)", type);
 	    }
 	}
-	DPRINTF(" / Instance: ");
+	TRACE(" / Instance: ");
 	if (instance == ((DIDFT_ANYINSTANCE >> 8) & 0xFFFF)) {
-	    DPRINTF("DIDFT_ANYINSTANCE");
+	    TRACE("DIDFT_ANYINSTANCE");
 	} else {
-            DPRINTF("%3d", instance);
+            TRACE("%3d", instance);
 	}
     }
 }
 
 void _dump_DIPROPHEADER(LPCDIPROPHEADER diph) {
     if (TRACE_ON(dinput)) {
-        DPRINTF("  - dwObj = 0x%08x\n", diph->dwObj);
-	DPRINTF("  - dwHow = %s\n",
-		((diph->dwHow == DIPH_DEVICE) ? "DIPH_DEVICE" :
-		 ((diph->dwHow == DIPH_BYOFFSET) ? "DIPH_BYOFFSET" :
-		  ((diph->dwHow == DIPH_BYID)) ? "DIPH_BYID" : "unknown")));
+        TRACE("  - dwObj = 0x%08x\n", diph->dwObj);
+        TRACE("  - dwHow = %s\n",
+            ((diph->dwHow == DIPH_DEVICE) ? "DIPH_DEVICE" :
+            ((diph->dwHow == DIPH_BYOFFSET) ? "DIPH_BYOFFSET" :
+            ((diph->dwHow == DIPH_BYID)) ? "DIPH_BYID" : "unknown")));
     }
 }
 
 void _dump_OBJECTINSTANCEA(const DIDEVICEOBJECTINSTANCEA *ddoi) {
-    if (TRACE_ON(dinput)) {
-        DPRINTF("    - enumerating : %s ('%s') - %2d - 0x%08x - %s\n",
-		debugstr_guid(&ddoi->guidType), _dump_dinput_GUID(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, ddoi->tszName);
-    }
+    TRACE("    - enumerating : %s ('%s') - %2d - 0x%08x - %s\n",
+        debugstr_guid(&ddoi->guidType), _dump_dinput_GUID(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, ddoi->tszName);
 }
 
 void _dump_OBJECTINSTANCEW(const DIDEVICEOBJECTINSTANCEW *ddoi) {
-    if (TRACE_ON(dinput)) {
-        DPRINTF("    - enumerating : %s ('%s'), - %2d - 0x%08x - %s\n",
-		debugstr_guid(&ddoi->guidType), _dump_dinput_GUID(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, debugstr_w(ddoi->tszName));
-    }
+    TRACE("    - enumerating : %s ('%s'), - %2d - 0x%08x - %s\n",
+        debugstr_guid(&ddoi->guidType), _dump_dinput_GUID(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, debugstr_w(ddoi->tszName));
 }
 
 /* This function is a helper to convert a GUID into any possible DInput GUID out there */

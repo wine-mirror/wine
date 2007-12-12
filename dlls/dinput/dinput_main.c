@@ -199,12 +199,12 @@ static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
 #undef FE
 	};
 	if (dwFlags == 0) {
-	    DPRINTF("DIEDFL_ALLDEVICES");
+	    TRACE("DIEDFL_ALLDEVICES");
 	    return;
 	}
 	for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++)
 	    if (flags[i].mask & dwFlags)
-		DPRINTF("%s ",flags[i].name);
+		TRACE("%s ",flags[i].name);
     }
 }
 
