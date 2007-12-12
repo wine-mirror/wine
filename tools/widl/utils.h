@@ -46,4 +46,8 @@ size_t widl_getline(char **linep, size_t *lenp, FILE *fp);
 UUID *parse_uuid(const char *u);
 int is_valid_uuid(const char *s);
 
+#define MAKEVERSION(major, minor) ((((major) & 0xffff) << 16) | ((minor) & 0xffff))
+#define MAJORVERSION(version) (((version) >> 16) & 0xffff)
+#define MINORVERSION(version) ((version) & 0xffff)
+
 #endif

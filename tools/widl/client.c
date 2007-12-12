@@ -29,16 +29,12 @@
 #include <ctype.h>
 #include <signal.h>
 
-#include "windef.h"
-
 #include "widl.h"
 #include "utils.h"
 #include "parser.h"
 #include "header.h"
 
 #include "widltypes.h"
-#include "typelib.h"
-#include "typelib_struct.h"
 #include "typegen.h"
 
 static FILE* client;
@@ -337,7 +333,7 @@ static void write_clientinterfacedecl(type_t *iface)
     print_client("{{0x%08lx,0x%04x,0x%04x,{0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}},{%d,%d}},\n",
                  uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1],
                  uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6],
-                 uuid->Data4[7], LOWORD(ver), HIWORD(ver));
+                 uuid->Data4[7], MAJORVERSION(ver), MINORVERSION(ver));
     print_client("{{0x8a885d04,0x1ceb,0x11c9,{0x9f,0xe8,0x08,0x00,0x2b,0x10,0x48,0x60}},{2,0}},\n"); /* FIXME */
     print_client("0,\n");
     if (endpoints)
@@ -360,7 +356,7 @@ static void write_clientinterfacedecl(type_t *iface)
                      iface->name, iface->name);
     else
         print_client("RPC_IF_HANDLE %s%s_v%d_%d_c_ifspec = (RPC_IF_HANDLE)& %s___RpcClientInterface;\n",
-                     prefix_client, iface->name, LOWORD(ver), HIWORD(ver), iface->name);
+                     prefix_client, iface->name, MAJORVERSION(ver), MINORVERSION(ver), iface->name);
     fprintf(client, "\n");
 }
 

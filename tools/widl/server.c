@@ -35,10 +35,7 @@
 #include "utils.h"
 #include "parser.h"
 #include "header.h"
-#include "windef.h"
 
-#include "typelib.h"
-#include "typelib_struct.h"
 #include "typegen.h"
 
 static FILE* server;
@@ -285,7 +282,7 @@ static void write_dispatchtable(type_t *iface)
     print_server("0\n");
     indent--;
     print_server("};\n");
-    print_server("RPC_DISPATCH_TABLE %s_v%d_%d_DispatchTable =\n", iface->name, LOWORD(ver), HIWORD(ver));
+    print_server("RPC_DISPATCH_TABLE %s_v%d_%d_DispatchTable =\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
     print_server("{\n");
     indent++;
     print_server("%u,\n", method_count);
@@ -349,7 +346,7 @@ static void write_serverinterfacedecl(type_t *iface)
 
     if (endpoints) write_endpoints( server, iface->name, endpoints );
 
-    print_server("extern RPC_DISPATCH_TABLE %s_v%d_%d_DispatchTable;\n", iface->name, LOWORD(ver), HIWORD(ver));
+    print_server("extern RPC_DISPATCH_TABLE %s_v%d_%d_DispatchTable;\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
     fprintf(server, "\n");
     print_server("static const RPC_SERVER_INTERFACE %s___RpcServerInterface =\n", iface->name );
     print_server("{\n");
@@ -358,9 +355,9 @@ static void write_serverinterfacedecl(type_t *iface)
     print_server("{{0x%08lx,0x%04x,0x%04x,{0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}},{%d,%d}},\n",
                  uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1],
                  uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6],
-                 uuid->Data4[7], LOWORD(ver), HIWORD(ver));
+                 uuid->Data4[7], MAJORVERSION(ver), MINORVERSION(ver));
     print_server("{{0x8a885d04,0x1ceb,0x11c9,{0x9f,0xe8,0x08,0x00,0x2b,0x10,0x48,0x60}},{2,0}},\n"); /* FIXME */
-    print_server("&%s_v%d_%d_DispatchTable,\n", iface->name, LOWORD(ver), HIWORD(ver));
+    print_server("&%s_v%d_%d_DispatchTable,\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
     if (endpoints)
     {
         print_server("%u,\n", list_count(endpoints));
@@ -381,7 +378,7 @@ static void write_serverinterfacedecl(type_t *iface)
                      iface->name, iface->name);
     else
         print_server("RPC_IF_HANDLE %s%s_v%d_%d_s_ifspec = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
-                     prefix_server, iface->name, LOWORD(ver), HIWORD(ver), iface->name);
+                     prefix_server, iface->name, MAJORVERSION(ver), MINORVERSION(ver), iface->name);
     fprintf(server, "\n");
 }
 

@@ -31,8 +31,6 @@
 #include <alloca.h>
 #endif
 
-#include "windef.h"
-
 #include "widl.h"
 #include "utils.h"
 #include "parser.h"
@@ -929,8 +927,8 @@ uniondef: tUNION t_ident '{' fields '}'		{ $$ = get_typev(RPC_FC_NON_ENCAPSULATE
 	;
 
 version:
-	  aNUM					{ $$ = MAKELONG($1, 0); }
-	| aNUM '.' aNUM				{ $$ = MAKELONG($1, $3); }
+	  aNUM					{ $$ = MAKEVERSION($1, 0); }
+	| aNUM '.' aNUM				{ $$ = MAKEVERSION($1, $3); }
 	;
 
 %%
