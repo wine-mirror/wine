@@ -1019,6 +1019,16 @@ static void test_GetMiscStatus(IOleObject *oleobj)
     }
 }
 
+static void test_SetHostNames(IOleObject *oleobj)
+{
+    HRESULT hres;
+
+    static const WCHAR test_appW[] =  {'t','e','s','t',' ','a','p','p',0};
+
+    hres = IOleObject_SetHostNames(oleobj, test_appW, (void*)0xdeadbeef);
+    ok(hres == S_OK, "SetHostNames failed: %08x\n", hres);
+}
+
 static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
 {
     IOleObject *oleobj;
@@ -1032,6 +1042,7 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
         return;
 
     test_GetMiscStatus(oleobj);
+    test_SetHostNames(oleobj);
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
     ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08x\n", hres);
@@ -1070,6 +1081,8 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
     ok((hwnd == NULL) == (client == NULL), "unexpected hwnd %p\n", hwnd);
 
     shell_embedding_hwnd = hwnd;
+
+    test_SetHostNames(oleobj);
 
     IOleInPlaceObject_Release(inplace);
     IOleObject_Release(oleobj);
