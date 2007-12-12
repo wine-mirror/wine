@@ -86,6 +86,7 @@ static BOOL  HLPFILE_UncompressLZ77_Phrases(HLPFILE*);
 static BOOL  HLPFILE_Uncompress_Phrases40(HLPFILE*);
 static BOOL  HLPFILE_Uncompress_Topic(HLPFILE*);
 static BOOL  HLPFILE_GetContext(HLPFILE*);
+static BOOL  HLPFILE_GetKeywords(HLPFILE*);
 static BOOL  HLPFILE_GetMap(HLPFILE*);
 static BOOL  HLPFILE_AddPage(HLPFILE*, BYTE*, BYTE*, unsigned);
 static BOOL  HLPFILE_AddParagraph(HLPFILE*, BYTE *, BYTE*, unsigned*);
@@ -393,6 +394,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
             ref = GET_UINT(buf, 0xc);
     } while (ref != 0xffffffff);
 
+    HLPFILE_GetKeywords(hlpfile);
     HLPFILE_GetMap(hlpfile);
     if (hlpfile->version <= 16) return TRUE;
     return HLPFILE_GetContext(hlpfile);
@@ -2020,6 +2022,39 @@ static BOOL HLPFILE_GetContext(HLPFILE *hlpfile)
     hlpfile->Context = HeapAlloc(GetProcessHeap(), 0, clen);
     if (!hlpfile->Context) return FALSE;
     memcpy(hlpfile->Context, cbuf, clen);
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *
+ *           HLPFILE_GetKeywords
+ */
+static BOOL HLPFILE_GetKeywords(HLPFILE *hlpfile)
+{
+    BYTE                *cbuf, *cend;
+    unsigned            clen;
+
+    if (!HLPFILE_FindSubFile("|KWBTREE",  &cbuf, &cend)) return FALSE;
+    clen = cend - cbuf;
+    hlpfile->kwbtree = HeapAlloc(GetProcessHeap(), 0, clen);
+    if (!hlpfile->kwbtree) return FALSE;
+    memcpy(hlpfile->kwbtree, cbuf, clen);
+
+    if (!HLPFILE_FindSubFile("|KWDATA",  &cbuf, &cend))
+    {
+        WINE_ERR("corrupted help file: kwbtree present but kwdata absent\n");
+        HeapFree(GetProcessHeap(), 0, hlpfile->kwbtree);
+        return FALSE;
+    }
+    clen = cend - cbuf;
+    hlpfile->kwdata = HeapAlloc(GetProcessHeap(), 0, clen);
+    if (!hlpfile->kwdata)
+    {
+        HeapFree(GetProcessHeap(), 0, hlpfile->kwdata);
+        return FALSE;
+    }
+    memcpy(hlpfile->kwdata, cbuf, clen);
 
     return TRUE;
 }

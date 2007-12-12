@@ -124,6 +124,8 @@ typedef struct tagHlpFileFile
     HLPFILE_PAGE*               first_page;
     HLPFILE_MACRO*              first_macro;
     BYTE*                       Context;
+    BYTE*                       kwbtree;
+    BYTE*                       kwdata;
     unsigned                    wMapLen;
     HLPFILE_MAP*                Map;
     unsigned long               contents_start;
