@@ -11,6 +11,7 @@ MODCFLAGS = @BUILTINFLAG@
 
 C_SRCS = \
 	print.c \
+	registry.c \
 	wordpad.c
 
 RC_SRCS = rsrc.rc

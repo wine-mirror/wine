@@ -185,6 +185,8 @@
 #define STRING_INVALID_NUMBER 1705
 #define STRING_OLE_STORAGE_NOT_SUPPORTED 1706
 
+LPWSTR file_basename(LPWSTR);
+
 void dialog_printsetup(HWND);
 void dialog_print(HWND, LPWSTR);
 void target_device(HWND, DWORD);
@@ -197,3 +199,12 @@ LRESULT print_preview(HWND);
 void get_default_printer_opts(void);
 void registry_set_pagemargins(HKEY);
 void registry_read_pagemargins(HKEY);
+
+int reg_formatindex(WPARAM);
+void registry_read_filelist(HWND);
+void registry_read_options(void);
+void registry_read_formatopts_all(DWORD[], DWORD[]);
+void registry_read_winrect(RECT*);
+void registry_set_filelist(LPCWSTR, HWND);
+void registry_set_formatopts_all(DWORD[]);
+void registry_set_options(HWND);
