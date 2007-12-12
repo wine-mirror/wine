@@ -952,12 +952,19 @@ static void test_ndr_allocate(void)
     MIDL_STUB_MESSAGE StubMsg;
     MIDL_STUB_DESC StubDesc;
     void *p1, *p2;
-    struct tag_mem_list_t
+    struct tag_mem_list_v1_t
     {
         DWORD magic;
         void *ptr;
-        struct tag_mem_list_t *next;
-    } *mem_list;
+        struct tag_mem_list_v1_t *next;
+    } *mem_list_v1;
+    struct tag_mem_list_v2_t
+    {
+        DWORD magic;
+        DWORD size;
+        DWORD unknown;
+        struct tag_mem_list_v2_t *next;
+    } *mem_list_v2;
     const DWORD magic_MEML = 'M' << 24 | 'E' << 16 | 'M' << 8 | 'L';
 
     StubDesc = Object_StubDesc;
@@ -966,23 +973,46 @@ static void test_ndr_allocate(void)
     ok(StubMsg.pMemoryList == NULL, "memlist %p\n", StubMsg.pMemoryList);
     my_alloc_called = my_free_called = 0;
     p1 = NdrAllocate(&StubMsg, 10);
-    p2 = NdrAllocate(&StubMsg, 20);
+    p2 = NdrAllocate(&StubMsg, 24);
     ok(my_alloc_called == 2, "alloc called %d\n", my_alloc_called);
-    mem_list = StubMsg.pMemoryList;
 todo_wine {
-    ok(mem_list != NULL, "mem_list NULL\n");
+    ok(StubMsg.pMemoryList != NULL, "StubMsg.pMemoryList NULL\n");
  }
-    if(mem_list)
+    if(StubMsg.pMemoryList)
     {
-        ok(mem_list->magic == magic_MEML, "magic %08x\n", mem_list->magic);
-        ok(mem_list->ptr == p2, "ptr != p2\n");
-        ok(mem_list->next != NULL, "next NULL\n");
-        mem_list = mem_list->next;
-        if(mem_list)
+        mem_list_v2 = StubMsg.pMemoryList;
+        if (mem_list_v2->size == 24)
         {
-            ok(mem_list->magic == magic_MEML, "magic %08x\n", mem_list->magic);
-            ok(mem_list->ptr == p1, "ptr != p2\n");
-            ok(mem_list->next == NULL, "next %p\n", mem_list->next);
+            trace("v2 mem list format\n");
+            ok((char *)mem_list_v2 == (char *)p2 + 24, "expected mem_list_v2 pointer %p, but got %p\n", (char *)p2 + 24, mem_list_v2);
+            ok(mem_list_v2->magic == magic_MEML, "magic %08x\n", mem_list_v2->magic);
+            ok(mem_list_v2->size == 24, "wrong size for p2 %d\n", mem_list_v2->size);
+            ok(mem_list_v2->unknown == 0, "wrong unknown for p2 0x%x\n", mem_list_v2->unknown);
+            ok(mem_list_v2->next != NULL, "next NULL\n");
+            mem_list_v2 = mem_list_v2->next;
+            if(mem_list_v2)
+            {
+                ok((char *)mem_list_v2 == (char *)p1 + 16, "expected mem_list_v2 pointer %p, but got %p\n", (char *)p1 + 16, mem_list_v2);
+                ok(mem_list_v2->magic == magic_MEML, "magic %08x\n", mem_list_v2->magic);
+                ok(mem_list_v2->size == 16, "wrong size for p1 %d\n", mem_list_v2->size);
+                ok(mem_list_v2->unknown == 0, "wrong unknown for p1 0x%x\n", mem_list_v2->unknown);
+                ok(mem_list_v2->next == NULL, "next %p\n", mem_list_v2->next);
+            }
+        }
+        else
+        {
+            trace("v1 mem list format\n");
+            mem_list_v1 = StubMsg.pMemoryList;
+            ok(mem_list_v1->magic == magic_MEML, "magic %08x\n", mem_list_v1->magic);
+            ok(mem_list_v1->ptr == p2, "ptr != p2\n");
+            ok(mem_list_v1->next != NULL, "next NULL\n");
+            mem_list_v1 = mem_list_v1->next;
+            if(mem_list_v1)
+            {
+                ok(mem_list_v1->magic == magic_MEML, "magic %08x\n", mem_list_v1->magic);
+                ok(mem_list_v1->ptr == p1, "ptr != p1\n");
+                ok(mem_list_v1->next == NULL, "next %p\n", mem_list_v1->next);
+            }
         }
     }
     /* NdrFree isn't exported so we can't test free'ing */
