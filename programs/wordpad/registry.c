@@ -99,9 +99,8 @@ void registry_read_winrect(RECT* rc)
     HKEY hKey;
     DWORD size = sizeof(RECT);
 
-    ZeroMemory(&rc, sizeof(RECT));
     if(registry_get_handle(&hKey, 0, (LPWSTR)key_options) != ERROR_SUCCESS ||
-       RegQueryValueExW(hKey, var_framerect, 0, NULL, (LPBYTE)&rc, &size) !=
+       RegQueryValueExW(hKey, var_framerect, 0, NULL, (LPBYTE)rc, &size) !=
        ERROR_SUCCESS || size != sizeof(RECT))
     {
         rc->top = 0;
