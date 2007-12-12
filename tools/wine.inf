@@ -254,16 +254,16 @@ HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For Direc
 
 [Environment]
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"APPDATA",,"%16410%"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ComSpec",,"%11%\cmd.exe"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ComSpec",0x00020000,"%11%\cmd.exe"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"LOCALAPPDATA",,"%16412%"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATH",2,"%11%;%10%"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATH",0x00020000,"%11%;%10%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ProgramFiles",,"%16422%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SystemDrive",2,"c:"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SYSTEMROOT",,"%10%"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TEMP",,"%10%\temp"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TMP",,"%10%\temp"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TEMP",0x00020000,"%10%\temp"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TMP",0x00020000,"%10%\temp"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"USERPROFILE",,"%53%"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"windir",,"%10%"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"windir",0x00020000,"%10%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"winsysdir",,"%11%"
 
 [Fonts]
@@ -2648,6 +2648,12 @@ HKLM,"%Services%\Spooler","ImagePath",,"spoolsv.exe"
 HKLM,"%Services%\Spooler","ObjectName",,"LocalSystem"
 HKLM,"%Services%\Spooler","Start",0x10001,2
 HKLM,"%Services%\Spooler","Type",0x10001,0x110
+HKLM,"%Services%\MountMgr","Description",,"Device mounting service."
+HKLM,"%Services%\MountMgr","DisplayName",,"Mount Manager"
+HKLM,"%Services%\MountMgr","ErrorControl",0x10001,1
+HKLM,"%Services%\MountMgr","ImagePath",,"mountmgr.sys"
+HKLM,"%Services%\MountMgr","Start",0x10001,2
+HKLM,"%Services%\MountMgr","Type",0x10001,1
 HKLM,"%Services%\VxD\MSTCP",,,""
 
 [VersionInfo]
