@@ -760,6 +760,7 @@ UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent)
 
     sprintfW(keypath, szUserDataComp_fmt, usersid, comp);
 
+    msi_free(usersid);
     return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
