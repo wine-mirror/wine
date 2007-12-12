@@ -327,6 +327,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         rc = msi_media_get_disk_info(data->package, mi);
         if (rc != ERROR_SUCCESS)
         {
+            msi_free(cab);
             ERR("Failed to get next cabinet information: %d\n", rc);
             return -1;
         }
