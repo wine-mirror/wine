@@ -76,18 +76,6 @@ static struct
     HLPFILE_LINK*       link;
 } attributes;
 
-/*
- * Compare function type for HLPFILE_BPTreeSearch function.
- *
- * PARAMS
- *     p       [I] pointer to testing block (key + data)
- *     key     [I] pointer to key value to look for
- *     leaf    [I] whether this function called for index of leaf page
- *     next    [O] pointer to pointer to next block
- */
-typedef int (*HLPFILE_BPTreeCompare)(void *p, const void *key,
-                                     int leaf, void **next);
-
 static BOOL  HLPFILE_DoReadHlpFile(HLPFILE*, LPCSTR);
 static BOOL  HLPFILE_ReadFileToBuffer(HFILE);
 static BOOL  HLPFILE_FindSubFile(LPCSTR name, BYTE**, BYTE**);
@@ -105,8 +93,6 @@ static void  HLPFILE_Uncompress2(const BYTE*, const BYTE*, BYTE*, const BYTE*);
 static BOOL  HLPFILE_Uncompress3(char*, const char*, const BYTE*, const BYTE*);
 static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz);
 static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
-
-static void* HLPFILE_BPTreeSearch(BYTE*, const void*, HLPFILE_BPTreeCompare);
 
 /***********************************************************************
  *
@@ -1924,8 +1910,8 @@ static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, 
  *     Pointer to block identified by key, or NULL if failure.
  *
  */
-static void* HLPFILE_BPTreeSearch(BYTE* buf, const void* key,
-                                  HLPFILE_BPTreeCompare comp)
+void* HLPFILE_BPTreeSearch(BYTE* buf, const void* key,
+                           HLPFILE_BPTreeCompare comp)
 {
     unsigned magic;
     unsigned page_size;
@@ -1968,6 +1954,54 @@ static void* HLPFILE_BPTreeSearch(BYTE* buf, const void* key,
         ptr = newptr;
     }
     return NULL;
+}
+
+/**************************************************************************
+ * HLPFILE_BPTreeEnum
+ *
+ * Enumerates elements in B+ tree.
+ *
+ * PARAMS
+ *     buf        [I]  pointer to the embedded file structured as a B+ tree
+ *     cb         [I]  compare function
+ *     cookie     [IO] cookie for cb function
+ */
+void HLPFILE_BPTreeEnum(BYTE* buf, HLPFILE_BPTreeCallback cb, void* cookie)
+{
+    unsigned magic;
+    unsigned page_size;
+    unsigned cur_page;
+    unsigned level;
+    BYTE *pages, *ptr, *newptr;
+    int i, entries;
+
+    magic = GET_USHORT(buf, 9);
+    if (magic != 0x293B)
+    {
+        WINE_ERR("Invalid magic in B+ tree: 0x%x\n", magic);
+        return;
+    }
+    page_size = GET_USHORT(buf, 9+4);
+    cur_page  = GET_USHORT(buf, 9+26);
+    level     = GET_USHORT(buf, 9+32);
+    pages     = buf + 9 + 38;
+    while (--level > 0)
+    {
+        ptr = pages + cur_page*page_size;
+        cur_page = GET_USHORT(ptr, 4);
+    }
+    while (cur_page != 0xFFFF)
+    {
+        ptr = pages + cur_page*page_size;
+        entries = GET_SHORT(ptr, 2);
+        ptr += 8;
+        for (i = 0; i < entries; i++)
+        {
+            cb(ptr, (void **)&newptr, cookie);
+            ptr = newptr;
+        }
+        cur_page = GET_USHORT(pages+cur_page*page_size, 6);
+    }
 }
 
 

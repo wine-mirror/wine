@@ -3,6 +3,7 @@
  *
  * Copyright    1996 Ulrich Schmid
  *              2002 Eric Pouech
+ *              2007 Kirill K. Smirnov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -150,6 +151,28 @@ typedef struct tagHlpFileFile
     HLPFILE_WINDOWINFO*         windows;
 } HLPFILE;
 
+/*
+ * Compare function type for HLPFILE_BPTreeSearch function.
+ *
+ * PARAMS
+ *     p       [I] pointer to testing block (key + data)
+ *     key     [I] pointer to key value to look for
+ *     leaf    [I] whether this function called for index of leaf page
+ *     next    [O] pointer to pointer to next block
+ */
+typedef int (*HLPFILE_BPTreeCompare)(void *p, const void *key,
+                                     int leaf, void **next);
+
+/*
+ * Callback function type for HLPFILE_BPTreeEnum function.
+ *
+ * PARAMS
+ *     p       [I]  pointer to data block
+ *     next    [O]  pointer to pointer to next block
+ *     cookie  [IO] cookie data
+ */
+typedef void (*HLPFILE_BPTreeCallback)(void *p, void **next, void *cookie);
+
 HLPFILE*      HLPFILE_ReadHlpFile(LPCSTR lpszPath);
 HLPFILE_PAGE* HLPFILE_Contents(HLPFILE* hlpfile);
 HLPFILE_PAGE* HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash);
@@ -158,3 +181,6 @@ HLPFILE_PAGE* HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset);
 LONG          HLPFILE_Hash(LPCSTR lpszContext);
 void          HLPFILE_FreeLink(HLPFILE_LINK* link);
 void          HLPFILE_FreeHlpFile(HLPFILE*);
+
+void* HLPFILE_BPTreeSearch(BYTE*, const void*, HLPFILE_BPTreeCompare);
+void  HLPFILE_BPTreeEnum(BYTE*, HLPFILE_BPTreeCallback cb, void *cookie);
