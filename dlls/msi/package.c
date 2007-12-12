@@ -123,15 +123,16 @@ UINT msi_clone_properties(MSIPACKAGE *package)
             break;
 
         rc = MSI_DatabaseOpenViewW(package->db, Insert, &view2);
-        if (rc!= ERROR_SUCCESS)
+        if (rc != ERROR_SUCCESS)
+        {
+            msiobj_release(&row->hdr);
             continue;
+        }
 
-        rc = MSI_ViewExecute(view2, row);
+        MSI_ViewExecute(view2, row);
         MSI_ViewClose(view2);
         msiobj_release(&view2->hdr);
-
-        if (rc == ERROR_SUCCESS)
-            msiobj_release(&row->hdr);
+        msiobj_release(&row->hdr);
     }
 
     MSI_ViewClose(view);
