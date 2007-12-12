@@ -25,7 +25,7 @@
 #include "crt0_private.h"
 
 struct _DRIVER_OBJECT;
-extern NTSTATUS DriverEntry( struct _DRIVER_OBJECT *obj, UNICODE_STRING *path );
+extern NTSTATUS WINAPI DriverEntry( struct _DRIVER_OBJECT *obj, UNICODE_STRING *path );
 
 NTSTATUS DECLSPEC_HIDDEN __wine_spec_drv_entry( struct _DRIVER_OBJECT *obj, UNICODE_STRING *path )
 {
