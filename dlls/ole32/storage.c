@@ -716,24 +716,24 @@ STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
     WideCharToMultiByte( CP_ACP, 0, stde->pps_rawname, -1, name, sizeof(name), NULL, NULL);
 	if (!stde->pps_sizeofname)
 		return;
-	DPRINTF("name: %s\n",name);
-	DPRINTF("type: %d\n",stde->pps_type);
-	DPRINTF("prev pps: %d\n",stde->pps_prev);
-	DPRINTF("next pps: %d\n",stde->pps_next);
-	DPRINTF("dir pps: %d\n",stde->pps_dir);
-	DPRINTF("guid: %s\n",debugstr_guid(&(stde->pps_guid)));
+	TRACE("name: %s\n",name);
+	TRACE("type: %d\n",stde->pps_type);
+	TRACE("prev pps: %d\n",stde->pps_prev);
+	TRACE("next pps: %d\n",stde->pps_next);
+	TRACE("dir pps: %d\n",stde->pps_dir);
+	TRACE("guid: %s\n",debugstr_guid(&(stde->pps_guid)));
 	if (stde->pps_type !=2) {
 		time_t	t;
                 DWORD dw;
 		RtlTimeToSecondsSince1970((LARGE_INTEGER *)&(stde->pps_ft1),&dw);
                 t = dw;
-		DPRINTF("ts1: %s\n",ctime(&t));
+		TRACE("ts1: %s\n",ctime(&t));
 		RtlTimeToSecondsSince1970((LARGE_INTEGER *)&(stde->pps_ft2),&dw);
                 t = dw;
-		DPRINTF("ts2: %s\n",ctime(&t));
+		TRACE("ts2: %s\n",ctime(&t));
 	}
-	DPRINTF("startblock: %d\n",stde->pps_sb);
-	DPRINTF("size: %d\n",stde->pps_size);
+	TRACE("startblock: %d\n",stde->pps_sb);
+	TRACE("size: %d\n",stde->pps_size);
 }
 
 /******************************************************************************
