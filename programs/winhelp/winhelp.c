@@ -672,6 +672,20 @@ BOOL WINHELP_CreateHelpWindowByMap(HLPFILE* hlpfile, LONG lMap,
 
 /***********************************************************************
  *
+ *           WINHELP_CreateHelpWindowByOffset
+ */
+BOOL WINHELP_CreateHelpWindowByOffset(HLPFILE* hlpfile, LONG lOffset,
+                                      HLPFILE_WINDOWINFO* wi, int nCmdShow)
+{
+    HLPFILE_PAGE*       page = NULL;
+
+    page = HLPFILE_PageByOffset(hlpfile, lOffset);
+    if (page) page->file->wRefCount++;
+    return WINHELP_CreateHelpWindow(page, wi, nCmdShow);
+}
+
+/***********************************************************************
+ *
  *           WINHELP_MainWndProc
  */
 static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -1932,4 +1946,136 @@ WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW* win, WPARAM wParam, LPARAM
     }
 
     return NULL;
+}
+
+/**************************************************************************
+ * cb_KWBTree
+ *
+ * HLPFILE_BPTreeCallback enumeration function for '|KWBTREE' internal file.
+ *
+ */
+static void cb_KWBTree(void *p, void **next, void *cookie)
+{
+    HWND hListWnd = (HWND)cookie;
+
+    WINE_TRACE("Adding '%s' to search list\n", (char *)p);
+    SendMessage(hListWnd, LB_INSERTSTRING, -1, (LPARAM)p);
+    *next = (char*)p + strlen((char*)p) + 7;
+}
+
+/**************************************************************************
+ * comp_KWBTREE
+ *
+ * HLPFILE_BPTreeCompare function for '|KWBTREE' internal file.
+ *
+ */
+static int comp_KWBTree(void *p, const void *key,
+                        int leaf, void** next)
+{
+    WINE_TRACE("comparing key '%s' with '%s'\n", (char *)p, (char *)key);
+    *next = (char*)p+strlen(p)+1+(leaf?6:2);
+    /* unlike directory, index is case insensitive */
+    return lstrcmpi(p, key);
+}
+
+/**************************************************************************
+ * WINHELP_IndexDlgProc
+ *
+ * Index dialog callback function.
+ *
+ */
+INT_PTR CALLBACK WINHELP_SearchDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    static HLPFILE *file;
+    int sel;
+    ULONG offset = 1;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        file = (HLPFILE *)lParam;
+        HLPFILE_BPTreeEnum(file->kwbtree, cb_KWBTree,
+                           GetDlgItem(hWnd, IDC_INDEXLIST));
+        return TRUE;
+    case WM_COMMAND:
+        switch (LOWORD(wParam))
+        {
+        case IDOK:
+            sel = SendDlgItemMessage(hWnd, IDC_INDEXLIST, LB_GETCURSEL, 0, 0);
+            if (sel != LB_ERR)
+            {
+                char buf[500]; /* enough */
+                BYTE *p;
+                int count;
+
+                SendDlgItemMessage(hWnd, IDC_INDEXLIST, LB_GETTEXT,
+                                   sel, (LPARAM)buf);
+                p = HLPFILE_BPTreeSearch(file->kwbtree, buf, comp_KWBTree);
+                if (p == NULL)
+                {
+                    /*
+                     * TODO:
+                     * This may happen if help file uses other locale than
+                     * system. We should honour charset provided in help file
+                     * and use UNICODE, but for now current implementation is
+                     * acceptable (almost all help files use ANSI).
+                     */
+                    WINE_FIXME("item '%s' not found, locale mismatch???\n", buf);
+                    return TRUE;
+                }
+                count = *(short*)((char *)p + strlen((char *)p) + 1);
+                if (count > 1)
+                {
+                    MessageBox(hWnd, "count > 1 not supported yet", "Error", MB_OK | MB_ICONSTOP);
+                    return TRUE;
+                }
+                offset = *(ULONG*)((char *)p + strlen((char *)p) + 3);
+                offset = *(long*)(file->kwdata + offset + 9);
+                if (offset == 0xFFFFFFFF)
+                {
+                    MessageBox(hWnd, "macro keywords not supported yet", "Error", MB_OK | MB_ICONSTOP);
+                    return TRUE;
+                }
+            }
+            /* Fall through */
+        case IDCANCEL:
+            EndDialog(hWnd, offset);
+            return TRUE;
+        default:
+            break;
+        }
+    default:
+        break;
+    }
+    return FALSE;
+}
+
+/**************************************************************************
+ * WINHELP_CreateIndexWindow
+ *
+ * Displays a dialog with keywords of current help file.
+ *
+ */
+BOOL WINHELP_CreateIndexWindow(void)
+{
+    int ret;
+    HLPFILE *hlpfile;
+
+    if (Globals.active_win && Globals.active_win->page && Globals.active_win->page->file)
+        hlpfile = Globals.active_win->page->file;
+    else
+        return FALSE;
+
+    if (hlpfile->kwbtree == NULL)
+    {
+        WINE_TRACE("No index provided\n");
+        return FALSE;
+    }
+
+    ret = DialogBoxParam(Globals.hInstance, MAKEINTRESOURCE(IDD_INDEX),
+                         Globals.active_win->hMainWnd, WINHELP_SearchDlgProc,
+                         (LPARAM)hlpfile);
+    if (ret > 1)
+        WINHELP_CreateHelpWindowByOffset(hlpfile, ret, Globals.active_win->info, SW_NORMAL);
+    return TRUE;
 }

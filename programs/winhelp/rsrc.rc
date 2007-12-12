@@ -20,6 +20,7 @@
  */
 
 #include <windef.h>
+#include <winuser.h>
 
 #include "winhelp.h"
 #include "winhelp_res.h"

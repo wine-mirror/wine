@@ -523,7 +523,7 @@ void CALLBACK MACRO_Find(void)
 
 void CALLBACK MACRO_Finder(void)
 {
-    WINE_FIXME("()\n");
+    WINHELP_CreateIndexWindow();
 }
 
 void CALLBACK MACRO_FloatingMenu(void)
