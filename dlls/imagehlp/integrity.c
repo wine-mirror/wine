@@ -226,19 +226,25 @@ BOOL WINAPI ImageGetCertificateData(
 
     TRACE("%p %d %p %p\n", handle, Index, Certificate, RequiredLength);
 
+    if( !RequiredLength)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
     if( !IMAGEHLP_GetCertificateOffset( handle, Index, &ofs, &size ) )
         return FALSE;
-
-    if( !Certificate )
-    {
-        *RequiredLength = size;
-        return TRUE;
-    }
 
     if( *RequiredLength < size )
     {
         *RequiredLength = size;
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    if( !Certificate )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -255,6 +261,7 @@ BOOL WINAPI ImageGetCertificateData(
         return FALSE;
 
     TRACE("OK\n");
+    SetLastError( NO_ERROR );
 
     return TRUE;
 }
