@@ -1270,23 +1270,17 @@ static void PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
   m = NdrFreer[*desc & NDR_TABLE_MASK];
   if (m) m(pStubMsg, Pointer, desc);
 
-  /* we should check if the memory comes from NdrAllocate,
-   * and deallocate only if so - checking if the pointer is between
-   * BufferStart and BufferEnd will not always work since the buffer
-   * may be reallocated when the server wants to marshal the reply */
-  if (Pointer >= (unsigned char *)pStubMsg->RpcMsg->Buffer ||
-      Pointer <= (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength)
-      goto notfree;
-
   if (attr & RPC_FC_P_ONSTACK) {
     TRACE("not freeing stack ptr %p\n", Pointer);
     return;
   }
+
+  /* try to free everything else. NdrFree will do the job of sorting out
+   * whether we allocated it or whether the app did */
+
   TRACE("freeing %p\n", Pointer);
   NdrFree(pStubMsg, Pointer);
   return;
-notfree:
-  TRACE("not freeing %p\n", Pointer);
 }
 
 /***********************************************************************
