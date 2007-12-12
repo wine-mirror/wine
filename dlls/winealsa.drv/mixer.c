@@ -233,8 +233,7 @@ static int blacklisted(snd_mixer_elem_t *elem)
     BOOL blisted = 0;
 
     if (!snd_mixer_selem_has_playback_volume(elem) &&
-        (!snd_mixer_selem_has_capture_volume(elem) ||
-         !snd_mixer_selem_has_capture_switch(elem)))
+        !snd_mixer_selem_has_capture_volume(elem))
         blisted = 1;
 
     TRACE("%s: %x\n", name, blisted);
@@ -382,7 +381,7 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
             else if (!capt)
                 continue;
 
-            if (capt && snd_mixer_selem_has_capture_switch(elem))
+            if (capt && snd_mixer_selem_has_capture_volume(elem))
             {
                 (++mline)->component = comp;
                 MultiByteToWideChar(CP_UNIXCP, 0, name, -1, mline->name, MAXPNAMELEN);
@@ -473,7 +472,7 @@ static void ALSA_MixerInit(void)
                 captelem = elem;
             else if (!blacklisted(elem))
             {
-                if (snd_mixer_selem_has_capture_switch(elem))
+                if (snd_mixer_selem_has_capture_volume(elem))
                     ++capcontrols;
                 if (snd_mixer_selem_has_playback_volume(elem))
                 {
@@ -1306,14 +1305,14 @@ static DWORD MIX_GetLineInfo(UINT wDevID, LPMIXERLINEW Ml, DWORD_PTR flags)
         return MMSYSERR_INVALPARAM;
     }
 
-    Ml->fdwLine = MIXERLINE_LINEF_ACTIVE;
     Ml->dwUser  = 0;
-
+    Ml->fdwLine = MIXERLINE_LINEF_DISCONNECTED;
     switch (qf)
     {
     case MIXER_GETLINEINFOF_COMPONENTTYPE:
     {
         Ml->dwLineID = 0xFFFF;
+        TRACE("Looking for componenttype %d/%x\n", Ml->dwComponentType, Ml->dwComponentType);
         for (idx = 0; idx < mmixer->chans; ++idx)
             if (mmixer->lines[idx].component == Ml->dwComponentType)
             {
@@ -1383,6 +1382,8 @@ static DWORD MIX_GetLineInfo(UINT wDevID, LPMIXERLINEW Ml, DWORD_PTR flags)
         return MMSYSERR_INVALPARAM;
     }
 
+    Ml->fdwLine &= ~MIXERLINE_LINEF_DISCONNECTED;
+    Ml->fdwLine |= MIXERLINE_LINEF_ACTIVE;
     if (Ml->dwLineID >= mmixer->dests)
         Ml->fdwLine |= MIXERLINE_LINEF_SOURCE;
 
