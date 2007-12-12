@@ -317,6 +317,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
         case 23: /* installs another package in the source tree */
             deformat_string(package,target,&deformated);
             rc = HANDLE_CustomType23(package,source,deformated,type,action);
+            msi_free(deformated);
             break;
         case 50: /*EXE file specified by a property value */
             rc = HANDLE_CustomType50(package,source,target,type,action);
