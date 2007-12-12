@@ -182,7 +182,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
 
 .man.in.man:
-	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $< >$@ || ($(RM) $@ && false)
+	LC_ALL=C sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $< >$@ || ($(RM) $@ && false)
 
 # 'all' target first in case the enclosing Makefile didn't define any target
 
