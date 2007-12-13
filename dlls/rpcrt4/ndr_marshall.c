@@ -1270,12 +1270,14 @@ static void PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
   m = NdrFreer[*desc & NDR_TABLE_MASK];
   if (m) m(pStubMsg, Pointer, desc);
 
-  /* we should check if the memory comes from NdrAllocate,
-   * and deallocate only if so - checking if the pointer is between
-   * BufferStart and BufferEnd will not always work since the buffer
-   * may be reallocated when the server wants to marshal the reply */
-  if (Pointer >= (unsigned char *)pStubMsg->RpcMsg->Buffer ||
-      Pointer <= (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength)
+  /* this check stops us from trying to free buffer memory. we don't have to
+   * worry about clients, since they won't call this function.
+   * we don't have to check for the buffer being reallocated because
+   * BufferStart and BufferEnd won't be reset when allocating memory for
+   * sending the response. we don't have to check for the new buffer here as
+   * it won't be used a type memory, only for buffer memory */
+  if (Pointer >= (unsigned char *)pStubMsg->BufferStart &&
+      Pointer < (unsigned char *)pStubMsg->BufferEnd)
       goto notfree;
 
   if (attr & RPC_FC_P_ONSTACK) {
