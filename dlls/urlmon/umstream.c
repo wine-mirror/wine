@@ -19,23 +19,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
+#include "urlmon_main.h"
 
-#define COBJMACROS
-
-#include "windef.h"
-#include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "winuser.h"
-#include "objbase.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
-#include "ole2.h"
-#include "urlmon.h"
 #include "wininet.h"
 #include "shlwapi.h"
-#include "urlmon_main.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 

@@ -22,21 +22,10 @@
  * - Handle redirects as native.
  */
 
-#include <stdarg.h>
-
-#define COBJMACROS
-#define NONAMELESSUNION
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "ole2.h"
-#include "urlmon.h"
-#include "wininet.h"
 #include "urlmon_main.h"
+#include "wininet.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 

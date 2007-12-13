@@ -18,25 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "winreg.h"
-#include "winerror.h"
-#include "advpub.h"
-
-#include "objbase.h"
-
-#include "urlmon.h"
-
-#include "wine/debug.h"
 
 #include "urlmon_main.h"
+
+#include "winreg.h"
+#include "advpub.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
