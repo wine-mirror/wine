@@ -2521,6 +2521,36 @@ static void test_GetSystemMetrics( void)
     ReleaseDC( 0, hdc);
 }
 
+static void test_EnumDisplaySettings(void)
+{
+    DEVMODE devmode;
+    DWORD val;
+    HDC hdc;
+
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
+    EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+
+    hdc = GetDC(0);
+    val = GetDeviceCaps(hdc, BITSPIXEL);
+    if(devmode.dmBitsPerPel == 32 && val == 24) {
+        todo_wine ok(devmode.dmBitsPerPel == val, "GetDeviceCaps(BITSPIXEL) returned %d, EnumDisplaySettings returned %d\n",
+                     val, devmode.dmBitsPerPel);
+    } else {
+        ok(devmode.dmBitsPerPel == val, "GetDeviceCaps(BITSPIXEL) returned %d, EnumDisplaySettings returned %d\n",
+           val, devmode.dmBitsPerPel);
+    }
+
+    val = GetDeviceCaps(hdc, NUMCOLORS);
+    if(devmode.dmBitsPerPel <= 8) {
+        ok(val == 256, "Screen bpp is %d, NUMCOLORS returned %d\n", devmode.dmBitsPerPel, val);
+    } else {
+        ok(val == -1, "Screen bpp is %d, NUMCOLORS returned %d\n", devmode.dmBitsPerPel, val);
+    }
+
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(sysparams)
 {
     int argc;
@@ -2545,6 +2575,8 @@ START_TEST(sysparams)
 
     trace("testing GetSystemMetrics with your current desktop settings\n");
     test_GetSystemMetrics( );
+    trace("testing EnumDisplaySettings vs GetDeviceCaps\n");
+    test_EnumDisplaySettings( );
 
     change_counter = 0;
     change_last_param = 0;
