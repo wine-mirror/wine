@@ -788,7 +788,8 @@ UINT WINAPI GetKeyboardLayoutList(INT nBuff, HKL *layouts)
  */
 BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk)
 {
-    FIXME_(keyboard)("(%p,%d,0x%08x,%d): stub\n",hwnd,id,modifiers,vk);
+    static int once;
+    if (!once++) FIXME_(keyboard)("(%p,%d,0x%08x,%d): stub\n",hwnd,id,modifiers,vk);
     return TRUE;
 }
 
@@ -797,7 +798,8 @@ BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk)
  */
 BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id)
 {
-    FIXME_(keyboard)("(%p,%d): stub\n",hwnd,id);
+    static int once;
+    if (!once++) FIXME_(keyboard)("(%p,%d): stub\n",hwnd,id);
     return TRUE;
 }
 
