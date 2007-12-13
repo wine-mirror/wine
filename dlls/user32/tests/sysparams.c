@@ -150,16 +150,26 @@ static LRESULT CALLBACK SysParamsTestWndProc( HWND hWnd, UINT msg, WPARAM wParam
                                               LPARAM lParam );
 static int change_counter;
 static int change_last_param;
+static int last_bpp;
+static BOOL displaychange_ok = FALSE, displaychange_test_active = FALSE;
+static HANDLE displaychange_sem = 0;
 
 static LRESULT CALLBACK SysParamsTestWndProc( HWND hWnd, UINT msg, WPARAM wParam,
                                               LPARAM lParam )
 {
     switch (msg) {
 
+    case WM_DISPLAYCHANGE:
+        ok(displaychange_ok, "Unexpected WM_DISPLAYCHANGE message\n");
+        last_bpp = wParam;
+        displaychange_ok = FALSE;
+        ReleaseSemaphore(displaychange_sem, 1, 0);
+        break;
+
     case WM_SETTINGCHANGE:
         if (change_counter>0) { 
             /* ignore these messages caused by resizing of toolbars */
-            if( wParam == SPI_SETWORKAREA) break;
+            if( wParam == SPI_SETWORKAREA || displaychange_test_active) break;
             if( change_last_param == SPI_SETWORKAREA) {
                 change_last_param = wParam;
                 break;
@@ -175,6 +185,7 @@ static LRESULT CALLBACK SysParamsTestWndProc( HWND hWnd, UINT msg, WPARAM wParam
         PostQuitMessage( 0 );
         break;
 
+    /* drop through */
     default:
         return( DefWindowProcA( hWnd, msg, wParam, lParam ) );
     }
@@ -2169,6 +2180,78 @@ static void test_SPI_SETWALLPAPER( void )              /*   115 */
     test_reg_key(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, oldval);
 }
 
+static void test_WM_DISPLAYCHANGE(void)
+{
+    DEVMODE mode, startmode;
+    int start_bpp, last_set_bpp = 0;
+    int test_bpps[] = {8, 16, 24, 32}, i;
+    LONG change_ret;
+    DWORD wait_ret;
+
+    displaychange_test_active = TRUE;
+
+    memset(&startmode, 0, sizeof(startmode));
+    startmode.dmSize = sizeof(startmode);
+    EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &startmode);
+    start_bpp = startmode.dmBitsPerPel;
+
+    displaychange_sem = CreateSemaphore(NULL, 0, 1, NULL);
+
+    for(i = 0; i < sizeof(test_bpps)/sizeof(test_bpps[0]); i++) {
+        last_bpp = -1;
+
+        memset(&mode, 0, sizeof(mode));
+        mode.dmSize = sizeof(mode);
+        mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+        mode.dmBitsPerPel = test_bpps[i];
+        mode.dmPelsWidth = GetSystemMetrics(SM_CXSCREEN);
+        mode.dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
+
+        change_counter = 0; /* This sends a SETTINGSCHANGE message as well in which we aren't interested */
+        displaychange_ok = TRUE;
+        change_ret = ChangeDisplaySettingsEx(NULL, &mode, NULL, 0, NULL);
+        /* Wait quite long for the message, screen setting changes can take some time */
+        if(change_ret == DISP_CHANGE_SUCCESSFUL) {
+            wait_ret = WaitForSingleObject(displaychange_sem, 10000);
+            ok(wait_ret == WAIT_OBJECT_0, "Waiting for the WM_DISPLAYCHANGE message timed out\n");
+        }
+        displaychange_ok = FALSE;
+
+        if(change_ret != DISP_CHANGE_SUCCESSFUL) {
+            skip("Setting depth %d failed(ret = %d)\n", test_bpps[i], change_ret);
+            ok(last_bpp == -1, "WM_DISPLAYCHANGE was sent with wParam %d despide mode change failure\n", last_bpp);
+            continue;
+        }
+
+        if((start_bpp != test_bpps[i] ||
+           (test_bpps[i] == 32 && last_bpp == 24)) &&
+            !(test_bpps[i] == 24 && start_bpp == 32)) {
+            todo_wine ok(last_bpp == test_bpps[i], "Set bpp %d, but WM_DISPLAYCHANGE reported bpp %d\n", test_bpps[i], last_bpp);
+        } else {
+            ok(last_bpp == test_bpps[i], "Set bpp %d, but WM_DISPLAYCHANGE reported bpp %d\n", test_bpps[i], last_bpp);
+        }
+        last_set_bpp = test_bpps[i];
+    }
+
+    if(start_bpp != last_set_bpp && last_set_bpp != 0) {
+        memset(&mode, 0, sizeof(mode));
+        mode.dmSize = sizeof(mode);
+        mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+        mode.dmBitsPerPel = start_bpp;
+        mode.dmPelsWidth = GetSystemMetrics(SM_CXSCREEN);
+        mode.dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
+
+        displaychange_ok = TRUE;
+        change_ret = ChangeDisplaySettingsEx(NULL, &mode, NULL, 0, NULL);
+        WaitForSingleObject(displaychange_sem, 10000);
+        displaychange_ok = FALSE;
+        CloseHandle(displaychange_sem);
+        displaychange_sem = 0;
+    }
+
+    displaychange_test_active = FALSE;
+}
+
 /*
  * Registry entries for the system parameters.
  * Names are created by 'SET' flags names.
@@ -2210,6 +2293,9 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     test_SPI_SETWHEELSCROLLLINES();             /*    105 */
     test_SPI_SETMENUSHOWDELAY();                /*    107 */
     test_SPI_SETWALLPAPER();                    /*    115 */
+
+    test_WM_DISPLAYCHANGE();
+
     SendMessageA( ghTestWnd, WM_DESTROY, 0, 0 );
     return 0;
 }
