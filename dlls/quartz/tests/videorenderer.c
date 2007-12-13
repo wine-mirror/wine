@@ -43,19 +43,20 @@
 
 static IUnknown *pVideoRenderer = NULL;
 
-static void test_aggregation(void)
+static void test_aggregation(const CLSID clsidOuter, const CLSID clsidInner,
+                             const IID iidOuter, const IID iidInner)
 {
     HRESULT hr;
     IUnknown *pUnkOuter = NULL;
     IUnknown *pUnkInner = NULL;
-    IVideoWindow *pVideoWindowInner = NULL;
+    IUnknown *pUnkInnerFail = NULL;
     IUnknown *pUnkOuterTest = NULL;
     IUnknown *pUnkInnerTest = NULL;
-    IVideoWindow *pVideoWindowTest = NULL;
-    IReferenceClock *pReferenceClockTest = NULL;
+    IUnknown *pUnkAggregatee = NULL;
+    IUnknown *pUnkAggregator = NULL;
     IUnknown *pUnkTest = NULL;
 
-    hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&clsidOuter, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IUnknown, (LPVOID*)&pUnkOuter);
     ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
     ok(pUnkOuter != NULL, "pUnkOuter is NULL\n");
@@ -67,13 +68,13 @@ static void test_aggregation(void)
     }
 
     /* for aggregation, we should only be able to request IUnknown */
-    hr = CoCreateInstance(&CLSID_VideoRenderer, pUnkOuter, CLSCTX_INPROC_SERVER,
-                          &IID_IVideoWindow, (LPVOID*)&pVideoWindowInner);
+    hr = CoCreateInstance(&clsidInner, pUnkOuter, CLSCTX_INPROC_SERVER,
+                          &iidInner, (LPVOID*)&pUnkInnerFail);
     ok(hr == E_NOINTERFACE, "CoCreateInstance returned %x\n", hr);
-    ok(pVideoWindowInner == NULL, "pVideoWindowInner is not NULL\n");
+    ok(pUnkInnerFail == NULL, "pUnkInnerFail is not NULL\n");
 
     /* aggregation, request IUnknown */
-    hr = CoCreateInstance(&CLSID_VideoRenderer, pUnkOuter, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&clsidInner, pUnkOuter, CLSCTX_INPROC_SERVER,
                           &IID_IUnknown, (LPVOID*)&pUnkInner);
     ok(hr == S_OK, "CoCreateInstance returned %x\n", hr);
     ok(pUnkInner != NULL, "pUnkInner is NULL\n");
@@ -89,49 +90,49 @@ static void test_aggregation(void)
     RELEASE_EXPECT(pUnkOuter, 1);
     RELEASE_EXPECT(pUnkInner, 1);
 
-    QI_FAIL(pUnkOuter, IID_IVideoWindow, pVideoWindowTest);
-    QI_FAIL(pUnkInner, IID_IReferenceClock, pReferenceClockTest);
+    QI_FAIL(pUnkOuter, iidInner, pUnkAggregatee);
+    QI_FAIL(pUnkInner, iidOuter, pUnkAggregator);
 
     /* these QueryInterface calls should work */
-    QI_SUCCEED(pUnkOuter, IID_IReferenceClock, pReferenceClockTest);
+    QI_SUCCEED(pUnkOuter, iidOuter, pUnkAggregator);
     QI_SUCCEED(pUnkOuter, IID_IUnknown, pUnkOuterTest);
-    QI_SUCCEED(pUnkInner, IID_IVideoWindow, pVideoWindowTest);
+    QI_SUCCEED(pUnkInner, iidInner, pUnkAggregatee);
     QI_SUCCEED(pUnkInner, IID_IUnknown, pUnkInnerTest);
 
-    if (!pReferenceClockTest || !pUnkOuterTest || !pVideoWindowTest \
+    if (!pUnkAggregator || !pUnkOuterTest || !pUnkAggregatee \
                     || !pUnkInnerTest)
     {
         skip("One of the required interfaces is NULL\n");
         return;
     }
 
-    ADDREF_EXPECT(pReferenceClockTest, 5);
+    ADDREF_EXPECT(pUnkAggregator, 5);
     ADDREF_EXPECT(pUnkOuterTest, 6);
-    ADDREF_EXPECT(pVideoWindowTest, 7);
+    ADDREF_EXPECT(pUnkAggregatee, 7);
     ADDREF_EXPECT(pUnkInnerTest, 3);
-    RELEASE_EXPECT(pReferenceClockTest, 6);
+    RELEASE_EXPECT(pUnkAggregator, 6);
     RELEASE_EXPECT(pUnkOuterTest, 5);
-    RELEASE_EXPECT(pVideoWindowTest, 4);
+    RELEASE_EXPECT(pUnkAggregatee, 4);
     RELEASE_EXPECT(pUnkInnerTest, 2);
 
-    QI_SUCCEED(pReferenceClockTest, IID_IUnknown, pUnkTest);
+    QI_SUCCEED(pUnkAggregator, IID_IUnknown, pUnkTest);
     QI_SUCCEED(pUnkOuterTest, IID_IUnknown, pUnkTest);
-    QI_SUCCEED(pVideoWindowTest, IID_IUnknown, pUnkTest);
+    QI_SUCCEED(pUnkAggregatee, IID_IUnknown, pUnkTest);
     QI_SUCCEED(pUnkInnerTest, IID_IUnknown, pUnkTest);
 
-    QI_FAIL(pReferenceClockTest, IID_IVideoWindow, pUnkTest);
-    QI_FAIL(pUnkOuterTest, IID_IVideoWindow, pUnkTest);
-    QI_FAIL(pVideoWindowTest, IID_IVideoWindow, pUnkTest);
-    QI_SUCCEED(pUnkInnerTest, IID_IVideoWindow, pUnkTest);
+    QI_FAIL(pUnkAggregator, iidInner, pUnkTest);
+    QI_FAIL(pUnkOuterTest, iidInner, pUnkTest);
+    QI_FAIL(pUnkAggregatee, iidInner, pUnkTest);
+    QI_SUCCEED(pUnkInnerTest, iidInner, pUnkTest);
 
-    QI_SUCCEED(pReferenceClockTest, IID_IReferenceClock, pUnkTest);
-    QI_SUCCEED(pUnkOuterTest, IID_IReferenceClock, pUnkTest);
-    QI_SUCCEED(pVideoWindowTest, IID_IReferenceClock, pUnkTest);
-    QI_FAIL(pUnkInnerTest, IID_IReferenceClock, pUnkTest);
+    QI_SUCCEED(pUnkAggregator, iidOuter, pUnkTest);
+    QI_SUCCEED(pUnkOuterTest, iidOuter, pUnkTest);
+    QI_SUCCEED(pUnkAggregatee, iidOuter, pUnkTest);
+    QI_FAIL(pUnkInnerTest, iidOuter, pUnkTest);
 
-    RELEASE_EXPECT(pReferenceClockTest, 10);
+    RELEASE_EXPECT(pUnkAggregator, 10);
     RELEASE_EXPECT(pUnkOuterTest, 9);
-    RELEASE_EXPECT(pVideoWindowTest, 8);
+    RELEASE_EXPECT(pUnkAggregatee, 8);
     RELEASE_EXPECT(pUnkInnerTest, 2);
     RELEASE_EXPECT(pUnkOuter, 7);
     RELEASE_EXPECT(pUnkInner, 1);
@@ -196,7 +197,8 @@ START_TEST(videorenderer)
         return;
 
     test_query_interface();
-    test_aggregation();
+    test_aggregation(CLSID_SystemClock, CLSID_VideoRenderer,
+                     IID_IReferenceClock, IID_IVideoWindow);
 
     release_video_renderer();
 }
