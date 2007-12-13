@@ -89,6 +89,7 @@ static HRESULT WINAPI EnumMonikerImpl_QueryInterface(
         return S_OK;
     }
 
+    *ppvObj = NULL;
     FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }

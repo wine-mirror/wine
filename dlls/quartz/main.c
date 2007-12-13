@@ -89,6 +89,7 @@ DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 	return S_OK;
     }
 
+    *ppobj = NULL;
     WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
     return E_NOINTERFACE;
 }

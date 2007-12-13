@@ -38,9 +38,7 @@ static void test_IReferenceClock_query_interface(const char * clockdesc, IRefere
 
     hr = IReferenceClock_QueryInterface(pClock, &IID_IDirectDraw, (LPVOID *)&pF);
     ok(hr == E_NOINTERFACE, "IReferenceClock_QueryInterface returned %x\n", hr);
-    todo_wine {
     ok(pF == NULL, "pF is not NULL\n");
-    }
 
     hr = IReferenceClock_QueryInterface(pClock, &IID_IReferenceClock, (LPVOID *)&pF);
     ok(hr == S_OK, "IReferenceClock_QueryInterface returned %x\n", hr);
