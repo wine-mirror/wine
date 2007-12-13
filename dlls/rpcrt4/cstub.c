@@ -595,7 +595,5 @@ void WINAPI NdrStubGetBuffer(LPRPCSTUBBUFFER iface,
     return;
   }
 
-  pStubMsg->BufferStart = pStubMsg->RpcMsg->Buffer;
-  pStubMsg->BufferEnd = pStubMsg->BufferStart + pStubMsg->BufferLength;
-  pStubMsg->Buffer = pStubMsg->BufferStart;
+  pStubMsg->Buffer = pStubMsg->RpcMsg->Buffer;
 }
