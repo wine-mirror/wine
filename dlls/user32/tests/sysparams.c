@@ -2223,9 +2223,7 @@ static void test_WM_DISPLAYCHANGE(void)
             continue;
         }
 
-        if((start_bpp != test_bpps[i] ||
-           (test_bpps[i] == 32 && last_bpp == 24)) &&
-            !(test_bpps[i] == 24 && start_bpp == 32)) {
+        if(start_bpp != test_bpps[i]) {
             todo_wine ok(last_bpp == test_bpps[i], "Set bpp %d, but WM_DISPLAYCHANGE reported bpp %d\n", test_bpps[i], last_bpp);
         } else {
             ok(last_bpp == test_bpps[i], "Set bpp %d, but WM_DISPLAYCHANGE reported bpp %d\n", test_bpps[i], last_bpp);
@@ -2533,13 +2531,8 @@ static void test_EnumDisplaySettings(void)
 
     hdc = GetDC(0);
     val = GetDeviceCaps(hdc, BITSPIXEL);
-    if(devmode.dmBitsPerPel == 32 && val == 24) {
-        todo_wine ok(devmode.dmBitsPerPel == val, "GetDeviceCaps(BITSPIXEL) returned %d, EnumDisplaySettings returned %d\n",
-                     val, devmode.dmBitsPerPel);
-    } else {
-        ok(devmode.dmBitsPerPel == val, "GetDeviceCaps(BITSPIXEL) returned %d, EnumDisplaySettings returned %d\n",
-           val, devmode.dmBitsPerPel);
-    }
+    ok(devmode.dmBitsPerPel == val, "GetDeviceCaps(BITSPIXEL) returned %d, EnumDisplaySettings returned %d\n",
+        val, devmode.dmBitsPerPel);
 
     val = GetDeviceCaps(hdc, NUMCOLORS);
     if(devmode.dmBitsPerPel <= 8) {

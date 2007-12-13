@@ -179,7 +179,6 @@ static LONG X11DRV_XRandR_SetCurrentMode(int mode)
     unsigned int i;
     int j;
     DWORD dwBpp = screen_bpp;
-    if (dwBpp == 24) dwBpp = 32;
 
     wine_tsx11_lock();
     root = RootWindow (gdi_display, DefaultScreen(gdi_display));

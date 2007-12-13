@@ -1638,11 +1638,7 @@ static void test_select_object(void)
             ok(hbm_old != 0, "SelectObject failed, BITSPIXEL: %d, created depth: %d\n", bpp, depths[i]);
             SelectObject(hdc, hbm_old);
         } else {
-            if(bpp == 24 && depths[i] == 32) {
-                todo_wine ok(hbm_old == 0, "SelectObject should fail. BITSPIXELS: %d, created depth: %d\n", bpp, depths[i]);
-            } else {
-                ok(hbm_old == 0, "SelectObject should fail. BITSPIXELS: %d, created depth: %d\n", bpp, depths[i]);
-            }
+            ok(hbm_old == 0, "SelectObject should fail. BITSPIXELS: %d, created depth: %d\n", bpp, depths[i]);
         }
 
         memset(&bm, 0xAA, sizeof(bm));

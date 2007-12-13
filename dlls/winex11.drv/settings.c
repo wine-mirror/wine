@@ -44,7 +44,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11settings);
 static LPDDHALMODEINFO dd_modes = NULL;
 static unsigned int dd_mode_count = 0;
 static unsigned int dd_max_modes = 0;
-static const unsigned int depths[]  = {8, 16, 32};
+/* All Windows drivers seen so far either support 32 bit depths, or 24 bit depths, but never both. So if we have
+ * a 32 bit framebuffer, report 32 bit bpps, otherwise 24 bit ones.
+ */
+static const unsigned int depths_24[]  = {8, 16, 24};
+static const unsigned int depths_32[]  = {8, 16, 32};
 
 /* pointers to functions that actually do the hard stuff */
 static int (*pGetCurrentMode)(void);
@@ -92,7 +96,6 @@ void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigne
         ERR("Maximum modes (%d) exceeded\n", dd_max_modes);
         return;
     }
-    if (dwBpp == 24) dwBpp = 32;
     if (bpp == 0) bpp = dwBpp;
     info->dwWidth        = width;
     info->dwHeight       = height;
@@ -115,7 +118,7 @@ void X11DRV_Settings_AddDepthModes(void)
     int i, j;
     int existing_modes = dd_mode_count;
     DWORD dwBpp = screen_bpp;
-    if (dwBpp == 24) dwBpp = 32;
+    const DWORD *depths = screen_bpp == 32 ? depths_32 : depths_24;
 
     for (j=0; j<3; j++)
     {
@@ -360,7 +363,7 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
               devmode->dmPelsWidth,devmode->dmPelsHeight,
               devmode->dmBitsPerPel,devmode->dmDisplayFrequency, handler_name);
 
-        dwBpp = (devmode->dmBitsPerPel == 24) ? 32 : devmode->dmBitsPerPel;
+        dwBpp = devmode->dmBitsPerPel;
         if (devmode->dmFields & DM_BITSPERPEL) def_mode &= !dwBpp;
         if (devmode->dmFields & DM_PELSWIDTH)  def_mode &= !devmode->dmPelsWidth;
         if (devmode->dmFields & DM_PELSHEIGHT) def_mode &= !devmode->dmPelsHeight;
