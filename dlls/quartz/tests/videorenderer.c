@@ -27,6 +27,10 @@
     ok(hr == S_OK, "IUnknown_QueryInterface returned %x\n", hr); \
     ok(ppv != NULL, "Pointer is NULL\n");
 
+#define QI_FAIL(iface, riid, ppv) hr = IUnknown_QueryInterface(iface, &riid, (LPVOID*)&ppv); \
+    ok(hr == E_NOINTERFACE, "IUnknown_QueryInterface returned %x\n", hr); \
+    ok(ppv == NULL, "Pointer is %p\n", ppv);
+
 #define ADDREF_EXPECT(iface, num) if (iface) { \
     hr = IUnknown_AddRef(iface); \
     ok(hr == num, "IUnknown_AddRef should return %d, got %d\n", num, hr); \
@@ -38,6 +42,104 @@
 }
 
 static IUnknown *pVideoRenderer = NULL;
+
+static void test_aggregation(void)
+{
+    HRESULT hr;
+    IUnknown *pUnkOuter = NULL;
+    IUnknown *pUnkInner = NULL;
+    IVideoWindow *pVideoWindowInner = NULL;
+    IUnknown *pUnkOuterTest = NULL;
+    IUnknown *pUnkInnerTest = NULL;
+    IVideoWindow *pVideoWindowTest = NULL;
+    IReferenceClock *pReferenceClockTest = NULL;
+    IUnknown *pUnkTest = NULL;
+
+    hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IUnknown, (LPVOID*)&pUnkOuter);
+    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
+    ok(pUnkOuter != NULL, "pUnkOuter is NULL\n");
+
+    if (!pUnkOuter)
+    {
+        skip("pUnkOuter is NULL\n");
+        return;
+    }
+
+    /* for aggregation, we should only be able to request IUnknown */
+    hr = CoCreateInstance(&CLSID_VideoRenderer, pUnkOuter, CLSCTX_INPROC_SERVER,
+                          &IID_IVideoWindow, (LPVOID*)&pVideoWindowInner);
+    todo_wine {
+    ok(hr == E_NOINTERFACE, "CoCreateInstance returned %x\n", hr);
+    }
+    ok(pVideoWindowInner == NULL, "pVideoWindowInner is not NULL\n");
+
+    /* aggregation, request IUnknown */
+    hr = CoCreateInstance(&CLSID_VideoRenderer, pUnkOuter, CLSCTX_INPROC_SERVER,
+                          &IID_IUnknown, (LPVOID*)&pUnkInner);
+    todo_wine {
+    ok(hr == S_OK, "CoCreateInstance returned %x\n", hr);
+    ok(pUnkInner != NULL, "pUnkInner is NULL\n");
+    }
+
+    if (!pUnkInner)
+    {
+        skip("pUnkInner is NULL\n");
+        return;
+    }
+
+    ADDREF_EXPECT(pUnkOuter, 2);
+    ADDREF_EXPECT(pUnkInner, 2);
+    RELEASE_EXPECT(pUnkOuter, 1);
+    RELEASE_EXPECT(pUnkInner, 1);
+
+    QI_FAIL(pUnkOuter, IID_IVideoWindow, pVideoWindowTest);
+    QI_FAIL(pUnkInner, IID_IReferenceClock, pReferenceClockTest);
+
+    /* these QueryInterface calls should work */
+    QI_SUCCEED(pUnkOuter, IID_IReferenceClock, pReferenceClockTest);
+    QI_SUCCEED(pUnkOuter, IID_IUnknown, pUnkOuterTest);
+    QI_SUCCEED(pUnkInner, IID_IVideoWindow, pVideoWindowTest);
+    QI_SUCCEED(pUnkInner, IID_IUnknown, pUnkInnerTest);
+
+    if (!pReferenceClockTest || !pUnkOuterTest || !pVideoWindowTest \
+                    || !pUnkInnerTest)
+    {
+        skip("One of the required interfaces is NULL\n");
+        return;
+    }
+
+    ADDREF_EXPECT(pReferenceClockTest, 5);
+    ADDREF_EXPECT(pUnkOuterTest, 6);
+    ADDREF_EXPECT(pVideoWindowTest, 7);
+    ADDREF_EXPECT(pUnkInnerTest, 3);
+    RELEASE_EXPECT(pReferenceClockTest, 6);
+    RELEASE_EXPECT(pUnkOuterTest, 5);
+    RELEASE_EXPECT(pVideoWindowTest, 4);
+    RELEASE_EXPECT(pUnkInnerTest, 2);
+
+    QI_SUCCEED(pReferenceClockTest, IID_IUnknown, pUnkTest);
+    QI_SUCCEED(pUnkOuterTest, IID_IUnknown, pUnkTest);
+    QI_SUCCEED(pVideoWindowTest, IID_IUnknown, pUnkTest);
+    QI_SUCCEED(pUnkInnerTest, IID_IUnknown, pUnkTest);
+
+    QI_FAIL(pReferenceClockTest, IID_IVideoWindow, pUnkTest);
+    QI_FAIL(pUnkOuterTest, IID_IVideoWindow, pUnkTest);
+    QI_FAIL(pVideoWindowTest, IID_IVideoWindow, pUnkTest);
+    QI_SUCCEED(pUnkInnerTest, IID_IVideoWindow, pUnkTest);
+
+    QI_SUCCEED(pReferenceClockTest, IID_IReferenceClock, pUnkTest);
+    QI_SUCCEED(pUnkOuterTest, IID_IReferenceClock, pUnkTest);
+    QI_SUCCEED(pVideoWindowTest, IID_IReferenceClock, pUnkTest);
+    QI_FAIL(pUnkInnerTest, IID_IReferenceClock, pUnkTest);
+
+    RELEASE_EXPECT(pReferenceClockTest, 10);
+    RELEASE_EXPECT(pUnkOuterTest, 9);
+    RELEASE_EXPECT(pVideoWindowTest, 8);
+    RELEASE_EXPECT(pUnkInnerTest, 2);
+    RELEASE_EXPECT(pUnkOuter, 7);
+    RELEASE_EXPECT(pUnkInner, 1);
+}
 
 static int create_video_renderer(void)
 {
@@ -98,6 +200,7 @@ START_TEST(videorenderer)
         return;
 
     test_query_interface();
+    test_aggregation();
 
     release_video_renderer();
 }
