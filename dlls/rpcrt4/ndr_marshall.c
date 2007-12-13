@@ -25,8 +25,7 @@
  *  - transmit_as/represent as
  *  - Multi-dimensional arrays
  *  - Conversion functions (NdrConvert)
- *  - Checks for integer addition overflow
- *  - Checks for out-of-memory conditions
+ *  - Checks for integer addition overflow in base type and user marshall functions
  */
 
 #include <stdarg.h>
