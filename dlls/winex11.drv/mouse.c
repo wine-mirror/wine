@@ -409,6 +409,7 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
     int and_width_bytes, xor_width_bytes;
     XcursorPixel *pixel_ptr;
     XcursorImage *image;
+    BOOL alpha_zero = TRUE;
 
     ymax = (ptr->nHeight > 32) ? 32 : ptr->nHeight;
     xmax = (ptr->nWidth > 32) ? 32 : ptr->nWidth;
@@ -424,6 +425,37 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
 
     image = pXcursorImageCreate( xmax, ymax );
     pixel_ptr = image->pixels;
+
+    /* Generally 32 bit bitmaps have an alpha channel which is used in favor
+     * of the AND mask. However, if all pixels have alpha = 0x00, the bitmap
+     * is treated like one without alpha and the masks are used. As soon as
+     * one pixel has alpha != 0x00, and the mask ignored as described in the
+     * docs.
+     *
+     * This is most likely for applications which create the bitmaps with
+     * CreateDIBitmap, which creates a device dependent bitmap, so the format
+     * that arrives when loading depends on the screen's bpp. Apps that were
+     * written at 8 / 16 bpp times do not know about the 32 bit alpha, so
+     * they would get a completely transparent cursor on 32 bit displays.
+     *
+     * Non-32 bit bitmaps always use the AND mask
+     */
+    if(ptr->bBitsPerPixel == 32)
+    {
+        for (y = 0; alpha_zero && y < ymax; ++y)
+        {
+            xor_ptr = xor_bits + (y * xor_width_bytes);
+            for (x = 0; x < xmax; ++x)
+            {
+                if (xor_ptr[3] != 0x00)
+                {
+                    alpha_zero = FALSE;
+                    break;
+                }
+                xor_ptr+=4;
+            }
+        }
+    }
 
     /* On windows, to calculate the color for a pixel, first an AND is done
      * with the background and the "and" bitmap, then an XOR with the "xor"
@@ -484,7 +516,7 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
                     return 0;
             }
 
-            if (ptr->bBitsPerPixel != 32)
+            if (alpha_zero)
             {
                 /* Alpha channel */
                 if (~*and_ptr & (1 << (7 - (x & 7)))) *pixel_ptr |= 0xff << 24;
