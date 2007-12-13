@@ -1245,6 +1245,7 @@ static void PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned type = pFormat[0], attr = pFormat[1];
   PFORMAT_STRING desc;
   NDR_FREE m;
+  unsigned char *current_pointer = Pointer;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, Pointer, pFormat);
   TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
@@ -1263,12 +1264,12 @@ static void PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
   }
 
   if (attr & RPC_FC_P_DEREF) {
-    Pointer = *(unsigned char**)Pointer;
-    TRACE("deref => %p\n", Pointer);
+    current_pointer = *(unsigned char**)Pointer;
+    TRACE("deref => %p\n", current_pointer);
   }
 
   m = NdrFreer[*desc & NDR_TABLE_MASK];
-  if (m) m(pStubMsg, Pointer, desc);
+  if (m) m(pStubMsg, current_pointer, desc);
 
   /* this check stops us from trying to free buffer memory. we don't have to
    * worry about clients, since they won't call this function.
