@@ -4476,7 +4476,7 @@ static HRESULT WINAPI GraphConfig_QueryInterface(IGraphConfig *iface, REFIID rii
 
 static ULONG WINAPI GraphConfig_AddRef(IGraphConfig *iface)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventSink_vtbl, iface);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
 
     return Filtergraph_AddRef(This);
 }
