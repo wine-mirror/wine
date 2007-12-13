@@ -1063,7 +1063,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
                                       DWORD fdwDetails)
 {
     DWORD		ret = MMSYSERR_NOTSUPPORTED;
-    DWORD		c, chnl;
+    DWORD		chnl;
     struct mixer*	mix;
 
     TRACE("(%04X, %p, %u);\n", wDevID, lpmcd, fdwDetails);
@@ -1084,7 +1084,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 	TRACE("MIXER_GETCONTROLDETAILSF_VALUE (%08x)\n", lpmcd->dwControlID);
 	if (MIX_CheckControl(mix, lpmcd->dwControlID))
 	{
-	    c = lpmcd->dwControlID - 1;
+	    DWORD c = lpmcd->dwControlID - 1;
 	    chnl = HIWORD(mix->ctrl[c].dwLineID);
 	    if (chnl == LINEID_DST)
 		chnl = LOWORD(mix->ctrl[c].dwLineID) ? SOUND_MIXER_RECLEV :
@@ -1221,7 +1221,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 	ret = MMSYSERR_INVALPARAM;
 	if (MIX_CheckControl(mix, lpmcd->dwControlID))
 	{
-	    int	c = lpmcd->dwControlID - 1;
+	    DWORD c = lpmcd->dwControlID - 1;
 
 	    if (mix->ctrl[c].ctrl.dwControlType == MIXERCONTROL_CONTROLTYPE_MUX ||
 		mix->ctrl[c].ctrl.dwControlType == MIXERCONTROL_CONTROLTYPE_MIXER)
