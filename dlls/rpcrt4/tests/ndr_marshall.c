@@ -1193,17 +1193,13 @@ todo_wine {
     my_free_called = 0;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerFree( &StubMsg, mem, fmtstr_conf_str );
-todo_wine {
     ok(my_free_called == 1, "free called %d\n", my_free_called);
-}
 
     mem = my_alloc(10);
     my_free_called = 0;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerFree( &StubMsg, mem, fmtstr_conf_str );
-todo_wine {
     ok(my_free_called == 1, "free called %d\n", my_free_called);
-}
 
     /* Server */
     my_alloc_called = 0;
@@ -1246,9 +1242,7 @@ todo_wine {
     my_free_called = 0;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerFree( &StubMsg, mem, fmtstr_conf_str );
-todo_wine {
     ok(my_free_called == 1, "free called %d\n", my_free_called);
-}
 
     HeapFree(GetProcessHeap(), 0, mem_orig);
     HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);

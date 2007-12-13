@@ -373,32 +373,9 @@ void * WINAPI NdrAllocate(MIDL_STUB_MESSAGE *pStubMsg, size_t len)
 
 static void WINAPI NdrFree(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *Pointer)
 {
-    NDR_MEMORY_LIST *mem_list, *prev_mem_list;
-
     TRACE("(%p, %p)\n", pStubMsg, Pointer);
 
-    for (prev_mem_list = NULL, mem_list = pStubMsg->pMemoryList;
-       mem_list;
-       prev_mem_list = mem_list, mem_list = mem_list->next)
-    {
-      const unsigned char *base_pointer = (unsigned char *)mem_list - mem_list->size;
-      if (base_pointer == Pointer)
-      {
-          if (mem_list->magic != MEML_MAGIC)
-          {
-              ERR("memory linked list corrupted, magic changed to 0x%08x\n", mem_list->magic);
-              break;
-          }
-
-          /* fixup next pointers */
-          if (prev_mem_list)
-              prev_mem_list->next = mem_list->next;
-          else
-              pStubMsg->pMemoryList = mem_list->next;
-          pStubMsg->pfnFree(Pointer);
-          break;
-      }
-    }
+    pStubMsg->pfnFree(Pointer);
 }
 
 static inline BOOL IsConformanceOrVariancePresent(PFORMAT_STRING pFormat)
