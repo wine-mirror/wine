@@ -27,6 +27,26 @@
 #include "dshow.h"
 #include "control.h"
 
+static void test_IReferenceClock_query_interface(const char * clockdesc, IReferenceClock * pClock)
+{
+    HRESULT hr;
+    IUnknown *pF;
+
+    hr = IReferenceClock_QueryInterface(pClock, &IID_IUnknown, (LPVOID *)&pF);
+    ok(hr == S_OK, "IReferenceClock_QueryInterface returned %x\n", hr);
+    ok(pF != NULL, "pF is NULL\n");
+
+    hr = IReferenceClock_QueryInterface(pClock, &IID_IDirectDraw, (LPVOID *)&pF);
+    ok(hr == E_NOINTERFACE, "IReferenceClock_QueryInterface returned %x\n", hr);
+    todo_wine {
+    ok(pF == NULL, "pF is not NULL\n");
+    }
+
+    hr = IReferenceClock_QueryInterface(pClock, &IID_IReferenceClock, (LPVOID *)&pF);
+    ok(hr == S_OK, "IReferenceClock_QueryInterface returned %x\n", hr);
+    ok(pF != NULL, "pF is NULL\n");
+}
+
 /* The following method expects a reference clock that will keep ticking for
  * at least 5 seconds since its creation. This method assumes no other methods
  * were called on the IReferenceClock interface since its creation.
@@ -81,6 +101,7 @@ static void test_IReferenceClock_SystemClock(void)
     ok(hr == S_OK, "Unable to create reference clock from system clock %x\n", hr);
     if (hr == S_OK)
     {
+        test_IReferenceClock_query_interface("SystemClock", pReferenceClock);
 	test_IReferenceClock_methods("SystemClock", pReferenceClock);
 	IReferenceClock_Release(pReferenceClock);
     }
