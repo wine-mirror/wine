@@ -1431,14 +1431,15 @@ int is_declptr(const type_t *t)
 
 static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
                                type_t *type,
-                               const char *name, unsigned int *typestring_offset)
+                               const char *name, unsigned int *typestring_offset,
+                               int toplevel)
 {
     size_t start_offset = *typestring_offset;
     unsigned char rtype;
 
     update_tfsoff(type, start_offset, file);
 
-    if (is_declptr(type))
+    if (toplevel && is_declptr(type))
     {
         unsigned char flag = is_conformant_array(type) ? 0 : RPC_FC_P_SIMPLEPOINTER;
         int pointer_type = is_ptr(type) ? type->type : get_attrv(attrs, ATTR_POINTERTYPE);
@@ -1453,10 +1454,9 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
             print_file(file, 2, "NdrFcShort(0x2),\n");
             *typestring_offset += 2;
         }
-        rtype = type->ref->type;
     }
-    else
-        rtype = type->ref->type;
+
+    rtype = type->ref->type;
 
     if ((rtype != RPC_FC_BYTE) && (rtype != RPC_FC_CHAR) && (rtype != RPC_FC_WCHAR))
     {
@@ -1721,7 +1721,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
     if (array && !processed(array->type))
         array_offset
             = is_attr(array->attrs, ATTR_STRING)
-            ? write_string_tfs(file, array->attrs, array->type, array->name, tfsoff)
+            ? write_string_tfs(file, array->attrs, array->type, array->name, tfsoff, FALSE)
             : write_array_tfs(file, array->attrs, array->type, array->name, tfsoff);
 
     corroff = *tfsoff;
@@ -2071,7 +2071,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
     }
 
     if ((last_ptr(type) || last_array(type)) && is_ptrchain_attr(var, ATTR_STRING))
-        return write_string_tfs(file, var->attrs, type, var->name, typeformat_offset);
+        return write_string_tfs(file, var->attrs, type, var->name, typeformat_offset, TRUE);
 
     if (is_array(type))
     {
@@ -2198,7 +2198,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     }
     else if (last_array(type) && is_attr(attrs, ATTR_STRING))
     {
-        write_string_tfs(file, attrs, type, name, tfsoff);
+        write_string_tfs(file, attrs, type, name, tfsoff, FALSE);
     }
     else if (type->declarray && is_conformant_array(type))
         ;    /* conformant arrays and strings are handled specially */
