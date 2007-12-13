@@ -3,19 +3,19 @@ Signature="$CHICAGO$"
 
 
 [RegisterDll]
-AddReg=Classes.Reg, Settings.Reg
+AddReg=Classes.Reg
 
 
 [UnregisterDll]
-DelReg=Classes.Reg, Settings.Reg
+DelReg=Classes.Reg
 
 
 [RegisterIE]
-AddReg=IE.Reg
+AddReg=IE.Reg, Settings.Reg
 
 
 [UnregisterIE]
-DelReg=IE.Reg
+DelReg=IE.Reg, Settings.Reg
 
 
 [Classes.Reg]
