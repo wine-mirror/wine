@@ -686,7 +686,7 @@ void BuildSpec16File( DLLSPEC *spec )
     for ( i = 0; i < nb_funcs; i++ )
     {
         unsigned int arg_types[2];
-        int j, nop_words, argsize = 0;
+        int nop_words, argsize = 0;
 
         if ( typelist[i]->type == TYPE_PASCAL )
             argsize = get_function_argsize( typelist[i] );
