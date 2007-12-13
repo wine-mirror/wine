@@ -2411,8 +2411,12 @@ HRESULT WINAPI CoCreateInstance(
 	hres = IClassFactory_CreateInstance(lpclf, pUnkOuter, iid, ppv);
 	IClassFactory_Release(lpclf);
 	if(FAILED(hres))
-          FIXME("no instance created for interface %s of class %s, hres is 0x%08x\n",
-		debugstr_guid(iid), debugstr_guid(rclsid),hres);
+        {
+          if (hres == CLASS_E_NOAGGREGATION && pUnkOuter)
+              FIXME("Class %s does not support aggregation\n", debugstr_guid(rclsid));
+          else
+              FIXME("no instance created for interface %s of class %s, hres is 0x%08x\n", debugstr_guid(iid), debugstr_guid(rclsid),hres);
+        }
 
 	return hres;
 }
