@@ -4,12 +4,13 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = quartz.dll
 IMPORTS   = ole32 kernel32
-EXTRALIBS = -lstrmiids
+EXTRALIBS = -lstrmiids -luuid
 
 CTESTS = \
 	filtergraph.c \
 	memallocator.c \
-	referenceclock.c
+	referenceclock.c \
+	videorenderer.c
 
 @MAKE_TEST_RULES@
 
