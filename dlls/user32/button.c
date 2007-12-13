@@ -217,6 +217,15 @@ static inline WCHAR *get_button_text( HWND hwnd )
     return buffer;
 }
 
+static void setup_clipping( HWND hwnd, HDC hdc )
+{
+    RECT rc;
+
+    GetClientRect( hwnd, &rc );
+    DPtoLP( hdc, (POINT *)&rc, 2 );
+    IntersectClipRect( hdc, rc.left, rc.top, rc.right, rc.bottom );
+}
+
 /***********************************************************************
  *           ButtonWndProc_common
  */
@@ -798,6 +807,9 @@ static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
     parent = GetParent(hwnd);
     if (!parent) parent = hwnd;
     SendMessageW( parent, WM_CTLCOLORBTN, (WPARAM)hDC, (LPARAM)hwnd );
+
+    setup_clipping( hwnd, hDC );
+
     hOldPen = (HPEN)SelectObject(hDC, SYSCOLOR_GetPen(COLOR_WINDOWFRAME));
     hOldBrush =(HBRUSH)SelectObject(hDC,GetSysColorBrush(COLOR_BTNFACE));
     oldBkMode = SetBkMode(hDC, TRANSPARENT);
@@ -970,7 +982,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
     if (dtFlags == (UINT)-1L) /* Noting to draw */
 	return;
 
-    IntersectClipRect(hDC, client.left, client.top, client.right, client.bottom);
+    setup_clipping( hwnd, hDC );
 
     if (action == ODA_DRAWENTIRE)
 	BUTTON_DrawLabel(hwnd, hDC, dtFlags, &rtext);
@@ -1046,6 +1058,8 @@ static void GB_Paint( HWND hwnd, HDC hDC, UINT action )
     if (dtFlags == (UINT)-1L)
        return;
 
+    setup_clipping( hwnd, hDC );
+
     /* Because buttons have CS_PARENTDC class style, there is a chance
      * that label will be drawn out of client rect.
      * But Windows doesn't clip label's rect, so do I.
@@ -1100,8 +1114,6 @@ static void OB_Paint( HWND hwnd, HDC hDC, UINT action )
 {
     LONG state = get_button_state( hwnd );
     DRAWITEMSTRUCT dis;
-    HRGN clipRegion;
-    RECT clipRect;
     LONG_PTR id = GetWindowLongPtrW( hwnd, GWLP_ID );
     HWND parent;
     HFONT hFont, hPrevFont = 0;
@@ -1118,21 +1130,13 @@ static void OB_Paint( HWND hwnd, HDC hDC, UINT action )
     dis.itemData   = 0;
     GetClientRect( hwnd, &dis.rcItem );
 
-    clipRegion = CreateRectRgnIndirect(&dis.rcItem);
-    if (GetClipRgn(hDC, clipRegion) != 1)
-    {
-	DeleteObject(clipRegion);
-	clipRegion=NULL;
-    }
-    clipRect = dis.rcItem;
-    DPtoLP(hDC, (LPPOINT) &clipRect, 2);
-    IntersectClipRect(hDC, clipRect.left,  clipRect.top, clipRect.right, clipRect.bottom);
-
     if ((hFont = get_button_font( hwnd ))) hPrevFont = SelectObject( hDC, hFont );
     parent = GetParent(hwnd);
     if (!parent) parent = hwnd;
     SendMessageW( parent, WM_CTLCOLORBTN, (WPARAM)hDC, (LPARAM)hwnd );
+
+    setup_clipping( hwnd, hDC );
+
     SendMessageW( GetParent(hwnd), WM_DRAWITEM, id, (LPARAM)&dis );
     if (hPrevFont) SelectObject(hDC, hPrevFont);
-    SelectClipRgn(hDC, clipRegion);
 }
