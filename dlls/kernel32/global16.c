@@ -324,9 +324,9 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
             !(pArena->flags & GA_DISCARDABLE) ||
             (pArena->lockCount > 0) || (pArena->pageLockCount > 0)) return 0;
         if (pArena->flags & GA_DOSMEM)
-            DOSMEM_FreeBlock( (void *)pArena->base );
+            DOSMEM_FreeBlock( pArena->base );
         else
-            HeapFree( heap, 0, (void *)pArena->base );
+            HeapFree( heap, 0, pArena->base );
         pArena->base = 0;
 
         /* Note: we rely on the fact that SELECTOR_ReallocBlock won't
@@ -355,7 +355,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
 
       /* Reallocate the linear memory */
 
-    ptr = (void *)pArena->base;
+    ptr = pArena->base;
     oldsize = pArena->size;
     TRACE("oldbase %p oldsize %08x newsize %08x\n", ptr,oldsize,size);
     if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
@@ -399,7 +399,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         if (pArena->pageLockCount <1)
         {
             if (pArena->flags & GA_DOSMEM)
-                DOSMEM_FreeBlock( (void *)pArena->base );
+                DOSMEM_FreeBlock( pArena->base );
             else
                 HeapFree( heap, 0, ptr );
             SELECTOR_FreeBlock( sel );
@@ -415,7 +415,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     if (!sel)
     {
         if (pArena->flags & GA_DOSMEM)
-            DOSMEM_FreeBlock( (void *)pArena->base );
+            DOSMEM_FreeBlock( pArena->base );
         else
             HeapFree( heap, 0, ptr );
         memset( pArena, 0, sizeof(GLOBALARENA) );
@@ -424,9 +424,9 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     selcount = (size + 0xffff) / 0x10000;
 
     if (!(pNewArena = GLOBAL_GetArena( sel, selcount )))
-    {        
+    {
         if (pArena->flags & GA_DOSMEM)
-            DOSMEM_FreeBlock( (void *)pArena->base );
+            DOSMEM_FreeBlock( pArena->base );
         else
             HeapFree( heap, 0, ptr );
         SELECTOR_FreeBlock( sel );
@@ -468,7 +468,7 @@ HGLOBAL16 WINAPI GlobalFree16(
         WARN("Invalid handle 0x%04x passed to GlobalFree16!\n",handle);
         return 0;
     }
-    ptr = (void *)GET_ARENA_PTR(handle)->base;
+    ptr = GET_ARENA_PTR(handle)->base;
 
     TRACE("%04x\n", handle );
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
@@ -533,7 +533,7 @@ LPVOID WINAPI GlobalLock16(
     if (!VALID_HANDLE(handle))
 	return 0;
     GET_ARENA_PTR(handle)->lockCount++;
-    return (LPVOID)GET_ARENA_PTR(handle)->base;
+    return GET_ARENA_PTR(handle)->base;
 }
 
 

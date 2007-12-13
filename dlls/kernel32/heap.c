@@ -107,7 +107,7 @@ static inline HANDLE HEAP_CreateSystemHeap(void)
     {
         /* wait for the heap to be initialized */
         WaitForSingleObject( event, INFINITE );
-        systemHeap = (HANDLE)base;
+        systemHeap = base;
     }
     CloseHandle( map );
     return systemHeap;
@@ -360,7 +360,7 @@ HGLOBAL WINAPI GlobalAlloc(
    {
       palloc=HeapAlloc(GetProcessHeap(), hpflags, size);
       TRACE( "(flags=%04x) returning %p\n",  flags, palloc );
-      return (HGLOBAL) palloc;
+      return palloc;
    }
    else  /* HANDLE */
    {
@@ -620,10 +620,10 @@ HGLOBAL WINAPI GlobalReAlloc(
          }
          else
          {
-             size = HeapSize(GetProcessHeap(), 0, (LPVOID)hmem);
+             size = HeapSize(GetProcessHeap(), 0, hmem);
              hnew = GlobalAlloc(flags, size);
              palloc = GlobalLock(hnew);
-             memcpy(palloc, (LPVOID)hmem, size);
+             memcpy(palloc, hmem, size);
              GlobalUnlock(hnew);
              GlobalFree(hmem);
          }
@@ -743,7 +743,7 @@ HGLOBAL WINAPI GlobalFree(HGLOBAL hmem)
         hreturned = 0;
         if(ISPOINTER(hmem)) /* POINTER */
         {
-            if(!HeapFree(GetProcessHeap(), 0, (LPVOID) hmem))
+            if(!HeapFree(GetProcessHeap(), 0, hmem))
             {
                 SetLastError(ERROR_INVALID_HANDLE);
                 hreturned = hmem;
@@ -817,7 +817,7 @@ SIZE_T WINAPI GlobalSize(HGLOBAL hmem)
 
    if(ISPOINTER(hmem))
    {
-      retval=HeapSize(GetProcessHeap(), 0,  (LPVOID) hmem);
+      retval=HeapSize(GetProcessHeap(), 0, hmem);
    }
    else
    {
@@ -1159,7 +1159,7 @@ void WINAPI __regs_AllocMappedBuffer(
         buffer[0] = (DWORD)handle;
         buffer[1] = ptr;
 
-        context->Eax = (DWORD) ptr;
+        context->Eax = ptr;
         context->Edi = (DWORD)(buffer + 2);
     }
 }
