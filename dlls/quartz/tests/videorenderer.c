@@ -69,18 +69,14 @@ static void test_aggregation(void)
     /* for aggregation, we should only be able to request IUnknown */
     hr = CoCreateInstance(&CLSID_VideoRenderer, pUnkOuter, CLSCTX_INPROC_SERVER,
                           &IID_IVideoWindow, (LPVOID*)&pVideoWindowInner);
-    todo_wine {
     ok(hr == E_NOINTERFACE, "CoCreateInstance returned %x\n", hr);
-    }
     ok(pVideoWindowInner == NULL, "pVideoWindowInner is not NULL\n");
 
     /* aggregation, request IUnknown */
     hr = CoCreateInstance(&CLSID_VideoRenderer, pUnkOuter, CLSCTX_INPROC_SERVER,
                           &IID_IUnknown, (LPVOID*)&pUnkInner);
-    todo_wine {
     ok(hr == S_OK, "CoCreateInstance returned %x\n", hr);
     ok(pUnkInner != NULL, "pUnkInner is NULL\n");
-    }
 
     if (!pUnkInner)
     {

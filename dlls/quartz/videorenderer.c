@@ -46,6 +46,7 @@ static BOOL wnd_class_registered = FALSE;
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 
 static const IBaseFilterVtbl VideoRenderer_Vtbl;
+static const IUnknownVtbl IInner_VTable;
 static const IBasicVideoVtbl IBasicVideo_VTable;
 static const IVideoWindowVtbl IVideoWindow_VTable;
 static const IPinVtbl VideoRenderer_InputPin_Vtbl;
@@ -55,6 +56,7 @@ typedef struct VideoRendererImpl
     const IBaseFilterVtbl * lpVtbl;
     const IBasicVideoVtbl * IBasicVideo_vtbl;
     const IVideoWindowVtbl * IVideoWindow_vtbl;
+    const IUnknownVtbl * IInner_vtbl;
 
     LONG refCount;
     CRITICAL_SECTION csFilter;
@@ -79,6 +81,9 @@ typedef struct VideoRendererImpl
     RECT WindowPos;
     long VideoWidth;
     long VideoHeight;
+    IUnknown * pUnkOuter;
+    BOOL bUnkOuterValid;
+    BOOL bAggregatable;
 } VideoRendererImpl;
 
 static LRESULT CALLBACK VideoWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -436,10 +441,11 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     *ppv = NULL;
 
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-    
     pVideoRenderer = CoTaskMemAlloc(sizeof(VideoRendererImpl));
+    pVideoRenderer->pUnkOuter = pUnkOuter;
+    pVideoRenderer->bUnkOuterValid = FALSE;
+    pVideoRenderer->bAggregatable = FALSE;
+    pVideoRenderer->IInner_vtbl = &IInner_VTable;
 
     pVideoRenderer->lpVtbl = &VideoRenderer_Vtbl;
     pVideoRenderer->IBasicVideo_vtbl = &IBasicVideo_VTable;
@@ -482,15 +488,18 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     return hr;
 }
 
-static HRESULT WINAPI VideoRenderer_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI Inner_QueryInterface(IUnknown * iface, REFIID riid, LPVOID * ppv)
 {
-    VideoRendererImpl *This = (VideoRendererImpl *)iface;
+    ICOM_THIS_MULTI(VideoRendererImpl, IInner_vtbl, iface);
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
+
+    if (This->bAggregatable)
+        This->bUnkOuterValid = TRUE;
 
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)This;
+        *ppv = (LPVOID)&(This->IInner_vtbl);
     else if (IsEqualIID(riid, &IID_IPersist))
         *ppv = (LPVOID)This;
     else if (IsEqualIID(riid, &IID_IMediaFilter))
@@ -513,9 +522,9 @@ static HRESULT WINAPI VideoRenderer_QueryInterface(IBaseFilter * iface, REFIID r
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI VideoRenderer_AddRef(IBaseFilter * iface)
+static ULONG WINAPI Inner_AddRef(IUnknown * iface)
 {
-    VideoRendererImpl *This = (VideoRendererImpl *)iface;
+    ICOM_THIS_MULTI(VideoRendererImpl, IInner_vtbl, iface);
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
     TRACE("(%p/%p)->() AddRef from %d\n", This, iface, refCount - 1);
@@ -523,9 +532,9 @@ static ULONG WINAPI VideoRenderer_AddRef(IBaseFilter * iface)
     return refCount;
 }
 
-static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
+static ULONG WINAPI Inner_Release(IUnknown * iface)
 {
-    VideoRendererImpl *This = (VideoRendererImpl *)iface;
+    ICOM_THIS_MULTI(VideoRendererImpl, IInner_vtbl, iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
     TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
@@ -564,6 +573,61 @@ static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
     }
     else
         return refCount;
+}
+
+static const IUnknownVtbl IInner_VTable =
+{
+    Inner_QueryInterface,
+    Inner_AddRef,
+    Inner_Release
+};
+
+static HRESULT WINAPI VideoRenderer_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
+{
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
+
+    if (This->bAggregatable)
+        This->bUnkOuterValid = TRUE;
+
+    if (This->pUnkOuter)
+    {
+        if (This->bAggregatable)
+            return IUnknown_QueryInterface(This->pUnkOuter, riid, ppv);
+
+        if (IsEqualIID(riid, &IID_IUnknown))
+        {
+            HRESULT hr;
+
+            IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
+            hr = IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
+            IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
+            This->bAggregatable = TRUE;
+            return hr;
+        }
+
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    return IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
+}
+
+static ULONG WINAPI VideoRenderer_AddRef(IBaseFilter * iface)
+{
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
+
+    if (This->pUnkOuter && This->bUnkOuterValid)
+        return IUnknown_AddRef(This->pUnkOuter);
+    return IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
+}
+
+static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
+{
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
+
+    if (This->pUnkOuter && This->bUnkOuterValid)
+        return IUnknown_Release(This->pUnkOuter);
+    return IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
 }
 
 /** IPersist methods **/
