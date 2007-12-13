@@ -239,10 +239,12 @@ RPC_STATUS WINAPI RpcStringFreeW(RPC_WSTR* String)
  *
  * Raises an exception.
  */
-void WINAPI RpcRaiseException(RPC_STATUS exception)
+void DECLSPEC_NORETURN WINAPI RpcRaiseException(RPC_STATUS exception)
 {
-  /* FIXME: translate exception? */
+  /* shouldn't return */
   RaiseException(exception, 0, 0, NULL);
+  ERR("handler continued execution\n");
+  ExitProcess(1);
 }
 
 /*************************************************************************

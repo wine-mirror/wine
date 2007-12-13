@@ -289,7 +289,7 @@ RPC_STATUS RPC_ENTRY DceErrorInqTextA(RPC_STATUS e, RPC_CSTR buffer);
 RPC_STATUS RPC_ENTRY DceErrorInqTextW(RPC_STATUS e, RPC_WSTR buffer);
 #define              DceErrorInqText WINELIB_NAME_AW(DceErrorInqText)
 
-RPCRTAPI void RPC_ENTRY
+RPCRTAPI DECLSPEC_NORETURN void RPC_ENTRY
   RpcRaiseException( RPC_STATUS exception );
         
 RPCRTAPI RPC_STATUS RPC_ENTRY
