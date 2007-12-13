@@ -341,6 +341,23 @@ typedef struct _NDR_MEMORY_LIST
 
 #define MEML_MAGIC  ('M' << 24 | 'E' << 16 | 'M' << 8 | 'L')
 
+/***********************************************************************
+ *            NdrAllocate [RPCRT4.@]
+ *
+ * Allocates a block of memory using pStubMsg->pfnAllocate.
+ *
+ * PARAMS
+ *  pStubMsg [I/O] MIDL_STUB_MESSAGE structure.
+ *  len      [I]   Size of memory block to allocate.
+ *
+ * RETURNS
+ *  The memory block of size len that was allocated.
+ *
+ * NOTES
+ *  The memory block is always 8-byte aligned.
+ *  If the function is unable to allocate memory an ERROR_OUTOFMEMORY
+ *  exception is raised.
+ */
 void * WINAPI NdrAllocate(MIDL_STUB_MESSAGE *pStubMsg, size_t len)
 {
     size_t aligned_len;
