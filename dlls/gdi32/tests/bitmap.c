@@ -119,8 +119,10 @@ static void test_createdibitmap(void)
 {
     HDC hdc, hdcmem;
     BITMAPINFOHEADER bmih;
+    BITMAPINFO bm;
     HBITMAP hbm, hbm_colour, hbm_old;
     INT screen_depth;
+    DWORD pixel;
 
     hdc = GetDC(0);
     screen_depth = GetDeviceCaps(hdc, BITSPIXEL);
@@ -219,7 +221,30 @@ static void test_createdibitmap(void)
         test_bitmap_info(hbm, 1, &bmih);
         DeleteObject(hbm);
     }
-    
+
+    /* Test how formats are converted */
+    pixel = 0xffffffff;
+    bmih.biBitCount = 1;
+    bmih.biWidth = 1;
+    bmih.biHeight = 1;
+
+    memset(&bm, 0, sizeof(bm));
+    bm.bmiHeader.biSize = sizeof(bm.bmiHeader);
+    bm.bmiHeader.biWidth = 1;
+    bm.bmiHeader.biHeight = 1;
+    bm.bmiHeader.biPlanes = 1;
+    bm.bmiHeader.biBitCount= 24;
+    bm.bmiHeader.biCompression= BI_RGB;
+    bm.bmiHeader.biSizeImage = 0;
+    hbm = CreateDIBitmap(hdc, &bmih, CBM_INIT, &pixel, &bm, DIB_RGB_COLORS);
+    ok(hbm != NULL, "CreateDIBitmap failed\n");
+
+    pixel = 0xdeadbeef;
+    bm.bmiHeader.biBitCount= 32;
+    GetDIBits(hdc, hbm, 0, 1, &pixel, &bm, DIB_RGB_COLORS);
+    ok(pixel == 0x00ffffff, "Reading a 32 bit pixel from a DDB returned %08x\n", pixel);
+    DeleteObject(hbm);
+
     ReleaseDC(0, hdc);
 }
 
