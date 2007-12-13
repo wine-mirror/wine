@@ -922,16 +922,16 @@ void ReleaseHelpViewer(HHInfo *info)
         return;
 
     /* Free allocated strings */
-    heap_free((LPWSTR)info->WinType.pszType);
-    heap_free((LPWSTR)info->WinType.pszCaption);
-    heap_free((LPWSTR)info->WinType.pszToc);
-    heap_free((LPWSTR)info->WinType.pszIndex);
-    heap_free((LPWSTR)info->WinType.pszFile);
-    heap_free((LPWSTR)info->WinType.pszHome);
-    heap_free((LPWSTR)info->WinType.pszJump1);
-    heap_free((LPWSTR)info->WinType.pszJump2);
-    heap_free((LPWSTR)info->WinType.pszUrlJump1);
-    heap_free((LPWSTR)info->WinType.pszUrlJump2);
+    heap_free(info->pszType);
+    heap_free(info->pszCaption);
+    heap_free(info->pszToc);
+    heap_free(info->pszIndex);
+    heap_free(info->pszFile);
+    heap_free(info->pszHome);
+    heap_free(info->pszJump1);
+    heap_free(info->pszJump2);
+    heap_free(info->pszUrlJump1);
+    heap_free(info->pszUrlJump2);
 
     if (info->pCHMInfo)
         CloseCHM(info->pCHMInfo);
@@ -958,7 +958,7 @@ HHInfo *CreateHelpViewer(LPCWSTR filename)
         return NULL;
     }
 
-    if (!LoadWinTypeFromCHM(info->pCHMInfo, &info->WinType)) {
+    if (!LoadWinTypeFromCHM(info)) {
         ReleaseHelpViewer(info);
         return NULL;
     }

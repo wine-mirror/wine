@@ -92,6 +92,19 @@ typedef struct {
     IOleObject *wb_object;
 
     HH_WINTYPEW WinType;
+
+    LPWSTR pszType;
+    LPWSTR pszCaption;
+    LPWSTR pszToc;
+    LPWSTR pszIndex;
+    LPWSTR pszFile;
+    LPWSTR pszHome;
+    LPWSTR pszJump1;
+    LPWSTR pszJump2;
+    LPWSTR pszUrlJump1;
+    LPWSTR pszUrlJump2;
+    LPWSTR pszCustomTabs;
+
     CHMInfo *pCHMInfo;
     ContentItem *content;
     HWND hwndTabCtrl;
@@ -111,7 +124,7 @@ void InitContent(HHInfo*);
 void ReleaseContent(HHInfo*);
 
 CHMInfo *OpenCHM(LPCWSTR szFile);
-BOOL LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
+BOOL LoadWinTypeFromCHM(HHInfo *info);
 CHMInfo *CloseCHM(CHMInfo *pCHMInfo);
 void SetChmPath(ChmPath*,LPCWSTR,LPCWSTR);
 IStream *GetChmStream(CHMInfo*,LPCWSTR,ChmPath*);

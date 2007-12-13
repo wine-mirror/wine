@@ -200,10 +200,10 @@ LPWSTR FindContextAlias(CHMInfo *chm, DWORD index)
  * FIXME: There may be more than one window type in the file, so
  *        add the ability to choose a certain window type
  */
-BOOL LoadWinTypeFromCHM(CHMInfo *pChmInfo, HH_WINTYPEW *pHHWinType)
+BOOL LoadWinTypeFromCHM(HHInfo *info)
 {
     LARGE_INTEGER liOffset;
-    IStorage *pStorage = pChmInfo->pStorage;
+    IStorage *pStorage = info->pCHMInfo->pStorage;
     IStream *pStream;
     HRESULT hr;
     DWORD cbRead;
@@ -221,26 +221,26 @@ BOOL LoadWinTypeFromCHM(CHMInfo *pChmInfo, HH_WINTYPEW *pHHWinType)
     if (FAILED(hr)) goto done;
 
     /* read the HH_WINTYPE struct data */
-    hr = IStream_Read(pStream, pHHWinType, sizeof(*pHHWinType), &cbRead);
+    hr = IStream_Read(pStream, &info->WinType, sizeof(info->WinType), &cbRead);
     if (FAILED(hr)) goto done;
 
     /* convert the #STRINGS offsets to actual strings */
-    pHHWinType->pszType = strdupAtoW(GetChmString(pChmInfo, (DWORD)pHHWinType->pszType));
-    pHHWinType->pszCaption = strdupAtoW(GetChmString(pChmInfo, (DWORD)pHHWinType->pszCaption));
-    pHHWinType->pszToc = strdupAtoW(GetChmString(pChmInfo, (DWORD)pHHWinType->pszToc));
-    pHHWinType->pszIndex = strdupAtoW(GetChmString(pChmInfo, (DWORD)pHHWinType->pszIndex));
-    pHHWinType->pszFile = strdupAtoW(GetChmString(pChmInfo, (DWORD)pHHWinType->pszFile));
-    pHHWinType->pszHome = strdupAtoW(GetChmString(pChmInfo, (DWORD)pHHWinType->pszHome));
-    pHHWinType->pszJump1 = strdupAtoW(GetChmString(pChmInfo, (DWORD)pHHWinType->pszJump1));
-    pHHWinType->pszJump2 = strdupAtoW(GetChmString(pChmInfo, (DWORD)pHHWinType->pszJump2));
-    pHHWinType->pszUrlJump1 = strdupAtoW(GetChmString(pChmInfo, (DWORD)pHHWinType->pszUrlJump1));
-    pHHWinType->pszUrlJump2 = strdupAtoW(GetChmString(pChmInfo, (DWORD)pHHWinType->pszUrlJump2));
-    
+    info->WinType.pszType     = info->pszType     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszType));
+    info->WinType.pszCaption  = info->pszCaption  = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszCaption));
+    info->WinType.pszToc      = info->pszToc      = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszToc));
+    info->WinType.pszIndex    = info->pszIndex    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszIndex));
+    info->WinType.pszFile     = info->pszFile     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszFile));
+    info->WinType.pszHome     = info->pszHome     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszHome));
+    info->WinType.pszJump1    = info->pszJump1    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszJump1));
+    info->WinType.pszJump2    = info->pszJump2    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszJump2));
+    info->WinType.pszUrlJump1 = info->pszUrlJump1 = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszUrlJump1));
+    info->WinType.pszUrlJump2 = info->pszUrlJump2 = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszUrlJump2));
+
     /* FIXME: pszCustomTabs is a list of multiple zero-terminated strings so ReadString won't
      * work in this case
      */
 #if 0
-    pHHWinType->pszCustomTabs = CHM_ReadString(pChmInfo, (DWORD)pHHWinType->pszCustomTabs);
+    info->WinType.pszCustomTabs = info->pszCustomTabs = CHM_ReadString(pChmInfo, (DWORD_PTR)info->WinType.pszCustomTabs);
 #endif
 
 done:
