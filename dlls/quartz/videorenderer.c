@@ -488,7 +488,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     return hr;
 }
 
-static HRESULT WINAPI Inner_QueryInterface(IUnknown * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI VideoRendererInner_QueryInterface(IUnknown * iface, REFIID riid, LPVOID * ppv)
 {
     ICOM_THIS_MULTI(VideoRendererImpl, IInner_vtbl, iface);
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
@@ -522,7 +522,7 @@ static HRESULT WINAPI Inner_QueryInterface(IUnknown * iface, REFIID riid, LPVOID
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI Inner_AddRef(IUnknown * iface)
+static ULONG WINAPI VideoRendererInner_AddRef(IUnknown * iface)
 {
     ICOM_THIS_MULTI(VideoRendererImpl, IInner_vtbl, iface);
     ULONG refCount = InterlockedIncrement(&This->refCount);
@@ -532,7 +532,7 @@ static ULONG WINAPI Inner_AddRef(IUnknown * iface)
     return refCount;
 }
 
-static ULONG WINAPI Inner_Release(IUnknown * iface)
+static ULONG WINAPI VideoRendererInner_Release(IUnknown * iface)
 {
     ICOM_THIS_MULTI(VideoRendererImpl, IInner_vtbl, iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
@@ -577,9 +577,9 @@ static ULONG WINAPI Inner_Release(IUnknown * iface)
 
 static const IUnknownVtbl IInner_VTable =
 {
-    Inner_QueryInterface,
-    Inner_AddRef,
-    Inner_Release
+    VideoRendererInner_QueryInterface,
+    VideoRendererInner_AddRef,
+    VideoRendererInner_Release
 };
 
 static HRESULT WINAPI VideoRenderer_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
