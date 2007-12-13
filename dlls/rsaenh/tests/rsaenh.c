@@ -30,7 +30,6 @@
 
 static HCRYPTPROV hProv;
 static const char szContainer[] = "winetest";
-static const unsigned char pbData[] = "Wine rocks totally!";
 static const char szProvider[] = MS_ENHANCED_PROV_A;
 
 typedef struct _ctdatatype {
