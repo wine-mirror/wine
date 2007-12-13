@@ -190,6 +190,20 @@ static void test_query_interface(void)
     RELEASE_EXPECT(pVideoWindow, 1);
 }
 
+static void test_all_aggregations(void)
+{
+    IID iids[] = {
+        IID_IMediaFilter, IID_IBaseFilter, IID_IBasicVideo, IID_IVideoWindow
+    };
+    int i;
+
+    for (i = 0; i < sizeof(iids) / sizeof(iids[0]); i++)
+    {
+        test_aggregation(CLSID_SystemClock, CLSID_VideoRenderer,
+                         IID_IReferenceClock, iids[i]);
+    }
+}
+
 START_TEST(videorenderer)
 {
     CoInitialize(NULL);
@@ -197,8 +211,7 @@ START_TEST(videorenderer)
         return;
 
     test_query_interface();
-    test_aggregation(CLSID_SystemClock, CLSID_VideoRenderer,
-                     IID_IReferenceClock, IID_IVideoWindow);
+    test_all_aggregations();
 
     release_video_renderer();
 }
