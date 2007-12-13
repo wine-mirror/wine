@@ -1080,7 +1080,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
 
     ok(pformatetc != NULL, "pformatetx == NULL\n");
     if(pformatetc) {
-        if (mime_type[0]) todo_wine {
+        if (mime_type[0]) {
             clipfmt[0] = 0;
             ok(GetClipboardFormatName(pformatetc->cfFormat, clipfmt, sizeof(clipfmt)-1),
                "GetClipboardFormatName failed, error %d\n", GetLastError());

@@ -80,6 +80,7 @@ struct Binding {
     BINDINFO bindinfo;
     DWORD bindf;
     LPWSTR mime;
+    UINT clipboard_format;
     LPWSTR url;
     BOOL report_mime;
     DWORD continue_call;
@@ -249,6 +250,75 @@ static void dump_BINDINFO(BINDINFO *bi)
             debugstr_guid(&bi->iid),
             bi->pUnk, bi->dwReserved
             );
+}
+
+static void set_binding_mime(Binding *binding, LPCWSTR mime)
+{
+    EnterCriticalSection(&binding->section);
+
+    if(binding->report_mime) {
+        heap_free(binding->mime);
+        binding->mime = heap_strdupW(mime);
+    }
+
+    LeaveCriticalSection(&binding->section);
+}
+
+static void handle_mime_available(Binding *binding, BOOL verify)
+{
+    BOOL report_mime;
+
+    EnterCriticalSection(&binding->section);
+    report_mime = binding->report_mime;
+    binding->report_mime = FALSE;
+    LeaveCriticalSection(&binding->section);
+
+    if(!report_mime)
+        return;
+
+    if(verify) {
+        LPWSTR mime = NULL;
+
+        fill_stream_buffer(binding->stream);
+        FindMimeFromData(NULL, binding->url, binding->stream->buf,
+                         min(binding->stream->buf_size, 255), binding->mime, 0, &mime, 0);
+
+        heap_free(binding->mime);
+        binding->mime = heap_strdupW(mime);
+        CoTaskMemFree(mime);
+    }
+
+    IBindStatusCallback_OnProgress(binding->callback, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE, binding->mime);
+
+    binding->clipboard_format = RegisterClipboardFormatW(binding->mime);
+}
+
+typedef struct {
+    task_header_t header;
+    BOOL verify;
+} mime_available_task_t;
+
+static void mime_available_proc(Binding *binding, task_header_t *t)
+{
+    mime_available_task_t *task = (mime_available_task_t*)t;
+
+    handle_mime_available(binding, task->verify);
+
+    heap_free(task);
+}
+
+static void mime_available(Binding *This, LPCWSTR mime, BOOL verify)
+{
+    if(mime)
+        set_binding_mime(This, mime);
+
+    if(GetCurrentThreadId() == This->apartment_thread) {
+        handle_mime_available(This, verify);
+    }else {
+        mime_available_task_t *task = heap_alloc(sizeof(task_header_t));
+        task->verify = verify;
+        push_task(This, &task->header, mime_available_proc);
+    }
 }
 
 #define STREAM_THIS(iface) DEFINE_THIS(ProtocolStream, Stream, iface)
@@ -725,18 +795,14 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
     case BINDSTATUS_BEGINDOWNLOADDATA:
         fill_stream_buffer(This->stream);
         break;
-    case BINDSTATUS_MIMETYPEAVAILABLE: {
-        int len = strlenW(szStatusText)+1;
-        This->mime = heap_alloc(len*sizeof(WCHAR));
-        memcpy(This->mime, szStatusText, len*sizeof(WCHAR));
+    case BINDSTATUS_MIMETYPEAVAILABLE:
+        set_binding_mime(This, szStatusText);
         break;
-    }
     case BINDSTATUS_SENDINGREQUEST:
         on_progress(This, 0, 0, BINDSTATUS_SENDINGREQUEST, szStatusText);
         break;
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
-        This->report_mime = FALSE;
-        on_progress(This, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE, szStatusText);
+        mime_available(This, szStatusText, FALSE);
         break;
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
         break;
@@ -764,19 +830,8 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
     if(GetCurrentThreadId() != This->apartment_thread)
         FIXME("called from worked hread\n");
 
-    if(This->report_mime) {
-        LPWSTR mime;
-
-        This->report_mime = FALSE;
-
-        fill_stream_buffer(This->stream);
-
-        FindMimeFromData(NULL, This->url, This->stream->buf,
-                         min(This->stream->buf_size, 255), This->mime, 0, &mime, 0);
-
-        IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
-                BINDSTATUS_MIMETYPEAVAILABLE, mime);
-    }
+    if(This->report_mime)
+        mime_available(This, NULL, TRUE);
 
     if(This->download_state == BEFORE_DOWNLOAD) {
         fill_stream_buffer(This->stream);
@@ -801,6 +856,7 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         This->request_locked = SUCCEEDED(hres);
     }
 
+    formatetc.cfFormat = This->clipboard_format;
     IBindStatusCallback_OnDataAvailable(This->callback, bscf, progress,
             &formatetc, &This->stgmed);
 
@@ -1137,6 +1193,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->service_provider = NULL;
     ret->stream = NULL;
     ret->mime = NULL;
+    ret->clipboard_format = 0;
     ret->url = NULL;
     ret->apartment_thread = GetCurrentThreadId();
     ret->notif_hwnd = get_notif_hwnd();
