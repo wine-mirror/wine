@@ -1701,7 +1701,7 @@ static void test_CreateBitmap(void)
     BITMAP bmp;
     HDC screenDC = GetDC(0);
     HDC hdc = CreateCompatibleDC(screenDC);
-    UINT i, expect;
+    UINT i, expect = 0;
 
     /* all of these are the stock monochrome bitmap */
     HBITMAP bm = CreateCompatibleBitmap(hdc, 0, 0);
