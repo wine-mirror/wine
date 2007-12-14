@@ -101,6 +101,7 @@ static void test_reference(void)
 
     r = IHlink_GetStringReference(lnk, -1, &str, NULL);
     ok(r == S_OK, "failed\n");
+    CoTaskMemFree(str);
 
     r = IHlink_GetStringReference(lnk, HLINKGETREF_DEFAULT, &str, NULL);
     ok(r == S_OK, "failed\n");
@@ -115,6 +116,8 @@ static void test_reference(void)
     r = IHlink_GetStringReference(lnk, HLINKGETREF_DEFAULT, NULL, &str);
     ok(r == S_OK, "failed\n");
     ok(str == NULL, "string should be null\n");
+
+    IHlink_Release(lnk);
 }
 
 /* url only */
