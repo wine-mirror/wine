@@ -977,7 +977,7 @@ static int rpcrt4_conn_tcp_read(RpcConnection *Connection,
       pfds[0].fd = tcpc->sock;
       pfds[0].events = POLLIN;
       pfds[1].fd = tcpc->cancel_fds[0];
-      pfds[1].fd = POLLIN;
+      pfds[1].events = POLLIN;
       if (poll(pfds, 2, -1 /* infinite */) == -1 && errno != EINTR)
       {
         ERR("poll() failed: %s\n", strerror(errno));
