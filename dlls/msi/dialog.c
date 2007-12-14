@@ -2464,7 +2464,7 @@ static void msi_dialog_vcl_add_columns( msi_dialog *dialog, msi_control *control
 {
     LPCWSTR text = MSI_RecordGetString( rec, 10 );
     LPCWSTR begin = text, end;
-    WCHAR num[10];
+    WCHAR *num;
     LVCOLUMNW lvc;
     DWORD count = 0;
 
@@ -2478,6 +2478,10 @@ static void msi_dialog_vcl_add_columns( msi_dialog *dialog, msi_control *control
         if (!(end = strchrW( begin, '}' )))
             return;
 
+        num = msi_alloc( (end-begin+1)*sizeof(WCHAR) );
+        if (!num)
+            return;
+
         lstrcpynW( num, begin + 1, end - begin );
         begin += end - begin + 1;
 
@@ -2485,14 +2489,17 @@ static void msi_dialog_vcl_add_columns( msi_dialog *dialog, msi_control *control
         if ( !num[0] || !lstrcmpW( num, zero ) )
         {
             count++;
+            msi_free( num );
             continue;
         }
 
         /* the width must be a positive number
          * if a width is invalid, all remaining columns are hidden
          */
-        if ( !strncmpW( num, negative, 1 ) || !str_is_number( num ) )
+        if ( !strncmpW( num, negative, 1 ) || !str_is_number( num ) ) {
+            msi_free( num );
             return;
+        }
 
         ZeroMemory( &lvc, sizeof(lvc) );
         lvc.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
@@ -2501,6 +2508,7 @@ static void msi_dialog_vcl_add_columns( msi_dialog *dialog, msi_control *control
 
         SendMessageW( control->hwnd,  LVM_INSERTCOLUMNW, count++, (LPARAM)&lvc );
         msi_free( lvc.pszText );
+        msi_free( num );
     }
 }
 
