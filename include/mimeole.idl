@@ -30,6 +30,7 @@ interface IMimeBody;
 interface IMimeEnumProperties;
 
 cpp_quote("DEFINE_GUID(CLSID_IMimeBody,      0xfd853cdb, 0x7f86, 0x11d0, 0x82, 0x52, 0x0, 0xc0, 0x4f, 0xd8, 0x5a, 0xb4);")
+cpp_quote("DEFINE_GUID(CLSID_IMimeAllocator, 0xfd853cdd, 0x7f86, 0x11d0, 0x82, 0x52, 0x0, 0xc0, 0x4f, 0xd8, 0x5a, 0xb4);")
 cpp_quote("DEFINE_GUID(CLSID_IMimeMessage,   0xfd853ce3, 0x7f86, 0x11d0, 0x82, 0x52, 0x0, 0xc0, 0x4f, 0xd8, 0x5a, 0xb4);")
 
 cpp_quote("#define MIME_E_REG_CREATE_KEY         0x800cce01")
@@ -1017,6 +1018,15 @@ cpp_quote("#endif")
     ]
     interface IMimeEnumHeaderRows : IUnknown
     {
+        typedef struct tagENUMHEADERROW
+        {
+            HHEADERROW   hRow;
+            LPSTR        pszHeader;
+            LPSTR        pszData;
+            ULONG        cchData;
+            DWORD_PTR    dwReserved;
+        } ENUMHEADERROW, *LPENUMHEADERROW;
+
         /* FIXME: fill this in */
     }
 
@@ -1026,6 +1036,13 @@ cpp_quote("#endif")
     ]
     interface IMimeEnumProperties : IUnknown
     {
+        typedef struct tagENUMPROPERTY
+        {
+            LPSTR       pszName;
+            HHEADERROW  hRow;
+            DWORD       dwPropId;
+        } ENUMPROPERTY, *LPENUMPROPERTY;
+
         /* FIXME: fill this in */
     }
 
@@ -1062,7 +1079,40 @@ cpp_quote("#endif")
     ]
     interface IMimeAllocator : IMalloc
     {
-        /* FIXME: fill this in */
+        typedef [unique] IMimeAllocator *LPMIMEALLOCATOR;
+
+        HRESULT FreeParamInfoArray(
+            [in] ULONG            cParams,
+            [in] LPMIMEPARAMINFO  prgParam,
+            [in] boolean          fFreeArray);
+
+        HRESULT FreeAddressList(
+            [in,out] LPADDRESSLIST pList);
+
+        HRESULT FreeAddressProps(
+            [in,out] LPADDRESSPROPS pAddress);
+
+        HRESULT ReleaseObjects(
+            [in] ULONG            cObjects,
+            [in] IUnknown         **prgpUnknown,
+            [in] boolean          fFreeArray);
+
+        HRESULT FreeEnumHeaderRowArray(
+            [in] ULONG            cRows,
+            [in] LPENUMHEADERROW  prgRow,
+            [in] boolean          fFreeArray);
+
+        HRESULT FreeEnumPropertyArray(
+            [in] ULONG            cProps,
+            [in] LPENUMPROPERTY   prgProp,
+            [in] boolean          fFreeArray);
+
+        HRESULT FreeThumbprint(
+            [in] THUMBBLOB         *pthumbprint);
+
+        HRESULT PropVariantClear(
+            [in] LPPROPVARIANT     pProp);
+
     }
 
     [
