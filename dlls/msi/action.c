@@ -5194,8 +5194,8 @@ BOOL move_files_wildcard(LPWSTR source, LPWSTR dest, int options)
         path = wildcard_to_file(source, wfd.cFileName);
         if (!path)
         {
-            free_list(&files);
-            return FALSE;
+            res = FALSE;
+            goto done;
         }
 
         add_wildcard(&files, path, dest);
@@ -5208,8 +5208,8 @@ BOOL move_files_wildcard(LPWSTR source, LPWSTR dest, int options)
     file->dest = msi_realloc(file->dest, size * sizeof(WCHAR));
     if (!file->dest)
     {
-        free_list(&files);
-        return FALSE;
+        res = FALSE;
+        goto done;
     }
 
     lstrcpyW(strrchrW(file->dest, '\\') + 1, file->destname);
@@ -5224,7 +5224,12 @@ BOOL move_files_wildcard(LPWSTR source, LPWSTR dest, int options)
         free_file_entry(file);
     }
 
-    return TRUE;
+    res = TRUE;
+
+done:
+    free_list(&files);
+    FindClose(hfile);
+    return res;
 }
 
 static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
