@@ -118,6 +118,7 @@ static BOOL load_driver(void)
     if (RegOpenKeyW( HKEY_LOCAL_MACHINE, str + 18 /* skip \registry\machine */, &driver_hkey ))
     {
         WINE_ERR( "cannot open key %s, err=%u\n", wine_dbgstr_w(str), GetLastError() );
+        HeapFree( GetProcessHeap(), 0, str);
         return FALSE;
     }
     RtlInitUnicodeString( &keypath, str );
