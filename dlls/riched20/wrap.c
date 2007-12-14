@@ -338,7 +338,7 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
 
 static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp);
 
-static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
+static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD beginofs) {
   ME_DisplayItem *p;
   ME_WrapContext wc;
   int dpi = GetDeviceCaps(c->hDC, LOGPIXELSX);
@@ -353,8 +353,8 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
 /*   wc.para_style = tp->member.para.style; */
   wc.style = NULL;
   tp->member.para.nRightMargin = tp->member.para.pFmt->dxRightIndent*dpi/1440;
-  tp->member.para.nFirstMargin = tp->member.para.pFmt->dxStartIndent*dpi/1440;
-  tp->member.para.nLeftMargin = (tp->member.para.pFmt->dxStartIndent+tp->member.para.pFmt->dxOffset)*dpi/1440;
+  tp->member.para.nFirstMargin = tp->member.para.pFmt->dxStartIndent*dpi/1440 + beginofs;
+  tp->member.para.nLeftMargin = (tp->member.para.pFmt->dxStartIndent+tp->member.para.pFmt->dxOffset)*dpi/1440 + beginofs;
   wc.nFirstMargin = tp->member.para.nFirstMargin;
   wc.nLeftMargin = tp->member.para.nLeftMargin;
   wc.nRightMargin = tp->member.para.nRightMargin;
@@ -443,7 +443,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
       bRedraw = TRUE;
     item->member.para.nYPos = c.pt.y;
 
-    ME_WrapTextParagraph(&c, item);
+    ME_WrapTextParagraph(&c, item, editor->selofs);
 
     if (bRedraw)
     {

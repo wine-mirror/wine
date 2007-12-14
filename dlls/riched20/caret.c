@@ -27,7 +27,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 static BOOL
 ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs);
 
-
 void ME_GetSelection(ME_TextEditor *editor, int *from, int *to)
 {
   *from = ME_GetCursorOfs(editor, 0);
@@ -832,25 +831,64 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y)
   tmp_cursor = editor->pCursors[0];
   is_selection = ME_IsSelection(editor);
 
-  ME_FindPixelPos(editor, x, y, &editor->pCursors[0], &editor->bCaretAtEnd);
-  
-  if (GetKeyState(VK_SHIFT)>=0)
+  if (x >= editor->selofs)
   {
-    editor->pCursors[1] = editor->pCursors[0];
-  }
-  else
-  {
-    if (!is_selection) {
+    ME_FindPixelPos(editor, x, y, &editor->pCursors[0], &editor->bCaretAtEnd);
+    if (GetKeyState(VK_SHIFT)>=0)
+    {
+      editor->pCursors[1] = editor->pCursors[0];
+    }
+    else if (!is_selection) {
       editor->pCursors[1] = tmp_cursor;
       is_selection = 1;
     }
+
+    ME_InvalidateSelection(editor);
+    HideCaret(editor->hWnd);
+    ME_MoveCaret(editor);
+    ShowCaret(editor->hWnd);
+    ME_ClearTempStyle(editor);
+    ME_SendSelChange(editor);
   }
-  ME_InvalidateSelection(editor);
-  HideCaret(editor->hWnd);
-  ME_MoveCaret(editor);
-  ShowCaret(editor->hWnd);
-  ME_ClearTempStyle(editor);
-  ME_SendSelChange(editor);
+  else
+  {
+    ME_DisplayItem *pRow;
+
+    editor->linesel = 1;
+    editor->sely = y;
+    /* Set pCursors[0] to beginning of line */
+    ME_FindPixelPos(editor, x, y, &editor->pCursors[1], &editor->bCaretAtEnd);
+    /* Set pCursors[1] to end of line */
+    pRow = ME_FindItemFwd(editor->pCursors[1].pRun, diStartRowOrParagraphOrEnd);
+    assert(pRow);
+    /* pCursor[0] is the position where the cursor will be drawn,
+     * pCursor[1] is the other end of the selection range
+     * pCursor[2] and [3] are backups of [0] and [1] so I
+     * don't have to look them up again
+     */
+
+    if (pRow->type == diStartRow) {
+      /* FIXME WTF was I thinking about here ? */
+      ME_DisplayItem *pRun = ME_FindItemFwd(pRow, diRun);
+      assert(pRun);
+      editor->pCursors[0].pRun = pRun;
+      editor->pCursors[0].nOffset = 0;
+      editor->bCaretAtEnd = 1;
+    } else {
+      editor->pCursors[0].pRun = ME_FindItemBack(pRow, diRun);
+      assert(editor->pCursors[0].pRun && editor->pCursors[0].pRun->member.run.nFlags & MERF_ENDPARA);
+      editor->pCursors[0].nOffset = 0;
+      editor->bCaretAtEnd = 0;
+    }
+    editor->pCursors[2] = editor->pCursors[0];
+    editor->pCursors[3] = editor->pCursors[1];
+    ME_InvalidateSelection(editor);
+    HideCaret(editor->hWnd);
+    ME_MoveCaret(editor);
+    ShowCaret(editor->hWnd);
+    ME_ClearTempStyle(editor);
+    ME_SendSelChange(editor);
+  }
 }
 
 void ME_MouseMove(ME_TextEditor *editor, int x, int y)
@@ -861,14 +899,33 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
 
   tmp_cursor = editor->pCursors[0];
   /* FIXME: do something with the return value of ME_FindPixelPos */
-  ME_FindPixelPos(editor, x, y, &tmp_cursor, &editor->bCaretAtEnd);
-  
-  if (tmp_cursor.pRun == editor->pCursors[0].pRun && 
-      tmp_cursor.nOffset == editor->pCursors[0].nOffset)
+  if (!editor->linesel)
+    ME_FindPixelPos(editor, x, y, &tmp_cursor, &editor->bCaretAtEnd);
+  else ME_FindPixelPos(editor, (y > editor->sely) * editor->rcFormat.right, y, &tmp_cursor, &editor->bCaretAtEnd);
+
+  if (!memcmp(&tmp_cursor, editor->pCursors, sizeof(tmp_cursor)))
     return;
-  
+
   ME_InvalidateSelection(editor);
-  editor->pCursors[0] = tmp_cursor;
+  if (!editor->linesel)
+    editor->pCursors[0] = tmp_cursor;
+  else if (!memcmp(&tmp_cursor, editor->pCursors+2, sizeof(tmp_cursor)) ||
+           !memcmp(&tmp_cursor, editor->pCursors+3, sizeof(tmp_cursor)))
+  {
+    editor->pCursors[0] = editor->pCursors[2];
+    editor->pCursors[1] = editor->pCursors[3];
+  }
+  else if (y < editor->sely)
+  {
+    editor->pCursors[0] = tmp_cursor;
+    editor->pCursors[1] = editor->pCursors[2];
+  }
+  else
+  {
+    editor->pCursors[0] = tmp_cursor;
+    editor->pCursors[1] = editor->pCursors[3];
+  }
+
   HideCaret(editor->hWnd);
   ME_MoveCaret(editor);
   ME_InvalidateSelection(editor);
@@ -1239,7 +1296,6 @@ void ME_SendSelChange(ME_TextEditor *editor)
     sc.seltyp |= SEL_MULTICHAR;
   SendMessageW(GetParent(editor->hWnd), WM_NOTIFY, sc.nmhdr.idFrom, (LPARAM)&sc);
 }
-
 
 BOOL
 ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)

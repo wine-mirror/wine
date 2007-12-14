@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2006 Mike McCormack
+ * Top level resource file for MOUSE driver dll
+ *
+ * Copyright 2007 Maarten Lankhorst for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,15 +18,4 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define WINE_FILEDESCRIPTION_STR "Wine Richedit dll"
-#define WINE_FILENAME_STR "riched20.dll"
-#define WINE_FILEVERSION 5,30,23,1215
-#define WINE_FILEVERSION_STR "5,30,23,1215"
-#define WINE_PRODUCTVERSION 5,30,23,1215
-#define WINE_PRODUCTVERSION_STR "5,30,23,1215"
-
-#include "wine/wine_common_ver.rc"
-
-#include "res.h"
-
-OCR_REVERSE CURSOR ocr_reverse.cur
+#define OCR_REVERSE 32768

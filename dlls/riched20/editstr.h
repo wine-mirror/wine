@@ -325,6 +325,7 @@ typedef struct tagME_TextEditor
   BOOL bHaveFocus;
   /*for IME */
   int imeStartIndex;
+  DWORD selofs, linesel, sely;
 } ME_TextEditor;
 
 typedef struct tagME_Context
