@@ -611,7 +611,7 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     PRINTER_INFO_2A	pinfo2a;
     char		*e,*s,*name,*prettyname,*devname;
     BOOL		ret = FALSE, set_default = FALSE;
-    char                *port,*devline,*env_default;
+    char                *port = NULL, *devline,*env_default;
     HKEY                hkeyPrinter, hkeyPrinters, hkey;
 
     while (isspace(*pent)) pent++;
@@ -723,8 +723,8 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     if (isfirst || set_default)
         WINSPOOL_SetDefaultPrinter(devname,name,TRUE);
 
-    HeapFree(GetProcessHeap(), 0, port);
  end:
+    HeapFree(GetProcessHeap(), 0, port);
     HeapFree(GetProcessHeap(), 0, name);
     return ret;
 }
