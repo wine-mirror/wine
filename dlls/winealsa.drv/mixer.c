@@ -210,6 +210,7 @@ static const struct mixerlinetype {
     { "Line",       MIXERLINE_COMPONENTTYPE_SRC_LINE,        },
     { "Phone",      MIXERLINE_COMPONENTTYPE_SRC_TELEPHONE,   },
     { "Digital",    MIXERLINE_COMPONENTTYPE_SRC_MICROPHONE,  },
+    { "Front Mic",  MIXERLINE_COMPONENTTYPE_SRC_MICROPHONE,  },
 };
 
 /* Map name to MIXERLINE_COMPONENTTYPE_XXX */
