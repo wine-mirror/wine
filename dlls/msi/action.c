@@ -1401,7 +1401,7 @@ static UINT load_file_hash(MSIPACKAGE *package, MSIFILE *file)
         '`','M','s','i','F','i','l','e','H','a','s','h','`',' ',
         'W','H','E','R','E',' ','`','F','i','l','e','_','`',' ','=',' ','\'','%','s','\'',0};
     MSIQUERY *view = NULL;
-    MSIRECORD *row;
+    MSIRECORD *row = NULL;
     UINT r;
 
     TRACE("%s\n", debugstr_w(file->File));
@@ -1426,6 +1426,7 @@ static UINT load_file_hash(MSIPACKAGE *package, MSIFILE *file)
 
 done:
     if (view) msiobj_release(&view->hdr);
+    if (row) msiobj_release(&row->hdr);
     return r;
 }
 
