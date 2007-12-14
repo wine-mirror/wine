@@ -664,8 +664,8 @@ static void test_WM_GETTEXT(void)
     /* Baseline test with normal-sized buffer */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
     result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-    ok(result == strlen(buffer),
-        "WM_GETTEXT returned %d, expected %d\n", result, strlen(buffer));
+    ok(result == lstrlen(buffer),
+        "WM_GETTEXT returned %d, expected %d\n", result, lstrlen(buffer));
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,text);
     ok(result == 0, 
@@ -673,9 +673,9 @@ static void test_WM_GETTEXT(void)
 
     /* Test for returned value of WM_GETTEXTLENGTH */
     result = SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
-    ok(result == strlen(text),
+    ok(result == lstrlen(text),
         "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
-        result, strlen(text));
+        result, lstrlen(text));
 
     /* Test for behavior in overflow case */
     memset(buffer, 0, 1024);
@@ -689,17 +689,17 @@ static void test_WM_GETTEXT(void)
     /* Baseline test with normal-sized buffer and carriage return */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text2);
     result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-    ok(result == strlen(buffer),
-        "WM_GETTEXT returned %d, expected %d\n", result, strlen(buffer));
+    ok(result == lstrlen(buffer),
+        "WM_GETTEXT returned %d, expected %d\n", result, lstrlen(buffer));
     result = strcmp(buffer,text2_after);
     ok(result == 0,
         "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
 
     /* Test for returned value of WM_GETTEXTLENGTH */
     result = SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
-    ok(result == strlen(text2_after),
+    ok(result == lstrlen(text2_after),
         "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
-        result, strlen(text2_after));
+        result, lstrlen(text2_after));
 
     /* Test for behavior of CRLF conversion in case of overflow */
     memset(buffer, 0, 1024);
