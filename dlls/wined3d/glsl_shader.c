@@ -612,7 +612,7 @@ void shader_generate_glsl_declarations(
     /* Declare input register varyings. Only pixel shader, vertex shaders have that declared in the
      * helper function shader that is linked in at link time
      */
-    if(pshader && This->baseShader.hex_version >= WINED3DVS_VERSION(3, 0)) {
+    if(pshader && This->baseShader.hex_version >= WINED3DPS_VERSION(3, 0)) {
         if(use_vs(device)) {
             shader_addline(buffer, "varying vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
         } else {
