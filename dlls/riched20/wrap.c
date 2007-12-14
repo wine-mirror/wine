@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
  * - no tabs
  */
 
-ME_DisplayItem *ME_MakeRow(int height, int baseline, int width)
+static ME_DisplayItem *ME_MakeRow(int height, int baseline, int width)
 {
   ME_DisplayItem *item = ME_MakeDI(diStartRow);
 
@@ -51,7 +51,7 @@ static void ME_BeginRow(ME_WrapContext *wc)
   wc->pt.x = 0;
 }
 
-void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
+static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
 {
   ME_DisplayItem *p, *row, *para;
   int ascent = 0, descent = 0, width=0, shift = 0, align = 0;
@@ -336,7 +336,9 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
   return p->next;
 }
 
-void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
+static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp);
+
+static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
   ME_DisplayItem *p;
   ME_WrapContext wc;
   int dpi = GetDeviceCaps(c->hDC, LOGPIXELSX);
@@ -379,7 +381,7 @@ void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
 }
 
 
-void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
+static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
   ME_DisplayItem *p, *pRow;
 
   /* remove all items that will be reinserted by paragraph wrapper anyway */
