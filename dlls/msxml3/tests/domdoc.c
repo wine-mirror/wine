@@ -415,7 +415,7 @@ static void test_domdoc( void )
     ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code\n");
 
     /* content doesn't matter here */
-    str = SysAllocString( szNonExistentFile );
+    str = NULL;
     r = IXMLDOMDocument_get_nodeName( doc, &str );
     ok ( r == S_OK, "get_nodeName wrong code\n");
     ok ( str != NULL, "str is null\n");
@@ -670,7 +670,7 @@ todo_wine
         ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code\n");
 
         /* content doesn't matter here */
-        str = SysAllocString( szNonExistentFile );
+        str = NULL;
         r = IXMLDOMNode_get_nodeName( node, &str );
         ok ( r == S_OK, "get_nodeName wrong code\n");
         ok ( str != NULL, "str is null\n");
