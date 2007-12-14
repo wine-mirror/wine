@@ -1217,7 +1217,7 @@ LSTATUS WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWO
 {
     NTSTATUS status;
     ANSI_STRING nameA;
-    DWORD total_size;
+    DWORD total_size, datalen = 0;
     char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
     static const int info_size = offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data );
@@ -1228,6 +1228,7 @@ LSTATUS WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWO
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
+    if (count) datalen = *count;
     if (!data && count) *count = 0;
 
     /* this matches Win9x behaviour - NT sets *type to a random value */
@@ -1270,21 +1271,21 @@ LSTATUS WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWO
                                        total_size - info_size );
             if (data && len)
             {
-                if (len > *count) status = STATUS_BUFFER_OVERFLOW;
+                if (len > datalen) status = STATUS_BUFFER_OVERFLOW;
                 else
                 {
                     RtlUnicodeToMultiByteN( (char*)data, len, NULL, (WCHAR *)(buf_ptr + info_size),
                                             total_size - info_size );
                     /* if the type is REG_SZ and data is not 0-terminated
                      * and there is enough space in the buffer NT appends a \0 */
-                    if (len < *count && data[len-1]) data[len] = 0;
+                    if (len < datalen && data[len-1]) data[len] = 0;
                 }
             }
             total_size = len + info_size;
         }
         else if (data)
         {
-            if (total_size - info_size > *count) status = STATUS_BUFFER_OVERFLOW;
+            if (total_size - info_size > datalen) status = STATUS_BUFFER_OVERFLOW;
             else memcpy( data, buf_ptr + info_size, total_size - info_size );
         }
     }

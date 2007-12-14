@@ -580,6 +580,10 @@ static void test_query_value_ex(void)
     ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Nonexistent Value", NULL, &type, buffer, &size);
     ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
     ok(size == sizeof(buffer), "size shouldn't have been changed to %d\n", size);
+
+    size = 4;
+    ret = RegQueryValueExA(hkey_main, "BIN32", NULL, &size, buffer, &size);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 }
 
 static void test_get_value(void)
