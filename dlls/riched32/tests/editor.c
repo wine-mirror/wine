@@ -118,15 +118,15 @@ static void test_WM_GETTEXTLENGTH(void)
     /* Test for WM_GETTEXTLENGTH */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text3);
     result = SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
-    ok(result == strlen(text3),
+    ok(result == lstrlen(text3),
         "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
-        result, strlen(text3));
+        result, lstrlen(text3));
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text4);
     result = SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
-    ok(result == strlen(text4),
+    ok(result == lstrlen(text4),
         "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
-        result, strlen(text4));
+        result, lstrlen(text4));
 
     DestroyWindow(hwndRichEdit);
 }
