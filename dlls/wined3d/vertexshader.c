@@ -691,6 +691,10 @@ static inline BOOL swizzled_attribs_differ(IWineD3DVertexShaderImpl *This, IWine
     DWORD usage_idx;
 
     for(i = 0; i < vdecl->declarationWNumElements; i++) {
+        /* Ignore tesselated streams and the termination entry(position0, stream 255, unused) */
+        if(vdecl->pDeclarationWine[i].Stream >= MAX_STREAMS ||
+           vdecl->pDeclarationWine[i].Type == WINED3DDECLTYPE_UNUSED) continue;
+
         for(j = 0; j < MAX_ATTRIBS; j++) {
             if(!This->baseShader.reg_maps.attributes[j]) continue;
 
