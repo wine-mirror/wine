@@ -236,9 +236,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         write_remoting_arguments(server, indent, func, PASS_OUT, PHASE_FREE);
 
-        if (!is_void(def->type))
-            write_remoting_arguments(server, indent, func, PASS_RETURN, PHASE_FREE);
-
         indent--;
         print_server("}\n");
         print_server("RpcEndFinally\n");
