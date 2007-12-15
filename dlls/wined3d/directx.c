@@ -1746,6 +1746,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             case WINED3DFMT_R16F:
             case WINED3DFMT_X8L8V8U8:
             case WINED3DFMT_L6V5U5:
+            case WINED3DFMT_G16R16:
                 TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
                 return WINED3DERR_NOTAVAILABLE;
 
@@ -1842,6 +1843,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             case WINED3DFMT_A8B8G8R8:
             case WINED3DFMT_X8B8G8R8:
             case WINED3DFMT_P8:
+            case WINED3DFMT_G16R16:
                 TRACE_(d3d_caps)("[OK]\n");
                 return WINED3D_OK;
             case WINED3DFMT_R16F:
@@ -1973,6 +1975,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         case WINED3DFMT_X8B8G8R8:
         case WINED3DFMT_A2R10G10B10:
         case WINED3DFMT_A2B10G10R10:
+        case WINED3DFMT_G16R16:
             TRACE_(d3d_caps)("[OK]\n");
             return WINED3D_OK;
 
@@ -2045,7 +2048,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             return WINED3DERR_NOTAVAILABLE;
 
             /* Not supported */
-        case WINED3DFMT_G16R16:
         case WINED3DFMT_A16B16G16R16:
         case WINED3DFMT_A8R3G3B2:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */

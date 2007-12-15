@@ -2054,6 +2054,78 @@ out:
     IDirect3D9_Release(d3d);
 }
 
+static void g16r16_texture_test(IDirect3DDevice9 *device)
+{
+    IDirect3D9 *d3d = NULL;
+    HRESULT hr;
+    IDirect3DTexture9 *texture = NULL;
+    D3DLOCKED_RECT lr;
+    DWORD *data;
+    DWORD color, red, green, blue;
+    float quad[] = {
+       -1.0,      -1.0,       0.1,     0.0,    0.0,
+       -1.0,       1.0,       0.1,     0.0,    1.0,
+        1.0,      -1.0,       0.1,     1.0,    0.0,
+        1.0,       1.0,       0.1,     1.0,    1.0,
+    };
+
+    memset(&lr, 0, sizeof(lr));
+    IDirect3DDevice9_GetDirect3D(device, &d3d);
+    if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
+       D3DRTYPE_TEXTURE, D3DFMT_G16R16) != D3D_OK) {
+           skip("D3DFMT_G16R16 textures not supported\n");
+           goto out;
+    }
+
+    hr = IDirect3DDevice9_CreateTexture(device, 1, 1, 1, 0, D3DFMT_G16R16,
+                                        D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed with %s\n", DXGetErrorString9(hr));
+    if(!texture) {
+        skip("Failed to create D3DFMT_G16R16 texture\n");
+        goto out;
+    }
+
+    hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_LockRect failed with %s\n", DXGetErrorString9(hr));
+    data = lr.pBits;
+    *data = 0x0f00f000;
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_UnlockRect failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+    color = getPixelColor(device, 240, 320);
+    red   = (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue  = (color & 0x000000ff) >>  0;
+    ok(blue == 0xff && red >= 0xef && red <= 0xf1 && green >= 0x0e && green <= 0x10,
+       "D3DFMT_G16R16 with value 0x00ffff00 has color %08x, expected 0x00F00FFF\n", color);
+
+out:
+    if(texture) IDirect3DTexture9_Release(texture);
+    IDirect3D9_Release(d3d);
+}
+
 static void texture_transform_flags_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
@@ -5442,6 +5514,7 @@ START_TEST(visual)
     alpha_test(device_ptr);
     release_buffer_test(device_ptr);
     float_texture_test(device_ptr);
+    g16r16_texture_test(device_ptr);
     texture_transform_flags_test(device_ptr);
     autogen_mipmap_test(device_ptr);
 
