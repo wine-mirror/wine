@@ -2967,9 +2967,23 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
         TRACE("Unsupported blit between buffers on the same swapchain\n");
         return WINED3DERR_INVALIDCALL;
-    } else if((dstSwapchain || This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) &&
-              (srcSwapchain || SrcSurface == myDevice->render_targets[0]) ) {
-        ERR("Can't perform hardware blit between 2 different swapchains, falling back to software\n");
+    } else if(dstSwapchain && dstSwapchain == srcSwapchain) {
+        FIXME("Implement hardware blit between two surfaces on the same swapchain\n");
+        return WINED3DERR_INVALIDCALL;
+    } else if(dstSwapchain && srcSwapchain) {
+        FIXME("Implement hardware blit between two different swapchains\n");
+        return WINED3DERR_INVALIDCALL;
+    } else if(dstSwapchain) {
+        if(SrcSurface != myDevice->render_targets[0]) {
+            ERR("Unexpected render target -> render target blit\n");
+        }
+        FIXME("Implement blit from active render target to a swapchain\n");
+        return WINED3DERR_INVALIDCALL;
+    } else if(srcSwapchain) {
+        if(This != (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) {
+            ERR("Unexpected render target -> render target blit\n");
+        }
+        FIXME("Implement blit from a swapchain to the active render target\n");
         return WINED3DERR_INVALIDCALL;
     }
 
