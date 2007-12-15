@@ -826,6 +826,20 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
   ReadConformance(pStubMsg, NULL);
   ReadVariance(pStubMsg, NULL, pStubMsg->MaxCount);
 
+  if (pFormat[1] != RPC_FC_STRING_SIZED && (pStubMsg->MaxCount != pStubMsg->ActualCount))
+  {
+    ERR("buffer size %d must equal memory size %ld for non-sized conformant strings\n",
+        pStubMsg->ActualCount, pStubMsg->MaxCount);
+    RpcRaiseException(RPC_S_INVALID_BOUND);
+    return NULL;
+  }
+  if (pStubMsg->Offset)
+  {
+    ERR("conformant strings can't have Offset (%d)\n", pStubMsg->Offset);
+    RpcRaiseException(RPC_S_INVALID_BOUND);
+    return NULL;
+  }
+
   if (*pFormat == RPC_FC_C_CSTRING) esize = 1;
   else if (*pFormat == RPC_FC_C_WSTRING) esize = 2;
   else {
@@ -864,8 +878,17 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
       return NULL;
     }
 
-  if (fMustAlloc || !*ppMemory)
+  if (fMustAlloc)
     *ppMemory = NdrAllocate(pStubMsg, memsize);
+  else
+  {
+    if (!pStubMsg->IsClient && !*ppMemory && (pStubMsg->MaxCount == pStubMsg->ActualCount))
+      /* if the data in the RPC buffer is big enough, we just point straight
+       * into it */
+      *ppMemory = pStubMsg->Buffer;
+    else if (!*ppMemory)
+      *ppMemory = NdrAllocate(pStubMsg, memsize);
+  }
 
   safe_copy_from_buffer(pStubMsg, *ppMemory, bufsize);
 

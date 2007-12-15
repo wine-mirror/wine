@@ -1207,10 +1207,9 @@ todo_wine {
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 0);
-todo_wine {
     ok(mem == StubMsg.BufferStart + 12, "mem not pointing at buffer\n");
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
-}
+
     my_alloc_called = 0;
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -1224,10 +1223,8 @@ todo_wine {
     mem = mem_orig;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 0);
-todo_wine {
     ok(mem == StubMsg.BufferStart + 12, "mem not pointing at buffer\n");
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
-}
 
     my_alloc_called = 0;
     mem = mem_orig;
