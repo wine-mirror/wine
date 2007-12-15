@@ -1096,6 +1096,9 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       }
     }
 
+    if (attr & RPC_FC_P_ALLOCALLNODES)
+        FIXME("RPC_FC_P_ALLOCALLNODES not implemented\n");
+
     if (attr & RPC_FC_P_DEREF) {
       if (fMustAlloc) {
         base_ptr_val = NdrAllocate(pStubMsg, sizeof(void *));
