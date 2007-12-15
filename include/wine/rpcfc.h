@@ -60,8 +60,10 @@
 #define RPC_FC_BOGUS_ARRAY		0x21 /* complex array */
 
 #define RPC_FC_C_CSTRING		0x22
+#define RPC_FC_C_SSTRING		0x24
 #define RPC_FC_C_WSTRING		0x25
 #define RPC_FC_CSTRING                  0x26
+#define RPC_FC_SSTRING			0x28
 #define RPC_FC_WSTRING                  0x29
 
 #define RPC_FC_ENCAPSULATED_UNION	0x2a
