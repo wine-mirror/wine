@@ -56,6 +56,14 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
     
     int infologLength = 0;
     char *infoLog;
+    int i;
+    BOOL is_spam;
+
+    const char *spam[] = {
+        "Vertex shader was successfully compiled to run on hardware.\n",    /* fglrx        */
+        "Fragment shader was successfully compiled to run on hardware.\n",  /* fglrx        */
+        "Fragment shader(s) linked, vertex shader(s) linked."               /* fglrx, no \n */
+    };
 
     GL_EXTCALL(glGetObjectParameterivARB(obj,
                GL_OBJECT_INFO_LOG_LENGTH_ARB,
@@ -67,7 +75,19 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
     {
         infoLog = HeapAlloc(GetProcessHeap(), 0, infologLength);
         GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
-        FIXME("Error received from GLSL shader #%u: %s\n", obj, debugstr_a(infoLog));
+        is_spam = FALSE;
+
+        for(i = 0; i < sizeof(spam) / sizeof(spam[0]); i++) {
+            if(strcmp(infoLog, spam[i]) == 0) {
+                is_spam = TRUE;
+                break;
+            }
+        }
+        if(is_spam) {
+            TRACE("Spam received from GLSL shader #%u: %s\n", obj, debugstr_a(infoLog));
+        } else {
+            FIXME("Error received from GLSL shader #%u: %s\n", obj, debugstr_a(infoLog));
+        }
         HeapFree(GetProcessHeap(), 0, infoLog);
     }
 }
