@@ -2595,17 +2595,9 @@ static inline int is_size_needed_for_phase(enum remoting_phase phase)
     return (phase != PHASE_UNMARSHAL);
 }
 
-static int needs_freeing(const attr_list_t *attrs, const type_t *t, int out)
+static int needs_freeing(const type_t *t)
 {
-    return
-        (is_user_type(t)
-         || (is_ptr(t)
-             && (t->ref->type == RPC_FC_IP
-                 || (is_struct(t->ref->type) && t->ref->type != RPC_FC_STRUCT)
-                 || is_ptr(t->ref)
-                 || is_user_type(t->ref))))
-         || (out && is_string_type(attrs, t))
-         || is_array(t);
+    return !is_base_type(t->type) && (t->type != RPC_FC_RP || !is_base_type(t->ref->type));
 }
 
 expr_t *get_size_is_expr(const type_t *t, const char *name)
@@ -2646,7 +2638,7 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
 
     if (phase == PHASE_FREE)
     {
-        if (!needs_freeing(var->attrs, type, out_attr))
+        if (!needs_freeing(type))
             return;
     }
     else
