@@ -967,10 +967,15 @@ static int rpcrt4_conn_tcp_read(RpcConnection *Connection,
   do
   {
     int r = recv(tcpc->sock, (char *)buffer + bytes_read, count - bytes_read, 0);
-    if (r >= 0)
+    if (!r)
+      return -1;
+    else if (r > 0)
       bytes_read += r;
     else if (errno != EAGAIN)
+    {
+      WARN("recv() failed: %s\n", strerror(errno));
       return -1;
+    }
     else
     {
       struct pollfd pfds[2];
