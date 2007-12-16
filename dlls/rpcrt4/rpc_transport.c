@@ -88,7 +88,10 @@ static CRITICAL_SECTION_DEBUG assoc_list_cs_debug =
 };
 static CRITICAL_SECTION assoc_list_cs = { &assoc_list_cs_debug, -1, 0, 0, 0, 0 };
 
-static struct list assoc_list = LIST_INIT(assoc_list);
+static struct list client_assoc_list = LIST_INIT(client_assoc_list);
+static struct list server_assoc_list = LIST_INIT(server_assoc_list);
+
+static LONG last_assoc_group_id;
 
 /**** ncacn_np support ****/
 
@@ -1454,6 +1457,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
 
   NewConnection = ops->alloc();
   NewConnection->Next = NULL;
+  NewConnection->server_binding = NULL;
   NewConnection->server = server;
   NewConnection->ops = ops;
   NewConnection->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
@@ -1481,14 +1485,36 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   return RPC_S_OK;
 }
 
+static RPC_STATUS RpcAssoc_Alloc(LPCSTR Protseq, LPCSTR NetworkAddr,
+                                 LPCSTR Endpoint, LPCWSTR NetworkOptions,
+                                 RpcAssoc **assoc_out)
+{
+  RpcAssoc *assoc;
+  assoc = HeapAlloc(GetProcessHeap(), 0, sizeof(*assoc));
+  if (!assoc)
+    return RPC_S_OUT_OF_RESOURCES;
+  assoc->refs = 1;
+  list_init(&assoc->free_connection_pool);
+  InitializeCriticalSection(&assoc->cs);
+  assoc->Protseq = RPCRT4_strdupA(Protseq);
+  assoc->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
+  assoc->Endpoint = RPCRT4_strdupA(Endpoint);
+  assoc->NetworkOptions = NetworkOptions ? RPCRT4_strdupW(NetworkOptions) : NULL;
+  assoc->assoc_group_id = 0;
+  list_init(&assoc->entry);
+  *assoc_out = assoc;
+  return RPC_S_OK;
+}
+
 RPC_STATUS RPCRT4_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr,
                                  LPCSTR Endpoint, LPCWSTR NetworkOptions,
                                  RpcAssoc **assoc_out)
 {
   RpcAssoc *assoc;
+  RPC_STATUS status;
 
   EnterCriticalSection(&assoc_list_cs);
-  LIST_FOR_EACH_ENTRY(assoc, &assoc_list, RpcAssoc, entry)
+  LIST_FOR_EACH_ENTRY(assoc, &client_assoc_list, RpcAssoc, entry)
   {
     if (!strcmp(Protseq, assoc->Protseq) &&
         !strcmp(NetworkAddr, assoc->NetworkAddr) &&
@@ -1503,21 +1529,62 @@ RPC_STATUS RPCRT4_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr,
     }
   }
 
-  assoc = HeapAlloc(GetProcessHeap(), 0, sizeof(*assoc));
-  if (!assoc)
+  status = RpcAssoc_Alloc(Protseq, NetworkAddr, Endpoint, NetworkOptions, &assoc);
+  if (status != RPC_S_OK)
   {
-    LeaveCriticalSection(&assoc_list_cs);
-    return RPC_S_OUT_OF_RESOURCES;
+      LeaveCriticalSection(&assoc_list_cs);
+      return status;
   }
-  assoc->refs = 1;
-  list_init(&assoc->connection_pool);
-  InitializeCriticalSection(&assoc->cs);
-  assoc->Protseq = RPCRT4_strdupA(Protseq);
-  assoc->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
-  assoc->Endpoint = RPCRT4_strdupA(Endpoint);
-  assoc->NetworkOptions = NetworkOptions ? RPCRT4_strdupW(NetworkOptions) : NULL;
-  assoc->assoc_group_id = 0;
-  list_add_head(&assoc_list, &assoc->entry);
+  list_add_head(&client_assoc_list, &assoc->entry);
+  *assoc_out = assoc;
+
+  LeaveCriticalSection(&assoc_list_cs);
+
+  TRACE("new assoc %p\n", assoc);
+
+  return RPC_S_OK;
+}
+
+RPC_STATUS RpcServerAssoc_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr,
+                                         LPCSTR Endpoint, LPCWSTR NetworkOptions,
+                                         unsigned long assoc_gid,
+                                         RpcAssoc **assoc_out)
+{
+  RpcAssoc *assoc;
+  RPC_STATUS status;
+
+  EnterCriticalSection(&assoc_list_cs);
+  if (assoc_gid)
+  {
+    LIST_FOR_EACH_ENTRY(assoc, &server_assoc_list, RpcAssoc, entry)
+    {
+      /* FIXME: NetworkAddr shouldn't be NULL */
+      if (assoc->assoc_group_id == assoc_gid &&
+          !strcmp(Protseq, assoc->Protseq) &&
+          (!NetworkAddr || !assoc->NetworkAddr || !strcmp(NetworkAddr, assoc->NetworkAddr)) &&
+          !strcmp(Endpoint, assoc->Endpoint) &&
+          ((!assoc->NetworkOptions == !NetworkOptions) &&
+           (!NetworkOptions || !strcmpW(NetworkOptions, assoc->NetworkOptions))))
+      {
+        assoc->refs++;
+        *assoc_out = assoc;
+        LeaveCriticalSection(&assoc_list_cs);
+        TRACE("using existing assoc %p\n", assoc);
+        return RPC_S_OK;
+      }
+    }
+    *assoc_out = NULL;
+    return RPC_S_NO_CONTEXT_AVAILABLE;
+  }
+
+  status = RpcAssoc_Alloc(Protseq, NetworkAddr, Endpoint, NetworkOptions, &assoc);
+  if (status != RPC_S_OK)
+  {
+      LeaveCriticalSection(&assoc_list_cs);
+      return status;
+  }
+  assoc->assoc_group_id = InterlockedIncrement(&last_assoc_group_id);
+  list_add_head(&server_assoc_list, &assoc->entry);
   *assoc_out = assoc;
 
   LeaveCriticalSection(&assoc_list_cs);
@@ -1543,7 +1610,7 @@ ULONG RpcAssoc_Release(RpcAssoc *assoc)
 
     TRACE("destroying assoc %p\n", assoc);
 
-    LIST_FOR_EACH_ENTRY_SAFE(Connection, cursor2, &assoc->connection_pool, RpcConnection, conn_pool_entry)
+    LIST_FOR_EACH_ENTRY_SAFE(Connection, cursor2, &assoc->free_connection_pool, RpcConnection, conn_pool_entry)
     {
       list_remove(&Connection->conn_pool_entry);
       RPCRT4_DestroyConnection(Connection);
@@ -1695,7 +1762,7 @@ static RpcConnection *RpcAssoc_GetIdleConnection(RpcAssoc *assoc,
   RpcConnection *Connection;
   EnterCriticalSection(&assoc->cs);
   /* try to find a compatible connection from the connection pool */
-  LIST_FOR_EACH_ENTRY(Connection, &assoc->connection_pool, RpcConnection, conn_pool_entry)
+  LIST_FOR_EACH_ENTRY(Connection, &assoc->free_connection_pool, RpcConnection, conn_pool_entry)
   {
     if (!memcmp(&Connection->ActiveInterface, InterfaceId,
                 sizeof(RPC_SYNTAX_IDENTIFIER)) &&
@@ -1757,7 +1824,7 @@ void RpcAssoc_ReleaseIdleConnection(RpcAssoc *assoc, RpcConnection *Connection)
   assert(!Connection->server);
   EnterCriticalSection(&assoc->cs);
   if (!assoc->assoc_group_id) assoc->assoc_group_id = Connection->assoc_group_id;
-  list_add_head(&assoc->connection_pool, &Connection->conn_pool_entry);
+  list_add_head(&assoc->free_connection_pool, &Connection->conn_pool_entry);
   LeaveCriticalSection(&assoc->cs);
 }
 
@@ -1786,6 +1853,10 @@ RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
   HeapFree(GetProcessHeap(), 0, Connection->NetworkOptions);
   if (Connection->AuthInfo) RpcAuthInfo_Release(Connection->AuthInfo);
   if (Connection->QOS) RpcQualityOfService_Release(Connection->QOS);
+
+  /* server-only */
+  if (Connection->server_binding) RPCRT4_DestroyBinding(Connection->server_binding);
+
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;
 }

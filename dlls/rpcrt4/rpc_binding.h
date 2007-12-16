@@ -63,23 +63,20 @@ typedef struct _RpcAssoc
     ULONG assoc_group_id;
 
     CRITICAL_SECTION cs;
-    struct list connection_pool;
+    /* connections available to be used */
+    struct list free_connection_pool;
 } RpcAssoc;
 
 struct connection_ops;
 
 typedef struct _RpcConnection
 {
-  struct _RpcConnection* Next;
   BOOL server;
   LPSTR NetworkAddr;
   LPSTR Endpoint;
   LPWSTR NetworkOptions;
   const struct connection_ops *ops;
   USHORT MaxTransmissionSize;
-  /* The active interface bound to server. */
-  RPC_SYNTAX_IDENTIFIER ActiveInterface;
-  USHORT NextCallId;
 
   /* authentication */
   CtxtHandle ctx;
@@ -93,6 +90,13 @@ typedef struct _RpcConnection
   /* client-only */
   struct list conn_pool_entry;
   ULONG assoc_group_id; /* association group returned during binding */
+
+  /* server-only */
+  /* The active interface bound to server. */
+  RPC_SYNTAX_IDENTIFIER ActiveInterface;
+  USHORT NextCallId;
+  struct _RpcConnection* Next;
+  struct _RpcBinding *server_binding;
 } RpcConnection;
 
 struct connection_ops {
@@ -150,6 +154,7 @@ RPC_STATUS RPCRT4_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endp
 RPC_STATUS RpcAssoc_GetClientConnection(RpcAssoc *assoc, const RPC_SYNTAX_IDENTIFIER *InterfaceId, const RPC_SYNTAX_IDENTIFIER *TransferSyntax, RpcAuthInfo *AuthInfo, RpcQualityOfService *QOS, RpcConnection **Connection);
 void RpcAssoc_ReleaseIdleConnection(RpcAssoc *assoc, RpcConnection *Connection);
 ULONG RpcAssoc_Release(RpcAssoc *assoc);
+RPC_STATUS RpcServerAssoc_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCWSTR NetworkOptions, unsigned long assoc_gid, RpcAssoc **assoc_out);
 
 RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCWSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcQualityOfService *QOS);
 RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection);

@@ -241,6 +241,7 @@ RpcPktHdr *RPCRT4_BuildBindNackHeader(unsigned long DataRepresentation,
 RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation,
                                      unsigned short MaxTransmissionSize,
                                      unsigned short MaxReceiveSize,
+                                     unsigned long AssocGroupId,
                                      LPCSTR ServerAddress,
                                      unsigned long Result,
                                      unsigned long Reason,
@@ -266,6 +267,7 @@ RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation,
   header->common.frag_len = header_size;
   header->bind_ack.max_tsize = MaxTransmissionSize;
   header->bind_ack.max_rsize = MaxReceiveSize;
+  header->bind_ack.assoc_gid = AssocGroupId;
   server_address = (RpcAddressString*)(&header->bind_ack + 1);
   server_address->length = strlen(ServerAddress) + 1;
   strcpy(server_address->string, ServerAddress);
