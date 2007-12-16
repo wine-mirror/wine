@@ -47,6 +47,10 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
     if(myDevice->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
         ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
     }
+    if(This->Flags & SFLAG_CONVERTED) {
+        FIXME("Read back converted textures unsupported, format=%s\n", debug_d3dformat(This->resource.format));
+        return;
+    }
 
     ENTER_GL();
             /* Make sure that a proper texture unit is selected, bind the texture
@@ -85,12 +89,6 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         void *mem;
         int src_pitch = 0;
         int dst_pitch = 0;
-
-         if(This->Flags & SFLAG_CONVERTED) {
-             FIXME("Read back converted textures unsupported\n");
-             LEAVE_GL();
-             return;
-         }
 
         if (This->Flags & SFLAG_NONPOW2) {
             unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
