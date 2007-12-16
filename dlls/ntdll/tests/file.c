@@ -498,17 +498,39 @@ static void test_iocp_fileio(HANDLE h)
 {
     static const char pipe_name[] = "\\\\.\\pipe\\iocompletiontestnamedpipe";
 
-    HANDLE hPipeSrv = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 4, 1024, 1024, 1000, NULL );
-    HANDLE hPipeClt = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
-    ok( hPipeSrv != INVALID_HANDLE_VALUE && hPipeClt != INVALID_HANDLE_VALUE, "Cannot create or connect to pipe\n" );
-    if (hPipeSrv != INVALID_HANDLE_VALUE && hPipeClt != INVALID_HANDLE_VALUE)
+    IO_STATUS_BLOCK iosb;
+    FILE_COMPLETION_INFORMATION fci = {h, CKEY_SECOND};
+    HANDLE hPipeSrv, hPipeClt;
+    NTSTATUS res;
+
+    hPipeSrv = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 4, 1024, 1024, 1000, NULL );
+    ok( hPipeSrv != INVALID_HANDLE_VALUE, "Cannot create named pipe\n" );
+    if (hPipeSrv != INVALID_HANDLE_VALUE )
+    {
+        hPipeClt = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+        ok( hPipeClt != INVALID_HANDLE_VALUE, "Cannot connect to pipe\n" );
+        if (hPipeClt != INVALID_HANDLE_VALUE)
+        {
+            res = pNtSetInformationFile( hPipeSrv, &iosb, &fci, sizeof(fci), FileCompletionInformation );
+            ok( res == STATUS_INVALID_PARAMETER, "Unexpected NtSetInformationFile on non-overlapped handle: %x\n", res );
+            CloseHandle(hPipeClt);
+        }
+        CloseHandle( hPipeSrv );
+    }
+
+    hPipeSrv = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 4, 1024, 1024, 1000, NULL );
+    ok( hPipeSrv != INVALID_HANDLE_VALUE, "Cannot create named pipe\n" );
+    if (hPipeSrv == INVALID_HANDLE_VALUE )
+        return;
+
+    hPipeClt = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+    ok( hPipeClt != INVALID_HANDLE_VALUE, "Cannot connect to pipe\n" );
+    if (hPipeClt != INVALID_HANDLE_VALUE)
     {
         OVERLAPPED o = {0,};
         BYTE buf[3];
         DWORD read;
         long count;
-        FILE_COMPLETION_INFORMATION fci = {h, CKEY_SECOND};
-        IO_STATUS_BLOCK iosb;
 
         NTSTATUS res = pNtSetInformationFile( hPipeSrv, &iosb, &fci, sizeof(fci), FileCompletionInformation );
         ok( res == STATUS_SUCCESS, "NtSetInformationFile failed: %x\n", res );

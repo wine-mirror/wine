@@ -2050,7 +2050,7 @@ DECL_HANDLER(set_completion_info)
 
     if (fd)
     {
-        if (!fd->completion)
+        if (!(fd->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)) && !fd->completion)
         {
             fd->completion = get_completion_obj( current->process, req->chandle, IO_COMPLETION_MODIFY_STATE );
             fd->comp_key = req->ckey;
