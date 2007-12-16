@@ -42,6 +42,7 @@
 #include "wine/exception.h"
 
 #include "rpc_server.h"
+#include "rpc_assoc.h"
 #include "rpc_message.h"
 #include "rpc_defs.h"
 #include "ncastatus.h"

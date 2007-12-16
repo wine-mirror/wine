@@ -18,6 +18,7 @@ C_SRCS = \
 	ndr_marshall.c \
 	ndr_ole.c \
 	ndr_stubless.c \
+	rpc_assoc.c \
 	rpc_binding.c \
 	rpc_epmap.c \
 	rpc_message.c \

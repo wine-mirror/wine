@@ -39,7 +39,7 @@
 #include "wine/debug.h"
 
 #include "rpc_binding.h"
-#include "rpc_message.h"
+#include "rpc_assoc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
