@@ -202,7 +202,7 @@ INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
     case DESKTOPVERTRES:
         return virtual_screen_rect.bottom - virtual_screen_rect.top;
     case BITSPIXEL:
-        return screen_depth;
+        return screen_bpp;
     case PLANES:
         return 1;
     case NUMBRUSHES:

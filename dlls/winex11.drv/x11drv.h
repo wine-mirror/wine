@@ -531,6 +531,7 @@ extern Visual *visual;
 extern Window root_window;
 extern unsigned int screen_width;
 extern unsigned int screen_height;
+extern unsigned int screen_bpp;
 extern unsigned int screen_depth;
 extern RECT virtual_screen_rect;
 extern unsigned int text_caps;

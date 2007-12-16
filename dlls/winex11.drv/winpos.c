@@ -895,7 +895,7 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
                          SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE, NULL );
     data->lock_changes--;
     ClipCursor(NULL);
-    SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_depth,
+    SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp,
                          MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
 
     EnumWindows( update_windows_on_desktop_resize, (LPARAM)&resize_data );

@@ -70,6 +70,7 @@ Screen *screen;
 Visual *visual;
 unsigned int screen_width;
 unsigned int screen_height;
+unsigned int screen_bpp;
 unsigned int screen_depth;
 RECT virtual_screen_rect;
 Window root_window;
@@ -490,6 +491,8 @@ static BOOL process_attach(void)
         screen_depth = desktop_vi->depth;
         XFree(desktop_vi);
     }
+
+    screen_bpp = screen_depth; /* TODO */
 
     XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
 

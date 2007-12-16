@@ -86,7 +86,7 @@ LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
 void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigned int bpp, unsigned int freq)
 {
     LPDDHALMODEINFO info = &(dd_modes[dd_mode_count]);
-    DWORD dwBpp = screen_depth;
+    DWORD dwBpp = screen_bpp;
     if (dd_mode_count >= dd_max_modes)
     {
         ERR("Maximum modes (%d) exceeded\n", dd_max_modes);
@@ -114,8 +114,9 @@ void X11DRV_Settings_AddDepthModes(void)
 {
     int i, j;
     int existing_modes = dd_mode_count;
-    DWORD dwBpp = screen_depth;
+    DWORD dwBpp = screen_bpp;
     if (dwBpp == 24) dwBpp = 32;
+
     for (j=0; j<3; j++)
     {
         if (depths[j] != dwBpp)
