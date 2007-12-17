@@ -1628,10 +1628,7 @@ static void test_MsiEnumClients(void)
     /* all params correct, component missing */
     product[0] = '\0';
     r = MsiEnumClientsA(component, 0, product);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
@@ -1666,20 +1663,14 @@ static void test_MsiEnumClients(void)
 
     /* product value exists */
     r = MsiEnumClientsA(component, 0, product);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
 
     /* try index 0 again */
     product[0] = '\0';
     r = MsiEnumClientsA(component, 0, product);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
 
     /* try index 1, second product value does not exist */
     product[0] = '\0';
@@ -1696,27 +1687,22 @@ static void test_MsiEnumClients(void)
     todo_wine
     {
         ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+        ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
     }
-    ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
     /* start the enumeration over */
     product[0] = '\0';
     r = MsiEnumClientsA(component, 0, product);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(product, prodcode) || !lstrcmpA(product, prodcode2),
-           "Expected %s or %s, got %s\n", prodcode, prodcode2, product);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(product, prodcode) || !lstrcmpA(product, prodcode2),
+       "Expected %s or %s, got %s\n", prodcode, prodcode2, product);
+
     /* correctly query second product */
     product[0] = '\0';
     r = MsiEnumClientsA(component, 1, product);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(product, prodcode) || !lstrcmpA(product, prodcode2),
-           "Expected %s or %s, got %s\n", prodcode, prodcode2, product);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(product, prodcode) || !lstrcmpA(product, prodcode2),
+       "Expected %s or %s, got %s\n", prodcode, prodcode2, product);
 
     RegDeleteValueA(compkey, prod_squashed);
     RegDeleteValueA(compkey, prod2_squashed);
@@ -1733,10 +1719,7 @@ static void test_MsiEnumClients(void)
     /* user local component key exists */
     product[0] = '\0';
     r = MsiEnumClientsA(component, 0, product);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
     /* index > 0, no products exist */
@@ -1772,7 +1755,10 @@ static void test_MsiEnumClients(void)
     /* try index 1, second product value does not exist */
     product[0] = '\0';
     r = MsiEnumClientsA(component, 1, product);
-    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
     res = RegSetValueExA(compkey, prod2_squashed, 0, REG_SZ, (const BYTE *)"C:\\another", 10);

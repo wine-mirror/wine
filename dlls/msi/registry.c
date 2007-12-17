@@ -1317,9 +1317,9 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
     if (!szComponent || !*szComponent || !szProduct)
         return ERROR_INVALID_PARAMETER;
 
-    r = MSIREG_OpenComponentsKey(szComponent,&hkeyComp,FALSE);
-    if( r != ERROR_SUCCESS )
-        return ERROR_NO_MORE_ITEMS;
+    r = MSIREG_OpenUserDataComponentKey(szComponent, &hkeyComp, FALSE);
+    if (r != ERROR_SUCCESS)
+        return ERROR_UNKNOWN_COMPONENT;
 
     sz = SQUISH_GUID_SIZE;
     r = RegEnumValueW(hkeyComp, index, szValName, &sz, NULL, NULL, NULL, NULL);
