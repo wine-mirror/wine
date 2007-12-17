@@ -122,6 +122,7 @@ typedef struct tagHlpFileFile
     LPSTR                       lpszTitle;
     LPSTR                       lpszCopyright;
     HLPFILE_PAGE*               first_page;
+    HLPFILE_PAGE*               last_page;
     HLPFILE_MACRO*              first_macro;
     BYTE*                       Context;
     BYTE*                       kwbtree;

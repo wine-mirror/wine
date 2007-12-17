@@ -443,15 +443,14 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
 
     if (hlpfile->first_page)
     {
-        HLPFILE_PAGE  *p;
-
-        for (p = hlpfile->first_page; p->next; p = p->next);
-        page->prev = p;
-        p->next    = page;
+        hlpfile->last_page->next = page;
+        page->prev = hlpfile->last_page;
+        hlpfile->last_page = page;
     }
     else
     {
         hlpfile->first_page = page;
+        hlpfile->last_page = page;
         page->prev = NULL;
     }
 
@@ -889,9 +888,8 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
     unsigned short     bits;
     unsigned           nc, ncol = 1;
 
-    if (!hlpfile->first_page) {WINE_WARN("no page\n"); return FALSE;};
-
-    for (page = hlpfile->first_page; page->next; page = page->next) /* Nothing */;
+    if (!hlpfile->last_page) {WINE_WARN("no page\n"); return FALSE;};
+    page = hlpfile->last_page;
     for (paragraphptr = &page->first_paragraph; *paragraphptr;
          paragraphptr = &(*paragraphptr)->next) /* Nothing */;
 
