@@ -787,7 +787,7 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
            DestRect->right > This->surface_desc.dwWidth ||
            DestRect->bottom > This->surface_desc.dwHeight)
         {
-            WARN("Source rectangle is invalid, returning DDERR_INVALIDRECT\n");
+            WARN("Destination rectangle is invalid, returning DDERR_INVALIDRECT\n");
             LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDRECT;
         }
