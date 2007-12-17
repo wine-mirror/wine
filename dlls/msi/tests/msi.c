@@ -1618,18 +1618,12 @@ static void test_MsiEnumClients(void)
     /* empty szComponent */
     product[0] = '\0';
     r = MsiEnumClientsA("", 0, product);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
     /* NULL lpProductBuf */
     r = MsiEnumClientsA(component, 0, NULL);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* all params correct, component missing */
     product[0] = '\0';

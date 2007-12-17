@@ -1284,6 +1284,9 @@ UINT WINAPI MsiEnumClientsA(LPCSTR szComponent, DWORD index, LPSTR szProduct)
 
     TRACE("%s %d %p\n", debugstr_a(szComponent), index, szProduct);
 
+    if ( !szProduct )
+        return ERROR_INVALID_PARAMETER;
+
     if( szComponent )
     {
         szwComponent = strdupAtoW( szComponent );
@@ -1311,7 +1314,7 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
 
     TRACE("%s %d %p\n", debugstr_w(szComponent), index, szProduct);
 
-    if (!szComponent || !szProduct)
+    if (!szComponent || !*szComponent || !szProduct)
         return ERROR_INVALID_PARAMETER;
 
     r = MSIREG_OpenComponentsKey(szComponent,&hkeyComp,FALSE);
