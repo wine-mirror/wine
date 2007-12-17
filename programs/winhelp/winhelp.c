@@ -1957,25 +1957,13 @@ WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW* win, WPARAM wParam, LPARAM
 static void cb_KWBTree(void *p, void **next, void *cookie)
 {
     HWND hListWnd = (HWND)cookie;
+    int count;
 
     WINE_TRACE("Adding '%s' to search list\n", (char *)p);
     SendMessage(hListWnd, LB_INSERTSTRING, -1, (LPARAM)p);
+    count = SendMessage(hListWnd, LB_GETCOUNT, 0, 0);
+    SendMessage(hListWnd, LB_SETITEMDATA, count-1, (LPARAM)p);
     *next = (char*)p + strlen((char*)p) + 7;
-}
-
-/**************************************************************************
- * comp_KWBTREE
- *
- * HLPFILE_BPTreeCompare function for '|KWBTREE' internal file.
- *
- */
-static int comp_KWBTree(void *p, const void *key,
-                        int leaf, void** next)
-{
-    WINE_TRACE("comparing key '%s' with '%s'\n", (char *)p, (char *)key);
-    *next = (char*)p+strlen(p)+1+(leaf?6:2);
-    /* unlike directory, index is case insensitive */
-    return lstrcmpi(p, key);
 }
 
 /**************************************************************************
@@ -2004,25 +1992,11 @@ INT_PTR CALLBACK WINHELP_SearchDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
             sel = SendDlgItemMessage(hWnd, IDC_INDEXLIST, LB_GETCURSEL, 0, 0);
             if (sel != LB_ERR)
             {
-                char buf[500]; /* enough */
                 BYTE *p;
                 int count;
 
-                SendDlgItemMessage(hWnd, IDC_INDEXLIST, LB_GETTEXT,
-                                   sel, (LPARAM)buf);
-                p = HLPFILE_BPTreeSearch(file->kwbtree, buf, comp_KWBTree);
-                if (p == NULL)
-                {
-                    /*
-                     * TODO:
-                     * This may happen if help file uses other locale than
-                     * system. We should honour charset provided in help file
-                     * and use UNICODE, but for now current implementation is
-                     * acceptable (almost all help files use ANSI).
-                     */
-                    WINE_FIXME("item '%s' not found, locale mismatch???\n", buf);
-                    return TRUE;
-                }
+                p = (BYTE*)SendDlgItemMessage(hWnd, IDC_INDEXLIST,
+                                              LB_GETITEMDATA, sel, 0);
                 count = *(short*)((char *)p + strlen((char *)p) + 1);
                 if (count > 1)
                 {
