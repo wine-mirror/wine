@@ -408,7 +408,7 @@ void nsfree(void*);
 
 void nsACString_Init(nsACString*,const char*);
 void nsACString_SetData(nsACString*,const char*);
-PRUint32 nsACString_GetData(const nsACString*,const char**,PRBool*);
+PRUint32 nsACString_GetData(const nsACString*,const char**);
 void nsACString_Finish(nsACString*);
 
 void nsAString_Init(nsAString*,const PRUnichar*);

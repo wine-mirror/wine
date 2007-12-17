@@ -505,7 +505,7 @@ static nsresult NSAPI nsChannel_GetContentCharset(nsIHttpChannel *iface,
     if(This->channel) {
         nsresult nsres = nsIChannel_GetContentCharset(This->channel, aContentCharset);
         const char *ch;
-        nsACString_GetData(aContentCharset, &ch, NULL);
+        nsACString_GetData(aContentCharset, &ch);
         return nsres;
     }
 
@@ -589,7 +589,7 @@ static BOOL do_load_from_moniker_hack(nsChannel *This)
     if(NS_SUCCEEDED(nsres)) {
         const char *scheme;
 
-        nsACString_GetData(&scheme_str, &scheme, NULL);
+        nsACString_GetData(&scheme_str, &scheme);
         ret = !strcmp(scheme, "wine");
     }
 
@@ -1101,7 +1101,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
         nsIInputStream_Release(This->post_data_stream);
 
     if(aContentType) {
-        nsACString_GetData(aContentType, &content_type, NULL);
+        nsACString_GetData(aContentType, &content_type);
         if(*content_type)
             FIXME("Unsupported aContentType argument: %s\n", debugstr_a(content_type));
     }
@@ -1982,7 +1982,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     BOOL is_wine_uri = FALSE;
     nsresult nsres;
 
-    nsACString_GetData(aSpec, &spec, NULL);
+    nsACString_GetData(aSpec, &spec);
 
     TRACE("(%p(%s) %s %p %p)\n", aSpec, debugstr_a(spec), debugstr_a(aOriginCharset),
           aBaseURI, _retval);
@@ -2003,7 +2003,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
 
         nsres = nsIURI_GetSpec(aBaseURI, &base_uri_str);
         if(NS_SUCCEEDED(nsres)) {
-            nsACString_GetData(&base_uri_str, &base_uri, NULL);
+            nsACString_GetData(&base_uri_str, &base_uri);
             TRACE("base_uri=%s\n", debugstr_a(base_uri));
         }else {
             ERR("GetSpec failed: %08x\n", nsres);

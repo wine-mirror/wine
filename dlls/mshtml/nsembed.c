@@ -472,9 +472,9 @@ void nsACString_SetData(nsACString *str, const char *data)
     NS_CStringSetData(str, data, PR_UINT32_MAX);
 }
 
-PRUint32 nsACString_GetData(const nsACString *str, const char **data, PRBool *termited)
+PRUint32 nsACString_GetData(const nsACString *str, const char **data)
 {
-    return NS_CStringGetData(str, data, termited);
+    return NS_CStringGetData(str, data, NULL);
 }
 
 void nsACString_Finish(nsACString *str)
@@ -1104,7 +1104,7 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
 
     nsACString_Init(&spec_str, NULL);
     nsIURI_GetSpec(aURI, &spec_str);
-    nsACString_GetData(&spec_str, &spec, NULL);
+    nsACString_GetData(&spec_str, &spec);
 
     TRACE("(%p)->(%p(%s) %p)\n", This, aURI, debugstr_a(spec), _retval);
 
