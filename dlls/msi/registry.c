@@ -1327,6 +1327,10 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
     if (r != ERROR_SUCCESS)
     {
         RegCloseKey(hkeyComp);
+
+        if (index != 0)
+            return ERROR_INVALID_PARAMETER;
+
         return ERROR_UNKNOWN_COMPONENT;
     }
 

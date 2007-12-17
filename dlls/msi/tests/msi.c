@@ -1649,10 +1649,7 @@ static void test_MsiEnumClients(void)
     /* index > 0, no products exist */
     product[0] = '\0';
     r = MsiEnumClientsA(component, 1, product);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
@@ -1722,10 +1719,7 @@ static void test_MsiEnumClients(void)
     /* index > 0, no products exist */
     product[0] = '\0';
     r = MsiEnumClientsA(component, 1, product);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
