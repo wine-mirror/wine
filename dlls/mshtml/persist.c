@@ -362,7 +362,7 @@ static HRESULT get_doc_string(HTMLDocument *This, char **str, DWORD *len)
     nsnode_to_nsstring(nsnode, &nsstr);
     nsIDOMNode_Release(nsnode);
 
-    nsAString_GetData(&nsstr, &strw, NULL);
+    nsAString_GetData(&nsstr, &strw);
     TRACE("%s\n", debugstr_w(strw));
 
     *len = WideCharToMultiByte(CP_ACP, 0, strw, -1, NULL, 0, NULL, NULL);

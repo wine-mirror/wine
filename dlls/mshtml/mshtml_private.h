@@ -412,7 +412,7 @@ PRUint32 nsACString_GetData(const nsACString*,const char**);
 void nsACString_Finish(nsACString*);
 
 void nsAString_Init(nsAString*,const PRUnichar*);
-PRUint32 nsAString_GetData(const nsAString*,const PRUnichar**,PRBool*);
+PRUint32 nsAString_GetData(const nsAString*,const PRUnichar**);
 void nsAString_Finish(nsAString*);
 
 nsIInputStream *create_nsstream(const char*,PRInt32);

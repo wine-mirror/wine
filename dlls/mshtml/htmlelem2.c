@@ -612,7 +612,7 @@ static HRESULT WINAPI HTMLElement2_get_dir(IHTMLElement2 *iface, BSTR *p)
         nsres = nsIDOMHTMLElement_GetDir(This->nselem, &dir_str);
         if(NS_SUCCEEDED(nsres)) {
             const PRUnichar *dir;
-            nsAString_GetData(&dir_str, &dir, NULL);
+            nsAString_GetData(&dir_str, &dir);
             if(*dir)
                 *p = SysAllocString(dir);
         }else {

@@ -147,7 +147,7 @@ static BOOL is_br_node(nsIDOMNode *node)
     nsAString_Init(&tag_str, NULL);
     nsIDOMElement_GetTagName(elem, &tag_str);
     nsIDOMElement_Release(elem);
-    nsAString_GetData(&tag_str, &tag, 0);
+    nsAString_GetData(&tag_str, &tag);
 
     if(!strcmpiW(tag, brW))
         ret = TRUE;
@@ -233,7 +233,7 @@ static void wstrbuf_append_node(wstrbuf_t *buf, nsIDOMNode *node)
 
         nsAString_Init(&data_str, NULL);
         nsIDOMText_GetData(nstext, &data_str);
-        nsAString_GetData(&data_str, &data, NULL);
+        nsAString_GetData(&data_str, &data);
         wstrbuf_append_nodetxt(buf, data, strlenW(data));
         nsAString_Finish(&data_str);
 
@@ -264,7 +264,7 @@ static BOOL fill_nodestr(dompos_t *pos)
     nsAString_Init(&pos->str, NULL);
     nsIDOMText_GetData(text, &pos->str);
     nsIDOMText_Release(text);
-    nsAString_GetData(&pos->str, &pos->p, NULL);
+    nsAString_GetData(&pos->str, &pos->p);
 
     if(pos->off == -1)
         pos->off = *pos->p ? strlenW(pos->p)-1 : 0;
@@ -1042,7 +1042,7 @@ static HRESULT WINAPI HTMLTxtRange_get_htmlText(IHTMLTxtRange *iface, BSTR *p)
             nsnode_to_nsstring((nsIDOMNode*)fragment, &nsstr);
             nsIDOMDocumentFragment_Release(fragment);
 
-            nsAString_GetData(&nsstr, &nstext, NULL);
+            nsAString_GetData(&nsstr, &nstext);
             *p = SysAllocString(nstext);
 
             nsAString_Finish(&nsstr);

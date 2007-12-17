@@ -175,7 +175,7 @@ static HRESULT get_style_attr(HTMLStyle *This, LPCWSTR name, BSTR *p)
 
     get_style_attr_nsval(This, name, &str_value);
 
-    nsAString_GetData(&str_value, &value, NULL);
+    nsAString_GetData(&str_value, &value);
     *p = *value ? SysAllocString(value) : NULL;
 
     nsAString_Finish(&str_value);
@@ -193,7 +193,7 @@ static HRESULT check_style_attr_value(HTMLStyle *This, LPCWSTR name, LPCWSTR exv
 
     get_style_attr_nsval(This, name, &str_value);
 
-    nsAString_GetData(&str_value, &value, NULL);
+    nsAString_GetData(&str_value, &value);
     *p = strcmpW(value, exval) ? VARIANT_FALSE : VARIANT_TRUE;
     nsAString_Finish(&str_value);
 

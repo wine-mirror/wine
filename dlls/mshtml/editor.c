@@ -253,7 +253,7 @@ static void remove_child_attr(nsIDOMElement *elem, LPCWSTR tag, nsAString *attr_
 
             nsAString_Init(&tag_str, NULL);
             nsIDOMElement_GetTagName(child_elem, &tag_str);
-            nsAString_GetData(&tag_str, &ctag, NULL);
+            nsAString_GetData(&tag_str, &ctag);
 
             if(!strcmpiW(ctag, tag))
                 /* FIXME: remove node if there are no more attributes */
@@ -300,7 +300,7 @@ static void get_font_size(HTMLDocument *This, WCHAR *ret)
 
             nsAString_Init(&tag_str, NULL);
             nsIDOMElement_GetTagName(elem, &tag_str);
-            nsAString_GetData(&tag_str, &tag, NULL);
+            nsAString_GetData(&tag_str, &tag);
 
             if(!strcmpiW(tag, wszFont)) {
                 nsAString size_str, val_str;
@@ -312,7 +312,7 @@ static void get_font_size(HTMLDocument *This, WCHAR *ret)
                 nsAString_Init(&val_str, NULL);
 
                 nsIDOMElement_GetAttribute(elem, &size_str, &val_str);
-                nsAString_GetData(&val_str, &val, NULL);
+                nsAString_GetData(&val_str, &val);
 
                 if(*val) {
                     TRACE("found size %s\n", debugstr_w(val));

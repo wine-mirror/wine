@@ -223,7 +223,7 @@ static HRESULT WINAPI HTMLDOMNode_get_nodeName(IHTMLDOMNode *iface, BSTR *p)
         nsres = nsIDOMNode_GetNodeName(This->nsnode, &name_str);
 
         if(NS_SUCCEEDED(nsres)) {
-            nsAString_GetData(&name_str, &name, NULL);
+            nsAString_GetData(&name_str, &name);
             *p = SysAllocString(name);
         }else {
             ERR("GetNodeName failed: %08x\n", nsres);

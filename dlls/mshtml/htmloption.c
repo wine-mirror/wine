@@ -147,7 +147,7 @@ static HRESULT WINAPI HTMLOptionElement_get_value(IHTMLOptionElement *iface, BST
     nsAString_Init(&value_str, NULL);
     nsres = nsIDOMHTMLOptionElement_GetValue(This->nsoption, &value_str);
     if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&value_str, &value, NULL);
+        nsAString_GetData(&value_str, &value);
         *p = SysAllocString(value);
     }else {
         ERR("GetValue failed: %08x\n", nsres);
@@ -250,7 +250,7 @@ static HRESULT WINAPI HTMLOptionElement_get_text(IHTMLOptionElement *iface, BSTR
     nsAString_Init(&text_str, NULL);
     nsres = nsIDOMHTMLOptionElement_GetText(This->nsoption, &text_str);
     if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&text_str, &text, NULL);
+        nsAString_GetData(&text_str, &text);
         *p = SysAllocString(text);
     }else {
         ERR("GetText failed: %08x\n", nsres);

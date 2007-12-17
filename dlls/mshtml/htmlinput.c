@@ -126,7 +126,7 @@ static HRESULT WINAPI HTMLInputElement_get_type(IHTMLInputElement *iface, BSTR *
     nsres = nsIDOMHTMLInputElement_GetType(This->nsinput, &type_str);
 
     if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&type_str, &type, NULL);
+        nsAString_GetData(&type_str, &type);
         *p = SysAllocString(type);
     }else {
         ERR("GetType failed: %08x\n", nsres);
@@ -158,7 +158,7 @@ static HRESULT WINAPI HTMLInputElement_get_value(IHTMLInputElement *iface, BSTR 
 
     nsres = nsIDOMHTMLInputElement_GetValue(This->nsinput, &value_str);
     if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&value_str, &value, NULL);
+        nsAString_GetData(&value_str, &value);
         *p = SysAllocString(value);
     }else {
         ERR("GetValue failed: %08x\n", nsres);
@@ -190,7 +190,7 @@ static HRESULT WINAPI HTMLInputElement_get_name(IHTMLInputElement *iface, BSTR *
 
     nsres = nsIDOMHTMLInputElement_GetName(This->nsinput, &name_str);
     if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&name_str, &name, NULL);
+        nsAString_GetData(&name_str, &name);
         *p = SysAllocString(name);
     }else {
         ERR("GetName failed: %08x\n", nsres);

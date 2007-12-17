@@ -191,7 +191,7 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
 
     if(NS_SUCCEEDED(nsres)) {
         static const WCHAR wszSRC[] = {'s','r','c',0};
-        nsAString_GetData(&value_str, &value, NULL);
+        nsAString_GetData(&value_str, &value);
         if(!strcmpiW(strAttributeName, wszSRC))
         {
             WCHAR buffer[256];
@@ -253,7 +253,7 @@ static HRESULT WINAPI HTMLElement_get_className(IHTMLElement *iface, BSTR *p)
 
     if(NS_SUCCEEDED(nsres)) {
         const PRUnichar *class;
-        nsAString_GetData(&class_str, &class, NULL);
+        nsAString_GetData(&class_str, &class);
         *p = SysAllocString(class);
     }else {
         ERR("GetClassName failed: %08x\n", nsres);
@@ -292,7 +292,7 @@ static HRESULT WINAPI HTMLElement_get_tagName(IHTMLElement *iface, BSTR *p)
     nsAString_Init(&tag_str, NULL);
     nsres = nsIDOMHTMLElement_GetTagName(This->nselem, &tag_str);
     if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&tag_str, &tag, NULL);
+        nsAString_GetData(&tag_str, &tag);
         *p = SysAllocString(tag);
     }else {
         ERR("GetTagName failed: %08x\n", nsres);
@@ -1318,7 +1318,7 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
     nsAString_Init(&class_name_str, NULL);
     nsIDOMHTMLElement_GetTagName(nselem, &class_name_str);
 
-    nsAString_GetData(&class_name_str, &class_name, NULL);
+    nsAString_GetData(&class_name_str, &class_name);
 
     if(!strcmpW(class_name, wszA))
         ret = HTMLAnchorElement_Create(nselem);
@@ -1495,7 +1495,7 @@ static BOOL is_elem_name(HTMLElement *elem, LPCWSTR name)
 
     nsAString_Init(&nsstr, NULL);
     nsIDOMHTMLElement_GetId(elem->nselem, &nsstr);
-    nsAString_GetData(&nsstr, &str, NULL);
+    nsAString_GetData(&nsstr, &str);
     if(!strcmpiW(str, name)) {
         nsAString_Finish(&nsstr);
         return TRUE;
@@ -1505,7 +1505,7 @@ static BOOL is_elem_name(HTMLElement *elem, LPCWSTR name)
     nsres =  nsIDOMHTMLElement_GetAttribute(elem->nselem, &nsname, &nsstr);
     nsAString_Finish(&nsname);
     if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&nsstr, &str, NULL);
+        nsAString_GetData(&nsstr, &str);
         ret = !strcmpiW(str, name);
     }
 
@@ -1615,7 +1615,7 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
             continue;
 
         nsIDOMElement_GetTagName(This->elems[i]->nselem, &tag_str);
-        nsAString_GetData(&tag_str, &tag, NULL);
+        nsAString_GetData(&tag_str, &tag);
 
         if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, tag, -1,
                           V_BSTR(&tagName), -1) == CSTR_EQUAL)

@@ -131,7 +131,7 @@ static HRESULT WINAPI HTMLTextAreaElement_get_value(IHTMLTextAreaElement *iface,
 
     nsres = nsIDOMHTMLTextAreaElement_GetValue(This->nstextarea, &value_str);
     if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&value_str, &value, NULL);
+        nsAString_GetData(&value_str, &value);
         *p = SysAllocString(value);
     }else {
         ERR("GetValue failed: %08x\n", nsres);
@@ -163,7 +163,7 @@ static HRESULT WINAPI HTMLTextAreaElement_get_name(IHTMLTextAreaElement *iface, 
 
     nsres = nsIDOMHTMLTextAreaElement_GetName(This->nstextarea, &name_str);
     if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&name_str, &name, NULL);
+        nsAString_GetData(&name_str, &name);
         *p = SysAllocString(name);
     }else {
         ERR("GetName failed: %08x\n", nsres);

@@ -334,7 +334,7 @@ static nsresult NSAPI nsTooltipTextProvider_GetNodeText(nsITooltipTextProvider *
             nsIDOMHTMLElement_GetTitle(nselem, &title_str);
             nsIDOMHTMLElement_Release(nselem);
 
-            nsAString_GetData(&title_str, &title, NULL);
+            nsAString_GetData(&title_str, &title);
             if(title && *title) {
                 if(node != aNode)
                     nsIDOMNode_Release(node);

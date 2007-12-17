@@ -489,9 +489,9 @@ void nsAString_Init(nsAString *str, const PRUnichar *data)
         NS_StringSetData(str, data, PR_UINT32_MAX);
 }
 
-PRUint32 nsAString_GetData(const nsAString *str, const PRUnichar **data, PRBool *termited)
+PRUint32 nsAString_GetData(const nsAString *str, const PRUnichar **data)
 {
-    return NS_StringGetData(str, data, termited);
+    return NS_StringGetData(str, data, NULL);
 }
 
 void nsAString_Finish(nsAString *str)

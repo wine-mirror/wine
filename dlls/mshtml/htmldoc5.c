@@ -243,7 +243,7 @@ static HRESULT WINAPI HTMLDocument5_get_compatMode(IHTMLDocument5 *iface, BSTR *
     nsIDOMNSHTMLDocument_GetCompatMode(nshtmldoc, &mode_str);
     nsIDOMNSHTMLDocument_Release(nshtmldoc);
 
-    nsAString_GetData(&mode_str, &mode, NULL);
+    nsAString_GetData(&mode_str, &mode);
     *p = SysAllocString(mode);
     nsAString_Finish(&mode_str);
 
