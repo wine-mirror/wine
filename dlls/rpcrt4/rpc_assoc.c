@@ -137,6 +137,7 @@ RPC_STATUS RpcServerAssoc_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr,
             }
         }
         *assoc_out = NULL;
+        LeaveCriticalSection(&assoc_list_cs);
         return RPC_S_NO_CONTEXT_AVAILABLE;
     }
 
