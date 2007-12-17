@@ -30,8 +30,7 @@
 #include "winuser.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
-#include "d3dx8core.h"
-#include "d3dx8core_private.h"
+#include "d3dx8_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 

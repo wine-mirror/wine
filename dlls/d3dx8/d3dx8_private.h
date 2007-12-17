@@ -18,14 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_D3DX8CORE_PRIVATE_H
-#define __WINE_D3DX8CORE_PRIVATE_H
+#ifndef __WINE_D3DX8_PRIVATE_H
+#define __WINE_D3DX8_PRIVATE_H
 
 #include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"
-#include "d3dx8core.h"
+#include "d3dx8.h"
 
 /* Interfaces */
 typedef struct ID3DXBufferImpl ID3DXBufferImpl;
@@ -70,4 +70,4 @@ struct ID3DXFontImpl
   /* ID3DXFont fields */
 };
 
-#endif /*__WINE_D3DX8CORE_PRIVATE_H */
+#endif /*__WINE_D3DX8_PRIVATE_H */
