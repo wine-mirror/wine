@@ -1569,7 +1569,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
      * setting the bit to work                                        
      */
     DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
-                 ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN;
+                 ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN | ECO_SELECTIONBAR;
     DWORD raw = GetWindowLongW(hWnd, GWL_STYLE);
     DWORD settings = mask & raw;
 
@@ -1589,22 +1589,23 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     }
     SetWindowLongW(hWnd, GWL_STYLE, (raw & ~mask) | (settings & mask));
 
-    if (lParam & ECO_AUTOWORDSELECTION)
+    if (settings & ECO_AUTOWORDSELECTION)
       FIXME("ECO_AUTOWORDSELECTION not implemented yet!\n");
-    if (lParam & ECO_SELECTIONBAR)
+    if (settings & ECO_SELECTIONBAR)
         editor->selofs = 16;
     else
         editor->selofs = 0;
+    ME_WrapMarkedParagraphs(editor);
 
-    if (lParam & ECO_VERTICAL)
+    if (settings & ECO_VERTICAL)
       FIXME("ECO_VERTICAL not implemented yet!\n");
-    if (lParam & ECO_AUTOHSCROLL)
+    if (settings & ECO_AUTOHSCROLL)
       FIXME("ECO_AUTOHSCROLL not implemented yet!\n");
-    if (lParam & ECO_AUTOVSCROLL)
+    if (settings & ECO_AUTOVSCROLL)
       FIXME("ECO_AUTOVSCROLL not implemented yet!\n");
-    if (lParam & ECO_NOHIDESEL)
+    if (settings & ECO_NOHIDESEL)
       FIXME("ECO_NOHIDESEL not implemented yet!\n");
-    if (lParam & ECO_WANTRETURN)
+    if (settings & ECO_WANTRETURN)
       FIXME("ECO_WANTRETURN not implemented yet!\n");
 
     return settings;
