@@ -714,9 +714,6 @@ MSIText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     info = GetPropW(hWnd, szButtonData);
 
-    if ( info->font )
-        SetTextColor( (HDC)wParam, info->font->color );
-
     if( msg == WM_CTLCOLORSTATIC &&
        ( info->attributes & msidbControlAttributesTransparent ) )
     {
@@ -725,6 +722,8 @@ MSIText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     r = CallWindowProcW(info->oldproc, hWnd, msg, wParam, lParam);
+    if ( info->font )
+        SetTextColor( (HDC)wParam, info->font->color );
 
     switch( msg )
     {
