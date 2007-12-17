@@ -37,11 +37,15 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wingdi.h"
-#include "shlobj.h"  /* DROPFILES */
 
 #include "win.h"
 #include "x11drv.h"
+
+/* avoid conflict with field names in included win32 headers */
+#undef Status
+#include "shlobj.h"  /* DROPFILES */
 #include "shellapi.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(event);

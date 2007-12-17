@@ -23,8 +23,11 @@
 #include <X11/Xlib.h>
 
 #include "win.h"
-#include "ddrawi.h"
 #include "x11drv.h"
+
+/* avoid conflict with field names in included win32 headers */
+#undef Status
+#include "ddrawi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
