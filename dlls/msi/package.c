@@ -892,6 +892,9 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
             if (file != szPackage)
                 DeleteFileW( file );
 
+            if (GetFileAttributesW(szPackage) == INVALID_FILE_ATTRIBUTES)
+                return ERROR_FILE_NOT_FOUND;
+
             return r;
         }
     }

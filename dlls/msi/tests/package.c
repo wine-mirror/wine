@@ -2049,10 +2049,7 @@ static void test_msipackage(void)
 
     /* nonexistent szPackagePath */
     r = MsiOpenPackage("nonexistent", &hpack);
-    todo_wine
-    {
-        ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
-    }
+    ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
 
     /* NULL hProduct */
     r = MsiOpenPackage(msifile, NULL);
