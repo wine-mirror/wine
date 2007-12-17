@@ -183,6 +183,9 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVerte
             This->swizzled_attribs[j].usage = This->pDeclarationWine[i].Usage;
             This->swizzled_attribs[j].idx = This->pDeclarationWine[i].UsageIndex;
             This->num_swizzled_attribs++;
+        } else if(This->pDeclarationWine[i].Type == WINED3DDECLTYPE_FLOAT16_2 ||
+                  This->pDeclarationWine[i].Type == WINED3DDECLTYPE_FLOAT16_4) {
+            This->half_float_used = TRUE;
         }
     }
 

@@ -2884,6 +2884,11 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
     /* Default to no instancing */
     stateblock->wineD3DDevice->instancedDraw = FALSE;
 
+    if(((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->half_float_used && !GL_SUPPORT(NV_HALF_FLOAT)) {
+        /* This will be handled using drawStridedSlow */
+        return;
+    }
+
     for (i = 0; i < MAX_ATTRIBS; i++) {
 
         if (!strided->u.input[i].lpData && !strided->u.input[i].VBO)
@@ -2997,6 +3002,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
             }
         }
     }
+    checkGLcall("Loading numbered arrays");
 }
 
 /* Used from 2 different functions, and too big to justify making it inlined */

@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 #define GLINFO_LOCATION This->adapter->gl_info
 
 #include <stdio.h>
+#include <math.h>
 
 #if 0 /* TODO */
 extern IWineD3DVertexShaderImpl*            VertexShaders[64];
@@ -200,6 +201,10 @@ void primitiveDeclarationConvertToStridedData(
                 if((UINT_PTR)data < -This->stateBlock->loadBaseVertexIndex * stride) {
                     FIXME("System memory vertex data load offset is negative!\n");
                 }
+            } else if(vertexDeclaration->half_float_used && !GL_SUPPORT(NV_HALF_FLOAT)) {
+                WARN("Half float vertex data used, but GL_NV_half_float is not supported. Not using vbos\n");
+                streamVBO = 0;
+                data = ((IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[element->Stream])->resource.allocatedMemory;
             }
 
             if(fixup) {
@@ -588,6 +593,170 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     checkGLcall("glEnd and previous calls");
 }
 
+/* See GL_NV_half_float for reference */
+static inline float float_16_to_32(const unsigned short *in) {
+    const unsigned short s = ((*in) & 0x8000);
+    const unsigned short e = ((*in) & 0x7C00) >> 10;
+    const unsigned short m = (*in) & 0x3FF;
+    const float sgn = (s ? -1.0 : 1.0);
+
+    if(e == 0) {
+        if(m == 0) return sgn * 0.0; /* +0.0 or -0.0 */
+        else return sgn * pow(2, -14.0) * ( (float) m / 1024.0);
+    } else if(e < 31) {
+        return sgn * pow(2, (float) e-15.0) * (1.0 + ((float) m / 1024.0));
+    } else {
+        if(m == 0) return sgn / 0.0; /* +INF / -INF */
+        else return 0.0 / 0.0; /* NAN */
+    }
+}
+
+static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, const UINT index, const void *ptr) {
+    switch(type) {
+        case WINED3DDECLTYPE_FLOAT1:
+            GL_EXTCALL(glVertexAttrib1fvARB(index, (float *) ptr));
+            break;
+        case WINED3DDECLTYPE_FLOAT2:
+            GL_EXTCALL(glVertexAttrib2fvARB(index, (float *) ptr));
+            break;
+        case WINED3DDECLTYPE_FLOAT3:
+            GL_EXTCALL(glVertexAttrib3fvARB(index, (float *) ptr));
+            break;
+        case WINED3DDECLTYPE_FLOAT4:
+            GL_EXTCALL(glVertexAttrib4fvARB(index, (float *) ptr));
+            break;
+
+        case WINED3DDECLTYPE_UBYTE4:
+            GL_EXTCALL(glVertexAttrib4ubvARB(index, ptr));
+            break;
+        case WINED3DDECLTYPE_UBYTE4N:
+        case WINED3DDECLTYPE_D3DCOLOR:
+            GL_EXTCALL(glVertexAttrib4NubvARB(index, ptr));
+            break;
+
+        case WINED3DDECLTYPE_SHORT2:
+            GL_EXTCALL(glVertexAttrib4svARB(index, (GLshort *) ptr));
+            break;
+        case WINED3DDECLTYPE_SHORT4:
+            GL_EXTCALL(glVertexAttrib4svARB(index, (GLshort *) ptr));
+            break;
+
+        case WINED3DDECLTYPE_SHORT2N:
+        {
+            GLshort s[4] = {((short *) ptr)[0], ((short *) ptr)[1], 0, 1};
+            GL_EXTCALL(glVertexAttrib4NsvARB(index, s));
+            break;
+        }
+        case WINED3DDECLTYPE_USHORT2N:
+        {
+            GLushort s[4] = {((unsigned short *) ptr)[0], ((unsigned short *) ptr)[1], 0, 1};
+            GL_EXTCALL(glVertexAttrib4NusvARB(index, s));
+            break;
+        }
+        case WINED3DDECLTYPE_SHORT4N:
+            GL_EXTCALL(glVertexAttrib4NsvARB(index, (GLshort *) ptr));
+            break;
+        case WINED3DDECLTYPE_USHORT4N:
+            GL_EXTCALL(glVertexAttrib4NusvARB(index, (GLushort *) ptr));
+            break;
+
+        case WINED3DDECLTYPE_UDEC3:
+            FIXME("Unsure about WINED3DDECLTYPE_UDEC3\n");
+            /*glVertexAttrib3usvARB(instancedData[j], (GLushort *) ptr); Does not exist */
+            break;
+        case WINED3DDECLTYPE_DEC3N:
+            FIXME("Unsure about WINED3DDECLTYPE_DEC3N\n");
+            /*glVertexAttrib3NusvARB(instancedData[j], (GLushort *) ptr); Does not exist */
+            break;
+
+        case WINED3DDECLTYPE_FLOAT16_2:
+            /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
+             * byte float according to the IEEE standard
+             */
+            if (GL_SUPPORT(NV_HALF_FLOAT)) {
+                GL_EXTCALL(glVertexAttrib2hvNV(index, (GLhalfNV *)ptr));
+            } else {
+                float x = float_16_to_32(((unsigned short *) ptr) + 0);
+                float y = float_16_to_32(((unsigned short *) ptr) + 1);
+                GL_EXTCALL(glVertexAttrib2fARB(index, x, y));
+            }
+            break;
+        case WINED3DDECLTYPE_FLOAT16_4:
+            if (GL_SUPPORT(NV_HALF_FLOAT)) {
+                GL_EXTCALL(glVertexAttrib4hvNV(index, (GLhalfNV *)ptr));
+            } else {
+                float x = float_16_to_32(((unsigned short *) ptr) + 0);
+                float y = float_16_to_32(((unsigned short *) ptr) + 1);
+                float z = float_16_to_32(((unsigned short *) ptr) + 2);
+                float w = float_16_to_32(((unsigned short *) ptr) + 3);
+                GL_EXTCALL(glVertexAttrib4fARB(index, x, y, z, w));
+            }
+            break;
+
+        case WINED3DDECLTYPE_UNUSED:
+        default:
+            ERR("Unexpected attribute declaration: %d\n", type);
+            break;
+    }
+}
+
+static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd, UINT numberOfVertices,
+                              GLenum glPrimitiveType, const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx,
+                              ULONG startVertex) {
+
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
+    const WORD                *pIdxBufS     = NULL;
+    const DWORD               *pIdxBufL     = NULL;
+    LONG                       vx_index;
+    int i;
+    IWineD3DStateBlockImpl *stateblock = (IWineD3DStateBlockImpl *) This->stateBlock;
+    BYTE *ptr;
+
+    if (idxSize != 0) {
+        /* Immediate mode drawing can't make use of indices in a vbo - get the data from the index buffer.
+         * If the index buffer has no vbo(not supported or other reason), or with user pointer drawing
+         * idxData will be != NULL
+         */
+        if(idxData == NULL) {
+            idxData = ((IWineD3DIndexBufferImpl *) stateblock->pIndexData)->resource.allocatedMemory;
+        }
+
+        if (idxSize == 2) pIdxBufS = (const WORD *) idxData;
+        else pIdxBufL = (const DWORD *) idxData;
+    }
+
+    /* Start drawing in GL */
+    VTRACE(("glBegin(%x)\n", glPrimType));
+    glBegin(glPrimitiveType);
+
+    for (vx_index = 0; vx_index < numberOfVertices; ++vx_index) {
+        if (idxData != NULL) {
+
+            /* Indexed so work out the number of strides to skip */
+            if (idxSize == 2) {
+                VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufS[startIdx+vx_index]));
+                SkipnStrides = pIdxBufS[startIdx + vx_index] + stateblock->loadBaseVertexIndex;
+            } else {
+                VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufL[startIdx+vx_index]));
+                SkipnStrides = pIdxBufL[startIdx + vx_index] + stateblock->loadBaseVertexIndex;
+            }
+        }
+
+        for(i = MAX_ATTRIBS - 1; i >= 0; i--) {
+            if(!sd->u.input[i].lpData) continue;
+
+            ptr = sd->u.input[i].lpData +
+                  sd->u.input[i].dwStride * SkipnStrides +
+                  stateblock->streamOffset[sd->u.input[i].streamNo];
+
+            send_attribute(This, sd->u.input[i].dwType, i, ptr);
+        }
+    }
+
+    glEnd();
+}
+
 static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLint old_binding = 0;
@@ -741,86 +910,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVerte
                 ptr += (long) vb->resource.allocatedMemory;
             }
 
-            switch(sd->u.input[instancedData[j]].dwType) {
-                case WINED3DDECLTYPE_FLOAT1:
-                    GL_EXTCALL(glVertexAttrib1fvARB(instancedData[j], (float *) ptr));
-                    break;
-                case WINED3DDECLTYPE_FLOAT2:
-                    GL_EXTCALL(glVertexAttrib2fvARB(instancedData[j], (float *) ptr));
-                    break;
-                case WINED3DDECLTYPE_FLOAT3:
-                    GL_EXTCALL(glVertexAttrib3fvARB(instancedData[j], (float *) ptr));
-                    break;
-                case WINED3DDECLTYPE_FLOAT4:
-                    GL_EXTCALL(glVertexAttrib4fvARB(instancedData[j], (float *) ptr));
-                    break;
-
-                case WINED3DDECLTYPE_UBYTE4:
-                    GL_EXTCALL(glVertexAttrib4ubvARB(instancedData[j], ptr));
-                    break;
-                case WINED3DDECLTYPE_UBYTE4N:
-                case WINED3DDECLTYPE_D3DCOLOR:
-                    GL_EXTCALL(glVertexAttrib4NubvARB(instancedData[j], ptr));
-                    break;
-
-                case WINED3DDECLTYPE_SHORT2:
-                    GL_EXTCALL(glVertexAttrib4svARB(instancedData[j], (GLshort *) ptr));
-                    break;
-                case WINED3DDECLTYPE_SHORT4:
-                    GL_EXTCALL(glVertexAttrib4svARB(instancedData[j], (GLshort *) ptr));
-                    break;
-
-                case WINED3DDECLTYPE_SHORT2N:
-                {
-                    GLshort s[4] = {((short *) ptr)[0], ((short *) ptr)[1], 0, 1};
-                    GL_EXTCALL(glVertexAttrib4NsvARB(instancedData[j], s));
-                    break;
-                }
-                case WINED3DDECLTYPE_USHORT2N:
-                {
-                    GLushort s[4] = {((unsigned short *) ptr)[0], ((unsigned short *) ptr)[1], 0, 1};
-                    GL_EXTCALL(glVertexAttrib4NusvARB(instancedData[j], s));
-                    break;
-                }
-                case WINED3DDECLTYPE_SHORT4N:
-                    GL_EXTCALL(glVertexAttrib4NsvARB(instancedData[j], (GLshort *) ptr));
-                    break;
-                case WINED3DDECLTYPE_USHORT4N:
-                    GL_EXTCALL(glVertexAttrib4NusvARB(instancedData[j], (GLushort *) ptr));
-                    break;
-
-                case WINED3DDECLTYPE_UDEC3:
-                    FIXME("Unsure about WINED3DDECLTYPE_UDEC3\n");
-                    /*glVertexAttrib3usvARB(instancedData[j], (GLushort *) ptr); Does not exist */
-                    break;
-                case WINED3DDECLTYPE_DEC3N:
-                    FIXME("Unsure about WINED3DDECLTYPE_DEC3N\n");
-                    /*glVertexAttrib3NusvARB(instancedData[j], (GLushort *) ptr); Does not exist */
-                    break;
-
-                case WINED3DDECLTYPE_FLOAT16_2:
-                    /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
-                     * byte float according to the IEEE standard
-                     */
-                    if (GL_SUPPORT(NV_HALF_FLOAT)) {
-                        GL_EXTCALL(glVertexAttrib2hvNV(instancedData[j], (GLhalfNV *)ptr));
-                    } else {
-                        FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_2\n");
-                    }
-                    break;
-                case WINED3DDECLTYPE_FLOAT16_4:
-                    if (GL_SUPPORT(NV_HALF_FLOAT)) {
-                        GL_EXTCALL(glVertexAttrib4hvNV(instancedData[j], (GLhalfNV *)ptr));
-                    } else {
-                        FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_4\n");
-                    }
-                    break;
-
-                case WINED3DDECLTYPE_UNUSED:
-                default:
-                    ERR("Unexpected declaration in instanced attributes\n");
-                    break;
-            }
+            send_attribute(This, sd->u.input[instancedData[j]].dwType, instancedData[j], ptr);
         }
 
         glDrawElements(glPrimitiveType, numberOfVertices, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
@@ -1037,10 +1127,13 @@ void drawPrimitive(IWineD3DDevice *iface,
             /* Instancing emulation with mixing immediate mode and arrays */
             drawStridedInstanced(iface, &This->strided_streams, calculatedNumberOfindices, glPrimType,
                             idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
-        } else {
-            /* Simple array draw call */
+        } else if(GL_SUPPORT(NV_HALF_FLOAT) || (!((IWineD3DVertexDeclarationImpl *) This->stateBlock->vertexDecl)->half_float_used)) {
             drawStridedFast(iface, calculatedNumberOfindices, glPrimType,
                             idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+        } else {
+            FIXME("Using immediate mode with vertex shaders for half float emulation\n");
+            drawStridedSlowVs(iface, strided, calculatedNumberOfindices, glPrimType,
+                              idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
         }
     }
 
