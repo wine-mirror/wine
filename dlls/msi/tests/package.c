@@ -2056,10 +2056,7 @@ static void test_msipackage(void)
 
     /* NULL hProduct */
     r = MsiOpenPackage(msifile, NULL);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     name[0]='#';
     name[1]=0;

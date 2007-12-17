@@ -932,8 +932,14 @@ UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phP
 
     TRACE("%s %08x %p\n", debugstr_w(szPackage), dwOptions, phPackage );
 
-    if( szPackage == NULL )
+    if( !szPackage || !phPackage )
         return ERROR_INVALID_PARAMETER;
+
+    if ( !*szPackage )
+    {
+        FIXME("Should create an empty database and package.");
+        return ERROR_FUNCTION_FAILED;
+    }
 
     if( dwOptions )
         FIXME("dwOptions %08x not supported\n", dwOptions);
