@@ -466,8 +466,7 @@ static UINT ACTION_AppSearchIni(MSIPACKAGE *package, LPWSTR *appValue,
 static void ACTION_ExpandAnyPath(MSIPACKAGE *package, WCHAR *src, WCHAR *dst,
  size_t len)
 {
-    WCHAR *ptr;
-    size_t copied = 0;
+    WCHAR *ptr, *deformatted;
 
     if (!src || !dst || !len)
     {
@@ -475,46 +474,24 @@ static void ACTION_ExpandAnyPath(MSIPACKAGE *package, WCHAR *src, WCHAR *dst,
         return;
     }
 
-    /* Ignore the short portion of the path, don't think we can use it anyway */
+    dst[0] = '\0';
+
+    /* Ignore the short portion of the path */
     if ((ptr = strchrW(src, '|')))
         ptr++;
     else
         ptr = src;
-    while (*ptr && copied < len - 1)
+
+    deformat_string(package, ptr, &deformatted);
+    if (!deformatted || lstrlenW(deformatted) > len - 1)
     {
-        WCHAR *prop = strchrW(ptr, '[');
-
-        if (prop)
-        {
-            WCHAR *propEnd = strchrW(prop + 1, ']');
-
-            if (!propEnd)
-            {
-                WARN("Unterminated property name in AnyPath: %s\n",
-                 debugstr_w(prop));
-                break;
-            }
-            else
-            {
-                DWORD propLen;
-
-                *propEnd = 0;
-                propLen = len - copied - 1;
-                MSI_GetPropertyW(package, prop + 1, dst + copied, &propLen);
-                ptr = propEnd + 1;
-                copied += propLen;
-            }
-        }
-        else
-        {
-            size_t toCopy = min(strlenW(ptr) + 1, len - copied - 1);
-
-            memcpy(dst + copied, ptr, toCopy * sizeof(WCHAR));
-            ptr += toCopy;
-            copied += toCopy;
-        }
+        msi_free(deformatted);
+        return;
     }
-    *(dst + copied) = '\0';
+
+    lstrcpyW(dst, deformatted);
+    dst[lstrlenW(deformatted)] = '\0';
+    msi_free(deformatted);
 }
 
 /* Sets *matches to whether the file (whose path is filePath) matches the
