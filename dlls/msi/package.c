@@ -889,8 +889,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         r = MSI_OpenDatabaseW( file, MSIDBOPEN_READONLY, &db );
         if( r != ERROR_SUCCESS )
         {
-            if (GetLastError() == ERROR_FILE_NOT_FOUND)
-                msi_ui_error( 4, MB_OK | MB_ICONWARNING );
             if (file != szPackage)
                 DeleteFileW( file );
 

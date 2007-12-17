@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <windows.h>
+#include <msidefs.h>
 #include <msi.h>
 #include <msiquery.h>
 
@@ -1992,6 +1993,40 @@ static UINT try_query( MSIHANDLE hdb, LPCSTR szQuery )
     return try_query_param( hdb, szQuery, 0 );
 }
 
+static void set_summary_str(MSIHANDLE hdb, DWORD pid, LPCSTR value)
+{
+    MSIHANDLE summary;
+    UINT r;
+
+    r = MsiGetSummaryInformationA(hdb, NULL, 1, &summary);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiSummaryInfoSetPropertyA(summary, pid, VT_LPSTR, 0, NULL, value);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSummaryInfoPersist(summary);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    MsiCloseHandle(summary);
+}
+
+static void set_summary_dword(MSIHANDLE hdb, DWORD pid, DWORD value)
+{
+    MSIHANDLE summary;
+    UINT r;
+
+    r = MsiGetSummaryInformationA(hdb, NULL, 1, &summary);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiSummaryInfoSetPropertyA(summary, pid, VT_I4, value, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSummaryInfoPersist(summary);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    MsiCloseHandle(summary);
+}
+
 static void test_msipackage(void)
 {
     MSIHANDLE hdb = 0, hpack = 100;
@@ -1999,34 +2034,53 @@ static void test_msipackage(void)
     const char *query;
     char name[10];
 
-    DeleteFile(msifile);
+    /* NULL szPackagePath */
+    r = MsiOpenPackage(NULL, &hpack);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
-    todo_wine {
-    name[0] = 0;
-    r = MsiOpenPackage(name, &hpack);
-    ok(r == ERROR_SUCCESS, "failed to open package with no name\n");
-    r = MsiCloseHandle(hpack);
-    ok(r == ERROR_SUCCESS, "failed to close package\n");
+    /* empty szPackagePath */
+    r = MsiOpenPackage("", &hpack);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     }
 
-    /* just MsiOpenDatabase should not create a file */
-    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
-    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+    MsiCloseHandle(hpack);
+
+    /* nonexistent szPackagePath */
+    r = MsiOpenPackage("nonexistent", &hpack);
+    todo_wine
+    {
+        ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
+    }
+
+    /* NULL hProduct */
+    r = MsiOpenPackage(msifile, NULL);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
 
     name[0]='#';
     name[1]=0;
     r = MsiOpenPackage(name, &hpack);
-    ok(r == ERROR_INVALID_HANDLE, "MsiOpenPackage returned wrong code\n");
+    ok(r == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", r);
 
-    todo_wine {
-    /* now try again with our empty database */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* database exists, but is emtpy */
     sprintf(name, "#%ld", hdb);
     r = MsiOpenPackage(name, &hpack);
-    ok(r == ERROR_INSTALL_PACKAGE_INVALID, "MsiOpenPackage returned wrong code\n");
-    if (!r)    MsiCloseHandle(hpack);
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_PACKAGE_INVALID,
+           "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
     }
 
-    /* create a table */
+    if (r == ERROR_SUCCESS)
+        MsiCloseHandle(hpack);
+
     query = "CREATE TABLE `Property` ( "
             "`Property` CHAR(72), `Value` CHAR(0) "
             "PRIMARY KEY `Property`)";
@@ -2039,15 +2093,50 @@ static void test_msipackage(void)
     r = try_query(hdb, query);
     ok(r == ERROR_SUCCESS, "failed to create InstallExecuteSequence table\n");
 
-    todo_wine {
+    /* a few key tables exist */
     sprintf(name, "#%ld", hdb);
     r = MsiOpenPackage(name, &hpack);
-    ok(r == ERROR_INSTALL_PACKAGE_INVALID, "MsiOpenPackage returned wrong code\n");
-    if (!r)    MsiCloseHandle(hpack);
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_PACKAGE_INVALID,
+           "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
     }
 
-    r = MsiCloseHandle(hdb);
-    ok(r == ERROR_SUCCESS, "MsiCloseHandle(database) failed\n");
+    if (r == ERROR_SUCCESS)
+        MsiCloseHandle(hpack);
+
+    MsiCloseHandle(hdb);
+    DeleteFile(msifile);
+
+    /* start with a clean database to show what constitutes a valid package */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    sprintf(name, "#%ld", hdb);
+
+    /* The following summary information props must exist:
+     *  - PID_REVNUMBER
+     *  - PID_PAGECOUNT
+     */
+
+    set_summary_dword(hdb, PID_PAGECOUNT, 100);
+    r = MsiOpenPackage(name, &hpack);
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_PACKAGE_INVALID,
+           "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
+    }
+
+    if (r == ERROR_SUCCESS)
+        MsiCloseHandle(hpack);
+
+    set_summary_str(hdb, PID_REVNUMBER, "{004757CD-5092-49c2-AD20-28E1CE0DF5F2}");
+    r = MsiOpenPackage(name, &hpack);
+    ok(r == ERROR_SUCCESS,
+       "Expected ERROR_SUCCESS, got %d\n", r);
+
+    MsiCloseHandle(hpack);
+    MsiCloseHandle(hdb);
     DeleteFile(msifile);
 }
 
