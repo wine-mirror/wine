@@ -139,7 +139,7 @@ extern void async_set_result( struct object *obj, unsigned int status, unsigned 
 extern int async_waiting( struct async_queue *queue );
 extern void async_terminate( struct async *async, unsigned int status );
 extern void async_wake_up( struct async_queue *queue, unsigned int status );
-extern void fd_add_completion( struct fd *fd, unsigned long cvalue, unsigned int status, unsigned long information );
+extern void fd_assign_completion( struct fd *fd, struct completion **p_port, unsigned long *p_key );
 
 /* access rights that require Unix read permission */
 #define FILE_UNIX_READ_ACCESS (FILE_READ_DATA|FILE_READ_ATTRIBUTES|FILE_READ_EA)

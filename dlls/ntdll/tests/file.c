@@ -566,9 +566,21 @@ static void test_iocp_fileio(HANDLE h)
             ok( U(ioSb).Status == STATUS_SUCCESS, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
             ok( completionValue == (ULONG_PTR)&o, "Invalid completion value: %lx\n", completionValue );
         }
+
+        ReadFile( hPipeSrv, buf, sizeof(buf), &read, &o);
+        CloseHandle( hPipeSrv );
+        count = get_pending_msgs(h);
+        ok( count == 1, "Unexpected msg count: %ld\n", count );
+        if (get_msg(h))
+        {
+            ok( completionKey == CKEY_SECOND, "Invalid completion key: %lx\n", completionKey );
+            ok( ioSb.Information == 0, "Invalid ioSb.Information: %ld\n", ioSb.Information );
+            /* wine sends wrong status here */
+            todo_wine ok( U(ioSb).Status == STATUS_PIPE_BROKEN, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
+            ok( completionValue == (ULONG_PTR)&o, "Invalid completion value: %lx\n", completionValue );
+        }
     }
 
-    CloseHandle( hPipeSrv );
     CloseHandle( hPipeClt );
 }
 

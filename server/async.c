@@ -42,6 +42,8 @@ struct async
     struct timeout_user *timeout;
     unsigned int         timeout_status;  /* status to report upon timeout */
     struct event        *event;
+    struct completion   *completion;
+    unsigned long        comp_key;
     async_data_t         data;            /* data for async I/O call */
 };
 
@@ -121,6 +123,7 @@ static void async_destroy( struct object *obj )
 
     if (async->timeout) remove_timeout_user( async->timeout );
     if (async->event) release_object( async->event );
+    if (async->completion) release_object( async->completion );
     release_object( async->queue );
     release_object( async->thread );
 }
@@ -145,10 +148,6 @@ void async_terminate( struct async *async, unsigned int status )
         async->status = status;
         return;
     }
-
-    /* send error completion event */
-    if (status != STATUS_ALERTED && async->data.cvalue && async->queue->fd)
-        fd_add_completion( async->queue->fd, async->data.cvalue, status, 0 );
 
     memset( &data, 0, sizeof(data) );
     data.type            = APC_ASYNC_IO;
@@ -214,6 +213,7 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
     async->data    = *data;
     async->timeout = NULL;
     async->queue   = (struct async_queue *)grab_object( queue );
+    fd_assign_completion( queue->fd, &async->completion, &async->comp_key );
 
     list_add_tail( &queue->queue, &async->queue_entry );
     grab_object( async );
@@ -257,8 +257,8 @@ void async_set_result( struct object *obj, unsigned int status, unsigned long to
         if (async->timeout) remove_timeout_user( async->timeout );
         async->timeout = NULL;
         async->status = status;
-        if (async->data.cvalue && async->queue->fd)
-            fd_add_completion( async->queue->fd, async->data.cvalue, status, total );
+        if (async->completion && async->data.cvalue)
+            add_completion( async->completion, async->comp_key, async->data.cvalue, status, total );
         if (async->data.apc)
         {
             apc_call_t data;
