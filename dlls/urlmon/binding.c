@@ -51,6 +51,8 @@ typedef enum {
     END_DOWNLOAD
 } download_state_t;
 
+#define BINDING_LOCKED  0x0001
+
 struct Binding {
     const IBindingVtbl               *lpBindingVtbl;
     const IInternetProtocolSinkVtbl  *lpInternetProtocolSinkVtbl;
@@ -71,7 +73,7 @@ struct Binding {
     LPWSTR url;
     BOOL report_mime;
     DWORD continue_call;
-    BOOL request_locked;
+    DWORD state;
     download_state_t download_state;
 
     DWORD apartment_thread;
@@ -838,9 +840,10 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
                 BINDSTATUS_DOWNLOADINGDATA, This->url);
     }
 
-    if(!This->request_locked) {
+    if(!(This->state & BINDING_LOCKED)) {
         HRESULT hres = IInternetProtocol_LockRequest(This->protocol, 0);
-        This->request_locked = SUCCEEDED(hres);
+        if(SUCCEEDED(hres))
+            This->state |= BINDING_LOCKED;
     }
 
     formatetc.cfFormat = This->clipboard_format;
@@ -896,9 +899,9 @@ static void report_result_proc(Binding *binding, task_header_t *t)
 {
     IInternetProtocol_Terminate(binding->protocol, 0);
 
-    if(binding->request_locked) {
+    if(binding->state & BINDING_LOCKED) {
         IInternetProtocol_UnlockRequest(binding->protocol);
-        binding->request_locked = FALSE;
+        binding->state &= ~BINDING_LOCKED;
     }
 
     heap_free(t);
@@ -1186,7 +1189,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->notif_hwnd = get_notif_hwnd();
     ret->report_mime = TRUE;
     ret->continue_call = 0;
-    ret->request_locked = FALSE;
+    ret->state = 0;
     ret->download_state = BEFORE_DOWNLOAD;
     ret->task_queue_head = ret->task_queue_tail = NULL;
 
@@ -1284,7 +1287,7 @@ HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
     }
 
     if(binding->stream->init_buf) {
-        if(binding->request_locked)
+        if(binding->state & BINDING_LOCKED)
             IInternetProtocol_UnlockRequest(binding->protocol);
 
         IStream_AddRef(STREAM(binding->stream));
