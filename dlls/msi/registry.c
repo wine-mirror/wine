@@ -1311,6 +1311,9 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
 
     TRACE("%s %d %p\n", debugstr_w(szComponent), index, szProduct);
 
+    if (!szComponent || !szProduct)
+        return ERROR_INVALID_PARAMETER;
+
     r = MSIREG_OpenComponentsKey(szComponent,&hkeyComp,FALSE);
     if( r != ERROR_SUCCESS )
         return ERROR_NO_MORE_ITEMS;
