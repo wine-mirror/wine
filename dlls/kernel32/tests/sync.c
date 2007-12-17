@@ -282,10 +282,118 @@ static void test_event_security(void)
     CloseHandle(handle);
 }
 
+static HANDLE sem = 0;
+
+static void CALLBACK iocp_callback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
+{
+    ReleaseSemaphore(sem, 1, NULL);
+}
+
+static BOOL WINAPI (*p_BindIoCompletionCallback)( HANDLE FileHandle, LPOVERLAPPED_COMPLETION_ROUTINE Function, ULONG Flags) = NULL;
+
+static void test_iocp_callback(void)
+{
+    char temp_path[MAX_PATH];
+    char filename[MAX_PATH];
+    DWORD ret;
+    BOOL retb;
+    static const char prefix[] = "pfx";
+    HANDLE hFile;
+    HMODULE hmod = GetModuleHandleA("kernel32.dll");
+    DWORD bytesWritten;
+    const char *buffer = "12345678123456781234567812345678";
+    OVERLAPPED overlapped;
+
+    p_BindIoCompletionCallback = (void*)GetProcAddress(hmod, "BindIoCompletionCallback");
+    if(!p_BindIoCompletionCallback) {
+        skip("BindIoCompletionCallback not found in this DLL\n");
+        return;
+    }
+
+    sem = CreateSemaphore(NULL, 0, 1, NULL);
+    ok(sem != INVALID_HANDLE_VALUE, "Creating a semaphore failed\n");
+
+    ret = GetTempPathA(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPathA error %d\n", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, filename);
+    ok(ret != 0, "GetTempFileNameA error %d\n", GetLastError());
+
+    hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                        CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
+
+    retb = p_BindIoCompletionCallback(hFile, iocp_callback, 0);
+    ok(retb == FALSE, "BindIoCompletionCallback succeeded on a file that wasn't created with FILE_FLAG_OVERLAPPED\n");
+    if(retb == FALSE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+        todo_wine ok (0, "BindIoCompletionCallback returned ERROR_CALL_NOT_IMPLEMENTED\n");
+        return;
+    }
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error is %d\n", GetLastError());
+
+    ret = CloseHandle(hFile);
+    ok( ret, "CloseHandle: error %d\n", GetLastError());
+    ret = DeleteFileA(filename);
+    ok( ret, "DeleteFileA: error %d\n", GetLastError());
+
+    hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                        CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
+
+    retb = p_BindIoCompletionCallback(hFile, iocp_callback, 0);
+    ok(retb == TRUE, "BindIoCompletionCallback failed\n");
+
+    memset(&overlapped, 0, sizeof(overlapped));
+    retb = WriteFile(hFile, (const void *) buffer, 4, &bytesWritten, &overlapped);
+    ok(retb == TRUE || GetLastError() == ERROR_IO_PENDING, "WriteFile failed, lastError = %d\n", GetLastError());
+
+    ret = WaitForSingleObject(sem, 5000);
+    ok(ret == WAIT_OBJECT_0, "Wait for the IO completion callback failed\n");
+    CloseHandle(sem);
+
+    retb = p_BindIoCompletionCallback(hFile, iocp_callback, 0);
+    ok(retb == FALSE, "BindIoCompletionCallback succeeded when setting the same callback on the file again\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error is %d\n", GetLastError());
+    retb = p_BindIoCompletionCallback(hFile, NULL, 0);
+    ok(retb == FALSE, "BindIoCompletionCallback succeeded when setting the callback to NULL\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error is %d\n", GetLastError());
+
+    ret = CloseHandle(hFile);
+    ok( ret, "CloseHandle: error %d\n", GetLastError());
+    ret = DeleteFileA(filename);
+    ok( ret, "DeleteFileA: error %d\n", GetLastError());
+
+    hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                        CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
+    retb = p_BindIoCompletionCallback(hFile, NULL, 0);
+    ok(retb == TRUE, "BindIoCompletionCallback failed with a NULL callback(first time set)\n");
+    ret = CloseHandle(hFile);
+    ok( ret, "CloseHandle: error %d\n", GetLastError());
+    ret = DeleteFileA(filename);
+    ok( ret, "DeleteFileA: error %d\n", GetLastError());
+
+    hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                        CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
+    retb = p_BindIoCompletionCallback(hFile, iocp_callback, 12345);
+    ok(retb == TRUE, "BindIoCompletionCallback failed with Flags != 0\n");
+    ret = CloseHandle(hFile);
+    ok( ret, "CloseHandle: error %d\n", GetLastError());
+    ret = DeleteFileA(filename);
+    ok( ret, "DeleteFileA: error %d\n", GetLastError());
+
+    retb = p_BindIoCompletionCallback(NULL, iocp_callback, 0);
+    ok(retb == FALSE, "BindIoCompletionCallback succeeded on a NULL file\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Last error is %d\n", GetLastError());
+}
+
 START_TEST(sync)
 {
     test_signalandwait();
     test_mutex();
     test_slist();
     test_event_security();
+    test_iocp_callback();
 }
