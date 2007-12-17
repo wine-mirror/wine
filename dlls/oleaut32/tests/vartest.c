@@ -3104,8 +3104,8 @@ static void test_Round( int line, VARIANT *arg, int deci, VARIANT *expected )
 
 static void test_VarRound(void)
 {
-    static WCHAR szNumMin[] = {'-','1','.','4','5','\0' };
-    static WCHAR szNum[] = {'1','.','4','5','\0' };
+    static WCHAR szNumMin[] = {'-','1','.','4','4','9','\0' };
+    static WCHAR szNum[] = {'1','.','4','5','1','\0' };
     HRESULT hres;
     VARIANT v, exp, vDst;
     CY *pcy = &V_CY(&v);
@@ -3140,7 +3140,7 @@ static void test_VarRound(void)
     /* floating point numbers aren't exactly equal and we can't just
      * compare the first few digits. */
     VARROUND(DATE,1.451,1,DATE,1.5);
-    VARROUND(DATE,-1.45,1,DATE,-1.4);
+    VARROUND(DATE,-1.449,1,DATE,-1.4);
 
     /* replace the decimal separator */
     GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
@@ -3148,7 +3148,7 @@ static void test_VarRound(void)
         szNumMin[2] = buff[0];
         szNum[1] = buff[0];
         VARROUND(BSTR,(BSTR)szNumMin,1,R8,-1.40);
-        if (0) { VARROUND(BSTR,(BSTR)szNum,1,R8,1.50); }
+        VARROUND(BSTR,(BSTR)szNum,1,R8,1.50);
     } else {
         skip("Skipping VarRound(BSTR) as decimal separator is '%s'\n", buff);
     }
