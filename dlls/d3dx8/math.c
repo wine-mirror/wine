@@ -587,6 +587,23 @@ D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm)
 
 /*_________________D3DXMatrixStack____________________*/
 
+HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, LPD3DXMATRIXSTACK* ppstack)
+{
+    ID3DXMatrixStackImpl* object;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXMatrixStackImpl));
+    if ( object == NULL )
+    {
+     *ppstack = NULL;
+     return E_OUTOFMEMORY;
+    }
+    object->lpVtbl = &ID3DXMatrixStack_Vtbl;
+    object->ref = 1;
+    object->current = 0;
+    *ppstack = (LPD3DXMATRIXSTACK)object;
+    return D3D_OK;
+}
+
 static HRESULT WINAPI ID3DXMatrixStackImpl_QueryInterface(ID3DXMatrixStack *iface, REFIID riid, void **ppobj)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
