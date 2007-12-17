@@ -871,12 +871,60 @@ static UINT msi_dialog_checkbox_control( msi_dialog *dialog, MSIRECORD *rec )
 
 static UINT msi_dialog_line_control( msi_dialog *dialog, MSIRECORD *rec )
 {
+    DWORD attributes;
+    LPCWSTR name;
+    DWORD style, exstyle = 0;
+    DWORD x, y, width, height;
+    msi_control *control;
+
     TRACE("%p %p\n", dialog, rec);
 
-    /* line is exactly 2 units in height */
-    MSI_RecordSetInteger( rec, 7, 2 );
+    style = WS_CHILD | SS_ETCHEDHORZ | SS_SUNKEN;
 
-    msi_dialog_add_control( dialog, rec, szStatic, SS_ETCHEDHORZ | SS_SUNKEN );
+    name = MSI_RecordGetString( rec, 2 );
+    attributes = MSI_RecordGetInteger( rec, 8 );
+
+    if( attributes & msidbControlAttributesVisible )
+        style |= WS_VISIBLE;
+    if( ~attributes & msidbControlAttributesEnabled )
+        style |= WS_DISABLED;
+    if( attributes & msidbControlAttributesSunken )
+        exstyle |= WS_EX_CLIENTEDGE;
+
+    msi_dialog_map_events(dialog, name);
+
+    control = msi_alloc( sizeof(*control) + strlenW(name) * sizeof(WCHAR) );
+    if (!control)
+        return ERROR_OUTOFMEMORY;
+
+    strcpyW( control->name, name );
+    list_add_head( &dialog->controls, &control->entry );
+    control->handler = NULL;
+    control->property = NULL;
+    control->value = NULL;
+    control->hBitmap = NULL;
+    control->hIcon = NULL;
+    control->hDll = NULL;
+    control->tabnext = strdupW( MSI_RecordGetString( rec, 11) );
+    control->type = strdupW( MSI_RecordGetString( rec, 3 ) );
+    control->progress_current = 0;
+    control->progress_max = 100;
+
+    x = MSI_RecordGetInteger( rec, 4 );
+    y = MSI_RecordGetInteger( rec, 5 );
+    width = MSI_RecordGetInteger( rec, 6 );
+
+    x = msi_dialog_scale_unit( dialog, x );
+    y = msi_dialog_scale_unit( dialog, y );
+    width = msi_dialog_scale_unit( dialog, width );
+    height = 2; /* line is exactly 2 units in height */
+
+    control->hwnd = CreateWindowExW( exstyle, szStatic, NULL, style,
+                          x, y, width, height, dialog->hwnd, NULL, NULL, NULL );
+
+    TRACE("Dialog %s control %s hwnd %p\n",
+           debugstr_w(dialog->name), debugstr_w(name), control->hwnd );
+
     return ERROR_SUCCESS;
 }
 
