@@ -381,6 +381,8 @@ dlls/psapi/tests/*.ok
 dlls/psapi/tests/psapi_crosstest.exe
 dlls/psapi/tests/testlist.c
 dlls/qcap/version.res
+dlls/qmgr/qmgr_local.h
+dlls/qmgr/qmgr_local_i.c
 dlls/qmgrprxy/qmgrprxy.h
 dlls/qmgrprxy/qmgrprxy_i.c
 dlls/qmgrprxy/qmgrprxy_p.c

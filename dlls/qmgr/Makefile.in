@@ -9,6 +9,8 @@ EXTRALIBS =
 C_SRCS = \
 	qmgr_main.c
 
+IDL_I_SRCS = qmgr_local.idl
+
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
