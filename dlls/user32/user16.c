@@ -447,24 +447,6 @@ BOOL16 WINAPI EmptyClipboard16(void)
 
 
 /**************************************************************************
- *		SetClipboardData (USER.141)
- */
-HANDLE16 WINAPI SetClipboardData16(UINT16 wFormat, HANDLE16 hData)
-{
-    return HANDLE_16(SetClipboardData(wFormat, HANDLE_32(hData)));
-}
-
-
-/**************************************************************************
- *		GetClipboardData (USER.142)
- */
-HANDLE16 WINAPI GetClipboardData16(UINT16 wFormat)
-{
-    return HANDLE_16(GetClipboardData(wFormat));
-}
-
-
-/**************************************************************************
  *		CountClipboardFormats (USER.143)
  */
 INT16 WINAPI CountClipboardFormats16(void)
