@@ -2,6 +2,7 @@
  * Direct3D X 8 private include file
  *
  * Copyright 2002 Raphael Junqueira
+ * Copyright 2007 David Adam
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,6 +31,7 @@
 /* Interfaces */
 typedef struct ID3DXBufferImpl ID3DXBufferImpl;
 typedef struct ID3DXFontImpl   ID3DXFontImpl;
+typedef struct ID3DXMatrixStackImpl ID3DXMatrixStackImpl;
 
 /* ----------- */
 /* ID3DXBuffer */
@@ -68,6 +70,24 @@ struct ID3DXFontImpl
   LONG           ref;
 
   /* ID3DXFont fields */
+};
+
+/* ----------- */
+/* ID3DXMatrix */
+/* ----------- */
+
+/*****************************************************************************
+ * ID3DXMatrixStackImpl implementation structure
+ */
+struct ID3DXMatrixStackImpl
+{
+  /* IUnknown fields */
+  const ID3DXMatrixStackVtbl *lpVtbl;
+  LONG                   ref;
+
+  /* ID3DXMatrixStack fields */
+  int current;
+  D3DXMATRIX *stack;
 };
 
 #endif /*__WINE_D3DX8_PRIVATE_H */
