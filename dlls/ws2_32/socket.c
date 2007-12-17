@@ -327,6 +327,15 @@ static const int ws_aiflag_map[][2] =
      */
 };
 
+static const int ws_niflag_map[][2] =
+{
+    MAP_OPTION( NI_NOFQDN ),
+    MAP_OPTION( NI_NUMERICHOST ),
+    MAP_OPTION( NI_NAMEREQD ),
+    MAP_OPTION( NI_NUMERICSERV ),
+    MAP_OPTION( NI_DGRAM ),
+};
+
 static const int ws_eai_map[][2] =
 {
     MAP_OPTION( EAI_AGAIN ),
@@ -3327,7 +3336,7 @@ void WINAPI WS_freeaddrinfo(struct WS_addrinfo *res)
     }
 }
 
-/* helper functions for getaddrinfo() */
+/* helper functions for getaddrinfo()/getnameinfo() */
 static int convert_aiflag_w2u(int winflags) {
     int i, unixflags = 0;
 
@@ -3338,6 +3347,19 @@ static int convert_aiflag_w2u(int winflags) {
         }
     if (winflags)
         FIXME("Unhandled windows AI_xxx flags %x\n", winflags);
+    return unixflags;
+}
+
+static int convert_niflag_w2u(int winflags) {
+    int i, unixflags = 0;
+
+    for (i=0;i<sizeof(ws_niflag_map)/sizeof(ws_niflag_map[0]);i++)
+        if (ws_niflag_map[i][0] & winflags) {
+            unixflags |= ws_niflag_map[i][1];
+            winflags &= ~ws_niflag_map[i][0];
+        }
+    if (winflags)
+        FIXME("Unhandled windows NI_xxx flags %x\n", winflags);
     return unixflags;
 }
 
@@ -3498,7 +3520,7 @@ int WINAPI WS_getnameinfo(const SOCKADDR *sa, WS_socklen_t salen, PCHAR host,
         WSASetLastError(WSAEFAULT);
         return WSA_NOT_ENOUGH_MEMORY;
     }
-    ret = getnameinfo(&sa_u.addr, size, host, hostlen, serv, servlen, convert_aiflag_w2u(flags));
+    ret = getnameinfo(&sa_u.addr, size, host, hostlen, serv, servlen, convert_niflag_w2u(flags));
     return convert_eai_u2w(ret);
 #else
     FIXME("getnameinfo() failed, not found during buildtime.\n");
