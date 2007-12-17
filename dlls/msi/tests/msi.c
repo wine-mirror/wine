@@ -1643,10 +1643,7 @@ static void test_MsiEnumClients(void)
     /* user unmanaged component key exists */
     product[0] = '\0';
     r = MsiEnumClientsA(component, 0, product);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
     /* index > 0, no products exist */
@@ -1719,10 +1716,7 @@ static void test_MsiEnumClients(void)
     /* user local component key exists */
     product[0] = '\0';
     r = MsiEnumClientsA(component, 0, product);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
     /* index > 0, no products exist */

@@ -1321,6 +1321,15 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
         MSIREG_OpenLocalSystemComponentKey(szComponent, &hkeyComp, FALSE) != ERROR_SUCCESS)
         return ERROR_UNKNOWN_COMPONENT;
 
+    /* see if there are any products at all */
+    sz = SQUISH_GUID_SIZE;
+    r = RegEnumValueW(hkeyComp, 0, szValName, &sz, NULL, NULL, NULL, NULL);
+    if (r != ERROR_SUCCESS)
+    {
+        RegCloseKey(hkeyComp);
+        return ERROR_UNKNOWN_COMPONENT;
+    }
+
     sz = SQUISH_GUID_SIZE;
     r = RegEnumValueW(hkeyComp, index, szValName, &sz, NULL, NULL, NULL, NULL);
     if( r == ERROR_SUCCESS )
