@@ -30,6 +30,11 @@
 #define D3DXToRadian(degree) ((degree) * (D3DX_PI / 180.0f))
 #define D3DXToDegree(radian) ((radian) * (180.0f / D3DX_PI))
 
+typedef struct ID3DXMatrixStack *LPD3DXMATRIXSTACK;
+
+DEFINE_GUID(IID_ID3DXMatrixStack,
+0xe3357330, 0xcc5e, 0x11d2, 0xa4, 0x34, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0xa8);
+
 typedef struct D3DXVECTOR2
 {
 #ifdef __cplusplus
@@ -340,6 +345,64 @@ D3DXVECTOR4* WINAPI D3DXVec4Cross(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CON
 D3DXVECTOR4* WINAPI D3DXVec4Hermite(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pt1, CONST D3DXVECTOR4 *pv2, CONST D3DXVECTOR4 *pt2, FLOAT s);
 D3DXVECTOR4* WINAPI D3DXVec4Normalize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv);
 D3DXVECTOR4* WINAPI D3DXVec4Transform(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv, CONST D3DXMATRIX *pm);
+
+#ifdef __cplusplus
+}
+#endif
+
+#define INTERFACE ID3DXMatrixStack
+DECLARE_INTERFACE_(ID3DXMatrixStack, IUnknown)
+{
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID, LPVOID*) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    STDMETHOD(Pop)(THIS) PURE;
+    STDMETHOD(Push)(THIS) PURE;
+    STDMETHOD(LoadIdentity)(THIS) PURE;
+    STDMETHOD(LoadMatrix)(THIS_ CONST LPD3DXMATRIX) PURE;
+    STDMETHOD(MultMatrix)(THIS_ CONST LPD3DXMATRIX) PURE;
+    STDMETHOD(MultMatrixLocal)(THIS_ CONST LPD3DXMATRIX) PURE;
+    STDMETHOD(RotateAxis)(THIS_ CONST LPD3DXVECTOR3, FLOAT) PURE;
+    STDMETHOD(RotateAxisLocal)(THIS_ CONST LPD3DXVECTOR3, FLOAT) PURE;
+    STDMETHOD(RotateYawPitchRoll)(THIS_ FLOAT, FLOAT, FLOAT) PURE;
+    STDMETHOD(RotateYawPitchRollLocal)(THIS_ FLOAT, FLOAT, FLOAT) PURE;
+    STDMETHOD(Scale)(THIS_ FLOAT, FLOAT, FLOAT) PURE;
+    STDMETHOD(ScaleLocal)(THIS_ FLOAT, FLOAT, FLOAT) PURE;
+    STDMETHOD(Translate)(THIS_ FLOAT, FLOAT, FLOAT) PURE;
+    STDMETHOD(TranslateLocal)(THIS_ FLOAT, FLOAT, FLOAT) PURE;
+    STDMETHOD_(LPD3DXMATRIX, GetTop)(THIS) PURE;
+};
+
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+
+#define ID3DXMatrixStack_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
+#define ID3DXMatrixStack_AddRef(p)                        (p)->lpVtbl->AddRef(p)
+#define ID3DXMatrixStack_Release(p)                       (p)->lpVtbl->Release(p)
+#define ID3DXMAtrixStack_Pop(p)                           (p)->lpVtbl->Pop(p)
+#define ID3DXMatrixStack_Push(p)                          (p)->lpVtbl->Push(p)
+#define ID3DXMatrixStack_LoadIdentity(p)                  (p)->lpVtbl->LoadIdentity(p)
+#define ID3DXMatrixStack_LoadMatrix(p,a)                  (p)->lpVtbl->LoadMatrix(p,a)
+#define ID3DXMatrixStack_MultMatrix(p,a)                  (p)->lpVtbl->MultMatrix(p,a)
+#define ID3DXMatrixStack_MultMatrixLocal(p,a)             (p)->lpVtbl->MultMatrixLocal(p,a)
+#define ID3DXMatrixStack_RotateAxis(p,a,b)                (p)->lpVtbl->RotateAxis(p,a,b)
+#define ID3DXMatrixStack_RotateAxisLocal(p,a,b)           (p)->lpVtbl->RotateAxisLocal(p,a,b)
+#define ID3DXMatrixStack_RotateYawPitchRoll(p,a,b,c)      (p)->lpVtbl->RotateYawPitchRoll(p,a,b,c)
+#define ID3DXMatrixStack_RotateYawPitchRollLocal(p,a,b,c) (p)->lpVtbl->RotateYawPitchRollLocal(p,a,b,c)
+#define ID3DXMatrixStack_Scale(p,a,b,c)                   (p)->lpVtbl->Scale(p,a,b,c)
+#define ID3DXMatrixStack_ScaleLocal(p,a,b,c)              (p)->lpVtbl->ScaleLocal(p,a,b,c)
+#define ID3DXMatrixStack_Translate(p,a,b,c)               (p)->lpVtbl->Translate(p,a,b,c)
+#define ID3DXMatrixStack_TranslateLocal(p,a,b,c)          (p)->lpVtbl->TranslateLocal(p,a,b,c)
+#define ID3DXMatrixStack_GetTop(p)                        (p)->lpVtbl->GetTop(p)
+
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, LPD3DXMATRIXSTACK* ppstack);
 
 #ifdef __cplusplus
 }
