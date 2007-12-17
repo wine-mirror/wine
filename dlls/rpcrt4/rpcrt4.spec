@@ -51,7 +51,7 @@
 @ stub I_RpcGetAssociationContext
 @ stdcall I_RpcGetBuffer(ptr)
 @ stub I_RpcGetBufferWithObject
-@ stub I_RpcGetCurrentCallHandle
+@ stdcall I_RpcGetCurrentCallHandle()
 @ stub I_RpcGetExtendedError
 @ stub I_RpcGetServerContextList
 @ stub I_RpcGetThreadEvent # win9x

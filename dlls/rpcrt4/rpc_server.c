@@ -1121,3 +1121,12 @@ RPC_STATUS WINAPI RpcMgmtSetServerStackSize(ULONG ThreadStackSize)
   FIXME("(0x%x): stub\n", ThreadStackSize);
   return RPC_S_OK;
 }
+
+/***********************************************************************
+ *             I_RpcGetCurrentCallHandle (RPCRT4.@)
+ */
+RPC_BINDING_HANDLE WINAPI I_RpcGetCurrentCallHandle(void)
+{
+    FIXME("\n");
+    return NULL;
+}
