@@ -2045,7 +2045,8 @@ static void test_msipackage(void)
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     }
 
-    MsiCloseHandle(hpack);
+    if (r == ERROR_SUCCESS)
+        MsiCloseHandle(hpack);
 
     /* nonexistent szPackagePath */
     r = MsiOpenPackage("nonexistent", &hpack);
@@ -2066,14 +2067,8 @@ static void test_msipackage(void)
     /* database exists, but is emtpy */
     sprintf(name, "#%ld", hdb);
     r = MsiOpenPackage(name, &hpack);
-    todo_wine
-    {
-        ok(r == ERROR_INSTALL_PACKAGE_INVALID,
-           "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
-    }
-
-    if (r == ERROR_SUCCESS)
-        MsiCloseHandle(hpack);
+    ok(r == ERROR_INSTALL_PACKAGE_INVALID,
+       "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
 
     query = "CREATE TABLE `Property` ( "
             "`Property` CHAR(72), `Value` CHAR(0) "
@@ -2090,14 +2085,8 @@ static void test_msipackage(void)
     /* a few key tables exist */
     sprintf(name, "#%ld", hdb);
     r = MsiOpenPackage(name, &hpack);
-    todo_wine
-    {
-        ok(r == ERROR_INSTALL_PACKAGE_INVALID,
-           "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
-    }
-
-    if (r == ERROR_SUCCESS)
-        MsiCloseHandle(hpack);
+    ok(r == ERROR_INSTALL_PACKAGE_INVALID,
+       "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
 
     MsiCloseHandle(hdb);
     DeleteFile(msifile);
@@ -2115,14 +2104,8 @@ static void test_msipackage(void)
 
     set_summary_dword(hdb, PID_PAGECOUNT, 100);
     r = MsiOpenPackage(name, &hpack);
-    todo_wine
-    {
-        ok(r == ERROR_INSTALL_PACKAGE_INVALID,
-           "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
-    }
-
-    if (r == ERROR_SUCCESS)
-        MsiCloseHandle(hpack);
+    ok(r == ERROR_INSTALL_PACKAGE_INVALID,
+       "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
 
     set_summary_str(hdb, PID_REVNUMBER, "{004757CD-5092-49c2-AD20-28E1CE0DF5F2}");
     r = MsiOpenPackage(name, &hpack);

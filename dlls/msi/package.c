@@ -637,7 +637,7 @@ static UINT msi_load_summary_properties( MSIPACKAGE *package )
     UINT rc;
     MSIHANDLE suminfo;
     MSIHANDLE hdb = alloc_msihandle( &package->db->hdr );
-    INT word_count;
+    INT count;
     DWORD len;
     LPWSTR package_code;
     static const WCHAR szPackageCode[] = {
@@ -645,8 +645,9 @@ static UINT msi_load_summary_properties( MSIPACKAGE *package )
 
     if (!hdb) {
         ERR("Unable to allocate handle\n");
-        return 0;
+        return ERROR_OUTOFMEMORY;
     }
+
     rc = MsiGetSummaryInformationW( hdb, NULL, 0, &suminfo );
     MsiCloseHandle(hdb);
     if (rc != ERROR_SUCCESS)
@@ -655,35 +656,47 @@ static UINT msi_load_summary_properties( MSIPACKAGE *package )
         return rc;
     }
 
-    /* load package attributes */
-    rc = MsiSummaryInfoGetPropertyW( suminfo, PID_WORDCOUNT, NULL,
-                                     &word_count, NULL, NULL, NULL );
-    if (rc == ERROR_SUCCESS)
-        package->WordCount = word_count;
-    else
-        WARN("Unable to query word count\n");
+    rc = MsiSummaryInfoGetPropertyW( suminfo, PID_PAGECOUNT, NULL,
+                                     &count, NULL, NULL, NULL );
+    if (rc != ERROR_SUCCESS)
+    {
+        WARN("Unable to query page count: %d", rc);
+        goto done;
+    }
 
     /* load package code property */
     len = 0;
     rc = MsiSummaryInfoGetPropertyW( suminfo, PID_REVNUMBER, NULL,
                                      NULL, NULL, NULL, &len );
-    if (rc == ERROR_MORE_DATA)
+    if (rc != ERROR_MORE_DATA)
     {
-        len++;
-        package_code = msi_alloc( len * sizeof(WCHAR) );
-        rc = MsiSummaryInfoGetPropertyW( suminfo, PID_REVNUMBER, NULL,
-                                         NULL, NULL, package_code, &len );
-        if (rc == ERROR_SUCCESS)
-            MSI_SetPropertyW( package, szPackageCode, package_code );
-        else
-            WARN("Unable to query rev number, %d\n", rc);
-        msi_free( package_code );
+        WARN("Unable to query revision number: %d\n", rc);
+        rc = ERROR_FUNCTION_FAILED;
+        goto done;
     }
-    else
-        WARN("Unable to query rev number, %d\n", rc);
 
+    len++;
+    package_code = msi_alloc( len * sizeof(WCHAR) );
+    rc = MsiSummaryInfoGetPropertyW( suminfo, PID_REVNUMBER, NULL,
+                                     NULL, NULL, package_code, &len );
+    if (rc != ERROR_SUCCESS)
+    {
+        WARN("Unable to query rev number: %d\n", rc);
+        goto done;
+    }
+
+    MSI_SetPropertyW( package, szPackageCode, package_code );
+    msi_free( package_code );
+
+    /* load package attributes */
+    count = 0;
+    MsiSummaryInfoGetPropertyW( suminfo, PID_WORDCOUNT, NULL,
+                                &count, NULL, NULL, NULL );
+    package->WordCount = count;
+
+done:
     MsiCloseHandle(suminfo);
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 static MSIPACKAGE *msi_alloc_package( void )
@@ -746,6 +759,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         'P','r','o','d','u','c','t','C','o','d','e',0};
     MSIPACKAGE *package;
     WCHAR uilevel[10];
+    UINT r;
 
     TRACE("%p\n", db);
 
@@ -767,7 +781,12 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
 
         package->ProductCode = msi_dup_property( package, szProductCode );
         set_installed_prop( package );
-        msi_load_summary_properties( package );
+        r = msi_load_summary_properties( package );
+        if (r != ERROR_SUCCESS)
+        {
+            msiobj_release( &package->hdr );
+            return NULL;
+        }
 
         if (package->WordCount & MSIWORDCOUNT_ADMINISTRATIVE)
             msi_load_admin_properties( package );
@@ -906,7 +925,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     {
         if (file != szPackage)
             DeleteFileW( file );
-        return ERROR_FUNCTION_FAILED;
+
+        return ERROR_INSTALL_PACKAGE_INVALID;
     }
 
     if( file != szPackage )
