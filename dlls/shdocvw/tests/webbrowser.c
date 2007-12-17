@@ -186,6 +186,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         switch(nCmdID) {
         case 24:
             return E_FAIL; /* TODO */
+        case 66:
+            return E_FAIL; /* TODO */
         default:
             ok(0, "unexpected nCmdID %d\n", nCmdID);
         }
