@@ -1359,17 +1359,20 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 	/* FIXME: should we read at least 1 char? The SDK does not say */
 	/* wait for at least one available input record (it doesn't mean we'll have
 	 * chars stored in xbuf...)
+	 *
+	 * Although SDK doc keeps silence about 1 char, SDK examples assume
+	 * that we should wait for at least one character (not key). --KS
 	 */
 	charsread = 0;
         do 
 	{
 	    if (read_console_input(hConsoleInput, &ir, timeout) != rci_gotone) break;
-            timeout = 0;
 	    if (ir.EventType == KEY_EVENT && ir.Event.KeyEvent.bKeyDown &&
 		ir.Event.KeyEvent.uChar.UnicodeChar &&
 		!(ir.Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
 	    {
 		xbuf[charsread++] = ir.Event.KeyEvent.uChar.UnicodeChar;
+		timeout = 0;
 	    }
         } while (charsread < nNumberOfCharsToRead);
         /* nothing has been read */
