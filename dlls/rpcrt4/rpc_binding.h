@@ -187,5 +187,7 @@ RPC_STATUS RpcTransport_GetTopOfTower(unsigned char *tower_data, size_t *tower_s
 RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data, size_t tower_size, char **protseq, char **networkaddr, char **endpoint);
 
 void RPCRT4_SetThreadCurrentConnection(RpcConnection *Connection);
+void RPCRT4_SetThreadCurrentCallHandle(RpcBinding *Binding);
+RpcBinding *RPCRT4_GetThreadCurrentCallHandle(void);
 
 #endif

@@ -152,6 +152,7 @@ struct threaddata
     CRITICAL_SECTION cs;
     DWORD thread_id;
     RpcConnection *connection;
+    RpcBinding *server_binding;
 };
 
 /***********************************************************************
@@ -188,7 +189,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
             DeleteCriticalSection(&tdata->cs);
             if (tdata->connection)
-                ERR("tdata->connection should be NULL but is still set to %p\n", tdata);
+                ERR("tdata->connection should be NULL but is still set to %p\n", tdata->connection);
+            if (tdata->server_binding)
+                ERR("tdata->server_binding should be NULL but is still set to %p\n", tdata->server_binding);
             HeapFree(GetProcessHeap(), 0, tdata);
         }
         break;
@@ -886,29 +889,51 @@ RPC_STATUS RPC_ENTRY RpcMgmtSetCancelTimeout(LONG Timeout)
     return RPC_S_OK;
 }
 
-void RPCRT4_SetThreadCurrentConnection(RpcConnection *Connection)
+static struct threaddata *get_or_create_threaddata(void)
 {
     struct threaddata *tdata = NtCurrentTeb()->ReservedForNtRpc;
     if (!tdata)
     {
-        tdata = HeapAlloc(GetProcessHeap(), 0, sizeof(*tdata));
-        if (!tdata) return;
+        tdata = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*tdata));
+        if (!tdata) return NULL;
 
         InitializeCriticalSection(&tdata->cs);
         tdata->thread_id = GetCurrentThreadId();
-        tdata->connection = Connection;
 
         EnterCriticalSection(&threaddata_cs);
         list_add_tail(&threaddata_list, &tdata->entry);
         LeaveCriticalSection(&threaddata_cs);
 
         NtCurrentTeb()->ReservedForNtRpc = tdata;
-        return;
+        return tdata;
     }
+    return tdata;
+}
+
+void RPCRT4_SetThreadCurrentConnection(RpcConnection *Connection)
+{
+    struct threaddata *tdata = get_or_create_threaddata();
+    if (!tdata) return;
 
     EnterCriticalSection(&tdata->cs);
     tdata->connection = Connection;
     LeaveCriticalSection(&tdata->cs);
+}
+
+void RPCRT4_SetThreadCurrentCallHandle(RpcBinding *Binding)
+{
+    struct threaddata *tdata = get_or_create_threaddata();
+    if (!tdata) return;
+
+    tdata->server_binding = Binding;
+}
+
+RpcBinding *RPCRT4_GetThreadCurrentCallHandle(void)
+{
+    struct threaddata *tdata = get_or_create_threaddata();
+    if (!tdata) return NULL;
+
+    return tdata->server_binding;
 }
 
 /******************************************************************************

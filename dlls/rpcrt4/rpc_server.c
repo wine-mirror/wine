@@ -293,6 +293,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
       exception = FALSE;
 
       /* dispatch */
+      RPCRT4_SetThreadCurrentCallHandle(msg->Handle);
       __TRY {
         if (func) func(msg);
       } __EXCEPT(rpc_filter) {
@@ -304,6 +305,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
         response = RPCRT4_BuildFaultHeader(msg->DataRepresentation,
                                            RPC2NCA_STATUS(status));
       } __ENDTRY
+      RPCRT4_SetThreadCurrentCallHandle(NULL);
 
       if (!exception)
         response = RPCRT4_BuildResponseHeader(msg->DataRepresentation,
@@ -1127,6 +1129,6 @@ RPC_STATUS WINAPI RpcMgmtSetServerStackSize(ULONG ThreadStackSize)
  */
 RPC_BINDING_HANDLE WINAPI I_RpcGetCurrentCallHandle(void)
 {
-    FIXME("\n");
-    return NULL;
+    TRACE("\n");
+    return RPCRT4_GetThreadCurrentCallHandle();
 }
