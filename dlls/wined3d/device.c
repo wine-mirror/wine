@@ -6192,25 +6192,22 @@ static void check_fbo_status(IWineD3DDevice *iface) {
     if (status == GL_FRAMEBUFFER_COMPLETE_EXT) {
         TRACE("FBO complete\n");
     } else {
+        IWineD3DSurfaceImpl *attachment;
+        int i;
         FIXME("FBO status %s (%#x)\n", debug_fbostatus(status), status);
 
         /* Dump the FBO attachments */
-        if (status == GL_FRAMEBUFFER_UNSUPPORTED_EXT) {
-            IWineD3DSurfaceImpl *attachment;
-            int i;
-
-            for (i = 0; i < GL_LIMITS(buffers); ++i) {
-                attachment = (IWineD3DSurfaceImpl *)This->fbo_color_attachments[i];
-                if (attachment) {
-                    FIXME("\tColor attachment %d: (%p) %s %ux%u\n", i, attachment, debug_d3dformat(attachment->resource.format),
-                            attachment->pow2Width, attachment->pow2Height);
-                }
-            }
-            attachment = (IWineD3DSurfaceImpl *)This->fbo_depth_attachment;
+        for (i = 0; i < GL_LIMITS(buffers); ++i) {
+            attachment = (IWineD3DSurfaceImpl *)This->fbo_color_attachments[i];
             if (attachment) {
-                FIXME("\tDepth attachment: (%p) %s %ux%u\n", attachment, debug_d3dformat(attachment->resource.format),
+                FIXME("\tColor attachment %d: (%p) %s %ux%u\n", i, attachment, debug_d3dformat(attachment->resource.format),
                         attachment->pow2Width, attachment->pow2Height);
             }
+        }
+        attachment = (IWineD3DSurfaceImpl *)This->fbo_depth_attachment;
+        if (attachment) {
+            FIXME("\tDepth attachment: (%p) %s %ux%u\n", attachment, debug_d3dformat(attachment->resource.format),
+                    attachment->pow2Width, attachment->pow2Height);
         }
     }
 }
