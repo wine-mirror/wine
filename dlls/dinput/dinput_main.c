@@ -198,6 +198,7 @@ static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
 	    FE(DIEDFL_INCLUDEPHANTOMS)
 #undef FE
 	};
+	TRACE(" flags: ");
 	if (dwFlags == 0) {
 	    TRACE("DIEDFL_ALLDEVICES");
 	    return;
@@ -206,6 +207,7 @@ static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
 	    if (flags[i].mask & dwFlags)
 		TRACE("%s ",flags[i].name);
     }
+    TRACE("\n");
 }
 
 /******************************************************************************
@@ -222,7 +224,7 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
     TRACE("(this=%p,0x%04x '%s',%p,%p,%04x)\n",
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
 	  lpCallback, pvRef, dwFlags);
-    TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
+    _dump_EnumDevices_dwFlags(dwFlags);
 
     for (i = 0; i < NB_DINPUT_DEVICES; i++) {
         if (!dinput_devices[i]->enum_deviceA) continue;
@@ -252,7 +254,7 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
     TRACE("(this=%p,0x%04x '%s',%p,%p,%04x)\n",
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
 	  lpCallback, pvRef, dwFlags);
-    TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
+    _dump_EnumDevices_dwFlags(dwFlags);
 
     for (i = 0; i < NB_DINPUT_DEVICES; i++) {
         if (!dinput_devices[i]->enum_deviceW) continue;

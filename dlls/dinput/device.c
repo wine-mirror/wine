@@ -59,6 +59,7 @@ void _dump_cooperativelevel_DI(DWORD dwFlags) {
 	    FE(DISCL_NOWINKEY)
 #undef FE
 	};
+	TRACE(" cooperative level : ");
 	for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++)
 	    if (flags[i].mask & dwFlags)
 		TRACE("%s ",flags[i].name);
@@ -675,7 +676,6 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
 
     TRACE("(%p) %p,0x%08x\n", This, hwnd, dwflags);
-    TRACE(" cooperative level : ");
     _dump_cooperativelevel_DI(dwflags);
 
     if ((dwflags & (DISCL_EXCLUSIVE | DISCL_NONEXCLUSIVE)) == 0 ||
