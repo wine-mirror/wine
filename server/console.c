@@ -302,6 +302,43 @@ static struct object *create_console_input( struct thread* renderer )
     return &console_input->obj;
 }
 
+static void generate_sb_initial_events( struct console_input *console_input )
+{
+    struct screen_buffer *screen_buffer = console_input->active;
+    struct console_renderer_event evt;
+
+    evt.event = CONSOLE_RENDERER_ACTIVE_SB_EVENT;
+    memset(&evt.u, 0, sizeof(evt.u));
+    console_input_events_append( console_input->evt, &evt );
+
+    evt.event = CONSOLE_RENDERER_SB_RESIZE_EVENT;
+    evt.u.resize.width  = screen_buffer->width;
+    evt.u.resize.height = screen_buffer->height;
+    console_input_events_append( console_input->evt, &evt );
+
+    evt.event = CONSOLE_RENDERER_DISPLAY_EVENT;
+    evt.u.display.left   = screen_buffer->win.left;
+    evt.u.display.top    = screen_buffer->win.top;
+    evt.u.display.width  = screen_buffer->win.right - screen_buffer->win.left + 1;
+    evt.u.display.height = screen_buffer->win.bottom - screen_buffer->win.top + 1;
+    console_input_events_append( console_input->evt, &evt );
+
+    evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
+    evt.u.update.top    = 0;
+    evt.u.update.bottom = screen_buffer->height - 1;
+    console_input_events_append( console_input->evt, &evt );
+
+    evt.event = CONSOLE_RENDERER_CURSOR_GEOM_EVENT;
+    evt.u.cursor_geom.size    = screen_buffer->cursor_size;
+    evt.u.cursor_geom.visible = screen_buffer->cursor_visible;
+    console_input_events_append( console_input->evt, &evt );
+
+    evt.event = CONSOLE_RENDERER_CURSOR_POS_EVENT;
+    evt.u.cursor_pos.x = screen_buffer->cursor_x;
+    evt.u.cursor_pos.y = screen_buffer->cursor_y;
+    console_input_events_append( console_input->evt, &evt );
+}
+
 static struct screen_buffer *create_console_output( struct console_input *console_input )
 {
     struct screen_buffer *screen_buffer;
@@ -341,40 +378,8 @@ static struct screen_buffer *create_console_output( struct console_input *consol
 
     if (!console_input->active)
     {
-        struct console_renderer_event evt;
 	console_input->active = (struct screen_buffer*)grab_object( screen_buffer );
-
-	/* generate the initial events */
-	evt.event = CONSOLE_RENDERER_ACTIVE_SB_EVENT;
-        memset(&evt.u, 0, sizeof(evt.u));
-	console_input_events_append( console_input->evt, &evt );
-
-	evt.event = CONSOLE_RENDERER_SB_RESIZE_EVENT;
-	evt.u.resize.width  = screen_buffer->width;
-	evt.u.resize.height = screen_buffer->height;
-	console_input_events_append( console_input->evt, &evt );
-
-	evt.event = CONSOLE_RENDERER_DISPLAY_EVENT;
-	evt.u.display.left   = screen_buffer->win.left;
-	evt.u.display.top    = screen_buffer->win.top;
-	evt.u.display.width  = screen_buffer->win.right - screen_buffer->win.left + 1;
-	evt.u.display.height = screen_buffer->win.bottom - screen_buffer->win.top + 1;
-	console_input_events_append( console_input->evt, &evt );
-
-	evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
-	evt.u.update.top    = 0;
-	evt.u.update.bottom = screen_buffer->height - 1;
-	console_input_events_append( console_input->evt, &evt );
-
- 	evt.event = CONSOLE_RENDERER_CURSOR_GEOM_EVENT;
- 	evt.u.cursor_geom.size    = screen_buffer->cursor_size;
- 	evt.u.cursor_geom.visible = screen_buffer->cursor_visible;
- 	console_input_events_append( console_input->evt, &evt );
-
-	evt.event = CONSOLE_RENDERER_CURSOR_POS_EVENT;
-	evt.u.cursor_pos.x = screen_buffer->cursor_x;
-	evt.u.cursor_pos.y = screen_buffer->cursor_y;
-	console_input_events_append( console_input->evt, &evt );
+        generate_sb_initial_events( console_input );
     }
     return screen_buffer;
 }
@@ -665,8 +670,7 @@ static int set_console_input_info( const struct set_console_input_info_request *
 	{
 	    if (console->active) release_object( console->active );
 	    console->active = screen_buffer;
-	    evt.event = CONSOLE_RENDERER_ACTIVE_SB_EVENT;
-	    console_input_events_append( console->evt, &evt );
+	    generate_sb_initial_events( console );
 	}
 	else
 	    release_object( screen_buffer );
