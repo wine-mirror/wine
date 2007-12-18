@@ -396,7 +396,7 @@ static HRESULT parse_headers(MimeBody *body, IStream *stm)
     return hr;
 }
 
-static void emptry_param_list(struct list *list)
+static void empty_param_list(struct list *list)
 {
     param_t *param, *cursor2;
 
@@ -417,7 +417,7 @@ static void empty_header_list(struct list *list)
     {
         list_remove(&header->entry);
         PropVariantClear(&header->value);
-        emptry_param_list(&header->params);
+        empty_param_list(&header->params);
         HeapFree(GetProcessHeap(), 0, header);
     }
 }
