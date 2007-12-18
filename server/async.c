@@ -213,7 +213,8 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
     async->data    = *data;
     async->timeout = NULL;
     async->queue   = (struct async_queue *)grab_object( queue );
-    fd_assign_completion( queue->fd, &async->completion, &async->comp_key );
+    async->completion = NULL;
+    if (queue->fd) fd_assign_completion( queue->fd, &async->completion, &async->comp_key );
 
     list_add_tail( &queue->queue, &async->queue_entry );
     grab_object( async );
