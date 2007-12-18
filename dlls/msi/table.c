@@ -1659,8 +1659,14 @@ static UINT TABLE_delete( struct tagMSIVIEW *view )
     TRACE("%p\n", view );
 
     tv->table = NULL;
-
     tv->columns = NULL;
+
+    if (tv->order)
+    {
+        msi_free( tv->order->reorder );
+        msi_free( tv->order );
+        tv->order = NULL;
+    }
 
     msi_free( tv );
 
