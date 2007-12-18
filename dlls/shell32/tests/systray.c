@@ -26,30 +26,35 @@
 
 
 static HWND hMainWnd;
+static BOOL (WINAPI *pShell_NotifyIconW)(DWORD,PNOTIFYICONDATAW);
 
 void test_cbsize(void)
 {
-    NOTIFYICONDATAW nidW;
     NOTIFYICONDATAA nidA;
 
-    ZeroMemory(&nidW, sizeof(nidW));
-    nidW.cbSize = NOTIFYICONDATAW_V1_SIZE;
-    nidW.hWnd = hMainWnd;
-    nidW.uID = 1;
-    nidW.uFlags = NIF_ICON|NIF_MESSAGE;
-    nidW.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    nidW.uCallbackMessage = WM_USER+17;
-    ok(Shell_NotifyIconW(NIM_ADD, &nidW), "NIM_ADD failed!\n");
+    if (pShell_NotifyIconW)
+    {
+        NOTIFYICONDATAW nidW;
 
-    /* using an invalid cbSize does work */
-    nidW.cbSize = 3;
-    nidW.hWnd = hMainWnd;
-    nidW.uID = 1;
-    ok(Shell_NotifyIconW(NIM_DELETE, &nidW), "NIM_DELETE failed!\n");
-    /* as icon doesn't exist anymore - now there will be an error */
-    nidW.cbSize = sizeof(nidW);
-    /* wine currently doesn't return error code put prints an ERR(...) */
-    todo_wine ok(!Shell_NotifyIconW(NIM_DELETE, &nidW), "The icon was not deleted\n");
+        ZeroMemory(&nidW, sizeof(nidW));
+        nidW.cbSize = NOTIFYICONDATAW_V1_SIZE;
+        nidW.hWnd = hMainWnd;
+        nidW.uID = 1;
+        nidW.uFlags = NIF_ICON|NIF_MESSAGE;
+        nidW.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+        nidW.uCallbackMessage = WM_USER+17;
+        ok(pShell_NotifyIconW(NIM_ADD, &nidW), "NIM_ADD failed!\n");
+
+        /* using an invalid cbSize does work */
+        nidW.cbSize = 3;
+        nidW.hWnd = hMainWnd;
+        nidW.uID = 1;
+        ok(pShell_NotifyIconW(NIM_DELETE, &nidW), "NIM_DELETE failed!\n");
+        /* as icon doesn't exist anymore - now there will be an error */
+        nidW.cbSize = sizeof(nidW);
+        /* wine currently doesn't return error code put prints an ERR(...) */
+        todo_wine ok(!pShell_NotifyIconW(NIM_DELETE, &nidW), "The icon was not deleted\n");
+    }
 
     /* same for Shell_NotifyIconA */
     ZeroMemory(&nidA, sizeof(nidA));
@@ -77,6 +82,10 @@ START_TEST(systray)
     WNDCLASSA wc;
     MSG msg;
     RECT rc;
+    HMODULE hdll;
+
+    hdll = GetModuleHandleA("shell32.dll");
+    pShell_NotifyIconW = (void*)GetProcAddress(hdll, "Shell_NotifyIconW");
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
