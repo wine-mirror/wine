@@ -444,6 +444,24 @@ static void release_data(REFIID riid, void *data)
         FIXME("Unhandled data format %s\n", debugstr_guid(riid));
 }
 
+static HRESULT find_prop(MimeBody *body, const char *name, header_t **prop)
+{
+    header_t *header;
+
+    *prop = NULL;
+
+    LIST_FOR_EACH_ENTRY(header, &body->headers, header_t, entry)
+    {
+        if(!strcasecmp(name, header->prop->name))
+        {
+            *prop = header;
+            return S_OK;
+        }
+    }
+
+    return MIME_E_NOT_FOUND;
+}
+
 static HRESULT WINAPI MimeBody_QueryInterface(IMimeBody* iface,
                                      REFIID riid,
                                      void** ppvObject)
@@ -670,8 +688,43 @@ static HRESULT WINAPI MimeBody_GetParameters(
                                     ULONG* pcParams,
                                     LPMIMEPARAMINFO* pprgParam)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    MimeBody *This = impl_from_IMimeBody(iface);
+    HRESULT hr;
+    header_t *header;
+
+    TRACE("(%p)->(%s, %p, %p)\n", iface, debugstr_a(pszName), pcParams, pprgParam);
+
+    *pprgParam = NULL;
+    *pcParams = 0;
+
+    hr = find_prop(This, pszName, &header);
+    if(hr != S_OK) return hr;
+
+    *pcParams = list_count(&header->params);
+    if(*pcParams)
+    {
+        IMimeAllocator *alloc;
+        param_t *param;
+        MIMEPARAMINFO *info;
+
+        MimeOleGetAllocator(&alloc);
+
+        *pprgParam = info = IMimeAllocator_Alloc(alloc, *pcParams * sizeof(**pprgParam));
+        LIST_FOR_EACH_ENTRY(param, &header->params, param_t, entry)
+        {
+            int len;
+
+            len = strlen(param->name) + 1;
+            info->pszName = IMimeAllocator_Alloc(alloc, len);
+            memcpy(info->pszName, param->name, len);
+            len = strlen(param->value) + 1;
+            info->pszData = IMimeAllocator_Alloc(alloc, len);
+            memcpy(info->pszData, param->value, len);
+            info++;
+        }
+        IMimeAllocator_Release(alloc);
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_IsContentType(

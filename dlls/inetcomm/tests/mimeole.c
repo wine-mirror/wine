@@ -90,6 +90,9 @@ static void test_CreateBody(void)
     LARGE_INTEGER off;
     ULARGE_INTEGER pos;
     ENCODINGTYPE enc;
+    ULONG count;
+    MIMEPARAMINFO *param_info;
+    IMimeAllocator *alloc;
 
     hr = CoCreateInstance(&CLSID_IMimeBody, NULL, CLSCTX_INPROC_SERVER, &IID_IMimeBody, (void**)&body);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -134,6 +137,30 @@ static void test_CreateBody(void)
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(enc == IET_8BIT, "encoding %d\n", enc);
 
+    hr = MimeOleGetAllocator(&alloc);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeBody_GetParameters(body, "nothere", &count, &param_info);
+    ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
+    ok(count == 0, "got %d\n", count);
+    ok(!param_info, "got %p\n", param_info);
+
+    hr = IMimeBody_GetParameters(body, "bar", &count, &param_info);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(count == 0, "got %d\n", count);
+    ok(!param_info, "got %p\n", param_info);
+
+    hr = IMimeBody_GetParameters(body, "Content-Type", &count, &param_info);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    todo_wine  /* native adds a charset parameter */
+        ok(count == 3, "got %d\n", count);
+    ok(param_info != NULL, "got %p\n", param_info);
+
+    hr = IMimeAllocator_FreeParamInfoArray(alloc, count, param_info, TRUE);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    IMimeAllocator_Release(alloc);
+
+    IStream_Release(in);
     IMimeBody_Release(body);
 }
 
