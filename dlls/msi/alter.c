@@ -241,6 +241,7 @@ static const MSIVIEWOPS alter_ops =
     NULL,
     NULL,
     NULL,
+    NULL,
 };
 
 UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, column_info *colinfo, int hold )

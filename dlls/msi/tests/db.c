@@ -4610,16 +4610,10 @@ static void test_order(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     val = MsiRecordGetInteger(hrec, 1);
-    todo_wine
-    {
-        ok(val == 3, "Expected 3, got %d\n", val);
-    }
+    ok(val == 3, "Expected 3, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 4, "Expected 3, got %d\n", val);
-    }
+    ok(val == 4, "Expected 3, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4627,16 +4621,10 @@ static void test_order(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     val = MsiRecordGetInteger(hrec, 1);
-    todo_wine
-    {
-        ok(val == 5, "Expected 5, got %d\n", val);
-    }
+    ok(val == 5, "Expected 5, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 6, "Expected 6, got %d\n", val);
-    }
+    ok(val == 6, "Expected 6, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4644,16 +4632,10 @@ static void test_order(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     val = MsiRecordGetInteger(hrec, 1);
-    todo_wine
-    {
-        ok(val == 1, "Expected 1, got %d\n", val);
-    }
+    ok(val == 1, "Expected 1, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 2, "Expected 2, got %d\n", val);
-    }
+    ok(val == 2, "Expected 2, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4673,10 +4655,7 @@ static void test_order(void)
     ok(val == 1, "Expected 1, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 12, "Expected 12, got %d\n", val);
-    }
+    ok(val == 12, "Expected 12, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4687,10 +4666,7 @@ static void test_order(void)
     ok(val == 3, "Expected 3, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 12, "Expected 12, got %d\n", val);
-    }
+    ok(val == 12, "Expected 12, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4701,10 +4677,7 @@ static void test_order(void)
     ok(val == 5, "Expected 5, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 12, "Expected 12, got %d\n", val);
-    }
+    ok(val == 12, "Expected 12, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4715,10 +4688,7 @@ static void test_order(void)
     ok(val == 1, "Expected 1, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 14, "Expected 14, got %d\n", val);
-    }
+    ok(val == 14, "Expected 14, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4729,10 +4699,7 @@ static void test_order(void)
     ok(val == 3, "Expected 3, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 14, "Expected 14, got %d\n", val);
-    }
+    ok(val == 14, "Expected 14, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4743,10 +4710,7 @@ static void test_order(void)
     ok(val == 5, "Expected 5, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 14, "Expected 14, got %d\n", val);
-    }
+    ok(val == 14, "Expected 14, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4757,10 +4721,7 @@ static void test_order(void)
     ok(val == 1, "Expected 1, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 10, "Expected 10, got %d\n", val);
-    }
+    ok(val == 10, "Expected 10, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4771,10 +4732,7 @@ static void test_order(void)
     ok(val == 3, "Expected 3, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 10, "Expected 10, got %d\n", val);
-    }
+    ok(val == 10, "Expected 10, got %d\n", val);
 
     MsiCloseHandle(hrec);
 
@@ -4785,10 +4743,7 @@ static void test_order(void)
     ok(val == 5, "Expected 5, got %d\n", val);
 
     val = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(val == 10, "Expected 10, got %d\n", val);
-    }
+    ok(val == 10, "Expected 10, got %d\n", val);
 
     MsiCloseHandle(hrec);
 

@@ -61,16 +61,6 @@ struct sql_str {
     INT len;
 };
 
-typedef struct _column_info
-{
-    LPCWSTR table;
-    LPCWSTR column;
-    UINT   type;
-    BOOL   temporary;
-    struct expr *val;
-    struct _column_info *next;
-} column_info;
-
 struct complex_expr
 {
     UINT op;

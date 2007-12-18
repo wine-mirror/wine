@@ -32,7 +32,6 @@ C_SRCS = \
 	msi.c \
 	msi_main.c \
 	msiquery.c \
-	order.c \
 	package.c \
 	preview.c \
 	record.c \

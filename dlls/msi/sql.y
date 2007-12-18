@@ -373,15 +373,16 @@ data_count:
 oneselect:
     unorderedsel TK_ORDER TK_BY selcollist
         {
-            SQL_input* sql = (SQL_input*) info;
+            UINT r;
 
-            $$ = NULL;
             if( $4 )
-                ORDER_CreateView( sql->db, &$$, $1, $4 );
-            else
-                $$ = $1;
-            if( !$$ )
-                YYABORT;
+            {
+                r = $1->ops->sort( $1, $4 );
+                if ( r != ERROR_SUCCESS)
+                    YYABORT;
+            }
+
+            $$ = $1;
         }
   | unorderedsel
     ;

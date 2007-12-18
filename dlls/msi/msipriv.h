@@ -133,6 +133,16 @@ typedef struct tagMSIMEDIADISK
     LPWSTR disk_prompt;
 } MSIMEDIADISK;
 
+typedef struct _column_info
+{
+    LPCWSTR table;
+    LPCWSTR column;
+    INT   type;
+    BOOL   temporary;
+    struct expr *val;
+    struct _column_info *next;
+} column_info;
+
 typedef const struct tagMSICOLUMNHASHENTRY *MSIITERHANDLE;
 
 typedef struct tagMSIVIEWOPS
@@ -248,6 +258,11 @@ typedef struct tagMSIVIEWOPS
      * remove_column - removes the column represented by table name and column number from the table
      */
     UINT (*remove_column)( struct tagMSIVIEW *view, LPCWSTR table, UINT number );
+
+    /*
+     * sort - orders the table by columns
+     */
+    UINT (*sort)( struct tagMSIVIEW *view, column_info *columns );
 } MSIVIEWOPS;
 
 struct tagMSIVIEW

@@ -268,6 +268,24 @@ static UINT JOIN_find_matching_rows( struct tagMSIVIEW *view, UINT col,
     return ERROR_NO_MORE_ITEMS;
 }
 
+static UINT JOIN_sort(struct tagMSIVIEW *view, column_info *columns)
+{
+    MSIJOINVIEW *jv = (MSIJOINVIEW *)view;
+    JOINTABLE *table;
+    UINT r;
+
+    TRACE("%p %p\n", view, columns);
+
+    LIST_FOR_EACH_ENTRY(table, &jv->tables, JOINTABLE, entry)
+    {
+        r = table->view->ops->sort(table->view, columns);
+        if (r != ERROR_SUCCESS)
+            return r;
+    }
+
+    return ERROR_SUCCESS;
+}
+
 static const MSIVIEWOPS join_ops =
 {
     JOIN_fetch_int,
@@ -287,6 +305,7 @@ static const MSIVIEWOPS join_ops =
     NULL,
     NULL,
     NULL,
+    JOIN_sort,
 };
 
 UINT JOIN_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR tables )
