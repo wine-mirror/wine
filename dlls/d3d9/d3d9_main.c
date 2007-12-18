@@ -61,6 +61,18 @@ IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion) {
     return (IDirect3D9*) object;
 }
 
+/*******************************************************************
+ *       Direct3DShaderValidatorCreate9 (D3D9.@)
+ *
+ * No documentation available for this function.
+ * SDK only says it is internal and shouldn't be used.
+ */
+void* WINAPI Direct3DShaderValidatorCreate9(void)
+{
+    FIXME("stub\n");
+    return NULL;
+}
+
 /* At process attach */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {

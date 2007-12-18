@@ -1,6 +1,7 @@
 @ stdcall D3D9GetSWInfo()
 @ stdcall DebugSetMute()
 @ stdcall Direct3DCreate9(long)
+@ stdcall Direct3DShaderValidatorCreate9()
 @ stdcall D3DPERF_BeginEvent(long wstr)
 @ stdcall D3DPERF_EndEvent()
 @ stdcall D3DPERF_GetStatus()
