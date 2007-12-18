@@ -36,7 +36,8 @@ static char msg1[] =
     "MIME-Version: 1.0\r\n"
     "Content-Type: multipart/mixed;\r\n"
     " boundary=\"------------1.5.0.6\";\r\n"
-    " stuff=\"du;nno\"\r\n"
+    " stuff=\"du;nno\";\r\n"
+    " morestuff=\"so\\\\me\\\"thing\\\"\"\r\n"
     "foo: bar\r\n"
     "From: Huw Davies <huw@codeweavers.com>\r\n"
     "From: Me <xxx@codeweavers.com>\r\n"
@@ -90,7 +91,7 @@ static void test_CreateBody(void)
     LARGE_INTEGER off;
     ULARGE_INTEGER pos;
     ENCODINGTYPE enc;
-    ULONG count;
+    ULONG count, found_param, i;
     MIMEPARAMINFO *param_info;
     IMimeAllocator *alloc;
 
@@ -119,7 +120,7 @@ static void test_CreateBody(void)
     ok(hr == S_OK, "ret %08x\n", hr);
     off.QuadPart = 0;
     IStream_Seek(in, off, STREAM_SEEK_CUR, &pos);
-    ok(pos.u.LowPart == 328, "pos %u\n", pos.u.LowPart);
+    ok(pos.u.LowPart == 359, "pos %u\n", pos.u.LowPart);
 
     hr = IMimeBody_IsContentType(body, "multipart", "mixed");
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -153,8 +154,26 @@ static void test_CreateBody(void)
     hr = IMimeBody_GetParameters(body, "Content-Type", &count, &param_info);
     ok(hr == S_OK, "ret %08x\n", hr);
     todo_wine  /* native adds a charset parameter */
-        ok(count == 3, "got %d\n", count);
+        ok(count == 4, "got %d\n", count);
     ok(param_info != NULL, "got %p\n", param_info);
+
+    found_param = 0;
+    for(i = 0; i < count; i++)
+    {
+        if(!strcmp(param_info[i].pszName, "morestuff"))
+        {
+            found_param++;
+            ok(!strcmp(param_info[i].pszData, "so\\me\"thing\""),
+               "got %s\n", param_info[i].pszData);
+        }
+        else if(!strcmp(param_info[i].pszName, "stuff"))
+        {
+            found_param++;
+            ok(!strcmp(param_info[i].pszData, "du;nno"),
+               "got %s\n", param_info[i].pszData);
+        }
+    }
+    ok(found_param == 2, "matched %d params\n", found_param);
 
     hr = IMimeAllocator_FreeParamInfoArray(alloc, count, param_info, TRUE);
     ok(hr == S_OK, "ret %08x\n", hr);

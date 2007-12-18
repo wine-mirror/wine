@@ -268,6 +268,39 @@ static void unfold_header(char *header, int len)
     *(start - 1) = '\0';
 }
 
+static char *unquote_string(const char *str)
+{
+    int quoted = 0;
+    char *ret, *cp;
+
+    while(*str == ' ' || *str == '\t') str++;
+
+    if(*str == '"')
+    {
+        quoted = 1;
+        str++;
+    }
+    ret = strdupA(str);
+    for(cp = ret; *cp; cp++)
+    {
+        if(*cp == '\\')
+            memmove(cp, cp + 1, strlen(cp + 1) + 1);
+        else if(*cp == '"')
+        {
+            if(!quoted)
+            {
+                WARN("quote in unquoted string\n");
+            }
+            else
+            {
+                *cp = '\0';
+                break;
+            }
+        }
+    }
+    return ret;
+}
+
 static void add_param(header_t *header, const char *p)
 {
     const char *key = p, *value, *cp = p;
@@ -293,7 +326,7 @@ static void add_param(header_t *header, const char *p)
 
     param = HeapAlloc(GetProcessHeap(), 0, sizeof(*param));
     param->name = name;
-    param->value = strdupA(value);
+    param->value = unquote_string(value);
     list_add_tail(&header->params, &param->entry);
 }
 
