@@ -37,6 +37,8 @@
 # define SPI_GETDESKWALLPAPER 0x0073
 #endif
 
+static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODEA, HWND, DWORD, LPVOID);
+
 static int strict;
 static int dpi;
 static int iswin9x;
@@ -2188,6 +2190,12 @@ static void test_WM_DISPLAYCHANGE(void)
     LONG change_ret;
     DWORD wait_ret;
 
+    if (!pChangeDisplaySettingsExA)
+    {
+        skip("ChangeDisplaySettingsExA is not available\n");
+        return;
+    }
+
     displaychange_test_active = TRUE;
 
     memset(&startmode, 0, sizeof(startmode));
@@ -2209,7 +2217,7 @@ static void test_WM_DISPLAYCHANGE(void)
 
         change_counter = 0; /* This sends a SETTINGSCHANGE message as well in which we aren't interested */
         displaychange_ok = TRUE;
-        change_ret = ChangeDisplaySettingsEx(NULL, &mode, NULL, 0, NULL);
+        change_ret = pChangeDisplaySettingsExA(NULL, &mode, NULL, 0, NULL);
         /* Wait quite long for the message, screen setting changes can take some time */
         if(change_ret == DISP_CHANGE_SUCCESSFUL) {
             wait_ret = WaitForSingleObject(displaychange_sem, 10000);
@@ -2240,7 +2248,7 @@ static void test_WM_DISPLAYCHANGE(void)
         mode.dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
 
         displaychange_ok = TRUE;
-        change_ret = ChangeDisplaySettingsEx(NULL, &mode, NULL, 0, NULL);
+        change_ret = pChangeDisplaySettingsExA(NULL, &mode, NULL, 0, NULL);
         WaitForSingleObject(displaychange_sem, 10000);
         displaychange_ok = FALSE;
         CloseHandle(displaychange_sem);
@@ -2552,8 +2560,12 @@ START_TEST(sysparams)
     MSG msg;
     HANDLE hThread;
     DWORD dwThreadId;
-    HANDLE hInstance = GetModuleHandleA( NULL );
+    HANDLE hInstance, hdll;
 
+    hdll = GetModuleHandleA("user32.dll");
+    pChangeDisplaySettingsExA=(void*)GetProcAddress(hdll, "ChangeDisplaySettingsExA");
+
+    hInstance = GetModuleHandleA( NULL );
     hdc = GetDC(0);
     dpi = GetDeviceCaps( hdc, LOGPIXELSY);
     iswin9x = GetVersion() & 0x80000000;
