@@ -2977,8 +2977,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         if(SrcSurface != myDevice->render_targets[0]) {
             ERR("Unexpected render target -> render target blit\n");
         }
-        FIXME("Implement blit from active render target to a swapchain\n");
-        return WINED3DERR_INVALIDCALL;
+        TRACE("Blit from active render target to a swapchain\n");
+        /* Handled with regular texture -> swapchain blit */
     } else if(srcSwapchain) {
         if(This != (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) {
             ERR("Unexpected render target -> render target blit\n");
@@ -2987,7 +2987,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         return WINED3DERR_INVALIDCALL;
     }
 
-    if(srcSwapchain || SrcSurface == myDevice->render_targets[0]) {
+    if((srcSwapchain || SrcSurface == myDevice->render_targets[0]) && !dstSwapchain) {
         /* Blit from render target to texture */
         WINED3DRECT srect;
         BOOL upsideDown, stretchx;
