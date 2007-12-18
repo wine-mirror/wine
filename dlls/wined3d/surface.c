@@ -3095,6 +3095,16 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             SourceRectangle.top = 0;
             SourceRectangle.bottom = Src->currentDesc.Height;
         }
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && GL_SUPPORT(EXT_FRAMEBUFFER_BLIT) &&
+            (Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) == 0) {
+            TRACE("Using stretch_rect_fbo\n");
+            /* The source is always a texture, but never the currently active render target, and the texture
+             * contents are never upside down
+             */
+            stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, (WINED3DRECT *) &SourceRectangle,
+                              (IWineD3DSurface *)This, &rect, Filter, FALSE);
+            return WINED3D_OK;
+        }
 
         if(!CalculateTexRect(Src, &SourceRectangle, glTexCoord)) {
             /* Fall back to software */
