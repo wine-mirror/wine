@@ -184,7 +184,19 @@ static void winstation_init(void)
     if (buffer || !GetProcessWindowStation())
     {
         handle = CreateWindowStationW( winstation ? winstation : WinSta0, 0, WINSTA_ALL_ACCESS, NULL );
-        if (handle) SetProcessWindowStation( handle );
+        if (handle)
+        {
+            SetProcessWindowStation( handle );
+            /* only WinSta0 is visible */
+            if (!winstation || !strcmpiW( winstation, WinSta0 ))
+            {
+                USEROBJECTFLAGS flags;
+                flags.fInherit  = FALSE;
+                flags.fReserved = FALSE;
+                flags.dwFlags   = WSF_VISIBLE;
+                SetUserObjectInformationW( handle, UOI_FLAGS, &flags, sizeof(flags) );
+            }
+        }
     }
     if (buffer || !GetThreadDesktop( GetCurrentThreadId() ))
     {
