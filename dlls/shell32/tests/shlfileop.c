@@ -40,6 +40,7 @@ static const WCHAR UNICODE_PATH[] = {'c',':','\\',0x00c4,'\0','\0'};
 static HMODULE hshell32;
 static int (WINAPI *pSHCreateDirectoryExA)(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
 static int (WINAPI *pSHCreateDirectoryExW)(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
+static int (WINAPI *pSHFileOperationW)(LPSHFILEOPSTRUCTW);
 static int (WINAPI *pSHPathPrepareForWriteA)(HWND, IUnknown*, LPCSTR, DWORD);
 static int (WINAPI *pSHPathPrepareForWriteW)(HWND, IUnknown*, LPCWSTR, DWORD);
 
@@ -48,6 +49,7 @@ static void InitFunctionPointers(void)
     hshell32 = GetModuleHandleA("shell32.dll");
     pSHCreateDirectoryExA = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExA");
     pSHCreateDirectoryExW = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExW");
+    pSHFileOperationW = (void*)GetProcAddress(hshell32, "SHFileOperationW");
     pSHPathPrepareForWriteA = (void*)GetProcAddress(hshell32, "SHPathPrepareForWriteA");
     pSHPathPrepareForWriteW = (void*)GetProcAddress(hshell32, "SHPathPrepareForWriteW");
 }
@@ -1119,6 +1121,12 @@ static void test_unicode(void)
     int ret;
     HANDLE file;
 
+    if (!pSHFileOperationW)
+    {
+        skip("SHFileOperationW() is missing\n");
+        return;
+    }
+
     shfoW.hwnd = NULL;
     shfoW.wFunc = FO_DELETE;
     shfoW.pFrom = UNICODE_PATH;
@@ -1143,7 +1151,7 @@ static void test_unicode(void)
 
     /* Try to delete a file with unicode filename */
     ok(file_existsW(UNICODE_PATH), "The file does not exist\n");
-    ret = SHFileOperationW(&shfoW);
+    ret = pSHFileOperationW(&shfoW);
     ok(!ret, "File is not removed, ErrorCode: %d\n", ret);
     ok(!file_existsW(UNICODE_PATH), "The file should have been removed\n");
 
@@ -1151,7 +1159,7 @@ static void test_unicode(void)
     createTestFileW(UNICODE_PATH);
     shfoW.fFlags |= FOF_ALLOWUNDO;
     ok(file_existsW(UNICODE_PATH), "The file does not exist\n");
-    ret = SHFileOperationW(&shfoW);
+    ret = pSHFileOperationW(&shfoW);
     ok(!ret, "File is not removed, ErrorCode: %d\n", ret);
     ok(!file_existsW(UNICODE_PATH), "The file should have been removed\n");
 
@@ -1166,7 +1174,7 @@ static void test_unicode(void)
     ok(!ret, "SHCreateDirectoryExW returned %d\n", ret);
     ok(file_existsW(UNICODE_PATH), "The directory is not created\n");
     shfoW.fFlags &= ~FOF_ALLOWUNDO;
-    ret = SHFileOperationW(&shfoW);
+    ret = pSHFileOperationW(&shfoW);
     ok(!ret, "Directory is not removed, ErrorCode: %d\n", ret);
     ok(!file_existsW(UNICODE_PATH), "The directory should have been removed\n");
 
@@ -1175,7 +1183,7 @@ static void test_unicode(void)
     ok(!ret, "SHCreateDirectoryExW returned %d\n", ret);
     ok(file_existsW(UNICODE_PATH), "The directory was not created\n");
     shfoW.fFlags |= FOF_ALLOWUNDO;
-    ret = SHFileOperationW(&shfoW);
+    ret = pSHFileOperationW(&shfoW);
     ok(!ret, "Directory is not removed, ErrorCode: %d\n", ret);
     ok(!file_existsW(UNICODE_PATH), "The directory should have been removed\n");
 }
