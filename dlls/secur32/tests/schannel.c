@@ -106,8 +106,8 @@ static const BYTE selfSignedCert[] = {
 static void InitFunctionPtrs(void)
 {
     HMODULE advapi32dll = GetModuleHandleA("advapi32.dll");
-    HMODULE crypt32dll = LoadLibraryA("crypt32.dll");
 
+    crypt32dll = LoadLibraryA("crypt32.dll");
     secdll = LoadLibraryA("secur32.dll");
     if(!secdll)
         secdll = LoadLibraryA("security.dll");
