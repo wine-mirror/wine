@@ -63,7 +63,7 @@
 @ stub GetStartupFlags
 @ stub GetTargetForVTableEntry
 @ stub GetTokenForVTableEntry
-@ stub GetVersionFromProcess
+@ stdcall GetVersionFromProcess(ptr ptr long ptr)
 @ stub GetXMLElement
 @ stub GetXMLElementAttribute
 @ stub GetXMLObject

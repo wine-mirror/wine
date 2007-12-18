@@ -264,3 +264,9 @@ HRESULT WINAPI GetAssemblyMDImport(LPCWSTR szFileName, REFIID riid, IUnknown **p
     FIXME("(%p %s, %p, %p): stub\n", szFileName, debugstr_w(szFileName), riid, *ppIUnk);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+HRESULT WINAPI GetVersionFromProcess(HANDLE hProcess, LPWSTR pVersion, DWORD cchBuffer, DWORD *dwLength)
+{
+    FIXME("(%p, %p, %d, %p): stub\n", hProcess, pVersion, cchBuffer, dwLength);
+    return E_NOTIMPL;
+}
