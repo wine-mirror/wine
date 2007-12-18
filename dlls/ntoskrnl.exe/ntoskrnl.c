@@ -172,7 +172,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
         DPRINTF( "%04x:Ret  driver dispatch %p (device=%p,irp=%p) retval=%08x\n",
                  GetCurrentThreadId(), dispatch, device, &irp, status );
 
-    *out_size = irp.IoStatus.u.Status ? 0 : irp.IoStatus.Information;
+    *out_size = (irp.IoStatus.u.Status >= 0) ? irp.IoStatus.Information : 0;
     return irp.IoStatus.u.Status;
 }
 
