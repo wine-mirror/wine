@@ -651,14 +651,19 @@ Wine will be built without XComposite support. (winex11.drv)])
 			     [OPENGL_LIBS="-lGL"
                              OPENGLFILES='$(OPENGLFILES)'
                              AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])],
-                             [if test -f /usr/X11R6/lib/libGL.a
-                              then
-                                  WINE_WARNING([/usr/X11R6/lib/libGL.a is present on your system.
+                             [WINE_CHECK_SONAME(GL,glXCreateContext,
+				    [OPENGL_LIBS="-Xlinker -dylib_file -Xlinker /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -lGL"
+	                            OPENGLFILES='$(OPENGLFILES)'
+	                            AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])],
+				    [if test -f /usr/X11R6/lib/libGL.a
+	                            then
+		                        WINE_WARNING([/usr/X11R6/lib/libGL.a is present on your system.
 This probably prevents linking to OpenGL. Try deleting the file and restarting configure.])
-                              else
-                                  WINE_WARNING([No OpenGL library found on this system.
+	                            else
+	                                WINE_WARNING([No OpenGL library found on this system.
 Wine will be built without OpenGL or Direct3D support.])
-                              fi],
+	                            fi],
+				    $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib)],
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
 	        dnl Check for GLU32 library.
