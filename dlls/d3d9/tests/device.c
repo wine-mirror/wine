@@ -183,7 +183,7 @@ static void test_swapchain(void)
     ok(backbuffer != NULL, "The back buffer is NULL\n");
     if(backbuffer) IDirect3DSurface9_Release(backbuffer);
 
-    /* Try to get a nonexistant swapchain */
+    /* Try to get a nonexistent swapchain */
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 1, &swapchainX);
     ok(hr == D3DERR_INVALIDCALL, "GetSwapChain on an nonexistent swapchain returned (%s)\n", DXGetErrorString9(hr));
     ok(swapchainX == NULL, "Swapchain 1 is %p\n", swapchainX);

@@ -715,7 +715,7 @@ InitCommonControls (void)
  *
  * NOTES
  *     Probaly all versions of comctl32 initializes the Win95 controls in DllMain
- *     during DLL initializaiton. Starting from comctl32 v5.82 all the controls
+ *     during DLL initialization. Starting from comctl32 v5.82 all the controls
  *     are initialized there. We follow this behaviour and this function is just
  *     a dummy.
  *

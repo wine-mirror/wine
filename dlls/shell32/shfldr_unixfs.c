@@ -482,7 +482,7 @@ static inline void UNIXFS_seconds_since_1970_to_dos_date_time(
  * buffer 'pIDL'.
  *
  * PARAMS
- *  pszUnixPath [I] An absolute path. The SHITEMID will be build for the last component.
+ *  pszUnixPath [I] An absolute path. The SHITEMID will be built for the last component.
  *  pIDL        [O] SHITEMID will be constructed here.
  *
  * RETURNS
