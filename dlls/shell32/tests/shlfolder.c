@@ -324,7 +324,27 @@ static void test_BindToObject(void)
 
     IShellFolder_Release(psfSystemDir);
 }
-  
+
+/* Based on PathAddBackslashW from dlls/shlwapi/path.c */
+static LPWSTR myPathAddBackslashW( LPWSTR lpszPath )
+{
+  size_t iLen;
+
+  if (!lpszPath || (iLen = lstrlenW(lpszPath)) >= MAX_PATH)
+    return NULL;
+
+  if (iLen)
+  {
+    lpszPath += iLen;
+    if (lpszPath[-1] != '\\')
+    {
+      *lpszPath++ = '\\';
+      *lpszPath = '\0';
+    }
+  }
+  return lpszPath;
+}
+
 static void test_GetDisplayName(void)
 {
     BOOL result;
@@ -357,7 +377,7 @@ static void test_GetDisplayName(void)
     ok(result, "SHGetSpecialFolderPathW failed! Last error: %u\n", GetLastError());
     if (!result) return;
 
-    PathAddBackslashW(wszTestDir);
+    myPathAddBackslashW(wszTestDir);
     lstrcatW(wszTestDir, wszDirName);
     /* Use ANSI file functions so this works on Windows 9x */
     WideCharToMultiByte(CP_ACP, 0, wszTestDir, -1, szTestDir, MAX_PATH, 0, 0);
@@ -370,7 +390,7 @@ static void test_GetDisplayName(void)
     }
 
     lstrcpyW(wszTestFile, wszTestDir);
-    PathAddBackslashW(wszTestFile);
+    myPathAddBackslashW(wszTestFile);
     lstrcatW(wszTestFile, wszFileName);
     WideCharToMultiByte(CP_ACP, 0, wszTestFile, -1, szTestFile, MAX_PATH, 0, 0);
 
@@ -824,7 +844,7 @@ static void test_SHGetPathFromIDList(void)
         IShellFolder_Release(psfDesktop);
         return;
     }
-    PathAddBackslashW(wszFileName);
+    myPathAddBackslashW(wszFileName);
     lstrcatW(wszFileName, wszTestFile);
     hTestFile = CreateFileW(wszFileName, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
     ok(hTestFile != INVALID_HANDLE_VALUE, "CreateFileW failed! Last error: %u\n", GetLastError());
@@ -1153,7 +1173,7 @@ static void test_FolderShortcut(void) {
 
     /* Next few lines are meant to show that children of FolderShortcuts are not FolderShortcuts,
      * but ShellFSFolders. */
-    PathAddBackslashW(wszDesktopPath);
+    myPathAddBackslashW(wszDesktopPath);
     lstrcatW(wszDesktopPath, wszSomeSubFolder);
     if (!CreateDirectoryW(wszDesktopPath, NULL)) {
         IShellFolder_Release(pShellFolder);

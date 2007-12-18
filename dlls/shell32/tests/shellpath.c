@@ -642,6 +642,27 @@ static void testEnvVars(void)
     matchSpecialFolderPathToEnv(CSIDL_SYSTEM, "winsysdir");
 }
 
+/* Loosely based on PathRemoveBackslashA from dlls/shlwapi/path.c */
+static BOOL myPathIsRootA(LPCSTR lpszPath)
+{
+  if (lpszPath && *lpszPath &&
+      lpszPath[1] == ':' && lpszPath[2] == '\\' && lpszPath[3] == '\0')
+      return TRUE; /* X:\ */
+  return FALSE;
+}
+static LPSTR myPathRemoveBackslashA( LPSTR lpszPath )
+{
+  LPSTR szTemp = NULL;
+
+  if(lpszPath)
+  {
+    szTemp = CharPrevA(lpszPath, lpszPath + strlen(lpszPath));
+    if (!myPathIsRootA(lpszPath) && *szTemp == '\\')
+      *szTemp = '\0';
+  }
+  return szTemp;
+}
+
 /* Verifies the shell path for CSIDL_WINDOWS matches the return from
  * GetWindowsDirectory.  If SHGetSpecialFolderPath fails, no harm, no foul--not
  * every shell32 version supports CSIDL_WINDOWS.
@@ -654,9 +675,9 @@ static void testWinDir(void)
 
     if (pSHGetSpecialFolderPathA(NULL, windowsShellPath, CSIDL_WINDOWS, FALSE))
     {
-        PathRemoveBackslashA(windowsShellPath);
+        myPathRemoveBackslashA(windowsShellPath);
         GetWindowsDirectoryA(windowsDir, sizeof(windowsDir));
-        PathRemoveBackslashA(windowsDir);
+        myPathRemoveBackslashA(windowsDir);
         ok(!lstrcmpiA(windowsDir, windowsShellPath),
          "GetWindowsDirectory does not match SHGetSpecialFolderPath:\n"
          "GetWindowsDirectory returns %s\nSHGetSpecialFolderPath returns %s\n",
@@ -675,10 +696,10 @@ static void testSystemDir(void)
     if (!pSHGetSpecialFolderPathA) return;
 
     GetSystemDirectoryA(systemDir, sizeof(systemDir));
-    PathRemoveBackslashA(systemDir);
+    myPathRemoveBackslashA(systemDir);
     if (pSHGetSpecialFolderPathA(NULL, systemShellPath, CSIDL_SYSTEM, FALSE))
     {
-        PathRemoveBackslashA(systemShellPath);
+        myPathRemoveBackslashA(systemShellPath);
         ok(!lstrcmpiA(systemDir, systemShellPath),
          "GetSystemDirectory does not match SHGetSpecialFolderPath:\n"
          "GetSystemDirectory returns %s\nSHGetSpecialFolderPath returns %s\n",
@@ -689,7 +710,7 @@ static void testSystemDir(void)
      */
     if (pSHGetSpecialFolderPathA(NULL, systemShellPath, CSIDL_SYSTEMX86, FALSE))
     {
-        PathRemoveBackslashA(systemShellPath);
+        myPathRemoveBackslashA(systemShellPath);
         ok(!lstrcmpiA(systemDir, systemShellPath),
          "GetSystemDirectory does not match SHGetSpecialFolderPath:\n"
          "GetSystemDirectory returns %s\nSHGetSpecialFolderPath returns %s\n",
