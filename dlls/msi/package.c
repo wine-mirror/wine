@@ -660,7 +660,7 @@ static UINT msi_load_summary_properties( MSIPACKAGE *package )
                                      &count, NULL, NULL, NULL );
     if (rc != ERROR_SUCCESS)
     {
-        WARN("Unable to query page count: %d", rc);
+        WARN("Unable to query page count: %d\n", rc);
         goto done;
     }
 
@@ -960,7 +960,7 @@ UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phP
 
     if ( !*szPackage )
     {
-        FIXME("Should create an empty database and package.");
+        FIXME("Should create an empty database and package\n");
         return ERROR_FUNCTION_FAILED;
     }
 
