@@ -4558,6 +4558,247 @@ static void test_defaultdatabase(void)
     DeleteFileA(msifile);
 }
 
+static void test_order(void)
+{
+    MSIHANDLE hdb, hview, hrec;
+    LPCSTR query;
+    UINT r;
+    int val;
+
+    hdb = create_db();
+    ok(hdb, "failed to create db\n");
+
+    query = "CREATE TABLE `Mesa` ( `A` SHORT NOT NULL, `B` SHORT, `C` SHORT PRIMARY KEY `A`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `Mesa` ( `A`, `B`, `C` ) VALUES ( 1, 2, 9 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `Mesa` ( `A`, `B`, `C` ) VALUES ( 3, 4, 7 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `Mesa` ( `A`, `B`, `C` ) VALUES ( 5, 6, 8 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `Sideboard` ( `D` SHORT NOT NULL, `E` SHORT, `F` SHORT PRIMARY KEY `D`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `Sideboard` ( `D`, `E`, `F` ) VALUES ( 10, 11, 18 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `Sideboard` ( `D`, `E`, `F` ) VALUES ( 12, 13, 16 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `Sideboard` ( `D`, `E`, `F` ) VALUES ( 14, 15, 17 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT `A`, `B` FROM `Mesa` ORDER BY `C`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    todo_wine
+    {
+        ok(val == 3, "Expected 3, got %d\n", val);
+    }
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 4, "Expected 3, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    todo_wine
+    {
+        ok(val == 5, "Expected 5, got %d\n", val);
+    }
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 6, "Expected 6, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    todo_wine
+    {
+        ok(val == 1, "Expected 1, got %d\n", val);
+    }
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 2, "Expected 2, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+
+    query = "SELECT `A`, `D` FROM `Mesa`, `Sideboard` ORDER BY `F`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    ok(val == 1, "Expected 1, got %d\n", val);
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 12, "Expected 12, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    ok(val == 3, "Expected 3, got %d\n", val);
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 12, "Expected 12, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    ok(val == 5, "Expected 5, got %d\n", val);
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 12, "Expected 12, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    ok(val == 1, "Expected 1, got %d\n", val);
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 14, "Expected 14, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    ok(val == 3, "Expected 3, got %d\n", val);
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 14, "Expected 14, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    ok(val == 5, "Expected 5, got %d\n", val);
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 14, "Expected 14, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    ok(val == 1, "Expected 1, got %d\n", val);
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 10, "Expected 10, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    ok(val == 3, "Expected 3, got %d\n", val);
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 10, "Expected 10, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    val = MsiRecordGetInteger(hrec, 1);
+    ok(val == 5, "Expected 5, got %d\n", val);
+
+    val = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(val == 10, "Expected 10, got %d\n", val);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+
+    MsiCloseHandle(hview);
+    MsiCloseHandle(hdb);
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -4586,4 +4827,5 @@ START_TEST(db)
     test_stringtable();
     test_viewmodify_delete();
     test_defaultdatabase();
+    test_order();
 }
