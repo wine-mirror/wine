@@ -338,7 +338,7 @@
 @ stub IoCreateController
 @ stdcall IoCreateDevice(ptr long ptr long long long ptr)
 @ stub IoCreateDisk
-@ stub IoCreateDriver
+@ stdcall IoCreateDriver(ptr ptr)
 @ stub IoCreateFile
 @ stub IoCreateFileSpecifyDeviceObjectHint
 @ stub IoCreateNotificationEvent
@@ -354,7 +354,7 @@
 @ stub IoCsqRemoveNextIrp
 @ stub IoDeleteController
 @ stdcall IoDeleteDevice(ptr)
-@ stub IoDeleteDriver
+@ stdcall IoDeleteDriver(ptr)
 @ stub IoDeleteSymbolicLink
 @ stub IoDetachDevice
 @ stub IoDeviceHandlerObjectSize
