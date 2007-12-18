@@ -63,7 +63,7 @@
 @ stub MimeOleGenerateCID
 @ stub MimeOleGenerateFileName
 @ stub MimeOleGenerateMID
-@ stub MimeOleGetAllocator
+@ stdcall MimeOleGetAllocator(ptr)
 @ stub MimeOleGetBodyPropA
 @ stub MimeOleGetBodyPropW
 @ stub MimeOleGetCertsFromThumbprints

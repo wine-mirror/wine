@@ -137,11 +137,22 @@ static void test_CreateBody(void)
     IMimeBody_Release(body);
 }
 
+static void test_Allocator(void)
+{
+    HRESULT hr;
+    IMimeAllocator *alloc;
+
+    hr = MimeOleGetAllocator(&alloc);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    IMimeAllocator_Release(alloc);
+}
+
 START_TEST(mimeole)
 {
     OleInitialize(NULL);
     test_CreateVirtualStream();
     test_CreateSecurity();
     test_CreateBody();
+    test_Allocator();
     OleUninitialize();
 }

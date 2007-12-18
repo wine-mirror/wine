@@ -70,3 +70,4 @@ BOOL InternetTransport_RegisterClass(HINSTANCE hInstance);
 void InternetTransport_UnregisterClass(HINSTANCE hInstance);
 
 HRESULT MimeBody_create(IUnknown *outer, void **obj);
+HRESULT MimeAllocator_create(IUnknown *outer, void **obj);

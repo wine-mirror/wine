@@ -440,6 +440,12 @@ static struct regsvr_coclass const coclass_list[] = {
         "inetcomm.dll",
         "Both"
     },
+    {   &CLSID_IMimeAllocator,
+        "CLSID_IMimeAllocator",
+        NULL,
+        "inetcomm.dll",
+        "Both"
+    },
     {   &CLSID_IMimeMessage,
         "CLSID_IMimeMessage",
         NULL,

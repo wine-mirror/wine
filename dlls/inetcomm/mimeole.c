@@ -1824,3 +1824,208 @@ HRESULT WINAPI MimeOleCreateSecurity(IMimeSecurity **ppSecurity)
     *ppSecurity = (IMimeSecurity *)&This->lpVtbl;
     return S_OK;
 }
+
+
+typedef struct
+{
+    IMimeAllocatorVtbl *lpVtbl;
+} MimeAllocator;
+
+static HRESULT WINAPI MimeAlloc_QueryInterface(
+        IMimeAllocator* iface,
+        REFIID riid,
+        void **obj)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IMalloc) ||
+        IsEqualIID(riid, &IID_IMimeAllocator))
+    {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    FIXME("no interface for %s\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MimeAlloc_AddRef(
+        IMimeAllocator* iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI MimeAlloc_Release(
+        IMimeAllocator* iface)
+{
+    return 1;
+}
+
+static LPVOID WINAPI MimeAlloc_Alloc(
+        IMimeAllocator* iface,
+        ULONG cb)
+{
+    return CoTaskMemAlloc(cb);
+}
+
+static LPVOID WINAPI MimeAlloc_Realloc(
+        IMimeAllocator* iface,
+        LPVOID pv,
+        ULONG cb)
+{
+    return CoTaskMemRealloc(pv, cb);
+}
+
+static void WINAPI MimeAlloc_Free(
+        IMimeAllocator* iface,
+        LPVOID pv)
+{
+    return CoTaskMemFree(pv);
+}
+
+static ULONG WINAPI MimeAlloc_GetSize(
+        IMimeAllocator* iface,
+        LPVOID pv)
+{
+    FIXME("stub\n");
+    return 0;
+}
+
+static int WINAPI MimeAlloc_DidAlloc(
+        IMimeAllocator* iface,
+        LPVOID pv)
+{
+    FIXME("stub\n");
+    return 0;
+}
+
+static void WINAPI MimeAlloc_HeapMinimize(
+        IMimeAllocator* iface)
+{
+    FIXME("stub\n");
+    return;
+}
+
+static HRESULT WINAPI MimeAlloc_FreeParamInfoArray(
+        IMimeAllocator* iface,
+        ULONG cParams,
+        LPMIMEPARAMINFO prgParam,
+        boolean fFreeArray)
+{
+    ULONG i;
+    TRACE("(%p)->(%d, %p, %d)\n", iface, cParams, prgParam, fFreeArray);
+
+    for(i = 0; i < cParams; i++)
+    {
+        IMimeAllocator_Free(iface, prgParam[i].pszName);
+        IMimeAllocator_Free(iface, prgParam[i].pszData);
+    }
+    if(fFreeArray) IMimeAllocator_Free(iface, prgParam);
+    return S_OK;
+}
+
+static HRESULT WINAPI MimeAlloc_FreeAddressList(
+        IMimeAllocator* iface,
+        LPADDRESSLIST pList)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeAlloc_FreeAddressProps(
+        IMimeAllocator* iface,
+        LPADDRESSPROPS pAddress)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeAlloc_ReleaseObjects(
+        IMimeAllocator* iface,
+        ULONG cObjects,
+        IUnknown **prgpUnknown,
+        boolean fFreeArray)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+
+static HRESULT WINAPI MimeAlloc_FreeEnumHeaderRowArray(
+        IMimeAllocator* iface,
+        ULONG cRows,
+        LPENUMHEADERROW prgRow,
+        boolean fFreeArray)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeAlloc_FreeEnumPropertyArray(
+        IMimeAllocator* iface,
+        ULONG cProps,
+        LPENUMPROPERTY prgProp,
+        boolean fFreeArray)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeAlloc_FreeThumbprint(
+        IMimeAllocator* iface,
+        THUMBBLOB *pthumbprint)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+
+static HRESULT WINAPI MimeAlloc_PropVariantClear(
+        IMimeAllocator* iface,
+        LPPROPVARIANT pProp)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static IMimeAllocatorVtbl mime_alloc_vtbl =
+{
+    MimeAlloc_QueryInterface,
+    MimeAlloc_AddRef,
+    MimeAlloc_Release,
+    MimeAlloc_Alloc,
+    MimeAlloc_Realloc,
+    MimeAlloc_Free,
+    MimeAlloc_GetSize,
+    MimeAlloc_DidAlloc,
+    MimeAlloc_HeapMinimize,
+    MimeAlloc_FreeParamInfoArray,
+    MimeAlloc_FreeAddressList,
+    MimeAlloc_FreeAddressProps,
+    MimeAlloc_ReleaseObjects,
+    MimeAlloc_FreeEnumHeaderRowArray,
+    MimeAlloc_FreeEnumPropertyArray,
+    MimeAlloc_FreeThumbprint,
+    MimeAlloc_PropVariantClear
+};
+
+static MimeAllocator mime_allocator =
+{
+    &mime_alloc_vtbl
+};
+
+HRESULT MimeAllocator_create(IUnknown *outer, void **obj)
+{
+    if(outer) return CLASS_E_NOAGGREGATION;
+
+    *obj = &mime_allocator;
+    return S_OK;
+}
+
+HRESULT WINAPI MimeOleGetAllocator(IMimeAllocator **alloc)
+{
+    return MimeAllocator_create(NULL, (void**)alloc);
+}

@@ -131,8 +131,8 @@ static const struct IClassFactoryVtbl cf_vtbl =
     cf_LockServer
 };
 
-static cf mime_body_cf = { &cf_vtbl, MimeBody_create };
-
+static cf mime_body_cf      = { &cf_vtbl, MimeBody_create };
+static cf mime_allocator_cf = { &cf_vtbl, MimeAllocator_create };
 
 /***********************************************************************
  *              DllGetClassObject (INETCOMM.@)
@@ -146,6 +146,10 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     if( IsEqualCLSID( rclsid, &CLSID_IMimeBody ))
     {
         cf = (IClassFactory*) &mime_body_cf.lpVtbl;
+    }
+    else if( IsEqualCLSID( rclsid, &CLSID_IMimeAllocator ))
+    {
+        cf = (IClassFactory*) &mime_allocator_cf.lpVtbl;
     }
 
     if ( !cf )
