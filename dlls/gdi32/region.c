@@ -1683,7 +1683,7 @@ static void REGION_RegionOp(
 	    top = max(r1->top,ybot);
 	    bot = min(r1->bottom,r2->top);
 
-	    if ((top != bot) && (nonOverlap1Func != (void (*)())NULL))
+            if ((top != bot) && (nonOverlap1Func != NULL))
 	    {
 		(* nonOverlap1Func) (newReg, r1, r1BandEnd, top, bot);
 	    }
@@ -1695,7 +1695,7 @@ static void REGION_RegionOp(
 	    top = max(r2->top,ybot);
 	    bot = min(r2->bottom,r1->top);
 
-	    if ((top != bot) && (nonOverlap2Func != (void (*)())NULL))
+            if ((top != bot) && (nonOverlap2Func != NULL))
 	    {
 		(* nonOverlap2Func) (newReg, r2, r2BandEnd, top, bot);
 	    }
@@ -1755,7 +1755,7 @@ static void REGION_RegionOp(
     curBand = newReg->numRects;
     if (r1 != r1End)
     {
-	if (nonOverlap1Func != (void (*)())NULL)
+        if (nonOverlap1Func != NULL)
 	{
 	    do
 	    {
@@ -1770,7 +1770,7 @@ static void REGION_RegionOp(
 	    } while (r1 != r1End);
 	}
     }
-    else if ((r2 != r2End) && (nonOverlap2Func != (void (*)())NULL))
+    else if ((r2 != r2End) && (nonOverlap2Func != NULL))
     {
 	do
 	{
