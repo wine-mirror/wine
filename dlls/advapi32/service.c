@@ -97,6 +97,7 @@ static CRITICAL_SECTION service_cs = { &service_cs_debug, -1, 0, 0, 0, 0 };
 
 static service_data **services;
 static unsigned int nb_services;
+static HANDLE service_event;
 
 extern HANDLE __wine_make_process_system(void);
 
@@ -456,6 +457,7 @@ static BOOL service_handle_start(HANDLE pipe, service_data *service, DWORD count
     args = NULL;
     service->thread = CreateThread( NULL, 0, service_thread,
                                     service, 0, NULL );
+    SetEvent( service_event );  /* notify the main loop */
 
 end:
     HeapFree(GetProcessHeap(), 0, args);
@@ -636,24 +638,6 @@ static BOOL service_handle_control(HANDLE pipe, service_data *service,
 }
 
 /******************************************************************************
- * service_reap_thread
- */
-static DWORD service_reap_thread(service_data *service)
-{
-    DWORD exitcode = 0;
-
-    if (!service->thread)
-        return 0;
-    GetExitCodeThread(service->thread, &exitcode);
-    if (exitcode!=STILL_ACTIVE)
-    {
-        CloseHandle(service->thread);
-        service->thread = 0;
-    }
-    return exitcode;
-}
-
-/******************************************************************************
  * service_control_dispatcher
  */
 static DWORD WINAPI service_control_dispatcher(LPVOID arg)
@@ -702,8 +686,6 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
             break;
         }
 
-        service_reap_thread(service);
-
         /* handle the request */
         switch (req[0])
         {
@@ -733,53 +715,57 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
  */
 static BOOL service_run_threads(void)
 {
-    DWORD i, n = 0;
-    HANDLE *handles;
+    DWORD i, n, ret;
+    HANDLE wait_handles[MAXIMUM_WAIT_OBJECTS];
+    UINT wait_services[MAXIMUM_WAIT_OBJECTS];
 
-    if (nb_services >= MAXIMUM_WAIT_OBJECTS) FIXME( "too many services %u\n", nb_services );
+    service_event = CreateEventW( NULL, FALSE, FALSE, NULL );
 
-    EnterCriticalSection( &service_cs );
+    wait_handles[0] = __wine_make_process_system();
+    wait_handles[1] = service_event;
 
     TRACE("Starting %d pipe listener threads. Services running as process %d\n",
           nb_services, GetCurrentProcessId());
 
-    handles = HeapAlloc(GetProcessHeap(), 0, sizeof(HANDLE) * (nb_services + 1));
-
-    handles[n++] = __wine_make_process_system();
-
+    EnterCriticalSection( &service_cs );
     for (i = 0; i < nb_services; i++)
     {
         services[i]->status.dwProcessId = GetCurrentProcessId();
-        handles[n++] = CreateThread( NULL, 0, service_control_dispatcher,
-                                     services[i], 0, NULL );
+        CloseHandle( CreateThread( NULL, 0, service_control_dispatcher, services[i], 0, NULL ));
     }
-    assert(n == nb_services + 1);
-
     LeaveCriticalSection( &service_cs );
 
     /* wait for all the threads to pack up and exit */
-    while (n > 1)
+    for (;;)
     {
-        DWORD ret = WaitForMultipleObjects( min(n,MAXIMUM_WAIT_OBJECTS), handles, FALSE, INFINITE );
+        EnterCriticalSection( &service_cs );
+        for (i = 0, n = 2; i < nb_services && n < MAXIMUM_WAIT_OBJECTS; i++)
+        {
+            if (!services[i]->thread) continue;
+            wait_services[n] = i;
+            wait_handles[n++] = services[i]->thread;
+        }
+        LeaveCriticalSection( &service_cs );
+
+        ret = WaitForMultipleObjects( n, wait_handles, FALSE, INFINITE );
         if (!ret)  /* system process event */
         {
             TRACE( "last user process exited, shutting down\n" );
             /* FIXME: we should maybe send a shutdown control to running services */
             ExitProcess(0);
         }
-        if (ret < MAXIMUM_WAIT_OBJECTS)
+        else if (ret == 1)
         {
-            CloseHandle( handles[ret] );
-            memmove( &handles[ret], &handles[ret+1], (n - ret - 1) * sizeof(HANDLE) );
-            n--;
+            continue;  /* rebuild the list */
         }
-        else break;
+        else if (ret < n)
+        {
+            services[wait_services[ret]]->thread = 0;
+            CloseHandle( wait_handles[ret] );
+            if (n == 3) return TRUE; /* it was the last running thread */
+        }
+        else return FALSE;
     }
-
-    while (n) CloseHandle( handles[--n] );
-    HeapFree(GetProcessHeap(), 0, handles);
-
-    return TRUE;
 }
 
 /******************************************************************************
