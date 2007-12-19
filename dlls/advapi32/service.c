@@ -1620,7 +1620,7 @@ static BOOL service_wait_for_startup(SC_HANDLE hService)
 
     TRACE("%p\n", hService);
 
-    for (i=0; i<30; i++)
+    for (i=0; i<20; i++)
     {
         status.dwCurrentState = 0;
         r = QueryServiceStatus(hService, &status);
@@ -1632,7 +1632,7 @@ static BOOL service_wait_for_startup(SC_HANDLE hService)
             break;
         }
         r = FALSE;
-        Sleep(1000);
+        Sleep(100 * i);
     }
     return r;
 }
