@@ -2595,11 +2595,6 @@ static inline int is_size_needed_for_phase(enum remoting_phase phase)
     return (phase != PHASE_UNMARSHAL);
 }
 
-static int needs_freeing(const type_t *t)
-{
-    return !is_base_type(t->type) && (t->type != RPC_FC_RP || !is_base_type(t->ref->type));
-}
-
 expr_t *get_size_is_expr(const type_t *t, const char *name)
 {
     expr_t *x = NULL;
@@ -2636,12 +2631,7 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
     if (!in_attr && !out_attr)
         in_attr = 1;
 
-    if (phase == PHASE_FREE)
-    {
-        if (!needs_freeing(type))
-            return;
-    }
-    else
+    if (phase != PHASE_FREE)
         switch (pass)
         {
         case PASS_IN:
@@ -2786,7 +2776,8 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
     }
     else if (!is_ptr(var->type) && is_base_type(rtype))
     {
-        print_phase_basetype(file, indent, phase, pass, var, var->name);
+        if (phase != PHASE_FREE)
+            print_phase_basetype(file, indent, phase, pass, var, var->name);
     }
     else if (!is_ptr(var->type))
     {
@@ -2836,7 +2827,8 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
     {
         if (last_ptr(var->type) && (pointer_type == RPC_FC_RP) && is_base_type(rtype))
         {
-            print_phase_basetype(file, indent, phase, pass, var, var->name);
+            if (phase != PHASE_FREE)
+                print_phase_basetype(file, indent, phase, pass, var, var->name);
         }
         else if (last_ptr(var->type) && (pointer_type == RPC_FC_RP) && (rtype == RPC_FC_STRUCT))
         {
