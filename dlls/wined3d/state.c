@@ -3232,7 +3232,9 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
             checkGLcall("glBindBufferARB");
             curVBO = sd->u.s.diffuse.VBO;
         }
-        glColorPointer(4, GL_UNSIGNED_BYTE,
+
+        glColorPointer(WINED3D_ATR_SIZE(sd->u.s.diffuse.dwType),
+                       WINED3D_ATR_GLTYPE(sd->u.s.diffuse.dwType),
                        sd->u.s.diffuse.dwStride,
                        sd->u.s.diffuse.lpData + stateblock->loadBaseVertexIndex * sd->u.s.diffuse.dwStride + offset[sd->u.s.diffuse.streamNo]);
         checkGLcall("glColorPointer(4, GL_UNSIGNED_BYTE, ...)");
@@ -3257,7 +3259,8 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
                 checkGLcall("glBindBufferARB");
                 curVBO = sd->u.s.specular.VBO;
             }
-            GL_EXTCALL(glSecondaryColorPointerEXT)(4, GL_UNSIGNED_BYTE,
+            GL_EXTCALL(glSecondaryColorPointerEXT)(WINED3D_ATR_SIZE(sd->u.s.specular.dwType),
+                                                   WINED3D_ATR_GLTYPE(sd->u.s.specular.dwType),
                                                    sd->u.s.specular.dwStride,
                                                    sd->u.s.specular.lpData + stateblock->loadBaseVertexIndex * sd->u.s.specular.dwStride + offset[sd->u.s.specular.streamNo]);
             vcheckGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, ...)");

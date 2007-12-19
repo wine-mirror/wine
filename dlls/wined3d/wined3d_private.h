@@ -410,6 +410,13 @@ void primitiveDeclarationConvertToStridedData(
 
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 
+typedef void (*glAttribFunc)(void *data);
+typedef void (*glTexAttribFunc)(GLuint unit, void *data);
+extern glAttribFunc position_funcs[WINED3DDECLTYPE_UNUSED];
+extern glAttribFunc diffuse_funcs[WINED3DDECLTYPE_UNUSED];
+extern glAttribFunc specular_funcs[WINED3DDECLTYPE_UNUSED];
+extern glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
+
 #define eps 1e-8
 
 #define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \

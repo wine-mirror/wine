@@ -302,8 +302,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
     LONG                       vx_index;
-    float x  = 0.0f, y  = 0.0f, z = 0.0f;  /* x,y,z coordinates          */
-    float rhw = 0.0f;                      /* rhw                        */
     DWORD diffuseColor = 0xFFFFFFFF;       /* Diffuse Color              */
     DWORD specularColor = 0;               /* Specular Color             */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -351,6 +349,32 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     }
     if(sd->u.s.position.lpData) {
         position = sd->u.s.position.lpData + streamOffset[sd->u.s.position.streamNo];
+    }
+
+    /* The texture coordinate types are not so easy to map into a common function signature - we're
+     * not using the vector functions here
+     */
+    if(FIXME_ON(d3d_draw)) {
+        for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
+            DWORD type = sd->u.s.texCoords[textureNo].dwType;
+            if (sd->u.s.texCoords[textureNo].lpData &&
+                type != WINED3DDECLTYPE_FLOAT1 &&
+                type != WINED3DDECLTYPE_FLOAT2 &&
+                type != WINED3DDECLTYPE_FLOAT3 &&
+                type != WINED3DDECLTYPE_FLOAT4) {
+                FIXME("Implement fixed function texture coordinates from %s\n", debug_d3ddecltype(type));
+            }
+        }
+        if(specular && This->stateBlock->renderState[WINED3DRS_FOGENABLE] &&
+           (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || sd->u.s.position_transformed )&&
+           This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
+            if(GL_SUPPORT(EXT_FOG_COORD) && sd->u.s.specular.dwType != WINED3DDECLTYPE_D3DCOLOR) {
+                FIXME("Implement fog coordinates from %s\n", debug_d3ddecltype(sd->u.s.specular.dwType));
+            }
+        }
+        if(This->activeContext->num_untracked_materials && sd->u.s.diffuse.dwType != WINED3DDECLTYPE_D3DCOLOR) {
+            FIXME("Implement diffuse color tracking from %s\n", debug_d3ddecltype(sd->u.s.diffuse.dwType));
+        }
     }
 
     /* Start drawing in GL */
@@ -486,22 +510,13 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         /* Diffuse -------------------------------- */
         if (diffuse) {
             DWORD *ptrToCoords = (DWORD *)(diffuse + (SkipnStrides * sd->u.s.diffuse.dwStride));
-            diffuseColor = ptrToCoords[0];
-            VTRACE(("diffuseColor=%lx\n", diffuseColor));
 
-            glColor4ub(D3DCOLOR_B_R(diffuseColor),
-		     D3DCOLOR_B_G(diffuseColor),
-		     D3DCOLOR_B_B(diffuseColor),
-		     D3DCOLOR_B_A(diffuseColor));
-            VTRACE(("glColor4ub: r,g,b,a=%lu,%lu,%lu,%lu\n", 
-                    D3DCOLOR_B_R(diffuseColor),
-		    D3DCOLOR_B_G(diffuseColor),
-		    D3DCOLOR_B_B(diffuseColor),
-		    D3DCOLOR_B_A(diffuseColor)));
-
+            diffuse_funcs[sd->u.s.diffuse.dwType]((void *) ptrToCoords);
             if(This->activeContext->num_untracked_materials) {
                 unsigned char i;
                 float color[4];
+
+                diffuseColor = ptrToCoords[0];
                 color[0] = D3DCOLOR_B_R(diffuseColor) / 255.0;
                 color[1] = D3DCOLOR_B_G(diffuseColor) / 255.0;
                 color[2] = D3DCOLOR_B_B(diffuseColor) / 255.0;
@@ -516,14 +531,13 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         /* Specular ------------------------------- */
         if (specular) {
             DWORD *ptrToCoords = (DWORD *)(specular + (SkipnStrides * sd->u.s.specular.dwStride));
-            specularColor = ptrToCoords[0];
-            VTRACE(("specularColor=%lx\n", specularColor));
 
             /* special case where the fog density is stored in the specular alpha channel */
             if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] &&
               (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || sd->u.s.position.dwType == WINED3DDECLTYPE_FLOAT4 )&&
               This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
                 if(GL_SUPPORT(EXT_FOG_COORD)) {
+                    specularColor = ptrToCoords[0];
                     GL_EXTCALL(glFogCoordfEXT(specularColor >> 24));
                 } else {
                     static BOOL warned = FALSE;
@@ -535,52 +549,19 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                 }
             }
 
-            VTRACE(("glSecondaryColor4ub: r,g,b=%lu,%lu,%lu\n", 
-                    D3DCOLOR_B_R(specularColor), 
-                    D3DCOLOR_B_G(specularColor), 
-                    D3DCOLOR_B_B(specularColor)));
-            if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-                GL_EXTCALL(glSecondaryColor3ubEXT)(
-                           D3DCOLOR_B_R(specularColor),
-                           D3DCOLOR_B_G(specularColor),
-                           D3DCOLOR_B_B(specularColor));
-            } else {
-                /* Do not worry if specular colour missing and disable request */
-                VTRACE(("Specular color extensions not supplied\n"));
-            }
+            specular_funcs[sd->u.s.specular.dwType]((void *) ptrToCoords);
         }
 
         /* Normal -------------------------------- */
         if (normal != NULL) {
             float *ptrToCoords = (float *)(normal + (SkipnStrides * sd->u.s.normal.dwStride));
-
-            VTRACE(("glNormal:nx,ny,nz=%f,%f,%f\n", ptrToCoords[0], ptrToCoords[1], ptrToCoords[2]));
-            glNormal3f(ptrToCoords[0], ptrToCoords[1], ptrToCoords[2]);
+            normal_funcs[sd->u.s.normal.dwType](ptrToCoords);
         }
 
         /* Position -------------------------------- */
         if (position) {
             float *ptrToCoords = (float *)(position + (SkipnStrides * sd->u.s.position.dwStride));
-            x = ptrToCoords[0];
-            y = ptrToCoords[1];
-            z = ptrToCoords[2];
-            rhw = 1.0;
-            VTRACE(("x,y,z=%f,%f,%f\n", x,y,z));
-
-            /* RHW follows, only if transformed, ie 4 floats were provided */
-            if (sd->u.s.position_transformed) {
-                rhw = ptrToCoords[3];
-                VTRACE(("rhw=%f\n", rhw));
-            }
-
-            if (1.0f == rhw || ((rhw < eps) && (rhw > -eps))) {
-                VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z));
-                glVertex3f(x, y, z);
-            } else {
-                GLfloat w = 1.0 / rhw;
-                VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw));
-                glVertex4f(x*w, y*w, z*w, w);
-            }
+            position_funcs[sd->u.s.position.dwType](ptrToCoords);
         }
 
         /* For non indexed mode, step onto next parts */

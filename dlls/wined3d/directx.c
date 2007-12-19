@@ -143,6 +143,12 @@ DWORD *stateLookup[MAX_LOOKUPS];
 
 DWORD minMipLookup[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
 
+/* drawStridedSlow attributes */
+glAttribFunc position_funcs[WINED3DDECLTYPE_UNUSED];
+glAttribFunc diffuse_funcs[WINED3DDECLTYPE_UNUSED];
+glAttribFunc specular_funcs[WINED3DDECLTYPE_UNUSED];
+glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
+glTexAttribFunc texcoord_funcs[WINED3DDECLTYPE_UNUSED];
 
 /**
  * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
@@ -2879,8 +2885,139 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
     }
 }
 
-#define PUSH1(att)        attribs[nAttribs++] = (att);
+void invalid_func(void *data) {
+    ERR("Invalid vertex attribute function called\n");
+    DebugBreak();
+}
+
 #define GLINFO_LOCATION (Adapters[0].gl_info)
+
+/* Helper functions for providing vertex data to opengl. The arrays are initialized based on
+ * the extension detection and are used in drawStridedSlow
+ */
+static void position_d3dcolor(void *data) {
+    DWORD pos = *((DWORD *) data);
+
+    FIXME("Add a test for fixed function position from d3dcolor type\n");
+    glVertex4s(D3DCOLOR_B_R(pos),
+               D3DCOLOR_B_G(pos),
+               D3DCOLOR_B_B(pos),
+               D3DCOLOR_B_A(pos));
+}
+static void position_float4(void *data) {
+    GLfloat *pos = (float *) data;
+    float w = 1.0 / pos[3];
+
+    glVertex4f(pos[0] * w, pos[1] * w, pos[2] * w, w);
+}
+
+static void diffuse_d3dcolor(void *data) {
+    DWORD diffuseColor = *((DWORD *) data);
+
+    glColor4ub(D3DCOLOR_B_R(diffuseColor),
+               D3DCOLOR_B_G(diffuseColor),
+               D3DCOLOR_B_B(diffuseColor),
+               D3DCOLOR_B_A(diffuseColor));
+}
+
+static void specular_d3dcolor(void *data) {
+    DWORD specularColor = *((DWORD *) data);
+
+    GL_EXTCALL(glSecondaryColor3ubEXT)(D3DCOLOR_B_R(specularColor),
+                                       D3DCOLOR_B_G(specularColor),
+                                       D3DCOLOR_B_B(specularColor));
+}
+static void warn_no_specular_func(void *data) {
+    WARN("GL_EXT_secondary_color not supported\n");
+}
+
+void fillGLAttribFuncs(WineD3D_GL_Info *gl_info) {
+    position_funcs[WINED3DDECLTYPE_FLOAT1]      = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_FLOAT2]      = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_FLOAT3]      = (void *) glVertex3fv;
+    position_funcs[WINED3DDECLTYPE_FLOAT4]      = (void *) position_float4;
+    position_funcs[WINED3DDECLTYPE_D3DCOLOR]    = (void *) position_d3dcolor;
+    position_funcs[WINED3DDECLTYPE_UBYTE4]      = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_SHORT2]      = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_SHORT4]      = (void *) glVertex2sv;
+    position_funcs[WINED3DDECLTYPE_UBYTE4N]     = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_SHORT2N]     = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_SHORT4N]     = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_USHORT2N]    = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_USHORT4N]    = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_UDEC3]       = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_DEC3N]       = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_FLOAT16_2]   = (void *) invalid_func;
+    position_funcs[WINED3DDECLTYPE_FLOAT16_4]   = (void *) invalid_func;
+
+    diffuse_funcs[WINED3DDECLTYPE_FLOAT1]       = (void *) invalid_func;
+    diffuse_funcs[WINED3DDECLTYPE_FLOAT2]       = (void *) invalid_func;
+    diffuse_funcs[WINED3DDECLTYPE_FLOAT3]       = (void *) glColor3fv;
+    diffuse_funcs[WINED3DDECLTYPE_FLOAT4]       = (void *) glColor4fv;
+    diffuse_funcs[WINED3DDECLTYPE_D3DCOLOR]     = (void *) diffuse_d3dcolor;
+    diffuse_funcs[WINED3DDECLTYPE_UBYTE4]       = (void *) invalid_func;
+    diffuse_funcs[WINED3DDECLTYPE_SHORT2]       = (void *) invalid_func;
+    diffuse_funcs[WINED3DDECLTYPE_SHORT4]       = (void *) invalid_func;
+    diffuse_funcs[WINED3DDECLTYPE_UBYTE4N]      = (void *) glColor4ubv;
+    diffuse_funcs[WINED3DDECLTYPE_SHORT2N]      = (void *) invalid_func;
+    diffuse_funcs[WINED3DDECLTYPE_SHORT4N]      = (void *) glColor4sv;
+    diffuse_funcs[WINED3DDECLTYPE_USHORT2N]     = (void *) invalid_func;
+    diffuse_funcs[WINED3DDECLTYPE_USHORT4N]     = (void *) glColor4usv;
+    diffuse_funcs[WINED3DDECLTYPE_UDEC3]        = (void *) invalid_func;
+    diffuse_funcs[WINED3DDECLTYPE_DEC3N]        = (void *) invalid_func;
+    diffuse_funcs[WINED3DDECLTYPE_FLOAT16_2]    = (void *) invalid_func;
+    diffuse_funcs[WINED3DDECLTYPE_FLOAT16_4]    = (void *) invalid_func;
+
+    /* No 4 component entry points here */
+    specular_funcs[WINED3DDECLTYPE_FLOAT1]      = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_FLOAT2]      = (void *) invalid_func;
+    if(GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+        specular_funcs[WINED3DDECLTYPE_FLOAT3]      = (void *) GL_EXTCALL(glSecondaryColor3fvEXT);
+    } else {
+        specular_funcs[WINED3DDECLTYPE_FLOAT3]      = (void *) warn_no_specular_func;
+    }
+    specular_funcs[WINED3DDECLTYPE_FLOAT4]      = (void *) invalid_func;
+    if(GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+        specular_funcs[WINED3DDECLTYPE_D3DCOLOR]    = (void *) specular_d3dcolor;
+    } else {
+        specular_funcs[WINED3DDECLTYPE_FLOAT3]      = (void *) warn_no_specular_func;
+    }
+    specular_funcs[WINED3DDECLTYPE_UBYTE4]      = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_SHORT2]      = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_SHORT4]      = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_UBYTE4N]     = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_SHORT2N]     = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_SHORT4N]     = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_USHORT2N]    = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_USHORT4N]    = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_UDEC3]       = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_DEC3N]       = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_FLOAT16_2]   = (void *) invalid_func;
+    specular_funcs[WINED3DDECLTYPE_FLOAT16_4]   = (void *) invalid_func;
+
+    /* Only 3 component entry points here. Test how others behave. Float4 normals are used
+     * by one of our tests, trying to pass it to the pixel shader, which fails on Windows.
+     */
+    normal_funcs[WINED3DDECLTYPE_FLOAT1]         = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_FLOAT2]         = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_FLOAT3]         = (void *) glNormal3fv;
+    normal_funcs[WINED3DDECLTYPE_FLOAT4]         = (void *) glNormal3fv; /* Just ignore the 4th value */
+    normal_funcs[WINED3DDECLTYPE_D3DCOLOR]       = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_UBYTE4]         = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_SHORT2]         = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_SHORT4]         = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_UBYTE4N]        = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_SHORT2N]        = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_SHORT4N]        = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_USHORT2N]       = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_USHORT4N]       = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_UDEC3]          = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_DEC3N]          = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_FLOAT16_2]      = (void *) invalid_func;
+    normal_funcs[WINED3DDECLTYPE_FLOAT16_4]      = (void *) invalid_func;
+}
+
+#define PUSH1(att)        attribs[nAttribs++] = (att);
 BOOL InitAdapters(void) {
     static HMODULE mod_gl;
     BOOL ret;
@@ -3022,6 +3159,7 @@ BOOL InitAdapters(void) {
 
         select_shader_mode(&Adapters[0].gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &Adapters[0].gl_info);
+        fillGLAttribFuncs(&Adapters[0].gl_info);
 
     }
     numAdapters = 1;
