@@ -5677,6 +5677,148 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     if(dcl_color) IDirect3DVertexDeclaration9_Release(dcl_color);
 }
 
+struct vertex_float16color {
+    float x, y, z;
+    DWORD c1, c2;
+};
+
+static void test_vshader_float16(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    DWORD color;
+    void *data;
+    static const D3DVERTEXELEMENT9 decl_elements[] = {
+        {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
+        {0,  12,  D3DDECLTYPE_FLOAT16_4,D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
+        D3DDECL_END()
+    };
+    IDirect3DVertexDeclaration9 *vdecl = NULL;
+    IDirect3DVertexBuffer9 *buffer = NULL;
+    IDirect3DVertexShader9 *shader;
+    DWORD shader_code[] = {
+        0xfffe0101, 0x0000001f, 0x80000000, 0x900f0000, 0x0000001f, 0x8000000a,
+        0x900f0001, 0x00000001, 0xc00f0000, 0x90e40000, 0x00000001, 0xd00f0000,
+        0x90e40001, 0x0000ffff
+    };
+    struct vertex_float16color quad[] = {
+        { -1.0,   -1.0,     0.1,        0x3c000000, 0x00000000 }, /* green */
+        { -1.0,    0.0,     0.1,        0x3c000000, 0x00000000 },
+        {  0.0,   -1.0,     0.1,        0x3c000000, 0x00000000 },
+        {  0.0,    0.0,     0.1,        0x3c000000, 0x00000000 },
+
+        {  0.0,   -1.0,     0.1,        0x00003c00, 0x00000000 }, /* red */
+        {  0.0,    0.0,     0.1,        0x00003c00, 0x00000000 },
+        {  1.0,   -1.0,     0.1,        0x00003c00, 0x00000000 },
+        {  1.0,    0.0,     0.1,        0x00003c00, 0x00000000 },
+
+        {  0.0,    0.0,     0.1,        0x00000000, 0x00003c00 }, /* blue */
+        {  0.0,    1.0,     0.1,        0x00000000, 0x00003c00 },
+        {  1.0,    0.0,     0.1,        0x00000000, 0x00003c00 },
+        {  1.0,    1.0,     0.1,        0x00000000, 0x00003c00 },
+
+        { -1.0,    0.0,     0.1,        0x00000000, 0x3c000000 }, /* alpha */
+        { -1.0,    1.0,     0.1,        0x00000000, 0x3c000000 },
+        {  0.0,    0.0,     0.1,        0x00000000, 0x3c000000 },
+        {  0.0,    1.0,     0.1,        0x00000000, 0x3c000000 },
+    };
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff102030, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vdecl);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexDeclaration failed hr=%s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexShader failed hr=%s\n", DXGetErrorString9(hr));
+    IDirect3DDevice9_SetVertexShader(device, shader);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetVertexShader failed hr=%s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed hr=%s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, vdecl);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed, hr=%s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad +  0, sizeof(quad[0]));
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad +  4, sizeof(quad[0]));
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad +  8, sizeof(quad[0]));
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad + 12, sizeof(quad[0]));
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed, hr=%s\n", DXGetErrorString9(hr));
+    }
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    color = getPixelColor(device, 480, 360);
+    ok(color == 0x00ff0000,
+       "Input 0x00003c00, 0x00000000 returned color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color == 0x00000000,
+       "Input 0x00000000, 0x3c000000 returned color %08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x0000ff00,
+       "Input 0x3c000000, 0x00000000 returned color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color == 0x000000ff,
+       "Input 0x00000000, 0x00003c00 returned color %08x, expected 0x000000ff\n", color);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff102030, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad), 0, 0,
+                                             D3DPOOL_MANAGED, &buffer, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexBuffer failed, hr=%s\n", DXGetErrorString9(hr));
+    hr = IDirect3DVertexBuffer9_Lock(buffer, 0, sizeof(quad), (void **) &data, 0);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed, hr=%s\n", DXGetErrorString9(hr));
+    memcpy(data, quad, sizeof(quad));
+    hr = IDirect3DVertexBuffer9_Unlock(buffer);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed, hr=%s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, buffer, 0, sizeof(quad[0]));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed, hr=%s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed (%08x)\n", hr);
+    if(SUCCEEDED(hr)) {
+            hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,  0, 2);
+            ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitive failed, hr = %#08x\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,  4, 2);
+            ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitive failed, hr = %#08x\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,  8, 2);
+            ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitive failed, hr = %#08x\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 12, 2);
+            ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitive failed, hr = %#08x\n", hr);
+
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed, hr=%s\n", DXGetErrorString9(hr));
+    }
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    color = getPixelColor(device, 480, 360);
+    ok(color == 0x00ff0000,
+       "Input 0x00003c00, 0x00000000 returned color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color == 0x00000000,
+       "Input 0x00000000, 0x3c000000 returned color %08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x0000ff00,
+       "Input 0x3c000000, 0x00000000 returned color %08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color == 0x000000ff,
+       "Input 0x00000000, 0x00003c00 returned color %08x, expected 0x000000ff\n", color);
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed, hr=%s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed, hr=%s\n", DXGetErrorString9(hr));
+    IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetVertexShader failed hr=%s\n", DXGetErrorString9(hr));
+
+    IDirect3DVertexDeclaration9_Release(vdecl);
+    IDirect3DVertexShader9_Release(shader);
+    IDirect3DVertexBuffer9_Release(buffer);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -5771,6 +5913,7 @@ START_TEST(visual)
         test_mova(device_ptr);
         if (caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
             test_vshader_input(device_ptr);
+            test_vshader_float16(device_ptr);
         } else {
             skip("No vs_3_0 support\n");
         }

@@ -733,6 +733,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedDa
 
             send_attribute(This, sd->u.input[i].dwType, i, ptr);
         }
+        SkipnStrides++;
     }
 
     glEnd();
