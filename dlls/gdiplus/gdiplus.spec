@@ -93,7 +93,7 @@
 @ stdcall GdipCreateFromHDC(long ptr)
 @ stdcall GdipCreateFromHWND(long ptr)
 @ stub GdipCreateFromHWNDICM
-@ stub GdipCreateHBITMAPFromBitmap
+@ stdcall GdipCreateHBITMAPFromBitmap(ptr ptr long)
 @ stub GdipCreateHICONFromBitmap
 @ stub GdipCreateHalftonePalette
 @ stub GdipCreateHatchBrush

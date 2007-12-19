@@ -253,6 +253,16 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromFile(GDIPCONST WCHAR* filename,
     return stat;
 }
 
+GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
+    HBITMAP* hbmReturn, ARGB background)
+{
+    FIXME("stub\n");
+
+    hbmReturn = NULL;
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipConvertToEmfPlus(const GpGraphics* ref,
     GpMetafile* metafile, BOOL* succ, EmfType emfType,
     const WCHAR* description, GpMetafile** out_metafile)
