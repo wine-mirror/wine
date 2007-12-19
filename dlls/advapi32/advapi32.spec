@@ -527,10 +527,10 @@
 @ stdcall RegisterEventSourceA(ptr ptr)
 @ stdcall RegisterEventSourceW(ptr ptr)
 # @ stub RegisterIdleTask
-@ stdcall RegisterServiceCtrlHandlerA (ptr ptr)
+@ stdcall RegisterServiceCtrlHandlerA(str ptr)
 @ stdcall RegisterServiceCtrlHandlerExA(str ptr ptr)
 @ stdcall RegisterServiceCtrlHandlerExW(wstr ptr ptr)
-@ stdcall RegisterServiceCtrlHandlerW (ptr ptr)
+@ stdcall RegisterServiceCtrlHandlerW(wstr ptr)
 @ stdcall RegisterTraceGuidsA(ptr ptr ptr long ptr str str ptr)
 @ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr)
 # @ stub RemoveTraceCallback
