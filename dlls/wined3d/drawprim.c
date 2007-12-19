@@ -201,10 +201,6 @@ void primitiveDeclarationConvertToStridedData(
                 if((UINT_PTR)data < -This->stateBlock->loadBaseVertexIndex * stride) {
                     FIXME("System memory vertex data load offset is negative!\n");
                 }
-            } else if(vertexDeclaration->half_float_conv_needed) {
-                WARN("Half float vertex data used, but GL_NV_half_float is not supported. Not using vbos\n");
-                streamVBO = 0;
-                data = ((IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[element->Stream])->resource.allocatedMemory;
             }
 
             if(fixup) {
@@ -572,24 +568,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
     glEnd();
     checkGLcall("glEnd and previous calls");
-}
-
-/* See GL_NV_half_float for reference */
-static inline float float_16_to_32(const unsigned short *in) {
-    const unsigned short s = ((*in) & 0x8000);
-    const unsigned short e = ((*in) & 0x7C00) >> 10;
-    const unsigned short m = (*in) & 0x3FF;
-    const float sgn = (s ? -1.0 : 1.0);
-
-    if(e == 0) {
-        if(m == 0) return sgn * 0.0; /* +0.0 or -0.0 */
-        else return sgn * pow(2, -14.0) * ( (float) m / 1024.0);
-    } else if(e < 31) {
-        return sgn * pow(2, (float) e-15.0) * (1.0 + ((float) m / 1024.0));
-    } else {
-        if(m == 0) return sgn / 0.0; /* +INF / -INF */
-        else return 0.0 / 0.0; /* NAN */
-    }
 }
 
 static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, const UINT index, const void *ptr) {
@@ -1103,19 +1081,21 @@ void drawPrimitive(IWineD3DDevice *iface,
 
         if (This->useDrawStridedSlow || emulation) {
             /* Immediate mode drawing */
-            drawStridedSlow(iface, strided, calculatedNumberOfindices,
-                            glPrimType, idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+            if(use_vs(This)) {
+                FIXME("Using immediate mode with vertex shaders for half float emulation\n");
+                drawStridedSlowVs(iface, strided, calculatedNumberOfindices, glPrimType,
+                                  idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+            } else {
+                drawStridedSlow(iface, strided, calculatedNumberOfindices,
+                                glPrimType, idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+            }
         } else if(This->instancedDraw) {
             /* Instancing emulation with mixing immediate mode and arrays */
             drawStridedInstanced(iface, &This->strided_streams, calculatedNumberOfindices, glPrimType,
                             idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
-        } else if(!((IWineD3DVertexDeclarationImpl *) This->stateBlock->vertexDecl)->half_float_conv_needed) {
+        } else {
             drawStridedFast(iface, calculatedNumberOfindices, glPrimType,
                             idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
-        } else {
-            FIXME("Using immediate mode with vertex shaders for half float emulation\n");
-            drawStridedSlowVs(iface, strided, calculatedNumberOfindices, glPrimType,
-                              idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
         }
     }
 

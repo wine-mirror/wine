@@ -277,6 +277,8 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
         WARN("glBufferDataARB failed with error %s (%#x)\n", debug_glerror(error), error);
         goto error;
     }
+    object->vbo_size = object->resource.size;
+    object->vbo_usage = glUsage;
 
     LEAVE_GL();
 

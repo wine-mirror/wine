@@ -142,12 +142,53 @@ static inline void fixup_transformed_pos(float *p) {
     p[3] = w;
 }
 
+DWORD *find_conversion_shift(IWineD3DVertexBufferImpl *This, WineDirect3DVertexStridedData *strided, DWORD stride) {
+    DWORD *ret, i, shift, j, type;
+    DWORD orig_type_size;
+
+    if(!stride) {
+        TRACE("No shift\n");
+        return NULL;
+    }
+
+    This->conv_stride = stride;
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DWORD) * stride);
+    for(i = 0; i < MAX_ATTRIBS; i++) {
+        type = strided->u.input[i].dwType;
+        if(type == WINED3DDECLTYPE_FLOAT16_2) {
+            shift = 4;
+        } else if(type == WINED3DDECLTYPE_FLOAT16_4) {
+            shift = 8;
+        } else {
+            shift = 0;
+        }
+        This->conv_stride += shift;
+
+        if(shift) {
+            orig_type_size = WINED3D_ATR_TYPESIZE(type) * WINED3D_ATR_SIZE(type);
+            for(j = (DWORD_PTR) strided->u.input[i].lpData + orig_type_size; j < stride; j++) {
+                ret[j] += shift;
+            }
+        }
+    }
+
+    if(TRACE_ON(d3d)) {
+        TRACE("Dumping conversion shift:\n");
+        for(i = 0; i < stride; i++) {
+            TRACE("[%d]", ret[i]);
+        }
+        TRACE("\n");
+    }
+    return ret;
+}
+
 inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *This)
 {
     WineDirect3DVertexStridedData strided;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BOOL ret = FALSE;
-    DWORD type_old, type_new;
+    DWORD type_old, type_new, stride;
+    int i;
 
     /* In d3d7 the vertex buffer declaration NEVER changes because it is stored in the d3d7 vertex buffer.
      * Once we have our declaration there is no need to look it up again.
@@ -180,8 +221,6 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
      */
 
     if (use_vs(device)) {
-        /* Assume no conversion. TODO: Deal with FLOAT16 conversion*/
-        memset(&strided, 0, sizeof(strided));
         if(!This->last_was_vshader && This->last_was_converted) {
             /* Reload if we're switching from converted fixed function to vertex shaders.
              * This isn't strictly needed, e.g. a FLOAT16 attribute could stay at the same
@@ -192,7 +231,69 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
             ret = TRUE;
         }
         This->last_was_vshader = TRUE;
+
+        /* The vertex declaration is so nice to carry a flag for this. It takes the gl info into account,
+         * but check that separately to avoid the memcmp over the structure
+         */
+        if(GL_SUPPORT(NV_HALF_FLOAT)) {
+            memset(&strided, 0, sizeof(strided));
+            ret = FALSE;
+        } else if(((IWineD3DVertexDeclarationImpl *)device->stateBlock->vertexDecl)->half_float_conv_needed) {
+            memcpy(&strided, &device->strided_streams, sizeof(strided));
+
+            stride = 0;
+            for(i = 0; i < MAX_ATTRIBS; i++) {
+                if(strided.u.input[i].VBO != This->vbo) {
+                    /* Ignore attributes from a different vbo */
+                    memset(&strided.u.input[i], 0, sizeof(strided.u.input[i]));
+                    continue;
+                };
+
+                type_old = This->strided.u.input[i].dwType;
+                type_new = strided.u.input[i].dwType;
+                if(type_old != type_new) {
+                    if(type_old == WINED3DDECLTYPE_FLOAT16_2 || type_new == WINED3DDECLTYPE_FLOAT16_2 ||
+                       type_old == WINED3DDECLTYPE_FLOAT16_4 || type_new == WINED3DDECLTYPE_FLOAT16_4) {
+                        TRACE("Reloading because attribute %i was %s before and is %s now\n", i,
+                              debug_d3ddecltype(type_old), debug_d3ddecltype(type_new));
+                        stride = strided.u.input[i].dwStride;
+                        ret = TRUE;
+                    }
+                } else if(type_new == WINED3DDECLTYPE_FLOAT16_2 || type_new == WINED3DDECLTYPE_FLOAT16_4) {
+                    if(This->strided.u.input[i].lpData != strided.u.input[i].lpData) {
+                        TRACE("Reconverting buffer because attribute %d has type %s and moved from offset %p to %p\n",
+                              i, debug_d3ddecltype(type_new), This->strided.u.s.position.lpData, strided.u.s.position.lpData);
+                        memcpy(&This->strided, &strided, sizeof(strided));
+                        ret = TRUE;
+                        stride = strided.u.input[i].dwStride;
+                    }
+                }
+
+                if(!(type_new == WINED3DDECLTYPE_FLOAT16_2 || type_new == WINED3DDECLTYPE_FLOAT16_4)) {
+                    /* Nuke unconverted attributes */
+                    memset(&strided.u.input[i], 0, sizeof(strided.u.input[i]));
+                }
+            }
+            if(ret) {
+                memcpy(&This->strided, &strided, sizeof(strided));
+                HeapFree(GetProcessHeap(), 0, This->conv_shift);
+                This->conv_shift = find_conversion_shift(This, &This->strided, stride);
+            }
+        } else {
+            /* No conversion*/
+            memset(&strided, 0, sizeof(strided));
+            ret = (memcmp(&strided, &This->strided, sizeof(strided)) != 0);
+            if(ret) {
+                HeapFree(GetProcessHeap(), 0, This->conv_shift);
+                This->conv_shift = NULL;
+            }
+        }
     } else {
+        /* This will need modifications of the loading code as well - not handled right now */
+        if(((IWineD3DVertexDeclarationImpl *)device->stateBlock->vertexDecl)->half_float_conv_needed) {
+            FIXME("Implement half float fixup with fixed function vertex processing\n");
+        }
+
         /* we need a copy because we modify some params */
         memcpy(&strided, &device->strided_streams, sizeof(strided));
 
@@ -337,9 +438,9 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BYTE *data;
-    UINT start = 0, end = 0, stride = 0;
+    UINT start = 0, end = 0, stride = 0, vertices;
     BOOL declChanged = FALSE;
-    int i;
+    int i, j;
     TRACE("(%p)->()\n", This);
 
     if(This->Flags & VBFLAG_LOAD) {
@@ -391,6 +492,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
             checkGLcall("glDeleteBuffersARB");
             LEAVE_GL();
             This->vbo = 0;
+            HeapFree(GetProcessHeap(), 0, This->conv_shift);
 
             /* The stream source state handler might have read the memory of the vertex buffer already
              * and got the memory in the vbo which is not valid any longer. Dirtify the stream source
@@ -451,16 +553,80 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     /* OK, we have the original data from the app, the description of the buffer and the dirty area.
      * so convert the stuff
      */
-    data = HeapAlloc(GetProcessHeap(), 0, end-start);
-    if(!data) {
-        ERR("Out of memory\n");
-        return;
-    }
-    memcpy(data, This->resource.allocatedMemory + start, end - start);
-
     if(This->last_was_vshader) {
-        /* TODO: Implement conversion for FLOAT16_2 and FLOAT16_4 */
+        TRACE("vertex-shadered conversion\n");
+        /* TODO: Improve that */
+        for(i = 0; i < MAX_ATTRIBS; i++) {
+            if(This->strided.u.input[i].dwStride) {
+                stride = This->strided.u.input[i].dwStride;
+            }
+        }
+        TRACE("Found input stride %d, output stride %d\n", stride, This->conv_stride);
+        /* For now reconvert the entire buffer */
+        start = 0;
+        end = This->resource.size;
+
+        vertices = This->resource.size / stride;
+        TRACE("%d vertices in buffer\n", vertices);
+        if(This->vbo_size != vertices * This->conv_stride) {
+            TRACE("Old size %d, creating new size %d\n", This->vbo_size, vertices * This->conv_stride);
+            ENTER_GL();
+            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+            checkGLcall("glBindBufferARB");
+            GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices * This->conv_stride, NULL, This->vbo_usage));
+            This->vbo_size = vertices * This->conv_stride;
+            checkGLcall("glBufferDataARB");
+            LEAVE_GL();
+        }
+        data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, vertices * This->conv_stride);
+        if(!data) {
+            ERR("Out of memory\n");
+            return;
+        }
+
+        /* Now for each vertex in the buffer */
+        for(i = 0; i < vertices; i++) {
+            /* Copy the vertex over, taking the shifts into account */
+            for(j = 0; j < stride; j++) {
+                data[This->conv_stride * i + j + This->conv_shift[j]] = This->resource.allocatedMemory[i * stride + j];
+            }
+            /* And convert FLOAT16s */
+            for(j = 0; j < MAX_ATTRIBS; j++) {
+                DWORD_PTR offset = (DWORD_PTR) This->strided.u.input[j].lpData;
+                float *dest = (float *) (&data[This->conv_stride * i + offset + This->conv_shift[offset]]);
+                WORD *in = (WORD *) (&This->resource.allocatedMemory[i * stride + offset]);
+
+                switch(This->strided.u.input[j].dwType) {
+                    case WINED3DDECLTYPE_FLOAT16_4:
+                        dest[3] = float_16_to_32(in + 3);
+                        dest[2] = float_16_to_32(in + 2);
+                        /* drop through */
+                    case WINED3DDECLTYPE_FLOAT16_2:
+                        dest[1] = float_16_to_32(in + 1);
+                        dest[0] = float_16_to_32(in + 0);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        if(!device->isInDraw) {
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        }
+        ENTER_GL();
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, This->vbo_size, data));
+        checkGLcall("glBufferSubDataARB");
+        LEAVE_GL();
     } else {
+        data = HeapAlloc(GetProcessHeap(), 0, end-start);
+        if(!data) {
+            ERR("Out of memory\n");
+            return;
+        }
+        memcpy(data, This->resource.allocatedMemory + start, end - start);
+
         if     (This->strided.u.s.position.dwStride)        stride = This->strided.u.s.position.dwStride;
         else if(This->strided.u.s.specular.dwStride)        stride = This->strided.u.s.specular.dwStride;
         else if(This->strided.u.s.diffuse.dwStride)         stride = This->strided.u.s.diffuse.dwStride;
@@ -498,17 +664,16 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
             CONVERT_D3DCOLOR_ATTRIB(texCoords[7]);
 #undef CONVERT_D3DCOLOR_ATTRIB
         }
+        if(!device->isInDraw) {
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        }
+        ENTER_GL();
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end - start, data));
+        checkGLcall("glBufferSubDataARB");
+        LEAVE_GL();
     }
-
-    if(!device->isInDraw) {
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-    }
-    ENTER_GL();
-    GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
-    checkGLcall("glBindBufferARB");
-    GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end - start, data));
-    checkGLcall("glBufferSubDataARB");
-    LEAVE_GL();
 
     HeapFree(GetProcessHeap(), 0, data);
 }

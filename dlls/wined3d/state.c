@@ -2880,14 +2880,10 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
     GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
     int i;
     UINT *offset = stateblock->streamOffset;
+    IWineD3DVertexBufferImpl *vb;
 
     /* Default to no instancing */
     stateblock->wineD3DDevice->instancedDraw = FALSE;
-
-    if(((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->half_float_conv_needed) {
-        /* This will be handled using drawStridedSlow */
-        return;
-    }
 
     for (i = 0; i < MAX_ATTRIBS; i++) {
 
@@ -2909,12 +2905,37 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
                 checkGLcall("glBindBufferARB");
                 curVBO = strided->u.input[i].VBO;
             }
-            GL_EXTCALL(glVertexAttribPointerARB(i,
-                            WINED3D_ATR_SIZE(strided->u.input[i].dwType),
-                            WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
-                            WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
-                            strided->u.input[i].dwStride,
-                            strided->u.input[i].lpData + stateblock->loadBaseVertexIndex * strided->u.input[i].dwStride + offset[strided->u.input[i].streamNo]) );
+            vb = (IWineD3DVertexBufferImpl *) stateblock->streamSource[strided->u.input[i].streamNo];
+            /* Use the VBO to find out if a vertex buffer exists, not the vb pointer. vb can point to a
+             * user pointer data blob. In that case curVBO will be 0. If there is a vertex buffer but no
+             * vbo we won't be load converted attributes anyway
+             */
+            if(curVBO && vb->conv_shift) {
+                TRACE("Loading attribute from shifted buffer\n");
+                TRACE("Attrib %d has original stride %d, new stride %d\n", i, strided->u.input[i].dwStride, vb->conv_stride);
+                TRACE("Original offset %p, additional offset 0x%08x\n",strided->u.input[i].lpData, vb->conv_shift[(DWORD_PTR) strided->u.input[i].lpData]);
+                TRACE("Opengl type %x\n", WINED3D_ATR_GLTYPE(strided->u.input[i].dwType));
+                GL_EXTCALL(glVertexAttribPointerARB(i,
+                                WINED3D_ATR_SIZE(strided->u.input[i].dwType),
+                                WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
+                                WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
+                                vb->conv_stride,
+
+                                strided->u.input[i].lpData + vb->conv_shift[(DWORD_PTR) strided->u.input[i].lpData] +
+                                stateblock->loadBaseVertexIndex * strided->u.input[i].dwStride +
+                                offset[strided->u.input[i].streamNo]));
+
+            } else {
+                GL_EXTCALL(glVertexAttribPointerARB(i,
+                                WINED3D_ATR_SIZE(strided->u.input[i].dwType),
+                                WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
+                                WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
+                                strided->u.input[i].dwStride,
+
+                                strided->u.input[i].lpData +
+                                stateblock->loadBaseVertexIndex * strided->u.input[i].dwStride +
+                                offset[strided->u.input[i].streamNo]) );
+                }
             GL_EXTCALL(glEnableVertexAttribArrayARB(i));
         } else {
             /* Stride = 0 means always the same values. glVertexAttribPointerARB doesn't do that. Instead disable the pointer and
@@ -2922,7 +2943,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
              */
             BYTE *ptr = strided->u.input[i].lpData + offset[strided->u.input[i].streamNo];
             if(strided->u.input[i].VBO) {
-                IWineD3DVertexBufferImpl *vb = (IWineD3DVertexBufferImpl *) stateblock->streamSource[strided->u.input[i].streamNo];
+                vb = (IWineD3DVertexBufferImpl *) stateblock->streamSource[strided->u.input[i].streamNo];
                 ptr += (long) vb->resource.allocatedMemory;
             }
             GL_EXTCALL(glDisableVertexAttribArrayARB(i));
@@ -3360,10 +3381,16 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
     }
 
     if(useVertexShaderFunction) {
-        TRACE("Loading numbered arrays\n");
-        loadNumberedArrays(stateblock, dataLocations);
-        device->useDrawStridedSlow = FALSE;
-        context->numberedArraysLoaded = TRUE;
+        if(((IWineD3DVertexDeclarationImpl *) stateblock->vertexDecl)->half_float_conv_needed && !fixup) {
+            TRACE("Using drawStridedSlow with vertex shaders for FLOAT16 conversion\n");
+            device->useDrawStridedSlow = TRUE;
+            context->numberedArraysLoaded = FALSE;
+        } else {
+            TRACE("Loading numbered arrays\n");
+            loadNumberedArrays(stateblock, dataLocations);
+            device->useDrawStridedSlow = FALSE;
+            context->numberedArraysLoaded = TRUE;
+        }
     } else if (fixup ||
                (dataLocations->u.s.pSize.lpData == NULL &&
                 dataLocations->u.s.diffuse.lpData == NULL &&

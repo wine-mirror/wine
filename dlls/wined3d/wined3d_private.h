@@ -121,6 +121,24 @@ void init_type_lookup(WineD3D_GL_Info *gl_info);
 #define WINED3D_ATR_NORMALIZED(type)    GLINFO_LOCATION.glTypeLookup[type].normalized
 #define WINED3D_ATR_TYPESIZE(type)      GLINFO_LOCATION.glTypeLookup[type].typesize
 
+/* See GL_NV_half_float for reference */
+static inline float float_16_to_32(const unsigned short *in) {
+    const unsigned short s = ((*in) & 0x8000);
+    const unsigned short e = ((*in) & 0x7C00) >> 10;
+    const unsigned short m = (*in) & 0x3FF;
+    const float sgn = (s ? -1.0 : 1.0);
+
+    if(e == 0) {
+        if(m == 0) return sgn * 0.0; /* +0.0 or -0.0 */
+        else return sgn * pow(2, -14.0) * ( (float) m / 1024.0);
+    } else if(e < 31) {
+        return sgn * pow(2, (float) e-15.0) * (1.0 + ((float) m / 1024.0));
+    } else {
+        if(m == 0) return sgn / 0.0; /* +INF / -INF */
+        else return 0.0 / 0.0; /* NAN */
+    }
+}
+
 /**
  * Settings 
  */
@@ -826,6 +844,8 @@ typedef struct IWineD3DVertexBufferImpl
     GLuint                    vbo;
     BYTE                      Flags;
     LONG                      bindCount;
+    LONG                      vbo_size;
+    GLenum                    vbo_usage;
 
     UINT                      dirtystart, dirtyend;
     LONG                      lockcount;
@@ -835,6 +855,10 @@ typedef struct IWineD3DVertexBufferImpl
     WineDirect3DVertexStridedData strided;
     BOOL                      last_was_vshader;
     BOOL                      last_was_converted;
+
+    /* Extra load offsets, for FLOAT16 conversion */
+    DWORD                     *conv_shift;
+    DWORD                     conv_stride;
 } IWineD3DVertexBufferImpl;
 
 extern const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
