@@ -74,15 +74,11 @@ typedef struct service_start_info_t
 typedef struct service_data_t
 {
     struct list entry;
-    union {
-        LPHANDLER_FUNCTION handler;
-        LPHANDLER_FUNCTION_EX handler_ex;
-    } handler;
+    LPHANDLER_FUNCTION_EX handler;
     LPVOID context;
     SERVICE_STATUS_PROCESS status;
     HANDLE thread;
     BOOL unicode : 1;
-    BOOL extended : 1; /* uses handler_ex instead of handler? */
     union {
         LPSERVICE_MAIN_FUNCTIONA a;
         LPSERVICE_MAIN_FUNCTIONW w;
@@ -606,11 +602,6 @@ static BOOL service_accepts_control(const service_data *service, DWORD dwControl
     case SERVICE_CONTROL_NETBINDDISABLE:
         if (a&SERVICE_ACCEPT_NETBINDCHANGE)
             return TRUE;
-    }
-    if (!service->extended)
-        return FALSE;
-    switch (dwControl)
-    {
     case SERVICE_CONTROL_HARDWAREPROFILECHANGE:
         if (a&SERVICE_ACCEPT_HARDWAREPROFILECHANGE)
             return TRUE;
@@ -639,16 +630,8 @@ static BOOL service_handle_control(HANDLE pipe, service_data *service,
     
     if (service_accepts_control(service, dwControl))
     {
-        if (service->extended && service->handler.handler_ex)
-        {
-            service->handler.handler_ex(dwControl, 0, NULL, service->context);
-            ret = ERROR_SUCCESS;
-        }
-        else if (service->handler.handler)
-        {
-            service->handler.handler(dwControl);
-            ret = ERROR_SUCCESS;
-        }
+        if (service->handler)
+            ret = service->handler(dwControl, 0, NULL, service->context);
     }
     return WriteFile(pipe, &ret, sizeof ret, &count, NULL);
 }
@@ -906,48 +889,6 @@ BOOL WINAPI UnlockServiceDatabase (SC_LOCK ScLock)
     TRACE("%p\n",ScLock);
 
     return CloseHandle( ScLock );
-}
-
-/******************************************************************************
- * RegisterServiceCtrlHandlerA [ADVAPI32.@]
- */
-SERVICE_STATUS_HANDLE WINAPI
-RegisterServiceCtrlHandlerA( LPCSTR lpServiceName, LPHANDLER_FUNCTION lpfHandler )
-{
-    LPWSTR lpServiceNameW;
-    SERVICE_STATUS_HANDLE ret;
-
-    lpServiceNameW = SERV_dup(lpServiceName);
-    ret = RegisterServiceCtrlHandlerW( lpServiceNameW, lpfHandler );
-    HeapFree(GetProcessHeap(), 0, lpServiceNameW);
-    return ret;
-}
-
-/******************************************************************************
- * RegisterServiceCtrlHandlerW [ADVAPI32.@]
- *
- * PARAMS
- *   lpServiceName []
- *   lpfHandler    []
- */
-SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName,
-                             LPHANDLER_FUNCTION lpfHandler )
-{
-    service_data *service;
-    SERVICE_STATUS_HANDLE handle = 0;
-
-    EnterCriticalSection( &service_cs );
-    LIST_FOR_EACH_ENTRY( service, &service_list, service_data, entry )
-    {
-        if(!strcmpW(lpServiceName, service->name))
-        {
-            service->handler.handler = lpfHandler;
-            handle = (SERVICE_STATUS_HANDLE)service;
-            break;
-        }
-    }
-    LeaveCriticalSection( &service_cs );
-    return handle;
 }
 
 /******************************************************************************
@@ -2577,13 +2518,48 @@ BOOL WINAPI SetServiceBits( SERVICE_STATUS_HANDLE hServiceStatus,
     return TRUE;
 }
 
-SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA( LPCSTR lpServiceName,
-        LPHANDLER_FUNCTION_EX lpHandlerProc, LPVOID lpContext )
+/* thunk for calling the RegisterServiceCtrlHandler handler function */
+static DWORD WINAPI ctrl_handler_thunk( DWORD control, DWORD type, void *data, void *context )
 {
-    FIXME("%s %p %p\n", debugstr_a(lpServiceName), lpHandlerProc, lpContext);
-    return 0;
+    LPHANDLER_FUNCTION func = context;
+
+    func( control );
+    return ERROR_SUCCESS;
 }
 
+/******************************************************************************
+ * RegisterServiceCtrlHandlerA [ADVAPI32.@]
+ */
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerA( LPCSTR name, LPHANDLER_FUNCTION handler )
+{
+    return RegisterServiceCtrlHandlerExA( name, ctrl_handler_thunk, handler );
+}
+
+/******************************************************************************
+ * RegisterServiceCtrlHandlerW [ADVAPI32.@]
+ */
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerW( LPCWSTR name, LPHANDLER_FUNCTION handler )
+{
+    return RegisterServiceCtrlHandlerExW( name, ctrl_handler_thunk, handler );
+}
+
+/******************************************************************************
+ * RegisterServiceCtrlHandlerExA [ADVAPI32.@]
+ */
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA( LPCSTR name, LPHANDLER_FUNCTION_EX handler, LPVOID context )
+{
+    LPWSTR nameW;
+    SERVICE_STATUS_HANDLE ret;
+
+    nameW = SERV_dup(name);
+    ret = RegisterServiceCtrlHandlerExW( nameW, handler, context );
+    HeapFree( GetProcessHeap(), 0, nameW );
+    return ret;
+}
+
+/******************************************************************************
+ * RegisterServiceCtrlHandlerExW [ADVAPI32.@]
+ */
 SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceName,
         LPHANDLER_FUNCTION_EX lpHandlerProc, LPVOID lpContext )
 {
@@ -2597,9 +2573,8 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceNam
     {
         if(!strcmpW(lpServiceName, service->name))
         {
-            service->handler.handler_ex = lpHandlerProc;
+            service->handler = lpHandlerProc;
             service->context = lpContext;
-            service->extended = TRUE;
             handle = (SERVICE_STATUS_HANDLE)service;
             break;
         }
