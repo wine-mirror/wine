@@ -463,7 +463,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 BOOL NE_LoadAllSegments( NE_MODULE *pModule )
 {
     int i;
-    SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
+    SEGTABLEENTRY * pSegTable = NE_SEG_TABLE(pModule);
 
     if (pModule->ne_flags & NE_FFLAGS_SELFLOAD)
     {
@@ -551,7 +551,7 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
             /*TRACE("entry: %p, entry->segnum: %d, entry->offs: %04x\n", entry, entry->segnum, entry->offs);*/
             if (entry->segnum == segnum)
             {
-                pFunc = ((BYTE *)pSeg+entry->offs);
+                pFunc = pSeg+entry->offs;
                 TRACE("pFunc: %p, *(DWORD *)pFunc: %08x, num_entries: %d\n", pFunc, *(DWORD *)pFunc, num_entries);
                 if (*(pFunc+2) == 0x90)
                 {

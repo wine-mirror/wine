@@ -529,7 +529,7 @@ FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
     if (!snoop)
         return (FARPROC16)MAKESEGPTR( sel, offset );
     else
-        return (FARPROC16)SNOOP16_GetProcAddress16(hModule,ordinal,(FARPROC16)MAKESEGPTR( sel, offset ));
+        return SNOOP16_GetProcAddress16(hModule,ordinal,(FARPROC16)MAKESEGPTR( sel, offset ));
 }
 
 
@@ -2051,7 +2051,7 @@ static HMODULE16 create_dummy_module( HMODULE module32 )
     pStr += len+2;
 
     /* All tables zero terminated */
-    pModule->ne_rsrctab = pModule->ne_imptab = pModule->ne_enttab = (char *)pStr - (char *)pModule;
+    pModule->ne_rsrctab = pModule->ne_imptab = pModule->ne_enttab = pStr - (char *)pModule;
 
     NE_RegisterModule( pModule );
     pModule->owner32 = LoadLibraryA( filename );  /* increment the ref count of the 32-bit module */

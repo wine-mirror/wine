@@ -586,7 +586,7 @@ LPVOID WINAPI LockResource( HGLOBAL handle )
     TRACE("(%p)\n", handle );
 
     if (HIWORD( handle ))  /* 32-bit memory handle */
-        return (LPVOID)handle;
+        return handle;
 
     /* 16-bit memory handle */
     return LockResource16( HGLOBAL_16(handle) );
