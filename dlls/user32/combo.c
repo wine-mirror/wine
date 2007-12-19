@@ -1030,9 +1030,12 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
        }
    }
 
-   lphc->wState |= (CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
-   SendMessageW(lphc->hWndEdit, WM_SETTEXT, 0, pText ? (LPARAM)pText : (LPARAM)empty_stringW);
-   lphc->wState &= ~(CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
+   if( CB_HASSTRINGS(lphc) )
+   {
+      lphc->wState |= (CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
+      SendMessageW(lphc->hWndEdit, WM_SETTEXT, 0, pText ? (LPARAM)pText : (LPARAM)empty_stringW);
+      lphc->wState &= ~(CBF_NOEDITNOTIFY | CBF_NOLBSELECT);
+   }
 
    if( lphc->wState & CBF_FOCUSED )
       SendMessageW(lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1));
