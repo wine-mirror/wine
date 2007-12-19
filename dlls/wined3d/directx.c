@@ -3160,7 +3160,7 @@ BOOL InitAdapters(void) {
         select_shader_mode(&Adapters[0].gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &Adapters[0].gl_info);
         fillGLAttribFuncs(&Adapters[0].gl_info);
-
+        init_type_lookup(&Adapters[0].gl_info);
     }
     numAdapters = 1;
     TRACE("%d adapters successfully initialized\n", numAdapters);

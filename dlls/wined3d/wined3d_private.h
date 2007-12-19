@@ -114,42 +114,12 @@ extern DWORD *stateLookup[MAX_LOOKUPS];
 
 extern DWORD minMipLookup[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
 
-typedef struct _WINED3DGLTYPE {
-    int         d3dType;
-    GLint       size;
-    GLenum      glType;
-    GLboolean   normalized;
-    int         typesize;
-} WINED3DGLTYPE;
-
-/* NOTE: Make sure these are in the correct numerical order. (see /include/wined3d_types.h) */
-static WINED3DGLTYPE const glTypeLookup[WINED3DDECLTYPE_UNUSED] = {
-                                  {WINED3DDECLTYPE_FLOAT1,    1, GL_FLOAT           , GL_FALSE ,sizeof(float)},
-                                  {WINED3DDECLTYPE_FLOAT2,    2, GL_FLOAT           , GL_FALSE ,sizeof(float)},
-                                  {WINED3DDECLTYPE_FLOAT3,    3, GL_FLOAT           , GL_FALSE ,sizeof(float)},
-                                  {WINED3DDECLTYPE_FLOAT4,    4, GL_FLOAT           , GL_FALSE ,sizeof(float)},
-                                  {WINED3DDECLTYPE_D3DCOLOR,  4, GL_UNSIGNED_BYTE   , GL_TRUE  ,sizeof(BYTE)},
-                                  {WINED3DDECLTYPE_UBYTE4,    4, GL_UNSIGNED_BYTE   , GL_FALSE ,sizeof(BYTE)},
-                                  {WINED3DDECLTYPE_SHORT2,    2, GL_SHORT           , GL_FALSE ,sizeof(short int)},
-                                  {WINED3DDECLTYPE_SHORT4,    4, GL_SHORT           , GL_FALSE ,sizeof(short int)},
-                                  {WINED3DDECLTYPE_UBYTE4N,   4, GL_UNSIGNED_BYTE   , GL_TRUE  ,sizeof(BYTE)},
-                                  {WINED3DDECLTYPE_SHORT2N,   2, GL_SHORT           , GL_TRUE  ,sizeof(short int)},
-                                  {WINED3DDECLTYPE_SHORT4N,   4, GL_SHORT           , GL_TRUE  ,sizeof(short int)},
-                                  {WINED3DDECLTYPE_USHORT2N,  2, GL_UNSIGNED_SHORT  , GL_TRUE  ,sizeof(short int)},
-                                  {WINED3DDECLTYPE_USHORT4N,  4, GL_UNSIGNED_SHORT  , GL_TRUE  ,sizeof(short int)},
-                                  {WINED3DDECLTYPE_UDEC3,     3, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
-                                  {WINED3DDECLTYPE_DEC3N,     3, GL_SHORT           , GL_TRUE  ,sizeof(short int)},
-                                  /* We should do an extension check for NV_HALF_FLOAT. However, without NV_HALF_FLOAT
-                                   * we won't be able to load the data at all, so at least for the moment it wouldn't
-                                   * gain us much. */
-                                  {WINED3DDECLTYPE_FLOAT16_2, 2, GL_HALF_FLOAT_NV   , GL_FALSE ,sizeof(GLhalfNV)},
-                                  {WINED3DDECLTYPE_FLOAT16_4, 4, GL_HALF_FLOAT_NV   , GL_FALSE ,sizeof(GLhalfNV)}};
-
-#define WINED3D_ATR_TYPE(type)          glTypeLookup[type].d3dType
-#define WINED3D_ATR_SIZE(type)          glTypeLookup[type].size
-#define WINED3D_ATR_GLTYPE(type)        glTypeLookup[type].glType
-#define WINED3D_ATR_NORMALIZED(type)    glTypeLookup[type].normalized
-#define WINED3D_ATR_TYPESIZE(type)      glTypeLookup[type].typesize
+void init_type_lookup(WineD3D_GL_Info *gl_info);
+#define WINED3D_ATR_TYPE(type)          GLINFO_LOCATION.glTypeLookup[type].d3dType
+#define WINED3D_ATR_SIZE(type)          GLINFO_LOCATION.glTypeLookup[type].size
+#define WINED3D_ATR_GLTYPE(type)        GLINFO_LOCATION.glTypeLookup[type].glType
+#define WINED3D_ATR_NORMALIZED(type)    GLINFO_LOCATION.glTypeLookup[type].normalized
+#define WINED3D_ATR_TYPESIZE(type)      GLINFO_LOCATION.glTypeLookup[type].typesize
 
 /**
  * Settings 

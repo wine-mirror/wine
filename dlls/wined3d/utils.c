@@ -326,6 +326,38 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
 
     return TRUE;
 }
+
+/* NOTE: Make sure these are in the correct numerical order. (see /include/wined3d_types.h) */
+static WINED3DGLTYPE const glTypeLookupTemplate[WINED3DDECLTYPE_UNUSED] = {
+                                  {WINED3DDECLTYPE_FLOAT1,    1, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {WINED3DDECLTYPE_FLOAT2,    2, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {WINED3DDECLTYPE_FLOAT3,    3, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {WINED3DDECLTYPE_FLOAT4,    4, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {WINED3DDECLTYPE_D3DCOLOR,  4, GL_UNSIGNED_BYTE   , GL_TRUE  ,sizeof(BYTE)},
+                                  {WINED3DDECLTYPE_UBYTE4,    4, GL_UNSIGNED_BYTE   , GL_FALSE ,sizeof(BYTE)},
+                                  {WINED3DDECLTYPE_SHORT2,    2, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_SHORT4,    4, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_UBYTE4N,   4, GL_UNSIGNED_BYTE   , GL_TRUE  ,sizeof(BYTE)},
+                                  {WINED3DDECLTYPE_SHORT2N,   2, GL_SHORT           , GL_TRUE  ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_SHORT4N,   4, GL_SHORT           , GL_TRUE  ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_USHORT2N,  2, GL_UNSIGNED_SHORT  , GL_TRUE  ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_USHORT4N,  4, GL_UNSIGNED_SHORT  , GL_TRUE  ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_UDEC3,     3, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_DEC3N,     3, GL_SHORT           , GL_TRUE  ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_FLOAT16_2, 2, GL_HALF_FLOAT_NV   , GL_FALSE ,sizeof(GLhalfNV)},
+                                  {WINED3DDECLTYPE_FLOAT16_4, 4, GL_HALF_FLOAT_NV   , GL_FALSE ,sizeof(GLhalfNV)}};
+
+void init_type_lookup(WineD3D_GL_Info *gl_info) {
+    memcpy(gl_info->glTypeLookup, glTypeLookupTemplate, sizeof(glTypeLookupTemplate));
+    if(!GL_SUPPORT(NV_HALF_FLOAT)) {
+        /* Do not change the size of the type, it is CPU side. Whe have to change the GPU-side information though.
+         * It is the job of the vertex buffer code to make sure that the vbos have the right format
+         */
+        gl_info->glTypeLookup[WINED3DDECLTYPE_FLOAT16_2].glType = GL_FLOAT;
+        gl_info->glTypeLookup[WINED3DDECLTYPE_FLOAT16_4].glType = GL_FLOAT;
+    }
+}
+
 #undef GLINFO_LOCATION
 
 #define GLINFO_LOCATION This->adapter->gl_info

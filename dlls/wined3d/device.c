@@ -1711,7 +1711,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice*
     return hr;
 }
 
-static size_t ConvertFvfToDeclaration(DWORD fvf, WINED3DVERTEXELEMENT** ppVertexElements) {
+static size_t ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the GL info, which has the type table */
+                                      DWORD fvf, WINED3DVERTEXELEMENT** ppVertexElements) {
 
     unsigned int idx, idx2;
     unsigned int offset;
@@ -1839,10 +1840,11 @@ static size_t ConvertFvfToDeclaration(DWORD fvf, WINED3DVERTEXELEMENT** ppVertex
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3DDevice* iface, IWineD3DVertexDeclaration** ppVertexDeclaration, IUnknown *Parent, DWORD Fvf) {
     WINED3DVERTEXELEMENT* elements = NULL;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     size_t size;
     DWORD hr;
 
-    size = ConvertFvfToDeclaration(Fvf, &elements);
+    size = ConvertFvfToDeclaration(This, Fvf, &elements);
     if (size == 0) return WINED3DERR_OUTOFVIDEOMEMORY;
 
     hr = IWineD3DDevice_CreateVertexDeclaration(iface, ppVertexDeclaration, Parent, elements, size);
