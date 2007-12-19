@@ -903,6 +903,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
     if (!hBrush) /* did the app forget to call defwindowproc ? */
         hBrush = (HBRUSH)DefWindowProcW(parent, WM_CTLCOLORSTATIC,
 					(WPARAM)hDC, (LPARAM)hwnd );
+    setup_clipping( hwnd, hDC );
 
     if (style & BS_LEFTTEXT)
     {
@@ -916,7 +917,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
         rtext.left += checkBoxWidth + 4;
         rbox.right = checkBoxWidth;
     }
- 
+
     /* Since WM_ERASEBKGND does nothing, first prepare background */
     if (action == ODA_SELECT) FillRect( hDC, &rbox, hBrush );
     if (action == ODA_DRAWENTIRE) FillRect( hDC, &client, hBrush );
@@ -982,8 +983,6 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
     if (dtFlags == (UINT)-1L) /* Noting to draw */
 	return;
 
-    setup_clipping( hwnd, hDC );
-
     if (action == ODA_DRAWENTIRE)
 	BUTTON_DrawLabel(hwnd, hDC, dtFlags, &rtext);
 
@@ -1044,6 +1043,7 @@ static void GB_Paint( HWND hwnd, HDC hDC, UINT action )
     if (!hbr) /* did the app forget to call defwindowproc ? */
         hbr = (HBRUSH)DefWindowProcW(parent, WM_CTLCOLORSTATIC,
 				     (WPARAM)hDC, (LPARAM)hwnd);
+    setup_clipping( hwnd, hDC );
 
     GetClientRect( hwnd, &rc);
     rcFrame = rc;
@@ -1057,8 +1057,6 @@ static void GB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     if (dtFlags == (UINT)-1L)
        return;
-
-    setup_clipping( hwnd, hDC );
 
     /* Because buttons have CS_PARENTDC class style, there is a chance
      * that label will be drawn out of client rect.
