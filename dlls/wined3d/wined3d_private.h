@@ -863,6 +863,8 @@ typedef struct IWineD3DVertexBufferImpl
     LONG                      declChanges, draws;
     /* Last description of the buffer */
     WineDirect3DVertexStridedData strided;
+    BOOL                      last_was_vshader;
+    BOOL                      last_was_converted;
 } IWineD3DVertexBufferImpl;
 
 extern const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;

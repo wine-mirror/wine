@@ -104,76 +104,50 @@ static DWORD    WINAPI IWineD3DVertexBufferImpl_GetPriority(IWineD3DVertexBuffer
     return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
 }
 
-static void fixup_vertices(
-	BYTE *src, BYTE *dst,
-	int stride,
-	int num,
-	int pos, BOOL haspos,
-	int diffuse, BOOL hasdiffuse,
-	int specular, BOOL hasspecular
-) {
-    int i;
+static inline void fixup_d3dcolor(DWORD *pos) {
+    DWORD srcColor = *pos;
+
+    /* Color conversion like in drawStridedSlow. watch out for little endianity
+     * If we want that stuff to work on big endian machines too we have to consider more things
+     *
+     * 0xff000000: Alpha mask
+     * 0x00ff0000: Blue mask
+     * 0x0000ff00: Green mask
+     * 0x000000ff: Red mask
+     */
+    *pos = 0;
+    *pos |= (srcColor & 0xff00ff00)      ;   /* Alpha Green */
+    *pos |= (srcColor & 0x00ff0000) >> 16;   /* Red */
+    *pos |= (srcColor & 0x000000ff) << 16;   /* Blue */
+}
+
+static inline void fixup_transformed_pos(float *p) {
     float x, y, z, w;
 
-    for(i = num - 1; i >= 0; i--) {
-        if(haspos) {
-            float *p = (float *) ((src + pos) + i * stride);
-
-            /* rhw conversion like in drawStridedSlow */
-            if(p[3] == 1.0 || ((p[3] < eps) && (p[3] > -eps))) {
-                x = p[0];
-                y = p[1];
-                z = p[2];
-                w = 1.0;
-            } else {
-                w = 1.0 / p[3];
-                x = p[0] * w;
-                y = p[1] * w;
-                z = p[2] * w;
-            }
-            p = (float *) (dst + i * stride + pos);
-            p[0] = x;
-            p[1] = y;
-            p[2] = z;
-            p[3] = w;
-        }
-        if(hasdiffuse) {
-            DWORD srcColor, *dstColor = (DWORD *) (dst + i * stride + diffuse);
-            srcColor = * (DWORD *) ( (src + diffuse) + i * stride);
-
-            /* Color conversion like in drawStridedSlow. watch out for little endianity
-            * If we want that stuff to work on big endian machines too we have to consider more things
-            *
-            * 0xff000000: Alpha mask
-            * 0x00ff0000: Blue mask
-            * 0x0000ff00: Green mask
-            * 0x000000ff: Red mask
-            */
-
-            *dstColor = 0;
-            *dstColor |= (srcColor & 0xff00ff00)      ;   /* Alpha Green */
-            *dstColor |= (srcColor & 0x00ff0000) >> 16;   /* Red */
-            *dstColor |= (srcColor & 0x000000ff) << 16;   /* Blue */
-        }
-        if(hasspecular) {
-            DWORD srcColor, *dstColor = (DWORD *) (dst + i * stride + specular);
-            srcColor = * (DWORD *) ( (src + specular) + i * stride);
-
-            /* Similar to diffuse
-             * TODO: Write the alpha value out for fog coords
-             */
-            *dstColor = 0;
-            *dstColor |= (srcColor & 0xff00ff00)      ;   /* Alpha Green */
-            *dstColor |= (srcColor & 0x00ff0000) >> 16;   /* Red */
-            *dstColor |= (srcColor & 0x000000ff) << 16;   /* Blue */
-        }
+    /* rhw conversion like in drawStridedSlow */
+    if(p[3] == 1.0 || ((p[3] < eps) && (p[3] > -eps))) {
+        x = p[0];
+        y = p[1];
+        z = p[2];
+        w = 1.0;
+    } else {
+        w = 1.0 / p[3];
+        x = p[0] * w;
+        y = p[1] * w;
+        z = p[2] * w;
     }
+    p[0] = x;
+    p[1] = y;
+    p[2] = z;
+    p[3] = w;
 }
 
 inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *This)
 {
     WineDirect3DVertexStridedData strided;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    BOOL ret = FALSE;
+    DWORD type_old, type_new;
 
     /* In d3d7 the vertex buffer declaration NEVER changes because it is stored in the d3d7 vertex buffer.
      * Once we have our declaration there is no need to look it up again.
@@ -186,10 +160,9 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
      * help finding them, only the vertex declaration or the device FVF can determine that at drawPrim
      * time. Rules are as follows:
      *
-     * -> No modification when Vertex Shaders are used
      * -> Fix up position1 and position 2 if they are XYZRHW
-     * -> Fix up diffuse color
-     * -> Fix up specular color
+     * -> Fix up types that are D3DDECLTYPE_D3DCOLOR if no shader is used
+     * -> TODO: Convert FLOAT16 to FLOAT32 if not supported natively by gl
      *
      * The Declaration is only known at drawing time, and it can change from draw to draw. If any converted values
      * are changed, the whole buffer has to be reconverted and reloaded. (Converting is SLOW, so if this happens too
@@ -207,50 +180,157 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
      */
 
     if (use_vs(device)) {
-        /* Assume no conversion */
+        /* Assume no conversion. TODO: Deal with FLOAT16 conversion*/
         memset(&strided, 0, sizeof(strided));
+        if(!This->last_was_vshader && This->last_was_converted) {
+            /* Reload if we're switching from converted fixed function to vertex shaders.
+             * This isn't strictly needed, e.g. a FLOAT16 attribute could stay at the same
+             * place. It is always needed for the FLOAT4 and D3DCOLOR conversions however, and
+             * it is unlikely that any game uses FLOAT16s with fixed function vertex processing.
+             */
+            TRACE("Reconverting because switching from converted fixed function drawing to shaders\n");
+            ret = TRUE;
+        }
+        This->last_was_vshader = TRUE;
     } else {
         /* we need a copy because we modify some params */
         memcpy(&strided, &device->strided_streams, sizeof(strided));
 
-        /* Filter out data that does not come from this VBO */
-        if(strided.u.s.position.VBO != This->vbo)    memset(&strided.u.s.position, 0, sizeof(strided.u.s.position));
-        if(strided.u.s.diffuse.VBO != This->vbo)     memset(&strided.u.s.diffuse, 0, sizeof(strided.u.s.diffuse));
-        if(strided.u.s.specular.VBO != This->vbo)    memset(&strided.u.s.specular, 0, sizeof(strided.u.s.specular));
-        if(strided.u.s.position2.VBO != This->vbo)   memset(&strided.u.s.position2, 0, sizeof(strided.u.s.position2));
-    }
+        /* Kill things that does not exist in our fixed function pipeline implementation */
+        memset(&strided.u.s.blendWeights, 0, sizeof(strided.u.s.blendWeights));
+        memset(&strided.u.s.blendMatrixIndices, 0, sizeof(strided.u.s.blendMatrixIndices));
+        memset(&strided.u.s.pSize, 0, sizeof(strided.u.s.pSize));
+        memset(&strided.u.s.position2, 0, sizeof(strided.u.s.position2));
+        memset(&strided.u.s.normal2, 0, sizeof(strided.u.s.normal2));
+        memset(&strided.u.s.tangent, 0, sizeof(strided.u.s.tangent));
+        memset(&strided.u.s.binormal, 0, sizeof(strided.u.s.binormal));
+        memset(&strided.u.s.tessFactor, 0, sizeof(strided.u.s.tessFactor));
+        memset(&strided.u.s.fog, 0, sizeof(strided.u.s.fog));
+        memset(&strided.u.s.depth, 0, sizeof(strided.u.s.depth));
+        memset(&strided.u.s.sample, 0, sizeof(strided.u.s.sample));
 
+        /* Filter out data that does not come from this VBO. No need to repeat that on
+         * the attributes filtered above.
+         */
+#define FILTER_OTHER_VBO(name) if(strided.u.s.name.VBO != This->vbo) {memset(&strided.u.s.name, 0, sizeof(strided.u.s.name));}
+        FILTER_OTHER_VBO(position);
+        /*FILTER_OTHER_VBO(blendWeights);*/
+        /*FILTER_OTHER_VBO(blendMatrixIndices);*/
+        FILTER_OTHER_VBO(normal);
+        /*FILTER_OTHER_VBO(pSize);*/
+        FILTER_OTHER_VBO(diffuse);
+        FILTER_OTHER_VBO(specular);
+        FILTER_OTHER_VBO(texCoords[0]);
+        FILTER_OTHER_VBO(texCoords[1]);
+        FILTER_OTHER_VBO(texCoords[2]);
+        FILTER_OTHER_VBO(texCoords[3]);
+        FILTER_OTHER_VBO(texCoords[4]);
+        FILTER_OTHER_VBO(texCoords[5]);
+        FILTER_OTHER_VBO(texCoords[6]);
+        FILTER_OTHER_VBO(texCoords[7]);
+        /*FILTER_OTHER_VBO(position2);*/
+        /*FILTER_OTHER_VBO(normal2);*/
+        /*FILTER_OTHER_VBO(tangent);*/
+        /*FILTER_OTHER_VBO(binormal);*/
+        /*FILTER_OTHER_VBO(tessFactor);*/
+        /*FILTER_OTHER_VBO(fog);*/
+        /*FILTER_OTHER_VBO(depth);*/
+        /*FILTER_OTHER_VBO(sample);*/
+#undef FILTER_OTHER_VBO
+
+        /* Now find out if anything has changed. compared to the last run. Keep a few things in mind:
+         *
+         * 1) We do not mind if types change that do not need conversion
+         *
+         * 2) If some data exists cannot be found out by the data field alone. Data can appear at offset 0,
+         * so the main identification is the type. Note that D3DDECLTYPE_FLOAT1 is defined to 0, watch out
+         * for this if any semantic needs conversion if it is declared with that
+         *
+         * 3) If the type is the same, and it needs conversion, make sure it stayed at the same place. Moving
+         * converted bytes requires a reconversion of the whole buffer
+         *
+         * 4) The stride is not a reliable indicator for existance, as it can be 0 if an attribute stays static
+         *
+         * 5) If we used a vertex buffer before, and we aren't using one now(wouldn't be in this codepath
+         * otherwise) then we cannot compare the strided structures. Vertex shaders use numbered attributes,
+         * fixed function pipeline uses named once. For example, a vertex shader could have used converted
+         * tessFactor data which the code below ignores entirely. So if we used a vertex shader before, and
+         * used conversion before, assume a decl change
+         */
+        if(This->last_was_vshader && This->last_was_converted) {
+            TRACE("Reconverting because a vertex shader with conversion was used before\n");
+            ret = TRUE;
+            /* Still have to run through the code below to find the fixed function attribs that need
+             * conversion
+             */
+        }
+        do {
+            /* Position: We have to convert FLOAT4 data because opengl divides the vertex by 1 / w, or
+             * of course if the position has type D3DCOLOR
+             */
+            type_old = This->strided.u.s.position.dwType;
+            type_new = strided.u.s.position.dwType;
+            if(type_old != type_new) {
+                if(type_old == WINED3DDECLTYPE_FLOAT4   || type_new == WINED3DDECLTYPE_FLOAT4 ||
+                   type_old == WINED3DDECLTYPE_D3DCOLOR || type_new == WINED3DDECLTYPE_D3DCOLOR) {
+                    TRACE("Reconverting buffer because POSITION type changed from %s to %s\n",
+                          debug_d3ddecltype(type_old), debug_d3ddecltype(type_new));
+                    memcpy(&This->strided, &strided, sizeof(strided));
+                    ret = TRUE;
+                    break;
+                }
+            } else if(type_new == WINED3DDECLTYPE_D3DCOLOR || type_new == WINED3DDECLTYPE_FLOAT4) {
+                if(This->strided.u.s.position.lpData != strided.u.s.position.lpData) {
+                    TRACE("Reconverting buffer because POSITION has type %s and moved from offset %p to %p\n",
+                          debug_d3ddecltype(type_new), This->strided.u.s.position.lpData, strided.u.s.position.lpData);
+                    memcpy(&This->strided, &strided, sizeof(strided));
+                    ret = TRUE;
+                    break;
+                }
+            }
+
+            /* Others: D3DCOLOR needs conversion */
+#define CHECK_D3DCOLOR_CONV(name) \
+            type_old = This->strided.u.s.name.dwType; \
+            type_new = strided.u.s.name.dwType; \
+            if(type_old != type_new) { \
+                if(type_old == WINED3DDECLTYPE_D3DCOLOR || type_new == WINED3DDECLTYPE_D3DCOLOR) { \
+                    TRACE("Reconverting buffer because %s type changed from %s to %s\n", \
+                           #name, debug_d3ddecltype(type_old), debug_d3ddecltype(type_new)); \
+                    memcpy(&This->strided, &strided, sizeof(strided)); \
+                    ret = TRUE; \
+                    break; \
+                } \
+            } else if(type_new == WINED3DDECLTYPE_D3DCOLOR) { \
+                if(This->strided.u.s.name.lpData != strided.u.s.name.lpData) { \
+                    TRACE("Reconverting buffer because DIFFUSE has type %s and moved from offset %p to %p\n", \
+                          debug_d3ddecltype(type_new), This->strided.u.s.name.lpData, strided.u.s.name.lpData); \
+                    memcpy(&This->strided, &strided, sizeof(strided)); \
+                    ret = TRUE; \
+                    break; \
+                } \
+            }
+            CHECK_D3DCOLOR_CONV(normal);
+            CHECK_D3DCOLOR_CONV(diffuse);
+            CHECK_D3DCOLOR_CONV(specular);
+            CHECK_D3DCOLOR_CONV(texCoords[0]);
+            CHECK_D3DCOLOR_CONV(texCoords[1]);
+            CHECK_D3DCOLOR_CONV(texCoords[2]);
+            CHECK_D3DCOLOR_CONV(texCoords[3]);
+            CHECK_D3DCOLOR_CONV(texCoords[4]);
+            CHECK_D3DCOLOR_CONV(texCoords[5]);
+            CHECK_D3DCOLOR_CONV(texCoords[6]);
+            CHECK_D3DCOLOR_CONV(texCoords[7]);
+#undef CHECK_D3DCOLOR_CONV
+
+            /* No conversion */
+        } while(0);
+        This->last_was_vshader = FALSE;
+    }
     /* We have a declaration now in the buffer */
     This->Flags |= VBFLAG_HASDESC;
 
-    /* Find out if reload is needed
-     * Position of the semantic in the vertex and the stride must be equal to the stored type. Don't mind if only unconverted stuff changed.
-     *
-     * If some stuff does not exist in the buffer, then lpData, dwStride and dwType are memsetted to 0. So if the semantic didn't exist before
-     * and does not exist now all 3 values will be equal(=0).
-     *
-     * Checking the lpData field alone is not enough, because data may appear at offset 0 in the buffer. This is the same location as nonexistent
-     * data uses, so we have to check the type and stride too. Colors can be at offset 0 too, because it is perfectly fine to render from 2 or more
-     * buffers at the same time and get the position from one and the color from the other buffer.
-     */
-    if( /* Position transformed vs untransformed */
-        ((This->strided.u.s.position_transformed || strided.u.s.position_transformed) &&
-          (This->strided.u.s.position.lpData != strided.u.s.position.lpData ||
-           This->strided.u.s.position.dwType != strided.u.s.position.dwType)) ||
-        /* Diffuse position and data type */
-        This->strided.u.s.diffuse.lpData != strided.u.s.diffuse.lpData || This->strided.u.s.diffuse.dwStride != strided.u.s.diffuse.dwStride ||
-         This->strided.u.s.diffuse.dwType != strided.u.s.diffuse.dwType ||
-        /* Specular position and data type */
-        This->strided.u.s.specular.lpData != strided.u.s.specular.lpData || This->strided.u.s.specular.dwStride != strided.u.s.specular.dwStride ||
-         This->strided.u.s.specular.dwType != strided.u.s.specular.dwType) {
-
-        TRACE("Declaration changed, reloading buffer\n");
-        /* Set the new description */
-        memcpy(&This->strided, &strided, sizeof(strided));
-        return TRUE;
-    }
-
-    return FALSE;
+    return ret;
 }
 
 static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface) {
@@ -259,6 +339,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     BYTE *data;
     UINT start = 0, end = 0, stride = 0;
     BOOL declChanged = FALSE;
+    int i;
     TRACE("(%p)->()\n", This);
 
     if(This->Flags & VBFLAG_LOAD) {
@@ -290,8 +371,17 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
      * of them(and thus stop converting)
      */
     if(declChanged) {
+        WineDirect3DVertexStridedData zero;
         This->declChanges++;
         This->draws = 0;
+
+        memset(&zero, 0, sizeof(zero));
+        zero.u.s.position_transformed = This->strided.u.s.position_transformed;
+        if(memcmp(&zero, &This->strided, sizeof(zero)) == 0) {
+            This->last_was_converted = FALSE;
+        } else {
+            This->last_was_converted = TRUE;
+        }
 
         if(This->declChanges > VB_MAXDECLCHANGES) {
             FIXME("Too much declaration changes, stopping converting\n");
@@ -339,15 +429,12 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     This->dirtystart = 0;
     This->dirtyend = 0;
 
-    if     (This->strided.u.s.position.dwStride) stride = This->strided.u.s.position.dwStride;
-    else if(This->strided.u.s.specular.dwStride) stride = This->strided.u.s.specular.dwStride;
-    else if(This->strided.u.s.diffuse.dwStride)  stride = This->strided.u.s.diffuse.dwStride;
-    else {
+    if(!This->last_was_converted) {
         /* That means that there is nothing to fixup. Just upload from This->resource.allocatedMemory
          * directly into the vbo. Do not free the system memory copy because drawPrimitive may need it if
          * the stride is 0, for instancing emulation, vertex blending emulation or shader emulation.
          */
-        TRACE("No conversion needed, locking directly into the VBO in future\n");
+        TRACE("No conversion needed\n");
 
         if(!device->isInDraw) {
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
@@ -371,16 +458,47 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     }
     memcpy(data, This->resource.allocatedMemory + start, end - start);
 
-    fixup_vertices(data, data, stride, ( end - start) / stride,
-                   /* Position */
-                   (int)This->strided.u.s.position.lpData, /* Data location */
-                   This->strided.u.s.position_transformed, /* Do convert? */
-                   /* Diffuse color */
-                   (int)This->strided.u.s.diffuse.lpData, /* Location */
-                   This->strided.u.s.diffuse.dwType == WINED3DDECLTYPE_SHORT4 || This->strided.u.s.diffuse.dwType == WINED3DDECLTYPE_D3DCOLOR, /* Convert? */
-                   /* specular color */
-                   (int)This->strided.u.s.specular.lpData, /* location */
-                   This->strided.u.s.specular.dwType == WINED3DDECLTYPE_SHORT4 || This->strided.u.s.specular.dwType == WINED3DDECLTYPE_D3DCOLOR);
+    if(This->last_was_vshader) {
+        /* TODO: Implement conversion for FLOAT16_2 and FLOAT16_4 */
+    } else {
+        if     (This->strided.u.s.position.dwStride)        stride = This->strided.u.s.position.dwStride;
+        else if(This->strided.u.s.specular.dwStride)        stride = This->strided.u.s.specular.dwStride;
+        else if(This->strided.u.s.diffuse.dwStride)         stride = This->strided.u.s.diffuse.dwStride;
+        else if(This->strided.u.s.normal.dwStride)          stride = This->strided.u.s.normal.dwStride;
+        else if(This->strided.u.s.texCoords[0].dwStride)    stride = This->strided.u.s.texCoords[0].dwStride;
+        else if(This->strided.u.s.texCoords[1].dwStride)    stride = This->strided.u.s.texCoords[1].dwStride;
+        else if(This->strided.u.s.texCoords[2].dwStride)    stride = This->strided.u.s.texCoords[2].dwStride;
+        else if(This->strided.u.s.texCoords[3].dwStride)    stride = This->strided.u.s.texCoords[3].dwStride;
+        else if(This->strided.u.s.texCoords[4].dwStride)    stride = This->strided.u.s.texCoords[4].dwStride;
+        else if(This->strided.u.s.texCoords[5].dwStride)    stride = This->strided.u.s.texCoords[5].dwStride;
+        else if(This->strided.u.s.texCoords[6].dwStride)    stride = This->strided.u.s.texCoords[6].dwStride;
+        else if(This->strided.u.s.texCoords[7].dwStride)    stride = This->strided.u.s.texCoords[7].dwStride;
+
+        for(i = (( end - start) / stride) - 1; i >= 0; i--) {
+            if(This->strided.u.s.position.dwType == WINED3DDECLTYPE_FLOAT4) {
+                fixup_transformed_pos((float *)((DWORD_PTR) data + ((DWORD_PTR) This->strided.u.s.position.lpData) + i * stride));
+            } else if(This->strided.u.s.position.dwType == WINED3DDECLTYPE_D3DCOLOR) {
+                FIXME("Write a test for D3DCOLOR position\n");
+            }
+#define CONVERT_D3DCOLOR_ATTRIB(name) \
+                if(This->strided.u.s.name.dwType == WINED3DDECLTYPE_D3DCOLOR) { \
+                    fixup_d3dcolor((DWORD *)((DWORD_PTR) data + ((DWORD_PTR) This->strided.u.s.name.lpData) + i * stride)); \
+                }
+            CONVERT_D3DCOLOR_ATTRIB(position);
+            CONVERT_D3DCOLOR_ATTRIB(specular);
+            CONVERT_D3DCOLOR_ATTRIB(diffuse);
+            CONVERT_D3DCOLOR_ATTRIB(normal);
+            CONVERT_D3DCOLOR_ATTRIB(texCoords[0]);
+            CONVERT_D3DCOLOR_ATTRIB(texCoords[1]);
+            CONVERT_D3DCOLOR_ATTRIB(texCoords[2]);
+            CONVERT_D3DCOLOR_ATTRIB(texCoords[3]);
+            CONVERT_D3DCOLOR_ATTRIB(texCoords[4]);
+            CONVERT_D3DCOLOR_ATTRIB(texCoords[5]);
+            CONVERT_D3DCOLOR_ATTRIB(texCoords[6]);
+            CONVERT_D3DCOLOR_ATTRIB(texCoords[7]);
+#undef CONVERT_D3DCOLOR_ATTRIB
+        }
+    }
 
     if(!device->isInDraw) {
         ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
