@@ -5449,16 +5449,26 @@ struct vertex_floatcolor {
 static void fixed_function_decl_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
-    DWORD color;
+    DWORD color, size;
     void *data;
     static const D3DVERTEXELEMENT9 decl_elements_d3dcolor[] = {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
         D3DDECL_END()
     };
+    static const D3DVERTEXELEMENT9 decl_elements_d3dcolor_2streams[] = {
+        {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
+        {1,   0,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
+        D3DDECL_END()
+    };
     static const D3DVERTEXELEMENT9 decl_elements_ubyte4n[] = {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_UBYTE4N,  D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 decl_elements_ubyte4n_2streams[] = {
+        {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
+        {1,   0,  D3DDECLTYPE_UBYTE4N,  D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
         D3DDECL_END()
     };
     static const D3DVERTEXELEMENT9 decl_elements_short4[] = {
@@ -5472,7 +5482,8 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
         D3DDECL_END()
     };
     IDirect3DVertexDeclaration9 *dcl_float = NULL, *dcl_short = NULL, *dcl_ubyte = NULL, *dcl_color = NULL;
-    IDirect3DVertexBuffer9 *vb;
+    IDirect3DVertexDeclaration9 *dcl_color_2 = NULL, *dcl_ubyte_2 = NULL;
+    IDirect3DVertexBuffer9 *vb, *vb2;
     struct vertex quad1[] =                             /* D3DCOLOR */
     {
         {-1.0f, -1.0f,   0.1f,                          0x00ffff00},
@@ -5501,6 +5512,45 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
         { 1.0f,  0.0f,   0.1f,                          1.0, 0.0, 0.0, 0.0},
         { 1.0f,  1.0f,   0.1f,                          1.0, 0.0, 0.0, 0.0},
     };
+    DWORD colors[] = {
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+        0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
+    };
+    float quads[] = {
+        -1.0,   -1.0,     0.1,
+        -1.0,    0.0,     0.1,
+         0.0,   -1.0,     0.1,
+         0.0,    0.0,     0.1,
+
+         0.0,   -1.0,     0.1,
+         0.0,    0.0,     0.1,
+         1.0,   -1.0,     0.1,
+         1.0,    0.0,     0.1,
+
+         0.0,    0.0,     0.1,
+         0.0,    1.0,     0.1,
+         1.0,    0.0,     0.1,
+         1.0,    1.0,     0.1,
+
+        -1.0,    0.0,     0.1,
+        -1.0,    1.0,     0.1,
+         0.0,    0.0,     0.1,
+         0.0,    1.0,     0.1
+    };
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
@@ -5513,8 +5563,13 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr) || hr == E_FAIL, "CreateVertexDeclaration failed (%08x)\n", hr);
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_float, &dcl_float);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_ubyte4n_2streams, &dcl_ubyte_2);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_d3dcolor_2streams, &dcl_color_2);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
 
-    hr = IDirect3DDevice9_CreateVertexBuffer(device, max(sizeof(quad1), max(sizeof(quad2), max(sizeof(quad3), sizeof(quad4)))),
+    size = max(sizeof(quad1), max(sizeof(quad2), max(sizeof(quad3), max(sizeof(quad4), sizeof(quads)))));
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, size,
                                              0, 0, D3DPOOL_MANAGED, &vb, NULL);
     ok(hr == D3D_OK, "CreateVertexBuffer failed with %s\n", DXGetErrorString9(hr));
 
@@ -5670,11 +5725,81 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
            "D3DDECLTYPE_FLOAT4 returned color %08x, expected 0x00ff0000\n", color);
     }
 
+    /* This test is pointless without those two declarations: */
+    if(!dcl_color_2 || !dcl_ubyte_2) goto out;
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quads), (void **) &data, 0);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %s\n", DXGetErrorString9(hr));
+    memcpy(data, quads, sizeof(quads));
+    hr = IDirect3DVertexBuffer9_Unlock(vb);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(colors),
+                                             0, 0, D3DPOOL_MANAGED, &vb2, NULL);
+    ok(hr == D3D_OK, "CreateVertexBuffer failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DVertexBuffer9_Lock(vb2, 0, sizeof(colors), (void **) &data, 0);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %s\n", DXGetErrorString9(hr));
+    memcpy(data, colors, sizeof(colors));
+    hr = IDirect3DVertexBuffer9_Unlock(vb2);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 0, sizeof(float) * 3);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 1, vb2, 0, sizeof(DWORD) * 4);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, dcl_ubyte_2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitive failed, hr = %#08x\n", hr);
+
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, dcl_color_2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 4, 2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitive failed, hr = %#08x\n", hr);
+
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, dcl_ubyte_2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 8, 2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitive failed, hr = %#08x\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    color = getPixelColor(device, 480, 360);
+    ok(color == 0x00ff0000,
+       "D3DDECLTYPE_USHORT4N returned color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color == 0x00ffffff,
+       "Unused quad returned color %08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x000000ff,
+       "D3DDECLTYPE_D3DCOLOR returned color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color == 0x000000ff,
+       "D3DDECLTYPE_FLOAT4 returned color %08x, expected 0x000000ff\n", color);
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 1, NULL, 0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DVertexBuffer9_Release(vb2);
+
+    out:
     IDirect3DVertexBuffer9_Release(vb);
     if(dcl_float) IDirect3DVertexDeclaration9_Release(dcl_float);
     if(dcl_short) IDirect3DVertexDeclaration9_Release(dcl_short);
     if(dcl_ubyte) IDirect3DVertexDeclaration9_Release(dcl_ubyte);
     if(dcl_color) IDirect3DVertexDeclaration9_Release(dcl_color);
+    if(dcl_color_2) IDirect3DVertexDeclaration9_Release(dcl_color_2);
+    if(dcl_ubyte_2) IDirect3DVertexDeclaration9_Release(dcl_ubyte_2);
 }
 
 struct vertex_float16color {
