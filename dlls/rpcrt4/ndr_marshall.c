@@ -102,7 +102,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define ALIGN_POINTER(_Ptr, _Align) _Ptr = ALIGNED_POINTER(_Ptr, _Align)
 #define ALIGN_POINTER_CLEAR(_Ptr, _Align) \
     do { \
-        memset((_Ptr), 0, (ULONG_PTR)(_Ptr) & ((_Align) - 1)); \
+        memset((_Ptr), 0, ((_Align) - (ULONG_PTR)(_Ptr)) & ((_Align) - 1)); \
         ALIGN_POINTER(_Ptr, _Align); \
     } while(0)
 
