@@ -585,6 +585,16 @@ static void test_listbox_LB_DIR()
         "SendMessage(LB_DIR, 0, *) returned incorrect index (expected %d got %d)!\n",
         itemCount - 1, res);
 
+    /* This tests behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, 0, (LPARAM)pathBuffer);
+    ok (res == -1, "SendMessage(LB_DIR, 0, *.txt) returned %d, expected -1\n", res);
+
+    /* There should be NO content in the listbox */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == 0, "SendMessage(LB_DIR) DID fill the listbox!\n");
+
 
     /* This should list all the w*.c files in the test directory
      * As of this writing, this includes win.c, winstation.c, wsprintf.c
@@ -632,6 +642,16 @@ static void test_listbox_LB_DIR()
     ok(res + 1 == itemCount,
         "SendMessage(LB_DIR, DDL_DIRECTORY, *) returned incorrect index (expected %d got %d)!\n",
         itemCount - 1, res);
+
+    /* This tests behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY, (LPARAM)pathBuffer);
+    ok (res == -1, "SendMessage(LB_DIR, DDL_DIRECTORY, *.txt) returned %d, expected -1\n", res);
+
+    /* There should be NO content in the listbox */
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == 0, "SendMessage(LB_DIR) DID fill the listbox!\n");
 
 
     /* Test DDL_DIRECTORY */
@@ -696,6 +716,16 @@ static void test_listbox_LB_DIR()
         }
     }
 
+    /* This tests behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
+    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, *.txt) returned %d, expected %d\n",
+        res, itemCount_justDrives -1);
+
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_justDrives, "SendMessage(LB_DIR) returned %d expected %d\n",
+        itemCount, itemCount_justDrives);
 
     trace("Files with w*.c: %d Mapped drives: %d Directories: 1\n",
         itemCount_justFiles, itemCount_justDrives);
@@ -716,6 +746,16 @@ static void test_listbox_LB_DIR()
         "SendMessage(LB_DIR, DDL_DRIVES, w*.c) filled with %d entries, expected %d\n",
         itemCount, itemCount_justDrives + itemCount_allFiles);
     ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DRIVES, w*.c) returned incorrect index!\n");
+
+    /* This tests behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DRIVES, (LPARAM)pathBuffer);
+    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DRIVES, *.txt) returned %d, expected %d\n",
+        res, itemCount_justDrives -1);
+
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == res + 1, "SendMessage(LB_DIR) returned %d expected %d\n", itemCount, res + 1);
 
 
     /* Test DDL_DRIVES. */
@@ -782,6 +822,17 @@ static void test_listbox_LB_DIR()
         }
     }
 
+    /* This tests behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_DRIVES, (LPARAM)pathBuffer);
+    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES, *.txt) returned %d, expected %d\n",
+        res, itemCount_justDrives -1);
+
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == res + 1, "SendMessage(LB_DIR) returned %d expected %d\n", itemCount, res + 1);
+
+
 
     /* Test DDL_DIRECTORY|DDL_DRIVES. */
     strcpy(pathBuffer, "w*.c");
@@ -834,6 +885,17 @@ static void test_listbox_LB_DIR()
     SendMessage(hList, LB_GETTEXT, 0, (LPARAM)pathBuffer);
     ok( !strcmp(pathBuffer, "[..]"), "First (and only) element is not [..]\n");
 
+    /* This tests behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
+    ok (res == -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, *.txt) returned %d, expected %d\n",
+        res, -1);
+
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == res + 1, "SendMessage(LB_DIR) returned %d expected %d\n", itemCount, res + 1);
+
+
     /* Test DDL_DIRECTORY|DDL_EXCLUSIVE. */
     strcpy(pathBuffer, "w*.c");
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
@@ -871,6 +933,15 @@ static void test_listbox_LB_DIR()
         }
     }
 
+    /* This tests behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
+    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, *.txt) returned %d, expected %d\n",
+        res, itemCount_justDrives -1);
+
+    itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
+    ok (itemCount == res + 1, "SendMessage(LB_DIR) returned %d expected %d\n", itemCount, res + 1);
 
     /* Test DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE. */
     strcpy(pathBuffer, "w*.c");
@@ -999,7 +1070,7 @@ static void test_listbox_dlgdir(void)
      */
     strcpy(pathBuffer, "w*.c");
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL, 0);
-    ok (res != 0, "DlgDirList(*.c, 0) failed - 0x%08x\n", GetLastError());
+    ok (res == 1, "DlgDirList(*.c, 0) returned %d - expected 1 - 0x%08x\n", res, GetLastError());
 
     /* Path specification gets converted to uppercase */
     ok (!strcmp(pathBuffer, "W*.C"),
@@ -1025,11 +1096,19 @@ static void test_listbox_dlgdir(void)
             (*(p-2) == '.')), "Element %d (%s) does not fit requested w*.c\n", i, pathBuffer);
     }
 
+    /* Test behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL, 0);
+    ok (res == 1, "DlgDirList(*.txt, 0) returned %d expected 1\n", res);
+
+    itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
+    ok (itemCount == 0, "DlgDirList() DID fill the listbox!\n");
+
     /* Test DDL_DIRECTORY */
     strcpy(pathBuffer, "w*.c");
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
         DDL_DIRECTORY);
-    ok (res != 0, "DlgDirList(*.c, DDL_DIRECTORY) failed - 0x%08x\n", GetLastError());
+    ok (res == 1, "DlgDirList(*.c, DDL_DIRECTORY) failed - 0x%08x\n", GetLastError());
 
     /* There should be some content in the listbox. In particular, there should
      * be exactly one more element than before, since the string "[..]" should
@@ -1053,11 +1132,28 @@ static void test_listbox_dlgdir(void)
             (*(p-2) == '.')), "Element %d (%s) does not fit requested w*.c\n", i, pathBuffer);
     }
 
+    /* Test behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
+        DDL_DIRECTORY);
+    ok (res == 1, "DlgDirList(*.txt, DDL_DIRECTORY) returned %d expected 1\n", res);
+
+    itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
+    ok (itemCount == 1, "DlgDirList() incorrectly filled the listbox! (expected 1 got %d)\n",
+        itemCount);
+    for (i = 0; i < itemCount; i++) {
+        memset(pathBuffer, 0, MAX_PATH);
+        SendMessage(g_listBox, LB_GETTEXT, i, (LPARAM)pathBuffer);
+        p = pathBuffer + strlen(pathBuffer);
+        ok( !strcmp(pathBuffer, "[..]"), "Element %d (%s) does not fit requested [..]\n", i, pathBuffer);
+    }
+
+
     /* Test DDL_DRIVES. At least on WinXP-SP2, this implies DDL_EXCLUSIVE */
     strcpy(pathBuffer, "w*.c");
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
         DDL_DRIVES);
-    ok (res != 0, "DlgDirList(*.c, DDL_DRIVES) failed - 0x%08x\n", GetLastError());
+    ok (res == 1, "DlgDirList(*.c, DDL_DRIVES) failed - 0x%08x\n", GetLastError());
 
     /* There should be some content in the listbox. In particular, there should
      * be at least one element before, since the string "[-c-]" should
@@ -1085,11 +1181,21 @@ static void test_listbox_dlgdir(void)
         }
     }
 
+    /* Test behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
+        DDL_DRIVES);
+    ok (res == 1, "DlgDirList(*.txt, DDL_DRIVES) returned %d expected 1\n", res);
+
+    itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_justDrives, "DlgDirList() incorrectly filled the listbox!\n");
+
+
     /* Test DDL_DIRECTORY|DDL_DRIVES. This does *not* imply DDL_EXCLUSIVE */
     strcpy(pathBuffer, "w*.c");
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
         DDL_DIRECTORY|DDL_DRIVES);
-    ok (res != 0, "DlgDirList(*.c, DDL_DIRECTORY|DDL_DRIVES) failed - 0x%08x\n", GetLastError());
+    ok (res == 1, "DlgDirList(*.c, DDL_DIRECTORY|DDL_DRIVES) failed - 0x%08x\n", GetLastError());
 
     /* There should be some content in the listbox. In particular, there should
      * be exactly the number of plain files, plus the number of mapped drives,
@@ -1119,11 +1225,24 @@ static void test_listbox_dlgdir(void)
         }
     }
 
+    /* Test behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
+        DDL_DIRECTORY|DDL_DRIVES);
+    ok (res == 1, "DlgDirList(*.txt, DDL_DIRECTORY|DDL_DRIVES) returned %d expected 1\n", res);
+
+    itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_justDrives + 1,
+        "DlgDirList() incorrectly filled the listbox! (expected %d got %d)\n",
+        itemCount_justDrives + 1, itemCount);
+
+
+
     /* Test DDL_DIRECTORY|DDL_EXCLUSIVE. */
     strcpy(pathBuffer, "w*.c");
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
         DDL_DIRECTORY|DDL_EXCLUSIVE);
-    ok (res != 0, "DlgDirList(*.c, DDL_DIRECTORY|DDL_EXCLUSIVE) failed - 0x%08x\n", GetLastError());
+    ok (res == 1, "DlgDirList(*.c, DDL_DIRECTORY|DDL_EXCLUSIVE) failed - 0x%08x\n", GetLastError());
 
     /* There should be exactly one element: "[..]" */
     itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
@@ -1135,11 +1254,22 @@ static void test_listbox_dlgdir(void)
     SendMessage(g_listBox, LB_GETTEXT, 0, (LPARAM)pathBuffer);
     ok( !strcmp(pathBuffer, "[..]"), "First (and only) element is not [..]\n");
 
+
+    /* Test behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
+        DDL_DIRECTORY|DDL_EXCLUSIVE);
+    ok (res == 1, "DlgDirList(*.txt, DDL_DIRECTORY|DDL_EXCLUSIVE) returned %d expected 1\n", res);
+
+    itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
+    ok (itemCount == 1, "DlgDirList() incorrectly filled the listbox!\n");
+
+
     /* Test DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE. */
     strcpy(pathBuffer, "w*.c");
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
         DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE);
-    ok (res != 0, "DlgDirList(*.c, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE) failed - 0x%08x\n", GetLastError());
+    ok (res == 1, "DlgDirList(*.c, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE) failed - 0x%08x\n", GetLastError());
 
     /* There should be no plain files on the listbox */
     itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
@@ -1158,6 +1288,16 @@ static void test_listbox_dlgdir(void)
             ok( !strcmp(pathBuffer, "[..]"), "Element %d (%s) does not fit expected [..]\n", i, pathBuffer);
         }
     }
+
+    /* Test behavior when no files match the wildcard */
+    strcpy(pathBuffer, "*.txt");
+    res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
+        DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE);
+    ok (res == 1, "DlgDirList(*.txt, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE) returned %d expected 1\n", res);
+
+    itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
+    ok (itemCount == itemCount_justDrives + 1, "DlgDirList() incorrectly filled the listbox!\n");
+
 
     /* Now test DlgDirSelectEx() in normal operation */
     /* Fill with everything - drives, directory and all plain files. */

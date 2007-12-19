@@ -1775,21 +1775,17 @@ static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
         {
             if (!(attrib & DDL_EXCLUSIVE))
             {
-                if (SENDMSG( combo ? CB_DIR : LB_DIR,
-                             attrib & ~(DDL_DIRECTORY | DDL_DRIVES),
-                             (LPARAM)spec ) == LB_ERR)
-                    return FALSE;
+                SENDMSG( combo ? CB_DIR : LB_DIR,
+                         attrib & ~(DDL_DIRECTORY | DDL_DRIVES),
+                         (LPARAM)spec );
             }
-            if (SENDMSG( combo ? CB_DIR : LB_DIR,
-                       (attrib & (DDL_DIRECTORY | DDL_DRIVES)) | DDL_EXCLUSIVE,
-                         (LPARAM)any ) == LB_ERR)
-                return FALSE;
+            SENDMSG( combo ? CB_DIR : LB_DIR,
+                   (attrib & (DDL_DIRECTORY | DDL_DRIVES)) | DDL_EXCLUSIVE,
+                   (LPARAM)any );
         }
         else
         {
-            if (SENDMSG( combo ? CB_DIR : LB_DIR, attrib,
-                         (LPARAM)spec ) == LB_ERR)
-                return FALSE;
+            SENDMSG( combo ? CB_DIR : LB_DIR, attrib, (LPARAM)spec );
         }
     }
 
