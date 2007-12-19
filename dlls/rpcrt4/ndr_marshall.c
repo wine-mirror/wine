@@ -2008,10 +2008,10 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     }
     case RPC_FC_ALIGNM4:
-      ALIGN_POINTER_CLEAR(pMemory, 4);
+      ALIGN_POINTER(pMemory, 4);
       break;
     case RPC_FC_ALIGNM8:
-      ALIGN_POINTER_CLEAR(pMemory, 8);
+      ALIGN_POINTER(pMemory, 8);
       break;
     case RPC_FC_STRUCTPAD1:
     case RPC_FC_STRUCTPAD2:
@@ -2127,10 +2127,10 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     }
     case RPC_FC_ALIGNM4:
-      ALIGN_POINTER(pMemory, 4);
+      ALIGN_POINTER_CLEAR(pMemory, 4);
       break;
     case RPC_FC_ALIGNM8:
-      ALIGN_POINTER(pMemory, 8);
+      ALIGN_POINTER_CLEAR(pMemory, 8);
       break;
     case RPC_FC_STRUCTPAD1:
     case RPC_FC_STRUCTPAD2:
@@ -2139,6 +2139,7 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_STRUCTPAD5:
     case RPC_FC_STRUCTPAD6:
     case RPC_FC_STRUCTPAD7:
+      memset(pMemory, 0, *pFormat - RPC_FC_STRUCTPAD1 + 1);
       pMemory += *pFormat - RPC_FC_STRUCTPAD1 + 1;
       break;
     case RPC_FC_EMBEDDED_COMPLEX:
