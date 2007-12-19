@@ -317,7 +317,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, VertexBuffer, WINED3DRTYPE_VERTEXBUFFER, Size)
 
-    TRACE("(%p) : Size=%d, Usage=%d, FVF=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
+    TRACE("(%p) : Size=%d, Usage=0x%08x, FVF=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
     *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
 
     object->fvf = FVF;
@@ -338,8 +338,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
      * more. In this call we can convert dx7 buffers too.
      */
     conv = ((FVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW ) || (FVF & (WINED3DFVF_DIFFUSE | WINED3DFVF_SPECULAR));
-    if( GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) && Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC) && 
-        (dxVersion > 7 || !conv) ) {
+    if(!GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT)) {
+        TRACE("Not creating a vbo because GL_ARB_vertex_buffer is not supported\n");
+    } else if(Pool == WINED3DPOOL_SYSTEMMEM) {
+        TRACE("Not creating a vbo because the vertex buffer is in system memory\n");
+    } else if(Usage & WINED3DUSAGE_DYNAMIC) {
+        TRACE("Not creating a vbo because the buffer has dynamic usage\n");
+    } else if(dxVersion <= 7 && conv) {
+        TRACE("Not creating a vbo because dxVersion is 7 and the fvf needs conversion\n");
+    } else {
         CreateVBO(object);
     }
     return WINED3D_OK;
