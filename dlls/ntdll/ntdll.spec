@@ -822,7 +822,7 @@
 @ stdcall RtlSetGroupSecurityDescriptor(ptr ptr long)
 # @ stub RtlSetHeapInformation
 @ stub RtlSetInformationAcl
-# @ stub RtlSetIoCompletionCallback
+@ stdcall RtlSetIoCompletionCallback(long ptr long)
 @ stdcall RtlSetLastWin32Error(long)
 @ stdcall RtlSetLastWin32ErrorAndNtStatusFromNtStatus(long)
 # @ stub RtlSetMemoryStreamSize

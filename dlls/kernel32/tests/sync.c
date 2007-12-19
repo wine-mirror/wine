@@ -326,10 +326,6 @@ static void test_iocp_callback(void)
 
     retb = p_BindIoCompletionCallback(hFile, iocp_callback, 0);
     ok(retb == FALSE, "BindIoCompletionCallback succeeded on a file that wasn't created with FILE_FLAG_OVERLAPPED\n");
-    if(retb == FALSE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
-        todo_wine ok (0, "BindIoCompletionCallback returned ERROR_CALL_NOT_IMPLEMENTED\n");
-        return;
-    }
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error is %d\n", GetLastError());
 
     ret = CloseHandle(hFile);

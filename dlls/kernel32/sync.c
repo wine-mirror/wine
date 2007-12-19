@@ -1912,8 +1912,13 @@ BOOL WINAPI PostQueuedCompletionStatus( HANDLE CompletionPort, DWORD dwNumberOfB
  */
 BOOL WINAPI BindIoCompletionCallback( HANDLE FileHandle, LPOVERLAPPED_COMPLETION_ROUTINE Function, ULONG Flags)
 {
-    FIXME("%p, %p, %d, stub!\n", FileHandle, Function, Flags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    NTSTATUS status;
+
+    TRACE("(%p, %p, %d)\n", FileHandle, Function, Flags);
+
+    status = RtlSetIoCompletionCallback( FileHandle, (PRTL_OVERLAPPED_COMPLETION_ROUTINE)Function, Flags );
+    if (status == STATUS_SUCCESS) return TRUE;
+    SetLastError( RtlNtStatusToDosError(status) );
     return FALSE;
 }
 

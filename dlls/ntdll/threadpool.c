@@ -54,6 +54,16 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static RTL_CRITICAL_SECTION threadpool_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static HANDLE compl_port = NULL;
+static RTL_CRITICAL_SECTION threadpool_compl_cs;
+static RTL_CRITICAL_SECTION_DEBUG critsect_compl_debug =
+{
+    0, 0, &threadpool_compl_cs,
+    { &critsect_compl_debug.ProcessLocksList, &critsect_compl_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": threadpool_compl_cs") }
+};
+static RTL_CRITICAL_SECTION threadpool_compl_cs = { &critsect_compl_debug, -1, 0, 0, 0, 0 };
+
 struct work_item
 {
     struct list entry;
@@ -217,4 +227,87 @@ NTSTATUS WINAPI RtlQueueWorkItem(PRTL_WORK_ITEM_ROUTINE Function, PVOID Context,
     }
 
     return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ * iocp_poller - get completion events and run callbacks
+ */
+static DWORD CALLBACK iocp_poller(LPVOID Arg)
+{
+    while( TRUE )
+    {
+        PRTL_OVERLAPPED_COMPLETION_ROUTINE callback;
+        LPVOID overlapped;
+        IO_STATUS_BLOCK iosb;
+        NTSTATUS res = NtRemoveIoCompletion( compl_port, (PULONG_PTR)&callback, (PULONG_PTR)&overlapped, &iosb, NULL );
+        if (res)
+        {
+            ERR("NtRemoveIoCompletion failed: 0x%x\n", res);
+        }
+        else
+        {
+            DWORD transferred = 0;
+            DWORD err = 0;
+
+            if (iosb.u.Status == STATUS_SUCCESS)
+                transferred = iosb.Information;
+            else
+                err = RtlNtStatusToDosError(iosb.u.Status);
+
+            callback( err, transferred, overlapped );
+        }
+    }
+}
+
+/***********************************************************************
+ *              RtlSetIoCompletionCallback  (NTDLL.@)
+ *
+ * Binds a handle to a thread pool's completion port, and possibly
+ * starts a non-I/O thread to monitor this port and call functions back.
+ *
+ * PARAMS
+ *  FileHandle [I] Handle to bind to a completion port.
+ *  Function   [I] Callback function to call on I/O completions.
+ *  Flags      [I] Not used.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: Any NTSTATUS code.
+ *
+ */
+NTSTATUS WINAPI RtlSetIoCompletionCallback(HANDLE FileHandle, PRTL_OVERLAPPED_COMPLETION_ROUTINE Function, ULONG Flags)
+{
+    IO_STATUS_BLOCK iosb;
+    FILE_COMPLETION_INFORMATION info;
+
+    if (Flags) FIXME("Unknown value Flags=0x%x\n", Flags);
+
+    if (!compl_port)
+    {
+        NTSTATUS res = STATUS_SUCCESS;
+
+        RtlEnterCriticalSection(&threadpool_compl_cs);
+        if (!compl_port)
+        {
+            HANDLE cport;
+
+            res = NtCreateIoCompletion( &cport, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
+            if (!res)
+            {
+                /* FIXME native can start additional threads in case of e.g. hung callback function. */
+                res = RtlQueueWorkItem( iocp_poller, NULL, WT_EXECUTEDEFAULT );
+                if (!res)
+                    compl_port = cport;
+                else
+                    NtClose( cport );
+            }
+        }
+        RtlLeaveCriticalSection(&threadpool_compl_cs);
+        if (res) return res;
+    }
+
+    info.CompletionPort = compl_port;
+    info.CompletionKey = (ULONG_PTR)Function;
+
+    return NtSetInformationFile( FileHandle, &iosb, &info, sizeof(info), FileCompletionInformation );
 }
