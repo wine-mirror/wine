@@ -549,7 +549,7 @@ basic_tests(void)
   pvectors_t pvecs = {&vec1, &pvec2};
   sp_inner_t spi = {42};
   sp_t sp = {-13, &spi};
-  aligns_t aligns = {3, 4, 5, 6.0};
+  aligns_t aligns;
   pints_t pints;
   ptypes_t ptypes;
   padded_t padded;
@@ -633,6 +633,11 @@ basic_tests(void)
   ok(enum_ord(E3) == 3, "RPC enum_ord\n");
   ok(enum_ord(E4) == 4, "RPC enum_ord\n");
 
+  memset(&aligns, 0, sizeof(aligns));
+  aligns.c = 3;
+  aligns.i = 4;
+  aligns.s = 5;
+  aligns.d = 6.0;
   ok(sum_aligns(&aligns) == 18.0, "RPC sum_aligns\n");
 
   padded.i = -3;
@@ -711,6 +716,7 @@ null_list(void)
 {
   test_list_t *n = HeapAlloc(GetProcessHeap(), 0, sizeof *n);
   n->t = TL_NULL;
+  n->u.x = 0;
   return n;
 }
 

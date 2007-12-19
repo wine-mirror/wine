@@ -112,7 +112,7 @@ cpp_quote("#endif")
     int t;
     [switch_is(t)] union
     {
-      [case(TL_NULL)] int x;  /* end of list */
+      [case(TL_NULL)] char x;  /* end of list */
       [case(TL_LIST)] struct test_list *tail;
     } u;
   } test_list_t;
