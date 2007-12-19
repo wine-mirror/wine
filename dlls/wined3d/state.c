@@ -561,7 +561,7 @@ state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
         } else {
             glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, stateblock->material.Power);
         }
-        checkGLcall("glMaterialf(GL_SHININESS");
+        checkGLcall("glMaterialf(GL_SHININESS)");
 
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
             glEnable(GL_COLOR_SUM_EXT);
@@ -792,9 +792,9 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
              * -1/(e-s) and e/(e-s) respectively.
              */
             glFogf(GL_FOG_START, 0.0f);
-            checkGLcall("glFogf(GL_FOG_START, fogstart");
+            checkGLcall("glFogf(GL_FOG_START, fogstart)");
             glFogf(GL_FOG_END, 1.0f);
-            checkGLcall("glFogf(GL_FOG_END, fogend");
+            checkGLcall("glFogf(GL_FOG_END, fogend)");
         }
         return;
     }
@@ -863,7 +863,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
 
         if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
             glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
             context->fog_coord = FALSE;
         }
         context->last_was_foggy_shader = TRUE;
@@ -904,7 +904,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
 
         if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
             glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
             context->fog_coord = FALSE;
         }
     }
@@ -921,10 +921,10 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             case WINED3DFOG_EXP:  {
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP);
-                    checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
+                    checkGLcall("glFogi(GL_FOG_MODE, GL_EXP)");
                     if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                         glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
                         context->fog_coord = FALSE;
                     }
                     break;
@@ -933,10 +933,10 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             case WINED3DFOG_EXP2: {
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP2);
-                    checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
+                    checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2)");
                     if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                         glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
                         context->fog_coord = FALSE;
                     }
                     break;
@@ -945,10 +945,10 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             case WINED3DFOG_LINEAR: {
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_LINEAR);
-                    checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
+                    checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
                     if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                         glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
                         context->fog_coord = FALSE;
                     }
                     break;
@@ -962,7 +962,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 if(GL_SUPPORT(EXT_FOG_COORD)) {
                     if(context->fog_coord == FALSE) {
                         glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
-                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)\n");
+                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)");
                         context->fog_coord = TRUE;
                     }
                     glFogi(GL_FOG_MODE, GL_LINEAR);
@@ -985,30 +985,30 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         switch (stateblock->renderState[WINED3DRS_FOGTABLEMODE]) {
             case WINED3DFOG_EXP:
                 glFogi(GL_FOG_MODE, GL_EXP);
-                checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
+                checkGLcall("glFogi(GL_FOG_MODE, GL_EXP)");
                 if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                     glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
                     context->fog_coord = FALSE;
                 }
                 break;
 
             case WINED3DFOG_EXP2:
                 glFogi(GL_FOG_MODE, GL_EXP2);
-                checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
+                checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2)");
                 if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                     glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
                     context->fog_coord = FALSE;
                 }
                 break;
 
             case WINED3DFOG_LINEAR:
                 glFogi(GL_FOG_MODE, GL_LINEAR);
-                checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
+                checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
                 if(GL_SUPPORT(EXT_FOG_COORD) && context->fog_coord) {
                     glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
                     context->fog_coord = FALSE;
                 }
                 break;
@@ -1026,21 +1026,21 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         if(fogstart != fogend)
         {
             glFogfv(GL_FOG_START, &fogstart);
-            checkGLcall("glFogf(GL_FOG_START, fogstart");
+            checkGLcall("glFogf(GL_FOG_START, fogstart)");
             TRACE("Fog Start == %f\n", fogstart);
 
             glFogfv(GL_FOG_END, &fogend);
-            checkGLcall("glFogf(GL_FOG_END, fogend");
+            checkGLcall("glFogf(GL_FOG_END, fogend)");
             TRACE("Fog End == %f\n", fogend);
         }
         else
         {
             glFogf(GL_FOG_START, -1.0 / 0.0);
-            checkGLcall("glFogf(GL_FOG_START, fogstart");
+            checkGLcall("glFogf(GL_FOG_START, fogstart)");
             TRACE("Fog Start == %f\n", fogstart);
 
             glFogf(GL_FOG_END, 0.0);
-            checkGLcall("glFogf(GL_FOG_END, fogend");
+            checkGLcall("glFogf(GL_FOG_END, fogend)");
             TRACE("Fog End == %f\n", fogend);
         }
     } else {
@@ -1052,9 +1052,9 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
              * -1/(e-s) and e/(e-s) respectively.
              */
             glFogf(GL_FOG_START, 0.0f);
-            checkGLcall("glFogf(GL_FOG_START, fogstart");
+            checkGLcall("glFogf(GL_FOG_START, fogstart)");
             glFogf(GL_FOG_END, 1.0f);
-            checkGLcall("glFogf(GL_FOG_END, fogend");
+            checkGLcall("glFogf(GL_FOG_END, fogend)");
         }
     }
 }
@@ -1281,11 +1281,11 @@ static void state_psizemin(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MIN];
     if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
         GL_EXTCALL(glPointParameterfARB)(GL_POINT_SIZE_MIN_ARB, tmpvalue.f);
-        checkGLcall("glPointParameterfARB(...");
+        checkGLcall("glPointParameterfARB(...)");
     }
     else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
         GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, tmpvalue.f);
-        checkGLcall("glPointParameterfEXT(...);");
+        checkGLcall("glPointParameterfEXT(...)");
     } else if(tmpvalue.f != 1.0) {
         FIXME("WINED3DRS_POINTSIZE_MIN not supported on this opengl, value is %f\n", tmpvalue.f);
     }
@@ -1300,11 +1300,11 @@ static void state_psizemax(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MAX];
     if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
         GL_EXTCALL(glPointParameterfARB)(GL_POINT_SIZE_MAX_ARB, tmpvalue.f);
-        checkGLcall("glPointParameterfARB(...");
+        checkGLcall("glPointParameterfARB(...)");
     }
     else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
         GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, tmpvalue.f);
-        checkGLcall("glPointParameterfEXT(...);");
+        checkGLcall("glPointParameterfEXT(...)");
     } else if(tmpvalue.f != 64.0) {
         FIXME("WINED3DRS_POINTSIZE_MAX not supported on this opengl, value is %f\n", tmpvalue.f);
     }
@@ -1369,11 +1369,11 @@ static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3
 
     if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
         GL_EXTCALL(glPointParameterfvARB)(GL_POINT_DISTANCE_ATTENUATION_ARB, att);
-        checkGLcall("glPointParameterfvARB(GL_DISTANCE_ATTENUATION_ARB, ...");
+        checkGLcall("glPointParameterfvARB(GL_DISTANCE_ATTENUATION_ARB, ...)");
     }
     else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
         GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
-        checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...");
+        checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...)");
     } else if(stateblock->renderState[WINED3DRS_POINTSCALEENABLE]) {
         WARN("POINT_PARAMETERS not supported in this version of opengl\n");
     }
@@ -1440,10 +1440,10 @@ static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
     if (stateblock->renderState[WINED3DRS_POINTSPRITEENABLE]) {
         glEnable(GL_POINT_SPRITE_ARB);
-        checkGLcall("glEnable(GL_POINT_SPRITE_ARB)\n");
+        checkGLcall("glEnable(GL_POINT_SPRITE_ARB)");
     } else {
         glDisable(GL_POINT_SPRITE_ARB);
-        checkGLcall("glDisable(GL_POINT_SPRITE_ARB)\n");
+        checkGLcall("glDisable(GL_POINT_SPRITE_ARB)");
     }
 }
 
@@ -2139,15 +2139,15 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
             TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set GL_TEXTURE_GEN_x and GL_x, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR\n");
             glEnable(GL_TEXTURE_GEN_S);
-            checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+            checkGLcall("glEnable(GL_TEXTURE_GEN_S)");
             glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
             checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
             glEnable(GL_TEXTURE_GEN_T);
-            checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+            checkGLcall("glEnable(GL_TEXTURE_GEN_T)");
             glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
             checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
             glEnable(GL_TEXTURE_GEN_R);
-            checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+            checkGLcall("glEnable(GL_TEXTURE_GEN_R)");
             glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
             checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
         }
@@ -2172,15 +2172,15 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
                 glPopMatrix();
 
                 glEnable(GL_TEXTURE_GEN_S);
-                checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+                checkGLcall("glEnable(GL_TEXTURE_GEN_S)");
                 glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
                 checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
                 glEnable(GL_TEXTURE_GEN_T);
-                checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+                checkGLcall("glEnable(GL_TEXTURE_GEN_T)");
                 glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
                 checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
                 glEnable(GL_TEXTURE_GEN_R);
-                checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+                checkGLcall("glEnable(GL_TEXTURE_GEN_R)");
                 glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
                 checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
             }
@@ -2206,15 +2206,15 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
             glPopMatrix();
 
             glEnable(GL_TEXTURE_GEN_S);
-            checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+            checkGLcall("glEnable(GL_TEXTURE_GEN_S)");
             glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
             checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
             glEnable(GL_TEXTURE_GEN_T);
-            checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+            checkGLcall("glEnable(GL_TEXTURE_GEN_T)");
             glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
             checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
             glEnable(GL_TEXTURE_GEN_R);
-            checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+            checkGLcall("glEnable(GL_TEXTURE_GEN_R)");
             glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
             checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
             }
@@ -2389,7 +2389,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
             glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
                       GL_TEXTURE_LOD_BIAS_EXT,
                       tmpvalue.f);
-            checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
+            checkGLcall("glTexEnvi(GL_TEXTURE_LOD_BIAS_EXT, ...)");
         }
 
         if (stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE && stateblock->pixelShader &&
@@ -2521,7 +2521,7 @@ static void tex_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
             glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV,
                       (float *) &(stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00]));
-            checkGLcall("glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, mat)\n");
+            checkGLcall("glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, mat)");
         }
     }
 }
@@ -2872,7 +2872,7 @@ static inline void unloadNumberedArrays(IWineD3DStateBlockImpl *stateblock) {
         maxAttribs = 16;
     for (i = 0; i < maxAttribs; ++i) {
         GL_EXTCALL(glDisableVertexAttribArrayARB(i));
-        checkGLcall("glDisableVertexAttribArrayARB(reg);");
+        checkGLcall("glDisableVertexAttribArrayARB(reg)");
     }
 }
 
