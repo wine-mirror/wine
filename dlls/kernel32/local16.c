@@ -133,7 +133,7 @@ typedef struct
   /* All local heap allocations are aligned on 4-byte boundaries */
 #define LALIGN(word)          (((word) + 3) & ~3)
 
-#define ARENA_PTR(ptr,arena)       ((LOCALARENA *)((ptr)+(arena)))
+#define ARENA_PTR(ptr,arena)       ((LOCALARENA *)((char *)(ptr)+(arena)))
 #define ARENA_PREV(ptr,arena)      (ARENA_PTR((ptr),(arena))->prev & ~3)
 #define ARENA_NEXT(ptr,arena)      (ARENA_PTR((ptr),(arena))->next)
 #define ARENA_FLAGS(ptr,arena)     (ARENA_PTR((ptr),(arena))->prev & 3)
