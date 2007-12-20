@@ -146,9 +146,6 @@ static BOOL wininit(void)
 	return FALSE;
     }
 
-    printf("Wine is finalizing your software installation. This may take a few minutes,\n");
-    printf("though it never actually does.\n");
-
     while( GetLine( hFile, buffer, sizeof(buffer) ) &&
 	    lstrcmpiA(buffer,RENAME_FILE_SECTION)!=0  )
 	; /* Read the lines until we match the rename section */
@@ -732,21 +729,8 @@ static const struct option long_options[] =
     { NULL,          0, 0, 0 }
 };
 
-struct op_mask {
-    BOOL w9xonly; /* Perform only operations done on Windows 9x */
-    BOOL ntonly; /* Perform only operations done on Windows NT */
-    BOOL startup; /* Perform the operations that are performed every boot */
-    BOOL preboot; /* Perform file renames typically done before the system starts */
-    BOOL prelogin; /* Perform the operations typically done before the user logs in */
-    BOOL postlogin; /* Operations done after login */
-};
-
-static const struct op_mask SESSION_START={FALSE, FALSE, TRUE, TRUE, TRUE, TRUE},
-    SETUP={FALSE, FALSE, FALSE, TRUE, TRUE, TRUE};
-
 int main( int argc, char *argv[] )
 {
-    struct op_mask ops = SESSION_START; /* Which of the ops do we want to perform? */
     /* First, set the current directory to SystemRoot */
     TCHAR gen_path[MAX_PATH];
     DWORD res;
@@ -801,33 +785,20 @@ int main( int argc, char *argv[] )
 
     if (shutdown) return 0;
 
-    if (restart) ops = SETUP;
+    wininit();
+    pendingRename();
 
-    /* Perform the ops by order, stopping if one fails, skipping if necessary */
-    /* Shachar: Sorry for the perl syntax */
-    res=(ops.ntonly || !ops.preboot || wininit())&&
-        (ops.w9xonly || !ops.preboot || pendingRename()) &&
-        (ops.ntonly || !ops.prelogin ||
-         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICESONCE],
-                TRUE, FALSE )) &&
-        (ops.ntonly || !ops.prelogin ||
-         ProcessWindowsFileProtection()) &&
-        (ops.ntonly || !ops.prelogin || !ops.startup ||
-         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES],
-                FALSE, FALSE )) &&
-        (!ops.postlogin ||
-         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE],
-                TRUE, TRUE )) &&
-        (!ops.postlogin || !ops.startup ||
-         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUN],
-                FALSE, FALSE )) &&
-        (!ops.postlogin || !ops.startup ||
-         ProcessRunKeys( HKEY_CURRENT_USER, runkeys_names[RUNKEY_RUN],
-                FALSE, FALSE )) &&
-	(!ops.postlogin || !ops.startup ||
-	 ProcessStartupItems( ));
+    ProcessWindowsFileProtection();
+    ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICESONCE], TRUE, FALSE );
+    if (!restart) ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES], FALSE, FALSE );
+    ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE], TRUE, TRUE );
+    if (!restart)
+    {
+        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUN], FALSE, FALSE );
+        ProcessRunKeys( HKEY_CURRENT_USER, runkeys_names[RUNKEY_RUN], FALSE, FALSE );
+        ProcessStartupItems();
+    }
 
     WINE_TRACE("Operation done\n");
-
-    return res?0:101;
+    return 0;
 }
