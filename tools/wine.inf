@@ -2646,7 +2646,7 @@ HKLM,"%Services%\Spooler","ErrorControl",0x10001,1
 HKLM,"%Services%\Spooler","Group",,"SpoolerGroup"
 HKLM,"%Services%\Spooler","ImagePath",,"spoolsv.exe"
 HKLM,"%Services%\Spooler","ObjectName",,"LocalSystem"
-HKLM,"%Services%\Spooler","Start",0x10001,2
+HKLM,"%Services%\Spooler","Start",0x10001,4
 HKLM,"%Services%\Spooler","Type",0x10001,0x110
 HKLM,"%Services%\MountMgr","Description",,"Device mounting service."
 HKLM,"%Services%\MountMgr","DisplayName",,"Mount Manager"
