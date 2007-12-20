@@ -305,7 +305,7 @@ DWORD MCIAVI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 
     MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
 
-    wma = (WINE_MCIAVI *)MCIAVI_mciGetOpenDev(wDevID);
+    wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL) 	return MCIERR_INVALID_DEVICE_ID;
 
     EnterCriticalSection(&wma->cs);
@@ -402,7 +402,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
-    wma = (WINE_MCIAVI *)MCIAVI_mciGetOpenDev(wDevID);
+    wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
     EnterCriticalSection(&wma->cs);
