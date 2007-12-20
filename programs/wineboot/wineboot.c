@@ -61,6 +61,7 @@
 # include <getopt.h>
 #endif
 #include <windows.h>
+#include <wine/unicode.h>
 #include <wine/debug.h>
 
 #define COBJMACROS
@@ -76,123 +77,59 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 extern BOOL shutdown_close_windows( BOOL force );
 extern void kill_processes( BOOL kill_desktop );
 
-static BOOL GetLine( HANDLE hFile, char *buf, size_t buflen )
-{
-    unsigned int i=0;
-    DWORD r;
-    buf[0]='\0';
-
-    do
-    {
-        DWORD read;
-        if( !ReadFile( hFile, buf, 1, &read, NULL ) || read!=1 )
-        {
-            return FALSE;
-        }
-
-    } while( isspace( *buf ) );
-
-    while( buf[i]!='\n' && i<=buflen &&
-            ReadFile( hFile, buf+i+1, 1, &r, NULL ) )
-    {
-        ++i;
-    }
-
-
-    if( buf[i]!='\n' )
-    {
-	return FALSE;
-    }
-
-    if( i>0 && buf[i-1]=='\r' )
-        --i;
-
-    buf[i]='\0';
-
-    return TRUE;
-}
 
 /* Performs the rename operations dictated in %SystemRoot%\Wininit.ini.
  * Returns FALSE if there was an error, or otherwise if all is ok.
  */
 static BOOL wininit(void)
 {
-    const char * const RENAME_FILE="wininit.ini";
-    const char * const RENAME_FILE_TO="wininit.bak";
-    const char * const RENAME_FILE_SECTION="[rename]";
-    char buffer[MAX_LINE_LENGTH];
-    HANDLE hFile;
+    static const WCHAR nulW[] = {'N','U','L',0};
+    static const WCHAR renameW[] = {'r','e','n','a','m','e',0};
+    static const WCHAR wininitW[] = {'w','i','n','i','n','i','t','.','i','n','i',0};
+    static const WCHAR wininitbakW[] = {'w','i','n','i','n','i','t','.','b','a','k',0};
+    WCHAR initial_buffer[1024];
+    WCHAR *str, *buffer = initial_buffer;
+    DWORD size = sizeof(initial_buffer)/sizeof(WCHAR);
+    DWORD res;
 
-
-    hFile=CreateFileA(RENAME_FILE, GENERIC_READ,
-		    FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
-		    NULL );
-    
-    if( hFile==INVALID_HANDLE_VALUE )
+    for (;;)
     {
-	DWORD err=GetLastError();
-	
-	if( err==ERROR_FILE_NOT_FOUND )
-	{
-	    /* No file - nothing to do. Great! */
-	    WINE_TRACE("Wininit.ini not present - no renaming to do\n");
-
-	    return TRUE;
-	}
-
-	WINE_ERR("There was an error in reading wininit.ini file - %d\n",
-		GetLastError() );
-
-	return FALSE;
+        if (!(res = GetPrivateProfileSectionW( renameW, buffer, size, wininitW ))) return TRUE;
+        if (res < size - 2) break;
+        if (buffer != initial_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+        size *= 2;
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return FALSE;
     }
 
-    while( GetLine( hFile, buffer, sizeof(buffer) ) &&
-	    lstrcmpiA(buffer,RENAME_FILE_SECTION)!=0  )
-	; /* Read the lines until we match the rename section */
-
-    while( GetLine( hFile, buffer, sizeof(buffer) ) && buffer[0]!='[' )
+    for (str = buffer; *str; str += strlenW(str) + 1)
     {
-	/* First, make sure this is not a comment */
-	if( buffer[0]!=';' && buffer[0]!='\0' )
-	{
-	    char * value;
+        WCHAR *value;
 
-	    value=strchr(buffer, '=');
+        if (*str == ';') continue;  /* comment */
+        if (!(value = strchrW( str, '=' ))) continue;
 
-	    if( value==NULL )
-	    {
-		WINE_WARN("Line with no \"=\" in it in wininit.ini - %s\n",
-			buffer);
-	    } else
-	    {
-		/* split the line into key and value */
-		*(value++)='\0';
+        /* split the line into key and value */
+        *value++ = 0;
 
-                if( lstrcmpiA( "NUL", buffer )==0 )
-                {
-                    WINE_TRACE("Deleting file \"%s\"\n", value );
-                    /* A file to delete */
-                    if( !DeleteFileA( value ) )
-                        WINE_WARN("Error deleting file \"%s\"\n", value);
-                } else
-                {
-                    WINE_TRACE("Renaming file \"%s\" to \"%s\"\n", value,
-                            buffer );
+        if (!lstrcmpiW( nulW, str ))
+        {
+            WINE_TRACE("Deleting file %s\n", wine_dbgstr_w(value) );
+            if( !DeleteFileW( value ) )
+                WINE_WARN("Error deleting file %s\n", wine_dbgstr_w(value) );
+        }
+        else
+        {
+            WINE_TRACE("Renaming file %s to %s\n", wine_dbgstr_w(value), wine_dbgstr_w(str) );
 
-                    if( !MoveFileExA(value, buffer, MOVEFILE_COPY_ALLOWED|
-                            MOVEFILE_REPLACE_EXISTING) )
-                    {
-                        WINE_WARN("Error renaming \"%s\" to \"%s\"\n", value,
-                                buffer );
-                    }
-                }
-	    }
-	}
+            if( !MoveFileExW(value, str, MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING) )
+                WINE_WARN("Error renaming %s to %s\n", wine_dbgstr_w(value), wine_dbgstr_w(str) );
+        }
+        str = value;
     }
 
-    CloseHandle( hFile );
+    if (buffer != initial_buffer) HeapFree( GetProcessHeap(), 0, buffer );
 
-    if( !MoveFileExA( RENAME_FILE, RENAME_FILE_TO, MOVEFILE_REPLACE_EXISTING) )
+    if( !MoveFileExW( wininitW, wininitbakW, MOVEFILE_REPLACE_EXISTING) )
     {
         WINE_ERR("Couldn't rename wininit.ini, error %d\n", GetLastError() );
 
