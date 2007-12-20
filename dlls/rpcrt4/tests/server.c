@@ -667,6 +667,7 @@ basic_tests(void)
 
   str = get_filename();
   ok(!strcmp(str, __FILE__), "get_filename() returned %s instead of %s\n", str, __FILE__);
+  midl_user_free(str);
 }
 
 static void
