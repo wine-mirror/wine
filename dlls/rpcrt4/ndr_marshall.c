@@ -664,7 +664,13 @@ static inline void safe_copy_from_buffer(MIDL_STUB_MESSAGE *pStubMsg, void *p, U
 {
     if ((pStubMsg->Buffer + size < pStubMsg->Buffer) || /* integer overflow of pStubMsg->Buffer */
         (pStubMsg->Buffer + size > pStubMsg->BufferEnd))
+    {
+        ERR("buffer overflow - Buffer = %p, BufferEnd = %p, size = %u\n",
+            pStubMsg->Buffer, pStubMsg->BufferEnd, size);
         RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
+    if (p == pStubMsg->Buffer)
+        ERR("pointer is the same as the buffer\n");
     memcpy(p, pStubMsg->Buffer, size);
     pStubMsg->Buffer += size;
 }
