@@ -5481,8 +5481,13 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
         {0,  12,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
         D3DDECL_END()
     };
+    static const D3DVERTEXELEMENT9 decl_elements_positiont[] = {
+        {0,   0,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITIONT,      0},
+        {0,  16,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
+        D3DDECL_END()
+    };
     IDirect3DVertexDeclaration9 *dcl_float = NULL, *dcl_short = NULL, *dcl_ubyte = NULL, *dcl_color = NULL;
-    IDirect3DVertexDeclaration9 *dcl_color_2 = NULL, *dcl_ubyte_2 = NULL;
+    IDirect3DVertexDeclaration9 *dcl_color_2 = NULL, *dcl_ubyte_2 = NULL, *dcl_positiont;
     IDirect3DVertexBuffer9 *vb, *vb2;
     struct vertex quad1[] =                             /* D3DCOLOR */
     {
@@ -5551,6 +5556,12 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
          0.0,    0.0,     0.1,
          0.0,    1.0,     0.1
     };
+    struct tvertex quad_transformed[] = {
+       {  90,    110,     0.1,      2.0,        0x00ffff00},
+       { 570,    110,     0.1,      2.0,        0x00ffff00},
+       {  90,    300,     0.1,      2.0,        0x00ffff00},
+       { 570,    300,     0.1,      2.0,        0x00ffff00}
+    };
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
@@ -5566,6 +5577,8 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_ubyte4n_2streams, &dcl_ubyte_2);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_d3dcolor_2streams, &dcl_color_2);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_positiont, &dcl_positiont);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
 
     size = max(sizeof(quad1), max(sizeof(quad2), max(sizeof(quad3), max(sizeof(quad4), sizeof(quads)))));
@@ -5725,6 +5738,83 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
            "D3DDECLTYPE_FLOAT4 returned color %08x, expected 0x00ff0000\n", color);
     }
 
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad_transformed), (void **) &data, 0);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %s\n", DXGetErrorString9(hr));
+    memcpy(data, quad_transformed, sizeof(quad_transformed));
+    hr = IDirect3DVertexBuffer9_Unlock(vb);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, dcl_positiont);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 0, sizeof(quad_transformed[0]));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitive failed, hr = %#08x\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    color = getPixelColor(device, 88, 108);
+    ok(color == 0x000000ff,
+       "pixel 88/108 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 92, 108);
+    ok(color == 0x000000ff,
+       "pixel 92/108 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 88, 112);
+    ok(color == 0x000000ff,
+       "pixel 88/112 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 92, 112);
+    ok(color == 0x00ffff00,
+       "pixel 92/112 has color %08x, expected 0x00ffff00\n", color);
+
+    color = getPixelColor(device, 568, 108);
+    ok(color == 0x000000ff,
+       "pixel 568/108 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 572, 108);
+    ok(color == 0x000000ff,
+       "pixel 572/108 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 568, 112);
+    ok(color == 0x00ffff00,
+       "pixel 568/112 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 572, 112);
+    ok(color == 0x000000ff,
+       "pixel 572/112 has color %08x, expected 0x000000ff\n", color);
+
+    color = getPixelColor(device, 88, 298);
+    ok(color == 0x000000ff,
+       "pixel 88/298 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 92, 298);
+    ok(color == 0x00ffff00,
+       "pixel 92/298 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 88, 302);
+    ok(color == 0x000000ff,
+       "pixel 88/302 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 92, 302);
+    ok(color == 0x000000ff,
+       "pixel 92/302 has color %08x, expected 0x000000ff\n", color);
+
+    color = getPixelColor(device, 568, 298);
+    ok(color == 0x00ffff00,
+       "pixel 568/298 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 572, 298);
+    ok(color == 0x000000ff,
+       "pixel 572/298 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 568, 302);
+    ok(color == 0x000000ff,
+       "pixel 568/302 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 572, 302);
+    ok(color == 0x000000ff,
+       "pixel 572/302 has color %08x, expected 0x000000ff\n", color);
+
     /* This test is pointless without those two declarations: */
     if(!dcl_color_2 || !dcl_ubyte_2) goto out;
 
@@ -5800,6 +5890,7 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     if(dcl_color) IDirect3DVertexDeclaration9_Release(dcl_color);
     if(dcl_color_2) IDirect3DVertexDeclaration9_Release(dcl_color_2);
     if(dcl_ubyte_2) IDirect3DVertexDeclaration9_Release(dcl_ubyte_2);
+    if(dcl_positiont) IDirect3DVertexDeclaration9_Release(dcl_positiont);
 }
 
 struct vertex_float16color {
