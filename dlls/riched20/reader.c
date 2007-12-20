@@ -552,7 +552,7 @@ RTFCharSetToCodePage(RTF_Info *info, int charset)
                         /* FIXME: TranslateCharsetInfo does not work as good as it
                          * should, so let's use it only when all else fails */
                         if (!TranslateCharsetInfo(&n, &csi, TCI_SRCCHARSET))
-				ERR("%s: unknown charset %u\n", __FUNCTION__, charset);
+                                ERR("unknown charset %d\n", charset);
 			else
                                 return csi.ciACP;
 		}
