@@ -709,7 +709,7 @@ DWORD WINAPI ThunkInitLS(
 
 	if (!addr[1])
 		return 0;
-	*(DWORD*)thunk = addr[1];
+	*thunk = addr[1];
 
 	return addr[1];
 }
@@ -1645,7 +1645,7 @@ static BOOL THUNK_Init(void)
     ThunkletHeap = HeapCreate( 0, 0x10000, 0x10000 );
     if (!ThunkletHeap) return FALSE;
 
-    ThunkletCodeSel = SELECTOR_AllocBlock( (void *)ThunkletHeap, 0x10000, WINE_LDT_FLAGS_CODE );
+    ThunkletCodeSel = SELECTOR_AllocBlock( ThunkletHeap, 0x10000, WINE_LDT_FLAGS_CODE );
 
     thunk = HeapAlloc( ThunkletHeap, 0, 5 );
     if (!thunk) return FALSE;
@@ -1712,7 +1712,7 @@ static FARPROC THUNK_AllocLSThunklet( SEGPTR target, DWORD relay,
         thunk->jmp_glue = 0xE9;
 
         thunk->target  = (DWORD)target;
-        thunk->relay   = (DWORD)relay;
+        thunk->relay   = relay;
         thunk->glue    = (DWORD)glue - (DWORD)&thunk->type;
 
         thunk->type    = THUNKLET_TYPE_LS;
@@ -1746,7 +1746,7 @@ static SEGPTR THUNK_AllocSLThunklet( FARPROC target, DWORD relay,
         thunk->jmp_glue = 0xEA;
 
         thunk->target  = (DWORD)target;
-        thunk->relay   = (DWORD)relay;
+        thunk->relay   = relay;
         thunk->glue    = (DWORD)glue;
 
         thunk->type    = THUNKLET_TYPE_SL;
@@ -2076,7 +2076,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE16 handle, LPSTR func_name)
     if (!code_sel32)
     {
         if (!ThunkletHeap) THUNK_Init();
-        code_sel32 = SELECTOR_AllocBlock( (void *)ThunkletHeap, 0x10000,
+        code_sel32 = SELECTOR_AllocBlock( ThunkletHeap, 0x10000,
                                           WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
         if (!code_sel32) return 0;
     }

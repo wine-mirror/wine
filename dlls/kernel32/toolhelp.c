@@ -98,7 +98,7 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_MODULE** ldr_mod, ULON
                                         &pbi, sizeof(pbi), NULL );
     if (!status)
     {
-        if (ReadProcessMemory( hProcess, &((PEB*)pbi.PebBaseAddress)->LdrData,
+        if (ReadProcessMemory( hProcess, &pbi.PebBaseAddress->LdrData,
                                &pLdrData, sizeof(pLdrData), NULL ) &&
             ReadProcessMemory( hProcess,
                                &pLdrData->InLoadOrderModuleList.Flink,
