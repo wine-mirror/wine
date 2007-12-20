@@ -4307,34 +4307,6 @@ BOOL WINAPI DuplicateToken(
                              DuplicateTokenHandle );
 }
 
-BOOL WINAPI EnumDependentServicesA(
-        SC_HANDLE hService,
-        DWORD dwServiceState,
-        LPENUM_SERVICE_STATUSA lpServices,
-        DWORD cbBufSize,
-        LPDWORD pcbBytesNeeded,
-        LPDWORD lpServicesReturned )
-{
-    FIXME("%p 0x%08x %p 0x%08x %p %p - stub\n", hService, dwServiceState,
-          lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
-
-    return FALSE;
-}
-
-BOOL WINAPI EnumDependentServicesW(
-        SC_HANDLE hService,
-        DWORD dwServiceState,
-        LPENUM_SERVICE_STATUSW lpServices,
-        DWORD cbBufSize,
-        LPDWORD pcbBytesNeeded,
-        LPDWORD lpServicesReturned )
-{
-    FIXME("%p 0x%08x %p 0x%08x %p %p - stub\n", hService, dwServiceState,
-          lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
-
-    return FALSE;
-}
-
 /******************************************************************************
  * ComputeStringSidSize
  */

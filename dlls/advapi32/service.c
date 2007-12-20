@@ -2570,3 +2570,31 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceNam
 
     return handle;
 }
+
+/******************************************************************************
+ * EnumDependentServicesA [ADVAPI32.@]
+ */
+BOOL WINAPI EnumDependentServicesA( SC_HANDLE hService, DWORD dwServiceState,
+                                    LPENUM_SERVICE_STATUSA lpServices, DWORD cbBufSize,
+        LPDWORD pcbBytesNeeded, LPDWORD lpServicesReturned )
+{
+    FIXME("%p 0x%08x %p 0x%08x %p %p - stub\n", hService, dwServiceState,
+          lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
+
+    *lpServicesReturned = 0;
+    return TRUE;
+}
+
+/******************************************************************************
+ * EnumDependentServicesW [ADVAPI32.@]
+ */
+BOOL WINAPI EnumDependentServicesW( SC_HANDLE hService, DWORD dwServiceState,
+                                    LPENUM_SERVICE_STATUSW lpServices, DWORD cbBufSize,
+                                    LPDWORD pcbBytesNeeded, LPDWORD lpServicesReturned )
+{
+    FIXME("%p 0x%08x %p 0x%08x %p %p - stub\n", hService, dwServiceState,
+          lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
+
+    *lpServicesReturned = 0;
+    return TRUE;
+}
