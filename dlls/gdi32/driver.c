@@ -414,6 +414,11 @@ DEVMODEW * WINAPI GdiConvertToDevmodeW(const DEVMODEA *dmA)
     WORD dmW_size, dmA_size;
 
     dmA_size = dmA->dmSize;
+
+    /* this is the minimal dmSize that XP accepts */
+    if (dmA_size < FIELD_OFFSET(DEVMODEA, dmFields))
+        return NULL;
+
     if (dmA_size > sizeof(DEVMODEA))
         dmA_size = sizeof(DEVMODEA);
 

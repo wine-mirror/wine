@@ -222,6 +222,19 @@ static void test_GdiConvertToDevmodeW(void)
        "expected %04x, got %04x\n",
         FIELD_OFFSET(DEVMODEW, dmPanningHeight) + sizeof(dmW->dmPanningHeight), dmW->dmSize);
     HeapFree(GetProcessHeap(), 0, dmW);
+
+    SetLastError(0xdeadbeef);
+    dmA.dmSize = 0;
+    dmW = pGdiConvertToDevmodeW(&dmA);
+    ok(!dmW, "GdiConvertToDevmodeW should fail\n");
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+
+    /* this is the minimal dmSize that XP accepts */
+    dmA.dmSize = FIELD_OFFSET(DEVMODEA, dmFields);
+    dmW = pGdiConvertToDevmodeW(&dmA);
+    ok(dmW->dmSize == FIELD_OFFSET(DEVMODEW, dmFields),
+       "expected %04x, got %04x\n", FIELD_OFFSET(DEVMODEW, dmFields), dmW->dmSize);
+    HeapFree(GetProcessHeap(), 0, dmW);
 }
 
 START_TEST(dc)
