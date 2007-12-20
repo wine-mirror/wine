@@ -358,6 +358,10 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
     TRACE("flags=%s\n",_CDS_flags(flags));
     if (devmode)
     {
+        /* this is the minimal dmSize that XP accepts */
+        if (devmode->dmSize < FIELD_OFFSET(DEVMODEW, dmFields))
+            return DISP_CHANGE_FAILED;
+
         TRACE("DM_fields=%s\n",_DM_fields(devmode->dmFields));
         TRACE("width=%d height=%d bpp=%d freq=%d (%s)\n",
               devmode->dmPelsWidth,devmode->dmPelsHeight,

@@ -2999,8 +2999,13 @@ LONG WINAPI ChangeDisplaySettingsExA( LPCSTR devname, LPDEVMODEA devmode, HWND h
         DEVMODEW *devmodeW;
 
         devmodeW = GdiConvertToDevmodeW(devmode);
-        ret = ChangeDisplaySettingsExW(nameW.Buffer, devmodeW, hwnd, flags, lparam);
-        HeapFree(GetProcessHeap(), 0, devmodeW);
+        if (devmodeW)
+        {
+            ret = ChangeDisplaySettingsExW(nameW.Buffer, devmodeW, hwnd, flags, lparam);
+            HeapFree(GetProcessHeap(), 0, devmodeW);
+        }
+        else
+            ret = DISP_CHANGE_SUCCESSFUL;
     }
     else
     {

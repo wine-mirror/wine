@@ -25,6 +25,7 @@
 
 static HMODULE hdll;
 static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODEA, HWND, DWORD, LPVOID);
+static LONG (WINAPI *pChangeDisplaySettingsExW)(LPCWSTR, LPDEVMODEW, HWND, DWORD, LPVOID);
 static BOOL (WINAPI *pEnumDisplayDevicesA)(LPCSTR,DWORD,LPDISPLAY_DEVICEA,DWORD);
 static BOOL (WINAPI *pEnumDisplayMonitors)(HDC,LPRECT,MONITORENUMPROC,LPARAM);
 static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
@@ -41,6 +42,7 @@ static void init_function_pointers(void)
       trace("GetProcAddress(%s) failed\n", #func);
 
     GET_PROC(ChangeDisplaySettingsExA)
+    GET_PROC(ChangeDisplaySettingsExW)
     GET_PROC(EnumDisplayDevicesA)
     GET_PROC(EnumDisplayMonitors)
     GET_PROC(GetMonitorInfoA)
@@ -113,7 +115,7 @@ struct vid_mode
     LONG success;
 };
 
-static struct vid_mode vid_modes_test[] = {
+static const struct vid_mode vid_modes_test[] = {
     {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY, 1},
     {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT |                 DM_DISPLAYFREQUENCY, 1},
     {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL                      , 1},
@@ -135,7 +137,9 @@ static struct vid_mode vid_modes_test[] = {
 
 static void test_ChangeDisplaySettingsEx(void)
 {
-    DEVMODE dm;
+    DEVMODEA dm;
+    DEVMODEW dmW;
+    DWORD width;
     LONG res;
     int i;
 
@@ -144,6 +148,31 @@ static void test_ChangeDisplaySettingsEx(void)
         skip("ChangeDisplaySettingsExA is not available\n");
         return;
     }
+
+    SetLastError(0xdeadbeef);
+    res = EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm);
+    ok(res, "EnumDisplaySettings error %u\n", GetLastError());
+
+    width = dm.dmPelsWidth;
+
+    /* the following 2 tests show that dm.dmSize being 0 is invalid, but
+     * ChangeDisplaySettingsExA still reports success.
+     */
+    memset(&dm, 0, sizeof(dm));
+    dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+    dm.dmPelsWidth = width;
+    res = pChangeDisplaySettingsExA(NULL, &dm, NULL, CDS_TEST, NULL);
+    ok(res == DISP_CHANGE_SUCCESSFUL,
+       "ChangeDisplaySettingsExA returned %d, expected DISP_CHANGE_SUCCESSFUL\n", res);
+
+    memset(&dmW, 0, sizeof(dmW));
+    dmW.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+    dmW.dmPelsWidth = width;
+    SetLastError(0xdeadbeef);
+    res = pChangeDisplaySettingsExW(NULL, &dmW, NULL, CDS_TEST, NULL);
+    if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        ok(res == DISP_CHANGE_FAILED,
+           "ChangeDisplaySettingsExW returned %d, expected DISP_CHANGE_FAILED\n", res);
 
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
