@@ -145,8 +145,7 @@ static BOOL FD31_ScanDir(HWND hWnd, LPCWSTR newPath)
 	    if (scptr)	*scptr = 0;
             while (*filter == ' ') filter++;
 	    TRACE("Using file spec %s\n", debugstr_w(filter));
-	    if (SendMessageW(hdlg, LB_DIR, 0, (LPARAM)filter) == LB_ERR)
-	        return FALSE;
+	    SendMessageW(hdlg, LB_DIR, 0, (LPARAM)filter);
 	    if (scptr) *scptr = ';';
 	        filter = (scptr) ? (scptr + 1) : 0;
 	 }
