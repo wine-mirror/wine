@@ -94,6 +94,7 @@ static void test_CreateBody(void)
     ULONG count, found_param, i;
     MIMEPARAMINFO *param_info;
     IMimeAllocator *alloc;
+    BODYOFFSETS offsets;
 
     hr = CoCreateInstance(&CLSID_IMimeBody, NULL, CLSCTX_INPROC_SERVER, &IID_IMimeBody, (void**)&body);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -137,6 +138,14 @@ static void test_CreateBody(void)
     hr = IMimeBody_GetCurrentEncoding(body, &enc);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(enc == IET_8BIT, "encoding %d\n", enc);
+
+    memset(&offsets, 0xcc, sizeof(offsets));
+    hr = IMimeBody_GetOffsets(body, &offsets);
+    ok(hr == MIME_E_NO_DATA, "ret %08x\n", hr);
+    ok(offsets.cbBoundaryStart == 0, "got %d\n", offsets.cbBoundaryStart);
+    ok(offsets.cbHeaderStart == 0, "got %d\n", offsets.cbHeaderStart);
+    ok(offsets.cbBodyStart == 0, "got %d\n", offsets.cbBodyStart);
+    ok(offsets.cbBodyEnd == 0, "got %d\n", offsets.cbBodyEnd);
 
     hr = MimeOleGetAllocator(&alloc);
     ok(hr == S_OK, "ret %08x\n", hr);

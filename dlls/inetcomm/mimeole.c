@@ -107,6 +107,7 @@ typedef struct MimeBody
     ENCODINGTYPE encoding;
     void *data;
     IID data_iid;
+    BODYOFFSETS body_offsets;
 } MimeBody;
 
 static inline MimeBody *impl_from_IMimeBody( IMimeBody *iface )
@@ -857,8 +858,13 @@ static HRESULT WINAPI MimeBody_GetOffsets(
                                  IMimeBody* iface,
                                  LPBODYOFFSETS pOffsets)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    MimeBody *This = impl_from_IMimeBody(iface);
+    TRACE("(%p)->(%p)\n", This, pOffsets);
+
+    *pOffsets = This->body_offsets;
+
+    if(This->body_offsets.cbBodyEnd == 0) return MIME_E_NO_DATA;
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_GetCurrentEncoding(
@@ -1037,11 +1043,21 @@ static IMimeBodyVtbl body_vtbl =
     MimeBody_GetHandle
 };
 
+static HRESULT MimeBody_set_offsets(MimeBody *body, const BODYOFFSETS *offsets)
+{
+    TRACE("setting offsets to %d, %d, %d, %d\n", offsets->cbBoundaryStart,
+          offsets->cbHeaderStart, offsets->cbBodyStart, offsets->cbBodyEnd);
+
+    body->body_offsets = *offsets;
+    return S_OK;
+}
+
 #define FIRST_CUSTOM_PROP_ID 0x100
 
 HRESULT MimeBody_create(IUnknown *outer, void **obj)
 {
     MimeBody *This;
+    BODYOFFSETS body_offsets;
 
     *obj = NULL;
 
@@ -1061,6 +1077,10 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj)
     This->encoding = IET_7BIT;
     This->data = NULL;
     This->data_iid = IID_NULL;
+
+    body_offsets.cbBoundaryStart = body_offsets.cbHeaderStart = 0;
+    body_offsets.cbBodyStart     = body_offsets.cbBodyEnd     = 0;
+    MimeBody_set_offsets(This, &body_offsets);
 
     *obj = (IMimeBody *)&This->lpVtbl;
     return S_OK;
