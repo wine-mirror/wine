@@ -928,7 +928,7 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
                           LPVOID lpNew, ULONG *lpCount)
 {
     static const BOOL bBadPtr = TRUE; /* Windows bug - Assumes source is bad */
-    LPSPropValue lpDest = (LPSPropValue)lpProps;
+    LPSPropValue lpDest = lpProps;
     ULONG ulCount = cValues * sizeof(SPropValue);
     ULONG ulLen, i;
     int iter;
@@ -964,7 +964,7 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
             break;
         case PT_STRING8:
             ulLen = bBadPtr ? 0 : lstrlenA(lpDest->Value.lpszA) + 1u;
-            lpDest->Value.lpszA = (LPSTR)RELOC_PTR(lpDest->Value.lpszA);
+            lpDest->Value.lpszA = RELOC_PTR(lpDest->Value.lpszA);
             if (bBadPtr)
                 ulLen = lstrlenA(lpDest->Value.lpszA) + 1u;
             ulCount += ulLen;
@@ -999,7 +999,7 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
                     {
                         ULONG ulStrLen = bBadPtr ? 0 : lstrlenA(lpDest->Value.MVszA.lppszA[i]) + 1u;
 
-                        lpDest->Value.MVszA.lppszA[i] = (LPSTR)RELOC_PTR(lpDest->Value.MVszA.lppszA[i]);
+                        lpDest->Value.MVszA.lppszA[i] = RELOC_PTR(lpDest->Value.MVszA.lppszA[i]);
                         if (bBadPtr)
                             ulStrLen = lstrlenA(lpDest->Value.MVszA.lppszA[i]) + 1u;
                         ulCount += ulStrLen;
