@@ -3253,6 +3253,15 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
             TRACE("Colorfill\n");
 
+            /* This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0] || dstSwapchain
+                must be true if we are here */
+            if (This != (IWineD3DSurfaceImpl *) myDevice->render_targets[0] &&
+                    !(This == (IWineD3DSurfaceImpl*) dstSwapchain->frontBuffer ||
+                      (dstSwapchain->backBuffer && This == (IWineD3DSurfaceImpl*) dstSwapchain->backBuffer[0]))) {
+                TRACE("Surface is higher back buffer, falling back to software\n");
+                return WINED3DERR_INVALIDCALL;
+            }
+
             /* The color as given in the Blt function is in the format of the frame-buffer...
              * 'clear' expect it in ARGB format => we need to do some conversion :-)
              */
@@ -3288,44 +3297,12 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 return WINED3DERR_INVALIDCALL;
             }
 
-            ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_RESOURCELOAD);
-            ENTER_GL();
-
-            TRACE("Calling GetSwapChain with mydevice = %p\n", myDevice);
-            if(dstSwapchain && dstSwapchain->backBuffer && This == (IWineD3DSurfaceImpl*) dstSwapchain->backBuffer[0]) {
-                glDrawBuffer(GL_BACK);
-                checkGLcall("glDrawBuffer(GL_BACK)");
-            } else if (dstSwapchain && This == (IWineD3DSurfaceImpl*) dstSwapchain->frontBuffer) {
-                glDrawBuffer(GL_FRONT);
-                checkGLcall("glDrawBuffer(GL_FRONT)");
-            } else if(This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) {
-                glDrawBuffer(myDevice->offscreenBuffer);
-                checkGLcall("glDrawBuffer(myDevice->offscreenBuffer3)");
-            } else {
-                LEAVE_GL();
-                TRACE("Surface is higher back buffer, falling back to software\n");
-                return WINED3DERR_INVALIDCALL;
-            }
-
             TRACE("(%p) executing Render Target override, color = %x\n", This, color);
-
-            IWineD3DDevice_Clear( (IWineD3DDevice *) myDevice,
-                                1 /* Number of rectangles */,
-                                &rect,
-                                WINED3DCLEAR_TARGET,
-                                color,
-                                0.0 /* Z */,
-                                0 /* Stencil */);
-
-            /* Restore the original draw buffer */
-            if(!dstSwapchain) {
-                glDrawBuffer(myDevice->offscreenBuffer);
-            } else if(dstSwapchain->backBuffer && dstSwapchain->backBuffer[0]) {
-                glDrawBuffer(GL_BACK);
-            }
-            vcheckGLcall("glDrawBuffer");
-            LEAVE_GL();
-
+            IWineD3DDeviceImpl_ClearSurface(myDevice, This,
+                                            1, /* Number of rectangles */
+                                            &rect, WINED3DCLEAR_TARGET, color,
+                                            0.0 /* Z */,
+                                            0 /* Stencil */);
             return WINED3D_OK;
         }
     }

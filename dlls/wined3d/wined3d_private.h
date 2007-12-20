@@ -769,6 +769,9 @@ struct IWineD3DDeviceImpl
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
 
+HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfaceImpl *target, DWORD Count,
+                                        CONST WINED3DRECT* pRects, DWORD Flags, WINED3DCOLOR Color,
+                                        float Z, DWORD Stencil);
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This);
 void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state);
 static inline BOOL isStateDirty(WineD3DContext *context, DWORD state) {

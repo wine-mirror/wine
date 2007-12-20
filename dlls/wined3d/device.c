@@ -4775,6 +4775,168 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
+/* Not called from the VTable (internal subroutine) */
+HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfaceImpl *target, DWORD Count,
+                                        CONST WINED3DRECT* pRects, DWORD Flags, WINED3DCOLOR Color,
+                                        float Z, DWORD Stencil) {
+    GLbitfield     glMask = 0;
+    unsigned int   i;
+    WINED3DRECT curRect;
+    RECT vp_rect;
+    WINED3DVIEWPORT *vp = &This->stateBlock->viewport;
+    UINT drawable_width, drawable_height;
+
+    /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
+     * drawable. After the clear we'll mark the drawable up to date, so we have to make sure that this is true
+     * for the cleared parts, and the untouched parts.
+     *
+     * If we're clearing the whole target there is no need to copy it into the drawable, it will be overwritten
+     * anyway. If we're not clearing the color buffer we don't have to copy either since we're not going to set
+     * the drawable up to date. We have to check all settings that limit the clear area though. Do not bother
+     * checking all this if the dest surface is in the drawable anyway.
+     */
+    if((Flags & WINED3DCLEAR_TARGET) && !(target->Flags & SFLAG_INDRAWABLE)) {
+        while(1) {
+            if(vp->X != 0 || vp->Y != 0 ||
+               vp->Width < target->currentDesc.Width || vp->Height < target->currentDesc.Height) {
+                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
+                break;
+            }
+            if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE] && (
+               This->stateBlock->scissorRect.left > 0 || This->stateBlock->scissorRect.top > 0 ||
+               This->stateBlock->scissorRect.right < target->currentDesc.Width ||
+               This->stateBlock->scissorRect.bottom < target->currentDesc.Height)) {
+                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
+                break;
+            }
+            if(Count > 0 && pRects && (
+               pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
+               pRects[0].x2 < target->currentDesc.Width ||
+               pRects[0].y2 < target->currentDesc.Height)) {
+                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
+                break;
+            }
+            break;
+        }
+    }
+
+    target->get_drawable_size(target, &drawable_width, &drawable_height);
+
+    ActivateContext(This, (IWineD3DSurface *) target, CTXUSAGE_CLEAR);
+    ENTER_GL();
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        apply_fbo_state((IWineD3DDevice *) This);
+    }
+
+    /* Only set the values up once, as they are not changing */
+    if (Flags & WINED3DCLEAR_STENCIL) {
+        glClearStencil(Stencil);
+        checkGLcall("glClearStencil");
+        glMask = glMask | GL_STENCIL_BUFFER_BIT;
+        glStencilMask(0xFFFFFFFF);
+    }
+
+    if (Flags & WINED3DCLEAR_ZBUFFER) {
+        glDepthMask(GL_TRUE);
+        glClearDepth(Z);
+        checkGLcall("glClearDepth");
+        glMask = glMask | GL_DEPTH_BUFFER_BIT;
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
+    }
+
+    if (Flags & WINED3DCLEAR_TARGET) {
+        TRACE("Clearing screen with glClear to color %x\n", Color);
+        glClearColor(D3DCOLOR_R(Color),
+                     D3DCOLOR_G(Color),
+                     D3DCOLOR_B(Color),
+                     D3DCOLOR_A(Color));
+        checkGLcall("glClearColor");
+
+        /* Clear ALL colors! */
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glMask = glMask | GL_COLOR_BUFFER_BIT;
+    }
+
+    vp_rect.left = vp->X;
+    vp_rect.top = vp->Y;
+    vp_rect.right = vp->X + vp->Width;
+    vp_rect.bottom = vp->Y + vp->Height;
+    if (!(Count > 0 && pRects)) {
+        if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE]) {
+            IntersectRect(&vp_rect, &vp_rect, &This->stateBlock->scissorRect);
+        }
+        if(This->render_offscreen) {
+            glScissor(vp_rect.left, vp_rect.top,
+                        vp_rect.right - vp_rect.left, vp_rect.bottom - vp_rect.top);
+        } else {
+            glScissor(vp_rect.left, drawable_height - vp_rect.bottom,
+                        vp_rect.right - vp_rect.left, vp_rect.bottom - vp_rect.top);
+        }
+        checkGLcall("glScissor");
+        glClear(glMask);
+        checkGLcall("glClear");
+    } else {
+        /* Now process each rect in turn */
+        for (i = 0; i < Count; i++) {
+            /* Note gl uses lower left, width/height */
+            IntersectRect((RECT *) &curRect, &vp_rect, (RECT *) &pRects[i]);
+            if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE]) {
+                IntersectRect((RECT *) &curRect, (RECT *) &curRect, &This->stateBlock->scissorRect);
+            }
+            TRACE("(%p) Rect=(%d,%d)->(%d,%d) glRect=(%d,%d), len=%d, hei=%d\n", This,
+                  pRects[i].x1, pRects[i].y1, pRects[i].x2, pRects[i].y2,
+                  curRect.x1, (target->currentDesc.Height - curRect.y2),
+                  curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
+
+            /* Tests show that rectangles where x1 > x2 or y1 > y2 are ignored silently.
+             * The rectangle is not cleared, no error is returned, but further rectanlges are
+             * still cleared if they are valid
+             */
+            if(curRect.x1 > curRect.x2 || curRect.y1 > curRect.y2) {
+                TRACE("Rectangle with negative dimensions, ignoring\n");
+                continue;
+            }
+
+            if(This->render_offscreen) {
+                glScissor(curRect.x1, curRect.y1,
+                          curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
+            } else {
+                glScissor(curRect.x1, drawable_height - curRect.y2,
+                          curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
+            }
+            checkGLcall("glScissor");
+
+            glClear(glMask);
+            checkGLcall("glClear");
+        }
+    }
+
+    /* Restore the old values (why..?) */
+    if (Flags & WINED3DCLEAR_STENCIL) {
+        glStencilMask(This->stateBlock->renderState[WINED3DRS_STENCILWRITEMASK]);
+    }
+    if (Flags & WINED3DCLEAR_TARGET) {
+        DWORD mask = This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE];
+        glColorMask(mask & WINED3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
+                    mask & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                    mask & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
+                    mask & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
+
+        /* Dirtify the target surface for now. If the surface is locked regularly, and an up to date sysmem copy exists,
+         * it is most likely more efficient to perform a clear on the sysmem copy too instead of downloading it
+         */
+        IWineD3DSurface_ModifyLocation(This->lastActiveRenderTarget, SFLAG_INDRAWABLE, TRUE);
+        /* TODO: Move the fbo logic into ModifyLocation() */
+        if(This->render_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+            target->Flags |= SFLAG_INTEXTURE;
+        }
+    }
+    LEAVE_GL();
+
+    return WINED3D_OK;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONST WINED3DRECT* pRects,
                                         DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
