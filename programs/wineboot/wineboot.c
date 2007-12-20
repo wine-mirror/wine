@@ -29,7 +29,7 @@
  * - PendingRenameOperations (rename operations left in the registry - Win NT+ only)
  *
  * Startup (before the user logs in)
- * - Services (NT, ?semi-synchronous?, not implemented yet)
+ * - Services (NT)
  * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce (9x, asynch)
  * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServices (9x, asynch)
  * 
@@ -622,6 +622,51 @@ static int ProcessWindowsFileProtection(void)
     return 1;
 }
 
+/* start services */
+static void start_services(void)
+{
+    static const WCHAR servicesW[] = {'S','y','s','t','e','m','\\',
+                                      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                      'S','e','r','v','i','c','e','s',0};
+    static const WCHAR startW[] = {'S','t','a','r','t',0};
+    HKEY hkey, skey;
+    DWORD type, size, start, index = 0;
+    WCHAR name[MAX_PATH];
+    SC_HANDLE manager;
+
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, servicesW, &hkey )) return;
+
+    if (!(manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_ALL_ACCESS )))
+    {
+        RegCloseKey( hkey );
+        return;
+    }
+
+    while (!RegEnumKeyW( hkey, index++, name, sizeof(name) ))
+    {
+        if (RegOpenKeyW( hkey, name, &skey )) continue;
+        size = sizeof(start);
+        if (!RegQueryValueExW( skey, startW, NULL, &type, (LPBYTE)&start, &size ) && type == REG_DWORD)
+        {
+            if (start == SERVICE_BOOT_START ||
+                start == SERVICE_SYSTEM_START ||
+                start == SERVICE_AUTO_START)
+            {
+                SC_HANDLE handle = OpenServiceW( manager, name, SERVICE_ALL_ACCESS );
+                if (handle)
+                {
+                    WINE_TRACE( "starting service %s start %u\n", wine_dbgstr_w(name), start );
+                    StartServiceW( handle, 0, NULL );
+                    CloseServiceHandle( handle );
+                }
+            }
+        }
+        RegCloseKey( skey );
+    }
+    CloseServiceHandle( manager );
+    RegCloseKey( hkey );
+}
+
 /* Process items in the StartUp group of the user's Programs under the Start Menu. Some installers put
  * shell links here to restart themselves after boot. */
 static BOOL ProcessStartupItems(void)
@@ -790,7 +835,11 @@ int main( int argc, char *argv[] )
 
     ProcessWindowsFileProtection();
     ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICESONCE], TRUE, FALSE );
-    if (!restart) ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES], FALSE, FALSE );
+    if (!restart)
+    {
+        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES], FALSE, FALSE );
+        start_services();
+    }
     ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE], TRUE, TRUE );
     if (!restart)
     {
