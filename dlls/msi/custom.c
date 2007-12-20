@@ -689,6 +689,8 @@ static DWORD WINAPI ACTION_CallDllFunction( const GUID *guid )
             TRACE("calling %s\n", debugstr_w( function ) );
             handle_msi_break( function );
 
+            CoInitialize(NULL);
+
             __TRY
             {
                 r = fn( hPackage );
@@ -700,6 +702,8 @@ static DWORD WINAPI ACTION_CallDllFunction( const GUID *guid )
                 r = ERROR_SUCCESS;
             }
             __ENDTRY;
+
+            CoUninitialize();
 
             MsiCloseHandle( hPackage );
         }
