@@ -1268,7 +1268,7 @@ typedef struct IWineD3DVertexDeclarationImpl {
     DWORD                   streams[MAX_STREAMS];
     UINT                    num_streams;
     BOOL                    position_transformed;
-    BOOL                    half_float_used;
+    BOOL                    half_float_conv_needed;
 
     /* Ordered array of declaration types that need swizzling in a vshader */
     attrib_declaration      swizzled_attribs[MAX_ATTRIBS];

@@ -2884,7 +2884,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
     /* Default to no instancing */
     stateblock->wineD3DDevice->instancedDraw = FALSE;
 
-    if(((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->half_float_used && !GL_SUPPORT(NV_HALF_FLOAT)) {
+    if(((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->half_float_conv_needed) {
         /* This will be handled using drawStridedSlow */
         return;
     }

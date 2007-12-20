@@ -201,7 +201,7 @@ void primitiveDeclarationConvertToStridedData(
                 if((UINT_PTR)data < -This->stateBlock->loadBaseVertexIndex * stride) {
                     FIXME("System memory vertex data load offset is negative!\n");
                 }
-            } else if(vertexDeclaration->half_float_used && !GL_SUPPORT(NV_HALF_FLOAT)) {
+            } else if(vertexDeclaration->half_float_conv_needed) {
                 WARN("Half float vertex data used, but GL_NV_half_float is not supported. Not using vbos\n");
                 streamVBO = 0;
                 data = ((IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[element->Stream])->resource.allocatedMemory;
@@ -1127,7 +1127,7 @@ void drawPrimitive(IWineD3DDevice *iface,
             /* Instancing emulation with mixing immediate mode and arrays */
             drawStridedInstanced(iface, &This->strided_streams, calculatedNumberOfindices, glPrimType,
                             idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
-        } else if(GL_SUPPORT(NV_HALF_FLOAT) || (!((IWineD3DVertexDeclarationImpl *) This->stateBlock->vertexDecl)->half_float_used)) {
+        } else if(!((IWineD3DVertexDeclarationImpl *) This->stateBlock->vertexDecl)->half_float_conv_needed) {
             drawStridedFast(iface, calculatedNumberOfindices, glPrimType,
                             idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
         } else {

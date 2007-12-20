@@ -26,6 +26,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_decl);
 
+#define GLINFO_LOCATION This->wineD3DDevice->adapter->gl_info
+
 static void dump_wined3dvertexelement(const WINED3DVERTEXELEMENT *element) {
     TRACE("     Stream: %d\n", element->Stream);
     TRACE("     Offset: %d\n", element->Offset);
@@ -185,7 +187,9 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVerte
             This->num_swizzled_attribs++;
         } else if(This->pDeclarationWine[i].Type == WINED3DDECLTYPE_FLOAT16_2 ||
                   This->pDeclarationWine[i].Type == WINED3DDECLTYPE_FLOAT16_4) {
-            This->half_float_used = TRUE;
+            if(!GL_SUPPORT(NV_HALF_FLOAT)) {
+                This->half_float_conv_needed = TRUE;
+            }
         }
     }
 
