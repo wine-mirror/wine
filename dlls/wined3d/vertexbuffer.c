@@ -572,9 +572,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
                 switch(This->conv_map[j]) {
                     case CONV_NONE:
                         /* Done already */
-                        /* Vertex attribute sizes are always multiples of 4, but we can't skip 3 additional bytes
-                         * because the attributes don't have to start at aligned offsets
-                         */
+                        j += 3;
                         break;
                     case CONV_D3DCOLOR:
                         fixup_d3dcolor((DWORD *) (data + i * This->stride + j));

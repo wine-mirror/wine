@@ -736,6 +736,52 @@ static void test_fvf_decl_management(
     return;
 }
 
+static void test_vertex_declaration_alignment(
+    IDirect3DDevice9* device) {
+
+    HRESULT hr;
+    IDirect3DVertexDeclaration9* result_decl = NULL;
+    int i;
+
+    CONST D3DVERTEXELEMENT9 test_elements[5][3] =
+    {
+        {
+            { 0, 0, D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 16, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR  , 0 },
+            D3DDECL_END()
+        },
+        {
+            { 0, 0, D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 17, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR  , 0 },
+            D3DDECL_END()
+        },
+        {
+            { 0, 0, D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 18, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR  , 0 },
+            D3DDECL_END()
+        },
+        {
+            { 0, 0, D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 19, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR  , 0 },
+            D3DDECL_END()
+        },
+        {
+            { 0, 0, D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 20, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR  , 0 },
+            D3DDECL_END()
+        }
+    };
+    HRESULT results[5] = {D3D_OK, E_FAIL, E_FAIL, E_FAIL, D3D_OK};
+
+    for(i = 0; i < sizeof(test_elements) / sizeof(test_elements[0]); i++) {
+        result_decl = NULL;
+        hr = IDirect3DDevice9_CreateVertexDeclaration(device, test_elements[i], &result_decl);
+        ok(hr == results[i], "CreateVertexDeclaration for declaration %d returned %#x, expected %#x\n",
+                              i, hr, results[i]);
+        if(result_decl) IDirect3DVertexDeclaration9_Release(result_decl);
+    }
+}
+
 START_TEST(vertexdeclaration)
 {
     static D3DVERTEXELEMENT9 simple_decl[] = {
@@ -770,4 +816,5 @@ START_TEST(vertexdeclaration)
     test_get_declaration(decl_ptr, simple_decl, simple_decl_num_elements);
     test_fvf_decl_conversion(device_ptr);
     test_fvf_decl_management(device_ptr);
+    test_vertex_declaration_alignment(device_ptr);
 }

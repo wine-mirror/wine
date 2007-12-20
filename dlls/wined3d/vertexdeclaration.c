@@ -159,6 +159,12 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVerte
          */
         if(This->pDeclarationWine[i].Stream >= MAX_STREAMS) continue;
 
+        if(This->pDeclarationWine[i].Offset & 0x3) {
+            WARN("Declaration element %d is not 4 byte aligned(%d), returning E_FAIL\n", i, This->pDeclarationWine[i].Offset);
+            HeapFree(GetProcessHeap(), 0, This->pDeclarationWine);
+            return E_FAIL;
+        }
+
         if(!isPreLoaded[This->pDeclarationWine[i].Stream]) {
             This->streams[This->num_streams] = This->pDeclarationWine[i].Stream;
             This->num_streams++;

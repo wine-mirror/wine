@@ -368,7 +368,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
     if (FAILED(hr)) {
 
         /* free up object */
-        FIXME("(%p) call to IWineD3DDevice_CreateVertexDeclaration failed\n", This);
+        WARN("(%p) call to IWineD3DDevice_CreateVertexDeclaration failed\n", This);
         HeapFree(GetProcessHeap(), 0, object->elements);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
