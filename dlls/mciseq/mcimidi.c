@@ -863,9 +863,9 @@ static DWORD MIDI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 	    TRACE("hFile closed !\n");
 	}
 	HeapFree(GetProcessHeap(), 0, wmm->tracks);
-	HeapFree(GetProcessHeap(), 0, (LPWSTR)wmm->lpstrElementName);
-	HeapFree(GetProcessHeap(), 0, (LPSTR)wmm->lpstrCopyright);
-	HeapFree(GetProcessHeap(), 0, (LPSTR)wmm->lpstrName);
+	HeapFree(GetProcessHeap(), 0, wmm->lpstrElementName);
+	HeapFree(GetProcessHeap(), 0, wmm->lpstrCopyright);
+	HeapFree(GetProcessHeap(), 0, wmm->lpstrName);
     } else {
 	TRACE("Shouldn't happen... nUseCount=%d\n", wmm->nUseCount);
 	return MCIERR_INTERNAL;
