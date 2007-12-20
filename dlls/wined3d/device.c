@@ -2430,6 +2430,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     if (StreamNumber >= MAX_STREAMS) {
         WARN("Stream out of range %d\n", StreamNumber);
         return WINED3DERR_INVALIDCALL;
+    } else if(OffsetInBytes & 0x3) {
+        WARN("OffsetInBytes is not 4 byte aligned: %d\n", OffsetInBytes);
+        return WINED3DERR_INVALIDCALL;
     }
 
     oldSrc = This->updateStateBlock->streamSource[StreamNumber];

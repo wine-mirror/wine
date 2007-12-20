@@ -1655,6 +1655,86 @@ static void test_lights(void)
     if(d3d9) IDirect3D9_Release(d3d9);
 }
 
+static void test_set_stream_source(void)
+{
+    D3DPRESENT_PARAMETERS present_parameters;
+    IDirect3DDevice9 *device = NULL;
+    IDirect3D9 *d3d9;
+    HWND hwnd;
+    HRESULT hr;
+    IDirect3DVertexBuffer9 *pVertexBuffer;
+
+    d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
+    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!d3d9 || !hwnd) goto cleanup;
+
+    ZeroMemory(&present_parameters, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = hwnd;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+
+    hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+                                  D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device );
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!device)
+    {
+        hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, hwnd,
+                                      D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device );
+        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+        if(!device)
+        {
+            skip("Failed to create a d3d device\n");
+            goto cleanup;
+        }
+    }
+
+    hr = IDirect3DDevice9_CreateVertexBuffer( device, 512, 0, 0, D3DPOOL_DEFAULT, &pVertexBuffer, NULL );
+    ok(hr == D3D_OK, "Failed to create a vertex buffer, hr = %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 0, 32);
+    ok(hr == D3D_OK, "Failed to set the stream source, offset 0, hr = %s\n",
+       DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 1, 32);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 1, hr = %s\n",
+       DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 2, 32);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 2, hr = %s\n",
+       DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 3, 32);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 3, hr = %s\n",
+       DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 4, 32);
+    ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %s\n",
+      DXGetErrorString9(hr));
+
+    /* Try to set the NULL buffer with an offset and stride 0 */
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
+    ok(hr == D3D_OK, "Failed to set the stream source, offset 0, hr = %s\n",
+       DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 1, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 1, hr = %s\n",
+       DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 2, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 2, hr = %s\n",
+       DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 3, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 3, hr = %s\n",
+       DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 4, 0);
+    ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %s\n",
+       DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
+    ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %s\n", DXGetErrorString9(hr));
+
+    cleanup:
+    if(pVertexBuffer) IDirect3DDevice9_Release(pVertexBuffer);
+    if(device) IDirect3DDevice9_Release(device);
+    if(d3d9) IDirect3D9_Release(d3d9);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -1681,5 +1761,6 @@ START_TEST(device)
         test_null_stream();
         test_vertex_buffer_alignment();
         test_lights();
+        test_set_stream_source();
     }
 }
