@@ -2881,6 +2881,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
     int i;
     UINT *offset = stateblock->streamOffset;
     IWineD3DVertexBufferImpl *vb;
+    DWORD_PTR shift_index;
 
     /* Default to no instancing */
     stateblock->wineD3DDevice->instancedDraw = FALSE;
@@ -2915,13 +2916,15 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
                 TRACE("Attrib %d has original stride %d, new stride %d\n", i, strided->u.input[i].dwStride, vb->conv_stride);
                 TRACE("Original offset %p, additional offset 0x%08x\n",strided->u.input[i].lpData, vb->conv_shift[(DWORD_PTR) strided->u.input[i].lpData]);
                 TRACE("Opengl type %x\n", WINED3D_ATR_GLTYPE(strided->u.input[i].dwType));
+                shift_index = ((DWORD_PTR) strided->u.input[i].lpData + offset[strided->u.input[i].streamNo]);
+                shift_index = shift_index % strided->u.input[i].dwStride;
                 GL_EXTCALL(glVertexAttribPointerARB(i,
                                 WINED3D_ATR_SIZE(strided->u.input[i].dwType),
                                 WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
                                 WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
                                 vb->conv_stride,
 
-                                strided->u.input[i].lpData + vb->conv_shift[(DWORD_PTR) strided->u.input[i].lpData] +
+                                strided->u.input[i].lpData + vb->conv_shift[shift_index] +
                                 stateblock->loadBaseVertexIndex * strided->u.input[i].dwStride +
                                 offset[strided->u.input[i].streamNo]));
 

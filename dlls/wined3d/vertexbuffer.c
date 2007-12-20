@@ -197,6 +197,8 @@ static inline BOOL process_converted_attribute(IWineD3DVertexBufferImpl *This,
     DWORD attrib_size;
     BOOL ret = FALSE;
     int i;
+    DWORD offset = This->resource.wineD3DDevice->stateBlock->streamOffset[attrib->streamNo];
+    DWORD_PTR data;
 
     /* Check for some valid situations which cause us pain. One is if the buffer is used for
      * constant attributes(stride = 0), the other one is if the buffer is used on two streams
@@ -223,13 +225,14 @@ static inline BOOL process_converted_attribute(IWineD3DVertexBufferImpl *This,
         }
     }
 
+    data = (((DWORD_PTR) attrib->lpData) + offset) % This->stride;
     attrib_size = WINED3D_ATR_SIZE(type) * WINED3D_ATR_TYPESIZE(type);
     for(i = 0; i < attrib_size; i++) {
-        if(This->conv_map[(DWORD_PTR) attrib->lpData + i] != conv_type) {
-            TRACE("Byte %ld in vertex changed\n", i + (DWORD_PTR) attrib->lpData);
-            TRACE("It was type %d, is %d now\n", This->conv_map[(DWORD_PTR) attrib->lpData + i], conv_type);
+        if(This->conv_map[(DWORD_PTR) data + i] != conv_type) {
+            TRACE("Byte %ld in vertex changed\n", i + (DWORD_PTR) data);
+            TRACE("It was type %d, is %d now\n", This->conv_map[(DWORD_PTR) data + i], conv_type);
             ret = TRUE;
-            This->conv_map[(DWORD_PTR) attrib->lpData + i] = conv_type;
+            This->conv_map[(DWORD_PTR) data + i] = conv_type;
         }
     }
     return ret;
@@ -239,8 +242,7 @@ static inline BOOL check_attribute(IWineD3DVertexBufferImpl *This, const WineDir
                                    const BOOL check_d3dcolor, const BOOL is_ffp_position, const BOOL is_ffp_color,
                                    DWORD *stride_this_run, BOOL *float16_used) {
     BOOL ret = FALSE;
-    DWORD type, attrib_size;
-    int i;
+    DWORD type;
 
     /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
      * there, on nonexistant attribs the vbo is 0.
@@ -271,16 +273,7 @@ static inline BOOL check_attribute(IWineD3DVertexBufferImpl *This, const WineDir
     } else if(is_ffp_position && type == WINED3DDECLTYPE_FLOAT4) {
         ret = process_converted_attribute(This, CONV_POSITIONT, attrib, stride_this_run, WINED3DDECLTYPE_FLOAT4);
     } else if(This->conv_map) {
-        attrib_size = WINED3D_ATR_SIZE(type) * WINED3D_ATR_TYPESIZE(type);
-
-        for(i = 0; i < attrib_size; i++) {
-            if(This->conv_map[(DWORD_PTR) attrib->lpData + i] != CONV_NONE) {
-                TRACE("Byte %ld in vertex changed\n", i + (DWORD_PTR) attrib->lpData);
-                TRACE("It was type %d, is CONV_NONE now\n", This->conv_map[(DWORD_PTR) attrib->lpData + i]);
-                ret = TRUE;
-                This->conv_map[(DWORD_PTR) attrib->lpData + i] = CONV_NONE;
-            }
-        }
+        ret = process_converted_attribute(This, CONV_NONE, attrib, stride_this_run, type);
     }
     return ret;
 }
