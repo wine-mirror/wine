@@ -324,6 +324,10 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
                               DOSVM_IntProcRelay, 
                               DOSVM_GetBuiltinHandler(intnum) );
     }
+    else if (wine_ldt_is_system(context->SegCs))
+    {
+        DOSVM_CallBuiltinHandler( context, intnum );
+    }
     else
     {
         DOSVM_HardwareInterruptPM( context, intnum );

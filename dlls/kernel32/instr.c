@@ -769,7 +769,6 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
             break;  /* Unable to emulate it */
 
         case 0xcd: /* int <XX> */
-            if (wine_ldt_is_system(context->SegCs)) break;  /* don't emulate it in 32-bit code */
             if (!winedos.EmulateInterruptPM) load_winedos();
             if (winedos.EmulateInterruptPM)
             {
