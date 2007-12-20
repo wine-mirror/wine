@@ -1185,7 +1185,7 @@ DECL_HANDLER(make_process_system)
         make_object_static( (struct object *)user_process_event );
     }
 
-    if (!(reply->event = alloc_handle( current->process, user_process_event, EVENT_ALL_ACCESS, 0 )))
+    if (!(reply->event = alloc_handle( current->process, user_process_event, SYNCHRONIZE, 0 )))
         return;
 
     if (!process->is_system)
