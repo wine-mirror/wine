@@ -77,6 +77,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 extern BOOL shutdown_close_windows( BOOL force );
 extern void kill_processes( BOOL kill_desktop );
 
+static WCHAR windowsdir[MAX_PATH];
 
 /* Performs the rename operations dictated in %SystemRoot%\Wininit.ini.
  * Returns FALSE if there was an error, or otherwise if all is ok.
@@ -483,79 +484,81 @@ end:
  * known good versions. The only programs that should install into this dll
  * cache are Windows Updates and IE (which is treated like a Windows Update)
  *
- * Implementing this allows installing ie in win2k mode to actaully install the
+ * Implementing this allows installing ie in win2k mode to actually install the
  * system dlls that we expect and need
  */
 static int ProcessWindowsFileProtection(void)
 {
-    WIN32_FIND_DATA finddata;
-    LPSTR custom_dllcache = NULL;
-    static CHAR default_dllcache[] = "C:\\Windows\\System32\\dllcache";
+    static const WCHAR winlogonW[] = {'S','o','f','t','w','a','r','e','\\',
+                                      'M','i','c','r','o','s','o','f','t','\\',
+                                      'W','i','n','d','o','w','s',' ','N','T','\\',
+                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                      'W','i','n','l','o','g','o','n',0};
+    static const WCHAR cachedirW[] = {'S','F','C','D','l','l','C','a','c','h','e','D','i','r',0};
+    static const WCHAR dllcacheW[] = {'\\','d','l','l','c','a','c','h','e','\\','*',0};
+    static const WCHAR wildcardW[] = {'\\','*',0};
+    WIN32_FIND_DATAW finddata;
     HANDLE find_handle;
     BOOL find_rc;
     DWORD rc;
     HKEY hkey;
-    LPSTR dllcache;
-    CHAR find_string[MAX_PATH];
-    CHAR windowsdir[MAX_PATH];
+    LPWSTR dllcache = NULL;
 
-    rc = RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon", &hkey );
-    if (rc == ERROR_SUCCESS)
+    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, winlogonW, &hkey ))
     {
         DWORD sz = 0;
-        rc = RegQueryValueEx( hkey, "SFCDllCacheDir", 0, NULL, NULL, &sz);
-        if (rc == ERROR_MORE_DATA)
+        if (!RegQueryValueExW( hkey, cachedirW, 0, NULL, NULL, &sz))
         {
-            sz++;
-            custom_dllcache = HeapAlloc(GetProcessHeap(),0,sz);
-            RegQueryValueEx( hkey, "SFCDllCacheDir", 0, NULL, (LPBYTE)custom_dllcache, &sz);
+            sz += sizeof(WCHAR);
+            dllcache = HeapAlloc(GetProcessHeap(),0,sz + sizeof(wildcardW));
+            RegQueryValueExW( hkey, cachedirW, 0, NULL, (LPBYTE)dllcache, &sz);
+            strcatW( dllcache, wildcardW );
         }
     }
     RegCloseKey(hkey);
 
-    if (custom_dllcache)
-        dllcache = custom_dllcache;
-    else
-        dllcache = default_dllcache;
+    if (!dllcache)
+    {
+        DWORD sz = GetSystemDirectoryW( NULL, 0 );
+        dllcache = HeapAlloc( GetProcessHeap(), 0, sz * sizeof(WCHAR) + sizeof(dllcacheW));
+        GetSystemDirectoryW( dllcache, sz );
+        strcatW( dllcache, dllcacheW );
+    }
 
-    strcpy(find_string,dllcache);
-    strcat(find_string,"\\*.*");
-
-    GetWindowsDirectory(windowsdir,MAX_PATH);
-
-    find_handle = FindFirstFile(find_string,&finddata);
+    find_handle = FindFirstFileW(dllcache,&finddata);
     find_rc = find_handle != INVALID_HANDLE_VALUE;
     while (find_rc)
     {
-        CHAR targetpath[MAX_PATH];
-        CHAR currentpath[MAX_PATH];
+        static const WCHAR dotW[] = {'.',0};
+        static const WCHAR dotdotW[] = {'.','.',0};
+        WCHAR targetpath[MAX_PATH];
+        WCHAR currentpath[MAX_PATH];
         UINT sz;
         UINT sz2;
-        CHAR tempfile[MAX_PATH];
+        WCHAR tempfile[MAX_PATH];
 
-        if (strcmp(finddata.cFileName,".") == 0 ||
-            strcmp(finddata.cFileName,"..") == 0)
+        if (strcmpW(finddata.cFileName,dotW) == 0 || strcmpW(finddata.cFileName,dotdotW) == 0)
         {
-            find_rc = FindNextFile(find_handle,&finddata);
+            find_rc = FindNextFileW(find_handle,&finddata);
             continue;
         }
 
         sz = MAX_PATH;
         sz2 = MAX_PATH;
-        VerFindFile(VFFF_ISSHAREDFILE, finddata.cFileName, windowsdir, 
-                windowsdir, currentpath, &sz, targetpath,&sz2);
+        VerFindFileW(VFFF_ISSHAREDFILE, finddata.cFileName, windowsdir,
+                     windowsdir, currentpath, &sz, targetpath, &sz2);
         sz = MAX_PATH;
-        rc = VerInstallFile(0, finddata.cFileName, finddata.cFileName,
-                            dllcache, targetpath, currentpath, tempfile,&sz);
+        rc = VerInstallFileW(0, finddata.cFileName, finddata.cFileName,
+                             dllcache, targetpath, currentpath, tempfile, &sz);
         if (rc != ERROR_SUCCESS)
         {
-            WINE_ERR("WFP: %s error 0x%x\n",finddata.cFileName,rc);
-            DeleteFile(tempfile);
+            WINE_ERR("WFP: %s error 0x%x\n",wine_dbgstr_w(finddata.cFileName),rc);
+            DeleteFileW(tempfile);
         }
-        find_rc = FindNextFile(find_handle,&finddata);
+        find_rc = FindNextFileW(find_handle,&finddata);
     }
     FindClose(find_handle);
-    HeapFree(GetProcessHeap(),0,custom_dllcache);
+    HeapFree(GetProcessHeap(),0,dllcache);
     return 1;
 }
 
@@ -714,35 +717,15 @@ static const struct option long_options[] =
 int main( int argc, char *argv[] )
 {
     /* First, set the current directory to SystemRoot */
-    TCHAR gen_path[MAX_PATH];
-    DWORD res;
     int optc;
     int end_session = 0, force = 0, kill = 0, restart = 0, shutdown = 0;
 
-    res=GetWindowsDirectory( gen_path, sizeof(gen_path) );
-    
-    if( res==0 )
+    GetWindowsDirectoryW( windowsdir, MAX_PATH );
+    if( !SetCurrentDirectoryW( windowsdir ) )
     {
-	WINE_ERR("Couldn't get the windows directory - error %d\n",
-		GetLastError() );
-
-	return 100;
-    }
-
-    if( res>=sizeof(gen_path) )
-    {
-	WINE_ERR("Windows path too long (%d)\n", res );
-
-	return 100;
-    }
-
-    if( !SetCurrentDirectory( gen_path ) )
-    {
-        WINE_ERR("Cannot set the dir to %s (%d)\n", gen_path, GetLastError() );
-
+        WINE_ERR("Cannot set the dir to %s (%d)\n", wine_dbgstr_w(windowsdir), GetLastError() );
         return 100;
     }
-
 
     while ((optc = getopt_long(argc, argv, short_options, long_options, NULL )) != -1)
     {
