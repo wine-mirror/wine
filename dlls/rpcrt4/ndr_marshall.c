@@ -890,7 +890,9 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
       *ppMemory = NdrAllocate(pStubMsg, memsize);
   }
 
-  if (*ppMemory != pStubMsg->Buffer)
+  if (*ppMemory == pStubMsg->Buffer)
+    safe_buffer_increment(pStubMsg, bufsize);
+  else
     safe_copy_from_buffer(pStubMsg, *ppMemory, bufsize);
 
   if (*pFormat == RPC_FC_C_CSTRING) {
