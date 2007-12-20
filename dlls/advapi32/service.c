@@ -1578,6 +1578,12 @@ static DWORD service_start_process(struct sc_service *hsvc, LPDWORD ppid)
     handles[0] = service_get_event_handle( hsvc->name );
     ZeroMemory(&si, sizeof(STARTUPINFOW));
     si.cb = sizeof(STARTUPINFOW);
+    if (!(svc_type & SERVICE_INTERACTIVE_PROCESS))
+    {
+        static WCHAR desktopW[] = {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n','\\','D','e','f','a','u','l','t',0};
+        si.lpDesktop = desktopW;
+    }
+
     r = CreateProcessW(NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     if (r)
     {
