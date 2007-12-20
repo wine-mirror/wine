@@ -130,6 +130,7 @@ SRCDIR_INCLUDES = \
 	ddk/compstui.h \
 	ddk/hidsdi.h \
 	ddk/imm.h \
+	ddk/mountmgr.h \
 	ddk/ntddcdvd.h \
 	ddk/ntddser.h \
 	ddk/ntddtape.h \
