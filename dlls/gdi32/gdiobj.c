@@ -363,7 +363,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
            9, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','S','o','n','g','\0'}   /* FIXME: Is this correct? */
+           {'S','i','m','S','u','n','\0'}
         },
     },
     {   HANGEUL_CHARSET,
@@ -405,9 +405,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+           9, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - what is the native font??? */
+           {'P','M','i','n','g','L','i','U','\0'}
         },
     },
     {   JOHAB_CHARSET,

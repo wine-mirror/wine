@@ -308,8 +308,8 @@ static const struct CharsetBindingInfo charsetbindings[] =
 	{ "\x82\x6c\x82\x72 \x82\x6f\x96\xbe\x92\xa9",
 			SHIFTJIS_CHARSET }, /* MS P mincho */
 	{ "GulimChe", HANGEUL_CHARSET },
-	{ "MS Song", GB2312_CHARSET },
-	{ "MS Hei", GB2312_CHARSET },
+	{ "\xcb\xce\xcc\xe5", GB2312_CHARSET }, /* SimSun */
+	{ "\xba\xda\xcc\xe5", GB2312_CHARSET }, /* SimHei */
 	{ "\xb7\x73\xb2\xd3\xa9\xfa\xc5\xe9", CHINESEBIG5_CHARSET },/*MS Mingliu*/
 	{ "\xb2\xd3\xa9\xfa\xc5\xe9", CHINESEBIG5_CHARSET },
 
