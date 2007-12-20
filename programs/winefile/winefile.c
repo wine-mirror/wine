@@ -66,6 +66,7 @@ static const WCHAR reg_start_x[] = { 's','t','a','r','t','X','\0'};
 static const WCHAR reg_start_y[] = { 's','t','a','r','t','Y','\0'};
 static const WCHAR reg_width[] = { 'w','i','d','t','h','\0'};
 static const WCHAR reg_height[] = { 'h','e','i','g','h','t','\0'};
+static const WCHAR reg_logfont[] = { 'l','o','g','f','o','n','t','\0'};
 
 enum ENTRY_TYPE {
 	ET_WINDOWS,
@@ -1645,6 +1646,7 @@ static windowOptions load_registry_settings(void)
 	DWORD type;
 	HKEY hKey;
 	windowOptions opts;
+	LOGFONT logfont;
 
         RegOpenKeyExW( HKEY_CURRENT_USER, registry_key,
                        0, KEY_QUERY_VALUE, &hKey );
@@ -1666,9 +1668,14 @@ static windowOptions load_registry_settings(void)
         if( RegQueryValueExW( hKey, reg_height, NULL, &type,
                               (LPBYTE) &opts.height, &size ) != ERROR_SUCCESS )
 		opts.height = CW_USEDEFAULT;
+	size=sizeof(logfont);
+	if( RegQueryValueExW( hKey, reg_logfont, NULL, &type,
+                              (LPBYTE) &logfont, &size ) != ERROR_SUCCESS )
+		GetObject(GetStockObject(DEFAULT_GUI_FONT),sizeof(logfont),&logfont);
 
 	RegCloseKey( hKey );
 
+	Globals.hfont = CreateFontIndirect(&logfont);
 	return opts;
 }
 
@@ -1677,6 +1684,7 @@ static void save_registry_settings(void)
 	WINDOWINFO wi;
 	HKEY hKey;
 	INT width, height;
+	LOGFONT logfont;
 
 	wi.cbSize = sizeof( WINDOWINFO );
 	GetWindowInfo(Globals.hMainWnd, &wi);
@@ -1704,6 +1712,9 @@ static void save_registry_settings(void)
                         (LPBYTE) &width, sizeof(DWORD) );
         RegSetValueExW( hKey, reg_height, 0, REG_DWORD,
                         (LPBYTE) &height, sizeof(DWORD) );
+        GetObject(Globals.hfont, sizeof(logfont), &logfont);
+        RegSetValueExW( hKey, reg_logfont, 0, REG_BINARY,
+                        (LPBYTE) &logfont, sizeof(LOGFONT) );
 
 	/* TODO: Save more settings here (List vs. Detailed View, etc.) */
 	RegCloseKey( hKey );
