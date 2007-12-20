@@ -463,8 +463,8 @@ static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin,
     win->hButtonBoxWnd = oldwin->hButtonBoxWnd;
     win->hTextWnd      = oldwin->hTextWnd;
     win->hHistoryWnd   = oldwin->hHistoryWnd;
-    oldwin->hMainWnd = oldwin->hButtonBoxWnd = oldwin->hTextWnd = oldwin->hHistoryWnd = 0;
-    win->hBrush = oldwin->hBrush;
+    oldwin->hMainWnd   = oldwin->hButtonBoxWnd = oldwin->hTextWnd = oldwin->hHistoryWnd = 0;
+    win->hBrush        = CreateSolidBrush(win->info->sr_color);
 
     SetWindowLong(win->hMainWnd,      0, (LONG)win);
     SetWindowLong(win->hButtonBoxWnd, 0, (LONG)win);
@@ -1253,7 +1253,6 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         if (hWnd == Globals.hPopupWnd) Globals.hPopupWnd = 0;
 
         bExit = (Globals.wVersion >= 4 && !lstrcmpi(win->lpszName, "main"));
-        DeleteObject(win->hBrush);
 
         WINHELP_DeleteWindow(win);
 
@@ -1833,6 +1832,8 @@ static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
 
     if (win->hShadowWnd) DestroyWindow(win->hShadowWnd);
     if (win->hHistoryWnd) DestroyWindow(win->hHistoryWnd);
+
+    DeleteObject(win->hBrush);
 
     for (i = 0; i < win->histIndex; i++)
     {
