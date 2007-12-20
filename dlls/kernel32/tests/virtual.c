@@ -27,6 +27,7 @@
 #include "wine/test.h"
 
 #define NUM_THREADS 4
+#define MAPPING_SIZE 0x100000
 
 static HINSTANCE hkernel32;
 static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
@@ -270,8 +271,9 @@ static void test_MapViewOfFile(void)
 {
     static const char testfile[] = "testfile.xxx";
     HANDLE file, mapping;
-    void *ptr;
+    void *ptr, *ptr2;
     MEMORY_BASIC_INFORMATION info;
+    BOOL ret;
 
     SetLastError(0xdeadbeef);
     file = CreateFileA( testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
@@ -496,6 +498,64 @@ todo_wine ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLast
     CloseHandle( mapping );
 
     CloseHandle( file );
+
+    /* read/write mapping with SEC_RESERVE */
+    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE | SEC_RESERVE, 0, MAPPING_SIZE, NULL);
+    ok(mapping != INVALID_HANDLE_VALUE, "CreateFileMappingA failed with error %d\n", GetLastError());
+
+    ptr = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0);
+    ok(ptr != NULL, "MapViewOfFile failed with error %d\n", GetLastError());
+
+    ret = VirtualQuery(ptr, &info, sizeof(info));
+    ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+    ok(info.BaseAddress == ptr, "BaseAddress should have been %p but was %p instead\n", ptr, info.BaseAddress);
+    ok(info.AllocationBase == ptr, "AllocationBase should have been %p but was %p instead\n", ptr, info.AllocationBase);
+    ok(info.AllocationProtect == PAGE_READWRITE, "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+    ok(info.RegionSize == MAPPING_SIZE, "RegionSize should have been 0x%x but was 0x%x\n", MAPPING_SIZE, (unsigned int)info.RegionSize);
+todo_wine
+    ok(info.State == MEM_RESERVE, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
+todo_wine
+    ok(info.Protect == 0, "Protect should have been 0 instead of 0x%x\n", info.Protect);
+    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+
+    ptr = VirtualAlloc(ptr, 0x10000, MEM_COMMIT, PAGE_READWRITE);
+    ok(ptr != NULL, "VirtualAlloc failed with error %d\n", GetLastError());
+
+    ret = VirtualQuery(ptr, &info, sizeof(info));
+    ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+    ok(info.BaseAddress == ptr, "BaseAddress should have been %p but was %p instead\n", ptr, info.BaseAddress);
+    ok(info.AllocationBase == ptr, "AllocationBase should have been %p but was %p instead\n", ptr, info.AllocationBase);
+    ok(info.AllocationProtect == PAGE_READWRITE, "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+todo_wine
+    ok(info.RegionSize == 0x10000, "RegionSize should have been 0x10000 but was 0x%x\n", (unsigned int)info.RegionSize);
+    ok(info.State == MEM_COMMIT, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
+    ok(info.Protect == PAGE_READWRITE, "Protect should have been 0 instead of 0x%x\n", info.Protect);
+    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+
+    ptr2 = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0);
+    /* on NT ptr != ptr2 but on Win9x ptr == ptr2 */
+    ok(ptr2 != NULL, "MapViewOfFile failed with error %d\n", GetLastError());
+    trace("mapping same section resulted in views %p and %p\n", ptr, ptr2);
+
+    /* shows that the VirtualAlloc above affects the mapping, not just the
+     * virtual memory in this process - it also affects all other processes
+     * with a view of the mapping, but that isn't tested here */
+    ret = VirtualQuery(ptr2, &info, sizeof(info));
+    ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+    ok(info.BaseAddress == ptr2, "BaseAddress should have been %p but was %p instead\n", ptr2, info.BaseAddress);
+    ok(info.AllocationBase == ptr2, "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
+    ok(info.AllocationProtect == PAGE_READWRITE, "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+todo_wine
+    ok(info.RegionSize == 0x10000, "RegionSize should have been 0x10000 but was 0x%x\n", (unsigned int)info.RegionSize);
+    ok(info.State == MEM_COMMIT, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
+    ok(info.Protect == PAGE_READWRITE, "Protect should have been 0 instead of 0x%x\n", info.Protect);
+    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+
+    ret = UnmapViewOfFile(ptr2);
+    ok(ret, "UnmapViewOfFile failed with error %d\n", GetLastError());
+    ret = UnmapViewOfFile(ptr);
+    ok(ret, "UnmapViewOfFile failed with error %d\n", GetLastError());
+    CloseHandle(mapping);
 }
 
 static DWORD (WINAPI *pNtMapViewOfSection)( HANDLE handle, HANDLE process, PVOID *addr_ptr,
