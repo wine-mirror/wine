@@ -1750,13 +1750,20 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     radio_button_group_descr group;
     MSIPACKAGE *package = dialog->package;
     WNDPROC oldproc;
+    DWORD attr, style = WS_GROUP;
 
     prop = MSI_RecordGetString( rec, 9 );
 
     TRACE("%p %p %s\n", dialog, rec, debugstr_w( prop ));
 
+    attr = MSI_RecordGetInteger( rec, 8 );
+    if (attr & msidbControlAttributesHasBorder)
+        style |= BS_GROUPBOX;
+    else
+        style |= BS_OWNERDRAW;
+
     /* Create parent group box to hold radio buttons */
-    control = msi_dialog_add_control( dialog, rec, szButton, BS_GROUPBOX|WS_GROUP );
+    control = msi_dialog_add_control( dialog, rec, szButton, style );
     if( !control )
         return ERROR_FUNCTION_FAILED;
 
