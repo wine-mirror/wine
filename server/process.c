@@ -601,7 +601,7 @@ static void process_killed( struct process *process )
 
     assert( list_empty( &process->thread_list ));
     process->end_time = current_time;
-    close_process_desktop( process );
+    if (!process->is_system) close_process_desktop( process );
     handles = process->handles;
     process->handles = NULL;
     if (handles) release_object( handles );
@@ -1191,6 +1191,7 @@ DECL_HANDLER(make_process_system)
     if (!process->is_system)
     {
         process->is_system = 1;
+        close_process_desktop( process );
         if (!--user_processes) set_event( user_process_event );
     }
 }
