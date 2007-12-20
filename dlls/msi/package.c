@@ -1345,7 +1345,7 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
     if( !package )
     {
         HRESULT hr;
-        BSTR name, value;
+        BSTR name = NULL, value = NULL;
         IWineMsiRemotePackage *remote_package;
 
         remote_package = (IWineMsiRemotePackage *)msi_get_remote( hInstall );
@@ -1354,7 +1354,7 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
 
         name = SysAllocString( szName );
         value = SysAllocString( szValue );
-        if (!name || !value)
+        if ((!name && szName) || (!value && szValue))
         {
             SysFreeString( name );
             SysFreeString( value );
