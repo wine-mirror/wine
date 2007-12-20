@@ -389,11 +389,11 @@ static HANDLER_DEF(abrt_handler)
 
 
 /**********************************************************************
- *		term_handler
+ *		quit_handler
  *
- * Handler for SIGTERM.
+ * Handler for SIGQUIT.
  */
-static HANDLER_DEF(term_handler)
+static HANDLER_DEF(quit_handler)
 {
     server_abort_thread(0);
 }
@@ -468,7 +468,7 @@ BOOL SIGNAL_Init(void)
     if (set_handler( SIGBUS,  (void (*)())bus_handler  ) == -1) goto error;
     if (set_handler( SIGTRAP, (void (*)())trap_handler ) == -1) goto error;
     if (set_handler( SIGABRT, (void (*)())abrt_handler ) == -1) goto error;
-    if (set_handler( SIGTERM, (void (*)())term_handler ) == -1) goto error;
+    if (set_handler( SIGQUIT, (void (*)())quit_handler ) == -1) goto error;
     if (set_handler( SIGUSR1, (void (*)())usr1_handler ) == -1) goto error;
     /* 'ta 6' tells the kernel to synthesize any unaligned accesses this 
        process makes, instead of just signalling an error and terminating

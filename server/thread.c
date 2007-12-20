@@ -920,14 +920,14 @@ void kill_thread( struct thread *thread, int violent_death )
     {
         while (thread->wait) end_wait( thread );
         send_thread_wakeup( thread, NULL, STATUS_PENDING );
-        /* if it is waiting on the socket, we don't need to send a SIGTERM */
+        /* if it is waiting on the socket, we don't need to send a SIGQUIT */
         violent_death = 0;
     }
     kill_console_processes( thread, 0 );
     debug_exit_thread( thread );
     abandon_mutexes( thread );
     wake_up( &thread->obj, 0 );
-    if (violent_death) send_thread_signal( thread, SIGTERM );
+    if (violent_death) send_thread_signal( thread, SIGQUIT );
     cleanup_thread( thread );
     remove_process_thread( thread->process, thread );
     release_object( thread );
