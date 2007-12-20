@@ -567,8 +567,9 @@ static void SECUR32_initializeProviders(void)
         {
             WCHAR *ptr;
 
+            size = size / sizeof(WCHAR);
             for (ptr = securityPkgNames;
-             ptr < (PWSTR)((PBYTE)securityPkgNames + size); )
+              ptr < securityPkgNames + size; )
             {
                 WCHAR *comma;
 
