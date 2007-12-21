@@ -1422,4 +1422,17 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
     /* work around for broken photoshop 4 installer */
     if ( lpBuffer->dwAvailPhys +  lpBuffer->dwAvailPageFile >= 2U*1024*1024*1024)
          lpBuffer->dwAvailPageFile = 2U*1024*1024*1024 -  lpBuffer->dwAvailPhys - 1;
+
+    /* limit page file size for really old binaries */
+    if (nt->OptionalHeader.MajorSubsystemVersion < 4)
+    {
+        if (lpBuffer->dwTotalPageFile > MAXLONG) lpBuffer->dwTotalPageFile = MAXLONG;
+        if (lpBuffer->dwAvailPageFile > MAXLONG) lpBuffer->dwAvailPageFile = MAXLONG;
+    }
+
+    TRACE("Length %u, MemoryLoad %u, TotalPhys %lx, AvailPhys %lx,"
+          " TotalPageFile %lx, AvailPageFile %lx, TotalVirtual %lx, AvailVirtual %lx\n",
+          lpBuffer->dwLength, lpBuffer->dwMemoryLoad, lpBuffer->dwTotalPhys,
+          lpBuffer->dwAvailPhys, lpBuffer->dwTotalPageFile, lpBuffer->dwAvailPageFile,
+          lpBuffer->dwTotalVirtual, lpBuffer->dwAvailVirtual );
 }
