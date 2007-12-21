@@ -817,11 +817,13 @@ RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface,
                 }
                 break;
             }
-            break;
+
+            goto done;
         }
     }
     LeaveCriticalSection(&This->lock);
 
+done:
     TRACE("-- 0x08%x\n", hr);
     return hr;
 }
