@@ -2765,9 +2765,10 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
         {
             /* these are all unmarshalled by pointing into the buffer on the
              * server side */
-            if (type->type != RPC_FC_SMFARRAY &&
-                type->type != RPC_FC_LGFARRAY &&
-                type->type != RPC_FC_CARRAY)
+            if (type->type == RPC_FC_BOGUS_ARRAY ||
+                type->type == RPC_FC_CVARRAY ||
+                (type->type == RPC_FC_SMVARRAY && type->type == RPC_FC_LGVARRAY && in_attr) ||
+                (type->type == RPC_FC_CARRAY && type->type == RPC_FC_CARRAY && !in_attr))
             {
                 print_file(file, indent, "if (%s)\n", var->name);
                 indent++;
