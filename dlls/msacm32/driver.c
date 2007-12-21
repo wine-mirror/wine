@@ -299,7 +299,7 @@ MMRESULT WINAPI acmDriverDetailsW(HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, D
     if (mmr == MMSYSERR_NOERROR) {
         ACMDRIVERDETAILSW paddw;
         paddw.cbStruct = sizeof(paddw);
-        mmr = (MMRESULT)MSACM_Message(acmDrvr, ACMDM_DRIVER_DETAILS, (LPARAM)&paddw,  0);
+        mmr = MSACM_Message(acmDrvr, ACMDM_DRIVER_DETAILS, (LPARAM)&paddw,  0);
 
 	acmDriverClose(acmDrvr, 0);
         paddw.cbStruct = min(padd->cbStruct, sizeof(*padd));

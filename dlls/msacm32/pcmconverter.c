@@ -1006,8 +1006,8 @@ static LRESULT PCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
     if (adsi->fdwDriver & PCM_RESAMPLE) {
 	DWORD	nsrc2 = nsrc;
 	DWORD	ndst2 = ndst;
-	apd->cvt.cvtChangeRate((DWORD)adsi->pwfxSrc->nSamplesPerSec, adsh->pbSrc, &nsrc2,
-			       (DWORD)adsi->pwfxDst->nSamplesPerSec, adsh->pbDst, &ndst2);
+	apd->cvt.cvtChangeRate(adsi->pwfxSrc->nSamplesPerSec, adsh->pbSrc, &nsrc2,
+			       adsi->pwfxDst->nSamplesPerSec, adsh->pbDst, &ndst2);
 	nsrc -= nsrc2;
 	ndst -= ndst2;
     } else {
