@@ -585,7 +585,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
         if (value!=NULL)
         {
             LPBYTE nd2;
-            TRACE("value %s, chunk %i size %i\n",debugstr_w((LPWSTR)value),
+            TRACE("value %s, chunk %i size %i\n",debugstr_w(value),
                     chunk, size);
             if (size)
                 nd2= msi_realloc(newdata,(size + chunk));
