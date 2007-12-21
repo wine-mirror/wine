@@ -161,6 +161,7 @@ typedef struct _IFilterGraphImpl {
     const IMediaEventSinkVtbl *IMediaEventSink_vtbl;
     const IGraphConfigVtbl *IGraphConfig_vtbl;
     const IMediaPositionVtbl *IMediaPosition_vtbl;
+    const IUnknownVtbl * IInner_vtbl;
     /* IAMGraphStreams */
     /* IAMStats */
     /* IBasicVideo2 */
@@ -194,16 +195,29 @@ typedef struct _IFilterGraphImpl {
     CRITICAL_SECTION cs;
     ITF_CACHE_ENTRY ItfCacheEntries[MAX_ITF_CACHE_ENTRIES];
     int nItfCacheEntries;
+    IUnknown * pUnkOuter;
+    BOOL bUnkOuterValid;
+    BOOL bAggregatable;
 } IFilterGraphImpl;
 
+static HRESULT WINAPI Filtergraph_QueryInterface(IFilterGraphImpl *This,
+                                                 REFIID riid, LPVOID * ppv);
+static ULONG WINAPI Filtergraph_AddRef(IFilterGraphImpl *This);
+static ULONG WINAPI Filtergraph_Release(IFilterGraphImpl *This);
 
-static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
+static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown * iface,
 					  REFIID riid,
 					  LPVOID *ppvObj) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IInner_vtbl, iface);
     TRACE("(%p)->(%s (%p), %p)\n", This, debugstr_guid(riid), riid, ppvObj);
     
-    if (IsEqualGUID(&IID_IUnknown, riid) ||
-	IsEqualGUID(&IID_IFilterGraph, riid) ||
+    if (This->bAggregatable)
+        This->bUnkOuterValid = TRUE;
+
+    if (IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppvObj = &(This->IInner_vtbl);
+        TRACE("   returning IUnknown interface (%p)\n", *ppvObj);
+    } else if (IsEqualGUID(&IID_IFilterGraph, riid) ||
 	IsEqualGUID(&IID_IFilterGraph2, riid) ||
 	IsEqualGUID(&IID_IGraphBuilder, riid)) {
         *ppvObj = &(This->IFilterGraph2_vtbl);
@@ -246,11 +260,12 @@ static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
 	return E_NOINTERFACE;
     }
 
-    InterlockedIncrement(&This->ref);
+    IUnknown_AddRef((IUnknown *)(*ppvObj));
     return S_OK;
 }
 
-static ULONG Filtergraph_AddRef(IFilterGraphImpl *This) {
+static ULONG WINAPI FilterGraphInner_AddRef(IUnknown * iface) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IInner_vtbl, iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->(): new ref = %d\n", This, ref);
@@ -258,7 +273,8 @@ static ULONG Filtergraph_AddRef(IFilterGraphImpl *This) {
     return ref;
 }
 
-static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
+static ULONG WINAPI FilterGraphInner_Release(IUnknown * iface) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IInner_vtbl, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     
     TRACE("(%p)->(): new ref = %d\n", This, ref);
@@ -4618,6 +4634,54 @@ static const IGraphConfigVtbl IGraphConfig_VTable =
     GraphConfig_RemoveFilterEx
 };
 
+static const IUnknownVtbl IInner_VTable =
+{
+    FilterGraphInner_QueryInterface,
+    FilterGraphInner_AddRef,
+    FilterGraphInner_Release
+};
+
+static HRESULT WINAPI Filtergraph_QueryInterface(IFilterGraphImpl *This,
+                                                 REFIID riid,
+                                                 LPVOID * ppv) {
+    if (This->bAggregatable)
+        This->bUnkOuterValid = TRUE;
+
+    if (This->pUnkOuter)
+    {
+        if (This->bAggregatable)
+            return IUnknown_QueryInterface(This->pUnkOuter, riid, ppv);
+
+        if (IsEqualIID(riid, &IID_IUnknown))
+        {
+            HRESULT hr;
+
+            IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
+            hr = IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
+            IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
+            This->bAggregatable = TRUE;
+            return hr;
+        }
+
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    return IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
+}
+
+static ULONG WINAPI Filtergraph_AddRef(IFilterGraphImpl *This) {
+    if (This->pUnkOuter && This->bUnkOuterValid)
+        return IUnknown_AddRef(This->pUnkOuter);
+    return IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
+}
+
+static ULONG WINAPI Filtergraph_Release(IFilterGraphImpl *This) {
+    if (This->pUnkOuter && This->bUnkOuterValid)
+        return IUnknown_Release(This->pUnkOuter);
+    return IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
+}
+
 /* This is the only function that actually creates a FilterGraph class... */
 HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
@@ -4626,10 +4690,13 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
-    if( pUnkOuter )
-        return CLASS_E_NOAGGREGATION;
+    *ppObj = NULL;
 
     fimpl = CoTaskMemAlloc(sizeof(*fimpl));
+    fimpl->pUnkOuter = pUnkOuter;
+    fimpl->bUnkOuterValid = FALSE;
+    fimpl->bAggregatable = FALSE;
+    fimpl->IInner_vtbl = &IInner_VTable;
     fimpl->IFilterGraph2_vtbl = &IFilterGraph2_VTable;
     fimpl->IMediaControl_vtbl = &IMediaControl_VTable;
     fimpl->IMediaSeeking_vtbl = &IMediaSeeking_VTable;
