@@ -9,6 +9,7 @@ EXTRALIBS = -lstrmiids -luuid
 CTESTS = \
 	filtergraph.c \
 	memallocator.c \
+	misc.c \
 	referenceclock.c \
 	videorenderer.c
 
