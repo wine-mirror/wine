@@ -2223,7 +2223,7 @@ int CDECL MSVCRT_fgetc(MSVCRT_FILE* file)
     } else
       j = MSVCRT__filbuf(file);
     if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT)
-    || ((j != '\r') || (file->_cnt && ((char *)file->_ptr)[0] != '\n')))
+    || ((j != '\r') || (file->_cnt && file->_ptr[0] != '\n')))
         return j;
   } while(1);
 }
