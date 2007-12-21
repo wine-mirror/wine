@@ -154,11 +154,19 @@ DWORD *find_conversion_shift(IWineD3DVertexBufferImpl *This, WineDirect3DVertexS
     This->conv_stride = stride;
     ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DWORD) * stride);
     for(i = 0; i < MAX_ATTRIBS; i++) {
+        if(strided->u.input[i].VBO != This->vbo) continue;
+
         type = strided->u.input[i].dwType;
         if(type == WINED3DDECLTYPE_FLOAT16_2) {
             shift = 4;
         } else if(type == WINED3DDECLTYPE_FLOAT16_4) {
             shift = 8;
+            /* Pre-shift the last 4 bytes in the FLOAT16_4 by 4 bytes - this makes FLOAT16_2 and FLOAT16_4 conversions
+             * compatible
+             */
+            for(j = 4; j < 8; j++) {
+                ret[(DWORD_PTR) strided->u.input[i].lpData + j ] += 4;
+            }
         } else {
             shift = 0;
         }
@@ -182,13 +190,108 @@ DWORD *find_conversion_shift(IWineD3DVertexBufferImpl *This, WineDirect3DVertexS
     return ret;
 }
 
+static inline BOOL process_converted_attribute(IWineD3DVertexBufferImpl *This,
+                                               const enum vbo_conversion_type conv_type,
+                                               const WineDirect3DStridedData *attrib,
+                                               DWORD *stride_this_run, const DWORD type) {
+    DWORD attrib_size;
+    BOOL ret = FALSE;
+    int i;
+
+    /* Check for some valid situations which cause us pain. One is if the buffer is used for
+     * constant attributes(stride = 0), the other one is if the buffer is used on two streams
+     * with different strides. In the 2nd case we might have to drop conversion entirely,
+     * it is possible that the same bytes are once read as FLOAT2 and once as UBYTE4N.
+     */
+    if(attrib->dwStride == 0) {
+        FIXME("%s used with stride 0, let's hope we get the vertex stride from somewhere else\n",
+                debug_d3ddecltype(type));
+    } else if(attrib->dwStride != *stride_this_run &&
+                *stride_this_run) {
+        FIXME("Got two concurrent strides, %d and %d\n", attrib->dwStride, *stride_this_run);
+    } else {
+        *stride_this_run = attrib->dwStride;
+        if(This->stride != *stride_this_run) {
+            /* We rely that this happens only on the first converted attribute that is found,
+             * if at all. See above check
+             */
+            TRACE("Reconverting because converted attributes occur, and the stride changed\n");
+            This->stride = *stride_this_run;
+            HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, This->conv_map);
+            This->conv_map = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->conv_map) * This->stride);
+            ret = TRUE;
+        }
+    }
+
+    attrib_size = WINED3D_ATR_SIZE(type) * WINED3D_ATR_TYPESIZE(type);
+    for(i = 0; i < attrib_size; i++) {
+        if(This->conv_map[(DWORD_PTR) attrib->lpData + i] != conv_type) {
+            TRACE("Byte %ld in vertex changed\n", i + (DWORD_PTR) attrib->lpData);
+            TRACE("It was type %d, is %d now\n", This->conv_map[(DWORD_PTR) attrib->lpData + i], conv_type);
+            ret = TRUE;
+            This->conv_map[(DWORD_PTR) attrib->lpData + i] = conv_type;
+        }
+    }
+    return ret;
+}
+
+static inline BOOL check_attribute(IWineD3DVertexBufferImpl *This, const WineDirect3DStridedData *attrib,
+                                   const BOOL check_d3dcolor, const BOOL is_ffp_position, const BOOL is_ffp_color,
+                                   DWORD *stride_this_run, BOOL *float16_used) {
+    BOOL ret = FALSE;
+    DWORD type, attrib_size;
+    int i;
+
+    /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
+     * there, on nonexistant attribs the vbo is 0.
+     */
+    if(attrib->VBO != This->vbo) return FALSE;
+
+    type = attrib->dwType;
+    /* Look for newly appeared conversion */
+    if(!GL_SUPPORT(NV_HALF_FLOAT) && (
+       type == WINED3DDECLTYPE_FLOAT16_2 ||
+       type == WINED3DDECLTYPE_FLOAT16_4)) {
+
+        ret = process_converted_attribute(This, CONV_FLOAT16_2, attrib, stride_this_run, type);
+
+        if(is_ffp_position) {
+            FIXME("Test FLOAT16 fixed function processing positions\n");
+        } else if(is_ffp_color) {
+            FIXME("test FLOAT16 fixed function processing colors\n");
+        }
+        *float16_used = TRUE;
+    } else if(check_d3dcolor && type == WINED3DDECLTYPE_D3DCOLOR) {
+
+        ret = process_converted_attribute(This, CONV_D3DCOLOR, attrib, stride_this_run, WINED3DDECLTYPE_D3DCOLOR);
+
+        if(!is_ffp_color) {
+            FIXME("Test for non-color fixed function D3DCOLOR type\n");
+        }
+    } else if(is_ffp_position && type == WINED3DDECLTYPE_FLOAT4) {
+        ret = process_converted_attribute(This, CONV_POSITIONT, attrib, stride_this_run, WINED3DDECLTYPE_FLOAT4);
+    } else if(This->conv_map) {
+        attrib_size = WINED3D_ATR_SIZE(type) * WINED3D_ATR_TYPESIZE(type);
+
+        for(i = 0; i < attrib_size; i++) {
+            if(This->conv_map[(DWORD_PTR) attrib->lpData + i] != CONV_NONE) {
+                TRACE("Byte %ld in vertex changed\n", i + (DWORD_PTR) attrib->lpData);
+                TRACE("It was type %d, is CONV_NONE now\n", This->conv_map[(DWORD_PTR) attrib->lpData + i]);
+                ret = TRUE;
+                This->conv_map[(DWORD_PTR) attrib->lpData + i] = CONV_NONE;
+            }
+        }
+    }
+    return ret;
+}
+
 inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *This)
 {
-    WineDirect3DVertexStridedData strided;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BOOL ret = FALSE;
-    DWORD type_old, type_new, stride;
     int i;
+    DWORD stride_this_run = 0;
+    BOOL float16_used = FALSE;
 
     /* In d3d7 the vertex buffer declaration NEVER changes because it is stored in the d3d7 vertex buffer.
      * Once we have our declaration there is no need to look it up again.
@@ -197,248 +300,124 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
         return FALSE;
     }
 
-    /* There are certain vertex data types that need to be fixed up. The Vertex Buffers FVF doesn't
-     * help finding them, only the vertex declaration or the device FVF can determine that at drawPrim
-     * time. Rules are as follows:
+    TRACE("Finding vertex buffer conversion information\n");
+    /* Certain declaration types need some fixups before we can pass them to opengl. This means D3DCOLOR attributes with fixed
+     * function vertex processing, FLOAT4 POSITIONT with fixed function, and FLOAT16 if GL_NV_half_float is not supported.
      *
-     * -> Fix up position1 and position 2 if they are XYZRHW
-     * -> Fix up types that are D3DDECLTYPE_D3DCOLOR if no shader is used
-     * -> TODO: Convert FLOAT16 to FLOAT32 if not supported natively by gl
+     * The vertex buffer FVF doesn't help with finding them, we have to use the decoded vertex declaration and pick the things
+     * that concern the current buffer. A problem with this is that this can change between draws, so we have to validate
+     * the information and reprocess the buffer if it changes, and avoid false positives for performance reasons.
      *
-     * The Declaration is only known at drawing time, and it can change from draw to draw. If any converted values
-     * are changed, the whole buffer has to be reconverted and reloaded. (Converting is SLOW, so if this happens too
-     * often PreLoad stops converting entirely and falls back to drawStridedSlow).
+     * We have do destinguish between vertex shaders and fixed function to pick the way we access the
+     * strided vertex information.
      *
-     * Reconvert if:
-     * -> New semantics that have to be converted appear
-     * -> The position of semantics that have to be converted changes
-     * -> The stride of the vertex changed AND there is stuff that needs conversion
-     * -> (If a vertex shader is bound and in use assume that nothing that needs conversion is there)
+     * This code sets up a per-byte array with the size of the detected stride of the arrays in the
+     * buffer. For each byte we have a field that marks the conversion needed on this byte. For example,
+     * the following declaration with fixed function vertex processing:
      *
-     * Return values:
-     *  TRUE: Reload is needed
-     *  FALSE: otherwise
+     *      POSITIONT, FLOAT4
+     *      NORMAL, FLOAT3
+     *      DIFFUSE, FLOAT16_4
+     *      SPECULAR, D3DCOLOR
+     *
+     * Will result in
+     * {                 POSITIONT                    }{             NORMAL                }{    DIFFUSE          }{SPECULAR }
+     * [P][P][P][P][P][P][P][P][P][P][P][P][P][P][P][P][0][0][0][0][0][0][0][0][0][0][0][0][F][F][F][F][F][F][F][F][C][C][C][C]
+     *
+     * Where in this example map P means 4 component position conversion, 0 means no conversion, F means FLOAT16_2 conversion
+     * and C means D3DCOLOR conversion(red / blue swizzle).
+     *
+     * If we're doing conversion and the stride changes we have to reconvert the whole buffer. Note that we do not mind if the
+     * semantic changes, we only care for the conversion type. So if the NORMAL is replaced with a TEXCOORD, nothing has to be
+     * done, or if the DIFFUSE is replaced with a D3DCOLOR BLENDWEIGHT we can happily dismiss the change. Some conversion types
+     * depend on the semantic as well, for example a FLOAT4 texcoord needs no conversion while a FLOAT4 positiont needs one
      */
-
-    if (use_vs(device)) {
-        if(!This->last_was_vshader && This->last_was_converted) {
-            /* Reload if we're switching from converted fixed function to vertex shaders.
-             * This isn't strictly needed, e.g. a FLOAT16 attribute could stay at the same
-             * place. It is always needed for the FLOAT4 and D3DCOLOR conversions however, and
-             * it is unlikely that any game uses FLOAT16s with fixed function vertex processing.
-             */
-            TRACE("Reconverting because switching from converted fixed function drawing to shaders\n");
-            ret = TRUE;
-        }
-        This->last_was_vshader = TRUE;
-
-        /* The vertex declaration is so nice to carry a flag for this. It takes the gl info into account,
-         * but check that separately to avoid the memcmp over the structure
+    if(use_vs(device)) {
+        TRACE("vhsader\n");
+        /* If the current vertex declaration is marked for no half float conversion don't bother to
+         * analyse the strided streams in depth, just set them up for no conversion. Return decl changed
+         * if we used conversion before
          */
-        if(GL_SUPPORT(NV_HALF_FLOAT)) {
-            memset(&strided, 0, sizeof(strided));
-            ret = FALSE;
-        } else if(((IWineD3DVertexDeclarationImpl *)device->stateBlock->vertexDecl)->half_float_conv_needed) {
-            memcpy(&strided, &device->strided_streams, sizeof(strided));
-
-            stride = 0;
-            for(i = 0; i < MAX_ATTRIBS; i++) {
-                if(strided.u.input[i].VBO != This->vbo) {
-                    /* Ignore attributes from a different vbo */
-                    memset(&strided.u.input[i], 0, sizeof(strided.u.input[i]));
-                    continue;
-                };
-
-                type_old = This->strided.u.input[i].dwType;
-                type_new = strided.u.input[i].dwType;
-                if(type_old != type_new) {
-                    if(type_old == WINED3DDECLTYPE_FLOAT16_2 || type_new == WINED3DDECLTYPE_FLOAT16_2 ||
-                       type_old == WINED3DDECLTYPE_FLOAT16_4 || type_new == WINED3DDECLTYPE_FLOAT16_4) {
-                        TRACE("Reloading because attribute %i was %s before and is %s now\n", i,
-                              debug_d3ddecltype(type_old), debug_d3ddecltype(type_new));
-                        stride = strided.u.input[i].dwStride;
-                        ret = TRUE;
-                    }
-                } else if(type_new == WINED3DDECLTYPE_FLOAT16_2 || type_new == WINED3DDECLTYPE_FLOAT16_4) {
-                    if(This->strided.u.input[i].lpData != strided.u.input[i].lpData) {
-                        TRACE("Reconverting buffer because attribute %d has type %s and moved from offset %p to %p\n",
-                              i, debug_d3ddecltype(type_new), This->strided.u.s.position.lpData, strided.u.s.position.lpData);
-                        memcpy(&This->strided, &strided, sizeof(strided));
-                        ret = TRUE;
-                        stride = strided.u.input[i].dwStride;
-                    }
-                }
-
-                if(!(type_new == WINED3DDECLTYPE_FLOAT16_2 || type_new == WINED3DDECLTYPE_FLOAT16_4)) {
-                    /* Nuke unconverted attributes */
-                    memset(&strided.u.input[i], 0, sizeof(strided.u.input[i]));
-                }
-            }
-            if(ret) {
-                memcpy(&This->strided, &strided, sizeof(strided));
+        if(!((IWineD3DVertexDeclarationImpl *) device->stateBlock->vertexDecl)->half_float_conv_needed) {
+            if(This->conv_map) {
+                TRACE("Now using shaders without conversion, but conversion used before\n");
+                HeapFree(GetProcessHeap(), 0, This->conv_map);
                 HeapFree(GetProcessHeap(), 0, This->conv_shift);
-                This->conv_shift = find_conversion_shift(This, &This->strided, stride);
-            }
-        } else {
-            /* No conversion*/
-            memset(&strided, 0, sizeof(strided));
-            ret = (memcmp(&strided, &This->strided, sizeof(strided)) != 0);
-            if(ret) {
-                HeapFree(GetProcessHeap(), 0, This->conv_shift);
+                This->conv_map = NULL;
+                This->stride = 0;
                 This->conv_shift = NULL;
+                This->conv_stride = 0;
+                return TRUE;
+            } else {
+                return FALSE;
             }
+        }
+        for(i = 0; i < MAX_ATTRIBS; i++) {
+            ret = check_attribute(This, &device->strided_streams.u.input[i], FALSE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
+        }
+
+        /* Recalculate the conversion shift map if the declaration has changed,
+         * and we're using float16 conversion or used it on the last run
+         */
+        if(ret && (float16_used || This->conv_map)) {
+            HeapFree(GetProcessHeap(), 0, This->conv_shift);
+            This->conv_shift = find_conversion_shift(This, &device->strided_streams, This->stride);
         }
     } else {
-        /* This will need modifications of the loading code as well - not handled right now */
-        if(((IWineD3DVertexDeclarationImpl *)device->stateBlock->vertexDecl)->half_float_conv_needed) {
-            FIXME("Implement half float fixup with fixed function vertex processing\n");
-        }
-
-        /* we need a copy because we modify some params */
-        memcpy(&strided, &device->strided_streams, sizeof(strided));
-
-        /* Kill things that does not exist in our fixed function pipeline implementation */
-        memset(&strided.u.s.blendWeights, 0, sizeof(strided.u.s.blendWeights));
-        memset(&strided.u.s.blendMatrixIndices, 0, sizeof(strided.u.s.blendMatrixIndices));
-        memset(&strided.u.s.pSize, 0, sizeof(strided.u.s.pSize));
-        memset(&strided.u.s.position2, 0, sizeof(strided.u.s.position2));
-        memset(&strided.u.s.normal2, 0, sizeof(strided.u.s.normal2));
-        memset(&strided.u.s.tangent, 0, sizeof(strided.u.s.tangent));
-        memset(&strided.u.s.binormal, 0, sizeof(strided.u.s.binormal));
-        memset(&strided.u.s.tessFactor, 0, sizeof(strided.u.s.tessFactor));
-        memset(&strided.u.s.fog, 0, sizeof(strided.u.s.fog));
-        memset(&strided.u.s.depth, 0, sizeof(strided.u.s.depth));
-        memset(&strided.u.s.sample, 0, sizeof(strided.u.s.sample));
-
-        /* Filter out data that does not come from this VBO. No need to repeat that on
-         * the attributes filtered above.
+        /* Fixed function is a bit trickier. We have to take care for D3DCOLOR types, FLOAT4 positions and of course
+         * FLOAT16s if not supported. Also, we can't iterate over the array, so use macros to generate code for all
+         * the attributes that our current fixed function pipeline implementation cares for.
          */
-#define FILTER_OTHER_VBO(name) if(strided.u.s.name.VBO != This->vbo) {memset(&strided.u.s.name, 0, sizeof(strided.u.s.name));}
-        FILTER_OTHER_VBO(position);
-        /*FILTER_OTHER_VBO(blendWeights);*/
-        /*FILTER_OTHER_VBO(blendMatrixIndices);*/
-        FILTER_OTHER_VBO(normal);
-        /*FILTER_OTHER_VBO(pSize);*/
-        FILTER_OTHER_VBO(diffuse);
-        FILTER_OTHER_VBO(specular);
-        FILTER_OTHER_VBO(texCoords[0]);
-        FILTER_OTHER_VBO(texCoords[1]);
-        FILTER_OTHER_VBO(texCoords[2]);
-        FILTER_OTHER_VBO(texCoords[3]);
-        FILTER_OTHER_VBO(texCoords[4]);
-        FILTER_OTHER_VBO(texCoords[5]);
-        FILTER_OTHER_VBO(texCoords[6]);
-        FILTER_OTHER_VBO(texCoords[7]);
-        /*FILTER_OTHER_VBO(position2);*/
-        /*FILTER_OTHER_VBO(normal2);*/
-        /*FILTER_OTHER_VBO(tangent);*/
-        /*FILTER_OTHER_VBO(binormal);*/
-        /*FILTER_OTHER_VBO(tessFactor);*/
-        /*FILTER_OTHER_VBO(fog);*/
-        /*FILTER_OTHER_VBO(depth);*/
-        /*FILTER_OTHER_VBO(sample);*/
-#undef FILTER_OTHER_VBO
+        ret = check_attribute(This, &device->strided_streams.u.s.position,     TRUE, TRUE,  FALSE, &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.normal,       TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.diffuse,      TRUE, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.specular,     TRUE, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[0], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[1], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[2], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[3], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[4], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[5], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[6], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[7], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
 
-        /* Now find out if anything has changed. compared to the last run. Keep a few things in mind:
-         *
-         * 1) We do not mind if types change that do not need conversion
-         *
-         * 2) If some data exists cannot be found out by the data field alone. Data can appear at offset 0,
-         * so the main identification is the type. Note that D3DDECLTYPE_FLOAT1 is defined to 0, watch out
-         * for this if any semantic needs conversion if it is declared with that
-         *
-         * 3) If the type is the same, and it needs conversion, make sure it stayed at the same place. Moving
-         * converted bytes requires a reconversion of the whole buffer
-         *
-         * 4) The stride is not a reliable indicator for existance, as it can be 0 if an attribute stays static
-         *
-         * 5) If we used a vertex buffer before, and we aren't using one now(wouldn't be in this codepath
-         * otherwise) then we cannot compare the strided structures. Vertex shaders use numbered attributes,
-         * fixed function pipeline uses named once. For example, a vertex shader could have used converted
-         * tessFactor data which the code below ignores entirely. So if we used a vertex shader before, and
-         * used conversion before, assume a decl change
-         */
-        if(This->last_was_vshader && This->last_was_converted) {
-            TRACE("Reconverting because a vertex shader with conversion was used before\n");
-            ret = TRUE;
-            /* Still have to run through the code below to find the fixed function attribs that need
-             * conversion
-             */
-        }
-        do {
-            /* Position: We have to convert FLOAT4 data because opengl divides the vertex by 1 / w, or
-             * of course if the position has type D3DCOLOR
-             */
-            type_old = This->strided.u.s.position.dwType;
-            type_new = strided.u.s.position.dwType;
-            if(type_old != type_new) {
-                if(type_old == WINED3DDECLTYPE_FLOAT4   || type_new == WINED3DDECLTYPE_FLOAT4 ||
-                   type_old == WINED3DDECLTYPE_D3DCOLOR || type_new == WINED3DDECLTYPE_D3DCOLOR) {
-                    TRACE("Reconverting buffer because POSITION type changed from %s to %s\n",
-                          debug_d3ddecltype(type_old), debug_d3ddecltype(type_new));
-                    memcpy(&This->strided, &strided, sizeof(strided));
-                    ret = TRUE;
-                    break;
-                }
-            } else if(type_new == WINED3DDECLTYPE_D3DCOLOR || type_new == WINED3DDECLTYPE_FLOAT4) {
-                if(This->strided.u.s.position.lpData != strided.u.s.position.lpData) {
-                    TRACE("Reconverting buffer because POSITION has type %s and moved from offset %p to %p\n",
-                          debug_d3ddecltype(type_new), This->strided.u.s.position.lpData, strided.u.s.position.lpData);
-                    memcpy(&This->strided, &strided, sizeof(strided));
-                    ret = TRUE;
-                    break;
-                }
-            }
-
-            /* Others: D3DCOLOR needs conversion */
-#define CHECK_D3DCOLOR_CONV(name) \
-            type_old = This->strided.u.s.name.dwType; \
-            type_new = strided.u.s.name.dwType; \
-            if(type_old != type_new) { \
-                if(type_old == WINED3DDECLTYPE_D3DCOLOR || type_new == WINED3DDECLTYPE_D3DCOLOR) { \
-                    TRACE("Reconverting buffer because %s type changed from %s to %s\n", \
-                           #name, debug_d3ddecltype(type_old), debug_d3ddecltype(type_new)); \
-                    memcpy(&This->strided, &strided, sizeof(strided)); \
-                    ret = TRUE; \
-                    break; \
-                } \
-            } else if(type_new == WINED3DDECLTYPE_D3DCOLOR) { \
-                if(This->strided.u.s.name.lpData != strided.u.s.name.lpData) { \
-                    TRACE("Reconverting buffer because DIFFUSE has type %s and moved from offset %p to %p\n", \
-                          debug_d3ddecltype(type_new), This->strided.u.s.name.lpData, strided.u.s.name.lpData); \
-                    memcpy(&This->strided, &strided, sizeof(strided)); \
-                    ret = TRUE; \
-                    break; \
-                } \
-            }
-            CHECK_D3DCOLOR_CONV(normal);
-            CHECK_D3DCOLOR_CONV(diffuse);
-            CHECK_D3DCOLOR_CONV(specular);
-            CHECK_D3DCOLOR_CONV(texCoords[0]);
-            CHECK_D3DCOLOR_CONV(texCoords[1]);
-            CHECK_D3DCOLOR_CONV(texCoords[2]);
-            CHECK_D3DCOLOR_CONV(texCoords[3]);
-            CHECK_D3DCOLOR_CONV(texCoords[4]);
-            CHECK_D3DCOLOR_CONV(texCoords[5]);
-            CHECK_D3DCOLOR_CONV(texCoords[6]);
-            CHECK_D3DCOLOR_CONV(texCoords[7]);
-#undef CHECK_D3DCOLOR_CONV
-
-            /* No conversion */
-        } while(0);
-        This->last_was_vshader = FALSE;
+        if(float16_used) FIXME("Float16 conversion used with fixed function vertex processing\n");
     }
-    /* We have a declaration now in the buffer */
+
+    if(stride_this_run == 0 && This->conv_map) {
+        /* Sanity test */
+        if(ret == FALSE) {
+            ERR("no converted attributes found, old conversion map exists, and no declaration change???\n");
+        }
+        HeapFree(GetProcessHeap(), 0, This->conv_map);
+        This->conv_map = NULL;
+        This->stride = 0;
+    }
     This->Flags |= VBFLAG_HASDESC;
 
+    if(ret) TRACE("Conversion information changed\n");
     return ret;
+}
+
+static void check_vbo_size(IWineD3DVertexBufferImpl *This) {
+    DWORD size = This->conv_stride ? This->conv_stride * (This->resource.size / This->stride) : This->resource.size;
+    if(This->vbo_size != size) {
+        TRACE("Old size %d, creating new size %d\n", This->vbo_size, size);
+        ENTER_GL();
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, size, NULL, This->vbo_usage));
+        This->vbo_size = size;
+        checkGLcall("glBufferDataARB");
+        LEAVE_GL();
+    }
 }
 
 static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BYTE *data;
-    UINT start = 0, end = 0, stride = 0, vertices;
+    UINT start = 0, end = 0, vertices;
     BOOL declChanged = FALSE;
     int i, j;
     TRACE("(%p)->()\n", This);
@@ -472,20 +451,11 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
      * of them(and thus stop converting)
      */
     if(declChanged) {
-        WineDirect3DVertexStridedData zero;
         This->declChanges++;
         This->draws = 0;
 
-        memset(&zero, 0, sizeof(zero));
-        zero.u.s.position_transformed = This->strided.u.s.position_transformed;
-        if(memcmp(&zero, &This->strided, sizeof(zero)) == 0) {
-            This->last_was_converted = FALSE;
-        } else {
-            This->last_was_converted = TRUE;
-        }
-
         if(This->declChanges > VB_MAXDECLCHANGES) {
-            FIXME("Too much declaration changes, stopping converting\n");
+            FIXME("Too many declaration changes, stopping converting\n");
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
             ENTER_GL();
             GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
@@ -503,6 +473,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
 
             return;
         }
+        check_vbo_size(This);
     } else {
         /* However, it is perfectly fine to change the declaration every now and then. We don't want a game that
          * changes it every minute drop the VBO after VB_MAX_DECL_CHANGES minutes. So count draws without
@@ -519,6 +490,11 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
         end = This->resource.size;
     } else if(This->Flags & VBFLAG_DIRTY) {
         /* No decl change, but dirty data, reload the changed stuff */
+        if(This->conv_shift) {
+            if(This->dirtystart != 0 || This->dirtyend != 0) {
+                FIXME("Implement partial buffer loading with shifted conversion\n");
+            }
+        }
         start = This->dirtystart;
         end = This->dirtyend;
     } else {
@@ -531,7 +507,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     This->dirtystart = 0;
     This->dirtyend = 0;
 
-    if(!This->last_was_converted) {
+    if(!This->conv_map) {
         /* That means that there is nothing to fixup. Just upload from This->resource.allocatedMemory
          * directly into the vbo. Do not free the system memory copy because drawPrimitive may need it if
          * the stride is 0, for instancing emulation, vertex blending emulation or shader emulation.
@@ -550,127 +526,78 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
         return;
     }
 
-    /* OK, we have the original data from the app, the description of the buffer and the dirty area.
-     * so convert the stuff
-     */
-    if(This->last_was_vshader) {
-        TRACE("vertex-shadered conversion\n");
-        /* TODO: Improve that */
-        for(i = 0; i < MAX_ATTRIBS; i++) {
-            if(This->strided.u.input[i].dwStride) {
-                stride = This->strided.u.input[i].dwStride;
-            }
-        }
-        TRACE("Found input stride %d, output stride %d\n", stride, This->conv_stride);
-        /* For now reconvert the entire buffer */
-        start = 0;
-        end = This->resource.size;
+    /* Now for each vertex in the buffer that needs conversion */
+    vertices = This->resource.size / This->stride;
 
-        vertices = This->resource.size / stride;
-        TRACE("%d vertices in buffer\n", vertices);
-        if(This->vbo_size != vertices * This->conv_stride) {
-            TRACE("Old size %d, creating new size %d\n", This->vbo_size, vertices * This->conv_stride);
-            ENTER_GL();
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
-            checkGLcall("glBindBufferARB");
-            GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices * This->conv_stride, NULL, This->vbo_usage));
-            This->vbo_size = vertices * This->conv_stride;
-            checkGLcall("glBufferDataARB");
-            LEAVE_GL();
-        }
-        data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, vertices * This->conv_stride);
-        if(!data) {
-            ERR("Out of memory\n");
-            return;
-        }
+    if(This->conv_shift) {
+        TRACE("Shifted conversion\n");
+        data = HeapAlloc(GetProcessHeap(), 0, vertices * This->conv_stride);
 
-        /* Now for each vertex in the buffer */
-        for(i = 0; i < vertices; i++) {
-            /* Copy the vertex over, taking the shifts into account */
-            for(j = 0; j < stride; j++) {
-                data[This->conv_stride * i + j + This->conv_shift[j]] = This->resource.allocatedMemory[i * stride + j];
-            }
-            /* And convert FLOAT16s */
-            for(j = 0; j < MAX_ATTRIBS; j++) {
-                DWORD_PTR offset = (DWORD_PTR) This->strided.u.input[j].lpData;
-                float *dest = (float *) (&data[This->conv_stride * i + offset + This->conv_shift[offset]]);
-                WORD *in = (WORD *) (&This->resource.allocatedMemory[i * stride + offset]);
-
-                switch(This->strided.u.input[j].dwType) {
-                    case WINED3DDECLTYPE_FLOAT16_4:
-                        dest[3] = float_16_to_32(in + 3);
-                        dest[2] = float_16_to_32(in + 2);
-                        /* drop through */
-                    case WINED3DDECLTYPE_FLOAT16_2:
-                        dest[1] = float_16_to_32(in + 1);
-                        dest[0] = float_16_to_32(in + 0);
+        for(i = start / This->stride; i < min((end / This->stride) + 1, vertices); i++) {
+            for(j = 0; j < This->stride; j++) {
+                switch(This->conv_map[j]) {
+                    case CONV_NONE:
+                        data[This->conv_stride * i + j + This->conv_shift[j]] = This->resource.allocatedMemory[This->stride * i + j];
                         break;
+
+                    case CONV_FLOAT16_2:
+                    {
+                        float *out = (float *) (&data[This->conv_stride * i + j + This->conv_shift[j]]);
+                        WORD *in = (WORD *) (&This->resource.allocatedMemory[i * This->stride + j]);
+
+                        out[1] = float_16_to_32(in + 1);
+                        out[0] = float_16_to_32(in + 0);
+                        j += 3;    /* Skip 3 additional bytes,as a FLOAT16_2 has 4 bytes */
+                        break;
+                    }
+
                     default:
-                        break;
+                        FIXME("Unimplemented conversion %d in shifted conversion\n", This->conv_map[j]);
                 }
             }
         }
-        if(!device->isInDraw) {
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-        }
+
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
         checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, This->vbo_size, data));
+        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, vertices * This->conv_stride, data));
         checkGLcall("glBufferSubDataARB");
         LEAVE_GL();
+
     } else {
-        data = HeapAlloc(GetProcessHeap(), 0, end-start);
-        if(!data) {
-            ERR("Out of memory\n");
-            return;
-        }
-        memcpy(data, This->resource.allocatedMemory + start, end - start);
+        data = HeapAlloc(GetProcessHeap(), 0, This->resource.size);
+        memcpy(data + start, This->resource.allocatedMemory + start, end - start);
+        for(i = start / This->stride; i < min((end / This->stride) + 1, vertices); i++) {
+            for(j = 0; j < This->stride; j++) {
+                switch(This->conv_map[j]) {
+                    case CONV_NONE:
+                        /* Done already */
+                        /* Vertex attribute sizes are always multiples of 4, but we can't skip 3 additional bytes
+                         * because the attributes don't have to start at aligned offsets
+                         */
+                        break;
+                    case CONV_D3DCOLOR:
+                        fixup_d3dcolor((DWORD *) (data + i * This->stride + j));
+                        j += 3;
+                        break;
 
-        if     (This->strided.u.s.position.dwStride)        stride = This->strided.u.s.position.dwStride;
-        else if(This->strided.u.s.specular.dwStride)        stride = This->strided.u.s.specular.dwStride;
-        else if(This->strided.u.s.diffuse.dwStride)         stride = This->strided.u.s.diffuse.dwStride;
-        else if(This->strided.u.s.normal.dwStride)          stride = This->strided.u.s.normal.dwStride;
-        else if(This->strided.u.s.texCoords[0].dwStride)    stride = This->strided.u.s.texCoords[0].dwStride;
-        else if(This->strided.u.s.texCoords[1].dwStride)    stride = This->strided.u.s.texCoords[1].dwStride;
-        else if(This->strided.u.s.texCoords[2].dwStride)    stride = This->strided.u.s.texCoords[2].dwStride;
-        else if(This->strided.u.s.texCoords[3].dwStride)    stride = This->strided.u.s.texCoords[3].dwStride;
-        else if(This->strided.u.s.texCoords[4].dwStride)    stride = This->strided.u.s.texCoords[4].dwStride;
-        else if(This->strided.u.s.texCoords[5].dwStride)    stride = This->strided.u.s.texCoords[5].dwStride;
-        else if(This->strided.u.s.texCoords[6].dwStride)    stride = This->strided.u.s.texCoords[6].dwStride;
-        else if(This->strided.u.s.texCoords[7].dwStride)    stride = This->strided.u.s.texCoords[7].dwStride;
+                    case CONV_POSITIONT:
+                        fixup_transformed_pos((float *) (data + i * This->stride + j));
+                        j += 15;
+                        break;
 
-        for(i = (( end - start) / stride) - 1; i >= 0; i--) {
-            if(This->strided.u.s.position.dwType == WINED3DDECLTYPE_FLOAT4) {
-                fixup_transformed_pos((float *)((DWORD_PTR) data + ((DWORD_PTR) This->strided.u.s.position.lpData) + i * stride));
-            } else if(This->strided.u.s.position.dwType == WINED3DDECLTYPE_D3DCOLOR) {
-                FIXME("Write a test for D3DCOLOR position\n");
-            }
-#define CONVERT_D3DCOLOR_ATTRIB(name) \
-                if(This->strided.u.s.name.dwType == WINED3DDECLTYPE_D3DCOLOR) { \
-                    fixup_d3dcolor((DWORD *)((DWORD_PTR) data + ((DWORD_PTR) This->strided.u.s.name.lpData) + i * stride)); \
+                    case CONV_FLOAT16_2:
+                        ERR("Did not expect FLOAT16 conversion in unshifted conversion\n");
+                    default:
+                        FIXME("Unimplemented conversion %d in shifted conversion\n", This->conv_map[j]);
                 }
-            CONVERT_D3DCOLOR_ATTRIB(position);
-            CONVERT_D3DCOLOR_ATTRIB(specular);
-            CONVERT_D3DCOLOR_ATTRIB(diffuse);
-            CONVERT_D3DCOLOR_ATTRIB(normal);
-            CONVERT_D3DCOLOR_ATTRIB(texCoords[0]);
-            CONVERT_D3DCOLOR_ATTRIB(texCoords[1]);
-            CONVERT_D3DCOLOR_ATTRIB(texCoords[2]);
-            CONVERT_D3DCOLOR_ATTRIB(texCoords[3]);
-            CONVERT_D3DCOLOR_ATTRIB(texCoords[4]);
-            CONVERT_D3DCOLOR_ATTRIB(texCoords[5]);
-            CONVERT_D3DCOLOR_ATTRIB(texCoords[6]);
-            CONVERT_D3DCOLOR_ATTRIB(texCoords[7]);
-#undef CONVERT_D3DCOLOR_ATTRIB
+            }
         }
-        if(!device->isInDraw) {
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-        }
+
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
         checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end - start, data));
+        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end - start, data + start));
         checkGLcall("glBufferSubDataARB");
         LEAVE_GL();
     }

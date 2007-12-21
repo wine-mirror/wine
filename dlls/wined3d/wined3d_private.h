@@ -831,6 +831,17 @@ typedef struct IWineD3DResourceImpl
 /*****************************************************************************
  * IWineD3DVertexBuffer implementation structure (extends IWineD3DResourceImpl)
  */
+enum vbo_conversion_type {
+    CONV_NONE               = 0,
+    CONV_D3DCOLOR           = 1,
+    CONV_POSITIONT          = 2,
+    CONV_FLOAT16_2          = 3 /* Also handles FLOAT16_4 */
+
+    /* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
+     * fixed function semantics as D3DCOLOR or FLOAT16
+     */
+};
+
 typedef struct IWineD3DVertexBufferImpl
 {
     /* IUnknown & WineD3DResource Information     */
@@ -852,13 +863,12 @@ typedef struct IWineD3DVertexBufferImpl
 
     LONG                      declChanges, draws;
     /* Last description of the buffer */
-    WineDirect3DVertexStridedData strided;
-    BOOL                      last_was_vshader;
-    BOOL                      last_was_converted;
+    DWORD                     stride;       /* 0 if no conversion               */
+    enum vbo_conversion_type  *conv_map;    /* NULL if no conversion            */
 
     /* Extra load offsets, for FLOAT16 conversion */
-    DWORD                     *conv_shift;
-    DWORD                     conv_stride;
+    DWORD                     *conv_shift;  /* NULL if no shifted conversion    */
+    DWORD                     conv_stride;  /* 0 if no shifted conversion       */
 } IWineD3DVertexBufferImpl;
 
 extern const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
