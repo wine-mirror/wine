@@ -2330,6 +2330,20 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                 }
             }
             break;
+        case INTERNET_OPTION_VERSION:
+        {
+            TRACE("INTERNET_OPTION_VERSION\n");
+            if (*lpdwBufferLength < sizeof(INTERNET_VERSION_INFO))
+                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            else
+            {
+                static const INTERNET_VERSION_INFO info = { 6, 0 };
+                memcpy(lpBuffer, &info, sizeof(info));
+                *lpdwBufferLength = sizeof(info);
+                bSuccess = TRUE;
+            }
+            break;
+        }
         default:
             FIXME("Stub! %d\n", dwOption);
             break;
