@@ -2885,6 +2885,7 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
 
     if (!*ppMemory || fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, memsize);
+    pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_copy_from_buffer(pStubMsg, *ppMemory + pStubMsg->Offset, bufsize);
 
     EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
@@ -4515,6 +4516,7 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     if (!*ppMemory || fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, size);
+    pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_copy_from_buffer(pStubMsg, *ppMemory + pStubMsg->Offset, bufsize);
 
     EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
