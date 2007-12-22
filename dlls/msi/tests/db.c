@@ -3899,13 +3899,63 @@ static void test_select_markers(void)
     r = MsiViewFetch(view, &res);
     ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
-    r = MsiViewClose(view);
-    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
-    r = MsiCloseHandle(view);
-    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
-    r = MsiCloseHandle(hdb);
-    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+    MsiCloseHandle(rec);
+    MsiViewClose(view);
+    MsiCloseHandle(view);
 
+    rec = MsiCreateRecord(2);
+    MsiRecordSetString(rec, 1, "one");
+    MsiRecordSetInteger(rec, 2, 1);
+
+    query = "SELECT * FROM `Table` WHERE `Two`<>? AND `Three`>? ORDER BY `Three`";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewExecute(view, rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewFetch(view, &res);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(res, 1, buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buf, "apple"), "Expected apple, got %s\n", buf);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(res, 2, buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buf, "two"), "Expected two, got %s\n", buf);
+
+    r = MsiRecordGetInteger(res, 3);
+    ok(r == 2, "Expected 2, got %d\n", r);
+
+    MsiCloseHandle(res);
+
+    r = MsiViewFetch(view, &res);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(res, 1, buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buf, "banana"), "Expected banana, got %s\n", buf);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(res, 2, buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buf, "three"), "Expected three, got %s\n", buf);
+
+    r = MsiRecordGetInteger(res, 3);
+    ok(r == 3, "Expected 3, got %d\n", r);
+
+    MsiCloseHandle(res);
+
+    r = MsiViewFetch(view, &res);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+
+    MsiCloseHandle(rec);
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+    MsiCloseHandle(hdb);
     DeleteFile(msifile);
 }
 
