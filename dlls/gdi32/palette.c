@@ -869,7 +869,7 @@ VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
 }
 
 /*********************************************************************
- *           SetMagicColors   (GDI.@)
+ *           SetMagicColors   (GDI32.@)
  */
 BOOL WINAPI SetMagicColors(HDC hdc, ULONG u1, ULONG u2)
 {
