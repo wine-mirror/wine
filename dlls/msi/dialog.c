@@ -3074,7 +3074,7 @@ static UINT msi_dialog_set_property( msi_dialog *dialog, LPCWSTR event, LPCWSTR 
     prop = msi_alloc( len*sizeof(WCHAR));
     strcpyW( prop, &event[1] );
     p = strchrW( prop, ']' );
-    if( p && p[1] == 0 )
+    if( p && (p[1] == 0 || p[1] == ' ') )
     {
         *p = 0;
         if( strcmpW( szNullArg, arg ) )
