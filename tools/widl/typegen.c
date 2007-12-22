@@ -3073,7 +3073,8 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
             if (!in_attr && !var->type->size_is && !is_string)
             {
                 print_file(file, indent, "");
-                write_type_decl(file, var->type->ref, "_W%u", i++);
+                write_type_decl(file, var->type->declarray ? var->type : var->type->ref,
+                                "_W%u", i++);
                 fprintf(file, ";\n");
             }
 
