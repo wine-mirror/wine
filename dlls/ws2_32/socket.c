@@ -3480,6 +3480,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
         freeaddrinfo(unixaires);
     } else {
         result = convert_eai_u2w(result);
+        *res = NULL;
     }
     return result;
 
