@@ -1543,6 +1543,7 @@ static UINT TABLE_delete_row( struct tagMSIVIEW *view, UINT row )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
     UINT r, num_rows, num_cols, i;
+    BYTE **data;
 
     TRACE("%p %d\n", tv, row);
 
@@ -1556,13 +1557,25 @@ static UINT TABLE_delete_row( struct tagMSIVIEW *view, UINT row )
     if ( row >= num_rows )
         return ERROR_FUNCTION_FAILED;
 
-    tv->table->row_count--;
+    if ( row < tv->table->row_count )
+    {
+        num_rows = tv->table->row_count;
+        tv->table->row_count--;
+        data = tv->table->data;
+    }
+    else
+    {
+        num_rows = tv->table->nonpersistent_row_count;
+        row -= tv->table->row_count;
+        tv->table->nonpersistent_row_count--;
+        data = tv->table->nonpersistent_data;
+    }
 
     if ( row == num_rows - 1 )
         return ERROR_SUCCESS;
 
     for (i = row + 1; i < num_rows; i++)
-        memcpy(tv->table->data[i - 1], tv->table->data[i], tv->row_size);
+        memcpy(data[i - 1], data[i], tv->row_size);
 
     return ERROR_SUCCESS;
 }
@@ -1622,6 +1635,13 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
         r = table_validate_new( tv, rec );
         break;
 
+    case MSIMODIFY_INSERT:
+        r = table_validate_new( tv, rec );
+        if (r != ERROR_SUCCESS)
+            break;
+        r = TABLE_insert_row( view, rec, FALSE );
+        break;
+
     case MSIMODIFY_INSERT_TEMPORARY:
         r = table_validate_new( tv, rec );
         if (r != ERROR_SUCCESS)
@@ -1634,7 +1654,6 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
         break;
 
     case MSIMODIFY_REFRESH:
-    case MSIMODIFY_INSERT:
     case MSIMODIFY_ASSIGN:
     case MSIMODIFY_REPLACE:
     case MSIMODIFY_MERGE:
