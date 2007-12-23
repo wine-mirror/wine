@@ -745,7 +745,17 @@ end:
 
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 {
+    return GdipCreateFromHDC2(hdc, NULL, graphics);
+}
+
+GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **graphics)
+{
     GpStatus retval;
+
+    if(hDevice != NULL) {
+        FIXME("Don't know how to hadle parameter hDevice\n");
+        return NotImplemented;
+    }
 
     if(hdc == NULL)
         return OutOfMemory;
