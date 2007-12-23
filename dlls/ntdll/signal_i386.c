@@ -936,7 +936,9 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     }
 
     stack--;  /* push the stack_layout structure */
-#ifdef HAVE_VALGRIND_MEMCHECK_H
+#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
+    VALGRIND_MAKE_MEM_UNDEFINED(stack, sizeof(*stack));
+#elif defined(VALGRIND_MAKE_WRITABLE)
     VALGRIND_MAKE_WRITABLE(stack, sizeof(*stack));
 #endif
     stack->ret_addr     = (void *)0xdeadbabe;  /* raise_func must not return */

@@ -140,7 +140,9 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL qu
 static inline void mark_block_free( void *ptr, SIZE_T size )
 {
     if (TRACE_ON(heap) || WARN_ON(heap)) memset( ptr, ARENA_FREE_FILLER, size );
-#ifdef VALGRIND_MAKE_NOACCESS
+#if defined(VALGRIND_MAKE_MEM_NOACCESS)
+    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ));
+#elif defined( VALGRIND_MAKE_NOACCESS)
     VALGRIND_DISCARD( VALGRIND_MAKE_NOACCESS( ptr, size ));
 #endif
 }
@@ -148,7 +150,9 @@ static inline void mark_block_free( void *ptr, SIZE_T size )
 /* mark a block of memory as initialized for debugging purposes */
 static inline void mark_block_initialized( void *ptr, SIZE_T size )
 {
-#ifdef VALGRIND_MAKE_READABLE
+#if defined(VALGRIND_MAKE_MEM_DEFINED)
+    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_DEFINED( ptr, size ));
+#elif defined(VALGRIND_MAKE_READABLE)
     VALGRIND_DISCARD( VALGRIND_MAKE_READABLE( ptr, size ));
 #endif
 }
@@ -156,13 +160,17 @@ static inline void mark_block_initialized( void *ptr, SIZE_T size )
 /* mark a block of memory as uninitialized for debugging purposes */
 static inline void mark_block_uninitialized( void *ptr, SIZE_T size )
 {
-#ifdef VALGRIND_MAKE_WRITABLE
+#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
+    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
+#elif defined(VALGRIND_MAKE_WRITABLE)
     VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
 #endif
     if (TRACE_ON(heap) || WARN_ON(heap))
     {
         memset( ptr, ARENA_INUSE_FILLER, size );
-#ifdef VALGRIND_MAKE_WRITABLE
+#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
+        VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
+#elif defined(VALGRIND_MAKE_WRITABLE)
         /* make it uninitialized to valgrind again */
         VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
 #endif

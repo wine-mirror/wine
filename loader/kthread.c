@@ -150,7 +150,7 @@ static inline void writejump( const char *symbol, void *dest )
     *(int *)(addr+1) = (unsigned char *)dest - (addr + 5);
     mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC);
 
-# ifdef HAVE_VALGRIND_MEMCHECK_H
+# ifdef VALGRIND_DISCARD_TRANSLATIONS
     VALGRIND_DISCARD_TRANSLATIONS( addr, 5 );
 # endif
 #endif  /* __GLIBC__ && __i386__ */
