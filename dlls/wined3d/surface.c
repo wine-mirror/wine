@@ -1402,7 +1402,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                     *convert = CONVERT_PALETTED;
                 }
             }
-            else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+            else if(!GL_SUPPORT(EXT_PALETTED_TEXTURE) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
                 *format = GL_RED;
                 *internal = GL_RGBA;
                 *type = GL_UNSIGNED_BYTE;
