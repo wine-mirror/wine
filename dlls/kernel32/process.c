@@ -1194,6 +1194,7 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
             /* skip \??\ prefix */
             curdir_str.Buffer = newdir.Buffer + 4;
             curdir_str.Length = newdir.Length - 4 * sizeof(WCHAR);
+            curdir_str.MaximumLength = newdir.MaximumLength - 4 * sizeof(WCHAR);
         }
         else cur_dir = NULL;
     }
