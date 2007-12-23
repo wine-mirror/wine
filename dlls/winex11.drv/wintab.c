@@ -353,6 +353,15 @@ static void Tablet_FixupCursors(void)
         }
 }
 
+static void trace_axes(XValuatorInfoPtr val)
+{
+    int i;
+    XAxisInfoPtr axis;
+
+    for (i = 0, axis = val->axes ; i < val->num_axes; i++, axis++)
+        TRACE("        Axis %d: [resolution %d|min_value %d|max_value %d]\n", i, axis->resolution, axis->min_value, axis->max_value);
+}
+
 void X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
     const WCHAR SZ_CONTEXT_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','C','o','n','t','e','x','t',0};
@@ -431,7 +440,15 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     {
         int class_loop;
 
-        TRACE("Trying device %i(%s)\n",loop,devices[loop].name);
+        TRACE("Device %i:  [id %d|name %s|type %s|num_classes %d|use %s]\n",
+                loop, (int) devices[loop].id, devices[loop].name,
+                XGetAtomName(data->display, devices[loop].type),
+                devices[loop].num_classes,
+                devices[loop].use == IsXKeyboard ? "IsXKeyboard" :
+                    devices[loop].use == IsXPointer ? "IsXPointer" :
+                    devices[loop].use == IsXExtensionDevice ? "IsXExtensionDevice" :
+                    "Unknown"
+                );
         if (devices[loop].use == IsXExtensionDevice)
         {
             LPWTI_CURSORS_INFO cursor;
@@ -503,10 +520,16 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             {
                 switch (any->class)
                 {
+
                     case ValuatorClass:
+                        Val = (XValuatorInfoPtr) any;
+                        TRACE("    ValidatorInput %d: [class %d|length %d|num_axes %d|mode %d|motion_buffer %ld]\n",
+                                class_loop, (int) Val->class, Val->length, Val->num_axes, Val->mode, Val->motion_buffer);
+                        if (TRACE_ON(wintab32))
+                            trace_axes(Val);
+
                         if (!axis_read_complete)
                         {
-                            Val = (XValuatorInfoPtr) any;
                             Axis = (XAxisInfoPtr) ((char *) Val + sizeof
                                 (XValuatorInfo));
 
