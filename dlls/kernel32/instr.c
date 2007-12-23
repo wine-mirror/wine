@@ -773,8 +773,8 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
             if (winedos.EmulateInterruptPM)
             {
                 context->Eip += prefixlen + 2;
-                winedos.EmulateInterruptPM( context, instr[1] );
-                return ExceptionContinueExecution;
+                if (winedos.EmulateInterruptPM( context, instr[1] )) return ExceptionContinueExecution;
+                context->Eip -= prefixlen + 2;  /* restore eip */
             }
             break;  /* Unable to emulate it */
 

@@ -135,7 +135,7 @@ extern struct winedos_exports
     BOOL     (*FreeDosBlock)(void* ptr);
     UINT     (*ResizeDosBlock)(void *ptr, UINT size, BOOL exact);
     /* for instr.c */
-    void (WINAPI *EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );
+    BOOL (WINAPI *EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );
     void (WINAPI *CallBuiltinHandler)( CONTEXT86 *context, BYTE intnum );
     DWORD (WINAPI *inport)( int port, int size );
     void (WINAPI *outport)( int port, int size, DWORD val );

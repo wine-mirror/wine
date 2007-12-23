@@ -45,6 +45,7 @@ static void WINAPI DOSVM_Int2aHandler(CONTEXT86*);
 static void WINAPI DOSVM_Int41Handler(CONTEXT86*);
 static void WINAPI DOSVM_Int4bHandler(CONTEXT86*);
 static void WINAPI DOSVM_Int5cHandler(CONTEXT86*);
+static void WINAPI DOSVM_DefaultHandler(CONTEXT86*);
 
 static FARPROC16     DOSVM_Vectors16[256];
 static FARPROC48     DOSVM_Vectors48[256];
@@ -75,7 +76,8 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
   /* 58 */ 0,                  0,                  0,                  0,
   /* 5C */ DOSVM_Int5cHandler, 0,                  0,                  0,
   /* 60 */ 0,                  0,                  0,                  0,
-  /* 64 */ 0,                  0,                  0,                  DOSVM_Int67Handler
+  /* 64 */ 0,                  0,                  0,                  DOSVM_Int67Handler,
+  /* 68 */ DOSVM_DefaultHandler
 };
 
 
@@ -257,7 +259,7 @@ static void DOSVM_PushFlags( CONTEXT86 *context, BOOL islong, BOOL isstub )
  * Pushes interrupt frame to stack and changes instruction 
  * pointer to interrupt handler.
  */
-void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum ) 
+BOOL WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum ) 
 {
     TRACE_(relay)("Call DOS int 0x%02x ret=%04x:%08x\n"
                   "  eax=%08x ebx=%08x ecx=%08x edx=%08x\n"
@@ -326,12 +328,14 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
     }
     else if (wine_ldt_is_system(context->SegCs))
     {
-        DOSVM_CallBuiltinHandler( context, intnum );
+        INTPROC proc = DOSVM_GetBuiltinHandler( intnum );
+        if (!proc) return FALSE;
     }
     else
     {
         DOSVM_HardwareInterruptPM( context, intnum );
     }
+    return TRUE;
 }
 
 

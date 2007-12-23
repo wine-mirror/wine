@@ -473,7 +473,7 @@ extern void WINAPI EMS_Ioctl_Handler(CONTEXT86*);
 
 /* interrupts.c */
 extern void WINAPI DOSVM_CallBuiltinHandler( CONTEXT86 *, BYTE );
-extern void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *, BYTE );
+extern BOOL WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *, BYTE );
 extern BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *, BYTE );
 extern FARPROC16   DOSVM_GetPMHandler16( BYTE );
 extern FARPROC48   DOSVM_GetPMHandler48( BYTE );
