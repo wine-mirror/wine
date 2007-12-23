@@ -528,7 +528,13 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                         if (TRACE_ON(wintab32))
                             trace_axes(Val);
 
-                        if (!axis_read_complete)
+                        /* FIXME:  This is imperfect; we compute our devices capabilities based upon the
+                        **         first pen type device we find.  However, a more correct implementation
+                        **         would require acquiring a wide variety of tablets and running through
+                        **         the various inputs to see what the values are.  Odds are that a
+                        **         more 'correct' algorithm would condense to this one anyway.
+                        */
+                        if (!axis_read_complete && Val->num_axes >= 5 && cursor->TYPE == CSR_TYPE_PEN)
                         {
                             Axis = (XAxisInfoPtr) ((char *) Val + sizeof
                                 (XValuatorInfo));
