@@ -1931,7 +1931,7 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
     if (device->render_targets && device->render_targets[0]) {
         IWineD3DSurfaceImpl* render_target = (IWineD3DSurfaceImpl*)device->render_targets[0];
 
-        if(render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
+        if((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET) && (render_target->resource.format == WINED3DFMT_P8))
             index_in_alpha = TRUE;
     }
 
