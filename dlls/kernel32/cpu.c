@@ -808,7 +808,12 @@ VOID WINAPI GetSystemInfo(
 VOID WINAPI GetNativeSystemInfo(
     LPSYSTEM_INFO si	/* [out] Destination for system information, may not be NULL */)
 {
-    FIXME("(%p) using GetSystemInfo()\n", si);
+    static BOOL reported = FALSE;
+    if (!reported) {
+        FIXME("(%p) using GetSystemInfo()\n", si);
+        reported = TRUE;
+    } else
+        TRACE("(%p) using GetSystemInfo()\n", si);
     GetSystemInfo(si); 
 }
 
