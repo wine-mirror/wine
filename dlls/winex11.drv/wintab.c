@@ -419,7 +419,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                               PK_NORMAL_PRESSURE | PK_TANGENT_PRESSURE |
                               PK_ORIENTATION;
 
-            cursor->PHYSID = cursor_target;
+            cursor->PHYSID = target->id;
             cursor->NPBUTTON = 1;
             cursor->NPBTNMARKS[0] = 0 ;
             cursor->NPBTNMARKS[1] = 1 ;
@@ -574,12 +574,12 @@ static int figure_deg(int x, int y)
     return rc;
 }
 
-static int get_button_state(int deviceid)
+static int get_button_state(int curnum)
 {
-    return button_state[deviceid];
+    return button_state[curnum];
 }
 
-static void set_button_state(XID deviceid)
+static void set_button_state(int curnum, XID deviceid)
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
     XDevice *device;
@@ -614,23 +614,40 @@ static void set_button_state(XID deviceid)
     }
     pXFreeDeviceState(state);
     wine_tsx11_unlock();
-    button_state[deviceid] = rc;
+    button_state[curnum] = rc;
+}
+
+static int cursor_from_device(DWORD deviceid, LPWTI_CURSORS_INFO *cursorp)
+{
+    int i;
+    for (i = 0; i < gNumCursors; i++)
+        if (gSysCursor[i].PHYSID == deviceid)
+        {
+            *cursorp = &gSysCursor[i];
+            return i;
+        }
+
+    ERR("Could not map device id %d to a cursor\n", (int) deviceid);
+    return -1;
 }
 
 static void motion_event( HWND hwnd, XEvent *event )
 {
     XDeviceMotionEvent *motion = (XDeviceMotionEvent *)event;
-    LPWTI_CURSORS_INFO cursor = &gSysCursor[motion->deviceid];
+    LPWTI_CURSORS_INFO cursor;
+    int curnum = cursor_from_device(motion->deviceid, &cursor);
+    if (curnum < 0)
+        return;
 
     memset(&gMsgPacket,0,sizeof(WTPACKET));
 
-    TRACE("Received tablet motion event (%p)\n",hwnd);
+    TRACE("Received tablet motion event (%p); device id %d, cursor num %d\n",hwnd, (int) motion->deviceid, curnum);
 
     /* Set cursor to inverted if cursor is the eraser */
     gMsgPacket.pkStatus = (cursor->TYPE == 0xc85a ?TPS_INVERT:0);
     gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(motion->time);
     gMsgPacket.pkSerialNumber = gSerial++;
-    gMsgPacket.pkCursor = motion->deviceid;
+    gMsgPacket.pkCursor = curnum;
     gMsgPacket.pkX = motion->axis_data[0];
     gMsgPacket.pkY = motion->axis_data[1];
     gMsgPacket.pkOrientation.orAzimuth = figure_deg(motion->axis_data[3],motion->axis_data[4]);
@@ -639,14 +656,17 @@ static void motion_event( HWND hwnd, XEvent *event )
                                              abs(motion->axis_data[4])))
                                            * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
     gMsgPacket.pkNormalPressure = motion->axis_data[2];
-    gMsgPacket.pkButtons = get_button_state(motion->deviceid);
+    gMsgPacket.pkButtons = get_button_state(curnum);
     SendMessageW(hwndTabletDefault,WT_PACKET,0,(LPARAM)hwnd);
 }
 
 static void button_event( HWND hwnd, XEvent *event )
 {
     XDeviceButtonEvent *button = (XDeviceButtonEvent *) event;
-    LPWTI_CURSORS_INFO cursor = &gSysCursor[button->deviceid];
+    LPWTI_CURSORS_INFO cursor;
+    int curnum = cursor_from_device(button->deviceid, &cursor);
+    if (curnum < 0)
+        return;
 
     memset(&gMsgPacket,0,sizeof(WTPACKET));
 
@@ -654,10 +674,10 @@ static void button_event( HWND hwnd, XEvent *event )
 
     /* Set cursor to inverted if cursor is the eraser */
     gMsgPacket.pkStatus = (cursor->TYPE == 0xc85a ?TPS_INVERT:0);
-    set_button_state(button->deviceid);
+    set_button_state(curnum, button->deviceid);
     gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(button->time);
     gMsgPacket.pkSerialNumber = gSerial++;
-    gMsgPacket.pkCursor = button->deviceid;
+    gMsgPacket.pkCursor = curnum;
     gMsgPacket.pkX = button->axis_data[0];
     gMsgPacket.pkY = button->axis_data[1];
     gMsgPacket.pkOrientation.orAzimuth = figure_deg(button->axis_data[3],button->axis_data[4]);
@@ -665,7 +685,7 @@ static void button_event( HWND hwnd, XEvent *event )
                                                             abs(button->axis_data[4])))
                                            * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
     gMsgPacket.pkNormalPressure = button->axis_data[2];
-    gMsgPacket.pkButtons = get_button_state(button->deviceid);
+    gMsgPacket.pkButtons = get_button_state(curnum);
     SendMessageW(hwndTabletDefault,WT_PACKET,0,(LPARAM)hwnd);
 }
 
@@ -680,7 +700,10 @@ static void key_event( HWND hwnd, XEvent *event )
 static void proximity_event( HWND hwnd, XEvent *event )
 {
     XProximityNotifyEvent *proximity = (XProximityNotifyEvent *) event;
-    LPWTI_CURSORS_INFO cursor = &gSysCursor[proximity->deviceid];
+    LPWTI_CURSORS_INFO cursor;
+    int curnum = cursor_from_device(proximity->deviceid, &cursor);
+    if (curnum < 0)
+        return;
 
     memset(&gMsgPacket,0,sizeof(WTPACKET));
 
@@ -690,7 +713,7 @@ static void proximity_event( HWND hwnd, XEvent *event )
     gMsgPacket.pkStatus |= (event->type==proximity_out_type)?TPS_PROXIMITY:0;
     gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(proximity->time);
     gMsgPacket.pkSerialNumber = gSerial++;
-    gMsgPacket.pkCursor = proximity->deviceid;
+    gMsgPacket.pkCursor = curnum;
     gMsgPacket.pkX = proximity->axis_data[0];
     gMsgPacket.pkY = proximity->axis_data[1];
     gMsgPacket.pkOrientation.orAzimuth = figure_deg(proximity->axis_data[3],proximity->axis_data[4]);
@@ -698,7 +721,7 @@ static void proximity_event( HWND hwnd, XEvent *event )
                                                             abs(proximity->axis_data[4])))
                                            * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
     gMsgPacket.pkNormalPressure = proximity->axis_data[2];
-    gMsgPacket.pkButtons = get_button_state(proximity->deviceid);
+    gMsgPacket.pkButtons = get_button_state(curnum);
 
     SendMessageW(hwndTabletDefault, WT_PROXIMITY, (event->type == proximity_in_type), (LPARAM)hwnd);
 }
