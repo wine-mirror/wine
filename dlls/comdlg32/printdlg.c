@@ -2684,6 +2684,23 @@ PRINTDLG_PS_ChangePrinterA(HWND hDlg, PageSetupDataA *pda) {
     return TRUE;
 }
 
+static void PRINTDLG_PS_SetOrientationW(HWND hDlg, PageSetupDataW* pda)
+{
+    WCHAR PaperName[64];
+
+    GetDlgItemTextW(hDlg, cmb2, PaperName, sizeof(PaperName)/sizeof(WCHAR));
+    PRINTDLG_PaperSizeW(&pda->pdlg, PaperName, &pda->curdlg.ptPaperSize);
+    pda->curdlg.ptPaperSize.x = _c_10mm2size((LPPAGESETUPDLGA)pda->dlga, pda->curdlg.ptPaperSize.x);
+    pda->curdlg.ptPaperSize.y = _c_10mm2size((LPPAGESETUPDLGA)pda->dlga, pda->curdlg.ptPaperSize.y);
+
+    if(IsDlgButtonChecked(hDlg, rad2))
+    {
+        DWORD tmp = pda->curdlg.ptPaperSize.x;
+        pda->curdlg.ptPaperSize.x = pda->curdlg.ptPaperSize.y;
+        pda->curdlg.ptPaperSize.y = tmp;
+    }
+}
+
 static BOOL
 PRINTDLG_PS_ChangePrinterW(HWND hDlg, PageSetupDataW *pda) {
     DEVNAMES	*dn;
@@ -2696,8 +2713,18 @@ PRINTDLG_PS_ChangePrinterW(HWND hDlg, PageSetupDataW *pda) {
     portname	= ((WCHAR*)dn)+dn->wOutputOffset;
     PRINTDLG_SetUpPaperComboBoxW(hDlg,cmb2,devname,portname,dm);
     PRINTDLG_SetUpPaperComboBoxW(hDlg,cmb3,devname,portname,dm);
+
+    /* Landscape orientation */
+    if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
+        CheckRadioButton(hDlg, rad1, rad2, rad2);
+    else /* this is default if papersize is not set */
+        CheckRadioButton(hDlg, rad1, rad2, rad1);
+
     GlobalUnlock(pda->pdlg.hDevNames);
     GlobalUnlock(pda->pdlg.hDevMode);
+
+    PRINTDLG_PS_SetOrientationW(hDlg, pda);
+
     return TRUE;
 }
 
@@ -3302,7 +3329,6 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{ '_', '_', 'W', 'I', 'N', 'E', '_', 'P', 'A', 'G', 'E', 
 	  'S', 'E', 'T', 'U', 'P', 'D', 'L', 'G', 'D', 'A', 'T', 'A', 0 };
     PageSetupDataW	*pda;
-    LPDEVMODEW          dm;
     BOOL		res = FALSE;
 
     if (uMsg==WM_INITDIALOG) {
@@ -3331,31 +3357,6 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
         PRINTDLG_PS_ChangePrinterW(hDlg,pda);
-
-        if(pda->dlga->hDevMode)
-        {
-            WCHAR PaperName[64];
-
-            dm = GlobalLock(pda->dlga->hDevMode);
-            /* Landscape orientation */
-            if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
-                CheckRadioButton(hDlg, rad1, rad2, rad2);
-            else /* this is default if papersize is not set */
-                CheckRadioButton(hDlg, rad1, rad2, rad1);
-
-            GetDlgItemTextW(hDlg, cmb2, PaperName, sizeof(PaperName)/sizeof(WCHAR));
-            PRINTDLG_PaperSizeW(&pda->pdlg, PaperName, &pda->curdlg.ptPaperSize);
-            pda->curdlg.ptPaperSize.x = _c_10mm2size((LPPAGESETUPDLGA)pda->dlga, pda->curdlg.ptPaperSize.x);
-            pda->curdlg.ptPaperSize.y = _c_10mm2size((LPPAGESETUPDLGA)pda->dlga, pda->curdlg.ptPaperSize.y);
-            GlobalUnlock(pda->dlga->hDevMode);
-
-            if(IsDlgButtonChecked(hDlg, rad2))
-            {
-                DWORD tmp = pda->curdlg.ptPaperSize.x;
-                pda->curdlg.ptPaperSize.x = pda->curdlg.ptPaperSize.y;
-                pda->curdlg.ptPaperSize.y = tmp;
-	    }
-        }
 
 	if (pda->dlga->Flags & PSD_DISABLEORIENTATION) {
 	    EnableWindow(GetDlgItem(hDlg,rad1),FALSE);
