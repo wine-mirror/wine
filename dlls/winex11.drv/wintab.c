@@ -304,6 +304,55 @@ static int Tablet_ErrorHandler(Display *dpy, XErrorEvent *event, void* arg)
     return 1;
 }
 
+static int find_cursor_by_type(int cursor_type, int exclude)
+{
+    int i;
+    for (i = 0; i < gNumCursors; i++)
+        if (i != exclude)
+            if (gSysCursor[i].TYPE == cursor_type)
+                return i;
+
+    return -1;
+}
+
+static void swap_cursors(int a, int b)
+{
+    WTI_CURSORS_INFO temp;
+    temp = gSysCursor[a];
+    gSysCursor[a] = gSysCursor[b];
+    gSysCursor[b] = temp;
+}
+
+/* Adobe Photoshop 7.0 relies on the eraser being cursor #2 or #5, and it assumes the stylus is 1.
+**   If the X configuration is not set up that way, make it
+*/
+static void Tablet_FixupCursors(void)
+{
+    if (gNumCursors >= 1)
+        if (gSysCursor[1].TYPE != CSR_TYPE_PEN)
+        {
+            int stylus;
+            stylus = find_cursor_by_type(CSR_TYPE_PEN, 1);
+            if (stylus >= 0)
+            {
+                swap_cursors(1, stylus);
+                TRACE("Swapped cursor %d with stylus slot (1) for compatibility with older programs\n", stylus);
+            }
+        }
+
+    if (gNumCursors >= 2)
+        if (gSysCursor[2].TYPE != CSR_TYPE_ERASER)
+        {
+            int eraser;
+            eraser = find_cursor_by_type(CSR_TYPE_ERASER, 2);
+            if (eraser >= 0)
+            {
+                swap_cursors(2, eraser);
+                TRACE("Swapped cursor %d with eraser slot (2) for compatibility with older programs\n", eraser);
+            }
+        }
+}
+
 void X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
     const WCHAR SZ_CONTEXT_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','C','o','n','t','e','x','t',0};
@@ -554,9 +603,10 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
         }
     }
     pXFreeDeviceList(devices);
-    wine_tsx11_unlock();
     gSysDevice.NCSRTYPES = cursor_target+1;
     gNumCursors = cursor_target+1;
+    Tablet_FixupCursors();
+    wine_tsx11_unlock();
 }
 
 static int figure_deg(int x, int y)
