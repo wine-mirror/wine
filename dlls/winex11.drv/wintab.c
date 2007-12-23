@@ -867,19 +867,19 @@ int X11DRV_AttachEventQueueToTablet(HWND hOwner)
         if (the_device->num_classes > 0)
         {
             DeviceKeyPress(the_device, key_press_type, event_list[event_number]);
-            if (event_list[event_number]) event_number++;
+            if (key_press_type) event_number++;
             DeviceKeyRelease(the_device, key_release_type, event_list[event_number]);
-            if (event_list[event_number]) event_number++;
+            if (key_release_type) event_number++;
             DeviceButtonPress(the_device, button_press_type, event_list[event_number]);
-            if (event_list[event_number]) event_number++;
+            if (button_press_type) event_number++;
             DeviceButtonRelease(the_device, button_release_type, event_list[event_number]);
-            if (event_list[event_number]) event_number++;
+            if (button_release_type) event_number++;
             DeviceMotionNotify(the_device, motion_type, event_list[event_number]);
-            if (event_list[event_number]) event_number++;
+            if (motion_type) event_number++;
             ProximityIn(the_device, proximity_in_type, event_list[event_number]);
-            if (event_list[event_number]) event_number++;
+            if (proximity_in_type) event_number++;
             ProximityOut(the_device, proximity_out_type, event_list[event_number]);
-            if (event_list[event_number]) event_number++;
+            if (proximity_out_type) event_number++;
 
             if (key_press_type) X11DRV_register_event_handler( key_press_type, key_event );
             if (key_release_type) X11DRV_register_event_handler( key_release_type, key_event );
