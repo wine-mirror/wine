@@ -1096,7 +1096,6 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                 {
                     DWORD id;
                     id = tgtcursor->PHYSID;
-                    id += (wCategory - WTI_CURSORS);
                     rc = CopyTabletData(lpOutput,&id,sizeof(DWORD));
                 }
                     break;
