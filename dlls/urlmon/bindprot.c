@@ -436,13 +436,14 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
     TRACE("(%p)->(%u %s)\n", This, ulStatusCode, debugstr_w(szStatusText));
 
     switch(ulStatusCode) {
+    case BINDSTATUS_FINDINGRESOURCE:
+    case BINDSTATUS_CONNECTING:
     case BINDSTATUS_SENDINGREQUEST:
-        return IInternetProtocolSink_ReportProgress(This->protocol_sink,
-                ulStatusCode, NULL);
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
         return IInternetProtocolSink_ReportProgress(This->protocol_sink,
                 ulStatusCode, szStatusText);
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
+    case BINDSTATUS_MIMETYPEAVAILABLE:
         return IInternetProtocolSink_ReportProgress(This->protocol_sink,
                 BINDSTATUS_MIMETYPEAVAILABLE, szStatusText);
     default:
