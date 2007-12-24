@@ -39,17 +39,16 @@
 #define SET_EXPECT(func) \
     expect_ ## func = TRUE
 
-#define CHECK_EXPECT(func) \
-    do { \
-        ok(expect_ ##func, "unexpected call " #func "\n"); \
-        expect_ ## func = FALSE; \
-        called_ ## func = TRUE; \
-    }while(0)
-
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
         called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
     }while(0)
 
 #define CHECK_CALLED(func) \
@@ -1607,7 +1606,6 @@ static void test_BindToObject(int protocol, BOOL emul)
     LPOLESTR display_name;
     IBindCtx *bctx;
     MSG msg;
-    IBindStatusCallback *previousclb;
     IUnknown *unk = (IUnknown*)0x00ff00ff;
     IBinding *bind;
 
@@ -1624,14 +1622,6 @@ static void test_BindToObject(int protocol, BOOL emul)
     if(FAILED(hres))
         return;
     CHECK_CALLED(QueryInterface_IServiceProvider);
-
-    SET_EXPECT(QueryInterface_IServiceProvider);
-    hres = RegisterBindStatusCallback(bctx, &bsc, &previousclb, 0);
-    ok(SUCCEEDED(hres), "RegisterBindStatusCallback failed: %08x\n", hres);
-    ok(previousclb == &bsc, "previousclb(%p) != sclb(%p)\n", previousclb, &bsc);
-    CHECK_CALLED(QueryInterface_IServiceProvider);
-    if(previousclb)
-        IBindStatusCallback_Release(previousclb);
 
     hres = CreateURLMoniker(NULL, urls[test_protocol], &mon);
     ok(SUCCEEDED(hres), "failed to create moniker: %08x\n", hres);
@@ -1652,8 +1642,10 @@ static void test_BindToObject(int protocol, BOOL emul)
     ok(hres == S_OK, "GetDisplayName failed %08x\n", hres);
     ok(!lstrcmpW(display_name, urls[test_protocol]), "GetDisplayName got wrong name\n");
 
-    SET_EXPECT(QueryInterface_IServiceProvider);
     SET_EXPECT(GetBindInfo);
+    SET_EXPECT(QueryInterface_IInternetProtocol);
+    if(!emulate_protocol)
+        SET_EXPECT(QueryService_IInternetProtocol);
     SET_EXPECT(OnStartBinding);
     if(emulate_protocol) {
         SET_EXPECT(Start);
@@ -1693,7 +1685,7 @@ static void test_BindToObject(int protocol, BOOL emul)
     /* no point testing the calls if binding didn't even work */
     if (!SUCCEEDED(hres)) return;
 
-    if((bindf & BINDF_ASYNCHRONOUS) && !data_available) {
+    if((bindf & BINDF_ASYNCHRONOUS)) {
         ok(hres == MK_S_ASYNCHRONOUS, "IMoniker_BindToStorage failed: %08x\n", hres);
         ok(unk == NULL, "istr should be NULL\n");
     }else {
@@ -1709,8 +1701,10 @@ static void test_BindToObject(int protocol, BOOL emul)
         DispatchMessage(&msg);
     }
 
-    todo_wine CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
     CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(QueryInterface_IInternetProtocol);
+    if(!emulate_protocol)
+        CHECK_CALLED(QueryService_IInternetProtocol);
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {
         CHECK_CALLED(Start);
@@ -1777,7 +1771,7 @@ static void create_file(void)
 
     file = CreateFileW(wszIndexHtml, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
     if(file == INVALID_HANDLE_VALUE)
         return;
 
