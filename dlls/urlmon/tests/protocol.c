@@ -393,8 +393,6 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
             ok(szStatusText != NULL, "szStatusText == NULL\n");
             if(szStatusText)
                 ok(!*szStatusText, "wrong szStatusText\n");
-        }else {
-            ok(szStatusText == NULL, "szStatusText != NULL\n");
         }
         break;
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
@@ -460,7 +458,10 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
             }
             SetEvent(event_complete);
         }
+    }else {
+        CHECK_EXPECT(ReportData);
     }
+
     return S_OK;
 }
 
@@ -736,9 +737,11 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
        "ReportProgress(BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE) failed: %08x\n", hres);
     CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
 
+    SET_EXPECT(ReportData);
     hres = IInternetProtocolSink_ReportData(pOIProtSink,
             BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION, 13, 13);
     ok(hres == S_OK, "ReportData failed: %08x\n", hres);
+    CHECK_CALLED(ReportData);
 
     SET_EXPECT(ReportResult);
     hres = IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
