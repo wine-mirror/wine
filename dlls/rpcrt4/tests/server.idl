@@ -300,6 +300,8 @@ cpp_quote("#endif")
   int sum_pcarr2(int n, [size_is(, n)] int **pa);
   int sum_L1_norms(int n, [size_is(n)] vector_t *vs);
 
+  void get_5numbers([in] int count, [out, length_is(count)] pints_t pn[5]);
+  void get_numbers([in] int length, [in] int size, [out, length_is(length), size_is(size)] pints_t pn[]);
   str_t get_filename(void);
   void context_handle_test(void);
   void stop(void);

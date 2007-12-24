@@ -595,6 +595,32 @@ s_context_handle_test(void)
 }
 
 void
+s_get_5numbers(int count, pints_t n[5])
+{
+    int i;
+    for (i = 0; i < count; i++)
+    {
+        n[i].pi = midl_user_allocate(sizeof(*n[i].pi));
+        *n[i].pi = i;
+        n[i].ppi = NULL;
+        n[i].pppi = NULL;
+    }
+}
+
+void
+s_get_numbers(int length, int size, pints_t n[])
+{
+    int i;
+    for (i = 0; i < length; i++)
+    {
+        n[i].pi = midl_user_allocate(sizeof(*n[i].pi));
+        *n[i].pi = i;
+        n[i].ppi = NULL;
+        n[i].pppi = NULL;
+    }
+}
+
+void
 s_stop(void)
 {
   ok(RPC_S_OK == RpcMgmtStopServerListening(NULL), "RpcMgmtStopServerListening\n");
@@ -1029,6 +1055,8 @@ array_tests(void)
   int n;
   int ca[5] = {1, -2, 3, -4, 5};
   doub_carr_t *dc;
+  int *pi;
+  pints_t api[5];
 
   ok(cstr_length(str1, sizeof str1) == strlen(str1), "RPC cstr_length\n");
 
@@ -1103,6 +1131,22 @@ array_tests(void)
   free_pyramid_doub_carr(dc);
 
   ok(sum_L1_norms(2, vs) == 21, "RPC sum_L1_norms\n");
+
+  memset(api, 0, sizeof(api));
+  pi = HeapAlloc(GetProcessHeap(), 0, sizeof(*pi));
+  *pi = -1;
+  api[0].pi = pi;
+  get_5numbers(1, api);
+  todo_wine
+  ok(api[0].pi == pi, "RPC varying array [out] pointer changed from %p to %p\n", pi, api[0].pi);
+  ok(*api[0].pi == 0, "pi unmarshalled incorrectly %d\n", *pi);
+
+  api[0].pi = pi;
+  get_numbers(1, 1, api);
+  todo_wine
+  ok(api[0].pi == pi, "RPC conformant varying array [out] pointer changed from %p to %p\n", pi, api[0].pi);
+  ok(*api[0].pi == 0, "pi unmarshalled incorrectly %d\n", *pi);
+  HeapFree(GetProcessHeap(), 0, pi);
 }
 
 static void
