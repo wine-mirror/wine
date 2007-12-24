@@ -1129,95 +1129,104 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
         case WTI_CURSORS+7:
         case WTI_CURSORS+8:
         case WTI_CURSORS+9:
-            tgtcursor = &gSysCursor[wCategory - WTI_CURSORS];
-            switch (nIndex)
+            if (wCategory - WTI_CURSORS >= gNumCursors)
             {
-                case CSR_NAME:
-                    rc = CopyTabletData(lpOutput, &tgtcursor->NAME,
-                                        (strlenW(tgtcursor->NAME)+1) * sizeof(WCHAR));
-                    break;
-                case CSR_ACTIVE:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->ACTIVE,
-                                        sizeof(BOOL));
-                    break;
-                case CSR_PKTDATA:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->PKTDATA,
-                                        sizeof(WTPKT));
-                    break;
-                case CSR_BUTTONS:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->BUTTONS,
-                                        sizeof(BYTE));
-                    break;
-                case CSR_BUTTONBITS:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->BUTTONBITS,
-                                        sizeof(BYTE));
-                    break;
-                case CSR_BTNNAMES:
-                    FIXME("Button Names not returned correctly\n");
-                    rc = CopyTabletData(lpOutput,&tgtcursor->BTNNAMES,
-                                        tgtcursor->cchBTNNAMES*sizeof(WCHAR));
-                    break;
-                case CSR_BUTTONMAP:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->BUTTONMAP,
-                                        sizeof(BYTE)*32);
-                    break;
-                case CSR_SYSBTNMAP:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->SYSBTNMAP,
-                                        sizeof(BYTE)*32);
-                    break;
-                case CSR_NPBTNMARKS:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->NPBTNMARKS,
-                                        sizeof(UINT)*2);
-                    break;
-                case CSR_NPBUTTON:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->NPBUTTON,
-                                        sizeof(BYTE));
-                    break;
-                case CSR_NPRESPONSE:
-                    FIXME("Not returning CSR_NPRESPONSE correctly\n");
-                    rc = 0;
-                    break;
-                case CSR_TPBUTTON:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->TPBUTTON,
-                                        sizeof(BYTE));
-                    break;
-                case CSR_TPBTNMARKS:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->TPBTNMARKS,
-                                        sizeof(UINT)*2);
-                    break;
-                case CSR_TPRESPONSE:
-                    FIXME("Not returning CSR_TPRESPONSE correctly\n");
-                    rc = 0;
-                    break;
-                case CSR_PHYSID:
+                rc = 0;
+                WARN("Requested cursor information for non existent cursor %d; only %d cursors\n",
+                        wCategory - WTI_CURSORS, gNumCursors);
+            }
+            else
+            {
+                tgtcursor = &gSysCursor[wCategory - WTI_CURSORS];
+                switch (nIndex)
                 {
-                    DWORD id;
-                    id = tgtcursor->PHYSID;
-                    rc = CopyTabletData(lpOutput,&id,sizeof(DWORD));
+                    case CSR_NAME:
+                        rc = CopyTabletData(lpOutput, &tgtcursor->NAME,
+                                            (strlenW(tgtcursor->NAME)+1) * sizeof(WCHAR));
+                        break;
+                    case CSR_ACTIVE:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->ACTIVE,
+                                            sizeof(BOOL));
+                        break;
+                    case CSR_PKTDATA:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->PKTDATA,
+                                            sizeof(WTPKT));
+                        break;
+                    case CSR_BUTTONS:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->BUTTONS,
+                                            sizeof(BYTE));
+                        break;
+                    case CSR_BUTTONBITS:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->BUTTONBITS,
+                                            sizeof(BYTE));
+                        break;
+                    case CSR_BTNNAMES:
+                        FIXME("Button Names not returned correctly\n");
+                        rc = CopyTabletData(lpOutput,&tgtcursor->BTNNAMES,
+                                            tgtcursor->cchBTNNAMES*sizeof(WCHAR));
+                        break;
+                    case CSR_BUTTONMAP:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->BUTTONMAP,
+                                            sizeof(BYTE)*32);
+                        break;
+                    case CSR_SYSBTNMAP:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->SYSBTNMAP,
+                                            sizeof(BYTE)*32);
+                        break;
+                    case CSR_NPBTNMARKS:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->NPBTNMARKS,
+                                            sizeof(UINT)*2);
+                        break;
+                    case CSR_NPBUTTON:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->NPBUTTON,
+                                            sizeof(BYTE));
+                        break;
+                    case CSR_NPRESPONSE:
+                        FIXME("Not returning CSR_NPRESPONSE correctly\n");
+                        rc = 0;
+                        break;
+                    case CSR_TPBUTTON:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->TPBUTTON,
+                                            sizeof(BYTE));
+                        break;
+                    case CSR_TPBTNMARKS:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->TPBTNMARKS,
+                                            sizeof(UINT)*2);
+                        break;
+                    case CSR_TPRESPONSE:
+                        FIXME("Not returning CSR_TPRESPONSE correctly\n");
+                        rc = 0;
+                        break;
+                    case CSR_PHYSID:
+                    {
+                        DWORD id;
+                        id = tgtcursor->PHYSID;
+                        rc = CopyTabletData(lpOutput,&id,sizeof(DWORD));
+                    }
+                        break;
+                    case CSR_MODE:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->MODE,sizeof(UINT));
+                        break;
+                    case CSR_MINPKTDATA:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->MINPKTDATA,
+                            sizeof(UINT));
+                        break;
+                    case CSR_MINBUTTONS:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->MINBUTTONS,
+                            sizeof(UINT));
+                        break;
+                    case CSR_CAPABILITIES:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->CAPABILITIES,
+                            sizeof(UINT));
+                        break;
+                    case CSR_TYPE:
+                        rc = CopyTabletData(lpOutput,&tgtcursor->TYPE,
+                            sizeof(UINT));
+                        break;
+                    default:
+                        FIXME("WTI_CURSORS unhandled index %i\n",nIndex);
+                        rc = 0;
                 }
-                    break;
-                case CSR_MODE:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->MODE,sizeof(UINT));
-                    break;
-                case CSR_MINPKTDATA:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->MINPKTDATA,
-                        sizeof(UINT));
-                    break;
-                case CSR_MINBUTTONS:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->MINBUTTONS,
-                        sizeof(UINT));
-                    break;
-                case CSR_CAPABILITIES:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->CAPABILITIES,
-                        sizeof(UINT));
-                    break;
-                case CSR_TYPE:
-                    rc = CopyTabletData(lpOutput,&tgtcursor->TYPE,
-                        sizeof(UINT));
-                    break;
-                default:
-                    FIXME("WTI_CURSORS unhandled index %i\n",nIndex);
-                    rc = 0;
             }
             break;
         case WTI_DEVICES:
