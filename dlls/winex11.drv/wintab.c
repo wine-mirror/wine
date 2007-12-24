@@ -950,6 +950,7 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
             switch (nIndex)
             {
                 WORD version;
+                UINT num;
                 case IFC_WINTABID:
                 {
                     static const WCHAR driver[] = {'W','i','n','e',' ','W','i','n','t','a','b',' ','1','.','1',0};
@@ -963,6 +964,14 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                 case IFC_IMPLVERSION:
                     version = (0x00) | (0x01 << 8);
                     rc = CopyTabletData(lpOutput, &version,sizeof(WORD));
+                    break;
+                case IFC_NDEVICES:
+                    num = 1;
+                    rc = CopyTabletData(lpOutput, &num,sizeof(num));
+                    break;
+                case IFC_NCURSORS:
+                    num = gNumCursors;
+                    rc = CopyTabletData(lpOutput, &num,sizeof(num));
                     break;
                 default:
                     FIXME("WTI_INTERFACE unhandled index %i\n",nIndex);
