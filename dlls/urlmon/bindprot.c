@@ -416,8 +416,10 @@ static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
         PROTOCOLDATA *pProtocolData)
 {
     BindProtocol *This = PROTSINK_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pProtocolData);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pProtocolData);
+
+    return IInternetProtocolSink_Switch(This->protocol_sink, pProtocolData);
 }
 
 static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink *iface,
