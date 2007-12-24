@@ -3429,7 +3429,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
         DWORD now = GetTickCount();
         DWORD res;
 
-        if ((dwTimeout != INFINITE) && (start_time + dwTimeout >= now))
+        if (now - start_time > dwTimeout)
         {
             hr = RPC_S_CALLPENDING;
             break;
