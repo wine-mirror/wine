@@ -202,6 +202,24 @@ typedef struct tagWTI_DEVICES_INFO
         /* a null-terminated string containing the devices Plug and Play ID.*/
 }   WTI_DEVICES_INFO, *LPWTI_DEVICES_INFO;
 
+
+/***********************************************************************
+ * WACOM WINTAB EXTENSIONS TO SUPPORT CSR_TYPE
+ *   In Wintab 1.2, a CSR_TYPE feature was added.  This adds the
+ *   ability to return a type of cursor on a tablet.
+ *   Unfortunately, we cannot get the cursor type directly from X,
+ *   and it is not specified directly anywhere.  So we virtualize
+ *   the type here.  (This is unfortunate, the kernel module has
+ *   the exact type, but we have no way of getting that module to
+ *   pass us that type).
+ */
+
+#define CSR_TYPE_PEN        0x822
+#define CSR_TYPE_ERASER     0x82a
+#define CSR_TYPE_MOUSE_2D   0x007
+#define CSR_TYPE_MOUSE_4D   0x094
+
+
 typedef struct tagWTPACKET {
         HCTX pkContext;
         UINT pkStatus;
@@ -425,9 +443,9 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             cursor->NPBTNMARKS[1] = 1 ;
             cursor->CAPABILITIES = CRC_MULTIMODE;
             if (strcasecmp(target->name,"stylus")==0)
-                cursor->TYPE = 0x4825;
+                cursor->TYPE = CSR_TYPE_PEN;
             if (strcasecmp(target->name,"eraser")==0)
-                cursor->TYPE = 0xc85a;
+                cursor->TYPE = CSR_TYPE_ERASER;
 
 
             any = (XAnyClassPtr) (target->inputclassinfo);
@@ -644,7 +662,7 @@ static void motion_event( HWND hwnd, XEvent *event )
     TRACE("Received tablet motion event (%p); device id %d, cursor num %d\n",hwnd, (int) motion->deviceid, curnum);
 
     /* Set cursor to inverted if cursor is the eraser */
-    gMsgPacket.pkStatus = (cursor->TYPE == 0xc85a ?TPS_INVERT:0);
+    gMsgPacket.pkStatus = (cursor->TYPE  == CSR_TYPE_ERASER ? TPS_INVERT:0);
     gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(motion->time);
     gMsgPacket.pkSerialNumber = gSerial++;
     gMsgPacket.pkCursor = curnum;
@@ -673,7 +691,7 @@ static void button_event( HWND hwnd, XEvent *event )
     TRACE("Received tablet button %s event\n", (event->type == button_press_type)?"press":"release");
 
     /* Set cursor to inverted if cursor is the eraser */
-    gMsgPacket.pkStatus = (cursor->TYPE == 0xc85a ?TPS_INVERT:0);
+    gMsgPacket.pkStatus = (cursor->TYPE == CSR_TYPE_ERASER ? TPS_INVERT:0);
     set_button_state(curnum, button->deviceid);
     gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(button->time);
     gMsgPacket.pkSerialNumber = gSerial++;
@@ -709,7 +727,7 @@ static void proximity_event( HWND hwnd, XEvent *event )
 
     TRACE("Received tablet proximity event\n");
     /* Set cursor to inverted if cursor is the eraser */
-    gMsgPacket.pkStatus = (cursor->TYPE == 0xc85a ?TPS_INVERT:0);
+    gMsgPacket.pkStatus = (cursor->TYPE == CSR_TYPE_ERASER ? TPS_INVERT:0);
     gMsgPacket.pkStatus |= (event->type==proximity_out_type)?TPS_PROXIMITY:0;
     gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(proximity->time);
     gMsgPacket.pkSerialNumber = gSerial++;
