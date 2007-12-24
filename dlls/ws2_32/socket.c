@@ -2766,7 +2766,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
             if (timeout != -1)
             {
-                timeout -= timeout_start - GetTickCount();
+                timeout -= GetTickCount() - timeout_start;
                 if (timeout < 0) timeout = 0;
             }
 
