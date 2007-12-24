@@ -253,15 +253,19 @@ static HRESULT WINAPI BindProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER 
 static HRESULT WINAPI BindProtocol_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
 {
     BindProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08x)\n", This, dwOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%08x)\n", This, dwOptions);
+
+    return IInternetProtocol_LockRequest(This->protocol, dwOptions);
 }
 
 static HRESULT WINAPI BindProtocol_UnlockRequest(IInternetProtocol *iface)
 {
     BindProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    return IInternetProtocol_UnlockRequest(This->protocol);
 }
 
 #undef PROTOCOL_THIS
