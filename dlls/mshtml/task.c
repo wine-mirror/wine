@@ -214,7 +214,7 @@ static void set_progress(HTMLDocument *doc)
 static void task_start_binding(HTMLDocument *doc, BSCallback *bscallback)
 {
     if(doc)
-        start_binding(doc, bscallback);
+        start_binding(doc, bscallback, NULL);
     IBindStatusCallback_Release(STATUSCLB(bscallback));
 }
 

@@ -829,20 +829,24 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
     IBindStatusCallback_Release(STATUSCLB(callback));
 }
 
-HRESULT start_binding(HTMLDocument *doc, BSCallback *bscallback)
+HRESULT start_binding(HTMLDocument *doc, BSCallback *bscallback, IBindCtx *bctx)
 {
     IStream *str = NULL;
-    IBindCtx *bctx;
     HRESULT hres;
 
     bscallback->doc = doc;
     call_docview_84(bscallback->doc);
 
-    hres = CreateAsyncBindCtx(0, STATUSCLB(bscallback), NULL, &bctx);
-    if(FAILED(hres)) {
-        WARN("CreateAsyncBindCtx failed: %08x\n", hres);
-        on_stop_nsrequest(bscallback);
-        return hres;
+    if(bctx) {
+        RegisterBindStatusCallback(bctx, STATUSCLB(bscallback), NULL, 0);
+        IBindCtx_AddRef(bctx);
+    }else {
+        hres = CreateAsyncBindCtx(0, STATUSCLB(bscallback), NULL, &bctx);
+        if(FAILED(hres)) {
+            WARN("CreateAsyncBindCtx failed: %08x\n", hres);
+            on_stop_nsrequest(bscallback);
+            return hres;
+        }
     }
 
     hres = IMoniker_BindToStorage(bscallback->mon, bctx, NULL, &IID_IStream, (void**)&str);
