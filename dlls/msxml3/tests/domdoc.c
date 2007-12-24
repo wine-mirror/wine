@@ -750,6 +750,7 @@ todo_wine
             r = IXMLDOMNode_get_baseName( next, &str );
             ok( r == S_FALSE, "get_baseName returned wrong code\n");
             ok( str == NULL, "basename was wrong\n");
+            SysFreeString(str);
         }
         else
             ok( FALSE, "no next\n");
@@ -840,6 +841,7 @@ todo_wine
         r = IXMLDOMNode_get_baseName( node, &str );
         ok( r == S_OK, "get_baseName returned wrong code\n");
         ok( lstrcmpW(str,szbs) == 0, "basename was wrong\n");
+        SysFreeString(str);
     }
     else
         ok( FALSE, "no node\n");
