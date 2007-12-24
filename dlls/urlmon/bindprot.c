@@ -189,8 +189,10 @@ static HRESULT WINAPI BindProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 static HRESULT WINAPI BindProtocol_Continue(IInternetProtocol *iface, PROTOCOLDATA *pProtocolData)
 {
     BindProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pProtocolData);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pProtocolData);
+
+    return IInternetProtocol_Continue(This->protocol, pProtocolData);
 }
 
 static HRESULT WINAPI BindProtocol_Abort(IInternetProtocol *iface, HRESULT hrReason,
