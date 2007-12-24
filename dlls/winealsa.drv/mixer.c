@@ -371,7 +371,8 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
             const char * name = snd_mixer_selem_get_name(elem);
             DWORD comp = getcomponenttype(name);
 
-            if (snd_mixer_selem_has_playback_volume(elem))
+            if (snd_mixer_selem_has_playback_volume(elem) &&
+               (snd_mixer_selem_has_capture_volume(elem) || comp != MIXERLINE_COMPONENTTYPE_SRC_MICROPHONE))
             {
                 (++mline)->component = comp;
                 MultiByteToWideChar(CP_UNIXCP, 0, name, -1, mline->name, MAXPNAMELEN);
@@ -382,7 +383,7 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
             else if (!capt)
                 continue;
 
-            if (capt && snd_mixer_selem_has_capture_volume(elem))
+            if (capt && (snd_mixer_selem_has_capture_volume(elem) || comp == MIXERLINE_COMPONENTTYPE_SRC_MICROPHONE))
             {
                 (++mline)->component = comp;
                 MultiByteToWideChar(CP_UNIXCP, 0, name, -1, mline->name, MAXPNAMELEN);
@@ -473,9 +474,19 @@ static void ALSA_MixerInit(void)
                 captelem = elem;
             else if (!blacklisted(elem))
             {
+                DWORD comp = getcomponenttype(snd_mixer_selem_get_name(elem));
+                DWORD skip = 0;
+
+                /* Work around buggy drivers: Make this a capture control if the name is recognised as a microphone */
                 if (snd_mixer_selem_has_capture_volume(elem))
                     ++capcontrols;
-                if (snd_mixer_selem_has_playback_volume(elem))
+                else if (comp == MIXERLINE_COMPONENTTYPE_SRC_MICROPHONE)
+                {
+                    ++capcontrols;
+                    skip = 1;
+                }
+
+                if (!skip && snd_mixer_selem_has_playback_volume(elem))
                 {
                     if (!strcasecmp(snd_mixer_selem_get_name(elem), "Headphone") && !headelem)
                         headelem = elem;
