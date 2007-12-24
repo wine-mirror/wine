@@ -474,8 +474,8 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                 int shft = 0;
 
                 X11DRV_expect_error(data->display,Tablet_ErrorHandler,NULL);
-                pXGetDeviceButtonMapping(data->display, opendevice, map, 32);
-                if (X11DRV_check_error())
+                cursor->BUTTONS = pXGetDeviceButtonMapping(data->display, opendevice, map, 32);
+                if (X11DRV_check_error() || cursor->BUTTONS <= 0)
                 {
                     TRACE("No buttons, Non Tablet Device\n");
                     pXCloseDevice(data->display, opendevice);
@@ -606,7 +606,8 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                         int i;
 
                         Button = (XButtonInfoPtr) any;
-                        cursor->BUTTONS = Button->num_buttons;
+                        TRACE("    ButtonInput %d: [class %d|length %d|num_buttons %d]\n",
+                                class_loop, (int) Button->class, Button->length, Button->num_buttons);
                         cursor->BTNNAMES = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*cchBuf);
                         for (i = 0; i < cursor->BUTTONS; i++)
                         {
