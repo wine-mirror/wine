@@ -1662,7 +1662,7 @@ static void test_set_stream_source(void)
     IDirect3D9 *d3d9;
     HWND hwnd;
     HRESULT hr;
-    IDirect3DVertexBuffer9 *pVertexBuffer;
+    IDirect3DVertexBuffer9 *pVertexBuffer = NULL;
 
     d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
@@ -1692,23 +1692,23 @@ static void test_set_stream_source(void)
 
     hr = IDirect3DDevice9_CreateVertexBuffer( device, 512, 0, 0, D3DPOOL_DEFAULT, &pVertexBuffer, NULL );
     ok(hr == D3D_OK, "Failed to create a vertex buffer, hr = %s\n", DXGetErrorString9(hr));
-
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 0, 32);
-    ok(hr == D3D_OK, "Failed to set the stream source, offset 0, hr = %s\n",
-       DXGetErrorString9(hr));
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 1, 32);
-    ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 1, hr = %s\n",
-       DXGetErrorString9(hr));
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 2, 32);
-    ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 2, hr = %s\n",
-       DXGetErrorString9(hr));
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 3, 32);
-    ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 3, hr = %s\n",
-       DXGetErrorString9(hr));
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 4, 32);
-    ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %s\n",
-      DXGetErrorString9(hr));
-
+    if (SUCCEEDED(hr)) {
+	hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 0, 32);
+	ok(hr == D3D_OK, "Failed to set the stream source, offset 0, hr = %s\n",
+	   DXGetErrorString9(hr));
+	hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 1, 32);
+	ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 1, hr = %s\n",
+	   DXGetErrorString9(hr));
+	hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 2, 32);
+	ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 2, hr = %s\n",
+	   DXGetErrorString9(hr));
+	hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 3, 32);
+	ok(hr == D3DERR_INVALIDCALL, "Unexpected result when setting the stream source, offset 3, hr = %s\n",
+	   DXGetErrorString9(hr));
+	hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 4, 32);
+	ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %s\n",
+	  DXGetErrorString9(hr));
+    }
     /* Try to set the NULL buffer with an offset and stride 0 */
     hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
     ok(hr == D3D_OK, "Failed to set the stream source, offset 0, hr = %s\n",
@@ -1729,8 +1729,8 @@ static void test_set_stream_source(void)
     hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
     ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %s\n", DXGetErrorString9(hr));
 
-    cleanup:
     if(pVertexBuffer) IDirect3DDevice9_Release(pVertexBuffer);
+cleanup:
     if(device) IDirect3DDevice9_Release(device);
     if(d3d9) IDirect3D9_Release(d3d9);
 }
