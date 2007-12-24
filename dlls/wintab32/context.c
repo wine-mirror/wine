@@ -73,7 +73,8 @@ static BOOL is_string_field(UINT wCategory, UINT nIndex)
         return TRUE;
     if (is_logcontext_category(wCategory) && nIndex == CTX_NAME)
         return TRUE;
-    if (wCategory >= WTI_CURSORS && wCategory <= WTI_CURSORS + 9)
+    if ((wCategory >= WTI_CURSORS && wCategory <= WTI_CURSORS + 9) &&
+            (nIndex == CSR_NAME || nIndex == CSR_BTNNAMES))
         return TRUE;
     if (wCategory == WTI_DEVICES && (nIndex == DVC_NAME || nIndex == DVC_PNPID))
         return TRUE;
