@@ -1137,7 +1137,6 @@ array_tests(void)
   *pi = -1;
   api[0].pi = pi;
   get_5numbers(1, api);
-  todo_wine
   ok(api[0].pi == pi, "RPC varying array [out] pointer changed from %p to %p\n", pi, api[0].pi);
   ok(*api[0].pi == 0, "pi unmarshalled incorrectly %d\n", *pi);
 

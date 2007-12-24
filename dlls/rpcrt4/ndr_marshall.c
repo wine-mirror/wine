@@ -4479,6 +4479,8 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     unsigned char alignment;
     DWORD size, elements, esize;
     ULONG bufsize;
+    unsigned char *saved_buffer;
+    ULONG offset;
 
     TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -4517,13 +4519,16 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
     bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+    offset = pStubMsg->Offset;
 
     if (!*ppMemory || fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, size);
-    pStubMsg->BufferMark = pStubMsg->Buffer;
-    safe_copy_from_buffer(pStubMsg, *ppMemory + pStubMsg->Offset, bufsize);
+    saved_buffer = pStubMsg->BufferMark = pStubMsg->Buffer;
+    safe_buffer_increment(pStubMsg, bufsize);
 
-    EmbeddedPointerUnmarshall(pStubMsg, *ppMemory, *ppMemory, pFormat, TRUE /* FIXME */);
+    EmbeddedPointerUnmarshall(pStubMsg, saved_buffer, *ppMemory, pFormat, fMustAlloc);
+
+    memcpy(*ppMemory + offset, saved_buffer, bufsize);
 
     return NULL;
 }
