@@ -19,6 +19,7 @@
  *
  */
 
+#include "rpc_binding.h"
 #include "wine/list.h"
 
 typedef struct _RpcAssoc
@@ -35,8 +36,13 @@ typedef struct _RpcAssoc
     ULONG assoc_group_id;
 
     CRITICAL_SECTION cs;
-    /* connections available to be used */
+
+    /* client-only */
+    /* connections available to be used (protected by cs) */
     struct list free_connection_pool;
+
+    /* server-only */
+    struct list context_handle_list; /* protected by cs */
 } RpcAssoc;
 
 RPC_STATUS RPCRT4_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCWSTR NetworkOptions, RpcAssoc **assoc);
@@ -44,3 +50,9 @@ RPC_STATUS RpcAssoc_GetClientConnection(RpcAssoc *assoc, const RPC_SYNTAX_IDENTI
 void RpcAssoc_ReleaseIdleConnection(RpcAssoc *assoc, RpcConnection *Connection);
 ULONG RpcAssoc_Release(RpcAssoc *assoc);
 RPC_STATUS RpcServerAssoc_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCWSTR NetworkOptions, unsigned long assoc_gid, RpcAssoc **assoc_out);
+RPC_STATUS RpcServerAssoc_AllocateContextHandle(RpcAssoc *assoc, void *CtxGuard, NDR_SCONTEXT *SContext);
+RPC_STATUS RpcServerAssoc_FindContextHandle(RpcAssoc *assoc, const UUID *uuid, void *CtxGuard, ULONG Flags, NDR_SCONTEXT *SContext);
+RPC_STATUS RpcServerAssoc_UpdateContextHandle(RpcAssoc *assoc, NDR_SCONTEXT SContext, void *CtxGuard, NDR_RUNDOWN rundown_routine);
+unsigned int RpcServerAssoc_ReleaseContextHandle(RpcAssoc *assoc, NDR_SCONTEXT SContext, BOOL release_lock);
+void RpcContextHandle_GetUuid(NDR_SCONTEXT SContext, UUID *uuid);
+BOOL RpcContextHandle_IsGuardCorrect(NDR_SCONTEXT SContext, void *CtxGuard);

@@ -24,6 +24,7 @@
 
 #include "rpc.h"
 #include "rpcndr.h"
+#include "winternl.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -48,6 +49,19 @@ static struct list server_assoc_list = LIST_INIT(server_assoc_list);
 
 static LONG last_assoc_group_id;
 
+typedef struct _RpcContextHandle
+{
+    struct list entry;
+    void *user_context;
+    NDR_RUNDOWN rundown_routine;
+    void *ctx_guard;
+    UUID uuid;
+    RTL_RWLOCK rw_lock;
+    unsigned int refs;
+} RpcContextHandle;
+
+static void RpcContextHandle_Destroy(RpcContextHandle *context_handle);
+
 static RPC_STATUS RpcAssoc_Alloc(LPCSTR Protseq, LPCSTR NetworkAddr,
                                  LPCSTR Endpoint, LPCWSTR NetworkOptions,
                                  RpcAssoc **assoc_out)
@@ -58,6 +72,7 @@ static RPC_STATUS RpcAssoc_Alloc(LPCSTR Protseq, LPCSTR NetworkAddr,
         return RPC_S_OUT_OF_RESOURCES;
     assoc->refs = 1;
     list_init(&assoc->free_connection_pool);
+    list_init(&assoc->context_handle_list);
     InitializeCriticalSection(&assoc->cs);
     assoc->Protseq = RPCRT4_strdupA(Protseq);
     assoc->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
@@ -171,6 +186,7 @@ ULONG RpcAssoc_Release(RpcAssoc *assoc)
     if (!refs)
     {
         RpcConnection *Connection, *cursor2;
+        RpcContextHandle *context_handle, *context_handle_cursor;
 
         TRACE("destroying assoc %p\n", assoc);
 
@@ -179,6 +195,9 @@ ULONG RpcAssoc_Release(RpcAssoc *assoc)
             list_remove(&Connection->conn_pool_entry);
             RPCRT4_DestroyConnection(Connection);
         }
+
+        LIST_FOR_EACH_ENTRY_SAFE(context_handle, context_handle_cursor, &assoc->context_handle_list, RpcContextHandle, entry)
+            RpcContextHandle_Destroy(context_handle);
 
         HeapFree(GetProcessHeap(), 0, assoc->NetworkOptions);
         HeapFree(GetProcessHeap(), 0, assoc->Endpoint);
@@ -390,4 +409,131 @@ void RpcAssoc_ReleaseIdleConnection(RpcAssoc *assoc, RpcConnection *Connection)
     if (!assoc->assoc_group_id) assoc->assoc_group_id = Connection->assoc_group_id;
     list_add_head(&assoc->free_connection_pool, &Connection->conn_pool_entry);
     LeaveCriticalSection(&assoc->cs);
+}
+
+RPC_STATUS RpcServerAssoc_AllocateContextHandle(RpcAssoc *assoc, void *CtxGuard,
+                                                NDR_SCONTEXT *SContext)
+{
+    RpcContextHandle *context_handle;
+
+    context_handle = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*context_handle));
+    if (!context_handle)
+        return ERROR_OUTOFMEMORY;
+
+    context_handle->ctx_guard = CtxGuard;
+    RtlInitializeResource(&context_handle->rw_lock);
+    context_handle->refs = 1;
+
+    /* lock here to mirror unmarshall, so we don't need to special-case the
+     * freeing of a non-marshalled context handle */
+    RtlAcquireResourceExclusive(&context_handle->rw_lock, TRUE);
+
+    EnterCriticalSection(&assoc->cs);
+    list_add_tail(&assoc->context_handle_list, &context_handle->entry);
+    LeaveCriticalSection(&assoc->cs);
+
+    *SContext = (NDR_SCONTEXT)context_handle;
+    return RPC_S_OK;
+}
+
+BOOL RpcContextHandle_IsGuardCorrect(NDR_SCONTEXT SContext, void *CtxGuard)
+{
+    RpcContextHandle *context_handle = (RpcContextHandle *)SContext;
+    return context_handle->ctx_guard == CtxGuard;
+}
+
+RPC_STATUS RpcServerAssoc_FindContextHandle(RpcAssoc *assoc, const UUID *uuid,
+                                            void *CtxGuard, ULONG Flags, NDR_SCONTEXT *SContext)
+{
+    RpcContextHandle *context_handle;
+
+    EnterCriticalSection(&assoc->cs);
+    LIST_FOR_EACH_ENTRY(context_handle, &assoc->context_handle_list, RpcContextHandle, entry)
+    {
+        if (RpcContextHandle_IsGuardCorrect((NDR_SCONTEXT)context_handle, CtxGuard) &&
+            !memcmp(&context_handle->uuid, uuid, sizeof(*uuid)))
+        {
+            *SContext = (NDR_SCONTEXT)context_handle;
+            if (context_handle->refs++)
+            {
+                LeaveCriticalSection(&assoc->cs);
+                TRACE("found %p\n", context_handle);
+                RtlAcquireResourceExclusive(&context_handle->rw_lock, TRUE);
+                return RPC_S_OK;
+            }
+        }
+    }
+    LeaveCriticalSection(&assoc->cs);
+
+    ERR("no context handle found for uuid %s, guard %p\n",
+        debugstr_guid(uuid), CtxGuard);
+    return ERROR_INVALID_HANDLE;
+}
+
+RPC_STATUS RpcServerAssoc_UpdateContextHandle(RpcAssoc *assoc,
+                                              NDR_SCONTEXT SContext,
+                                              void *CtxGuard,
+                                              NDR_RUNDOWN rundown_routine)
+{
+    RpcContextHandle *context_handle = (RpcContextHandle *)SContext;
+    RPC_STATUS status;
+
+    if (!RpcContextHandle_IsGuardCorrect((NDR_SCONTEXT)context_handle, CtxGuard))
+        return ERROR_INVALID_HANDLE;
+
+    EnterCriticalSection(&assoc->cs);
+    if (UuidIsNil(&context_handle->uuid, &status))
+    {
+        /* add a ref for the data being valid */
+        context_handle->refs++;
+        UuidCreate(&context_handle->uuid);
+        context_handle->rundown_routine = rundown_routine;
+        TRACE("allocated uuid %s for context handle %p\n",
+              debugstr_guid(&context_handle->uuid), context_handle);
+    }
+    LeaveCriticalSection(&assoc->cs);
+
+    return RPC_S_OK;
+}
+
+void RpcContextHandle_GetUuid(NDR_SCONTEXT SContext, UUID *uuid)
+{
+    RpcContextHandle *context_handle = (RpcContextHandle *)SContext;
+    *uuid = context_handle->uuid;
+}
+
+static void RpcContextHandle_Destroy(RpcContextHandle *context_handle)
+{
+    TRACE("freeing %p\n", context_handle);
+
+    if (context_handle->user_context && context_handle->rundown_routine)
+    {
+        TRACE("calling rundown routine %p with user context %p\n",
+              context_handle->rundown_routine, context_handle->user_context);
+        context_handle->rundown_routine(context_handle->user_context);
+    }
+
+    RtlDeleteResource(&context_handle->rw_lock);
+
+    HeapFree(GetProcessHeap(), 0, context_handle);
+}
+
+unsigned int RpcServerAssoc_ReleaseContextHandle(RpcAssoc *assoc, NDR_SCONTEXT SContext, BOOL release_lock)
+{
+    RpcContextHandle *context_handle = (RpcContextHandle *)SContext;
+    unsigned int refs;
+
+    if (release_lock)
+        RtlReleaseResource(&context_handle->rw_lock);
+
+    EnterCriticalSection(&assoc->cs);
+    refs = --context_handle->refs;
+    if (!refs)
+        list_remove(&context_handle->entry);
+    LeaveCriticalSection(&assoc->cs);
+
+    if (!refs)
+        RpcContextHandle_Destroy(context_handle);
+
+    return refs;
 }

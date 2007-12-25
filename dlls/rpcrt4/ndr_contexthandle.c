@@ -20,6 +20,7 @@
  */
 
 #include "ndr_misc.h"
+#include "rpc_assoc.h"
 #include "rpcndr.h"
 
 #include "wine/rpcfc.h"
@@ -33,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 typedef struct ndr_context_handle
 {
-    DWORD      attributes;
+    ULONG      attributes;
     GUID       uuid;
 } ndr_context_handle;
 
@@ -212,35 +213,66 @@ void WINAPI NDRCContextUnmarshall(NDR_CCONTEXT *CContext,
 /***********************************************************************
  *           NDRSContextMarshall [RPCRT4.@]
  */
-void WINAPI NDRSContextMarshall(NDR_SCONTEXT CContext,
+void WINAPI NDRSContextMarshall(NDR_SCONTEXT SContext,
                                void *pBuff,
                                NDR_RUNDOWN userRunDownIn)
 {
-    FIXME("(%p %p %p): stub\n", CContext, pBuff, userRunDownIn);
+    TRACE("(%p %p %p)\n", SContext, pBuff, userRunDownIn);
+    NDRSContextMarshall2(I_RpcGetCurrentCallHandle(), SContext, pBuff, userRunDownIn, NULL, 0);
 }
 
 /***********************************************************************
  *           NDRSContextMarshallEx [RPCRT4.@]
  */
 void WINAPI NDRSContextMarshallEx(RPC_BINDING_HANDLE hBinding,
-                                  NDR_SCONTEXT CContext,
+                                  NDR_SCONTEXT SContext,
                                   void *pBuff,
                                   NDR_RUNDOWN userRunDownIn)
 {
-    FIXME("(%p %p %p %p): stub\n", hBinding, CContext, pBuff, userRunDownIn);
+    TRACE("(%p %p %p %p)\n", hBinding, SContext, pBuff, userRunDownIn);
+    NDRSContextMarshall2(hBinding, SContext, pBuff, userRunDownIn, NULL, 0);
 }
 
 /***********************************************************************
  *           NDRSContextMarshall2 [RPCRT4.@]
  */
 void WINAPI NDRSContextMarshall2(RPC_BINDING_HANDLE hBinding,
-                                 NDR_SCONTEXT CContext,
+                                 NDR_SCONTEXT SContext,
                                  void *pBuff,
                                  NDR_RUNDOWN userRunDownIn,
                                  void *CtxGuard, ULONG Flags)
 {
-    FIXME("(%p %p %p %p %p %u): stub\n",
-          hBinding, CContext, pBuff, userRunDownIn, CtxGuard, Flags);
+    RpcBinding *binding = hBinding;
+    RPC_STATUS status;
+    ndr_context_handle *ndr = pBuff;
+
+    TRACE("(%p %p %p %p %p %u)\n",
+          hBinding, SContext, pBuff, userRunDownIn, CtxGuard, Flags);
+
+    if (!binding->server || !binding->Assoc)
+        RpcRaiseException(ERROR_INVALID_HANDLE);
+
+    if (SContext->userContext)
+    {
+        status = RpcServerAssoc_UpdateContextHandle(binding->Assoc, SContext, CtxGuard, userRunDownIn);
+        if (status != RPC_S_OK)
+            RpcRaiseException(status);
+        ndr->attributes = 0;
+        RpcContextHandle_GetUuid(SContext, &ndr->uuid);
+    }
+    else
+    {
+        if (!RpcContextHandle_IsGuardCorrect(SContext, CtxGuard))
+            RpcRaiseException(ERROR_INVALID_HANDLE);
+        memset(ndr, 0, sizeof(*ndr));
+        /* Note: release the context handle twice in this case to release
+         * one ref being kept around for the data and one ref for the
+         * unmarshall/marshall sequence */
+        if (!RpcServerAssoc_ReleaseContextHandle(binding->Assoc, SContext, FALSE))
+            return; /* this is to cope with the case of the data not being valid
+                     * before and so not having a further reference */
+    }
+    RpcServerAssoc_ReleaseContextHandle(binding->Assoc, SContext, TRUE);
 }
 
 /***********************************************************************
@@ -249,8 +281,8 @@ void WINAPI NDRSContextMarshall2(RPC_BINDING_HANDLE hBinding,
 NDR_SCONTEXT WINAPI NDRSContextUnmarshall(void *pBuff,
                                           ULONG DataRepresentation)
 {
-    FIXME("(%p %08x): stub\n", pBuff, DataRepresentation);
-    return NULL;
+    TRACE("(%p %08x)\n", pBuff, DataRepresentation);
+    return NDRSContextUnmarshall2(I_RpcGetCurrentCallHandle(), pBuff, DataRepresentation, NULL, 0);
 }
 
 /***********************************************************************
@@ -260,8 +292,8 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshallEx(RPC_BINDING_HANDLE hBinding,
                                             void *pBuff,
                                             ULONG DataRepresentation)
 {
-    FIXME("(%p %p %08x): stub\n", hBinding, pBuff, DataRepresentation);
-    return NULL;
+    TRACE("(%p %p %08x)\n", hBinding, pBuff, DataRepresentation);
+    return NDRSContextUnmarshall2(hBinding, pBuff, DataRepresentation, NULL, 0);
 }
 
 /***********************************************************************
@@ -272,7 +304,36 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshall2(RPC_BINDING_HANDLE hBinding,
                                            ULONG DataRepresentation,
                                            void *CtxGuard, ULONG Flags)
 {
-    FIXME("(%p %p %08x %p %u): stub\n",
+    RpcBinding *binding = hBinding;
+    NDR_SCONTEXT SContext;
+    RPC_STATUS status;
+
+    TRACE("(%p %p %08x %p %u)\n",
           hBinding, pBuff, DataRepresentation, CtxGuard, Flags);
-    return NULL;
+
+    if (!binding->server || !binding->Assoc)
+        RpcRaiseException(ERROR_INVALID_HANDLE);
+
+    if (!pBuff)
+        status = RpcServerAssoc_AllocateContextHandle(binding->Assoc, CtxGuard,
+                                                      &SContext);
+    else
+    {
+        const ndr_context_handle *context_ndr = pBuff;
+        if (context_ndr->attributes)
+        {
+            ERR("non-null attributes 0x%x\n", context_ndr->attributes);
+            status = ERROR_INVALID_HANDLE;
+        }
+        else
+            status = RpcServerAssoc_FindContextHandle(binding->Assoc,
+                                                      &context_ndr->uuid,
+                                                      CtxGuard, Flags,
+                                                      &SContext);
+    }
+
+    if (status != RPC_S_OK)
+        RpcRaiseException(status);
+
+    return SContext;
 }
