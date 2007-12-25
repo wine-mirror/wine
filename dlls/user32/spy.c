@@ -260,7 +260,9 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "BM_CLICK",                 /* 0x00f5 */
     "BM_GETIMAGE",              /* 0x00f6 */
     "BM_SETIMAGE",              /* 0x00f7 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_INPUT_DEVICE_CHANGE",   /* 0x00fe */
+    "WM_INPUT",                 /* 0x00ff */
 
     "WM_KEYDOWN",               /* 0x0100 */
     "WM_KEYUP",                 /* 0x0101 */
@@ -270,11 +272,11 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_SYSKEYUP",              /* 0x0105 */
     "WM_SYSCHAR",               /* 0x0106 */
     "WM_SYSDEADCHAR",           /* 0x0107 */
-    "WM_KEYLAST",               /* 0x0108 */
     NULL,
-    "WM_CONVERTREQUEST",
-    "WM_CONVERTRESULT",
-    "WM_INTERIM",
+    "WM_UNICHAR",               /* 0x0109 */
+    "WM_CONVERTREQUEST",        /* 0x010a */
+    "WM_CONVERTRESULT",         /* 0x010b */
+    "WM_INTERIM",               /* 0x010c */
     "WM_IME_STARTCOMPOSITION",  /* 0x010d */
     "WM_IME_ENDCOMPOSITION",    /* 0x010e */
     "WM_IME_COMPOSITION",       /* 0x010f */
@@ -450,7 +452,8 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_XBUTTONDOWN",           /* 0x020B */
     "WM_XBUTTONUP",             /* 0x020C */
     "WM_XBUTTONDBLCLK",         /* 0x020D */
-    NULL, NULL,
+    "WM_MOUSEHWHEEL",           /* 0x020E */
+    NULL,
 
     "WM_PARENTNOTIFY",          /* 0x0210 */
     "WM_ENTERMENULOOP",         /* 0x0211 */
@@ -589,17 +592,24 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_PALETTEISCHANGING",
     "WM_PALETTECHANGED",
     "WM_HOTKEY",                /* 0x0312 */
-          NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL,
     "WM_PRINT",                 /* 0x0317 */
     "WM_PRINTCLIENT",           /* 0x0318 */
     "WM_APPCOMMAND",            /* 0x0319 */
     "WM_THEMECHANGED",          /* 0x031A */
-    NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL,
+    "WM_CLIPBOARDUPDATE",       /* 0x031D */
+    "WM_DWMCOMPOSITIONCHANGED", /* 0x031E */
+    "WM_DWMNCRENDERINGCHANGED", /* 0x031F */
+
+    "WM_DWMCOLORIZATIONCOLORCHANGED", /* 0x0320 */
+    "WM_DWMWINDOWMAXIMIZEDCHANGE", /* 0x0321 */
+    NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_GETTITLEBARINFOEX",     /* 0x033F */
 
     /* 0x0340 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
