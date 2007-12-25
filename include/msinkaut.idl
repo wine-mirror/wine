@@ -130,7 +130,7 @@ library MSINKAUTLib
             [out, retval] IInkDrawingAttributes** DrawingAttributes);
     };
 
-cpp_quote("#ifndef _WINGDI_");
+cpp_quote("#ifndef _WINGDI_")
 /* already defined in wingdi.h but needed for WIDL */
     typedef struct tagXFORM {
         single eM11;
@@ -140,7 +140,7 @@ cpp_quote("#ifndef _WINGDI_");
         single eDx;
         single eDy;
     } XFORM;
-cpp_quote("#endif /* _WINGDI_ */");
+cpp_quote("#endif /* _WINGDI_ */")
 
     [
         odl,

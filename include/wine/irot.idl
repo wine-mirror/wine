@@ -18,8 +18,8 @@
 
 import "wtypes.idl";
 
-cpp_quote("#define IROT_PROTSEQ {'n','c','a','l','r','p','c',0}");
-cpp_quote("#define IROT_ENDPOINT {'i','r','o','t',0}");
+cpp_quote("#define IROT_PROTSEQ {'n','c','a','l','r','p','c',0}")
+cpp_quote("#define IROT_ENDPOINT {'i','r','o','t',0}")
 
 typedef struct tagMonikerComparisonData {
 	ULONG ulCntData;

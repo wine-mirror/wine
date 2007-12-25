@@ -172,9 +172,9 @@ cpp_quote("HRESULT WINAPI CreateStdAccessibleProxyA(HWND,LPCSTR,LONG,REFIID,void
 cpp_quote("HRESULT WINAPI CreateStdAccessibleProxyW(HWND,LPCWSTR,LONG,REFIID,void **);")
 cpp_quote("#define CreateStdAccessibleProxy WINELIB_NAME_AW(CreateStdAccessibleProxy)")
 
-cpp_quote("UINT WINAPI GetRoleTextA(DWORD,LPSTR,UINT);");
-cpp_quote("UINT WINAPI GetRoleTextW(DWORD,LPWSTR,UINT);");
-cpp_quote("#define GetRoleText WINELIB_NAME_AW(GetRoleText)");
-cpp_quote("UINT WINAPI GetStateTextA(DWORD,LPSTR,UINT);");
-cpp_quote("UINT WINAPI GetStateTextW(DWORD,LPWSTR,UINT);");
+cpp_quote("UINT WINAPI GetRoleTextA(DWORD,LPSTR,UINT);")
+cpp_quote("UINT WINAPI GetRoleTextW(DWORD,LPWSTR,UINT);")
+cpp_quote("#define GetRoleText WINELIB_NAME_AW(GetRoleText)")
+cpp_quote("UINT WINAPI GetStateTextA(DWORD,LPSTR,UINT);")
+cpp_quote("UINT WINAPI GetStateTextW(DWORD,LPWSTR,UINT);")
 cpp_quote("#define GetStateText WINELIB_NAME_AW(GetStateText)")

@@ -20,8 +20,8 @@ import "oaidl.idl";
 import "ocidl.idl";
 import "dxgi.idl";
 
-cpp_quote("#ifndef _D3D10_CONSTANTS");
-cpp_quote("#define _D3D10_CONSTANTS");
+cpp_quote("#ifndef _D3D10_CONSTANTS")
+cpp_quote("#define _D3D10_CONSTANTS")
 const float D3D10_DEFAULT_BLEND_FACTOR_ALPHA                                            = 1.0;
 const float D3D10_DEFAULT_BLEND_FACTOR_BLUE                                             = 1.0;
 const float D3D10_DEFAULT_BLEND_FACTOR_GREEN                                            = 1.0;
@@ -238,7 +238,7 @@ const unsigned int D3D_MINOR_VERSION                                            
 const unsigned int D3D_SPEC_DATE_DAY                                                    = 8;
 const unsigned int D3D_SPEC_DATE_MONTH                                                  = 8;
 const unsigned int D3D_SPEC_DATE_YEAR                                                   = 2006;
-cpp_quote("#endif");
+cpp_quote("#endif")
 
 const unsigned int D3D10_APPEND_ALIGNED_ELEMENT                                         = 0xffffffff;
 const unsigned int _FACD3D10                                                            = 0x87;
@@ -246,10 +246,10 @@ const unsigned int _FACD3D10DEBUG                                               
 const unsigned int D3D10_FILTER_TYPE_MASK                                               = 0x3;
 const unsigned int D3D10_SDK_VERSION                                                    = 29;
 
-cpp_quote("#define MAKE_D3D10_HRESULT(code)                   MAKE_HRESULT( 1, _FACD3D10, code)");
-cpp_quote("#define MAKE_D3D10_STATUS(code)                    MAKE_HRESULT( 0, _FACD3D10, code)");
-cpp_quote("#define D3D10_ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS  MAKE_D3D10_HRESULT(1)");
-cpp_quote("#define D3D10_ERROR_FILE_NOT_FOUND                 MAKE_D3D10_HRESULT(2)");
+cpp_quote("#define MAKE_D3D10_HRESULT(code)                   MAKE_HRESULT( 1, _FACD3D10, code)")
+cpp_quote("#define MAKE_D3D10_STATUS(code)                    MAKE_HRESULT( 0, _FACD3D10, code)")
+cpp_quote("#define D3D10_ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS  MAKE_D3D10_HRESULT(1)")
+cpp_quote("#define D3D10_ERROR_FILE_NOT_FOUND                 MAKE_D3D10_HRESULT(2)")
 
 typedef enum D3D10_BLEND {
     D3D10_BLEND_ZERO             = 1,
