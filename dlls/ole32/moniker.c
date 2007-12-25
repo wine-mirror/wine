@@ -73,6 +73,7 @@ struct rot_entry
     MonikerComparisonData* moniker_data; /* moniker comparison data that identifies this object */
     DWORD              cookie; /* cookie identifying this object */
     FILETIME           last_modified;
+    IrotContextHandle  ctxt_handle;
 };
 
 /* define the RunningObjectTableImpl structure */
@@ -183,7 +184,8 @@ static inline void rot_entry_delete(struct rot_entry *rot_entry)
         InterfaceData *moniker = NULL;
         __TRY
         {
-            IrotRevoke(get_irot_handle(), rot_entry->cookie, &object, &moniker);
+            IrotRevoke(get_irot_handle(), rot_entry->cookie,
+                       &rot_entry->ctxt_handle, &object, &moniker);
         }
         __EXCEPT(rpc_filter)
         {
@@ -554,7 +556,10 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
     {
         __TRY
         {
-            hr = IrotRegister(get_irot_handle(), rot_entry->moniker_data, rot_entry->object, moniker, &rot_entry->last_modified, grfFlags, &rot_entry->cookie);
+            hr = IrotRegister(get_irot_handle(), rot_entry->moniker_data,
+                              rot_entry->object, moniker,
+                              &rot_entry->last_modified, grfFlags,
+                              &rot_entry->cookie, &rot_entry->ctxt_handle);
         }
         __EXCEPT(rpc_filter)
         {

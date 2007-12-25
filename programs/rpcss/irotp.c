@@ -41,6 +41,7 @@ struct rot_entry
     MonikerComparisonData *moniker_data; /* moniker comparison data that identifies this object */
     DWORD              cookie; /* cookie identifying this object */
     FILETIME           last_modified;
+    LONG               refs;
 };
 
 static struct list RunningObjectTable = LIST_INIT(RunningObjectTable);
@@ -56,12 +57,15 @@ static CRITICAL_SECTION csRunningObjectTable = { &critsect_debug, -1, 0, 0, 0, 0
 
 static LONG last_cookie = 1;
 
-static inline void rot_entry_delete(struct rot_entry *rot_entry)
+static inline void rot_entry_release(struct rot_entry *rot_entry)
 {
-    HeapFree(GetProcessHeap(), 0, rot_entry->object);
-    HeapFree(GetProcessHeap(), 0, rot_entry->moniker);
-    HeapFree(GetProcessHeap(), 0, rot_entry->moniker_data);
-    HeapFree(GetProcessHeap(), 0, rot_entry);
+    if (!InterlockedDecrement(&rot_entry->refs))
+    {
+        HeapFree(GetProcessHeap(), 0, rot_entry->object);
+        HeapFree(GetProcessHeap(), 0, rot_entry->moniker);
+        HeapFree(GetProcessHeap(), 0, rot_entry->moniker_data);
+        HeapFree(GetProcessHeap(), 0, rot_entry);
+    }
 }
 
 HRESULT IrotRegister(
@@ -71,10 +75,11 @@ HRESULT IrotRegister(
     const InterfaceData *mk,
     const FILETIME *time,
     DWORD grfFlags,
-    IrotCookie *cookie)
+    IrotCookie *cookie,
+    IrotContextHandle *ctxt_handle)
 {
     struct rot_entry *rot_entry;
-    const struct rot_entry *existing_rot_entry;
+    struct rot_entry *existing_rot_entry;
     HRESULT hr;
 
     if (grfFlags & ~(ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT))
@@ -87,10 +92,11 @@ HRESULT IrotRegister(
     if (!rot_entry)
         return E_OUTOFMEMORY;
 
+    rot_entry->refs = 1;
     rot_entry->object = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(InterfaceData, abData[obj->ulCntData]));
     if (!rot_entry->object)
     {
-        rot_entry_delete(rot_entry);
+        rot_entry_release(rot_entry);
         return E_OUTOFMEMORY;
     }
     rot_entry->object->ulCntData = obj->ulCntData;
@@ -101,7 +107,7 @@ HRESULT IrotRegister(
     rot_entry->moniker = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(InterfaceData, abData[mk->ulCntData]));
     if (!rot_entry->moniker)
     {
-        rot_entry_delete(rot_entry);
+        rot_entry_release(rot_entry);
         return E_OUTOFMEMORY;
     }
     rot_entry->moniker->ulCntData = mk->ulCntData;
@@ -110,7 +116,7 @@ HRESULT IrotRegister(
     rot_entry->moniker_data = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(MonikerComparisonData, abData[data->ulCntData]));
     if (!rot_entry->moniker_data)
     {
-        rot_entry_delete(rot_entry);
+        rot_entry_release(rot_entry);
         return E_OUTOFMEMORY;
     }
     rot_entry->moniker_data->ulCntData = data->ulCntData;
@@ -120,7 +126,7 @@ HRESULT IrotRegister(
 
     hr = S_OK;
 
-    LIST_FOR_EACH_ENTRY(existing_rot_entry, &RunningObjectTable, const struct rot_entry, entry)
+    LIST_FOR_EACH_ENTRY(existing_rot_entry, &RunningObjectTable, struct rot_entry, entry)
     {
         if ((existing_rot_entry->moniker_data->ulCntData == data->ulCntData) &&
             !memcmp(&data->abData, &existing_rot_entry->moniker_data->abData, data->ulCntData))
@@ -136,11 +142,14 @@ HRESULT IrotRegister(
         list_add_tail(&RunningObjectTable, &rot_entry->entry);
         /* gives a registration identifier to the registered object*/
         *cookie = rot_entry->cookie = InterlockedIncrement(&last_cookie);
+        *ctxt_handle = rot_entry;
     }
     else
     {
-        rot_entry_delete(rot_entry);
+        rot_entry_release(rot_entry);
         *cookie = existing_rot_entry->cookie;
+        InterlockedIncrement(&existing_rot_entry->refs);
+        *ctxt_handle = existing_rot_entry;
     }
 
 
@@ -152,6 +161,7 @@ HRESULT IrotRegister(
 HRESULT IrotRevoke(
     IrotHandle h,
     IrotCookie cookie,
+    IrotContextHandle *ctxt_handle,
     PInterfaceData *obj,
     PInterfaceData *mk)
 {
@@ -185,7 +195,8 @@ HRESULT IrotRevoke(
                 hr = E_OUTOFMEMORY;
             }
 
-            rot_entry_delete(rot_entry);
+            rot_entry_release(rot_entry);
+            *ctxt_handle = NULL;
             return hr;
         }
     }
@@ -352,6 +363,15 @@ HRESULT IrotEnumRunning(
     LeaveCriticalSection(&csRunningObjectTable);
 
     return hr;
+}
+
+void __RPC_USER IrotContextHandle_rundown(IrotContextHandle ctxt_handle)
+{
+    struct rot_entry *rot_entry = ctxt_handle;
+    EnterCriticalSection(&csRunningObjectTable);
+    list_remove(&rot_entry->entry);
+    LeaveCriticalSection(&csRunningObjectTable);
+    rot_entry_release(rot_entry);
 }
 
 void * __RPC_USER MIDL_user_allocate(size_t size)
