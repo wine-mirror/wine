@@ -2735,12 +2735,6 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     }
 }
 
-static const GLfloat invymat[16] = {
-    1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, -1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f};
-
 static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     glMatrixMode(GL_PROJECTION);
     checkGLcall("glMatrixMode(GL_PROJECTION)");
@@ -2808,8 +2802,8 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
         /* D3D texture coordinates are flipped compared to OpenGL ones, so
          * render everything upside down when rendering offscreen. */
         if (stateblock->wineD3DDevice->render_offscreen) {
-            glMultMatrixf(invymat);
-            checkGLcall("glMultMatrixf(invymat)");
+            glScalef(1.0, -1.0, 1.0);
+            checkGLcall("glScalef");
         }
     } else {
         /* The rule is that the window coordinate 0 does not correspond to the
@@ -2833,12 +2827,13 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
         glTranslatef(1.0 / stateblock->viewport.Width, -1.0/ stateblock->viewport.Height, -1.0);
         checkGLcall("glTranslatef (1.0 / width, -1.0 / height, -1.0)");
         glScalef(1.0, 1.0, 2.0);
+        checkGLcall("glScalef");
 
         /* D3D texture coordinates are flipped compared to OpenGL ones, so
             * render everything upside down when rendering offscreen. */
         if (stateblock->wineD3DDevice->render_offscreen) {
-            glMultMatrixf(invymat);
-            checkGLcall("glMultMatrixf(invymat)");
+            glScalef(1.0, -1.0, 1.0);
+            checkGLcall("glScalef");
         }
         glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
         checkGLcall("glLoadMatrixf");
