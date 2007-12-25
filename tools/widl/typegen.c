@@ -154,6 +154,44 @@ int is_union(unsigned char type)
     }
 }
 
+static int type_has_pointers(const type_t *type)
+{
+    if (is_user_type(type))
+        return FALSE;
+    else if (is_ptr(type))
+        return TRUE;
+    else if (is_array(type))
+        return type_has_pointers(type->ref);
+    else if (is_struct(type->type))
+    {
+        const var_t *field;
+        if (type->fields) LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
+        {
+            if (type_has_pointers(field->type))
+                return TRUE;
+        }
+    }
+    else if (is_union(type->type))
+    {
+        var_list_t *fields;
+        const var_t *field;
+        if (type->type == RPC_FC_ENCAPSULATED_UNION)
+        {
+            const var_t *uv = LIST_ENTRY(list_tail(type->fields), const var_t, entry);
+            fields = uv->type->fields;
+        }
+        else
+            fields = type->fields;
+        if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
+        {
+            if (field->type && type_has_pointers(field->type))
+                return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static unsigned short user_type_offset(const char *name)
 {
     user_type_t *ut;
@@ -1534,9 +1572,10 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
     if (!pointer_type)
         pointer_type = RPC_FC_RP;
 
-    has_pointer = FALSE;
     if (write_embedded_types(file, attrs, type->ref, name, FALSE, typestring_offset))
         has_pointer = TRUE;
+    else
+        has_pointer = type_has_pointers(type->ref);
 
     align = 0;
     size = type_memsize((is_conformant_array(type) ? type->ref : type), &align);
@@ -1716,6 +1755,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
     if (type->fields) LIST_FOR_EACH_ENTRY(f, type->fields, var_t, entry)
         has_pointers |= write_embedded_types(file, f->attrs, f->type, f->name,
                                              FALSE, tfsoff);
+    if (!has_pointers) has_pointers = type_has_pointers(type);
 
     array = find_array_or_string_in_struct(type);
     if (array && !processed(array->type))
