@@ -3160,7 +3160,14 @@ void assign_stub_out_args( FILE *file, int indent, const func_t *func )
             print_file(file, indent, "");
             write_name(file, var);
 
-            if (var->type->size_is)
+            if (is_context_handle(var->type))
+            {
+                fprintf(file, " = NdrContextHandleInitialize(\n");
+                print_file(file, indent + 1, "&_StubMsg,\n");
+                print_file(file, indent + 1, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]);\n",
+                           var->type->typestring_offset);
+            }
+            else if (var->type->size_is)
             {
                 unsigned int size, align = 0;
                 type_t *type = var->type;
