@@ -301,6 +301,6 @@ cpp_quote("#endif")
   int sum_L1_norms(int n, [size_is(n)] vector_t *vs);
 
   str_t get_filename(void);
-
+  void context_handle_test(void);
   void stop(void);
 }

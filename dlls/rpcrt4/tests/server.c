@@ -504,6 +504,97 @@ s_get_filename(void)
 }
 
 void
+s_context_handle_test(void)
+{
+    NDR_SCONTEXT h;
+    RPC_BINDING_HANDLE binding;
+    RPC_STATUS status;
+    unsigned char buf[20];
+    static RPC_SERVER_INTERFACE server_if =
+    {
+        sizeof(RPC_SERVER_INTERFACE),
+        {{0x00000000,0x4114,0x0704,{0x23,0x01,0x00,0x00,0x00,0x00,0x00,0x00}},{1,0}},
+        {{0x8a885d04,0x1ceb,0x11c9,{0x9f,0xe8,0x08,0x00,0x2b,0x10,0x48,0x60}},{2,0}},
+        NULL,
+        0,
+        0,
+        0,
+        0,
+        0,
+    };
+
+    binding = I_RpcGetCurrentCallHandle();
+    ok(binding != NULL, "I_RpcGetCurrentCallHandle returned NULL\n");
+
+    h = NDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
+    ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
+
+    /* marshal a context handle with NULL userContext */
+    memset(buf, 0xcc, sizeof(buf));
+    NDRSContextMarshall2(binding, h, buf, NULL, NULL, 0);
+    ok(*(ULONG *)buf == 0, "attributes should have been set to 0 instead of 0x%x\n", *(ULONG *)buf);
+    ok(UuidIsNil((UUID *)&buf[4], &status), "uuid should have been nil\n");
+
+    h = NDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
+    ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
+
+    /* marshal a context handle with non-NULL userContext */
+    memset(buf, 0xcc, sizeof(buf));
+    h->userContext = (void *)0xdeadbeef;
+    NDRSContextMarshall2(binding, h, buf, NULL, NULL, 0);
+    ok(*(ULONG *)buf == 0, "attributes should have been set to 0 instead of 0x%x\n", *(ULONG *)buf);
+    ok(!UuidIsNil((UUID *)&buf[4], &status), "uuid should not have been nil\n");
+
+    h = NDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
+    ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
+    ok(h->userContext == (void *)0xdeadbeef, "userContext of interface didn't unmarshal properly: %p\n", h->userContext);
+
+    /* marshal a context handle with an interface specified */
+    h = NDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, &server_if.InterfaceId, 0);
+    ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
+
+    memset(buf, 0xcc, sizeof(buf));
+    h->userContext = (void *)0xcafebabe;
+    NDRSContextMarshall2(binding, h, buf, NULL, &server_if.InterfaceId, 0);
+    ok(*(ULONG *)buf == 0, "attributes should have been set to 0 instead of 0x%x\n", *(ULONG *)buf);
+    ok(!UuidIsNil((UUID *)&buf[4], &status), "uuid should not have been nil\n");
+
+    h = NDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if.InterfaceId, 0);
+    ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
+    ok(h->userContext == (void *)0xcafebabe, "userContext of interface didn't unmarshal properly: %p\n", h->userContext);
+
+    /* test same interface data, but different pointer */
+    /* raises ERROR_INVALID_HANDLE exception */
+    if (0)
+    {
+        RPC_SERVER_INTERFACE server_if_clone = server_if;
+
+        NDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if_clone.InterfaceId, 0);
+    }
+
+    /* test different interface data, but different pointer */
+    /* raises ERROR_INVALID_HANDLE exception */
+    if (0)
+    {
+        static RPC_SERVER_INTERFACE server_if2 =
+        {
+            sizeof(RPC_SERVER_INTERFACE),
+            {{0x00000000,0x4114,0x0704,{0x23,0x01,0x00,0x00,0x00,0x00,0x00,0x00}},{1,0}},
+            {{0x8a885d04,0x1ceb,0x11c9,{0x9f,0xe8,0x08,0x00,0x2b,0x10,0x48,0x60}},{2,0}},
+            NULL,
+            0,
+            0,
+            0,
+            0,
+            0,
+        };
+        NDRSContextMarshall2(binding, h, buf, NULL, &server_if.InterfaceId, 0);
+
+        NDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if2.InterfaceId, 0);
+    }
+}
+
+void
 s_stop(void)
 {
   ok(RPC_S_OK == RpcMgmtStopServerListening(NULL), "RpcMgmtStopServerListening\n");
@@ -1021,6 +1112,7 @@ run_tests(void)
   union_tests();
   pointer_tests();
   array_tests();
+  context_handle_test();
 }
 
 static void
