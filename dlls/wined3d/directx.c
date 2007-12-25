@@ -2906,9 +2906,14 @@ static void position_d3dcolor(void *data) {
 }
 static void position_float4(void *data) {
     GLfloat *pos = (float *) data;
-    float w = 1.0 / pos[3];
 
-    glVertex4f(pos[0] * w, pos[1] * w, pos[2] * w, w);
+    if (pos[3] < eps && pos[3] > -eps)
+        glVertex3fv(pos);
+    else {
+        float w = 1.0 / pos[3];
+
+        glVertex4f(pos[0] * w, pos[1] * w, pos[2] * w, w);
+    }
 }
 
 static void diffuse_d3dcolor(void *data) {
