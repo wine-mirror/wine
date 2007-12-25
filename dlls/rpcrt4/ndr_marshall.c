@@ -6001,13 +6001,44 @@ void WINAPI NdrServerContextMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                      NDR_SCONTEXT ContextHandle,
                                      NDR_RUNDOWN RundownRoutine )
 {
-    FIXME("(%p, %p, %p): stub\n", pStubMsg, ContextHandle, RundownRoutine);
+    TRACE("(%p, %p, %p)\n", pStubMsg, ContextHandle, RundownRoutine);
+
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
+
+    if (pStubMsg->Buffer + cbNDRContext > (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength)
+    {
+        ERR("buffer overflow - Buffer = %p, BufferEnd = %p\n",
+            pStubMsg->Buffer, (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
+
+    NDRSContextMarshall2(pStubMsg->RpcMsg->Handle, ContextHandle,
+                         pStubMsg->Buffer, RundownRoutine, NULL, 0);
+    pStubMsg->Buffer += cbNDRContext;
 }
 
 NDR_SCONTEXT WINAPI NdrServerContextUnmarshall(PMIDL_STUB_MESSAGE pStubMsg)
 {
-    FIXME("(%p): stub\n", pStubMsg);
-    return NULL;
+    NDR_SCONTEXT ContextHandle;
+
+    TRACE("(%p)\n", pStubMsg);
+
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
+
+    if (pStubMsg->Buffer + cbNDRContext > (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength)
+    {
+        ERR("buffer overflow - Buffer = %p, BufferEnd = %p\n",
+            pStubMsg->Buffer, (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
+
+    ContextHandle = NDRSContextUnmarshall2(pStubMsg->RpcMsg->Handle,
+                                           pStubMsg->Buffer,
+                                           pStubMsg->RpcMsg->DataRepresentation,
+                                           NULL, 0);
+    pStubMsg->Buffer += cbNDRContext;
+
+    return ContextHandle;
 }
 
 void WINAPI NdrContextHandleSize(PMIDL_STUB_MESSAGE pStubMsg,
@@ -6020,8 +6051,9 @@ void WINAPI NdrContextHandleSize(PMIDL_STUB_MESSAGE pStubMsg,
 NDR_SCONTEXT WINAPI NdrContextHandleInitialize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
-    FIXME("(%p, %p): stub\n", pStubMsg, pFormat);
-    return NULL;
+    TRACE("(%p, %p)\n", pStubMsg, pFormat);
+    return NDRSContextUnmarshall2(pStubMsg->RpcMsg->Handle, NULL,
+                                  pStubMsg->RpcMsg->DataRepresentation, NULL, 0);
 }
 
 void WINAPI NdrServerContextNewMarshall(PMIDL_STUB_MESSAGE pStubMsg,
@@ -6029,12 +6061,45 @@ void WINAPI NdrServerContextNewMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                         NDR_RUNDOWN RundownRoutine,
                                         PFORMAT_STRING pFormat)
 {
-    FIXME("(%p, %p, %p, %p): stub\n", pStubMsg, ContextHandle, RundownRoutine, pFormat);
+    TRACE("(%p, %p, %p, %p)\n", pStubMsg, ContextHandle, RundownRoutine, pFormat);
+
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
+
+    if (pStubMsg->Buffer + cbNDRContext > (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength)
+    {
+        ERR("buffer overflow - Buffer = %p, BufferEnd = %p\n",
+            pStubMsg->Buffer, (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
+
+    /* FIXME: do something with pFormat */
+    NDRSContextMarshall2(pStubMsg->RpcMsg->Handle, ContextHandle,
+                          pStubMsg->Buffer, RundownRoutine, NULL, 0);
+    pStubMsg->Buffer += cbNDRContext;
 }
 
 NDR_SCONTEXT WINAPI NdrServerContextNewUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                   PFORMAT_STRING pFormat)
 {
-    FIXME("(%p, %p): stub\n", pStubMsg, pFormat);
-    return NULL;
+    NDR_SCONTEXT ContextHandle;
+
+    TRACE("(%p, %p)\n", pStubMsg, pFormat);
+
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
+
+    if (pStubMsg->Buffer + cbNDRContext > (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength)
+    {
+        ERR("buffer overflow - Buffer = %p, BufferEnd = %p\n",
+            pStubMsg->Buffer, (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
+
+    /* FIXME: do something with pFormat */
+    ContextHandle = NDRSContextUnmarshall2(pStubMsg->RpcMsg->Handle,
+                                           pStubMsg->Buffer,
+                                           pStubMsg->RpcMsg->DataRepresentation,
+                                           NULL, 0);
+    pStubMsg->Buffer += cbNDRContext;
+
+    return ContextHandle;
 }
