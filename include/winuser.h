@@ -1193,6 +1193,7 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_NCXBUTTONDBLCLK  0x00ad
 
   /* Raw input */
+#define WM_INPUT_DEVICE_CHANGE 0x00fe
 #define WM_INPUT            0x00ff
 
   /* Keyboard messages */
@@ -1204,8 +1205,9 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_SYSKEYUP         0x0105
 #define WM_SYSCHAR          0x0106
 #define WM_SYSDEADCHAR      0x0107
+#define WM_UNICHAR          0x0109
 #define WM_KEYFIRST         WM_KEYDOWN
-#define WM_KEYLAST          0x0108
+#define WM_KEYLAST          0x0109
 
 /* Win32 4.0 messages for IME */
 #define WM_IME_STARTCOMPOSITION     0x010d
@@ -1278,12 +1280,13 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_XBUTTONDOWN      0x020B
 #define WM_XBUTTONUP        0x020C
 #define WM_XBUTTONDBLCLK    0x020D
+#define WM_MOUSEHWHEEL      0x020E
 
 #define XBUTTON1            0x0001
 #define XBUTTON2            0x0002
 
 #define WM_MOUSEFIRST       0x0200
-#define WM_MOUSELAST        0x020D
+#define WM_MOUSELAST        0x020E
 
 #define WHEEL_DELTA      120
 #define WHEEL_PAGESCROLL  (UINT_MAX)
@@ -1369,6 +1372,11 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_IME_KEYDOWN              0x0290
 #define WM_IME_KEYUP                0x0291
 
+#define WM_NCMOUSEHOVER     0x02A0
+#define WM_MOUSEHOVER       0x02A1
+#define WM_MOUSELEAVE       0x02A3
+#define WM_NCMOUSELEAVE     0x02A2
+
 #define WM_WTSSESSION_CHANGE        0x02B1
 
 #define WM_TABLET_FIRST             0x02c0
@@ -1404,6 +1412,14 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_PRINTCLIENT       0x0318
 #define WM_APPCOMMAND        0x0319
 #define WM_THEMECHANGED      0x031A
+#define WM_CLIPBOARDUPDATE   0x031D
+
+#define WM_DWMCOMPOSITIONCHANGED 0x031E
+#define WM_DWMNCRENDERINGCHANGED 0x031F
+#define WM_DWMCOLORIZATIONCOLORCHANGED 0x0320
+#define WM_DWMWINDOWMAXIMIZEDCHANGE 0x0321
+
+#define WM_GETTITLEBARINFOEX 0x033F
 
 #define WM_HANDHELDFIRST     0x0358
 #define WM_HANDHELDLAST      0x035F
@@ -1415,6 +1431,8 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_PENWINLAST       0x038F
 
 #define WM_APP               0x8000
+
+#define UNICODE_NOCHAR       0xFFFF
 
 /* MsgWaitForMultipleObjectsEx flags */
 #define MWMO_WAITALL         0x0001
@@ -3797,12 +3815,6 @@ typedef struct tagCOMPAREITEMSTRUCT
 #define MK_MBUTTON	    0x0010
 #define MK_XBUTTON1         0x0020
 #define MK_XBUTTON2         0x0040
-
-
-#define WM_MOUSEHOVER       0x02A1
-#define WM_MOUSELEAVE       0x02A3
-#define WM_NCMOUSEHOVER     0x02A0
-#define WM_NCMOUSELEAVE     0x02A2
 
 
 #define TME_HOVER       0x00000001
