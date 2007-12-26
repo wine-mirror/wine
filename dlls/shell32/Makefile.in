@@ -38,6 +38,7 @@ C_SRCS = \
 	shfldr_desktop.c \
 	shfldr_fs.c \
 	shfldr_mycomp.c \
+	shfldr_netplaces.c \
 	shfldr_unixfs.c \
 	shlexec.c \
 	shlfileop.c \

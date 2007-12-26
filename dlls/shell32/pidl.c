@@ -1429,6 +1429,12 @@ LPITEMIDLIST _ILCreateBitBucket(void)
     return _ILCreateGuid(PT_GUID, &CLSID_RecycleBin);
 }
 
+LPITEMIDLIST _ILCreateNetHood(void)
+{
+    TRACE("()\n");
+    return _ILCreateGuid(PT_GUID, &CLSID_NetworkPlaces);
+}
+
 LPITEMIDLIST _ILCreateGuid(PIDLTYPE type, REFIID guid)
 {
     LPITEMIDLIST pidlOut;

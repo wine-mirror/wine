@@ -94,6 +94,10 @@ IDI_SHELL_CONFIRM_DELETE ICON delete.ico
 /* @makedep: mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON mydocs.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: mydocs.ico */
+IDI_SHELL_MY_NETWORK_PLACES ICON mydocs.ico
+
 /* @makedep: searching.avi */
 IDR_AVI_SEARCHING AVI searching.avi
 
