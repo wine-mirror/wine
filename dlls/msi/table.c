@@ -189,7 +189,7 @@ LPWSTR encode_streamname(BOOL bTable, LPCWSTR in)
             if( next && (next<0x80) )
             {
                 next = utf2mime(next);
-                if( next >= 0  )
+                if( next != -1 )
                 {
                      next += 0x3ffffc0;
                      ch += (next<<6);
