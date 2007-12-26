@@ -81,66 +81,49 @@ static BOOL is_string_field(UINT wCategory, UINT nIndex)
     return FALSE;
 }
 
-static char* DUMPBITS(int x, char* buf)
+static const char* DUMPBITS(int x)
 {
-    strcpy(buf,"{");
-   if (x&PK_CONTEXT) strcat(buf,"PK_CONTEXT ");
-   if (x&PK_STATUS) strcat(buf, "PK_STATUS ");
-   if (x&PK_TIME) strcat(buf, "PK_TIME ");
-   if (x&PK_CHANGED) strcat(buf, "PK_CHANGED ");
-   if (x&PK_SERIAL_NUMBER) strcat(buf, "PK_SERIAL_NUMBER ");
-   if (x&PK_CURSOR) strcat(buf, "PK_CURSOR ");
-   if (x&PK_BUTTONS) strcat(buf, "PK_BUTTONS ");
-   if (x&PK_X) strcat(buf, "PK_X ");
-   if (x&PK_Y) strcat(buf, "PK_Y ");
-   if (x&PK_Z) strcat(buf, "PK_Z ");
-   if (x&PK_NORMAL_PRESSURE) strcat(buf, "PK_NORMAL_PRESSURE ");
-   if (x&PK_TANGENT_PRESSURE) strcat(buf, "PK_TANGENT_PRESSURE ");
-   if (x&PK_ORIENTATION) strcat(buf, "PK_ORIENTATION ");
-   if (x&PK_ROTATION) strcat(buf, "PK_ROTATION ");
-    strcat(buf, "}");
-    return buf;
+    char buf[200];
+    buf[0] = 0;
+    if (x&PK_CONTEXT) strcat(buf,"PK_CONTEXT ");
+    if (x&PK_STATUS) strcat(buf, "PK_STATUS ");
+    if (x&PK_TIME) strcat(buf, "PK_TIME ");
+    if (x&PK_CHANGED) strcat(buf, "PK_CHANGED ");
+    if (x&PK_SERIAL_NUMBER) strcat(buf, "PK_SERIAL_NUMBER ");
+    if (x&PK_CURSOR) strcat(buf, "PK_CURSOR ");
+    if (x&PK_BUTTONS) strcat(buf, "PK_BUTTONS ");
+    if (x&PK_X) strcat(buf, "PK_X ");
+    if (x&PK_Y) strcat(buf, "PK_Y ");
+    if (x&PK_Z) strcat(buf, "PK_Z ");
+    if (x&PK_NORMAL_PRESSURE) strcat(buf, "PK_NORMAL_PRESSURE ");
+    if (x&PK_TANGENT_PRESSURE) strcat(buf, "PK_TANGENT_PRESSURE ");
+    if (x&PK_ORIENTATION) strcat(buf, "PK_ORIENTATION ");
+    if (x&PK_ROTATION) strcat(buf, "PK_ROTATION ");
+    return wine_dbg_sprintf("{%s}",buf);
 }
 
 static inline void DUMPPACKET(WTPACKET packet)
 {
     TRACE("pkContext: %p pkStatus: 0x%x pkTime : 0x%x pkChanged: 0x%x pkSerialNumber: 0x%x pkCursor : %i pkButtons: %x pkX: %i pkY: %i pkZ: %i pkNormalPressure: %i pkTangentPressure: %i pkOrientation: (%i,%i,%i) pkRotation: (%i,%i,%i)\n",
-          packet.pkContext,
-    (UINT)packet.pkStatus,
-    (UINT)packet.pkTime,
-    (UINT)packet.pkChanged,
-    packet.pkSerialNumber,
-    packet.pkCursor,
-    (UINT)packet.pkButtons,
-    packet.pkX,
-    packet.pkY,
-    packet.pkZ,
-    packet.pkNormalPressure,
-    packet.pkTangentPressure,
-    packet.pkOrientation.orAzimuth,
-        packet.pkOrientation.orAltitude, packet.pkOrientation.orTwist,
-    packet.pkRotation.roPitch,
-        packet.pkRotation.roRoll, packet.pkRotation.roYaw);
+          packet.pkContext, packet.pkStatus, packet.pkTime, packet.pkChanged, packet.pkSerialNumber,
+          packet.pkCursor, packet.pkButtons, packet.pkX, packet.pkY, packet.pkZ,
+          packet.pkNormalPressure, packet.pkTangentPressure,
+          packet.pkOrientation.orAzimuth, packet.pkOrientation.orAltitude, packet.pkOrientation.orTwist,
+          packet.pkRotation.roPitch, packet.pkRotation.roRoll, packet.pkRotation.roYaw);
 }
 
 static inline void DUMPCONTEXT(LOGCONTEXTW lc)
 {
-        CHAR mmsg[4000];
-        CHAR bits[100];
-        CHAR bits1[100];
-        CHAR bits2[100];
-
-        sprintf(mmsg,"%s, %x, %x, %x, %x, %x, %x, %x%s, %x%s, %x%s, %x, %x, %i, %i, %i, %i ,%i, %i, %i, %i, %i,%i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i %i %i",
-    wine_dbgstr_w(lc.lcName), lc.lcOptions, lc.lcStatus, lc.lcLocks, lc.lcMsgBase,
-lc.lcDevice, lc.lcPktRate, (UINT)lc.lcPktData, DUMPBITS(lc.lcPktData,bits),
-(UINT)lc.lcPktMode, DUMPBITS(lc.lcPktMode,bits1), (UINT)lc.lcMoveMask,
-DUMPBITS(lc.lcMoveMask,bits2), (INT)lc.lcBtnDnMask, (INT)lc.lcBtnUpMask,
-(INT)lc.lcInOrgX, (INT)lc.lcInOrgY, (INT)lc.lcInOrgZ, lc.lcInExtX, lc.lcInExtY,
-lc.lcInExtZ, lc.lcOutOrgX, lc.lcOutOrgY, lc.lcOutOrgZ, lc.lcOutExtX,
-lc.lcOutExtY, lc.lcOutExtZ, lc.lcSensX, lc.lcSensY, lc.lcSensZ, lc.lcSysMode,
-lc.lcSysOrgX, lc.lcSysOrgY, lc.lcSysExtX, lc.lcSysExtY, lc.lcSysSensX,
-lc.lcSysSensY);
-        TRACE("context: %s\n",mmsg);
+    TRACE("context: %s, %x, %x, %x, %x, %x, %x, %x%s, %x%s, %x%s, %x, %x, %i, %i, %i, %i ,%i, %i, %i, %i, %i,%i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i %i %i",
+          wine_dbgstr_w(lc.lcName), lc.lcOptions, lc.lcStatus, lc.lcLocks, lc.lcMsgBase,
+          lc.lcDevice, lc.lcPktRate, lc.lcPktData, DUMPBITS(lc.lcPktData),
+          lc.lcPktMode, DUMPBITS(lc.lcPktMode), lc.lcMoveMask,
+          DUMPBITS(lc.lcMoveMask), lc.lcBtnDnMask, lc.lcBtnUpMask,
+          lc.lcInOrgX, lc.lcInOrgY, lc.lcInOrgZ, lc.lcInExtX, lc.lcInExtY,
+          lc.lcInExtZ, lc.lcOutOrgX, lc.lcOutOrgY, lc.lcOutOrgZ, lc.lcOutExtX,
+          lc.lcOutExtY, lc.lcOutExtZ, lc.lcSensX, lc.lcSensY, lc.lcSensZ, lc.lcSysMode,
+          lc.lcSysOrgX, lc.lcSysOrgY, lc.lcSysExtX, lc.lcSysExtY, lc.lcSysSensX,
+          lc.lcSysSensY);
 }
 
 
@@ -306,10 +289,9 @@ static LPVOID TABLET_CopyPacketData(LPOPENCONTEXT context, LPVOID lpPkt,
                                     LPWTPACKET wtp)
 {
     LPBYTE ptr;
-    CHAR bits[100];
 
     ptr = lpPkt;
-    TRACE("Packet Bits %s\n",DUMPBITS(context->context.lcPktData,bits));
+    TRACE("Packet Bits %s\n",DUMPBITS(context->context.lcPktData));
 
     if (context->context.lcPktData & PK_CONTEXT)
         ptr+=CopyTabletData(ptr,&wtp->pkContext,sizeof(HCTX));
