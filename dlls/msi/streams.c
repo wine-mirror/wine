@@ -408,17 +408,22 @@ static UINT add_streams_to_table(MSISTREAMSVIEW *sv)
 
         /* table streams are not in the _Streams table */
         if (*stat.pwcsName == 0x4840)
+        {
+            CoTaskMemFree(stat.pwcsName);
             continue;
+        }
 
         stream = create_stream(sv, stat.pwcsName, TRUE, NULL);
         if (!stream)
         {
             count = -1;
+            CoTaskMemFree(stat.pwcsName);
             break;
         }
 
         IStorage_OpenStream(sv->db->storage, stat.pwcsName, 0,
                             STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream->stream);
+        CoTaskMemFree(stat.pwcsName);
 
         if (!add_stream_to_table(sv, stream, count++))
         {

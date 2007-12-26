@@ -265,6 +265,7 @@ void enum_stream_names( IStorage *stg )
         decode_streamname( stat.pwcsName, name );
         TRACE("stream %2d -> %s %s\n", n,
               debugstr_w(stat.pwcsName), debugstr_w(name) );
+        CoTaskMemFree( stat.pwcsName );
         n++;
     }
 
@@ -2577,6 +2578,7 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
             break;
 
         decode_streamname( stat.pwcsName, name );
+        CoTaskMemFree( stat.pwcsName );
         if ( name[0] != 0x4840 )
             continue;
 
