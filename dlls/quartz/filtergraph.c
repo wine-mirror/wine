@@ -289,6 +289,7 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown * iface) {
         {
             IBaseFilter_SetSyncSource(This->ppFiltersInGraph[i], NULL);
             IBaseFilter_Release(This->ppFiltersInGraph[i]);
+            CoTaskMemFree(This->pFilterNames[i]);
         }
         for (i = 0; i < This->nItfCacheEntries; i++)
         {
