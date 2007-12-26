@@ -1043,7 +1043,6 @@ static void test_marshal_VARIANT(void)
     lpsa = SafeArrayCreate(VT_R8, 1, &sab);
     *(DWORD *)lpsa->pvData = 0xcafebabe;
     *((DWORD *)lpsa->pvData + 1) = 0xdeadbeef;
-    lpsa->cLocks = 7;
 
     VariantInit(&v);
     V_VT(&v) = VT_UI4 | VT_ARRAY;
@@ -1127,7 +1126,6 @@ static void test_marshal_VARIANT(void)
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
-    lpsa->cLocks = 0;
     SafeArrayDestroy(lpsa);
 
     /*** VARIANT BYREF ***/
@@ -1216,9 +1214,7 @@ static void test_marshal_VARIANT(void)
         stubMsg.Buffer = buffer;
         next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
         ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
-        ok(V_VT(V_VARIANTREF(&v)) == V_VT(V_VARIANTREF(&v3)), "vts differ %x %x\n",
-           V_VT(V_VARIANTREF(&v)), V_VT(V_VARIANTREF(&v3)));
-        ok(V_R8(V_VARIANTREF(&v)) == V_R8(V_VARIANTREF(&v3)), "r8s differ\n");
+        ok(V_UNKNOWN(&v) == V_UNKNOWN(&v3), "got %p expect %p\n", V_UNKNOWN(&v), V_UNKNOWN(&v3));
         VARIANT_UserFree(&umcb.Flags, &v3);
         ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
         IUnknown_Release((IUnknown *)heap_unknown);
