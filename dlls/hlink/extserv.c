@@ -91,6 +91,7 @@ static ULONG WINAPI ExtServUnk_Release(IUnknown *iface)
     if(!ref) {
         heap_free(This->username);
         heap_free(This->password);
+        heap_free(This->headers);
         heap_free(This);
     }
 
