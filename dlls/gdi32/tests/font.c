@@ -347,8 +347,7 @@ static void test_bitmap_font_metrics(void)
         { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8, CP1251_BIT },
         { "Small Fonts", FW_NORMAL, 10, 8, 2, 0, 0, 6, 12, CP932_BIT },
         { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, CP1252_BIT | CP1250_BIT | CP1251_BIT },
-/* No proper small font for Japanese yet */
-/*        { "Small Fonts", FW_NORMAL, 11, 9, 2, 0, 0, 7, 14, CP932_BIT }, */
+        { "Small Fonts", FW_NORMAL, 11, 9, 2, 0, 0, 7, 14, CP932_BIT },
         { "Fixedsys", FW_NORMAL, 15, 12, 3, 3, 0, 8, 8, CP1252_BIT | CP1250_BIT },
         { "Fixedsys", FW_NORMAL, 16, 12, 4, 3, 0, 8, 8, CP1251_BIT },
         { "FixedSys", FW_NORMAL, 18, 16, 2, 0, 0, 8, 16, CP932_BIT }

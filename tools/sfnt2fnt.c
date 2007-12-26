@@ -312,8 +312,8 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     /* Hack: Courier has no internal leading, nor do any Chinese or Japanese fonts */
     if(!strcmp(face->family_name, "Courier") || enc == 936 || enc == 950 || enc == 932)
         il = 0;
-    /* Japanese fonts have an external leading */
-    if(enc == 932)
+    /* Japanese system fonts have an external leading (not small font) */
+    if (enc == 932 && ppem > 11)
         el = 2;
     else
         el = 0;
