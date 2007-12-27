@@ -263,6 +263,7 @@ void async_set_result( struct object *obj, unsigned int status, unsigned long to
         if (async->data.apc)
         {
             apc_call_t data;
+            memset( &data, 0, sizeof(data) );
             data.type         = APC_USER;
             data.user.func    = async->data.apc;
             data.user.args[0] = (unsigned long)async->data.arg;
