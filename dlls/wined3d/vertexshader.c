@@ -413,7 +413,8 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
          * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
          * contains 1.0 to allow a mad.
          */
-        shader_addline(&buffer, "gl_Position.xy = gl_Position.xy * posFixup.xy + posFixup.zw;\n");
+        shader_addline(&buffer, "gl_Position.y = gl_Position.y * posFixup.y;\n");
+        shader_addline(&buffer, "gl_Position.xy += posFixup.zw * gl_Position.ww;\n");
 
         /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
          *
@@ -444,10 +445,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
             This->baseShader.limits.constant_float = 
                 min(95, This->baseShader.limits.constant_float);
 
-        /* Some instructions need a temporary register. Add it if needed, but only if it is really needed */
-        if(reg_maps->usesnrm || This->rel_offset) {
-            shader_addline(&buffer, "TEMP TMP;\n");
-        }
+        shader_addline(&buffer, "TEMP TMP;\n");
 
         /* Base Declarations */
         shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
@@ -479,8 +477,9 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
          * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
          * contains 1.0 to allow a mad, but arb vs swizzles are too restricted for that.
          */
-        shader_addline(&buffer, "ADD TMP_OUT.x, TMP_OUT.x, posFixup.z;\n");
-        shader_addline(&buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, posFixup.w;\n");
+        shader_addline(&buffer, "MUL TMP, posFixup, TMP_OUT.w;\n");
+        shader_addline(&buffer, "ADD TMP_OUT.x, TMP_OUT.x, TMP.z;\n");
+        shader_addline(&buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TMP.w;\n");
 
         /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
          * and the glsl equivalent
