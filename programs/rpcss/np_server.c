@@ -110,6 +110,7 @@ static void RPCSS_ServerProcessRESOLVEEPMessage(PRPCSS_NP_MESSAGE pMsg,
 static void RPCSS_ServerProcessMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPLY pReply, char *vardata)
 {
   WINE_TRACE("\n");
+  ZeroMemory(pReply, sizeof(*pReply));
   switch (pMsg->message_type) {
     case RPCSS_NP_MESSAGE_TYPEID_RANMSG:
       RPCSS_ServerProcessRANMessage(pMsg, pReply);
@@ -436,6 +437,7 @@ BOOL RPCSS_BecomePipeServer(void)
    */
   
   if ((client_handle = RPCSS_NPConnect()) != INVALID_HANDLE_VALUE) {
+    ZeroMemory(&msg, sizeof(msg));
     msg.message_type = RPCSS_NP_MESSAGE_TYPEID_RANMSG;
     msg.message.ranmsg.timeout = 1000;
     msg.vardata_payload_size = 0;
