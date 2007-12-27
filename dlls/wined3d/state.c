@@ -2421,6 +2421,13 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
             if(!isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) {
                 activate_dimensions(sampler, stateblock, context);
             }
+
+            if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && sampler == 0) {
+                /* If color keying is enabled update the alpha test, it depends on the existence
+                * of a color key in stage 0
+                */
+                state_alpha(WINED3DRS_COLORKEYENABLE, stateblock, context);
+            }
         } /* Otherwise tex_colorop disables the stage */
         glBindTexture(GL_TEXTURE_2D, stateblock->wineD3DDevice->dummyTextureName[sampler]);
         checkGLcall("glBindTexture(GL_TEXTURE_2D, stateblock->wineD3DDevice->dummyTextureName[sampler])");
