@@ -935,6 +935,13 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
                                         REFIID riid, void **ppv)
 {
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+                                        REFIID riid, void **ppv)
+{
     CHECK_EXPECT(CreateInstance);
 
     ok(iface == expect_cf, "unexpected iface\n");
@@ -960,8 +967,17 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
     ClassFactory_LockServer
 };
 
-static IClassFactory test_protocol_cf = { &ClassFactoryVtbl };
-static IClassFactory test_protocol_cf2 = { &ClassFactoryVtbl };
+static const IClassFactoryVtbl ProtocolCFVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ProtocolCF_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory test_protocol_cf = { &ProtocolCFVtbl };
+static IClassFactory test_protocol_cf2 = { &ProtocolCFVtbl };
+static IClassFactory test_cf = { &ClassFactoryVtbl };
 
 static void test_NameSpace(void)
 {
@@ -1085,6 +1101,33 @@ static void test_NameSpace(void)
     hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
                               &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
+
+    IInternetSession_Release(session);
+}
+
+static void test_MimeFilter(void)
+{
+    IInternetSession *session;
+    HRESULT hres;
+
+    static const WCHAR mimeW[] = {'t','e','s','t','/','m','i','m','e',0};
+
+    hres = CoInternetGetSession(0, &session, 0);
+    ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IInternetSession_RegisterMimeFilter(session, &test_cf, &IID_NULL, mimeW);
+    ok(hres == S_OK, "RegisterMimeFilter failed: %08x\n", hres);
+
+    hres = IInternetSession_UnregisterMimeFilter(session, &test_cf, mimeW);
+    ok(hres == S_OK, "UnregisterMimeFilter failed: %08x\n", hres);
+
+    hres = IInternetSession_UnregisterMimeFilter(session, &test_cf, mimeW);
+    ok(hres == S_OK, "UnregisterMimeFilter failed: %08x\n", hres);
+
+    hres = IInternetSession_UnregisterMimeFilter(session, (void*)0xdeadbeef, mimeW);
+    ok(hres == S_OK, "UnregisterMimeFilter failed: %08x\n", hres);
 
     IInternetSession_Release(session);
 }
@@ -1243,6 +1286,7 @@ START_TEST(misc)
     test_SecurityManager();
     test_ZoneManager();
     test_NameSpace();
+    test_MimeFilter();
     test_ReleaseBindInfo();
     test_UrlMkGetSessionOption();
     test_ObtainUserAgentString();
