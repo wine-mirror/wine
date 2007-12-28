@@ -251,6 +251,8 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
     IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
     ReleaseBindInfo(&bindinfo);
 
+    TRACE("bindf %x\n", grfBINDF);
+
     if(strlenW(szUrl)>=sizeof(wszAbout)/sizeof(WCHAR) && !memcmp(wszAbout, szUrl, sizeof(wszAbout))) {
         text = szUrl + sizeof(wszAbout)/sizeof(WCHAR);
         if(!strcmpW(wszBlank, text))
@@ -449,9 +451,43 @@ static HRESULT WINAPI AboutProtocolInfo_QueryInfo(IInternetProtocolInfo *iface, 
         QUERYOPTION QueryOption, DWORD dwQueryFlags, LPVOID pBuffer, DWORD cbBuffer, DWORD* pcbBuf,
         DWORD dwReserved)
 {
-    FIXME("%p)->(%s %08x %08x %p %d %p %d)\n", iface, debugstr_w(pwzUrl), QueryOption, dwQueryFlags, pBuffer,
-            cbBuffer, pcbBuf, dwReserved);
-    return E_NOTIMPL;
+    TRACE("%p)->(%s %08x %08x %p %d %p %d)\n", iface, debugstr_w(pwzUrl), QueryOption, dwQueryFlags, pBuffer,
+          cbBuffer, pcbBuf, dwReserved);
+
+    switch(QueryOption) {
+    case QUERY_CAN_NAVIGATE:
+        return INET_E_USE_DEFAULT_PROTOCOLHANDLER;
+
+    case QUERY_USES_NETWORK:
+        if(!pBuffer || cbBuffer < sizeof(DWORD))
+            return E_FAIL;
+
+        *(DWORD*)pBuffer = 0;
+        if(pcbBuf)
+            *pcbBuf = sizeof(DWORD);
+
+        break;
+
+    case QUERY_IS_CACHED:
+        FIXME("Unsupported option QUERY_IS_CACHED\n");
+        return E_NOTIMPL;
+    case QUERY_IS_INSTALLEDENTRY:
+        FIXME("Unsupported option QUERY_IS_INSTALLEDENTRY\n");
+        return E_NOTIMPL;
+    case QUERY_IS_CACHED_OR_MAPPED:
+        FIXME("Unsupported option QUERY_IS_CACHED_OR_MAPPED\n");
+        return E_NOTIMPL;
+    case QUERY_IS_SECURE:
+        FIXME("Unsupported option QUERY_IS_SECURE\n");
+        return E_NOTIMPL;
+    case QUERY_IS_SAFE:
+        FIXME("Unsupported option QUERY_IS_SAFE\n");
+        return E_NOTIMPL;
+    default:
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static const IInternetProtocolInfoVtbl AboutProtocolInfoVtbl = {
