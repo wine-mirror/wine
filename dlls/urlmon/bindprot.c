@@ -105,9 +105,8 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocol *iface)
             IInternetProtocol_Release(This->protocol);
         if(This->bind_info)
             IInternetBindInfo_Release(This->bind_info);
-        if(This->protocol_sink)
-            IInternetProtocolSink_Release(This->protocol_sink);
 
+        set_binding_sink(PROTOCOL(This), NULL);
         heap_free(This);
 
         URLMON_UnlockModule();
@@ -172,10 +171,7 @@ static HRESULT WINAPI BindProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     IInternetBindInfo_AddRef(pOIBindInfo);
     This->bind_info = pOIBindInfo;
 
-    IInternetProtocolSink_AddRef(pOIProtSink);
-    This->protocol_sink = pOIProtSink;
-
-    IInternetProtocolSink_QueryInterface(pOIProtSink, &IID_IServiceProvider, (void**)&This->service_provider);
+    set_binding_sink(PROTOCOL(This), pOIProtSink);
 
     hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
     if(SUCCEEDED(hres)) {
@@ -266,6 +262,25 @@ static HRESULT WINAPI BindProtocol_UnlockRequest(IInternetProtocol *iface)
     TRACE("(%p)\n", This);
 
     return IInternetProtocol_UnlockRequest(This->protocol);
+}
+
+void set_binding_sink(IInternetProtocol *bind_protocol, IInternetProtocolSink *sink)
+{
+    BindProtocol *This = PROTOCOL_THIS(bind_protocol);
+    IInternetProtocolSink *prev_sink;
+    IServiceProvider *service_provider = NULL;
+
+    if(sink)
+        IInternetProtocolSink_AddRef(sink);
+    prev_sink = InterlockedExchangePointer((void**)&This->protocol_sink, sink);
+    if(prev_sink)
+        IInternetProtocolSink_Release(prev_sink);
+
+    if(sink)
+        IInternetProtocolSink_QueryInterface(sink, &IID_IServiceProvider, (void**)&service_provider);
+    service_provider = InterlockedExchangePointer((void**)&This->service_provider, service_provider);
+    if(service_provider)
+        IServiceProvider_Release(service_provider);
 }
 
 #undef PROTOCOL_THIS
