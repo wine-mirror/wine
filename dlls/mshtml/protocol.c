@@ -880,9 +880,30 @@ static HRESULT WINAPI ResProtocolInfo_QueryInfo(IInternetProtocolInfo *iface, LP
         QUERYOPTION QueryOption, DWORD dwQueryFlags, LPVOID pBuffer, DWORD cbBuffer, DWORD* pcbBuf,
         DWORD dwReserved)
 {
-    FIXME("%p)->(%s %08x %08x %p %d %p %d)\n", iface, debugstr_w(pwzUrl), QueryOption, dwQueryFlags, pBuffer,
-            cbBuffer, pcbBuf, dwReserved);
-    return E_NOTIMPL;
+    TRACE("%p)->(%s %08x %08x %p %d %p %d)\n", iface, debugstr_w(pwzUrl), QueryOption, dwQueryFlags, pBuffer,
+          cbBuffer, pcbBuf, dwReserved);
+
+    switch(QueryOption) {
+    case QUERY_USES_NETWORK:
+        if(!pBuffer || cbBuffer < sizeof(DWORD))
+            return E_FAIL;
+
+        *(DWORD*)pBuffer = 0;
+        if(pcbBuf)
+            *pcbBuf = sizeof(DWORD);
+        break;
+
+    case QUERY_IS_SECURE:
+        FIXME("not supporte QUERY_IS_SECURE\n");
+        return E_NOTIMPL;
+    case QUERY_IS_SAFE:
+        FIXME("not supporte QUERY_IS_SAFE\n");
+        return E_NOTIMPL;
+    default:
+        return INET_E_USE_DEFAULT_PROTOCOLHANDLER;
+    }
+
+    return S_OK;
 }
 
 static const IInternetProtocolInfoVtbl ResProtocolInfoVtbl = {
