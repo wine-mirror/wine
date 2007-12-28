@@ -105,6 +105,7 @@ static const WCHAR user_agentW[] = {'W','i','n','e',0};
 static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
 static const WCHAR hostW[] = {'w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
 static const WCHAR winehq_ipW[] = {'2','0','9','.','4','6','.','2','5','.','1','3','4',0};
+static const WCHAR emptyW[] = {0};
 
 static HRESULT expect_hrResult;
 static LPCWSTR file_name, http_url, expect_wsz;
@@ -113,12 +114,14 @@ static BOOL first_data_notif = FALSE, http_is_first = FALSE,
     http_post_test = FALSE;
 static int state = 0, prot_state;
 static DWORD bindf = 0, ex_priority = 0;
+static IInternetProtocol *binding_protocol;
 static IInternetBindInfo *prot_bind_info;
 static IInternetProtocolSink *binding_sink;
 static void *expect_pv;
 static HANDLE event_complete, event_complete2;
 static BOOL binding_test;
 static PROTOCOLDATA protocoldata, *pdata;
+static DWORD prot_read;
 
 static enum {
     FILE_TEST,
@@ -525,7 +528,20 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
             SetEvent(event_complete);
         }
     }else {
+        BYTE buf[1000];
+        ULONG read;
+        HRESULT hres;
+
         CHECK_EXPECT(ReportData);
+
+        if(tested_protocol == BIND_TEST)
+            return S_OK;
+
+        do {
+            SET_EXPECT(Read);
+            hres = IInternetProtocol_Read(binding_protocol, expect_pv=buf, sizeof(buf), &read);
+            CHECK_CALLED(Read);
+        }while(hres == S_OK);
     }
 
     return S_OK;
@@ -804,6 +820,8 @@ static DWORD WINAPI thread_proc(PVOID arg)
     CHECK_CALLED(Switch);
     ok(hres == S_OK, "Switch failed: %08x\n", hres);
 
+    SetEvent(event_complete);
+
     return 0;
 }
 
@@ -814,9 +832,6 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     BINDINFO bindinfo, exp_bindinfo;
     DWORD cbindf = 0;
     HRESULT hres;
-
-    static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
-    static const WCHAR empty_str[] = {0};
 
     CHECK_EXPECT(Start);
 
@@ -837,10 +852,10 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ok(cbindf == (bindf|BINDF_FROMURLMON), "bindf = %x, expected %x\n",
        cbindf, (bindf|BINDF_FROMURLMON));
     ok(!memcmp(&exp_bindinfo, &bindinfo, sizeof(bindinfo)), "unexpected bindinfo\n");
+    ReleaseBindInfo(&bindinfo);
 
     SET_EXPECT(ReportProgress_SENDINGREQUEST);
-    hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
-            BINDSTATUS_SENDINGREQUEST, empty_str);
+    hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_SENDINGREQUEST, emptyW);
     ok(hres == S_OK, "ReportProgress(BINDSTATUS_SENDINGREQUEST) failed: %08x\n", hres);
     CHECK_CALLED(ReportProgress_SENDINGREQUEST);
 
@@ -908,8 +923,6 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
         IServiceProvider_Release(service_provider);
 
-        binding_sink = pOIProtSink;
-        IInternetProtocolSink_AddRef(binding_sink);
         CreateThread(NULL, 0, thread_proc, NULL, 0, NULL);
 
         return S_OK;
@@ -917,13 +930,13 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
     hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
-            BINDSTATUS_CACHEFILENAMEAVAILABLE, expect_wsz = empty_str);
+            BINDSTATUS_CACHEFILENAMEAVAILABLE, expect_wsz = emptyW);
     ok(hres == S_OK, "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
     CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
 
     SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
     hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE,
-                                                expect_wsz = wszTextHtml);
+                                                expect_wsz = text_htmlW);
     ok(hres == S_OK,
        "ReportProgress(BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE) failed: %08x\n", hres);
     CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
@@ -933,6 +946,11 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
             BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION, 13, 13);
     ok(hres == S_OK, "ReportData failed: %08x\n", hres);
     CHECK_CALLED(ReportData);
+
+    if(tested_protocol == BIND_TEST) {
+        hres = IInternetProtocol_Terminate(binding_protocol, 0);
+        ok(hres == E_FAIL, "Termiante failed: %08x\n", hres);
+    }
 
     SET_EXPECT(ReportResult);
     hres = IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
@@ -951,7 +969,7 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
     CHECK_EXPECT(Continue);
 
     ok(pProtocolData != NULL, "pProtocolData == NULL\n");
-    if(!pProtocolData)
+    if(!pProtocolData || tested_protocol == BIND_TEST)
         return S_OK;
 
     switch(prot_state) {
@@ -967,11 +985,13 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
         SET_EXPECT(QueryService_HttpNegotiate);
         hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate,
                                              &IID_IHttpNegotiate, (void**)&http_negotiate);
+        IServiceProvider_Release(service_provider);
         CHECK_CALLED(QueryService_HttpNegotiate);
         ok(hres == S_OK, "Could not get IHttpNegotiate\n");
 
         SET_EXPECT(OnResponse);
         hres = IHttpNegotiate_OnResponse(http_negotiate, 200, header, NULL, NULL);
+        IHttpNegotiate_Release(http_negotiate);
         CHECK_CALLED(OnResponse);
         IHttpNegotiate_Release(http_negotiate);
         ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
@@ -996,6 +1016,9 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
     hres = IInternetProtocolSink_ReportData(binding_sink, bscf, 100, 400);
     CHECK_CALLED(ReportData);
     ok(hres == S_OK, "ReportData failed: %08x\n", hres);
+
+    if(prot_state == 3)
+        prot_state = 4;
 
     return S_OK;
 }
@@ -1029,7 +1052,7 @@ static HRESULT WINAPI Protocol_Resume(IInternetProtocol *iface)
 static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
-    static DWORD read;
+    static BOOL b = TRUE;
 
     CHECK_EXPECT(Read);
 
@@ -1038,11 +1061,21 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
     ok(pcbRead != NULL, "pcbRead == NULL\n");
     ok(!*pcbRead, "*pcbRead = %d\n", *pcbRead);
 
-    if(read)
+    if(prot_state == 3) {
+        HRESULT hres;
+
+        SET_EXPECT(ReportResult);
+        hres = IInternetProtocolSink_ReportResult(binding_sink, S_OK, ERROR_SUCCESS, NULL);
+        CHECK_CALLED(ReportResult);
+
         return S_FALSE;
+    }
+
+    if((b = !b))
+        return tested_protocol == HTTP_TEST ? E_PENDING : S_FALSE;
 
     memset(pv, 'x', 100);
-    *pcbRead = read = 100;
+    prot_read += *pcbRead = 100;
     return S_OK;
 }
 
@@ -1701,6 +1734,7 @@ static void test_CreateBinding(void)
     ok(hres == S_OK, "RegisterNameSpace failed: %08x\n", hres);
 
     hres = IInternetSession_CreateBinding(session, NULL, test_url, NULL, NULL, &protocol, 0);
+    binding_protocol = protocol;
     ok(hres == S_OK, "CreateBinding failed: %08x\n", hres);
     ok(protocol != NULL, "protocol == NULL\n");
 
@@ -1709,7 +1743,6 @@ static void test_CreateBinding(void)
 
     hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetProtocolSink, (void**)&sink);
     ok(hres == S_OK, "Could not get IInternetProtocolSink: %08x\n", hres);
-    IInternetProtocolSink_Release(sink);
 
     hres = IInternetProtocol_Start(protocol, test_url, NULL, &bind_info, 0, 0);
     ok(hres == E_INVALIDARG, "Start failed: %08x, expected E_INVALIDARG\n", hres);
@@ -1778,6 +1811,22 @@ static void test_CreateBinding(void)
     ok(hres == S_OK, "Terminate failed: %08x\n", hres);
     CHECK_CALLED(Terminate);
 
+    SET_EXPECT(Continue);
+    hres = IInternetProtocolSink_Switch(sink, &protocoldata);
+    ok(hres == S_OK, "Switch failed: %08x\n", hres);
+    CHECK_CALLED(Continue);
+
+    hres = IInternetProtocolSink_ReportProgress(sink,
+            BINDSTATUS_CACHEFILENAMEAVAILABLE, expect_wsz = emptyW);
+    ok(hres == S_OK, "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
+
+    hres = IInternetProtocolSink_ReportResult(sink, S_OK, ERROR_SUCCESS, NULL);
+    ok(hres == E_FAIL, "ReportResult failed: %08x, expected E_FAIL\n", hres);
+
+    hres = IInternetProtocolSink_ReportData(sink, 0, 0, 0);
+    ok(hres == S_OK, "ReportData failed: %08x\n", hres);
+
+    IInternetProtocolSink_Release(sink);
     IInternetPriority_Release(priority);
     IInternetBindInfo_Release(prot_bind_info);
     IInternetProtocol_Release(protocol);
@@ -1788,6 +1837,7 @@ static void test_binding(int prot)
 {
     IInternetProtocol *protocol;
     IInternetSession *session;
+    ULONG ref;
     HRESULT hres;
 
     trace("Testing %s binding...\n", debugstr_w(protocol_names[prot]));
@@ -1795,6 +1845,7 @@ static void test_binding(int prot)
     tested_protocol = prot;
     binding_test = TRUE;
     first_data_notif = TRUE;
+    prot_read = 0;
 
     hres = CoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
@@ -1803,6 +1854,7 @@ static void test_binding(int prot)
     ok(hres == S_OK, "RegisterNameSpace failed: %08x\n", hres);
 
     hres = IInternetSession_CreateBinding(session, NULL, binding_urls[prot], NULL, NULL, &protocol, 0);
+    binding_protocol = protocol;
     IInternetSession_Release(session);
     ok(hres == S_OK, "CreateBinding failed: %08x\n", hres);
     ok(protocol != NULL, "protocol == NULL\n");
@@ -1810,8 +1862,8 @@ static void test_binding(int prot)
     hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetBindInfo, (void**)&prot_bind_info);
     ok(hres == S_OK, "QueryInterface(IID_IInternetBindInfo) failed: %08x\n", hres);
 
-    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetBindInfo, (void**)&prot_bind_info);
-    ok(hres == S_OK, "QueryInterface(IID_IInternetBindInfo) failed: %08x\n", hres);
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetProtocolSink, (void**)&binding_sink);
+    ok(hres == S_OK, "QueryInterface(IID_IInternetProtocolSink) failed: %08x\n", hres);
 
     ex_priority = 0;
     SET_EXPECT(QueryService_InternetProtocol);
@@ -1824,8 +1876,6 @@ static void test_binding(int prot)
     hres = IInternetProtocol_Start(protocol, binding_urls[prot], &protocol_sink, &bind_info, 0, 0);
     ok(hres == S_OK, "Start failed: %08x\n", hres);
 
-    IInternetProtocol_Release(protocol);
-
     CHECK_CALLED(QueryService_InternetProtocol);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(ReportProgress_PROTOCOLCLASSID);
@@ -1833,13 +1883,15 @@ static void test_binding(int prot)
     CHECK_CALLED(Start);
 
     if(prot == HTTP_TEST) {
-        while(prot_state < 3) {
+        while(prot_state < 4) {
             WaitForSingleObject(event_complete, INFINITE);
             SET_EXPECT(Continue);
             IInternetProtocol_Continue(protocol, pdata);
             CHECK_CALLED(Continue);
             SetEvent(event_complete2);
         }
+
+        WaitForSingleObject(event_complete, INFINITE);
     }else {
         SET_EXPECT(LockRequest);
         hres = IInternetProtocol_LockRequest(protocol, 0);
@@ -1850,14 +1902,17 @@ static void test_binding(int prot)
         hres = IInternetProtocol_UnlockRequest(protocol);
         ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
         CHECK_CALLED(UnlockRequest);
-
-        SET_EXPECT(Terminate);
-        hres = IInternetProtocol_Terminate(protocol, 0);
-        ok(hres == S_OK, "Terminate failed: %08x\n", hres);
-        CHECK_CALLED(Terminate);
     }
 
+    SET_EXPECT(Terminate);
+    hres = IInternetProtocol_Terminate(protocol, 0);
+    ok(hres == S_OK, "Terminate failed: %08x\n", hres);
+    CHECK_CALLED(Terminate);
+
     IInternetBindInfo_Release(prot_bind_info);
+    IInternetProtocolSink_Release(binding_sink);
+    ref = IInternetProtocol_Release(protocol);
+    ok(!ref, "ref=%u, expected 0\n", ref);
 }
 
 START_TEST(protocol)
