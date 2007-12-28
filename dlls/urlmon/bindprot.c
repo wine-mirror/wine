@@ -530,7 +530,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 
 HRESULT create_binding_protocol(LPCWSTR url, IInternetProtocol **protocol)
 {
-    BindProtocol *ret = heap_alloc(sizeof(BindProtocol));
+    BindProtocol *ret = heap_alloc_zero(sizeof(BindProtocol));
 
     ret->lpInternetProtocolVtbl = &BindProtocolVtbl;
     ret->lpInternetBindInfoVtbl = &InternetBindInfoVtbl;
@@ -539,11 +539,6 @@ HRESULT create_binding_protocol(LPCWSTR url, IInternetProtocol **protocol)
     ret->lpInternetProtocolSinkVtbl = &InternetProtocolSinkVtbl;
 
     ret->ref = 1;
-    ret->protocol = NULL;
-    ret->bind_info = NULL;
-    ret->protocol_sink = NULL;
-    ret->service_provider = NULL;
-    ret->priority = 0;
 
     URLMON_LockModule();
 
