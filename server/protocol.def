@@ -1925,6 +1925,14 @@ enum message_type
 @END
 
 
+/* check if the thread owning the window is hung */
+@REQ(is_window_hung)
+    user_handle_t   win;       /* window handle */
+@REPLY
+    int is_hung;
+@END
+
+
 /* Retrieve info about a serial port */
 @REQ(get_serial_info)
     obj_handle_t handle;       /* handle to comm port */

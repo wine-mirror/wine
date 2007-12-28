@@ -1562,6 +1562,22 @@ void post_win_event( struct thread *thread, unsigned int event,
     }
 }
 
+
+/* check if the thread owning the window is hung */
+DECL_HANDLER(is_window_hung)
+{
+    struct thread *thread;
+
+    thread = get_window_thread( req->win );
+    if (thread)
+    {
+        reply->is_hung = is_queue_hung( thread->queue );
+        release_object( thread );
+    }
+    else reply->is_hung = 0;
+}
+
+
 /* get the message queue of the current thread */
 DECL_HANDLER(get_msg_queue)
 {

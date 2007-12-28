@@ -2412,6 +2412,16 @@ static void dump_kill_win_timer_request( const struct kill_win_timer_request *re
     fprintf( stderr, " id=%lx", req->id );
 }
 
+static void dump_is_window_hung_request( const struct is_window_hung_request *req )
+{
+    fprintf( stderr, " win=%p", req->win );
+}
+
+static void dump_is_window_hung_reply( const struct is_window_hung_reply *req )
+{
+    fprintf( stderr, " is_hung=%d", req->is_hung );
+}
+
 static void dump_get_serial_info_request( const struct get_serial_info_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -3878,6 +3888,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_message_reply_request,
     (dump_func)dump_set_win_timer_request,
     (dump_func)dump_kill_win_timer_request,
+    (dump_func)dump_is_window_hung_request,
     (dump_func)dump_get_serial_info_request,
     (dump_func)dump_set_serial_info_request,
     (dump_func)dump_register_async_request,
@@ -4112,6 +4123,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_message_reply_reply,
     (dump_func)dump_set_win_timer_reply,
     (dump_func)0,
+    (dump_func)dump_is_window_hung_reply,
     (dump_func)dump_get_serial_info_reply,
     (dump_func)0,
     (dump_func)0,
@@ -4346,6 +4358,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_message_reply",
     "set_win_timer",
     "kill_win_timer",
+    "is_window_hung",
     "get_serial_info",
     "set_serial_info",
     "register_async",

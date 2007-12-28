@@ -2597,6 +2597,19 @@ struct kill_win_timer_reply
 
 
 
+struct is_window_hung_request
+{
+    struct request_header __header;
+    user_handle_t   win;
+};
+struct is_window_hung_reply
+{
+    struct reply_header __header;
+    int is_hung;
+};
+
+
+
 struct get_serial_info_request
 {
     struct request_header __header;
@@ -4382,6 +4395,7 @@ enum request
     REQ_get_message_reply,
     REQ_set_win_timer,
     REQ_kill_win_timer,
+    REQ_is_window_hung,
     REQ_get_serial_info,
     REQ_set_serial_info,
     REQ_register_async,
@@ -4620,6 +4634,7 @@ union generic_request
     struct get_message_reply_request get_message_reply_request;
     struct set_win_timer_request set_win_timer_request;
     struct kill_win_timer_request kill_win_timer_request;
+    struct is_window_hung_request is_window_hung_request;
     struct get_serial_info_request get_serial_info_request;
     struct set_serial_info_request set_serial_info_request;
     struct register_async_request register_async_request;
@@ -4856,6 +4871,7 @@ union generic_reply
     struct get_message_reply_reply get_message_reply_reply;
     struct set_win_timer_reply set_win_timer_reply;
     struct kill_win_timer_reply kill_win_timer_reply;
+    struct is_window_hung_reply is_window_hung_reply;
     struct get_serial_info_reply get_serial_info_reply;
     struct set_serial_info_reply set_serial_info_reply;
     struct register_async_reply register_async_reply;
@@ -4960,6 +4976,6 @@ union generic_reply
     struct add_fd_completion_reply add_fd_completion_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 334
+#define SERVER_PROTOCOL_VERSION 335
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

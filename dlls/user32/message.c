@@ -3556,6 +3556,13 @@ BOOL WINAPI GetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
  */
 BOOL WINAPI IsHungAppWindow( HWND hWnd )
 {
-    DWORD_PTR dwResult;
-    return !SendMessageTimeoutA(hWnd, WM_NULL, 0, 0, SMTO_ABORTIFHUNG, 5000, &dwResult);
+    BOOL ret;
+
+    SERVER_START_REQ( is_window_hung )
+    {
+        req->win = hWnd;
+        ret = !wine_server_call_err( req ) && reply->is_hung;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
