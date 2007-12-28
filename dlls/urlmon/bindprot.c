@@ -36,6 +36,8 @@ typedef struct {
     IServiceProvider *service_provider;
 
     LONG priority;
+
+    BOOL reported_result;
 } BindProtocol;
 
 #define PROTOCOL(x)  ((IInternetProtocol*) &(x)->lpInternetProtocolVtbl)
@@ -205,7 +207,18 @@ static HRESULT WINAPI BindProtocol_Terminate(IInternetProtocol *iface, DWORD dwO
 
     TRACE("(%p)->(%08x)\n", This, dwOptions);
 
+    if(!This->reported_result)
+        return E_FAIL;
+
     IInternetProtocol_Terminate(This->protocol, 0);
+
+    set_binding_sink(PROTOCOL(This), NULL);
+
+    if(This->bind_info) {
+        IInternetBindInfo_Release(This->bind_info);
+        This->bind_info = NULL;
+    }
+
     return S_OK;
 }
 
@@ -440,6 +453,14 @@ static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface
 
     TRACE("(%p)->(%p)\n", This, pProtocolData);
 
+    TRACE("flags %x state %x data %p cb %u\n", pProtocolData->grfFlags, pProtocolData->dwState,
+          pProtocolData->pData, pProtocolData->cbData);
+
+    if(!This->protocol_sink) {
+        IInternetProtocol_Continue(This->protocol, pProtocolData);
+        return S_OK;
+    }
+
     return IInternetProtocolSink_Switch(This->protocol_sink, pProtocolData);
 }
 
@@ -482,6 +503,9 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportData(IInternetProtocolSink *i
 
     TRACE("(%p)->(%d %u %u)\n", This, grfBSCF, ulProgress, ulProgressMax);
 
+    if(!This->protocol_sink)
+        return S_OK;
+
     return IInternetProtocolSink_ReportData(This->protocol_sink, grfBSCF, ulProgress, ulProgressMax);
 }
 
@@ -491,6 +515,11 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportResult(IInternetProtocolSink 
     BindProtocol *This = PROTSINK_THIS(iface);
 
     TRACE("(%p)->(%08x %d %s)\n", This, hrResult, dwError, debugstr_w(szResult));
+
+    if(!This->protocol_sink)
+        return E_FAIL;
+
+    This->reported_result = TRUE;
 
     return IInternetProtocolSink_ReportResult(This->protocol_sink, hrResult, dwError, szResult);
 }
