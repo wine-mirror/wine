@@ -327,7 +327,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
 
     if (driver && driver->proc)
 	/* The driver has been registered at runtime with its driverproc */
-        return MSVIDEO_OpenFunction(fccType, fccHandler, wMode, (DRIVERPROC)driver->proc, (DWORD)NULL);
+        return MSVIDEO_OpenFunction(fccType, fccHandler, wMode, driver->proc, 0);
   
     /* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the
      * same layout as ICOPEN
