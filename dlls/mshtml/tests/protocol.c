@@ -367,6 +367,52 @@ static void test_res_protocol(void)
         hres = IInternetProtocolInfo_CompareUrl(protocol_info, NULL, NULL, 0xdeadbeef);
         ok(hres == E_NOTIMPL, "CompareUrl failed: %08x\n", hres);
 
+        for(i=0; i<30; i++) {
+            if(i == QUERY_USES_NETWORK || i == QUERY_IS_SECURE || i == QUERY_IS_SAFE)
+                continue;
+
+            hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, i, 0,
+                                                   buf, sizeof(buf), &size, 0);
+            ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER,
+               "QueryInfo(%d) returned: %08x, expected INET_E_USE_DEFAULT_PROTOCOLHANDLER\n", i, hres);
+        }
+
+        size = 0xdeadbeef;
+        memset(buf, '?', sizeof(buf));
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+                                               buf, sizeof(buf), &size, 0);
+        ok(hres == S_OK, "QueryInfo(QUERY_USES_NETWORK) failed: %08x\n", hres);
+        ok(size == sizeof(DWORD), "size=%d\n", size);
+        ok(!*(DWORD*)buf, "buf=%d\n", *(DWORD*)buf);
+
+        memset(buf, '?', sizeof(buf));
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+                                               buf, sizeof(buf), NULL, 0);
+        ok(hres == S_OK, "QueryInfo(QUERY_USES_NETWORK) failed: %08x\n", hres);
+        ok(!*(DWORD*)buf, "buf=%d\n", *(DWORD*)buf);
+
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+                                               buf, 3, &size, 0);
+        ok(hres == E_FAIL, "QueryInfo(QUERY_USES_NETWORK) failed: %08x, expected E_FAIL\n", hres);
+
+        size = 0xdeadbeef;
+        memset(buf, '?', sizeof(buf));
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, NULL, QUERY_USES_NETWORK, 0,
+                                               buf, sizeof(buf), &size, 0);
+        ok(hres == S_OK, "QueryInfo(QUERY_USES_NETWORK) failed: %08x, expected E_FAIL\n", hres);
+        ok(hres == S_OK, "QueryInfo(QUERY_USES_NETWORK) failed: %08x\n", hres);
+        ok(size == sizeof(DWORD), "size=%d\n", size);
+        ok(!*(DWORD*)buf, "buf=%d\n", *(DWORD*)buf);
+
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+                                               NULL, sizeof(buf), &size, 0);
+        ok(hres == E_FAIL, "QueryInfo(QUERY_USES_NETWORK) failed: %08x, expected E_FAIL\n", hres);
+
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, 60, 0,
+                                               NULL, sizeof(buf), &size, 0);
+        ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER,
+           "QueryInfo failed: %08x, expected INET_E_USE_DEFAULT_PROTOCOLHANDLER\n", hres);
+
         IInternetProtocolInfo_Release(protocol_info);
     }
 
@@ -380,6 +426,12 @@ static void test_res_protocol(void)
         ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
 
         if(SUCCEEDED(hres)) {
+            IInternetPriority *priority;
+
+            hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
+            ok(hres == E_NOINTERFACE,
+               "QueryInterface(IInternetPriority) returned %08x, expected E_NOINTEFACE\n", hres);
+
             test_protocol_fail(protocol, wrong_url1, E_INVALIDARG, FALSE);
             test_protocol_fail(protocol, wrong_url2,
                                HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), FALSE);
@@ -560,6 +612,54 @@ static void test_about_protocol(void)
         hres = IInternetProtocolInfo_CompareUrl(protocol_info, NULL, NULL, 0xdeadbeef);
         ok(hres == E_NOTIMPL, "CompareUrl failed: %08x\n", hres);
 
+        for(i=0; i<30; i++) {
+            switch(i) {
+            case QUERY_CAN_NAVIGATE:
+            case QUERY_USES_NETWORK:
+            case QUERY_IS_CACHED:
+            case QUERY_IS_INSTALLEDENTRY:
+            case QUERY_IS_CACHED_OR_MAPPED:
+            case QUERY_IS_SECURE:
+            case QUERY_IS_SAFE:
+                break;
+            default:
+                hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, i, 0,
+                                                       buf, sizeof(buf), &size, 0);
+                ok(hres == E_FAIL, "QueryInfo(%d) returned: %08x, expected E_FAIL\n", i, hres);
+            }
+        }
+
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_CAN_NAVIGATE, 0,
+                                               buf, sizeof(buf), &size, 0);
+        ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER,
+           "QueryInfo returned: %08x, expected INET_E_USE_DEFAULT_PROTOCOLHANDLER\n", hres);
+
+        size = 0xdeadbeef;
+        memset(buf, '?', sizeof(buf));
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+                                               buf, sizeof(buf), &size, 0);
+        ok(hres == S_OK, "QueryInfo(QUERY_USES_NETWORK) failed: %08x\n", hres);
+        ok(size == sizeof(DWORD), "size=%d\n", size);
+        ok(!*(DWORD*)buf, "buf=%d\n", *(DWORD*)buf);
+
+        memset(buf, '?', sizeof(buf));
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+                                               buf, sizeof(buf), NULL, 0);
+        ok(hres == S_OK, "QueryInfo(QUERY_USES_NETWORK) failed: %08x\n", hres);
+        ok(!*(DWORD*)buf, "buf=%d\n", *(DWORD*)buf);
+
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+                                               buf, 3, &size, 0);
+        ok(hres == E_FAIL, "QueryInfo(QUERY_USES_NETWORK) failed: %08x, expected E_FAIL\n", hres);
+
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+                                               NULL, sizeof(buf), &size, 0);
+        ok(hres == E_FAIL, "QueryInfo(QUERY_USES_NETWORK) failed: %08x, expected E_FAIL\n", hres);
+
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, 60, 0,
+                                               NULL, sizeof(buf), &size, 0);
+        ok(hres == E_FAIL, "QueryInfo failed: %08x, expected E_FAIL\n", hres);
+
         IInternetProtocolInfo_Release(protocol_info);
     }
 
@@ -573,6 +673,12 @@ static void test_about_protocol(void)
         ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
 
         if(SUCCEEDED(hres)) {
+            IInternetPriority *priority;
+
+            hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
+            ok(hres == E_NOINTERFACE,
+               "QueryInterface(IInternetPriority) returned %08x, expected E_NOINTEFACE\n", hres);
+
             protocol_start(protocol, blank_url);
             hres = IInternetProtocol_LockRequest(protocol, 0);
             ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
