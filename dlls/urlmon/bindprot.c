@@ -453,12 +453,19 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSin
     switch(ulStatusCode) {
     case BINDSTATUS_FINDINGRESOURCE:
     case BINDSTATUS_CONNECTING:
+    case BINDSTATUS_BEGINDOWNLOADDATA:
     case BINDSTATUS_SENDINGREQUEST:
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
+    case BINDSTATUS_DIRECTBIND:
+    case BINDSTATUS_MIMETYPEAVAILABLE:
+        if(!This->protocol_sink)
+            return S_OK;
         return IInternetProtocolSink_ReportProgress(This->protocol_sink,
                 ulStatusCode, szStatusText);
+
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
-    case BINDSTATUS_MIMETYPEAVAILABLE:
+        if(!This->protocol_sink)
+            return S_OK;
         return IInternetProtocolSink_ReportProgress(This->protocol_sink,
                 BINDSTATUS_MIMETYPEAVAILABLE, szStatusText);
     default:
