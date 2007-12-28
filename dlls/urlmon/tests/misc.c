@@ -350,6 +350,48 @@ static void test_CoInternetCompareUrl(void)
     ok(hres == S_FALSE, "CoInternetParseUrl failed: %08x\n", hres);
 }
 
+static const struct {
+    LPCWSTR url;
+    DWORD uses_net;
+} query_info_tests[] = {
+    {url1, 0},
+    {url2, 0},
+    {url3, 0},
+    {url4, 0},
+    {url5, 0},
+    {url6, 0},
+    {url7, 0},
+    {url8, 0}
+};
+
+static void test_CoInternetQueryInfo(void)
+{
+    BYTE buf[100];
+    DWORD cb, i;
+    HRESULT hres;
+
+    for(i=0; i < sizeof(query_info_tests)/sizeof(query_info_tests[0]); i++) {
+        cb = 0xdeadbeef;
+        memset(buf, '?', sizeof(buf));
+        hres = CoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, buf, sizeof(buf), &cb, 0);
+        ok(hres == S_OK, "[%d] CoInternetQueryInfo failed: %08x\n", i, hres);
+        ok(cb == sizeof(DWORD), "[%d] cb = %d\n", i, cb);
+        ok(*(DWORD*)buf == query_info_tests[i].uses_net, "[%d] ret %x, expected %x\n",
+           i, *(DWORD*)buf, query_info_tests[i].uses_net);
+
+        hres = CoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, buf, 3, &cb, 0);
+        ok(hres == E_FAIL, "[%d] CoInternetQueryInfo failed: %08x, expected E_FAIL\n", i, hres);
+        hres = CoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, NULL, sizeof(buf), &cb, 0);
+        ok(hres == E_FAIL, "[%d] CoInternetQueryInfo failed: %08x, expected E_FAIL\n", i, hres);
+
+        memset(buf, '?', sizeof(buf));
+        hres = CoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, buf, sizeof(buf), NULL, 0);
+        ok(hres == S_OK, "[%d] CoInternetQueryInfo failed: %08x\n", i, hres);
+        ok(*(DWORD*)buf == query_info_tests[i].uses_net, "[%d] ret %x, expected %x\n",
+           i, *(DWORD*)buf, query_info_tests[i].uses_net);
+    }
+}
+
 static const WCHAR mimeTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 static const WCHAR mimeTextPlain[] = {'t','e','x','t','/','p','l','a','i','n',0};
 static const WCHAR mimeTextRichtext[] = {'t','e','x','t','/','r','i','c','h','t','e','x','t',0};
@@ -1196,6 +1238,7 @@ START_TEST(misc)
     test_RegisterFormatEnumerator();
     test_CoInternetParseUrl();
     test_CoInternetCompareUrl();
+    test_CoInternetQueryInfo();
     test_FindMimeFromData();
     test_SecurityManager();
     test_ZoneManager();
