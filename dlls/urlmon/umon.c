@@ -1126,26 +1126,6 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
 }
 
 /***********************************************************************
- *           CoInternetQueryInfo (URLMON.@)
- *
- * Retrieves information relevant to a specified URL
- *
- * RETURNS
- *    S_OK 			success
- *    S_FALSE			buffer too small
- *    INET_E_QUERYOPTIONUNKNOWN	invalid option
- *
- */
-HRESULT WINAPI CoInternetQueryInfo(LPCWSTR pwzUrl, QUERYOPTION QueryOption,
-  DWORD dwQueryFlags, LPVOID pvBuffer, DWORD cbBuffer, DWORD * pcbBuffer,
-  DWORD dwReserved)
-{
-  FIXME("(%s, %x, %x, %p, %x, %p, %x): stub\n", debugstr_w(pwzUrl),
-    QueryOption, dwQueryFlags, pvBuffer, cbBuffer, pcbBuffer, dwReserved);
-  return S_OK;
-}
-
-/***********************************************************************
  *           IsAsyncMoniker (URLMON.@)
  */
 HRESULT WINAPI IsAsyncMoniker(IMoniker *pmk)
@@ -1183,6 +1163,8 @@ HRESULT WINAPI BindAsyncMoniker(IMoniker *pmk, DWORD grfOpt, IBindStatusCallback
 {
     LPBC pbc = NULL;
     HRESULT hr = E_INVALIDARG;
+
+    TRACE("(%p %08x %p %s %p)\n", pmk, grfOpt, pbsc, debugstr_guid(iidResult), ppvResult);
 
     if (pmk && ppvResult)
     {
