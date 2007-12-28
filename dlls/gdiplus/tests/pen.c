@@ -29,7 +29,7 @@
 
 static void test_startup(void)
 {
-    GpPen *pen;
+    GpPen *pen = NULL;
     Status status;
     struct GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
