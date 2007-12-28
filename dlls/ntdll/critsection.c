@@ -209,7 +209,7 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
         HANDLE sem;
         if (NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 )) return 0;
         if (!(ret = (HANDLE)interlocked_cmpxchg_ptr( (PVOID *)&crit->LockSemaphore,
-                                                     (PVOID)sem, 0 )))
+                                                     sem, 0 )))
             ret = sem;
         else
             NtClose(sem);  /* somebody beat us to it */

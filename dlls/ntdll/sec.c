@@ -66,8 +66,8 @@ static BOOLEAN copy_acl(DWORD nDestinationAclLength, PACL pDestinationAcl, PACL 
 
     if (!pSourceAcl || !RtlValidAcl(pSourceAcl))
         return FALSE;
-        
-    size = ((ACL *)pSourceAcl)->AclSize;
+
+    size = pSourceAcl->AclSize;
     if (nDestinationAclLength < size)
         return FALSE;
 

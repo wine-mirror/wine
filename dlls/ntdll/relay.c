@@ -526,7 +526,7 @@ void RELAY_SetupDLL( HMODULE module )
     /* patch the functions in the export table to point to the relay thunks */
 
     funcs = (DWORD *)((char *)module + exports->AddressOfFunctions);
-    entry_point_rva = (const char *)descr->entry_point_base - (const char *)module;
+    entry_point_rva = descr->entry_point_base - (const char *)module;
     for (i = 0; i < exports->NumberOfFunctions; i++, funcs++)
     {
         if (!descr->entry_point_offsets[i]) continue;   /* not a normal function */

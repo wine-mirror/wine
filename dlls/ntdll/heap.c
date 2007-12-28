@@ -1621,8 +1621,8 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
         ptr = entry->lpData;
         LIST_FOR_EACH_ENTRY( sub, &heapPtr->subheap_list, SUBHEAP, entry )
         {
-            if (((char *)ptr >= (char *)sub->base) &&
-                ((char *)ptr < (char *)sub->base + sub->size))
+            if ((ptr >= (char *)sub->base) &&
+                (ptr < (char *)sub->base + sub->size))
             {
                 currentheap = sub;
                 break;

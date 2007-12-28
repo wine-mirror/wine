@@ -833,7 +833,7 @@ NTSTATUS WINAPI RtlFormatCurrentUserKeyPath( IN OUT PUNICODE_STRING KeyPath)
                     KeyPath->Buffer = (PWCHAR)((LPBYTE)buf + sizeof(pathW));
                     status = RtlConvertSidToUnicodeString(KeyPath,
                                                           ((TOKEN_USER *)buffer)->User.Sid, FALSE);
-                    KeyPath->Buffer = (PWCHAR)buf;
+                    KeyPath->Buffer = buf;
                     KeyPath->Length += sizeof(pathW);
                     KeyPath->MaximumLength += sizeof(pathW);
                 }
