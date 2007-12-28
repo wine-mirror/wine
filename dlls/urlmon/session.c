@@ -184,7 +184,6 @@ static HRESULT WINAPI InternetSession_RegisterNameSpace(IInternetSession *iface,
         const LPCWSTR *ppwzPatterns, DWORD dwReserved)
 {
     name_space *new_name_space;
-    int size;
 
     TRACE("(%p %s %s %d %p %d)\n", pCF, debugstr_guid(rclsid), debugstr_w(pwzProtocol),
           cPatterns, ppwzPatterns, dwReserved);
@@ -199,12 +198,9 @@ static HRESULT WINAPI InternetSession_RegisterNameSpace(IInternetSession *iface,
 
     new_name_space = heap_alloc(sizeof(name_space));
 
-    size = (strlenW(pwzProtocol)+1)*sizeof(WCHAR);
-    new_name_space->protocol = heap_alloc(size);
-    memcpy(new_name_space->protocol, pwzProtocol, size);
-
     IClassFactory_AddRef(pCF);
     new_name_space->cf = pCF;
+    new_name_space->protocol = heap_strdupW(pwzProtocol);
     new_name_space->clsid = *rclsid;
 
     new_name_space->next = name_space_list;
