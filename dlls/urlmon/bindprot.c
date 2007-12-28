@@ -399,26 +399,26 @@ static const IInternetPriorityVtbl InternetPriorityVtbl = {
 
 #define PROTSINK_THIS(iface) DEFINE_THIS(BindProtocol, InternetProtocolSink, iface)
 
-static HRESULT WINAPI InternetProtocolSink_QueryInterface(IInternetProtocolSink *iface,
+static HRESULT WINAPI BPInternetProtocolSink_QueryInterface(IInternetProtocolSink *iface,
         REFIID riid, void **ppv)
 {
     BindProtocol *This = PROTSINK_THIS(iface);
     return IInternetProtocol_QueryInterface(PROTOCOL(This), riid, ppv);
 }
 
-static ULONG WINAPI InternetProtocolSink_AddRef(IInternetProtocolSink *iface)
+static ULONG WINAPI BPInternetProtocolSink_AddRef(IInternetProtocolSink *iface)
 {
     BindProtocol *This = PROTSINK_THIS(iface);
     return IInternetProtocol_AddRef(PROTOCOL(This));
 }
 
-static ULONG WINAPI InternetProtocolSink_Release(IInternetProtocolSink *iface)
+static ULONG WINAPI BPInternetProtocolSink_Release(IInternetProtocolSink *iface)
 {
     BindProtocol *This = PROTSINK_THIS(iface);
     return IInternetProtocol_Release(PROTOCOL(This));
 }
 
-static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
+static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface,
         PROTOCOLDATA *pProtocolData)
 {
     BindProtocol *This = PROTSINK_THIS(iface);
@@ -428,7 +428,7 @@ static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
     return IInternetProtocolSink_Switch(This->protocol_sink, pProtocolData);
 }
 
-static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink *iface,
+static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSink *iface,
         ULONG ulStatusCode, LPCWSTR szStatusText)
 {
     BindProtocol *This = PROTSINK_THIS(iface);
@@ -453,7 +453,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *iface,
+static HRESULT WINAPI BPInternetProtocolSink_ReportData(IInternetProtocolSink *iface,
         DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
 {
     BindProtocol *This = PROTSINK_THIS(iface);
@@ -463,7 +463,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
     return IInternetProtocolSink_ReportData(This->protocol_sink, grfBSCF, ulProgress, ulProgressMax);
 }
 
-static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *iface,
+static HRESULT WINAPI BPInternetProtocolSink_ReportResult(IInternetProtocolSink *iface,
         HRESULT hrResult, DWORD dwError, LPCWSTR szResult)
 {
     BindProtocol *This = PROTSINK_THIS(iface);
@@ -476,13 +476,13 @@ static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *i
 #undef PROTSINK_THIS
 
 static const IInternetProtocolSinkVtbl InternetProtocolSinkVtbl = {
-    InternetProtocolSink_QueryInterface,
-    InternetProtocolSink_AddRef,
-    InternetProtocolSink_Release,
-    InternetProtocolSink_Switch,
-    InternetProtocolSink_ReportProgress,
-    InternetProtocolSink_ReportData,
-    InternetProtocolSink_ReportResult
+    BPInternetProtocolSink_QueryInterface,
+    BPInternetProtocolSink_AddRef,
+    BPInternetProtocolSink_Release,
+    BPInternetProtocolSink_Switch,
+    BPInternetProtocolSink_ReportProgress,
+    BPInternetProtocolSink_ReportData,
+    BPInternetProtocolSink_ReportResult
 };
 
 #define SERVPROV_THIS(iface) DEFINE_THIS(BindProtocol, ServiceProvider, iface)
