@@ -87,9 +87,17 @@ GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
 GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, REAL width, GpUnit unit,
     GpPen **pen)
 {
+    GpBrush *brush;
+    GdipCreateSolidFill(color, (GpSolidFill **)(&brush));
+    return GdipCreatePen2(brush, width, unit, pen);
+}
+
+GpStatus WINGDIPAPI GdipCreatePen2(GpBrush *brush, REAL width, GpUnit unit,
+    GpPen **pen)
+{
     GpPen *gp_pen;
 
-    if(!pen)
+    if(!pen || !brush)
         return InvalidParameter;
 
     gp_pen = GdipAlloc(sizeof(GpPen));
@@ -103,7 +111,7 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, REAL width, GpUnit unit,
     gp_pen->miterlimit = 10.0;
     gp_pen->dash = DashStyleSolid;
     gp_pen->offset = 0.0;
-    GdipCreateSolidFill(color, (GpSolidFill **)(&gp_pen->brush));
+    gp_pen->brush = brush;
 
     if(!((gp_pen->unit == UnitWorld) || (gp_pen->unit == UnitPixel))) {
         FIXME("UnitWorld, UnitPixel only supported units\n");

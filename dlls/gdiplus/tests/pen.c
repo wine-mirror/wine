@@ -62,6 +62,10 @@ static void test_constructor_destructor(void)
     GpStatus status;
     GpPen *pen = NULL;
 
+    status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, NULL);
+    expect(InvalidParameter, status);
+    ok(pen == NULL, "Expected pen to be NULL\n");
+
     status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
     expect(Ok, status);
     ok(pen != NULL, "Expected pen to be initialized\n");
@@ -70,6 +74,38 @@ static void test_constructor_destructor(void)
     expect(InvalidParameter, status);
 
     status = GdipDeletePen(pen);
+    expect(Ok, status);
+}
+
+static void test_constructor_destructor2(void)
+{
+    GpStatus status;
+    GpPen *pen = NULL;
+    GpBrush *brush = NULL;
+    GpPointF points[2];
+
+    status = GdipCreatePen2(NULL, 10.0f, UnitPixel, &pen);
+    expect(InvalidParameter, status);
+    ok(pen == NULL, "Expected pen to be NULL\n");
+
+    points[0].X = 7.0;
+    points[0].Y = 11.0;
+    points[1].X = 13.0;
+    points[1].Y = 17.0;
+
+    status = GdipCreateLineBrush(&points[0], &points[1], (ARGB)0xffff00ff,
+                    (ARGB)0xff0000ff, WrapModeTile, (GpLineGradient **)&brush);
+    expect(Ok, status);
+    ok(brush != NULL, "Expected brush to be initialized\n");
+
+    status = GdipCreatePen2(brush, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+    ok(pen != NULL, "Expected pen to be initialized\n");
+
+    status = GdipDeletePen(pen);
+    expect(Ok, status);
+
+    status = GdipDeleteBrush(brush);
     expect(Ok, status);
 }
 
@@ -205,6 +241,7 @@ START_TEST(pen)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_constructor_destructor();
+    test_constructor_destructor2();
     test_brushfill();
     test_dasharray();
 

@@ -121,7 +121,7 @@
 @ stub GdipCreatePathGradientI
 @ stdcall GdipCreatePathIter(ptr ptr)
 @ stdcall GdipCreatePen1(long long long ptr)
-@ stub GdipCreatePen2
+@ stdcall GdipCreatePen2(ptr long long ptr)
 @ stub GdipCreateRegion
 @ stub GdipCreateRegionHrgn
 @ stub GdipCreateRegionPath
