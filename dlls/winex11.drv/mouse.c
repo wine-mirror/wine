@@ -566,8 +566,8 @@ static Cursor create_xcursor_cursor( Display *display, CURSORICONINFO *ptr )
     /* Make sure hotspot is valid */
     image->xhot = ptr->ptHotSpot.x;
     image->yhot = ptr->ptHotSpot.y;
-    if (image->xhot < 0 || image->xhot >= image->width ||
-        image->yhot < 0 || image->yhot >= image->height)
+    if (image->xhot >= image->width ||
+        image->yhot >= image->height)
     {
         image->xhot = image->width / 2;
         image->yhot = image->height / 2;
