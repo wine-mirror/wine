@@ -67,6 +67,30 @@ typedef struct _RTL_QUERY_REGISTRY_TABLE {
   ULONG  DefaultLength;
 } RTL_QUERY_REGISTRY_TABLE, *PRTL_QUERY_REGISTRY_TABLE;
 
+typedef struct _KEY_VALUE_PARTIAL_INFORMATION {
+    ULONG TitleIndex;
+    ULONG Type;
+    ULONG DataLength;
+    UCHAR Data[1];
+} KEY_VALUE_PARTIAL_INFORMATION, *PKEY_VALUE_PARTIAL_INFORMATION;
+
+typedef struct _KEY_VALUE_FULL_INFORMATION {
+    ULONG TitleIndex;
+    ULONG Type;
+    ULONG DataOffset;
+    ULONG DataLength;
+    ULONG NameLength;
+    WCHAR Name[1];
+} KEY_VALUE_FULL_INFORMATION, *PKEY_VALUE_FULL_INFORMATION;
+
+typedef enum _KEY_VALUE_INFORMATION_CLASS {
+    KeyValueBasicInformation,
+    KeyValueFullInformation,
+    KeyValuePartialInformation,
+    KeyValueFullInformationAlign64,
+    KeyValuePartialInformationAlign64
+} KEY_VALUE_INFORMATION_CLASS;
+
 #define InitializeObjectAttributes(p,n,a,r,s) \
     do { \
         (p)->Length = sizeof(OBJECT_ATTRIBUTES); \
@@ -93,6 +117,7 @@ static NTSTATUS (WINAPI * pNtDeleteKey)(HKEY);
 static NTSTATUS (WINAPI * pNtCreateKey)( PHKEY retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
                              ULONG TitleIndex, const UNICODE_STRING *class, ULONG options,
                              PULONG dispos );
+static NTSTATUS (WINAPI * pNtQueryValueKey)(HANDLE,const UNICODE_STRING *,KEY_VALUE_INFORMATION_CLASS,void *,DWORD,DWORD *);
 static NTSTATUS (WINAPI * pNtSetValueKey)( PHKEY, const PUNICODE_STRING, ULONG,
                                ULONG, const PVOID, ULONG  );
 static NTSTATUS (WINAPI * pRtlFormatCurrentUserKeyPath)(PUNICODE_STRING);
@@ -138,6 +163,7 @@ static BOOL InitFunctionPtrs(void)
         NTDLL_GET_PROC(NtCreateKey)
         NTDLL_GET_PROC(NtFlushKey)
         NTDLL_GET_PROC(NtDeleteKey)
+        NTDLL_GET_PROC(NtQueryValueKey)
         NTDLL_GET_PROC(NtSetValueKey)
         NTDLL_GET_PROC(NtOpenKey)
         NTDLL_GET_PROC(RtlFormatCurrentUserKeyPath)
@@ -432,6 +458,53 @@ static void test_NtFlushKey(void)
     pNtClose(hkey);
 }
 
+static void test_NtQueryValueKey(void)
+{
+    HANDLE key;
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING ValName;
+    KEY_VALUE_PARTIAL_INFORMATION *partial_info;
+    KEY_VALUE_FULL_INFORMATION *full_info;
+    DWORD len;
+
+    pRtlCreateUnicodeStringFromAsciiz(&ValName, "deletetest");
+
+    InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
+    status = pNtOpenKey(&key, KEY_READ, &attr);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+
+    len = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
+    partial_info = HeapAlloc(GetProcessHeap(), 0, len);
+    status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, len, &len);
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
+    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->Type);
+    ok(partial_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", partial_info->Type);
+    todo_wine
+    ok(partial_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", partial_info->DataLength);
+    todo_wine
+    ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[partial_info->DataLength]), "NtQueryValueKey returned wrong len %d\n", len);
+    HeapFree(GetProcessHeap(), 0, partial_info);
+
+    len = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]);
+    full_info = HeapAlloc(GetProcessHeap(), 0, len);
+    status = pNtQueryValueKey(key, &ValName, KeyValueFullInformation, full_info, len, &len);
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
+    ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", full_info->Type);
+    ok(full_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", full_info->Type);
+    todo_wine
+    ok(full_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", full_info->DataLength);
+    todo_wine
+    ok(full_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", full_info->NameLength);
+    todo_wine
+    ok(len == FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]) + full_info->DataLength + full_info->NameLength,
+        "NtQueryValueKey returned wrong len %d\n", len);
+    HeapFree(GetProcessHeap(), 0, full_info);
+
+    pRtlFreeUnicodeString(&ValName);
+    pNtClose(key);
+}
+
 static void test_NtDeleteKey(void)
 {
     NTSTATUS status;
@@ -477,6 +550,7 @@ START_TEST(reg)
     test_RtlQueryRegistryValues();
     test_RtlpNtQueryValueKey();
     test_NtFlushKey();
+    test_NtQueryValueKey();
     test_NtDeleteKey();
 
     pRtlFreeUnicodeString(&winetestpath);
