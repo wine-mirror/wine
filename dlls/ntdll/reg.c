@@ -505,7 +505,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
         if (!(ret = wine_server_call( req )))
         {
             copy_key_value_info( info_class, info, length, reply->type,
-                                 0, wine_server_reply_size(reply) );
+                                 name->Length, reply->total );
             *result_len = fixed_size + reply->total;
             if (length < *result_len) ret = STATUS_BUFFER_OVERFLOW;
         }
