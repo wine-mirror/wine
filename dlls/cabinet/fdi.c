@@ -461,7 +461,7 @@ static char *FDI_read_string(HFDI hfdi, INT_PTR hf, long cabsize)
   }
 
   /* otherwise, set the stream to just after the string and return */
-  PFDI_SEEK(hfdi, hf, base + ((cab_off_t) strlen((char *) buf)) + 1, SEEK_SET);
+  PFDI_SEEK(hfdi, hf, base + strlen((char *)buf) + 1, SEEK_SET);
 
   return (char *) buf;
 }
