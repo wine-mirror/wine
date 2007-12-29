@@ -2898,7 +2898,7 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
  */
 DWORD WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes, DWORD n)
 {
-    int i;
+    DWORD i;
 
     if (pPens && pBrushes) /* "set" call */
     {
