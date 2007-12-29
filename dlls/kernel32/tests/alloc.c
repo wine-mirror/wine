@@ -150,8 +150,7 @@ static void test_Heap(void)
 
    dwSize = HeapSize(heap, 0, mem1);
    /* should work with 0-length buffer */
-   ok((dwSize >= 0) && (dwSize < 0xFFFFFFFF),
-      "The size of the 0-length buffer\n");
+   ok(dwSize < 0xFFFFFFFF, "The size of the 0-length buffer\n");
    ok(HeapFree(heap, 0, mem1), "Freed the 0-length buffer\n");
 
 /* Check that HeapDestry works */
