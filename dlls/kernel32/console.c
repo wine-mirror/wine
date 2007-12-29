@@ -1792,7 +1792,7 @@ HANDLE WINAPI CreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode
         req->access     = dwDesiredAccess;
         req->attributes = (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
         req->share      = dwShareMode;
-	if (!wine_server_call_err( req )) ret = reply->handle_out;
+        if (!wine_server_call_err( req )) ret = console_handle_map(reply->handle_out);
     }
     SERVER_END_REQ;
 
