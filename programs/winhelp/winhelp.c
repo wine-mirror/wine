@@ -1219,7 +1219,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                 hlpfile = WINHELP_LookupHelpFile(part->link->lpszString);
                 if (part->link->window == -1)
                     wi = win->info;
-                else if ((part->link->window >= 0) && (part->link->window < hlpfile->numWindows))
+                else if (part->link->window < hlpfile->numWindows)
                     wi = &hlpfile->windows[part->link->window];
                 else
                 {
