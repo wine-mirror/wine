@@ -1324,7 +1324,7 @@ HDDEDATA WINAPI DdeAddData(HDDEDATA hData, LPBYTE pSrc, DWORD cb, DWORD cbOff)
     if (new_sz > old_sz)
     {
 	DdeUnaccessData(hData);
-	hData = GlobalReAlloc((HGLOBAL)hData, new_sz + sizeof(DDE_DATAHANDLE_HEAD),
+	hData = GlobalReAlloc(hData, new_sz + sizeof(DDE_DATAHANDLE_HEAD),
 			      GMEM_MOVEABLE | GMEM_DDESHARE);
 	pDst = DdeAccessData(hData, &old_sz);
     }
@@ -1394,7 +1394,7 @@ DWORD WINAPI DdeGetData(HDDEDATA hData, LPBYTE pDst, DWORD cbMax, DWORD cbOff)
  */
 LPBYTE WINAPI DdeAccessData(HDDEDATA hData, LPDWORD pcbDataSize)
 {
-    HGLOBAL			hMem = (HGLOBAL)hData;
+    HGLOBAL			hMem = hData;
     DDE_DATAHANDLE_HEAD*	pDdh;
 
     TRACE("(%p,%p)\n", hData, pcbDataSize);
@@ -1419,7 +1419,7 @@ LPBYTE WINAPI DdeAccessData(HDDEDATA hData, LPDWORD pcbDataSize)
  */
 BOOL WINAPI DdeUnaccessData(HDDEDATA hData)
 {
-    HGLOBAL hMem = (HGLOBAL)hData;
+    HGLOBAL hMem = hData;
 
     TRACE("(%p)\n", hData);
 
@@ -1434,7 +1434,7 @@ BOOL WINAPI DdeUnaccessData(HDDEDATA hData)
 BOOL WINAPI DdeFreeDataHandle(HDDEDATA hData)
 {
     TRACE("(%p)\n", hData);
-    return GlobalFree((HGLOBAL)hData) == 0;
+    return GlobalFree(hData) == 0;
 }
 
 /******************************************************************
@@ -1447,11 +1447,11 @@ BOOL WDML_IsAppOwned(HDDEDATA hData)
     DDE_DATAHANDLE_HEAD*	pDdh;
     BOOL                        ret = FALSE;
 
-    pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock((HGLOBAL)hData);
+    pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock(hData);
     if (pDdh != NULL)
     {
         ret = pDdh->bAppOwned;
-        GlobalUnlock((HGLOBAL)hData);
+        GlobalUnlock(hData);
     }
     return ret;
 }
