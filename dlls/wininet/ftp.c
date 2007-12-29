@@ -3462,7 +3462,7 @@ static BOOL FTP_ParseDirectory(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR 
 
             tmpafp = HeapReAlloc(GetProcessHeap(), 0, *lpafp,
                 sizeof(FILEPROPERTIESW)*indexFilePropArray);
-            if (NULL == tmpafp)
+            if (NULL != tmpafp)
                 *lpafp = tmpafp;
         }
         *dwfp = indexFilePropArray;
