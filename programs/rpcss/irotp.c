@@ -240,6 +240,8 @@ HRESULT IrotGetObject(
 
     WINE_TRACE("%p\n", moniker_data);
 
+    *cookie = 0;
+
     EnterCriticalSection(&csRunningObjectTable);
 
     LIST_FOR_EACH_ENTRY(rot_entry, &RunningObjectTable, const struct rot_entry, entry)
@@ -303,6 +305,8 @@ HRESULT IrotGetTimeOfLastChange(
     HRESULT hr = MK_E_UNAVAILABLE;
 
     WINE_TRACE("%p\n", moniker_data);
+
+    memset(time, 0, sizeof(*time));
 
     EnterCriticalSection(&csRunningObjectTable);
     LIST_FOR_EACH_ENTRY(rot_entry, &RunningObjectTable, const struct rot_entry, entry)
