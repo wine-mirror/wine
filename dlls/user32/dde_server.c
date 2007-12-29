@@ -1005,7 +1005,7 @@ static LRESULT CALLBACK WDML_ServerConvProc(HWND hwndServer, UINT iMsg, WPARAM w
     }
     if (pConv->hwndClient != WIN_GetFullHandle( (HWND)wParam ) || pConv->hwndServer != hwndServer)
     {
-	ERR("mismatch between C/S windows and converstation\n");
+	ERR("mismatch between C/S windows and conversation\n");
         return 0;
     }
     if (pConv->instance != pInstance || pConv->instance == NULL)
