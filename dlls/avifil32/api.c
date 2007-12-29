@@ -1509,7 +1509,7 @@ BOOL WINAPI AVISaveOptions(HWND hWnd, UINT uFlags, INT nStreams,
     HeapFree(GetProcessHeap(), 0, pSavedOptions);
   }
 
-  return (BOOL)ret;
+  return ret;
 }
 
 /***********************************************************************
