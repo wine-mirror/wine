@@ -790,29 +790,64 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 ULONG WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
   PFORMAT_STRING pFormat )
 {
-  ULONG rslt = 0;
+  ULONG bufsize, memsize, esize, i;
 
-  FIXME("(pStubMsg == ^%p, pFormat == ^%p)\n", pStubMsg, pFormat);
+  TRACE("(pStubMsg == ^%p, pFormat == ^%p)\n", pStubMsg, pFormat);
 
-  assert(pStubMsg && pFormat);
+  ReadConformance(pStubMsg, NULL);
+  ReadVariance(pStubMsg, NULL, pStubMsg->MaxCount);
 
-  if (*pFormat == RPC_FC_C_CSTRING) {
-    rslt = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer); /* maxlen */
+  if (pFormat[1] != RPC_FC_STRING_SIZED && (pStubMsg->MaxCount != pStubMsg->ActualCount))
+  {
+    ERR("buffer size %d must equal memory size %ld for non-sized conformant strings\n",
+        pStubMsg->ActualCount, pStubMsg->MaxCount);
+    RpcRaiseException(RPC_S_INVALID_BOUND);
   }
-  else if (*pFormat == RPC_FC_C_WSTRING) {
-    rslt = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer)*2; /* maxlen */
+  if (pStubMsg->Offset)
+  {
+    ERR("conformant strings can't have Offset (%d)\n", pStubMsg->Offset);
+    RpcRaiseException(RPC_S_INVALID_BOUND);
   }
+
+  if (*pFormat == RPC_FC_C_CSTRING) esize = 1;
+  else if (*pFormat == RPC_FC_C_WSTRING) esize = 2;
   else {
     ERR("Unhandled string type: %#x\n", *pFormat);
     /* FIXME: raise an exception */
+    esize = 0;
   }
 
-  if (pFormat[1] != RPC_FC_PAD) {
-    FIXME("sized string format=%d\n", pFormat[1]);
+  memsize = safe_multiply(esize, pStubMsg->MaxCount);
+  bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+
+  /* strings must always have null terminating bytes */
+  if (bufsize < esize)
+  {
+    ERR("invalid string length of %d\n", pStubMsg->ActualCount);
+    RpcRaiseException(RPC_S_INVALID_BOUND);
   }
 
-  TRACE("  --> %u\n", rslt);
-  return rslt;
+  /* verify the buffer is safe to access */
+  if ((pStubMsg->Buffer + bufsize < pStubMsg->Buffer) ||
+      (pStubMsg->Buffer + bufsize > pStubMsg->BufferEnd))
+  {
+    ERR("bufsize 0x%x exceeded buffer end %p of buffer %p\n", bufsize,
+        pStubMsg->BufferEnd, pStubMsg->Buffer);
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  for (i = bufsize - esize; i < bufsize; i++)
+    if (pStubMsg->Buffer[i] != 0)
+    {
+      ERR("string not null-terminated at byte position %d, data is 0x%x\n",
+        i, pStubMsg->Buffer[i]);
+      RpcRaiseException(RPC_S_INVALID_BOUND);
+    }
+
+  safe_buffer_increment(pStubMsg, bufsize);
+  pStubMsg->MemorySize += memsize;
+
+  return pStubMsg->MemorySize;
 }
 
 /************************************************************************
