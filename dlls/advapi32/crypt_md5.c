@@ -55,7 +55,7 @@ static void byteReverse( unsigned char *buf, unsigned longs )
     unsigned int t;
 
     do {
-        t = (unsigned int)((unsigned)buf[3] << 8 | buf[2]) << 16 |
+        t = ((unsigned)buf[3] << 8 | buf[2]) << 16 |
             ((unsigned)buf[1] << 8 | buf[0]);
         *(unsigned int *)buf = t;
         buf += 4;
@@ -87,7 +87,7 @@ VOID WINAPI MD5Update( MD5_CTX *ctx, const unsigned char *buf, unsigned int len 
     /* Update bitcount */
     t = ctx->i[0];
 
-    if ((ctx->i[0] = t + ((unsigned int)len << 3)) < t)
+    if ((ctx->i[0] = t + (len << 3)) < t)
         ctx->i[1]++;        /* Carry from low to high */
 
     ctx->i[1] += len >> 29;
