@@ -573,6 +573,7 @@ serialize_param(
 	return S_OK;
     case VT_I8:
     case VT_UI8:
+    case VT_R8:
     case VT_CY:
 	hres = S_OK;
 	if (debugout) TRACE_(olerelay)("%x%x\n",arg[0],arg[1]);
@@ -900,6 +901,7 @@ deserialize_param(
 	}
         case VT_I8:
         case VT_UI8:
+        case VT_R8:
         case VT_CY:
 	    if (readit) {
 		hres = xbuf_get(buf,(LPBYTE)arg,8);
