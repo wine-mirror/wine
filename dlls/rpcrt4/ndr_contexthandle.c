@@ -272,6 +272,7 @@ void WINAPI NDRSContextMarshall2(RPC_BINDING_HANDLE hBinding,
             return; /* this is to cope with the case of the data not being valid
                      * before and so not having a further reference */
     }
+    RPCRT4_RemoveThreadContextHandle(SContext);
     RpcServerAssoc_ReleaseContextHandle(binding->Assoc, SContext, TRUE);
 }
 
@@ -335,5 +336,6 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshall2(RPC_BINDING_HANDLE hBinding,
     if (status != RPC_S_OK)
         RpcRaiseException(status);
 
+    RPCRT4_PushThreadContextHandle(SContext);
     return SContext;
 }

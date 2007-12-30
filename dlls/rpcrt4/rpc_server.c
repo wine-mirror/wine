@@ -172,6 +172,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
   void *buf = msg->Buffer;
   RPC_STATUS status;
   BOOL exception;
+  NDR_SCONTEXT context_handle;
 
   msg->Handle = (RPC_BINDING_HANDLE)conn->server_binding;
 
@@ -306,6 +307,10 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
                                            RPC2NCA_STATUS(status));
       } __ENDTRY
       RPCRT4_SetThreadCurrentCallHandle(NULL);
+
+      /* release any unmarshalled context handles */
+      while ((context_handle = RPCRT4_PopThreadContextHandle()) != NULL)
+          RpcServerAssoc_ReleaseContextHandle(conn->server_binding->Assoc, context_handle, TRUE);
 
       if (!exception)
         response = RPCRT4_BuildResponseHeader(msg->DataRepresentation,

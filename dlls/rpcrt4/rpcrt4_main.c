@@ -146,6 +146,12 @@ static CRITICAL_SECTION threaddata_cs = { &threaddata_cs_debug, -1, 0, 0, 0, 0 }
 
 struct list threaddata_list = LIST_INIT(threaddata_list);
 
+struct context_handle_list
+{
+    struct context_handle_list *next;
+    NDR_SCONTEXT context_handle;
+};
+
 struct threaddata
 {
     struct list entry;
@@ -153,6 +159,7 @@ struct threaddata
     DWORD thread_id;
     RpcConnection *connection;
     RpcBinding *server_binding;
+    struct context_handle_list *context_handle_list;
 };
 
 /***********************************************************************
@@ -934,6 +941,59 @@ RpcBinding *RPCRT4_GetThreadCurrentCallHandle(void)
     if (!tdata) return NULL;
 
     return tdata->server_binding;
+}
+
+void RPCRT4_PushThreadContextHandle(NDR_SCONTEXT SContext)
+{
+    struct threaddata *tdata = get_or_create_threaddata();
+    struct context_handle_list *context_handle_list;
+
+    if (!tdata) return;
+
+    context_handle_list = HeapAlloc(GetProcessHeap(), 0, sizeof(*context_handle_list));
+    if (!context_handle_list) return;
+
+    context_handle_list->context_handle = SContext;
+    context_handle_list->next = tdata->context_handle_list;
+    tdata->context_handle_list = context_handle_list;
+}
+
+void RPCRT4_RemoveThreadContextHandle(NDR_SCONTEXT SContext)
+{
+    struct threaddata *tdata = get_or_create_threaddata();
+    struct context_handle_list *current, *prev;
+
+    if (!tdata) return;
+
+    for (current = tdata->context_handle_list, prev = NULL; current; prev = current, current = current->next)
+    {
+        if (current->context_handle == SContext)
+        {
+            if (prev)
+                prev->next = current->next;
+            else
+                tdata->context_handle_list = current->next;
+            HeapFree(GetProcessHeap(), 0, current);
+            return;
+        }
+    }
+}
+
+NDR_SCONTEXT RPCRT4_PopThreadContextHandle(void)
+{
+    struct threaddata *tdata = get_or_create_threaddata();
+    struct context_handle_list *context_handle_list;
+    NDR_SCONTEXT context_handle;
+
+    if (!tdata) return NULL;
+
+    context_handle_list = tdata->context_handle_list;
+    if (!context_handle_list) return NULL;
+    tdata->context_handle_list = context_handle_list->next;
+
+    context_handle = context_handle_list->context_handle;
+    HeapFree(GetProcessHeap(), 0, context_handle_list);
+    return context_handle;
 }
 
 /******************************************************************************

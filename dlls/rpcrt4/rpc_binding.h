@@ -22,6 +22,7 @@
 #define __WINE_RPC_BINDING_H
 
 #include "wine/rpcss_shared.h"
+#include "rpcndr.h"
 #include "security.h"
 #include "wine/list.h"
 
@@ -189,5 +190,8 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data, size_t 
 void RPCRT4_SetThreadCurrentConnection(RpcConnection *Connection);
 void RPCRT4_SetThreadCurrentCallHandle(RpcBinding *Binding);
 RpcBinding *RPCRT4_GetThreadCurrentCallHandle(void);
+void RPCRT4_PushThreadContextHandle(NDR_SCONTEXT SContext);
+void RPCRT4_RemoveThreadContextHandle(NDR_SCONTEXT SContext);
+NDR_SCONTEXT RPCRT4_PopThreadContextHandle(void);
 
 #endif
