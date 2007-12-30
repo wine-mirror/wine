@@ -376,6 +376,8 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     LPDIDATAFORMAT df = NULL;
     int idx = 0;
 
+    TRACE("%s %p %p %p %hu\n", debugstr_guid(rguid), jvt, dinput, pdev, index);
+
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(JoystickImpl));
     if (newDevice == 0) {
         WARN("out of memory\n");
@@ -552,6 +554,7 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
 {
     unsigned short index;
 
+    TRACE("%p %s %p %p\n",dinput, debugstr_guid(rguid), riid, pdev);
     find_joystick_devices();
     *pdev = NULL;
 
@@ -571,7 +574,7 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
         return DIERR_NOINTERFACE;
     }
 
-    WARN("invalid device GUID\n");
+    WARN("invalid device GUID %s\n",debugstr_guid(rguid));
     return DIERR_DEVICENOTREG;
 }
 
@@ -579,6 +582,7 @@ static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, RE
 {
     unsigned short index;
 
+    TRACE("%p %s %p %p\n",dinput, debugstr_guid(rguid), riid, pdev);
     find_joystick_devices();
     *pdev = NULL;
 
@@ -597,7 +601,7 @@ static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, RE
         return DIERR_NOINTERFACE;
     }
 
-    WARN("invalid device GUID\n");
+    WARN("invalid device GUID %s\n",debugstr_guid(rguid));
     return DIERR_DEVICENOTREG;
 }
 
