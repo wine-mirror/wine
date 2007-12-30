@@ -149,7 +149,6 @@ typedef struct tagOPENCONTEXT
 int TABLET_PostTabletMessage(LPOPENCONTEXT newcontext, UINT msg, WPARAM wParam,
                              LPARAM lParam, BOOL send_always);
 LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd);
-LPOPENCONTEXT FindOpenContext(HWND hwnd);
 
 /* X11drv functions */
 extern int (*pLoadTabletInfo)(HWND hwnddefault);

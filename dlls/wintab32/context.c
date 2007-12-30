@@ -166,21 +166,6 @@ static inline DWORD ScaleForContext(DWORD In, DWORD InOrg, DWORD InExt, DWORD
         return ((abs(InExt) - (In - InOrg))*abs(OutExt) / abs(InExt)) + OutOrg;
 }
 
-LPOPENCONTEXT FindOpenContext(HWND hwnd)
-{
-    LPOPENCONTEXT ptr;
-
-    EnterCriticalSection(&csTablet);
-    ptr = gOpenContexts;
-    while (ptr)
-    {
-        TRACE("Trying Context %p (%p %p)\n",ptr->handle,hwnd,ptr->hwndOwner);
-        if (ptr->hwndOwner == hwnd) break;
-    }
-    LeaveCriticalSection(&csTablet);
-    return ptr;
-}
-
 LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
 {
     LPOPENCONTEXT ptr=NULL;
