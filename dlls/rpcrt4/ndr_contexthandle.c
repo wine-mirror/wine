@@ -259,21 +259,25 @@ void WINAPI NDRSContextMarshall2(RPC_BINDING_HANDLE hBinding,
             RpcRaiseException(status);
         ndr->attributes = 0;
         RpcContextHandle_GetUuid(SContext, &ndr->uuid);
+
+        RPCRT4_RemoveThreadContextHandle(SContext);
+        RpcServerAssoc_ReleaseContextHandle(binding->Assoc, SContext, TRUE);
     }
     else
     {
         if (!RpcContextHandle_IsGuardCorrect(SContext, CtxGuard))
             RpcRaiseException(ERROR_INVALID_HANDLE);
         memset(ndr, 0, sizeof(*ndr));
+
+        RPCRT4_RemoveThreadContextHandle(SContext);
         /* Note: release the context handle twice in this case to release
          * one ref being kept around for the data and one ref for the
          * unmarshall/marshall sequence */
-        if (!RpcServerAssoc_ReleaseContextHandle(binding->Assoc, SContext, FALSE))
+        if (!RpcServerAssoc_ReleaseContextHandle(binding->Assoc, SContext, TRUE))
             return; /* this is to cope with the case of the data not being valid
                      * before and so not having a further reference */
+        RpcServerAssoc_ReleaseContextHandle(binding->Assoc, SContext, FALSE);
     }
-    RPCRT4_RemoveThreadContextHandle(SContext);
-    RpcServerAssoc_ReleaseContextHandle(binding->Assoc, SContext, TRUE);
 }
 
 /***********************************************************************
