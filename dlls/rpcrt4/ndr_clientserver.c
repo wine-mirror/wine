@@ -106,22 +106,42 @@ unsigned char* WINAPI NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_M
 {
   TRACE("(pRpcMsg == ^%p, pStubMsg == ^%p, pStubDesc == ^%p)\n", pRpcMsg, pStubMsg, pStubDesc);
 
-  assert( pRpcMsg && pStubMsg && pStubDesc );
-
-  /* not everyone allocates stack space for w2kReserved */
-  memset(pStubMsg, 0, FIELD_OFFSET(MIDL_STUB_MESSAGE,pCSInfo));
-
-  pStubMsg->ReuseBuffer = TRUE;
-  pStubMsg->IsClient = FALSE;
-  pStubMsg->StubDesc = pStubDesc;
-  pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
-  pStubMsg->pfnFree = pStubDesc->pfnFree;
   pStubMsg->RpcMsg = pRpcMsg;
   pStubMsg->Buffer = pStubMsg->BufferStart = pRpcMsg->Buffer;
+  pStubMsg->BufferEnd = pStubMsg->Buffer + pRpcMsg->BufferLength;
   pStubMsg->BufferLength = pRpcMsg->BufferLength;
-  pStubMsg->BufferEnd = pStubMsg->Buffer + pStubMsg->BufferLength;
+  pStubMsg->IsClient = FALSE;
+  pStubMsg->ReuseBuffer = FALSE;
+  pStubMsg->pAllocAllNodesContext = NULL;
+  pStubMsg->pPointerQueueState = NULL;
+  pStubMsg->IgnoreEmbeddedPointers = 0;
+  pStubMsg->PointerBufferMark = NULL;
+  pStubMsg->uFlags = 0;
+  pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
+  pStubMsg->pfnFree = pStubDesc->pfnFree;
+  pStubMsg->StackTop = NULL;
+  pStubMsg->StubDesc = pStubDesc;
+  pStubMsg->FullPtrXlatTables = NULL;
+  pStubMsg->FullPtrRefId = 0;
+  pStubMsg->PointerLength = 0;
+  pStubMsg->fInDontFree = 0;
+  pStubMsg->fDontCallFreeInst = 0;
+  pStubMsg->fInOnlyParam = 0;
+  pStubMsg->fHasReturn = 0;
+  pStubMsg->fHasExtensions = 0;
+  pStubMsg->fHasNewCorrDesc = 0;
+  pStubMsg->fUnused = 0;
+  pStubMsg->dwDestContext = MSHCTX_DIFFERENTMACHINE;
+  pStubMsg->pvDestContext = NULL;
+  pStubMsg->pRpcChannelBuffer = NULL;
+  pStubMsg->pArrayInfo = NULL;
+  pStubMsg->dwStubPhase = 0;
+  /* FIXME: LowStackMark */
+  pStubMsg->pAsyncMsg = NULL;
+  pStubMsg->pCorrInfo = NULL;
+  pStubMsg->pCorrMemory = NULL;
+  pStubMsg->pMemoryList = NULL;
 
-  /* FIXME: determine the proper return value */
   return NULL;
 }
 
