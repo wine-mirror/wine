@@ -2611,6 +2611,12 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
     }
     else if (phase == PHASE_UNMARSHAL)
     {
+        print_file(file, indent, "if (_StubMsg.Buffer + sizeof(");
+        write_type_decl(file, is_ptr(type) ? type->ref : type, NULL);
+        fprintf(file, ") > _StubMsg.BufferEnd)\n");
+        print_file(file, indent, "{\n");
+        print_file(file, indent + 1, "RpcRaiseException(RPC_X_BAD_STUB_DATA);\n");
+        print_file(file, indent, "}\n");
         if (pass == PASS_IN || pass == PASS_RETURN)
             print_file(file, indent, "");
         else
