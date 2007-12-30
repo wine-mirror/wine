@@ -52,6 +52,7 @@ typedef enum {
 } download_state_t;
 
 #define BINDING_LOCKED  0x0001
+#define BINDING_STOPPED 0x0002
 
 struct Binding {
     const IBindingVtbl               *lpBindingVtbl;
@@ -74,6 +75,7 @@ struct Binding {
     BOOL report_mime;
     DWORD continue_call;
     DWORD state;
+    HRESULT hres;
     download_state_t download_state;
 
     DWORD apartment_thread;
@@ -307,6 +309,21 @@ static void mime_available(Binding *This, LPCWSTR mime, BOOL verify)
         mime_available_task_t *task = heap_alloc(sizeof(task_header_t));
         task->verify = verify;
         push_task(This, &task->header, mime_available_proc);
+    }
+}
+
+static void stop_binding(Binding *binding, HRESULT hres, LPCWSTR str)
+{
+    if(binding->state & BINDING_LOCKED) {
+        IInternetProtocol_UnlockRequest(binding->protocol);
+        binding->state &= ~BINDING_LOCKED;
+    }
+
+    if(!(binding->state & BINDING_STOPPED)) {
+        binding->state |= BINDING_STOPPED;
+
+        IBindStatusCallback_OnStopBinding(binding->callback, hres, str);
+        binding->hres = hres;
     }
 }
 
@@ -852,9 +869,8 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
     IBindStatusCallback_OnDataAvailable(This->callback, bscf, progress,
             &formatetc, &This->stgmed);
 
-    if(This->download_state == END_DOWNLOAD) {
-        IBindStatusCallback_OnStopBinding(This->callback, S_OK, NULL);
-    }
+    if(This->download_state == END_DOWNLOAD)
+        stop_binding(This, S_OK, NULL);
 }
 
 typedef struct {
@@ -1167,6 +1183,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->state = 0;
     ret->download_state = BEFORE_DOWNLOAD;
     ret->task_queue_head = ret->task_queue_tail = NULL;
+    ret->hres = S_OK;
 
     memset(&ret->bindinfo, 0, sizeof(BINDINFO));
     ret->bindinfo.cbSize = sizeof(BINDINFO);
@@ -1232,7 +1249,7 @@ static HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **
     hres = IBindStatusCallback_OnStartBinding(binding->callback, 0, BINDING(binding));
     if(FAILED(hres)) {
         WARN("OnStartBinding failed: %08x\n", hres);
-        IBindStatusCallback_OnStopBinding(binding->callback, 0x800c0008, NULL);
+        stop_binding(binding, 0x800c0008, NULL);
         IBinding_Release(BINDING(binding));
         return hres;
     }
@@ -1245,8 +1262,7 @@ static HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **
     if(FAILED(hres)) {
         WARN("Start failed: %08x\n", hres);
 
-        IInternetProtocol_Terminate(binding->protocol, 0);
-        IBindStatusCallback_OnStopBinding(binding->callback, S_OK, NULL);
+        stop_binding(binding, hres, NULL);
         IBinding_Release(BINDING(binding));
 
         return hres;
