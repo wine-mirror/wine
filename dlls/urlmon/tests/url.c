@@ -1698,7 +1698,7 @@ static void test_BindToObject(int protocol, BOOL emul)
         trace( "Network unreachable, skipping tests\n" );
         return;
     }
-    todo_wine ok(SUCCEEDED(hres), "IMoniker_BindToObject failed with error 0x%08x\n", hres);
+    ok(SUCCEEDED(hres), "IMoniker_BindToObject failed with error 0x%08x\n", hres);
     /* no point testing the calls if binding didn't even work */
     if (!SUCCEEDED(hres)) return;
 
@@ -1750,7 +1750,10 @@ static void test_BindToObject(int protocol, BOOL emul)
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == HTTP_TEST)
             CLEAR_CALLED(OnProgress_DOWNLOADINGDATA);
-        CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
+        if(test_protocol == HTTP_TEST && urls[test_protocol] != SHORT_RESPONSE_URL)
+            todo_wine CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
+        else
+            CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
         CHECK_CALLED(OnProgress_CLASSIDAVAILABLE);
         CHECK_CALLED(OnProgress_BEGINSYNCOPERATION);
         CHECK_CALLED(OnProgress_ENDSYNCOPERATION);
@@ -1758,8 +1761,13 @@ static void test_BindToObject(int protocol, BOOL emul)
         CHECK_CALLED(OnStopBinding);
     }
 
-    ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
-    ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
+    if(test_protocol != HTTP_TEST || emul || urls[test_protocol] == SHORT_RESPONSE_URL) {
+        ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
+        ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
+    }else todo_wine {
+        ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
+        ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
+    }
 
     if(test_protocol == HTTP_TEST)
         http_is_first = FALSE;
