@@ -1219,13 +1219,11 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     return S_OK;
 }
 
-HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
+static HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **ret)
 {
     Binding *binding = NULL;
     HRESULT hres;
     MSG msg;
-
-    *ppv = NULL;
 
     hres = Binding_Create(url, pbc, riid, &binding);
     if(FAILED(hres))
@@ -1241,6 +1239,8 @@ HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
 
     hres = IInternetProtocol_Start(binding->protocol, url, PROTSINK(binding),
              BINDINF(binding), 0, 0);
+
+    TRACE("start ret %08x\n", hres);
 
     if(FAILED(hres)) {
         WARN("Start failed: %08x\n", hres);
@@ -1260,6 +1260,21 @@ HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
             DispatchMessageW(&msg);
         }
     }
+
+    *ret = binding;
+    return S_OK;
+}
+
+HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
+{
+    Binding *binding;
+    HRESULT hres;
+
+    *ppv = NULL;
+
+    hres = start_binding(url, pbc, riid, &binding);
+    if(FAILED(hres))
+        return hres;
 
     if(binding->stream->init_buf) {
         if(binding->state & BINDING_LOCKED)

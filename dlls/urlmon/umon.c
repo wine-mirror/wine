@@ -743,7 +743,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
 
     TRACE("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppvObject);
 
-    return start_binding(This->URLName, pbc, riid, ppvObject);
+    return bind_to_storage(This->URLName, pbc, riid, ppvObject);
 }
 
 /******************************************************************************
