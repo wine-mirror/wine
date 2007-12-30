@@ -236,8 +236,10 @@ static BOOL install_from_registered_dir(void)
         res = RegQueryValueExA(hkey, "GeckoCabDir", NULL, &type, (PBYTE)file_name, &size);
     }
     RegCloseKey(hkey);
-    if(res != ERROR_SUCCESS || type != REG_SZ)
+    if(res != ERROR_SUCCESS || type != REG_SZ) {
+        heap_free(file_name);
         return FALSE;
+    }
 
     strcat(file_name, GECKO_FILE_NAME);
 
