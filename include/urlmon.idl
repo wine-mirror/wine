@@ -546,8 +546,11 @@ interface IMonikerProp : IUnknown
     typedef [unique] IMonikerProp *LPMONIKERPROP;
 
     typedef enum {
-        MIMETYPEPROP = 0x00000000,
-        USE_SRC_URL  = 0x00000001
+        MIMETYPEPROP        = 0,
+        USE_SRC_URL         = 1,
+        CLASSIDPROP         = 2,
+        TRUSTEDDOWNLOADPROP = 3,
+        POPUPLEVELPROP      = 4
     } MONIKERPROPERTY;
 
     HRESULT PutProperty(
