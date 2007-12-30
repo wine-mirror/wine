@@ -61,6 +61,21 @@ typedef struct _RPC_MESSAGE
 #define RPC_NCA_FLAGS_BROADCAST     0x00000002
 #define RPC_NCA_FLAGS_MAYBE         0x00000004
 
+#define RPC_BUFFER_COMPLETE         0x00001000
+#define RPC_BUFFER_PARTIAL          0x00002000
+#define RPC_BUFFER_EXTRA            0x00004000
+#define RPC_BUFFER_ASYNC            0x00008000
+#define RPC_BUFFER_NONOTIFY         0x00010000
+
+#define RPCFLG_MESSAGE              0x01000000
+#define RPCFLG_HAS_MULTI_SYNTAXES   0x02000000
+#define RPCFLG_HAS_CALLBACK         0x04000000
+#define RPCFLG_AUTO_COMPLETE        0x08000000
+#define RPCFLG_LOCAL_CALL           0x10000000
+#define RPCFLG_INPUT_SYNCHRONOUS    0x20000000
+#define RPCFLG_ASYNCHRONOUS         0x40000000
+#define RPCFLG_NON_NDR              0x80000000
+
 typedef void  (__RPC_STUB *RPC_DISPATCH_FUNCTION)(PRPC_MESSAGE Message);
 typedef RPC_STATUS (RPC_ENTRY *RPC_FORWARD_FUNCTION)(UUID *InterfaceId, RPC_VERSION *InterfaceVersion, UUID *ObjectId, unsigned char *Rpcpro, void **ppDestEndpoint);
 
