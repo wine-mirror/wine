@@ -1191,10 +1191,12 @@ static void test_CreateAsyncBindCtx(void)
 
 static void test_CreateAsyncBindCtxEx(void)
 {
-    IBindCtx *bctx = NULL, *bctx_arg = NULL;
+    IBindCtx *bctx = NULL, *bctx2 = NULL, *bctx_arg = NULL;
     IUnknown *unk;
     BIND_OPTS bindopts;
     HRESULT hres;
+
+    static WCHAR testW[] = {'t','e','s','t',0};
 
     hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, NULL, 0);
     ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed: %08x, expected E_INVALIDARG\n", hres);
@@ -1248,8 +1250,23 @@ static void test_CreateAsyncBindCtxEx(void)
     if(SUCCEEDED(hres))
         IUnknown_Release(unk);
 
-    if(SUCCEEDED(hres))
-        IBindCtx_Release(bctx);
+    IBindCtx_Release(bctx);
+
+    hres = CreateBindCtx(0, &bctx2);
+    ok(hres == S_OK, "CreateBindCtx failed: %08x\n", hres);
+
+    hres = CreateAsyncBindCtxEx(bctx2, 0, NULL, NULL, &bctx, 0);
+    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
+
+    hres = IBindCtx_RegisterObjectParam(bctx2, testW, (IUnknown*)&Protocol);
+    ok(hres == S_OK, "RegisterObjectParam failed: %08x\n", hres);
+
+    hres = IBindCtx_GetObjectParam(bctx, testW, &unk);
+    ok(hres == S_OK, "GetObjectParam failed: %08x\n", hres);
+    ok(unk == (IUnknown*)&Protocol, "unexpected unk %p\n", unk);
+
+    IBindCtx_Release(bctx);
+    IBindCtx_Release(bctx2);
 }
 
 static void test_bscholder(IBindStatusCallback *holder)
