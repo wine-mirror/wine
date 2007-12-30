@@ -913,16 +913,23 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
     return S_OK;
 }
 
+typedef struct {
+    task_header_t header;
+
+    HRESULT hres;
+    LPWSTR str;
+} report_result_task_t;
+
 static void report_result_proc(Binding *binding, task_header_t *t)
 {
+    report_result_task_t *task = (report_result_task_t*)t;
+
     IInternetProtocol_Terminate(binding->protocol, 0);
 
-    if(binding->state & BINDING_LOCKED) {
-        IInternetProtocol_UnlockRequest(binding->protocol);
-        binding->state &= ~BINDING_LOCKED;
-    }
+    stop_binding(binding, task->hres, task->str);
 
-    heap_free(t);
+    heap_free(task->str);
+    heap_free(task);
 }
 
 static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *iface,
@@ -934,9 +941,14 @@ static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *i
 
     if(GetCurrentThreadId() == This->apartment_thread && !This->continue_call) {
         IInternetProtocol_Terminate(This->protocol, 0);
+        stop_binding(This, hrResult, szResult);
     }else {
-        task_header_t *task = heap_alloc(sizeof(task_header_t));
-        push_task(This, task, report_result_proc);
+        report_result_task_t *task = heap_alloc(sizeof(report_result_task_t));
+
+        task->hres = hrResult;
+        task->str = heap_strdupW(szResult);
+
+        push_task(This, &task->header, report_result_proc);
     }
 
     return S_OK;
@@ -1269,7 +1281,7 @@ static HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **
     }
 
     while(!(binding->bindf & BINDF_ASYNCHRONOUS) &&
-          binding->download_state != END_DOWNLOAD) {
+          !(binding->state & BINDING_STOPPED)) {
         MsgWaitForMultipleObjects(0, NULL, FALSE, 5000, QS_POSTMESSAGE);
         while (PeekMessageW(&msg, binding->notif_hwnd, WM_USER, WM_USER+117, PM_REMOVE|PM_NOYIELD)) {
             TranslateMessage(&msg);
@@ -1292,8 +1304,10 @@ HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
     if(FAILED(hres))
         return hres;
 
-    if(binding->stream->init_buf) {
-        if(binding->state & BINDING_LOCKED)
+    if(binding->hres != S_OK) {
+        hres = SUCCEEDED(binding->hres) ? S_OK : binding->hres;
+    }else if(binding->stream->init_buf) {
+        if((binding->state & BINDING_STOPPED) && (binding->state & BINDING_LOCKED))
             IInternetProtocol_UnlockRequest(binding->protocol);
 
         IStream_AddRef(STREAM(binding->stream));
