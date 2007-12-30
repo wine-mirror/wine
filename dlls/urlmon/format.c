@@ -44,6 +44,7 @@ static HRESULT WINAPI EnumFORMATETC_QueryInterface(IEnumFORMATETC *iface, REFIID
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IEnumFORMATETC, riid)) {
+        IEnumFORMATETC_AddRef(iface);
         *ppv = iface;
         return S_OK;
     }
