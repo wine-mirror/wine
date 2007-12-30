@@ -180,7 +180,7 @@ static RPC_DISPATCH_FUNCTION IFoo_table[] =
     0
 };
 
-RPC_DISPATCH_TABLE IFoo_v0_0_DispatchTable =
+static RPC_DISPATCH_TABLE IFoo_v0_0_DispatchTable =
 {
     0,
     IFoo_table
@@ -199,7 +199,7 @@ static const RPC_SERVER_INTERFACE IFoo___RpcServerInterface =
     0,
 };
 
-RPC_IF_HANDLE IFoo_v0_0_s_ifspec = (RPC_IF_HANDLE)& IFoo___RpcServerInterface;
+static RPC_IF_HANDLE IFoo_v0_0_s_ifspec = (RPC_IF_HANDLE)& IFoo___RpcServerInterface;
 
 static void test_rpc_ncacn_ip_tcp(void)
 {
