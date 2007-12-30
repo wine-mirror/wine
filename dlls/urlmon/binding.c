@@ -1162,7 +1162,6 @@ static BOOL is_urlmon_protocol(LPCWSTR url)
 static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **binding)
 {
     Binding *ret;
-    int len;
     HRESULT hres;
 
     if(!IsEqualGUID(&IID_IStream, riid)) {
@@ -1172,7 +1171,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
 
     URLMON_LockModule();
 
-    ret = heap_alloc(sizeof(Binding));
+    ret = heap_alloc_zero(sizeof(Binding));
 
     ret->lpBindingVtbl              = &BindingVtbl;
     ret->lpInternetProtocolSinkVtbl = &InternetProtocolSinkVtbl;
@@ -1181,25 +1180,12 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
 
     ret->ref = 1;
 
-    ret->callback = NULL;
-    ret->protocol = NULL;
-    ret->service_provider = NULL;
-    ret->stream = NULL;
-    ret->mime = NULL;
-    ret->clipboard_format = 0;
-    ret->url = NULL;
     ret->apartment_thread = GetCurrentThreadId();
     ret->notif_hwnd = get_notif_hwnd();
     ret->report_mime = TRUE;
-    ret->continue_call = 0;
-    ret->state = 0;
     ret->download_state = BEFORE_DOWNLOAD;
-    ret->task_queue_head = ret->task_queue_tail = NULL;
-    ret->hres = S_OK;
 
-    memset(&ret->bindinfo, 0, sizeof(BINDINFO));
     ret->bindinfo.cbSize = sizeof(BINDINFO);
-    ret->bindf = 0;
 
     InitializeCriticalSection(&ret->section);
     ret->section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": Binding.section");
@@ -1235,9 +1221,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     if(!is_urlmon_protocol(url))
         ret->bindf |= BINDF_NEEDFILE;
 
-    len = strlenW(url)+1;
-    ret->url = heap_alloc(len*sizeof(WCHAR));
-    memcpy(ret->url, url, len*sizeof(WCHAR));
+    ret->url = heap_strdupW(url);
 
     ret->stream = create_stream(ret->protocol);
     ret->stgmed.tymed = TYMED_ISTREAM;
