@@ -21,6 +21,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
+static WCHAR cbinding_contextW[] = {'C','B','i','n','d','i','n','g',' ','C','o','n','t','e','x','t',0};
+
 typedef struct Binding Binding;
 
 struct _task_header_t;
@@ -661,6 +663,25 @@ static HRESULT WINAPI Binding_GetBindResult(IBinding *iface, CLSID *pclsidProtoc
     return E_NOTIMPL;
 }
 
+static Binding *get_bctx_binding(IBindCtx *bctx)
+{
+    IBinding *binding;
+    IUnknown *unk;
+    HRESULT hres;
+
+    hres = IBindCtx_GetObjectParam(bctx, cbinding_contextW, &unk);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IBinding, (void*)&binding);
+    IUnknown_Release(unk);
+    if(FAILED(hres))
+        return NULL;
+
+    /* FIXME!!! */
+    return BINDING_THIS(binding);
+}
+
 #undef BINDING_THIS
 
 static const IBindingVtbl BindingVtbl = {
@@ -1159,7 +1180,7 @@ static BOOL is_urlmon_protocol(LPCWSTR url)
     return FALSE;
 }
 
-static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **binding)
+static HRESULT Binding_Create(Binding *binding_ctx, LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **binding)
 {
     Binding *ret;
     HRESULT hres;
@@ -1182,7 +1203,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
 
     ret->apartment_thread = GetCurrentThreadId();
     ret->notif_hwnd = get_notif_hwnd();
-    ret->report_mime = TRUE;
+    ret->report_mime = !binding_ctx;
     ret->download_state = BEFORE_DOWNLOAD;
 
     ret->bindinfo.cbSize = sizeof(BINDINFO);
@@ -1200,11 +1221,16 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     IBindStatusCallback_QueryInterface(ret->callback, &IID_IServiceProvider,
                                        (void**)&ret->service_provider);
 
-    hres = create_binding_protocol(url, TRUE, &ret->protocol);
-    if(FAILED(hres)) {
-        WARN("Could not get protocol handler\n");
-        IBinding_Release(BINDING(ret));
-        return hres;
+    if(binding_ctx) {
+        ret->protocol = binding_ctx->protocol;
+        IInternetProtocol_AddRef(ret->protocol);
+    }else {
+        hres = create_binding_protocol(url, TRUE, &ret->protocol);
+        if(FAILED(hres)) {
+            WARN("Could not get protocol handler\n");
+            IBinding_Release(BINDING(ret));
+            return hres;
+        }
     }
 
     hres = IBindStatusCallback_GetBindInfo(ret->callback, &ret->bindf, &ret->bindinfo);
@@ -1223,7 +1249,14 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
 
     ret->url = heap_strdupW(url);
 
-    ret->stream = create_stream(ret->protocol);
+    if(binding_ctx) {
+        ret->stream = binding_ctx->stream;
+        IStream_AddRef(STREAM(ret->stream));
+        ret->clipboard_format = binding_ctx->clipboard_format;
+    }else {
+        ret->stream = create_stream(ret->protocol);
+    }
+
     ret->stgmed.tymed = TYMED_ISTREAM;
     ret->stgmed.u.pstm = STREAM(ret->stream);
     ret->stgmed.pUnkForRelease = (IUnknown*)BINDING(ret); /* NOTE: Windows uses other IUnknown */
@@ -1232,13 +1265,13 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     return S_OK;
 }
 
-static HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **ret)
+static HRESULT start_binding(Binding *binding_ctx, LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **ret)
 {
     Binding *binding = NULL;
     HRESULT hres;
     MSG msg;
 
-    hres = Binding_Create(url, pbc, riid, &binding);
+    hres = Binding_Create(binding_ctx, url, pbc, riid, &binding);
     if(FAILED(hres))
         return hres;
 
@@ -1250,18 +1283,21 @@ static HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **
         return hres;
     }
 
-    hres = IInternetProtocol_Start(binding->protocol, url, PROTSINK(binding),
-             BINDINF(binding), 0, 0);
+    if(binding_ctx) {
+        set_binding_sink(binding->protocol, PROTSINK(binding));
+        report_data(binding, 0, 0, 0);
+    }else {
+        hres = IInternetProtocol_Start(binding->protocol, url, PROTSINK(binding),
+                 BINDINF(binding), 0, 0);
 
-    TRACE("start ret %08x\n", hres);
+        TRACE("start ret %08x\n", hres);
 
-    if(FAILED(hres)) {
-        WARN("Start failed: %08x\n", hres);
+        if(FAILED(hres)) {
+            stop_binding(binding, hres, NULL);
+            IBinding_Release(BINDING(binding));
 
-        stop_binding(binding, hres, NULL);
-        IBinding_Release(BINDING(binding));
-
-        return hres;
+            return hres;
+        }
     }
 
     while(!(binding->bindf & BINDF_ASYNCHRONOUS) &&
@@ -1279,12 +1315,16 @@ static HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **
 
 HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
 {
-    Binding *binding;
+    Binding *binding = NULL, *binding_ctx;
     HRESULT hres;
 
     *ppv = NULL;
 
-    hres = start_binding(url, pbc, riid, &binding);
+    binding_ctx = get_bctx_binding(pbc);
+
+    hres = start_binding(binding_ctx, url, pbc, riid, &binding);
+    if(binding_ctx)
+        IBinding_Release(BINDING(binding_ctx));
     if(FAILED(hres))
         return hres;
 
