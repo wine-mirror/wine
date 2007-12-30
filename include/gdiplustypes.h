@@ -42,7 +42,8 @@ enum Status{
     UnsupportedGdiplusVersion   = 17,
     GdiplusNotInitialized       = 18,
     PropertyNotFound            = 19,
-    PropertyNotSupported        = 20
+    PropertyNotSupported        = 20,
+    ProfileNotFound             = 21
 };
 
 
