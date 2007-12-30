@@ -436,6 +436,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
         wine_tsx11_unlock();
         return;
     }
+    TRACE("XListInputDevices reports %d devices\n", num_devices);
     for (loop=0; loop < num_devices; loop++)
     {
         int class_loop;

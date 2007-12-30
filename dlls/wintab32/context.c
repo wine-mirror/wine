@@ -367,6 +367,8 @@ static VOID TABLET_BlankPacketData(LPOPENCONTEXT context, LPVOID lpPkt, INT n)
 UINT WINAPI WTInfoT(UINT wCategory, UINT nIndex, LPVOID lpOutput, BOOL bUnicode)
 {
     UINT result;
+
+    TRACE("(%d, %d, %p, %d)\n", wCategory, nIndex, lpOutput, bUnicode);
     if (gLoaded == FALSE)
          LoadTablet();
 
@@ -409,7 +411,7 @@ UINT WINAPI WTInfoT(UINT wCategory, UINT nIndex, LPVOID lpOutput, BOOL bUnicode)
                 LOGCONTEXTWtoA(&buf, lpOutput);
         }
 
-        return bUnicode ? sizeof(LOGCONTEXTW) : sizeof(LOGCONTEXTA);
+        result = bUnicode ? sizeof(LOGCONTEXTW) : sizeof(LOGCONTEXTA);
     }
     else if (is_string_field(wCategory, nIndex) && !bUnicode)
     {
@@ -422,6 +424,7 @@ UINT WINAPI WTInfoT(UINT wCategory, UINT nIndex, LPVOID lpOutput, BOOL bUnicode)
     else
         result =  pWTInfoW(wCategory, nIndex, lpOutput);
 
+    TRACE("returns %d\n", result);
     return result;
 }
 
