@@ -1139,7 +1139,7 @@ static BOOL WINAPI CRYPT_CreatePKCS7(LPCSTR pszObjectOid,
         ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &pObject->rgBlob[0],
          CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED |
          CERT_QUERY_CONTENT_FLAG_PKCS7_UNSIGNED, CERT_QUERY_FORMAT_FLAG_BINARY,
-         0, NULL, NULL, NULL, (HCERTSTORE *)ppvContext, NULL, NULL);
+         0, NULL, NULL, NULL, ppvContext, NULL, NULL);
     else
     {
         FIXME("multiple messages unimplemented\n");
