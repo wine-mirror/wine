@@ -353,7 +353,7 @@ static LPWSTR msi_build_createsql_prelude(LPWSTR table)
 
 static LPWSTR msi_build_createsql_columns(LPWSTR *columns_data, LPWSTR *types, DWORD num_columns)
 {
-    LPWSTR columns;
+    LPWSTR columns, p;
     LPCWSTR type;
     DWORD sql_size = 1, i, len;
     WCHAR expanded[128], *ptr;
@@ -413,9 +413,13 @@ static LPWSTR msi_build_createsql_columns(LPWSTR *columns_data, LPWSTR *types, D
         sprintfW(expanded, column_fmt, columns_data[i], type, size, extra, comma);
         sql_size += lstrlenW(expanded);
 
-        columns = msi_realloc(columns, sql_size * sizeof(WCHAR));
-        if (!columns)
+        p = msi_realloc(columns, sql_size * sizeof(WCHAR));
+        if (!p)
+        {
+            msi_free(columns);
             return NULL;
+        }
+        columns = p;
 
         lstrcatW(columns, expanded);
     }
@@ -519,7 +523,7 @@ static LPWSTR msi_build_insertsql_prelude(LPWSTR table)
 
 static LPWSTR msi_build_insertsql_columns(LPWSTR *columns_data, LPWSTR *types, DWORD num_columns)
 {
-    LPWSTR columns;
+    LPWSTR columns, p;
     DWORD sql_size = 1, i;
     WCHAR expanded[128];
 
@@ -540,9 +544,13 @@ static LPWSTR msi_build_insertsql_columns(LPWSTR *columns_data, LPWSTR *types, D
             expanded[lstrlenW(expanded) - 2] = '\0';
         }
 
-        columns = msi_realloc(columns, sql_size * sizeof(WCHAR));
-        if (!columns)
+        p = msi_realloc(columns, sql_size * sizeof(WCHAR));
+        if (!p)
+        {
+            msi_free(columns);
             return NULL;
+        }
+        columns = p;
 
         lstrcatW(columns, expanded);
     }

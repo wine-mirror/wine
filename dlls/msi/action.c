@@ -4482,7 +4482,7 @@ static UINT ACTION_InstallServices( MSIPACKAGE *package )
 /* converts arg1[~]arg2[~]arg3 to a list of ptrs to the strings */
 static LPCWSTR *msi_service_args_to_vector(LPWSTR args, DWORD *numargs)
 {
-    LPCWSTR *vector;
+    LPCWSTR *vector, *temp_vector;
     LPWSTR p, q;
     DWORD sep_len;
 
@@ -4508,9 +4508,13 @@ static LPCWSTR *msi_service_args_to_vector(LPWSTR args, DWORD *numargs)
         {
             *q = '\0';
 
-            vector = msi_realloc(vector, (*numargs + 1) * sizeof(LPWSTR));
-            if (!vector)
+            temp_vector = msi_realloc(vector, (*numargs + 1) * sizeof(LPWSTR));
+            if (!temp_vector)
+            {
+                msi_free(vector);
                 return NULL;
+            }
+            vector = temp_vector;
 
             p = q + sep_len;
         }
