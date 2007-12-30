@@ -74,11 +74,11 @@ BindCtxImpl_QueryInterface(IBindCtx* iface,REFIID riid,void** ppvObject)
 {
     BindCtxImpl *This = (BindCtxImpl *)iface;
 
-    TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
+    TRACE("(%p %s %p)\n",This, debugstr_guid(riid), ppvObject);
 
     /* Perform a sanity check on the parameters.*/
-    if ( (This==0) || (ppvObject==0) )
-        return E_INVALIDARG;
+    if (!ppvObject)
+        return E_POINTER;
 
     /* Initialize the return parameter.*/
     *ppvObject = 0;
