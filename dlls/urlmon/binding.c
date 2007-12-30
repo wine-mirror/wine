@@ -790,6 +790,8 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
     case BINDSTATUS_SENDINGREQUEST:
         on_progress(This, 0, 0, BINDSTATUS_SENDINGREQUEST, szStatusText);
         break;
+    case BINDSTATUS_PROTOCOLCLASSID:
+        break;
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
         mime_available(This, szStatusText, FALSE);
         break;
@@ -1095,33 +1097,6 @@ static HRESULT get_callback(IBindCtx *pbc, IBindStatusCallback **callback)
     return SUCCEEDED(hres) ? S_OK : MK_E_SYNTAX;
 }
 
-static HRESULT get_protocol(Binding *This, LPCWSTR url)
-{
-    IClassFactory *cf = NULL;
-    HRESULT hres;
-
-    hres = IBindStatusCallback_QueryInterface(This->callback, &IID_IInternetProtocol,
-            (void**)&This->protocol);
-    if(SUCCEEDED(hres))
-        return S_OK;
-
-    if(This->service_provider) {
-        hres = IServiceProvider_QueryService(This->service_provider, &IID_IInternetProtocol,
-                &IID_IInternetProtocol, (void**)&This->protocol);
-        if(SUCCEEDED(hres))
-            return S_OK;
-    }
-
-    hres = get_protocol_handler(url, NULL, &cf);
-    if(FAILED(hres))
-        return hres;
-
-    hres = IClassFactory_CreateInstance(cf, NULL, &IID_IInternetProtocol, (void**)&This->protocol);
-    IClassFactory_Release(cf);
-
-    return hres;
-}
-
 static BOOL is_urlmon_protocol(LPCWSTR url)
 {
     static const WCHAR wszCdl[] = {'c','d','l'};
@@ -1210,7 +1185,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     IBindStatusCallback_QueryInterface(ret->callback, &IID_IServiceProvider,
                                        (void**)&ret->service_provider);
 
-    hres = get_protocol(ret, url);
+    hres = create_binding_protocol(url, TRUE, &ret->protocol);
     if(FAILED(hres)) {
         WARN("Could not get protocol handler\n");
         IBinding_Release(BINDING(ret));

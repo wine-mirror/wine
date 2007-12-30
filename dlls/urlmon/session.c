@@ -306,7 +306,7 @@ static HRESULT WINAPI InternetSession_CreateBinding(IInternetSession *iface,
     if(pBC || pUnkOuter || ppUnk || dwOption)
         FIXME("Unsupported arguments\n");
 
-    return create_binding_protocol(szUrl, ppOInetProt);
+    return create_binding_protocol(szUrl, FALSE, ppOInetProt);
 }
 
 static HRESULT WINAPI InternetSession_SetSessionOption(IInternetSession *iface,

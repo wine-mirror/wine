@@ -38,6 +38,7 @@ typedef struct {
     LONG priority;
 
     BOOL reported_result;
+    BOOL from_urlmon;
 } BindProtocol;
 
 #define PROTOCOL(x)  ((IInternetProtocol*) &(x)->lpInternetProtocolVtbl)
@@ -152,16 +153,23 @@ static HRESULT WINAPI BindProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         if(FAILED(hres))
             return hres;
 
-        hres = IClassFactory_CreateInstance(cf, (IUnknown*)BINDINFO(This),
-                &IID_IUnknown, (void**)&unk);
-        IClassFactory_Release(cf);
-        if(FAILED(hres))
-            return hres;
+        if(This->from_urlmon) {
+            hres = IClassFactory_CreateInstance(cf, NULL, &IID_IInternetProtocol, (void**)&protocol);
+            IClassFactory_Release(cf);
+            if(FAILED(hres))
+                return hres;
+        }else {
+            hres = IClassFactory_CreateInstance(cf, (IUnknown*)BINDINFO(This),
+                    &IID_IUnknown, (void**)&unk);
+            IClassFactory_Release(cf);
+            if(FAILED(hres))
+                return hres;
 
-        hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocol, (void**)&protocol);
-        IUnknown_Release(unk);
-        if(FAILED(hres))
-            return hres;
+            hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocol, (void**)&protocol);
+            IUnknown_Release(unk);
+            if(FAILED(hres))
+                return hres;
+        }
     }
 
     StringFromCLSID(&clsid, &clsid_str);
@@ -488,7 +496,8 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSin
         if(!This->protocol_sink)
             return S_OK;
         return IInternetProtocolSink_ReportProgress(This->protocol_sink,
-                BINDSTATUS_MIMETYPEAVAILABLE, szStatusText);
+                This->from_urlmon ? BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE : BINDSTATUS_MIMETYPEAVAILABLE,
+                                                    szStatusText);
     default:
         FIXME("unsupported ulStatusCode %u\n", ulStatusCode);
     }
@@ -579,7 +588,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     BPServiceProvider_QueryService
 };
 
-HRESULT create_binding_protocol(LPCWSTR url, IInternetProtocol **protocol)
+HRESULT create_binding_protocol(LPCWSTR url, BOOL from_urlmon, IInternetProtocol **protocol)
 {
     BindProtocol *ret = heap_alloc_zero(sizeof(BindProtocol));
 
@@ -590,6 +599,7 @@ HRESULT create_binding_protocol(LPCWSTR url, IInternetProtocol **protocol)
     ret->lpInternetProtocolSinkVtbl = &InternetProtocolSinkVtbl;
 
     ret->ref = 1;
+    ret->from_urlmon = from_urlmon;
 
     URLMON_LockModule();
 
