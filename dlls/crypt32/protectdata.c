@@ -331,7 +331,7 @@ BOOL serialize(const struct protect_data_t *pInfo, DATA_BLOB *pSerial)
     if (ptr - pSerial->pbData != dwStruct)
     {
         ERR("struct size changed!? %u != expected %u\n",
-            ptr - pSerial->pbData, (unsigned int)dwStruct);
+            ptr - pSerial->pbData, dwStruct);
         LocalFree(pSerial->pbData);
         pSerial->pbData=NULL;
         pSerial->cbData=0;
@@ -476,8 +476,7 @@ BOOL unserialize(const DATA_BLOB *pSerial, struct protect_data_t *pInfo)
     {
         /* this is an impossible-to-reach test, but if the padding
          * issue is ever understood, this may become more useful */
-        ERR("loaded corrupt structure! (used %u expected %u)\n",
-                (unsigned int)index, (unsigned int)size);
+        ERR("loaded corrupt structure! (used %u expected %u)\n", index, size);
         status=FALSE;
     }
 
@@ -776,15 +775,15 @@ report(const DATA_BLOB* pDataIn, const DATA_BLOB* pOptionalEntropy,
     TRACE("pPromptStruct: %p\n", pPromptStruct);
     if (pPromptStruct)
     {
-        TRACE("  cbSize: 0x%x\n",(unsigned int)pPromptStruct->cbSize);
-        TRACE("  dwPromptFlags: 0x%x\n",(unsigned int)pPromptStruct->dwPromptFlags);
+        TRACE("  cbSize: 0x%x\n", pPromptStruct->cbSize);
+        TRACE("  dwPromptFlags: 0x%x\n", pPromptStruct->dwPromptFlags);
         TRACE("  hwndApp: %p\n", pPromptStruct->hwndApp);
         TRACE("  szPrompt: %p %s\n",
               pPromptStruct->szPrompt,
               pPromptStruct->szPrompt ? debugstr_w(pPromptStruct->szPrompt)
               : "");
     }
-    TRACE("dwFlags: 0x%04x\n",(unsigned int)dwFlags);
+    TRACE("dwFlags: 0x%04x\n", dwFlags);
     TRACE_DATA_BLOB(pDataIn);
     if (pOptionalEntropy)
     {
@@ -893,7 +892,7 @@ BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn,
         ERR("CryptEncrypt\n");
         goto free_hash;
     }
-    TRACE("required encrypted storage: %u\n",(unsigned int)dwLength);
+    TRACE("required encrypted storage: %u\n", dwLength);
 
     /* copy plain text into cipher area for CryptEncrypt call */
     protect_data.cipher.cbData=dwLength;
@@ -910,7 +909,7 @@ BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn,
     if (!CryptEncrypt(hKey, hHash, TRUE, 0, protect_data.cipher.pbData,
                       &dwLength, protect_data.cipher.cbData))
     {
-        ERR("CryptEncrypt %u\n",(unsigned int)GetLastError());
+        ERR("CryptEncrypt %u\n", GetLastError());
         goto free_hash;
     }
     protect_data.cipher.cbData=dwLength;

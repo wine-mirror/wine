@@ -521,7 +521,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreA(HCRYPTPROV hCryptProv,
 
 static void WINAPI CRYPT_MsgCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
-    HCRYPTMSG msg = (HCRYPTMSG)hCertStore;
+    HCRYPTMSG msg = hCertStore;
 
     TRACE("(%p, %08x)\n", msg, dwFlags);
     CryptMsgClose(msg);

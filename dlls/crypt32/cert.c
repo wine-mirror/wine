@@ -831,8 +831,7 @@ DWORD WINAPI CertGetPublicKeyLength(DWORD dwCertEncodingType,
 
         if (ret)
         {
-            RSAPUBKEY *rsaPubKey = (RSAPUBKEY *)((LPBYTE)buf +
-             sizeof(BLOBHEADER));
+            RSAPUBKEY *rsaPubKey = (RSAPUBKEY *)(buf + sizeof(BLOBHEADER));
 
             len = rsaPubKey->bitlen;
             LocalFree(buf);
