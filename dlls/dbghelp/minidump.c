@@ -386,7 +386,7 @@ static  void    dump_exception_info(struct dump_context* dc,
     mdExcpt.ExceptionRecord.NumberParameters = prec->NumberParameters;
     mdExcpt.ExceptionRecord.__unusedAlignment = 0;
     for (i = 0; i < mdExcpt.ExceptionRecord.NumberParameters; i++)
-        mdExcpt.ExceptionRecord.ExceptionInformation[i] = (DWORD_PTR)prec->ExceptionInformation[i];
+        mdExcpt.ExceptionRecord.ExceptionInformation[i] = prec->ExceptionInformation[i];
     mdExcpt.ThreadContext.DataSize = sizeof(*pctx);
     mdExcpt.ThreadContext.Rva = dc->rva + sizeof(mdExcpt);
 
@@ -657,7 +657,7 @@ static void dump_memory_info(struct dump_context* dc, DWORD* size)
         {
             len = min(dc->mem[i].size - pos, sizeof(tmp));
             if (ReadProcessMemory(dc->hProcess, 
-                                  (void*)(ULONG)(dc->mem[i].base + pos), 
+                                  (void*)(dc->mem[i].base + pos),
                                   tmp, len, NULL))
                 WriteFile(dc->hFile, tmp, len, &written, NULL);
         }
