@@ -394,6 +394,9 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
             }
         }
 
+        if (pal) IDirectDrawPalette_Release(pal);
+        if (pal_src) IDirectDrawPalette_Release(pal_src);
+
         /* Copy one surface on the other */
         dst_d = (DDSURFACEDESC *)&(This->surface_desc);
         src_d = (DDSURFACEDESC *)&(src_ptr->surface_desc);
