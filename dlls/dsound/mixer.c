@@ -445,11 +445,11 @@ static LPBYTE DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, DWORD writepos,
 		/* 8-bit WAV is unsigned, but we need to operate */
 		/* on signed data for this to work properly */
 		for (i = 0; i < len; i+=2) {
-			*(bpc++) = (((INT)(*(mem++) - 128) * vLeft) >> 16) + 128;
-			*(bpc++) = (((INT)(*(mem++) - 128) * vRight) >> 16) + 128;
+			*(bpc++) = (((*(mem++) - 128) * vLeft) >> 16) + 128;
+			*(bpc++) = (((*(mem++) - 128) * vRight) >> 16) + 128;
 		}
 		if (len % 2 == 1 && nChannels == 1)
-			*(bpc++) = (((INT)(*(mem++) - 128) * vLeft) >> 16) + 128;
+			*(bpc++) = (((*(mem++) - 128) * vLeft) >> 16) + 128;
 		break;
 	case 16:
 		/* 16-bit WAV is signed -- much better */

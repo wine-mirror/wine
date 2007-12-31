@@ -376,7 +376,7 @@ DirectSoundCaptureEnumerateW(
                                  wDesc, sizeof(wDesc)/sizeof(WCHAR) );
             MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
                                  wName, sizeof(wName)/sizeof(WCHAR) );
-            if (lpDSEnumCallback((LPGUID)&DSOUND_capture_guids[wid], wDesc, wName, lpContext) == FALSE)
+            if (lpDSEnumCallback(&DSOUND_capture_guids[wid], wDesc, wName, lpContext) == FALSE)
                 return DS_OK;
 	}
     }
@@ -418,7 +418,7 @@ DSOUND_capture_callback(
     DWORD dw2 )
 {
     DirectSoundCaptureDevice * This = (DirectSoundCaptureDevice*)dwUser;
-    IDirectSoundCaptureBufferImpl * Moi = (IDirectSoundCaptureBufferImpl*) This->capture_buffer;
+    IDirectSoundCaptureBufferImpl * Moi = This->capture_buffer;
     TRACE("(%p,%08x(%s),%08x,%08x,%08x) entering at %d\n",hwi,msg,
 	msg == MM_WIM_OPEN ? "MM_WIM_OPEN" : msg == MM_WIM_CLOSE ? "MM_WIM_CLOSE" :
 	msg == MM_WIM_DATA ? "MM_WIM_DATA" : "UNKNOWN",dwUser,dw1,dw2,GetTickCount());
@@ -1388,7 +1388,7 @@ HRESULT IDirectSoundCaptureBufferImpl_Create(
     	HRESULT err = DS_OK;
         LPBYTE newbuf;
         DWORD buflen;
-        IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)*ppobj;
+        IDirectSoundCaptureBufferImpl *This = *ppobj;
 
         This->ref = 1;
         This->device = device;

@@ -1560,7 +1560,7 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
            if (device->hwbuf)
                device->dsbd.dwFlags |= DSBCAPS_LOCHARDWARE;
            else device->dsbd.dwFlags |= DSBCAPS_LOCSOFTWARE;
-           hres = PrimaryBufferImpl_Create(device, (PrimaryBufferImpl**)&(device->primary), &(device->dsbd));
+           hres = PrimaryBufferImpl_Create(device, &(device->primary), &(device->dsbd));
            if (device->primary) {
                IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(device->primary));
                *ppdsb = (LPDIRECTSOUNDBUFFER)(device->primary);
@@ -1628,12 +1628,12 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
             return DSERR_INVALIDPARAM;
         }
 
-        hres = IDirectSoundBufferImpl_Create(device, (IDirectSoundBufferImpl**)&dsb, dsbd);
+        hres = IDirectSoundBufferImpl_Create(device, &dsb, dsbd);
         if (dsb) {
             hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
             if (*ppdsb) {
                 dsb->secondary = (SecondaryBufferImpl*)*ppdsb;
-                IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)*ppdsb);
+                IDirectSoundBuffer_AddRef(*ppdsb);
             } else
                 WARN("SecondaryBufferImpl_Create failed\n");
         } else
