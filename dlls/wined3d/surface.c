@@ -2972,12 +2972,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         FIXME("Implement hardware blit between two different swapchains\n");
         return WINED3DERR_INVALIDCALL;
     } else if(dstSwapchain) {
-        if(SrcSurface != myDevice->render_targets[0]) {
-            ERR("Unexpected render target -> render target blit\n");
-            return 0;
+        if(SrcSurface == myDevice->render_targets[0]) {
+            TRACE("Blit from active render target to a swapchain\n");
+            /* Handled with regular texture -> swapchain blit */
         }
-        TRACE("Blit from active render target to a swapchain\n");
-        /* Handled with regular texture -> swapchain blit */
     } else if(srcSwapchain && This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) {
         FIXME("Implement blit from a swapchain to the active render target\n");
         return WINED3DERR_INVALIDCALL;
