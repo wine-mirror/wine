@@ -1335,7 +1335,7 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_RunApplication
   HANDLE hReceiveEvent )
 {
   IDirectPlayLobbyWImpl *This = (IDirectPlayLobbyWImpl *)iface;
-  FIXME( "(%p)->(0x%08x,%p,%p,%p):stub\n", This, dwFlags, lpdwAppID, lpConn, (void *)hReceiveEvent );
+  FIXME( "(%p)->(0x%08x,%p,%p,%p):stub\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
   return DPERR_OUTOFMEMORY;
 }
 
