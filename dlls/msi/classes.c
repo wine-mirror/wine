@@ -178,7 +178,7 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
         while (parent->Parent && parent->Parent != parent)
             parent = parent->Parent;
 
-        /* FIXME: need to determing if we are really the CurVer */
+        /* FIXME: need to determine if we are really the CurVer */
 
         progid->CurVer = parent;
         parent->VersionInd = progid;
@@ -445,7 +445,7 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
 
 /*
  * While the extension table has 2 primary keys, this function is only looking
- * at the Extension key which is what is referenced as a forign key 
+ * at the Extension key which is what is referenced as a foreign key
  */
 static MSIEXTENSION *load_given_extension( MSIPACKAGE *package, LPCWSTR name )
 {
@@ -512,7 +512,7 @@ static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
     buffer = MSI_RecordGetString(row,5);
     deformat_string(package,buffer,&verb->Argument);
 
-    /* assosiate the verb with the correct extension */
+    /* associate the verb with the correct extension */
     list_add_tail( &extension->verbs, &verb->entry );
     
     return ERROR_SUCCESS;
@@ -1252,7 +1252,7 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         LPWSTR key;
 
         /* 
-         * check if the MIME is to be installed. Either as requesed by an
+         * check if the MIME is to be installed. Either as requested by an
          * extension or Class
          */
         mt->InstallMe = (mt->InstallMe ||
