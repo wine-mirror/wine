@@ -500,7 +500,7 @@ static GpStatus draw_polyline(GpGraphics *graphics, GpPen *pen,
         draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
                  pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X, pt[count - 1].Y);
         draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
-                         pt[1].X, pt[1].Y, pt[0].X, pt[0].Y);\
+                         pt[1].X, pt[1].Y, pt[0].X, pt[0].Y);
     }
 
     transform_and_round_points(graphics, pti, ptcopy, count);

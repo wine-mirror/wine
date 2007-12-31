@@ -97,7 +97,7 @@ static void test_aggregation(const CLSID clsidOuter, const CLSID clsidInner,
     QI_SUCCEED(pUnkInner, iidInner, pUnkAggregatee);
     QI_SUCCEED(pUnkInner, IID_IUnknown, pUnkInnerTest);
 
-    if (!pUnkAggregator || !pUnkOuterTest || !pUnkAggregatee \
+    if (!pUnkAggregator || !pUnkOuterTest || !pUnkAggregatee
                     || !pUnkInnerTest)
     {
         skip("One of the required interfaces is NULL\n");

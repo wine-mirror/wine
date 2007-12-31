@@ -1072,7 +1072,7 @@ DATETIME_SetFocus (DATETIME_INFO *infoPtr, HWND lostFocus)
     TRACE("got focus from %p\n", lostFocus);
 
     /* if monthcal is open and it loses focus, close monthcal */
-    if (infoPtr->hMonthCal && (lostFocus == infoPtr->hMonthCal) && \
+    if (infoPtr->hMonthCal && (lostFocus == infoPtr->hMonthCal) &&
         IsWindowVisible(infoPtr->hMonthCal))
     {
         ShowWindow(infoPtr->hMonthCal, SW_HIDE);

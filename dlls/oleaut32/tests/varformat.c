@@ -393,7 +393,7 @@ static void test_VarFormat(void)
   VARFMT(VT_BOOL,V_BOOL,VARIANT_TRUE,"",E_INVALIDARG,"");
 }
 
-static const char *szVarWdnFail = \
+static const char *szVarWdnFail =
     "VarWeekdayName (%d, %d, %d, %d, %x): returned %8x, expected %8x\n";
 #define VARWDN(iWeekday, fAbbrev, iFirstDay, dwFlags, ret, buff, out, freeOut) \
 do { \

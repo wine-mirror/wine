@@ -736,7 +736,7 @@ static void test_MsiQueryComponentState(void)
 
     /* empty szProductCode */
     state = MAGIC_ERROR;
-    r = pMsiQueryComponentStateA("", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);\
+    r = pMsiQueryComponentStateA("", NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
 
