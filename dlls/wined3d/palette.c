@@ -63,6 +63,7 @@ static ULONG  WINAPI IWineD3DPaletteImpl_Release(IWineD3DPalette *iface) {
     TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
 
     if (!ref) {
+        DeleteObject(This->hpal);
         HeapFree(GetProcessHeap(), 0, This);
         return 0;
     }
