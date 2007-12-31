@@ -1350,8 +1350,8 @@ IDirect3DDeviceImpl_1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIXHANDLE *D3DM
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_OUTOFMEMORY;
     }
-    This->Handles[(DWORD) *D3DMatHandle - 1].ptr = Matrix;
-    This->Handles[(DWORD) *D3DMatHandle - 1].type = DDrawHandle_Matrix;
+    This->Handles[*D3DMatHandle - 1].ptr = Matrix;
+    This->Handles[*D3DMatHandle - 1].type = DDrawHandle_Matrix;
     TRACE(" returning matrix handle %d\n", *D3DMatHandle);
 
     LeaveCriticalSection(&ddraw_cs);
@@ -1382,7 +1382,7 @@ IDirect3DDeviceImpl_1_SetMatrix(IDirect3DDevice *iface,
                                 D3DMATRIX *D3DMatrix)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
-    TRACE("(%p)->(%08x,%p)\n", This, (DWORD) D3DMatHandle, D3DMatrix);
+    TRACE("(%p)->(%08x,%p)\n", This, D3DMatHandle, D3DMatrix);
 
     if( (!D3DMatHandle) || (!D3DMatrix) )
         return DDERR_INVALIDPARAMS;
@@ -1451,7 +1451,7 @@ IDirect3DDeviceImpl_1_GetMatrix(IDirect3DDevice *iface,
                                 D3DMATRIX *D3DMatrix)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
-    TRACE("(%p)->(%08x,%p)\n", This, (DWORD) D3DMatHandle, D3DMatrix);
+    TRACE("(%p)->(%08x,%p)\n", This, D3DMatHandle, D3DMatrix);
 
     if(!D3DMatrix)
         return DDERR_INVALIDPARAMS;
@@ -1499,7 +1499,7 @@ IDirect3DDeviceImpl_1_DeleteMatrix(IDirect3DDevice *iface,
                                    D3DMATRIXHANDLE D3DMatHandle)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
-    TRACE("(%p)->(%08x)\n", This, (DWORD) D3DMatHandle);
+    TRACE("(%p)->(%08x)\n", This, D3DMatHandle);
 
     if(!D3DMatHandle)
         return DDERR_INVALIDPARAMS;
@@ -4589,7 +4589,7 @@ IDirect3DDeviceImpl_7_Clear(IDirect3DDevice7 *iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     HRESULT hr;
-    TRACE("(%p)->(%08x,%p,%08x,%08x,%f,%08x): Relay\n", This, Count, Rects, Flags, (DWORD) Color, Z, Stencil);
+    TRACE("(%p)->(%08x,%p,%08x,%08x,%f,%08x): Relay\n", This, Count, Rects, Flags, Color, Z, Stencil);
 
     /* Note; D3DRECT is compatible with WINED3DRECT */
     EnterCriticalSection(&ddraw_cs);

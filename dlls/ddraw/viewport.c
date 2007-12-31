@@ -515,7 +515,7 @@ IDirect3DViewportImpl_SetBackground(IDirect3DViewport3 *iface,
                                     D3DMATERIALHANDLE hMat)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    TRACE("(%p)->(%d)\n", This, (DWORD) hMat);
+    TRACE("(%p)->(%d)\n", This, hMat);
 
     EnterCriticalSection(&ddraw_cs);
     if(hMat && hMat > This->ddraw->d3ddevice->numHandles)
