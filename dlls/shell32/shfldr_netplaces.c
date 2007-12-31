@@ -272,31 +272,31 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnCreateViewObject (IShellFolder2 * ifac
     HRESULT hr = E_INVALIDARG;
 
     TRACE ("(%p)->(hwnd=%p,%s,%p)\n", This,
-            hwndOwner, shdebugstr_guid (riid), ppvOut);
+           hwndOwner, shdebugstr_guid (riid), ppvOut);
 
     if (!ppvOut)
         return hr;
 
-	*ppvOut = NULL;
+    *ppvOut = NULL;
 
-	if (IsEqualIID (riid, &IID_IDropTarget))
+    if (IsEqualIID (riid, &IID_IDropTarget))
     {
-	    WARN ("IDropTarget not implemented\n");
-	    hr = E_NOTIMPL;
-	}
+        WARN ("IDropTarget not implemented\n");
+        hr = E_NOTIMPL;
+    }
     else if (IsEqualIID (riid, &IID_IContextMenu))
     {
-	    WARN ("IContextMenu not implemented\n");
-	    hr = E_NOTIMPL;
-	}
+        WARN ("IContextMenu not implemented\n");
+        hr = E_NOTIMPL;
+    }
     else if (IsEqualIID (riid, &IID_IShellView))
     {
-	    pShellView = IShellView_Constructor ((IShellFolder *) iface);
-	    if (pShellView)
+        pShellView = IShellView_Constructor ((IShellFolder *) iface);
+        if (pShellView)
         {
             hr = IShellView_QueryInterface (pShellView, riid, ppvOut);
             IShellView_Release (pShellView);
-	    }
+        }
     }
     TRACE ("-- (%p)->(interface=%p)\n", This, ppvOut);
     return hr;
@@ -380,43 +380,43 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnGetUIObjectOf (IShellFolder2 * iface,
     if (!ppvOut)
         return hr;
 
-	*ppvOut = NULL;
+    *ppvOut = NULL;
 
-	if (IsEqualIID (riid, &IID_IContextMenu) && (cidl >= 1))
+    if (IsEqualIID (riid, &IID_IContextMenu) && (cidl >= 1))
     {
-	    pObj = (LPUNKNOWN) ISvItemCm_Constructor ((IShellFolder *) iface, This->pidlRoot, apidl, cidl);
-	    hr = S_OK;
-	}
+        pObj = (LPUNKNOWN) ISvItemCm_Constructor ((IShellFolder *) iface, This->pidlRoot, apidl, cidl);
+        hr = S_OK;
+    }
     else if (IsEqualIID (riid, &IID_IDataObject) && (cidl >= 1))
     {
-	    pObj = (LPUNKNOWN) IDataObject_Constructor (hwndOwner, This->pidlRoot, apidl, cidl);
-	    hr = S_OK;
-	}
+        pObj = (LPUNKNOWN) IDataObject_Constructor (hwndOwner, This->pidlRoot, apidl, cidl);
+        hr = S_OK;
+    }
     else if (IsEqualIID (riid, &IID_IExtractIconA) && (cidl == 1))
     {
-	    pidl = ILCombine (This->pidlRoot, apidl[0]);
-	    pObj = (LPUNKNOWN) IExtractIconA_Constructor (pidl);
-	    SHFree (pidl);
-	    hr = S_OK;
-	}
+        pidl = ILCombine (This->pidlRoot, apidl[0]);
+        pObj = (LPUNKNOWN) IExtractIconA_Constructor (pidl);
+        SHFree (pidl);
+        hr = S_OK;
+    }
     else if (IsEqualIID (riid, &IID_IExtractIconW) && (cidl == 1))
     {
-	    pidl = ILCombine (This->pidlRoot, apidl[0]);
-	    pObj = (LPUNKNOWN) IExtractIconW_Constructor (pidl);
-	    SHFree (pidl);
-	    hr = S_OK;
-	}
+        pidl = ILCombine (This->pidlRoot, apidl[0]);
+        pObj = (LPUNKNOWN) IExtractIconW_Constructor (pidl);
+        SHFree (pidl);
+        hr = S_OK;
+    }
     else if (IsEqualIID (riid, &IID_IDropTarget) && (cidl >= 1))
     {
-	    hr = IShellFolder_QueryInterface (iface, &IID_IDropTarget, (LPVOID *) & pObj);
-	}
+        hr = IShellFolder_QueryInterface (iface, &IID_IDropTarget, (LPVOID *) & pObj);
+    }
     else
-	    hr = E_NOINTERFACE;
+        hr = E_NOINTERFACE;
 
-	if (SUCCEEDED(hr) && !pObj)
-	    hr = E_OUTOFMEMORY;
+    if (SUCCEEDED(hr) && !pObj)
+        hr = E_OUTOFMEMORY;
 
-	*ppvOut = pObj;
+    *ppvOut = pObj;
     TRACE ("(%p)->hr=0x%08x\n", This, hr);
     return hr;
 }
