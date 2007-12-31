@@ -2268,7 +2268,10 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
 
     control = msi_dialog_add_control( dialog, rec, WC_LISTBOXW, style );
     if (!control)
+    {
+        msi_free(info);
         return ERROR_FUNCTION_FAILED;
+    }
 
     control->handler = msi_dialog_listbox_handler;
 

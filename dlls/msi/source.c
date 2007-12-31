@@ -605,7 +605,10 @@ static UINT fill_source_list(struct list *sourcelist, HKEY sourcekey, DWORD *cou
 
         entry->path = msi_alloc(val_size);
         if (!entry->path)
+        {
+            msi_free(entry);
             goto error;
+        }
 
         lstrcpyW(entry->szIndex, name);
         entry->index = atoiW(name);
@@ -614,7 +617,11 @@ static UINT fill_source_list(struct list *sourcelist, HKEY sourcekey, DWORD *cou
         r = RegEnumValueW(sourcekey, index, name, &size, NULL,
                           NULL, (LPBYTE)entry->path, &val_size);
         if (r != ERROR_SUCCESS)
+        {
+            msi_free(entry->path);
+            msi_free(entry);
             goto error;
+        }
 
         index = ++(*count);
         add_source_to_list(sourcelist, entry);
