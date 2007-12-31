@@ -328,8 +328,10 @@ BOOL WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
     }
     else if (wine_ldt_is_system(context->SegCs))
     {
-        INTPROC proc = DOSVM_GetBuiltinHandler( intnum );
-        if (!proc) return FALSE;
+        INTPROC proc;
+        if (intnum >= sizeof(DOSVM_VectorsBuiltin)/sizeof(INTPROC)) return FALSE;
+        if (!(proc = DOSVM_VectorsBuiltin[intnum])) return FALSE;
+        proc( context );
     }
     else
     {
