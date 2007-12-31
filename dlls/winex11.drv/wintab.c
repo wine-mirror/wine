@@ -724,9 +724,16 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
 
     }
     pXFreeDeviceList(devices);
-    gSysDevice.NCSRTYPES = cursor_target+1;
-    gNumCursors = cursor_target+1;
-    Tablet_FixupCursors();
+
+    if (axis_read_complete)
+    {
+        gSysDevice.NCSRTYPES = cursor_target+1;
+        gNumCursors = cursor_target+1;
+        Tablet_FixupCursors();
+    }
+    else
+        WARN("Did not find a valid stylus cursor with >= 5 axes, returning 0 valid devices.\n");
+
     wine_tsx11_unlock();
 }
 
