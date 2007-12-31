@@ -23,6 +23,7 @@
 #include "hlink.h"
 
 #include "wine/list.h"
+#include "wine/unicode.h"
 
 #ifdef INIT_GUID
 #include "initguid.h"
@@ -155,6 +156,7 @@ struct HTMLDocument {
     BOOL has_key_path;
     BOOL container_locked;
     BOOL focus;
+    LPWSTR mime;
 
     DWORD update;
 
@@ -560,6 +562,22 @@ static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
 }
+
+static inline LPWSTR heap_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = heap_alloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
+}
+
 
 HINSTANCE get_shdoclc(void);
 

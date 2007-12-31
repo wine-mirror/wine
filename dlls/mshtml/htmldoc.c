@@ -185,6 +185,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
         if(This->window)
             IHTMLWindow2_Release(HTMLWINDOW2(This->window));
 
+        heap_free(This->mime);
         detach_selection(This);
         detach_ranges(This);
         release_nodes(This);

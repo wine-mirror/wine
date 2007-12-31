@@ -502,8 +502,24 @@ static ULONG WINAPI MonikerProp_Release(IMonikerProp *iface)
 static HRESULT WINAPI MonikerProp_PutProperty(IMonikerProp *iface, MONIKERPROPERTY mkp, LPCWSTR val)
 {
     HTMLDocument *This = MONPROP_THIS(iface);
-    FIXME("(%p)->(%d %s)\n", This, mkp, debugstr_w(val));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %s)\n", This, mkp, debugstr_w(val));
+
+    switch(mkp) {
+    case MIMETYPEPROP:
+        heap_free(This->mime);
+        This->mime = heap_strdupW(val);
+        break;
+
+    case CLASSIDPROP:
+        break;
+
+    default:
+        FIXME("mkp %d\n", mkp);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static const IMonikerPropVtbl MonikerPropVtbl = {
@@ -743,4 +759,5 @@ void HTMLDocument_Persist_Init(HTMLDocument *This)
     This->bscallback = NULL;
     This->mon = NULL;
     This->url = NULL;
+    This->mime = NULL;
 }
