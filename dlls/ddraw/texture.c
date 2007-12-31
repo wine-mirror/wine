@@ -302,7 +302,6 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
     IDirectDrawSurfaceImpl *src_ptr = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirect3DTexture2, D3DTexture2);
     IWineD3DPalette *wine_pal, *wine_pal_src;
     IDirectDrawPalette *pal = NULL, *pal_src = NULL;
-    IDirectDrawPaletteImpl *pal_impl, *pal_impl_src;
     HRESULT ret_value = D3D_OK;
 
     TRACE("(%p)->(%p)\n", This, src_ptr);
@@ -346,11 +345,6 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
                 LeaveCriticalSection(&ddraw_cs);
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
-            pal_impl = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, pal);
-        }
-        else
-        {
-          pal_impl = NULL;
         }
 
         ret_value = IWineD3DSurface_GetPalette(src_ptr->WineD3DSurface, &wine_pal_src);
@@ -369,29 +363,19 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
                 LeaveCriticalSection(&ddraw_cs);
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
-            pal_impl_src = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, pal_src);
-        }
-        else
-        {
-            pal_impl_src = NULL;
         }
 
         /* After seeing some logs, not sure at all about this... */
-        if (pal_impl == NULL)
+        if (pal == NULL)
         {
             IWineD3DSurface_SetPalette(This->WineD3DSurface, wine_pal);
-            if (pal_impl_src != NULL) IDirectDrawPalette_AddRef(ICOM_INTERFACE(pal_impl_src, IDirectDrawPalette));
+            if (pal_src != NULL) IDirectDrawPalette_AddRef(pal_src);
         }
-        else
+        else if (pal_src != NULL)
         {
-            if (pal_impl_src != NULL)
-            {
-                PALETTEENTRY palent[256];
-                IDirectDrawPalette_GetEntries(ICOM_INTERFACE(pal_impl_src, IDirectDrawPalette),
-                                              0, 0, 256, palent);
-                IDirectDrawPalette_SetEntries(ICOM_INTERFACE(pal_impl, IDirectDrawPalette),
-                                              0, 0, 256, palent);
-            }
+            PALETTEENTRY palent[256];
+            IDirectDrawPalette_GetEntries(pal_src, 0, 0, 256, palent);
+            IDirectDrawPalette_SetEntries(pal, 0, 0, 256, palent);
         }
 
         if (pal) IDirectDrawPalette_Release(pal);
