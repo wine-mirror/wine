@@ -58,10 +58,6 @@ struct sam_user
     LPWSTR user_logon_script_path;
 };
 
-static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','t',
-                                'o','r',0};
-static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
-
 static struct list user_list = LIST_INIT( user_list );
 
 BOOL NETAPI_IsLocalComputer(LPCWSTR ServerName);
