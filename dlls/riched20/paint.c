@@ -267,7 +267,7 @@ static void ME_DrawGraphics(ME_Context *c, int x, int y, ME_Run *run,
 static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Paragraph *para) 
 {
   ME_Run *run = &rundi->member.run;
-  ME_DisplayItem *start = ME_FindItemBack(rundi, diStartRow);
+  ME_DisplayItem *start;
   int runofs = run->nCharOfs+para->nCharOfs;
   int nSelFrom, nSelTo;
   const WCHAR wszSpace[] = {' ', 0};
@@ -275,6 +275,7 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
   if (run->nFlags & MERF_HIDDEN)
     return;
 
+  start = ME_FindItemBack(rundi, diStartRow);
   ME_GetSelection(c->editor, &nSelFrom, &nSelTo);
 
   /* Draw selected end-of-paragraph mark */

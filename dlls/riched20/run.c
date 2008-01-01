@@ -606,7 +606,7 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
 int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
 {
   SIZE size;
-  HDC hDC = GetDC(editor->hWnd);
+  HDC hDC;
   HGDIOBJ hOldFont;
   ME_String *strRunText;
   /* This could point to either the run's real text, or it's masked form in a password control */
@@ -623,6 +623,7 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
   else
     strRunText = pRun->strText;
   
+  hDC = GetDC(editor->hWnd);
   hOldFont = ME_SelectStyleFont(editor, hDC, pRun->style);
   GetTextExtentPoint32W(hDC, strRunText->szData, nOffset, &size);
   ME_UnselectStyleFont(editor, hDC, pRun->style, hOldFont);

@@ -341,7 +341,7 @@ static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp);
 static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD beginofs) {
   ME_DisplayItem *p;
   ME_WrapContext wc;
-  int dpi = GetDeviceCaps(c->hDC, LOGPIXELSX);
+  int dpi;
   int border = 0;
   int linespace = 0;
 
@@ -351,6 +351,7 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   }
   ME_PrepareParagraphForWrapping(c, tp);
 
+  dpi = GetDeviceCaps(c->hDC, LOGPIXELSX);
   wc.context = c;
 /*   wc.para_style = tp->member.para.style; */
   wc.style = NULL;
