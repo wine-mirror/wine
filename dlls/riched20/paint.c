@@ -365,6 +365,29 @@ int  ME_GetParaBorderWidth(ME_TextEditor* editor, int flags)
   return width;
 }
 
+int  ME_GetParaLineSpace(ME_TextEditor* editor, ME_Paragraph* para, int dpi)
+{
+  int   sp = 0, ls = 0;
+  if (!(para->pFmt->dwMask & PFM_LINESPACING)) return 0;
+
+  /* FIXME: how to compute simply the line space in ls ??? */
+  /* FIXME: does line spacing include the line itself ??? */
+  switch (para->pFmt->bLineSpacingRule)
+  {
+  case 0:       sp = ls; break;
+  case 1:       sp = (3 * ls) / 2; break;
+  case 2:       sp = 2 * ls; break;
+  case 3:       sp = para->pFmt->dyLineSpacing * dpi / 1440; if (sp < ls) sp = ls; break;
+  case 4:       sp = para->pFmt->dyLineSpacing * dpi / 1440; break;
+  case 5:       sp = para->pFmt->dyLineSpacing / 20; break;
+  default: FIXME("Unsupported spacing rule value %d\n", para->pFmt->bLineSpacingRule);
+  }
+  if (editor->nZoomNumerator == 0)
+    return sp;
+  else
+    return sp * editor->nZoomNumerator / editor->nZoomDenominator;
+}
+
 static int ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, int dpi)
 {
   int           idx, border_width;

@@ -343,6 +343,7 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   ME_WrapContext wc;
   int dpi = GetDeviceCaps(c->hDC, LOGPIXELSX);
   int border = 0;
+  int linespace = 0;
 
   assert(tp->type == diParagraph);
   if (!(tp->member.para.nFlags & MEPF_REWRAP)) {
@@ -378,14 +379,17 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   wc.nAvailWidth = wc.nTotalWidth - wc.nFirstMargin - wc.nRightMargin;
   wc.pRowStart = NULL;
 
+  linespace = ME_GetParaLineSpace(c->editor, &tp->member.para, dpi);
+
   ME_BeginRow(&wc);
   for (p = tp->next; p!=tp->member.para.next_para; ) {
     assert(p->type != diStartRow);
     if (p->type == diRun) {
       p = ME_WrapHandleRun(&wc, p);
-      continue;
     }
-    p = p->next;
+    else p = p->next;
+    if (wc.nRow && p == wc.pRowStart)
+      wc.pt.y += linespace;
   }
   ME_WrapEndParagraph(&wc, p);
   if ((tp->member.para.pFmt->dwMask & PFM_BORDER) && (tp->member.para.pFmt->wBorders & 8))
