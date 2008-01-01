@@ -5142,7 +5142,7 @@ void test_vshader_input(IDirect3DDevice9 *device)
         r = (color & 0x00ff0000) >> 16;
         g = (color & 0x0000ff00) >>  8;
         b = (color & 0x000000ff) >>  0;
-        ok(r >= 0xfe && r <= 0xff && g >= 0xfe && g <= 0xff && b >= 0x00 && b <= 0x01,
+        ok(r >= 0xfe && r <= 0xff && g >= 0xfe && g <= 0xff && b <= 0x01,
            "Input test: Quad 4(color-float) returned color 0x%08x, expected 0x00FFFF00\n", color);
 
         IDirect3DVertexShader9_Release(texcoord_color_shader);
