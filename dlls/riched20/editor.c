@@ -1034,6 +1034,27 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
   return -1;
 }
 
+/* helper to send a msg filter notification */
+static BOOL
+ME_FilterEvent(ME_TextEditor *editor, UINT msg, WPARAM* wParam, LPARAM* lParam)
+{
+    MSGFILTER msgf;
+
+    msgf.nmhdr.hwndFrom = editor->hWnd;
+    msgf.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
+    msgf.nmhdr.code = EN_MSGFILTER;
+    msgf.msg = msg;
+
+    msgf.wParam = *wParam;
+    msgf.lParam = *lParam;
+    if (SendMessageW(GetParent(editor->hWnd), WM_NOTIFY, msgf.nmhdr.idFrom, (LPARAM)&msgf))
+        return FALSE;
+    *wParam = msgf.wParam;
+    *lParam = msgf.lParam;
+    msgf.wParam = *wParam;
+
+    return TRUE;
+}
 
 static BOOL
 ME_KeyDown(ME_TextEditor *editor, WORD nKey)
@@ -2374,6 +2395,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     SetWindowLongPtrW(hWnd, 0, 0);
     return 0;
   case WM_LBUTTONDOWN:
+    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
+        !ME_FilterEvent(editor, msg, &wParam, &lParam))
+      return 0;
     SetFocus(hWnd);
     ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     SetCapture(hWnd);
@@ -2381,6 +2405,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_SetCursor(editor, LOWORD(lParam));
     break;
   case WM_MOUSEMOVE:
+    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
+        !ME_FilterEvent(editor, msg, &wParam, &lParam))
+      return 0;
     if (GetCapture() == hWnd)
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     ME_LinkNotify(editor,msg,wParam,lParam);
@@ -2389,14 +2416,26 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case WM_LBUTTONUP:
     if (GetCapture() == hWnd)
       ReleaseCapture();
+    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
+        !ME_FilterEvent(editor, msg, &wParam, &lParam))
+      return 0;
     editor->linesel = 0;
     ME_SetCursor(editor, LOWORD(lParam));
     ME_LinkNotify(editor,msg,wParam,lParam);
     break;
   case WM_LBUTTONDBLCLK:
+    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
+        !ME_FilterEvent(editor, msg, &wParam, &lParam))
+      return 0;
     ME_LinkNotify(editor,msg,wParam,lParam);
     ME_SelectWord(editor);
     break;
+  case WM_RBUTTONUP:
+  case WM_RBUTTONDOWN:
+    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
+        !ME_FilterEvent(editor, msg, &wParam, &lParam))
+      return 0;
+    goto do_default;
   case WM_CONTEXTMENU:
     if (!ME_ShowContextMenu(editor, (short)LOWORD(lParam), (short)HIWORD(lParam)))
       goto do_default;
@@ -2438,7 +2477,15 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case WM_COMMAND:
     TRACE("editor wnd command = %d\n", LOWORD(wParam));
     return 0;
+  case WM_KEYUP:
+    if ((editor->nEventMask & ENM_KEYEVENTS) &&
+        !ME_FilterEvent(editor, msg, &wParam, &lParam))
+      return 0;
+    goto do_default;
   case WM_KEYDOWN:
+    if ((editor->nEventMask & ENM_KEYEVENTS) &&
+        !ME_FilterEvent(editor, msg, &wParam, &lParam))
+      return 0;
     if (ME_KeyDown(editor, LOWORD(wParam)))
       return 0;
     goto do_default;
@@ -2545,7 +2592,11 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     int gcWheelDelta;
     UINT pulScrollLines;
-    
+
+    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
+        !ME_FilterEvent(editor, msg, &wParam, &lParam))
+      return 0;
+
     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
     gcWheelDelta = -GET_WHEEL_DELTA_WPARAM(wParam);
     
