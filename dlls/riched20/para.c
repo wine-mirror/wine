@@ -280,45 +280,67 @@ ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *item) {
   return ME_FindItemBackOrHere(item, diParagraph);
 }
 
-static void ME_DumpStyleEffect(char **p, const char *name, const PARAFORMAT2 *fmt, int mask)
-{
-  *p += sprintf(*p, "%-22s%s\n", name, (fmt->dwMask & mask) ? ((fmt->wEffects & mask) ? "yes" : "no") : "N/A");
-}
-
 void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048])
 {
-  /* FIXME only PARAFORMAT styles implemented */
   char *p;
   p = buf;
-  p += sprintf(p, "Alignment:            %s\n",
-    !(pFmt->dwMask & PFM_ALIGNMENT) ? "N/A" :
-      ((pFmt->wAlignment == PFA_LEFT) ? "left" :
-        ((pFmt->wAlignment == PFA_RIGHT) ? "right" :
-          ((pFmt->wAlignment == PFA_CENTER) ? "center" :
-            /*((pFmt->wAlignment == PFA_JUSTIFY) ? "justify" : "incorrect")*/
-            "incorrect"))));
 
-  if (pFmt->dwMask & PFM_OFFSET)
-    p += sprintf(p, "Offset:               %d\n", (int)pFmt->dxOffset);
-  else
-    p += sprintf(p, "Offset:               N/A\n");
-    
-  if (pFmt->dwMask & PFM_OFFSETINDENT)
-    p += sprintf(p, "Offset indent:        %d\n", (int)pFmt->dxStartIndent);
-  else
-    p += sprintf(p, "Offset indent:        N/A\n");
-    
-  if (pFmt->dwMask & PFM_STARTINDENT)
-    p += sprintf(p, "Start indent:         %d\n", (int)pFmt->dxStartIndent);
-  else
-    p += sprintf(p, "Start indent:         N/A\n");
-    
-  if (pFmt->dwMask & PFM_RIGHTINDENT)
-    p += sprintf(p, "Right indent:         %d\n", (int)pFmt->dxRightIndent);
-  else
-    p += sprintf(p, "Right indent:         N/A\n");
-    
-  ME_DumpStyleEffect(&p, "Page break before:", pFmt, PFM_PAGEBREAKBEFORE);
+#define DUMP(mask, name, fmt, field) \
+  if (pFmt->dwMask & (mask)) p += sprintf(p, "%-22s" fmt "\n", name, pFmt->field); \
+  else p += sprintf(p, "%-22sN/A\n", name);
+
+/* we take for granted that PFE_xxx is the hiword of the corresponding PFM_xxx */
+#define DUMP_EFFECT(mask, name) \
+  p += sprintf(p, "%-22s%s\n", name, (pFmt->dwMask & (mask)) ? ((pFmt->wEffects & ((mask) >> 8)) ? "yes" : "no") : "N/A");
+
+  DUMP(PFM_NUMBERING,      "Numbering:",         "%u", wNumbering);
+  DUMP_EFFECT(PFM_DONOTHYPHEN,     "Disable auto-hyphen:");
+  DUMP_EFFECT(PFM_KEEP,            "No page break in para:");
+  DUMP_EFFECT(PFM_KEEPNEXT,        "No page break in para & next:");
+  DUMP_EFFECT(PFM_NOLINENUMBER,    "No line number:");
+  DUMP_EFFECT(PFM_NOWIDOWCONTROL,  "No widow & orphan:");
+  DUMP_EFFECT(PFM_PAGEBREAKBEFORE, "Page break before:");
+  DUMP_EFFECT(PFM_RTLPARA,         "RTL para:");
+  DUMP_EFFECT(PFM_SIDEBYSIDE,      "Side by side:");
+  DUMP_EFFECT(PFM_TABLE,           "Table:");
+  DUMP(PFM_OFFSETINDENT,   "Offset indent:",     "%d", dxStartIndent);
+  DUMP(PFM_STARTINDENT,    "Start indent:",      "%d", dxStartIndent);
+  DUMP(PFM_RIGHTINDENT,    "Right indent:",      "%d", dxRightIndent);
+  DUMP(PFM_OFFSET,         "Offset:",            "%d", dxOffset);
+  if (pFmt->dwMask & PFM_ALIGNMENT) {
+    switch (pFmt->wAlignment) {
+    case PFA_LEFT   : p += sprintf(p, "Alignment:            left\n"); break;
+    case PFA_RIGHT  : p += sprintf(p, "Alignment:            right\n"); break;
+    case PFA_CENTER : p += sprintf(p, "Alignment:            center\n"); break;
+    case PFA_JUSTIFY: p += sprintf(p, "Alignment:            justify\n"); break;
+    default         : p += sprintf(p, "Alignment:            incorrect %d\n", pFmt->wAlignment); break;
+    }
+  }
+  else p += sprintf(p, "Alignment:            N/A\n");
+  DUMP(PFM_TABSTOPS,       "Tab Stops:",         "%d", cTabCount);
+  if (pFmt->dwMask & PFM_TABSTOPS) {
+    int i;
+    p += sprintf(p, "\t");
+    for (i = 0; i < pFmt->cTabCount; i++) p += sprintf(p, "%x ", pFmt->rgxTabs[i]);
+    p += sprintf(p, "\n");
+  }
+  DUMP(PFM_SPACEBEFORE,    "Space Before:",      "%d", dySpaceBefore);
+  DUMP(PFM_SPACEAFTER,     "Space After:",       "%d", dySpaceAfter);
+  DUMP(PFM_LINESPACING,    "Line spacing:",      "%d", dyLineSpacing);
+  DUMP(PFM_STYLE,          "Text style:",        "%d", sStyle);
+  DUMP(PFM_LINESPACING,    "Line spacing rule:", "%u", bLineSpacingRule);
+  /* bOutlineLevel should be 0 */
+  DUMP(PFM_SHADING,        "Shading Weigth:",    "%u", wShadingWeight);
+  DUMP(PFM_SHADING,        "Shading Style:",     "%u", wShadingStyle);
+  DUMP(PFM_NUMBERINGSTART, "Numbering Start:",   "%u", wNumberingStart);
+  DUMP(PFM_NUMBERINGSTYLE, "Numbering Style:",   "0x%x", wNumberingStyle);
+  DUMP(PFM_NUMBERINGTAB,   "Numbering Tab:",     "%u", wNumberingStyle);
+  DUMP(PFM_BORDER,         "Border Space:",      "%u", wBorderSpace);
+  DUMP(PFM_BORDER,         "Border Width:",      "%u", wBorderWidth);
+  DUMP(PFM_BORDER,         "Borders:",           "%u", wBorders);
+
+#undef DUMP
+#undef DUMP_EFFECT
 }
 
 void ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const PARAFORMAT2 *pFmt)
