@@ -273,7 +273,7 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeText
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     HRESULT hr = WINED3DERR_INVALIDCALL;
 
-    if (Level < This->baseTexture.levels && FaceType >= WINED3DCUBEMAP_FACE_POSITIVE_X && FaceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z) {
+    if (Level < This->baseTexture.levels && FaceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z) {
         *ppCubeMapSurface = This->surfaces[FaceType][Level];
         IWineD3DSurface_AddRef(*ppCubeMapSurface);
 
@@ -292,7 +292,7 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_LockRect(IWineD3DCubeTexture *ifac
     HRESULT hr = WINED3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
-    if (Level < This->baseTexture.levels && FaceType >= WINED3DCUBEMAP_FACE_POSITIVE_X && FaceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z) {
+    if (Level < This->baseTexture.levels && FaceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z) {
         hr = IWineD3DSurface_LockRect(This->surfaces[FaceType][Level], pLockedRect, pRect, Flags);
     }
 
@@ -309,7 +309,7 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *if
     HRESULT hr = WINED3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
-    if (Level < This->baseTexture.levels && FaceType >= WINED3DCUBEMAP_FACE_POSITIVE_X && FaceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z) {
+    if (Level < This->baseTexture.levels && FaceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z) {
         hr = IWineD3DSurface_UnlockRect(This->surfaces[FaceType][Level]);
     }
 
@@ -326,7 +326,7 @@ static HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture 
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
     TRACE("(%p) : dirtyfication of faceType(%d) Level (0)\n", This, FaceType);
-    if (FaceType >= WINED3DCUBEMAP_FACE_POSITIVE_X && FaceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z) {
+    if (FaceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z) {
         hr = IWineD3DSurface_AddDirtyRect(This->surfaces[FaceType][0], pDirtyRect);
     } else {
         WARN("(%p) overflow FaceType(%d)\n", This, FaceType);
