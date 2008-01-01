@@ -278,7 +278,7 @@ ME_LogFontFromStyle(HDC hDC, LOGFONTW *lf, const ME_Style *s, int nZoomNumerator
   lf->lfWeight = 400;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_BOLD)
     lf->lfWeight = 700;
-  if (s->fmt.dwEffects & s->fmt.dwMask & CFM_WEIGHT)
+  if (s->fmt.dwMask & CFM_WEIGHT)
     lf->lfWeight = s->fmt.wWeight;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_ITALIC)
     lf->lfItalic = 1;
