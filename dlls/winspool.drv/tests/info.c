@@ -768,7 +768,7 @@ static void test_EnumForms(LPSTR pName)
     DWORD   pcbNeeded;
     DWORD   pcReturned;
     DWORD   level;
-    INT     i;
+    UINT    i;
     const char *formtype;
     static const char * const formtypes[] = { "FORM_USER", "FORM_BUILTIN", "FORM_PRINTER", "FORM_flag_unknown" };
 #define FORMTYPE_MAX 2
@@ -2115,7 +2115,7 @@ static void test_GetPrinterDriver(void)
 
             /* MSDN is wrong: The Drivers on the win9x-CD's have cVersion=0x0400
                NT351: 1, NT4.0+w2k(Kernelmode): 2, w2k and above(Usermode): 3  */
-            ok((di_2->cVersion >= 0 && di_2->cVersion <= 3) ||
+            ok( (di_2->cVersion <= 3) ||
                 (di_2->cVersion == 0x0400), "di_2->cVersion = %d\n", di_2->cVersion);
             ok(di_2->pName != NULL, "not expected NULL ptr\n");
             ok(di_2->pEnvironment != NULL, "not expected NULL ptr\n");
