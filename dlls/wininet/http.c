@@ -1441,13 +1441,14 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         WCHAR buf[MAXHOSTNAME];
         URL_COMPONENTSW UrlComponents;
 
+        buf[0] = '\0';
         memset( &UrlComponents, 0, sizeof UrlComponents );
         UrlComponents.dwStructSize = sizeof UrlComponents;
         UrlComponents.lpszHostName = buf;
         UrlComponents.dwHostNameLength = MAXHOSTNAME;
 
-        InternetCrackUrlW(lpszReferrer, 0, 0, &UrlComponents);
-        if (strlenW(UrlComponents.lpszHostName))
+        if (InternetCrackUrlW(lpszReferrer, 0, 0, &UrlComponents) &&
+            strlenW(UrlComponents.lpszHostName))
             HTTP_ProcessHeader(lpwhr, szHost, UrlComponents.lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
     }
     else
