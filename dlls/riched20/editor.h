@@ -214,6 +214,7 @@ BOOL ME_UpdateSelection(ME_TextEditor *editor, const ME_Cursor *pTempCursor);
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor);
 void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor);
 void ME_SendRequestResize(ME_TextEditor *editor, BOOL force);
+int  ME_twips2points(ME_Context *c, int x, int dpi);
 
 /* para.c */
 ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run); 

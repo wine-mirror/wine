@@ -141,6 +141,13 @@ ME_RewrapRepaint(ME_TextEditor *editor)
   ME_Repaint(editor);
 }
 
+int ME_twips2points(ME_Context *c, int x, int dpi)
+{
+  if (c->editor->nZoomNumerator == 0)
+    return x * dpi / 1440;
+  else
+    return x * dpi * c->editor->nZoomNumerator / 1440 / c->editor->nZoomDenominator;
+}
 
 static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, int nChars, 
   ME_Style *s, int *width, int nSelFrom, int nSelTo, int ymin, int cy) {
@@ -167,17 +174,8 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, in
     if (s->fmt.dwEffects & CFE_SUBSCRIPT) yTwipsOffset = -s->fmt.yHeight/12;
   }
   if (yTwipsOffset)
-  {
-    int numerator = 1;
-    int denominator = 1;
-    
-    if (c->editor->nZoomNumerator)
-    {
-      numerator = c->editor->nZoomNumerator;
-      denominator = c->editor->nZoomDenominator;
-    }
-    yOffset = yTwipsOffset * GetDeviceCaps(hDC, LOGPIXELSY) * numerator / denominator / 1440;
-  }
+    yOffset = ME_twips2points(c, yTwipsOffset, GetDeviceCaps(hDC, LOGPIXELSY));
+
   ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, nChars, NULL);
   GetTextExtentPoint32W(hDC, szText, nChars, &sz);
   if (width) *width = sz.cx;
@@ -329,11 +327,11 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
       case diParagraph:
         para = &p->member.para;
         assert(para);
-        nMargWidth = para->pFmt->dxStartIndent*dpi/1440;
+        nMargWidth = ME_twips2points(c, para->pFmt->dxStartIndent, dpi);
         if (pno != 0)
-          nMargWidth += para->pFmt->dxOffset*dpi/1440;
+          nMargWidth += ME_twips2points(c, para->pFmt->dxOffset, dpi);
         xs = c->rcView.left+nMargWidth;
-        xe = c->rcView.right-(para->pFmt->dxRightIndent*dpi/1440);
+        xe = c->rcView.right - ME_twips2points(c, para->pFmt->dxRightIndent, dpi);
         break;
       case diStartRow:
         y += height;
