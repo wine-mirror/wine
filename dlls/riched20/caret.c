@@ -704,102 +704,83 @@ int ME_GetCursorOfs(ME_TextEditor *editor, int nCursor)
     + pCursor->pRun->member.run.nCharOfs + pCursor->nOffset;
 }
 
-int ME_FindPixelPos(ME_TextEditor *editor, int x, int y, ME_Cursor *result, BOOL *is_eol)
+static void ME_FindPixelPos(ME_TextEditor *editor, int x, int y, ME_Cursor *result, BOOL *is_eol)
 {
   ME_DisplayItem *p = editor->pBuffer->pFirst->member.para.next_para;
+  ME_DisplayItem *last = NULL;
   int rx = 0;
-  
+
   if (is_eol)
     *is_eol = 0;
 
-  while(p != editor->pBuffer->pLast)
+  /* find paragraph */
+  for (; p != editor->pBuffer->pLast; p = p->member.para.next_para)
   {
-    if (p->type == diParagraph)
+    assert(p->type == diParagraph);
+    if (y < p->member.para.nYPos + p->member.para.nHeight)
     {
-      int ry = y - p->member.para.nYPos;
-      if (ry < 0)
-      {
-        result->pRun = ME_FindItemFwd(p, diRun);
-        result->nOffset = 0;
-        return 0;
-      }
-      if (ry >= p->member.para.nHeight)
-      {
-        p = p->member.para.next_para;
-        continue;
-      }
+      y -= p->member.para.nYPos;
       p = ME_FindItemFwd(p, diStartRow);
-      y = ry;
-      continue;
+      break;
     }
-    if (p->type == diStartRow)
+  }
+  /* find row */
+  for (; p != editor->pBuffer->pLast; )
+  {
+    ME_DisplayItem *pp;
+    assert(p->type == diStartRow);
+    if (y < p->member.row.nYPos + p->member.row.nHeight)
     {
-      int ry = y - p->member.row.nYPos;
-      if (ry < 0)
-        return 0;
-      if (ry >= p->member.row.nHeight)
-      {
-        p = ME_FindItemFwd(p, diStartRowOrParagraphOrEnd);
-        if (p->type != diStartRow)
-          return 0;
-        continue;
-      }
-      p = ME_FindItemFwd(p, diRun);
-      continue;
+        p = ME_FindItemFwd(p, diRun);
+        break;
     }
-    if (p->type == diRun)
+    pp = ME_FindItemFwd(p, diStartRowOrParagraphOrEnd);
+    if (pp->type != diStartRow)
     {
-      ME_DisplayItem *pp;
+        p = ME_FindItemFwd(p, diRun);
+        break;
+    }
+    p = pp;
+  }
+  for (; p != editor->pBuffer->pLast; p = p->next)
+  {
+    switch (p->type)
+    {
+    case diRun:
       rx = x - p->member.run.pt.x;
-      if (rx < 0)
-        rx = 0;
-      if (rx >= p->member.run.nWidth) /* not this run yet... find next item */
+      if (rx < p->member.run.nWidth)
       {
-        pp = p;
-        do {
-          p = p->next;
-          if (p->type == diRun)
-          {
-            rx = x - p->member.run.pt.x;
-            goto continue_search;
-          }
-          if (p->type == diStartRow)
-          {
-            p = ME_FindItemFwd(p, diRun);
-            if (is_eol)
-              *is_eol = 1;
-            rx = 0; /* FIXME not sure */
-            goto found_here;
-          }
-          if (p->type == diParagraph || p->type == diTextEnd)
-          {
-            rx = 0; /* FIXME not sure */
-            p = pp;
-            goto found_here;
-          }
-        } while(1);
-        continue;
+      found_here:
+        assert(p->type == diRun);
+        if ((p->member.run.nFlags & MERF_ENDPARA) || rx < 0)
+          rx = 0;
+        result->pRun = p;
+        result->nOffset = ME_CharFromPointCursor(editor, rx, &p->member.run);
+        if (editor->pCursors[0].nOffset == p->member.run.strText->nLen && rx)
+        {
+          result->pRun = ME_FindItemFwd(editor->pCursors[0].pRun, diRun);
+          result->nOffset = 0;
+        }
+        return;
       }
-    found_here:
-      if (p->member.run.nFlags & MERF_ENDPARA)
-        rx = 0;
-      result->pRun = p;
-      result->nOffset = ME_CharFromPointCursor(editor, rx, &p->member.run);
-      if (editor->pCursors[0].nOffset == p->member.run.strText->nLen && rx)
-      {
-        result->pRun = ME_FindItemFwd(editor->pCursors[0].pRun, diRun);
-        result->nOffset = 0;
-      }
-      return 1;
+      break;
+    case diStartRow:
+      p = ME_FindItemFwd(p, diRun);
+      if (is_eol) *is_eol = 1;
+      rx = 0; /* FIXME not sure */
+      goto found_here;
+    case diParagraph:
+    case diTextEnd:
+      rx = 0; /* FIXME not sure */
+      p = last;
+      goto found_here;
+    default: assert(0);
     }
-    assert(0);
-  continue_search:
-    ;
+    last = p;
   }
   result->pRun = ME_FindItemBack(p, diRun);
   result->nOffset = 0;
   assert(result->pRun->member.run.nFlags & MERF_ENDPARA);
-  return 0;
 }
 
 

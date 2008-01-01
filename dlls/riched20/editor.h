@@ -181,7 +181,6 @@ void ME_SelectWord(ME_TextEditor *editor);
 void ME_HideCaret(ME_TextEditor *ed);
 void ME_ShowCaret(ME_TextEditor *ed);
 void ME_MoveCaret(ME_TextEditor *ed);
-int ME_FindPixelPos(ME_TextEditor *editor, int x, int y, ME_Cursor *result, BOOL *is_eol);
 int ME_CharFromPos(ME_TextEditor *editor, int x, int y);
 void ME_LButtonDown(ME_TextEditor *editor, int x, int y);
 void ME_MouseMove(ME_TextEditor *editor, int x, int y);
