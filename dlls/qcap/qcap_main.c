@@ -82,66 +82,79 @@ static CFactoryTemplate const g_cTemplates[] = {
         wAudioCaptureFilter, 
         &CLSID_AudioCaptureFilter,
         QCAP_createAudioCaptureFilter,
+        NULL,
         NULL
     },{
         wAVICompressor, 
         &CLSID_AVICompressor, 
         QCAP_createAVICompressor,
+        NULL,
         NULL
     },*/{
         wVFWCaptFilter,
         &CLSID_VfwCapture,
         QCAP_createVFWCaptureFilter,
+        NULL,
         NULL
     },/*{
         wVFWCaptFilterProp,
         &CLSID_VFWCaptureFilterPropertyPage,
         QCAP_createVFWCaptureFilterPropertyPage,
+        NULL,
         NULL
     },{
         wAVIMux,
         &CLSID_AVImux,
         QCAP_createAVImux,
+        NULL,
         NULL
     },{
         wAVIMuxPropPage,
         &CLSID_AVImuxPropertyPage,
         QCAP_createAVImuxPropertyPage,
+        NULL,
         NULL
     },{
         wAVIMuxPropPage1,
         &CLSID_AVImuxPropertyPage1,
         QCAP_createAVImuxPropertyPage1,
+        NULL,
         NULL
     },{
         wFileWriter,
         &CLSID_FileWriter,
         QCAP_createFileWriter,
+        NULL,
         NULL
     },*/{
         wCaptGraphBuilder,
         &CLSID_CaptureGraphBuilder,
         QCAP_createCaptureGraphBuilder2,
+        NULL,
         NULL
     },{
         wCaptGraphBuilder2,
         &CLSID_CaptureGraphBuilder2,
         QCAP_createCaptureGraphBuilder2,
+        NULL,
         NULL
     }/*,{
         wInfPinTeeFilter, 
         &CLSID_InfinitePinTeeFilter, 
         QCAP_createInfinitePinTeeFilter,
+        NULL,
         NULL
     },{
         wSmartTeeFilter,
         &CLSID_SmartTeeFilter,
         QCAP_createSmartTeeFilter,
+        NULL,
         NULL
     },{
         wAudioInMixerProp,
         &CLSID_AudioInputMixerPropertyPage,
         QCAP_createAudioInputMixerPropertyPage,
+        NULL,
         NULL
     }*/
 };
