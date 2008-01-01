@@ -938,8 +938,8 @@ void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *p
 
   do {
     /* FIXME add more style feature comparisons */
-    int nAttribs = CFM_SIZE | CFM_FACE | CFM_COLOR;
-    int nEffects = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE;
+    int nAttribs = CFM_SIZE | CFM_FACE | CFM_COLOR | CFM_UNDERLINETYPE;
+    int nEffects = CFM_BOLD | CFM_ITALIC;
 
     run = ME_FindItemFwd(run, diRun);
 
@@ -962,6 +962,8 @@ void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *p
     }
     if (pFmt->yHeight != tmp.yHeight)
       pFmt->dwMask &= ~CFM_SIZE;
+    if (pFmt->bUnderlineType != tmp.bUnderlineType)
+      pFmt->dwMask &= ~CFM_UNDERLINETYPE;
     if (pFmt->dwMask & CFM_COLOR)
     {
       if (!((pFmt->dwEffects&CFE_AUTOCOLOR) & (tmp.dwEffects&CFE_AUTOCOLOR)))

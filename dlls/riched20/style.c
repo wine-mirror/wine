@@ -85,6 +85,20 @@ CHARFORMAT2W *ME_ToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from)
     CHARFORMATA *t = (CHARFORMATA *)to;
     CopyMemory(t, from, FIELD_OFFSET(CHARFORMATA, szFaceName));
     WideCharToMultiByte(0, 0, from->szFaceName, -1, t->szFaceName, sizeof(t->szFaceName), 0, 0);
+    if (from->dwMask & CFM_UNDERLINETYPE)
+    {
+        switch (from->bUnderlineType)
+        {
+        case CFU_CF1UNDERLINE:
+            to->dwMask |= CFM_UNDERLINE;
+            to->dwEffects |= CFE_UNDERLINE;
+            break;
+        case CFU_UNDERLINENONE:
+            to->dwMask |= CFM_UNDERLINE;
+            to->dwEffects &= ~CFE_UNDERLINE;
+            break;
+        }
+    }
     t->cbSize = sizeof(*t); /* it was overwritten by CopyMemory */
     return to;
   }
@@ -92,6 +106,20 @@ CHARFORMAT2W *ME_ToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from)
   {
     CHARFORMATW *t = (CHARFORMATW *)to;
     CopyMemory(t, from, sizeof(*t));
+    if (from->dwMask & CFM_UNDERLINETYPE)
+    {
+        switch (from->bUnderlineType)
+        {
+        case CFU_CF1UNDERLINE:
+            to->dwMask |= CFM_UNDERLINE;
+            to->dwEffects |= CFE_UNDERLINE;
+            break;
+        case CFU_UNDERLINENONE:
+            to->dwMask |= CFM_UNDERLINE;
+            to->dwEffects &= ~CFE_UNDERLINE;
+            break;
+        }
+    }
     t->cbSize = sizeof(*t); /* it was overwritten by CopyMemory */
     return to;
   }
@@ -186,6 +214,13 @@ ME_Style *ME_ApplyStyle(ME_Style *sSrc, CHARFORMAT2W *style)
       s->fmt.dwEffects |= CFE_AUTOCOLOR;
     else
       s->fmt.dwEffects &= ~CFE_AUTOCOLOR;
+  }
+  if (style->dwMask & CFM_UNDERLINE)
+  {
+      s->fmt.dwMask |= CFM_UNDERLINETYPE;
+      s->fmt.dwMask &= ~CFM_UNDERLINE;
+      s->fmt.bUnderlineType = (style->dwEffects & CFM_UNDERLINE) ?
+          CFU_CF1UNDERLINE : CFU_UNDERLINENONE;
   }
   return s;
 }
@@ -285,6 +320,8 @@ ME_LogFontFromStyle(HDC hDC, LOGFONTW *lf, const ME_Style *s, int nZoomNumerator
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_ITALIC)
     lf->lfItalic = 1;
   if (s->fmt.dwEffects & s->fmt.dwMask & (CFM_UNDERLINE | CFE_LINK))
+    lf->lfUnderline = 1;
+  if (s->fmt.dwMask & CFM_UNDERLINETYPE && s->fmt.bUnderlineType == CFU_CF1UNDERLINE)
     lf->lfUnderline = 1;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_STRIKEOUT)
     lf->lfStrikeOut = 1;
