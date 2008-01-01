@@ -68,6 +68,12 @@ static SetThreadIdealProcessor_t pSetThreadIdealProcessor=NULL;
 typedef BOOL (WINAPI *SetThreadPriorityBoost_t)(HANDLE,BOOL);
 static SetThreadPriorityBoost_t pSetThreadPriorityBoost=NULL;
 
+typedef BOOL (WINAPI *RegisterWaitForSingleObject_t)(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOID,ULONG,ULONG);
+static RegisterWaitForSingleObject_t pRegisterWaitForSingleObject=NULL;
+
+typedef BOOL (WINAPI *UnregisterWait_t)(HANDLE);
+static UnregisterWait_t pUnregisterWait=NULL;
+
 static HANDLE create_target_process(const char *arg)
 {
     char **argv;
@@ -878,6 +884,71 @@ static void test_QueueUserWorkItem(void)
     ok(times_executed == 100, "didn't execute all of the work items\n");
 }
 
+static void CALLBACK signaled_function(PVOID p, BOOLEAN TimerOrWaitFired)
+{
+    HANDLE event = p;
+    SetEvent(event);
+    ok(!TimerOrWaitFired, "wait shouldn't have timed out\n");
+}
+
+static void CALLBACK timeout_function(PVOID p, BOOLEAN TimerOrWaitFired)
+{
+    HANDLE event = p;
+    SetEvent(event);
+    ok(TimerOrWaitFired, "wait should have timed out\n");
+}
+
+static void test_RegisterWaitForSingleObject(void)
+{
+    BOOL ret;
+    HANDLE wait_handle;
+    HANDLE handle;
+    HANDLE complete_event;
+
+    if (!pRegisterWaitForSingleObject || !pUnregisterWait)
+    {
+        skip("RegisterWaitForSingleObject or UnregisterWait not implemented\n");
+        return;
+    }
+
+    /* test signaled case */
+
+    handle = CreateEvent(NULL, TRUE, TRUE, NULL);
+    complete_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    ret = pRegisterWaitForSingleObject(&wait_handle, handle, signaled_function, complete_event, INFINITE, WT_EXECUTEONLYONCE);
+    ok(ret, "RegisterWaitForSingleObject failed with error %d\n", GetLastError());
+
+    WaitForSingleObject(complete_event, INFINITE);
+    /* give worker thread chance to complete */
+    Sleep(100);
+
+    ret = pUnregisterWait(wait_handle);
+    ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
+
+    /* test cancel case */
+
+    ResetEvent(handle);
+
+    ret = pRegisterWaitForSingleObject(&wait_handle, handle, signaled_function, complete_event, INFINITE, WT_EXECUTEONLYONCE);
+    ok(ret, "RegisterWaitForSingleObject failed with error %d\n", GetLastError());
+
+    ret = pUnregisterWait(wait_handle);
+    ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
+
+    /* test timeout case */
+
+    ret = pRegisterWaitForSingleObject(&wait_handle, handle, timeout_function, complete_event, 0, WT_EXECUTEONLYONCE);
+    ok(ret, "RegisterWaitForSingleObject failed with error %d\n", GetLastError());
+
+    WaitForSingleObject(complete_event, INFINITE);
+    /* give worker thread chance to complete */
+    Sleep(100);
+
+    ret = pUnregisterWait(wait_handle);
+    ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
+}
+
 START_TEST(thread)
 {
    HINSTANCE lib;
@@ -894,6 +965,8 @@ START_TEST(thread)
    pQueueUserWorkItem=(QueueUserWorkItem_t)GetProcAddress(lib,"QueueUserWorkItem");
    pSetThreadIdealProcessor=(SetThreadIdealProcessor_t)GetProcAddress(lib,"SetThreadIdealProcessor");
    pSetThreadPriorityBoost=(SetThreadPriorityBoost_t)GetProcAddress(lib,"SetThreadPriorityBoost");
+   pRegisterWaitForSingleObject=(RegisterWaitForSingleObject_t)GetProcAddress(lib,"RegisterWaitForSingleObject");
+   pUnregisterWait=(UnregisterWait_t)GetProcAddress(lib,"UnregisterWait");
 
    if (argc >= 3)
    {
@@ -934,4 +1007,5 @@ START_TEST(thread)
    test_SetThreadContext();
 #endif
    test_QueueUserWorkItem();
+   test_RegisterWaitForSingleObject();
 }
