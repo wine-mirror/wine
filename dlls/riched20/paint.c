@@ -146,13 +146,12 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, in
   ME_Style *s, int *width, int nSelFrom, int nSelTo, int ymin, int cy) {
   HDC hDC = c->hDC;
   HGDIOBJ hOldFont;
-  COLORREF rgbOld, rgbBack;
+  COLORREF rgbOld;
   int yOffset = 0, yTwipsOffset = 0;
   SIZE          sz;
   COLORREF      rgb;
 
   hOldFont = ME_SelectStyleFont(c->editor, hDC, s);
-  rgbBack = ME_GetBackColor(c->editor);
   if ((s->fmt.dwMask & CFM_LINK) && (s->fmt.dwEffects & CFE_LINK))
     rgb = RGB(0,0,255);
   else if ((s->fmt.dwMask & CFM_COLOR) && (s->fmt.dwEffects & CFE_AUTOCOLOR))
@@ -309,17 +308,6 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     }
 }
 
-COLORREF ME_GetBackColor(const ME_TextEditor *editor)
-{
-/* Looks like I was seriously confused
-    return GetSysColor((GetWindowLong(editor->hWnd, GWL_STYLE) & ES_READONLY) ? COLOR_3DFACE: COLOR_WINDOW);
-*/
-  if (editor->rgbBackColor == -1)
-    return GetSysColor(COLOR_WINDOW);
-  else
-    return editor->rgbBackColor;
-}
-
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   int align = SetTextAlign(c->hDC, TA_BASELINE);
   ME_DisplayItem *p;
@@ -350,22 +338,19 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         rcPara.bottom = y+p->member.row.nHeight;
         visible = RectVisible(c->hDC, &rcPara);
         if (visible) {
-          HBRUSH hbr;
-          hbr = CreateSolidBrush(ME_GetBackColor(c->editor));
           /* left margin */
           rc.left = c->rcView.left;
           rc.right = c->rcView.left+nMargWidth;
           rc.top = y;
           rc.bottom = y+p->member.row.nHeight;
-          FillRect(c->hDC, &rc, hbr/* c->hbrMargin */);
+          FillRect(c->hDC, &rc, c->editor->hbrBackground);
           /* right margin */
           rc.left = xe;
           rc.right = c->rcView.right;
-          FillRect(c->hDC, &rc, hbr/* c->hbrMargin */);
+          FillRect(c->hDC, &rc, c->editor->hbrBackground);
           rc.left = c->rcView.left+nMargWidth;
           rc.right = xe;
-          FillRect(c->hDC, &rc, hbr);
-          DeleteObject(hbr);
+          FillRect(c->hDC, &rc, c->editor->hbrBackground);
         }
         if (me_debug)
         {

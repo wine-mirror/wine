@@ -1284,7 +1284,8 @@ void ME_DestroyEditor(ME_TextEditor *editor)
     if (editor->pFontCache[i].hFont)
       DeleteObject(editor->pFontCache[i].hFont);
   }
-  DeleteObject(editor->hbrBackground);
+  if (editor->rgbBackColor != -1)
+    DeleteObject(editor->hbrBackground);
   if(editor->lpOleCallback)
     IUnknown_Release(editor->lpOleCallback);
 
@@ -1732,9 +1733,13 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   }
   case EM_SETBKGNDCOLOR:
   {
-    LRESULT lColor = ME_GetBackColor(editor);
-    if (editor->rgbBackColor != -1)
+    LRESULT lColor;
+    if (editor->rgbBackColor != -1) {
       DeleteObject(editor->hbrBackground);
+      lColor = editor->rgbBackColor;
+    }
+    else lColor = GetSysColor(COLOR_WINDOW);
+
     if (wParam)
     {
       editor->rgbBackColor = -1;

@@ -239,7 +239,6 @@ void ME_RewrapRepaint(ME_TextEditor *editor);
 void ME_UpdateRepaint(ME_TextEditor *editor);
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
-COLORREF ME_GetBackColor(const ME_TextEditor *editor);
 void ME_InvalidateSelection(ME_TextEditor *editor);
 void ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator);
