@@ -3508,7 +3508,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                 (dwFlags & COWAIT_ALERTABLE) ? TRUE : FALSE);
         }
 
-        if ((res >= WAIT_OBJECT_0) && (res < WAIT_OBJECT_0 + cHandles))
+        if (res < WAIT_OBJECT_0 + cHandles)
         {
             /* handle signaled, store index */
             *lpdwindex = (res - WAIT_OBJECT_0);
