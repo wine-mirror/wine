@@ -1289,7 +1289,12 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
 
             PixelFormat_WineD3DtoDD(&callback_sd.u4.ddpfPixelFormat, mode.Format);
 
-            TRACE("Enumerating %dx%d@%d\n", callback_sd.dwWidth, callback_sd.dwHeight, callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount);
+            /* Calc pitch and DWORD align like MSDN says */
+            callback_sd.u1.lPitch = (callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount / 8) * mode.Width;
+            callback_sd.u1.lPitch = (callback_sd.u1.lPitch + 3) & ~3;
+
+            TRACE("Enumerating %dx%dx%d @%d\n", callback_sd.dwWidth, callback_sd.dwHeight, callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount,
+              callback_sd.u2.dwRefreshRate);
 
             if(cb(&callback_sd, Context) == DDENUMRET_CANCEL)
             {
