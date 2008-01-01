@@ -2660,7 +2660,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_SendRequestResize(editor, TRUE);
     return 0;
   case WM_SETREDRAW:
-    editor->bRedraw = wParam;
+    if ((editor->bRedraw = wParam))
+      ME_RewrapRepaint(editor);
     return 0;
   case WM_SIZE:
   {

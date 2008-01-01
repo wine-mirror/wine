@@ -109,7 +109,8 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
 {
   /* Should be called whenever the contents of the control have changed */
   ME_Cursor *pCursor;
-  
+
+  if (!editor->bRedraw) return;
   if (ME_WrapMarkedParagraphs(editor))
     ME_UpdateScrollBar(editor);
   
@@ -135,10 +136,12 @@ ME_RewrapRepaint(ME_TextEditor *editor)
    * looks, but not content. Like resizing. */
   
   ME_MarkAllForWrapping(editor);
-  ME_WrapMarkedParagraphs(editor);
-  ME_UpdateScrollBar(editor);
-  
-  ME_Repaint(editor);
+  if (editor->bRedraw)
+  {
+    ME_WrapMarkedParagraphs(editor);
+    ME_UpdateScrollBar(editor);
+    ME_Repaint(editor);
+  }
 }
 
 int ME_twips2pointsX(ME_Context *c, int x)
