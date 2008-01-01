@@ -174,7 +174,9 @@ ME_Style *ME_ApplyStyle(ME_Style *sSrc, CHARFORMAT2W *style)
   COPY_STYLE_ITEM(CFM_STYLE, sStyle);
   COPY_STYLE_ITEM(CFM_UNDERLINETYPE, bUnderlineType);
   COPY_STYLE_ITEM(CFM_WEIGHT, wWeight);
-  
+  /* FIXME: this is not documented this way, but that's the more logical */
+  COPY_STYLE_ITEM(CFM_FACE, bPitchAndFamily);
+
   s->fmt.dwEffects &= ~(style->dwMask);
   s->fmt.dwEffects |= style->dwEffects & style->dwMask;
   s->fmt.dwMask |= style->dwMask;
