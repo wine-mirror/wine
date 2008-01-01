@@ -604,10 +604,11 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
             }
         }
         if(This->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
-            if(((IWineD3DDeviceImpl *) This->baseShader.device)->strided_streams.u.s.position_transformed &&
-                 This->vertexprocessing != pretransformed) {
-                WARN("Recompiling shader because pretransformed vertices are provided, which wasn't the case before\n");
-                goto recompile;
+            if(((IWineD3DDeviceImpl *) This->baseShader.device)->strided_streams.u.s.position_transformed) {
+                if(This->vertexprocessing != pretransformed) {
+                    WARN("Recompiling shader because pretransformed vertices are provided, which wasn't the case before\n");
+                    goto recompile;
+                }
             } else if(!use_vs((IWineD3DDeviceImpl *) This->baseShader.device) &&
                        This->vertexprocessing != fixedfunction) {
                 WARN("Recompiling shader because fixed function vp is in use, which wasn't the case before\n");
