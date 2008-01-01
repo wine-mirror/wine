@@ -61,6 +61,7 @@ void ME_MakeFirstParagraph(HDC hDC, ME_TextBuffer *text)
   ZeroMemory(&fmt, sizeof(fmt));
   fmt.cbSize = sizeof(fmt);
   fmt.dwMask = PFM_ALIGNMENT | PFM_OFFSET | PFM_STARTINDENT | PFM_RIGHTINDENT | PFM_TABSTOPS;
+  fmt.wAlignment = PFA_LEFT;
 
   CopyMemory(para->member.para.pFmt, &fmt, sizeof(PARAFORMAT2));
   
