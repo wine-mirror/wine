@@ -306,6 +306,131 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     }
 }
 
+static struct {unsigned width_num : 4, width_den : 4, pen_style : 4, dble : 1;} border_details[] = {
+  /* none */            {0, 0, PS_SOLID, FALSE},
+  /* 3/4 */             {3, 4, PS_SOLID, FALSE},
+  /* 1 1/2 */           {3, 2, PS_SOLID, FALSE},
+  /* 2 1/4 */           {9, 4, PS_SOLID, FALSE},
+  /* 3 */               {3, 1, PS_SOLID, FALSE},
+  /* 4 1/2 */           {9, 2, PS_SOLID, FALSE},
+  /* 6 */               {6, 1, PS_SOLID, FALSE},
+  /* 3/4 double */      {3, 4, PS_SOLID, TRUE},
+  /* 1 1/2 double */    {3, 2, PS_SOLID, TRUE},
+  /* 2 1/4 double */    {9, 4, PS_SOLID, TRUE},
+  /* 3/4 gray */        {3, 4, PS_DOT /* FIXME */, FALSE},
+  /* 1 1/2 dashed */    {3, 2, PS_DASH, FALSE},
+};
+
+static COLORREF         pen_colors[16] = {
+  /* Black */           RGB(0x00, 0x00, 0x00),  /* Blue */            RGB(0x00, 0x00, 0xFF),
+  /* Cyan */            RGB(0x00, 0xFF, 0xFF),  /* Green */           RGB(0x00, 0xFF, 0x00),
+  /* Magenta */         RGB(0xFF, 0x00, 0xFF),  /* Red */             RGB(0xFF, 0x00, 0x00),
+  /* Yellow */          RGB(0xFF, 0xFF, 0x00),  /* White */           RGB(0xFF, 0xFF, 0xFF),
+  /* Dark blue */       RGB(0x00, 0x00, 0x80),  /* Dark cyan */       RGB(0x00, 0x80, 0x80),
+  /* Dark green */      RGB(0x00, 0x80, 0x80),  /* Dark magenta */    RGB(0x80, 0x00, 0x80),
+  /* Dark red */        RGB(0x80, 0x00, 0x00),  /* Dark yellow */     RGB(0x80, 0x80, 0x00),
+  /* Dark gray */       RGB(0x80, 0x80, 0x80),  /* Light gray */      RGB(0xc0, 0xc0, 0xc0),
+};
+
+static int ME_GetBorderPenWidth(ME_TextEditor* editor, int idx)
+{
+  int width;
+
+  if (editor->nZoomNumerator == 0)
+  {
+      width = border_details[idx].width_num + border_details[idx].width_den / 2;
+      width /= border_details[idx].width_den;
+  }
+  else
+  {
+      width = border_details[idx].width_num * editor->nZoomNumerator;
+      width += border_details[idx].width_den * editor->nZoomNumerator / 2;
+      width /= border_details[idx].width_den * editor->nZoomDenominator;
+  }
+  return width;
+}
+
+int  ME_GetParaBorderWidth(ME_TextEditor* editor, int flags)
+{
+  int idx = (flags >> 8) & 0xF;
+  int width;
+
+  if (idx >= sizeof(border_details) / sizeof(border_details[0]))
+  {
+      FIXME("Unsupported border value %d\n", idx);
+      return 0;
+  }
+  width = ME_GetBorderPenWidth(editor, idx);
+  if (border_details[idx].dble) width = width * 2 + 1;
+  return width;
+}
+
+static int ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y)
+{
+  HPEN          pen, oldpen;
+  POINT         pt;
+  int           idx, pen_width, border_width;
+  COLORREF      pencr;
+
+  if (!(para->pFmt->dwMask & PFM_BORDER)) return 0;
+
+  if (para->pFmt->wBorders & 0x00B0)
+      FIXME("Unsupported border flags %x\n", para->pFmt->wBorders);
+  border_width = ME_GetParaBorderWidth(c->editor, para->pFmt->wBorders);
+  if (border_width == 0 || !(para->pFmt->wBorders & 0xF)) return 0;
+  idx = (para->pFmt->wBorders >> 8) & 0xF;
+
+  if (para->pFmt->wBorders & 64) /* autocolor */
+      pencr = GetSysColor(COLOR_WINDOWTEXT);
+  else
+      pencr = pen_colors[(para->pFmt->wBorders >> 12) & 0xF];
+
+  pen_width = ME_GetBorderPenWidth(c->editor, idx);
+  pen = CreatePen(border_details[idx].pen_style, pen_width, pencr);
+  oldpen = SelectObject(c->hDC, pen);
+  MoveToEx(c->hDC, 0, 0, &pt);
+  if (para->pFmt->wBorders & 1)
+  {
+    MoveToEx(c->hDC, c->rcView.left, y, NULL);
+    LineTo(c->hDC, c->rcView.left, y + para->nHeight);
+    if (border_details[idx].dble) {
+      MoveToEx(c->hDC, c->rcView.left + pen_width + 1, y + pen_width + 1, NULL);
+      LineTo(c->hDC, c->rcView.left + pen_width + 1, y + para->nHeight - pen_width - 1);
+    }
+  }
+  if (para->pFmt->wBorders & 2)
+  {
+    MoveToEx(c->hDC, c->rcView.right, y, NULL);
+    LineTo(c->hDC, c->rcView.right, y + para->nHeight);
+    if (border_details[idx].dble) {
+      MoveToEx(c->hDC, c->rcView.right - pen_width - 1, y + pen_width + 1, NULL);
+      LineTo(c->hDC, c->rcView.right - pen_width - 1, y + para->nHeight - pen_width - 1);
+    }
+  }
+  if (para->pFmt->wBorders & 4)
+  {
+    MoveToEx(c->hDC, c->rcView.left, y, NULL);
+    LineTo(c->hDC, c->rcView.right, y);
+    if (border_details[idx].dble) {
+      MoveToEx(c->hDC, c->rcView.left + pen_width + 1, y + pen_width + 1, NULL);
+      LineTo(c->hDC, c->rcView.right - pen_width - 1, y + pen_width + 1);
+    }
+  }
+  if (para->pFmt->wBorders & 8)
+  {
+    MoveToEx(c->hDC, c->rcView.left, y + para->nHeight - 1, NULL);
+    LineTo(c->hDC, c->rcView.right, y + para->nHeight - 1);
+    if (border_details[idx].dble) {
+      MoveToEx(c->hDC, c->rcView.left + pen_width + 1, y + para->nHeight - 1 - pen_width - 1, NULL);
+      LineTo(c->hDC, c->rcView.right - pen_width - 1, y + para->nHeight - 1 - pen_width - 1);
+    }
+  }
+  MoveToEx(c->hDC, pt.x, pt.y, NULL);
+  SelectObject(c->hDC, oldpen);
+  DeleteObject(pen);
+  return (para->pFmt->wBorders & 4) ? border_width : 0;
+}
+
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   int align = SetTextAlign(c->hDC, TA_BASELINE);
   int dpi = GetDeviceCaps(c->hDC, LOGPIXELSX);
@@ -318,7 +443,7 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   int xs = 0, xe = 0;
   BOOL visible = FALSE;
   int nMargWidth = 0;
-  
+
   c->pt.x = c->rcView.left;
   rcPara.left = c->rcView.left;
   rcPara.right = c->rcView.right;
@@ -332,6 +457,7 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
           nMargWidth += ME_twips2points(c, para->pFmt->dxOffset, dpi);
         xs = c->rcView.left+nMargWidth;
         xe = c->rcView.right - ME_twips2points(c, para->pFmt->dxRightIndent, dpi);
+        y += ME_DrawParaDecoration(c, para, y);
         break;
       case diStartRow:
         y += height;

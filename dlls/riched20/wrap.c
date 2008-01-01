@@ -342,6 +342,7 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   ME_DisplayItem *p;
   ME_WrapContext wc;
   int dpi = GetDeviceCaps(c->hDC, LOGPIXELSX);
+  int border = 0;
 
   assert(tp->type == diParagraph);
   if (!(tp->member.para.nFlags & MEPF_REWRAP)) {
@@ -358,6 +359,19 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   wc.nRow = 0;
   wc.pt.x = 0;
   wc.pt.y = 0;
+  if (tp->member.para.pFmt->dwMask & PFM_BORDER)
+  {
+    border = ME_GetParaBorderWidth(c->editor, tp->member.para.pFmt->wBorders);
+    if (tp->member.para.pFmt->wBorders & 1) {
+      wc.nFirstMargin += border;
+      wc.nLeftMargin += border;
+    }
+    if (tp->member.para.pFmt->wBorders & 2)
+      wc.nRightMargin -= border;
+    if (tp->member.para.pFmt->wBorders & 4)
+      wc.pt.y += border;
+  }
+
   wc.nTotalWidth = c->rcView.right - c->rcView.left;
   wc.nAvailWidth = wc.nTotalWidth - wc.nFirstMargin - wc.nRightMargin;
   wc.pRowStart = NULL;
@@ -372,6 +386,9 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
     p = p->next;
   }
   ME_WrapEndParagraph(&wc, p);
+  if ((tp->member.para.pFmt->dwMask & PFM_BORDER) && (tp->member.para.pFmt->wBorders & 8))
+    wc.pt.y += border;
+
   tp->member.para.nFlags &= ~MEPF_REWRAP;
   tp->member.para.nHeight = wc.pt.y;
   tp->member.para.nRows = wc.nRow;

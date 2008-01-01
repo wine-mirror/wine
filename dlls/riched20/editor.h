@@ -254,6 +254,9 @@ void ME_UpdateScrollBar(ME_TextEditor *editor);
 int ME_GetYScrollPos(ME_TextEditor *editor);
 BOOL ME_GetYScrollVisible(ME_TextEditor *editor);
 
+/* other functions in paint.c */
+int  ME_GetParaBorderWidth(ME_TextEditor *editor, int);
+
 /* richole.c */
 extern LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *);
 
