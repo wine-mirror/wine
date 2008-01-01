@@ -217,10 +217,10 @@
 @ varargs _execle(str str)
 @ varargs _execlp(str str)
 @ varargs _execlpe(str str)
-@ cdecl _execv(str str)
-@ cdecl _execve(str str str) MSVCRT__execve
-@ cdecl _execvp(str str)
-@ cdecl _execvpe(str str str)
+@ cdecl _execv(str ptr)
+@ cdecl _execve(str ptr ptr) MSVCRT__execve
+@ cdecl _execvp(str ptr)
+@ cdecl _execvpe(str ptr ptr)
 @ cdecl _exit(long) MSVCRT__exit
 @ cdecl _expand(ptr long)
 @ cdecl _fcloseall() MSVCRT__fcloseall
