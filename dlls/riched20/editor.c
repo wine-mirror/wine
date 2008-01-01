@@ -1159,14 +1159,12 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
 
 ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
-  HDC hDC;
   int i;
   ed->hWnd = hWnd;
   ed->bEmulateVersion10 = FALSE;
   ed->pBuffer = ME_MakeText();
-  hDC = GetDC(hWnd);
-  ME_MakeFirstParagraph(hDC, ed->pBuffer);
-  ReleaseDC(hWnd, hDC);
+  ed->nZoomNumerator = ed->nZoomDenominator = 0;
+  ME_MakeFirstParagraph(ed);
   ed->bCaretShown = FALSE;
   ed->nCursors = 4;
   ed->pCursors = ALLOC_N_OBJ(ME_Cursor, ed->nCursors);
@@ -1191,7 +1189,6 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
-  ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ed->bRedraw = TRUE;
   ed->bHideSelection = FALSE;
   ed->nInvalidOfs = -1;

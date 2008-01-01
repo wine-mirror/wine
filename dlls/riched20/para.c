@@ -25,16 +25,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 static const WCHAR wszParagraphSign[] = {0xB6, 0};
 
-void ME_MakeFirstParagraph(HDC hDC, ME_TextBuffer *text)
+void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
+  ME_Context c;
+  HDC hDC;
   PARAFORMAT2 fmt;
   CHARFORMAT2W cf;
   LOGFONTW lf;
   HFONT hf;
+  ME_TextBuffer *text = editor->pBuffer;
   ME_DisplayItem *para = ME_MakeDI(diParagraph);
   ME_DisplayItem *run;
   ME_Style *style;
 
+  hDC = GetDC(editor->hWnd);
+
+  ME_InitContext(&c, editor, hDC);
   hf = (HFONT)GetStockObject(SYSTEM_FONT);
   assert(hf);
   GetObjectW(hf, sizeof(LOGFONTW), &lf);
@@ -48,9 +54,8 @@ void ME_MakeFirstParagraph(HDC hDC, ME_TextBuffer *text)
   
   cf.dwEffects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
   lstrcpyW(cf.szFaceName, lf.lfFaceName);
-  cf.yHeight=lf.lfHeight*1440/GetDeviceCaps(hDC, LOGPIXELSY);
-  if (lf.lfWeight>=700) /* FIXME correct weight ? */
-    cf.dwEffects |= CFE_BOLD;
+  cf.yHeight = ME_twips2pointsY(&c, lf.lfHeight);
+  if (lf.lfWeight >= 700) cf.dwEffects |= CFE_BOLD;
   cf.wWeight = lf.lfWeight;
   if (lf.lfItalic) cf.dwEffects |= CFE_ITALIC;
   cf.bUnderlineType = (lf.lfUnderline) ? CFU_CF1UNDERLINE : CFU_UNDERLINENONE;
@@ -79,6 +84,9 @@ void ME_MakeFirstParagraph(HDC hDC, ME_TextBuffer *text)
   text->pLast->member.para.prev_para = para;
 
   text->pLast->member.para.nCharOfs = 1;
+
+  ME_DestroyContext(&c);
+  ReleaseDC(editor->hWnd, hDC);
 }
  
 void ME_MarkAllForWrapping(ME_TextEditor *editor)
