@@ -397,7 +397,7 @@
 @ stdcall RectInRegion(long ptr)
 @ stdcall RectVisible(long ptr)
 @ stdcall Rectangle(long long long long long)
-# @ stub RemoveFontMemResourceEx
+@ stdcall RemoveFontMemResourceEx(ptr)
 @ stdcall RemoveFontResourceA(str)
 @ stdcall RemoveFontResourceExA(str long ptr)
 @ stdcall RemoveFontResourceExW(wstr long ptr)
