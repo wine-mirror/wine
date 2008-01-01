@@ -44,7 +44,7 @@ void ME_MakeFirstParagraph(HDC hDC, ME_TextBuffer *text)
   cf.dwMask |= CFM_ALLCAPS|CFM_BOLD|CFM_DISABLED|CFM_EMBOSS|CFM_HIDDEN;
   cf.dwMask |= CFM_IMPRINT|CFM_ITALIC|CFM_LINK|CFM_OUTLINE|CFM_PROTECTED;
   cf.dwMask |= CFM_REVISED|CFM_SHADOW|CFM_SMALLCAPS|CFM_STRIKEOUT;
-  cf.dwMask |= CFM_SUBSCRIPT|CFM_UNDERLINE;
+  cf.dwMask |= CFM_SUBSCRIPT|CFM_UNDERLINE|CFM_WEIGHT;
   
   cf.dwEffects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
   lstrcpyW(cf.szFaceName, lf.lfFaceName);
@@ -55,7 +55,9 @@ void ME_MakeFirstParagraph(HDC hDC, ME_TextBuffer *text)
   if (lf.lfItalic) cf.dwEffects |= CFE_ITALIC;
   if (lf.lfUnderline) cf.dwEffects |= CFE_UNDERLINE;
   if (lf.lfStrikeOut) cf.dwEffects |= CFE_STRIKEOUT;
-  
+  cf.bPitchAndFamily = lf.lfPitchAndFamily;
+  cf.bCharSet = lf.lfCharSet;
+
   ZeroMemory(&fmt, sizeof(fmt));
   fmt.cbSize = sizeof(fmt);
   fmt.dwMask = PFM_ALIGNMENT | PFM_OFFSET | PFM_STARTINDENT | PFM_RIGHTINDENT | PFM_TABSTOPS;
