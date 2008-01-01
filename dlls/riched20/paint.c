@@ -148,14 +148,18 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, in
   HGDIOBJ hOldFont;
   COLORREF rgbOld, rgbBack;
   int yOffset = 0, yTwipsOffset = 0;
+  SIZE          sz;
+  COLORREF      rgb;
+
   hOldFont = ME_SelectStyleFont(c->editor, hDC, s);
   rgbBack = ME_GetBackColor(c->editor);
   if ((s->fmt.dwMask & CFM_LINK) && (s->fmt.dwEffects & CFE_LINK))
-    rgbOld = SetTextColor(hDC, RGB(0,0,255));  
+    rgb = RGB(0,0,255);
   else if ((s->fmt.dwMask & CFM_COLOR) && (s->fmt.dwEffects & CFE_AUTOCOLOR))
-    rgbOld = SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
+    rgb = GetSysColor(COLOR_WINDOWTEXT);
   else
-    rgbOld = SetTextColor(hDC, s->fmt.crTextColor);
+    rgb = s->fmt.crTextColor;
+  rgbOld = SetTextColor(hDC, rgb);
   if ((s->fmt.dwMask & s->fmt.dwEffects) & CFM_OFFSET) {
     yTwipsOffset = s->fmt.yOffset;
   }
@@ -176,14 +180,41 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, in
     yOffset = yTwipsOffset * GetDeviceCaps(hDC, LOGPIXELSY) * numerator / denominator / 1440;
   }
   ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, nChars, NULL);
-  if (width) {
-    SIZE sz;
-    GetTextExtentPoint32W(hDC, szText, nChars, &sz);
-    *width = sz.cx;
+  GetTextExtentPoint32W(hDC, szText, nChars, &sz);
+  if (width) *width = sz.cx;
+  if (s->fmt.dwMask & CFM_UNDERLINETYPE)
+  {
+    HPEN    hPen;
+    switch (s->fmt.bUnderlineType)
+    {
+    case CFU_UNDERLINE:
+    case CFU_UNDERLINEWORD: /* native seems to map it to simple underline (MSDN) */
+    case CFU_UNDERLINEDOUBLE: /* native seems to map it to simple underline (MSDN) */
+      hPen = CreatePen(PS_SOLID, 1, rgb);
+      break;
+    case CFU_UNDERLINEDOTTED:
+      hPen = CreatePen(PS_DOT, 1, rgb);
+      break;
+    default:
+      WINE_FIXME("Unknown underline type (%u)\n", s->fmt.bUnderlineType);
+      /* fall through */
+    case CFU_CF1UNDERLINE: /* this type is supported in the font, do nothing */
+    case CFU_UNDERLINENONE:
+      hPen = NULL;
+      break;
+    }
+    if (hPen != NULL)
+    {
+      HPEN hOldPen = SelectObject(hDC, hPen);
+      /* FIXME: should use textmetrics info for Descent info */
+      MoveToEx(hDC, x, y - yOffset + 1, NULL);
+      LineTo(hDC, x + sz.cx, y - yOffset + 1);
+      SelectObject(hDC, hOldPen);
+      DeleteObject(hPen);
+    }
   }
   if (nSelFrom < nChars && nSelTo >= 0 && nSelFrom<nSelTo)
   {
-    SIZE sz;
     if (nSelFrom < 0) nSelFrom = 0;
     if (nSelTo > nChars) nSelTo = nChars;
     GetTextExtentPoint32W(hDC, szText, nSelFrom, &sz);
