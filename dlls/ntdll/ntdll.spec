@@ -521,8 +521,8 @@
 # @ stub RtlDeleteTimer
 # @ stub RtlDeleteTimerQueue
 # @ stub RtlDeleteTimerQueueEx
-# @ stub RtlDeregisterWait
-# @ stub RtlDeregisterWaitEx
+@ stdcall RtlDeregisterWait(ptr)
+@ stdcall RtlDeregisterWaitEx(ptr ptr)
 @ stdcall RtlDestroyAtomTable(ptr)
 @ stdcall RtlDestroyEnvironment(ptr)
 @ stdcall RtlDestroyHandleTable(ptr)
@@ -793,7 +793,7 @@
 @ stub RtlRealPredecessor
 @ stub RtlRealSuccessor
 @ stub RtlRegisterSecureMemoryCacheCallback
-@ stub RtlRegisterWait
+@ stdcall RtlRegisterWait(ptr ptr ptr ptr long long)
 @ stdcall RtlReleaseActivationContext(ptr)
 @ stub RtlReleaseMemoryStream
 @ stdcall RtlReleasePebLock()
