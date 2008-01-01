@@ -487,11 +487,10 @@ void ME_GetGraphicsSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize)
  * pixel horizontal position. This version rounds left (ie. if the second
  * character is at pixel position 8, then for cx=0..7 it returns 0).  
  */     
-int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run)
+int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
 {
   int fit = 0;
   HGDIOBJ hOldFont;
-  HDC hDC;
   SIZE sz;
   if (!run->strText->nLen)
     return 0;
@@ -505,29 +504,28 @@ int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run)
   if (run->nFlags & MERF_GRAPHICS)
   {
     SIZE sz;
-    ME_GetGraphicsSize(editor, run, &sz);
+    ME_GetGraphicsSize(c->editor, run, &sz);
     if (cx < sz.cx)
       return 0;
     return 1;
   }
-  hDC = GetDC(editor->hWnd);
-  hOldFont = ME_SelectStyleFont(editor, hDC, run->style);
+  hOldFont = ME_SelectStyleFont(c->editor, c->hDC, run->style);
   
-  if (editor->cPasswordMask)
+  if (c->editor->cPasswordMask)
   {
-    ME_String *strMasked = ME_MakeStringR(editor->cPasswordMask,ME_StrVLen(run->strText));
-    GetTextExtentExPointW(hDC, strMasked->szData, run->strText->nLen,
+    ME_String *strMasked = ME_MakeStringR(c->editor->cPasswordMask,ME_StrVLen(run->strText));
+    GetTextExtentExPointW(c->hDC, strMasked->szData, run->strText->nLen,
       cx, &fit, NULL, &sz);
     ME_DestroyString(strMasked);
   }
   else
   {
-    GetTextExtentExPointW(hDC, run->strText->szData, run->strText->nLen,
+    GetTextExtentExPointW(c->hDC, run->strText->szData, run->strText->nLen,
       cx, &fit, NULL, &sz);
   }
   
-  ME_UnselectStyleFont(editor, hDC, run->style, hOldFont);
-  ReleaseDC(editor->hWnd, hDC);
+  ME_UnselectStyleFont(c->editor, c->hDC, run->style, hOldFont);
+
   return fit;
 }
 

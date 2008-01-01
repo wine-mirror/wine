@@ -150,7 +150,7 @@ ME_DisplayItem *ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor,
 void ME_CheckCharOffsets(ME_TextEditor *editor);
 void ME_PropagateCharOffset(ME_DisplayItem *p, int shift);
 void ME_GetGraphicsSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize);
-int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run);
+int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run);
 /* this one accounts for 1/2 char tolerance */
 int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run);
 int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset);

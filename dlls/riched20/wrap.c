@@ -168,7 +168,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
   int i, idesp, len;
   ME_Run *run = &p->member.run;
 
-  idesp = i = ME_CharFromPoint(wc->context->editor, loc, run);
+  idesp = i = ME_CharFromPoint(wc->context, loc, run);
   len = ME_StrVLen(run->strText);
   assert(len>0);
   assert(i<len);
