@@ -1022,6 +1022,11 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_7400;
                     vidmem = 256; /* The 7400 uses 256-512MB */
                 }
+                /* Geforce7 lowend */
+                else if(strstr(gl_info->gl_renderer, "7300")) {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_7300;
+                    vidmem = 256; /* Mac Pros with this card have 256 MB */
+                }
                 /* Geforce6 highend */
                 else if(strstr(gl_info->gl_renderer, "6800"))
                 {
