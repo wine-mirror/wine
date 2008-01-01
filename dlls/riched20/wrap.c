@@ -521,9 +521,11 @@ ME_SendRequestResize(ME_TextEditor *editor, BOOL force)
       info.nmhdr.code = EN_REQUESTRESIZE;
       info.rc = rc;
       info.rc.bottom = editor->nTotalLength;
-    
+
+      editor->nEventMask &= ~ENM_REQUESTRESIZE;
       SendMessageW(GetParent(editor->hWnd), WM_NOTIFY,
                    info.nmhdr.idFrom, (LPARAM)&info);
+      editor->nEventMask |= ENM_REQUESTRESIZE;
     }
   }
 }
