@@ -60,8 +60,8 @@ void ME_AddRefStyle(ME_Style *item);
 void ME_ReleaseStyle(ME_Style *item);
 ME_Style *ME_GetInsertStyle(ME_TextEditor *editor, int nCursor);
 ME_Style *ME_ApplyStyle(ME_Style *sSrc, CHARFORMAT2W *style);
-HFONT ME_SelectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s);
-void ME_UnselectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s, HFONT hOldFont);
+HFONT ME_SelectStyleFont(ME_Context *c, ME_Style *s);
+void ME_UnselectStyleFont(ME_Context *c, ME_Style *s, HFONT hOldFont);
 void ME_InitCharFormat2W(CHARFORMAT2W *pFmt);
 void ME_SaveTempStyle(ME_TextEditor *editor);
 void ME_ClearTempStyle(ME_TextEditor *editor);
@@ -213,7 +213,8 @@ BOOL ME_UpdateSelection(ME_TextEditor *editor, const ME_Cursor *pTempCursor);
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor);
 void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor);
 void ME_SendRequestResize(ME_TextEditor *editor, BOOL force);
-int  ME_twips2points(ME_Context *c, int x, int dpi);
+int  ME_twips2pointsX(ME_Context *c, int x);
+int  ME_twips2pointsY(ME_Context *c, int y);
 
 /* para.c */
 ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run); 
@@ -255,7 +256,7 @@ BOOL ME_GetYScrollVisible(ME_TextEditor *editor);
 
 /* other functions in paint.c */
 int  ME_GetParaBorderWidth(ME_TextEditor *editor, int);
-int  ME_GetParaLineSpace(ME_TextEditor *editor, ME_Paragraph*, int);
+int  ME_GetParaLineSpace(ME_Context *c, ME_Paragraph*);
 
 /* richole.c */
 extern LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *);

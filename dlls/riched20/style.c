@@ -297,20 +297,12 @@ void ME_DumpStyleToBuf(CHARFORMAT2W *pFmt, char buf[2048])
 
 
 static void
-ME_LogFontFromStyle(HDC hDC, LOGFONTW *lf, const ME_Style *s, int nZoomNumerator, int nZoomDenominator)
+ME_LogFontFromStyle(ME_Context* c, LOGFONTW *lf, const ME_Style *s)
 {
-  int rx, ry;
-  rx = GetDeviceCaps(hDC, LOGPIXELSX);
-  ry = GetDeviceCaps(hDC, LOGPIXELSY);
   ZeroMemory(lf, sizeof(LOGFONTW));
   lstrcpyW(lf->lfFaceName, s->fmt.szFaceName);
 
-  if (nZoomNumerator == 0)
-  {
-    nZoomNumerator = 1;
-    nZoomDenominator = 1;
-  }
-  lf->lfHeight = -s->fmt.yHeight*ry*nZoomNumerator/nZoomDenominator/1440;
+  lf->lfHeight = ME_twips2pointsY(c, -s->fmt.yHeight);
   
   lf->lfWeight = 400;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_BOLD)
@@ -363,22 +355,22 @@ static BOOL ME_IsFontEqual(const LOGFONTW *p1, const LOGFONTW *p2)
   return TRUE;
 }
 
-HFONT ME_SelectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s)
+HFONT ME_SelectStyleFont(ME_Context *c, ME_Style *s)
 {
   HFONT hOldFont;
   LOGFONTW lf;
   int i, nEmpty, nAge = 0x7FFFFFFF;
   ME_FontCacheItem *item;
-  assert(hDC);
+  assert(c->hDC);
   assert(s);
   
-  ME_LogFontFromStyle(hDC, &lf, s, editor->nZoomNumerator, editor->nZoomDenominator);
+  ME_LogFontFromStyle(c, &lf, s);
   
   for (i=0; i<HFONT_CACHE_SIZE; i++)
-    editor->pFontCache[i].nAge++;
+    c->editor->pFontCache[i].nAge++;
   for (i=0, nEmpty=-1, nAge=0; i<HFONT_CACHE_SIZE; i++)
   {
-    item = &editor->pFontCache[i];
+    item = &c->editor->pFontCache[i];
     if (!item->nRefs)
     {
       if (item->nAge > nAge)
@@ -389,7 +381,7 @@ HFONT ME_SelectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s)
   }
   if (i < HFONT_CACHE_SIZE) /* found */
   {
-    item = &editor->pFontCache[i];
+    item = &c->editor->pFontCache[i];
     TRACE_(richedit_style)("font reused %d\n", i);
 
     s->hFont = item->hFont;
@@ -397,7 +389,7 @@ HFONT ME_SelectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s)
   }
   else
   {
-    item = &editor->pFontCache[nEmpty]; /* this legal even when nEmpty == -1, as we don't dereference it */
+    item = &c->editor->pFontCache[nEmpty]; /* this legal even when nEmpty == -1, as we don't dereference it */
 
     assert(nEmpty != -1); /* otherwise we leak cache entries or get too many fonts at once*/
     if (item->hFont) {
@@ -412,22 +404,22 @@ HFONT ME_SelectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s)
     item->nRefs = 1;
     memcpy(&item->lfSpecs, &lf, sizeof(LOGFONTW));
   }
-  hOldFont = SelectObject(hDC, s->hFont);
+  hOldFont = SelectObject(c->hDC, s->hFont);
   /* should be cached too, maybe ? */
-  GetTextMetricsW(hDC, &s->tm);
+  GetTextMetricsW(c->hDC, &s->tm);
   return hOldFont;
 }
 
-void ME_UnselectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s, HFONT hOldFont)
+void ME_UnselectStyleFont(ME_Context *c, ME_Style *s, HFONT hOldFont)
 {
   int i;
   
-  assert(hDC);
+  assert(c->hDC);
   assert(s);
-  SelectObject(hDC, hOldFont);
+  SelectObject(c->hDC, hOldFont);
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
-    ME_FontCacheItem *pItem = &editor->pFontCache[i];
+    ME_FontCacheItem *pItem = &c->editor->pFontCache[i];
     if (pItem->hFont == s->hFont && pItem->nRefs > 0)
     {
       pItem->nRefs--;

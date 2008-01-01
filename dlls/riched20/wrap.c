@@ -341,7 +341,6 @@ static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp);
 static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD beginofs) {
   ME_DisplayItem *p;
   ME_WrapContext wc;
-  int dpi;
   int border = 0;
   int linespace = 0;
 
@@ -351,18 +350,17 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   }
   ME_PrepareParagraphForWrapping(c, tp);
 
-  dpi = GetDeviceCaps(c->hDC, LOGPIXELSX);
   wc.context = c;
 /*   wc.para_style = tp->member.para.style; */
   wc.style = NULL;
-  wc.nFirstMargin = ME_twips2points(c, tp->member.para.pFmt->dxStartIndent, dpi) + beginofs;
-  wc.nLeftMargin = wc.nFirstMargin + ME_twips2points(c, tp->member.para.pFmt->dxOffset, dpi) + beginofs;
-  wc.nRightMargin = ME_twips2points(c, tp->member.para.pFmt->dxRightIndent, dpi);
+  wc.nFirstMargin = ME_twips2pointsX(c, tp->member.para.pFmt->dxStartIndent) + beginofs;
+  wc.nLeftMargin = wc.nFirstMargin + ME_twips2pointsX(c, tp->member.para.pFmt->dxOffset) + beginofs;
+  wc.nRightMargin = ME_twips2pointsX(c, tp->member.para.pFmt->dxRightIndent);
   wc.nRow = 0;
   wc.pt.x = 0;
   wc.pt.y = 0;
   if (tp->member.para.pFmt->dwMask & PFM_SPACEBEFORE)
-    wc.pt.y += ME_twips2points(c, tp->member.para.pFmt->dySpaceBefore, dpi);
+    wc.pt.y += ME_twips2pointsY(c, tp->member.para.pFmt->dySpaceBefore);
   if (tp->member.para.pFmt->dwMask & PFM_BORDER)
   {
     border = ME_GetParaBorderWidth(c->editor, tp->member.para.pFmt->wBorders);
@@ -380,7 +378,7 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   wc.nAvailWidth = wc.nTotalWidth - wc.nFirstMargin - wc.nRightMargin;
   wc.pRowStart = NULL;
 
-  linespace = ME_GetParaLineSpace(c->editor, &tp->member.para, dpi);
+  linespace = ME_GetParaLineSpace(c, &tp->member.para);
 
   ME_BeginRow(&wc);
   for (p = tp->next; p!=tp->member.para.next_para; ) {
@@ -396,7 +394,7 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   if ((tp->member.para.pFmt->dwMask & PFM_BORDER) && (tp->member.para.pFmt->wBorders & 8))
     wc.pt.y += border;
   if (tp->member.para.pFmt->dwMask & PFM_SPACEAFTER)
-      wc.pt.y += ME_twips2points(c, tp->member.para.pFmt->dySpaceAfter, dpi);
+    wc.pt.y += ME_twips2pointsY(c, tp->member.para.pFmt->dySpaceAfter);
 
   tp->member.para.nFlags &= ~MEPF_REWRAP;
   tp->member.para.nHeight = wc.pt.y;

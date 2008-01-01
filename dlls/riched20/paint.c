@@ -141,12 +141,20 @@ ME_RewrapRepaint(ME_TextEditor *editor)
   ME_Repaint(editor);
 }
 
-int ME_twips2points(ME_Context *c, int x, int dpi)
+int ME_twips2pointsX(ME_Context *c, int x)
 {
   if (c->editor->nZoomNumerator == 0)
-    return x * dpi / 1440;
+    return x * c->dpi.cx / 1440;
   else
-    return x * dpi * c->editor->nZoomNumerator / 1440 / c->editor->nZoomDenominator;
+    return x * c->dpi.cx * c->editor->nZoomNumerator / 1440 / c->editor->nZoomDenominator;
+}
+
+int ME_twips2pointsY(ME_Context *c, int y)
+{
+  if (c->editor->nZoomNumerator == 0)
+    return y * c->dpi.cy / 1440;
+  else
+    return y * c->dpi.cy * c->editor->nZoomNumerator / 1440 / c->editor->nZoomDenominator;
 }
 
 static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, int nChars, 
@@ -158,7 +166,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, in
   SIZE          sz;
   COLORREF      rgb;
 
-  hOldFont = ME_SelectStyleFont(c->editor, hDC, s);
+  hOldFont = ME_SelectStyleFont(c, s);
   if ((s->fmt.dwMask & CFM_LINK) && (s->fmt.dwEffects & CFE_LINK))
     rgb = RGB(0,0,255);
   else if ((s->fmt.dwMask & CFM_COLOR) && (s->fmt.dwEffects & CFE_AUTOCOLOR))
@@ -174,8 +182,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, in
     if (s->fmt.dwEffects & CFE_SUBSCRIPT) yTwipsOffset = -s->fmt.yHeight/12;
   }
   if (yTwipsOffset)
-    yOffset = ME_twips2points(c, yTwipsOffset, GetDeviceCaps(hDC, LOGPIXELSY));
-
+    yOffset = ME_twips2pointsY(c, yTwipsOffset);
   ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, nChars, NULL);
   GetTextExtentPoint32W(hDC, szText, nChars, &sz);
   if (width) *width = sz.cx;
@@ -223,7 +230,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, in
 	PatBlt(hDC, x, ymin, sz.cx, cy, DSTINVERT);
   }
   SetTextColor(hDC, rgbOld);
-  ME_UnselectStyleFont(c->editor, hDC, s, hOldFont);
+  ME_UnselectStyleFont(c, s, hOldFont);
 }
 
 static void ME_DebugWrite(HDC hDC, const POINT *pt, LPCWSTR szText) {
@@ -366,7 +373,7 @@ int  ME_GetParaBorderWidth(ME_TextEditor* editor, int flags)
   return width;
 }
 
-int  ME_GetParaLineSpace(ME_TextEditor* editor, ME_Paragraph* para, int dpi)
+int  ME_GetParaLineSpace(ME_Context* c, ME_Paragraph* para)
 {
   int   sp = 0, ls = 0;
   if (!(para->pFmt->dwMask & PFM_LINESPACING)) return 0;
@@ -378,18 +385,18 @@ int  ME_GetParaLineSpace(ME_TextEditor* editor, ME_Paragraph* para, int dpi)
   case 0:       sp = ls; break;
   case 1:       sp = (3 * ls) / 2; break;
   case 2:       sp = 2 * ls; break;
-  case 3:       sp = para->pFmt->dyLineSpacing * dpi / 1440; if (sp < ls) sp = ls; break;
-  case 4:       sp = para->pFmt->dyLineSpacing * dpi / 1440; break;
+  case 3:       sp = ME_twips2pointsY(c, para->pFmt->dyLineSpacing); if (sp < ls) sp = ls; break;
+  case 4:       sp = ME_twips2pointsY(c, para->pFmt->dyLineSpacing); break;
   case 5:       sp = para->pFmt->dyLineSpacing / 20; break;
   default: FIXME("Unsupported spacing rule value %d\n", para->pFmt->bLineSpacingRule);
   }
-  if (editor->nZoomNumerator == 0)
+  if (c->editor->nZoomNumerator == 0)
     return sp;
   else
-    return sp * editor->nZoomNumerator / editor->nZoomDenominator;
+    return sp * c->editor->nZoomNumerator / c->editor->nZoomDenominator;
 }
 
-static int ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, int dpi)
+static int ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y)
 {
   int           idx, border_width;
   int           ybefore, yafter;
@@ -402,7 +409,7 @@ static int ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, int d
     rc.left = c->rcView.left;
     rc.right = c->rcView.right;
     rc.top = y;
-    ybefore = ME_twips2points(c, para->pFmt->dySpaceBefore, dpi);
+    ybefore = ME_twips2pointsY(c, para->pFmt->dySpaceBefore);
     rc.bottom = y + ybefore;
     FillRect(c->hDC, &rc, c->editor->hbrBackground);
   }
@@ -412,7 +419,7 @@ static int ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, int d
     rc.left = c->rcView.left;
     rc.right = c->rcView.right;
     rc.bottom = y + para->nHeight;
-    yafter = ME_twips2points(c, para->pFmt->dySpaceAfter, dpi);
+    yafter = ME_twips2pointsY(c, para->pFmt->dySpaceAfter);
     rc.top = rc.bottom - yafter;
     FillRect(c->hDC, &rc, c->editor->hbrBackground);
   }
@@ -489,7 +496,6 @@ static int ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, int d
 
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   int align = SetTextAlign(c->hDC, TA_BASELINE);
-  int dpi = GetDeviceCaps(c->hDC, LOGPIXELSX);
   ME_DisplayItem *p;
   ME_Run *run;
   ME_Paragraph *para = NULL;
@@ -508,12 +514,12 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
       case diParagraph:
         para = &p->member.para;
         assert(para);
-        nMargWidth = ME_twips2points(c, para->pFmt->dxStartIndent, dpi);
+        nMargWidth = ME_twips2pointsX(c, para->pFmt->dxStartIndent);
         if (pno != 0)
-          nMargWidth += ME_twips2points(c, para->pFmt->dxOffset, dpi);
+          nMargWidth += ME_twips2pointsX(c, para->pFmt->dxOffset);
         xs = c->rcView.left+nMargWidth;
-        xe = c->rcView.right - ME_twips2points(c, para->pFmt->dxRightIndent, dpi);
-        y += ME_DrawParaDecoration(c, para, y, dpi);
+        xe = c->rcView.right - ME_twips2pointsX(c, para->pFmt->dxRightIndent);
+        y += ME_DrawParaDecoration(c, para, y);
         break;
       case diStartRow:
         y += height;

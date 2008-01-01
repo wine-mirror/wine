@@ -334,6 +334,7 @@ typedef struct tagME_Context
   POINT ptRowOffset;
   RECT rcView;
   HBRUSH hbrMargin;
+  SIZE dpi;
 
   /* those are valid inside ME_WrapTextParagraph and related */
   POINT ptFirstRun;
