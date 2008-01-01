@@ -352,12 +352,9 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   wc.context = c;
 /*   wc.para_style = tp->member.para.style; */
   wc.style = NULL;
-  tp->member.para.nRightMargin = tp->member.para.pFmt->dxRightIndent*dpi/1440;
-  tp->member.para.nFirstMargin = tp->member.para.pFmt->dxStartIndent*dpi/1440 + beginofs;
-  tp->member.para.nLeftMargin = (tp->member.para.pFmt->dxStartIndent+tp->member.para.pFmt->dxOffset)*dpi/1440 + beginofs;
-  wc.nFirstMargin = tp->member.para.nFirstMargin;
-  wc.nLeftMargin = tp->member.para.nLeftMargin;
-  wc.nRightMargin = tp->member.para.nRightMargin;
+  wc.nFirstMargin = tp->member.para.pFmt->dxStartIndent*dpi/1440 + beginofs;
+  wc.nLeftMargin = wc.nFirstMargin + tp->member.para.pFmt->dxOffset*dpi/1440 + beginofs;
+  wc.nRightMargin = tp->member.para.pFmt->dxRightIndent*dpi/1440;
   wc.nRow = 0;
   wc.pt.x = 0;
   wc.pt.y = 0;

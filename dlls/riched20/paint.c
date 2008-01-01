@@ -310,14 +310,15 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
 
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   int align = SetTextAlign(c->hDC, TA_BASELINE);
+  int dpi = GetDeviceCaps(c->hDC, LOGPIXELSX);
   ME_DisplayItem *p;
   ME_Run *run;
   ME_Paragraph *para = NULL;
   RECT rc, rcPara;
   int y = c->pt.y;
   int height = 0, baseline = 0, no=0, pno = 0;
-  int xs, xe;
-  int visible = 0;
+  int xs = 0, xe = 0;
+  BOOL visible = FALSE;
   int nMargWidth = 0;
   
   c->pt.x = c->rcView.left;
@@ -327,12 +328,14 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
     switch(p->type) {
       case diParagraph:
         para = &p->member.para;
+        assert(para);
+        nMargWidth = para->pFmt->dxStartIndent*dpi/1440;
+        if (pno != 0)
+          nMargWidth += para->pFmt->dxOffset*dpi/1440;
+        xs = c->rcView.left+nMargWidth;
+        xe = c->rcView.right-(para->pFmt->dxRightIndent*dpi/1440);
         break;
       case diStartRow:
-        assert(para);
-        nMargWidth = (pno==0?para->nFirstMargin:para->nLeftMargin);
-        xs = c->rcView.left+nMargWidth;
-        xe = c->rcView.right-para->nRightMargin;
         y += height;
         rcPara.top = y;
         rcPara.bottom = y+p->member.row.nHeight;

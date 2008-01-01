@@ -167,7 +167,6 @@ typedef struct tagME_Paragraph
   struct tagME_TableCell *pCells;    /* list of cells and their properties */
   struct tagME_TableCell *pLastCell; /* points to the last cell in the list */
 
-  int nLeftMargin, nRightMargin, nFirstMargin;
   int nCharOfs;
   int nFlags;
   int nYPos, nHeight;

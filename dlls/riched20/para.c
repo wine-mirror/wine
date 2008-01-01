@@ -141,11 +141,6 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
   new_para->member.para.nFlags = MEPF_REWRAP; /* FIXME copy flags (if applicable) */
   /* FIXME initialize format style and call ME_SetParaFormat blah blah */
   CopyMemory(new_para->member.para.pFmt, run_para->member.para.pFmt, sizeof(PARAFORMAT2));
-  
-  /* FIXME remove this as soon as nLeftMargin etc are replaced with proper fields of PARAFORMAT2 */
-  new_para->member.para.nLeftMargin = run_para->member.para.nLeftMargin;
-  new_para->member.para.nRightMargin = run_para->member.para.nRightMargin;
-  new_para->member.para.nFirstMargin = run_para->member.para.nFirstMargin;
 
   new_para->member.para.bTable = run_para->member.para.bTable;
   
