@@ -331,3 +331,12 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
     CloseHandle( pi.hThread );
     return TRUE;
 }
+
+/***********************************************************************
+ *		RegisterServicesProcess (USER32.@)
+ */
+int WINAPI RegisterServicesProcess(DWORD ServicesProcessId)
+{
+    FIXME("(0x%x): stub\n", ServicesProcessId);
+    return 0;
+}

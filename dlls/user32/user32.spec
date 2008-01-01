@@ -563,7 +563,7 @@
 # @ stub RegisterMessagePumpHook
 @ stub RegisterNetworkCapabilities
 @ stdcall RegisterRawInputDevices(ptr long long)
-@ stub RegisterServicesProcess
+@ stdcall RegisterServicesProcess(long)
 @ stdcall RegisterShellHookWindow (long)
 @ stdcall RegisterSystemThread(long long)
 @ stdcall RegisterTasklist (long)
