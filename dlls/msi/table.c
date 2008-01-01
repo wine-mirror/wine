@@ -1206,7 +1206,7 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
         return r;
 
     /* check the column value is in range */
-    if (ival < 0 || ival > tv->num_cols || ival == col)
+    if (ival > tv->num_cols || ival == col)
     {
         ERR("bad column ref (%u) for stream\n", ival);
         return ERROR_FUNCTION_FAILED;
