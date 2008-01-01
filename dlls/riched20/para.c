@@ -351,22 +351,51 @@ void ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const PARAFOR
   
   CopyMemory(&copy, para->member.para.pFmt, sizeof(PARAFORMAT2));
 
-  if (pFmt->dwMask & PFM_ALIGNMENT)
-    para->member.para.pFmt->wAlignment = pFmt->wAlignment;
-  if (pFmt->dwMask & PFM_STARTINDENT)
-    para->member.para.pFmt->dxStartIndent = pFmt->dxStartIndent;
-  if (pFmt->dwMask & PFM_OFFSET)
-    para->member.para.pFmt->dxOffset = pFmt->dxOffset;
+#define COPY_FIELD(m, f) \
+  if (pFmt->dwMask & (m)) {                     \
+    para->member.para.pFmt->dwMask |= m;        \
+    para->member.para.pFmt->f = pFmt->f;        \
+  }
+
+  COPY_FIELD(PFM_NUMBERING, wNumbering);
+#define EFFECTS_MASK (PFM_RTLPARA|PFM_KEEP|PFM_KEEPNEXT|PFM_PAGEBREAKBEFORE| \
+                      PFM_NOLINENUMBER|PFM_NOWIDOWCONTROL|PFM_DONOTHYPHEN|PFM_SIDEBYSIDE| \
+                      PFM_TABLE)
+  /* we take for granted that PFE_xxx is the hiword of the corresponding PFM_xxx */
+  if (pFmt->dwMask & EFFECTS_MASK) {
+    para->member.para.pFmt->dwMask &= ~(pFmt->dwMask & EFFECTS_MASK);
+    para->member.para.pFmt->wEffects |= pFmt->wEffects & HIWORD(pFmt->dwMask);
+  }
+#undef EFFECTS_MASK
+
+  COPY_FIELD(PFM_STARTINDENT, dxStartIndent);
   if (pFmt->dwMask & PFM_OFFSETINDENT)
     para->member.para.pFmt->dxStartIndent += pFmt->dxStartIndent;
-    
+  COPY_FIELD(PFM_RIGHTINDENT, dxRightIndent);
+  COPY_FIELD(PFM_OFFSET, dxOffset);
+  COPY_FIELD(PFM_ALIGNMENT, wAlignment);
+
   if (pFmt->dwMask & PFM_TABSTOPS)
   {
     para->member.para.pFmt->cTabCount = pFmt->cTabCount;
-    memcpy(para->member.para.pFmt->rgxTabs, pFmt->rgxTabs, pFmt->cTabCount*sizeof(int));
+    memcpy(para->member.para.pFmt->rgxTabs, pFmt->rgxTabs, pFmt->cTabCount*sizeof(LONG));
   }
-    
-  /* FIXME to be continued (indents, bulleting and such) */
+  COPY_FIELD(PFM_SPACEBEFORE, dySpaceBefore);
+  COPY_FIELD(PFM_SPACEAFTER, dySpaceAfter);
+  COPY_FIELD(PFM_LINESPACING, dyLineSpacing);
+  COPY_FIELD(PFM_STYLE, sStyle);
+  COPY_FIELD(PFM_LINESPACING, bLineSpacingRule);
+  COPY_FIELD(PFM_SHADING, wShadingWeight);
+  COPY_FIELD(PFM_SHADING, wShadingStyle);
+  COPY_FIELD(PFM_NUMBERINGSTART, wNumberingStart);
+  COPY_FIELD(PFM_NUMBERINGSTYLE, wNumberingStyle);
+  COPY_FIELD(PFM_NUMBERINGTAB, wNumberingTab);
+  COPY_FIELD(PFM_BORDER, wBorderSpace);
+  COPY_FIELD(PFM_BORDER, wBorderWidth);
+  COPY_FIELD(PFM_BORDER, wBorders);
+
+  para->member.para.pFmt->dwMask |= pFmt->dwMask;
+#undef COPY_FIELD
 
   if (memcmp(&copy, para->member.para.pFmt, sizeof(PARAFORMAT2)))
     para->member.para.nFlags |= MEPF_REWRAP;
@@ -435,28 +464,45 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
     ZeroMemory(&tmp, sizeof(tmp));
     tmp.cbSize = sizeof(tmp);
     ME_GetParaFormat(editor, para, &tmp);
-    
-    assert(tmp.dwMask & PFM_ALIGNMENT);    
-    if (pFmt->wAlignment != tmp.wAlignment)
-      pFmt->dwMask &= ~PFM_ALIGNMENT;
-    
+
+#define CHECK_FIELD(m, f) \
+    if (pFmt->f != tmp.f) pFmt->dwMask &= ~(m);
+
+    CHECK_FIELD(PFM_NUMBERING, wNumbering);
+    /* para->member.para.pFmt->wEffects = pFmt->wEffects; */
+    assert(tmp.dwMask & PFM_ALIGNMENT);
+    CHECK_FIELD(PFM_NUMBERING, wNumbering);
     assert(tmp.dwMask & PFM_STARTINDENT);
-    if (pFmt->dxStartIndent != tmp.dxStartIndent)
-      pFmt->dwMask &= ~PFM_STARTINDENT;
-    
+    CHECK_FIELD(PFM_STARTINDENT, dxStartIndent);
+    assert(tmp.dwMask & PFM_RIGHTINDENT);
+    CHECK_FIELD(PFM_RIGHTINDENT, dxRightIndent);
     assert(tmp.dwMask & PFM_OFFSET);
-    if (pFmt->dxOffset != tmp.dxOffset)
-      pFmt->dwMask &= ~PFM_OFFSET;
-    
-    assert(tmp.dwMask & PFM_TABSTOPS);    
+    CHECK_FIELD(PFM_OFFSET, dxOffset);
+    CHECK_FIELD(PFM_ALIGNMENT, wAlignment);
+
+    assert(tmp.dwMask & PFM_TABSTOPS);
     if (pFmt->dwMask & PFM_TABSTOPS) {
-      if (pFmt->cTabCount != tmp.cTabCount)
-        pFmt->dwMask &= ~PFM_TABSTOPS;
-      else
-      if (memcmp(pFmt->rgxTabs, tmp.rgxTabs, tmp.cTabCount*sizeof(int)))
+      if (pFmt->cTabCount != tmp.cTabCount ||
+          memcmp(pFmt->rgxTabs, tmp.rgxTabs, tmp.cTabCount*sizeof(int)))
         pFmt->dwMask &= ~PFM_TABSTOPS;
     }
-    
+
+    CHECK_FIELD(PFM_SPACEBEFORE, dySpaceBefore);
+    CHECK_FIELD(PFM_SPACEAFTER, dySpaceAfter);
+    CHECK_FIELD(PFM_LINESPACING, dyLineSpacing);
+    CHECK_FIELD(PFM_STYLE, sStyle);
+    CHECK_FIELD(PFM_SPACEAFTER, bLineSpacingRule);
+    CHECK_FIELD(PFM_SHADING, wShadingWeight);
+    CHECK_FIELD(PFM_SHADING, wShadingStyle);
+    CHECK_FIELD(PFM_NUMBERINGSTART, wNumberingStart);
+    CHECK_FIELD(PFM_NUMBERINGSTYLE, wNumberingStyle);
+    CHECK_FIELD(PFM_NUMBERINGTAB, wNumberingTab);
+    CHECK_FIELD(PFM_BORDER, wBorderSpace);
+    CHECK_FIELD(PFM_BORDER, wBorderWidth);
+    CHECK_FIELD(PFM_BORDER, wBorders);
+
+#undef CHECK_FIELD
+
     if (para == para_end)
       return;
     para = para->member.para.next_para;
