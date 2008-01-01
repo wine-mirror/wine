@@ -368,18 +368,16 @@ DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data )
 
         MSI_RecordSetStringW(rec,0,ptr);
         MSI_FormatRecordW(package,rec,NULL,&size);
-        if (size >= 0)
-        {
-            size++;
-            *data = msi_alloc(size*sizeof(WCHAR));
-            if (size > 1)
-                MSI_FormatRecordW(package,rec,*data,&size);
-            else
-                *data[0] = 0;
-            msiobj_release( &rec->hdr );
-            return sizeof(WCHAR)*size;
-        }
+
+        size++;
+        *data = msi_alloc(size*sizeof(WCHAR));
+        if (size > 1)
+            MSI_FormatRecordW(package,rec,*data,&size);
+        else
+            *data[0] = 0;
+
         msiobj_release( &rec->hdr );
+        return sizeof(WCHAR)*size;
     }
 
     *data = NULL;
