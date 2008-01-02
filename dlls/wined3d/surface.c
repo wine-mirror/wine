@@ -47,15 +47,13 @@ static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
     IWineD3DSurface_BindTexture((IWineD3DSurface *)This);
 }
 
+/* This call just downloads data, the caller is responsible for activating the
+ * right context and binding the correct texture. */
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
-    IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
-
     if (0 == This->glDescription.textureName) {
         ERR("Surface does not have a texture, but SFLAG_INTEXTURE is set\n");
         return;
     }
-
-    ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
 
     if(This->Flags & SFLAG_CONVERTED) {
         FIXME("Read back converted textures unsupported, format=%s\n", debug_d3dformat(This->resource.format));
@@ -63,8 +61,6 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
     }
 
     ENTER_GL();
-
-    surface_bind_and_dirtify(This);
 
     if (This->resource.format == WINED3DFMT_DXT1 ||
             This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
@@ -194,6 +190,8 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
     This->Flags |= SFLAG_INSYSMEM;
 }
 
+/* This call just uploads data, the caller is responsible for activating the
+ * right context and binding the correct texture. */
 static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data) {
     if (This->resource.format == WINED3DFMT_DXT1 ||
             This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
@@ -250,6 +248,8 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
     }
 }
 
+/* This call just allocates the texture, the caller is responsible for
+ * activating the right context and binding the correct texture. */
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type) {
     BOOL enable_client_storage = FALSE;
     BYTE *mem = NULL;
@@ -3792,6 +3792,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
         /* Download the surface to system memory */
         if(This->Flags & SFLAG_INTEXTURE) {
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            surface_bind_and_dirtify(This);
+
             surface_download_data(This);
         } else {
             read_from_framebuffer(This, rect,
@@ -3806,6 +3809,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         }
     } else /* if(flag == SFLAG_INTEXTURE) */ {
         d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
+
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        surface_bind_and_dirtify(This);
 
         if (This->Flags & SFLAG_INDRAWABLE) {
             GLint prevRead;
