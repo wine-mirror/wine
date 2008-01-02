@@ -95,15 +95,12 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
 
     /* Override the IWineD3DResource PreLoad method */
     unsigned int i;
-    BOOL setGlTextureDesc = FALSE;
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BOOL srgb_mode = This->baseTexture.is_srgb;
     BOOL srgb_was_toggled = FALSE;
 
     TRACE("(%p) : About to load texture\n", This);
-
-    if (This->baseTexture.textureName == 0)  setGlTextureDesc = TRUE;
 
     if(!device->isInDraw) {
         /* ActivateContext sets isInDraw to TRUE when loading a pbuffer into a texture, thus no danger of
@@ -121,8 +118,6 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
     /* If the texture is marked dirty or the srgb sampler setting has changed since the last load then reload the surfaces */
     if (This->baseTexture.dirty) {
         for (i = 0; i < This->baseTexture.levels; i++) {
-            if(setGlTextureDesc)
-                IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], This->baseTexture.textureName, IWineD3DTexture_GetTextureDimensions(iface));
             IWineD3DSurface_LoadTexture(This->surfaces[i], srgb_mode);
         }
     } else if (srgb_was_toggled) {
@@ -193,8 +188,20 @@ static BOOL WINAPI IWineD3DTextureImpl_GetDirty(IWineD3DTexture *iface) {
 
 static HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    BOOL set_gl_texture_desc = This->baseTexture.textureName == 0;
+    HRESULT hr;
+
     TRACE("(%p) : relay to BaseTexture\n", This);
-    return IWineD3DBaseTextureImpl_BindTexture((IWineD3DBaseTexture *)iface);
+
+    hr = IWineD3DBaseTextureImpl_BindTexture((IWineD3DBaseTexture *)iface);
+    if (set_gl_texture_desc && SUCCEEDED(hr)) {
+        UINT i;
+        for (i = 0; i < This->baseTexture.levels; ++i) {
+            IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], This->baseTexture.textureName, IWineD3DTexture_GetTextureDimensions(iface));
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IWineD3DTextureImpl_UnBindTexture(IWineD3DTexture *iface) {
