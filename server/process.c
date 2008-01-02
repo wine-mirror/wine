@@ -53,7 +53,9 @@
 
 static struct list process_list = LIST_INIT(process_list);
 static int running_processes, user_processes;
-static struct event *user_process_event;  /* signaled when all user processes have exited */
+static struct event *shutdown_event;           /* signaled when shutdown starts */
+static struct timeout_user *shutdown_timeout;  /* timeout for server shutdown */
+static int shutting_down;  /* are we in the process of shutting down the server? */
 
 /* process operations */
 
@@ -227,17 +229,32 @@ static void set_process_startup_state( struct process *process, enum startup_sta
     }
 }
 
+/* callback for server shutdown */
+static void server_shutdown_timeout( void *arg )
+{
+    shutdown_timeout = NULL;
+    if (!running_processes) close_master_socket( 0 );
+    else
+    {
+        if (debug_level) fprintf( stderr, "wineserver: shutting down\n" );
+        if (shutdown_event) set_event( shutdown_event );
+        /* leave 2 seconds for system processes to exit */
+        close_master_socket( 2 * -TICKS_PER_SEC );
+        shutting_down = 1;
+    }
+}
+
 /* final cleanup once we are sure a process is really dead */
 static void process_died( struct process *process )
 {
     if (debug_level) fprintf( stderr, "%04x: *process killed*\n", process->id );
     if (!process->is_system)
     {
-        if (!--user_processes && user_process_event)
-            set_event( user_process_event );
+        if (!--user_processes && master_socket_timeout != TIMEOUT_INFINITE)
+            shutdown_timeout = add_timeout_user( master_socket_timeout, server_shutdown_timeout, NULL );
     }
     release_object( process );
-    if (!--running_processes) close_master_socket();
+    if (!--running_processes && shutting_down) close_master_socket( 0 );
 }
 
 /* callback for process sigkill timeout */
@@ -353,7 +370,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
  error:
     if (process) release_object( process );
     /* if we failed to start our first process, close everything down */
-    if (!running_processes) close_master_socket();
+    if (!running_processes) close_master_socket( 0 );
     return NULL;
 }
 
@@ -558,7 +575,7 @@ static void terminate_process( struct process *process, struct thread *skip, int
 }
 
 /* kill all processes */
-void kill_all_processes( struct process *skip, int exit_code )
+static void kill_all_processes( struct process *skip, int exit_code )
 {
     for (;;)
     {
@@ -572,6 +589,19 @@ void kill_all_processes( struct process *skip, int exit_code )
         if (&process->entry == &process_list) break;  /* no process found */
         terminate_process( process, NULL, exit_code );
     }
+}
+
+/* forced shutdown, used for wineserver -k */
+void shutdown_master_socket(void)
+{
+    kill_all_processes( NULL, 1 );
+    master_socket_timeout = 0;
+    if (shutdown_timeout)
+    {
+        remove_timeout_user( shutdown_timeout );
+        shutdown_timeout = NULL;
+    }
+    if (!shutting_down) server_shutdown_timeout( NULL );
 }
 
 /* kill all processes being attached to a console renderer */
@@ -634,8 +664,11 @@ void add_process_thread( struct process *process, struct thread *thread )
         running_processes++;
         if (!process->is_system)
         {
-            if (!user_processes++ && user_process_event)
-                reset_event( user_process_event );
+            if (!user_processes++ && shutdown_timeout)
+            {
+                remove_timeout_user( shutdown_timeout );
+                shutdown_timeout = NULL;
+            }
         }
     }
     grab_object( thread );
@@ -857,6 +890,12 @@ DECL_HANDLER(new_process)
     if (fcntl( socket_fd, F_SETFL, O_NONBLOCK ) == -1)
     {
         set_error( STATUS_INVALID_HANDLE );
+        close( socket_fd );
+        return;
+    }
+    if (shutting_down)
+    {
+        set_error( STATUS_SHUTDOWN_IN_PROGRESS );
         close( socket_fd );
         return;
     }
@@ -1179,19 +1218,20 @@ DECL_HANDLER(make_process_system)
 {
     struct process *process = current->process;
 
-    if (!user_process_event)
+    if (!shutdown_event)
     {
-        if (!(user_process_event = create_event( NULL, NULL, 0, 1, 0, NULL ))) return;
-        make_object_static( (struct object *)user_process_event );
+        if (!(shutdown_event = create_event( NULL, NULL, 0, 1, 0, NULL ))) return;
+        make_object_static( (struct object *)shutdown_event );
     }
 
-    if (!(reply->event = alloc_handle( current->process, user_process_event, SYNCHRONIZE, 0 )))
+    if (!(reply->event = alloc_handle( current->process, shutdown_event, SYNCHRONIZE, 0 )))
         return;
 
     if (!process->is_system)
     {
         process->is_system = 1;
         close_process_desktop( process );
-        if (!--user_processes) set_event( user_process_event );
+        if (!--user_processes && master_socket_timeout != TIMEOUT_INFINITE)
+            shutdown_timeout = add_timeout_user( master_socket_timeout, server_shutdown_timeout, NULL );
     }
 }

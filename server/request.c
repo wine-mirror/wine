@@ -78,7 +78,6 @@ struct master_socket
 {
     struct object        obj;        /* object header */
     struct fd           *fd;         /* file descriptor of the master socket */
-    struct timeout_user *timeout;    /* timeout on last process exit */
 };
 
 static void master_socket_dump( struct object *obj, int verbose );
@@ -123,7 +122,7 @@ unsigned int global_error = 0;  /* global error code for when no thread is curre
 timeout_t server_start_time = 0;  /* server startup time */
 
 static struct master_socket *master_socket;  /* the master socket object */
-static int force_shutdown;
+static struct timeout_user *master_timeout;
 
 /* socket communication static structures */
 static struct iovec myiovec;
@@ -508,11 +507,6 @@ static void master_socket_poll_event( struct fd *fd, int event )
         unsigned int len = sizeof(dummy);
         int client = accept( get_unix_fd( master_socket->fd ), (struct sockaddr *) &dummy, &len );
         if (client == -1) return;
-        if (sock->timeout)
-        {
-            remove_timeout_user( sock->timeout );
-            sock->timeout = NULL;
-        }
         fcntl( client, F_SETFL, O_NONBLOCK );
         create_process( client, NULL, 0 );
     }
@@ -731,7 +725,6 @@ static void acquire_lock(void)
     if (!(master_socket = alloc_object( &master_socket_ops )) ||
         !(master_socket->fd = create_anonymous_fd( &master_socket_fd_ops, fd, &master_socket->obj, 0 )))
         fatal_error( "out of memory\n" );
-    master_socket->timeout = NULL;
     set_fd_events( master_socket->fd, POLLIN );
     make_object_static( &master_socket->obj );
 }
@@ -810,40 +803,29 @@ void open_master_socket(void)
 /* master socket timer expiration handler */
 static void close_socket_timeout( void *arg )
 {
-    master_socket->timeout = NULL;
+    master_timeout = NULL;
     flush_registry();
-
-    /* if a new client is waiting, we keep on running */
-    if (!force_shutdown && check_fd_events( master_socket->fd, POLLIN )) return;
-
     if (debug_level) fprintf( stderr, "wineserver: exiting (pid=%ld)\n", (long) getpid() );
 
 #ifdef DEBUG_OBJECTS
     close_objects();  /* shut down everything properly */
 #endif
-    exit( force_shutdown );
+    exit( 0 );
 }
 
 /* close the master socket and stop waiting for new clients */
-void close_master_socket(void)
+void close_master_socket( timeout_t timeout )
 {
-    if (master_socket_timeout == TIMEOUT_INFINITE) return;  /* just keep running forever */
-
-    if (master_socket_timeout)
-        master_socket->timeout = add_timeout_user( master_socket_timeout, close_socket_timeout, NULL );
-    else
-        close_socket_timeout( NULL );  /* close it right away */
-}
-
-/* forced shutdown, used for wineserver -k */
-void shutdown_master_socket(void)
-{
-    force_shutdown = 1;
-    master_socket_timeout = 0;
-    if (master_socket->timeout)
+    if (master_socket)
     {
-        remove_timeout_user( master_socket->timeout );
-        close_socket_timeout( NULL );
+        release_object( master_socket );
+        master_socket = NULL;
     }
-    set_fd_events( master_socket->fd, -1 ); /* stop waiting for new clients */
+    if (master_timeout)  /* cancel previous timeout */
+        remove_timeout_user( master_timeout );
+
+    if (timeout)
+        master_timeout = add_timeout_user( timeout, close_socket_timeout, NULL );
+    else  /* close it right away */
+        close_socket_timeout( NULL );
 }

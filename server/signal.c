@@ -190,8 +190,6 @@ static void sigterm_callback(void)
 /* SIGINT callback */
 static void sigint_callback(void)
 {
-    kill_all_processes( NULL, 1 );
-    flush_registry();
     shutdown_master_socket();
 }
 
