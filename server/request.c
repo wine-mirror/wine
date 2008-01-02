@@ -623,7 +623,7 @@ int kill_lock_owner( int sig )
     create_server_dir( server_dir );
     fd = create_server_lock();
 
-    for (i = 0; i < 10; i++)
+    for (i = 1; i <= 20; i++)
     {
         fl.l_type   = F_WRLCK;
         fl.l_whence = SEEK_SET;
@@ -647,7 +647,7 @@ int kill_lock_owner( int sig )
             }
         }
         else if (fl.l_pid != pid) goto done;  /* no longer the same process */
-        sleep( 1 );
+        usleep( 50000 * i );
     }
     /* waited long enough, now kill it */
     kill( pid, SIGKILL );
