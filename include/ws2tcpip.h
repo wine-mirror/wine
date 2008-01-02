@@ -19,6 +19,10 @@
 #ifndef __WS2TCPIP__
 #define __WS2TCPIP__
 
+#include <winsock2.h>
+/* FIXME: #include <ws2ipdef.h> */
+#include <limits.h>
+
 #ifdef USE_WS_PREFIX
 #define WS(x)    WS_##x
 #else
