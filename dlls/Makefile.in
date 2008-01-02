@@ -271,6 +271,7 @@ TESTSUBDIRS = \
 	gdi32/tests \
 	gdiplus/tests \
 	hlink/tests \
+	imm32/tests \
 	inetcomm/tests \
 	infosoft/tests \
 	iphlpapi/tests \

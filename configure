@@ -20808,6 +20808,8 @@ ac_config_files="$ac_config_files dlls/imagehlp/Makefile"
 
 ac_config_files="$ac_config_files dlls/imm32/Makefile"
 
+ac_config_files="$ac_config_files dlls/imm32/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/inetcomm/Makefile"
 
 ac_config_files="$ac_config_files dlls/inetcomm/tests/Makefile"
@@ -22010,6 +22012,7 @@ do
     "dlls/imaadp32.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imaadp32.acm/Makefile" ;;
     "dlls/imagehlp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imagehlp/Makefile" ;;
     "dlls/imm32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imm32/Makefile" ;;
+    "dlls/imm32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imm32/tests/Makefile" ;;
     "dlls/inetcomm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetcomm/Makefile" ;;
     "dlls/inetcomm/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetcomm/tests/Makefile" ;;
     "dlls/infosoft/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/infosoft/Makefile" ;;

@@ -189,6 +189,9 @@ dlls/icmp/libicmp.def
 dlls/imagehlp/libimagehlp.def
 dlls/imm.dll16
 dlls/imm32/libimm32.def
+dlls/imm32/tests/*.ok
+dlls/imm32/tests/imm32_crosstest.exe
+dlls/imm32/tests/testlist.c
 dlls/imm32/version.res
 dlls/inetcomm/libinetcomm.def
 dlls/inetcomm/tests/*.ok
@@ -737,6 +740,7 @@ programs/winetest/dsound_test.exe
 programs/winetest/gdi32_test.exe
 programs/winetest/gdiplus_test.exe
 programs/winetest/hlink_test.exe
+programs/winetest/imm32_test.exe
 programs/winetest/inetcomm_test.exe
 programs/winetest/infosoft_test.exe
 programs/winetest/iphlpapi_test.exe
