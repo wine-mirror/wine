@@ -3534,7 +3534,19 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
           flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
           persistent ? "TRUE" : "FALSE");
 
-    /* TODO: For offscreen textures with fbo offscreen rendering the drawable is the same as the texture.*/
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        IWineD3DSwapChain *swapchain = NULL;
+
+        if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
+            TRACE("Surface %p is an onscreen surface\n", iface);
+
+            IWineD3DSwapChain_Release(swapchain);
+        } else {
+            /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets. */
+            if (flag & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)) flag |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
+        }
+    }
+
     if(persistent) {
         if((This->Flags & SFLAG_INTEXTURE) && !(flag & SFLAG_INTEXTURE)) {
             if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&texture) == WINED3D_OK) {
@@ -3762,11 +3774,24 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, DWORD flag, const RECT *rect) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    IWineD3DSwapChain *swapchain = NULL;
     GLenum format, internal, type;
     CONVERT_TYPES convert;
     int bpp;
     int width, pitch, outpitch;
     BYTE *mem;
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
+            TRACE("Surface %p is an onscreen surface\n", iface);
+
+            IWineD3DSwapChain_Release(swapchain);
+        } else {
+            /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets.
+             * Prefer SFLAG_INTEXTURE. */
+            if (flag == SFLAG_INDRAWABLE) flag = SFLAG_INTEXTURE;
+        }
+    }
 
     TRACE("(%p)->(%s, %p)\n", iface,
           flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
@@ -3775,7 +3800,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         TRACE("Rectangle: (%d,%d)-(%d,%d)\n", rect->left, rect->top, rect->right, rect->bottom);
     }
 
-    /* TODO: For fbo targets, texture == drawable */
     if(This->Flags & flag) {
         TRACE("Location already up to date\n");
         return WINED3D_OK;
@@ -3919,6 +3943,12 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
     if(rect == NULL) {
         This->Flags |= flag;
+    }
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && !swapchain
+            && (This->Flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE))) {
+        /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets. */
+        This->Flags |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
     }
 
     return WINED3D_OK;
