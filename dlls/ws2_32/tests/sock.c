@@ -816,10 +816,10 @@ static void do_test( test_setup *test )
     WaitForSingleObject ( server_ready, INFINITE );
 
     wait = WaitForMultipleObjects ( 1 + n, thread, TRUE, 1000 * TEST_TIMEOUT );
-    ok ( wait >= WAIT_OBJECT_0 && wait <= WAIT_OBJECT_0 + n , 
+    ok ( wait <= WAIT_OBJECT_0 + n ,
          "some threads have not completed: %x\n", wait );
 
-    if ( ! ( wait >= WAIT_OBJECT_0 && wait <= WAIT_OBJECT_0 + n ) )
+    if ( ! ( wait <= WAIT_OBJECT_0 + n ) )
     {
         for (i = 0; i <= n; i++)
         {
