@@ -125,7 +125,7 @@ void *Context_GetLinkedContext(void *context, size_t contextSize)
      contextSize);
 }
 
-PCONTEXT_PROPERTY_LIST Context_GetProperties(void *context, size_t contextSize)
+PCONTEXT_PROPERTY_LIST Context_GetProperties(const void *context, size_t contextSize)
 {
     PBASE_CONTEXT ptr = BASE_CONTEXT_FROM_CONTEXT(context, contextSize);
 

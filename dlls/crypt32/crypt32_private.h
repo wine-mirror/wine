@@ -317,7 +317,7 @@ void Context_CopyProperties(const void *to, const void *from,
 /* Returns context's properties, or the linked context's properties if context
  * is a link context.
  */
-PCONTEXT_PROPERTY_LIST Context_GetProperties(void *context, size_t contextSize);
+PCONTEXT_PROPERTY_LIST Context_GetProperties(const void *context, size_t contextSize);
 
 void Context_AddRef(void *context, size_t contextSize);
 
