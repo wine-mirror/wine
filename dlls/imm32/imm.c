@@ -240,6 +240,9 @@ static HIMCC updateCompStr(HIMCC old, LPWSTR compstr, DWORD len)
 
     TRACE("%s, %i\n",debugstr_wn(compstr,len),len);
 
+    if (old == NULL && compstr == NULL && len == 0)
+        return NULL;
+
     if (old != NULL)
     {
         olddata = ImmLockIMCC(old);
@@ -372,6 +375,9 @@ static HIMCC updateResultStr(HIMCC old, LPWSTR resultstr, DWORD len)
     INT current_offset = 0;
 
     TRACE("%s, %i\n",debugstr_wn(resultstr,len),len);
+
+    if (old == NULL && resultstr == NULL && len == 0)
+        return NULL;
 
     if (old != NULL)
     {
@@ -1419,7 +1425,7 @@ BOOL WINAPI ImmNotifyIME(
                         pX11DRV_ForceXIMReset(root_context->IMC.hWnd);
                     {
                         HIMCC newCompStr;
-                        DWORD cplen;
+                        DWORD cplen = 0;
                         LPWSTR cpstr;
                         LPCOMPOSITIONSTRING cs = NULL;
                         LPBYTE cdata = NULL;
@@ -1429,11 +1435,14 @@ BOOL WINAPI ImmNotifyIME(
                         ImmDestroyIMCC(root_context->IMC.hCompStr);
                         root_context->IMC.hCompStr = newCompStr;
 
-                        cdata = ImmLockIMCC(root_context->IMC.hCompStr);
-                        cs = (LPCOMPOSITIONSTRING)cdata;
-                        cplen = cs->dwCompStrLen;
-                        cpstr = (LPWSTR)&(cdata[cs->dwCompStrOffset]);
-                        ImmUnlockIMCC(root_context->IMC.hCompStr);
+                        if (root_context->IMC.hCompStr)
+                        {
+                            cdata = ImmLockIMCC(root_context->IMC.hCompStr);
+                            cs = (LPCOMPOSITIONSTRING)cdata;
+                            cplen = cs->dwCompStrLen;
+                            cpstr = (LPWSTR)&(cdata[cs->dwCompStrOffset]);
+                            ImmUnlockIMCC(root_context->IMC.hCompStr);
+                        }
                         if (cplen > 0)
                         {
                             WCHAR param = cpstr[0];
