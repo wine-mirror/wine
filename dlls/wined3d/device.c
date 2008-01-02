@@ -6318,6 +6318,9 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 
         TRACE("Source surface %p is onscreen\n", src_surface);
         ActivateContext(This, src_surface, CTXUSAGE_RESOURCELOAD);
+        /* Make sure the drawable is up to date. In the offscreen case
+         * attach_surface_fbo() implicitly takes care of this. */
+        IWineD3DSurface_LoadLocation(src_surface, SFLAG_INDRAWABLE, NULL);
 
         ENTER_GL();
         GL_EXTCALL(glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0));
@@ -6344,6 +6347,9 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 
         TRACE("Destination surface %p is onscreen\n", dst_surface);
         ActivateContext(This, dst_surface, CTXUSAGE_RESOURCELOAD);
+        /* Make sure the drawable is up to date. In the offscreen case
+         * attach_surface_fbo() implicitly takes care of this. */
+        IWineD3DSurface_LoadLocation(dst_surface, SFLAG_INDRAWABLE, NULL);
 
         ENTER_GL();
         GL_EXTCALL(glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0));
@@ -6379,6 +6385,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
                 dst_rect->x1, dst_rect->y1, dst_rect->x2, dst_rect->y2, mask, gl_filter));
         checkGLcall("glBlitFramebuffer()");
     }
+
+    IWineD3DSurface_ModifyLocation(dst_surface, SFLAG_INDRAWABLE, TRUE);
 
     if (This->render_offscreen) {
         bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);
