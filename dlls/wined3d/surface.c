@@ -36,6 +36,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
 static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey);
 
+static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
+    /* Make sure that a proper texture unit is selected, bind the texture
+     * and dirtify the sampler to restore the texture on the next draw. */
+    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+        checkGLcall("glActiveTextureARB");
+    }
+    IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
+    IWineD3DSurface_BindTexture((IWineD3DSurface *)This);
+}
+
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
 
@@ -52,15 +63,8 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
     }
 
     ENTER_GL();
-            /* Make sure that a proper texture unit is selected, bind the texture
-    * and dirtify the sampler to restore the texture on the next draw
-            */
-    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-        checkGLcall("glActiveTextureARB");
-    }
-    IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
-    IWineD3DSurface_BindTexture((IWineD3DSurface *) This);
+
+    surface_bind_and_dirtify(This);
 
     if (This->resource.format == WINED3DFMT_DXT1 ||
             This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
