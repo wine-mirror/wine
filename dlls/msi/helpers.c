@@ -1029,20 +1029,14 @@ WCHAR* generate_error_string(MSIPACKAGE *package, UINT error, DWORD count, ... )
     va_end(va);
 
     MSI_FormatRecordW(package,rec,NULL,&size);
-    if (size >= 0)
-    {
-        size++;
-        data = msi_alloc(size*sizeof(WCHAR));
-        if (size > 1)
-            MSI_FormatRecordW(package,rec,data,&size);
-        else
-            data[0] = 0;
-        msiobj_release( &rec->hdr );
-        return data;
-    }
 
+    size++;
+    data = msi_alloc(size*sizeof(WCHAR));
+    if (size > 1)
+        MSI_FormatRecordW(package,rec,data,&size);
+    else
+        data[0] = 0;
     msiobj_release( &rec->hdr );
-    data = NULL;
     return data;
 }
 
