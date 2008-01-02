@@ -578,22 +578,22 @@ DECLARE_INTERFACE_(IDirect3DTexture,IUnknown)
 #define IDirect3DTexture_AddRef(p)             (p)->lpVtbl->AddRef(p)
 #define IDirect3DTexture_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirect3DTexture methods ***/
-#define IDirect3DTexture_Initialize(p,a,b,c) (p)->lpVtbl->Initialize(p,a,b,c)
-#define IDirect3DTexture_GetHandle(p,a,b,c) (p)->lpVtbl->GetHandle(p,a,b,c)
-#define IDirect3DTexture_PaletteChanged(p,a,b,c) (p)->lpVtbl->PaletteChanged(p,a,b,c)
-#define IDirect3DTexture_Load(p,a,b,c) (p)->lpVtbl->Load(p,a,b,c)
-#define IDirect3DTexture_Unload(p,a,b,c) (p)->lpVtbl->Unload(p,a,b,c)
+#define IDirect3DTexture_Initialize(p,a,b) (p)->lpVtbl->Initialize(p,a,b)
+#define IDirect3DTexture_GetHandle(p,a,b) (p)->lpVtbl->GetHandle(p,a,b)
+#define IDirect3DTexture_PaletteChanged(p,a,b) (p)->lpVtbl->PaletteChanged(p,a,b)
+#define IDirect3DTexture_Load(p,a) (p)->lpVtbl->Load(p,a)
+#define IDirect3DTexture_Unload(p) (p)->lpVtbl->Unload(p)
 #else
 /*** IUnknown methods ***/
 #define IDirect3DTexture_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
 #define IDirect3DTexture_AddRef(p)             (p)->AddRef()
 #define IDirect3DTexture_Release(p)            (p)->Release()
 /*** IDirect3DTexture methods ***/
-#define IDirect3DTexture_Initialize(p,a,b,c) (p)->Initialize(a,b,c)
-#define IDirect3DTexture_GetHandle(p,a,b,c) (p)->GetHandle(a,b,c)
-#define IDirect3DTexture_PaletteChanged(p,a,b,c) (p)->PaletteChanged(a,b,c)
-#define IDirect3DTexture_Load(p,a,b,c) (p)->Load(a,b,c)
-#define IDirect3DTexture_Unload(p,a,b,c) (p)->Unload(a,b,c)
+#define IDirect3DTexture_Initialize(p,a,b) (p)->Initialize(a,b)
+#define IDirect3DTexture_GetHandle(p,a,b) (p)->GetHandle(a,b)
+#define IDirect3DTexture_PaletteChanged(p,a,b) (p)->PaletteChanged(a,b)
+#define IDirect3DTexture_Load(p,a) (p)->Load(a)
+#define IDirect3DTexture_Unload(p) (p)->Unload()
 #endif
 
 
