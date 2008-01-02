@@ -635,11 +635,6 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateSurface(LPDIRECT3DDEVICE8 iface
     IDirect3DSurface8Impl *object;
     IDirect3DDevice8Impl  *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    if(MultisampleQuality < 0) { 
-        FIXME("MultisampleQuality out of range %d, substituting 0\n", MultisampleQuality);
-        /*FIXME: Find out what windows does with a MultisampleQuality < 0 */
-        MultisampleQuality=0;
-    }
 
     if(MultisampleQuality > 0){
         FIXME("MultisampleQuality set to %d, substituting 0\n" , MultisampleQuality);

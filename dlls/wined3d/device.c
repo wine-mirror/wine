@@ -709,11 +709,6 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     *This flag has the same behavior as the constant, D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL, in D3DPRESENTFLAG.
     ***************************/
 
-    if(MultisampleQuality < 0) {
-        FIXME("Invalid multisample level %d\n", MultisampleQuality);
-        return WINED3DERR_INVALIDCALL; /* TODO: Check that this is the case! */
-    }
-
     if(MultisampleQuality > 0) {
         FIXME("MultisampleQuality set to %d, substituting 0\n", MultisampleQuality);
         MultisampleQuality=0;
