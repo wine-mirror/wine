@@ -44,9 +44,8 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         return;
     }
 
-    if(myDevice->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
-        ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-    }
+    ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
     if(This->Flags & SFLAG_CONVERTED) {
         FIXME("Read back converted textures unsupported, format=%s\n", debug_d3dformat(This->resource.format));
         return;

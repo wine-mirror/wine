@@ -158,9 +158,7 @@ static HRESULT WINAPI IWineD3DIndexBufferImpl_Unlock(IWineD3DIndexBuffer *iface)
     if(locks == 0 && This->vbo && (This->dirtyend - This->dirtystart) > 0) {
         IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
-        if(device->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-        }
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
 
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, This->vbo));

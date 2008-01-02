@@ -4246,12 +4246,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
         ERR("Output vertex declaration not implemented yet\n");
     }
 
-    /* Need any context to write to the vbo. In a non-multithreaded environment a context is there anyway,
-     * and this call is quite performance critical, so don't call needlessly
-     */
-    if(This->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
-        ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-    }
+    /* Need any context to write to the vbo. */
+    ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
 
     /* ProcessVertices reads from vertex buffers, which have to be assigned. DrawPrimitive and DrawPrimitiveUP
      * control the streamIsUP flag, thus restore it afterwards.
@@ -4741,9 +4737,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
         return WINED3DERR_INVALIDCALL;
     }
 
-    if(This->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
-        ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-    }
+    ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
     ENTER_GL();
     glFlush();
