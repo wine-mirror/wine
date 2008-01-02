@@ -225,7 +225,7 @@ static DWORD get_ports_from_reg(DWORD level, LPBYTE pPorts, DWORD cbBuf, LPDWORD
 
             if ((res == ERROR_SUCCESS) && (portname[0])) {
                 numentries++;
-                /* calsulate the required size */
+                /* calculate the required size */
                 needed += entrysize;
                 needed += (len + 1) * sizeof(WCHAR);
                 if (level > 1) {

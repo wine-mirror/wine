@@ -1166,7 +1166,7 @@ static BOOL ReadAFMDir(LPCSTR dirname)
  *  Reads font metrics from Type 1 AFM font files in directories listed in the
  *  [afmdirs] section of the Wine configuration file.
  *
- *  If this function fails (returns FALSE), the dirver will fail to initialize
+ *  If this function fails (returns FALSE), the driver will fail to initialize
  *  and the driver heap will be destroyed, so it's not necessary to HeapFree
  *  everything in that event.
  *

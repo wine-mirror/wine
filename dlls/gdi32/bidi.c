@@ -367,7 +367,7 @@ static int resolveExplicit(int level, int dir, WORD *pcls, WORD *plevel, int cch
 enum states /* possible states */
 {
     xa,        /*  arabic letter */
-    xr,        /*  right leter */
+    xr,        /*  right letter */
     xl,        /*  left letter */
 
     ao,        /*  arabic lett. foll by ON */
@@ -494,7 +494,7 @@ static int GetResolvedType(int action)
 
   States can be of two kinds:
      - Immediate Resolution State, where each input token
-       is resolved as soon as it is seen. These states havve
+       is resolved as soon as it is seen. These states have
        only single action codes (xxN) or the no-op (xxx)
        for static input tokens.
      - Deferred Resolution State, where input tokens either
