@@ -685,8 +685,41 @@ static HRESULT WINAPI xmlnode_get_xml(
     IXMLDOMNode *iface,
     BSTR* xmlString)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    xmlBufferPtr pXmlBuf;
+    int nSize;
+
+    TRACE("iface %p\n", iface);
+
+    if(!xmlString)
+        return E_INVALIDARG;
+
+    *xmlString = NULL;
+
+    pXmlBuf = xmlBufferCreate();
+    if(pXmlBuf)
+    {
+        nSize = xmlNodeDump(pXmlBuf, This->node->doc, This->node, 0, 0);
+        if(nSize > 0)
+        {
+            const xmlChar *pContent;
+
+            /* Attribute Nodes return a space infront of their name */
+            pContent = xmlBufferContent(pXmlBuf);
+            if( ((char*)pContent)[0] == ' ')
+                *xmlString = bstr_from_xmlChar(pContent+1);
+            else
+                *xmlString = bstr_from_xmlChar(pContent);
+
+
+            xmlBufferFree(pXmlBuf);
+        }
+    }
+
+    /* Always returns a string. */
+    if(*xmlString == NULL)  *xmlString = SysAllocStringLen( NULL, 0 );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_transformNode(
