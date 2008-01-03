@@ -71,4 +71,19 @@ extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 
+/* IXMLDOMNode Internal Structure */
+typedef struct _xmlnode
+{
+    const struct IXMLDOMNodeVtbl *lpVtbl;
+    const struct IUnknownVtbl *lpInternalUnkVtbl;
+    IUnknown *pUnkOuter;
+    LONG ref;
+    xmlNodePtr node;
+} xmlnode;
+
+static inline xmlnode *impl_from_IXMLDOMNode( IXMLDOMNode *iface )
+{
+    return (xmlnode *)((char*)iface - FIELD_OFFSET(xmlnode, lpVtbl));
+}
+
 #endif /* __MSXML_PRIVATE__ */

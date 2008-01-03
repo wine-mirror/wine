@@ -195,8 +195,46 @@ static HRESULT WINAPI xmlnodemap_setNamedItem(
     IXMLDOMNode* newItem,
     IXMLDOMNode** namedItem)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlnode *ThisNew = NULL;
+    xmlNodePtr nodeNew;
+    IXMLDOMNode *pAttr = NULL;
+    xmlNodePtr node;
+
+    TRACE("%p %p %p\n", This, newItem, namedItem );
+
+    if(!newItem)
+        return E_INVALIDARG;
+
+    if(namedItem) *namedItem = NULL;
+
+    node = xmlNodePtr_from_domnode( This->node, 0 );
+    if ( !node )
+        return E_FAIL;
+
+    /* Must be an Attribute */
+    IUnknown_QueryInterface(newItem, &IID_IXMLDOMNode, (LPVOID*)&pAttr);
+    if(pAttr)
+    {
+        ThisNew = impl_from_IXMLDOMNode( pAttr );
+
+        if(ThisNew->node->type != XML_ATTRIBUTE_NODE)
+        {
+            IUnknown_Release(pAttr);
+            return E_FAIL;
+        }
+
+        nodeNew = xmlAddChild(node, ThisNew->node);
+
+        if(namedItem)
+            *namedItem = create_node( (xmlNodePtr) nodeNew );
+
+        IUnknown_Release(pAttr);
+
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI xmlnodemap_removeNamedItem(

@@ -39,20 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
-typedef struct _xmlnode
-{
-    const struct IXMLDOMNodeVtbl *lpVtbl;
-    const struct IUnknownVtbl *lpInternalUnkVtbl;
-    IUnknown *pUnkOuter;
-    LONG ref;
-    xmlNodePtr node;
-} xmlnode;
-
-static inline xmlnode *impl_from_IXMLDOMNode( IXMLDOMNode *iface )
-{
-    return (xmlnode *)((char*)iface - FIELD_OFFSET(xmlnode, lpVtbl));
-}
-
 static inline xmlnode *impl_from_InternalUnknown( IUnknown *iface )
 {
     return (xmlnode *)((char*)iface - FIELD_OFFSET(xmlnode, lpInternalUnkVtbl));
