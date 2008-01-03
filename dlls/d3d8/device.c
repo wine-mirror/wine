@@ -97,7 +97,7 @@ static ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface) {
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        int i;
+        unsigned i;
 
         TRACE("Releasing wined3d device %p\n", This->WineD3DDevice);
         EnterCriticalSection(&d3d8_cs);
