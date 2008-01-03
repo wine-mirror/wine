@@ -545,6 +545,10 @@ static void test_domnode( void )
 
     VariantInit(&var);
     ok( V_VT(&var) == VT_EMPTY, "variant init failed\n");
+
+    r = IXMLDOMNode_get_nodeValue( doc, NULL );
+    ok(r == E_INVALIDARG, "get_nodeValue ret %08x\n", r );
+
     r = IXMLDOMNode_get_nodeValue( doc, &var );
     ok( r == S_FALSE, "nextNode returned wrong code\n");
     ok( V_VT(&var) == VT_NULL, "variant wasn't empty\n");

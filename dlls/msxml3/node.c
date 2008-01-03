@@ -219,6 +219,9 @@ static HRESULT WINAPI xmlnode_get_nodeValue(
 
     TRACE("%p %p\n", This, value);
 
+    if(!value)
+        return E_INVALIDARG;
+
     V_BSTR(value) = NULL;
     V_VT(value) = VT_NULL;
 
