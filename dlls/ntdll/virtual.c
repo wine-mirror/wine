@@ -824,7 +824,12 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
         /* page-aligned (EINVAL), or because the underlying filesystem */
         /* does not support mmap() (ENOEXEC,ENODEV), we do it by hand. */
         if ((errno != ENOEXEC) && (errno != EINVAL) && (errno != ENODEV)) return FILE_GetNtStatus();
-        if (shared_write) return FILE_GetNtStatus();  /* we cannot fake shared write mappings */
+        if (shared_write)  /* we cannot fake shared write mappings */
+        {
+            if (errno == EINVAL) return STATUS_INVALID_PARAMETER;
+            ERR( "shared writable mmap not supported, broken filesystem?\n" );
+            return STATUS_NOT_SUPPORTED;
+        }
     }
 
     /* Reserve the memory with an anonymous mmap */
