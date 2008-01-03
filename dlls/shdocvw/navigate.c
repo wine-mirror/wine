@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Jacek Caban for CodeWeavers
+ * Copyright 2006-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -436,29 +436,17 @@ static BOOL try_application_url(LPCWSTR url)
     return ShellExecuteExW(&exec_info);
 }
 
-static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx)
+static HRESULT http_load_hack(DocHost *This, IMoniker *mon, IBindStatusCallback *callback, IBindCtx *bindctx)
 {
     IOleObject *oleobj;
     IPersistMoniker *persist;
-    VARIANT_BOOL cancel = VARIANT_FALSE;
     HRESULT hres;
-
-    if(cancel) {
-        FIXME("Cancel\n");
-        return S_OK;
-    }
-
-    IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
-                                 (IUnknown*)CLIENTSITE(This));
 
     /*
      * FIXME:
      * We should use URLMoniker's BindToObject instead creating HTMLDocument here.
      * This should be fixed when mshtml.dll and urlmon.dll will be good enough.
      */
-
-    if(This->document)
-        deactivate_document(This);
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL,
                             CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -473,9 +461,6 @@ static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx)
     if(FAILED(hres))
         return hres;
 
-    if(This->frame)
-        IOleInPlaceFrame_EnableModeless(This->frame, FALSE); /* FIXME */
-
     hres = IPersistMoniker_Load(persist, FALSE, mon, bindctx, 0);
     IPersistMoniker_Release(persist);
 
@@ -483,7 +468,6 @@ static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx)
         static const WCHAR empty[] = {0};
 
         IOleInPlaceFrame_SetStatusText(This->frame, empty); /* FIXME */
-        IOleInPlaceFrame_EnableModeless(This->frame, TRUE); /* FIXME */
     }
 
     if(FAILED(hres)) {
@@ -504,36 +488,47 @@ static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx)
 
 }
 
-static HRESULT bind_url_to_object(DocHost *This, LPCWSTR url, PBYTE post_data, ULONG post_data_len,
+static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCtx *bindctx,
+                              IBindStatusCallback *callback)
+{
+    HRESULT hres;
+
+    IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
+                                 (IUnknown*)CLIENTSITE(This));
+
+    if(This->frame)
+        IOleInPlaceFrame_EnableModeless(This->frame, FALSE);
+
+    hres = http_load_hack(This, mon, callback, bindctx);
+
+    if(This->frame)
+        IOleInPlaceFrame_EnableModeless(This->frame, TRUE);
+
+    return S_OK;
+}
+
+static HRESULT navigate_mon(DocHost *This, IMoniker *mon, PBYTE post_data, ULONG post_data_len,
                      LPWSTR headers)
 {
     IBindStatusCallback *callback;
-    IMoniker *mon;
     IBindCtx *bindctx;
     HRESULT hres;
-
-    if(!This->hwnd)
-        create_doc_view_hwnd(This);
-
-    hres = CreateURLMoniker(NULL, url, &mon);
-    if(FAILED(hres)) {
-        WARN("CreateURLMoniker failed: %08x\n", hres);
-        return hres;
-    }
 
     IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
     TRACE("navigating to %s\n", debugstr_w(This->url));
 
+    if(This->document)
+        deactivate_document(This);
+
     callback = create_callback(This, post_data, post_data_len, (LPWSTR)headers);
     CreateAsyncBindCtx(0, callback, 0, &bindctx);
 
-    hres = navigate(This, mon, bindctx);
+    hres = bind_to_object(This, mon, This->url, bindctx, callback);
 
     IBindStatusCallback_OnStopBinding(callback, hres, NULL);
 
     IBindStatusCallback_Release(callback);
     IBindCtx_Release(bindctx);
-    IMoniker_Release(mon);
 
     return hres;
 }
@@ -541,12 +536,19 @@ static HRESULT bind_url_to_object(DocHost *This, LPCWSTR url, PBYTE post_data, U
 HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
                      const VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
 {
+    IMoniker *mon;
     PBYTE post_data = NULL;
     ULONG post_data_len = 0;
     LPWSTR headers = NULL;
     HRESULT hres;
 
     TRACE("navigating to %s\n", debugstr_w(url));
+
+    hres = CreateURLMoniker(NULL, url, &mon);
+    if(FAILED(hres)) {
+        WARN("CreateURLMoniker failed: %08x\n", hres);
+        return hres;
+    }
 
     if((Flags && V_VT(Flags) != VT_EMPTY) 
        || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY))
@@ -571,8 +573,12 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
         TRACE("Headers: %s\n", debugstr_w(headers));
     }
 
-    hres = bind_url_to_object(This, url, post_data, post_data_len, headers);
+    if(!This->hwnd)
+        create_doc_view_hwnd(This);
 
+    hres = navigate_mon(This, mon, post_data, post_data_len, headers);
+
+    IMoniker_Release(mon);
     if(post_data)
         SafeArrayUnaccessData(V_ARRAY(PostData));
 
@@ -617,23 +623,23 @@ static HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
     }
 
     on_before_navigate2(This, url, post_data, post_data_len, headers, &cancel);
+    CoTaskMemFree(url);
+
+    if(cancel) {
+        FIXME("navigation canceled\n");
+        hres = S_OK;
+    }else {
+        /* FIXME: We should do it after BindToObject call */
+        if(try_application_url(url))
+            return S_OK;
+
+        hres = navigate_mon(This, mon, post_data, post_data_len, headers);
+    }
 
     CoTaskMemFree(headers);
     ReleaseBindInfo(&bindinfo);
 
-    if(cancel) {
-        FIXME("navigation canceled\n");
-        CoTaskMemFree(url);
-        return S_OK;
-    }
-
-    /* FIXME: We should do it after BindToObject call */
-    if(try_application_url(url))
-        return S_OK;
-
-    This->url = url;
-
-    return navigate(This, mon, bindctx);
+    return hres;
 }
 
 HRESULT go_home(DocHost *This)
