@@ -563,13 +563,13 @@ static void paint(HWND dialog)
     EndPaint(dialog, &ps);
 }
 
-BOOL browse_for_unix_folder(HWND dialog, char *pszPath)
+BOOL browse_for_unix_folder(HWND dialog, WCHAR *pszPath)
 {
     static WCHAR wszUnixRootDisplayName[] = 
         { ':',':','{','C','C','7','0','2','E','B','2','-','7','D','C','5','-','1','1','D','9','-',
           'C','6','8','7','-','0','0','0','4','2','3','8','A','0','1','C','D','}', 0 };
-    char pszChoosePath[256];
-    BROWSEINFOA bi = {
+    WCHAR pszChoosePath[FILENAME_MAX];
+    BROWSEINFOW bi = {
         dialog,
         NULL,
         NULL,
@@ -583,7 +583,7 @@ BOOL browse_for_unix_folder(HWND dialog, char *pszPath)
     LPITEMIDLIST pidlUnixRoot, pidlSelectedPath;
     HRESULT hr;
    
-    LoadString(GetModuleHandle(NULL), IDS_CHOOSE_PATH, pszChoosePath, 256);
+    LoadStringW(GetModuleHandle(NULL), IDS_CHOOSE_PATH, pszChoosePath, FILENAME_MAX);
     
     hr = SHGetDesktopFolder(&pDesktop);
     if (!SUCCEEDED(hr)) return FALSE;
@@ -596,12 +596,12 @@ BOOL browse_for_unix_folder(HWND dialog, char *pszPath)
     }
 
     bi.pidlRoot = pidlUnixRoot;
-    pidlSelectedPath = SHBrowseForFolderA(&bi);
+    pidlSelectedPath = SHBrowseForFolderW(&bi);
     SHFree(pidlUnixRoot);
     
     if (pidlSelectedPath) {
         STRRET strSelectedPath;
-        char *pszSelectedPath;
+        WCHAR *pszSelectedPath;
         HRESULT hr;
         
         hr = IShellFolder_GetDisplayNameOf(pDesktop, pidlSelectedPath, SHGDN_FORPARSING, 
@@ -612,11 +612,11 @@ BOOL browse_for_unix_folder(HWND dialog, char *pszPath)
             return FALSE;
         }
 
-        hr = StrRetToStr(&strSelectedPath, pidlSelectedPath, &pszSelectedPath);
+        hr = StrRetToStrW(&strSelectedPath, pidlSelectedPath, &pszSelectedPath);
         SHFree(pidlSelectedPath);
         if (!SUCCEEDED(hr)) return FALSE;
 
-        lstrcpy(pszPath, pszSelectedPath);
+        lstrcpyW(pszPath, pszSelectedPath);
         
         CoTaskMemFree(pszSelectedPath);
         return TRUE;
@@ -740,9 +740,9 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
 
                 case IDC_BUTTON_BROWSE_PATH:
                 {
-                    char szTargetPath[FILENAME_MAX];
+                    WCHAR szTargetPath[FILENAME_MAX];
                     if (browse_for_unix_folder(dialog, szTargetPath)) 
-                        set_text(dialog, IDC_EDIT_PATH, szTargetPath);
+                        set_textW(dialog, IDC_EDIT_PATH, szTargetPath);
                     break;
                 }
 

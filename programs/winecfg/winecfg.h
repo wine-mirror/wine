@@ -109,7 +109,7 @@ long drive_available_mask(char letter);
 BOOL add_drive(const char letter, const char *targetpath, const char *label, const char *serial, unsigned int type);
 void delete_drive(struct drive *pDrive);
 void apply_drive_changes(void);
-BOOL browse_for_unix_folder(HWND dialog, char *pszPath);
+BOOL browse_for_unix_folder(HWND dialog, WCHAR *pszPath);
 extern struct drive drives[26]; /* one for each drive letter */
 
 BOOL gui_mode;
@@ -141,9 +141,23 @@ static inline char *get_text(HWND dialog, WORD id)
     return result;
 }
 
+static inline WCHAR *get_textW(HWND dialog, WORD id)
+{
+    HWND item = GetDlgItem(dialog, id);
+    int len = GetWindowTextLengthW(item) + 1;
+    WCHAR *result = len ? HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)) : NULL;
+    if (!result || GetWindowTextW(item, result, len) == 0) return NULL;
+    return result;
+}
+
 static inline void set_text(HWND dialog, WORD id, const char *text)
 {
     SetWindowText(GetDlgItem(dialog, id), text);
+}
+
+static inline void set_textW(HWND dialog, WORD id, const WCHAR *text)
+{
+    SetWindowTextW(GetDlgItem(dialog, id), text);
 }
 
 #define WINE_KEY_ROOT "Software\\Wine"
