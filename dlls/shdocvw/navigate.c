@@ -537,7 +537,13 @@ static HRESULT http_load_hack(DocHost *This, IMoniker *mon, IBindStatusCallback 
 static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCtx *bindctx,
                               IBindStatusCallback *callback)
 {
+    WCHAR schema[30];
+    DWORD schema_len;
     HRESULT hres;
+
+    static const WCHAR httpW[] = {'h','t','t','p',0};
+    static const WCHAR httpsW[] = {'h','t','t','p','s',0};
+    static const WCHAR ftpW[]= {'f','t','p',0};
 
     IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
                                  (IUnknown*)CLIENTSITE(This));
@@ -545,7 +551,23 @@ static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCt
     if(This->frame)
         IOleInPlaceFrame_EnableModeless(This->frame, FALSE);
 
-    hres = http_load_hack(This, mon, callback, bindctx);
+    hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(schema[0]),
+            &schema_len, 0);
+    if(SUCCEEDED(hres) &&
+       (!strcmpW(schema, httpW) || !strcmpW(schema, httpsW) || !strcmpW(schema, ftpW))) {
+        hres = http_load_hack(This, mon, callback, bindctx);
+    }else {
+        IUnknown *unk = NULL;
+
+        hres = IMoniker_BindToObject(mon, bindctx, NULL, &IID_IUnknown, (void**)&unk);
+        if(SUCCEEDED(hres)) {
+            hres = S_OK;
+            if(unk)
+                IUnknown_Release(unk);
+        }else {
+            FIXME("BindToObject failed: %08x\n", hres);
+        }
+    }
 
     if(This->frame)
         IOleInPlaceFrame_EnableModeless(This->frame, TRUE);
