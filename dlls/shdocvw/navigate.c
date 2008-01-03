@@ -90,6 +90,14 @@ static void dump_BINDINFO(BINDINFO *bi)
             );
 }
 
+static void set_status_text(BindStatusCallback *This, LPCWSTR str)
+{
+    if(!This->doc_host || !This->doc_host->frame)
+        return;
+
+    IOleInPlaceFrame_SetStatusText(This->doc_host->frame, str);
+}
+
 #define BINDSC_THIS(iface) DEFINE_THIS(BindStatusCallback, BindStatusCallback, iface)
 
 static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *iface,
@@ -178,8 +186,26 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface,
         ULONG ulProgress, ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
-    FIXME("(%p)->(%d %d %d %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
+
+    TRACE("(%p)->(%d %d %d %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
           debugstr_w(szStatusText));
+
+    switch(ulStatusCode) {
+    case BINDSTATUS_BEGINDOWNLOADDATA:
+        set_status_text(This, szStatusText); /* FIXME: "Start downloading from site: %s" */
+        return S_OK;
+    case BINDSTATUS_ENDDOWNLOADDATA:
+        set_status_text(This, szStatusText); /* FIXME: "Downloading from site: %s" */
+        return S_OK;
+    case BINDSTATUS_CLASSIDAVAILABLE:
+    case BINDSTATUS_MIMETYPEAVAILABLE:
+    case BINDSTATUS_BEGINSYNCOPERATION:
+    case BINDSTATUS_ENDSYNCOPERATION:
+        return S_OK;
+    default:
+        FIXME("status code %u\n", ulStatusCode);
+    }
+
     return E_NOTIMPL;
 }
 
