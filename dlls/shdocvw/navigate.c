@@ -466,8 +466,8 @@ static BOOL try_application_url(LPCWSTR url)
 
 static HRESULT http_load_hack(DocHost *This, IMoniker *mon, IBindStatusCallback *callback, IBindCtx *bindctx)
 {
-    IOleObject *oleobj;
     IPersistMoniker *persist;
+    IUnknown *doc;
     HRESULT hres;
 
     /*
@@ -478,39 +478,32 @@ static HRESULT http_load_hack(DocHost *This, IMoniker *mon, IBindStatusCallback 
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL,
                             CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-                            &IID_IUnknown, (void**)&This->document);
+                            &IID_IUnknown, (void**)&doc);
 
     if(FAILED(hres)) {
         ERR("Could not create HTMLDocument: %08x\n", hres);
         return hres;
     }
 
-    hres = IUnknown_QueryInterface(This->document, &IID_IPersistMoniker, (void**)&persist);
+    hres = IUnknown_QueryInterface(doc, &IID_IPersistMoniker, (void**)&persist);
     if(FAILED(hres))
         return hres;
 
     hres = IPersistMoniker_Load(persist, FALSE, mon, bindctx, 0);
     IPersistMoniker_Release(persist);
 
+    if(SUCCEEDED(hres))
+        hres = IBindStatusCallback_OnObjectAvailable(callback, &IID_IUnknown, doc);
+    else
+        WARN("Load failed: %08x\n", hres);
+
+    IUnknown_Release(doc);
+
     if(This->frame) {
         static const WCHAR empty[] = {0};
 
         IOleInPlaceFrame_SetStatusText(This->frame, empty); /* FIXME */
     }
-
-    if(FAILED(hres)) {
-        WARN("Load failed: %08x\n", hres);
-        return hres;
-    }
-
-    hres = IUnknown_QueryInterface(This->document, &IID_IOleObject, (void**)&oleobj);
-    if(FAILED(hres))
-        return hres;
-
-    hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(This));
-    IOleObject_Release(oleobj);
-
-    PostMessageW(This->hwnd, WB_WM_NAVIGATE2, 0, 0);
 
     return hres;
 
