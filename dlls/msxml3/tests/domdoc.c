@@ -136,8 +136,15 @@ static const WCHAR szstar[] = { '*',0 };
 static const WCHAR szfn1_txt[] = {'f','n','1','.','t','x','t',0};
 
 static WCHAR szComment[] = {'A',' ','C','o','m','m','e','n','t',0 };
+static WCHAR szCommentXML[] = {'<','!','-','-','A',' ','C','o','m','m','e','n','t','-','-','>',0 };
+static WCHAR szCommentNodeText[] = {'#','c','o','m','m','e','n','t',0 };
+
+static WCHAR szElement[] = {'E','l','e','T','e','s','t', 0 };
+static WCHAR szElementXML[]  = {'<','E','l','e','T','e','s','t','/','>',0 };
+static WCHAR szElementXML2[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','/','>',0 };
 
 static WCHAR szAttribute[] = {'A','t','t','r',0 };
+static WCHAR szAttributeXML[] = {'A','t','t','r','=','"','"',0 };
 
 #define expect_bstr_eq_and_free(bstr, expect) { \
     BSTR bstrExp = alloc_str_from_narrow(expect); \
@@ -1750,6 +1757,117 @@ static void test_cloneNode(void )
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_xmlTypes(void)
+{
+    IXMLDOMDocument *doc = NULL;
+    IXMLDOMElement *pRoot;
+    HRESULT hr;
+    IXMLDOMComment *pComment;
+    IXMLDOMElement *pElement;
+    IXMLDOMAttribute *pAttrubute;
+    IXMLDOMNamedNodeMap *pAttribs;
+    BSTR str;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
+    if( hr != S_OK )
+        return;
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    if(hr == S_OK)
+    {
+        hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)pRoot, NULL);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            /* Comment */
+            hr = IXMLDOMDocument_createComment(doc, szComment, &pComment);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pComment, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_get_nodeName(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, szCommentNodeText ), "incorrect comment node Name\n");
+                SysFreeString(str);
+
+                hr = IXMLDOMComment_get_xml(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, szCommentXML ), "incorrect comment xml\n");
+                SysFreeString(str);
+
+                IXMLDOMComment_Release(pComment);
+            }
+
+            /* Element */
+            hr = IXMLDOMDocument_createElement(doc, szElement, &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMElement_get_nodeName(pElement, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, szElement ), "incorrect element node Name\n");
+                SysFreeString(str);
+
+                hr = IXMLDOMElement_get_xml(pElement, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, szElementXML ), "incorrect element xml\n");
+                SysFreeString(str);
+
+                 /* Attribute */
+                hr = IXMLDOMDocument_createAttribute(doc, szAttribute, &pAttrubute);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                if(hr == S_OK)
+                {
+                    IXMLDOMNode *pNewChild = (IXMLDOMNode *)0x1;
+                    hr = IXMLDOMElement_appendChild(pElement, (IXMLDOMNode*)pAttrubute, &pNewChild);
+                    ok(hr == E_FAIL, "ret %08x\n", hr );
+                    ok(pNewChild == NULL, "pNewChild not NULL");
+
+                    hr = IXMLDOMElement_get_attributes(pElement, &pAttribs);
+                    ok(hr == S_OK, "ret %08x\n", hr );
+                    if ( hr == S_OK )
+                    {
+                        hr = IXMLDOMNamedNodeMap_setNamedItem(pAttribs, (IXMLDOMNode*)pAttrubute, NULL );
+                        ok(hr == S_OK, "ret %08x\n", hr );
+
+                        IXMLDOMNamedNodeMap_Release(pAttribs);
+                    }
+
+                    hr = IXMLDOMAttribute_get_nodeName(pAttrubute, &str);
+                    ok(hr == S_OK, "ret %08x\n", hr );
+                    ok( !lstrcmpW( str, szAttribute ), "incorrect attribute node Name\n");
+                    SysFreeString(str);
+
+                    hr = IXMLDOMAttribute_get_xml(pAttrubute, &str);
+                    ok(hr == S_OK, "ret %08x\n", hr );
+                    ok( !lstrcmpW( str, szAttributeXML ), "incorrect attribute xml\n");
+                    SysFreeString(str);
+
+                    IXMLDOMAttribute_Release(pAttrubute);
+
+                    /* Check Element again with the Add Attribute*/
+                    hr = IXMLDOMElement_get_xml(pElement, &str);
+                    ok(hr == S_OK, "ret %08x\n", hr );
+                    ok( !lstrcmpW( str, szElementXML2 ), "incorrect element xml\n");
+                    SysFreeString(str);
+                }
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            IXMLDOMElement_Release( pRoot );
+        }
+    }
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -1769,6 +1887,7 @@ START_TEST(domdoc)
     test_IXMLDOMDocument2();
     test_XPath();
     test_cloneNode();
+    test_xmlTypes();
 
     CoUninitialize();
 }
