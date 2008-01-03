@@ -558,13 +558,24 @@ static HRESULT navigate_mon(DocHost *This, IMoniker *mon, PBYTE post_data, ULONG
 {
     IBindStatusCallback *callback;
     IBindCtx *bindctx;
+    VARIANT_BOOL cancel = VARIANT_FALSE;
+    LPWSTR url;
     HRESULT hres;
 
-    IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
-    TRACE("navigating to %s\n", debugstr_w(This->url));
+    IMoniker_GetDisplayName(mon, NULL, NULL, &url);
+    TRACE("navigating to %s\n", debugstr_w(url));
+
+    on_before_navigate2(This, url, post_data, post_data_len, headers, &cancel);
+    if(cancel) {
+        FIXME("Navigation canceled\n");
+        CoTaskMemFree(url);
+        return S_OK;
+    }
 
     if(This->document)
         deactivate_document(This);
+    CoTaskMemFree(This->url);
+    This->url = url;
 
     callback = create_callback(This, post_data, post_data_len, (LPWSTR)headers);
     CreateAsyncBindCtx(0, callback, 0, &bindctx);
@@ -637,7 +648,6 @@ static HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
     PBYTE post_data = NULL;
     ULONG post_data_len = 0;
     LPWSTR headers = NULL;
-    VARIANT_BOOL cancel = VARIANT_FALSE;
     BINDINFO bindinfo;
     DWORD bindf = 0;
     HRESULT hres;
@@ -666,20 +676,15 @@ static HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
             post_data = bindinfo.stgmedData.u.hGlobal;
     }
 
-    on_before_navigate2(This, url, post_data, post_data_len, headers, &cancel);
-    CoTaskMemFree(url);
-
-    if(cancel) {
-        FIXME("navigation canceled\n");
-        hres = S_OK;
-    }else {
-        /* FIXME: We should do it after BindToObject call */
-        if(try_application_url(url))
-            return S_OK;
-
-        hres = navigate_mon(This, mon, post_data, post_data_len, headers);
+    /* FIXME: We should do it after BindToObject call */
+    if(try_application_url(url)) {
+        CoTaskMemFree(url);
+        return S_OK;
     }
 
+    hres = navigate_mon(This, mon, post_data, post_data_len, headers);
+
+    CoTaskMemFree(url);
     CoTaskMemFree(headers);
     ReleaseBindInfo(&bindinfo);
 
