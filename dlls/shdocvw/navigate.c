@@ -217,6 +217,14 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface,
+        REFIID riid, IUnknown *punk)
+{
+    BindStatusCallback *This = BINDSC_THIS(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), punk);
+    return E_NOTIMPL;
+}
+
 #undef BSC_THIS
 
 static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
@@ -229,7 +237,8 @@ static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
     BindStatusCallback_OnProgress,
     BindStatusCallback_OnStopBinding,
     BindStatusCallback_GetBindInfo,
-    BindStatusCallback_OnDataAvailable
+    BindStatusCallback_OnDataAvailable,
+    BindStatusCallback_OnObjectAvailable
 };
 
 #define HTTPNEG_THIS(iface) DEFINE_THIS(BindStatusCallback, HttpNegotiate, iface)
