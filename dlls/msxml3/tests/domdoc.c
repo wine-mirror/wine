@@ -137,6 +137,8 @@ static const WCHAR szfn1_txt[] = {'f','n','1','.','t','x','t',0};
 
 static WCHAR szComment[] = {'A',' ','C','o','m','m','e','n','t',0 };
 
+static WCHAR szAttribute[] = {'A','t','t','r',0 };
+
 #define expect_bstr_eq_and_free(bstr, expect) { \
     BSTR bstrExp = alloc_str_from_narrow(expect); \
     ok(lstrcmpW(bstr, bstrExp) == 0, "String differs\n"); \
@@ -337,6 +339,7 @@ static void test_domdoc( void )
     IXMLDOMNode *node;
     IXMLDOMText *nodetext = NULL;
     IXMLDOMComment *node_comment = NULL;
+    IXMLDOMAttribute *node_attr = NULL;
     VARIANT_BOOL b;
     VARIANT var;
     BSTR str;
@@ -507,6 +510,13 @@ static void test_domdoc( void )
     r = IXMLDOMDocument_createComment(doc, szComment, &node_comment);
     ok( r == S_OK, "returns %08x\n", r );
     IXMLDOMText_Release( node_comment );
+
+    /* test Create Attribute */
+    r = IXMLDOMDocument_createAttribute(doc, NULL, NULL);
+    ok( r == E_INVALIDARG, "returns %08x\n", r );
+    r = IXMLDOMDocument_createAttribute(doc, szAttribute, &node_attr);
+    ok( r == S_OK, "returns %08x\n", r );
+    IXMLDOMText_Release( node_attr);
 
     r = IXMLDOMDocument_Release( doc );
     ok( r == 0, "document ref count incorrect\n");

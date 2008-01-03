@@ -981,8 +981,29 @@ static HRESULT WINAPI domdoc_createAttribute(
     BSTR name,
     IXMLDOMAttribute** attribute )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument2( iface );
+    xmlNodePtr xmlnode;
+    xmlChar *xml_name;
+
+    TRACE("%p->(%s %p)\n", iface, debugstr_w(name), attribute);
+
+    if(!attribute)
+        return E_INVALIDARG;
+
+    *attribute = NULL;
+
+    xml_name = xmlChar_from_wchar((WCHAR*)name);
+    xmlnode = (xmlNode *)xmlNewProp(NULL, xml_name, NULL);
+    HeapFree(GetProcessHeap(), 0, xml_name);
+
+    if(!xmlnode)
+        return E_FAIL;
+
+    xmlnode->doc = get_doc( This );
+
+    *attribute = (IXMLDOMAttribute*)create_attribute(xmlnode);
+
+    return S_OK;
 }
 
 
