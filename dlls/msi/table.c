@@ -481,7 +481,7 @@ end:
 
 static void free_table( MSITABLE *table )
 {
-    int i;
+    UINT i;
     for( i=0; i<table->row_count; i++ )
         msi_free( table->data[i] );
     msi_free( table->data );
@@ -1050,7 +1050,7 @@ static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
 {
     MSITABLE *table;
     UINT size, offset, old_count;
-    int n;
+    UINT n;
 
     table = find_cached_table( db, name );
     old_count = table->col_count;
@@ -1778,7 +1778,7 @@ static UINT TABLE_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 static UINT TABLE_add_ref(struct tagMSIVIEW *view)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
-    int i;
+    UINT i;
 
     TRACE("%p %d\n", view, tv->table->ref_count);
 
@@ -1829,8 +1829,7 @@ static UINT TABLE_release(struct tagMSIVIEW *view)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
     INT ref = tv->table->ref_count;
-    int i;
-    UINT r;
+    UINT i, r;
 
     TRACE("%p %d\n", view, ref);
 
