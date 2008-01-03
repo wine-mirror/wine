@@ -238,7 +238,7 @@ static char* test_buffer ( char *buf, int chunk_size, int n_chunks )
 
 /*
  * This routine is called when a client / server does not expect any more data,
- * but needs to acknowedge the closing of the connection (by reasing 0 bytes).
+ * but needs to acknowledge the closing of the connection (by reading 0 bytes).
  */
 static void read_zero_bytes ( SOCKET s )
 {

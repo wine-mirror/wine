@@ -453,7 +453,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
 
     switch (fdwDetails & MIXER_GETCONTROLDETAILSF_QUERYMASK) {
     case MIXER_GETCONTROLDETAILSF_VALUE:
-	/* can savely use A structure as it is, no string inside */
+	/* can safely use A structure as it is, no string inside */
 	ret = mixerGetControlDetailsW(hmix, lpmcdA, fdwDetails);
 	break;
     case MIXER_GETCONTROLDETAILSF_LISTTEXT:
@@ -887,7 +887,7 @@ UINT WINAPI midiOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
     if (lpText == NULL) ret = MMSYSERR_INVALPARAM;
     else if (uSize == 0) ret = MMSYSERR_NOERROR;
     else if (
-	       /* test has been removed 'coz MMSYSERR_BASE is 0, and gcc did emit
+	       /* test has been removed because MMSYSERR_BASE is 0, and gcc did emit
 		* a warning for the test was always true */
 	       (/*uError >= MMSYSERR_BASE && */ uError <= MMSYSERR_LASTERROR) ||
 	       (uError >= MIDIERR_BASE  && uError <= MIDIERR_LASTERROR)) {
@@ -1795,7 +1795,7 @@ MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi
 	return MMSYSERR_NOMEM;
 
     lpMidiStrm->dwTempo = 500000;
-    lpMidiStrm->dwTimeDiv = 480; 	/* 480 is 120 quater notes per minute *//* FIXME ??*/
+    lpMidiStrm->dwTimeDiv = 480; 	/* 480 is 120 quarter notes per minute *//* FIXME ??*/
     lpMidiStrm->dwPositionMS = 0;
 
     mosm.dwStreamID = (DWORD)lpMidiStrm;

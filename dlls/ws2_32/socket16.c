@@ -132,7 +132,7 @@ static SEGPTR get_buffer_pe(int size)
 
 /* duplicate hostent entry
  * and handle all Win16/Win32 dependent things (struct size, ...) *correctly*.
- * Dito for protoent and servent.
+ * Ditto for protoent and servent.
  */
 static SEGPTR ws_hostent_32_to_16( const struct WS_hostent* he )
 {

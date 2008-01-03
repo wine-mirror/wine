@@ -873,7 +873,7 @@ static	DWORD	MCI_LoadMciDriver(LPCWSTR _strDevTyp, LPWINE_MCIDRIVER* lpwmd)
     wmd->CreatorThread = GetCurrentThreadId();
 
     EnterCriticalSection(&WINMM_cs);
-    /* wmd must be inserted in list before sending opening the driver, coz' it
+    /* wmd must be inserted in list before sending opening the driver, because it
      * may want to lookup at wDevID
      */
     wmd->lpNext = MciDrivers;

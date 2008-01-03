@@ -155,7 +155,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
-/* critical section to protect some non-rentrant net function */
+/* critical section to protect some non-reentrant net function */
 extern CRITICAL_SECTION csWSgetXXXbyYYY;
 
 union generic_unix_sockaddr
@@ -1958,7 +1958,7 @@ WS_u_short WINAPI WS_htons(WS_u_short hostshort)
 
 /***********************************************************************
  *		WSAHtonl		(WS2_32.46)
- *  From MSDN decription of error codes, this function should also
+ *  From MSDN description of error codes, this function should also
  *  check if WinSock has been initialized and the socket is a valid
  *  socket. But why? This function only translates a host byte order
  *  u_long into a network byte order u_long...
@@ -2940,10 +2940,10 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 #endif
 #if defined(SO_RCVTIMEO) || defined(SO_SNDTIMEO)
             if (optval && optlen == sizeof(UINT32)) {
-                /* WinSock passes miliseconds instead of struct timeval */
+                /* WinSock passes milliseconds instead of struct timeval */
                 tval.tv_usec = (*(const UINT32*)optval % 1000) * 1000;
                 tval.tv_sec = *(const UINT32*)optval / 1000;
-                /* min of 500 milisec */
+                /* min of 500 milliseconds */
                 if (tval.tv_sec == 0 && tval.tv_usec < 500000)
                     tval.tv_usec = 500000;
                 optlen = sizeof(struct timeval);
@@ -3968,7 +3968,7 @@ static int list_dup(char** l_src, char** l_to, int item_size)
 
 /* duplicate hostent entry
  * and handle all Win16/Win32 dependent things (struct size, ...) *correctly*.
- * Dito for protoent and servent.
+ * Ditto for protoent and servent.
  */
 static struct WS_hostent *WS_dup_he(const struct hostent* p_he)
 {

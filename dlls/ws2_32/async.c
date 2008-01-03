@@ -114,7 +114,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
 
-/* critical section to protect some non-rentrant net function */
+/* critical section to protect some non-reentrant net function */
 CRITICAL_SECTION csWSgetXXXbyYYY;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
