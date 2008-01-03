@@ -203,18 +203,16 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
 
-    FIXME("(%p)->(%p %p)\n", This, grfBINDF, pbindinfo);
+    TRACE("(%p)->(%p %p)\n", This, grfBINDF, pbindinfo);
 
-    memset(pbindinfo, 0, sizeof(BINDINFO));
-    pbindinfo->cbSize = sizeof(BINDINFO);
-
-    pbindinfo->cbstgmedData = This->post_data_len;
+    *grfBINDF = BINDF_ASYNCHRONOUS;
 
     if(This->post_data) {
         pbindinfo->dwBindVerb = BINDVERB_POST;
 
         pbindinfo->stgmedData.tymed = TYMED_HGLOBAL;
         pbindinfo->stgmedData.u.hGlobal = This->post_data;
+        pbindinfo->cbstgmedData = This->post_data_len;
         pbindinfo->stgmedData.pUnkForRelease = (IUnknown*)BINDSC(This);
         IBindStatusCallback_AddRef(BINDSC(This));
     }
