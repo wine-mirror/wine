@@ -152,8 +152,10 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
        DWORD dwReserved, IBinding *pbind)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwReserved, pbind);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p)\n", This, dwReserved, pbind);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BindStatusCallback_GetPriority(IBindStatusCallback *iface,
