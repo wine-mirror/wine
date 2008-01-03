@@ -36,6 +36,8 @@ typedef struct {
 
     LONG ref;
 
+    DocHost *doc_host;
+
     HGLOBAL post_data;
     LPWSTR headers;
     ULONG post_data_len;
@@ -135,6 +137,8 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if(This->doc_host)
+            IOleClientSite_Release(CLIENTSITE(This->doc_host));
         if(This->post_data)
             GlobalFree(This->post_data);
         heap_free(This->headers);
@@ -181,7 +185,14 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
         HRESULT hresult, LPCWSTR szError)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
+
     FIXME("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
+
+    if(This->doc_host) {
+        IOleClientSite_Release(CLIENTSITE(This->doc_host));
+        This->doc_host = NULL;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -299,8 +310,8 @@ static const IHttpNegotiateVtbl HttpNegotiateVtbl = {
     HttpNegotiate_OnResponse
 };
 
-static IBindStatusCallback *create_callback(DocHost *This, PBYTE post_data,
-        ULONG post_data_len, LPWSTR headers, VARIANT_BOOL *cancel)
+static IBindStatusCallback *create_callback(DocHost *doc_host, PBYTE post_data,
+        ULONG post_data_len, LPWSTR headers)
 {
     BindStatusCallback *ret = heap_alloc(sizeof(BindStatusCallback));
 
@@ -311,6 +322,9 @@ static IBindStatusCallback *create_callback(DocHost *This, PBYTE post_data,
     ret->post_data = NULL;
     ret->post_data_len = post_data_len;
     ret->headers = NULL;
+
+    ret->doc_host = doc_host;
+    IOleClientSite_AddRef(CLIENTSITE(doc_host));
 
     if(post_data) {
         ret->post_data = GlobalAlloc(0, post_data_len);
@@ -496,7 +510,6 @@ static HRESULT bind_url_to_object(DocHost *This, LPCWSTR url, PBYTE post_data, U
     IBindStatusCallback *callback;
     IMoniker *mon;
     IBindCtx *bindctx;
-    VARIANT_BOOL cancel = VARIANT_FALSE;
     HRESULT hres;
 
     if(!This->hwnd)
@@ -511,12 +524,14 @@ static HRESULT bind_url_to_object(DocHost *This, LPCWSTR url, PBYTE post_data, U
     IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
     TRACE("navigating to %s\n", debugstr_w(This->url));
 
-    callback = create_callback(This, post_data, post_data_len, (LPWSTR)headers, &cancel);
+    callback = create_callback(This, post_data, post_data_len, (LPWSTR)headers);
     CreateAsyncBindCtx(0, callback, 0, &bindctx);
-    IBindStatusCallback_Release(callback);
 
     hres = navigate(This, mon, bindctx);
 
+    IBindStatusCallback_OnStopBinding(callback, hres, NULL);
+
+    IBindStatusCallback_Release(callback);
     IBindCtx_Release(bindctx);
     IMoniker_Release(mon);
 
