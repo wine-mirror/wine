@@ -482,9 +482,29 @@ static HRESULT WINAPI xmlnode_appendChild(
     IXMLDOMNode** outNewChild)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
+    IXMLDOMNode *pAttr = NULL;
     VARIANT var;
 
     TRACE("(%p)->(%p,%p)\n", This, newChild, outNewChild);
+
+    /* Cannot Append an Attribute node. */
+    IUnknown_QueryInterface(newChild, &IID_IXMLDOMNode, (LPVOID*)&pAttr);
+    if(pAttr)
+    {
+        xmlnode *ThisNew = impl_from_IXMLDOMNode( pAttr );
+
+        if(ThisNew->node->type == XML_ATTRIBUTE_NODE)
+        {
+            if(outNewChild) *outNewChild = NULL;
+
+            IUnknown_Release(pAttr);
+
+            return E_FAIL;
+        }
+
+        IUnknown_Release(pAttr);
+    }
+
     VariantInit(&var);
     return IXMLDOMNode_insertBefore(iface, newChild, var, outNewChild);
 }
