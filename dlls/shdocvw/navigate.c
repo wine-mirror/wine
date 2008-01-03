@@ -461,6 +461,7 @@ static void on_before_navigate2(DocHost *This, LPCWSTR url, const BYTE *post_dat
         SafeArrayDestroy(V_ARRAY(&var_post_data));
 }
 
+/* FIXME: urlmon should handle it */
 static BOOL try_application_url(LPCWSTR url)
 {
     SHELLEXECUTEINFOW exec_info;
@@ -564,6 +565,8 @@ static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCt
             hres = S_OK;
             if(unk)
                 IUnknown_Release(unk);
+        }else if(try_application_url(This->url)) {
+            hres = S_OK;
         }else {
             FIXME("BindToObject failed: %08x\n", hres);
         }
@@ -666,16 +669,12 @@ static HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
                               IBindStatusCallback *callback)
 {
     IHttpNegotiate *http_negotiate;
-    LPWSTR url = NULL;
     PBYTE post_data = NULL;
     ULONG post_data_len = 0;
     LPWSTR headers = NULL;
     BINDINFO bindinfo;
     DWORD bindf = 0;
     HRESULT hres;
-
-    IMoniker_GetDisplayName(mon, NULL, NULL, &url);
-    TRACE("navigating to %s\n", debugstr_w(url));
 
     hres = IBindStatusCallback_QueryInterface(callback, &IID_IHttpNegotiate,
                                               (void**)&http_negotiate);
@@ -698,15 +697,8 @@ static HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
             post_data = bindinfo.stgmedData.u.hGlobal;
     }
 
-    /* FIXME: We should do it after BindToObject call */
-    if(try_application_url(url)) {
-        CoTaskMemFree(url);
-        return S_OK;
-    }
-
     hres = navigate_mon(This, mon, post_data, post_data_len, headers);
 
-    CoTaskMemFree(url);
     CoTaskMemFree(headers);
     ReleaseBindInfo(&bindinfo);
 
