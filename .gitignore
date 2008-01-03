@@ -807,6 +807,7 @@ programs/xcopy/rsrc.res
 programs/xcopy/xcopy
 server/wineserver
 server/wineserver-installed
+server/wineserver.fr.man
 server/wineserver.man
 tools/fnt2bdf
 tools/fnt2fon
