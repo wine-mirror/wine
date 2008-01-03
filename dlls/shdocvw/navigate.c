@@ -232,8 +232,36 @@ static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *
         REFIID riid, IUnknown *punk)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), punk);
-    return E_NOTIMPL;
+    IOleObject *oleobj;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), punk);
+
+    IUnknown_AddRef(punk);
+    This->doc_host->document = punk;
+
+    hres = IUnknown_QueryInterface(punk, &IID_IOleObject, (void**)&oleobj);
+    if(SUCCEEDED(hres)) {
+        CLSID clsid;
+
+        hres = IOleObject_GetUserClassID(oleobj, &clsid);
+        if(SUCCEEDED(hres))
+            TRACE("Got clsid %s\n",
+                  IsEqualGUID(&clsid, &CLSID_HTMLDocument) ? "CLSID_HTMLDocument" : debugstr_guid(&clsid));
+
+        hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(This->doc_host));
+        if(FAILED(hres))
+            FIXME("SetClientSite failed: %08x\n", hres);
+
+        /* FIXME: Call SetAdvise */
+        /* FIXME: Call Invoke(DISPID_READYSTATE) */
+    }else {
+        FIXME("Could not get IOleObject iface: %08x\n", hres);
+    }
+
+    PostMessageW(This->doc_host->hwnd, WB_WM_NAVIGATE2, 0, 0);
+
+    return S_OK;
 }
 
 #undef BSC_THIS
