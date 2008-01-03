@@ -30,6 +30,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
+static const WCHAR emptyW[] = {0};
+
 typedef struct {
     const IBindStatusCallbackVtbl  *lpBindStatusCallbackVtbl;
     const IHttpNegotiateVtbl       *lpHttpNegotiateVtbl;
@@ -214,14 +216,16 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
 
-    FIXME("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
+    TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
+
+    set_status_text(This, emptyW);
 
     if(This->doc_host) {
         IOleClientSite_Release(CLIENTSITE(This->doc_host));
         This->doc_host = NULL;
     }
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
@@ -512,8 +516,10 @@ static HRESULT http_load_hack(DocHost *This, IMoniker *mon, IBindStatusCallback 
     }
 
     hres = IUnknown_QueryInterface(doc, &IID_IPersistMoniker, (void**)&persist);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        IUnknown_Release(doc);
         return hres;
+    }
 
     hres = IPersistMoniker_Load(persist, FALSE, mon, bindctx, 0);
     IPersistMoniker_Release(persist);
@@ -525,14 +531,7 @@ static HRESULT http_load_hack(DocHost *This, IMoniker *mon, IBindStatusCallback 
 
     IUnknown_Release(doc);
 
-    if(This->frame) {
-        static const WCHAR empty[] = {0};
-
-        IOleInPlaceFrame_SetStatusText(This->frame, empty); /* FIXME */
-    }
-
-    return hres;
-
+    return IBindStatusCallback_OnStopBinding(callback, hres, NULL);
 }
 
 static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCtx *bindctx,
@@ -571,8 +570,6 @@ static HRESULT navigate_mon(DocHost *This, IMoniker *mon, PBYTE post_data, ULONG
     CreateAsyncBindCtx(0, callback, 0, &bindctx);
 
     hres = bind_to_object(This, mon, This->url, bindctx, callback);
-
-    IBindStatusCallback_OnStopBinding(callback, hres, NULL);
 
     IBindStatusCallback_Release(callback);
     IBindCtx_Release(bindctx);
