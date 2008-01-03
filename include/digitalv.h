@@ -199,7 +199,7 @@ extern "C" {
 #define MCI_DGV_MONITOR_METHOD              0x00010000L
 #define MCI_DGV_MONITOR_SOURCE              0x00020000L
 
-/* values for dwSource parameter of the MCI_DGV_MONITOR_PARMS struture */
+/* values for dwSource parameter of the MCI_DGV_MONITOR_PARMS structure */
 
 #define MCI_DGV_MONITOR_INPUT               0x00004000L
 #define MCI_DGV_MONITOR_FILE                0x00004001L

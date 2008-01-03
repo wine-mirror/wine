@@ -564,7 +564,7 @@ typedef struct _CAT_MEMBERINFO
 
 typedef struct _WIN_CERTIFICATE {
   DWORD dwLength;
-  WORD  wRevision;                   /*  WIN_CERT_REVISON_xxx */
+  WORD  wRevision;                   /*  WIN_CERT_REVISION_xxx */
   WORD  wCertificateType;            /*  WIN_CERT_TYPE_xxx */
   BYTE  bCertificate[ANYSIZE_ARRAY];
 } WIN_CERTIFICATE, *LPWIN_CERTIFICATE;

@@ -1068,7 +1068,7 @@ typedef struct _SYSTEM_CPU_INFORMATION {
 #define CPU_FEATURE_PAT    0x00000400   /* Page Attribute Table */
 #define CPU_FEATURE_FXSR   0x00000800   /* FXSAVE and FXSTORE instructions */
 #define CPU_FEATURE_SEP    0x00001000   /* SYSENTER and SYSEXIT instructions */
-#define CPU_FEATURE_SSE    0x00002000   /* SSE extenstions (ext. MMX) */
+#define CPU_FEATURE_SSE    0x00002000   /* SSE extensions (ext. MMX) */
 #define CPU_FEATURE_3DNOW  0x00008000   /* 3DNOW instructions available 
                                            (FIXME: needs to be confirmed) */
 #define CPU_FEATURE_SSE2   0x00010000   /* SSE2 extensions (XMMI64) */

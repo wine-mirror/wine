@@ -384,7 +384,7 @@ DECL_WINELIB_TYPE_AW(LPWAVEOUTCAPS2)
 #define WAVECAPS_PLAYBACKRATE   0x0002   /* supports playback rate control */
 #define WAVECAPS_VOLUME         0x0004   /* supports volume control */
 #define WAVECAPS_LRVOLUME       0x0008   /* separate left-right volume control */
-#define WAVECAPS_SYNC           0x0010	 /* driver is synchrounous and playing is blocking */
+#define WAVECAPS_SYNC           0x0010	 /* driver is synchronous and playing is blocking */
 #define WAVECAPS_SAMPLEACCURATE 0x0020	 /* position is sample accurate */
 #define WAVECAPS_DIRECTSOUND	0x0040   /* ? */
 

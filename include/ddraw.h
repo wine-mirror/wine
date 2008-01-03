@@ -338,7 +338,7 @@ typedef struct _DDSCAPS {
 #define DDSCAPS2_RESERVED2              0x00000040
 /* indicates surface will never be locked again */
 #define DDSCAPS2_OPAQUE                 0x00000080
-/* set at CreateSurface() time to indicate antialising will be used */
+/* set at CreateSurface() time to indicate antialiasing will be used */
 #define DDSCAPS2_HINTANTIALIASING       0x00000100
 /* set at CreateSurface() time to indicate cubic environment map */
 #define DDSCAPS2_CUBEMAP                0x00000200

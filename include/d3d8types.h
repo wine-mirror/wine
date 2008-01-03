@@ -170,7 +170,7 @@ typedef enum _D3DVSD_TOKENTYPE {
   D3DVSD_FORCE_DWORD       = 0x7FFFFFFF
 } D3DVSD_TOKENTYPE;
 
-/** input registers for vertes shaders functions */
+/** input registers for vertex shaders functions */
 /*
 #define D3DVSDE_POSITION      0
 #define D3DVSDE_BLENDWEIGHT   1
