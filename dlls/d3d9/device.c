@@ -61,7 +61,7 @@ static ULONG WINAPI IDirect3DDevice9Impl_Release(LPDIRECT3DDEVICE9 iface) {
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-      int i;
+      unsigned i;
       This->inDestruction = TRUE;
 
       EnterCriticalSection(&d3d9_cs);
