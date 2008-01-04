@@ -1472,10 +1472,8 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
                                const char *name, unsigned int *typestring_offset,
                                int toplevel)
 {
-    size_t start_offset = *typestring_offset;
+    size_t start_offset;
     unsigned char rtype;
-
-    update_tfsoff(type, start_offset, file);
 
     if (toplevel && is_declptr(type))
     {
@@ -1493,6 +1491,9 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
             *typestring_offset += 2;
         }
     }
+
+    start_offset = *typestring_offset;
+    update_tfsoff(type, start_offset, file);
 
     rtype = type->ref->type;
 
@@ -2743,10 +2744,11 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
             }
 
             if ((phase == PHASE_FREE) || (pointer_type == RPC_FC_UP))
-                print_phase_function(file, indent, "Pointer", phase, var, start_offset);
+                print_phase_function(file, indent, "Pointer", phase, var,
+                                     start_offset - (type->size_is ? 4 : 2));
             else
                 print_phase_function(file, indent, "ConformantString", phase, var,
-                                     start_offset + (type->size_is ? 4 : 2));
+                                     start_offset);
         }
     }
     else if (is_array(type))
