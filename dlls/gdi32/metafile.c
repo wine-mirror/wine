@@ -427,7 +427,12 @@ BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
                   mr->rdSize,offset,mh->mtSize*2);
             break;
 	}
+
 	offset += mr->rdSize * 2;
+	if (mr->rdFunction == META_EOF) {
+	    TRACE("Got META_EOF so stopping\n");
+	    break;
+	}
 	PlayMetaFileRecord( hdc, ht, mr, mh->mtNoObjects );
     }
 
