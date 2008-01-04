@@ -110,6 +110,7 @@ BASEDIRS = \
 	mlang \
 	mmdevldr.vxd \
 	monodebg.vxd \
+	mountmgr.sys \
 	mpr \
 	mprapi \
 	msacm32 \

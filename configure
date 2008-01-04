@@ -20868,6 +20868,8 @@ ac_config_files="$ac_config_files dlls/mmdevldr.vxd/Makefile"
 
 ac_config_files="$ac_config_files dlls/monodebg.vxd/Makefile"
 
+ac_config_files="$ac_config_files dlls/mountmgr.sys/Makefile"
+
 ac_config_files="$ac_config_files dlls/mpr/Makefile"
 
 ac_config_files="$ac_config_files dlls/mprapi/Makefile"
@@ -22042,6 +22044,7 @@ do
     "dlls/mlang/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mlang/tests/Makefile" ;;
     "dlls/mmdevldr.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mmdevldr.vxd/Makefile" ;;
     "dlls/monodebg.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/monodebg.vxd/Makefile" ;;
+    "dlls/mountmgr.sys/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mountmgr.sys/Makefile" ;;
     "dlls/mpr/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mpr/Makefile" ;;
     "dlls/mprapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mprapi/Makefile" ;;
     "dlls/msacm32.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm32.drv/Makefile" ;;

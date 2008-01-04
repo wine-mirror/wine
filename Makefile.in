@@ -288,6 +288,7 @@ ALL_MAKEFILES = \
 	dlls/mlang/tests/Makefile \
 	dlls/mmdevldr.vxd/Makefile \
 	dlls/monodebg.vxd/Makefile \
+	dlls/mountmgr.sys/Makefile \
 	dlls/mpr/Makefile \
 	dlls/mprapi/Makefile \
 	dlls/msacm32.drv/Makefile \
@@ -672,6 +673,7 @@ dlls/mlang/Makefile: dlls/mlang/Makefile.in dlls/Makedll.rules
 dlls/mlang/tests/Makefile: dlls/mlang/tests/Makefile.in dlls/Maketest.rules
 dlls/mmdevldr.vxd/Makefile: dlls/mmdevldr.vxd/Makefile.in dlls/Makedll.rules
 dlls/monodebg.vxd/Makefile: dlls/monodebg.vxd/Makefile.in dlls/Makedll.rules
+dlls/mountmgr.sys/Makefile: dlls/mountmgr.sys/Makefile.in dlls/Makedll.rules
 dlls/mpr/Makefile: dlls/mpr/Makefile.in dlls/Makedll.rules
 dlls/mprapi/Makefile: dlls/mprapi/Makefile.in dlls/Makedll.rules
 dlls/msacm32.drv/Makefile: dlls/msacm32.drv/Makefile.in dlls/Makedll.rules
