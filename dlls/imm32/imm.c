@@ -1406,15 +1406,18 @@ BOOL WINAPI ImmNotifyIME(
                 case CPS_CANCEL:
                     TRACE("%s - %s\n","NI_COMPOSITIONSTR","CPS_CANCEL");
                     {
-                        HIMCC newCompStr;
+                        BOOL send;
+
                         if (pX11DRV_ForceXIMReset)
                             pX11DRV_ForceXIMReset(root_context->IMC.hWnd);
 
-                        newCompStr = updateCompStr(root_context->IMC.hCompStr, NULL, 0);
-                        ImmDestroyIMCC(root_context->IMC.hCompStr);
-                        root_context->IMC.hCompStr = newCompStr;
+                        send = (root_context->IMC.hCompStr!=NULL);
 
-                        ImmInternalPostIMEMessage(WM_IME_COMPOSITION, 0,
+                        ImmDestroyIMCC(root_context->IMC.hCompStr);
+                        root_context->IMC.hCompStr = NULL;
+
+                        if (send)
+                            ImmInternalPostIMEMessage(WM_IME_COMPOSITION, 0,
                                                   GCS_COMPSTR);
                         rc = TRUE;
                     }

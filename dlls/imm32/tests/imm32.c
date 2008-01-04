@@ -183,11 +183,9 @@ static int test_ImmNotifyIME(void) {
 
     ok(ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_CANCEL, 0), "Canceling an "
        "empty composition string succeeds.\n");
-    todo_wine {
     ok(!msg_spy_find_msg(WM_IME_COMPOSITION), "Windows does not post "
        "WM_IME_COMPOSITION in response to NI_COMPOSITIONSTR / CPS_CANCEL, if "
        "the composition string being canceled is empty.\n");
-    }
 
     msg_spy_flush_msgs();
 
@@ -203,11 +201,9 @@ static int test_ImmNotifyIME(void) {
 
     ok(ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_CANCEL, 0), "Canceling an "
        "empty composition string succeeds.\n");
-    todo_wine {
     ok(!msg_spy_find_msg(WM_IME_COMPOSITION), "Windows does not post "
        "WM_IME_COMPOSITION in response to NI_COMPOSITIONSTR / CPS_CANCEL, if "
        "the composition string being canceled is empty.\n");
-    }
 
     msg_spy_flush_msgs();
     ImmReleaseContext(hwnd, imc);
