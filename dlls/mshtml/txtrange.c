@@ -496,8 +496,12 @@ static void range_to_string(HTMLTxtRange *This, wstrbuf_t *buf)
 
     nsIDOMNode_AddRef(end_pos.node);
 
-    if(start_pos.node != end_pos.node && !is_br_node(end_pos.node))
-        wstrbuf_append_nodetxt(buf, end_pos.p, end_pos.off+1);
+    if(start_pos.node != end_pos.node) {
+        if(end_pos.type == TEXT_NODE)
+            wstrbuf_append_nodetxt(buf, end_pos.p, end_pos.off+1);
+        else
+            wstrbuf_append_node(buf, end_pos.node);
+    }
 
     nsIDOMNode_Release(iter);
     dompos_release(&start_pos);
