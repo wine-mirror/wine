@@ -270,9 +270,19 @@ HANDLE WINAPI RegisterWaitForSingleObjectEx( HANDLE hObject,
                 WAITORTIMERCALLBACK Callback, PVOID Context,
                 ULONG dwMilliseconds, ULONG dwFlags ) 
 {
-    FIXME("%p %p %p %d %d\n",
+    NTSTATUS status;
+    HANDLE hNewWaitObject;
+
+    TRACE("%p %p %p %d %d\n",
           hObject,Callback,Context,dwMilliseconds,dwFlags);
-    return 0;
+
+    status = RtlRegisterWait( &hNewWaitObject, hObject, Callback, Context, dwMilliseconds, dwFlags );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
+    }
+    return hNewWaitObject;
 }
 
 /***********************************************************************
