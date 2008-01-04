@@ -19,74 +19,13 @@
  * 
  * WINE RPC TODO's (and a few TODONT's)
  *
- * - Ove's decreasingly incomplete widl is an IDL compiler for wine.  For widl
- *   to be wine's only IDL compiler, a fair bit of work remains to be done.
- *   until then we have used some midl-generated stuff.  (What?)
- *   widl currently doesn't generate stub/proxy files required by wine's (O)RPC
- *   capabilities -- nor does it make those lovely format strings :(
- *   The MS MIDL compiler does some really esoteric stuff.  Of course Ove has
- *   started with the less esoteric stuff.  There are also lots of nice
- *   comments in there if you want to flex your bison and help build this monster.
- *
- * - RPC has a quite featureful error handling mechanism; basically none of this is
- *   implemented right now.  We also have deficiencies on the compiler side, where
- *   wine's __TRY / __EXCEPT / __FINALLY macros are not even used for RpcTryExcept & co,
- *   due to syntactic differences! (we can fix it with widl by using __TRY)
- *
- * - There are several different memory allocation schemes for MSRPC.
- *   I don't even understand what they all are yet, much less have them
- *   properly implemented.  Surely we are supposed to be doing something with
- *   the user-provided allocation/deallocation functions, but so far,
- *   I don't think we are doing this...
- *
- * - MSRPC provides impersonation capabilities which currently are not possible
- *   to implement in wine.  At the very least we should implement the authorization
- *   API's & gracefully ignore the irrelevant stuff (to an extent we already do).
- *
- * - Some transports are not yet implemented.  The existing transport implementations
- *   are incomplete and may be bug-infested.
- * 
- * - The various transports that we do support ought to be supported in a more
- *   object-oriented manner, as in DCE's RPC implementation, instead of cluttering
- *   up the code with conditionals like we do now.
- * 
- * - Data marshalling: So far, only the beginnings of a full implementation
- *   exist in wine.  NDR protocol itself is documented, but the MS API's to
- *   convert data-types in memory into NDR are not.  This is challenging work,
- *   and has supposedly been "at the top of Greg's queue" for several months now.
- *
- * - ORPC is RPC for OLE; once we have a working RPC framework, we can
- *   use it to implement out-of-process OLE client/server communications.
- *   ATM there is maybe a disconnect between the marshalling in the OLE DLLs
- *   and the marshalling going on here [TODO: well, is there or not?]
- * 
- * - In-source API Documentation, at least for those functions which we have
- *   implemented, but preferably for everything we can document, would be nice,
- *   since some of this stuff is quite obscure.
- *
- * - Name services... [TODO: what about them]
- *
- * - Protocol Towers: Totally unimplemented.... I think.
- *
- * - Context Handle Rundown: whatever that is.
- *
- * - Nested RPC's: Totally unimplemented.
- *
  * - Statistics: we are supposed to be keeping various counters.  we aren't.
  *
  * - Async RPC: Unimplemented.
  *
- * - XML/http RPC: Somewhere there's an XML fiend that wants to do this! Betcha
- *   we could use these as a transport for RPC's across computers without a
- *   permissions and/or licensing crisis.
- *
  * - The NT "ports" API, aka LPC.  Greg claims this is on his radar.  Might (or
  *   might not) enable users to get some kind of meaningful result out of
  *   NT-based native rpcrt4's.  Commonly-used transport for self-to-self RPC's.
- *
- * - ...?  More stuff I haven't thought of.  If you think of more RPC todo's
- *   drop me an e-mail <gmturner007@ameritech.net> or send a patch to the
- *   wine-patches mailing list.
  */
 
 #include "config.h"

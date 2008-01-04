@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * TODO:
- *  - Non-conformant strings
  *  - String structs
  *  - Byte count pointers
  *  - transmit_as/represent as
