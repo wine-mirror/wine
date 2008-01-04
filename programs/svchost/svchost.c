@@ -229,6 +229,12 @@ static BOOL AddServiceElem(LPWSTR service_name,
         goto cleanup;
     }
 
+    if (GetProcAddress(library, "SvchostPushServiceGlobals"))
+    {
+        WINE_FIXME("library %s expects undocumented SvchostPushServiceGlobals function to be called\n",
+                   wine_dbgstr_w(dll_name_long));
+    }
+
     /* Fill in the service table entry */
     service_table_entry->lpServiceName = service_name;
     service_table_entry->lpServiceProc = service_main_func;
