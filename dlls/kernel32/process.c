@@ -774,6 +774,45 @@ static BOOL process_init(void)
 
 
 /***********************************************************************
+ *           start_wineboot
+ *
+ * Start the wineboot process if necessary. Return the event to wait on.
+ */
+static HANDLE start_wineboot(void)
+{
+    static const WCHAR wineboot_eventW[] = {'_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
+    HANDLE event;
+
+    if (!(event = CreateEventW( NULL, TRUE, FALSE, wineboot_eventW )))
+    {
+        ERR( "failed to create wineboot event, expect trouble\n" );
+        return 0;
+    }
+    if (GetLastError() != ERROR_ALREADY_EXISTS)  /* we created it */
+    {
+        static const WCHAR command_line[] = {'\\','w','i','n','e','b','o','o','t','.','e','x','e',0};
+        STARTUPINFOW si;
+        PROCESS_INFORMATION pi;
+        WCHAR cmdline[MAX_PATH + sizeof(command_line)/sizeof(WCHAR)];
+
+        memset( &si, 0, sizeof(si) );
+        si.cb = sizeof(si);
+        GetSystemDirectoryW( cmdline, MAX_PATH );
+        lstrcatW( cmdline, command_line );
+        if (CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
+        {
+            TRACE( "started wineboot pid %04x tid %04x\n", pi.dwProcessId, pi.dwThreadId );
+            CloseHandle( pi.hThread );
+            CloseHandle( pi.hProcess );
+
+        }
+        else ERR( "failed to start wineboot, err %u\n", GetLastError() );
+    }
+    return event;
+}
+
+
+/***********************************************************************
  *           init_stack
  *
  * Allocate the stack of new process.
@@ -894,6 +933,7 @@ void __wine_kernel_init(void)
 
     WCHAR *p, main_exe_name[MAX_PATH+1];
     PEB *peb = NtCurrentTeb()->Peb;
+    HANDLE boot_event = 0;
 
     /* Initialize everything */
     if (!process_init()) exit(1);
@@ -913,6 +953,7 @@ void __wine_kernel_init(void)
             ExitProcess( GetLastError() );
         }
         if (!build_command_line( __wine_main_wargv )) goto error;
+        boot_event = start_wineboot();
     }
 
     /* if there's no extension, append a dot to prevent LoadLibrary from appending .dll */
@@ -942,6 +983,12 @@ void __wine_kernel_init(void)
         FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM, NULL, error, 0, msg, sizeof(msg), NULL );
         MESSAGE( "wine: could not load %s: %s", debugstr_w(main_exe_name), msg );
         ExitProcess( error );
+    }
+
+    if (boot_event)
+    {
+        if (WaitForSingleObject( boot_event, 30000 )) WARN( "boot event wait timed out\n" );
+        CloseHandle( boot_event );
     }
 
     /* switch to the new stack */

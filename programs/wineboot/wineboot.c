@@ -716,9 +716,13 @@ static const struct option long_options[] =
 
 int main( int argc, char *argv[] )
 {
+    extern HANDLE __wine_make_process_system(void);
+    static const WCHAR wineboot_eventW[] = {'_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
+
     /* First, set the current directory to SystemRoot */
     int optc;
     int end_session = 0, force = 0, kill = 0, restart = 0, shutdown = 0;
+    HANDLE event;
 
     GetWindowsDirectoryW( windowsdir, MAX_PATH );
     if( !SetCurrentDirectoryW( windowsdir ) )
@@ -750,6 +754,9 @@ int main( int argc, char *argv[] )
 
     if (shutdown) return 0;
 
+    event = CreateEventW( NULL, TRUE, FALSE, wineboot_eventW );
+    ResetEvent( event );  /* in case this is a restart */
+
     wininit();
     pendingRename();
 
@@ -769,5 +776,11 @@ int main( int argc, char *argv[] )
     }
 
     WINE_TRACE("Operation done\n");
+
+    SetEvent( event );
+
+    /* FIXME: the wait is needed to keep services running */
+    /* it should be removed once we have a proper services.exe */
+    WaitForSingleObject( __wine_make_process_system(), INFINITE );
     return 0;
 }
