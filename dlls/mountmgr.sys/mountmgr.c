@@ -58,11 +58,58 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
     return irp->IoStatus.u.Status;
 }
 
+/* handler for ioctls on the harddisk device */
+static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
+{
+    IO_STACK_LOCATION *irpsp = irp->Tail.Overlay.s.u.CurrentStackLocation;
+
+    TRACE( "ioctl %x insize %u outsize %u\n",
+           irpsp->Parameters.DeviceIoControl.IoControlCode,
+           irpsp->Parameters.DeviceIoControl.InputBufferLength,
+           irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+
+    switch(irpsp->Parameters.DeviceIoControl.IoControlCode)
+    {
+    default:
+        FIXME( "unsupported ioctl %x\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
+        irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+        break;
+    }
+    return irp->IoStatus.u.Status;
+}
+
+/* driver entry point for the harddisk driver */
+static NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
+{
+    static const WCHAR harddisk0W[] = {'\\','D','e','v','i','c','e',
+                                       '\\','H','a','r','d','d','i','s','k','0',0};
+    static const WCHAR physdrive0W[] = {'\\','?','?','\\','P','h','y','s','i','c','a','l','D','r','i','v','e','0',0};
+
+    UNICODE_STRING nameW, linkW;
+    DEVICE_OBJECT *device;
+    NTSTATUS status;
+
+    driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = harddisk_ioctl;
+
+    RtlInitUnicodeString( &nameW, harddisk0W );
+    RtlInitUnicodeString( &linkW, physdrive0W );
+    if (!(status = IoCreateDevice( driver, 0, &nameW, 0, 0, FALSE, &device )))
+        status = IoCreateSymbolicLink( &linkW, &nameW );
+    if (status)
+    {
+        FIXME( "failed to create device error %x\n", status );
+        return status;
+    }
+
+    return status;
+}
+
 /* main entry point for the mount point manager driver */
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     static const WCHAR device_mountmgrW[] = {'\\','D','e','v','i','c','e','\\','M','o','u','n','t','P','o','i','n','t','M','a','n','a','g','e','r',0};
     static const WCHAR link_mountmgrW[] = {'\\','?','?','\\','M','o','u','n','t','P','o','i','n','t','M','a','n','a','g','e','r',0};
+    static const WCHAR harddiskW[] = {'\\','D','r','i','v','e','r','\\','H','a','r','d','d','i','s','k',0};
 
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
@@ -81,6 +128,9 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
         FIXME( "failed to create device error %x\n", status );
         return status;
     }
+
+    RtlInitUnicodeString( &nameW, harddiskW );
+    status = IoCreateDriver( &nameW, harddisk_driver_entry );
 
     return status;
 }
