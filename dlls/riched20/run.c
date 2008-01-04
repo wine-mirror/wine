@@ -950,7 +950,8 @@ void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *p
     {
       if (!(tmp.dwMask & CFM_FACE))
         pFmt->dwMask &= ~CFM_FACE;
-      else if (lstrcmpW(pFmt->szFaceName, tmp.szFaceName))
+      else if (lstrcmpW(pFmt->szFaceName, tmp.szFaceName) ||
+          pFmt->bPitchAndFamily != tmp.bPitchAndFamily)
         pFmt->dwMask &= ~CFM_FACE;
     }
     if (pFmt->yHeight != tmp.yHeight)

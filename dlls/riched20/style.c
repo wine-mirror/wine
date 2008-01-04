@@ -320,7 +320,8 @@ ME_LogFontFromStyle(ME_Context* c, LOGFONTW *lf, const ME_Style *s)
   if (s->fmt.dwEffects & s->fmt.dwMask & (CFM_SUBSCRIPT|CFM_SUPERSCRIPT))
     lf->lfHeight = (lf->lfHeight*2)/3;
 /*lf.lfQuality = PROOF_QUALITY; */
-  lf->lfPitchAndFamily = s->fmt.bPitchAndFamily;
+  if (s->fmt.dwMask & CFM_FACE)
+    lf->lfPitchAndFamily = s->fmt.bPitchAndFamily;
   if (s->fmt.dwMask & CFM_CHARSET)
     lf->lfCharSet = s->fmt.bCharSet;
 }

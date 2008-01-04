@@ -419,6 +419,7 @@ static void ME_RTFCharAttrHook(RTF_Info *info)
           fmt.szFaceName[sizeof(fmt.szFaceName)/sizeof(WCHAR)-1] = '\0';
           fmt.bCharSet = f->rtfFCharSet;
           fmt.dwMask = CFM_FACE | CFM_CHARSET;
+          fmt.bPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
         }
       }
       break;
