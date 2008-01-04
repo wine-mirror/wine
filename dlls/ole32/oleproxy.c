@@ -376,9 +376,9 @@ static HRESULT WINAPI CFProxy_CreateInstance(
      *
      * Data: Only the 'IID'.
      */
+    memset(&msg, 0, sizeof(msg));
     msg.iMethod  = 3;
     msg.cbBuffer = sizeof(*riid);
-    msg.Buffer	 = NULL;
     hres = IRpcChannelBuffer_GetBuffer(This->chanbuf,&msg,&IID_IClassFactory);
     if (hres) {
 	FIXME("IRpcChannelBuffer_GetBuffer failed with %x?\n",hres);
