@@ -1413,7 +1413,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     }
 
     if (NULL != lpszReferrer && strlenW(lpszReferrer))
-        HTTP_ProcessHeader(lpwhr, HTTP_REFERER, lpszReferrer, HTTP_ADDHDR_FLAG_COALESCE);
+        HTTP_ProcessHeader(lpwhr, HTTP_REFERER, lpszReferrer, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
     if (lpszAcceptTypes)
     {
@@ -1436,23 +1436,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     else if (strlenW(lpszVerb))
         lpwhr->lpszVerb = WININET_strdupW(lpszVerb);
 
-    if (NULL != lpszReferrer && strlenW(lpszReferrer))
-    {
-        WCHAR buf[MAXHOSTNAME];
-        URL_COMPONENTSW UrlComponents;
-
-        buf[0] = '\0';
-        memset( &UrlComponents, 0, sizeof UrlComponents );
-        UrlComponents.dwStructSize = sizeof UrlComponents;
-        UrlComponents.lpszHostName = buf;
-        UrlComponents.dwHostNameLength = MAXHOSTNAME;
-
-        if (InternetCrackUrlW(lpszReferrer, 0, 0, &UrlComponents) &&
-            strlenW(UrlComponents.lpszHostName))
-            HTTP_ProcessHeader(lpwhr, szHost, UrlComponents.lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
-    }
-    else
-        HTTP_ProcessHeader(lpwhr, szHost, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
+    HTTP_ProcessHeader(lpwhr, szHost, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
     if (lpwhs->nServerPort == INTERNET_INVALID_PORT_NUMBER)
         lpwhs->nServerPort = (dwFlags & INTERNET_FLAG_SECURE ?
