@@ -72,6 +72,31 @@ static const MIDL_STUB_DESC Object_StubDesc =
     0   /* Reserved5 */
     };
 
+static RPC_DISPATCH_FUNCTION IFoo_table[] =
+{
+    0
+};
+
+static RPC_DISPATCH_TABLE IFoo_v0_0_DispatchTable =
+{
+    0,
+    IFoo_table
+};
+
+static const RPC_SERVER_INTERFACE IFoo___RpcServerInterface =
+{
+    sizeof(RPC_SERVER_INTERFACE),
+    {{0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x12,0x34}},{0,0}},
+    {{0x8a885d04,0x1ceb,0x11c9,{0x9f,0xe8,0x08,0x00,0x2b,0x10,0x48,0x60}},{2,0}},
+    &IFoo_v0_0_DispatchTable,
+    0,
+    0,
+    0,
+    0,
+    0,
+};
+
+static RPC_IF_HANDLE IFoo_v0_0_s_ifspec = (RPC_IF_HANDLE)& IFoo___RpcServerInterface;
 
 static void test_ndr_simple_type(void)
 {
@@ -1509,6 +1534,62 @@ static void test_nonconformant_string(void)
     HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
 }
 
+static void test_ndr_buffer(void)
+{
+    static unsigned char ncalrpc[] = "ncalrpc";
+    static unsigned char endpoint[] = "winetest:" __FILE__;
+    RPC_MESSAGE RpcMessage;
+    MIDL_STUB_MESSAGE StubMsg;
+    MIDL_STUB_DESC StubDesc = Object_StubDesc;
+    unsigned char *ret;
+    unsigned char *binding;
+    RPC_BINDING_HANDLE Handle;
+    RPC_STATUS status;
+
+    StubDesc.RpcInterfaceInformation = (void *)&IFoo___RpcServerInterface;
+
+    ok(RPC_S_OK == RpcServerUseProtseqEp(ncalrpc, 20, endpoint, NULL), "RpcServerUseProtseqEp\n");
+    ok(RPC_S_OK == RpcServerRegisterIf(IFoo_v0_0_s_ifspec, NULL, NULL), "RpcServerRegisterIf\n");
+    ok(RPC_S_OK == RpcServerListen(1, 20, TRUE), "RpcServerListen\n");
+
+    status = RpcStringBindingCompose(NULL, ncalrpc, NULL, endpoint, NULL, &binding);
+    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%lu)\n", status);
+
+    status = RpcBindingFromStringBinding(binding, &Handle);
+    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%lu)\n", status);
+
+    NdrClientInitializeNew(&RpcMessage, &StubMsg, &StubDesc, 5);
+
+    ret = NdrGetBuffer(&StubMsg, 10, Handle);
+    ok(ret == StubMsg.Buffer, "NdrGetBuffer should have returned the same value as StubMsg.Buffer instead of %p\n", ret);
+    ok(RpcMessage.Handle != NULL, "RpcMessage.Handle should not have been NULL\n");
+    ok(RpcMessage.Buffer != NULL, "RpcMessage.Buffer should not have been NULL\n");
+    ok(RpcMessage.BufferLength == 10, "RpcMessage.BufferLength should have been 10 instead of %d\n", RpcMessage.BufferLength);
+    ok(RpcMessage.RpcFlags == 0, "RpcMessage.RpcFlags should have been 0x0 instead of 0x%lx\n", RpcMessage.RpcFlags);
+    ok(StubMsg.Buffer != NULL, "Buffer should not have been NULL\n");
+    ok(!StubMsg.BufferStart, "BufferStart should have been NULL instead of %p\n", StubMsg.BufferStart);
+    ok(!StubMsg.BufferEnd, "BufferEnd should have been NULL instead of %p\n", StubMsg.BufferEnd);
+todo_wine
+    ok(StubMsg.BufferLength == 0, "BufferLength should have left as 0 instead of being set to %d\n", StubMsg.BufferLength);
+    ok(StubMsg.fBufferValid == TRUE, "fBufferValid should have been TRUE instead of 0x%x\n", StubMsg.fBufferValid);
+
+    StubMsg.BufferLength = 1;
+    NdrFreeBuffer(&StubMsg);
+    ok(RpcMessage.Handle != NULL, "RpcMessage.Handle should not have been NULL\n");
+todo_wine
+    ok(RpcMessage.Buffer != NULL, "RpcMessage.Buffer should not have been NULL\n");
+    ok(RpcMessage.BufferLength == 10, "RpcMessage.BufferLength should have been left as 10 instead of %d\n", RpcMessage.BufferLength);
+    ok(StubMsg.Buffer != NULL, "Buffer should not have been NULL\n");
+    ok(StubMsg.BufferLength == 1, "BufferLength should have left as 1 instead of being set to %d\n", StubMsg.BufferLength);
+    ok(StubMsg.fBufferValid == FALSE, "fBufferValid should have been FALSE instead of 0x%x\n", StubMsg.fBufferValid);
+
+    /* attempt double-free */
+    NdrFreeBuffer(&StubMsg);
+
+    status = RpcServerUnregisterIf(NULL, NULL, FALSE);
+    ok(status == RPC_S_OK, "RpcServerUnregisterIf failed (%lu)\n", status);
+}
+
 START_TEST( ndr_marshall )
 {
     test_ndr_simple_type();
@@ -1521,4 +1602,5 @@ START_TEST( ndr_marshall )
     test_conformant_array();
     test_conformant_string();
     test_nonconformant_string();
+    test_ndr_buffer();
 }
