@@ -387,7 +387,13 @@ static void test_readdirectorychanges(void)
         return;
     }
 
+    SetLastError(0xdeadbeef);
     r = GetTempPathW( MAX_PATH, path );
+    if (!r && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("GetTempPathW is not implemented\n");
+        return;
+    }
     ok( r != 0, "temp path failed\n");
     if (!r)
         return;
@@ -600,8 +606,13 @@ static void test_readdirectorychanges_null(void)
         skip("ReadDirectoryChangesW is not available\n");
         return;
     }
-
+    SetLastError(0xdeadbeef);
     r = GetTempPathW( MAX_PATH, path );
+    if (!r && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("GetTempPathW is not implemented\n");
+        return;
+    }
     ok( r != 0, "temp path failed\n");
     if (!r)
         return;
