@@ -331,7 +331,7 @@ static HRESULT WINAPI AboutProtocol_Read(IInternetProtocol *iface, void* pv, ULO
     if(!*pcbRead)
         return S_FALSE;
 
-    memcpy(pv, This->data, *pcbRead);
+    memcpy(pv, This->data+This->cur, *pcbRead);
     This->cur += *pcbRead;
 
     return S_OK;
@@ -739,7 +739,7 @@ static HRESULT WINAPI ResProtocol_Read(IInternetProtocol *iface, void* pv, ULONG
     if(!*pcbRead)
         return S_FALSE;
 
-    memcpy(pv, This->data, *pcbRead);
+    memcpy(pv, This->data+This->cur, *pcbRead);
     This->cur += *pcbRead;
 
     return S_OK;
