@@ -1576,7 +1576,6 @@ todo_wine
     StubMsg.BufferLength = 1;
     NdrFreeBuffer(&StubMsg);
     ok(RpcMessage.Handle != NULL, "RpcMessage.Handle should not have been NULL\n");
-todo_wine
     ok(RpcMessage.Buffer != NULL, "RpcMessage.Buffer should not have been NULL\n");
     ok(RpcMessage.BufferLength == 10, "RpcMessage.BufferLength should have been left as 10 instead of %d\n", RpcMessage.BufferLength);
     ok(StubMsg.Buffer != NULL, "Buffer should not have been NULL\n");
