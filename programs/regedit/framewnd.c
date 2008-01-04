@@ -327,6 +327,7 @@ static BOOL ImportRegistryFile(HWND hWnd)
     } else {
         CheckCommDlgError(hWnd);
     }
+    RefreshTreeView(g_pChildWnd->hTreeWnd);
     return TRUE;
 }
 
