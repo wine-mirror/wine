@@ -455,6 +455,7 @@ static BOOL service_handle_start(HANDLE pipe, service_data *service, DWORD count
     HeapFree(GetProcessHeap(), 0, service->args);
     service->args = args;
     args = NULL;
+    service->status.dwCurrentState = SERVICE_START_PENDING;
     service->thread = CreateThread( NULL, 0, service_thread,
                                     service, 0, NULL );
     SetEvent( service_event );  /* notify the main loop */
@@ -1625,6 +1626,7 @@ static BOOL service_wait_for_startup(SC_HANDLE hService)
             break;
         }
         r = FALSE;
+        if (status.dwCurrentState != SERVICE_START_PENDING) break;
         Sleep(100 * i);
     }
     return r;
