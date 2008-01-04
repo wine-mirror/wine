@@ -217,6 +217,94 @@ static NTSTATUS add_mount_point( DRIVER_OBJECT *driver, DWORD type, int drive,
     return STATUS_SUCCESS;
 }
 
+/* check if a given mount point matches the requested specs */
+static BOOL matching_mount_point( const struct mount_point *mount, const MOUNTMGR_MOUNT_POINT *spec )
+{
+    if (spec->SymbolicLinkNameOffset)
+    {
+        const WCHAR *name = (const WCHAR *)((const char *)spec + spec->SymbolicLinkNameOffset);
+        if (spec->SymbolicLinkNameLength != mount->link.Length) return FALSE;
+        if (memicmpW( name, mount->link.Buffer, mount->link.Length/sizeof(WCHAR)))
+            return FALSE;
+    }
+    if (spec->DeviceNameOffset)
+    {
+        const WCHAR *name = (const WCHAR *)((const char *)spec + spec->DeviceNameOffset);
+        const UNICODE_STRING *dev_name = get_device_name( mount->device );
+        if (spec->DeviceNameLength != dev_name->Length) return FALSE;
+        if (memicmpW( name, dev_name->Buffer, dev_name->Length/sizeof(WCHAR)))
+            return FALSE;
+    }
+    if (spec->UniqueIdOffset)
+    {
+        const void *id = ((const char *)spec + spec->UniqueIdOffset);
+        if (spec->UniqueIdLength != mount->id_len) return FALSE;
+        if (memcmp( id, mount->id, mount->id_len )) return FALSE;
+    }
+    return TRUE;
+}
+
+/* implementation of IOCTL_MOUNTMGR_QUERY_POINTS */
+static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
+                                    void *out_buff, SIZE_T outsize, IO_STATUS_BLOCK *iosb )
+{
+    UINT i, j, pos, size;
+    const MOUNTMGR_MOUNT_POINT *input = in_buff;
+    MOUNTMGR_MOUNT_POINTS *info = out_buff;
+    UNICODE_STRING *dev_name;
+
+    /* sanity checks */
+    if (input->SymbolicLinkNameOffset + input->SymbolicLinkNameLength > insize ||
+        input->UniqueIdOffset + input->UniqueIdLength > insize ||
+        input->DeviceNameOffset + input->DeviceNameLength > insize ||
+        input->SymbolicLinkNameOffset + input->SymbolicLinkNameLength < input->SymbolicLinkNameOffset ||
+        input->UniqueIdOffset + input->UniqueIdLength < input->UniqueIdOffset ||
+        input->DeviceNameOffset + input->DeviceNameLength < input->DeviceNameOffset)
+        return STATUS_INVALID_PARAMETER;
+
+    for (i = j = size = 0; i < MAX_MOUNT_POINTS; i++)
+    {
+        if (!mount_points[i].device) continue;
+        if (!matching_mount_point( &mount_points[i], input )) continue;
+        size += get_device_name(mount_points[i].device)->Length;
+        size += mount_points[i].link.Length;
+        j++;
+    }
+    pos = FIELD_OFFSET( MOUNTMGR_MOUNT_POINTS, MountPoints[j] );
+    size += pos;
+
+    if (size > outsize)
+    {
+        if (size >= sizeof(info->Size)) info->Size = size;
+        iosb->Information = sizeof(info->Size);
+        return STATUS_MORE_ENTRIES;
+    }
+
+    info->NumberOfMountPoints = j;
+    for (i = j = 0; i < MAX_MOUNT_POINTS; i++)
+    {
+        if (!mount_points[i].device) continue;
+        if (!matching_mount_point( &mount_points[i], input )) continue;
+        info->MountPoints[j].UniqueIdOffset = 0;  /* FIXME */
+        info->MountPoints[j].UniqueIdLength = 0;
+
+        dev_name = get_device_name( mount_points[i].device );
+        info->MountPoints[j].DeviceNameOffset = pos;
+        info->MountPoints[j].DeviceNameLength = dev_name->Length;
+        memcpy( (char *)out_buff + pos, dev_name->Buffer, dev_name->Length );
+        pos += dev_name->Length;
+
+        info->MountPoints[j].SymbolicLinkNameOffset = pos;
+        info->MountPoints[j].SymbolicLinkNameLength = mount_points[i].link.Length;
+        memcpy( (char *)out_buff + pos, mount_points[i].link.Buffer, mount_points[i].link.Length );
+        pos += mount_points[i].link.Length;
+        j++;
+    }
+    info->Size = pos;
+    iosb->Information = pos;
+    return STATUS_SUCCESS;
+}
+
 /* handler for ioctls on the mount manager device */
 static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
@@ -229,6 +317,15 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
     switch(irpsp->Parameters.DeviceIoControl.IoControlCode)
     {
+    case IOCTL_MOUNTMGR_QUERY_POINTS:
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(MOUNTMGR_MOUNT_POINT))
+            return STATUS_INVALID_PARAMETER;
+        irp->IoStatus.u.Status = query_mount_points( irpsp->Parameters.DeviceIoControl.Type3InputBuffer,
+                                                     irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                                     irp->MdlAddress->StartVa,
+                                                     irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                                     &irp->IoStatus );
+        break;
     default:
         FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
