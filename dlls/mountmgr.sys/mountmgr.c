@@ -30,6 +30,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "winioctl.h"
+#include "winreg.h"
 #include "ddk/wdm.h"
 #include "ddk/mountmgr.h"
 #include "wine/library.h"
@@ -56,6 +57,7 @@ struct mount_point
 };
 
 static struct mount_point mount_points[MAX_MOUNT_POINTS];
+static HKEY mount_key;
 
 static inline UNICODE_STRING *get_device_name( DEVICE_OBJECT *dev )
 {
@@ -207,6 +209,11 @@ static NTSTATUS add_mount_point( DRIVER_OBJECT *driver, DWORD type, int drive,
     TRACE( "created device %s symlinks %s %s\n", debugstr_w(get_device_name(mount_drive->device)->Buffer),
            debugstr_w(mount_drive->link.Buffer), debugstr_w(mount_volume->link.Buffer) );
 
+    RegSetValueExW( mount_key, mount_drive->link.Buffer, 0, REG_BINARY,
+                    mount_drive->id, mount_drive->id_len );
+    RegSetValueExW( mount_key, mount_volume->link.Buffer, 0, REG_BINARY,
+                    mount_volume->id, mount_volume->id_len );
+
     return STATUS_SUCCESS;
 }
 
@@ -278,6 +285,8 @@ static void create_drive_mount_points( DRIVER_OBJECT *driver )
 /* driver entry point for the harddisk driver */
 static NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
+    static const WCHAR mounted_devicesW[] = {'S','y','s','t','e','m','\\',
+                                             'M','o','u','n','t','e','d','D','e','v','i','c','e','s',0};
     static const WCHAR harddisk0W[] = {'\\','D','e','v','i','c','e',
                                        '\\','H','a','r','d','d','i','s','k','0',0};
     static const WCHAR physdrive0W[] = {'\\','?','?','\\','P','h','y','s','i','c','a','l','D','r','i','v','e','0',0};
@@ -287,6 +296,9 @@ static NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STR
     NTSTATUS status;
 
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = harddisk_ioctl;
+
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, mounted_devicesW, 0, NULL,
+                     REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &mount_key, NULL );
 
     RtlInitUnicodeString( &nameW, harddisk0W );
     RtlInitUnicodeString( &linkW, physdrive0W );
