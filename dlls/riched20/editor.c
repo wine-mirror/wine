@@ -1172,6 +1172,8 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->pCursors[0].nOffset = 0;
   ed->pCursors[1].pRun = ME_FindItemFwd(ed->pBuffer->pFirst, diRun);
   ed->pCursors[1].nOffset = 0;
+  ed->pCursors[2] = ed->pCursors[0];
+  ed->pCursors[3] = ed->pCursors[1];
   ed->nLastTotalLength = ed->nTotalLength = 0;
   ed->nHeight = 0;
   ed->nUDArrowX = -1;
