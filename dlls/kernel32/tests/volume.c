@@ -24,6 +24,9 @@
 static HINSTANCE hdll;
 static BOOL (WINAPI * pGetVolumeNameForVolumeMountPointA)(LPCSTR, LPSTR, DWORD);
 static BOOL (WINAPI * pGetVolumeNameForVolumeMountPointW)(LPCWSTR, LPWSTR, DWORD);
+static HANDLE (WINAPI *pFindFirstVolumeA)(LPSTR,DWORD);
+static BOOL (WINAPI *pFindNextVolumeA)(HANDLE,LPSTR,DWORD);
+static BOOL (WINAPI *pFindVolumeClose)(HANDLE);
 
 /* ############################### */
 
@@ -42,6 +45,32 @@ static void test_query_dos_deviceA(void)
         }
     }
     todo_wine ok(found, "expected at least one devicename to contain HARDDISK or RAMDISK\n");
+}
+
+static void test_FindFirstVolume(void)
+{
+    char volume[50];
+    HANDLE handle;
+
+    handle = pFindFirstVolumeA( volume, 0 );
+    ok( handle == INVALID_HANDLE_VALUE, "succeeded with short buffer\n" );
+    ok( GetLastError() == ERROR_FILENAME_EXCED_RANGE, "wrong error %u\n", GetLastError() );
+    handle = pFindFirstVolumeA( volume, 49 );
+    ok( handle == INVALID_HANDLE_VALUE, "succeeded with short buffer\n" );
+    ok( GetLastError() == ERROR_FILENAME_EXCED_RANGE, "wrong error %u\n", GetLastError() );
+    handle = pFindFirstVolumeA( volume, 50 );
+    ok( handle != INVALID_HANDLE_VALUE, "failed err %u\n", GetLastError() );
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        do
+        {
+            ok( strlen(volume) == 49, "bad volume name %s\n", volume );
+            ok( !memcmp( volume, "\\\\?\\Volume{", 11 ), "bad volume name %s\n", volume );
+            ok( !memcmp( volume + 47, "}\\", 2 ), "bad volume name %s\n", volume );
+        } while (pFindNextVolumeA( handle, volume, MAX_PATH ));
+        ok( GetLastError() == ERROR_NO_MORE_FILES, "wrong error %u\n", GetLastError() );
+        pFindVolumeClose( handle );
+    }
 }
 
 static void test_GetVolumeNameForVolumeMountPointA(void)
@@ -103,8 +132,12 @@ START_TEST(volume)
     hdll = GetModuleHandleA("kernel32.dll");
     pGetVolumeNameForVolumeMountPointA = (void *) GetProcAddress(hdll, "GetVolumeNameForVolumeMountPointA");
     pGetVolumeNameForVolumeMountPointW = (void *) GetProcAddress(hdll, "GetVolumeNameForVolumeMountPointW");
+    pFindFirstVolumeA = (void *) GetProcAddress(hdll, "FindFirstVolumeA");
+    pFindNextVolumeA = (void *) GetProcAddress(hdll, "FindNextVolumeA");
+    pFindVolumeClose = (void *) GetProcAddress(hdll, "FindVolumeClose");
 
     test_query_dos_deviceA();
+    test_FindFirstVolume();
     test_GetVolumeNameForVolumeMountPointA();
     test_GetVolumeNameForVolumeMountPointW();
 }
