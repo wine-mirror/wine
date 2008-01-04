@@ -484,7 +484,7 @@ static int NAS_DestroyRingMessage(MSG_RING* mr)
 /******************************************************************
  *		NAS_AddRingMessage
  *
- * Inserts a new message into the ring (should be called from DriverProc derivated routines)
+ * Inserts a new message into the ring (should be called from DriverProc derived routines)
  */
 static int NAS_AddRingMessage(MSG_RING* mr, enum win_wm_message msg, DWORD param, BOOL wait)
 {

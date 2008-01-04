@@ -281,7 +281,7 @@ static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr, LPCWSTR ve
     req[n++] = path;
     req[n++] = http1_1 ? g_szHttp1_1 : g_szHttp1_0;
 
-    /* Append custom request heades */
+    /* Append custom request headers */
     for (i = 0; i < lpwhr->nCustHeaders; i++)
     {
         if (lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST)
@@ -723,7 +723,7 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
 }
 
 /* read any content returned by the server so that the connection can be
- * resued */
+ * reused */
 static void HTTP_DrainContent(LPWININETHTTPREQW lpwhr)
 {
     DWORD bytes_read;
@@ -1768,7 +1768,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
     if (index >= 0)
         lphttpHdr = &lpwhr->pCustHeaders[index];
 
-    /* Ensure header satisifies requested attributes */
+    /* Ensure header satisfies requested attributes */
     if (!lphttpHdr ||
         ((dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS) &&
          (~lphttpHdr->wFlags & HDR_ISREQUEST)))
@@ -1780,7 +1780,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
     if (lpdwIndex)
         (*lpdwIndex)++;
 
-    /* coalesce value to reuqested type */
+    /* coalesce value to requested type */
     if (dwInfoLevel & HTTP_QUERY_FLAG_NUMBER)
     {
 	*(int *)lpBuffer = atoiW(lphttpHdr->lpszValue);

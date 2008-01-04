@@ -1571,7 +1571,7 @@ static void III_antialias(real xr[SBLIMIT][SSLIMIT],struct gr_info_s *gr_info)
 }
 
 /*
- DCT insipired by Jeff Tsay's DCT from the maplay package
+ DCT inspired by Jeff Tsay's DCT from the maplay package
  this is an optimized version with manual unroll.
 
  References:

@@ -241,7 +241,7 @@ static void InternetCrackUrl_test(void)
   ok(GLE != 0xdeadbeef && GLE != ERROR_SUCCESS, "Expected GLE to represent a failure\n");
 
   /* Invalid Call: must set size of components structure (Windows only
-   * inforces this on the InternetCrackUrlA version of the call) */
+   * enforces this on the InternetCrackUrlA version of the call) */
   copy_compsA(&urlSrc, &urlComponents, 0, 1024, 1024, 1024, 2048, 1024);
   SetLastError(0xdeadbeef);
   urlComponents.dwStructSize = 0;
@@ -250,7 +250,7 @@ static void InternetCrackUrl_test(void)
   ok(GLE != 0xdeadbeef && GLE != ERROR_SUCCESS, "Expected GLE to represent a failure\n");
 
   /* Invalid Call: size of dwStructSize must be one of the "standard" sizes
-   * of the URL_COMPONENTS structure (Windows only inforces this on the
+   * of the URL_COMPONENTS structure (Windows only enforces this on the
    * InternetCrackUrlA version of the call) */
   copy_compsA(&urlSrc, &urlComponents, 0, 1024, 1024, 1024, 2048, 1024);
   SetLastError(0xdeadbeef);
@@ -461,7 +461,7 @@ static void InternetCreateUrlA_test(void)
 		"Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 	ok(len == -1, "Expected len -1, got %d\n", len);
 
-	/* test valid lpUrlComponets, emptry szUrl
+	/* test valid lpUrlComponets, empty szUrl
 	 * lpdwUrlLength is size of buffer required on exit, including
 	 * the terminating null when GLE == ERROR_INSUFFICIENT_BUFFER
 	 */

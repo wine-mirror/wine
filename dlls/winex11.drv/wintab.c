@@ -459,13 +459,13 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
 
     if (!X11DRV_XInput_Init())
     {
-        ERR("Unable to initialized the XInput library.\n");
+        ERR("Unable to initialize the XInput library.\n");
         return;
     }
 
     hwndTabletDefault = hwnddefault;
 
-    /* Do base initializaion */
+    /* Do base initialization */
     strcpyW(gSysContext.lcName, SZ_CONTEXT_NAME);
     strcpyW(gSysDevice.NAME, SZ_DEVICE_NAME);
 

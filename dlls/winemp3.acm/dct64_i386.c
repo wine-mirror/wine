@@ -1,9 +1,9 @@
 /*
  * Copyright (c) Michael Hipp and other authors of the mpglib project.
  *
- * Discrete Cosine Tansform (DCT) for subband synthesis
+ * Discrete Cosine Transform (DCT) for subband synthesis
  * optimized for machines with no auto-increment.
- * The performance is highly compiler dependend. Maybe
+ * The performance is highly compiler dependent. Maybe
  * the dct64.c version for 'normal' processor may be faster
  * even for Intel processors.
  *

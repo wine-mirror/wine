@@ -2354,7 +2354,7 @@ INT FTP_ReceiveResponse(LPWININETFTPSESSIONW lpwfs, DWORD_PTR dwContext)
 	        if(lpszResponse[3] != '-')
 		    break;
 		else
-		{  /* Start of multiline repsonse.  Loop until we get "nnn " */
+		{  /* Start of multiline response.  Loop until we get "nnn " */
 		    multiline = TRUE;
 		    memcpy(firstprefix, lpszResponse, 3);
 		    firstprefix[3] = ' ';
@@ -3430,7 +3430,7 @@ static BOOL FTP_ParseDirectory(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR 
 
     TRACE("\n");
 
-    /* Allocate intial file properties array */
+    /* Allocate initial file properties array */
     *lpafp = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(FILEPROPERTIESW)*(sizeFilePropArray));
     if (!*lpafp)
         return FALSE;

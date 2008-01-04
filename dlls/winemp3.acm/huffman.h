@@ -1,11 +1,11 @@
 /*
  * Copyright (c) Michael Hipp and other authors of the mpglib project.
  *
- * huffman tables ... recalcualted to work with my optimzed
+ * huffman tables ... recalculated to work with my optimized
  * decoder scheme (MH)
  *
  * probably we could save a few bytes of memory, because the
- * smaller tables are often the part of a bigger table
+ * smaller tables are often part of a bigger table
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

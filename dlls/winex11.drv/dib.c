@@ -2636,7 +2636,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
     case 4:
     case 8:
         {
-            /* ==== rgb 888 dib -> any bmp bormat ==== */
+            /* ==== rgb 888 dib -> any bmp format ==== */
             const BYTE* srcbyte;
 
             /* Windows only supports one 24bpp DIB format: RGB888 */
@@ -3652,7 +3652,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 
  	/* We must save and restore the bmpImage's masks in order
  	 * to preserve them across the call to XShmGetImage, which
- 	 * decides to eleminate them since it doesn't happen to know
+	 * decides to eliminate them since it doesn't happen to know
  	 * what the format of the image is supposed to be, even though
  	 * we do. */
         saveRed = bmpImage->red_mask;

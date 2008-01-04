@@ -1050,7 +1050,7 @@ static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInf
 /*************************************************************
  *                 get_tile_pict
  *
- * Returns an appropiate Picture for tiling the text colour.
+ * Returns an appropriate Picture for tiling the text colour.
  * Call and use result within the xrender_cs
  */
 static Picture get_tile_pict(enum drawable_depth_type type, int text_pixel)

@@ -928,7 +928,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
             if (physDevDst->depth == 1)
             {
                 /* MSDN says if StretchBlt must convert a bitmap from monochrome
-                   to color or vice versa, the forground and background color of
+                   to color or vice versa, the foreground and background color of
                    the device context are used.  In fact, it also applies to the
                    case when it is converted from mono to mono. */
                 XSetBackground( gdi_display, gc, physDevDst->textPixel );

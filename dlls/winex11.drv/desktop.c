@@ -124,7 +124,7 @@ static LONG X11DRV_desktop_SetCurrentMode(int mode)
     if (dwBpp != dd_modes[mode].dwBPP)
     {
         FIXME("Cannot change screen BPP from %d to %d\n", dwBpp, dd_modes[mode].dwBPP);
-        /* Ignore the depth missmatch
+        /* Ignore the depth mismatch
          *
          * Some (older) applications require a specific bit depth, this will allow them
          * to run. X11drv performs a color depth conversion if needed.

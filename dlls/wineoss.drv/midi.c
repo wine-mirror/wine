@@ -109,7 +109,7 @@ static WINE_MIDIOUT	MidiOutDev[MAX_MIDIOUTDRV];
 
 /* this is the total number of MIDI out devices found (synth and port) */
 static	int 		MODM_NumDevs = 0;
-/* this is the number of FM synthetizers (index from 0 to NUMFMSYNTHDEVS - 1) */
+/* this is the number of FM synthesizers (index from 0 to NUMFMSYNTHDEVS - 1) */
 static	int		MODM_NumFMSynthDevs = 0;
 /* the Midi ports have index from NUMFMSYNTHDEVS to NumDevs - 1 */
 
@@ -299,9 +299,9 @@ LRESULT OSS_MidiInit(void)
 
 	/* This whole part is somewhat obscure to me. I'll keep trying to dig
 	   info about it. If you happen to know, please tell us. The very
-	   descritive minfo.dev_type was not used here.
+	   descriptive minfo.dev_type was not used here.
 	*/
-	/* Manufac ID. We do not have access to this with soundcard.h
+	/* Manufacturer ID. We do not have access to this with soundcard.h
 	   Does not seem to be a problem, because in mmsystem.h only
 	   Microsoft's ID is listed */
 	MidiOutDev[numsynthdevs + i].caps.wMid = 0x00FF;
@@ -980,7 +980,7 @@ typedef struct sChannel {
 
     int			bender;
     int			benderRange;
-    /* controlers */
+    /* controllers */
     int			bank;		/* CTL_BANK_SELECT */
     int			volume;		/* CTL_MAIN_VOLUME */
     int			balance;	/* CTL_BALANCE     */

@@ -2808,7 +2808,7 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
   if (lpszUrl == NULL)
   {
      /*
-      * According to the doc we are supost to use the ip for the next
+      * According to the doc we are supposed to use the ip for the next
       * server in the WnInet internal server database. I have
       * no idea what that is or how to get it.
       *

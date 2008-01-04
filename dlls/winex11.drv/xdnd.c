@@ -443,7 +443,7 @@ static int X11DRV_XDND_DeconstructTextPlain(int property, void* data, int len)
 {
     char* dostext;
 
-    /* Always suppply plain text */
+    /* Always supply plain text */
     X11DRV_XDND_UnixToDos(&dostext, (char*)data, len);
     X11DRV_XDND_InsertXDNDData(property, CF_TEXT, dostext, strlen(dostext));
 

@@ -4,8 +4,8 @@
  * copyright (c) 1995,1996,1997 by Michael Hipp, All rights reserved.
  * See also 'README'
  *
- * slighlty optimized for machines without autoincrement/decrement.
- * The performance is highly compiler dependend. Maybe
+ * Slightly optimized for machines without autoincrement/decrement.
+ * The performance is highly compiler dependent. Maybe
  * the decode.c version for 'normal' processor may be faster
  * even for Intel processors.
  *

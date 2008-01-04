@@ -1299,7 +1299,7 @@ static int OSS_DestroyRingMessage(OSS_MSG_RING* omr)
 /******************************************************************
  *		OSS_AddRingMessage
  *
- * Inserts a new message into the ring (should be called from DriverProc derivated routines)
+ * Inserts a new message into the ring (should be called from DriverProc derived routines)
  */
 static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD param, BOOL wait)
 {

@@ -651,7 +651,7 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 /**********************************************************************
  *           EVENT_DropFromOffix
  *
- * don't know if it still works (last Changlog is from 96/11/04)
+ * don't know if it still works (last Changelog is from 96/11/04)
  */
 static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 {

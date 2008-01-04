@@ -1052,7 +1052,7 @@ static void draw_moving_frame( HDC hdc, RECT *rect, BOOL thickframe )
 /***********************************************************************
  *           start_size_move
  *
- * Initialisation of a move or resize, when initiatied from a menu choice.
+ * Initialization of a move or resize, when initiated from a menu choice.
  * Return hit test code for caption or sizing border.
  */
 static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG style )
@@ -1069,7 +1069,7 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
         /* Move pointer at the center of the caption */
         RECT rect = rectWindow;
         /* Note: to be exactly centered we should take the different types
-         * of border into account, but it shouldn't make more that a few pixels
+         * of border into account, but it shouldn't make more than a few pixels
          * of difference so let's not bother with that */
         rect.top += GetSystemMetrics(SM_CYBORDER);
         if (style & WS_SYSMENU)
