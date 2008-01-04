@@ -377,6 +377,7 @@ int wmain (int argc, WCHAR *argvW[])
                   value = strtoulW(strvalue, NULL, 10);
               }
           }
+          RegCloseKey(key);
       }
 
       if (value == 0 && RegOpenKeyEx(HKEY_LOCAL_MACHINE, regKeyW,
@@ -397,6 +398,7 @@ int wmain (int argc, WCHAR *argvW[])
                   value = strtoulW(strvalue, NULL, 10);
               }
           }
+          RegCloseKey(key);
       }
 
       /* If one found, set the screen to that colour */

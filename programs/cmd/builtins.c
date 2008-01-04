@@ -2598,11 +2598,11 @@ void WCMD_assoc (WCHAR *command, BOOL assoc) {
                 WCMD_output_asis(keyValue);
               }
               WCMD_output_asis(newline);
+              RegCloseKey(readKey);
             }
           }
         }
       }
-      RegCloseKey(readKey);
 
     } else {
 

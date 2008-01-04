@@ -70,9 +70,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
       strcpyW (string, file);
       CharLower (string);
       if (strstrW (string, extension_exe) == NULL) strcatW (string, extension_exe);
-      h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
-                      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-      if (h != INVALID_HANDLE_VALUE) {
+      if (GetFileAttributes (string) != INVALID_FILE_ATTRIBUTES) {
         WCMD_run_program (command, 0);
       } else {
         SetLastError (ERROR_FILE_NOT_FOUND);
