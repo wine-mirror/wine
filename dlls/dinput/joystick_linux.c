@@ -574,7 +574,6 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
         return DIERR_NOINTERFACE;
     }
 
-    WARN("invalid device GUID %s\n",debugstr_guid(rguid));
     return DIERR_DEVICENOTREG;
 }
 

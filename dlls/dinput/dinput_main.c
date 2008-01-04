@@ -464,6 +464,11 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
       ret_value = DIERR_NOINTERFACE;
   }
 
+  if (ret_value == DIERR_NOINTERFACE)
+  {
+    WARN("invalid device GUID %s\n", debugstr_guid(rguid));
+  }
+
   return ret_value;
 }
 
