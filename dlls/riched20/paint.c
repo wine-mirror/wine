@@ -697,8 +697,7 @@ int ME_GetYScrollPos(ME_TextEditor *editor)
   SCROLLINFO si;
   si.cbSize = sizeof(si);
   si.fMask = SIF_POS;
-  GetScrollInfo(editor->hWnd, SB_VERT, &si);
-  return si.nPos;
+  return GetScrollInfo(editor->hWnd, SB_VERT, &si) ? si.nPos : 0;
 }
 
 BOOL ME_GetYScrollVisible(ME_TextEditor *editor)
