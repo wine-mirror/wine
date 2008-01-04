@@ -146,6 +146,7 @@ static int stream_read, protocol_read;
 static enum load_state_t {
     LD_DOLOAD,
     LD_LOADING,
+    LD_LOADED,
     LD_INTERACTIVE,
     LD_COMPLETE,
     LD_NO
@@ -2392,7 +2393,9 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 static void _test_readyState(unsigned line, IUnknown *unk)
 {
     IHTMLDocument2 *htmldoc;
+    DISPPARAMS dispparams;
     BSTR state;
+    VARIANT out;
     HRESULT hres;
 
     static const WCHAR wszUninitialized[] = {'u','n','i','n','i','t','i','a','l','i','z','e','d',0};
@@ -2403,6 +2406,7 @@ static void _test_readyState(unsigned line, IUnknown *unk)
     static const LPCWSTR expected_state[] = {
         wszUninitialized,
         wszLoading,
+        NULL,
         wszInteractive,
         wszComplete,
         wszUninitialized
@@ -2426,7 +2430,21 @@ static void _test_readyState(unsigned line, IUnknown *unk)
          debugstr_w(state), load_state);
     SysFreeString(state);
 
-    IHTMLDocument_Release(htmldoc);
+    dispparams.cArgs = 0;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = NULL;
+
+    VariantInit(&out);
+
+    hres = IHTMLDocument2_Invoke(htmldoc, DISPID_READYSTATE, &IID_NULL, 0, DISPATCH_PROPERTYGET,
+                                 &dispparams, &out, NULL, NULL);
+    ok(hres == S_OK, "Invoke(DISPID_READYSTATE) failed: %08x\n", hres);
+
+    ok_(__FILE__,line) (V_VT(&out) == VT_I4, "V_VT(out)=%d\n", V_VT(&out));
+    ok_(__FILE__,line) (V_I4(&out) == load_state%5, "VT_I4(out)=%d, expected %d\n", V_I4(&out), load_state%5);
+
+    IHTMLDocument2_Release(htmldoc);
 }
 
 static void test_ConnectionPoint(IConnectionPointContainer *container, REFIID riid)
