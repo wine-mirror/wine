@@ -432,12 +432,10 @@ HFONT WINAPI CreateFontIndirectA( const LOGFONTA *plfA )
 {
     LOGFONTW lfW;
 
-    if (plfA) {
-	FONT_LogFontAToW( plfA, &lfW );
-	return CreateFontIndirectW( &lfW );
-     } else
-	return CreateFontIndirectW( NULL );
+    if (!plfA) return 0;
 
+    FONT_LogFontAToW( plfA, &lfW );
+    return CreateFontIndirectW( &lfW );
 }
 
 /***********************************************************************
@@ -445,64 +443,59 @@ HFONT WINAPI CreateFontIndirectA( const LOGFONTA *plfA )
  */
 HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 {
-    HFONT hFont = 0;
+    static const WCHAR ItalicW[] = {' ','I','t','a','l','i','c','\0'};
+    static const WCHAR BoldW[]   = {' ','B','o','l','d','\0'};
+    WCHAR *pFaceNameItalicSuffix, *pFaceNameBoldSuffix;
+    WCHAR *pFaceNameSuffix = NULL;
+    HFONT hFont;
+    FONTOBJ *fontPtr;
 
-    if (plf)
+    if (!plf) return 0;
+
+    if (!(fontPtr = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC, (HGDIOBJ *)&hFont,
+                                     &font_funcs ))) return 0;
+
+    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
+
+    TRACE("(%d %d %d %d %x %d %x %d %d) %s %s %s %s => %p\n",
+          plf->lfHeight, plf->lfWidth,
+          plf->lfEscapement, plf->lfOrientation,
+          plf->lfPitchAndFamily,
+          plf->lfOutPrecision, plf->lfClipPrecision,
+          plf->lfQuality, plf->lfCharSet,
+          debugstr_w(plf->lfFaceName),
+          plf->lfWeight > 400 ? "Bold" : "",
+          plf->lfItalic ? "Italic" : "",
+          plf->lfUnderline ? "Underline" : "", hFont);
+
+    if (plf->lfEscapement != plf->lfOrientation)
     {
-        FONTOBJ* fontPtr;
-	if ((fontPtr = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC,
-					(HGDIOBJ *)&hFont, &font_funcs )))
-	{
-            static const WCHAR ItalicW[] = {' ','I','t','a','l','i','c','\0'};
-            static const WCHAR BoldW[]   = {' ','B','o','l','d','\0'};
-            WCHAR *pFaceNameItalicSuffix, *pFaceNameBoldSuffix;
-            WCHAR* pFaceNameSuffix = NULL;
-
-	    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
-
-            TRACE("(%d %d %d %d %x %d %x %d %d) %s %s %s %s => %p\n",
-                  plf->lfHeight, plf->lfWidth,
-                  plf->lfEscapement, plf->lfOrientation,
-                  plf->lfPitchAndFamily,
-		  plf->lfOutPrecision, plf->lfClipPrecision,
-		  plf->lfQuality, plf->lfCharSet,
-                  debugstr_w(plf->lfFaceName),
-                  plf->lfWeight > 400 ? "Bold" : "",
-                  plf->lfItalic ? "Italic" : "",
-                  plf->lfUnderline ? "Underline" : "", hFont);
-
-	    if (plf->lfEscapement != plf->lfOrientation) {
-	      /* this should really depend on whether GM_ADVANCED is set */
-	      fontPtr->logfont.lfOrientation = fontPtr->logfont.lfEscapement;
-	      WARN("orientation angle %f set to "
-                   "escapement angle %f for new font %p\n",
-                   plf->lfOrientation/10., plf->lfEscapement/10., hFont);
-	    }
-
-            pFaceNameItalicSuffix = strstrW(fontPtr->logfont.lfFaceName, ItalicW);
-            if (pFaceNameItalicSuffix) {
-                fontPtr->logfont.lfItalic = TRUE;
-                pFaceNameSuffix = pFaceNameItalicSuffix;
-            }
-
-            pFaceNameBoldSuffix = strstrW(fontPtr->logfont.lfFaceName, BoldW);
-            if (pFaceNameBoldSuffix) {
-                if (fontPtr->logfont.lfWeight < FW_BOLD) {
-                    fontPtr->logfont.lfWeight = FW_BOLD;
-                }
-                if (!pFaceNameSuffix ||
-                    (pFaceNameBoldSuffix < pFaceNameSuffix)) {
-                    pFaceNameSuffix = pFaceNameBoldSuffix;
-                }
-            }
-
-            if (pFaceNameSuffix) *pFaceNameSuffix = 0;
-
-	    GDI_ReleaseObj( hFont );
-	}
+        /* this should really depend on whether GM_ADVANCED is set */
+        fontPtr->logfont.lfOrientation = fontPtr->logfont.lfEscapement;
+        WARN("orientation angle %f set to "
+             "escapement angle %f for new font %p\n",
+             plf->lfOrientation/10., plf->lfEscapement/10., hFont);
     }
-    else WARN("(NULL) => NULL\n");
 
+    pFaceNameItalicSuffix = strstrW(fontPtr->logfont.lfFaceName, ItalicW);
+    if (pFaceNameItalicSuffix)
+    {
+        fontPtr->logfont.lfItalic = TRUE;
+        pFaceNameSuffix = pFaceNameItalicSuffix;
+    }
+
+    pFaceNameBoldSuffix = strstrW(fontPtr->logfont.lfFaceName, BoldW);
+    if (pFaceNameBoldSuffix)
+    {
+        if (fontPtr->logfont.lfWeight < FW_BOLD)
+            fontPtr->logfont.lfWeight = FW_BOLD;
+        if (!pFaceNameSuffix || (pFaceNameBoldSuffix < pFaceNameSuffix))
+            pFaceNameSuffix = pFaceNameBoldSuffix;
+    }
+
+    if (pFaceNameSuffix) *pFaceNameSuffix = 0;
+
+    GDI_ReleaseObj( hFont );
     return hFont;
 }
 
