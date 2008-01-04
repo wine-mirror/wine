@@ -321,7 +321,8 @@ ME_LogFontFromStyle(ME_Context* c, LOGFONTW *lf, const ME_Style *s)
     lf->lfHeight = (lf->lfHeight*2)/3;
 /*lf.lfQuality = PROOF_QUALITY; */
   lf->lfPitchAndFamily = s->fmt.bPitchAndFamily;
-  lf->lfCharSet = s->fmt.bCharSet;
+  if (s->fmt.dwMask & CFM_CHARSET)
+    lf->lfCharSet = s->fmt.bCharSet;
 }
 
 void ME_CharFormatFromLogFont(HDC hDC, const LOGFONTW *lf, CHARFORMAT2W *fmt)
