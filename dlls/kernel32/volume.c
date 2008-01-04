@@ -37,6 +37,7 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "ntddcdrm.h"
+#include "ddk/mountmgr.h"
 #include "kernel_private.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
@@ -1403,19 +1404,117 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
  */
 HANDLE WINAPI FindFirstVolumeA(LPSTR volume, DWORD len)
 {
-    FIXME("(%p, %d), stub!\n", volume, len);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return INVALID_HANDLE_VALUE;
+    WCHAR *buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    HANDLE handle = FindFirstVolumeW( buffer, len );
+
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        if (!WideCharToMultiByte( CP_ACP, 0, buffer, -1, volume, len, NULL, NULL ))
+        {
+            FindVolumeClose( handle );
+            handle = INVALID_HANDLE_VALUE;
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return handle;
 }
 
 /***********************************************************************
  *           FindFirstVolumeW   (KERNEL32.@)
  */
-HANDLE WINAPI FindFirstVolumeW(LPWSTR volume, DWORD len)
+HANDLE WINAPI FindFirstVolumeW( LPWSTR volume, DWORD len )
 {
-    FIXME("(%p, %d), stub!\n", volume, len);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    DWORD size = 1024;
+    HANDLE mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, 0, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                              NULL, OPEN_EXISTING, 0, 0 );
+    if (mgr == INVALID_HANDLE_VALUE) return INVALID_HANDLE_VALUE;
+
+    for (;;)
+    {
+        MOUNTMGR_MOUNT_POINT input;
+        MOUNTMGR_MOUNT_POINTS *output;
+
+        if (!(output = HeapAlloc( GetProcessHeap(), 0, size )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            break;
+        }
+        memset( &input, 0, sizeof(input) );
+
+        if (!DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_POINTS, &input, sizeof(input),
+                              output, size, NULL, NULL ))
+        {
+            if (GetLastError() != ERROR_MORE_DATA) break;
+            size = output->Size;
+            HeapFree( GetProcessHeap(), 0, output );
+            continue;
+        }
+        CloseHandle( mgr );
+        /* abuse the Size field to store the current index */
+        output->Size = 0;
+        if (!FindNextVolumeW( output, volume, len ))
+        {
+            HeapFree( GetProcessHeap(), 0, output );
+            return INVALID_HANDLE_VALUE;
+        }
+        return (HANDLE)output;
+    }
+    CloseHandle( mgr );
     return INVALID_HANDLE_VALUE;
+}
+
+/***********************************************************************
+ *           FindNextVolumeA   (KERNEL32.@)
+ */
+BOOL WINAPI FindNextVolumeA( HANDLE handle, LPSTR volume, DWORD len )
+{
+    WCHAR *buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    BOOL ret;
+
+    if ((ret = FindNextVolumeW( handle, buffer, len )))
+    {
+        if (!WideCharToMultiByte( CP_ACP, 0, buffer, -1, volume, len, NULL, NULL )) ret = FALSE;
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *           FindNextVolumeW   (KERNEL32.@)
+ */
+BOOL WINAPI FindNextVolumeW( HANDLE handle, LPWSTR volume, DWORD len )
+{
+    MOUNTMGR_MOUNT_POINTS *data = handle;
+
+    while (data->Size < data->NumberOfMountPoints)
+    {
+        static const WCHAR volumeW[] = {'\\','?','?','\\','V','o','l','u','m','e','{',};
+        WCHAR *link = (WCHAR *)((char *)data + data->MountPoints[data->Size].SymbolicLinkNameOffset);
+        DWORD size = data->MountPoints[data->Size].SymbolicLinkNameLength;
+        data->Size++;
+        /* skip non-volumes */
+        if (size < sizeof(volumeW) || memcmp( link, volumeW, sizeof(volumeW) )) continue;
+        if (size + sizeof(WCHAR) >= len * sizeof(WCHAR))
+        {
+            SetLastError( ERROR_FILENAME_EXCED_RANGE );
+            return FALSE;
+        }
+        memcpy( volume, link, size );
+        volume[1] = '\\';  /* map \??\ to \\?\ */
+        volume[size / sizeof(WCHAR)] = '\\';  /* Windows appends a backslash */
+        volume[size / sizeof(WCHAR) + 1] = 0;
+        TRACE( "returning entry %u %s\n", data->Size - 1, debugstr_w(volume) );
+        return TRUE;
+    }
+    SetLastError( ERROR_NO_MORE_FILES );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           FindVolumeClose   (KERNEL32.@)
+ */
+BOOL WINAPI FindVolumeClose(HANDLE handle)
+{
+    return HeapFree( GetProcessHeap(), 0, handle );
 }
 
 /***********************************************************************
@@ -1436,16 +1535,6 @@ HANDLE WINAPI FindFirstVolumeMountPointW(LPCWSTR root, LPWSTR mount_point, DWORD
     FIXME("(%s, %p, %d), stub!\n", debugstr_w(root), mount_point, len);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return INVALID_HANDLE_VALUE;
-}
-
-/***********************************************************************
- *           FindVolumeClose   (KERNEL32.@)
- */
-BOOL WINAPI FindVolumeClose(HANDLE handle)
-{
-    FIXME("(%p), stub!\n", handle);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
 }
 
 /***********************************************************************

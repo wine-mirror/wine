@@ -378,10 +378,10 @@
 @ stdcall FindNextChangeNotification(long)
 @ stdcall FindNextFileA(long ptr)
 @ stdcall FindNextFileW(long ptr)
-@ stub FindNextVolumeA
+@ stdcall FindNextVolumeA(long ptr long)
 @ stub FindNextVolumeMountPointA
 @ stub FindNextVolumeMountPointW
-@ stub FindNextVolumeW
+@ stdcall FindNextVolumeW(long ptr long)
 @ stdcall FindResourceA(long str str)
 @ stdcall FindResourceExA(long str str long)
 @ stdcall FindResourceExW(long wstr wstr long)
