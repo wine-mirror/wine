@@ -626,7 +626,7 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
                     while((chunk_size > 0) && (y < y_bottom))
                         {
                             /* ---- flag bits: 0 = SKIP, 10 = V1, 11 = V4 ---- */
-                        flag = (unsigned long)get_long();
+                        flag = get_long();
                         chunk_size -= 4;
                         mask = 0x80000000;
 
@@ -637,7 +637,7 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
                                 if(mask == 1)
                                     {
                                     if(chunk_size < 0) break;
-                                    flag = (unsigned long)get_long();
+                                    flag = get_long();
                                     chunk_size -= 4;
                                     mask = 0x80000000;
                                     }
