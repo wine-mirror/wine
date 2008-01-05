@@ -623,8 +623,12 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
     p = strrchrW( db, '\\' );
     if (!p)
     {
-        msi_free(db);
-        return ERROR_SUCCESS;
+        p = strrchrW( db, '/' );
+        if (!p)
+        {
+            msi_free(db);
+            return ERROR_SUCCESS;
+        }
     }
 
     len = p - db + 2;
