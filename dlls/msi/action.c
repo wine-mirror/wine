@@ -60,6 +60,8 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
  * consts and values used
  */
 static const WCHAR c_colon[] = {'C',':','\\',0};
+static const WCHAR szOriginalDatabase[] =
+    {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
 
 static const WCHAR szCreateFolders[] =
     {'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
@@ -610,17 +612,24 @@ BOOL ui_sequence_exists( MSIPACKAGE *package )
 
 static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 {
-    LPWSTR p;
+    LPWSTR p, db;
     LPWSTR source, check;
     DWORD len;
 
-    p = strrchrW( package->PackagePath, '\\' );
-    if (!p)
-        return ERROR_SUCCESS;
+    db = msi_dup_property( package, szOriginalDatabase );
+    if (!db)
+        return ERROR_OUTOFMEMORY;
 
-    len = p - package->PackagePath + 2;
+    p = strrchrW( db, '\\' );
+    if (!p)
+    {
+        msi_free(db);
+        return ERROR_SUCCESS;
+    }
+
+    len = p - db + 2;
     source = msi_alloc( len * sizeof(WCHAR) );
-    lstrcpynW( source, package->PackagePath, len );
+    lstrcpynW( source, db, len );
 
     check = msi_dup_property( package, cszSourceDir );
     if (!check || replace)
@@ -634,6 +643,7 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 
     msi_free( check );
     msi_free( source );
+    msi_free( db );
 
     return ERROR_SUCCESS;
 }
@@ -3872,8 +3882,6 @@ static UINT msi_get_local_package_name( LPWSTR path )
 
 static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
 {
-    static const WCHAR szOriginalDatabase[] =
-        {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
     WCHAR packagefile[MAX_PATH];
     LPWSTR msiFilePath;
     HKEY props;
