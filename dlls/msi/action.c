@@ -4203,7 +4203,7 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
 
     msi_set_sourcedir_props(package, TRUE);
 
-    attrib = GetFileAttributesW(package->PackagePath);
+    attrib = GetFileAttributesW(package->db->path);
     if (attrib == INVALID_FILE_ATTRIBUTES)
     {
         LPWSTR prompt;
@@ -4221,7 +4221,7 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
                     INSTALLPROPERTY_DISKPROMPTW,prompt,&size);
         }
         else
-            prompt = strdupW(package->PackagePath);
+            prompt = strdupW(package->db->path);
 
         msg = generate_error_string(package,1302,1,prompt);
         while(attrib == INVALID_FILE_ATTRIBUTES)
@@ -4232,7 +4232,7 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
                 rc = ERROR_INSTALL_USEREXIT;
                 break;
             }
-            attrib = GetFileAttributesW(package->PackagePath);
+            attrib = GetFileAttributesW(package->db->path);
         }
         msi_free(prompt);
         rc = ERROR_SUCCESS;
