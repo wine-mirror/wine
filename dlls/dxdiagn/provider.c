@@ -112,7 +112,7 @@ static HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface
     if (FAILED(hr)) {
       return hr;
     }
-    hr = DXDiag_InitRootDXDiagContainer((PDXDIAGCONTAINER)This->pRootContainer);
+    hr = DXDiag_InitRootDXDiagContainer(This->pRootContainer);
   }
   return IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)This->pRootContainer, &IID_IDxDiagContainer, (void**) ppInstance);
 }

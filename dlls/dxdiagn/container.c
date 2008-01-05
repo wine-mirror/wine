@@ -116,8 +116,8 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainerInternal(PDXDIAGCONT
 
   p = This->subContainers;
   while (NULL != p) {
-    if (0 == lstrcmpW(p->contName, pwszContainer)) {      
-      *ppInstance = (PDXDIAGCONTAINER)p->pCont;
+    if (0 == lstrcmpW(p->contName, pwszContainer)) {
+      *ppInstance = p->pCont;
       return S_OK;
     }
     p = p->next;
@@ -159,7 +159,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER if
 
   hr = IDxDiagContainerImpl_GetChildContainerInternal(pContainer, tmp, ppInstance);
   if (SUCCEEDED(hr)) {
-    IDxDiagContainerImpl_AddRef((PDXDIAGCONTAINER)*ppInstance);
+    IDxDiagContainerImpl_AddRef(*ppInstance);
   }
 
 on_error:
