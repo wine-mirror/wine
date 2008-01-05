@@ -573,22 +573,20 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
         mi->first_volume = strdupW(mi->volume_label);
 
     source_dir = msi_dup_property(package, cszSourceDir);
+    lstrcpyW(mi->source, source_dir);
 
-    if (mi->cabinet && mi->cabinet[0] == '#')
+    if (file->IsCompressed && mi->cabinet)
     {
-        r = writeout_cabinet_stream(package, &mi->cabinet[1], mi->source);
-        if (r != ERROR_SUCCESS)
+        if (mi->cabinet[0] == '#')
         {
-            ERR("Failed to extract cabinet stream\n");
-            return ERROR_FUNCTION_FAILED;
+            r = writeout_cabinet_stream(package, &mi->cabinet[1], mi->source);
+            if (r != ERROR_SUCCESS)
+            {
+                ERR("Failed to extract cabinet stream\n");
+                return ERROR_FUNCTION_FAILED;
+            }
         }
-    }
-    else
-    {
-        lstrcpyW(mi->source, source_dir);
-
-
-        if (mi->cabinet)
+        else
             lstrcatW(mi->source, mi->cabinet);
     }
 
