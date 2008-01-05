@@ -132,8 +132,8 @@
 @ stub SpoolerFindFirstPrinterChangeNotification
 @ stub SpoolerFindNextPrinterChangeNotification
 @ stub SpoolerFreePrinterNotifyInfo
-@ stub SpoolerHasInitialized
-@ stub SpoolerInit
+@ stdcall SpoolerHasInitialized()
+@ stdcall SpoolerInit()
 @ stub StartDocPrinterW
 @ stub StartPagePrinter
 @ stub UnloadDriver

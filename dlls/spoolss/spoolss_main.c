@@ -230,3 +230,21 @@ BOOL WINAPI SplIsUpgrade(void)
     FIXME("() stub\n");
     return FALSE;
 }
+
+/******************************************************************
+ *   SpoolerHasInitialized  [SPOOLSS.@]
+ */
+BOOL WINAPI SpoolerHasInitialized(void)
+{
+    FIXME("() stub\n");
+    return TRUE;
+}
+
+/******************************************************************
+ *   SpoolerInit   [SPOOLSS.@]
+ */
+BOOL WINAPI SpoolerInit(void)
+{
+    FIXME("() stub\n");
+    return TRUE;
+}
