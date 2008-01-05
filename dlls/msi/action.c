@@ -608,6 +608,36 @@ BOOL ui_sequence_exists( MSIPACKAGE *package )
     return FALSE;
 }
 
+static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
+{
+    LPWSTR p;
+    LPWSTR source, check;
+    DWORD len;
+
+    p = strrchrW( package->PackagePath, '\\' );
+    if (!p)
+        return ERROR_SUCCESS;
+
+    len = p - package->PackagePath + 2;
+    source = msi_alloc( len * sizeof(WCHAR) );
+    lstrcpynW( source, package->PackagePath, len );
+
+    check = msi_dup_property( package, cszSourceDir );
+    if (!check || replace)
+        MSI_SetPropertyW( package, cszSourceDir, source );
+
+    msi_free( check );
+
+    check = msi_dup_property( package, cszSOURCEDIR );
+    if (!check || replace)
+        MSI_SetPropertyW( package, cszSOURCEDIR, source );
+
+    msi_free( check );
+    msi_free( source );
+
+    return ERROR_SUCCESS;
+}
+
 /****************************************************
  * TOP level entry points 
  *****************************************************/
@@ -629,7 +659,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     if (szPackagePath)   
     {
-        LPWSTR p, check, dir;
+        LPWSTR p, dir;
         LPCWSTR file;
 
         dir = strdupW(szPackagePath);
@@ -658,18 +688,9 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 
         lstrcpyW(package->PackagePath, dir);
         lstrcatW(package->PackagePath, file);
-
-        check = msi_dup_property( package, cszSourceDir );
-        if (!check)
-            MSI_SetPropertyW(package, cszSourceDir, dir);
-        msi_free(check);
-
-        check = msi_dup_property( package, cszSOURCEDIR );
-        if (!check)
-            MSI_SetPropertyW(package, cszSOURCEDIR, dir);
-
         msi_free(dir);
-        msi_free(check);
+
+        msi_set_sourcedir_props(package, FALSE);
     }
 
     msi_parse_command_line( package, szCommandLine );
@@ -4156,27 +4177,6 @@ UINT ACTION_ForceReboot(MSIPACKAGE *package)
     return ERROR_INSTALL_SUSPEND;
 }
 
-static UINT msi_set_sourcedir_props(MSIPACKAGE *package)
-{
-    LPWSTR p, source;
-    DWORD len;
-
-    p = strrchrW( package->PackagePath, '\\' );
-    if (!p)
-        return ERROR_SUCCESS;
-
-    len = p - package->PackagePath + 2;
-    source = msi_alloc( len * sizeof(WCHAR) );
-    lstrcpynW( source, package->PackagePath, len );
-
-    MSI_SetPropertyW( package, cszSourceDir, source );
-    MSI_SetPropertyW( package, cszSOURCEDIR, source );
-
-    msi_free( source );
-
-    return ERROR_SUCCESS;
-}
-
 static UINT ACTION_ResolveSource(MSIPACKAGE* package)
 {
     DWORD attrib;
@@ -4189,7 +4189,7 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
     if (!package->PackagePath)
         return ERROR_SUCCESS;
 
-    msi_set_sourcedir_props(package);
+    msi_set_sourcedir_props(package, TRUE);
 
     attrib = GetFileAttributesW(package->PackagePath);
     if (attrib == INVALID_FILE_ATTRIBUTES)
