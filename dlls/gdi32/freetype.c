@@ -3291,7 +3291,7 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     if(size) {
         potm = HeapAlloc(GetProcessHeap(), 0, size);
         WineEngGetOutlineTextMetrics(font, size, potm);
-        ptm = (TEXTMETRICW*)&potm->otmTextMetrics;
+        ptm = &potm->otmTextMetrics;
     } else {
         WineEngGetTextMetrics(font, &tm);
         ptm = &tm;

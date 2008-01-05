@@ -327,7 +327,7 @@ HPQ16 WINAPI CreatePQ16(INT16 size)
  */
 INT16 WINAPI DeletePQ16(HPQ16 hPQ)
 {
-    return GlobalFree16((HGLOBAL16)hPQ);
+    return GlobalFree16(hPQ);
 }
 
 /**********************************************************************

@@ -832,7 +832,7 @@ INT WINAPI GetDIBits(
                                     *dstbits++ = (BYTE)(((val >> 2) & 0xf8) | ((val >> 7) & 0x07));
                                     *dstbits++ = (BYTE)(((val >> 7) & 0xf8) | ((val >> 12) & 0x07));
                                 }
-                                dstbits = (LPBYTE)(dbits+=dstwidthb);
+                                dstbits = dbits+=dstwidthb;
                                 srcbits = (LPWORD)(sbits+=srcwidthb);
                             }
                         }
@@ -848,7 +848,7 @@ INT WINAPI GetDIBits(
 
                     case 32: /* 32 bpp srcDIB -> 24 bpp dstDIB */
                         {
-                            LPBYTE srcbits = (LPBYTE)sbits;
+                            LPBYTE srcbits = sbits;
 
                             width = min(srcwidth, dstwidth);
                             for( y = 0; y < lines; y++) {
@@ -857,8 +857,8 @@ INT WINAPI GetDIBits(
                                     *dstbits++ = *srcbits++;
                                     *dstbits++ = *srcbits++;
                                 }
-                                dstbits=(LPBYTE)(dbits+=dstwidthb);
-                                srcbits = (LPBYTE)(sbits+=srcwidthb);
+                                dstbits = dbits+=dstwidthb;
+                                srcbits = sbits+=srcwidthb;
                             }
                         }
                         break;

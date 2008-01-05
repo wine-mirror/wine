@@ -308,8 +308,6 @@ HMETAFILE16 WINAPI SetMetaFileBits16( HGLOBAL16 hMem )
 HMETAFILE16 WINAPI SetMetaFileBitsBetter16( HMETAFILE16 hMeta )
 {
     if( IsValidMetaFile16( hMeta ) )
-        return (HMETAFILE16)GlobalReAlloc16( hMeta, 0,
-			   GMEM_SHARE | GMEM_NODISCARD | GMEM_MODIFY);
+        return GlobalReAlloc16( hMeta, 0, GMEM_SHARE | GMEM_NODISCARD | GMEM_MODIFY);
     return (HMETAFILE16)0;
 }
-

@@ -2545,7 +2545,7 @@ static INT CALLBACK cbEnhPaletteCopy( HDC a,
 
     /* Update the passed data as a return code */
     info->lpPe     = NULL; /* Palettes were copied! */
-    info->cEntries = (UINT)dwNumPalToCopy;
+    info->cEntries = dwNumPalToCopy;
 
     return FALSE; /* That's all we need */
   }
@@ -2576,7 +2576,7 @@ UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
   if ( enhHeader->nPalEntries == 0 ) return 0;
 
   /* Is the user requesting the number of palettes? */
-  if ( lpPe == NULL ) return (UINT)enhHeader->nPalEntries;
+  if ( lpPe == NULL ) return enhHeader->nPalEntries;
 
   /* Copy cEntries worth of PALETTEENTRY structs into the buffer */
   infoForCallBack.cEntries = cEntries;
