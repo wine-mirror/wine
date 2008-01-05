@@ -932,7 +932,12 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     if( file != szPackage )
         track_tempfile( package, file );
 
-    if( szPackage[0] != '#' )
+    if( UrlIsW( szPackage, URLIS_URL ) )
+    {
+        MSI_SetPropertyW( package, OriginalDatabase, szPackage );
+        MSI_SetPropertyW( package, Database, db->path );
+    }
+    else if( szPackage[0] != '#' )
     {
         MSI_SetPropertyW( package, OriginalDatabase, szPackage );
         MSI_SetPropertyW( package, Database, szPackage );
