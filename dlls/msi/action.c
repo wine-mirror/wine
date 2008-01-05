@@ -60,8 +60,6 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
  * consts and values used
  */
 static const WCHAR c_colon[] = {'C',':','\\',0};
-static const WCHAR szOriginalDatabase[] =
-    {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
 
 static const WCHAR szCreateFolders[] =
     {'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
@@ -615,6 +613,9 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
     LPWSTR p, db;
     LPWSTR source, check;
     DWORD len;
+
+    static const WCHAR szOriginalDatabase[] =
+        {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
 
     db = msi_dup_property( package, szOriginalDatabase );
     if (!db)
@@ -3887,7 +3888,6 @@ static UINT msi_get_local_package_name( LPWSTR path )
 static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
 {
     WCHAR packagefile[MAX_PATH];
-    LPWSTR msiFilePath;
     HKEY props;
     UINT r;
 
@@ -3897,17 +3897,14 @@ static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
 
     TRACE("Copying to local package %s\n",debugstr_w(packagefile));
 
-    msiFilePath = msi_dup_property( package, szOriginalDatabase );
-    r = CopyFileW( msiFilePath, packagefile, FALSE);
+    r = CopyFileW( package->db->path, packagefile, FALSE);
 
     if (!r)
     {
         ERR("Unable to copy package (%s -> %s) (error %d)\n",
-            debugstr_w(msiFilePath), debugstr_w(packagefile), GetLastError());
-        msi_free( msiFilePath );
+            debugstr_w(package->db->path), debugstr_w(packagefile), GetLastError());
         return ERROR_FUNCTION_FAILED;
     }
-    msi_free( msiFilePath );
 
     msi_reg_set_val_str( hkey, INSTALLPROPERTY_LOCALPACKAGEW, packagefile );
 
