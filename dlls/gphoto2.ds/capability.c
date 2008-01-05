@@ -193,17 +193,17 @@ TW_UINT16 GPHOTO2_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
 static TW_BOOL GPHOTO2_OneValueSet32 (pTW_CAPABILITY pCapability, TW_UINT32 value)
 {
-    pCapability->hContainer = (TW_HANDLE)GlobalAlloc (0, sizeof(TW_ONEVALUE));
+    pCapability->hContainer = GlobalAlloc (0, sizeof(TW_ONEVALUE));
 
     TRACE("-> %ld\n", value);
 
     if (pCapability->hContainer)
     {
-        pTW_ONEVALUE pVal = GlobalLock ((HGLOBAL) pCapability->hContainer);
+        pTW_ONEVALUE pVal = GlobalLock (pCapability->hContainer);
         pVal->ItemType = TWTY_UINT32;
         pVal->Item = value;
-        GlobalUnlock ((HGLOBAL) pCapability->hContainer);
-	pCapability->ConType = TWON_ONEVALUE;
+        GlobalUnlock (pCapability->hContainer);
+        pCapability->ConType = TWON_ONEVALUE;
         return TRUE;
     }
     else
@@ -212,17 +212,17 @@ static TW_BOOL GPHOTO2_OneValueSet32 (pTW_CAPABILITY pCapability, TW_UINT32 valu
 
 static TW_BOOL GPHOTO2_OneValueSet16 (pTW_CAPABILITY pCapability, TW_UINT16 value)
 {
-    pCapability->hContainer = (TW_HANDLE)GlobalAlloc (0, sizeof(TW_ONEVALUE));
+    pCapability->hContainer = GlobalAlloc (0, sizeof(TW_ONEVALUE));
 
     TRACE("-> %d\n", value);
 
     if (pCapability->hContainer)
     {
-        pTW_ONEVALUE pVal = GlobalLock ((HGLOBAL) pCapability->hContainer);
+        pTW_ONEVALUE pVal = GlobalLock (pCapability->hContainer);
         pVal->ItemType = TWTY_UINT16;
         pVal->Item = value;
-        GlobalUnlock ((HGLOBAL) pCapability->hContainer);
-	pCapability->ConType = TWON_ONEVALUE;
+        GlobalUnlock (pCapability->hContainer);
+        pCapability->ConType = TWON_ONEVALUE;
         return TRUE;
     }
     else
@@ -233,25 +233,25 @@ static TW_BOOL GPHOTO2_EnumSet16 (pTW_CAPABILITY pCapability, int nrofvalues,
                                   const TW_UINT16 *values, int current, int def)
 {
     pTW_ENUMERATION pVal;
-    pCapability->hContainer = (TW_HANDLE)GlobalAlloc (0, sizeof(TW_ENUMERATION) + nrofvalues * sizeof(TW_UINT16));
+    pCapability->hContainer = GlobalAlloc (0, sizeof(TW_ENUMERATION) + nrofvalues * sizeof(TW_UINT16));
 
     if (!pCapability->hContainer)
 	return FALSE;
 
-    pVal = GlobalLock ((HGLOBAL) pCapability->hContainer);
+    pVal = GlobalLock (pCapability->hContainer);
     pVal->ItemType = TWTY_UINT16;
     pVal->NumItems = nrofvalues;
     memcpy(pVal->ItemList, values, sizeof(TW_UINT16)*nrofvalues);
     pVal->CurrentIndex = current;
     pVal->DefaultIndex = def;
     pCapability->ConType = TWON_ENUMERATION;
-    GlobalUnlock ((HGLOBAL) pCapability->hContainer);
+    GlobalUnlock (pCapability->hContainer);
     return TRUE;
 }
 
 static TW_BOOL GPHOTO2_EnumGet16 (pTW_CAPABILITY pCapability, int *nrofvalues, TW_UINT16 **values)
 {
-    pTW_ENUMERATION pVal = GlobalLock ((HGLOBAL) pCapability->hContainer);
+    pTW_ENUMERATION pVal = GlobalLock (pCapability->hContainer);
 
     if (!pVal)
 	return FALSE;
@@ -259,18 +259,18 @@ static TW_BOOL GPHOTO2_EnumGet16 (pTW_CAPABILITY pCapability, int *nrofvalues, T
     *values = HeapAlloc( GetProcessHeap(), 0, sizeof(TW_UINT16)*pVal->NumItems);
     memcpy (*values, pVal->ItemList, sizeof(TW_UINT16)*(*nrofvalues));
     FIXME("Current Index %ld, Default Index %ld\n", pVal->CurrentIndex, pVal->DefaultIndex);
-    GlobalUnlock ((HGLOBAL) pCapability->hContainer);
+    GlobalUnlock (pCapability->hContainer);
     return TRUE;
 }
 
 static TW_BOOL GPHOTO2_OneValueGet32 (pTW_CAPABILITY pCapability, TW_UINT32 *pValue)
 {
-    pTW_ONEVALUE pVal = GlobalLock ((HGLOBAL) pCapability->hContainer);
+    pTW_ONEVALUE pVal = GlobalLock (pCapability->hContainer);
 
     if (pVal)
     {
         *pValue = pVal->Item;
-        GlobalUnlock ((HGLOBAL) pCapability->hContainer);
+        GlobalUnlock (pCapability->hContainer);
         return TRUE;
     }
     else
@@ -279,12 +279,12 @@ static TW_BOOL GPHOTO2_OneValueGet32 (pTW_CAPABILITY pCapability, TW_UINT32 *pVa
 
 static TW_BOOL GPHOTO2_OneValueGet16 (pTW_CAPABILITY pCapability, TW_UINT16 *pValue)
 {
-    pTW_ONEVALUE pVal = GlobalLock ((HGLOBAL) pCapability->hContainer);
+    pTW_ONEVALUE pVal = GlobalLock (pCapability->hContainer);
 
     if (pVal)
     {
         *pValue = pVal->Item;
-        GlobalUnlock ((HGLOBAL) pCapability->hContainer);
+        GlobalUnlock (pCapability->hContainer);
         return TRUE;
     }
     else
