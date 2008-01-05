@@ -1082,7 +1082,7 @@ HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
         TRACE("Default created (%p)\n",hwndDefault);
   }
 
-  return (HWND)hwndDefault;
+  return hwndDefault;
 }
 
 /***********************************************************************
