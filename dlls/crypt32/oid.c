@@ -77,6 +77,13 @@ struct OIDFunction
     struct list next;
 };
 
+static const WCHAR ROOT[] = {'R','O','O','T',0};
+static const WCHAR MY[] = {'M','Y',0};
+static const WCHAR CA[] = {'C','A',0};
+static const WCHAR ADDRESSBOOK[] = {'A','D','D','R','E','S','S','B','O','O','K',0};
+static const LPCWSTR LocalizedKeys[] = {ROOT,MY,CA,ADDRESSBOOK};
+static WCHAR LocalizedNames[4][256];
+
 static void free_function_sets(void)
 {
     struct OIDFunctionSet *setCursor, *setNext;
@@ -987,12 +994,32 @@ BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD dwEncodingType,
     return ret;
 }
 
+static void oid_init_localizednames(HINSTANCE hInstance)
+{
+    int i;
+
+    for(i = 0; i < sizeof(LocalizedKeys)/sizeof(LPCWSTR); i++)
+    {
+        LoadStringW(hInstance, IDS_LOCALIZEDNAME_ROOT+i, LocalizedNames[i], 256);
+    }
+}
+
 /********************************************************************
  *              CryptFindLocalizedName (CRYPT32.@)
  */
 LPCWSTR WINAPI CryptFindLocalizedName(LPCWSTR pwszCryptName)
 {
-    FIXME(" %s - stub\n",debugstr_w(pwszCryptName));
+    int i;
+
+    for(i = 0; i < sizeof(LocalizedKeys)/sizeof(LPCWSTR); i++)
+    {
+        if(!lstrcmpiW(LocalizedKeys[i], pwszCryptName))
+        {
+            return LocalizedNames[i];
+        }
+    }
+
+    FIXME("No name for: %s - stub\n",debugstr_w(pwszCryptName));
     return NULL;
 }
 
@@ -1345,6 +1372,7 @@ static void init_oid_info(HINSTANCE hinst)
 {
     DWORD i;
 
+    oid_init_localizednames(hinst);
     for (i = 0; i < sizeof(oidInfoConstructors) /
      sizeof(oidInfoConstructors[0]); i++)
     {

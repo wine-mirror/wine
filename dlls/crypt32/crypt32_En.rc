@@ -164,3 +164,11 @@ STRINGTABLE DISCARDABLE
     IDS_LIFETIME_SIGNING "Lifetime Signing"
     IDS_ANY_CERT_POLICY "All issuance policies"
 }
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_LOCALIZEDNAME_ROOT "Trusted Root Certification Authorities"
+    IDS_LOCALIZEDNAME_MY "Personal"
+    IDS_LOCALIZEDNAME_CA "Intermediate Certification Authorities"
+    IDS_LOCALIZEDNAME_ADDRESSBOOK "Other People"
+}
