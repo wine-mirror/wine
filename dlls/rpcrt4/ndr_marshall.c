@@ -6279,9 +6279,18 @@ void WINAPI NdrContextHandleSize(PMIDL_STUB_MESSAGE pStubMsg,
 NDR_SCONTEXT WINAPI NdrContextHandleInitialize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
+    RPC_SYNTAX_IDENTIFIER *if_id = NULL;
+
     TRACE("(%p, %p)\n", pStubMsg, pFormat);
+
+    if (pFormat[1] & NDR_STRICT_CONTEXT_HANDLE)
+    {
+        RPC_SERVER_INTERFACE *sif = pStubMsg->StubDesc->RpcInterfaceInformation;
+        if_id = &sif->InterfaceId;
+    }
+
     return NDRSContextUnmarshall2(pStubMsg->RpcMsg->Handle, NULL,
-                                  pStubMsg->RpcMsg->DataRepresentation, NULL, 0);
+                                  pStubMsg->RpcMsg->DataRepresentation, if_id, 0);
 }
 
 void WINAPI NdrServerContextNewMarshall(PMIDL_STUB_MESSAGE pStubMsg,
@@ -6289,6 +6298,8 @@ void WINAPI NdrServerContextNewMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                         NDR_RUNDOWN RundownRoutine,
                                         PFORMAT_STRING pFormat)
 {
+    RPC_SYNTAX_IDENTIFIER *if_id = NULL;
+
     TRACE("(%p, %p, %p, %p)\n", pStubMsg, ContextHandle, RundownRoutine, pFormat);
 
     ALIGN_POINTER(pStubMsg->Buffer, 4);
@@ -6300,9 +6311,14 @@ void WINAPI NdrServerContextNewMarshall(PMIDL_STUB_MESSAGE pStubMsg,
         RpcRaiseException(RPC_X_BAD_STUB_DATA);
     }
 
-    /* FIXME: do something with pFormat */
+    if (pFormat[1] & NDR_STRICT_CONTEXT_HANDLE)
+    {
+        RPC_SERVER_INTERFACE *sif = pStubMsg->StubDesc->RpcInterfaceInformation;
+        if_id = &sif->InterfaceId;
+    }
+
     NDRSContextMarshall2(pStubMsg->RpcMsg->Handle, ContextHandle,
-                          pStubMsg->Buffer, RundownRoutine, NULL, 0);
+                          pStubMsg->Buffer, RundownRoutine, if_id, 0);
     pStubMsg->Buffer += cbNDRContext;
 }
 
@@ -6310,6 +6326,7 @@ NDR_SCONTEXT WINAPI NdrServerContextNewUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                   PFORMAT_STRING pFormat)
 {
     NDR_SCONTEXT ContextHandle;
+    RPC_SYNTAX_IDENTIFIER *if_id = NULL;
 
     TRACE("(%p, %p)\n", pStubMsg, pFormat);
 
@@ -6322,11 +6339,16 @@ NDR_SCONTEXT WINAPI NdrServerContextNewUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
         RpcRaiseException(RPC_X_BAD_STUB_DATA);
     }
 
-    /* FIXME: do something with pFormat */
+    if (pFormat[1] & NDR_STRICT_CONTEXT_HANDLE)
+    {
+        RPC_SERVER_INTERFACE *sif = pStubMsg->StubDesc->RpcInterfaceInformation;
+        if_id = &sif->InterfaceId;
+    }
+
     ContextHandle = NDRSContextUnmarshall2(pStubMsg->RpcMsg->Handle,
                                            pStubMsg->Buffer,
                                            pStubMsg->RpcMsg->DataRepresentation,
-                                           NULL, 0);
+                                           if_id, 0);
     pStubMsg->Buffer += cbNDRContext;
 
     return ContextHandle;
