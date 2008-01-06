@@ -1922,7 +1922,7 @@ static void get_date_str(LPSTR date)
 {
     SYSTEMTIME systime;
 
-    static const char date_fmt[] = "%d%d%d";
+    static const char date_fmt[] = "%d%02d%02d";
     GetLocalTime(&systime);
     sprintf(date, date_fmt, systime.wYear, systime.wMonth, systime.wDay);
 }

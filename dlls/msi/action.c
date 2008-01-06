@@ -3978,7 +3978,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
 
     SYSTEMTIME systime;
-    static const WCHAR date_fmt[] = {'%','i','%','i','%','i',0};
+    static const WCHAR date_fmt[] = {'%','i','%','0','2','i','%','0','2','i',0};
     LPWSTR upgrade_code;
     WCHAR szDate[9];
 
