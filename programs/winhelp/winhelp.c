@@ -1972,6 +1972,10 @@ static void cb_KWBTree(void *p, void **next, void *cookie)
  *
  * Index dialog callback function.
  *
+ * nResult passed to EndDialog:
+ *   1: CANCEL button
+ *  >1: valid offset value +2.
+ *  EndDialog itself can return 0 (error).
  */
 INT_PTR CALLBACK WINHELP_SearchDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -2011,6 +2015,7 @@ INT_PTR CALLBACK WINHELP_SearchDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
                     MessageBox(hWnd, "macro keywords not supported yet", "Error", MB_OK | MB_ICONSTOP);
                     return TRUE;
                 }
+                offset += 2;
             }
             /* Fall through */
         case IDCANCEL:
@@ -2051,6 +2056,10 @@ BOOL WINHELP_CreateIndexWindow(void)
                          Globals.active_win->hMainWnd, WINHELP_SearchDlgProc,
                          (LPARAM)hlpfile);
     if (ret > 1)
+    {
+        ret -= 2;
+        WINE_TRACE("got %d as an offset\n", ret);
         WINHELP_CreateHelpWindowByOffset(hlpfile, ret, Globals.active_win->info, SW_NORMAL);
+    }
     return TRUE;
 }
