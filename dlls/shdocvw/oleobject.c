@@ -166,7 +166,11 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site)
     static const WCHAR wszitem[] = {'i','t','e','m',0};
 
     if(This->inplace)
+    {
+        if(This->shell_embedding_hwnd)
+            ShowWindow(This->shell_embedding_hwnd, SW_SHOW);
         return S_OK;
+    }
 
     hres = activate_inplace(This, active_site);
     if(FAILED(hres))
@@ -421,8 +425,8 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
         return activate_inplace(This, pActiveSite);
     case OLEIVERB_HIDE:
         TRACE("OLEIVERB_HIDE\n");
-        if(This->doc_host.hwnd)
-            ShowWindow(This->doc_host.hwnd, SW_HIDE);
+        if(This->shell_embedding_hwnd)
+            ShowWindow(This->shell_embedding_hwnd, SW_HIDE);
         return S_OK;
     default:
         FIXME("stub for %d\n", iVerb);
