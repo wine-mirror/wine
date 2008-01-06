@@ -6241,7 +6241,8 @@ void WINAPI NdrServerContextMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     }
 
     NDRSContextMarshall2(pStubMsg->RpcMsg->Handle, ContextHandle,
-                         pStubMsg->Buffer, RundownRoutine, NULL, 0);
+                         pStubMsg->Buffer, RundownRoutine, NULL,
+                         RPC_CONTEXT_HANDLE_DEFAULT_FLAGS);
     pStubMsg->Buffer += cbNDRContext;
 }
 
@@ -6263,7 +6264,7 @@ NDR_SCONTEXT WINAPI NdrServerContextUnmarshall(PMIDL_STUB_MESSAGE pStubMsg)
     ContextHandle = NDRSContextUnmarshall2(pStubMsg->RpcMsg->Handle,
                                            pStubMsg->Buffer,
                                            pStubMsg->RpcMsg->DataRepresentation,
-                                           NULL, 0);
+                                           NULL, RPC_CONTEXT_HANDLE_DEFAULT_FLAGS);
     pStubMsg->Buffer += cbNDRContext;
 
     return ContextHandle;
@@ -6280,9 +6281,14 @@ NDR_SCONTEXT WINAPI NdrContextHandleInitialize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
     RPC_SYNTAX_IDENTIFIER *if_id = NULL;
+    ULONG flags = RPC_CONTEXT_HANDLE_DEFAULT_FLAGS;
 
     TRACE("(%p, %p)\n", pStubMsg, pFormat);
 
+    if (pFormat[1] & NDR_CONTEXT_HANDLE_SERIALIZE)
+        flags |= RPC_CONTEXT_HANDLE_SERIALIZE;
+    if (pFormat[1] & NDR_CONTEXT_HANDLE_NO_SERIALIZE)
+        flags |= RPC_CONTEXT_HANDLE_DONT_SERIALIZE;
     if (pFormat[1] & NDR_STRICT_CONTEXT_HANDLE)
     {
         RPC_SERVER_INTERFACE *sif = pStubMsg->StubDesc->RpcInterfaceInformation;
@@ -6290,7 +6296,8 @@ NDR_SCONTEXT WINAPI NdrContextHandleInitialize(PMIDL_STUB_MESSAGE pStubMsg,
     }
 
     return NDRSContextUnmarshall2(pStubMsg->RpcMsg->Handle, NULL,
-                                  pStubMsg->RpcMsg->DataRepresentation, if_id, 0);
+                                  pStubMsg->RpcMsg->DataRepresentation, if_id,
+                                  flags);
 }
 
 void WINAPI NdrServerContextNewMarshall(PMIDL_STUB_MESSAGE pStubMsg,
@@ -6299,6 +6306,7 @@ void WINAPI NdrServerContextNewMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                         PFORMAT_STRING pFormat)
 {
     RPC_SYNTAX_IDENTIFIER *if_id = NULL;
+    ULONG flags = RPC_CONTEXT_HANDLE_DEFAULT_FLAGS;
 
     TRACE("(%p, %p, %p, %p)\n", pStubMsg, ContextHandle, RundownRoutine, pFormat);
 
@@ -6311,6 +6319,10 @@ void WINAPI NdrServerContextNewMarshall(PMIDL_STUB_MESSAGE pStubMsg,
         RpcRaiseException(RPC_X_BAD_STUB_DATA);
     }
 
+    if (pFormat[1] & NDR_CONTEXT_HANDLE_SERIALIZE)
+        flags |= RPC_CONTEXT_HANDLE_SERIALIZE;
+    if (pFormat[1] & NDR_CONTEXT_HANDLE_NO_SERIALIZE)
+        flags |= RPC_CONTEXT_HANDLE_DONT_SERIALIZE;
     if (pFormat[1] & NDR_STRICT_CONTEXT_HANDLE)
     {
         RPC_SERVER_INTERFACE *sif = pStubMsg->StubDesc->RpcInterfaceInformation;
@@ -6318,7 +6330,7 @@ void WINAPI NdrServerContextNewMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     }
 
     NDRSContextMarshall2(pStubMsg->RpcMsg->Handle, ContextHandle,
-                          pStubMsg->Buffer, RundownRoutine, if_id, 0);
+                          pStubMsg->Buffer, RundownRoutine, if_id, flags);
     pStubMsg->Buffer += cbNDRContext;
 }
 
@@ -6327,6 +6339,7 @@ NDR_SCONTEXT WINAPI NdrServerContextNewUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 {
     NDR_SCONTEXT ContextHandle;
     RPC_SYNTAX_IDENTIFIER *if_id = NULL;
+    ULONG flags = RPC_CONTEXT_HANDLE_DEFAULT_FLAGS;
 
     TRACE("(%p, %p)\n", pStubMsg, pFormat);
 
@@ -6339,6 +6352,10 @@ NDR_SCONTEXT WINAPI NdrServerContextNewUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
         RpcRaiseException(RPC_X_BAD_STUB_DATA);
     }
 
+    if (pFormat[1] & NDR_CONTEXT_HANDLE_SERIALIZE)
+        flags |= RPC_CONTEXT_HANDLE_SERIALIZE;
+    if (pFormat[1] & NDR_CONTEXT_HANDLE_NO_SERIALIZE)
+        flags |= RPC_CONTEXT_HANDLE_DONT_SERIALIZE;
     if (pFormat[1] & NDR_STRICT_CONTEXT_HANDLE)
     {
         RPC_SERVER_INTERFACE *sif = pStubMsg->StubDesc->RpcInterfaceInformation;
@@ -6348,7 +6365,7 @@ NDR_SCONTEXT WINAPI NdrServerContextNewUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     ContextHandle = NDRSContextUnmarshall2(pStubMsg->RpcMsg->Handle,
                                            pStubMsg->Buffer,
                                            pStubMsg->RpcMsg->DataRepresentation,
-                                           if_id, 0);
+                                           if_id, flags);
     pStubMsg->Buffer += cbNDRContext;
 
     return ContextHandle;
