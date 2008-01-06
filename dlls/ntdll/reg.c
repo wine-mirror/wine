@@ -481,9 +481,17 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
     switch(info_class)
     {
     case KeyValueBasicInformation:
-        fixed_size = (char *)((KEY_VALUE_BASIC_INFORMATION *)info)->Name - (char *)info;
+    {
+        KEY_VALUE_BASIC_INFORMATION *basic_info = info;
+        if (FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name) < length)
+        {
+            memcpy(basic_info->Name, name->Buffer,
+                   min(length - FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name), name->Length));
+        }
+        fixed_size = FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name) + name->Length;
         data_ptr = NULL;
         break;
+    }
     case KeyValueFullInformation:
     {
         KEY_VALUE_FULL_INFORMATION *full_info = info;
@@ -509,12 +517,12 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
     {
         req->hkey = handle;
         wine_server_add_data( req, name->Buffer, name->Length );
-        if (length > fixed_size) wine_server_set_reply( req, data_ptr, length - fixed_size );
+        if (length > fixed_size && data_ptr) wine_server_set_reply( req, data_ptr, length - fixed_size );
         if (!(ret = wine_server_call( req )))
         {
             copy_key_value_info( info_class, info, length, reply->type,
                                  name->Length, reply->total );
-            *result_len = fixed_size + reply->total;
+            *result_len = fixed_size + (info_class == KeyValueBasicInformation ? 0 : reply->total);
             if (length < *result_len) ret = STATUS_BUFFER_OVERFLOW;
         }
     }
