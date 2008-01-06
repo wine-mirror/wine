@@ -819,7 +819,6 @@ static const msi_table mov_tables[] =
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
     ADD_TABLE(mov_move_file),
-    ADD_TABLE(registry),
 };
 
 static const msi_table mc_tables[] =
