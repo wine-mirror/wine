@@ -112,6 +112,7 @@ static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "ResolveSource\t\t950\n"
                                            "MoveFiles\t\t1700\n"
                                            "InstallFiles\t\t4000\n"
+                                           "DuplicateFiles\t\t4500\n"
                                            "InstallServices\t\t5000\n"
                                            "InstallFinalize\t\t6600\n"
                                            "InstallInitialize\t\t1500\n"
@@ -559,6 +560,22 @@ static const CHAR mc_file_hash_dat[] = "File_\tOptions\tHashPart1\tHashPart2\tHa
                                        "MsiFileHash\tFile_\n"
                                        "caesar\t0\t850433704\t-241429251\t675791761\t-1221108824";
 
+static const CHAR df_directory_dat[] = "Directory\tDirectory_Parent\tDefaultDir\n"
+                                       "s72\tS72\tl255\n"
+                                       "Directory\tDirectory\n"
+                                       "THIS\tMSITESTDIR\tthis\n"
+                                       "DOESNT\tTHIS\tdoesnt\n"
+                                       "NONEXISTENT\tDOESNT\texist\n"
+                                       "MSITESTDIR\tProgramFilesFolder\tmsitest\n"
+                                       "ProgramFilesFolder\tTARGETDIR\t.\n"
+                                       "TARGETDIR\t\tSourceDir";
+
+static const CHAR df_duplicate_file_dat[] = "FileKey\tComponent_\tFile_\tDestName\tDestFolder\n"
+                                            "s72\ts72\ts72\tS255\tS72\n"
+                                            "DuplicateFile\tFileKey\n"
+                                            "maximus\tmaximus\tmaximus\taugustus\t\n"
+                                            "caesar\tmaximus\tmaximus\t\tNONEXISTENT\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -832,6 +849,19 @@ static const msi_table mc_tables[] =
     ADD_TABLE(mc_media),
     ADD_TABLE(property),
     ADD_TABLE(mc_file_hash),
+};
+
+static const msi_table df_tables[] =
+{
+    ADD_TABLE(rof_component),
+    ADD_TABLE(df_directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+    ADD_TABLE(df_duplicate_file),
 };
 
 /* cabinet definitions */
@@ -3568,6 +3598,33 @@ static void test_missingcab(void)
     DeleteFile(msifile);
 }
 
+static void test_duplicatefiles(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\maximus", 500);
+    create_database(msifile, df_tables, sizeof(df_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    /* fails if the destination folder is not a valid property */
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\augustus", TRUE), "File not duplicated\n");
+    ok(delete_pf("msitest\\this\\doesnt\\exist\\maximus", TRUE), "File not duplicated\n");
+    ok(delete_pf("msitest\\this\\doesnt\\exist", FALSE), "File not duplicated\n");
+    ok(delete_pf("msitest\\this\\doesnt", FALSE), "File not duplicated\n");
+    ok(delete_pf("msitest\\this", FALSE), "File not duplicated\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    DeleteFile("msitest\\maximus");
+    RemoveDirectory("msitest");
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -3609,6 +3666,7 @@ START_TEST(install)
     test_removefiles();
     test_movefiles();
     test_missingcab();
+    test_duplicatefiles();
 
     SetCurrentDirectoryA(prev_path);
 }
