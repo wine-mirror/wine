@@ -32,17 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nonclient);
 
-static const BYTE lpGrayMask[] = { 0xAA, 0xA0,
-                                   0x55, 0x50,
-                                   0xAA, 0xA0,
-                                   0x55, 0x50,
-                                   0xAA, 0xA0,
-                                   0x55, 0x50,
-                                   0xAA, 0xA0,
-                                   0x55, 0x50,
-                                   0xAA, 0xA0,
-                                   0x55, 0x50};
-
 #define SC_ABOUTWINE            (SC_SCREENSAVE+1)
 #define SC_PUTMARK              (SC_SCREENSAVE+2)
 
