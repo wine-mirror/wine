@@ -1086,6 +1086,21 @@ static HRESULT get_moniker_for_progid_display_name(LPBC pbc,
         IParseDisplayName *pdn;
         hr = IMoniker_BindToObject(class_moniker, pbc, NULL,
                                    &IID_IParseDisplayName, (void **)&pdn);
+        /* fallback to using IClassFactory to get IParseDisplayName -
+         * adsldp.dll depends on this */
+        if (FAILED(hr))
+        {
+            IClassFactory *pcf;
+            hr = IMoniker_BindToObject(class_moniker, pbc, NULL,
+                                       &IID_IClassFactory, (void **)&pcf);
+            if (SUCCEEDED(hr))
+            {
+                hr = IClassFactory_CreateInstance(pcf, NULL,
+                                                  &IID_IParseDisplayName,
+                                                  (void **)&pdn);
+                IClassFactory_Release(pcf);
+            }
+        }
         IMoniker_Release(class_moniker);
         if (SUCCEEDED(hr))
         {
