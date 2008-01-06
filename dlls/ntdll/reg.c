@@ -485,9 +485,17 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
         data_ptr = NULL;
         break;
     case KeyValueFullInformation:
-        data_ptr = (UCHAR *)((KEY_VALUE_FULL_INFORMATION *)info)->Name;
+    {
+        KEY_VALUE_FULL_INFORMATION *full_info = info;
+        if (FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name) < length)
+        {
+            memcpy(full_info->Name, name->Buffer,
+                   min(length - FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name), name->Length));
+        }
+        data_ptr = (UCHAR *)full_info->Name + name->Length;
         fixed_size = (char *)data_ptr - (char *)info;
         break;
+    }
     case KeyValuePartialInformation:
         data_ptr = ((KEY_VALUE_PARTIAL_INFORMATION *)info)->Data;
         fixed_size = (char *)data_ptr - (char *)info;

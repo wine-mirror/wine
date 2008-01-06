@@ -501,7 +501,6 @@ static void test_NtQueryValueKey(void)
     ok(full_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", full_info->Type);
     ok(full_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", full_info->DataLength);
     ok(full_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", full_info->NameLength);
-    todo_wine
     ok(len == FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]) + full_info->DataLength + full_info->NameLength,
         "NtQueryValueKey returned wrong len %d\n", len);
     len = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]) + full_info->DataLength + full_info->NameLength;
@@ -513,9 +512,7 @@ static void test_NtQueryValueKey(void)
     ok(full_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", full_info->Type);
     ok(full_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", full_info->DataLength);
     ok(full_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", full_info->NameLength);
-    todo_wine
     ok(!memcmp(full_info->Name, ValName.Buffer, ValName.Length), "incorrect Name returned\n");
-    todo_wine
     ok(*(DWORD *)((char *)full_info + full_info->DataOffset) == 711, "incorrect Data returned: 0x%x\n",
         *(DWORD *)((char *)full_info + full_info->DataOffset));
     HeapFree(GetProcessHeap(), 0, full_info);
