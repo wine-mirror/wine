@@ -1371,11 +1371,16 @@ REFIID
 
 %long
 
+DWORD
 HRESULT
+HTHUMBNAIL
+HWND
+UINT
 
 %ptr
 
 BOOL *
+LPCVOID
 
 %%dxdiagn.dll
 

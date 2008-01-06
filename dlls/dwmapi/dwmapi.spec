@@ -39,6 +39,6 @@
 @ stub DwmRegisterThumbnail
 @ stub DwmSetDxFrameDuration
 @ stub DwmSetPresentParameters
-@ stub DwmSetWindowAttribute
-@ stub DwmUnregisterThumbnail
+@ stdcall DwmSetWindowAttribute(long long ptr long)
+@ stdcall DwmUnregisterThumbnail(long)
 @ stub DwmUpdateThumbnailProperties
