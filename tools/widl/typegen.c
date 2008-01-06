@@ -43,6 +43,7 @@
 
 static const func_t *current_func;
 static const type_t *current_structure;
+static const ifref_t *current_iface;
 
 static struct list expr_eval_routines = LIST_INIT(expr_eval_routines);
 struct expr_eval_routine
@@ -2057,7 +2058,10 @@ static size_t write_contexthandle_tfs(FILE *file, const type_t *type,
                                       unsigned int *typeformat_offset)
 {
     size_t start_offset = *typeformat_offset;
-    unsigned char flags = 0x08 /* strict */;
+    unsigned char flags = 0;
+
+    if (is_attr(current_iface->attrs, ATTR_STRICTCONTEXTHANDLE))
+        flags |= 0x08 /* strict */;
 
     if (is_ptr(type))
     {
@@ -2280,6 +2284,7 @@ static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, type_pred_t pr
         if (iface->iface->funcs)
         {
             const func_t *func;
+            current_iface = iface;
             LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
             {
                 if (is_local(func->def->attrs)) continue;
