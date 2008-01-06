@@ -1669,11 +1669,13 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         const EMRCREATEDIBPATTERNBRUSHPT *lpCreate = (const EMRCREATEDIBPATTERNBRUSHPT *)mr;
         LPVOID lpPackedStruct;
 
-        /* check that offsets and data are contained within the record */
-        if ( !( (lpCreate->cbBmi>=0) && (lpCreate->cbBits>=0) &&
-                (lpCreate->offBmi>=0) && (lpCreate->offBits>=0) &&
-                ((lpCreate->offBmi +lpCreate->cbBmi ) <= mr->nSize) &&
-                ((lpCreate->offBits+lpCreate->cbBits) <= mr->nSize) ) )
+        /* Check that offsets and data are contained within the record
+         * (including checking for wrap arounds).
+         */
+        if (    lpCreate->offBmi  + lpCreate->cbBmi  > mr->nSize
+             || lpCreate->offBits + lpCreate->cbBits > mr->nSize
+             || lpCreate->offBmi  + lpCreate->cbBmi  < lpCreate->offBmi
+             || lpCreate->offBits + lpCreate->cbBits < lpCreate->offBits )
         {
             ERR("Invalid EMR_CREATEDIBPATTERNBRUSHPT record\n");
             break;
