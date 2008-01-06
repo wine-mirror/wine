@@ -695,7 +695,7 @@ static char *relative_path( LPCWSTR link, LPCWSTR locn )
  */
 static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc, char **relative )
 {
-    WCHAR filename[MAX_PATH], buffer[MAX_PATH];
+    WCHAR filename[MAX_PATH], shortfilename[MAX_PATH], buffer[MAX_PATH];
     DWORD len, i, r, filelen;
     const DWORD locations[] = {
         CSIDL_STARTUP, CSIDL_DESKTOPDIRECTORY, CSIDL_STARTMENU,
@@ -703,7 +703,16 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc, char **relative )
         CSIDL_COMMON_STARTMENU };
 
     WINE_TRACE("%s\n", wine_dbgstr_w(linkfile));
-    filelen=GetFullPathNameW( linkfile, MAX_PATH, filename, NULL );
+    filelen=GetFullPathNameW( linkfile, MAX_PATH, shortfilename, NULL );
+    if (filelen==0 || filelen>MAX_PATH)
+        return FALSE;
+
+    WINE_TRACE("%s\n", wine_dbgstr_w(shortfilename));
+
+    /* the CSLU Toolkit uses a short path name when creating .lnk files;
+     * expand or our hardcoded list won't match.
+     */
+    filelen=GetLongPathNameW(shortfilename, filename, MAX_PATH);
     if (filelen==0 || filelen>MAX_PATH)
         return FALSE;
 
