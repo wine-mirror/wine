@@ -1311,7 +1311,7 @@ static void test_class_moniker(void)
     ok(hr == MK_E_UNAVAILABLE, "IMoniker_GetTimeOfLastChange should return MK_E_UNAVAILABLE, not 0x%08x\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-    ok_ole_success(hr, IMoniker_BindToStorage);
+    ok_ole_success(hr, IMoniker_BindToObject);
     IUnknown_Release(unknown);
 
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
