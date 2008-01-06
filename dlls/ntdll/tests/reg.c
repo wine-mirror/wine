@@ -482,6 +482,15 @@ static void test_NtQueryValueKey(void)
     ok(partial_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", partial_info->Type);
     ok(partial_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", partial_info->DataLength);
     ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[partial_info->DataLength]), "NtQueryValueKey returned wrong len %d\n", len);
+
+    partial_info = HeapReAlloc(GetProcessHeap(), 0, partial_info, len);
+    status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, len, &len);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
+    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->Type);
+    ok(partial_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", partial_info->Type);
+    ok(partial_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", partial_info->DataLength);
+    ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[partial_info->DataLength]), "NtQueryValueKey returned wrong len %d\n", len);
+    ok(*(DWORD *)partial_info->Data == 711, "incorrect Data returned: 0x%x\n", *(DWORD *)partial_info->Data);
     HeapFree(GetProcessHeap(), 0, partial_info);
 
     len = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]);
@@ -495,6 +504,20 @@ static void test_NtQueryValueKey(void)
     todo_wine
     ok(len == FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]) + full_info->DataLength + full_info->NameLength,
         "NtQueryValueKey returned wrong len %d\n", len);
+    len = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]) + full_info->DataLength + full_info->NameLength;
+
+    full_info = HeapReAlloc(GetProcessHeap(), 0, full_info, len);
+    status = pNtQueryValueKey(key, &ValName, KeyValueFullInformation, full_info, len, &len);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
+    ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", full_info->Type);
+    ok(full_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", full_info->Type);
+    ok(full_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", full_info->DataLength);
+    ok(full_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", full_info->NameLength);
+    todo_wine
+    ok(!memcmp(full_info->Name, ValName.Buffer, ValName.Length), "incorrect Name returned\n");
+    todo_wine
+    ok(*(DWORD *)((char *)full_info + full_info->DataOffset) == 711, "incorrect Data returned: 0x%x\n",
+        *(DWORD *)((char *)full_info + full_info->DataOffset));
     HeapFree(GetProcessHeap(), 0, full_info);
 
     pRtlFreeUnicodeString(&ValName);
