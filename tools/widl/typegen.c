@@ -2707,10 +2707,11 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
             }
             else
             {
-                print_file(file, indent, "NdrServerContextMarshall(\n");
+                print_file(file, indent, "NdrServerContextNewMarshall(\n");
                 print_file(file, indent + 1, "&_StubMsg,\n");
                 print_file(file, indent + 1, "(NDR_SCONTEXT)%s,\n", var->name);
-                print_file(file, indent + 1, "(NDR_RUNDOWN)%s_rundown);\n", get_context_handle_type_name(var->type));
+                print_file(file, indent + 1, "(NDR_RUNDOWN)%s_rundown,\n", get_context_handle_type_name(var->type));
+                print_file(file, indent + 1, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]);\n", start_offset);
             }
         }
         else if (phase == PHASE_UNMARSHAL)
@@ -2723,7 +2724,11 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
                 print_file(file, indent + 1, "_Handle);\n");
             }
             else
-                print_file(file, indent, "%s = NdrServerContextUnmarshall(&_StubMsg);\n", var->name);
+            {
+                print_file(file, indent, "%s = NdrServerContextNewUnmarshall(\n", var->name);
+                print_file(file, indent + 1, "&_StubMsg,\n");
+                print_file(file, indent + 1, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]);\n", start_offset);
+            }
         }
     }
     else if (is_user_type(var->type))
