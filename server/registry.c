@@ -168,12 +168,6 @@ static const struct object_ops key_ops =
  * - REG_EXPAND_SZ and REG_MULTI_SZ are saved as strings instead of hex
  */
 
-static inline char to_hex( char ch )
-{
-    if (isdigit(ch)) return ch - '0';
-    return tolower(ch) - 'a' + 10;
-}
-
 /* dump the full path of a key */
 static void dump_path( const struct key *key, const struct key *base, FILE *f )
 {
@@ -1076,65 +1070,6 @@ static void file_read_error( const char *err, struct file_load_info *info )
         fprintf( stderr, "<fd>:%d: %s '%s'\n", info->line, err, info->buffer );
 }
 
-/* parse an escaped string back into Unicode */
-/* return the number of chars read from the input, or -1 on output overflow */
-static int parse_strW( WCHAR *dest, data_size_t *len, const char *src, char endchar )
-{
-    data_size_t count = sizeof(WCHAR);  /* for terminating null */
-    const char *p = src;
-    while (*p && *p != endchar)
-    {
-        if (*p != '\\') *dest = (WCHAR)*p++;
-        else
-        {
-            p++;
-            switch(*p)
-            {
-            case 'a': *dest = '\a'; p++; break;
-            case 'b': *dest = '\b'; p++; break;
-            case 'e': *dest = '\e'; p++; break;
-            case 'f': *dest = '\f'; p++; break;
-            case 'n': *dest = '\n'; p++; break;
-            case 'r': *dest = '\r'; p++; break;
-            case 't': *dest = '\t'; p++; break;
-            case 'v': *dest = '\v'; p++; break;
-            case 'x':  /* hex escape */
-                p++;
-                if (!isxdigit(*p)) *dest = 'x';
-                else
-                {
-                    *dest = to_hex(*p++);
-                    if (isxdigit(*p)) *dest = (*dest * 16) + to_hex(*p++);
-                    if (isxdigit(*p)) *dest = (*dest * 16) + to_hex(*p++);
-                    if (isxdigit(*p)) *dest = (*dest * 16) + to_hex(*p++);
-                }
-                break;
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':  /* octal escape */
-                *dest = *p++ - '0';
-                if (*p >= '0' && *p <= '7') *dest = (*dest * 8) + (*p++ - '0');
-                if (*p >= '0' && *p <= '7') *dest = (*dest * 8) + (*p++ - '0');
-                break;
-            default:
-                *dest = (WCHAR)*p++;
-                break;
-            }
-        }
-        if ((count += sizeof(WCHAR)) > *len) return -1;  /* dest buffer overflow */
-        dest++;
-    }
-    *dest = 0;
-    if (!*p) return -1;  /* delimiter not found */
-    *len = count;
-    return p + 1 - src;
-}
-
 /* convert a data type tag to a value type */
 static int get_data_type( const char *buffer, int *type, int *parse_type )
 {
@@ -1176,10 +1111,11 @@ static struct key *load_key( struct key *base, const char *buffer, int flags,
     WCHAR *p;
     struct unicode_str name;
     int res, modif;
-    data_size_t len = strlen(buffer) * sizeof(WCHAR);
+    data_size_t len;
 
-    if (!get_file_tmp_space( info, len )) return NULL;
+    if (!get_file_tmp_space( info, strlen(buffer) * sizeof(WCHAR) )) return NULL;
 
+    len = info->tmplen;
     if ((res = parse_strW( info->tmp, &len, buffer, ']' )) == -1)
     {
         file_read_error( "Malformed key", info );
@@ -1233,10 +1169,10 @@ static struct key_value *parse_value_name( struct key *key, const char *buffer, 
     struct key_value *value;
     struct unicode_str name;
     int index;
-    data_size_t maxlen = strlen(buffer) * sizeof(WCHAR);
 
-    if (!get_file_tmp_space( info, maxlen )) return NULL;
+    if (!get_file_tmp_space( info, strlen(buffer) * sizeof(WCHAR) )) return NULL;
     name.str = info->tmp;
+    name.len = info->tmplen;
     if (buffer[0] == '@')
     {
         name.len = 0;
@@ -1244,10 +1180,10 @@ static struct key_value *parse_value_name( struct key *key, const char *buffer, 
     }
     else
     {
-        int r = parse_strW( info->tmp, &maxlen, buffer + 1, '\"' );
+        int r = parse_strW( info->tmp, &name.len, buffer + 1, '\"' );
         if (r == -1) goto error;
         *len = r + 1; /* for initial quote */
-        name.len = maxlen - sizeof(WCHAR);
+        name.len -= sizeof(WCHAR);  /* terminating null */
     }
     while (isspace(buffer[*len])) (*len)++;
     if (buffer[*len] != '=') goto error;
@@ -1277,8 +1213,8 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     switch(parse_type)
     {
     case REG_SZ:
-        len = strlen(buffer) * sizeof(WCHAR);
-        if (!get_file_tmp_space( info, len )) return 0;
+        if (!get_file_tmp_space( info, strlen(buffer) * sizeof(WCHAR) )) return 0;
+        len = info->tmplen;
         if ((res = parse_strW( info->tmp, &len, buffer, '\"' )) == -1) goto error;
         ptr = info->tmp;
         break;
@@ -1332,10 +1268,11 @@ static int get_prefix_len( struct key *key, const char *name, struct file_load_i
 {
     WCHAR *p;
     int res;
-    data_size_t len = strlen(name) * sizeof(WCHAR);
+    data_size_t len;
 
-    if (!get_file_tmp_space( info, len )) return 0;
+    if (!get_file_tmp_space( info, strlen(name) * sizeof(WCHAR) )) return 0;
 
+    len = info->tmplen;
     if ((res = parse_strW( info->tmp, &len, name, ']' )) == -1)
     {
         file_read_error( "Malformed key", info );
