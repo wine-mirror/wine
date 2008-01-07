@@ -387,8 +387,29 @@ MSVCRT_intptr_t CDECL _execl(const char* name, const char* arg0, ...)
  */
 MSVCRT_intptr_t CDECL _execle(const char* name, const char* arg0, ...)
 {
-    FIXME("stub\n");
-    return -1;
+  va_list ap;
+  MSVCRT_wchar_t *nameW, *args, *envs = NULL;
+  const char * const *envp;
+  MSVCRT_intptr_t ret;
+
+  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+
+  va_start(ap, arg0);
+  args = msvcrt_valisttos_aw(arg0, ap, ' ');
+  va_end(ap);
+
+  va_start(ap, arg0);
+  while (va_arg( ap, char * ) != NULL) /*nothing*/;
+  envp = va_arg( ap, const char * const * );
+  if (envp) envs = msvcrt_argvtos_aw(envp, 0);
+  va_end(ap);
+
+  ret = msvcrt_spawn_wide(MSVCRT__P_OVERLAY, nameW, args, envs);
+
+  MSVCRT_free(nameW);
+  MSVCRT_free(args);
+  MSVCRT_free(envs);
+  return ret;
 }
 
 /*********************************************************************
@@ -423,8 +444,31 @@ MSVCRT_intptr_t CDECL _execlp(const char* name, const char* arg0, ...)
  */
 MSVCRT_intptr_t CDECL _execlpe(const char* name, const char* arg0, ...)
 {
-    FIXME("stub\n");
-    return -1;
+  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
+  va_list ap;
+  MSVCRT_wchar_t *nameW, *args, *envs = NULL, fullname[MAX_PATH];
+  const char * const *envp;
+  MSVCRT_intptr_t ret;
+
+  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  _wsearchenv(nameW, path, fullname);
+
+  va_start(ap, arg0);
+  args = msvcrt_valisttos_aw(arg0, ap, ' ');
+  va_end(ap);
+
+  va_start(ap, arg0);
+  while (va_arg( ap, char * ) != NULL) /*nothing*/;
+  envp = va_arg( ap, const char * const * );
+  if (envp) envs = msvcrt_argvtos_aw(envp, 0);
+  va_end(ap);
+
+  ret = msvcrt_spawn_wide(MSVCRT__P_OVERLAY, fullname[0] ? fullname : nameW, args, envs);
+
+  MSVCRT_free(nameW);
+  MSVCRT_free(args);
+  MSVCRT_free(envs);
+  return ret;
 }
 
 /*********************************************************************
