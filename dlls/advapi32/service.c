@@ -497,7 +497,7 @@ static BOOL service_send_start_message(HANDLE pipe, LPCWSTR *argv, DWORD argc)
     }
     *p=0;
 
-    r = WriteFile(pipe, ssi, sizeof *ssi + len*sizeof(WCHAR), &count, NULL);
+    r = WriteFile(pipe, ssi, sizeof *ssi + (len-1)*sizeof(WCHAR), &count, NULL);
     if (r)
     {
         r = ReadFile(pipe, &result, sizeof result, &count, NULL);
