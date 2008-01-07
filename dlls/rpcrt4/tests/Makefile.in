@@ -15,6 +15,7 @@ CTESTS = \
 	generated.c \
 	ndr_marshall.c \
 	rpc.c \
+	rpc_async.c \
 	server.c
 
 @MAKE_TEST_RULES@
