@@ -513,7 +513,8 @@ void CC_PaintTriangle( HWND hDlg, int y)
 void CC_PaintCross( HWND hDlg, int x, int y)
 {
  HDC hDC;
- int w = GetDialogBaseUnits();
+ int w = GetDialogBaseUnits() - 1;
+ int wc = GetDialogBaseUnits() * 3 / 4;
  HWND hwnd = GetDlgItem(hDlg, 0x2c6);
  LPCCPRIV lpp = (LPCCPRIV) GetPropW( hDlg, szColourDialogProp );
  RECT rect;
@@ -525,8 +526,7 @@ void CC_PaintCross( HWND hDlg, int x, int y)
    GetClientRect(hwnd, &rect);
    hDC = GetDC(hwnd);
    SelectClipRgn( hDC, CreateRectRgnIndirect(&rect));
-   hPen = CreatePen(PS_SOLID, 2, 0xffffff); /* -white- color */
-   hPen = SelectObject(hDC, hPen);
+
    point.x = ((long)rect.right * (long)x) / (long)MAXHORI;
    point.y = rect.bottom - ((long)rect.bottom * (long)y) / (long)MAXVERT;
    if ( lpp->oldcross.left != lpp->oldcross.right )
@@ -539,11 +539,18 @@ void CC_PaintCross( HWND hDlg, int x, int y)
    lpp->oldcross.top    = point.y - w - 1;
    lpp->oldcross.bottom = point.y + w + 1;
 
+   hPen = CreatePen(PS_SOLID, 3, 0x000000); /* -black- color */
+   hPen = SelectObject(hDC, hPen);
    MoveToEx(hDC, point.x - w, point.y, &p);
+   LineTo(hDC, point.x - wc, point.y);
+   MoveToEx(hDC, point.x + wc, point.y, &p);
    LineTo(hDC, point.x + w, point.y);
    MoveToEx(hDC, point.x, point.y - w, &p);
+   LineTo(hDC, point.x, point.y - wc);
+   MoveToEx(hDC, point.x, point.y + wc, &p);
    LineTo(hDC, point.x, point.y + w);
-   DeleteObject( SelectObject(hDC, hPen)) ;
+   DeleteObject( SelectObject(hDC, hPen));
+
    ReleaseDC(hwnd, hDC);
  }
 }
