@@ -1154,3 +1154,42 @@ RPC_STATUS WINAPI I_RpcSendReceive(PRPC_MESSAGE pMsg)
     I_RpcFreeBuffer(&original_message);
   return status;
 }
+
+/***********************************************************************
+ *           I_RpcAsyncSetHandle [RPCRT4.@]
+ *
+ * Sets the asynchronous state of the handle contained in the RPC message
+ * structure.
+ *
+ * PARAMS
+ *  pMsg   [I] RPC Message structure.
+ *  pAsync [I] Asynchronous state to set.
+ *
+ * RETURNS
+ *  Success: RPC_S_OK.
+ *  Failure: Any error code.
+ */
+RPC_STATUS WINAPI I_RpcAsyncSetHandle(PRPC_MESSAGE pMsg, PRPC_ASYNC_STATE pAsync)
+{
+    FIXME("(%p, %p): stub\n", pMsg, pAsync);
+    return RPC_S_INVALID_BINDING;
+}
+
+/***********************************************************************
+ *           I_RpcAsyncAbortCall [RPCRT4.@]
+ *
+ * Aborts an asynchronous call.
+ *
+ * PARAMS
+ *  pAsync        [I] Asynchronous state.
+ *  ExceptionCode [I] Exception code.
+ *
+ * RETURNS
+ *  Success: RPC_S_OK.
+ *  Failure: Any error code.
+ */
+RPC_STATUS WINAPI I_RpcAsyncAbortCall(PRPC_ASYNC_STATE pAsync, ULONG ExceptionCode)
+{
+    FIXME("(%p, %d): stub\n", pAsync, ExceptionCode);
+    return RPC_S_INVALID_ASYNC_HANDLE;
+}

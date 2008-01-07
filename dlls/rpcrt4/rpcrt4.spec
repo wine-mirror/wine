@@ -18,11 +18,11 @@
 @ stdcall IUnknown_AddRef_Proxy(ptr)
 @ stdcall IUnknown_QueryInterface_Proxy(ptr ptr ptr)
 @ stdcall IUnknown_Release_Proxy(ptr)
-@ stub I_RpcAbortAsyncCall
+@ stdcall I_RpcAbortAsyncCall(ptr long) I_RpcAsyncAbortCall
 @ stdcall I_RpcAllocate(long)
-@ stub I_RpcAsyncAbortCall
+@ stdcall I_RpcAsyncAbortCall(ptr long)
 @ stub I_RpcAsyncSendReceive # NT4
-@ stub I_RpcAsyncSetHandle
+@ stdcall I_RpcAsyncSetHandle(ptr ptr)
 @ stub I_RpcBCacheAllocate
 @ stub I_RpcBCacheFree
 @ stub I_RpcBindingCopy
