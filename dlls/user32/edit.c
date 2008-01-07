@@ -263,7 +263,6 @@ static void	EDIT_WM_ContextMenu(EDITSTATE *es, INT x, INT y);
 static void	EDIT_WM_Copy(EDITSTATE *es);
 static LRESULT	EDIT_WM_Create(EDITSTATE *es, LPCWSTR name);
 static LRESULT	EDIT_WM_Destroy(EDITSTATE *es);
-static LRESULT	EDIT_WM_EraseBkGnd(EDITSTATE *es, HDC dc);
 static INT	EDIT_WM_GetText(const EDITSTATE *es, INT count, LPWSTR dst, BOOL unicode);
 static LRESULT	EDIT_WM_HScroll(EDITSTATE *es, INT action, INT pos);
 static LRESULT	EDIT_WM_KeyDown(EDITSTATE *es, INT key);
@@ -893,7 +892,8 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 
 	case WM_ERASEBKGND:
-		result = EDIT_WM_EraseBkGnd(es, (HDC)wParam);
+		/* we do the proper erase in EDIT_WM_Paint */
+		result = 1;
 		break;
 
 	case WM_GETFONT:
@@ -4255,18 +4255,6 @@ static LRESULT EDIT_WM_Destroy(EDITSTATE *es)
 	HeapFree(GetProcessHeap(), 0, es);
 
 	return 0;
-}
-
-
-/*********************************************************************
- *
- *	WM_ERASEBKGND
- *
- */
-static LRESULT EDIT_WM_EraseBkGnd(EDITSTATE *es, HDC dc)
-{
-    /* we do the proper erase in EDIT_WM_Paint */
-    return 1;
 }
 
 
