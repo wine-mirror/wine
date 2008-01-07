@@ -156,22 +156,34 @@ AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
 dnl **** Add a message to the list displayed at the end ****
 dnl
 dnl Usage: WINE_NOTICE(notice)
-dnl Usage: WINE_NOTICE_IF(test, notice)
+dnl Usage: WINE_NOTICE_WITH(with_flag, test, notice)
 dnl Usage: WINE_WARNING(warning)
-dnl Usage: WINE_WARNING_IF(test, warning)
+dnl Usage: WINE_WARNING_WITH(with_flag, test, warning)
 dnl Usage: WINE_PRINT_MESSAGES
 dnl
 AC_DEFUN([WINE_NOTICE],[wine_notices="$wine_notices|$1"])
-AC_DEFUN([WINE_NOTICE_IF],[AS_IF([$1],[WINE_NOTICE([$2],[$3])])])
 AC_DEFUN([WINE_WARNING],[wine_warnings="$wine_warnings|$1"])
-AC_DEFUN([WINE_WARNING_IF],[AS_IF([$1],[WINE_WARNING([$2],[$3])])])
+
+AC_DEFUN([WINE_NOTICE_WITH],[AS_IF([$2],[case "x$with_$1" in
+  x)   WINE_NOTICE([$3]) ;;
+  xno) ;;
+  *)   AC_MSG_ERROR([$3
+This is an error since --with-$1 was requested.]) ;;
+esac])])
+
+AC_DEFUN([WINE_WARNING_WITH],[AS_IF([$2],[case "x$with_$1" in
+  x)   WINE_WARNING([$3]) ;;
+  xno) ;;
+  *)   AC_MSG_ERROR([$3
+This is an error since --with-$1 was requested.]) ;;
+esac])])
 
 AC_DEFUN([WINE_PRINT_MESSAGES],[ac_save_IFS="$IFS"
 IFS="|"
-if test "$verbose" = "yes"; then
+if test "x$wine_notices != "x; then
+    echo >&AS_MESSAGE_FD
     for msg in $wine_notices; do
         if test -n "$msg"; then
-            echo >&2
             AC_MSG_NOTICE([$msg])
         fi
     done

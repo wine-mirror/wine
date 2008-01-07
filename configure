@@ -1372,8 +1372,38 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --without-alsa          do not use the Alsa sound support
+  --without-audioio       do not use the AudioIO sound support
+  --without-capi          do not use CAPI (ISDN support)
+  --without-cms           do not use CMS (color management support)
+  --without-coreaudio     do not use the CoreAudio sound support
+  --without-cups          do not use CUPS
+  --without-curses        do not use (n)curses
+  --without-esd           do not use the EsounD sound support
+  --without-fontconfig    do not use fontconfig
+  --without-gphoto        do not use gphoto (Digital Camera support)
+  --without-hal           do not use HAL (dynamic device support)
+  --without-jack          do not use the Jack sound support
+  --without-jpeg          do not use JPEG
+  --without-ldap          do not use LDAP
+  --without-nas           do not use the NAS sound support
   --without-opengl        do not use OpenGL
-  --with-wine-tools=<dir> use Wine tools from directory <dir>
+  --without-openssl       do not use OpenSSL
+  --without-oss           do not use the OSS sound support
+  --without-png           do not use PNG
+  --without-sane          do not use SANE (scanner support)
+  --without-xcomposite    do not use the Xcomposite extension
+  --without-xcursor       do not use the Xcursor extension
+  --without-xinerama      do not use Xinerama (multi-monitor support)
+  --without-xinput        do not use the Xinput extension
+  --without-xml           do not use XML
+  --without-xrandr        do not use Xrandr (resolution changes)
+  --without-xrender       do not use the Xrender extension
+  --without-xshape        do not use the Xshape extension
+  --without-xshm          do not use XShm (shared memory extension)
+  --without-xslt          do not use XSLT
+  --without-xvidmode      do not use XFree video mode extension
+  --with-wine-tools=DIR   use Wine tools from directory DIR
   --with-x                use the X Window System
 
 Some influential environment variables:
@@ -1868,10 +1898,191 @@ fi
 
 
 
+# Check whether --with-alsa was given.
+if test "${with_alsa+set}" = set; then
+  withval=$with_alsa; if test "x$withval" = "xno"; then ac_cv_header_sys_asoundlib_h=no; ac_cv_header_alsa_asoundlib_h=no; fi
+fi
+
+
+# Check whether --with-audioio was given.
+if test "${with_audioio+set}" = set; then
+  withval=$with_audioio; if test "x$withval" = "xno"; then ac_cv_header_libaudioio_h=no; fi
+fi
+
+
+# Check whether --with-capi was given.
+if test "${with_capi+set}" = set; then
+  withval=$with_capi; if test "x$withval" = "xno"; then ac_cv_header_capi20_h=no; ac_cv_header_linux_capi_h=no; fi
+fi
+
+
+# Check whether --with-cms was given.
+if test "${with_cms+set}" = set; then
+  withval=$with_cms; if test "x$withval" = "xno"; then ac_cv_header_lcms_h=no; ac_cv_header_lcms_lcms_h=no; fi
+fi
+
+
+# Check whether --with-coreaudio was given.
+if test "${with_coreaudio+set}" = set; then
+  withval=$with_coreaudio; if test "x$withval" = "xno"; then ac_cv_header_CoreAudio_CoreAudio_h=no; fi
+fi
+
+
+# Check whether --with-cups was given.
+if test "${with_cups+set}" = set; then
+  withval=$with_cups; if test "x$withval" = "xno"; then ac_cv_header_cups_cups_h=no; fi
+fi
+
+
+# Check whether --with-curses was given.
+if test "${with_curses+set}" = set; then
+  withval=$with_curses; if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi
+fi
+
+
+# Check whether --with-esd was given.
+if test "${with_esd+set}" = set; then
+  withval=$with_esd;
+fi
+
+
+# Check whether --with-fontconfig was given.
+if test "${with_fontconfig+set}" = set; then
+  withval=$with_fontconfig; if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi
+fi
+
+
+# Check whether --with-gphoto was given.
+if test "${with_gphoto+set}" = set; then
+  withval=$with_gphoto;
+fi
+
+
+# Check whether --with-hal was given.
+if test "${with_hal+set}" = set; then
+  withval=$with_hal;
+fi
+
+
+# Check whether --with-jack was given.
+if test "${with_jack+set}" = set; then
+  withval=$with_jack; if test "x$withval" = "xno"; then ac_cv_header_jack_jack_h=no; fi
+fi
+
+
+# Check whether --with-jpeg was given.
+if test "${with_jpeg+set}" = set; then
+  withval=$with_jpeg; if test "x$withval" = "xno"; then ac_cv_header_jpeglib_h=no; fi
+fi
+
+
+# Check whether --with-ldap was given.
+if test "${with_ldap+set}" = set; then
+  withval=$with_ldap; if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi
+fi
+
+
+# Check whether --with-nas was given.
+if test "${with_nas+set}" = set; then
+  withval=$with_nas; if test "x$withval" = "xno"; then ac_cv_header_audio_audiolib_h=no; fi
+fi
+
+
 # Check whether --with-opengl was given.
 if test "${with_opengl+set}" = set; then
   withval=$with_opengl;
 fi
+
+
+# Check whether --with-openssl was given.
+if test "${with_openssl+set}" = set; then
+  withval=$with_openssl; if test "x$withval" = "xno"; then ac_cv_header_openssl_err_h=no; ac_cv_header_openssl_ssl_h=no; fi
+fi
+
+
+# Check whether --with-oss was given.
+if test "${with_oss+set}" = set; then
+  withval=$with_oss; if test "x$withval" = "xno"; then ac_cv_header_soundcard_h=no; ac_cv_header_sys_soundcard_h=no; ac_cv_header_machine_soundcard_h=no; fi
+fi
+
+
+# Check whether --with-png was given.
+if test "${with_png+set}" = set; then
+  withval=$with_png; if test "x$withval" = "xno"; then ac_cv_header_png_h=no; fi
+fi
+
+
+# Check whether --with-sane was given.
+if test "${with_sane+set}" = set; then
+  withval=$with_sane;
+fi
+
+
+# Check whether --with-xcomposite was given.
+if test "${with_xcomposite+set}" = set; then
+  withval=$with_xcomposite; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xcomposite_h=no; fi
+fi
+
+
+# Check whether --with-xcursor was given.
+if test "${with_xcursor+set}" = set; then
+  withval=$with_xcursor; if test "x$withval" = "xno"; then ac_cv_header_X11_Xcursor_Xcursor_h=no; fi
+fi
+
+
+# Check whether --with-xinerama was given.
+if test "${with_xinerama+set}" = set; then
+  withval=$with_xinerama; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xinerama_h=no; fi
+fi
+
+
+# Check whether --with-xinput was given.
+if test "${with_xinput+set}" = set; then
+  withval=$with_xinput; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_XInput_h=no; fi
+fi
+
+
+# Check whether --with-xml was given.
+if test "${with_xml+set}" = set; then
+  withval=$with_xml;
+fi
+
+
+# Check whether --with-xrandr was given.
+if test "${with_xrandr+set}" = set; then
+  withval=$with_xrandr; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xrandr_h=no; fi
+fi
+
+
+# Check whether --with-xrender was given.
+if test "${with_xrender+set}" = set; then
+  withval=$with_xrender; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xrender_h=no; fi
+fi
+
+
+# Check whether --with-xshape was given.
+if test "${with_xshape+set}" = set; then
+  withval=$with_xshape; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_shape_h=no; fi
+fi
+
+
+# Check whether --with-xshm was given.
+if test "${with_xshm+set}" = set; then
+  withval=$with_xshm; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_XShm_h=no; fi
+fi
+
+
+# Check whether --with-xslt was given.
+if test "${with_xslt+set}" = set; then
+  withval=$with_xslt;
+fi
+
+
+# Check whether --with-xvidmode was given.
+if test "${with_xvidmode+set}" = set; then
+  withval=$with_xvidmode; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; fi
+fi
+
 
 
 # Check whether --with-wine-tools was given.
@@ -9475,6 +9686,18 @@ _ACEOF
 fi
 
         fi
+        if test "x$ac_cv_lib_soname_Xcursor" = "x"; then
+  case "x$with_xcursor" in
+  x)   wine_notices="$wine_notices|libxcursor development files not found, the Xcursor extension won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libxcursor development files not found, the Xcursor extension won't be supported.
+This is an error since --with-xcursor was requested." >&5
+echo "$as_me: error: libxcursor development files not found, the Xcursor extension won't be supported.
+This is an error since --with-xcursor was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+fi
+
 
                 if test "$ac_cv_header_X11_extensions_XInput_h" = "yes"
         then
@@ -9557,6 +9780,18 @@ _ACEOF
 fi
 
         fi
+        if test "x$ac_cv_lib_soname_Xi" = "x"; then
+  case "x$with_xinput" in
+  x)   wine_notices="$wine_notices|libxi development files not found, the Xinput extension won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libxi development files not found, the Xinput extension won't be supported.
+This is an error since --with-xinput was requested." >&5
+echo "$as_me: error: libxi development files not found, the Xinput extension won't be supported.
+This is an error since --with-xinput was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+fi
+
 
                 if test "$ac_cv_header_X11_extensions_XShm_h" = "yes"
         then
@@ -9631,8 +9866,15 @@ fi
 
         fi
         if test "$ac_cv_lib_Xext_XShmQueryExtension" != "yes"; then
-  wine_notices="$wine_notices|XShm development files not found.
-Wine will be built without XShm support. (winex11.drv)"
+  case "x$with_xshm" in
+  x)   wine_notices="$wine_notices|XShm development files not found, X Shared Memory won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: XShm development files not found, X Shared Memory won't be supported.
+This is an error since --with-xshm was requested." >&5
+echo "$as_me: error: XShm development files not found, X Shared Memory won't be supported.
+This is an error since --with-xshm was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -9709,8 +9951,15 @@ fi
 
         fi
         if test "$ac_cv_lib_Xext_XShapeQueryExtension" != "yes"; then
-  wine_notices="$wine_notices|XShape development files not found.
-Wine will be built without XShape support. (winex11.drv)"
+  case "x$with_xshape" in
+  x)   wine_notices="$wine_notices|XShape development files not found, XShape won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: XShape development files not found, XShape won't be supported.
+This is an error since --with-xshape was requested." >&5
+echo "$as_me: error: XShape development files not found, XShape won't be supported.
+This is an error since --with-xshape was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -9789,8 +10038,15 @@ fi
 
         fi
         if test "$ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension" != "yes"; then
-  wine_notices="$wine_notices|Xxf86vm development files not found.
-Wine will be built without XF86 Vidmode support. (winex11.drv)"
+  case "x$with_xvidmode" in
+  x)   wine_notices="$wine_notices|libxxf86vm development files not found, XFree86 Vidmode won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libxxf86vm development files not found, XFree86 Vidmode won't be supported.
+This is an error since --with-xvidmode was requested." >&5
+echo "$as_me: error: libxxf86vm development files not found, XFree86 Vidmode won't be supported.
+This is an error since --with-xvidmode was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -9945,8 +10201,15 @@ fi
 
         fi
         if test "x$ac_cv_lib_soname_Xrender" = "x"; then
-  wine_notices="$wine_notices|XRender development files not found.
-Wine will be built without XRender support. (winex11.drv)"
+  case "x$with_xrender" in
+  x)   wine_notices="$wine_notices|libxrender development files not found, XRender won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libxrender development files not found, XRender won't be supported.
+This is an error since --with-xrender was requested." >&5
+echo "$as_me: error: libxrender development files not found, XRender won't be supported.
+This is an error since --with-xrender was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -10073,8 +10336,15 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         fi
         if test "x$ac_cv_lib_soname_Xrandr" = "x"; then
-  wine_notices="$wine_notices|XRandr development files not found.
-Wine will be built without XRandr support. (winex11.drv)"
+  case "x$with_xrandr" in
+  x)   wine_notices="$wine_notices|libxrandr development files not found, XRandr won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libxrandr development files not found, XRandr won't be supported.
+This is an error since --with-xrandr was requested." >&5
+echo "$as_me: error: libxrandr development files not found, XRandr won't be supported.
+This is an error since --with-xrandr was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -10201,8 +10471,15 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         fi
         if test "x$ac_cv_lib_soname_Xinerama" = "x"; then
-  wine_notices="$wine_notices|Xinerama development files not found.
-Wine will be built without Xinerama support. (winex11.drv)"
+  case "x$with_xinerama" in
+  x)   wine_notices="$wine_notices|libxinerama development files not found, multi-monitor setups won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libxinerama development files not found, multi-monitor setups won't be supported.
+This is an error since --with-xinerama was requested." >&5
+echo "$as_me: error: libxinerama development files not found, multi-monitor setups won't be supported.
+This is an error since --with-xinerama was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -10288,13 +10565,21 @@ fi
 
         fi
         if test "x$ac_cv_lib_soname_Xcomposite" = "x"; then
-  wine_notices="$wine_notices|XComposite development files not found.
-Wine will be built without XComposite support. (winex11.drv)"
+  case "x$with_xcomposite" in
+  x)   wine_notices="$wine_notices|libxcomposite development files not found, Xcomposite won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libxcomposite development files not found, Xcomposite won't be supported.
+This is an error since --with-xcomposite was requested." >&5
+echo "$as_me: error: libxcomposite development files not found, Xcomposite won't be supported.
+This is an error since --with-xcomposite was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
 
-        if test "x$with_opengl" != "xno"
+        opengl_msg=""
+    if test "x$with_opengl" != "xno"
     then
 
 
@@ -10547,11 +10832,10 @@ if test "x$ac_cv_lib_soname_GL" = "x"; then
 echo "${ECHO_T}not found" >&6; }
        if test -f /usr/X11R6/lib/libGL.a
 	                            then
-		                        wine_warnings="$wine_warnings|/usr/X11R6/lib/libGL.a is present on your system.
+		                        opengl_msg="/usr/X11R6/lib/libGL.a is present on your system.
 This probably prevents linking to OpenGL. Try deleting the file and restarting configure."
 	                            else
-	                                wine_warnings="$wine_warnings|No OpenGL library found on this system.
-Wine will be built without OpenGL or Direct3D support."
+	                                opengl_msg="No OpenGL library found on this system."
 	                            fi
 else
   { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_GL" >&5
@@ -10656,14 +10940,27 @@ if test $ac_cv_lib_GLU_gluLookAt = yes; then
 fi
 
              else
-                 wine_warnings="$wine_warnings|Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).
-Wine will be built without OpenGL or Direct3D support."
+                 opengl_msg="Old Mesa headers detected. Consider upgrading your Mesa libraries."
 	     fi
          else
-             wine_warnings="$wine_warnings|OpenGL development headers not found.
-Wine will be built without OpenGL or Direct3D support."
+             opengl_msg="OpenGL development headers not found."
 	 fi
     fi
+    if test -n "$opengl_msg"; then
+  case "x$with_opengl" in
+  x)   wine_warnings="$wine_warnings|$opengl_msg
+OpenGL and Direct3D won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: $opengl_msg
+OpenGL and Direct3D won't be supported.
+This is an error since --with-opengl was requested." >&5
+echo "$as_me: error: $opengl_msg
+OpenGL and Direct3D won't be supported.
+This is an error since --with-opengl was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+fi
+
 
         NASLIBS=""
 
@@ -11013,10 +11310,25 @@ else
     XLIB=""
     X_CFLAGS=""
     X_LIBS=""
-    wine_warnings="$wine_warnings|X development files not found. Wine will be built
-without X support, which probably isn't what you want. You will need to install
-development packages of Xlib/Xfree86 at the very least."
 fi
+if test "x$XLIB" = "x"; then
+  case "x$with_x" in
+  x)   wine_warnings="$wine_warnings|X development files not found. Wine will be built
+without X support, which probably isn't what you want. You will need to install
+development packages of Xlib/Xfree86 at the very least." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: X development files not found. Wine will be built
+without X support, which probably isn't what you want. You will need to install
+development packages of Xlib/Xfree86 at the very least.
+This is an error since --with-x was requested." >&5
+echo "$as_me: error: X development files not found. Wine will be built
+without X support, which probably isn't what you want. You will need to install
+development packages of Xlib/Xfree86 at the very least.
+This is an error since --with-x was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+fi
+
 
 
 XML2LIBS=""
@@ -11027,16 +11339,18 @@ XSLTLIBS=""
 
 XSLTINCL=""
 
-ac_save_CPPFLAGS="$CPPFLAGS"
-if test "$PKG_CONFIG" != "false"
+if test "x$with_xml" != "xno"
 then
-    ac_xml_libs="`$PKG_CONFIG --libs libxml-2.0 2>/dev/null`"
-    ac_xml_cflags="`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`"
-else
-    ac_xml_libs="`xml2-config --libs 2>/dev/null`"
-    ac_xml_cflags="`xml2-config --cflags  2>/dev/null`"
-fi
-CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    if test "$PKG_CONFIG" != "false"
+    then
+        ac_xml_libs="`$PKG_CONFIG --libs libxml-2.0 2>/dev/null`"
+        ac_xml_cflags="`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`"
+    else
+        ac_xml_libs="`xml2-config --libs 2>/dev/null`"
+        ac_xml_cflags="`xml2-config --cflags  2>/dev/null`"
+    fi
+    CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
 
 for ac_header in libxml/parser.h
 do
@@ -11244,11 +11558,11 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBXML2 1
 _ACEOF
 
-             XML2LIBS="$ac_xml_libs"
-             XML2INCL="$ac_xml_cflags"
+                 XML2LIBS="$ac_xml_libs"
+                 XML2INCL="$ac_xml_cflags"
 fi
 
-         { echo "$as_me:$LINENO: checking for xmlReadMemory in -lxml2" >&5
+             { echo "$as_me:$LINENO: checking for xmlReadMemory in -lxml2" >&5
 echo $ECHO_N "checking for xmlReadMemory in -lxml2... $ECHO_C" >&6; }
 if test "${ac_cv_lib_xml2_xmlReadMemory+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -11317,7 +11631,7 @@ _ACEOF
 
 fi
 
-         { echo "$as_me:$LINENO: checking for xmlNewDocPI in -lxml2" >&5
+             { echo "$as_me:$LINENO: checking for xmlNewDocPI in -lxml2" >&5
 echo $ECHO_N "checking for xmlNewDocPI in -lxml2... $ECHO_C" >&6; }
 if test "${ac_cv_lib_xml2_xmlNewDocPI+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -11391,22 +11705,32 @@ fi
 
 done
 
-CPPFLAGS="$ac_save_CPPFLAGS"
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
 if test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"; then
-  wine_notices="$wine_notices|libxml2 development files not found.
-Wine will be built without XML support. (msxml.dll)"
+  case "x$with_xml" in
+  x)   wine_notices="$wine_notices|libxml2 development files not found, XML won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libxml2 development files not found, XML won't be supported.
+This is an error since --with-xml was requested." >&5
+echo "$as_me: error: libxml2 development files not found, XML won't be supported.
+This is an error since --with-xml was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
-if test "$PKG_CONFIG" != "false"
+if test "x$with_xslt" != "xno"
 then
-    ac_xslt_libs="`$PKG_CONFIG --libs libxslt 2>/dev/null`"
-    ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt 2>/dev/null`"
-else
-    ac_xslt_libs="`xslt-config --libs 2>/dev/null`"
-    ac_xslt_cflags="`xslt-config --cflags 2>/dev/null`"
-fi
-CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
+    if test "$PKG_CONFIG" != "false"
+    then
+        ac_xslt_libs="`$PKG_CONFIG --libs libxslt 2>/dev/null`"
+        ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt 2>/dev/null`"
+    else
+        ac_xslt_libs="`xslt-config --libs 2>/dev/null`"
+        ac_xslt_cflags="`xslt-config --cflags 2>/dev/null`"
+    fi
+    CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
 
 
 for ac_header in libxslt/pattern.h libxslt/transform.h
@@ -11530,8 +11854,8 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBXSLT 1
 _ACEOF
 
-             XSLTLIBS="$ac_xslt_libs"
-             XSLTINCL="$ac_xslt_cflags"
+                 XSLTLIBS="$ac_xslt_libs"
+                 XSLTINCL="$ac_xslt_cflags"
 fi
 
 
@@ -11539,16 +11863,24 @@ fi
 
 done
 
-CPPFLAGS="$ac_save_CPPFLAGS"
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
 if test "$ac_cv_lib_xslt_xsltCompilePattern" != "yes"; then
-  wine_notices="$wine_notices|libxslt development files not found.
-Wine will be built without xslt support. (msxml.dll)"
+  case "x$with_xslt" in
+  x)   wine_notices="$wine_notices|libxslt development files not found, xslt won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libxslt development files not found, xslt won't be supported.
+This is an error since --with-xslt was requested." >&5
+echo "$as_me: error: libxslt development files not found, xslt won't be supported.
+This is an error since --with-xslt was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
 HALINCL=""
 
-if test "$PKG_CONFIG" != "false"
+if test "x$with_hal" != "xno" -a "$PKG_CONFIG" != "false"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
     ac_hal_libs="`$PKG_CONFIG --libs hal 2>/dev/null`"
@@ -11848,8 +12180,15 @@ fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 if test "x$ac_cv_lib_soname_hal" = "x"; then
-  wine_notices="$wine_notices|libhal development files not found.
-Wine will be built without dynamic device support. (explorer.exe)"
+  case "x$with_hal" in
+  x)   wine_notices="$wine_notices|libhal development files not found, no dynamic device support." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libhal development files not found, no dynamic device support.
+This is an error since --with-hal was requested." >&5
+echo "$as_me: error: libhal development files not found, no dynamic device support.
+This is an error since --with-hal was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -12113,8 +12452,15 @@ done
 
 LIBS="$ac_save_LIBS"
 if test "x$ac_cv_lib_soname_curses$ac_cv_lib_soname_ncurses" = "x"; then
-  wine_notices="$wine_notices|lib(n)curses development files not found.
-Wine will be built without (n)curses support. (wineconsole.exe)"
+  case "x$with_curses" in
+  x)   wine_notices="$wine_notices|lib(n)curses development files not found, curses won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: lib(n)curses development files not found, curses won't be supported.
+This is an error since --with-curses was requested." >&5
+echo "$as_me: error: lib(n)curses development files not found, curses won't be supported.
+This is an error since --with-curses was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -12156,7 +12502,7 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-if test "$sane_devel" != "no"
+if test "$sane_devel" != "no" -a "x$with_sane" != "xno"
 then
     ac_sane_incl="`$sane_devel --cflags`"
     ac_save_CPPFLAGS="$CPPFLAGS"
@@ -12377,8 +12723,15 @@ fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 if test "x$ac_cv_lib_soname_sane" = "x"; then
-  wine_notices="$wine_notices|libsane development files not found.
-Wine will be built without scanner support. (sane.ds/twain_32.dll)"
+  case "x$with_sane" in
+  x)   wine_notices="$wine_notices|libsane development files not found, scanners won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libsane development files not found, scanners won't be supported.
+This is an error since --with-sane was requested." >&5
+echo "$as_me: error: libsane development files not found, scanners won't be supported.
+This is an error since --with-sane was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -12458,7 +12811,7 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-if test "$gphoto2_devel" != "no" -a "$gphoto2port_devel" != "no"
+if test "$gphoto2_devel" != "no" -a "$gphoto2port_devel" != "no" -a "x$with_gphoto" != "xno"
 then
     ac_gphoto2_incl="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
     ac_gphoto2_libs=""
@@ -12681,8 +13034,15 @@ fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"; then
-  wine_notices="$wine_notices|libgphoto2 development files not found.
-Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)"
+  case "x$with_gphoto" in
+  x)   wine_notices="$wine_notices|libgphoto2 development files not found, digital cameras won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libgphoto2 development files not found, digital cameras won't be supported.
+This is an error since --with-gphoto was requested." >&5
+echo "$as_me: error: libgphoto2 development files not found, digital cameras won't be supported.
+This is an error since --with-gphoto was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -12839,8 +13199,15 @@ fi
 
 fi
 if test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"; then
-  wine_notices="$wine_notices|liblcms development files not found.
-Wine will be built without Color Management support. (mscms.dll)"
+  case "x$with_cms" in
+  x)   wine_notices="$wine_notices|liblcms development files not found, Color Management won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: liblcms development files not found, Color Management won't be supported.
+This is an error since --with-cms was requested." >&5
+echo "$as_me: error: liblcms development files not found, Color Management won't be supported.
+This is an error since --with-cms was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -13096,8 +13463,15 @@ done
 LIBS="$ac_wine_check_funcs_save_LIBS"
 fi
 if test "x$LDAPLIBS" = "x"; then
-  wine_notices="$wine_notices|libldap (OpenLDAP) development files not found.
-Wine will be built without LDAP support. (wldap32.dll)"
+  case "x$with_ldap" in
+  x)   wine_notices="$wine_notices|libldap (OpenLDAP) development files not found, LDAP won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libldap (OpenLDAP) development files not found, LDAP won't be supported.
+This is an error since --with-ldap was requested." >&5
+echo "$as_me: error: libldap (OpenLDAP) development files not found, LDAP won't be supported.
+This is an error since --with-ldap was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -14055,7 +14429,7 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-if test x$ESDCONFIG != x -a x$ESDCONFIG != x'"$ESDCONFIG"';
+if test "x$with_esd" != xno -a "x$ESDCONFIG" != x -a "x$ESDCONFIG" != x'"$ESDCONFIG"';
 then
     ESD_CFLAGS=""
     for i in `$ESDCONFIG --cflags`
@@ -14422,8 +14796,15 @@ fi
 
 fi
 if test "x$ac_cv_lib_soname_capi20" = "x"; then
-  wine_notices="$wine_notices|libcapi20 development files not found.
-Wine will be built without ISDN support. (capi2032.dll)"
+  case "x$with_capi" in
+  x)   wine_notices="$wine_notices|libcapi20 development files not found, ISDN won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libcapi20 development files not found, ISDN won't be supported.
+This is an error since --with-capi was requested." >&5
+echo "$as_me: error: libcapi20 development files not found, ISDN won't be supported.
+This is an error since --with-capi was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -14509,8 +14890,15 @@ fi
 
 fi
 if test "x$ac_cv_lib_soname_cups" = "x"; then
-  wine_notices="$wine_notices|libcups development files not found.
-Wine will be built without CUPS support."
+  case "x$with_cups" in
+  x)   wine_notices="$wine_notices|libcups development files not found, CUPS won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libcups development files not found, CUPS won't be supported.
+This is an error since --with-cups was requested." >&5
+echo "$as_me: error: libcups development files not found, CUPS won't be supported.
+This is an error since --with-cups was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -14676,7 +15064,7 @@ _ACEOF
 
 fi
 
-elif test -n "$X_CFLAGS"
+elif test -n "$X_CFLAGS" -a "x$with_fontconfig" != "xno"
 then
         ac_save_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $X_CFLAGS"
@@ -14912,8 +15300,15 @@ fi
     fi
 fi
 if test "x$ac_cv_lib_soname_fontconfig" = "x"; then
-  wine_notices="$wine_notices|fontconfig development files not found.
-Wine will be built without fontconfig support."
+  case "x$with_fontconfig" in
+  x)   wine_notices="$wine_notices|fontconfig development files not found, fontconfig won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: fontconfig development files not found, fontconfig won't be supported.
+This is an error since --with-fontconfig was requested." >&5
+echo "$as_me: error: fontconfig development files not found, fontconfig won't be supported.
+This is an error since --with-fontconfig was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -15077,8 +15472,15 @@ fi
 
 fi
 if test "x$ac_cv_lib_soname_ssl" = "x"; then
-  wine_notices="$wine_notices|OpenSSL development files not found.
-Wine will be built without SSL support. (wininet.dll)"
+  case "x$with_openssl" in
+  x)   wine_notices="$wine_notices|OpenSSL development files not found, SSL won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: OpenSSL development files not found, SSL won't be supported.
+This is an error since --with-openssl was requested." >&5
+echo "$as_me: error: OpenSSL development files not found, SSL won't be supported.
+This is an error since --with-openssl was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -15164,8 +15566,15 @@ fi
 
 fi
 if test "x$ac_cv_lib_soname_jpeg" = "x"; then
-  wine_notices="$wine_notices|libjpeg development files not found.
-Wine will be built without JPEG support. (oleaut32.dll)"
+  case "x$with_jpeg" in
+  x)   wine_notices="$wine_notices|libjpeg development files not found, JPEG won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libjpeg development files not found, JPEG won't be supported.
+This is an error since --with-jpeg was requested." >&5
+echo "$as_me: error: libjpeg development files not found, JPEG won't be supported.
+This is an error since --with-jpeg was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
@@ -15251,18 +15660,26 @@ fi
 
 fi
 if test "x$ac_cv_lib_soname_png" = "x"; then
-  wine_notices="$wine_notices|libpng development files not found.
-Wine will be built without PNG support. (oleaut32.dll)"
+  case "x$with_png" in
+  x)   wine_notices="$wine_notices|libpng development files not found, PNG won't be supported." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libpng development files not found, PNG won't be supported.
+This is an error since --with-png was requested." >&5
+echo "$as_me: error: libpng development files not found, PNG won't be supported.
+This is an error since --with-png was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
 
 
 if test "x$ALSALIBS$AUDIOIOLIBS$COREAUDIO$NASLIBS$ESD_LIBS$ac_cv_lib_soname_jack" = "x" -a \
-                 "$ac_cv_header_sys_soundcard_h" != "yes" -a \
-                 "$ac_cv_header_machine_soundcard_h" != "yes" -a \
-                 "$ac_cv_header_soundcard_h" != "yes"; then
-  wine_warnings="$wine_warnings|No sound system was found. Windows applications will be silent."
+        "$ac_cv_header_sys_soundcard_h" != "yes" -a \
+        "$ac_cv_header_machine_soundcard_h" != "yes" -a \
+        "$ac_cv_header_soundcard_h" != "yes" -a \
+        "x$with_alsa$with_audioio$with_coreaudio$with_nas$with_esd$with_jack$with_oss" != xnonononononono
+then
+    wine_warnings="$wine_warnings|No sound system was found. Windows applications will be silent."
 fi
-
 
 
 EXTRACFLAGS=""
@@ -23020,10 +23437,10 @@ fi
 
 ac_save_IFS="$IFS"
 IFS="|"
-if test "$verbose" = "yes"; then
+if test "x$wine_notices != "x; then
+    echo >&6
     for msg in $wine_notices; do
         if test -n "$msg"; then
-            echo >&2
             { echo "$as_me:$LINENO: $msg" >&5
 echo "$as_me: $msg" >&6;}
         fi
@@ -23038,7 +23455,7 @@ echo "$as_me: WARNING: $msg" >&2;}
 done
 IFS="$ac_save_IFS"
 
-echo
-echo "Configure finished.  Do '${ac_make} depend && ${ac_make}' to compile Wine."
-echo
+echo "
+$as_me: Finished.  Do '${ac_make} depend && ${ac_make}' to compile Wine.
+" >&6
 
