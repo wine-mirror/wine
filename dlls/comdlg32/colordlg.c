@@ -739,7 +739,7 @@ void CC_SwitchToFullSize( HWND hDlg, COLORREF result, LPCRECT lprect )
 static void CC_PaintPredefColorArray( HWND hDlg, int rows, int cols)
 {
  HWND hwnd = GetDlgItem(hDlg, 0x2d0);
- RECT rect;
+ RECT rect, blockrect;
  HDC  hdc;
  HBRUSH hBrush;
  int dx, dy, i, j, k;
@@ -762,14 +762,17 @@ static void CC_PaintPredefColorArray( HWND hDlg, int rows, int cols)
    hBrush = CreateSolidBrush(predefcolors[j][i]);
    if (hBrush)
    {
-    hBrush = SelectObject(hdc, hBrush);
-    Rectangle(hdc, rect.left, rect.top,
-                rect.left + dx - DISTANCE, rect.top + dy - DISTANCE);
-    rect.left = rect.left + dx;
-    DeleteObject(SelectObject(hdc, hBrush)) ;
+    blockrect.left = rect.left;
+    blockrect.top = rect.top;
+    blockrect.right = rect.left + dx - DISTANCE;
+    blockrect.bottom = rect.top + dy - DISTANCE;
+    FillRect(hdc, &blockrect, hBrush);
+    DrawEdge(hdc, &blockrect, BDR_SUNKEN, BF_RECT);
+    DeleteObject(hBrush);
    }
+   rect.left += dx;
   }
-  rect.top = rect.top + dy;
+  rect.top += dy;
   rect.left = k;
  }
  ReleaseDC(hwnd, hdc);
@@ -783,7 +786,7 @@ static void CC_PaintPredefColorArray( HWND hDlg, int rows, int cols)
 void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, const COLORREF *lpcr )
 {
  HWND hwnd = GetDlgItem(hDlg, 0x2d1);
- RECT rect;
+ RECT rect, blockrect;
  HDC  hdc;
  HBRUSH hBrush;
  int dx, dy, i, j, k;
@@ -808,14 +811,17 @@ void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, const COLORREF *lpcr
     hBrush = CreateSolidBrush(lpcr[i+j*cols]);
     if (hBrush)
     {
-     hBrush = SelectObject(hdc, hBrush) ;
-     Rectangle(hdc, rect.left, rect.top,
-                  rect.left + dx - DISTANCE, rect.top + dy - DISTANCE);
-     rect.left = rect.left + dx;
-     DeleteObject( SelectObject(hdc, hBrush) ) ;
+     blockrect.left = rect.left;
+     blockrect.top = rect.top;
+     blockrect.right = rect.left + dx - DISTANCE;
+     blockrect.bottom = rect.top + dy - DISTANCE;
+     FillRect(hdc, &blockrect, hBrush);
+     DrawEdge(hdc, &blockrect, BDR_SUNKEN, BF_RECT);
+     DeleteObject(hBrush);
     }
+    rect.left += dx;
    }
-   rect.top = rect.top + dy;
+   rect.top += dy;
    rect.left = k;
   }
   ReleaseDC(hwnd, hdc);
@@ -823,7 +829,6 @@ void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, const COLORREF *lpcr
  if (lpp->hwndFocus == hwnd)
    CC_DrawCurrentFocusRect(lpp);
 }
-
 
 
 /***********************************************************************
