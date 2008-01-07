@@ -556,10 +556,10 @@
 @ cdecl _wsearchenv(wstr wstr ptr)
 @ cdecl _wsetlocale(long wstr) MSVCRT__wsetlocale
 @ varargs _wsopen (wstr long long) MSVCRT__wsopen
-@ stub _wspawnl #(long wstr wstr) varargs
-@ stub _wspawnle #(long wstr wstr) varargs
-@ stub _wspawnlp #(long wstr wstr) varargs
-@ stub _wspawnlpe #(long wstr wstr) varargs
+@ varargs _wspawnl(long wstr wstr)
+@ varargs _wspawnle(long wstr wstr)
+@ varargs _wspawnlp(long wstr wstr)
+@ varargs _wspawnlpe(long wstr wstr)
 @ cdecl _wspawnv(long wstr ptr)
 @ cdecl _wspawnve(long wstr ptr ptr)
 @ cdecl _wspawnvp(long wstr ptr)

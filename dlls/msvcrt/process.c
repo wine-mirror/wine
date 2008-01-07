@@ -590,6 +590,27 @@ MSVCRT_intptr_t CDECL _execvp(const char* name, char* const* argv)
 }
 
 /*********************************************************************
+ *      _wspawnl (MSVCRT.@)
+ *
+ * Unicode version of _spawnl
+ */
+MSVCRT_intptr_t CDECL _wspawnl(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* arg0, ...)
+{
+  va_list ap;
+  MSVCRT_wchar_t *args;
+  MSVCRT_intptr_t ret;
+
+  va_start(ap, arg0);
+  args = msvcrt_valisttos(arg0, ap, ' ');
+  va_end(ap);
+
+  ret = msvcrt_spawn(flags, name, args, NULL);
+
+  MSVCRT_free(args);
+  return ret;
+}
+
+/*********************************************************************
  *		_spawnl (MSVCRT.@)
  *
  * Like on Windows, this function does not handle arguments with spaces
@@ -611,6 +632,35 @@ MSVCRT_intptr_t CDECL _spawnl(int flags, const char* name, const char* arg0, ...
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
+  return ret;
+}
+
+/*********************************************************************
+ *      _wspawnle (MSVCRT.@)
+ *
+ * Unicode version of _spawnle
+ */
+MSVCRT_intptr_t CDECL _wspawnle(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* arg0, ...)
+{
+  va_list ap;
+  MSVCRT_wchar_t *args, *envs = NULL;
+  const MSVCRT_wchar_t * const *envp;
+  MSVCRT_intptr_t ret;
+
+  va_start(ap, arg0);
+  args = msvcrt_valisttos(arg0, ap, ' ');
+  va_end(ap);
+
+  va_start(ap, arg0);
+  while (va_arg( ap, MSVCRT_wchar_t * ) != NULL) /*nothing*/;
+  envp = va_arg( ap, const MSVCRT_wchar_t * const * );
+  if (envp) envs = msvcrt_argvtos(envp, 0);
+  va_end(ap);
+
+  ret = msvcrt_spawn(flags, name, args, envs);
+
+  MSVCRT_free(args);
+  MSVCRT_free(envs);
   return ret;
 }
 
@@ -644,6 +694,29 @@ MSVCRT_intptr_t CDECL _spawnle(int flags, const char* name, const char* arg0, ..
   return ret;
 }
 
+/*********************************************************************
+ *      _wspawnlp (MSVCRT.@)
+ *
+ * Unicode version of _spawnlp
+ */
+MSVCRT_intptr_t CDECL _wspawnlp(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* arg0, ...)
+{
+  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
+  va_list ap;
+  MSVCRT_wchar_t *args, fullname[MAX_PATH];
+  MSVCRT_intptr_t ret;
+
+  _wsearchenv(name, path, fullname);
+
+  va_start(ap, arg0);
+  args = msvcrt_valisttos(arg0, ap, ' ');
+  va_end(ap);
+
+  ret = msvcrt_spawn(flags, fullname[0] ? fullname : name, args, NULL);
+
+  MSVCRT_free(args);
+  return ret;
+}
 
 /*********************************************************************
  *		_spawnlp (MSVCRT.@)
@@ -669,6 +742,38 @@ MSVCRT_intptr_t CDECL _spawnlp(int flags, const char* name, const char* arg0, ..
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
+  return ret;
+}
+
+/*********************************************************************
+ *      _wspawnlpe (MSVCRT.@)
+ *
+ * Unicode version of _spawnlpe
+ */
+MSVCRT_intptr_t CDECL _wspawnlpe(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* arg0, ...)
+{
+  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
+  va_list ap;
+  MSVCRT_wchar_t *args, *envs = NULL, fullname[MAX_PATH];
+  const MSVCRT_wchar_t * const *envp;
+  MSVCRT_intptr_t ret;
+
+  _wsearchenv(name, path, fullname);
+
+  va_start(ap, arg0);
+  args = msvcrt_valisttos(arg0, ap, ' ');
+  va_end(ap);
+
+  va_start(ap, arg0);
+  while (va_arg( ap, MSVCRT_wchar_t * ) != NULL) /*nothing*/;
+  envp = va_arg( ap, const MSVCRT_wchar_t * const * );
+  if (envp) envs = msvcrt_argvtos(envp, 0);
+  va_end(ap);
+
+  ret = msvcrt_spawn(flags, fullname[0] ? fullname : name, args, envs);
+
+  MSVCRT_free(args);
+  MSVCRT_free(envs);
   return ret;
 }
 
