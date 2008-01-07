@@ -1767,10 +1767,18 @@ static void test_xmlTypes(void)
     IXMLDOMAttribute *pAttrubute;
     IXMLDOMNamedNodeMap *pAttribs;
     BSTR str;
+    IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;   /* Used for testing Siblings */
 
     hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
     if( hr != S_OK )
         return;
+
+    hr = IXMLDOMDocument_get_nextSibling(doc, NULL);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+    hr = IXMLDOMDocument_get_nextSibling(doc, &pNextChild);
+    ok(hr == S_FALSE, "ret %08x\n", hr );
+    ok(pNextChild == NULL, "pDocChild not NULL\n");
 
     hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
     ok(hr == S_OK, "ret %08x\n", hr );
@@ -1825,6 +1833,15 @@ static void test_xmlTypes(void)
                 if(hr == S_OK)
                 {
                     IXMLDOMNode *pNewChild = (IXMLDOMNode *)0x1;
+
+                    hr = IXMLDOMAttribute_get_nextSibling(pAttrubute, NULL);
+                    ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                    pNextChild = (IXMLDOMNode *)0x1;
+                    hr = IXMLDOMAttribute_get_nextSibling(pAttrubute, &pNextChild);
+                    ok(hr == S_FALSE, "ret %08x\n", hr );
+                    ok(pNextChild == NULL, "pNextChild not NULL\n");
+
                     hr = IXMLDOMElement_appendChild(pElement, (IXMLDOMNode*)pAttrubute, &pNewChild);
                     ok(hr == E_FAIL, "ret %08x\n", hr );
                     ok(pNewChild == NULL, "pNewChild not NULL\n");
