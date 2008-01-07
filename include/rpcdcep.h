@@ -183,11 +183,6 @@ RPCRTAPI UINT RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcSetWMsgEndpoint( WCHAR* Endpoint );
 
-RPCRTAPI RPC_STATUS RPC_ENTRY
-  I_RpcBindingInqTransportType( RPC_BINDING_HANDLE Binding, unsigned int* Type );
-
-RPCRTAPI LONG RPC_ENTRY I_RpcMapWin32Status(RPC_STATUS);
-
 #endif
 
 #else
@@ -211,6 +206,11 @@ RPCRTAPI UINT RPC_ENTRY
   I_RpcWindowProc( void* hWnd, unsigned int Message, unsigned int wParam, unsigned long lParam );
 
 #endif
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  I_RpcBindingInqTransportType( RPC_BINDING_HANDLE Binding, unsigned int* Type );
+
+RPCRTAPI LONG RPC_ENTRY I_RpcMapWin32Status(RPC_STATUS);
 
 #ifdef __cplusplus
 }
