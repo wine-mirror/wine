@@ -821,6 +821,8 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     {
         TRACE("Calling apartment thread 0x%08x...\n", message_state->target_tid);
 
+        msg->ProcNum &= ~RPC_FLAGS_VALID_BIT;
+
         if (!PostMessageW(message_state->target_hwnd, DM_EXECUTERPC, 0,
                           (LPARAM)&message_state->params))
         {
