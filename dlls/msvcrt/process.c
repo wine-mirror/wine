@@ -215,16 +215,57 @@ static MSVCRT_wchar_t* msvcrt_argvtos_wide(const MSVCRT_wchar_t* const* arg, MSV
   return ret;
 }
 
-/* INTERNAL: Convert va_list to a single 'delim'-separated string, with an
- * extra '\0' to terminate it
+/* INTERNAL: Convert ansi argv list to a single 'delim'-separated wide string, with an
+ * extra '\0' to terminate it.
  */
-static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
+static MSVCRT_wchar_t *msvcrt_argvtos_aw(const char * const *arg, MSVCRT_wchar_t delim)
+{
+  const char * const *a;
+  unsigned long len;
+  MSVCRT_wchar_t *p, *ret;
+
+  if (!arg && !delim)
+  {
+      /* Return NULL for an empty environment list */
+      return NULL;
+  }
+
+  /* get length */
+  a = arg;
+  len = 0;
+  while (*a)
+  {
+    len += MultiByteToWideChar(CP_ACP, 0, *a, -1, NULL, 0);
+    a++;
+  }
+
+  ret = MSVCRT_malloc((len + 1) * sizeof(MSVCRT_wchar_t));
+  if (!ret)
+    return NULL;
+
+  /* fill string */
+  a = arg;
+  p = ret;
+  while (*a)
+  {
+    p += MultiByteToWideChar(CP_ACP, 0, *a, strlen(*a), p, len - (p - ret));
+    *p++ = delim;
+    a++;
+  }
+  if (delim && p > ret) p[-1] = 0;
+  else *p = 0;
+  return ret;
+}
+
+/* INTERNAL: Convert ansi va_list to a single 'delim'-separated wide string, with an
+ * extra '\0' to terminate it.
+ */
+static MSVCRT_wchar_t *msvcrt_valisttos_aw(const char *arg0, va_list alist, MSVCRT_wchar_t delim)
 {
   va_list alist2;
-  long size;
+  unsigned long len;
   const char *arg;
-  char* p;
-  char *ret;
+  MSVCRT_wchar_t *p, *ret;
 
 #ifdef HAVE_VA_COPY
   va_copy(alist2,alist);
@@ -244,13 +285,13 @@ static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
 
   /* get length */
   arg = arg0;
-  size = 0;
+  len = 0;
   do {
-      size += strlen(arg) + 1;
+      len += MultiByteToWideChar(CP_ACP, 0, arg, -1, NULL, 0);
       arg = va_arg(alist, char*);
   } while (arg != NULL);
 
-  ret = MSVCRT_malloc(size + 1);
+  ret = MSVCRT_malloc((len + 1) * sizeof(MSVCRT_wchar_t));
   if (!ret)
     return NULL;
 
@@ -258,9 +299,7 @@ static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
   arg = arg0;
   p = ret;
   do {
-      int len = strlen(arg);
-      memcpy(p,arg,len);
-      p += len;
+      p += MultiByteToWideChar(CP_ACP, 0, arg, strlen(arg), p, len - (p - ret));
       *p++ = delim;
       arg = va_arg(alist2, char*);
   } while (arg != NULL);
@@ -327,16 +366,19 @@ MSVCRT_intptr_t CDECL _cwait(int *status, MSVCRT_intptr_t pid, int action)
 MSVCRT_intptr_t CDECL _execl(const char* name, const char* arg0, ...)
 {
   va_list ap;
-  char * args;
-  MSVCRT_intptr_t ret;
+  MSVCRT_wchar_t *nameW, *args;
+  MSVCRT_intptr_t ret = -1;
+
+  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
   va_start(ap, arg0);
-  args = msvcrt_valisttos(arg0, ap, ' ');
+  args = msvcrt_valisttos_aw(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, NULL);
-  MSVCRT_free(args);
+  ret = msvcrt_spawn_wide(MSVCRT__P_OVERLAY, nameW, args, NULL);
 
+  MSVCRT_free(nameW);
+  MSVCRT_free(args);
   return ret;
 }
 
@@ -357,20 +399,22 @@ MSVCRT_intptr_t CDECL _execle(const char* name, const char* arg0, ...)
  */
 MSVCRT_intptr_t CDECL _execlp(const char* name, const char* arg0, ...)
 {
+  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
   va_list ap;
-  char * args;
+  MSVCRT_wchar_t *nameW, *args, fullname[MAX_PATH];
   MSVCRT_intptr_t ret;
-  char fullname[MAX_PATH];
 
-  _searchenv(name, "PATH", fullname);
+  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  _wsearchenv(nameW, path, fullname);
 
   va_start(ap, arg0);
-  args = msvcrt_valisttos(arg0, ap, ' ');
+  args = msvcrt_valisttos_aw(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, fullname[0] ? fullname : name, args, NULL);
-  MSVCRT_free(args);
+  ret = msvcrt_spawn_wide(MSVCRT__P_OVERLAY, fullname[0] ? fullname : nameW, args, NULL);
 
+  MSVCRT_free(nameW);
+  MSVCRT_free(args);
   return ret;
 }
 
@@ -440,16 +484,19 @@ MSVCRT_intptr_t CDECL _execvp(const char* name, char* const* argv)
 MSVCRT_intptr_t CDECL _spawnl(int flags, const char* name, const char* arg0, ...)
 {
   va_list ap;
-  char * args;
+  MSVCRT_wchar_t *nameW, *args;
   MSVCRT_intptr_t ret;
 
+  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+
   va_start(ap, arg0);
-  args = msvcrt_valisttos(arg0, ap, ' ');
+  args = msvcrt_valisttos_aw(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, name, args, NULL);
-  MSVCRT_free(args);
+  ret = msvcrt_spawn_wide(flags, nameW, args, NULL);
 
+  MSVCRT_free(nameW);
+  MSVCRT_free(args);
   return ret;
 }
 
@@ -458,26 +505,29 @@ MSVCRT_intptr_t CDECL _spawnl(int flags, const char* name, const char* arg0, ...
  */
 MSVCRT_intptr_t CDECL _spawnle(int flags, const char* name, const char* arg0, ...)
 {
-    va_list ap;
-    char *args, *envs = NULL;
-    const char * const *envp;
-    MSVCRT_intptr_t ret;
+  va_list ap;
+  MSVCRT_wchar_t *nameW, *args, *envs = NULL;
+  const char * const *envp;
+  MSVCRT_intptr_t ret;
 
-    va_start(ap, arg0);
-    args = msvcrt_valisttos(arg0, ap, ' ');
-    va_end(ap);
+  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
-    va_start(ap, arg0);
-    while (va_arg( ap, char * ) != NULL) /*nothing*/;
-    envp = va_arg( ap, const char * const * );
-    if (envp) envs = msvcrt_argvtos(envp, 0);
-    va_end(ap);
+  va_start(ap, arg0);
+  args = msvcrt_valisttos_aw(arg0, ap, ' ');
+  va_end(ap);
 
-    ret = msvcrt_spawn(flags, name, args, envs);
+  va_start(ap, arg0);
+  while (va_arg( ap, char * ) != NULL) /*nothing*/;
+  envp = va_arg( ap, const char * const * );
+  if (envp) envs = msvcrt_argvtos_aw(envp, 0);
+  va_end(ap);
 
-    MSVCRT_free(args);
-    MSVCRT_free(envs);
-    return ret;
+  ret = msvcrt_spawn_wide(flags, nameW, args, envs);
+
+  MSVCRT_free(nameW);
+  MSVCRT_free(args);
+  MSVCRT_free(envs);
+  return ret;
 }
 
 
@@ -489,20 +539,22 @@ MSVCRT_intptr_t CDECL _spawnle(int flags, const char* name, const char* arg0, ..
  */
 MSVCRT_intptr_t CDECL _spawnlp(int flags, const char* name, const char* arg0, ...)
 {
+  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
   va_list ap;
-  char * args;
+  MSVCRT_wchar_t *nameW, *args, fullname[MAX_PATH];
   MSVCRT_intptr_t ret;
-  char fullname[MAX_PATH];
 
-  _searchenv(name, "PATH", fullname);
+  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  _wsearchenv(nameW, path, fullname);
 
   va_start(ap, arg0);
-  args = msvcrt_valisttos(arg0, ap, ' ');
+  args = msvcrt_valisttos_aw(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, fullname[0] ? fullname : name, args, NULL);
-  MSVCRT_free(args);
+  ret = msvcrt_spawn_wide(flags, fullname[0] ? fullname : nameW, args, NULL);
 
+  MSVCRT_free(nameW);
+  MSVCRT_free(args);
   return ret;
 }
 
@@ -511,29 +563,31 @@ MSVCRT_intptr_t CDECL _spawnlp(int flags, const char* name, const char* arg0, ..
  */
 MSVCRT_intptr_t CDECL _spawnlpe(int flags, const char* name, const char* arg0, ...)
 {
-    va_list ap;
-    char *args, *envs = NULL;
-    const char * const *envp;
-    MSVCRT_intptr_t ret;
-    char fullname[MAX_PATH];
+  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
+  va_list ap;
+  MSVCRT_wchar_t *nameW, *args, *envs = NULL, fullname[MAX_PATH];
+  const char * const *envp;
+  MSVCRT_intptr_t ret;
 
-    _searchenv(name, "PATH", fullname);
+  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  _wsearchenv(nameW, path, fullname);
 
-    va_start(ap, arg0);
-    args = msvcrt_valisttos(arg0, ap, ' ');
-    va_end(ap);
+  va_start(ap, arg0);
+  args = msvcrt_valisttos_aw(arg0, ap, ' ');
+  va_end(ap);
 
-    va_start(ap, arg0);
-    while (va_arg( ap, char * ) != NULL) /*nothing*/;
-    envp = va_arg( ap, const char * const * );
-    if (envp) envs = msvcrt_argvtos(envp, 0);
-    va_end(ap);
+  va_start(ap, arg0);
+  while (va_arg( ap, char * ) != NULL) /*nothing*/;
+  envp = va_arg( ap, const char * const * );
+  if (envp) envs = msvcrt_argvtos_aw(envp, 0);
+  va_end(ap);
 
-    ret = msvcrt_spawn(flags, fullname[0] ? fullname : name, args, envs);
+  ret = msvcrt_spawn_wide(flags, fullname[0] ? fullname : nameW, args, envs);
 
-    MSVCRT_free(args);
-    MSVCRT_free(envs);
-    return ret;
+  MSVCRT_free(nameW);
+  MSVCRT_free(args);
+  MSVCRT_free(envs);
+  return ret;
 }
 
 /*********************************************************************
