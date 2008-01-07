@@ -235,10 +235,9 @@ COLORREF ARGB2COLORREF(ARGB color)
     ARGB:       aarrggbb
     FIXME:doesn't handle alpha channel
     */
-    return (COLORREF)
-        ((color & 0x0000ff) << 16) +
-         (color & 0x00ff00) +
-        ((color & 0xff0000) >> 16);
+    return ((color & 0x0000ff) << 16) +
+           (color & 0x00ff00) +
+           ((color & 0xff0000) >> 16);
 }
 
 /* Like atan2, but puts angle in correct quadrant if dx is 0. */

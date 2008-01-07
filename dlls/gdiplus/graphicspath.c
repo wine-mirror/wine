@@ -570,6 +570,6 @@ GpStatus WINGDIPAPI GdipTransformPath(GpPath *path, GpMatrix *matrix)
     if(path->pathdata.Count == 0)
         return Ok;
 
-    return GdipTransformMatrixPoints(matrix, (GpPointF*) path->pathdata.Points,
+    return GdipTransformMatrixPoints(matrix, path->pathdata.Points,
                                      path->pathdata.Count);
 }
