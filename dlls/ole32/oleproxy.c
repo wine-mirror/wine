@@ -574,9 +574,11 @@ static HRESULT WINAPI RemUnkStub_Invoke(LPRPCSTUBBUFFER iface,
     *(HRESULT *)buf = hr;
     buf += sizeof(HRESULT);
     
-    if (hr) return hr;
-    /* FIXME: pQIResults is a unique pointer so pQIResults can be NULL! */
-    memcpy(buf, pQIResults, cIids * sizeof(REMQIRESULT));
+    if (hr == S_OK)
+      /* FIXME: pQIResults is a unique pointer so pQIResults can be NULL! */
+      memcpy(buf, pQIResults, cIids * sizeof(REMQIRESULT));
+
+    CoTaskMemFree(pQIResults);
 
     break;
   }
