@@ -535,11 +535,31 @@ LRESULT print_preview(HWND hMainWnd)
 
     if(window.right != preview.window.right || window.bottom != preview.window.bottom)
     {
-        DeleteDC(preview.hdcSized),
-                 preview.hdcSized = CreateCompatibleDC(hdc);
-                 SelectObject(preview.hdcSized, hBitmapScaled);
+        HPEN hPen;
+        int TopMargin = (int)((float)twips_to_pixels(fr.rc.top, GetDeviceCaps(hdc, LOGPIXELSX)) * ratio);
+        int BottomMargin = (int)((float)twips_to_pixels(fr.rc.bottom, GetDeviceCaps(hdc, LOGPIXELSX)) * ratio);
+        int LeftMargin = (int)((float)twips_to_pixels(fr.rc.left, GetDeviceCaps(hdc, LOGPIXELSY)) * ratio);
+        int RightMargin = (int)((float)twips_to_pixels(fr.rc.right, GetDeviceCaps(hdc, LOGPIXELSY)) * ratio);
 
-                 StretchBlt(preview.hdcSized, 0, 0, bmNewWidth, bmNewHeight, preview.hdc, 0, 0, bmWidth, bmHeight, SRCCOPY);
+        DeleteDC(preview.hdcSized);
+        preview.hdcSized = CreateCompatibleDC(hdc);
+        SelectObject(preview.hdcSized, hBitmapScaled);
+
+        StretchBlt(preview.hdcSized, 0, 0, bmNewWidth, bmNewHeight, preview.hdc, 0, 0, bmWidth, bmHeight, SRCCOPY);
+
+        /* Draw margin lines */
+        hPen = CreatePen(PS_DOT, 1, RGB(0,0,0));
+        SelectObject(preview.hdcSized, hPen);
+
+        MoveToEx(preview.hdcSized, 0, TopMargin, NULL);
+        LineTo(preview.hdcSized, bmNewWidth, TopMargin);
+        MoveToEx(preview.hdcSized, 0, BottomMargin, NULL);
+        LineTo(preview.hdcSized, bmNewWidth, BottomMargin);
+
+        MoveToEx(preview.hdcSized, LeftMargin, 0, NULL);
+        LineTo(preview.hdcSized, LeftMargin, bmNewHeight);
+        MoveToEx(preview.hdcSized, RightMargin, 0, NULL);
+        LineTo(preview.hdcSized, RightMargin, bmNewHeight);
     }
 
     window.top = barheight;
