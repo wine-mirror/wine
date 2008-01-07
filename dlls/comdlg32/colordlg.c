@@ -1075,10 +1075,10 @@ LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam )
     CC_PaintPredefColorArray(hDlg, 6, 8);
     CC_PaintUserColorArray(hDlg, 2, 8, lpp->lpcc->lpCustColors);
     CC_PaintLumBar(hDlg, lpp->h, lpp->s);
-    CC_PaintCross(hDlg, lpp->h, lpp->s);
     CC_PaintTriangle(hDlg, lpp->l);
     CC_PaintSelectedColor(hDlg, lpp->lpcc->rgbResult);
     CC_PaintColorGraph(hDlg);
+    CC_PaintCross(hDlg, lpp->h, lpp->s);
     EndPaint(hDlg, &ps);
 
     return TRUE;
