@@ -125,6 +125,8 @@ extern MSVCRT_wchar_t **_wenviron;
 extern char ** msvcrt_SnapshotOfEnvironmentA(char **);
 extern MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **);
 
+MSVCRT_wchar_t *msvcrt_wstrdupa(const char *);
+
 /* FIXME: This should be declared in new.h but it's not an extern "C" so
  * it would not be much use anyway. Even for Winelib applications.
  */

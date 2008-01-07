@@ -570,7 +570,7 @@
 @ cdecl _wstat64(wstr ptr) MSVCRT__wstat64
 @ cdecl _wstrdate(ptr)
 @ cdecl _wstrtime(ptr)
-@ stub _wsystem #(wstr)
+@ cdecl _wsystem(wstr)
 @ cdecl _wtempnam(wstr wstr)
 @ stub _wtmpnam #(ptr)
 @ cdecl _wtoi(wstr) ntdll._wtoi

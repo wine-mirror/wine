@@ -229,7 +229,7 @@ char*** CDECL __p___initenv(void) { return &MSVCRT___initenv; }
 MSVCRT_wchar_t*** CDECL __p___winitenv(void) { return &MSVCRT___winitenv; }
 
 /* INTERNAL: Create a wide string from an ascii string */
-static MSVCRT_wchar_t *wstrdupa(const char *str)
+MSVCRT_wchar_t *msvcrt_wstrdupa(const char *str)
 {
   const size_t len = strlen(str) + 1 ;
   MSVCRT_wchar_t *wstr = MSVCRT_malloc(len* sizeof (MSVCRT_wchar_t));
@@ -249,7 +249,7 @@ void msvcrt_init_args(void)
   DWORD version;
 
   MSVCRT__acmdln = _strdup( GetCommandLineA() );
-  MSVCRT__wcmdln = wstrdupa(MSVCRT__acmdln);
+  MSVCRT__wcmdln = msvcrt_wstrdupa(MSVCRT__acmdln);
   MSVCRT___argc = __wine_main_argc;
   MSVCRT___argv = __wine_main_argv;
   MSVCRT___wargv = __wine_main_wargv;

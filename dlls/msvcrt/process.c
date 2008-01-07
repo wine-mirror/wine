@@ -269,6 +269,22 @@ static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
   return ret;
 }
 
+/* INTERNAL: retrieve COMSPEC environment variable */
+static MSVCRT_wchar_t *msvcrt_get_comspec(void)
+{
+  static const MSVCRT_wchar_t cmd[] = {'c','m','d',0};
+  static const MSVCRT_wchar_t comspec[] = {'C','O','M','S','P','E','C',0};
+  MSVCRT_wchar_t *ret;
+  unsigned int len;
+
+  if (!(len = GetEnvironmentVariableW(comspec, NULL, 0))) len = sizeof(cmd)/sizeof(MSVCRT_wchar_t);
+  if ((ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(MSVCRT_wchar_t))))
+  {
+    if (!GetEnvironmentVariableW(comspec, ret, len)) strcpyW(ret, cmd);
+  }
+  return ret;
+}
+
 /*********************************************************************
  *		_cwait (MSVCRT.@)
  */
@@ -822,19 +838,50 @@ int CDECL MSVCRT__pclose(MSVCRT_FILE* file)
 }
 
 /*********************************************************************
+ *      _wsystem (MSVCRT.@)
+ *
+ * Unicode version of system
+ */
+int CDECL _wsystem(const MSVCRT_wchar_t* cmd)
+{
+  int res;
+  MSVCRT_wchar_t *comspec, *fullcmd;
+  unsigned int len;
+  static const MSVCRT_wchar_t flag[] = {' ','/','c',' ',0};
+
+  if (!(comspec = msvcrt_get_comspec())) return -1;
+  len = strlenW(comspec) + strlenW(flag) + strlenW(cmd) + 1;
+
+  if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(MSVCRT_wchar_t))))
+  {
+    HeapFree(GetProcessHeap(), 0, comspec);
+    return -1;
+  }
+  strcpyW(fullcmd, comspec);
+  strcatW(fullcmd, flag);
+  strcatW(fullcmd, cmd);
+
+  res = msvcrt_spawn_wide(MSVCRT__P_WAIT, comspec, fullcmd, NULL);
+
+  HeapFree(GetProcessHeap(), 0, comspec);
+  HeapFree(GetProcessHeap(), 0, fullcmd);
+  return res;
+}
+
+/*********************************************************************
  *		system (MSVCRT.@)
  */
 int CDECL MSVCRT_system(const char* cmd)
 {
-    char* cmdcopy;
-    int res;
+  int res = -1;
+  MSVCRT_wchar_t *cmdW;
 
-    /* Make a writable copy for CreateProcess */
-    cmdcopy=_strdup(cmd);
-    /* FIXME: should probably launch cmd interpreter in COMSPEC */
-    res=msvcrt_spawn(MSVCRT__P_WAIT, NULL, cmdcopy, NULL);
-    MSVCRT_free(cmdcopy);
-    return res;
+  if ((cmdW = msvcrt_wstrdupa(cmd)))
+  {
+    res = _wsystem(cmdW);
+    HeapFree(GetProcessHeap(), 0, cmdW);
+  }
+  return res;
 }
 
 /*********************************************************************
