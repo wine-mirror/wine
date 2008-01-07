@@ -1167,6 +1167,9 @@ fi
 WINE_NOTICE_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
                  [libpng development files not found, PNG won't be supported.])
 
+dnl **** Check for libodbc ****
+WINE_CHECK_SONAME(odbc,SQLConnect,,[AC_DEFINE_UNQUOTED(SONAME_LIBODBC,["libodbc.$LIBEXT"])])
+
 dnl **** Check for any sound system ****
 if test "x$ALSALIBS$AUDIOIOLIBS$COREAUDIO$NASLIBS$ESD_LIBS$ac_cv_lib_soname_jack" = "x" -a \
         "$ac_cv_header_sys_soundcard_h" != "yes" -a \

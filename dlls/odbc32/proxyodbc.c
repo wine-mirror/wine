@@ -518,31 +518,23 @@ static BOOL ODBC_LoadDriverManager(void)
    TRACE("\n");
 
    gProxyHandle.bFunctionReady = FALSE;
-   gProxyHandle.nErrorType = ERROR_LIBRARY_NOT_FOUND;
 
-   if (s!= NULL && strlen (s) >= sizeof(gProxyHandle.dmLibName))
-   {
-          ERR("Driver name too long (%s)\n",s);
-          return FALSE;
-   }
-   if (s == NULL || strlen(s) == 0)
-          s = "libodbc.so";
-   strcpy(gProxyHandle.dmLibName, s);
+#ifdef SONAME_LIBODBC
+   if (!s || !s[0]) s = SONAME_LIBODBC;
+#endif
+   if (!s || !s[0]) goto failed;
 
-   gProxyHandle.dmHandle = wine_dlopen(gProxyHandle.dmLibName, RTLD_LAZY | RTLD_GLOBAL, error, sizeof(error));
+   gProxyHandle.dmHandle = wine_dlopen(s, RTLD_LAZY | RTLD_GLOBAL, error, sizeof(error));
 
-   if (gProxyHandle.dmHandle == NULL)           /* fail to load unixODBC driver manager */
-   {
-           WARN("failed to open library %s: %s\n", gProxyHandle.dmLibName, error);
-           gProxyHandle.dmLibName[0] = '\0';
-           gProxyHandle.nErrorType = ERROR_LIBRARY_NOT_FOUND;
-           return FALSE;
-   }
-   else
+   if (gProxyHandle.dmHandle != NULL)
    {
       gProxyHandle.nErrorType = ERROR_FREE;
       return TRUE;
    }
+failed:
+   WARN("failed to open library %s: %s\n", debugstr_a(s), error);
+   gProxyHandle.nErrorType = ERROR_LIBRARY_NOT_FOUND;
+   return FALSE;
 }
 
 

@@ -45,7 +45,6 @@ typedef struct proxyhandle
 	int  nErrorType;
 	DM_FUNC functions[NUM_SQLFUNC];			/* entry point for driver manager functions */
 	char driverLibName[200];	/* ODBC driver SO name */
-	char dmLibName[200];		/* driver manager library name */
 	char ServerName[200];       /* keep server name */
 	char UserName[50];          /* keep username */
 } PROXYHANDLE;
