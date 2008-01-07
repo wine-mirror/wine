@@ -179,6 +179,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
             *handle = reply->handle;
         }
         SERVER_END_REQ;
+        if (io->u.Status == STATUS_SUCCESS) io->Information = FILE_OPENED;
         return io->u.Status;
     }
 
