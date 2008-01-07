@@ -337,24 +337,29 @@ static int CC_MouseCheckColorGraph( HWND hDlg, int dlgitem, int *hori, int *vert
  ClientToScreen(hDlg, &point);
  hwnd = GetDlgItem( hDlg, dlgitem );
  GetWindowRect(hwnd, &rect);
- if (PtInRect(&rect, point))
- {
-  GetClientRect(hwnd, &rect);
-  ScreenToClient(hwnd, &point);
 
-  x = (long) point.x * MAXHORI;
-  x /= rect.right;
-  y = (long) (rect.bottom - point.y) * MAXVERT;
-  y /= rect.bottom;
-
-  if (hori)
-   *hori = x;
-  if (vert)
-   *vert = y;
-  return 1;
- }
- else
+ if (!PtInRect(&rect, point))
   return 0;
+
+ GetClientRect(hwnd, &rect);
+ ScreenToClient(hwnd, &point);
+
+ x = (long) point.x * MAXHORI;
+ x /= rect.right;
+ y = (long) (rect.bottom - point.y) * MAXVERT;
+ y /= rect.bottom;
+
+ if (x < 0) x = 0;
+ if (y < 0) y = 0;
+ if (x > MAXHORI) x = MAXHORI;
+ if (y > MAXVERT) y = MAXVERT;
+
+ if (hori)
+  *hori = x;
+ if (vert)
+  *vert = y;
+
+ return 1;
 }
 /***********************************************************************
  *                  CC_MouseCheckResultWindow                 [internal]
