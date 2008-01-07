@@ -347,6 +347,7 @@ static void test_domdoc( void )
     IXMLDOMText *nodetext = NULL;
     IXMLDOMComment *node_comment = NULL;
     IXMLDOMAttribute *node_attr = NULL;
+    IXMLDOMNode *nodeChild = NULL;
     VARIANT_BOOL b;
     VARIANT var;
     BSTR str;
@@ -508,6 +509,17 @@ static void test_domdoc( void )
     ok( r == E_INVALIDARG, "returns %08x\n", r );
     r = IXMLDOMDocument_createTextNode(doc, str, &nodetext);
     ok( r == S_OK, "returns %08x\n", r );
+    if(nodetext)
+    {
+        /* Text Last Child Checks */
+        r = IXMLDOMText_get_lastChild(nodetext, NULL);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+
+        nodeChild = (IXMLDOMNode*)0x1;
+        r = IXMLDOMText_get_lastChild(nodetext, &nodeChild);
+        ok(r == S_FALSE, "ret %08x\n", r );
+        ok(nodeChild == NULL, "nodeChild not NULL\n");
+    }
     IXMLDOMText_Release( nodetext );
     SysFreeString( str );
 
@@ -516,6 +528,17 @@ static void test_domdoc( void )
     ok( r == E_INVALIDARG, "returns %08x\n", r );
     r = IXMLDOMDocument_createComment(doc, szComment, &node_comment);
     ok( r == S_OK, "returns %08x\n", r );
+    if(node_comment)
+    {
+        /* Last Child Checks */
+        r = IXMLDOMComment_get_lastChild(node_comment, NULL);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+
+        nodeChild = (IXMLDOMNode*)0x1;
+        r = IXMLDOMComment_get_lastChild(node_comment, &nodeChild);
+        ok(r == S_FALSE, "ret %08x\n", r );
+        ok(nodeChild == NULL, "pLastChild not NULL\n");
+    }
     IXMLDOMText_Release( node_comment );
 
     /* test Create Attribute */

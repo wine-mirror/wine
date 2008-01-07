@@ -334,7 +334,24 @@ static HRESULT WINAPI xmlnode_get_lastChild(
     IXMLDOMNode** lastChild)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    return get_node( This, "lastChild", This->node->last, lastChild );
+
+    TRACE("%p\n", This );
+
+    if (!lastChild)
+        return E_INVALIDARG;
+
+    switch( This->node->type )
+    {
+    /* CDATASection, Comment, PI and Text Nodes do not support lastChild */
+    case XML_TEXT_NODE:
+    case XML_CDATA_SECTION_NODE:
+    case XML_PI_NODE:
+    case XML_COMMENT_NODE:
+        *lastChild = NULL;
+        return S_FALSE;
+    default:
+        return get_node( This, "lastChild", This->node->last, lastChild );
+    }
 }
 
 static HRESULT WINAPI xmlnode_get_previousSibling(
