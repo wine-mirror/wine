@@ -824,8 +824,5 @@ void close_master_socket( timeout_t timeout )
     if (master_timeout)  /* cancel previous timeout */
         remove_timeout_user( master_timeout );
 
-    if (timeout)
-        master_timeout = add_timeout_user( timeout, close_socket_timeout, NULL );
-    else  /* close it right away */
-        close_socket_timeout( NULL );
+    master_timeout = add_timeout_user( timeout, close_socket_timeout, NULL );
 }

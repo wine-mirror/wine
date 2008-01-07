@@ -55,7 +55,7 @@ static struct list process_list = LIST_INIT(process_list);
 static int running_processes, user_processes;
 static struct event *shutdown_event;           /* signaled when shutdown starts */
 static struct timeout_user *shutdown_timeout;  /* timeout for server shutdown */
-static int shutting_down;  /* are we in the process of shutting down the server? */
+static int shutdown_stage;  /* current stage in the shutdown process */
 
 /* process operations */
 
@@ -148,6 +148,8 @@ static unsigned int alloc_ptid_entries;     /* number of allocated entries */
 static unsigned int next_free_ptid;         /* next free entry */
 static unsigned int last_free_ptid;         /* last free entry */
 
+static void kill_all_processes(void);
+
 #define PTID_OFFSET 8  /* offset for first ptid value */
 
 /* allocate a new process or thread id */
@@ -233,15 +235,36 @@ static void set_process_startup_state( struct process *process, enum startup_sta
 static void server_shutdown_timeout( void *arg )
 {
     shutdown_timeout = NULL;
-    if (!running_processes) close_master_socket( 0 );
-    else
+    if (!running_processes)
     {
+        close_master_socket( 0 );
+        return;
+    }
+    switch(++shutdown_stage)
+    {
+    case 1:  /* signal system processes to exit */
         if (debug_level) fprintf( stderr, "wineserver: shutting down\n" );
         if (shutdown_event) set_event( shutdown_event );
-        /* leave 2 seconds for system processes to exit */
-        close_master_socket( 2 * -TICKS_PER_SEC );
-        shutting_down = 1;
+        shutdown_timeout = add_timeout_user( 2 * -TICKS_PER_SEC, server_shutdown_timeout, NULL );
+        close_master_socket( 4 * -TICKS_PER_SEC );
+        break;
+    case 2:  /* now forcibly kill all processes (but still wait for SIGKILL timeouts) */
+        kill_all_processes();
+        break;
     }
+}
+
+/* forced shutdown, used for wineserver -k */
+void shutdown_master_socket(void)
+{
+    kill_all_processes();
+    shutdown_stage = 2;
+    if (shutdown_timeout)
+    {
+        remove_timeout_user( shutdown_timeout );
+        shutdown_timeout = NULL;
+    }
+    close_master_socket( 2 * -TICKS_PER_SEC );  /* for SIGKILL timeouts */
 }
 
 /* final cleanup once we are sure a process is really dead */
@@ -250,11 +273,11 @@ static void process_died( struct process *process )
     if (debug_level) fprintf( stderr, "%04x: *process killed*\n", process->id );
     if (!process->is_system)
     {
-        if (!--user_processes && master_socket_timeout != TIMEOUT_INFINITE)
+        if (!--user_processes && !shutdown_stage && master_socket_timeout != TIMEOUT_INFINITE)
             shutdown_timeout = add_timeout_user( master_socket_timeout, server_shutdown_timeout, NULL );
     }
     release_object( process );
-    if (!--running_processes && shutting_down) close_master_socket( 0 );
+    if (!--running_processes && shutdown_stage) close_master_socket( 0 );
 }
 
 /* callback for process sigkill timeout */
@@ -575,7 +598,7 @@ static void terminate_process( struct process *process, struct thread *skip, int
 }
 
 /* kill all processes */
-static void kill_all_processes( struct process *skip, int exit_code )
+static void kill_all_processes(void)
 {
     for (;;)
     {
@@ -583,25 +606,11 @@ static void kill_all_processes( struct process *skip, int exit_code )
 
         LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
         {
-            if (process == skip) continue;
             if (process->running_threads) break;
         }
         if (&process->entry == &process_list) break;  /* no process found */
-        terminate_process( process, NULL, exit_code );
+        terminate_process( process, NULL, 1 );
     }
-}
-
-/* forced shutdown, used for wineserver -k */
-void shutdown_master_socket(void)
-{
-    kill_all_processes( NULL, 1 );
-    master_socket_timeout = 0;
-    if (shutdown_timeout)
-    {
-        remove_timeout_user( shutdown_timeout );
-        shutdown_timeout = NULL;
-    }
-    if (!shutting_down) server_shutdown_timeout( NULL );
 }
 
 /* kill all processes being attached to a console renderer */
@@ -893,7 +902,7 @@ DECL_HANDLER(new_process)
         close( socket_fd );
         return;
     }
-    if (shutting_down)
+    if (shutdown_stage)
     {
         set_error( STATUS_SHUTDOWN_IN_PROGRESS );
         close( socket_fd );
@@ -1231,7 +1240,7 @@ DECL_HANDLER(make_process_system)
     {
         process->is_system = 1;
         close_process_desktop( process );
-        if (!--user_processes && master_socket_timeout != TIMEOUT_INFINITE)
+        if (!--user_processes && !shutdown_stage && master_socket_timeout != TIMEOUT_INFINITE)
             shutdown_timeout = add_timeout_user( master_socket_timeout, server_shutdown_timeout, NULL );
     }
 }
