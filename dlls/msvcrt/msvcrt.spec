@@ -518,10 +518,10 @@
 @ cdecl _wcsupr(wstr) ntdll._wcsupr
 @ cdecl _wctime(ptr) MSVCRT__wctime
 @ extern _wenviron
-@ stub _wexecl #(wstr wstr) varargs
-@ stub _wexecle #(wstr wstr) varargs
-@ stub _wexeclp #(wstr wstr) varargs
-@ stub _wexeclpe #(wstr wstr) varargs
+@ varargs _wexecl(wstr wstr)
+@ varargs _wexecle(wstr wstr)
+@ varargs _wexeclp(wstr wstr)
+@ varargs _wexeclpe(wstr wstr)
 @ stub _wexecv #(wstr ptr)
 @ stub _wexecve #(wstr ptr ptr)
 @ stub _wexecvp #(wstr ptr)
