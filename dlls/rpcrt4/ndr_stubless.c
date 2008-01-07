@@ -37,7 +37,6 @@
 #include "objbase.h"
 #include "rpc.h"
 #include "rpcproxy.h"
-#include "ndrtypes.h"
 
 #include "wine/debug.h"
 #include "wine/rpcfc.h"
