@@ -114,7 +114,7 @@ static inline void DUMPPACKET(WTPACKET packet)
 
 static inline void DUMPCONTEXT(LOGCONTEXTW lc)
 {
-    TRACE("context: %s, %x, %x, %x, %x, %x, %x, %x%s, %x%s, %x%s, %x, %x, %i, %i, %i, %i ,%i, %i, %i, %i, %i,%i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i %i %i",
+    TRACE("context: %s, %x, %x, %x, %x, %x, %x, %x%s, %x%s, %x%s, %x, %x, %i, %i, %i, %i ,%i, %i, %i, %i, %i,%i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i %i %i\n",
           wine_dbgstr_w(lc.lcName), lc.lcOptions, lc.lcStatus, lc.lcLocks, lc.lcMsgBase,
           lc.lcDevice, lc.lcPktRate, lc.lcPktData, DUMPBITS(lc.lcPktData),
           lc.lcPktMode, DUMPBITS(lc.lcPktMode), lc.lcMoveMask,
