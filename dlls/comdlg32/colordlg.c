@@ -463,7 +463,7 @@ void CC_PaintTriangle( HWND hDlg, int y)
 {
  HDC hDC;
  long temp;
- int w = LOWORD(GetDialogBaseUnits());
+ int w = LOWORD(GetDialogBaseUnits()) / 2;
  POINT points[3];
  int height;
  int oben;
@@ -484,6 +484,7 @@ void CC_PaintTriangle( HWND hDlg, int y)
    oben = points[0].y;           /*  | \ |  */
                                  /*  |  \|  */
    temp = (long)height * (long)y;
+   points[0].x += 1;
    points[0].y = oben + height - temp / (long)MAXVERT;
    points[1].y = points[0].y + w;
    points[2].y = points[0].y - w;
@@ -496,7 +497,11 @@ void CC_PaintTriangle( HWND hDlg, int y)
    lpp->old3angle.right = points[1].x + 1;
    lpp->old3angle.top   = points[2].y - 1;
    lpp->old3angle.bottom= points[1].y + 1;
+
+   hbr = SelectObject(hDC, GetStockObject(BLACK_BRUSH));
    Polygon(hDC, points, 3);
+   SelectObject(hDC, hbr);
+
    ReleaseDC(hDlg, hDC);
  }
 }
@@ -647,7 +652,7 @@ static void CC_PaintLumBar( HWND hDlg, int hue, int sat )
    rect.bottom = rect.top;
   }
   GetClientRect(hwnd, &rect);
-  FrameRect(hDC, &rect, GetStockObject(BLACK_BRUSH) );
+  DrawEdge(hDC, &rect, BDR_SUNKENOUTER, BF_RECT);
   ReleaseDC(hwnd, hDC);
  }
 }
