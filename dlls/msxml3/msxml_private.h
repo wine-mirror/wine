@@ -63,14 +63,6 @@ extern HRESULT XMLElementCollection_create( IUnknown *pUnkOuter, xmlNodePtr node
 
 extern xmlDocPtr parse_xml(char *ptr, int len);
 
-#endif
-
-extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
-                                             LONG line, LONG linepos, LONG filepos );
-extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
-extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
-extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
-
 /* IXMLDOMNode Internal Structure */
 typedef struct _xmlnode
 {
@@ -85,5 +77,13 @@ static inline xmlnode *impl_from_IXMLDOMNode( IXMLDOMNode *iface )
 {
     return (xmlnode *)((char*)iface - FIELD_OFFSET(xmlnode, lpVtbl));
 }
+
+#endif
+
+extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
+                                             LONG line, LONG linepos, LONG filepos );
+extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
+extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
+extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 
 #endif /* __MSXML_PRIVATE__ */
