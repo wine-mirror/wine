@@ -182,7 +182,7 @@ static void dump_path( const struct key *key, const struct key *base, FILE *f )
 /* dump a value to a text file */
 static void dump_value( const struct key_value *value, FILE *f )
 {
-    unsigned int i;
+    unsigned int i, dw;
     int count;
 
     if (value->namelen)
@@ -198,37 +198,37 @@ static void dump_value( const struct key_value *value, FILE *f )
     case REG_SZ:
     case REG_EXPAND_SZ:
     case REG_MULTI_SZ:
-        if (value->type != REG_SZ) fprintf( f, "str(%d):", value->type );
+        /* only output properly terminated strings in string format */
+        if (value->len < sizeof(WCHAR)) break;
+        if (value->len % sizeof(WCHAR)) break;
+        if (((WCHAR *)value->data)[value->len / sizeof(WCHAR) - 1]) break;
+        if (value->type != REG_SZ) fprintf( f, "str(%x):", value->type );
         fputc( '\"', f );
         if (value->data) dump_strW( (WCHAR *)value->data, value->len / sizeof(WCHAR), f, "\"\"" );
-        fputc( '\"', f );
-        break;
+        fprintf( f, "\"\n" );
+        return;
+
     case REG_DWORD:
-        if (value->len == sizeof(DWORD))
+        if (value->len != sizeof(dw)) break;
+        memcpy( &dw, value->data, sizeof(dw) );
+        fprintf( f, "dword:%08x\n", dw );
+        return;
+    }
+
+    if (value->type == REG_BINARY) count += fprintf( f, "hex:" );
+    else count += fprintf( f, "hex(%x):", value->type );
+    for (i = 0; i < value->len; i++)
+    {
+        count += fprintf( f, "%02x", *((unsigned char *)value->data + i) );
+        if (i < value->len-1)
         {
-            DWORD dw;
-            memcpy( &dw, value->data, sizeof(DWORD) );
-            fprintf( f, "dword:%08x", dw );
-            break;
-        }
-        /* else fall through */
-    default:
-        if (value->type == REG_BINARY) count += fprintf( f, "hex:" );
-        else count += fprintf( f, "hex(%x):", value->type );
-        for (i = 0; i < value->len; i++)
-        {
-            count += fprintf( f, "%02x", *((unsigned char *)value->data + i) );
-            if (i < value->len-1)
+            fputc( ',', f );
+            if (++count > 76)
             {
-                fputc( ',', f );
-                if (++count > 76)
-                {
-                    fprintf( f, "\\\n  " );
-                    count = 2;
-                }
+                fprintf( f, "\\\n  " );
+                count = 2;
             }
         }
-        break;
     }
     fputc( '\n', f );
 }
