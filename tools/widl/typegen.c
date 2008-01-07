@@ -2061,7 +2061,7 @@ static size_t write_contexthandle_tfs(FILE *file, const type_t *type,
     unsigned char flags = 0;
 
     if (is_attr(current_iface->attrs, ATTR_STRICTCONTEXTHANDLE))
-        flags |= 0x08 /* strict */;
+        flags |= NDR_STRICT_CONTEXT_HANDLE;
 
     if (is_ptr(type))
         flags |= 0x80;
@@ -2069,20 +2069,21 @@ static size_t write_contexthandle_tfs(FILE *file, const type_t *type,
     {
         flags |= 0x40;
         if (!is_attr(var->attrs, ATTR_OUT))
-            flags |= 0x01;
+            flags |= NDR_CONTEXT_HANDLE_CANNOT_BE_NULL;
     }
     if (is_attr(var->attrs, ATTR_OUT))
         flags |= 0x20;
 
     WRITE_FCTYPE(file, FC_BIND_CONTEXT, *typeformat_offset);
     print_file(file, 2, "0x%x,\t/* Context flags: ", flags);
-    if (((flags & 0x21) != 0x21) && (flags & 0x01))
+    /* return and can't be null values overlap */
+    if (((flags & 0x21) != 0x21) && (flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL))
         print_file(file, 0, "can't be null, ");
-    if (flags & 0x02)
+    if (flags & NDR_CONTEXT_HANDLE_SERIALIZE)
         print_file(file, 0, "serialize, ");
-    if (flags & 0x04)
+    if (flags & NDR_CONTEXT_HANDLE_NO_SERIALIZE)
         print_file(file, 0, "no serialize, ");
-    if (flags & 0x08)
+    if (flags & NDR_STRICT_CONTEXT_HANDLE)
         print_file(file, 0, "strict, ");
     if ((flags & 0x21) == 0x20)
         print_file(file, 0, "out, ");
