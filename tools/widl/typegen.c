@@ -2064,13 +2064,13 @@ static size_t write_contexthandle_tfs(FILE *file, const type_t *type,
         flags |= 0x08 /* strict */;
 
     if (is_ptr(type))
-    {
         flags |= 0x80;
-        if (type->type != RPC_FC_RP)
+    if (is_attr(var->attrs, ATTR_IN))
+    {
+        flags |= 0x40;
+        if (!is_attr(var->attrs, ATTR_OUT))
             flags |= 0x01;
     }
-    if (is_attr(var->attrs, ATTR_IN))
-        flags |= 0x40;
     if (is_attr(var->attrs, ATTR_OUT))
         flags |= 0x20;
 
