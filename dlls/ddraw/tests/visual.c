@@ -761,6 +761,46 @@ static void alpha_test(IDirect3DDevice7 *device)
     if(backbuffer) IDirectDrawSurface7_Release(backbuffer);
 }
 
+static void rhw_zero_test(IDirect3DDevice7 *device)
+{
+/* Test if it will render a quad correctly when vertex rhw = 0 */
+    HRESULT hr;
+    DWORD color;
+
+    struct {
+        float x, y, z;
+        float rhw;
+        DWORD diffuse;
+        } quad1[] =
+    {
+        {0, 100, 0, 0, 0xffffffff},
+        {0, 0, 0, 0, 0xffffffff},
+        {100, 100, 0, 0, 0xffffffff},
+        {100, 0, 0, 0, 0xffffffff},
+    };
+
+    /* Clear to black */
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0, 0.0, 0);
+    ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
+
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice7_BeginScene failed with %08x\n", hr);
+
+    if (SUCCEEDED(hr)) {
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_DIFFUSE, quad1, 4, 0);
+        ok(hr == D3D_OK, "DrawPrimitive failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed, hr = %08x\n", hr);
+    }
+
+    color = getPixelColor(device, 5, 5);
+    ok(color == 0xffffff, "Got color %08x, expected 00ffffff\n", color);
+
+    color = getPixelColor(device, 105, 105);
+    ok(color == 0, "Got color %08x, expected 00000000\n", color);
+}
+
 START_TEST(visual)
 {
     HRESULT hr;
@@ -806,6 +846,7 @@ START_TEST(visual)
     fog_test(Direct3DDevice);
     offscreen_test(Direct3DDevice);
     alpha_test(Direct3DDevice);
+    rhw_zero_test(Direct3DDevice);
 
 cleanup:
     releaseObjects();
