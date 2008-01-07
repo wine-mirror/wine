@@ -441,16 +441,8 @@ void CC_PaintSelectedColor( HWND hDlg, COLORREF cr )
   hBrush = CreateSolidBrush(cr);
   if (hBrush)
   {
-   hBrush = SelectObject(hdc, hBrush) ;
-   Rectangle(hdc, rect.left, rect.top, rect.right/2, rect.bottom);
-   DeleteObject ( SelectObject(hdc, hBrush) ) ;
-   hBrush = CreateSolidBrush( GetNearestColor(hdc, cr) );
-   if (hBrush)
-   {
-    hBrush = SelectObject(hdc, hBrush) ;
-    Rectangle(hdc, rect.right/2-1, rect.top, rect.right, rect.bottom);
-    DeleteObject(SelectObject(hdc, hBrush)) ;
-   }
+   FillRect(hdc, &rect, hBrush);
+   DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
   }
   ReleaseDC(hwnd, hdc);
  }
