@@ -934,14 +934,11 @@ lock_end:
     return IWineD3DBaseSurfaceImpl_LockRect(iface, pLockedRect, pRect, Flags);
 }
 
-static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
+static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fmt, GLenum type, UINT bpp, const BYTE *mem) {
     GLint  prev_store;
     GLint  prev_rasterpos[4];
     GLint skipBytes = 0;
-    BOOL storechanged = FALSE, memory_allocated = FALSE;
-    GLint fmt, type;
-    BYTE *mem;
-    UINT bpp;
+    BOOL storechanged = FALSE;
     UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
     IWineD3DDeviceImpl *myDevice = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *swapchain;
@@ -997,88 +994,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
         read = This->resource.allocatedMemory[0];
     }
 
-    switch (This->resource.format) {
-        /* No special care needed */
-        case WINED3DFMT_A4R4G4B4:
-        case WINED3DFMT_R5G6B5:
-        case WINED3DFMT_A1R5G5B5:
-        case WINED3DFMT_R8G8B8:
-        case WINED3DFMT_X4R4G4B4:
-        case WINED3DFMT_X1R5G5B5:
-            type = This->glDescription.glType;
-            fmt = This->glDescription.glFormat;
-            mem = This->resource.allocatedMemory;
-            bpp = This->bytesPerPixel;
-            break;
-
-        /* In the past times we used to set the X channel of X8R8G8B8 and the above formats to
-         * 1.0 because it happened to fix the intro movie in Pirates. However, this seems wrong.
-         * If the game uses an X8R8G8B8 back buffer the GL alpha channel should not make any differences,
-         * and the bug must be somewhere else. If we really have to set the alpha channel to 1.0 in
-         * this case do it by clearing it after the draw instead of fixing it up in the CPU. Blending
-         * is disabled via CTXUSAGE_BLIT context setup, so in the glDrawPixels call it does not
-         * have any effects
-         */
-        case WINED3DFMT_X8R8G8B8:
-        case WINED3DFMT_A8R8G8B8:
-        {
-            glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
-            vcheckGLcall("glPixelStorei");
-            storechanged = TRUE;
-            type = This->glDescription.glType;
-            fmt = This->glDescription.glFormat;
-            mem = This->resource.allocatedMemory;
-            bpp = This->bytesPerPixel;
-        }
-        break;
-
-        case WINED3DFMT_A2R10G10B10:
-        {
-            glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
-            vcheckGLcall("glPixelStorei");
-            storechanged = TRUE;
-            type = This->glDescription.glType;
-            fmt = This->glDescription.glFormat;
-            mem = This->resource.allocatedMemory;
-            bpp = This->bytesPerPixel;
-        }
-        break;
-
-        case WINED3DFMT_P8:
-        {
-            int height = This->glRect.bottom - This->glRect.top;
-            type = GL_UNSIGNED_BYTE;
-            fmt = GL_RGBA;
-
-            mem = HeapAlloc(GetProcessHeap(), 0, This->resource.size * sizeof(DWORD));
-            if(!mem) {
-                ERR("Out of memory\n");
-                goto cleanup;
-            }
-            memory_allocated = TRUE;
-            d3dfmt_convert_surface(This->resource.allocatedMemory,
-                                   mem,
-                                   pitch,
-                                   pitch,
-                                   height,
-                                   pitch * 4,
-                                   CONVERT_PALETTED,
-                                   This);
-            bpp = This->bytesPerPixel * 4;
-            pitch *= 4;
-        }
-        break;
-
-        default:
-            FIXME("Unsupported Format %u in locking func\n", This->resource.format);
-
-            /* Give it a try */
-            type = This->glDescription.glType;
-            fmt = This->glDescription.glFormat;
-            mem = This->resource.allocatedMemory;
-            bpp = This->bytesPerPixel;
-    }
-
     if(This->Flags & SFLAG_PBO) {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
         checkGLcall("glBindBufferARB");
@@ -1090,7 +1005,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
                  mem + bpp * This->lockedRect.left + pitch * This->lockedRect.top);
     checkGLcall("glDrawPixels");
 
-cleanup:
     if(This->Flags & SFLAG_PBO) {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
         checkGLcall("glBindBufferARB");
@@ -1109,8 +1023,6 @@ cleanup:
         glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
         vcheckGLcall("glPixelStorei GL_PACK_SWAP_BYTES");
     }
-
-    if(memory_allocated) HeapFree(GetProcessHeap(), 0, mem);
 
     if(!swapchain) {
         glDrawBuffer(myDevice->offscreenBuffer);
@@ -1390,7 +1302,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                     p8_render_target = TRUE;
             }
 
-            /* Use conversion when the paletted texture extension OR fragment shaders are available. When either
+             /* Use conversion when the paletted texture extension OR fragment shaders are available. When either
              * of the two is available make sure texturing is requested as neither of the two works in
              * conjunction with calls like glDraw-/glReadPixels. Further also use conversion in case of color keying.
              * Paletted textures can be emulated using shaders but only do that for 2D purposes e.g. situations
@@ -3832,7 +3744,37 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         if(This->Flags & SFLAG_INTEXTURE) {
             surface_blt_to_drawable(This, rect);
         } else {
-            flush_to_framebuffer_drawpixels(This);
+            d3dfmt_get_conv(This, TRUE /* We need color keying */, FALSE /* We won't use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
+
+            /* The width is in 'length' not in bytes */
+            width = This->currentDesc.Width;
+            pitch = IWineD3DSurface_GetPitch(iface);
+
+            if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
+                int height = This->currentDesc.Height;
+
+                /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
+                outpitch = width * bpp;
+                outpitch = (outpitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
+
+                mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
+                if(!mem) {
+                    ERR("Out of memory %d, %d!\n", outpitch, height);
+                    return WINED3DERR_OUTOFVIDEOMEMORY;
+                }
+                d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, width, height, outpitch, convert, This);
+
+                This->Flags |= SFLAG_CONVERTED;
+            } else {
+                This->Flags &= ~SFLAG_CONVERTED;
+                mem = This->resource.allocatedMemory;
+            }
+
+            flush_to_framebuffer_drawpixels(This, format, type, bpp, mem);
+
+            /* Don't delete PBO memory */
+            if((mem != This->resource.allocatedMemory) && !(This->Flags & SFLAG_PBO))
+                HeapFree(GetProcessHeap(), 0, mem);
         }
     } else /* if(flag == SFLAG_INTEXTURE) */ {
         d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
