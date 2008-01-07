@@ -160,18 +160,8 @@ static BOOL pendingRename(void)
     if( (res=RegOpenKeyExW( HKEY_LOCAL_MACHINE, SessionW, 0, KEY_ALL_ACCESS, &hSession ))
             !=ERROR_SUCCESS )
     {
-        if( res==ERROR_FILE_NOT_FOUND )
-        {
-            WINE_TRACE("The key was not found - skipping\n");
-            res=TRUE;
-        }
-        else
-        {
-            WINE_ERR("Couldn't open key, error %d\n", res );
-            res=FALSE;
-        }
-
-        goto end;
+        WINE_TRACE("The key was not found - skipping\n");
+        return TRUE;
     }
 
     res=RegQueryValueExW( hSession, ValueName, NULL, NULL /* The value type does not really interest us, as it is not
@@ -326,9 +316,7 @@ static DWORD runCmd(LPWSTR cmdline, LPCWSTR dir, BOOL wait, BOOL minimized)
 
     if( !CreateProcessW(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, dir, &si, &info) )
     {
-        WINE_ERR("Failed to run command %s (%d)\n", wine_dbgstr_w(cmdline),
-                 GetLastError() );
-
+        WINE_WARN("Failed to run command %s (%d)\n", wine_dbgstr_w(cmdline), GetLastError() );
         return INVALID_RUNCMD_RETURN;
     }
 
@@ -361,8 +349,8 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
     static const WCHAR WINKEY_NAME[]={'S','o','f','t','w','a','r','e','\\',
         'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
         'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
-    HKEY hkWin=NULL, hkRun=NULL;
-    DWORD res=ERROR_SUCCESS;
+    HKEY hkWin, hkRun;
+    DWORD res;
     DWORD i, nMaxCmdLine=0, nMaxValue=0;
     WCHAR *szCmdLine=NULL;
     WCHAR *szValue=NULL;
@@ -372,36 +360,19 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
     else
         WINE_TRACE("processing %s entries under HKCU\n",wine_dbgstr_w(szKeyName) );
 
-    if( (res=RegOpenKeyExW( hkRoot, WINKEY_NAME, 0, KEY_READ, &hkWin ))!=ERROR_SUCCESS )
+    if (RegOpenKeyExW( hkRoot, WINKEY_NAME, 0, KEY_READ, &hkWin ) != ERROR_SUCCESS)
+        return TRUE;
+
+    if (RegOpenKeyExW( hkWin, szKeyName, 0, bDelete?KEY_ALL_ACCESS:KEY_READ, &hkRun ) != ERROR_SUCCESS)
     {
-        WINE_ERR("RegOpenKey failed on Software\\Microsoft\\Windows\\CurrentVersion (%d)\n",
-                res);
-
-        goto end;
+        RegCloseKey( hkWin );
+        return TRUE;
     }
+    RegCloseKey( hkWin );
 
-    if( (res=RegOpenKeyExW( hkWin, szKeyName, 0, bDelete?KEY_ALL_ACCESS:KEY_READ, &hkRun ))!=
-            ERROR_SUCCESS)
-    {
-        if( res==ERROR_FILE_NOT_FOUND )
-        {
-            WINE_TRACE("Key doesn't exist - nothing to be done\n");
-
-            res=ERROR_SUCCESS;
-        }
-        else
-            WINE_ERR("RegOpenKey failed on run key (%d)\n", res);
-
-        goto end;
-    }
-    
     if( (res=RegQueryInfoKeyW( hkRun, NULL, NULL, NULL, NULL, NULL, NULL, &i, &nMaxValue,
                     &nMaxCmdLine, NULL, NULL ))!=ERROR_SUCCESS )
-    {
-        WINE_ERR("Couldn't query key info (%d)\n", res );
-
         goto end;
-    }
 
     if( i==0 )
     {
@@ -470,12 +441,10 @@ end:
 
     if( hkRun!=NULL )
         RegCloseKey( hkRun );
-    if( hkWin!=NULL )
-        RegCloseKey( hkWin );
 
     WINE_TRACE("done\n");
 
-    return res==ERROR_SUCCESS?TRUE:FALSE;
+    return res==ERROR_SUCCESS;
 }
 
 /*
@@ -672,7 +641,7 @@ static BOOL ProcessStartupItems(void)
 		WINE_TRACE("Unable to parse display name.\n");
 	    else
 		if ((iRet = (int)ShellExecuteW(NULL, NULL, wszCommand, NULL, NULL, SW_SHOWNORMAL)) <= 32)
-		    WINE_ERR("Error %d executing command %s.\n", iRet, wine_dbgstr_w(wszCommand));
+		    WINE_WARN("Error %d executing command %s.\n", iRet, wine_dbgstr_w(wszCommand));
 	}
 
 	IMalloc_Free(ppM, pidlItem);
