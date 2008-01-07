@@ -130,6 +130,8 @@ HKCU,"Software\Microsoft\Internet Explorer\Main","Search Page",,"http://www.goog
 
 
 [IE.Reg]
+HKLM,"Software\Microsoft\Internet Explorer","Build",,"62900.2180"
+HKLM,"Software\Microsoft\Internet Explorer","IVer",,"103"
 HKLM,"Software\Microsoft\Internet Explorer","Version",,"6.0.2900.2180"
 
 
