@@ -202,16 +202,14 @@ static void test_GdiConvertToDevmodeW(void)
     dmA.dmSize = FIELD_OFFSET(DEVMODEA, dmFields) + sizeof(dmA.dmFields);
     dmW = pGdiConvertToDevmodeW(&dmA);
     ok(dmW->dmSize == FIELD_OFFSET(DEVMODEW, dmFields) + sizeof(dmW->dmFields),
-       "expected %04x, got %04x\n",
-        FIELD_OFFSET(DEVMODEW, dmFields) + sizeof(dmW->dmFields), dmW->dmSize);
+       "wrong size %u\n", dmW->dmSize);
     HeapFree(GetProcessHeap(), 0, dmW);
 
     dmA.dmICMMethod = DMICMMETHOD_NONE;
     dmA.dmSize = FIELD_OFFSET(DEVMODEA, dmICMMethod) + sizeof(dmA.dmICMMethod);
     dmW = pGdiConvertToDevmodeW(&dmA);
     ok(dmW->dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod) + sizeof(dmW->dmICMMethod),
-       "expected %04x, got %04x\n",
-        FIELD_OFFSET(DEVMODEW, dmICMMethod) + sizeof(dmW->dmICMMethod), dmW->dmSize);
+       "wrong size %u\n", dmW->dmSize);
     ok(dmW->dmICMMethod == DMICMMETHOD_NONE,
        "expected DMICMMETHOD_NONE, got %u\n", dmW->dmICMMethod);
     HeapFree(GetProcessHeap(), 0, dmW);
@@ -219,8 +217,7 @@ static void test_GdiConvertToDevmodeW(void)
     dmA.dmSize = 1024;
     dmW = pGdiConvertToDevmodeW(&dmA);
     ok(dmW->dmSize == FIELD_OFFSET(DEVMODEW, dmPanningHeight) + sizeof(dmW->dmPanningHeight),
-       "expected %04x, got %04x\n",
-        FIELD_OFFSET(DEVMODEW, dmPanningHeight) + sizeof(dmW->dmPanningHeight), dmW->dmSize);
+       "wrong size %u\n", dmW->dmSize);
     HeapFree(GetProcessHeap(), 0, dmW);
 
     SetLastError(0xdeadbeef);
