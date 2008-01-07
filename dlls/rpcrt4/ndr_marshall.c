@@ -6370,3 +6370,56 @@ NDR_SCONTEXT WINAPI NdrServerContextNewUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     return ContextHandle;
 }
+
+/***********************************************************************
+ *           NdrCorrelationInitialize [RPCRT4.@]
+ *
+ * Initializes correlation validity checking.
+ *
+ * PARAMS
+ *  pStubMsg    [I] MIDL_STUB_MESSAGE used during unmarshalling.
+ *  pMemory     [I] Pointer to memory to use as a cache.
+ *  CacheSize   [I] Size of the memory pointed to by pMemory.
+ *  Flags       [I] Reserved. Set to zero.
+ *
+ * RETURNS
+ *  Nothing.
+ */
+void WINAPI NdrCorrelationInitialize(PMIDL_STUB_MESSAGE pStubMsg, void *pMemory, ULONG CacheSize, ULONG Flags)
+{
+    FIXME("(%p, %p, %d, 0x%x): stub\n", pStubMsg, pMemory, CacheSize, Flags);
+    pStubMsg->fHasNewCorrDesc = TRUE;
+}
+
+/***********************************************************************
+ *           NdrCorrelationPass [RPCRT4.@]
+ *
+ * Performs correlation validity checking.
+ *
+ * PARAMS
+ *  pStubMsg    [I] MIDL_STUB_MESSAGE used during unmarshalling.
+ *
+ * RETURNS
+ *  Nothing.
+ */
+void WINAPI NdrCorrelationPass(PMIDL_STUB_MESSAGE pStubMsg)
+{
+    FIXME("(%p): stub\n", pStubMsg);
+}
+
+/***********************************************************************
+ *           NdrCorrelationFree [RPCRT4.@]
+ *
+ * Frees any resources used while unmarshalling parameters that need
+ * correlation validity checking.
+ *
+ * PARAMS
+ *  pStubMsg    [I] MIDL_STUB_MESSAGE used during unmarshalling.
+ *
+ * RETURNS
+ *  Nothing.
+ */
+void WINAPI NdrCorrelationFree(PMIDL_STUB_MESSAGE pStubMsg)
+{
+    FIXME("(%p): stub\n", pStubMsg);
+}

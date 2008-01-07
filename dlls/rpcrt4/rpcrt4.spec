@@ -201,9 +201,9 @@
 @ stdcall NdrContextHandleSize(ptr ptr ptr)
 @ stdcall NdrConvert2(ptr ptr long)
 @ stdcall NdrConvert(ptr ptr)
-@ stub NdrCorrelationFree
-@ stub NdrCorrelationInitialize
-@ stub NdrCorrelationPass
+@ stdcall NdrCorrelationFree(ptr)
+@ stdcall NdrCorrelationInitialize(ptr ptr long long)
+@ stdcall NdrCorrelationPass(ptr)
 @ stub NdrDcomAsyncClientCall
 @ stub NdrDcomAsyncStubCall
 @ stdcall NdrDllCanUnloadNow(ptr)
