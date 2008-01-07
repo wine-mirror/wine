@@ -1,7 +1,7 @@
 /*
  * crypt32 dll French resources
  *
- * Copyright 2006 Jonathan Ernst
+ * Copyright 2006-2008 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,13 +22,13 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_AUTHORITY_KEY_ID "Authority Key Identifier"
-    IDS_KEY_ATTRIBUTES "Key Attributes"
-    IDS_KEY_USAGE_RESTRICTION "Key Usage Restriction"
+    IDS_AUTHORITY_KEY_ID "Identifiant de l'authorité de la clé"
+    IDS_KEY_ATTRIBUTES "Attributs de la clé"
+    IDS_KEY_USAGE_RESTRICTION "Restrictions de l'utilisation de la clé"
     IDS_SUBJECT_ALT_NAME "Subject Alternative Name"
     IDS_ISSUER_ALT_NAME "Issuer Alternative Name"
     IDS_BASIC_CONSTRAINTS "Basic Constraints"
-    IDS_KEY_USAGE "Key Usage"
+    IDS_KEY_USAGE "Utilisation de la clé"
     IDS_CERT_POLICIES "Certificate Policies"
     IDS_SUBJECT_KEY_IDENTIFIER "Subject Key Identifier"
     IDS_CRL_REASON_CODE "CRL Reason Code"
@@ -49,7 +49,7 @@ STRINGTABLE DISCARDABLE
     IDS_SMIME_CAPABILITIES "SMIME Capabilities"
     IDS_PREFER_SIGNED_DATA "Prefer Signed Data"
     IDS_CPS "CPS"
-    IDS_USER_NOTICE "User Notice"
+    IDS_USER_NOTICE "Notice utilisateur"
     IDS_OCSP "On-line Certificate Status Protocol"
     IDS_CA_ISSUER "Certification Authority Issuer"
     IDS_CERT_TEMPLATE_NAME "Certification Template Name"
@@ -157,10 +157,18 @@ STRINGTABLE DISCARDABLE
     IDS_DOCUMENT_SIGNING "Signature de document"
     IDS_IPSEC_IKE_INTERMEDIATE "IP security IKE intermediate"
     IDS_FILE_RECOVERY "Récupération de fichier"
-    IDS_ROOT_LIST_SIGNER "Root List Signer"
+    IDS_ROOT_LIST_SIGNER "Signataires de la liste racine"
     IDS_ANY_APPLICATION_POLICIES "All application policies"
     IDS_DS_EMAIL_REPLICATION "Directory Service Email Replication"
     IDS_ENROLLMENT_AGENT "Certificate Request Agent"
     IDS_LIFETIME_SIGNING "Lifetime Signing"
     IDS_ANY_CERT_POLICY "All issuance policies"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_LOCALIZEDNAME_ROOT "Autorités de certification de confiance"
+    IDS_LOCALIZEDNAME_MY "Personnel"
+    IDS_LOCALIZEDNAME_CA "Autorités intermédiaires"
+    IDS_LOCALIZEDNAME_ADDRESSBOOK "Autres personnes"
 }
