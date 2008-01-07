@@ -283,11 +283,13 @@ static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *
         if(FAILED(hres))
             FIXME("SetClientSite failed: %08x\n", hres);
 
-        /* FIXME: Call SetAdvise */
-        /* FIXME: Call Invoke(DISPID_READYSTATE) */
+        IOleObject_Release(oleobj);
     }else {
         FIXME("Could not get IOleObject iface: %08x\n", hres);
     }
+
+    /* FIXME: Call SetAdvise */
+    /* FIXME: Call Invoke(DISPID_READYSTATE) */
 
     PostMessageW(This->doc_host->hwnd, WB_WM_NAVIGATE2, 0, 0);
 
