@@ -118,6 +118,7 @@ struct dispatch_params
     IID                iid; /* ID of interface being called */
     IUnknown          *iface; /* interface being called */
     HANDLE             handle; /* handle that will become signaled when call finishes */
+    BOOL               bypass_rpcrt; /* bypass RPC runtime? */
     RPC_STATUS         status; /* status (out) */
     HRESULT            hr; /* hresult (out) */
 };
@@ -127,6 +128,7 @@ struct message_state
     RPC_BINDING_HANDLE binding_handle;
     ULONG prefix_data_len;
     SChannelHookCallInfo channel_hook_info;
+    BOOL bypass_rpcrt;
 
     /* client only */
     HWND target_hwnd;
@@ -513,7 +515,16 @@ static HRESULT WINAPI ServerRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
             msg->BufferLength += FIELD_OFFSET(WIRE_ORPC_EXTENT, data[0]);
     }
 
-    status = I_RpcGetBuffer(msg);
+    if (message_state->bypass_rpcrt)
+    {
+        msg->Buffer = HeapAlloc(GetProcessHeap(), 0, msg->BufferLength);
+        if (msg->Buffer)
+            status = RPC_S_OK;
+        else
+            status = ERROR_OUTOFMEMORY;
+    }
+    else
+        status = I_RpcGetBuffer(msg);
 
     orpcthat = (ORPCTHAT *)msg->Buffer;
     msg->Buffer = (char *)msg->Buffer + FIELD_OFFSET(ORPCTHAT, extensions);
@@ -663,6 +674,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
         }
         else
         {
+            message_state->params.bypass_rpcrt = TRUE;
             message_state->target_hwnd = apartment_getwindow(apt);
             message_state->target_tid = apt->tid;
             /* we assume later on that this being non-NULL is the indicator that
@@ -676,7 +688,17 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
     /* Note: message_state->params.msg is initialised in
      * ClientRpcChannelBuffer_SendReceive */
 
-    status = I_RpcGetBuffer(msg);
+    /* shortcut the RPC runtime */
+    if (message_state->target_hwnd)
+    {
+        msg->Buffer = HeapAlloc(GetProcessHeap(), 0, msg->BufferLength);
+        if (msg->Buffer)
+            status = RPC_S_OK;
+        else
+            status = ERROR_OUTOFMEMORY;
+    }
+    else
+        status = I_RpcGetBuffer(msg);
 
     msg->Handle = message_state;
 
@@ -817,7 +839,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
      * from DllMain */
 
     message_state->params.msg = olemsg;
-    if (message_state->target_hwnd)
+    if (message_state->params.bypass_rpcrt)
     {
         TRACE("Calling apartment thread 0x%08x...\n", message_state->target_tid);
 
@@ -939,7 +961,13 @@ static HRESULT WINAPI ServerRpcChannelBuffer_FreeBuffer(LPRPCCHANNELBUFFER iface
     msg->BufferLength += message_state->prefix_data_len;
     message_state->prefix_data_len = 0;
 
-    status = I_RpcFreeBuffer(msg);
+    if (message_state->bypass_rpcrt)
+    {
+        HeapFree(GetProcessHeap(), 0, msg->Buffer);
+        status = RPC_S_OK;
+    }
+    else
+        status = I_RpcFreeBuffer(msg);
 
     msg->Handle = message_state;
 
@@ -962,7 +990,13 @@ static HRESULT WINAPI ClientRpcChannelBuffer_FreeBuffer(LPRPCCHANNELBUFFER iface
     msg->Buffer = (char *)msg->Buffer - message_state->prefix_data_len;
     msg->BufferLength += message_state->prefix_data_len;
 
-    status = I_RpcFreeBuffer(msg);
+    if (message_state->params.bypass_rpcrt)
+    {
+        HeapFree(GetProcessHeap(), 0, msg->Buffer);
+        status = RPC_S_OK;
+    }
+    else
+        status = I_RpcFreeBuffer(msg);
 
     HeapFree(GetProcessHeap(), 0, msg->RpcInterfaceInformation);
     msg->RpcInterfaceInformation = NULL;
@@ -1286,6 +1320,7 @@ void RPC_ExecuteCall(struct dispatch_params *params)
 
     message_state->prefix_data_len = (char *)msg->Buffer - original_buffer;
     message_state->binding_handle = msg->Handle;
+    message_state->bypass_rpcrt = params->bypass_rpcrt;
 
     message_state->channel_hook_info.iid = params->iid;
     message_state->channel_hook_info.cbSize = sizeof(message_state->channel_hook_info);
@@ -1357,6 +1392,10 @@ void RPC_ExecuteCall(struct dispatch_params *params)
     COM_CurrentInfo()->pending_call_count_server--;
     COM_CurrentInfo()->causality_id = old_causality_id;
 
+    /* the invoke allocated a new buffer, so free the old one */
+    if (message_state->bypass_rpcrt && original_buffer != msg->Buffer)
+        HeapFree(GetProcessHeap(), 0, original_buffer);
+
 exit_reset_state:
     message_state = (struct message_state *)msg->Handle;
     msg->Handle = message_state->binding_handle;
@@ -1400,6 +1439,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     params->status = RPC_S_OK;
     params->hr = S_OK;
     params->handle = NULL;
+    params->bypass_rpcrt = FALSE;
 
     /* Note: this is the important difference between STAs and MTAs - we
      * always execute RPCs to STAs in the thread that originally created the
