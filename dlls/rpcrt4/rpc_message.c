@@ -1000,7 +1000,8 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   if (status != RPC_S_OK) return status;
 
   hdr = RPCRT4_BuildRequestHeader(pMsg->DataRepresentation,
-                                  pMsg->BufferLength, pMsg->ProcNum,
+                                  pMsg->BufferLength,
+                                  pMsg->ProcNum & ~RPC_FLAGS_VALID_BIT,
                                   &bind->ObjectUuid);
   if (!hdr)
   {

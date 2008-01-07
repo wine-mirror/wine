@@ -901,7 +901,6 @@ static void test_client_init(void)
     ok(rpcMsg.Handle == NULL, "rpcMsg.Handle should have been NULL instead of %p\n", rpcMsg.Handle);
     TEST_POINTER_UNSET(Buffer);
     ok(rpcMsg.BufferLength == 0xcccccccc, "rpcMsg.BufferLength should have been unset instead of %d\n", rpcMsg.BufferLength);
-    todo_wine
     ok(rpcMsg.ProcNum == 0x8001, "rpcMsg.ProcNum should have been 0x8001 instead of 0x%x\n", rpcMsg.ProcNum);
     TEST_POINTER_UNSET(TransferSyntax);
     ok(rpcMsg.RpcInterfaceInformation == Object_StubDesc.RpcInterfaceInformation,
