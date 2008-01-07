@@ -522,10 +522,10 @@
 @ varargs _wexecle(wstr wstr)
 @ varargs _wexeclp(wstr wstr)
 @ varargs _wexeclpe(wstr wstr)
-@ stub _wexecv #(wstr ptr)
-@ stub _wexecve #(wstr ptr ptr)
-@ stub _wexecvp #(wstr ptr)
-@ stub _wexecvpe #(wstr ptr ptr)
+@ cdecl _wexecv(wstr ptr)
+@ cdecl _wexecve(wstr ptr ptr)
+@ cdecl _wexecvp(wstr ptr)
+@ cdecl _wexecvpe(wstr ptr ptr)
 @ cdecl _wfdopen(long wstr) MSVCRT__wfdopen
 @ cdecl _wfindfirst(wstr ptr) MSVCRT__wfindfirst
 @ cdecl _wfindfirsti64(wstr ptr) MSVCRT__wfindfirsti64

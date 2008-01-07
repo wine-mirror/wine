@@ -542,6 +542,16 @@ MSVCRT_intptr_t CDECL _execlpe(const char* name, const char* arg0, ...)
 }
 
 /*********************************************************************
+ *      _wexecv (MSVCRT.@)
+ *
+ * Unicode version of _execv
+ */
+MSVCRT_intptr_t CDECL _wexecv(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv)
+{
+  return _wspawnve(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, NULL);
+}
+
+/*********************************************************************
  *		_execv (MSVCRT.@)
  *
  * Like on Windows, this function does not handle arguments with spaces
@@ -553,6 +563,16 @@ MSVCRT_intptr_t CDECL _execv(const char* name, char* const* argv)
 }
 
 /*********************************************************************
+ *      _wexecve (MSVCRT.@)
+ *
+ * Unicode version of _execve
+ */
+MSVCRT_intptr_t CDECL _wexecve(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv, const MSVCRT_wchar_t* const* envv)
+{
+  return _wspawnve(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, envv);
+}
+
+/*********************************************************************
  *		_execve (MSVCRT.@)
  *
  * Like on Windows, this function does not handle arguments with spaces
@@ -561,6 +581,21 @@ MSVCRT_intptr_t CDECL _execv(const char* name, char* const* argv)
 MSVCRT_intptr_t CDECL MSVCRT__execve(const char* name, char* const* argv, const char* const* envv)
 {
   return _spawnve(MSVCRT__P_OVERLAY, name, (const char* const*) argv, envv);
+}
+
+/*********************************************************************
+ *      _wexecvpe (MSVCRT.@)
+ *
+ * Unicode version of _execvpe
+ */
+MSVCRT_intptr_t CDECL _wexecvpe(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv, const MSVCRT_wchar_t* const* envv)
+{
+  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
+  MSVCRT_wchar_t fullname[MAX_PATH];
+
+  _wsearchenv(name, path, fullname);
+  return _wspawnvpe(MSVCRT__P_OVERLAY, fullname[0] ? fullname : name,
+                    (const MSVCRT_wchar_t* const*) argv, envv);
 }
 
 /*********************************************************************
@@ -576,6 +611,16 @@ MSVCRT_intptr_t CDECL _execvpe(const char* name, char* const* argv, const char* 
   _searchenv(name, "PATH", fullname);
   return _spawnve(MSVCRT__P_OVERLAY, fullname[0] ? fullname : name,
                   (const char* const*) argv, envv);
+}
+
+/*********************************************************************
+ *      _wexecvp (MSVCRT.@)
+ *
+ * Unicode version of _execvp
+ */
+MSVCRT_intptr_t CDECL _wexecvp(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv)
+{
+  return _wexecvpe(name, argv, NULL);
 }
 
 /*********************************************************************
