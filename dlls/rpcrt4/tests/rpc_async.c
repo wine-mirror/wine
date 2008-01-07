@@ -36,35 +36,25 @@ static void test_RpcAsyncInitializeHandle(void)
     int i;
 
     status = pRpcAsyncInitializeHandle((PRPC_ASYNC_STATE)buffer, sizeof(buffer));
-    todo_wine
     ok(status == ERROR_INVALID_PARAMETER, "RpcAsyncInitializeHandle with large Size should have returned ERROR_INVALID_PARAMETER instead of %ld\n", status);
 
     status = pRpcAsyncInitializeHandle(&async, sizeof(async) - 1);
-    todo_wine
     ok(status == ERROR_INVALID_PARAMETER, "RpcAsyncInitializeHandle with small Size should have returned ERROR_INVALID_PARAMETER instead of %ld\n", status);
 
     memset(&async, 0xcc, sizeof(async));
     status = pRpcAsyncInitializeHandle(&async, sizeof(async));
-    todo_wine
     ok(status == RPC_S_OK, "RpcAsyncInitializeHandle failed with error %ld\n", status);
 
-    todo_wine
     ok(async.Size == sizeof(async), "async.Size wrong: %d\n", async.Size);
-    todo_wine
     ok(async.Signature == 0x43595341, "async.Signature should be 0x43595341, but is 0x%x instead\n", async.Signature);
-    todo_wine
     ok(async.Lock == 0, "async.Lock should be 0, but is %d instead\n", async.Lock);
-    todo_wine
     ok(async.Flags == 0, "async.Flags should be 0, but is %d instead\n", async.Flags);
-    todo_wine
     ok(async.StubInfo == NULL, "async.StubInfo should be NULL, not %p\n", async.StubInfo);
     ok(async.UserInfo == (void *)0xcccccccc, "async.UserInfo should be unset, not %p\n", async.UserInfo);
-    todo_wine
     ok(async.RuntimeInfo == NULL, "async.RuntimeInfo should be NULL, not %p\n", async.RuntimeInfo);
     ok(async.Event == 0xcccccccc, "async.Event should be unset, not %d\n", async.Event);
     ok(async.NotificationType == 0xcccccccc, "async.NotificationType should be unset, not %d\n", async.NotificationType);
     for (i = 0; i < 4; i++)
-        todo_wine
         ok(async.Reserved[i] == 0x0, "async.Reserved[%d] should be 0x0, not 0x%lx\n", i, async.Reserved[i]);
 }
 
@@ -74,7 +64,6 @@ static void test_RpcAsyncGetCallStatus(void)
     RPC_STATUS status;
 
     status = pRpcAsyncInitializeHandle(&async, sizeof(async));
-    todo_wine
     ok(status == RPC_S_OK, "RpcAsyncInitializeHandle failed with error %ld\n", status);
 
     status = pRpcAsyncGetCallStatus(&async);
