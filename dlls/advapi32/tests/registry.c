@@ -282,7 +282,7 @@ static void test_hkey_main_Value_W(LPCWSTR name, LPCWSTR string,
     }
     ok(memcmp(value, string, cbData) == 0, "RegQueryValueExW failed: %s/%d != %s/%d\n",
        wine_debugstr_wn(value, cbData / sizeof(WCHAR)), cbData,
-       wine_debugstr_wn(string, full_byte_len / sizeof(WCHAR)), full_byte_len / sizeof(WCHAR));
+       wine_debugstr_wn(string, full_byte_len / sizeof(WCHAR)), full_byte_len);
     HeapFree(GetProcessHeap(), 0, value);
 }
 
