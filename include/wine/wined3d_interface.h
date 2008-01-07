@@ -363,7 +363,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(CreateCubeTexture)(THIS_ UINT EdgeLength, UINT Levels, DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool, struct IWineD3DCubeTexture** ppCubeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn) PURE;
     STDMETHOD(CreateQuery)(THIS_ WINED3DQUERYTYPE Type, struct IWineD3DQuery **ppQuery, IUnknown *pParent);
     STDMETHOD(CreateAdditionalSwapChain)(THIS_ WINED3DPRESENT_PARAMETERS *pPresentationParameters, struct IWineD3DSwapChain **pSwapChain, IUnknown *pParent, D3DCB_CREATERENDERTARGETFN pFn, D3DCB_CREATEDEPTHSTENCILSURFACEFN pFn2);
-    STDMETHOD(CreateVertexDeclaration)(THIS_ struct IWineD3DVertexDeclaration** ppDecl, IUnknown* pParent, const WINED3DVERTEXELEMENT *elements, size_t element_count) PURE;
+    STDMETHOD(CreateVertexDeclaration)(THIS_ struct IWineD3DVertexDeclaration** ppDecl, IUnknown* pParent, const WINED3DVERTEXELEMENT *elements, UINT element_count) PURE;
     STDMETHOD(CreateVertexDeclarationFromFVF)(THIS_ struct IWineD3DVertexDeclaration** ppDecl, IUnknown* pParent, DWORD Fvf) PURE;
     STDMETHOD(CreateVertexShader)(THIS_ struct IWineD3DVertexDeclaration *vertex_declaration, CONST DWORD* pFunction, struct IWineD3DVertexShader** ppShader, IUnknown *pParent) PURE;
     STDMETHOD(CreatePixelShader)(THIS_ CONST DWORD* pFunction, struct IWineD3DPixelShader** ppShader, IUnknown *pParent) PURE;
@@ -1278,8 +1278,8 @@ DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IWineD3DBase)
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     /*** IWineD3DVertexDeclaration methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice **ppDevice) PURE;
-    STDMETHOD(GetDeclaration)(THIS_ WINED3DVERTEXELEMENT *elements, size_t *elements_count) PURE;
-    STDMETHOD(SetDeclaration)(THIS_ const WINED3DVERTEXELEMENT *elements, size_t element_count) PURE;
+    STDMETHOD(GetDeclaration)(THIS_ WINED3DVERTEXELEMENT *elements, UINT *elements_count) PURE;
+    STDMETHOD(SetDeclaration)(THIS_ const WINED3DVERTEXELEMENT *elements, UINT element_count) PURE;
 };
 #undef INTERFACE
 

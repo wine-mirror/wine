@@ -1472,7 +1472,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexDeclaration(IDirect3DDevi
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DVertexDeclaration8Impl *object;
     WINED3DVERTEXELEMENT *wined3d_elements;
-    size_t wined3d_element_count;
+    UINT wined3d_element_count;
     HRESULT hr = D3D_OK;
 
     TRACE("(%p) : declaration %p\n", This, declaration);

@@ -1700,7 +1700,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, U
  * Vertex Declaration
  *****/
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration** ppVertexDeclaration,
-        IUnknown *parent, const WINED3DVERTEXELEMENT *elements, size_t element_count) {
+        IUnknown *parent, const WINED3DVERTEXELEMENT *elements, UINT element_count) {
     IWineD3DDeviceImpl            *This   = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexDeclarationImpl *object = NULL;
     HRESULT hr = WINED3D_OK;
@@ -1719,8 +1719,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice*
     return hr;
 }
 
-static size_t ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the GL info, which has the type table */
-                                      DWORD fvf, WINED3DVERTEXELEMENT** ppVertexElements) {
+static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the GL info, which has the type table */
+                                            DWORD fvf, WINED3DVERTEXELEMENT** ppVertexElements) {
 
     unsigned int idx, idx2;
     unsigned int offset;
@@ -1849,7 +1849,7 @@ static size_t ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the GL in
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3DDevice* iface, IWineD3DVertexDeclaration** ppVertexDeclaration, IUnknown *Parent, DWORD Fvf) {
     WINED3DVERTEXELEMENT* elements = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    size_t size;
+    unsigned int size;
     DWORD hr;
 
     size = ConvertFvfToDeclaration(This, Fvf, &elements);

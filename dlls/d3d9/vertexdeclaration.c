@@ -289,10 +289,10 @@ static const IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl =
     IDirect3DVertexDeclaration9Impl_GetDeclaration
 };
 
-static size_t convert_to_wined3d_declaration(const D3DVERTEXELEMENT9* d3d9_elements, WINED3DVERTEXELEMENT **wined3d_elements) {
+static UINT convert_to_wined3d_declaration(const D3DVERTEXELEMENT9* d3d9_elements, WINED3DVERTEXELEMENT **wined3d_elements) {
     const D3DVERTEXELEMENT9* element;
-    size_t element_count = 1;
-    size_t i;
+    UINT element_count = 1;
+    UINT i;
 
     TRACE("d3d9_elements %p, wined3d_elements %p\n", d3d9_elements, wined3d_elements);
 
@@ -323,7 +323,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DVertexDeclaration9Impl *object = NULL;
     WINED3DVERTEXELEMENT* wined3d_elements;
-    size_t element_count;
+    UINT element_count;
     HRESULT hr = D3D_OK;
 
     TRACE("(%p) : Relay\n", iface);

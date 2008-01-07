@@ -103,7 +103,7 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDecl
 }
 
 static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclaration *iface,
-        WINED3DVERTEXELEMENT *elements, size_t *element_count) {
+        WINED3DVERTEXELEMENT *elements, UINT *element_count) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     HRESULT hr = WINED3D_OK;
 
@@ -119,7 +119,7 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVerte
 }
 
 static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVertexDeclaration *iface,
-        const WINED3DVERTEXELEMENT *elements, size_t element_count) {
+        const WINED3DVERTEXELEMENT *elements, UINT element_count) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     HRESULT hr = WINED3D_OK;
     int i, j;
