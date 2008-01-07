@@ -623,6 +623,7 @@ MSVCRT_clock_t MSVCRT_clock(void);
 double         MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2);
 MSVCRT_time_t  MSVCRT_time(MSVCRT_time_t*);
 MSVCRT_FILE*   MSVCRT__fdopen(int, const char *);
+MSVCRT_FILE*   MSVCRT__wfdopen(int, const MSVCRT_wchar_t *);
 int            MSVCRT_vsnprintf(char *str, unsigned int len, const char *format, va_list valist);
 int            MSVCRT_vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
                                  const MSVCRT_wchar_t *format, va_list valist );

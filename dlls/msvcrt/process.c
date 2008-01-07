@@ -721,22 +721,21 @@ MSVCRT_intptr_t CDECL _wspawnvp(int flags, const MSVCRT_wchar_t* name, const MSV
 }
 
 /*********************************************************************
- *		_popen (MSVCRT.@)
- * FIXME: convert to _wpopen and call that from here instead?  But it
- * would have to convert the command back to ANSI to call msvcrt_spawn,
- * less than ideal.
+ *		_wpopen (MSVCRT.@)
+ *
+ * Unicode version of _popen
  */
-MSVCRT_FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
+MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wchar_t* mode)
 {
-  static const char wcmd[] = "cmd", cmdFlag[] = " /C ", comSpec[] = "COMSPEC";
   MSVCRT_FILE *ret;
   BOOL readPipe = TRUE;
   int textmode, fds[2], fdToDup, fdToOpen, fdStdHandle = -1, fdStdErr = -1;
-  const char *p;
-  char *cmdcopy;
-  DWORD comSpecLen;
+  const MSVCRT_wchar_t *p;
+  MSVCRT_wchar_t *comspec, *fullcmd;
+  unsigned int len;
+  static const MSVCRT_wchar_t flag[] = {' ','/','c',' ',0};
 
-  TRACE("(command=%s, mode=%s)\n", debugstr_a(command), debugstr_a(mode));
+  TRACE("(command=%s, mode=%s)\n", debugstr_w(command), debugstr_w(mode));
 
   if (!command || !mode)
     return NULL;
@@ -782,27 +781,27 @@ MSVCRT_FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
 
   MSVCRT__close(fds[fdToDup]);
 
-  comSpecLen = GetEnvironmentVariableA(comSpec, NULL, 0);
-  if (!comSpecLen)
-    comSpecLen = strlen(wcmd) + 1;
-  cmdcopy = HeapAlloc(GetProcessHeap(), 0, comSpecLen + strlen(cmdFlag)
-   + strlen(command));
-  if (!GetEnvironmentVariableA(comSpec, cmdcopy, comSpecLen))
-    strcpy(cmdcopy, wcmd);
-  strcat(cmdcopy, cmdFlag);
-  strcat(cmdcopy, command);
-  if (msvcrt_spawn(MSVCRT__P_NOWAIT, NULL, cmdcopy, NULL) == -1)
+  if (!(comspec = msvcrt_get_comspec())) goto error;
+  len = strlenW(comspec) + strlenW(flag) + strlenW(command) + 1;
+
+  if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(MSVCRT_wchar_t)))) goto error;
+  strcpyW(fullcmd, comspec);
+  strcatW(fullcmd, flag);
+  strcatW(fullcmd, command);
+  HeapFree(GetProcessHeap(), 0, comspec);
+
+  if (msvcrt_spawn_wide(MSVCRT__P_NOWAIT, NULL, fullcmd, NULL) == -1)
   {
     MSVCRT__close(fds[fdToOpen]);
     ret = NULL;
   }
   else
   {
-    ret = MSVCRT__fdopen(fds[fdToOpen], mode);
+    ret = MSVCRT__wfdopen(fds[fdToOpen], mode);
     if (!ret)
       MSVCRT__close(fds[fdToOpen]);
   }
-  HeapFree(GetProcessHeap(), 0, cmdcopy);
+  HeapFree(GetProcessHeap(), 0, fullcmd);
   MSVCRT__dup2(fdStdHandle, fdToDup);
   MSVCRT__close(fdStdHandle);
   if (readPipe)
@@ -821,12 +820,30 @@ error:
 }
 
 /*********************************************************************
- *		_wpopen (MSVCRT.@)
+ *      _popen (MSVCRT.@)
  */
-MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wchar_t* mode)
+MSVCRT_FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
 {
-  FIXME("(command=%s, mode=%s): stub\n", debugstr_w(command), debugstr_w(mode));
-  return NULL;
+  MSVCRT_FILE *ret;
+  MSVCRT_wchar_t *cmdW, *modeW;
+
+  TRACE("(command=%s, mode=%s)\n", debugstr_a(command), debugstr_a(mode));
+
+  if (!command || !mode)
+    return NULL;
+
+  if (!(cmdW = msvcrt_wstrdupa(command))) return NULL;
+  if (!(modeW = msvcrt_wstrdupa(mode)))
+  {
+    HeapFree(GetProcessHeap(), 0, cmdW);
+    return NULL;
+  }
+
+  ret = MSVCRT__wpopen(cmdW, modeW);
+
+  HeapFree(GetProcessHeap(), 0, cmdW);
+  HeapFree(GetProcessHeap(), 0, modeW);
+  return ret;
 }
 
 /*********************************************************************
