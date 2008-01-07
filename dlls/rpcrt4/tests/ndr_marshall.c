@@ -891,10 +891,27 @@ static void test_client_init(void)
     MIDL_STUB_MESSAGE stubMsg;
     RPC_MESSAGE rpcMsg;
 
-    memset(&rpcMsg, 0, sizeof(rpcMsg));
+    memset(&rpcMsg, 0xcc, sizeof(rpcMsg));
     memset(&stubMsg, 0xcc, sizeof(stubMsg));
 
     NdrClientInitializeNew(&rpcMsg, &stubMsg, &Object_StubDesc, 1);
+
+#define TEST_POINTER_UNSET(field) ok(rpcMsg.field == (void *)0xcccccccc, #field " should have been unset instead of %p\n", rpcMsg.field)
+
+    ok(rpcMsg.Handle == NULL, "rpcMsg.Handle should have been NULL instead of %p\n", rpcMsg.Handle);
+    TEST_POINTER_UNSET(Buffer);
+    ok(rpcMsg.BufferLength == 0xcccccccc, "rpcMsg.BufferLength should have been unset instead of %d\n", rpcMsg.BufferLength);
+    todo_wine
+    ok(rpcMsg.ProcNum == 0x8001, "rpcMsg.ProcNum should have been 0x8001 instead of 0x%x\n", rpcMsg.ProcNum);
+    TEST_POINTER_UNSET(TransferSyntax);
+    ok(rpcMsg.RpcInterfaceInformation == Object_StubDesc.RpcInterfaceInformation,
+        "rpcMsg.RpcInterfaceInformation should have been %p instead of %p\n",
+        Object_StubDesc.RpcInterfaceInformation, rpcMsg.RpcInterfaceInformation);
+    /* Note: ReservedForRuntime not tested */
+    TEST_POINTER_UNSET(ManagerEpv);
+    TEST_POINTER_UNSET(ImportContext);
+    ok(rpcMsg.RpcFlags == 0, "rpcMsg.RpcFlags should have been 0 instead of 0x%lx\n", rpcMsg.RpcFlags);
+#undef TEST_POINTER_UNSET
 
 #define TEST_ZERO(field, fmt) ok(stubMsg.field == 0, #field " should have been set to zero instead of " fmt "\n", stubMsg.field)
 #define TEST_POINTER_UNSET(field) ok(stubMsg.field == (void *)0xcccccccc, #field " should have been unset instead of %p\n", stubMsg.field)
