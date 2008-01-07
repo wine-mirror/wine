@@ -84,7 +84,7 @@ BEGIN
         MENUITEM "&Копировать",		FCIDM_SHVIEW_COPY
         MENUITEM SEPARATOR
         MENUITEM "Создать &ярлык",	FCIDM_SHVIEW_CREATELINK
-        MENUITEM "&Удалмть",		FCIDM_SHVIEW_DELETE
+        MENUITEM "&Удалить",		FCIDM_SHVIEW_DELETE
         MENUITEM "Переи&меновать",	FCIDM_SHVIEW_RENAME
         MENUITEM SEPARATOR
         MENUITEM "Сво&йства",		FCIDM_SHVIEW_PROPERTIES
