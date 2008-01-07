@@ -304,7 +304,10 @@ static enum fs_type VOLUME_ReadFATSuperblock( HANDLE handle, BYTE *buff )
     /* try a fixed disk, with a FAT partition */
     if (SetFilePointer( handle, 0, NULL, FILE_BEGIN ) != 0 ||
         !ReadFile( handle, buff, SUPERBLOCK_SIZE, &size, NULL ))
+    {
+        if (GetLastError() == ERROR_BAD_DEV_TYPE) return FS_UNKNOWN;  /* not a real device */
         return FS_ERROR;
+    }
 
     if (size < SUPERBLOCK_SIZE) return FS_UNKNOWN;
 
