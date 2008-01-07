@@ -981,8 +981,8 @@ static DWORD shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
     return mask;
 }
 
-static size_t shader_glsl_get_write_mask_size(DWORD write_mask) {
-    size_t size = 0;
+static unsigned int shader_glsl_get_write_mask_size(DWORD write_mask) {
+    unsigned int size = 0;
 
     if (write_mask & WINED3DSP_WRITEMASK_0) ++size;
     if (write_mask & WINED3DSP_WRITEMASK_1) ++size;
@@ -1344,7 +1344,7 @@ void shader_glsl_mov(SHADER_OPCODE_ARG* arg) {
             !shader_is_pshader_version(shader->baseShader.hex_version) &&
             shader_get_regtype(arg->dst) == WINED3DSPR_ADDR)) {
         /* This is a simple floor() */
-        size_t mask_size = shader_glsl_get_write_mask_size(write_mask);
+        unsigned int mask_size = shader_glsl_get_write_mask_size(write_mask);
         if (mask_size > 1) {
             shader_addline(buffer, "ivec%d(floor(%s)));\n", mask_size, src0_param.param_str);
         } else {
@@ -1352,7 +1352,7 @@ void shader_glsl_mov(SHADER_OPCODE_ARG* arg) {
         }
     } else if(arg->opcode->opcode == WINED3DSIO_MOVA) {
         /* We need to *round* to the nearest int here. */
-        size_t mask_size = shader_glsl_get_write_mask_size(write_mask);
+        unsigned int mask_size = shader_glsl_get_write_mask_size(write_mask);
         if (mask_size > 1) {
             shader_addline(buffer, "ivec%d(floor(abs(%s) + vec%d(0.5)) * sign(%s)));\n", mask_size, src0_param.param_str, mask_size, src0_param.param_str);
         } else {
@@ -1370,7 +1370,7 @@ void shader_glsl_dot(SHADER_OPCODE_ARG* arg) {
     glsl_src_param_t src0_param;
     glsl_src_param_t src1_param;
     DWORD dst_write_mask, src_write_mask;
-    size_t dst_size = 0;
+    unsigned int dst_size = 0;
 
     dst_write_mask = shader_glsl_append_dst(buffer, arg);
     dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
@@ -1415,7 +1415,7 @@ void shader_glsl_pow(SHADER_OPCODE_ARG *arg) {
     glsl_src_param_t src0_param;
     glsl_src_param_t src1_param;
     DWORD dst_write_mask;
-    size_t dst_size;
+    unsigned int dst_size;
 
     dst_write_mask = shader_glsl_append_dst(buffer, arg);
     dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
@@ -1437,7 +1437,7 @@ void shader_glsl_log(SHADER_OPCODE_ARG *arg) {
     SHADER_BUFFER *buffer = arg->buffer;
     glsl_src_param_t src0_param;
     DWORD dst_write_mask;
-    size_t dst_size;
+    unsigned int dst_size;
 
     dst_write_mask = shader_glsl_append_dst(buffer, arg);
     dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
@@ -1524,7 +1524,7 @@ void shader_glsl_expp(SHADER_OPCODE_ARG* arg) {
         shader_addline(arg->buffer, "tmp0%s);\n", dst_mask);
     } else {
         DWORD write_mask;
-        size_t mask_size;
+        unsigned int mask_size;
 
         write_mask = shader_glsl_append_dst(arg->buffer, arg);
         mask_size = shader_glsl_get_write_mask_size(write_mask);
@@ -1541,7 +1541,7 @@ void shader_glsl_expp(SHADER_OPCODE_ARG* arg) {
 void shader_glsl_rcp(SHADER_OPCODE_ARG* arg) {
     glsl_src_param_t src_param;
     DWORD write_mask;
-    size_t mask_size;
+    unsigned int mask_size;
 
     write_mask = shader_glsl_append_dst(arg->buffer, arg);
     mask_size = shader_glsl_get_write_mask_size(write_mask);
@@ -1558,7 +1558,7 @@ void shader_glsl_rsq(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     glsl_src_param_t src_param;
     DWORD write_mask;
-    size_t mask_size;
+    unsigned int mask_size;
 
     write_mask = shader_glsl_append_dst(buffer, arg);
     mask_size = shader_glsl_get_write_mask_size(write_mask);
@@ -1577,7 +1577,7 @@ void shader_glsl_compare(SHADER_OPCODE_ARG* arg) {
     glsl_src_param_t src0_param;
     glsl_src_param_t src1_param;
     DWORD write_mask;
-    size_t mask_size;
+    unsigned int mask_size;
 
     write_mask = shader_glsl_append_dst(arg->buffer, arg);
     mask_size = shader_glsl_get_write_mask_size(write_mask);
@@ -2221,7 +2221,7 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
 
         if (src_mod == WINED3DSPSM_DZ) {
             glsl_src_param_t div_param;
-            size_t mask_size = shader_glsl_get_write_mask_size(write_mask);
+            unsigned int mask_size = shader_glsl_get_write_mask_size(write_mask);
             shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_2, &div_param);
 
             if (mask_size > 1) {
@@ -2231,7 +2231,7 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
             }
         } else if (src_mod == WINED3DSPSM_DW) {
             glsl_src_param_t div_param;
-            size_t mask_size = shader_glsl_get_write_mask_size(write_mask);
+            unsigned int mask_size = shader_glsl_get_write_mask_size(write_mask);
             shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, &div_param);
 
             if (mask_size > 1) {
@@ -2295,7 +2295,7 @@ void pshader_glsl_texdp3(SHADER_OPCODE_ARG* arg) {
     DWORD dstreg = arg->dst & WINED3DSP_REGNUM_MASK;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD dst_mask;
-    size_t mask_size;
+    unsigned int mask_size;
 
     dst_mask = shader_glsl_append_dst(arg->buffer, arg);
     mask_size = shader_glsl_get_write_mask_size(dst_mask);
@@ -2644,7 +2644,7 @@ void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg) {
     glsl_src_param_t src1_param;
     glsl_src_param_t src2_param;
     DWORD write_mask;
-    size_t mask_size;
+    unsigned int mask_size;
 
     write_mask = shader_glsl_append_dst(arg->buffer, arg);
     mask_size = shader_glsl_get_write_mask_size(write_mask);
