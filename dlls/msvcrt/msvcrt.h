@@ -634,6 +634,7 @@ int            MSVCRT__write(int,const void*,unsigned int);
 int            _getch(void);
 int            _ismbstrail(const unsigned char* start, const unsigned char* str);
 MSVCRT_intptr_t _spawnve(int,const char*,const char* const *,const char* const *);
+MSVCRT_intptr_t _spawnvpe(int,const char*,const char* const *,const char* const *);
 MSVCRT_intptr_t _wspawnve(int,const MSVCRT_wchar_t*,const MSVCRT_wchar_t* const *,const MSVCRT_wchar_t* const *);
 MSVCRT_intptr_t _wspawnvpe(int,const MSVCRT_wchar_t*,const MSVCRT_wchar_t* const *,const MSVCRT_wchar_t* const *);
 void           _searchenv(const char*,const char*,char*);

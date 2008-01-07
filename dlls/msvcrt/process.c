@@ -5,6 +5,7 @@
  * Copyright 1996 Jukka Iivonen
  * Copyright 1997,2000 Uwe Bonnes
  * Copyright 2000 Jon Griffiths
+ * Copyright 2007 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,10 +36,105 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-static MSVCRT_intptr_t msvcrt_spawn(int flags, const MSVCRT_wchar_t* exe, MSVCRT_wchar_t* cmdline, MSVCRT_wchar_t* env)
+static void msvcrt_search_executable(const MSVCRT_wchar_t *name, MSVCRT_wchar_t *fullname, int use_path)
+{
+  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
+  static const MSVCRT_wchar_t suffix[][5] =
+    {{'.','c','o','m',0}, {'.','e','x','e',0}, {'.','b','a','t',0}, {'.','c','m','d',0}};
+
+  MSVCRT_wchar_t buffer[MAX_PATH];
+  const MSVCRT_wchar_t *env, *p;
+  unsigned int i, name_len, path_len;
+  int extension = 1;
+
+  *fullname = '\0';
+  msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
+
+  p = memchrW(name, '\0', MAX_PATH);
+  if (!p) p = name + MAX_PATH - 1;
+  name_len = p - name;
+
+  /* FIXME extra-long names are silently truncated */
+  memcpy(buffer, name, name_len * sizeof(MSVCRT_wchar_t));
+  buffer[name_len] = '\0';
+
+  /* try current dir first */
+  if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
+  {
+    strcpyW(fullname, buffer);
+    return;
+  }
+
+  for (p--; p >= name; p--)
+    if (*p == '\\' || *p == '/' || *p == ':' || *p == '.') break;
+
+  /* if there's no extension, try some well-known extensions */
+  if ((p < name || *p != '.') && name_len <= MAX_PATH - 5)
+  {
+    for (i = 0; i < 4; i++)
+    {
+      memcpy(buffer + name_len, suffix[i], 5 * sizeof(MSVCRT_wchar_t));
+      if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
+      {
+        strcpyW(fullname, buffer);
+        return;
+      }
+    }
+    extension = 0;
+  }
+
+  if (!use_path || !(env = _wgetenv(path))) return;
+
+  /* now try search path */
+  do
+  {
+    p = env;
+    while (*p && *p != ';') p++;
+    if (p == env) return;
+
+    path_len = p - env;
+    if (path_len + name_len <= MAX_PATH - 2)
+    {
+      memcpy(buffer, env, path_len * sizeof(MSVCRT_wchar_t));
+      if (buffer[path_len] != '/' || buffer[path_len] != '\\')
+      {
+        buffer[path_len++] = '\\';
+        buffer[path_len] = '\0';
+      }
+      else buffer[path_len] = '\0';
+
+      strcatW(buffer, name);
+      if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
+      {
+        strcpyW(fullname, buffer);
+        return;
+      }
+    }
+    /* again, if there's no extension, try some well-known extensions */
+    if (!extension && path_len + name_len <= MAX_PATH - 5)
+    {
+      for (i = 0; i < 4; i++)
+      {
+        memcpy(buffer + path_len + name_len, suffix[i], 5 * sizeof(MSVCRT_wchar_t));
+        if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
+        {
+          strcpyW(fullname, buffer);
+          return;
+        }
+      }
+    }
+    env = *p ? p + 1 : p;
+  } while(1);
+}
+
+static MSVCRT_intptr_t msvcrt_spawn(int flags, const MSVCRT_wchar_t* exe, MSVCRT_wchar_t* cmdline,
+                                    MSVCRT_wchar_t* env, int use_path)
 {
   STARTUPINFOW si;
   PROCESS_INFORMATION pi;
+  MSVCRT_wchar_t fullname[MAX_PATH];
+
+  TRACE("%x %s %s %s %d\n", flags, debugstr_w(exe), debugstr_w(cmdline), debugstr_w(env), use_path);
 
   if ((unsigned)flags > MSVCRT__P_DETACH)
   {
@@ -46,10 +142,12 @@ static MSVCRT_intptr_t msvcrt_spawn(int flags, const MSVCRT_wchar_t* exe, MSVCRT
     return -1;
   }
 
+  msvcrt_search_executable(exe, fullname, use_path);
+
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(si);
   msvcrt_create_io_inherit_block(&si.cbReserved2, &si.lpReserved2);
-  if (!CreateProcessW(exe, cmdline, NULL, NULL, TRUE,
+  if (!CreateProcessW(fullname, cmdline, NULL, NULL, TRUE,
                      flags == MSVCRT__P_DETACH ? DETACHED_PROCESS : 0,
                      env, NULL, &si, &pi))
   {
@@ -336,7 +434,7 @@ MSVCRT_intptr_t CDECL _wexecl(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* 
   args = msvcrt_valisttos(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, NULL);
+  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, NULL, 0);
 
   MSVCRT_free(args);
   return ret;
@@ -352,7 +450,7 @@ MSVCRT_intptr_t CDECL _execl(const char* name, const char* arg0, ...)
 {
   va_list ap;
   MSVCRT_wchar_t *nameW, *args;
-  MSVCRT_intptr_t ret = -1;
+  MSVCRT_intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -360,7 +458,7 @@ MSVCRT_intptr_t CDECL _execl(const char* name, const char* arg0, ...)
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, NULL);
+  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, NULL, 0);
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
@@ -389,7 +487,7 @@ MSVCRT_intptr_t CDECL _wexecle(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t*
   if (envp) envs = msvcrt_argvtos(envp, 0);
   va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, envs);
+  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, envs, 0);
 
   MSVCRT_free(args);
   MSVCRT_free(envs);
@@ -418,7 +516,7 @@ MSVCRT_intptr_t CDECL _execle(const char* name, const char* arg0, ...)
   if (envp) envs = msvcrt_argvtos_aw(envp, 0);
   va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, envs);
+  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, envs, 0);
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
@@ -433,18 +531,15 @@ MSVCRT_intptr_t CDECL _execle(const char* name, const char* arg0, ...)
  */
 MSVCRT_intptr_t CDECL _wexeclp(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* arg0, ...)
 {
-  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
   va_list ap;
-  MSVCRT_wchar_t *args, fullname[MAX_PATH];
+  MSVCRT_wchar_t *args;
   MSVCRT_intptr_t ret;
-
-  _wsearchenv(name, path, fullname);
 
   va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, fullname[0] ? fullname : name, args, NULL);
+  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, NULL, 1);
 
   MSVCRT_free(args);
   return ret;
@@ -458,19 +553,17 @@ MSVCRT_intptr_t CDECL _wexeclp(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t*
  */
 MSVCRT_intptr_t CDECL _execlp(const char* name, const char* arg0, ...)
 {
-  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
   va_list ap;
-  MSVCRT_wchar_t *nameW, *args, fullname[MAX_PATH];
+  MSVCRT_wchar_t *nameW, *args;
   MSVCRT_intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
-  _wsearchenv(nameW, path, fullname);
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, fullname[0] ? fullname : nameW, args, NULL);
+  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, NULL, 1);
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
@@ -484,13 +577,10 @@ MSVCRT_intptr_t CDECL _execlp(const char* name, const char* arg0, ...)
  */
 MSVCRT_intptr_t CDECL _wexeclpe(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* arg0, ...)
 {
-  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
   va_list ap;
-  MSVCRT_wchar_t *args, *envs = NULL, fullname[MAX_PATH];
+  MSVCRT_wchar_t *args, *envs = NULL;
   const MSVCRT_wchar_t * const *envp;
   MSVCRT_intptr_t ret;
-
-  _wsearchenv(name, path, fullname);
 
   va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -502,7 +592,7 @@ MSVCRT_intptr_t CDECL _wexeclpe(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t
   if (envp) envs = msvcrt_argvtos(envp, 0);
   va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, fullname[0] ? fullname : name, args, envs);
+  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, envs, 1);
 
   MSVCRT_free(args);
   MSVCRT_free(envs);
@@ -514,14 +604,12 @@ MSVCRT_intptr_t CDECL _wexeclpe(const MSVCRT_wchar_t* name, const MSVCRT_wchar_t
  */
 MSVCRT_intptr_t CDECL _execlpe(const char* name, const char* arg0, ...)
 {
-  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
   va_list ap;
-  MSVCRT_wchar_t *nameW, *args, *envs = NULL, fullname[MAX_PATH];
+  MSVCRT_wchar_t *nameW, *args, *envs = NULL;
   const char * const *envp;
   MSVCRT_intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
-  _wsearchenv(nameW, path, fullname);
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
@@ -533,7 +621,7 @@ MSVCRT_intptr_t CDECL _execlpe(const char* name, const char* arg0, ...)
   if (envp) envs = msvcrt_argvtos_aw(envp, 0);
   va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, fullname[0] ? fullname : nameW, args, envs);
+  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, envs, 1);
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
@@ -590,12 +678,7 @@ MSVCRT_intptr_t CDECL MSVCRT__execve(const char* name, char* const* argv, const 
  */
 MSVCRT_intptr_t CDECL _wexecvpe(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv, const MSVCRT_wchar_t* const* envv)
 {
-  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
-  MSVCRT_wchar_t fullname[MAX_PATH];
-
-  _wsearchenv(name, path, fullname);
-  return _wspawnvpe(MSVCRT__P_OVERLAY, fullname[0] ? fullname : name,
-                    (const MSVCRT_wchar_t* const*) argv, envv);
+  return _wspawnvpe(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, envv);
 }
 
 /*********************************************************************
@@ -606,11 +689,7 @@ MSVCRT_intptr_t CDECL _wexecvpe(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* cons
  */
 MSVCRT_intptr_t CDECL _execvpe(const char* name, char* const* argv, const char* const* envv)
 {
-  char fullname[MAX_PATH];
-
-  _searchenv(name, "PATH", fullname);
-  return _spawnve(MSVCRT__P_OVERLAY, fullname[0] ? fullname : name,
-                  (const char* const*) argv, envv);
+  return _spawnvpe(MSVCRT__P_OVERLAY, name, (const char* const*) argv, envv);
 }
 
 /*********************************************************************
@@ -649,7 +728,7 @@ MSVCRT_intptr_t CDECL _wspawnl(int flags, const MSVCRT_wchar_t* name, const MSVC
   args = msvcrt_valisttos(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, name, args, NULL);
+  ret = msvcrt_spawn(flags, name, args, NULL, 0);
 
   MSVCRT_free(args);
   return ret;
@@ -673,7 +752,7 @@ MSVCRT_intptr_t CDECL _spawnl(int flags, const char* name, const char* arg0, ...
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, nameW, args, NULL);
+  ret = msvcrt_spawn(flags, nameW, args, NULL, 0);
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
@@ -702,7 +781,7 @@ MSVCRT_intptr_t CDECL _wspawnle(int flags, const MSVCRT_wchar_t* name, const MSV
   if (envp) envs = msvcrt_argvtos(envp, 0);
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, name, args, envs);
+  ret = msvcrt_spawn(flags, name, args, envs, 0);
 
   MSVCRT_free(args);
   MSVCRT_free(envs);
@@ -731,7 +810,7 @@ MSVCRT_intptr_t CDECL _spawnle(int flags, const char* name, const char* arg0, ..
   if (envp) envs = msvcrt_argvtos_aw(envp, 0);
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, nameW, args, envs);
+  ret = msvcrt_spawn(flags, nameW, args, envs, 0);
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
@@ -746,18 +825,15 @@ MSVCRT_intptr_t CDECL _spawnle(int flags, const char* name, const char* arg0, ..
  */
 MSVCRT_intptr_t CDECL _wspawnlp(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* arg0, ...)
 {
-  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
   va_list ap;
-  MSVCRT_wchar_t *args, fullname[MAX_PATH];
+  MSVCRT_wchar_t *args;
   MSVCRT_intptr_t ret;
-
-  _wsearchenv(name, path, fullname);
 
   va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, fullname[0] ? fullname : name, args, NULL);
+  ret = msvcrt_spawn(flags, name, args, NULL, 1);
 
   MSVCRT_free(args);
   return ret;
@@ -771,19 +847,17 @@ MSVCRT_intptr_t CDECL _wspawnlp(int flags, const MSVCRT_wchar_t* name, const MSV
  */
 MSVCRT_intptr_t CDECL _spawnlp(int flags, const char* name, const char* arg0, ...)
 {
-  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
   va_list ap;
-  MSVCRT_wchar_t *nameW, *args, fullname[MAX_PATH];
+  MSVCRT_wchar_t *nameW, *args;
   MSVCRT_intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
-  _wsearchenv(nameW, path, fullname);
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, fullname[0] ? fullname : nameW, args, NULL);
+  ret = msvcrt_spawn(flags, nameW, args, NULL, 1);
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
@@ -797,13 +871,10 @@ MSVCRT_intptr_t CDECL _spawnlp(int flags, const char* name, const char* arg0, ..
  */
 MSVCRT_intptr_t CDECL _wspawnlpe(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* arg0, ...)
 {
-  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
   va_list ap;
-  MSVCRT_wchar_t *args, *envs = NULL, fullname[MAX_PATH];
+  MSVCRT_wchar_t *args, *envs = NULL;
   const MSVCRT_wchar_t * const *envp;
   MSVCRT_intptr_t ret;
-
-  _wsearchenv(name, path, fullname);
 
   va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -815,7 +886,7 @@ MSVCRT_intptr_t CDECL _wspawnlpe(int flags, const MSVCRT_wchar_t* name, const MS
   if (envp) envs = msvcrt_argvtos(envp, 0);
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, fullname[0] ? fullname : name, args, envs);
+  ret = msvcrt_spawn(flags, name, args, envs, 1);
 
   MSVCRT_free(args);
   MSVCRT_free(envs);
@@ -827,14 +898,12 @@ MSVCRT_intptr_t CDECL _wspawnlpe(int flags, const MSVCRT_wchar_t* name, const MS
  */
 MSVCRT_intptr_t CDECL _spawnlpe(int flags, const char* name, const char* arg0, ...)
 {
-  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
   va_list ap;
-  MSVCRT_wchar_t *nameW, *args, *envs = NULL, fullname[MAX_PATH];
+  MSVCRT_wchar_t *nameW, *args, *envs = NULL;
   const char * const *envp;
   MSVCRT_intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
-  _wsearchenv(nameW, path, fullname);
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
@@ -846,7 +915,7 @@ MSVCRT_intptr_t CDECL _spawnlpe(int flags, const char* name, const char* arg0, .
   if (envp) envs = msvcrt_argvtos_aw(envp, 0);
   va_end(ap);
 
-  ret = msvcrt_spawn(flags, fullname[0] ? fullname : nameW, args, envs);
+  ret = msvcrt_spawn(flags, nameW, args, envs, 1);
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
@@ -871,7 +940,7 @@ MSVCRT_intptr_t CDECL _spawnve(int flags, const char* name, const char* const* a
   args = msvcrt_argvtos_aw(argv, ' ');
   envs = msvcrt_argvtos_aw(envv, 0);
 
-  ret = msvcrt_spawn(flags, nameW, args, envs);
+  ret = msvcrt_spawn(flags, nameW, args, envs, 0);
 
   MSVCRT_free(nameW);
   MSVCRT_free(args);
@@ -887,52 +956,16 @@ MSVCRT_intptr_t CDECL _spawnve(int flags, const char* name, const char* const* a
 MSVCRT_intptr_t CDECL _wspawnve(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv,
                                 const MSVCRT_wchar_t* const* envv)
 {
-  MSVCRT_wchar_t * args = msvcrt_argvtos(argv,' ');
-  MSVCRT_wchar_t * envs = msvcrt_argvtos(envv,0);
-  MSVCRT_wchar_t fullname[MAX_PATH];
-  const MSVCRT_wchar_t *p;
-  int len;
-  MSVCRT_intptr_t ret = -1;
+  MSVCRT_wchar_t *args, *envs;
+  MSVCRT_intptr_t ret;
 
-  TRACE(":call (%s), params (%s), env (%s)\n",debugstr_w(name),debugstr_w(args),
-   envs?"Custom":"Null");
+  args = msvcrt_argvtos(argv, ' ');
+  envs = msvcrt_argvtos(envv, 0);
 
-  /* no check for NULL name.
-     native doesn't do it */
+  ret = msvcrt_spawn(flags, name, args, envs, 0);
 
-  p = memchrW(name, '\0', MAX_PATH);
-  if( !p )
-    p = name + MAX_PATH - 1;
-  len = p - name;
-
-  /* extra-long names are silently truncated. */
-  memcpy(fullname, name, len * sizeof(MSVCRT_wchar_t));
-
-  for( p--; p >= name; p-- )
-  {
-    if( *p == '\\' || *p == '/' || *p == ':' || *p == '.' )
-      break;
-  }
-
-  /* if no extension is given, assume .exe */
-  if( (p < name || *p != '.') && len <= MAX_PATH - 5 )
-  {
-    static const MSVCRT_wchar_t dotexe[] = {'.','e','x','e'};
-
-    FIXME("only trying .exe when no extension given\n");
-    memcpy(fullname+len, dotexe, 4 * sizeof(MSVCRT_wchar_t));
-    len += 4;
-  }
-
-  fullname[len] = '\0';
-
-  if (args)
-  {
-    ret = msvcrt_spawn(flags, fullname, args, envs);
-    MSVCRT_free(args);
-  }
+  MSVCRT_free(args);
   MSVCRT_free(envs);
-
   return ret;
 }
 
@@ -966,9 +999,20 @@ MSVCRT_intptr_t CDECL _wspawnv(int flags, const MSVCRT_wchar_t* name, const MSVC
 MSVCRT_intptr_t CDECL _spawnvpe(int flags, const char* name, const char* const* argv,
                                 const char* const* envv)
 {
-  char fullname[MAX_PATH];
-  _searchenv(name, "PATH", fullname);
-  return _spawnve(flags, fullname[0] ? fullname : name, argv, envv);
+  MSVCRT_wchar_t *nameW, *args, *envs;
+  MSVCRT_intptr_t ret;
+
+  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+
+  args = msvcrt_argvtos_aw(argv, ' ');
+  envs = msvcrt_argvtos_aw(envv, 0);
+
+  ret = msvcrt_spawn(flags, nameW, args, envs, 1);
+
+  MSVCRT_free(nameW);
+  MSVCRT_free(args);
+  MSVCRT_free(envs);
+  return ret;
 }
 
 /*********************************************************************
@@ -979,11 +1023,17 @@ MSVCRT_intptr_t CDECL _spawnvpe(int flags, const char* name, const char* const* 
 MSVCRT_intptr_t CDECL _wspawnvpe(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv,
                                  const MSVCRT_wchar_t* const* envv)
 {
-  static const MSVCRT_wchar_t path[] = {'P','A','T','H',0};
-  MSVCRT_wchar_t fullname[MAX_PATH];
+  MSVCRT_wchar_t *args, *envs;
+  MSVCRT_intptr_t ret;
 
-  _wsearchenv(name, path, fullname);
-  return _wspawnve(flags, fullname[0] ? fullname : name, argv, envv);
+  args = msvcrt_argvtos(argv, ' ');
+  envs = msvcrt_argvtos(envv, 0);
+
+  ret = msvcrt_spawn(flags, name, args, envs, 1);
+
+  MSVCRT_free(args);
+  MSVCRT_free(envs);
+  return ret;
 }
 
 /*********************************************************************
@@ -1077,7 +1127,7 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
   strcatW(fullcmd, command);
   HeapFree(GetProcessHeap(), 0, comspec);
 
-  if (msvcrt_spawn(MSVCRT__P_NOWAIT, NULL, fullcmd, NULL) == -1)
+  if (msvcrt_spawn(MSVCRT__P_NOWAIT, NULL, fullcmd, NULL, 1) == -1)
   {
     MSVCRT__close(fds[fdToOpen]);
     ret = NULL;
@@ -1165,7 +1215,7 @@ int CDECL _wsystem(const MSVCRT_wchar_t* cmd)
   strcatW(fullcmd, flag);
   strcatW(fullcmd, cmd);
 
-  res = msvcrt_spawn(MSVCRT__P_WAIT, comspec, fullcmd, NULL);
+  res = msvcrt_spawn(MSVCRT__P_WAIT, comspec, fullcmd, NULL, 1);
 
   HeapFree(GetProcessHeap(), 0, comspec);
   HeapFree(GetProcessHeap(), 0, fullcmd);
