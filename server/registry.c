@@ -1092,12 +1092,12 @@ static int get_data_type( const char *buffer, int *type, int *parse_type )
 
     for (ptr = data_types; ptr->tag; ptr++)
     {
-        if (memcmp( ptr->tag, buffer, ptr->len )) continue;
+        if (strncmp( ptr->tag, buffer, ptr->len )) continue;
         *parse_type = ptr->parse_type;
         if ((*type = ptr->type) != -1) return ptr->len;
         /* "hex(xx):" is special */
         *type = (int)strtoul( buffer + 4, &end, 16 );
-        if ((end <= buffer) || memcmp( end, "):", 2 )) return 0;
+        if ((end <= buffer) || strncmp( end, "):", 2 )) return 0;
         return end + 2 - buffer;
     }
     return 0;
@@ -1146,17 +1146,18 @@ static int parse_hex( unsigned char *dest, data_size_t *len, const char *buffer 
 {
     const char *p = buffer;
     data_size_t count = 0;
+    char *end;
+
     while (isxdigit(*p))
     {
-        int val;
-        char buf[3];
-        memcpy( buf, p, 2 );
-        buf[2] = 0;
-        sscanf( buf, "%x", &val );
+        unsigned int val = strtoul( p, &end, 16 );
+        if (end == p || val > 0xff) return -1;
         if (count++ >= *len) return -1;  /* dest buffer overflow */
-        *dest++ = (unsigned char )val;
-        p += 2;
+        *dest++ = val;
+        p = end;
+        while (isspace(*p)) p++;
         if (*p == ',') p++;
+        while (isspace(*p)) p++;
     }
     *len = count;
     return p - buffer;
@@ -1227,7 +1228,7 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
         len = 0;
         for (;;)
         {
-            maxlen = 1 + strlen(buffer)/3;  /* 3 chars for one hex byte */
+            maxlen = 1 + strlen(buffer) / 2;  /* at least 2 chars for one hex byte */
             if (!get_file_tmp_space( info, len + maxlen )) return 0;
             if ((res = parse_hex( (unsigned char *)info->tmp + len, &maxlen, buffer )) == -1) goto error;
             len += maxlen;
@@ -1259,6 +1260,11 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
 
  error:
     file_read_error( "Malformed value", info );
+    free( value->data );
+    value->data = NULL;
+    value->len  = 0;
+    value->type = REG_NONE;
+    make_dirty( key );
     return 0;
 }
 
