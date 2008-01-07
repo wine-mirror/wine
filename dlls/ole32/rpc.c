@@ -248,8 +248,6 @@ static unsigned char * ChannelHooks_ClientFillBuffer(SChannelHookCallInfo *info,
 
     LeaveCriticalSection(&csChannelHook);
 
-    HeapFree(GetProcessHeap(), 0, data);
-
     return buffer;
 }
 
@@ -369,8 +367,6 @@ static unsigned char * ChannelHooks_ServerFillBuffer(SChannelHookCallInfo *info,
     }
 
     LeaveCriticalSection(&csChannelHook);
-
-    HeapFree(GetProcessHeap(), 0, data);
 
     return buffer;
 }
@@ -563,6 +559,8 @@ static HRESULT WINAPI ServerRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
         }
     }
 
+    HeapFree(GetProcessHeap(), 0, channel_hook_data);
+
     /* store the prefixed data length so that we can restore the real buffer
      * later */
     message_state->prefix_data_len = (char *)msg->Buffer - (char *)orpcthat;
@@ -750,6 +748,8 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
         message_state->prefix_data_len = (char *)msg->Buffer - (char *)orpcthis;
         msg->BufferLength -= message_state->prefix_data_len;
     }
+
+    HeapFree(GetProcessHeap(), 0, channel_hook_data);
 
     TRACE("-- %ld\n", status);
 
