@@ -1827,7 +1827,7 @@ static void test_xmlTypes(void)
                     IXMLDOMNode *pNewChild = (IXMLDOMNode *)0x1;
                     hr = IXMLDOMElement_appendChild(pElement, (IXMLDOMNode*)pAttrubute, &pNewChild);
                     ok(hr == E_FAIL, "ret %08x\n", hr );
-                    ok(pNewChild == NULL, "pNewChild not NULL");
+                    ok(pNewChild == NULL, "pNewChild not NULL\n");
 
                     hr = IXMLDOMElement_get_attributes(pElement, &pAttribs);
                     ok(hr == S_OK, "ret %08x\n", hr );
