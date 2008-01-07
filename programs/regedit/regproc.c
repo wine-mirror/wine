@@ -92,15 +92,10 @@ static BYTE* convertHexCSVToHex(char *str, DWORD *size)
     *size=0;
     while (*s != '\0') {
         UINT wc;
-        char dummy;
+        char *end;
 
-        if (s[1] != ',' && s[1] != '\0' && s[2] != ',' && s[2] != '\0') {
-            fprintf(stderr,"%s: ERROR converting CSV hex stream. Invalid sequence at '%s'\n",
-                    getAppName(), s);
-            HeapFree(GetProcessHeap(), 0, data);
-            return NULL;
-        }
-        if (sscanf(s, "%x%c", &wc, &dummy) < 1 || dummy != ',') {
+        wc = strtoul(s,&end,16);
+        if (end == s || wc > 0xff || (*end && *end != ',')) {
             fprintf(stderr,"%s: ERROR converting CSV hex stream. Invalid value at '%s'\n",
                     getAppName(), s);
             HeapFree(GetProcessHeap(), 0, data);
@@ -108,10 +103,8 @@ static BYTE* convertHexCSVToHex(char *str, DWORD *size)
         }
         *d++ =(BYTE)wc;
         (*size)++;
-
-        /* Skip one or two digits and any comma */
-        while (*s && *s!=',') s++;
-        if (*s) s++;
+        if (*end) end++;
+        s = end;
     }
 
     return data;
