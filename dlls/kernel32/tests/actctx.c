@@ -555,8 +555,8 @@ static void test_file_info(HANDLE handle, ULONG assid, ULONG fileid, LPCWSTR fil
 
     ok(info->ulFlags == 2, "info->ulFlags=%x, expected 2\n", info->ulFlags);
     ok(info->ulFilenameLength == lstrlenW(filename)*sizeof(WCHAR),
-       "info->ulFilenameLength=%u, expected %u\n",
-       info->ulFilenameLength, lstrlenW(filename)*sizeof(WCHAR));
+       "info->ulFilenameLength=%u, expected %u*sizeof(WCHAR)\n",
+       info->ulFilenameLength, lstrlenW(filename));
     ok(info->ulPathLength == 0, "info->ulPathLength=%u\n", info->ulPathLength);
     ok(info->lpFileName != NULL, "info->lpFileName == NULL\n");
     if(info->lpFileName)
