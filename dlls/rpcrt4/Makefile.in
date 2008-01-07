@@ -20,6 +20,7 @@ C_SRCS = \
 	ndr_ole.c \
 	ndr_stubless.c \
 	rpc_assoc.c \
+	rpc_async.c \
 	rpc_binding.c \
 	rpc_epmap.c \
 	rpc_message.c \

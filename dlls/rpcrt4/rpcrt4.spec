@@ -362,12 +362,12 @@
 @ stub NdrpSetRpcSsDefaults
 @ stub NdrpVarVtOfTypeDesc # wxp
 @ stub PerformRpcInitialization
-@ stub RpcAbortAsyncCall
-@ stub RpcAsyncAbortCall
-@ stub RpcAsyncCancelCall
-@ stub RpcAsyncCompleteCall
-@ stub RpcAsyncGetCallStatus
-@ stub RpcAsyncInitializeHandle
+@ stdcall RpcAbortAsyncCall(ptr long) RpcAsyncAbortCall
+@ stdcall RpcAsyncAbortCall(ptr long)
+@ stdcall RpcAsyncCancelCall(ptr long)
+@ stdcall RpcAsyncCompleteCall(ptr ptr)
+@ stdcall RpcAsyncGetCallStatus(ptr)
+@ stdcall RpcAsyncInitializeHandle(ptr long)
 @ stub RpcAsyncRegisterInfo
 @ stdcall RpcBindingCopy(ptr ptr)
 @ stdcall RpcBindingFree(ptr)
@@ -394,12 +394,12 @@
 @ stdcall RpcBindingToStringBindingA(ptr ptr)
 @ stdcall RpcBindingToStringBindingW(ptr ptr)
 @ stdcall RpcBindingVectorFree(ptr)
-@ stub RpcCancelAsyncCall
+@ stdcall RpcCancelAsyncCall(ptr long) RpcAsyncCancelCall
 @ stdcall RpcCancelThread(ptr)
 @ stub RpcCancelThreadEx
 @ stub RpcCertGeneratePrincipalNameA
 @ stub RpcCertGeneratePrincipalNameW
-@ stub RpcCompleteAsyncCall
+@ stdcall RpcCompleteAsyncCall(ptr ptr) RpcAsyncCompleteCall
 @ stdcall RpcEpRegisterA(ptr ptr ptr str)
 @ stub RpcEpRegisterNoReplaceA
 @ stub RpcEpRegisterNoReplaceW
@@ -416,11 +416,11 @@
 @ stub RpcErrorSaveErrorInfo # wxp
 @ stdcall RpcErrorStartEnumeration(ptr)
 @ stub RpcFreeAuthorizationContext # wxp
-@ stub RpcGetAsyncCallStatus
+@ stdcall RpcGetAsyncCallStatus(ptr) RpcAsyncGetCallStatus
 @ stub RpcIfIdVectorFree
 @ stub RpcIfInqId
 @ stdcall RpcImpersonateClient(ptr)
-@ stub RpcInitializeAsyncHandle
+@ stdcall RpcInitializeAsyncHandle(ptr long) RpcAsyncInitializeHandle
 @ stub RpcMgmtBindingInqParameter # win9x
 @ stub RpcMgmtBindingSetParameter # win9x
 @ stdcall RpcMgmtEnableIdleCleanup()
