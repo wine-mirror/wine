@@ -158,16 +158,19 @@ static INT CALLBACK font_enum_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DW
 
 static void test_font_metrics(HDC hdc, HFONT hfont, const char *test_str,
 			      INT test_str_len, const TEXTMETRICA *tm_orig,
-			      const SIZE *size_orig, INT width_orig,
+			      const SIZE *size_orig, INT width_of_A_orig,
 			      INT scale_x, INT scale_y)
 {
     HFONT old_hfont;
+    LOGFONTA lf;
     TEXTMETRICA tm;
     SIZE size;
-    INT width;
+    INT width_of_A;
 
     if (!hfont)
         return;
+
+    GetObjectA(hfont, sizeof(lf), &lf);
 
     old_hfont = SelectObject(hdc, hfont);
 
@@ -177,20 +180,25 @@ static void test_font_metrics(HDC hdc, HFONT hfont, const char *test_str,
     ok(tm.tmAscent == tm_orig->tmAscent * scale_y, "%d != %d\n", tm.tmAscent, tm_orig->tmAscent * scale_y);
     ok(tm.tmDescent == tm_orig->tmDescent * scale_y, "%d != %d\n", tm.tmDescent, tm_orig->tmDescent * scale_y);
     ok(tm.tmAveCharWidth == tm_orig->tmAveCharWidth * scale_x, "%d != %d\n", tm.tmAveCharWidth, tm_orig->tmAveCharWidth * scale_x);
+    ok(tm.tmMaxCharWidth == tm_orig->tmMaxCharWidth * scale_x, "%d != %d\n", tm.tmAveCharWidth, tm_orig->tmMaxCharWidth * scale_x);
+
+    ok(lf.lfHeight == tm.tmHeight, "lf %d != tm %d\n", lf.lfHeight, tm.tmHeight);
+    if (lf.lfWidth)
+        ok(lf.lfWidth == tm.tmAveCharWidth, "lf %d != tm %d\n", lf.lfWidth, tm.tmAveCharWidth);
 
     GetTextExtentPoint32A(hdc, test_str, test_str_len, &size);
 
     ok(size.cx == size_orig->cx * scale_x, "%d != %d\n", size.cx, size_orig->cx * scale_x);
     ok(size.cy == size_orig->cy * scale_y, "%d != %d\n", size.cy, size_orig->cy * scale_y);
 
-    GetCharWidthA(hdc, 'A', 'A', &width);
+    GetCharWidthA(hdc, 'A', 'A', &width_of_A);
 
-    ok(width == width_orig * scale_x, "%d != %d\n", width, width_orig * scale_x);
+    ok(width_of_A == width_of_A_orig * scale_x, "%d != %d\n", width_of_A, width_of_A_orig * scale_x);
 
     SelectObject(hdc, old_hfont);
 }
 
-/* see whether GDI scales bitmap font metrics */
+/* Test how GDI scales bitmap font metrics */
 static void test_bitmap_font(void)
 {
     static const char test_str[11] = "Test String";
@@ -246,7 +254,6 @@ todo_wine
     bitmap_lf.lfHeight = height_orig * 3;
     bitmap_lf.lfWidth = 0;
     hfont = create_font("3x3", &bitmap_lf);
-
 todo_wine
 {
     test_font_metrics(hdc, hfont, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 3);
