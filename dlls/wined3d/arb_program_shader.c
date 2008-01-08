@@ -1734,7 +1734,12 @@ static void shader_arb_cleanup(IWineD3DDevice *iface) {
 
 static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
+    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *) This->baseShader.device)->adapter->gl_info;
 
+    ENTER_GL();
+    GL_EXTCALL(glDeleteProgramsARB(1, &This->baseShader.prgId));
+    checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &This->baseShader.prgId))");
+    LEAVE_GL();
     This->baseShader.prgId = 0;
     This->baseShader.is_compiled = FALSE;
 }
