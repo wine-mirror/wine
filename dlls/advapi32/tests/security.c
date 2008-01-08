@@ -1627,11 +1627,18 @@ static void test_security_descriptor(void)
     SECURITY_DESCRIPTOR sd;
     char buf[8192];
     DWORD size;
-    BOOL isDefault, isPresent;
+    BOOL isDefault, isPresent, ret;
     PACL pacl;
     PSID psid;
 
-    InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+    SetLastError(0xdeadbeef);
+    ret = InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+    if (ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("InitializeSecurityDescriptor is not implemented\n");
+        return;
+    }
+
     ok(GetSecurityDescriptorOwner(&sd, &psid, &isDefault), "GetSecurityDescriptorOwner failed\n");
     expect_eq(psid, NULL, PSID, "%p");
     expect_eq(isDefault, FALSE, BOOL, "%d");
@@ -2253,6 +2260,12 @@ static void test_PrivateObjectSecurity(void)
     ULONG len;
     PSECURITY_DESCRIPTOR buf;
 
+    if (!pConvertStringSecurityDescriptorToSecurityDescriptorA)
+    {
+        skip("ConvertStringSecurityDescriptorToSecurityDescriptor is not available\n");
+        return;
+    }
+
     ok(pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "O:SY"
         "G:S-1-5-21-93476-23408-4576"
@@ -2308,6 +2321,12 @@ static void test_acls(void)
 
     SetLastError(0xdeadbeef);
     ret = InitializeAcl(pAcl, sizeof(ACL) - 1, ACL_REVISION);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("InitializeAcl is not implemented\n");
+        return;
+    }
+
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InitializeAcl with too small a buffer should have failed with ERROR_INSUFFICIENT_BUFFER instead of %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
