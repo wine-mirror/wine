@@ -406,6 +406,87 @@ static void check_vbo_size(IWineD3DVertexBufferImpl *This) {
     }
 }
 
+static void CreateVBO(IWineD3DVertexBufferImpl *This) {
+    GLenum error, glUsage;
+    DWORD vboUsage = This->resource.usage;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+    TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p  Usage(%s)\n", This, debug_d3dusage(vboUsage));
+
+    /* Make sure that a context is there. Needed in a multithreaded environment. Otherwise this call is a nop */
+    ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    ENTER_GL();
+
+    /* Make sure that the gl error is cleared. Do not use checkGLcall
+    * here because checkGLcall just prints a fixme and continues. However,
+    * if an error during VBO creation occurs we can fall back to non-vbo operation
+    * with full functionality(but performance loss)
+    */
+    while(glGetError() != GL_NO_ERROR);
+
+    /* Basically the FVF parameter passed to CreateVertexBuffer is no good
+    * It is the FVF set with IWineD3DDevice::SetFVF or the Vertex Declaration set with
+    * IWineD3DDevice::SetVertexDeclaration that decides how the vertices in the buffer
+    * look like. This means that on each DrawPrimitive call the vertex buffer has to be verified
+    * to check if the rhw and color values are in the correct format.
+    */
+
+    GL_EXTCALL(glGenBuffersARB(1, &This->vbo));
+    error = glGetError();
+    if(This->vbo == 0 || error != GL_NO_ERROR) {
+        WARN("Failed to create a VBO with error %s (%#x)\n", debug_glerror(error), error);
+        goto error;
+    }
+
+    GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+    error = glGetError();
+    if(error != GL_NO_ERROR) {
+        WARN("Failed to bind the VBO with error %s (%#x)\n", debug_glerror(error), error);
+        goto error;
+    }
+
+    /* Don't use static, because dx apps tend to update the buffer
+    * quite often even if they specify 0 usage. Because we always keep the local copy
+    * we never read from the vbo and can create a write only opengl buffer.
+    */
+    switch(vboUsage & (WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_DYNAMIC) ) {
+        case WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_DYNAMIC:
+        case WINED3DUSAGE_DYNAMIC:
+            TRACE("Gl usage = GL_STREAM_DRAW\n");
+            glUsage = GL_STREAM_DRAW_ARB;
+            break;
+        case WINED3DUSAGE_WRITEONLY:
+        default:
+            TRACE("Gl usage = GL_DYNAMIC_DRAW\n");
+            glUsage = GL_DYNAMIC_DRAW_ARB;
+            break;
+    }
+
+    /* Reserve memory for the buffer. The amount of data won't change
+    * so we are safe with calling glBufferData once with a NULL ptr and
+    * calling glBufferSubData on updates
+    */
+    GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, This->resource.size, NULL, glUsage));
+    error = glGetError();
+    if(error != GL_NO_ERROR) {
+        WARN("glBufferDataARB failed with error %s (%#x)\n", debug_glerror(error), error);
+        goto error;
+    }
+    This->vbo_size = This->resource.size;
+    This->vbo_usage = glUsage;
+
+    LEAVE_GL();
+
+    return;
+    error:
+            /* Clean up all vbo init, but continue because we can work without a vbo :-) */
+            FIXME("Failed to create a vertex buffer object. Continuing, but performance issues can occur\n");
+    if(This->vbo) GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
+    This->vbo = 0;
+    LEAVE_GL();
+    return;
+}
+
 static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
@@ -421,7 +502,11 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
 
     if(!This->vbo) {
         /* TODO: Make converting independent from VBOs */
-        return; /* Not doing any conversion */
+        if(This->Flags & VBFLAG_CREATEVBO) {
+            This->Flags &= ~VBFLAG_CREATEVBO;
+        } else {
+            return; /* Not doing any conversion */
+        }
     }
 
     /* Reading the declaration makes only sense if the stateblock is finalized and the buffer bound to a stream */
@@ -612,6 +697,7 @@ static void WINAPI IWineD3DVertexBufferImpl_UnLoad(IWineD3DVertexBuffer *iface) 
         checkGLcall("glDeleteBuffersARB");
         LEAVE_GL();
         This->vbo = 0;
+        This->Flags |= VBFLAG_CREATEVBO; /* Recreate the VBO next load */
     }
 }
 
