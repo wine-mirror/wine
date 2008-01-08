@@ -958,6 +958,12 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
 
     TRACE("%p->(%s %s %p)\n", iface, debugstr_w(target), debugstr_w(data), pi);
 
+    if(!pi)
+        return E_INVALIDARG;
+
+    if(!target || lstrlenW(target) == 0)
+        return E_FAIL;
+
     xml_target = xmlChar_from_wchar((WCHAR*)target);
     xml_content = xmlChar_from_wchar((WCHAR*)data);
 

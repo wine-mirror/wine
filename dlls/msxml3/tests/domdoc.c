@@ -348,6 +348,7 @@ static void test_domdoc( void )
     IXMLDOMComment *node_comment = NULL;
     IXMLDOMAttribute *node_attr = NULL;
     IXMLDOMNode *nodeChild = NULL;
+    IXMLDOMProcessingInstruction *nodePI = NULL;
     VARIANT_BOOL b;
     VARIANT var;
     BSTR str;
@@ -547,6 +548,31 @@ static void test_domdoc( void )
     r = IXMLDOMDocument_createAttribute(doc, szAttribute, &node_attr);
     ok( r == S_OK, "returns %08x\n", r );
     IXMLDOMText_Release( node_attr);
+
+    /* test Processing Instruction */
+    str = SysAllocStringLen(NULL, 0);
+    r = IXMLDOMDocument_createProcessingInstruction(doc, str, str, NULL);
+    ok( r == E_INVALIDARG, "returns %08x\n", r );
+    r = IXMLDOMDocument_createProcessingInstruction(doc, NULL, str, &nodePI);
+    ok( r == E_FAIL, "returns %08x\n", r );
+    r = IXMLDOMDocument_createProcessingInstruction(doc, str, str, &nodePI);
+    ok( r == E_FAIL, "returns %08x\n", r );
+    SysFreeString(str);
+
+    r = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"), _bstr_("version=\"1.0\""), &nodePI);
+    ok( r == S_OK, "returns %08x\n", r );
+    if(nodePI)
+    {
+        /* Last Child Checks */
+        r = IXMLDOMProcessingInstruction_get_lastChild(nodePI, NULL);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+
+        nodeChild = (IXMLDOMNode*)0x1;
+        r = IXMLDOMProcessingInstruction_get_lastChild(nodePI, &nodeChild);
+        ok(r == S_FALSE, "ret %08x\n", r );
+        ok(nodeChild == NULL, "nodeChild not NULL\n");
+    }
+    IXMLDOMProcessingInstruction_Release(nodePI);
 
     r = IXMLDOMDocument_Release( doc );
     ok( r == 0, "document ref count incorrect\n");
