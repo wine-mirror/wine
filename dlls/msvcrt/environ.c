@@ -105,8 +105,8 @@ int CDECL _putenv(const char *str)
  if ((ret == -1) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ret = 0;
 
  /* Update the __p__environ array only when already initialized */
- if (_environ)
-   _environ = msvcrt_SnapshotOfEnvironmentA(_environ);
+ if (MSVCRT__environ)
+   MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
  if (_wenviron)
    _wenviron = msvcrt_SnapshotOfEnvironmentW(_wenviron);
    
@@ -151,8 +151,8 @@ int CDECL _wputenv(const MSVCRT_wchar_t *str)
  if ((ret == -1) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ret = 0;
 
  /* Update the __p__environ array only when already initialized */
- if (_environ)
-   _environ = msvcrt_SnapshotOfEnvironmentA(_environ);
+ if (MSVCRT__environ)
+   MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
  if (_wenviron)
    _wenviron = msvcrt_SnapshotOfEnvironmentW(_wenviron);
 

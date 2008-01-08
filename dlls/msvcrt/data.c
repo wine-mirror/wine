@@ -50,7 +50,7 @@ char **MSVCRT___argv;
 MSVCRT_wchar_t **MSVCRT___wargv;
 char *MSVCRT__acmdln;
 MSVCRT_wchar_t *MSVCRT__wcmdln;
-char **_environ = 0;
+char **MSVCRT__environ = 0;
 MSVCRT_wchar_t **_wenviron = 0;
 char **MSVCRT___initenv = 0;
 MSVCRT_wchar_t **MSVCRT___winitenv = 0;
@@ -203,9 +203,9 @@ MSVCRT_wchar_t*** CDECL __p___wargv(void) { return &MSVCRT___wargv; }
  */
 char*** CDECL __p__environ(void)
 {
-  if (!_environ)
-    _environ = msvcrt_SnapshotOfEnvironmentA(NULL);
-  return &_environ;
+  if (!MSVCRT__environ)
+    MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(NULL);
+  return &MSVCRT__environ;
 }
 
 /*********************************************************************
@@ -302,7 +302,7 @@ void msvcrt_free_args(void)
   /* FIXME: more things to free */
   HeapFree(GetProcessHeap(), 0, MSVCRT___initenv);
   HeapFree(GetProcessHeap(), 0, MSVCRT___winitenv);
-  HeapFree(GetProcessHeap(), 0, _environ);
+  HeapFree(GetProcessHeap(), 0, MSVCRT__environ);
   HeapFree(GetProcessHeap(), 0, _wenviron);
   HeapFree(GetProcessHeap(), 0, MSVCRT__pgmptr);
   HeapFree(GetProcessHeap(), 0, MSVCRT__wpgmptr);

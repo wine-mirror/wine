@@ -119,7 +119,7 @@ void   msvcrt_set_errno(int);
 void   _purecall(void);
 void   _amsg_exit(int errnum);
 
-extern char **_environ;
+extern char **MSVCRT__environ;
 extern MSVCRT_wchar_t **_wenviron;
 
 extern char ** msvcrt_SnapshotOfEnvironmentA(char **);

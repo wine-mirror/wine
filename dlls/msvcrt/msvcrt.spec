@@ -208,7 +208,7 @@
 @ cdecl _ecvt(double long ptr ptr)
 @ cdecl _endthread ()
 @ cdecl _endthreadex(long)
-@ extern _environ
+@ extern _environ MSVCRT__environ
 @ cdecl _eof(long)
 @ cdecl _errno() MSVCRT__errno
 @ cdecl _except_handler2(ptr ptr ptr ptr)
