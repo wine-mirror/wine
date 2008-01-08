@@ -206,7 +206,7 @@ getbuffer:
         if (hres) return hres;
 
 	seekto.u.LowPart = 0;seekto.u.HighPart = 0;
-	hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
+	hres = IStream_Seek(pStm,seekto,STREAM_SEEK_SET,&newpos);
 	if (hres) {
             FIXME("IStream_Seek failed, %x\n",hres);
 	    return hres;

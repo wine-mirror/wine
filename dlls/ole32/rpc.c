@@ -1823,7 +1823,7 @@ HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     hres = IStream_Write(pStm,marshalbuffer,bufferlen,&res);
     if (hres) goto out;
     seekto.u.LowPart = 0;seekto.u.HighPart = 0;
-    hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
+    hres = IStream_Seek(pStm,seekto,STREAM_SEEK_SET,&newpos);
     
     TRACE("unmarshalling classfactory\n");
     hres = CoUnmarshalInterface(pStm,&IID_IClassFactory,ppv);
@@ -1907,7 +1907,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 
         seekto.u.LowPart = 0;
         seekto.u.HighPart = 0;
-        hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
+        hres = IStream_Seek(pStm,seekto,STREAM_SEEK_SET,&newpos);
         if (hres) {
             FIXME("IStream_Seek failed, %x\n",hres);
             CloseHandle(hPipe);
