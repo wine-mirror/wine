@@ -274,8 +274,8 @@ static void fill_thread( struct snapshot* snap, ULONG* offset, LPVOID info, ULON
         {
             thd_entry->dwSize = sizeof(THREADENTRY32);
             thd_entry->cntUsage = 0; /* MSDN says no longer used, always 0 */
-            thd_entry->th32ThreadID = (ULONG)sti->dwThreadID;
-            thd_entry->th32OwnerProcessID = (ULONG)sti->dwOwningPID;
+            thd_entry->th32ThreadID = sti->dwThreadID;
+            thd_entry->th32OwnerProcessID = sti->dwOwningPID;
             thd_entry->tpBasePri = sti->dwBasePriority;
             thd_entry->tpDeltaPri = 0; /* MSDN says no longer used, always 0 */
             thd_entry->dwFlags = 0; /* MSDN says no longer used, always 0" */

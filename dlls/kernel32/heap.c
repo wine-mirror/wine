@@ -955,7 +955,7 @@ HLOCAL WINAPI LocalAlloc(
                 UINT flags, /* [in] Allocation attributes */
                 SIZE_T size /* [in] Number of bytes to allocate */
 ) {
-    return (HLOCAL)GlobalAlloc( flags, size );
+    return GlobalAlloc( flags, size );
 }
 
 
@@ -984,7 +984,7 @@ SIZE_T WINAPI LocalCompact( UINT minfree )
 UINT WINAPI LocalFlags(
               HLOCAL handle /* [in] Handle of memory object */
 ) {
-    return GlobalFlags( (HGLOBAL)handle );
+    return GlobalFlags( handle );
 }
 
 
@@ -1004,7 +1004,7 @@ UINT WINAPI LocalFlags(
 HLOCAL WINAPI LocalFree(
                 HLOCAL handle /* [in] Handle of memory object */
 ) {
-    return (HLOCAL)GlobalFree( (HGLOBAL)handle );
+    return GlobalFree( handle );
 }
 
 
@@ -1024,7 +1024,7 @@ HLOCAL WINAPI LocalFree(
 HLOCAL WINAPI LocalHandle(
                 LPCVOID ptr /* [in] Address of local memory block */
 ) {
-    return (HLOCAL)GlobalHandle( ptr );
+    return GlobalHandle( ptr );
 }
 
 
@@ -1044,7 +1044,7 @@ HLOCAL WINAPI LocalHandle(
 LPVOID WINAPI LocalLock(
               HLOCAL handle /* [in] Address of local memory object */
 ) {
-    return GlobalLock( (HGLOBAL)handle );
+    return GlobalLock( handle );
 }
 
 
@@ -1066,7 +1066,7 @@ HLOCAL WINAPI LocalReAlloc(
                 SIZE_T size,   /* [in] New size of block */
                 UINT flags     /* [in] How to reallocate object */
 ) {
-    return (HLOCAL)GlobalReAlloc( (HGLOBAL)handle, size, flags );
+    return GlobalReAlloc( handle, size, flags );
 }
 
 
@@ -1095,7 +1095,7 @@ SIZE_T WINAPI LocalShrink( HGLOBAL handle, UINT newsize )
 SIZE_T WINAPI LocalSize(
               HLOCAL handle /* [in] Handle of memory object */
 ) {
-    return GlobalSize( (HGLOBAL)handle );
+    return GlobalSize( handle );
 }
 
 
@@ -1115,7 +1115,7 @@ SIZE_T WINAPI LocalSize(
 BOOL WINAPI LocalUnlock(
               HLOCAL handle /* [in] Handle of memory object */
 ) {
-    return GlobalUnlock( (HGLOBAL)handle );
+    return GlobalUnlock( handle );
 }
 
 
