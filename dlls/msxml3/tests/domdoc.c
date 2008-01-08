@@ -1829,6 +1829,15 @@ static void test_xmlTypes(void)
     ok(hr == S_FALSE, "ret %08x\n", hr );
     ok(pNextChild == NULL, "pDocChild not NULL\n");
 
+    /* test previous Sibling */
+    hr = IXMLDOMDocument_get_previousSibling(doc, NULL);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+    pNextChild = (IXMLDOMNode *)0x1;
+    hr = IXMLDOMDocument_get_previousSibling(doc, &pNextChild);
+    ok(hr == S_FALSE, "ret %08x\n", hr );
+    ok(pNextChild == NULL, "pNextChild not NULL\n");
+
     hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
     ok(hr == S_OK, "ret %08x\n", hr );
     if(hr == S_OK)
@@ -1888,6 +1897,15 @@ static void test_xmlTypes(void)
 
                     pNextChild = (IXMLDOMNode *)0x1;
                     hr = IXMLDOMAttribute_get_nextSibling(pAttrubute, &pNextChild);
+                    ok(hr == S_FALSE, "ret %08x\n", hr );
+                    ok(pNextChild == NULL, "pNextChild not NULL\n");
+
+                    /* test Previous Sibling*/
+                    hr = IXMLDOMAttribute_get_previousSibling(pAttrubute, NULL);
+                    ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                    pNextChild = (IXMLDOMNode *)0x1;
+                    hr = IXMLDOMAttribute_get_previousSibling(pAttrubute, &pNextChild);
                     ok(hr == S_FALSE, "ret %08x\n", hr );
                     ok(pNextChild == NULL, "pNextChild not NULL\n");
 

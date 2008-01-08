@@ -359,7 +359,23 @@ static HRESULT WINAPI xmlnode_get_previousSibling(
     IXMLDOMNode** previousSibling)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    return get_node( This, "previous", This->node->prev, previousSibling );
+
+    TRACE("%p\n", This );
+
+    if (!previousSibling)
+        return E_INVALIDARG;
+
+    switch( This->node->type )
+    {
+    /* Attribute, Document and Document Fragment Nodes do not support previousSibling */
+    case XML_DOCUMENT_NODE:
+    case XML_DOCUMENT_FRAG_NODE:
+    case XML_ATTRIBUTE_NODE:
+        *previousSibling = NULL;
+        return S_FALSE;
+    default:
+        return get_node( This, "previous", This->node->prev, previousSibling );
+    }
 }
 
 static HRESULT WINAPI xmlnode_get_nextSibling(
