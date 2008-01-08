@@ -218,10 +218,10 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
     }
     else
     {
-        DWORD len;
+        DWORD len = 0;
 
         ret = ImageGetCertificateData(pSubjectInfo->hFile, dwIndex, NULL, &len);
-        if (!ret)
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
             goto error;
         pCert = HeapAlloc(GetProcessHeap(), 0, len);
         if (!pCert)
