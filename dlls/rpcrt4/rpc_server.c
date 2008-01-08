@@ -335,10 +335,8 @@ fail:
   /* clean up */
   if (msg->Buffer == buf) msg->Buffer = NULL;
   TRACE("freeing Buffer=%p\n", buf);
-  HeapFree(GetProcessHeap(), 0, buf);
-  msg->Handle = 0;
+  I_RpcFree(buf);
   I_RpcFreeBuffer(msg);
-  msg->Buffer = NULL;
   RPCRT4_FreeHeader(hdr);
   HeapFree(GetProcessHeap(), 0, msg);
 }
