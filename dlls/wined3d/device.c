@@ -6781,6 +6781,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     HRESULT hr;
     BOOL DisplayModeChanged = FALSE;
     WINED3DDISPLAYMODE mode;
+    IWineD3DBaseShaderImpl *shader;
     TRACE("(%p)\n", This);
 
     hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **) &swapchain);
@@ -6835,6 +6836,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     }
 
     IWineD3DDevice_EnumResources(iface, reset_unload_resources, NULL);
+    LIST_FOR_EACH_ENTRY(shader, &This->shaders, IWineD3DBaseShaderImpl, baseShader.shader_list_entry) {
+        This->shader_backend->shader_destroy((IWineD3DBaseShader *) shader);
+    }
 
     if(pPresentationParameters->Windowed) {
         mode.Width = swapchain->orig_width;
