@@ -408,8 +408,26 @@ static HRESULT WINAPI xmlnode_get_attributes(
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
     TRACE("%p\n", This);
-    *attributeMap = create_nodemap( iface );
-    return S_OK;
+
+    if (!attributeMap)
+        return E_INVALIDARG;
+
+    switch( This->node->type )
+    {
+    /* Attribute, CDataSection, Comment, Documents, Documents Fragments,
+       Entity and Text Nodes does not support get_attributes */
+    case XML_ATTRIBUTE_NODE:
+    case XML_COMMENT_NODE:
+    case XML_DOCUMENT_NODE:
+    case XML_DOCUMENT_FRAG_NODE:
+    case XML_ENTITY_NODE:
+    case XML_TEXT_NODE:
+        *attributeMap = NULL;
+        return S_FALSE;
+    default:
+        *attributeMap = create_nodemap( iface );
+        return S_OK;
+    }
 }
 
 static HRESULT WINAPI xmlnode_insertBefore(

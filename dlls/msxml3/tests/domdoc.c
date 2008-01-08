@@ -512,6 +512,8 @@ static void test_domdoc( void )
     ok( r == S_OK, "returns %08x\n", r );
     if(nodetext)
     {
+        IXMLDOMNamedNodeMap *pAttribs;
+
         /* Text Last Child Checks */
         r = IXMLDOMText_get_lastChild(nodetext, NULL);
         ok(r == E_INVALIDARG, "ret %08x\n", r );
@@ -520,6 +522,15 @@ static void test_domdoc( void )
         r = IXMLDOMText_get_lastChild(nodetext, &nodeChild);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok(nodeChild == NULL, "nodeChild not NULL\n");
+
+        /* test get_attributes */
+        r = IXMLDOMText_get_attributes( nodetext, NULL );
+        ok( r == E_INVALIDARG, "get_attributes returned wrong code\n");
+
+        pAttribs = (IXMLDOMNamedNodeMap*)0x1;
+        r = IXMLDOMText_get_attributes( nodetext, &pAttribs);
+        ok(r == S_FALSE, "ret %08x\n", r );
+        ok( pAttribs == NULL, "pAttribs not NULL\n");
     }
     IXMLDOMText_Release( nodetext );
     SysFreeString( str );
@@ -1838,6 +1849,15 @@ static void test_xmlTypes(void)
     ok(hr == S_FALSE, "ret %08x\n", hr );
     ok(pNextChild == NULL, "pNextChild not NULL\n");
 
+    /* test get_attributes */
+    hr = IXMLDOMDocument_get_attributes( doc, NULL );
+    ok( hr == E_INVALIDARG, "get_attributes returned wrong code\n");
+
+    pAttribs = (IXMLDOMNamedNodeMap*)0x1;
+    hr = IXMLDOMDocument_get_attributes( doc, &pAttribs);
+    ok(hr == S_FALSE, "ret %08x\n", hr );
+    ok( pAttribs == NULL, "pAttribs not NULL\n");
+
     hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
     ok(hr == S_OK, "ret %08x\n", hr );
     if(hr == S_OK)
@@ -1851,6 +1871,15 @@ static void test_xmlTypes(void)
             ok(hr == S_OK, "ret %08x\n", hr );
             if(hr == S_OK)
             {
+                /* test get_attributes */
+                hr = IXMLDOMComment_get_attributes( pComment, NULL );
+                ok( hr == E_INVALIDARG, "get_attributes returned wrong code\n");
+
+                pAttribs = (IXMLDOMNamedNodeMap*)0x1;
+                hr = IXMLDOMComment_get_attributes( pComment, &pAttribs);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok( pAttribs == NULL, "pAttribs not NULL\n");
+
                 hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pComment, NULL);
                 ok(hr == S_OK, "ret %08x\n", hr );
 
@@ -1908,6 +1937,15 @@ static void test_xmlTypes(void)
                     hr = IXMLDOMAttribute_get_previousSibling(pAttrubute, &pNextChild);
                     ok(hr == S_FALSE, "ret %08x\n", hr );
                     ok(pNextChild == NULL, "pNextChild not NULL\n");
+
+                    /* test get_attributes */
+                    hr = IXMLDOMAttribute_get_attributes( pAttrubute, NULL );
+                    ok( hr == E_INVALIDARG, "get_attributes returned wrong code\n");
+
+                    pAttribs = (IXMLDOMNamedNodeMap*)0x1;
+                    hr = IXMLDOMAttribute_get_attributes( pAttrubute, &pAttribs);
+                    ok(hr == S_FALSE, "ret %08x\n", hr );
+                    ok( pAttribs == NULL, "pAttribs not NULL\n");
 
                     hr = IXMLDOMElement_appendChild(pElement, (IXMLDOMNode*)pAttrubute, &pNewChild);
                     ok(hr == E_FAIL, "ret %08x\n", hr );
