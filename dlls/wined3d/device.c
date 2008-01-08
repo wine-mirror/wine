@@ -1883,6 +1883,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
         IWineD3DVertexShader_Release(*ppVertexShader);
         return WINED3DERR_INVALIDCALL;
     }
+    list_add_head(&This->shaders, &object->baseShader.shader_list_entry);
 
     return WINED3D_OK;
 }
@@ -1897,6 +1898,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
     hr = IWineD3DPixelShader_SetFunction(*ppPixelShader, pFunction);
     if (WINED3D_OK == hr) {
         TRACE("(%p) : Created Pixel shader %p\n", This, *ppPixelShader);
+        list_add_head(&This->shaders, &object->baseShader.shader_list_entry);
     } else {
         WARN("(%p) : Failed to create pixel shader\n", This);
     }

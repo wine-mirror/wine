@@ -675,6 +675,7 @@ struct IWineD3DDeviceImpl
     UINT                    NumberOfSwapChains;
 
     struct list             resources; /* a linked list to track resources created by the device */
+    struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
 
     /* Render Target Support */
     IWineD3DSurface       **render_targets;
@@ -1970,6 +1971,7 @@ typedef struct IWineD3DBaseShaderClass
 
     /* Pointer to the parent device */
     IWineD3DDevice *device;
+    struct list     shader_list_entry;
 
 } IWineD3DBaseShaderClass;
 

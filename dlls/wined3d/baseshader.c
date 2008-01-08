@@ -1142,6 +1142,7 @@ ULONG  WINAPI IWineD3DBaseShaderImpl_Release(IWineD3DBaseShader *iface) {
         shader_delete_constant_list(&This->baseShader.constantsF);
         shader_delete_constant_list(&This->baseShader.constantsB);
         shader_delete_constant_list(&This->baseShader.constantsI);
+        list_remove(&This->baseShader.shader_list_entry);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
