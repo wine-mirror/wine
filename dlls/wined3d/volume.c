@@ -98,7 +98,10 @@ static void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
 }
 
 static void WINAPI IWineD3DVolumeImpl_UnLoad(IWineD3DVolume *iface) {
-    IWineD3DResourceImpl_UnLoad((IWineD3DResource *)iface);
+    /* The whole content is shadowed on This->resource.allocatedMemory, and the
+     * texture name is managed by the VolumeTexture container
+     */
+    TRACE("(%p): Nothing to do\n", iface);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {
