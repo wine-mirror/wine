@@ -739,7 +739,7 @@ struct chmFile *chm_openW(const WCHAR *filename)
     sremain = _CHM_ITSP_V1_LEN;
     sbufpos = sbuffer;
     if (_chm_fetch_bytes(newHandle, sbuffer,
-                         (UInt64)itsfHeader.dir_offset, sremain) != sremain       ||
+                         itsfHeader.dir_offset, sremain) != sremain    ||
         !_unmarshal_itsp_header(&sbufpos, &sremain, &itspHeader))
     {
         chm_close(newHandle);
@@ -1042,7 +1042,7 @@ int chm_resolve_object(struct chmFile *h,
 
         /* try to fetch the index page */
         if (_chm_fetch_bytes(h, page_buf,
-                             (UInt64)h->dir_offset + (UInt64)curPage*h->block_len,
+                             h->dir_offset + (UInt64)curPage*h->block_len,
                              h->block_len) != h->block_len)
 	{
 	    HeapFree(GetProcessHeap(), 0, page_buf);
@@ -1105,10 +1105,10 @@ static int _chm_get_cmpblock_bounds(struct chmFile *h,
         dummy = buffer;
         remain = 8;
         if (_chm_fetch_bytes(h, buffer,
-                             (UInt64)h->data_offset
-                                + (UInt64)h->rt_unit.start
-                                + (UInt64)h->reset_table.table_offset
-                                + (UInt64)block*8,
+                             h->data_offset
+                                + h->rt_unit.start
+                                + h->reset_table.table_offset
+                                + block*8,
                              remain) != remain                            ||
             !_unmarshal_uint64(&dummy, &remain, start))
             return 0;
@@ -1117,10 +1117,10 @@ static int _chm_get_cmpblock_bounds(struct chmFile *h,
         dummy = buffer;
         remain = 8;
         if (_chm_fetch_bytes(h, buffer,
-                         (UInt64)h->data_offset
-                                + (UInt64)h->rt_unit.start
-                                + (UInt64)h->reset_table.table_offset
-                                + (UInt64)block*8 + 8,
+                             h->data_offset
+                                + h->rt_unit.start
+                                + h->reset_table.table_offset
+                                + block*8 + 8,
                          remain) != remain                                ||
             !_unmarshal_int64(&dummy, &remain, len))
             return 0;
@@ -1133,10 +1133,10 @@ static int _chm_get_cmpblock_bounds(struct chmFile *h,
         dummy = buffer;
         remain = 8;
         if (_chm_fetch_bytes(h, buffer,
-                             (UInt64)h->data_offset
-                                + (UInt64)h->rt_unit.start
-                                + (UInt64)h->reset_table.table_offset
-                                + (UInt64)block*8,
+                             h->data_offset
+                                + h->rt_unit.start
+                                + h->reset_table.table_offset
+                                + block*8,
                              remain) != remain                            ||
             !_unmarshal_uint64(&dummy, &remain, start))
             return 0;
@@ -1339,7 +1339,7 @@ LONGINT64 chm_retrieve_object(struct chmFile *h,
         /* read data */
         return _chm_fetch_bytes(h,
                                 buf,
-                                (UInt64)h->data_offset + (UInt64)ui->start + (UInt64)addr,
+                                h->data_offset + ui->start + addr,
                                 len);
     }
 
@@ -1382,7 +1382,7 @@ int chm_enumerate(struct chmFile *h,
     Int32 curPage;
 
     /* buffer to hold whatever page we're looking at */
-    UChar *page_buf = HeapAlloc(GetProcessHeap(), 0, (unsigned int)h->block_len);
+    UChar *page_buf = HeapAlloc(GetProcessHeap(), 0, h->block_len);
     struct chmPmglHeader header;
     UChar *end;
     UChar *cur;
@@ -1403,7 +1403,7 @@ int chm_enumerate(struct chmFile *h,
         /* try to fetch the index page */
         if (_chm_fetch_bytes(h,
                              page_buf,
-                             (UInt64)h->dir_offset + (UInt64)curPage*h->block_len,
+                             h->dir_offset + (UInt64)curPage*h->block_len,
                              h->block_len) != h->block_len)
         {
             HeapFree(GetProcessHeap(), 0, page_buf);
@@ -1495,7 +1495,7 @@ int chm_enumerate_dir(struct chmFile *h,
     Int32 curPage;
 
     /* buffer to hold whatever page we're looking at */
-    UChar *page_buf = HeapAlloc(GetProcessHeap(), 0, (unsigned int)h->block_len);
+    UChar *page_buf = HeapAlloc(GetProcessHeap(), 0, h->block_len);
     struct chmPmglHeader header;
     UChar *end;
     UChar *cur;
@@ -1540,7 +1540,7 @@ int chm_enumerate_dir(struct chmFile *h,
         /* try to fetch the index page */
         if (_chm_fetch_bytes(h,
                              page_buf,
-                             (UInt64)h->dir_offset + (UInt64)curPage*h->block_len,
+                             h->dir_offset + (UInt64)curPage*h->block_len,
                              h->block_len) != h->block_len)
         {
             HeapFree(GetProcessHeap(), 0, page_buf);
