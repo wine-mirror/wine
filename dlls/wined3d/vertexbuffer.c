@@ -597,7 +597,22 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
 }
 
 static void WINAPI IWineD3DVertexBufferImpl_UnLoad(IWineD3DVertexBuffer *iface) {
-    IWineD3DResourceImpl_UnLoad((IWineD3DResource *)iface);
+    IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *) iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    TRACE("(%p)\n", This);
+
+    /* This is easy: The whole content is shadowed in This->resource.allocatedMemory,
+     * so we only have to destroy the vbo. Only do it if we have a vbo, which implies
+     * that vbos are supported
+     */
+    if(This->vbo) {
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ENTER_GL();
+        GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
+        checkGLcall("glDeleteBuffersARB");
+        LEAVE_GL();
+        This->vbo = 0;
+    }
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *iface) {
