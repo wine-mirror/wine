@@ -6766,6 +6766,13 @@ static void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, WINED3DPRESENT_PARAM
     surface->resource.size = IWineD3DSurface_GetPitch((IWineD3DSurface *) surface) * surface->pow2Width;
 }
 
+static HRESULT WINAPI reset_unload_resources(IWineD3DResource *resource, void *data) {
+    TRACE("Unloading resource %p\n", resource);
+    IWineD3DResource_UnLoad(resource);
+    IWineD3DResource_Release(resource);
+    return S_OK;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain;
@@ -6824,7 +6831,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     if(pPresentationParameters->EnableAutoDepthStencil != swapchain->presentParms.EnableAutoDepthStencil) {
         ERR("What do do about a changed auto depth stencil parameter?\n");
     }
-    TRACE("Checks done\n");
+
+    IWineD3DDevice_EnumResources(iface, reset_unload_resources, NULL);
 
     if(pPresentationParameters->Windowed) {
         mode.Width = swapchain->orig_width;
