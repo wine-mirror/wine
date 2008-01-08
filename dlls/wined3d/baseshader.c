@@ -181,6 +181,20 @@ unsigned int shader_get_float_offset(const DWORD reg) {
      }
 }
 
+static void shader_delete_constant_list(struct list* clist) {
+
+    struct list *ptr;
+    struct local_constant* constant;
+
+    ptr = list_head(clist);
+    while (ptr) {
+        constant = LIST_ENTRY(ptr, struct local_constant, entry);
+        ptr = list_next(clist, ptr);
+        HeapFree(GetProcessHeap(), 0, constant);
+    }
+    list_init(clist);
+}
+
 /* Note that this does not count the loop register
  * as an address register. */
 
@@ -203,6 +217,13 @@ HRESULT shader_get_registers_used(
 
     if (pToken == NULL)
         return WINED3D_OK;
+
+    /* get_registers_used is called on every compile on some 1.x shaders, which can result
+     * in stacking up a collection of local constants. Delete the old constants if existing
+     */
+    shader_delete_constant_list(&This->baseShader.constantsF);
+    shader_delete_constant_list(&This->baseShader.constantsB);
+    shader_delete_constant_list(&This->baseShader.constantsI);
 
     while (WINED3DVS_END() != *pToken) {
         CONST SHADER_OPCODE* curOpcode;
@@ -1072,20 +1093,6 @@ void shader_trace_init(
         This->baseShader.functionLength = (len + 1) * sizeof(DWORD);
     } else {
         This->baseShader.functionLength = 1; /* no Function defined use fixed function vertex processing */
-    }
-}
-
-static void shader_delete_constant_list(
-    struct list* clist) {
-
-    struct list *ptr;
-    struct local_constant* constant;
-
-    ptr = list_head(clist);
-    while (ptr) {
-        constant = LIST_ENTRY(ptr, struct local_constant, entry);
-        ptr = list_next(clist, ptr);
-        HeapFree(GetProcessHeap(), 0, constant);
     }
 }
 
