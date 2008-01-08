@@ -113,9 +113,35 @@ BOOL FD31_CallWindowProc(const FD31_DATA *lfs, UINT wMsg, WPARAM wParam,
 }
 
 /***********************************************************************
+ * 				FD31_GetFileType		[internal]
+ */
+static LPCWSTR FD31_GetFileType(LPCWSTR cfptr, LPCWSTR fptr, const WORD index)
+{
+  int n, i;
+  i = 0;
+  if (cfptr)
+    for ( ;(n = lstrlenW(cfptr)) != 0; i++)
+      {
+	cfptr += n + 1;
+	if (i == index)
+	  return cfptr;
+	cfptr += lstrlenW(cfptr) + 1;
+      }
+  if (fptr)
+    for ( ;(n = lstrlenW(fptr)) != 0; i++)
+      {
+	fptr += n + 1;
+	if (i == index)
+	  return fptr;
+	fptr += lstrlenW(fptr) + 1;
+    }
+  return FILE_star; /* FIXME */
+}
+
+/***********************************************************************
  * 				FD31_ScanDir                 [internal]
  */
-static BOOL FD31_ScanDir(HWND hWnd, LPCWSTR newPath)
+static BOOL FD31_ScanDir(const OPENFILENAMEW *ofn, HWND hWnd, LPCWSTR newPath)
 {
     WCHAR		buffer[BUFFILE];
     HWND 		hdlg, hdlgDir;
@@ -125,10 +151,10 @@ static BOOL FD31_ScanDir(HWND hWnd, LPCWSTR newPath)
     TRACE("Trying to change to %s\n", debugstr_w(newPath));
     if  ( newPath[0] && !SetCurrentDirectoryW( newPath ))
         return FALSE;
-    lstrcpynW(buffer, newPath, sizeof(buffer)/sizeof(WCHAR));
 
     /* get the list of spec files */
-    GetDlgItemTextW(hWnd, edt1, buffer, sizeof(buffer)/sizeof(WCHAR));
+    lstrcpynW(buffer, FD31_GetFileType(ofn->lpstrCustomFilter,
+              ofn->lpstrFilter, ofn->nFilterIndex - 1), BUFFILE);
 
     hCursorWait = LoadCursorA(0, (LPSTR)IDC_WAIT);
     oldCursor = SetCursor(hCursorWait);
@@ -159,33 +185,6 @@ static BOOL FD31_ScanDir(HWND hWnd, LPCWSTR newPath)
     }
     SetCursor(oldCursor);
     return lRet;
-}
-
-/***********************************************************************
- * 				FD31_GetFileType		[internal]
- */
-
-static LPCWSTR FD31_GetFileType(LPCWSTR cfptr, LPCWSTR fptr, const WORD index)
-{
-  int n, i;
-  i = 0;
-  if (cfptr)
-    for ( ;(n = lstrlenW(cfptr)) != 0; i++)
-      {
-	cfptr += n + 1;
-	if (i == index)
-	  return cfptr;
-	cfptr += lstrlenW(cfptr) + 1;
-      }
-  if (fptr)
-    for ( ;(n = lstrlenW(fptr)) != 0; i++)
-      {
-	fptr += n + 1;
-	if (i == index)
-	  return fptr;
-	fptr += lstrlenW(fptr) + 1;
-    }
-  return FILE_star; /* FIXME */
 }
 
 /***********************************************************************
@@ -374,7 +373,7 @@ static LRESULT FD31_DirListDblClick( const FD31_DATA *lfs )
     }
   strcatW(tmpstr, FILE_bslash);
 
-  FD31_ScanDir(hWnd, tmpstr);
+  FD31_ScanDir(lfs->ofnW, hWnd, tmpstr);
   /* notify the app */
   if (lfs->hook)
     {
@@ -449,7 +448,7 @@ static LRESULT FD31_TestPath( const FD31_DATA *lfs, LPWSTR path )
 
         TRACE("path=%s, tmpstr2=%s\n", debugstr_w(path), debugstr_w(tmpstr2));
         SetDlgItemTextW( hWnd, edt1, tmpstr2 );
-        FD31_ScanDir(hWnd, path);
+        FD31_ScanDir(lfs->ofnW, hWnd, path);
         return (lfs->ofnW->Flags & OFN_NOVALIDATE) ? TRUE : FALSE;
     }
 
@@ -461,7 +460,7 @@ static LRESULT FD31_TestPath( const FD31_DATA *lfs, LPWSTR path )
         strcatW(path, FILE_bslash);
 
     /* if ScanDir succeeds, we have changed the directory */
-    if (FD31_ScanDir(hWnd, path))
+    if (FD31_ScanDir(lfs->ofnW, hWnd, path))
         return FALSE; /* and path is not a valid file name */
 
     /* if not, this must be a filename */
@@ -476,7 +475,7 @@ static LRESULT FD31_TestPath( const FD31_DATA *lfs, LPWSTR path )
 
         lstrcpynW(tmpstr2, pBeginFileName + 1, sizeof(tmpstr2)/sizeof(WCHAR) );
         /* Should we MessageBox() if this fails? */
-        if (!FD31_ScanDir(hWnd, path))
+        if (!FD31_ScanDir(lfs->ofnW, hWnd, path))
         {
             return FALSE;
         }
@@ -870,11 +869,19 @@ LONG FD31_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   if (ofn->nFilterIndex == 0 && ofn->lpstrCustomFilter == NULL)
   	ofn->nFilterIndex = 1;
   SendDlgItemMessageW(hWnd, cmb1, CB_SETCURSEL, ofn->nFilterIndex - 1, 0);
-  lstrcpynW(tmpstr, FD31_GetFileType(ofn->lpstrCustomFilter,
+  if (ofn->lpstrFile && ofn->lpstrFile[0])
+  {
+    TRACE( "SetText of edt1 to %s\n", debugstr_w(ofn->lpstrFile) );
+    SetDlgItemTextW( hWnd, edt1, ofn->lpstrFile );
+  }
+  else
+  {
+    lstrcpynW(tmpstr, FD31_GetFileType(ofn->lpstrCustomFilter,
 	     ofn->lpstrFilter, ofn->nFilterIndex - 1),BUFFILE);
-  TRACE("nFilterIndex = %d, SetText of edt1 to %s\n",
+    TRACE("nFilterIndex = %d, SetText of edt1 to %s\n",
   			ofn->nFilterIndex, debugstr_w(tmpstr));
-  SetDlgItemTextW( hWnd, edt1, tmpstr );
+    SetDlgItemTextW( hWnd, edt1, tmpstr );
+  }
   /* get drive list */
   *tmpstr = 0;
   DlgDirListComboBoxW(hWnd, tmpstr, cmb2, 0, DDL_DRIVES | DDL_EXCLUSIVE);
@@ -895,9 +902,9 @@ LONG FD31_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
     }
   else
     *tmpstr = 0;
-  if (!FD31_ScanDir(hWnd, tmpstr)) {
+  if (!FD31_ScanDir(ofn, hWnd, tmpstr)) {
     *tmpstr = 0;
-    if (!FD31_ScanDir(hWnd, tmpstr))
+    if (!FD31_ScanDir(ofn, hWnd, tmpstr))
       WARN("Couldn't read initial directory %s!\n", debugstr_w(tmpstr));
   }
   /* select current drive in combo 2, omit missing drives */
