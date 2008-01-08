@@ -996,7 +996,7 @@ static int rpcrt4_conn_tcp_write(RpcConnection *Connection,
   int bytes_written = 0;
   do
   {
-    int r = write(tcpc->sock, (const char *)buffer + bytes_written, count - bytes_written);
+    int r = send(tcpc->sock, (const char *)buffer + bytes_written, count - bytes_written, 0);
     if (r >= 0)
       bytes_written += r;
     else if (errno != EAGAIN)
