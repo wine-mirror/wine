@@ -3278,6 +3278,8 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     TRACE("Deleting shader object %u\n", This->baseShader.prgId);
     GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
     checkGLcall("glDeleteObjectARB");
+    This->baseShader.prgId = 0;
+    This->baseShader.is_compiled = FALSE;
 }
 
 const shader_backend_t glsl_shader_backend = {

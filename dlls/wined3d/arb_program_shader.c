@@ -1733,6 +1733,10 @@ static void shader_arb_cleanup(IWineD3DDevice *iface) {
 }
 
 static void shader_arb_destroy(IWineD3DBaseShader *iface) {
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
+
+    This->baseShader.prgId = 0;
+    This->baseShader.is_compiled = FALSE;
 }
 
 const shader_backend_t arb_program_shader_backend = {
