@@ -130,6 +130,8 @@ typedef struct _RPC_CLIENT_INTERFACE
 #define TRANSPORT_TYPE_WMSG 0x08
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
+  I_RpcNegotiateTransferSyntax( RPC_MESSAGE* Message );
+RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcGetBuffer( RPC_MESSAGE* Message );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcGetBufferWithObject( RPC_MESSAGE* Message, UUID* ObjectUuid );
