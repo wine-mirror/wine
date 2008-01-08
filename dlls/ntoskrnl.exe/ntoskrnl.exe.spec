@@ -552,9 +552,9 @@
 @ stub KeInitializeMutex
 @ stub KeInitializeQueue
 @ stub KeInitializeSemaphore
-@ stub KeInitializeSpinLock
+@ stdcall KeInitializeSpinLock(ptr)
 @ stdcall KeInitializeTimer(ptr)
-@ stub KeInitializeTimerEx
+@ stdcall KeInitializeTimerEx(ptr long)
 @ stub KeInsertByKeyDeviceQueue
 @ stub KeInsertDeviceQueue
 @ stub KeInsertHeadQueue

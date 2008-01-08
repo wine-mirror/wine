@@ -485,11 +485,29 @@ void WINAPI ExFreePoolWithTag( void *ptr, ULONG tag )
 
 
 /***********************************************************************
+ *           KeInitializeSpinLock   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeSpinLock( PKSPIN_LOCK SpinLock )
+{
+    FIXME("%p\n", SpinLock);
+}
+
+
+/***********************************************************************
+ *           KeInitializeTimerEx   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeTimerEx( PKTIMER Timer, TIMER_TYPE Type )
+{
+    FIXME("%p %d\n", Timer, Type);
+}
+
+
+/***********************************************************************
  *           KeInitializeTimer   (NTOSKRNL.EXE.@)
  */
 void WINAPI KeInitializeTimer( PKTIMER Timer )
 {
-    FIXME("%p\n", Timer);
+    KeInitializeTimerEx(Timer, NotificationTimer);
 }
 
 
