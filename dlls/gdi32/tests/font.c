@@ -244,20 +244,14 @@ static void test_bitmap_font(void)
     bitmap_lf.lfHeight = height_orig * 2;
     bitmap_lf.lfWidth *= 3;
     hfont = create_font("3x2", &bitmap_lf);
-todo_wine
-{
     test_font_metrics(hdc, hfont, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 2);
-}
     DeleteObject(hfont);
 
     /* test integer scaling 3x3 */
     bitmap_lf.lfHeight = height_orig * 3;
     bitmap_lf.lfWidth = 0;
     hfont = create_font("3x3", &bitmap_lf);
-todo_wine
-{
     test_font_metrics(hdc, hfont, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 3);
-}
     DeleteObject(hfont);
 
     ReleaseDC(0, hdc);
