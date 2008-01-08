@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 David Adam
+ * Copyright (C) 2007 Tony Wasserka
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,13 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __D3DX9_H__
-#define __D3DX9_H__
+#ifndef __WINE_D3DX9CORE_H
+#define __WINE_D3DX9CORE_H
 
-#include <limits.h>
+#include <d3dx9.h>
 
-#include "d3d9.h"
-#include "d3dx9core.h"
-#include "d3dx9math.h"
+#define D3DX_VERSION 0x0900
+#define D3DX_SDK_VERSION 9
 
 #endif
