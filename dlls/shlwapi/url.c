@@ -843,7 +843,7 @@ HRESULT WINAPI UrlEscapeA(
     HRESULT ret;
     DWORD lenW = sizeof(bufW)/sizeof(WCHAR), lenA;
 
-    if (!pcchEscaped)
+    if (!pszEscaped || !pcchEscaped || !*pcchEscaped)
         return E_INVALIDARG;
 
     if(!RtlCreateUnicodeStringFromAsciiz(&urlW, pszUrl))
@@ -854,7 +854,7 @@ HRESULT WINAPI UrlEscapeA(
     }
     if(ret == S_OK) {
         RtlUnicodeToMultiByteSize(&lenA, escapedW, lenW * sizeof(WCHAR));
-        if(pszEscaped && *pcchEscaped > lenA) {
+        if(*pcchEscaped > lenA) {
             RtlUnicodeToMultiByteN(pszEscaped, *pcchEscaped - 1, &lenA, escapedW, lenW * sizeof(WCHAR));
             pszEscaped[lenA] = 0;
             *pcchEscaped = lenA;

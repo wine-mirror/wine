@@ -461,23 +461,17 @@ static void test_UrlEscape(void)
 
     ret = UrlEscapeA("/woningplan/woonkamer basis.swf", NULL, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
-    todo_wine {
-        ok(size == 0, "got %d, expected %d\n", size, 0);
-    }
+    ok(size == 0, "got %d, expected %d\n", size, 0);
 
     size = 0;
     ret = UrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
-    todo_wine {
-        ok(size == 0, "got %d, expected %d\n", size, 0);
-    }
+    ok(size == 0, "got %d, expected %d\n", size, 0);
 
     size = 1;
     ret = UrlEscapeA("/woningplan/woonkamer basis.swf", NULL, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
-    todo_wine {
-        ok(size == 1, "got %d, expected %d\n", size, 1);
-    }
+    ok(size == 1, "got %d, expected %d\n", size, 1);
 
     size = 1;
     ret = UrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, NULL, URL_ESCAPE_SPACES_ONLY);
