@@ -88,11 +88,11 @@ void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface){
 
     if (This->resource.wineD3DDevice != NULL) {
         IWineD3DDevice_ResourceReleased((IWineD3DDevice *)This->resource.wineD3DDevice, iface);
-    }/* NOTE: this is not really an error for systemmem resoruces */
+    }/* NOTE: this is not really an error for systemmem resources */
     return;
 }
 
-/* IWineD3DResource Interface follow: */
+/* IWineD3DResource Interface follows: */
 HRESULT WINAPI IWineD3DResourceImpl_GetDevice(IWineD3DResource *iface, IWineD3DDevice** ppDevice) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
     TRACE("(%p) : returning %p\n", This, This->resource.wineD3DDevice);

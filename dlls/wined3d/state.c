@@ -83,8 +83,8 @@ static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
     /* Lighting is not enabled if transformed vertices are drawn
      * but lighting does not affect the stream sources, so it is not grouped for performance reasons.
-     * This state reads the decoded vertex decl, so if it is dirty don't do anything. The
-     * vertex declaration appplying function calls this function for updating
+     * This state reads the decoded vertex declaration, so if it is dirty don't do anything. The
+     * vertex declaration applying function calls this function for updating
      */
 
     if(isStateDirty(context, STATE_VDECL)) {
@@ -435,7 +435,7 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     if (use_vs(stateblock->wineD3DDevice)) {
         /* The spec says that opengl clipping planes are disabled when using shaders. Direct3D planes aren't,
          * so that is an issue. The MacOS ATI driver keeps clipping planes activated with shaders in some
-         * contitions I got sick of tracking down. The shader state handler disables all clip planes because
+         * conditions I got sick of tracking down. The shader state handler disables all clip planes because
          * of that - don't do anything here and keep them disabled
          */
         if(stateblock->renderState[WINED3DRS_CLIPPLANEENABLE]) {
@@ -1457,7 +1457,7 @@ static void state_wrap(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DC
      http://www.cosc.brocku.ca/Offerings/3P98/course/lectures/texture/
      http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/FixedFunction/Textures/texturewrapping.asp
      http://www.gamedev.net/reference/programming/features/rendererdll3/page2.asp
-     Descussion that ways to turn on WRAPing to solve an opengl conversion problem.
+     Discussion on the ways to turn on WRAPing to solve an OpenGL conversion problem.
      http://www.flipcode.org/cgi-bin/fcmsg.cgi?thread_show=10248
 
      so far as I can tell, wrapping and texture-coordinate generate go hand in hand,
@@ -1916,7 +1916,7 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     DWORD op, arg1, arg2, arg0;
 
     TRACE("Setting alpha op for stage %d\n", stage);
-    /* Do not care for enabled / disabled stages, just assign the settigns. colorop disables / enables required stuff */
+    /* Do not care for enabled / disabled stages, just assign the settings. colorop disables / enables required stuff */
     if (mapped_stage != -1) {
         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
             if (tex_used && mapped_stage >= GL_LIMITS(textures)) {
@@ -2543,7 +2543,7 @@ static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
      *
      * Deliberately no check if the vertex declaration is dirty because the vdecl state
      * does not always update the world matrix, only on a switch between transformed
-     * and untrannsformed draws. It *may* happen that the world matrix is set 2 times during one
+     * and untransformed draws. It *may* happen that the world matrix is set 2 times during one
      * draw, but that should be rather rare and cheaper in total.
      */
     glMatrixMode(GL_MODELVIEW);
@@ -3198,7 +3198,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
 
         /* min(WINED3D_ATR_SIZE(position),3) to Disable RHW mode as 'w' coord
            handling for rhw mode should not impact screen position whereas in GL it does.
-           This may  result in very slightly distored textures in rhw mode, but
+           This may result in very slightly distorted textures in rhw mode, but
            a very minimal different. There's always the other option of
            fixing the view matrix to prevent w from having any effect
 
@@ -3247,9 +3247,9 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     /*  WARNING: Data here MUST be in RGBA format, so cannot      */
     /*     go directly into fast mode from app pgm, because       */
     /*     directx requires data in BGRA format.                  */
-    /* currently fixupVertices swizels the format, but this isn't */
+    /* currently fixupVertices swizzles the format, but this isn't */
     /* very practical when using VBOS                             */
-    /* NOTE: Unless we write a vertex shader to swizel the colour */
+    /* NOTE: Unless we write a vertex shader to swizzle the colour */
     /* , or the user doesn't care and wants the speed advantage   */
 
     if (sd->u.s.diffuse.lpData || sd->u.s.diffuse.VBO) {

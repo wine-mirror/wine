@@ -105,7 +105,7 @@ static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* 
 }
 
 CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
-    /* Arithmethic */
+    /* Arithmetic */
     {WINED3DSIO_NOP,  "nop", "NOP", 0, 0, pshader_hw_map2gl, NULL, 0, 0},
     {WINED3DSIO_MOV,  "mov", "MOV", 1, 2, pshader_hw_map2gl, shader_glsl_mov, 0, 0},
     {WINED3DSIO_ADD,  "add", "ADD", 1, 3, pshader_hw_map2gl, shader_glsl_arith, 0, 0},
@@ -510,7 +510,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
         }
 
         /* Don't do any register mapping magic if it is not needed, or if we can't
-         * achive anything anyway
+         * achieve anything anyway
          */
         if(highest_reg_used < (GL_LIMITS(glsl_varyings) / 4) ||
            num_regs_used > (GL_LIMITS(glsl_varyings) / 4) ) {

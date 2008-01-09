@@ -488,7 +488,7 @@ struct WineD3DContext {
     IWineD3DSurface         *surface;
     DWORD                   tid;    /* Thread ID which owns this context at the moment */
 
-    /* Stores some inforation about the context state for optimization */
+    /* Stores some information about the context state for optimization */
     GLint                   last_draw_buffer;
     BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
     BOOL                    last_was_pshader;
@@ -513,7 +513,7 @@ struct WineD3DContext {
 
 typedef enum ContextUsage {
     CTXUSAGE_RESOURCELOAD       = 1,    /* Only loads textures: No State is applied */
-    CTXUSAGE_DRAWPRIM           = 2,    /* OpenGL states are set up for blitting DirectDraw surfacs */
+    CTXUSAGE_DRAWPRIM           = 2,    /* OpenGL states are set up for blitting DirectDraw surfaces */
     CTXUSAGE_BLIT               = 3,    /* OpenGL states are set up 3D drawing */
     CTXUSAGE_CLEAR              = 4,    /* Drawable and states are set up for clearing */
 } ContextUsage;

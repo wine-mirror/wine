@@ -970,7 +970,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
      * video memory. If the value is slightly wrong it doesn't matter as we didn't include AGP-like memory which
      * makes the amount of addressable memory higher and second OpenGL isn't that critical it moves to system
      * memory behind our backs if really needed.
-     * Note that the amout of video memory can be overruled using a registry setting.
+     * Note that the amount of video memory can be overruled using a registry setting.
      */
     switch (gl_info->gl_vendor) {
         case VENDOR_NVIDIA:
@@ -2667,7 +2667,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
             *pCaps->PS20Caps.Caps                     = 0;
             *pCaps->PS20Caps.DynamicFlowControlDepth  = 0; /* WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH = 0 */
             *pCaps->PS20Caps.NumTemps                 = max(12, GLINFO_LOCATION.ps_arb_max_temps);
-            *pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH; /* Minumum: 1 */
+            *pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH; /* Minimum: 1 */
             *pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MIN_NUMINSTRUCTIONSLOTS; /* Minimum number (64 ALU + 32 Texture), a GeforceFX uses 512 */
 
             *pCaps->MaxPShaderInstructionsExecuted    = 512; /* Minimum value, a GeforceFX uses 1024 */
@@ -2882,7 +2882,7 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
 
         /* The Intel GPUs on MacOS set the .w register of texcoords to 0.0 by default, which causes problems
          * with fixed function fragment processing. Ideally this flag should be detected with a test shader
-         * and opengl feedback mode, but some GL implementations(MacOS ATI at least, propably all macos ones)
+         * and OpenGL feedback mode, but some GL implementations (MacOS ATI at least, probably all MacOS ones)
          * do not like vertex shaders in feedback mode and return an error, even though it should be valid
          * according to the spec.
          *

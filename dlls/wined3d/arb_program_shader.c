@@ -1366,8 +1366,8 @@ void pshader_hw_texdepth(SHADER_OPCODE_ARG* arg) {
     char dst_name[50];
 
     /* texdepth has an implicit destination, the fragment depth value. It's only parameter,
-     * which is essentially an input, is the destiantion register because it is the first
-     * param. According to the msdn, this must be register r5, but let's keep it more flexible
+     * which is essentially an input, is the destination register because it is the first
+     * parameter. According to the msdn, this must be register r5, but let's keep it more flexible
      * here
      */
     pshader_get_register_name(arg->dst, dst_name);
@@ -1562,7 +1562,7 @@ void shader_hw_nrm(SHADER_OPCODE_ARG* arg) {
 
 void shader_hw_sincos(SHADER_OPCODE_ARG* arg) {
     /* This instruction exists in ARB, but the d3d instruction takes two extra parameters which
-     * must contain fixed constants. So we need a separate functin to filter those constants and
+     * must contain fixed constants. So we need a separate function to filter those constants and
      * can't use map2gl
      */
     SHADER_BUFFER* buffer = arg->buffer;

@@ -249,7 +249,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
         PUSH1(0); /* end the list */
 
-        /* In case of failure hope that standard ChooosePixelFormat will find something suitable */
+        /* In case of failure hope that standard ChoosePixelFormat will find something suitable */
         if(!GL_EXTCALL(wglChoosePixelFormatARB(hdc, (const int*)&attribs, NULL, 1, &iPixelFormat, &nFormats)))
         {
             /* PixelFormat selection */
@@ -474,10 +474,10 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
  *
  * Sets up a context for DirectDraw blitting.
  * All texture units are disabled, texture unit 0 is set as current unit
- * fog, lighting, blending, alpha test, z test, scissor test, culling diabled
+ * fog, lighting, blending, alpha test, z test, scissor test, culling disabled
  * color writing enabled for all channels
  * register combiners disabled, shaders disabled
- * world matris is set to identity, texture matrix 0 too
+ * world matrix is set to identity, texture matrix 0 too
  * projection matrix is setup for drawing screen coordinates
  *
  * Params:
@@ -740,7 +740,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
                 if(This->activeContext && tid == This->lastThread) {
                     context = This->activeContext;
                 } else {
-                    /* This may happen if the app jumps streight into offscreen rendering
+                    /* This may happen if the app jumps straight into offscreen rendering
                      * Start using the context of the primary swapchain. tid == 0 is no problem
                      * for findThreadContextForSwapChain.
                      *

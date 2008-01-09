@@ -127,7 +127,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_GetParent(IWineD3DBaseTexture *iface, IUn
    IWineD3DBaseTexture IWineD3DBaseTexture parts follow
    ****************************************************** */
 
-/* There is no OpenGL equivilent of setLOD, getLOD, all they do it priortise testure loading
+/* There is no OpenGL equivalent of setLOD, getLOD, all they do it prioritize texture loading
  * so just pretend that they work unless something really needs a failure. */
 DWORD WINAPI IWineD3DBaseTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LODNew) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
@@ -299,7 +299,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
                 checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
             }
             if(textureDimensions==GL_TEXTURE_CUBE_MAP_ARB) {
-                /* Cubemaps are always set to clamp, regardeless of the sampler state. */
+                /* Cubemaps are always set to clamp, regardless of the sampler state. */
                 glTexParameteri(textureDimensions, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                 glTexParameteri(textureDimensions, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                 glTexParameteri(textureDimensions, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -420,7 +420,7 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
         glValue = stateLookup[WINELOOKUP_MAGFILTER][state - minLookup[WINELOOKUP_MAGFILTER]];
         TRACE("ValueMAG=%d setting MAGFILTER to %x\n", state, glValue);
         glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
-        /* We need to reset the Aniotropic filtering state when we change the mag filter to WINED3DTEXF_ANISOTROPIC (this seems a bit weird, check the documentataion to see how it should be switched off. */
+        /* We need to reset the Aniotropic filtering state when we change the mag filter to WINED3DTEXF_ANISOTROPIC (this seems a bit weird, check the documentation to see how it should be switched off. */
         if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && WINED3DTEXF_ANISOTROPIC == state &&
             textureDimensions != GL_TEXTURE_RECTANGLE_ARB) {
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT, samplerStates[WINED3DSAMP_MAXANISOTROPY]);

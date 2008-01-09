@@ -75,8 +75,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
  *  http://developer.nvidia.com/view.asp?IO=var_memory_management
  */
 
-/* TODO: Vertex and Pixel shaders are almost identicle, the only exception being the way that some of the data is looked up or the availablity of some of the data i.e. some instructions are only valid for pshaders and some for vshaders
-because of this the bulk of the software pipeline can be shared between pixel and vertex shaders... and it wouldn't supprise me if the programes can be cross compiled using a large body body shared code */
+/* TODO: Vertex and Pixel shaders are almost identical, the only exception being the way that some of the data is looked up or the availability of some of the data i.e. some instructions are only valid for pshaders and some for vshaders
+because of this the bulk of the software pipeline can be shared between pixel and vertex shaders... and it wouldn't surprise me if the program can be cross compiled using a large body of shared code */
 
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 
@@ -418,8 +418,8 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
 
         /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
          *
-         * Basically we want(in homogenous coordinates) z = z * 2 - 1. However, shaders are run
-         * before the homogenous divide, so we have to take the w into account: z = ((z / w) * 2 - 1) * w,
+         * Basically we want (in homogeneous coordinates) z = z * 2 - 1. However, shaders are run
+         * before the homogeneous divide, so we have to take the w into account: z = ((z / w) * 2 - 1) * w,
          * which is the same as z = z / 2 - w.
          */
         shader_addline(&buffer, "gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;\n");

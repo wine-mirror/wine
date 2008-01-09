@@ -1056,7 +1056,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         /* Set its container to this object */
         IWineD3DVolume_SetContainer(object->volumes[i], (IWineD3DBase *)object);
 
-        /* calcualte the next mipmap level */
+        /* calculate the next mipmap level */
         tmpW = max(1, tmpW >> 1);
         tmpH = max(1, tmpH >> 1);
         tmpD = max(1, tmpD >> 1);
@@ -2166,7 +2166,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
 
     if(!This->d3d_initialized) return WINED3DERR_INVALIDCALL;
 
-    /* I don't think that the interface guarants that the device is destroyed from the same thread
+    /* I don't think that the interface guarantees that the device is destroyed from the same thread
      * it was created. Thus make sure a context is active for the glDelete* calls
      */
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
@@ -2236,7 +2236,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
 
     TRACE("Releasing the render target at %p\n", This->render_targets[0]);
     if(IWineD3DSurface_Release(This->render_targets[0]) >0){
-          /* This check is a bit silly, itshould be in swapchain_release FIXME("(%p) Something's still holding the renderTarget\n",This); */
+          /* This check is a bit silly, it should be in swapchain_release FIXME("(%p) Something's still holding the renderTarget\n",This); */
     }
     TRACE("Setting rendertarget to NULL\n");
     This->render_targets[0] = NULL;
@@ -2458,8 +2458,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
         return WINED3D_OK;
     }
 
-    /* Need to do a getParent and pass the reffs up */
-    /* MSDN says ..... When an application no longer holds a references to this interface, the interface will automatically be freed.
+    /* Need to do a getParent and pass the references up */
+    /* MSDN says ..... When an application no longer holds a reference to this interface, the interface will automatically be freed.
     which suggests that we shouldn't be ref counting? and do need a _release on the stream source to reset the stream source
     so for now, just count internally   */
     if (pStreamData != NULL) {
@@ -2572,7 +2572,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
      */
 
     /* Capture the times we can just ignore the change for now */
-    if (d3dts == WINED3DTS_VIEW) { /* handle the VIEW matrice */
+    if (d3dts == WINED3DTS_VIEW) { /* handle the VIEW matrix */
         This->view_ident = !memcmp(lpmatrix, identity, 16 * sizeof(float));
         /* Handled by the state manager */
     }
@@ -4268,7 +4268,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
 
     if(vbo || SrcStartIndex) {
         unsigned int i;
-        /* ProcessVertices can't convert FROM a vbo, and vertex buffers used to source into ProcesVerticse are
+        /* ProcessVertices can't convert FROM a vbo, and vertex buffers used to source into ProcessVertices are
          * unlikely to ever be used for drawing. Release vbos in those buffers and fix up the strided structure
          *
          * Also get the start index in, but only loop over all elements if there's something to add at all.
@@ -5597,7 +5597,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         /* not a whole row so we have to do it a line at a time */
         int j;
 
-        /* hopefully using pointer addtion will be quicker than using a point + j * rowoffset */
+        /* hopefully using pointer addition will be quicker than using a point + j * rowoffset */
         const unsigned char* data =((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
 
         for(j = destTop ; j < (srcHeight + destTop) ; j++){
@@ -6031,7 +6031,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
     }
 }
 
-/* rendertarget and deptth stencil functions */
+/* rendertarget and depth stencil functions */
 static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface,DWORD RenderTargetIndex, IWineD3DSurface **ppRenderTarget) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -6499,11 +6499,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
     if (pNewZStencil == This->stencilBufferTarget) {
         TRACE("Trying to do a NOP SetRenderTarget operation\n");
     } else {
-        /** OpenGL doesn't support 'sharing' of the stencilBuffer so we may incure an extra memory overhead
+        /** OpenGL doesn't support 'sharing' of the stencilBuffer so we may incur an extra memory overhead
         * depending on the renter target implementation being used.
         * A shared context implementation will share all buffers between all rendertargets (including swapchains),
         * implementations that use separate pbuffers for different swapchains or rendertargets will have to duplicate the
-        * stencil buffer and incure an extra memory overhead
+        * stencil buffer and incur an extra memory overhead
          ******************************************************/
 
         tmp = This->stencilBufferTarget;
@@ -6980,7 +6980,7 @@ static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT i
 ** ********************************************************/
 /** This function must be called in the release of a resource when ref == 0,
 * the contents of resource must still be correct,
-* any handels to other resource held by the caller must be closed
+* any handles to other resource held by the caller must be closed
 * (e.g. a texture should release all held surfaces because telling the device that it's been released.)
  *****************************************************/
 static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource){
@@ -7129,7 +7129,7 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
     }
 
 
-    /* Remove the resoruce from the resourceStore */
+    /* Remove the resource from the resourceStore */
     IWineD3DDeviceImpl_RemoveResource(iface, resource);
 
     TRACE("Resource released\n");

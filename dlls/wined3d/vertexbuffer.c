@@ -301,7 +301,7 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
      * that concern the current buffer. A problem with this is that this can change between draws, so we have to validate
      * the information and reprocess the buffer if it changes, and avoid false positives for performance reasons.
      *
-     * We have do destinguish between vertex shaders and fixed function to pick the way we access the
+     * We have to distinguish between vertex shaders and fixed function to pick the way we access the
      * strided vertex information.
      *
      * This code sets up a per-byte array with the size of the detected stride of the arrays in the
@@ -429,7 +429,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
         declChanged = IWineD3DVertexBufferImpl_FindDecl(This);
     } else if(This->Flags & VBFLAG_HASDESC) {
         /* Reuse the declaration stored in the buffer. It will most likely not change, and if it does
-         * the stream source state handler will call PreLoad again and the change will be cought
+         * the stream source state handler will call PreLoad again and the change will be caught
          */
     } else {
         /* Cannot get a declaration, and no declaration is stored in the buffer. It is pointless to preload
@@ -440,8 +440,8 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     }
 
     /* If applications change the declaration over and over, reconverting all the time is a huge
-     * performance hit. So count the declaration changes and release the VBO if there are too much
-     * of them(and thus stop converting)
+     * performance hit. So count the declaration changes and release the VBO if there are too many
+     * of them (and thus stop converting)
      */
     if(declChanged) {
         This->declChanges++;

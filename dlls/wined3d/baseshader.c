@@ -125,7 +125,7 @@ static inline int shader_skip_opcode(
     DWORD opcode_token) {
 
    /* Shaders >= 2.0 may contain address tokens, but fortunately they
-    * have a useful legnth mask - use it here. Shaders 1.0 contain no such tokens */
+    * have a useful length mask - use it here. Shaders 1.0 contain no such tokens */
 
     return (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)?
         ((opcode_token & WINED3DSI_INSTLENGTH_MASK) >> WINED3DSI_INSTLENGTH_SHIFT):

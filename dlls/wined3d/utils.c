@@ -350,7 +350,7 @@ static WINED3DGLTYPE const glTypeLookupTemplate[WINED3DDECLTYPE_UNUSED] = {
 void init_type_lookup(WineD3D_GL_Info *gl_info) {
     memcpy(gl_info->glTypeLookup, glTypeLookupTemplate, sizeof(glTypeLookupTemplate));
     if(!GL_SUPPORT(NV_HALF_FLOAT)) {
-        /* Do not change the size of the type, it is CPU side. Whe have to change the GPU-side information though.
+        /* Do not change the size of the type, it is CPU side. We have to change the GPU-side information though.
          * It is the job of the vertex buffer code to make sure that the vbos have the right format
          */
         gl_info->glTypeLookup[WINED3DDECLTYPE_FLOAT16_2].glType = GL_FLOAT;
@@ -2603,7 +2603,7 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
                 case WINED3DDECLTYPE_FLOAT3: /* Opengl defaults match dx defaults */
                 case WINED3DDECLTYPE_FLOAT4: /* No defaults apply, all app defined */
 
-                /* This is to prevent swaping the matrix lines and put the default 4th coord = 1.0
+                /* This is to prevent swapping the matrix lines and put the default 4th coord = 1.0
                  * into a bad place. The division elimination below will apply to make sure the
                  * 1.0 doesn't do anything bad. The caller will set this value if the stride is 0
                  */
@@ -2737,7 +2737,7 @@ WINED3DFORMAT pixelformat_for_depth(DWORD depth) {
         case 15: return WINED3DFMT_X1R5G5B5;
         case 16: return WINED3DFMT_R5G6B5;
         case 24: return WINED3DFMT_X8R8G8B8; /* Robots needs 24bit to be X8R8G8B8 */
-        case 32: return WINED3DFMT_X8R8G8B8; /* EVE online and the Fur demo need 32bit AdapterDisplatMode to return X8R8G8B8 */
+        case 32: return WINED3DFMT_X8R8G8B8; /* EVE online and the Fur demo need 32bit AdapterDisplayMode to return X8R8G8B8 */
         default: return WINED3DFMT_UNKNOWN;
     }
 }

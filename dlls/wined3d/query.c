@@ -134,7 +134,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
         if(pData == NULL || dwSize == 0) break;
         for(i = 0; i < WINED3DRTYPECOUNT; i++){
             /*I'm setting the default values to 1 so as to reduce the risk of a div/0 in the caller*/
-            /*  isTextureResident could be used to get some of this infomration  */
+            /*  isTextureResident could be used to get some of this information  */
             data->stats[i].bThrashing            = FALSE;
             data->stats[i].ApproxBytesDownloaded = 1;
             data->stats[i].NumEvicts             = 1;
@@ -187,7 +187,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
         DWORD* data = pData;
 
         if(This->state == QUERY_CREATED) {
-            /* D3D allows GetData on a new query, opengl doesn't. So just invent the data outselves */
+            /* D3D allows GetData on a new query, OpenGL doesn't. So just invent the data ourselves */
             TRACE("Query wasn't yet started, returning S_OK\n");
             res = S_OK;
             if(data) *data = 0;
