@@ -67,6 +67,7 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
     static const char format[] =
         "mailto:\"%s\"?subject=\"%s\"&cc=\"%s\"&bcc=\"%s\"&body=\"%s\"";
     char *mailto = NULL, *escape = NULL;
+    char empty_string[] = "";
     HRESULT res;
     DWORD size;
 
@@ -178,8 +179,8 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
 
     sprintf( mailto, format, to ? to : "", subject, cc ? cc : "", bcc ? bcc : "", body );
 
-    size = 0;
-    res = UrlEscapeA( mailto, NULL, &size, URL_ESCAPE_SPACES_ONLY );
+    size = 1;
+    res = UrlEscapeA( mailto, empty_string, &size, URL_ESCAPE_SPACES_ONLY );
     if (res != E_POINTER) goto exit;
 
     escape = HeapAlloc( GetProcessHeap(), 0, size );
