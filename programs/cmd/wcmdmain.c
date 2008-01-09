@@ -118,6 +118,8 @@ int wmain (int argc, WCHAR *argvW[])
   char ansiVersion[100];
   CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
 
+  srand(time(NULL));
+
   /* Pre initialize some messages */
   strcpy(ansiVersion, PACKAGE_VERSION);
   MultiByteToWideChar(CP_ACP, 0, ansiVersion, -1, string, 1024);
