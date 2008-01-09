@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dma);
 
-/* Internal registers of the 2 DMA chips wich control 8 DMA channels */
+/* Internal registers of the 2 DMA chips which control 8 DMA channels */
 static DWORD DMA_BaseAddress[8];
 static WORD  DMA_ByteCount[8];
 static DWORD DMA_CurrentBaseAddress[8];

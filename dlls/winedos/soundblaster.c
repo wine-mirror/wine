@@ -220,7 +220,7 @@ static void SB_Reset(void)
         /* All right, let's put the magic value for autodetection */
         DSP_OutBuffer[0] = 0xaa;
     else
-        /* Something is wrong, put 0 to failed audetection */
+        /* Something is wrong, put 0 to failed autodetection */
         DSP_OutBuffer[0] = 0x00;
 }
 

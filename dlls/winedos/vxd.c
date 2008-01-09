@@ -264,7 +264,7 @@ void WINAPI VXD_Shell( CONTEXT86 *context )
     case 0x0002:
     case 0x0003:
         /* SHELL_SYSMODAL_Message
-	ebx virtual maschine handle
+	ebx virtual machine handle
 	eax message box flags
 	ecx address of message
 	edi address of caption
@@ -272,7 +272,7 @@ void WINAPI VXD_Shell( CONTEXT86 *context )
 	*/
     case 0x0004:
 	/* SHELL_Message
-	ebx virtual maschine handle
+	ebx virtual machine handle
 	eax message box flags
 	ecx address of message
 	edi address of caption
@@ -543,7 +543,7 @@ void WINAPI VXD_APM ( CONTEXT86 *context )
  * This means especially that the flat code/data selectors get actually
  * allocated with base 0x0, so that flat offsets and (real) linear addresses
  * do again agree!  In fact, every call e.g. of a Win32s VxD service now
- * has all pointer arguments (which are offsets in the flat data segement)
+ * has all pointer arguments (which are offsets in the flat data segment)
  * first reduced by 0x10000 by the W32SKRNL glue code, and then again
  * increased by 0x10000 by *our* code.
  *

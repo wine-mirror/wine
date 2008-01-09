@@ -23,7 +23,7 @@
  */
 /* NOTE:
  *    with esd we cannot stop the audio that is already in
- *    the servers buffer.
+ *    the server's buffer.
  *
  * FIXME:
  *	pause in waveOut does not work correctly in loop mode
@@ -462,7 +462,7 @@ LONG ESD_WaveInit(void)
 	WOutDev[i].esd_fd = -1;
 	memset(&WOutDev[i].caps, 0, sizeof(WOutDev[i].caps)); /* zero out
 							caps values */
-    	WOutDev[i].caps.wMid = 0x00FF; 	/* Manufac ID */
+	WOutDev[i].caps.wMid = 0x00FF; 	/* Manufacturer ID */
     	WOutDev[i].caps.wPid = 0x0001; 	/* Product ID */
     	lstrcpyW(WOutDev[i].caps.szPname, ini);
         snprintf(WOutDev[i].interface_name, sizeof(WOutDev[i].interface_name), "wineesd: %d", i);

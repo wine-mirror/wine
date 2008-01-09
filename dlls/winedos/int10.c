@@ -927,7 +927,7 @@ static void INT10_HandleVESA( CONTEXT86 *context )
     case 0x05: /* VESA SuperVGA BIOS - CPU VIDEO MEMORY CONTROL */
         /*
          * This subfunction supports only Window A (BL_reg == 0) and
-         * is assumes that window granularity is 64k.
+         * it assumes that window granularity is 64k.
          */
         switch(BH_reg(context)) {
         case 0x00: /* select video memory window */
@@ -1386,7 +1386,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         case 0x20: /* ALTERNATE PRTSC */
             FIXME("Install Alternate Print Screen - Not Supported\n");
             break;
-        case 0x30: /* SELECT VERTICAL RESOULTION */
+        case 0x30: /* SELECT VERTICAL RESOLUTION */
             FIXME("Select vertical resolution - not supported\n");
             break;
         case 0x31: /* ENABLE/DISABLE DEFAULT PALETTE LOADING */
@@ -1395,7 +1395,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                 (data->VGASettings & 0xf7) |
                 ((AL_reg(context) == 1) << 3);
             break;
-        case 0x32: /* ENABLE/DISABLE VIDEO ADDRERSSING */
+        case 0x32: /* ENABLE/DISABLE VIDEO ADDRESSING */
             FIXME("Video Addressing - Not Supported\n");
             break;
         case 0x33: /* ENABLE/DISABLE GRAY SCALE SUMMING */

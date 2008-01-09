@@ -24,7 +24,7 @@
  * - nearly all joystick functions can be regarded as obsolete,
  *   as Linux (2.1.x) now supports extended joysticks with a completely 
  *   new joystick driver interface
- *   New driver's docu says:
+ *   New driver's documentation says:
  *     "For backward compatibility the old interface is still included,
  *     but will be dropped in the future."
  *   Thus we should implement the new interface and at most keep the old
@@ -83,7 +83,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(joystick);
 typedef struct tagWINE_JSTCK {
     int		joyIntf;
     int		in_use;
-    /* Some extra info we need to make this acutaly work under the
+    /* Some extra info we need to make this actually work under the
        Linux 2.2 event api.
        First of all, we cannot keep closing and reopening the device file -
        that blows away the state of the stick device, and we lose events. So, we
