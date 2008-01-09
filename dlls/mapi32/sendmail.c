@@ -127,16 +127,19 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
     {
         to = HeapAlloc( GetProcessHeap(), 0, to_size );
         if (!to) goto exit;
+        to[0] = 0;
     }
     if (cc_size)
     {
         cc = HeapAlloc( GetProcessHeap(), 0, cc_size );
         if (!cc) goto exit;
+        cc[0] = 0;
     }
     if (bcc_size)
     {
         bcc = HeapAlloc( GetProcessHeap(), 0, bcc_size );
         if (!bcc) goto exit;
+        bcc[0] = 0;
     }
 
     if (message->lpOriginator)
