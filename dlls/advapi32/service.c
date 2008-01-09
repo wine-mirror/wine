@@ -1037,26 +1037,29 @@ BOOL WINAPI ControlService( SC_HANDLE hService, DWORD dwControl,
         return FALSE;
     }
 
-    ret = QueryServiceStatus(hService, lpServiceStatus);
-    if (!ret)
+    if (lpServiceStatus)
     {
-        ERR("failed to query service status\n");
-        SetLastError(ERROR_SERVICE_NOT_ACTIVE);
-        return FALSE;
-    }
+        ret = QueryServiceStatus(hService, lpServiceStatus);
+        if (!ret)
+        {
+            ERR("failed to query service status\n");
+            SetLastError(ERROR_SERVICE_NOT_ACTIVE);
+            return FALSE;
+        }
 
-    switch (lpServiceStatus->dwCurrentState)
-    {
-    case SERVICE_STOPPED:
-        SetLastError(ERROR_SERVICE_NOT_ACTIVE);
-        return FALSE;
-    case SERVICE_START_PENDING:
-        if (dwControl==SERVICE_CONTROL_STOP)
-            break;
-        /* fall thru */
-    case SERVICE_STOP_PENDING:
-        SetLastError(ERROR_SERVICE_CANNOT_ACCEPT_CTRL);
-        return FALSE;
+        switch (lpServiceStatus->dwCurrentState)
+        {
+        case SERVICE_STOPPED:
+            SetLastError(ERROR_SERVICE_NOT_ACTIVE);
+            return FALSE;
+        case SERVICE_START_PENDING:
+            if (dwControl==SERVICE_CONTROL_STOP)
+                break;
+            /* fall thru */
+        case SERVICE_STOP_PENDING:
+            SetLastError(ERROR_SERVICE_CANNOT_ACCEPT_CTRL);
+            return FALSE;
+        }
     }
 
     handle = service_open_pipe(hsvc->name);
