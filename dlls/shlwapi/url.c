@@ -860,7 +860,7 @@ HRESULT WINAPI UrlEscapeA(
             *pcchEscaped = lenA;
         } else {
             *pcchEscaped = lenA + 1;
-            ret = E_INVALIDARG;
+            ret = E_POINTER;
         }
     }
     if(escapedW != bufW) HeapFree(GetProcessHeap(), 0, escapedW);

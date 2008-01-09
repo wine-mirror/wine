@@ -480,9 +480,7 @@ static void test_UrlEscape(void)
 
     size = 1;
     ret = UrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, &size, URL_ESCAPE_SPACES_ONLY);
-    todo_wine {
-        ok(ret == E_POINTER, "got %x, expected %x\n", ret, E_POINTER);
-    }
+    ok(ret == E_POINTER, "got %x, expected %x\n", ret, E_POINTER);
     ok(size == 34, "got %d, expected %d\n", size, 34);
 
     for(i=0; i<sizeof(TEST_ESCAPE)/sizeof(TEST_ESCAPE[0]); i++) {
