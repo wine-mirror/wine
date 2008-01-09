@@ -200,6 +200,26 @@ static UINT WHERE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
     return wv->table->ops->set_row( wv->table, row, rec, mask );
 }
 
+static UINT WHERE_delete_row(struct tagMSIVIEW *view, UINT row)
+{
+    MSIWHEREVIEW *wv = (MSIWHEREVIEW *)view;
+    UINT r;
+
+    TRACE("(%p %d)\n", view, row);
+
+    if ( !wv->table )
+        return ERROR_FUNCTION_FAILED;
+
+    if ( row > wv->row_count )
+        return ERROR_NO_MORE_ITEMS;
+
+    r = find_entry_in_hash( wv->reorder, row, &row );
+    if ( r != ERROR_SUCCESS )
+        return r;
+
+    return wv->table->ops->delete_row( wv->table, row );
+}
+
 static INT INT_evaluate_binary( INT lval, UINT op, INT rval )
 {
     switch( op )
@@ -549,7 +569,7 @@ static const MSIVIEWOPS where_ops =
     WHERE_get_row,
     WHERE_set_row,
     NULL,
-    NULL,
+    WHERE_delete_row,
     WHERE_execute,
     WHERE_close,
     WHERE_get_dimensions,

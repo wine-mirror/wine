@@ -4991,7 +4991,7 @@ static void test_viewmodify_delete_temporary(void)
     DeleteFileA(msifile);
 }
 
-static void test_msidatabasecommit()
+static void test_deleterow()
 {
     MSIHANDLE hdb, hview, hrec;
     const char *query;
@@ -5040,18 +5040,12 @@ static void test_msidatabasecommit()
     size = MAX_PATH;
     r = MsiRecordGetStringA(hrec, 1, buf, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(buf, "two"), "Expected two, got %s\n", buf);
-    }
+    ok(!lstrcmpA(buf, "two"), "Expected two, got %s\n", buf);
 
     MsiCloseHandle(hrec);
 
     r = MsiViewFetch(hview, &hrec);
-    todo_wine
-    {
-        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
-    }
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
@@ -5089,5 +5083,5 @@ START_TEST(db)
     test_defaultdatabase();
     test_order();
     test_viewmodify_delete_temporary();
-    test_msidatabasecommit();
+    test_deleterow();
 }

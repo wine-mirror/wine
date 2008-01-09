@@ -1572,6 +1572,13 @@ static UINT TABLE_delete_row( struct tagMSIVIEW *view, UINT row )
         data = tv->table->nonpersistent_data;
     }
 
+    /* reset the hash tables */
+    for (i = 0; i < tv->num_cols; i++)
+    {
+        msi_free( tv->columns[i].hash_table );
+        tv->columns[i].hash_table = NULL;
+    }
+
     if ( row == num_rows - 1 )
         return ERROR_SUCCESS;
 

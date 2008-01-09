@@ -77,7 +77,6 @@ static UINT DELETE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIDELETEVIEW *dv = (MSIDELETEVIEW*)view;
     UINT r, i, rows = 0, cols = 0;
-    MSIRECORD *empty;
 
     TRACE("%p %p\n", dv, record);
 
@@ -92,17 +91,11 @@ static UINT DELETE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     if( r != ERROR_SUCCESS )
         return r;
 
-    TRACE("blanking %d rows\n", rows);
-
-    empty = MSI_CreateRecord( cols );
-    if (!empty)
-        return ERROR_FUNCTION_FAILED;
+    TRACE("deleting %d rows\n", rows);
 
     /* blank out all the rows that match */
     for ( i=0; i<rows; i++ )
-        dv->table->ops->set_row( dv->table, i, empty, (1<<cols)-1 );
-
-    msiobj_release( &empty->hdr );
+        dv->table->ops->delete_row( dv->table, i );
 
     return ERROR_SUCCESS;
 }
