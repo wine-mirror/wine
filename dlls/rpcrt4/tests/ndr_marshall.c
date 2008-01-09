@@ -1573,6 +1573,7 @@ static void test_ndr_buffer(void)
 
     status = RpcBindingFromStringBinding(binding, &Handle);
     ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%lu)\n", status);
+    RpcStringFree(&binding);
 
     NdrClientInitializeNew(&RpcMessage, &StubMsg, &StubDesc, 5);
 
@@ -1600,6 +1601,8 @@ todo_wine
 
     /* attempt double-free */
     NdrFreeBuffer(&StubMsg);
+
+    RpcBindingFree(&Handle);
 
     status = RpcServerUnregisterIf(NULL, NULL, FALSE);
     ok(status == RPC_S_OK, "RpcServerUnregisterIf failed (%lu)\n", status);
