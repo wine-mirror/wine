@@ -31,6 +31,8 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "winreg.h"
+#include "ntddstor.h"
+#include "ntddcdrm.h"
 #include "ddk/wdm.h"
 #include "ddk/mountmgr.h"
 #include "wine/library.h"
@@ -45,7 +47,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 /* extra info for disk devices, stored in DeviceExtension */
 struct disk_device_info
 {
-    UNICODE_STRING name;    /* device name */
+    UNICODE_STRING        name;     /* device name */
+    STORAGE_DEVICE_NUMBER devnum;   /* device number info */
 };
 
 struct mount_point
@@ -134,6 +137,25 @@ static NTSTATUS create_disk_device( DRIVER_OBJECT *driver, DWORD type, DEVICE_OB
     {
         info = (*dev_obj)->DeviceExtension;
         info->name = name;
+        switch(type)
+        {
+        case DRIVE_REMOVABLE:
+            info->devnum.DeviceType = FILE_DEVICE_DISK;
+            info->devnum.DeviceNumber = i;
+            info->devnum.PartitionNumber = 0;
+            break;
+        case DRIVE_CDROM:
+            info->devnum.DeviceType = FILE_DEVICE_CD_ROM;
+            info->devnum.DeviceNumber = i;
+            info->devnum.PartitionNumber = 0;
+            break;
+        case DRIVE_FIXED:
+        default:  /* FIXME */
+            info->devnum.DeviceType = FILE_DEVICE_DISK;
+            info->devnum.DeviceNumber = 1;
+            info->devnum.PartitionNumber = i;
+            break;
+        }
     }
     else
     {
@@ -338,6 +360,7 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
 static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = irp->Tail.Overlay.s.u.CurrentStackLocation;
+    struct disk_device_info *disk_info = device->DeviceExtension;
 
     TRACE( "ioctl %x insize %u outsize %u\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
@@ -346,6 +369,33 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
     switch(irpsp->Parameters.DeviceIoControl.IoControlCode)
     {
+    case IOCTL_DISK_GET_DRIVE_GEOMETRY:
+    {
+        DISK_GEOMETRY info;
+        DWORD len = min( sizeof(info), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+
+        info.Cylinders.QuadPart = 10000;
+        info.MediaType = (disk_info->devnum.DeviceType == FILE_DEVICE_DISK) ? FixedMedia : RemovableMedia;
+        info.TracksPerCylinder = 255;
+        info.SectorsPerTrack = 63;
+        info.BytesPerSector = 512;
+        memcpy( irp->MdlAddress->StartVa, &info, len );
+        irp->IoStatus.Information = len;
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        break;
+    }
+    case IOCTL_STORAGE_GET_DEVICE_NUMBER:
+    {
+        DWORD len = min( sizeof(disk_info->devnum), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+
+        memcpy( irp->MdlAddress->StartVa, &disk_info->devnum, len );
+        irp->IoStatus.Information = len;
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        break;
+    }
+    case IOCTL_CDROM_READ_TOC:
+        irp->IoStatus.u.Status = STATUS_INVALID_DEVICE_REQUEST;
+        break;
     default:
         FIXME( "unsupported ioctl %x\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
