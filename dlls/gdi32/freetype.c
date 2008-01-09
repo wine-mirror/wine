@@ -3125,13 +3125,15 @@ found:
     TRACE("Chosen: %s %s (%s/%p:%ld)\n", debugstr_w(family->FamilyName),
 	  debugstr_w(face->StyleName), face->file, face->font_data_ptr, face->face_index);
 
-    ret->ppem = height;
-    ret->aveWidth = abs(lf.lfWidth);
-
     ret->scale_x = 0.0;
     ret->scale_y = 0.0;
 
+    ret->aveWidth = abs(lf.lfWidth);
+
     if(!face->scalable) {
+        ret->ppem = face->size.height;
+        if (height != 0) ret->ppem += diff;
+
         width = face->size.x_ppem >> 6;
         height = face->size.y_ppem >> 6;
     }
