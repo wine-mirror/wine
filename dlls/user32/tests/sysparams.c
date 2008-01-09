@@ -2532,6 +2532,7 @@ static void test_EnumDisplaySettings(void)
     DEVMODE devmode;
     DWORD val;
     HDC hdc;
+    DWORD num;
 
     memset(&devmode, 0, sizeof(devmode));
     devmode.dmSize = sizeof(devmode);
@@ -2550,6 +2551,16 @@ static void test_EnumDisplaySettings(void)
     }
 
     ReleaseDC(0, hdc);
+
+    num = 1;
+    while (1) {
+	SetLastError (0xdeadbeef);
+	if (!EnumDisplaySettings(NULL, num++, &devmode)) {
+		DWORD le = GetLastError();
+		ok (le == ERROR_NO_MORE_FILES, "Last error on EnumDisplaySettings was %d, expected ERROR_NO_MORE_FILES\n", le);
+		break;
+	}
+    }
 }
 
 START_TEST(sysparams)

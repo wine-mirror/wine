@@ -316,6 +316,7 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
         return TRUE;
     }
     TRACE("mode %d -- not present (%s)\n", n, handler_name);
+    SetLastError(ERROR_NO_MORE_FILES);
     return FALSE;
 }
 
