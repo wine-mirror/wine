@@ -345,6 +345,8 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID rii
 
     TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppvObject );
 
+    *ppvObject = NULL;
+
     if ( IsEqualGUID( riid, &IID_IUnknown ) ||
          IsEqualGUID( riid, &IID_IXMLDOMDocument ) ||
          IsEqualGUID( riid, &IID_IXMLDOMDocument2 ) )
@@ -359,6 +361,11 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID rii
     else if (IsEqualGUID(&IID_IPersistStream, riid))
     {
         *ppvObject = (IPersistStream*)&(This->lpvtblIPersistStream);
+    }
+    else if(IsEqualGUID(&IID_IRunnableObject, riid))
+    {
+        TRACE("IID_IRunnableObject not supported returning NULL\n");
+        return E_NOINTERFACE;
     }
     else
     {
