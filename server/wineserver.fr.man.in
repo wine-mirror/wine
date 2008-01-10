@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINESERVER 1 "Décembre 2007" "@PACKAGE_STRING@" "Windows sur Unix"
+.TH WINESERVER 1 "Janvier 2008" "@PACKAGE_STRING@" "Windows sur Unix"
 .SH NAME
 wineserver \- le serveur Wine
 .SH SYNOPSIS
@@ -17,18 +17,18 @@ comme expliqué ci-dessous.
 .SH OPTIONS
 .TP
 .BI \-d [n]
-Défini le niveau de déboguage à
+Défini le niveau de débogage à
 .I n.
-0 signifie aucune information de déboguage, 1 est le niveau normal et 2 est
-pour un déboguage plus important. Si
+0 signifie aucune information de débogage, 1 est le niveau normal et 2 est
+pour un débogage plus important. Si
 .I n
-n'est pas spécifié, la valeur par défaut est 1. La sortie de déboguage sera
-stderr. \fBwine(1)\fR définit automatiquement le niveau de déboguage lorsqu'il
+n'est pas spécifié, la valeur par défaut est 1. La sortie de débogage sera
+stderr. \fBwine(1)\fR définit automatiquement le niveau de débogage lorsqu'il
 démarre \fBwineserver\fR si l'option +server est indiquée dans la variable
 WINEDEBUG.
 .TP
 .B \-f
-Laisse le serveur au premier plan pour un déboguage plus aisé, par
+Laisse le serveur au premier plan pour un débogage plus aisé, par
 exemple lorsqu'il est exécuté dans un débogueur.
 .TP
 .B \-h
