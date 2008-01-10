@@ -652,6 +652,16 @@ static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
             container->bscallback->nscontext = context;
         }
 
+        if(container->doc && container->doc->mime) {
+            DWORD len;
+
+            heap_free(This->content);
+
+            len = WideCharToMultiByte(CP_ACP, 0, container->doc->mime, -1, NULL, 0, NULL, NULL);
+            This->content = heap_alloc(len);
+            WideCharToMultiByte(CP_ACP, 0, container->doc->mime, -1, This->content, -1, NULL, NULL);
+        }
+
         if(do_load_from_moniker_hack(This))
             return WINE_NS_LOAD_FROM_MONIKER;
     }else  {

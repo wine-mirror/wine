@@ -887,16 +887,6 @@ void set_document_bscallback(HTMLDocument *doc, BSCallback *callback)
     if(callback) {
         IBindStatusCallback_AddRef(STATUSCLB(callback));
         callback->doc = doc;
-
-        if(doc->mime) {
-            DWORD len;
-
-            heap_free(callback->nschannel->content);
-
-            len = WideCharToMultiByte(CP_ACP, 0, doc->mime, -1, NULL, 0, NULL, NULL);
-            callback->nschannel->content = heap_alloc(len);
-            WideCharToMultiByte(CP_ACP, 0, doc->mime, -1, callback->nschannel->content, -1, NULL, NULL);
-        }
     }
 }
 
