@@ -29,8 +29,8 @@
 @ stub CorTickleSvc
 @ stub CreateConfigStream
 @ stub CreateDebuggingInterfaceFromVersion
-@ stub DllCanUnloadNow
-@ stub DllGetClassObject
+@ stdcall -private DllCanUnloadNow()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stub DllRegisterServer
 @ stub DllUnregisterServer
 @ stub EEDllGetClassObjectFromClass

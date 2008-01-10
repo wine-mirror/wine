@@ -270,3 +270,18 @@ HRESULT WINAPI GetVersionFromProcess(HANDLE hProcess, LPWSTR pVersion, DWORD cch
     FIXME("(%p, %p, %d, %p): stub\n", hProcess, pVersion, cchBuffer, dwLength);
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
+{
+    FIXME("(%p, %p, %p): stub\n", rclsid, riid, ppv);
+    if(!ppv)
+        return E_INVALIDARG;
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI DllCanUnloadNow(VOID)
+{
+    FIXME("stub\n");
+    return S_OK;
+}
