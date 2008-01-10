@@ -116,6 +116,9 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
         doc = container_iter->doc;
     }
 
+    if(!doc->client)
+        return TRUE;
+
     if(!hlnf && !exec_shldocvw_67(doc, uri))
         return FALSE;
 
