@@ -99,11 +99,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static const WCHAR wszFont[] = {'f','o','n','t',0};
 static const WCHAR wszSize[] = {'s','i','z','e',0};
 
-static void set_dirty(HTMLDocument *This, VARIANT_BOOL dirty)
+void set_dirty(HTMLDocument *This, VARIANT_BOOL dirty)
 {
     nsresult nsres;
 
-    if(!This->nscontainer || !This->nscontainer->editor)
+    if(This->usermode != EDITMODE || !This->nscontainer || !This->nscontainer->editor)
         return;
 
     if(dirty) {
@@ -976,7 +976,7 @@ static HRESULT exec_setdirty(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 {
     TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
 
-    if(!in || This->usermode != EDITMODE)
+    if(!in)
         return S_OK;
 
     if(V_VT(in) == VT_BOOL)

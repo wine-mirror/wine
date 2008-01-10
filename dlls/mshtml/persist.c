@@ -705,18 +705,21 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM
     DWORD len, written=0;
     HRESULT hres;
 
-    WARN("(%p)->(%p %x) needs more work\n", This, pStm, fClearDirty);
+    TRACE("(%p)->(%p %x)\n", This, pStm, fClearDirty);
 
     hres = get_doc_string(This, &str, &len);
     if(FAILED(hres))
         return hres;
-
 
     hres = IStream_Write(pStm, str, len, &written);
     if(FAILED(hres))
         FIXME("Write failed: %08x\n", hres);
 
     heap_free(str);
+
+    if(fClearDirty)
+        set_dirty(This, VARIANT_FALSE);
+
     return S_OK;
 }
 

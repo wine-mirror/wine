@@ -490,8 +490,9 @@ void handle_edit_event(HTMLDocument*,nsIDOMEvent*);
 HRESULT editor_exec_copy(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
 HRESULT editor_exec_cut(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
 HRESULT editor_exec_paste(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
-void handle_edit_load(HTMLDocument *This);
+void handle_edit_load(HTMLDocument*);
 HRESULT editor_is_dirty(HTMLDocument*);
+void set_dirty(HTMLDocument*,VARIANT_BOOL);
 
 extern DWORD mshtml_tls;
 
