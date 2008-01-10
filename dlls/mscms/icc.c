@@ -80,8 +80,8 @@ void MSCMS_get_tag_by_index( icProfile *iccprofile, DWORD index, icTag *tag )
     tag->size = tmp->size;
 
     MSCMS_adjust_endianess32( (ULONG *)&tag->sig );
-    MSCMS_adjust_endianess32( (ULONG *)&tag->offset );
-    MSCMS_adjust_endianess32( (ULONG *)&tag->size );
+    MSCMS_adjust_endianess32( &tag->offset );
+    MSCMS_adjust_endianess32( &tag->size );
 }
 
 void MSCMS_get_tag_data( const icProfile *iccprofile, const icTag *tag, DWORD offset, void *buffer )
@@ -98,7 +98,7 @@ DWORD MSCMS_get_profile_size( const icProfile *iccprofile )
 {
     DWORD size = ((const icHeader *)iccprofile)->size;
 
-    MSCMS_adjust_endianess32( (ULONG *)&size );
+    MSCMS_adjust_endianess32( &size );
     return size;
 }
 
