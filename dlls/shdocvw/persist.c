@@ -155,7 +155,7 @@ static HRESULT WINAPI PersistMemory_Load(IPersistMemory *iface, LPVOID pMem, ULO
 {
     WebBrowser *This = PERMEMORY_THIS(iface);
     FIXME("(%p)->(%p %x)\n", This, pMem, cbSize);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI PersistMemory_Save(IPersistMemory *iface, LPVOID pMem,
