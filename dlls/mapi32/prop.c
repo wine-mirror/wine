@@ -1331,7 +1331,7 @@ ULONG WINAPI FBadProp(LPSPropValue lpProp)
         return FBadRglpszW(lpProp->Value.MVszW.lppszW,
                            lpProp->Value.MVszW.cValues);
     case PT_MV_BINARY:
-        return FBadEntryList((LPENTRYLIST)&lpProp->Value.MVbin);
+        return FBadEntryList(&lpProp->Value.MVbin);
     }
     return FALSE;
 }
