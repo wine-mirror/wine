@@ -1,0 +1,309 @@
+/*
+ * WineCfg resources
+ * Traditional Chinese Language Support
+ *
+ * Copyright 2008 Sin-ta Hsiea
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ */
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+
+IDR_WINECFG MENU DISCARDABLE
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "設定", IDC_AUDIO_CONFIGURE
+    END
+END
+
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
+STYLE WS_CHILD
+FONT 8, "PMingLiu"
+BEGIN
+    LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
+    CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
+    LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
+    LTEXT           "這一函式庫是自由軟體， 你可以遵照自由軟體基金會出版的 GNU 較寬鬆通用公共許\可證條款 來修改和重新發佈這一程式， 或者是許\可證的2.1版， 或是 (根據你的選擇) 任何更新的版本。",
+                    IDC_STATIC,119,44,124,72
+END
+
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "PMingLiu"
+BEGIN
+    GROUPBOX        " 應用程式設定 ",IDC_STATIC, 8,4,244,240
+    LTEXT           "Wine 可以對不同程式假裝成不同版本的 Windows 。 「函式庫」 與 「顯示」 頁籤將連結到這個頁籤， 除了調整預設設定， 也能調整個別程式的設定。",
+                    IDC_STATIC,15,20,227,30
+    CONTROL         "Applications",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+                    15,50,230,150
+    PUSHBUTTON	    "增加程式設定(&A) ...",IDC_APP_ADDAPP, 90,204,75,14
+    PUSHBUTTON	    "移除程式設定(&R)",IDC_APP_REMOVEAPP, 170,204,75,14
+    LTEXT           "&Windows 版本：",IDC_STATIC,17,226,58,8
+    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "PMingLiu"
+BEGIN
+    GROUPBOX        " 視窗設定 ",IDC_STATIC,8,4,244,184
+
+    CONTROL         "允許\ DirectX 程式防止游標離開它的視窗(&m)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
+
+    CONTROL	        "允許\視窗管理器控制視窗(&w)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
+    LTEXT           "如果視窗是由視窗管理員所控制， 它將會有標準的邊框、 與你的虛擬桌面耦合並出現在你的視窗清單中。\n\n如果視窗不受控制， 他將與視窗管理員分離。 這表示這個視窗將不能與你的桌面耦合 ，可是能使 Wine 模擬的更準確， 某些程式會執行得更順利。",
+		           IDC_STATIC,19,51,225,80
+
+    CONTROL         "模擬一個虛擬桌面(&d)",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
+    LTEXT           "你可以選擇讓所有的 Windows 程式視窗限制在一個像虛擬桌面的視窗， 或是讓它們表現得像是你的其他程式。",
+                    IDC_STATIC,19,138,225,28
+    LTEXT           "桌面大小(&s)：",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,109,168,8,8,WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,190,244,48
+
+    LTEXT           "&Vertex Shader支援：",IDC_STATIC,15,203,80,32
+    COMBOBOX        IDC_D3D_VSHADER_MODE,100,201,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL         "允許\&Pixel Shader（如果硬體支援）",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,219,230,10
+    GROUPBOX        " 螢幕解析度(&R) ",IDC_STATIC,8,242,244,25
+    CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
+    EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
+    LTEXT           "dpi",IDC_STATIC,235,252,10,8
+END
+
+IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "PMingLiu"
+BEGIN
+    GROUPBOX        " DLL 頂替 ",IDC_STATIC,8,4,244,240
+    LTEXT           "動態連結函式庫可以個別設定， 來指定要使用 Wine 提供的內建版本， 還是使用取自 Windows 或程式所提供的原生版本。"
+                    ,IDC_STATIC,16,16,220,32
+    LTEXT           "新增函式庫頂替(&N)：",IDC_STATIC,16,58,100,8
+    COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON      "加入(&A)",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
+    LTEXT           "已有的函式庫頂替(&o)：",IDC_STATIC,16,86,100,8
+    LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    PUSHBUTTON      "編輯(&E)",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "移除(&R)",IDC_DLLS_REMOVEDLL,164,114,82,14
+END
+
+IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "編輯頂替"
+FONT 8, "PMingLiu"
+BEGIN
+    GROUPBOX        " 載入順序 ",IDC_STATIC,8,4,94,66
+    CONTROL         "內建(Wine)(&B)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
+    CONTROL         "原生(Windows)(&N)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
+    CONTROL         "內建先於原生(&l)",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "原生先於內建(&v)",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "停用(&D)",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    DEFPUSHBUTTON   "確定",IDOK,8,74,45,14,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,57,74,45,14,WS_GROUP
+END
+
+IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "PMingLiu"
+BEGIN
+    GROUPBOX        " 儲存槽對映(&m) ",IDC_STATIC,8,4,244,240
+    CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                    LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
+    PUSHBUTTON      "加入(&A)",IDC_BUTTON_ADD,15,98,37,14
+    PUSHBUTTON      "移除(&R)",IDC_BUTTON_REMOVE,56,98,37,14
+    PUSHBUTTON      "自動偵測(&d)...",IDC_BUTTON_AUTODETECT,197,98,49,14
+
+    /* editing drive details */
+    LTEXT           "路徑(&P)：",IDC_STATIC,15,123,20,9
+    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "瀏覽(&B)...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+
+    LTEXT           "類型(&T)：",IDC_STATIC_TYPE,15,138,21,10
+    COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    LTEXT           "標籤與序號",IDC_LABELSERIAL_STATIC,15,155,95,10
+
+    PUSHBUTTON      "顯示進階(&A)",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
+    CONTROL         "自動從裝置偵測(&)：",IDC_RADIO_AUTODETECT,"Button",
+                    BS_AUTORADIOBUTTON,15,166,93,10
+    EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "瀏覽(&w)...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    CONTROL         "手動指定(&M)：",IDC_RADIO_ASSIGN,"Button",
+                    BS_AUTORADIOBUTTON,15,195,69,10
+
+    LTEXT           "標籤(&L)：",IDC_STATIC_LABEL,33,208,29,12
+    EDITTEXT        IDC_EDIT_LABEL,63,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "序號(&e)：",IDC_STATIC_SERIAL,33,225,29,12
+    EDITTEXT        IDC_EDIT_SERIAL,63,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+
+    CONTROL         "顯示隱藏檔案(&d)",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+END
+
+IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "PMingLiu"
+BEGIN
+    GROUPBOX        " 驅動程式選擇 ",IDC_STATIC,8,4,244,195
+    LTEXT           "勾選方框來選擇想要的驅動程式。 不選擇任何驅動程式將停用音效。 不建議同時選擇複數的驅動程式。 按下滑鼠右鍵來對驅動程式設定。",IDC_STATIC,15,20,227,30
+    CONTROL         "裝置",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
+    PUSHBUTTON      "測試音效(&T)",IDC_AUDIO_TEST,170,50,59,14
+    PUSHBUTTON	    "控制台(&C)",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
+    LTEXT	    "硬體加速(&H)： ",IDC_STATIC,15,215,90,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "預設取樣頻率(&S)：",IDC_STATIC,15,232,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "預設取樣位元率&B)：",IDC_STATIC,137,232,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "驅動程式模擬(&E)",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
+END
+
+IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "PMingLiu"
+BEGIN
+    GROUPBOX        " 外觀 ",IDC_STATIC,8,4,244,106
+    LTEXT           "佈景主題(&T)：",IDC_STATIC,15,16,130,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "安裝佈景主題(&I)...",IDC_THEME_INSTALL,152,23,93,14
+    LTEXT           "配色(&C)：",IDC_THEME_COLORTEXT,15,40,112,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "大小(&S)：",IDC_THEME_SIZETEXT,135,40,110,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "物件(&e)：",IDC_STATIC,15,64,112,8
+    COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
+    LTEXT           "顏色(&o)：",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
+    LTEXT           "大小(&z)：",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
+    CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
+    PUSHBUTTON      "字型(&F)",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " 特殊資料夾(&h) ",IDC_STATIC,8,114,244,100
+    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
+    CONTROL         "連結至(&L)：",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
+    PUSHBUTTON      "瀏覽(&r)",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WINE_VERSION        "CVS"
+    IDS_TAB_APPLICATIONS    "應用程式"
+    IDS_TAB_DLLS            "函式庫"
+    IDS_TAB_DRIVES          "儲存槽"
+    IDS_CHOOSE_PATH         "請選擇 unix 資料夾。"
+    IDS_HIDE_ADVANCED       "隱藏進階選項(&A)"
+    IDS_SHOW_ADVANCED       "顯示進階選項(&A)"
+    IDS_NOTHEME             "（無佈景主題）"
+    IDS_TAB_GRAPHICS        "顯示"
+    IDS_TAB_DESKTOP_INTEGRATION "桌面整合"
+    IDS_TAB_AUDIO           "音效"
+    IDS_TAB_ABOUT           "關於"
+    IDS_WINECFG_TITLE       "Wine 設定"
+    IDS_WINECFG_TITLE_APP   "Wine 於 %s 的設定"
+    IDS_THEMEFILE           "佈景主題檔案"
+    IDS_THEMEFILE_SELECT    "選擇一個佈景主題檔案"
+    IDS_AUDIO_MISSING       "目前在登錄資訊裡沒有指定任何音效驅動程式。\n\n一個推薦的驅動程式已預先幫你選擇。\n你可以使用此驅動程式，或是選擇其他可用的。\n\n你必須點選「套用」使選擇生效。"
+    IDS_SHELL_FOLDER        "特殊資料夾"
+    IDS_LINKS_TO            "連結至"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "不建議對這個函式庫更改載入順序。\n你確定要如此嗎？"
+    IDS_DLL_WARNING_CAPTION "警告：系統函式庫"
+    IDS_DLL_NATIVE          "原生"
+    IDS_DLL_BUILTIN         "內建"
+    IDS_DLL_NATIVE_BUILTIN  "原生，內建"
+    IDS_DLL_BUILTIN_NATIVE  "內建、原生"
+    IDS_DLL_DISABLED        "停用"
+    IDS_DEFAULT_SETTINGS    "預設設定"
+    IDS_EXECUTABLE_FILTER   "Wine 程式 (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "使用全域設定"
+    IDS_SELECT_EXECUTABLE   "選擇一個可執行檔"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SHADER_MODE_HARDWARE    "硬體"
+    IDS_SHADER_MODE_NONE        "無"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DRIVE_UNKNOWN           "自動偵測"
+    IDS_DRIVE_FIXED             "本機硬碟"
+    IDS_DRIVE_REMOTE            "網路分享"
+    IDS_DRIVE_REMOVABLE         "軟碟機"
+    IDS_DRIVE_CDROM             "光碟"
+    IDS_DRIVE_LETTERS_EXCEEDED  "你無法再增加任何儲存槽。\n\n每個儲存槽比需要有一個從 A 到 Z 之間的英文字， 所以你不能擁有超過 26"    IDS_SYSTEM_DRIVE_LABEL      "系統儲存槽"
+    IDS_CONFIRM_DELETE_C        "你確定要刪除 C 槽嗎？\n\n大部分的 Windows 程式都假定 C 槽存在， 而沒有 C 槽時就會死得很嚴重。 如果你刪除了它， 請記得要重新建立一個！"
+    IDS_COL_DRIVELETTER         "字母"
+    IDS_COL_DRIVEMAPPING        "儲存槽對映"
+    IDS_NO_DRIVE_C              "你沒有 C 槽。 這不是件好事。 \n\n請記得點選「儲存槽」頁籤的「加入」來建立一個！\n"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ACCEL_FULL              "完全"
+    IDS_ACCEL_STANDARD          "標準"
+    IDS_ACCEL_BASIC             "基本"
+    IDS_ACCEL_EMULATION         "軟體模擬"
+    IDS_DRIVER_ALSA             "ALSA Driver"
+    IDS_DRIVER_ESOUND           "EsounD Driver"
+    IDS_DRIVER_OSS              "OSS Driver"
+    IDS_DRIVER_JACK             "JACK Driver"
+    IDS_DRIVER_NAS              "NAS Driver"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
+    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
+    IDS_OPEN_DRIVER_ERROR       "無法開啟 %s ！"
+    IDS_SOUNDDRIVERS            "音效驅動程式"
+    IDS_DEVICES_WAVEOUT         "Wave 輸出裝置"
+    IDS_DEVICES_WAVEIN          "Wave 輸入裝置"
+    IDS_DEVICES_MIDIOUT         "MIDI 輸出裝置"
+    IDS_DEVICES_MIDIIN          "MIDI 輸入裝置"
+    IDS_DEVICES_AUX             "輔助裝置"
+    IDS_DEVICES_MIXER           "混音器裝置"
+    IDS_UNAVAILABLE_DRIVER      "在登錄資訊裡記錄的驅動程式不可使用！\n\n是否將 %s 從登錄資訊裡移除？"
+    IDS_WARNING                 "警告"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "控制項背景"
+    IDC_SYSPARAMS_BUTTON_TEXT       "控制項文字"
+    IDC_SYSPARAMS_DESKTOP           "桌面"
+    IDC_SYSPARAMS_MENU              "選單背景"
+    IDC_SYSPARAMS_MENU_TEXT         "選單文字"
+    IDC_SYSPARAMS_SCROLLBAR         "捲軸"
+    IDC_SYSPARAMS_SELECTION         "Selection Background"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Selection Text"
+    IDC_SYSPARAMS_TOOLTIP           "ToolTip Background"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "ToolTip Text"
+    IDC_SYSPARAMS_WINDOW            "Window Background"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Window Text"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Active Title Bar"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Active Title Text"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Inactive Title Bar"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inactive Title Text"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
+END
