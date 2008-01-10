@@ -3084,6 +3084,16 @@ BOOL WINAPI SetLayeredWindowAttributes( HWND hWnd, COLORREF rgbKey,
 }
 
 /*****************************************************************************
+ *              GetLayeredWindowAttributes (USER32.@)
+ */
+BOOL WINAPI GetLayeredWindowAttributes( HWND hWnd, COLORREF *prgbKey,
+                                        BYTE *pbAlpha, DWORD *pdwFlags )
+{
+    FIXME("(%p,%p,%p,%p): stub!\n", hWnd, prgbKey, pbAlpha, pdwFlags);
+    return FALSE;
+}
+
+/*****************************************************************************
  *              UpdateLayeredWindow (USER32.@)
  */
 BOOL WINAPI UpdateLayeredWindow( HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psize,

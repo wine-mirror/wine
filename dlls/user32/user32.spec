@@ -304,7 +304,7 @@
 @ stdcall GetKeyboardType(long)
 @ stdcall GetLastActivePopup(long)
 @ stdcall GetLastInputInfo(ptr)
-# @ stub GetLayeredWindowAttributes
+@ stdcall GetLayeredWindowAttributes(long ptr ptr ptr)
 # @ stub GetListBoxInfo
 @ stdcall GetMenu(long)
 @ stdcall GetMenuBarInfo(long long long ptr)
