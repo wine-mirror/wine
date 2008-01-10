@@ -113,9 +113,14 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
          * Gecko grabs focus in edit mode and some apps don't like it.
          * We should somehow prevent grabbing focus.
          */
+
+        TRACE("WM_RESETFOCUS_HACK\n");
+
         if(This->reset_focus) {
             SetFocus(This->reset_focus);
             This->reset_focus = NULL;
+            if(This->doc)
+                This->doc->focus = FALSE;
         }
     }
 
