@@ -972,7 +972,14 @@ static void test_GetShortPathNameW(void)
     WCHAR name[] = { 't', 'e', 's', 't', 0 };
     WCHAR backSlash[] = { '\\', 0 };
 
+    SetLastError(0xdeadbeef);
     GetTempPathW( MAX_PATH, path );
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("GetTempPathW is not implemented\n");
+        return;
+    }
+
     lstrcatW( path, test_path );
     lstrcatW( path, backSlash );
     ret = CreateDirectoryW( path, NULL );
