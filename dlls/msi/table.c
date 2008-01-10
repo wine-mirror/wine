@@ -105,13 +105,13 @@ static WCHAR szType[]    = { 'T','y','p','e',0 };
  * Do not mark them const.
  */
 static MSICOLUMNINFO _Columns_cols[4] = {
-    { szColumns, 1, szTable,  MSITYPE_VALID | MSITYPE_STRING | MSITYPE_KEY | 64, 0 },
-    { szColumns, 2, szNumber, MSITYPE_VALID | MSITYPE_KEY | 2,     2 },
-    { szColumns, 3, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 4 },
-    { szColumns, 4, szType,   MSITYPE_VALID | 2,                   6 },
+    { szColumns, 1, szTable,  MSITYPE_VALID | MSITYPE_STRING | MSITYPE_KEY | 64, 0, 0, NULL },
+    { szColumns, 2, szNumber, MSITYPE_VALID | MSITYPE_KEY | 2,     2, 0, NULL },
+    { szColumns, 3, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 4, 0, NULL },
+    { szColumns, 4, szType,   MSITYPE_VALID | 2,                   6, 0, NULL },
 };
 static MSICOLUMNINFO _Tables_cols[1] = {
-    { szTables,  1, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 0 },
+    { szTables,  1, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 0, 0, NULL },
 };
 
 #define MAX_STREAM_NAME 0x1f
