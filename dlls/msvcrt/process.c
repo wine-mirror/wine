@@ -189,7 +189,7 @@ static MSVCRT_wchar_t* msvcrt_argvtos(const MSVCRT_wchar_t* const* arg, MSVCRT_w
   MSVCRT_wchar_t* p;
   MSVCRT_wchar_t* ret;
 
-  if (!arg && !delim)
+  if (!arg)
   {
       /* Return NULL for an empty environment list */
       return NULL;
@@ -233,7 +233,7 @@ static MSVCRT_wchar_t *msvcrt_argvtos_aw(const char * const *arg, MSVCRT_wchar_t
   unsigned long len;
   MSVCRT_wchar_t *p, *ret;
 
-  if (!arg && !delim)
+  if (!arg)
   {
       /* Return NULL for an empty environment list */
       return NULL;
