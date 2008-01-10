@@ -298,6 +298,12 @@ static void test_GetTimeZoneInformation(void)
     utc = st;
     SetLastError(0xdeadbeef);
     res = pSystemTimeToTzSpecificLocalTime(&tzinfo, &utc, &current);
+    if (!res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("SystemTimeToTzSpecificLocalTime is not implemented\n");
+        return;
+    }
+
     ok(res, "SystemTimeToTzSpecificLocalTime error %u\n", GetLastError());
     s_time = system_time_to_minutes(&current);
 
