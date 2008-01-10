@@ -32,12 +32,16 @@ PROGRAMS = \
 	wine-pthread \
 	wine-pthread-installed
 
-MANPAGES = wine.man wine.de.man
+MANPAGES = \
+	wine.man \
+	wine.de.man \
+	wine.fr.man
 
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
 	$(DESTDIR)$(mandir)/man$(prog_manext) \
-	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)
+	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext) \
+	$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)
 
 all: $(WINE_BINARIES) $(WINE_BINARIES:%=%-installed) $(MODULE) $(MANPAGES)
 
@@ -85,11 +89,13 @@ install:: $(WINE_BINARIES:%=%-installed) $(MANPAGES) $(INSTALLDIRS)
 	done
 	$(INSTALL_DATA) wine.man $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) wine.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
+	$(INSTALL_DATA) wine.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 
 uninstall::
 	-cd $(DESTDIR)$(bindir) && $(RM) $(WINE_BINARIES) $(MODULE)
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
+	$(RM) $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 
 clean::
 	$(RM) version.c version-stamp
