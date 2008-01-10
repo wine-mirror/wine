@@ -588,7 +588,6 @@ static LRESULT FD31_FileTypeChange( const FD31_DATA *lfs )
         return TRUE;
     pstr = (LPWSTR)SendDlgItemMessageW(lfs->hwnd, cmb1, CB_GETITEMDATA, lRet, 0);
     TRACE("Selected filter : %s\n", debugstr_w(pstr));
-    SetDlgItemTextW( lfs->hwnd, edt1, pstr );
 
     return FD31_Validate( lfs, NULL, cmb1, lRet, TRUE );
 }
