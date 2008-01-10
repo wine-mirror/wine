@@ -1998,7 +1998,7 @@ static const struct nls_update_font_list
     /* Chinese Traditional */
     { 950, 950, "vga950.fon", "cvgafix.fon", "cvgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
-      "Tahoma",  "Times New Roman", /* FIXME unverified */
+      "PMingLiU",  "MingLiU",
     }
 };
 
