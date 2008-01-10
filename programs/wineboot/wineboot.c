@@ -495,6 +495,7 @@ static int ProcessWindowsFileProtection(void)
     }
 
     find_handle = FindFirstFileW(dllcache,&finddata);
+    dllcache[ strlenW(dllcache) - 2] = 0; /* strip off wildcard */
     find_rc = find_handle != INVALID_HANDLE_VALUE;
     while (find_rc)
     {
