@@ -233,6 +233,12 @@ static void test_message_null_buffer(void)
     SetLastError(0xdeadbeef);
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, 0, 0, NULL, 0, NULL);
     error = GetLastError();
+    if (!ret && error == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("FormatMessageW is not implemented\n");
+        return;
+    }
+
     ok(!ret, "FormatMessageW returned %u\n", ret);
     ok(error == ERROR_INVALID_PARAMETER, "last error %u\n", error);
 }
