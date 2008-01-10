@@ -168,7 +168,7 @@ internal dlls (
 .I builtin
 ). The type may be abbreviated with the first letter of the type (
 .I n, b
-). Each sequence of orders must be separated by commas.
+). The library may also be disabled (''). Each sequence of orders must be separated by commas.
 .RS
 .PP
 Each dll may have its own specific load order. The load order
@@ -197,11 +197,11 @@ WINEDLLOVERRIDES="comdlg32,shell32=n;c:\(rs\(rsfoo\(rs\(rsbar\(rs\(rsbaz=b"
 Try to load the libraries comdlg32 and shell32 as native windows dlls. Furthermore, if 
 an application request to load c:\(rsfoo\(rsbar\(rsbaz.dll load the builtin library baz. 
 .TP
-WINEDLLOVERRIDES="comdlg32=b,n;shell32=b;comctl32=n"
+WINEDLLOVERRIDES="comdlg32=b,n;shell32=b;comctl32=n;oleaut32="
 .br
 Try to load comdlg32 as builtin first and try the native version if
 the builtin load fails; load shell32 always as builtin and comctl32
-always as native.
+always as native. Oleaut32 will be disabled.
 .RE
 .TP
 .I DISPLAY
