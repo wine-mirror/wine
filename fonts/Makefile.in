@@ -186,8 +186,8 @@ small_fonts-1256-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
 small_fonts-1257-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 1257 96 128 5
 
-small_fonts-932-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 932 96 128 5
+small_fonts-932-96-11.fnt: small_fonts_jp.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) small_fonts_jp.ttf 11 932 96 128 7
 
 system-1252-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) system.ttf 16 1252 96 128 7
@@ -217,7 +217,7 @@ system-874-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) system.ttf 16 874 96 128 7
 
 system-932-96-18.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) system.ttf 18 932 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 18 932 96 128 8
 
 system-936-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) system.ttf 16 936 96 128 7
