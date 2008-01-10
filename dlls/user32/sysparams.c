@@ -3102,3 +3102,13 @@ BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
 
     return USER_Driver->pEnumDisplaySettingsEx(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
 }
+
+/***********************************************************************
+ *              SetProcessDPIAware   (USER32.@)
+ */
+BOOL WINAPI SetProcessDPIAware( VOID )
+{
+    FIXME( "stub!\n");
+
+    return TRUE;
+}

@@ -639,6 +639,7 @@
 @ stdcall SetMessageQueue(long)
 @ stdcall SetParent(long long)
 @ stdcall SetProcessDefaultLayout(long)
+@ stdcall SetProcessDPIAware()
 @ stdcall SetProcessWindowStation(long)
 @ stdcall SetProgmanWindow (long)
 @ stdcall SetPropA(long str long)
