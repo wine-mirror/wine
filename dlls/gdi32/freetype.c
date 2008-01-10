@@ -3262,7 +3262,7 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     OUTLINETEXTMETRICW *potm = NULL;
     UINT size;
     TEXTMETRICW tm, *ptm;
-    GdiFont *font = alloc_font();
+    GdiFont *font;
     LONG width, height;
 
     if (face->cache_valid)
@@ -3273,6 +3273,8 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
         *ptype = face->type;
         return;
     }
+
+    font = alloc_font();
 
     if(face->scalable) {
         height = 100;
