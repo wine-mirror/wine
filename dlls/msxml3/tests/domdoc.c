@@ -531,8 +531,8 @@ static void test_domdoc( void )
         r = IXMLDOMText_get_attributes( nodetext, &pAttribs);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok( pAttribs == NULL, "pAttribs not NULL\n");
+        IXMLDOMText_Release( nodetext );
     }
-    IXMLDOMText_Release( nodetext );
     SysFreeString( str );
 
     /* test Create Comment */
@@ -550,8 +550,8 @@ static void test_domdoc( void )
         r = IXMLDOMComment_get_lastChild(node_comment, &nodeChild);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok(nodeChild == NULL, "pLastChild not NULL\n");
+        IXMLDOMText_Release( node_comment );
     }
-    IXMLDOMText_Release( node_comment );
 
     /* test Create Attribute */
     r = IXMLDOMDocument_createAttribute(doc, NULL, NULL);
@@ -582,8 +582,8 @@ static void test_domdoc( void )
         r = IXMLDOMProcessingInstruction_get_lastChild(nodePI, &nodeChild);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok(nodeChild == NULL, "nodeChild not NULL\n");
+        IXMLDOMProcessingInstruction_Release(nodePI);
     }
-    IXMLDOMProcessingInstruction_Release(nodePI);
 
     r = IXMLDOMDocument_Release( doc );
     ok( r == 0, "document ref count incorrect\n");
