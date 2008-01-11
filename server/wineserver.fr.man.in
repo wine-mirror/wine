@@ -6,7 +6,7 @@ wineserver \- le serveur Wine
 .BI wineserver\  [options]
 .SH DESCRIPTION
 .B wineserver
-est un démon qui fournit à Wine à peut près les mêmes services
+est un démon qui fournit à Wine à peu près les mêmes services
 que le noyau de Windows fournit sous Windows.
 .PP
 .B wineserver
@@ -17,7 +17,7 @@ comme expliqué ci-dessous.
 .SH OPTIONS
 .TP
 .BI \-d [n]
-Défini le niveau de débogage à
+Définit le niveau de débogage à
 .I n.
 0 signifie aucune information de débogage, 1 est le niveau normal et 2 est
 pour un débogage plus important. Si
@@ -99,13 +99,13 @@ est Alexandre Julliard. Beaucoup d'autres personnes ont contribué de nouvelles 
 et des correction d'anomalies. Référez-vous au fichier Changelog dans la distribution de Wine
 pour les détails complets.
 .SH ANOMALIES
-Si vous rencontrez une anomalie, veuillez soumettre à rapport d'anomalie sur
+Si vous rencontrez une anomalie, veuillez soumettre un rapport d'anomalie sur
 .UR http://bugs.winehq.org
 .B http://bugs.winehq.org.
 .UE
 .SH DISPONIBILITÉ
 .B wineserver
-fait partie de la distribution de Wine qui est dispobible depuis WineHQ,
+fait partie de la distribution de Wine qui est disponible depuis WineHQ,
 le quartier général des développeurs de Wine, sur
 .UR http://www.winehq.org/
 .B http://www.winehq.org/.

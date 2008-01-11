@@ -92,7 +92,7 @@ et, s'il n'existe pas, il cherchera alors un fichier nommé
 "wineserver" dans le chemin et dans quelques autres emplacements potentiels.
 .TP
 .I WINELOADER
-Spécifie le chemin et le nom de l'éxécutable
+Spécifie le chemin et le nom de l'exécutable
 .B wine
 à utiliser pour exécuter de nouveaux processus Windows. S'il n'est pas défini, Wine
 essaiera de charger
@@ -157,10 +157,10 @@ Wine cherchera aussi dans le répertoire
 .B @dlldir@.
 .TP
 .I WINEDLLOVERRIDES
-Définit le type de surclassage et l'ordre de chargement des dlss utilisées lors du chargement
+Définit le type de surclassage et l'ordre de chargement des dlls utilisées lors du chargement
 d'un processus pour chaque dll. La valeur par défaut est définie dans le fichier de
 configuration. Il y a actuellement deux types de librairies qui peuvent être chargées
-dans l'espace d'adressage d'un processus : Le dlls natives de Windows (
+dans l'espace d'adressage d'un processus : Les dlls natives de Windows (
 .I native
 ), et les dlls fournies par
 .B wine
@@ -230,9 +230,7 @@ Le chargeur de programme de
 .
 .TP
 .I @bindir@/wineconsole
-The
-.B wine
-chargeur de programme pour les applications en mode console (CUI).
+Le chargeur de programme pour les applications en mode console (CUI).
 .TP
 .I @bindir@/wineserver
 Le serveur
