@@ -305,6 +305,8 @@ BOOL WINAPI SetEnvironmentVariableW( LPCWSTR name, LPCWSTR value )
 /***********************************************************************
  *           ExpandEnvironmentStringsA   (KERNEL32.@)
  *
+ * See ExpandEnvironmentStringsW.
+ *
  * Note: overlapping buffers are not supported; this is how it should be.
  * FIXME: return value is wrong for MBCS
  */
@@ -334,6 +336,21 @@ DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
 
 /***********************************************************************
  *           ExpandEnvironmentStringsW   (KERNEL32.@)
+ *
+ * Replaces references to environment variables of the form '%EnvVar%'
+ * by their value. If the environment variable does not exist, then the
+ * reference is left as is.
+ *
+ * PARAMS
+ *  src       [I] The string to be expanded.
+ *  dst       [O] The buffer in which to put the expanded string.
+ *  len       [I] The buffer size, in characters.
+ *
+ * RETURNS
+ *  The number of characters copied into the buffer. If the buffer is
+ *  too small, then the required buffer size, in characters including the
+ *  trailing '\0', is returned.
+ *  If the function fails for some other reason, then it returns 0.
  */
 DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
 {
@@ -346,7 +363,7 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
 
     RtlInitUnicodeString(&us_src, src);
 
-    /* make sure we don't overflow maximum UNICODE_STRING size */
+    /* make sure we don't overflow the maximum UNICODE_STRING size */
     if (len > 0x7fff)
         len = 0x7fff;
 

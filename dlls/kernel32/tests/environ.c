@@ -217,8 +217,54 @@ static void test_GetSetEnvironmentVariableW(void)
 
 static void test_ExpandEnvironmentStringsA(void)
 {
+    const char* value="Long long value";
+    const char* not_an_env_var="%NotAnEnvVar%";
     char buf[256], buf1[256], buf2[0x8000];
     DWORD ret_size, ret_size1;
+
+    SetEnvironmentVariableA("EnvVar", value);
+
+    ret_size = ExpandEnvironmentStringsA(NULL, buf1, sizeof(buf1));
+    ok(ret_size == 1 || ret_size == 0 /* Win9x */,
+       "ExpandEnvironmentStrings returned %d\n", ret_size);
+
+    /* Try to get the required buffer size 'the natural way' */
+    strcpy(buf, "%EnvVar%");
+    ret_size = ExpandEnvironmentStringsA(buf, NULL, 0);
+    /* v5.1.2600.2945 (XP SP2) returns len + 2 here! */
+    ok(ret_size == strlen(value)+1 || ret_size == strlen(value)+2 || ret_size == 0 /* Win95 */,
+       "ExpandEnvironmentStrings returned %d instead of %d\n",
+       ret_size, strlen(value)+1);
+    if (ret_size == strlen(value)+2)
+        trace("ExpandEnvironmentStrings is buggy: it returned len + 2\n");
+
+    /* Again, side-stepping the Win95 bug */
+    ret_size = ExpandEnvironmentStringsA(buf, buf1, 0);
+    /* v5.1.2600.2945 (XP SP2) returns len + 2 here! */
+    ok(ret_size == strlen(value)+1 || ret_size == strlen(value)+2,
+       "ExpandEnvironmentStrings returned %d instead of %d\n",
+       ret_size, strlen(value)+1);
+
+    /* Try with a buffer that's too small */
+    ret_size = ExpandEnvironmentStringsA(buf, buf1, 12);
+    /* v5.1.2600.2945 (XP SP2) returns len + 2 here! */
+    ok(ret_size == strlen(value)+1 || ret_size == strlen(value)+2,
+       "ExpandEnvironmentStrings returned %d instead of %d\n",
+       ret_size, strlen(value)+1);
+
+    /* Try with a buffer of just the right size */
+    /* v5.1.2600.2945 (XP SP2) needs and returns len + 2 here! */
+    ret_size = ExpandEnvironmentStringsA(buf, buf1, ret_size);
+    ok(ret_size == strlen(value)+1 || ret_size == strlen(value)+2,
+       "ExpandEnvironmentStrings returned %d instead of %d\n",
+       ret_size, strlen(value)+1);
+    ok(!strcmp(buf1, value), "ExpandEnvironmentStrings returned [%s]\n", buf1);
+
+    /* Try with an unset environment variable */
+    strcpy(buf, not_an_env_var);
+    ret_size = ExpandEnvironmentStringsA(buf, buf1, sizeof(buf1));
+    ok(ret_size == strlen(not_an_env_var)+1, "ExpandEnvironmentStrings returned %d instead of %d\n", ret_size, strlen(value)+1);
+    ok(!strcmp(buf1, not_an_env_var), "ExpandEnvironmentStrings returned [%s]\n", buf1);
 
     /* test a large destination size */
     strcpy(buf, "12345");
@@ -231,6 +277,8 @@ static void test_ExpandEnvironmentStringsA(void)
     if (ERROR_ENVVAR_NOT_FOUND == GetLastError())
         return;
     ok(!strcmp(buf, buf1), "ExpandEnvironmentStrings failed %s vs %s. ret_size = %d\n", buf, buf1, ret_size);
+
+    SetEnvironmentVariableA("EnvVar", NULL);
 }
 
 static BOOL (WINAPI *pGetComputerNameExA)(COMPUTER_NAME_FORMAT,LPSTR,LPDWORD);
