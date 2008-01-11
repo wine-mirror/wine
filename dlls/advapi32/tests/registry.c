@@ -710,7 +710,7 @@ static void test_get_value(void)
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
 
     /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ and no buffer (ok, expands) */
-    size = 0xbadbeef;
+    size = 0;
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ, NULL, NULL, &size);
     ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
     /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath1 length + 1 here. */

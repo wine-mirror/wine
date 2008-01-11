@@ -1417,8 +1417,8 @@ static VOID ADVAPI_ApplyRestrictions( DWORD dwFlags, DWORD dwType,
 /******************************************************************************
  * RegGetValueW   [ADVAPI32.@]
  *
- * Retrieves the type and data for a value name associated with a key 
- * optionally expanding it's content and restricting it's type.
+ * Retrieves the type and data for a value name associated with a key,
+ * optionally expanding its content and restricting its type.
  *
  * PARAMS
  *  hKey      [I] Handle to an open key.
@@ -1427,16 +1427,17 @@ static VOID ADVAPI_ApplyRestrictions( DWORD dwFlags, DWORD dwType,
  *  dwFlags   [I] Flags restricting the value type to retrieve.
  *  pdwType   [O] Destination for the values type, may be NULL.
  *  pvData    [O] Destination for the values content, may be NULL.
- *  pcbData   [I/O] Size of pvData, updated with the size required to 
- *                  retrieve the whole content.
+ *  pcbData   [I/O] Size of pvData, updated with the size in bytes required to
+ *                  retrieve the whole content, including the trailing '\0'
+ *                  for strings.
  *
  * RETURNS
  *  Success: ERROR_SUCCESS
  *  Failure: nonzero error code from Winerror.h
  *
  * NOTES
- *  - Unless RRF_NOEXPAND is specified REG_EXPAND_SZ is automatically expanded
- *    and REG_SZ is retrieved instead.
+ *  - Unless RRF_NOEXPAND is specified, REG_EXPAND_SZ values are automatically
+ *    expanded and pdwType is set to REG_SZ instead.
  *  - Restrictions are applied after expanding, using RRF_RT_REG_EXPAND_SZ 
  *    without RRF_NOEXPAND is thus not allowed.
  */
@@ -1505,7 +1506,7 @@ LSTATUS WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
                 cbData = ExpandEnvironmentStringsW(pvBuf, pvData,
                                                    pcbData ? *pcbData : 0);
                 dwType = REG_SZ;
-                if(pcbData && cbData > *pcbData)
+                if(pvData && pcbData && cbData > *pcbData)
                     ret = ERROR_MORE_DATA;
             }
             else if (pvData)
@@ -1600,7 +1601,7 @@ LSTATUS WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
                 cbData = ExpandEnvironmentStringsA(pvBuf, pvData,
                                                    pcbData ? *pcbData : 0);
                 dwType = REG_SZ;
-                if(pcbData && cbData > *pcbData)
+                if(pvData && pcbData && cbData > *pcbData)
                     ret = ERROR_MORE_DATA;
             }
             else if (pvData)
