@@ -564,8 +564,8 @@ static const CHAR df_directory_dat[] = "Directory\tDirectory_Parent\tDefaultDir\
                                        "s72\tS72\tl255\n"
                                        "Directory\tDirectory\n"
                                        "THIS\tMSITESTDIR\tthis\n"
-                                       "DOESNT\tTHIS\tdoesnt\n"
-                                       "NONEXISTENT\tDOESNT\texist\n"
+                                       "DOESNOT\tTHIS\tdoesnot\n"
+                                       "NONEXISTENT\tDOESNOT\texist\n"
                                        "MSITESTDIR\tProgramFilesFolder\tmsitest\n"
                                        "ProgramFilesFolder\tTARGETDIR\t.\n"
                                        "TARGETDIR\t\tSourceDir";
@@ -3614,9 +3614,9 @@ static void test_duplicatefiles(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\augustus", TRUE), "File not duplicated\n");
-    ok(delete_pf("msitest\\this\\doesnt\\exist\\maximus", TRUE), "File not duplicated\n");
-    ok(delete_pf("msitest\\this\\doesnt\\exist", FALSE), "File not duplicated\n");
-    ok(delete_pf("msitest\\this\\doesnt", FALSE), "File not duplicated\n");
+    ok(delete_pf("msitest\\this\\doesnot\\exist\\maximus", TRUE), "File not duplicated\n");
+    ok(delete_pf("msitest\\this\\doesnot\\exist", FALSE), "File not duplicated\n");
+    ok(delete_pf("msitest\\this\\doesnot", FALSE), "File not duplicated\n");
     ok(delete_pf("msitest\\this", FALSE), "File not duplicated\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
