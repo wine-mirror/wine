@@ -3259,9 +3259,6 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
 static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
 			   NEWTEXTMETRICEXW *pntm, LPDWORD ptype)
 {
-    OUTLINETEXTMETRICW *potm = NULL;
-    UINT size;
-    TEXTMETRICW tm, *ptm;
     GdiFont *font;
     LONG width, height;
 
@@ -3295,73 +3292,26 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
 
     memset(&pelf->elfLogFont, 0, sizeof(LOGFONTW));
 
-    size = WineEngGetOutlineTextMetrics(font, 0, NULL);
-    if(size) {
-        potm = HeapAlloc(GetProcessHeap(), 0, size);
-        WineEngGetOutlineTextMetrics(font, size, potm);
-        ptm = &potm->otmTextMetrics;
-    } else {
-        WineEngGetTextMetrics(font, &tm);
-        ptm = &tm;
-    }
-        
-    pntm->ntmTm.tmHeight = pelf->elfLogFont.lfHeight = ptm->tmHeight;
-    pntm->ntmTm.tmAscent = ptm->tmAscent;
-    pntm->ntmTm.tmDescent = ptm->tmDescent;
-    pntm->ntmTm.tmInternalLeading = ptm->tmInternalLeading;
-    pntm->ntmTm.tmExternalLeading = ptm->tmExternalLeading;
-    pntm->ntmTm.tmAveCharWidth = pelf->elfLogFont.lfWidth = ptm->tmAveCharWidth;
-    pntm->ntmTm.tmMaxCharWidth = ptm->tmMaxCharWidth;
-    pntm->ntmTm.tmWeight = pelf->elfLogFont.lfWeight = ptm->tmWeight;
-    pntm->ntmTm.tmOverhang = ptm->tmOverhang;
-    pntm->ntmTm.tmDigitizedAspectX = ptm->tmDigitizedAspectX;
-    pntm->ntmTm.tmDigitizedAspectY = ptm->tmDigitizedAspectY;
-    pntm->ntmTm.tmFirstChar = ptm->tmFirstChar;
-    pntm->ntmTm.tmLastChar = ptm->tmLastChar;
-    pntm->ntmTm.tmDefaultChar = ptm->tmDefaultChar;
-    pntm->ntmTm.tmBreakChar = ptm->tmBreakChar;
-    pntm->ntmTm.tmItalic = pelf->elfLogFont.lfItalic = ptm->tmItalic;
-    pntm->ntmTm.tmUnderlined = pelf->elfLogFont.lfUnderline = ptm->tmUnderlined;
-    pntm->ntmTm.tmStruckOut = pelf->elfLogFont.lfStrikeOut = ptm->tmStruckOut;
-    pntm->ntmTm.tmPitchAndFamily = ptm->tmPitchAndFamily;
-    pelf->elfLogFont.lfPitchAndFamily = (ptm->tmPitchAndFamily & 0xf1) + 1;
-    pntm->ntmTm.tmCharSet = pelf->elfLogFont.lfCharSet = ptm->tmCharSet;
-    pelf->elfLogFont.lfOutPrecision = OUT_STROKE_PRECIS;
-    pelf->elfLogFont.lfClipPrecision = CLIP_STROKE_PRECIS;
-    pelf->elfLogFont.lfQuality = DRAFT_QUALITY;
+    if (WineEngGetOutlineTextMetrics(font, 0, NULL))
+    {
+        memcpy(&pntm->ntmTm, &font->potm->otmTextMetrics, sizeof(TEXTMETRICW));
 
-    *ptype = 0;
-    if (ptm->tmPitchAndFamily & TMPF_TRUETYPE)
-        *ptype |= TRUETYPE_FONTTYPE;
-    if (ptm->tmPitchAndFamily & TMPF_DEVICE)
-        *ptype |= DEVICE_FONTTYPE;
-    if(!(ptm->tmPitchAndFamily & TMPF_VECTOR))
-        *ptype |= RASTER_FONTTYPE;
-
-    pntm->ntmTm.ntmFlags = ptm->tmItalic ? NTM_ITALIC : 0;
-    if(ptm->tmWeight > 550) pntm->ntmTm.ntmFlags |= NTM_BOLD;
-    if(pntm->ntmTm.ntmFlags == 0) pntm->ntmTm.ntmFlags = NTM_REGULAR;
-    pntm->ntmTm.ntmFlags |= face->ntmFlags;
-
-    pntm->ntmTm.ntmCellHeight = pntm->ntmTm.tmHeight;
-    pntm->ntmTm.ntmAvgWidth = pntm->ntmTm.tmAveCharWidth;
-    memset(&pntm->ntmFontSig, 0, sizeof(FONTSIGNATURE));
-
-    if(potm) {
-        pntm->ntmTm.ntmSizeEM = potm->otmEMSquare;
+        pntm->ntmTm.ntmSizeEM = font->potm->otmEMSquare;
 
         lstrcpynW(pelf->elfLogFont.lfFaceName,
-                 (WCHAR*)((char*)potm + (ptrdiff_t)potm->otmpFamilyName),
+                 (WCHAR*)((char*)font->potm + (ULONG_PTR)font->potm->otmpFamilyName),
                  LF_FACESIZE);
         lstrcpynW(pelf->elfFullName,
-                 (WCHAR*)((char*)potm + (ptrdiff_t)potm->otmpFaceName),
+                 (WCHAR*)((char*)font->potm + (ULONG_PTR)font->potm->otmpFaceName),
                  LF_FULLFACESIZE);
         lstrcpynW(pelf->elfStyle,
-                 (WCHAR*)((char*)potm + (ptrdiff_t)potm->otmpStyleName),
+                 (WCHAR*)((char*)font->potm + (ULONG_PTR)font->potm->otmpStyleName),
                  LF_FACESIZE);
+    }
+    else
+    {
+        WineEngGetTextMetrics(font, (TEXTMETRICW *)&pntm->ntmTm);
 
-        HeapFree(GetProcessHeap(), 0, potm);
-    } else {
         pntm->ntmTm.ntmSizeEM = pntm->ntmTm.tmHeight - pntm->ntmTm.tmInternalLeading;
 
         lstrcpynW(pelf->elfLogFont.lfFaceName, face->family->FamilyName, LF_FACESIZE);
@@ -3369,7 +3319,32 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
         pelf->elfStyle[0] = '\0';
     }
 
+    pntm->ntmTm.ntmFlags = face->ntmFlags;
+    pntm->ntmTm.ntmCellHeight = pntm->ntmTm.tmHeight;
+    pntm->ntmTm.ntmAvgWidth = pntm->ntmTm.tmAveCharWidth;
+    memset(&pntm->ntmFontSig, 0, sizeof(FONTSIGNATURE));
+
     pelf->elfScript[0] = '\0'; /* This will get set in WineEngEnumFonts */
+
+    pelf->elfLogFont.lfHeight = pntm->ntmTm.tmHeight;
+    pelf->elfLogFont.lfWidth = pntm->ntmTm.tmAveCharWidth;
+    pelf->elfLogFont.lfWeight = pntm->ntmTm.tmWeight;
+    pelf->elfLogFont.lfItalic = pntm->ntmTm.tmItalic;
+    pelf->elfLogFont.lfUnderline = pntm->ntmTm.tmUnderlined;
+    pelf->elfLogFont.lfStrikeOut = pntm->ntmTm.tmStruckOut;
+    pelf->elfLogFont.lfCharSet = pntm->ntmTm.tmCharSet;
+    pelf->elfLogFont.lfOutPrecision = OUT_STROKE_PRECIS;
+    pelf->elfLogFont.lfClipPrecision = CLIP_STROKE_PRECIS;
+    pelf->elfLogFont.lfQuality = DRAFT_QUALITY;
+    pelf->elfLogFont.lfPitchAndFamily = (pntm->ntmTm.tmPitchAndFamily & 0xf1) + 1;
+
+    *ptype = 0;
+    if (pntm->ntmTm.tmPitchAndFamily & TMPF_TRUETYPE)
+        *ptype |= TRUETYPE_FONTTYPE;
+    if (pntm->ntmTm.tmPitchAndFamily & TMPF_DEVICE)
+        *ptype |= DEVICE_FONTTYPE;
+    if(!(pntm->ntmTm.tmPitchAndFamily & TMPF_VECTOR))
+        *ptype |= RASTER_FONTTYPE;
 
     memcpy(&face->elf,pelf,sizeof(ENUMLOGFONTEXW));
     memcpy(&face->ntm,pntm,sizeof(NEWTEXTMETRICEXW));
