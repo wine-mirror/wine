@@ -417,3 +417,53 @@ struct module* pe_load_builtin_module(struct process* pcs, const WCHAR* name,
     }
     return module;
 }
+
+/***********************************************************************
+ *           ImageDirectoryEntryToDataEx (DBGHELP.@)
+ *
+ * Search for specified directory in PE image
+ *
+ * PARAMS
+ *
+ *   base    [in]  Image base address
+ *   image   [in]  TRUE - image has been loaded by loader, FALSE - raw file image
+ *   dir     [in]  Target directory index
+ *   size    [out] Receives directory size
+ *   section [out] Receives pointer to section header of section containing directory data
+ *
+ * RETURNS
+ *   Success: pointer to directory data
+ *   Failure: NULL
+ *
+ */
+PVOID WINAPI ImageDirectoryEntryToDataEx( PVOID base, BOOLEAN image, USHORT dir, PULONG size, PIMAGE_SECTION_HEADER *section )
+{
+    const IMAGE_NT_HEADERS *nt;
+    DWORD addr;
+
+    *size = 0;
+
+    if (!(nt = RtlImageNtHeader( base ))) return NULL;
+    if (dir >= nt->OptionalHeader.NumberOfRvaAndSizes) return NULL;
+    if (!(addr = nt->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
+
+    *size = nt->OptionalHeader.DataDirectory[dir].Size;
+    if (image || addr < nt->OptionalHeader.SizeOfHeaders)
+    {
+        if (*section) *section = NULL;
+        return (char *)base + addr;
+    }
+
+    return RtlImageRvaToVa( nt, (HMODULE)base, addr, section );
+}
+
+/***********************************************************************
+ *         ImageDirectoryEntryToData   (DBGHELP.@)
+ *
+ * NOTES
+ *   See ImageDirectoryEntryToDataEx
+ */
+PVOID WINAPI ImageDirectoryEntryToData( PVOID base, BOOLEAN image, USHORT dir, PULONG size )
+{
+    return ImageDirectoryEntryToDataEx( base, image, dir, size, NULL );
+}
