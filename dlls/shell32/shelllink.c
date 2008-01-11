@@ -924,7 +924,14 @@ static HRESULT WINAPI IPersistStream_fnLoad(
 
     r = IStream_Read(stm, &zero, sizeof zero, &dwBytesRead);
     if( FAILED( r ) || zero || dwBytesRead != sizeof zero )
-        ERR("Last word was not zero\n");
+    {
+        /* Some lnk files have extra data blocks starting with a
+         * DATABLOCK_HEADER. For instance EXP_SPECIAL_FOLDER and an unknown
+         * one with a 0xa0000003 signature. However these don't seem to matter
+         * too much.
+         */
+        WARN("Last word was not zero\n");
+    }
 
     TRACE("OK\n");
 
