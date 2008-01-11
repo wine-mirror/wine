@@ -168,7 +168,7 @@ dans l'espace d'adressage d'un processus : Les dlls natives de Windows (
 .I builtin
 ). Le type peut être abrégé avec la première lettre du type (
 .I n, b
-). Chaque séquence d'ordre doit être séparé par une virgule.
+). La bibliothèque peut également être désactivée (''). Chaque séquence d'ordre doit être séparé par une virgule.
 .RS
 .PP
 Chaque dll peut avoir son ordre de chargement propre. L'orde de chargement
@@ -198,12 +198,12 @@ WINEDLLOVERRIDES="comdlg32,shell32=n;c:\(rs\(rsfoo\(rs\(rsbar\(rs\(rsbaz=b"
 Tente de charger les bibliothèques windows natives comdlg32 et shell32. De plus, si une
 application demande le chargement de  c:\(rsfoo\(rsbar\(rsbaz.dll, chargera la bibliothèque fournie baz.
 .TP
-WINEDLLOVERRIDES="comdlg32=b,n;shell32=b;comctl32=n"
+WINEDLLOVERRIDES="comdlg32=b,n;shell32=b;comctl32=n;oleaut32="
 .br
 Tente de charger la bibliothèque fournie comdlg32 en premier, puis
 essaie la version native ensuite si le chargement de la version
 fournie échoue. Dans tous les cas, la version fournie de shell32 et la
-version native de comctl32 sera chargée.
+version native de comctl32 sera chargée. Oleaut32 sera désactivée.
 .RE
 .TP
 .I DISPLAY
