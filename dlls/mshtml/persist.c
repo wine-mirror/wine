@@ -90,8 +90,9 @@ static int fix_headers(char *buf, DWORD post_len)
 static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
 {
     nsIInputStream *ret = NULL;
+    IUnknown *unk;
     IBindStatusCallback *callback;
-    IHttpNegotiate *http_negotiate;
+    IServiceProvider *service_provider;
     BINDINFO bindinfo;
     DWORD bindf = 0;
     DWORD post_len = 0, headers_len = 0;
@@ -108,19 +109,33 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
     if(!bctx)
         return NULL;
 
-    hres = IBindCtx_GetObjectParam(bctx, _BSCB_Holder_, (IUnknown**)&callback);
+    hres = IBindCtx_GetObjectParam(bctx, _BSCB_Holder_, &unk);
     if(FAILED(hres))
         return NULL;
 
-    hres = IBindStatusCallback_QueryInterface(callback, &IID_IHttpNegotiate,
-                                              (void**)&http_negotiate);
-    if(SUCCEEDED(hres)) {
-        hres = IHttpNegotiate_BeginningTransaction(http_negotiate, emptystr,
-                                                   emptystr, 0, &headers);
-        IHttpNegotiate_Release(http_negotiate);
+    hres = IUnknown_QueryInterface(unk, &IID_IBindStatusCallback, (void**)&callback);
+    if(FAILED(hres)) {
+        IUnknown_Release(unk);
+        return NULL;
+    }
 
-        if(SUCCEEDED(hres) && headers)
-            headers_len = WideCharToMultiByte(CP_ACP, 0, headers, -1, NULL, 0, NULL, NULL);
+    hres = IUnknown_QueryInterface(unk, &IID_IServiceProvider, (void**)&service_provider);
+    IUnknown_Release(unk);
+    if(SUCCEEDED(hres)) {
+        IHttpNegotiate *http_negotiate;
+
+        hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate, &IID_IHttpNegotiate,
+                                             (void**)&http_negotiate);
+        if(SUCCEEDED(hres)) {
+            hres = IHttpNegotiate_BeginningTransaction(http_negotiate, emptystr,
+                                                       emptystr, 0, &headers);
+            IHttpNegotiate_Release(http_negotiate);
+
+            if(SUCCEEDED(hres) && headers)
+                headers_len = WideCharToMultiByte(CP_ACP, 0, headers, -1, NULL, 0, NULL, NULL);
+        }
+
+        IServiceProvider_Release(service_provider);
     }
 
     memset(&bindinfo, 0, sizeof(bindinfo));
@@ -140,7 +155,6 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
 
         if(headers_len) {
             WideCharToMultiByte(CP_ACP, 0, headers, -1, data, -1, NULL, NULL);
-            CoTaskMemFree(headers);
             len = fix_headers(data, post_len);
         }
 
@@ -159,6 +173,7 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
         ret = create_nsstream(data, len+post_len);
     }
 
+    CoTaskMemFree(headers);
     ReleaseBindInfo(&bindinfo);
     IBindStatusCallback_Release(callback);
 
