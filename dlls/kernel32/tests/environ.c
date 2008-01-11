@@ -298,12 +298,17 @@ static void test_GetComputerName(void)
     error = GetLastError();
     todo_wine
     ok(!ret && error == ERROR_BUFFER_OVERFLOW, "GetComputerNameA should have failed with ERROR_BUFFER_OVERFLOW instead of %d\n", error);
-    size++; /* nul terminating character */
-    name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
-    ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
-    ret = GetComputerNameA(name, &size);
-    ok(ret, "GetComputerNameA failed with error %d\n", GetLastError());
-    HeapFree(GetProcessHeap(), 0, name);
+
+    /* Only Vista returns the computer name length as documented in the MSDN */
+    if (size != 0)
+    {
+        size++; /* nul terminating character */
+        name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
+        ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
+        ret = GetComputerNameA(name, &size);
+        ok(ret, "GetComputerNameA failed with error %d\n", GetLastError());
+        HeapFree(GetProcessHeap(), 0, name);
+    }
 
     size = MAX_COMPUTERNAME_LENGTH + 1;
     name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
