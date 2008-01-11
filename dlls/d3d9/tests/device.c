@@ -279,6 +279,15 @@ static void test_swapchain(void)
     DestroyWindow( hwnd );
 }
 
+/* Shared between two functions */
+static const DWORD simple_vs[] = {0xFFFE0101,       /* vs_1_1               */
+    0x0000001F, 0x80000000, 0x900F0000,             /* dcl_position0 v0     */
+    0x00000009, 0xC0010000, 0x90E40000, 0xA0E40000, /* dp4 oPos.x, v0, c0   */
+    0x00000009, 0xC0020000, 0x90E40000, 0xA0E40001, /* dp4 oPos.y, v0, c1   */
+    0x00000009, 0xC0040000, 0x90E40000, 0xA0E40002, /* dp4 oPos.z, v0, c2   */
+    0x00000009, 0xC0080000, 0x90E40000, 0xA0E40003, /* dp4 oPos.w, v0, c3   */
+    0x0000FFFF};                                    /* END                  */
+
 static void test_refcount(void)
 {
     HRESULT                      hr;
@@ -313,13 +322,6 @@ static void test_refcount(void)
     {
 	D3DDECL_END()
     };
-    static DWORD simple_vs[] = {0xFFFE0101,             /* vs_1_1               */
-        0x0000001F, 0x80000000, 0x900F0000,             /* dcl_position0 v0     */
-        0x00000009, 0xC0010000, 0x90E40000, 0xA0E40000, /* dp4 oPos.x, v0, c0   */
-        0x00000009, 0xC0020000, 0x90E40000, 0xA0E40001, /* dp4 oPos.y, v0, c1   */
-        0x00000009, 0xC0040000, 0x90E40000, 0xA0E40002, /* dp4 oPos.z, v0, c2   */
-        0x00000009, 0xC0080000, 0x90E40000, 0xA0E40003, /* dp4 oPos.w, v0, c3   */
-        0x0000FFFF};                                    /* END                  */
     static DWORD simple_ps[] = {0xFFFF0101,                                     /* ps_1_1                       */
         0x00000051, 0xA00F0001, 0x3F800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
         0x00000042, 0xB00F0000,                                                 /* tex t0                       */
@@ -719,6 +721,9 @@ static void test_reset(void)
     DWORD                        width, orig_width = GetSystemMetrics(SM_CXSCREEN);
     DWORD                        height, orig_height = GetSystemMetrics(SM_CYSCREEN);
     IDirect3DSwapChain9          *pSwapchain;
+    IDirect3DSurface9            *surface;
+    IDirect3DTexture9            *texture;
+    IDirect3DVertexShader9       *shader;
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
@@ -848,6 +853,55 @@ static void test_reset(void)
         }
         IDirect3DSwapChain9_Release(pSwapchain);
     }
+
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed         = TRUE;
+    d3dpp.BackBufferWidth  = 400;
+    d3dpp.BackBufferHeight  = 300;
+
+    /* _Reset fails if there is a resource in the default pool */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &surface, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DSurface9_Release(surface);
+    /* Reset again to get the device out of the lost state */
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+
+    /* Scratch, sysmem and managed pools are fine */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DSurface9_Release(surface);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DSurface9_Release(surface);
+    hr = IDirect3DDevice9_CreateTexture(pDevice, 16, 16, 0, 0, D3DFMT_R5G6B5, D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DTexture9_Release(texture);
+
+    /* A reference held to an implicit surface causes failures as well */
+    hr = IDirect3DDevice9_GetBackBuffer(pDevice, 0, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DSurface9_Release(surface);
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+
+    /* Shaders are fine as well */
+    hr = IDirect3DDevice9_CreateVertexShader(pDevice, simple_vs, &shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DVertexShader9_Release(shader);
 
 cleanup:
     if(pD3d) IDirect3D9_Release(pD3d);

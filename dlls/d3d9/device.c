@@ -230,12 +230,109 @@ static BOOL     WINAPI  IDirect3DDevice9Impl_ShowCursor(LPDIRECT3DDEVICE9 iface,
     return ret;
 }
 
+static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data) {
+    BOOL *resources_ok = (BOOL *) data;
+    WINED3DRESOURCETYPE type;
+    HRESULT ret = S_OK;
+    WINED3DSURFACE_DESC surface_desc;
+    WINED3DVOLUME_DESC volume_desc;
+    WINED3DINDEXBUFFER_DESC index_desc;
+    WINED3DVERTEXBUFFER_DESC vertex_desc;
+    WINED3DFORMAT dummy_format;
+    DWORD dummy_dword;
+    WINED3DPOOL pool = WINED3DPOOL_SCRATCH; /* a harmless pool */
+    IUnknown *parent;
+
+    type = IWineD3DResource_GetType(resource);
+    switch(type) {
+        case WINED3DRTYPE_SURFACE:
+            surface_desc.Format = &dummy_format;
+            surface_desc.Type = &type;
+            surface_desc.Usage = &dummy_dword;
+            surface_desc.Pool = &pool;
+            surface_desc.Size = &dummy_dword;
+            surface_desc.MultiSampleType = &dummy_dword;
+            surface_desc.MultiSampleQuality = &dummy_dword;
+            surface_desc.Width = &dummy_dword;
+            surface_desc.Height = &dummy_dword;
+
+            IWineD3DSurface_GetDesc((IWineD3DSurface *) resource, &surface_desc);
+            break;
+
+        case WINED3DRTYPE_VOLUME:
+            volume_desc.Format = &dummy_format;
+            volume_desc.Type = &type;
+            volume_desc.Usage = &dummy_dword;
+            volume_desc.Pool = &pool;
+            volume_desc.Size = &dummy_dword;
+            volume_desc.Width = &dummy_dword;
+            volume_desc.Height = &dummy_dword;
+            volume_desc.Depth = &dummy_dword;
+            IWineD3DVolume_GetDesc((IWineD3DVolume *) resource, &volume_desc);
+            break;
+
+        case WINED3DRTYPE_INDEXBUFFER:
+            IWineD3DIndexBuffer_GetDesc((IWineD3DIndexBuffer *) resource, &index_desc);
+            pool = index_desc.Pool;
+            break;
+
+        case WINED3DRTYPE_VERTEXBUFFER:
+            IWineD3DVertexBuffer_GetDesc((IWineD3DVertexBuffer *) resource, &vertex_desc);
+            pool = index_desc.Pool;
+            break;
+
+        /* No need to check for textures. If there is a D3DPOOL_DEFAULT texture, there
+         * is a D3DPOOL_DEFAULT surface or volume as well
+         */
+        default:
+            break;
+    }
+
+    if(pool == WINED3DPOOL_DEFAULT) {
+        IWineD3DResource_GetParent(resource, &parent);
+        if(IUnknown_Release(parent) == 0) {
+            TRACE("Parent %p is an implicit resource with ref 0\n", parent);
+        } else {
+            WARN("Resource %p(wineD3D %p) with pool D3DPOOL_DEFAULT blocks the Reset call\n", parent, resource);
+            ret = S_FALSE;
+            *resources_ok = FALSE;
+        }
+    }
+    IWineD3DResource_Release(resource);
+
+    return ret;
+}
+
 static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9 iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     WINED3DPRESENT_PARAMETERS localParameters;
     HRESULT hr;
+    BOOL resources_ok = TRUE;
+    UINT i;
 
     TRACE("(%p) Relay pPresentationParameters(%p)\n", This, pPresentationParameters);
+
+    /* Reset states that hold a COM object. WineD3D holds an internal reference to set objects, because
+     * such objects can still be used for rendering after their external d3d9 object has been destroyed.
+     * These objects must not be enumerated. Unsetting them tells WineD3D that the application will not
+     * make use of the hidden reference and destroys the objects.
+     *
+     * Unsetting them is no problem, because the states are supposed to be reset anyway. If the validation
+     * below fails, the device is considered "lost", and _Reset and _Release are the only allowed calls
+     */
+    IWineD3DDevice_SetIndices(This->WineD3DDevice, NULL);
+    for(i = 0; i < 16; i++) {
+        IWineD3DDevice_SetStreamSource(This->WineD3DDevice, i, NULL, 0, 0);
+    }
+    for(i = 0; i < 16; i++) {
+        IWineD3DDevice_SetTexture(This->WineD3DDevice, i, NULL);
+    }
+
+    IWineD3DDevice_EnumResources(This->WineD3DDevice, reset_enum_callback, &resources_ok);
+    if(!resources_ok) {
+        WARN("The application is holding D3DPOOL_DEFAULT resources, rejecting reset\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     localParameters.BackBufferWidth                     = pPresentationParameters->BackBufferWidth;
     localParameters.BackBufferHeight                    = pPresentationParameters->BackBufferHeight;

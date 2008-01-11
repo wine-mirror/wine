@@ -247,6 +247,10 @@ typedef HRESULT (WINAPI *D3DCB_CREATEADDITIONALSWAPCHAIN) (IUnknown *pDevice,
                                                struct IWineD3DSwapChain **pSwapChain
                                                );
 
+typedef HRESULT (WINAPI *D3DCB_ENUMRESOURCES) (struct IWineD3DResource *resource,
+                                               void *pData
+                                               );
+
 /*****************************************************************************
  * Callback functions for custom implicit object destruction.
  */
@@ -482,6 +486,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(GetFrontBufferData)(THIS_ UINT iSwapChain,struct IWineD3DSurface* pSurface) PURE;
     /*** object tracking ***/
     STDMETHOD_(void, ResourceReleased)(THIS_ struct IWineD3DResource *resource);
+    STDMETHOD(EnumResources)(THIS_ D3DCB_ENUMRESOURCES pCallback, void *pData);
 };
 #undef INTERFACE
 
@@ -621,6 +626,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_UpdateSurface(p,a,b,c,d)                 (p)->lpVtbl->UpdateSurface(p,a,b,c,d)
 #define IWineD3DDevice_GetFrontBufferData(p,a,b)                (p)->lpVtbl->GetFrontBufferData(p,a,b)
 #define IWineD3DDevice_ResourceReleased(p,a)                    (p)->lpVtbl->ResourceReleased(p,a)
+#define IWineD3DDevice_EnumResources(p,a,b)                     (p)->lpVtbl->EnumResources(p,a,b)
 #endif
 
 /*****************************************************************************

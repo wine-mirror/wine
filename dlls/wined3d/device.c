@@ -6824,6 +6824,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     if(pPresentationParameters->EnableAutoDepthStencil != swapchain->presentParms.EnableAutoDepthStencil) {
         ERR("What do do about a changed auto depth stencil parameter?\n");
     }
+    TRACE("Checks done\n");
 
     if(pPresentationParameters->Windowed) {
         mode.Width = swapchain->orig_width;
@@ -7095,6 +7096,24 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
 
 }
 
+static HRESULT WINAPI IWineD3DDeviceImpl_EnumResources(IWineD3DDevice *iface, D3DCB_ENUMRESOURCES pCallback, void *pData) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DResourceImpl *resource, *cursor;
+    HRESULT ret;
+    TRACE("(%p)->(%p,%p)\n", This, pCallback, pData);
+
+    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &This->resources, IWineD3DResourceImpl, resource.resource_list_entry) {
+        TRACE("enumerating resource %p\n", resource);
+        IWineD3DResource_AddRef((IWineD3DResource *) resource);
+        ret = pCallback((IWineD3DResource *) resource, pData);
+        if(ret == S_FALSE) {
+            TRACE("Canceling enumeration\n");
+            break;
+        }
+    }
+    return WINED3D_OK;
+}
+
 /**********************************************************
  * IWineD3DDevice VTbl follows
  **********************************************************/
@@ -7241,7 +7260,8 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_UpdateSurface,
     IWineD3DDeviceImpl_GetFrontBufferData,
     /*** object tracking ***/
-    IWineD3DDeviceImpl_ResourceReleased
+    IWineD3DDeviceImpl_ResourceReleased,
+    IWineD3DDeviceImpl_EnumResources
 };
 
 
