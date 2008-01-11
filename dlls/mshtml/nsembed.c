@@ -303,6 +303,15 @@ static void set_lang(nsIPrefBranch *pref)
         ERR("SetCharPref failed: %08x\n", nsres);
 }
 
+static void set_bool_pref(nsIPrefBranch *pref, const char *pref_name, BOOL val)
+{
+    nsresult nsres;
+
+    nsres = nsIPrefBranch_SetBoolPref(pref, pref_name, val);
+    if(NS_FAILED(nsres))
+        ERR("Could not set pref %s\n", debugstr_a(pref_name));
+}
+
 static void set_profile(void)
 {
     nsIPrefBranch *pref;
@@ -340,6 +349,8 @@ static void set_profile(void)
     }
 
     set_lang(pref);
+    set_bool_pref(pref, "security.warn_entering_secure", FALSE);
+    set_bool_pref(pref, "security.warn_submit_insecure", FALSE);
 
     nsIPrefBranch_Release(pref);
 }
