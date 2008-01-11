@@ -1504,7 +1504,7 @@ LSTATUS WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
             if (dwType == REG_EXPAND_SZ)
             {
                 cbData = ExpandEnvironmentStringsW(pvBuf, pvData,
-                                                   pcbData ? *pcbData : 0);
+                                                   pcbData ? *pcbData : 0) * sizeof(WCHAR);
                 dwType = REG_SZ;
                 if(pvData && pcbData && cbData > *pcbData)
                     ret = ERROR_MORE_DATA;
