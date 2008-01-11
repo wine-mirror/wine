@@ -1988,6 +1988,8 @@ static void test_xmlTypes(void)
     }
 
     IXMLDOMDocument_Release(doc);
+
+    free_bstrs();
 }
 
 START_TEST(domdoc)
