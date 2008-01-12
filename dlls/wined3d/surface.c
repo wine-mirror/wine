@@ -489,8 +489,58 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     return;
 }
 
-void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
-    FIXME("(%p): Stub!\n", iface);
+static void surface_remove_pbo(IWineD3DSurfaceImpl *This) {
+    This->resource.heapMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + RESOURCE_ALIGNMENT);
+    This->resource.allocatedMemory =
+            (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+
+    ENTER_GL();
+    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+    checkGLcall("glBindBuffer(GL_PIXEL_UNPACK_BUFFER, This->pbo)");
+    GL_EXTCALL(glGetBufferSubDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0, This->resource.size, This->resource.allocatedMemory));
+    checkGLcall("glGetBufferSubData");
+    GL_EXTCALL(glDeleteBuffersARB(1, &This->pbo));
+    checkGLcall("glDeleteBuffers");
+    LEAVE_GL();
+
+    This->pbo = 0;
+    This->Flags &= ~SFLAG_PBO;
+}
+
+static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
+    IWineD3DBaseTexture *texture = NULL;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    TRACE("(%p)\n", iface);
+
+    /* Default pool resources are supposed to be destroyed before Reset is called.
+     * Implicit resources stay however. So this means we have an implicit render target
+     * or depth stencil, and the content isn't supposed to survive the reset anyway
+     */
+    if(This->resource.pool == WINED3DPOOL_DEFAULT) {
+        TRACE("Default pool - nothing to do\n");
+        return;
+    }
+
+    /* Load the surface into system memory */
+    IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+
+    /* Destroy PBOs, but load them into real sysmem before */
+    if(This->Flags & SFLAG_PBO) {
+        surface_remove_pbo(This);
+    }
+
+    /* If we're in a texture, the texture name belongs to the texture. Otherwise,
+     * destroy it
+     */
+    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **) &texture);
+    if(!texture) {
+        ENTER_GL();
+        glDeleteTextures(1, &This->glDescription.textureName);
+        This->glDescription.textureName = 0;
+        LEAVE_GL();
+    } else {
+        IWineD3DBaseTexture_Release(texture);
+    }
     return;
 }
 
