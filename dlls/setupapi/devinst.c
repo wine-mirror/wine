@@ -3813,7 +3813,7 @@ BOOL WINAPI SetupDiDeleteDevRegKey(
         SetLastError(ERROR_INVALID_FLAGS);
         return FALSE;
     }
-    if (KeyType != DIREG_DEV && KeyType != DIREG_DRV)
+    if (KeyType != DIREG_DEV && KeyType != DIREG_DRV && KeyType != DIREG_BOTH)
     {
         SetLastError(ERROR_INVALID_FLAGS);
         return FALSE;
