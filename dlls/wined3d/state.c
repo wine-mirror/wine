@@ -356,6 +356,11 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 static void state_blendfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     float col[4];
 
+    if(!GL_SUPPORT(EXT_BLEND_COLOR)) {
+        WARN("Unsupported in local OpenGL implementation: glBlendColorEXT\n");
+        return;
+    }
+
     TRACE("Setting BlendFactor to %d\n", stateblock->renderState[WINED3DRS_BLENDFACTOR]);
     D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_BLENDFACTOR], col);
     GL_EXTCALL(glBlendColorEXT (col[0],col[1],col[2],col[3]));

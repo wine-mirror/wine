@@ -83,6 +83,7 @@ static const struct {
     {"GL_ARB_shader_objects",               ARB_SHADER_OBJECTS,             0                           },
 
     /* EXT */
+    {"GL_EXT_blend_color",                  EXT_BLEND_COLOR,                0                           },
     {"GL_EXT_blend_minmax",                 EXT_BLEND_MINMAX,               0                           },
     {"GL_EXT_fog_coord",                    EXT_FOG_COORD,                  0                           },
     {"GL_EXT_framebuffer_blit",             EXT_FRAMEBUFFER_BLIT,           0                           },
@@ -2224,8 +2225,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                        WINED3DPCMPCAPS_NEVER        |
                        WINED3DPCMPCAPS_NOTEQUAL;
 
-    *pCaps->SrcBlendCaps  = WINED3DPBLENDCAPS_BLENDFACTOR     |
-                            WINED3DPBLENDCAPS_BOTHINVSRCALPHA |
+    *pCaps->SrcBlendCaps  = WINED3DPBLENDCAPS_BOTHINVSRCALPHA |
                             WINED3DPBLENDCAPS_BOTHSRCALPHA    |
                             WINED3DPBLENDCAPS_DESTALPHA       |
                             WINED3DPBLENDCAPS_DESTCOLOR       |
@@ -2239,8 +2239,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                             WINED3DPBLENDCAPS_SRCCOLOR        |
                             WINED3DPBLENDCAPS_ZERO;
 
-    *pCaps->DestBlendCaps = WINED3DPBLENDCAPS_BLENDFACTOR     |
-                            WINED3DPBLENDCAPS_DESTALPHA       |
+    *pCaps->DestBlendCaps = WINED3DPBLENDCAPS_DESTALPHA       |
                             WINED3DPBLENDCAPS_DESTCOLOR       |
                             WINED3DPBLENDCAPS_INVDESTALPHA    |
                             WINED3DPBLENDCAPS_INVDESTCOLOR    |
@@ -2256,6 +2255,12 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
      * WINED3DPBLENDCAPS_BOTHINVSRCALPHA and WINED3DPBLENDCAPS_BOTHSRCALPHA are
      * legacy settings for srcblend only
      */
+
+    if( GL_SUPPORT(EXT_BLEND_COLOR)) {
+        *pCaps->SrcBlendCaps |= WINED3DPBLENDCAPS_BLENDFACTOR;
+        *pCaps->DestBlendCaps |= WINED3DPBLENDCAPS_BLENDFACTOR;
+    }
+
 
     *pCaps->AlphaCmpCaps = WINED3DPCMPCAPS_ALWAYS       |
                            WINED3DPCMPCAPS_EQUAL        |

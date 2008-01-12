@@ -3188,6 +3188,7 @@ typedef enum _GL_SupportedExt {
   ARB_VERTEX_SHADER,
   ARB_SHADER_OBJECTS,
   /* EXT */
+  EXT_BLEND_COLOR,
   EXT_BLEND_MINMAX,
   EXT_FOG_COORD,
   EXT_FRAMEBUFFER_OBJECT,
@@ -3257,7 +3258,7 @@ typedef enum _GL_SupportedExt {
     /* GL_ARB_draw_buffers */ \
     USE_GL_FUNC(PGLFNDRAWBUFFERSARBPROC,                            glDrawBuffersARB,                           ARB_DRAW_BUFFERS,       NULL );\
     /* GL_ARB_imaging, GL_EXT_blend_minmax */ \
-    USE_GL_FUNC(PGLFNBLENDCOLORPROC,                                glBlendColorEXT,                            EXT_BLEND_MINMAX,       NULL );\
+    USE_GL_FUNC(PGLFNBLENDCOLORPROC,                                glBlendColorEXT,                            EXT_BLEND_COLOR,        NULL );\
     USE_GL_FUNC(PGLFNBLENDEQUATIONPROC,                             glBlendEquationEXT,                         EXT_BLEND_MINMAX,       NULL );\
     /* GL_ARB_multisample */ \
     USE_GL_FUNC(WINED3D_PFNGLSAMPLECOVERAGEARBPROC,                 glSampleCoverageARB,                        ARB_MULTISAMPLE,        NULL );\
