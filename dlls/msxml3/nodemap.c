@@ -227,7 +227,7 @@ static HRESULT WINAPI xmlnodemap_setNamedItem(
         nodeNew = xmlAddChild(node, ThisNew->node);
 
         if(namedItem)
-            *namedItem = create_node( (xmlNodePtr) nodeNew );
+            *namedItem = create_node( nodeNew );
 
         IUnknown_Release(pAttr);
 
