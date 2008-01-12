@@ -3540,7 +3540,7 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
 }
 
 struct coords {
-    int x, y, z;
+    GLfloat x, y, z;
 };
 
 static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in) {
@@ -3599,22 +3599,22 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         checkGLcall("glTexParameteri");
 
-        coords[0].x = rect.left   / This->pow2Width;
+        coords[0].x = (float)rect.left   / This->pow2Width;
         coords[0].z = 0;
 
-        coords[1].x = rect.left   / This->pow2Width;
+        coords[1].x = (float)rect.left   / This->pow2Width;
         coords[1].z = 0;
 
-        coords[2].x = rect.right  / This->pow2Width;
+        coords[2].x = (float)rect.right  / This->pow2Width;
         coords[2].z = 0;
 
-        coords[3].x = rect.right  / This->pow2Width;
+        coords[3].x = (float)rect.right  / This->pow2Width;
         coords[3].z = 0;
 
-        coords[0].y = rect.top    / This->pow2Height;
-        coords[1].y = rect.bottom / This->pow2Height;
-        coords[2].y = rect.bottom / This->pow2Height;
-        coords[3].y = rect.top    / This->pow2Height;
+        coords[0].y = (float)rect.top    / This->pow2Height;
+        coords[1].y = (float)rect.bottom / This->pow2Height;
+        coords[2].y = (float)rect.bottom / This->pow2Height;
+        coords[3].y = (float)rect.top    / This->pow2Height;
     } else {
         /* Must be a cube map */
         glEnable(GL_TEXTURE_CUBE_MAP_ARB);
@@ -3676,16 +3676,16 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     }
 
     glBegin(GL_QUADS);
-    glTexCoord3iv((GLint *) &coords[0]);
+    glTexCoord3fv(&coords[0].x);
     glVertex2i(rect.left, device->render_offscreen ? rect.bottom : rect.top);
 
-    glTexCoord3iv((GLint *) &coords[1]);
-    glVertex2i(0, device->render_offscreen ? rect.top : rect.bottom);
+    glTexCoord3fv(&coords[1].x);
+    glVertex2i(rect.left, device->render_offscreen ? rect.top : rect.bottom);
 
-    glTexCoord3iv((GLint *) &coords[2]);
+    glTexCoord3fv(&coords[2].x);
     glVertex2i(rect.right, device->render_offscreen ? rect.top : rect.bottom);
 
-    glTexCoord3iv((GLint *) &coords[3]);
+    glTexCoord3fv(&coords[3].x);
     glVertex2i(rect.right, device->render_offscreen ? rect.bottom : rect.top);
     glEnd();
     checkGLcall("glEnd");
