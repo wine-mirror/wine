@@ -600,7 +600,7 @@ NetQueryDisplayInformation(
         NetApiBufferAllocate(dwSize +
                              admin_size - sizeof(NET_DISPLAY_USER) +
                              guest_size - sizeof(NET_DISPLAY_USER),
-                             (LPVOID *) SortedBuffer);
+                             SortedBuffer);
         inf = (PNET_DISPLAY_USER) *SortedBuffer;
         str = (LPWSTR) ((PBYTE) inf + sizeof(NET_DISPLAY_USER) * records);
         inf->usri1_name = str;
