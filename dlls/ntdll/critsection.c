@@ -39,12 +39,12 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 static inline LONG interlocked_inc( PLONG dest )
 {
-    return interlocked_xchg_add( (int *)dest, 1 ) + 1;
+    return interlocked_xchg_add( dest, 1 ) + 1;
 }
 
 static inline LONG interlocked_dec( PLONG dest )
 {
-    return interlocked_xchg_add( (int *)dest, -1 ) - 1;
+    return interlocked_xchg_add( dest, -1 ) - 1;
 }
 
 static inline void small_pause(void)
@@ -208,8 +208,7 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
     {
         HANDLE sem;
         if (NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 )) return 0;
-        if (!(ret = (HANDLE)interlocked_cmpxchg_ptr( (PVOID *)&crit->LockSemaphore,
-                                                     sem, 0 )))
+        if (!(ret = interlocked_cmpxchg_ptr( &crit->LockSemaphore, sem, 0 )))
             ret = sem;
         else
             NtClose(sem);  /* somebody beat us to it */
@@ -490,7 +489,7 @@ NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
             if (crit->LockCount > 0) break;  /* more than one waiter, don't bother spinning */
             if (crit->LockCount == -1)       /* try again */
             {
-                if (interlocked_cmpxchg( (int *)&crit->LockCount, 0, -1 ) == -1) goto done;
+                if (interlocked_cmpxchg( &crit->LockCount, 0, -1 ) == -1) goto done;
             }
             small_pause();
         }
@@ -534,7 +533,7 @@ done:
 BOOL WINAPI RtlTryEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
     BOOL ret = FALSE;
-    if (interlocked_cmpxchg( (int *)&crit->LockCount, 0, -1 ) == -1)
+    if (interlocked_cmpxchg( &crit->LockCount, 0, -1 ) == -1)
     {
         crit->OwningThread   = ULongToHandle(GetCurrentThreadId());
         crit->RecursionCount = 1;

@@ -73,12 +73,12 @@ struct work_item
 
 static inline LONG interlocked_inc( PLONG dest )
 {
-    return interlocked_xchg_add( (int *)dest, 1 ) + 1;
+    return interlocked_xchg_add( dest, 1 ) + 1;
 }
 
 static inline LONG interlocked_dec( PLONG dest )
 {
-    return interlocked_xchg_add( (int *)dest, -1 ) - 1;
+    return interlocked_xchg_add( dest, -1 ) - 1;
 }
 
 static void WINAPI worker_thread_proc(void * param)
@@ -148,7 +148,7 @@ static NTSTATUS add_work_item_to_queue(struct work_item *work_item)
     {
         HANDLE sem;
         status = NtCreateSemaphore(&sem, SEMAPHORE_ALL_ACCESS, NULL, 1, LONG_MAX);
-        if (interlocked_cmpxchg_ptr( (PVOID *)&work_item_event, sem, 0 ))
+        if (interlocked_cmpxchg_ptr( &work_item_event, sem, 0 ))
             NtClose(sem);  /* somebody beat us to it */
     }
     else
@@ -486,14 +486,14 @@ NTSTATUS WINAPI RtlDeregisterWaitEx(HANDLE WaitHandle, HANDLE CompletionEvent)
                 status = NtCreateEvent( &CompletionEvent, EVENT_ALL_ACCESS, NULL, TRUE, FALSE );
                 if (status != STATUS_SUCCESS)
                     return status;
-                interlocked_xchg_ptr( (PVOID *)&wait_work_item->CompletionEvent, CompletionEvent );
+                interlocked_xchg_ptr( &wait_work_item->CompletionEvent, CompletionEvent );
                 if (wait_work_item->CallbackInProgress)
                     NtWaitForSingleObject( CompletionEvent, FALSE, NULL );
                 NtClose( CompletionEvent );
             }
             else
             {
-                interlocked_xchg_ptr( (PVOID *)&wait_work_item->CompletionEvent, CompletionEvent );
+                interlocked_xchg_ptr( &wait_work_item->CompletionEvent, CompletionEvent );
                 if (wait_work_item->CallbackInProgress)
                     status = STATUS_PENDING;
             }
