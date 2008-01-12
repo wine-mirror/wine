@@ -1680,6 +1680,24 @@ static BOOL load_font_from_data_dir(LPCWSTR file)
     return ret;
 }
 
+static BOOL load_font_from_winfonts_dir(LPCWSTR file)
+{
+    static const WCHAR slashW[] = {'\\','\0'};
+    BOOL ret = FALSE;
+    WCHAR windowsdir[MAX_PATH];
+    char *unixname;
+
+    GetWindowsDirectoryW(windowsdir, sizeof(windowsdir) / sizeof(WCHAR));
+    strcatW(windowsdir, fontsW);
+    strcatW(windowsdir, slashW);
+    strcatW(windowsdir, file);
+    if ((unixname = wine_get_unix_file_name(windowsdir))) {
+        ret = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
+        HeapFree(GetProcessHeap(), 0, unixname);
+    }
+    return ret;
+}
+
 static void load_system_fonts(void)
 {
     HKEY hkey;
@@ -1825,6 +1843,7 @@ static void update_reg_entries(void)
  */
 INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 {
+    INT ret = 0;
     if (ft_handle)  /* do it only if we have freetype up and running */
     {
         char *unixname;
@@ -1834,12 +1853,21 @@ INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 
         if((unixname = wine_get_unix_file_name(file)))
         {
-            INT ret = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
+            ret = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
             HeapFree(GetProcessHeap(), 0, unixname);
-            return ret;
+        }
+        if (!ret && !strchrW(file, '\\')) {
+            /* Try in %WINDIR%/fonts, needed for Fotobuch Designer */
+            ret = load_font_from_winfonts_dir(file);
+            if (!ret) {
+                /* Try in datadir/fonts (or builddir/fonts),
+                 * needed for Magic the Gathering Online
+                 */
+                ret = load_font_from_data_dir(file);
+            }
         }
     }
-    return 0;
+   return ret;
 }
 
 /*************************************************************
