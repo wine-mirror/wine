@@ -601,10 +601,10 @@ unsigned int CDECL MSVCRT__getdiskfree(unsigned int disk, struct MSVCRT__diskfre
 
   if (GetDiskFreeSpaceW(disk==0?NULL:drivespec,ret,ret+1,ret+2,ret+3))
   {
-    d->sectors_per_cluster = (unsigned)ret[0];
-    d->bytes_per_sector = (unsigned)ret[1];
-    d->avail_clusters = (unsigned)ret[2];
-    d->total_clusters = (unsigned)ret[3];
+    d->sectors_per_cluster = ret[0];
+    d->bytes_per_sector = ret[1];
+    d->avail_clusters = ret[2];
+    d->total_clusters = ret[3];
     return 0;
   }
   err = GetLastError();

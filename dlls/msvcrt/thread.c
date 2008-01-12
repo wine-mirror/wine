@@ -108,8 +108,8 @@ MSVCRT_uintptr_t CDECL _beginthreadex(
 
   /* FIXME */
   return (MSVCRT_uintptr_t)CreateThread(security, stack_size,
-				     (LPTHREAD_START_ROUTINE) start_address,
-				     arglist, initflag, (LPDWORD) thrdaddr);
+				     start_address, arglist,
+				     initflag, thrdaddr);
 }
 
 /*********************************************************************
