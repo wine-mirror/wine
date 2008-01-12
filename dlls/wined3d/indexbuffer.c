@@ -110,6 +110,10 @@ static void WINAPI IWineD3DIndexBufferImpl_PreLoad(IWineD3DIndexBuffer *iface) {
     IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
+static void WINAPI IWineD3DIndexBufferImpl_UnLoad(IWineD3DIndexBuffer *iface) {
+    IWineD3DResourceImpl_UnLoad((IWineD3DResource *)iface);
+}
+
 static WINED3DRESOURCETYPE WINAPI IWineD3DIndexBufferImpl_GetType(IWineD3DIndexBuffer *iface) {
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
@@ -201,6 +205,7 @@ const IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl =
     IWineD3DIndexBufferImpl_SetPriority,
     IWineD3DIndexBufferImpl_GetPriority,
     IWineD3DIndexBufferImpl_PreLoad,
+    IWineD3DIndexBufferImpl_UnLoad,
     IWineD3DIndexBufferImpl_GetType,
     /* IWineD3DIndexBuffer */
     IWineD3DIndexBufferImpl_Lock,

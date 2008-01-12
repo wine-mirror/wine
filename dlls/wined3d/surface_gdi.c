@@ -183,6 +183,20 @@ IWineGDISurfaceImpl_PreLoad(IWineD3DSurface *iface)
 }
 
 /*****************************************************************************
+ * IWineD3DSurface::Unoad, GDI version
+ *
+ * This call is unsupported on GDI surfaces, if it's called something went
+ * wrong in the parent library. Write an informative warning
+ *
+ *****************************************************************************/
+static void WINAPI IWineGDISurfaceImpl_UnLoad(IWineD3DSurface *iface)
+{
+    ERR("(%p): UnLoad is not supported on X11 surfaces!\n", iface);
+    ERR("(%p): Most likely the parent library did something wrong.\n", iface);
+    ERR("(%p): Please report to wine-devel\n", iface);
+}
+
+/*****************************************************************************
  * IWineD3DSurface::LockRect, GDI version
  *
  * Locks the surface and returns a pointer to the surface memory
@@ -490,13 +504,14 @@ const char* filename)
             fwrite(output, 3 * This->pow2Width, 1, f);
         }
     } else {
-        int red_shift, green_shift, blue_shift, pix_width;
+        int red_shift, green_shift, blue_shift, pix_width, alpha_shift;
 
         pix_width = This->bytesPerPixel;
 
         red_shift = get_shift(formatEntry->redMask);
         green_shift = get_shift(formatEntry->greenMask);
         blue_shift = get_shift(formatEntry->blueMask);
+        alpha_shift = get_shift(formatEntry->alphaMask);
 
         for (y = 0; y < This->pow2Height; y++) {
             unsigned char *src = (unsigned char *) This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
@@ -515,8 +530,8 @@ const char* filename)
                 output[3 * x + 0] = red_shift > 0 ? comp >> red_shift : comp << -red_shift;
                 comp = color & formatEntry->greenMask;
                 output[3 * x + 1] = green_shift > 0 ? comp >> green_shift : comp << -green_shift;
-                comp = color & formatEntry->blueMask;
-                output[3 * x + 2] = blue_shift > 0 ? comp >> blue_shift : comp << -blue_shift;
+                comp = color & formatEntry->alphaMask;
+                output[3 * x + 2] = alpha_shift > 0 ? comp >> alpha_shift : comp << -alpha_shift;
             }
             fwrite(output, 3 * This->pow2Width, 1, f);
         }
@@ -775,6 +790,7 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetPriority,
     IWineD3DBaseSurfaceImpl_GetPriority,
     IWineGDISurfaceImpl_PreLoad,
+    IWineGDISurfaceImpl_UnLoad,
     IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetContainer,

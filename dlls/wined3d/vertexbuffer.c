@@ -596,6 +596,10 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     HeapFree(GetProcessHeap(), 0, data);
 }
 
+static void WINAPI IWineD3DVertexBufferImpl_UnLoad(IWineD3DVertexBuffer *iface) {
+    IWineD3DResourceImpl_UnLoad((IWineD3DResource *)iface);
+}
+
 static WINED3DRESOURCETYPE WINAPI IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *iface) {
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
@@ -682,6 +686,7 @@ const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
     IWineD3DVertexBufferImpl_SetPriority,
     IWineD3DVertexBufferImpl_GetPriority,
     IWineD3DVertexBufferImpl_PreLoad,
+    IWineD3DVertexBufferImpl_UnLoad,
     IWineD3DVertexBufferImpl_GetType,
     /* IWineD3DVertexBuffer */
     IWineD3DVertexBufferImpl_Lock,

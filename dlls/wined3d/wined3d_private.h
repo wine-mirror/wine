@@ -1603,6 +1603,7 @@ unsigned int count_bits(unsigned int mask);
     extern DWORD WINAPI IWineD3DResourceImpl_SetPriority(IWineD3DResource *iface, DWORD  PriorityNew);
     extern DWORD WINAPI IWineD3DResourceImpl_GetPriority(IWineD3DResource *iface);
     extern void WINAPI IWineD3DResourceImpl_PreLoad(IWineD3DResource *iface);
+    extern void WINAPI IWineD3DResourceImpl_UnLoad(IWineD3DResource *iface);
     extern WINED3DRESOURCETYPE WINAPI IWineD3DResourceImpl_GetType(IWineD3DResource *iface);
     /*** class static members ***/
     void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface);

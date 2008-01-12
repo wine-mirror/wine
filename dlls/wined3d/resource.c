@@ -235,6 +235,11 @@ void     WINAPI        IWineD3DResourceImpl_PreLoad(IWineD3DResource *iface) {
     FIXME("(%p) : stub\n", This);
 }
 
+void     WINAPI        IWineD3DResourceImpl_UnLoad(IWineD3DResource *iface) {
+    IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
+    FIXME("(%p) : stub\n", This);
+}
+
 WINED3DRESOURCETYPE WINAPI IWineD3DResourceImpl_GetType(IWineD3DResource *iface) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
     TRACE("(%p) : returning %d\n", This, This->resource.resourceType);
@@ -271,5 +276,6 @@ static const IWineD3DResourceVtbl IWineD3DResource_Vtbl =
     IWineD3DResourceImpl_SetPriority,
     IWineD3DResourceImpl_GetPriority,
     IWineD3DResourceImpl_PreLoad,
+    IWineD3DResourceImpl_UnLoad,
     IWineD3DResourceImpl_GetType
 };

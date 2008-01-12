@@ -142,6 +142,10 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
     return ;
 }
 
+static void WINAPI IWineD3DTextureImpl_UnLoad(IWineD3DTexture *iface) {
+    IWineD3DResourceImpl_UnLoad((IWineD3DResource *)iface);
+}
+
 static WINED3DRESOURCETYPE WINAPI IWineD3DTextureImpl_GetType(IWineD3DTexture *iface) {
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
@@ -328,6 +332,7 @@ const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_SetPriority,
     IWineD3DTextureImpl_GetPriority,
     IWineD3DTextureImpl_PreLoad,
+    IWineD3DTextureImpl_UnLoad,
     IWineD3DTextureImpl_GetType,
     /* IWineD3DBaseTexture */
     IWineD3DTextureImpl_SetLOD,
