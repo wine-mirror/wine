@@ -57,8 +57,8 @@ struct dump_context
     void*                               pcs_buffer;
     SYSTEM_PROCESS_INFORMATION*         spi;
     /* module information */
-    struct dump_module*                 module;
-    unsigned                            num_module;
+    struct dump_module*                 modules;
+    unsigned                            num_modules;
     /* exception information */
     /* output information */
     MINIDUMP_TYPE                       type;
@@ -71,12 +71,12 @@ struct dump_context
 };
 
 /******************************************************************
- *		fetch_process_info
+ *		fetch_processes_info
  *
  * reads system wide process information, and make spi point to the record
  * for process of id 'pid'
  */
-static BOOL fetch_process_info(struct dump_context* dc)
+static BOOL fetch_processes_info(struct dump_context* dc)
 {
     ULONG       buf_size = 0x1000;
     NTSTATUS    nts;
@@ -221,24 +221,24 @@ static BOOL add_module(struct dump_context* dc, const WCHAR* name,
                        DWORD base, DWORD size, DWORD timestamp, DWORD checksum,
                        BOOL is_elf)
 {
-    if (!dc->module)
-        dc->module = HeapAlloc(GetProcessHeap(), 0,
-                               ++dc->num_module * sizeof(*dc->module));
+    if (!dc->modules)
+        dc->modules = HeapAlloc(GetProcessHeap(), 0,
+                                ++dc->num_modules * sizeof(*dc->modules));
     else
-        dc->module = HeapReAlloc(GetProcessHeap(), 0, dc->module,
-                                 ++dc->num_module * sizeof(*dc->module));
-    if (!dc->module) return FALSE;
+        dc->modules = HeapReAlloc(GetProcessHeap(), 0, dc->modules,
+                                  ++dc->num_modules * sizeof(*dc->modules));
+    if (!dc->modules) return FALSE;
     if (is_elf ||
         !GetModuleFileNameExW(dc->hProcess, (HMODULE)base,
-                              dc->module[dc->num_module - 1].name,
-                              sizeof(dc->module[dc->num_module - 1].name) / sizeof(WCHAR)))
-        lstrcpynW(dc->module[dc->num_module - 1].name, name,
-                  sizeof(dc->module[dc->num_module - 1].name) / sizeof(WCHAR));
-    dc->module[dc->num_module - 1].base = base;
-    dc->module[dc->num_module - 1].size = size;
-    dc->module[dc->num_module - 1].timestamp = timestamp;
-    dc->module[dc->num_module - 1].checksum = checksum;
-    dc->module[dc->num_module - 1].is_elf = is_elf;
+                              dc->modules[dc->num_modules - 1].name,
+                              sizeof(dc->modules[dc->num_modules - 1].name) / sizeof(WCHAR)))
+        lstrcpynW(dc->modules[dc->num_modules - 1].name, name,
+                  sizeof(dc->modules[dc->num_modules - 1].name) / sizeof(WCHAR));
+    dc->modules[dc->num_modules - 1].base = base;
+    dc->modules[dc->num_modules - 1].size = size;
+    dc->modules[dc->num_modules - 1].timestamp = timestamp;
+    dc->modules[dc->num_modules - 1].checksum = checksum;
+    dc->modules[dc->num_modules - 1].is_elf = is_elf;
 
     return TRUE;
 }
@@ -285,7 +285,7 @@ static BOOL fetch_elf_module_info_cb(const WCHAR* name, unsigned long base,
     return TRUE;
 }
 
-static void fetch_module_info(struct dump_context* dc)
+static void fetch_modules_info(struct dump_context* dc)
 {
     EnumerateLoadedModulesW64(dc->hProcess, fetch_pe_module_info_cb, dc);
     /* Since we include ELF modules in a separate stream from the regular PE ones,
@@ -410,10 +410,10 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size
     RVA                         rva_base;
     DWORD                       flags_out;
 
-    for (i = nmod = 0; i < dc->num_module; i++)
+    for (i = nmod = 0; i < dc->num_modules; i++)
     {
-        if ((dc->module[i].is_elf && dump_elf) ||
-            (!dc->module[i].is_elf && !dump_elf))
+        if ((dc->modules[i].is_elf && dump_elf) ||
+            (!dc->modules[i].is_elf && !dump_elf))
             nmod++;
     }
 
@@ -425,10 +425,10 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size
      */
     rva_base = dc->rva;
     dc->rva += *size = sizeof(mdModuleList.NumberOfModules) + sizeof(mdModule) * nmod;
-    for (i = 0; i < dc->num_module; i++)
+    for (i = 0; i < dc->num_modules; i++)
     {
-        if ((dc->module[i].is_elf && !dump_elf) ||
-            (!dc->module[i].is_elf && dump_elf))
+        if ((dc->modules[i].is_elf && !dump_elf) ||
+            (!dc->modules[i].is_elf && dump_elf))
             continue;
 
         flags_out = ModuleWriteModule | ModuleWriteMiscRecord | ModuleWriteCvRecord;
@@ -438,10 +438,10 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size
             flags_out |= ModuleWriteTlsData;
         if (dc->type & MiniDumpWithCodeSegs)
             flags_out |= ModuleWriteCodeSegs;
-        ms->Length = (lstrlenW(dc->module[i].name) + 1) * sizeof(WCHAR);
+        ms->Length = (lstrlenW(dc->modules[i].name) + 1) * sizeof(WCHAR);
         if (sizeof(ULONG) + ms->Length > sizeof(tmp))
             FIXME("Buffer overflow!!!\n");
-        lstrcpyW(ms->Buffer, dc->module[i].name);
+        lstrcpyW(ms->Buffer, dc->modules[i].name);
 
         if (dc->cb)
         {
@@ -453,10 +453,10 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size
             cbin.CallbackType = ModuleCallback;
 
             cbin.u.Module.FullPath = ms->Buffer;
-            cbin.u.Module.BaseOfImage = dc->module[i].base;
-            cbin.u.Module.SizeOfImage = dc->module[i].size;
-            cbin.u.Module.CheckSum = dc->module[i].checksum;
-            cbin.u.Module.TimeDateStamp = dc->module[i].timestamp;
+            cbin.u.Module.BaseOfImage = dc->modules[i].base;
+            cbin.u.Module.SizeOfImage = dc->modules[i].size;
+            cbin.u.Module.CheckSum = dc->modules[i].checksum;
+            cbin.u.Module.TimeDateStamp = dc->modules[i].timestamp;
             memset(&cbin.u.Module.VersionInfo, 0, sizeof(cbin.u.Module.VersionInfo));
             cbin.u.Module.CvRecord = NULL;
             cbin.u.Module.SizeOfCvRecord = 0;
@@ -470,10 +470,10 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size
         }
         if (flags_out & ModuleWriteModule)
         {
-            mdModule.BaseOfImage = dc->module[i].base;
-            mdModule.SizeOfImage = dc->module[i].size;
-            mdModule.CheckSum = dc->module[i].checksum;
-            mdModule.TimeDateStamp = dc->module[i].timestamp;
+            mdModule.BaseOfImage = dc->modules[i].base;
+            mdModule.SizeOfImage = dc->modules[i].size;
+            mdModule.CheckSum = dc->modules[i].checksum;
+            mdModule.TimeDateStamp = dc->modules[i].timestamp;
             mdModule.ModuleNameRva = dc->rva;
             ms->Length -= sizeof(WCHAR);
             append(dc, ms, sizeof(ULONG) + ms->Length + sizeof(WCHAR));
@@ -700,16 +700,16 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     dc.hProcess = hProcess;
     dc.hFile = hFile;
     dc.pid = pid;
-    dc.module = NULL;
-    dc.num_module = 0;
+    dc.modules = NULL;
+    dc.num_modules = 0;
     dc.cb = CallbackParam;
     dc.type = DumpType;
     dc.mem = NULL;
     dc.num_mem = 0;
     dc.rva = 0;
 
-    if (!fetch_process_info(&dc)) return FALSE;
-    fetch_module_info(&dc);
+    if (!fetch_processes_info(&dc)) return FALSE;
+    fetch_modules_info(&dc);
 
     /* 1) init */
     nStreams = 6 + (ExceptionParam ? 1 : 0) +
@@ -806,7 +806,7 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
 
     HeapFree(GetProcessHeap(), 0, dc.pcs_buffer);
     HeapFree(GetProcessHeap(), 0, dc.mem);
-    HeapFree(GetProcessHeap(), 0, dc.module);
+    HeapFree(GetProcessHeap(), 0, dc.modules);
 
     return TRUE;
 }
