@@ -39,6 +39,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 static struct be_process_io be_process_minidump_io;
 
+static DWORD64  get_addr64(DWORD64 addr)
+{
+    return addr & 0xFFFFFFFF;
+}
+
 void minidump_write(const char* file, const EXCEPTION_RECORD* rec)
 {
     HANDLE                              hFile;
@@ -95,12 +100,13 @@ static BOOL WINAPI tgt_process_minidump_read(HANDLE hProcess, const void* addr,
 
         for (i = 0; i < mml->NumberOfMemoryRanges; i++, mmd++)
         {
-            if (mmd->StartOfMemoryRange <= (DWORD_PTR)addr &&
-                (DWORD_PTR)addr < mmd->StartOfMemoryRange + mmd->Memory.DataSize)
+            if (get_addr64(mmd->StartOfMemoryRange) <= (DWORD_PTR)addr &&
+                (DWORD_PTR)addr < get_addr64(mmd->StartOfMemoryRange) + mmd->Memory.DataSize)
             {
-                len = min(len, mmd->StartOfMemoryRange + mmd->Memory.DataSize - (DWORD_PTR)addr);
-                memcpy(buffer, 
-                       (char*)PRIVATE(dbg_curr_process)->mapping + mmd->Memory.Rva + (DWORD_PTR)addr - mmd->StartOfMemoryRange,
+                len = min(len,
+                          get_addr64(mmd->StartOfMemoryRange) + mmd->Memory.DataSize - (DWORD_PTR)addr);
+                memcpy(buffer,
+                       (char*)PRIVATE(dbg_curr_process)->mapping + mmd->Memory.Rva + (DWORD_PTR)addr - get_addr64(mmd->StartOfMemoryRange),
                        len);
                 if (rlen) *rlen = len;
                 return TRUE;
@@ -146,8 +152,8 @@ static BOOL is_pe_module_embedded(struct tgt_process_minidump_data* data,
 
         for (i = 0, mm = &mml->Modules[0]; i < mml->NumberOfModules; i++, mm++)
         {
-            if (mm->BaseOfImage <= pe_mm->BaseOfImage &&
-                mm->BaseOfImage + mm->SizeOfImage >= pe_mm->BaseOfImage + pe_mm->SizeOfImage)
+            if (get_addr64(mm->BaseOfImage) <= get_addr64(pe_mm->BaseOfImage) &&
+                get_addr64(mm->BaseOfImage) + mm->SizeOfImage >= get_addr64(pe_mm->BaseOfImage) + pe_mm->SizeOfImage)
                 return TRUE;
         }
     }
@@ -307,7 +313,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         for (i = 0; i < mtl->NumberOfThreads; i++)
         {
             dbg_add_thread(dbg_curr_process, mtl->Threads[i].ThreadId, NULL,
-                           (void*)(DWORD_PTR)mtl->Threads[i].Teb);
+                           (void*)(DWORD_PTR)get_addr64(mtl->Threads[i].Teb));
         }
     }
     /* first load ELF modules, then do the PE ones */
@@ -324,11 +330,11 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             nameW[mds->Length / sizeof(WCHAR)] = 0;
             if (SymFindFileInPathW(hProc, NULL, nameW, (void*)(DWORD_PTR)mm->CheckSum,
                                    0, 0, SSRVOPT_DWORD, buffer, validate_file, NULL))
-                SymLoadModuleExW(hProc, NULL, buffer, NULL, mm->BaseOfImage, mm->SizeOfImage,
-                                 NULL, 0);
+                SymLoadModuleExW(hProc, NULL, buffer, NULL, get_addr64(mm->BaseOfImage),
+                                 mm->SizeOfImage, NULL, 0);
             else
-                SymLoadModuleExW(hProc, NULL, nameW, NULL, mm->BaseOfImage, mm->SizeOfImage,
-                                 NULL, SLMFLAG_VIRTUAL);
+                SymLoadModuleExW(hProc, NULL, nameW, NULL, get_addr64(mm->BaseOfImage),
+                                 mm->SizeOfImage, NULL, SLMFLAG_VIRTUAL);
         }
     }
     if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, &dir, &stream, &size))
@@ -343,14 +349,14 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             nameW[mds->Length / sizeof(WCHAR)] = 0;
             if (SymFindFileInPathW(hProc, NULL, nameW, (void*)(DWORD_PTR)mm->TimeDateStamp,
                                    mm->SizeOfImage, 0, SSRVOPT_DWORD, buffer, validate_file, NULL))
-                SymLoadModuleExW(hProc, NULL, buffer, NULL, mm->BaseOfImage, mm->SizeOfImage,
-                                 NULL, 0);
+                SymLoadModuleExW(hProc, NULL, buffer, NULL, get_addr64(mm->BaseOfImage),
+                                 mm->SizeOfImage, NULL, 0);
             else if (is_pe_module_embedded(data, mm))
-                SymLoadModuleExW(hProc, NULL, nameW, NULL, mm->BaseOfImage, mm->SizeOfImage,
-                                 NULL, 0);
+                SymLoadModuleExW(hProc, NULL, nameW, NULL, get_addr64(mm->BaseOfImage),
+                                 mm->SizeOfImage, NULL, 0);
             else
-                SymLoadModuleExW(hProc, NULL, nameW, NULL, mm->BaseOfImage, mm->SizeOfImage,
-                                 NULL, SLMFLAG_VIRTUAL);
+                SymLoadModuleExW(hProc, NULL, nameW, NULL, get_addr64(mm->BaseOfImage),
+                                 mm->SizeOfImage, NULL, SLMFLAG_VIRTUAL);
         }
     }
     if (MiniDumpReadDumpStream(data->mapping, ExceptionStream, &dir, &stream, &size))
@@ -365,8 +371,8 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             dbg_curr_thread->in_exception = TRUE;
             dbg_curr_thread->excpt_record.ExceptionCode = mes->ExceptionRecord.ExceptionCode;
             dbg_curr_thread->excpt_record.ExceptionFlags = mes->ExceptionRecord.ExceptionFlags;
-            dbg_curr_thread->excpt_record.ExceptionRecord = (void*)(DWORD_PTR)mes->ExceptionRecord.ExceptionRecord;
-            dbg_curr_thread->excpt_record.ExceptionAddress = (void*)(DWORD_PTR)mes->ExceptionRecord.ExceptionAddress;
+            dbg_curr_thread->excpt_record.ExceptionRecord = (void*)(DWORD_PTR)get_addr64(mes->ExceptionRecord.ExceptionRecord);
+            dbg_curr_thread->excpt_record.ExceptionAddress = (void*)(DWORD_PTR)get_addr64(mes->ExceptionRecord.ExceptionAddress);
             dbg_curr_thread->excpt_record.NumberParameters = mes->ExceptionRecord.NumberParameters;
             for (i = 0; i < dbg_curr_thread->excpt_record.NumberParameters; i++)
             {
