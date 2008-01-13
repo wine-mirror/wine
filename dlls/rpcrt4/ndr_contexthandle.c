@@ -320,6 +320,7 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshall2(RPC_BINDING_HANDLE hBinding,
     RpcBinding *binding = hBinding;
     NDR_SCONTEXT SContext;
     RPC_STATUS status;
+    const ndr_context_handle *context_ndr = pBuff;
 
     TRACE("(%p %p %08x %p %u)\n",
           hBinding, pBuff, DataRepresentation, CtxGuard, Flags);
@@ -330,12 +331,12 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshall2(RPC_BINDING_HANDLE hBinding,
     if (Flags & RPC_CONTEXT_HANDLE_FLAGS)
         FIXME("unimplemented flags: 0x%x\n", Flags & RPC_CONTEXT_HANDLE_FLAGS);
 
-    if (!pBuff)
+    if (!pBuff || (!context_ndr->attributes &&
+                   UuidIsNil((UUID *)&context_ndr->uuid, &status)))
         status = RpcServerAssoc_AllocateContextHandle(binding->Assoc, CtxGuard,
                                                       &SContext);
     else
     {
-        const ndr_context_handle *context_ndr = pBuff;
         if (context_ndr->attributes)
         {
             ERR("non-null attributes 0x%x\n", context_ndr->attributes);
