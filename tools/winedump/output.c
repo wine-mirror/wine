@@ -238,35 +238,30 @@ void  output_c_preamble (void)
 
   fprintf (cfile,
            "BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID "
-           "lpvReserved)\n{\n\tTRACE(\"(0x%%p, %%d, %%p)\\n\",hinstDLL,"
-           "fdwReason,lpvReserved);\n\n\t"
-           "if (fdwReason == DLL_WINE_PREATTACH) return FALSE;\t"
-           "/* prefer native version */\n\n\t"
-           "if (fdwReason == DLL_PROCESS_ATTACH)\n\t{\n\t\t");
+           "lpvReserved)\n{\n"
+           "\tTRACE(\"(0x%%p, %%d, %%p)\\n\", hinstDLL, fdwReason, lpvReserved);\n"
+           "\n\tswitch (fdwReason)\n\t{\n"
+           "\t\tcase DLL_WINE_PREATTACH:\n"
+           "\t\t\treturn FALSE;    /* prefer native version */\n"
+           "\t\tcase DLL_PROCESS_ATTACH:\n");
 
   if (globals.forward_dll)
-  {
-    fprintf (cfile,
-             "hDLL = LoadLibraryA( \"%s\" );\n\t\t"
-             "TRACE(\":Forwarding DLL (%s) loaded (%%ld)\\n\",(LONG)hDLL);",
+    fprintf (cfile, "\t\t\thDLL = LoadLibraryA(\"%s\");\n"
+             "\t\t\tTRACE(\"Forwarding DLL (%s) loaded (%%p)\\n\", hDLL);\n",
              globals.forward_dll, globals.forward_dll);
-  }
   else
-    fputs ("/* FIXME: Initialisation */", cfile);
+    fprintf (cfile, "\t\t\t/* FIXME: Initialisation */\n"
+             "\t\t\tDisableThreadLibraryCalls(hinstDLL);\n\t\t\tbreak;\n");
 
-  fputs ("\n\t}\n\telse if (fdwReason == DLL_PROCESS_DETACH)\n\t{\n\t\t",
-         cfile);
+  fprintf (cfile, "\t\t\tbreak;\n\t\tcase DLL_PROCESS_DETACH:\n");
 
   if (globals.forward_dll)
-  {
-    fprintf (cfile,
-             "FreeLibrary( hDLL );\n\t\tTRACE(\":Forwarding DLL (%s)"
-             " freed\\n\");", globals.forward_dll);
-  }
-  else
-    fputs ("/* FIXME: Cleanup */", cfile);
+    fprintf (cfile, "\t\t\tFreeLibrary(hDLL);\n"
+             "\t\t\tTRACE(\"Forwarding DLL (%s) freed\\n\");\n",
+             globals.forward_dll);
 
-  fputs ("\n\t}\n\n\treturn TRUE;\n}\n\n\n", cfile);
+  fprintf (cfile, "\t\t\tbreak;\n\t\tdefault:\n\t\t\tbreak;\n\t}\n\n"
+           "\treturn TRUE;\n}\n\n\n");
 }
 
 
