@@ -629,7 +629,8 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
             call_set_active_object(This->ip_window, ACTOBJ(This));
 
         memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
-        IOleInPlaceFrame_SetBorderSpace(This->frame, &rcBorderWidths);
+        if (This->frame)
+            IOleInPlaceFrame_SetBorderSpace(This->frame, &rcBorderWidths);
     }
 
     return S_OK;
