@@ -138,6 +138,9 @@ static void output_spec_postamble (void)
  */
 void  output_header_preamble (void)
 {
+  if (!globals.do_code)
+      return;
+
   hfile = open_file (OUTPUT_DLL_NAME, "_dll.h", "w");
 
   atexit (output_header_postamble);
@@ -160,6 +163,9 @@ void  output_header_preamble (void)
  */
 void  output_header_symbol (const parsed_symbol *sym)
 {
+  if (!globals.do_code)
+      return;
+
   assert (hfile);
   assert (sym && sym->symbol);
 
@@ -210,10 +216,15 @@ void  output_c_preamble (void)
 
   fprintf (cfile,
            "/*\n * %s.dll\n *\n * Generated from %s by winedump.\n *\n"
-           " * DO NOT SUBMIT GENERATED DLLS FOR INCLUSION INTO WINE!\n * \n */"
-           "\n\n#include \"config.h\"\n#include \"%s_dll.h\"\n\n"
-           "WINE_DEFAULT_DEBUG_CHANNEL(%s);\n\n",
-           OUTPUT_DLL_NAME, globals.input_name, OUTPUT_DLL_NAME,
+           " * DO NOT SUBMIT GENERATED DLLS FOR INCLUSION INTO WINE!\n *\n */"
+           "\n\n#include \"config.h\"\n\n#include <stdarg.h>\n\n"
+           "#include \"windef.h\"\n#include \"winbase.h\"\n",
+           OUTPUT_DLL_NAME, globals.input_name);
+
+  if (globals.do_code)
+    fprintf (cfile, "#include \"%s_dll.h\"\n", OUTPUT_DLL_NAME);
+
+  fprintf (cfile,"#include \"wine/debug.h\"\n\nWINE_DEFAULT_DEBUG_CHANNEL(%s);\n\n",
            OUTPUT_DLL_NAME);
 
   if (globals.forward_dll)
