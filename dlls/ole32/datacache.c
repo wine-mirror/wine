@@ -831,7 +831,7 @@ static HRESULT DataCacheEntry_GetData(DataCacheEntry *This,
         if (FAILED(hr))
             return hr;
     }
-    if (stgmedium->tymed == TYMED_NULL)
+    if (This->stgmedium.tymed == TYMED_NULL)
         return OLE_E_BLANK;
     return copy_stg_medium(This->data_cf, stgmedium, &This->stgmedium);
 }
