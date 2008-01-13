@@ -63,6 +63,7 @@ BEGIN
     BEGIN
         MENUITEM "Панель &инструментов",        ID_TOGGLE_TOOLBAR
         MENUITEM "П&анель форматирования",      ID_TOGGLE_FORMATBAR
+        MENUITEM "&Ruler",          ID_TOGGLE_RULER
         MENUITEM "&Строка состояния",      ID_TOGGLE_STATUSBAR
         MENUITEM SEPARATOR
         MENUITEM "&Параметры . . .",  ID_VIEWPROPERTIES
@@ -167,7 +168,8 @@ BEGIN
     GROUPBOX "Панели", 0, 150, 10, 120, 85
     CHECKBOX "&Инструментов", IDC_PAGEFMT_TB, 160, 20, 80, 15
     CHECKBOX "&Форматирования", IDC_PAGEFMT_FB, 160, 38, 80, 15
-    CHECKBOX "&Строка состояния", IDC_PAGEFMT_SB, 160, 56, 80, 15
+    CHECKBOX "&Ruler", IDC_PAGEFMT_RU, 160, 56, 80, 15
+    CHECKBOX "&Строка состояния", IDC_PAGEFMT_SB, 160, 74, 80, 15
     LTEXT "", IDC_PAGEFMT_ID, 0,0,0,0
 END
 
