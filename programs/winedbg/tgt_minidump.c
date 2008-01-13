@@ -452,9 +452,18 @@ static BOOL tgt_process_minidump_close_process(struct dbg_process* pcs, BOOL kil
     return TRUE;
 }
 
+static BOOL WINAPI tgt_process_minidump_get_selector(HANDLE hThread, DWORD sel, LDT_ENTRY* le)
+{
+    /* so far, pretend all selectors are valid, and mapped to a 32bit flat address space */
+    memset(le, 0, sizeof(*le));
+    le->HighWord.Bits.Default_Big = 1;
+    return TRUE;
+}
+
 static struct be_process_io be_process_minidump_io =
 {
     tgt_process_minidump_close_process,
     tgt_process_minidump_read,
     tgt_process_minidump_write,
+    tgt_process_minidump_get_selector,
 };

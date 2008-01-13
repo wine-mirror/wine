@@ -984,4 +984,5 @@ static struct be_process_io be_process_active_io =
     tgt_process_active_close_process,
     ReadProcessMemory,
     WriteProcessMemory,
+    GetThreadSelectorEntry,
 };

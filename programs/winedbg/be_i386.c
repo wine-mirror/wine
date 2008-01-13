@@ -40,7 +40,7 @@ static ADDRESS_MODE get_selector_type(HANDLE hThread, const CONTEXT* ctx, WORD s
     if (IS_VM86_MODE(ctx)) return AddrModeReal;
     /* null or system selector */
     if (!(sel & 4) || ((sel >> 3) < 17)) return AddrModeFlat;
-    if (GetThreadSelectorEntry(hThread, sel, &le))
+    if (dbg_curr_process->process_io->get_selector(hThread, sel, &le))
         return le.HighWord.Bits.Default_Big ? AddrMode1632 : AddrMode1616;
     /* selector doesn't exist */
     return -1;
@@ -59,7 +59,7 @@ static void* be_i386_linearize(HANDLE hThread, const ADDRESS64* addr)
             return (void*)(DWORD)addr->Offset;
         /* fall through */
     case AddrMode1616:
-        if (!GetThreadSelectorEntry(hThread, addr->Segment, &le)) return NULL;
+        if (!dbg_curr_process->process_io->get_selector(hThread, addr->Segment, &le)) return NULL;
         return (void*)((le.HighWord.Bits.BaseHi << 24) + 
                        (le.HighWord.Bits.BaseMid << 16) + le.BaseLow +
                        (DWORD)addr->Offset);

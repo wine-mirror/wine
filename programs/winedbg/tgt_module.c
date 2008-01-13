@@ -90,9 +90,15 @@ static BOOL tgt_process_module_close_process(struct dbg_process* pcs, BOOL kill)
     return TRUE;
 }
 
+static BOOL WINAPI tgt_process_module_get_selector(HANDLE hThread, DWORD sel, LDT_ENTRY* le)
+{
+    return FALSE;
+}
+
 static struct be_process_io be_process_module_io =
 {
     tgt_process_module_close_process,
     tgt_process_module_read,
     tgt_process_module_write,
+    tgt_process_module_get_selector,
 };

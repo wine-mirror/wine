@@ -584,7 +584,7 @@ void info_win32_segments(DWORD start, int length)
 
     for (i = start; i < start + length; i++)
     {
-        if (!GetThreadSelectorEntry(dbg_curr_thread->handle, (i << 3) | 7, &le))
+        if (!dbg_curr_process->process_io->get_selector(dbg_curr_thread->handle, (i << 3) | 7, &le))
             continue;
 
         if (le.HighWord.Bits.Type & 0x08)
