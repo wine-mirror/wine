@@ -1181,6 +1181,7 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
             case DW_TAG_structure_type:
             case DW_TAG_class_type:
             case DW_TAG_union_type:
+            case DW_TAG_typedef:
                 /* FIXME: we need to handle nested udt definitions */
                 break;
             default:
