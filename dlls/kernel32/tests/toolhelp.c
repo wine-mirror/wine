@@ -106,6 +106,7 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
     MODULEENTRY32       me;
     unsigned            found = 0;
     int                 num = 0;
+    int			childpos = -1;
 
     hSnapshot = pCreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
     ok(hSnapshot != NULL, "Cannot create snapshot\n");
@@ -117,7 +118,7 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
         do
         {
             if (pe.th32ProcessID == curr_pid) found++;
-            if (pe.th32ProcessID == sub_pcs_pid) found++;
+            if (pe.th32ProcessID == sub_pcs_pid) { childpos = num; found++; }
             trace("PID=%x %s\n", pe.th32ProcessID, pe.szExeFile);
             num++;
         } while (pProcess32Next( hSnapshot, &pe ));
@@ -138,6 +139,10 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
     }
     ok(found == 2, "couldn't find self and/or sub-process in process list\n");
     ok(!num, "mismatch in counting\n");
+
+    /* one broken program does Process32First() and does not expect anything
+     * interesting to be there, especially not the just forked off child */
+    ok (childpos !=0, "child is not expected to be at position 0.\n");
 
     te.dwSize = sizeof(te);
     ok(!pThread32First( hSnapshot, &te ), "shouldn't return a thread\n");

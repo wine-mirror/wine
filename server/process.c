@@ -344,7 +344,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
 
     process->start_time = current_time;
     process->end_time = 0;
-    list_add_head( &process_list, &process->entry );
+    list_add_tail( &process_list, &process->entry );
 
     if (!(process->id = process->group_id = alloc_ptid( process )))
     {
