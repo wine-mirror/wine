@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = d3dx9_36.dll
+IMPORTS   = d3d9 d3dx8 kernel32
+EXTRALIBS = -ldxguid -luuid
+
+C_SRCS = \
+	d3dx9_36_main.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
