@@ -108,10 +108,11 @@ void  output_spec_symbol (const parsed_symbol *sym)
 
     if (sym->argc)
       fputc (' ', specfile);
-    fprintf (specfile, ") %s_%s", OUTPUT_UC_DLL_NAME, sym->function_name);
+    fputs (") ", specfile);
 
     if (sym->flags & SYM_THISCALL)
-      fputs (" # __thiscall", specfile);
+      fputs ("__thiscall_", specfile);
+    fprintf (specfile, "%s_%s", OUTPUT_UC_DLL_NAME, sym->function_name);
 
     fputc ('\n',specfile);
   }
@@ -235,9 +236,6 @@ void  output_c_preamble (void)
     fputs ("\nHMODULE hDLL=0;\t/* DLL to call */\n\n", cfile);
   }
 
-  fputs ("#ifdef __i386__\n#define GET_THIS(t,p) t p;\\\n__asm__ __volatile__"
-         " (\"movl %%ecx, %0\" : \"=m\" (p))\n#endif\n\n\n", cfile);
-
   fprintf (cfile,
            "BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID "
            "lpvReserved)\n{\n\tTRACE(\"(0x%%p, %%d, %%p)\\n\",hinstDLL,"
@@ -272,11 +270,6 @@ void  output_c_preamble (void)
 }
 
 
-#define CPP_END  if (sym->flags & SYM_THISCALL) \
-  fputs ("#endif\n", cfile); fputs ("\n\n", cfile)
-#define GET_THIS if (sym->flags & SYM_THISCALL) \
-  fprintf (cfile, "\tGET_THIS(%s,%s);\n", sym->arg_text[0],sym->arg_name[0])
-
 /*******************************************************************
  *         output_c_symbol
  *
@@ -286,6 +279,7 @@ void  output_c_symbol (const parsed_symbol *sym)
 {
   unsigned int i, start = sym->flags & SYM_THISCALL ? 1 : 0;
   int is_void;
+  static int has_thiscall = 0;
 
   assert (cfile);
   assert (sym && sym->symbol);
@@ -300,10 +294,30 @@ void  output_c_symbol (const parsed_symbol *sym)
     return;
   }
 
-  if (sym->flags & SYM_THISCALL)
-    fputs ("#ifdef __i386__\n", cfile);
+  if (sym->flags & SYM_THISCALL && !has_thiscall)
+  {
+    fputs ("#ifdef __i386__  /* thiscall functions are i386-specific */\n\n"
+           "#define THISCALL(func) __thiscall_ ## func\n"
+           "#define THISCALL_NAME(func) __ASM_NAME(\"__thiscall_\" #func)\n"
+           "#define DEFINE_THISCALL_WRAPPER(func) \\\n"
+           "\textern void THISCALL(func)(); \\\n"
+           "\t__ASM_GLOBAL_FUNC(__thiscall_ ## func, \\\n"
+           "\t\t\t\"popl %eax\\n\\t\" \\\n"
+           "\t\t\t\"pushl %ecx\\n\\t\" \\\n"
+           "\t\t\t\"pushl %eax\\n\\t\" \\\n"
+           "\t\t\t\"jmp \" __ASM_NAME(#func) )\n"
+           "#else /* __i386__ */\n\n"
+           "#define THISCALL(func) func\n"
+           "#define THISCALL_NAME(func) __ASM_NAME(#func)\n"
+           "#define DEFINE_THISCALL_WRAPPER(func) /* nothing */\n\n"
+           "#endif /* __i386__ */\n\n", cfile);
+    has_thiscall = 1;
+  }
 
   output_c_banner(sym);
+
+  if (sym->flags & SYM_THISCALL)
+    fprintf(cfile, "DEFINE_THISCALL_WRAPPER(%s)\n", sym->function_name);
 
   if (!sym->function_name)
   {
@@ -311,7 +325,6 @@ void  output_c_symbol (const parsed_symbol *sym)
     fprintf (cfile, "#if 0\n__%s %s_%s()\n{\n\t/* %s in .spec */\n}\n#endif\n",
              symbol_get_call_convention(sym), OUTPUT_UC_DLL_NAME, sym->symbol,
              globals.forward_dll ? "@forward" : "@stub");
-    CPP_END;
     return;
   }
 
@@ -322,12 +335,10 @@ void  output_c_symbol (const parsed_symbol *sym)
 
   if (!globals.do_trace)
   {
-    GET_THIS;
     fputs ("\tFIXME(\":stub\\n\");\n", cfile);
     if (!is_void)
         fprintf (cfile, "\treturn (%s) 0;\n", sym->return_text);
     fputs ("}\n", cfile);
-    CPP_END;
     return;
   }
 
@@ -349,8 +360,6 @@ void  output_c_symbol (const parsed_symbol *sym)
 
     if (!is_void)
       fprintf (cfile, "\t%s retVal;\n", sym->return_text);
-
-    GET_THIS;
 
     fprintf (cfile, "\tpFunc=(void*)GetProcAddress(hDLL,\"%s\");\n",
              sym->symbol);
@@ -380,7 +389,6 @@ void  output_c_symbol (const parsed_symbol *sym)
     if (!is_void)
       fprintf (cfile, "\treturn (%s) 0;\n", sym->return_text);
     fputs ("}\n", cfile);
-    CPP_END;
     return;
   }
 
@@ -412,7 +420,6 @@ void  output_c_symbol (const parsed_symbol *sym)
     fputs (");\n", cfile);
 
   fputs ("}\n", cfile);
-  CPP_END;
 }
 
 
