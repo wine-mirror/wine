@@ -417,6 +417,7 @@ static HRESULT WINAPI xmlnode_get_attributes(
     /* Attribute, CDataSection, Comment, Documents, Documents Fragments,
        Entity and Text Nodes does not support get_attributes */
     case XML_ATTRIBUTE_NODE:
+    case XML_CDATA_SECTION_NODE:
     case XML_COMMENT_NODE:
     case XML_DOCUMENT_NODE:
     case XML_DOCUMENT_FRAG_NODE:
