@@ -306,7 +306,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     LPWSTR host = 0, path = 0, user = 0, pass = 0, addl_header = 0,
         post_cookie = 0, optional = 0;
     BYTE security_id[512];
-    LPOLESTR user_agent, accept_mimes[257];
+    LPOLESTR user_agent = NULL, accept_mimes[257];
     HRESULT hres;
 
     static const WCHAR wszHttp[] = {'h','t','t','p',':'};
