@@ -33,6 +33,7 @@
 #include "olectl.h"
 #include "mshtmdid.h"
 #include "shlguid.h"
+#include "exdispid.h"
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -75,6 +76,20 @@ DEFINE_EXPECT(Invoke_AMBIENT_USERAGENT);
 DEFINE_EXPECT(Invoke_AMBIENT_PALETTE);
 DEFINE_EXPECT(Invoke_AMBIENT_SILENT);
 DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+DEFINE_EXPECT(Invoke_STATUSTEXTCHANGE);
+DEFINE_EXPECT(Invoke_PROPERTYCHANGE);
+DEFINE_EXPECT(Invoke_DOWNLOADBEGIN);
+DEFINE_EXPECT(Invoke_BEFORENAVIGATE2);
+DEFINE_EXPECT(Invoke_SETSECURELOCKICON);
+DEFINE_EXPECT(Invoke_FILEDOWNLOAD);
+DEFINE_EXPECT(Invoke_COMMANDSTATECHANGE);
+DEFINE_EXPECT(Invoke_DOWNLOADCOMPLETE);
+DEFINE_EXPECT(Invoke_ONMENUBAR);
+DEFINE_EXPECT(Invoke_ONADDRESSBAR);
+DEFINE_EXPECT(Invoke_ONSTATUSBAR);
+DEFINE_EXPECT(Invoke_ONTOOLBAR);
+DEFINE_EXPECT(Invoke_ONFULLSCREEN);
+DEFINE_EXPECT(Invoke_WINDOWSETRESIZABLE);
 DEFINE_EXPECT(EnableModeless_TRUE);
 DEFINE_EXPECT(EnableModeless_FALSE);
 DEFINE_EXPECT(GetHostInfo);
@@ -89,8 +104,21 @@ DEFINE_EXPECT(Exec_SETPROGRESSPOS);
 DEFINE_EXPECT(QueryStatus_SETPROGRESSTEXT);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
+static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
+static VARIANT_BOOL exvb;
+static IWebBrowser2 *wb;
 
 static HWND container_hwnd, shell_embedding_hwnd;
+
+static const char *debugstr_w(LPCWSTR str)
+{
+    static char buf[1024];
+    if(!str)
+        return "(null)";
+    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
+    return buf;
+}
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -358,6 +386,240 @@ static IDispatchVtbl DispatchVtbl = {
 };
 
 static IDispatch Dispatch = { &DispatchVtbl };
+
+static HRESULT WINAPI WebBrowserEvents2_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&DIID_DWebBrowserEvents2, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+#define test_invoke_bool(p) _test_invoke_bool(__LINE__,p)
+static void _test_invoke_bool(unsigned line, const DISPPARAMS *params)
+{
+    ok_(__FILE__,line) (params->rgvarg != NULL, "rgvarg == NULL\n");
+    ok_(__FILE__,line) (params->cArgs == 1, "cArgs=%d, expected 1\n", params->cArgs);
+    ok_(__FILE__,line) (V_VT(params->rgvarg) == VT_BOOL, "V_VT(arg)=%d\n", V_VT(params->rgvarg));
+    ok_(__FILE__,line) (V_BOOL(params->rgvarg) == exvb, "V_VT(arg)=%x, expected %x\n",
+                        V_BOOL(params->rgvarg), exvb);
+}
+
+static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const VARIANT *flags,
+        const VARIANT *frame, const VARIANT *post_data, const VARIANT *headers, const VARIANT *cancel)
+{
+    ok(V_VT(disp) == VT_DISPATCH, "V_VT(disp)=%d, expected VT_DISPATCH\n", V_VT(disp));
+    ok(V_DISPATCH(disp) != NULL, "V_DISPATCH(disp) == NULL\n");
+    ok(V_DISPATCH(disp) == (IDispatch*)wb, "V_DISPATCH(disp)=%p, wb=%p\n", V_DISPATCH(disp), wb);
+
+    ok(V_VT(url) == (VT_BYREF|VT_VARIANT), "V_VT(url)=%x, expected VT_BYREF|VT_VARIANT\n", V_VT(url));
+    ok(V_VARIANTREF(url) != NULL, "V_VARIANTREF(url) == NULL)\n");
+    if(V_VARIANTREF(url)) {
+        ok(V_VT(V_VARIANTREF(url)) == VT_BSTR, "V_VT(V_VARIANTREF(url))=%d, expected VT_BSTR\n",
+           V_VT(V_VARIANTREF(url)));
+        ok(V_BSTR(V_VARIANTREF(url)) != NULL, "V_BSTR(V_VARIANTREF(url)) == NULL\n");
+        ok(!lstrcmpW(V_BSTR(V_VARIANTREF(url)), about_blankW), "unexpected url %s\n",
+           debugstr_w(V_BSTR(V_VARIANTREF(url))));
+    }
+
+    ok(V_VT(flags) == (VT_BYREF|VT_VARIANT), "V_VT(flags)=%x, expected VT_BYREF|VT_VARIANT\n",
+       V_VT(flags));
+    ok(V_VT(flags) == (VT_BYREF|VT_VARIANT), "V_VT(flags)=%x, expected VT_BYREF|VT_VARIANT\n",
+       V_VT(flags));
+    ok(V_VARIANTREF(flags) != NULL, "V_VARIANTREF(flags) == NULL)\n");
+    if(V_VARIANTREF(flags)) {
+        ok(V_VT(V_VARIANTREF(flags)) == VT_I4, "V_VT(V_VARIANTREF(flags))=%d, expected VT_I4\n",
+           V_VT(V_VARIANTREF(flags)));
+        ok(V_I4(V_VARIANTREF(flags)) == 0, "V_I4(V_VARIANTREF(flags)) = %d, expected 0\n",
+           V_I4(V_VARIANTREF(flags)));
+    }
+
+    ok(V_VT(frame) == (VT_BYREF|VT_VARIANT), "V_VT(frame)=%x, expected VT_BYREF|VT_VARIANT\n",
+       V_VT(frame));
+    ok(V_VT(frame) == (VT_BYREF|VT_VARIANT), "V_VT(frame)=%x, expected VT_BYREF|VT_VARIANT\n",
+       V_VT(frame));
+    ok(V_VARIANTREF(frame) != NULL, "V_VARIANTREF(frame) == NULL)\n");
+    if(V_VARIANTREF(frame)) {
+        ok(V_VT(V_VARIANTREF(frame)) == VT_BSTR, "V_VT(V_VARIANTREF(frame))=%d, expected VT_BSTR\n",
+           V_VT(V_VARIANTREF(frame)));
+        ok(V_BSTR(V_VARIANTREF(frame)) == NULL, "V_BSTR(V_VARIANTREF(frame)) = %p, expected NULL\n",
+           V_BSTR(V_VARIANTREF(frame)));
+    }
+
+    ok(V_VT(post_data) == (VT_BYREF|VT_VARIANT), "V_VT(post_data)=%x, expected VT_BYREF|VT_VARIANT\n",
+       V_VT(post_data));
+    ok(V_VT(post_data) == (VT_BYREF|VT_VARIANT), "V_VT(post_data)=%x, expected VT_BYREF|VT_VARIANT\n",
+       V_VT(post_data));
+    ok(V_VARIANTREF(post_data) != NULL, "V_VARIANTREF(post_data) == NULL)\n");
+    if(V_VARIANTREF(post_data)) {
+        ok(V_VT(V_VARIANTREF(post_data)) == (VT_VARIANT|VT_BYREF),
+           "V_VT(V_VARIANTREF(post_data))=%d, expected VT_VARIANT|VT_BYREF\n",
+           V_VT(V_VARIANTREF(post_data)));
+        ok(V_VARIANTREF(V_VARIANTREF(post_data)) != NULL,
+           "V_VARIANTREF(V_VARIANTREF(post_data)) == NULL\n");
+        if(V_VARIANTREF(V_VARIANTREF(post_data))) {
+            ok(V_VT(V_VARIANTREF(V_VARIANTREF(post_data))) == VT_EMPTY,
+               "V_VT(V_VARIANTREF(V_VARIANTREF(post_data))) = %d, expected VT_EMPTY\n",
+               V_VT(V_VARIANTREF(V_VARIANTREF(post_data))));
+
+            if(V_VT(V_VARIANTREF(V_VARIANTREF(post_data))) == (VT_UI1|VT_ARRAY)) {
+                const SAFEARRAY *sa = V_ARRAY(V_VARIANTREF(V_VARIANTREF(post_data)));
+
+                ok(sa->cDims == 1, "sa->cDims = %d, expected 1\n", sa->cDims);
+                ok(sa->fFeatures == 0, "sa->fFeatures = %d, expected 0\n", sa->fFeatures);
+            }
+        }
+    }
+
+    ok(V_VT(headers) == (VT_BYREF|VT_VARIANT), "V_VT(headers)=%x, expected VT_BYREF|VT_VARIANT\n",
+       V_VT(headers));
+    ok(V_VARIANTREF(headers) != NULL, "V_VARIANTREF(headers) == NULL)\n");
+    if(V_VARIANTREF(headers)) {
+        ok(V_VT(V_VARIANTREF(headers)) == VT_BSTR, "V_VT(V_VARIANTREF(headers))=%d, expected VT_BSTR\n",
+           V_VT(V_VARIANTREF(headers)));
+        ok(V_BSTR(V_VARIANTREF(headers)) == NULL, "V_BSTR(V_VARIANTREF(heders)) = %p, expected NULL\n",
+           V_BSTR(V_VARIANTREF(headers)));
+    }
+
+    ok(V_VT(cancel) == (VT_BYREF|VT_BOOL), "V_VT(cancel)=%x, expected VT_BYREF|VT_BOOL\n",
+       V_VT(cancel));
+    ok(V_BOOLREF(cancel) != NULL, "V_BOOLREF(pDispParams->rgvarg[0] == NULL)\n");
+    if(V_BOOLREF(cancel))
+        ok(*V_BOOLREF(cancel) == VARIANT_FALSE, "*V_BOOLREF(calcel) = %x, expected VARIANT_FALSE\n",
+           *V_BOOLREF(cancel));
+}
+
+static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ok(IsEqualGUID(&IID_NULL, riid), "riid != IID_NULL\n");
+    ok(pDispParams != NULL, "pDispParams == NULL\n");
+    ok(pExcepInfo == NULL, "pExcepInfo=%p, expected NULL\n", pExcepInfo);
+    ok(pVarResult == NULL, "pVarResult=%p\n", pVarResult);
+    ok(wFlags == DISPATCH_METHOD, "wFlags=%08x, expected DISPATCH_METHOD\n", wFlags);
+    ok(pDispParams->rgdispidNamedArgs == NULL,
+       "pDispParams->rgdispidNamedArgs = %p\n", pDispParams->rgdispidNamedArgs);
+    ok(pDispParams->cNamedArgs == 0, "pDispParams->cNamedArgs = %d\n", pDispParams->cNamedArgs);
+
+    switch(dispIdMember) {
+    case DISPID_STATUSTEXTCHANGE:
+        CHECK_EXPECT2(Invoke_STATUSTEXTCHANGE);
+
+        ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pDispParams->cArgs == 1, "cArgs=%d, expected 1\n", pDispParams->cArgs);
+        /* TODO: Check args */
+        break;
+
+    case DISPID_PROPERTYCHANGE:
+        CHECK_EXPECT2(Invoke_PROPERTYCHANGE);
+
+        ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pDispParams->cArgs == 1, "cArgs=%d, expected 1\n", pDispParams->cArgs);
+        /* TODO: Check args */
+        break;
+
+    case DISPID_DOWNLOADBEGIN:
+        CHECK_EXPECT(Invoke_DOWNLOADBEGIN);
+
+        ok(pDispParams->rgvarg == NULL, "rgvarg=%p, expected NULL\n", pDispParams->rgvarg);
+        ok(pDispParams->cArgs == 0, "cArgs=%d, expected 0\n", pDispParams->cArgs);
+        break;
+
+    case DISPID_BEFORENAVIGATE2:
+        CHECK_EXPECT(Invoke_BEFORENAVIGATE2);
+
+        ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pDispParams->cArgs == 7, "cArgs=%d, expected 7\n", pDispParams->cArgs);
+        test_OnBeforeNavigate(pDispParams->rgvarg+6, pDispParams->rgvarg+5, pDispParams->rgvarg+4,
+                              pDispParams->rgvarg+3, pDispParams->rgvarg+2, pDispParams->rgvarg+1,
+                              pDispParams->rgvarg);
+        break;
+
+    case DISPID_SETSECURELOCKICON:
+        CHECK_EXPECT(Invoke_SETSECURELOCKICON);
+
+        ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pDispParams->cArgs == 1, "cArgs=%d, expected 1\n", pDispParams->cArgs);
+        /* TODO: Check args */
+        break;
+
+    case DISPID_FILEDOWNLOAD:
+        CHECK_EXPECT(Invoke_FILEDOWNLOAD);
+
+        ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pDispParams->cArgs == 2, "cArgs=%d, expected 2\n", pDispParams->cArgs);
+        /* TODO: Check args */
+        break;
+
+    case DISPID_COMMANDSTATECHANGE:
+        CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE);
+
+        ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pDispParams->cArgs == 2, "cArgs=%d, expected 2\n", pDispParams->cArgs);
+        /* TODO: Check args */
+        break;
+
+    case DISPID_DOWNLOADCOMPLETE:
+        CHECK_EXPECT(Invoke_DOWNLOADCOMPLETE);
+
+        ok(pDispParams->rgvarg == NULL, "rgvarg=%p, expected NULL\n", pDispParams->rgvarg);
+        ok(pDispParams->cArgs == 0, "cArgs=%d, expected 0\n", pDispParams->cArgs);
+        break;
+
+    case DISPID_ONMENUBAR:
+        CHECK_EXPECT(Invoke_ONMENUBAR);
+        test_invoke_bool(pDispParams);
+        break;
+
+    case DISPID_ONADDRESSBAR:
+        CHECK_EXPECT(Invoke_ONADDRESSBAR);
+        test_invoke_bool(pDispParams);
+        break;
+
+    case DISPID_ONSTATUSBAR:
+        CHECK_EXPECT(Invoke_ONSTATUSBAR);
+        test_invoke_bool(pDispParams);
+        break;
+
+    case DISPID_ONTOOLBAR:
+        CHECK_EXPECT(Invoke_ONTOOLBAR);
+        test_invoke_bool(pDispParams);
+        break;
+
+    case DISPID_ONFULLSCREEN:
+        CHECK_EXPECT(Invoke_ONFULLSCREEN);
+        test_invoke_bool(pDispParams);
+        break;
+
+    case DISPID_WINDOWSETRESIZABLE:
+        CHECK_EXPECT(Invoke_WINDOWSETRESIZABLE);
+        test_invoke_bool(pDispParams);
+        break;
+
+    default:
+        ok(0, "unexpected dispIdMember %d\n", dispIdMember);
+    }
+
+    return S_OK;
+}
+
+static IDispatchVtbl WebBrowserEvents2Vtbl = {
+    WebBrowserEvents2_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    WebBrowserEvents2_Invoke
+};
+
+static IDispatch WebBrowserEvents2 = { &WebBrowserEvents2Vtbl };
 
 static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
 {
@@ -769,7 +1031,6 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
         IUnknown *pcmdtReserved, IDispatch *pdicpReserved)
 {
     ok(0, "unexpected call %d %p %p %p\n", dwID, ppt, pcmdtReserved, pdicpReserved);
-    trace("%x\n", dwID);
     return S_FALSE;
 }
 
@@ -1063,7 +1324,9 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
         SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         SET_EXPECT(Invoke_AMBIENT_SILENT);
     }else {
+        SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
         SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE);
     }
 
     hres = IOleObject_SetClientSite(oleobj, client);
@@ -1075,7 +1338,9 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
     }else {
+        todo_wine CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
         todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+        todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
    }
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
@@ -1149,15 +1414,19 @@ static void test_ie_funcs(IUnknown *unk)
     ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_MenuBar(wb, VARIANT_FALSE);
+    SET_EXPECT(Invoke_ONMENUBAR);
+    hres = IWebBrowser2_put_MenuBar(wb, (exvb = VARIANT_FALSE));
     ok(hres == S_OK, "put_MenuBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONMENUBAR);
 
     hres = IWebBrowser2_get_MenuBar(wb, &b);
     ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_MenuBar(wb, 100);
+    SET_EXPECT(Invoke_ONMENUBAR);
+    hres = IWebBrowser2_put_MenuBar(wb, (exvb = 100));
     ok(hres == S_OK, "put_MenuBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONMENUBAR);
 
     hres = IWebBrowser2_get_MenuBar(wb, &b);
     ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
@@ -1169,22 +1438,28 @@ static void test_ie_funcs(IUnknown *unk)
     ok(hres == S_OK, "get_AddressBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_AddressBar(wb, VARIANT_FALSE);
+    SET_EXPECT(Invoke_ONADDRESSBAR);
+    hres = IWebBrowser2_put_AddressBar(wb, (exvb = VARIANT_FALSE));
     ok(hres == S_OK, "put_AddressBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONADDRESSBAR);
 
     hres = IWebBrowser2_get_AddressBar(wb, &b);
     ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_AddressBar(wb, 100);
+    SET_EXPECT(Invoke_ONADDRESSBAR);
+    hres = IWebBrowser2_put_AddressBar(wb, (exvb = 100));
     ok(hres == S_OK, "put_AddressBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONADDRESSBAR);
 
     hres = IWebBrowser2_get_AddressBar(wb, &b);
     ok(hres == S_OK, "get_AddressBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_AddressBar(wb, VARIANT_TRUE);
+    SET_EXPECT(Invoke_ONADDRESSBAR);
+    hres = IWebBrowser2_put_AddressBar(wb, (exvb = VARIANT_TRUE));
     ok(hres == S_OK, "put_MenuBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONADDRESSBAR);
 
     /* StatusBar */
 
@@ -1192,22 +1467,28 @@ static void test_ie_funcs(IUnknown *unk)
     ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_StatusBar(wb, VARIANT_TRUE);
+    SET_EXPECT(Invoke_ONSTATUSBAR);
+    hres = IWebBrowser2_put_StatusBar(wb, (exvb = VARIANT_TRUE));
     ok(hres == S_OK, "put_StatusBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONSTATUSBAR);
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
     ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_StatusBar(wb, VARIANT_FALSE);
+    SET_EXPECT(Invoke_ONSTATUSBAR);
+    hres = IWebBrowser2_put_StatusBar(wb, (exvb = VARIANT_FALSE));
     ok(hres == S_OK, "put_StatusBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONSTATUSBAR);
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
     ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_StatusBar(wb, 100);
+    SET_EXPECT(Invoke_ONSTATUSBAR);
+    hres = IWebBrowser2_put_StatusBar(wb, (exvb = 100));
     ok(hres == S_OK, "put_StatusBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONSTATUSBAR);
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
     ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
@@ -1219,22 +1500,28 @@ static void test_ie_funcs(IUnknown *unk)
     ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
     ok(i, "i=%x\n", i);
 
-    hres = IWebBrowser2_put_ToolBar(wb, VARIANT_FALSE);
+    SET_EXPECT(Invoke_ONTOOLBAR);
+    hres = IWebBrowser2_put_ToolBar(wb, (exvb = VARIANT_FALSE));
     ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONTOOLBAR);
 
     hres = IWebBrowser2_get_ToolBar(wb, &i);
     ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
     ok(i == VARIANT_FALSE, "b=%x\n", i);
 
-    hres = IWebBrowser2_put_ToolBar(wb, 100);
+    SET_EXPECT(Invoke_ONTOOLBAR);
+    hres = IWebBrowser2_put_ToolBar(wb, (exvb = 100));
     ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONTOOLBAR);
 
     hres = IWebBrowser2_get_ToolBar(wb, &i);
     ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
     ok(i, "i=%x\n", i);
 
-    hres = IWebBrowser2_put_ToolBar(wb, VARIANT_TRUE);
+    SET_EXPECT(Invoke_ONTOOLBAR);
+    hres = IWebBrowser2_put_ToolBar(wb, (exvb = VARIANT_TRUE));
     ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONTOOLBAR);
 
     /* FullScreen */
 
@@ -1242,22 +1529,28 @@ static void test_ie_funcs(IUnknown *unk)
     ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_FullScreen(wb, VARIANT_TRUE);
+    SET_EXPECT(Invoke_ONFULLSCREEN);
+    hres = IWebBrowser2_put_FullScreen(wb, (exvb = VARIANT_TRUE));
     ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
+    todo_wine CHECK_CALLED(Invoke_ONFULLSCREEN);
 
     hres = IWebBrowser2_get_FullScreen(wb, &b);
     ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_FullScreen(wb, 100);
+    SET_EXPECT(Invoke_ONFULLSCREEN);
+    hres = IWebBrowser2_put_FullScreen(wb, (exvb = 100));
     ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
+    todo_wine CHECK_CALLED(Invoke_ONFULLSCREEN);
 
     hres = IWebBrowser2_get_FullScreen(wb, &b);
     ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_FullScreen(wb, VARIANT_FALSE);
+    SET_EXPECT(Invoke_ONFULLSCREEN);
+    hres = IWebBrowser2_put_FullScreen(wb, (exvb = VARIANT_FALSE));
     ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
+    todo_wine CHECK_CALLED(Invoke_ONFULLSCREEN);
 
     /* Resizable */
 
@@ -1266,11 +1559,15 @@ static void test_ie_funcs(IUnknown *unk)
     ok(hres == E_NOTIMPL, "get_Resizable failed: %08x\n", hres);
     ok(b == 0x100, "b=%x\n", b);
 
-    hres = IWebBrowser2_put_Resizable(wb, VARIANT_TRUE);
+    SET_EXPECT(Invoke_WINDOWSETRESIZABLE);
+    hres = IWebBrowser2_put_Resizable(wb, (exvb = VARIANT_TRUE));
     ok(hres == S_OK, "put_Resizable failed: %08x\n", hres);
+    todo_wine CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
 
-    hres = IWebBrowser2_put_Resizable(wb, VARIANT_FALSE);
+    SET_EXPECT(Invoke_WINDOWSETRESIZABLE);
+    hres = IWebBrowser2_put_Resizable(wb, (exvb = VARIANT_FALSE));
     ok(hres == S_OK, "put_Resizable failed: %08x\n", hres);
+    todo_wine CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
 
     hres = IWebBrowser2_get_Resizable(wb, &b);
     ok(hres == E_NOTIMPL, "get_Resizable failed: %08x\n", hres);
@@ -1504,14 +1801,42 @@ static void test_Extent(IUnknown *unk)
     IOleObject_Release(oleobj);
 }
 
+static void test_ConnectionPoint(IUnknown *unk, BOOL init)
+{
+    IConnectionPointContainer *container;
+    IConnectionPoint *point;
+    HRESULT hres;
+
+    static DWORD dw = 100;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IConnectionPointContainer, (void**)&container);
+    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IConnectionPointContainer_FindConnectionPoint(container, &DIID_DWebBrowserEvents2, &point);
+    IConnectionPointContainer_Release(container);
+    ok(hres == S_OK, "FindConnectionPoint failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    if(init) {
+        hres = IConnectionPoint_Advise(point, (IUnknown*)&WebBrowserEvents2, &dw);
+        ok(hres == S_OK, "Advise failed: %08x\n", hres);
+        ok(dw == 1, "dw=%d, expected 1\n", dw);
+    }else {
+        hres = IConnectionPoint_Unadvise(point, dw);
+        ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+    }
+
+    IConnectionPoint_Release(point);
+}
+
 static void test_Navigate2(IUnknown *unk)
 {
     IWebBrowser2 *webbrowser;
     VARIANT url;
     HRESULT hres;
-
-    static const WCHAR wszAboutBlank[] =
-        {'a','b','o','u','t',':','b','l','a','n','k',0};
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&webbrowser);
     ok(hres == S_OK, "QueryInterface(IID_IWebBrowser) failed: %08x\n", hres);
@@ -1519,11 +1844,16 @@ static void test_Navigate2(IUnknown *unk)
         return;
 
     V_VT(&url) = VT_BSTR;
-    V_BSTR(&url) = SysAllocString(wszAboutBlank);
+    V_BSTR(&url) = SysAllocString(about_blankW);
 
     SET_EXPECT(Invoke_AMBIENT_USERMODE);
+    SET_EXPECT(Invoke_PROPERTYCHANGE);
+    SET_EXPECT(Invoke_BEFORENAVIGATE2);
+    SET_EXPECT(Invoke_DOWNLOADBEGIN);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
     SET_EXPECT(EnableModeless_FALSE);
+    SET_EXPECT(Invoke_STATUSTEXTCHANGE);
+    SET_EXPECT(SetStatusText);
     SET_EXPECT(GetHostInfo);
     SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
     SET_EXPECT(Invoke_AMBIENT_USERAGENT);
@@ -1533,29 +1863,36 @@ static void test_Navigate2(IUnknown *unk)
     SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
     SET_EXPECT(Exec_SETPROGRESSMAX);
     SET_EXPECT(Exec_SETPROGRESSPOS);
+    SET_EXPECT(Invoke_SETSECURELOCKICON);
+    SET_EXPECT(Invoke_FILEDOWNLOAD);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
-    SET_EXPECT(SetStatusText);
+    SET_EXPECT(Invoke_COMMANDSTATECHANGE);
     SET_EXPECT(EnableModeless_TRUE);
 
     hres = IWebBrowser2_Navigate2(webbrowser, &url, NULL, NULL, NULL, NULL);
     ok(hres == S_OK, "Navigate2 failed: %08x\n", hres);
 
     CHECK_CALLED(Invoke_AMBIENT_USERMODE);
+    todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
+    CHECK_CALLED(Invoke_BEFORENAVIGATE2);
+    todo_wine CHECK_CALLED(Invoke_DOWNLOADBEGIN);
     todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
     CHECK_CALLED(EnableModeless_FALSE);
+    todo_wine CHECK_CALLED(Invoke_STATUSTEXTCHANGE);
+    CHECK_CALLED(SetStatusText);
     CHECK_CALLED(GetHostInfo);
     CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
     CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
     CHECK_CALLED(Invoke_AMBIENT_PALETTE);
     CHECK_CALLED(GetOptionKeyPath);
     CHECK_CALLED(GetOverridesKeyPath);
-    todo_wine {
-    CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
-    CHECK_CALLED(Exec_SETPROGRESSMAX);
-    CHECK_CALLED(Exec_SETPROGRESSPOS);
-    CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
-    }
-    CHECK_CALLED(SetStatusText);
+    todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
+    todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
+    todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
+    todo_wine CHECK_CALLED(Invoke_SETSECURELOCKICON);
+    todo_wine CHECK_CALLED(Invoke_FILEDOWNLOAD);
+    todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
+    todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     CHECK_CALLED(EnableModeless_TRUE);
 
     VariantClear(&url);
@@ -1599,8 +1936,12 @@ static void test_WebBrowser(void)
     if(FAILED(hres))
         return;
 
+    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
+    ok(hres == S_OK, "Could not get IWebBrowser2 iface: %08x\n", hres);
+
     test_QueryInterface(unk);
     test_ClassInfo(unk);
+    test_ConnectionPoint(unk, TRUE);
     test_ClientSite(unk, &ClientSite);
     test_Extent(unk);
     test_wb_funcs(unk, TRUE);
@@ -1610,7 +1951,9 @@ static void test_WebBrowser(void)
     test_ie_funcs(unk);
     test_GetControlInfo(unk);
     test_wb_funcs(unk, FALSE);
+    test_ConnectionPoint(unk, FALSE);
 
+    IWebBrowser2_Release(wb);
     ref = IUnknown_Release(unk);
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
