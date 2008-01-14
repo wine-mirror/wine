@@ -1189,7 +1189,23 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
         char **envp = build_envp( env );
         close( fd[0] );
 
-        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS)) setsid();
+        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
+        {
+            int pid;
+            if (!(pid = fork()))
+            {
+                int fd = open( "/dev/null", O_RDWR );
+                setsid();
+                /* close stdin and stdout */
+                if (fd != -1)
+                {
+                    dup2( fd, 0 );
+                    dup2( fd, 1 );
+                    close( fd );
+                }
+            }
+            else if (pid != -1) _exit(0);  /* parent */
+        }
 
         /* Reset signals that we previously set to SIG_IGN */
         signal( SIGPIPE, SIG_DFL );
@@ -1410,7 +1426,22 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         char preloader_reserve[64], socket_env[64];
         char **argv = build_argv( cmd_line, 1 );
 
-        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS)) setsid();
+        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
+        {
+            if (!(pid = fork()))
+            {
+                int fd = open( "/dev/null", O_RDWR );
+                setsid();
+                /* close stdin and stdout */
+                if (fd != -1)
+                {
+                    dup2( fd, 0 );
+                    dup2( fd, 1 );
+                    close( fd );
+                }
+            }
+            else if (pid != -1) _exit(0);  /* parent */
+        }
 
         /* Reset signals that we previously set to SIG_IGN */
         signal( SIGPIPE, SIG_DFL );
