@@ -513,7 +513,9 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
         ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
         ok(pDispParams->cArgs == 1, "cArgs=%d, expected 1\n", pDispParams->cArgs);
-        /* TODO: Check args */
+        ok(V_VT(pDispParams->rgvarg) == VT_BSTR, "V_VT(pDispParams->rgvarg)=%d, expected VT_BSTR\n",
+           V_VT(pDispParams->rgvarg));
+        /* TODO: Check text */
         break;
 
     case DISPID_PROPERTYCHANGE:
@@ -1878,7 +1880,7 @@ static void test_Navigate2(IUnknown *unk)
     todo_wine CHECK_CALLED(Invoke_DOWNLOADBEGIN);
     todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
     CHECK_CALLED(EnableModeless_FALSE);
-    todo_wine CHECK_CALLED(Invoke_STATUSTEXTCHANGE);
+    CHECK_CALLED(Invoke_STATUSTEXTCHANGE);
     CHECK_CALLED(SetStatusText);
     CHECK_CALLED(GetHostInfo);
     CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);

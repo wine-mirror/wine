@@ -94,10 +94,19 @@ static void dump_BINDINFO(BINDINFO *bi)
 
 static void set_status_text(BindStatusCallback *This, LPCWSTR str)
 {
-    if(!This->doc_host || !This->doc_host->frame)
+    VARIANTARG arg;
+    DISPPARAMS dispparams = {&arg, NULL, 1, 0};
+
+    if(!This->doc_host)
         return;
 
-    IOleInPlaceFrame_SetStatusText(This->doc_host->frame, str);
+    V_VT(&arg) = VT_BSTR;
+    V_BSTR(&arg) = str ? SysAllocString(str) : NULL;
+    call_sink(This->doc_host->cps.wbe2, DISPID_STATUSTEXTCHANGE, &dispparams);
+    VariantClear(&arg);
+
+    if(This->doc_host->frame)
+        IOleInPlaceFrame_SetStatusText(This->doc_host->frame, str);
 }
 
 #define BINDSC_THIS(iface) DEFINE_THIS(BindStatusCallback, BindStatusCallback, iface)
