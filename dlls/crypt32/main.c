@@ -59,8 +59,16 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
 HCRYPTPROV CRYPT_GetDefaultProvider(void)
 {
     if (!hDefProv)
-        CryptAcquireContextW(&hDefProv, NULL, MS_ENHANCED_PROV_W,
-         PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    {
+        HCRYPTPROV prov;
+
+        CryptAcquireContextW(&prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL,
+         CRYPT_VERIFYCONTEXT);
+        InterlockedCompareExchangePointer((PVOID *)&hDefProv, (PVOID)prov,
+         NULL);
+        if (hDefProv != prov)
+            CryptReleaseContext(prov, 0);
+    }
     return hDefProv;
 }
 
