@@ -3290,8 +3290,6 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     font->name = strdupW(face->family->FamilyName);
     font->ntmFlags = face->ntmFlags;
 
-    memset(&pelf->elfLogFont, 0, sizeof(LOGFONTW));
-
     if (WineEngGetOutlineTextMetrics(font, 0, NULL))
     {
         memcpy(&pntm->ntmTm, &font->potm->otmTextMetrics, sizeof(TEXTMETRICW));
@@ -3315,17 +3313,19 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
         pntm->ntmTm.ntmSizeEM = pntm->ntmTm.tmHeight - pntm->ntmTm.tmInternalLeading;
 
         lstrcpynW(pelf->elfLogFont.lfFaceName, face->family->FamilyName, LF_FACESIZE);
-        lstrcpynW(pelf->elfFullName, face->family->FamilyName, LF_FACESIZE);
-        pelf->elfStyle[0] = '\0';
+        lstrcpynW(pelf->elfFullName, face->family->FamilyName, LF_FULLFACESIZE);
+        lstrcpynW(pelf->elfStyle, face->StyleName, LF_FACESIZE);
     }
 
     pntm->ntmTm.ntmFlags = face->ntmFlags;
     pntm->ntmTm.ntmCellHeight = pntm->ntmTm.tmHeight;
     pntm->ntmTm.ntmAvgWidth = pntm->ntmTm.tmAveCharWidth;
-    memset(&pntm->ntmFontSig, 0, sizeof(FONTSIGNATURE));
+    memcpy(&pntm->ntmFontSig, &face->fs, sizeof(FONTSIGNATURE));
 
     pelf->elfScript[0] = '\0'; /* This will get set in WineEngEnumFonts */
 
+    pelf->elfLogFont.lfEscapement = 0;
+    pelf->elfLogFont.lfOrientation = 0;
     pelf->elfLogFont.lfHeight = pntm->ntmTm.tmHeight;
     pelf->elfLogFont.lfWidth = pntm->ntmTm.tmAveCharWidth;
     pelf->elfLogFont.lfWeight = pntm->ntmTm.tmWeight;
