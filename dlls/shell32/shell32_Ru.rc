@@ -76,7 +76,7 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
+        MENUITEM "&Выбрать"		FCIDM_SHVIEW_OPEN
         MENUITEM "&Проводник",		FCIDM_SHVIEW_EXPLORE
         MENUITEM "&Открыть",		FCIDM_SHVIEW_OPEN
         MENUITEM SEPARATOR
@@ -165,13 +165,13 @@ STRINGTABLE DISCARDABLE
     IDS_DELETEITEM_CAPTION	"Подтверждение удаления файла"
     IDS_DELETEFOLDER_CAPTION	"Подтверждение удаления папки"
     IDS_DELETEITEM_TEXT		"Удалить '%1'?"
-    IDS_DELETEMULTIPLE_TEXT	"Удалить эти обьекты (%1?"
-    IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+    IDS_DELETEMULTIPLE_TEXT	"Удалить эти обьекты (%1)?"
+    IDS_OVERWRITEFILE_TEXT "Папка уже содержит файл '%1'.\n\nВы хотите заменить его?"
     IDS_OVERWRITEFILE_CAPTION	"Подтверждение замены файла"
-    IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
+    IDS_OVERWRITEFOLDER_TEXT "Эта папка уже содержит папку '%1'.\n\n"\
+	    "Если файлы в конечной папке имеют те же имена, что и файлы в выбранной\n"\
+	    "папке, они будут заменены. Вы всё ещё хотите переместить или скопировать\n"\
+	    "папку?"
 
     /* message box strings */
     IDS_RESTART_TITLE		"Перезагрузить"
