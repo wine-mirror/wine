@@ -34,7 +34,8 @@ static void test_Scan0(void)
     stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat24bppRGB, NULL, &bm);
     expect(Ok, stat);
     ok(NULL != bm, "Expected bitmap to be initialized\n");
-    GdipDisposeImage((GpImage*)bm);
+    if (stat == Ok)
+        GdipDisposeImage((GpImage*)bm);
 
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, -10, 10, PixelFormat24bppRGB, NULL, &bm);
@@ -58,7 +59,8 @@ static void test_Scan0(void)
     stat = GdipCreateBitmapFromScan0(10, 10, 12, PixelFormat24bppRGB, buff, &bm);
     expect(Ok, stat);
     ok(NULL != bm, "Expected bitmap to be initialized\n");
-    GdipDisposeImage((GpImage*)bm);
+    if (stat == Ok)
+        GdipDisposeImage((GpImage*)bm);
 
     bm = (GpBitmap*) 0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat24bppRGB, buff, &bm);
