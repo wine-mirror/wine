@@ -1191,9 +1191,9 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                     FT_UInt dummy;
 
                     if(!pFT_Get_First_Char || (pFT_Get_First_Char( ft_face, &dummy ) < 0x100))
-                        fs.fsCsb[0] |= 1;
+                        fs.fsCsb[0] |= FS_LATIN1;
                     else
-                        fs.fsCsb[0] |= 1L << 31;
+                        fs.fsCsb[0] |= FS_SYMBOL;
                 }
             }
 #ifdef HAVE_FREETYPE_FTWINFNT_H
@@ -1300,10 +1300,10 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                     switch(ft_face->charmaps[i]->encoding) {
                     case FT_ENCODING_UNICODE:
                     case FT_ENCODING_APPLE_ROMAN:
-			face->fs.fsCsb[0] |= 1;
+			face->fs.fsCsb[0] |= FS_LATIN1;
                         break;
                     case FT_ENCODING_MS_SYMBOL:
-                        face->fs.fsCsb[0] |= 1L << 31;
+                        face->fs.fsCsb[0] |= FS_SYMBOL;
                         break;
                     default:
                         break;
@@ -1311,7 +1311,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                 }
             }
 
-            if(face->fs.fsCsb[0] & ~(1L << 31))
+            if (!(face->fs.fsCsb[0] & FS_SYMBOL))
                 have_installed_roman_font = TRUE;
         } while(!FT_IS_SCALABLE(ft_face) && ++bitmap_num < ft_face->num_fixed_sizes);
 

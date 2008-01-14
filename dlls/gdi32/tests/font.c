@@ -269,21 +269,6 @@ static INT CALLBACK find_font_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DW
     return 1; /* continue enumeration */
 }
 
-#define CP1252_BIT    0x00000001
-#define CP1250_BIT    0x00000002
-#define CP1251_BIT    0x00000004
-#define CP1253_BIT    0x00000008
-#define CP1254_BIT    0x00000010
-#define CP1255_BIT    0x00000020
-#define CP1256_BIT    0x00000040
-#define CP1257_BIT    0x00000080
-#define CP1258_BIT    0x00000100
-#define CP874_BIT     0x00010000
-#define CP932_BIT     0x00020000
-#define CP936_BIT     0x00040000
-#define CP949_BIT     0x00080000
-#define CP950_BIT     0x00100000
-
 static void test_bitmap_font_metrics(void)
 {
     static const struct font_data
@@ -294,64 +279,64 @@ static void test_bitmap_font_metrics(void)
         DWORD ansi_bitfield;
     } fd[] =
     {
-        { "MS Sans Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 11, CP1252_BIT | CP1250_BIT | CP1251_BIT },
-        { "MS Sans Serif", FW_NORMAL, 16, 13, 3, 3, 0, 7, 14, CP1252_BIT | CP1250_BIT | CP1251_BIT },
-        { "MS Sans Serif", FW_NORMAL, 20, 16, 4, 4, 0, 8, 16, CP1252_BIT | CP1251_BIT },
-        { "MS Sans Serif", FW_NORMAL, 20, 16, 4, 4, 0, 8, 18, CP1250_BIT },
-        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 19, CP1252_BIT },
-        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 24, CP1250_BIT },
-        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 20, CP1251_BIT },
-        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 5, 0, 12, 24, CP1252_BIT },
-        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 6, 0, 12, 24, CP1250_BIT },
-        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 5, 0, 12, 25, CP1251_BIT },
-        { "MS Sans Serif", FW_NORMAL, 37, 29, 8, 5, 0, 16, 32, CP1252_BIT | CP1250_BIT | CP1251_BIT },
-        { "MS Serif", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8, CP1252_BIT | CP1250_BIT },
-        { "MS Serif", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8, CP1251_BIT },
-        { "MS Serif", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, CP1252_BIT | CP1250_BIT | CP1251_BIT },
-        { "MS Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 11, CP1252_BIT },
-        { "MS Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 12, CP1250_BIT | CP1251_BIT },
-        { "MS Serif", FW_NORMAL, 16, 13, 3, 3, 0, 6, 14, CP1252_BIT | CP1250_BIT },
-        { "MS Serif", FW_NORMAL, 16, 13, 3, 3, 0, 6, 16, CP1251_BIT },
-        { "MS Serif", FW_NORMAL, 19, 15, 4, 3, 0, 8, 18, CP1252_BIT | CP1250_BIT },
-        { "MS Serif", FW_NORMAL, 19, 15, 4, 3, 0, 8, 19, CP1251_BIT },
-        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 17, CP1252_BIT },
-        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 22, CP1250_BIT },
-        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 23, CP1251_BIT },
-        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 23, CP1252_BIT },
-        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 26, CP1250_BIT },
-        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 27, CP1251_BIT },
-        { "MS Serif", FW_NORMAL, 35, 27, 8, 3, 0, 16, 33, CP1252_BIT | CP1250_BIT },
-        { "MS Serif", FW_NORMAL, 35, 27, 8, 3, 0, 16, 34, CP1251_BIT },
-        { "Courier", FW_NORMAL, 13, 11, 2, 0, 0, 8, 8, CP1252_BIT | CP1250_BIT | CP1251_BIT },
-        { "Courier", FW_NORMAL, 16, 13, 3, 0, 0, 9, 9, CP1252_BIT | CP1250_BIT | CP1251_BIT },
-        { "Courier", FW_NORMAL, 20, 16, 4, 0, 0, 12, 12, CP1252_BIT | CP1250_BIT | CP1251_BIT },
-        { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 14, CP1252_BIT },
-        { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 15, CP1250_BIT | CP1251_BIT },
+        { "MS Sans Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 11, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC },
+        { "MS Sans Serif", FW_NORMAL, 16, 13, 3, 3, 0, 7, 14, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC },
+        { "MS Sans Serif", FW_NORMAL, 20, 16, 4, 4, 0, 8, 16, FS_LATIN1 | FS_CYRILLIC },
+        { "MS Sans Serif", FW_NORMAL, 20, 16, 4, 4, 0, 8, 18, FS_LATIN2 },
+        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 19, FS_LATIN1 },
+        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 24, FS_LATIN2 },
+        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 20, FS_CYRILLIC },
+        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 5, 0, 12, 24, FS_LATIN1 },
+        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 6, 0, 12, 24, FS_LATIN2 },
+        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 5, 0, 12, 25, FS_CYRILLIC },
+        { "MS Sans Serif", FW_NORMAL, 37, 29, 8, 5, 0, 16, 32, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC },
+        { "MS Serif", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8, FS_LATIN1 | FS_LATIN2 },
+        { "MS Serif", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8, FS_CYRILLIC },
+        { "MS Serif", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC },
+        { "MS Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 11, FS_LATIN1 },
+        { "MS Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 12, FS_LATIN2 | FS_CYRILLIC },
+        { "MS Serif", FW_NORMAL, 16, 13, 3, 3, 0, 6, 14, FS_LATIN1 | FS_LATIN2 },
+        { "MS Serif", FW_NORMAL, 16, 13, 3, 3, 0, 6, 16, FS_CYRILLIC },
+        { "MS Serif", FW_NORMAL, 19, 15, 4, 3, 0, 8, 18, FS_LATIN1 | FS_LATIN2 },
+        { "MS Serif", FW_NORMAL, 19, 15, 4, 3, 0, 8, 19, FS_CYRILLIC },
+        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 17, FS_LATIN1 },
+        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 22, FS_LATIN2 },
+        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 23, FS_CYRILLIC },
+        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 23, FS_LATIN1 },
+        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 26, FS_LATIN2 },
+        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 27, FS_CYRILLIC },
+        { "MS Serif", FW_NORMAL, 35, 27, 8, 3, 0, 16, 33, FS_LATIN1 | FS_LATIN2 },
+        { "MS Serif", FW_NORMAL, 35, 27, 8, 3, 0, 16, 34, FS_CYRILLIC },
+        { "Courier", FW_NORMAL, 13, 11, 2, 0, 0, 8, 8, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC },
+        { "Courier", FW_NORMAL, 16, 13, 3, 0, 0, 9, 9, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC },
+        { "Courier", FW_NORMAL, 20, 16, 4, 0, 0, 12, 12, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC },
+        { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 14, FS_LATIN1 },
+        { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 15, FS_LATIN2 | FS_CYRILLIC },
 /*
  * TODO:  the system for CP932 should be NORMAL, not BOLD.  However that would
  *        require a new system.sfd for that font
  */
-        { "System", FW_BOLD, 18, 16, 2, 0, 2, 8, 16, CP932_BIT },
-        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 2, CP1252_BIT },
-        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 8, CP1250_BIT | CP1251_BIT },
-        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 2, 4, CP932_BIT },
-        { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 3, 4, CP1252_BIT },
-        { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 2, 8, CP1250_BIT | CP1251_BIT },
-        { "Small Fonts", FW_NORMAL, 5, 4, 1, 0, 0, 3, 6, CP932_BIT },
-        { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 13, CP1252_BIT },
-        { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 8, CP1250_BIT | CP1251_BIT },
-        { "Small Fonts", FW_NORMAL, 6, 5, 1, 0, 0, 4, 8, CP932_BIT },
-        { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 7, CP1252_BIT },
-        { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 8, CP1250_BIT | CP1251_BIT },
-        { "Small Fonts", FW_NORMAL, 8, 7, 1, 0, 0, 5, 10, CP932_BIT },
-        { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8, CP1252_BIT | CP1250_BIT },
-        { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8, CP1251_BIT },
-        { "Small Fonts", FW_NORMAL, 10, 8, 2, 0, 0, 6, 12, CP932_BIT },
-        { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, CP1252_BIT | CP1250_BIT | CP1251_BIT },
-        { "Small Fonts", FW_NORMAL, 11, 9, 2, 0, 0, 7, 14, CP932_BIT },
-        { "Fixedsys", FW_NORMAL, 15, 12, 3, 3, 0, 8, 8, CP1252_BIT | CP1250_BIT },
-        { "Fixedsys", FW_NORMAL, 16, 12, 4, 3, 0, 8, 8, CP1251_BIT },
-        { "FixedSys", FW_NORMAL, 18, 16, 2, 0, 0, 8, 16, CP932_BIT }
+        { "System", FW_BOLD, 18, 16, 2, 0, 2, 8, 16, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 2, FS_LATIN1 },
+        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 8, FS_LATIN2 | FS_CYRILLIC },
+        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 2, 4, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 3, 4, FS_LATIN1 },
+        { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 2, 8, FS_LATIN2 | FS_CYRILLIC },
+        { "Small Fonts", FW_NORMAL, 5, 4, 1, 0, 0, 3, 6, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 13, FS_LATIN1 },
+        { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 8, FS_LATIN2 | FS_CYRILLIC },
+        { "Small Fonts", FW_NORMAL, 6, 5, 1, 0, 0, 4, 8, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 7, FS_LATIN1 },
+        { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 8, FS_LATIN2 | FS_CYRILLIC },
+        { "Small Fonts", FW_NORMAL, 8, 7, 1, 0, 0, 5, 10, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8, FS_LATIN1 | FS_LATIN2 },
+        { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8, FS_CYRILLIC },
+        { "Small Fonts", FW_NORMAL, 10, 8, 2, 0, 0, 6, 12, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC },
+        { "Small Fonts", FW_NORMAL, 11, 9, 2, 0, 0, 7, 14, FS_JISJAPAN },
+        { "Fixedsys", FW_NORMAL, 15, 12, 3, 3, 0, 8, 8, FS_LATIN1 | FS_LATIN2 },
+        { "Fixedsys", FW_NORMAL, 16, 12, 4, 3, 0, 8, 8, FS_CYRILLIC },
+        { "FixedSys", FW_NORMAL, 18, 16, 2, 0, 0, 8, 16, FS_JISJAPAN }
 
         /* FIXME: add "Terminal" */
     };
