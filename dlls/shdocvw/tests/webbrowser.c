@@ -1532,7 +1532,7 @@ static void test_ie_funcs(IUnknown *unk)
     SET_EXPECT(Invoke_ONFULLSCREEN);
     hres = IWebBrowser2_put_FullScreen(wb, (exvb = VARIANT_TRUE));
     ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
-    todo_wine CHECK_CALLED(Invoke_ONFULLSCREEN);
+    CHECK_CALLED(Invoke_ONFULLSCREEN);
 
     hres = IWebBrowser2_get_FullScreen(wb, &b);
     ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
@@ -1541,7 +1541,7 @@ static void test_ie_funcs(IUnknown *unk)
     SET_EXPECT(Invoke_ONFULLSCREEN);
     hres = IWebBrowser2_put_FullScreen(wb, (exvb = 100));
     ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
-    todo_wine CHECK_CALLED(Invoke_ONFULLSCREEN);
+    CHECK_CALLED(Invoke_ONFULLSCREEN);
 
     hres = IWebBrowser2_get_FullScreen(wb, &b);
     ok(hres == S_OK, "get_FullScreen failed: %08x\n", hres);
@@ -1550,7 +1550,7 @@ static void test_ie_funcs(IUnknown *unk)
     SET_EXPECT(Invoke_ONFULLSCREEN);
     hres = IWebBrowser2_put_FullScreen(wb, (exvb = VARIANT_FALSE));
     ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
-    todo_wine CHECK_CALLED(Invoke_ONFULLSCREEN);
+    CHECK_CALLED(Invoke_ONFULLSCREEN);
 
     /* Resizable */
 
