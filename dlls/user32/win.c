@@ -1519,6 +1519,11 @@ HWND WINAPI GetDesktopWindow(void)
 
         memset( &si, 0, sizeof(si) );
         si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESTDHANDLES;
+        si.hStdInput  = 0;
+        si.hStdOutput = 0;
+        si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
+
         GetSystemDirectoryW( cmdline, MAX_PATH );
         lstrcatW( cmdline, command_line );
         if (CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS,
