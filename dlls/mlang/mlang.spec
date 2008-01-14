@@ -11,4 +11,4 @@
 @ stdcall LcidToRfc1766A(long ptr long)
 @ stdcall LcidToRfc1766W(long ptr long)
 @ stub Rfc1766ToLcidA
-@ stub Rfc1766ToLcidW
+@ stdcall Rfc1766ToLcidW(ptr wstr)
