@@ -146,6 +146,13 @@ static WCHAR szElementXML2[] = {'<','E','l','e','T','e','s','t',' ','A','t','t',
 static WCHAR szAttribute[] = {'A','t','t','r',0 };
 static WCHAR szAttributeXML[] = {'A','t','t','r','=','"','"',0 };
 
+static WCHAR szCData[] = {'[','1',']','*','2','=','3',';',' ','&','g','e','e',' ','t','h','a','t','s',
+                          ' ','n','o','t',' ','r','i','g','h','t','!', 0};
+static WCHAR szCDataXML[] = {'<','!','[','C','D','A','T','A','[','[','1',']','*','2','=','3',';',' ','&',
+                             'g','e','e',' ','t','h','a','t','s',' ','n','o','t',' ','r','i','g','h','t',
+                             '!',']',']','>',0};
+static WCHAR szCDataNodeText[] = {'#','c','d','a','t','a','-','s','e','c','t','i','o','n',0 };
+
 #define expect_bstr_eq_and_free(bstr, expect) { \
     BSTR bstrExp = alloc_str_from_narrow(expect); \
     ok(lstrcmpW(bstr, bstrExp) == 0, "String differs\n"); \
@@ -1839,6 +1846,7 @@ static void test_xmlTypes(void)
     IXMLDOMElement *pElement;
     IXMLDOMAttribute *pAttrubute;
     IXMLDOMNamedNodeMap *pAttribs;
+    IXMLDOMCDATASection *pCDataSec;
     BSTR str;
     IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;   /* Used for testing Siblings */
     VARIANT v;
@@ -2017,6 +2025,58 @@ static void test_xmlTypes(void)
 
                 IXMLDOMElement_Release(pElement);
             }
+
+            /* CData Section */
+            hr = IXMLDOMDocument_createCDATASection(doc, szCData, NULL);
+            ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+            hr = IXMLDOMDocument_createCDATASection(doc, szCData, &pCDataSec);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;
+
+                hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pCDataSec, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                /* get Attribute Tests */
+                hr = IXMLDOMCDATASection_get_attributes(pCDataSec, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                pAttribs = (IXMLDOMNamedNodeMap*)0x1;
+                hr = IXMLDOMCDATASection_get_attributes(pCDataSec, &pAttribs);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok(pAttribs == NULL, "pAttribs != NULL\n");
+
+                hr = IXMLDOMCDATASection_get_nodeName(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, szCDataNodeText ), "incorrect cdata node Name\n");
+                SysFreeString(str);
+
+                hr = IXMLDOMCDATASection_get_xml(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, szCDataXML ), "incorrect cdata xml\n");
+                SysFreeString(str);
+
+                /* test lastChild */
+                pNextChild = (IXMLDOMNode*)0x1;
+                hr = IXMLDOMCDATASection_get_lastChild(pCDataSec, &pNextChild);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok(pNextChild == NULL, "pNextChild not NULL\n");
+
+                /* test get_dataType */
+                hr = IXMLDOMCDATASection_get_dataType(pCDataSec, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_get_dataType(pCDataSec, &v);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
+                VariantClear(&v);
+
+                IXMLDOMCDATASection_Release(pCDataSec);
+            }
+
+
 
             IXMLDOMElement_Release( pRoot );
         }

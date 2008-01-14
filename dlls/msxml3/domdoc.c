@@ -947,8 +947,29 @@ static HRESULT WINAPI domdoc_createCDATASection(
     BSTR data,
     IXMLDOMCDATASection** cdata )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument2( iface );
+    xmlNodePtr xmlnode;
+    xmlChar *xml_content;
+
+    TRACE("%p->(%s %p)\n", iface, debugstr_w(data), comment);
+
+    if(!cdata)
+        return E_INVALIDARG;
+
+    *cdata = NULL;
+
+    xml_content = xmlChar_from_wchar((WCHAR*)data);
+    xmlnode = xmlNewCDataBlock(get_doc( This ), xml_content, strlen( (char*)xml_content) );
+    HeapFree(GetProcessHeap(), 0, xml_content);
+
+    if(!xmlnode)
+        return E_FAIL;
+
+    xmlnode->doc = get_doc( This );
+
+    *cdata = (IXMLDOMCDATASection*)create_cdata(xmlnode);
+
+    return S_OK;
 }
 
 

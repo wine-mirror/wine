@@ -10,6 +10,7 @@ EXTRAINCL = @XML2INCL@ @XSLTINCL@
 
 C_SRCS = \
 	attribute.c \
+	cdata.c \
 	comment.c \
 	domdoc.c \
 	element.c \
