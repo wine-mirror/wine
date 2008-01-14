@@ -531,6 +531,13 @@ static void test_domdoc( void )
         r = IXMLDOMText_get_attributes( nodetext, &pAttribs);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok( pAttribs == NULL, "pAttribs not NULL\n");
+
+        /* test get_dataType */
+        r = IXMLDOMText_get_dataType(nodetext, &var);
+        ok(r == S_FALSE, "ret %08x\n", r );
+        ok( V_VT(&var) == VT_NULL, "incorrect dataType type\n");
+        VariantClear(&var);
+
         IXMLDOMText_Release( nodetext );
     }
     SysFreeString( str );
@@ -582,6 +589,12 @@ static void test_domdoc( void )
         r = IXMLDOMProcessingInstruction_get_lastChild(nodePI, &nodeChild);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok(nodeChild == NULL, "nodeChild not NULL\n");
+
+        r = IXMLDOMProcessingInstruction_get_dataType(nodePI, &var);
+        ok(r == S_FALSE, "ret %08x\n", r );
+        ok( V_VT(&var) == VT_NULL, "incorrect dataType type\n");
+        VariantClear(&var);
+
         IXMLDOMProcessingInstruction_Release(nodePI);
     }
 
@@ -1828,6 +1841,7 @@ static void test_xmlTypes(void)
     IXMLDOMNamedNodeMap *pAttribs;
     BSTR str;
     IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;   /* Used for testing Siblings */
+    VARIANT v;
 
     hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
     if( hr != S_OK )
@@ -1857,6 +1871,12 @@ static void test_xmlTypes(void)
     hr = IXMLDOMDocument_get_attributes( doc, &pAttribs);
     ok(hr == S_FALSE, "ret %08x\n", hr );
     ok( pAttribs == NULL, "pAttribs not NULL\n");
+
+    /* test get_dataType */
+    hr = IXMLDOMDocument_get_dataType(doc, &v);
+    ok(hr == S_FALSE, "ret %08x\n", hr );
+    ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
+    VariantClear(&v);
 
     hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
     ok(hr == S_OK, "ret %08x\n", hr );
@@ -1893,6 +1913,11 @@ static void test_xmlTypes(void)
                 ok( !lstrcmpW( str, szCommentXML ), "incorrect comment xml\n");
                 SysFreeString(str);
 
+                hr = IXMLDOMComment_get_dataType(pComment, &v);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
+                VariantClear(&v);
+
                 IXMLDOMComment_Release(pComment);
             }
 
@@ -1913,6 +1938,11 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok( !lstrcmpW( str, szElementXML ), "incorrect element xml\n");
                 SysFreeString(str);
+
+                hr = IXMLDOMElement_get_dataType(pElement, &v);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
+                VariantClear(&v);
 
                  /* Attribute */
                 hr = IXMLDOMDocument_createAttribute(doc, szAttribute, &pAttrubute);
@@ -1970,6 +2000,11 @@ static void test_xmlTypes(void)
                     ok(hr == S_OK, "ret %08x\n", hr );
                     ok( !lstrcmpW( str, szAttributeXML ), "incorrect attribute xml\n");
                     SysFreeString(str);
+
+                    hr = IXMLDOMAttribute_get_dataType(pAttrubute, &v);
+                    ok(hr == S_FALSE, "ret %08x\n", hr );
+                    ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
+                    VariantClear(&v);
 
                     IXMLDOMAttribute_Release(pAttrubute);
 
