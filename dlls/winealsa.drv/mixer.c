@@ -985,6 +985,12 @@ static DWORD MIX_GetControlDetails(UINT wDevID, LPMIXERCONTROLDETAILS mctrld, DW
                     break;
                 }
 
+	    if (chn > SND_MIXER_SCHN_LAST)
+	    {
+		TRACE("can't find active channel\n");
+		return MMSYSERR_INVALPARAM;  /* fixme: what's right error? */
+	    }
+
             mcdb->fValue = !ival;
             TRACE("=> %s\n", mcdb->fValue ? "on" : "off");
             return MMSYSERR_NOERROR;
