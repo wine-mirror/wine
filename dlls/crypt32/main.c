@@ -47,7 +47,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
             crypt_sip_free();
             root_store_free();
             default_chain_engine_free();
-            if (hDefProv) CryptReleaseContext(hDefProv, 0);
+            /* Don't release the default provider on process shutdown, there's
+             * no guarantee the provider dll hasn't already been unloaded.
+             */
+            if (hDefProv && !pvReserved) CryptReleaseContext(hDefProv, 0);
             break;
     }
     return TRUE;
