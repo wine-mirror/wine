@@ -459,15 +459,20 @@ static HRESULT WINAPI domelem_getAttribute(
     domelem *This = impl_from_IXMLDOMElement( iface );
     xmlNodePtr element;
     xmlChar *xml_name, *xml_value;
-    HRESULT hr = E_FAIL;
+    HRESULT hr = S_FALSE;
 
     TRACE("(%p)->(%s,%p)\n", This, debugstr_w(name), value);
+
+    if(!value || !name)
+        return E_INVALIDARG;
 
     element = get_element( This );
     if ( !element )
         return E_FAIL;
 
-    VariantInit(value);
+    V_BSTR(value) = NULL;
+    V_VT(value) = VT_NULL;
+
     xml_name = xmlChar_from_wchar( name );
     xml_value = xmlGetNsProp(element, xml_name, NULL);
     HeapFree(GetProcessHeap(), 0, xml_name);

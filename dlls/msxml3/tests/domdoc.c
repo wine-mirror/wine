@@ -697,8 +697,8 @@ static void test_domnode( void )
         V_VT(&var) = VT_I4;
         V_I4(&var) = 0x1234;
         r = IXMLDOMElement_getAttribute( element, str, &var );
-        ok( r == E_FAIL, "getAttribute ret %08x\n", r );
-        ok( V_VT(&var) == VT_EMPTY, "vt = %x\n", V_VT(&var));
+        ok( r == S_FALSE, "getAttribute ret %08x\n", r );
+        ok( V_VT(&var) == VT_NULL, "vt = %x\n", V_VT(&var));
         VariantClear(&var);
         SysFreeString( str );
 
@@ -710,6 +710,13 @@ static void test_domnode( void )
         ok( V_VT(&var) == VT_BSTR, "vt = %x\n", V_VT(&var));
         ok( !lstrcmpW(V_BSTR(&var), szstr1), "wrong attr value\n");
         VariantClear( &var );
+
+        r = IXMLDOMElement_getAttribute( element, NULL, &var );
+        ok( r == E_INVALIDARG, "getAttribute ret %08x\n", r );
+
+        r = IXMLDOMElement_getAttribute( element, str, NULL );
+        ok( r == E_INVALIDARG, "getAttribute ret %08x\n", r );
+
         SysFreeString( str );
 
         r = IXMLDOMElement_get_attributes( element, &map );
