@@ -1562,12 +1562,12 @@ static void test_ie_funcs(IUnknown *unk)
     SET_EXPECT(Invoke_WINDOWSETRESIZABLE);
     hres = IWebBrowser2_put_Resizable(wb, (exvb = VARIANT_TRUE));
     ok(hres == S_OK, "put_Resizable failed: %08x\n", hres);
-    todo_wine CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
+    CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
 
     SET_EXPECT(Invoke_WINDOWSETRESIZABLE);
     hres = IWebBrowser2_put_Resizable(wb, (exvb = VARIANT_FALSE));
     ok(hres == S_OK, "put_Resizable failed: %08x\n", hres);
-    todo_wine CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
+    CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
 
     hres = IWebBrowser2_get_Resizable(wb, &b);
     ok(hres == E_NOTIMPL, "get_Resizable failed: %08x\n", hres);
