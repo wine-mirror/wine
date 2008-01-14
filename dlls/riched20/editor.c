@@ -2393,6 +2393,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         pt.x = 0;
         pt.y = editor->pBuffer->pLast->member.para.nYPos;
     }
+    pt.x += editor->selofs;
     if (wParam >= 0x40000) {
         *(POINTL *)wParam = pt;
     }
