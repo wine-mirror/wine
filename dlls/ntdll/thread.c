@@ -886,6 +886,10 @@ static inline void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
     {
         to->FloatSave = from->FloatSave;
     }
+    if (flags & CONTEXT_EXTENDED_REGISTERS)
+    {
+        memcpy( to->ExtendedRegisters, from->ExtendedRegisters, sizeof(to->ExtendedRegisters) );
+    }
 #elif defined(__x86_64__)
     flags &= ~CONTEXT_AMD64;  /* get rid of CPU id */
     if (flags & CONTEXT_CONTROL)
