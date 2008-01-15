@@ -304,6 +304,8 @@ typedef ucontext_t SIGCONTEXT;
 #define ESP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->__ss.__esp))
 #define TRAP_sig(context)    ((context)->uc_mcontext->__es.__trapno)
 #define ERROR_sig(context)   ((context)->uc_mcontext->__es.__err)
+#define FPU_sig(context)     NULL
+#define FPUX_sig(context)    ((XMM_SAVE_AREA32 *)&(context)->uc_mcontext->__fs.__fpu_fcw)
 #else
 #define EAX_sig(context)     ((context)->uc_mcontext->ss.eax)
 #define EBX_sig(context)     ((context)->uc_mcontext->ss.ebx)
@@ -323,10 +325,9 @@ typedef ucontext_t SIGCONTEXT;
 #define ESP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->ss.esp))
 #define TRAP_sig(context)    ((context)->uc_mcontext->es.trapno)
 #define ERROR_sig(context)   ((context)->uc_mcontext->es.err)
+#define FPU_sig(context)     NULL
+#define FPUX_sig(context)    ((XMM_SAVE_AREA32 *)&(context)->uc_mcontext->fs.fpu_fcw)
 #endif
-
-#define FPU_sig(context)     NULL  /* FIXME */
-#define FPUX_sig(context)    NULL  /* FIXME */
 
 #endif /* __APPLE__ */
 
@@ -703,6 +704,52 @@ static inline void restore_fpux( const CONTEXT *context )
 
 
 /***********************************************************************
+ *           fpux_to_fpu
+ *
+ * Build a standard FPU context from an extended one.
+ */
+static void fpux_to_fpu( FLOATING_SAVE_AREA *fpu, const XMM_SAVE_AREA32 *fpux )
+{
+    unsigned int i, tag, stack_top;
+
+    fpu->ControlWord   = fpux->ControlWord | 0xffff0000;
+    fpu->StatusWord    = fpux->StatusWord | 0xffff0000;
+    fpu->ErrorOffset   = fpux->ErrorOffset;
+    fpu->ErrorSelector = fpux->ErrorSelector | (fpux->ErrorOpcode << 16);
+    fpu->DataOffset    = fpux->DataOffset;
+    fpu->DataSelector  = fpux->DataSelector;
+    fpu->Cr0NpxState   = fpux->StatusWord | 0xffff0000;
+
+    stack_top = (fpux->StatusWord >> 11) & 7;
+    fpu->TagWord = 0xffff0000;
+    for (i = 0; i < 8; i++)
+    {
+        memcpy( &fpu->RegisterArea[10 * i], &fpux->FloatRegisters[i], 10 );
+        if (!(fpux->TagWord & (1 << i))) tag = 3;  /* empty */
+        else
+        {
+            const M128A *reg = &fpux->FloatRegisters[(i - stack_top) & 7];
+            if ((reg->High & 0x7fff) == 0x7fff)  /* exponent all ones */
+            {
+                tag = 2;  /* special */
+            }
+            else if (!(reg->High & 0x7fff))  /* exponent all zeroes */
+            {
+                if (reg->Low) tag = 2;  /* special */
+                else tag = 1;  /* zero */
+            }
+            else
+            {
+                if (reg->Low >> 63) tag = 0;  /* valid */
+                else tag = 2;  /* special */
+            }
+        }
+        fpu->TagWord |= tag << (2 * i);
+    }
+}
+
+
+/***********************************************************************
  *           save_context
  *
  * Build a context structure from the signal info.
@@ -746,10 +793,10 @@ static inline void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
     if (fpux)
     {
         save_fpux( context );
-        context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
+        context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
         memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
         fpux_support = 1;
-        /* FIXME: convert fpux to fpu */
+        if (!fpu) fpux_to_fpu( &context->FloatSave, fpux );
     }
     if (!fpu && !fpux) save_fpu( context );
 }
