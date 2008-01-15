@@ -66,7 +66,7 @@ static BOOL PSAPI_ModuleIteratorInit(MODULE_ITERATOR *iter, HANDLE hProcess)
     }
 
     /* Read address of LdrData from PEB */
-    if (!ReadProcessMemory(hProcess, &((PPEB)pbi.PebBaseAddress)->LdrData,
+    if (!ReadProcessMemory(hProcess, &pbi.PebBaseAddress->LdrData,
                            &pLdrData, sizeof(pLdrData), NULL))
         return FALSE;
 
