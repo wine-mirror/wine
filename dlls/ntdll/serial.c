@@ -264,7 +264,7 @@ static NTSTATUS get_line_control(int fd, SERIAL_LINE_CONTROL* slc)
     case CS6:   slc->WordLength = 6;    break;
     case CS7:   slc->WordLength = 7;	break;
     case CS8:	slc->WordLength = 8;	break;
-    default: ERR("unknown size %x\n", port.c_cflag & CSIZE);
+    default: ERR("unknown size %x\n", (UINT)(port.c_cflag & CSIZE));
     }
 
     if (port.c_cflag & CSTOPB)
