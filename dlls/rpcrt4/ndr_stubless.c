@@ -902,6 +902,10 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
 
             TRACE("\tbase type: 0x%02x\n", *pTypeFormat);
 
+            /* make a note of the address of the return value parameter for later */
+            if (pParam->param_attributes.IsReturn)
+                retval_ptr = (LONG_PTR *)pArg;
+
             switch (phase)
             {
                 case STUBLESS_MARSHAL:
@@ -931,11 +935,6 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                         else
                             call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
                     }
-
-                    /* make a note of the address of the return value parameter for later */
-                    if (pParam->param_attributes.IsReturn)
-                        retval_ptr = (LONG_PTR *)pArg;
-
                     break;
                 case STUBLESS_CALCSIZE:
                     if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
@@ -1082,6 +1081,9 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
 
             TRACE("\tbase type 0x%02x\n", *pTypeFormat);
 
+            if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
+                retval_ptr = (LONG_PTR *)pArg;
+
             switch (phase)
             {
                 case STUBLESS_MARSHAL:
@@ -1095,9 +1097,7 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
                 case STUBLESS_UNMARSHAL:
                     if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
                         call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
-                    else if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                        retval_ptr = (LONG_PTR *)pArg;
-                        break;
+                    break;
                 case STUBLESS_CALCSIZE:
                     if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
                         call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
@@ -1118,6 +1118,9 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
                 &pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset];
 
             TRACE("\tcomplex type 0x%02x\n", *pTypeFormat);
+
+            if (pParam->param_direction == RPC_FC_RETURN_PARAM)
+                retval_ptr = (LONG_PTR *)pArg;
 
             switch (phase)
             {
@@ -1150,8 +1153,6 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
                     if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                         pParam->param_direction == RPC_FC_IN_PARAM)
                         call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
-                    else if (pParam->param_direction == RPC_FC_RETURN_PARAM)
-                        retval_ptr = (LONG_PTR *)pArg;
                     break;
                 case STUBLESS_CALCSIZE:
                     if (pParam->param_direction == RPC_FC_OUT_PARAM ||
