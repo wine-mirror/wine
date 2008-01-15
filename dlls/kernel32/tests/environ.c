@@ -234,7 +234,7 @@ static void test_ExpandEnvironmentStringsA(void)
     /* v5.1.2600.2945 (XP SP2) returns len + 2 here! */
     ok(ret_size == strlen(value)+1 || ret_size == strlen(value)+2 || ret_size == 0 /* Win95 */,
        "ExpandEnvironmentStrings returned %d instead of %d\n",
-       ret_size, strlen(value)+1);
+       ret_size, lstrlenA(value)+1);
     if (ret_size == strlen(value)+2)
         trace("ExpandEnvironmentStrings is buggy: it returned len + 2\n");
 
@@ -243,27 +243,27 @@ static void test_ExpandEnvironmentStringsA(void)
     /* v5.1.2600.2945 (XP SP2) returns len + 2 here! */
     ok(ret_size == strlen(value)+1 || ret_size == strlen(value)+2,
        "ExpandEnvironmentStrings returned %d instead of %d\n",
-       ret_size, strlen(value)+1);
+       ret_size, lstrlenA(value)+1);
 
     /* Try with a buffer that's too small */
     ret_size = ExpandEnvironmentStringsA(buf, buf1, 12);
     /* v5.1.2600.2945 (XP SP2) returns len + 2 here! */
     ok(ret_size == strlen(value)+1 || ret_size == strlen(value)+2,
        "ExpandEnvironmentStrings returned %d instead of %d\n",
-       ret_size, strlen(value)+1);
+       ret_size, lstrlenA(value)+1);
 
     /* Try with a buffer of just the right size */
     /* v5.1.2600.2945 (XP SP2) needs and returns len + 2 here! */
     ret_size = ExpandEnvironmentStringsA(buf, buf1, ret_size);
     ok(ret_size == strlen(value)+1 || ret_size == strlen(value)+2,
        "ExpandEnvironmentStrings returned %d instead of %d\n",
-       ret_size, strlen(value)+1);
+       ret_size, lstrlenA(value)+1);
     ok(!strcmp(buf1, value), "ExpandEnvironmentStrings returned [%s]\n", buf1);
 
     /* Try with an unset environment variable */
     strcpy(buf, not_an_env_var);
     ret_size = ExpandEnvironmentStringsA(buf, buf1, sizeof(buf1));
-    ok(ret_size == strlen(not_an_env_var)+1, "ExpandEnvironmentStrings returned %d instead of %d\n", ret_size, strlen(value)+1);
+    ok(ret_size == strlen(not_an_env_var)+1, "ExpandEnvironmentStrings returned %d instead of %d\n", ret_size, lstrlenA(value)+1);
     ok(!strcmp(buf1, not_an_env_var), "ExpandEnvironmentStrings returned [%s]\n", buf1);
 
     /* test a large destination size */
