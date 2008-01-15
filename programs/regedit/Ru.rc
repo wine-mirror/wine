@@ -127,7 +127,7 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_EDIT_MODIFY          "Modifies the value's data"
+    ID_EDIT_MODIFY          "Изменяет значение параметра"
     ID_EDIT_NEW_KEY         "Добавляет новый ключ"
     ID_EDIT_NEW_STRINGVALUE "Добавляет новое строковое значение"
     ID_EDIT_NEW_BINARYVALUE "Добавляет новое бинарное значение"
