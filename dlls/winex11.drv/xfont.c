@@ -3305,9 +3305,18 @@ BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
     NEWTEXTMETRICEXW	tm;
     fontResource*	pfr = fontList;
     BOOL	  	b, bRet = 0;
+    LOGFONTW lfW;
 
     /* don't enumerate x11 fonts if we're using client side fonts */
     if (physDev->has_gdi_font) return FALSE;
+
+    if (!plf)
+    {
+        lfW.lfCharSet = DEFAULT_CHARSET;
+        lfW.lfPitchAndFamily = 0;
+        lfW.lfFaceName[0] = 0;
+        plf = &lfW;
+    }
 
     if( plf->lfFaceName[0] )
     {

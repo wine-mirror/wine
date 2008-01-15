@@ -692,7 +692,8 @@ static INT CALLBACK FONT_EnumInstance16( const LOGFONTW *plf, const TEXTMETRICW 
     INT ret = 1;
     DC *dc;
 
-    if( pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
+    if (!pfe->lpLogFontParam ||
+        pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
         pfe->lpLogFontParam->lfCharSet == plf->lfCharSet )
     {
         WORD args[7];
@@ -740,7 +741,8 @@ static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *p
     DC *dc;
 
     /* lfCharSet is at the same offset in both LOGFONTA and LOGFONTW */
-    if((pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
+    if ((!pfe->lpLogFontParam ||
+        pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
         pfe->lpLogFontParam->lfCharSet == plf->lfCharSet) &&
        (!(fType & RASTER_FONTTYPE) || GetDeviceCaps(pfe->hdc, TEXTCAPS) & TC_RA_ABLE) )
     {
@@ -785,11 +787,17 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
     DC* 	dc = DC_GetDCPtr( HDC_32(hDC) );
     NEWTEXTMETRICEX16 tm16;
     ENUMLOGFONTEX16 lf16;
-    LOGFONTW lfW;
+    LOGFONTW lfW, *plfW;
     BOOL enum_gdi_fonts;
 
     if (!dc) return 0;
-    FONT_LogFont16ToW(plf, &lfW);
+
+    if (plf)
+    {
+        FONT_LogFont16ToW(plf, &lfW);
+        plfW = &lfW;
+    }
+    else plfW = NULL;
 
     fe16.hdc = HDC_32(hDC);
     fe16.dc = dc;
@@ -812,10 +820,10 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
     }
 
     if (enum_gdi_fonts)
-        ret = WineEngEnumFonts( &lfW, FONT_EnumInstance16, (LPARAM)&fe16 );
+        ret = WineEngEnumFonts( plfW, FONT_EnumInstance16, (LPARAM)&fe16 );
     fe16.dwFlags &= ~ENUM_CALLED;
     if (ret && dc->funcs->pEnumDeviceFonts) {
-	ret2 = dc->funcs->pEnumDeviceFonts( dc->physDev, &lfW, FONT_EnumInstance16, (LPARAM)&fe16 );
+	ret2 = dc->funcs->pEnumDeviceFonts( dc->physDev, plfW, FONT_EnumInstance16, (LPARAM)&fe16 );
 	if(fe16.dwFlags & ENUM_CALLED) /* update ret iff a font gets enumed */
 	    ret = ret2;
     }
@@ -888,10 +896,16 @@ INT WINAPI EnumFontFamiliesExA( HDC hDC, LPLOGFONTA plf,
                                     FONTENUMPROCA efproc,
                                     LPARAM lParam, DWORD dwFlags)
 {
-    LOGFONTW lfW;
-    FONT_LogFontAToW( plf, &lfW );
+    LOGFONTW lfW, *plfW;
 
-    return FONT_EnumFontFamiliesEx( hDC, &lfW, (FONTENUMPROCW)efproc, lParam, 0);
+    if (plf)
+    {
+        FONT_LogFontAToW( plf, &lfW );
+        plfW = &lfW;
+    }
+    else plfW = NULL;
+
+    return FONT_EnumFontFamiliesEx( hDC, plfW, (FONTENUMPROCW)efproc, lParam, 0);
 }
 
 /***********************************************************************
@@ -900,17 +914,19 @@ INT WINAPI EnumFontFamiliesExA( HDC hDC, LPLOGFONTA plf,
 INT16 WINAPI EnumFontFamilies16( HDC16 hDC, LPCSTR lpFamily,
                                  FONTENUMPROC16 efproc, LPARAM lpData )
 {
-    LOGFONT16	lf;
+    LOGFONT16 lf, *plf;
 
-    lf.lfCharSet = DEFAULT_CHARSET;
     if (lpFamily)
     {
         if (!*lpFamily) return 1;
         lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
+        lf.lfCharSet = DEFAULT_CHARSET;
+        lf.lfPitchAndFamily = 0;
+        plf = &lf;
     }
-    else lf.lfFaceName[0] = '\0';
+    else plf = NULL;
 
-    return EnumFontFamiliesEx16( hDC, &lf, efproc, lpData, 0 );
+    return EnumFontFamiliesEx16( hDC, plf, efproc, lpData, 0 );
 }
 
 /***********************************************************************
@@ -919,17 +935,19 @@ INT16 WINAPI EnumFontFamilies16( HDC16 hDC, LPCSTR lpFamily,
 INT WINAPI EnumFontFamiliesA( HDC hDC, LPCSTR lpFamily,
                                   FONTENUMPROCA efproc, LPARAM lpData )
 {
-    LOGFONTA	lf;
+    LOGFONTA lf, *plf;
 
-    lf.lfCharSet = DEFAULT_CHARSET;
     if (lpFamily)
     {
         if (!*lpFamily) return 1;
         lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
+        lf.lfCharSet = DEFAULT_CHARSET;
+        lf.lfPitchAndFamily = 0;
+        plf = &lf;
     }
-    else lf.lfFaceName[0] = lf.lfFaceName[1] = '\0';
+    else plf = NULL;
 
-    return EnumFontFamiliesExA( hDC, &lf, efproc, lpData, 0 );
+    return EnumFontFamiliesExA( hDC, plf, efproc, lpData, 0 );
 }
 
 /***********************************************************************
@@ -938,17 +956,19 @@ INT WINAPI EnumFontFamiliesA( HDC hDC, LPCSTR lpFamily,
 INT WINAPI EnumFontFamiliesW( HDC hDC, LPCWSTR lpFamily,
                                   FONTENUMPROCW efproc, LPARAM lpData )
 {
-    LOGFONTW  lf;
+    LOGFONTW lf, *plf;
 
-    lf.lfCharSet = DEFAULT_CHARSET;
     if (lpFamily)
     {
         if (!*lpFamily) return 1;
         lstrcpynW( lf.lfFaceName, lpFamily, LF_FACESIZE );
+        lf.lfCharSet = DEFAULT_CHARSET;
+        lf.lfPitchAndFamily = 0;
+        plf = &lf;
     }
-    else lf.lfFaceName[0] = 0;
+    else plf = NULL;
 
-    return EnumFontFamiliesExW( hDC, &lf, efproc, lpData, 0 );
+    return EnumFontFamiliesExW( hDC, plf, efproc, lpData, 0 );
 }
 
 /***********************************************************************

@@ -1287,6 +1287,18 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
         ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
         ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
         ok(russian_charset > 0, "NULL family should enumerate RUSSIAN_CHARSET\n");
+
+        efd.total = 0;
+        SetLastError(0xdeadbeef);
+        ret = EnumFontFamiliesEx(hdc, NULL, arial_enum_proc, (LPARAM)&efd, 0);
+        ok(ret, "EnumFontFamiliesEx error %u\n", GetLastError());
+        get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
+        trace("enumerated ansi %d, symbol %d, russian %d fonts for NULL\n",
+              ansi_charset, symbol_charset, russian_charset);
+        ok(efd.total > 0, "no fonts enumerated: NULL\n");
+        ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
+        ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
+        ok(russian_charset > 0, "NULL family should enumerate RUSSIAN_CHARSET\n");
     }
 
     efd.total = 0;

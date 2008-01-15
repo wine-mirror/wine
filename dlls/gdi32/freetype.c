@@ -3371,6 +3371,14 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
     LOGFONTW lf;
     int i;
 
+    if (!plf)
+    {
+        lf.lfCharSet = DEFAULT_CHARSET;
+        lf.lfPitchAndFamily = 0;
+        lf.lfFaceName[0] = 0;
+        plf = &lf;
+    }
+
     TRACE("facename = %s charset %d\n", debugstr_w(plf->lfFaceName), plf->lfCharSet);
 
     if(plf->lfFaceName[0]) {
