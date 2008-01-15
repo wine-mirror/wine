@@ -68,6 +68,33 @@
 
 #undef ERR  /* Solaris needs to define this */
 
+/* not defined for x86, so copy the x86_64 definition */
+typedef struct DECLSPEC_ALIGN(16) _M128A
+{
+    ULONGLONG Low;
+    LONGLONG High;
+} M128A;
+
+typedef struct
+{
+    WORD ControlWord;
+    WORD StatusWord;
+    BYTE TagWord;
+    BYTE Reserved1;
+    WORD ErrorOpcode;
+    DWORD ErrorOffset;
+    WORD ErrorSelector;
+    WORD Reserved2;
+    DWORD DataOffset;
+    WORD DataSelector;
+    WORD Reserved3;
+    DWORD MxCsr;
+    DWORD MxCsr_Mask;
+    M128A FloatRegisters[8];
+    M128A XmmRegisters[16];
+    BYTE Reserved4[96];
+} XMM_SAVE_AREA32;
+
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -98,6 +125,7 @@ typedef ucontext_t SIGCONTEXT;
 #define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
 
 #define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->uc_mcontext.fpregs))
+#define FPUX_sig(context)    ((context)->uc_mcontext.fpregs->status >> 16 ? NULL : (XMM_SAVE_AREA32 *)(FPU_sig(context) + 1))
 
 #define VM86_EAX 0 /* the %eax value while vm86_enter is executing */
 
@@ -165,6 +193,9 @@ typedef struct trapframe SIGCONTEXT;
 #define EIP_sig(context)     (*((unsigned long*)&(context)->tf_eip))
 #define ESP_sig(context)     (*((unsigned long*)&(context)->tf_esp))
 
+#define FPU_sig(context)     NULL  /* FIXME */
+#define FPUX_sig(context)    NULL  /* FIXME */
+
 #endif /* bsdi */
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
@@ -192,6 +223,9 @@ typedef struct sigcontext SIGCONTEXT;
 
 #define EIP_sig(context)     ((context)->sc_eip)
 #define ESP_sig(context)     ((context)->sc_esp)
+
+#define FPU_sig(context)     NULL  /* FIXME */
+#define FPUX_sig(context)    NULL  /* FIXME */
 
 #endif  /* *BSD */
 
@@ -239,6 +273,9 @@ typedef struct ucontext SIGCONTEXT;
 #ifdef TRAPNO
 #define TRAP_sig(context)     ((context)->uc_mcontext.gregs[TRAPNO])
 #endif
+
+#define FPU_sig(context)     NULL  /* FIXME */
+#define FPUX_sig(context)    NULL  /* FIXME */
 
 #endif  /* svr4 || SCO_DS */
 
@@ -288,6 +325,9 @@ typedef ucontext_t SIGCONTEXT;
 #define ERROR_sig(context)   ((context)->uc_mcontext->es.err)
 #endif
 
+#define FPU_sig(context)     NULL  /* FIXME */
+#define FPUX_sig(context)    NULL  /* FIXME */
+
 #endif /* __APPLE__ */
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
@@ -298,6 +338,8 @@ static size_t signal_stack_mask;
 static size_t signal_stack_size;
 
 static wine_signal_handler handlers[256];
+
+static int fpux_support;  /* whether the CPU support extended fpu context */
 
 extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( const CONTEXT *context );
 
@@ -606,6 +648,25 @@ static inline void save_fpu( CONTEXT *context )
 
 
 /***********************************************************************
+ *           save_fpux
+ *
+ * Save the thread FPU extended context.
+ */
+static inline void save_fpux( CONTEXT *context )
+{
+#ifdef __GNUC__
+    /* we have to enforce alignment by hand */
+    char buffer[sizeof(XMM_SAVE_AREA32) + 16];
+    XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
+
+    __asm__ __volatile__( "fxsave %0" : "=m" (*state) );
+    context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
+    memcpy( context->ExtendedRegisters, state, sizeof(*state) );
+#endif
+}
+
+
+/***********************************************************************
  *           restore_fpu
  *
  * Restore the FPU context to a sigcontext.
@@ -622,6 +683,26 @@ static inline void restore_fpu( const CONTEXT *context )
 
 
 /***********************************************************************
+ *           restore_fpux
+ *
+ * Restore the FPU extended context to a sigcontext.
+ */
+static inline void restore_fpux( const CONTEXT *context )
+{
+#ifdef __GNUC__
+    /* we have to enforce alignment by hand */
+    char buffer[sizeof(XMM_SAVE_AREA32) + 16];
+    XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
+
+    memcpy( state, context->ExtendedRegisters, sizeof(*state) );
+    /* reset the current interrupt status */
+    state->StatusWord &= state->ControlWord | 0xff80;
+    __asm__ __volatile__( "fxrstor %0" : : "m" (*state) );
+#endif
+}
+
+
+/***********************************************************************
  *           save_context
  *
  * Build a context structure from the signal info.
@@ -629,6 +710,8 @@ static inline void restore_fpu( const CONTEXT *context )
 static inline void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext, WORD fs, WORD gs )
 {
     struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
+    FLOATING_SAVE_AREA *fpu = FPU_sig(sigcontext);
+    XMM_SAVE_AREA32 *fpux = FPUX_sig(sigcontext);
 
     memset(context, 0, sizeof(*context));
     context->ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS;
@@ -655,17 +738,20 @@ static inline void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
     context->Dr6          = regs->dr6;
     context->Dr7          = regs->dr7;
 
-#ifdef FPU_sig
-    if (FPU_sig(sigcontext))
+    if (fpu)
     {
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
-        context->FloatSave = *FPU_sig(sigcontext);
+        context->FloatSave = *fpu;
     }
-    else
-#endif
+    if (fpux)
     {
-        save_fpu( context );
+        save_fpux( context );
+        context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
+        memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
+        fpux_support = 1;
+        /* FIXME: convert fpux to fpu */
     }
+    if (!fpu && !fpux) save_fpu( context );
 }
 
 
@@ -677,6 +763,8 @@ static inline void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
 static inline void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 {
     struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
+    FLOATING_SAVE_AREA *fpu = FPU_sig(sigcontext);
+    XMM_SAVE_AREA32 *fpux = FPUX_sig(sigcontext);
 
     regs->dr0 = context->Dr0;
     regs->dr1 = context->Dr1;
@@ -709,16 +797,9 @@ static inline void restore_context( const CONTEXT *context, SIGCONTEXT *sigconte
     wine_set_fs( context->SegFs );
 #endif
 
-#ifdef FPU_sig
-    if (FPU_sig(sigcontext))
-    {
-        *FPU_sig(sigcontext) = context->FloatSave;
-    }
-    else
-#endif
-    {
-        restore_fpu( context );
-    }
+    if (fpu) *fpu = context->FloatSave;
+    if (fpux) memcpy( fpux, context->ExtendedRegisters, sizeof(*fpux) );
+    if (!fpu && !fpux) restore_fpu( context );
 }
 
 
@@ -730,7 +811,8 @@ static inline void restore_context( const CONTEXT *context, SIGCONTEXT *sigconte
 void WINAPI __regs_get_cpu_context( CONTEXT *context, CONTEXT *regs )
 {
     *context = *regs;
-    save_fpu( context );
+    if (fpux_support) save_fpux( context );
+    else save_fpu( context );
 }
 DEFINE_REGS_ENTRYPOINT( get_cpu_context, 4, 4 )
 
@@ -744,7 +826,8 @@ void set_cpu_context( const CONTEXT *context )
 {
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
 
-    if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
+    if (flags & CONTEXT_EXTENDED_REGISTERS) restore_fpux( context );
+    else if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
 
     if (flags & CONTEXT_DEBUG_REGISTERS)
     {
