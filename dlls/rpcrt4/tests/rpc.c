@@ -374,6 +374,16 @@ static void test_towers(void)
 
     I_RpcFree(address);
     I_RpcFree(tower);
+
+    /* test the behaviour for np with no address */
+    ret = TowerConstruct(&mapi_if_id, &ndr_syntax, "ncacn_np", "\\pipe\\test", NULL, &tower);
+    ok(ret == RPC_S_OK, "TowerConstruct failed with error %ld\n", ret);
+    ret = TowerExplode(tower, NULL, NULL, NULL, NULL, &address);
+    ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
+    ok(!strcmp(address, ""), "address was \"%s\" instead of \"\"\n", address);
+
+    I_RpcFree(address);
+    I_RpcFree(tower);
 }
 
 static void test_I_RpcMapWin32Status(void)
