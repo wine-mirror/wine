@@ -893,11 +893,11 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
 
     TRACE("format: %d bits - %d x %d\n", capBox->bitDepth, capBox->width, capBox->height);
 
-    return (Capture*) capBox;
+    return capBox;
 
 error:
     if (capBox)
-        qcap_driver_destroy( (Capture*) capBox );
+        qcap_driver_destroy( capBox );
 
     return NULL;
 }

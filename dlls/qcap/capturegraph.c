@@ -165,7 +165,7 @@ fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface)
         This->lpVtbl = NULL;
         This->lpVtbl2 = NULL;
         if (This->mygraph != NULL)
-            IGraphBuilder_Release((IGraphBuilder *)This->mygraph);
+            IGraphBuilder_Release(This->mygraph);
         CoTaskMemFree(This);
         ObjectRefCount(FALSE);
     }
@@ -191,7 +191,7 @@ fnCaptureGraphBuilder2_SetFilterGraph(ICaptureGraphBuilder2 * iface,
         return E_POINTER;
 
     This->mygraph = pfg;
-    IGraphBuilder_AddRef((IGraphBuilder *)This->mygraph);
+    IGraphBuilder_AddRef(This->mygraph);
     if (SUCCEEDED(IUnknown_QueryInterface(This->mygraph,
                                           &IID_IMediaEvent, (LPVOID *)&pmev)))
     {
@@ -219,7 +219,7 @@ fnCaptureGraphBuilder2_GetFilterGraph(ICaptureGraphBuilder2 * iface,
         return E_UNEXPECTED;
     }
 
-    IGraphBuilder_AddRef((IGraphBuilder *)This->mygraph);
+    IGraphBuilder_AddRef(This->mygraph);
    
     TRACE("(%p) return filtergraph %p\n", iface, *pfg);
     return S_OK;
