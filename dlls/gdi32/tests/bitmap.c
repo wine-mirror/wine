@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winerror.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmsystem.h"
@@ -965,6 +966,23 @@ static void test_bitmap(void)
 
     hdc = CreateCompatibleDC(0);
     assert(hdc != 0);
+
+    SetLastError(0xdeadbeef);
+    hbmp = CreateBitmap(0x7ffffff, 1, 1, 1, NULL);
+    ok(hbmp != 0, "CreateBitmap should not fail\n");
+    DeleteObject(hbmp);
+
+    SetLastError(0xdeadbeef);
+    hbmp = CreateBitmap(0x7ffffff, 9, 1, 1, NULL);
+    ok(!hbmp, "CreateBitmap should fail\n");
+    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
+       "expected ERROR_NOT_ENOUGH_MEMORY, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hbmp = CreateBitmap(0x7ffffff + 1, 1, 1, 1, NULL);
+    ok(!hbmp, "CreateBitmap should fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     hbmp = CreateBitmap(15, 15, 1, 1, NULL);
     assert(hbmp != NULL);

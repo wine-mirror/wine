@@ -136,79 +136,71 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 
     TRACE("(%p,%d,%d) =\n", hdc, width, height);
 
-    if ((width >= 0x10000) || (height >= 0x10000))
-    {
-        FIXME("got bad width %d or height %d, please look for reason\n",
-              width, height);
-    }
-    else
-    {
-        if (!(dc = DC_GetDCPtr(hdc))) return 0;
+    if (!(dc = DC_GetDCPtr(hdc))) return 0;
 
-        if (GDIMAGIC( dc->header.wMagic ) != MEMORY_DC_MAGIC)
+    if (GDIMAGIC( dc->header.wMagic ) != MEMORY_DC_MAGIC)
+    {
+        hbmpRet = CreateBitmap(width, height,
+                               GetDeviceCaps(hdc, PLANES),
+                               GetDeviceCaps(hdc, BITSPIXEL),
+                               NULL);
+    }
+    else  /* Memory DC */
+    {
+        BITMAPOBJ *bmp = GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
+
+        if (!bmp->dib)
         {
+            /* A device-dependent bitmap is selected in the DC */
             hbmpRet = CreateBitmap(width, height,
-                                   GetDeviceCaps(hdc, PLANES),
-                                   GetDeviceCaps(hdc, BITSPIXEL),
+                                   bmp->bitmap.bmPlanes,
+                                   bmp->bitmap.bmBitsPixel,
                                    NULL);
         }
-        else  /* Memory DC */
+        else
         {
-            BITMAPOBJ *bmp = GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
+            /* A DIB section is selected in the DC */
+            BITMAPINFO *bi;
+            void *bits;
 
-            if (!bmp->dib)
+            /* Allocate memory for a BITMAPINFOHEADER structure and a
+               color table. The maximum number of colors in a color table
+               is 256 which corresponds to a bitmap with depth 8.
+               Bitmaps with higher depths don't have color tables. */
+            bi = HeapAlloc(GetProcessHeap(), 0, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+
+            if (bi)
             {
-                /* A device-dependent bitmap is selected in the DC */
-                hbmpRet = CreateBitmap(width, height,
-                                       bmp->bitmap.bmPlanes,
-                                       bmp->bitmap.bmBitsPixel,
-                                       NULL);
-            }
-            else
-            {
-                /* A DIB section is selected in the DC */
-                BITMAPINFO *bi;
-                void *bits;
+                bi->bmiHeader.biSize          = sizeof(bi->bmiHeader);
+                bi->bmiHeader.biWidth         = width;
+                bi->bmiHeader.biHeight        = height;
+                bi->bmiHeader.biPlanes        = bmp->dib->dsBmih.biPlanes;
+                bi->bmiHeader.biBitCount      = bmp->dib->dsBmih.biBitCount;
+                bi->bmiHeader.biCompression   = bmp->dib->dsBmih.biCompression;
+                bi->bmiHeader.biSizeImage     = 0;
+                bi->bmiHeader.biXPelsPerMeter = bmp->dib->dsBmih.biXPelsPerMeter;
+                bi->bmiHeader.biYPelsPerMeter = bmp->dib->dsBmih.biYPelsPerMeter;
+                bi->bmiHeader.biClrUsed       = bmp->dib->dsBmih.biClrUsed;
+                bi->bmiHeader.biClrImportant  = bmp->dib->dsBmih.biClrImportant;
 
-                /* Allocate memory for a BITMAPINFOHEADER structure and a
-                   color table. The maximum number of colors in a color table
-                   is 256 which corresponds to a bitmap with depth 8.
-                   Bitmaps with higher depths don't have color tables. */
-                bi = HeapAlloc(GetProcessHeap(), 0, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
-
-                if (bi)
+                if (bi->bmiHeader.biCompression == BI_BITFIELDS)
                 {
-                    bi->bmiHeader.biSize          = sizeof(bi->bmiHeader);
-                    bi->bmiHeader.biWidth         = width;
-                    bi->bmiHeader.biHeight        = height;
-                    bi->bmiHeader.biPlanes        = bmp->dib->dsBmih.biPlanes;
-                    bi->bmiHeader.biBitCount      = bmp->dib->dsBmih.biBitCount;
-                    bi->bmiHeader.biCompression   = bmp->dib->dsBmih.biCompression;
-                    bi->bmiHeader.biSizeImage     = 0;
-                    bi->bmiHeader.biXPelsPerMeter = bmp->dib->dsBmih.biXPelsPerMeter;
-                    bi->bmiHeader.biYPelsPerMeter = bmp->dib->dsBmih.biYPelsPerMeter;
-                    bi->bmiHeader.biClrUsed       = bmp->dib->dsBmih.biClrUsed;
-                    bi->bmiHeader.biClrImportant  = bmp->dib->dsBmih.biClrImportant;
-
-                    if (bi->bmiHeader.biCompression == BI_BITFIELDS)
-                    {
-                        /* Copy the color masks */
-                        CopyMemory(bi->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD));
-                    }
-                    else if (bi->bmiHeader.biBitCount <= 8)
-                    {
-                        /* Copy the color table */
-                        GetDIBColorTable(hdc, 0, 256, bi->bmiColors);
-                    }
-
-                    hbmpRet = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
-                    HeapFree(GetProcessHeap(), 0, bi);
+                    /* Copy the color masks */
+                    CopyMemory(bi->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD));
                 }
+                else if (bi->bmiHeader.biBitCount <= 8)
+                {
+                    /* Copy the color table */
+                    GetDIBColorTable(hdc, 0, 256, bi->bmiColors);
+                }
+
+                hbmpRet = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
+                HeapFree(GetProcessHeap(), 0, bi);
             }
-            GDI_ReleaseObj(dc->hBitmap);
         }
-        DC_ReleaseDCPtr( dc );
+        GDI_ReleaseObj(dc->hBitmap);
     }
+    DC_ReleaseDCPtr( dc );
 
     TRACE("\t\t%p\n", hbmpRet);
     return hbmpRet;
@@ -240,6 +232,12 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
+    }
+
+    if (bmp->bmWidth > 0x7ffffff || bmp->bmHeight > 0x7ffffff)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
     }
 
     bm = *bmp;
@@ -278,6 +276,12 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
 
     /* Windows ignores the provided bm.bmWidthBytes */
     bm.bmWidthBytes = BITMAP_GetWidthBytes( bm.bmWidth, bm.bmBitsPixel );
+    /* XP doesn't allow to create bitmaps larger than 128 Mb */
+    if (bm.bmHeight * bm.bmWidthBytes > 128 * 1024 * 1024)
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return 0;
+    }
 
       /* Create the BITMAPOBJ */
     bmpobj = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC,
