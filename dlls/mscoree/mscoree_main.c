@@ -99,6 +99,8 @@ HRESULT WINAPI CorBindToRuntimeHost(LPCWSTR pwszVersion, LPCWSTR pwszBuildFlavor
         return E_FAIL;
     }
 
+    HeapFree(GetProcessHeap(), 0, mono_exe);
+
     return S_OK;
 }
 
