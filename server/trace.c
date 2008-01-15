@@ -259,21 +259,30 @@ static void dump_luid( const luid_t *luid )
     fprintf( stderr, "%d.%u", luid->high_part, luid->low_part );
 }
 
-static void dump_context( const CONTEXT *context )
+static void dump_context( const CONTEXT *context, data_size_t size )
 {
+    CONTEXT ctx;
+
+    memset( &ctx, 0, sizeof(ctx) );
+    memcpy( &ctx, context, min( size, sizeof(CONTEXT) ));
 #ifdef __i386__
     fprintf( stderr, "{flags=%08x,eax=%08x,ebx=%08x,ecx=%08x,edx=%08x,esi=%08x,edi=%08x,"
              "ebp=%08x,eip=%08x,esp=%08x,eflags=%08x,cs=%04x,ds=%04x,es=%04x,"
              "fs=%04x,gs=%04x,dr0=%08x,dr1=%08x,dr2=%08x,dr3=%08x,dr6=%08x,dr7=%08x,",
-             context->ContextFlags, context->Eax, context->Ebx, context->Ecx, context->Edx,
-             context->Esi, context->Edi, context->Ebp, context->Eip, context->Esp, context->EFlags,
-             context->SegCs, context->SegDs, context->SegEs, context->SegFs, context->SegGs,
-             context->Dr0, context->Dr1, context->Dr2, context->Dr3, context->Dr6, context->Dr7 );
+             ctx.ContextFlags, ctx.Eax, ctx.Ebx, ctx.Ecx, ctx.Edx,
+             ctx.Esi, ctx.Edi, ctx.Ebp, ctx.Eip, ctx.Esp, ctx.EFlags,
+             ctx.SegCs, ctx.SegDs, ctx.SegEs, ctx.SegFs, ctx.SegGs,
+             ctx.Dr0, ctx.Dr1, ctx.Dr2, ctx.Dr3, ctx.Dr6, ctx.Dr7 );
     fprintf( stderr, "float=" );
-    dump_uints( (const int *)&context->FloatSave, sizeof(context->FloatSave) / sizeof(int) );
+    dump_uints( (const int *)&ctx.FloatSave, sizeof(ctx.FloatSave) / sizeof(int) );
+    if (size > FIELD_OFFSET( CONTEXT, ExtendedRegisters ))
+    {
+        fprintf( stderr, ",extended=" );
+        dump_uints( (const int *)&ctx.ExtendedRegisters, sizeof(ctx.ExtendedRegisters) / sizeof(int) );
+    }
     fprintf( stderr, "}" );
 #else
-    dump_uints( (const int *)context, sizeof(*context) / sizeof(int) );
+    dump_uints( (const int *)&ctx, sizeof(ctx) / sizeof(int) );
 #endif
 }
 
@@ -384,8 +393,8 @@ static void dump_varargs_context( data_size_t size )
         fprintf( stderr, "{}" );
         return;
     }
-    dump_context( cur_data );
-    remove_data( size );
+    dump_context( cur_data, size );
+    remove_data( min( size, sizeof(CONTEXT) ));
 }
 
 static void dump_varargs_exc_event( data_size_t size )
@@ -398,9 +407,12 @@ static void dump_varargs_exc_event( data_size_t size )
         return;
     }
     fprintf( stderr, "{context=" );
-    dump_context( ptr );
-    fprintf( stderr, ",rec=" );
-    dump_exc_record( (const EXCEPTION_RECORD *)(ptr + 1) );
+    dump_context( ptr, size );
+    if (size > sizeof(CONTEXT))
+    {
+        fprintf( stderr, ",rec=" );
+        dump_exc_record( (const EXCEPTION_RECORD *)(ptr + 1) );
+    }
     fputc( '}', stderr );
     remove_data( size );
 }

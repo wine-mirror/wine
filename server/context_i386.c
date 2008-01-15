@@ -66,6 +66,10 @@ void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
     {
         to->FloatSave = from->FloatSave;
     }
+    if (flags & CONTEXT_EXTENDED_REGISTERS)
+    {
+        memcpy( to->ExtendedRegisters, from->ExtendedRegisters, sizeof(to->ExtendedRegisters) );
+    }
     if (flags & CONTEXT_DEBUG_REGISTERS)
     {
         to->Dr0 = from->Dr0;
