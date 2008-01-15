@@ -3178,6 +3178,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
         Sampler -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
     }
 
+    if (Sampler >= sizeof(This->stateBlock->samplerState)/sizeof(This->stateBlock->samplerState[0])) {
+        ERR("Current Sampler overflows sampleState0 array (sampler %d vs size %d)\n", Sampler,
+            sizeof(This->stateBlock->samplerState)/sizeof(This->stateBlock->samplerState[0])
+        );
+        return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
+    }
     /**
     * SetSampler is designed to allow for more than the standard up to 8 textures
     *  and Geforce has stopped supporting more than 6 standard textures in openGL.
@@ -3223,6 +3229,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, 
         Sampler -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
     }
 
+    if (Sampler >= sizeof(This->stateBlock->samplerState)/sizeof(This->stateBlock->samplerState[0])) {
+        ERR("Current Sampler overflows sampleState0 array (sampler %d vs size %d)\n", Sampler,
+            sizeof(This->stateBlock->samplerState)/sizeof(This->stateBlock->samplerState[0])
+        );
+        return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
+    }
     *Value = This->stateBlock->samplerState[Sampler][Type];
     TRACE("(%p) : Returning %#x\n", This, *Value);
 
@@ -4398,6 +4410,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
         Stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
     }
 
+    if (Stage >= sizeof(This->stateBlock->textures)/sizeof(This->stateBlock->textures[0])) {
+        ERR("Current stage overflows textures array (stage %d vs size %d)\n", Stage,
+            sizeof(This->stateBlock->textures)/sizeof(This->stateBlock->textures[0])
+        );
+        return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
+    }
+
     oldTexture = This->updateStateBlock->textures[Stage];
 
     if(pTexture != NULL) {
@@ -4488,6 +4507,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD
 
     if (Stage >= WINED3DVERTEXTEXTURESAMPLER0 && Stage <= WINED3DVERTEXTEXTURESAMPLER3) {
         Stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
+    }
+
+    if (Stage >= sizeof(This->stateBlock->textures)/sizeof(This->stateBlock->textures[0])) {
+        ERR("Current stage overflows textures array (stage %d vs size %d)\n", Stage,
+            sizeof(This->stateBlock->textures)/sizeof(This->stateBlock->textures[0])
+        );
+        return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
     }
 
     *ppTexture=This->stateBlock->textures[Stage];
