@@ -52,6 +52,11 @@ static void test_FindFirstVolume(void)
     char volume[50];
     HANDLE handle;
 
+    if (!pFindFirstVolumeA) {
+        skip("FindFirstVolumeA not found\n");
+        return;
+    }
+
     handle = pFindFirstVolumeA( volume, 0 );
     ok( handle == INVALID_HANDLE_VALUE, "succeeded with short buffer\n" );
     ok( GetLastError() == ERROR_FILENAME_EXCED_RANGE, "wrong error %u\n", GetLastError() );
