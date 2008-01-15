@@ -210,10 +210,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
         lprect->top    = wndPtr->rectClient.bottom - wndPtr->rectWindow.top;
         lprect->right  = wndPtr->rectClient.right - wndPtr->rectWindow.left;
         lprect->bottom = lprect->top + GetSystemMetrics(SM_CYHSCROLL);
-	if(wndPtr->dwStyle & WS_BORDER) {
-	  lprect->left--;
-	  lprect->right++;
-	} else if(wndPtr->dwStyle & WS_VSCROLL)
+	if(wndPtr->dwStyle & WS_VSCROLL)
 	  lprect->right++;
         vertical = FALSE;
 	break;
@@ -226,10 +223,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
         lprect->top    = wndPtr->rectClient.top - wndPtr->rectWindow.top;
         lprect->right  = lprect->left + GetSystemMetrics(SM_CXVSCROLL);
         lprect->bottom = wndPtr->rectClient.bottom - wndPtr->rectWindow.top;
-	if(wndPtr->dwStyle & WS_BORDER) {
-	  lprect->top--;
-	  lprect->bottom++;
-	} else if(wndPtr->dwStyle & WS_HSCROLL)
+	if(wndPtr->dwStyle & WS_HSCROLL)
 	  lprect->bottom++;
         vertical = TRUE;
 	break;
