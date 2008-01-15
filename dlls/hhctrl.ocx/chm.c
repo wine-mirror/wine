@@ -304,7 +304,7 @@ void SetChmPath(ChmPath *file, LPCWSTR base_file, LPCWSTR path)
 IStream *GetChmStream(CHMInfo *info, LPCWSTR parent_chm, ChmPath *chm_file)
 {
     IStorage *storage;
-    IStream *stream;
+    IStream *stream = NULL;
     HRESULT hres;
 
     TRACE("%s (%s :: %s)\n", debugstr_w(parent_chm), debugstr_w(chm_file->chm_file),
