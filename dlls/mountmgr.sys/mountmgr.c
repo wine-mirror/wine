@@ -142,17 +142,17 @@ static NTSTATUS create_disk_device( DRIVER_OBJECT *driver, DWORD type, DEVICE_OB
         case DRIVE_REMOVABLE:
             info->devnum.DeviceType = FILE_DEVICE_DISK;
             info->devnum.DeviceNumber = i;
-            info->devnum.PartitionNumber = 0;
+            info->devnum.PartitionNumber = ~0u;
             break;
         case DRIVE_CDROM:
             info->devnum.DeviceType = FILE_DEVICE_CD_ROM;
             info->devnum.DeviceNumber = i;
-            info->devnum.PartitionNumber = 0;
+            info->devnum.PartitionNumber = ~0u;
             break;
         case DRIVE_FIXED:
         default:  /* FIXME */
             info->devnum.DeviceType = FILE_DEVICE_DISK;
-            info->devnum.DeviceNumber = 1;
+            info->devnum.DeviceNumber = 0;
             info->devnum.PartitionNumber = i;
             break;
         }
@@ -441,6 +441,7 @@ static NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STR
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
     NTSTATUS status;
+    struct disk_device_info *info;
 
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = harddisk_ioctl;
 
@@ -449,13 +450,18 @@ static NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STR
 
     RtlInitUnicodeString( &nameW, harddisk0W );
     RtlInitUnicodeString( &linkW, physdrive0W );
-    if (!(status = IoCreateDevice( driver, 0, &nameW, 0, 0, FALSE, &device )))
+    if (!(status = IoCreateDevice( driver, sizeof(*info), &nameW, 0, 0, FALSE, &device )))
         status = IoCreateSymbolicLink( &linkW, &nameW );
     if (status)
     {
         FIXME( "failed to create device error %x\n", status );
         return status;
     }
+    info = device->DeviceExtension;
+    info->name = nameW;
+    info->devnum.DeviceType = FILE_DEVICE_DISK;
+    info->devnum.DeviceNumber = 0;
+    info->devnum.PartitionNumber = 0;
 
     create_drive_mount_points( driver );
 
