@@ -284,7 +284,7 @@ static void test_event_security(void)
 
 static HANDLE sem = 0;
 
-static void CALLBACK iocp_callback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
+static void CALLBACK iocp_callback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransferred, LPOVERLAPPED lpOverlapped)
 {
     ReleaseSemaphore(sem, 1, NULL);
 }
