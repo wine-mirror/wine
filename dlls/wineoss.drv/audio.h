@@ -137,7 +137,7 @@ typedef struct {
     DWORD			dwThreadID;
     OSS_MSG_RING		msgRing;
 
-    /* make accomodation for the inaccuracy of OSS when reporting buffer size remaining by using the clock instead of GETOSPACE */
+    /* make accommodation for the inaccuracy of OSS when reporting buffer size remaining by using the clock instead of GETOSPACE */
     DWORD                       dwProjectedFinishTime;
 
 } WINE_WAVEOUT;

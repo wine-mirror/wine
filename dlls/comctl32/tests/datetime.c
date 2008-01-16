@@ -311,7 +311,7 @@ static void test_dtm_set_and_get_range(HWND hWndDateTime)
 
     /* initialize st[0] to lowest possible value */
     fill_systime_struct(&st[0], 1601, 1, 0, 1, 0, 0, 0, 0);
-    /* intialize st[1] to all invalid numbers */
+    /* initialize st[1] to all invalid numbers */
     fill_systime_struct(&st[1], 0, 0, 7, 0, 24, 60, 60, 1000);
 
     r = SendMessage(hWndDateTime, DTM_SETRANGE, GDTR_MIN, (LPARAM)st);

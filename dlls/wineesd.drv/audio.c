@@ -571,7 +571,7 @@ static int ESD_DestroyRingMessage(ESD_MSG_RING* mr)
 /******************************************************************
  *		ESD_AddRingMessage
  *
- * Inserts a new message into the ring (should be called from DriverProc derivated routines)
+ * Inserts a new message into the ring (should be called from DriverProc derived routines)
  */
 static int ESD_AddRingMessage(ESD_MSG_RING* mr, enum win_wm_message msg, DWORD param, BOOL wait)
 {

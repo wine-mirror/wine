@@ -232,8 +232,8 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
     {
 	BOOL	ret;
 
-	/* to reestablist a connection, we have to make sure that:
-	 * 1/ pConv is the converstation attached to the client window (it wouldn't be
+	/* to reestablish a connection, we have to make sure that:
+	 * 1/ pConv is the conversation attached to the client window (it wouldn't be
 	 *    if a call to DdeReconnect would have already been done...)
 	 *    FIXME: is this really an error ???
 	 * 2/ the pConv conversation had really been deconnected
@@ -1394,7 +1394,7 @@ BOOL WINAPI DdeDisconnect(HCONV hConv)
                     pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
 
                 WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
-                /* still have to destroy data assosiated with conversation */
+                /* still have to destroy data associated with conversation */
                 WDML_RemoveConv(pConv, WDML_CLIENT_SIDE);
             }
             else

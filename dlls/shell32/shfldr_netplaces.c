@@ -3,7 +3,7 @@
  *
  *	Copyright 1997			Marcus Meissner
  *	Copyright 1998, 1999, 2002	Juergen Schmied
- *	Copyright 2003                  Mike McCormack for Codeweavers
+ *	Copyright 2003                  Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

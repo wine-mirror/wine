@@ -268,7 +268,7 @@ static int id (HWND h)
  *   3. Prev Group of hDlg in hDlg is null
  *   4. Prev Tab of hDlg in hDlg is null
  *   5. Next Group of null is first visible enabled child
- *      Check it skips invisible, diabled and both.
+ *      Check it skips invisible, disabled and both.
  *   6. Next Tab of null is first visible enabled tabstop
  *      Check it skips invisible, disabled, nontabstop, and in combination.
  *   7. Next Group of hDlg in hDlg is as of null

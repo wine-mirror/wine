@@ -1064,7 +1064,7 @@ typedef struct _SYSTEM_CPU_INFORMATION {
 #define CPU_FEATURE_MTRR   0x00000040   /* Memory Type Range Registers */
 #define CPU_FEATURE_CX8    0x00000080   /* Compare and eXchange 8 byte instr. */
 #define CPU_FEATURE_MMX    0x00000100   /* Multi Media eXtensions */
-#define CPU_FEATURE_X86    0x00000200   /* seems to be alway ON, on the '86 */
+#define CPU_FEATURE_X86    0x00000200   /* seems to be always ON, on the '86 */
 #define CPU_FEATURE_PAT    0x00000400   /* Page Attribute Table */
 #define CPU_FEATURE_FXSR   0x00000800   /* FXSAVE and FXSTORE instructions */
 #define CPU_FEATURE_SEP    0x00001000   /* SYSENTER and SYSEXIT instructions */

@@ -919,7 +919,7 @@ static void init_msvcrt_io_block(STARTUPINFO* st)
  *        If any found, cycle through PATHEXT looking for name.exe one by one
  *      Launching
  *        Once a match has been found, it is launched - Code currently uses
- *          findexecutable to acheive this which is left untouched.
+ *          findexecutable to achieve this which is left untouched.
  */
 
 void WCMD_run_program (WCHAR *command, int called) {

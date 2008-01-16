@@ -174,7 +174,7 @@ do {                                                           \
  * elm  - how to find the next element
  * field - to be concatenated to rc to compare with fieldToCompare
  * fieldToCompare - The value that we're comparing against
- * compare_cb - Callback to invoke to determine if comparision should continue.
+ * compare_cb - Callback to invoke to determine if comparison should continue.
  *              Callback must be defined with DPQ_DECL_COMPARECB.
  * rc - Variable to put the return code. Same type as (head).lpQHFirst
  */

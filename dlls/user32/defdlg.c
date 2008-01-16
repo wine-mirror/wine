@@ -375,7 +375,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     HWND hwnd32 = WIN_Handle32( hwnd );
     BOOL result = FALSE;
 
-    /* Perform DIALOGINFO intialization if not done */
+    /* Perform DIALOGINFO initialization if not done */
     if(!(dlgInfo = DIALOG_get_info(hwnd32, TRUE))) return -1;
 
     SetWindowLongPtrW( hwnd32, DWLP_MSGRESULT, 0 );
@@ -477,7 +477,7 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     BOOL result = FALSE;
     DLGPROC dlgproc;
 
-    /* Perform DIALOGINFO intialization if not done */
+    /* Perform DIALOGINFO initialization if not done */
     if(!(dlgInfo = DIALOG_get_info( hwnd, TRUE ))) return -1;
 
     SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, 0 );

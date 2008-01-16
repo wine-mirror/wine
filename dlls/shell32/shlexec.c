@@ -188,7 +188,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
             case 'I':
 		if (pidl) {
 		    INT chars = 0;
-		    /* %p should not exceed 8, maybe 16 when looking foward to 64bit.
+		    /* %p should not exceed 8, maybe 16 when looking forward to 64bit.
 		     * allowing a buffer of 100 should more than exceed all needs */
 		    WCHAR buf[100];
 		    LPVOID  pv;

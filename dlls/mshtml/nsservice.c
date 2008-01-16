@@ -394,7 +394,7 @@ static nsresult NSAPI nsServiceFactory_QueryInterface(nsIFactory *iface, nsIIDRe
     *result = NULL;
 
     if(IsEqualGUID(&IID_nsISupports, riid)) {
-        TRACE("(%p)->(IID_nsISupoprts %p)\n", This, result);
+        TRACE("(%p)->(IID_nsISupports %p)\n", This, result);
         *result = NSFACTORY(This);
     }else if(IsEqualGUID(&IID_nsIFactory, riid)) {
         TRACE("(%p)->(IID_nsIFactory %p)\n", This, result);

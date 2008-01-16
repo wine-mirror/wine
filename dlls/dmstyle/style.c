@@ -750,7 +750,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
       break;
     }
     case DMUS_FOURCC_MOTIFSETTINGS_CHUNK: {
-      TRACE_(dmfile)(": MotifSettigns chunk (skipping for now)\n");
+      TRACE_(dmfile)(": MotifSettings chunk (skipping for now)\n");
       IStream_Read (pStm, &pNewMotif->settings, Chunk.dwSize, NULL);
       /** TODO trace settings */
       break;

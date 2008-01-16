@@ -423,7 +423,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValu
     memcpy(env, start, (end-start) * sizeof(WCHAR));
     env[(end-start)] = 0x00;
 
-    /* If env var not found, return emptry string */
+    /* If env var not found, return empty string */
     if ((GetEnvironmentVariable(env, fullpath, MAX_PATH) == 0) ||
         (SearchPath(fullpath, outputparam, NULL,
                     MAX_PATH, outputparam, NULL) == 0)) {

@@ -1956,7 +1956,7 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
  *  None.
  *
  * RETURNS
- *  The LCID currently assocated with the calling thread.
+ *  The LCID currently associated with the calling thread.
  */
 LCID WINAPI GetThreadLocale(void)
 {

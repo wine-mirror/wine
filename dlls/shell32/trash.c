@@ -349,7 +349,7 @@ static HRESULT TRASH_CreateSimplePIDL(const TRASH_ELEMENT *element, const WIN32_
 /***********************************************************************
  *      TRASH_UnpackItemID [Internal]
  *
- * DESCRITION:
+ * DESCRIPTION:
  * Extract the information stored in an Item ID. The TRASH_ELEMENT
  * identifies the element in the Trash. The WIN32_FIND_DATA contains the
  * information about the original file. The data->ftLastAccessTime contains

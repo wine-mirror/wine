@@ -54,7 +54,7 @@
 /* number of microseconds/10 to wait for master mutex before giving up */
 #define MASTER_MUTEX_TIMEOUT 6000000
 
-/* number of miliseconds to wait on the master mutex after it returns BUSY */
+/* number of milliseconds to wait on the master mutex after it returns BUSY */
 #define MASTER_MUTEX_WAITNAMEDPIPE_TIMEOUT 5000
 
 /* a data payload; not a normal message */

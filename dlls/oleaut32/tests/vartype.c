@@ -4933,7 +4933,7 @@ static void test_VarBstrCmp(void)
     VARBSTRCMP(bstr,NULL,0,VARCMP_GT);
     VARBSTRCMP(NULL,bstr,0,VARCMP_LT);
 
-    /* NULL and empty string comparisions */
+    /* NULL and empty string comparisons */
     VARBSTRCMP(bstrempty,NULL,0,VARCMP_EQ);
     VARBSTRCMP(NULL,bstrempty,0,VARCMP_EQ);
 

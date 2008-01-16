@@ -3,7 +3,7 @@
  *
  *	Copyright 1998,1999	<juergen.schmied@debitel.net>
  *
- * This is the view visualizing the data provied by the shellfolder.
+ * This is the view visualizing the data provided by the shellfolder.
  * No direct access to data from pidls should be done from here.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,9 +21,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * FIXME: The order by part of the background context menu should be
- * buily according to the columns shown.
+ * built according to the columns shown.
  *
- * FIXME: Load/Save the view state from/into the stream provied by
+ * FIXME: Load/Save the view state from/into the stream provided by
  * the ShellBrowser
  *
  * FIXME: CheckToolbar: handle the "new folder" and "folder up" button

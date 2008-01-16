@@ -703,7 +703,7 @@ SQLRETURN WINAPI SQLAllocStmt(SQLHDBC ConnectionHandle, SQLHSTMT *StatementHandl
 SQLRETURN WINAPI SQLAllocHandleStd( SQLSMALLINT HandleType,
                                                          SQLHANDLE InputHandle, SQLHANDLE *OutputHandle)
 {
-        TRACE("ProxyODBC: SQLAllocHandelStd.\n");
+        TRACE("ProxyODBC: SQLAllocHandleStd.\n");
 
         if (!gProxyHandle.bFunctionReady || gProxyHandle.dmHandle == NULL)
         {

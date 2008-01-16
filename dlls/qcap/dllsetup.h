@@ -74,7 +74,7 @@ extern HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num, BOO
  * This function is table driven using the static members of the
  * CFactoryTemplate class defined in the Dll.
  *
- * It calls the intialize function for any class in CFactoryTemplate with
+ * It calls the initialize function for any class in CFactoryTemplate with
  * one defined.
  *
  ****************************************************************************/

@@ -2013,7 +2013,7 @@ static LONG URL_ParseUrl(LPCWSTR pszUrl, WINE_PARSE_URL *pl)
  *  pszIn   [I]   Url to parse
  *  pszOut  [O]   Destination for part of pszIn requested
  *  pcchOut [I]   Size of pszOut
- *          [O]   length of pszOut string EXLUDING '\0' if S_OK, otherwise
+ *          [O]   length of pszOut string EXCLUDING '\0' if S_OK, otherwise
  *                needed size of pszOut INCLUDING '\0'.
  *  dwPart  [I]   URL_PART_ enum from "shlwapi.h"
  *  dwFlags [I]   URL_ flags from "shlwapi.h"

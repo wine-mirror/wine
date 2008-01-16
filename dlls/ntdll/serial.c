@@ -1360,7 +1360,7 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 
         /* this is an ioctl we implement in a non blocking way if hEvent is not
          * null
-         * so we have to explicitely wait if no hEvent is provided
+         * so we have to explicitly wait if no hEvent is provided
          */
         if (!hev)
         {

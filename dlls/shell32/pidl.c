@@ -62,7 +62,7 @@ extern BOOL WINAPI Free(LPVOID);
  *
  * PARAMS
  *  psf        [I]   Shell Folder to start with, if NULL the desktop is used
- *  pidl       [I]   ItemIDList relativ to the psf to get the display name for
+ *  pidl       [I]   ItemIDList relative to the psf to get the display name for
  *  path       [O]   Filled in with the display name, assumed to be at least MAX_PATH long
  *  type       [I]   Type of display name to retrieve
  *                    0 = SHGDN_FORPARSING | SHGDN_FORADDRESSBAR uses always the desktop as root

@@ -603,7 +603,7 @@ Thunk_IDirect3DDeviceImpl_1_SwapTextureHandles(IDirect3DDevice *iface,
  *
  * This method seems to retrieve some stats from the device.
  * The MSDN documentation doesn't exist any more, but the D3DSTATS
- * structure suggests that the amout of drawn primitives and processed
+ * structure suggests that the amount of drawn primitives and processed
  * vertices is returned.
  *
  * Exists in Version 1, 2 and 3

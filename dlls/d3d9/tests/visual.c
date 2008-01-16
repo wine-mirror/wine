@@ -5646,7 +5646,7 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     /* The following test with vertex buffers doesn't serve to find out new information from windows.
      * It is a plain regression test because wined3d uses different codepaths for attribute conversion
      * with vertex buffers. It makes sure that the vertex buffer one works, while the above tests
-     * wether the immediate mode code works
+     * whether the immediate mode code works
      */
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed (%08x)\n", hr);

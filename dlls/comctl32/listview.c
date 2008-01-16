@@ -7596,7 +7596,7 @@ static INT WINAPI LISTVIEW_CallBackCompare(LPVOID first, LPVOID second, LPARAM l
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] pfnCompare : application-defined value
- * [I] lParamSort : pointer to comparision callback
+ * [I] lParamSort : pointer to comparison callback
  *
  * RETURN:
  *   SUCCESS : TRUE

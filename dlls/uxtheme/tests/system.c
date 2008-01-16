@@ -128,7 +128,7 @@ static void test_GetWindowTheme(void)
             "Expected E_HANDLE, got 0x%08x\n",
             GetLastError());
 
-    /* Only do the bare minumum to get a valid hwnd */
+    /* Only do the bare minimum to get a valid hwnd */
     hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
     if (!hWnd) return;
 
@@ -161,7 +161,7 @@ static void test_SetWindowTheme(void)
             GetLastError());
     }
 
-    /* Only do the bare minumum to get a valid hwnd */
+    /* Only do the bare minimum to get a valid hwnd */
     hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
     if (!hWnd) return;
 
@@ -231,7 +231,7 @@ static void test_OpenThemeData(void)
                 GetLastError());
     }
 
-    /* Only do the bare minumum to get a valid hdc */
+    /* Only do the bare minimum to get a valid hdc */
     hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
     if (!hWnd) return;
 

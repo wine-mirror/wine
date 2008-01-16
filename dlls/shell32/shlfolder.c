@@ -113,7 +113,7 @@ BOOL SHELL32_GetCustomFolderAttribute(
  *
  * PARAMETERS
  *  pszNext [IN] string to get the element from
- *  pszOut  [IN] pointer to buffer whitch receives string
+ *  pszOut  [IN] pointer to buffer which receives string
  *  dwOut   [IN] length of pszOut
  *
  *  RETURNS

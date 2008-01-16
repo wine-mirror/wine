@@ -476,7 +476,7 @@ typedef struct pcmwaveformat_tag {
 
 #ifndef _WAVEFORMATEX_
 #define _WAVEFORMATEX_
-/* dito same for Win16 / Win32 */
+/* ditto same for Win16 / Win32 */
 typedef struct tWAVEFORMATEX {
     WORD	wFormatTag;
     WORD	nChannels;

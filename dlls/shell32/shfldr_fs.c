@@ -1462,7 +1462,7 @@ IFSFldr_PersistFolder3_InitializeEx (IPersistFolder3 * iface,
     This->pidlRoot = ILClone (pidlRoot);
 
     /*
-     *  the target folder is spezified in csidl OR pidlTargetFolder OR
+     *  the target folder is specified in csidl OR pidlTargetFolder OR
      *  szTargetParsingName
      */
     if (ppfti) {

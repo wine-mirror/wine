@@ -49,7 +49,7 @@
 * a pidl of NULL means the desktop
 *
 * The structure of the pidl seems to be a union. The first byte of the
-* PIDLDATA desribes the type of pidl.
+* PIDLDATA describes the type of pidl.
 *
 *	object        ! first byte /  ! format       ! living space
 *	              ! size

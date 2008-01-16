@@ -294,7 +294,7 @@ METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
  *         MF_CreateMetaHeaderDisk
  *
  * Take a memory based METAHEADER and change it to a disk based METAHEADER
- * assosiated with filename.  Note: Trashes contents of old one.
+ * associated with filename.  Note: Trashes contents of old one.
  */
 METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCVOID filename, BOOL uni )
 {

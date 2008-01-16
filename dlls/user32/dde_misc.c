@@ -1724,7 +1724,7 @@ WDML_CONV*	WDML_AddConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
 {
     WDML_CONV*	pConv;
 
-    /* no converstation yet, add it */
+    /* no conversation yet, add it */
     pConv = HeapAlloc(GetProcessHeap(), 0, sizeof(WDML_CONV));
     if (!pConv) return NULL;
 

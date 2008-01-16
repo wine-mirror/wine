@@ -2324,7 +2324,7 @@ static void test_try_transform(void)
     DeleteFileA("testdata.bin");
 
     /*
-     * Both these generate an equivilent transform,
+     * Both these generate an equivalent transform,
      *  but the first doesn't work in Wine yet
      *  because MsiDatabaseGenerateTransform is unimplemented.
      */

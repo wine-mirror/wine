@@ -414,7 +414,7 @@ void GraphCtrl_DrawPoint(TGraphCtrl* this)
          *  note: the m_dcPlot covers the entire client
          *        but we only shift bitmap that is the size 
          *        of the plot rectangle
-         *  grab the right side of the plot (exluding m_nShiftPixels on the left)
+         *  grab the right side of the plot (excluding m_nShiftPixels on the left)
          *  move this grabbed bitmap to the left by m_nShiftPixels
          */
         BitBlt(this->m_dcPlot, this->m_rectPlot.left, this->m_rectPlot.top+1, 
@@ -430,7 +430,7 @@ void GraphCtrl_DrawPoint(TGraphCtrl* this)
         /*  fill the cleanup area with the background */
         FillRect(this->m_dcPlot, &rectCleanUp, this->m_brushBack);
 
-        /*  draw the next line segement */
+        /*  draw the next line segment */
         for (i = 0; i < MAX_PLOTS; i++) 
         {
             /*  grab the plotting pen */

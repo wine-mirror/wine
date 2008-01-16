@@ -86,7 +86,7 @@ typedef struct {
   cab_UWORD cCFData;      /* number of this folder's CFDATA sections */
   cab_UWORD typeCompress; /* compression type of data in CFDATA section*/
   /* additional area if reserve flag was set */
-} CFFOLDER; /* minumum 8 bytes */
+} CFFOLDER; /* minimum 8 bytes */
 
 typedef struct {
   cab_ULONG cbFile;          /* size of the uncompressed file in bytes */

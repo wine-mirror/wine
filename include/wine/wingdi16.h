@@ -172,7 +172,7 @@ typedef struct {
     DWORD  dfFace;
     DWORD  dfReserved;
     CHAR   szDeviceName[60]; /* FIXME: length unknown */
-    CHAR   szFaceName[60];   /* dito */
+    CHAR   szFaceName[60];   /* ditto */
 } FONTDIR16, *LPFONTDIR16;
 
 typedef struct

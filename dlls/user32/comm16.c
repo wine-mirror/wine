@@ -816,7 +816,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 	 * 1. if the baud rate is a CBR constant, interpret it.
 	 * 2. if it is greater than 57600, the baud rate is 115200
 	 * 3. use the actual baudrate
-	 * steps 2 and 3 are equivilent to 16550 baudrate divisor = 115200/BaudRate
+	 * steps 2 and 3 are equivalent to 16550 baudrate divisor = 115200/BaudRate
 	 * see http://support.microsoft.com/support/kb/articles/q108/9/28.asp
 	 */
 	switch(lpdcb->BaudRate)

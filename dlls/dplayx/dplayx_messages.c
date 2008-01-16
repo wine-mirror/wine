@@ -138,7 +138,7 @@ static DWORD CALLBACK DPL_MSG_ThreadMain( LPVOID lpContext )
   CloseHandle( lpThreadInfo->hSettingRead );
   lpThreadInfo->hSettingRead = 0;
 
-  TRACE( "App created && intialized starting main message reception loop\n" );
+  TRACE( "App created && initialized starting main message reception loop\n" );
 
   for ( ;; )
   {
@@ -246,7 +246,7 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
     /* FIXME: I think that the rest of the message has something to do
      *        with remote data for the player that perhaps I need to setup.
      *        However, with the information that is passed, all that it could
-     *        be used for is a standardized intialization value, which I'm
+     *        be used for is a standardized initialization value, which I'm
      *        guessing we can do without. Unless the message content is the same
      *        for several different messages?
      */

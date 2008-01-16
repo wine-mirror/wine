@@ -1,7 +1,7 @@
 /*
  *	IEnumFORMATETC, IDataObject
  *
- * selecting and droping objects within the shell and/or common dialogs
+ * selecting and dropping objects within the shell and/or common dialogs
  *
  *	Copyright 1998, 1999	<juergen.schmied@metronet.de>
  *

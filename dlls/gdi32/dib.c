@@ -1137,7 +1137,7 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 us
     return HBITMAP_16(hbitmap);
 }
 
-/* Copy/synthetize RGB palette from BITMAPINFO. Ripped from dlls/winex11.drv/dib.c */
+/* Copy/synthesize RGB palette from BITMAPINFO. Ripped from dlls/winex11.drv/dib.c */
 static void DIB_CopyColorTable( DC *dc, BITMAPOBJ *bmp, WORD coloruse, const BITMAPINFO *info )
 {
     RGBQUAD *colorTable;

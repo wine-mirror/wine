@@ -498,7 +498,7 @@ static int stabs_pts_read_range(struct ParseTypedefData* ptd, const char* typena
     PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
 
     /* basically, we don't use ref... in some cases, for example, float is declared
-     * as a derivated type of int... which won't help us... so we guess the types
+     * as a derived type of int... which won't help us... so we guess the types
      * from the various formats
      */
     if (lo.sign == 0 && hi.sign < 0)

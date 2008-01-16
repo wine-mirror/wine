@@ -53,7 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 typedef struct
 {
 	LPWSTR sSourceFile;	/* file (not path!) containing the icon */
-	DWORD dwSourceIndex;	/* index within the file, if it is a resoure ID it will be negated */
+	DWORD dwSourceIndex;	/* index within the file, if it is a resource ID it will be negated */
 	DWORD dwListIndex;	/* index within the iconlist */
 	DWORD dwFlags;		/* GIL_* flags */
 	DWORD dwAccessTime;

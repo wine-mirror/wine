@@ -2187,7 +2187,7 @@ static nsresult NSAPI nsIOServiceFactory_QueryInterface(nsIFactory *iface, nsIID
     *result = NULL;
 
     if(IsEqualGUID(&IID_nsISupports, riid)) {
-        TRACE("(IID_nsISupoprts %p)\n", result);
+        TRACE("(IID_nsISupports %p)\n", result);
         *result = iface;
     }else if(IsEqualGUID(&IID_nsIFactory, riid)) {
         TRACE("(IID_nsIFactory %p)\n", result);

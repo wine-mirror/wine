@@ -334,7 +334,7 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
      * Some games(GTA 2) seem to use the second enumerated device, so I have to enumerate
      * at least 2 devices. So enumerate the reference device to have 2 devices.
      *
-     * Other games(Rollcage) tell emulation and hal device appart by certain flags.
+     * Other games(Rollcage) tell emulation and hal device apart by certain flags.
      * Rollcage expects D3DPTEXTURECAPS_POW2 to be set(yeah, it is a limitation flag),
      * and it refuses all devices that have the perspective flag set. This way it refuses
      * the emulation device, and HAL devices never have POW2 unset in d3d7 on windows.

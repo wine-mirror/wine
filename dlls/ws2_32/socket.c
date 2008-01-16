@@ -1976,7 +1976,7 @@ int WINAPI WSAHtonl(SOCKET s, WS_u_long hostlong, WS_u_long *lpnetlong)
 
 /***********************************************************************
  *		WSAHtons		(WS2_32.47)
- *  From MSDN decription of error codes, this function should also
+ *  From MSDN description of error codes, this function should also
  *  check if WinSock has been initialized and the socket is a valid
  *  socket. But why? This function only translates a host byte order
  *  u_short into a network byte order u_short...

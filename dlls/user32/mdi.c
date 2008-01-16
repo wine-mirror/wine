@@ -28,7 +28,7 @@
  *
  *      When we have more than 9 opened windows, a "More Windows..."
  *      option appears in the "Windows" menu. Each child window has
- *      a WND* associated with it, accesible via the children list of
+ *      a WND* associated with it, accessible via the children list of
  *      the parent window. This WND* has a wIDmenu member, which reflects
  *      the position of the child in the window list. For example, with
  *      9 child windows, we could have the following pattern:

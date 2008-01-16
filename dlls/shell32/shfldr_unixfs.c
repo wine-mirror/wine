@@ -41,7 +41,7 @@
  * show up in the title bar of an application's window. They tend to accumulate
  * in the most-recently-used section of the file-menu. And I've even seen some
  * in a configuration dialog's edit control. In those examples, wine can't do a
- * lot about this, since path-names can't be told appart from ordinary strings
+ * lot about this, since path-names can't be told apart from ordinary strings
  * here. That's different in the file dialogs, though.
  *
  * With the introduction of the 'shell' in win32, Microsoft established an 
@@ -104,7 +104,7 @@
  * might ask ("And I don't want wine have access to my complete hard drive, you 
  * *%&1#!"). No problem, as I stated above, unixfs uses the _posix_ apis to 
  * construct the ITEMIDLISTs. Folders, which aren't accessible via a drive letter,
- * don't have the SFGAO_FILESYSTEM flag set. So the file dialogs should'nt allow
+ * don't have the SFGAO_FILESYSTEM flag set. So the file dialogs shouldn't allow
  * the user to select such a folder for file storage (And if it does anyhow, it 
  * will not be able to return a valid path, since there is none). Think of those 
  * folders as a hierarchy of 'My Computer'-like folders, which happen to be a 
@@ -112,7 +112,7 @@
  * change anything at all in wine's fileio api's, windows applications will have 
  * no more access rights as they had before. 
  *
- * To sum it all up, you can still savely run wine with you root account (Just
+ * To sum it all up, you can still safely run wine with you root account (Just
  * kidding, don't do it.)
  *
  * If you are now standing in front of your computer, shouting hotly 
@@ -553,7 +553,7 @@ static char* UNIXFS_build_shitemid(char *pszUnixPath, void *pIDL) {
  *
  * PARAMS
  *  pUnixFolder [I] If path is relative, pUnixFolder represents the base path
- *  path        [I] An absolute unix or dos path or a path relativ to pUnixFolder
+ *  path        [I] An absolute unix or dos path or a path relative to pUnixFolder
  *  ppidl       [O] The corresponding ITEMIDLIST. Release with SHFree/ILFree
  *  
  * RETURNS

@@ -330,7 +330,7 @@ LRESULT OSS_MidiInit(void)
 
 	/* This whole part is somewhat obscure to me. I'll keep trying to dig
 	   info about it. If you happen to know, please tell us. The very
-	   descritive minfo.dev_type was not used here.
+	   descriptive minfo.dev_type was not used here.
 	*/
 	/* Manufac ID. We do not have access to this with soundcard.h
 	   Does not seem to be a problem, because in mmsystem.h only

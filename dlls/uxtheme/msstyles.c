@@ -141,7 +141,7 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
     }
     pszSizes = (LPWSTR)LoadResource(hTheme, hrsc);
 
-    /* Validate requested color against whats available from the theme */
+    /* Validate requested color against what's available from the theme */
     if(pszColorName) {
         tmp = pszColors;
         while(*tmp) {
@@ -155,7 +155,7 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
     else
         pszSelectedColor = pszColors; /* Use the default color */
 
-    /* Validate requested size against whats available from the theme */
+    /* Validate requested size against what's available from the theme */
     if(pszSizeName) {
         tmp = pszSizes;
         while(*tmp) {

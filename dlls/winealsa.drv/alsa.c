@@ -122,7 +122,7 @@ void ALSA_WaitRingMessage(ALSA_MSG_RING* omr, DWORD sleep)
 /******************************************************************
  *		ALSA_AddRingMessage
  *
- * Inserts a new message into the ring (should be called from DriverProc derivated routines)
+ * Inserts a new message into the ring (should be called from DriverProc derived routines)
  */
 int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD param, BOOL wait)
 {

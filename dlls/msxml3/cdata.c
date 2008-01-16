@@ -71,7 +71,7 @@ static HRESULT WINAPI domcdata_QueryInterface(
     }
     else
     {
-        FIXME("Unsupported inteferace %s\n", debugstr_guid(riid));
+        FIXME("Unsupported interface %s\n", debugstr_guid(riid));
         return E_NOINTERFACE;
     }
 

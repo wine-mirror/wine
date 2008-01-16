@@ -506,7 +506,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     devices = pXListInputDevices(data->display, &num_devices);
     if (!devices)
     {
-        WARN("XInput Extenstions reported as not avalable\n");
+        WARN("XInput Extensions reported as not avalable\n");
         wine_tsx11_unlock();
         return;
     }
@@ -1240,7 +1240,7 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
             if (wCategory - WTI_CURSORS >= gNumCursors)
             {
                 rc = 0;
-                WARN("Requested cursor information for non existent cursor %d; only %d cursors\n",
+                WARN("Requested cursor information for nonexistent cursor %d; only %d cursors\n",
                         wCategory - WTI_CURSORS, gNumCursors);
             }
             else

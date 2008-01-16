@@ -169,7 +169,7 @@ typedef struct tagTREEVIEW_INFO
 #define TV_VSCROLL 	0x02	/* (horizontal/vertical) */
 #define TV_LDRAG		0x04	/* Lbutton pushed to start drag */
 #define TV_LDRAGGING	0x08	/* Lbutton pushed, mouse moved. */
-#define TV_RDRAG		0x10	/* dito Rbutton */
+#define TV_RDRAG		0x10	/* ditto Rbutton */
 #define TV_RDRAGGING	0x20
 
 /* bitflags for infoPtr->timer */

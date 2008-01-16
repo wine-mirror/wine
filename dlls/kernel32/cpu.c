@@ -730,7 +730,7 @@ VOID WINAPI GetSystemInfo(
 			    case CPU_SUBTYPE_POWERPC_750:
 			    case CPU_SUBTYPE_POWERPC_7400:
 			    case CPU_SUBTYPE_POWERPC_7450:
-				/* G3/G4 derivate from 603 so ... */
+				/* G3/G4 derive from 603 so ... */
 				cachedsi.dwProcessorType = PROCESSOR_PPC_603;
 				cachedsi.wProcessorLevel = 6;
 				break;
