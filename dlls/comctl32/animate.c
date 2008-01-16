@@ -145,6 +145,8 @@ static BOOL ANIMATE_LoadFileW(ANIMATE_INFO *infoPtr, LPWSTR lpName)
 
 static BOOL ANIMATE_DoStop(ANIMATE_INFO *infoPtr)
 {
+    BOOL stopped = FALSE;
+
     EnterCriticalSection(&infoPtr->cs);
 
     /* should stop playing */
@@ -167,15 +169,18 @@ static BOOL ANIMATE_DoStop(ANIMATE_INFO *infoPtr)
         CloseHandle( handle );
         CloseHandle( infoPtr->hStopEvent );
         infoPtr->hStopEvent = 0;
+        stopped = TRUE;
     }
     if (infoPtr->uTimer) {
 	KillTimer(infoPtr->hwndSelf, infoPtr->uTimer);
 	infoPtr->uTimer = 0;
+	stopped = TRUE;
     }
 
     LeaveCriticalSection(&infoPtr->cs);
 
-    ANIMATE_Notify(infoPtr, ACN_STOP);
+    if (stopped)
+        ANIMATE_Notify(infoPtr, ACN_STOP);
 
     return TRUE;
 }
@@ -429,11 +434,19 @@ static LRESULT ANIMATE_Play(ANIMATE_INFO *infoPtr, UINT cRepeat, WORD wFrom, WOR
     TRACE("(repeat=%d from=%d to=%d);\n",
 	  infoPtr->nLoop, infoPtr->nFromFrame, infoPtr->nToFrame);
 
-    if (infoPtr->nFromFrame >= infoPtr->nToFrame ||
+    if (infoPtr->nFromFrame > infoPtr->nToFrame ||
 	infoPtr->nToFrame >= infoPtr->mah.dwTotalFrames)
 	return FALSE;
 
     infoPtr->currFrame = infoPtr->nFromFrame;
+
+    /* seek - doesn't need to start a thread or set a timer and neither
+     * does it send a notification */
+    if (infoPtr->nFromFrame == infoPtr->nToFrame)
+    {
+        ANIMATE_DrawFrame(infoPtr);
+        return TRUE;
+    }
 
     if (infoPtr->dwStyle & ACS_TIMER) 
     {
