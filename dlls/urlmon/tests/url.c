@@ -1283,11 +1283,13 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
     }
 
     ok(pstgmed != NULL, "stgmeg == NULL\n");
-    if(pstgmed) {
-        ok(pstgmed->tymed == TYMED_ISTREAM, "tymed=%u\n", pstgmed->tymed);
-        ok(U(*pstgmed).pstm != NULL, "pstm == NULL\n");
-        ok(pstgmed->pUnkForRelease != NULL, "pUnkForRelease == NULL\n");
+    if(!pstgmed) {
+	skip("further pstgmed related tests here.\n");
+	return S_OK;
     }
+    ok(pstgmed->tymed == TYMED_ISTREAM, "tymed=%u\n", pstgmed->tymed);
+    ok(U(*pstgmed).pstm != NULL, "pstm == NULL\n");
+    ok(pstgmed->pUnkForRelease != NULL, "pUnkForRelease == NULL\n");
 
     if(grfBSCF & BSCF_FIRSTDATANOTIFICATION) {
         hres = IStream_Write(U(*pstgmed).pstm, buf, 10, NULL);
