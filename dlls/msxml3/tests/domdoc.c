@@ -142,6 +142,8 @@ static WCHAR szCommentNodeText[] = {'#','c','o','m','m','e','n','t',0 };
 static WCHAR szElement[] = {'E','l','e','T','e','s','t', 0 };
 static WCHAR szElementXML[]  = {'<','E','l','e','T','e','s','t','/','>',0 };
 static WCHAR szElementXML2[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','/','>',0 };
+static WCHAR szElementXML3[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','>',
+                                'T','e','s','t','i','n','g','N','o','d','e','<','/','E','l','e','T','e','s','t','>',0 };
 
 static WCHAR szAttribute[] = {'A','t','t','r',0 };
 static WCHAR szAttributeXML[] = {'A','t','t','r','=','"','"',0 };
@@ -444,6 +446,9 @@ static void test_domdoc( void )
     ok( !lstrcmpW( str, szDocument ), "incorrect nodeName\n");
     SysFreeString( str );
 
+    /* test put_text */
+    r = IXMLDOMDocument_put_text( doc, _bstr_("Should Fail") );
+    ok( r == E_FAIL, "ret %08x\n", r );
 
     /* check that there's a document element */
     element = NULL;
@@ -2029,6 +2034,13 @@ static void test_xmlTypes(void)
                     ok( !lstrcmpW( str, szElementXML2 ), "incorrect element xml\n");
                     SysFreeString(str);
                 }
+
+                hr = IXMLDOMElement_put_text(pElement, _bstr_("TestingNode"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMElement_get_xml(pElement, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, szElementXML3 ), "incorrect element xml\n");
 
                 IXMLDOMElement_Release(pElement);
             }

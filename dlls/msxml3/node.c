@@ -697,8 +697,29 @@ static HRESULT WINAPI xmlnode_put_text(
     IXMLDOMNode *iface,
     BSTR text)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    xmlChar *str = NULL;
+
+    TRACE("%p\n", This);
+
+    switch(This->node->type)
+    {
+    case XML_DOCUMENT_NODE:
+        return E_FAIL;
+    default:
+        break;
+    }
+
+    str = xmlChar_from_wchar((WCHAR*)text);
+
+    /* Escape the string. */
+    str = xmlEncodeEntitiesReentrant(This->node->doc, str);
+    str = xmlEncodeSpecialChars(This->node->doc, str);
+
+    xmlNodeSetContent(This->node, str);
+    xmlFree(str);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_get_specified(
