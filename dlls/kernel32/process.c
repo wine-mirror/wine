@@ -2719,8 +2719,7 @@ BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess,
         return FALSE;
     }
     if (lpProcessAffinityMask) *lpProcessAffinityMask = pbi.AffinityMask;
-    /* FIXME */
-    if (lpSystemAffinityMask)  *lpSystemAffinityMask = 1;
+    if (lpSystemAffinityMask)  *lpSystemAffinityMask = (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
     return TRUE;
 }
 
