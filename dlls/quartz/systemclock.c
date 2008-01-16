@@ -113,7 +113,7 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
     /** First SingleShots Advice: sorted list */
     for (it = This->pSingleShotAdvise; NULL != it && (it->rtBaseTime + it->rtIntervalTime) <= curTime; it = it->next) {
       /** send event ... */
-      SetEvent((HANDLE) it->hEvent);
+      SetEvent(it->hEvent);
       /** ... and Release it */
       QUARTZ_RemoveAviseEntryFromQueue(This, it);
       CoTaskMemFree(it);
@@ -125,7 +125,7 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
       if (it->rtBaseTime <= curTime) {
 	DWORD nPeriods = (DWORD) ((curTime - it->rtBaseTime) / it->rtIntervalTime);
 	/** Release the semaphore ... */
-	ReleaseSemaphore((HANDLE) it->hEvent, nPeriods, NULL);
+	ReleaseSemaphore(it->hEvent, nPeriods, NULL);
 	/** ... and refresh time */
 	it->rtBaseTime += nPeriods * it->rtIntervalTime;
 	/*assert( it->rtBaseTime + it->rtIntervalTime < curTime );*/
