@@ -2141,7 +2141,12 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 
     piosb->Information = 0;
 
-    if ((status = server_get_unix_fd( hDevice, 0, &fd, &needs_close, NULL, NULL ))) goto error;
+    if ((status = server_get_unix_fd( hDevice, 0, &fd, &needs_close, NULL, NULL )))
+    {
+        if (status == STATUS_BAD_DEVICE_TYPE) return status;  /* no associated fd */
+        goto error;
+    }
+
     if ((status = CDROM_Open(fd, &dev)))
     {
         if (needs_close) close( fd );
@@ -2415,12 +2420,8 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         break;
 
     default:
-        FIXME("Unsupported IOCTL %x (type=%x access=%x func=%x meth=%x)\n", 
-              dwIoControlCode, dwIoControlCode >> 16, (dwIoControlCode >> 14) & 3,
-              (dwIoControlCode >> 2) & 0xFFF, dwIoControlCode & 3);
-        sz = 0;
-        status = STATUS_INVALID_PARAMETER;
-        break;
+        if (needs_close) close( fd );
+        return STATUS_NOT_SUPPORTED;
     }
     if (needs_close) close( fd );
  error:

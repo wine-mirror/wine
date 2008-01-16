@@ -1104,7 +1104,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
         break;
     }
 
-    if (status == STATUS_NOT_SUPPORTED)
+    if (status == STATUS_NOT_SUPPORTED || status == STATUS_BAD_DEVICE_TYPE)
         status = server_ioctl_file( handle, event, apc, apc_context, io, code,
                                     in_buffer, in_size, out_buffer, out_size );
 
