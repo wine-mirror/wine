@@ -160,6 +160,7 @@ BASEDIRS = \
 	pdh \
 	powrprof \
 	printui \
+	propsys \
 	psapi \
 	pstorec \
 	qcap \

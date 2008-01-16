@@ -354,6 +354,7 @@ ALL_MAKEFILES = \
 	dlls/pdh/tests/Makefile \
 	dlls/powrprof/Makefile \
 	dlls/printui/Makefile \
+	dlls/propsys/Makefile \
 	dlls/psapi/Makefile \
 	dlls/psapi/tests/Makefile \
 	dlls/pstorec/Makefile \
@@ -739,6 +740,7 @@ dlls/pdh/Makefile: dlls/pdh/Makefile.in dlls/Makedll.rules
 dlls/pdh/tests/Makefile: dlls/pdh/tests/Makefile.in dlls/Maketest.rules
 dlls/powrprof/Makefile: dlls/powrprof/Makefile.in dlls/Makedll.rules
 dlls/printui/Makefile: dlls/printui/Makefile.in dlls/Makedll.rules
+dlls/propsys/Makefile: dlls/propsys/Makefile.in dlls/Makedll.rules
 dlls/psapi/Makefile: dlls/psapi/Makefile.in dlls/Makedll.rules
 dlls/psapi/tests/Makefile: dlls/psapi/tests/Makefile.in dlls/Maketest.rules
 dlls/pstorec/Makefile: dlls/pstorec/Makefile.in dlls/Makedll.rules
