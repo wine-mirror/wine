@@ -495,7 +495,7 @@ sub output_header($$$) {
     print OUT "\n";
 
     print OUT "/***********************************************************************\n";
-    print OUT " * Compability macros\n";
+    print OUT " * Compatibility macros\n";
     print OUT " */\n";
     print OUT "\n";
     print OUT "#define DWORD_PTR UINT_PTR\n";
