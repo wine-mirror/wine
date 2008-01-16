@@ -957,7 +957,7 @@ static void dump_get_process_info_reply( const struct get_process_info_reply *re
     fprintf( stderr, " ppid=%04x,", req->ppid );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
-    fprintf( stderr, " affinity=%d,", req->affinity );
+    fprintf( stderr, " affinity=%08x,", req->affinity );
     fprintf( stderr, " peb=%p,", req->peb );
     fprintf( stderr, " start_time=" );
     dump_timeout( &req->start_time );
@@ -971,7 +971,7 @@ static void dump_set_process_info_request( const struct set_process_info_request
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " mask=%d,", req->mask );
     fprintf( stderr, " priority=%d,", req->priority );
-    fprintf( stderr, " affinity=%d", req->affinity );
+    fprintf( stderr, " affinity=%08x", req->affinity );
 }
 
 static void dump_get_thread_info_request( const struct get_thread_info_request *req )
@@ -987,7 +987,7 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, " teb=%p,", req->teb );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
-    fprintf( stderr, " affinity=%d,", req->affinity );
+    fprintf( stderr, " affinity=%08x,", req->affinity );
     fprintf( stderr, " creation_time=" );
     dump_timeout( &req->creation_time );
     fprintf( stderr, "," );
@@ -1002,7 +1002,7 @@ static void dump_set_thread_info_request( const struct set_thread_info_request *
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " mask=%d,", req->mask );
     fprintf( stderr, " priority=%d,", req->priority );
-    fprintf( stderr, " affinity=%d,", req->affinity );
+    fprintf( stderr, " affinity=%08x,", req->affinity );
     fprintf( stderr, " token=%p", req->token );
 }
 

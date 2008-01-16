@@ -171,7 +171,7 @@ static inline void init_thread_structure( struct thread *thread )
     thread->state           = RUNNING;
     thread->exit_code       = 0;
     thread->priority        = 0;
-    thread->affinity        = 1;
+    thread->affinity        = ~0;
     thread->suspend         = 0;
     thread->desktop_users   = 0;
     thread->token           = NULL;
@@ -413,10 +413,7 @@ static void set_thread_info( struct thread *thread,
             set_error( STATUS_INVALID_PARAMETER );
     }
     if (req->mask & SET_THREAD_INFO_AFFINITY)
-    {
-        if (req->affinity != 1) set_error( STATUS_INVALID_PARAMETER );
-        else thread->affinity = req->affinity;
-    }
+        thread->affinity = req->affinity;
     if (req->mask & SET_THREAD_INFO_TOKEN)
         security_set_thread_token( thread, req->token );
 }

@@ -595,7 +595,7 @@ struct get_process_info_reply
     process_id_t ppid;
     int          exit_code;
     int          priority;
-    int          affinity;
+    unsigned int affinity;
     void*        peb;
     timeout_t    start_time;
     timeout_t    end_time;
@@ -609,7 +609,7 @@ struct set_process_info_request
     obj_handle_t handle;
     int          mask;
     int          priority;
-    int          affinity;
+    unsigned int affinity;
 };
 struct set_process_info_reply
 {
@@ -634,7 +634,7 @@ struct get_thread_info_reply
     void*        teb;
     int          exit_code;
     int          priority;
-    int          affinity;
+    unsigned int affinity;
     timeout_t    creation_time;
     timeout_t    exit_time;
     int          last;
@@ -648,7 +648,7 @@ struct set_thread_info_request
     obj_handle_t handle;
     int          mask;
     int          priority;
-    int          affinity;
+    unsigned int affinity;
     obj_handle_t token;
 };
 struct set_thread_info_reply
@@ -4976,6 +4976,6 @@ union generic_reply
     struct add_fd_completion_reply add_fd_completion_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 335
+#define SERVER_PROTOCOL_VERSION 336
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

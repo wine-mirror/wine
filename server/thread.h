@@ -80,7 +80,7 @@ struct thread
     CONTEXT               *suspend_context; /* current context if suspended */
     void                  *teb;           /* TEB address (in client address space) */
     int                    priority;      /* priority level */
-    int                    affinity;      /* affinity mask */
+    unsigned int           affinity;      /* affinity mask */
     int                    suspend;       /* suspend count */
     obj_handle_t           desktop;       /* desktop handle */
     int                    desktop_users; /* number of objects using the thread desktop */

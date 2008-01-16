@@ -64,7 +64,7 @@ struct process
     timeout_t            start_time;      /* absolute time at process start */
     timeout_t            end_time;        /* absolute time at process end */
     int                  priority;        /* priority class */
-    int                  affinity;        /* process affinity mask */
+    unsigned int         affinity;        /* process affinity mask */
     int                  suspend;         /* global process suspend count */
     int                  is_system;       /* is it a system process? */
     unsigned int         create_flags;    /* process creation flags */

@@ -146,6 +146,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
     case ProcessBasicInformation:
         {
             PROCESS_BASIC_INFORMATION pbi;
+            const unsigned int affinity_mask = (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
 
             if (ProcessInformationLength >= sizeof(PROCESS_BASIC_INFORMATION))
             {
@@ -162,7 +163,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                         {
                             pbi.ExitStatus = reply->exit_code;
                             pbi.PebBaseAddress = reply->peb;
-                            pbi.AffinityMask = reply->affinity;
+                            pbi.AffinityMask = reply->affinity & affinity_mask;
                             pbi.BasePriority = reply->priority;
                             pbi.UniqueProcessId = reply->pid;
                             pbi.InheritedFromUniqueProcessId = reply->ppid;
@@ -359,6 +360,8 @@ NTSTATUS WINAPI NtSetInformationProcess(
     {
     case ProcessAffinityMask:
         if (ProcessInformationLength != sizeof(DWORD_PTR)) return STATUS_INVALID_PARAMETER;
+        if (*(PDWORD_PTR)ProcessInformation & ~((1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1))
+            return STATUS_INVALID_PARAMETER;
         SERVER_START_REQ( set_process_info )
         {
             req->handle   = ProcessHandle;

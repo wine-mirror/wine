@@ -322,7 +322,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
     process->priority        = PROCESS_PRIOCLASS_NORMAL;
-    process->affinity        = 1;
+    process->affinity        = ~0;
     process->suspend         = 0;
     process->is_system       = 0;
     process->create_flags    = 0;
@@ -1098,11 +1098,7 @@ DECL_HANDLER(set_process_info)
     if ((process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION )))
     {
         if (req->mask & SET_PROCESS_INFO_PRIORITY) process->priority = req->priority;
-        if (req->mask & SET_PROCESS_INFO_AFFINITY)
-        {
-            if (req->affinity != 1) set_error( STATUS_INVALID_PARAMETER );
-            else process->affinity = req->affinity;
-        }
+        if (req->mask & SET_PROCESS_INFO_AFFINITY) process->affinity = req->affinity;
         release_object( process );
     }
 }

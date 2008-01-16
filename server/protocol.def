@@ -565,7 +565,7 @@ typedef union
     process_id_t ppid;             /* server process id of parent */
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
-    int          affinity;         /* process affinity mask */
+    unsigned int affinity;         /* process affinity mask */
     void*        peb;              /* PEB address in process address space */
     timeout_t    start_time;       /* process start time */
     timeout_t    end_time;         /* process end time */
@@ -577,7 +577,7 @@ typedef union
     obj_handle_t handle;       /* process handle */
     int          mask;         /* setting mask (see below) */
     int          priority;     /* priority class */
-    int          affinity;     /* affinity mask */
+    unsigned int affinity;     /* affinity mask */
 @END
 #define SET_PROCESS_INFO_PRIORITY 0x01
 #define SET_PROCESS_INFO_AFFINITY 0x02
@@ -593,7 +593,7 @@ typedef union
     void*        teb;           /* thread teb pointer */
     int          exit_code;     /* thread exit code */
     int          priority;      /* thread priority level */
-    int          affinity;      /* thread affinity mask */
+    unsigned int affinity;      /* thread affinity mask */
     timeout_t    creation_time; /* thread creation time */
     timeout_t    exit_time;     /* thread exit time */
     int          last;          /* last thread in process */
@@ -605,7 +605,7 @@ typedef union
     obj_handle_t handle;       /* thread handle */
     int          mask;         /* setting mask (see below) */
     int          priority;     /* priority class */
-    int          affinity;     /* affinity mask */
+    unsigned int affinity;     /* affinity mask */
     obj_handle_t token;        /* impersonation token */
 @END
 #define SET_THREAD_INFO_PRIORITY 0x01
