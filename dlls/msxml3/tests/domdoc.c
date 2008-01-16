@@ -550,6 +550,12 @@ static void test_domdoc( void )
         ok( V_VT(&var) == VT_NULL, "incorrect dataType type\n");
         VariantClear(&var);
 
+        /* test nodeTypeString */
+        r = IXMLDOMText_get_nodeTypeString(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("text") ), "incorrect nodeTypeString string\n");
+        SysFreeString(str);
+
         IXMLDOMText_Release( nodetext );
     }
     SysFreeString( str );
@@ -569,7 +575,8 @@ static void test_domdoc( void )
         r = IXMLDOMComment_get_lastChild(node_comment, &nodeChild);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok(nodeChild == NULL, "pLastChild not NULL\n");
-        IXMLDOMText_Release( node_comment );
+
+        IXMLDOMComment_Release( node_comment );
     }
 
     /* test Create Attribute */
@@ -606,6 +613,12 @@ static void test_domdoc( void )
         ok(r == S_FALSE, "ret %08x\n", r );
         ok( V_VT(&var) == VT_NULL, "incorrect dataType type\n");
         VariantClear(&var);
+
+        /* test nodeTypeString */
+        r = IXMLDOMProcessingInstruction_get_nodeTypeString(nodePI, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("processinginstruction") ), "incorrect nodeTypeString string\n");
+        SysFreeString(str);
 
         IXMLDOMProcessingInstruction_Release(nodePI);
     }
@@ -1898,6 +1911,12 @@ static void test_xmlTypes(void)
     ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
     VariantClear(&v);
 
+    /* test nodeTypeString */
+    hr = IXMLDOMDocument_get_nodeTypeString(doc, &str);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok( !lstrcmpW( str, _bstr_("document") ), "incorrect nodeTypeString string\n");
+    SysFreeString(str);
+
     hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
     ok(hr == S_OK, "ret %08x\n", hr );
     if(hr == S_OK)
@@ -1919,6 +1938,12 @@ static void test_xmlTypes(void)
                 hr = IXMLDOMComment_get_attributes( pComment, &pAttribs);
                 ok(hr == S_FALSE, "ret %08x\n", hr );
                 ok( pAttribs == NULL, "pAttribs not NULL\n");
+
+                /* test nodeTypeString */
+                hr = IXMLDOMComment_get_nodeTypeString(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("comment") ), "incorrect nodeTypeString string\n");
+                SysFreeString(str);
 
                 hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pComment, NULL);
                 ok(hr == S_OK, "ret %08x\n", hr );
@@ -1948,6 +1973,12 @@ static void test_xmlTypes(void)
             {
                 hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
                 ok(hr == S_OK, "ret %08x\n", hr );
+
+                /* test nodeTypeString */
+                hr = IXMLDOMDocument_get_nodeTypeString(pElement, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("element") ), "incorrect nodeTypeString string\n");
+                SysFreeString(str);
 
                 hr = IXMLDOMElement_get_nodeName(pElement, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
@@ -2014,6 +2045,12 @@ static void test_xmlTypes(void)
                     hr = IXMLDOMAttribute_get_nodeName(pAttrubute, &str);
                     ok(hr == S_OK, "ret %08x\n", hr );
                     ok( !lstrcmpW( str, szAttribute ), "incorrect attribute node Name\n");
+                    SysFreeString(str);
+
+                    /* test nodeTypeString */
+                    hr = IXMLDOMAttribute_get_nodeTypeString(pAttrubute, &str);
+                    ok(hr == S_OK, "ret %08x\n", hr );
+                    ok( !lstrcmpW( str, _bstr_("attribute") ), "incorrect nodeTypeString string\n");
                     SysFreeString(str);
 
                     hr = IXMLDOMAttribute_get_xml(pAttrubute, &str);
@@ -2091,6 +2128,12 @@ static void test_xmlTypes(void)
                 ok(hr == S_FALSE, "ret %08x\n", hr );
                 ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
                 VariantClear(&v);
+
+                /* test nodeTypeString */
+                hr = IXMLDOMCDATASection_get_nodeTypeString(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("cdatasection") ), "incorrect nodeTypeString string\n");
+                SysFreeString(str);
 
                 IXMLDOMCDATASection_Release(pCDataSec);
             }
