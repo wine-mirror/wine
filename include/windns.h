@@ -152,7 +152,7 @@ typedef enum _DnsSection
     DnsSectionQuestion,
     DnsSectionAnswer,
     DnsSectionAuthority,
-    DnsSectionAddtional
+    DnsSectionAddtional /* Not a typo, as per Microsoft's headers */
 } DNS_SECTION;
 
 typedef LONG DNS_STATUS, *PDNS_STATUS;

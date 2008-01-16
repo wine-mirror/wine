@@ -1384,6 +1384,7 @@ PVOID    WINAPI MyMalloc(DWORD dwSize);
 PVOID    WINAPI MyRealloc(PVOID lpSrc, DWORD dwSize);
 DWORD    WINAPI OpenAndMapForRead(PCWSTR, PDWORD, PHANDLE, PHANDLE, PVOID *);
 LONG     WINAPI QueryRegistryValue(HKEY, PCWSTR, PBYTE *, PDWORD, PDWORD);
+/* RetreiveFileSecurity is not a typo, as per Microsoft's dlls */
 DWORD    WINAPI RetreiveFileSecurity(PCWSTR, PSECURITY_DESCRIPTOR *);
 BOOL     WINAPI SetupAddSectionToDiskSpaceListA(HDSKSPC, HINF, HINF, PCSTR, UINT, PVOID, UINT);
 BOOL     WINAPI SetupAddSectionToDiskSpaceListW(HDSKSPC, HINF, HINF, PCWSTR, UINT, PVOID, UINT);
