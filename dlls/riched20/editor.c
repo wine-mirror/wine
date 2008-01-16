@@ -628,9 +628,9 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   int nEventMask = editor->nEventMask;
   ME_InStream inStream;
 
-  TRACE("stream==%p hWnd==%p format==0x%X\n", stream, editor->hWnd, (UINT)format);
+  TRACE("stream==%p hWnd==%p format==0x%X\n", stream, editor->hWnd, format);
   editor->nEventMask = 0;
-  
+
   ME_GetSelection(editor, &from, &to);
   if ((format & SFF_SELECTION) && (editor->mode & TM_RICHTEXT)) {
     style = ME_GetSelectionInsertStyle(editor);
@@ -1140,7 +1140,7 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
   int seltype = 0;
   if(!editor->lpOleCallback)
     return FALSE;
-  ME_GetSelection(editor, (int *)&selrange.cpMin, (int *)&selrange.cpMax);
+  ME_GetSelection(editor, &selrange.cpMin, &selrange.cpMax);
   if(selrange.cpMin == selrange.cpMax)
     seltype |= SEL_EMPTY;
   else
@@ -1561,7 +1561,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case EM_EXGETSEL:
   {
     CHARRANGE *pRange = (CHARRANGE *)lParam;
-    ME_GetSelection(editor, (int *)&pRange->cpMin, (int *)&pRange->cpMax);
+    ME_GetSelection(editor, &pRange->cpMin, &pRange->cpMax);
     TRACE("EM_EXGETSEL = (%d,%d)\n", pRange->cpMin, pRange->cpMax);
     return 0;
   }
@@ -2034,11 +2034,11 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     LPDATAOBJECT dataObj = NULL;
     CHARRANGE range;
     HRESULT hr = S_OK;
-    
+
     if (editor->cPasswordMask)
       return 0; /* Copying or Cutting masked text isn't allowed */
-    
-    ME_GetSelection(editor, (int*)&range.cpMin, (int*)&range.cpMax);
+
+    ME_GetSelection(editor, &range.cpMin, &range.cpMax);
     if(editor->lpOleCallback)
         hr = IRichEditOleCallback_GetClipboardData(editor->lpOleCallback, &range, RECO_COPY, &dataObj);
     if(FAILED(hr) || !dataObj)
