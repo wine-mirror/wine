@@ -242,6 +242,13 @@ typedef struct {
     FT_Pos size, x_ppem, y_ppem;
 } My_FT_Bitmap_Size;
 
+struct enum_data
+{
+    ENUMLOGFONTEXW elf;
+    NEWTEXTMETRICEXW ntm;
+    DWORD type;
+};
+
 typedef struct tagFace {
     struct list entry;
     WCHAR *StyleName;
@@ -260,10 +267,7 @@ typedef struct tagFace {
     BOOL external; /* TRUE if we should manually add this font to the registry */
     struct tagFamily *family;
     /* Cached data for Enum */
-    BOOL cache_valid;
-    ENUMLOGFONTEXW elf;
-    NEWTEXTMETRICEXW ntm;
-    DWORD type;
+    struct enum_data *cached_enum_data;
 } Face;
 
 typedef struct tagFamily {
@@ -1239,7 +1243,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                 }
             }
             face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
-            face->cache_valid = FALSE;
+            face->cached_enum_data = NULL;
             list_add_tail(&family->faces, &face->entry);
             face->StyleName = StyleW;
             if (file)
@@ -3290,12 +3294,12 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     GdiFont *font;
     LONG width, height;
 
-    if (face->cache_valid)
+    if (face->cached_enum_data)
     {
         TRACE("Cached\n");
-        memcpy(pelf,&face->elf,sizeof(ENUMLOGFONTEXW));
-        memcpy(pntm,&face->ntm,sizeof(NEWTEXTMETRICEXW));
-        *ptype = face->type;
+        memcpy(pelf, &face->cached_enum_data->elf, sizeof(ENUMLOGFONTEXW));
+        memcpy(pntm, &face->cached_enum_data->ntm, sizeof(NEWTEXTMETRICEXW));
+        *ptype = face->cached_enum_data->type;
         return;
     }
 
@@ -3374,10 +3378,13 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     if(!(pntm->ntmTm.tmPitchAndFamily & TMPF_VECTOR))
         *ptype |= RASTER_FONTTYPE;
 
-    memcpy(&face->elf,pelf,sizeof(ENUMLOGFONTEXW));
-    memcpy(&face->ntm,pntm,sizeof(NEWTEXTMETRICEXW));
-    face->type = *ptype;
-    face->cache_valid = TRUE;
+    face->cached_enum_data = HeapAlloc(GetProcessHeap(), 0, sizeof(*face->cached_enum_data));
+    if (face->cached_enum_data)
+    {
+        memcpy(&face->cached_enum_data->elf, pelf, sizeof(ENUMLOGFONTEXW));
+        memcpy(&face->cached_enum_data->ntm, pntm, sizeof(NEWTEXTMETRICEXW));
+        face->cached_enum_data->type = *ptype;
+    }
 
     free_font(font);
 }
