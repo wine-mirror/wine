@@ -358,14 +358,21 @@ void BuildSpec32File( DLLSPEC *spec )
 
     /* Reserve some space for the PE header */
 
-    output( "\n\t.section \".init\",\"ax\"\n" );
-    output( "\tjmp 1f\n" );
-    output( "__wine_spec_pe_header:\n" );
     if (target_platform == PLATFORM_APPLE)
-        output( "\t.space %u\n", 65536 + page_size );
+    {
+        output( "\t.text\n" );
+        output( "\t.align %d\n", get_alignment(page_size) );
+        output( "__wine_spec_pe_header:\n" );
+        output( "\t.space 65536\n" );
+    }
     else
+    {
+        output( "\n\t.section \".init\",\"ax\"\n" );
+        output( "\tjmp 1f\n" );
+        output( "__wine_spec_pe_header:\n" );
         output( "\t.skip %u\n", 65536 + page_size );
-    output( "1:\n" );
+        output( "1:\n" );
+    }
 
     /* Output the NT header */
 
