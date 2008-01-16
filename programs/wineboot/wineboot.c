@@ -666,18 +666,20 @@ static void usage(void)
     WINE_MESSAGE( "    -h,--help         Display this help message\n" );
     WINE_MESSAGE( "    -e,--end-session  End the current session cleanly\n" );
     WINE_MESSAGE( "    -f,--force        Force exit for processes that don't exit cleanly\n" );
+    WINE_MESSAGE( "    -i,--init         Perform initialization for first Wine instance\n" );
     WINE_MESSAGE( "    -k,--kill         Kill running processes without any cleanup\n" );
     WINE_MESSAGE( "    -r,--restart      Restart only, don't do normal startup operations\n" );
     WINE_MESSAGE( "    -s,--shutdown     Shutdown only, don't reboot\n" );
 }
 
-static const char short_options[] = "efhkrs";
+static const char short_options[] = "efhikrs";
 
 static const struct option long_options[] =
 {
     { "help",        0, 0, 'h' },
     { "end-session", 0, 0, 'e' },
     { "force",       0, 0, 'f' },
+    { "init" ,       0, 0, 'i' },
     { "kill",        0, 0, 'k' },
     { "restart",     0, 0, 'r' },
     { "shutdown",    0, 0, 's' },
@@ -691,7 +693,7 @@ int main( int argc, char *argv[] )
 
     /* First, set the current directory to SystemRoot */
     int optc;
-    int end_session = 0, force = 0, kill = 0, restart = 0, shutdown = 0;
+    int end_session = 0, force = 0, init = 0, kill = 0, restart = 0, shutdown = 0;
     HANDLE event;
 
     GetWindowsDirectoryW( windowsdir, MAX_PATH );
@@ -705,8 +707,9 @@ int main( int argc, char *argv[] )
     {
         switch(optc)
         {
-        case 'e': end_session = 1; break;
+        case 'e': end_session = kill = 1; break;
         case 'f': force = 1; break;
+        case 'i': init = 1; break;
         case 'k': kill = 1; break;
         case 'r': restart = 1; break;
         case 's': shutdown = 1; break;
@@ -720,7 +723,7 @@ int main( int argc, char *argv[] )
         if (!shutdown_close_windows( force )) return 1;
     }
 
-    if (end_session || kill) kill_processes( shutdown );
+    if (kill) kill_processes( shutdown );
 
     if (shutdown) return 0;
 
@@ -732,13 +735,14 @@ int main( int argc, char *argv[] )
 
     ProcessWindowsFileProtection();
     ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICESONCE], TRUE, FALSE );
-    if (!restart)
+    if (init || (kill && !restart))
     {
         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES], FALSE, FALSE );
         start_services();
     }
     ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE], TRUE, TRUE );
-    if (!restart)
+
+    if (!init && !restart)
     {
         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUN], FALSE, FALSE );
         ProcessRunKeys( HKEY_CURRENT_USER, runkeys_names[RUNKEY_RUN], FALSE, FALSE );
@@ -751,6 +755,6 @@ int main( int argc, char *argv[] )
 
     /* FIXME: the wait is needed to keep services running */
     /* it should be removed once we have a proper services.exe */
-    WaitForSingleObject( __wine_make_process_system(), INFINITE );
+    if (!restart) WaitForSingleObject( __wine_make_process_system(), INFINITE );
     return 0;
 }

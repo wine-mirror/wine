@@ -790,7 +790,7 @@ static HANDLE start_wineboot(void)
     }
     if (GetLastError() != ERROR_ALREADY_EXISTS)  /* we created it */
     {
-        static const WCHAR command_line[] = {'\\','w','i','n','e','b','o','o','t','.','e','x','e',0};
+        static const WCHAR command_line[] = {'\\','w','i','n','e','b','o','o','t','.','e','x','e',' ','-','-','i','n','i','t',0};
         STARTUPINFOW si;
         PROCESS_INFORMATION pi;
         WCHAR cmdline[MAX_PATH + sizeof(command_line)/sizeof(WCHAR)];
