@@ -1041,7 +1041,7 @@ BOOL WINAPI LineDDA(INT nXStart, INT nYStart, INT nXEnd, INT nYEnd,
  *   *Very* simple bezier drawing code,
  *
  *   It uses a recursive algorithm to divide the curve in a series
- *   of straight line segments. Not ideal but for me sufficient.
+ *   of straight line segments. Not ideal but sufficient for me.
  *   If you are in need for something better look for some incremental
  *   algorithm.
  *
@@ -1203,7 +1203,7 @@ static void GDI_InternalBezier( POINT *Points, POINT **PtsOut, INT *dwOut,
  *  Ptr to an array of POINTs that contain the lines that approximate the
  *  Beziers.  The array is allocated on the process heap and it is the caller's
  *  responsibility to HeapFree it. [this is not a particularly nice interface
- *  but since we can't know in advance how many points will generate, the
+ *  but since we can't know in advance how many points we will generate, the
  *  alternative would be to call the function twice, once to determine the size
  *  and a second time to do the work - I decided this was too much of a pain].
  */
