@@ -846,7 +846,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
             *Header, hdr_length,
             (unsigned char *)pMsg->Buffer + buffer_length, data_length,
             (RpcAuthVerifier *)auth_data,
-            (unsigned char *)auth_data + sizeof(RpcAuthVerifier),
+            auth_data + sizeof(RpcAuthVerifier),
             header_auth_len - sizeof(RpcAuthVerifier));
         if (status != RPC_S_OK) goto fail;
       }

@@ -888,7 +888,7 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
         unsigned char *pArg;
 
         current_stack_offset = pParam->stack_offset;
-        pArg = (unsigned char *)(args+current_stack_offset);
+        pArg = args + current_stack_offset;
 
         TRACE("param[%d]: new format\n", i);
         TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(pParam->param_attributes); TRACE("\n");
@@ -1063,7 +1063,7 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
          * if present, so adjust this */
         unsigned short current_stack_offset_adjusted = current_stack_offset +
             (object ? sizeof(void *) : 0);
-        unsigned char *pArg = (unsigned char *)(args+current_stack_offset_adjusted);
+        unsigned char *pArg = args + current_stack_offset_adjusted;
 
         /* no more parameters; exit loop */
         if (current_stack_offset_adjusted >= stack_size)

@@ -1527,8 +1527,7 @@ static void PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
    * BufferStart and BufferEnd won't be reset when allocating memory for
    * sending the response. we don't have to check for the new buffer here as
    * it won't be used a type memory, only for buffer memory */
-  if (Pointer >= (unsigned char *)pStubMsg->BufferStart &&
-      Pointer < (unsigned char *)pStubMsg->BufferEnd)
+  if (Pointer >= pStubMsg->BufferStart && Pointer < pStubMsg->BufferEnd)
       goto notfree;
 
   if (attr & RPC_FC_P_ONSTACK) {
@@ -4980,7 +4979,7 @@ static ULONG get_discriminant(unsigned char fc, const unsigned char *pMemory)
     case RPC_FC_CHAR:
     case RPC_FC_SMALL:
     case RPC_FC_USMALL:
-        return *(const UCHAR *)pMemory;
+        return *pMemory;
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
@@ -5800,12 +5799,12 @@ unsigned char *WINAPI NdrRangeUnmarshall(
     case RPC_FC_CHAR:
     case RPC_FC_SMALL:
         RANGE_UNMARSHALL(UCHAR, "%d");
-        TRACE("value: 0x%02x\n", **(UCHAR **)ppMemory);
+        TRACE("value: 0x%02x\n", **ppMemory);
         break;
     case RPC_FC_BYTE:
     case RPC_FC_USMALL:
         RANGE_UNMARSHALL(CHAR, "%u");
-        TRACE("value: 0x%02x\n", **(UCHAR **)ppMemory);
+        TRACE("value: 0x%02x\n", **ppMemory);
         break;
     case RPC_FC_WCHAR: /* FIXME: valid? */
     case RPC_FC_USHORT:
@@ -5913,7 +5912,7 @@ static unsigned char *WINAPI NdrBaseTypeMarshall(
     case RPC_FC_SMALL:
     case RPC_FC_USMALL:
         safe_copy_to_buffer(pStubMsg, pMemory, sizeof(UCHAR));
-        TRACE("value: 0x%02x\n", *(UCHAR *)pMemory);
+        TRACE("value: 0x%02x\n", *pMemory);
         break;
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
@@ -5998,7 +5997,7 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
     case RPC_FC_SMALL:
     case RPC_FC_USMALL:
         BASE_TYPE_UNMARSHALL(UCHAR);
-        TRACE("value: 0x%02x\n", **(UCHAR **)ppMemory);
+        TRACE("value: 0x%02x\n", **ppMemory);
         break;
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
