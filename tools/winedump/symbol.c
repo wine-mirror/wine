@@ -38,7 +38,7 @@ static const char * const swap_after[] =
   " ,", ",",
   "( ", "(",
   " )", ")",
-  "wchar_t", "WCHAR", /* Help with Unicode compliles */
+  "wchar_t", "WCHAR", /* Help with Unicode compiles */
   "wctype_t", "WCHAR",
   "wint_t", "WCHAR",
   NULL, NULL
@@ -166,7 +166,7 @@ const char *symbol_get_call_convention(const parsed_symbol *sym)
 /*******************************************************************
  *         symbol_get_spec_type
  *
- * Get the .spec file text for a symbols argument
+ * Get the .spec file text for a symbol's argument
  */
 const char *symbol_get_spec_type (const parsed_symbol *sym, size_t arg)
 {

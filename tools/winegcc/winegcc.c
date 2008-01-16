@@ -987,7 +987,7 @@ int main(int argc, char **argv)
 		case 'x':
 		    lang = strmake("-x%s", option_arg);
 		    strarray_add(opts.files, lang);
-		    /* we'll pass these flags ourselves, explicitely */
+		    /* we'll pass these flags ourselves, explicitly */
                     raw_compiler_arg = raw_linker_arg = 0;
 		    break;
                 case '-':

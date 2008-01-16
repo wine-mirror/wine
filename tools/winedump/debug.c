@@ -193,7 +193,7 @@ static int dump_cv_sst_global_types(const OMFDirEntry* omfde)
     /* doc says:
      * - for NB07 & NB08 (that we don't support yet), offsets are from types
      * - for NB09, offsets are from data
-     * For now, we only support the later
+     * For now, we only support the latter
      */
     codeview_dump_types_from_offsets(data, (const DWORD*)(types + 1), types->cTypes);
 
@@ -278,7 +278,7 @@ static int dump_cv_sst_src_module(const OMFDirEntry* omfde)
     /* the OMFSourceFile is quite unpleasant to use:
      * we have first:
      * 	unsigned short	number of segments
-     *	unsigned short	reservered
+     *	unsigned short	reserved
      *	unsigned long	baseSrcLn[# segments]
      *  unsigned long	offset[2 * #segments]
      *				odd indices are start offsets

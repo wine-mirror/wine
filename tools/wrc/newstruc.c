@@ -794,7 +794,7 @@ static void handle_ani_list(riff_tag_t *lst, enum res_e type, int isswapped)
 		}
 		else if(!memcmp(rtp->tag, iart, sizeof(iart)))
 		{
-			/* Ignore the author's name; its a string */
+			/* Ignore the author's name; it's a string */
 			rtp = NEXT_TAG(rtp);
 		}
 		else if(!memcmp(rtp->tag, fram, sizeof(fram)))

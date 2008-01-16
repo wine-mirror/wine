@@ -2126,7 +2126,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
         off = write_array_tfs(file, var->attrs, type, var->name, typeformat_offset);
         ptr_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
         /* Top level pointers to conformant arrays may be handled specially
-           since we can bypass the pointer, but if the array is burried
+           since we can bypass the pointer, but if the array is buried
            beneath another pointer (e.g., "[size_is(,n)] int **p" then we
            always need to write the pointer.  */
         if (!ptr_type && var->type != type)

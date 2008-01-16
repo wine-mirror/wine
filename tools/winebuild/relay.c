@@ -383,7 +383,7 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
  * All routines expect that the 16-bit stack contents (arguments) and the
  * return address (segptr to CallTo16_Ret) were already set up by the
  * caller; nb_args must contain the number of bytes to be conserved.  The
- * 16-bit SS:SP will be set accordinly.
+ * 16-bit SS:SP will be set accordingly.
  *
  * All other registers are either taken from the CONTEXT86 structure
  * or else set to default values.  The target routine address is either

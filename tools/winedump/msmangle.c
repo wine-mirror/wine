@@ -594,17 +594,17 @@ static char *demangle_datatype (char **str, compound_type *ct,
 
 
 /* Constraints:
- * There are two conventions for specifying data type constaints. I
+ * There are two conventions for specifying data type constants. I
  * don't know how the compiler chooses between them, but I suspect it
  * is based on ensuring that linker names are unique.
  * Convention 1. The data type modifier is given first, followed
  *   by the data type it operates on. '?' means passed by value,
  *   'A' means passed by reference. Note neither of these characters
  *   is a valid base data type. This is then followed by a character
- *   specifying constness or volatilty.
+ *   specifying constness or volatility.
  * Convention 2. The base data type (which is never '?' or 'A') is
  *   given first. The character modifier is optionally given after
- *   the base type character. If a valid character mofifier is present,
+ *   the base type character. If a valid character modifier is present,
  *   then it only applies to the current data type if the character
  *   after that is not 'A' 'B' or 'C' (Because this makes a convention 1
  *   constraint for the next data type).
@@ -612,9 +612,9 @@ static char *demangle_datatype (char **str, compound_type *ct,
  * The conventions are usually mixed within the same symbol.
  * Since 'C' is both a qualifier and a data type, I suspect that
  * convention 1 allows specifying e.g. 'volatile signed char*'. In
- * convention 2 this would be 'CC' which is ambigious (i.e. Is it two
+ * convention 2 this would be 'CC' which is ambiguous (i.e. Is it two
  * pointers, or a single pointer + modifier?). In convention 1 it
- * is encoded as '?CC' which is not ambigious. This probably
+ * is encoded as '?CC' which is not ambiguous. This probably
  * holds true for some other types as well.
  */
 

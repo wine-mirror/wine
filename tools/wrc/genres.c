@@ -716,7 +716,7 @@ static res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
 	{
 		restag = put_res_header(res, WRC_RT_DIALOG, NULL, name, dlgex->memopt, &(dlgex->lvc));
 
-		/* FIXME: MS doc says thet the first word must contain 0xffff
+		/* FIXME: MS doc says that the first word must contain 0xffff
 		 * and the second 0x0001 to signal a DLGTEMPLATEEX. Borland's
 		 * compiler reverses the two words.
 		 * I don't know which one to choose, but I write it as Mr. B
@@ -749,8 +749,8 @@ static res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
 		{
 			put_word(res, dlgex->font->size);
 			put_word(res, dlgex->font->weight);
-			/* FIXME: ? TRUE should be sufficient to say that its
-			 * italic, but Borland's compiler says its 0x0101.
+			/* FIXME: ? TRUE should be sufficient to say that it's
+			 * italic, but Borland's compiler says it's 0x0101.
 			 * I just copy it here, and hope for the best.
 			 */
 			put_word(res, dlgex->font->italic ? 0x0101 : 0);
@@ -1020,7 +1020,7 @@ static res_t *cursorgroup2res(name_id_t *name, cursor_group_t *curg)
 			put_word(res, cur->planes);
 			put_word(res, cur->bits);
 			/* FIXME: The +4 is the hotspot in the cursor resource.
-			 * However, I cound not find this in the documentation.
+			 * However, I could not find this in the documentation.
 			 * The hotspot bytes must either be included or MS
 			 * doesn't care.
 			 */
@@ -1057,7 +1057,7 @@ static res_t *cursorgroup2res(name_id_t *name, cursor_group_t *curg)
 			put_word(res, cur->planes);
 			put_word(res, cur->bits);
 			/* FIXME: The +4 is the hotspot in the cursor resource.
-			 * However, I cound not find this in the documentation.
+			 * However, I could not find this in the documentation.
 			 * The hotspot bytes must either be included or MS
 			 * doesn't care.
 			 */
