@@ -237,6 +237,7 @@ BASEDIRS = \
 	wintab32 \
 	wintrust \
 	wldap32 \
+	wmi \
 	wnaspi32 \
 	wow32 \
 	ws2_32 \

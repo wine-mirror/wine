@@ -21713,6 +21713,8 @@ ac_config_files="$ac_config_files dlls/wintrust/tests/Makefile"
 
 ac_config_files="$ac_config_files dlls/wldap32/Makefile"
 
+ac_config_files="$ac_config_files dlls/wmi/Makefile"
+
 ac_config_files="$ac_config_files dlls/wnaspi32/Makefile"
 
 ac_config_files="$ac_config_files dlls/wow32/Makefile"
@@ -22720,6 +22722,7 @@ do
     "dlls/wintrust/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintrust/Makefile" ;;
     "dlls/wintrust/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintrust/tests/Makefile" ;;
     "dlls/wldap32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wldap32/Makefile" ;;
+    "dlls/wmi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wmi/Makefile" ;;
     "dlls/wnaspi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wnaspi32/Makefile" ;;
     "dlls/wow32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wow32/Makefile" ;;
     "dlls/ws2_32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ws2_32/Makefile" ;;

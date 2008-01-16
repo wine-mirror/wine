@@ -461,6 +461,7 @@ ALL_MAKEFILES = \
 	dlls/wintrust/Makefile \
 	dlls/wintrust/tests/Makefile \
 	dlls/wldap32/Makefile \
+	dlls/wmi/Makefile \
 	dlls/wnaspi32/Makefile \
 	dlls/wow32/Makefile \
 	dlls/ws2_32/Makefile \
@@ -848,6 +849,7 @@ dlls/wintab32/Makefile: dlls/wintab32/Makefile.in dlls/Makedll.rules
 dlls/wintrust/Makefile: dlls/wintrust/Makefile.in dlls/Makedll.rules
 dlls/wintrust/tests/Makefile: dlls/wintrust/tests/Makefile.in dlls/Maketest.rules
 dlls/wldap32/Makefile: dlls/wldap32/Makefile.in dlls/Makedll.rules
+dlls/wmi/Makefile: dlls/wmi/Makefile.in dlls/Makedll.rules
 dlls/wnaspi32/Makefile: dlls/wnaspi32/Makefile.in dlls/Makedll.rules
 dlls/wow32/Makefile: dlls/wow32/Makefile.in dlls/Makedll.rules
 dlls/ws2_32/Makefile: dlls/ws2_32/Makefile.in dlls/Makedll.rules
