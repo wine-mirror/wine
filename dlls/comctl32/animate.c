@@ -903,11 +903,10 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     case WM_PRINTCLIENT:
     case WM_PAINT:
         {
-            /* the animation isn't playing, or has not decompressed
+            /* the animation has not decompressed
              * (and displayed) the first frame yet, don't paint
              */
-            if ((!infoPtr->uTimer && !infoPtr->hThread) ||
-                !infoPtr->hbmPrevFrame)
+            if (!infoPtr->hbmPrevFrame)
             {
                 /* default paint handling */
                 return DefWindowProcW(hWnd, uMsg, wParam, lParam);
