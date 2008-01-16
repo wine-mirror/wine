@@ -574,7 +574,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
   if (This->hmmio != NULL)
     return AVIERR_ERROR; /* No reuse of this object for another file! */
 
-  /* remeber mode and name */
+  /* remember mode and name */
   This->uMode = dwMode;
 
   len = lstrlenW(pszFileName) + 1;

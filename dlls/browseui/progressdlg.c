@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(browseui);
 #define CANCEL_MSG_LINE 2
 
 /* Note: to avoid a deadlock we don't want to send messages to the dialog
- * with the critical section held. Instead we only mark what fields shoud be
+ * with the critical section held. Instead we only mark what fields should be
  * updated and the dialog proc does the update */
 #define UPDATE_PROGRESS         0x1
 #define UPDATE_TITLE            0x2

@@ -623,7 +623,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
   if (This->paf->hmmio != NULL)
     return AVIERR_ERROR; /* No reuse of this object for another file! */
 
-  /* remeber mode and name */
+  /* remember mode and name */
   This->paf->uMode = dwMode;
 
   len = lstrlenW(pszFileName) + 1;
@@ -951,7 +951,7 @@ static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream *iface, LONG pos,
   if (This->lpFormat == NULL) {
     /* initial format */
     if (This->paf->dwMoviChunkPos != 0)
-      return AVIERR_ERROR; /* user has used API in wrong sequnece! */
+      return AVIERR_ERROR; /* user has used API in wrong sequence! */
 
     This->lpFormat = HeapAlloc(GetProcessHeap(), 0, formatsize);
     if (This->lpFormat == NULL)
@@ -1413,7 +1413,7 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
     break;
   };
 
-  /* first frame is alwasy a keyframe */
+  /* first frame is always a keyframe */
   if (This->lLastFrame == -1)
     flags |= AVIIF_KEYFRAME;
 
@@ -2226,7 +2226,7 @@ static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
 
     /* ... some optional additional extra chunk for this stream ... */
     if (pStream->extra.lp != NULL && pStream->extra.cb > 0) {
-      /* the chunk header(s) are already in the strucuture */
+      /* the chunk header(s) are already in the structure */
       if (mmioWrite(This->hmmio, (HPSTR)pStream->extra.lp, pStream->extra.cb) != pStream->extra.cb)
 	return AVIERR_FILEWRITE;
     }
@@ -2332,7 +2332,7 @@ static HRESULT AVIFILE_SaveIndex(const IAVIFileImpl *This)
     return AVIERR_FILEWRITE;
 
   if (This->fInfo.dwFlags & AVIFILEINFO_ISINTERLEAVED) {
-    /* is interleaved -- write block of coresponding frames */
+    /* is interleaved -- write block of corresponding frames */
     LONG lInitialFrames = 0;
     LONG stepsize;
     LONG i;

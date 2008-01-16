@@ -423,7 +423,7 @@ static void test_enum_value(void)
     ok( val_count == 2 || val_count == 3, "val_count set to %d\n", val_count );
     ok( data_count == 7, "data_count set to %d instead of 7\n", data_count );
     ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
-    /* v5.1.2600.0 (XP Home and Proffesional) does not touch value or data in this case */
+    /* v5.1.2600.0 (XP Home and Professional) does not touch value or data in this case */
     ok( !strcmp( value, "Te" ) || !strcmp( value, "xxxxxxxxxx" ), 
         "value set to '%s' instead of 'Te' or 'xxxxxxxxxx'\n", value );
     ok( !strcmp( data, "foobar" ) || !strcmp( data, "xxxxxxx" ), 

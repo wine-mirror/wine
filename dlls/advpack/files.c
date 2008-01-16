@@ -514,7 +514,7 @@ HRESULT WINAPI DelNodeRunDLL32W(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, INT 
     return res;
 }
 
-/* The following defintions were copied from dlls/cabinet/cabinet.h */
+/* The following definitions were copied from dlls/cabinet/cabinet.h */
 
 /* SESSION Operation */
 #define EXTRACT_FILLFILELIST  0x00000001
