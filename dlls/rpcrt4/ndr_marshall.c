@@ -6207,6 +6207,7 @@ static unsigned char *WINAPI NdrContextHandleMarshall(
         ERR("invalid format type %x\n", *pFormat);
         RpcRaiseException(RPC_S_INTERNAL_ERROR);
     }
+    TRACE("flags: 0x%02x\n", pFormat[1]);
 
     if (pFormat[1] & 0x80)
         NdrClientContextMarshall(pStubMsg, *(NDR_CCONTEXT **)pMemory, FALSE);
@@ -6225,16 +6226,22 @@ static unsigned char *WINAPI NdrContextHandleUnmarshall(
     PFORMAT_STRING pFormat,
     unsigned char fMustAlloc)
 {
+    TRACE("pStubMsg %p, ppMemory %p, pFormat %p, fMustAlloc %s\n", pStubMsg,
+        ppMemory, pFormat, fMustAlloc ? "TRUE": "FALSE");
+
     if (*pFormat != RPC_FC_BIND_CONTEXT)
     {
         ERR("invalid format type %x\n", *pFormat);
         RpcRaiseException(RPC_S_INTERNAL_ERROR);
     }
+    TRACE("flags: 0x%02x\n", pFormat[1]);
 
-  **(NDR_CCONTEXT **)ppMemory = NULL;
-  NdrClientContextUnmarshall(pStubMsg, *(NDR_CCONTEXT **)ppMemory, pStubMsg->RpcMsg->Handle);
+    /* [out]-only or [ret] param */
+    if ((pFormat[1] & 0x60) == 0x20)
+        **(NDR_CCONTEXT **)ppMemory = NULL;
+    NdrClientContextUnmarshall(pStubMsg, *(NDR_CCONTEXT **)ppMemory, pStubMsg->RpcMsg->Handle);
 
-  return NULL;
+    return NULL;
 }
 
 /***********************************************************************
