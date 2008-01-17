@@ -1147,14 +1147,16 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
     /* perform base relocation, if necessary */
 
-    if (ptr != base)
+    if (ptr != base &&
+        ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
+          !NtCurrentTeb()->Peb->ImageBaseAddress) )
     {
         const IMAGE_DATA_DIRECTORY *relocs;
 
         relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
         if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
         {
-            WARN( "Need to relocate module from addr %lx, but there are no relocation records\n",
+            WARN_(module)( "Need to relocate module from addr %lx, but there are no relocation records\n",
                   (ULONG_PTR)nt->OptionalHeader.ImageBase );
             status = STATUS_CONFLICTING_ADDRESSES;
             goto error;
@@ -1165,7 +1167,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
          *        Some DLLs really check the MSB of the module handle :-/
          */
         if ((nt->OptionalHeader.ImageBase & 0x80000000) && !((ULONG_PTR)base & 0x80000000))
-            ERR( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
+            ERR_(module)( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
 
         if (!do_relocations( ptr, relocs, ptr - base, total_size ))
         {
