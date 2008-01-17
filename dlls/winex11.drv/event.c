@@ -964,6 +964,9 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         return SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
     case WM_X11DRV_SET_WIN_FORMAT:
         return X11DRV_set_win_format( hwnd, (XID)wp );
+    case WM_X11DRV_RESIZE_DESKTOP:
+        X11DRV_resize_desktop( LOWORD(lp), HIWORD(lp) );
+        return 0;
     default:
         FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp );
         return 0;

@@ -131,8 +131,7 @@ static LONG X11DRV_XF86VM_SetCurrentMode(int mode)
 #endif
   XSync(gdi_display, False);
   wine_tsx11_unlock();
-  X11DRV_handle_desktop_resize( real_xf86vm_modes[mode]->hdisplay,
-                                real_xf86vm_modes[mode]->vdisplay );
+  X11DRV_resize_desktop( real_xf86vm_modes[mode]->hdisplay, real_xf86vm_modes[mode]->vdisplay );
   return DISP_CHANGE_SUCCESSFUL;
 }
 

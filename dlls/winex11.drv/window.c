@@ -998,6 +998,9 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
         }
     }
 
+    /* only the size is allowed to change for the desktop window */
+    if (data->whole_window == root_window) mask &= CWWidth | CWHeight;
+
     if (mask)
     {
         DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
@@ -1225,46 +1228,27 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
 }
 
 
-/* fill in the desktop X window id in the x11drv_win_data structure */
+/* initialize the desktop window id in the desktop manager process */
 static void get_desktop_xwin( Display *display, struct x11drv_win_data *data )
 {
-    Window win = (Window)GetPropA( data->hwnd, whole_window_prop );
-
-    if (win)
-    {
-        unsigned int width, height;
-
-        /* retrieve the real size of the desktop */
-        SERVER_START_REQ( get_window_rectangles )
-        {
-            req->handle = data->hwnd;
-            wine_server_call( req );
-            width  = reply->window.right - reply->window.left;
-            height = reply->window.bottom - reply->window.top;
-        }
-        SERVER_END_REQ;
-        data->whole_window = win;
-        if (win != root_window) X11DRV_init_desktop( win, width, height );
-    }
-    else
+    data->whole_window = root_window;
+    if (root_window != DefaultRootWindow( display ))
     {
         VisualID visualid;
 
         wine_tsx11_lock();
         visualid = XVisualIDFromVisual(visual);
         wine_tsx11_unlock();
+        data->managed = TRUE;
+        SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
         SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
         SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
-        data->whole_window = root_window;
-        X11DRV_SetWindowPos( data->hwnd, 0, &virtual_screen_rect, &virtual_screen_rect,
-                             SWP_NOZORDER | SWP_NOACTIVATE, NULL );
-        if (root_window != DefaultRootWindow( display ))
-        {
-            data->managed = TRUE;
-            SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
-            set_initial_wm_hints( display, data );
-        }
+        set_initial_wm_hints( display, data );
     }
+    SetWindowPos( data->hwnd, 0, virtual_screen_rect.left, virtual_screen_rect.top,
+                  virtual_screen_rect.right - virtual_screen_rect.left,
+                  virtual_screen_rect.bottom - virtual_screen_rect.top,
+                  SWP_NOZORDER | SWP_NOACTIVATE );
 }
 
 /**********************************************************************
@@ -1272,13 +1256,39 @@ static void get_desktop_xwin( Display *display, struct x11drv_win_data *data )
  */
 BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
 {
-    Display *display = thread_display();
-    struct x11drv_win_data *data;
+    unsigned int width, height;
 
-    if (!(data = alloc_win_data( display, hwnd ))) return FALSE;
+    /* retrieve the real size of the desktop */
+    SERVER_START_REQ( get_window_rectangles )
+    {
+        req->handle = hwnd;
+        wine_server_call( req );
+        width  = reply->window.right - reply->window.left;
+        height = reply->window.bottom - reply->window.top;
+    }
+    SERVER_END_REQ;
 
-    get_desktop_xwin( display, data );
-
+    if (!width && !height)  /* not initialized yet */
+    {
+        SERVER_START_REQ( set_window_pos )
+        {
+            req->handle        = hwnd;
+            req->previous      = 0;
+            req->flags         = SWP_NOZORDER;
+            req->window.left   = virtual_screen_rect.left;
+            req->window.top    = virtual_screen_rect.top;
+            req->window.right  = virtual_screen_rect.right;
+            req->window.bottom = virtual_screen_rect.bottom;
+            req->client        = req->window;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
+    else
+    {
+        Window win = (Window)GetPropA( hwnd, whole_window_prop );
+        if (win && win != root_window) X11DRV_init_desktop( win, width, height );
+    }
     return TRUE;
 }
 
@@ -1321,18 +1331,18 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         cs->cy = 0;
     }
 
-    /* initialize the dimensions before sending WM_GETMINMAXINFO */
-    SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-    X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER | SWP_NOACTIVATE, NULL );
+    if (hwnd == GetDesktopWindow()) get_desktop_xwin( display, data );
+    else
+    {
+        /* initialize the dimensions before sending WM_GETMINMAXINFO */
+        SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
+        X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER | SWP_NOACTIVATE, NULL );
 
-    /* create an X window if it's a top level window */
-    if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
-    {
-        if (!create_whole_window( display, data, cs->style )) goto failed;
-    }
-    else if (hwnd == GetDesktopWindow())
-    {
-        get_desktop_xwin( display, data );
+        /* create an X window if it's a top level window */
+        if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
+        {
+            if (!create_whole_window( display, data, cs->style )) goto failed;
+        }
     }
 
     /* get class or window DC if needed */
@@ -1493,7 +1503,11 @@ Window X11DRV_get_whole_window( HWND hwnd )
 {
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 
-    if (!data) return (Window)GetPropA( hwnd, whole_window_prop );
+    if (!data)
+    {
+        if (hwnd == GetDesktopWindow()) return root_window;
+        return (Window)GetPropA( hwnd, whole_window_prop );
+    }
     return data->whole_window;
 }
 

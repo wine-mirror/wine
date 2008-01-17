@@ -873,15 +873,13 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
 
 
 /***********************************************************************
- *		X11DRV_handle_desktop_resize
+ *		X11DRV_resize_desktop
  */
-void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
+void X11DRV_resize_desktop( unsigned int width, unsigned int height )
 {
     HWND hwnd = GetDesktopWindow();
     struct x11drv_win_data *data;
     struct desktop_resize_data resize_data;
-
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
     SetRect( &resize_data.old_screen_rect, 0, 0, screen_width, screen_height );
     resize_data.old_virtual_rect = virtual_screen_rect;
@@ -889,14 +887,22 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
     screen_width  = width;
     screen_height = height;
     xinerama_init();
-    TRACE("desktop %p change to (%dx%d)\n", hwnd, width, height);
-    data->lock_changes++;
-    X11DRV_SetWindowPos( hwnd, 0, &virtual_screen_rect, &virtual_screen_rect,
-                         SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE, NULL );
-    data->lock_changes--;
     ClipCursor(NULL);
-    SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp,
-                         MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
+
+    if (!(data = X11DRV_get_win_data( hwnd )))
+    {
+        SendMessageW( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, MAKELPARAM( width, height ) );
+    }
+    else
+    {
+        TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
+        SetWindowPos( hwnd, 0, virtual_screen_rect.left, virtual_screen_rect.top,
+                      virtual_screen_rect.right - virtual_screen_rect.left,
+                      virtual_screen_rect.bottom - virtual_screen_rect.top,
+                      SWP_NOZORDER | SWP_NOACTIVATE );
+        SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp,
+                             MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
+    }
 
     EnumWindows( update_windows_on_desktop_resize, (LPARAM)&resize_data );
 }

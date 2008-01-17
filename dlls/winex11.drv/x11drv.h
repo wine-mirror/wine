@@ -644,7 +644,8 @@ enum x11drv_window_messages
 {
     WM_X11DRV_ACQUIRE_SELECTION = 0x80001000,
     WM_X11DRV_DELETE_WINDOW,
-    WM_X11DRV_SET_WIN_FORMAT
+    WM_X11DRV_SET_WIN_FORMAT,
+    WM_X11DRV_RESIZE_DESKTOP
 };
 
 /* _NET_WM_STATE properties that we keep track of */
@@ -733,7 +734,7 @@ extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data 
 extern void xinerama_init(void);
 
 extern void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height );
-extern void X11DRV_handle_desktop_resize(unsigned int width, unsigned int height);
+extern void X11DRV_resize_desktop(unsigned int width, unsigned int height);
 extern void X11DRV_Settings_AddDepthModes(void);
 extern void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigned int bpp, unsigned int freq);
 extern int X11DRV_Settings_CreateDriver(LPDDHALINFO info);

@@ -229,7 +229,7 @@ static LONG X11DRV_XRandR_SetCurrentMode(int mode)
     wine_tsx11_unlock();
     if (stat == RRSetConfigSuccess)
     {
-        X11DRV_handle_desktop_resize( dd_modes[mode].dwWidth, dd_modes[mode].dwHeight );
+        X11DRV_resize_desktop( dd_modes[mode].dwWidth, dd_modes[mode].dwHeight );
         return DISP_CHANGE_SUCCESSFUL;
     }
 
