@@ -514,10 +514,10 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     for (loop=0; loop < num_devices; loop++)
     {
         int class_loop;
-        char *device_type = XGetAtomName(data->display, devices[loop].type);
+        char *device_type = devices[loop].type ? XGetAtomName(data->display, devices[loop].type) : NULL;
 
         TRACE("Device %i:  [id %d|name %s|type %s|num_classes %d|use %s]\n",
-                loop, (int) devices[loop].id, devices[loop].name, device_type,
+                loop, (int) devices[loop].id, devices[loop].name, device_type ? device_type : "",
                 devices[loop].num_classes,
                 devices[loop].use == IsXKeyboard ? "IsXKeyboard" :
                     devices[loop].use == IsXPointer ? "IsXPointer" :
@@ -580,7 +580,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             if (! IS_TABLET_CURSOR(target->name, device_type))
             {
                 WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device\n",
-                        loop, devices[loop].name, device_type);
+                     loop, devices[loop].name, device_type ? device_type : "");
                 XFree(device_type);
                 cursor_target --;
                 continue;
