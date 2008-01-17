@@ -57,6 +57,7 @@ static void thread_attach(void)
     kernel_get_thread_data()->stack_sel = GlobalHandleToSel16( hstack );
     NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR( kernel_get_thread_data()->stack_sel,
                                                         0x10000 - sizeof(STACK16FRAME) );
+    memset( (char *)GlobalLock16(hstack) + 0x10000 - sizeof(STACK16FRAME), 0, sizeof(STACK16FRAME) );
 }
 
 
