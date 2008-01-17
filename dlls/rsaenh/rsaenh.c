@@ -828,8 +828,8 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
             }
     }
 
-    hCryptKey = (HCRYPTKEY)new_object(&handle_table, sizeof(CRYPTKEY), RSAENH_MAGIC_KEY, 
-                                      destroy_key, (OBJECTHDR**)&pCryptKey);
+    hCryptKey = new_object(&handle_table, sizeof(CRYPTKEY), RSAENH_MAGIC_KEY,
+                           destroy_key, (OBJECTHDR**)&pCryptKey);
     if (hCryptKey != (HCRYPTKEY)INVALID_HANDLE_VALUE)
     {
         pCryptKey->aiAlgid = aiAlgid;
@@ -1095,8 +1095,8 @@ static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, const 
     KEYCONTAINER *pKeyContainer;
     HCRYPTPROV hKeyContainer;
 
-    hKeyContainer = (HCRYPTPROV)new_object(&handle_table, sizeof(KEYCONTAINER), RSAENH_MAGIC_CONTAINER,
-                                           destroy_key_container, (OBJECTHDR**)&pKeyContainer);
+    hKeyContainer = new_object(&handle_table, sizeof(KEYCONTAINER), RSAENH_MAGIC_CONTAINER,
+                               destroy_key_container, (OBJECTHDR**)&pKeyContainer);
     if (hKeyContainer != (HCRYPTPROV)INVALID_HANDLE_VALUE)
     {
         lstrcpynA(pKeyContainer->szName, pszContainerName, MAX_PATH);
@@ -1670,10 +1670,10 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
         }
     }
 
-    *phHash = (HCRYPTHASH)new_object(&handle_table, sizeof(CRYPTHASH), RSAENH_MAGIC_HASH,
-                                     destroy_hash, (OBJECTHDR**)&pCryptHash);
+    *phHash = new_object(&handle_table, sizeof(CRYPTHASH), RSAENH_MAGIC_HASH,
+                         destroy_hash, (OBJECTHDR**)&pCryptHash);
     if (!pCryptHash) return FALSE;
-    
+
     pCryptHash->aiAlgid = Algid;
     pCryptHash->hKey = hKey;
     pCryptHash->hProv = hProv;
@@ -1834,8 +1834,8 @@ BOOL WINAPI RSAENH_CPDuplicateHash(HCRYPTPROV hUID, HCRYPTHASH hHash, DWORD *pdw
         return FALSE;
     }
 
-    *phHash = (HCRYPTHASH)new_object(&handle_table, sizeof(CRYPTHASH), RSAENH_MAGIC_HASH, 
-                                     destroy_hash, (OBJECTHDR**)&pDestHash);
+    *phHash = new_object(&handle_table, sizeof(CRYPTHASH), RSAENH_MAGIC_HASH,
+                         destroy_hash, (OBJECTHDR**)&pDestHash);
     if (*phHash != (HCRYPTHASH)INVALID_HANDLE_VALUE)
     {
         memcpy(pDestHash, pSrcHash, sizeof(CRYPTHASH));
@@ -1890,8 +1890,8 @@ BOOL WINAPI RSAENH_CPDuplicateKey(HCRYPTPROV hUID, HCRYPTKEY hKey, DWORD *pdwRes
         return FALSE;
     }
 
-    *phKey = (HCRYPTKEY)new_object(&handle_table, sizeof(CRYPTKEY), RSAENH_MAGIC_KEY, destroy_key, 
-                                   (OBJECTHDR**)&pDestKey);
+    *phKey = new_object(&handle_table, sizeof(CRYPTKEY), RSAENH_MAGIC_KEY, destroy_key,
+                        (OBJECTHDR**)&pDestKey);
     if (*phKey != (HCRYPTKEY)INVALID_HANDLE_VALUE)
     {
         memcpy(pDestKey, pSrcKey, sizeof(CRYPTKEY));

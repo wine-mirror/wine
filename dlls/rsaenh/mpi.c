@@ -1069,7 +1069,7 @@ int mp_div (const mp_int * a, const mp_int * b, mp_int * c, mp_int * d)
 
   /* normalize both x and y, ensure that y >= b/2, [b == 2**DIGIT_BIT] */
   norm = mp_count_bits(&y) % DIGIT_BIT;
-  if (norm < (int)(DIGIT_BIT-1)) {
+  if (norm < DIGIT_BIT-1) {
      norm = (DIGIT_BIT-1) - norm;
      if ((res = mp_mul_2d (&x, norm, &x)) != MP_OKAY) {
        goto __Y;
@@ -1285,7 +1285,7 @@ int mp_div_2d (const mp_int * a, int b, mp_int * c, mp_int * d)
   }
 
   /* shift by as many digits in the bit count */
-  if (b >= (int)DIGIT_BIT) {
+  if (b >= DIGIT_BIT) {
     mp_rshd (c, b / DIGIT_BIT);
   }
 
@@ -1390,9 +1390,9 @@ int mp_div_d (const mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
       } else {
         t = 0;
       }
-      q.dp[ix] = (mp_digit)t;
+      q.dp[ix] = t;
   }
-  
+
   if (d != NULL) {
      *d = (mp_digit)w;
   }
@@ -1710,11 +1710,11 @@ mp_exptmod_fast (const mp_int * G, const mp_int * X, mp_int * P, mp_int * Y, int
       }
       /* read next digit and reset bitcnt */
       buf    = X->dp[digidx--];
-      bitcnt = (int)DIGIT_BIT;
+      bitcnt = DIGIT_BIT;
     }
 
     /* grab the next msb from the exponent */
-    y     = (mp_digit)(buf >> (DIGIT_BIT - 1)) & 1;
+    y     = (buf >> (DIGIT_BIT - 1)) & 1;
     buf <<= (mp_digit)1;
 
     /* if the bit is zero and mode == 0 then we ignore it
@@ -2609,7 +2609,7 @@ mp_mod_2d (const mp_int * a, int b, mp_int * c)
   }
 
   /* if the modulus is larger than the value than return */
-  if (b > (int) (a->used * DIGIT_BIT)) {
+  if (b > a->used * DIGIT_BIT) {
     res = mp_copy (a, c);
     return res;
   }
@@ -2624,8 +2624,7 @@ mp_mod_2d (const mp_int * a, int b, mp_int * c)
     c->dp[x] = 0;
   }
   /* clear the digit that is not completely outside/inside the modulus */
-  c->dp[b / DIGIT_BIT] &=
-    (mp_digit) ((((mp_digit) 1) << (((mp_digit) b) % DIGIT_BIT)) - ((mp_digit) 1));
+  c->dp[b / DIGIT_BIT] &= (1 << ((mp_digit)b % DIGIT_BIT)) - 1;
   mp_clamp (c);
   return MP_OKAY;
 }
@@ -2661,7 +2660,7 @@ int mp_montgomery_calc_normalization (mp_int * a, const mp_int * b)
 
 
   /* now compute C = A * B mod b */
-  for (x = bits - 1; x < (int)DIGIT_BIT; x++) {
+  for (x = bits - 1; x < DIGIT_BIT; x++) {
     if ((res = mp_mul_2 (a, a)) != MP_OKAY) {
       return res;
     }
@@ -2907,14 +2906,14 @@ int mp_mul_2d (const mp_int * a, int b, mp_int * c)
      }
   }
 
-  if (c->alloc < (int)(c->used + b/DIGIT_BIT + 1)) {
+  if (c->alloc < c->used + b/DIGIT_BIT + 1) {
      if ((res = mp_grow (c, c->used + b / DIGIT_BIT + 1)) != MP_OKAY) {
        return res;
      }
   }
 
   /* shift by as many digits in the bit count */
-  if (b >= (int)DIGIT_BIT) {
+  if (b >= DIGIT_BIT) {
     if ((res = mp_lshd (c, b / DIGIT_BIT)) != MP_OKAY) {
       return res;
     }
@@ -4068,7 +4067,7 @@ int s_mp_exptmod (const mp_int * G, const mp_int * X, mp_int * P, mp_int * Y)
       }
       /* read next digit and reset the bitcnt */
       buf    = X->dp[digidx--];
-      bitcnt = (int) DIGIT_BIT;
+      bitcnt = DIGIT_BIT;
     }
 
     /* grab the next msb from the exponent */
