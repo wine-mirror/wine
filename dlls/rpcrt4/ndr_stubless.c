@@ -38,6 +38,7 @@
 #include "rpc.h"
 #include "rpcproxy.h"
 
+#include "wine/exception.h"
 #include "wine/debug.h"
 #include "wine/rpcfc.h"
 
@@ -676,70 +677,123 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
      * 4. PROXY_SENDRECEIVE - send/receive buffer
      * 5. PROXY_UNMARHSAL - unmarshal [out] params from buffer
      */
-    for (phase = PROXY_CALCSIZE; phase <= PROXY_UNMARSHAL; phase++)
+    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
     {
-        TRACE("phase = %d\n", phase);
-        switch (phase)
+        __TRY
         {
-        case PROXY_GETBUFFER:
-            /* allocate the buffer */
-            if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
-                NdrProxyGetBuffer(This, &stubMsg);
-            else if (Oif_flags.HasPipes)
-                /* NdrGetPipeBuffer(...) */
-                FIXME("pipes not supported yet\n");
-            else
+            for (phase = PROXY_CALCSIZE; phase <= PROXY_UNMARSHAL; phase++)
             {
-                if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
-#if 0
-                    NdrNsGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
-#else
-                    FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
-#endif
-                else
-                    NdrGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
+                TRACE("phase = %d\n", phase);
+                switch (phase)
+                {
+                case PROXY_GETBUFFER:
+                    /* allocate the buffer */
+                    NdrProxyGetBuffer(This, &stubMsg);
+                    break;
+                case PROXY_SENDRECEIVE:
+                    /* send the [in] params and receive the [out] and [retval]
+                     * params */
+                    NdrProxySendReceive(This, &stubMsg);
+
+                    /* convert strings, floating point values and endianess into our
+                     * preferred format */
+                    if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
+                        NdrConvert(&stubMsg, pFormat);
+
+                    break;
+                case PROXY_CALCSIZE:
+                case PROXY_MARSHAL:
+                case PROXY_UNMARSHAL:
+                    if (bV2Format)
+                        client_do_args(&stubMsg, pFormat, phase, number_of_params,
+                            (unsigned char *)&RetVal);
+                    else
+                        client_do_args_old_format(&stubMsg, pFormat, phase, stack_size,
+                            (unsigned char *)&RetVal,
+                            (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT));
+                    break;
+                default:
+                    ERR("shouldn't reach here. phase %d\n", phase);
+                    break;
+                }
             }
-            break;
-        case PROXY_SENDRECEIVE:
-            /* send the [in] params and receive the [out] and [retval]
-             * params */
-            if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
-                NdrProxySendReceive(This, &stubMsg);
-            else if (Oif_flags.HasPipes)
-                /* NdrPipesSendReceive(...) */
-                FIXME("pipes not supported yet\n");
-            else
+        }
+        __EXCEPT(NULL)
+        {
+            RetVal = NdrProxyErrorHandler(GetExceptionCode());
+        }
+        __ENDTRY
+    }
+    else
+    {
+        /* order of phases:
+         * 1. PROXY_CALCSIZE - calculate the buffer size
+         * 2. PROXY_GETBUFFER - allocate the buffer
+         * 3. PROXY_MARHSAL - marshal [in] params into the buffer
+         * 4. PROXY_SENDRECEIVE - send/receive buffer
+         * 5. PROXY_UNMARHSAL - unmarshal [out] params from buffer
+         */
+        for (phase = PROXY_CALCSIZE; phase <= PROXY_UNMARSHAL; phase++)
+        {
+            TRACE("phase = %d\n", phase);
+            switch (phase)
             {
-                if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
-#if 0
-                    NdrNsSendReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
-#else
-                    FIXME("using auto handle - call NdrNsSendReceive when it gets implemented\n");
-#endif
+            case PROXY_GETBUFFER:
+                /* allocate the buffer */
+                if (Oif_flags.HasPipes)
+                    /* NdrGetPipeBuffer(...) */
+                    FIXME("pipes not supported yet\n");
                 else
-                    NdrSendReceive(&stubMsg, stubMsg.Buffer);
+                {
+                    if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+#if 0
+                        NdrNsGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
+#else
+                        FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
+#endif
+                    else
+                        NdrGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
+                }
+                break;
+            case PROXY_SENDRECEIVE:
+                /* send the [in] params and receive the [out] and [retval]
+                 * params */
+                if (Oif_flags.HasPipes)
+                    /* NdrPipesSendReceive(...) */
+                    FIXME("pipes not supported yet\n");
+                else
+                {
+                    if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+#if 0
+                        NdrNsSendReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
+#else
+                        FIXME("using auto handle - call NdrNsSendReceive when it gets implemented\n");
+#endif
+                    else
+                        NdrSendReceive(&stubMsg, stubMsg.Buffer);
+                }
+
+                /* convert strings, floating point values and endianess into our
+                 * preferred format */
+                if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
+                    NdrConvert(&stubMsg, pFormat);
+
+                break;
+            case PROXY_CALCSIZE:
+            case PROXY_MARSHAL:
+            case PROXY_UNMARSHAL:
+                if (bV2Format)
+                    client_do_args(&stubMsg, pFormat, phase, number_of_params,
+                        (unsigned char *)&RetVal);
+                else
+                    client_do_args_old_format(&stubMsg, pFormat, phase, stack_size,
+                        (unsigned char *)&RetVal,
+                        (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT));
+                break;
+            default:
+                ERR("shouldn't reach here. phase %d\n", phase);
+                break;
             }
-
-            /* convert strings, floating point values and endianess into our
-             * preferred format */
-            if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
-                NdrConvert(&stubMsg, pFormat);
-
-            break;
-        case PROXY_CALCSIZE:
-        case PROXY_MARSHAL:
-        case PROXY_UNMARSHAL:
-            if (bV2Format)
-                client_do_args(&stubMsg, pFormat, phase, number_of_params,
-                    (unsigned char *)&RetVal);
-            else
-                client_do_args_old_format(&stubMsg, pFormat, phase, stack_size,
-                    (unsigned char *)&RetVal,
-                    (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT));
-            break;
-        default:
-            ERR("shouldn't reach here. phase %d\n", phase);
-            break;
         }
     }
 
