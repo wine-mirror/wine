@@ -182,7 +182,6 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
             if (tid != GetCurrentThreadId() &&
                 (mdThd->SuspendCount = SuspendThread(hThread)) != (DWORD)-1)
             {
-                mdThd->SuspendCount--;
                 ctx->ContextFlags = CONTEXT_FULL;
                 if (!GetThreadContext(hThread, ctx))
                     memset(ctx, 0, sizeof(*ctx));
@@ -204,6 +203,8 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
                     pctx = &lctx;
                 }
                 else pctx = except->ExceptionPointers->ContextRecord;
+
+                memcpy(ctx, pctx, sizeof(*ctx));
                 fetch_thread_stack(dc, tbi.TebBaseAddress, pctx, &mdThd->Stack);
             }
         }
@@ -423,6 +424,11 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size
      * size of mdModuleList
      * FIXME: if we don't ask for all modules in cb, we'll get a hole in the file
      */
+
+    /* the stream size is just the size of the module index.  It does not include the data for the
+       names of each module.  *Technically* the names are supposed to go into the common string table
+       in the minidump file.  Since each string is referenced by RVA they can all safely be located
+       anywhere between streams in the file, so the end of this stream is sufficient. */
     rva_base = dc->rva;
     dc->rva += *size = sizeof(mdModuleList.NumberOfModules) + sizeof(mdModule) * nmod;
     for (i = 0; i < dc->num_modules; i++)
@@ -523,12 +529,16 @@ static  void    dump_system_info(struct dump_context* dc, DWORD *size)
 
     mdSysInfo.CSDVersionRva = dc->rva + sizeof(mdSysInfo);
     mdSysInfo.u1.Reserved1 = 0;
+    mdSysInfo.u1.s.SuiteMask = VER_SUITE_TERMINAL;
 
+    FIXME("fill in CPU vendorID and feature set\n");
     memset(&mdSysInfo.Cpu, 0, sizeof(mdSysInfo.Cpu));
 
     append(dc, &mdSysInfo, sizeof(mdSysInfo));
     *size = sizeof(mdSysInfo);
 
+    /* write the service pack version string after this stream.  It is referenced within the
+       stream by its RVA in the file. */
     slen = lstrlenW(osInfo.szCSDVersion) * sizeof(WCHAR);
     WriteFile(dc->hFile, &slen, sizeof(slen), &written, NULL);
     WriteFile(dc->hFile, osInfo.szCSDVersion, slen, &written, NULL);
@@ -678,6 +688,10 @@ static void dump_misc_info(struct dump_context* dc, DWORD* size)
     mmi.Flags1 = MINIDUMP_MISC1_PROCESS_ID;
     mmi.ProcessId = dc->pid;
     /* FIXME: create/user/kernel time */
+    mmi.ProcessCreateTime = 0;
+    mmi.ProcessKernelTime = 0;
+    mmi.ProcessUserTime = 0;
+
     append(dc, &mmi, sizeof(mmi));
     *size = sizeof(mmi);
 }
@@ -692,6 +706,7 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
                               PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
                               PMINIDUMP_CALLBACK_INFORMATION CallbackParam)
 {
+    static const MINIDUMP_DIRECTORY emptyDir = {UnusedStream, {0, 0}};
     MINIDUMP_HEADER     mdHead;
     MINIDUMP_DIRECTORY  mdDir;
     DWORD               i, nStreams, idx_stream;
@@ -715,6 +730,9 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     nStreams = 6 + (ExceptionParam ? 1 : 0) +
         (UserStreamParam ? UserStreamParam->UserStreamCount : 0);
 
+    /* pad the directory size to a multiple of 4 for alignment purposes */
+    nStreams = (nStreams + 3) & ~3;
+
     if (DumpType & MiniDumpWithDataSegs)
         FIXME("NIY MiniDumpWithDataSegs\n");
     if (DumpType & MiniDumpWithFullMemory)
@@ -728,8 +746,9 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
 
     /* 2) write header */
     mdHead.Signature = MINIDUMP_SIGNATURE;
-    mdHead.Version = MINIDUMP_VERSION;
+    mdHead.Version = MINIDUMP_VERSION;  /* NOTE: native puts in an 'implementation specific' value in the high order word of this member */
     mdHead.NumberOfStreams = nStreams;
+    mdHead.CheckSum = 0;                /* native sets a 0 checksum in its files */
     mdHead.StreamDirectoryRva = sizeof(mdHead);
     mdHead.u.TimeDateStamp = time(NULL);
     mdHead.Flags = DumpType;
@@ -803,6 +822,11 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
                    UserStreamParam->UserStreamArray[i].BufferSize);
         }
     }
+
+    /* fill the remaining directory entries with 0's (unused stream types) */
+    /* NOTE: this should always come last in the dump! */
+    for (i = idx_stream; i < nStreams; i++)
+        writeat(&dc, mdHead.StreamDirectoryRva + i * sizeof(emptyDir), &emptyDir, sizeof(emptyDir));
 
     HeapFree(GetProcessHeap(), 0, dc.pcs_buffer);
     HeapFree(GetProcessHeap(), 0, dc.mem);
