@@ -39,9 +39,12 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#define USE_WS_PREFIX
+#include "winsock2.h"
 #include "iphlpapi.h"
 #include "ifenum.h"
 #include "ipstats.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
@@ -812,17 +815,44 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
  */
 DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdwBestIfIndex)
 {
+    struct WS_sockaddr_in sa_in;
+    memset(&sa_in, 0, sizeof(sa_in));
+    sa_in.sin_family = AF_INET;
+    sa_in.sin_addr.S_un.S_addr = dwDestAddr;
+    return GetBestInterfaceEx((struct WS_sockaddr *)&sa_in, pdwBestIfIndex);
+}
+
+/******************************************************************
+ *    GetBestInterfaceEx (IPHLPAPI.@)
+ *
+ * Get the interface, with the best route for the given IP address.
+ *
+ * PARAMS
+ *  dwDestAddr     [In]  IP address to search the interface for
+ *  pdwBestIfIndex [Out] found best interface
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetBestInterfaceEx(struct WS_sockaddr *pDestAddr, PDWORD pdwBestIfIndex)
+{
   DWORD ret;
 
-  TRACE("dwDestAddr 0x%08lx, pdwBestIfIndex %p\n", dwDestAddr, pdwBestIfIndex);
-  if (!pdwBestIfIndex)
+  TRACE("pDestAddr %p, pdwBestIfIndex %p\n", pDestAddr, pdwBestIfIndex);
+  if (!pDestAddr || !pdwBestIfIndex)
     ret = ERROR_INVALID_PARAMETER;
   else {
     MIB_IPFORWARDROW ipRow;
 
-    ret = GetBestRoute(dwDestAddr, 0, &ipRow);
-    if (ret == ERROR_SUCCESS)
-      *pdwBestIfIndex = ipRow.dwForwardIfIndex;
+    if (pDestAddr->sa_family == AF_INET) {
+      ret = GetBestRoute(((struct WS_sockaddr_in *)pDestAddr)->sin_addr.S_un.S_addr, 0, &ipRow);
+      if (ret == ERROR_SUCCESS)
+        *pdwBestIfIndex = ipRow.dwForwardIfIndex;
+    } else {
+      FIXME("address family %d not supported\n", pDestAddr->sa_family);
+      ret = ERROR_NOT_SUPPORTED;
+    }
   }
   TRACE("returning %d\n", ret);
   return ret;

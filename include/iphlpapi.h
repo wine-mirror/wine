@@ -94,6 +94,16 @@ DWORD WINAPI GetUniDirectionalAdapterInfo(
 
 DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdwBestIfIndex);
 
+#ifdef __WINE_WINSOCKAPI_STDLIB_H
+DWORD WINAPI GetBestInterfaceEx(
+#ifdef USE_WS_PREFIX
+    struct WS_sockaddr *pDestAddr,
+#else
+    struct sockaddr *pDestAddr,
+#endif
+    PDWORD pdwBestIfIndex);
+#endif
+
 DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr,
  PMIB_IPFORWARDROW   pBestRoute);
 

@@ -20,6 +20,7 @@
 @ stub GetAdapterOrderMap
 @ stdcall GetAdaptersInfo( ptr ptr )
 @ stdcall GetBestInterface( long ptr )
+@ stdcall GetBestInterfaceEx( ptr ptr )
 @ stub GetBestInterfaceFromStack
 @ stdcall GetBestRoute( long long long )
 @ stub GetBestRouteFromStack
