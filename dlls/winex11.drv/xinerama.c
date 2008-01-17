@@ -134,14 +134,14 @@ static inline int query_screens(void)
 
 #endif  /* SONAME_LIBXINERAMA */
 
-void xinerama_init(void)
+void xinerama_init( unsigned int width, unsigned int height )
 {
     MONITORINFOEXW *primary;
     int i;
 
     wine_tsx11_lock();
 
-    SetRect( &virtual_screen_rect, 0, 0, screen_width, screen_height );
+    SetRect( &virtual_screen_rect, 0, 0, width, height );
 
     if (root_window != DefaultRootWindow( gdi_display ) || !query_screens())
     {

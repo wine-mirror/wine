@@ -528,10 +528,7 @@ static BOOL process_attach(void)
 
     if (TRACE_ON(synchronous)) XSynchronize( display, True );
 
-    screen_width  = WidthOfScreen( screen );
-    screen_height = HeightOfScreen( screen );
-
-    xinerama_init();
+    xinerama_init( WidthOfScreen(screen), HeightOfScreen(screen) );
     X11DRV_Settings_Init();
 
 #ifdef HAVE_LIBXXF86VM

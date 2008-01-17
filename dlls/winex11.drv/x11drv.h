@@ -731,7 +731,7 @@ extern void X11DRV_sync_window_position( Display *display, struct x11drv_win_dat
 extern BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                                    const RECT *rectClient, UINT swp_flags, const RECT *validRects );
 extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );
-extern void xinerama_init(void);
+extern void xinerama_init( unsigned int width, unsigned int height );
 
 extern void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height );
 extern void X11DRV_resize_desktop(unsigned int width, unsigned int height);
