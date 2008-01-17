@@ -594,6 +594,7 @@ static void test_get_value(void)
     DWORD dw, qw[2];
     CHAR buf[80];
     CHAR expanded[] = "bar\\subdir1";
+    CHAR expanded2[] = "ImARatherLongButIndeedNeededString\\subdir1";
    
     if(!pRegGetValueA)
     {
@@ -711,11 +712,11 @@ static void test_get_value(void)
 
     /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ and no buffer (ok, expands) */
     size = 0;
-    ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ, NULL, NULL, &size);
+    ret = pRegGetValueA(hkey_main, NULL, "TP2_EXP_SZ", RRF_RT_REG_SZ, NULL, NULL, &size);
     ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
-    /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath1 length + 1 here. */
-    ok((size == strlen(expanded)+1) || (size == strlen(sTestpath1)+1),
-        "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%d\n", lstrlenA(expanded), lstrlenA(sTestpath1), size);
+    /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath2 length + 1 here. */
+    ok((size == strlen(expanded2)+1) || (size == strlen(sTestpath2)+1),
+        "strlen(expanded2)=%d, strlen(sTestpath2)=%d, size=%d\n", lstrlenA(expanded2), lstrlenA(sTestpath2), size);
 
     /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ (ok, expands) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
@@ -726,7 +727,17 @@ static void test_get_value(void)
         "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%d\n", lstrlenA(expanded), lstrlenA(sTestpath1), size);
     ok(type == REG_SZ, "type=%d\n", type);
     ok(!strcmp(expanded, buf), "expanded=\"%s\" buf=\"%s\"\n", expanded, buf);
-    
+
+    /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ (ok, expands a lot) */
+    buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
+    ret = pRegGetValueA(hkey_main, NULL, "TP2_EXP_SZ", RRF_RT_REG_SZ, &type, buf, &size);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath2 length + 1 here. */
+    ok((size == strlen(expanded2)+1) || (size == strlen(sTestpath2)+1),
+        "strlen(expanded2)=%d, strlen(sTestpath1)=%d, size=%d\n", lstrlenA(expanded2), lstrlenA(sTestpath2), size);
+    ok(type == REG_SZ, "type=%d\n", type);
+    ok(!strcmp(expanded2, buf), "expanded2=\"%s\" buf=\"%s\"\n", expanded2, buf);
+
     /* Query REG_EXPAND_SZ using RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND (ok, doesn't expand) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND, &type, buf, &size);
