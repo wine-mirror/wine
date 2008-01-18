@@ -1872,6 +1872,7 @@ static void test_xmlTypes(void)
     IXMLDOMAttribute *pAttrubute;
     IXMLDOMNamedNodeMap *pAttribs;
     IXMLDOMCDATASection *pCDataSec;
+    IXMLDOMImplementation *pIXMLDOMImplementation = NULL;
     BSTR str;
     IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;   /* Used for testing Siblings */
     VARIANT v;
@@ -1916,6 +1917,61 @@ static void test_xmlTypes(void)
     ok(hr == S_OK, "ret %08x\n", hr );
     ok( !lstrcmpW( str, _bstr_("document") ), "incorrect nodeTypeString string\n");
     SysFreeString(str);
+
+    /* test implementation */
+    hr = IXMLDOMDocument_get_implementation(doc, NULL);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+    hr = IXMLDOMDocument_get_implementation(doc, &pIXMLDOMImplementation);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    if(hr == S_OK)
+    {
+        VARIANT_BOOL hasFeature = VARIANT_TRUE;
+        BSTR sEmpty = SysAllocStringLen(NULL, 0);
+
+        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, NULL, sEmpty, &hasFeature);
+        ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, sEmpty, sEmpty, NULL);
+        ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("DOM"), sEmpty, &hasFeature);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(hasFeature == VARIANT_FALSE, "hasFeature returned false\n");
+
+        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, sEmpty, sEmpty, &hasFeature);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(hasFeature == VARIANT_FALSE, "hasFeature returned true\n");
+
+        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("DOM"), NULL, &hasFeature);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(hasFeature == VARIANT_TRUE, "hasFeature returned false\n");
+
+        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("DOM"), sEmpty, &hasFeature);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(hasFeature == VARIANT_FALSE, "hasFeature returned false\n");
+
+        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("DOM"), _bstr_("1.0"), &hasFeature);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(hasFeature == VARIANT_TRUE, "hasFeature returned true\n");
+
+        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("XML"), _bstr_("1.0"), &hasFeature);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(hasFeature == VARIANT_TRUE, "hasFeature returned true\n");
+
+        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("MS-DOM"), _bstr_("1.0"), &hasFeature);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(hasFeature == VARIANT_TRUE, "hasFeature returned true\n");
+
+        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("SSS"), NULL, &hasFeature);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(hasFeature == VARIANT_FALSE, "hasFeature returned false\n");
+
+        SysFreeString(sEmpty);
+        IXMLDOMImplementation_Release(pIXMLDOMImplementation);
+    }
+
+
 
     hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
     ok(hr == S_OK, "ret %08x\n", hr );

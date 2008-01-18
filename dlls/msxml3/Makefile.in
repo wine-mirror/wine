@@ -13,6 +13,7 @@ C_SRCS = \
 	cdata.c \
 	comment.c \
 	domdoc.c \
+	domimpl.c \
 	element.c \
 	factory.c \
 	main.c \

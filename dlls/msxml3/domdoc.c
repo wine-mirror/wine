@@ -804,8 +804,12 @@ static HRESULT WINAPI domdoc_get_implementation(
     IXMLDOMDocument2 *iface,
     IXMLDOMImplementation** impl )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    if(!impl)
+        return E_INVALIDARG;
+
+    *impl = (IXMLDOMImplementation*)create_doc_Implementation();
+
+    return S_OK;
 }
 
 static HRESULT WINAPI domdoc_get_documentElement(
