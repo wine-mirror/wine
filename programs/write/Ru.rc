@@ -1,5 +1,7 @@
 /*
- * Copyright 2007 Mikolaj Zalewski
+ * Russian language support
+ *
+ * Copyright 2008 Andrey Esin <andrey@esin.name>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,14 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windef.h>
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-#include "resources.h"
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "En.rc"
-#include "Fr.rc"
-#include "Ko.rc"
-#include "No.rc"
-#include "Ru.rc"
+STRINGTABLE
+{
+    IDS_FAILED, "Не удалось запустить Wordpad"
+}
