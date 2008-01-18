@@ -774,6 +774,12 @@ static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data
                      XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
 
     wine_tsx11_unlock();
+
+    if (data->wm_hints)
+    {
+        data->wm_hints->flags = 0;
+        set_icon_hints( display, data, (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICON ) );
+    }
 }
 
 
@@ -837,21 +843,17 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
                      x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
                      (unsigned char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
 
-    wine_tsx11_unlock();
-
     /* wm hints */
     if (data->wm_hints)
     {
-        data->wm_hints->flags = InputHint | StateHint | WindowGroupHint;
+        data->wm_hints->flags |= InputHint | StateHint | WindowGroupHint;
         data->wm_hints->input = !(style & WS_DISABLED);
         data->wm_hints->initial_state = (style & WS_MINIMIZE) ? IconicState : NormalState;
         data->wm_hints->window_group = group_leader;
-        set_icon_hints( display, data, (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICON ) );
-
-        wine_tsx11_lock();
         XSetWMHints( display, data->whole_window, data->wm_hints );
-        wine_tsx11_unlock();
     }
+
+    wine_tsx11_unlock();
 }
 
 
