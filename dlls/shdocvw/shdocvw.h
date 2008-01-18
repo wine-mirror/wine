@@ -38,6 +38,8 @@
 #include "mshtmhst.h"
 #include "hlink.h"
 
+#include "wine/unicode.h"
+
 /**********************************************************************
  * Shell Instance Objects
  */
@@ -239,6 +241,21 @@ static inline void *heap_realloc(void *mem, size_t len)
 static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline LPWSTR heap_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = heap_alloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
 }
 
 #endif /* __WINE_SHDOCVW_H */

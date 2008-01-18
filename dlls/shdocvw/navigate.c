@@ -40,6 +40,7 @@ typedef struct {
 
     DocHost *doc_host;
 
+    LPWSTR url;
     HGLOBAL post_data;
     LPWSTR headers;
     ULONG post_data_len;
@@ -160,6 +161,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
             IOleClientSite_Release(CLIENTSITE(This->doc_host));
         if(This->post_data)
             GlobalFree(This->post_data);
+        heap_free(This->url);
         heap_free(This->headers);
         heap_free(This);
     }
@@ -379,7 +381,7 @@ static const IHttpNegotiateVtbl HttpNegotiateVtbl = {
     HttpNegotiate_OnResponse
 };
 
-static IBindStatusCallback *create_callback(DocHost *doc_host, PBYTE post_data,
+static IBindStatusCallback *create_callback(DocHost *doc_host, LPCWSTR url, PBYTE post_data,
         ULONG post_data_len, LPWSTR headers)
 {
     BindStatusCallback *ret = heap_alloc(sizeof(BindStatusCallback));
@@ -388,6 +390,7 @@ static IBindStatusCallback *create_callback(DocHost *doc_host, PBYTE post_data,
     ret->lpHttpNegotiateVtbl      = &HttpNegotiateVtbl;
 
     ret->ref = 1;
+    ret->url = heap_strdupW(url);
     ret->post_data = NULL;
     ret->post_data_len = post_data_len;
     ret->headers = NULL;
@@ -613,7 +616,7 @@ static HRESULT navigate_mon(DocHost *This, IMoniker *mon, PBYTE post_data, ULONG
     CoTaskMemFree(This->url);
     This->url = url;
 
-    callback = create_callback(This, post_data, post_data_len, (LPWSTR)headers);
+    callback = create_callback(This, url, post_data, post_data_len, (LPWSTR)headers);
     CreateAsyncBindCtx(0, callback, 0, &bindctx);
 
     hres = bind_to_object(This, mon, This->url, bindctx, callback);
