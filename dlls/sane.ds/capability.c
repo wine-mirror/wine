@@ -176,14 +176,14 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
 static TW_BOOL TWAIN_OneValueSet (pTW_CAPABILITY pCapability, TW_UINT32 value)
 {
-    pCapability->hContainer = (TW_HANDLE)GlobalAlloc (0, sizeof(TW_ONEVALUE));
+    pCapability->hContainer = GlobalAlloc (0, sizeof(TW_ONEVALUE));
 
     if (pCapability->hContainer)
     {
-        pTW_ONEVALUE pVal = GlobalLock ((HGLOBAL) pCapability->hContainer);
+        pTW_ONEVALUE pVal = GlobalLock (pCapability->hContainer);
         pVal->ItemType = TWTY_UINT32;
         pVal->Item = value;
-        GlobalUnlock ((HGLOBAL) pCapability->hContainer);
+        GlobalUnlock (pCapability->hContainer);
         return TRUE;
     }
     else
@@ -192,12 +192,12 @@ static TW_BOOL TWAIN_OneValueSet (pTW_CAPABILITY pCapability, TW_UINT32 value)
 
 static TW_BOOL TWAIN_OneValueGet (pTW_CAPABILITY pCapability, TW_UINT32 *pValue)
 {
-    pTW_ONEVALUE pVal = GlobalLock ((HGLOBAL) pCapability->hContainer);
+    pTW_ONEVALUE pVal = GlobalLock (pCapability->hContainer);
 
     if (pVal)
     {
         *pValue = pVal->Item;
-        GlobalUnlock ((HGLOBAL) pCapability->hContainer);
+        GlobalUnlock (pCapability->hContainer);
         return TRUE;
     }
     else
