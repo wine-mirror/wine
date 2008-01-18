@@ -41,7 +41,7 @@ typedef struct {
 
     LPWSTR url;
     HGLOBAL post_data;
-    LPWSTR headers;
+    BSTR headers;
     ULONG post_data_len;
 } BindStatusCallback;
 
@@ -160,8 +160,9 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
             IOleClientSite_Release(CLIENTSITE(This->doc_host));
         if(This->post_data)
             GlobalFree(This->post_data);
+        if(This->headers)
+            SysFreeString(This->headers);
         heap_free(This->url);
-        heap_free(This->headers);
         heap_free(This);
     }
 
@@ -399,7 +400,7 @@ static BindStatusCallback *create_callback(DocHost *doc_host, LPCWSTR url, PBYTE
     ret->url = heap_strdupW(url);
     ret->post_data = NULL;
     ret->post_data_len = post_data_len;
-    ret->headers = NULL;
+    ret->headers = headers ? SysAllocString(headers) : NULL;
 
     ret->doc_host = doc_host;
     IOleClientSite_AddRef(CLIENTSITE(doc_host));
@@ -407,12 +408,6 @@ static BindStatusCallback *create_callback(DocHost *doc_host, LPCWSTR url, PBYTE
     if(post_data) {
         ret->post_data = GlobalAlloc(0, post_data_len);
         memcpy(ret->post_data, post_data, post_data_len);
-    }
-
-    if(headers) {
-        int size = (strlenW(headers)+1)*sizeof(WCHAR);
-        ret->headers = heap_alloc(size);
-        memcpy(ret->headers, headers, size);
     }
 
     return ret;
