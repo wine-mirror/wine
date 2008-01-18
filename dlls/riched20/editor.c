@@ -2077,7 +2077,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     else
         bufferA = heap_alloc(wParam + 2);
 
-    ex.cb = wParam + (unicode ? 2*sizeof(WCHAR) : 2);
+    ex.cb = (wParam + 2) * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
     ex.flags = GT_USECRLF;
     ex.codepage = unicode ? 1200 : CP_ACP;
     ex.lpDefaultChar = NULL;
@@ -2086,8 +2086,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
 
     if (unicode)
     {
-        memcpy((LPWSTR)lParam, bufferW, wParam);
-        if (lstrlenW(bufferW) >= wParam / sizeof(WCHAR)) rc = 0;
+        memcpy((LPWSTR)lParam, bufferW, wParam * sizeof(WCHAR));
+        if (lstrlenW(bufferW) >= wParam) rc = 0;
     }
     else
     {
