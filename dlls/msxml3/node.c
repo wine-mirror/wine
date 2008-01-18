@@ -821,16 +821,13 @@ static HRESULT WINAPI xmlnode_get_dataType(
     if(!dataTypeName)
         return E_INVALIDARG;
 
-    /* CDATA Section, Comment, Document, Document Fragment,
+    /* Attribute, CDATA Section, Comment, Document, Document Fragment,
         Entity, Notation, PI, and Text Node are non-typed. */
     V_BSTR(dataTypeName) = NULL;
     V_VT(dataTypeName) = VT_NULL;
 
     switch ( This->node->type )
     {
-    case XML_ATTRIBUTE_NODE:
-        FIXME("NODE_ATTRIBUTE_NODE should return a valid value.\n");
-        break;
     case XML_ELEMENT_NODE:
         pVal = xmlGetNsProp(This->node, (xmlChar*)"dt",
                             (xmlChar*)"urn:schemas-microsoft-com:datatypes");
