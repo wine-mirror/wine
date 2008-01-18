@@ -2101,7 +2101,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case EM_GETTEXTEX:
   {
     GETTEXTEX *ex = (GETTEXTEX*)wParam;
-    int nStart, nCount;
+    int nStart, nCount; /* in chars */
 
     if (ex->flags & ~(GT_SELECTION | GT_USECRLF))
       FIXME("GETTEXTEX flags 0x%08x not supported\n", ex->flags & ~(GT_SELECTION | GT_USECRLF));
@@ -2110,12 +2110,11 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     {
       ME_GetSelection(editor, &nStart, &nCount);
       nCount -= nStart;
-      nCount = min(nCount, ex->cb - 1);
     }
     else
     {
       nStart = 0;
-      nCount = ex->cb - 1;
+      nCount = 0x7fffffff;
     }
     if (ex->codepage == 1200)
     {
@@ -2127,10 +2126,13 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       /* potentially each char may be a CR, why calculate the exact value with O(N) when
         we can just take a bigger buffer? :) */
       int crlfmul = (ex->flags & GT_USECRLF) ? 2 : 1;
-      LPWSTR buffer = heap_alloc((crlfmul*nCount + 1) * sizeof(WCHAR));
+      LPWSTR buffer;
       DWORD buflen = ex->cb;
       LRESULT rc;
       DWORD flags = 0;
+
+      nCount = min(nCount, ex->cb - 1);
+      buffer = heap_alloc((crlfmul*nCount + 1) * sizeof(WCHAR));
 
       buflen = ME_GetTextW(editor, buffer, nStart, nCount, ex->flags & GT_USECRLF);
       rc = WideCharToMultiByte(ex->codepage, flags, buffer, -1, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefaultChar);
