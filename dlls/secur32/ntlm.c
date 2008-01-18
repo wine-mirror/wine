@@ -832,9 +832,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         helper->crypt.ntlm2.send_a4i = SECUR32_arc4Alloc();
         helper->crypt.ntlm2.recv_a4i = SECUR32_arc4Alloc();
         SECUR32_arc4Init(helper->crypt.ntlm2.send_a4i,
-                (BYTE *)helper->crypt.ntlm2.send_seal_key, 16);
+                         helper->crypt.ntlm2.send_seal_key, 16);
         SECUR32_arc4Init(helper->crypt.ntlm2.recv_a4i,
-               (BYTE *)helper->crypt.ntlm2.recv_seal_key, 16);
+                         helper->crypt.ntlm2.recv_seal_key, 16);
         helper->crypt.ntlm2.send_seq_no = 0l;
         helper->crypt.ntlm2.recv_seq_no = 0l;
     }
