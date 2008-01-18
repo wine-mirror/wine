@@ -792,7 +792,6 @@ static inline void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
     }
     if (fpux)
     {
-        save_fpux( context );
         context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
         memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
         fpux_support = 1;
@@ -873,7 +872,7 @@ void set_cpu_context( const CONTEXT *context )
 {
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
 
-    if (flags & CONTEXT_EXTENDED_REGISTERS) restore_fpux( context );
+    if ((flags & CONTEXT_EXTENDED_REGISTERS) && fpux_support) restore_fpux( context );
     else if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
 
     if (flags & CONTEXT_DEBUG_REGISTERS)
