@@ -61,6 +61,8 @@ static LRESULT WINAPI shell_embedding_proc(HWND hwnd, UINT msg, WPARAM wParam, L
     switch(msg) {
     case WM_SIZE:
         return resize_window(This, LOWORD(lParam), HIWORD(lParam));
+    case WM_DOCHOSTTASK:
+        return process_dochost_task(&This->doc_host, lParam);
     }
 
     return DefWindowProcW(hwnd, msg, wParam, lParam);

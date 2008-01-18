@@ -77,6 +77,8 @@ ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         return iewnd_OnDestroy(This);
     case WM_SIZE:
         return iewnd_OnSize(This, LOWORD(lparam), HIWORD(lparam));
+    case WM_DOCHOSTTASK:
+        return process_dochost_task(&This->doc_host, lparam);
     }
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }

@@ -269,10 +269,16 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
     return E_NOTIMPL;
 }
 
+static void object_available_proc(DocHost *This, task_header_t *task)
+{
+    object_available(This);
+}
+
 static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface,
         REFIID riid, IUnknown *punk)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
+    task_header_t *task;
     IOleObject *oleobj;
     HRESULT hres;
 
@@ -302,7 +308,8 @@ static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *
     /* FIXME: Call SetAdvise */
     /* FIXME: Call Invoke(DISPID_READYSTATE) */
 
-    PostMessageW(This->doc_host->hwnd, WB_WM_NAVIGATE2, 0, 0);
+    task = heap_alloc(sizeof(*task));
+    push_dochost_task(This->doc_host, task, object_available_proc, FALSE);
 
     return S_OK;
 }

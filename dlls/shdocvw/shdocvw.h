@@ -51,6 +51,7 @@ extern HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid,
  */
 
 typedef struct ConnectionPoint ConnectionPoint;
+typedef struct DocHost DocHost;
 
 typedef struct {
     const IConnectionPointContainerVtbl *lpConnectionPointContainerVtbl;
@@ -62,7 +63,15 @@ typedef struct {
     IUnknown *impl;
 } ConnectionPointContainer;
 
-typedef struct {
+struct _task_header_t;
+
+typedef void (*task_proc_t)(DocHost*, struct _task_header_t*);
+
+typedef struct _task_header_t {
+    task_proc_t proc;
+} task_header_t;
+
+struct DocHost {
     const IOleClientSiteVtbl      *lpOleClientSiteVtbl;
     const IOleInPlaceSiteVtbl     *lpOleInPlaceSiteVtbl;
     const IDocHostUIHandler2Vtbl  *lpDocHostUIHandlerVtbl;
@@ -92,7 +101,7 @@ typedef struct {
     VARIANT_BOOL offline;
 
     ConnectionPointContainer cps;
-} DocHost;
+};
 
 struct WebBrowser {
     /* Interfaces available via WebBrowser object */
@@ -198,16 +207,19 @@ HRESULT WebBrowserV2_Create(IUnknown*,REFIID,void**);
 
 void create_doc_view_hwnd(DocHost*);
 void deactivate_document(DocHost*);
+void object_available(DocHost*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 HRESULT navigate_url(DocHost*,LPCWSTR,const VARIANT*,const VARIANT*,VARIANT*,VARIANT*);
 HRESULT go_home(DocHost*);
+
+#define WM_DOCHOSTTASK (WM_USER+0x300)
+void push_dochost_task(DocHost*,task_header_t*,task_proc_t,BOOL);
+LRESULT  process_dochost_task(DocHost*,LPARAM);
 
 HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**);
 void InternetExplorer_WebBrowser_Init(InternetExplorer*);
 
 HRESULT CUrlHistory_Create(IUnknown*,REFIID,void**);
-
-#define WB_WM_NAVIGATE2 (WM_USER+100)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
