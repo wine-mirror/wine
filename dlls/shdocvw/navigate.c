@@ -638,10 +638,28 @@ static HRESULT navigate_bsc(DocHost *This, BindStatusCallback *bsc, IMoniker *mo
     return hres;
 }
 
+typedef struct {
+    task_header_t header;
+    BindStatusCallback *bsc;
+} task_navigate_bsc_t;
+
+static void navigate_bsc_proc(DocHost *This, task_header_t *t)
+{
+    task_navigate_bsc_t *task = (task_navigate_bsc_t*)t;
+
+    if(!This->hwnd)
+        create_doc_view_hwnd(This);
+
+    navigate_bsc(This, task->bsc, NULL);
+
+    IBindStatusCallback_Release(BINDSC(task->bsc));
+}
+
+
 HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
                      const VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
 {
-    BindStatusCallback *bsc;
+    task_navigate_bsc_t *task;
     PBYTE post_data = NULL;
     ULONG post_data_len = 0;
     LPWSTR headers = NULL;
@@ -671,16 +689,13 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
         TRACE("Headers: %s\n", debugstr_w(headers));
     }
 
-    if(!This->hwnd)
-        create_doc_view_hwnd(This);
+    task = heap_alloc(sizeof(*task));
+    task->bsc = create_callback(This, url, post_data, post_data_len, headers);
 
-    bsc = create_callback(This, url, post_data, post_data_len, headers);
     if(post_data)
         SafeArrayUnaccessData(V_ARRAY(PostData));
 
-    navigate_bsc(This, bsc, NULL);
-
-    IBindStatusCallback_Release(BINDSC(bsc));
+    push_dochost_task(This, &task->header, navigate_bsc_proc, This->url == NULL);
 
     return S_OK;
 }
