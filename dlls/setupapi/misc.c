@@ -789,7 +789,7 @@ DWORD WINAPI RetreiveFileSecurity(LPCWSTR lpFileName,
     DWORD dwSize = 0x100;
     DWORD dwError;
 
-    SecDesc = (PSECURITY_DESCRIPTOR)MyMalloc(dwSize);
+    SecDesc = MyMalloc(dwSize);
     if (SecDesc == NULL)
         return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -808,7 +808,7 @@ DWORD WINAPI RetreiveFileSecurity(LPCWSTR lpFileName,
         return dwError;
     }
 
-    SecDesc = (PSECURITY_DESCRIPTOR)MyRealloc(SecDesc, dwSize);
+    SecDesc = MyRealloc(SecDesc, dwSize);
     if (SecDesc == NULL)
         return ERROR_NOT_ENOUGH_MEMORY;
 

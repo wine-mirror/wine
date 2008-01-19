@@ -1082,7 +1082,7 @@ WCHAR *PARSER_get_dest_dir( INFCONTEXT *context )
 HINF WINAPI SetupOpenInfFileA( PCSTR name, PCSTR class, DWORD style, UINT *error )
 {
     UNICODE_STRING nameW, classW;
-    HINF ret = (HINF)INVALID_HANDLE_VALUE;
+    HINF ret = INVALID_HANDLE_VALUE;
 
     classW.Buffer = NULL;
     if (class && !RtlCreateUnicodeStringFromAsciiz( &classW, class ))
@@ -1112,11 +1112,11 @@ HINF WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR class, DWORD style, UINT *err
 
     if (strchrW( name, '\\' ) || strchrW( name, '/' ))
     {
-        if (!(len = GetFullPathNameW( name, 0, NULL, NULL ))) return (HINF)INVALID_HANDLE_VALUE;
+        if (!(len = GetFullPathNameW( name, 0, NULL, NULL ))) return INVALID_HANDLE_VALUE;
         if (!(path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
         {
             SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return (HINF)INVALID_HANDLE_VALUE;
+            return INVALID_HANDLE_VALUE;
         }
         GetFullPathNameW( name, len, path, NULL );
         handle = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
@@ -1130,7 +1130,7 @@ HINF WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR class, DWORD style, UINT *err
         if (!(path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
         {
             SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return (HINF)INVALID_HANDLE_VALUE;
+            return INVALID_HANDLE_VALUE;
         }
         GetWindowsDirectoryW( path, len );
         p = path + strlenW(path);
@@ -1153,7 +1153,7 @@ HINF WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR class, DWORD style, UINT *err
     if (!file)
     {
         HeapFree( GetProcessHeap(), 0, path );
-        return (HINF)INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE_VALUE;
     }
     TRACE( "%s -> %p\n", debugstr_w(path), file );
     file->filename = path;
@@ -1171,7 +1171,7 @@ BOOL WINAPI SetupOpenAppendInfFileA( PCSTR name, HINF parent_hinf, UINT *error )
 
     if (!name) return SetupOpenAppendInfFileW( NULL, parent_hinf, error );
     child_hinf = SetupOpenInfFileA( name, NULL, INF_STYLE_WIN4, error );
-    if (child_hinf == (HINF)INVALID_HANDLE_VALUE) return FALSE;
+    if (child_hinf == INVALID_HANDLE_VALUE) return FALSE;
     append_inf_file( parent_hinf, child_hinf );
     TRACE( "%p: appended %s (%p)\n", parent_hinf, debugstr_a(name), child_hinf );
     return TRUE;
@@ -1196,14 +1196,14 @@ BOOL WINAPI SetupOpenAppendInfFileW( PCWSTR name, HINF parent_hinf, UINT *error 
                                      sizeof(filename)/sizeof(WCHAR), NULL ))
         {
             child_hinf = SetupOpenInfFileW( filename, NULL, INF_STYLE_WIN4, error );
-            if (child_hinf == (HINF)INVALID_HANDLE_VALUE) return FALSE;
+            if (child_hinf == INVALID_HANDLE_VALUE) return FALSE;
             append_inf_file( parent_hinf, child_hinf );
             TRACE( "%p: appended %s (%p)\n", parent_hinf, debugstr_w(filename), child_hinf );
         }
         return TRUE;
     }
     child_hinf = SetupOpenInfFileW( name, NULL, INF_STYLE_WIN4, error );
-    if (child_hinf == (HINF)INVALID_HANDLE_VALUE) return FALSE;
+    if (child_hinf == INVALID_HANDLE_VALUE) return FALSE;
     append_inf_file( parent_hinf, child_hinf );
     TRACE( "%p: appended %s (%p)\n", parent_hinf, debugstr_w(name), child_hinf );
     return TRUE;

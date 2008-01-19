@@ -1116,7 +1116,7 @@ SetupDiCreateDeviceInfoListExA(const GUID *ClassGuid,
     {
         MachineNameW = MultiByteToUnicode(MachineName, CP_ACP);
         if (MachineNameW == NULL)
-            return (HDEVINFO)INVALID_HANDLE_VALUE;
+            return INVALID_HANDLE_VALUE;
     }
 
     hDevInfo = SetupDiCreateDeviceInfoListExW(ClassGuid, hwndParent,
@@ -1160,20 +1160,20 @@ SetupDiCreateDeviceInfoListExW(const GUID *ClassGuid,
     {
         FIXME("remote support is not implemented\n");
         SetLastError(ERROR_INVALID_MACHINENAME);
-        return (HDEVINFO)INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE_VALUE;
     }
 
     if (Reserved != NULL)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return (HDEVINFO)INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE_VALUE;
     }
 
     list = HeapAlloc(GetProcessHeap(), 0, size);
     if (!list)
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return (HDEVINFO)INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE_VALUE;
     }
 
     list->magic = SETUP_DEVICE_INFO_SET_MAGIC;
@@ -1243,7 +1243,7 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(
     TRACE("%p %p %d %d %d %p %s\n", DeviceInfoSet, DeviceInfoData, Scope,
             HwProfile, KeyType, InfHandle, debugstr_w(InfSectionName));
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return INVALID_HANDLE_VALUE;
@@ -1387,7 +1387,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
         SetLastError(ERROR_INVALID_DEVINST_NAME);
         return FALSE;
     }
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -1520,7 +1520,7 @@ BOOL WINAPI SetupDiRegisterDeviceInfo(
     TRACE("%p %p %08x %p %p %p\n", DeviceInfoSet, DeviceInfoData, Flags,
             CompareProc, CompareContext, DupDeviceInfoData);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -1567,7 +1567,7 @@ BOOL WINAPI SetupDiEnumDeviceInfo(
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (devinfo && devinfo != (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (devinfo && devinfo != INVALID_HANDLE_VALUE)
     {
         struct DeviceInfoSet *list = (struct DeviceInfoSet *)devinfo;
         if (list->magic == SETUP_DEVICE_INFO_SET_MAGIC)
@@ -1907,7 +1907,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsA(
         enumstrW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if (!enumstrW)
         {
-            ret = (HDEVINFO)INVALID_HANDLE_VALUE;
+            ret = INVALID_HANDLE_VALUE;
             goto end;
         }
         MultiByteToWideChar(CP_ACP, 0, enumstr, -1, enumstrW, len);
@@ -1941,7 +1941,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsExA(
         enumstrW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if (!enumstrW)
         {
-            ret = (HDEVINFO)INVALID_HANDLE_VALUE;
+            ret = INVALID_HANDLE_VALUE;
             goto end;
         }
         MultiByteToWideChar(CP_ACP, 0, enumstr, -1, enumstrW, len);
@@ -1953,7 +1953,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsExA(
         if (!machineW)
         {
             HeapFree(GetProcessHeap(), 0, enumstrW);
-            ret = (HDEVINFO)INVALID_HANDLE_VALUE;
+            ret = INVALID_HANDLE_VALUE;
             goto end;
         }
         MultiByteToWideChar(CP_ACP, 0, machine, -1, machineW, len);
@@ -2362,7 +2362,7 @@ BOOL WINAPI SetupDiGetDeviceInfoListDetailA(
 
     TRACE("%p %p\n", DeviceInfoSet, DevInfoData);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -2395,7 +2395,7 @@ BOOL WINAPI SetupDiGetDeviceInfoListDetailW(
 
     TRACE("%p %p\n", DeviceInfoSet, DevInfoData);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -2470,7 +2470,7 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
             debugstr_guid(InterfaceClassGuid), debugstr_w(ReferenceString),
             CreationFlags, DeviceInterfaceData);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -2593,7 +2593,7 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
     TRACE("%p %p %d %08x %p %p\n", DeviceInfoSet, DeviceInterfaceData, Reserved,
             samDesired, InfHandle, InfSectionName);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE ||
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
             set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -2666,7 +2666,7 @@ BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(
 
     TRACE("%p %p %d\n", DeviceInfoSet, DeviceInterfaceData, Reserved);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE ||
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
             set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -2738,7 +2738,7 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(
     TRACE("%p, %p, %s, %d, %p\n", DeviceInfoSet, DeviceInfoData,
      debugstr_guid(InterfaceClassGuid), MemberIndex, DeviceInterfaceData);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE ||
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
             set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -2828,7 +2828,7 @@ BOOL WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO devinfo)
     BOOL ret = FALSE;
 
     TRACE("%p\n", devinfo);
-    if (devinfo && devinfo != (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (devinfo && devinfo != INVALID_HANDLE_VALUE)
     {
         struct DeviceInfoSet *list = (struct DeviceInfoSet *)devinfo;
 
@@ -2872,7 +2872,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
      DeviceInterfaceData, DeviceInterfaceDetailData,
      DeviceInterfaceDetailDataSize, RequiredSize, DeviceInfoData);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE ||
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
             set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -2945,7 +2945,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
      DeviceInterfaceData, DeviceInterfaceDetailData,
      DeviceInterfaceDetailDataSize, RequiredSize, DeviceInfoData);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE ||
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
             set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -3676,7 +3676,7 @@ HKEY WINAPI SetupDiOpenDevRegKey(
     TRACE("%p %p %d %d %d %x\n", DeviceInfoSet, DeviceInfoData,
           Scope, HwProfile, KeyType, samDesired);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return INVALID_HANDLE_VALUE;
@@ -3792,7 +3792,7 @@ BOOL WINAPI SetupDiDeleteDevRegKey(
     TRACE("%p %p %d %d %d\n", DeviceInfoSet, DeviceInfoData, Scope, HwProfile,
             KeyType);
 
-    if (!DeviceInfoSet || DeviceInfoSet == (HDEVINFO)INVALID_HANDLE_VALUE)
+    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;

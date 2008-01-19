@@ -104,7 +104,7 @@ static RETERR16 get_last_error(void)
 RETERR16 WINAPI IpOpen16( LPCSTR filename, HINF16 *hinf16 )
 {
     HINF hinf = SetupOpenInfFileA( filename, NULL, INF_STYLE_WIN4, NULL );
-    if (hinf == (HINF)INVALID_HANDLE_VALUE) return get_last_error();
+    if (hinf == INVALID_HANDLE_VALUE) return get_last_error();
     return alloc_hinf16( hinf, hinf16 );
 }
 

@@ -426,7 +426,7 @@ HSPFILEQ WINAPI SetupOpenFileQueue(void)
     struct file_queue *queue;
 
     if (!(queue = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*queue))))
-        return (HSPFILEQ)INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE_VALUE;
     return queue;
 }
 
