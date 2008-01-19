@@ -947,11 +947,11 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface
     } else {
         clsidChild = This->m_pCLSID;
     }
-    
+
     hr = CreateUnixFolder(NULL, &IID_IPersistFolder3, (void**)&persistFolder, clsidChild);
     if (!SUCCEEDED(hr)) return hr;
-    hr = IPersistFolder_QueryInterface(persistFolder, riid, (void**)ppvOut);
-   
+    hr = IPersistFolder_QueryInterface(persistFolder, riid, ppvOut);
+
     if (SUCCEEDED(hr)) {
         UnixFolder *subfolder = ADJUST_THIS(UnixFolder, IPersistFolder3, persistFolder);
         subfolder->m_pidlLocation = ILCombine(This->m_pidlLocation, pidl);

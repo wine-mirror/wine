@@ -133,7 +133,7 @@ end:
 void WINAPI DragFinish16(HDROP16 h)
 {
     TRACE("\n");
-    GlobalFree16((HGLOBAL16)h);
+    GlobalFree16(h);
 }
 
 

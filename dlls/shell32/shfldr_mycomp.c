@@ -447,7 +447,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetAttributesOf (IShellFolder2 * iface,
         IShellFolder *psfParent = NULL;
         LPCITEMIDLIST rpidl = NULL;
 
-        hr = SHBindToParent(This->pidlRoot, &IID_IShellFolder, (LPVOID*)&psfParent, (LPCITEMIDLIST*)&rpidl);
+        hr = SHBindToParent(This->pidlRoot, &IID_IShellFolder, (LPVOID*)&psfParent, &rpidl);
         if(SUCCEEDED(hr)) {
             SHELL32_GetItemAttributes (psfParent, rpidl, rgfInOut);
             IShellFolder_Release(psfParent);

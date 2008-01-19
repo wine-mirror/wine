@@ -1539,7 +1539,7 @@ static HRESULT SHELL_PidlGeticonLocationA(IShellFolder* psf, LPCITEMIDLIST pidl,
     if (SUCCEEDED(hr)) {
 	IExtractIconA* pei;
 
-	hr = IShellFolder_GetUIObjectOf(psf, 0, 1, (LPCITEMIDLIST*)&pidlLast, &IID_IExtractIconA, NULL, (LPVOID*)&pei);
+	hr = IShellFolder_GetUIObjectOf(psf, 0, 1, &pidlLast, &IID_IExtractIconA, NULL, (LPVOID*)&pei);
 
 	if (SUCCEEDED(hr)) {
 	    hr = IExtractIconA_GetIconLocation(pei, 0, pszIconPath, MAX_PATH, piIcon, NULL);
@@ -1918,7 +1918,7 @@ static HRESULT SHELL_PidlGeticonLocationW(IShellFolder* psf, LPCITEMIDLIST pidl,
     if (SUCCEEDED(hr)) {
 	IExtractIconW* pei;
 
-	hr = IShellFolder_GetUIObjectOf(psf, 0, 1, (LPCITEMIDLIST*)&pidlLast, &IID_IExtractIconW, NULL, (LPVOID*)&pei);
+	hr = IShellFolder_GetUIObjectOf(psf, 0, 1, &pidlLast, &IID_IExtractIconW, NULL, (LPVOID*)&pei);
 
 	if (SUCCEEDED(hr)) {
 	    hr = IExtractIconW_GetIconLocation(pei, 0, pszIconPath, MAX_PATH, piIcon, NULL);

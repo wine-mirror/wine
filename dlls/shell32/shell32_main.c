@@ -526,7 +526,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                 static const WCHAR p1W[] = {'%','1',0};
                 WCHAR sTemp [MAX_PATH];
 
-                szExt = (LPWSTR) PathFindExtensionW(szFullPath);
+                szExt = PathFindExtensionW(szFullPath);
                 TRACE("szExt=%s\n", debugstr_w(szExt));
                 if ( szExt &&
                      HCR_MapTypeToValueW(szExt, sTemp, MAX_PATH, TRUE) &&
@@ -584,7 +584,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                 static const WCHAR p1W[] = {'%','1',0};
 
                 psfi->iIcon = 0;
-                szExt = (LPWSTR) PathFindExtensionW(sTemp);
+                szExt = PathFindExtensionW(sTemp);
                 if ( szExt &&
                      HCR_MapTypeToValueW(szExt, sTemp, MAX_PATH, TRUE) &&
                      HCR_GetDefaultIconW(sTemp, sTemp, MAX_PATH, &icon_idx))
@@ -1090,7 +1090,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
 
     if(!(hRes = FindResourceW(shell32_hInstance, wszSHELL_ABOUT_MSGBOX, (LPWSTR)RT_DIALOG)))
         return FALSE;
-    if(!(template = (LPVOID)LoadResource(shell32_hInstance, hRes)))
+    if(!(template = LoadResource(shell32_hInstance, hRes)))
         return FALSE;
     info.szApp        = szApp;
     info.szOtherStuff = szOtherStuff;
