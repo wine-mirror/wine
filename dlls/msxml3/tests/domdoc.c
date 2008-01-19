@@ -154,6 +154,7 @@ static WCHAR szCDataXML[] = {'<','!','[','C','D','A','T','A','[','[','1',']','*'
                              'g','e','e',' ','t','h','a','t','s',' ','n','o','t',' ','r','i','g','h','t',
                              '!',']',']','>',0};
 static WCHAR szCDataNodeText[] = {'#','c','d','a','t','a','-','s','e','c','t','i','o','n',0 };
+static WCHAR szDocFragmentText[] = {'#','d','o','c','u','m','e','n','t','-','f','r','a','g','m','e','n','t',0 };
 
 #define expect_bstr_eq_and_free(bstr, expect) { \
     BSTR bstrExp = alloc_str_from_narrow(expect); \
@@ -1873,6 +1874,7 @@ static void test_xmlTypes(void)
     IXMLDOMNamedNodeMap *pAttribs;
     IXMLDOMCDATASection *pCDataSec;
     IXMLDOMImplementation *pIXMLDOMImplementation = NULL;
+    IXMLDOMDocumentFragment *pDocFrag = NULL;
     BSTR str;
     IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;   /* Used for testing Siblings */
     VARIANT v;
@@ -2193,6 +2195,70 @@ static void test_xmlTypes(void)
 
                 IXMLDOMCDATASection_Release(pCDataSec);
             }
+
+            /* Document Fragments */
+            hr = IXMLDOMDocument_createDocumentFragment(doc, NULL);
+            ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+            hr = IXMLDOMDocument_createDocumentFragment(doc, &pDocFrag);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;
+
+                hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pDocFrag, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                /* get Attribute Tests */
+                hr = IXMLDOMDocumentFragment_get_attributes(pDocFrag, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                pAttribs = (IXMLDOMNamedNodeMap*)0x1;
+                hr = IXMLDOMDocumentFragment_get_attributes(pDocFrag, &pAttribs);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok(pAttribs == NULL, "pAttribs != NULL\n");
+
+                hr = IXMLDOMDocumentFragment_get_nodeName(pDocFrag, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, szDocFragmentText ), "incorrect docfragment node Name\n");
+                SysFreeString(str);
+
+                /* test next Sibling*/
+                hr = IXMLDOMDocumentFragment_get_nextSibling(pDocFrag, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                pNextChild = (IXMLDOMNode *)0x1;
+                hr = IXMLDOMDocumentFragment_get_nextSibling(pDocFrag, &pNextChild);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok(pNextChild == NULL, "pNextChild not NULL\n");
+
+                /* test Previous Sibling*/
+                hr = IXMLDOMDocumentFragment_get_previousSibling(pDocFrag, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                pNextChild = (IXMLDOMNode *)0x1;
+                hr = IXMLDOMDocumentFragment_get_previousSibling(pDocFrag, &pNextChild);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok(pNextChild == NULL, "pNextChild not NULL\n");
+
+                /* test get_dataType */
+                hr = IXMLDOMDocumentFragment_get_dataType(pDocFrag, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                hr = IXMLDOMDocumentFragment_get_dataType(pDocFrag, &v);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
+                VariantClear(&v);
+
+                /* test nodeTypeString */
+                hr = IXMLDOMDocumentFragment_get_nodeTypeString(pDocFrag, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("documentfragment") ), "incorrect nodeTypeString string\n");
+                SysFreeString(str);
+
+                IXMLDOMDocumentFragment_Release(pCDataSec);
+            }
+
 
 
 

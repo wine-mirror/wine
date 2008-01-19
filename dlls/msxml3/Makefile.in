@@ -12,6 +12,7 @@ C_SRCS = \
 	attribute.c \
 	cdata.c \
 	comment.c \
+	docfrag.c \
 	domdoc.c \
 	domimpl.c \
 	element.c \

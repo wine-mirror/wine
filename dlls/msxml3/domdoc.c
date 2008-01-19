@@ -885,8 +885,26 @@ static HRESULT WINAPI domdoc_createDocumentFragment(
     IXMLDOMDocument2 *iface,
     IXMLDOMDocumentFragment** docFrag )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument2( iface );
+    xmlNodePtr xmlnode;
+
+    TRACE("%p\n", iface);
+
+    if(!docFrag)
+        return E_INVALIDARG;
+
+    *docFrag = NULL;
+
+    xmlnode = xmlNewDocFragment(get_doc( This ) );
+
+    if(!xmlnode)
+        return E_FAIL;
+
+    xmlnode->doc = get_doc( This );
+
+    *docFrag = (IXMLDOMDocumentFragment*)create_doc_fragment(xmlnode);
+
+    return S_OK;
 }
 
 

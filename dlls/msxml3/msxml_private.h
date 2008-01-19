@@ -45,6 +45,7 @@ extern IUnknown         *create_cdata( xmlNodePtr text );
 extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr );
 extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
 extern IUnknown         *create_doc_Implementation();
+extern IUnknown         *create_doc_fragment( xmlNodePtr fragment );
 
 extern HRESULT queryresult_create( xmlNodePtr, LPWSTR, IXMLDOMNodeList ** );
 
