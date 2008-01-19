@@ -472,7 +472,7 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	    switch(idCommand)
 	    {
 	      case FCIDM_SHVIEW_RENAME:
-	        strcpy((LPSTR)lpszName, "rename");
+	        strcpy(lpszName, "rename");
 	        hr = NOERROR;
 	        break;
 	    }
