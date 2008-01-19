@@ -290,7 +290,7 @@ static HTREEITEM InsertTreeViewItem( browse_info *info, IShellFolder * lpsf,
 	tvins.hInsertAfter = NULL;
 	tvins.hParent      = hParent;
 
-	return (HTREEITEM)TreeView_InsertItemW( info->hwndTreeView, &tvins );
+	return TreeView_InsertItemW( info->hwndTreeView, &tvins );
 }
 
 /******************************************************************************

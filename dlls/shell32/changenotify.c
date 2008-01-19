@@ -423,7 +423,7 @@ DWORD WINAPI NTSHChangeNotifyRegister(
     FIXME("(%p,0x%08x,0x%08x,0x%08x,0x%08x,%p):semi stub.\n",
 		hwnd,events1,events2,msg,count,idlist);
 
-    return (DWORD) SHChangeNotifyRegister(hwnd, events1, events2, msg, count, idlist);
+    return SHChangeNotifyRegister(hwnd, events1, events2, msg, count, idlist);
 }
 
 /*************************************************************************
@@ -448,7 +448,7 @@ HANDLE WINAPI SHChangeNotification_Lock(
     {
         idlist = SHAlloc( sizeof(LPCITEMIDLIST *) * node->cidl );
         for(i=0; i<node->cidl; i++)
-            idlist[i] = (LPCITEMIDLIST)node->pidlSignaled;
+            idlist[i] = node->pidlSignaled;
         *lpwEventId = node->wSignalledEvent;
         *lppidls = (LPITEMIDLIST*)idlist;
         node->wSignalledEvent = 0;

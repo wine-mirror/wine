@@ -288,7 +288,7 @@ static PIDLCPanelStruct* _ILGetCPanelPointer(LPCITEMIDLIST pidl)
     LPPIDLDATA pdata = _ILGetDataPointer(pidl);
 
     if (pdata && pdata->type==PT_CPLAPPLET)
-        return (PIDLCPanelStruct*)&(pdata->u.cpanel);
+        return &pdata->u.cpanel;
 
     return NULL;
 }
@@ -436,14 +436,14 @@ static BOOL CreateCPanelEnumList(
 
                 if (!(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
                     strcpy(p, wfd.cFileName);
-                    SHELL_RegisterCPanelApp((IEnumIDList*)iface, szPath);
+                    SHELL_RegisterCPanelApp(iface, szPath);
                 }
             } while(FindNextFileA(hFile, &wfd));
             FindClose(hFile);
         }
 
-        SHELL_RegisterRegistryCPanelApps((IEnumIDList*)iface, HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
-        SHELL_RegisterRegistryCPanelApps((IEnumIDList*)iface, HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
+        SHELL_RegisterRegistryCPanelApps(iface, HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
+        SHELL_RegisterRegistryCPanelApps(iface, HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
     }
     return TRUE;
 }

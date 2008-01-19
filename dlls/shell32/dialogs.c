@@ -103,7 +103,7 @@ void WINAPI RunFileDlg(
         MessageBoxA (hwndOwner, "Couldn't find dialog.", "Nix", MB_OK) ;
         return;
         }
-    if(!(template = (LPVOID)LoadResource(shell32_hInstance, hRes)))
+    if(!(template = LoadResource(shell32_hInstance, hRes)))
         {
         MessageBoxA (hwndOwner, "Couldn't load dialog.", "Nix", MB_OK) ;
         return;
