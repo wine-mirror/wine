@@ -897,6 +897,10 @@ static void start_process( void *arg )
  */
 static void set_process_name( int argc, char *argv[] )
 {
+#ifdef HAVE_SETPROCTITLE
+    setproctitle("-%s", argv[1]);
+#endif
+
 #ifdef HAVE_PRCTL
     int i, offset;
     char *p, *prctl_name = argv[1];

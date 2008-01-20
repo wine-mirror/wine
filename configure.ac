@@ -1364,6 +1364,7 @@ AC_CHECK_FUNCS(\
 	rfork \
 	sched_yield \
 	select \
+	setproctitle \
 	setrlimit \
 	settimeofday \
 	sigaltstack \

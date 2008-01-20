@@ -16536,6 +16536,7 @@ esac
 
 
 
+
 for ac_func in \
 	_pclose \
 	_popen \
@@ -16581,6 +16582,7 @@ for ac_func in \
 	rfork \
 	sched_yield \
 	select \
+	setproctitle \
 	setrlimit \
 	settimeofday \
 	sigaltstack \
