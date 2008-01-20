@@ -218,7 +218,6 @@ ME_Style *ME_ApplyStyle(ME_Style *sSrc, CHARFORMAT2W *style)
   if (style->dwMask & CFM_UNDERLINE)
   {
       s->fmt.dwMask |= CFM_UNDERLINETYPE;
-      s->fmt.dwMask &= ~CFM_UNDERLINE;
       s->fmt.bUnderlineType = (style->dwEffects & CFM_UNDERLINE) ?
           CFU_CF1UNDERLINE : CFU_UNDERLINENONE;
   }
