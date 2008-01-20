@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msvcr71.dll
+IMPORTLIB = libmsvcr71.$(IMPLIBEXT)
+IMPORTS   = msvcrt kernel32
+
+C_SRCS = \
+	msvcr71.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

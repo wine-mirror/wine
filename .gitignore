@@ -287,6 +287,7 @@ dlls/msi/tests/testlist.c
 dlls/msimg32/libmsimg32.def
 dlls/msimtf/rsrc.res
 dlls/msrle32/rsrc.res
+dlls/msvcr71/libmsvcr71.def
 dlls/msvcrt/libmsvcrt.def
 dlls/msvcrt/rsrc.res
 dlls/msvcrt/tests/*.ok

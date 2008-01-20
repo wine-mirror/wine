@@ -132,6 +132,7 @@ BASEDIRS = \
 	msnet32 \
 	msrle32 \
 	msvcirt \
+	msvcr71 \
 	msvcrt \
 	msvcrt20 \
 	msvcrt40 \
@@ -559,6 +560,7 @@ IMPORT_LIBS = \
 	mshtml/libmshtml.$(IMPLIBEXT) \
 	msi/libmsi.$(IMPLIBEXT) \
 	msimg32/libmsimg32.$(IMPLIBEXT) \
+	msvcr71/libmsvcr71.$(IMPLIBEXT) \
 	msvcrt/libmsvcrt.$(IMPLIBEXT) \
 	msvcrt20/libmsvcrt20.$(IMPLIBEXT) \
 	msvcrt40/libmsvcrt40.$(IMPLIBEXT) \
@@ -814,6 +816,9 @@ msi/libmsi.$(IMPLIBEXT): msi/msi.spec $(WINEBUILD)
 
 msimg32/libmsimg32.$(IMPLIBEXT): msimg32/msimg32.spec $(WINEBUILD)
 	@cd msimg32 && $(MAKE) libmsimg32.$(IMPLIBEXT)
+
+msvcr71/libmsvcr71.$(IMPLIBEXT): msvcr71/msvcr71.spec $(WINEBUILD)
+	@cd msvcr71 && $(MAKE) libmsvcr71.$(IMPLIBEXT)
 
 msvcrt/libmsvcrt.$(IMPLIBEXT): msvcrt/msvcrt.spec $(WINEBUILD)
 	@cd msvcrt && $(MAKE) libmsvcrt.$(IMPLIBEXT)

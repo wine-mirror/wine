@@ -21419,6 +21419,8 @@ ac_config_files="$ac_config_files dlls/msrle32/Makefile"
 
 ac_config_files="$ac_config_files dlls/msvcirt/Makefile"
 
+ac_config_files="$ac_config_files dlls/msvcr71/Makefile"
+
 ac_config_files="$ac_config_files dlls/msvcrt/Makefile"
 
 ac_config_files="$ac_config_files dlls/msvcrt/tests/Makefile"
@@ -22575,6 +22577,7 @@ do
     "dlls/msnet32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msnet32/Makefile" ;;
     "dlls/msrle32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msrle32/Makefile" ;;
     "dlls/msvcirt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcirt/Makefile" ;;
+    "dlls/msvcr71/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcr71/Makefile" ;;
     "dlls/msvcrt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt/Makefile" ;;
     "dlls/msvcrt/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt/tests/Makefile" ;;
     "dlls/msvcrt20/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt20/Makefile" ;;
