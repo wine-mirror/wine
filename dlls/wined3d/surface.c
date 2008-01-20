@@ -993,7 +993,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     GLint  prev_store;
     GLint  prev_rasterpos[4];
     GLint skipBytes = 0;
-    BOOL storechanged = FALSE;
     UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
     IWineD3DDeviceImpl *myDevice = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *swapchain;
@@ -1074,10 +1073,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     /* Reset to previous pack row length */
     glPixelStorei(GL_UNPACK_ROW_LENGTH, skipBytes);
     vcheckGLcall("glPixelStorei GL_UNPACK_ROW_LENGTH");
-    if(storechanged) {
-        glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
-        vcheckGLcall("glPixelStorei GL_PACK_SWAP_BYTES");
-    }
 
     if(!swapchain) {
         glDrawBuffer(myDevice->offscreenBuffer);
