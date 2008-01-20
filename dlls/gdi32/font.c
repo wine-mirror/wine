@@ -848,8 +848,9 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf,
 
     if (!dc) return 0;
 
-    TRACE("lfFaceName = %s lfCharset = %d\n", debugstr_w(plf->lfFaceName),
-	  plf->lfCharSet);
+    if (plf)
+        TRACE("lfFaceName = %s lfCharset = %d\n", debugstr_w(plf->lfFaceName),
+	    plf->lfCharSet);
     fe32.lpLogFontParam = plf;
     fe32.lpEnumFunc = efproc;
     fe32.lpData = lParam;
