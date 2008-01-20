@@ -843,6 +843,180 @@ static void test_sequence(void)
     HeapFree(GetProcessHeap(), 0, config);
 }
 
+static void test_queryconfig2(void)
+{
+    SC_HANDLE scm_handle, svc_handle;
+    BOOL ret;
+    DWORD expected, needed;
+    BYTE buffer[MAX_PATH];
+    LPSERVICE_DESCRIPTIONA pConfig = (LPSERVICE_DESCRIPTIONA)buffer;
+    static const CHAR servicename [] = "Winetest";
+    static const CHAR displayname [] = "Winetest dummy service";
+    static const CHAR pathname    [] = "we_dont_care.exe";
+    static const CHAR dependencies[] = "Master1\0Master2\0+MasterGroup1\0";
+    static const CHAR password    [] = "";
+    static const CHAR description [] = "Description";
+    HMODULE dllhandle = GetModuleHandleA("advapi32.dll");
+    BOOL (WINAPI *pQueryServiceConfig2A)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD)
+            = (void*)GetProcAddress(dllhandle, "QueryServiceConfig2A");
+    BOOL (WINAPI *pQueryServiceConfig2W)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD)
+            = (void*)GetProcAddress(dllhandle, "QueryServiceConfig2W");
+    if(!pQueryServiceConfig2A)
+    {
+        skip("function QueryServiceConfig2A not present\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
+
+    if (!scm_handle)
+    {
+	if(GetLastError() == ERROR_ACCESS_DENIED)
+            skip("Not enough rights to get a handle to the manager\n");
+        else
+            ok(FALSE, "Could not get a handle to the manager: %d\n", GetLastError());
+        return;
+    }
+
+    /* Create a dummy service */
+    SetLastError(0xdeadbeef);
+    svc_handle = CreateServiceA(scm_handle, servicename, displayname, GENERIC_ALL,
+        SERVICE_INTERACTIVE_PROCESS | SERVICE_WIN32_OWN_PROCESS, SERVICE_DISABLED, SERVICE_ERROR_IGNORE,
+        pathname, NULL, NULL, dependencies, NULL, password);
+
+    if (!svc_handle)
+    {
+        if(GetLastError() == ERROR_SERVICE_EXISTS)
+        {
+            /* We try and open the service and do the rest of the tests. Some could
+             * fail if the tests were changed between these runs.
+             */
+            trace("Deletion probably didn't work last time\n");
+            SetLastError(0xdeadbeef);
+            svc_handle = OpenServiceA(scm_handle, servicename, GENERIC_ALL);
+            if (!svc_handle)
+            {
+                if(GetLastError() == ERROR_ACCESS_DENIED)
+                    skip("Not enough rights to open the service\n");
+                else
+                    ok(FALSE, "Could not open the service : %d\n", GetLastError());
+                CloseServiceHandle(scm_handle);
+                return;
+            }
+        }
+        if (GetLastError() == ERROR_ACCESS_DENIED)
+        {
+            skip("Not enough rights to create the service\n");
+            CloseServiceHandle(scm_handle);
+            return;
+        }
+        ok(svc_handle != NULL, "Could not create the service : %d\n", GetLastError());
+	if (!svc_handle)
+        {
+            CloseServiceHandle(scm_handle);
+            return;
+        }
+    }
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceConfig2A(svc_handle,0xfff0,buffer,sizeof(SERVICE_DESCRIPTIONA),&needed);
+    ok(!ret, "expected QueryServiceConfig2A to fail\n");
+    ok(ERROR_INVALID_LEVEL == GetLastError(), "expected error ERROR_INVALID_LEVEL, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceConfig2A(svc_handle,0xfff0,buffer,sizeof(SERVICE_DESCRIPTIONA),NULL);
+    ok(!ret, "expected QueryServiceConfig2A to fail\n");
+    ok(ERROR_INVALID_LEVEL == GetLastError(), "expected error ERROR_INVALID_LEVEL, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer,sizeof(SERVICE_DESCRIPTIONA),NULL);
+    ok(!ret, "expected QueryServiceConfig2A to fail\n");
+    ok(ERROR_INVALID_ADDRESS == GetLastError(), "expected error ERROR_INVALID_ADDRESS, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,NULL,sizeof(SERVICE_DESCRIPTIONA),&needed);
+    ok(!ret, "expected QueryServiceConfig2A to fail\n");
+    ok(ERROR_INVALID_ADDRESS == GetLastError(), "expected error ERROR_INVALID_ADDRESS, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,NULL,sizeof(SERVICE_DESCRIPTIONA),NULL);
+    ok(!ret, "expected QueryServiceConfig2A to fail\n");
+    ok(ERROR_INVALID_ADDRESS == GetLastError(), "expected error ERROR_INVALID_ADDRESS, got %d\n", GetLastError());
+
+    needed = 0;
+    pConfig->lpDescription = (LPSTR)0xdeadbeef;
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer,sizeof(SERVICE_DESCRIPTIONA),&needed);
+    ok(ret, "expected QueryServiceConfig2A to succeed\n");
+    ok(needed == sizeof(SERVICE_DESCRIPTIONA), "expected needed to be %d, got %d\n", sizeof(SERVICE_DESCRIPTIONA), needed);
+    ok(!pConfig->lpDescription, "expected lpDescription to be NULL, got %p", pConfig->lpDescription);
+
+    SetLastError(0xdeadbeef);
+    needed = 0;
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,NULL,0,&needed);
+    ok(!ret, "expected QueryServiceConfig2A to fail\n");
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(), "expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(needed == sizeof(SERVICE_DESCRIPTIONA), "expected needed to be %d, got %d\n", sizeof(SERVICE_DESCRIPTIONA), needed);
+
+    pConfig->lpDescription = (LPSTR) description;
+    ret = ChangeServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer);
+    ok(ret, "ChangeServiceConfig2A failed\n");
+    if (!ret) {
+        goto cleanup;
+    }
+
+    SetLastError(0xdeadbeef);
+    needed = 0;
+    expected = sizeof(SERVICE_DESCRIPTIONA) + sizeof(description) * sizeof(WCHAR); /* !! */
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer,sizeof(SERVICE_DESCRIPTIONA),&needed);
+    ok(!ret, "expected QueryServiceConfig2A to fail\n");
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(), "expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(needed == expected, "expected needed to be %d, got %d\n", expected, needed);
+
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer,needed-1,&needed);
+    ok(!ret, "expected QueryServiceConfig2A to fail\n");
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(), "expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer,needed,&needed);
+    ok(ret, "expected QueryServiceConfig2A to succeed\n");
+    ok(pConfig->lpDescription && !strcmp(description,pConfig->lpDescription),
+        "expected lpDescription to be %s, got %s\n",description ,pConfig->lpDescription);
+
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer, needed + 1,&needed);
+    ok(ret, "expected QueryServiceConfig2A to succeed\n");
+    ok(pConfig->lpDescription && !strcmp(description,pConfig->lpDescription),
+        "expected lpDescription to be %s, got %s\n",description ,pConfig->lpDescription);
+
+    if(!pQueryServiceConfig2W)
+    {
+        skip("function QueryServiceConfig2W not present\n");
+        goto cleanup;
+    }
+    SetLastError(0xdeadbeef);
+    needed = 0;
+    expected = sizeof(SERVICE_DESCRIPTIONW) + sizeof(WCHAR) * sizeof(description);
+    ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_DESCRIPTION,NULL,0,&needed);
+    ok(!ret, "expected QueryServiceConfig2W to fail\n");
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(), "expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(needed == expected, "expected needed to be %d, got %d\n", expected, needed);
+
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer, needed,&needed);
+    ok(ret, "expected QueryServiceConfig2W to succeed\n");
+
+cleanup:
+    DeleteService(svc_handle);
+
+    CloseServiceHandle(svc_handle);
+
+    /* Wait a while. The following test does a CreateService again */
+    Sleep(1000);
+
+    CloseServiceHandle(scm_handle);
+}
+
 static void test_refcount(void)
 {
     SC_HANDLE scm_handle, svc_handle1, svc_handle2, svc_handle3, svc_handle4, svc_handle5;
@@ -967,6 +1141,7 @@ START_TEST(service)
     test_close();
     /* Test the creation, querying and deletion of a service */
     test_sequence();
+    test_queryconfig2();
     /* The main reason for this test is to check if any refcounting is used
      * and what the rules are
      */
