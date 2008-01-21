@@ -971,6 +971,7 @@ done:
  */
 static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
 {
+    char                accmem;
     const char*         access = NULL;
     const char*         member_type = NULL;
     struct datatype_t   ct_ret;
@@ -1012,9 +1013,12 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
      * 'Z'
      */
 
+    accmem = *sym->current++;
+    if (accmem < 'A' || accmem > 'Z') goto done;
+
     if (!(sym->flags & UNDNAME_NO_ACCESS_SPECIFIERS))
     {
-        switch ((*sym->current - 'A') / 8)
+        switch ((accmem - 'A') / 8)
         {
         case 0: access = "private: "; break;
         case 1: access = "protected: "; break;
@@ -1023,9 +1027,9 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
     }
     if (!(sym->flags & UNDNAME_NO_MEMBER_TYPE))
     {
-        if (*sym->current >= 'A' && *sym->current <= 'X')
+        if (accmem <= 'X')
         {
-            switch ((*sym->current - 'A') % 8)
+            switch ((accmem - 'A') % 8)
             {
             case 2: case 3: member_type = "static "; break;
             case 4: case 5: member_type = "virtual "; break;
@@ -1034,17 +1038,16 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
         }
     }
 
-    if (*sym->current >= 'A' && *sym->current <= 'X')
+    if (accmem <= 'X')
     {
-        if (!((*sym->current - 'A') & 2))
+        if (((accmem - 'A') % 8) != 2 && ((accmem - 'A') % 8) != 3)
         {
             /* Implicit 'this' pointer */
             /* If there is an implicit this pointer, const modifier follows */
-            if (!get_modifier(*++sym->current, &modifier)) goto done;
+            if (!get_modifier(*sym->current, &modifier)) goto done;
+            sym->current++;
         }
     }
-    else if (*sym->current < 'A' || *sym->current > 'Z') goto done;
-    sym->current++;
 
     name = get_class_string(sym, 0);
   
