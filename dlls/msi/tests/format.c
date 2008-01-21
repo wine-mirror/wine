@@ -1646,6 +1646,42 @@ static void test_formatrecord(void)
     ok( sz == 8, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"100 -100"), "wrong output (%s)\n",buffer);
 
+    sz = sizeof(buffer);
+    MsiRecordSetString(hrec, 0, "[1] {[noprop] [twoprop]} {abcdef}");
+    MsiRecordSetString(hrec, 1, "one");
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(sz == 33, "Expected 33, got %d\n",sz);
+    todo_wine
+    {
+        ok(!lstrcmpA(buffer, "one {[noprop] [twoprop]} {abcdef}"),
+           "Expected \"one {[noprop] [twoprop]} {abcdef}\", got \"%s\"\n", buffer);
+    }
+
+    sz = sizeof(buffer);
+    MsiRecordSetString(hrec, 0, "[1] {[noprop] [one]} {abcdef}");
+    MsiRecordSetString(hrec, 1, "one");
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(sz == 29, "Expected 29, got %d\n",sz);
+    todo_wine
+    {
+        ok(!lstrcmpA(buffer, "one {[noprop] [one]} {abcdef}"),
+           "Expected \"one {[noprop] [one]} {abcdef}\", got \"%s\"\n", buffer);
+    }
+
+    sz = sizeof(buffer);
+    MsiRecordSetString(hrec, 0, "[1] {[one]} {abcdef}");
+    MsiRecordSetString(hrec, 1, "one");
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(sz == 20, "Expected 20, got %d\n",sz);
+    todo_wine
+    {
+        ok(!lstrcmpA(buffer, "one {[one]} {abcdef}"),
+           "Expected \"one {[one]} {abcdef}\", got \"%s\"\n", buffer);
+    }
+
     MsiCloseHandle( hrec );
 }
 
@@ -2001,6 +2037,42 @@ static void test_formatrecord_package(void)
     {
         ok( sz == 0, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
+    }
+
+    sz = sizeof(buffer);
+    MsiRecordSetString(hrec, 0, "[1] {[noprop] [twoprop]} {abcdef}");
+    MsiRecordSetString(hrec, 1, "one");
+    r = MsiFormatRecord(package, hrec, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(sz == 13, "Expected 13, got %d\n",sz);
+    todo_wine
+    {
+        ok(!lstrcmpA(buffer, "one  {abcdef}"),
+           "Expected \"one  {abcdef}\", got \"%s\"\n", buffer);
+    }
+
+    sz = sizeof(buffer);
+    MsiRecordSetString(hrec, 0, "[1] {[noprop] [one]} {abcdef}");
+    MsiRecordSetString(hrec, 1, "one");
+    r = MsiFormatRecord(package, hrec, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(sz == 13, "Expected 13, got %d\n",sz);
+    todo_wine
+    {
+        ok(!lstrcmpA(buffer, "one  {abcdef}"),
+           "Expected \"one  {abcdef}\", got \"%s\"\n", buffer);
+    }
+
+    sz = sizeof(buffer);
+    MsiRecordSetString(hrec, 0, "[1] {[one]} {abcdef}");
+    MsiRecordSetString(hrec, 1, "one");
+    r = MsiFormatRecord(package, hrec, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(sz == 20, "Expected 20, got %d\n",sz);
+    todo_wine
+    {
+        ok(!lstrcmpA(buffer, "one mercury {abcdef}"),
+           "Expected \"one mercury {abcdef}\", got \"%s\"\n", buffer);
     }
 
     MsiCloseHandle(hrec);
