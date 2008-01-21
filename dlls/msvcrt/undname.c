@@ -734,7 +734,8 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
     case 'T': /* union */
     case 'U': /* struct */
     case 'V': /* class */
-        /* Class/struct/union */
+    case 'Y': /* cointerface */
+        /* Class/struct/union/cointerface */
         {
             const char* struct_name = NULL;
             const char* type_name = NULL;
@@ -748,6 +749,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                 case 'T': type_name = "union ";  break;
                 case 'U': type_name = "struct "; break;
                 case 'V': type_name = "class ";  break;
+                case 'Y': type_name = "cointerface "; break;
                 }
             }
             ct->left = str_printf(sym, "%s%s", type_name, struct_name);
