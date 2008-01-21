@@ -1121,13 +1121,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
     IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
     if(swapchain || (myDevice->render_targets && iface == myDevice->render_targets[0])) {
+        if(swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+
         if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
             static BOOL warned = FALSE;
             if(!warned) {
                 ERR("The application tries to write to the render target, but render target locking is disabled\n");
                 warned = TRUE;
             }
-            if(swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
             goto unlock_end;
         }
 
