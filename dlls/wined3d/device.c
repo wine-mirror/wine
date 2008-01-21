@@ -894,9 +894,15 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     }
 
     /** FIXME: add support for real non-power-two if it's provided by the video card **/
-    /* Precalculated scaling for 'faked' non power of two texture coords */
+    /* Precalculated scaling for 'faked' non power of two texture coords.
+       Second also don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE
+       is used in combination with texture uploads (RTL_READTEX/RTL_TEXTEX). The reason is that EXT_PALETTED_TEXTURE
+       doesn't work in combination with ARB_TEXTURE_RECTANGLE.
+    */
     if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE) &&
-       (Width != pow2Width || Height != pow2Height)) {
+       (Width != pow2Width || Height != pow2Height) &&
+       !((Format == WINED3DFMT_P8) && GL_SUPPORT(EXT_PALETTED_TEXTURE) && (wined3d_settings.rendertargetlock_mode == RTL_READTEX || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX)))
+    {
         object->baseTexture.pow2Matrix[0] =  (float)Width;
         object->baseTexture.pow2Matrix[5] =  (float)Height;
         object->baseTexture.pow2Matrix[10] = 1.0;
