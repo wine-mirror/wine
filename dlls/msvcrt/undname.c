@@ -289,6 +289,52 @@ static char* str_printf(struct parsed_symbol* sym, const char* format, ...)
 static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                               struct array* pmt, BOOL in_args);
 
+static const char* get_number(struct parsed_symbol* sym)
+{
+    char*       ptr;
+    BOOL        sgn = FALSE;
+
+    if (*sym->current == '?')
+    {
+        sgn = TRUE;
+        sym->current++;
+    }
+    if (*sym->current >= '0' && *sym->current <= '8')
+    {
+        ptr = und_alloc(sym, 3);
+        if (sgn) ptr[0] = '-';
+        ptr[sgn ? 1 : 0] = *sym->current + 1;
+        ptr[sgn ? 2 : 1] = '\0';
+        sym->current++;
+    }
+    else if (*sym->current == '9')
+    {
+        ptr = und_alloc(sym, 4);
+        if (sgn) ptr[0] = '-';
+        ptr[sgn ? 1 : 0] = '1';
+        ptr[sgn ? 2 : 1] = '0';
+        ptr[sgn ? 3 : 2] = '\0';
+        sym->current++;
+    }
+    else if (*sym->current >= 'A' && *sym->current <= 'P')
+    {
+        long    ret = 0;
+
+        while (*sym->current >= 'A' && *sym->current <= 'P')
+        {
+            ret *= 16;
+            ret += *sym->current++ - 'A';
+        }
+        if (*sym->current != '@') return NULL;
+
+        ptr = und_alloc(sym, 17);
+        sprintf(ptr, "%s%ld", sgn ? "-" : "", ret);
+        sym->current++;
+    }
+    else return NULL;
+    return ptr;
+}
+
 /******************************************************************
  *		get_args
  * Parses a list of function/method arguments, creates a string corresponding
@@ -672,7 +718,6 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
 {
     char                dt;
     BOOL                add_pmt = TRUE;
-    int                 num_args=0;
 
     assert(ct);
     ct->left = ct->right = NULL;
@@ -779,34 +824,46 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
         add_pmt = FALSE;
         break;
     case '$':
-        if (sym->current[0] != '0') goto done;
-        if (sym->current[1] >= '0' && sym->current[1] <= '9')
+        switch (*sym->current++)
         {
-            char*       ptr;
-            ptr = und_alloc(sym, 2);
-            ptr[0] = sym->current[1] + 1;
-            ptr[1] = 0;
-            ct->left = ptr;
-            sym->current += 2;
-        }
-        else if (sym->current[1] >= 'A' && sym->current[1] <= 'P')
-        {
-            while (sym->current[1] >= 'A' && sym->current[1] <= 'P')
+        case '0':
+            if (!(ct->left = get_number(sym))) goto done;
+            break;
+        case 'D':
             {
-                num_args *= 16;
-		num_args += sym->current[1] - 'A';
-		sym->current += 1;
+                const char*   ptr;
+                if (!(ptr = get_number(sym))) goto done;
+                ct->left = str_printf(sym, "`template-parameter%s'", ptr);
             }
-            if(sym->current[1] == '@')
+            break;
+        case 'F':
             {
-                char *ptr;
-                ptr = und_alloc(sym, 17);
-                sprintf(ptr,"%d",num_args);
-                ct->left = ptr;
-                sym->current += 1;
+                const char*   p1;
+                const char*   p2;
+                if (!(p1 = get_number(sym))) goto done;
+                if (!(p2 = get_number(sym))) goto done;
+                ct->left = str_printf(sym, "{%s,%s}", p1, p2);
             }
+            break;
+        case 'G':
+            {
+                const char*   p1;
+                const char*   p2;
+                const char*   p3;
+                if (!(p1 = get_number(sym))) goto done;
+                if (!(p2 = get_number(sym))) goto done;
+                if (!(p3 = get_number(sym))) goto done;
+                ct->left = str_printf(sym, "{%s,%s,%s}", p1, p2, p3);
+            }
+            break;
+        case 'Q':
+            {
+                const char*   ptr;
+                if (!(ptr = get_number(sym))) goto done;
+                ct->left = str_printf(sym, "`non-type-template-parameter%s'", ptr);
+            }
+            break;
         }
-        else goto done;
         break;
     default :
         ERR("Unknown type %c\n", dt);
@@ -1036,6 +1093,22 @@ done:
     return ret;
 }
 
+/******************************************************************
+ *		handle_template
+ * Does the final parsing and handling for a name with templates
+ */
+static BOOL handle_template(struct parsed_symbol* sym)
+{
+    const char* name;
+    const char* args;
+
+    assert(*sym->current++ == '$');
+    if (!(name = get_literal_string(sym))) return FALSE;
+    if (!(args = get_args(sym, NULL, FALSE, '<', '>'))) return FALSE;
+    sym->result = str_printf(sym, "%s%s", name, args);
+    return TRUE;
+}
+
 /*******************************************************************
  *         symbol_demangle
  * Demangle a C++ linker symbol
@@ -1181,12 +1254,15 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
     }
 
     /* Either a class name, or '@' if the symbol is not a class member */
-    if (*sym->current != '@')
+    switch (*sym->current)
     {
+    case '@': sym->current++; break;
+    case '$': break;
+    default:
         /* Class the function is associated with, terminated by '@@' */
         if (!get_class(sym)) goto done;
+        break;
     }
-    else sym->current++;
 
     switch (do_after)
     {
@@ -1211,6 +1287,8 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         ret = handle_data(sym);
     else if (*sym->current >= 'A' && *sym->current <= 'Z')
         ret = handle_method(sym, do_after == 3);
+    else if (*sym->current == '$')
+        ret = handle_template(sym);
     else ret = FALSE;
 done:
     if (ret) assert(sym->result);

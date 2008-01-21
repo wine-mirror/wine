@@ -981,6 +981,9 @@ static void test_demangle(void)
 { "??0?$Foo@P6GHPAX0@Z@@QAE@PAD@Z", "__thiscall Foo<int (__stdcall*)(void *,void *)>::Foo<int (__stdcall*)(void *,void *)>(char *)", 0x880},
 { "?Qux@Bar@@0PAP6AHPAV1@AAH1PAH@ZA", "private: static int (__cdecl** Bar::Qux)(class Bar *,int &,int &,int *)" },
 { "?Qux@Bar@@0PAP6AHPAV1@AAH1PAH@ZA", "Bar::Qux", 0x1800},
+{"?$AAA@$DBAB@", "AAA<`template-parameter257'>"},
+{"?$AAA@$D?4@", "AAA<`template-parameter-5'>"},
+{"?$AAA@PAUBBB@@", "AAA<struct BBB *>"},
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));
     char* name;
