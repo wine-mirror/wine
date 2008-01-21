@@ -2,7 +2,7 @@
 18 stub PostError
 19 stub InitSSAutoEnterThread
 20 stub UpdateError
-22 stub LoadStringRC
+22 stdcall LoadStringRC(long ptr long long)
 23 stub ReOpenMetaDataWithMemory
 
 @ stub CallFunctionShim
@@ -69,7 +69,7 @@
 @ stub GetXMLObject
 @ stdcall LoadLibraryShim(ptr ptr ptr ptr)
 @ stub LoadLibraryWithPolicyShim
-@ stub LoadStringRCEx
+@ stdcall LoadStringRCEx(long long ptr long long ptr)
 @ stub LockClrVersion
 @ stub MetaDataGetDispenser
 @ stub OpenCtrs
