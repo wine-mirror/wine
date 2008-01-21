@@ -952,9 +952,14 @@ static BOOL handle_data(struct parsed_symbol* sym)
             ct.right = str_printf(sym, "{for `%s'}", cls);
         }
         break;
+    case '8':
+    case '9':
+        modifier = ct.left = ct.right = NULL;
+        break;
     default: goto done;
     }
     if (sym->flags & UNDNAME_NAME_ONLY) ct.left = ct.right = modifier = NULL;
+
     sym->result = str_printf(sym, "%s%s%s%s%s%s%s%s", access,
                              member_type, ct.left, 
                              modifier && ct.left ? " " : NULL, modifier, 
@@ -1218,6 +1223,44 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
             case 'M': function_name = "`eh vector destructor iterator'"; break;
             case 'N': function_name = "`eh vector vbase constructor iterator'"; break;
             case 'O': function_name = "`copy constructor closure'"; break;
+            case 'R':
+                sym->flags |= UNDNAME_NO_FUNCTION_RETURNS;
+                switch (*++sym->current)
+                {
+                case '0':
+                    {
+                        struct datatype_t       ct;
+                        struct array pmt;
+
+                        sym->current++;
+                        str_array_init(&pmt);
+                        demangle_datatype(sym, &ct, &pmt, FALSE);
+                        function_name = str_printf(sym, "%s%s `RTTI Type Descriptor'",
+                                                   ct.left, ct.right);
+                        sym->current--;
+                    }
+                    break;
+                case '1':
+                    {
+                        const char* n1, *n2, *n3, *n4;
+                        sym->current++;
+                        n1 = get_number(sym);
+                        n2 = get_number(sym);
+                        n3 = get_number(sym);
+                        n4 = get_number(sym);
+                        sym->current--;
+                        function_name = str_printf(sym, "`RTTI Base Class Descriptor at (%s,%s,%s,%s)'",
+                                                   n1, n2, n3, n4);
+                    }
+                    break;
+                case '2': function_name = "`RTTI Base Class Array'"; break;
+                case '3': function_name = "`RTTI Class Hierarchy Descriptor'"; break;
+                case '4': function_name = "`RTTI Complete Object Locator'"; break;
+                default:
+                    ERR("Unknown RTTI operator: _R%c\n", *sym->current);
+                    break;
+                }
+                break;
             case 'S': function_name = "`local vftable'"; break;
             case 'T': function_name = "`local vftable constructor closure'"; break;
             case 'U': function_name = "operator new[]"; break;
@@ -1291,7 +1334,7 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
     }
 
     /* Function/Data type and access level */
-    if (*sym->current >= '0' && *sym->current <= '7')
+    if (*sym->current >= '0' && *sym->current <= '9')
         ret = handle_data(sym);
     else if (*sym->current >= 'A' && *sym->current <= 'Z')
         ret = handle_method(sym, do_after == 3);
