@@ -13,6 +13,7 @@ CTESTS = \
 	font.c \
 	gdiobj.c \
 	generated.c \
+	icm.c \
 	mapping.c \
 	metafile.c \
 	palette.c \
