@@ -2,6 +2,7 @@
  * Image Color Management
  *
  * Copyright 2004 Marcus Meissner
+ * Copyright 2008 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,11 +23,14 @@
 
 #include <stdarg.h>
 #include <string.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winnls.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(icm);
 
@@ -34,15 +38,146 @@ WINE_DEFAULT_DEBUG_CHANNEL(icm);
 /***********************************************************************
  *           EnumICMProfilesA    (GDI32.@)
  */
-INT WINAPI EnumICMProfilesA(HDC hdc,ICMENUMPROCA func,LPARAM lParam) {
-	FIXME("(%p, %p, 0x%08lx), stub.\n",hdc,func,lParam);
+INT WINAPI EnumICMProfilesA(HDC hdc, ICMENUMPROCA func, LPARAM lparam)
+{
+	FIXME("%p, %p, 0x%08lx stub\n", hdc, func, lparam);
 	return -1;
 }
 
 /***********************************************************************
  *           EnumICMProfilesW    (GDI32.@)
  */
-INT WINAPI EnumICMProfilesW(HDC hdc,ICMENUMPROCW func,LPARAM lParam) {
-	FIXME("(%p, %p, 0x%08lx), stub.\n",hdc,func,lParam);
+INT WINAPI EnumICMProfilesW(HDC hdc, ICMENUMPROCW func, LPARAM lparam)
+{
+	FIXME("%p, %p, 0x%08lx stub\n", hdc, func, lparam);
 	return -1;
+}
+
+/**********************************************************************
+ *           GetICMProfileA   (GDI32.@)
+ *
+ * Returns the filename of the specified device context's color
+ * management profile, even if color management is not enabled
+ * for that DC.
+ *
+ * RETURNS
+ *    TRUE if filename is copied successfully.
+ *    FALSE if the buffer length pointed to by size is too small.
+ *
+ * FIXME
+ *    How does Windows assign these? Some registry key?
+ */
+BOOL WINAPI GetICMProfileA(HDC hdc, LPDWORD size, LPSTR filename)
+{
+    WCHAR filenameW[MAX_PATH];
+    DWORD buflen = MAX_PATH;
+    BOOL ret = FALSE;
+
+    TRACE("%p, %p, %p\n", hdc, size, filename);
+
+    if (!hdc || !size || !filename) return FALSE;
+
+    if (GetICMProfileW(hdc, &buflen, filenameW))
+    {
+        int len = WideCharToMultiByte(CP_ACP, 0, filenameW, -1, NULL, 0, NULL, NULL);
+        if (*size >= len)
+        {
+            WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, *size, NULL, NULL);
+            ret = TRUE;
+        }
+        else SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        *size = len;
+    }
+    return ret;
+}
+
+/**********************************************************************
+ *           GetICMProfileW     (GDI32.@)
+ */
+BOOL WINAPI GetICMProfileW(HDC hdc, LPDWORD size, LPWSTR filename)
+{
+    DWORD required;
+    WCHAR systemdir[MAX_PATH];
+    static const WCHAR profile[] =
+        {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s',
+         '\\','c','o','l','o','r','\\','s','R','G','B',' ','C','o','l','o','r',' ',
+         'S','p','a','c','e',' ','P','r','o','f','i','l','e','.','i','c','m',0};
+
+    TRACE("%p, %p, %p\n", hdc, size, filename);
+
+    if (!hdc || !size) return FALSE;
+
+    required  = GetSystemDirectoryW(systemdir, MAX_PATH);
+    required += sizeof(profile) / sizeof(WCHAR);
+
+    if (*size < required)
+    {
+        *size = required;
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+    if (filename)
+    {
+        strcpyW(filename, systemdir);
+        strcatW(filename, profile);
+
+        if (GetFileAttributesW(filename) == INVALID_FILE_ATTRIBUTES)
+            WARN("color profile not found\n");
+    }
+    *size = required;
+    return TRUE;
+}
+
+/**********************************************************************
+ *           GetLogColorSpaceA     (GDI32.@)
+ */
+BOOL WINAPI GetLogColorSpaceA(HCOLORSPACE colorspace, LPLOGCOLORSPACEA buffer, DWORD size)
+{
+    FIXME("%p %p 0x%08x stub\n", colorspace, buffer, size);
+    return FALSE;
+}
+
+/**********************************************************************
+ *           GetLogColorSpaceW      (GDI32.@)
+ */
+BOOL WINAPI GetLogColorSpaceW(HCOLORSPACE colorspace, LPLOGCOLORSPACEW buffer, DWORD size)
+{
+    FIXME("%p %p 0x%08x stub\n", colorspace, buffer, size);
+    return FALSE;
+}
+
+/**********************************************************************
+ *           SetICMProfileA         (GDI32.@)
+ */
+BOOL WINAPI SetICMProfileA(HDC hdc, LPSTR filename)
+{
+    FIXME("%p %s stub\n", hdc, debugstr_a(filename));
+    return TRUE;
+}
+
+/**********************************************************************
+ *           SetICMProfileW         (GDI32.@)
+ */
+BOOL WINAPI SetICMProfileW(HDC hdc, LPWSTR filename)
+{
+    FIXME("%p %s stub\n", hdc, debugstr_w(filename));
+    return TRUE;
+}
+
+/**********************************************************************
+ *           UpdateICMRegKeyA       (GDI32.@)
+ */
+BOOL WINAPI UpdateICMRegKeyA(DWORD reserved, LPSTR cmid, LPSTR filename, UINT command)
+{
+    FIXME("0x%08x, %s, %s, 0x%08x stub\n", reserved, debugstr_a(cmid), debugstr_a(filename), command);
+    return TRUE;
+}
+
+/**********************************************************************
+ *           UpdateICMRegKeyW       (GDI32.@)
+ */
+BOOL WINAPI UpdateICMRegKeyW(DWORD reserved, LPWSTR cmid, LPWSTR filename, UINT command)
+{
+    FIXME("0x%08x, %s, %s, 0x%08x stub\n", reserved, debugstr_w(cmid), debugstr_w(filename), command);
+    return TRUE;
 }
