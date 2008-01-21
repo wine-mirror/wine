@@ -288,8 +288,8 @@
 @ stub GetGlyphOutlineWow
 @ stdcall GetGraphicsMode(long)
 # @ stub GetHFONT
-@ stdcall GetICMProfileA(long ptr str)
-@ stdcall GetICMProfileW(long ptr wstr)
+@ stdcall GetICMProfileA(long ptr ptr)
+@ stdcall GetICMProfileW(long ptr ptr)
 @ stdcall GetKerningPairs(long long ptr) GetKerningPairsA
 @ stdcall GetKerningPairsA(long long ptr)
 @ stdcall GetKerningPairsW(long long ptr)
