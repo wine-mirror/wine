@@ -413,7 +413,7 @@ BOOL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
     FONTFAMILY		*family;
     char                FaceName[LF_FACESIZE];
 
-    if( plf->lfFaceName[0] ) {
+    if( plf && plf->lfFaceName[0] ) {
         WideCharToMultiByte(CP_ACP, 0, plf->lfFaceName, -1,
 			  FaceName, sizeof(FaceName), NULL, NULL);
         TRACE("lfFaceName = '%s'\n", FaceName);
