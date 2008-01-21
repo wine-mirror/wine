@@ -538,8 +538,8 @@ static BOOL get_class(struct parsed_symbol* sym)
             if (*++sym->current == '$') 
             {
                 sym->current++;
-                name = get_template_name(sym);
-                str_array_push(sym, name, -1, &sym->names);
+                if ((name = get_template_name(sym)))
+                    str_array_push(sym, name, -1, &sym->names);
             }
             break;
         default:
@@ -1292,17 +1292,17 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
             str_array_push(sym, function_name, -1, &sym->stack);
             break;
         }
-        sym->stack.start = 1;
     }
     else if (*sym->current == '$')
     {
         /* Strange construct, it's a name with a template argument list
            and that's all. */
         sym->current++;
-        sym->result = get_template_name(sym);
-        ret = TRUE;
+        ret = (sym->result = get_template_name(sym)) != NULL;
         goto done;
     }
+    else if (*sym->current == '?' && sym->current[1] == '$')
+        do_after = 5;
 
     /* Either a class name, or '@' if the symbol is not a class member */
     switch (*sym->current)
@@ -1330,6 +1330,9 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         break;
     case 3:
         sym->flags &= ~UNDNAME_NO_FUNCTION_RETURNS;
+        break;
+    case 5:
+        sym->names.start = 1;
         break;
     }
 

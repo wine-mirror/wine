@@ -984,6 +984,7 @@ static void test_demangle(void)
 {"?$AAA@$DBAB@", "AAA<`template-parameter257'>"},
 {"?$AAA@$D?4@", "AAA<`template-parameter-5'>"},
 {"?$AAA@PAUBBB@@", "AAA<struct BBB *>"},
+{"??$ccccc@PAVaaa@@@bar@bb@foo@@DGPAV0@PAV0@PAVee@@IPAPAVaaa@@1@Z", "private: static class bar * __stdcall foo::bb::bar::ccccc<class aaa *>(class bar *,class ee *,unsigned int,class aaa **,class ee *)"},
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));
     char* name;
