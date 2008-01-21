@@ -672,7 +672,7 @@ static UINT BUTTON_CalcLabelRect(HWND hwnd, HDC hdc, RECT *rc)
       empty_rect:
          rc->right = r.left;
          rc->bottom = r.top;
-         return (UINT)(LONG)-1;
+         return (UINT)-1;
    }
 
    /* Position label inside bounding rectangle according to

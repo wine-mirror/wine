@@ -1116,10 +1116,10 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
     wc->cbClsExtra    = classPtr->cbClsExtra;
     wc->cbWndExtra    = classPtr->cbWndExtra;
     wc->hInstance     = (hInstance == user32_module) ? 0 : hInstance;
-    wc->hIcon         = (HICON)classPtr->hIcon;
-    wc->hIconSm       = (HICON)classPtr->hIconSm;
-    wc->hCursor       = (HCURSOR)classPtr->hCursor;
-    wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
+    wc->hIcon         = classPtr->hIcon;
+    wc->hIconSm       = classPtr->hIconSm;
+    wc->hCursor       = classPtr->hCursor;
+    wc->hbrBackground = classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameA( classPtr );
     wc->lpszClassName = name;
     atom = classPtr->atomName;

@@ -1155,7 +1155,7 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
    HWND	hWnd = lphc->self;
 
    TRACE("[%p]: sel ok? [%i] dropped? [%i]\n",
-	 lphc->self, (INT)ok, (INT)(lphc->wState & CBF_DROPPED));
+	 lphc->self, ok, (INT)(lphc->wState & CBF_DROPPED));
 
    CB_NOTIFY( lphc, (ok) ? CBN_SELENDOK : CBN_SELENDCANCEL );
 

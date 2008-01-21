@@ -687,7 +687,7 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
     hotspot.y = ICON_HOTSPOT;
 
     TRACE_(cursor)("%p (%u bytes), ver %08x, %ix%i %s %s\n",
-                   bits, cbSize, (unsigned)dwVersion, width, height,
+                   bits, cbSize, dwVersion, width, height,
                                   bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
     if (dwVersion == 0x00020000)
     {
@@ -869,7 +869,7 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
 
     DeleteObject( hAndBits );
     DeleteObject( hXorBits );
-    return HICON_32((HICON16)hObj);
+    return HICON_32(hObj);
 }
 
 
@@ -1132,7 +1132,7 @@ static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
             }
             else
             {
-                pDirEntry = (CURSORICONDIRENTRY *)CURSORICON_FindBestCursorRes(
+                pDirEntry = CURSORICON_FindBestCursorRes(
                                 pDir, iDesiredCX, iDesiredCY, 1);
             }
 

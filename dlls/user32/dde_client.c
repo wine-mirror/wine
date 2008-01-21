@@ -717,7 +717,7 @@ static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPVOID pData, DWORD cbD
 
     if (cbData == (DWORD)-1)
     {
-        hglobal = (HGLOBAL)pData;
+        hglobal = pData;
         dh = (DDE_DATAHANDLE_HEAD *)GlobalLock(hglobal);
         cbData = GlobalSize(hglobal) - sizeof(DDE_DATAHANDLE_HEAD);
         pData = (LPVOID)(dh + 1);

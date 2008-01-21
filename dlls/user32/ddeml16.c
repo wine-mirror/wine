@@ -281,7 +281,7 @@ BOOL16 WINAPI DdeFreeDataHandle16(HDDEDATA hData)
  */
 BOOL16 WINAPI DdeKeepStringHandle16(DWORD idInst, HSZ hsz)
 {
-    return (BOOL)DdeKeepStringHandle(idInst, hsz);
+    return DdeKeepStringHandle(idInst, hsz);
 }
 
 /*****************************************************************
