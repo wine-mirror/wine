@@ -1464,9 +1464,7 @@ LONG WINAPI NdrStubCall2(
                 Status = I_RpcGetBuffer(pRpcMsg); 
                 if (Status)
                     RpcRaiseException(Status);
-                stubMsg.BufferStart = pRpcMsg->Buffer;
-                stubMsg.BufferEnd = stubMsg.BufferStart + stubMsg.BufferLength;
-                stubMsg.Buffer = stubMsg.BufferStart;
+                stubMsg.Buffer = pRpcMsg->Buffer;
             }
             break;
         case STUBLESS_UNMARSHAL:
