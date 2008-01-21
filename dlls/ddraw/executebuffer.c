@@ -317,7 +317,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 		for (i = 0; i < count; i++) {
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
 		    
-		    IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
+		    IDirect3DDevice2_SetRenderState(ICOM_INTERFACE(lpDevice, IDirect3DDevice2),
 						    ci->u1.drstRenderStateType, ci->u2.dwArg[0]);
 
 		    instr += size;
