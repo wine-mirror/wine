@@ -260,10 +260,10 @@ static void lighting_test(IDirect3DDevice9 *device)
     ok(color == 0x00ff0000, "Unlit quad without normals has color %08x\n", color);
     color = getPixelColor(device, 160, 120); /* upper left quad - lit without normals */
     ok(color == 0x00000000, "Lit quad without normals has color %08x\n", color);
-    color = getPixelColor(device, 480, 360); /* lower left quad - unlit width normals */
-    ok(color == 0x000000ff, "Unlit quad width normals has color %08x\n", color);
-    color = getPixelColor(device, 480, 120); /* upper left quad - lit width normals */
-    ok(color == 0x00000000, "Lit quad width normals has color %08x\n", color);
+    color = getPixelColor(device, 480, 360); /* lower left quad - unlit with normals */
+    ok(color == 0x000000ff, "Unlit quad with normals has color %08x\n", color);
+    color = getPixelColor(device, 480, 120); /* upper left quad - lit with normals */
+    ok(color == 0x00000000, "Lit quad with normals has color %08x\n", color);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
