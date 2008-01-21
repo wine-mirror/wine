@@ -73,6 +73,7 @@ typedef struct _RpcConnection
   /* client-only */
   struct list conn_pool_entry;
   ULONG assoc_group_id; /* association group returned during binding */
+  RPC_ASYNC_STATE *async_state;
 
   /* server-only */
   /* The active interface bound to server. */
@@ -92,6 +93,7 @@ struct connection_ops {
   int (*write)(RpcConnection *conn, const void *buffer, unsigned int len);
   int (*close)(RpcConnection *conn);
   void (*cancel_call)(RpcConnection *conn);
+  int (*wait_for_incoming_data)(RpcConnection *conn);
   size_t (*get_top_of_tower)(unsigned char *tower_data, const char *networkaddr, const char *endpoint);
   RPC_STATUS (*parse_top_of_tower)(const unsigned char *tower_data, size_t tower_size, char **networkaddr, char **endpoint);
 };

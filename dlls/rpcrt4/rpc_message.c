@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winuser.h"
 
 #include "rpc.h"
 #include "rpcndr.h"
@@ -1039,6 +1040,49 @@ RPC_STATUS WINAPI I_RpcFreeBuffer(PRPC_MESSAGE pMsg)
   return RPC_S_OK;
 }
 
+static void CALLBACK async_apc_notifier_proc(ULONG_PTR ulParam)
+{
+    RPC_ASYNC_STATE *state = (RPC_ASYNC_STATE *)ulParam;
+    state->u.APC.NotificationRoutine(state, NULL, state->Event);
+}
+
+static DWORD WINAPI async_notifier_proc(LPVOID p)
+{
+    RpcConnection *conn = p;
+    RPC_ASYNC_STATE *state = conn->async_state;
+
+    if (state && !conn->ops->wait_for_incoming_data(conn))
+    {
+        state->Event = RpcCallComplete;
+        switch (state->NotificationType)
+        {
+        case RpcNotificationTypeEvent:
+            SetEvent(state->u.hEvent);
+            break;
+        case RpcNotificationTypeApc:
+            QueueUserAPC(async_apc_notifier_proc, state->u.APC.hThread, (ULONG_PTR)state);
+            break;
+        case RpcNotificationTypeIoc:
+            PostQueuedCompletionStatus(state->u.IOC.hIOPort,
+                state->u.IOC.dwNumberOfBytesTransferred,
+                state->u.IOC.dwCompletionKey,
+                state->u.IOC.lpOverlapped);
+            break;
+        case RpcNotificationTypeHwnd:
+            PostMessageW(state->u.HWND.hWnd, state->u.HWND.Msg, 0, 0);
+            break;
+        case RpcNotificationTypeCallback:
+            state->u.NotificationRoutine(state, NULL, state->Event);
+            break;
+        case RpcNotificationTypeNone:
+        default:
+            break;
+        }
+    }
+
+    return 0;
+}
+
 /***********************************************************************
  *           I_RpcSend [RPCRT4.@]
  *
@@ -1079,6 +1123,12 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   status = RPCRT4_Send(conn, hdr, pMsg->Buffer, pMsg->BufferLength);
 
   RPCRT4_FreeHeader(hdr);
+
+  if (status == RPC_S_OK && pMsg->RpcFlags & RPC_BUFFER_ASYNC)
+  {
+    if (!QueueUserWorkItem(async_notifier_proc, conn, WT_EXECUTEDEFAULT | WT_EXECUTELONGFUNCTION))
+        status = RPC_S_OUT_OF_RESOURCES;
+  }
 
   return status;
 }
@@ -1198,8 +1248,17 @@ RPC_STATUS WINAPI I_RpcSendReceive(PRPC_MESSAGE pMsg)
  */
 RPC_STATUS WINAPI I_RpcAsyncSetHandle(PRPC_MESSAGE pMsg, PRPC_ASYNC_STATE pAsync)
 {
-    FIXME("(%p, %p): stub\n", pMsg, pAsync);
-    return RPC_S_INVALID_BINDING;
+    RpcBinding* bind = (RpcBinding*)pMsg->Handle;
+    RpcConnection *conn;
+
+    TRACE("(%p, %p)\n", pMsg, pAsync);
+
+    if (!bind || bind->server || !pMsg->ReservedForRuntime) return RPC_S_INVALID_BINDING;
+
+    conn = pMsg->ReservedForRuntime;
+    conn->async_state = pAsync;
+
+    return RPC_S_OK;
 }
 
 /***********************************************************************
