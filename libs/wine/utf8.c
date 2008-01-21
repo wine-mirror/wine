@@ -82,7 +82,11 @@ static inline int get_length_wcs_utf8( int flags, const WCHAR *src, unsigned int
         if (val < 0x10000)  /* 0x800-0xffff: 3 bytes */
             len += 3;
         else   /* 0x10000-0x10ffff: 4 bytes */
+        {
             len += 4;
+            src++;
+            srclen--;
+        }
     }
     return len;
 }
@@ -144,6 +148,8 @@ int wine_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int 
             val >>= 6;
             dst[0] = 0xf0 | val;
             dst += 4;
+            src++;
+            srclen--;
         }
     }
     return dstlen - len;
