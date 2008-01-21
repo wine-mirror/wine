@@ -1012,7 +1012,6 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
      * 'Y'
      * 'Z'
      */
-
     accmem = *sym->current++;
     if (accmem < 'A' || accmem > 'Z') goto done;
 
@@ -1033,10 +1032,18 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
             {
             case 2: case 3: member_type = "static "; break;
             case 4: case 5: member_type = "virtual "; break;
-            case 6: case 7: member_type = "thunk "; break;
+            case 6: case 7:
+                access = str_printf(sym, "[thunk]:%s", access);
+                member_type = "virtual ";
+                break;
             }
         }
     }
+
+    name = get_class_string(sym, 0);
+
+    if ((accmem - 'A') % 8 == 6 || (accmem - '8') % 8 == 7) /* a thunk */
+        name = str_printf(sym, "%s`adjustor{%s}' ", name, get_number(sym));
 
     if (accmem <= 'X')
     {
@@ -1049,8 +1056,6 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
         }
     }
 
-    name = get_class_string(sym, 0);
-  
     if (!get_calling_convention(*sym->current++, &call_conv, &exported,
                                 sym->flags))
         goto done;
