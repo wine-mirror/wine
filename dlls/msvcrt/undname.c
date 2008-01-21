@@ -362,12 +362,8 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
         }
         if (!demangle_datatype(sym, &ct, pmt_ref, TRUE))
             return NULL;
-        /* 'void' terminates an argument list */
-        if (!strcmp(ct.left, "void"))
-        {
-            if (!z_term && *sym->current == '@') sym->current++;
-            break;
-        }
+        /* 'void' terminates an argument list in a function */
+        if (z_term && !strcmp(ct.left, "void")) break;
         str_array_push(sym, str_printf(sym, "%s%s", ct.left, ct.right), -1, 
                        &arg_collect);
         if (!strcmp(ct.left, "...")) break;
