@@ -26,6 +26,7 @@
  */
 
 #include "config.h"
+#include <time.h>
 #include "wcmd.h"
 #include "wine/debug.h"
 
