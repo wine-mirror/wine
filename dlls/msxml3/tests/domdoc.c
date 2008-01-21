@@ -156,6 +156,9 @@ static WCHAR szCDataXML[] = {'<','!','[','C','D','A','T','A','[','[','1',']','*'
 static WCHAR szCDataNodeText[] = {'#','c','d','a','t','a','-','s','e','c','t','i','o','n',0 };
 static WCHAR szDocFragmentText[] = {'#','d','o','c','u','m','e','n','t','-','f','r','a','g','m','e','n','t',0 };
 
+static WCHAR szEntityRef[] = {'E','n','t','i','t','y','r','e','f',0 };
+static WCHAR szEntityRefXML[] = {'&','e','n','t','i','t','y','r','e','f',';',0 };
+
 #define expect_bstr_eq_and_free(bstr, expect) { \
     BSTR bstrExp = alloc_str_from_narrow(expect); \
     ok(lstrcmpW(bstr, bstrExp) == 0, "String differs\n"); \
@@ -1875,6 +1878,7 @@ static void test_xmlTypes(void)
     IXMLDOMCDATASection *pCDataSec;
     IXMLDOMImplementation *pIXMLDOMImplementation = NULL;
     IXMLDOMDocumentFragment *pDocFrag = NULL;
+    IXMLDOMEntityReference *pEntityRef = NULL;
     BSTR str;
     IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;   /* Used for testing Siblings */
     VARIANT v;
@@ -2259,8 +2263,46 @@ static void test_xmlTypes(void)
                 IXMLDOMDocumentFragment_Release(pCDataSec);
             }
 
+            /* Entity References */
+            hr = IXMLDOMDocument_createEntityReference(doc, szEntityRef, NULL);
+            ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
+            hr = IXMLDOMDocument_createEntityReference(doc, szEntityRef, &pEntityRef);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pEntityRef, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
 
+                /* get Attribute Tests */
+                hr = IXMLDOMEntityReference_get_attributes(pEntityRef, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                pAttribs = (IXMLDOMNamedNodeMap*)0x1;
+                hr = IXMLDOMEntityReference_get_attributes(pEntityRef, &pAttribs);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok(pAttribs == NULL, "pAttribs != NULL\n");
+
+                /* test dataType */
+                hr = IXMLDOMEntityReference_get_dataType(pEntityRef, &v);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
+                VariantClear(&v);
+
+                /* test nodeTypeString */
+                hr = IXMLDOMEntityReference_get_nodeTypeString(pEntityRef, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("entityreference") ), "incorrect nodeTypeString string\n");
+                SysFreeString(str);
+
+                /* test get_xml*/
+                hr = IXMLDOMEntityReference_get_xml(pEntityRef, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                todo_wine ok( !lstrcmpW( str, szEntityRefXML ), "incorrect xml string\n");
+                SysFreeString(str);
+
+                IXMLDOMEntityReference_Release(pEntityRef);
+            }
 
             IXMLDOMElement_Release( pRoot );
         }

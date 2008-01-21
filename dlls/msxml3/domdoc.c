@@ -1074,8 +1074,29 @@ static HRESULT WINAPI domdoc_createEntityReference(
     BSTR name,
     IXMLDOMEntityReference** entityRef )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument2( iface );
+    xmlNodePtr xmlnode;
+    xmlChar *xml_name;
+
+    TRACE("%p\n", iface);
+
+    if(!entityRef)
+        return E_INVALIDARG;
+
+    *entityRef = NULL;
+
+    xml_name = xmlChar_from_wchar((WCHAR*)name);
+    xmlnode = xmlNewReference(get_doc( This ), xml_name );
+    HeapFree(GetProcessHeap(), 0, xml_name);
+
+    if(!xmlnode)
+        return E_FAIL;
+
+    xmlnode->doc = get_doc( This );
+
+    *entityRef = (IXMLDOMEntityReference*)create_doc_entity_ref(xmlnode);
+
+    return S_OK;
 }
 
 

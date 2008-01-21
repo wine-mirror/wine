@@ -16,6 +16,7 @@ C_SRCS = \
 	domdoc.c \
 	domimpl.c \
 	element.c \
+	entityref.c \
 	factory.c \
 	main.c \
 	node.c \
