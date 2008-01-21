@@ -548,7 +548,7 @@ INT16 WINAPI GetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR str, UINT16 len )
 void WINAPI SetDlgItemInt16( HWND16 hwnd, INT16 id, UINT16 value, BOOL16 fSigned )
 {
     SetDlgItemInt( WIN_Handle32(hwnd), (UINT)(UINT16)id,
-             (UINT)(fSigned ? (INT16) value : (UINT16) value), fSigned );
+             (UINT)(fSigned ? (INT16) value : value), fSigned );
 }
 
 

@@ -474,7 +474,7 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
     if (!(hRes = FindResourceExW(user32_module, (LPWSTR)RT_DIALOG,
                                  msg_box_res_nameW, msgbox->dwLanguageId)))
         return 0;
-    if (!(tmplate = (LPVOID)LoadResource(user32_module, hRes)))
+    if (!(tmplate = LoadResource(user32_module, hRes)))
         return 0;
 
     if ((msgbox->dwStyle & MB_TASKMODAL) && (msgbox->hwndOwner==NULL))

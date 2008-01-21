@@ -690,7 +690,7 @@ LONG WINAPI SetClassLong16( HWND16 hwnd16, INT16 offset, LONG newval )
         {
             WNDPROC new_proc = WINPROC_AllocProc16( (WNDPROC16)newval );
             WNDPROC old_proc = (WNDPROC)SetClassLongA( WIN_Handle32(hwnd16), offset, (LONG_PTR)new_proc );
-            return (LONG)WINPROC_GetProc16( (WNDPROC)old_proc, FALSE );
+            return (LONG)WINPROC_GetProc16( old_proc, FALSE );
         }
     case GCLP_MENUNAME:
         newval = (LONG)MapSL( newval );

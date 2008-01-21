@@ -1723,7 +1723,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, UINT size, BOOL unicod
     case GWLP_USERDATA:  retvalue = wndPtr->userdata; break;
     case GWL_STYLE:      retvalue = wndPtr->dwStyle; break;
     case GWL_EXSTYLE:    retvalue = wndPtr->dwExStyle; break;
-    case GWLP_ID:        retvalue = (ULONG_PTR)wndPtr->wIDmenu; break;
+    case GWLP_ID:        retvalue = wndPtr->wIDmenu; break;
     case GWLP_HINSTANCE: retvalue = (ULONG_PTR)wndPtr->hInstance; break;
     case GWLP_WNDPROC:
         /* This looks like a hack only for the edit control (see tests). This makes these controls
@@ -2072,7 +2072,7 @@ LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
     {
         WNDPROC new_proc = WINPROC_AllocProc16( (WNDPROC16)newval );
         WNDPROC old_proc = (WNDPROC)SetWindowLongPtrA( WIN_Handle32(hwnd), offset, (LONG_PTR)new_proc );
-        return (LONG)WINPROC_GetProc16( (WNDPROC)old_proc, FALSE );
+        return (LONG)WINPROC_GetProc16( old_proc, FALSE );
     }
     else return SetWindowLongA( WIN_Handle32(hwnd), offset, newval );
 }

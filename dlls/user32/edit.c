@@ -2165,8 +2165,7 @@ static void EDIT_MoveWordBackward(EDITSTATE *es, BOOL extend)
 			e = li + EDIT_EM_LineLength(es, li);
 		}
 	} else {
-		e = li + (INT)EDIT_CallWordBreakProc(es,
-				li, e - li, ll, WB_LEFT);
+		e = li + EDIT_CallWordBreakProc(es, li, e - li, ll, WB_LEFT);
 	}
 	if (!extend)
 		s = e;

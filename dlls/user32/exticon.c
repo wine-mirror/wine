@@ -486,10 +486,10 @@ static UINT ICO_ExtractIconExW(
 
 	        if (pCIDir)
                 {
-	          RetPtr[icon] = (HICON)CreateIconFromResourceEx(pCIDir, uSize, TRUE, 0x00030000,
+	          RetPtr[icon] = CreateIconFromResourceEx(pCIDir, uSize, TRUE, 0x00030000,
                                                                  cx1, cy1, flags);
                   if (cx2 && cy2)
-                      RetPtr[++icon] = (HICON)CreateIconFromResourceEx(pCIDir, uSize, TRUE, 0x00030000,
+                      RetPtr[++icon] = CreateIconFromResourceEx(pCIDir, uSize, TRUE, 0x00030000,
                                                                        cx2, cy2, flags);
                 }
 	        else
@@ -674,11 +674,9 @@ static UINT ICO_ExtractIconExW(
 	      RetPtr[i]=0;
 	      continue;
 	    }
-	    RetPtr[i] = (HICON) CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000,
-                                                         cx1, cy1, flags);
+	    RetPtr[i] = CreateIconFromResourceEx(idata, idataent->Size, TRUE, 0x00030000, cx1, cy1, flags);
             if (cx2 && cy2)
-                RetPtr[++i] = (HICON) CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000,
-                                                               cx2, cy2, flags);
+                RetPtr[++i] = CreateIconFromResourceEx(idata, idataent->Size, TRUE, 0x00030000, cx2, cy2, flags);
 	  }
 	  ret = i;	/* return number of retrieved icons */
 	}			/* if(sig == IMAGE_NT_SIGNATURE) */
