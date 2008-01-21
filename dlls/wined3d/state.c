@@ -351,6 +351,12 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     TRACE("glBlendFunc src=%x, dst=%x\n", srcBlend, dstBlend);
     glBlendFunc(srcBlend, dstBlend);
     checkGLcall("glBlendFunc");
+
+    /* colorkey fixup for stage 0 alphaop depends on WINED3DRS_ALPHABLENDENABLE state,
+        so it may need updating */
+    if (stateblock->renderState[WINED3DRS_COLORKEYENABLE]) {
+        StateTable[STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP)].apply(STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP), stateblock, context);
+    }
 }
 
 static void state_blendfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -1950,13 +1956,38 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
              * cannot remove the texture's alpha channel entirely.
              *
              * The fixup is required for Prince of Persia 3D(prison bars), while Moto racer 2 requires D3DTOP_MODULATE to work
-             * on color keyed surfaces.
+             * on color keyed surfaces. Aliens vs Predator 1 uses color keyed textures and alpha component of diffuse color to
+             * draw things like translucent text and perform other blending effects.
              *
+             * Aliens vs Predator 1 relies on diffuse alpha having an effect, so it cannot be ignored. To provide the
+             * behavior expected by the game, while emulating the colorkey, diffuse alpha must be modulated with texture alpha.
+             * OTOH, Moto racer 2 at some points sets alphaop/alphaarg to SELECTARG/CURRENT, yet puts garbage in diffuse alpha
+             * (zeroes). This works on native, because the game disables alpha test and alpha blending. Alpha test is overwritten by
+             * wine's for purposes of color-keying though, so this will lead to missing geometry if texture alpha is modulated
+             * (pixels fail alpha test). To get around this, ALPHABLENDENABLE state is checked: if the app enables alpha blending,
+             * it can be expected to provide meaningful values in diffuse alpha, so it should be modulated with texture alpha;
+             * otherwise, selecting diffuse alpha is ignored in favour of texture alpha.
+
              * What to do with multitexturing? So far no app has been found that uses color keying with multitexturing
              */
-            if(op == WINED3DTOP_DISABLE) op = WINED3DTOP_SELECTARG1;
-            if(op == WINED3DTOP_SELECTARG1) arg1 = WINED3DTA_TEXTURE;
-            else if(op == WINED3DTOP_SELECTARG2) arg2 = WINED3DTA_TEXTURE;
+            if(op == WINED3DTOP_DISABLE) {
+                arg1 = WINED3DTA_TEXTURE;
+                op = WINED3DTOP_SELECTARG1;
+            }
+            else if(op == WINED3DTOP_SELECTARG1 && arg1 != WINED3DTA_TEXTURE) {
+                if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
+                    arg2 = WINED3DTA_TEXTURE;
+                    op = WINED3DTOP_MODULATE;
+                }
+                else arg1 = WINED3DTA_TEXTURE;
+            }
+            else if(op == WINED3DTOP_SELECTARG2 && arg2 != WINED3DTA_TEXTURE) {
+                if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
+                    arg1 = WINED3DTA_TEXTURE;
+                    op = WINED3DTOP_MODULATE;
+                }
+                else arg2 = WINED3DTA_TEXTURE;
+            }
         }
     }
 
