@@ -624,7 +624,8 @@ static BOOL get_calling_convention(char ch, const char** call_conv,
             case 'E': case 'F': *call_conv = "thiscall"; break;
             case 'G': case 'H': *call_conv = "stdcall"; break;
             case 'I': case 'J': *call_conv = "fastcall"; break;
-            case 'K': break;
+            case 'K': case 'L': break;
+            case 'M': *call_conv = "clrcall"; break;
             default: ERR("Unknown calling convention %c\n", ch); return FALSE;
             }
         }
@@ -638,7 +639,8 @@ static BOOL get_calling_convention(char ch, const char** call_conv,
             case 'E': case 'F': *call_conv = "__thiscall"; break;
             case 'G': case 'H': *call_conv = "__stdcall"; break;
             case 'I': case 'J': *call_conv = "__fastcall"; break;
-            case 'K': break;
+            case 'K': case 'L': break;
+            case 'M': *call_conv = "__clrcall"; break;
             default: ERR("Unknown calling convention %c\n", ch); return FALSE;
             }
         }
