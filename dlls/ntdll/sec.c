@@ -1341,7 +1341,7 @@ NTSTATUS WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 
 	TRACE("(%p,%d,%p)\n",pAcl,dwAceIndex,pAce);
 
-	if (dwAceIndex > pAcl->AceCount)
+	if (dwAceIndex >= pAcl->AceCount)
 		return STATUS_INVALID_PARAMETER;
 
 	ace = (PACE_HEADER)(pAcl + 1);
