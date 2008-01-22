@@ -773,6 +773,7 @@ static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data
     XChangeProperty( display, data->whole_window, x11drv_atom(XdndAware),
                      XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
 
+    data->wm_hints = XAllocWMHints();
     wine_tsx11_unlock();
 
     if (data->wm_hints)
@@ -1100,6 +1101,8 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
     }
     /* Outlook stops processing messages after destroying a dialog, so we need an explicit flush */
     XFlush( display );
+    XFree( data->wm_hints );
+    data->wm_hints = NULL;
     wine_tsx11_unlock();
     RemovePropA( data->hwnd, whole_window_prop );
 }
@@ -1193,7 +1196,6 @@ void X11DRV_DestroyWindow( HWND hwnd )
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
     wine_tsx11_lock();
     XDeleteContext( display, (XID)hwnd, win_data_context );
-    XFree( data->wm_hints );
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );
 }
@@ -1210,7 +1212,6 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
         if (!winContext) winContext = XUniqueContext();
         if (!win_data_context) win_data_context = XUniqueContext();
         XSaveContext( display, (XID)hwnd, win_data_context, (char *)data );
-        data->wm_hints = XAllocWMHints();
         wine_tsx11_unlock();
     }
     return data;
