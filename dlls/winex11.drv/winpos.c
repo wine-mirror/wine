@@ -234,6 +234,26 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
 
 
 /***********************************************************************
+ *		move_window_bits
+ *
+ * Move the window bits when a window is moved.
+ * FIXME: currently we don't move anything, we just invalidate the new position.
+ */
+static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect, const RECT *new_rect,
+                              const RECT *window_rect, const RECT *whole_rect, const RECT *client_rect )
+{
+    RECT invalid_rect = *new_rect;
+    UINT flags = RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN;
+
+    /* make it relative to the client area */
+    OffsetRect( &invalid_rect, -client_rect->left, -client_rect->top );
+    if (invalid_rect.left < 0 || invalid_rect.top < 0 ||
+        invalid_rect.right > client_rect->right - client_rect->left ||
+        invalid_rect.bottom > client_rect->bottom - client_rect->top) flags |= RDW_FRAME;
+    RedrawWindow( data->hwnd, &invalid_rect, NULL, flags );
+}
+
+/***********************************************************************
  *		set_server_window_pos
  *
  * Set the window pos on the server side only. Helper for SetWindowPos.
@@ -312,8 +332,6 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 
     old_style = GetWindowLongW( hwnd, GWL_STYLE );
 
-    if (!data->whole_window) swp_flags |= SWP_NOCOPYBITS;  /* we can't rely on X11 to move the bits */
-
     if ((ret = set_server_window_pos( hwnd, insert_after, rectWindow, rectClient, swp_flags,
                                       valid_rects, &visible_rect )))
     {
@@ -366,24 +384,32 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 
         if (!IsRectEmpty( &valid_rects[0] ))
         {
-            int x_offset = 0, y_offset = 0;
+            int x_offset = data->whole_rect.left - new_whole_rect.left;
+            int y_offset = data->whole_rect.top - new_whole_rect.top;
 
-            if (data->whole_window)
+            /* if all that happened is that the whole window moved, copy everything */
+            if (!(swp_flags & SWP_FRAMECHANGED) &&
+                data->whole_rect.right   - new_whole_rect.right  == x_offset &&
+                data->whole_rect.bottom  - new_whole_rect.bottom == y_offset &&
+                data->client_rect.left   - rectClient->left      == x_offset &&
+                data->client_rect.right  - rectClient->right     == x_offset &&
+                data->client_rect.top    - rectClient->top       == y_offset &&
+                data->client_rect.bottom - rectClient->bottom    == y_offset &&
+                !memcmp( &valid_rects[0], rectClient, sizeof(RECT) ))
             {
-                /* the X server will move the bits for us */
-                x_offset = data->whole_rect.left - new_whole_rect.left;
-                y_offset = data->whole_rect.top - new_whole_rect.top;
+                /* if we have an X window the bits will be moved by the X server */
+                if (!data->whole_window)
+                    move_window_bits( data, &data->whole_rect, &new_whole_rect,
+                                      rectWindow, &new_whole_rect, rectClient );
             }
-
-            if (x_offset != valid_rects[1].left - valid_rects[0].left ||
-                y_offset != valid_rects[1].top - valid_rects[0].top)
+            else
             {
-                /* FIXME: should copy the window bits here */
-                RECT invalid_rect = valid_rects[0];
-
-                /* invalid_rects are relative to the client area */
-                OffsetRect( &invalid_rect, -rectClient->left, -rectClient->top );
-                RedrawWindow( hwnd, &invalid_rect, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
+                /* check if the offset corresponds to what the X server will move */
+                if (!data->whole_window ||
+                    x_offset != valid_rects[1].left - valid_rects[0].left ||
+                    y_offset != valid_rects[1].top - valid_rects[0].top)
+                    move_window_bits( data, &valid_rects[1], &valid_rects[0],
+                                      rectWindow, &new_whole_rect, rectClient );
             }
         }
 
