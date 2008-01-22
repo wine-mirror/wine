@@ -1296,37 +1296,13 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     CBT_CREATEWNDA cbtc;
     CREATESTRUCTA cbcs;
     BOOL ret = FALSE;
+    INT cx = cs->cx, cy = cs->cy;
 
     if (!(data = alloc_win_data( display, hwnd ))) return FALSE;
-
-    if (cs->cx > 65535)
-    {
-        ERR( "invalid window width %d\n", cs->cx );
-        cs->cx = 65535;
-    }
-    if (cs->cy > 65535)
-    {
-        ERR( "invalid window height %d\n", cs->cy );
-        cs->cy = 65535;
-    }
-    if (cs->cx < 0)
-    {
-        ERR( "invalid window width %d\n", cs->cx );
-        cs->cx = 0;
-    }
-    if (cs->cy < 0)
-    {
-        ERR( "invalid window height %d\n", cs->cy );
-        cs->cy = 0;
-    }
 
     if (hwnd == GetDesktopWindow()) get_desktop_xwin( display, data );
     else
     {
-        /* initialize the dimensions before sending WM_GETMINMAXINFO */
-        SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-        X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER | SWP_NOACTIVATE, NULL );
-
         /* create an X window if it's a top level window */
         if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
         {
@@ -1360,15 +1336,15 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         POINT maxSize, maxPos, minTrack, maxTrack;
 
         WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack);
-        if (maxTrack.x < cs->cx) cs->cx = maxTrack.x;
-        if (maxTrack.y < cs->cy) cs->cy = maxTrack.y;
-        if (cs->cx < 0) cs->cx = 0;
-        if (cs->cy < 0) cs->cy = 0;
-
-        SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-        if (!X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER | SWP_NOACTIVATE, NULL ))
-            return FALSE;
+        if (maxTrack.x < cx) cx = maxTrack.x;
+        if (maxTrack.y < cy) cy = maxTrack.y;
     }
+
+    if (cx < 0) cx = 0;
+    if (cy < 0) cy = 0;
+    SetRect( &rect, cs->x, cs->y, cs->x + cx, cs->y + cy );
+    if (!X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER | SWP_NOACTIVATE, NULL ))
+        return FALSE;
 
     /* send WM_NCCREATE */
     TRACE( "hwnd %p cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cs->cx, cs->cy );

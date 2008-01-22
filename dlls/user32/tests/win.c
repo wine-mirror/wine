@@ -3733,6 +3733,43 @@ static LRESULT CALLBACK minmax_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
     return 1;
 }
 
+static int expected_cx, expected_cy;
+static RECT expected_rect;
+
+static LRESULT CALLBACK winsizes_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    switch(msg)
+    {
+    case WM_GETMINMAXINFO:
+    {
+        RECT rect;
+        GetWindowRect( hwnd, &rect );
+        ok( !rect.left && !rect.top && !rect.right && !rect.bottom,
+            "wrong rect %d,%d-%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
+        return DefWindowProc(hwnd, msg, wp, lp);
+    }
+    case WM_NCCREATE:
+    case WM_CREATE:
+    {
+        CREATESTRUCTA *cs = (CREATESTRUCTA *)lp;
+        RECT rect;
+        GetWindowRect( hwnd, &rect );
+        trace( "hwnd %p msg %x size %dx%d rect %d,%d-%d,%d\n",
+               hwnd, msg, cs->cx, cs->cy, rect.left, rect.top, rect.right, rect.bottom );
+        ok( cs->cx == expected_cx, "wrong x size %d/%d\n", cs->cx, expected_cx );
+        ok( cs->cy == expected_cy, "wrong y size %d/%d\n", cs->cy, expected_cy );
+        ok( rect.right - rect.left == expected_rect.right - expected_rect.left &&
+            rect.bottom - rect.top == expected_rect.bottom - expected_rect.top,
+            "wrong rect %d,%d-%d,%d / %d,%d-%d,%d\n",
+            rect.left, rect.top, rect.right, rect.bottom,
+            expected_rect.left, expected_rect.top, expected_rect.right, expected_rect.bottom );
+        return DefWindowProc(hwnd, msg, wp, lp);
+    }
+    default:
+        return DefWindowProc(hwnd, msg, wp, lp);
+    }
+}
+
 static void test_CreateWindow(void)
 {
     WNDCLASS cls;
@@ -3986,11 +4023,53 @@ static void test_CreateWindow(void)
     ok(EqualRect(&rc, &rc_minmax), "rects don't match: (%d,%d-%d,%d) and (%d,%d-%d,%d)\n",
        rc.left, rc.top, rc.right, rc.bottom,
        rc_minmax.left, rc_minmax.top, rc_minmax.right, rc_minmax.bottom);
-
     DestroyWindow(hwnd);
+
+    cls.lpfnWndProc = winsizes_wnd_proc;
+    cls.lpszClassName = "Sizes_WndClass";
+    RegisterClass(&cls);
+
+    expected_cx = expected_cy = 200000;
+    SetRect( &expected_rect, 0, 0, 200000, 200000 );
+    hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, 300000, 300000, 200000, 200000, parent, 0, 0, NULL);
+    ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+    GetClientRect( hwnd, &rc );
+    ok( rc.right == 200000, "invalid rect right %u\n", rc.right );
+    ok( rc.bottom == 200000, "invalid rect bottom %u\n", rc.bottom );
+    DestroyWindow(hwnd);
+
+    expected_cx = expected_cy = -10;
+    SetRect( &expected_rect, 0, 0, 0, 0 );
+    hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, -20, -20, -10, -10, parent, 0, 0, NULL);
+    ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+    GetClientRect( hwnd, &rc );
+    ok( rc.right == 0, "invalid rect right %u\n", rc.right );
+    ok( rc.bottom == 0, "invalid rect bottom %u\n", rc.bottom );
+    DestroyWindow(hwnd);
+
+    expected_cx = expected_cy = -200000;
+    SetRect( &expected_rect, 0, 0, 0, 0 );
+    hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, -300000, -300000, -200000, -200000, parent, 0, 0, NULL);
+    ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+    GetClientRect( hwnd, &rc );
+    ok( rc.right == 0, "invalid rect right %u\n", rc.right );
+    ok( rc.bottom == 0, "invalid rect bottom %u\n", rc.bottom );
+    DestroyWindow(hwnd);
+
+    /* top level window */
+    expected_cx = expected_cy = 200000;
+    SetRect( &expected_rect, 0, 0, GetSystemMetrics(SM_CXMAXTRACK), GetSystemMetrics(SM_CYMAXTRACK) );
+    hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_OVERLAPPEDWINDOW, 300000, 300000, 200000, 200000, 0, 0, 0, NULL);
+    ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+    GetClientRect( hwnd, &rc );
+    ok( rc.right <= expected_cx, "invalid rect right %u\n", rc.right );
+    ok( rc.bottom <= expected_cy, "invalid rect bottom %u\n", rc.bottom );
+    DestroyWindow(hwnd);
+
     DestroyWindow(parent);
 
     UnregisterClass("MinMax_WndClass", GetModuleHandle(0));
+    UnregisterClass("Sizes_WndClass", GetModuleHandle(0));
 
 #undef expect_menu
 #undef expect_style
