@@ -142,9 +142,9 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
         LPVOID address;
         LPVOID ret;
         DWORD psize = getpagesize();
-        ULONG page   = (ULONG) stack32_pop( context );
-        ULONG npages = (ULONG) stack32_pop( context );
-        ULONG flags  = (ULONG) stack32_pop( context );
+        ULONG page   = stack32_pop( context );
+        ULONG npages = stack32_pop( context );
+        ULONG flags  = stack32_pop( context );
 
         TRACE("PageReserve: page: %08x, npages: %08x, flags: %08x partial stub!\n",
               page, npages, flags );
@@ -172,11 +172,11 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
         LPVOID ret;
         DWORD virt_perm;
         DWORD psize = getpagesize();
-        ULONG page   = (ULONG) stack32_pop( context );
-        ULONG npages = (ULONG) stack32_pop( context );
-        ULONG hpd  = (ULONG) stack32_pop( context );
-        ULONG pagerdata   = (ULONG) stack32_pop( context );
-        ULONG flags  = (ULONG) stack32_pop( context );
+        ULONG page   = stack32_pop( context );
+        ULONG npages = stack32_pop( context );
+        ULONG hpd  = stack32_pop( context );
+        ULONG pagerdata   = stack32_pop( context );
+        ULONG flags  = stack32_pop( context );
 
         TRACE("PageCommit: page: %08x, npages: %08x, hpd: %08x pagerdata: "
               "%08x, flags: %08x partial stub\n",
@@ -202,9 +202,9 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
         LPVOID address;
         BOOL ret;
         DWORD psize = getpagesize();
-        ULONG page = (ULONG) stack32_pop( context );
-        ULONG npages = (ULONG) stack32_pop( context );
-        ULONG flags = (ULONG) stack32_pop( context );
+        ULONG page = stack32_pop( context );
+        ULONG npages = stack32_pop( context );
+        ULONG flags = stack32_pop( context );
 
         TRACE("PageDecommit: page: %08x, npages: %08x, flags: %08x partial stub\n",
               page, npages, flags );
@@ -277,7 +277,7 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
     {
         BOOL ret;
         LPVOID hmem = (LPVOID) stack32_pop( context );
-        DWORD flags = (DWORD ) stack32_pop( context );
+        DWORD flags = stack32_pop( context );
 
         TRACE("PageFree: hmem: %p, flags: %08x partial stub\n",
               hmem, flags );
@@ -407,8 +407,8 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
 
     case 0x001e: /* GetDemandPageInfo */
     {
-         DWORD dinfo = (DWORD)stack32_pop( context );
-         DWORD flags = (DWORD)stack32_pop( context );
+         DWORD dinfo = stack32_pop( context );
+         DWORD flags = stack32_pop( context );
 
          /* GetDemandPageInfo is supposed to fill out the struct at
           * "dinfo" with various low-level memory management information.
