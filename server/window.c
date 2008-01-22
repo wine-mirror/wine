@@ -1500,34 +1500,38 @@ static void set_window_pos( struct window *win, struct window *previous,
         client_changed = (client_rect->left   - old_client_rect.left   != x_offset ||
                           client_rect->right  - old_client_rect.right  != x_offset ||
                           client_rect->top    - old_client_rect.top    != y_offset ||
-                          client_rect->bottom - old_client_rect.bottom != y_offset);
+                          client_rect->bottom - old_client_rect.bottom != y_offset ||
+                          !valid_rects ||
+                          memcmp( &valid_rects[0], client_rect, sizeof(*client_rect) ));
     }
 
     if (frame_changed || client_changed)
     {
-        struct region *tmp = create_empty_region();
+        struct region *win_rgn = old_vis_rgn;  /* reuse previous region */
 
-        if (tmp)
+        set_region_rect( win_rgn, window_rect );
+        if (valid_rects)
         {
             /* subtract the valid portion of client rect from the total region */
-            if (!client_changed)
-                set_region_rect( tmp, client_rect );
-            else if (valid_rects)
-                set_region_rect( tmp, &valid_rects[0] );
-
-            set_region_rect( old_vis_rgn, window_rect );
-            if (!subtract_region( tmp, old_vis_rgn, tmp )) free_region( tmp );
-            else
+            struct region *tmp = create_empty_region();
+            if (tmp)
             {
-                if (!is_desktop_window(win))
-                    offset_region( tmp, -client_rect->left, -client_rect->top );
-                if (exposed_rgn)
-                {
-                    union_region( exposed_rgn, exposed_rgn, tmp );
-                    free_region( tmp );
-                }
-                else exposed_rgn = tmp;
+                set_region_rect( tmp, &valid_rects[0] );
+                if (subtract_region( tmp, win_rgn, tmp )) win_rgn = tmp;
+                else free_region( tmp );
             }
+        }
+        if (!is_desktop_window(win))
+            offset_region( win_rgn, -client_rect->left, -client_rect->top );
+        if (exposed_rgn)
+        {
+            union_region( exposed_rgn, exposed_rgn, win_rgn );
+            if (win_rgn != old_vis_rgn) free_region( win_rgn );
+        }
+        else
+        {
+            exposed_rgn = win_rgn;
+            if (win_rgn == old_vis_rgn) old_vis_rgn = NULL;
         }
     }
 
@@ -1535,7 +1539,7 @@ static void set_window_pos( struct window *win, struct window *previous,
         redraw_window( win, exposed_rgn, 1, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
 
 done:
-    free_region( old_vis_rgn );
+    if (old_vis_rgn) free_region( old_vis_rgn );
     if (exposed_rgn) free_region( exposed_rgn );
     clear_error();  /* we ignore out of memory errors once the new rects have been set */
 }
