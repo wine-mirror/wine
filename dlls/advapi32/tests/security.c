@@ -1541,6 +1541,21 @@ static void test_LookupAccountName(void)
         ok(sid_use == SidTypeUser, "Expected SidTypeUser, got %d\n", sid_use);
     }
     domain_size = domain_save;
+    sid_size = sid_save;
+
+    ret = LookupAccountNameA(NULL, "Everyone", psid, &sid_size, domain, &domain_size, &sid_use);
+    get_sid_info(psid, &account, &sid_dom);
+    ok(ret, "Failed to lookup account name\n");
+    ok(sid_size != 0, "sid_size was zero\n");
+    todo_wine
+    {
+        ok(!lstrcmp(account, "Everyone"), "Expected %s, got %s\n", user_name, account);
+        ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
+        ok(domain_size == 0, "Expected %d, got %d\n", domain_save - 1, domain_size);
+        ok(lstrlen(domain) == domain_size, "Expected %d\n", lstrlen(domain));
+        ok(sid_use == SidTypeWellKnownGroup, "Expected SidTypeUser, got %d\n", sid_use);
+    }
+    domain_size = domain_save;
 
     /* NULL Sid with zero sid size */
     SetLastError(0xdeadbeef);
