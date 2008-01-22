@@ -445,8 +445,8 @@
 @ cdecl _setmode(long long)
 @ stub _setsystime #(ptr long)
 @ cdecl _sleep(long) MSVCRT__sleep
-@ varargs _snprintf(str long str) MSVCRT__snprintf
-@ varargs _snwprintf(wstr long wstr) MSVCRT__snwprintf
+@ varargs _snprintf(ptr long str) MSVCRT__snprintf
+@ varargs _snwprintf(ptr long wstr) MSVCRT__snwprintf
 @ varargs _sopen(str long long) MSVCRT__sopen
 @ varargs _spawnl(long str str)
 @ varargs _spawnle(long str str)
@@ -497,8 +497,8 @@
 @ cdecl _unloaddll(long)
 @ cdecl _unlock(long)
 @ cdecl _utime(str ptr)
-@ cdecl _vsnprintf(ptr long ptr ptr) MSVCRT_vsnprintf
-@ cdecl _vsnwprintf(ptr long wstr long) MSVCRT_vsnwprintf
+@ cdecl _vsnprintf(ptr long str ptr) MSVCRT_vsnprintf
+@ cdecl _vsnwprintf(ptr long wstr ptr) MSVCRT_vsnwprintf
 @ cdecl _waccess(wstr long)
 @ cdecl _wasctime(ptr) MSVCRT__wasctime
 @ cdecl _wchdir(wstr)
@@ -734,7 +734,7 @@
 @ cdecl strtol(str ptr long) ntdll.strtol
 @ cdecl strtoul(str ptr long) ntdll.strtoul
 @ cdecl strxfrm(ptr str long) MSVCRT_strxfrm
-@ varargs swprintf(wstr wstr) MSVCRT_swprintf
+@ varargs swprintf(ptr wstr) MSVCRT_swprintf
 @ varargs swscanf(wstr wstr) MSVCRT_swscanf
 @ cdecl system(str) MSVCRT_system
 @ cdecl tan(double) MSVCRT_tan
@@ -748,12 +748,12 @@
 @ cdecl towupper(long) ntdll.towupper
 @ cdecl ungetc(long ptr) MSVCRT_ungetc
 @ cdecl ungetwc(long ptr) MSVCRT_ungetwc
-@ cdecl vfprintf(ptr str long) MSVCRT_vfprintf
-@ cdecl vfwprintf(ptr wstr long) MSVCRT_vfwprintf
-@ cdecl vprintf(str long) MSVCRT_vprintf
+@ cdecl vfprintf(ptr str ptr) MSVCRT_vfprintf
+@ cdecl vfwprintf(ptr wstr ptr) MSVCRT_vfwprintf
+@ cdecl vprintf(str ptr) MSVCRT_vprintf
 @ cdecl vsprintf(ptr str ptr) MSVCRT_vsprintf
-@ cdecl vswprintf(ptr wstr long) MSVCRT_vswprintf
-@ cdecl vwprintf(wstr long) MSVCRT_vwprintf
+@ cdecl vswprintf(ptr wstr ptr) MSVCRT_vswprintf
+@ cdecl vwprintf(wstr ptr) MSVCRT_vwprintf
 @ cdecl wcscat(wstr wstr) ntdll.wcscat
 @ cdecl wcschr(wstr long) ntdll.wcschr
 @ cdecl wcscmp(wstr wstr) ntdll.wcscmp
