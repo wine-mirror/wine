@@ -1347,10 +1347,10 @@ HRESULT MSSTYLES_GetPropertyRect(PTHEME_PROPERTY tp, RECT *pRect)
     LPCWSTR lpCur = tp->lpValue;
     LPCWSTR lpEnd = tp->lpValue + tp->dwValueLen;
 
-    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->left);
-    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->top);
-    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->right);
-    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->bottom)) {
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pRect->left);
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pRect->top);
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pRect->right);
+    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pRect->bottom)) {
         TRACE("Could not parse rect property\n");
         return E_PROP_ID_UNSUPPORTED;
     }
