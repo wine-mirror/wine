@@ -2003,7 +2003,7 @@ static void IWineD3DDeviceImpl_LoadLogo(IWineD3DDeviceImpl *This, const char *fi
 
 static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DSwapChainImpl *swapchain;
+    IWineD3DSwapChainImpl *swapchain = NULL;
     HRESULT hr;
     DWORD state;
 
@@ -2141,7 +2141,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     }
     return WINED3D_OK;
 
-    err_out:
+err_out:
     HeapFree(GetProcessHeap(), 0, This->render_targets);
     HeapFree(GetProcessHeap(), 0, This->fbo_color_attachments);
     HeapFree(GetProcessHeap(), 0, This->draw_buffers);
