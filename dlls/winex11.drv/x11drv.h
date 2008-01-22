@@ -669,7 +669,7 @@ struct x11drv_win_data
     Pixmap      pixmap;         /* Base pixmap for if gl_drawable is a GLXPixmap */
     RECT        window_rect;    /* USER window rectangle relative to parent */
     RECT        whole_rect;     /* X window rectangle for the whole window relative to parent */
-    RECT        client_rect;    /* client area relative to whole window */
+    RECT        client_rect;    /* client area relative to parent */
     XIC         xic;            /* X input context */
     XWMHints   *wm_hints;       /* window manager hints */
     BOOL        managed;        /* is window managed? */

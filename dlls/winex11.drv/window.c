@@ -965,7 +965,6 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
 
     old_client_rect = data->client_rect;
     data->client_rect = *new_client_rect;
-    OffsetRect( &data->client_rect, -data->whole_rect.left, -data->whole_rect.top );
 
     if (data->gl_drawable)
         update_gl_drawable(display, data, &old_client_rect);

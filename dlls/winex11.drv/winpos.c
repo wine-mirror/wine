@@ -96,8 +96,8 @@ void X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
-    rect.left   = event->x;
-    rect.top    = event->y;
+    rect.left   = data->whole_rect.left + event->x;
+    rect.top    = data->whole_rect.top + event->y;
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
@@ -112,15 +112,15 @@ void X11DRV_Expose( HWND hwnd, XEvent *xev )
     SERVER_START_REQ( update_window_zorder )
     {
         req->window      = hwnd;
-        req->rect.left   = rect.left + data->whole_rect.left;
-        req->rect.top    = rect.top + data->whole_rect.top;
-        req->rect.right  = rect.right + data->whole_rect.left;
-        req->rect.bottom = rect.bottom + data->whole_rect.top;
+        req->rect.left   = rect.left;
+        req->rect.top    = rect.top;
+        req->rect.right  = rect.right;
+        req->rect.bottom = rect.bottom;
         wine_server_call( req );
     }
     SERVER_END_REQ;
 
-    /* make position relative to client area instead of window */
+    /* make position relative to client area instead of parent */
     OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
     RedrawWindow( hwnd, &rect, 0, flags );
 }
@@ -191,8 +191,8 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
 
     if (!data->managed) return;
 
-    if (data->client_rect.left <= 0 && data->client_rect.right >= screen_width &&
-        data->client_rect.top <= 0 && data->client_rect.bottom >= screen_height)
+    if (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
+        data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height)
         new_state |= (1 << WM_STATE_FULLSCREEN);
 
     ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
