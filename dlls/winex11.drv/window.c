@@ -1203,22 +1203,9 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
 {
     struct x11drv_win_data *data;
 
-    if ((data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data))))
+    if ((data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
     {
-        data->hwnd          = hwnd;
-        data->whole_window  = 0;
-        data->icon_window   = 0;
-        data->fbconfig_id   = 0;
-        data->gl_drawable   = 0;
-        data->pixmap        = 0;
-        data->xic           = 0;
-        data->managed       = FALSE;
-        data->wm_state      = 0;
-        data->dce           = NULL;
-        data->lock_changes  = 0;
-        data->hWMIconBitmap = 0;
-        data->hWMIconMask   = 0;
-
+        data->hwnd = hwnd;
         wine_tsx11_lock();
         if (!winContext) winContext = XUniqueContext();
         if (!win_data_context) win_data_context = XUniqueContext();

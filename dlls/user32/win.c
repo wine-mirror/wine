@@ -166,6 +166,8 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     win->dwMagic    = WND_MAGIC;
     win->flags      = 0;
     win->cbWndExtra = extra_bytes;
+    SetRectEmpty( &win->rectWindow );
+    SetRectEmpty( &win->rectClient );
     memset( win->wExtra, 0, extra_bytes );
     CLASS_AddWindow( class, win, unicode );
     return win;

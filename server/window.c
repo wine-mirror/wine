@@ -424,6 +424,7 @@ void close_desktop_window( struct desktop *desktop )
 static struct window *create_window( struct window *parent, struct window *owner,
                                      atom_t atom, void *instance )
 {
+    static const rectangle_t empty_rect;
     int extra_bytes;
     struct window *win;
     struct desktop *desktop;
@@ -462,6 +463,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->prop_alloc     = 0;
     win->properties     = NULL;
     win->nb_extra_bytes = extra_bytes;
+    win->window_rect = win->visible_rect = win->client_rect = empty_rect;
     memset( win->extra_bytes, 0, extra_bytes );
     list_init( &win->children );
     list_init( &win->unlinked );
