@@ -125,7 +125,7 @@ typedef ucontext_t SIGCONTEXT;
 #define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
 
 #define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->uc_mcontext.fpregs))
-#define FPUX_sig(context)    ((context)->uc_mcontext.fpregs->status >> 16 ? NULL : (XMM_SAVE_AREA32 *)(FPU_sig(context) + 1))
+#define FPUX_sig(context)    (FPU_sig(context) && !((context)->uc_mcontext.fpregs->status >> 16) ? (XMM_SAVE_AREA32 *)(FPU_sig(context) + 1) : NULL)
 
 #define VM86_EAX 0 /* the %eax value while vm86_enter is executing */
 
