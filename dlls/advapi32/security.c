@@ -3043,9 +3043,252 @@ DWORD WINAPI SetEntriesInAclA( ULONG count, PEXPLICIT_ACCESSA pEntries,
 DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
                                PACL OldAcl, PACL* NewAcl )
 {
-    FIXME("%d %p %p %p\n",count,pEntries,OldAcl,NewAcl);
+    ULONG i;
+    PSID *ppsid;
+    DWORD ret = ERROR_SUCCESS;
+    DWORD acl_size = sizeof(ACL);
+    NTSTATUS status;
+
+    TRACE("%d %p %p %p\n", count, pEntries, OldAcl, NewAcl);
+
     *NewAcl = NULL;
-    return ERROR_SUCCESS;
+
+    if (!count && !OldAcl)
+        return ERROR_SUCCESS;
+
+    /* allocate array of maximum sized sids allowed */
+    ppsid = HeapAlloc(GetProcessHeap(), 0, count * (sizeof(SID *) + FIELD_OFFSET(SID, SubAuthority[SID_MAX_SUB_AUTHORITIES])));
+    if (!ppsid)
+        return ERROR_OUTOFMEMORY;
+
+    for (i = 0; i < count; i++)
+    {
+        ppsid[i] = (char *)&ppsid[count] + i * FIELD_OFFSET(SID, SubAuthority[SID_MAX_SUB_AUTHORITIES]);
+
+        TRACE("[%d]:\n\tgrfAccessPermissions = 0x%x\n\tgrfAccessMode = %d\n\tgrfInheritance = 0x%x\n\t"
+              "Trustee.pMultipleTrustee = %p\n\tMultipleTrusteeOperation = %d\n\tTrusteeForm = %d\n\t"
+              "Trustee.TrusteeType = %d\n\tptstrName = %p\n", i,
+              pEntries[i].grfAccessPermissions, pEntries[i].grfAccessMode, pEntries[i].grfInheritance,
+              pEntries[i].Trustee.pMultipleTrustee, pEntries[i].Trustee.MultipleTrusteeOperation,
+              pEntries[i].Trustee.TrusteeForm, pEntries[i].Trustee.TrusteeType,
+              pEntries[i].Trustee.ptstrName);
+
+        if (pEntries[i].Trustee.MultipleTrusteeOperation != NO_MULTIPLE_TRUSTEE)
+        {
+            WARN("bad multiple trustee operation %d for trustee %d\n", pEntries[i].Trustee.MultipleTrusteeOperation, i);
+            ret = ERROR_INVALID_PARAMETER;
+            goto exit;
+        }
+
+        switch (pEntries[i].Trustee.TrusteeForm)
+        {
+        case TRUSTEE_IS_SID:
+            if (!CopySid(FIELD_OFFSET(SID, SubAuthority[SID_MAX_SUB_AUTHORITIES]),
+                         ppsid[i], pEntries[i].Trustee.ptstrName))
+            {
+                WARN("bad sid %p for trustee %d\n", pEntries[i].Trustee.ptstrName, i);
+                ret = ERROR_INVALID_PARAMETER;
+                goto exit;
+            }
+            break;
+        case TRUSTEE_IS_NAME:
+        {
+            DWORD sid_size = FIELD_OFFSET(SID, SubAuthority[SID_MAX_SUB_AUTHORITIES]);
+            DWORD domain_size = 0;
+            SID_NAME_USE use;
+            if (!LookupAccountNameW(NULL, pEntries[i].Trustee.ptstrName, ppsid[i], &sid_size, NULL, &domain_size, &use))
+            {
+                WARN("bad user name %s for trustee %d\n", debugstr_w(pEntries[i].Trustee.ptstrName), i);
+                ret = ERROR_INVALID_PARAMETER;
+                goto exit;
+            }
+            break;
+        }
+        case TRUSTEE_IS_OBJECTS_AND_SID:
+            FIXME("TRUSTEE_IS_OBJECTS_AND_SID unimplemented\n");
+            break;
+        case TRUSTEE_IS_OBJECTS_AND_NAME:
+            FIXME("TRUSTEE_IS_OBJECTS_AND_NAME unimplemented\n");
+            break;
+        default:
+            WARN("bad trustee form %d for trustee %d\n", pEntries[i].Trustee.TrusteeForm, i);
+            ret = ERROR_INVALID_PARAMETER;
+            goto exit;
+        }
+
+        /* Note: we overestimate the ACL size here as a tradeoff between
+         * instructions (simplicity) and memory */
+        switch (pEntries[i].grfAccessMode)
+        {
+        case GRANT_ACCESS:
+        case SET_ACCESS:
+            acl_size += FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) + GetLengthSid(ppsid[i]);
+            break;
+        case DENY_ACCESS:
+            acl_size += FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart) + GetLengthSid(ppsid[i]);
+            break;
+        case SET_AUDIT_SUCCESS:
+        case SET_AUDIT_FAILURE:
+            acl_size += FIELD_OFFSET(SYSTEM_AUDIT_ACE, SidStart) + GetLengthSid(ppsid[i]);
+            break;
+        case REVOKE_ACCESS:
+            break;
+        default:
+            WARN("bad access mode %d for trustee %d\n", pEntries[i].grfAccessMode, i);
+            ret = ERROR_INVALID_PARAMETER;
+            goto exit;
+        }
+    }
+
+    if (OldAcl)
+    {
+        ACL_SIZE_INFORMATION size_info;
+
+        status = RtlQueryInformationAcl(OldAcl, &size_info, sizeof(size_info), AclSizeInformation);
+        if (status != STATUS_SUCCESS)
+        {
+            ret = RtlNtStatusToDosError(status);
+            goto exit;
+        }
+        acl_size += size_info.AclBytesInUse - sizeof(ACL);
+    }
+
+    *NewAcl = LocalAlloc(0, acl_size);
+    if (!*NewAcl)
+    {
+        ret = ERROR_OUTOFMEMORY;
+        goto exit;
+    }
+
+    status = RtlCreateAcl( *NewAcl, acl_size, ACL_REVISION );
+    if (status != STATUS_SUCCESS)
+    {
+        ret = RtlNtStatusToDosError(status);
+        goto exit;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        switch (pEntries[i].grfAccessMode)
+        {
+        case GRANT_ACCESS:
+            status = RtlAddAccessAllowedAceEx(*NewAcl, ACL_REVISION,
+                                              pEntries[i].grfInheritance,
+                                              pEntries[i].grfAccessPermissions,
+                                              ppsid[i]);
+            break;
+        case SET_ACCESS:
+        {
+            ULONG j;
+            BOOL add = TRUE;
+            if (OldAcl)
+            {
+                for (j = 0; ; j++)
+                {
+                    const ACE_HEADER *existing_ace_header;
+                    status = RtlGetAce(OldAcl, j, (LPVOID *)&existing_ace_header);
+                    if (status != STATUS_SUCCESS)
+                        break;
+                    if (pEntries[i].grfAccessMode == SET_ACCESS &&
+                        existing_ace_header->AceType == ACCESS_ALLOWED_ACE_TYPE &&
+                        EqualSid(ppsid[i], &((ACCESS_ALLOWED_ACE *)existing_ace_header)->SidStart))
+                    {
+                        add = FALSE;
+                        break;
+                    }
+                }
+            }
+            if (add)
+                status = RtlAddAccessAllowedAceEx(*NewAcl, ACL_REVISION,
+                                                  pEntries[i].grfInheritance,
+                                                  pEntries[i].grfAccessPermissions,
+                                                  ppsid[i]);
+            break;
+        }
+        case DENY_ACCESS:
+            status = RtlAddAccessDeniedAceEx(*NewAcl, ACL_REVISION,
+                                             pEntries[i].grfInheritance,
+                                             pEntries[i].grfAccessPermissions,
+                                             ppsid[i]);
+            break;
+        case SET_AUDIT_SUCCESS:
+            status = RtlAddAuditAccessAceEx(*NewAcl, ACL_REVISION,
+                                            pEntries[i].grfInheritance,
+                                            pEntries[i].grfAccessPermissions,
+                                            ppsid[i], TRUE, FALSE);
+            break;
+        case SET_AUDIT_FAILURE:
+            status = RtlAddAuditAccessAceEx(*NewAcl, ACL_REVISION,
+                                            pEntries[i].grfInheritance,
+                                            pEntries[i].grfAccessPermissions,
+                                            ppsid[i], FALSE, TRUE);
+            break;
+        default:
+            FIXME("unhandled access mode %d\n", pEntries[i].grfAccessMode);
+        }
+    }
+
+    if (OldAcl)
+    {
+        for (i = 0; ; i++)
+        {
+            BOOL add = TRUE;
+            ULONG j;
+            const ACE_HEADER *old_ace_header;
+            status = RtlGetAce(OldAcl, i, (LPVOID *)&old_ace_header);
+            if (status != STATUS_SUCCESS) break;
+            for (j = 0; j < count; j++)
+            {
+                if (pEntries[j].grfAccessMode == SET_ACCESS &&
+                    old_ace_header->AceType == ACCESS_ALLOWED_ACE_TYPE &&
+                    EqualSid(ppsid[j], &((ACCESS_ALLOWED_ACE *)old_ace_header)->SidStart))
+                {
+                    status = RtlAddAccessAllowedAceEx(*NewAcl, ACL_REVISION, pEntries[j].grfInheritance, pEntries[j].grfAccessPermissions, ppsid[j]);
+                    add = FALSE;
+                    break;
+                }
+                else if (pEntries[j].grfAccessMode == REVOKE_ACCESS)
+                {
+                    switch (old_ace_header->AceType)
+                    {
+                    case ACCESS_ALLOWED_ACE_TYPE:
+                        if (EqualSid(ppsid[j], &((ACCESS_ALLOWED_ACE *)old_ace_header)->SidStart))
+                            add = FALSE;
+                        break;
+                    case ACCESS_DENIED_ACE_TYPE:
+                        if (EqualSid(ppsid[j], &((ACCESS_DENIED_ACE *)old_ace_header)->SidStart))
+                            add = FALSE;
+                        break;
+                    case SYSTEM_AUDIT_ACE_TYPE:
+                        if (EqualSid(ppsid[j], &((SYSTEM_AUDIT_ACE *)old_ace_header)->SidStart))
+                            add = FALSE;
+                        break;
+                    case SYSTEM_ALARM_ACE_TYPE:
+                        if (EqualSid(ppsid[j], &((SYSTEM_ALARM_ACE *)old_ace_header)->SidStart))
+                            add = FALSE;
+                        break;
+                    default:
+                        FIXME("unhandled ace type %d\n", old_ace_header->AceType);
+                    }
+
+                    if (!add)
+                        break;
+                }
+            }
+            if (add)
+                status = RtlAddAce(*NewAcl, ACL_REVISION, 1, (PACE_HEADER)old_ace_header, old_ace_header->AceSize);
+            if (status != STATUS_SUCCESS)
+            {
+                WARN("RtlAddAce failed with error 0x%08x\n", status);
+                ret = RtlNtStatusToDosError(status);
+                break;
+            }
+        }
+    }
+
+exit:
+    HeapFree(GetProcessHeap(), 0, ppsid);
+    return ret;
 }
 
 /******************************************************************************

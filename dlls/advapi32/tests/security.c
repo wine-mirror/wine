@@ -2027,13 +2027,13 @@ static void test_SetEntriesInAcl(void)
     ExplicitAccess.Trustee.ptstrName = (LPWSTR)EveryoneSid;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
-    todo_wine
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
 
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
     ExplicitAccess.Trustee.ptstrName = (LPWSTR)wszEveryone;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
+    todo_wine
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
     todo_wine
     ok(NewAcl != NULL, "returned acl was NULL\n");
@@ -2041,7 +2041,6 @@ static void test_SetEntriesInAcl(void)
 
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_BAD_FORM;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
-    todo_wine
     ok(res == ERROR_INVALID_PARAMETER, "SetEntriesInAclW failed: %u\n", res);
     ok(NewAcl == NULL, "returned acl wasn't NULL: %p\n", NewAcl);
     LocalFree(NewAcl);
@@ -2049,7 +2048,6 @@ static void test_SetEntriesInAcl(void)
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
     ExplicitAccess.Trustee.MultipleTrusteeOperation = TRUSTEE_IS_IMPERSONATE;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
-    todo_wine
     ok(res == ERROR_INVALID_PARAMETER, "SetEntriesInAclW failed: %u\n", res);
     ok(NewAcl == NULL, "returned acl wasn't NULL: %p\n", NewAcl);
     LocalFree(NewAcl);
@@ -2057,6 +2055,7 @@ static void test_SetEntriesInAcl(void)
     ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     ExplicitAccess.grfAccessMode = SET_ACCESS;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
+    todo_wine
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
     todo_wine
     ok(NewAcl != NULL, "returned acl was NULL\n");
@@ -2067,7 +2066,6 @@ static void test_SetEntriesInAcl(void)
     ExplicitAccess.Trustee.ptstrName = (LPWSTR)UsersSid;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
-    todo_wine
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
 
