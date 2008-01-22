@@ -1547,14 +1547,13 @@ static void test_LookupAccountName(void)
     get_sid_info(psid, &account, &sid_dom);
     ok(ret, "Failed to lookup account name\n");
     ok(sid_size != 0, "sid_size was zero\n");
+    ok(!lstrcmp(account, "Everyone"), "Expected Everyone, got %s\n", account);
     todo_wine
-    {
-        ok(!lstrcmp(account, "Everyone"), "Expected %s, got %s\n", user_name, account);
-        ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
-        ok(domain_size == 0, "Expected %d, got %d\n", domain_save - 1, domain_size);
-        ok(lstrlen(domain) == domain_size, "Expected %d\n", lstrlen(domain));
-        ok(sid_use == SidTypeWellKnownGroup, "Expected SidTypeUser, got %d\n", sid_use);
-    }
+    ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
+    ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
+    todo_wine
+    ok(lstrlen(domain) == domain_size, "Expected %d, got %d\n", lstrlen(domain), domain_size);
+    ok(sid_use == SidTypeWellKnownGroup, "Expected SidTypeUser, got %d\n", sid_use);
     domain_size = domain_save;
 
     /* NULL Sid with zero sid size */
@@ -2048,9 +2047,7 @@ static void test_SetEntriesInAcl(void)
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
     ExplicitAccess.Trustee.ptstrName = (LPWSTR)wszEveryone;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
-    todo_wine
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
-    todo_wine
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
 
@@ -2070,9 +2067,7 @@ static void test_SetEntriesInAcl(void)
     ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     ExplicitAccess.grfAccessMode = SET_ACCESS;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
-    todo_wine
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
-    todo_wine
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
 
