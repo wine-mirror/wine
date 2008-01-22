@@ -483,10 +483,19 @@ void processRegLines(FILE *in)
 {
     LPSTR line           = NULL;  /* line read from input stream */
     ULONG lineSize       = REG_VAL_BUF_SIZE;
+    BYTE  uni[2];
 
     line = HeapAlloc(GetProcessHeap(), 0, lineSize);
     CHECK_ENOUGH_MEMORY(line);
 
+    if (fread(uni, 2, 1, in) == 1) {
+        if (uni[0] == 0xff && uni[1] == 0xfe) {
+            printf("Trying to import from a unicode file: this isn't supported yet.\n"
+                   "Please use export as Win 9x/NT4 files from native regedit\n");
+            return;
+        }
+        fseek(in, -2, SEEK_CUR);
+    }
     while (!feof(in)) {
         LPSTR s; /* The pointer into line for where the current fgets should read */
         s = line;
