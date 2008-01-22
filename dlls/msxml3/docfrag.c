@@ -59,12 +59,12 @@ static HRESULT WINAPI domfrag_QueryInterface(
     TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMDocumentFragment ) ||
+         IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = iface;
     }
-    else if ( IsEqualGUID( riid, &IID_IDispatch ) ||
-              IsEqualGUID( riid, &IID_IXMLDOMNode ) )
+    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) )
     {
         return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
     }

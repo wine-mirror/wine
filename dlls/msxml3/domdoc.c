@@ -354,13 +354,13 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID rii
     *ppvObject = NULL;
 
     if ( IsEqualGUID( riid, &IID_IUnknown ) ||
+         IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IXMLDOMDocument ) ||
          IsEqualGUID( riid, &IID_IXMLDOMDocument2 ) )
     {
         *ppvObject = iface;
     }
-    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
-              IsEqualGUID( riid, &IID_IDispatch ) )
+    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) )
     {
         return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
     }

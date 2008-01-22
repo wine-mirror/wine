@@ -652,12 +652,12 @@ static HRESULT WINAPI Internal_QueryInterface(
     TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMElement ) ||
+         IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = &This->lpVtbl;
     }
-    else if ( IsEqualGUID( riid, &IID_IDispatch ) ||
-              IsEqualGUID( riid, &IID_IXMLDOMNode ) )
+    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) )
     {
         return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
     }
