@@ -2719,7 +2719,17 @@ static void dump_set_window_pos_request( const struct set_window_pos_request *re
 static void dump_set_window_pos_reply( const struct set_window_pos_reply *req )
 {
     fprintf( stderr, " new_style=%08x,", req->new_style );
-    fprintf( stderr, " new_ex_style=%08x", req->new_ex_style );
+    fprintf( stderr, " new_ex_style=%08x,", req->new_ex_style );
+    fprintf( stderr, " visible=" );
+    dump_rectangle( &req->visible );
+}
+
+static void dump_set_window_visible_rect_request( const struct set_window_visible_rect_request *req )
+{
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " visible=" );
+    dump_rectangle( &req->visible );
 }
 
 static void dump_get_window_rectangles_request( const struct get_window_rectangles_request *req )
@@ -3921,6 +3931,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_children_from_point_request,
     (dump_func)dump_get_window_tree_request,
     (dump_func)dump_set_window_pos_request,
+    (dump_func)dump_set_window_visible_rect_request,
     (dump_func)dump_get_window_rectangles_request,
     (dump_func)dump_get_window_text_request,
     (dump_func)dump_set_window_text_request,
@@ -4156,6 +4167,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_children_from_point_reply,
     (dump_func)dump_get_window_tree_reply,
     (dump_func)dump_set_window_pos_reply,
+    (dump_func)0,
     (dump_func)dump_get_window_rectangles_reply,
     (dump_func)dump_get_window_text_reply,
     (dump_func)0,
@@ -4391,6 +4403,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_window_children_from_point",
     "get_window_tree",
     "set_window_pos",
+    "set_window_visible_rect",
     "get_window_rectangles",
     "get_window_text",
     "set_window_text",

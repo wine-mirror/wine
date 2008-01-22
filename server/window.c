@@ -1409,12 +1409,10 @@ static struct region *expose_window( struct window *win, const rectangle_t *old_
 /* set the window and client rectangles, updating the update region if necessary */
 static void set_window_pos( struct window *win, struct window *previous,
                             unsigned int swp_flags, const rectangle_t *window_rect,
-                            const rectangle_t *client_rect, const rectangle_t *visible_rect,
-                            const rectangle_t *valid_rects )
+                            const rectangle_t *client_rect, const rectangle_t *valid_rects )
 {
     struct region *old_vis_rgn = NULL, *exposed_rgn = NULL;
     const rectangle_t old_window_rect = win->window_rect;
-    const rectangle_t old_visible_rect = win->visible_rect;
     const rectangle_t old_client_rect = win->client_rect;
     int client_changed, frame_changed;
     int visible = (win->style & WS_VISIBLE) || (swp_flags & SWP_SHOWWINDOW);
@@ -1426,11 +1424,25 @@ static void set_window_pos( struct window *win, struct window *previous,
     /* set the new window info before invalidating anything */
 
     win->window_rect  = *window_rect;
-    win->visible_rect = *visible_rect;
     win->client_rect  = *client_rect;
     if (!(swp_flags & SWP_NOZORDER) && win->parent) link_window( win, previous );
     if (swp_flags & SWP_SHOWWINDOW) win->style |= WS_VISIBLE;
     else if (swp_flags & SWP_HIDEWINDOW) win->style &= ~WS_VISIBLE;
+
+    /* assume the visible rect stays at the same offset from the window rect */
+    win->visible_rect.left   += window_rect->left   - old_window_rect.left;
+    win->visible_rect.top    += window_rect->top    - old_window_rect.top;
+    win->visible_rect.right  += window_rect->right  - old_window_rect.right;
+    win->visible_rect.bottom += window_rect->bottom - old_window_rect.bottom;
+    /* but don't make it smaller than the client rect */
+    if (win->visible_rect.left > client_rect->left)
+        win->visible_rect.left = max( window_rect->left, client_rect->left );
+    if (win->visible_rect.top > client_rect->top)
+        win->visible_rect.top = max( window_rect->top, client_rect->top );
+    if (win->visible_rect.right < client_rect->right)
+        win->visible_rect.right = min( window_rect->right, client_rect->right );
+    if (win->visible_rect.bottom < client_rect->bottom)
+        win->visible_rect.bottom = min( window_rect->bottom, client_rect->bottom );
 
     /* if the window is not visible, everything is easy */
     if (!visible) return;
@@ -1474,8 +1486,7 @@ static void set_window_pos( struct window *win, struct window *previous,
     if (swp_flags & SWP_NOCOPYBITS)
     {
         frame_changed = ((swp_flags & SWP_FRAMECHANGED) ||
-                         memcmp( window_rect, &old_window_rect, sizeof(old_window_rect) ) ||
-                         memcmp( visible_rect, &old_visible_rect, sizeof(old_visible_rect) ));
+                         memcmp( window_rect, &old_window_rect, sizeof(old_window_rect) ));
         client_changed = memcmp( client_rect, &old_client_rect, sizeof(old_client_rect) );
     }
     else
@@ -1485,11 +1496,7 @@ static void set_window_pos( struct window *win, struct window *previous,
         int y_offset = window_rect->top - old_window_rect.top;
         frame_changed = ((swp_flags & SWP_FRAMECHANGED) ||
                          window_rect->right  - old_window_rect.right != x_offset ||
-                         window_rect->bottom - old_window_rect.bottom != y_offset ||
-                         visible_rect->left   - old_visible_rect.left   != x_offset ||
-                         visible_rect->right  - old_visible_rect.right  != x_offset ||
-                         visible_rect->top    - old_visible_rect.top    != y_offset ||
-                         visible_rect->bottom - old_visible_rect.bottom != y_offset);
+                         window_rect->bottom - old_window_rect.bottom != y_offset);
         client_changed = (client_rect->left   - old_client_rect.left   != x_offset ||
                           client_rect->right  - old_client_rect.right  != x_offset ||
                           client_rect->top    - old_client_rect.top    != y_offset ||
@@ -1531,6 +1538,45 @@ done:
     free_region( old_vis_rgn );
     if (exposed_rgn) free_region( exposed_rgn );
     clear_error();  /* we ignore out of memory errors once the new rects have been set */
+}
+
+/* set the window visible rect */
+static void set_window_visible_rect( struct window *win, const rectangle_t *visible_rect,
+                                     unsigned int swp_flags )
+{
+    struct region *old_vis_rgn = NULL, *exposed_rgn = NULL;
+    const rectangle_t old_visible_rect = win->visible_rect;
+
+    if (!memcmp( visible_rect, &old_visible_rect, sizeof(old_visible_rect) )) return;
+
+    /* if the window is not visible, everything is easy */
+    if (!is_visible( win ) || (swp_flags & SWP_NOREDRAW))
+    {
+        win->visible_rect = *visible_rect;
+        return;
+    }
+
+    if (!(old_vis_rgn = get_visible_region( win, DCX_WINDOW ))) return;
+    win->visible_rect = *visible_rect;
+
+    /* expose anything revealed by the change */
+
+    exposed_rgn = expose_window( win, &win->window_rect, old_vis_rgn );
+    if (exposed_rgn)
+    {
+        /* subtract the client rect from the total window rect */
+        set_region_rect( exposed_rgn, &win->window_rect );
+        set_region_rect( old_vis_rgn, &win->client_rect );
+        if (subtract_region( exposed_rgn, exposed_rgn, old_vis_rgn ))
+        {
+            if (!is_desktop_window(win))
+                offset_region( exposed_rgn, -win->client_rect.left, -win->client_rect.top );
+            redraw_window( win, exposed_rgn, 1, RDW_INVALIDATE | RDW_FRAME | RDW_NOCHILDREN );
+        }
+        free_region( exposed_rgn );
+    }
+    free_region( old_vis_rgn );
+    clear_error();  /* we ignore out of memory errors once the new rect has been set */
 }
 
 
@@ -1850,7 +1896,7 @@ DECL_HANDLER(get_window_tree)
 /* set the position and Z order of a window */
 DECL_HANDLER(set_window_pos)
 {
-    const rectangle_t *visible_rect = NULL, *valid_rects = NULL;
+    const rectangle_t *valid_rects = NULL;
     struct window *previous = NULL;
     struct window *win = get_window( req->handle );
     unsigned int flags = req->flags;
@@ -1894,13 +1940,19 @@ DECL_HANDLER(set_window_pos)
         return;
     }
 
-    if (get_req_data_size() >= sizeof(rectangle_t)) visible_rect = get_req_data();
-    if (get_req_data_size() >= 3 * sizeof(rectangle_t)) valid_rects = visible_rect + 1;
-
-    if (!visible_rect) visible_rect = &req->window;
-    set_window_pos( win, previous, flags, &req->window, &req->client, visible_rect, valid_rects );
+    if (get_req_data_size() >= 2 * sizeof(rectangle_t)) valid_rects = get_req_data();
+    set_window_pos( win, previous, flags, &req->window, &req->client, valid_rects );
     reply->new_style = win->style;
     reply->new_ex_style = win->ex_style;
+    reply->visible = win->visible_rect;
+}
+
+
+/* set the visible rectangle of a window */
+DECL_HANDLER(set_window_visible_rect)
+{
+    struct window *win = get_window( req->handle );
+    if (win) set_window_visible_rect( win, &req->visible, req->flags );
 }
 
 

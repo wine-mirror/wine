@@ -2185,6 +2185,15 @@ enum message_type
 @REPLY
     unsigned int   new_style;     /* new window style */
     unsigned int   new_ex_style;  /* new window extended style */
+    rectangle_t    visible;       /* new visible rectangle */
+@END
+
+
+/* Set the visible rectangle of a window */
+@REQ(set_window_visible_rect)
+    unsigned int   flags;         /* SWP_* flags */
+    user_handle_t  handle;        /* handle to the window */
+    rectangle_t    visible;       /* visible rectangle */
 @END
 
 

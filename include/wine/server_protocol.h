@@ -2965,6 +2965,21 @@ struct set_window_pos_reply
     struct reply_header __header;
     unsigned int   new_style;
     unsigned int   new_ex_style;
+    rectangle_t    visible;
+};
+
+
+
+struct set_window_visible_rect_request
+{
+    struct request_header __header;
+    unsigned int   flags;
+    user_handle_t  handle;
+    rectangle_t    visible;
+};
+struct set_window_visible_rect_reply
+{
+    struct reply_header __header;
 };
 
 
@@ -4416,6 +4431,7 @@ enum request
     REQ_get_window_children_from_point,
     REQ_get_window_tree,
     REQ_set_window_pos,
+    REQ_set_window_visible_rect,
     REQ_get_window_rectangles,
     REQ_get_window_text,
     REQ_set_window_text,
@@ -4655,6 +4671,7 @@ union generic_request
     struct get_window_children_from_point_request get_window_children_from_point_request;
     struct get_window_tree_request get_window_tree_request;
     struct set_window_pos_request set_window_pos_request;
+    struct set_window_visible_rect_request set_window_visible_rect_request;
     struct get_window_rectangles_request get_window_rectangles_request;
     struct get_window_text_request get_window_text_request;
     struct set_window_text_request set_window_text_request;
@@ -4892,6 +4909,7 @@ union generic_reply
     struct get_window_children_from_point_reply get_window_children_from_point_reply;
     struct get_window_tree_reply get_window_tree_reply;
     struct set_window_pos_reply set_window_pos_reply;
+    struct set_window_visible_rect_reply set_window_visible_rect_reply;
     struct get_window_rectangles_reply get_window_rectangles_reply;
     struct get_window_text_reply get_window_text_reply;
     struct set_window_text_reply set_window_text_reply;
@@ -4976,6 +4994,6 @@ union generic_reply
     struct add_fd_completion_reply add_fd_completion_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 336
+#define SERVER_PROTOCOL_VERSION 337
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

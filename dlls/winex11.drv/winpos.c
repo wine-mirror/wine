@@ -241,7 +241,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 {
     Display *display = thread_display();
     struct x11drv_win_data *data;
-    RECT new_whole_rect, old_client_rect;
+    RECT new_whole_rect, old_client_rect, visible_rect;
     WND *win;
     DWORD old_style, new_style, new_ex_style;
     BOOL ret, make_managed = FALSE;
@@ -262,15 +262,12 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         }
     }
 
-    new_whole_rect = *rectWindow;
-    X11DRV_window_to_X_rect( data, &new_whole_rect );
-
     old_client_rect = data->client_rect;
 
     if (!data->whole_window) swp_flags |= SWP_NOCOPYBITS;  /* we can't rely on X11 to move the bits */
 
     if (!(win = WIN_GetPtr( hwnd ))) return FALSE;
-    if (win == WND_OTHER_PROCESS)
+    if (win == WND_DESKTOP || win == WND_OTHER_PROCESS)
     {
         if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %p\n", hwnd );
         return FALSE;
@@ -288,34 +285,52 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         req->client.top    = rectClient->top;
         req->client.right  = rectClient->right;
         req->client.bottom = rectClient->bottom;
-        if (memcmp( rectWindow, &new_whole_rect, sizeof(RECT) ) || !IsRectEmpty( &valid_rects[0] ))
+        if (!IsRectEmpty( &valid_rects[0] ))
+            wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
+        if ((ret = !wine_server_call( req )))
         {
-            wine_server_add_data( req, &new_whole_rect, sizeof(new_whole_rect) );
-            if (!IsRectEmpty( &valid_rects[0] ))
-                wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
+            new_style = reply->new_style;
+            new_ex_style = reply->new_ex_style;
+            visible_rect.left   = reply->visible.left;
+            visible_rect.top    = reply->visible.top;
+            visible_rect.right  = reply->visible.right;
+            visible_rect.bottom = reply->visible.bottom;
         }
-        ret = !wine_server_call( req );
-        new_style = reply->new_style;
-        new_ex_style = reply->new_ex_style;
     }
     SERVER_END_REQ;
 
-    if (win == WND_DESKTOP || data->whole_window == DefaultRootWindow(gdi_display))
+    if (ret)
     {
-        data->whole_rect = data->client_rect = data->window_rect = *rectWindow;
-        if (win != WND_DESKTOP)
+        if (data->whole_window == DefaultRootWindow(gdi_display))
         {
+            data->whole_rect = data->client_rect = data->window_rect = *rectWindow;
             win->rectWindow   = *rectWindow;
             win->rectClient   = *rectClient;
             win->dwStyle      = new_style;
             win->dwExStyle    = new_ex_style;
             WIN_ReleasePtr( win );
+            return TRUE;
         }
-        return ret;
-    }
 
-    if (ret)
-    {
+        new_whole_rect = *rectWindow;
+        X11DRV_window_to_X_rect( data, &new_whole_rect );
+        if (memcmp( &visible_rect, &new_whole_rect, sizeof(RECT) ))
+        {
+            TRACE( "%p: need to update visible rect %s -> %s\n", hwnd,
+                   wine_dbgstr_rect(&visible_rect), wine_dbgstr_rect(&new_whole_rect) );
+            SERVER_START_REQ( set_window_visible_rect )
+            {
+                req->handle         = hwnd;
+                req->flags          = swp_flags;
+                req->visible.left   = new_whole_rect.left;
+                req->visible.top    = new_whole_rect.top;
+                req->visible.right  = new_whole_rect.right;
+                req->visible.bottom = new_whole_rect.bottom;
+                wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
+
         /* invalidate DCEs */
 
         if ((((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) && (new_style & WS_VISIBLE)) ||
