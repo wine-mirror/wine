@@ -7,6 +7,7 @@ IMPORTS   = kernel32
 EXTRALIBS = -luuid
 
 C_SRCS = \
+	factory.c \
 	qmgr.c \
 	qmgr_main.c
 

@@ -34,6 +34,13 @@ typedef struct
     LONG ref;
 } BackgroundCopyManagerImpl;
 
+typedef struct
+{
+    const IClassFactoryVtbl *lpVtbl;
+} ClassFactoryImpl;
+
+extern ClassFactoryImpl BITS_ClassFactory;
+
 HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj);
 
 #endif /* __QMGR_H__ */
