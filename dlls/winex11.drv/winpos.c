@@ -237,20 +237,59 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
  *		move_window_bits
  *
  * Move the window bits when a window is moved.
- * FIXME: currently we don't move anything, we just invalidate the new position.
  */
 static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect, const RECT *new_rect,
                               const RECT *window_rect, const RECT *whole_rect, const RECT *client_rect )
 {
-    RECT invalid_rect = *new_rect;
-    UINT flags = RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN;
+    RECT src_rect = *old_rect;
+    RECT dst_rect = *new_rect;
+    HDC hdc_src, hdc_dst;
+    INT code;
+    HRGN rgn = 0;
+    HWND parent = 0;
 
-    /* make it relative to the client area */
-    OffsetRect( &invalid_rect, -client_rect->left, -client_rect->top );
-    if (invalid_rect.left < 0 || invalid_rect.top < 0 ||
-        invalid_rect.right > client_rect->right - client_rect->left ||
-        invalid_rect.bottom > client_rect->bottom - client_rect->top) flags |= RDW_FRAME;
-    RedrawWindow( data->hwnd, &invalid_rect, NULL, flags );
+    if (!data->whole_window)
+    {
+        OffsetRect( &dst_rect, -window_rect->left, -window_rect->top );
+        parent = GetAncestor( data->hwnd, GA_PARENT );
+        hdc_src = GetDCEx( parent, 0, DCX_CACHE );
+        hdc_dst = GetDCEx( data->hwnd, 0, DCX_CACHE | DCX_WINDOW );
+    }
+    else
+    {
+        OffsetRect( &dst_rect, -whole_rect->left, -whole_rect->top );
+        /* make src rect relative to the old position of the window */
+        OffsetRect( &src_rect, -data->whole_rect.left, -data->whole_rect.top );
+        if (dst_rect.left == src_rect.left && dst_rect.top == src_rect.top) return;
+        /* now make them relative to window rect for DCX_WINDOW */
+        OffsetRect( &dst_rect, whole_rect->left - window_rect->left,
+                    whole_rect->top - window_rect->top );
+        OffsetRect( &src_rect, whole_rect->left - window_rect->left,
+                    whole_rect->top - window_rect->top );
+        hdc_src = hdc_dst = GetDCEx( data->hwnd, 0, DCX_CACHE | DCX_WINDOW );
+    }
+
+    code = X11DRV_START_EXPOSURES;
+    ExtEscape( hdc_dst, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
+
+    TRACE( "copying bits for win %p/%lx %s -> %s\n",
+         data->hwnd, data->whole_window, wine_dbgstr_rect(&src_rect), wine_dbgstr_rect(&dst_rect) );
+    BitBlt( hdc_dst, dst_rect.left, dst_rect.top,
+            dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top,
+            hdc_src, src_rect.left, src_rect.top, SRCCOPY );
+
+    code = X11DRV_END_EXPOSURES;
+    ExtEscape( hdc_dst, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, sizeof(rgn), (LPSTR)&rgn );
+
+    ReleaseDC( data->hwnd, hdc_dst );
+    if (hdc_src != hdc_dst) ReleaseDC( parent, hdc_src );
+
+    if (rgn)
+    {
+        OffsetRgn( rgn, window_rect->left - client_rect->left, window_rect->top - client_rect->top );
+        RedrawWindow( data->hwnd, NULL, rgn, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN );
+        DeleteObject( rgn );
+    }
 }
 
 /***********************************************************************
@@ -403,14 +442,8 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                                       rectWindow, &new_whole_rect, rectClient );
             }
             else
-            {
-                /* check if the offset corresponds to what the X server will move */
-                if (!data->whole_window ||
-                    x_offset != valid_rects[1].left - valid_rects[0].left ||
-                    y_offset != valid_rects[1].top - valid_rects[0].top)
-                    move_window_bits( data, &valid_rects[1], &valid_rects[0],
-                                      rectWindow, &new_whole_rect, rectClient );
-            }
+                move_window_bits( data, &valid_rects[1], &valid_rects[0],
+                                  rectWindow, &new_whole_rect, rectClient );
         }
 
 
