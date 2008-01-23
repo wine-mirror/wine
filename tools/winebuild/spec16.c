@@ -461,7 +461,7 @@ static void output_init_code( const DLLSPEC *spec, const char *header_name )
     output( "\t.align 4\n" );
     output( "\t%s\n", func_declaration(name) );
     output( "%s:\n", name );
-    output( "subl $4,%%esp\n" );
+    output( "\tsubl $4,%%esp\n" );
     if (UsePIC)
     {
         output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
@@ -485,7 +485,7 @@ static void output_init_code( const DLLSPEC *spec, const char *header_name )
     output( "\t.align 4\n" );
     output( "\t%s\n", func_declaration(name) );
     output( "%s:\n", name );
-    output( "subl $8,%%esp\n" );
+    output( "\tsubl $8,%%esp\n" );
     if (UsePIC)
     {
         output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
