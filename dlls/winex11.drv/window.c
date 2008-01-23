@@ -260,6 +260,49 @@ static void sync_window_region( Display *display, struct x11drv_win_data *data, 
 
 
 /***********************************************************************
+ *              sync_window_text
+ */
+static void sync_window_text( Display *display, Window win, const WCHAR *text )
+{
+    UINT count;
+    char *buffer, *utf8_buffer;
+    XTextProperty prop;
+
+    /* allocate new buffer for window text */
+    count = WideCharToMultiByte(CP_UNIXCP, 0, text, -1, NULL, 0, NULL, NULL);
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, count ))) return;
+    WideCharToMultiByte(CP_UNIXCP, 0, text, -1, buffer, count, NULL, NULL);
+
+    count = WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), NULL, 0, NULL, NULL);
+    if (!(utf8_buffer = HeapAlloc( GetProcessHeap(), 0, count )))
+    {
+        HeapFree( GetProcessHeap(), 0, buffer );
+        return;
+    }
+    WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), utf8_buffer, count, NULL, NULL);
+
+    wine_tsx11_lock();
+    if (XmbTextListToTextProperty( display, &buffer, 1, XStdICCTextStyle, &prop ) == Success)
+    {
+        XSetWMName( display, win, &prop );
+        XSetWMIconName( display, win, &prop );
+        XFree( prop.value );
+    }
+    /*
+      Implements a NET_WM UTF-8 title. It should be without a trailing \0,
+      according to the standard
+      ( http://www.pps.jussieu.fr/~jch/software/UTF8_STRING/UTF8_STRING.text ).
+    */
+    XChangeProperty( display, win, x11drv_atom(_NET_WM_NAME), x11drv_atom(UTF8_STRING),
+                     8, PropModeReplace, (unsigned char *) utf8_buffer, count);
+    wine_tsx11_unlock();
+
+    HeapFree( GetProcessHeap(), 0, utf8_buffer );
+    HeapFree( GetProcessHeap(), 0, buffer );
+}
+
+
+/***********************************************************************
  *              X11DRV_set_win_format
  */
 BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
@@ -1051,6 +1094,7 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     int cx, cy, mask;
     XSetWindowAttributes attr;
     XIM xim;
+    WCHAR text[1024];
     HRGN hrgn;
 
     if (!(cx = data->window_rect.right - data->window_rect.left)) cx = 1;
@@ -1090,6 +1134,10 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     X11DRV_set_wm_hints( display, data );
 
     SetPropA( data->hwnd, whole_window_prop, (HANDLE)data->whole_window );
+
+    /* set the window text */
+    if (!InternalGetWindowText( data->hwnd, text, sizeof(text)/sizeof(WCHAR) )) text[0] = 0;
+    sync_window_text( display, data->whole_window, text );
 
     /* set the window region */
     if ((hrgn = CreateRectRgn( 0, 0, 0, 0 )))
@@ -1139,51 +1187,10 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
 void X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
 {
     Display *display = thread_display();
-    UINT count;
-    char *buffer;
-    char *utf8_buffer;
     Window win;
-    XTextProperty prop;
 
     if ((win = X11DRV_get_whole_window( hwnd )) && win != DefaultRootWindow(display))
-    {
-        /* allocate new buffer for window text */
-        count = WideCharToMultiByte(CP_UNIXCP, 0, text, -1, NULL, 0, NULL, NULL);
-        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, count )))
-        {
-            ERR("Not enough memory for window text\n");
-            return;
-        }
-        WideCharToMultiByte(CP_UNIXCP, 0, text, -1, buffer, count, NULL, NULL);
-
-        count = WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), NULL, 0, NULL, NULL);
-        if (!(utf8_buffer = HeapAlloc( GetProcessHeap(), 0, count )))
-        {
-            ERR("Not enough memory for window text in UTF-8\n");
-            HeapFree( GetProcessHeap(), 0, buffer );
-            return;
-        }
-        WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), utf8_buffer, count, NULL, NULL);
-
-        wine_tsx11_lock();
-	if (XmbTextListToTextProperty( display, &buffer, 1, XStdICCTextStyle, &prop ) == Success)
-	{
-	    XSetWMName( display, win, &prop );
-	    XSetWMIconName( display, win, &prop );
-	    XFree( prop.value );
-	}
-        /*
-        Implements a NET_WM UTF-8 title. It should be without a trailing \0,
-        according to the standard
-        ( http://www.pps.jussieu.fr/~jch/software/UTF8_STRING/UTF8_STRING.text ).
-        */
-        XChangeProperty( display, win, x11drv_atom(_NET_WM_NAME), x11drv_atom(UTF8_STRING),
-                         8, PropModeReplace, (unsigned char *) utf8_buffer, count);
-        wine_tsx11_unlock();
-
-        HeapFree( GetProcessHeap(), 0, utf8_buffer );
-        HeapFree( GetProcessHeap(), 0, buffer );
-    }
+        sync_window_text( display, win, text );
 }
 
 
