@@ -724,10 +724,11 @@ extern BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rec
 extern void X11DRV_set_iconic_state( HWND hwnd );
 extern void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect );
 extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect );
+extern void X11DRV_sync_gl_drawable( Display *display, struct x11drv_win_data *data );
 extern void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data );
 extern void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data,
-                                         UINT swp_flags, const RECT *new_client_rect,
-                                         const RECT *new_whole_rect );
+                                         UINT swp_flags, const RECT *old_client_rect,
+                                         const RECT *old_whole_rect );
 extern BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                                    const RECT *rectClient, UINT swp_flags, const RECT *validRects );
 extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );

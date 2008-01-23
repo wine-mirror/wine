@@ -343,7 +343,10 @@ done:
     return TRUE;
 }
 
-static void update_gl_drawable(Display *display, struct x11drv_win_data *data, const RECT *old_client_rect)
+/***********************************************************************
+ *              X11DRV_sync_gl_drawable
+ */
+void X11DRV_sync_gl_drawable(Display *display, struct x11drv_win_data *data)
 {
     int w = data->client_rect.right - data->client_rect.left;
     int h = data->client_rect.bottom - data->client_rect.top;
@@ -352,14 +355,6 @@ static void update_gl_drawable(Display *display, struct x11drv_win_data *data, c
     HWND next_hwnd;
     Drawable glxp;
     Pixmap pix;
-
-    if((w == old_client_rect->right - old_client_rect->left &&
-        h == old_client_rect->bottom - old_client_rect->top) ||
-       w <= 0 || h <= 0)
-    {
-        TRACE("No resize needed\n");
-        return;
-    }
 
     TRACE("Resizing GL drawable 0x%lx to %dx%d\n", data->gl_drawable, w, h);
 #ifdef SONAME_LIBXCOMPOSITE
@@ -952,26 +947,15 @@ void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect )
  * Synchronize the X window position with the Windows one
  */
 void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data,
-                                  UINT swp_flags, const RECT *new_client_rect,
-                                  const RECT *new_whole_rect )
+                                  UINT swp_flags, const RECT *old_client_rect,
+                                  const RECT *old_whole_rect )
 {
     XWindowChanges changes;
     int mask;
-    RECT old_whole_rect;
-    RECT old_client_rect;
-
-    old_whole_rect = data->whole_rect;
-    data->whole_rect = *new_whole_rect;
-
-    old_client_rect = data->client_rect;
-    data->client_rect = *new_client_rect;
-
-    if (data->gl_drawable)
-        update_gl_drawable(display, data, &old_client_rect);
 
     if (!data->whole_window || data->lock_changes) return;
 
-    mask = get_window_changes( &changes, &old_whole_rect, &data->whole_rect );
+    mask = get_window_changes( &changes, old_whole_rect, &data->whole_rect );
 
     if (!(swp_flags & SWP_NOZORDER))
     {

@@ -239,7 +239,7 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
  * Move the window bits when a window is moved.
  */
 static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect, const RECT *new_rect,
-                              const RECT *window_rect, const RECT *whole_rect, const RECT *client_rect )
+                              const RECT *old_whole_rect )
 {
     RECT src_rect = *old_rect;
     RECT dst_rect = *new_rect;
@@ -250,22 +250,22 @@ static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect
 
     if (!data->whole_window)
     {
-        OffsetRect( &dst_rect, -window_rect->left, -window_rect->top );
+        OffsetRect( &dst_rect, -data->window_rect.left, -data->window_rect.top );
         parent = GetAncestor( data->hwnd, GA_PARENT );
         hdc_src = GetDCEx( parent, 0, DCX_CACHE );
         hdc_dst = GetDCEx( data->hwnd, 0, DCX_CACHE | DCX_WINDOW );
     }
     else
     {
-        OffsetRect( &dst_rect, -whole_rect->left, -whole_rect->top );
+        OffsetRect( &dst_rect, -data->whole_rect.left, -data->whole_rect.top );
         /* make src rect relative to the old position of the window */
-        OffsetRect( &src_rect, -data->whole_rect.left, -data->whole_rect.top );
+        OffsetRect( &src_rect, -old_whole_rect->left, -old_whole_rect->top );
         if (dst_rect.left == src_rect.left && dst_rect.top == src_rect.top) return;
         /* now make them relative to window rect for DCX_WINDOW */
-        OffsetRect( &dst_rect, whole_rect->left - window_rect->left,
-                    whole_rect->top - window_rect->top );
-        OffsetRect( &src_rect, whole_rect->left - window_rect->left,
-                    whole_rect->top - window_rect->top );
+        OffsetRect( &dst_rect, data->whole_rect.left - data->window_rect.left,
+                    data->whole_rect.top - data->window_rect.top );
+        OffsetRect( &src_rect, data->whole_rect.left - data->window_rect.left,
+                    data->whole_rect.top - data->window_rect.top );
         hdc_src = hdc_dst = GetDCEx( data->hwnd, 0, DCX_CACHE | DCX_WINDOW );
     }
 
@@ -286,7 +286,8 @@ static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect
 
     if (rgn)
     {
-        OffsetRgn( rgn, window_rect->left - client_rect->left, window_rect->top - client_rect->top );
+        OffsetRgn( rgn, data->window_rect.left - data->client_rect.left,
+                   data->window_rect.top - data->client_rect.top );
         RedrawWindow( data->hwnd, NULL, rgn, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN );
         DeleteObject( rgn );
     }
@@ -349,7 +350,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 {
     Display *display = thread_display();
     struct x11drv_win_data *data;
-    RECT new_whole_rect, visible_rect;
+    RECT old_window_rect, old_whole_rect, old_client_rect, visible_rect;
     DWORD old_style, new_style;
     BOOL ret, make_managed = FALSE;
 
@@ -381,20 +382,25 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         }
 
         new_style = GetWindowLongW( hwnd, GWL_STYLE );
-        new_whole_rect = *rectWindow;
-        X11DRV_window_to_X_rect( data, &new_whole_rect );
-        if (memcmp( &visible_rect, &new_whole_rect, sizeof(RECT) ))
+        old_window_rect = data->window_rect;
+        old_whole_rect = data->whole_rect;
+        old_client_rect = data->client_rect;
+        data->window_rect = *rectWindow;
+        data->whole_rect = *rectWindow;
+        data->client_rect = *rectClient;
+        X11DRV_window_to_X_rect( data, &data->whole_rect );
+        if (memcmp( &visible_rect, &data->whole_rect, sizeof(RECT) ))
         {
             TRACE( "%p: need to update visible rect %s -> %s\n", hwnd,
-                   wine_dbgstr_rect(&visible_rect), wine_dbgstr_rect(&new_whole_rect) );
+                   wine_dbgstr_rect(&visible_rect), wine_dbgstr_rect(&data->whole_rect) );
             SERVER_START_REQ( set_window_visible_rect )
             {
                 req->handle         = hwnd;
                 req->flags          = swp_flags;
-                req->visible.left   = new_whole_rect.left;
-                req->visible.top    = new_whole_rect.top;
-                req->visible.right  = new_whole_rect.right;
-                req->visible.bottom = new_whole_rect.bottom;
+                req->visible.left   = data->whole_rect.left;
+                req->visible.top    = data->whole_rect.top;
+                req->visible.right  = data->whole_rect.right;
+                req->visible.bottom = data->whole_rect.bottom;
                 wine_server_call( req );
             }
             SERVER_END_REQ;
@@ -406,7 +412,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
              (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW)))
         {
             RECT rect;
-            UnionRect( &rect, rectWindow, &data->window_rect );
+            UnionRect( &rect, rectWindow, &old_window_rect );
             invalidate_dce( hwnd, &rect );
         }
 
@@ -423,29 +429,31 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 
         if (!IsRectEmpty( &valid_rects[0] ))
         {
-            int x_offset = data->whole_rect.left - new_whole_rect.left;
-            int y_offset = data->whole_rect.top - new_whole_rect.top;
+            int x_offset = old_whole_rect.left - data->whole_rect.left;
+            int y_offset = old_whole_rect.top - data->whole_rect.top;
 
             /* if all that happened is that the whole window moved, copy everything */
             if (!(swp_flags & SWP_FRAMECHANGED) &&
-                data->whole_rect.right   - new_whole_rect.right  == x_offset &&
-                data->whole_rect.bottom  - new_whole_rect.bottom == y_offset &&
-                data->client_rect.left   - rectClient->left      == x_offset &&
-                data->client_rect.right  - rectClient->right     == x_offset &&
-                data->client_rect.top    - rectClient->top       == y_offset &&
-                data->client_rect.bottom - rectClient->bottom    == y_offset &&
-                !memcmp( &valid_rects[0], rectClient, sizeof(RECT) ))
+                old_whole_rect.right   - data->whole_rect.right   == x_offset &&
+                old_whole_rect.bottom  - data->whole_rect.bottom  == y_offset &&
+                old_client_rect.left   - data->client_rect.left   == x_offset &&
+                old_client_rect.right  - data->client_rect.right  == x_offset &&
+                old_client_rect.top    - data->client_rect.top    == y_offset &&
+                old_client_rect.bottom - data->client_rect.bottom == y_offset &&
+                !memcmp( &valid_rects[0], &data->client_rect, sizeof(RECT) ))
             {
                 /* if we have an X window the bits will be moved by the X server */
                 if (!data->whole_window)
-                    move_window_bits( data, &data->whole_rect, &new_whole_rect,
-                                      rectWindow, &new_whole_rect, rectClient );
+                    move_window_bits( data, &old_whole_rect, &data->whole_rect, &old_whole_rect );
             }
             else
-                move_window_bits( data, &valid_rects[1], &valid_rects[0],
-                                  rectWindow, &new_whole_rect, rectClient );
+                move_window_bits( data, &valid_rects[1], &valid_rects[0], &old_whole_rect );
         }
 
+        if (data->gl_drawable &&
+            data->client_rect.right-data->client_rect.left == old_client_rect.right-old_client_rect.left &&
+            data->client_rect.bottom-data->client_rect.top == old_client_rect.bottom-old_client_rect.top)
+            X11DRV_sync_gl_drawable( display, data );
 
         if (data->whole_window && !data->lock_changes)
         {
@@ -467,8 +475,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
             }
         }
 
-        data->window_rect = *rectWindow;
-        X11DRV_sync_window_position( display, data, swp_flags, rectClient, &new_whole_rect );
+        X11DRV_sync_window_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
 
         if (data->whole_window && !data->lock_changes)
         {
