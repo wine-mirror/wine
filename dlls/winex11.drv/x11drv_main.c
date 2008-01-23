@@ -543,7 +543,6 @@ static BOOL process_attach(void)
     X11DRV_XComposite_Init();
 #endif
 
-    X11DRV_ClipCursor( NULL );
     X11DRV_InitKeyboard();
     X11DRV_InitClipboard();
 

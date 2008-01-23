@@ -964,7 +964,6 @@ void X11DRV_resize_desktop( unsigned int width, unsigned int height )
     resize_data.old_virtual_rect = virtual_screen_rect;
 
     xinerama_init( width, height );
-    ClipCursor(NULL);
 
     if (!(data = X11DRV_get_win_data( hwnd )))
     {

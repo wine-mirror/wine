@@ -169,6 +169,7 @@ void xinerama_init( unsigned int width, unsigned int height )
            wine_dbgstr_rect(&virtual_screen_rect), screen_width, screen_height );
 
     wine_tsx11_unlock();
+    ClipCursor( NULL );  /* reset the cursor clip rectangle */
 }
 
 
