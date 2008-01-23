@@ -128,6 +128,9 @@
 # Desktop
 @ cdecl wine_create_desktop(long long) X11DRV_create_desktop
 
+# System tray
+@ cdecl wine_make_systray_window(long) X11DRV_make_systray_window
+
 # XIM
 @ cdecl ForceXIMReset(long) X11DRV_ForceXIMReset
 

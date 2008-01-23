@@ -220,6 +220,7 @@ static void modify_icon(NOTIFYICONDATAW *nid, BOOL modify_tooltip)
 
 static void add_icon(NOTIFYICONDATAW *nid)
 {
+    HMODULE x11drv = GetModuleHandleA( "winex11.drv" );
     RECT rect;
     struct icon  *icon;
     static const WCHAR adaptor_windowname[] = /* Wine System Tray Adaptor */ {'W','i','n','e',' ','S','y','s','t','e','m',' ','T','r','a','y',' ','A','d','a','p','t','o','r',0};
@@ -250,13 +251,18 @@ static void add_icon(NOTIFYICONDATAW *nid)
     AdjustWindowRect(&rect, WS_CLIPSIBLINGS | WS_CAPTION, FALSE);
 
     /* create the adaptor window */
-    icon->window = CreateWindowEx(WS_EX_TRAYWINDOW, adaptor_classname,
+    icon->window = CreateWindowEx(0, adaptor_classname,
                                   adaptor_windowname,
                                   WS_CLIPSIBLINGS | WS_CAPTION,
                                   CW_USEDEFAULT, CW_USEDEFAULT,
                                   rect.right - rect.left,
                                   rect.bottom - rect.top,
                                   NULL, NULL, NULL, icon);
+    if (x11drv)
+    {
+        void (*make_systray_window)(HWND) = (void *)GetProcAddress( x11drv, "wine_make_systray_window" );
+        if (make_systray_window) make_systray_window( icon->window );
+    }
 
     if (!hide_systray)
         ShowWindow(icon->window, SW_SHOWNA);

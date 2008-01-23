@@ -79,9 +79,6 @@ BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rect )
 {
     DWORD style, ex_style;
 
-    /* tray window is always managed */
-    ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
-    if (ex_style & WS_EX_TRAYWINDOW) return TRUE;
     /* child windows are not managed */
     style = GetWindowLongW( hwnd, GWL_STYLE );
     if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD) return FALSE;
@@ -91,6 +88,7 @@ BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rect )
     /* windows with caption are managed */
     if ((style & WS_CAPTION) == WS_CAPTION) return TRUE;
     /* tool windows are not managed  */
+    ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
     if (ex_style & WS_EX_TOOLWINDOW) return FALSE;
     /* windows with thick frame are managed */
     if (style & WS_THICKFRAME) return TRUE;
@@ -642,14 +640,18 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data, HICO
 }
 
 /***********************************************************************
- *              systray_dock_window
+ *              wine_make_systray_window   (X11DRV.@)
  *
  * Docks the given X window with the NETWM system tray.
  */
-static void systray_dock_window( Display *display, struct x11drv_win_data *data )
+void X11DRV_make_systray_window( HWND hwnd )
 {
     static Atom systray_atom;
+    Display *display = thread_display();
+    struct x11drv_win_data *data;
     Window systray_window;
+
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
     wine_tsx11_lock();
     if (!systray_atom)
@@ -1448,12 +1450,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         SetWindowPos( hwnd, 0, newPos.left, newPos.top,
                       newPos.right, newPos.bottom, swFlag );
     }
-
-    /* Dock system tray windows. */
-    /* Dock after the window is created so we don't have problems calling
-     * SetWindowPos. */
-    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_TRAYWINDOW)
-        systray_dock_window( display, data );
 
     return TRUE;
 
