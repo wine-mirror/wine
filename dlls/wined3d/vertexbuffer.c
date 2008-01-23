@@ -228,11 +228,11 @@ static inline BOOL process_converted_attribute(IWineD3DVertexBufferImpl *This,
     data = (((DWORD_PTR) attrib->lpData) + offset) % This->stride;
     attrib_size = WINED3D_ATR_SIZE(type) * WINED3D_ATR_TYPESIZE(type);
     for(i = 0; i < attrib_size; i++) {
-        if(This->conv_map[(DWORD_PTR) data + i] != conv_type) {
-            TRACE("Byte %ld in vertex changed\n", i + (DWORD_PTR) data);
-            TRACE("It was type %d, is %d now\n", This->conv_map[(DWORD_PTR) data + i], conv_type);
+        if(This->conv_map[data + i] != conv_type) {
+            TRACE("Byte %ld in vertex changed\n", i + data);
+            TRACE("It was type %d, is %d now\n", This->conv_map[data + i], conv_type);
             ret = TRUE;
-            This->conv_map[(DWORD_PTR) data + i] = conv_type;
+            This->conv_map[data + i] = conv_type;
         }
     }
     return ret;

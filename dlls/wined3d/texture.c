@@ -287,7 +287,7 @@ static HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface
 
     if (Level < This->baseTexture.levels) {
         *ppSurfaceLevel = This->surfaces[Level];
-        IWineD3DSurface_AddRef((IWineD3DSurface*) This->surfaces[Level]);
+        IWineD3DSurface_AddRef(This->surfaces[Level]);
         hr = WINED3D_OK;
         TRACE("(%p) : returning %p for level %d\n", This, *ppSurfaceLevel, Level);
     }
