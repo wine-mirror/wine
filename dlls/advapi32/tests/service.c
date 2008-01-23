@@ -950,7 +950,7 @@ static void test_queryconfig2(void)
     ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer,sizeof(SERVICE_DESCRIPTIONA),&needed);
     ok(ret, "expected QueryServiceConfig2A to succeed\n");
     ok(needed == sizeof(SERVICE_DESCRIPTIONA), "expected needed to be %d, got %d\n", sizeof(SERVICE_DESCRIPTIONA), needed);
-    ok(!pConfig->lpDescription, "expected lpDescription to be NULL, got %p", pConfig->lpDescription);
+    ok(!pConfig->lpDescription, "expected lpDescription to be NULL, got %p\n", pConfig->lpDescription);
 
     SetLastError(0xdeadbeef);
     needed = 0;
