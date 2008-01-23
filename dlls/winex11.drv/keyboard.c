@@ -2121,17 +2121,15 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 			/* let's do vkey -> keycode -> (XLookupString) ansi char */
 			XKeyEvent e;
 			KeySym keysym;
-			int keyc;
-			char s[2];
-			e.display = display;
+			int keyc, len;
+			char s[10];
 
-			e.state = LockMask;
-			/* LockMask should behave exactly like caps lock - upercase
-			 * the letter keys and that's about it. */
+			e.display = display;
+			e.state = 0;
+			e.keycode = 0;
 
                         wine_tsx11_lock();
 
-			e.keycode = 0;
 			/* We exit on the first keycode found, to speed up the thing. */
 			for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
 			{ /* Find a keycode that could have generated this virtual key */
@@ -2159,14 +2157,16 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 			}
 			TRACE("Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
 
-			if (XLookupString(&e, s, 2, &keysym, NULL))
-                        {
-                            wine_tsx11_unlock();
-                            returnMVK (*s);
-                        }
-
-			TRACE("returning no ANSI.\n");
+                        len = XLookupString(&e, s, sizeof(s), &keysym, NULL);
                         wine_tsx11_unlock();
+
+                        if (len)
+                        {
+                            WCHAR wch;
+                            if (MultiByteToWideChar(CP_UNIXCP, 0, s, len, &wch, 1))
+                                returnMVK(toupperW(wch));
+                        }
+			TRACE("returning no ANSI.\n");
 			return 0;
 		}
 		default: /* reserved */

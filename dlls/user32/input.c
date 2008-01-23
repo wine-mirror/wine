@@ -622,7 +622,18 @@ UINT WINAPI MapVirtualKeyW(UINT code, UINT maptype)
  */
 UINT WINAPI MapVirtualKeyExA(UINT code, UINT maptype, HKL hkl)
 {
-    return MapVirtualKeyExW(code, maptype, hkl);
+    UINT ret;
+
+    ret = MapVirtualKeyExW( code, maptype, hkl );
+    if (maptype == MAPVK_VK_TO_CHAR)
+    {
+        BYTE ch = 0;
+        WCHAR wch = ret;
+
+        WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)&ch, 1, NULL, NULL );
+        ret = ch;
+    }
+    return ret;
 }
 
 /******************************************************************************
