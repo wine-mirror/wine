@@ -676,9 +676,12 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
   }
 
   /* tack on a negotiate packet */
-  RPCRT4_ClientAuthorize(Connection, NULL, &out);
-  r = RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, out.pvBuffer, out.cbBuffer);
-  HeapFree(GetProcessHeap(), 0, out.pvBuffer);
+  r = RPCRT4_ClientAuthorize(Connection, NULL, &out);
+  if (r == RPC_S_OK)
+  {
+    r = RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, out.pvBuffer, out.cbBuffer);
+    HeapFree(GetProcessHeap(), 0, out.pvBuffer);
+  }
 
   return r;
 }
