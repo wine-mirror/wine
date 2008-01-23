@@ -1050,7 +1050,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         HRESULT hr;
         /* Create the volume */
         hr = D3DCB_CreateVolume(This->parent, parent, tmpW, tmpH, tmpD, Format, Pool, Usage,
-                                (IWineD3DVolume **)&object->volumes[i], pSharedHandle);
+                                &object->volumes[i], pSharedHandle);
 
         if(FAILED(hr)) {
             ERR("Creating a volume for the volume texture failed(%08x)\n", hr);
@@ -1490,7 +1490,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     object->presentParms = *pPresentationParameters;
 
     TRACE("calling rendertarget CB\n");
-    hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
+    hr = D3DCB_CreateRenderTarget(This->parent,
                              parent,
                              object->presentParms.BackBufferWidth,
                              object->presentParms.BackBufferHeight,
@@ -1572,7 +1572,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 
         for(i = 0; i < object->presentParms.BackBufferCount; i++) {
             TRACE("calling rendertarget CB\n");
-            hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
+            hr = D3DCB_CreateRenderTarget(This->parent,
                                     parent,
                                     object->presentParms.BackBufferWidth,
                                     object->presentParms.BackBufferHeight,
@@ -1607,7 +1607,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     if (pPresentationParameters->EnableAutoDepthStencil && hr == WINED3D_OK) {
         TRACE("Creating depth stencil buffer\n");
         if (This->auto_depth_stencil_buffer == NULL ) {
-            hr = D3DCB_CreateDepthStencil((IUnknown *) This->parent,
+            hr = D3DCB_CreateDepthStencil(This->parent,
                                     parent,
                                     object->presentParms.BackBufferWidth,
                                     object->presentParms.BackBufferHeight,
@@ -2054,7 +2054,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* Setup the implicit swapchain */
     TRACE("Creating implicit swapchain\n");
-    hr=D3DCB_CreateAdditionalSwapChain((IUnknown *) This->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
+    hr=D3DCB_CreateAdditionalSwapChain(This->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
     if (FAILED(hr) || !swapchain) {
         WARN("Failed to create implicit swapchain\n");
         goto err_out;
@@ -2613,7 +2613,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface
         FIXME("Unhandled transform state!!\n");
     }
 
-    multiply_matrix(&temp, mat, (const WINED3DMATRIX *) pMatrix);
+    multiply_matrix(&temp, mat, pMatrix);
 
     /* Apply change via set transform - will reapply to eg. lights this way */
     return IWineD3DDeviceImpl_SetTransform(iface, State, &temp);
@@ -4564,7 +4564,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, U
     HRESULT hr;
 
     if(iSwapChain > 0) {
-        hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
+        hr = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapChain);
         if (hr == WINED3D_OK) {
             hr = IWineD3DSwapChain_GetDisplayMode(swapChain, pMode);
             IWineD3DSwapChain_Release(swapChain);
@@ -4789,7 +4789,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
 
     for(i = 0 ; i < swapchains ; i ++) {
 
-        IWineD3DDeviceImpl_GetSwapChain(iface, i , (IWineD3DSwapChain **)&swapChain);
+        IWineD3DDeviceImpl_GetSwapChain(iface, i, &swapChain);
         TRACE("presentinng chain %d, %p\n", i, swapChain);
         IWineD3DSwapChain_Present(swapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, 0);
         IWineD3DSwapChain_Release(swapChain);
@@ -5339,7 +5339,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, I
 static HRESULT  WINAPI  IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *iface,UINT iSwapChain, IWineD3DSurface *pDestSurface) {
     IWineD3DSwapChain *swapChain;
     HRESULT hr;
-    hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
+    hr = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapChain);
     if(hr == WINED3D_OK) {
         hr = IWineD3DSwapChain_GetFrontBufferData(swapChain, pDestSurface);
                 IWineD3DSwapChain_Release(swapChain);
@@ -5448,7 +5448,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface
 
     TRACE("(%p) :  SwapChain %d returning %p\n", This, iSwapChain, pRasterStatus);
 
-    hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
+    hr = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapChain);
     if(hr == WINED3D_OK){
         hr = IWineD3DSwapChain_GetRasterStatus(swapChain, pRasterStatus);
         IWineD3DSwapChain_Release(swapChain);
