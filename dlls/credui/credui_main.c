@@ -462,6 +462,8 @@ static void CredDialogCommandOk(HWND hwndDlg, struct cred_dialog_params *params)
     GetDlgItemTextW(hwndDlg, IDC_PASSWORD, params->pszPassword,
                     params->ulPasswordMaxChars);
 
+    params->fSave = IsDlgButtonChecked(hwndDlg, IDC_SAVE) == BST_CHECKED;
+
     EndDialog(hwndDlg, IDOK);
 }
 
