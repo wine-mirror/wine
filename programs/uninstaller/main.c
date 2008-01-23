@@ -286,6 +286,10 @@ static void UninstallProgram(void)
     list_need_update = 1;
 }
 
+static void UpdateButtons(HWND hDlg, HWND hList)
+{
+    EnableWindow(GetDlgItem(hDlg, IDC_UNINSTALL), SendMessageW(hList, LB_GETSELCOUNT, 0, 0) > 0);
+}
 
 static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
@@ -299,6 +303,7 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
             GetTextMetricsW(hdc, &tm);
             UpdateList(hList);
             ReleaseDC(hwnd, hdc);
+            UpdateButtons(hwnd, hList);
             break;
         case WM_COMMAND:
             switch(LOWORD(wParam))
@@ -316,6 +321,7 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
                         }
                         else sFilter = NULL;
                         UpdateList(hList);
+                        UpdateButtons(hwnd, hList);
                     }
                     break;
                 }
@@ -326,6 +332,7 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
                     {
                         UninstallProgram();
                         UpdateList(hList);
+                        UpdateButtons(hwnd, hList);
                     }
                     break;
                 }
@@ -344,6 +351,7 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
                        wine_dbgstr_w(entries[sel].descr));
                        oldsel = sel;
                    }
+                    UpdateButtons(hwnd, hList);
                     break;
                 case IDC_ABOUT:
                     MessageBoxW(0, sAbout, sAboutTitle, MB_OK);
