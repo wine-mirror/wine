@@ -857,6 +857,8 @@ static void test_queryconfig2(void)
     static const CHAR password    [] = "";
     static const CHAR description [] = "Description";
     HMODULE dllhandle = GetModuleHandleA("advapi32.dll");
+    BOOL (WINAPI *pChangeServiceConfig2A)(SC_HANDLE,DWORD,LPVOID)
+            = (void*)GetProcAddress(dllhandle, "ChangeServiceConfig2A");
     BOOL (WINAPI *pQueryServiceConfig2A)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD)
             = (void*)GetProcAddress(dllhandle, "QueryServiceConfig2A");
     BOOL (WINAPI *pQueryServiceConfig2W)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD)
@@ -957,8 +959,14 @@ static void test_queryconfig2(void)
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(), "expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
     ok(needed == sizeof(SERVICE_DESCRIPTIONA), "expected needed to be %d, got %d\n", sizeof(SERVICE_DESCRIPTIONA), needed);
 
+    if(!pChangeServiceConfig2A)
+    {
+        skip("function ChangeServiceConfig2A not present\n");
+        goto cleanup;
+    }
+
     pConfig->lpDescription = (LPSTR) description;
-    ret = ChangeServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer);
+    ret = pChangeServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer);
     ok(ret, "ChangeServiceConfig2A failed\n");
     if (!ret) {
         goto cleanup;
