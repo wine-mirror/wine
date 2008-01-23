@@ -85,7 +85,7 @@ typedef struct
    int			nToFrame;
    int			nLoop;
    int			currFrame;
-   /* tranparency info*/
+   /* transparency info*/
    COLORREF         	transparentColor;
    HBRUSH           	hbrushBG;
    HBITMAP  	    	hbmPrevFrame;

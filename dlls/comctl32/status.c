@@ -31,7 +31,7 @@
  * TODO:
  * 	-- CCS_BOTTOM (default)
  * 	-- CCS_LEFT
- * 	-- CCS_NODEVIDER
+ * 	-- CCS_NODIVIDER
  * 	-- CCS_NOMOVEX
  * 	-- CCS_NOMOVEY
  * 	-- CCS_NOPARENTALIGN

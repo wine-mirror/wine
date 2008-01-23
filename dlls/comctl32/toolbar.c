@@ -880,7 +880,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc, DWORD dwBaseCustDr
     }
 
     /* copy text & bitmap rects after adjusting for drop-down arrow
-     * so that text & bitmap is centred in the rectangle not containing
+     * so that text & bitmap is centered in the rectangle not containing
      * the arrow */
     CopyRect(&rcText, &rc);
     CopyRect(&rcBitmap, &rc);
@@ -1769,7 +1769,7 @@ TOOLBAR_LayoutToolbar(HWND hwnd)
 		else
 		    y += cy;
 
-		/* nSepRows is used to calculate the extra height follwoing  */
+		/* nSepRows is used to calculate the extra height following  */
 		/* the last row.					     */
 		nSepRows++;
 	    }
@@ -4967,7 +4967,7 @@ TOOLBAR_SetRows (HWND hwnd, WPARAM wParam, LPARAM lParam)
            rows (if CCS_NORESIZE is set), or will take up the whole window
            (if no CCS_NORESIZE).
 
-           Basic algorithum - If N buttons, and y rows requested, each row
+           Basic algorithm - If N buttons, and y rows requested, each row
            contains N/y buttons.
 
            FIXME: Handling of separators not obvious from testing results

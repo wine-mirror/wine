@@ -2044,7 +2044,7 @@ static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
       {
 	/* These are for adjusting the drawing of a Selected tab      */
 	/* The initial values are for the normal case of non-Selected */
-	int ZZ = 1;   /* Do not strech if selected */
+	int ZZ = 1;   /* Do not stretch if selected */
 	if (iItem == infoPtr->iSelected) {
 	    ZZ = 0;
 

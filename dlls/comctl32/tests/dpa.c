@@ -218,7 +218,7 @@ static void test_dpa(void)
 
     /* Set item with out of bound index */
     ok(pDPA_SetPtr(dpa, 1, (PVOID)6), "\n");
-    /* Fill the greated gap */
+    /* Fill the created gap */
     ok(pDPA_SetPtr(dpa, 0, (PVOID)5), "\n");
     rc=CheckDPA(dpa, 0x56, &dw);
     ok(rc, "dw=0x%x\n", dw);

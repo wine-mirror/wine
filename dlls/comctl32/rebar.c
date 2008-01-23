@@ -74,7 +74,7 @@
 
 /*
  * 3. REBAR_MoveChildWindows should have a loop because more than
- *    one pass is made (together with the RBN_CHILDSIZEs) is made on
+ *    one pass (together with the RBN_CHILDSIZEs) is made on
  *    at least RB_INSERTBAND
  */
 
@@ -167,7 +167,7 @@ typedef struct
     DWORD    orgStyle;    /* original style (dwStyle may change) */
     SIZE     calcSize;    /* calculated rebar size - coordinates swapped for CCS_VERT */
     BOOL     bUnicode;    /* TRUE if parent wants notify in W format */
-    BOOL     DoRedraw;    /* TRUE to acutally draw bands */
+    BOOL     DoRedraw;    /* TRUE to actually draw bands */
     UINT     fStatus;     /* Status flags (see below)  */
     HCURSOR  hcurArrow;   /* handle to the arrow cursor */
     HCURSOR  hcurHorz;    /* handle to the EW cursor */
@@ -233,7 +233,7 @@ typedef struct
 /* height of a rebar without a child */
 #define REBAR_NO_CHILD_HEIGHT 4
 
-/* minimium vertical height of a normal bar                        */
+/* minimum vertical height of a normal bar                        */
 /*   or minimum width of a CCS_VERT bar - from experiment on Win2k */
 #define REBAR_MINSIZE  23
 
@@ -1005,7 +1005,7 @@ REBAR_MoveChildWindows (const REBAR_INFO *infoPtr, UINT start, UINT endplus)
 	if (lpBand->hwndChild) {
 	    TRACE("hwndChild = %p\n", lpBand->hwndChild);
 
-	    /* Always geterate the RBN_CHILDSIZE even it child
+	    /* Always generate the RBN_CHILDSIZE even if child
 		   did not change */
 	    rbcz.uBand = i;
 	    rbcz.wID = lpBand->wID;
@@ -2142,7 +2142,7 @@ REBAR_GetRect (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 
     lpBand = &infoPtr->bands[iBand];
-    /* For CCS_VERT the coordintes will be swapped - like on Windows */
+    /* For CCS_VERT the coordinates will be swapped - like on Windows */
     CopyRect (lprc, &lpBand->rcBand);
 
     TRACE("band %d, (%d,%d)-(%d,%d)\n", iBand,

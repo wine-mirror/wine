@@ -1218,7 +1218,7 @@ static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
 /******************************************************************************
  *            PROPSHEET_WizardSubclassProc
  *
- * Subclassing window procedure for wizard extrior pages to prevent drawing
+ * Subclassing window procedure for wizard exterior pages to prevent drawing
  * background and so drawing above the watermark.
  */
 static LRESULT CALLBACK

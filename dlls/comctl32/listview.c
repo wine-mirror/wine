@@ -371,7 +371,7 @@ typedef struct tagLISTVIEW_INFO
 /* Size of "line" scroll for V & H scrolls */
 #define LISTVIEW_SCROLL_ICON_LINE_SIZE 37
 
-/* Padding betwen image and label */
+/* Padding between image and label */
 #define IMAGE_PADDING  2
 
 /* Padding behind the label */
@@ -950,7 +950,7 @@ static void prepaint_setup (const LISTVIEW_INFO *infoPtr, HDC hdc, NMLVCUSTOMDRA
     if (lpnmlvcd->clrText == CLR_DEFAULT)
         lpnmlvcd->clrText = comctl32_color.clrWindowText;
 
-    /* apprently, for selected items, we have to override the returned values */
+    /* apparently, for selected items, we have to override the returned values */
     if (!SubItem)
     {
         if (lpnmlvcd->nmcd.uItemState & CDIS_SELECTED)
@@ -1010,7 +1010,7 @@ static inline BOOL ranges_delitem(RANGES ranges, INT nItem)
  * ITERATOR DOCUMENTATION
  *
  * The iterator functions allow for easy, and convenient iteration
- * over items of iterest in the list. Typically, you create a
+ * over items of interest in the list. Typically, you create a
  * iterator, use it, and destroy it, as such:
  *   ITERATOR i;
  *
@@ -1496,7 +1496,7 @@ static inline INT LISTVIEW_GetCountPerColumn(const LISTVIEW_INFO *infoPtr)
  * BUGS
  *
  *  - The current implementation has a list of characters it will
- *    accept and it ignores averything else. In particular it will
+ *    accept and it ignores everything else. In particular it will
  *    ignore accentuated characters which seems to match what
  *    Windows does. But I'm not sure it makes sense to follow
  *    Windows there.
@@ -1826,9 +1826,9 @@ static void LISTVIEW_InvalidateSelectedItems(const LISTVIEW_INFO *infoPtr)
  * Computes an item's (left,top) corner, relative to rcView.
  * That is, the position has NOT been made relative to the Origin.
  * This is deliberate, to avoid computing the Origin over, and
- * over again, when this function is call in a loop. Instead,
- * one ca factor the computation of the Origin before the loop,
- * and offset the value retured by this function, on every iteration.
+ * over again, when this function is called in a loop. Instead,
+ * one can factor the computation of the Origin before the loop,
+ * and offset the value returned by this function, on every iteration.
  * 
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
@@ -1866,15 +1866,15 @@ static void LISTVIEW_GetItemOrigin(const LISTVIEW_INFO *infoPtr, INT nItem, LPPO
  * DESCRIPTION:            [INTERNAL]
  * Compute the rectangles of an item.  This is to localize all
  * the computations in one place. If you are not interested in some
- * of these values, simply pass in a NULL -- the fucntion is smart
+ * of these values, simply pass in a NULL -- the function is smart
  * enough to compute only what's necessary. The function computes
  * the standard rectangles (BOUNDS, ICON, LABEL) plus a non-standard
  * one, the BOX rectangle. This rectangle is very cheap to compute,
  * and is guaranteed to contain all the other rectangles. Computing
- * the ICON rect is also cheap, but all the others are potentaily
+ * the ICON rect is also cheap, but all the others are potentially
  * expensive. This gives an easy and effective optimization when
  * searching (like point inclusion, or rectangle intersection):
- * first test against the BOX, and if TRUE, test agains the desired
+ * first test against the BOX, and if TRUE, test against the desired
  * rectangle.
  * If the function does not have all the necessary information
  * to computed the requested rectangles, will crash with a
@@ -1884,7 +1884,7 @@ static void LISTVIEW_GetItemOrigin(const LISTVIEW_INFO *infoPtr, INT nItem, LPPO
  * We have the following 'special' meanings for a few fields:
  *   * If LVIS_FOCUSED is set, we assume the item has the focus
  *     This is important in ICON mode, where it might get a larger
- *     then usual rectange
+ *     then usual rectangle
  *
  * Please note that subitem support works only in REPORT mode.
  *
@@ -2009,7 +2009,7 @@ static void LISTVIEW_GetItemMetrics(const LISTVIEW_INFO *infoPtr, const LVITEMW 
     /************************************************************/
     if (doLabel)
     {
-	/* calculate how far to the right can the label strech */
+	/* calculate how far to the right can the label stretch */
 	Label.right = Box.right;
 	if (uView == LVS_REPORT)
 	{
@@ -2760,7 +2760,7 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
 	
 	TRACE("New range %s @%d\n", debugrange(chkrgn), index);
 
-        /* merge now common anges */
+        /* merge now common ranges */
 	fromindex = 0;
 	srchrgn.lower = chkrgn->lower - 1;
 	srchrgn.upper = chkrgn->upper + 1;
@@ -3349,7 +3349,7 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
 
 
 /***
- * Tests wheather the item is assignable to a list with style lStyle 
+ * Tests whether the item is assignable to a list with style lStyle
  */
 static inline BOOL is_assignable_item(const LVITEMW *lpLVItem, LONG lStyle)
 {
@@ -3367,7 +3367,7 @@ static inline BOOL is_assignable_item(const LVITEMW *lpLVItem, LONG lStyle)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] lpLVItem : valid pointer to new item atttributes
+ * [I] lpLVItem : valid pointer to new item attributes
  * [I] isNew : the item being set is being inserted
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  * [O] bChanged : will be set to TRUE if the item really changed
@@ -3392,7 +3392,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 
     if (infoPtr->dwStyle & LVS_OWNERDATA)
     {
-	/* a virtual listview we stores only selection and focus */
+	/* a virtual listview only stores selection and focus */
 	if (lpLVItem->mask & ~LVIF_STATE)
 	    return FALSE;
 	lpItem = NULL;
@@ -3442,7 +3442,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     nmlv.lParam = item.lParam;
     
     /* send LVN_ITEMCHANGING notification, if the item is not being inserted */
-    /* and we are _NOT_ virtual (LVS_OWERNDATA), and change notifications */
+    /* and we are _NOT_ virtual (LVS_OWNERDATA), and change notifications */
     /* are enabled */
     if(lpItem && !isNew && infoPtr->bDoChangeNotify)
     {
@@ -3512,7 +3512,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] lpLVItem : valid pointer to new subitem atttributes
+ * [I] lpLVItem : valid pointer to new subitem attributes
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  * [O] bChanged : will be set to TRUE if the item really changed
  *
@@ -3590,7 +3590,7 @@ static BOOL set_sub_item(const LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, 
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] lpLVItem : new item atttributes
+ * [I] lpLVItem : new item attributes
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
  * RETURN:
@@ -4425,7 +4425,7 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
     if (nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns))
 	rcCol.left = rcCol.right;
     
-    /* ajust the other columns */
+    /* adjust the other columns */
     for (nCol = nColumn; nCol < DPA_GetPtrCount(infoPtr->hdpaColumns); nCol++)
     {
 	lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nCol);
@@ -4436,7 +4436,7 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
     /* do not update screen if not in report mode */
     if (!is_redrawing(infoPtr) || (infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return;
     
-    /* if we have a focus, must first erase the focus rect */
+    /* if we have a focus, we must first erase the focus rect */
     if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, FALSE);
     
     /* Need to reset the item width when inserting a new column */
@@ -6497,7 +6497,7 @@ static BOOL LISTVIEW_RedrawItems(const LISTVIEW_INFO *infoPtr, INT nFirst, INT n
  *  is 16 and an 8 is passed, the list will be scrolled by 16. If a 7
  *  is passed, then the scroll will be 0.  (per MSDN 7/2002)
  *
- *  For:  (per experimentaion with native control and CSpy ListView)
+ *  For:  (per experimentation with native control and CSpy ListView)
  *     LVS_ICON       dy=1 = 1 pixel  (vertical only)
  *                    dx ignored
  *     LVS_SMALLICON  dy=1 = 1 pixel  (vertical only)
@@ -10116,7 +10116,7 @@ static LRESULT CALLBACK EditLblWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 
 /***
  * DESCRIPTION:
- * Creates a subclassed edit cotrol
+ * Creates a subclassed edit control
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure

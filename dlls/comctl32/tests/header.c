@@ -1156,7 +1156,7 @@ static void test_hdm_index_messages(HWND hParent)
 
     ok_sequence(sequences, HEADER_SEQ_INDEX, orderArray_seq, "set_get_orderArray sequence testing", FALSE);
 
-    /* check if the array order is set correctly and the size of the array is corret. */
+    /* check if the array order is set correctly and the size of the array is correct. */
     expect(2, iSize);
     expect(lpiarray[0], lpiarrayReceived[0]);
     expect(lpiarray[1], lpiarrayReceived[1]);
