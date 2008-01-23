@@ -937,6 +937,7 @@ static RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc,
     AuthInfo->exp = exp;
     AuthInfo->cbMaxToken = cbMaxToken;
     AuthInfo->identity = identity;
+    AuthInfo->server_principal_name = NULL;
 
     /* duplicate the SEC_WINNT_AUTH_IDENTITY structure, if applicable, to
      * enable better matching in RpcAuthInfo_IsEqual */
@@ -1004,6 +1005,7 @@ ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo)
             HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->Password);
             HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity);
         }
+        HeapFree(GetProcessHeap(), 0, AuthInfo->server_principal_name);
         HeapFree(GetProcessHeap(), 0, AuthInfo);
     }
 
@@ -1415,7 +1417,7 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   }
 
   TRACE("found package %s for service %u\n", packages[i].Name, AuthnSvc);
-  r = AcquireCredentialsHandleA((SEC_CHAR *)ServerPrincName, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
+  r = AcquireCredentialsHandleA(NULL, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
                                 AuthIdentity, NULL, NULL, &cred, &exp);
   cbMaxToken = packages[i].cbMaxToken;
   FreeContextBuffer(packages);
@@ -1426,8 +1428,17 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
                            AuthIdentity, &new_auth_info);
     if (r == RPC_S_OK)
     {
-      if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
-      bind->AuthInfo = new_auth_info;
+      new_auth_info->server_principal_name = RPCRT4_strdupAtoW((char *)ServerPrincName);
+      if (new_auth_info->server_principal_name)
+      {
+        if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
+        bind->AuthInfo = new_auth_info;
+      }
+      else
+      {
+        RpcAuthInfo_Release(new_auth_info);
+        r = ERROR_OUTOFMEMORY;
+      }
     }
     else
       FreeCredentialsHandle(&cred);
@@ -1535,7 +1546,7 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
   }
 
   TRACE("found package %s for service %u\n", debugstr_w(packages[i].Name), AuthnSvc);
-  r = AcquireCredentialsHandleW((SEC_WCHAR *)ServerPrincName, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
+  r = AcquireCredentialsHandleW(NULL, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
                                 AuthIdentity, NULL, NULL, &cred, &exp);
   cbMaxToken = packages[i].cbMaxToken;
   FreeContextBuffer(packages);
@@ -1546,8 +1557,17 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
                            AuthIdentity, &new_auth_info);
     if (r == RPC_S_OK)
     {
-      if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
-      bind->AuthInfo = new_auth_info;
+      new_auth_info->server_principal_name = RPCRT4_strdupW(ServerPrincName);
+      if (new_auth_info->server_principal_name)
+      {
+        if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
+        bind->AuthInfo = new_auth_info;
+      }
+      else
+      {
+        RpcAuthInfo_Release(new_auth_info);
+        r = ERROR_OUTOFMEMORY;
+      }
     }
     else
       FreeCredentialsHandle(&cred);

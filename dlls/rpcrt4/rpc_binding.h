@@ -41,6 +41,7 @@ typedef struct _RpcAuthInfo
   /* our copy of NT auth identity structure, if the authentication service
    * takes an NT auth identity */
   SEC_WINNT_AUTH_IDENTITY_W *nt_identity;
+  LPWSTR server_principal_name;
 } RpcAuthInfo;
 
 typedef struct _RpcQualityOfService

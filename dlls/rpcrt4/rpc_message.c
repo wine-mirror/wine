@@ -581,10 +581,10 @@ static RPC_STATUS RPCRT4_ClientAuthorize(RpcConnection *conn, SecBuffer *in,
   inp_desc.pBuffers = in;
   inp_desc.ulVersion = 0;
 
-  r = InitializeSecurityContextA(&conn->AuthInfo->cred, in ? &conn->ctx : NULL,
-        NULL, context_req, 0, SECURITY_NETWORK_DREP,
-        in ? &inp_desc : NULL, 0, &conn->ctx, &out_desc, &conn->attr,
-        &conn->exp);
+  r = InitializeSecurityContextW(&conn->AuthInfo->cred, in ? &conn->ctx : NULL,
+        in ? NULL : conn->AuthInfo->server_principal_name, context_req, 0,
+        SECURITY_NETWORK_DREP, in ? &inp_desc : NULL, 0, &conn->ctx,
+        &out_desc, &conn->attr, &conn->exp);
   if (FAILED(r))
   {
       WARN("InitializeSecurityContext failed with error 0x%08x\n", r);
