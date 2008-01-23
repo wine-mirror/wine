@@ -2389,7 +2389,7 @@ static void test_encodeSequenceOfAny(DWORD dwEncoding)
     BYTE *buf = NULL;
     DWORD bufSize = 0;
 
-    /* Encode a homogenous sequence */
+    /* Encode a homogeneous sequence */
     for (i = 0; i < sizeof(ints) / sizeof(ints[0]); i++)
     {
         blobs[i].cbData = ints[i].encoded[1] + 2;

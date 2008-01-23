@@ -328,7 +328,7 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
  * This function is pretty similar to IDirect3DVertexBuffer7::ProcessVertices,
  * so it's tempting to forward it to there. However, there are some
  * tiny differences. First, the lpOffscreen flag that is reported back,
- * then there is the homogenous vertex that is generated. Also there's a lack
+ * then there is the homogeneous vertex that is generated. Also there's a lack
  * of FVFs, but still a custom stride. Last, the d3d1 - d3d3 viewport has some
  * settings (scale) that d3d7 and wined3d do not have. All in all wrapping to
  * ProcessVertices doesn't pay of in terms of wrapper code needed and code

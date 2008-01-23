@@ -379,7 +379,7 @@ static BOOL fci_flush_data_block (HFCI hfci, int* err,
   /* add optional reserved area */
 
   /* This allocation and freeing at each CFData block is a bit */
-  /* inefficent, but it's harder to forget about freeing the buffer :-). */
+  /* inefficient, but it's harder to forget about freeing the buffer :-). */
   /* Reserved areas are used seldom besides that... */
   if (cbReserveCFData!=0) {
     if(!(reserved = (char*)PFCI_ALLOC(hfci, cbReserveCFData))) {

@@ -6,7 +6,7 @@ This library (twain_32.dll) is an implementation of TWAIN API for providing imag
 
 2. WHAT'S IMPLEMENTED
 
-- Functions that dispatch operations specified by the operation triplets to the coresponding function.
+- Functions that dispatch operations specified by the operation triplets to the corresponding function.
 
 - All the operation triplets related to the Data Source Manager are implemented.  Appplication is able to enumerate data sources and open them.
 

@@ -245,7 +245,7 @@ static inline BOOL check_attribute(IWineD3DVertexBufferImpl *This, const WineDir
     DWORD type;
 
     /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
-     * there, on nonexistant attribs the vbo is 0.
+     * there, on nonexistent attribs the vbo is 0.
      */
     if(attrib->VBO != This->vbo) return FALSE;
 

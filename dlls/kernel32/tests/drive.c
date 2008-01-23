@@ -126,7 +126,7 @@ static void test_GetDiskFreeSpaceA(void)
                     ok( total_clusters <= 65535,
                             "total clusters is %d > 65535\n", total_clusters);
                 else if (pGetDiskFreeSpaceExA) {
-                    /* NT, 2k, XP : GetDiskFreeSpace shoud be accurate */
+                    /* NT, 2k, XP : GetDiskFreeSpace should be accurate */
                     ULARGE_INTEGER totEx, tot, d;
 
                     tot.QuadPart = sectors_per_cluster;

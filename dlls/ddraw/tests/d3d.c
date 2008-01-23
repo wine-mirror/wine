@@ -1055,7 +1055,7 @@ static void Direct3D1Test(void)
     }
     for(i = 0; i < sizeof(outH); i++) {
         if(((unsigned char *) outH)[i] != 0xaa) {
-            ok(FALSE, "Homogenous output was generated despite UNCLIPPED flag\n");
+            ok(FALSE, "Homogeneous output was generated despite UNCLIPPED flag\n");
             break;
         }
     }

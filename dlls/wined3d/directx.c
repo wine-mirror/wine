@@ -814,7 +814,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                  * a fixed function pipeline anymore.
                  *
                  * So this is just a check to check that our assumption holds true. If not, write a warning
-                 * and reduce the number of vertex samplers or propably disable vertex texture fetch.
+                 * and reduce the number of vertex samplers or probably disable vertex texture fetch.
                  */
                 if(gl_info->max_vertex_samplers &&
                    MAX_TEXTURES + gl_info->max_vertex_samplers > gl_info->max_combined_samplers) {

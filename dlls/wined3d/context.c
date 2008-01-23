@@ -789,7 +789,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
                 if(This->activeContext && tid == This->lastThread) {
                     context = This->activeContext;
                 } else {
-                    /* This may happen if the app jumps streight into offscreen rendering
+                    /* This may happen if the app jumps straight into offscreen rendering
                      * Start using the context of the primary swapchain. tid == 0 is no problem
                      * for findThreadContextForSwapChain.
                      *

@@ -7,7 +7,7 @@
  * 		98/7 	changes for making this MIDI driver work on OSS
  * 			current support is limited to MIDI ports of OSS systems
  * 		98/9	rewriting MCI code for MIDI
- * 		98/11 	splitted in midi.c and mcimidi.c
+ * 		98/11 	split in midi.c and mcimidi.c
  * Copyright 2006       Emmanuel Maillard
  *
  * This library is free software; you can redistribute it and/or

@@ -442,7 +442,7 @@ resources
 		}
 	/*
 	 * The following newline rule will never get reduced because we never
-	 * get the tNL token, unless we explicitely set the 'want_nl'
+	 * get the tNL token, unless we explicitly set the 'want_nl'
 	 * flag, which we don't.
 	 * The *ONLY* reason for this to be here is because Berkeley
 	 * yacc (byacc), at least version 1.9, has a bug.

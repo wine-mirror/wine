@@ -3229,9 +3229,9 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
 
         /* min(WINED3D_ATR_SIZE(position),3) to Disable RHW mode as 'w' coord
            handling for rhw mode should not impact screen position whereas in GL it does.
-           This may result in very slightly distorted textures in rhw mode, but
-           a very minimal different. There's always the other option of
-           fixing the view matrix to prevent w from having any effect
+           This may result in very slightly distorted textures in rhw mode.
+           There's always the other option of fixing the view matrix to
+           prevent w from having any effect.
 
            This only applies to user pointer sources, in VBOs the vertices are fixed up
          */
@@ -3278,9 +3278,9 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     /*  WARNING: Data here MUST be in RGBA format, so cannot      */
     /*     go directly into fast mode from app pgm, because       */
     /*     directx requires data in BGRA format.                  */
-    /* currently fixupVertices swizzles the format, but this isn't */
+    /* currently fixupVertices swizzles the format, but this isn't*/
     /* very practical when using VBOS                             */
-    /* NOTE: Unless we write a vertex shader to swizzle the colour */
+    /* NOTE: Unless we write a vertex shader to swizzle the colour*/
     /* , or the user doesn't care and wants the speed advantage   */
 
     if (sd->u.s.diffuse.lpData || sd->u.s.diffuse.VBO) {

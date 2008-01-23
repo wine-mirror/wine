@@ -134,7 +134,7 @@ static void update_empty_exe( void )
     CloseHandle( test );
 
     r = EndUpdateResource( res, FALSE );
-    ok( r == FALSE, "EndUpdateResouce failed\n");
+    ok( r == FALSE, "EndUpdateResource failed\n");
 
     res = BeginUpdateResource( filename, FALSE );
     ok( res == NULL, "BeginUpdateResource failed\n");
@@ -149,7 +149,7 @@ static void update_resources_none( void )
     ok( res != NULL, "BeginUpdateResource failed\n");
 
     r = EndUpdateResource( res, FALSE );
-    ok( r, "EndUpdateResouce failed\n");
+    ok( r, "EndUpdateResource failed\n");
 }
 
 static void update_resources_delete( void )
@@ -161,7 +161,7 @@ static void update_resources_delete( void )
     ok( res != NULL, "BeginUpdateResource failed\n");
 
     r = EndUpdateResource( res, FALSE );
-    ok( r, "EndUpdateResouce failed\n");
+    ok( r, "EndUpdateResource failed\n");
 }
 
 static void update_resources_version(void)
@@ -178,17 +178,17 @@ static void update_resources_version(void)
                         MAKEINTRESOURCE(0x4567),
                         0xabcd,
                         NULL, 0 );
-    ok( r == FALSE, "UpdateResouce failed\n");
+    ok( r == FALSE, "UpdateResource failed\n");
 
     r = UpdateResource( res,
                         MAKEINTRESOURCE(0x1230),
                         MAKEINTRESOURCE(0x4567),
                         0xabcd,
                         foo, sizeof foo );
-    ok( r == TRUE, "UpdateResouce failed\n");
+    ok( r == TRUE, "UpdateResource failed\n");
 
     r = EndUpdateResource( res, FALSE );
-    ok( r, "EndUpdateResouce failed\n");
+    ok( r, "EndUpdateResource failed\n");
 }
 
 

@@ -693,7 +693,7 @@ INT16 WINAPI DeleteJob16(HPJOB16 hJob, INT16 nNotUsed)
 
 /*
  * The following two function would allow a page to be sent to the printer
- * when it has been processed.  For simplicity they havn't been implemented.
+ * when it has been processed.  For simplicity they haven't been implemented.
  * This means a whole job has to be processed before it is sent to the printer.
  */
 
