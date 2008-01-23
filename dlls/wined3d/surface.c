@@ -386,7 +386,7 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %d\n", This, ref + 1);
     if (ref == 0) {
-        IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
+        IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
         renderbuffer_entry_t *entry, *entry2;
         TRACE("(%p) : cleaning up\n", This);
 
@@ -724,7 +724,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         }
 
         top = mem + pitch * local_rect.top;
-        bottom = ((BYTE *) mem) + pitch * ( local_rect.bottom - local_rect.top - 1);
+        bottom = mem + pitch * ( local_rect.bottom - local_rect.top - 1);
         for(i = 0; i < (local_rect.bottom - local_rect.top) / 2; i++) {
             memcpy(row, top + off, len);
             memcpy(top + off, bottom + off, len);
@@ -759,7 +759,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         for(y = local_rect.top; y < local_rect.bottom; y++) {
             for(x = local_rect.left; x < local_rect.right; x++) {
                 /*                      start              lines            pixels      */
-                BYTE *blue =  (BYTE *) ((BYTE *) mem) + y * pitch + x * (sizeof(BYTE) * 3);
+                BYTE *blue =  mem + y * pitch + x * (sizeof(BYTE) * 3);
                 BYTE *green = blue  + 1;
                 BYTE *red =   green + 1;
 
@@ -994,7 +994,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     GLint  prev_rasterpos[4];
     GLint skipBytes = 0;
     UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
-    IWineD3DDeviceImpl *myDevice = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *swapchain;
 
     /* Activate the correct context for the render target */
@@ -1655,7 +1655,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
             unsigned char *Dest;
             for(y = 0; y < height; y++) {
                 Source = (short *) (src + y * pitch);
-                Dest = (unsigned char *) (dst + y * outpitch);
+                Dest = dst + y * outpitch;
                 for (x = 0; x < width; x++ ) {
                     long color = (*Source++);
                     /* B */ Dest[0] = 0xff;
@@ -1693,7 +1693,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
             unsigned char *Dest;
             for(y = 0; y < height; y++) {
                 Source = (DWORD *) (src + y * pitch);
-                Dest = (unsigned char *) (dst + y * outpitch);
+                Dest = dst + y * outpitch;
                 for (x = 0; x < width; x++ ) {
                     long color = (*Source++);
                     /* B */ Dest[0] = ((color >> 16) & 0xff) + 128; /* W */
@@ -1719,7 +1719,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                  */
                 for(y = 0; y < height; y++) {
                     Source = (WORD *) (src + y * pitch);
-                    Dest = (unsigned char *) (dst + y * outpitch);
+                    Dest = dst + y * outpitch;
                     for (x = 0; x < width; x++ ) {
                         short color = (*Source++);
                         unsigned char l = ((color >> 10) & 0xfc);
@@ -1772,7 +1772,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                  */
                 for(y = 0; y < height; y++) {
                     Source = (DWORD *) (src + y * pitch);
-                    Dest = (unsigned char *) (dst + y * outpitch);
+                    Dest = dst + y * outpitch;
                     for (x = 0; x < width; x++ ) {
                         long color = (*Source++);
                         /* L */ Dest[2] = ((color >> 16) & 0xff);   /* L */
@@ -1789,7 +1789,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                  */
                 for(y = 0; y < height; y++) {
                     Source = (DWORD *) (src + y * pitch);
-                    Dest = (unsigned char *) (dst + y * outpitch);
+                    Dest = dst + y * outpitch;
                     for (x = 0; x < width; x++ ) {
                         long color = (*Source++);
                         /* B */ Dest[0] = ((color >> 16) & 0xff);       /* L */
@@ -1808,8 +1808,8 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
             unsigned char *Source;
             unsigned char *Dest;
             for(y = 0; y < height; y++) {
-                Source = (unsigned char *) (src + y * pitch);
-                Dest = (unsigned char *) (dst + y * outpitch);
+                Source = src + y * pitch;
+                Dest = dst + y * outpitch;
                 for (x = 0; x < width; x++ ) {
                     unsigned char color = (*Source++);
                     /* A */ Dest[1] = (color & 0xf0) << 0;

@@ -651,7 +651,7 @@ static HRESULT
                 case 2: COLORFILL_ROW(WORD)
         case 3:
         {
-            BYTE *d = (BYTE *) buf;
+            BYTE *d = buf;
             for (x = 0; x < width; x++,d+=3)
             {
                 d[0] = (color    ) & 0xFF;
@@ -1427,8 +1427,8 @@ IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface,
 
         /* Since slock was originally copied from this surface's description, we can just reuse it */
         assert(This->resource.allocatedMemory != NULL);
-        sbuf = (BYTE *)This->resource.allocatedMemory + lock_src.top * pitch + lock_src.left * bpp;
-        dbuf = (BYTE *)This->resource.allocatedMemory + lock_dst.top * pitch + lock_dst.left * bpp;
+        sbuf = This->resource.allocatedMemory + lock_src.top * pitch + lock_src.left * bpp;
+        dbuf = This->resource.allocatedMemory + lock_dst.top * pitch + lock_dst.left * bpp;
         sEntry = getFormatDescEntry(Src->resource.format, NULL, NULL);
         dEntry = sEntry;
     }
@@ -1514,8 +1514,8 @@ IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface,
             {
                 BYTE *d, *s;
                 DWORD tmp;
-                s = (BYTE *) sbuf;
-                d = (BYTE *) dbuf;
+                s = sbuf;
+                d = dbuf;
                 for (y = 0; y < h; y++)
                 {
                     for (x = 0; x < w * 3; x += 3)

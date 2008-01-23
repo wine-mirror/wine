@@ -140,7 +140,7 @@ ULONG WINAPI IWineGDISurfaceImpl_Release(IWineD3DSurface *iface) {
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %d\n", This, ref + 1);
     if (ref == 0) {
-        IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
+        IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
         TRACE("(%p) : cleaning up\n", This);
 
         if(This->Flags & SFLAG_DIBSECTION) {
@@ -254,7 +254,7 @@ static HRESULT WINAPI
 IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DDeviceImpl *dev = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
+    IWineD3DDeviceImpl *dev = This->resource.wineD3DDevice;
     TRACE("(%p)\n", This);
 
     if (!(This->Flags & SFLAG_LOCKED))
@@ -492,7 +492,7 @@ const char* filename)
             table[i][2] = This->palette->palents[i].peBlue;
         }
         for (y = 0; y < This->pow2Height; y++) {
-            unsigned char *src = (unsigned char *) This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
+            unsigned char *src = This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
             for (x = 0; x < This->pow2Width; x++) {
                 unsigned char color = *src;
                 src += 1;
@@ -514,7 +514,7 @@ const char* filename)
         alpha_shift = get_shift(formatEntry->alphaMask);
 
         for (y = 0; y < This->pow2Height; y++) {
-            unsigned char *src = (unsigned char *) This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
+            unsigned char *src = This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
             for (x = 0; x < This->pow2Width; x++) {	    
                 unsigned int color;
                 unsigned int comp;
