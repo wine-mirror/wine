@@ -1834,7 +1834,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
 
     /* Display the window */
 
-    SetWindowPos( menu->hWnd, HWND_TOP, 0, 0, 0, 0,
+    SetWindowPos( menu->hWnd, HWND_TOPMOST, 0, 0, 0, 0,
                   SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
     UpdateWindow( menu->hWnd );
     return TRUE;
