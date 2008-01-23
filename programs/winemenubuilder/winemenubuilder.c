@@ -866,6 +866,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
                                    '\\','s','t','a','r','t','.','e','x','e',0};
     char *link_name = NULL, *icon_name = NULL, *work_dir = NULL;
     char *escaped_path = NULL, *escaped_args = NULL, *escaped_description = NULL;
+    WCHAR szTmp[INFOTIPSIZE];
     WCHAR szDescription[INFOTIPSIZE], szPath[MAX_PATH], szWorkDir[MAX_PATH];
     WCHAR szArgs[INFOTIPSIZE], szIconPath[MAX_PATH];
     int iIconId = 0, r = -1;
@@ -890,20 +891,23 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     }
     WINE_TRACE("Link       : %s\n", wine_dbgstr_a(link_name));
 
-    szWorkDir[0] = 0;
-    IShellLinkW_GetWorkingDirectory( sl, szWorkDir, MAX_PATH );
+    szTmp[0] = 0;
+    IShellLinkW_GetWorkingDirectory( sl, szTmp, MAX_PATH );
+    ExpandEnvironmentStringsW(szTmp, szWorkDir, MAX_PATH);
     WINE_TRACE("workdir    : %s\n", wine_dbgstr_w(szWorkDir));
 
-    szDescription[0] = 0;
-    IShellLinkW_GetDescription( sl, szDescription, INFOTIPSIZE );
+    szTmp[0] = 0;
+    IShellLinkW_GetDescription( sl, szTmp, INFOTIPSIZE );
+    ExpandEnvironmentStringsW(szTmp, szDescription, INFOTIPSIZE);
     WINE_TRACE("description: %s\n", wine_dbgstr_w(szDescription));
 
     get_cmdline( sl, szPath, MAX_PATH, szArgs, INFOTIPSIZE);
     WINE_TRACE("path       : %s\n", wine_dbgstr_w(szPath));
     WINE_TRACE("args       : %s\n", wine_dbgstr_w(szArgs));
 
-    szIconPath[0] = 0;
-    IShellLinkW_GetIconLocation( sl, szIconPath, MAX_PATH, &iIconId );
+    szTmp[0] = 0;
+    IShellLinkW_GetIconLocation( sl, szTmp, MAX_PATH, &iIconId );
+    ExpandEnvironmentStringsW(szTmp, szIconPath, MAX_PATH);
     WINE_TRACE("icon file  : %s\n", wine_dbgstr_w(szIconPath) );
 
     if( !szPath[0] )
