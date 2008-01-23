@@ -1105,7 +1105,7 @@ static void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
 
 /* TODO: Merge with primitive type + init_materials()!! */
 static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)stateblock->wineD3DDevice;
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     GLenum Parm = 0;
     WineDirect3DStridedData *diffuse = &device->strided_streams.u.s.diffuse;
     BOOL isDiffuseSupplied;
@@ -2029,7 +2029,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     }
     generated = (stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU;
 
-    set_texture_matrix((float *)&stateblock->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
+    set_texture_matrix(&stateblock->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
                         stateblock->textureState[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS],
                         generated,
                         context->last_was_rhw,
@@ -2417,7 +2417,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
             }
         }
 
-        IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) stateblock->textures[sampler]);
+        IWineD3DBaseTexture_PreLoad(stateblock->textures[sampler]);
         IWineD3DBaseTexture_ApplyStateChanges(stateblock->textures[sampler], stateblock->textureState[sampler], stateblock->samplerState[sampler]);
 
         if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
@@ -2586,12 +2586,12 @@ static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
     } else {
         /* In the general case, the view matrix is the identity matrix */
         if (stateblock->wineD3DDevice->view_ident) {
-            glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+            glLoadMatrixf(&stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
         } else {
-            glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+            glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
-            glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+            glMultMatrixf(&stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
             checkGLcall("glMultMatrixf");
         }
     }
@@ -2607,7 +2607,7 @@ static void clipplane(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     /* Clip Plane settings are affected by the model view in OpenGL, the View transform in direct3d */
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+    glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
 
     TRACE("Clipplane [%f,%f,%f,%f]\n",
           stateblock->clipplane[index][0],
@@ -2727,7 +2727,7 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
     glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode(GL_MODELVIEW)");
-    glLoadMatrixf((float *)(float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+    glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
     checkGLcall("glLoadMatrixf(...)");
 
     /* Reset lights. TODO: Call light apply func */
@@ -2871,7 +2871,7 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
         }
         checkGLcall("glScalef");
 
-        glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
+        glMultMatrixf(&stateblock->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
         checkGLcall("glLoadMatrixf");
     }
 }
@@ -3669,7 +3669,7 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContex
         /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
-        glLoadMatrixf((float *)&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+        glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
 
         /* Diffuse: */
         colRGBA[0] = lightInfo->OriginalParms.Diffuse.r;

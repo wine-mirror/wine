@@ -669,7 +669,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedDa
     const DWORD               *pIdxBufL     = NULL;
     LONG                       vx_index;
     int i;
-    IWineD3DStateBlockImpl *stateblock = (IWineD3DStateBlockImpl *) This->stateBlock;
+    IWineD3DStateBlockImpl *stateblock = This->stateBlock;
     BYTE *ptr;
 
     if (idxSize != 0) {

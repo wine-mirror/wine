@@ -147,7 +147,7 @@ static HRESULT WINAPI IWineD3DIndexBufferImpl_Lock(IWineD3DIndexBuffer *iface, U
     TRACE("(%p) : offset %d, size %d, Flags=%x\n", This, OffsetToLock, SizeToLock, Flags);
 
     InterlockedIncrement(&This->lockcount);
-    *ppbData = (BYTE *)This->resource.allocatedMemory + OffsetToLock;
+    *ppbData = This->resource.allocatedMemory + OffsetToLock;
 
     if(Flags & (WINED3DLOCK_READONLY | WINED3DLOCK_NO_DIRTY_UPDATE) || This->vbo == 0) {
         return WINED3D_OK;

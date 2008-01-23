@@ -169,8 +169,8 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_GetParent(IWineD3DPalette *iface, IUn
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     TRACE("(%p)->(%p)\n", This, Parent);
 
-    *Parent = (IUnknown *) This->parent;
-    IUnknown_AddRef( (IUnknown *) This->parent);
+    *Parent = This->parent;
+    IUnknown_AddRef(This->parent);
     return WINED3D_OK;
 }
 
