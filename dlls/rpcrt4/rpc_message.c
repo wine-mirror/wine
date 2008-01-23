@@ -806,7 +806,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   unsigned long buffer_length;
   unsigned long auth_length;
   unsigned char *auth_data = NULL;
-  RpcPktHdr *CurrentHeader;
+  RpcPktHdr *CurrentHeader = NULL;
   void *payload = NULL;
 
   *Header = NULL;
