@@ -882,7 +882,7 @@ void X11DRV_set_iconic_state( HWND hwnd )
         XSetWMHints( display, data->whole_window, data->wm_hints );
     }
 
-    if (style & WS_VISIBLE)
+    if (data->mapped)
     {
         if (iconic)
             XIconifyWindow( display, data->whole_window, DefaultScreen(display) );

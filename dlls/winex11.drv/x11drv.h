@@ -672,7 +672,8 @@ struct x11drv_win_data
     RECT        client_rect;    /* client area relative to parent */
     XIC         xic;            /* X input context */
     XWMHints   *wm_hints;       /* window manager hints */
-    BOOL        managed;        /* is window managed? */
+    BOOL        managed : 1;    /* is window managed? */
+    BOOL        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
     DWORD       wm_state;       /* bit mask of active x11drv_wm_state values */
     struct dce *dce;            /* DCE for CS_OWNDC or CS_CLASSDC windows */
     unsigned int lock_changes;  /* lock count for X11 change requests */

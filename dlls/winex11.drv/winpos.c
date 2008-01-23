@@ -144,19 +144,21 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 
     if (changed & WS_VISIBLE)
     {
-        if (data->whole_window && X11DRV_is_window_rect_mapped( &data->window_rect ))
+        if (data->whole_window && (new_style & WS_VISIBLE) &&
+            X11DRV_is_window_rect_mapped( &data->window_rect ))
         {
-            if (new_style & WS_VISIBLE)
+            X11DRV_set_wm_hints( display, data );
+            if (!data->mapped)
             {
                 TRACE( "mapping win %p\n", hwnd );
                 X11DRV_sync_window_style( display, data );
-                X11DRV_set_wm_hints( display, data );
                 wine_tsx11_lock();
                 XMapWindow( display, data->whole_window );
                 wine_tsx11_unlock();
+                data->mapped = TRUE;
             }
-            /* we don't unmap windows, that causes trouble with the window manager */
         }
+        /* we don't unmap windows, that causes trouble with the window manager */
         invalidate_dce( hwnd, &data->window_rect );
     }
 
@@ -190,6 +192,7 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
     XEvent xev;
 
     if (!data->managed) return;
+    if (!data->mapped) return;
 
     if (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
         data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height)
@@ -351,11 +354,9 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
     Display *display = thread_display();
     struct x11drv_win_data *data;
     RECT old_window_rect, old_whole_rect, old_client_rect, visible_rect;
-    DWORD old_style, new_style;
+    DWORD new_style;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
-
-    old_style = GetWindowLongW( hwnd, GWL_STYLE );
 
     if (!set_server_window_pos( hwnd, insert_after, rectWindow, rectClient, swp_flags,
                                 valid_rects, &visible_rect ))
@@ -375,12 +376,12 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
         data->managed = TRUE;
         SetPropA( hwnd, managed_prop, (HANDLE)1 );
-        if (old_style & WS_VISIBLE)
+        if (data->mapped)
         {
             wine_tsx11_lock();
             XUnmapWindow( display, data->whole_window );
             wine_tsx11_unlock();
-            old_style &= ~WS_VISIBLE;  /* force it to be mapped again below */
+            data->mapped = FALSE;
         }
     }
 
@@ -451,21 +452,13 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 
     if (!data->whole_window || data->lock_changes) return TRUE;  /* nothing more to do */
 
-    if ((old_style & WS_VISIBLE) && !(new_style & WS_VISIBLE))
+    if (data->mapped && (!(new_style & WS_VISIBLE) || !X11DRV_is_window_rect_mapped( rectWindow )))
     {
-        /* window got hidden, unmap it */
         TRACE( "unmapping win %p\n", hwnd );
         wine_tsx11_lock();
         XUnmapWindow( display, data->whole_window );
         wine_tsx11_unlock();
-    }
-    else if ((new_style & WS_VISIBLE) && !X11DRV_is_window_rect_mapped( rectWindow ))
-    {
-        /* resizing to zero size or off screen -> unmap */
-        TRACE( "unmapping zero size or off-screen win %p\n", hwnd );
-        wine_tsx11_lock();
-        XUnmapWindow( display, data->whole_window );
-        wine_tsx11_unlock();
+        data->mapped = FALSE;
     }
 
     X11DRV_sync_window_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
@@ -473,33 +466,22 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
     if ((new_style & WS_VISIBLE) && !(new_style & WS_MINIMIZE) &&
         X11DRV_is_window_rect_mapped( rectWindow ))
     {
-        BOOL mapped = FALSE;
+        BOOL was_mapped = data->mapped;
 
-        if (!(old_style & WS_VISIBLE))
-        {
-            /* window got shown, map it */
-            TRACE( "mapping win %p\n", hwnd );
-            mapped = TRUE;
-        }
-        else if ((swp_flags & (SWP_NOSIZE | SWP_NOMOVE)) != (SWP_NOSIZE | SWP_NOMOVE))
-        {
-            /* resizing from zero size to non-zero -> map */
-            TRACE( "mapping non zero size or off-screen win %p\n", hwnd );
-            mapped = TRUE;
-        }
-
-        if (mapped || (swp_flags & SWP_FRAMECHANGED))
+        if (!data->mapped || (swp_flags & SWP_FRAMECHANGED))
             X11DRV_set_wm_hints( display, data );
 
-        if (mapped)
+        if (!data->mapped)
         {
+            TRACE( "mapping win %p\n", hwnd );
             X11DRV_sync_window_style( display, data );
             wine_tsx11_lock();
             XMapWindow( display, data->whole_window );
             XFlush( display );
             wine_tsx11_unlock();
+            data->mapped = TRUE;
         }
-        update_wm_states( display, data, mapped );
+        update_wm_states( display, data, !was_mapped );
     }
 
     return TRUE;
