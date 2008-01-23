@@ -386,6 +386,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"ddraw.dll",
 	"Both"
     },
+    {   &CLSID_DirectDraw7,
+	"DirectDraw 7 Object",
+	NULL,
+	"ddraw.dll",
+	"Both"
+    },
     {   &CLSID_DirectDrawClipper,
 	"DirectDraw Clipper Object",
 	NULL,
