@@ -274,9 +274,19 @@ static void test_ExpandEnvironmentStringsA(void)
     ret_size1 = GetWindowsDirectoryA(buf1,256);
     ok ((ret_size1 >0) && (ret_size1<256), "GetWindowsDirectory Failed\n");
     ret_size = ExpandEnvironmentStringsA("%SystemRoot%",buf,sizeof(buf));
-    if (ERROR_ENVVAR_NOT_FOUND == GetLastError())
-        return;
-    ok(!strcmp(buf, buf1), "ExpandEnvironmentStrings failed %s vs %s. ret_size = %d\n", buf, buf1, ret_size);
+    if (ERROR_ENVVAR_NOT_FOUND != GetLastError())
+    {
+        ok(!strcmp(buf, buf1), "ExpandEnvironmentStrings failed %s vs %s. ret_size = %d\n", buf, buf1, ret_size);
+    }
+
+    /* Try with a variable that references another */
+    SetEnvironmentVariableA("IndirectVar", "Foo%EnvVar%Bar");
+    strcpy(buf, "Indirect-%IndirectVar%-Indirect");
+    strcpy(buf2, "Indirect-Foo%EnvVar%Bar-Indirect");
+    ret_size = ExpandEnvironmentStringsA(buf, buf1, sizeof(buf1));
+    ok(ret_size == strlen(buf2)+1, "ExpandEnvironmentStrings returned %d instead of %d\n", ret_size, strlen(buf2)+1);
+    ok(!strcmp(buf1, buf2), "ExpandEnvironmentStrings returned [%s]\n", buf1);
+    SetEnvironmentVariableA("IndirectVar", NULL);
 
     SetEnvironmentVariableA("EnvVar", NULL);
 }
