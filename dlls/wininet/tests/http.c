@@ -999,7 +999,7 @@ static void HttpHeaders_test(void)
     ok(index == 1, "Index was not incremented\n");
     ok(strcmp(buffer,"test1")==0, "incorrect string was returned(%s)\n",buffer);
     ok(len == 5, "Invalid length (exp. 5, got %d)\n", len);
-    ok(buffer[len] == 0, "Buffer not NULL-terminated\n"); /* len show only 5 characters but the buffer is NULL-terminated*/
+    ok((len < sizeof(buffer)) && (buffer[len] == 0), "Buffer not NULL-terminated\n"); /* len show only 5 characters but the buffer is NULL-terminated*/
     len = sizeof(buffer);
     strcpy(buffer,"Warning");
     ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
