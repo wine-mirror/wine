@@ -631,11 +631,10 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
             if (!found)
             {
                 entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
-                list_init(&entry->entry);
                 len = strlenW(pszTargetName);
                 entry->pszTargetName = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
                 memcpy(entry->pszTargetName, pszTargetName, (len + 1)*sizeof(WCHAR));
-                list_add_tail(&entry->entry, &pending_credentials_list);
+                list_add_tail(&pending_credentials_list, &entry->entry);
             }
 
             len = strlenW(params.pszUsername);
