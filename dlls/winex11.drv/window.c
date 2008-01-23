@@ -1234,10 +1234,6 @@ static void get_desktop_xwin( Display *display, struct x11drv_win_data *data )
         SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
         set_initial_wm_hints( display, data );
     }
-    SetWindowPos( data->hwnd, 0, virtual_screen_rect.left, virtual_screen_rect.top,
-                  virtual_screen_rect.right - virtual_screen_rect.left,
-                  virtual_screen_rect.bottom - virtual_screen_rect.top,
-                  SWP_NOZORDER | SWP_NOACTIVATE );
 }
 
 /**********************************************************************

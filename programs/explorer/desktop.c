@@ -181,17 +181,14 @@ void manage_desktop( char *arg )
         xwin = create_desktop( "Default", width, height );
     }
 
-    if (!xwin)  /* using the root window */
-    {
-        using_root = TRUE;
-        width = GetSystemMetrics(SM_CXSCREEN);
-        height = GetSystemMetrics(SM_CYSCREEN);
-    }
+    if (!xwin) using_root = TRUE; /* using the root window */
 
     /* create the desktop window */
     hwnd = CreateWindowExW( 0, DESKTOP_CLASS_ATOM, NULL,
                             WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-                            0, 0, width, height, 0, 0, 0, NULL );
+                            GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
+                            GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN),
+                            0, 0, 0, NULL );
     if (hwnd == GetDesktopWindow())
     {
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
