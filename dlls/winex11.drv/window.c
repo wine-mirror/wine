@@ -602,12 +602,7 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data, HICO
     data->hWMIconBitmap = 0;
     data->hWMIconMask = 0;
 
-    if (!data->managed)
-    {
-        destroy_icon_window( display, data );
-        hints->flags &= ~(IconPixmapHint | IconMaskHint | IconWindowHint);
-    }
-    else if (!hIcon)
+    if (!hIcon)
     {
         if (!data->icon_window) create_icon_window( display, data );
         hints->icon_window = data->icon_window;
