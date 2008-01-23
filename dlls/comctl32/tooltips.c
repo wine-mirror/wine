@@ -752,7 +752,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr, BOOL track_activate)
          * it is no longer needed */
     }
 
-    SetWindowPos (hwnd, HWND_TOP, rect.left, rect.top,
+    SetWindowPos (hwnd, HWND_TOPMOST, rect.left, rect.top,
 		    rect.right - rect.left, rect.bottom - rect.top,
 		    SWP_SHOWWINDOW | SWP_NOACTIVATE);
 
