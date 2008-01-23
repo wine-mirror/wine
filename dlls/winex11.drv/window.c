@@ -1086,7 +1086,7 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
  *
  * Create the whole X window for a given window
  */
-static Window create_whole_window( Display *display, struct x11drv_win_data *data, DWORD style )
+static Window create_whole_window( Display *display, struct x11drv_win_data *data )
 {
     int cx, cy, mask;
     XSetWindowAttributes attr;
@@ -1114,14 +1114,6 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
         return 0;
     }
     XSaveContext( display, data->whole_window, winContext, (char *)data->hwnd );
-
-    /* non-maximized child must be at bottom of Z order */
-    if ((style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
-    {
-        XWindowChanges changes;
-        changes.stack_mode = Below;
-        XConfigureWindow( display, data->whole_window, CWStackMode, &changes );
-    }
     wine_tsx11_unlock();
 
     xim = x11drv_thread_data()->xim;
@@ -1332,7 +1324,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         /* create an X window if it's a top level window */
         if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
         {
-            if (!create_whole_window( display, data, cs->style )) goto failed;
+            if (!create_whole_window( display, data )) goto failed;
         }
     }
 
@@ -1586,7 +1578,7 @@ void X11DRV_SetParent( HWND hwnd, HWND parent, HWND old_parent )
     else  /* new top level window */
     {
         /* FIXME: we ignore errors since we can't really recover anyway */
-        create_whole_window( display, data, GetWindowLongW( hwnd, GWL_STYLE ) );
+        create_whole_window( display, data );
     }
 }
 
