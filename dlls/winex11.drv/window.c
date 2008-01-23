@@ -849,8 +849,10 @@ static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data
 
     if (data->wm_hints)
     {
+        HICON icon = (HICON)SendMessageW( data->hwnd, WM_GETICON, ICON_BIG, 0 );
+        if (!icon) icon = (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICON );
         data->wm_hints->flags = 0;
-        set_icon_hints( display, data, (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICON ) );
+        set_icon_hints( display, data, icon );
     }
 }
 
