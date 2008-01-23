@@ -9584,6 +9584,12 @@ static void test_dbcs_wm_char(void)
     UINT i, j, k;
     struct message wmCharSeq[2];
 
+    if (!pGetCPInfoExA)
+    {
+        skip("GetCPInfoExA is not available\n");
+        return;
+    }
+
     pGetCPInfoExA( CP_ACP, 0, &cpinfo );
     if (cpinfo.MaxCharSize != 2)
     {
