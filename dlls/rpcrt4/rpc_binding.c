@@ -1421,13 +1421,17 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   FreeContextBuffer(packages);
   if (r == ERROR_SUCCESS)
   {
-    if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
-    bind->AuthInfo = NULL;
+    RpcAuthInfo *new_auth_info;
     r = RpcAuthInfo_Create(AuthnLevel, AuthnSvc, cred, exp, cbMaxToken,
-                           AuthIdentity, &bind->AuthInfo);
-    if (r != RPC_S_OK)
+                           AuthIdentity, &new_auth_info);
+    if (r == RPC_S_OK)
+    {
+      if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
+      bind->AuthInfo = new_auth_info;
+    }
+    else
       FreeCredentialsHandle(&cred);
-    return RPC_S_OK;
+    return r;
   }
   else
   {
@@ -1537,13 +1541,17 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
   FreeContextBuffer(packages);
   if (r == ERROR_SUCCESS)
   {
-    if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
-    bind->AuthInfo = NULL;
+    RpcAuthInfo *new_auth_info;
     r = RpcAuthInfo_Create(AuthnLevel, AuthnSvc, cred, exp, cbMaxToken,
-                           AuthIdentity, &bind->AuthInfo);
-    if (r != RPC_S_OK)
+                           AuthIdentity, &new_auth_info);
+    if (r == RPC_S_OK)
+    {
+      if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
+      bind->AuthInfo = new_auth_info;
+    }
+    else
       FreeCredentialsHandle(&cred);
-    return RPC_S_OK;
+    return r;
   }
   else
   {
