@@ -1504,7 +1504,7 @@ static void test_null_stream(void)
     HWND hwnd;
     HRESULT hr;
     IDirect3DVertexShader9 *shader = NULL;
-    IDirect3DVertexDeclaration9 *decl;
+    IDirect3DVertexDeclaration9 *decl = NULL;
     DWORD shader_code[] = {
         0xfffe0101,                             /* vs_1_1           */
         0x0000001f, 0x80000000, 0x900f0000,     /* dcl_position v0  */
@@ -1544,8 +1544,16 @@ static void test_null_stream(void)
     }
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexDeclaration failed (0x%08x)\n", hr);
+    if (!SUCCEEDED(hr)) {
+	skip("Vertex declaration handling not possible.\n");
+	goto cleanup;
+    }
     hr = IDirect3DDevice9_CreateVertexBuffer(device, 12 * sizeof(float), 0, 0, D3DPOOL_MANAGED, &buffer, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexBuffer failed (0x%08x)\n", hr);
+    if (!SUCCEEDED(hr)) {
+	skip("Vertex buffer handling not possible.\n");
+	goto cleanup;
+    }
 
     hr = IDirect3DDevice9_SetStreamSource(device, 0, buffer, 0, sizeof(float) * 3);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetStreamSource failed (0x%08x)\n", hr);
@@ -1570,7 +1578,7 @@ static void test_null_stream(void)
     IDirect3DDevice9_SetVertexShader(device, NULL);
     IDirect3DDevice9_SetVertexDeclaration(device, NULL);
 
-    cleanup:
+cleanup:
     if(decl) IDirect3DVertexDeclaration9_Release(decl);
     if(shader) IDirect3DVertexShader9_Release(shader);
     if(device) IDirect3DDevice9_Release(device);
