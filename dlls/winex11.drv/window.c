@@ -951,11 +951,7 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
                                   const RECT *old_whole_rect )
 {
     XWindowChanges changes;
-    int mask;
-
-    if (!data->whole_window || data->lock_changes) return;
-
-    mask = get_window_changes( &changes, old_whole_rect, &data->whole_rect );
+    int mask = get_window_changes( &changes, old_whole_rect, &data->whole_rect );
 
     if (!(swp_flags & SWP_NOZORDER))
     {
