@@ -23,9 +23,6 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#ifdef HAVE_LIBXSHAPE
-#include <X11/extensions/shape.h>
-#endif /* HAVE_LIBXSHAPE */
 #include <stdarg.h>
 
 #include "windef.h"
@@ -1025,59 +1022,6 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     data->lock_changes++;
     SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
     data->lock_changes--;
-}
-
-
-/***********************************************************************
- *		SetWindowRgn  (X11DRV.@)
- *
- * Assign specified region to window (for non-rectangular windows)
- */
-int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
-{
-    struct x11drv_win_data *data;
-
-    if (!(data = X11DRV_get_win_data( hwnd )))
-    {
-        if (IsWindow( hwnd ))
-            FIXME( "not supported on other thread window %p\n", hwnd );
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return FALSE;
-    }
-
-#ifdef HAVE_LIBXSHAPE
-    if (data->whole_window)
-    {
-        Display *display = thread_display();
-
-        if (!hrgn)
-        {
-            wine_tsx11_lock();
-            XShapeCombineMask( display, data->whole_window,
-                               ShapeBounding, 0, 0, None, ShapeSet );
-            wine_tsx11_unlock();
-        }
-        else
-        {
-            RGNDATA *pRegionData = X11DRV_GetRegionData( hrgn, 0 );
-            if (pRegionData)
-            {
-                wine_tsx11_lock();
-                XShapeCombineRectangles( display, data->whole_window, ShapeBounding,
-                                         data->window_rect.left - data->whole_rect.left,
-                                         data->window_rect.top - data->whole_rect.top,
-                                         (XRectangle *)pRegionData->Buffer,
-                                         pRegionData->rdh.nCount,
-                                         ShapeSet, YXBanded );
-                wine_tsx11_unlock();
-                HeapFree(GetProcessHeap(), 0, pRegionData);
-            }
-        }
-    }
-#endif  /* HAVE_LIBXSHAPE */
-
-    invalidate_dce( hwnd, &data->window_rect );
-    return TRUE;
 }
 
 

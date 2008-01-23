@@ -32,6 +32,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
+#ifdef HAVE_LIBXSHAPE
+#include <X11/extensions/shape.h>
+#endif /* HAVE_LIBXSHAPE */
 
 #include "windef.h"
 #include "winbase.h"
@@ -218,6 +221,41 @@ void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data )
         XChangeWindowAttributes( display, data->whole_window, mask, &attr );
         wine_tsx11_unlock();
     }
+}
+
+
+/***********************************************************************
+ *              sync_window_region
+ *
+ * Update the X11 window region.
+ */
+static void sync_window_region( Display *display, struct x11drv_win_data *data, HRGN hrgn )
+{
+#ifdef HAVE_LIBXSHAPE
+    if (!data->whole_window) return;
+
+    if (!hrgn)
+    {
+        wine_tsx11_lock();
+        XShapeCombineMask( display, data->whole_window, ShapeBounding, 0, 0, None, ShapeSet );
+        wine_tsx11_unlock();
+    }
+    else
+    {
+        RGNDATA *pRegionData = X11DRV_GetRegionData( hrgn, 0 );
+        if (pRegionData)
+        {
+            wine_tsx11_lock();
+            XShapeCombineRectangles( display, data->whole_window, ShapeBounding,
+                                     data->window_rect.left - data->whole_rect.left,
+                                     data->window_rect.top - data->whole_rect.top,
+                                     (XRectangle *)pRegionData->Buffer,
+                                     pRegionData->rdh.nCount, ShapeSet, YXBanded );
+            wine_tsx11_unlock();
+            HeapFree(GetProcessHeap(), 0, pRegionData);
+        }
+    }
+#endif  /* HAVE_LIBXSHAPE */
 }
 
 
@@ -1013,6 +1051,7 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     int cx, cy, mask;
     XSetWindowAttributes attr;
     XIM xim;
+    HRGN hrgn;
 
     if (!(cx = data->window_rect.right - data->window_rect.left)) cx = 1;
     if (!(cy = data->window_rect.bottom - data->window_rect.top)) cy = 1;
@@ -1051,6 +1090,13 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     X11DRV_set_wm_hints( display, data );
 
     SetPropA( data->hwnd, whole_window_prop, (HANDLE)data->whole_window );
+
+    /* set the window region */
+    if ((hrgn = CreateRectRgn( 0, 0, 0, 0 )))
+    {
+        if (GetWindowRgn( data->hwnd, hrgn ) != ERROR) sync_window_region( display, data, hrgn );
+        DeleteObject( hrgn );
+    }
     return data->whole_window;
 }
 
@@ -1618,4 +1664,29 @@ void X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
         XSetWMHints( display, data->whole_window, data->wm_hints );
         wine_tsx11_unlock();
     }
+}
+
+
+/***********************************************************************
+ *		SetWindowRgn  (X11DRV.@)
+ *
+ * Assign specified region to window (for non-rectangular windows)
+ */
+int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+{
+    struct x11drv_win_data *data;
+
+    if ((data = X11DRV_get_win_data( hwnd )))
+    {
+        sync_window_region( thread_display(), data, hrgn );
+        invalidate_dce( hwnd, &data->window_rect );
+    }
+    else if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())
+    {
+        FIXME( "not supported on other thread window %p\n", hwnd );
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+
+    return TRUE;
 }
