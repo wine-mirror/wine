@@ -444,9 +444,8 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 
     lps->fErase = send_erase( hwnd, flags, hrgn, &lps->rcPaint, &lps->hdc );
 
-    TRACE("hdc = %p box = (%d,%d - %d,%d), fErase = %d\n",
-          lps->hdc, lps->rcPaint.left, lps->rcPaint.top, lps->rcPaint.right, lps->rcPaint.bottom,
-          lps->fErase);
+    TRACE("hdc = %p box = (%s), fErase = %d\n",
+          lps->hdc, wine_dbgstr_rect(&lps->rcPaint), lps->fErase);
 
     return lps->hdc;
 }

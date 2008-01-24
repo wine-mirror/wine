@@ -421,8 +421,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                   GetClientRect( hwnd, &rc );
                   x = (rc.right - rc.left - GetSystemMetrics(SM_CXICON))/2;
                   y = (rc.bottom - rc.top - GetSystemMetrics(SM_CYICON))/2;
-                  TRACE("Painting class icon: vis rect=(%d,%d - %d,%d)\n",
-                        ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
+                  TRACE("Painting class icon: vis rect=(%s)\n",
+                        wine_dbgstr_rect(&ps.rcPaint));
                   DrawIcon( hdc, x, y, hIcon );
               }
               EndPaint( hwnd, &ps );

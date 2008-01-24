@@ -581,9 +581,9 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
         if (!IsWindowEnabled(descr->self)) dis.itemState |= ODS_DISABLED;
         dis.itemData     = item->data;
         dis.rcItem       = *rect;
-        TRACE("[%p]: drawitem %d (%s) action=%02x state=%02x rect=%d,%d-%d,%d\n",
+        TRACE("[%p]: drawitem %d (%s) action=%02x state=%02x rect=%s\n",
               descr->self, index, item ? debugstr_w(item->str) : "", action,
-              dis.itemState, rect->left, rect->top, rect->right, rect->bottom );
+              dis.itemState, wine_dbgstr_rect(rect) );
         SendMessageW(descr->owner, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
     }
     else
@@ -601,9 +601,9 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
             oldText = SetTextColor( hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
         }
 
-        TRACE("[%p]: painting %d (%s) action=%02x rect=%d,%d-%d,%d\n",
+        TRACE("[%p]: painting %d (%s) action=%02x rect=%s\n",
               descr->self, index, item ? debugstr_w(item->str) : "", action,
-              rect->left, rect->top, rect->right, rect->bottom );
+              wine_dbgstr_rect(rect) );
         if (!item)
             ExtTextOutW( hdc, rect->left + 1, rect->top,
                            ETO_OPAQUE | ETO_CLIPPED, rect, NULL, 0, NULL );

@@ -435,14 +435,11 @@ static void CBCalcPlacement(
   if (lprEdit->right < lprEdit->left)
     lprEdit->right = lprEdit->left;
 
-  TRACE("\ttext\t= (%d,%d-%d,%d)\n",
-	lprEdit->left, lprEdit->top, lprEdit->right, lprEdit->bottom);
+  TRACE("\ttext\t= (%s)\n", wine_dbgstr_rect(lprEdit));
 
-  TRACE("\tbutton\t= (%d,%d-%d,%d)\n",
-	lprButton->left, lprButton->top, lprButton->right, lprButton->bottom);
+  TRACE("\tbutton\t= (%s)\n", wine_dbgstr_rect(lprButton));
 
-  TRACE("\tlbox\t= (%d,%d-%d,%d)\n",
-	lprLB->left, lprLB->top, lprLB->right, lprLB->bottom );
+  TRACE("\tlbox\t= (%s)\n", wine_dbgstr_rect(lprLB));
 }
 
 /***********************************************************************

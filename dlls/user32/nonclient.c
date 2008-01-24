@@ -396,9 +396,7 @@ BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exSty
                 WS_EX_STATICEDGE | WS_EX_TOOLWINDOW);
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
-    TRACE("(%d,%d)-(%d,%d) %08x %d %08x\n",
-          rect->left, rect->top, rect->right, rect->bottom,
-          style, menu, exStyle );
+    TRACE("(%s) %08x %d %08x\n", wine_dbgstr_rect(rect), style, menu, exStyle );
 
     NC_AdjustRectOuter( rect, style, menu, exStyle );
     NC_AdjustRectInner( rect, style, exStyle );
@@ -1065,14 +1063,12 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
 	RECT r = rect;
 	r.bottom = rect.top + GetSystemMetrics(SM_CYMENU);
 
-	TRACE("Calling DrawMenuBar with rect (%d, %d)-(%d, %d)\n",
-              r.left, r.top, r.right, r.bottom);
+	TRACE("Calling DrawMenuBar with rect (%s)\n", wine_dbgstr_rect(&r));
 
 	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint ) + 1;
     }
 
-    TRACE("After MenuBar, rect is (%d, %d)-(%d, %d).\n",
-          rect.left, rect.top, rect.right, rect.bottom );
+    TRACE("After MenuBar, rect is (%s).\n", wine_dbgstr_rect(&rect));
 
     if (dwExStyle & WS_EX_CLIENTEDGE)
 	DrawEdge (hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);

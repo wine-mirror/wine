@@ -2321,10 +2321,8 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
         case LVM_GETSUBITEMRECT:
             {
                 LPRECT rc = (LPRECT) sp_e->lParam;
-                if (rc) {
-                    TRACE("lParam rect (%d,%d)-(%d,%d)\n",
-                          rc->left, rc->top, rc->right, rc->bottom);
-                }
+                if (rc)
+                    TRACE("lParam rect (%s)\n", wine_dbgstr_rect(rc));
                 break;
             }
         case LVM_SETITEMPOSITION32:
@@ -2404,10 +2402,9 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                       lpdis->CtlType, lpdis->CtlID);
                 TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n",
                       lpdis->itemID, lpdis->itemAction, lpdis->itemState);
-                TRACE("hWnd=%p hDC=%p (%d,%d)-(%d,%d) itemData=0x%08lx\n",
-                      lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left,
-                      lpdis->rcItem.top, lpdis->rcItem.right,
-                      lpdis->rcItem.bottom, lpdis->itemData);
+                TRACE("hWnd=%p hDC=%p (%s) itemData=0x%08lx\n",
+                      lpdis->hwndItem, lpdis->hDC,
+                      wine_dbgstr_rect(&lpdis->rcItem), lpdis->itemData);
             }
             break;
         case WM_MEASUREITEM:
@@ -2463,8 +2460,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
         case WM_NCCALCSIZE:
             {
                 RECT *rc = (RECT *)sp_e->lParam;
-                TRACE("Rect (%d,%d)-(%d,%d)\n",
-                      rc->left, rc->top, rc->right, rc->bottom);
+                TRACE("Rect (%s)\n", wine_dbgstr_rect(rc));
             }
             break;
         case WM_NOTIFY:

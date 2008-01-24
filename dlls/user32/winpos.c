@@ -170,8 +170,7 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
     if (ret)
     {
         MapWindowPoints( GetAncestor( hwnd, GA_PARENT ), 0, (POINT *)rect, 2 );
-        TRACE( "hwnd %p (%d,%d)-(%d,%d)\n",
-               hwnd, rect->left, rect->top, rect->right, rect->bottom);
+        TRACE( "hwnd %p (%s)\n", hwnd, wine_dbgstr_rect(rect) );
     }
     return ret;
 }
