@@ -219,7 +219,7 @@ BEGIN
     IDS_TAB_AUDIO           "Lyd"
     IDS_TAB_ABOUT           "Om"
     IDS_WINECFG_TITLE       "Oppsett av Wine"
-    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
+    IDS_WINECFG_TITLE_APP   "Oppsett av Wine for «%s»"
     IDS_THEMEFILE           "Temafiler"
     IDS_THEMEFILE_SELECT    "Velg en temafil"
     IDS_AUDIO_MISSING       "Ingen lyddriver er oppgitt i registeret.\n\nEn anbefalt driver er valgt for deg;\nbruk den eller velg en annen,\n\nog trykk «Bruk» for at endringene skal tre i kraft."
