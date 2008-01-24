@@ -32,6 +32,182 @@
 #include "wingdi.h"
 #include "winuser.h"
 
+static char **test_argv;
+static int test_argc;
+static HWND child = 0;
+static HWND parent = 0;
+static HANDLE child_process;
+
+#define PROC_INIT (WM_USER+1)
+
+static LRESULT CALLBACK callback_child(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    BOOL ret;
+    DWORD error;
+
+    switch (msg)
+    {
+        /* Destroy the cursor. */
+        case WM_USER+1:
+            SetLastError(0xdeadbeef);
+            ret = DestroyCursor((HCURSOR) lParam);
+            error = GetLastError();
+            todo_wine {
+            ok(!ret, "DestroyCursor on the active cursor succeeded.\n");
+            ok(error == ERROR_DESTROY_OBJECT_OF_OTHER_THREAD,
+                "Last error: %u\n", error);
+            }
+            return TRUE;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
+    }
+
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+static LRESULT CALLBACK callback_parent(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (msg == PROC_INIT)
+    {
+        child = (HWND) wParam;
+        return TRUE;
+    }
+
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+static void do_child(void)
+{
+    WNDCLASS class;
+    MSG msg;
+    BOOL ret;
+
+    /* Register a new class. */
+    class.style = CS_GLOBALCLASS;
+    class.lpfnWndProc = callback_child;
+    class.cbClsExtra = 0;
+    class.cbWndExtra = 0;
+    class.hInstance = GetModuleHandle(NULL);
+    class.hIcon = NULL;
+    class.hCursor = NULL;
+    class.hbrBackground = NULL;
+    class.lpszMenuName = NULL;
+    class.lpszClassName = "cursor_child";
+
+    SetLastError(0xdeadbeef);
+    ret = RegisterClass(&class);
+    ok(ret, "Failed to register window class.  Error: %u\n", GetLastError());
+
+    /* Create a window. */
+    child = CreateWindowA("cursor_child", "cursor_child", WS_POPUP | WS_VISIBLE,
+        0, 0, 200, 200, 0, 0, 0, NULL);
+    ok(child != 0, "CreateWindowA failed.  Error: %u\n", GetLastError());
+
+    /* Let the parent know our HWND. */
+    PostMessage(parent, PROC_INIT, (WPARAM) child, 0);
+
+    /* Receive messages. */
+    while ((ret = GetMessage(&msg, child, 0, 0)))
+    {
+        ok(ret != -1, "GetMessage failed.  Error: %u\n", GetLastError());
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
+static void do_parent(void)
+{
+    char path_name[MAX_PATH];
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+    WNDCLASS class;
+    MSG msg;
+    BOOL ret;
+
+    /* Register a new class. */
+    class.style = CS_GLOBALCLASS;
+    class.lpfnWndProc = callback_parent;
+    class.cbClsExtra = 0;
+    class.cbWndExtra = 0;
+    class.hInstance = GetModuleHandle(NULL);
+    class.hIcon = NULL;
+    class.hCursor = NULL;
+    class.hbrBackground = NULL;
+    class.lpszMenuName = NULL;
+    class.lpszClassName = "cursor_parent";
+
+    SetLastError(0xdeadbeef);
+    ret = RegisterClass(&class);
+    ok(ret, "Failed to register window class.  Error: %u\n", GetLastError());
+
+    /* Create a window. */
+    parent = CreateWindowA("cursor_parent", "cursor_parent", WS_POPUP | WS_VISIBLE,
+        0, 0, 200, 200, 0, 0, 0, NULL);
+    ok(parent != 0, "CreateWindowA failed.  Error: %u\n", GetLastError());
+
+    /* Start child process. */
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+
+    sprintf(path_name, "%s cursoricon %x", test_argv[0], (unsigned int) parent);
+    ok(CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess failed.\n");
+    child_process = info.hProcess;
+
+    /* Wait for child window handle. */
+    while ((child == 0) && (ret = GetMessage(&msg, parent, 0, 0)))
+    {
+        ok(ret != -1, "GetMessage failed.  Error: %u\n", GetLastError());
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
+static void finish_child_process(void)
+{
+    DWORD exit_code;
+    BOOL ret;
+
+    SendMessage(child, WM_CLOSE, 0, 0);
+    ok(WaitForSingleObject(child_process, 30000) == WAIT_OBJECT_0, "Child process termination failed.\n");
+
+    ret = GetExitCodeProcess(child_process, &exit_code);
+    ok(ret, "GetExitCodeProcess() failed.  Error: %u\n", GetLastError());
+    ok(exit_code == 0, "Exit code == %u.\n", exit_code);
+
+    CloseHandle(child_process);
+}
+
+static void test_child_process(void)
+{
+    static const BYTE bmp_bits[4096];
+    HCURSOR cursor;
+    ICONINFO cursorInfo;
+    UINT display_bpp;
+    HDC hdc;
+
+    /* Create and set a dummy cursor. */
+    hdc = GetDC(0);
+    display_bpp = GetDeviceCaps(hdc, BITSPIXEL);
+    ReleaseDC(0, hdc);
+
+    cursorInfo.fIcon = FALSE;
+    cursorInfo.xHotspot = 0;
+    cursorInfo.yHotspot = 0;
+    cursorInfo.hbmMask = CreateBitmap(32, 32, 1, 1, bmp_bits);
+    cursorInfo.hbmColor = CreateBitmap(32, 32, 1, display_bpp, bmp_bits);
+
+    cursor = CreateIconIndirect(&cursorInfo);
+    ok(cursor != NULL, "CreateIconIndirect returned %p.\n", cursor);
+
+    SetCursor(cursor);
+
+    /* Destroy the cursor. */
+    SendMessage(child, WM_USER+1, 0, (LPARAM) cursor);
+}
+
 static void test_CopyImage_Check(HBITMAP bitmap, UINT flags, INT copyWidth, INT copyHeight,
                                   INT expectedWidth, INT expectedHeight, WORD expectedDepth, BOOL dibExpected)
 {
@@ -471,6 +647,21 @@ static void test_DestroyCursor(void)
 
 START_TEST(cursoricon)
 {
+    test_argc = winetest_get_mainargs(&test_argv);
+
+    if (test_argc >= 3)
+    {
+        /* Child process. */
+        sscanf (test_argv[2], "%x", (unsigned int *) &parent);
+
+        ok(parent != NULL, "Parent not found.\n");
+        if (parent == NULL)
+            ExitProcess(1);
+
+        do_child();
+        return;
+    }
+
     test_CopyImage_Bitmap(1);
     test_CopyImage_Bitmap(4);
     test_CopyImage_Bitmap(8);
@@ -480,4 +671,7 @@ START_TEST(cursoricon)
     test_initial_cursor();
     test_CreateIcon();
     test_DestroyCursor();
+    do_parent();
+    test_child_process();
+    finish_child_process();
 }
