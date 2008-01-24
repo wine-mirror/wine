@@ -48,14 +48,21 @@ static void init_functionpointers(void)
     HMODULE hmsi = GetModuleHandleA("msi.dll");
     HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
 
-    pMsiGetComponentPathA = (void*)GetProcAddress(hmsi, "MsiGetComponentPathA");
-    pMsiGetFileHashA = (void*)GetProcAddress(hmsi, "MsiGetFileHashA");
-    pMsiOpenPackageExA = (void*)GetProcAddress(hmsi, "MsiOpenPackageExA");
-    pMsiOpenPackageExW = (void*)GetProcAddress(hmsi, "MsiOpenPackageExW");
-    pMsiQueryComponentStateA = (void*)GetProcAddress(hmsi, "MsiQueryComponentStateA");
-    pMsiUseFeatureExA = (void*)GetProcAddress(hmsi, "MsiUseFeatureExA");
+#define GET_PROC(dll, func) \
+    p ## func = (void *)GetProcAddress(dll, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
 
-    pConvertSidToStringSidA = (void*)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
+    GET_PROC(hmsi, MsiGetComponentPathA)
+    GET_PROC(hmsi, MsiGetFileHashA)
+    GET_PROC(hmsi, MsiOpenPackageExA)
+    GET_PROC(hmsi, MsiOpenPackageExW)
+    GET_PROC(hmsi, MsiQueryComponentStateA)
+    GET_PROC(hmsi, MsiUseFeatureExA)
+
+    GET_PROC(hadvapi32, ConvertSidToStringSidA)
+
+#undef GET_PROC
 }
 
 static void test_usefeature(void)
@@ -63,7 +70,10 @@ static void test_usefeature(void)
     INSTALLSTATE r;
 
     if (!pMsiUseFeatureExA)
+    {
+        skip("MsiUseFeatureExA not implemented\n");
         return;
+    }
 
     r = MsiQueryFeatureState(NULL,NULL);
     ok( r == INSTALLSTATE_INVALIDARG, "wrong return val\n");
@@ -279,7 +289,7 @@ static void test_MsiGetFileHash(void)
 
     if (!pMsiGetFileHashA)
     {
-        skip("MsiGetFileHash not implemented.");
+        skip("MsiGetFileHash not implemented\n");
         return;
     }
 
@@ -723,6 +733,12 @@ static void test_MsiQueryComponentState(void)
     UINT r;
 
     static const INSTALLSTATE MAGIC_ERROR = 0xdeadbeef;
+
+    if (!pMsiQueryComponentStateA)
+    {
+        skip("MsiQueryComponentStateA not implemented\n");
+        return;
+    }
 
     create_test_guid(prodcode, prod_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
@@ -1782,10 +1798,17 @@ START_TEST(msi)
     test_null();
     test_getcomponentpath();
     test_MsiGetFileHash();
-    test_MsiQueryProductState();
-    test_MsiQueryFeatureState();
-    test_MsiQueryComponentState();
-    test_MsiGetComponentPath();
-    test_MsiGetProductCode();
-    test_MsiEnumClients();
+
+    if (!pConvertSidToStringSidA)
+        skip("ConvertSidToStringSidA not implemented\n");
+    else
+    {
+        /* These tests rely on get_user_sid that needs ConvertSidToStringSidA */
+        test_MsiQueryProductState();
+        test_MsiQueryFeatureState();
+        test_MsiQueryComponentState();
+        test_MsiGetComponentPath();
+        test_MsiGetProductCode();
+        test_MsiEnumClients();
+    }
 }
