@@ -148,6 +148,12 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
             X11DRV_set_wm_hints( display, data );
             if (!data->mapped)
             {
+                if (!data->managed && is_window_managed( hwnd, SWP_NOACTIVATE, &data->window_rect ))
+                {
+                    TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
+                    data->managed = TRUE;
+                    SetPropA( hwnd, managed_prop, (HANDLE)1 );
+                }
                 TRACE( "mapping win %p\n", hwnd );
                 X11DRV_sync_window_style( display, data );
                 wine_tsx11_lock();
@@ -368,9 +374,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
     }
 
     /* check if we need to switch the window to managed */
-    if (!data->managed && data->whole_window && managed_mode &&
-        root_window == DefaultRootWindow( display ) &&
-        is_window_managed( hwnd, swp_flags, rectWindow ))
+    if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, rectWindow ))
     {
         TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
         data->managed = TRUE;

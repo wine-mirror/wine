@@ -108,6 +108,7 @@ static LONG X11DRV_desktop_SetCurrentMode(int mode)
 void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
 {
     root_window = win;
+    managed_mode = 0;  /* no managed windows in desktop mode */
     max_width = screen_width;
     max_height = screen_height;
     xinerama_init( width, height );
