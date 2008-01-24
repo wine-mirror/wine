@@ -949,7 +949,7 @@ static void test_queryconfig2(void)
     pConfig->lpDescription = (LPSTR)0xdeadbeef;
     ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer,sizeof(SERVICE_DESCRIPTIONA),&needed);
     ok(ret, "expected QueryServiceConfig2A to succeed\n");
-    ok(needed == sizeof(SERVICE_DESCRIPTIONA), "expected needed to be %d, got %d\n", sizeof(SERVICE_DESCRIPTIONA), needed);
+    ok(needed == sizeof(SERVICE_DESCRIPTIONA), "got %d\n", needed);
     ok(!pConfig->lpDescription, "expected lpDescription to be NULL, got %p\n", pConfig->lpDescription);
 
     SetLastError(0xdeadbeef);
@@ -957,7 +957,7 @@ static void test_queryconfig2(void)
     ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,NULL,0,&needed);
     ok(!ret, "expected QueryServiceConfig2A to fail\n");
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(), "expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-    ok(needed == sizeof(SERVICE_DESCRIPTIONA), "expected needed to be %d, got %d\n", sizeof(SERVICE_DESCRIPTIONA), needed);
+    ok(needed == sizeof(SERVICE_DESCRIPTIONA), "got %d\n", needed);
 
     if(!pChangeServiceConfig2A)
     {

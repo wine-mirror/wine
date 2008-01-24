@@ -3185,9 +3185,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
     }
 
     if (Sampler >= sizeof(This->stateBlock->samplerState)/sizeof(This->stateBlock->samplerState[0])) {
-        ERR("Current Sampler overflows sampleState0 array (sampler %d vs size %d)\n", Sampler,
-            sizeof(This->stateBlock->samplerState)/sizeof(This->stateBlock->samplerState[0])
-        );
+        ERR("Current Sampler overflows sampleState0 array (sampler %d)\n", Sampler);
         return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
     }
     /**
@@ -3236,9 +3234,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, 
     }
 
     if (Sampler >= sizeof(This->stateBlock->samplerState)/sizeof(This->stateBlock->samplerState[0])) {
-        ERR("Current Sampler overflows sampleState0 array (sampler %d vs size %d)\n", Sampler,
-            sizeof(This->stateBlock->samplerState)/sizeof(This->stateBlock->samplerState[0])
-        );
+        ERR("Current Sampler overflows sampleState0 array (sampler %d)\n", Sampler);
         return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
     }
     *Value = This->stateBlock->samplerState[Sampler][Type];
@@ -4417,9 +4413,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
     }
 
     if (Stage >= sizeof(This->stateBlock->textures)/sizeof(This->stateBlock->textures[0])) {
-        ERR("Current stage overflows textures array (stage %d vs size %d)\n", Stage,
-            sizeof(This->stateBlock->textures)/sizeof(This->stateBlock->textures[0])
-        );
+        ERR("Current stage overflows textures array (stage %d)\n", Stage);
         return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
     }
 
@@ -4516,9 +4510,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD
     }
 
     if (Stage >= sizeof(This->stateBlock->textures)/sizeof(This->stateBlock->textures[0])) {
-        ERR("Current stage overflows textures array (stage %d vs size %d)\n", Stage,
-            sizeof(This->stateBlock->textures)/sizeof(This->stateBlock->textures[0])
-        );
+        ERR("Current stage overflows textures array (stage %d)\n", Stage);
         return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
     }
 

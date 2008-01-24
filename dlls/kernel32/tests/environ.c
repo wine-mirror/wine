@@ -284,7 +284,7 @@ static void test_ExpandEnvironmentStringsA(void)
     strcpy(buf, "Indirect-%IndirectVar%-Indirect");
     strcpy(buf2, "Indirect-Foo%EnvVar%Bar-Indirect");
     ret_size = ExpandEnvironmentStringsA(buf, buf1, sizeof(buf1));
-    ok(ret_size == strlen(buf2)+1, "ExpandEnvironmentStrings returned %d instead of %d\n", ret_size, strlen(buf2)+1);
+    ok(ret_size == strlen(buf2)+1, "ExpandEnvironmentStrings returned %d instead of %d\n", ret_size, lstrlen(buf2)+1);
     ok(!strcmp(buf1, buf2), "ExpandEnvironmentStrings returned [%s]\n", buf1);
     SetEnvironmentVariableA("IndirectVar", NULL);
 
