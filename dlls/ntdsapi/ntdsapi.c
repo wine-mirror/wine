@@ -21,8 +21,10 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winuser.h"
 #include "ntdsapi.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdsapi);
 
@@ -52,11 +54,85 @@ DWORD WINAPI DsMakeSpnW(LPCWSTR svc_class, LPCWSTR svc_name,
                         LPCWSTR inst_name, USHORT inst_port,
                         LPCWSTR ref, DWORD *spn_length, LPWSTR spn)
 {
-    FIXME("(%s,%s,%s,%d,%s,%p,%p): stub!\n", debugstr_w(svc_class),
+    DWORD new_spn_length;
+    INT len;
+    LPWSTR p;
+
+    TRACE("(%s,%s,%s,%d,%s,%p,%p)\n", debugstr_w(svc_class),
             debugstr_w(svc_name), debugstr_w(inst_name), inst_port,
             debugstr_w(ref), spn_length, spn);
 
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    if (!svc_class || !svc_name)
+        return ERROR_INVALID_PARAMETER;
+
+    new_spn_length = strlenW(svc_class) + 1 /* for '/' */ + 1 /* for terminating '\0' */;
+    if (inst_name)
+        new_spn_length += strlenW(inst_name);
+    else
+        new_spn_length += strlenW(svc_name);
+    if (inst_port)
+    {
+        USHORT n = inst_port;
+        new_spn_length += 1 /* for ':' */;
+        do
+        {
+            n /= 10;
+            new_spn_length++;
+        } while (n != 0);
+    }
+    if (inst_name)
+        new_spn_length += 1 /* for '/' */ + strlenW(svc_name);
+
+    if (*spn_length < new_spn_length)
+    {
+        *spn_length = new_spn_length;
+        return ERROR_BUFFER_OVERFLOW;
+    }
+    *spn_length = new_spn_length;
+
+    p = spn;
+    len = strlenW(svc_class);
+    memcpy(p, svc_class, len * sizeof(WCHAR));
+    p += len;
+    *p = '/';
+    p++;
+    if (inst_name)
+    {
+        len = strlenW(inst_name);
+        memcpy(p, inst_name, len * sizeof(WCHAR));
+        p += len;
+        *p = '\0';
+    }
+    else
+    {
+        len = strlenW(svc_name);
+        memcpy(p, svc_name, len * sizeof(WCHAR));
+        p += len;
+        *p = '\0';
+    }
+
+    if (inst_port)
+    {
+        static const WCHAR percentU[] = {'%','u',0};
+        *p = ':';
+        p++;
+        wsprintfW(p, percentU, inst_port);
+        p += strlenW(p);
+    }
+
+    if (inst_name)
+    {
+        *p = '/';
+        p++;
+        len = strlenW(svc_name);
+        memcpy(p, svc_name, len * sizeof(WCHAR));
+        p += len;
+        *p = '\0';
+    }
+
+    TRACE("spn = %s\n", debugstr_w(spn));
+
+    return ERROR_SUCCESS;
 }
 
 DWORD WINAPI DsMakeSpnA(LPCSTR svc_class, LPCSTR svc_name,
