@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <X11/Xlib.h>
 #ifdef HAVE_LIBXXSHM
@@ -4302,6 +4303,7 @@ static LONG CALLBACK X11DRV_DIB_FaultHandler( PEXCEPTION_POINTERS ep )
     BOOL found = FALSE;
     BYTE *addr;
     struct list *ptr;
+    const size_t pagemask = getpagesize() - 1;
 
     if (ep->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION)
         return EXCEPTION_CONTINUE_SEARCH;
@@ -4312,7 +4314,8 @@ static LONG CALLBACK X11DRV_DIB_FaultHandler( PEXCEPTION_POINTERS ep )
     LIST_FOR_EACH( ptr, &dibs_list )
     {
         physBitmap = LIST_ENTRY( ptr, X_PHYSBITMAP, entry );
-        if ((physBitmap->base <= addr) && (addr < physBitmap->base + physBitmap->size))
+        if ((physBitmap->base <= addr) &&
+            (addr < physBitmap->base + ((physBitmap->size + pagemask) & ~pagemask)))
         {
             found = TRUE;
             break;
@@ -4321,6 +4324,9 @@ static LONG CALLBACK X11DRV_DIB_FaultHandler( PEXCEPTION_POINTERS ep )
     LeaveCriticalSection(&dibs_cs);
 
     if (!found) return EXCEPTION_CONTINUE_SEARCH;
+
+    if (addr >= physBitmap->base + physBitmap->size)
+        WARN( "%p: access to %p beyond the end of the DIB\n", physBitmap->hbitmap, addr );
 
     X11DRV_DIB_Lock( physBitmap, DIB_Status_None );
     if (ep->ExceptionRecord->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT) {
