@@ -353,17 +353,11 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
     RECT old_window_rect, old_whole_rect, old_client_rect, visible_rect;
     DWORD new_style;
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
-
     if (!set_server_window_pos( hwnd, insert_after, rectWindow, rectClient, swp_flags,
                                 valid_rects, &visible_rect ))
         return FALSE;
 
-    if (data->whole_window == DefaultRootWindow(gdi_display))
-    {
-        data->whole_rect = data->client_rect = data->window_rect = *rectWindow;
-        return TRUE;
-    }
+    if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
 
     /* check if we need to switch the window to managed */
     if (!data->managed && data->whole_window && managed_mode &&
@@ -933,7 +927,6 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
 void X11DRV_resize_desktop( unsigned int width, unsigned int height )
 {
     HWND hwnd = GetDesktopWindow();
-    struct x11drv_win_data *data;
     struct desktop_resize_data resize_data;
 
     SetRect( &resize_data.old_screen_rect, 0, 0, screen_width, screen_height );
@@ -941,7 +934,7 @@ void X11DRV_resize_desktop( unsigned int width, unsigned int height )
 
     xinerama_init( width, height );
 
-    if (!(data = X11DRV_get_win_data( hwnd )))
+    if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())
     {
         SendMessageW( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, MAKELPARAM( width, height ) );
     }

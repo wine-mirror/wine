@@ -875,7 +875,6 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
 
     if (data->hwnd == GetDesktopWindow())
     {
-        if (data->whole_window == DefaultRootWindow(display)) return;
         /* force some styles for the desktop to get the correct decorations */
         style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
         owner = 0;
@@ -947,7 +946,7 @@ void X11DRV_set_iconic_state( HWND hwnd )
     BOOL iconic = (style & WS_MINIMIZE) != 0;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->whole_window || data->whole_window == DefaultRootWindow(display)) return;
+    if (!data->whole_window) return;
 
     GetWindowRect( hwnd, &rect );
 
@@ -1155,8 +1154,7 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
     if (thread_data->cursor_window == data->whole_window) thread_data->cursor_window = None;
     wine_tsx11_lock();
     XDeleteContext( display, data->whole_window, winContext );
-    if (data->whole_window != DefaultRootWindow(display))
-        XDestroyWindow( display, data->whole_window );
+    XDestroyWindow( display, data->whole_window );
     data->whole_window = 0;
     if (data->xic)
     {
@@ -1242,22 +1240,22 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
 
 
 /* initialize the desktop window id in the desktop manager process */
-static void get_desktop_xwin( Display *display, struct x11drv_win_data *data )
+static struct x11drv_win_data *create_desktop_win_data( Display *display, HWND hwnd )
 {
-    data->whole_window = root_window;
-    if (root_window != DefaultRootWindow( display ))
-    {
-        VisualID visualid;
+    struct x11drv_win_data *data;
+    VisualID visualid;
 
-        wine_tsx11_lock();
-        visualid = XVisualIDFromVisual(visual);
-        wine_tsx11_unlock();
-        data->managed = TRUE;
-        SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
-        SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
-        SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
-        set_initial_wm_hints( display, data );
-    }
+    if (!(data = alloc_win_data( display, hwnd ))) return NULL;
+    wine_tsx11_lock();
+    visualid = XVisualIDFromVisual(visual);
+    wine_tsx11_unlock();
+    data->whole_window = root_window;
+    data->managed = TRUE;
+    SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
+    SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
+    SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
+    set_initial_wm_hints( display, data );
+    return data;
 }
 
 /**********************************************************************
@@ -1309,7 +1307,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
     Display *display = thread_display();
     WND *wndPtr;
-    struct x11drv_win_data *data;
     HWND insert_after;
     RECT rect;
     DWORD style;
@@ -1318,20 +1315,27 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     BOOL ret = FALSE;
     INT cx = cs->cx, cy = cs->cy;
 
-    if (!(data = alloc_win_data( display, hwnd ))) return FALSE;
-
-    if (hwnd == GetDesktopWindow()) get_desktop_xwin( display, data );
+    if (hwnd == GetDesktopWindow())
+    {
+        if (root_window != DefaultRootWindow( display ))
+        {
+            if (!create_desktop_win_data( display, hwnd )) return FALSE;
+        }
+    }
     else
     {
+        struct x11drv_win_data *data;
+
+        if (!(data = alloc_win_data( display, hwnd ))) return FALSE;
+
         /* create an X window if it's a top level window */
         if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
         {
             if (!create_whole_window( display, data )) goto failed;
         }
+        /* get class or window DC if needed */
+        alloc_window_dce( data );
     }
-
-    /* get class or window DC if needed */
-    alloc_window_dce( data );
 
     /* Call the WH_CBT hook */
 
@@ -1379,11 +1383,11 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     }
 
     /* make sure the window is still valid */
-    if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
-    if (data->whole_window) X11DRV_sync_window_style( display, data );
+    if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
 
     /* send WM_NCCALCSIZE */
-    rect = data->window_rect;
+    rect = wndPtr->rectWindow;
+    WIN_ReleasePtr( wndPtr );
     SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&rect );
 
     if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
@@ -1392,17 +1396,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     insert_after = (wndPtr->dwStyle & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
 
     X11DRV_SetWindowPos( hwnd, insert_after, &wndPtr->rectWindow, &rect, SWP_NOACTIVATE, NULL );
-
-    TRACE( "win %p window %d,%d,%d,%d client %d,%d,%d,%d whole %d,%d,%d,%d X client %d,%d,%d,%d xwin %x\n",
-           hwnd, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
-           wndPtr->rectWindow.right, wndPtr->rectWindow.bottom,
-           wndPtr->rectClient.left, wndPtr->rectClient.top,
-           wndPtr->rectClient.right, wndPtr->rectClient.bottom,
-           data->whole_rect.left, data->whole_rect.top,
-           data->whole_rect.right, data->whole_rect.bottom,
-           data->client_rect.left, data->client_rect.top,
-           data->client_rect.right, data->client_rect.bottom,
-           (unsigned int)data->whole_window );
 
     WIN_ReleasePtr( wndPtr );
 
