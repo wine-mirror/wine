@@ -41,9 +41,17 @@ static void init_functionpointers(void)
     HMODULE hmsi = GetModuleHandleA("msi.dll");
     HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
 
-    pMsiSourceListGetInfoA = (void*)GetProcAddress(hmsi, "MsiSourceListGetInfoA");
-    pMsiSourceListAddSourceExA = (void*)GetProcAddress(hmsi, "MsiSourceListAddSourceExA");
-    pConvertSidToStringSidA = (void*)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
+#define GET_PROC(dll, func) \
+    p ## func = (void *)GetProcAddress(dll, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
+
+    GET_PROC(hmsi, MsiSourceListAddSourceExA)
+    GET_PROC(hmsi, MsiSourceListGetInfoA)
+
+    GET_PROC(hadvapi32, ConvertSidToStringSidA)
+
+#undef GET_PROC
 }
 
 /* copied from dlls/msi/registry.c */
@@ -124,6 +132,12 @@ static void test_MsiSourceListGetInfo(void)
     UINT r;
     HKEY userkey, hkey;
     DWORD size;
+
+    if (!pMsiSourceListGetInfoA)
+    {
+        skip("Skipping MsiSourceListGetInfoA tests\n");
+        return;
+    }
 
     create_test_guid(prodcode, prod_squashed);
     get_user_sid(&usersid);
@@ -348,7 +362,7 @@ static void test_MsiSourceListAddSourceEx(void)
 
     if (!pMsiSourceListAddSourceExA)
     {
-        skip("Skipping MsiSourceListAddSourceEx tests\n");
+        skip("Skipping MsiSourceListAddSourceExA tests\n");
         return;
     }
 
