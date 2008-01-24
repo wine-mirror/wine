@@ -625,7 +625,7 @@ static void test_edit_control_4(void)
 
     for (i = lo; i < mid; i++) {
        ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
-       ok(0 == ret, "expected 0 got %d\n", ret);
+       ok((0 == ret || 1 == ret /* Vista */), "expected 0 or 1 got %d\n", ret);
     }
     for (i = mid; i <= hi; i++) {
        ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
@@ -643,7 +643,7 @@ static void test_edit_control_4(void)
 
     for (i = lo; i < mid; i++) {
        ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
-       ok(0 == ret, "expected 0 got %d\n", ret);
+       ok((0 == ret || 1 == ret /* Vista */), "expected 0 or 1 got %d\n", ret);
     }
     for (i = mid; i <= hi; i++) {
        ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
@@ -661,7 +661,7 @@ static void test_edit_control_4(void)
 
     for (i = lo; i < mid; i++) {
        ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
-       ok(0 == ret, "expected 0 got %d\n", ret);
+       ok((0 == ret || 1 == ret /* Vista */), "expected 0 or 1 got %d\n", ret);
     }
     for (i = mid; i <= hi; i++) {
        ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
