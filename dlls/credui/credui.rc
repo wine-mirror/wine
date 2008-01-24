@@ -34,4 +34,5 @@ IDB_BANNER BITMAP LOADONCALL DISCARDABLE banner.bmp
 #include "credui_Ko.rc"
 #include "credui_No.rc"
 #include "credui_Pl.rc"
+#include "credui_Ru.rc"
 #include "credui_Sv.rc"
