@@ -23,6 +23,16 @@ import "unknwn.idl";
 import "objidl.idl";
 import "oaidl.idl";
 
+[
+    uuid(f5078f18-c551-11d3-89b9-0000f81fe221),
+    version(3.0),
+    helpstring("Microsoft XML, v3.0")
+]
+library MSXML2
+{
+
+importlib("stdole2.tlb");
+
 interface IXMLDOMImplementation;
 interface IXMLDOMNode;
 interface IXMLDOMDocumentFragment;
@@ -1052,3 +1062,5 @@ coclass XSLTemplate30
 {
     [default] interface IXSLTemplate;
 }
+
+} /* Library MSXML */

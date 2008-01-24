@@ -305,6 +305,7 @@ dlls/msvidc32/rsrc.res
 dlls/msvideo.dll16
 dlls/mswsock/libmswsock.def
 dlls/mswsock/version.res
+dlls/msxml3/msxml3_v1.tlb
 dlls/msxml3/tests/*.ok
 dlls/msxml3/tests/msxml3_crosstest.exe
 dlls/msxml3/tests/testlist.c
