@@ -875,7 +875,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: 1 if OK
          */
 
-        TRACE("UnMapModule: %x\n", (DWORD)W32S_APP2WINE(context->Edx));
+        TRACE("UnMapModule: %x\n", W32S_APP2WINE(context->Edx));
 
         /* As we didn't map anything, there's nothing to unmap ... */
 

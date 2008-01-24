@@ -145,8 +145,8 @@ static REQUEST_HEADER * get_hdr(int id, void**extra)
 {
   void **hdr_ptr = strategy_data[id];
   if (extra)
-    *extra = hdr_ptr ? (void*)(hdr_ptr+1) : (void *)NULL;
-  return hdr_ptr ? *hdr_ptr : (void *)NULL;
+    *extra = hdr_ptr ? (void*)(hdr_ptr+1) : NULL;
+  return hdr_ptr ? *hdr_ptr : NULL;
 }
 
 static void WINAPI nul_strategy(CONTEXT86*ctx)

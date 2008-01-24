@@ -553,7 +553,7 @@ char VGA_GetColor16(int reg)
 {
 
     if (!lpddraw) return 0;
-	return (char)vga_16_palette[reg];
+	return vga_16_palette[reg];
 }
 
 /* set all 17 [char wide] colors at once in 16 color mode. */

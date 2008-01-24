@@ -1720,7 +1720,7 @@ static void INT21_RandomBlockReadFromFCB( CONTEXT86 *context )
         } else {
             disk_transfer_area = INT21_GetCurrentDTA(context);
             records_requested = CX_reg(context);
-            bytes_requested = (UINT) records_requested * fcb->logical_record_size;
+            bytes_requested = records_requested * fcb->logical_record_size;
             bytes_read = _lread((HFILE) handle, disk_transfer_area, bytes_requested);
             if (bytes_read != bytes_requested) {
                 TRACE("_lread(%d, %p, %d) failed with %d\n",
@@ -1811,7 +1811,7 @@ static void INT21_RandomBlockWriteToFCB( CONTEXT86 *context )
         } else {
             disk_transfer_area = INT21_GetCurrentDTA(context);
             records_requested = CX_reg(context);
-            bytes_requested = (UINT) records_requested * fcb->logical_record_size;
+            bytes_requested = records_requested * fcb->logical_record_size;
             bytes_written = _lwrite((HFILE) handle, (LPCSTR)disk_transfer_area, bytes_requested);
             if (bytes_written != bytes_requested) {
                 TRACE("_lwrite(%d, %p, %d) failed with %d\n",
@@ -5006,7 +5006,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             }
             else
             {
-                LPVOID address = (void*)((DWORD)context->SegEs << 4);
+                LPVOID address = (void*)(context->SegEs << 4);
                 UINT blocksize = DOSMEM_ResizeBlock( address, newsize, FALSE );
 
                 RESET_CFLAG(context);

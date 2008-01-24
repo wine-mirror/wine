@@ -608,7 +608,7 @@ void WINAPI DOSVM_outport( int port, int size, DWORD value )
        break;
     case 0x61:
         parport_8255[1] = (BYTE)value;
-        if ((((BYTE)parport_8255[1] & 3) == 3) && (tmr_8253[2].countmax != 1))
+        if (((parport_8255[1] & 3) == 3) && (tmr_8253[2].countmax != 1))
         {
             TRACE("Beep (freq: %d) !\n", 1193180 / tmr_8253[2].countmax);
             Beep(1193180 / tmr_8253[2].countmax, 20);

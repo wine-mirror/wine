@@ -300,7 +300,7 @@ LPVOID DOSMEM_AllocBlock(UINT size, UINT16* pseg)
                 }
                 /* curr is the found block */
                 curr->psp = psp;
-                if( pseg ) *pseg = (((char*)curr) + 16 - (char*)DOSMEM_dosmem) >> 4;
+                if( pseg ) *pseg = (((char*)curr) + 16 - DOSMEM_dosmem) >> 4;
                 return (LPVOID) ((char*)curr + 16);
             }
         }
